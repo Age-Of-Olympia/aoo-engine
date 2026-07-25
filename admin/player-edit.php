@@ -13,7 +13,9 @@ require_once __DIR__ . '/helpers.php';
 
 use App\Factory\PlayerFactory;
 use App\Service\CsrfProtectionService;
+use App\Service\EffectService;
 use Classes\Db;
+use Classes\Str;
 use Classes\View;
 
 $csrf = new CsrfProtectionService();
@@ -42,6 +44,13 @@ const PLAYER_EDIT_VITALS = [
     'mvt' => 'MVT',
     'a'   => 'A',
     'ae'  => 'Ae',
+];
+
+/** Unités de durée proposées pour la pose d'un effet, en secondes. */
+const PLAYER_EDIT_DURATION_UNITS = [
+    'minutes' => 60,
+    'heures'  => 3600,
+    'jours'   => 86400,
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['player_save'])) {
@@ -165,6 +174,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['inventory_add']) || 
     redirectTo($backTo); // PRG
 }
 
+// Effets : poser ou lever un effet — le geste d'animation (geler un
+// personnage, lui retirer une malédiction) sans passer par SQL.
+//
+// On passe par Player::add_effect et end_effect, PAS par un INSERT
+// direct : ce sont eux qui convertissent la durée en échéance et qui
+// appliquent les ANNULATIONS du catalogue (poser un effet lève ceux
+// qu'il annule, et tombe s'il en subit un qui le contredit). Une
+// écriture directe en base produirait des états que le jeu ne sait pas
+// produire — exactement ce qu'un outil d'admin ne doit pas fabriquer.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['effect_add']) || isset($_POST['effect_remove']))) {
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+
+        $effectService = new EffectService();
+        $effectName = trim((string) ($_POST['effect_name'] ?? ''));
+
+        // Validé AVANT l'appel : add_effect pose l'effet puis sort en
+        // erreur si le nom est inconnu — il laisserait une ligne
+        // orpheline derrière lui.
+        if (!$effectService->exists($effectName)) {
+            throw new RuntimeException("Effet inconnu au catalogue : « {$effectName} ».");
+        }
+
+        $label = $effectService->getLabel($effectName);
+
+        if (isset($_POST['effect_add'])) {
+            $unit = (string) ($_POST['duration_unit'] ?? 'heures');
+            $factor = PLAYER_EDIT_DURATION_UNITS[$unit] ?? 3600;
+            $duration = max(0, (int) ($_POST['duration'] ?? 0)) * $factor;
+            $value = max(1, (int) ($_POST['effect_value'] ?? 1));
+
+            // 0 = illimité, la convention d'add_effect (endTime nul).
+            $player->add_effect($effectName, $duration, $value);
+
+            setFlash('success', $duration === 0
+                ? "« {$label} » posé sans limite de durée sur « {$player->data->name} »."
+                : "« {$label} » posé sur « {$player->data->name} » pour " . Str::displaySeconds($duration) . '.');
+        } else {
+            $player->end_effect($effectName);
+            setFlash('success', "« {$label} » levé sur « {$player->data->name} ».");
+        }
+    } catch (Throwable $e) {
+        setFlash('danger', $e->getMessage());
+    }
+    redirectTo($backTo); // PRG
+}
+
 // ----- Affichage -----
 
 $vitalsRows = '';
@@ -256,6 +312,80 @@ $inventory = formCard('Inventaire (piles)', ''
     . '<p class="text-muted mb-0">Piles seulement — les instances individualisées (durabilité) naissent du jeu ;'
     . ' les objets équipés se gèrent en jeu.</p>');
 
+// ----- Effets (formulaires séparés du formulaire principal) -----
+
+$effectService = new EffectService();
+
+$effectRows = '';
+foreach ($player->getEffects() as $carried) {
+    $endTime = (int) $carried->getEndTime();
+    /* endTime nul = illimité (convention d'add_effect / purge_effects,
+     * qui ne supprime que les échéances strictement positives). */
+    if ($endTime === 0) {
+        $remaining = '<span class="badge badge-secondary">illimité</span>';
+    } elseif ($endTime <= time()) {
+        $remaining = '<span class="badge badge-warning">expiré</span>'
+            . ' <small class="text-muted">(retiré au prochain tour)</small>';
+    } else {
+        $remaining = e(Str::displaySeconds($endTime - time()));
+    }
+
+    $effectRows .= '<tr>'
+        . '<td><span class="ra ' . e($effectService->getIcon($carried->getName())) . '"></span> '
+        . e($effectService->getLabel($carried->getName()))
+        . ' <code>' . e($carried->getName()) . '</code></td>'
+        . '<td>' . (int) $carried->getValue() . '</td>'
+        . '<td>' . $remaining . '</td>'
+        . '<td><form method="post" action="player-edit.php?id=' . (int) $id . '"'
+        . ' onsubmit="return confirm(\'Lever « ' . e($effectService->getLabel($carried->getName())) . ' » ?\');">'
+        . $csrf->renderTokenField()
+        . '<input type="hidden" name="id" value="' . (int) $id . '">'
+        . '<input type="hidden" name="effect_name" value="' . e($carried->getName()) . '">'
+        . '<button type="submit" name="effect_remove" value="1" class="btn btn-sm btn-outline-danger">Lever</button>'
+        . '</form></td>'
+        . '</tr>';
+}
+
+$effectOptions = [];
+foreach ($effectService->getAllEffects() as $catalogEffect) {
+    $effectOptions[$catalogEffect->getName()] = $catalogEffect->getLabel() !== ''
+        ? $catalogEffect->getLabel() . ' (' . $catalogEffect->getName() . ')'
+        : $catalogEffect->getName();
+}
+asort($effectOptions);
+
+$durationUnits = [];
+foreach (array_keys(PLAYER_EDIT_DURATION_UNITS) as $unit) {
+    $durationUnits[$unit] = $unit;
+}
+
+$effects = formCard('Effets', ''
+    . ($effectRows === ''
+        ? '<p class="text-muted">Aucun effet en cours.</p>'
+        : '<table class="table table-sm mb-2"><thead><tr><th>Effet</th><th>Valeur</th><th>Échéance</th><th></th></tr></thead>'
+            . '<tbody>' . $effectRows . '</tbody></table>')
+    . '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex flex-wrap align-items-end" style="gap:.5rem">'
+    . $csrf->renderTokenField()
+    . '<input type="hidden" name="id" value="' . (int) $id . '">'
+    . formField('Effet', formSelect('effect_name', $effectOptions, null, '— choisir —', 'required'))
+    . formField('Durée', formInput('duration', '1', 'type="number" min="0" style="max-width:6rem"'), 'form-group', '0 = illimité')
+    // Durée en temps réel : c'est ce que le moteur sait faire AUJOURD'HUI
+    // (players_effects.endTime = horodatage absolu, 0 = illimité). Le
+    // passage des effets à une durée en TOURS est en cours de discussion
+    // (MR !645) : endTime deviendrait un compteur de tours et 0
+    // signifierait « expiré », l'inverse d'ici. Ce champ suivra ce
+    // choix — il n'anticipe pas dessus, un libellé « tours » sur un
+    // moteur en horodatages enregistrerait une date de 1970.
+    . formField('Unité', formSelect('duration_unit', $durationUnits, 'heures'))
+    . formField('Valeur', formInput('effect_value', '1', 'type="number" min="1" style="max-width:6rem"'))
+    . '<button type="submit" name="effect_add" value="1" class="btn btn-outline-primary mb-3">Poser</button>'
+    . '</form>'
+    . '<p class="text-muted mb-1">Poser un effet applique les règles du catalogue, annulations comprises :'
+    . ' un effet qui en neutralise un autre le lève, et tombe lui-même s\'il en subit un qui le contredit.</p>'
+    . '<p class="text-muted mb-0"><em>Durée en temps réel, provisoire :</em> le passage des effets à une durée'
+    . ' en <strong>tours</strong> est en discussion. Quand il sera tranché, l\'unité changera ici —'
+    . ' et « 0 = illimité » avec elle, cette valeur signifiant « expiré » dans le modèle par tours.</p>');
+
 $body = '<form method="post" action="player-edit.php?id=' . (int) $id . '">'
     . $csrfField
     . '<input type="hidden" name="id" value="' . (int) $id . '">'
@@ -263,6 +393,7 @@ $body = '<form method="post" action="player-edit.php?id=' . (int) $id . '">'
     . '<button type="submit" name="player_save" value="1" class="btn btn-primary">Enregistrer</button> '
     . '<a class="btn btn-outline-secondary" href="players.php">Retour à la liste</a>'
     . '</form>'
-    . $inventory;
+    . $inventory
+    . $effects;
 
 echo admin_layout('Édition — ' . $player->data->name, renderFlashMessage() . $body);
