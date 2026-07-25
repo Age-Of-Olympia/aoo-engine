@@ -99,6 +99,13 @@ echo '
     </tr>
     ';
 
+    /* Identité de CELUI QUI LIT, figée avant la boucle : $player y est
+     * réaffecté à l'acteur de chaque ligne (voir $actor plus bas). Sans
+     * cette copie, le test de propriété du détail se comparait à
+     * lui-même — toujours vrai — et exposait les jets de dés de tout le
+     * monde. */
+    $viewerId = (int) $player->id;
+
     foreach($logsToDisplay as $e){
         if(
             isset($_GET['self'])
@@ -111,14 +118,19 @@ echo '
         }
 
 
-        $player = $playerService->GetPlayer($e->player_id);
-        $player->get_data(false);
-        $playerRaceJson = $raceService->getRaceData($player->data->race);
+        /* Acteur de la ligne — nommé pour lui-même : il occupait
+         * $player, ce qui écrasait le lecteur. */
+        $actor = $playerService->GetPlayer($e->player_id);
+        $actor->get_data(false);
+        $actorRaceJson = $raceService->getRaceData($actor->data->race);
 
 
         $hiddenText = '';
 
-        if($e->player_id == $player->id && $e->hiddenText != ''){
+        /* Le détail d'une action (jets de dés, calculs) n'appartient
+         * qu'à son auteur. Les administrateurs gardent la vue complète,
+         * c'est l'objet de leurs onglets dédiés. */
+        if(($e->player_id == $viewerId || $displayAllCondition) && $e->hiddenText != ''){
 
             /* Style porté par .logs-hidden (main.css pour l'habillage
              * hérité, css/paper-app.css pour le thème papier). */
@@ -146,9 +158,9 @@ echo '
                     <span class="log-'. $e->type .'">'. $e->text .'</span><br />
                     '. $hiddenText .'
                 </td>
-            <td class="log-td" style="--race-bg: '. $playerRaceJson->bgColor .'; --race-fg: '. $playerRaceJson->color .';">
-                <span class="log-actor">'. $player->data->name .'<br />
-                (<a href="infos.php?targetId='. $player->id .'">mat.'. $player->getDisplayId() .'</a>)</span>
+            <td class="log-td" style="--race-bg: '. $actorRaceJson->bgColor .'; --race-fg: '. $actorRaceJson->color .';">
+                <span class="log-actor">'. $actor->data->name .'<br />
+                (<a href="infos.php?targetId='. $actor->id .'">mat.'. $actor->getDisplayId() .'</a>)</span>
             </td>
             ';
 

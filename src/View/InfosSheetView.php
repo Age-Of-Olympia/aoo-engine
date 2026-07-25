@@ -184,7 +184,9 @@ final class InfosSheetView
         echo '<img src="' . $targetEntity->getAvatar() . '" />';
 
 
-        $text = nl2br($targetEntity->getText());
+        /* Texte libre du joueur : mise en forme simple tolérée, tout le
+         * reste neutralisé (Str::richText). Il était rendu brut. */
+        $text = Str::richText($targetEntity->getText());
 
         if ($player->id != $targetEntity->getId() && $distance > $caracsJson->p) {
 
@@ -297,7 +299,7 @@ final class InfosSheetView
 
                 <h2>Histoire:' . $storyEdit . '</h2>
 
-                ' . nl2br($targetEntity->getStory()) . '
+                ' . Str::richText($targetEntity->getStory()) . '
             </td>
         </tr>
         </table>

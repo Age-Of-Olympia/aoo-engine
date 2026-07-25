@@ -229,5 +229,93 @@ class Str{
 
         return preg_replace(['/\>[^\S ]+/s','/[^\S ]+\</s','/(\s)+/s'],['>','<','\\1'],$b);
     }
+
+    /**
+     * Balises de mise en forme tolérées dans un texte libre saisi par un
+     * joueur. Aucune ne porte d'attribut : c'est ce qui rend la liste
+     * blanche sûre — pas de href, pas de style, pas de gestionnaire
+     * d'évènement, donc rien à assainir à l'intérieur d'une balise.
+     */
+    private const RICH_TEXT_TAGS = ['b', 'strong', 'i', 'em', 'u', 's', 'br'];
+
+    /** Celles qui ne se ferment pas. */
+    private const RICH_TEXT_VOID_TAGS = ['br'];
+
+    /**
+     * Rendu d'un texte libre de joueur (message du jour, histoire) ou
+     * d'admin (texte d'un type de bâtiment) : la mise en forme simple
+     * passe, tout le reste devient du texte visible.
+     *
+     * Le sens de l'opération est ce qui compte. On échappe TOUT d'abord,
+     * puis on ré-autorise exactement les motifs de la liste blanche —
+     * jamais l'inverse. Une balise ne peut donc pas se faufiler avec un
+     * attribut : « &lt;b onclick=… &gt; » ne correspond à aucun motif et
+     * reste affiché tel quel, en clair, au lieu de s'exécuter.
+     *
+     * Les balises non refermées sont refermées, et les fermetures
+     * orphelines supprimées : sans ça, un « <b> » oublié dans un message
+     * du jour mettrait en gras tout le reste de la page.
+     */
+    public static function richText(?string $raw): string
+    {
+        $escaped = htmlspecialchars((string) $raw, ENT_QUOTES, 'UTF-8');
+
+        /* \s* et /? tolèrent « <br/> » et « <br /> » ; rien d'autre ne
+         * peut tenir entre le nom de balise et le chevron fermant. */
+        $allowed = implode('|', self::RICH_TEXT_TAGS);
+        $restored = preg_replace_callback(
+            '#&lt;(/?)(' . $allowed . ')\s*/?&gt;#i',
+            static fn(array $m): string => '<' . $m[1] . strtolower($m[2]) . '>',
+            $escaped
+        );
+
+        return nl2br(self::balanceTags((string) $restored));
+    }
+
+    /**
+     * Referme ce que l'auteur a laissé ouvert, dans l'ordre, et jette
+     * les fermetures qui ne correspondent à rien. Le texte d'un joueur
+     * ne doit pas pouvoir déborder sur l'interface.
+     */
+    private static function balanceTags(string $html): string
+    {
+        $open = [];
+
+        $out = preg_replace_callback(
+            '#<(/?)([a-z]+)>#',
+            static function (array $m) use (&$open): string {
+                $closing = $m[1] === '/';
+                $tag = $m[2];
+
+                if (in_array($tag, self::RICH_TEXT_VOID_TAGS, true)) {
+                    return $closing ? '' : $m[0];
+                }
+
+                if (!$closing) {
+                    $open[] = $tag;
+
+                    return $m[0];
+                }
+
+                /* Fermeture orpheline : rien à refermer, on l'efface. */
+                $at = array_search($tag, $open, true);
+                if ($at === false) {
+                    return '';
+                }
+
+                /* Referme aussi ce qui a été ouvert par-dessus, sinon on
+                 * produirait du HTML mal imbriqué. */
+                $inner = array_splice($open, $at);
+                array_shift($inner);
+
+                return implode('', array_map(static fn(string $t): string => '</' . $t . '>', array_reverse($inner)))
+                    . $m[0];
+            },
+            $html
+        );
+
+        return (string) $out
+            . implode('', array_map(static fn(string $t): string => '</' . $t . '>', array_reverse($open)));
+    }
 }
 

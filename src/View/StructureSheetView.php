@@ -10,6 +10,7 @@ use App\Service\BuildingService;
 use App\Service\FactionService;
 use App\Service\RaceService;
 use Classes\Player;
+use Classes\Str;
 use Classes\Ui;
 use Classes\View;
 
@@ -115,8 +116,11 @@ final class StructureSheetView
             }
         }
 
+        // Message du jour du bâtiment : texte libre saisi en admin, lu par
+        // tous les observateurs. Même traitement que celui des joueurs —
+        // mise en forme simple tolérée, le reste neutralisé.
         if (!empty($target->data->text)) {
-            echo '<p><sup>' . $target->data->text . '</sup></p>';
+            echo '<p><sup>' . Str::richText((string) $target->data->text) . '</sup></p>';
         }
 
         echo '

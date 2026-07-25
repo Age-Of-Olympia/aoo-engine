@@ -13,6 +13,7 @@ use App\Service\BuildingService;
 use App\Service\FactionService;
 use App\Service\RaceService;
 use Classes\Player;
+use Classes\Str;
 use Classes\Ui;
 use Classes\View;
 
@@ -87,7 +88,11 @@ final class EntityCardView
             'img' => self::buttonsHtml($player, $target, $buildingDetails, $buildingClosure, $x, $y, $coords),
             'pvPct' => $pvPct,
             'type' => self::typeLabel($raceService, $target),
-            'text' => $target->data->text,
+            /* Message du jour : saisi par le joueur, donc assaini ici —
+             * Ui::get_card sert aussi des textes composés par le jeu
+             * (état d'une ressource, avec ses propres balises), on ne
+             * peut donc pas assainir dans le composant. */
+            'text' => Str::richText($target->data->text),
             'race' => $target->data->race,
             'faction' => self::factionHtml($player, $target),
         ];

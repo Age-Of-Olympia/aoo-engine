@@ -30,14 +30,9 @@ final class FeedRenderer
 
         ob_start();
         foreach ($logs as $e) {
-            /* Le contenu du mdj vit dans hiddenText, enrobé d'un
-             * div.action-details — classe masquée globalement, donc on
-             * la remplace pour afficher le texte dans le flux. */
-            $text = str_replace('class="action-details"', 'class="hud-mdj-text"', (string) $e->hiddenText);
-
             echo '<div class="hud-feed-item hud-feed-item--mdj">'
                 . '<strong>' . self::authorName($playerService, (int) $e->player_id) . '</strong>'
-                . $text
+                . '<div class="hud-mdj-text">' . self::mdjBody((string) $e->hiddenText) . '</div>'
                 . '<div class="hud-feed-meta">' . self::humanDate((int) $e->time) . '</div>'
                 . '</div>';
         }
@@ -86,6 +81,28 @@ final class FeedRenderer
         echo '<a class="hud-feed-all" href="logs.php?light">Tout voir</a>';
 
         return Str::minify(ob_get_clean());
+    }
+
+    /**
+     * Le texte d'un message du jour, sorti de son enveloppe de journal.
+     *
+     * Il est stocké dans hiddenText, concaténé brut dans un
+     * div.action-details au moment de la publication
+     * (scripts/account/mdj.php) : c'est de la saisie joueur, elle doit
+     * passer par la liste blanche avant d'atteindre l'écran de qui que
+     * ce soit. L'enveloppe, elle, est de notre fait — on la retire pour
+     * n'assainir que ce que le joueur a écrit, puis on la remplace par
+     * la classe visible du flux.
+     */
+    private static function mdjBody(string $hiddenText): string
+    {
+        if (preg_match('#^<div class="action-details">(.*)</div>$#s', $hiddenText, $m) === 1) {
+            return Str::richText($m[1]);
+        }
+
+        /* Enveloppe inattendue (journal ancien, autre forme) : on ne
+         * devine pas, on retire tout le balisage avant d'afficher. */
+        return Str::richText(strip_tags($hiddenText));
     }
 
     /**
