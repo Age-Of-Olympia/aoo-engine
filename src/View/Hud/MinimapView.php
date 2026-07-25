@@ -12,10 +12,14 @@ use Classes\Str;
  *
  * Réutilise les couches PNG pré-générées (ViewService::getGlobalMap /
  * getLocalMap — simples glob, aucun rendu GD) : carte du monde sur le
- * plan monde, carte locale ailleurs. Les couches joueurs GD sont
- * volontairement exclues ; la position du joueur est un marqueur CSS
- * placé via ViewService::getPositionPercent(). Le bloc est un repère
- * cliquable vers map.php, pas une carte temps réel.
+ * plan monde, carte locale ailleurs.
+ *
+ * Les couches joueurs GD restent volontairement exclues : les produire
+ * coûte un rendu d'image par joueur et par affichage du HUD. Les
+ * personnages sont donc des repères CSS posés en pourcentages — mais
+ * décidés par LES MÊMES règles de visibilité que ces couches
+ * (ViewService::visiblePlayers), pas par une seconde lecture. Le bloc
+ * reste un repère cliquable vers map.php, pas une carte temps réel.
  */
 final class MinimapView
 {
@@ -102,9 +106,27 @@ final class MinimapView
 
             if ($imgs !== '') {
                 $marker = '';
+
+                /* Les autres personnages : mêmes règles de visibilité
+                 * que le calque GD de la grande carte — c'est la même
+                 * méthode qui les décide (ViewService::visiblePlayers).
+                 * On en prend seulement la projection en pourcentages,
+                 * pour poser des repères CSS plutôt que de produire une
+                 * image GD à chaque affichage du HUD.
+                 *
+                 * Soi-même est écrit EN DERNIER : les repères sont posés
+                 * en absolu dans l'ordre du flux, le joueur doit donc
+                 * rester au-dessus quand deux personnages se superposent. */
+                foreach ($viewService->getVisiblePlayersPercent() as $other) {
+                    $marker .= '<span class="hud-minimap-player'
+                        . ($other['known'] ? '' : ' hud-minimap-player--far')
+                        . '" style="left: ' . round($other['x'], 2) . '%; top: ' . round($other['y'], 2)
+                        . '%; --minimap-race: ' . htmlspecialchars($other['color'], ENT_QUOTES, 'UTF-8') . ';"></span>';
+                }
+
                 $pos = $viewService->getPositionPercent();
                 if ($pos !== null) {
-                    $marker = '<span class="hud-minimap-me" title="Vous êtes ici" style="left: '
+                    $marker .= '<span class="hud-minimap-me" title="Vous êtes ici" style="left: '
                         . round($pos['x'], 2) . '%; top: ' . round($pos['y'], 2) . '%;"></span>';
                 }
 

@@ -170,6 +170,148 @@ class ViewService {
         ];
     }
     
+    /**
+     * LES personnages visibles sur une carte, et leur couleur — source
+     * unique des règles de visibilité.
+     *
+     * Elles vivaient en double, recopiées dans le générateur du calque
+     * GD de chaque carte. Elles n'ont pourtant rien d'anodin : ce sont
+     * elles qui décident si un joueur voit un adversaire, et sous quelle
+     * identité. Deux copies, c'est la certitude qu'elles divergeront —
+     * elles avaient d'ailleurs DÉJÀ divergé, et ce tableau le dit
+     * plutôt que de le masquer :
+     *
+     *   carte LOCALE  : respecte incognitoMode, IGNORE la colonne
+     *                   `visible`, exclut le lecteur, n'anonymise pas ;
+     *   carte MONDE   : respecte `visible` (qui sert aussi de race
+     *                   d'emprunt), IGNORE incognitoMode, inclut le
+     *                   lecteur, et noircit au-delà de DIST_MAP_MAX.
+     *
+     * Cet écart est CONSERVÉ tel quel : le corriger changerait ce que
+     * les joueurs voient, et c'est une décision de jeu, pas de
+     * refactorisation. Il est désormais lisible en un seul endroit.
+     *
+     * @param string $scope 'local' ou 'global'
+     * @return array<int, array{x: int, y: int, color: string, known: bool}>
+     *         x/y en PIXELS de la carte concernée
+     */
+    private function visiblePlayers(string $scope): array
+    {
+        $isGlobal = $scope === 'global';
+
+        if ($isGlobal) {
+            if (empty($this->scaleX) || empty($this->scaleY)) {
+                return [];
+            }
+            $default = '#000000';
+            $sql = "
+                SELECT c.x, c.y, c.z, p.race, p.visible
+                FROM players p
+                JOIN coords c ON c.id = p.coords_id
+                WHERE c.x IS NOT NULL AND c.y IS NOT NULL
+                  AND p.player_type IN ('real', 'npc')
+                  AND c.plan = '" . $this->worldPlan . "'
+            ";
+        } else {
+            if (!$this->localBoundsAvailable) {
+                return [];
+            }
+            $default = '#ffffff';
+            $zCondition = $this->currentPlan === $this->worldPlan
+                ? "AND c.z = 0"
+                : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
+            $sql = "
+                SELECT c.x, c.y, c.z, p.race, p.visible
+                FROM players p
+                JOIN coords c ON c.id = p.coords_id
+                LEFT JOIN players_options po ON po.player_id = p.id AND po.name = 'incognitoMode'
+                WHERE c.x IS NOT NULL AND c.y IS NOT NULL
+                  AND c.plan = '" . $this->currentPlan . "'
+                  AND p.id != " . (int) $this->playerId . "
+                  AND po.player_id IS NULL
+                  AND p.player_type IN ('real', 'npc')
+                  {$zCondition}
+            ";
+        }
+
+        $raceColors = array_merge(['default' => $default], $this->raceService->getBgColorMap());
+
+        $out = [];
+
+        foreach ($this->db->exe($sql) as $row) {
+            if (!isset($row['x'], $row['y'])) {
+                continue;
+            }
+
+            if ($isGlobal) {
+                if (!isset($row['z']) || $row['z'] != 0 || $row['visible'] == 'invisible') {
+                    continue;
+                }
+
+                /* `visible` sert aussi de race d'emprunt : un joueur peut
+                 * se montrer sous une autre apparence. */
+                $race = $row['visible'] !== null ? $row['visible'] : $row['race'];
+
+                $known = $this->getPlayersDistance($this->playerX, $this->playerY, $row['x'], $row['y']) <= DIST_MAP_MAX
+                    && $this->playerZ == 0
+                    && $this->currentPlan == $this->worldPlan;
+            } else {
+                $race = $row['race'];
+                $known = true;
+            }
+
+            $out[] = [
+                'x' => $this->transformX($row['x'], $scope),
+                'y' => $this->transformY($row['y'], $scope),
+                'color' => $known ? ($raceColors[$race] ?? $raceColors['default']) : $raceColors['default'],
+                'known' => $known,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Les mêmes personnages, en POURCENTAGES de l'image — de quoi poser
+     * des repères CSS par-dessus les couches PNG sans rendu GD, ce que
+     * fait la minimap du HUD (elle exclut volontairement les calques
+     * joueurs GD, trop coûteux à produire à chaque affichage).
+     *
+     * Même source de règles que le calque : c'est tout l'intérêt.
+     *
+     * @return array<int, array{x: float, y: float, color: string, known: bool}>
+     */
+    public function getVisiblePlayersPercent(): array
+    {
+        if ($this->playerX === null || $this->playerY === null) {
+            return [];
+        }
+
+        if ($this->isWorldPlan()) {
+            $scope = 'global';
+            $w = $this->width;
+            $h = $this->height;
+        } else {
+            $scope = 'local';
+            $w = $this->localMapWidth;
+            $h = $this->localMapHeight;
+        }
+
+        if (empty($w) || empty($h)) {
+            return [];
+        }
+
+        return array_map(
+            static fn(array $one): array => [
+                'x' => max(0.0, min(100.0, $one['x'] / $w * 100)),
+                'y' => max(0.0, min(100.0, $one['y'] / $h * 100)),
+                'color' => $one['color'],
+                'known' => $one['known'],
+            ],
+            $this->visiblePlayers($scope)
+        );
+    }
+
     private function transformX($x, $mapType = "global") {
         if ($mapType === "global") {
             $scale = $this->scaleX;
@@ -801,52 +943,21 @@ class ViewService {
             return null; // Pas de carte configurée pour ce niveau Z
         }
         $layer = $this->createLayer($this->localMapWidth, $this->localMapHeight);
-        $zCondition = $this->currentPlan === $this->worldPlan 
-            ? "AND c.z = 0" 
-            : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
         $mapType = "local";
 
-        $raceColors = array_merge(
-            ['default' => '#ffffff'],
-            $this->raceService->getBgColorMap()
-        );
-    
-        $sql = "
-            SELECT c.x, c.y, p.race, p.name as player_name, p.lastLoginTime
-            FROM players p
-            JOIN coords c ON c.id = p.coords_id
-            LEFT JOIN players_options po ON po.player_id = p.id AND po.name = 'incognitoMode'
-            WHERE c.x IS NOT NULL
-                AND c.y IS NOT NULL
-                AND c.plan = '" . $this->currentPlan . "'
-                AND p.id != " . $this->playerId . "
-                AND po.player_id IS NULL
-                AND p.player_type IN ('real', 'npc')
-                $zCondition
-            ";
-            
-        $players = $this->db->exe($sql);
+        /* Qui est visible, et de quelle couleur : visiblePlayers().
+         * Cette méthode ne fait plus que DESSINER. */
+        foreach ($this->visiblePlayers($mapType) as $one) {
 
-        foreach ($players as $player) {
-            if (!isset($player['x']) || !isset($player['y'])) {
-                continue;
-            }
-
-            $x = $this->transformX($player['x'], $mapType);
-            $y = $this->transformY($player['y'], $mapType);
-
-            $raceColor = $raceColors[$player['race']] ?? $raceColors['default'];
-            list($r, $g, $b) = sscanf($raceColor, "#%02x%02x%02x");
-            $playerColor = imagecolorallocate($layer, $r, $g, $b);
-            
-            $markerColor = $playerColor;
+            list($r, $g, $b) = sscanf($one['color'], "#%02x%02x%02x");
+            $markerColor = imagecolorallocate($layer, $r, $g, $b);
             $pulseColor = imagecolorallocatealpha($layer, $r, $g, $b, 80);
 
             $pulseSize = 6;
-            imagefilledellipse($layer, $x, $y, $pulseSize * 2, $pulseSize * 2, $pulseColor);
-            
+            imagefilledellipse($layer, $one['x'], $one['y'], $pulseSize * 2, $pulseSize * 2, $pulseColor);
+
             $markerSize = 6;
-            imagefilledellipse($layer, $x, $y, $markerSize, $markerSize, $markerColor);
+            imagefilledellipse($layer, $one['x'], $one['y'], $markerSize, $markerSize, $markerColor);
         }
 
         $filePath = $this->saveLayer($layer, 'players_layer.png', $this->playerId, $mapType);
@@ -858,62 +969,24 @@ class ViewService {
     public function generateWorldPlayersLayer() {
         $layer = $this->createLayer();
         $mapType = "global";
-        
-        // Couleurs des races depuis la table races
-        $raceColors = array_merge(
-            ['default' => '#000000'],
-            $this->raceService->getBgColorMap()
-        );
-        
-        // Récupère tous les joueurs avec des coordonnées
-        $sql = "
-            SELECT c.x, c.y, c.z, c.plan, p.race, p.name as player_name, p.lastLoginTime, p.visible
-            FROM players p 
-            JOIN coords c ON c.id = p.coords_id
-            WHERE c.x IS NOT NULL 
-            AND c.y IS NOT NULL
-            AND p.player_type IN ('real', 'npc')
-            AND c.plan = '" . $this->worldPlan . "'
-        ";
-        
-        $players = $this->db->exe($sql);
 
-        // Dessine chaque joueur
-        foreach ($players as $player) {
-            // Ignore si les coordonnées sont invalides
-            if (!isset($player['x']) || !isset($player['y']) || !isset($player['z']) || $player['z'] != 0 || $player['visible'] == "invisible") {
-                continue;
-            }
+        /* Qui est visible, sous quelle identité, et noirci ou non au-delà
+         * de la portée de reconnaissance : visiblePlayers(). Cette
+         * méthode ne fait plus que DESSINER. */
+        foreach ($this->visiblePlayers($mapType) as $one) {
 
-            // Récupère les coordonnées
-            $x = $this->transformX($player['x'], $mapType);
-            $y = $this->transformY($player['y'], $mapType);
-
-            // Récupère la couleur pour la race
-            // La couleur est noire par défaut si le personnage est à plus de 15 cases du joueur
-            // On n'affiche pas la case si le joueur est tagué comme invisible
-            $selectedRace = $player['race'];
-            if(!is_null($player['visible'])){
-                $selectedRace = $player['visible'];
-            }
-
-            $raceColor = ($this->getPlayersDistance($this->playerX, $this->playerY, $player['x'], $player['y']) > DIST_MAP_MAX || $this->playerZ != 0 || $this->currentPlan != $this->worldPlan) ? $raceColors['default'] : ($raceColors[$selectedRace] ?? $raceColors['default']);
-            
-            // Convertit la couleur hexadécimale en RVB
-            list($r, $g, $b) = sscanf($raceColor, "#%02x%02x%02x");
-            
-            // Alloue la couleur
+            list($r, $g, $b) = sscanf($one['color'], "#%02x%02x%02x");
             $playerColor = imagecolorallocate($layer, $r, $g, $b);
-            
+
             // Dessine un carré 2x2 pour le joueur
-            $size = 1; // Cela fera un carré 2x2 (1 pixel dans chaque direction à partir du centre)
-            imagefilledrectangle($layer, 
-                $x - $size, $y - $size, 
-                $x + $size, $y + $size, 
+            $size = 1;
+            imagefilledrectangle($layer,
+                $one['x'] - $size, $one['y'] - $size,
+                $one['x'] + $size, $one['y'] + $size,
                 $playerColor
             );
         }
-        
+
         $filePath = $this->saveLayer($layer, 'players_layer.png', $this->playerId, $mapType);
         imagedestroy($layer);
 

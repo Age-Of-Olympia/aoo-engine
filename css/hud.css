@@ -1516,6 +1516,28 @@ body:has(#hud) #view-landing-wrapper {
     50% { transform: scale(1.4); opacity: 0.7; }
 }
 
+/* Les autres personnages : plus petits et sans pulsation, pour que le
+ * repère « vous êtes ici » reste identifiable d'un coup d'œil. La
+ * couleur vient du rendu — elle est décidée par les mêmes règles que
+ * le calque de la grande carte, y compris l'anonymisation. */
+.hud-minimap-player {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    margin: -3px 0 0 -3px;
+    border-radius: 50%;
+    background: var(--minimap-race, #000);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    pointer-events: none;
+}
+
+/* Hors de portée de reconnaissance : la grande carte les noircit déjà,
+ * on ne révèle donc rien de plus — juste une présence. */
+.hud-minimap-player--far {
+    opacity: 0.55;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
 #hud-minimap .hud-minimap-placeholder {
     display: grid;
     place-items: center;
