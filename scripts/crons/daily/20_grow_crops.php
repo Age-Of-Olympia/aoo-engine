@@ -32,7 +32,11 @@ while($row = $res->fetch_object()){
     $item->get_data();
 
 
-    if(!empty($item->data->growZMin) && $item->data->growZMin > $row->z){
+    /* isset, pas !empty : growZMin = 0 est une contrainte (« ne germe
+     * pas sous le niveau de la mer »), pas une absence de contrainte.
+     * Avec !empty, une graine réglée sur 0 germait aussi en z négatif —
+     * le champ admin était sans effet à cette valeur. */
+    if(isset($item->data->growZMin) && $item->data->growZMin > $row->z){
 
         continue;
     }

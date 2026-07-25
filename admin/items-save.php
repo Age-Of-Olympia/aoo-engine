@@ -277,8 +277,11 @@ foreach (array_values((array) ($_POST['grow_name'] ?? [])) as $i => $growName) {
 if ($growTo !== []) {
     $extraObject->growTo = $growTo;
 }
+// Champ laissé VIDE : aucune contrainte de niveau (clé absente). Valeur 0 :
+// contrainte « pas sous le niveau de la mer » — elle doit être stockée, d'où
+// le test de chaîne vide et non un test sur l'entier (0 est une valeur).
 $growZMin = trim((string) ($_POST['grow_z_min'] ?? ''));
-if ($growZMin !== '' && (int) $growZMin !== 0) {
+if ($growZMin !== '') {
     $extraObject->growZMin = (int) $growZMin;
 }
 

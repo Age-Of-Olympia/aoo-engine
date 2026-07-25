@@ -11,12 +11,12 @@ use App\View\Player\SkillStatsView;
 $ownership = new SkillOwnershipService();
 $stats = new SkillStatsService();
 
-// "Inclure les PNJ" toggle: folds player_type='npc' into the per-player counts
-// and averages. Adoption figures below stay real-only (catalogue coverage).
+// "Inclure les PNJ" toggle: folds player_type='npc' into the population every
+// figure on the page covers — tiles, averages AND adoption bars.
 $includeNpcs = !empty($_GET['npc']);
 
-// Activity filter (Tous / Actifs / Inactifs): narrows the per-player counts and
-// averages to the chosen population. Same INACTIVE_TIME cutoff as the roster.
+// Activity filter (Tous / Actifs / Inactifs): narrows that same population to
+// the chosen subset. Same INACTIVE_TIME cutoff as the roster.
 $allowedStatuses = [
     SkillStatsService::STATUS_ALL,
     SkillStatsService::STATUS_ACTIVE,
@@ -54,8 +54,10 @@ $summary = [
     'avgPassives' => $playerCount > 0 ? $totalPassives / $playerCount : 0.0,
 ];
 
-// Adoption: every catalogued action/passive with its real-owner count, desc.
-$actionCounts = $ownership->actionOwnerCounts();
+// Adoption: every catalogued action/passive with its owner count, desc. Same
+// filters as the summary above — otherwise "Actifs" showed 9 joueurs facing
+// 315 détenteurs, with every bar stuck full.
+$actionCounts = $ownership->actionOwnerCounts($includeNpcs, $status);
 $actionAdoption = [];
 foreach ((new ActionCatalogService())->listActions() as $action) {
     $actionAdoption[] = [
@@ -65,7 +67,7 @@ foreach ((new ActionCatalogService())->listActions() as $action) {
     ];
 }
 
-$passiveCounts = $ownership->passiveOwnerCounts();
+$passiveCounts = $ownership->passiveOwnerCounts($includeNpcs, $status);
 $passiveAdoption = [];
 foreach ((new ActionPassiveCatalogService())->listPassives() as $passive) {
     $passiveAdoption[] = [
@@ -79,7 +81,10 @@ $byCountDesc = static fn(array $a, array $b): int => $b['count'] <=> $a['count']
 usort($actionAdoption, $byCountDesc);
 usort($passiveAdoption, $byCountDesc);
 
-$body = (new SkillStatsView())->render($summary, $actionAdoption, $passiveAdoption, $players);
+// One wording for "who is counted", shared by the tile and the filter bar.
+$populationLabel = $stats->populationLabel($includeNpcs, $status);
+
+$body = (new SkillStatsView())->render($summary, $actionAdoption, $passiveAdoption, $players, $populationLabel);
 
 // Filter bar: plain GET links so state is bookmarkable and needs no JS. Each
 // link preserves the OTHER filter's current value.
@@ -114,10 +119,10 @@ foreach ($statusLabels as $value => $label) {
     $statusButtons .= '<a class="' . $cls . '" href="' . e($buildUrl($includeNpcs, $value)) . '">' . e($label) . '</a> ';
 }
 
-$notes = ($includeNpcs ? 'PNJ inclus' : 'Joueurs réels uniquement')
-    . ' · ' . ($status === SkillStatsService::STATUS_ALL
-        ? 'tous statuts'
-        : ($status === SkillStatsService::STATUS_ACTIVE ? 'actifs seulement' : 'inactifs seulement'));
+// Reminder of the population every figure on the page covers (tiles, averages
+// and adoption bars), phrased by the service so the two can't drift apart.
+$notes = 'Population : ' . $populationLabel
+    . ($status === SkillStatsService::STATUS_ALL ? ' (tous statuts)' : '');
 
 $toggleBar = '<div class="mb-3 d-flex flex-wrap align-items-center" style="gap:.5rem">'
     . '<span class="btn-group">' . $statusButtons . '</span>'

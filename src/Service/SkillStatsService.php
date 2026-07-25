@@ -5,12 +5,13 @@ namespace App\Service;
 use Classes\Db;
 
 /**
- * Aggregate figures for the Compétences statistics page: how many real players
- * there are, and how many actions / passives each one holds (for averages and
- * outliers). Restricted to real players (player_type = 'real').
+ * Aggregate figures for the Compétences statistics page: how many players the
+ * current filter selects, and how many actions / passives each one holds (for
+ * averages and outliers). Real players only by default, PNJs on opt-in.
  *
  * Adoption-per-skill (how many players own each action/passive) is read from
- * SkillOwnershipService; this service covers the per-player side.
+ * SkillOwnershipService; this service covers the per-player side and owns the
+ * population predicate (populationWhere) both sides share.
  */
 class SkillStatsService
 {
@@ -24,11 +25,13 @@ class SkillStatsService
      * (real, or real + PNJ when opted in) plus an optional activity filter
      * (active / inactive, using the same INACTIVE_TIME cutoff as
      * PlayerService::isInactive). Single source of truth so the count, the
-     * per-player table and the averages always agree on the population.
+     * per-player table, the averages AND the adoption figures
+     * (SkillOwnershipService, which reuses this predicate) always agree on the
+     * population — otherwise "9 joueurs" could face "315 détenteurs".
      *
      * @param string $prefix Column prefix ('' for the count query, 'p.' when joined)
      */
-    private function whereClause(bool $includeNpcs, string $status, string $prefix = ''): string
+    public function populationWhere(bool $includeNpcs, string $status, string $prefix = ''): string
     {
         $types = $includeNpcs ? "'real', 'npc'" : "'real'";
         $where = $prefix . 'player_type IN (' . $types . ')';
@@ -44,10 +47,26 @@ class SkillStatsService
         return $where;
     }
 
+    /**
+     * Human-readable name of the population a filter selects. Single wording,
+     * reused by the summary tile and the filter bar so the page never labels
+     * "Joueurs réels" a figure that includes PNJs or only actives.
+     */
+    public function populationLabel(bool $includeNpcs, string $status): string
+    {
+        $who = $includeNpcs ? 'Joueurs + PNJ' : 'Joueurs réels';
+
+        return match ($status) {
+            self::STATUS_ACTIVE   => $who . ' actifs',
+            self::STATUS_INACTIVE => $who . ' inactifs',
+            default               => $who,
+        };
+    }
+
     public function realPlayerCount(bool $includeNpcs = false, string $status = self::STATUS_ALL): int
     {
         $res = (new Db())->exe(
-            'SELECT COUNT(*) AS n FROM players WHERE ' . $this->whereClause($includeNpcs, $status)
+            'SELECT COUNT(*) AS n FROM players WHERE ' . $this->populationWhere($includeNpcs, $status)
         );
 
         return (int) $res->fetch_assoc()['n'];
@@ -63,7 +82,7 @@ class SkillStatsService
         $sql = "SELECT p.id, p.name, COUNT(pa.name) AS n
                 FROM players p
                 LEFT JOIN players_actions pa ON pa.player_id = p.id
-                WHERE " . $this->whereClause($includeNpcs, $status, 'p.') . "
+                WHERE " . $this->populationWhere($includeNpcs, $status, 'p.') . "
                 GROUP BY p.id, p.name
                 ORDER BY n DESC, p.name ASC";
 
@@ -80,7 +99,7 @@ class SkillStatsService
         $sql = "SELECT p.id, p.name, COUNT(pp.passive_id) AS n
                 FROM players p
                 LEFT JOIN players_passives pp ON pp.player_id = p.id
-                WHERE " . $this->whereClause($includeNpcs, $status, 'p.') . "
+                WHERE " . $this->populationWhere($includeNpcs, $status, 'p.') . "
                 GROUP BY p.id, p.name
                 ORDER BY n DESC, p.name ASC";
 

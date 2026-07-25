@@ -61,6 +61,20 @@
     margin: 0;
 }
 
+/* En-têtes collants : le corps du tableau défile dans .stats-scroll, sans quoi
+   les colonnes perdent leur libellé dès le premier scroll. Fond opaque repris
+   du design system (sinon les lignes défileraient sous l'en-tête), et
+   box-shadow plutôt que border : border-collapse escamote les bordures des
+   cellules sticky. */
+.stats-card thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    white-space: nowrap;
+    background: var(--parchment);
+    box-shadow: inset 0 -1px 0 var(--rule);
+}
+
 .stats-count {
     width: 3rem;
     text-align: right;

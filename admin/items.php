@@ -56,12 +56,25 @@ function items_catalog(): array
 function items_owner_counts(): array
 {
     $counts = [];
+    /* Mêmes quatre emplacements que la liste détaillée
+     * (ItemOwnershipService / admin/item-owners.php) : sans les offres
+     * et les échanges, un objet engagé ne comptait plus nulle part, et
+     * le compteur contredisait sa propre page de détail. Les lignes à
+     * quantité nulle sont écartées — une pile vidée n'est pas une
+     * détention. */
     $res = (new \Classes\Db())->exe(
-        'SELECT item_id, COUNT(DISTINCT player_id) AS n FROM (
-            SELECT item_id, player_id FROM players_items
+        "SELECT item_id, COUNT(DISTINCT player_id) AS n FROM (
+            SELECT item_id, player_id FROM players_items WHERE n > 0
             UNION
-            SELECT item_id, player_id FROM players_items_bank
-         ) AS u GROUP BY item_id'
+            SELECT item_id, player_id FROM players_items_bank WHERE n > 0
+            UNION
+            SELECT i.item_id, l.player_id FROM players_items_instances l
+                JOIN item_instances i ON i.id = l.instance_id WHERE i.destroyed = 0
+            UNION
+            SELECT item_id, player_id FROM items_bids WHERE stock > 0
+            UNION
+            SELECT item_id, player_id FROM players_items_exchanges WHERE n > 0
+         ) AS u GROUP BY item_id"
     );
     while ($row = $res->fetch_object()) {
         $counts[(int) $row->item_id] = (int) $row->n;
@@ -144,7 +157,9 @@ function items_type_inconsistencies(object $row, string $type): array
     if (is_object($extra) && !empty($extra->effet) && $type !== 'consommable') {
         $issues[] = 'effets de consommation';
     }
-    if (is_object($extra) && (!empty($extra->growTo) || !empty($extra->growZMin)) && $type !== 'graine') {
+    // growZMin : isset et non !empty — 0 est une contrainte valide (« pas
+    // sous le niveau de la mer »), pas une absence de contrainte.
+    if (is_object($extra) && (!empty($extra->growTo) || isset($extra->growZMin)) && $type !== 'graine') {
         $issues[] = 'pousses de graine';
     }
 

@@ -1,9 +1,15 @@
 <?php
 /**
  * Détenteurs d'un objet du catalogue (lien depuis la colonne « Joueurs »
- * de admin/items.php) : détail joueur par joueur — quantité en
- * inventaire, emplacement équipé éventuel, quantité en banque. Même
- * périmètre que le compteur agrégé (ItemOwnershipService).
+ * de admin/items.php) : détail joueur par joueur, réparti entre les
+ * quatre emplacements possibles — inventaire (emplacement équipé
+ * compris), banque, offres de vente en cours et échanges en cours.
+ *
+ * Les quatre s'additionnent sans doublon : mettre en vente ou proposer
+ * en échange DÉBITE la banque, l'objet n'est donc jamais compté deux
+ * fois. C'est aussi pourquoi les deux dernières colonnes sont
+ * nécessaires : sans elles, un objet engagé disparaissait de la liste
+ * sans que rien ne dise où il était passé.
  */
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
@@ -33,14 +39,17 @@ foreach ($owners as $owner) {
         ? (string) $owner['inv']
             . ($owner['equiped'] !== '' ? ' <span class="badge badge-primary">équipé : ' . e($owner['equiped']) . '</span>' : '')
         : '<span class="text-muted">—</span>';
-    $bank = $owner['bank'] > 0 ? (string) $owner['bank'] : '<span class="text-muted">—</span>';
+    $cell = static fn(int $n): string => $n > 0 ? (string) $n : '<span class="text-muted">—</span>';
 
     $rows[] = '<tr>'
         . '<td>' . $owner['id'] . '</td>'
         . '<td>' . e($owner['name']) . '</td>'
         . '<td>' . e($owner['race']) . '</td>'
         . '<td>' . $inv . '</td>'
-        . '<td>' . $bank . '</td>'
+        . '<td>' . $cell($owner['bank']) . '</td>'
+        . '<td>' . $cell($owner['market']) . '</td>'
+        . '<td>' . $cell($owner['exchange']) . '</td>'
+        . '<td><strong>' . ($owner['inv'] + $owner['bank'] + $owner['market'] + $owner['exchange']) . '</strong></td>'
         . '<td><a class="btn btn-sm btn-outline-primary" href="/admin/player-edit.php?id=' . $owner['id'] . '">Fiche</a></td>'
         . '</tr>';
 }
@@ -52,8 +61,10 @@ $content = '<div class="d-flex justify-content-between align-items-center mb-3">
     . ($owners === []
         ? '<p class="text-muted">Aucun joueur ne détient cet objet.</p>'
         : '<p class="text-muted mb-2">' . count($owners) . ' joueur(s)</p>'
+            . '<p class="text-muted small mb-2">Mettre en vente ou proposer en échange débite la banque :'
+                . ' les colonnes s\'additionnent sans doublon.</p>'
             . renderTable(
-                ['Matricule', 'Nom', 'Race', 'Inventaire', 'Banque', ''],
+                ['Matricule', 'Nom', 'Race', 'Inventaire', 'Banque', 'En vente', 'En échange', 'Total', ''],
                 $rows,
                 'class="table table-striped table-hover table-sm" data-admin-list data-page-size="30"'
             ));
