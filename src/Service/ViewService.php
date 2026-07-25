@@ -1044,21 +1044,71 @@ class ViewService {
         ];
     }
 
+    /**
+     * Jeton opaque et stable identifiant les couches d'UN joueur.
+     *
+     * Ces couches sont personnelles : le calque « player » porte sa
+     * position, le calque « players » porte qui il est capable
+     * d'identifier — donc sa portée de perception et son voisinage. Les
+     * nommer « player_{id} » les rendait ÉNUMÉRABLES : servies en
+     * statique depuis la racine web, n'importe qui pouvait incrémenter
+     * le numéro et lire la vue d'un adversaire, sans même être connecté.
+     *
+     * La clé vit dans un fichier gitignoré, propre à l'installation ;
+     * un jeton ne se remonte donc pas à l'identifiant. Repli sur le mot
+     * de passe de base — gitignoré lui aussi — pour qu'une installation
+     * sans secret Tiled ne retombe pas silencieusement sur l'ancien
+     * nommage devinable.
+     */
+    public static function playerLayerToken(int $playerId): string
+    {
+        /* constant() plutôt que l'accès direct : ces deux constantes
+         * vivent dans des fichiers gitignorés, absents de l'analyse
+         * statique comme du dépôt. */
+        if (defined('TILED_HMAC_SECRET') && constant('TILED_HMAC_SECRET') !== '') {
+            $key = (string) constant('TILED_HMAC_SECRET');
+        } elseif (defined('DB_CONSTANTS')) {
+            $dbConstants = constant('DB_CONSTANTS');
+            $key = (string) ($dbConstants['psw'] ?? 'aoo-map-layer');
+        } else {
+            $key = 'aoo-map-layer';
+        }
+
+        return substr(hash_hmac('sha256', 'map-layer:' . $playerId, $key), 0, 32);
+    }
+
+    /** Chemin web d'une couche personnelle — source unique, écriture et lecture. */
+    public static function playerLayerPath(string $mapType, int $playerId, string $fileName): string
+    {
+        $baseName = $mapType === 'global' ? 'global_map' : 'local_map';
+
+        return '/img/maps/' . $baseName . '_p' . self::playerLayerToken($playerId) . '_' . $fileName;
+    }
+
     private function saveLayer($layer, $fileName, $playerId = null, $mapType = null) {
         // Ensure the maps directory exists
         if (!file_exists('img/maps')) {
             mkdir('img/maps', 0777, true);
         }
-        
+
         $baseName = $mapType === "global" ? 'global_map' : 'local_map';
 
-        // Prefix the filename with the player's ID if provided
         if ($playerId !== null) {
-            $fileName = 'player_' . $playerId . '_' . $fileName;
+            $filePath = ltrim(self::playerLayerPath((string) $mapType, (int) $playerId, $fileName), '/');
+
+            /* L'ancien fichier au nom devinable reste lisible tant qu'il
+             * est sur le disque : on l'efface en écrivant le nouveau,
+             * pour que la correction se propage d'elle-même au fil des
+             * régénérations plutôt que d'attendre un nettoyage manuel. */
+            $legacy = 'img/maps/' . $baseName . '_player_' . $playerId . '_' . $fileName;
+            if (is_file($legacy)) {
+                @unlink($legacy);
+            }
+        } else {
+            $filePath = 'img/maps/' . $baseName . '_' . $fileName;
         }
-        
+
         // Save the layer as a PNG image
-        $filePath = 'img/maps/' . $baseName . '_' . $fileName;
         imagepng($layer, $filePath);
 
         return $filePath;

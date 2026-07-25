@@ -153,7 +153,7 @@ if (!isset($_GET['local'])) {
 
         // Special handling for players & player layer
         if (in_array('players', $selectedLayers)) {
-            $playersLayerPath = '/img/maps/global_map_player_' . $_SESSION['playerId'] . '_players_layer.png';
+            $playersLayerPath = \App\Service\ViewService::playerLayerPath('global', (int) $_SESSION['playerId'], 'players_layer.png');
             $fullPath = $_SERVER['DOCUMENT_ROOT'].$playersLayerPath;
             if (file_exists($fullPath)) {
                 list($width, $height) = getimagesize($fullPath);
@@ -284,7 +284,7 @@ if(isset($_GET['local'])){
 
                 // Special handling for players & player layers
                 if (in_array('players', $selectedLayers)) {
-                    $playersLayerPath = '/img/maps/local_map_player_' . $_SESSION['playerId'] . '_players_layer.png';
+                    $playersLayerPath = \App\Service\ViewService::playerLayerPath('local', (int) $_SESSION['playerId'], 'players_layer.png');
                     $fullPath = $_SERVER['DOCUMENT_ROOT'].$playersLayerPath;
                     if (file_exists($fullPath)) {
                         list($width, $height) = getimagesize($fullPath);
@@ -293,7 +293,7 @@ if(isset($_GET['local'])){
                 }
 
                 if (in_array('player', $selectedLayers)) {
-                    $playerLayerPath = '/img/maps/local_map_player_' . $_SESSION['playerId'] . '_layer.png';
+                    $playerLayerPath = \App\Service\ViewService::playerLayerPath('local', (int) $_SESSION['playerId'], 'layer.png');
                     $fullPath = $_SERVER['DOCUMENT_ROOT'].$playerLayerPath;
                     if (file_exists($fullPath)) {
                         list($width, $height) = getimagesize($fullPath);
