@@ -195,7 +195,11 @@ class Ui{
                 echo '<div class="card-image"><img src="'. $data->bg .'" class="card-portrait" /><div id="action-data"></div></div>';
 
 
-                if(!empty($data->pvPct)){
+                /* isset, pas !empty : à 0 PV — le cas le plus grave —
+                 * !empty(0) valait faux et la carte de sélection
+                 * n'affichait AUCUN voile. Un mort, une ruine ou un
+                 * mur brisé apparaissaient donc indemnes. */
+                if(isset($data->pvPct)){
 
 
                     $height = floor((100 - $data->pvPct) * 225 / 100);
@@ -602,7 +606,12 @@ class Ui{
         $height = min(100 - $pvPct, 100);
         $rgb = self::hexToRgb($woundColor);
 
-        return '<div class="pv-veil" style="position: absolute; left: 0; bottom: 0; width: 100%; height: ' . $height . '%; background: rgba(' . $rgb . ', 0.35); border-top: 2px solid rgba(' . $rgb . ', 0.7); pointer-events: none;"></div>';
+        /* --pv-veil-rgb : la teinte de race exposée à la feuille de
+         * style. Les styles en ligne restent le rendu de référence
+         * (aucun habillage ne peut faire disparaître le voile) ; la
+         * variable permet au HUD de RENFORCER le voile en vignette
+         * mobile sans réécrire la couleur — cf. css/hud.css. */
+        return '<div class="pv-veil" style="--pv-veil-rgb: ' . $rgb . '; position: absolute; left: 0; bottom: 0; width: 100%; height: ' . $height . '%; background: rgba(' . $rgb . ', 0.35); border-top: 2px solid rgba(' . $rgb . ', 0.7); pointer-events: none;"></div>';
     }
 
     /**

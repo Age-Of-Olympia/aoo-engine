@@ -65,10 +65,12 @@ final class FeedRenderer
              * non lus (comparaison au dernier passage, localStorage).
              * data-own : nos propres actions ne comptent pas comme non
              * lues — seul ce que les autres nous font mérite le badge. */
-            $own = ((int) $e->player_id === (int) $player->id) ? ' data-own="1"' : '';
+            $isOwn = ((int) $e->player_id === (int) $player->id);
+            $own = $isOwn ? ' data-own="1"' : '';
 
             echo '<div class="hud-feed-item' . self::outcomeClass((string) $e->hiddenText) . '" data-time="' . (int) $e->time . '"' . $own . '>'
                 . '<span class="log-' . $e->type . '">' . $e->text . '</span>'
+                . self::renderDetail($isOwn, (string) $e->hiddenText)
                 . '<div class="hud-feed-meta">'
                 . self::authorName($playerService, (int) $e->player_id)
                 . ' · ' . self::humanDate((int) $e->time)
@@ -77,7 +79,47 @@ final class FeedRenderer
                 . '</div>';
         }
 
+        /* Le seul accès à la page complète était une icône de livre
+         * sans libellé, coincée dans la barre d'onglets : son intitulé
+         * ne vivait que dans un title, invisible au tactile. Un pied de
+         * flux le dit en toutes lettres. */
+        echo '<a class="hud-feed-all" href="logs.php?light">Tout voir</a>';
+
         return Str::minify(ob_get_clean());
+    }
+
+    /**
+     * Détail d'une action (verdict, jets de dés, coûts), repliable.
+     *
+     * Le flux simplifié n'en montrait rien : le joueur croyait
+     * l'information supprimée et devait ouvrir la page complète pour
+     * la retrouver — c'est ce qui lui faisait juger la fenêtre
+     * « perfectible ». Le détail revient donc là où il est lu, replié
+     * par défaut pour ne pas rendre le flux bavard.
+     *
+     * Réservé à son auteur : hiddenText est renvoyé par Log::get pour
+     * TOUTES les lignes visibles, y compris celles des autres, et les
+     * jets de dés d'autrui ne nous regardent pas.
+     */
+    private static function renderDetail(bool $isOwn, string $hiddenText): string
+    {
+        if (!$isOwn || $hiddenText === '') {
+            return '';
+        }
+
+        /* Le <style> embarqué masque .action-details partout où le
+         * texte est réinjecté : on le retire et on renomme la classe,
+         * comme le fait déjà renderMdj(). */
+        $body = str_replace(
+            ['<style>.action-details{display: none;}</style>', 'class="action-details"'],
+            ['', 'class="hud-feed-detail-body"'],
+            $hiddenText
+        );
+
+        return '<details class="hud-feed-detail">'
+            . '<summary>Détails</summary>'
+            . $body
+            . '</details>';
     }
 
     /**

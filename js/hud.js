@@ -181,10 +181,12 @@
             return;
         }
 
-        /* Mobile non zoomé : mise en page naturelle du SVG. Zoomé
+        /* Tactile non zoomé : mise en page naturelle du SVG. Zoomé
          * (pincement, initPinchZoom) : même dimensionnement explicite
-         * que le desktop, le cadre défile. */
-        if (isMobileViewport() && damierZoom <= 1) {
+         * que le desktop, le cadre défile. Un écran étroit SANS
+         * pincement (PC en fenêtre réduite) prend la branche desktop —
+         * sinon rien ne cale jamais le damier sur la hauteur du cadre. */
+        if (isMobileDevice() && damierZoom <= 1) {
             svg.style.width = '';
             svg.style.height = '';
             svg.style.maxWidth = '';
@@ -221,7 +223,9 @@
             return;
         }
 
-        if (isMobileViewport()) {
+        /* Même partage que fitDamier : les masques ne se recalent que
+         * là où le SVG est dimensionné explicitement. */
+        if (isMobileDevice()) {
             $masks.css({ width: '', height: '', maxWidth: '', maxHeight: '', top: '' });
             return;
         }
@@ -821,10 +825,17 @@
             if (!e.target.isConnected) {
                 return;
             }
+            /* #hud-dots / #hud-carousel : la pagination du bandeau bas
+             * est le SEUL chemin vers le volet Actions en écran étroit.
+             * Absents de cette liste, ces clics vidaient la sélection
+             * qu'on venait d'ouvrir — « quand je clique sur un
+             * personnage, il faut cliquer sur le petit point en bas
+             * pour changer de page et ça déselectionne la case ». */
             if ($(e.target).closest(
                 '#ajax-data, #hud-actions, #hud-zoom, #hud-layers,'
                 + ' #hud-side, #hud-theater-chat-btn, #hud-topbar,'
-                + ' .aoo-dialog-bg, #hud-action-modal, .hud-panel, #hud-rail'
+                + ' .aoo-dialog-bg, #hud-action-modal, .hud-panel, #hud-rail,'
+                + ' #hud-dots, #hud-carousel, #hud-backdrop'
             ).length) {
                 return;
             }
@@ -858,8 +869,10 @@
             sessionStorage.removeItem('hudSelCoords');
         });
 
+        /* Non restaurée sur mobile (le volet s'ouvrirait tout seul),
+         * mais restaurée en fenêtre PC étroite, comme en desktop. */
         var saved = sessionStorage.getItem('hudSelCoords');
-        if (saved && !isMobileViewport() && !tutorialActive()) {
+        if (saved && !isMobileDevice() && !tutorialActive()) {
             $.post('observe.php', { coords: saved }, function (data) {
                 $('#ajax-data').html(data);
             });
@@ -1450,6 +1463,28 @@
         });
     }
 
+    /* Panneaux qui affichent un message du jour — les seuls à
+     * recharger après une publication. reloadAllPanels() emporterait
+     * aussi un brouillon de réponse du forum ou un filtre
+     * d'inventaire : trop brutal pour un effet de bord. */
+    var MDJ_PANEL_URL = /^(load_infos|load_account)\.php/;
+
+    /*
+     * Le message du jour vit à trois endroits : le flux du panneau
+     * latéral, la carte de sélection (observe.php) et la fiche de
+     * personnage. Publier le sien n'en rafraîchissait qu'un — les deux
+     * autres gardaient l'ancien texte jusqu'au rechargement de la page
+     * (retour testeur sur la fenêtre de message du jour).
+     */
+    function propagateMdj() {
+        refreshSelection();
+        openPanels.forEach(function (entry, slot) {
+            if (MDJ_PANEL_URL.test(entry.url)) {
+                loadPanelContent(slot, entry.url);
+            }
+        });
+    }
+
     function openPanel(url, title, fromHistory) {
         var idx = openPanels.findIndex(function (p) { return p.url === url; });
 
@@ -1572,6 +1607,28 @@
      */
     function isMobileViewport() {
         return window.matchMedia('(max-width: 1023px)').matches;
+    }
+
+    /*
+     * Écran étroit ≠ appareil tactile. Un PC en fenêtre non maximisée
+     * passe sous 1024px : il doit prendre la MISE EN PAGE mobile
+     * (carrousel, tiroir) mais garder les affordances souris. Les
+     * gestes — pincement, et donc le dimensionnement naturel du damier
+     * qui les accompagne — n'ont de sens qu'avec un pointeur grossier.
+     * Sans cette distinction, le damier n'était jamais calé sur son
+     * cadre en fenêtre étroite : il débordait en hauteur et défilait
+     * (retour testeur « sur pc en pas plein écran, le damier est
+     * scrollable / masqué »).
+     */
+    function isTouchDevice() {
+        return window.matchMedia('(pointer: coarse)').matches;
+    }
+
+    /* Vraie mobilité : écran étroit ET tactile. Réservé aux
+     * comportements gestuels ; la mise en page, elle, ne regarde que
+     * la largeur (isMobileViewport). */
+    function isMobileDevice() {
+        return isMobileViewport() && isTouchDevice();
     }
 
     /* Fait défiler le carrousel bas vers une position (0 minimap,
@@ -2045,6 +2102,7 @@
                      * mobile se referme (blur). */
                     $('#hud-mdj-input').val('').trigger('blur');
                     loadFeed('mdj');
+                    propagateMdj();
                 })
                 .fail(function () {
                     alert('Erreur lors de la sauvegarde du message du jour.');
@@ -2055,7 +2113,12 @@
         });
 
         $('#hud-feed-refresh').on('click', function () {
-            loadFeed(activeTab());
+            /* Les DEUX flux, pas seulement l'onglet ouvert : le bouton
+             * est unique et visuellement rattaché aux deux onglets —
+             * basculer sur l'autre après un rafraîchissement y montrait
+             * encore l'état d'avant. */
+            loadFeed('mdj');
+            loadFeed('events');
 
             /* Le message du jour affiché ailleurs doit suivre : sans
              * cela les personnages gardaient leur ancien message tant

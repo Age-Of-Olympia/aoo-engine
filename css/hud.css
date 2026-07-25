@@ -1605,6 +1605,72 @@ body:has(#hud) #view-landing-wrapper {
     text-align: center;
 }
 
+/* Détail d'action replié dans le flux (FeedRenderer) : le joueur
+ * n'a plus à ouvrir la page complète pour retrouver ses jets de dés.
+ * Discret au repos, lisible par-dessus les lavis réussite / échec. */
+.hud-feed-detail > summary {
+    cursor: pointer;
+    font-size: 88%;
+    opacity: 0.7;
+    margin-top: 2px;
+    list-style: none;
+}
+
+.hud-feed-detail > summary::before {
+    content: '▸ ';
+}
+
+.hud-feed-detail[open] > summary::before {
+    content: '▾ ';
+}
+
+/* Chrome/Safari : le marqueur natif s'ajoute au nôtre */
+.hud-feed-detail > summary::-webkit-details-marker {
+    display: none;
+}
+
+.hud-feed-detail-body,
+.hud-feed-detail > *:not(summary) {
+    font-size: 92%;
+}
+
+/* Pied de flux : accès nommé à la page complète des évènements */
+.hud-feed-all {
+    display: block;
+    text-align: center;
+    padding: 8px 0 2px;
+    font-size: 92%;
+    opacity: 0.75;
+}
+
+/* ---------- Voile de dégâts en vignette (Classes\Ui::get_pv_veil) ----------
+ * Le voile est posé en styles EN LIGNE pour valoir dans les deux
+ * habillages — il ne peut donc pas suivre un media query tout seul.
+ * Sur mobile, le portrait est si réduit que la bande de sang devenait
+ * indistincte (retour testeur « les dégâts ne sont pas très visibles
+ * sur mobile »). On la renforce ici : plus opaque, filet plus épais,
+ * et une hauteur plancher pour qu'une blessure légère reste lisible.
+ * !important est le seul levier sur des propriétés posées en ligne ;
+ * --pv-veil-rgb conserve la teinte de race. La hauteur plancher
+ * exagère très légèrement les blessures les plus faibles : c'est
+ * assumé, le voile signale « blessé », il ne mesure pas. */
+@media (max-width: 1023px) {
+
+    .pv-veil {
+        min-height: 6px;
+        background: rgba(var(--pv-veil-rgb, 119, 0, 1), 0.55) !important;
+        border-top-width: 3px !important;
+    }
+
+    /* Même traitement pour la carte de sélection, dont le voile est
+     * converti en pourcentage par js/hud.js (adaptPvFilter) : sa
+     * teinte vient du serveur en ligne, l'opacité est ici. */
+    #hud #ajax-data .hud-pv-lost {
+        min-height: 6px;
+        opacity: 0.7;
+    }
+}
+
 /* Saisie du message du jour, façon chat (onglet Général) — c'est de
  * la parole : même matériau parchemin que la plaque et la bulle. */
 #hud-mdj-form {
@@ -2425,6 +2491,26 @@ body:has(#hud) #debug-flags {
     body:has(#hud) #admin-coords {
         left: 4px;
         bottom: 2px;
+    }
+}
+
+/* ---------- Fenêtre étroite AVEC souris (PC non maximisé) ----------
+ * La mise en page bascule sur la largeur, mais un PC en fenêtre
+ * réduite n'a pas de pincement : privé des médaillons de zoom, il ne
+ * lui restait aucun moyen d'agrandir le damier. On les rend en
+ * flottant au-dessus du cadre de carte — hors de la colonne flex, où
+ * ils redeviendraient une rangée parasite. Sous la nappe (z-index 55)
+ * et sous le tiroir : un panneau ouvert les recouvre, comme prévu. */
+@media (max-width: 1023px) and (not (pointer: coarse)) {
+
+    #hud-zoom {
+        display: flex;
+        position: fixed;
+        right: 14px;
+        /* juste au-dessus du carrousel (32vh) et de sa pagination */
+        bottom: calc(32vh + 30px);
+        z-index: 50;
+        margin: 0;
     }
 }
 
