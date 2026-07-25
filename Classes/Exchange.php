@@ -52,10 +52,22 @@ class Exchange{
     }
 
     public function get_items_data() {
+        /* id : la table n'avait AUCUNE clé primaire, si bien qu'on ne
+         * savait viser une ligne que par ses valeurs — et supprimer donc
+         * toutes les lignes identiques d'un coup. Invisible tant que
+         * tout est fongible, bloquant dès que deux exemplaires du même
+         * objet sont en jeu.
+         *
+         * L'état de l'exemplaire est LU ici, jamais recopié dans la
+         * ligne d'échange : cette lecture alimente à la fois l'affichage
+         * et la livraison, les deux doivent voir la même chose. LEFT
+         * JOIN — une ligne de pile n'a pas d'instance. */
         $sql = '
-            SELECT exchange_id, item_id, n, player_id, target_id
-            FROM players_items_exchanges
-            WHERE exchange_id = ?
+            SELECT e.id, e.exchange_id, e.item_id, e.n, e.player_id, e.target_id, e.instance_id,
+                   i.durability, i.durability_max, i.quality, i.custom_name, i.destroyed
+            FROM players_items_exchanges e
+            LEFT JOIN item_instances i ON i.id = e.instance_id
+            WHERE e.exchange_id = ?
         ';
 
 
@@ -81,37 +93,66 @@ class Exchange{
 
     }
 
-    public function add_item_to_exchange($itemId, $n, $itemOwnerId){
+    /**
+     * @param int|null $instanceId exemplaire individualisé mis en jeu.
+     *        La ligne porte alors une RÉFÉRENCE : usure et nom restent
+     *        sur item_instances. Un exemplaire est unique, la quantité
+     *        est forcée à 1 — l'accepter ouvrirait une duplication.
+     */
+    public function add_item_to_exchange($itemId, $n, $itemOwnerId, ?int $instanceId = null){
         $this->refuse_exchange(true,true);
 
         $values = array(
             'exchange_id'=>$this->id,
             'item_id'=>$itemId,
-            'n'=>$n,
+            'n'=>$instanceId !== null ? 1 : $n,
             'player_id'=>$itemOwnerId == $this->playerId ? $this->playerId : $this->targetId,
             'target_id'=>$itemOwnerId == $this->playerId ? $this->targetId : $this->playerId
         );
+
+        if($instanceId !== null){
+            $values['instance_id'] = $instanceId;
+        }
+
         $this->db->insert('players_items_exchanges', $values);
     }
 
-    public function remove_item_from_exchange($itemId,$itemN, $itemOwnerId){
+    /**
+     * Retire UNE ligne, visée par sa clé primaire.
+     *
+     * Elle ciblait ses lignes par (exchange_id, item_id, n, player_id) —
+     * faute de clé primaire sur la table — et supprimait donc toutes les
+     * lignes identiques d'un coup. Deux exemplaires du même objet ne
+     * pouvaient plus se retirer séparément.
+     */
+    public function remove_item_line(int $lineId){
         $this->refuse_exchange(true,true);
-        $sql = '
-        DELETE FROM
-        players_items_exchanges
-        WHERE
-        exchange_id = ?
-        AND
-        item_id = ?
-        AND
-        n = ?
-        AND
-        player_id = ?
-        ';
-    
-        if($this->db->exe($sql, array($this->id,$itemId,$itemN,$itemOwnerId),true)==false){
+
+        if($this->db->exe(
+            'DELETE FROM players_items_exchanges WHERE id = ? AND exchange_id = ?',
+            array($lineId, $this->id),
+            true
+        )==false){
             throw new Exception('Erreur lors de la suppression de l\'objet de l\'échange');
         }
+    }
+
+    /**
+     * Purge des lignes après règlement — acceptation comme annulation.
+     *
+     * Elle n'existait NULLE PART : les lignes survivaient à l'échange.
+     * Anodin sur des piles (les objets sont livrés, la ligne devient un
+     * vestige) ; faux dès qu'un exemplaire est séquestré, puisque sa
+     * ligne d'échange est alors la seule preuve que sa localisation
+     * « exchange » est légitime. Sans cette purge, un exemplaire livré
+     * resterait rattaché à un échange clos.
+     */
+    public function purge_items(){
+        $this->db->exe(
+            'DELETE FROM players_items_exchanges WHERE exchange_id = ?',
+            array($this->id)
+        );
+        $this->items = [];
     }
 
     public function is_in_progress()
@@ -191,6 +232,31 @@ class Exchange{
             }
             $item = new Item($exchange_item->item_id);
             $item->get_data();
+
+            /* Exemplaire : il change de PROPRIÉTAIRE et retombe en
+             * banque chez le destinataire. Transfert conditionnel — si
+             * l'exemplaire n'est plus séquestré chez le cédant (échange
+             * réglé deux fois, objet détruit entre-temps), il lève au
+             * lieu d'être livré une seconde fois. */
+            if(!empty($exchange_item->instance_id)){
+
+                $instanceService = new \App\Service\ItemInstanceService();
+                $label = $instanceService->describe((int) $exchange_item->instance_id);
+
+                $instanceService->deliverEscrow(
+                    (int) $exchange_item->instance_id,
+                    (int) $from_player->id,
+                    (int) $to_player->id,
+                    \App\Service\ItemInstanceService::LOCATION_EXCHANGE
+                );
+
+                if(!empty($result))
+                    $result.=", ";
+                $result.=$label;
+
+                continue;
+            }
+
             $item->add_item($to_player, $exchange_item->n, true);
             if(!empty($result))
                 $result.=", ";
@@ -212,6 +278,24 @@ class Exchange{
             }
             $item = new Item($exchange_item->item_id);
             $item->get_data();
+
+            /* Les deux parties doivent voir CE qu'elles échangent : un
+             * exemplaire porte son nom et son usure, pas une quantité. */
+            if(!empty($exchange_item->instance_id)){
+
+                $return .= '<li>'
+                    . \App\Service\ItemInstanceService::label(
+                        $exchange_item->custom_name,
+                        (string) $item->data->name
+                    )
+                    . ' <small>'
+                    . \App\Service\ItemInstanceService::stateLine($exchange_item, withBreak: false)
+                    . '</small></li>';
+                $noItem = false;
+
+                continue;
+            }
+
             $return .= '<li>'. $exchange_item->n . ' ' . $item->data->name. '</li>';;
             $noItem = false;
         }

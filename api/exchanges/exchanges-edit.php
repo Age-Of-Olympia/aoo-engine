@@ -88,6 +88,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $targetLog = "Vous avez échangé avec " . $offeringPlayer->data->name;
           $objects = "vous avez donné : " . $fromTargetToOffering . " et vous avez reçu : " . $fromOfferingToTarget;
           Log::put($targetPlayer, $offeringPlayer, $targetLog, "hidden_action", $objects, $logTime);
+
+          /* L'échange est réglé : ses lignes n'ont plus lieu d'être.
+           * Elles y survivaient — un exemplaire livré serait resté
+           * rattaché à un échange clos, et rien n'aurait distingué un
+           * séquestre légitime d'un vestige. */
+          $exchange->purge_items();
         }
       } else if ($POST_DATA['action'] =='refuse') {
         $exchange->refuse_exchange(Istarget: $isTarget, IsPlayer: !$isTarget);
@@ -112,6 +118,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $exchange->give_items(from_player: $offeringPlayer, to_player: $offeringPlayer);
       $exchange->give_items(from_player: $targetPlayer, to_player: $targetPlayer);
 
+      /* Les lignes disparaissent avec l'échange : elles y survivaient,
+       * et un exemplaire rendu serait resté rattaché à un échange clos —
+       * sa ligne étant la seule preuve d'un séquestre légitime. */
+      $exchange->purge_items();
       $exchange->cancel_exchange();
     } catch (Throwable $th) {
       $exchange->db->rollback_transaction('cancel_exchange');
@@ -125,18 +135,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $exchange->db->start_transaction('edit_objects_exchange');
     $exchange->get_items_data();
     try {
-    //refund all items 
+    /* Tout est repris puis reposé : le client envoie l'état voulu, pas
+     * un delta. Chaque ligne est visée par sa CLÉ PRIMAIRE — avant, on
+     * la visait par ses valeurs, ce qui emportait les lignes jumelles. */
+    $instanceService = new App\Service\ItemInstanceService();
+
     foreach ($exchange->items as $exchange_item) {
      if($exchange_item->player_id != $player->id)continue;
-     $exchange->remove_item_from_exchange($exchange_item->item_id, $exchange_item->n, $player->id);
+
+     $exchange->remove_item_line((int) $exchange_item->id);
+
+     /* Exemplaire : il revient au coffre par sa localisation, pas en
+      * recréditant une pile — sans quoi on fabriquerait une unité
+      * vierge et on laisserait l'exemplaire séquestré à jamais. */
+     if(!empty($exchange_item->instance_id)){
+       $instanceService->releaseFromExchange((int) $exchange_item->instance_id, (int) $player->id);
+       continue;
+     }
+
      $item = new Item($exchange_item->item_id);
      $item->add_item($player, $exchange_item->n, true);
     }
 
       // add new items
       foreach ($objects as $decodedObject) {
-        $item = new Item($decodedObject['id']);
+        /* itemId quand la ligne désigne un exemplaire : sa clé de liste
+         * côté client est l'id d'INSTANCE (deux épées usées sont deux
+         * entrées, pas une entrée « x2 »), l'objet catalogue voyage donc
+         * à part. Jamais d'id d'instance dans itemId : deux paramètres
+         * distincts, le serveur refuse l'ambigu. */
+        $item = new Item($decodedObject['itemId'] ?? $decodedObject['id']);
         $count = abs($decodedObject['n']);
+
+        /* Exemplaire choisi par le joueur : il quitte la banque pour
+         * l'échange. Aucune pile n'est débitée — c'était le piège du
+         * marché, un vendeur possédant aussi une pile voyait celle-ci
+         * partir à la place de son objet usé. */
+        $instanceId = isset($decodedObject['instanceId']) && $decodedObject['instanceId'] !== ''
+          ? (int) $decodedObject['instanceId']
+          : null;
+
+        if ($instanceId !== null) {
+          $instanceService->escrowForExchange($instanceId, (int) $player->id);
+          $exchange->add_item_to_exchange($item->id, 1, $player->id, $instanceId);
+          continue;
+        }
+
         if (!$item->add_item($player, -$count, true)) {
           throw new Exception('Erreur lors de l\'ajout de l\'objet à l\'échange');
         }

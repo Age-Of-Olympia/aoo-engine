@@ -40,8 +40,31 @@ $otherPlayer->get_data();
               if($exchange_item->player_id != $player->id)continue;
               $item = new Item($exchange_item->item_id);
               $item->get_data();
-              echo '<div>Objet : ' . $item->data->name . ' - Quantité: ' . $exchange_item->n . '<button class="delete" data-id="'.$exchange_item->item_id.'">X</button></div>';
-              $objects[] = ['id' => $exchange_item->item_id, 'name' => $item->data->name, 'n' => $exchange_item->n];
+
+              /* Exemplaire : sa clé de liste est son id d'INSTANCE, pour
+               * que deux exemplaires du même objet restent deux entrées
+               * distinctes — et qu'en retirer un ne retire pas l'autre.
+               * Il s'affiche avec son nom et son usure, jamais avec une
+               * quantité : il est unique. */
+              $isInstance = !empty($exchange_item->instance_id);
+              $key = $isInstance ? 'i' . (int) $exchange_item->instance_id : $exchange_item->item_id;
+
+              $label = $isInstance
+                ? \App\Service\ItemInstanceService::label($exchange_item->custom_name, (string) $item->data->name)
+                    . ' <small>'
+                    . \App\Service\ItemInstanceService::stateLine($exchange_item, withBreak: false)
+                    . '</small>'
+                : $item->data->name . ' - Quantité: ' . $exchange_item->n;
+
+              echo '<div>Objet : ' . $label
+                . '<button class="delete" data-id="' . htmlspecialchars((string) $key, ENT_QUOTES, 'UTF-8') . '">X</button></div>';
+
+              $entry = ['id' => $key, 'name' => $item->data->name, 'n' => $isInstance ? 1 : $exchange_item->n];
+              if ($isInstance) {
+                $entry['itemId'] = (int) $exchange_item->item_id;
+                $entry['instanceId'] = (int) $exchange_item->instance_id;
+              }
+              $objects[] = $entry;
             }
             ?>
             </div>
@@ -116,6 +139,24 @@ $otherPlayer->get_data();
        * un panneau voisin voyait ses boutons détournés ici. */
       $('.preview-action .action[data-action="add-to-exchange"]').click(function(e){
         e.preventDefault();
+
+        /* Exemplaire individualisé : la ligne cliquée EST l'objet, il
+         * n'y a pas de quantité à demander. Il entre dans l'échange par
+         * son id d'instance, et sa clé de liste est cet id — deux épées
+         * usées du même catalogue sont deux entrées distinctes, pas une
+         * entrée « x2 ». */
+        var instanceId = window.instanceId || null;
+
+        if(instanceId){
+          var key = 'i' + instanceId;
+          if(!objects.find(obj => obj.id === key)){
+            objects.push({ id: key, itemId: window.id, instanceId: instanceId, name: window.name, n: 1 });
+            updateObjectList();
+            $('#validate-button').prop('disabled', false);
+          }
+          return;
+        }
+
         aooPrompt('Combien?', window.n).then(function(n){
           if(n == null){
             return;
