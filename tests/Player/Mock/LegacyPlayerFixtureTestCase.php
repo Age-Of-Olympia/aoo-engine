@@ -134,9 +134,7 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
             // Purge every per-entity file cache: .json is the get_data()
             // cache, .svg the board render — a recycled id would otherwise
             // resurrect the previous fixture's identity.
-            foreach (['.json', '.svg', '.turn.json', '.caracs.json', '.invent.html'] as $suffix) {
-                @unlink(__DIR__ . '/../../../datas/private/players/' . $id . $suffix);
-            }
+            self::purgeEntityCache($id);
         }
 
         // Restore the map_elements 'sang' rows the exercised putBonus() calls
@@ -175,11 +173,32 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
      * (players row + starter actions + default options) and register it for
      * teardown. Returns a fresh legacy Player.
      */
+    /**
+     * Caches fichier par entité : .json est celui de get_data(), .svg le
+     * damier rendu, les autres les caracs / le tour / l'inventaire. Un id
+     * recyclé qui les retrouve ressuscite l'entité précédente.
+     */
+    private static function purgeEntityCache(int $id): void
+    {
+        foreach (['.json', '.svg', '.turn.json', '.caracs.json', '.invent.html'] as $suffix) {
+            @unlink(__DIR__ . '/../../../datas/private/players/' . $id . $suffix);
+        }
+    }
+
     protected function createRealPlayer(string $prefix, string $race = 'nain'): Player
     {
         $name = $prefix . '_' . bin2hex(random_bytes(4));
         $id = Player::put_player($name, $race);
         $this->createdPlayerIds[] = $id;
+
+        /* Purger AUSSI à la création, pas seulement au nettoyage. Le
+         * nettoyage ne couvre que les joueurs nés ici ; un fichier laissé
+         * par n'importe quel autre harnais suffit à ce que get_data()
+         * serve l'identité du PRÉCÉDENT occupant de l'id — coordonnées
+         * comprises. Invisible sur une base de dev, où l'auto-incrément
+         * ne recycle jamais ; systématique sur une base neuve, où les ids
+         * repartent à chaque test. */
+        self::purgeEntityCache($id);
 
         return new Player($id);
     }

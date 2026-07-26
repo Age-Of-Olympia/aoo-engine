@@ -35,64 +35,27 @@ class MapElementCachePurgeTest extends LegacyPlayerFixtureTestCase
         return $cache;
     }
 
-    /**
-     * Diagnostic : rejoue la sélection exacte de View::refresh_players_svg
-     * et rend les lignes qu'elle voit. Une purge qui rate ne dit rien par
-     * elle-même — c'est la donnée qui la décide qu'il faut lire.
-     */
-    private function explainMissedPurge(int $playerId, int $coordsId): string
-    {
-        $c = $this->link->fetchAssociative('SELECT x, y, z, plan FROM coords WHERE id = ?', [$coordsId]);
-        $p = $this->link->fetchAssociative('SELECT id, coords_id, player_type FROM players WHERE id = ?', [$playerId]);
-
-        $selected = $c === false ? [] : $this->link->fetchFirstColumn(
-            'SELECT p.id FROM players AS p
-             INNER JOIN coords AS c ON p.coords_id = c.id
-             WHERE x BETWEEN ? AND ? AND y BETWEEN ? AND ? AND c.z = ? AND c.plan = ?',
-            [$c['x'] - 20, $c['x'] + 20, $c['y'] - 20, $c['y'] + 20, $c['z'], $c['plan']]
-        );
-
-        /* Et surtout : ce que voit la connexion DE PRODUCTION. Doctrine
-         * et Classes\Db sont deux connexions distinctes ; une purge qui
-         * rate alors que la donnée la satisfait ne s'explique que si
-         * elles ne regardent pas la même chose. */
-        $legacy = new \Classes\Db();
-        $legacyDb = $legacy->exe('SELECT DATABASE() AS d')->fetch_object()->d ?? '?';
-        $legacyPlayers = (int) ($legacy->exe('SELECT COUNT(*) AS n FROM players')->fetch_object()->n ?? -1);
-        $legacyRes = $legacy->exe(
-            'SELECT p.id FROM players AS p
-             INNER JOIN coords AS c ON p.coords_id = c.id
-             WHERE x BETWEEN ? AND ? AND y BETWEEN ? AND ? AND c.z = ? AND c.plan = ?',
-            [$c['x'] - 20, $c['x'] + 20, $c['y'] - 20, $c['y'] + 20, $c['z'], $c['plan']]
-        );
-        $legacySelected = [];
-        while ($row = $legacyRes->fetch_object()) {
-            $legacySelected[] = $row->id;
-        }
-
-        $doctrineDb = $this->link->fetchOne('SELECT DATABASE()');
-
-        return 'purge manquée — case ' . json_encode($c, JSON_UNESCAPED_UNICODE)
-            . ' | joueur ' . json_encode($p, JSON_UNESCAPED_UNICODE)
-            . ' | doctrine(' . $doctrineDb . ') sélectionne ' . json_encode($selected)
-            . ' | legacy(' . $legacyDb . ', ' . $legacyPlayers . ' joueurs) sélectionne ' . json_encode($legacySelected)
-            . ' | cwd ' . getcwd();
-    }
-
     public function testAnElementAppearingInvalidatesTheCachedBoard(): void
     {
         $player = $this->createRealPlayer('GmPurge');
         $player->get_data();
         $this->snapshotBloodAt((int) $player->data->coords_id);
 
+        /* L'identité lue doit être celle de la base. get_data() sert un
+         * cache fichier indexé par id : sur une base neuve, où les ids
+         * sont recyclés d'un test à l'autre, un fichier resté en place
+         * fait hériter au nouveau joueur les coordonnées de l'ancien —
+         * on posait alors l'élément là où personne ne se trouve, et la
+         * purge ne ratait rien du tout. */
+        $this->assertSame(
+            (int) $this->link->fetchOne('SELECT coords_id FROM players WHERE id = ?', [(int) $player->id]),
+            (int) $player->data->coords_id,
+            'le joueur lu est bien celui de la base, pas un cache hérité'
+        );
+
         $cache = $this->primeCacheFor((int) $player->id);
 
         Element::put('sang', (int) $player->data->coords_id, 3600);
-
-        if (is_file($cache)) {
-            @unlink($cache);
-            $this->fail($this->explainMissedPurge((int) $player->id, (int) $player->data->coords_id));
-        }
 
         $this->assertFileDoesNotExist(
             $cache,
