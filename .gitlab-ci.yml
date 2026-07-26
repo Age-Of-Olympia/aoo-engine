@@ -125,6 +125,17 @@ test_job:
   services:
     - name: mariadb:11
       alias: mariadb
+      # Base JETABLE : rien à préserver en cas de coupure, donc aucune
+      # raison de payer les garanties de durabilité. La suite provoque
+      # ~2 300 fsyncs (fixtures : ~4 000 DELETE), qui coûtent une
+      # fraction de seconde en local et bien davantage sur le disque
+      # d'un runner partagé.
+      command:
+        - "--innodb-flush-log-at-trx-commit=0"
+        - "--innodb-doublewrite=0"
+        - "--sync-binlog=0"
+        - "--skip-log-bin"
+        - "--performance-schema=OFF"
       variables:
         MARIADB_ROOT_PASSWORD: passwordRoot
         MARIADB_DATABASE: aoo4
@@ -173,6 +184,17 @@ cypress_tutorial_job:
   services:
     - name: mariadb:11
       alias: mariadb
+      # Base JETABLE : rien à préserver en cas de coupure, donc aucune
+      # raison de payer les garanties de durabilité. La suite provoque
+      # ~2 300 fsyncs (fixtures : ~4 000 DELETE), qui coûtent une
+      # fraction de seconde en local et bien davantage sur le disque
+      # d'un runner partagé.
+      command:
+        - "--innodb-flush-log-at-trx-commit=0"
+        - "--innodb-doublewrite=0"
+        - "--sync-binlog=0"
+        - "--skip-log-bin"
+        - "--performance-schema=OFF"
       variables:
         MARIADB_ROOT_PASSWORD: passwordRoot
         MARIADB_DATABASE: aoo4
