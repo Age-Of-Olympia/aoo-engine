@@ -179,9 +179,27 @@ class TileDialogMigrationService
             return $entry;
         }
 
-        /* Case nue : rien ne peut plus porter un texte tout seul, on
-         * pose donc le support minimal. C'est ce que la règle « jamais
-         * de dialogue sur une case vide » implique. */
+        /* Aucune ENTITÉ sur la case — mais rarement rien. Un décor
+         * (map_foregrounds) ou une ressource (map_resources) s'y trouve
+         * le plus souvent : une pierre de tribut, un tertre, une statue,
+         * un autel brisé. Ce sont des objets qui ont quelque chose à
+         * dire, et le texte leur appartient — sauf qu'ils ne sont pas
+         * des entités et ne peuvent donc rien porter.
+         *
+         * Poser une pancarte à côté d'un tertre funéraire serait une
+         * réponse fausse à une vraie question. On ne décide donc pas :
+         * on nomme ce qui est là et on laisse trancher. Seules les cases
+         * réellement nues reçoivent un support. */
+        $decor = $this->decorOn($coordsId);
+
+        if ($decor !== null) {
+            $entry['action'] = 'à trancher';
+            $entry['warning'] = 'la case porte ' . $decor['kind'] . ' « ' . $decor['name'] . ' »,'
+                . ' qui ne peut rien porter faute d\'être une entité — le texte lui revient pourtant';
+
+            return $entry;
+        }
+
         $entry['action'] = 'poser une ' . self::CARRIER_RACE;
 
         return $entry;
@@ -229,7 +247,7 @@ class TileDialogMigrationService
     {
         $coordsId = (int) $entry['coords_id'];
 
-        if ($entry['action'] === 'conflit') {
+        if ($entry['action'] === 'conflit' || $entry['action'] === 'à trancher') {
             return ['coords_id' => $coordsId, 'done' => 'laissée en place (conflit)', 'error' => ''];
         }
 
@@ -268,6 +286,30 @@ class TileDialogMigrationService
         } catch (\Throwable $e) {
             return ['coords_id' => $coordsId, 'done' => '', 'error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Ce qui occupe la case sans être une entité.
+     *
+     * Le monde a trois familles de choses posées sur une case, et une
+     * seule sait porter quelque chose : les ENTITÉS (players). Les
+     * décors et les ressources sont dessinés, pas incarnés — ils n'ont
+     * ni inscription, ni dialogue, ni état. C'est ce que le passage des
+     * murs en entités avait commencé à corriger ; les décors attendent
+     * encore leur tour.
+     *
+     * @return array{kind: string, name: string}|null
+     */
+    private function decorOn(int $coordsId): ?array
+    {
+        foreach ([['map_foregrounds', 'le décor'], ['map_resources', 'la ressource']] as [$table, $label]) {
+            $res = $this->db->exe("SELECT name FROM {$table} WHERE coords_id = ? LIMIT 1", [$coordsId]);
+            if ($res && $res->num_rows) {
+                return ['kind' => $label, 'name' => (string) $res->fetch_object()->name];
+            }
+        }
+
+        return null;
     }
 
     /** @return array<string, mixed>|null */

@@ -35,6 +35,7 @@ function tdm_render_row(array $e): string
         str_starts_with($e['action'], 'poser') => '<span class="badge badge-warning">' . e($e['action']) . '</span>',
         $e['action'] === 'supprimer' => '<span class="badge badge-secondary">à supprimer</span>',
         $e['action'] === 'conflit' => '<span class="badge badge-danger">à trancher</span>',
+        $e['action'] === 'à trancher' => '<span class="badge badge-danger">à trancher</span>',
         default => '<span class="badge badge-light">' . e($e['action']) . '</span>',
     };
 
