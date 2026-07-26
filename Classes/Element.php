@@ -4,7 +4,14 @@ namespace Classes;
 class Element{
 
 
-    public static function put($name, $coords, $duration=THREE_DAYS){
+    /**
+     * @param bool $refreshWatchers purger le damier en cache de ceux qui
+     *        voient la case. À FAUX quand l'appelant purge déjà lui-même
+     *        la zone (traces de pas : Player::go le fait pour l'origine
+     *        ET la destination du pas) — sinon on paie deux fois la même
+     *        purge à chaque déplacement, l'action la plus fréquente du jeu.
+     */
+    public static function put($name, $coords, $duration=THREE_DAYS, bool $refreshWatchers=true){
 
 
         if(!(new \App\Service\EffectService())->exists($name)){
@@ -54,7 +61,10 @@ class Element{
 
         $db->exe($sql, array($name, $coords_id, $endTime));
 
-        self::refreshWatchers($db, (int) $coords_id);
+        if($refreshWatchers){
+
+            self::refreshWatchers($db, (int) $coords_id);
+        }
     }
 
     /**

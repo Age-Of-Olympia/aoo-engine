@@ -361,7 +361,11 @@ if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMod
         $footstepDuration = 32 * ONE_HOUR;
     }
     if(!$player->have_effect("leger")){
-        Element::put($footstep, $player->data->coords_id, $footstepDuration);
+        /* Pas de purge de cache ici : Player::go() ci-dessous purge déjà
+         * la case d'origine (celle de la trace) et la destination. La
+         * demander une seconde fois doublerait, à CHAQUE déplacement, la
+         * purge la plus coûteuse du jeu — pour un résultat identique. */
+        Element::put($footstep, $player->data->coords_id, $footstepDuration, refreshWatchers: false);
     }
     
 }
