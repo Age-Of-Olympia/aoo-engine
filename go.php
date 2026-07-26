@@ -356,9 +356,11 @@ if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMod
         $footstep.='o';
     }
 
-    $footstepDuration = 16 * ONE_HOUR;
+    /* Durées en TOURS depuis le passage des effets aux tours : une trace
+     * tient un tour, deux si le marcheur est couvert de boue. */
+    $footstepDuration = 1;
     if ($player->have_effect("boue")) {
-        $footstepDuration = 32 * ONE_HOUR;
+        $footstepDuration = 2;
     }
     if(!$player->have_effect("leger")){
         /* Pas de purge de cache ici : Player::go() ci-dessous purge déjà

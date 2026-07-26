@@ -2,6 +2,7 @@
 
 namespace Tests\Player;
 
+use App\Service\TurnScheduleService;
 use Classes\Element;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
@@ -60,6 +61,51 @@ class MapElementCachePurgeTest extends LegacyPlayerFixtureTestCase
         $this->assertFileDoesNotExist(
             $cache,
             'un élément qui apparaît purge le damier de ceux qui le voient'
+        );
+    }
+
+    /**
+     * Les durées s'écrivent en TOURS des deux côtés — effets comme
+     * éléments — mais un élément de carte n'appartient à aucun joueur :
+     * aucun tour ne le décrémente, c'est le cron horaire qui l'efface.
+     * Sa durée reste donc une échéance, calculée sur le tour de
+     * référence (vitesse 16, soit 18 h).
+     */
+    public function testAnElementDurationIsWrittenInTurnsAndLivedInRealTime(): void
+    {
+        $player = $this->createRealPlayer('GmPurge');
+        $player->get_data();
+        $this->snapshotBloodAt((int) $player->data->coords_id);
+
+        $before = time();
+        Element::put('sang', (int) $player->data->coords_id, 2);
+
+        $endTime = (int) $this->link->fetchOne(
+            "SELECT endTime FROM map_elements WHERE name = 'sang' AND coords_id = ?",
+            [(int) $player->data->coords_id]
+        );
+
+        $expected = $before + (2 * TurnScheduleService::referenceTurnSeconds());
+        $this->assertGreaterThanOrEqual($expected, $endTime);
+        $this->assertLessThanOrEqual($expected + 5, $endTime, 'deux tours de référence, soit 36 h');
+    }
+
+    /** Ce que le temps n'use pas : endTime 0, que le cron laisse passer. */
+    public function testAnEndlessElementIsWrittenAsNeverExpiring(): void
+    {
+        $player = $this->createRealPlayer('GmPurge');
+        $player->get_data();
+        $this->snapshotBloodAt((int) $player->data->coords_id);
+
+        Element::put('sang', (int) $player->data->coords_id, Element::DURATION_INFINITE);
+
+        $this->assertSame(
+            0,
+            (int) $this->link->fetchOne(
+                "SELECT endTime FROM map_elements WHERE name = 'sang' AND coords_id = ?",
+                [(int) $player->data->coords_id]
+            ),
+            'la convention que scripts/crons/hourly/delete_elements.php ne purge jamais'
         );
     }
 

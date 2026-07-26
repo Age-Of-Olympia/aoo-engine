@@ -40,9 +40,9 @@ if ($isStateChangingPost) {
     try {
         if (isset($_POST['element_place'])) {
             $name = trim((string) ($_POST['name'] ?? ''));
-            $hours = trim((string) ($_POST['hours'] ?? ''));
-            if ($hours !== '' && (!is_numeric($hours) || (float) $hours <= 0)) {
-                throw new RuntimeException('Durée invalide : un nombre d\'heures positif, ou vide pour permanent.');
+            $turns = trim((string) ($_POST['turns'] ?? ''));
+            if ($turns !== '' && (!ctype_digit($turns) || (int) $turns <= 0)) {
+                throw new RuntimeException('Durée invalide : un nombre de tours positif, ou vide pour permanent.');
             }
             $service->place(
                 $name,
@@ -50,11 +50,11 @@ if ($isStateChangingPost) {
                 (int) ($_POST['y'] ?? 0),
                 (int) ($_POST['z'] ?? 0),
                 $plan,
-                $hours === '' ? null : (int) round((float) $hours * 3600)
+                $turns === '' ? null : (int) $turns
             );
             setFlash('success', "Élément « {$name} » posé en ("
                 . (int) ($_POST['x'] ?? 0) . ',' . (int) ($_POST['y'] ?? 0) . ') — '
-                . ($hours === '' ? 'permanent' : "pour {$hours} h")
+                . ($turns === '' ? 'permanent' : 'pour ' . $turns . ' tour' . ($turns > 1 ? 's' : ''))
                 . '. L\'effet du même nom s\'appliquera à qui marche dessus.');
         } elseif (isset($_POST['element_remove'])) {
             // Le bouton de ligne porte l'id dans sa value : la table
@@ -147,8 +147,8 @@ ob_start();
                     <input type="number" class="form-control form-control-sm" name="z" value="0" required>
                 </div>
                 <div class="form-group mb-0" style="width:8rem;">
-                    <label style="font-size:13px;">Durée (heures)</label>
-                    <input type="number" class="form-control form-control-sm" name="hours" min="1" step="1"
+                    <label style="font-size:13px;" title="Un tour de référence dure 18 h">Durée (tours)</label>
+                    <input type="number" class="form-control form-control-sm" name="turns" min="1" step="1"
                            placeholder="permanent">
                 </div>
                 <button type="submit" name="element_place" value="1" class="btn btn-primary btn-sm">

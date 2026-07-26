@@ -3,20 +3,33 @@ namespace Classes;
 
 class Element{
 
+    /**
+     * Élément que le temps n'use pas. Écrit endTime = 0 en base, la
+     * valeur que le cron horaire laisse passer — le pendant, côté carte,
+     * de PlayerEffectService::DURATION_INFINITE.
+     */
+    public const DURATION_INFINITE = -1;
+
 
     /**
-     * @param int  $duration durée de vie en SECONDES. Les éléments de
-     *        carte restent datés : ils n'appartiennent à aucun joueur,
-     *        donc aucun tour ne les décrémente — c'est le cron horaire
-     *        (scripts/crons/hourly/delete_elements.php) qui les efface,
-     *        et endTime = 0 y signifie « permanent » (l'eau de pêche).
+     * @param int  $duration durée de vie en TOURS, comme celle des
+     *        effets — mais convertie en durée réelle, car un élément de
+     *        carte n'appartient à aucun joueur : aucun tour ne le
+     *        décrémente, c'est le cron horaire
+     *        (scripts/crons/hourly/delete_elements.php) qui l'efface.
+     *        La conversion passe par le tour de référence
+     *        (TurnScheduleService, vitesse 16 → 18 h), pour que « quatre
+     *        tours » veuille dire la même chose des deux côtés.
+     *        Element::DURATION_INFINITE pour un élément que rien n'use
+     *        (l'eau de pêche) : il est écrit endTime = 0, la convention
+     *        que le cron ne purge jamais.
      * @param bool $refreshWatchers purger le damier en cache de ceux qui
      *        voient la case. À FAUX quand l'appelant purge déjà lui-même
      *        la zone (traces de pas : Player::go le fait pour l'origine
      *        ET la destination du pas) — sinon on paie deux fois la même
      *        purge à chaque déplacement, l'action la plus fréquente du jeu.
      */
-    public static function put($name, $coords, $duration=THREE_DAYS, bool $refreshWatchers=true){
+    public static function put($name, $coords, $duration=4, bool $refreshWatchers=true){
 
 
         if(!(new \App\Service\EffectService())->exists($name)){
@@ -25,7 +38,11 @@ class Element{
         }
 
 
-        $endTime = time() + $duration;
+        /* Durée écrite en tours, vécue en temps réel : c'est le cron
+         * horaire qui efface, pas le tour d'un joueur. */
+        $endTime = $duration < 0
+            ? 0
+            : time() + ($duration * \App\Service\TurnScheduleService::referenceTurnSeconds());
 
         if(is_numeric($coords)){
 

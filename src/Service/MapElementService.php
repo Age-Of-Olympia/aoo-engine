@@ -82,9 +82,14 @@ class MapElementService
 
     /**
      * Pose un élément sur une case (upsert : reposer prolonge).
-     * $durationSeconds null = permanent (endTime 0, jamais purgé).
+     *
+     * $durationTurns s'écrit en TOURS, comme les durées d'effet, et se
+     * vit en temps réel : un élément n'appartient à aucun joueur, donc
+     * aucun tour ne le décrémente — c'est le cron horaire qui l'efface.
+     * La conversion passe par le tour de référence (18 h). null =
+     * permanent (endTime 0, jamais purgé).
      */
-    public function place(string $name, int $x, int $y, int $z, string $plan, ?int $durationSeconds): void
+    public function place(string $name, int $x, int $y, int $z, string $plan, ?int $durationTurns): void
     {
         if (!in_array($name, $this->placeableNames(), true)) {
             throw new RuntimeException(
@@ -106,7 +111,13 @@ class MapElementService
         $db->exe(
             'INSERT INTO map_elements (`name`, `coords_id`, `endTime`) VALUE (?, ?, ?)
              ON DUPLICATE KEY UPDATE endTime = VALUES(endTime)',
-            [$name, (int) $coordsId, $durationSeconds === null ? 0 : time() + $durationSeconds]
+            [
+                $name,
+                (int) $coordsId,
+                $durationTurns === null
+                    ? 0
+                    : time() + ($durationTurns * TurnScheduleService::referenceTurnSeconds()),
+            ]
         );
     }
 

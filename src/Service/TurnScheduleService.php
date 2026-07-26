@@ -26,6 +26,23 @@ class TurnScheduleService
     public const SECONDS_PER_SPD_POINT = 3600;
 
     /**
+     * Vitesse de référence pour les durées qui ne dépendent d'aucun
+     * joueur en particulier — les éléments posés sur la carte.
+     *
+     * Un élément de carte n'appartient à personne : aucun tour ne le
+     * décrémente, c'est le cron horaire qui l'efface. Sa durée reste
+     * donc une durée RÉELLE — mais on l'écrit en tours, comme celle des
+     * effets, et on la convertit ici. À vitesse 16, un tour dure 18 h.
+     */
+    public const REFERENCE_SPD = 16;
+
+    /** Durée réelle d'un tour de référence, en secondes (18 h). */
+    public static function referenceTurnSeconds(): int
+    {
+        return self::turnDurationSeconds(self::REFERENCE_SPD);
+    }
+
+    /**
      * Duration of one full turn for the given speed carac.
      * Each point above baseline shortens the turn by one hour.
      */
