@@ -32,6 +32,9 @@
          <testsuite name="Player">
             <directory suffix="Test.php">./tests/Player</directory>
         </testsuite>
+         <testsuite name="Account">
+            <directory suffix="Test.php">./tests/Account</directory>
+        </testsuite>
     </testsuites>
 
     <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">

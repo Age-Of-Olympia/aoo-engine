@@ -4,6 +4,7 @@ namespace App\View;
 
 use App\Tutorial\TutorialFeatureFlag;
 use App\Tutorial\TutorialSessionManager;
+use App\Service\TurnScheduleService;
 use Classes\Db;
 use Classes\File;
 use Classes\Player;
@@ -22,8 +23,27 @@ final class AccountView
      *
      * @return array<string, string> clé d'option => libellé HTML
      */
+    /**
+     * Fenêtre de décalage du prochain tour — calculée ici pour que le
+     * libellé de l'option, le champ de saisie de la page pleine et
+     * celui du panneau HUD annoncent tous les trois les mêmes bornes.
+     *
+     * @return array{min: int, max: int}
+     */
+    public static function nextTurnWindow(Player $player): array
+    {
+        $player->get_caracs();
+
+        return TurnScheduleService::rescheduleWindow(
+            $player->data->nextTurnTime,
+            $player->caracs->spd
+        );
+    }
+
     public static function buildOptions(Player $player): array
     {
+        $nextTurnWindow = self::nextTurnWindow($player);
+
         $options = array(
             'changeMail' => "Changer Mail<br /><sup>" .
                 (!empty($player->data->plain_mail) ? htmlspecialchars($player->data->plain_mail) : "") . "</sup>",
@@ -38,10 +58,22 @@ final class AccountView
             'hideGrid' => "Cacher le damier de la Vue<br /><sup>La grille ne s'affichera plus</sup>",
             'noMask' => "Désactiver les masques<br /><sup>Les effets de brumes et de pluie ne s'afficheront plus</sup>",
             'hideBoardCoords' => "Masquer les coordonnées du bord<br /><sup>La bordure graduée du plateau (nouvelle interface) disparaît</sup>",
+            /* Proposée par le popover de calques du HUD : sans elle
+             * dans cette liste, le serveur refusait la bascule et le
+             * bouton ne faisait rien. */
+            'hideBuildingsLayer' => "Masquer les bâtiments sur les cartes<br /><sup>Le calque des bâtiments disparaît des cartes</sup>",
             'showActionDetails' => "Afficher les détails des Actions<br /><sup>Affiche les calculs et les jets</sup>",
             'newHud' => "Nouvelle interface (bêta)<br /><sup>Nouvelle disposition du jeu sur grand écran : barre de statut, rail de navigation, chat et évènements</sup>",
             'noTrain' => "Interdire les entraînements<br />",
-            'dlag' => "DLA glissante<br /><sup>Décale l'heure du prochain tour</sup>",
+            /* Remplace l'ancienne « DLA glissante » : le joueur choisit
+             * l'heure de son prochain tour dans une fenêtre bornée. Ce
+             * n'est pas une bascule — le rendu lui donne un champ de
+             * date, et le handler POST la refuse explicitement. */
+            'nextTurn' => "Décaler le prochain tour<br /><sup>Actuellement le "
+                . date('d/m à H:i', $player->data->nextTurnTime)
+                . (!empty($player->data->nextTurnRescheduled)
+                    ? " — déjà décalé pour ce cycle"
+                    : " — déplaçable jusqu'au " . date('d/m à H:i', $nextTurnWindow['max'])) . "</sup>",
             'deleteAccount' => "Demander la suppression du compte<br /><sup>Votre compte sera supprimé sous 7 jours</sup>",
             'reloadView' => "Rafraichir la Vue<br /><sup>Si cette dernière est buguée</sup>",
             'incognitoMode' => "Mode Incognito (PNJ)<br /><sup>Invisible sur la carte et dans les évènements</sup>",
@@ -79,6 +111,8 @@ final class AccountView
         if ($hudPanel) {
             unset($options['changeMdj'], $options['changeStory']);
         }
+
+        $nextTurnWindow = self::nextTurnWindow($player);
 
         ob_start();
 
@@ -169,6 +203,21 @@ final class AccountView
                 echo '
                 <a href="account.php?story"><button>Changer</button></a>
                 ';
+            } elseif ($k == 'nextTurn') {
+                /* Pas une bascule : un créneau à choisir dans la fenêtre
+                 * autorisée, appliqué par api/player/set_next_turn.php.
+                 * Même contrôle qu'en page pleine (account.php). */
+                if (!empty($player->data->nextTurnRescheduled)) {
+                    echo '<sup>À nouveau disponible après votre prochain tour</sup>';
+                } else {
+                    echo '
+                    <input type="datetime-local" id="next-turn-input"
+                        min="' . date('Y-m-d\TH:i', $nextTurnWindow['min']) . '"
+                        max="' . date('Y-m-d\TH:i', $nextTurnWindow['max']) . '"
+                        value="' . date('Y-m-d\TH:i', $nextTurnWindow['min']) . '" />
+                    <button id="next-turn-apply">Appliquer</button>
+                    ';
+                }
             } elseif ($k == 'showTuto') {
                 // Feature flag determines which tutorial system to use
                 if (TutorialFeatureFlag::isEnabledForPlayer($player->id)) {

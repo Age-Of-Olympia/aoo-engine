@@ -1,7 +1,7 @@
 <?php
 use App\Factory\PlayerFactory;
 use App\Service\AccountDeletionService;
-use App\Service\TurnScheduleService;
+use App\View\AccountView;
 use Classes\Ui;
 use Classes\Str;
 use Classes\File;
@@ -64,48 +64,14 @@ if(isset($_POST['changeName'])){
 }
 
 // Reschedule window for the next turn (replaces the old "DLA glissante")
-$player->get_caracs();
-$nextTurnWindow = TurnScheduleService::rescheduleWindow($player->data->nextTurnTime, $player->caracs->spd);
+$nextTurnWindow = AccountView::nextTurnWindow($player);
 
-// Build options array dynamically
-$options = array(
-    'changeMail'=>"Changer Mail<br /><sup>" .
-        (!empty($player->data->plain_mail) ? htmlspecialchars($player->data->plain_mail) : "") . "</sup>",
-    'changePortrait'=>"Changer de Portrait<br /><sup>Vous pouvez faire une demande de Portrait sur le <a href='https://age-of-olympia.net/forum.php?topic=1725177169' target='_blank'>forum</a></sup>",
-    'changeAvatar'=>"Changer d'Avatar<br /><sup>Vous pouvez faire une demande d'Avatar sur le <a href='https://age-of-olympia.net/forum.php?topic=1725177169' target='_blank'>forum</a></sup>",
-    'changeMdj'=>"",
-    'changeStory'=>"",
-    'raceHint'=>"Indice de Race<br /><sup>Affiche une bordure de couleur autour du personnage</sup>",
-    'raceHintMax'=>"Indice de Race maximale<br /><sup>Colore également l'arrière plan du personnage</sup>",
-    'showBlockedTiles'=>"Marquer les cases infranchissables<br /><sup>Affiche un ⛔ sur les cases (murs, joueurs, cases interdites) où vous ne pouvez pas vous déplacer</sup>",
-    // 'noPrompt'=>"Désactiver le système anti-misslick<br /><sup>Vous n'aurez plus d'alertes pour confirmer vos Actions</sup>",
-    'hideGrid'=>"Cacher le damier de la Vue<br /><sup>La grille ne s'affichera plus</sup>",
-    'noMask'=>"Désactiver les masques<br /><sup>Les effets de brumes et de pluie ne s'afficheront plus</sup>",
-    'showActionDetails'=>"Afficher les détails des Actions<br /><sup>Affiche les calculs et les jets</sup>",
-    'noTrain'=>"Interdire les entraînements<br />",
-    'nextTurn'=>"Décaler le prochain tour<br /><sup>Actuellement le ". date('d/m à H:i', $player->data->nextTurnTime)
-        .(!empty($player->data->nextTurnRescheduled)
-            ? " — déjà décalé pour ce cycle"
-            : " — déplaçable jusqu'au ". date('d/m à H:i', $nextTurnWindow['max'])) ."</sup>",
-    'deleteAccount'=>"Demander la suppression du compte<br /><sup>Votre compte sera supprimé sous 7 jours</sup>",
-    'reloadView'=>"Rafraichir la Vue<br /><sup>Si cette dernière est buguée</sup>",
-    'incognitoMode'=>"Mode Incognito (PNJ)<br /><sup>Invisible sur la carte et dans les évènements</sup>",
-    'anonymeMode'=>"Mode Incognito/Anonyme (PNJ)<br /><sup>Non trouvable dans les recherches de destinataires</sup>",
-);
-
-// Conditionally add tutorial replay option
-// Show for players who have completed tutorial before (regardless of feature flag)
-$db = new Db();
-$sessionManager = new TutorialSessionManager($db);
-$hasCompletedTutorial = $sessionManager->hasCompletedBefore($player->id);
-
-// Always show replay option if player has completed tutorial
-// The feature flag will determine which tutorial system to use (new vs old)
-// NPCs (negative ids) never get the option — it's not meaningful for them
-// and the legacy fallback would otherwise activate via the !isEnabled branch.
-if ($player->id >= 0 && ($hasCompletedTutorial || !TutorialFeatureFlag::isEnabledForPlayer($player->id))) {
-    $options['showTuto'] = "Rejouer le tutoriel";
-}
+/* Liste des options : SSOT dans AccountView::buildOptions(), partagée
+ * avec le rendu en panneau du HUD (load_account.php). Elle sert ici à
+ * la fois d'affichage ET de liste blanche du handler POST ci-dessous —
+ * une copie locale qui dérive rend donc des options intogglables.
+ * C'est exactement ce qui est arrivé à newHud et hideBoardCoords. */
+$options = AccountView::buildOptions($player);
 
 define('OPTIONS', $options);
 
