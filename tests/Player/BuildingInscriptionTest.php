@@ -153,6 +153,39 @@ class BuildingInscriptionTest extends LegacyPlayerFixtureTestCase
         }
     }
 
+    /**
+     * Le read model de la console des bâtiments doit distinguer les
+     * trois états : la clé manquait, et la page d'édition tombait sur
+     * un « Undefined array key » à chaque ouverture.
+     */
+    public function testTheAdminReadModelCarriesTheThreeStates(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $id = $this->placeStructure('palissade', 0, 6);
+
+        $service = new BuildingService();
+        $rowOf = static function (array $rows, int $id): ?array {
+            foreach ($rows as $row) {
+                if ($row['id'] === $id) {
+                    return $row;
+                }
+            }
+
+            return null;
+        };
+
+        $row = $rowOf($service->listBuildings(), $id);
+        $this->assertIsArray($row);
+        $this->assertArrayHasKey('readable_from_afar', $row, 'la clé attendue par la page d\'édition');
+        $this->assertNull($row['readable_from_afar'], 'à la pose, aucun choix : il suit son type');
+
+        $service->setReadableFromAfar($id, false);
+        $this->assertFalse($rowOf($service->listBuildings(), $id)['readable_from_afar'], 'un non explicite');
+
+        $service->setReadableFromAfar($id, true);
+        $this->assertTrue($rowOf($service->listBuildings(), $id)['readable_from_afar'], 'un oui explicite');
+    }
+
     public function testAnEmptyTextSaysNothing(): void
     {
         $entity = $this->createRealPlayer('GmInscr');

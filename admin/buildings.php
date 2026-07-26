@@ -226,8 +226,8 @@ function building_render_edit(array $b, string $description, array $factions, ar
         . '<div class="form-group col-md-4"><label>Inscription lisible de loin</label>'
         . '<select name="readable_from_afar" class="form-control">'
         . '<option value="">Comme son type</option>'
-        . '<option value="1"' . ($b['readable_from_afar'] === 1 || $b['readable_from_afar'] === '1' ? ' selected' : '') . '>Oui</option>'
-        . '<option value="0"' . ($b['readable_from_afar'] === 0 || $b['readable_from_afar'] === '0' ? ' selected' : '') . '>Non, il faut s\'approcher</option>'
+        . '<option value="1"' . (($b['readable_from_afar'] ?? null) === true ? ' selected' : '') . '>Oui</option>'
+        . '<option value="0"' . (($b['readable_from_afar'] ?? null) === false ? ' selected' : '') . '>Non, il faut s\'approcher</option>'
         . '</select><small class="text-muted">Le défaut vient du type (console des Races) ;'
         . ' ce réglage n\'est qu\'une exception pour CET exemplaire.</small></div>'
         . ($isEdifice

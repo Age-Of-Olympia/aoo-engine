@@ -590,6 +590,11 @@ class BuildingService extends BaseService
                 'build_state' => (string) $row['build_state'],
                 'dialog' => (string) $row['dialog'],
                 'is_open' => (bool) $row['is_open'],
+                /* null = suit son type ; le rendu doit pouvoir faire la
+                 * différence avec un « non » explicite. */
+                'readable_from_afar' => $row['readable_from_afar'] !== null
+                    ? (bool) $row['readable_from_afar']
+                    : null,
                 'faction' => (string) $row['faction'],
                 'owner_id' => $row['owner_id'] !== null ? (int) $row['owner_id'] : null,
                 'owner_name' => $row['owner_name'] !== null ? (string) $row['owner_name'] : null,
