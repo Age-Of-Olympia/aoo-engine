@@ -183,6 +183,16 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         foreach (['.json', '.svg', '.turn.json', '.caracs.json', '.invent.html'] as $suffix) {
             @unlink(__DIR__ . '/../../../datas/private/players/' . $id . $suffix);
         }
+
+        /* Le fichier ne suffit pas : Json::decode garde un cache MÉMOIRE
+         * par chemin, sur un singleton global qui vit tout le process.
+         * Supprimer le fichier ne le vide pas — le décodeur ressert
+         * l'objet déjà lu. Sur une base neuve, où les ids sont recyclés
+         * d'un test à l'autre, le joueur suivant héritait ainsi de
+         * l'identité (et donc de la position) du précédent. */
+        foreach (['', '.turn', '.caracs'] as $variant) {
+            json()->forget('players', $id . $variant);
+        }
     }
 
     protected function createRealPlayer(string $prefix, string $race = 'nain'): Player
