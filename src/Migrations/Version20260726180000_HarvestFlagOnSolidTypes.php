@@ -33,9 +33,14 @@ use Doctrine\Migrations\AbstractMigration;
  * qui en compte des dizaines n'est pas un oubli, c'est un type mal
  * déclaré — et trancher pour lui écraserait du jeu. L'expérimental en
  * offre l'exemple : cocotier2 et cocotier3 sont déclarés à 1 PV quand
- * cocotier1 l'est à -1, et remettre leurs 58 lignes à zéro rendrait
- * autant de palmiers non récoltables. Ceux-là demandent une décision,
- * pas une migration ; la console les signale.
+ * cocotier1 l'est à -1, et remettre leurs lignes à zéro rendrait autant
+ * de palmiers non récoltables.
+ *
+ * Les cocotiers sont d'ailleurs exclus NOMMÉMENT, en plus de l'être par
+ * la règle : c'est un cas de jeu à trancher, pas une erreur de saisie,
+ * et il ne doit pas basculer par accident si l'un d'eux se retrouvait
+ * un jour seul de son espèce. Même mise de côté dans le rapport de la
+ * console (TileDialogMigrationService::SET_ASIDE_PREFIXES).
  */
 final class Version20260726180000_HarvestFlagOnSolidTypes extends AbstractMigration
 {
@@ -58,7 +63,8 @@ final class Version20260726180000_HarvestFlagOnSolidTypes extends AbstractMigrat
              WHERE t.pv > 0
                AND r.damages < 0
                AND (SELECT COUNT(*) FROM map_resources AS o
-                    WHERE CONVERT(o.name USING utf8mb4) = CONVERT(r.name USING utf8mb4)) = 1"
+                    WHERE CONVERT(o.name USING utf8mb4) = CONVERT(r.name USING utf8mb4)) = 1
+               AND r.name NOT LIKE 'cocotier%'"
         );
     }
 

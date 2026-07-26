@@ -175,6 +175,8 @@ if ($incoherences !== []) {
         . ' ceux-ci portent trop de lignes pour qu\'un automate tranche — remettre leur état à zéro'
         . ' retirerait la récolte à autant de cases. C\'est la <em>nature</em> qu\'il faut sans doute'
         . ' corriger, dans la console des types de ressources.</p>'
+        . '<p class="text-muted mb-2"><small>Certains types sont volontairement mis de côté et n\'apparaissent'
+        . ' pas ici — les cocotiers, en attente d\'un arbitrage de jeu.</small></p>'
         . '<table class="table table-sm mb-0"><thead><tr><th>Type</th><th>Ce que dit le catalogue</th>'
         . '<th>Ce que disent les cases</th></tr></thead><tbody>' . $lines . '</tbody></table>'
         . '</div></div>';

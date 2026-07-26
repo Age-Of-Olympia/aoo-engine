@@ -28,6 +28,22 @@ class TileDialogMigrationService
     /** Ce qu'on pose sur une case nue pour porter son texte. */
     public const CARRIER_RACE = 'pancarte';
 
+    /**
+     * Types mis de côté, en attente d'un arbitrage de jeu.
+     *
+     * Les cocotiers sont un cas à part : cocotier1 est déclaré
+     * récoltable (-1 PV) quand cocotier2 et cocotier3 le sont à 1 PV,
+     * et leurs quelque 90 cases se disent toutes récoltables. Ce n'est
+     * pas une erreur de saisie à redresser mais une règle de jeu à
+     * trancher — les signaler comme une anomalie reviendrait à réclamer
+     * une correction qui n'en est pas une.
+     *
+     * Retirer une entrée d'ici les fait revenir au rapport.
+     *
+     * @var list<string> préfixes de nom
+     */
+    private const SET_ASIDE_PREFIXES = ['cocotier'];
+
     private Db $db;
 
     public function __construct(?Db $db = null)
@@ -321,6 +337,10 @@ class TileDialogMigrationService
 
         $rows = [];
         while ($res && $row = $res->fetch_assoc()) {
+            if (self::isSetAside((string) $row['name'])) {
+                continue;
+            }
+
             $rows[] = [
                 'name' => (string) $row['name'],
                 'pv' => (int) $row['pv'],
@@ -329,6 +349,18 @@ class TileDialogMigrationService
         }
 
         return $rows;
+    }
+
+    /** Type en attente d'arbitrage, cf. SET_ASIDE_PREFIXES. */
+    public static function isSetAside(string $name): bool
+    {
+        foreach (self::SET_ASIDE_PREFIXES as $prefix) {
+            if (str_starts_with($name, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
