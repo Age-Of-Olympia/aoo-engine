@@ -935,8 +935,52 @@ const FEATURES = [
 
   { id:'admin-player-effects', title:"Effets d'un personnage éditables en admin", category:'admin', status:'testing',
     quarter:6.2, date:'Juil 2026 (S3)',
-    tech:"Pose et levée d'un effet depuis la fiche d'édition, via Player::add_effect / end_effect plutôt qu'un INSERT — ce sont eux qui appliquent les annulations du catalogue. Durée en temps réel, PROVISOIRE : le passage à une durée en tours (MR !645, à rebaser) inverserait le sens de la valeur 0, aujourd'hui « illimité » et demain « expiré ».",
+    tech:"Pose et levée d'un effet depuis la fiche d'édition, via Player::add_effect / end_effect plutôt qu'un INSERT — ce sont eux qui appliquent les annulations du catalogue. La durée s'est stabilisée en TOURS (voir « Durées d'effets en tours ») : le formulaire propose un nombre de tours et une case « sans fin », la valeur 0 signifiant désormais « expire au prochain tour ».",
     player:"Un animateur peut geler un personnage ou lever une malédiction depuis sa fiche, sans passer par la base.",
+    enables:[] },
+
+  /* ───────── Rafale « Retours en vrac » — lot 3 : carte, rendu, effets (26 juil. 2026) ───────── */
+
+  { id:'board-ground-zoom', title:"Le sol du damier suit le zoom", category:'ui-ux', status:'testing',
+    quarter:6.3, date:'Juil 2026 (S3)',
+    tech:"Le sol était un fond CSS posé sur le conteneur : il ne bougeait ni au zoom ni au défilement, si bien que le décor glissait sous les cases. Il devient un pattern SVG dans le damier lui-même, dimensionné sur l'image réelle de la tuile (gaia fait 500×500, soit dix cases, quand souterrain et ciel font 50×50).",
+    player:"Le sol reste solidaire du plateau quand on zoome ou qu'on fait glisser la carte.",
+    enables:[] },
+
+  { id:'minimap-players', title:"Joueurs sur la minimap, et règles de visibilité unifiées", category:'map-tiles', status:'testing',
+    quarter:6.3, date:'Juil 2026 (S3)',
+    tech:"La minimap du HUD montre les autres personnages, en repères CSS posés en pourcentages plutôt qu'en calque GD — produire une image par joueur et par affichage du HUD coûterait trop cher. Mais les règles qui décident QUI est visible ne sont pas réécrites : ViewService::visiblePlayers les porte une fois, et le calque GD de la grande carte comme les repères de la minimap s'y réfèrent (égalité du calque prouvée octet à octet avant/après extraction). Deux écarts corrigés au passage : le mode incognito n'était pas appliqué sur la carte du monde, et la carte locale ignorait le drapeau visible.",
+    player:"On voit les autres personnages sur la minimap, aux mêmes règles que sur la grande carte — et le mode incognito est enfin respecté partout.",
+    enables:[] },
+
+  { id:'map-layer-idor', title:"Calques de carte : adresses devinables", category:'tech-debt', status:'testing', playerHidden:true,
+    quarter:6.3, date:'Juil 2026 (S3)',
+    tech:"Les calques joueur étaient servis à une adresse contenant l'identifiant du joueur (img/maps/local_map_player_1_layer.png) et renvoyaient 200 SANS session : n'importe qui pouvait énumérer les identifiants et lire la position et le champ de perception de tout le monde. Les noms passent par un jeton HMAC non devinable, et les fichiers hérités sont supprimés à la régénération (404 vérifié).",
+    player:"",
+    enables:[] },
+
+  { id:'blood-immediate', title:"Le sang apparaît sans attendre un déplacement", category:'ui-ux', status:'testing',
+    quarter:6.3, date:'Juil 2026 (S3)',
+    tech:"Le damier de chaque joueur est un SVG mis en cache sur disque, et rien ne l'invalidait quand un élément apparaissait dessus : le sang était bien écrit en base, mais le joueur recevait sa vieille image. Element::put purge désormais le cache de ceux qui voient la case — sauf pour les traces de pas, que Player::go purge déjà (origine ET destination), et qui feraient payer deux fois la purge la plus coûteuse du jeu à chaque déplacement.",
+    player:"Une blessure se voit tout de suite sur le plateau, sans avoir à bouger.",
+    enables:[] },
+
+  { id:'effects-in-turns', title:"⭐ Durées d'effets en tours, et l'effet sans fin", category:'combat', status:'testing',
+    quarter:6.3, date:'Juil 2026 (S3)',
+    tech:"players_effects.endTime cesse d'être un instant pour devenir un nombre de TOURS restants, décrémenté à chaque tour. Zéro change de sens au passage — il voulait dire « sans fin », il veut dire « terminé » — donc l'infini devient une durée négative : la décrémentation ne vise que les positives, la purge ne vise que zéro, un effet sans fin n'est atteint par aucune des deux. La migration est la pièce maîtresse : sans elle, tous les effets permanents en cours disparaîtraient au premier tour joué, et les durées réglées sur les actions (172800 secondes) poseraient des effets de 172800 tours. Les éléments de carte gardent leur horloge — rien ne les décrémente, c'est le cron horaire qui les efface — mais leur durée s'écrit dans la même unité, convertie à la pose sur un tour de référence de 18 h. Reprise de la MR !645.",
+    player:"La durée d'un effet se lit enfin en tours : « trois tours » vaut la même chose pour tout le monde, quand « soixante-douze heures » dépendait de votre vitesse. Certains effets ne s'éteignent jamais d'eux-mêmes — le vol des oiseaux, un poison qu'il faut soigner.",
+    enables:[] },
+
+  { id:'profile-options-ssot', title:"Liste unique des options du profil", category:'tech-debt', status:'testing', playerHidden:true,
+    quarter:6.3, date:'Juil 2026 (S3)',
+    tech:"La liste des options joue deux rôles : elle décrit ce qu'on affiche ET elle sert de liste blanche au POST. Le refactor qui l'avait centralisée dans AccountView a été suivi de la fusion d'une branche partie AVANT, dont l'account.php a ressuscité une copie locale — antérieure aux options ajoutées entre-temps. Trois options proposées par l'interface étaient donc refusées par le serveur, dont celle qui donne accès à la nouvelle interface. Des tests interdisent la rechute : toute option proposée par le popover de calques ou par js/hud.js doit être acceptée par la liste blanche.",
+    player:"",
+    enables:[] },
+
+  { id:'ci-test-cost', title:"Coût du job de tests : mesuré, et taxes retirées", category:'build-ci', status:'testing', playerHidden:true,
+    quarter:6.3, date:'Juil 2026 (S3)',
+    tech:"Le job passait 291 s pour une suite qui tourne en 10 s en local. Retirés : la couverture sur les branches de travail (elle n'est lue que sur les branches d'intégration, et passe désormais par pcov), la durabilité InnoDB d'une base jetable, et surtout xdebug.mode=coverage laissé dans le php.ini de l'image — Xdebug était donc chargé en mode couverture pour TOUS les processus PHP de TOUS les jobs (PHPStan : 26 → 12 s). La mesure dit où est le reste : 15 559 requêtes à 0,26 ms en local contre ~17 ms en CI, soit un facteur 65 sur la latence d'aller-retour, pas sur le calcul. Suite dans l'issue #288.",
+    player:"",
     enables:[] },
 
   /* ─────────────────────────── PAST — ajouts ultérieurs ─────────────────────────── */
