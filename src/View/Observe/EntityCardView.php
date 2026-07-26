@@ -88,11 +88,7 @@ final class EntityCardView
             'img' => self::buttonsHtml($player, $target, $buildingDetails, $buildingClosure, $x, $y, $coords),
             'pvPct' => $pvPct,
             'type' => self::typeLabel($raceService, $target),
-            /* Message du jour : saisi par le joueur, donc assaini ici —
-             * Ui::get_card sert aussi des textes composés par le jeu
-             * (état d'une ressource, avec ses propres balises), on ne
-             * peut donc pas assainir dans le composant. */
-            'text' => Str::richText($target->data->text),
+            'text' => self::cardText($player, $target, $buildingDetails, $x, $y, $coords),
             'race' => $target->data->race,
             'faction' => self::factionHtml($player, $target),
         ];
@@ -260,6 +256,56 @@ final class EntityCardView
         }
 
         return '<a href="infos.php?targetId=' . $target->id . '"><button class="action"><span class="ra ' . $icon . '"></span> <span class="action-name">' . $label . '</span></button></a>';
+    }
+
+    /**
+     * Le texte porté par l'entité, tel que la carte de la case peut le
+     * montrer.
+     *
+     * Pour un PERSONNAGE, c'est son message du jour, et il se lit comme
+     * avant. Saisi par le joueur, donc assaini ici — Ui::get_card sert
+     * aussi des textes composés par le jeu (état d'une ressource, avec
+     * ses propres balises), on ne peut donc pas assainir dans le
+     * composant.
+     *
+     * Pour un DÉCOR, c'est son inscription, et elle obéit aux mêmes
+     * deux règles que dans la fiche : le texte de création ne compte
+     * pas, et hors de portée on annonce qu'il y a quelque chose plutôt
+     * que de le donner à lire. Sans ça, la carte affichait l'épitaphe
+     * en entier à côté d'un bouton « Trop loin pour lire », et les
+     * milliers de murs du monde réclamaient qu'on les frappe.
+     */
+    private static function cardText(
+        Player $player,
+        Player $target,
+        ?BuildingDetails $buildingDetails,
+        $x,
+        $y,
+        object $coords
+    ): string {
+        $isDecor = in_array((string) ($target->data->player_type ?? 'real'), ['building', 'unique'], true);
+
+        if (!$isDecor) {
+            return Str::richText($target->data->text);
+        }
+
+        $inscription = \App\Service\BuildingService::inscriptionOf($target);
+        if ($inscription === '') {
+            return '';
+        }
+
+        if ($buildingDetails !== null && $buildingDetails->isReadableFromAfar()) {
+            return Str::richText($inscription);
+        }
+
+        $distance = View::get_distance(
+            $player->getCoords(),
+            (object) ['x' => $x, 'y' => $y, 'z' => $coords->z, 'plan' => $coords->plan]
+        );
+
+        return $distance <= 1
+            ? Str::richText($inscription)
+            : '<em>Quelque chose est inscrit ici.</em>';
     }
 
     /** Ligne de type : libellé de race, suffixes PNJ et inactif. */

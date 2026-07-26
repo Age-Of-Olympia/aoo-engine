@@ -83,6 +83,29 @@ class BuildingInscriptionTest extends LegacyPlayerFixtureTestCase
         $this->assertSame('', BuildingService::inscriptionOf($building));
     }
 
+    /**
+     * La carte de la case rendait le texte brut de l'entité : l'épitaphe
+     * s'y lisait en entier à côté d'un bouton « Trop loin pour lire », et
+     * les milliers de murs du monde y réclamaient qu'on les frappe. Elle
+     * doit passer par la même lecture que la fiche.
+     */
+    public function testTheTileCardDoesNotShowTheRawEntityText(): void
+    {
+        $source = file_get_contents(__DIR__ . '/../../src/View/Observe/EntityCardView.php');
+        $this->assertIsString($source);
+
+        $this->assertStringNotContainsString(
+            "'text' => Str::richText(\$target->data->text)",
+            $source,
+            'la carte ne sert plus le texte brut de l\'entité'
+        );
+        $this->assertStringContainsString(
+            'BuildingService::inscriptionOf($target)',
+            $source,
+            'elle lit l\'inscription par la même porte que la fiche'
+        );
+    }
+
     public function testAnEmptyTextSaysNothing(): void
     {
         $entity = $this->createRealPlayer('GmInscr');
