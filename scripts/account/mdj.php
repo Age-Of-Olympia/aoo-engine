@@ -4,7 +4,11 @@ use Classes\Log;
 
 $ErrorMessageChangeSession = "Changement de personnage avant sauvegarde mdj";
 
-if(!empty($_POST['text'])){
+/* isset et non !empty : un message du jour VIDE est un choix — ne rien
+ * afficher au-dessus de son personnage. Avec !empty, l'effacement était
+ * impossible : le formulaire retombait sur l'affichage et l'ancien
+ * texte restait en base. */
+if(isset($_POST['text'])){
     if ($_POST['author-id']!=$player->id) {
         exit($ErrorMessageChangeSession);
     }
@@ -16,7 +20,9 @@ if(!empty($_POST['text'])){
 
     $player->refresh_data();
 
-    $log = 'Changement de message du jour.';
+    $log = trim((string) $_POST['text']) === ''
+        ? 'Effacement du message du jour.'
+        : 'Changement de message du jour.';
 
     $details = '<div class="action-details">'.$_POST['text'].'</div>';
 

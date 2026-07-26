@@ -65,6 +65,24 @@ class BuildingInscriptionTest extends LegacyPlayerFixtureTestCase
         $this->assertStringContainsString(',', $stored, 'et elle traverse le stockage intacte');
     }
 
+    /**
+     * Un bâtiment neuf se tait : rien n'est encore inscrit dessus. La
+     * phrase de création a du sens pour un personnage qui vient de
+     * naître, aucune pour un mur — et elle occupe l'emplacement de
+     * l'inscription.
+     */
+    public function testANewBuildingSaysNothingAtAll(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $id = $this->placeStructure('palissade', 0, 4);
+
+        $building = \App\Factory\PlayerFactory::legacy($id);
+        $building->get_data();
+
+        $this->assertSame('', trim((string) $building->data->text), 'aucun texte à la pose');
+        $this->assertSame('', BuildingService::inscriptionOf($building));
+    }
+
     public function testAnEmptyTextSaysNothing(): void
     {
         $entity = $this->createRealPlayer('GmInscr');

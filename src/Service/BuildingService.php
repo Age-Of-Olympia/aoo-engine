@@ -306,9 +306,15 @@ class BuildingService extends BaseService
             }
 
             $conn->executeStatement(
+                /* text = '' : un bâtiment neuf n'a RIEN d'inscrit dessus.
+                 * La colonne a pour défaut « Je suis nouveau,
+                 * frappez-moi! », qui a du sens pour un personnage qui
+                 * vient de naître et aucun pour un mur — sans ce vide
+                 * explicite, chaque bâtiment posé l'annoncerait dans sa
+                 * fiche. */
                 'INSERT INTO players
-                    (id, player_type, display_id, name, race, avatar, portrait, coords_id, nextTurnTime, registerTime)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)',
+                    (id, player_type, display_id, name, race, avatar, portrait, coords_id, nextTurnTime, registerTime, text)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, \'\')',
                 [
                     $id,
                     'building',
