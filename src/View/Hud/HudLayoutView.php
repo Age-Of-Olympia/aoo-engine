@@ -21,7 +21,7 @@ use Classes\Ui;
 final class HudLayoutView
 {
     /** Cache-busting des assets du HUD — à incrémenter à chaque modif CSS/JS. */
-    private const VERSION = '20260725a';
+    private const VERSION = '20260726a';
 
     public static function render(Player $player): void
     {
@@ -90,6 +90,7 @@ final class HudLayoutView
             'noMask'           => 'Désactiver les masques météo',
             'hideBoardCoords'  => 'Masquer les coordonnées du bord',
             'hideBuildingsLayer' => 'Masquer les bâtiments (cartes)',
+            'hideStructureBorders' => 'Masquer la bordure des décors',
         ];
         echo '<div id="hud-layers">'
             . '<button id="hud-layers-btn" title="Options d\'affichage du plateau" aria-label="Options d\'affichage du plateau"></button>'

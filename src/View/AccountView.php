@@ -62,6 +62,7 @@ final class AccountView
              * dans cette liste, le serveur refusait la bascule et le
              * bouton ne faisait rien. */
             'hideBuildingsLayer' => "Masquer les bâtiments sur les cartes<br /><sup>Le calque des bâtiments disparaît des cartes</sup>",
+            'hideStructureBorders' => "Masquer la bordure de race des décors<br /><sup>Murs, coffres et objets uniques perdent leur liseré ; les personnages gardent le leur</sup>",
             'showActionDetails' => "Afficher les détails des Actions<br /><sup>Affiche les calculs et les jets</sup>",
             'newHud' => "Nouvelle interface (bêta)<br /><sup>Nouvelle disposition du jeu sur grand écran : barre de statut, rail de navigation, chat et évènements</sup>",
             'noTrain' => "Interdire les entraînements<br />",

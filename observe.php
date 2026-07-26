@@ -357,30 +357,37 @@ else{
     }
 
 
-    // dialogs
-    $sql = '
-    SELECT
-    params
-    FROM
-    map_dialogs AS p
-    INNER JOIN
-    coords AS c
-    ON
-    p.coords_id = c.id
-    WHERE
-    c.x = ?
-    AND
-    c.y = ?
-    AND
-    c.z = ?
-    AND
-    c.plan = ?
-    ';
-
-    $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
-
-    \App\View\Observe\TileDialogView::render($player, $res);
 }
+
+/* Dialogue de CASE : rendu QUELLE QUE SOIT l'entité présente. Ce bloc
+ * vivait dans la branche « aucune entité », ce qui était sans effet
+ * tant que rien n'occupait les cases — mais depuis que les structures
+ * sont des entités, une pancarte masque son propre texte. Le
+ * déclencheur est collé à la case, pas à ce qui s'y trouve : il se lit
+ * dans les deux cas. */
+$sql = '
+SELECT
+params
+FROM
+map_dialogs AS p
+INNER JOIN
+coords AS c
+ON
+p.coords_id = c.id
+WHERE
+c.x = ?
+AND
+c.y = ?
+AND
+c.z = ?
+AND
+c.plan = ?
+';
+
+$res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
+
+\App\View\Observe\TileDialogView::render($player, $res);
+
 
 
 // Bourse au sol : piles + instances (GroundLootService::listAt),

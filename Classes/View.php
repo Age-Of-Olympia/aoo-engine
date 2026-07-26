@@ -442,7 +442,15 @@ class View{
                     }
 
 
-                    if(in_array('raceHint', $this->options)){
+                    /* La bordure de race dit d'un coup d'œil À QUI on a
+                     * affaire : elle a du sens sur un personnage, moins sur
+                     * un mur ou un coffre, où elle encombre le décor. Elle
+                     * reste donc toujours posée sur les personnages, PNJ
+                     * compris, et devient facultative sur le reste. */
+                    $raceHintApplies = in_array('raceHint', $this->options)
+                        && !($isStructure && in_array('hideStructureBorders', $this->options));
+
+                    if($raceHintApplies){
 
 
                         $raceBgColor = \App\Service\RaceService::getRaceColor($player->data->race);
