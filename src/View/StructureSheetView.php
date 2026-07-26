@@ -129,6 +129,40 @@ final class StructureSheetView
         </table>
         ';
 
+        /* Inscription — ce qui est ÉCRIT sur l'objet, à la place qu'occupe
+         * le message du jour d'un personnage : c'est la même colonne
+         * (players.text), et un bâtiment est une ligne de players.
+         *
+         * Hors de portée, on ne se tait PAS : dire qu'il y a quelque
+         * chose d'illisible d'ici est une information ; ne rien afficher
+         * ne se distingue pas d'un objet muet, et le joueur ne saura
+         * jamais qu'il devait s'approcher. */
+        $inscription = \App\Service\BuildingService::inscriptionOf($target);
+
+        if ($inscription !== '') {
+
+            $player->getCoords();
+            $inscriptionCoords = $entity->getCoords(EntityManagerFactory::getEntityManager()->getConnection());
+            $inscriptionDistance = $inscriptionCoords !== null
+                ? View::get_distance($player->coords, $inscriptionCoords)
+                : PHP_INT_MAX;
+
+            $readableHere = ($details !== null && $details->isReadableFromAfar())
+                || $inscriptionDistance <= 1;
+
+            echo '<div class="building-inscription" style="margin: 14px auto; max-width: 34rem; text-align: center;">';
+
+            if ($readableHere) {
+                echo '<blockquote style="font-style: italic;">'
+                    . \Classes\Str::richText($inscription) . '</blockquote>';
+            } else {
+                echo '<span class="building-status-state">Quelque chose est inscrit ici,'
+                    . ' mais il faut s\'approcher pour le déchiffrer.</span>';
+            }
+
+            echo '</div>';
+        }
+
         // Conversation — façon marchand : plein panneau, grand avatar.
         // Garde de PORTÉE côté serveur (même mécanisme que le MDJ limité
         // à la Perception) : il faut être sur une case adjacente.
@@ -140,26 +174,16 @@ final class StructureSheetView
                 ? View::get_distance($player->coords, $targetCoords)
                 : PHP_INT_MAX;
 
-            /* Nature et portée du dialogue (catalogue) : une pancarte se
-             * LIT et peut se lire de loin, une échoppe s'ADRESSE et
-             * demande qu'on s'y présente. Le défaut reste l'historique —
-             * interactif, adjacence exigée. */
-            $traits = (new \App\Service\DialogService())->traits($details->getDialog());
-            $isInformative = $traits['kind'] === \App\Service\DialogService::KIND_INFORMATIVE;
-            $needsAdjacency = !$traits['readableFromAfar'];
-
             if ($closure !== null) {
                 echo '<div class="building-status building-status--closed" style="margin: 14px auto; text-align: center;">'
                     . '<span class="building-status-door building-status-door--closed">Fermé'
                     . ($closure !== 'fermé volontairement' ? ' (' . $closure . ')' : '') . '</span>'
-                    . '<span class="building-status-state">'
-                    . ($isInformative ? 'Rien à lire ici.' : 'Personne ne répond.') . '</span>'
+                    . '<span class="building-status-state">Personne ne répond.</span>'
                     . '</div>';
-            } elseif ($needsAdjacency && $distance > 1) {
+            } elseif ($distance > 1) {
                 echo '<div class="building-status" style="margin: 14px auto; text-align: center;">'
                     . '<span class="building-status-state">Il faut être directement à côté du bâtiment'
-                    . ($isInformative ? ' pour déchiffrer ce qui y est inscrit.' : ' pour pouvoir parler au tenancier.')
-                    . '</span>'
+                    . ' pour pouvoir parler au tenancier.</span>'
                     . '</div>';
             } else {
                 echo Ui::get_dialog($player, [

@@ -448,6 +448,46 @@ class BuildingService extends BaseService
     }
 
     /**
+     * Défaut de `players.text` : tant qu'il vaut ça, l'entité n'a rien
+     * à dire. C'est la valeur posée par le schéma à la création, et les
+     * 13 549 bâtiments de l'expérimental la portaient tous — la place
+     * était donc libre pour y écrire les inscriptions.
+     */
+    public const DEFAULT_TEXT = 'Je suis nouveau, frappez-moi!';
+
+    /**
+     * Ce qui est écrit sur l'objet, ou '' s'il n'a rien à dire.
+     *
+     * C'est le MDJ (`players.text`), pas un champ de plus : un
+     * personnage y met son message du jour, une pancarte ce qui est
+     * gravé dessus. Même colonne, même emplacement dans la fiche.
+     */
+    public static function inscriptionOf(\Classes\Player $entity): string
+    {
+        $text = trim((string) ($entity->data->text ?? ''));
+
+        return ($text === '' || $text === self::DEFAULT_TEXT) ? '' : $text;
+    }
+
+    /**
+     * Une inscription se lit-elle sans s'approcher ? Propriété de
+     * l'OBJET : la même phrase sur une grande pancarte et sur une
+     * plaque gravée ne se lit pas de la même distance.
+     */
+    public function setReadableFromAfar(int $playerId, bool $readable): void
+    {
+        $details = $this->getDetails($playerId);
+        if ($details === null) {
+            throw new \InvalidArgumentException("#{$playerId} n'est pas un bâtiment.");
+        }
+
+        $details->setReadableFromAfar($readable);
+        $this->entityManager->flush();
+
+        $this->addAuditLog('BuildingService::setReadableFromAfar #' . $playerId . ' ' . ($readable ? 'oui' : 'non'));
+    }
+
+    /**
      * Attache un dialogue au bâtiment ('' pour le détacher). Le code doit
      * exister dans le catalogue `dialogs` — le lien vit sur l'entité et la
      * suit (ruine = muet, suppression = lien disparu), contrairement aux

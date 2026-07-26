@@ -223,28 +223,41 @@ final class EntityCardView
         $y,
         object $coords
     ): string {
-        if ($buildingDetails === null || $buildingDetails->getDialog() === '' || $buildingClosure !== null) {
+        if ($buildingClosure !== null) {
             return '';
         }
 
-        /* Ce qu'on fait du dialogue décide du verbe ET de la portée :
-         * une pancarte se LIT, éventuellement de loin ; une échoppe
-         * s'ADRESSE, et seulement de près. Le défaut reste l'historique. */
-        $traits = (new \App\Service\DialogService())->traits($buildingDetails->getDialog());
-        $isInformative = $traits['kind'] === \App\Service\DialogService::KIND_INFORMATIVE;
+        /* Ce que l'objet a à dire décide du verbe : une inscription se
+         * LIT (players.text, le MDJ d'un bâtiment), une échoppe
+         * s'ADRESSE (dialogue du catalogue). */
+        $inscription = \App\Service\BuildingService::inscriptionOf($target);
+        $hasDialog = $buildingDetails !== null && $buildingDetails->getDialog() !== '';
 
-        if (!$traits['readableFromAfar']) {
-            $distance = View::get_distance(
-                $player->getCoords(),
-                (object) ['x' => $x, 'y' => $y, 'z' => $coords->z, 'plan' => $coords->plan]
-            );
-            if ($distance > 1) {
-                return '';
-            }
+        if ($inscription === '' && !$hasDialog) {
+            return '';
         }
 
-        $icon = $isInformative ? 'ra-scroll-unfurled' : 'ra-speech-bubble';
-        $label = $isInformative ? 'Lire' : 'Parler';
+        $readsFromAfar = $inscription !== ''
+            && $buildingDetails !== null
+            && $buildingDetails->isReadableFromAfar();
+
+        $distance = View::get_distance(
+            $player->getCoords(),
+            (object) ['x' => $x, 'y' => $y, 'z' => $coords->z, 'plan' => $coords->plan]
+        );
+
+        $icon = $inscription !== '' ? 'ra-scroll-unfurled' : 'ra-speech-bubble';
+        $label = $inscription !== '' ? 'Lire' : 'Parler';
+
+        /* Trop loin : on le DIT plutôt que de masquer le bouton. Une
+         * affordance absente ne se distingue pas d'un objet muet — le
+         * joueur ne saurait jamais qu'il avait quelque chose à lire. */
+        if (!$readsFromAfar && $distance > 1) {
+            return '<button class="action" disabled title="Approchez-vous pour ' . strtolower($label) . '">'
+                . '<span class="ra ' . $icon . '"></span> '
+                . '<span class="action-name">' . ($inscription !== '' ? 'Trop loin pour lire' : 'Trop loin pour parler')
+                . '</span></button>';
+        }
 
         return '<a href="infos.php?targetId=' . $target->id . '"><button class="action"><span class="ra ' . $icon . '"></span> <span class="action-name">' . $label . '</span></button></a>';
     }

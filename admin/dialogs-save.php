@@ -72,8 +72,6 @@ if ($action === 'create' || $action === 'update') {
             'type'      => stringWithDefault('type', 'pnj'),
             'custom'    => trim((string) ($_POST['custom'] ?? '')),
             'is_active' => booleanCheckbox('is_active'),
-            'kind'      => ($_POST['kind'] ?? '') === 'informative' ? 'informative' : 'interactive',
-            'readable_from_afar' => booleanCheckbox('readable_from_afar'),
         ]);
     } catch (\RuntimeException $e) {
         setFlash('warning', $e->getMessage());

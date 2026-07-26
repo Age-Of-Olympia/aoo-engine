@@ -56,6 +56,15 @@ class BuildingDetails
     #[ORM\Column(type: "boolean", name: "is_open", options: ["default" => true])]
     private bool $isOpen = true;
 
+    /**
+     * Ce qui est inscrit sur l'objet se lit-il sans s'approcher ? La
+     * portée appartient au BÂTIMENT et non au texte : c'est la taille de
+     * l'objet qui décide. Une grande pancarte se lit de loin, la même
+     * phrase gravée sur une plaque demande qu'on s'en approche.
+     */
+    #[ORM\Column(type: "boolean", name: "readable_from_afar", options: ["default" => false])]
+    private bool $readableFromAfar = false;
+
     public function getPlayerId(): int
     {
         return $this->playerId;
@@ -114,6 +123,18 @@ class BuildingDetails
     public function isOpen(): bool
     {
         return $this->isOpen;
+    }
+
+    public function isReadableFromAfar(): bool
+    {
+        return $this->readableFromAfar;
+    }
+
+    public function setReadableFromAfar(bool $readable): self
+    {
+        $this->readableFromAfar = $readable;
+
+        return $this;
     }
 
     public function setIsOpen(bool $isOpen): self
