@@ -43,12 +43,21 @@ RUN apt-get update && apt-get install -y \
     libxtst6 \
     && rm -rf /var/lib/apt/lists/*
 
-# Layer 2 (stable): xdebug — slow PECL compile (~22s); rarely changes.
-# Placed BEFORE docker-php-ext-install so adding/removing PHP exts in the
-# layer below does not invalidate this expensive compile.
-RUN pecl install xdebug \
-    && docker-php-ext-enable xdebug \
-    && echo "xdebug.mode=coverage" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+# Layer 2 (stable): coverage drivers — slow PECL compiles (~22s each);
+# rarely change. Placed BEFORE docker-php-ext-install so adding/removing
+# PHP exts in the layer below does not invalidate these.
+#
+#   pcov:   line coverage at a fraction of Xdebug's cost (measured: the
+#           suite spends 2.3s of CPU without coverage, 16.3s with Xdebug).
+#           Off by default — the job that measures turns it on.
+#   xdebug: kept for step debugging, but mode=off. Left on
+#           `mode=coverage`, it taxed EVERY php process in the job —
+#           composer, the Doctrine migrations, PHPStan — not just the
+#           test run that actually wanted coverage.
+RUN pecl install xdebug pcov \
+    && docker-php-ext-enable xdebug pcov \
+    && echo "xdebug.mode=off" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "pcov.enabled=0" >> /usr/local/etc/php/conf.d/docker-php-ext-pcov.ini
 
 # Layer 3 (semi-volatile): PHP extensions — likely to grow over time as
 # the project adopts more Doctrine drivers / extensions.

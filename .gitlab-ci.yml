@@ -13,7 +13,7 @@ variables:
   # runner, un tag mutable (latest) resservait indéfiniment sa copie locale
   # périmée ; un tag neuf n'existe pas localement, donc il est tiré une fois,
   # puis plus jamais — zéro pull en régime permanent, zéro image périmée.
-  TEST_IMAGE_TAG: "test-20260723"
+  TEST_IMAGE_TAG: "test-20260726"
 
 # stan_job et test_job partagent l'étape test : ils ne dépendent que de
 # l'image, pas l'un de l'autre — les sérialiser doublait la durée du pipeline.
@@ -132,12 +132,14 @@ test_job:
     DB_HOST: mariadb
     DB_USER: root
     DB_PASS: passwordRoot
+    # Surchargée par les règles ci-dessous sur les branches d'intégration.
+    TEST_TARGET: test-ci
   before_script:
     - make setup-ci-env
     - composer install --no-progress --no-interaction
     - bash scripts/testing/setup_ci_database.sh
   script:
-    - make test-ci
+    - make $TEST_TARGET
   coverage: '/^\s*Lines:\s*\d+.\d+\%/'
   artifacts:
     reports:
@@ -145,9 +147,15 @@ test_job:
       coverage_report:
         coverage_format: cobertura
         path: tmp/coverage/cobertura.xml
+  # Les branches de travail passent la suite SANS couverture : c'est le
+  # retour rapide. La couverture, sept fois plus chère en calcul, n'est
+  # mesurée que là où on la lit — les branches d'intégration.
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
+    - if: $CI_COMMIT_BRANCH == "staging" || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "saison-3" || $CI_COMMIT_BRANCH == "integration/hud-redesign"
+      variables:
+        TEST_TARGET: test-ci-coverage
     - if: $CI_COMMIT_BRANCH
 
 # Cypress tutorial E2E test. Manual trigger initially: confirm Dockerfile.test

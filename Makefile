@@ -1,4 +1,4 @@
-.PHONY: all phpstan test test-ci coverage testf setup-ci-env coverage-report migration-status migration-check new-sql stale-branches release-check cypress-tutorial-ci
+.PHONY: all phpstan test test-ci test-ci-coverage coverage testf setup-ci-env coverage-report migration-status migration-check new-sql stale-branches release-check cypress-tutorial-ci
 
 PHPUNIT = XDEBUG_MODE=coverage ./vendor/bin/phpunit --testdox
 
@@ -23,10 +23,24 @@ testf:
 %:
 	@:
 
+# Suite sans couverture : c'est le retour rapide des pipelines de branche.
+# --no-coverage est nécessaire, pas décoratif : phpunit.xml déclare des
+# rapports de couverture, et sans pilote PHPUnit émet un avertissement —
+# que failOnWarning transforme en job rouge.
+# Mesurer la couverture multiplie le temps de calcul par ~7 (2,3 s de CPU
+# contre 16,3 s sur cette suite), pour un chiffre qui n'intéresse que les
+# branches d'intégration.
 test-ci:
 	mkdir -p tmp/coverage
-	composer install --no-progress --no-interaction
-	./vendor/bin/phpunit -c phpunit.xml --log-junit phpunit-report.xml --coverage-text --colors=never
+	./vendor/bin/phpunit -c phpunit.xml --log-junit phpunit-report.xml --colors=never --no-coverage
+
+# Couverture par pcov plutôt que Xdebug, et activée à la demande :
+# l'extension est chargée avec pcov.enabled=0 pour ne rien coûter au reste
+# du job (migrations, PHPStan).
+test-ci-coverage:
+	mkdir -p tmp/coverage
+	php -d pcov.enabled=1 -d pcov.directory=src ./vendor/bin/phpunit -c phpunit.xml \
+		--log-junit phpunit-report.xml --coverage-text --colors=never
 
 phpstan-ci:
 	composer install --no-progress --no-interaction
