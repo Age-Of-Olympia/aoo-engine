@@ -289,6 +289,49 @@ class TileDialogMigrationService
     }
 
     /**
+     * Types dont l'état des lignes contredit la nature déclarée.
+     *
+     * `resource_types.pv` positif dit « ça se casse » ; un `damages`
+     * négatif sur la ligne dit « ça se récolte ». Les deux ensemble
+     * n'ont pas de sens, et la case s'annonce à la fois destructible et
+     * récoltable.
+     *
+     * Les cas ISOLÉS sont redressés par migration — un clic de trop sur
+     * le bouton « mode récolte » de l'éditeur, dont le cycle ne
+     * revenait pas à zéro. Ceux qui portent des dizaines de lignes sont
+     * autre chose : un type mal déclaré, où c'est la NATURE qu'il faut
+     * corriger et non l'état. Trancher pour eux enlèverait la récolte à
+     * des dizaines de cases — d'où ce signalement plutôt qu'une
+     * correction.
+     *
+     * @return list<array{name: string, pv: int, rows: int}>
+     */
+    public function typeIncoherences(): array
+    {
+        $res = $this->db->exe(
+            "SELECT r.name AS name, t.pv AS pv, COUNT(*) AS rows_count
+             FROM map_resources AS r
+             JOIN resource_types AS t
+               ON CONVERT(t.name USING utf8mb4) = CONVERT(r.name USING utf8mb4)
+             WHERE t.pv > 0 AND r.damages < 0
+             GROUP BY r.name, t.pv
+             HAVING COUNT(*) > 1
+             ORDER BY COUNT(*) DESC"
+        );
+
+        $rows = [];
+        while ($res && $row = $res->fetch_assoc()) {
+            $rows[] = [
+                'name' => (string) $row['name'],
+                'pv' => (int) $row['pv'],
+                'rows' => (int) $row['rows_count'],
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
      * Ce qui occupe la case sans être une entité.
      *
      * Le monde a trois familles de choses posées sur une case, et une
