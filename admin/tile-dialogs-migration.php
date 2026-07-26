@@ -53,8 +53,15 @@ function tdm_render_row(array $e): string
         $notes .= '<div><small class="text-warning">' . e($e['warning']) . '</small></div>';
     }
 
+    /* Coordonnées au format de la console : ce qui se colle derrière
+     * « tp <nom> ». Aller voir la case est le premier réflexe devant
+     * une ligne « à trancher », autant ne pas la recopier à la main. */
+    $tp = (int) $e['x'] . ',' . (int) $e['y'] . ',' . (int) $e['z'] . ',' . $e['plan'];
+
     return '<tr>'
-        . '<td><code>' . e($e['plan']) . '</code> ' . (int) $e['x'] . ',' . (int) $e['y'] . ',' . (int) $e['z'] . '</td>'
+        . '<td><button type="button" class="btn btn-sm btn-outline-secondary tdm-tp"'
+        . ' data-tp="' . e($tp) . '" title="Copier pour la console : tp &lt;nom&gt; ' . e($tp) . '">'
+        . '<i class="fas fa-copy"></i> <code>' . e($tp) . '</code></button></td>'
         . '<td>' . $badge . '</td>'
         . '<td>' . ($e['target_id'] !== null
             ? e((string) $e['target_race']) . ' <small class="text-muted">#' . (int) $e['target_id'] . '</small>'
@@ -105,8 +112,47 @@ if ($plan === []) {
     }
 
     $body .= '<table class="table table-sm"><thead><tr>'
-        . '<th>Case</th><th>Action</th><th>Porteur</th><th>Contenu</th>'
+        . '<th>Case <small class="text-muted">(clic = copie pour <code>tp</code>)</small></th>'
+        . '<th>Action</th><th>Porteur</th><th>Contenu</th>'
         . '</tr></thead><tbody>' . $rows . '</tbody></table>';
+
+    /* Copie autonome : la console d'administration ne charge pas jQuery,
+     * et navigator.clipboard n'existe pas partout en http — d'où le
+     * repli sur une sélection temporaire. */
+    $body .= '<script>
+    document.addEventListener("click", function (event) {
+        var button = event.target.closest(".tdm-tp");
+        if (!button) { return; }
+
+        var value = button.getAttribute("data-tp");
+        var done = function () {
+            var code = button.querySelector("code");
+            var before = code.textContent;
+            code.textContent = "copié !";
+            setTimeout(function () { code.textContent = before; }, 1200);
+        };
+
+        var fallback = function () {
+            var field = document.createElement("textarea");
+            field.value = value;
+            field.style.position = "fixed";
+            field.style.opacity = "0";
+            document.body.appendChild(field);
+            field.select();
+            try { document.execCommand("copy"); done(); } finally { field.remove(); }
+        };
+
+        /* Le presse-papier moderne peut être REFUSÉ (permission, page non
+         * sécurisée) : sans ce rattrapage, le clic ne ferait rien du tout
+         * et le bouton mentirait par son silence. */
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(value).then(done, fallback);
+            return;
+        }
+
+        fallback();
+    });
+    </script>';
 }
 
 echo admin_layout('Dialogues de case', renderFlashMessage() . $body);
