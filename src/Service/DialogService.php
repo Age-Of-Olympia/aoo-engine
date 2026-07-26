@@ -52,6 +52,7 @@ class DialogService
     public static function clearCache(): void
     {
         self::$gameCache = [];
+        self::$traitsCache = [];
     }
 
     /**
@@ -79,11 +80,12 @@ class DialogService
      * Lignes de la table `dialogs` pour l'admin et l'export, par nom.
      *
      * @return array<string, array{name: string, npc_name: string, type: string, custom: string,
-     *                             is_active: bool, nodes: array, updated_at: ?string}>
+     *                             is_active: bool, kind: string, readable_from_afar: bool,
+     *                             nodes: array, updated_at: ?string}>
      */
     public function listGameDialogs(): array
     {
-        $res = $this->db->exe('SELECT name, npc_name, type, custom, dialog_data, is_active, updated_at FROM dialogs ORDER BY name');
+        $res = $this->db->exe('SELECT name, npc_name, type, custom, dialog_data, is_active, kind, readable_from_afar, updated_at FROM dialogs ORDER BY name');
 
         $dialogs = [];
         while ($row = $res->fetch_assoc()) {
@@ -93,12 +95,54 @@ class DialogService
                 'type'       => $row['type'],
                 'custom'     => $row['custom'],
                 'is_active'  => (bool) $row['is_active'],
+                'kind'       => $row['kind'],
+                'readable_from_afar' => (bool) $row['readable_from_afar'],
                 'nodes'      => (array) json_decode($row['dialog_data'], true),
                 'updated_at' => $row['updated_at'],
             ];
         }
 
         return $dialogs;
+    }
+
+    /** Dialogue qu'on LIT plutôt qu'on aborde : pancarte, inscription. */
+    public const KIND_INFORMATIVE = 'informative';
+
+    /** Dialogue qu'on ADRESSE à quelqu'un : marchand, tenancier. */
+    public const KIND_INTERACTIVE = 'interactive';
+
+    /** @var array<string, array{kind: string, readableFromAfar: bool}> cache par requête */
+    private static array $traitsCache = [];
+
+    /**
+     * Nature et portée d'un dialogue.
+     *
+     * Deux réglages distincts à dessein : la NATURE dit ce qu'on en
+     * fait (lire une pancarte, s'adresser à un marchand), la PORTÉE dit
+     * s'il faut s'approcher. On peut vouloir une inscription qu'il faut
+     * approcher pour déchiffrer, ou un crieur qu'on entend de loin.
+     *
+     * Un dialogue inconnu retombe sur le comportement historique :
+     * interactif, et il faut être à côté.
+     *
+     * @return array{kind: string, readableFromAfar: bool}
+     */
+    public function traits(string $name): array
+    {
+        if (!array_key_exists($name, self::$traitsCache)) {
+            $res = $this->db->exe(
+                'SELECT kind, readable_from_afar FROM dialogs WHERE name = ?',
+                [$name]
+            );
+            $row = ($res && $res->num_rows) ? $res->fetch_assoc() : null;
+
+            self::$traitsCache[$name] = [
+                'kind' => $row['kind'] ?? self::KIND_INTERACTIVE,
+                'readableFromAfar' => (bool) ($row['readable_from_afar'] ?? false),
+            ];
+        }
+
+        return self::$traitsCache[$name];
     }
 
     /** La ligne `dialogs` existe-t-elle (active ou non) ? */
@@ -113,7 +157,8 @@ class DialogService
      * Upsert d'un dialogue de jeu (admin, seed, import). Valide nom et
      * nœuds avant toute écriture.
      *
-     * @param array{npc_name?: string, type?: string, custom?: string, is_active?: bool} $fields
+     * @param array{npc_name?: string, type?: string, custom?: string, is_active?: bool,
+     *              kind?: string, readable_from_afar?: bool} $fields
      * @param array<int, mixed> $nodes les nœuds (clé "dialog" du read model)
      * @throws RuntimeException code 400
      */
@@ -123,11 +168,12 @@ class DialogService
         $nodes = self::assertValidDialogData($nodes);
 
         $this->db->exe(
-            'INSERT INTO dialogs (name, npc_name, type, custom, dialog_data, is_active)
-             VALUES (?, ?, ?, ?, ?, ?)
+            'INSERT INTO dialogs (name, npc_name, type, custom, dialog_data, is_active, kind, readable_from_afar)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE
                 npc_name = VALUES(npc_name), type = VALUES(type), custom = VALUES(custom),
-                dialog_data = VALUES(dialog_data), is_active = VALUES(is_active)',
+                dialog_data = VALUES(dialog_data), is_active = VALUES(is_active),
+                kind = VALUES(kind), readable_from_afar = VALUES(readable_from_afar)',
             array(
                 $name,
                 (string) ($fields['npc_name'] ?? 'TARGET_NAME'),
@@ -135,10 +181,12 @@ class DialogService
                 (string) ($fields['custom'] ?? ''),
                 json_encode($nodes, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 (int) ($fields['is_active'] ?? true),
+                (string) ($fields['kind'] ?? self::KIND_INTERACTIVE),
+                (int) (bool) ($fields['readable_from_afar'] ?? false),
             )
         );
 
-        unset(self::$gameCache[$name]);
+        unset(self::$gameCache[$name], self::$traitsCache[$name]);
     }
 
     /**

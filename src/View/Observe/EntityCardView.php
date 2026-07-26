@@ -209,10 +209,10 @@ final class EntityCardView
     }
 
     /**
-     * « Parler » (navigation vers la fiche, comme Marchander) : bâtiment
-     * ouvert porteur d'un dialogue, et ADJACENT seulement — même règle
-     * que la garde serveur de la fiche, pas d'affordance qui mène à un
-     * « il faut être à côté ».
+     * « Parler » / « Lire » (navigation vers la fiche, comme Marchander) :
+     * bâtiment ouvert porteur d'un dialogue. La portée suit celle du
+     * dialogue — même règle que la garde serveur de la fiche, pas
+     * d'affordance qui mène à un « il faut être à côté ».
      */
     private static function parlerButtonHtml(
         Player $player,
@@ -227,15 +227,26 @@ final class EntityCardView
             return '';
         }
 
-        $distance = View::get_distance(
-            $player->getCoords(),
-            (object) ['x' => $x, 'y' => $y, 'z' => $coords->z, 'plan' => $coords->plan]
-        );
-        if ($distance > 1) {
-            return '';
+        /* Ce qu'on fait du dialogue décide du verbe ET de la portée :
+         * une pancarte se LIT, éventuellement de loin ; une échoppe
+         * s'ADRESSE, et seulement de près. Le défaut reste l'historique. */
+        $traits = (new \App\Service\DialogService())->traits($buildingDetails->getDialog());
+        $isInformative = $traits['kind'] === \App\Service\DialogService::KIND_INFORMATIVE;
+
+        if (!$traits['readableFromAfar']) {
+            $distance = View::get_distance(
+                $player->getCoords(),
+                (object) ['x' => $x, 'y' => $y, 'z' => $coords->z, 'plan' => $coords->plan]
+            );
+            if ($distance > 1) {
+                return '';
+            }
         }
 
-        return '<a href="infos.php?targetId=' . $target->id . '"><button class="action"><span class="ra ra-speech-bubble"></span> <span class="action-name">Parler</span></button></a>';
+        $icon = $isInformative ? 'ra-scroll-unfurled' : 'ra-speech-bubble';
+        $label = $isInformative ? 'Lire' : 'Parler';
+
+        return '<a href="infos.php?targetId=' . $target->id . '"><button class="action"><span class="ra ' . $icon . '"></span> <span class="action-name">' . $label . '</span></button></a>';
     }
 
     /** Ligne de type : libellé de race, suffixes PNJ et inactif. */

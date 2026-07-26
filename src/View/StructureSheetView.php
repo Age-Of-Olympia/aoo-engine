@@ -140,16 +140,26 @@ final class StructureSheetView
                 ? View::get_distance($player->coords, $targetCoords)
                 : PHP_INT_MAX;
 
+            /* Nature et portée du dialogue (catalogue) : une pancarte se
+             * LIT et peut se lire de loin, une échoppe s'ADRESSE et
+             * demande qu'on s'y présente. Le défaut reste l'historique —
+             * interactif, adjacence exigée. */
+            $traits = (new \App\Service\DialogService())->traits($details->getDialog());
+            $isInformative = $traits['kind'] === \App\Service\DialogService::KIND_INFORMATIVE;
+            $needsAdjacency = !$traits['readableFromAfar'];
+
             if ($closure !== null) {
                 echo '<div class="building-status building-status--closed" style="margin: 14px auto; text-align: center;">'
                     . '<span class="building-status-door building-status-door--closed">Fermé'
                     . ($closure !== 'fermé volontairement' ? ' (' . $closure . ')' : '') . '</span>'
-                    . '<span class="building-status-state">Personne ne répond.</span>'
+                    . '<span class="building-status-state">'
+                    . ($isInformative ? 'Rien à lire ici.' : 'Personne ne répond.') . '</span>'
                     . '</div>';
-            } elseif ($distance > 1) {
+            } elseif ($needsAdjacency && $distance > 1) {
                 echo '<div class="building-status" style="margin: 14px auto; text-align: center;">'
                     . '<span class="building-status-state">Il faut être directement à côté du bâtiment'
-                    . ' pour pouvoir parler au tenancier.</span>'
+                    . ($isInformative ? ' pour déchiffrer ce qui y est inscrit.' : ' pour pouvoir parler au tenancier.')
+                    . '</span>'
                     . '</div>';
             } else {
                 echo Ui::get_dialog($player, [

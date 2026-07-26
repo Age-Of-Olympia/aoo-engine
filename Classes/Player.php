@@ -2408,6 +2408,12 @@ class Player implements ActorInterface {
         // Enable action details by default for all new players
         $player->add_option('showActionDetails');
 
+        /* Bordure de race réservée aux personnages par défaut : sur un
+         * mur ou un coffre, le liseré encombre le décor sans rien
+         * apprendre. Ceux qui la veulent partout la réactivent dans le
+         * popover « Affichage ». */
+        $player->add_option('hideStructureBorders');
+
         Dialog::refresh_register_dialog();
 
 
