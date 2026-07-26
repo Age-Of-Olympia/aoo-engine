@@ -35,6 +35,28 @@ class MapElementCachePurgeTest extends LegacyPlayerFixtureTestCase
         return $cache;
     }
 
+    /**
+     * Diagnostic : rejoue la sélection exacte de View::refresh_players_svg
+     * et rend les lignes qu'elle voit. Une purge qui rate ne dit rien par
+     * elle-même — c'est la donnée qui la décide qu'il faut lire.
+     */
+    private function explainMissedPurge(int $playerId, int $coordsId): string
+    {
+        $c = $this->link->fetchAssociative('SELECT x, y, z, plan FROM coords WHERE id = ?', [$coordsId]);
+        $p = $this->link->fetchAssociative('SELECT id, coords_id, player_type FROM players WHERE id = ?', [$playerId]);
+
+        $selected = $c === false ? [] : $this->link->fetchFirstColumn(
+            'SELECT p.id FROM players AS p
+             INNER JOIN coords AS c ON p.coords_id = c.id
+             WHERE x BETWEEN ? AND ? AND y BETWEEN ? AND ? AND c.z = ? AND c.plan = ?',
+            [$c['x'] - 20, $c['x'] + 20, $c['y'] - 20, $c['y'] + 20, $c['z'], $c['plan']]
+        );
+
+        return 'purge manquée — case ' . json_encode($c, JSON_UNESCAPED_UNICODE)
+            . ' | joueur ' . json_encode($p, JSON_UNESCAPED_UNICODE)
+            . ' | joueurs sélectionnés pour purge : ' . json_encode($selected);
+    }
+
     public function testAnElementAppearingInvalidatesTheCachedBoard(): void
     {
         $player = $this->createRealPlayer('GmPurge');
@@ -44,6 +66,11 @@ class MapElementCachePurgeTest extends LegacyPlayerFixtureTestCase
         $cache = $this->primeCacheFor((int) $player->id);
 
         Element::put('sang', (int) $player->data->coords_id, 3600);
+
+        if (is_file($cache)) {
+            @unlink($cache);
+            $this->fail($this->explainMissedPurge((int) $player->id, (int) $player->data->coords_id));
+        }
 
         $this->assertFileDoesNotExist(
             $cache,
