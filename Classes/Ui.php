@@ -250,7 +250,14 @@ class Ui{
                 }
 
 
-                echo '<div class="card-text">'. $data->text .'</div>';
+                /* Pas de boîte quand il n'y a rien dedans : un cadre vide
+                 * se lit comme un défaut d'affichage. Depuis que les
+                 * décors n'ont plus de texte de création, la plupart des
+                 * entités n'ont rien à dire. */
+                if(trim((string) ($data->text ?? '')) !== ''){
+
+                    echo '<div class="card-text">'. $data->text .'</div>';
+                }
 
 
             echo '</div>';
