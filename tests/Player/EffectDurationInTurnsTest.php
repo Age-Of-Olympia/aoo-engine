@@ -112,8 +112,19 @@ class EffectDurationInTurnsTest extends LegacyPlayerFixtureTestCase
     public function testTheRemainingTimeIsSpelledInTurns(): void
     {
         $this->assertSame('∞', PlayerEffectService::describeRemaining(PlayerEffectService::DURATION_INFINITE));
-        $this->assertSame('(reposez-vous)', PlayerEffectService::describeRemaining(0));
-        $this->assertSame('1 tour', PlayerEffectService::describeRemaining(1));
-        $this->assertSame('3 tours', PlayerEffectService::describeRemaining(3));
+        $this->assertSame('1 tour(s)', PlayerEffectService::describeRemaining(1));
+        $this->assertSame('3 tour(s)', PlayerEffectService::describeRemaining(3));
+        $this->assertSame('0 tour(s)', PlayerEffectService::describeRemaining(0));
+
+        /* « (reposez-vous) » annonçait une échéance atteinte du temps où
+         * un effet s'éteignait au repos. Le repos a changé : la formule
+         * n'apprenait plus rien et disparaît. */
+        foreach ([-1, 0, 1, 5] as $remaining) {
+            $this->assertStringNotContainsStringIgnoringCase(
+                'repos',
+                PlayerEffectService::describeRemaining($remaining),
+                'plus aucune mention du repos dans la durée restante'
+            );
+        }
     }
 }

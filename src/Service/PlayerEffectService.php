@@ -75,11 +75,10 @@ class PlayerEffectService
             return '∞';
         }
 
-        if ($endTime <= 0) {
-            return '(reposez-vous)';
-        }
-
-        return $endTime . ' tour' . ($endTime > 1 ? 's' : '');
+        /* Le compte, sans cas particulier. On annonçait « (reposez-vous) »
+         * à échéance atteinte, du temps où un effet s'éteignait au repos :
+         * le repos a changé, la formule n'apprenait plus rien. */
+        return $endTime . ' tour(s)';
     }
 
     private $entityManager;
