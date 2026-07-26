@@ -52,9 +52,31 @@ class MapElementCachePurgeTest extends LegacyPlayerFixtureTestCase
             [$c['x'] - 20, $c['x'] + 20, $c['y'] - 20, $c['y'] + 20, $c['z'], $c['plan']]
         );
 
+        /* Et surtout : ce que voit la connexion DE PRODUCTION. Doctrine
+         * et Classes\Db sont deux connexions distinctes ; une purge qui
+         * rate alors que la donnée la satisfait ne s'explique que si
+         * elles ne regardent pas la même chose. */
+        $legacy = new \Classes\Db();
+        $legacyDb = $legacy->exe('SELECT DATABASE() AS d')->fetch_object()->d ?? '?';
+        $legacyPlayers = (int) ($legacy->exe('SELECT COUNT(*) AS n FROM players')->fetch_object()->n ?? -1);
+        $legacyRes = $legacy->exe(
+            'SELECT p.id FROM players AS p
+             INNER JOIN coords AS c ON p.coords_id = c.id
+             WHERE x BETWEEN ? AND ? AND y BETWEEN ? AND ? AND c.z = ? AND c.plan = ?',
+            [$c['x'] - 20, $c['x'] + 20, $c['y'] - 20, $c['y'] + 20, $c['z'], $c['plan']]
+        );
+        $legacySelected = [];
+        while ($row = $legacyRes->fetch_object()) {
+            $legacySelected[] = $row->id;
+        }
+
+        $doctrineDb = $this->link->fetchOne('SELECT DATABASE()');
+
         return 'purge manquée — case ' . json_encode($c, JSON_UNESCAPED_UNICODE)
             . ' | joueur ' . json_encode($p, JSON_UNESCAPED_UNICODE)
-            . ' | joueurs sélectionnés pour purge : ' . json_encode($selected);
+            . ' | doctrine(' . $doctrineDb . ') sélectionne ' . json_encode($selected)
+            . ' | legacy(' . $legacyDb . ', ' . $legacyPlayers . ' joueurs) sélectionne ' . json_encode($legacySelected)
+            . ' | cwd ' . getcwd();
     }
 
     public function testAnElementAppearingInvalidatesTheCachedBoard(): void
