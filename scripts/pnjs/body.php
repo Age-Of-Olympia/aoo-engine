@@ -78,18 +78,7 @@ foreach($playersTbl as $pnj){
     
     foreach ($playerEffects as $effect){
         
-        $endTime = '(reposez-vous)';
-
-        if(time() < $effect->getEndTime()){
-
-            $endTime = Str::convert_time($effect->getEndTime()- time());
-        }
-
-
-        if(!$effect->getEndTime()){
-
-            $endTime = '∞';
-        }
+        $endTime = \App\Service\PlayerEffectService::describeRemaining($effect->getEndTime());
 
         $effectsTbl[] = '<span class="ra '. (new \App\Service\EffectService())->getIcon($effect->getName()) .'"></span> <sup>'. $endTime .'</sup>';
     }

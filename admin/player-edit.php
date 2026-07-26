@@ -14,6 +14,7 @@ require_once __DIR__ . '/helpers.php';
 use App\Factory\PlayerFactory;
 use App\Service\CsrfProtectionService;
 use App\Service\EffectService;
+use App\Service\PlayerEffectService;
 use Classes\Db;
 use Classes\Str;
 use Classes\View;
@@ -44,13 +45,6 @@ const PLAYER_EDIT_VITALS = [
     'mvt' => 'MVT',
     'a'   => 'A',
     'ae'  => 'Ae',
-];
-
-/** Unités de durée proposées pour la pose d'un effet, en secondes. */
-const PLAYER_EDIT_DURATION_UNITS = [
-    'minutes' => 60,
-    'heures'  => 3600,
-    'jours'   => 86400,
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['player_save'])) {
@@ -200,17 +194,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['effect_add']) || iss
         $label = $effectService->getLabel($effectName);
 
         if (isset($_POST['effect_add'])) {
-            $unit = (string) ($_POST['duration_unit'] ?? 'heures');
-            $factor = PLAYER_EDIT_DURATION_UNITS[$unit] ?? 3600;
-            $duration = max(0, (int) ($_POST['duration'] ?? 0)) * $factor;
+            /* Durée en TOURS. Sans fin est une case à cocher plutôt
+             * qu'une valeur à deviner : zéro veut dire « expiré au
+             * prochain tour », l'inverse de l'ancienne convention. */
+            $duration = empty($_POST['duration_infinite'])
+                ? max(0, (int) ($_POST['duration'] ?? 1))
+                : PlayerEffectService::DURATION_INFINITE;
             $value = max(1, (int) ($_POST['effect_value'] ?? 1));
 
-            // 0 = illimité, la convention d'add_effect (endTime nul).
             $player->add_effect($effectName, $duration, $value);
 
-            setFlash('success', $duration === 0
+            setFlash('success', PlayerEffectService::isInfinite($duration)
                 ? "« {$label} » posé sans limite de durée sur « {$player->data->name} »."
-                : "« {$label} » posé sur « {$player->data->name} » pour " . Str::displaySeconds($duration) . '.');
+                : "« {$label} » posé sur « {$player->data->name} » pour "
+                    . PlayerEffectService::describeRemaining($duration) . '.');
         } else {
             $player->end_effect($effectName);
             setFlash('success', "« {$label} » levé sur « {$player->data->name} ».");
@@ -319,15 +316,15 @@ $effectService = new EffectService();
 $effectRows = '';
 foreach ($player->getEffects() as $carried) {
     $endTime = (int) $carried->getEndTime();
-    /* endTime nul = illimité (convention d'add_effect / purge_effects,
-     * qui ne supprime que les échéances strictement positives). */
-    if ($endTime === 0) {
+    /* Durée en TOURS : négatif = sans fin, zéro = terminé (retiré au
+     * prochain tour par TurnProcessingService). */
+    if (PlayerEffectService::isInfinite($endTime)) {
         $remaining = '<span class="badge badge-secondary">illimité</span>';
-    } elseif ($endTime <= time()) {
+    } elseif ($endTime === 0) {
         $remaining = '<span class="badge badge-warning">expiré</span>'
             . ' <small class="text-muted">(retiré au prochain tour)</small>';
     } else {
-        $remaining = e(Str::displaySeconds($endTime - time()));
+        $remaining = e(PlayerEffectService::describeRemaining($endTime));
     }
 
     $effectRows .= '<tr>'
@@ -354,11 +351,6 @@ foreach ($effectService->getAllEffects() as $catalogEffect) {
 }
 asort($effectOptions);
 
-$durationUnits = [];
-foreach (array_keys(PLAYER_EDIT_DURATION_UNITS) as $unit) {
-    $durationUnits[$unit] = $unit;
-}
-
 $effects = formCard('Effets', ''
     . ($effectRows === ''
         ? '<p class="text-muted">Aucun effet en cours.</p>'
@@ -368,23 +360,16 @@ $effects = formCard('Effets', ''
     . $csrf->renderTokenField()
     . '<input type="hidden" name="id" value="' . (int) $id . '">'
     . formField('Effet', formSelect('effect_name', $effectOptions, null, '— choisir —', 'required'))
-    . formField('Durée', formInput('duration', '1', 'type="number" min="0" style="max-width:6rem"'), 'form-group', '0 = illimité')
-    // Durée en temps réel : c'est ce que le moteur sait faire AUJOURD'HUI
-    // (players_effects.endTime = horodatage absolu, 0 = illimité). Le
-    // passage des effets à une durée en TOURS est en cours de discussion
-    // (MR !645) : endTime deviendrait un compteur de tours et 0
-    // signifierait « expiré », l'inverse d'ici. Ce champ suivra ce
-    // choix — il n'anticipe pas dessus, un libellé « tours » sur un
-    // moteur en horodatages enregistrerait une date de 1970.
-    . formField('Unité', formSelect('duration_unit', $durationUnits, 'heures'))
+    . formField('Durée (tours)', formInput('duration', '1', 'type="number" min="0" style="max-width:6rem"'), 'form-group', '0 = expire au prochain tour')
+    . formField('Sans fin', '<input type="checkbox" name="duration_infinite" value="1" class="form-check-input">', 'form-group', 'ignore la durée')
     . formField('Valeur', formInput('effect_value', '1', 'type="number" min="1" style="max-width:6rem"'))
     . '<button type="submit" name="effect_add" value="1" class="btn btn-outline-primary mb-3">Poser</button>'
     . '</form>'
     . '<p class="text-muted mb-1">Poser un effet applique les règles du catalogue, annulations comprises :'
     . ' un effet qui en neutralise un autre le lève, et tombe lui-même s\'il en subit un qui le contredit.</p>'
-    . '<p class="text-muted mb-0"><em>Durée en temps réel, provisoire :</em> le passage des effets à une durée'
-    . ' en <strong>tours</strong> est en discussion. Quand il sera tranché, l\'unité changera ici —'
-    . ' et « 0 = illimité » avec elle, cette valeur signifiant « expiré » dans le modèle par tours.</p>');
+    . '<p class="text-muted mb-0">La durée se compte en <strong>tours</strong> du joueur : elle perd un point à'
+    . ' chaque tour et l\'effet tombe à zéro. « Sans fin » pose un effet que le temps n\'use pas —'
+    . ' un trait permanent, qu\'il faut lever à la main.</p>');
 
 $body = '<form method="post" action="player-edit.php?id=' . (int) $id . '">'
     . $csrfField

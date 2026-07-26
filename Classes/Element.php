@@ -5,6 +5,11 @@ class Element{
 
 
     /**
+     * @param int  $duration durée de vie en SECONDES. Les éléments de
+     *        carte restent datés : ils n'appartiennent à aucun joueur,
+     *        donc aucun tour ne les décrémente — c'est le cron horaire
+     *        (scripts/crons/hourly/delete_elements.php) qui les efface,
+     *        et endTime = 0 y signifie « permanent » (l'eau de pêche).
      * @param bool $refreshWatchers purger le damier en cache de ceux qui
      *        voient la case. À FAUX quand l'appelant purge déjà lui-même
      *        la zone (traces de pas : Player::go le fait pour l'origine

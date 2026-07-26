@@ -96,18 +96,7 @@ final class InfosSheetView
                     $targetEntity->getSecretFaction() == $player->data->secretFaction
                 ) {
 
-                    $endTime = '(reposez-vous)';
-
-                    if (time() < $effect->getEndTime()) {
-
-                        $endTime = Str::convert_time($effect->getEndTime() - time());
-                    }
-
-
-                    if (!$effect->getEndTime()) {
-
-                        $endTime = '∞';
-                    }
+                    $endTime = PlayerEffectService::describeRemaining($effect->getEndTime());
                 } else {
 
                     $endTime = '';

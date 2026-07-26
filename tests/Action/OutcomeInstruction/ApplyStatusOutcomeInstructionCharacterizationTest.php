@@ -17,14 +17,14 @@ class ApplyStatusOutcomeInstructionCharacterizationTest extends TestCase
         $instruction->setParameters([
             'adrenaline' => true,
             'player' => 'actor',
-            'duration' => 1,
+            'duration' => 0,
             'value' => 2,
             'stackable' => false,
         ]);
 
         $actor = $this->createMock(Player::class);
         $actor->data = (object) ['name' => 'Actor'];
-        $actor->expects($this->once())->method('add_effect')->with('adrenaline', 1, 2, false);
+        $actor->expects($this->once())->method('add_effect')->with('adrenaline', 0, 2, false);
 
         $target = $this->createMock(Player::class);
         $target->data = (object) ['name' => 'Target'];
@@ -43,12 +43,12 @@ class ApplyStatusOutcomeInstructionCharacterizationTest extends TestCase
         $instruction = new ApplyStatusOutcomeInstruction();
         $instruction->setParameters([
             'effect' => 'adrenaline', 'apply' => true, 'player' => 'actor',
-            'duration' => 1, 'value' => 2, 'stackable' => false,
+            'duration' => 0, 'value' => 2, 'stackable' => false,
         ]);
 
         $actor = $this->createMock(Player::class);
         $actor->data = (object) ['name' => 'Actor'];
-        $actor->expects($this->once())->method('add_effect')->with('adrenaline', 1, 2, false);
+        $actor->expects($this->once())->method('add_effect')->with('adrenaline', 0, 2, false);
         $target = $this->createMock(Player::class);
         $target->data = (object) ['name' => 'Target'];
 
@@ -77,7 +77,7 @@ class ApplyStatusOutcomeInstructionCharacterizationTest extends TestCase
         $instruction->setParameters([
             $payload => true,
             'player' => 'actor',
-            'duration' => 1,
+            'duration' => 0,
             'value' => 2,
         ]);
 

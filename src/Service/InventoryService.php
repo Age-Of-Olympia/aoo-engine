@@ -235,10 +235,14 @@ class InventoryService
                         else {
                             if ($player->effectService->isHidden($effet) || $effet == "poison" || $effet == "poison_magique") {
 
-                                $player->add_effect($effet, 0);
+                                /* Les effets cachés (poison…) ne s'éteignent
+                                 * pas d'eux-mêmes : il faut être soigné. Avec
+                                 * les durées en tours, zéro veut dire
+                                 * « terminé » — l'infini est explicite. */
+                                $player->add_effect($effet, PlayerEffectService::DURATION_INFINITE);
                             } else {
 
-                                $player->add_effect($effet, ONE_DAY);
+                                $player->add_effect($effet, 1);
                                 /* les effets cachés (poison…) restent
                                  * muets dans le message de retour */
                                 $details[] = 'effet ' . $effet;

@@ -138,14 +138,19 @@ class TurnProcessingService
 
         $player->playerService->playerUpdateVisible(null);
 
-        $expired = (int) $db->exe(
-            'SELECT COUNT(*) AS n FROM players_effects WHERE endTime <= ? AND endTime != 0 AND player_id = ?',
-            [$time, $player->id]
-        )->fetch_object()->n;
+        /* Les effets se comptent en TOURS : endTime porte le nombre de
+         * tours restants. Zéro = terminé, on purge ; les durées NÉGATIVES
+         * sont sans fin (PlayerEffectService::DURATION_INFINITE — le vol
+         * des oiseaux, un trait de race) et ne sont visées ni par le
+         * comptage ni par la décrémentation ci-dessous. */
+        $expired = $player->playerEffectService->countExpiredByPlayerId((int) $player->id);
         if ($expired) {
             $player->purge_effects();
             $rows[] = [null, 'Effets terminés', (string) $expired];
         }
+
+        // Un tour consommé sur ceux qui restent.
+        $player->playerEffectService->consumeOneTurnByPlayerId((int) $player->id);
 
         // Usure : le tour est l'unité de décrément — appliquer ici ce que
         // les événements du tour ont armé.

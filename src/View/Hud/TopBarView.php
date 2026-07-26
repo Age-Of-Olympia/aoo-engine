@@ -151,14 +151,7 @@ final class TopBarView
                 continue;
             }
 
-            /* Même lecture du temps restant que la fiche (InfosSheetView) */
-            $endTime = '(reposez-vous)';
-            if (time() < $effect->getEndTime()) {
-                $endTime = Str::convert_time($effect->getEndTime() - time());
-            }
-            if (!$effect->getEndTime()) {
-                $endTime = '∞';
-            }
+            $endTime = PlayerEffectService::describeRemaining($effect->getEndTime());
 
             $title = ucfirst($effect->getName()) . ' (' . $effect->getValue() . ') · ' . $endTime;
             $icon = $effectService->getIcon($effect->getName());

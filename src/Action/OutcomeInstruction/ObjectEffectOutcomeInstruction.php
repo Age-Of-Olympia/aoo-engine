@@ -29,10 +29,14 @@ class ObjectEffectOutcomeInstruction extends OutcomeInstruction implements HasPa
         {
             if(!empty($itemJson->addEffects)){
                 foreach($itemJson->addEffects as $e){
-                    $duration = $e->duration ?? 0;
-                    $timeMessage = 'pour ' . Str::displaySeconds($duration);
-                    if ($duration == 0) {
+                    /* Durée en TOURS, même convention que ApplyStatus. */
+                    $duration = (int) ($e->duration ?? 0);
+                    if (\App\Service\PlayerEffectService::isInfinite($duration)) {
+                        $timeMessage = 'sans limite de durée';
+                    } elseif ($duration === 0) {
                         $timeMessage = 'jusqu\'au prochain tour';
+                    } else {
+                        $timeMessage = 'pour ' . $duration . ' tour' . ($duration > 1 ? 's' : '');
                     }
                     switch ($e->on) {
                         case 'actor':

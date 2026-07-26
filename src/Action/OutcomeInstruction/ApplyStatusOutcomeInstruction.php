@@ -20,7 +20,7 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
         return new ParameterSchema(
             new ParameterField('effect', FieldType::EFFECT, 'Effet', required: true),
             new ParameterField('apply', FieldType::BOOL, 'Appliquer (sinon retirer)', default: true),
-            new ParameterField('duration', FieldType::INT, 'Durée (secondes)', default: 1, help: '1 = jusqu\'au prochain tour'),
+            new ParameterField('duration', FieldType::INT, 'Durée (tours)', default: 1, help: '0 = jusqu\'au prochain tour, -1 = sans fin'),
             new ParameterField('player', FieldType::ENUM, 'Appliquer à', default: 'both', options: [
                 'actor' => 'Acteur',
                 'target' => 'Cible',
@@ -67,10 +67,16 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
         if ($effectService->isHidden($status)) {
             $this->getOutcome()->getAction()->setHideOnSuccess(true);
         }
-        $duration = $params['duration'] ?? 1;
-        $timeMessage = 'pour ' . Str::displaySeconds($duration);
-        if ($duration == 1) {
+        /* La durée s'exprime en TOURS depuis le passage du moteur d'effets
+         * aux tours : zéro tient jusqu'au prochain, négatif ne s'éteint
+         * jamais (PlayerEffectService::DURATION_INFINITE). */
+        $duration = (int) ($params['duration'] ?? 1);
+        if (\App\Service\PlayerEffectService::isInfinite($duration)) {
+            $timeMessage = 'sans limite de durée';
+        } elseif ($duration === 0) {
             $timeMessage = 'jusqu\'au prochain tour';
+        } else {
+            $timeMessage = 'pour ' . $duration . ' tour' . ($duration > 1 ? 's' : '');
         }
         $player = $params['player'] ?? 'both';
         $valueParam = $params['value'] ?? 1;

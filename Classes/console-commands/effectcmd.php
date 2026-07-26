@@ -9,7 +9,7 @@ class EffectCmd extends Command
         parent::setDescription(<<<EOT
 Ajout ou suppression d'un effet à un joueur (si il a l'option, ça lui enlève s'il ne l'a pas ça a ajoute).
 Exemple:
-> effect [matricule ou nom] [nom effet] [secondes]
+> effect [matricule ou nom] [nom effet] [tours]
 > effect 1 adrenaline
 EOT);
     }
@@ -32,7 +32,10 @@ EOT);
             if (isset($argumentValues[2]) && is_numeric($argumentValues[2])) {
                 $duration = (int)$argumentValues[2];
             } else {
-                $duration = 0; // Default duration if not specified
+                /* Sans durée : un tour. Zéro voulait dire « illimité »
+                 * quand endTime portait un instant ; il veut désormais
+                 * dire « terminé ». L'infini se demande par -1. */
+                $duration = 1;
             }
             $player->add_effect($argumentValues[1],$duration);
 

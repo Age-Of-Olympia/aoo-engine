@@ -627,18 +627,19 @@ class Player implements ActorInterface {
         return $this->playerEffectService->hasEffectByPlayerIdByEffectName($this->id,$name);
     }
 
-    public function add_effect($name, $duration=0, int $value=1, bool $stackable=false): void{
+    /**
+     * @param int $duration durée en TOURS. Le compteur est décrémenté à
+     *        chaque tour du joueur et l'effet tombe à zéro.
+     *        PlayerEffectService::DURATION_INFINITE pour un effet qui ne
+     *        s'éteint jamais (vol des oiseaux, trait de race).
+     */
+    public function add_effect($name, $duration=1, int $value=1, bool $stackable=false): void{
 
-        // duration (0 is unlimited)
-        if($duration == 0){
-
-            $endTime = 0;
-        }
-
-        else{
-
-            $endTime = time() + $duration;
-        }
+        /* endTime porte désormais un NOMBRE DE TOURS, plus un instant.
+         * Zéro n'est donc plus « illimité » mais « expiré » — l'infini
+         * est une valeur négative, hors d'atteinte de la décrémentation
+         * comme de la purge. */
+        $endTime = (int) $duration;
 
         $this->playerEffectService->addEffectByPlayerId($this->id,$name,$endTime,$value, $stackable);
 
@@ -695,9 +696,7 @@ class Player implements ActorInterface {
         WHERE
         player_id = ?
         AND
-        endTime <=  '. time() .'
-        AND
-        endTime > 0
+        endTime = 0
         ';
 
         $db = new Db();
@@ -716,9 +715,7 @@ class Player implements ActorInterface {
         WHERE
         player_id = ?
         AND
-        endTime <=  '. time() .'
-        AND
-        endTime > 0
+        endTime = 0
         ';
 
         $db = new Db();
@@ -819,7 +816,9 @@ class Player implements ActorInterface {
             }
 
 
-            $this->add_effect($row->name, ONE_DAY);
+            /* Un élément de carte foulé applique son effet pour UN tour
+             * (l'élément, lui, reste daté : voir Element::put). */
+            $this->add_effect($row->name, 1);
         }
 
 
