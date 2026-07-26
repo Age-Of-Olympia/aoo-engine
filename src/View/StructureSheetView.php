@@ -143,8 +143,8 @@ final class StructureSheetView
 
             echo $readableHere
                 ? '<p><sup>' . Str::richText($inscription) . '</sup></p>'
-                : '<p><sup class="building-status-state">Quelque chose est inscrit ici,'
-                    . ' mais il faut s\'approcher pour le déchiffrer.</sup></p>';
+                : '<p><sup class="building-status-state">'
+                    . \App\Service\BuildingService::OUT_OF_REACH_NOTICE . '</sup></p>';
         }
 
         echo '

@@ -305,7 +305,7 @@ final class EntityCardView
 
         return $distance <= 1
             ? Str::richText($inscription)
-            : '<em>Quelque chose est inscrit ici.</em>';
+            : '<em>' . \App\Service\BuildingService::OUT_OF_REACH_NOTICE . '</em>';
     }
 
     /** Ligne de type : libellé de race, suffixes PNJ et inactif. */

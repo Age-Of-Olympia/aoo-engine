@@ -462,6 +462,15 @@ class BuildingService extends BaseService
     public const DEFAULT_TEXT = 'Je suis nouveau, frappez-moi!';
 
     /**
+     * Ce qu'on annonce quand il y a quelque chose à lire mais qu'on est
+     * trop loin. Dire qu'il y a un texte ne suffit pas : il faut dire
+     * quoi faire, sinon le joueur reste devant une phrase qui constate
+     * sans indiquer. Une seule formulation, partagée par la carte de la
+     * case et la fiche — deux endroits qui doivent dire la même chose.
+     */
+    public const OUT_OF_REACH_NOTICE = 'Quelque chose est inscrit ici. Vous devez vous approcher pour lire.';
+
+    /**
      * Ce qui est écrit sur l'objet, ou '' s'il n'a rien à dire.
      *
      * C'est le MDJ (`players.text`), pas un champ de plus : un
