@@ -390,12 +390,26 @@ HTML;
         . ' title="Décoché (défaut des personnages) : les tirs passent. Coché : fait écran sur la ligne de tir."> Bloque les tirs</label> '
         . ($structureMode ? '' : '<label class="mr-3"><input type="checkbox" name="playable" '
             . checked($isEdit && $race->getPlayable()) . '> Jouable (proposée à l\'inscription)</label>')
+        . ($structureMode
+            ? '<label class="mr-3"><input type="checkbox" name="readable_from_afar" '
+                . checked($isEdit && $race->isReadableFromAfar())
+                . ' title="Coché : ce qui est inscrit sur ce type d\'objet se lit sans s\'approcher (pancarte, enseigne).'
+                . ' Décoché : il faut être sur une case voisine (plaque gravée, épitaphe)."> Inscription lisible de loin</label> '
+            : '')
         . '<label><input type="checkbox" name="hidden" '
         . checked($isEdit && $race->getHidden()) . '> Cachée</label>'
         . '<small class="form-text text-muted">Cachée : les personnages de cette race ne définissent pas'
         . ' le « premier joueur » qui sert de référence au bonus d\'XP de rattrapage'
         . ' (un perso admin très haut niveau ne doit pas gonfler le bonus de tout le serveur).</small>'
         . '</div></div>'
+        . ($structureMode
+            ? '<div class="form-group col-12"><label>Inscription par défaut</label>'
+                . '<textarea class="form-control" name="default_text" rows="2"'
+                . ' placeholder="Ce qu\'un exemplaire NEUF de ce type porte déjà d\'inscrit. Vide : il naît muet.">'
+                . e($isEdit ? $race->getDefaultText() : '') . '</textarea>'
+                . '<small class="form-text text-muted">Copiée à la pose, puis libre :'
+                . ' changer ce défaut ne réécrit pas ce qui est déjà posé.</small></div>'
+            : '')
         . '<div class="form-group col-12"><label>Description</label>'
         . '<textarea class="form-control" name="description" rows="5">'
         . e($isEdit ? $race->getDescription() : '') . '</textarea></div>'

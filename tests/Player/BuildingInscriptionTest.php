@@ -106,6 +106,53 @@ class BuildingInscriptionTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /**
+     * La portée tient de la NATURE de l'objet ; l'exemplaire ne fait
+     * qu'y déroger. NULL veut donc dire « comme son type », pas
+     * « non » — sans cette distinction, changer le défaut d'un type ne
+     * rattraperait jamais ce qui est déjà posé.
+     */
+    public function testRangeComesFromTheKindUnlessTheOneAtHandDisagrees(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $id = $this->placeStructure('palissade', 0, 5);
+
+        $service = new BuildingService();
+        $building = \App\Factory\PlayerFactory::legacy($id);
+        $building->get_data();
+
+        $before = (int) $this->link->fetchOne("SELECT readable_from_afar FROM races WHERE name = 'palissade'");
+
+        try {
+            $this->link->executeStatement("UPDATE races SET readable_from_afar = 1 WHERE name = 'palissade'");
+            \App\Service\RaceService::clearCache();
+
+            $this->assertNull($service->getDetails($id)?->isReadableFromAfar(), 'aucune exception à la pose');
+            $this->assertTrue(
+                BuildingService::readsFromAfar($building, $service->getDetails($id)),
+                'sans exception, l\'exemplaire suit sa nature'
+            );
+
+            $service->setReadableFromAfar($id, false);
+            $this->assertFalse(
+                BuildingService::readsFromAfar($building, $service->getDetails($id)),
+                'et l\'exception l\'emporte quand elle est posée'
+            );
+
+            $service->setReadableFromAfar($id, null);
+            $this->assertTrue(
+                BuildingService::readsFromAfar($building, $service->getDetails($id)),
+                'la retirer rend l\'exemplaire à sa nature'
+            );
+        } finally {
+            $this->link->executeStatement(
+                'UPDATE races SET readable_from_afar = ? WHERE name = ?',
+                [$before, 'palissade']
+            );
+            \App\Service\RaceService::clearCache();
+        }
+    }
+
     public function testAnEmptyTextSaysNothing(): void
     {
         $entity = $this->createRealPlayer('GmInscr');

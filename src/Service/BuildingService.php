@@ -306,15 +306,15 @@ class BuildingService extends BaseService
             }
 
             $conn->executeStatement(
-                /* text = '' : un bâtiment neuf n'a RIEN d'inscrit dessus.
-                 * La colonne a pour défaut « Je suis nouveau,
-                 * frappez-moi! », qui a du sens pour un personnage qui
-                 * vient de naître et aucun pour un mur — sans ce vide
-                 * explicite, chaque bâtiment posé l'annoncerait dans sa
-                 * fiche. */
+                /* L'inscription vient de la NATURE de l'objet
+                 * (races.default_text), vide par défaut : un bâtiment
+                 * neuf n'a rien d'écrit dessus. Il faut le poser
+                 * explicitement, la colonne ayant pour défaut « Je suis
+                 * nouveau, frappez-moi! » — qui a du sens pour un
+                 * personnage naissant et aucun pour un mur. */
                 'INSERT INTO players
                     (id, player_type, display_id, name, race, avatar, portrait, coords_id, nextTurnTime, registerTime, text)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, \'\')',
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)',
                 [
                     $id,
                     'building',
@@ -325,6 +325,7 @@ class BuildingService extends BaseService
                     $avatar,
                     $coordsId,
                     time(),
+                    $race->getDefaultText(),
                 ]
             );
 
@@ -471,6 +472,27 @@ class BuildingService extends BaseService
     public const OUT_OF_REACH_NOTICE = 'Quelque chose est inscrit ici. Vous devez vous approcher pour lire.';
 
     /**
+     * L'inscription de cet objet se lit-elle d'où l'on est ?
+     *
+     * La portée tient de la NATURE (races.readable_from_afar) ; un
+     * exemplaire peut y déroger, et c'est ce que porte le drapeau
+     * nullable du bâtiment. NULL veut dire « comme sa nature », pas
+     * « non » — sans quoi changer le défaut d'un type ne rattraperait
+     * jamais ce qui est déjà posé.
+     */
+    public static function readsFromAfar(\Classes\Player $entity, ?BuildingDetails $details): bool
+    {
+        $exception = $details?->isReadableFromAfar();
+        if ($exception !== null) {
+            return $exception;
+        }
+
+        $race = (new RaceService())->getRaceByName((string) ($entity->data->race ?? ''));
+
+        return $race?->isReadableFromAfar() ?? false;
+    }
+
+    /**
      * Ce qui est écrit sur l'objet, ou '' s'il n'a rien à dire.
      *
      * C'est le MDJ (`players.text`), pas un champ de plus : un
@@ -485,11 +507,10 @@ class BuildingService extends BaseService
     }
 
     /**
-     * Une inscription se lit-elle sans s'approcher ? Propriété de
-     * l'OBJET : la même phrase sur une grande pancarte et sur une
-     * plaque gravée ne se lit pas de la même distance.
+     * Exception d'un exemplaire sur la portée de sa nature. null =
+     * aucune exception, il suit son type.
      */
-    public function setReadableFromAfar(int $playerId, bool $readable): void
+    public function setReadableFromAfar(int $playerId, ?bool $readable): void
     {
         $details = $this->getDetails($playerId);
         if ($details === null) {
@@ -499,7 +520,8 @@ class BuildingService extends BaseService
         $details->setReadableFromAfar($readable);
         $this->entityManager->flush();
 
-        $this->addAuditLog('BuildingService::setReadableFromAfar #' . $playerId . ' ' . ($readable ? 'oui' : 'non'));
+        $this->addAuditLog('BuildingService::setReadableFromAfar #' . $playerId . ' '
+            . ($readable === null ? 'comme sa nature' : ($readable ? 'oui' : 'non')));
     }
 
     /**
@@ -544,6 +566,7 @@ class BuildingService extends BaseService
         // join on r.name = p.race trips "illegal mix of collations".
         $rows = $this->entityManager->getConnection()->fetchAllAssociative(
             "SELECT p.id, p.name, p.race, b.build_state, b.faction, b.owner_id, b.dialog, b.is_open,
+                    b.readable_from_afar,
                     o.name AS owner_name, c.x, c.y, c.z, c.plan,
                     COALESCE(pb.n, 0) AS pv_bonus
              FROM buildings b

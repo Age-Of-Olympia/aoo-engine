@@ -138,7 +138,7 @@ final class StructureSheetView
                 ? View::get_distance($player->coords, $inscriptionCoords)
                 : PHP_INT_MAX;
 
-            $readableHere = ($details !== null && $details->isReadableFromAfar())
+            $readableHere = \App\Service\BuildingService::readsFromAfar($target, $details)
                 || $inscriptionDistance <= 1;
 
             echo $readableHere

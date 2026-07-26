@@ -234,8 +234,7 @@ final class EntityCardView
         }
 
         $readsFromAfar = $inscription !== ''
-            && $buildingDetails !== null
-            && $buildingDetails->isReadableFromAfar();
+            && \App\Service\BuildingService::readsFromAfar($target, $buildingDetails);
 
         $distance = View::get_distance(
             $player->getCoords(),
@@ -294,7 +293,7 @@ final class EntityCardView
             return '';
         }
 
-        if ($buildingDetails !== null && $buildingDetails->isReadableFromAfar()) {
+        if (\App\Service\BuildingService::readsFromAfar($target, $buildingDetails)) {
             return Str::richText($inscription);
         }
 

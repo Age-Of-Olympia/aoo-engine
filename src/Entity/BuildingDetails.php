@@ -57,13 +57,15 @@ class BuildingDetails
     private bool $isOpen = true;
 
     /**
-     * Ce qui est inscrit sur l'objet se lit-il sans s'approcher ? La
-     * portée appartient au BÂTIMENT et non au texte : c'est la taille de
-     * l'objet qui décide. Une grande pancarte se lit de loin, la même
-     * phrase gravée sur une plaque demande qu'on s'en approche.
+     * Ce qui est inscrit sur cet exemplaire se lit-il sans s'approcher ?
+     *
+     * NULL = comme sa nature (races.readable_from_afar). La nullabilité
+     * porte le sens : sans elle, « on a décidé que non » et « on n'a
+     * rien décidé » se confondraient, et changer le défaut d'un type ne
+     * rattraperait jamais les exemplaires déjà posés.
      */
-    #[ORM\Column(type: "boolean", name: "readable_from_afar", options: ["default" => false])]
-    private bool $readableFromAfar = false;
+    #[ORM\Column(type: "boolean", name: "readable_from_afar", nullable: true)]
+    private ?bool $readableFromAfar = null;
 
     public function getPlayerId(): int
     {
@@ -125,12 +127,13 @@ class BuildingDetails
         return $this->isOpen;
     }
 
-    public function isReadableFromAfar(): bool
+    /** null = suit sa race. */
+    public function isReadableFromAfar(): ?bool
     {
         return $this->readableFromAfar;
     }
 
-    public function setReadableFromAfar(bool $readable): self
+    public function setReadableFromAfar(?bool $readable): self
     {
         $this->readableFromAfar = $readable;
 

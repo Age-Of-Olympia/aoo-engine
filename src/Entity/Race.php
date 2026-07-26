@@ -63,6 +63,22 @@ class Race
     private string $structureNature = 'edifice';
 
     /**
+     * Ce type d'objet se lit-il sans s'approcher ? Une pancarte oui,
+     * une plaque gravée non. Défaut hérité par tout exemplaire posé ;
+     * celui-ci peut y déroger (buildings.readable_from_afar).
+     */
+    #[ORM\Column(type: "boolean", name: "readable_from_afar", options: ["default" => false])]
+    private bool $readableFromAfar = false;
+
+    /**
+     * Ce qu'un exemplaire NEUF de ce type porte déjà d'inscrit. Vide =
+     * il naît muet. Copié dans players.text à la pose, puis libre :
+     * changer le défaut d'un type ne réécrit pas ce qui est déjà posé.
+     */
+    #[ORM\Column(type: "text", name: "default_text", nullable: true)]
+    private ?string $defaultText = null;
+
+    /**
      * Élément de carte versé au sol quand l'entité est blessée
      * ('sang' pour les personnages, '' = rien — un mur ne saigne pas).
      */
@@ -292,6 +308,31 @@ class Race
     public function getBleeds(): string
     {
         return $this->bleeds;
+    }
+
+    public function isReadableFromAfar(): bool
+    {
+        return $this->readableFromAfar;
+    }
+
+    public function setReadableFromAfar(bool $readable): self
+    {
+        $this->readableFromAfar = $readable;
+
+        return $this;
+    }
+
+    /** Inscription d'un exemplaire neuf ; '' = il naît muet. */
+    public function getDefaultText(): string
+    {
+        return (string) $this->defaultText;
+    }
+
+    public function setDefaultText(string $text): self
+    {
+        $this->defaultText = $text;
+
+        return $this;
     }
 
     public function setBleeds(string $bleeds): void

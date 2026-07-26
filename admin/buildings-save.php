@@ -126,6 +126,10 @@ if ($action === 'edit') {
             trim((string) ($_POST['faction'] ?? ''))
         );
         $service->setDialog($id, trim((string) ($_POST['dialog'] ?? '')));
+
+        /* Trois états : vide = suit son type, sinon l'exemplaire tranche. */
+        $afar = (string) ($_POST['readable_from_afar'] ?? '');
+        $service->setReadableFromAfar($id, $afar === '' ? null : $afar === '1');
         // La porte n'est proposée que pour les édifices : le champ absent
         // (obstacle) ne doit pas fermer silencieusement.
         if (isset($_POST['has_door'])) {

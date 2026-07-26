@@ -104,6 +104,11 @@ $applyForm = static function (Race $race): string {
     // Saignement : un élément de carte connu, ou rien.
     $bleeds = trim((string) ($_POST['bleeds'] ?? ''));
     $race->setBleeds($bleeds !== '' && (new \App\Service\EffectService())->exists($bleeds) ? $bleeds : '');
+    /* Inscription : ce qu'un exemplaire neuf porte déjà, et jusqu'où on
+     * peut le lire. Réservé aux types de DÉCOR — un personnage écrit
+     * son message du jour lui-même. */
+    $race->setReadableFromAfar($kind === 'structure' && booleanCheckbox('readable_from_afar'));
+    $race->setDefaultText($kind === 'structure' ? trim((string) ($_POST['default_text'] ?? '')) : '');
     $race->setBlocksPassage(booleanCheckbox('blocks_passage'));
     $race->setBlocksProjectiles(booleanCheckbox('blocks_projectiles'));
     $race->setPlayable($kind === 'character' && booleanCheckbox('playable'));
