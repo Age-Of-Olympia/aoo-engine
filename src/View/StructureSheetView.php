@@ -116,26 +116,17 @@ final class StructureSheetView
             }
         }
 
-        // Message du jour du bâtiment : texte libre saisi en admin, lu par
-        // tous les observateurs. Même traitement que celui des joueurs —
-        // mise en forme simple tolérée, le reste neutralisé.
-        if (!empty($target->data->text)) {
-            echo '<p><sup>' . Str::richText((string) $target->data->text) . '</sup></p>';
-        }
-
-        echo '
-            </td>
-        </tr>
-        </table>
-        ';
-
-        /* Inscription — ce qui est ÉCRIT sur l'objet, à la place qu'occupe
-         * le message du jour d'un personnage : c'est la même colonne
-         * (players.text), et un bâtiment est une ligne de players.
+        /* Message du jour du bâtiment — son INSCRIPTION : ce qui est
+         * gravé, peint ou cloué dessus. Même colonne que le message du
+         * jour d'un personnage (players.text), même emplacement dans la
+         * fiche ; même traitement aussi, mise en forme simple tolérée et
+         * le reste neutralisé.
          *
-         * Hors de portée, on ne se tait PAS : dire qu'il y a quelque
-         * chose d'illisible d'ici est une information ; ne rien afficher
-         * ne se distingue pas d'un objet muet, et le joueur ne saura
+         * Deux règles s'y ajoutent. Le texte de création ne compte pas
+         * pour une inscription, sans quoi les milliers de murs du monde
+         * annonceraient tous « Je suis nouveau, frappez-moi! ». Et la
+         * PORTÉE : hors d'atteinte on ne se tait pas — ne rien afficher
+         * ne se distingue pas d'un objet muet, et le joueur ne saurait
          * jamais qu'il devait s'approcher. */
         $inscription = \App\Service\BuildingService::inscriptionOf($target);
 
@@ -150,18 +141,17 @@ final class StructureSheetView
             $readableHere = ($details !== null && $details->isReadableFromAfar())
                 || $inscriptionDistance <= 1;
 
-            echo '<div class="building-inscription" style="margin: 14px auto; max-width: 34rem; text-align: center;">';
-
-            if ($readableHere) {
-                echo '<blockquote style="font-style: italic;">'
-                    . \Classes\Str::richText($inscription) . '</blockquote>';
-            } else {
-                echo '<span class="building-status-state">Quelque chose est inscrit ici,'
-                    . ' mais il faut s\'approcher pour le déchiffrer.</span>';
-            }
-
-            echo '</div>';
+            echo $readableHere
+                ? '<p><sup>' . Str::richText($inscription) . '</sup></p>'
+                : '<p><sup class="building-status-state">Quelque chose est inscrit ici,'
+                    . ' mais il faut s\'approcher pour le déchiffrer.</sup></p>';
         }
+
+        echo '
+            </td>
+        </tr>
+        </table>
+        ';
 
         // Conversation — façon marchand : plein panneau, grand avatar.
         // Garde de PORTÉE côté serveur (même mécanisme que le MDJ limité
