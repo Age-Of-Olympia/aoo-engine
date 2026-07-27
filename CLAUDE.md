@@ -66,6 +66,11 @@ CYPRESS_CONTAINER=true xvfb-run --auto-servernum npx cypress run \
 **Key points**:
 - **CRITICAL**: Always use a SINGLE `it()` block for authenticated flows (Cypress resets session between blocks)
 - Reset test database before each run: `/var/www/html/scripts/testing/reset_test_database.sh`
+- **`reset_test_database.sh` must be run from the HOST, not from the devcontainer** — the
+  devcontainer image ships neither the MariaDB client nor `sudo` to install it. The script now
+  says so and exits instead of hanging (it used to loop forever on a silent `until mysql …`).
+  For a one-off schema fix without the client, use the Doctrine connection from the PHP
+  container: `php -r 'require "config/bootstrap.php"; …'`
 - Test database: `aoo4_test` (5 pre-configured test characters)
 - Full test: `cypress/e2e/tutorial-production-ready.cy.js`
 - Simple example: `cypress/e2e/tutorial-simple-test.cy.js`

@@ -23,6 +23,23 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 echo "🔄 Resetting test database: $DB_NAME"
 
+# Le client MariaDB, avant de toucher à quoi que ce soit.
+#
+# CLAUDE.md recommande de lancer ce script DEPUIS le devcontainer ; or son
+# image n'embarque ni `mysql` ni `sudo` pour l'installer. On partait alors
+# détruire la base, puis on s'enlisait dans la boucle d'attente de
+# init_test_from_dump.sh, qui ne dit rien et n'expire jamais.
+if ! command -v mysql >/dev/null 2>&1; then
+    echo "❌ '/usr/bin/mysql' est introuvable : ce script ne peut pas s'exécuter ici."
+    echo "   L'image du devcontainer n'embarque pas le client MariaDB."
+    echo "   Lancez-le depuis l'hôte, où le client est installé."
+    echo ""
+    echo "   Pour une correction ponctuelle de schéma sans client, la connexion"
+    echo "   Doctrine fait l'affaire depuis le conteneur PHP :"
+    echo "     php -r 'require \"config/bootstrap.php\"; …'"
+    exit 1
+fi
+
 # Drop database
 echo "📦 Dropping database..."
 mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -e "DROP DATABASE IF EXISTS $DB_NAME;"

@@ -19,9 +19,36 @@ TEST_DB="${TEST_DB:-aoo4_test}"
 
 echo "🔄 Initializing test database from main database structure..."
 
-# Wait for aoo4 to be ready (it's created by init_noupdates.sql first)
+# Le client MariaDB, avant tout le reste.
+#
+# Sans lui, la boucle d'attente ci-dessous tournait SANS FIN et sans rien
+# dire : `until mysql …` échoue de la même façon quand le serveur n'est pas
+# prêt et quand le binaire n'existe pas. L'image du devcontainer n'embarque
+# ni `mysql` ni `sudo` pour l'installer — on y perd une après-midi avant de
+# comprendre que le script n'attend rien du tout.
+for tool in mysql mysqldump; do
+    if ! command -v "$tool" >/dev/null 2>&1; then
+        echo "❌ '$tool' est introuvable : ce script ne peut pas s'exécuter ici."
+        echo "   L'image du devcontainer n'embarque pas le client MariaDB."
+        echo "   Lancez-le depuis l'hôte (où le client est installé), ou depuis"
+        echo "   le conteneur de base :"
+        echo "     docker exec -i mariadb-aoo4 mariadb -u$DB_USER -p$DB_PASS …"
+        exit 1
+    fi
+done
+
+# Wait for aoo4 to be ready (it's created by init_noupdates.sql first).
+# Borné : une base qui ne répond pas est une panne, pas une raison d'attendre
+# indéfiniment.
+WAIT_ATTEMPTS="${WAIT_ATTEMPTS:-30}"
+attempt=0
 until mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -e "USE $SOURCE_DB" 2>/dev/null; do
-    echo "⏳ Waiting for $SOURCE_DB to be ready..."
+    attempt=$((attempt + 1))
+    if [ "$attempt" -ge "$WAIT_ATTEMPTS" ]; then
+        echo "❌ $SOURCE_DB toujours injoignable sur $DB_HOST après $((WAIT_ATTEMPTS * 2)) s — abandon."
+        exit 1
+    fi
+    echo "⏳ Waiting for $SOURCE_DB to be ready... ($attempt/$WAIT_ATTEMPTS)"
     sleep 2
 done
 
