@@ -1210,34 +1210,8 @@ class View{
         }
 
 
-        // Fonction pour utiliser l'algorithme de Bresenham pour tracer une ligne
-        function bresenham($x1, $y1, $x2, $y2) {
-            $points = [];
-            $dx = abs($x2 - $x1);
-            $dy = abs($y2 - $y1);
-            $sx = ($x1 < $x2) ? 1 : -1;
-            $sy = ($y1 < $y2) ? 1 : -1;
-            $err = $dx - $dy;
-
-            while (true) {
-                $points[] = [$x1, $y1];
-                if ($x1 == $x2 && $y1 == $y2) break;
-                $e2 = 2 * $err;
-                if ($e2 > -$dy) {
-                    $err -= $dy;
-                    $x1 += $sx;
-                }
-                if ($e2 < $dx) {
-                    $err += $dx;
-                    $y1 += $sy;
-                }
-            }
-            return $points;
-        }
-
-
         // Tracer la ligne entre les deux joueurs
-        $line_points = bresenham($xA, $yA, $xB, $yB);
+        $line_points = self::bresenham($xA, $yA, $xB, $yB);
 
 
         ob_start();
@@ -1329,6 +1303,46 @@ class View{
         return 'data:image/svg+xml;charset=utf-8,' . rawurlencode($svg);
     }
 
+
+    /**
+     * Les cases traversées par la ligne entre deux points (Bresenham).
+     *
+     * Était une fonction NOMMÉE déclarée dans le corps de get_walls_between :
+     * PHP la définit globalement à l'exécution de sa ligne, donc un second
+     * appel dans la même requête levait « Cannot redeclare function
+     * Classes\bresenham() ». Le premier retour anticipé — aucune ressource
+     * dans la boîte englobante — le masquait la plupart du temps ; le
+     * simulateur d'actions, lui, rejoue l'action mille fois dans une seule
+     * requête et tombait dessus dès la deuxième dès qu'une ressource se
+     * trouvait entre les deux combattants.
+     *
+     * @return list<array{int, int}>
+     */
+    private static function bresenham(int $x1, int $y1, int $x2, int $y2): array
+    {
+        $points = [];
+        $dx = abs($x2 - $x1);
+        $dy = abs($y2 - $y1);
+        $sx = ($x1 < $x2) ? 1 : -1;
+        $sy = ($y1 < $y2) ? 1 : -1;
+        $err = $dx - $dy;
+
+        while (true) {
+            $points[] = [$x1, $y1];
+            if ($x1 == $x2 && $y1 == $y2) break;
+            $e2 = 2 * $err;
+            if ($e2 > -$dy) {
+                $err -= $dy;
+                $x1 += $sx;
+            }
+            if ($e2 < $dx) {
+                $err += $dx;
+                $y1 += $sy;
+            }
+        }
+
+        return $points;
+    }
 
     public static function refresh_players_svg(object $coords,$p=20):void{
         // based on View::get_coords_id_arround that is the fastest implementation 

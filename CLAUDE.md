@@ -211,7 +211,7 @@ if ($player->level > self::VETERAN_LEVEL_THRESHOLD) { ... }
 **Action**: Propose consistent naming convention.
 
 #### 6. **Large Classes (God Objects)**
-**Detection**: Classes with too many responsibilities (e.g., `Player.php` - 51k LOC)
+**Detection**: Classes with too many responsibilities (e.g., `Player.php` — ~2 600 lines, still the biggest legacy class; it was ~51k before the service extractions)
 
 **Note**: For legacy code like `Classes/Player.php`, acknowledge it but suggest gradual extraction of services.
 
@@ -313,7 +313,7 @@ When refactoring:
   - `Migrations/`: Doctrine database migrations
 
 - **Classes/**: Legacy utility classes (Player, Forum, Log, Item, Ui, etc.)
-  - `Player.php`: Core player operations (51k+ LOC - central to game logic)
+  - `Player.php`: Core player operations (~2 600 lines after the service extractions — still central to game logic)
   - `Log.php`: Game event logging system
   - `Forum.php`: Forum functionality
   - `Ui.php`: UI rendering utilities
@@ -326,7 +326,7 @@ When refactoring:
 - **scripts/**: Page-specific logic called by controllers
 
 - **config/**: Configuration files
-  - `constants.php`: Game constants (13k+ LOC)
+  - `constants.php`: Game constants (~320 lines — much of it moved to DB catalogs)
   - `db_constants.php`: Database configuration
   - `bootstrap.php`: Doctrine ORM setup
   - `functions.php`: Global utility functions
@@ -355,7 +355,7 @@ The game uses a **Doctrine-based action system** with inheritance:
 Services in `src/Service/` encapsulate business logic:
 - **ActionExecutorService**: Executes game actions
 - **PlayerService**: Player-related operations
-- **ViewService**: View rendering (44k+ LOC - complex)
+- **ViewService**: View rendering (~1 400 lines after extraction — was ~44k)
 - **ForumService**: Forum operations
 - **InventoryService**: Inventory management
 - Services extend `BaseService` and use Doctrine EntityManager
@@ -374,7 +374,7 @@ Views in `src/View/` render UI components:
 
 #### Legacy Integration
 - Modern `src/` code coexists with legacy `Classes/` code
-- `Classes\Player` is still central (51k LOC) - gradually being refactored
+- `Classes\Player` is still central (~2 600 lines, down from ~51k) - gradually being refactored
 - Both use same database via Doctrine/raw queries
 
 ## JavaScript & CSS Changes - Cache Busting
