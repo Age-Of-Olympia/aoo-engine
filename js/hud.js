@@ -44,13 +44,18 @@
 
     /*
      * Compteur d'évènements non lus : compare les data-time du flux au
-     * dernier passage sur l'onglet (localStorage). Purement frontend,
-     * pas de marqueur "lu" côté serveur en Phase 1.
+     * dernier passage sur l'onglet. Purement frontend, pas de marqueur
+     * "lu" côté serveur en Phase 1.
+     *
+     * Conservé dans localStorage — il doit survivre à la fermeture de
+     * l'onglet — mais PAR PERSONNAGE : ce qu'un personnage a lu ne dit
+     * rien de ce que l'autre a lu, et le badge repartait faussement à
+     * zéro en changeant de personnage.
      */
     var SEEN_KEY = 'hudEventsSeen';
 
     function updateEventsBadge() {
-        var lastSeen = parseInt(localStorage.getItem(SEEN_KEY), 10) || 0;
+        var lastSeen = parseInt(aooStore.getLocal(SEEN_KEY), 10) || 0;
         /* Nos propres actions (data-own, FeedRenderer) ne sont jamais
          * « non lues » : le badge ne signale que ce que les autres
          * nous font. */
@@ -73,7 +78,7 @@
             latest = Math.max(latest, parseInt($(this).data('time'), 10) || 0);
         });
         if (latest > 0) {
-            localStorage.setItem(SEEN_KEY, String(latest));
+            aooStore.setLocal(SEEN_KEY, String(latest));
         }
         $('#hud-events-badge').hide();
         $('.hud-dot[data-index="0"]').removeClass('hud-dot--badge');
@@ -128,11 +133,14 @@
     var DAMIER_ZOOM_MAX = 2.5;
     var DAMIER_ZOOM_STEP = 1.25;
 
-    /* Réglages du damier conservés par onglet (sessionStorage) : le
-     * déplacement recharge la page (view.js), le joueur doit
-     * retrouver son niveau de zoom et, hors déplacement, son
+    /* Réglages du damier conservés par onglet ET PAR PERSONNAGE
+     * (js/aoo-store.js) : le déplacement recharge la page (view.js), le
+     * joueur doit retrouver son niveau de zoom et, hors déplacement, son
      * panoramique. Après un déplacement le panoramique est remis au
-     * centre : la nouvelle case du joueur EST l'endroit cliqué. */
+     * centre : la nouvelle case du joueur EST l'endroit cliqué.
+     *
+     * Par personnage, parce que la PERCEPTION fixe la taille du plateau :
+     * le zoom qui cadre un nain à p=4 laisse un elfe à p=7 hors champ. */
     var DAMIER_ZOOM_KEY = 'hudDamierZoom';
     var DAMIER_PAN_KEY = 'hudDamierPan';
 
@@ -140,7 +148,7 @@
         var el = document.querySelector('#hud #game-map');
         var saved = null;
         try {
-            saved = JSON.parse(sessionStorage.getItem(DAMIER_PAN_KEY));
+            saved = JSON.parse(aooStore.get(DAMIER_PAN_KEY));
         } catch (e) {
             saved = null;
         }
@@ -160,7 +168,7 @@
             var el = this;
             clearTimeout(panTimer);
             panTimer = setTimeout(function () {
-                sessionStorage.setItem(DAMIER_PAN_KEY, JSON.stringify({
+                aooStore.set(DAMIER_PAN_KEY, JSON.stringify({
                     dx: Math.round(el.scrollLeft - (el.scrollWidth - el.clientWidth) / 2),
                     dy: Math.round(el.scrollTop - (el.scrollHeight - el.clientHeight) / 2)
                 }));
@@ -170,7 +178,7 @@
         /* Déplacement (#go-rect, recréé à chaque panneau observe.php) :
          * après le rechargement, recentré sur la nouvelle position. */
         $(document).on('click', '#go-rect', function () {
-            sessionStorage.removeItem(DAMIER_PAN_KEY);
+            aooStore.remove(DAMIER_PAN_KEY);
         });
     }
 
@@ -261,7 +269,7 @@
 
     function setDamierZoom(zoom) {
         damierZoom = Math.min(DAMIER_ZOOM_MAX, Math.max(1, zoom));
-        sessionStorage.setItem(DAMIER_ZOOM_KEY, String(damierZoom));
+        aooStore.set(DAMIER_ZOOM_KEY, String(damierZoom));
         fitDamier();
         centerMap();
         redrawBlockedMarkers();
@@ -452,7 +460,7 @@
      * jour… — utilisée après une action et par le bouton de
      * rafraîchissement du panneau latéral. */
     function refreshSelection() {
-        var selCoords = sessionStorage.getItem('hudSelCoords');
+        var selCoords = aooStore.get('hudSelCoords');
         if (selCoords) {
             $.post('observe.php', { coords: selCoords }, function (data) {
                 $('#ajax-data').html(data);
@@ -496,7 +504,7 @@
                 /* Sélection et actions de l'ancienne case : obsolètes. */
                 $('#ajax-data').empty();
                 $('#hud-actions').empty();
-                sessionStorage.removeItem('hudSelCoords');
+                aooStore.remove('hudSelCoords');
                 window.clickedCases = [];
 
                 /* Les gestionnaires du SVG sont morts avec l'ancien
@@ -779,7 +787,7 @@
             .attr('title', on
                 ? 'Quitter le mode théâtre'
                 : 'Mode théâtre : le plateau seul en scène');
-        sessionStorage.setItem('hudTheater', on ? '1' : '0');
+        aooStore.set('hudTheater', on ? '1' : '0');
 
         /* Le cadre du damier change de taille : tout se recale. */
         fitDamier();
@@ -803,14 +811,14 @@
         $('#hud-theater-chat-btn').on('click', function () {
             var on = !$('#hud').hasClass('hud--theater-chat');
             $('#hud').toggleClass('hud--theater-chat', on);
-            sessionStorage.setItem('hudTheaterChat', on ? '1' : '0');
+            aooStore.set('hudTheaterChat', on ? '1' : '0');
         });
 
-        if (sessionStorage.getItem('hudTheaterChat') === '1') {
+        if (aooStore.get('hudTheaterChat') === '1') {
             $('#hud').addClass('hud--theater-chat');
         }
 
-        if (sessionStorage.getItem('hudTheater') === '1') {
+        if (aooStore.get('hudTheater') === '1') {
             setTheaterMode(true);
         }
 
@@ -841,7 +849,7 @@
             }
             $('#ajax-data').empty();
             $('#hud-actions').empty();
-            sessionStorage.removeItem('hudSelCoords');
+            aooStore.remove('hudSelCoords');
             renderIdleSelection();
         });
     }
@@ -858,7 +866,7 @@
             if (settings.url === 'observe.php'
                 && typeof settings.data === 'string'
                 && settings.data.indexOf('coords=') === 0) {
-                sessionStorage.setItem('hudSelCoords',
+                aooStore.set('hudSelCoords',
                     decodeURIComponent(settings.data.slice('coords='.length)));
             }
         });
@@ -866,12 +874,12 @@
         /* « Fermer » sur la carte : la sélection est volontairement
          * refermée, ne pas la rouvrir au prochain chargement. */
         $(document).on('click', '.close-card', function () {
-            sessionStorage.removeItem('hudSelCoords');
+            aooStore.remove('hudSelCoords');
         });
 
         /* Non restaurée sur mobile (le volet s'ouvrirait tout seul),
          * mais restaurée en fenêtre PC étroite, comme en desktop. */
-        var saved = sessionStorage.getItem('hudSelCoords');
+        var saved = aooStore.get('hudSelCoords');
         if (saved && !isMobileDevice() && !tutorialActive()) {
             $.post('observe.php', { coords: saved }, function (data) {
                 $('#ajax-data').html(data);
@@ -1453,8 +1461,8 @@
             $(this).find('.hud-panel-back').toggle(panelHistory.length > 0);
         });
         $('#hud').toggleClass('hud--panel-open', openPanels.length > 0);
-        sessionStorage.setItem('hudPanels', JSON.stringify(openPanels));
-        sessionStorage.setItem('hudPanelHistory', JSON.stringify(panelHistory));
+        aooStore.set('hudPanels', JSON.stringify(openPanels));
+        aooStore.set('hudPanelHistory', JSON.stringify(panelHistory));
     }
 
     function reloadAllPanels() {
@@ -1803,13 +1811,13 @@
          * (déplacement, action…) — pile de retour comprise. */
         if (!tutorialActive()) {
             try {
-                var saved = JSON.parse(sessionStorage.getItem('hudPanels') || '[]');
+                var saved = JSON.parse(aooStore.get('hudPanels') || '[]');
                 openPanels = saved.slice(0, maxPanels());
             } catch (err) {
                 openPanels = [];
             }
             try {
-                panelHistory = JSON.parse(sessionStorage.getItem('hudPanelHistory') || '[]');
+                panelHistory = JSON.parse(aooStore.get('hudPanelHistory') || '[]');
             } catch (err) {
                 panelHistory = [];
             }
@@ -1869,11 +1877,11 @@
         $('.hud-panel-fullpage').on('click', function () {
             var wide = !$('#hud').hasClass('hud--panel-wide');
             $('#hud').toggleClass('hud--panel-wide', wide);
-            sessionStorage.setItem('hudPanelWide', wide ? '1' : '');
+            aooStore.set('hudPanelWide', wide ? '1' : '');
             $(this).attr('title', wide ? 'Réduire le panneau' : 'Agrandir le panneau');
         });
 
-        if (sessionStorage.getItem('hudPanelWide') === '1') {
+        if (aooStore.get('hudPanelWide') === '1') {
             $('#hud').addClass('hud--panel-wide');
             $('.hud-panel-fullpage').attr('title', 'Réduire le panneau');
         }
@@ -2067,12 +2075,12 @@
 
             /* Onglet actif persisté par onglet navigateur : un
              * rechargement rouvre le flux qu'on lisait. */
-            sessionStorage.setItem('hudFeedTab', tab);
+            aooStore.set('hudFeedTab', tab);
 
             loadFeed(tab);
         });
 
-        if (sessionStorage.getItem('hudFeedTab') === 'events') {
+        if (aooStore.get('hudFeedTab') === 'events') {
             $('.hud-tab[data-tab="events"]').trigger('click');
         }
 
@@ -2144,7 +2152,7 @@
         /* Réglages mémorisés du damier : zoom retrouvé après tout
          * rechargement, panoramique retrouvé hors déplacement. */
         initDamierMemory();
-        var savedZoom = parseFloat(sessionStorage.getItem(DAMIER_ZOOM_KEY));
+        var savedZoom = parseFloat(aooStore.get(DAMIER_ZOOM_KEY));
         if (savedZoom > 1) {
             setDamierZoom(savedZoom);
         }

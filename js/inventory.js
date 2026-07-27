@@ -82,7 +82,7 @@ $(document).ready(function(){
            l'objet via itemId (condition ItemPick). */
         if(action == 'use' && window.type == 'constructible'){
 
-            sessionStorage.setItem('pendingBuild', JSON.stringify({
+            aooStore.set('pendingBuild', JSON.stringify({
                 'action': window.buildAction,
                 'itemId': window.id,
                 'name': window.name

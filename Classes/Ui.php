@@ -37,6 +37,7 @@ class Ui{
                 <script src="js/jquery.js"></script>
                 <script src="js/main.js?v=20260724"></script>
                 <script src="js/console.js?v=20260614"></script>
+                ' . self::characterStoreTag() . '
                 <link href="css/main.min.css?v=20260719" rel="stylesheet">
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
@@ -86,7 +87,7 @@ class Ui{
                 <script src="js/tutorial/TutorialInit.js?v=' . $tutorialVersion . '"></script>
 
                 <!-- Choix de case de construction (réutilise le spotlight tutoriel) -->
-                <script src="js/build_picker.js?v=20260722"></script>
+                <script src="js/build_picker.js?v=20260727"></script>
         ';
 
         echo '    </head>
@@ -130,6 +131,33 @@ class Ui{
 
 
     // STATIC
+
+    /**
+     * L'étagère de réglages d'interface du personnage ACTIF.
+     *
+     * Zoom du damier, recentrage, volets ouverts, case sélectionnée, dernier
+     * évènement lu : autant de réglages qui appartiennent à un personnage et
+     * non à un navigateur. La perception fixe la taille du plateau — le zoom
+     * qui cadre un nain à p=4 laisse un elfe à p=7 hors champ —, si bien
+     * qu'en changeant de personnage on héritait d'un cadrage faux.
+     *
+     * L'identifiant est celui du personnage ACTIF, donc celui du tutoriel
+     * pendant un tutoriel : ses réglages n'écrasent plus ceux du joueur.
+     *
+     * Hors session (connexion, inscription) l'identifiant vaut 0 et
+     * `js/aoo-store.js` retombe sur une étagère anonyme.
+     */
+    private static function characterStoreTag(): string
+    {
+        try {
+            $characterId = \App\Tutorial\TutorialHelper::getActivePlayerId();
+        } catch (\Throwable $e) {
+            $characterId = 0;
+        }
+
+        return '<script>window.aooCharacterId = ' . (int) $characterId . ';</script>'
+            . '<script src="js/aoo-store.js?v=20260727"></script>';
+    }
 
     /**
      * Le joueur courant voit-il le thème papier (option newHud) ?

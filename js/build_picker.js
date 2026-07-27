@@ -7,7 +7,7 @@
    pendingBuild → retour au damier) ; Échap ou Annuler pour sortir. */
 $(document).ready(function(){
 
-    var raw = sessionStorage.getItem('pendingBuild');
+    var raw = aooStore.get('pendingBuild');
     if(!raw){
         return;
     }
@@ -16,14 +16,14 @@ $(document).ready(function(){
     try {
         pending = JSON.parse(raw);
     } catch(e){
-        sessionStorage.removeItem('pendingBuild');
+        aooStore.remove('pendingBuild');
         return;
     }
 
     /* Charge utile complète exigée : un pendingBuild tronqué armerait un
        POST action=undefined. */
     if(!pending || typeof pending.action !== 'string' || typeof pending.name !== 'string' || !pending.itemId){
-        sessionStorage.removeItem('pendingBuild');
+        aooStore.remove('pendingBuild');
         return;
     }
 
@@ -32,7 +32,7 @@ $(document).ready(function(){
        à une page inapte : sinon le picker se ré-armerait des jours plus
        tard, sur une visite sans rapport. */
     if(!$('#current-player-avatar').length || typeof TutorialHighlighter === 'undefined'){
-        sessionStorage.removeItem('pendingBuild');
+        aooStore.remove('pendingBuild');
         return;
     }
 
@@ -51,7 +51,7 @@ $(document).ready(function(){
     $('body').append($banner);
 
     function cleanup(){
-        sessionStorage.removeItem('pendingBuild');
+        aooStore.remove('pendingBuild');
         document.removeEventListener('click', onClick, true);
         document.removeEventListener('keydown', onKey, true);
         $banner.remove();

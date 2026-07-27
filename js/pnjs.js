@@ -15,11 +15,11 @@ function forgetPnjPanel(){
 
     ['hudPanels', 'hudPanelHistory'].forEach(function(key){
         try {
-            var panels = JSON.parse(sessionStorage.getItem(key) || '[]');
+            var panels = JSON.parse(aooStore.get(key) || '[]');
             panels = panels.filter(function(p){
                 return ((p && p.url) || '').indexOf('load_pnjs.php') === -1;
             });
-            sessionStorage.setItem(key, JSON.stringify(panels));
+            aooStore.set(key, JSON.stringify(panels));
         } catch (err) { /* stockage illisible : ne pas bloquer la bascule */ }
     });
 }
