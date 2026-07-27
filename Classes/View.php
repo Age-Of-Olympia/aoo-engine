@@ -175,24 +175,33 @@ class View{
             $tiledSql = '';
             $inSightIdImploded = implode(',', $this->inSightId);
 
-            // Forbidden coords (server truth from go.php):
-            // 'forbidden' triggers stop movement via
-            // scripts/map/triggers/forbidden.php. Triggers are not
-            // emitted to the DOM in normal play, so blocked-tiles.js
-            // can't see them — we surface the cells here as a
-            // data-blocked="forbidden" attribute on the .case below.
-            $forbiddenCoordsXY = [];
+            /* Les cases infranchissables, telles que le serveur les refusera.
+             *
+             * Le damier ne portait jusqu'ici que le seul cas indevinable par
+             * le client — les déclencheurs `forbidden`, absents du DOM en jeu
+             * normal — et laissait `js/blocked-tiles.js` RECONSTITUER le reste
+             * à partir des calques dessinés : une image de ressource ici, une
+             * image de joueur là. Deux prédicats de plus, en JavaScript,
+             * capables de contredire `go.php` ; ils se contredisaient déjà
+             * entre eux, `js/view.js` écartant les structures traversables que
+             * `js/blocked-tiles.js` comptait.
+             *
+             * Le verdict est désormais demandé à celui qui refuse le pas, pour
+             * tout le champ de vision d'un coup. Le client ne déduit plus, il
+             * lit `data-blocked`. */
+            $blockedCoordsXY = [];
             if (!empty($this->inSightId)) {
-                $forbiddenSql = '
-                    SELECT c.x, c.y
-                    FROM map_triggers AS t
-                    INNER JOIN coords AS c ON c.id = t.coords_id
-                    WHERE t.coords_id IN ('. $inSightIdImploded .')
-                    AND t.name = "forbidden"
-                ';
-                $resForbidden = (new Db())->exe($forbiddenSql);
-                while ($rowF = $resForbidden->fetch_object()) {
-                    $forbiddenCoordsXY[$rowF->x .','. $rowF->y] = true;
+                $occupancy = new \App\Service\Map\TileOccupancyService();
+                $refusals = $occupancy->blockedForStep(
+                    array_map('intval', $this->inSightId),
+                    (int) $this->playerId,
+                    \App\Service\Map\TileOccupancyService::charactersVisibleOn($planJson ?: null)
+                );
+
+                foreach (array_keys($refusals) as $blockedId) {
+                    if (isset($this->inSight[$blockedId])) {
+                        $blockedCoordsXY[$this->inSight[$blockedId]->x .','. $this->inSight[$blockedId]->y] = true;
+                    }
                 }
             }
 
@@ -204,11 +213,6 @@ class View{
              * — soit autant d'hydratations que d'occupants à l'écran, à
              * chaque rendu de damier. Sur la fenêtre la plus dense de
              * fort_turok, 428 occupants. */
-            /* Le catalogue des structures traversables : lu UNE fois, pas une
-             * fois par occupant. La boucle construisait un RaceService neuf à
-             * chaque ligne pour reposer la même question. */
-            $passableStructures = (new \App\Service\RaceService())->getPassableStructureNames();
-
             $entitiesInSight = [];
             if (!empty($this->inSightId)) {
                 $resEntities = (new Db())->exe('
@@ -472,15 +476,6 @@ class View{
                         }
                     }
 
-                    /* Structure passable (table…) : marquée pour que le
-                     * bouton Aller reste offert sur sa case (js/view.js). */
-                    $passableAttr = '';
-                    if($isStructure && in_array((string) $entity->race, $passableStructures, true)){
-
-                        $passableAttr = 'data-passable="1"';
-                    }
-
-
                     /* La bordure de race dit d'un coup d'œil À QUI on a
                      * affaire : elle a du sens sur un personnage, moins sur
                      * un mur ou un coffre, où elle encombre le décor. Elle
@@ -623,7 +618,6 @@ class View{
                             y="'. floor($y) .'"
 
                             href="'. $img .'"
-                            '. ($passableAttr ?? '') .'
                             class="avatar-shadow"
                             />
                         ';
@@ -655,8 +649,7 @@ class View{
                         x="'. floor($x) .'"
                         y="'. floor($y) .'"
 
-                        href="'. $img .'"
-                        '. ($row->whichTable == 'players' ? ($passableAttr ?? '') : '') .' '. $avatarClassAttr .'
+                        href="'. $img .'"'. $avatarClassAttr .'
                         />
                     ';
                 }
@@ -695,8 +688,8 @@ class View{
                         $goCase = 'go';
                     }
 
-                    $blockedAttr = isset($forbiddenCoordsXY[$coordX .','. $coordY])
-                        ? ' data-blocked="forbidden"'
+                    $blockedAttr = isset($blockedCoordsXY[$coordX .','. $coordY])
+                        ? ' data-blocked="1"'
                         : '';
 
                     if(!in_array('hideGrid', $this->options)){
@@ -707,7 +700,7 @@ class View{
                             data-coords="'. $coordX .','. $coordY .'"'. $blockedAttr;
 
                             if($this->fullCoordsOnCases){
-                                echo 'data-coords-full="'. $coordX .','. $coordY .','.$this->coords->z.','.$this->coords->plan.'"';
+                                echo ' data-coords-full="'. $coordX .','. $coordY .','.$this->coords->z.','.$this->coords->plan.'"';
                             }
 
                            echo '
@@ -724,14 +717,13 @@ class View{
                         echo '
                         <rect
                             class="case '. $goCase .'"
-                            class="case"
                             data-coords="'. $coordX .','. $coordY .'"'. $blockedAttr;
 
                             if($this->fullCoordsOnCases){
-                                echo 'data-coords-full="'. $coordX .','. $coordY .','.$this->coords->z.','.$this->coords->plan.'"';
+                                echo ' data-coords-full="'. $coordX .','. $coordY .','.$this->coords->z.','.$this->coords->plan.'"';
                             }
 
-                            echo 'x="' . $x . '"
+                            echo ' x="' . $x . '"
                             y="' . $y . '"
 
                             width="50"

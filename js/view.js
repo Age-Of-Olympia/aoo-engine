@@ -382,12 +382,21 @@ $(document).ready(function(){
         let [x, y] = coords.split(',');
 
 
-        // show go button if applicable (no player standing on the case)
-        /* Les structures passables (data-passable, ex. une table) ne
-           confisquent pas le bouton Aller. */
-        var hasPlayer = $('image[data-table="players"][x="'+ i +'"][y="'+ j +'"]').not('[data-passable]').length > 0;
+        /* Bouton Aller : proposé si la case est adjacente ET si le serveur
+           ne refusera pas le pas.
+           On lisait ici les calques dessinés pour deviner qu'un joueur
+           occupait la case — un troisième prédicat, muet sur les
+           ressources et les cases interdites, qui laissait offrir un
+           « Aller » que `go.php` refusait ensuite par une alerte. Le
+           verdict est maintenant porté par la case elle-même.
 
-        if($case.hasClass('go') && !hasPlayer){
+           Reste la case du joueur, qui porte elle aussi la classe `go` (le
+           voisinage est un 3×3 centré) : personne ne se bloque soi-même,
+           donc le serveur ne la marque pas — on l'écarte ici. */
+        var isOwnTile = coords === $('#current-player-avatar').attr('data-coords');
+        var blocked = $(this).attr('data-blocked') !== undefined || isOwnTile;
+
+        if($case.hasClass('go') && !blocked){
 
             $('#go-rect')
                 .show()

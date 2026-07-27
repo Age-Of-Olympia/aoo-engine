@@ -55,19 +55,75 @@ final class TileOccupancyService
      */
     public function stepRefusal(int $coordsId, int $moverId, bool $charactersVisible): ?string
     {
-        if ($this->hasForbiddenTrigger($coordsId)) {
-            return 'Impossible de se rendre à cet endroit.';
+        return $this->blockedForStep([$coordsId], $moverId, $charactersVisible)[$coordsId] ?? null;
+    }
+
+    /**
+     * Le même verdict, pour TOUT un champ de vision d'un coup.
+     *
+     * Le damier a besoin de marquer ses cases bloquées — six cent vingt-cinq
+     * pour une vue p=12. Les interroger une par une ferait trois requêtes
+     * chacune ; cette forme en fait trois pour l'ensemble.
+     *
+     * C'est la même règle : stepRefusal() n'est plus qu'un appel à un seul
+     * élément. Deux formes, une vérité.
+     *
+     * @param list<int> $coordsIds
+     * @return array<int, string> coords_id => motif, pour les seules cases bloquées
+     */
+    public function blockedForStep(array $coordsIds, int $moverId, bool $charactersVisible): array
+    {
+        $coordsIds = array_values(array_unique(array_map('intval', $coordsIds)));
+        if ($coordsIds === []) {
+            return [];
         }
 
-        if ($this->hasResource($coordsId)) {
-            return 'Quelque chose obstrue ton chemin.';
+        $in = implode(',', $coordsIds);
+        $blocked = [];
+
+        foreach ($this->conn->fetchFirstColumn(
+            "SELECT coords_id FROM map_triggers WHERE name = 'forbidden' AND coords_id IN ({$in})"
+        ) as $id) {
+            $blocked[(int) $id] = 'Impossible de se rendre à cet endroit.';
         }
 
-        if ($this->hasBlockingEntity($coordsId, $moverId, $charactersVisible)) {
-            return 'Quelque chose obstrue ton chemin.';
+        foreach ($this->conn->fetchFirstColumn(
+            "SELECT coords_id FROM map_resources WHERE coords_id IN ({$in})"
+        ) as $id) {
+            $blocked[(int) $id] ??= 'Quelque chose obstrue ton chemin.';
         }
 
-        return null;
+        $passable = $this->raceService->getPassableStructureNames();
+
+        $rows = $this->conn->fetchAllAssociative(
+            "SELECT p.id, p.coords_id, p.race, p.player_type,
+                    (SELECT 1 FROM players_options o
+                      WHERE o.player_id = p.id AND o.name = 'invisibleMode') AS invisible
+             FROM players p
+             WHERE p.coords_id IN ({$in})"
+        );
+
+        foreach ($rows as $row) {
+            if ((int) $row['id'] === $moverId) {
+                continue;
+            }
+
+            if (in_array((string) $row['race'], $passable, true)) {
+                continue;
+            }
+
+            $isStructure = in_array($row['player_type'] ?? 'real', ['building', 'unique'], true);
+
+            if (!$isStructure) {
+                if ($row['invisible'] !== null || !$charactersVisible) {
+                    continue;
+                }
+            }
+
+            $blocked[(int) $row['coords_id']] ??= 'Quelque chose obstrue ton chemin.';
+        }
+
+        return $blocked;
     }
 
     /**
@@ -130,15 +186,6 @@ final class TileOccupancyService
         return null;
     }
 
-    /** Une case interdite l'est pour tout le monde, décor ou pas. */
-    private function hasForbiddenTrigger(int $coordsId): bool
-    {
-        return (bool) $this->conn->fetchOne(
-            "SELECT 1 FROM map_triggers WHERE coords_id = ? AND name = 'forbidden' LIMIT 1",
-            [$coordsId]
-        );
-    }
-
     /**
      * Toute ressource bloque, sans distinction d'état : un filon épuisé barre
      * le passage comme un filon plein. Comportement d'origine, conservé tel
@@ -151,56 +198,6 @@ final class TileOccupancyService
             'SELECT 1 FROM map_resources WHERE coords_id = ? LIMIT 1',
             [$coordsId]
         );
-    }
-
-    private function hasBlockingEntity(int $coordsId, int $moverId, bool $charactersVisible): bool
-    {
-        $rows = $this->conn->fetchAllAssociative(
-            "SELECT p.id, p.race, p.player_type,
-                    (SELECT 1 FROM players_options o
-                      WHERE o.player_id = p.id AND o.name = 'invisibleMode') AS invisible
-             FROM players p
-             WHERE p.coords_id = ?",
-            [$coordsId]
-        );
-
-        if ($rows === []) {
-            return false;
-        }
-
-        $passable = $this->raceService->getPassableStructureNames();
-
-        foreach ($rows as $row) {
-            $id = (int) $row['id'];
-
-            // On ne se bloque pas soi-même.
-            if ($id === $moverId) {
-                continue;
-            }
-
-            // Le mur factice : une structure déclarée traversable au catalogue.
-            if (in_array((string) $row['race'], $passable, true)) {
-                continue;
-            }
-
-            $isStructure = in_array($row['player_type'] ?? 'real', ['building', 'unique'], true);
-
-            /* Les structures font partie du décor : toujours vues, donc
-             * toujours bloquantes. Les personnages, eux, ne bloquent que
-             * lorsqu'on les voit — discrétion et visibilité de plan. */
-            if (!$isStructure) {
-                if ($row['invisible'] !== null) {
-                    continue;
-                }
-                if (!$charactersVisible) {
-                    continue;
-                }
-            }
-
-            return true;
-        }
-
-        return false;
     }
 
     /**

@@ -195,6 +195,54 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertNull($service->buildRefusal($id), 'et on peut y bâtir — divergence gelée');
     }
 
+    /**
+     * La forme en lot répond exactement comme la forme unitaire.
+     *
+     * C'est ce que le damier interroge pour marquer ses cases — six cent
+     * vingt-cinq d'un coup. Si les deux formes divergeaient, l'écran
+     * annoncerait un refus que `go.php` n'appliquerait pas, ou l'inverse :
+     * précisément le défaut que la déduction en JavaScript entretenait.
+     */
+    public function testTheBatchFormAgreesWithTheSingleOne(): void
+    {
+        $free = $this->coordsId(11, 0);
+        $withResource = $this->coordsId(12, 0);
+        $forbidden = $this->coordsId(13, 0);
+
+        $this->link->executeStatement(
+            'INSERT INTO map_resources (name, coords_id, damages) VALUES (?, ?, -1)',
+            ['arbre1', $withResource]
+        );
+        $this->link->executeStatement(
+            "INSERT INTO map_triggers (name, coords_id, params) VALUES ('forbidden', ?, '')",
+            [$forbidden]
+        );
+
+        $service = $this->service();
+        $ids = [$free, $withResource, $forbidden];
+        $batch = $service->blockedForStep($ids, 1, true);
+
+        $this->assertSame(
+            [$withResource, $forbidden],
+            array_values(array_filter($ids, static fn (int $id): bool => isset($batch[$id]))),
+            'seules les deux cases occupées ressortent du lot'
+        );
+
+        foreach ($ids as $id) {
+            $this->assertSame(
+                $service->stepRefusal($id, 1, true),
+                $batch[$id] ?? null,
+                'même verdict, même motif, pour la case '. $id
+            );
+        }
+    }
+
+    /** Un lot vide ne pose aucune question à la base. */
+    public function testTheBatchFormAcceptsAnEmptyList(): void
+    {
+        $this->assertSame([], $this->service()->blockedForStep([], 1, true));
+    }
+
     /** Une case vraiment vide l'est pour les trois. */
     public function testAnEmptyTileSatisfiesTheThreeVerbs(): void
     {

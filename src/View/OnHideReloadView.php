@@ -46,8 +46,8 @@ class OnHideReloadView
 
             });
         </script>
-        <script src="js/blocked-tiles.js?v=20260720"></script>
-        <script src="js/view.js?v=20260727"></script>
+        <script src="js/blocked-tiles.js?v=20260727"></script>
+        <script src="js/view.js?v=20260727b"></script>
 <?php
     }
 }

@@ -1,14 +1,15 @@
 /**
- * Drop a red × on map tiles the player cannot walk on. Mirrors the
- * server's movement rules from go.php:
- *   - map_resources (ressources) on the destination cell,
- *   - other players on the destination cell,
- *   - 'forbidden' triggers on the destination cell (the trigger row
- *     itself isn't in the DOM in normal play, so View.php stamps
- *     data-blocked="forbidden" on the .case for these cells).
- * Foregrounds are decorative only — they don't block movement, even
- * if they look like walls (a forbidden trigger underneath them is
- * what historically did the blocking).
+ * Drop a red × on map tiles the player cannot walk on.
+ *
+ * Ce fichier n'a plus de règle à lui. Il en avait une, qui MIMAIT celle
+ * du serveur en relisant les calques dessinés — une image de ressource,
+ * une image de joueur — et qui pouvait donc s'en écarter : elle comptait
+ * les structures traversables (une table) que `js/view.js` écartait, et
+ * ne savait rien des plans où les personnages sont cachés.
+ *
+ * Le serveur pose désormais `data-blocked` sur chaque case refusée au
+ * pas, avec le verdict même de `go.php`
+ * (App\Service\Map\TileOccupancyService). Ici on ne fait que le lire.
  *
  * Used by:
  *   - the tutorial (scoped to padded highlight zones for the
@@ -37,23 +38,6 @@
  */
 (function() {
 
-    function collectBlockedCoords(playerCoords) {
-        const set = new Set();
-        $('image[data-table="resources"]').each(function() {
-            const c = this.getAttribute('data-coords');
-            if (c) set.add(c);
-        });
-        $('.case[data-blocked="forbidden"]').each(function() {
-            const c = this.getAttribute('data-coords');
-            if (c) set.add(c);
-        });
-        $('image[data-table="players"]').each(function() {
-            const c = this.getAttribute('data-coords');
-            if (c && c !== playerCoords) set.add(c);
-        });
-        return set;
-    }
-
     function tileCenterInZones(cr, zones) {
         if (!zones || zones.length === 0) {
             return true;
@@ -71,9 +55,8 @@
     window.drawBlockedTileMarkers = function(zones, className, container) {
         window.clearBlockedTileMarkers(className);
 
-        const playerCoords = $('#current-player-avatar').attr('data-coords');
-        const blocked = collectBlockedCoords(playerCoords);
-        if (blocked.size === 0) {
+        const $blocked = $('.case[data-blocked]');
+        if ($blocked.length === 0) {
             return;
         }
 
@@ -83,15 +66,7 @@
         const scrollLeft = useAbsolute ? containerEl.scrollLeft : 0;
         const scrollTop = useAbsolute ? containerEl.scrollTop : 0;
 
-        $('.case').each(function() {
-            const $case = $(this);
-            const coords = $case.attr('data-coords');
-            if (!coords || coords === playerCoords) {
-                return;
-            }
-            if (!blocked.has(coords)) {
-                return;
-            }
+        $blocked.each(function() {
             const cr = this.getBoundingClientRect();
             if (cr.width === 0 || cr.height === 0) {
                 return;
