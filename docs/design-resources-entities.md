@@ -451,10 +451,23 @@ Aucun n'attend un arbitrage. Certains sont graves.
 
 1. **`Classes/Player.php:1223` — `DELETE FROM players_bonus WHERE name IN
    ("pm","pv") AND n >= 0`, sans `player_id`.** Exécuté à chaque coup porté,
-   chaque soin, chaque repos, chaque `refreshWoundSprite`. Balayage complet de
-   la table pour tous les personnages et toutes les entités du jeu, et
-   impossibilité de porter un bonus PV/PM positif durable sur qui que ce soit.
-   C'est exactement le chemin que la destructibilité des solides va solliciter.
+   chaque soin, chaque repos, chaque coût de mouvement — `putBonus` a 55
+   appelants. Balayage complet de la table (la clé primaire est
+   `(player_id, name)`, il n'y a aucun index sur `name` seul).
+
+   **Ce n'est pas un bug de comportement**, contrairement à ce que disait la
+   première version de ce document. `players_bonus.n` pour `pv`/`pm` est un
+   *déficit* : une ligne à `n >= 0` équivaut à l'absence de ligne, et
+   `putBonus` plafonne le soin au déficit (`:1174`), donc `n` ne peut pas
+   devenir positif par le jeu. Le DELETE global ne supprimait que des lignes
+   déjà vides de sens.
+
+   Ce qui était vrai : un coût qui grandit avec le nombre d'entités blessées —
+   soit exactement ce que l'entification multiplie — et un effet de bord
+   unique, `admin/player-edit.php:98` calculant `n = wanted - max` sans
+   plafond, une vitalité fixée au-dessus du maximum étant reprise par la
+   première action venue. Corrigé en scopant sur `player_id`, forme déjà
+   utilisée par `applyUnequipItemBonus`.
 2. **`reparer` (action 92) donne 3 XP par point d'action sans vérifier que la
    cible est endommagée**, et `HealingOutcomeInstruction` retourne toujours un
    succès. Meilleur rapport XP/A du jeu, contre n'importe lequel des 13 546

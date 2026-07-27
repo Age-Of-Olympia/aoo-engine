@@ -1220,16 +1220,34 @@ class Player implements ActorInterface {
         $this->turn->$carac += $val;
 
 
+        /* Ménage des lignes vidées de leur sens : un déficit de PV ou de PM
+         * revenu à zéro vaut l'absence de ligne.
+         *
+         * Le player_id manquait. Le DELETE portait donc sur TOUTE la table,
+         * pour tous les personnages et toutes les entités, à chaque coup
+         * porté, chaque soin, chaque repos, chaque coût de mouvement — soit
+         * un balayage complet (aucun index sur `name` seul, la clé primaire
+         * est (player_id, name)) sur le chemin le plus fréquenté du jeu.
+         *
+         * Sans conséquence de jeu jusqu'ici, parce qu'il ne supprimait que
+         * des lignes déjà équivalentes à rien, et que putBonus plafonne le
+         * soin au déficit. Mais le coût grandit avec le nombre d'entités
+         * blessées, et c'est justement ce que l'entification multiplie.
+         *
+         * Forme identique à celle d'applyUnequipItemBonus, qui fait le même
+         * ménage correctement scopé. */
         $sql = '
         DELETE FROM
         players_bonus
         WHERE
+        player_id = ?
+        AND
         name IN ("pm", "pv")
         AND
         n >= 0
         ';
 
-        $db->exe($sql);
+        $db->exe($sql, array($this->id));
 
 
         $this->refresh_caracs();
