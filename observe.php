@@ -257,7 +257,13 @@ if($planJson){
         (
             p.id = ?
             OR
-            p.id < 0
+            /* Soi-même, plus tout ce qui n\'est pas un autre joueur : PNJ,
+             * bâtiments, objets uniques. « p.id < 0 » ne désignait que les
+             * PNJ — depuis la conversion des murs, un bâtiment porte un id
+             * POSITIF et disparaissait donc du panneau d\'observation sur
+             * les plans à visibilité coupée, alors que la carte le dessine
+             * (Classes/View.php : une structure fait partie du décor). */
+            p.player_type NOT IN ("real", "tutorial")
         )
         AND
         (p.id = ? OR po.player_id IS NULL)
@@ -295,7 +301,9 @@ elseif(!$planJson){
     (
         p.id = ?
         OR
-        p.id < 0
+        /* Même correction que la branche ci-dessus : les structures ont un
+         * id positif depuis la conversion des murs. */
+        p.player_type NOT IN ("real", "tutorial")
     )
     AND
     (p.id = ? OR po.player_id IS NULL)

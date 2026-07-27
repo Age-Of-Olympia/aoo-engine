@@ -22,7 +22,9 @@ use RuntimeException;
 class PlanAdminService
 {
     /** Tables sujettes à la cascade PNJ, dans l'ordre de suppression (FK). */
-    private const NPC_CASCADE_BY_PLAYER = ['players_actions', 'players_items', 'players_effects'];
+    /** Satellites 1:1 d'une entité : à défaire avant sa ligne players. */
+    private const NPC_CASCADE_SATELLITES = ['buildings', 'unique_objects'];
+    private const NPC_CASCADE_BY_PLAYER = ['players_actions', 'players_items', 'players_effects', 'players_bonus', 'players_options'];
     private const NPC_CASCADE_BY_PLAYER_OR_TARGET = ['players_logs', 'players_kills', 'players_assists'];
 
     private Db $db;
@@ -144,9 +146,13 @@ class PlanAdminService
     public function countCharactersOnPlan(string $plan): array
     {
         $res = $this->db->exe(
+            /* Compter par TYPE, pas par signe d'identifiant : « id > 0 »
+             * comptait les bâtiments comme des joueurs, et l'écran de zone
+             * dangereuse annonçait des centaines de joueurs là où il n'y en
+             * a aucun (663 sur praetorium_save, 662 sur praetorium_dark). */
             'SELECT
-                COALESCE(SUM(p.id > 0), 0) AS players,
-                COALESCE(SUM(p.id < 0), 0) AS npcs
+                COALESCE(SUM(p.player_type = "real"), 0) AS players,
+                COALESCE(SUM(p.player_type = "npc"), 0) AS npcs
              FROM players p JOIN coords c ON c.id = p.coords_id
              WHERE c.plan = ?',
             array($plan)
@@ -650,7 +656,12 @@ class PlanAdminService
     private function deleteNpcsOnPlan(string $plan): int
     {
         $res = $this->db->exe(
-            'SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ? AND p.id < 0',
+            /* Toutes les entités du plan, pas seulement les PNJ : depuis la
+             * conversion des murs, un bâtiment porte un id POSITIF, survivait
+             * à cette cascade et faisait ensuite échouer le DELETE des coords
+             * en 1451 — annulant la purge entière. */
+            'SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id
+             WHERE c.plan = ? AND p.player_type NOT IN ("real", "tutorial")',
             array($plan)
         );
         $npcIds = [];
@@ -662,6 +673,10 @@ class PlanAdminService
         }
 
         $in = implode(',', array_fill(0, count($npcIds), '?'));
+
+        foreach (self::NPC_CASCADE_SATELLITES as $table) {
+            $this->db->exe('DELETE FROM ' . $table . ' WHERE player_id IN (' . $in . ')', $npcIds);
+        }
 
         foreach (self::NPC_CASCADE_BY_PLAYER_OR_TARGET as $table) {
             $this->db->exe(

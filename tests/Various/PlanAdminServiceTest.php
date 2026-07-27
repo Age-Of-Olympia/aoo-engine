@@ -26,6 +26,8 @@ class PlanAdminServiceTest extends TestCase
     /** Ids de personnages de fixture, hors de portée des ids réels. */
     private const PLAYER_ID = 990001;
     private const NPC_ID = -990001;
+    /** Un bâtiment porte un id POSITIF : c'est tout l'objet du test dédié. */
+    private const BUILDING_ID = 990002;
 
     protected function setUp(): void
     {
@@ -173,14 +175,66 @@ class PlanAdminServiceTest extends TestCase
         $this->assertGreaterThan(0, (int) $link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::SRC]));
     }
 
+    /**
+     * Un bâtiment n'est pas un joueur, et il ne survit pas à la purge.
+     *
+     * Le service reconnaissait ses habitants au SIGNE de leur identifiant :
+     * un bâtiment, positif depuis la conversion des murs, était compté comme
+     * un joueur — l'écran de zone dangereuse annonçait des centaines de
+     * joueurs sur des plans qui n'en avaient aucun — puis survivait à la
+     * cascade et faisait échouer la suppression des coords sur la clé
+     * étrangère, annulant la purge entière.
+     */
+    public function testBuildingIsNotCountedAsPlayerAndIsCascaded(): void
+    {
+        $this->seedSourcePlan();
+        $link = $this->link();
+        $coordsId = (int) $link->fetchOne('SELECT id FROM coords WHERE plan = ? LIMIT 1', [self::SRC]);
+
+        $link->executeStatement(
+            'INSERT INTO players (id, player_type, name, coords_id, race) VALUES (?, ?, ?, ?, ?)',
+            [self::BUILDING_ID, 'building', 'Mur de test plans', $coordsId, 'mur_pierre']
+        );
+        // Les satellites qui bloquaient la suppression avant correction.
+        $link->executeStatement(
+            "INSERT INTO buildings (player_id, faction, build_state) VALUES (?, '', 'built')",
+            [self::BUILDING_ID]
+        );
+        $link->executeStatement(
+            "INSERT INTO players_options (player_id, name) VALUES (?, 'raceHint')",
+            [self::BUILDING_ID]
+        );
+        $link->executeStatement(
+            "INSERT INTO players_bonus (player_id, name, n) VALUES (?, 'pv', -12)",
+            [self::BUILDING_ID]
+        );
+
+        $service = new PlanAdminService();
+
+        $counts = $service->countCharactersOnPlan(self::SRC);
+        $this->assertSame(0, (int) $counts['players'], 'un bâtiment n\'est pas un joueur');
+
+        $report = $service->deletePlan(self::SRC, true);
+
+        $this->assertSame(0, (int) $link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::SRC]));
+        $this->assertSame(0, (int) $link->fetchOne('SELECT COUNT(*) FROM players WHERE id = ?', [self::BUILDING_ID]));
+        $this->assertSame(0, (int) $link->fetchOne('SELECT COUNT(*) FROM buildings WHERE player_id = ?', [self::BUILDING_ID]));
+        $this->assertSame(0, (int) $link->fetchOne('SELECT COUNT(*) FROM players_options WHERE player_id = ?', [self::BUILDING_ID]));
+        $this->assertSame(0, (int) $link->fetchOne('SELECT COUNT(*) FROM players_bonus WHERE player_id = ?', [self::BUILDING_ID]));
+    }
+
     public function testDeletePlanForcedCascadesNpcsAndRemovesEverything(): void
     {
         $this->seedSourcePlan();
         $link = $this->link();
         $coordsId = (int) $link->fetchOne('SELECT id FROM coords WHERE plan = ? LIMIT 1', [self::SRC]);
         $link->executeStatement(
-            'INSERT INTO players (id, name, coords_id, race) VALUES (?, ?, ?, ?)',
-            [self::NPC_ID, 'PNJ de test plans', $coordsId, 'nain']
+            /* player_type explicite : le service ne reconnaît plus un PNJ au
+             * signe de son identifiant. Player::put_player($name,$race,pnj:true)
+             * écrit 'npc' depuis toujours ; la fixture s'appuyait sur la seule
+             * convention d'id, qui ne distingue plus un PNJ d'un bâtiment. */
+            'INSERT INTO players (id, player_type, name, coords_id, race) VALUES (?, ?, ?, ?, ?)',
+            [self::NPC_ID, 'npc', 'PNJ de test plans', $coordsId, 'nain']
         );
 
         $service = new PlanAdminService();
@@ -268,9 +322,16 @@ class PlanAdminServiceTest extends TestCase
             return;
         }
 
+        foreach (['buildings', 'players_options', 'players_bonus'] as $satellite) {
+            $link->executeStatement(
+                "DELETE FROM {$satellite} WHERE player_id IN (?, ?, ?)",
+                [self::PLAYER_ID, self::NPC_ID, self::BUILDING_ID]
+            );
+        }
+
         $link->executeStatement(
-            'DELETE FROM players WHERE id IN (?, ?)',
-            [self::PLAYER_ID, self::NPC_ID]
+            'DELETE FROM players WHERE id IN (?, ?, ?)',
+            [self::PLAYER_ID, self::NPC_ID, self::BUILDING_ID]
         );
 
         foreach (['tiles', 'routes', 'plants', 'resources', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {

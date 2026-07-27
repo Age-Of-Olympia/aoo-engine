@@ -286,31 +286,25 @@ class TutorialMapInstance
 
         $coordsIdList = implode(',', $coordsIds);
 
-        // First, get all NPC IDs on this instance
+        /* Toutes les entités posées sur l'instance, pas seulement les PNJ.
+         *
+         * Le prédicat « id < 0 » datait d'un monde où seuls les PNJ étaient
+         * des lignes players. Depuis la conversion des murs, un bâtiment
+         * porte un id POSITIF (plage 20 000 000+) : il survivait au ménage,
+         * puis faisait échouer le DELETE des coords sur la clé étrangère —
+         * chaque session abandonnée laissait donc un plan entier derrière
+         * elle.
+         *
+         * Liste noire : tout ce qui est posé sur un plan d'instance s'en va,
+         * sauf ce qui doit lui survivre. Un type d'entité ajouté plus tard —
+         * ressource, décor — sera nettoyé sans qu'on ait à y repenser. */
         $npcIds = $this->conn->fetchFirstColumn("
-            SELECT id FROM players WHERE coords_id IN ({$coordsIdList}) AND id < 0
+            SELECT id FROM players
+            WHERE coords_id IN ({$coordsIdList})
+            AND player_type NOT IN ('real', 'tutorial')
         ");
 
-        // Delete foreign key references for each NPC
-        if (!empty($npcIds)) {
-            $npcIdList = implode(',', $npcIds);
-
-            // Delete all foreign key references
-            $this->conn->executeStatement("DELETE FROM players_logs WHERE player_id IN ({$npcIdList}) OR target_id IN ({$npcIdList})");
-            $this->conn->executeStatement("DELETE FROM players_actions WHERE player_id IN ({$npcIdList})");
-            $this->conn->executeStatement("DELETE FROM players_items WHERE player_id IN ({$npcIdList})");
-            $this->conn->executeStatement("DELETE FROM players_effects WHERE player_id IN ({$npcIdList})");
-            $this->conn->executeStatement("DELETE FROM players_kills WHERE player_id IN ({$npcIdList}) OR target_id IN ({$npcIdList})");
-            $this->conn->executeStatement("DELETE FROM players_assists WHERE player_id IN ({$npcIdList}) OR target_id IN ({$npcIdList})");
-
-            // Now safe to delete NPCs
-            $npcsDeleted = $this->conn->executeStatement("
-                DELETE FROM players WHERE id IN ({$npcIdList})
-            ");
-
-            if ($npcsDeleted > 0) {
-            }
-        }
+        $this->purgeEntities($npcIds);
 
         // Delete all map elements
         $mapElementTypes = ['resources', 'tiles', 'foregrounds', 'triggers', 'elements', 'dialogs', 'plants', 'routes'];
@@ -356,13 +350,17 @@ class TutorialMapInstance
 
         $coordsIdList = implode(',', $coordsIds);
 
-        // Delete NPCs on this instance
-        $npcsDeleted = $this->conn->executeStatement("
-            DELETE FROM players WHERE coords_id IN ({$coordsIdList}) AND id < 0
-        ");
-
-        if ($npcsDeleted > 0) {
-        }
+        /* Même correction qu'en deleteInstance : « id < 0 » laissait derrière
+         * lui les bâtiments, dont l'id est positif depuis la conversion des
+         * murs, et le DELETE des coords échouait ensuite sur la clé
+         * étrangère. Ce chemin ne démontait par ailleurs AUCUNE référence
+         * avant de supprimer la ligne players — il passe par le même
+         * démontage que sa jumelle. */
+        $this->purgeEntities($this->conn->fetchFirstColumn("
+            SELECT id FROM players
+            WHERE coords_id IN ({$coordsIdList})
+            AND player_type NOT IN ('real', 'tutorial')
+        "));
 
         // Delete all map elements
         $mapElementTypes = ['resources', 'tiles', 'foregrounds', 'triggers', 'elements', 'dialogs', 'plants', 'routes'];
@@ -387,6 +385,53 @@ class TutorialMapInstance
             unlink($instanceJsonPath);
         }
 
+    }
+
+    /**
+     * Démonte les entités d'une instance : satellites, références croisées,
+     * puis la ligne players elle-même.
+     *
+     * Les deux chemins de suppression faisaient chacun leur version de ce
+     * ménage — l'un incomplet, l'autre inexistant. Ils partagent désormais
+     * celle-ci, qui couvre aussi `players_bonus`, `buildings` et
+     * `unique_objects` : trois clés étrangères vers players.id qu'aucune des
+     * deux ne défaisait, et qui font échouer la suppression des coords dès
+     * qu'une structure a été posée ou blessée sur l'instance.
+     *
+     * @param list<int|string> $entityIds
+     */
+    private function purgeEntities(array $entityIds): void
+    {
+        if (empty($entityIds)) {
+            return;
+        }
+
+        $idList = implode(',', array_map('intval', $entityIds));
+
+        foreach (['buildings', 'unique_objects'] as $satellite) {
+            $this->conn->executeStatement("DELETE FROM {$satellite} WHERE player_id IN ({$idList})");
+        }
+
+        /* players_options n'était dans aucune des deux versions : 237 des 245
+         * entités non joueuses de la base en portent une (les bâtiments en
+         * ont toutes une, les PNJ leur incognitoMode). Sa clé étrangère
+         * suffisait à faire échouer la suppression. */
+        foreach (['players_bonus', 'players_effects', 'players_items', 'players_actions', 'players_options'] as $table) {
+            $this->conn->executeStatement("DELETE FROM {$table} WHERE player_id IN ({$idList})");
+        }
+
+        // Les ennemis d'entraînement sont des PNJ posés sur l'instance.
+        $this->conn->executeStatement("DELETE FROM tutorial_enemies WHERE enemy_player_id IN ({$idList})");
+
+        // Ces trois-là référencent players des DEUX côtés : une entité qui a
+        // combattu bloquait la suppression par sa colonne target_id.
+        foreach (['players_logs', 'players_kills', 'players_assists'] as $table) {
+            $this->conn->executeStatement(
+                "DELETE FROM {$table} WHERE player_id IN ({$idList}) OR target_id IN ({$idList})"
+            );
+        }
+
+        $this->conn->executeStatement("DELETE FROM players WHERE id IN ({$idList})");
     }
 
 }
