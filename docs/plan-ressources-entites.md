@@ -39,6 +39,7 @@ L0 ─┬─ L1 ── L2 ──┬── L3 ── L4 (décor)
     └─ L0bis      └── L5 (autel) ── L6 (ressources) ── L7 (plantes, creuser)
 
                                                         L8 (découpe players) ─ hors chemin
+                                                        L9 (tutoriel) ─────── en dernier
 ```
 
 **Avant l'ouverture de saison** : L0, L0bis, L1, L2. Trois à quatre semaines,
@@ -46,6 +47,10 @@ zéro migration de masse, zéro fenêtre de maintenance, et de la valeur visible
 immédiatement (`observe.php` passe de 249,6 ms à 0,6 ms par clic).
 
 **Après l'ouverture** : L3 à L7, sur la branche suivante. L8 quand on veut.
+
+**En dernier, quoi qu'il arrive** : L9, le tutoriel. Il sera adapté une fois le
+reste stabilisé — le rattraper à chaque lot reviendrait à le refaire autant de
+fois qu'il y a de lots.
 
 ---
 
@@ -180,17 +185,31 @@ vocabulaire de prose qui reste français.
   silencieusement l'épuisement.
 - `BlockingSsotGoldenMasterTest` — table de vérité occupant × verbe × les sept
   prédicats, plan **avec** et **sans** JSON, `player_visibility` à `false`.
-- Réparer la spec Cypress (elle attend 121 coords et 41 murs ; la graine en
-  produit 81 et 5+32) puis retirer `when: manual` et `allow_failure`.
+**La spec Cypress est reportée à la toute fin de la saison** (arbitrage du
+2026-07-27). Elle attend 121 coords et 41 murs quand la graine en produit 81 et
+5+32, mais le tutoriel sera de toute façon adapté une fois le reste stabilisé :
+le réparer maintenant, c'est le réparer deux fois. Il reste en `when: manual` +
+`allow_failure` jusque-là.
 
-**Étendre PHPStan** à `Classes/`, la racine et `scripts/`, même au niveau 0-1 :
-c'est exactement le périmètre des 60 références à réécrire.
+**PHPStan sur le legacy : pas un lot, une conséquence.** L'extension du
+périmètre à `Classes/` figurait ici ; l'arbitrage est qu'elle arrive d'elle-même
+à mesure que le legacy migre vers `src/`, déjà analysé — c'est le strangler du
+glossaire, et il n'y a pas de raison de payer un périmètre qui doit disparaître.
 
-**Attention** : le tutoriel ne peut pas servir de filet. `ActionStep::
-validateActionUsed:37` compare une chaîne envoyée par le navigateur — l'étape
-`use_fouiller` avance même quand la condition a refusé. Le catalogue
-`2.0.0-craft` enchaîne d'ailleurs 7 étapes bâties sur une récolte impossible
-(les deux `pierre1` du plan tutoriel sont à `damages=0`).
+La mesure le confirme, et elle corrige au passage ce que ce plan laissait
+craindre : tout `Classes/` au niveau 4 du projet ne produit que **153 erreurs**
+(11 057 lignes ; `Player.php` en fait 2 640, pas les 51 000 qu'annonce
+`CLAUDE.md`). Et sur les deux seuls fichiers que ce chantier réécrit —
+`View.php` et `Item.php` — il n'y en a que **21**, dont la majorité ne sont pas
+des défauts de code : PHPStan ne connaît ni `json()`, ni `ExitError()`, ni
+`ITEMS_OPT`, ni `CARACS`, qui vivent dans `config/` et ne sont pas déclarés en
+`scanFiles`.
+
+Ce qui reste utile, et qui profite aussi à `src/` : **déclarer ces globales de
+`config/` en `scanFiles`**. Le reste attend le strangler.
+
+**Attention** : le tutoriel ne peut pas servir de filet — il valide des clics,
+pas des gains. Voir L9, où il est traité en bloc et en dernier.
 
 ---
 
@@ -511,6 +530,28 @@ table**.
 **Ne pas en faire un prérequis** : mesuré, la largeur de `players` ne coûte que
 +6 Mo à 40 879 lignes. Ce lot se justifie par la clarté du modèle et la sécurité
 des identifiants de compte, pas par la performance.
+
+---
+
+## L9 — Le tutoriel, à la toute fin de la saison
+
+Rien avant que le reste ne soit stabilisé. Le tutoriel sera **adapté**, pas
+rattrapé : le réparer au fil des lots, c'est le réparer autant de fois qu'il y a
+de lots.
+
+Ce qui l'attend à ce moment-là, déjà recensé :
+
+- la spec Cypress attend 121 coords et 41 murs quand la graine en produit 81 et
+  5+32 ; une fois d'accord, retirer `when: manual` et `allow_failure` ;
+- `ActionStep::validateActionUsed:37` valide une CHAÎNE envoyée par le
+  navigateur, pas un gain : l'étape `use_fouiller` avance même quand la
+  condition a refusé. C'est pour ça que le tutoriel ne peut pas servir de filet
+  au reste du chantier ;
+- le catalogue `2.0.0-craft` enchaîne 7 étapes bâties sur une récolte
+  impossible — les deux `pierre1` du plan tutoriel sont à `damages = 0` ;
+- les plans d'instance sont clonés par session, et leurs ressources avec :
+  c'est le seul monde reproductible du jeu (81 coords, 5 ressources, 32
+  entités, 2 PNJ), donc le décor de test naturel de la migration.
 
 ---
 
