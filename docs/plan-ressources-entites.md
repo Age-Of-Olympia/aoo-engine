@@ -166,7 +166,11 @@ tout ce qui lit `datas/`).
   (aujourd'hui 100 % statique, `new Db()` en interne, relit le JSON de plan deux
   fois par récolte).
 
-**Tests** :
+**Tests étalons** — au sens de `docs/conventions-code.md` : une photographie du
+comportement existant, figée AVANT de refactorer. Les classes gardent le suffixe
+anglais des vingt-six qui existent déjà (`CreuserGoldenMasterTest`…) ; c'est le
+vocabulaire de prose qui reste français.
+
 - `FouillerGoldenMasterTest` — N=1, N=6, N=8, **la case à 1d16 de `fort_turok`
   (-22, 47)**, case mêlant deux rendements, case inerte, case à `damages=0`.
 - `ExhaustCapCharacterizationTest` — **pinne** le plafond d'épuisement par le dé
@@ -202,7 +206,7 @@ validateActionUsed:37` compare une chaîne envoyée par le navigateur — l'éta
 - **Supprimer `ObstacleCondition`** et ses 8 lignes de
   `action_condition_preconditions` : une requête et un Bresenham gaspillés par
   tir, technique et sort. Zéro comportement changé.
-- **`TileOccupancyService` en lecture seule** + golden master des prédicats
+- **`TileOccupancyService` en lecture seule** + test étalon des prédicats
   *actuels* : on gèle la divergence, on ne la corrige pas encore.
 - **`go.php` bascule dessus** — et c'est là, en un commit, un comportement
   changé et mesurable, que le bug du `if($planJson)` se corrige, avec la règle
@@ -481,8 +485,8 @@ lignes est la restauration d'une sauvegarde d'hébergeur.
 - **Action `planter`** (ItemPick sur `type=graine` + PlaceLayer sur la couche
   plants), qui ferme la fenêtre « la graine traîne au sol et se fait ramasser par
   le premier passant ». `growTo`/`growZMin` sortent des JSON vers `race_harvest`.
-- **`creuser`** : la distribuer — elle existe (action 164, type `dig`, golden
-  master compris) mais `players_actions` en compte **zéro** ligne et aucune
+- **`creuser`** : la distribuer — elle existe (action 164, type `dig`, test
+  étalon compris) mais `players_actions` en compte **zéro** ligne et aucune
   `race_starter_actions` ne la porte. Remplacer les `$_POST['digX']/['digY']`
   fabriqués par `go.php:235` par un BuildSitePick, remonter la confirmation
   « pas de Pioche » (18 lignes de JS inline) dans l'aperçu de coût, sortir la
