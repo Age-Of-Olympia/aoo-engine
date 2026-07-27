@@ -151,9 +151,30 @@ $(document).ready(function(){
     var lofShownFor = null;         /* data-coords de la case tracée */
     var lofSuppressClickUntil = 0;  /* l'appui long ne doit pas cliquer */
 
+    /* Génération du damier actuellement à l'écran.
+     *
+     * Le tracé se demande en DEUX allers-retours (observe.php, puis
+     * api/map/line_of_fire.php) : entre le clic droit et le dessin, le
+     * joueur a largement le temps de se déplacer. Le damier est alors
+     * remplacé — ce qui efface bien les marques — puis la réponse en vol
+     * arrive et redessine l'ANCIENNE trajectoire sur le NOUVEAU damier,
+     * que plus rien ne viendra effacer.
+     *
+     * Chaque effacement et chaque reconstruction du damier incrémentent ce
+     * compteur ; une réponse née sous une autre génération est jetée. */
+    var lofGeneration = 0;
+
+    function removeLofMarks(){
+        $('.lof-mark').remove();
+    }
+
+    /* Efface ET invalide : toute réponse encore en vol sera jetée.
+       Utilisé par le clic gauche, la bascule du clic droit, et la
+       reconstruction du damier (bindMapView). */
     window.clearLineOfFire = function(){
         lofShownFor = null;
-        $('.lof-mark').remove();
+        lofGeneration++;
+        removeLofMarks();
     };
 
     /* Charge le panneau d'observation d'une case.
@@ -199,7 +220,13 @@ $(document).ready(function(){
             return;
         }
         var parts = coords.split(',');
+        var asked = lofGeneration;
         $.getJSON('api/map/line_of_fire.php', {x: parts[0], y: parts[1]}, function(data){
+            /* Le damier a changé pendant le vol de la requête (déplacement,
+               rafraîchissement) : ce tracé ne parle plus de ce qu'on voit. */
+            if(asked !== lofGeneration){
+                return;
+            }
             /* tiles vide : case adjacente au joueur. */
             if(!data || !data.tiles || !data.tiles.length){
                 window.clearLineOfFire();
@@ -212,7 +239,12 @@ $(document).ready(function(){
 
     window.showLineOfFire = function(from, to, blocker, blockers){
 
-        window.clearLineOfFire();
+        /* On efface les marques précédentes SANS invalider la génération :
+           celle-ci ne change qu'avec le damier ou sur effacement voulu.
+           L'invalider ici ferait perdre au dernier tracé demandé une course
+           contre un tracé plus ancien mais arrivé avant lui. */
+        removeLofMarks();
+        lofShownFor = null;
 
         /* Centre (pixels SVG) d'une case logique — null si hors damier. */
         function tileCenter(tile){
@@ -316,6 +348,14 @@ $(document).ready(function(){
     };
 
     window.bindMapView = function(){
+
+    /* Damier neuf (chargement, ou remplacement après un déplacement par
+       hudRefreshAfterMove) : les marques sont parties avec l'ancien
+       balisage, mais l'état, lui, survivait — `lofShownFor` gardait une
+       case d'avant le pas, et la prochaine demande sur cette même case
+       l'effaçait au lieu de la tracer. On repart propre, et toute réponse
+       née avant ce damier est désormais périmée. */
+    window.clearLineOfFire();
 
     /* Ligne de tir à la demande : clic droit, ou appui long tactile
        (500 ms sans bouger). L'appui long ne doit pas déclencher le
