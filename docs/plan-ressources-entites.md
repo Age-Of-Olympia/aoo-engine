@@ -338,8 +338,18 @@ Dans l'ordre :
 9. Les ~32 fragments orphelins et groupes incomplets partent dans un rapport
    d'admin, un par un.
 
-**À trancher avant l'étape 4** : le multi-z (`porte_des_enfers` sur quatre
-étages, 14 colonnes concernées) — un objet ou quatre ?
+**Multi-z — tranché** : `porte_des_enfers` sur quatre étages devient **quatre
+bâtiments distincts**, un par niveau. Il n'y a pas de destruction d'étage pour
+l'instant, donc rien n'exige qu'ils se connaissent ; les lier serait une
+complication sans emploi. Les 14 colonnes concernées suivent la même règle.
+
+**Exemplaires tronqués — tranché** : la figure complète fait foi, et les 38
+exemplaires incomplets partent dans un **rapport**. Pas de complétion
+automatique : on regardera la liste avant de décider quoi en faire. Si une
+demi-figure est voulue quelque part, elle deviendra un décor à part entière.
+
+**`lac_thetis` et `triton_statue`** : reportés. Ce sont deux familles sur 68,
+elles n'empêchent pas les 66 autres d'avancer.
 
 ### Ce que la dérivation a mesuré (26 juillet, copie de production)
 
