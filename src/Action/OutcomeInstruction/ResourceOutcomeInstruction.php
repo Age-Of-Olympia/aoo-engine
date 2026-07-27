@@ -21,20 +21,21 @@ class ResourceOutcomeInstruction extends OutcomeInstruction implements HasParame
      * jet de récolte devient visible dans le détail d'action au lieu d'être
      * reconstruit à la main dans le message.
      *
-     * Passer par un setter et non par le constructeur : Doctrine hydrate ses
-     * entités sans l'appeler.
+     * STATIQUE, comme pour ResourceService et PlantsService : l'instruction
+     * est hydratée par Doctrine depuis le graphe d'action, un test n'a donc
+     * aucune prise sur l'instance pour lui passer un dé.
      */
-    private ?Dice $dice = null;
+    private static ?Dice $dice = null;
 
-    public function setDice(?Dice $dice): void
+    public static function setDiceForTests(?Dice $dice): void
     {
-        $this->dice = $dice;
+        self::$dice = $dice;
     }
 
     /** Un dé à $sides faces, une fois. */
     private function roll(int $sides): int
     {
-        $dice = $this->dice ?? new Dice(max(1, $sides));
+        $dice = self::$dice ?? new Dice(max(1, $sides));
 
         return (int) $dice->roll(1)[0];
     }
