@@ -85,7 +85,19 @@ body:has(#hud) {
     grid-area: 2 / 2 / 3 / 4;
     z-index: 1;
     margin: 9px;
-    background: url('../img/ui/paper/ornament.png') top right / clamp(110px, 16vw, 210px) no-repeat;
+    background: url('../img/ui/paper/ornament.png') top right no-repeat;
+    /* La taille reste HORS du raccourci `background`.
+     *
+     * Écrite dedans — `top right / clamp(110px, 16vw, 210px)` — clean-css
+     * la supprimait silencieusement à la minification : il sait recopier
+     * une taille en mots-clés (`center/cover`) ou en pourcentages
+     * (`center/100% 100%`), mais pas une fonction `clamp()` après une
+     * position en deux mots. Le fichier servi ne portait donc plus de
+     * taille du tout, `background-size` retombait sur `auto`, et les
+     * ferronneries s'affichaient à la taille NATIVE de l'image — d'où
+     * des ornements soudain démesurés. En déclaration propre, elle
+     * traverse la minification intacte. */
+    background-size: clamp(110px, 16vw, 210px);
     mix-blend-mode: multiply;
     opacity: 0.55;
     pointer-events: none;
