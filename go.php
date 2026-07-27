@@ -61,56 +61,31 @@ $goCoords->coordsId=$coordsId;
 $db = new Db();
 
 
-// check invalid location
-$inPlayerSql = '';
-$values = $coordsId;
+/* La règle du pas vit désormais dans TileOccupancyService — source unique,
+ * appelable, testée. Elle était ici en deux morceaux : cette requête, et le
+ * script inclus plus bas pour les cases interdites.
+ *
+ * Elle change sur un point, et c'est voulu : la sous-requête d'entités était
+ * construite DANS le `if ($planJson = …)`, si bien que sur les vingt plans
+ * sans fichier JSON aucune entité ne bloquait le pas — on traversait les murs
+ * de praetorium_save, praetorium_dark, temple… 2 819 entités concernées.
+ *
+ * La règle est maintenant « bloquer, c'est être vu » : les structures font
+ * partie du décor et bloquent toujours, les personnages suivent la visibilité
+ * du plan et leur mode discret. Sortir simplement la sous-requête du `if`
+ * aurait produit l'inverse — le rendu cache les joueurs de ces plans, on
+ * aurait obtenu des murs invisibles. */
+$planJson = json()->decode('plans', $player->coords->plan);
 
-if($planJson = json()->decode('plans', $player->coords->plan)){
-    // Only block occupied coordinates if player_visibility is not explicitly disabled
-    // This allows tutorial players to move freely without seeing each other
-    $playerVisibilityEnabled = !isset($planJson->player_visibility) || $planJson->player_visibility !== false;
+$refusal = (new \App\Service\Map\TileOccupancyService())->stepRefusal(
+    (int) $coordsId,
+    (int) $player->id,
+    \App\Service\Map\TileOccupancyService::charactersVisibleOn($planJson ?: null)
+);
 
-    if ($playerVisibilityEnabled) {
-        /* Les structures PASSABLES (table…) ne bloquent pas la case —
-         * liste résolue en PHP, la jointure races/players est interdite
-         * par collation (cf. BuildingService). */
-        $passable = (new \App\Service\RaceService())->getPassableStructureNames();
-        $passableSql = $passable !== []
-            ? ' AND players.race NOT IN (' . implode(',', array_map(fn($r) => '"' . $r . '"', $passable)) . ')'
-            : '';
+if($refusal !== null){
 
-        $inPlayerSql = '
-        OR
-        id IN(
-            SELECT coords_id FROM players
-            LEFT JOIN players_options AS po ON po.player_id = players.id AND po.name = "invisibleMode"
-            WHERE coords_id = ? AND po.player_id IS NULL' . $passableSql . '
-            )
-        ';
-
-        $values = array($coordsId, $coordsId);
-    }
-}
-
-
-$sql = '
-SELECT COUNT(*) AS n
-FROM coords
-WHERE
-id IN(
-    SELECT coords_id FROM map_resources WHERE coords_id = ?
-    )
-'. $inPlayerSql .'
-';
-
-$res = $db->exe($sql, $values);
-
-$row = $res->fetch_object();
-
-if($row->n){
-
-
-    echo '<script>aooAlert("Quelque chose obstrue ton chemin.").then(function(){document.location.reload();});</script>';
+    echo '<script>aooAlert('. json_encode($refusal, JSON_UNESCAPED_UNICODE) .').then(function(){document.location.reload();});</script>';
 
     exit();
 }
