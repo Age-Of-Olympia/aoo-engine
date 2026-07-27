@@ -5,12 +5,6 @@ use App\Enum\CoordType;
 
 class View{
 
-    /* Opacite d'UN calque d'ombre : l'image d'origine
-     * (img/foregrounds/ombre.png) est un noir uni a alpha 120 sur 127, soit
-     * 7/127. C'est elle qui fixe l'echelle des niveaux — la changer
-     * eclaircirait ou foncerait toute la carte d'un coup. */
-    private const SHADE_STEP = 7 / 127;
-
     private $coords; // Coordonnées de la vue
     private $p; // Portée de la vue
     private $tiled; // Indique si la vue est dans l'éditeur de map
@@ -681,13 +675,22 @@ class View{
              * foncer davantage — un degrade peint a la main, sur cinq niveaux,
              * et 82 % des lignes de `map_foregrounds`.
              *
-             * L'empilement est devenu une intensite (`coords.shade`). Le rendu
-             * reste fidele au pixel pres : N calques d'opacite `a` donnent
-             * `1-(1-a)^N`, qu'un seul rectangle porte aussi bien que N images.
-             * Les cases les plus sombres passent de cinq elements a un.
+             * L'empilement est devenu une intensite (`coords.shade`), et ce
+             * qu'un niveau VAUT a l'ecran se regle au tableau de bord admin
+             * (CellShadeService) : opacite d'un niveau, niveau maximal,
+             * couleur. Separer les deux permet de changer l'apparence des
+             * ombres sans reprendre les cases qui en portent une.
+             *
+             * Le rendu reste fidele au pixel pres : N calques d'opacite `a`
+             * donnent `1-(1-a)^N`, qu'un seul rectangle porte aussi bien que
+             * N images. Les cases les plus sombres passent de cinq elements
+             * a un.
              *
              * Dessine APRES les entites, comme le decor l'etait (couche 100,
              * au-dessus des joueurs en 98) : l'ombre couvre ce qui s'y tient. */
+            $shadeService = new \App\Service\CellShadeService();
+            $shadeColor = $shadeService->color();
+
             foreach($this->inSight as $row){
 
                 $level = (int) ($row->shade ?? 0);
@@ -697,7 +700,7 @@ class View{
                     continue;
                 }
 
-                $opacity = 1 - pow(1 - self::SHADE_STEP, $level);
+                $opacity = $shadeService->opacityFor($level);
 
                 $sx = ($row->x - $this->coords->x + $this->p) * 50;
                 $sy = ($this->coords->y - $row->y + $this->p) * 50;
@@ -709,8 +712,8 @@ class View{
                     y="'. $sy .'"
                     width="50"
                     height="50"
-                    fill="#000"
-                    fill-opacity="'. round($opacity, 4) .'"
+                    fill="'. $shadeColor .'"
+                    fill-opacity="'. $opacity .'"
                     pointer-events="none"
                     />
                 ';

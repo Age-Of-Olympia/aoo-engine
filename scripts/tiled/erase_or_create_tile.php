@@ -37,14 +37,14 @@ if($_POST['type'] == 'eraser'){
      * qu'il faisait deja en empilant des lignes. Seul le stockage change :
      * un niveau sur la case au lieu de N lignes de decor.
      *
-     * Le plafond a 8 est celui de la migration : au-dela, l'opacite ne bouge
-     * quasiment plus (8 calques = 37 %), et un clic reste sans effet visible
-     * plutot que de gonfler un compteur sans fin. */
+     * Le plafond vient du tableau de bord admin (CellShadeService), comme
+     * l'opacite d'un niveau et la couleur : au-dela, un clic reste sans effet
+     * visible plutot que de gonfler un compteur sans fin. */
     if($_POST['type'] == 'foregrounds' && $_POST['src'] == 'ombre'){
 
         (new Db())->exe(
-            'UPDATE coords SET shade = LEAST(shade + 1, 8) WHERE id = ?',
-            array($coordsId)
+            'UPDATE coords SET shade = LEAST(shade + 1, ?) WHERE id = ?',
+            array((new \App\Service\CellShadeService())->maxLevel(), $coordsId)
         );
 
         exit('ombre');
