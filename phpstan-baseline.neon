@@ -575,46 +575,10 @@ parameters:
 			path: src/View/QuestsView.php
 
 		-
-			message: '#^Negated boolean expression is always false\.$#'
-			identifier: booleanNot.alwaysFalse
-			count: 1
-			path: src/View/WarSchool/DistanceView.php
-
-		-
-			message: '#^Result of \|\| is always true\.$#'
-			identifier: booleanOr.alwaysTrue
-			count: 1
-			path: src/View/WarSchool/DistanceView.php
-
-		-
 			message: '#^Variable \$isFull might not be defined\.$#'
 			identifier: variable.undefined
 			count: 2
 			path: src/View/WarSchool/DistanceView.php
-
-		-
-			message: '#^Variable \$passiveRace in empty\(\) is never defined\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/View/WarSchool/DistanceView.php
-
-		-
-			message: '#^Negated boolean expression is always false\.$#'
-			identifier: booleanNot.alwaysFalse
-			count: 1
-			path: src/View/WarSchool/MagicView.php
-
-		-
-			message: '#^Result of \|\| is always true\.$#'
-			identifier: booleanOr.alwaysTrue
-			count: 1
-			path: src/View/WarSchool/MagicView.php
-
-		-
-			message: '#^Variable \$passiveRace in empty\(\) is never defined\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/View/WarSchool/MagicView.php
 
 		-
 			message: '#^Variable \$isFull might not be defined\.$#'
@@ -623,27 +587,9 @@ parameters:
 			path: src/View/WarSchool/MeleeView.php
 
 		-
-			message: '#^Negated boolean expression is always false\.$#'
-			identifier: booleanNot.alwaysFalse
-			count: 1
-			path: src/View/WarSchool/StealthView.php
-
-		-
-			message: '#^Result of \|\| is always true\.$#'
-			identifier: booleanOr.alwaysTrue
-			count: 1
-			path: src/View/WarSchool/StealthView.php
-
-		-
 			message: '#^Variable \$isFull might not be defined\.$#'
 			identifier: variable.undefined
 			count: 2
-			path: src/View/WarSchool/StealthView.php
-
-		-
-			message: '#^Variable \$passiveRace in empty\(\) is never defined\.$#'
-			identifier: empty.variable
-			count: 1
 			path: src/View/WarSchool/StealthView.php
 
 		-

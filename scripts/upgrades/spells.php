@@ -1,6 +1,7 @@
 <?php
 
 use App\Service\ActionService;
+use App\Service\ActionPassiveService;
 use App\View\Action\ActionCostView;
 use App\Service\OutcomeInstructionService;
 use Classes\Str;
@@ -23,8 +24,6 @@ if (isset($_GET['forget_p']) && !empty($_POST['passive'])) {
     }
 }
 
-echo '<table class="box-shadow marbre" border="1" cellspacing="0" align="center">';
-
 $spellList = $player->get_spells();
 $spellsN = count($spellList);
 $trStyle = '';
@@ -40,22 +39,25 @@ if(isset($_GET['forget_p'])){
     $maxColSpanP++;
 }
 
-$numberOfSpellsAvailable = NUMBER_MAX_COMP - $spellsN;
+$passivesN = (new ActionPassiveService())->getActionPassiveCount($player->getId());
+$nbComp = $spellsN + $passivesN;
+$numberOfSpellsAvailable = NUMBER_MAX_COMP - $nbComp;
 $maxSpells = NUMBER_MAX_COMP;
 
 if($numberOfSpellsAvailable < 0){
-    echo '<tr><th colspan="'.$maxColSpan.'"><font color="red">Vous ne pouvez pas utiliser vos sorts (max.'. $maxSpells .')</font></th>';
+    echo '<h2 style="color: red; text-align: center; margin: 10px 0; font-family: sans-serif; font-size: 1.2em;">Vous dépassez la limite de compétences (sorts + passifs cumulés, max '. $maxSpells .'). Oubliez-en pour repasser sous la limite.</h2>';
     $trStyle = (!isset($_GET['forget'])) ? 'style="opacity: 0.5;"' : '';
     $buttonStyle = 'class="blink" style="color: red;"';
 } else {
-    echo '<tr><th colspan="'.$maxColSpan.'"><font color="blue">Le maximum de sorts/techniques que vous pouvez utiliser est de '. $maxSpells .'.</font>';
-    if ($maxSpells == $spellsN) {
-        echo '<br />Vous avez atteint le maximum de sorts/techniques que vous pouvez utiliser.';
+    echo '<h2 style="color: black; text-align: center; margin: 10px 0; font-family: sans-serif; font-size: 1.2em;">Le maximum de compétences (sorts, techniques et passifs cumulés) est de '. $maxSpells .'.';
+    if ($nbComp >= $maxSpells) {
+        echo '<br />Vous avez atteint le maximum de compétences.';
     }
-    echo '</th>';
+    echo '</h2>';
 }
-echo '</tr>';
 
+echo '<table class="box-shadow marbre" border="1" cellspacing="0" align="center">';
+echo '<tr><th colspan="'.$maxColSpan.'" style="background-color: rgba(0,0,139,0.1);"><font color="blue">Sorts et Techniques Possédés</font></th></tr>';
 echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Bonus</th><th>Effet</th><th>Type</th><th>Niveau</th>';
 
 if(isset($_GET['forget'])){
