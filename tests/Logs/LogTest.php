@@ -211,15 +211,20 @@ class LogTest extends TestCase
             'player_id' => $this->player->id,
             'plan' => 'normal_plan'
         ]);
+        /* Événement discret d'un AUTRE : c'est à celui-là que « birdland »
+           sert. Il portait l'id du lecteur avant, ce qui testait en réalité
+           que l'on se cachait ses propres actions — voir
+           testIncognitoAuthorStillSeesHisOwnEvent. */
         $this->testDb->insertLog([
             'text' => 'Birdland action',
-            'player_id' => $this->player->id,
+            'player_id' => 99,
+            'target_id' => 98,
             'plan' => 'birdland'
         ]);
 
         // Act
         $result = Log::get($this->player);
-        
+
         // Assert
         $this->assertCount(1, $result);
         $this->assertEquals('Normal action', $result[0]->text);
@@ -275,6 +280,14 @@ class LogTest extends TestCase
         $this->assertEquals($type, $result[0]->type);
     }
 
+    /**
+     * Le mode discret range l'événement sur le plan fictif « birdland » —
+     * invisible aux autres, mais TOUJOURS lisible par son auteur.
+     *
+     * Ce test vérifiait auparavant que l'auteur ne voyait rien du tout. Ce
+     * n'était pas l'intention du mode discret, seulement l'effet d'un filtre
+     * placé avant le contrôle de propriété de la ligne.
+     */
     #[Group('log-put')]
     public function testPutHandlesIncognitoMode(): void
     {
@@ -282,13 +295,15 @@ class LogTest extends TestCase
         $this->player->setOption('incognitoMode', true);
         $target = 2;
         $text = 'Secret action';
-        
+
         // Act
         Log::put($this->player, $target, $text, 'action');
-        
+
         // Assert
         $result = Log::get($this->player);
-        $this->assertCount(0, $result);
+        $this->assertCount(1, $result, 'l\'auteur lit son propre événement discret');
+        $this->assertEquals('birdland', $result[0]->plan, 'rangé hors des regards');
+        $this->assertStringContainsString($text, $result[0]->text);
     }
 
     #[Group('log-put')]
@@ -399,5 +414,90 @@ class LogTest extends TestCase
         $result = Log::get($this->player);
 
         $this->assertEmpty($result);
+    }
+
+    /**
+     * L'incognito cache aux AUTRES, pas à soi-même.
+     *
+     * Log::put() range les événements d'un acteur discret sur le plan fictif
+     * « birdland », d'où ils ne sont lus par personne. L'auteur y compris,
+     * jusqu'ici : un PNJ discret ne voyait pas ses propres actions dans son
+     * fil, seulement la version écrite du point de vue de sa cible — qui,
+     * elle, n'est pas discrète.
+     */
+    #[Group('log-get')]
+    public function testIncognitoAuthorStillSeesHisOwnEvent(): void
+    {
+        $this->testDb->insertLog([
+            'type' => 'action',
+            'text' => "Plan d'origine : gaia - Vous avez agi discrètement",
+            'plan' => 'birdland',
+            'player_id' => $this->player->id,
+            'target_id' => 2,
+        ]);
+
+        $result = Log::get($this->player);
+
+        $this->assertCount(1, $result, 'l\'auteur voit son propre événement discret');
+        $this->assertSame('birdland', $result[0]->plan);
+    }
+
+    /** Et personne d'autre ne le voit — c'est tout l'objet du mode discret. */
+    #[Group('log-get')]
+    public function testIncognitoEventStaysHiddenFromEveryoneElse(): void
+    {
+        $this->testDb->insertLog([
+            'type' => 'action',
+            'text' => "Plan d'origine : gaia - Quelqu'un a agi discrètement",
+            'plan' => 'birdland',
+            'player_id' => 99,
+            'target_id' => 98,
+            'coords_computed' => '5_5_0_test_plan',
+        ]);
+        ViewMock::setCoordsAroundResult(['5_5_0_test_plan']);
+
+        $result = Log::get($this->player);
+
+        $this->assertEmpty($result, 'un tiers ne voit pas l\'événement d\'un acteur discret');
+    }
+
+    /**
+     * Le cas exact du signalement.
+     *
+     * Une action écrit deux lignes — celle de l'acteur et celle de la cible —
+     * et filterRows() n'en garde qu'UNE, celle du point de vue du lecteur.
+     * Quand l'acteur est discret, sa propre ligne partait à « birdland » et
+     * disparaissait AVANT ce tri : il ne restait que celle de la cible, d'où
+     * l'impression de lire l'action du mauvais côté.
+     *
+     * Maintenant qu'elle survit, le tri fait son travail et rend à l'acteur
+     * sa propre version.
+     */
+    #[Group('log-get')]
+    public function testIncognitoActorSeesHisOwnSideOfTheAction(): void
+    {
+        $this->testDb->insertLog([
+            'type' => 'action',
+            'text' => 'Vous avez attaqué',
+            'plan' => 'birdland',
+            'player_id' => $this->player->id,
+            'target_id' => 2,
+        ]);
+        $this->testDb->insertLog([
+            'type' => 'action_other_player',
+            'text' => 'Vous avez été attaqué',
+            'plan' => 'test_plan',
+            'player_id' => 2,
+            'target_id' => $this->player->id,
+        ]);
+
+        $textes = array_map(static fn ($row): string => $row->text, Log::get($this->player));
+
+        $this->assertContains('Vous avez attaqué', $textes, 'sa propre ligne, discrète, est rendue');
+        $this->assertNotContains(
+            'Vous avez été attaqué',
+            $textes,
+            'et remplace celle de la cible : une action ne se lit qu\'une fois'
+        );
     }
 }

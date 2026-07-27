@@ -50,7 +50,17 @@ class Log{
             return null;
         }
 
-        if ($row->plan == "birdland") {
+        /* « birdland » est le plan fictif où Log::put() range les événements
+         * d'un acteur discret (incognitoMode / invisibleMode) : ils restent
+         * en base pour la postérité, sans être lus par personne.
+         *
+         * Sans personne, l'auteur compris — et comme ce test précédait le
+         * contrôle de propriété plus bas, un PNJ discret ne voyait pas ses
+         * PROPRES actions dans son fil, seulement la version écrite du point
+         * de vue de sa cible, qui n'est pas discrète elle.
+         *
+         * L'incognito cache aux AUTRES. On s'en cache pas à soi-même. */
+        if ($row->plan == "birdland" && $row->player_id != $player->id) {
             return null;
         }
 

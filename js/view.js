@@ -156,6 +156,39 @@ $(document).ready(function(){
         $('.lof-mark').remove();
     };
 
+    /* Charge le panneau d'observation d'une case.
+     *
+     * C'est LUI qui porte les boutons d'action, et donc la cible réelle
+     * (data-target-id). Extrait du clic gauche pour que le clic droit
+     * sélectionne lui aussi : sans ça, on pouvait tracer une ligne de tir
+     * vers un personnage et frapper celui d'avant.
+     *
+     * options.force : refait la requête au lieu de resservir le cache —
+     * c'est ce que faisait le clic gauche après avoir retiré le marqueur
+     * de réinitialisation.
+     * options.done  : rappelé une fois le panneau en place.
+     */
+    function openObservation(coords, options){
+        options = options || {};
+
+        if(!options.force && window.clickedCases[coords]){
+            $('#ajax-data').html(window.clickedCases[coords]);
+            if(options.done){ options.done(); }
+            return;
+        }
+
+        $.ajax({
+            type: "POST",
+            url: 'observe.php',
+            data: {'coords': coords},
+            success: function(data){
+                $('#ajax-data').html(data);
+                window.clickedCases[coords] = data;
+                if(options.done){ options.done(); }
+            }
+        });
+    }
+
     function requestLineOfFire($case){
         var coords = $case.attr('data-coords');
         if(!coords){
@@ -288,9 +321,18 @@ $(document).ready(function(){
        (500 ms sans bouger). L'appui long ne doit pas déclencher le
        clic d'observation qui suivrait au relâcher — fenêtre de
        suppression courte. */
+    /* Le clic droit SÉLECTIONNE aussi : ce qu'on trace est ce qu'on frappe.
+     *
+     * L'observation d'abord, le tracé ensuite — l'injection du panneau dans
+     * #ajax-data efface le tracé si elle vient après. */
     $('.case').off('contextmenu.lof').on('contextmenu.lof', function(e){
         e.preventDefault();
-        requestLineOfFire($(this));
+        var $case = $(this);
+        var coords = $case.attr('data-coords');
+        if(!coords){
+            return;
+        }
+        openObservation(coords, {done: function(){ requestLineOfFire($case); }});
     });
 
     var lofPressTimer = null;
@@ -358,31 +400,18 @@ $(document).ready(function(){
         }
 
 
+        /* Marqueur de réinitialisation posé sur la case : on le retire et on
+           RECHARGE, au lieu de resservir le panneau mis en cache. */
         if($('.clicked-cases-reseter[data-coords="'+ coords +'"]')[0] != null){
 
             $('.clicked-cases-reseter[data-coords="'+ coords +'"]').remove();
 
-        } else if(window.clickedCases[coords]){
-
-            let data = window.clickedCases[coords];
-
-            $('#ajax-data').html(data);
+            openObservation(coords, {force: true});
 
             return false;
         }
 
-
-        $.ajax({
-            type: "POST",
-            url: 'observe.php',
-            data: {'coords':coords},
-            success: function(data)
-            {
-                $('#ajax-data').html(data);
-
-                window.clickedCases[coords] = data;
-            }
-        });
+        openObservation(coords);
 
         return false;
     });
