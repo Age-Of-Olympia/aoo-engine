@@ -42,15 +42,33 @@ L0 ─┬─ L1 ── L2 ──┬── L3 ── L4 (décor)
                                                         L9 (tutoriel) ─────── en dernier
 ```
 
-**Avant l'ouverture de saison** : L0, L0bis, L1, L2. Trois à quatre semaines,
-zéro migration de masse, zéro fenêtre de maintenance, et de la valeur visible
-immédiatement (`observe.php` passe de 249,6 ms à 0,6 ms par clic).
+**La saison ouvre avec l'ensemble** (arbitrage du 2026-07-27). Une version
+antérieure de ce plan coupait en deux — « L0 à L2 avant l'ouverture, le reste
+après » — c'était une prudence de rédaction, pas une contrainte du projet.
+Le chantier va au bout.
 
-**Après l'ouverture** : L3 à L7, sur la branche suivante. L8 quand on veut.
+L'ordre reste celui du schéma, pour des raisons de dépendance et non de
+calendrier :
+
+- **L0 conditionne tout le reste** : sans l'index et le scope, chaque entité
+  ajoutée alourdit le pas. Ce n'est pas négociable, c'est une journée.
+- **L1 précède tout changement de comportement** : on gèle avant de déplacer,
+  sinon une régression d'équilibrage devient indiscernable d'un bug de
+  migration.
+- **L5 précède L7** : rendre les plantes franchissables avant d'avoir absorbé
+  l'autel efface un dieu du classement au premier pas (cf. le trigger #16206).
+- **L8 est hors chemin** : le découpage de `players` se justifie par la clarté
+  et la sécurité des identifiants, pas par la performance. Il peut arriver
+  quand on veut.
 
 **En dernier, quoi qu'il arrive** : L9, le tutoriel. Il sera adapté une fois le
 reste stabilisé — le rattraper à chaque lot reviendrait à le refaire autant de
 fois qu'il y a de lots.
+
+Ce qui ne change pas avec le calendrier : les invariants de déploiement
+(migrations avant code, rétrocompatible seulement), et la vérification de
+réversibilité exigée avant L6 — `deploy_sql.sh` ne fait aucune sauvegarde, et
+l'existence de `map_walls_archive` en vraie production n'a jamais été contrôlée.
 
 ---
 
