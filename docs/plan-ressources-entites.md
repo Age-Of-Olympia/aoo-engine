@@ -291,8 +291,25 @@ elles sont ingérables à la migration.
 
 Dans l'ordre :
 
-1. **Sortir `ombre`** — 8 353 lignes, 82 % de la table, devient un attribut
-   d'éclairage de la case. Dédoublonner les 509 cases doublement assombries.
+1. **Sortir `ombre`** — 8 353 lignes, 82 % de la table, devient une INTENSITÉ
+   de case (`coords.shade`).
+
+   **Ne pas dédoublonner.** La première version de ce plan disait « dédoublonner
+   les 509 cases doublement assombries » : c'était une erreur, et elle aurait
+   détruit du travail. `ombre` est un noir uni à 5,5 % d'opacité que les
+   animateurs posent PLUSIEURS fois pour foncer — 7 104 cases à un calque, 319 à
+   deux, 154 à trois, 31 à quatre, 5 à cinq. Ce sont des dégradés peints à la
+   main, pas des doublons.
+
+   L'empilement EST l'intensité, mais exprimée en répétant une ligne, ce
+   qu'aucun code ne peut lire comme telle. Le rendu reste fidèle au pixel près :
+   N calques d'opacité `a` donnent `1-(1-a)^N`, qu'un seul rectangle porte aussi
+   bien que N images. Le geste de l'animateur ne change pas — même pinceau,
+   re-cliquer fonce.
+
+   La couleur viendra, si elle vient, en colonne supplémentaire avec le noir par
+   défaut : aujourd'hui le seul outil EST du noir (`tile_colors` associe une
+   couleur à un nom de décor, pour la carte du monde, pas à une case).
 2. **Sortir les suivants** (55 lignes) vers un `players_followers` autoporteur.
    Ferme au passage le bug où `add_follower` adopte une ligne de décor existante
    que `delete_follower` supprime ensuite.

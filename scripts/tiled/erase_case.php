@@ -42,4 +42,11 @@ if($type == 'buildings'){
     $sql = 'DELETE FROM '.$type.' WHERE coords_id =?';
 
     $db->exe($sql, $coordsId);
+
+    /* Effacer le decor d'une case efface aussi son assombrissement : c'est
+       ce que faisait le DELETE quand l'ombre etait une ligne de decor. */
+    if($type == 'map_foregrounds'){
+
+        $db->exe('UPDATE coords SET shade = 0 WHERE id = ?', array($coordsId));
+    }
 }

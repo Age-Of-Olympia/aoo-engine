@@ -30,6 +30,26 @@ if($_POST['type'] == 'eraser'){
         exit('error type');
     }
 
+    /* L'ombre n'est plus un decor mais une INTENSITE de case.
+     *
+     * Le geste de l'animateur ne change pas d'un poil : il prend le meme
+     * pinceau dans la meme palette, et re-cliquer fonce davantage — c'est ce
+     * qu'il faisait deja en empilant des lignes. Seul le stockage change :
+     * un niveau sur la case au lieu de N lignes de decor.
+     *
+     * Le plafond a 8 est celui de la migration : au-dela, l'opacite ne bouge
+     * quasiment plus (8 calques = 37 %), et un clic reste sans effet visible
+     * plutot que de gonfler un compteur sans fin. */
+    if($_POST['type'] == 'foregrounds' && $_POST['src'] == 'ombre'){
+
+        (new Db())->exe(
+            'UPDATE coords SET shade = LEAST(shade + 1, 8) WHERE id = ?',
+            array($coordsId)
+        );
+
+        exit('ombre');
+    }
+
     /* Les obstacles/décor sont des entités bâtiment depuis leur conversion :
        map_resources ne reçoit plus que les ressources et les survivants
        (autels, unique_*, plans de tutoriel) */
