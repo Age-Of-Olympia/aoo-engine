@@ -324,6 +324,10 @@ class BuildingService extends BaseService
                 ]
             );
 
+            /* L'emprise de la structure : une case aujourd'hui, son ancre.
+             * L4 y ajoutera les autres morceaux depuis race_footprint. */
+            (new \App\Service\Map\EntityCellService($conn))->syncAnchor((int) $id);
+
             $conn->executeStatement(
                 'INSERT INTO buildings (player_id, owner_id, faction, build_state)
                  VALUES (?, ?, ?, ?)',
@@ -785,6 +789,8 @@ class BuildingService extends BaseService
                 'UPDATE players SET coords_id = ? WHERE id = ?',
                 [$tombstoneCoordsId, $playerId]
             );
+
+            (new \App\Service\Map\EntityCellService($conn))->syncAnchor((int) $playerId);
         });
 
         if ($goCoords !== false) {

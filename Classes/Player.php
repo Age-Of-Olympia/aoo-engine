@@ -760,6 +760,11 @@ class Player implements ActorInterface {
         $db = new Db();
         $db->exe($sql, array($coordsId, $this->id));
 
+        /* L'emprise suit le pas. Elle ne se lit pas encore (L3 la pose, L4
+         * la branchera), mais une ancre laissée derrière ferait démarrer la
+         * suite d'une carte fausse. */
+        (new \App\Service\Map\EntityCellService())->syncAnchor((int) $this->id);
+
 
         // territory change
         if($goCoords->plan != $oldCoords->plan){
@@ -2384,6 +2389,9 @@ class Player implements ActorInterface {
         if (!$res) {
             exit('error inserting player');
         }
+
+        /* Le personnage naît avec son emprise — une case, son ancre. */
+        (new \App\Service\Map\EntityCellService())->syncAnchor((int) $id);
 
         // ID is already assigned via getNextEntityId()
         $player = new Player($id);

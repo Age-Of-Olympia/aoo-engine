@@ -281,6 +281,8 @@ class NpcAdminService
                 "UPDATE players SET coords_id = ? WHERE id = ? AND player_type = 'npc'",
                 [$coordsId, $pnjId]
             );
+
+            (new \App\Service\Map\EntityCellService())->syncAnchor((int) $pnjId);
         }
     }
 

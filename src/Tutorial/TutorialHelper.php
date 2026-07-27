@@ -370,6 +370,8 @@ class TutorialHelper
 
         $db->exe('UPDATE players SET coords_id = ? WHERE id = ?', array($coordsId, $player->id));
 
+        (new \App\Service\Map\EntityCellService())->syncAnchor((int) $player->id);
+
         /* getCoords() est mémoïsé : invalider après l'écriture directe
          * (null plutôt qu'unset — PHPStan unset.possiblyHookedProperty). */
         $player->coords = null;
