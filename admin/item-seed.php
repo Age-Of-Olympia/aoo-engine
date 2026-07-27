@@ -27,8 +27,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             EntityManagerFactory::getEntityManager()->getConnection(),
             rtrim($_SERVER['DOCUMENT_ROOT'], '/')
         );
+        $skippedNote = $result['skipped'] !== []
+            ? ' Colonnes absentes de ce schéma, ignorées : <b>' . e(implode(', ', $result['skipped'])) . '</b>.'
+            : '';
         setFlash('success', 'Seed terminé : <b>' . $result['seeded'] . '</b> objets recopiés, '
-            . $result['missing'] . ' sans fichier JSON, ' . $result['kept'] . ' déjà en base (préservés).');
+            . $result['missing'] . ' sans fichier JSON, ' . $result['kept'] . ' déjà en base (préservés).'
+            . $skippedNote);
     } catch (\Throwable $e) {
         setFlash('warning', 'Échec : ' . e($e->getMessage()));
     }

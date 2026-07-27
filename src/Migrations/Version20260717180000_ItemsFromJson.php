@@ -75,6 +75,17 @@ final class Version20260717180000_ItemsFromJson extends AbstractMigration
             $result['missing'],
             $result['kept']
         ));
+
+        /* Rejeu depuis une base vierge : les colonnes ajoutées APRÈS cette
+         * migration n'existent pas encore, le seeder les passe et la migration
+         * qui les introduit les peuple. On l'annonce plutôt que de le taire —
+         * c'est le signe que le catalogue a bougé depuis cette date. */
+        if ($result['skipped'] !== []) {
+            $this->write(sprintf(
+                'Items seed: colonnes pas encore créées à cette étape, laissées à leur migration propriétaire : %s.',
+                implode(', ', $result['skipped'])
+            ));
+        }
     }
 
     public function down(Schema $schema): void
