@@ -23,6 +23,7 @@ class ConditionRegistry
             'ForbidOnEquipedObjectStatus' => new ForbidOnEquipedObjectStatusCondition(),
             'RequiresAmmo' => new RequiresAmmoCondition(),
             'RequiresResource' => new RequiresResourceCondition(),
+            'RequiresDamagedTarget' => new RequiresDamagedTargetCondition(),
             'RequiresItem' => new RequiresItemCondition(),
             'ItemPick' => new ItemPickCondition(),
             'BuildSite' => new BuildSiteCondition(),
