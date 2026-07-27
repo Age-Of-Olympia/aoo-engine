@@ -373,6 +373,24 @@ class View{
             WHERE
             coords_id IN ('. $inSightIdImploded .')
 
+            UNION
+
+            /* Les suivants — l\'étal du marchand, le double d\'illusion.
+             * Ils se dessinent comme du décor et à la même profondeur, mais
+             * ils n\'en sont plus : ils appartiennent à un personnage, ils le
+             * suivent, et ils s\'en vont avec lui. Les ranger dans
+             * map_foregrounds les rendait indiscernables des décors posés par
+             * un animateur — 19 marchands de la carte n\'appartiennent à
+             * personne — et un suivant retiré emportait parfois l\'un d\'eux. */
+            SELECT
+            id, name, coords_id,
+            "foregrounds" AS whichTable,
+            100 AS tableOrder
+            FROM
+            players_followers
+            WHERE
+            coords_id IN ('. $inSightIdImploded .')
+
             '. $tiledSql .'
 
             ORDER BY
@@ -1343,31 +1361,15 @@ class View{
 
         $url = 'img/foregrounds/doubles/'. $player->id .'.png';
 
-        $sql = '
-        DELETE p
-        FROM
-        map_foregrounds AS m
-        INNER JOIN
-        players_followers AS p
-        ON
-        m.id = p.foreground_id
-        WHERE
-        p.player_id = ?
-        AND
-        m.name = ?
-        ';
+        /* Le double est un SUIVANT, plus une ligne de décor : il se retire de
+         * sa propre table. L'ancienne version supprimait au passage tout
+         * `map_foregrounds` portant ce nom — sans filtre de joueur. */
+        $name = 'doubles/'. $player->id;
 
-        $name = $name='doubles/'. $player->id;
-
-        $db = new Db();
-
-        $db->exe($sql, array($player->id, $name));
-
-        $values = array(
-            'name'=>'doubles/'. $player->id
+        (new Db())->exe(
+            'DELETE FROM players_followers WHERE player_id = ? AND name = ?',
+            array($player->id, $name)
         );
-
-        $db->delete('map_foregrounds', $values);
 
         if (file_exists($url)) {
             unlink($url); // Delete the file

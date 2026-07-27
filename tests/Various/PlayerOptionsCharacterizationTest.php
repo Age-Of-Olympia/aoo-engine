@@ -140,7 +140,7 @@ class PlayerOptionsCharacterizationTest extends TestCase
         // the add/end deltas are unambiguous. Rollback restores the
         // original rows after the test.
         $this->link->executeStatement(
-            "DELETE FROM players_followers WHERE player_id = ? AND foreground_id IN (SELECT id FROM map_foregrounds WHERE name = 'marchand')",
+            "DELETE FROM players_followers WHERE player_id = ? AND name = 'marchand'",
             [$this->playerId]
         );
         $this->link->executeStatement(
@@ -168,12 +168,17 @@ class PlayerOptionsCharacterizationTest extends TestCase
         );
     }
 
+    /**
+     * Le suivant porte son nom LUI-MÊME.
+     *
+     * Il pointait auparavant vers une ligne de `map_foregrounds`, ce qui le
+     * rendait indiscernable d'un décor posé par un animateur — et le rendre
+     * en effaçait parfois un. Le compte se lit donc sans jointure.
+     */
     private function marchandFollowerCount(): int
     {
         return (int) $this->link->fetchOne(
-            "SELECT COUNT(*) FROM players_followers AS f
-             INNER JOIN map_foregrounds AS m ON f.foreground_id = m.id
-             WHERE f.player_id = ? AND m.name = 'marchand'",
+            "SELECT COUNT(*) FROM players_followers WHERE player_id = ? AND name = 'marchand'",
             [$this->playerId]
         );
     }

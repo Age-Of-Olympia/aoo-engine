@@ -1506,123 +1506,63 @@ class Player implements ActorInterface {
     }
 
 
+    /**
+     * Pose un suivant — l'étal du marchand, le double d'illusion.
+     *
+     * Le suivant porte son nom et sa case ; il ne passe plus par une ligne de
+     * décor. L'ancienne version en posait une au nom CODÉ EN DUR (`marchand`,
+     * quel que soit le suivant demandé) puis la relisait par son nom, ce qui
+     * fatalisait pour tout autre suivant et pouvait, pour le marchand,
+     * ADOPTER un décor déjà présent sur la case — que la dépose supprimait
+     * ensuite. Sur la carte de production, 19 décors `marchand` n'appartiennent
+     * à personne et étaient à portée de ce geste.
+     */
     public function add_follower($name, $params){
 
-
         $db = new Db();
 
-        $values = array(
-            'coords_id'=>$this->data->coords_id,
-            'name'=>'marchand'
-                    );
-
-        $db->insert('map_foregrounds', $values);
-
-        $sql = 'SELECT id FROM map_foregrounds WHERE name = ? AND coords_id = ?';
-
-        $res = $db->exe($sql, array($name, $this->data->coords_id));
-
-        $row = $res->fetch_object();
-
-        $values = array(
-            'player_id'=>$this->id,
-            'foreground_id'=>$row->id,
-            'params'=>$params
-                    );
-
-        $db->insert('players_followers', $values);
+        $db->insert('players_followers', array(
+            'player_id' => $this->id,
+            'name'      => $name,
+            'coords_id' => $this->data->coords_id,
+            'params'    => $params
+        ));
     }
 
+    /**
+     * Retire un suivant. Le décor de la carte n'est plus concerné : c'est
+     * précisément ce qui faisait disparaître des décors d'animateur.
+     */
     public function delete_follower($name){
 
-
-        $db = new Db();
-
-        $sql = '
-        SELECT
-        f.id AS followerId,
-        foreground_id
-        FROM
-        players_followers AS f
-        INNER JOIN
-        map_foregrounds AS m
-        ON
-        f.foreground_id = m.id
-        WHERE
-        m.name = ?
-        AND
-        f.player_id = ?';
-
-        $res = $db->exe($sql, array($name, $this->id));
-
-        if($res->num_rows){
-
-
-            $row = $res->fetch_object();
-
-
-            $values = array('player_id'=>$this->id, 'foreground_id'=>$row->foreground_id);
-
-            $db->delete('players_followers', $values);
-
-
-            $values = array(
-                'id'=>$row->foreground_id
-                      );
-
-            $db->delete('map_foregrounds', $values);
-        }
+        (new Db())->exe(
+            'DELETE FROM players_followers WHERE player_id = ? AND name = ?',
+            array($this->id, $name)
+        );
     }
 
 
+    /**
+     * Le suivant emboîte le pas.
+     *
+     * `params` dit où il se tient : `on` sur la case où le porteur ARRIVE,
+     * `last` sur celle qu'il quitte — un étal reste en arrière, un double
+     * marche avec vous. Appelé par go() AVANT que players.coords_id ne change,
+     * d'où $this->data->coords_id qui vaut encore l'ancienne case.
+     */
     public function move_followers($coordsId){
-
 
         $db = new Db();
 
-        $res = $db->get_single_player_id('players_followers', $this->id);
+        $db->exe(
+            'UPDATE players_followers SET coords_id = ? WHERE player_id = ? AND params = ?',
+            array($coordsId, $this->id, 'on')
+        );
 
-        if($res->num_rows){
-
-
-            while($row = $res->fetch_object()){
-
-
-                $foreground_id = $row->foreground_id;
-
-                $position = $row->params;
-
-                if($position == 'last'){
-
-
-                    $sql = '
-                    UPDATE
-                    map_foregrounds
-                    SET
-                    coords_id = ?
-                    WHERE
-                    id = ?
-                    ';
-
-                    $db->exe($sql, array($this->data->coords_id, $foreground_id));
-                }
-
-                elseif($position == 'on'){
-
-
-                    $sql = '
-                    UPDATE
-                    map_foregrounds
-                    SET
-                    coords_id = ?
-                    WHERE
-                    id = ?
-                    ';
-
-                    $db->exe($sql, array($coordsId, $foreground_id));
-                }
-            }
-        }
+        $db->exe(
+            'UPDATE players_followers SET coords_id = ? WHERE player_id = ? AND params = ?',
+            array($this->data->coords_id, $this->id, 'last')
+        );
     }
 
     
