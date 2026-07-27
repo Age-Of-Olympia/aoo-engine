@@ -1338,7 +1338,21 @@ class View{
         $minY = $coords->y - $p;
         $maxY = $coords->y + $p;
 
-        // delete svg cache
+        /* Purge du cache SVG, restreinte à ce qui peut en avoir un.
+         *
+         * On exclut UNIQUEMENT le mobilier inerte — ressources et décors —
+         * qui n'agit jamais et ne rendra donc jamais de vue. Les bâtiments
+         * RESTENT dans le balayage : ils sont appelés à agir (bâtiments de
+         * défense), donc à tenir une session et un cache comme un joueur.
+         *
+         * Liste noire et non liste blanche, précisément pour ça : une liste
+         * blanche fondée sur « une structure n'agit pas » deviendrait fausse
+         * le jour où un bâtiment agit, et son cache cesserait silencieusement
+         * d'être purgé. Ici, tout type nouveau est balayé par défaut ; seul
+         * ce qui est démontré inerte en sort.
+         *
+         * Effet : le balayage cesse de croître avec le nombre de ressources
+         * et de décors posés, sans rien changer pour l'existant. */
         $sql = '
             SELECT p.id AS id
             FROM
@@ -1350,7 +1364,8 @@ class View{
             WHERE x BETWEEN ? AND ?
             AND y BETWEEN ? AND ?
             AND c.z = ?
-            AND c.plan = ?';
+            AND c.plan = ?
+            AND (p.player_type IS NULL OR p.player_type NOT IN (\'resource\', \'scenery\'))';
 
         $res = $db->exe($sql, array($minX, $maxX, $minY, $maxY, $coords->z, $coords->plan));
 
