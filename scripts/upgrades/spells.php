@@ -45,15 +45,12 @@ $numberOfSpellsAvailable = NUMBER_MAX_COMP - $nbComp;
 $maxSpells = NUMBER_MAX_COMP;
 
 if($numberOfSpellsAvailable < 0){
-    echo '<h2 style="color: red; text-align: center; margin: 10px 0; font-family: sans-serif; font-size: 1.2em;">Vous dépassez la limite de compétences (sorts + passifs cumulés, max '. $maxSpells .'). Oubliez-en pour repasser sous la limite.</h2>';
+    echo '<p style="color: red; text-align: center; margin: 6px 0; font-family: sans-serif; font-size: 1.05em;">Compétences apprises : '. $nbComp .'/'. $maxSpells .' (sorts + passifs cumulés)</p>';
+    echo '<p style="color: red; text-align: center; margin: 6px 0; font-family: sans-serif; font-size: 1.05em;">Vous dépassez la limite : oubliez-en pour repasser sous '. $maxSpells .'.</p>';
     $trStyle = (!isset($_GET['forget'])) ? 'style="opacity: 0.5;"' : '';
     $buttonStyle = 'class="blink" style="color: red;"';
 } else {
-    echo '<h2 style="color: black; text-align: center; margin: 10px 0; font-family: sans-serif; font-size: 1.2em;">Le maximum de compétences (sorts, techniques et passifs cumulés) est de '. $maxSpells .'.';
-    if ($nbComp >= $maxSpells) {
-        echo '<br />Vous avez atteint le maximum de compétences.';
-    }
-    echo '</h2>';
+    echo '<p style="color: black; text-align: center; margin: 6px 0; font-family: sans-serif; font-size: 1.05em;">Compétences apprises : '. $nbComp .'/'. $maxSpells .' (sorts + passifs cumulés)</p>';
 }
 
 echo '<table class="box-shadow marbre" border="1" cellspacing="0" align="center">';
