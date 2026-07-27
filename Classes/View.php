@@ -2,7 +2,6 @@
 namespace Classes;
 
 use App\Enum\CoordType;
-use App\Factory\PlayerFactory;
 
 class View{
 
@@ -197,6 +196,31 @@ class View{
                 }
             }
 
+            /* Les entités en vue, en UNE requête.
+             *
+             * La boucle de rendu ne lit d'un occupant que son type, son
+             * avatar, sa race et son nom. Elle montait pourtant un objet
+             * Player complet PAR LIGNE — caracs, options, effets, inventaire
+             * — soit autant d'hydratations que d'occupants à l'écran, à
+             * chaque rendu de damier. Sur la fenêtre la plus dense de
+             * fort_turok, 428 occupants. */
+            /* Le catalogue des structures traversables : lu UNE fois, pas une
+             * fois par occupant. La boucle construisait un RaceService neuf à
+             * chaque ligne pour reposer la même question. */
+            $passableStructures = (new \App\Service\RaceService())->getPassableStructureNames();
+
+            $entitiesInSight = [];
+            if (!empty($this->inSightId)) {
+                $resEntities = (new Db())->exe('
+                    SELECT id, name, player_type, avatar, race
+                    FROM players
+                    WHERE coords_id IN ('. $inSightIdImploded .')
+                ');
+                while ($rowE = $resEntities->fetch_object()) {
+                    $entitiesInSight[(int) $rowE->id] = $rowE;
+                }
+            }
+
             // Safety check: if no coords in sight, skip the query
             if (empty($this->inSightId)) {
                 error_log("[View] No coords found in sight for current position - skipping map elements query");
@@ -376,13 +400,30 @@ class View{
                 }
 
                 elseif($row->whichTable == 'players'){
-                    $player = PlayerFactory::legacy((int) $row->id);
-                    $player->get_data();
+
+                    /* Une SEULE requête pour toutes les entités en vue (voir
+                     * $entitiesInSight plus haut), au lieu d'un objet Player
+                     * complet hydraté par ligne.
+                     *
+                     * La boucle ne lit que cinq champs — type, avatar, race,
+                     * nom, id — là où PlayerFactory::legacy()->get_data()
+                     * montait tout le personnage : caracs, options, effets,
+                     * inventaire. À 428 occupants dans la fenêtre la plus
+                     * dense de fort_turok, c'était 428 hydratations par rendu
+                     * de damier. */
+                    $entity = $entitiesInSight[(int) $row->id] ?? null;
+
+                    if($entity === null){
+
+                        /* Ligne apparue entre les deux requêtes : on la saute
+                         * plutôt que de la dessiner à moitié. */
+                        continue;
+                    }
 
                     // Les structures (bâtiments, objets uniques) font partie du
                     // décor, comme les murs : toujours visibles, même quand la
                     // visibilité des joueurs est coupée (plans isolés, tutoriel).
-                    $isStructure = in_array($player->data->player_type ?? 'real', ['building', 'unique'], true);
+                    $isStructure = in_array($entity->player_type ?? 'real', ['building', 'unique'], true);
 
                     // Skip invisible players (except when viewing your own character)
                     if (!$isStructure && $row->id != $this->playerId && isset($invisiblePlayers[$row->id])) {
@@ -401,7 +442,7 @@ class View{
                     }
                     // Les PNJs peuvent voir tout le monde, sans restriction de visibilité
 
-                    $img = $player->data->avatar;
+                    $img = $entity->avatar;
 
                     // Avatar figé en base à la CONVERSION : quand elle a
                     // tourné sans img/ (déploiement — les migrations
@@ -412,7 +453,7 @@ class View{
                     // qu'une fois.
                     if($isStructure && (empty($img) || !file_exists($img))){
 
-                        $resolved = \App\Service\BuildingService::resolveAvatar((string) $player->data->race);
+                        $resolved = \App\Service\BuildingService::resolveAvatar((string) $entity->race);
 
                         if($resolved !== ''){
 
@@ -421,22 +462,21 @@ class View{
                             $db = new Db();
                             $db->exe(
                                 'UPDATE players SET avatar = ?, portrait = ? WHERE id = ?',
-                                array($resolved, $resolved, (int) $player->id)
+                                array($resolved, $resolved, (int) $entity->id)
                             );
-                            \App\Service\BuildingService::purgeEntityCaches((int) $player->id);
+                            \App\Service\BuildingService::purgeEntityCaches((int) $entity->id);
                         }
                         else{
 
                             // Vraiment sans visuel (taverne…) : initiales.
-                            $img = self::structureInitialsAvatar((string) $player->data->name);
+                            $img = self::structureInitialsAvatar((string) $entity->name);
                         }
                     }
 
                     /* Structure passable (table…) : marquée pour que le
                      * bouton Aller reste offert sur sa case (js/view.js). */
                     $passableAttr = '';
-                    if($isStructure && in_array((string) $player->data->race,
-                        (new \App\Service\RaceService())->getPassableStructureNames(), true)){
+                    if($isStructure && in_array((string) $entity->race, $passableStructures, true)){
 
                         $passableAttr = 'data-passable="1"';
                     }
@@ -453,7 +493,7 @@ class View{
                     if($raceHintApplies){
 
 
-                        $raceBgColor = \App\Service\RaceService::getRaceColor($player->data->race);
+                        $raceBgColor = \App\Service\RaceService::getRaceColor($entity->race);
 
 
                         if(in_array('raceHintMax', $this->options)){
