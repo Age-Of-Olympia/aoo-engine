@@ -444,13 +444,19 @@ class View{
 
                     $img = $entity->avatar;
 
-                    // Avatar figé en base à la CONVERSION : quand elle a
-                    // tourné sans img/ (déploiement — les migrations
-                    // partent du checkout git), il est resté vide et les
-                    // murs convertis s'affichaient en initiales « Mu ».
-                    // Au rendu, img/ existe : re-résolution par la race,
-                    // et AUTO-RÉPARATION de la ligne pour ne le faire
-                    // qu'une fois.
+                    /* Avatar figé en base à la CONVERSION : quand elle a tourné
+                     * sans img/ (le déploiement exécute les migrations depuis
+                     * le checkout git), il est resté vide — 10 539 bâtiments
+                     * sur 13 549 en production — et les murs convertis
+                     * s'affichaient en initiales « Mu ».
+                     *
+                     * Le rendu se contente de RÉSOUDRE le visuel manquant. Il
+                     * ne répare plus la ligne : réparer était un UPDATE et une
+                     * purge de cache déclenchés depuis un chemin de lecture,
+                     * pour chaque structure encore vide, à chaque affichage de
+                     * carte. La réparation durable est
+                     * `building repair-avatars` en console, qui fait
+                     * exactement le même calcul, une fois. */
                     if($isStructure && (empty($img) || !file_exists($img))){
 
                         $resolved = \App\Service\BuildingService::resolveAvatar((string) $entity->race);
@@ -458,13 +464,6 @@ class View{
                         if($resolved !== ''){
 
                             $img = $resolved;
-
-                            $db = new Db();
-                            $db->exe(
-                                'UPDATE players SET avatar = ?, portrait = ? WHERE id = ?',
-                                array($resolved, $resolved, (int) $entity->id)
-                            );
-                            \App\Service\BuildingService::purgeEntityCaches((int) $entity->id);
                         }
                         else{
 
