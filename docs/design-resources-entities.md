@@ -524,6 +524,23 @@ mis sur la construction.
    type ne l'utilise aujourd'hui — c'est une capacité en attente d'usage, pas du
    code mort à retirer.
 
+   **Le cas à ne pas casser en L4 : décor + déclencheur.** Un téléporteur est
+   invisible par lui-même ; ce qui le signale au joueur est un DÉCOR posé sur
+   la même case. Mesuré sur les 1 746 déclencheurs `tp` de production :
+   9 escaliers vers le bas, 9 vers le haut, 9 échelles, 14 portes des enfers,
+   plus les entrées de lieux (mine, carrière, tourbière, chantier, fort).
+   En face, **2 entités** et 4 ressources seulement.
+
+   Ces marqueurs étant des décors, `BuildingService::place()` ne les gouverne
+   pas aujourd'hui — la superposition passe donc sous le radar. Le jour où L4
+   entifie les décors, elle y passera : **toute règle du type « on ne bâtit pas
+   sur un déclencheur » interdirait de poser un escalier sur un téléporteur**,
+   c'est-à-dire le geste même qui lui donne son sens.
+
+   C'est aussi pourquoi la divergence épinglée par le test étalon — `place()`
+   ignore les déclencheurs quand `isVacant()` les compte — ne doit PAS être
+   « corrigée » par réflexe de cohérence. Elle est du bon côté.
+
    Conséquences pour l'emprise : la PK `(player_id, coords_id)` l'autorise
    nativement, et `BuildingService::place()` — qui refuse aujourd'hui de poser
    sur une case occupée — devra distinguer « refuser au joueur » de « permettre
