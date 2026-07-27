@@ -9,6 +9,21 @@ use Classes\View;
 
 class PlantsService
 {
+    /** Dé injectable — même point d'injection que ResourceService. */
+    private static ?\Classes\Dice $dice = null;
+
+    public static function setDiceForTests(?\Classes\Dice $dice): void
+    {
+        self::$dice = $dice;
+    }
+
+    /** Un dé à $sides faces, une fois. */
+    private static function roll(int $sides): int
+    {
+        $dice = self::$dice ?? new \Classes\Dice(max(1, $sides));
+
+        return (int) $dice->roll(1)[0];
+    }
 
 
     public static function getTriggerGrow(): Object
@@ -70,7 +85,7 @@ class PlantsService
         $growTo = (int) $item->grow_rate;
 
         //chance de 1/growTo
-        if(AUTO_GROW || rand(1,$growTo) == 1)
+        if(AUTO_GROW || self::roll($growTo) == 1)
         {
 
             $values = array(

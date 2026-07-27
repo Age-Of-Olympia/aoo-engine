@@ -8,12 +8,37 @@ use App\Action\Schema\HasParameterSchema;
 use App\Action\Schema\ParameterSchema;
 use App\Service\ResourceService;
 use Doctrine\ORM\Mapping as ORM;
+use Classes\Dice;
 use Classes\Item;
 use Classes\Player;
 
 #[ORM\Entity]
 class ResourceOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    /**
+     * Dé injectable. Nul en jeu — un dé de la bonne taille est fabriqué à
+     * chaque tirage, et il passe par DiceLog comme ceux du combat, donc le
+     * jet de récolte devient visible dans le détail d'action au lieu d'être
+     * reconstruit à la main dans le message.
+     *
+     * Passer par un setter et non par le constructeur : Doctrine hydrate ses
+     * entités sans l'appeler.
+     */
+    private ?Dice $dice = null;
+
+    public function setDice(?Dice $dice): void
+    {
+        $this->dice = $dice;
+    }
+
+    /** Un dé à $sides faces, une fois. */
+    private function roll(int $sides): int
+    {
+        $dice = $this->dice ?? new Dice(max(1, $sides));
+
+        return (int) $dice->roll(1)[0];
+    }
+
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema();
@@ -56,7 +81,7 @@ class ResourceOutcomeInstruction extends OutcomeInstruction implements HasParame
             $max = $v;
             $item = Item::get_item_by_name($k);
             $item->get_data();
-            $rand = rand(1, $max);
+            $rand = $this->roll($max);
 
             $item->add_item($actor, $rand);
 
