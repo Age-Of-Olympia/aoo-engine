@@ -942,7 +942,6 @@ class View{
 
         if(!$res->num_rows){
 
-            // Create coordinates with only the required fields
             $coordsData = [
                 'x' => (int)$goCoords->x,
                 'y' => (int)$goCoords->y,
@@ -951,8 +950,36 @@ class View{
             ];
 
             try {
-                $db->insert('coords', $coordsData);
-                $coordsId = $db->get_last_id('coords');
+                /* Upsert idempotent, PAS insert + get_last_id : deux requêtes
+                 * qui découvrent la même case au même instant doivent obtenir
+                 * le MÊME id. ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)
+                 * fait rendre à LAST_INSERT_ID() la ligne existante quand la
+                 * clé unique (plan, z, x, y) casse l'insertion — la forme
+                 * marche donc pour les deux chemins.
+                 *
+                 * get_last_id('coords') faisait « ORDER BY id DESC LIMIT 1 »,
+                 * c'est-à-dire le MAX de TOUTE la table : sous concurrence il
+                 * rendait la case d'un autre joueur. */
+                $db->exe(
+                    'INSERT INTO coords (x, y, z, plan) VALUES (?, ?, ?, ?)
+                     ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)',
+                    array($coordsData['x'], $coordsData['y'], $coordsData['z'], $coordsData['plan'])
+                );
+
+                $row = $db->exe('SELECT LAST_INSERT_ID() AS id')->fetch_assoc();
+                $coordsId = (int) ($row['id'] ?? 0);
+
+                /* Repli : en simulation les écritures sont avalées par
+                 * SimulationGuard, donc LAST_INSERT_ID() ne désigne pas notre
+                 * ligne. On relit alors par coordonnées plutôt que de rendre
+                 * un id faux. */
+                if (!$coordsId) {
+                    $again = $db->exe($sql, array($goCoords->x, $goCoords->y, $goCoords->z, $goCoords->plan));
+                    if (!$again->num_rows) {
+                        return null;
+                    }
+                    $coordsId = (int) $again->fetch_object()->id;
+                }
                 /* Pas de log du chemin nominal : l'auto-création de coords
                  * est un événement normal et fréquent (exploration de la
                  * carte) — le journaliser noie les vraies erreurs, et
