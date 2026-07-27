@@ -29,7 +29,7 @@ else{
         Les images non utilisées seront automatiquement supprimées.</font>
     </div>
     <div class="img-content"></div>
-    <script src="js/upload_img.js"></script>
+    <script src="js/upload_img.js?v=20260718"></script>
     <?php
 
     echo '

@@ -34,3 +34,6 @@ db/migrations/
 
 # Claude Code local settings
 .claude/
+
+.kr1.yaml
+

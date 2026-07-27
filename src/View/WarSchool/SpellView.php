@@ -19,14 +19,13 @@ class SpellView
         $actionPassiveService = new ActionPassiveService();
         $actions = $actionService->getActionsByCategory('spell');
 
-        // TODO : retirer cette ligne quand la limite sort par les passifs sera ajoutée
         $nb_comp = $actionPassiveService->getActionPassiveCount($player->getId()) + $player->get_spells_count();
 
         $playerGold = $player->get_gold();
 
         if (!empty($_POST['buySkillId'])) {
             if (ob_get_length()) ob_clean();
-            if ($player->get_spells_count() >= NUMBER_MAX_COMP) {
+            if ($nb_comp >= NUMBER_MAX_COMP) {
                 echo '<div id="data">Limite de compétences atteinte (max ' . NUMBER_MAX_COMP . ') !</div>';
                 exit;
             }
@@ -63,8 +62,11 @@ class SpellView
 
         ob_start();
 
+        echo '<style>.ws-content h1{font-size:1.6em}.ws-content h2{font-family:sans-serif;font-size:1.1em;font-weight:bold}.ws-content h3{font-family:sans-serif;font-size:1.05em;font-weight:normal}.ws-content .ws-info{font-family:sans-serif;font-size:1.05em;text-align:center;margin:6px 0}</style>';
+        echo '<div class="ws-content">';
+
         echo '<h1>Sorts</h1>';
-        echo '<h2>Vous avez ' . $playerGold . ' Po </h2>';
+        echo '<p class="ws-info">Vous avez ' . $playerGold . ' Po&nbsp;&middot;&nbsp;Compétences apprises : ' . $nb_comp . '/' . NUMBER_MAX_COMP . ' (sorts + passifs cumulés)</p>';
         echo '<details style="cursor: pointer; margin-bottom: 20px; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 5px;">';
             echo '<summary style="display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; margin: 15px 0; outline: none;">';
                 echo '<span style="display: list-item; list-item-type: disclosure-closed; margin-right: 10px;"></span>';
@@ -95,7 +97,6 @@ class SpellView
                   </thead>';
             echo '<tbody>';
 
-            // TODO : retirer cette ligne quand la limite sort par les passifs sera ajoutée
             $isFull = ($nb_comp >= NUMBER_MAX_COMP);
 
             foreach ($actions as $action) {
@@ -155,6 +156,7 @@ class SpellView
 
         echo '</div>';
 
+    echo '</div>';
     echo Str::minify(ob_get_clean());
 
     ?>

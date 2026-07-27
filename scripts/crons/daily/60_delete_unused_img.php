@@ -5,46 +5,54 @@ use Classes\File;
  * ce script unlink toutes les images uploadées qui ne sont pas retrouvées dans les posts du forum.
  */
 
+const UPLOADS_PREFIX = 'img/ui/forum/uploads/';
+
+function normalize_upload_key($path){
+
+    $path = str_replace('\\', '/', trim($path));
+    $path = preg_replace('#/+#', '/', $path); // 'uploads//x.png' -> 'uploads/x.png'
+    $path = ltrim($path, '/');                // '/img/ui/...'    -> 'img/ui/...'
+
+    if(!str_starts_with($path, UPLOADS_PREFIX))
+        return null;
+
+    $key = substr($path, strlen(UPLOADS_PREFIX));
+
+    return $key !== '' ? $key : null;
+}
 
 function search_img($text, &$result){
-
-
-    // Expression régulière pour capturer le contenu entre [img] et [/img]
     $pattern = '/\[img\](.*?)\[\/img\]/';
-
-    // Tableau pour stocker les correspondances
     $matches = array();
 
-    // Utilisation de preg_match_all pour capturer toutes les correspondances
     if (preg_match_all($pattern, $text, $matches)) {
-        // Les correspondances sont dans $matches[1]
         foreach ($matches[1] as $match) {
-
-            if(str_starts_with($match,"img/ui/forum/uploads/")) // keep only file name and use dict for faster check
-                $result[str_replace("img/ui/forum/uploads/","",$match)]=true;
+            $key = normalize_upload_key($match);
+            if($key !== null)
+                $result[$key] = true;
         }
     }
 }
 
-
 $result = array();
-
+$postsRead = 0;
 
 foreach(File::scan_dir(__DIR__ .'/../../../datas/private/forum/posts/', without:'.json') as $e){
-
     $postJson = json()->decode('forum/posts', $e);
+    if (!isset($postJson->text) || !is_string($postJson->text))
+        continue;
 
+    $postsRead++;
     search_img($postJson->text, $result);
 }
 
-
-// printr($result);
-
-
 $dir = __DIR__ .'/../../../img/ui/forum/uploads/';
 
+if ($postsRead === 0) {
+    echo "Aucun post lisible : suppression annulée par sécurité.\n";
+    return;
+}
 
-// Fonction pour parcourir récursivement un dossier et retourner les chemins des images trouvées
 function getImagesFromDir($dir) {
     $images = array();
     $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir));
@@ -52,9 +60,9 @@ function getImagesFromDir($dir) {
     foreach ($iterator as $file) {
         if ($file->isFile()) {
             $filePath = $file->getPathname();
-            // Vérifier si le fichier est une image en fonction de son extension
-            if (preg_match('/\.(jpg|jpeg|png|gif)$/i', $filePath)) {
-                $fileName= str_replace($dir, '', $filePath);
+            if (preg_match('/\.(jpg|jpeg|png|gif|webp|webm|jfif|avif)$/i', $filePath)) {
+                $fileName = str_replace($dir, '', $filePath);
+                $fileName = ltrim(preg_replace('#/+#', '/', str_replace('\\', '/', $fileName)), '/');
                 $images[] = $fileName;
             }
         }
