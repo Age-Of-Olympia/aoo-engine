@@ -6,6 +6,7 @@ use Classes\File;
 use Classes\Json;
 use Classes\Player;
 use Classes\View;
+use App\Service\TiledMapService;
 
 class MapCmd extends AdminCommand
 
@@ -158,6 +159,19 @@ function load_map($argumentValues) {
         $mapJson = json_decode(file_get_contents(PATH . $name . '.json'), true);
 
         if ($mapJson) {
+            /* Les 21 cartes archivées portent la clé « walls », nom de la
+             * couche avant le renommage du 2026-07-20. La boucle ci-dessous
+             * n'itère plus que « resources » : sans cette normalisation, les
+             * murs de fort_turok, praetorium, eryn_dolen et compagnie — plus
+             * de cinq mille lignes — étaient ignorés SANS UN MOT. */
+            $mapJson = TiledMapService::normalizeLegacyLayerKeys($mapJson);
+
+            /* Ce qui reste hors du périmètre est désormais annoncé : une
+             * sauvegarde amputée en silence est pire que pas de sauvegarde. */
+            foreach (array_diff(array_keys($mapJson), $tables) as $unknown) {
+                echo '<font color="orange">couche ignorée : ' . htmlspecialchars((string) $unknown) . '</font><br />';
+            }
+
             $db->start_transaction("map_load");
             echo 'Begin transaction for single-file map.<br />';
             ob_flush();
@@ -167,6 +181,19 @@ function load_map($argumentValues) {
                 foreach ($tables as $table) {
                     if (isset($mapJson[$table])) {
                         $data = $mapJson[$table];
+
+                        /* Remplacer, pas empiler. Le chemin multi-parties fait
+                         * ce DELETE depuis toujours ; celui-ci ne le faisait
+                         * pas, si bien que recharger une carte DOUBLAIT ses
+                         * lignes au lieu de la restaurer — sur le seul outil
+                         * de retour arrière du monde. */
+                        $db->exe(
+                            'DELETE a FROM map_' . $table . ' AS a
+                             INNER JOIN coords AS b ON a.coords_id = b.id
+                             WHERE b.plan = ?',
+                            $player->coords->plan
+                        );
+
                         $insertValues = array();
                         $n = 0;
 
