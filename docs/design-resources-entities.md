@@ -213,6 +213,50 @@ Le rôle par défaut vient du catalogue et reste **surchargeable case par case**
 l'admin voit alors que la case *diverge* de son type (les 6 géants sur 43 dont
 la base ne bloque pas, l'herbe sur le toit de la taverne).
 
+#### Le comportement partagé tombe de la jointure
+
+C'est l'intérêt principal de l'emprise, et il ne demande aucun code de
+partage. Aujourd'hui `observe.php` résout une case en entité par
+`p.coords_id = c.id` — **huit occurrences** —, si bien que seule la case
+d'ancrage d'une taverne 3×3 trouve le bâtiment ; les huit autres ne trouvent
+rien. D'où les **335 lignes `map_dialogs`**, des dialogues recopiés à la main
+case par case pour compenser.
+
+Passer cette jointure par `entity_cells` suffit : toute case de l'emprise rend
+le même `player_id`, donc la même fiche, le même dialogue, les mêmes PV, les
+mêmes actions. Les recopies deviennent du bruit à supprimer.
+
+Une nuance qui compte : « toutes les cases ouvrent le même dialogue » oui,
+« toutes les cases se comportent pareil » non. C'est à cela que servent les
+rôles — une taverne dont le toit est franchissable et la porte unique, c'est
+une seule entité, un seul dialogue, trois comportements de case.
+
+#### Les bâtiments sont concernés au même titre que le décor
+
+Un bâtiment EST une entité : 13 549 lignes `player_type='building'`, qui ont
+déjà leur ancre. Ce qui leur manque, c'est une découpe de plus d'une case.
+
+Les gros bâtiments, eux, sont encore du décor — **280 cases en `unique_*`**
+(taverne, fort, praetorium, pyramide) que la conversion des murs avait
+délibérément écartées. Décor et bâtiment sont donc le même sujet, et se
+règlent par la même table.
+
+#### Les deux éditeurs, et l'admin
+
+Trois surfaces à traiter, pas une :
+
+- **Tiled** (externe) ré-éclate la tuile posée en morceaux au push
+  (`expandComposite`) ;
+- **tiled** (maison) efface le décor case par case
+  (`DELETE FROM <table> WHERE coords_id = ?`), alors qu'il sait déjà démonter
+  un bâtiment par son service. C'est de là que viennent les fragments
+  orphelins ;
+- **l'admin** doit porter le catalogue des découpes, comme il porte déjà les
+  races, les effets, les objets et les types de ressource. Découpe, rôle de
+  chaque morceau, arbitrage figure complète / demi-figure : ce sont des
+  décisions de décor, elles appartiennent à une page d'administration et non à
+  une migration.
+
 Coût mesuré du JOIN sur le chemin chaud (banc à 40 879 entités, fenêtre p=12 la
 plus dense de `fort_turok`, index posé, 200 répétitions) : **2,17 → 2,62 ms.
 +0,45 ms par rendu de damier.** Non-sujet.

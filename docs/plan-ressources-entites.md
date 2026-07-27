@@ -308,15 +308,67 @@ Dans l'ordre :
    constructibles par-dessus (50 cases de fragment portent déjà une entité).
 6. `observe.php` lit l'emprise : les structures parlent enfin, les 110 lignes
    `map_dialogs` redondantes disparaissent.
-7. **Tiled** : supprimer `expandComposite` (`tools/tiled/aoo/aoo.js:897`), le
-   push envoie `{x, y, name}` sur une couche `structures` et le serveur
-   matérialise l'emprise depuis le catalogue. Le « c'est normal, les morceaux se
-   réaffichent » du guide disparaît.
-8. Les ~32 fragments orphelins et groupes incomplets partent dans un rapport
+7. **Les DEUX éditeurs, avant l'étape 4 et non après.** Tant qu'ils posent des
+   morceaux indépendants, ils fabriquent de la dette pendant qu'on la rembourse.
+
+   - *Tiled* (externe) : supprimer `expandComposite`
+     (`tools/tiled/aoo/aoo.js:897`), qui ré-éclate la tuile posée en morceaux
+     `-NN` au moment du push — le commentaire l'assume : « un pull ultérieur
+     ré-affiche les morceaux, ce qui revient au même visuellement ».
+     Visuellement oui, structurellement l'objet meurt à la porte. Le push
+     envoie `{x, y, name}` sur une couche `structures`, le serveur matérialise
+     l'emprise depuis le catalogue.
+   - *tiled* (maison, `tiled.php`) : même bascule, et elle est plus urgente.
+     `scripts/tiled/erase_case.php` sait déjà démonter un BÂTIMENT par son
+     service — « jamais par un DELETE brut », dit le commentaire — mais le
+     décor part par `DELETE FROM <table> WHERE coords_id = ?`, **une case à la
+     fois**. Effacer une case d'une taverne 3×3 laisse huit fragments
+     orphelins : c'est ainsi qu'on en a fabriqué une trentaine. La pose doit
+     écrire une entité et laisser le serveur étendre l'emprise ; l'effacement
+     doit prendre l'objet entier depuis n'importe laquelle de ses cases.
+
+8. **Le catalogue des découpes s'édite depuis l'admin**, comme les autres
+   catalogues passés en base : `admin/footprints.php` + `-save.php`, sur le
+   patron de `races.php`, `effects.php`, `items.php`, `resource-types.php`.
+   C'est là que se prennent les décisions de décor, pas dans une migration :
+   la découpe (w, h), le rôle de chaque morceau (`block` pour la base, `cover`
+   pour la partie haute, `door` pour l'entrée), et l'arbitrage figure complète
+   / demi-figure. Une migration fige, une page d'admin laisse la main aux
+   animateurs.
+9. Les ~32 fragments orphelins et groupes incomplets partent dans un rapport
    d'admin, un par un.
 
 **À trancher avant l'étape 4** : le multi-z (`porte_des_enfers` sur quatre
 étages, 14 colonnes concernées) — un objet ou quatre ?
+
+### Ce que la dérivation a mesuré (26 juillet, copie de production)
+
+Le catalogue est dérivable des données, et il l'a été — script rejouable, en
+lecture seule :
+
+- **66 familles sur 68** rendent une découpe complète, dont **8 figures
+  trouées** (le géant pétrifié occupe 4 cases dans une boîte 3×3).
+- **L'ancre est le premier morceau, pas le coin de la boîte englobante.** Une
+  figure trouée n'a pas forcément de case au coin bas-gauche — c'est ce qui
+  rendait l'ancre fausse pour cinq familles, et le problème disparaît avec ce
+  choix, sans cas particulier.
+- **38 exemplaires tronqués** sur 7 familles : 21 géants sans leurs pieds,
+  9 `arbre_blanc`, etc. Avec la règle « la figure complète fait foi », ce sont
+  des exemplaires à compléter — la liste de travail des animateurs.
+- **2 familles à trancher** : `lac_thetis` (les suffixes `-04`/`-05` sont deux
+  VARIANTES de lac, pas les moitiés d'une figure) et `triton_statue` (deux
+  conventions de nommage mélangées dans la même famille).
+- **Aucune famille de décor n'existe dans `races`** : le catalogue ne peut donc
+  pas être semé avant que L4 n'ait créé les entités `'scenery'`. La dérivation
+  est prête, l'écriture appartient à ce lot.
+
+Le mécanisme actuel, lui, ne couvre qu'une minorité du décor :
+`TileCatalogService::buildComposites` lit le DISQUE, exige que tous les
+morceaux existent sous `base-NN.png`, et écarte la famille entière au premier
+manquant. Or **442 fichiers de morceaux sont nommés `_NN` contre 120 en
+`-NN`** — et `unique_fort_turok` porte `_02`…`_16`, donc il n'a aucune tuile
+composite et se peint morceau par morceau. Mettre le catalogue en base rend
+ces conventions caduques : l'indice de morceau devient une colonne.
 
 ---
 
