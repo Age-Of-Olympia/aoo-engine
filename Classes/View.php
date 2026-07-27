@@ -213,6 +213,18 @@ class View{
              * — soit autant d'hydratations que d'occupants à l'écran, à
              * chaque rendu de damier. Sur la fenêtre la plus dense de
              * fort_turok, 428 occupants. */
+            /* Les PNJ apparus pour la session de tutoriel en cours.
+             *
+             * Le damier les marque `.tutorial-enemy`, la prise sur laquelle
+             * les étapes accrochent leur surlignage. Il les reconnaissait au
+             * NOM — « Âme d'entraînement » —, c'est-à-dire à un libellé
+             * d'affichage que l'administration du tutoriel peut changer :
+             * renommer le PNJ éteignait le surlignage, sans erreur ni trace.
+             *
+             * Une requête, et seulement pendant un tutoriel : hors session,
+             * getSessionEnemyIds() rend un tableau vide sans toucher la base. */
+            $tutorialEnemyIds = \App\Tutorial\TutorialHelper::getSessionEnemyIds();
+
             $entitiesInSight = [];
             if (!empty($this->inSightId)) {
                 $resEntities = (new Db())->exe('
@@ -584,16 +596,8 @@ class View{
 
 
                     $isCurrentPlayer = ($row->whichTable == 'players' && $row->id == $this->playerId);
-                    /* L'« Âme d'entraînement » du tutoriel se reconnaît à son
-                     * nom. Il se lisait sur un `$player` qui n'existe plus :
-                     * la boucle hydratait un personnage complet par occupant,
-                     * ce que la requête unique a remplacé — la ligne, elle,
-                     * est restée. Elle ne fatalisait pas (PHP 8 lit null sur
-                     * une variable indéfinie, en émettant une alerte), mais
-                     * elle rendait la marque `.tutorial-enemy` inatteignable,
-                     * donc le surlignage du combat d'entraînement muet. */
-                    $isTutorialEnemy = ($row->whichTable == 'players' && $row->id < 0
-                        && isset($entity) && $entity->name === "Âme d'entraînement");
+                    $isTutorialEnemy = ($row->whichTable == 'players'
+                        && isset($tutorialEnemyIds[(int) $row->id]));
 
                     if($row->whichTable == 'players'){
 

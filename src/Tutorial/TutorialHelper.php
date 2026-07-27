@@ -113,6 +113,57 @@ class TutorialHelper
     }
 
     /**
+     * Les PNJ que le tutoriel a fait apparaître pour la session en cours.
+     *
+     * Le damier a besoin de les reconnaître : il pose sur eux la marque
+     * `.tutorial-enemy`, à laquelle les étapes accrochent leur surlignage
+     * (« approche-toi », « clique dessus »). Il les reconnaissait à leur NOM,
+     * « Âme d'entraînement » — une chaîne éditable depuis l'administration du
+     * tutoriel, qui ne servait qu'à l'affichage, et dont personne ne pouvait
+     * deviner qu'un renommage éteindrait le surlignage sans rien signaler.
+     *
+     * L'inscription en base, elle, est posée par l'apparition elle-même
+     * (TutorialResourceManager) et ne dépend d'aucun libellé.
+     *
+     * Portée : les PNJ DYNAMIQUES de la session — ceux que le tutoriel fait
+     * naître à côté du joueur. Aujourd'hui il n'y en a qu'un, l'ennemi
+     * d'entraînement ; le rôle (`tutorial_npcs.role`) n'est pas reporté sur
+     * la ligne d'apparition, donc un second PNJ dynamique d'un autre rôle
+     * serait marqué comme lui. Le jour où ce cas se présente, c'est le rôle
+     * qu'il faudra porter ici, pas le nom.
+     *
+     * @return array<int, true> ids en CLÉS (pour un `isset()` par occupant) ;
+     *                          tableau vide hors tutoriel
+     */
+    public static function getSessionEnemyIds(): array
+    {
+        $sessionId = self::getSessionId();
+
+        if ($sessionId === null) {
+            return [];
+        }
+
+        try {
+            $db = new \Classes\Db();
+            $result = $db->exe(
+                'SELECT enemy_player_id FROM tutorial_enemies WHERE tutorial_session_id = ?',
+                [$sessionId]
+            );
+
+            $ids = [];
+
+            while ($result && $row = $result->fetch_object()) {
+                $ids[(int) $row->enemy_player_id] = true;
+            }
+
+            return $ids;
+        } catch (\Exception $e) {
+            error_log('[TutorialHelper] Error listing session enemies: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Get tutorial player ID if in tutorial
      *
      * @return int|null Tutorial player ID or null if not in tutorial
