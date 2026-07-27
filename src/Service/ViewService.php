@@ -833,23 +833,32 @@ class ViewService {
 
     private function generateResourceLayer($plan) {
         $layer = $this->createLayer();
-        $zCondition = $plan === $this->worldPlan 
-            ? "AND c.z = 0" 
-            : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
+        $zCondition = $plan === $this->worldPlan
+            ? "AND c.z = 0"
+            : ($this->playerZ !== null ? "AND c.z = " . (int) $this->playerZ : "");
         $mapType = $plan === $this->worldPlan ? "global" : "local";
 
-        // Requête les murs à partir de map_murs
+        /* Toute la couche, et non « ce dont le nom contient mur ou arbre ».
+         *
+         * Ce filtre datait du temps où map_resources portait aussi les murs.
+         * Depuis leur conversion en entités, la moitié « mur » ne correspond
+         * plus à rien — les murs sont dessinés par la couche buildings — et
+         * la moitié « arbre » laissait de côté la pierre, l'herbe, la jungle,
+         * la pierre noire, les rochers, les cocotiers et tous les minerais,
+         * soit près des trois quarts des ressources posées.
+         *
+         * Les types absents de tile_colors retombent sur la couleur par
+         * défaut (ColorService::colorFor), donc aucun n'est perdu. */
         $sql = "SELECT mw.*, c.x, c.y
             FROM map_resources mw
             JOIN coords c ON c.id = mw.coords_id
-            WHERE c.plan = '" . $plan . "'
-            AND (mw.name LIKE '%mur%' OR mw.name LIKE '%arbre%')
-            AND c.x BETWEEN " . $this->minX . " AND " . $this->maxX . "
-            AND c.y BETWEEN " . $this->minY . " AND " . $this->maxY . "
+            WHERE c.plan = ?
+            AND c.x BETWEEN " . (int) $this->minX . " AND " . (int) $this->maxX . "
+            AND c.y BETWEEN " . (int) $this->minY . " AND " . (int) $this->maxY . "
             $zCondition
             ORDER BY mw.name, mw.id";
 
-        $result = $this->db->exe($sql);
+        $result = $this->db->exe($sql, array($plan));
         
         // Crée les couleurs pour les murs
         $wallColor = imagecolorallocate($layer, 139, 69, 19);  // Marron
