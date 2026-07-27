@@ -131,6 +131,46 @@ class CellShadeServiceTest extends TestCase
     }
 
     /**
+     * Un plan qui ne dit rien suit le défaut global.
+     *
+     * C'est le cas de la quasi-totalité des cartes : personne ne doit avoir à
+     * régler quarante plans pour que les ombres existent.
+     */
+    public function testAPlanThatSaysNothingFollowsTheDefault(): void
+    {
+        $service = new CellShadeService($this->store([
+            CellShadeService::SETTING_STEP => '0.2',
+            CellShadeService::SETTING_MAX  => '4',
+        ]));
+
+        $config = $service->forPlan('plan_qui_n_existe_pas');
+
+        $this->assertSame(0.2, $config['step'], 'le défaut global descend');
+        $this->assertSame(4, $config['max']);
+        $this->assertSame(CellShadeService::DEFAULT_COLOR, $config['color']);
+        $this->assertEqualsWithDelta(
+            0.36,
+            $service->opacityOnPlan('plan_qui_n_existe_pas', 2),
+            0.0005,
+            'deux calques à 20 %'
+        );
+    }
+
+    /** Le plafond du plan borne aussi l'opacité, pas seulement le pinceau. */
+    public function testThePlanCeilingCapsTheOpacity(): void
+    {
+        $service = new CellShadeService($this->store([
+            CellShadeService::SETTING_MAX => '2',
+        ]));
+
+        $this->assertSame(
+            $service->opacityOnPlan(null, 2),
+            $service->opacityOnPlan(null, 9),
+            'au-delà du plafond, rien ne bouge'
+        );
+    }
+
+    /**
      * Un réglage enregistré est celui que le rendu applique aussitôt.
      */
     public function testASavedSettingDrivesTheRender(): void

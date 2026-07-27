@@ -93,6 +93,15 @@ ob_start();
                     niveau vaut à l'écran : les changer n'oblige pas à
                     reprendre les cases.
                 </p>
+                <p class="text-muted" style="font-size: 13px;">
+                    <strong>Ce sont les valeurs par défaut.</strong> Chaque plan
+                    peut les surcharger — une grotte plus sombre, un plan de
+                    glace plus bleu — depuis
+                    <a href="plans.php">Plans</a> ou depuis Tiled, avec les
+                    propriétés <code style="display:inline">shade_step</code>,
+                    <code style="display:inline">shade_max</code> et
+                    <code style="display:inline">shade_color</code>.
+                </p>
 
                 <label class="form-label mb-0">Opacité d'un niveau (entre 0 et 1)</label>
                 <input type="text" name="shade_step" class="form-select" style="max-width: 160px;"

@@ -37,14 +37,17 @@ if($_POST['type'] == 'eraser'){
      * qu'il faisait deja en empilant des lignes. Seul le stockage change :
      * un niveau sur la case au lieu de N lignes de decor.
      *
-     * Le plafond vient du tableau de bord admin (CellShadeService), comme
-     * l'opacite d'un niveau et la couleur : au-dela, un clic reste sans effet
-     * visible plutot que de gonfler un compteur sans fin. */
+     * Le plafond est celui DU PLAN edite (CellShadeService : reglage de plan,
+     * defaut du tableau de bord admin sinon) : au-dela, un clic reste sans
+     * effet visible plutot que de gonfler un compteur sans fin. */
     if($_POST['type'] == 'foregrounds' && $_POST['src'] == 'ombre'){
+
+        $shadeMax = (new \App\Service\CellShadeService())
+            ->forPlan($player->coords->plan)['max'];
 
         (new Db())->exe(
             'UPDATE coords SET shade = LEAST(shade + 1, ?) WHERE id = ?',
-            array((new \App\Service\CellShadeService())->maxLevel(), $coordsId)
+            array($shadeMax, $coordsId)
         );
 
         exit('ombre');

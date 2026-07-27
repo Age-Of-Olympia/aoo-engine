@@ -35,6 +35,14 @@ class PlanConfigService
         'scrollingMask'     => 'int',
         'verticalScrolling' => 'bool',
         'biomes'            => 'json',
+
+        /* Ombres du plan — une grotte se veut plus sombre qu'une plaine, et
+         * un plan de glace plus bleu. Absentes, les valeurs du tableau de
+         * bord admin s'appliquent (CellShadeService). L'INTENSITÉ, elle,
+         * reste sur la case : `coords.shade`. */
+        'shade_step'        => 'float',
+        'shade_max'         => 'int',
+        'shade_color'       => 'string',
     ];
 
     /** Sentinelle interne de parse() : retirer la clé du JSON */
@@ -327,6 +335,12 @@ class PlanConfigService
                     throw new RuntimeException($key . ' doit être un entier : ' . $raw, 400);
                 }
                 return (int) $raw;
+
+            case 'float':
+                if (!is_numeric($raw)) {
+                    throw new RuntimeException($key . ' doit être un nombre : ' . $raw, 400);
+                }
+                return (float) $raw;
 
             case 'bool':
                 $lower = strtolower($raw);

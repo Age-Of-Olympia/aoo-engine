@@ -676,10 +676,11 @@ class View{
              * et 82 % des lignes de `map_foregrounds`.
              *
              * L'empilement est devenu une intensite (`coords.shade`), et ce
-             * qu'un niveau VAUT a l'ecran se regle au tableau de bord admin
-             * (CellShadeService) : opacite d'un niveau, niveau maximal,
-             * couleur. Separer les deux permet de changer l'apparence des
-             * ombres sans reprendre les cases qui en portent une.
+             * qu'un niveau VAUT a l'ecran se regle PAR PLAN — une grotte se
+             * veut plus sombre qu'une plaine (CellShadeService, cascade plan
+             * → tableau de bord → defaut). Separer le niveau de son rendu
+             * permet de changer l'apparence des ombres sans reprendre les
+             * cases qui en portent une.
              *
              * Le rendu reste fidele au pixel pres : N calques d'opacite `a`
              * donnent `1-(1-a)^N`, qu'un seul rectangle porte aussi bien que
@@ -689,7 +690,8 @@ class View{
              * Dessine APRES les entites, comme le decor l'etait (couche 100,
              * au-dessus des joueurs en 98) : l'ombre couvre ce qui s'y tient. */
             $shadeService = new \App\Service\CellShadeService();
-            $shadeColor = $shadeService->color();
+            $shadeConfig = $shadeService->forPlan($this->coords->plan);
+            $shadeColor = $shadeConfig['color'];
 
             foreach($this->inSight as $row){
 
@@ -700,7 +702,7 @@ class View{
                     continue;
                 }
 
-                $opacity = $shadeService->opacityFor($level);
+                $opacity = $shadeService->opacityOnPlan($this->coords->plan, $level);
 
                 $sx = ($row->x - $this->coords->x + $this->p) * 50;
                 $sy = ($this->coords->y - $row->y + $this->p) * 50;
