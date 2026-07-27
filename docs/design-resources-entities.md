@@ -508,11 +508,31 @@ supprimer, ce sont les premières cibles de l'action `consacrer`. `consacrer`
 porte alors la condition « vénérer un dieu » et le coût de 50 PF, que !491 avait
 mis sur la construction.
 
-1. **Multi-occupation** — une case peut-elle appartenir à deux objets ? Le monde
-   dit déjà oui (174 cases à 2-4 ressources, 66 cases à plusieurs entités en
-   violation de `place()`, 642 à plusieurs décors). La PK `(player_id,
-   coords_id)` l'autorise ; il faut dire **qui gagne** au rendu et au blocage.
-   *Seule décision requise avant l'emprise.*
+1. ~~Multi-occupation~~ — **tranché le 2026-07-27 : oui, et c'est une capacité à
+   préserver.** Empiler des personnages et des choses sur une case sert aux
+   animateurs et à l'administration ; c'est peu utilisé, mais nécessaire. Le
+   monde le fait déjà (174 cases à 2-4 ressources, 66 cases à plusieurs entités,
+   642 à plusieurs décors) et ce n'est donc pas une dérive à résorber.
+
+   Ce n'est pas qu'une commodité d'animation : c'est ce dont **les plantes**
+   auront besoin — une plante marchable partage forcément sa case avec ce qui
+   pousse dessus ou autour — et ce que réclament les cas particuliers du type
+   **mur factice**, une structure qui a l'air d'arrêter et qu'on traverse.
+
+   Le mur factice a d'ailleurs déjà son mécanisme : `races.blocks_passage = 0`,
+   la « structure passable » que `go.php` sait déjà exclure du blocage. Aucun
+   type ne l'utilise aujourd'hui — c'est une capacité en attente d'usage, pas du
+   code mort à retirer.
+
+   Conséquences pour l'emprise : la PK `(player_id, coords_id)` l'autorise
+   nativement, et `BuildingService::place()` — qui refuse aujourd'hui de poser
+   sur une case occupée — devra distinguer « refuser au joueur » de « permettre
+   à l'animateur », au lieu d'interdire tout court. Reste à écrire **qui gagne
+   au rendu** (le `tableOrder` de l'UNION décide déjà, il faut l'assumer) et
+   **ce qui bloque** quand plusieurs occupants se contredisent : la règle
+   naturelle est que le plus restrictif l'emporte, un seul occupant bloquant
+   suffisant à bloquer — le mur factice étant précisément l'exception qui ne
+   bloque rien.
 2. **Les 2 148 lignes à `damages=0`** sur un type récoltable — décor voulu, ou
    mal configuré ? À trancher **par type**. Cas visible : les deux `pierre1` du
    plan tutoriel sont à 0, et 7 étapes du tutoriel artisanat sont bâties dessus.
