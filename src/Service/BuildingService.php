@@ -287,28 +287,17 @@ class BuildingService extends BaseService
         // être LIBRE (ni entité, ni mur) — vérifié ici, source unique de la
         // règle, sous verrou pour resserrer la fenêtre concurrente.
         $conn->transactional(function ($conn) use ($id, $displayId, $name, $race, $type, $avatar, $coordsId, $ownerId, $faction, $goCoords): void {
-            $occupant = $conn->fetchOne('SELECT id FROM players WHERE coords_id = ? FOR UPDATE', [$coordsId]);
-            if ($occupant !== false) {
+            /* Le verrou reste ICI : c'est lui qui resserre la fenêtre entre
+             * deux poses concurrentes, et il doit vivre dans la transaction.
+             * La RÈGLE, elle, est partie dans TileOccupancyService avec les
+             * deux autres questions d'occupation. */
+            $conn->fetchOne('SELECT id FROM players WHERE coords_id = ? FOR UPDATE', [$coordsId]);
+
+            $refusal = (new \App\Service\Map\TileOccupancyService($conn))->buildRefusal((int) $coordsId);
+            if ($refusal !== null) {
                 throw new \InvalidArgumentException(
-                    "Case ({$goCoords->x}, {$goCoords->y}, {$goCoords->plan}) occupée par l'entité #{$occupant}."
+                    "Case ({$goCoords->x}, {$goCoords->y}, {$goCoords->plan}) : " . lcfirst($refusal)
                 );
-            }
-            if ($conn->fetchOne('SELECT coords_id FROM map_resources WHERE coords_id = ?', [$coordsId]) !== false) {
-                throw new \InvalidArgumentException(
-                    "Case ({$goCoords->x}, {$goCoords->y}, {$goCoords->plan}) occupée par un mur."
-                );
-            }
-            // Un élément rend la case inconstructible SAUF si son effet
-            // est marqué constructible par-dessus (sang, boue, traces —
-            // effects.buildable_over) : même règle que
-            // PlaceLayerOutcomeInstruction pour les routes.
-            $effectService = new EffectService();
-            foreach ($conn->fetchFirstColumn('SELECT name FROM map_elements WHERE coords_id = ?', [$coordsId]) as $elementName) {
-                if (!$effectService->isBuildableOver((string) $elementName)) {
-                    throw new \InvalidArgumentException(
-                        "Case ({$goCoords->x}, {$goCoords->y}, {$goCoords->plan}) occupée par un élément ({$elementName})."
-                    );
-                }
             }
 
             $conn->executeStatement(

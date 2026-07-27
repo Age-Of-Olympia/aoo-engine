@@ -1323,30 +1323,27 @@ class View{
         self::refresh_players_svg($player->coords);
     }
 
+    /**
+     * La case est-elle vide ? — délègue à TileOccupancyService::isVacant(),
+     * qui porte les trois questions d'occupation au même endroit (le pas,
+     * l'atterrissage, la construction). Comportement inchangé.
+     */
     public static function is_free($coords): bool {
-    $db = new Db();
-    
-    $sql = '
-    SELECT (
-        SELECT COUNT(*) FROM players WHERE coords_id = c.id
-    ) + (
-        SELECT COUNT(*) FROM map_resources WHERE coords_id = c.id
-    ) + (
-        SELECT COUNT(*) FROM map_triggers WHERE coords_id = c.id
-    ) AS total
-    FROM coords AS c
-    WHERE c.x = ? AND c.y = ? AND c.z = ? AND c.plan = ?
-    ';
 
-    $res = $db->exe($sql, [$coords->x, $coords->y, $coords->z, $coords->plan]);
-    
-    if (!$res || $res->num_rows === 0) {
-        return true;
+        /* Lecture SEULE : surtout pas get_coords_id(), qui CRÉE la case
+         * absente — un prédicat de lecture ne doit rien écrire. */
+        $res = (new Db())->exe(
+            'SELECT id FROM coords WHERE x = ? AND y = ? AND z = ? AND plan = ?',
+            [$coords->x, $coords->y, $coords->z, $coords->plan]
+        );
+
+        // Case jamais créée : rien ne peut s'y trouver.
+        if (!$res || !$res->num_rows) {
+            return true;
+        }
+
+        $coordsId = $res->fetch_object()->id;
+
+        return (new \App\Service\Map\TileOccupancyService())->isVacant((int) $coordsId);
     }
-
-    $row = $res->fetch_object();
-    
-    // Si total == 0, c'est que la case est vide
-    return (int)$row->total === 0;
-}
 }

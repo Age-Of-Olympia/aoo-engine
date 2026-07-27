@@ -171,6 +171,41 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertNull($this->service()->stepRefusal($id, (int) $me->id, true));
     }
 
+    /**
+     * Les trois verbes ne répondent PAS à la même question, et c'est voulu.
+     *
+     * Un déclencheur — ici un téléporteur — rend la case impropre à
+     * l'atterrissage, laisse passer le pas, et n'empêche pas de bâtir. Cette
+     * dernière asymétrie n'a été décidée par personne : elle tombe d'une
+     * absence de filtre dans `place()`. Elle est épinglée telle quelle,
+     * l'aligner étant un changement de règle et non une extraction.
+     */
+    public function testTheThreeVerbsAnswerDifferentQuestions(): void
+    {
+        $id = $this->coordsId(9, 0);
+        $this->link->executeStatement(
+            "INSERT INTO map_triggers (name, coords_id, params) VALUES ('tp', ?, '')",
+            [$id]
+        );
+
+        $service = $this->service();
+
+        $this->assertNull($service->stepRefusal($id, 1, true), 'on marche sur un téléporteur');
+        $this->assertFalse($service->isVacant($id), 'on n\'y atterrit pas');
+        $this->assertNull($service->buildRefusal($id), 'et on peut y bâtir — divergence gelée');
+    }
+
+    /** Une case vraiment vide l'est pour les trois. */
+    public function testAnEmptyTileSatisfiesTheThreeVerbs(): void
+    {
+        $id = $this->coordsId(10, 0);
+        $service = $this->service();
+
+        $this->assertNull($service->stepRefusal($id, 1, true));
+        $this->assertTrue($service->isVacant($id));
+        $this->assertNull($service->buildRefusal($id));
+    }
+
     /** La visibilité de plan se lit comme au rendu : pas de JSON = cachés. */
     public function testCharacterVisibilityMatchesTheRenderRule(): void
     {
