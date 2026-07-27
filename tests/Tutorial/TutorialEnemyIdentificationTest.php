@@ -97,6 +97,38 @@ class TutorialEnemyIdentificationTest extends TutorialIntegrationTestCase
         $this->assertSame([$mine => true], TutorialHelper::getSessionEnemyIds());
     }
 
+    /**
+     * Un PNJ dynamique d'un autre rôle n'est pas l'adversaire.
+     *
+     * C'est ce que la colonne `role` referme : « apparu pour cette session »
+     * et « adversaire » désignaient la même ligne tant qu'il n'y avait qu'un
+     * seul PNJ dynamique. Le premier marchand aurait hérité du surlignage de
+     * combat.
+     */
+    public function testADynamicNpcOfAnotherRoleIsNotTheEnemy(): void
+    {
+        $sessionId = $this->openSession();
+        $enemy = $this->spawnEnemy($sessionId, 'Adversaire', 'enemy');
+        $this->spawnEnemy($sessionId, 'Marchand ambulant', 'merchant');
+
+        $this->assertSame([$enemy => true], TutorialHelper::getSessionEnemyIds());
+    }
+
+    /**
+     * Les lignes antérieures à la colonne comptent comme adversaires.
+     *
+     * Une session de tutoriel en cours au moment du déploiement a des lignes
+     * sans rôle. Toutes sont des adversaires — c'est le seul PNJ dynamique
+     * configuré —, et le surlignage doit continuer de les trouver.
+     */
+    public function testARowPredatingTheRoleColumnStillCounts(): void
+    {
+        $sessionId = $this->openSession();
+        $enemy = $this->spawnEnemy($sessionId, 'Âme héritée', null);
+
+        $this->assertSame([$enemy => true], TutorialHelper::getSessionEnemyIds());
+    }
+
     private function newSessionId(): string
     {
         return sprintf(
@@ -123,8 +155,10 @@ class TutorialEnemyIdentificationTest extends TutorialIntegrationTestCase
     /**
      * Sème un PNJ et son inscription, comme le fait
      * TutorialResourceManager::spawnDynamicNpcs().
+     *
+     * $role à null reproduit une ligne antérieure à la colonne.
      */
-    private function spawnEnemy(string $sessionId, string $name): int
+    private function spawnEnemy(string $sessionId, string $name, ?string $role = 'enemy'): int
     {
         $this->conn->insert('coords', [
             'x'    => random_int(1000, 99999),
@@ -146,6 +180,7 @@ class TutorialEnemyIdentificationTest extends TutorialIntegrationTestCase
             'tutorial_session_id' => $sessionId,
             'enemy_player_id'     => $enemyId,
             'enemy_coords_id'     => $coordsId,
+            'role'                => $role,
         ]);
 
         return $enemyId;

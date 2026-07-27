@@ -155,10 +155,16 @@ class TutorialResourceManager
                 $enemyPlayer = new \Classes\Player($enemyId);
                 $enemyPlayer->get_caracs();
 
+                /* Le rôle voyage avec l'apparition : sans lui, la ligne dit
+                 * seulement « un PNJ est né pour cette session », et qui la
+                 * relit ne peut plus distinguer l'adversaire d'un marchand.
+                 * Le damier en avait besoin pour poser `.tutorial-enemy` — il
+                 * s'en remettait faute de mieux au nom du personnage. */
                 $this->conn->insert('tutorial_enemies', [
                     'tutorial_session_id' => $sessionId,
                     'enemy_player_id'     => $enemyId,
                     'enemy_coords_id'     => $enemyCoordsId,
+                    'role'                => $npc['role'] ?? null,
                 ]);
             }
 

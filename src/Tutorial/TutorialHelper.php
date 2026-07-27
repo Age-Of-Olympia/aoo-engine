@@ -125,12 +125,9 @@ class TutorialHelper
      * L'inscription en base, elle, est posée par l'apparition elle-même
      * (TutorialResourceManager) et ne dépend d'aucun libellé.
      *
-     * Portée : les PNJ DYNAMIQUES de la session — ceux que le tutoriel fait
-     * naître à côté du joueur. Aujourd'hui il n'y en a qu'un, l'ennemi
-     * d'entraînement ; le rôle (`tutorial_npcs.role`) n'est pas reporté sur
-     * la ligne d'apparition, donc un second PNJ dynamique d'un autre rôle
-     * serait marqué comme lui. Le jour où ce cas se présente, c'est le rôle
-     * qu'il faudra porter ici, pas le nom.
+     * Portée : les PNJ apparus pour la session avec le rôle `enemy`. Les
+     * lignes antérieures à la colonne `role` restent à NULL et comptent comme
+     * telles — le seul PNJ dynamique configuré à ce jour est l'adversaire.
      *
      * @return array<int, true> ids en CLÉS (pour un `isset()` par occupant) ;
      *                          tableau vide hors tutoriel
@@ -146,7 +143,10 @@ class TutorialHelper
         try {
             $db = new \Classes\Db();
             $result = $db->exe(
-                'SELECT enemy_player_id FROM tutorial_enemies WHERE tutorial_session_id = ?',
+                "SELECT enemy_player_id
+                   FROM tutorial_enemies
+                  WHERE tutorial_session_id = ?
+                    AND (role IS NULL OR role = 'enemy')",
                 [$sessionId]
             );
 
