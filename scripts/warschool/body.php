@@ -73,6 +73,30 @@ if (!isset($_GET['hideMenu'])) {
 
 $warschool = new WarSchool($trainer);
 
+/*
+ * Habillage commun aux six onglets de compétences.
+ *
+ * Chacune des six vues portait sa propre copie de ces quatre règles et du
+ * conteneur qui les porte — six fois la même chaîne, à corriger six fois.
+ * Le corps de page est déjà le point de passage unique, en page complète
+ * comme en panneau HUD : c'est ici que l'habillage a sa place.
+ *
+ * Le style reste en ligne plutôt qu'en feuille : le panneau du HUD arrive
+ * par AJAX, sans passer par l'enveloppe Ui qui charge les feuilles.
+ */
+$skillTabs = ['melee', 'distance', 'magic', 'spells', 'stealth', 'survival'];
+$onSkillTab = (bool) array_intersect($skillTabs, array_keys($_GET));
+
+if ($onSkillTab) {
+    echo '<style>'
+        . '.ws-content h1{font-size:1.6em}'
+        . '.ws-content h2{font-family:sans-serif;font-size:1.1em;font-weight:bold}'
+        . '.ws-content h3{font-family:sans-serif;font-size:1.05em;font-weight:normal}'
+        . '.ws-content .ws-info{font-family:sans-serif;font-size:1.05em;text-align:center;margin:6px 0}'
+        . '</style>';
+    echo '<div class="ws-content">';
+}
+
 if (isset($_GET['melee'])) {
     MeleeView::render($player, $trainer);
 }
@@ -105,4 +129,8 @@ else {
     ];
 
     echo Ui::get_dialog($player, $options);
+}
+
+if ($onSkillTab) {
+    echo '</div>';
 }

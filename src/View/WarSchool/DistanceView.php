@@ -73,9 +73,6 @@ class DistanceView
 
         ob_start();
 
-        echo '<style>.ws-content h1{font-size:1.6em}.ws-content h2{font-family:sans-serif;font-size:1.1em;font-weight:bold}.ws-content h3{font-family:sans-serif;font-size:1.05em;font-weight:normal}.ws-content .ws-info{font-family:sans-serif;font-size:1.05em;text-align:center;margin:6px 0}</style>';
-        echo '<div class="ws-content">';
-
         echo '<h1>Compétences à Distance</h1>';
         echo '<p class="ws-info">Vous avez ' . $playerGold . ' Po&nbsp;&middot;&nbsp;Compétences apprises : ' . $nb_comp . '/' . NUMBER_MAX_COMP . ' (sorts + passifs cumulés)</p>';
         echo '<details style="cursor: pointer; margin-bottom: 20px; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 5px;">';
@@ -241,7 +238,6 @@ class DistanceView
 
         echo '</div>';
 
-    echo '</div>';
     echo Str::minify(ob_get_clean());
 
     ?>
