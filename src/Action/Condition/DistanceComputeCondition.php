@@ -17,18 +17,12 @@ class DistanceComputeCondition extends ComputeCondition implements DeclaresSimul
      */
     public function check(\App\Interface\ActorInterface $actor, ?\App\Interface\ActorInterface $target, \App\Entity\ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        if ($target !== null && !$actor->isSimulated() && !$target->isSimulated()) {
-            $report = (new \App\Service\BuildingService())
-                ->lineOfFireReport($actor->getCoords(), $target->getCoords());
-
-            if ($report['blocker'] !== null) {
-                return new ConditionResult(false, array(), [
-                    'Votre tir s\'écrase sur ' . htmlspecialchars((string) $report['blockerName'], ENT_QUOTES, 'UTF-8')
-                    . ' en (' . $report['blocker'][0] . ', ' . $report['blocker'][1] . ') !',
-                ]);
-            }
-        }
-
+        /* Le contrôle de ligne de tir a été retiré d'ici : il vivait en
+         * double, une fois ici pour le tir à distance et une fois dans
+         * ObstacleCondition pour les cinq autres types de calcul — avec deux
+         * géométries et deux catalogues d'obstacles différents. Il est
+         * désormais dans ObstacleCondition seule, déclarée en précondition
+         * des six types. */
         return parent::check($actor, $target, $condition, $conditionObject);
     }
 

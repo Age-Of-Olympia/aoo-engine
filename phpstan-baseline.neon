@@ -120,12 +120,6 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$coords\.$#'
 			identifier: property.notFound
-			count: 2
-			path: src/Action/Condition/ObstacleCondition.php
-
-		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$coords\.$#'
-			identifier: property.notFound
 			count: 1
 			path: src/Action/Condition/PlanCondition.php
 

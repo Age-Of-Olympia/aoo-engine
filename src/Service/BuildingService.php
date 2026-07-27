@@ -137,11 +137,17 @@ class BuildingService extends BaseService
             $blockersByTile[$row['x'] . ',' . $row['y']] ??= self::humanizeWallName((string) $row['name']);
         }
 
-        // Tous les obstacles dans l'ordre du trajet — blocker/blockerName
-        // restent le PREMIER (c'est lui qui arrête le tir), blockers liste
-        // chaque case bloquante pour le marquage du tracé.
+        /* Seules les cases traversées DANS LES DEUX SENS arrêtent le tir.
+         *
+         * Le corridor ($tiles) est l'union des deux traversées : c'est ce
+         * qu'on dessine et ce qu'on vient d'interroger en base. Mais un
+         * obstacle posé sur une case que seul l'un des deux tracés emprunte
+         * ne bloque pas — sinon le tir passerait dans un sens et pas dans
+         * l'autre, ce qui était le cas sur 36 % des trajets. */
         $blockers = [];
-        foreach ($tiles as $tile) {
+        foreach (\App\Action\Combat\LineOfFire::blockingTilesBetween(
+            (int) $from->x, (int) $from->y, (int) $to->x, (int) $to->y
+        ) as $tile) {
             if (isset($blockersByTile[$tile[0] . ',' . $tile[1]])) {
                 $blockers[] = $tile;
             }
