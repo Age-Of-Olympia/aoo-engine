@@ -590,7 +590,16 @@ class View{
 
 
                     $isCurrentPlayer = ($row->whichTable == 'players' && $row->id == $this->playerId);
-                    $isTutorialEnemy = ($row->whichTable == 'players' && $row->id < 0 && $player->data->name === "Âme d'entraînement");
+                    /* L'« Âme d'entraînement » du tutoriel se reconnaît à son
+                     * nom. Il se lisait sur un `$player` qui n'existe plus :
+                     * la boucle hydratait un personnage complet par occupant,
+                     * ce que la requête unique a remplacé — la ligne, elle,
+                     * est restée. Elle ne fatalisait pas (PHP 8 lit null sur
+                     * une variable indéfinie, en émettant une alerte), mais
+                     * elle rendait la marque `.tutorial-enemy` inatteignable,
+                     * donc le surlignage du combat d'entraînement muet. */
+                    $isTutorialEnemy = ($row->whichTable == 'players' && $row->id < 0
+                        && isset($entity) && $entity->name === "Âme d'entraînement");
 
                     if($row->whichTable == 'players'){
 
