@@ -160,7 +160,12 @@ class ResourceService
                      * et « exhaust > 1d100 » vaut exhaust-1 chances sur cent.
                      * Une entrée de biome SANS exhaust ne s'épuise jamais :
                      * null > n est toujours faux. */
-                    if($e->exhaust > self::roll(100))
+                    /* « ?? 0 » ne change RIEN au résultat — 0 comme null perd
+                     * face à un dé qui vaut au moins 1 — mais supprime le
+                     * warning « Undefined property » que les 41 entrées de
+                     * biome sans taux déclenchaient à chaque tentative, en
+                     * jeu comme au cron. */
+                    if(($e->exhaust ?? 0) > self::roll(100))
                         $resourcesIdArray[] = $row->id;
                     break;
                 }
@@ -176,7 +181,7 @@ class ResourceService
             if ($e->wall == $row->name) {
                 /* Échelle du MILLE, délibérément : regrow=20 vaut donc 1,9 %
                  * par passage du cron, pas 20 %. Voir createExhaustArray. */
-                if ($e->regrow > self::roll(1000))
+                if (($e->regrow ?? 0) > self::roll(1000))
                     $resourcesIdArray[] = $row->id;
                 break;
             }
