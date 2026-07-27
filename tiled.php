@@ -556,7 +556,7 @@ $modalView->displayModal('tile-info','info-display');
 
 <script src="js/admin-tools.js?v=20260715"></script>
 <script src="js/blocked-tiles.js?v=20260727"></script>
-<script src="js/tiled.js?v=20260421"></script>
+<script src="js/tiled.js?v=20260728"></script>
 <script>
 /* Tiled editor: toggle the "blocked tiles" overlay so admins can
    verify forbidden triggers / walls / players visually. Reuses

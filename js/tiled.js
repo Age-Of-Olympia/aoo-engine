@@ -96,11 +96,15 @@ function displayInfo(infosJson){
 
   
   data.forEach((item, index) => {
-      let params = item.params ? item.params : "N/A"; 
+      let params = item.params ? item.params : "N/A";
+      /* L'ombre se retire CRAN PAR CRAN : elle se pose ainsi (re-cliquer
+         fonce), elle doit se defaire ainsi. Le bouton le dit, sans quoi on
+         croirait effacer toute l'ombre d'un coup. */
+      let label = item.type === 'ombre' ? '−1 niveau' : 'Supprimer';
       let line = `
           <div class="info-row" data-index="${index}">
               <span>Type: ${item.type}, Name: ${item.name}, Params: ${params}</span>
-              <button class="delete-btn" data-coord-id="${item.coords_id}"  data-type="${item.type}">Supprimer</button>
+              <button class="delete-btn" data-coord-id="${item.coords_id}"  data-type="${item.type}">${label}</button>
           </div>
       `;
       displayDiv.append(line); 

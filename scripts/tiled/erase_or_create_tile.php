@@ -50,7 +50,12 @@ if($_POST['type'] == 'eraser'){
             array($shadeMax, $coordsId)
         );
 
-        exit('ombre');
+        echo 'ombre';
+
+        /* `return` et non `exit` : ce fichier est INCLUS dans une boucle
+           quand on peint une zone (tiled.php). Un exit s'arreterait a la
+           premiere case, et le pinceau de zone n'ombrerait qu'un carreau. */
+        return;
     }
 
     /* Les obstacles/décor sont des entités bâtiment depuis leur conversion :

@@ -26,8 +26,15 @@ select  p.coords_id as coords_id, 'buildings' as type, CONCAT(p.race, ' #', p.id
         CONCAT('état = ', b.build_state,
                IF(b.owner_id IS NULL, '', CONCAT(', propriétaire #', b.owner_id)),
                IF(b.faction = '', '', CONCAT(', faction ', b.faction))) as params
-from buildings b join players p on p.id = b.player_id where p.coords_id = ?";
-$res = $db->exe($sql, array($coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId));
+from buildings b join players p on p.id = b.player_id where p.coords_id = ?
+union
+/* L'ombre n'est plus un décor mais une intensité portée par la case
+   (coords.shade). Sans cette ligne, une case ombrée n'aurait plus rien à
+   dire d'elle-même : on ne saurait ni qu'elle l'est, ni de combien. */
+select id as coords_id, 'ombre' as type, CONCAT('niveau ', shade) as name,
+       '« −1 niveau » éclaircit d\'un cran' as params
+from coords where id = ? and shade > 0";
+$res = $db->exe($sql, array($coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId));
 
 
 $results = $res->fetch_all(MYSQLI_ASSOC);

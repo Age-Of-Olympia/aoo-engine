@@ -31,6 +31,16 @@ if($type == 'buildings'){
         $buildingService->remove((int) $building['player_id']);
     }
 
+} elseif($type === 'ombre'){
+
+    /* Retirer UN cran d'ombre, pas toute l'ombre.
+     *
+     * L'assombrissement se pose cran par cran — on re-clique pour foncer —,
+     * il doit donc se retirer de la meme facon : celui qui est alle trop
+     * loin revient d'un pas, sans tout reprendre. Le pinceau de gomme sur
+     * les decors, lui, remet la case a zero d'un coup. */
+    (new Db())->exe('UPDATE coords SET shade = GREATEST(shade - 1, 0) WHERE id = ?', array($coordsId));
+
 } else {
 
     /* Le nom de table vient du POST : liste blanche stricte */
