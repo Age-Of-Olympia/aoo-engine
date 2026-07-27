@@ -21,7 +21,15 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs
 
 # Utils
-RUN apt-get install -y \
+#
+# `apt-get update` AVANT chaque installation, et non une seule fois en haut :
+# sans lui, la couche dépend des listes laissées par une couche précédente.
+# Selon l'état du cache, elle réussit, échoue, ou — pire — n'installe qu'une
+# partie de ce qu'on lui demande. L'image de développement a tourné des mois
+# sans `xvfb` ni client MariaDB alors qu'ils sont écrits ici, et personne ne
+# pouvait le voir : Cypress et la réinitialisation de la base de test
+# échouaient chacun dans leur coin, sans jamais désigner l'image.
+RUN apt-get update && apt-get install -y \
     vim \
     git \
     rsync \
@@ -49,7 +57,7 @@ RUN apt-get update -qq -y && \
     mv chromedriver /usr/local/bin/
 
 # Install Cypress dependencies for headless and GUI mode
-RUN apt-get install -y \
+RUN apt-get update && apt-get install -y \
     libgtk-3-0 \
     libgbm1 \
     libnotify4 \
@@ -65,6 +73,17 @@ RUN apt-get install -y \
     libxi6 \
     libxrandr2 \
     libxrender1
+
+# L'outillage promis est-il VRAIMENT là ?
+#
+# Une image de développement à laquelle il manque un outil ne se signale
+# jamais : c'est l'outil qui échoue, plus tard, dans un contexte qui
+# n'évoque pas l'image. On préfère un build qui casse tout de suite à un
+# conteneur qui ment pendant six mois.
+RUN set -eux; \
+    for tool in xvfb-run Xvfb mysql mysqldump node npx; do \
+        command -v "$tool" >/dev/null || { echo "ABSENT de l'image : $tool"; exit 1; }; \
+    done
 
 # Install any extensions you need
 RUN docker-php-ext-configure gd --with-jpeg
