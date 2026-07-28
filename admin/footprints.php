@@ -1,22 +1,26 @@
 <?php
 /**
- * Découpes des décors multi-cases (admin → Cartes · Découpes).
+ * Forme et passage des décors en plusieurs morceaux (admin → Cartes).
  *
- * Un fort, une pyramide, un géant occupent plusieurs cases, et rien dans les
- * données ne le disait. On sait deviner la forme de deux manières — la carte
- * et les images d'ensemble —, mais **elles se contredisent** : celle de
- * `geant_petrifie` annonce 1×2 cases quand quatre morceaux existent et que la
- * carte en montre une figure de 3×3 trouée.
+ * Un fort, une pyramide, un géant sont posés en morceaux de 50 px, et rien
+ * dans les données ne disait lesquels vont ensemble ni lesquels barrent le
+ * chemin. On sait deviner la forme de deux manières — un exemplaire complet
+ * posé sur la carte, ou l'image d'ensemble du décor — mais elles se
+ * contredisent : celle de `geant_petrifie` annonce deux cases quand quatre
+ * morceaux existent et que la carte en montre une figure de 3×3 trouée.
  *
- * Cette page est l'endroit où un humain tranche, une fois. Une découpe
- * déclarée l'emporte sur ce que la carte et les images racontent : c'est ce
- * qui permet de corriger un décor mal posé au lieu de le subir.
+ * Cette page est l'endroit où un humain tranche, en VOYANT le décor. Chaque
+ * famille montre sa figure recomposée à l'échelle de la carte ; on clique une
+ * case pour dire si elle barre le chemin, on fait glisser un morceau pour
+ * corriger la figure. Ce qu'on enregistre l'emporte ensuite sur la carte et
+ * sur l'image.
  *
- * Chaque famille affiche sa source — déclarée, carte, image, ou aucune —, sa
- * figure dessinée case par case, et de quoi la reprendre.
+ * Le dessin de la grille appartient au JavaScript, qui doit de toute façon la
+ * redessiner à chaque geste : la faire aussi en PHP donnerait deux dessins à
+ * garder d'accord. Sans JavaScript, la carte de la famille montre les morceaux
+ * — on ne peut simplement pas les déplacer.
  *
- * Les mutations POSTent vers footprints-save.php (CSRF, PRG). Cette page ne
- * fait que rendre.
+ * Les mutations POSTent vers footprints-save.php (CSRF, PRG).
  */
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
@@ -24,179 +28,223 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\CsrfProtectionService;
 use App\Service\Map\EntityTypeFootprintService;
-
-/** D'où vient la découpe, dit d'un coup d'œil. */
-function footprint_source_badge(string $source): string
-{
-    return match ($source) {
-        'declared' => '<span class="badge badge-success" title="Déclarée ici : elle fait autorité">Déclarée</span>',
-        'map'      => '<span class="badge badge-secondary" title="Déduite d\'un exemplaire complet posé sur la carte">Carte</span>',
-        'image'    => '<span class="badge badge-secondary" title="Déduite de l\'image d\'ensemble, divisée par 50">Image</span>',
-        default    => '<span class="badge badge-warning" title="Aucune source fiable : la pose reste morceau par morceau">Inconnue</span>',
-    };
-}
+use App\Service\Map\SceneryFootprintDeriver;
 
 /**
- * La figure, dessinée. Une grille w×h où les cases occupées portent leur
- * numéro de morceau — c'est ainsi qu'on VOIT un trou.
+ * D'où vient la forme, dit en français plutôt qu'en jargon.
  *
- * @param array<int, array{0:int,1:int}> $offsets
- * @param array<int, string> $roles
+ * @return array{0: string, 1: string, 2: string} libellé, classe, explication
  */
-function footprint_grid(int $w, int $h, array $offsets, array $roles = []): string
+function footprint_origin(string $source): array
 {
-    $xs = array_column($offsets, 0);
-    $ys = array_column($offsets, 1);
-
-    if ($xs === []) {
-        return '<em>vide</em>';
-    }
-
-    $minX = min($xs);
-    $maxY = max($ys);
-
-    $byCell = [];
-
-    foreach ($offsets as $piece => [$dx, $dy]) {
-        $byCell[($maxY - $dy) . ',' . ($dx - $minX)] = $piece;
-    }
-
-    $html = '<table class="footprint-grid" style="border-collapse:collapse;display:inline-block;">';
-
-    for ($row = 0; $row < $h; $row++) {
-        $html .= '<tr>';
-
-        for ($col = 0; $col < $w; $col++) {
-            $piece = $byCell[$row . ',' . $col] ?? null;
-
-            $html .= $piece === null
-                ? '<td style="width:22px;height:22px;border:1px dashed #ccc;"></td>'
-                : '<td style="width:22px;height:22px;border:1px solid #666;background:#e7ded0;'
-                    . 'text-align:center;font-size:11px;" title="morceau ' . $piece
-                    . (isset($roles[$piece]) ? ' — ' . e($roles[$piece]) : '') . '">'
-                    . $piece . '</td>';
-        }
-
-        $html .= '</tr>';
-    }
-
-    return $html . '</table>';
+    return match ($source) {
+        'declared' => [
+            'réglé ici',
+            'fp-badge--set',
+            'Quelqu\'un a réglé cette figure à la main : elle fait autorité.',
+        ],
+        'map' => [
+            'deviné d\'après la carte',
+            'fp-badge--guessed',
+            'Forme relevée sur un exemplaire complet posé sur la carte. Le passage, lui, n\'est pas réglé.',
+        ],
+        'image' => [
+            'deviné d\'après l\'image',
+            'fp-badge--guessed',
+            'Forme relevée sur l\'image d\'ensemble du décor. Le passage, lui, n\'est pas réglé.',
+        ],
+        default => [
+            'forme inconnue',
+            'fp-badge--unknown',
+            'Ni la carte ni l\'image ne savent dire la figure : les morceaux sont alignés au hasard, à corriger.',
+        ],
+    };
 }
 
 $csrfToken = (new CsrfProtectionService())->generateToken();
 
 $service = new EntityTypeFootprintService();
+$deriver = new SceneryFootprintDeriver();
 
 $catalogue = $service->catalogue();
+$onDisk = $deriver->piecesOnDisk();
+
+/* Les familles à montrer : celles qui ont plusieurs morceaux sur le disque —
+ * un décor d'une seule case n'a pas de figure à régler — plus celles que la
+ * carte connaît sans que le disque les porte, qui sont justement les plus
+ * suspectes. */
+$families = [];
+
+foreach ($onDisk as $family => $pieces) {
+    if (count($pieces) > 1) {
+        $families[(string) $family] = $pieces;
+    }
+}
+
+foreach (array_keys($catalogue) as $family) {
+    $families[(string) $family] ??= $onDisk[$family] ?? [];
+}
+
+/* Ce qui n'est pas réglé passe devant : c'est le travail qui reste. */
+uksort($families, static function (string $a, string $b) use ($service): int {
+    $settled = static fn(string $family): int => $service->sourceOf($family) === 'declared' ? 1 : 0;
+
+    return [$settled($a), $a] <=> [$settled($b), $b];
+});
+
+$counts = ['all' => count($families), 'todo' => 0, 'set' => 0];
+
+foreach (array_keys($families) as $family) {
+    $counts[$service->sourceOf((string) $family) === 'declared' ? 'set' : 'todo']++;
+}
 
 ob_start();
 ?>
 
 <div class="container">
-    <h2 class="section-title">Découpes des décors</h2>
+    <h2 class="section-title">Décors en plusieurs morceaux</h2>
 
     <p class="text-content">
-        Un décor multi-cases est posé en morceaux. Sa <em>découpe</em> dit lesquels,
-        et où. On sait la deviner depuis la carte ou depuis l'image d'ensemble, mais
-        les deux se contredisent parfois — une découpe déclarée ici l'emporte sur
-        les deux.
+        Un décor plus grand qu'une case est posé en morceaux. Cette page dit
+        <strong>quelles cases il occupe</strong> et <strong>lesquelles barrent le chemin</strong>.
+        La forme est devinée quand c'est possible — d'après un exemplaire posé sur la carte, ou
+        d'après l'image d'ensemble du décor — mais les deux se trompent parfois, et rien ne devine
+        le passage. Ce qui est réglé ici l'emporte sur ce qui est deviné.
+    </p>
+
+    <p class="fp-note">
+        <strong>Cliquez une case</strong> pour la faire barrer le chemin, ou le laisser libre.
+        <strong>Faites glisser un morceau</strong> sur une case vide pour corriger la figure.
+        Le passage sera appliqué quand les décors deviendront des entités du moteur ; d'ici là il
+        est enregistré, sans effet en jeu.
     </p>
 
     <?= renderFlashMessage() ?>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Type</th>
-                <th>Source</th>
-                <th>Figure</th>
-                <th>Taille</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php foreach ($catalogue as $name => $footprint): ?>
-            <?php $source = $service->sourceOf((string) $name); ?>
-            <tr>
-                <td><code style="display:inline"><?= e((string) $name) ?></code></td>
-                <td><?= footprint_source_badge($source) ?></td>
-                <td><?= footprint_grid(
-                        (int) $footprint['w'],
-                        (int) $footprint['h'],
-                        $footprint['offsets'],
-                        $footprint['roles']
-                    ) ?></td>
-                <td>
-                    <?= (int) $footprint['w'] ?>×<?= (int) $footprint['h'] ?>,
-                    <?= (int) $footprint['cells'] ?> case(s)
-                    <?= $footprint['holed'] ? '<br /><small>figure trouée</small>' : '' ?>
-                </td>
-                <td>
-                    <?php if ($source === 'declared'): ?>
-                        <form method="post" action="footprints-save.php" style="display:inline;">
-                            <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
-                            <input type="hidden" name="action" value="forget" />
-                            <input type="hidden" name="type" value="<?= e((string) $name) ?>" />
-                            <button type="submit" class="btn btn-sm btn-secondary"
-                                    title="Le type retombera sur ce que la carte ou l'image disent">Oublier</button>
-                        </form>
-                    <?php else: ?>
-                        <form method="post" action="footprints-save.php" style="display:inline;">
-                            <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
-                            <input type="hidden" name="action" value="adopt" />
-                            <input type="hidden" name="type" value="<?= e((string) $name) ?>" />
-                            <button type="submit" class="btn btn-sm btn-primary"
-                                    title="Fige la découpe actuellement devinée : elle cessera de dépendre de la carte">Déclarer</button>
-                        </form>
-                    <?php endif; ?>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-        </tbody>
-    </table>
+    <div class="fp-toolbar">
+        <input type="search" id="fp-search" class="form-select fp-search"
+               placeholder="Chercher un décor…" aria-label="Chercher un décor" />
 
-    <div class="card mt-3" style="max-width: 760px;">
-        <div class="card-header"><strong>Déclarer une découpe à la main</strong></div>
-        <div class="card-body">
-            <p class="text-muted" style="font-size: 13px;">
-                Pour les figures qu'aucune source ne décrit correctement — le géant
-                pétrifié, dont l'image d'ensemble ne montre que le corps. Les décalages
-                s'écrivent en JSON, par morceau, relativement au premier :
-                <code style="display:inline">{"0":[0,0],"1":[0,-1],"2":[-1,-2],"3":[-2,-2]}</code>
-            </p>
+        <div class="fp-filters" role="group" aria-label="Filtrer les décors">
+            <button type="button" class="btn btn-sm btn-secondary active" data-filter="all">
+                Tous (<?= $counts['all'] ?>)
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" data-filter="todo">
+                À régler (<?= $counts['todo'] ?>)
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" data-filter="set">
+                Réglés (<?= $counts['set'] ?>)
+            </button>
+        </div>
 
-            <form method="post" action="footprints-save.php">
+        <p class="fp-legend">
+            <span class="fp-legend--free">on peut passer</span>
+            <span class="fp-legend--blocks">barre le chemin</span>
+        </p>
+    </div>
+
+    <?php if ($families === []): ?>
+        <p class="text-muted">Aucun décor en plusieurs morceaux sur ce déploiement.</p>
+    <?php endif; ?>
+
+    <div class="fp-grid">
+    <?php foreach ($families as $family => $pieces): ?>
+        <?php
+        $name = (string) $family;
+        $source = $service->sourceOf($name);
+        [$originLabel, $originClass, $originHint] = footprint_origin($source);
+        $footprint = $catalogue[$name] ?? null;
+
+        /* Sans figure connue on range les morceaux en carré, dans l'ordre de
+         * lecture : on montre qu'ils vont ensemble, sans prétendre savoir
+         * comment. C'est un point de départ qu'un humain corrige en quelques
+         * gestes.
+         *
+         * En carré et non sur une ligne : douze morceaux alignés faisaient une
+         * figure de six cents pixels de large, qui débordait sur la carte
+         * voisine et rendait les cases inaccessibles. Un carré est de surcroît
+         * la meilleure hypothèse — c'est la disposition qu'emploie l'image
+         * d'ensemble d'un décor. */
+        $offsets = $footprint['offsets'] ?? [];
+
+        if ($offsets === []) {
+            $columns = max(1, (int) ceil(sqrt(max(count($pieces), 1))));
+            $rank = 0;
+
+            foreach (array_keys($pieces) as $piece) {
+                $offsets[$piece] = [$rank % $columns, -intdiv($rank, $columns)];
+                $rank++;
+            }
+        }
+
+        $blocked = [];
+
+        foreach ($footprint['roles'] ?? [] as $piece => $role) {
+            if ($role === 'block') {
+                $blocked[] = (int) $piece;
+            }
+        }
+
+        $editor = [
+            'family'  => $name,
+            'w'       => (int) ($footprint['w'] ?? max(count($pieces), 1)),
+            'h'       => (int) ($footprint['h'] ?? 1),
+            'pieces'  => $pieces,
+            'offsets' => $offsets,
+            'blocked' => $blocked,
+        ];
+
+        $editorJson = (string) json_encode($editor, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        ?>
+        <section class="fp-card" data-state="<?= $source === 'declared' ? 'set' : 'todo' ?>"
+                 data-family="<?= e($name) ?>">
+            <header class="fp-card__head">
+                <code class="fp-card__name"><?= e($name) ?></code>
+                <span class="fp-badge <?= $originClass ?>" title="<?= e($originHint) ?>"><?= e($originLabel) ?></span>
+            </header>
+
+            <form method="post" action="footprints-save.php" class="fp-form">
                 <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
-                <input type="hidden" name="action" value="declare" />
+                <input type="hidden" name="type" value="<?= e($name) ?>" />
+                <?php /* La figure ne voyage qu'une fois : l'éditeur lit ce champ,
+                         le réécrit à chaque geste, et c'est lui qui part au POST. */ ?>
+                <input type="hidden" name="figure" class="fp-figure" value="<?= e($editorJson) ?>" />
 
-                <label class="form-label mb-0">Famille</label>
-                <input type="text" name="type" list="footprint-families" required
-                       class="form-select" style="max-width: 340px;"
-                       placeholder="geant_petrifie" />
-                <datalist id="footprint-families">
-                    <?php foreach (array_keys($catalogue) as $family): ?>
-                        <option value="<?= e((string) $family) ?>"></option>
+                <div class="fp-board">
+                    <?php /* Repli sans JavaScript : les morceaux, sans les gestes. */ ?>
+                    <?php foreach (array_keys($offsets) as $piece): ?>
+                        <?php if (isset($pieces[$piece])): ?>
+                            <img class="fp-fallback" src="<?= e($pieces[$piece]) ?>" alt="" loading="lazy" />
+                        <?php endif; ?>
                     <?php endforeach; ?>
-                </datalist>
+                </div>
 
-                <label class="form-label mb-0 mt-2">Largeur / hauteur</label>
-                <input type="number" name="w" min="1" max="32" value="1" class="form-select" style="max-width: 90px;" />
-                <input type="number" name="h" min="1" max="32" value="1" class="form-select" style="max-width: 90px;" />
+                <p class="fp-summary">
+                    <?= count($pieces) ?> morceau<?= count($pieces) > 1 ? 'x' : '' ?><?php
+                    if ($pieces === []): ?> sur le disque — la carte seule en parle<?php endif; ?>
+                </p>
 
-                <label class="form-label mb-0 mt-2">Décalages (JSON)</label>
-                <input type="text" name="offsets" class="form-select" placeholder='{"0":[0,0],"1":[0,-1]}' />
-
-                <label class="form-label mb-0 mt-2">Rôles par morceau (JSON, facultatif)</label>
-                <input type="text" name="roles" class="form-select" placeholder='{"0":"block","1":"cover"}' />
-
-                <div class="mt-2">
-                    <button type="submit" class="btn btn-sm btn-primary">Déclarer</button>
+                <div class="fp-actions">
+                    <button type="submit" name="action" value="save" class="btn btn-sm btn-primary">
+                        Enregistrer
+                    </button>
+                    <?php if ($source === 'declared'): ?>
+                        <button type="submit" name="action" value="forget" class="btn btn-sm btn-secondary"
+                                title="La forme sera de nouveau devinée d'après la carte ou l'image">
+                            Revenir au calcul automatique
+                        </button>
+                    <?php endif; ?>
                 </div>
             </form>
-        </div>
+        </section>
+    <?php endforeach; ?>
     </div>
 </div>
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Découpes des décors', $content);
+
+echo admin_layout('Décors en plusieurs morceaux', $content, [
+    'styles'  => ['/admin/css/footprints.css'],
+    'scripts' => ['/admin/js/footprints.js'],
+]);

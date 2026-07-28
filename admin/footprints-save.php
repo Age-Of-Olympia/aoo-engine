@@ -1,15 +1,20 @@
 <?php
 /**
- * Mutations des découpes de décor (admin → Cartes · Découpes).
+ * Enregistre la forme et le passage d'un décor (admin → Cartes).
  *
- * Trois gestes, tous en PRG derrière un jeton CSRF :
+ * Deux gestes, en PRG derrière un jeton CSRF :
  *
- * - `adopt`  — fige la découpe actuellement devinée. Elle cesse alors de
- *   dépendre de la carte : reprendre un décor mal posé ne la changera plus.
- * - `declare` — la saisit à la main, pour les figures qu'aucune source ne
- *   décrit correctement.
- * - `forget` — la retire ; le type retombe sur ce que la carte ou l'image
- *   disent.
+ * - `save`   — enregistre la figure telle qu'elle est réglée à l'écran. Elle
+ *   cesse alors d'être devinée : reprendre un décor mal posé sur la carte ne
+ *   la changera plus.
+ * - `forget` — la retire ; la forme redevient celle que la carte ou l'image
+ *   d'ensemble racontent.
+ *
+ * La figure arrive sérialisée dans un seul champ, telle que l'éditeur l'a
+ * construite : `{family, w, h, offsets: {morceau: [dx, dy]}, blocked: [morceaux]}`.
+ * Les cases qui barrent le chemin deviennent des rôles `block` ; les autres
+ * restent au rôle par défaut du type, ce qui évite d'écrire une évidence
+ * autant que de figer un défaut qui pourrait changer.
  */
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
@@ -24,52 +29,42 @@ try {
     (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
 
     $type = trim((string) ($_POST['type'] ?? ''));
-    $action = (string) ($_POST['action'] ?? '');
 
     if ($type === '') {
-        throw new RuntimeException('Aucun type indiqué.');
+        throw new RuntimeException('Aucun décor indiqué.');
     }
 
-    switch ($action) {
-        case 'adopt':
-            /* Ce que l'éditeur montre aujourd'hui devient ce qu'il montrera
-             * demain, quoi qu'il advienne de la carte. */
-            $footprint = $service->catalogue()[$type] ?? null;
-
-            if ($footprint === null) {
-                throw new RuntimeException('Aucune découpe connue pour « ' . $type . ' » : à saisir à la main.');
-            }
-
-            $service->declare($type, (int) $footprint['w'], (int) $footprint['h'], $footprint['offsets']);
-            setFlash('success', 'Découpe de « ' . $type . ' » déclarée.');
-            break;
-
-        case 'declare':
-            $offsets = json_decode((string) ($_POST['offsets'] ?? ''), true);
-            $roles = json_decode((string) ($_POST['roles'] ?? ''), true);
-
-            if (!is_array($offsets)) {
-                throw new RuntimeException('Les décalages doivent être un objet JSON, par exemple {"0":[0,0],"1":[0,-1]}.');
-            }
-
-            $service->declare(
-                $type,
-                (int) ($_POST['w'] ?? 1),
-                (int) ($_POST['h'] ?? 1),
-                $offsets,
-                is_array($roles) ? $roles : []
-            );
-            setFlash('success', 'Découpe de « ' . $type . ' » enregistrée.');
-            break;
-
-        case 'forget':
-            $service->forget($type);
-            setFlash('success', 'Découpe de « ' . $type . ' » oubliée : elle sera de nouveau devinée.');
-            break;
-
-        default:
-            throw new RuntimeException('Action inconnue : ' . $action);
+    if (($_POST['action'] ?? '') === 'forget') {
+        $service->forget($type);
+        setFlash('success', 'La forme de « ' . $type . ' » sera de nouveau devinée.');
+        redirectTo('/admin/footprints.php');
     }
+
+    $figure = json_decode((string) ($_POST['figure'] ?? ''), true);
+
+    if (!is_array($figure) || !isset($figure['offsets']) || !is_array($figure['offsets'])) {
+        throw new RuntimeException('La figure envoyée est illisible.');
+    }
+
+    $offsets = [];
+
+    foreach ($figure['offsets'] as $piece => $offset) {
+        if (is_array($offset) && count($offset) === 2) {
+            $offsets[(int) $piece] = [(int) $offset[0], (int) $offset[1]];
+        }
+    }
+
+    $roles = [];
+
+    foreach ($figure['blocked'] ?? [] as $piece) {
+        if (isset($offsets[(int) $piece])) {
+            $roles[(int) $piece] = 'block';
+        }
+    }
+
+    $service->declare($type, (int) ($figure['w'] ?? 1), (int) ($figure['h'] ?? 1), $offsets, $roles);
+
+    setFlash('success', 'La forme de « ' . $type . ' » est enregistrée.');
 } catch (\Throwable $e) {
     setFlash('danger', $e->getMessage());
 }

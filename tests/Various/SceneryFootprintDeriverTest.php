@@ -201,4 +201,38 @@ class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
 
         $this->assertArrayNotHasKey('gm_rocher', $this->deriver()->derive());
     }
+
+    /**
+     * Ce qui EXISTE sur le disque, par opposition à ce qui est posé.
+     *
+     * La page d'administration liste les décors à régler, et une famille dont
+     * aucun exemplaire n'est posé est justement la plus concernée : elle ne
+     * peut pas venir de la carte. Ce cas ne fixe donc pas un contenu — il
+     * dépend des assets du déploiement — mais la FORME de la réponse, dont
+     * l'éditeur dépend pour afficher les images.
+     */
+    public function testDiskPiecesAreGroupedByFamilyAndAddressable(): void
+    {
+        $onDisk = $this->deriver()->piecesOnDisk();
+
+        if ($onDisk === []) {
+            $this->markTestSkipped('Aucun décor sur ce déploiement : img/foregrounds/ est absent.');
+        }
+
+        foreach ($onDisk as $family => $pieces) {
+            $this->assertNotSame('', (string) $family);
+            $this->assertNotEmpty($pieces, 'une famille sans morceau ne devrait pas être listée');
+
+            foreach ($pieces as $url) {
+                $this->assertStringStartsWith('/img/foregrounds/' . $family, $url);
+                $this->assertStringEndsWith('.png', $url);
+            }
+
+            $this->assertSame(
+                array_keys($pieces),
+                array_values(array_unique(array_keys($pieces))),
+                'un morceau n\'apparaît qu\'une fois par famille'
+            );
+        }
+    }
 }

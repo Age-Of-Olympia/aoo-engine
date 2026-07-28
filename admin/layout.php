@@ -99,7 +99,7 @@ function admin_layout($title, $content, array $assets = []) {
             ['terrain-transitions.php', 'Transitions de terrain', '/admin/terrain-transitions.php'],
             ['tile-assets.php', 'Tuiles &amp; images', '/admin/tile-assets.php'],
             ['resource-types.php', 'Ressources (types)', '/admin/resource-types.php'],
-            ['footprints.php', 'Découpes des décors', '/admin/footprints.php'],
+            ['footprints.php', 'Décors en morceaux', '/admin/footprints.php'],
             ['tile-colors.php', 'Couleurs de carte', '/admin/tile-colors.php'],
             ['map-elements.php', 'Éléments posés', '/admin/map-elements.php'],
             ['screenshots.php', 'Captures', '/admin/screenshots.php'],

@@ -72,6 +72,9 @@ final class SceneryFootprintDeriver
     /** @var array<string, array{w:int,h:int,cells:int,holed:bool,offsets:array<int,array{0:int,1:int}>}>|null */
     private ?array $imageCache = null;
 
+    /** @var array<string, array<int, string>>|null */
+    private ?array $diskCache = null;
+
     public function __construct(?Connection $conn = null)
     {
         $this->conn = $conn;
@@ -209,31 +212,15 @@ final class SceneryFootprintDeriver
             return $this->imageCache;
         }
 
-        /* `DOCUMENT_ROOT` n'existe pas hors du web — console, migration, test.
-         * Le dépôt, lui, est toujours à trois niveaux au-dessus de ce fichier :
-         * le repli garde la même réponse partout, ce qui compte pour un
-         * catalogue que l'éditeur ET la ligne de commande consultent. */
-        $root = ($_SERVER['DOCUMENT_ROOT'] ?? '') . '/img/foregrounds/';
+        $root = self::foregroundsDir();
 
-        if (!is_dir($root)) {
-            $root = dirname(__DIR__, 3) . '/img/foregrounds/';
-        }
-
-        if (!is_dir($root)) {
+        if ($root === null) {
             return [];
-        }
-
-        /* Les morceaux disponibles, par famille : ce sont eux qu'on saura poser. */
-        $pieces = [];
-
-        foreach (glob($root . '*.png') ?: [] as $file) {
-            [$family, $index] = self::splitPiece(basename($file, '.png'));
-            $pieces[$family][$index] = true;
         }
 
         $footprints = [];
 
-        foreach ($pieces as $family => $indexes) {
+        foreach ($this->piecesOnDisk() as $family => $indexes) {
             if (count($indexes) < 2) {
                 continue;
             }
@@ -252,7 +239,6 @@ final class SceneryFootprintDeriver
             }
 
             $offsets = [];
-            ksort($indexes);
 
             foreach (array_keys($indexes) as $piece) {
                 $offsets[$piece] = [$piece % $w, $h - 1 - intdiv($piece, $w)];
@@ -273,6 +259,64 @@ final class SceneryFootprintDeriver
         }
 
         return $this->imageCache = $footprints;
+    }
+
+    /**
+     * Les morceaux présents sur le disque, par famille et par indice.
+     *
+     * C'est ce qui EXISTE, par opposition à ce qui est posé : une famille dont
+     * aucun exemplaire ne figure sur la carte est ici, et c'est justement
+     * celle qu'un animateur veut pouvoir régler.
+     *
+     * @return array<string, array<int, string>> famille → morceau → chemin web
+     */
+    public function piecesOnDisk(): array
+    {
+        if ($this->diskCache !== null) {
+            return $this->diskCache;
+        }
+
+        $root = self::foregroundsDir();
+
+        if ($root === null) {
+            return $this->diskCache = [];
+        }
+
+        $pieces = [];
+
+        foreach (glob($root . '*.png') ?: [] as $file) {
+            $base = basename($file, '.png');
+            [$family, $index] = self::splitPiece($base);
+            $pieces[$family][$index] = '/img/foregrounds/' . $base . '.png';
+        }
+
+        foreach ($pieces as &$indexes) {
+            ksort($indexes);
+        }
+
+        unset($indexes);
+        ksort($pieces);
+
+        return $this->diskCache = $pieces;
+    }
+
+    /**
+     * Le dossier des décors, ou `null` s'il est absent.
+     *
+     * `DOCUMENT_ROOT` n'existe pas hors du web — console, migration, test. Le
+     * dépôt, lui, est toujours à trois niveaux au-dessus de ce fichier : le
+     * repli garde la même réponse partout, ce qui compte pour un catalogue que
+     * l'éditeur ET la ligne de commande consultent.
+     */
+    private static function foregroundsDir(): ?string
+    {
+        $root = ($_SERVER['DOCUMENT_ROOT'] ?? '') . '/img/foregrounds/';
+
+        if (!is_dir($root)) {
+            $root = dirname(__DIR__, 3) . '/img/foregrounds/';
+        }
+
+        return is_dir($root) ? $root : null;
     }
 
     /**

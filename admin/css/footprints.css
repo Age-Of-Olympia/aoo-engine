@@ -1,0 +1,214 @@
+/*
+ * Décors en plusieurs morceaux — forme et passage.
+ *
+ * La grille est dessinée à 50 px la case, l'échelle réelle de la carte : un
+ * décor doit se reconnaître ici tel qu'il apparaîtra en jeu. Une vignette
+ * réduite était précisément le reproche fait à la première version.
+ */
+
+.fp-note {
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    border-left: 3px solid var(--admin-accent, #8a6d3b);
+    background: rgba(138, 109, 59, 0.07);
+    border-radius: 3px;
+}
+
+.fp-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.fp-search {
+    max-width: 260px;
+}
+
+.fp-filters {
+    display: flex;
+    gap: 6px;
+}
+
+.fp-filters .btn.active {
+    filter: brightness(0.88);
+    font-weight: 600;
+}
+
+/* Assez large pour une figure de quatre cases et sa couronne de cases vides,
+ * soit six cases de 50 px : le cas courant tient sans défiler. */
+.fp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+    align-items: start;
+}
+
+.fp-card {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.55);
+    /* Sans quoi la carte s'élargit à la taille de sa figure (`min-width: auto`
+     * est le défaut d'un élément de grille) et recouvre sa voisine : les cases
+     * du dessous deviennent alors inatteignables. */
+    min-width: 0;
+}
+
+.fp-card[hidden] {
+    display: none;
+}
+
+.fp-card__head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.fp-card__name {
+    display: inline;
+    font-size: 13px;
+    word-break: break-all;
+}
+
+.fp-badge {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    white-space: nowrap;
+    cursor: help;
+}
+
+.fp-badge--set { background: #d8ecd8; color: #2c5c2c; }
+.fp-badge--guessed { background: #e6e2d8; color: #5a5346; }
+.fp-badge--unknown { background: #f5e2c8; color: #7a4f16; }
+
+/*
+ * Le damier. Les cases vides restent visibles en pointillé : c'est ce qui
+ * permet de VOIR qu'une figure est trouée, et de savoir où déposer un morceau.
+ */
+.fp-board {
+    position: relative;
+    display: grid;
+    gap: 0;
+    margin-bottom: 8px;
+    /* Un damier discret sous les morceaux transparents, sinon un décor clair
+     * disparaît sur le fond de la page. */
+    background-image:
+        linear-gradient(45deg, rgba(0, 0, 0, 0.04) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.04) 75%),
+        linear-gradient(45deg, rgba(0, 0, 0, 0.04) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.04) 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+    /* Une figure plus large que sa carte défile chez elle plutôt que de
+     * déborder sur la voisine. Les cases gardent leurs 50 px : les réduire
+     * ferait mentir l'aperçu sur ce que la carte affichera. */
+    max-width: 100%;
+    max-height: 60vh;
+    overflow: auto;
+    justify-content: start;
+}
+
+.fp-cell {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    box-sizing: border-box;
+    border: 1px dashed rgba(0, 0, 0, 0.18);
+    padding: 0;
+    background: transparent;
+}
+
+.fp-cell--filled {
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+}
+
+.fp-cell--filled:focus-visible {
+    outline: 2px solid #8a6d3b;
+    outline-offset: -2px;
+}
+
+.fp-cell img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* Une case qui barre le chemin se voit sans survol : hachures rouges. */
+.fp-cell--blocks::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(180, 40, 40, 0.55) 0 4px,
+        transparent 4px 9px
+    );
+    box-shadow: inset 0 0 0 2px rgba(180, 40, 40, 0.75);
+    pointer-events: none;
+}
+
+.fp-cell--drop {
+    border-color: #8a6d3b;
+    background: rgba(138, 109, 59, 0.18);
+}
+
+.fp-cell--dragging {
+    opacity: 0.4;
+}
+
+/* Le repli sans JavaScript : les morceaux empilés, à la taille de la carte.
+ * On voit de quel décor il s'agit ; on ne peut simplement pas le régler. */
+.fp-fallback {
+    width: 50px;
+    height: 50px;
+}
+
+.fp-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 12px;
+    color: #5a5346;
+    margin: 6px 0 8px;
+}
+
+.fp-legend span::before {
+    content: '';
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    margin-right: 4px;
+    vertical-align: -1px;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.fp-legend .fp-legend--free::before { background: rgba(255, 255, 255, 0.8); }
+
+.fp-legend .fp-legend--blocks::before {
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(180, 40, 40, 0.6) 0 3px,
+        transparent 3px 6px
+    );
+}
+
+.fp-summary {
+    font-size: 12px;
+    color: #5a5346;
+    margin: 0 0 10px;
+}
+
+.fp-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
