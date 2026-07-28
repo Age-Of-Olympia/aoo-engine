@@ -35,6 +35,27 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         return $condition;
     }
 
+    /**
+     * Give an entity one more cell, with the role wanted.
+     *
+     * @return int the coords id of that cell
+     */
+    private function giveCellTo(int $entityId, int $x, int $y, string $role): int
+    {
+        $coordsId = (int) \Classes\View::get_coords_id(
+            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
+        );
+
+        $this->link->executeStatement(
+            'INSERT INTO entity_cells (player_id, coords_id, plan, z, x, y, piece, role)
+             VALUES (?, ?, ?, 0, ?, ?, 0, ?)
+             ON DUPLICATE KEY UPDATE role = VALUES(role)',
+            [$entityId, $coordsId, 'gaia', $x, $y, $role]
+        );
+
+        return $coordsId;
+    }
+
     /** Place le tireur en (0,0) et rend sa cible en (4,0). */
     private function shooterAndTarget(): array
     {
@@ -84,6 +105,81 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         );
 
         $this->assertTrue($result->isSuccess(), 'une table ne bloque pas les projectiles');
+    }
+
+    /**
+     * An entity screens every cell it HOLDS. A 2×2 wall used to stop arrows
+     * on the single cell it stood on.
+     */
+    public function testAnEntityScreensEveryCellItHolds(): void
+    {
+        [$shooter, $victim] = $this->shooterAndTarget();
+
+        /* The wall stands aside; only its emprise crosses the line. */
+        $wall = $this->placeStructure('mur_pierre', 2, 1);
+        $this->giveCellTo($wall, 2, 0, \App\Service\Map\EntityCellService::ROLE_PART);
+
+        $result = (new ObstacleCondition())->check(
+            $shooter, $victim, $this->condition(), new ConditionObject()
+        );
+
+        $this->assertFalse($result->isSuccess(), 'the cell it holds screens the shot');
+    }
+
+    /**
+     * `cover` is a drawing order: the back of a building must not make
+     * whoever stands behind it unreachable.
+     */
+    public function testACoverCellLetsTheShotThrough(): void
+    {
+        [$shooter, $victim] = $this->shooterAndTarget();
+
+        $wall = $this->placeStructure('mur_pierre', 2, 1);
+        $this->giveCellTo($wall, 2, 0, 'cover');
+
+        $result = (new ObstacleCondition())->check(
+            $shooter, $victim, $this->condition(), new ConditionObject()
+        );
+
+        $this->assertTrue($result->isSuccess(), 'one is not invulnerable behind a sprite');
+    }
+
+    /**
+     * The arch: its base refuses the step, its opening lets arrows pass.
+     * Blocking the way and screening a shot are two dials, on purpose.
+     */
+    public function testAnArchBlocksTheStepButNotTheShot(): void
+    {
+        [$shooter, $victim] = $this->shooterAndTarget();
+
+        $arch = $this->placeStructure('mur_pierre', 2, 1);
+        $cell = $this->giveCellTo($arch, 2, 0, 'block');
+
+        $entityManager = \App\Entity\EntityManagerFactory::getEntityManager();
+        $race = $entityManager->getRepository(\App\Entity\Race::class)->findOneBy(['name' => 'mur_pierre']);
+
+        if ($race === null) {
+            $this->markTestSkipped('mur_pierre absent du catalogue.');
+        }
+
+        $race->setBlocksProjectiles(false);
+        $entityManager->flush();
+
+        try {
+            $this->assertNotNull(
+                (new \App\Service\Map\TileOccupancyService())->stepRefusal($cell, (int) $shooter->id, true),
+                'the base refuses the step'
+            );
+
+            $result = (new ObstacleCondition())->check(
+                $shooter, $victim, $this->condition(), new ConditionObject()
+            );
+
+            $this->assertTrue($result->isSuccess(), 'and the arrow goes through the opening');
+        } finally {
+            $race->setBlocksProjectiles(true);
+            $entityManager->flush();
+        }
     }
 
     public function testAClearLineIsNotBlocked(): void

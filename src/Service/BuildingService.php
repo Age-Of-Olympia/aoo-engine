@@ -75,6 +75,15 @@ class BuildingService extends BaseService
     }
 
     /**
+     * A cell whose role is only a drawing order never screens anything.
+     *
+     * The rest is left to `races.blocks_projectiles`, which already tells a
+     * wall from a table — an arch stops the step on its base while arrows
+     * pass through its opening.
+     */
+    private const TRANSPARENT_ROLE = 'cover';
+
+    /**
      * Ligne de tir entre deux points du même plan : les cases traversées
      * (Bresenham, extrémités exclues) et le premier obstacle — toute
      * entité dont la race arrête les projectiles
@@ -111,26 +120,20 @@ class BuildingService extends BaseService
 
         $blocking = $this->raceService->getProjectileBlockingRaceNames();
         if ($blocking !== []) {
-            // Tout type d'entité : la race décide seule — les tombes de
-            // bâtiments et les morts sont hors plateau (plan), invisibles
-            // au filtre de cases.
-            //
-            // L'ANCRE SEULE, encore : un mur de 2×2 n'arrête donc les tirs que
-            // sur un quart de lui-même. Le jour où cette requête lira
-            // `entity_cells` comme le fait déjà TileOccupancyService, une seule
-            // règle importe : seules les cases `block` font écran. Une case
-            // `cover` est la portion HAUTE d'un décor, et son rôle est un ORDRE
-            // DE DESSIN : le sprite passe devant l'occupant, et là s'arrête
-            // l'effet — le moteur ne cache rien. La prendre pour un obstacle
-            // rendrait invulnérable quiconque se glisse derrière l'arrière
-            // d'un bâtiment.
+            // An entity screens every cell it HOLDS, not just the one it
+            // stands on: a 2×2 wall used to stop arrows on a quarter of
+            // itself. `cover` is excluded — it is a drawing order, so the
+            // back of a building must not make whoever stands there
+            // unreachable.
             $rows = $conn->fetchAllAssociative(
                 'SELECT c.x, c.y, p.name
                  FROM players p
-                 JOIN coords c ON c.id = p.coords_id
+                 JOIN entity_cells ec ON ec.player_id = p.id
+                 JOIN coords c ON c.id = ec.coords_id
                  WHERE ' . $tileFilter . '
+                   AND ec.role <> ?
                    AND p.race IN (' . implode(',', array_fill(0, count($blocking), '?')) . ')',
-                array_merge($tileParams, $blocking)
+                array_merge($tileParams, [self::TRANSPARENT_ROLE], $blocking)
             );
             foreach ($rows as $row) {
                 $blockersByTile[$row['x'] . ',' . $row['y']] = (string) $row['name'];
