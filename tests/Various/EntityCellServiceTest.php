@@ -8,29 +8,42 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * L'emprise : ce que `entity_cells` promet, et qui n'a pas encore de lecteur.
+ * L'emprise : les cases qu'une entité occupe, et comment elles s'y posent.
  *
- * Le lot L3 pose la table et la remplit à l'identique de l'existant — une
- * case par entité, celle de `players.coords_id`, en rôle d'ancre. Rien ne la
- * lit ; ces cas sont donc là pour deux raisons.
+ * L3 a posé la table et l'a remplie à l'identique de l'existant — une case
+ * par entité, celle de `players.coords_id`, en rôle d'ancre. L'occupation la
+ * lit désormais, et ce lot-ci la remplit vraiment : `syncFootprint()` étend
+ * l'entité sur toute la découpe déclarée de son type.
  *
- * D'abord fixer l'invariant, tant qu'il est simple à énoncer : toute entité
- * posée a exactement une ancre, et elle est à `players.coords_id`. C'est sur
- * lui que L4 s'appuiera pour poser les autres cases d'une emprise.
+ * Deux familles de cas, donc.
  *
- * Ensuite tenir la table à jour. Une table que personne ne lit pourrit sans
- * bruit : c'est le piège de ce genre de lot. `syncAnchor()` est appelé
- * derrière chaque écriture de `players.coords_id`, et `drift()` dit ce qui a
- * échappé.
+ * L'invariant d'abord, tant qu'il est simple à énoncer : toute entité posée a
+ * exactement UNE ancre, à `players.coords_id`, et une emprise ne la lui
+ * reprend pas. C'est sur elle que tout le reste s'appuie.
+ *
+ * La tenue de la table ensuite. Une table mal tenue ment sans bruit :
+ * `syncAnchor()` est appelé derrière chaque écriture de `players.coords_id`,
+ * `drift()` dit ce qui a échappé, et reposer une figure rétrécie rend les
+ * cases abandonnées — sans quoi une emprise ne ferait que grandir, et
+ * corriger une erreur en ajouterait une.
  */
 #[Group('items-golden-master')]
 class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
 {
     private const PLAN = 'plan_test_emprise';
 
+    /** @var list<string> les types dont un cas a déclaré la découpe */
+    private array $declaredTypes = [];
+
     protected function tearDown(): void
     {
         $link = $this->link;
+
+        foreach ($this->declaredTypes as $type) {
+            $link->executeStatement('DELETE FROM entity_type_footprints WHERE type_name = ?', [$type]);
+        }
+
+        $this->declaredTypes = [];
 
         /* Les cases partent avec les entités (ON DELETE CASCADE), mais le
          * ménage des coords vient après : la contrainte sur coords est en
@@ -190,6 +203,141 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
      * `players` demande de démonter au préalable une dizaine de tables
      * satellites, ce qui n'éprouverait que MariaDB.
      */
+    /**
+     * Déclare une découpe pour un type, et la retire au démontage.
+     *
+     * @param array<int, array{0:int,1:int}> $offsets
+     * @param array<int, string> $roles
+     */
+    private function declareFootprint(string $type, int $w, int $h, array $offsets, array $roles = []): void
+    {
+        $this->declaredTypes[] = $type;
+        (new \App\Service\Map\EntityTypeFootprintService($this->link))
+            ->declare($type, $w, $h, $offsets, $roles);
+    }
+
+    /**
+     * L'emprise se pose depuis la découpe du type.
+     *
+     * Sans cela, un animateur pouvait dessiner une figure de 3×3 dans la page
+     * d'administration sans que rien ne l'écrive : la découpe restait un
+     * dessin, et l'occupation ne voyait qu'une case.
+     */
+    public function testAFootprintSpreadsTheEntityOverItsCells(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $wall = $this->placeStructure('mur_pierre', 40, 40, self::PLAN);
+
+        $this->declareFootprint('mur_pierre', 2, 2, [
+            0 => [0, 0], 1 => [1, 0], 2 => [0, -1], 3 => [1, -1],
+        ]);
+
+        $this->assertSame(3, $this->service()->syncFootprint($wall), 'trois cases autour de l\'ancre');
+
+        $held = array_map(
+            static fn(array $cell): string => $cell['x'] . ',' . $cell['y'],
+            $this->service()->cellsOf($wall)
+        );
+        sort($held);
+
+        $this->assertSame(['40,39', '40,40', '41,39', '41,40'], $held);
+    }
+
+    /** L'ancre garde son rôle : une entité n'en a jamais deux. */
+    public function testTheAnchorKeepsItsRoleWithinAFootprint(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $wall = $this->placeStructure('mur_pierre', 42, 42, self::PLAN);
+
+        $this->declareFootprint('mur_pierre', 2, 1, [0 => [0, 0], 1 => [1, 0]]);
+        $this->service()->syncFootprint($wall);
+
+        $roles = array_count_values(array_column($this->service()->cellsOf($wall), 'role'));
+
+        $this->assertSame(1, $roles['anchor'] ?? 0, 'une ancre, et une seule');
+        $this->assertSame(1, $roles[\App\Service\Map\EntityCellService::ROLE_PART] ?? 0);
+    }
+
+    /**
+     * Un morceau marqué garde son rôle ; les autres n'en prennent aucun.
+     *
+     * `part` est l'absence d'avis : c'est le type qui tranche le passage,
+     * comme pour l'ancre. Résoudre le rôle à l'écriture aurait figé une
+     * réponse qui change avec `races.blocks_passage`.
+     */
+    public function testADeclaredRoleSurvivesWhileTheRestStaysUndecided(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $wall = $this->placeStructure('mur_pierre', 44, 44, self::PLAN);
+
+        $this->declareFootprint(
+            'mur_pierre',
+            3,
+            1,
+            [0 => [0, 0], 1 => [1, 0], 2 => [2, 0]],
+            [1 => 'door']
+        );
+
+        $this->service()->syncFootprint($wall);
+
+        $byCell = [];
+
+        foreach ($this->service()->cellsOf($wall) as $cell) {
+            $byCell[$cell['x'] . ',' . $cell['y']] = $cell['role'];
+        }
+
+        $this->assertSame('door', $byCell['45,44'], 'le morceau marqué garde son rôle');
+        $this->assertSame(\App\Service\Map\EntityCellService::ROLE_PART, $byCell['46,44']);
+    }
+
+    /**
+     * Reposer une figure rétrécie retire les cases devenues inutiles.
+     *
+     * C'est ce qui rend une correction visible : sans cela l'emprise ne
+     * ferait que grandir, et un animateur qui rectifie une erreur en
+     * ajouterait une.
+     */
+    public function testShrinkingAFootprintReleasesTheCellsItDropped(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $wall = $this->placeStructure('mur_pierre', 46, 46, self::PLAN);
+
+        $this->declareFootprint('mur_pierre', 3, 1, [0 => [0, 0], 1 => [1, 0], 2 => [2, 0]]);
+        $this->service()->syncFootprint($wall);
+        $this->assertCount(3, $this->service()->cellsOf($wall));
+
+        $this->declareFootprint('mur_pierre', 2, 1, [0 => [0, 0], 1 => [1, 0]]);
+        $this->service()->syncFootprint($wall);
+
+        $this->assertCount(2, $this->service()->cellsOf($wall), 'la case abandonnée est rendue');
+    }
+
+    /** Un type sans découpe ne tient qu'une case, comme avant. */
+    public function testATypeWithoutAFootprintKeepsASingleCell(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $wall = $this->placeStructure('mur_pierre', 48, 48, self::PLAN);
+
+        $this->assertSame(0, $this->service()->syncFootprint($wall));
+        $this->assertCount(1, $this->service()->cellsOf($wall));
+    }
+
+    /** Corriger une figure reprend les exemplaires déjà sur la carte. */
+    public function testCorrectingAFootprintTakesUpThePlacedCopies(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $first = $this->placeStructure('mur_pierre', 50, 50, self::PLAN);
+        $second = $this->placeStructure('mur_pierre', 55, 55, self::PLAN);
+
+        $this->declareFootprint('mur_pierre', 2, 1, [0 => [0, 0], 1 => [1, 0]]);
+
+        $reapplied = $this->service()->reapplyForType('mur_pierre');
+
+        $this->assertGreaterThanOrEqual(2, $reapplied, 'les deux exemplaires au moins');
+        $this->assertCount(2, $this->service()->cellsOf($first));
+        $this->assertCount(2, $this->service()->cellsOf($second));
+    }
+
     public function testTheSchemaCarriesTheLifecycleRules(): void
     {
         $rules = [];

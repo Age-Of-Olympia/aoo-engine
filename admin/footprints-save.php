@@ -15,13 +15,31 @@
  * Les cases qui barrent le chemin deviennent des rôles `block` ; les autres
  * restent au rôle par défaut du type, ce qui évite d'écrire une évidence
  * autant que de figer un défaut qui pourrait changer.
+ *
+ * Les deux gestes REPOSENT ensuite l'emprise des exemplaires déjà sur la
+ * carte. Sans cela, corriger une figure ne corrigerait que les poses à venir,
+ * et l'animateur repartirait convaincu d'avoir agi.
  */
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\CsrfProtectionService;
+use App\Service\Map\EntityCellService;
 use App\Service\Map\EntityTypeFootprintService;
+
+/**
+ * Ce que la reprise des exemplaires posés a changé, dit à l'animateur.
+ *
+ * Corriger une figure sans reposer ce qui est déjà sur la carte laisserait la
+ * correction invisible ; le taire laisserait croire qu'elle ne fait rien.
+ */
+function reapplied(int $count): string
+{
+    return $count === 0
+        ? ' Aucun exemplaire posé sur la carte.'
+        : ' ' . $count . ' exemplaire' . ($count > 1 ? 's' : '') . ' repris sur la carte.';
+}
 
 $service = new EntityTypeFootprintService();
 
@@ -34,9 +52,14 @@ try {
         throw new RuntimeException('Aucun décor indiqué.');
     }
 
+    $cells = new EntityCellService();
+
     if (($_POST['action'] ?? '') === 'forget') {
         $service->forget($type);
-        setFlash('success', 'La forme de « ' . $type . ' » sera de nouveau devinée.');
+
+        setFlash('success', 'La forme de « ' . $type . ' » sera de nouveau devinée.'
+            . reapplied($cells->reapplyForType($type)));
+
         redirectTo('/admin/footprints.php');
     }
 
@@ -64,7 +87,8 @@ try {
 
     $service->declare($type, (int) ($figure['w'] ?? 1), (int) ($figure['h'] ?? 1), $offsets, $roles);
 
-    setFlash('success', 'La forme de « ' . $type . ' » est enregistrée.');
+    setFlash('success', 'La forme de « ' . $type . ' » est enregistrée.'
+        . reapplied($cells->reapplyForType($type)));
 } catch (\Throwable $e) {
     setFlash('danger', $e->getMessage());
 }

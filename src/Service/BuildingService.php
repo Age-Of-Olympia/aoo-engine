@@ -334,9 +334,12 @@ class BuildingService extends BaseService
                 ]
             );
 
-            /* L'emprise de la structure : une case aujourd'hui, son ancre.
-             * L4 y ajoutera les autres morceaux depuis race_footprint. */
-            (new \App\Service\Map\EntityCellService($conn))->syncAnchor((int) $id);
+            /* L'emprise de la structure : son ancre, puis les cases que la
+             * découpe déclarée de son type ajoute autour. Un type sans découpe
+             * — l'immense majorité — n'en tient qu'une, comme avant. */
+            $cells = new \App\Service\Map\EntityCellService($conn);
+            $cells->syncAnchor((int) $id);
+            $cells->syncFootprint((int) $id);
 
             $conn->executeStatement(
                 'INSERT INTO buildings (player_id, owner_id, faction, build_state)

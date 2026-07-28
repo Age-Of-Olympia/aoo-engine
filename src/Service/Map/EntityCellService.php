@@ -18,15 +18,17 @@ use Doctrine\DBAL\Connection;
  *
  * # Où on en est
  *
- * L3 pose la table et la remplit à l'identique : une case par entité, celle
- * de `players.coords_id`, en rôle d'ancre. **Rien ne la lit encore.** Ce
- * service existe pour que la table ne pourrisse pas entre-temps — une entité
- * créée ou déplacée après la migration doit voir son ancre suivre, sinon L4
- * démarrerait d'une base fausse.
+ * L3 a posé la table et l'a remplie à l'identique : une case par entité,
+ * celle de `players.coords_id`, en rôle d'ancre. L'occupation la lit
+ * désormais — une entité barre le pas sur toutes les cases qu'elle tient.
  *
- * Les emprises réelles (plusieurs cases, rôles distincts par case) viennent
- * avec L4, quand le décor deviendra des entités. La forme est déjà là :
- * `syncAnchor()` ne touche QUE l'ancre et laisse les autres cases en place.
+ * Ce lot-ci ferme la boucle par l'autre bout : `syncFootprint()` pose
+ * l'emprise entière depuis la découpe déclarée du type. Sans lui, un
+ * animateur pouvait dessiner une figure de 3×3 dans la page d'administration
+ * sans que rien ne l'écrive — la découpe restait un dessin.
+ *
+ * Les deux méthodes se partagent le travail sans se marcher dessus :
+ * `syncAnchor()` ne touche QUE l'ancre, `syncFootprint()` que le reste.
  *
  * # Pourquoi l'ancre reste dans `players`
  *
@@ -36,6 +38,17 @@ use Doctrine\DBAL\Connection;
  */
 final class EntityCellService
 {
+    /**
+     * Le rôle d'une case d'emprise sur laquelle personne ne s'est prononcé.
+     *
+     * Elle appartient à l'entité, et ne dit rien de plus : c'est le type qui
+     * tranche le passage, comme pour l'ancre. `block`, `cover`, `door` et
+     * `open` sont les avis explicites d'un humain, posés depuis la page des
+     * décors ; `part` est leur absence, et il fallait pouvoir l'écrire sans
+     * figer une réponse.
+     */
+    public const ROLE_PART = 'part';
+
     private Connection $conn;
 
     public function __construct(?Connection $conn = null)
@@ -102,6 +115,155 @@ final class EntityCellService
         );
 
         return true;
+    }
+
+    /**
+     * Pose l'emprise d'une entité depuis la découpe déclarée de son type.
+     *
+     * L'ancre reste où `syncAnchor()` l'a mise ; cette méthode ne s'occupe que
+     * des AUTRES cases, celles que la découpe ajoute autour. Les deux se
+     * partagent ainsi la table sans jamais se contredire.
+     *
+     * Idempotent : les cases qui ne figurent plus dans la découpe s'en vont,
+     * les nouvelles arrivent, les inchangées restent. C'est ce qui permet de
+     * reposer une emprise après qu'un animateur a corrigé la figure.
+     *
+     * # Le rôle d'une case sans opinion
+     *
+     * Une découpe ne dit un rôle que pour les morceaux qu'un humain a
+     * marqués. Les autres prennent `part` : la case appartient à l'emprise et
+     * ne prétend rien de plus, donc c'est le type qui tranche — exactement ce
+     * que fait déjà l'ancre. Résoudre le rôle à l'écriture aurait figé une
+     * réponse qui change quand `races.blocks_passage` change.
+     *
+     * @return int le nombre de cases posées autour de l'ancre
+     */
+    public function syncFootprint(int $entityId, ?EntityTypeFootprintService $footprints = null): int
+    {
+        $anchor = $this->conn->fetchAssociative(
+            'SELECT p.race, p.coords_id, co.plan, co.z, co.x, co.y
+               FROM players p
+               JOIN coords co ON co.id = p.coords_id
+              WHERE p.id = ? AND p.coords_id > 0',
+            [$entityId]
+        );
+
+        if ($anchor === false) {
+            return $this->forgetSpread($entityId, []);
+        }
+
+        $footprint = ($footprints ?? new EntityTypeFootprintService($this->conn))
+            ->catalogue()[(string) $anchor['race']] ?? null;
+
+        if ($footprint === null || count($footprint['offsets']) < 2) {
+            return $this->forgetSpread($entityId, []);
+        }
+
+        $roles = $footprint['roles'];
+        $keep = [(int) $anchor['coords_id']];
+        $placed = 0;
+
+        foreach ($footprint['offsets'] as $piece => [$dx, $dy]) {
+            /* Le décalage nul, c'est l'ancre : elle est déjà posée, et lui
+             * réécrire son rôle romprait l'invariant « une ancre par entité ». */
+            if ($dx === 0 && $dy === 0) {
+                continue;
+            }
+
+            $x = (int) $anchor['x'] + $dx;
+            $y = (int) $anchor['y'] + $dy;
+
+            $coordsId = (int) \Classes\View::get_coords_id((object) [
+                'x' => $x, 'y' => $y, 'z' => (int) $anchor['z'], 'plan' => (string) $anchor['plan'],
+            ]);
+
+            $this->conn->executeStatement(
+                "INSERT INTO entity_cells (player_id, coords_id, plan, z, x, y, piece, role)
+                 VALUES (:p, :c, :plan, :z, :x, :y, :piece, :role)
+                 ON DUPLICATE KEY UPDATE
+                     plan = VALUES(plan), z = VALUES(z), x = VALUES(x), y = VALUES(y),
+                     piece = VALUES(piece), role = VALUES(role)",
+                [
+                    'p'     => $entityId,
+                    'c'     => $coordsId,
+                    'plan'  => (string) $anchor['plan'],
+                    'z'     => (int) $anchor['z'],
+                    'x'     => $x,
+                    'y'     => $y,
+                    'piece' => (int) $piece,
+                    'role'  => (string) ($roles[$piece] ?? self::ROLE_PART),
+                ]
+            );
+
+            $keep[] = $coordsId;
+            $placed++;
+        }
+
+        $this->forgetSpread($entityId, $keep);
+
+        return $placed;
+    }
+
+    /**
+     * Repose l'emprise de tous les exemplaires posés d'un type.
+     *
+     * Corriger une figure dans la page d'administration ne servirait à rien si
+     * les exemplaires déjà posés gardaient l'ancienne : c'est le geste qui
+     * rend la correction visible.
+     *
+     * @return int le nombre d'exemplaires repris
+     */
+    public function reapplyForType(string $typeName): int
+    {
+        $footprints = new EntityTypeFootprintService($this->conn);
+        $footprint = $footprints->catalogue()[$typeName] ?? null;
+
+        /* Un type qui retombe à une seule case n'a rien à reposer : il a des
+         * cases à RENDRE. Les rendre d'un seul ordre plutôt qu'une entité à la
+         * fois — `mur_pierre_bleue` compte 99 exemplaires en local, et un
+         * décor courant en aligne des centaines en production. */
+        if ($footprint === null || count($footprint['offsets']) < 2) {
+            return (int) $this->conn->executeStatement(
+                "DELETE ec FROM entity_cells ec
+                   JOIN players p ON p.id = ec.player_id
+                  WHERE p.race = ? AND ec.role <> 'anchor'",
+                [$typeName]
+            );
+        }
+
+        $reapplied = 0;
+
+        foreach ($this->conn->fetchFirstColumn(
+            'SELECT id FROM players WHERE race = ? AND coords_id > 0',
+            [$typeName]
+        ) as $entityId) {
+            $this->syncFootprint((int) $entityId, $footprints);
+            $reapplied++;
+        }
+
+        return $reapplied;
+    }
+
+    /**
+     * Retire les cases d'une emprise que la découpe ne réclame plus.
+     *
+     * L'ancre n'est jamais du lot : elle appartient à `syncAnchor()`, et la
+     * retirer ici la ferait disparaître à chaque découpe rétrécie.
+     *
+     * @param list<int> $keep les cases à conserver
+     */
+    private function forgetSpread(int $entityId, array $keep): int
+    {
+        $sql = "DELETE FROM entity_cells WHERE player_id = ? AND role <> 'anchor'";
+        $params = [$entityId];
+
+        if ($keep !== []) {
+            $sql .= ' AND coords_id NOT IN (' . implode(',', array_map('intval', $keep)) . ')';
+        }
+
+        $this->conn->executeStatement($sql, $params);
+
+        return 0;
     }
 
     /**
