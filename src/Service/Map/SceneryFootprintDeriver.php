@@ -32,7 +32,7 @@ use Doctrine\DBAL\Connection;
  * # Le piège du regroupement
  *
  * Ce n'est PAS la connexité. Deux exemplaires collés d'un même décor sont
- * adjacents et fusionneraient : sur la production, trois composantes avalent
+ * adjacents et fusionneraient : sur la production, trois groupes avalent
  * 28 géants à elles trois, dont une de 29 cases pour 13 géants.
  *
  * Le critère est **« connexes ET indices de morceaux tous distincts »** : un
@@ -129,7 +129,7 @@ final class SceneryFootprintDeriver
                 continue; /* une seule pièce : rien à découper */
             }
 
-            $groups = $this->components($cells);
+            $groups = $this->groupsIn($cells);
             $model = $this->completeModel($groups, count($pieces));
 
             if ($model === null) {
@@ -284,7 +284,7 @@ final class SceneryFootprintDeriver
      * conventions de nommage dans la même famille. Ni l'un ni l'autre ne se
      * devine : ils se tranchent.
      *
-     * @return array<string, array{pieces: int, components: int}>
+     * @return array<string, array{pieces: int, groups: int}>
      */
     public function undecidable(): array
     {
@@ -297,10 +297,10 @@ final class SceneryFootprintDeriver
                 continue;
             }
 
-            $groups = $this->components($cells);
+            $groups = $this->groupsIn($cells);
 
             if ($this->completeModel($groups, count($pieces)) === null) {
-                $result[$family] = ['pieces' => count($pieces), 'components' => count($groups)];
+                $result[$family] = ['pieces' => count($pieces), 'groups' => count($groups)];
             }
         }
 
@@ -347,7 +347,7 @@ final class SceneryFootprintDeriver
      * @param list<array{x: int, y: int, z: int, plan: string, piece: int}> $cells
      * @return list<list<array{x: int, y: int, z: int, plan: string, piece: int}>>
      */
-    private function components(array $cells): array
+    private function groupsIn(array $cells): array
     {
         $byKey = [];
 
@@ -360,7 +360,7 @@ final class SceneryFootprintDeriver
     }
 
     /**
-     * Une composante portant TOUS les morceaux, chacun une seule fois.
+     * Un groupe portant TOUS les morceaux, chacun une seule fois.
      *
      * C'est la figure complète : celle qui sert de modèle au catalogue. Les
      * exemplaires tronqués ne peuvent pas la donner, et les agrégats non plus.
@@ -384,9 +384,9 @@ final class SceneryFootprintDeriver
     /**
      * Combien d'exemplaires, et combien sont tronqués.
      *
-     * Un exemplaire tronqué est une composante isolée à qui il manque des
-     * morceaux. Un AGRÉGAT — plusieurs exemplaires collés — compte pour
-     * autant d'exemplaires que son morceau le plus répété.
+     * Un exemplaire tronqué est un groupe isolé à qui il manque des morceaux.
+     * Un AGRÉGAT — plusieurs exemplaires collés — compte pour autant
+     * d'exemplaires que son morceau le plus répété.
      *
      * @param list<list<array{piece: int}>> $groups
      * @return array{0: int, 1: int}

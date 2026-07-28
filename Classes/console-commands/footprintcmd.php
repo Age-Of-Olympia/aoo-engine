@@ -43,7 +43,7 @@ EOT);
 
     /**
      * @param array<string, array{w:int,h:int,cells:int,holed:bool,instances:int,truncated:int,offsets:array<int,array{0:int,1:int}>}> $catalogue
-     * @param array<string, array{pieces:int,components:int}> $undecidable
+     * @param array<string, array{pieces:int,groups:int}> $undecidable
      */
     private function summary(array $catalogue, array $undecidable): string
     {
@@ -80,7 +80,12 @@ EOT);
             $lines[] = '';
             $lines[] = 'Familles SANS exemplaire complet — découpe indérivable, à trancher :';
             foreach ($undecidable as $family => $u) {
-                $lines[] = sprintf('  %-28s %d morceaux, %d composantes', $family, $u['pieces'], $u['components']);
+                $lines[] = sprintf(
+                    '  %-28s %d morceaux, %d groupe(s) posé(s)',
+                    $family,
+                    $u['pieces'],
+                    $u['groups']
+                );
             }
         }
 
