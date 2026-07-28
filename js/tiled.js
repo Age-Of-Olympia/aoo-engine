@@ -101,12 +101,29 @@ function displayInfo(infosJson){
          fonce), elle doit se defaire ainsi. Le bouton le dit, sans quoi on
          croirait effacer toute l'ombre d'un coup. */
       let label = item.type === 'ombre' ? '−1 niveau' : 'Supprimer';
-      let line = `
+      let line;
+
+      /* La ligne « objet » parle de la FIGURE, pas de la case : elle porte
+         donc ses propres gestes — compléter ce qui manque, ou retirer
+         l'objet entier. Supprimer la case d'un géant retire de toute façon
+         le géant entier (erase_case.php) ; le bouton le dit. */
+      if(item.type === 'objet'){
+          line = `
+          <div class="info-row info-row--objet" data-index="${index}">
+              <span><strong>Objet :</strong> ${item.name} — ${params}</span>
+              <button class="object-complete-btn" data-coord-id="${item.coords_id}" data-name="${item.objectPiece || ''}">Compléter</button>
+          </div>
+          `;
+      }
+      else {
+          line = `
           <div class="info-row" data-index="${index}">
               <span>Type: ${item.type}, Name: ${item.name}, Params: ${params}</span>
               <button class="delete-btn" data-coord-id="${item.coords_id}"  data-type="${item.type}">${label}</button>
           </div>
-      `;
+          `;
+      }
+
       displayDiv.append(line); 
   });
   
@@ -116,6 +133,25 @@ function displayInfo(infosJson){
   showModal(infoModal);
 }
 
+
+/* « Compléter » : repose les morceaux manquants d'une figure tronquée.
+   Un clic là où il fallait auparavant replacer chaque morceau à la main —
+   et se souvenir de la découpe. */
+$(document).off('click.objectComplete').on('click.objectComplete', '.object-complete-btn', function () {
+
+  var $btn = $(this);
+  $btn.prop('disabled', true);
+
+  $.post('tiled.php', {
+    'coords': window.tiledInspectedCoords || '',
+    'coord-id': $btn.data('coord-id'),
+    'type': 'object_complete',
+    'src': $btn.data('name')
+  }, function (data) {
+    $btn.replaceWith('<span>' + data + '</span>');
+    if (typeof reloadMapView === 'function') { reloadMapView(); }
+  });
+});
 
 //Delete button on "info" modal
 $(document).on("click", ".delete-btn", function () {
@@ -235,6 +271,9 @@ $(document).ready(function(){
         return false;
 
       }else if( $selected.hasClass('select-name') && $selected.data('name') === 'info'){
+          /* Les gestes d'OBJET du panneau (compléter) rejouent sur la même
+             case : on retient ses coordonnées, la modale n'en garde pas. */
+          window.tiledInspectedCoords = $(this).data('coords');
           retrieveCaseData($(this).data('coords'));
           return false;
       }

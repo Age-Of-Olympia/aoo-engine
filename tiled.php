@@ -77,6 +77,17 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
         include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/tile_info.php';
         exit('infos');
     }
+
+    /* Les deux gestes de l'éditeur d'objet : compléter une figure tronquée,
+       ou la retirer en entier. Ils travaillent sur l'OBJET, pas sur la case —
+       c'est ce qui manquait pour reprendre les 38 exemplaires incomplets. */
+    if($_POST['type'] == 'object_complete'){
+
+        $placed = (new \App\Service\Map\SceneryObjectService())
+            ->complete($coordsId, (string) $_POST['src']);
+
+        exit($placed > 0 ? $placed .' morceau(x) reposé(s)' : 'figure déjà complète');
+    }
     
     if($_POST['type'] == 'harvest_mode'){
         //TODO here update to -1 if -2 or 0 update to -2 if needed
@@ -556,7 +567,7 @@ $modalView->displayModal('tile-info','info-display');
 
 <script src="js/admin-tools.js?v=20260715"></script>
 <script src="js/blocked-tiles.js?v=20260727"></script>
-<script src="js/tiled.js?v=20260728"></script>
+<script src="js/tiled.js?v=20260728b"></script>
 <script>
 /* Tiled editor: toggle the "blocked tiles" overlay so admins can
    verify forbidden triggers / walls / players visually. Reuses

@@ -2,6 +2,7 @@
 use App\Service\BuildingService;
 use App\Service\ResourcePaletteService;
 use Classes\Db;
+use Classes\View;
 
 if($_POST['type'] == 'eraser'){
     include 'erase_map.php';
@@ -67,12 +68,47 @@ if($_POST['type'] == 'eraser'){
     }
 
 
+    $db = new Db();
+
+    /* Un décor multi-cases se pose EN ENTIER.
+     *
+     * L'animateur prend un morceau dans la palette — n'importe lequel — et
+     * clique : la figure se pose alignée pour que CE morceau tombe sur la
+     * case visée. Le geste ne change pas, seul le résultat : il n'a plus à
+     * placer quatorze morceaux à la main pour un fort, ni à se souvenir de
+     * la découpe.
+     *
+     * Une famille sans découpe connue — décor d'une seule case, ou famille
+     * que la carte ne permet pas de trancher — retombe sur la pose simple.
+     * On ne devine pas une figure. */
+    if($_POST['type'] == 'foregrounds'){
+
+        $origin = $db->exe('SELECT x, y, z, plan FROM coords WHERE id = ?', array($coordsId))->fetch_object();
+
+        $cells = (new \App\Service\Map\SceneryObjectService())
+            ->cellsToPlace($_POST['src'], (int) $origin->x, (int) $origin->y);
+
+        if($cells !== array()){
+
+            foreach($cells as $pieceName => list($px, $py)){
+
+                $pieceCoordsId = View::get_coords_id((object) array(
+                    'x' => $px, 'y' => $py, 'z' => $origin->z, 'plan' => $origin->plan
+                ));
+
+                $db->insert('map_foregrounds', array('name' => $pieceName, 'coords_id' => $pieceCoordsId));
+            }
+
+            echo 'foregrounds ('. count($cells) .' morceaux)';
+
+            return;
+        }
+    }
+
     $values = array(
         'name'=>$_POST['src'],
         'coords_id'=>$coordsId
     );
-
-    $db = new Db();
 
     echo $_POST['type'];
 

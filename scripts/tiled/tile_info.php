@@ -40,6 +40,40 @@ $res = $db->exe($sql, array($coordsId, $coordsId, $coordsId, $coordsId, $coordsI
 $results = $res->fetch_all(MYSQLI_ASSOC);
 
 
+/* L'OBJET auquel la case appartient, quand elle porte un décor découpé.
+ *
+ * Une case ne disait jusqu'ici que ce qu'elle porte. Un animateur qui passe
+ * sur le pied d'un géant voyait « map_foregrounds / geant_petrifie-02 » et
+ * rien d'autre : ni de quelle figure il s'agit, ni s'il en manque des
+ * morceaux. Sur la carte, 38 exemplaires sont incomplets. */
+foreach ($results as $row) {
+    if ($row['type'] !== 'map_foregrounds') {
+        continue;
+    }
+
+    $object = (new \App\Service\Map\SceneryObjectService())
+        ->inspect((int) $coordsId, (string) $row['name']);
+
+    if ($object === null) {
+        continue;
+    }
+
+    $results[] = [
+        'coords_id' => $coordsId,
+        'type'      => 'objet',
+        'name'      => $object['family'] . ' — ' . $object['w'] . '×' . $object['h']
+                       . ', ' . count($object['coords_ids']) . '/' . $object['cells'] . ' case(s) posée(s)',
+        'params'    => $object['missing'] === []
+            ? 'figure complète'
+            : 'INCOMPLET : ' . count($object['missing']) . ' morceau(x) manquant(s)',
+        /* Le morceau posé SUR CETTE CASE : c'est lui que le geste
+           « Compléter » renvoie au serveur pour retrouver l'objet. */
+        'objectPiece' => $row['name'],
+    ];
+
+    break; /* une case n'appartient qu'à un objet */
+}
+
 // Convertir en JSON — pas dans $json : c'est le singleton du helper json()
 $tileInfoJson = json_encode($results, JSON_PRETTY_PRINT);
 

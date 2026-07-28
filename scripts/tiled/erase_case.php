@@ -49,9 +49,39 @@ if($type == 'buildings'){
         exit('error type');
     }
 
-    $sql = 'DELETE FROM '.$type.' WHERE coords_id =?';
+    /* Un décor multi-cases se retire EN ENTIER.
+     *
+     * Effacer case par case laissait des orphelins derrière : retirer la tête
+     * d'un géant et lui laisser les pieds n'a jamais été un geste voulu, et
+     * c'est ainsi qu'une trentaine de fragments incomplets sont arrivés sur
+     * la carte. Le service borne l'objet à UN exemplaire — deux décors collés
+     * sont adjacents, et les confondre ferait disparaître le voisin. */
+    if($type === 'map_foregrounds'){
 
-    $db->exe($sql, $coordsId);
+        $names = $db->exe('SELECT name FROM map_foregrounds WHERE coords_id = ?', array($coordsId));
+
+        $toErase = array($coordsId);
+
+        while($row = $names->fetch_object()){
+
+            $toErase = array_merge(
+                $toErase,
+                (new \App\Service\Map\SceneryObjectService())->objectCellsAt((int) $coordsId, $row->name)
+            );
+        }
+
+        foreach(array_unique($toErase) as $id){
+
+            $db->exe('DELETE FROM map_foregrounds WHERE coords_id = ?', $id);
+        }
+    }
+
+    else {
+
+        $sql = 'DELETE FROM '.$type.' WHERE coords_id =?';
+
+        $db->exe($sql, $coordsId);
+    }
 
     /* Effacer le decor d'une case efface aussi son assombrissement : c'est
        ce que faisait le DELETE quand l'ombre etait une ligne de decor. */
