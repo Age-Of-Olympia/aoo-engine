@@ -241,6 +241,45 @@ Les gros bâtiments, eux, sont encore du décor — **280 cases en `unique_*`**
 délibérément écartées. Décor et bâtiment sont donc le même sujet, et se
 règlent par la même table.
 
+#### Un seul catalogue de ce qui se pose sur une case
+
+`races.kind` distingue déjà `character` (22) de `structure` (64). Les
+ressources, elles, vivent dans une AUTRE table — même idée, mécanisme
+différent — et c'est ce qui produit le désordre mesuré le 28 juillet :
+
+- **47 noms vivent dans les deux catalogues** (`altar`, `cocotier1`,
+  `mur_pierre`…). Pour `mur_pierre` : 6 433 entités posées, 0 ressource — la
+  ligne de `resource_types` est un vestige de la conversion des murs ;
+- joindre `resource_types.name` à `map_resources.name` **échoue** — « Illegal
+  mix of collations ». Les deux moitiés du même sujet ne se parlent pas ;
+- sur 105 types de ressource : 44 réellement posés, **42 devenus des
+  structures**, 19 sans pose ni race ;
+- **4 ressources posées n'ont aucun type** (`glaise3`, `arbre7`, et deux
+  `unique_*` mal rangés).
+
+**Cible : un seul catalogue**, `races`, avec `kind` ∈ `character` |
+`structure` | `resource` | `scenery`. `races.name` étant déjà UNIQUE,
+l'unicité des noms devient une contrainte de base et non une convention
+qu'on espère respecter.
+
+**Arbitrages rendus (28 juillet) :**
+
+- **Un nom, un objet.** Les trois familles de décor en collision — `tonneau`
+  (50 poses de décor face à 151 obstacles), `enclume` (9), `centaure` (7) —
+  ne sont pas renommées : elles **fusionnent avec le type obstacle**. La
+  traversabilité se règle. Attention : `races.blocks_passage` est un réglage
+  par TYPE ; le cas par cas passe par `entity_cells.role`, que la conversion
+  doit donc poser (`open` pour les tonneaux couchés) et pas seulement
+  fusionner les noms.
+- **« Cassé » est un état, pas un type.** Les 18 entrées `*_broken` de
+  `resource_types` ne sont posées nulle part et décrivent l'apparence abîmée
+  d'un objet, que `BuildingService` dérive déjà du type et des PV. Retirées.
+  **Les images restent** — c'est le sprite que la bascule va chercher.
+  `altar_broken`, lui, est POSÉ cinq fois et relève du lot des autels.
+- **`pierre_precieuse`** (500 PV, posée nulle part) devient un décor comme
+  les autres, avec un inventaire par défaut qui pourra tomber à sa
+  destruction — donc `race_default_items`, à créer.
+
 #### Les deux éditeurs, et l'admin
 
 Trois surfaces à traiter, pas une :
