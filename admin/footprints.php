@@ -28,6 +28,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\CsrfProtectionService;
 use App\Service\Map\EntityTypeFootprintService;
+use App\Service\Map\Footprint;
 use App\Service\Map\SceneryFootprintDeriver;
 
 /**
@@ -59,6 +60,36 @@ function footprint_origin(string $source): array
             'Ni la carte ni l\'image ne savent dire la figure : les morceaux sont alignés au hasard, à corriger.',
         ],
     };
+}
+
+/**
+ * Une figure de repli, quand aucune source ne sait dire la forme.
+ *
+ * Les morceaux sont rangés en carré, dans l'ordre de lecture : on montre
+ * qu'ils vont ensemble, sans prétendre savoir comment. C'est un point de
+ * départ qu'un humain corrige en quelques gestes.
+ *
+ * En carré et non sur une ligne : douze morceaux alignés faisaient une figure
+ * de six cents pixels de large, qui débordait sur la carte voisine et rendait
+ * ses cases inatteignables. Le carré est de surcroît la meilleure hypothèse —
+ * c'est la disposition qu'emploie l'image d'ensemble d'un décor.
+ *
+ * @param list<int> $pieces
+ */
+function footprint_in_a_square(array $pieces): Footprint
+{
+    if ($pieces === []) {
+        return Footprint::fromOffsets([0 => [0, 0]]);
+    }
+
+    $columns = max(1, (int) ceil(sqrt(count($pieces))));
+    $offsets = [];
+
+    foreach (array_values($pieces) as $rank => $piece) {
+        $offsets[$piece] = [$rank % $columns, -intdiv($rank, $columns)];
+    }
+
+    return Footprint::fromOffsets($offsets);
 }
 
 $csrfToken = (new CsrfProtectionService())->generateToken();
@@ -155,46 +186,21 @@ ob_start();
         [$originLabel, $originClass, $originHint] = footprint_origin($source);
         $footprint = $catalogue[$name] ?? null;
 
-        /* Sans figure connue on range les morceaux en carré, dans l'ordre de
-         * lecture : on montre qu'ils vont ensemble, sans prétendre savoir
-         * comment. C'est un point de départ qu'un humain corrige en quelques
-         * gestes.
-         *
-         * En carré et non sur une ligne : douze morceaux alignés faisaient une
-         * figure de six cents pixels de large, qui débordait sur la carte
-         * voisine et rendait les cases inaccessibles. Un carré est de surcroît
-         * la meilleure hypothèse — c'est la disposition qu'emploie l'image
-         * d'ensemble d'un décor. */
-        $offsets = $footprint['offsets'] ?? [];
+        $figure = $footprint ?? footprint_in_a_square(array_keys($pieces));
 
-        if ($offsets === []) {
-            $columns = max(1, (int) ceil(sqrt(max(count($pieces), 1))));
-            $rank = 0;
+        $blocked = array_keys(array_filter(
+            $figure->roles(),
+            static fn(string $role): bool => $role === 'block'
+        ));
 
-            foreach (array_keys($pieces) as $piece) {
-                $offsets[$piece] = [$rank % $columns, -intdiv($rank, $columns)];
-                $rank++;
-            }
-        }
-
-        $blocked = [];
-
-        foreach ($footprint['roles'] ?? [] as $piece => $role) {
-            if ($role === 'block') {
-                $blocked[] = (int) $piece;
-            }
-        }
-
-        $editor = [
+        $editorJson = (string) json_encode([
             'family'  => $name,
-            'w'       => (int) ($footprint['w'] ?? max(count($pieces), 1)),
-            'h'       => (int) ($footprint['h'] ?? 1),
+            'w'       => $figure->width(),
+            'h'       => $figure->height(),
             'pieces'  => $pieces,
-            'offsets' => $offsets,
+            'offsets' => $figure->offsets(),
             'blocked' => $blocked,
-        ];
-
-        $editorJson = (string) json_encode($editor, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         ?>
         <section class="fp-card" data-state="<?= $source === 'declared' ? 'set' : 'todo' ?>"
                  data-family="<?= e($name) ?>">
@@ -212,7 +218,7 @@ ob_start();
 
                 <div class="fp-board">
                     <?php /* Repli sans JavaScript : les morceaux, sans les gestes. */ ?>
-                    <?php foreach (array_keys($offsets) as $piece): ?>
+                    <?php foreach (array_keys($figure->offsets()) as $piece): ?>
                         <?php if (isset($pieces[$piece])): ?>
                             <img class="fp-fallback" src="<?= e($pieces[$piece]) ?>" alt="" loading="lazy" />
                         <?php endif; ?>

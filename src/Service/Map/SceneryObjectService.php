@@ -56,21 +56,16 @@ final class SceneryObjectService
 
         $footprint = $this->footprints->catalogue()[$family] ?? null;
 
-        if ($footprint === null || !isset($footprint['offsets'][$pickedPiece])) {
+        if ($footprint === null || !isset($footprint->offsets()[$pickedPiece])) {
             return [];
         }
 
-        /* Les décalages sont relatifs au PREMIER morceau ; on les ramène au
-         * morceau choisi, pour qu'il tombe là où l'animateur a cliqué. */
-        [$px, $py] = $footprint['offsets'][$pickedPiece];
-
         $cells = [];
 
-        foreach ($footprint['offsets'] as $piece => [$dx, $dy]) {
-            $cells[$this->pieceName($pickedName, $family, $piece)] = [
-                $x + $dx - $px,
-                $y + $dy - $py,
-            ];
+        /* Le morceau choisi tombe là où l'animateur a cliqué ; la figure sait
+         * placer les autres autour de lui. */
+        foreach ($footprint->cellsAround($pickedPiece, $x, $y) as $piece => $position) {
+            $cells[$this->pieceName($pickedName, $family, $piece)] = $position;
         }
 
         return $cells;
@@ -172,7 +167,7 @@ final class SceneryObjectService
      * l'animateur qui passait dessus.
      *
      * @return array{
-     *     family: string, w: int, h: int, cells: int, holed: bool,
+     *     family: string, footprint: Footprint,
      *     present: list<int>, missing: array<int, array{0:int,1:int}>,
      *     coords_ids: list<int>
      * }|null null quand la case ne porte pas de décor à découpe connue
@@ -220,15 +215,12 @@ final class SceneryObjectService
 
         $missing = [];
 
-        if ($anchorPos !== null && isset($footprint['offsets'][$anchorPos['piece']])) {
-            [$ax, $ay] = $footprint['offsets'][$anchorPos['piece']];
-
-            foreach ($footprint['offsets'] as $piece => [$dx, $dy]) {
+        if ($anchorPos !== null) {
+            /* La figure vue depuis le premier morceau POSÉ : c'est lui le
+             * repère, puisque celui d'origine peut justement manquer. */
+            foreach ($footprint->cellsAround($anchorPos['piece'], $anchorPos['x'], $anchorPos['y']) as $piece => $position) {
                 if (!isset($present[$piece])) {
-                    $missing[$piece] = [
-                        $anchorPos['x'] + $dx - $ax,
-                        $anchorPos['y'] + $dy - $ay,
-                    ];
+                    $missing[$piece] = $position;
                 }
             }
         }
@@ -238,10 +230,7 @@ final class SceneryObjectService
 
         return [
             'family'     => $family,
-            'w'          => $footprint['w'],
-            'h'          => $footprint['h'],
-            'cells'      => $footprint['cells'],
-            'holed'      => $footprint['holed'],
+            'footprint'  => $footprint,
             'present'    => array_keys($present),
             'missing'    => $missing,
             'coords_ids' => $coordsIds,

@@ -93,15 +93,15 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
         $this->seedOnMap('gm_decl_tour');
 
         $this->assertSame('map', $this->service()->sourceOf('gm_decl_tour'));
-        $this->assertSame(2, $this->service()->catalogue()['gm_decl_tour']['cells']);
+        $this->assertSame(2, $this->service()->catalogue()['gm_decl_tour']->cells());
 
         $this->declare('gm_decl_tour', 2, 2, [0 => [0, 0], 1 => [0, -1], 2 => [1, 0], 3 => [1, -1]]);
 
         $footprint = $this->service()->catalogue()['gm_decl_tour'];
 
         $this->assertSame('declared', $this->service()->sourceOf('gm_decl_tour'));
-        $this->assertSame(4, $footprint['cells'], 'la déclaration, pas les deux cases de la carte');
-        $this->assertSame(2, $footprint['w']);
+        $this->assertSame(4, $footprint->cells(), 'la déclaration, pas les deux cases de la carte');
+        $this->assertSame(2, $footprint->width());
     }
 
     /** Oubliée, la famille retombe sur ce que la carte montre. */
@@ -115,7 +115,7 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
         $this->service()->forget('gm_decl_oubli');
 
         $this->assertSame('map', $this->service()->sourceOf('gm_decl_oubli'));
-        $this->assertSame(2, $this->service()->catalogue()['gm_decl_oubli']['cells']);
+        $this->assertSame(2, $this->service()->catalogue()['gm_decl_oubli']->cells());
     }
 
     /**
@@ -133,9 +133,9 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
 
         $footprint = $this->service()->catalogue()['gm_decl_geant'];
 
-        $this->assertSame($offsets, $footprint['offsets'], 'les décalages, au morceau près');
-        $this->assertSame(4, $footprint['cells']);
-        $this->assertTrue($footprint['holed'], '4 cases dans une boîte de 9');
+        $this->assertSame($offsets, $footprint->offsets(), 'les décalages, au morceau près');
+        $this->assertSame(4, $footprint->cells());
+        $this->assertTrue($footprint->isHoled(), '4 cases dans une boîte de 9');
     }
 
     /**
@@ -157,7 +157,7 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
 
         $this->assertSame(
             [0 => 'block', 1 => 'cover'],
-            $this->service()->declared()['gm_decl_arche']['roles']
+            $this->service()->declared()['gm_decl_arche']->roles()
         );
     }
 

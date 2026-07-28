@@ -2,6 +2,7 @@
 
 namespace App\View\Tiled;
 
+use App\Service\Map\Footprint;
 use App\Service\Map\SceneryFootprintDeriver;
 
 /**
@@ -24,10 +25,10 @@ use App\Service\Map\SceneryFootprintDeriver;
  *
  * # Et la FORME vient du catalogue, la même que pour la pose
  *
- * `SceneryFootprintDeriver::catalogue()` la résout une fois pour toutes — la
- * carte d'abord, les images d'ensemble ensuite. La palette et la pose lisent
- * la MÊME source : une infobulle qui annonce 2×2 doit poser un 2×2, sinon
- * elle ment.
+ * `EntityTypeFootprintService::catalogue()` la résout une fois pour toutes —
+ * les découpes déclarées, puis la carte, puis les images d'ensemble. La
+ * palette et la pose lisent la MÊME source : une infobulle qui annonce 2×2
+ * doit poser un 2×2, sinon elle ment.
  *
  * Sans découpe connue, on ne devine pas : la vignette aligne les morceaux
  * pour montrer qu'ils vont ensemble, et la pose reste morceau par morceau.
@@ -36,7 +37,7 @@ final class SceneryPaletteView
 {
     /**
      * @param list<array{name: string, url: string}> $pieces les vignettes brutes
-     * @param array<string, array{w:int,h:int,offsets:array<int,array{0:int,1:int}>,cells:int,holed:bool}> $footprints le catalogue unifié (carte + images)
+     * @param array<string, Footprint> $footprints le catalogue des découpes
      */
     public static function render(array $pieces, array $footprints): string
     {
@@ -77,9 +78,8 @@ final class SceneryPaletteView
      * Une vignette d'objet : la figure recomposée depuis ses morceaux.
      *
      * @param array<int, array{name: string, url: string}> $object
-     * @param array{w:int,h:int,offsets:array<int,array{0:int,1:int}>,cells:int,holed:bool}|null $footprint
      */
-    private static function objectTile(string $family, array $object, ?array $footprint): string
+    private static function objectTile(string $family, array $object, ?Footprint $footprint): string
     {
         ksort($object);
         $anchorName = $object[array_key_first($object)]['name'];
@@ -88,11 +88,11 @@ final class SceneryPaletteView
             ? sprintf(
                 '%s — %d×%d, %d case%s%s',
                 $family,
-                $footprint['w'],
-                $footprint['h'],
-                $footprint['cells'],
-                $footprint['cells'] > 1 ? 's' : '',
-                $footprint['holed'] ? ', figure trouée' : ''
+                $footprint->width(),
+                $footprint->height(),
+                $footprint->cells(),
+                $footprint->cells() > 1 ? 's' : '',
+                $footprint->isHoled() ? ', figure trouée' : ''
             )
             : sprintf('%s — %d morceaux, découpe inconnue (pose morceau par morceau)', $family, count($object));
 
@@ -104,9 +104,9 @@ final class SceneryPaletteView
 
         /* Sans découpe connue, la vignette aligne les morceaux : on voit
          * qu'ils vont ensemble, sans prétendre savoir comment. */
-        $offsets = $footprint['offsets'] ?? self::inARow($object);
-        $w = $footprint['w'] ?? count($object);
-        $h = $footprint['h'] ?? 1;
+        $offsets = $footprint?->offsets() ?? self::inARow($object);
+        $w = $footprint?->width() ?? count($object);
+        $h = $footprint?->height() ?? 1;
 
         return self::composed($attrs, $object, $offsets, $w, $h);
     }

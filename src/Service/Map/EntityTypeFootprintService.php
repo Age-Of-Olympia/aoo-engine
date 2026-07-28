@@ -41,7 +41,7 @@ final class EntityTypeFootprintService
     private ?Connection $conn;
     private SceneryFootprintDeriver $deriver;
 
-    /** @var array<string, array{w:int,h:int,cells:int,holed:bool,offsets:array<int,array{0:int,1:int}>,roles:array<int,string>}>|null */
+    /** @var array<string, Footprint>|null */
     private ?array $declaredCache = null;
 
     public function __construct(?Connection $conn = null, ?SceneryFootprintDeriver $deriver = null)
@@ -58,7 +58,7 @@ final class EntityTypeFootprintService
     /**
      * Les découpes déclarées, par nom de type.
      *
-     * @return array<string, array{w:int,h:int,cells:int,holed:bool,offsets:array<int,array{0:int,1:int}>,roles:array<int,string>}>
+     * @return array<string, Footprint>
      */
     public function declared(): array
     {
@@ -71,20 +71,19 @@ final class EntityTypeFootprintService
         foreach ($this->conn()->fetchAllAssociative(
             'SELECT type_name, w, h, offsets, roles FROM entity_type_footprints'
         ) as $row) {
-            $offsets = self::decodeOffsets((string) $row['offsets']);
-
-            if ($offsets === []) {
-                continue; /* déclaration illisible : on la laisse aux sources devinées */
+            try {
+                $declared[(string) $row['type_name']] = Footprint::boxed(
+                    (int) $row['w'],
+                    (int) $row['h'],
+                    self::decodeOffsets((string) $row['offsets']),
+                    self::decodeRoles($row['roles'])
+                );
+            } catch (\InvalidArgumentException) {
+                /* Déclaration illisible ou incohérente : on la laisse aux
+                 * sources devinées plutôt que de faire tomber la page qui la
+                 * liste — c'est justement là qu'on vient la réparer. */
+                continue;
             }
-
-            $declared[(string) $row['type_name']] = [
-                'w'       => (int) $row['w'],
-                'h'       => (int) $row['h'],
-                'cells'   => count($offsets),
-                'holed'   => count($offsets) < (int) $row['w'] * (int) $row['h'],
-                'offsets' => $offsets,
-                'roles'   => self::decodeRoles($row['roles']),
-            ];
         }
 
         return $this->declaredCache = $declared;
@@ -97,18 +96,11 @@ final class EntityTypeFootprintService
      * jamais les autres sources — y compris quand la carte le contredit,
      * ce qui est précisément le cas qu'on veut pouvoir corriger.
      *
-     * @return array<string, array{w:int,h:int,cells:int,holed:bool,offsets:array<int,array{0:int,1:int}>,roles:array<int,string>}>
+     * @return array<string, Footprint>
      */
     public function catalogue(): array
     {
-        $catalogue = [];
-
-        /* Les découpes devinées ne portent pas de rôle par morceau : seule une
-         * déclaration sait le dire. On complète pour que le catalogue ait une
-         * forme unique, quelle que soit la source. */
-        foreach ($this->deriver->catalogue() as $name => $footprint) {
-            $catalogue[$name] = $footprint + ['roles' => []];
-        }
+        $catalogue = $this->deriver->guessed();
 
         foreach ($this->declared() as $name => $footprint) {
             $catalogue[$name] = $footprint;
@@ -133,6 +125,7 @@ final class EntityTypeFootprintService
         if (isset($this->deriver->derive()[$name])) {
             return 'map';
         }
+
 
         if (isset($this->deriver->imageFootprints()[$name])) {
             return 'image';

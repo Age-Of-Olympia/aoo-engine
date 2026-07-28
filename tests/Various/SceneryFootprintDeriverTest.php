@@ -69,15 +69,16 @@ class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
         $this->put('gm_totem-00', 0, 1);
         $this->put('gm_totem-01', 0, 0);
 
-        $f = $this->deriver()->derive()['gm_totem'] ?? null;
+        $derived = $this->deriver()->derive()['gm_totem'] ?? null;
+        $f = $derived['footprint'] ?? null;
 
         $this->assertNotNull($f);
-        $this->assertSame(1, $f['w']);
-        $this->assertSame(2, $f['h']);
-        $this->assertSame(2, $f['cells']);
-        $this->assertFalse($f['holed']);
-        $this->assertSame(1, $f['instances']);
-        $this->assertSame([0 => [0, 0], 1 => [0, -1]], $f['offsets'], 'décalages relatifs au premier morceau');
+        $this->assertSame(1, $f->width());
+        $this->assertSame(2, $f->height());
+        $this->assertSame(2, $f->cells());
+        $this->assertFalse($f->isHoled());
+        $this->assertSame(1, $derived['instances']);
+        $this->assertSame([0 => [0, 0], 1 => [0, -1]], $f->offsets(), 'décalages relatifs au premier morceau');
     }
 
     /**
@@ -98,12 +99,13 @@ class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
         $this->put('gm_borne-00', 7, 1);
         $this->put('gm_borne-01', 7, 0);
 
-        $f = $this->deriver()->derive()['gm_borne'] ?? null;
+        $derived = $this->deriver()->derive()['gm_borne'] ?? null;
+        $f = $derived['footprint'] ?? null;
 
         $this->assertNotNull($f);
-        $this->assertSame(2, $f['cells'], 'la figure fait deux cases, pas quatre');
-        $this->assertSame(3, $f['instances'], 'l\'agrégat en vaut deux, plus celui à l\'écart');
-        $this->assertSame(0, $f['truncated'], 'aucun n\'est incomplet');
+        $this->assertSame(2, $f->cells(), 'la figure fait deux cases, pas quatre');
+        $this->assertSame(3, $derived['instances'], 'l\'agrégat en vaut deux, plus celui à l\'écart');
+        $this->assertSame(0, $derived['truncated'], 'aucun n\'est incomplet');
     }
 
     /**
@@ -142,16 +144,17 @@ class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
         $this->put('gm_geant-02', 1, 0);
         $this->put('gm_geant-03', 0, 0);
 
-        $f = $this->deriver()->derive()['gm_geant'] ?? null;
+        $derived = $this->deriver()->derive()['gm_geant'] ?? null;
+        $f = $derived['footprint'] ?? null;
 
         $this->assertNotNull($f);
-        $this->assertSame(3, $f['w']);
-        $this->assertSame(3, $f['h']);
-        $this->assertSame(4, $f['cells'], 'quatre cases dans une boîte de neuf');
-        $this->assertTrue($f['holed']);
+        $this->assertSame(3, $f->width());
+        $this->assertSame(3, $f->height());
+        $this->assertSame(4, $f->cells(), 'quatre cases dans une boîte de neuf');
+        $this->assertTrue($f->isHoled());
         $this->assertSame(
             [0 => [0, 0], 1 => [0, -1], 2 => [-1, -2], 3 => [-2, -2]],
-            $f['offsets']
+            $f->offsets()
         );
     }
 
@@ -167,12 +170,13 @@ class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
         $this->put('gm_arche-00', 8, 8);
         $this->put('gm_arche-01', 9, 8);
 
-        $f = $this->deriver()->derive()['gm_arche'] ?? null;
+        $derived = $this->deriver()->derive()['gm_arche'] ?? null;
+        $f = $derived['footprint'] ?? null;
 
         $this->assertNotNull($f);
-        $this->assertSame(4, $f['cells'], 'la figure complète fait foi');
-        $this->assertSame(2, $f['instances']);
-        $this->assertSame(1, $f['truncated']);
+        $this->assertSame(4, $f->cells(), 'la figure complète fait foi');
+        $this->assertSame(2, $derived['instances']);
+        $this->assertSame(1, $derived['truncated']);
     }
 
     /**

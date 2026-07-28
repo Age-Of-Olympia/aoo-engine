@@ -2,6 +2,7 @@
 
 namespace Tests\Various;
 
+use App\Service\Map\Footprint;
 use App\Service\Map\SceneryFootprintDeriver;
 use App\View\Tiled\SceneryPaletteView;
 use PHPUnit\Framework\TestCase;
@@ -76,10 +77,7 @@ class SceneryPaletteViewTest extends TestCase
     {
         $html = SceneryPaletteView::render(
             $this->pieces('gm_arche-00', 'gm_arche-01'),
-            ['gm_arche' => [
-                'w' => 2, 'h' => 1, 'cells' => 2, 'holed' => false,
-                'offsets' => [0 => [0, 0], 1 => [1, 0]],
-            ]]
+            ['gm_arche' => Footprint::boxed(2, 1, [0 => [0, 0], 1 => [1, 0]])]
         );
 
         $this->assertStringContainsString('gm_arche — 2×1, 2 cases', $html);
@@ -93,10 +91,7 @@ class SceneryPaletteViewTest extends TestCase
     {
         $html = SceneryPaletteView::render(
             $this->pieces('gm_geant-00', 'gm_geant-01'),
-            ['gm_geant' => [
-                'w' => 3, 'h' => 3, 'cells' => 2, 'holed' => true,
-                'offsets' => [0 => [0, 0], 1 => [2, 2]],
-            ]]
+            ['gm_geant' => Footprint::boxed(3, 3, [0 => [0, 0], 1 => [2, 2]])]
         );
 
         $this->assertStringContainsString('figure trouée', $html);
@@ -131,7 +126,7 @@ class SceneryPaletteViewTest extends TestCase
         );
 
         $this->assertArrayHasKey('arbre_sacre', $footprints, 'celle-ci est cohérente');
-        $this->assertSame(2, $footprints['arbre_sacre']['w']);
-        $this->assertSame(2, $footprints['arbre_sacre']['h']);
+        $this->assertSame(2, $footprints['arbre_sacre']->width());
+        $this->assertSame(2, $footprints['arbre_sacre']->height());
     }
 }

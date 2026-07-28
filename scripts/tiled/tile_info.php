@@ -73,8 +73,10 @@ foreach ($results as $row) {
     $results[] = [
         'coords_id' => $coordsId,
         'type'      => 'objet',
-        'name'      => $object['family'] . ' — ' . $object['w'] . '×' . $object['h']
-                       . ', ' . count($object['coords_ids']) . '/' . $object['cells'] . ' case(s) posée(s)',
+        'name'      => $object['family'] . ' — ' . $object['footprint']->width()
+                       . '×' . $object['footprint']->height() . ', '
+                       . count($object['coords_ids']) . '/' . $object['footprint']->cells()
+                       . ' case(s) posée(s)',
         'params'    => $object['missing'] === []
             ? 'figure complète'
             : 'INCOMPLET : ' . count($object['missing']) . ' morceau(x) manquant(s)',

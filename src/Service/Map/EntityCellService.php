@@ -149,29 +149,36 @@ final class EntityCellService
         );
 
         if ($anchor === false) {
-            return $this->forgetSpread($entityId, []);
+            $this->forgetSpread($entityId, []);
+
+            return 0;
         }
 
         $footprint = ($footprints ?? new EntityTypeFootprintService($this->conn))
             ->catalogue()[(string) $anchor['race']] ?? null;
 
-        if ($footprint === null || count($footprint['offsets']) < 2) {
-            return $this->forgetSpread($entityId, []);
+        if ($footprint === null || $footprint->isSingleCell()) {
+            $this->forgetSpread($entityId, []);
+
+            return 0;
         }
 
-        $roles = $footprint['roles'];
+        /* L'ancre est le premier morceau de la figure — c'est la convention
+         * des décalages, et `syncAnchor()` l'a posée à `players.coords_id`.
+         * On demande donc la figure VUE DEPUIS lui : les autres morceaux
+         * tombent alors d'eux-mêmes, sans arithmétique ici. */
+        $anchorPiece = array_key_first($footprint->offsets());
         $keep = [(int) $anchor['coords_id']];
         $placed = 0;
 
-        foreach ($footprint['offsets'] as $piece => [$dx, $dy]) {
-            /* Le décalage nul, c'est l'ancre : elle est déjà posée, et lui
-             * réécrire son rôle romprait l'invariant « une ancre par entité ». */
-            if ($dx === 0 && $dy === 0) {
+        $around = $footprint->cellsAround($anchorPiece, (int) $anchor['x'], (int) $anchor['y']);
+
+        foreach ($around as $piece => [$x, $y]) {
+            /* L'ancre est déjà posée, et lui réécrire son rôle romprait
+             * l'invariant « une ancre par entité ». */
+            if ($piece === $anchorPiece) {
                 continue;
             }
-
-            $x = (int) $anchor['x'] + $dx;
-            $y = (int) $anchor['y'] + $dy;
 
             $coordsId = (int) \Classes\View::get_coords_id((object) [
                 'x' => $x, 'y' => $y, 'z' => (int) $anchor['z'], 'plan' => (string) $anchor['plan'],
@@ -191,7 +198,7 @@ final class EntityCellService
                     'x'     => $x,
                     'y'     => $y,
                     'piece' => (int) $piece,
-                    'role'  => (string) ($roles[$piece] ?? self::ROLE_PART),
+                    'role'  => $footprint->roleOf((int) $piece, self::ROLE_PART),
                 ]
             );
 
@@ -222,7 +229,7 @@ final class EntityCellService
          * cases à RENDRE. Les rendre d'un seul ordre plutôt qu'une entité à la
          * fois — `mur_pierre_bleue` compte 99 exemplaires en local, et un
          * décor courant en aligne des centaines en production. */
-        if ($footprint === null || count($footprint['offsets']) < 2) {
+        if ($footprint === null || $footprint->isSingleCell()) {
             return (int) $this->conn->executeStatement(
                 "DELETE ec FROM entity_cells ec
                    JOIN players p ON p.id = ec.player_id
@@ -252,7 +259,7 @@ final class EntityCellService
      *
      * @param list<int> $keep les cases à conserver
      */
-    private function forgetSpread(int $entityId, array $keep): int
+    private function forgetSpread(int $entityId, array $keep): void
     {
         $sql = "DELETE FROM entity_cells WHERE player_id = ? AND role <> 'anchor'";
         $params = [$entityId];
@@ -262,8 +269,6 @@ final class EntityCellService
         }
 
         $this->conn->executeStatement($sql, $params);
-
-        return 0;
     }
 
     /**

@@ -65,11 +65,11 @@ final class SceneryFootprintDeriver
      * Mémoïsation par INSTANCE et non statique : la carte change entre deux
      * tests, et un cache global les ferait mentir.
      *
-     * @var array<string, array{w:int,h:int,cells:int,holed:bool,offsets:array<int,array{0:int,1:int}>,instances:int,truncated:int}>|null
+     * @var array<string, array{footprint: Footprint, instances: int, truncated: int}>|null
      */
     private ?array $mapCache = null;
 
-    /** @var array<string, array{w:int,h:int,cells:int,holed:bool,offsets:array<int,array{0:int,1:int}>}>|null */
+    /** @var array<string, Footprint>|null */
     private ?array $imageCache = null;
 
     /** @var array<string, array<int, string>>|null */
@@ -111,11 +111,7 @@ final class SceneryFootprintDeriver
     /**
      * Toutes les découpes dérivables, par famille.
      *
-     * @return array<string, array{
-     *     w: int, h: int, cells: int, holed: bool,
-     *     offsets: array<int, array{0:int,1:int}>,
-     *     instances: int, truncated: int
-     * }>
+     * @return array<string, array{footprint: Footprint, instances: int, truncated: int}>
      */
     public function derive(): array
     {
@@ -140,19 +136,9 @@ final class SceneryFootprintDeriver
             }
 
             [$instances, $truncated] = $this->countInstances($groups, count($pieces));
-            $offsets = $this->offsetsFrom($model);
-
-            $xs = array_column($offsets, 0);
-            $ys = array_column($offsets, 1);
-            $w = max($xs) - min($xs) + 1;
-            $h = max($ys) - min($ys) + 1;
 
             $catalogue[$family] = [
-                'w'         => $w,
-                'h'         => $h,
-                'cells'     => count($offsets),
-                'holed'     => count($offsets) < $w * $h,
-                'offsets'   => $offsets,
+                'footprint' => Footprint::fromOffsets($this->offsetsFrom($model)),
                 'instances' => $instances,
                 'truncated' => $truncated,
             ];
@@ -164,8 +150,13 @@ final class SceneryFootprintDeriver
     }
 
     /**
-     * Le catalogue que les ÉDITEURS consultent : la carte, complétée par les
-     * images d'ensemble.
+     * Les découpes DEVINÉES : la carte, complétée par les images d'ensemble.
+     *
+     * Le nom dit ce qu'elle vaut. Ce n'est pas le catalogue que consultent la
+     * pose et les éditeurs — celui-là est `EntityTypeFootprintService`, qui
+     * pose les découpes DÉCLARÉES par-dessus celles-ci. Les deux portaient le
+     * même nom, `catalogue()`, aux deux bouts d'une délégation : on ne pouvait
+     * pas savoir, en lisant un appel, laquelle des deux faisait autorité.
      *
      * `derive()` ne connaît que ce qui est posé — c'est ce qu'il faut pour un
      * rapport ou une migration, qui parlent de l'existant. Un éditeur, lui,
@@ -177,16 +168,18 @@ final class SceneryFootprintDeriver
      * figure de 3×3 trouée. L'asset est incomplet ; ce qui est posé ne ment
      * pas.
      *
-     * @return array<string, array{w:int,h:int,cells:int,holed:bool,offsets:array<int,array{0:int,1:int}>}>
+     * @return array<string, Footprint>
      */
-    public function catalogue(): array
+    public function guessed(): array
     {
-        $catalogue = $this->derive();
+        $catalogue = [];
+
+        foreach ($this->derive() as $family => $derived) {
+            $catalogue[$family] = $derived['footprint'];
+        }
 
         foreach ($this->imageFootprints() as $family => $footprint) {
-            if (!isset($catalogue[$family])) {
-                $catalogue[$family] = $footprint;
-            }
+            $catalogue[$family] ??= $footprint;
         }
 
         ksort($catalogue);
@@ -204,7 +197,7 @@ final class SceneryFootprintDeriver
      * Une image trop petite pour ses morceaux est ÉCARTÉE plutôt que crue :
      * c'est le cas du géant, dont l'ensemble ne montre que le corps.
      *
-     * @return array<string, array{w:int,h:int,cells:int,holed:bool,offsets:array<int,array{0:int,1:int}>}>
+     * @return array<string, Footprint>
      */
     public function imageFootprints(): array
     {
@@ -244,18 +237,10 @@ final class SceneryFootprintDeriver
                 $offsets[$piece] = [$piece % $w, $h - 1 - intdiv($piece, $w)];
             }
 
-            $anchor = $offsets[array_key_first($offsets)];
-
-            foreach ($offsets as $piece => [$dx, $dy]) {
-                $offsets[$piece] = [$dx - $anchor[0], $dy - $anchor[1]];
-            }
-
-            $footprints[$family] = [
-                'w' => $w, 'h' => $h,
-                'cells' => count($offsets),
-                'holed' => count($offsets) < $w * $h,
-                'offsets' => $offsets,
-            ];
+            /* La boîte vient de l'IMAGE et peut dépasser la figure : c'est
+             * ainsi qu'un géant de 3×3 n'occupant que quatre cases se dit
+             * troué. La déduire des décalages effacerait le trou. */
+            $footprints[$family] = Footprint::boxed($w, $h, $offsets);
         }
 
         return $this->imageCache = $footprints;
