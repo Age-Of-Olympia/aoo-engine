@@ -1264,6 +1264,38 @@ class View{
     }
 
     /**
+     * La case d'une entité la plus proche d'un point, ou son point déclaré.
+     *
+     * C'est elle qu'on vise : tirer sur une enclume de 3×3 en désignant sa
+     * case la plus lointaine traçait une ligne à travers son propre corps,
+     * et l'objet arrêtait le tir qui le visait.
+     *
+     * @return object coords {x, y, z, plan}
+     */
+    public static function get_nearest_cell_of($coords, int $entityId, $fallbackCoords)
+    {
+        $coords = (array) $coords;
+        $nearest = null;
+        $best = null;
+
+        foreach ((new \App\Service\Map\EntityCellService())->cellsOf($entityId) as $cell) {
+            $candidate = (object) [
+                'x' => (int) $cell['x'], 'y' => (int) $cell['y'],
+                'z' => (int) $cell['z'], 'plan' => (string) $cell['plan'],
+            ];
+
+            $distance = self::get_distance($coords, $candidate);
+
+            if ($best === null || $distance < $best) {
+                $best = $distance;
+                $nearest = $candidate;
+            }
+        }
+
+        return $nearest ?? $fallbackCoords;
+    }
+
+    /**
      * Distance jusqu'à une ENTITÉ, mesurée à la case la plus proche.
      *
      * `get_distance()` mesure vers un point. Une entité qui en occupe

@@ -1177,10 +1177,12 @@
     }
 
     /*
-     * Le #red-filter hérité (PV perdus) est calé en pixels sur
-     * l'ancien portrait 225px ; dans la fiche recomposée du bandeau,
-     * on le convertit en voile pourcentage ancré en haut du portrait
-     * — même information, indépendante de la taille du portrait.
+     * Le voile de PV perdus arrive du serveur en pourcentage, posé DANS le
+     * portrait : il épouse donc la figure quelle que soit sa taille. Il
+     * reste à lui donner sa classe et à conserver sa teinte.
+     *
+     * Le repli lit encore une hauteur en pixels : les fiches servies avant
+     * ce changement la portaient, rapportée à un portrait de 225 px.
      */
     function adaptPvFilter() {
         var $filter = $('#ajax-data #red-filter');
@@ -1189,16 +1191,26 @@
         }
 
         var styleAttr = $filter.attr('style') || '';
-        var match = styleAttr.match(/height:\s*([\d.]+)px/);
-        var lostPct = match ? Math.min(100, Math.max(0, parseFloat(match[1]) / 225 * 100)) : 0;
+        var lostPct = parseFloat($filter.attr('data-lost'));
+
+        if (isNaN(lostPct)) {
+            var match = styleAttr.match(/height:\s*([\d.]+)px/);
+            lostPct = match ? Math.min(100, Math.max(0, parseFloat(match[1]) / 225 * 100)) : 0;
+        }
         /* La teinte vient du serveur (races.wound_color — bronze pour une
            structure) : la conserver, --hud-blood n'est que le repli CSS. */
         var colorMatch = styleAttr.match(/background:\s*([^;]+)/);
 
+        /* On ne le DÉPLACE plus : le serveur l'a mis dans le portrait, et
+           c'est ce qui lui fait épouser une figure de proportions
+           quelconques. Le repli le rapatrie encore. */
         $filter.removeAttr('style')
             .addClass('hud-pv-lost')
-            .css('height', lostPct + '%')
-            .appendTo($('#ajax-data .card-image'));
+            .css('height', lostPct + '%');
+
+        if (!$filter.closest('.card-portrait-box').length) {
+            $filter.appendTo($('#ajax-data .card-image'));
+        }
 
         if (colorMatch) {
             $filter.css('background', colorMatch[1].trim());

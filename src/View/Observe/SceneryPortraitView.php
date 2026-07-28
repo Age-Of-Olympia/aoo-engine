@@ -3,6 +3,7 @@
 namespace App\View\Observe;
 
 use App\Entity\EntityManagerFactory;
+use App\View\SceneryFigure;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -46,25 +47,27 @@ final class SceneryPortraitView
             return null;
         }
 
-        $xs = array_map('intval', array_column($cells, 'x'));
-        $ys = array_map('intval', array_column($cells, 'y'));
-
-        $width = max($xs) - min($xs) + 1;
-        $height = max($ys) - min($ys) + 1;
+        $figure = SceneryFigure::grid(array_map(
+            static fn(array $cell): array => [
+                'url' => '/img/foregrounds/' . $cell['name'] . '.png',
+                'x'   => (int) $cell['x'],
+                'y'   => (int) $cell['y'],
+            ],
+            $cells
+        ));
 
         $pieces = '';
 
-        foreach ($cells as $cell) {
-            /* Percentages rather than pixels: the figure then fits whatever
-             * box the card gives it, and a fourteen-piece fort needs no more
-             * room than a two-piece tower. */
-            $left = round(((int) $cell['x'] - min($xs)) * 100 / $width, 4);
-            /* y grows upwards on the board and downwards on screen. */
-            $top = round((max($ys) - (int) $cell['y']) * 100 / $height, 4);
-
-            $pieces .= '<img src="/img/foregrounds/' . htmlspecialchars((string) $cell['name'], ENT_QUOTES) . '.png"'
-                . ' style="position:absolute;left:' . $left . '%;top:' . $top . '%;'
-                . 'width:' . round(100 / $width, 4) . '%;height:' . round(100 / $height, 4) . '%;"'
+        /* Percentages rather than pixels: the figure then fits whatever box
+         * the card gives it, and a sixteen-piece fort needs no more room than
+         * a two-piece tower. */
+        foreach ($figure['cells'] as $cell) {
+            $pieces .= '<img src="' . htmlspecialchars($cell['url'], ENT_QUOTES) . '"'
+                . ' style="position:absolute;'
+                . 'left:' . round($cell['col'] * 100 / $figure['w'], 4) . '%;'
+                . 'top:' . round($cell['row'] * 100 / $figure['h'], 4) . '%;'
+                . 'width:' . round(100 / $figure['w'], 4) . '%;'
+                . 'height:' . round(100 / $figure['h'], 4) . '%;"'
                 . ' alt="" loading="lazy" />';
         }
 
@@ -72,7 +75,7 @@ final class SceneryPortraitView
          * keeps its proportions instead of being stretched to the box. */
         return '<span class="card-portrait card-portrait--figure"'
             . ' style="position:relative;display:block;width:100%;height:auto;'
-            . 'aspect-ratio:' . $width . ' / ' . $height . ';">'
+            . 'aspect-ratio:' . $figure['w'] . ' / ' . $figure['h'] . ';">'
             . $pieces . '</span>';
     }
 }

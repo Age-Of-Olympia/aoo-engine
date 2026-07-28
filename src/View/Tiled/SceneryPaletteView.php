@@ -3,6 +3,7 @@
 namespace App\View\Tiled;
 
 use App\Service\Map\Footprint;
+use App\View\SceneryFigure;
 use App\Service\Map\SceneryFootprintDeriver;
 
 /**
@@ -115,10 +116,15 @@ final class SceneryPaletteView
      */
     private static function composed(string $attrs, array $object, array $offsets, int $w, int $h): string
     {
-        $xs = array_column($offsets, 0);
-        $ys = array_column($offsets, 1);
-        $minX = $xs === [] ? 0 : min($xs);
-        $maxY = $ys === [] ? 0 : max($ys);
+        $placed = [];
+
+        foreach ($offsets as $piece => [$dx, $dy]) {
+            if (isset($object[$piece])) {
+                $placed[] = ['url' => $object[$piece]['url'], 'x' => $dx, 'y' => $dy];
+            }
+        }
+
+        $grid = SceneryFigure::grid($placed);
 
         /* Bounded thumbnail: a 4×4 praetorium must not fill the palette. */
         $cell = $w > 3 || $h > 3 ? 16 : 25;
@@ -129,19 +135,13 @@ final class SceneryPaletteView
 
         $pieces = '';
 
-        foreach ($offsets as $piece => [$dx, $dy]) {
-            if (!isset($object[$piece])) {
-                continue;
-            }
+        foreach ($grid['cells'] as $item) {
+            $figure['cells'][] = ['u' => $item['url'], 'x' => $item['col'], 'y' => $item['row']];
 
-            $gx = $dx - $minX;
-            $gy = $maxY - $dy;
-
-            $figure['cells'][] = ['u' => $object[$piece]['url'], 'x' => $gx, 'y' => $gy];
-
-            $pieces .= '<img src="' . htmlspecialchars($object[$piece]['url'], ENT_QUOTES) . '"'
+            $pieces .= '<img src="' . htmlspecialchars($item['url'], ENT_QUOTES) . '"'
                 . ' style="position:absolute;width:' . $cell . 'px;height:' . $cell . 'px;'
-                . 'left:' . ($gx * $cell) . 'px;top:' . ($gy * $cell) . 'px;" loading="lazy" alt="" />';
+                . 'left:' . ($item['col'] * $cell) . 'px;top:' . ($item['row'] * $cell) . 'px;"'
+                . ' loading="lazy" alt="" />';
         }
 
         $json = json_encode($figure, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);

@@ -223,33 +223,39 @@ class Ui{
                 /* Une figure de plusieurs cases n'a pas d'image unique : la
                  * carte la recompose depuis ses morceaux. Les autres gardent
                  * leur portrait tel quel. */
+                /* Une figure de plusieurs cases n'a pas d'image unique : la
+                 * carte la recompose depuis ses morceaux. Les autres gardent
+                 * leur portrait tel quel. */
                 $portrait = $data->portraitHtml
                     ?? '<img src="'. $data->bg .'" class="card-portrait" />';
-
-                echo '<div class="card-image">'. $portrait .'<div id="action-data"></div></div>';
-
 
                 /* isset, pas !empty : à 0 PV — le cas le plus grave —
                  * !empty(0) valait faux et la carte de sélection
                  * n'affichait AUCUN voile. Un mort, une ruine ou un
                  * mur brisé apparaissaient donc indemnes. */
+                $veil = '';
+
                 if(isset($data->pvPct)){
 
-
-                    $height = floor((100 - $data->pvPct) * 225 / 100);
-                    $height = min($height, 225);
+                    /* En POURCENTAGE et DANS le portrait : le voile épousait
+                     * un portrait de 225 px de haut, calé au pixel près, et
+                     * ne voulait plus rien dire dès que la figure changeait
+                     * de proportions. */
+                    $lost = min(100, max(0, 100 - (int) $data->pvPct));
 
                     // life filter, teinté par la race/le type (wound_color)
                     $woundColor = (new \App\Service\RaceService())->getRaceWoundColor($data->race ?? null);
 
-                    echo '
-                    <div
-                        id="red-filter"
-                        style="background: '. $woundColor .'; width: 210px; height: '. $height .'px; position: absolute; bottom: 176px; left: 29px; opacity: 0.5; transition: height 0.2s linear;"
-                    >
-                    </div>
-                    ';
+                    $veil = '<div id="red-filter" data-lost="'. $lost .'"'
+                        . ' style="background: '. $woundColor .'; position: absolute;'
+                        . ' left: 0; right: 0; bottom: 0; height: '. $lost .'%;'
+                        . ' opacity: 0.5; transition: height 0.2s linear; pointer-events: none;"></div>';
                 }
+
+                echo '<div class="card-image"><span class="card-portrait-box"'
+                    . ' style="position:relative;display:block;">'
+                    . $portrait . $veil
+                    . '</span><div id="action-data"></div></div>';
 
 
                 echo '<div class="card-actions">';

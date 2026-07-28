@@ -96,7 +96,7 @@ class BuildingService extends BaseService
      *
      * @return array{tiles: list<array{int,int}>, blocker: ?array{int,int}, blockerName: ?string, blockers: list<array{int,int}>}
      */
-    public function lineOfFireReport(object $from, object $to): array
+    public function lineOfFireReport(object $from, object $to, ?int $targetEntityId = null): array
     {
         $tiles = \App\Action\Combat\LineOfFire::tilesBetween(
             (int) $from->x, (int) $from->y, (int) $to->x, (int) $to->y
@@ -135,8 +135,19 @@ class BuildingService extends BaseService
                    AND p.race IN (' . implode(',', array_fill(0, count($blocking), '?')) . ')',
                 array_merge($tileParams, [self::TRANSPARENT_ROLE], $blocking)
             );
+            /* La cible ne se fait pas écran à elle-même. Sans emprise la
+             * question ne se posait pas — sa case unique est une extrémité,
+             * exclue du corridor — mais un objet de plusieurs cases arrêtait
+             * un tir qui le visait, dès qu'on en désignait une case
+             * éloignée. */
+            $ownCells = $targetEntityId === null ? [] : $this->cellKeysOf($targetEntityId);
+
             foreach ($rows as $row) {
-                $blockersByTile[$row['x'] . ',' . $row['y']] = (string) $row['name'];
+                $key = $row['x'] . ',' . $row['y'];
+
+                if (!isset($ownCells[$key])) {
+                    $blockersByTile[$key] = (string) $row['name'];
+                }
             }
         }
 
@@ -194,6 +205,23 @@ class BuildingService extends BaseService
             'blockerName' => $blockersByTile[$first[0] . ',' . $first[1]],
             'blockers' => $blockers,
         ];
+    }
+
+    /**
+     * The tiles an entity holds, keyed "x,y", for excluding it from its own
+     * line of fire.
+     *
+     * @return array<string, true>
+     */
+    private function cellKeysOf(int $entityId): array
+    {
+        $keys = [];
+
+        foreach ((new \App\Service\Map\EntityCellService($this->entityManager->getConnection()))->cellsOf($entityId) as $cell) {
+            $keys[$cell['x'] . ',' . $cell['y']] = true;
+        }
+
+        return $keys;
     }
 
     /**

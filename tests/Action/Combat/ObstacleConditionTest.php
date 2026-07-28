@@ -249,6 +249,58 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         }
     }
 
+    /**
+     * Une cible ne se fait pas écran à elle-même. Sans emprise la question ne
+     * se posait pas — sa case unique est une extrémité, exclue du corridor —
+     * mais un objet de plusieurs cases arrêtait un tir qui le visait.
+     */
+    public function testATargetDoesNotScreenItself(): void
+    {
+        $this->requireBuildingsOrSkip();
+
+        $shooter = $this->createRealPlayer('GmVisee');
+        $this->movePlayerTo((int) $shooter->id, 0, 0);
+        $shooter->getCoords();
+
+        /* Un mur large, dont on vise la case la PLUS LOINTAINE. */
+        $wall = $this->placeStructure('mur_pierre', 0, 3);
+        $this->giveCellTo($wall, 0, 2, \App\Service\Map\EntityCellService::ROLE_PART);
+
+        $far = (object) ['x' => 0, 'y' => 3, 'z' => 0, 'plan' => 'gaia'];
+        $service = new BuildingService();
+
+        $this->assertNotNull(
+            $service->lineOfFireReport($shooter->getCoords(), $far)['blocker'],
+            'sans connaître la cible, sa propre case proche arrête le tir'
+        );
+
+        $this->assertNull(
+            $service->lineOfFireReport($shooter->getCoords(), $far, (int) $wall)['blocker'],
+            'en la connaissant, elle ne se bloque plus elle-même'
+        );
+    }
+
+    /** On vise la case la plus proche, comme la portée la mesure. */
+    public function testTheShotAimsAtTheNearestCell(): void
+    {
+        $this->requireBuildingsOrSkip();
+
+        $shooter = $this->createRealPlayer('GmViseeProche');
+        $this->movePlayerTo((int) $shooter->id, 0, 0);
+        $shooter->getCoords();
+
+        $wall = $this->placeStructure('mur_pierre', 0, 5);
+        $this->giveCellTo($wall, 0, 1, \App\Service\Map\EntityCellService::ROLE_PART);
+
+        $aim = \Classes\View::get_nearest_cell_of(
+            $shooter->getCoords(),
+            (int) $wall,
+            (object) ['x' => 0, 'y' => 5, 'z' => 0, 'plan' => 'gaia']
+        );
+
+        $this->assertSame(1, (int) $aim->y, 'la case collée, pas celle du fond');
+    }
+
     public function testAClearLineIsNotBlocked(): void
     {
         [$shooter, $victim] = $this->shooterAndTarget();
