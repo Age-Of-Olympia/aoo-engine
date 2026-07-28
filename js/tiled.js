@@ -254,6 +254,51 @@ $(document).ready(function(){
       src: $('.map').attr('src')
   }).appendTo('body').hide();
 
+  /* Le curseur d'OBJET : la figure entière, à l'échelle de la carte.
+     Le curseur simple est une image de 50×50 ; il ne pouvait montrer qu'un
+     morceau, si bien qu'on posait un fort de quatorze cases en ne voyant
+     qu'un pan de mur. Celui-ci reconstruit la figure depuis les données que
+     la palette porte (data-figure). */
+  var $objectCursor = $('<div>', { class: 'custom-cursor custom-cursor--object' })
+      .appendTo('body').hide();
+
+  /* Montre la figure de l'outil choisi, ou l'image simple à défaut. */
+  window.tiledShowCursorFor = function ($tool) {
+
+      var figure = $tool.attr('data-figure');
+
+      if (!figure) {
+          $objectCursor.hide().empty();
+          $customCursor.attr('src', $tool.attr('src') || $tool.find('img').first().attr('src') || '').show();
+          return $customCursor;
+      }
+
+      var f;
+      try { f = JSON.parse(figure); } catch (e) { f = null; }
+
+      if (!f || !f.cells || !f.cells.length) {
+          $objectCursor.hide().empty();
+          $customCursor.attr('src', $tool.find('img').first().attr('src') || '').show();
+          return $customCursor;
+      }
+
+      var CELL = 50;
+      var html = '';
+
+      f.cells.forEach(function (c) {
+          html += '<img src="' + c.u + '" style="position:absolute;width:' + CELL + 'px;height:' + CELL
+                + 'px;left:' + (c.x * CELL) + 'px;top:' + (c.y * CELL) + 'px;" alt="" />';
+      });
+
+      $customCursor.hide();
+      $objectCursor
+          .css({ width: (f.w * CELL) + 'px', height: (f.h * CELL) + 'px' })
+          .html(html)
+          .show();
+
+      return $objectCursor;
+  };
+
 
   selectPreviousTool($customCursor);
 
@@ -420,12 +465,15 @@ $(document).ready(function(){
         $customCursor.css({
             left: e.pageX + offsetX + 'px',
             top: e.pageY + offsetY + 'px'
-        /* Une vignette d'OBJET est un conteneur, pas une image : son curseur
-           reprend le premier morceau qu'elle montre. */
-        }).attr('src', $(this).attr('src') || $(this).find('img').first().attr('src') || '').show();
+        });
+
+        /* La figure entière suit le pointeur : on voit ce qu'on va poser. */
+        var $cursor = window.tiledShowCursorFor($(this));
+
+        $cursor.css({ left: e.pageX + offsetX + 'px', top: e.pageY + offsetY + 'px' });
 
           $('body').on('mousemove', function(e) {
-              $customCursor.css({
+              $cursor.css({
                   left: e.pageX - 25 +'px',
                   top: e.pageY - 25+'px'
               });
@@ -441,6 +489,7 @@ $(document).ready(function(){
       if (!["map", "modal-bg", "closeButton", "modal-content", "modal"].some(cls => $(e.target).hasClass(cls)) 
         && $(e.target).attr('type') !== 'text' ) {
           $customCursor.hide();
+          $('.custom-cursor--object').hide().empty();
           $('body').off('mousemove');
           $('.map').removeClass('selected').css('border', '0px');
       }

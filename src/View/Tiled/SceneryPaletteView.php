@@ -142,20 +142,35 @@ final class SceneryPaletteView
          * palette à lui seul. */
         $cell = $w > 3 || $h > 3 ? 16 : 25;
 
-        $html = '<span ' . $attrs . ' style="display:inline-block;position:relative;vertical-align:top;'
-            . 'width:' . ($w * $cell) . 'px;height:' . ($h * $cell) . 'px;margin:1px;cursor:pointer;">';
+        /* La figure, en données : le curseur de l'éditeur la reconstruit à
+         * l'échelle de la carte (50 px la case) pour qu'on VOIE ce qu'on
+         * s'apprête à poser. Une vignette de palette est trop petite, et le
+         * curseur ne montrait qu'un morceau — on posait à l'aveugle. */
+        $figure = ['w' => $w, 'h' => $h, 'cells' => []];
+
+        $pieces = '';
 
         foreach ($offsets as $piece => [$dx, $dy]) {
             if (!isset($object[$piece])) {
                 continue;
             }
 
-            $html .= '<img src="' . htmlspecialchars($object[$piece]['url'], ENT_QUOTES) . '"'
+            $gx = $dx - $minX;
+            $gy = $maxY - $dy;
+
+            $figure['cells'][] = ['u' => $object[$piece]['url'], 'x' => $gx, 'y' => $gy];
+
+            $pieces .= '<img src="' . htmlspecialchars($object[$piece]['url'], ENT_QUOTES) . '"'
                 . ' style="position:absolute;width:' . $cell . 'px;height:' . $cell . 'px;'
-                . 'left:' . (($dx - $minX) * $cell) . 'px;'
-                . 'top:' . (($maxY - $dy) * $cell) . 'px;" loading="lazy" alt="" />';
+                . 'left:' . ($gx * $cell) . 'px;top:' . ($gy * $cell) . 'px;" loading="lazy" alt="" />';
         }
 
-        return $html . '</span>';
+        $json = json_encode($figure, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        return '<span ' . $attrs
+            . ' data-figure="' . htmlspecialchars((string) $json, ENT_QUOTES) . '"'
+            . ' style="display:inline-block;position:relative;vertical-align:top;'
+            . 'width:' . ($w * $cell) . 'px;height:' . ($h * $cell) . 'px;margin:1px;cursor:pointer;">'
+            . $pieces . '</span>';
     }
 }

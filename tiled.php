@@ -599,11 +599,22 @@ $modalView->displayModal('tile-info','info-display');
     pointer-events: none;
     z-index: 1000;
 }
+
+/* Curseur d\'OBJET : la figure entière, à l\'échelle de la carte.
+   Le curseur simple est une image de 50×50 ; il ne montrait qu\'un morceau,
+   si bien qu\'on posait un fort de quatorze cases en ne voyant qu\'un pan de
+   mur. Celui-ci porte les morceaux à leur place, en semi-transparence pour
+   qu\'on distingue la carte dessous. */
+.custom-cursor--object {
+    width: auto;
+    height: auto;
+    opacity: 0.75;
+}
 </style>
 
 <script src="js/admin-tools.js?v=20260715"></script>
 <script src="js/blocked-tiles.js?v=20260727"></script>
-<script src="js/tiled.js?v=20260728d"></script>
+<script src="js/tiled.js?v=20260728e"></script>
 <script>
 /* Tiled editor: toggle the "blocked tiles" overlay so admins can
    verify forbidden triggers / walls / players visually. Reuses
