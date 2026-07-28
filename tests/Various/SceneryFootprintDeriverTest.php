@@ -165,6 +165,48 @@ class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
         $this->assertArrayHasKey('gm_lac', $deriver->undecidable());
     }
 
+    /** Objects are enumerated one per copy, cells and coords included. */
+    public function testObjectsAreEnumeratedOnePerCopy(): void
+    {
+        $this->put('gm_enum-00', 0, 1);
+        $this->put('gm_enum-01', 0, 0);
+        $this->put('gm_enum-00', 5, 1);
+        $this->put('gm_enum-01', 5, 0);
+
+        $mine = array_values(array_filter(
+            $this->deriver()->objects(),
+            static fn(array $object): bool => $object['family'] === 'gm_enum'
+        ));
+
+        $this->assertCount(2, $mine, 'two copies, two objects');
+
+        foreach ($mine as $object) {
+            $this->assertCount(2, $object['cells']);
+            $this->assertSame([0, 1], array_column($object['cells'], 'piece'));
+
+            foreach ($object['cells'] as $cell) {
+                $this->assertGreaterThan(0, $cell['coords_id'], 'the conversion needs the coords id');
+                $this->assertSame(self::PLAN, $cell['plan']);
+            }
+        }
+    }
+
+    /** Touching copies stay separate objects, as the grouping promises. */
+    public function testTouchingCopiesAreEnumeratedSeparately(): void
+    {
+        $this->put('gm_serre-00', 10, 1);
+        $this->put('gm_serre-01', 10, 0);
+        $this->put('gm_serre-00', 11, 1);
+        $this->put('gm_serre-01', 11, 0);
+
+        $mine = array_filter(
+            $this->deriver()->objects(),
+            static fn(array $object): bool => $object['family'] === 'gm_serre'
+        );
+
+        $this->assertCount(2, $mine);
+    }
+
     /** A single-cell decor has no cut-out, and does not clutter the catalogue. */
     public function testASingleTileDecorHasNoFootprint(): void
     {

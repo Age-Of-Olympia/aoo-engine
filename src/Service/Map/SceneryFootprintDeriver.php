@@ -274,22 +274,80 @@ final class SceneryFootprintDeriver
         $families = [];
 
         foreach ($this->conn()->fetchAllAssociative(
-            'SELECT f.name, c.x, c.y, c.z, c.plan
+            'SELECT f.name, f.coords_id, c.x, c.y, c.z, c.plan
                FROM map_foregrounds f JOIN coords c ON c.id = f.coords_id'
         ) as $row) {
             [$family, $piece] = self::splitPiece((string) $row['name']);
 
             $families[$family][] = [
-                'name'  => (string) $row['name'],
-                'x'     => (int) $row['x'],
-                'y'     => (int) $row['y'],
-                'z'     => (int) $row['z'],
-                'plan'  => (string) $row['plan'],
-                'piece' => $piece,
+                'name'      => (string) $row['name'],
+                'coords_id' => (int) $row['coords_id'],
+                'x'         => (int) $row['x'],
+                'y'         => (int) $row['y'],
+                'z'         => (int) $row['z'],
+                'plan'      => (string) $row['plan'],
+                'piece'     => $piece,
             ];
         }
 
         return $families;
+    }
+
+    /**
+     * Every scenery OBJECT placed on the map, cells included.
+     *
+     * A copy stops where a piece index repeats, so two objects standing side
+     * by side stay two.
+     *
+     * @return list<array{family: string, cells: list<array{name: string, coords_id: int, x: int, y: int, z: int, plan: string, piece: int}>}>
+     */
+    public function objects(): array
+    {
+        $objects = [];
+
+        foreach ($this->families() as $family => $cells) {
+            $byKey = [];
+
+            foreach ($cells as $cell) {
+                $byKey[TouchingCells::key($cell)] = $cell;
+            }
+
+            $seen = [];
+
+            foreach (array_keys($byKey) as $key) {
+                if (isset($seen[$key])) {
+                    continue;
+                }
+
+                $group = TouchingCells::groupAround($byKey, $key, self::distinctPieces(), $seen);
+
+                if ($group !== []) {
+                    /** @var list<array{name: string, coords_id: int, x: int, y: int, z: int, plan: string, piece: int}> $group */
+                    $objects[] = ['family' => (string) $family, 'cells' => $group];
+                }
+            }
+        }
+
+        return $objects;
+    }
+
+    /**
+     * Stop rule shared by every walk over scenery: a piece index already in
+     * the group belongs to the neighbouring copy, not to this one.
+     *
+     * @return callable(array<string, mixed>, array<string, mixed>): bool
+     */
+    public static function distinctPieces(): callable
+    {
+        return static function (array $candidate, array $group): bool {
+            foreach ($group as $cell) {
+                if ($cell['piece'] === $candidate['piece']) {
+                    return false;
+                }
+            }
+
+            return true;
+        };
     }
 
     /**

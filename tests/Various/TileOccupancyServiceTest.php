@@ -365,6 +365,27 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /**
+     * Converting scenery into entities must not, on its own, make a decor
+     * tile impossible to land on or to build on.
+     */
+    public function testSceneryDoesNotChangeLandingOrBuilding(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $decor = $this->placeStructure('mur_pierre', 60, 0, self::PLAN);
+
+        $this->link->executeStatement(
+            "UPDATE players SET player_type = 'scenery' WHERE id = ?",
+            [$decor]
+        );
+
+        $id = $this->coordsId(60, 0);
+        $service = $this->service();
+
+        $this->assertTrue($service->isVacant($id), 'decor does not fill a tile');
+        $this->assertNull($service->buildRefusal($id), 'and does not forbid building');
+    }
+
     public function testCharacterVisibilityMatchesTheRenderRule(): void
     {
         $this->assertFalse(TileOccupancyService::charactersVisibleOn(null), 'pas de JSON : cachés');

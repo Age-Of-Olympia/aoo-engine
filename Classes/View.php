@@ -231,6 +231,7 @@ class View{
                     SELECT id, name, player_type, avatar, race
                     FROM players
                     WHERE coords_id IN ('. $inSightIdImploded .')
+                    AND player_type <> "scenery"
                 ');
                 while ($rowE = $resEntities->fetch_object()) {
                     $entitiesInSight[(int) $rowE->id] = $rowE;
@@ -350,6 +351,10 @@ class View{
             players
             WHERE
             coords_id IN ('. $inSightIdImploded .')
+            /* Le decor est deja dessine par map_foregrounds, a sa propre
+             * profondeur : le laisser passer ici le dessinerait deux fois.
+             * Ce filtre tombe quand le rendu lira les entites. */
+            AND player_type <> "scenery"
 
             UNION
 

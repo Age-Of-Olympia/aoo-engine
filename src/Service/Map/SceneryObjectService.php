@@ -105,21 +105,7 @@ final class SceneryObjectService
             return [$coordsId];
         }
 
-        /* Stop rule: a piece index already in the group belongs to the
-         * neighbouring copy, not this one. */
-        $group = TouchingCells::groupAround(
-            $byKey,
-            $start,
-            static function (array $candidate, array $group): bool {
-                foreach ($group as $cell) {
-                    if ($cell['piece'] === $candidate['piece']) {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-        );
+        $group = TouchingCells::groupAround($byKey, $start, SceneryFootprintDeriver::distinctPieces());
 
         return array_values(array_map(
             static fn (array $cell): int => (int) $cell['coords_id'],

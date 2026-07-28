@@ -161,8 +161,15 @@ final class TileOccupancyService
     /** Any entity, at any title, on this tile. */
     private function heldByAnEntity(int $coordsId): bool
     {
+        /* Scenery is excluded on purpose: decor never counted for landing or
+         * building, and converting it into entities must not change that on
+         * its own. Making decor unbuildable is a decision of its own lot. */
         return (bool) $this->conn->fetchOne(
-            'SELECT 1 FROM (' . self::heldSql((string) $coordsId) . ') AS held LIMIT 1'
+            'SELECT 1
+               FROM (' . self::heldSql((string) $coordsId) . ') AS held
+               JOIN players p ON p.id = held.player_id
+              WHERE p.player_type <> \'scenery\'
+              LIMIT 1'
         );
     }
 
