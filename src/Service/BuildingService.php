@@ -114,6 +114,16 @@ class BuildingService extends BaseService
             // Tout type d'entité : la race décide seule — les tombes de
             // bâtiments et les morts sont hors plateau (plan), invisibles
             // au filtre de cases.
+            //
+            // L'ANCRE SEULE, encore : un mur de 2×2 n'arrête donc les tirs que
+            // sur un quart de lui-même. Le jour où cette requête lira
+            // `entity_cells` comme le fait déjà TileOccupancyService, une seule
+            // règle importe : seules les cases `block` font écran. Une case
+            // `cover` est la portion HAUTE d'un décor, et son rôle est un ORDRE
+            // DE DESSIN : le sprite passe devant l'occupant, et là s'arrête
+            // l'effet — le moteur ne cache rien. La prendre pour un obstacle
+            // rendrait invulnérable quiconque se glisse derrière l'arrière
+            // d'un bâtiment.
             $rows = $conn->fetchAllAssociative(
                 'SELECT c.x, c.y, p.name
                  FROM players p

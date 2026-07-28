@@ -204,7 +204,17 @@ Les rôles :
   haute où l'on va se cacher derrière ». C'est le cas particulier d'affichage
   assumé : la branche `players` de l'UNION émet
   `CASE role WHEN 'cover' THEN 100 ELSE 98 END AS tableOrder`, et le mécanisme
-  `<use>` de `Classes/View.php:486` existe déjà ;
+  `<use>` de `Classes/View.php:486` existe déjà.
+
+  **Un ordre de dessin, et rien d'autre.** Le personnage est bien caché — mais
+  à l'affichage seulement : le sprite passe devant lui, et là s'arrête l'effet.
+  Le moteur ne cache rien. L'occupant reste listé à l'observation, reste visé
+  par les tirs, et suit pour le pas les règles ordinaires. Faute de quoi il
+  serait inatteignable : on passerait derrière l'arrière d'un bâtiment pour
+  devenir invulnérable. Quand la ligne de tir lira `entity_cells` (aujourd'hui
+  `BuildingService::lineOfFireReport()` ne joint que `players.coords_id`),
+  seules les cases `block` feront écran ; `cover`, `door` et `open` laisseront
+  passer les projectiles comme elles laissent passer le pas ;
 - `door` — marchable, porte le point d'entrée : remplace les `tp` recopiés à la
   main (la taverne d'Olympia en a trois vers trois destinations) ;
 - `anchor` — case de référence pour l'édition et l'observation.
