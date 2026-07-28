@@ -150,34 +150,45 @@ class BuildingService extends BaseService
             $blockersByTile[$row['x'] . ',' . $row['y']] ??= self::humanizeWallName((string) $row['name']);
         }
 
-        /* Seules les cases traversées DANS LES DEUX SENS arrêtent le tir.
-         *
-         * Le corridor ($tiles) est l'union des deux traversées : c'est ce
-         * qu'on dessine et ce qu'on vient d'interroger en base. Mais un
-         * obstacle posé sur une case que seul l'un des deux tracés emprunte
-         * ne bloque pas — sinon le tir passerait dans un sens et pas dans
-         * l'autre, ce qui était le cas sur 36 % des trajets. */
+        /* Le tir passe s'il existe une traversée LIBRE : c'est le tireur qui
+         * se faufile. Poser la question par CASE — « celle-ci est-elle sur
+         * les deux tracés ? » — ne composait pas. Les trois cases d'une base
+         * d'enclume sont chacune évitable, aucun tracé ne les évite toutes,
+         * et le tir traversait donc un mur de trois cases de large. Sur les
+         * trajets de pente exacte 1:2, l'intersection était même vide : rien
+         * ne pouvait arrêter un tir. */
         $blockers = [];
-        foreach (\App\Action\Combat\LineOfFire::blockingTilesBetween(
+
+        foreach (\App\Action\Combat\LineOfFire::paths(
             (int) $from->x, (int) $from->y, (int) $to->x, (int) $to->y
-        ) as $tile) {
-            if (isset($blockersByTile[$tile[0] . ',' . $tile[1]])) {
-                $blockers[] = $tile;
+        ) as $path) {
+            $hit = null;
+
+            foreach ($path as $tile) {
+                if (isset($blockersByTile[$tile[0] . ',' . $tile[1]])) {
+                    $hit = $tile;
+                    break;
+                }
             }
+
+            /* Une seule traversée libre suffit à faire passer le tir. */
+            if ($hit === null) {
+                return ['tiles' => $tiles, 'blocker' => null, 'blockerName' => null, 'blockers' => []];
+            }
+
+            $blockers[] = $hit;
         }
 
-        if ($blockers !== []) {
-            $first = $blockers[0];
+        /* Les deux tracés sont barrés. On nomme le plus proche du tireur :
+         * c'est celui qu'il voit s'interposer. */
+        $first = $blockers[0];
 
-            return [
-                'tiles' => $tiles,
-                'blocker' => $first,
-                'blockerName' => $blockersByTile[$first[0] . ',' . $first[1]],
-                'blockers' => $blockers,
-            ];
-        }
-
-        return ['tiles' => $tiles, 'blocker' => null, 'blockerName' => null, 'blockers' => []];
+        return [
+            'tiles' => $tiles,
+            'blocker' => $first,
+            'blockerName' => $blockersByTile[$first[0] . ',' . $first[1]],
+            'blockers' => $blockers,
+        ];
     }
 
     /**

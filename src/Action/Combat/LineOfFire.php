@@ -27,11 +27,21 @@ namespace App\Action\Combat;
  *   traversées. C'est ce qu'on dessine, et c'est contigu — l'intersection
  *   seule aurait des trous dans un tiers des cas, et un tracé troué est
  *   illisible.
- * - `blockingTilesBetween()` rend le NOYAU : les cases traversées dans les
- *   deux sens, les seules qui arrêtent quelque chose.
+ * - `paths()` rend les DEUX TRAVERSÉES telles quelles. Un tir passe s'il
+ *   existe une traversée LIBRE : c'est le tireur qui se faufile.
  *
- * Les deux sont symétriques par construction : échanger les extrémités rend
- * le même ensemble de cases.
+ * Ce dernier point s'énonçait autrefois par case — « une case n'arrête que si
+ * les deux tracés la traversent » — et cela ne composait pas. Chacune des
+ * trois cases d'une base d'enclume est évitable par l'un des tracés, mais
+ * aucun tracé ne les évite TOUTES : le tir passait donc à travers un mur de
+ * trois cases de large. Pire, sur les trajets de pente exacte 1:2 les deux
+ * tracés divergent à chaque pas, l'intersection est vide, et RIEN ne pouvait
+ * jamais arrêter un tir.
+ *
+ * La question se pose donc par TRAJET et non par case : le tir passe si l'un
+ * des deux tracés est libre de bout en bout.
+ *
+ * Tout reste symétrique : échanger les extrémités échange les deux tracés.
  */
 final class LineOfFire
 {
@@ -74,28 +84,19 @@ final class LineOfFire
     }
 
     /**
-     * Les cases qui ARRÊTENT le tir : celles traversées dans les deux sens.
+     * Les deux traversées valides, chacune ordonnée depuis le tireur.
      *
-     * Un obstacle posé ailleurs dans le corridor ne bloque pas — le tir
-     * l'évite dans l'un des deux tracés, et la règle veut qu'il passe.
+     * Un tir passe s'il en existe une libre de bout en bout ; s'il faut
+     * nommer l'obstacle, c'est le premier rencontré depuis le tireur.
      *
-     * @return list<array{int, int}>
+     * @return array{0: list<array{int, int}>, 1: list<array{int, int}>}
      */
-    public static function blockingTilesBetween(int $x0, int $y0, int $x1, int $y1): array
+    public static function paths(int $x0, int $y0, int $x1, int $y1): array
     {
-        $backward = [];
-        foreach (self::raster($x1, $y1, $x0, $y0) as $tile) {
-            $backward[$tile[0] . ',' . $tile[1]] = true;
-        }
-
-        $blocking = [];
-        foreach (self::raster($x0, $y0, $x1, $y1) as $tile) {
-            if (isset($backward[$tile[0] . ',' . $tile[1]])) {
-                $blocking[] = $tile;
-            }
-        }
-
-        return $blocking;
+        return [
+            self::raster($x0, $y0, $x1, $y1),
+            array_reverse(self::raster($x1, $y1, $x0, $y0)),
+        ];
     }
 
     /**

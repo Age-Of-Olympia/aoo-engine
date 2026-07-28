@@ -48,12 +48,16 @@ class LineOfFireTest extends TestCase
 
     public function testKnightShapedShot(): void
     {
-        /* (0,0) → (2,1) : l'arrondi hésite entre (1,0) et (1,1) selon le
-         * sens de parcours. Le corridor contient les deux ; aucune des deux
-         * n'arrête le tir, puisque chacune est évitable par l'un des tracés
-         * — le noyau est donc vide. */
+        /* (0,0) → (2,1) : l'arrondi hésite entre (1,0) et (1,1) selon le sens
+         * de parcours. Le corridor contient les deux, et chaque tracé n'en
+         * emprunte qu'une : un obstacle sur l'une des deux laisse l'autre
+         * traversée libre, donc le tir passe. */
         $this->assertSame([[1, 1], [1, 0]], LineOfFire::tilesBetween(0, 0, 2, 1));
-        $this->assertSame([], LineOfFire::blockingTilesBetween(0, 0, 2, 1));
+
+        [$forward, $backward] = LineOfFire::paths(0, 0, 2, 1);
+
+        $this->assertSame([[1, 1]], $forward);
+        $this->assertSame([[1, 0]], $backward);
     }
 
     public function testShallowSlope(): void
@@ -63,11 +67,29 @@ class LineOfFireTest extends TestCase
             LineOfFire::tilesBetween(0, 0, 4, 1),
             'le corridor contient les deux arrondis de la case du milieu'
         );
-        $this->assertSame(
-            [[1, 0], [3, 1]],
-            LineOfFire::blockingTilesBetween(0, 0, 4, 1),
-            'seules les cases traversées dans les deux sens arrêtent le tir'
-        );
+
+        [$forward, $backward] = LineOfFire::paths(0, 0, 4, 1);
+
+        $this->assertSame([[1, 0], [2, 1], [3, 1]], $forward);
+        $this->assertSame([[1, 0], [2, 0], [3, 1]], $backward);
+        $this->assertNotSame($forward, $backward, 'les deux tracés divergent au milieu');
+    }
+
+    /**
+     * Le trajet de pente exacte 1:2 : les deux tracés n'ont AUCUNE case
+     * commune, et l'ancienne règle par case n'y laissait donc rien bloquer.
+     */
+    public function testTheHalfSlopeWhereTheOldRuleBlockedNothing(): void
+    {
+        [$forward, $backward] = LineOfFire::paths(0, 0, 1, 2);
+
+        $this->assertSame([], array_values(array_intersect(
+            array_map(self::key(...), $forward),
+            array_map(self::key(...), $backward)
+        )), 'pas une case commune');
+
+        $this->assertNotSame([], $forward, 'et pourtant chaque tracé traverse bien des cases');
+        $this->assertNotSame([], $backward);
     }
 
     public function testEndpointsAreNeverIncluded(): void
@@ -105,10 +127,17 @@ class LineOfFireTest extends TestCase
                     "corridor asymétrique vers ({$dx}, {$dy})"
                 );
 
+                /* Échanger les extrémités échange les deux tracés : le
+                 * couple, lui, ne change pas. */
+                [$there, $back] = LineOfFire::paths(0, 0, $dx, $dy);
+                [$thereBack, $backBack] = LineOfFire::paths($dx, $dy, 0, 0);
+
+                $couple = static fn(array $a, array $b): array => $sortedKeys(array_merge($a, $b));
+
                 $this->assertSame(
-                    $sortedKeys(LineOfFire::blockingTilesBetween(0, 0, $dx, $dy)),
-                    $sortedKeys(LineOfFire::blockingTilesBetween($dx, $dy, 0, 0)),
-                    "noyau asymétrique vers ({$dx}, {$dy})"
+                    $couple($there, $back),
+                    $couple($thereBack, $backBack),
+                    "tracés asymétriques vers ({$dx}, {$dy})"
                 );
             }
         }
@@ -140,15 +169,25 @@ class LineOfFireTest extends TestCase
         }
     }
 
-    /** Le noyau est toujours inclus dans le corridor. */
-    public function testBlockingTilesAreASubsetOfTheCorridor(): void
+    /** Les deux tracés tiennent toujours dans le corridor qu'on dessine. */
+    public function testBothPathsStayInsideTheCorridor(): void
     {
-        foreach ([[5, 2], [4, 1], [-7, 3], [2, -9]] as [$dx, $dy]) {
+        foreach ([[5, 2], [4, 1], [-7, 3], [2, -9], [4, 8]] as [$dx, $dy]) {
             $corridor = self::sortedKeys(LineOfFire::tilesBetween(0, 0, $dx, $dy));
-            $blocking = self::sortedKeys(LineOfFire::blockingTilesBetween(0, 0, $dx, $dy));
 
-            $this->assertSame([], array_values(array_diff($blocking, $corridor)));
+            foreach (LineOfFire::paths(0, 0, $dx, $dy) as $path) {
+                $this->assertSame(
+                    [],
+                    array_values(array_diff(self::sortedKeys($path), $corridor)),
+                    "un tracé sort du corridor vers ({$dx}, {$dy})"
+                );
+            }
         }
+    }
+
+    private static function key(array $tile): string
+    {
+        return $tile[0] . ',' . $tile[1];
     }
 
     /** @param list<array{int, int}> $tiles @return list<string> */
