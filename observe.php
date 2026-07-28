@@ -45,12 +45,12 @@ $player->get_data();
 $coords = $player->getCoords();
 
 
-/* Une entité répond depuis TOUTE case de son emprise, pas seulement celle
- * où elle se tient. Sans cela, seul le coin haut-gauche d'une bibliothèque de
- * 3×3 se disait bibliothèque, et ses huit autres cases n'étaient rien.
+/* An entity answers from EVERY cell it holds, not only the one it stands on:
+ * without this, only the top-left corner of a 3×3 library called itself a
+ * library.
  *
- * `players.coords_id` reste dans la condition : une entité dont l'emprise
- * n'aurait pas suivi resterait interrogeable là où elle se trouve. */
+ * `players.coords_id` stays in the condition, so an entity whose cells have
+ * not kept up is still reachable where it stands. */
 $entityOnCell = '(p.coords_id = c.id OR EXISTS (
         SELECT 1 FROM entity_cells ec WHERE ec.player_id = p.id AND ec.coords_id = c.id
     ))';

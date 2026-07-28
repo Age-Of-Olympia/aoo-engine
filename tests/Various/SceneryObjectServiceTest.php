@@ -189,11 +189,9 @@ class SceneryObjectServiceTest extends LegacyPlayerFixtureTestCase
     }
 
     /**
-     * Retirer un décor ne réécrit pas le passé.
-     *
-     * Supprimer la ligne `players` oblige à vider `players_logs` des deux
-     * côtés de sa clé étrangère : effacer un décor effaçait l'historique de
-     * tout ce qu'on lui avait fait. On le REMISE, comme un bâtiment.
+     * Removing a decor does not rewrite the past: dropping the `players` row
+     * would force `players_logs` to be cleared on both sides of its foreign
+     * key. It is SHELVED instead, like a building.
      */
     public function testRemovingSceneryKeepsWhatWasLoggedAboutIt(): void
     {

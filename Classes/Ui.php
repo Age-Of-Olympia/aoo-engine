@@ -220,27 +220,22 @@ class Ui{
                 echo '<div class="card-name">'. $data->name .'</div>';
 
 
-                /* Une figure de plusieurs cases n'a pas d'image unique : la
-                 * carte la recompose depuis ses morceaux. Les autres gardent
-                 * leur portrait tel quel. */
-                /* Une figure de plusieurs cases n'a pas d'image unique : la
-                 * carte la recompose depuis ses morceaux. Les autres gardent
-                 * leur portrait tel quel. */
+                /* A multi-cell figure has no single image: the card
+                 * recomposes it from its pieces. */
+                /* A multi-cell figure has no single image: the card
+                 * recomposes it from its pieces. */
                 $portrait = $data->portraitHtml
                     ?? '<img src="'. $data->bg .'" class="card-portrait" />';
 
-                /* isset, pas !empty : à 0 PV — le cas le plus grave —
-                 * !empty(0) valait faux et la carte de sélection
-                 * n'affichait AUCUN voile. Un mort, une ruine ou un
-                 * mur brisé apparaissaient donc indemnes. */
+                /* isset, not !empty: at 0 PV — the worst case — !empty(0)
+                 * was false and nothing was veiled at all. */
                 $veil = '';
 
                 if(isset($data->pvPct)){
 
-                    /* En POURCENTAGE et DANS le portrait : le voile épousait
-                     * un portrait de 225 px de haut, calé au pixel près, et
-                     * ne voulait plus rien dire dès que la figure changeait
-                     * de proportions. */
+                    /* A PERCENTAGE, and INSIDE the portrait: pinned to a
+                     * 225 px box it meant nothing once a figure changed
+                     * proportions. */
                     $lost = min(100, max(0, 100 - (int) $data->pvPct));
 
                     // life filter, teinté par la race/le type (wound_color)

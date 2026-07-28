@@ -46,8 +46,8 @@ class RequiresDistanceCondition extends BaseCondition implements HasParameterSch
         $maxDist = $params['max'] ?? null;
         $minDist = $params['min'] ?? null;
 
-        /* Vers l'ENTITÉ : on est à côté d'un objet dès qu'on est à côté de
-         * l'une de ses cases, pas seulement de celle où il se tient. */
+        /* To the ENTITY: one is next to an object as soon as one is next to
+         * any of its cells. */
         $distance = View::get_distance_to_entity($actor->getCoords(), $target->getId(), $target->getCoords());
 
         if ($minDist == null && $distance > $maxDist) {

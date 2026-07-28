@@ -84,8 +84,8 @@ final class EntityCardView
 
         $data = (object) [
             'bg' => $target->data->portrait,
-            /* Un décor de plusieurs cases se montre entier, pas par le coin
-             * dont son portrait porte l'image. */
+            /* A multi-cell decor shows whole, not by the corner its
+             * portrait happens to name. */
             'portraitHtml' => (new SceneryPortraitView())->compose((int) $target->id),
             'name' => self::nameWithEffects($target),
             'img' => self::buttonsHtml($player, $target, $buildingDetails, $buildingClosure, $x, $y, $coords),
@@ -239,8 +239,8 @@ final class EntityCardView
         $readsFromAfar = $inscription !== ''
             && \App\Service\BuildingService::readsFromAfar($target, $buildingDetails);
 
-        /* Vers l'entité entière : on parle à un bâtiment depuis n'importe
-         * laquelle de ses cases, pas depuis la seule qu'on a cliquée. */
+        /* To the whole entity: one talks to a building from any of its
+         * cells, not only the one clicked. */
         $distance = View::get_distance_to_entity($player->getCoords(), (int) $target->id, $target->getCoords());
 
         $icon = $inscription !== '' ? 'ra-scroll-unfurled' : 'ra-speech-bubble';
@@ -299,8 +299,8 @@ final class EntityCardView
             return Str::richText($inscription);
         }
 
-        /* Vers l'entité entière : on parle à un bâtiment depuis n'importe
-         * laquelle de ses cases, pas depuis la seule qu'on a cliquée. */
+        /* To the whole entity: one talks to a building from any of its
+         * cells, not only the one clicked. */
         $distance = View::get_distance_to_entity($player->getCoords(), (int) $target->id, $target->getCoords());
 
         return $distance <= 1

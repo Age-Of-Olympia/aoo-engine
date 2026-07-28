@@ -1177,12 +1177,12 @@
     }
 
     /*
-     * Le voile de PV perdus arrive du serveur en pourcentage, posé DANS le
-     * portrait : il épouse donc la figure quelle que soit sa taille. Il
-     * reste à lui donner sa classe et à conserver sa teinte.
+     * The lost-PV veil arrives from the server as a percentage, placed INSIDE
+     * the portrait, so it follows the figure whatever its size. Only its
+     * class and its colour are left to apply.
      *
-     * Le repli lit encore une hauteur en pixels : les fiches servies avant
-     * ce changement la portaient, rapportée à un portrait de 225 px.
+     * The fallback still reads a pixel height, for cards served before this
+     * change, relative to a 225 px portrait.
      */
     function adaptPvFilter() {
         var $filter = $('#ajax-data #red-filter');
@@ -1201,9 +1201,9 @@
            structure) : la conserver, --hud-blood n'est que le repli CSS. */
         var colorMatch = styleAttr.match(/background:\s*([^;]+)/);
 
-        /* On ne le DÉPLACE plus : le serveur l'a mis dans le portrait, et
-           c'est ce qui lui fait épouser une figure de proportions
-           quelconques. Le repli le rapatrie encore. */
+        /* No longer MOVED: the server put it inside the portrait, which is
+           what makes it follow a figure of any proportions. The fallback
+           still brings it back. */
         $filter.removeAttr('style')
             .addClass('hud-pv-lost')
             .css('height', lostPct + '%');

@@ -55,9 +55,8 @@ class ObstacleCondition extends BaseCondition implements HasParameterSchema
 
         $from = $actor->getCoords();
 
-        /* On vise la case la PLUS PROCHE de la cible, comme la portée la
-         * mesure : désigner la case lointaine d'un objet de plusieurs cases
-         * traçait une ligne à travers son propre corps. */
+        /* Aim at the target's NEAREST cell, as range measures it: aiming at
+         * a far cell traced a line through the object's own body. */
         $to = \Classes\View::get_nearest_cell_of($from, $target->getId(), $target->getCoords());
 
         $report = (new BuildingService())->lineOfFireReport($from, $to, $target->getId());

@@ -99,8 +99,8 @@ class FouillerGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $player = $this->createRealPlayer($prefix);
         $coordsId = View::get_coords_id((object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::PLAN]);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$coordsId, $player->id]);
-        /* Le fouilleur change de PLAN : sans resynchroniser, sa case reste
-         * sur gaia et toute distance le concernant devient infinie. */
+        /* The harvester changes PLAN: without a resync its cell stays on
+         * gaia and every distance about it becomes infinite. */
         (new \App\Service\Map\EntityCellService($this->link))->syncCells((int) $player->id);
         $player->getCoords();
         $player->get_caracs();

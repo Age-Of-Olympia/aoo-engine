@@ -108,12 +108,10 @@ final class SceneryObjectService
               WHERE ec.coords_id IN ({$in}) AND p.player_type = 'scenery'"
         );
 
-        /* On REMISE l'entité, on ne la supprime pas. Supprimer la ligne
-         * `players` oblige à vider `players_logs` des deux côtés de sa clé
-         * étrangère : effacer un décor effaçait donc l'historique de tout
-         * ce qu'on lui avait fait. Les bâtiments empruntent ce chemin
-         * depuis toujours, précisément pour que les événements restent
-         * vrais. */
+        /* SHELVE the entity, do not delete it. Dropping the `players` row
+         * forces `players_logs` to be cleared on both sides of its foreign
+         * key, so erasing a decor erased the history of everything done to
+         * it. Buildings have always taken this path, for that reason. */
         $buildings = new \App\Service\BuildingService();
 
         foreach ($ids as $id) {

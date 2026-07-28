@@ -273,10 +273,10 @@ function race_render_form(?Race $race, string $csrfToken, bool $structureMode = 
         $label = CARACS_TXT[$key] ?? $short;
         $value = $isEdit ? $race->getCarac($key) : 0;
 
-        /* Une structure n'avait que ses PV d'éditables : c'était vrai des
-         * murs, et faux dès qu'un bâtiment se défend ou qu'un décor encaisse
-         * un coup. Tout est réglable, PV en tête ; ce qui ne veut rien dire
-         * pour un mur y reste à zéro sans gêner personne. */
+        /* A structure had only its PV editable, which was true of walls and
+         * false as soon as a building defends itself or a decor takes a hit.
+         * All of them are settable; what means nothing for a wall stays at
+         * zero and bothers no one. */
         $caracInputs .= '<div class="form-group col-md-3 col-6">'
             . '<label title="' . e($label) . '">' . e($short) . '</label>'
             . '<input type="number" class="form-control" name="carac[' . e($key) . ']"'

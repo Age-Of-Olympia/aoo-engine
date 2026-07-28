@@ -29,11 +29,11 @@ if($type == 'buildings'){
             continue;
         }
 
-        /* REMISER, pas supprimer. `remove()` efface la ligne `players`, ce
-         * qui oblige à vider `players_logs` des deux côtés de sa clé
-         * étrangère : retirer un bâtiment de la carte effaçait donc
-         * l'historique de tout ce qu'on lui avait fait. L'éditeur retire du
-         * plateau ; il ne réécrit pas le passé. */
+        /* SHELVE, do not delete. `remove()` drops the `players` row, which
+         * forces `players_logs` to be cleared on both sides of its foreign
+         * key — so taking a building off the map erased the history of
+         * everything done to it. The editor removes from the board; it does
+         * not rewrite the past. */
         $buildingService->vanish((int) $building['player_id']);
     }
 
@@ -75,8 +75,8 @@ if($type == 'buildings'){
         $ids = implode(',', $cells);
         $db->exe("DELETE FROM map_foregrounds WHERE coords_id IN ({$ids})");
 
-        /* L'entité s'en va avec ses morceaux : la laisser derrière ferait
-         * bloquer un décor qui n'est plus dessiné nulle part. */
+        /* The entity goes with its pieces: left behind, a decor drawn
+         * nowhere would still block. */
         $objects->removeEntitiesOn($cells);
     } else {
         $db->exe('DELETE FROM ' . $type . ' WHERE coords_id = ?', $coordsId);

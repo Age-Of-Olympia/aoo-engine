@@ -135,11 +135,10 @@ class BuildingService extends BaseService
                    AND p.race IN (' . implode(',', array_fill(0, count($blocking), '?')) . ')',
                 array_merge($tileParams, [self::TRANSPARENT_ROLE], $blocking)
             );
-            /* La cible ne se fait pas écran à elle-même. Sans emprise la
-             * question ne se posait pas — sa case unique est une extrémité,
-             * exclue du corridor — mais un objet de plusieurs cases arrêtait
-             * un tir qui le visait, dès qu'on en désignait une case
-             * éloignée. */
+            /* A target does not screen itself. With a single cell the
+             * question did not arise — that cell is an endpoint, excluded
+             * from the corridor — but a multi-cell object stopped a shot
+             * meant for it as soon as a far cell was aimed at. */
             $ownCells = $targetEntityId === null ? [] : $this->cellKeysOf($targetEntityId);
 
             foreach ($rows as $row) {
@@ -161,13 +160,12 @@ class BuildingService extends BaseService
             $blockersByTile[$row['x'] . ',' . $row['y']] ??= self::humanizeWallName((string) $row['name']);
         }
 
-        /* Le tir passe s'il existe une traversée LIBRE : c'est le tireur qui
-         * se faufile. Poser la question par CASE — « celle-ci est-elle sur
-         * les deux tracés ? » — ne composait pas. Les trois cases d'une base
-         * d'enclume sont chacune évitable, aucun tracé ne les évite toutes,
-         * et le tir traversait donc un mur de trois cases de large. Sur les
-         * trajets de pente exacte 1:2, l'intersection était même vide : rien
-         * ne pouvait arrêter un tir. */
+        /* A shot passes if some traversal is CLEAR — the shooter threads
+         * through. Asking it per CELL ("is this one on both traversals?")
+         * does not compose: each cell of a three-wide base is individually
+         * avoidable, no traversal avoids them all, and the shot went through
+         * the wall. On exact 1:2 slopes the intersection was even empty, so
+         * nothing could block at all. */
         $blockers = [];
 
         foreach (\App\Action\Combat\LineOfFire::paths(
@@ -182,21 +180,17 @@ class BuildingService extends BaseService
                 }
             }
 
-            /* Une seule traversée libre suffit à faire passer le tir. */
+            /* One clear traversal is enough. */
             if ($hit === null) {
                 return ['tiles' => $tiles, 'blocker' => null, 'blockerName' => null, 'blockers' => []];
             }
 
             $blockers[] = $hit;
         }
-        /* Les deux tracés sont barrés. On nomme celui que le tireur voit
-         * s'interposer en PREMIER, et « premier » se mesure le long de la
-         * droite du tir — pas dans l'ordre du corridor.
-         *
-         * Les deux diffèrent : entre (0,-8) et (4,0), le corridor sort
-         * (1,-7) avant (0,-7), quand la projection sur la droite les classe
-         * dans l'autre sens. Le damier dessine en projetant ; s'en écarter
-         * faisait courir le trait vert au-delà du premier point d'impact. */
+        /* Both traversals are barred. Name the one the shooter sees step in
+         * FIRST, and "first" is measured along the shot line, not in corridor
+         * order — the board draws by projecting onto that line, and departing
+         * from it ran the green trace past the first impact. */
         $first = self::nearestAlongTheShot($blockers, $from, $to);
 
         return [
@@ -844,9 +838,8 @@ class BuildingService extends BaseService
 
         $playerType = $conn->fetchOne('SELECT player_type FROM players WHERE id = ?', [$playerId]);
 
-        /* Toute structure emprunte ce chemin, décor compris : la ligne
-         * `players` est REMISÉE et non supprimée, pour que les événements
-         * qui la citent restent vrais. */
+        /* Every structure takes this path, scenery included: the `players`
+         * row is SHELVED, not deleted, so the events naming it stay true. */
         if ($playerType === false
             || \App\Enum\EntityCategory::fromPlayerType((string) $playerType) !== \App\Enum\EntityCategory::Structure) {
             return false;
@@ -870,9 +863,9 @@ class BuildingService extends BaseService
                 $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$playerId]);
             }
 
-            /* Le décor est encore DESSINÉ depuis `map_foregrounds` : sans
-             * retirer ses morceaux, l'objet quitterait les règles en restant
-             * à l'écran. */
+            /* Scenery is still DRAWN from `map_foregrounds`: without taking
+             * its pieces, the object would leave the rules and stay on
+             * screen. */
             $conn->executeStatement(
                 'DELETE m FROM map_foregrounds m
                    JOIN entity_cells ec ON ec.coords_id = m.coords_id

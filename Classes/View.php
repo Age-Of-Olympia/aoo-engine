@@ -1264,11 +1264,10 @@ class View{
     }
 
     /**
-     * La case d'une entité la plus proche d'un point, ou son point déclaré.
+     * The entity cell nearest a point, or its declared point.
      *
-     * C'est elle qu'on vise : tirer sur une enclume de 3×3 en désignant sa
-     * case la plus lointaine traçait une ligne à travers son propre corps,
-     * et l'objet arrêtait le tir qui le visait.
+     * That is what a shot aims at: aiming at a far cell traced a line through
+     * the object's own body, and it screened the shot meant for it.
      *
      * @return object coords {x, y, z, plan}
      */
@@ -1296,16 +1295,12 @@ class View{
     }
 
     /**
-     * Distance jusqu'à une ENTITÉ, mesurée à la case la plus proche.
+     * Distance to an ENTITY, measured to its nearest cell.
      *
-     * `get_distance()` mesure vers un point. Une entité qui en occupe
-     * plusieurs n'en est pas un : se tenir contre la base d'une enclume de
-     * 3×3 laissait le corps à corps indisponible, parce que son ancre est à
-     * trois cases de là. On est à côté d'un objet dès qu'on est à côté de
-     * l'une de ses cases.
+     * One is next to an object as soon as one is next to any of its cells;
+     * `get_distance()` measures to a point, which a multi-cell object is not.
      *
-     * Sans emprise du tout, on retombe sur le point déclaré : une entité que
-     * rien n'a synchronisée garde la mesure d'avant.
+     * With no cells at all, falls back to the declared point.
      */
     public static function get_distance_to_entity($coords, int $entityId, $fallbackCoords = null): int
     {
@@ -1327,10 +1322,9 @@ class View{
             return $nearest;
         }
 
-        /* Sans aucune case — une entité que rien n'a synchronisée — on mesure
-         * comme avant, vers le point qu'elle déclare. Une emprise correcte
-         * porte toujours une case à ce point-là, donc les deux mesures
-         * coïncident dès que la table est à jour. */
+        /* With no cells at all — an entity nothing has synchronised — measure
+         * as before, to the point it declares. A correct set of cells always
+         * holds one there, so the two agree once the table is up to date. */
         return $fallbackCoords === null ? 100000000 : self::get_distance($coords, $fallbackCoords);
     }
 

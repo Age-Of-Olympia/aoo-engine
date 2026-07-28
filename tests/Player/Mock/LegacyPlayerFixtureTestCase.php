@@ -279,10 +279,9 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         $coordsId = View::get_coords_id((object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$coordsId, $playerId]);
 
-        /* Les cases suivent, comme derrière toute écriture de coords_id en
-         * production : les laisser en arrière ferait mesurer les distances
-         * depuis l'ancienne position. Les cas qui veulent EXPRESSÉMENT une
-         * dérive écrivent l'UPDATE eux-mêmes. */
+        /* Cells follow, as behind every production write to coords_id:
+         * leaving them behind would measure distances from the old spot.
+         * Cases that WANT drift write their own UPDATE. */
         (new \App\Service\Map\EntityCellService($this->link))->syncCells($playerId);
     }
 

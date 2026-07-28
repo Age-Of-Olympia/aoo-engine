@@ -250,9 +250,8 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
     }
 
     /**
-     * Une cible ne se fait pas écran à elle-même. Sans emprise la question ne
-     * se posait pas — sa case unique est une extrémité, exclue du corridor —
-     * mais un objet de plusieurs cases arrêtait un tir qui le visait.
+     * A target does not screen itself. With a single cell the question did
+     * not arise — that cell is an endpoint, excluded from the corridor.
      */
     public function testATargetDoesNotScreenItself(): void
     {
