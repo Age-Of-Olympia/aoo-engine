@@ -41,10 +41,8 @@ if($_POST['type'] == 'eraser'){
      * Le plafond est celui DU PLAN edite (CellShadeService : reglage de plan,
      * defaut du tableau de bord admin sinon) : au-dela, un clic reste sans
      * effet visible plutot que de gonfler un compteur sans fin. */
-    if($_POST['type'] == 'foregrounds' && $_POST['src'] == 'ombre'){
-
-        $shadeMax = (new \App\Service\CellShadeService())
-            ->forPlan($player->coords->plan)['max'];
+    if ($_POST['type'] === 'foregrounds' && $_POST['src'] === 'ombre') {
+        $shadeMax = (new \App\Service\CellShadeService())->forPlan($player->coords->plan)['max'];
 
         (new Db())->exe(
             'UPDATE coords SET shade = LEAST(shade + 1, ?) WHERE id = ?',
@@ -53,9 +51,9 @@ if($_POST['type'] == 'eraser'){
 
         echo 'ombre';
 
-        /* `return` et non `exit` : ce fichier est INCLUS dans une boucle
-           quand on peint une zone (tiled.php). Un exit s'arreterait a la
-           premiere case, et le pinceau de zone n'ombrerait qu'un carreau. */
+        /* `return` et non `exit` : ce fichier est INCLUS dans une boucle quand
+           on peint une zone (tiled.php). Un exit s'arrêterait à la première
+           case, et le pinceau de zone n'ombrerait qu'un carreau. */
         return;
     }
 
@@ -81,25 +79,22 @@ if($_POST['type'] == 'eraser'){
      * Une famille sans découpe connue — décor d'une seule case, ou famille
      * que la carte ne permet pas de trancher — retombe sur la pose simple.
      * On ne devine pas une figure. */
-    if($_POST['type'] == 'foregrounds'){
-
+    if ($_POST['type'] === 'foregrounds') {
         $origin = $db->exe('SELECT x, y, z, plan FROM coords WHERE id = ?', array($coordsId))->fetch_object();
 
         $cells = (new \App\Service\Map\SceneryObjectService())
             ->cellsToPlace($_POST['src'], (int) $origin->x, (int) $origin->y);
 
-        if($cells !== array()){
-
-            foreach($cells as $pieceName => list($px, $py)){
-
+        if ($cells !== array()) {
+            foreach ($cells as $pieceName => list($px, $py)) {
                 $pieceCoordsId = View::get_coords_id((object) array(
-                    'x' => $px, 'y' => $py, 'z' => $origin->z, 'plan' => $origin->plan
+                    'x' => $px, 'y' => $py, 'z' => $origin->z, 'plan' => $origin->plan,
                 ));
 
                 $db->insert('map_foregrounds', array('name' => $pieceName, 'coords_id' => $pieceCoordsId));
             }
 
-            echo 'foregrounds ('. count($cells) .' morceaux)';
+            echo 'foregrounds (' . count($cells) . ' morceaux)';
 
             return;
         }

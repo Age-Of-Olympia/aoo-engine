@@ -56,37 +56,26 @@ if($type == 'buildings'){
      * c'est ainsi qu'une trentaine de fragments incomplets sont arrivés sur
      * la carte. Le service borne l'objet à UN exemplaire — deux décors collés
      * sont adjacents, et les confondre ferait disparaître le voisin. */
-    if($type === 'map_foregrounds'){
-
+    if ($type === 'map_foregrounds') {
         $names = $db->exe('SELECT name FROM map_foregrounds WHERE coords_id = ?', array($coordsId));
+        $toErase = array((int) $coordsId);
+        $objects = new \App\Service\Map\SceneryObjectService();
 
-        $toErase = array($coordsId);
-
-        while($row = $names->fetch_object()){
-
-            $toErase = array_merge(
-                $toErase,
-                (new \App\Service\Map\SceneryObjectService())->objectCellsAt((int) $coordsId, $row->name)
-            );
+        while ($row = $names->fetch_object()) {
+            $toErase = array_merge($toErase, $objects->objectCellsAt((int) $coordsId, $row->name));
         }
 
-        foreach(array_unique($toErase) as $id){
-
-            $db->exe('DELETE FROM map_foregrounds WHERE coords_id = ?', $id);
-        }
+        /* Une seule requête : la boucle de DELETE faisait un aller-retour par
+           case, soit quatorze pour un fort. */
+        $ids = implode(',', array_map('intval', array_unique($toErase)));
+        $db->exe("DELETE FROM map_foregrounds WHERE coords_id IN ({$ids})");
+    } else {
+        $db->exe('DELETE FROM ' . $type . ' WHERE coords_id = ?', $coordsId);
     }
 
-    else {
-
-        $sql = 'DELETE FROM '.$type.' WHERE coords_id =?';
-
-        $db->exe($sql, $coordsId);
-    }
-
-    /* Effacer le decor d'une case efface aussi son assombrissement : c'est
-       ce que faisait le DELETE quand l'ombre etait une ligne de decor. */
-    if($type == 'map_foregrounds'){
-
+    /* Effacer le décor d'une case efface aussi son assombrissement : c'est ce
+       que faisait le DELETE quand l'ombre était une ligne de décor. */
+    if ($type === 'map_foregrounds') {
         $db->exe('UPDATE coords SET shade = 0 WHERE id = ?', array($coordsId));
     }
 }
