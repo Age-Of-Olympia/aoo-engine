@@ -2,6 +2,7 @@
 
 namespace Tests\Various;
 
+use App\Service\Map\EntityCellService;
 use App\Service\Map\TileOccupancyService;
 use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
@@ -252,7 +253,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->requireBuildingsOrSkip();
         $wall = $this->placeStructure('mur_pierre', 20, 0, self::PLAN);
 
-        $spread = $this->giveCell($wall, 21, 0, \App\Service\Map\EntityCellService::ROLE_PART);
+        $spread = $this->giveCell($wall, 21, 0, EntityCellService::ROLE_PART);
 
         $this->assertNotNull(
             $this->service()->stepRefusal($spread, 1, true),
@@ -260,17 +261,20 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /** A door opens in a wall that blocks everywhere else. */
-    public function testAnOpenCellIsWalkableThroughABlockingType(): void
+    /**
+     * A cell of a blocking type blocks, whatever its role — nothing can punch
+     * a hole through one today, and nothing needs to.
+     */
+    public function testNoRoleOpensAHoleThroughABlockingType(): void
     {
         $this->requireBuildingsOrSkip();
         $wall = $this->placeStructure('mur_pierre', 22, 0, self::PLAN);
 
-        $doorway = $this->giveCell($wall, 23, 0, 'door');
+        $body = $this->giveCell($wall, 23, 0, EntityCellService::ROLE_PART);
 
-        $this->assertNull(
-            $this->service()->stepRefusal($doorway, 1, true),
-            'une porte se franchit, quoi que fasse le mur qui la porte'
+        $this->assertNotNull(
+            $this->service()->stepRefusal($body, 1, true),
+            'the type decides, and this one blocks'
         );
     }
 
@@ -317,7 +321,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->requireBuildingsOrSkip();
         $wall = $this->placeStructure('mur_pierre', 30, 0, self::PLAN);
 
-        $body = $this->giveCell($wall, 31, 0, \App\Service\Map\EntityCellService::ROLE_PART);
+        $body = $this->giveCell($wall, 31, 0, EntityCellService::ROLE_PART);
         $service = $this->service();
 
         $this->assertNotNull($service->stepRefusal($body, 1, true), 'on n\'y entre pas');

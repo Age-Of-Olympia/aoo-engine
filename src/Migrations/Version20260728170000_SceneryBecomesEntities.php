@@ -37,8 +37,12 @@ final class Version20260728170000_SceneryBecomesEntities extends AbstractMigrati
     private const DEFAULT_PV = 10;
     private const DEFAULT_BG_COLOR = '#6b8f5a';
 
-    /** A co-located trigger decides the cell's role; otherwise it is `cover`. */
-    private const TRIGGER_ROLES = ['forbidden' => 'block', 'tp' => 'door'];
+    /**
+     * A `forbidden` trigger fencing off a decor is a workaround for scenery
+     * that could not block on its own. The rule moves onto the object; the
+     * trigger stays for now, and both say the same thing.
+     */
+    private const FENCED_OFF = 'forbidden';
 
     public function getDescription(): string
     {
@@ -163,22 +167,15 @@ final class Version20260728170000_SceneryBecomesEntities extends AbstractMigrati
         return $max === 0 ? self::ID_START : $max + 1;
     }
 
-    /**
-     * A trigger sitting on the cell says what it is: `forbidden` marks a cell
-     * one cannot enter, `tp` marks a way through.
-     */
+    /** Fenced off means the object itself blocks; otherwise it is plain scenery. */
     private function roleAt(int $coordsId): string
     {
-        foreach ($this->connection->fetchFirstColumn(
-            'SELECT name FROM map_triggers WHERE coords_id = ?',
-            [$coordsId]
-        ) as $trigger) {
-            if (isset(self::TRIGGER_ROLES[(string) $trigger])) {
-                return self::TRIGGER_ROLES[(string) $trigger];
-            }
-        }
+        $fencedOff = (bool) $this->connection->fetchOne(
+            'SELECT 1 FROM map_triggers WHERE coords_id = ? AND name = ? LIMIT 1',
+            [$coordsId, self::FENCED_OFF]
+        );
 
-        return 'cover';
+        return $fencedOff ? 'block' : 'cover';
     }
 
     /**

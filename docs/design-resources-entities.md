@@ -185,17 +185,17 @@ entity_cells(
   coords_id INT NOT NULL,        -- FK coords
   plan VARCHAR(50), z SMALLINT, x INT, y INT,   -- dénormalisé : chemin chaud
   piece SMALLINT NOT NULL DEFAULT 0,            -- index du morceau de sprite
-  role  VARCHAR(16) NOT NULL,                   -- anchor|block|cover|door|open
+  role  VARCHAR(16) NOT NULL,                   -- part|block|cover
   PRIMARY KEY (player_id, coords_id),
   KEY k_coords (coords_id, player_id),
   KEY k_hot (plan, z, x, y)
 )
 ```
 
-Invariant : toute entité a exactement une ligne `role='anchor'` à
-`players.coords_id`. **La colonne `players.coords_id` est conservée** comme
-ancre — aucun des 337 sites `coords_id` du dépôt ne casse — et `entity_cells`
-devient la SSOT de l'occupation.
+Invariant : toute entité posée tient une case à `players.coords_id`. **La
+colonne `players.coords_id` est conservée** comme origine — aucun des 337
+sites `coords_id` du dépôt ne casse — et `entity_cells` devient la SSOT de
+l'occupation.
 
 Les rôles :
 
@@ -213,11 +213,36 @@ Les rôles :
   serait inatteignable : on passerait derrière l'arrière d'un bâtiment pour
   devenir invulnérable. Quand la ligne de tir lira `entity_cells` (aujourd'hui
   `BuildingService::lineOfFireReport()` ne joint que `players.coords_id`),
-  seules les cases `block` feront écran ; `cover`, `door` et `open` laisseront
-  passer les projectiles comme elles laissent passer le pas ;
-- `door` — marchable, porte le point d'entrée : remplace les `tp` recopiés à la
-  main (la taverne d'Olympia en a trois vers trois destinations) ;
-- `anchor` — case de référence pour l'édition et l'observation.
+  seules les cases `block` feront écran ; `cover` et `part` laisseront passer
+  les projectiles comme elles laissent passer le pas ;
+- `part` — appartient à l'entité et ne prétend rien de plus : c'est le type
+  qui tranche le passage. C'est le rôle par défaut.
+
+Deux rôles annoncés par les premières versions de ce plan n'ont PAS été
+retenus.
+
+`door` devait « remplacer les `tp` recopiés à la main ». Il ne le peut pas :
+la destination d'un téléporteur vit dans `map_triggers.params`, et un rôle de
+seize caractères ne saurait la porter — encore moins les trois destinations de
+la taverne d'Olympia. Une porte vers un autre plan garde donc son déclencheur,
+qui seul sait où elle mène. Une porte qui ne fait que barrer le chemin sur le
+même plan n'a besoin de rien d'autre que du passage, donc de `block`.
+
+Ce que `door` aurait dit en plus — « cette case est une entrée » — est de
+toute façon déjà lisible : le déclencheur est posé dessus. Et si une porte
+doit un jour se fermer, ce n'est pas la case qui le dira mais l'état de
+l'entité, que `BuildingService::closureReason()` connaît déjà.
+
+`open` n'a jamais été défini nulle part, ni écrit, ni lu. Il aurait dit
+« cette case ne bloque pas, quoi que fasse son type » — percer une porte
+cochère dans un mur. Le besoin est plausible ; il n'existe pas aujourd'hui, et
+aucune case ne sait donc ouvrir un passage dans un type qui bloque. Le jour où
+quelqu'un en a besoin, le rôle revient AVEC une définition et un écrivain.
+
+`anchor` a existé le temps d'un lot : il marquait la case d'origine, une
+POSITION dans une colonne de natures, et il doublait `players.coords_id` —
+d'où la mécanique de dérive qu'il a fallu écrire pour surveiller la copie.
+L'origine reste `players.coords_id`.
 
 Le rôle par défaut vient du catalogue et reste **surchargeable case par case** —
 l'admin voit alors que la case *diverge* de son type (les 6 géants sur 43 dont

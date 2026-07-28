@@ -23,8 +23,6 @@ final class TileOccupancyService
     private const ROLE_VERDICTS = [
         'block' => true,
         'cover' => false,
-        'door'  => false,
-        'open'  => false,
     ];
 
     private Connection $conn;

@@ -18,6 +18,12 @@ use Doctrine\Migrations\AbstractMigration;
  * The origin stays `players.coords_id`. Every former anchor becomes `part`:
  * the cell belongs to its entity and leaves passability to the type, which is
  * exactly what `anchor` already meant to the occupancy service.
+ *
+ * `door` and `open` go with it, never having been written or read. A door's
+ * destination lives in `map_triggers.params`, which a 16-character role
+ * cannot hold, and whether it lets one through is the entity's state, not the
+ * cell's shape. What remains says one thing each: `part` defers to the type,
+ * `block` refuses the step, `cover` draws above the character.
  */
 final class Version20260728180000_TheAnchorRoleGoesAway extends AbstractMigration
 {
@@ -33,7 +39,7 @@ final class Version20260728180000_TheAnchorRoleGoesAway extends AbstractMigratio
         $this->addSql(
             "ALTER TABLE entity_cells
              MODIFY role VARCHAR(16) NOT NULL DEFAULT 'part'
-             COMMENT 'part|block|cover|door|open — part = belongs to the entity, the type decides'"
+             COMMENT 'part|block|cover — part = belongs to the entity, the type decides'"
         );
     }
 
