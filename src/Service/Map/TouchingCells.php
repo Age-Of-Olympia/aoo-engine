@@ -6,7 +6,7 @@ namespace App\Service\Map;
  * Les cases qui SE TOUCHENT : retrouver le groupe auquel une case appartient.
  *
  * Deux services en avaient chacun leur copie : celui qui dérive les découpes
- * de décor, qui partitionne toute une famille en composantes, et celui qui
+ * de décor, qui répartit toute une famille en groupes, et celui qui
  * retrouve l'objet auquel une case appartient. Même double boucle, même file,
  * même dictionnaire de positions — et une seule différence, qui est justement
  * le cœur du sujet : le second REFUSE d'absorber un morceau dont l'indice est
@@ -18,7 +18,7 @@ namespace App\Service\Map;
  *
  * # La clé
  *
- * `plan|z|x|y`. Une composante ne traverse ni les plans ni les étages, et la
+ * `plan|z|x|y`. Un groupe ne traverse ni les plans ni les étages, et la
  * clé le dit d'elle-même — plutôt que de scoper la requête en amont et
  * d'espérer que l'appelant y ait pensé.
  */

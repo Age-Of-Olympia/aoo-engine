@@ -79,8 +79,8 @@ final class SceneryObjectService
     /**
      * Les identifiants de case de l'objet auquel appartient une case donnée.
      *
-     * L'objet est la composante connexe qui contient la case, **restreinte à
-     * un seul exemplaire** : deux décors collés sont adjacents, et les
+     * L'objet est le groupe de cases qui se touchent autour d'elle,
+     * **restreint à un seul exemplaire** : deux décors collés sont adjacents, et les
      * confondre ferait disparaître le voisin. La restriction se fait en
      * s'arrêtant au premier morceau déjà rencontré — c'est le même critère
      * d'unicité qui sert à compter les exemplaires.
@@ -139,15 +139,15 @@ final class SceneryObjectService
             return [$coordsId];
         }
 
-        /* Le critère d'arrêt : un morceau dont l'indice est DÉJÀ dans la
-         * composante appartient à l'exemplaire voisin, pas à celui-ci. Deux
-         * décors collés sont adjacents ; sans cette règle, retirer l'un
-         * emporterait l'autre. */
-        $component = TouchingCells::groupAround(
+        /* Le critère d'arrêt : un morceau dont l'indice est DÉJÀ dans le
+         * groupe appartient à l'exemplaire voisin, pas à celui-ci. Deux décors
+         * collés se touchent ; sans cette règle, retirer l'un emporterait
+         * l'autre. */
+        $group = TouchingCells::groupAround(
             $byKey,
             $start,
-            static function (array $candidate, array $taken): bool {
-                foreach ($taken as $cell) {
+            static function (array $candidate, array $group): bool {
+                foreach ($group as $cell) {
                     if ($cell['piece'] === $candidate['piece']) {
                         return false;
                     }
@@ -159,7 +159,7 @@ final class SceneryObjectService
 
         return array_values(array_map(
             static fn (array $cell): int => (int) $cell['coords_id'],
-            $component
+            $group
         ));
     }
 
