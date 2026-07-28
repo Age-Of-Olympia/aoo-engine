@@ -184,8 +184,13 @@ final class SceneryObjectService
                 (code, name, label, description, playable, hidden, kind, structure_nature,
                  bleeds, wound_color, blocks_passage, blocks_projectiles, bgColor, color,
                  faction, plan, pv)
-             VALUES (?, ?, ?, '', 0, 1, 'structure', 'edifice', '', '#cd7f32', 0, 1, '#6b8f5a', 'black', '', '', 10)",
-            [strtoupper($family), $family, ucfirst(str_replace('_', ' ', $family))]
+             VALUES (?, ?, ?, '', 0, 1, 'structure', ?, '', '#cd7f32', 0, 1, '#6b8f5a', 'black', '', '', 10)",
+            [
+                strtoupper($family),
+                $family,
+                ucfirst(str_replace('_', ' ', $family)),
+                \App\View\Admin\TypeEditorFace::NATURE_DECOR,
+            ]
         );
 
         \App\Service\RaceService::clearCache();

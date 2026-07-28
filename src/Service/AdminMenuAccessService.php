@@ -48,6 +48,7 @@ class AdminMenuAccessService
         // même politique que races/effets
         'resource-types.php'       => ['Cartes · Ressources (types)', 'Cartes', self::LEVEL_SUPERADMIN],
         'footprints.php'           => ['Cartes · Décors en plusieurs morceaux', 'Cartes', self::LEVEL_SUPERADMIN],
+        'scenery-types.php'        => ['Cartes · Types de décor', 'Cartes', self::LEVEL_SUPERADMIN],
         // Couleurs de carte : palette visuelle de la carte monde générée —
         // travail d'animation, même niveau que les tuiles
         'tile-colors.php'          => ['Cartes · Couleurs de carte', 'Cartes', self::LEVEL_ADMIN],

@@ -23,6 +23,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Entity\Race;
+use App\View\Admin\TypeEditorFace;
 use App\Enum\ImageType;
 use App\Service\ActionService;
 use App\Service\BuildingService;
@@ -37,9 +38,17 @@ use App\Service\RaceService;
  * effectivement posé sur le plateau (stock, sinon le mur du même nom) :
  * le même visuel que partout ailleurs. Chemin relatif, ou '' sans image.
  */
-function race_image_path(string $name, bool $structureMode): string
+function race_image_path(string $name, TypeEditorFace $face): string
 {
-    if ($structureMode) {
+    /* Scenery sprites live in img/foregrounds, not img/walls: the type has no
+     * image of its own, so a placed instance lends its avatar. */
+    if ($face->isScenery()) {
+        $avatar = (new RaceService())->sceneryAvatar($name);
+
+        return $avatar ?? '';
+    }
+
+    if ($face->isStructure()) {
         return BuildingService::resolveAvatar($name);
     }
 
@@ -51,16 +60,16 @@ function race_image_path(string $name, bool $structureMode): string
 }
 
 /** Page du stock d'images correspondant à la section courante. */
-function race_images_page(bool $structureMode): string
+function race_images_page(TypeEditorFace $face): string
 {
-    return $structureMode ? '/admin/structure-images.php' : '/admin/avatars-portraits.php';
+    return $face->imagesPage();
 }
 
 /** La vignette, cliquable vers le stock d'images de la race / du type. */
-function race_image_cell(string $name, bool $structureMode): string
+function race_image_cell(string $name, TypeEditorFace $face): string
 {
-    $path = race_image_path($name, $structureMode);
-    $href = race_images_page($structureMode) . '?type=avatar&amp;race=' . e(urlencode($name));
+    $path = race_image_path($name, $face);
+    $href = race_images_page($face) . '?type=avatar&amp;race=' . e(urlencode($name));
 
     $inner = $path !== ''
         ? '<img src="/' . e($path) . '" height="36" loading="lazy" alt=""'
@@ -151,11 +160,11 @@ function kind_select(bool $isStructure): string
  *
  * @param Race[] $races déjà filtrées par sorte
  */
-function race_render_list(array $races, bool $structureMode = false): string
+function race_render_list(array $races, TypeEditorFace $face): string
 {
-    $selfPage = $structureMode ? '/admin/structure-types.php' : '/admin/races.php';
+    $selfPage = $face->page;
 
-    if ($structureMode) {
+    if ($face->isStructure()) {
         // « Posés » : entités de ce type actuellement dans le monde.
         $placedByType = [];
         $res = (new \Classes\Db())->exe(
@@ -171,11 +180,11 @@ function race_render_list(array $races, bool $structureMode = false): string
     $rows = '';
     foreach ($races as $race) {
         $rows .= '<tr>'
-            . '<td style="width:48px;">' . race_image_cell($race->getName(), $structureMode) . '</td>'
+            . '<td style="width:48px;">' . race_image_cell($race->getName(), $face) . '</td>'
             . '<td><code>' . e($race->getName()) . '</code></td>'
             . '<td>' . e($race->getLabel()) . '</td>';
 
-        if ($structureMode) {
+        if ($face->isStructure()) {
             $rows .= '<td>' . ($race->getStructureNature() === 'obstacle'
                     ? '<span class="badge badge-secondary">Obstacle</span>'
                     : '<span class="badge badge-info">Édifice</span>') . ' '
@@ -191,7 +200,7 @@ function race_render_list(array $races, bool $structureMode = false): string
             . 'border:1px solid #999;background:' . e($race->getBgColor()) . '"></span> '
             . e($race->getBgColor()) . '</td>';
 
-        if ($structureMode) {
+        if ($face->isStructure()) {
             $rows .= '<td>' . (int) $race->getCarac('pv') . ' PV</td>'
                 . '<td>' . (($placedByType[$race->getName()] ?? 0) > 0
                     ? '<strong>' . $placedByType[$race->getName()] . '</strong>'
@@ -213,14 +222,14 @@ function race_render_list(array $races, bool $structureMode = false): string
             . '</tr>';
     }
 
-    $headers = $structureMode
+    $headers = $face->isStructure()
         ? '<th></th><th>Code</th><th>Nom</th><th>Nature</th><th>Couleur</th><th>PV</th>'
             . '<th title="Entités de ce type posées dans le monde">Posés</th><th></th>'
         : '<th></th><th>Code</th><th>Nom</th><th>Statut</th><th>Couleur</th><th>Faction</th>'
             . '<th>Stats clés</th><th>Listes</th><th title="Personnages (joueurs et PNJ) utilisant cette race">Personnages</th><th></th>';
 
     return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">' . ($structureMode ? 'Types de bâtiments' : 'Races') . '</h1>'
+        . '<h1 class="mb-0">' . ($face->title) . '</h1>'
         . '<div class="d-flex gap-2">'
         . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=race"'
         . ' title="Télécharger toutes les races et types en bundle JSON (famille commune race)">'
@@ -229,7 +238,7 @@ function race_render_list(array $races, bool $structureMode = false): string
         . ' title="Importer un bundle JSON (avec prévisualisation avant application)">'
         . '<i class="fas fa-upload"></i> Importer</a>'
         . '<a class="btn btn-primary" href="' . $selfPage . '?action=new">'
-        . ($structureMode ? '+ Nouveau type' : '+ Nouvelle race') . '</a>'
+        . ($face->newLabel) . '</a>'
         . '</div></div>'
         . '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
         . $headers
@@ -251,11 +260,11 @@ function race_faction_select(string $current): string
     return formSelect('faction', $options, $current !== '' ? $current : null, '— aucune —');
 }
 
-function race_render_form(?Race $race, string $csrfToken, bool $structureMode = false): string
+function race_render_form(?Race $race, string $csrfToken, TypeEditorFace $face): string
 {
     $isEdit = $race !== null;
     $action = $isEdit ? 'update' : 'create';
-    $noun = $structureMode ? 'Type de bâtiment' : 'Race';
+    $noun = $face->singular;
     $title = $isEdit
         ? $noun . ' : ' . e($race->getLabel()) . ' <span class="text-muted">(' . e($race->getName()) . ')</span>'
         : 'Nouveau ' . strtolower($noun);
@@ -335,7 +344,7 @@ HTML;
     return '<div class="d-flex justify-content-between align-items-center mb-3">'
         . '<h1 class="mb-0">' . $title . '</h1>'
         . '<a class="btn btn-sm btn-outline-secondary" href="'
-        . ($structureMode ? '/admin/structure-types.php' : '/admin/races.php')
+        . ($face->page)
         . '">← Retour à la liste</a></div>'
 
         . '<form method="post" action="/admin/races-save.php?action=' . $action . '">'
@@ -347,8 +356,8 @@ HTML;
         . '<input type="text" class="form-control" name="label" required value="'
         . e($isEdit ? $race->getLabel() : '') . '"></div>'
         . '<div class="form-group col-md-4"><label>Flags</label><div>'
-        . ($structureMode
-            ? '<input type="hidden" name="kind" value="structure">'
+        . ($face->isStructure()
+            ? $face->formFields()
             : '<label class="mr-3">Sorte ' . kind_select($isEdit && $race->isStructureKind()) . '</label> ')
         . '<label class="mr-3">Saignement '
         . formSelect(
@@ -364,7 +373,7 @@ HTML;
         // champ caché sur le visage Races. Les flags de blocage restent
         // éditables partout — une race massive PEUT faire écran aux tirs,
         // simplement pas par défaut.
-        . ($structureMode
+        . ($face->isStructure()
             ? '<label class="mr-3">Nature '
                 . formSelect(
                     'structure_nature',
@@ -383,11 +392,11 @@ HTML;
         . '<label class="mr-3"><input type="checkbox" name="blocks_projectiles" '
         // Coché par défaut pour un type (un mur arrête la flèche), pas
         // pour une race de personnage (les tirs passent, sauf exception).
-        . checked($isEdit ? $race->blocksProjectiles() : $structureMode)
+        . checked($isEdit ? $race->blocksProjectiles() : $face->isStructure())
         . ' title="Décoché (défaut des personnages) : les tirs passent. Coché : fait écran sur la ligne de tir."> Bloque les tirs</label> '
-        . ($structureMode ? '' : '<label class="mr-3"><input type="checkbox" name="playable" '
+        . ($face->isStructure() ? '' : '<label class="mr-3"><input type="checkbox" name="playable" '
             . checked($isEdit && $race->getPlayable()) . '> Jouable (proposée à l\'inscription)</label>')
-        . ($structureMode
+        . ($face->isStructure()
             ? '<label class="mr-3"><input type="checkbox" name="readable_from_afar" '
                 . checked($isEdit && $race->isReadableFromAfar())
                 . ' title="Coché : ce qui est inscrit sur ce type d\'objet se lit sans s\'approcher (pancarte, enseigne).'
@@ -399,7 +408,7 @@ HTML;
         . ' le « premier joueur » qui sert de référence au bonus d\'XP de rattrapage'
         . ' (un perso admin très haut niveau ne doit pas gonfler le bonus de tout le serveur).</small>'
         . '</div></div>'
-        . ($structureMode
+        . ($face->isStructure()
             ? '<div class="form-group col-12"><label>Inscription par défaut</label>'
                 . '<textarea class="form-control" name="default_text" rows="2"'
                 . ' placeholder="Ce qu\'un exemplaire NEUF de ce type porte déjà d\'inscrit. Vide : il naît muet.">'
@@ -414,12 +423,12 @@ HTML;
 
         . '<div class="card mb-3"><div class="card-header">Apparence &amp; monde</div><div class="card-body"><div class="row">'
         . ($isEdit
-            ? '<div class="form-group col-md-2"><label>' . ($structureMode ? 'Image' : 'Avatar') . '</label>'
-                . '<div>' . race_image_cell($race->getName(), $structureMode) . '</div>'
-                . '<a class="btn btn-sm btn-outline-secondary mt-1" href="' . race_images_page($structureMode)
+            ? '<div class="form-group col-md-2"><label>' . ($face->isStructure() ? 'Image' : 'Avatar') . '</label>'
+                . '<div>' . race_image_cell($race->getName(), $face) . '</div>'
+                . '<a class="btn btn-sm btn-outline-secondary mt-1" href="' . race_images_page($face)
                 . '?type=avatar&amp;race=' . e(urlencode($race->getName())) . '">Gérer les images</a>'
                 . '<small class="form-text text-muted">Première image du stock'
-                . ($structureMode ? ' — le sprite des entités posées.' : ' — les joueurs choisissent en jeu.')
+                . ($face->isStructure() ? ' — le sprite des entités posées.' : ' — les joueurs choisissent en jeu.')
                 . '</small></div>'
             : '')
         . '<div class="form-group col-md-2"><label>Couleur de fond</label>'
@@ -433,7 +442,7 @@ HTML;
         . '<input type="color" class="form-control" name="wound_color" value="'
         . e($isEdit ? $race->getWoundColor() : \App\Service\RaceService::DEFAULT_WOUND_COLOR) . '">'
         . '<small class="form-text text-muted">Voile des PV perdus (portrait, carte) — rouge sang par défaut, bronze pour une structure par exemple.</small></div>'
-        . ($structureMode
+        . ($face->isStructure()
             ? '<input type="hidden" name="faction" value="' . e($isEdit ? $race->getFaction() : '') . '">'
                 . '<input type="hidden" name="plan" value="' . e($isEdit ? $race->getPlan() : '') . '">'
                 . '<input type="hidden" name="animateurId" value="' . e($isEdit ? (string) $race->getAnimateurId() : '') . '">'
@@ -454,7 +463,7 @@ HTML;
         . $caracInputs
         . '</div></div></div>'
 
-        . ($structureMode
+        . ($face->isStructure()
             ? '<textarea name="starter_actions" hidden>' . e($starterActions) . '</textarea>'
                 . '<textarea name="spells" hidden>' . e($spells) . '</textarea>'
             : '<div class="card mb-3"><div class="card-header">Listes d\'actions</div><div class="card-body"><div class="row">'
@@ -471,7 +480,7 @@ HTML;
                 . '</div></div></div>')
 
         . '<button type="submit" class="btn btn-primary">'
-        . ($isEdit ? 'Enregistrer' : ($structureMode ? 'Créer le type' : 'Créer la race')) . '</button>'
+        . ($isEdit ? 'Enregistrer' : ($face->isStructure() ? 'Créer le type' : 'Créer la race')) . '</button>'
         . '</form>'
         . ($isEdit ? race_render_delete_zone($race, $csrfToken) : '')
         . $catalog
@@ -486,13 +495,13 @@ HTML;
 function race_render_delete_zone(Race $race, string $csrfToken): string
 {
     $service = new RaceService();
-    $structureMode = $race->isStructureKind();
+    $face = TypeEditorFace::of($race);
     $players = $service->countPlayersUsingRace($race->getName());
 
     if ($players > 0) {
         // Deux vocabulaires : un type est bloqué par ses entités posées
         // (ou remisées aux limbes), une race par ses personnages.
-        $guard = $structureMode
+        $guard = $face->isStructure()
             ? 'Suppression impossible : <strong>' . $players . '</strong> entité(s) de ce type existent'
                 . ' encore — posées sur le plateau ou remisées aux limbes. Retirez-les d\'abord'
                 . ' (Bâtiments → <a href="/admin/buildings.php">Posés</a>).'
@@ -502,21 +511,21 @@ function race_render_delete_zone(Race $race, string $csrfToken): string
                 . '. Pour la retirer du jeu, décochez « Jouable » et cochez « Cachée ».';
         $body = '<p class="mb-0 text-muted">' . $guard . '</p>';
     } else {
-        $noun = $structureMode ? 'le type de bâtiment' : 'la race';
+        $noun = $face->isStructure() ? 'le type de bâtiment' : 'la race';
         $body = '<form method="post" action="/admin/races-save.php?action=delete" class="d-flex align-items-center gap-3"'
             . ' onsubmit="return confirm(\'Supprimer définitivement ' . $noun . ' « '
-            . e($race->getName()) . ' »' . ($structureMode ? '' : ' et ses listes d\\\'actions/sorts') . ' ?\');">'
+            . e($race->getName()) . ' »' . ($face->isStructure() ? '' : ' et ses listes d\\\'actions/sorts') . ' ?\');">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="name" value="' . e($race->getName()) . '">'
-            . ($structureMode ? '<input type="hidden" name="kind" value="structure">' : '')
+            . ($face->isStructure() ? $face->formFields() : '')
             . '<button type="submit" class="btn btn-outline-danger">Supprimer '
-            . ($structureMode ? 'le type' : 'la race') . '</button>'
+            . ($face->isStructure() ? 'le type' : 'la race') . '</button>'
             . '<small class="text-muted">'
-            . ($structureMode
+            . ($face->isStructure()
                 ? 'Aucune entité posée n\'utilise ce type.'
                 : 'Aucun personnage n\'utilise cette race. Supprime aussi ses listes d\'actions et de sorts')
             . ' — pensez à exporter un bundle JSON avant, pour pouvoir '
-            . ($structureMode ? 'le' : 'la') . ' restaurer.</small>'
+            . ($face->isStructure() ? 'le' : 'la') . ' restaurer.</small>'
             . '</form>';
     }
 
@@ -532,28 +541,27 @@ $service = new RaceService();
 
 $action = $_GET['action'] ?? 'list';
 
-// Deux sections pour une même table (décision du 2026-07-19) : Races
-// (personnages) ici, Types de bâtiments via admin/structure-types.php
-// (wrapper qui pose ?kind=structure avant d'inclure cette page).
-$structureMode = (($_GET['kind'] ?? '') === 'structure');
+/* One table, three faces: playable races here, building types through
+ * structure-types.php and scenery types through scenery-types.php — thin
+ * wrappers that set the query before including this page. */
+$face = TypeEditorFace::fromRequest($_GET);
 
 if ($action === 'new') {
-    $content = race_render_form(null, $csrfToken, $structureMode);
+    $content = race_render_form(null, $csrfToken, $face);
 } elseif ($action === 'edit') {
     $race = $service->getRaceByName((string) ($_GET['name'] ?? ''));
     if ($race === null) {
-        setFlash('warning', 'Race introuvable.');
-        redirectTo($structureMode ? '/admin/structure-types.php' : '/admin/races.php');
+        setFlash('warning', $face->singular . ' introuvable.');
+        redirectTo($face->page);
     }
-    // La sorte de la ligne fait foi : éditer une structure depuis
-    // n'importe où montre le visage « type de bâtiment ».
-    $content = race_render_form($race, $csrfToken, $structureMode || $race->isStructureKind());
+    /* The row decides: editing from anywhere shows its own face. */
+    $content = race_render_form($race, $csrfToken, TypeEditorFace::of($race));
 } else {
     $kept = array_values(array_filter(
         $service->getAllRaces(),
-        static fn (Race $race): bool => $race->isStructureKind() === $structureMode
+        static fn (Race $race): bool => $face->keeps($race)
     ));
-    $content = race_render_list($kept, $structureMode);
+    $content = race_render_list($kept, $face);
 }
 
-echo admin_layout($structureMode ? 'Types de bâtiments' : 'Races', renderFlashMessage() . $content);
+echo admin_layout($face->title, renderFlashMessage() . $content);

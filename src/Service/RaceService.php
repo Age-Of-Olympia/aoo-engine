@@ -36,6 +36,24 @@ class RaceService
      * Returns a Race entity that matches the given name (the lowercase code
      * stored in players.race), or null if not found.
      */
+    /**
+     * The sprite a scenery type wears, borrowed from a placed instance.
+     *
+     * A type carries no image of its own, and decor lives in img/foregrounds
+     * rather than the wall stock the other structures use.
+     */
+    public function sceneryAvatar(string $name): ?string
+    {
+        $avatar = $this->entityManager->getConnection()->fetchOne(
+            "SELECT avatar FROM players
+              WHERE race = ? AND player_type = 'scenery' AND avatar <> ''
+              LIMIT 1",
+            [$name]
+        );
+
+        return $avatar === false ? null : (string) $avatar;
+    }
+
     public function getRaceByName(string $name): ?Race
     {
         $name = strtolower($name);

@@ -29,8 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 /* Deux sections, une table : les mutations d'une sorte « structure »
  * renvoient vers Types de bâtiments, pas vers Races — messages compris
  * (chaque formulaire, suppression incluse, poste son kind). */
-$structureMode = (($_POST['kind'] ?? '') === 'structure');
-$backPage = $structureMode ? '/admin/structure-types.php' : '/admin/races.php';
+$face = \App\View\Admin\TypeEditorFace::fromRequest($_POST);
+$structureMode = $face->isStructure();
+$backPage = $face->page;
 
 try {
     (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
@@ -90,7 +91,7 @@ $validate = static function (): ?string {
  * Apply every form field onto the entity (shared by create and update).
  * Returns a notice appended to the success flash ('' when all clean).
  */
-$applyForm = static function (Race $race): string {
+$applyForm = static function (Race $race) use ($face): string {
     $notice = '';
 
     $race->setLabel(trim((string) $_POST['label']));
@@ -100,7 +101,11 @@ $applyForm = static function (Race $race): string {
     $kind = ($_POST['kind'] ?? 'character') === 'structure' ? 'structure' : 'character';
     $race->setKind($kind);
     // Nature (structures seulement) : édifice (porte) ou obstacle (mur).
-    $race->setStructureNature(($_POST['structure_nature'] ?? 'edifice') === 'obstacle' ? 'obstacle' : 'edifice');
+    /* The decor face keeps its own nature: that is what puts a type on that
+     * list rather than among the building types. */
+    $race->setStructureNature($face->isScenery()
+        ? \App\View\Admin\TypeEditorFace::NATURE_DECOR
+        : (($_POST['structure_nature'] ?? 'edifice') === 'obstacle' ? 'obstacle' : 'edifice'));
     // Saignement : un élément de carte connu, ou rien.
     $bleeds = trim((string) ($_POST['bleeds'] ?? ''));
     $race->setBleeds($bleeds !== '' && (new \App\Service\EffectService())->exists($bleeds) ? $bleeds : '');
