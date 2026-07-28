@@ -11,32 +11,67 @@ use App\Service\Map\SceneryFootprintDeriver;
  * `geant_petrifie-00`, `-01`, `-02`, `-03` sans savoir qu'ils font UN géant,
  * et il fallait connaître la découpe pour reconstituer la figure à la main.
  *
- * Chaque famille découpée devient une vignette unique qui montre l'objet
- * entier :
+ * # Ce qui commande le regroupement : les FICHIERS
  *
- * - l'image d'ensemble quand elle existe (`img/foregrounds/<base>/<base>.png`,
- *   la convention que `TileCatalogService::buildComposites` lit déjà) — 25
- *   familles l'ont ;
- * - sinon une grille composée des morceaux à leurs décalages dérivés, ce qui
- *   couvre les 41 autres sans rien demander aux graphistes.
+ * Une palette montre ce qu'on PEUT poser, pas ce qui se trouve déjà posé.
+ * Un premier jet groupait d'après les découpes dérivées de la carte : sur une
+ * base de développement qui ne porte que trente-sept décors, cinq familles se
+ * regroupaient et les sept cent dix autres vignettes restaient éparses. Le
+ * géant n'étant posé nulle part, ses quatre morceaux restaient séparés — la
+ * palette n'avait pas changé pour qui la regardait.
  *
- * Les décors d'une seule case restent listés tels quels : il n'y a rien à
- * regrouper.
+ * Le regroupement vient donc des noms de fichiers, qui disent ce qui existe.
+ *
+ * # Et la FORME, elle, se cherche là où elle est juste
+ *
+ * Par ordre de fiabilité :
+ *
+ * 1. la carte, quand un exemplaire complet y figure — c'est la seule source
+ *    qui montre la figure telle qu'elle est réellement posée ;
+ * 2. l'image d'ensemble (`base/base.png`), divisée par 50, avec des morceaux
+ *    rangés en lignes depuis le haut-gauche ;
+ * 3. rien — et alors on ne devine pas : la vignette aligne les morceaux, et
+ *    la pose reste morceau par morceau comme avant.
+ *
+ * L'ordre compte, car les deux sources se contredisent : l'image d'ensemble
+ * de `geant_petrifie` annonce 1×2 cases quand quatre morceaux existent et que
+ * la carte en montre une figure de 3×3 trouée. L'asset est incomplet ; la
+ * carte, elle, ne ment pas sur ce qui est posé.
  */
 final class SceneryPaletteView
 {
+    private const TILE = 50;
+
     /**
      * @param list<array{name: string, url: string}> $pieces les vignettes brutes
-     * @param array<string, array{w:int,h:int,offsets:array<int,array{0:int,1:int}>,cells:int,holed:bool}> $catalogue
+     * @param array<string, array{w:int,h:int,offsets:array<int,array{0:int,1:int}>,cells:int,holed:bool}> $mapFootprints
      */
-    public static function render(array $pieces, array $catalogue): string
+    public static function render(array $pieces, array $mapFootprints): string
     {
-        [$objects, $loners] = self::group($pieces, $catalogue);
+        $families = [];
+        $loners = [];
+
+        foreach ($pieces as $piece) {
+            [$family, $index] = SceneryFootprintDeriver::splitPiece($piece['name']);
+            $families[$family][$index] = $piece;
+        }
+
+        ksort($families);
 
         $html = '<div class="scenery-palette">';
 
-        foreach ($objects as $family => $object) {
-            $html .= self::objectTile($family, $object, $catalogue[$family]);
+        foreach ($families as $family => $object) {
+            /* Un seul morceau : ce n'est pas un objet découpé, c'est un décor. */
+            if (count($object) < 2) {
+                $loners[] = reset($object);
+                continue;
+            }
+
+            $html .= self::objectTile(
+                (string) $family,
+                $object,
+                $mapFootprints[$family] ?? self::footprintFromWholeImage((string) $family, $object)
+            );
         }
 
         foreach ($loners as $piece) {
@@ -50,97 +85,131 @@ final class SceneryPaletteView
     }
 
     /**
-     * Sépare ce qui compose un objet de ce qui se pose seul.
+     * La découpe lue sur l'image d'ensemble, quand elle existe et qu'elle est
+     * cohérente avec le nombre de morceaux.
      *
-     * @param list<array{name: string, url: string}> $pieces
-     * @param array<string, mixed> $catalogue
-     * @return array{0: array<string, array<int, array{name: string, url: string}>>, 1: list<array{name: string, url: string}>}
+     * Les morceaux y sont rangés en lignes depuis le haut-gauche ; on les
+     * ramène en décalages de jeu (y vers le haut) relatifs au morceau 0.
+     *
+     * @param array<int, array{name: string, url: string}> $object
+     * @return array{w:int,h:int,offsets:array<int,array{0:int,1:int}>,cells:int,holed:bool}|null
      */
-    private static function group(array $pieces, array $catalogue): array
+    private static function footprintFromWholeImage(string $family, array $object): ?array
     {
-        $objects = [];
-        $loners = [];
+        $whole = $_SERVER['DOCUMENT_ROOT'] . '/img/foregrounds/' . $family . '/' . $family . '.png';
+        $size = @getimagesize($whole);
 
-        foreach ($pieces as $piece) {
-            [$family, $index] = SceneryFootprintDeriver::splitPiece($piece['name']);
-
-            if (isset($catalogue[$family])) {
-                $objects[$family][$index] = $piece;
-                continue;
-            }
-
-            $loners[] = $piece;
+        if (!$size || $size[0] % self::TILE !== 0 || $size[1] % self::TILE !== 0) {
+            return null;
         }
 
-        ksort($objects);
+        $w = (int) ($size[0] / self::TILE);
+        $h = (int) ($size[1] / self::TILE);
 
-        return [$objects, $loners];
+        /* L'image doit pouvoir contenir tous les morceaux. Celle du géant
+         * annonce 1×2 pour quatre morceaux : elle est incomplète, on ne s'en
+         * sert pas. */
+        if ($w * $h < count($object)) {
+            return null;
+        }
+
+        $offsets = [];
+
+        foreach (array_keys($object) as $piece) {
+            $row = intdiv($piece, $w);
+            $offsets[$piece] = [$piece % $w, $h - 1 - $row];
+        }
+
+        ksort($offsets);
+        $anchor = $offsets[array_key_first($offsets)];
+
+        foreach ($offsets as $piece => [$dx, $dy]) {
+            $offsets[$piece] = [$dx - $anchor[0], $dy - $anchor[1]];
+        }
+
+        return [
+            'w' => $w, 'h' => $h,
+            'offsets' => $offsets,
+            'cells' => count($offsets),
+            'holed' => count($offsets) < $w * $h,
+        ];
     }
 
     /**
-     * Une vignette d'objet : l'image d'ensemble, ou la figure recomposée.
+     * Une vignette d'objet : la figure recomposée depuis ses morceaux.
      *
      * @param array<int, array{name: string, url: string}> $object
-     * @param array{w:int,h:int,offsets:array<int,array{0:int,1:int}>,cells:int,holed:bool} $footprint
+     * @param array{w:int,h:int,offsets:array<int,array{0:int,1:int}>,cells:int,holed:bool}|null $footprint
      */
-    private static function objectTile(string $family, array $object, array $footprint): string
+    private static function objectTile(string $family, array $object, ?array $footprint): string
     {
         ksort($object);
-        $anchorPiece = array_key_first($object);
-        $anchorName = $object[$anchorPiece]['name'];
+        $anchorName = $object[array_key_first($object)]['name'];
 
-        $title = sprintf(
-            '%s — %d×%d, %d case%s%s',
-            $family,
-            $footprint['w'],
-            $footprint['h'],
-            $footprint['cells'],
-            $footprint['cells'] > 1 ? 's' : '',
-            $footprint['holed'] ? ', figure trouée' : ''
-        );
+        $title = $footprint !== null
+            ? sprintf(
+                '%s — %d×%d, %d case%s%s',
+                $family,
+                $footprint['w'],
+                $footprint['h'],
+                $footprint['cells'],
+                $footprint['cells'] > 1 ? 's' : '',
+                $footprint['holed'] ? ', figure trouée' : ''
+            )
+            : sprintf('%s — %d morceaux, découpe inconnue (pose morceau par morceau)', $family, count($object));
 
-        /* Le clic porte le morceau d'ANCRE : la pose alignera la figure pour
-         * qu'il tombe sur la case visée (SceneryObjectService::cellsToPlace). */
-        $attrs = 'class="map foregrounds select-name scenery-object"'
+        $attrs = 'class="map foregrounds select-name scenery-object'
+            . ($footprint === null ? ' scenery-object--unknown' : '') . '"'
             . ' data-type="foregrounds"'
             . ' data-name="' . htmlspecialchars($anchorName, ENT_QUOTES) . '"'
             . ' title="' . htmlspecialchars($title, ENT_QUOTES) . '"';
 
-        $whole = 'img/foregrounds/' . $family . '/' . $family . '.png';
+        /* Sans découpe connue, la vignette aligne les morceaux : on voit
+         * qu'ils vont ensemble, sans prétendre savoir comment. */
+        $offsets = $footprint['offsets'] ?? self::inARow($object);
+        $w = $footprint['w'] ?? count($object);
+        $h = $footprint['h'] ?? 1;
 
-        if (file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . $whole)) {
-            return '<img ' . $attrs . ' src="' . htmlspecialchars($whole, ENT_QUOTES) . '"'
-                . ' width="' . (25 * $footprint['w']) . '" loading="lazy" />';
-        }
-
-        return self::composed($attrs, $object, $footprint);
+        return self::composed($attrs, $object, $offsets, $w, $h);
     }
 
     /**
-     * La figure recomposée depuis ses morceaux, à leurs décalages dérivés.
-     *
-     * Les décalages sont relatifs au premier morceau et peuvent être négatifs ;
-     * on les ramène à zéro pour poser la grille. Un morceau absent laisse un
-     * trou — c'est la forme de l'objet, pas un défaut.
-     *
      * @param array<int, array{name: string, url: string}> $object
-     * @param array{w:int,h:int,offsets:array<int,array{0:int,1:int}>} $footprint
+     * @return array<int, array{0:int,1:int}>
      */
-    private static function composed(string $attrs, array $object, array $footprint): string
+    private static function inARow(array $object): array
     {
-        $xs = array_column($footprint['offsets'], 0);
-        $ys = array_column($footprint['offsets'], 1);
-        $minX = min($xs);
-        $maxY = max($ys);
+        $offsets = [];
+        $i = 0;
 
-        $cell = 25;
+        foreach (array_keys($object) as $piece) {
+            $offsets[$piece] = [$i++, 0];
+        }
+
+        return $offsets;
+    }
+
+    /**
+     * @param array<int, array{name: string, url: string}> $object
+     * @param array<int, array{0:int,1:int}> $offsets
+     */
+    private static function composed(string $attrs, array $object, array $offsets, int $w, int $h): string
+    {
+        $xs = array_column($offsets, 0);
+        $ys = array_column($offsets, 1);
+        $minX = $xs === [] ? 0 : min($xs);
+        $maxY = $ys === [] ? 0 : max($ys);
+
+        /* Vignette bornée : un praetorium de 4×4 ne doit pas occuper la
+         * palette à lui seul. */
+        $cell = $w > 3 || $h > 3 ? 16 : 25;
+
         $html = '<span ' . $attrs . ' style="display:inline-block;position:relative;vertical-align:top;'
-            . 'width:' . ($footprint['w'] * $cell) . 'px;height:' . ($footprint['h'] * $cell) . 'px;'
-            . 'margin:1px;cursor:pointer;">';
+            . 'width:' . ($w * $cell) . 'px;height:' . ($h * $cell) . 'px;margin:1px;cursor:pointer;">';
 
-        foreach ($footprint['offsets'] as $piece => [$dx, $dy]) {
+        foreach ($offsets as $piece => [$dx, $dy]) {
             if (!isset($object[$piece])) {
-                continue; /* morceau sans vignette : la figure a un trou */
+                continue;
             }
 
             $html .= '<img src="' . htmlspecialchars($object[$piece]['url'], ENT_QUOTES) . '"'
