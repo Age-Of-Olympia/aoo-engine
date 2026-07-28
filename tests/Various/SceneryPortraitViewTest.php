@@ -104,13 +104,37 @@ class SceneryPortraitViewTest extends LegacyPlayerFixtureTestCase
         $html = (string) (new SceneryPortraitView($this->link))->compose((int) $entity->id);
 
         $top = static function (string $piece) use ($html): int {
-            preg_match('/' . preg_quote($piece, '/') . '\.png"[^>]*top:(\d+)px/', $html, $m);
+            preg_match('/' . preg_quote($piece, '/') . '\.png"[^>]*top:([\d.]+)%/', $html, $m);
 
-            return (int) ($m[1] ?? -1);
+            return (int) round((float) ($m[1] ?? -1));
         };
 
         $this->assertSame(0, $top('gm_haut-00'), 'the higher piece sits at the top');
         $this->assertGreaterThan(0, $top('gm_haut-01'), 'and the lower one below it');
+    }
+
+    /**
+     * Any piece count fits: the figure is laid out in percentages, so a
+     * fourteen-piece fort takes no more room than a two-piece tower.
+     */
+    public function testALargeFigureStillFitsItsBox(): void
+    {
+        $entity = $this->createRealPlayer('GmPortraitFort');
+        $piece = 0;
+
+        for ($row = 0; $row < 4; $row++) {
+            for ($col = 0; $col < 4; $col++) {
+                $this->piece((int) $entity->id, 'gm_fort-' . sprintf('%02d', $piece), $col, -$row, $piece);
+                $piece++;
+            }
+        }
+
+        $html = (string) (new SceneryPortraitView($this->link))->compose((int) $entity->id);
+
+        $this->assertStringContainsString('aspect-ratio:4 / 4', $html);
+        $this->assertStringContainsString('width:100%', $html, 'the figure fits whatever box it is given');
+        $this->assertSame(16, substr_count($html, '<img '), 'all sixteen pieces');
+        $this->assertStringNotContainsString('px;', $html, 'no fixed size to overflow the column');
     }
 
     /** A single cell speaks for itself: nothing to recompose. */

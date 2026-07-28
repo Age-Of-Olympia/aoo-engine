@@ -121,12 +121,12 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
 
             $cellCount = 0;
             if ($distanceInfluence) {
-                $distance = View::get_distance($actor->getCoords(), $target->getCoords());
+                $distance = View::get_distance_to_entity($actor->getCoords(), $target->getId(), $target->getCoords());
                 $cellCount = $distance - 1;
                 $totalDamages = $totalDamages - $cellCount;
             }
             if ($sautInfluence) {
-                $distance = View::get_distance($actor->getCoords(), $target->getCoords());
+                $distance = View::get_distance_to_entity($actor->getCoords(), $target->getId(), $target->getCoords());
                 $cellCount = $distance - 1;
                 $totalDamages = $totalDamages + floor(0.5 * $cellCount);
             }

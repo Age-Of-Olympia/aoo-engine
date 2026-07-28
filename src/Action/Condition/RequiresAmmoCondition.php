@@ -89,7 +89,7 @@ class RequiresAmmoCondition extends BaseCondition implements HasParameterSchema
             }
     
             if($actor->emplacements->main1->data->subtype == 'jet'){
-                $distance = $target !== null ? View::get_distance($actor->getCoords(), $target->getCoords()) : 0;
+                $distance = $target !== null ? View::get_distance_to_entity($actor->getCoords(), $target->getId(), $target->getCoords()) : 0;
                 if($target !== null && $distance > 2){
                     // A simulation must not drop the weapon onto the real map; still report the loss.
                     if (!$actor->isSimulated()) {

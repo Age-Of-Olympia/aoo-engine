@@ -13,12 +13,13 @@ use Doctrine\DBAL\Connection;
  * pieces are read from the map rather than guessed from the family name:
  * three suffix conventions coexist on disk, and the map already holds the
  * exact file each cell carries.
+ *
+ * Laid out in percentages, so the figure fits the card's portrait column
+ * whatever its size, and a fourteen-piece fort needs no more room than a
+ * two-piece tower.
  */
 final class SceneryPortraitView
 {
-    /** Portraits are a fixed box; the figure is scaled to sit inside it. */
-    private const BOX = 150;
-
     private Connection $conn;
 
     public function __construct(?Connection $conn = null)
@@ -50,27 +51,28 @@ final class SceneryPortraitView
 
         $width = max($xs) - min($xs) + 1;
         $height = max($ys) - min($ys) + 1;
-        $side = (int) floor(self::BOX / max($width, $height));
-
-        if ($side < 1) {
-            return null;
-        }
 
         $pieces = '';
 
         foreach ($cells as $cell) {
+            /* Percentages rather than pixels: the figure then fits whatever
+             * box the card gives it, and a fourteen-piece fort needs no more
+             * room than a two-piece tower. */
+            $left = round(((int) $cell['x'] - min($xs)) * 100 / $width, 4);
             /* y grows upwards on the board and downwards on screen. */
-            $left = ((int) $cell['x'] - min($xs)) * $side;
-            $top = (max($ys) - (int) $cell['y']) * $side;
+            $top = round((max($ys) - (int) $cell['y']) * 100 / $height, 4);
 
             $pieces .= '<img src="/img/foregrounds/' . htmlspecialchars((string) $cell['name'], ENT_QUOTES) . '.png"'
-                . ' style="position:absolute;left:' . $left . 'px;top:' . $top . 'px;'
-                . 'width:' . $side . 'px;height:' . $side . 'px;" alt="" loading="lazy" />';
+                . ' style="position:absolute;left:' . $left . '%;top:' . $top . '%;'
+                . 'width:' . round(100 / $width, 4) . '%;height:' . round(100 / $height, 4) . '%;"'
+                . ' alt="" loading="lazy" />';
         }
 
+        /* Inline, so it wins over the stylesheet's `height: 100%` — a figure
+         * keeps its proportions instead of being stretched to the box. */
         return '<span class="card-portrait card-portrait--figure"'
-            . ' style="position:relative;display:inline-block;'
-            . 'width:' . ($width * $side) . 'px;height:' . ($height * $side) . 'px;">'
+            . ' style="position:relative;display:block;width:100%;height:auto;'
+            . 'aspect-ratio:' . $width . ' / ' . $height . ';">'
             . $pieces . '</span>';
     }
 }

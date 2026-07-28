@@ -60,7 +60,7 @@ abstract class AbstractComputeCondition extends BaseCondition
         $this->applyActorPassives($actor, $conditionObject);
         $this->applyTargetPassives($target, $conditionObject);
 
-        $this->distance = View::get_distance($actor->getCoords(), $target->getCoords());
+        $this->distance = View::get_distance_to_entity($actor->getCoords(), $target->getId(), $target->getCoords());
 
         $result = $this->computeAttack($actor, $target, $conditionObject);
 

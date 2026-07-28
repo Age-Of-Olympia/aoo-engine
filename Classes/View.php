@@ -1263,6 +1263,45 @@ class View{
         else return $difY ;
     }
 
+    /**
+     * Distance jusqu'à une ENTITÉ, mesurée à la case la plus proche.
+     *
+     * `get_distance()` mesure vers un point. Une entité qui en occupe
+     * plusieurs n'en est pas un : se tenir contre la base d'une enclume de
+     * 3×3 laissait le corps à corps indisponible, parce que son ancre est à
+     * trois cases de là. On est à côté d'un objet dès qu'on est à côté de
+     * l'une de ses cases.
+     *
+     * Sans emprise du tout, on retombe sur le point déclaré : une entité que
+     * rien n'a synchronisée garde la mesure d'avant.
+     */
+    public static function get_distance_to_entity($coords, int $entityId, $fallbackCoords = null): int
+    {
+        $coords = (array) $coords;
+        $nearest = null;
+
+        foreach ((new \App\Service\Map\EntityCellService())->cellsOf($entityId) as $cell) {
+            $distance = self::get_distance($coords, [
+                'x' => (int) $cell['x'], 'y' => (int) $cell['y'],
+                'z' => (int) $cell['z'], 'plan' => (string) $cell['plan'],
+            ]);
+
+            if ($nearest === null || $distance < $nearest) {
+                $nearest = $distance;
+            }
+        }
+
+        if ($nearest !== null) {
+            return $nearest;
+        }
+
+        /* Sans aucune case — une entité que rien n'a synchronisée — on mesure
+         * comme avant, vers le point qu'elle déclare. Une emprise correcte
+         * porte toujours une case à ce point-là, donc les deux mesures
+         * coïncident dès que la table est à jour. */
+        return $fallbackCoords === null ? 100000000 : self::get_distance($coords, $fallbackCoords);
+    }
+
 
 
 

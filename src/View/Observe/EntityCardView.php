@@ -239,10 +239,9 @@ final class EntityCardView
         $readsFromAfar = $inscription !== ''
             && \App\Service\BuildingService::readsFromAfar($target, $buildingDetails);
 
-        $distance = View::get_distance(
-            $player->getCoords(),
-            (object) ['x' => $x, 'y' => $y, 'z' => $coords->z, 'plan' => $coords->plan]
-        );
+        /* Vers l'entité entière : on parle à un bâtiment depuis n'importe
+         * laquelle de ses cases, pas depuis la seule qu'on a cliquée. */
+        $distance = View::get_distance_to_entity($player->getCoords(), (int) $target->id, $target->getCoords());
 
         $icon = $inscription !== '' ? 'ra-scroll-unfurled' : 'ra-speech-bubble';
         $label = $inscription !== '' ? 'Lire' : 'Parler';
@@ -300,10 +299,9 @@ final class EntityCardView
             return Str::richText($inscription);
         }
 
-        $distance = View::get_distance(
-            $player->getCoords(),
-            (object) ['x' => $x, 'y' => $y, 'z' => $coords->z, 'plan' => $coords->plan]
-        );
+        /* Vers l'entité entière : on parle à un bâtiment depuis n'importe
+         * laquelle de ses cases, pas depuis la seule qu'on a cliquée. */
+        $distance = View::get_distance_to_entity($player->getCoords(), (int) $target->id, $target->getCoords());
 
         return $distance <= 1
             ? Str::richText($inscription)
