@@ -94,7 +94,7 @@ class BuildingService extends BaseService
      * (DistanceCompute) et à l'affichage de la trajectoire sur le damier
      * (observe).
      *
-     * @return array{tiles: list<array{int,int}>, blocker: ?array{int,int}, blockerName: ?string}
+     * @return array{tiles: list<array{int,int}>, blocker: ?array{int,int}, blockerName: ?string, blockers: list<array{int,int}>}
      */
     public function lineOfFireReport(object $from, object $to): array
     {
@@ -178,10 +178,15 @@ class BuildingService extends BaseService
 
             $blockers[] = $hit;
         }
-
-        /* Les deux tracés sont barrés. On nomme le plus proche du tireur :
-         * c'est celui qu'il voit s'interposer. */
-        $first = $blockers[0];
+        /* Les deux tracés sont barrés. On nomme celui que le tireur voit
+         * s'interposer en PREMIER, et « premier » se mesure le long de la
+         * droite du tir — pas dans l'ordre du corridor.
+         *
+         * Les deux diffèrent : entre (0,-8) et (4,0), le corridor sort
+         * (1,-7) avant (0,-7), quand la projection sur la droite les classe
+         * dans l'autre sens. Le damier dessine en projetant ; s'en écarter
+         * faisait courir le trait vert au-delà du premier point d'impact. */
+        $first = self::nearestAlongTheShot($blockers, $from, $to);
 
         return [
             'tiles' => $tiles,
@@ -189,6 +194,31 @@ class BuildingService extends BaseService
             'blockerName' => $blockersByTile[$first[0] . ',' . $first[1]],
             'blockers' => $blockers,
         ];
+    }
+
+    /**
+     * The blocker whose projection on the shot line is closest to the shooter.
+     *
+     * @param non-empty-list<array{int, int}> $blockers
+     * @return array{int, int}
+     */
+    private static function nearestAlongTheShot(array $blockers, object $from, object $to): array
+    {
+        $dx = (int) $to->x - (int) $from->x;
+        $dy = (int) $to->y - (int) $from->y;
+
+        $along = static fn(array $tile): int =>
+            ($tile[0] - (int) $from->x) * $dx + ($tile[1] - (int) $from->y) * $dy;
+
+        $nearest = $blockers[0];
+
+        foreach ($blockers as $tile) {
+            if ($along($tile) < $along($nearest)) {
+                $nearest = $tile;
+            }
+        }
+
+        return $nearest;
     }
 
     /**

@@ -182,6 +182,73 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         }
     }
 
+    /**
+     * Le trajet de pente exacte 1:2 : les deux tracés n'ont aucune case
+     * commune, et l'ancienne règle par case n'y laissait RIEN bloquer. Un mur
+     * de trois cases de large se traversait.
+     */
+    public function testAHalfSlopeShotIsStoppedByAWideWall(): void
+    {
+        $this->requireBuildingsOrSkip();
+
+        $shooter = $this->createRealPlayer('GmPente');
+        $victim = $this->createRealPlayer('GmPenteCible');
+        $this->movePlayerTo($shooter->id, 0, 0);
+        $this->movePlayerTo($victim->id, 2, 4);
+        $shooter->getCoords();
+        $victim->getCoords();
+
+        /* Trois cases de large en travers du corridor, à mi-chemin. */
+        $wall = $this->placeStructure('mur_pierre', 0, 2);
+        $this->giveCellTo($wall, 1, 2, \App\Service\Map\EntityCellService::ROLE_PART);
+        $this->giveCellTo($wall, 2, 2, \App\Service\Map\EntityCellService::ROLE_PART);
+
+        $report = (new BuildingService())->lineOfFireReport(
+            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'gaia'],
+            (object) ['x' => 2, 'y' => 4, 'z' => 0, 'plan' => 'gaia']
+        );
+
+        $this->assertNotNull($report['blocker'], 'aucun tracé ne contourne un mur de trois cases');
+    }
+
+    /**
+     * L'obstacle nommé est le premier VU DEPUIS LE TIREUR, mesuré le long de
+     * la droite du tir. Le damier dessine en projetant dessus : s'en écarter
+     * faisait courir le trait vert au-delà du premier point d'impact.
+     */
+    public function testTheNamedBlockerIsTheNearestAlongTheShot(): void
+    {
+        $this->requireBuildingsOrSkip();
+
+        $shooter = $this->createRealPlayer('GmProjection');
+        $victim = $this->createRealPlayer('GmProjectionCible');
+        $this->movePlayerTo($shooter->id, 0, 0);
+        $this->movePlayerTo($victim->id, 2, 4);
+        $shooter->getCoords();
+        $victim->getCoords();
+
+        $wall = $this->placeStructure('mur_pierre', 0, 2);
+        $this->giveCellTo($wall, 1, 2, \App\Service\Map\EntityCellService::ROLE_PART);
+
+        $report = (new BuildingService())->lineOfFireReport(
+            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'gaia'],
+            (object) ['x' => 2, 'y' => 4, 'z' => 0, 'plan' => 'gaia']
+        );
+
+        $this->assertNotNull($report['blocker']);
+
+        $along = static fn(array $tile): int => $tile[0] * 2 + $tile[1] * 4;
+        $named = $along($report['blocker']);
+
+        foreach ($report['blockers'] as $tile) {
+            $this->assertGreaterThanOrEqual(
+                $named,
+                $along($tile),
+                'un obstacle se projette plus près que celui qu\'on nomme'
+            );
+        }
+    }
+
     public function testAClearLineIsNotBlocked(): void
     {
         [$shooter, $victim] = $this->shooterAndTarget();
