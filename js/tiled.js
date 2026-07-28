@@ -85,6 +85,26 @@ $(document).ready(function(){
 
 });
 
+/* Entoure les cases d'un objet sur le damier de l'éditeur.
+ *
+ * L'emprise d'un décor n'était visible nulle part : on posait et on effaçait
+ * des morceaux sans jamais voir l'objet. Les cases posées prennent un
+ * liseré, celles où il MANQUE un morceau un liseré d'alerte — on voit donc
+ * la figure ET son trou.
+ */
+function outlineObject(cells, missing){
+
+  $('.scenery-outline, .scenery-hole').removeClass('scenery-outline scenery-hole');
+
+  cells.forEach(function(c){
+    $('.case[data-coords="' + c + '"]').addClass('scenery-outline');
+  });
+
+  missing.forEach(function(c){
+    $('.case[data-coords="' + c + '"]').addClass('scenery-hole');
+  });
+}
+
 //Display information with magnifying glass icon
 function displayInfo(infosJson){
   
@@ -108,10 +128,18 @@ function displayInfo(infosJson){
          l'objet entier. Supprimer la case d'un géant retire de toute façon
          le géant entier (erase_case.php) ; le bouton le dit. */
       if(item.type === 'objet'){
+          /* On ENTOURE l'objet sur la carte : son emprise était invisible,
+             on ne voyait que des morceaux épars. Les cases où il manque un
+             morceau sont marquées différemment — c'est le trou qu'on vient
+             réparer. */
+          outlineObject(item.objectCells || [], item.objectMissing || []);
+
+          var manque = (item.objectMissing || []).length;
+
           line = `
           <div class="info-row info-row--objet" data-index="${index}">
-              <span><strong>Objet :</strong> ${item.name} — ${params}</span>
-              <button class="object-complete-btn" data-coord-id="${item.coords_id}" data-name="${item.objectPiece || ''}">Compléter</button>
+              <span><strong>Objet :</strong> ${item.name}<br /><em>${params}</em></span>
+              ${manque ? `<button class="object-complete-btn" data-coord-id="${item.coords_id}" data-name="${item.objectPiece || ''}">Compléter (${manque})</button>` : ''}
           </div>
           `;
       }

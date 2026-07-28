@@ -22,19 +22,18 @@ foreach(File::scan_dir('img/foregrounds/', without:".png") as $e){
     }
 }
 
-// Display regular foregrounds
-echo '<div>';
-foreach($regularForegrounds as $fg){
-    echo '<img
-        class="map foregrounds select-name"
-        data-type="foregrounds"
-        data-name="'. $fg['name'] .'"
-        src="'. $fg['url'] .'"
-        width="50"
-        loading="lazy"
-    />';
-}
-echo '</div>';
+/* La palette montre des OBJETS, pas des morceaux.
+ *
+ * Elle listait 715 vignettes — `geant_petrifie-00`, `-01`, `-02`, `-03` —
+ * sans dire qu'elles font UN géant. On choisissait un morceau en croyant
+ * choisir un décor, et il fallait connaître la découpe pour reconstituer la
+ * figure à la main.
+ *
+ * Les découpes sont dérivées de la carte (SceneryFootprintDeriver) ; ce qui
+ * n'en a pas — un décor d'une seule case — reste listé tel quel. */
+$catalogue = (new \App\Service\Map\SceneryFootprintDeriver())->derive();
+
+echo \App\View\Tiled\SceneryPaletteView::render($regularForegrounds, $catalogue);
 
 // Display unique foregrounds in a subsection if any exist
 if(!empty($uniqueForegrounds)){
@@ -42,16 +41,7 @@ if(!empty($uniqueForegrounds)){
     echo '<summary style="cursor: pointer; font-weight: bold; padding: 5px; background: rgba(0, 0, 0, 0.05); border-radius: 4px;"><h4 style="display: inline; font-size: 14px;">Uniques</h4></summary>';
     echo '<div style="margin-top: 5px;">';
 
-    foreach($uniqueForegrounds as $fg){
-        echo '<img
-            class="map foregrounds select-name"
-            data-type="foregrounds"
-            data-name="'. $fg['name'] .'"
-            src="'. $fg['url'] .'"
-            width="50"
-            loading="lazy"
-        />';
-    }
+    echo \App\View\Tiled\SceneryPaletteView::render($uniqueForegrounds, $catalogue);
 
     echo '</div>';
     echo '</details>';

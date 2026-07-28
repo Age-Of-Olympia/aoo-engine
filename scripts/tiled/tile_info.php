@@ -58,6 +58,18 @@ foreach ($results as $row) {
         continue;
     }
 
+    $objectCells = [];
+
+    if ($object['coords_ids'] !== []) {
+        $in = implode(',', array_map('intval', $object['coords_ids']));
+
+        $cells = $db->exe("SELECT x, y FROM coords WHERE id IN ({$in})");
+
+        while ($cell = $cells->fetch_assoc()) {
+            $objectCells[] = $cell['x'] . ',' . $cell['y'];
+        }
+    }
+
     $results[] = [
         'coords_id' => $coordsId,
         'type'      => 'objet',
@@ -69,6 +81,14 @@ foreach ($results as $row) {
         /* Le morceau posé SUR CETTE CASE : c'est lui que le geste
            « Compléter » renvoie au serveur pour retrouver l'objet. */
         'objectPiece' => $row['name'],
+        /* Les cases de l'objet, et celles où il MANQUE un morceau : l'éditeur
+           les entoure sur la carte. Voir l'emprise d'un décor était jusqu'ici
+           impossible — on ne voyait que des morceaux épars. */
+        'objectCells'   => $objectCells,
+        'objectMissing' => array_values(array_map(
+            fn (array $xy): string => $xy[0] . ',' . $xy[1],
+            $object['missing']
+        )),
     ];
 
     break; /* une case n'appartient qu'à un objet */

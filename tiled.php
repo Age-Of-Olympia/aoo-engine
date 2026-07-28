@@ -119,6 +119,29 @@ echo '
 <link rel="stylesheet" href="css/modal.css" />
 
 <style>
+    /* Emprise d\'un objet de décor, entourée sur le damier.
+       Elle n\'était visible nulle part : on posait et on effaçait des
+       morceaux sans jamais voir la figure. Le liseré plein dit ce qui est
+       posé, le liseré d\'alerte les cases où il MANQUE un morceau. */
+    .case.scenery-outline {
+        outline: 2px solid rgba(60, 130, 220, 0.9);
+        outline-offset: -2px;
+    }
+    .case.scenery-hole {
+        outline: 2px dashed rgba(220, 70, 70, 0.95);
+        outline-offset: -2px;
+    }
+
+    /* Palette : une vignette par OBJET, pas par morceau. */
+    .scenery-palette .scenery-object {
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        margin: 1px;
+        vertical-align: top;
+    }
+    .scenery-palette .scenery-object.selected {
+        border-color: rgba(60, 130, 220, 0.9);
+    }
+
     /* Tiled editor specific layout - override body centering and ensure no overflow */
     html, body {
         height: 100%;
@@ -567,7 +590,7 @@ $modalView->displayModal('tile-info','info-display');
 
 <script src="js/admin-tools.js?v=20260715"></script>
 <script src="js/blocked-tiles.js?v=20260727"></script>
-<script src="js/tiled.js?v=20260728b"></script>
+<script src="js/tiled.js?v=20260728c"></script>
 <script>
 /* Tiled editor: toggle the "blocked tiles" overlay so admins can
    verify forbidden triggers / walls / players visually. Reuses
