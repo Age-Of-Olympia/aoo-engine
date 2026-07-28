@@ -33,12 +33,12 @@ use Doctrine\DBAL\Connection;
 final class SceneryObjectService
 {
     private Connection $conn;
-    private SceneryFootprintDeriver $deriver;
+    private EntityTypeFootprintService $footprints;
 
-    public function __construct(?Connection $conn = null, ?SceneryFootprintDeriver $deriver = null)
+    public function __construct(?Connection $conn = null, ?EntityTypeFootprintService $footprints = null)
     {
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
-        $this->deriver = $deriver ?? new SceneryFootprintDeriver($this->conn);
+        $this->footprints = $footprints ?? new EntityTypeFootprintService($this->conn);
     }
 
     /**
@@ -54,7 +54,7 @@ final class SceneryObjectService
     {
         [$family, $pickedPiece] = SceneryFootprintDeriver::splitPiece($pickedName);
 
-        $footprint = $this->deriver->catalogue()[$family] ?? null;
+        $footprint = $this->footprints->catalogue()[$family] ?? null;
 
         if ($footprint === null || !isset($footprint['offsets'][$pickedPiece])) {
             return [];
@@ -181,7 +181,7 @@ final class SceneryObjectService
     {
         [$family, ] = SceneryFootprintDeriver::splitPiece($name);
 
-        $footprint = $this->deriver->catalogue()[$family] ?? null;
+        $footprint = $this->footprints->catalogue()[$family] ?? null;
 
         if ($footprint === null) {
             return null;

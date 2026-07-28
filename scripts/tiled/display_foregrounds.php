@@ -1,5 +1,5 @@
 <?php
-use App\Service\Map\SceneryFootprintDeriver;
+use App\Service\Map\EntityTypeFootprintService;
 use App\View\Tiled\SceneryPaletteView;
 use Classes\File;
 
@@ -33,7 +33,7 @@ foreach(File::scan_dir('img/foregrounds/', without:".png") as $e){
  *
  * Les découpes sont dérivées de la carte (SceneryFootprintDeriver) ; ce qui
  * n'en a pas — un décor d'une seule case — reste listé tel quel. */
-$catalogue = (new SceneryFootprintDeriver())->catalogue();
+$catalogue = (new EntityTypeFootprintService())->catalogue();
 
 echo SceneryPaletteView::render($regularForegrounds, $catalogue);
 
