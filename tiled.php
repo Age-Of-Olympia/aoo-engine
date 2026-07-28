@@ -3,6 +3,7 @@ use App\Factory\PlayerFactory;
 use Classes\Ui;
 use Classes\View;
 use App\Service\AdminAuthorizationService;
+use App\Service\Map\SceneryObjectService;
 require_once('config.php');
 
 $player = PlayerFactory::legacy($_SESSION['playerId']);
@@ -82,8 +83,7 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
        ou la retirer en entier. Ils travaillent sur l'OBJET, pas sur la case —
        c'est ce qui manquait pour reprendre les 38 exemplaires incomplets. */
     if ($_POST['type'] === 'object_complete') {
-        $placed = (new \App\Service\Map\SceneryObjectService())
-            ->complete($coordsId, (string) $_POST['src']);
+        $placed = (new SceneryObjectService())->complete($coordsId, (string) $_POST['src']);
 
         exit($placed > 0 ? $placed . ' morceau(x) reposé(s)' : 'figure déjà complète');
     }

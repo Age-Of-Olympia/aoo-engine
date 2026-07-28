@@ -1,4 +1,5 @@
 <?php
+use App\Service\Map\SceneryObjectService;
 use Classes\Db;
 
 $db = new Db();
@@ -51,8 +52,7 @@ foreach ($results as $row) {
         continue;
     }
 
-    $object = (new \App\Service\Map\SceneryObjectService())
-        ->inspect((int) $coordsId, (string) $row['name']);
+    $object = (new SceneryObjectService())->inspect((int) $coordsId, (string) $row['name']);
 
     if ($object === null) {
         continue;

@@ -1,5 +1,6 @@
 <?php
 use App\Service\BuildingService;
+use App\Service\Map\SceneryObjectService;
 use Classes\Db;
 
 //delete the case given on table given
@@ -31,16 +32,14 @@ if($type == 'buildings'){
         $buildingService->remove((int) $building['player_id']);
     }
 
-} elseif($type === 'ombre'){
-
+} elseif ($type === 'ombre') {
     /* Retirer UN cran d'ombre, pas toute l'ombre.
      *
      * L'assombrissement se pose cran par cran — on re-clique pour foncer —,
-     * il doit donc se retirer de la meme facon : celui qui est alle trop
-     * loin revient d'un pas, sans tout reprendre. Le pinceau de gomme sur
-     * les decors, lui, remet la case a zero d'un coup. */
-    (new Db())->exe('UPDATE coords SET shade = GREATEST(shade - 1, 0) WHERE id = ?', array($coordsId));
-
+     * il doit donc se retirer de la même façon : celui qui est allé trop loin
+     * revient d'un pas, sans tout reprendre. Le pinceau de gomme sur les
+     * décors, lui, remet la case à zéro d'un coup. */
+    (new Db())->exe('UPDATE coords SET shade = GREATEST(shade - 1, 0) WHERE id = ?', [$coordsId]);
 } else {
 
     /* Le nom de table vient du POST : liste blanche stricte */
@@ -57,16 +56,16 @@ if($type == 'buildings'){
      * la carte. Le service borne l'objet à UN exemplaire — deux décors collés
      * sont adjacents, et les confondre ferait disparaître le voisin. */
     if ($type === 'map_foregrounds') {
-        $names = $db->exe('SELECT name FROM map_foregrounds WHERE coords_id = ?', array($coordsId));
-        $toErase = array((int) $coordsId);
-        $objects = new \App\Service\Map\SceneryObjectService();
+        $names = $db->exe('SELECT name FROM map_foregrounds WHERE coords_id = ?', [$coordsId]);
+        $toErase = [(int) $coordsId];
+        $objects = new SceneryObjectService();
 
         while ($row = $names->fetch_object()) {
             $toErase = array_merge($toErase, $objects->objectCellsAt((int) $coordsId, $row->name));
         }
 
         /* Une seule requête : la boucle de DELETE faisait un aller-retour par
-           case, soit quatorze pour un fort. */
+         * case, soit quatorze pour un fort. */
         $ids = implode(',', array_map('intval', array_unique($toErase)));
         $db->exe("DELETE FROM map_foregrounds WHERE coords_id IN ({$ids})");
     } else {
@@ -74,8 +73,8 @@ if($type == 'buildings'){
     }
 
     /* Effacer le décor d'une case efface aussi son assombrissement : c'est ce
-       que faisait le DELETE quand l'ombre était une ligne de décor. */
+     * que faisait le DELETE quand l'ombre était une ligne de décor. */
     if ($type === 'map_foregrounds') {
-        $db->exe('UPDATE coords SET shade = 0 WHERE id = ?', array($coordsId));
+        $db->exe('UPDATE coords SET shade = 0 WHERE id = ?', [$coordsId]);
     }
 }

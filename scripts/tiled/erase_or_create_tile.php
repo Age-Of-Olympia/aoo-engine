@@ -1,6 +1,8 @@
 <?php
 use App\Service\BuildingService;
 use App\Service\ResourcePaletteService;
+use App\Service\CellShadeService;
+use App\Service\Map\SceneryObjectService;
 use Classes\Db;
 use Classes\View;
 
@@ -42,11 +44,11 @@ if($_POST['type'] == 'eraser'){
      * defaut du tableau de bord admin sinon) : au-dela, un clic reste sans
      * effet visible plutot que de gonfler un compteur sans fin. */
     if ($_POST['type'] === 'foregrounds' && $_POST['src'] === 'ombre') {
-        $shadeMax = (new \App\Service\CellShadeService())->forPlan($player->coords->plan)['max'];
+        $shadeMax = (new CellShadeService())->forPlan($player->coords->plan)['max'];
 
         (new Db())->exe(
             'UPDATE coords SET shade = LEAST(shade + 1, ?) WHERE id = ?',
-            array($shadeMax, $coordsId)
+            [$shadeMax, $coordsId]
         );
 
         echo 'ombre';
@@ -80,18 +82,18 @@ if($_POST['type'] == 'eraser'){
      * que la carte ne permet pas de trancher — retombe sur la pose simple.
      * On ne devine pas une figure. */
     if ($_POST['type'] === 'foregrounds') {
-        $origin = $db->exe('SELECT x, y, z, plan FROM coords WHERE id = ?', array($coordsId))->fetch_object();
+        $origin = $db->exe('SELECT x, y, z, plan FROM coords WHERE id = ?', [$coordsId])->fetch_object();
 
-        $cells = (new \App\Service\Map\SceneryObjectService())
+        $cells = (new SceneryObjectService())
             ->cellsToPlace($_POST['src'], (int) $origin->x, (int) $origin->y);
 
-        if ($cells !== array()) {
-            foreach ($cells as $pieceName => list($px, $py)) {
-                $pieceCoordsId = View::get_coords_id((object) array(
+        if ($cells !== []) {
+            foreach ($cells as $pieceName => [$px, $py]) {
+                $pieceCoordsId = View::get_coords_id((object) [
                     'x' => $px, 'y' => $py, 'z' => $origin->z, 'plan' => $origin->plan,
-                ));
+                ]);
 
-                $db->insert('map_foregrounds', array('name' => $pieceName, 'coords_id' => $pieceCoordsId));
+                $db->insert('map_foregrounds', ['name' => $pieceName, 'coords_id' => $pieceCoordsId]);
             }
 
             echo 'foregrounds (' . count($cells) . ' morceaux)';

@@ -1,4 +1,6 @@
 <?php
+use App\Service\Map\SceneryFootprintDeriver;
+use App\View\Tiled\SceneryPaletteView;
 use Classes\File;
 
 echo '<details>';
@@ -31,9 +33,9 @@ foreach(File::scan_dir('img/foregrounds/', without:".png") as $e){
  *
  * Les découpes sont dérivées de la carte (SceneryFootprintDeriver) ; ce qui
  * n'en a pas — un décor d'une seule case — reste listé tel quel. */
-$catalogue = (new \App\Service\Map\SceneryFootprintDeriver())->catalogue();
+$catalogue = (new SceneryFootprintDeriver())->catalogue();
 
-echo \App\View\Tiled\SceneryPaletteView::render($regularForegrounds, $catalogue);
+echo SceneryPaletteView::render($regularForegrounds, $catalogue);
 
 // Display unique foregrounds in a subsection if any exist
 if(!empty($uniqueForegrounds)){
@@ -41,7 +43,7 @@ if(!empty($uniqueForegrounds)){
     echo '<summary style="cursor: pointer; font-weight: bold; padding: 5px; background: rgba(0, 0, 0, 0.05); border-radius: 4px;"><h4 style="display: inline; font-size: 14px;">Uniques</h4></summary>';
     echo '<div style="margin-top: 5px;">';
 
-    echo \App\View\Tiled\SceneryPaletteView::render($uniqueForegrounds, $catalogue);
+    echo SceneryPaletteView::render($uniqueForegrounds, $catalogue);
 
     echo '</div>';
     echo '</details>';
