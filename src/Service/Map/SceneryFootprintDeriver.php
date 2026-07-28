@@ -127,6 +127,117 @@ final class SceneryFootprintDeriver
     }
 
     /**
+     * Le catalogue que les ÉDITEURS consultent : la carte, complétée par les
+     * images d'ensemble.
+     *
+     * `derive()` ne connaît que ce qui est posé — c'est ce qu'il faut pour un
+     * rapport ou une migration, qui parlent de l'existant. Un éditeur, lui,
+     * doit savoir poser une figure qui ne figure encore nulle part.
+     *
+     * L'ordre de préséance n'est pas neutre : **la carte l'emporte**. Les deux
+     * sources se contredisent — l'image d'ensemble de `geant_petrifie` annonce
+     * 1×2 cases quand quatre morceaux existent et que la carte en montre une
+     * figure de 3×3 trouée. L'asset est incomplet ; ce qui est posé ne ment
+     * pas.
+     *
+     * @return array<string, array{w:int,h:int,cells:int,holed:bool,offsets:array<int,array{0:int,1:int}>}>
+     */
+    public function catalogue(): array
+    {
+        $catalogue = $this->derive();
+
+        foreach ($this->imageFootprints() as $family => $footprint) {
+            if (!isset($catalogue[$family])) {
+                $catalogue[$family] = $footprint;
+            }
+        }
+
+        ksort($catalogue);
+
+        return $catalogue;
+    }
+
+    /**
+     * Les découpes lisibles sur les images d'ensemble, `base/base.png`.
+     *
+     * Taille divisée par 50, morceaux rangés en lignes depuis le haut-gauche,
+     * décalages ramenés au premier morceau — la convention que Tiled utilise
+     * déjà.
+     *
+     * Une image trop petite pour ses morceaux est ÉCARTÉE plutôt que crue :
+     * c'est le cas du géant, dont l'ensemble ne montre que le corps.
+     *
+     * @return array<string, array{w:int,h:int,cells:int,holed:bool,offsets:array<int,array{0:int,1:int}>}>
+     */
+    public function imageFootprints(): array
+    {
+        /* `DOCUMENT_ROOT` n'existe pas hors du web — console, migration, test.
+         * Le dépôt, lui, est toujours à trois niveaux au-dessus de ce fichier :
+         * le repli garde la même réponse partout, ce qui compte pour un
+         * catalogue que l'éditeur ET la ligne de commande consultent. */
+        $root = ($_SERVER['DOCUMENT_ROOT'] ?? '') . '/img/foregrounds/';
+
+        if (!is_dir($root)) {
+            $root = dirname(__DIR__, 3) . '/img/foregrounds/';
+        }
+
+        if (!is_dir($root)) {
+            return [];
+        }
+
+        /* Les morceaux disponibles, par famille : ce sont eux qu'on saura poser. */
+        $pieces = [];
+
+        foreach (glob($root . '*.png') ?: [] as $file) {
+            [$family, $index] = self::splitPiece(basename($file, '.png'));
+            $pieces[$family][$index] = true;
+        }
+
+        $footprints = [];
+
+        foreach ($pieces as $family => $indexes) {
+            if (count($indexes) < 2) {
+                continue;
+            }
+
+            $size = @getimagesize($root . $family . '/' . $family . '.png');
+
+            if (!$size || $size[0] % 50 !== 0 || $size[1] % 50 !== 0) {
+                continue;
+            }
+
+            $w = (int) ($size[0] / 50);
+            $h = (int) ($size[1] / 50);
+
+            if ($w * $h < count($indexes)) {
+                continue; /* image incomplète : elle ne décrit pas cette figure */
+            }
+
+            $offsets = [];
+            ksort($indexes);
+
+            foreach (array_keys($indexes) as $piece) {
+                $offsets[$piece] = [$piece % $w, $h - 1 - intdiv($piece, $w)];
+            }
+
+            $anchor = $offsets[array_key_first($offsets)];
+
+            foreach ($offsets as $piece => [$dx, $dy]) {
+                $offsets[$piece] = [$dx - $anchor[0], $dy - $anchor[1]];
+            }
+
+            $footprints[$family] = [
+                'w' => $w, 'h' => $h,
+                'cells' => count($offsets),
+                'holed' => count($offsets) < $w * $h,
+                'offsets' => $offsets,
+            ];
+        }
+
+        return $footprints;
+    }
+
+    /**
      * Les familles dont AUCUN exemplaire n'est complet — découpe indérivable.
      *
      * Deux cas sur la production, et ils ne demandent pas la même réponse :

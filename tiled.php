@@ -138,8 +138,21 @@ echo '
         margin: 1px;
         vertical-align: top;
     }
-    .scenery-palette .scenery-object.selected {
-        border-color: rgba(60, 130, 220, 0.9);
+
+    /* Les morceaux qui composent la vignette ne reçoivent PAS le clic.
+       Sans cela l\'événement a pour cible l\'image intérieure, que le
+       désélecteur global ne reconnaît pas comme un outil de palette : la
+       sélection était retirée aussitôt posée, et plus rien n\'était
+       sélectionnable. */
+    .scenery-palette .scenery-object img {
+        pointer-events: none;
+    }
+
+    /* Découpe inconnue : la vignette groupe les morceaux mais la pose reste
+       morceau par morceau — le liseré le dit. */
+    .scenery-palette .scenery-object--unknown {
+        border-style: dashed;
+        border-color: rgba(180, 140, 60, 0.7);
     }
 
     /* Tiled editor specific layout - override body centering and ensure no overflow */
@@ -590,7 +603,7 @@ $modalView->displayModal('tile-info','info-display');
 
 <script src="js/admin-tools.js?v=20260715"></script>
 <script src="js/blocked-tiles.js?v=20260727"></script>
-<script src="js/tiled.js?v=20260728c"></script>
+<script src="js/tiled.js?v=20260728d"></script>
 <script>
 /* Tiled editor: toggle the "blocked tiles" overlay so admins can
    verify forbidden triggers / walls / players visually. Reuses

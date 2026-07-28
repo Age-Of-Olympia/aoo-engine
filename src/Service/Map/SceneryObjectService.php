@@ -54,7 +54,7 @@ final class SceneryObjectService
     {
         [$family, $pickedPiece] = SceneryFootprintDeriver::splitPiece($pickedName);
 
-        $footprint = $this->deriver->derive()[$family] ?? null;
+        $footprint = $this->deriver->catalogue()[$family] ?? null;
 
         if ($footprint === null || !isset($footprint['offsets'][$pickedPiece])) {
             return [];
@@ -190,7 +190,7 @@ final class SceneryObjectService
     {
         [$family, ] = SceneryFootprintDeriver::splitPiece($name);
 
-        $footprint = $this->deriver->derive()[$family] ?? null;
+        $footprint = $this->deriver->catalogue()[$family] ?? null;
 
         if ($footprint === null) {
             return null;

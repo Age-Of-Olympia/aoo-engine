@@ -22,31 +22,23 @@ use App\Service\Map\SceneryFootprintDeriver;
  *
  * Le regroupement vient donc des noms de fichiers, qui disent ce qui existe.
  *
- * # Et la FORME, elle, se cherche là où elle est juste
+ * # Et la FORME vient du catalogue, la même que pour la pose
  *
- * Par ordre de fiabilité :
+ * `SceneryFootprintDeriver::catalogue()` la résout une fois pour toutes — la
+ * carte d'abord, les images d'ensemble ensuite. La palette et la pose lisent
+ * la MÊME source : une infobulle qui annonce 2×2 doit poser un 2×2, sinon
+ * elle ment.
  *
- * 1. la carte, quand un exemplaire complet y figure — c'est la seule source
- *    qui montre la figure telle qu'elle est réellement posée ;
- * 2. l'image d'ensemble (`base/base.png`), divisée par 50, avec des morceaux
- *    rangés en lignes depuis le haut-gauche ;
- * 3. rien — et alors on ne devine pas : la vignette aligne les morceaux, et
- *    la pose reste morceau par morceau comme avant.
- *
- * L'ordre compte, car les deux sources se contredisent : l'image d'ensemble
- * de `geant_petrifie` annonce 1×2 cases quand quatre morceaux existent et que
- * la carte en montre une figure de 3×3 trouée. L'asset est incomplet ; la
- * carte, elle, ne ment pas sur ce qui est posé.
+ * Sans découpe connue, on ne devine pas : la vignette aligne les morceaux
+ * pour montrer qu'ils vont ensemble, et la pose reste morceau par morceau.
  */
 final class SceneryPaletteView
 {
-    private const TILE = 50;
-
     /**
      * @param list<array{name: string, url: string}> $pieces les vignettes brutes
-     * @param array<string, array{w:int,h:int,offsets:array<int,array{0:int,1:int}>,cells:int,holed:bool}> $mapFootprints
+     * @param array<string, array{w:int,h:int,offsets:array<int,array{0:int,1:int}>,cells:int,holed:bool}> $footprints le catalogue unifié (carte + images)
      */
-    public static function render(array $pieces, array $mapFootprints): string
+    public static function render(array $pieces, array $footprints): string
     {
         $families = [];
         $loners = [];
@@ -67,11 +59,7 @@ final class SceneryPaletteView
                 continue;
             }
 
-            $html .= self::objectTile(
-                (string) $family,
-                $object,
-                $mapFootprints[$family] ?? self::footprintFromWholeImage((string) $family, $object)
-            );
+            $html .= self::objectTile((string) $family, $object, $footprints[$family] ?? null);
         }
 
         foreach ($loners as $piece) {
@@ -84,56 +72,6 @@ final class SceneryPaletteView
         return $html . '</div>';
     }
 
-    /**
-     * La découpe lue sur l'image d'ensemble, quand elle existe et qu'elle est
-     * cohérente avec le nombre de morceaux.
-     *
-     * Les morceaux y sont rangés en lignes depuis le haut-gauche ; on les
-     * ramène en décalages de jeu (y vers le haut) relatifs au morceau 0.
-     *
-     * @param array<int, array{name: string, url: string}> $object
-     * @return array{w:int,h:int,offsets:array<int,array{0:int,1:int}>,cells:int,holed:bool}|null
-     */
-    private static function footprintFromWholeImage(string $family, array $object): ?array
-    {
-        $whole = $_SERVER['DOCUMENT_ROOT'] . '/img/foregrounds/' . $family . '/' . $family . '.png';
-        $size = @getimagesize($whole);
-
-        if (!$size || $size[0] % self::TILE !== 0 || $size[1] % self::TILE !== 0) {
-            return null;
-        }
-
-        $w = (int) ($size[0] / self::TILE);
-        $h = (int) ($size[1] / self::TILE);
-
-        /* L'image doit pouvoir contenir tous les morceaux. Celle du géant
-         * annonce 1×2 pour quatre morceaux : elle est incomplète, on ne s'en
-         * sert pas. */
-        if ($w * $h < count($object)) {
-            return null;
-        }
-
-        $offsets = [];
-
-        foreach (array_keys($object) as $piece) {
-            $row = intdiv($piece, $w);
-            $offsets[$piece] = [$piece % $w, $h - 1 - $row];
-        }
-
-        ksort($offsets);
-        $anchor = $offsets[array_key_first($offsets)];
-
-        foreach ($offsets as $piece => [$dx, $dy]) {
-            $offsets[$piece] = [$dx - $anchor[0], $dy - $anchor[1]];
-        }
-
-        return [
-            'w' => $w, 'h' => $h,
-            'offsets' => $offsets,
-            'cells' => count($offsets),
-            'holed' => count($offsets) < $w * $h,
-        ];
-    }
 
     /**
      * Une vignette d'objet : la figure recomposée depuis ses morceaux.

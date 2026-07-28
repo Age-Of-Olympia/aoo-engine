@@ -31,7 +31,7 @@ foreach(File::scan_dir('img/foregrounds/', without:".png") as $e){
  *
  * Les découpes sont dérivées de la carte (SceneryFootprintDeriver) ; ce qui
  * n'en a pas — un décor d'une seule case — reste listé tel quel. */
-$catalogue = (new \App\Service\Map\SceneryFootprintDeriver())->derive();
+$catalogue = (new \App\Service\Map\SceneryFootprintDeriver())->catalogue();
 
 echo \App\View\Tiled\SceneryPaletteView::render($regularForegrounds, $catalogue);
 

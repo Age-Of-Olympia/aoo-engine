@@ -420,7 +420,9 @@ $(document).ready(function(){
         $customCursor.css({
             left: e.pageX + offsetX + 'px',
             top: e.pageY + offsetY + 'px'
-        }).attr('src', $(this).attr('src')).show();
+        /* Une vignette d'OBJET est un conteneur, pas une image : son curseur
+           reprend le premier morceau qu'elle montre. */
+        }).attr('src', $(this).attr('src') || $(this).find('img').first().attr('src') || '').show();
 
           $('body').on('mousemove', function(e) {
               $customCursor.css({
