@@ -29,7 +29,12 @@ if($type == 'buildings'){
             continue;
         }
 
-        $buildingService->remove((int) $building['player_id']);
+        /* REMISER, pas supprimer. `remove()` efface la ligne `players`, ce
+         * qui oblige à vider `players_logs` des deux côtés de sa clé
+         * étrangère : retirer un bâtiment de la carte effaçait donc
+         * l'historique de tout ce qu'on lui avait fait. L'éditeur retire du
+         * plateau ; il ne réécrit pas le passé. */
+        $buildingService->vanish((int) $building['player_id']);
     }
 
 } elseif ($type === 'ombre') {

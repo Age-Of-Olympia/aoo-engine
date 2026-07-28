@@ -770,7 +770,7 @@ class BuildingService extends BaseService
             "SELECT p.race, p.avatar, COALESCE(b.n, 0) AS wound
              FROM players p
              LEFT JOIN players_bonus b ON b.player_id = p.id AND b.name = 'pv'
-             WHERE p.id = ? AND p.player_type = 'building'",
+             WHERE p.id = ? AND p.player_type IN ('building', 'scenery')",
             [$playerId]
         );
         if ($row === false) {
@@ -842,11 +842,13 @@ class BuildingService extends BaseService
     {
         $conn = $this->entityManager->getConnection();
 
-        $isBuilding = $conn->fetchOne(
-            "SELECT id FROM players WHERE id = ? AND player_type = 'building'",
-            [$playerId]
-        );
-        if ($isBuilding === false) {
+        $playerType = $conn->fetchOne('SELECT player_type FROM players WHERE id = ?', [$playerId]);
+
+        /* Toute structure emprunte ce chemin, décor compris : la ligne
+         * `players` est REMISÉE et non supprimée, pour que les événements
+         * qui la citent restent vrais. */
+        if ($playerType === false
+            || \App\Enum\EntityCategory::fromPlayerType((string) $playerType) !== \App\Enum\EntityCategory::Structure) {
             return false;
         }
 
@@ -867,6 +869,16 @@ class BuildingService extends BaseService
             foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
                 $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$playerId]);
             }
+
+            /* Le décor est encore DESSINÉ depuis `map_foregrounds` : sans
+             * retirer ses morceaux, l'objet quitterait les règles en restant
+             * à l'écran. */
+            $conn->executeStatement(
+                'DELETE m FROM map_foregrounds m
+                   JOIN entity_cells ec ON ec.coords_id = m.coords_id
+                  WHERE ec.player_id = ?',
+                [$playerId]
+            );
             $conn->executeStatement(
                 'UPDATE players SET coords_id = ? WHERE id = ?',
                 [$tombstoneCoordsId, $playerId]

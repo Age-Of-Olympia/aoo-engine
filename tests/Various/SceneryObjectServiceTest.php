@@ -188,6 +188,46 @@ class SceneryObjectServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /**
+     * Retirer un décor ne réécrit pas le passé.
+     *
+     * Supprimer la ligne `players` oblige à vider `players_logs` des deux
+     * côtés de sa clé étrangère : effacer un décor effaçait l'historique de
+     * tout ce qu'on lui avait fait. On le REMISE, comme un bâtiment.
+     */
+    public function testRemovingSceneryKeepsWhatWasLoggedAboutIt(): void
+    {
+        $this->requireBuildingsOrSkip();
+
+        $decor = $this->placeStructure('mur_pierre', 70, 70, self::PLAN);
+        $this->link->executeStatement("UPDATE players SET player_type = 'scenery' WHERE id = ?", [$decor]);
+
+        $witness = $this->createRealPlayer('GmTemoin');
+        $coordsId = (int) $this->link->fetchOne('SELECT coords_id FROM players WHERE id = ?', [$decor]);
+
+        $this->link->executeStatement(
+            'INSERT INTO players_logs (player_id, target_id, text, type, plan, time, coords_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [$witness->id, $decor, 'frappe', 'attack', self::PLAN, time(), $coordsId]
+        );
+
+        $mentions = fn(): int => (int) $this->link->fetchOne(
+            'SELECT COUNT(*) FROM players_logs WHERE player_id = ? OR target_id = ?',
+            [$decor, $decor]
+        );
+
+        $this->assertSame(1, $mentions());
+
+        $this->service()->removeEntitiesOn([$coordsId]);
+
+        $this->assertSame(1, $mentions(), 'le journal survit au retrait');
+        $this->assertSame(
+            1,
+            (int) $this->link->fetchOne('SELECT COUNT(*) FROM players WHERE id = ?', [$decor]),
+            'la ligne est remisée, pas supprimée'
+        );
+    }
+
     /** Completing an already complete figure places nothing. */
     public function testCompletingACompleteFigureDoesNothing(): void
     {

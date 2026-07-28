@@ -1262,7 +1262,8 @@ class Player implements ActorInterface {
          * des PV, sprite de base au-dessus — parité avec les murs de carte
          * (destroy.php). Central ici : dégâts comme soins, tous les
          * chemins passent par putBonus. */
-        if (array_key_exists('pv', (array) $bonus) && $this->getPlayerType() === 'building') {
+        if (array_key_exists('pv', (array) $bonus)
+            && in_array($this->getPlayerType(), ['building', 'scenery'], true)) {
 
             (new \App\Service\BuildingService())->refreshWoundSprite($this->id);
         }
