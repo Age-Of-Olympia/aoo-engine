@@ -18,9 +18,19 @@ class SceneryObjectServiceTest extends LegacyPlayerFixtureTestCase
 {
     private const PLAN = 'plan_test_objets';
 
+    /** @var list<string> families a case declared a cut-out for */
+    private array $declaredFamilies = [];
+
     protected function tearDown(): void
     {
         $link = $this->link;
+
+        foreach ($this->declaredFamilies as $family) {
+            $link->executeStatement('DELETE FROM entity_type_footprints WHERE type_name = ?', [$family]);
+            $link->executeStatement('DELETE FROM races WHERE name = ?', [$family]);
+        }
+
+        $this->declaredFamilies = [];
 
         $link->executeStatement(
             'DELETE m FROM map_foregrounds m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
@@ -134,6 +144,48 @@ class SceneryObjectServiceTest extends LegacyPlayerFixtureTestCase
 
         $after = $this->service()->inspect($bas, 'gm_arche-01');
         $this->assertSame([], $after['missing'], 'la figure est complète');
+    }
+
+    /**
+     * Placing scenery makes an ENTITY, or its cut-out's roles are read by
+     * nobody: the editor wrote pieces and nothing else, so a decor marked
+     * blocking in the admin page was walked through.
+     */
+    public function testPlacingSceneryMakesAnEntityThatCarriesTheRoles(): void
+    {
+        $this->seedModel('gm_pose');
+
+        (new \App\Service\Map\EntityTypeFootprintService($this->link))->declare(
+            'gm_pose',
+            1,
+            2,
+            [0 => [0, 0], 1 => [0, -1]],
+            [1 => 'block']
+        );
+        $this->declaredFamilies[] = 'gm_pose';
+
+        $placed = $this->service()->placeObject('gm_pose-00', 60, 60, 0, self::PLAN);
+
+        $this->assertSame(2, $placed, 'both pieces land');
+
+        $entityId = (int) $this->link->fetchOne(
+            "SELECT id FROM players WHERE race = 'gm_pose' AND player_type = 'scenery'"
+        );
+        $this->assertGreaterThan(0, $entityId, 'the figure became an entity');
+        $this->trackEntityId($entityId);
+
+        $roles = [];
+
+        foreach ((new \App\Service\Map\EntityCellService($this->link))->cellsOf($entityId) as $cell) {
+            $roles[$cell['piece']] = $cell['role'];
+        }
+
+        $this->assertSame('block', $roles[1] ?? null, 'the marked piece is solid');
+        $this->assertSame(
+            'cover',
+            $roles[0] ?? null,
+            'and an unmarked scenery cell stays a drawing — walked through, shot through'
+        );
     }
 
     /** Completing an already complete figure places nothing. */

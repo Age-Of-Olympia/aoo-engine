@@ -8,9 +8,10 @@ use Doctrine\DBAL\Connection;
 /**
  * Place and remove a multi-cell scenery object in one gesture.
  *
- * Works on `map_foregrounds` as it stands, so it does not wait for scenery to
- * become entities. Placement drops the whole figure with the picked piece on
- * the clicked tile; removal takes the whole object from any of its cells.
+ * Placement drops the whole figure with the picked piece on the clicked tile
+ * AND makes it an entity holding its cells; removal takes both away from any
+ * of its cells. Without the entity a declared cut-out would be a drawing:
+ * the roles an animator marks live on the cells, and nothing would read them.
  */
 final class SceneryObjectService
 {
@@ -47,6 +48,190 @@ final class SceneryObjectService
         }
 
         return $cells;
+    }
+
+    /**
+     * Put a whole object on the map: its pieces, and the entity holding them.
+     *
+     * The entity is what carries the cut-out's roles, so a figure placed
+     * without one blocks nothing however it is marked in the editor.
+     *
+     * @return int the number of pieces placed; 0 when the family has no
+     *             known cut-out, which the caller falls back on
+     */
+    public function placeObject(string $pickedName, int $x, int $y, int $z, string $plan): int
+    {
+        $cells = $this->cellsToPlace($pickedName, $x, $y);
+
+        if ($cells === []) {
+            return 0;
+        }
+
+        [$family, ] = SceneryFootprintDeriver::splitPiece($pickedName);
+        $anchorCoordsId = null;
+
+        foreach ($cells as $pieceName => [$px, $py]) {
+            $coordsId = (int) \Classes\View::get_coords_id(
+                (object) ['x' => $px, 'y' => $py, 'z' => $z, 'plan' => $plan]
+            );
+
+            $this->conn->executeStatement(
+                'INSERT INTO map_foregrounds (name, coords_id) VALUES (?, ?)',
+                [$pieceName, $coordsId]
+            );
+
+            /* The entity stands on its first piece, the offsets' origin. */
+            $anchorCoordsId ??= $coordsId;
+        }
+
+        $this->makeEntity($family, (int) $anchorCoordsId, (string) array_key_first($cells));
+
+        return count($cells);
+    }
+
+    /**
+     * Remove the entity holding a cell, if one does.
+     *
+     * @return int entities removed
+     */
+    public function removeEntitiesOn(array $coordsIds): int
+    {
+        if ($coordsIds === []) {
+            return 0;
+        }
+
+        $in = implode(',', array_map('intval', $coordsIds));
+
+        $ids = $this->conn->fetchFirstColumn(
+            "SELECT DISTINCT p.id FROM players p
+               JOIN entity_cells ec ON ec.player_id = p.id
+              WHERE ec.coords_id IN ({$in}) AND p.player_type = 'scenery'"
+        );
+
+        foreach ($ids as $id) {
+            \App\Service\BuildingService::deleteEntityRows($this->conn, (int) $id);
+        }
+
+        return count($ids);
+    }
+
+    /**
+     * Turn scenery placed WITHOUT an entity into one, and say how many.
+     *
+     * The L4 conversion ran once. Anything laid down since — through the
+     * editor, before placement learned to make entities — is pieces on the
+     * map that no entity holds, so its cut-out's roles are read by nobody.
+     *
+     * @return int objects converted
+     */
+    public function convertOrphans(): int
+    {
+        $converted = 0;
+
+        foreach ((new SceneryFootprintDeriver($this->conn))->objects() as $object) {
+            $coordsIds = array_column($object['cells'], 'coords_id');
+            $in = implode(',', array_map('intval', $coordsIds));
+
+            $held = (bool) $this->conn->fetchOne(
+                "SELECT 1 FROM entity_cells ec
+                   JOIN players p ON p.id = ec.player_id
+                  WHERE ec.coords_id IN ({$in}) AND p.player_type = 'scenery' LIMIT 1"
+            );
+
+            if ($held) {
+                continue;
+            }
+
+            $cells = $object['cells'];
+            usort($cells, static fn(array $a, array $b): int => $a['piece'] <=> $b['piece']);
+
+            $this->makeEntity(
+                $object['family'],
+                (int) $cells[0]['coords_id'],
+                (string) $cells[0]['name']
+            );
+
+            $converted++;
+        }
+
+        return $converted;
+    }
+
+    /**
+     * The type a scenery family stands for, created on first placement.
+     *
+     * Without it the entity's race names nothing, and a cell whose role is
+     * `part` — which defers to the type — blocks by default. A decor placed
+     * through the editor would turn solid all over instead of only where an
+     * animator marked it.
+     *
+     * Scenery is passable and screens nothing until a cell says otherwise;
+     * `block` cells are what make it solid, and the catalogue page refines
+     * the rest.
+     */
+    private function seedType(string $family): void
+    {
+        $this->conn->executeStatement(
+            "INSERT IGNORE INTO races
+                (code, name, label, description, playable, hidden, kind, structure_nature,
+                 bleeds, wound_color, blocks_passage, blocks_projectiles, bgColor, color,
+                 faction, plan, pv)
+             VALUES (?, ?, ?, '', 0, 1, 'structure', 'edifice', '', '#cd7f32', 0, 1, '#6b8f5a', 'black', '', '', 10)",
+            [strtoupper($family), $family, ucfirst(str_replace('_', ' ', $family))]
+        );
+
+        \App\Service\RaceService::clearCache();
+    }
+
+    /**
+     * The next free id in the scenery range.
+     *
+     * Not `getNextEntityId()`: that global lives in `config/functions.php`,
+     * loaded by the web entry point only, and this service also runs from the
+     * console. The range is read from the constant when it is there, so the
+     * two never drift apart.
+     */
+    private function nextSceneryId(): int
+    {
+        $range = defined('ENTITY_ID_RANGES')
+            ? ENTITY_ID_RANGES['scenery']
+            : ['start' => 40000000, 'end' => 49999999];
+
+        $max = (int) $this->conn->fetchOne(
+            'SELECT COALESCE(MAX(id), 0) FROM players WHERE id BETWEEN ? AND ?',
+            [$range['start'], $range['end']]
+        );
+
+        return $max === 0 ? (int) $range['start'] : $max + 1;
+    }
+
+    /** The scenery entity a placed figure belongs to, cells included. */
+    private function makeEntity(string $family, int $anchorCoordsId, string $anchorPieceName): void
+    {
+        $this->seedType($family);
+
+        $id = $this->nextSceneryId();
+
+        $this->conn->executeStatement(
+            "INSERT INTO players
+                (id, player_type, display_id, name, race, avatar, portrait,
+                 coords_id, nextTurnTime, registerTime, text)
+             VALUES (?, 'scenery', ?, ?, ?, ?, ?, ?, 0, ?, '')",
+            [
+                $id,
+                (int) $this->conn->fetchOne(
+                    "SELECT COALESCE(MAX(display_id), 0) + 1 FROM players WHERE player_type = 'scenery'"
+                ),
+                ucfirst(str_replace('_', ' ', $family)),
+                $family,
+                'img/foregrounds/' . $anchorPieceName . '.png',
+                'img/foregrounds/' . $anchorPieceName . '.png',
+                $anchorCoordsId,
+                time(),
+            ]
+        );
+
+        (new EntityCellService($this->conn))->syncCells($id, $this->footprints);
     }
 
     /**

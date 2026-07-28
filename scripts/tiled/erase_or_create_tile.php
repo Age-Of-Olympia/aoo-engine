@@ -84,19 +84,16 @@ if($_POST['type'] == 'eraser'){
     if ($_POST['type'] === 'foregrounds') {
         $origin = $db->exe('SELECT x, y, z, plan FROM coords WHERE id = ?', [$coordsId])->fetch_object();
 
-        $cells = (new SceneryObjectService())
-            ->cellsToPlace($_POST['src'], (int) $origin->x, (int) $origin->y);
+        $placed = (new SceneryObjectService())->placeObject(
+            $_POST['src'],
+            (int) $origin->x,
+            (int) $origin->y,
+            (int) $origin->z,
+            (string) $origin->plan
+        );
 
-        if ($cells !== []) {
-            foreach ($cells as $pieceName => [$px, $py]) {
-                $pieceCoordsId = View::get_coords_id((object) [
-                    'x' => $px, 'y' => $py, 'z' => $origin->z, 'plan' => $origin->plan,
-                ]);
-
-                $db->insert('map_foregrounds', ['name' => $pieceName, 'coords_id' => $pieceCoordsId]);
-            }
-
-            echo 'foregrounds (' . count($cells) . ' morceaux)';
+        if ($placed > 0) {
+            echo 'foregrounds (' . $placed . ' morceaux)';
 
             return;
         }

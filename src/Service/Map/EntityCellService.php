@@ -17,6 +17,16 @@ final class EntityCellService
     /** Cell with no role of its own: the entity type decides whether it blocks. */
     public const ROLE_PART = 'part';
 
+    /**
+     * Scenery is a drawing until someone says otherwise.
+     *
+     * An unmarked cell of a decor is its painted part — walked through, shot
+     * through. Only the cells an animator marks make it solid. Defaulting it
+     * to `part` instead would defer to the type, and an anvil whose base
+     * blocks would screen arrows across its whole height.
+     */
+    private const DEFAULT_ROLES = ['scenery' => 'cover'];
+
     private Connection $conn;
 
     public function __construct(?Connection $conn = null)
@@ -35,7 +45,7 @@ final class EntityCellService
     public function syncCells(int $entityId, ?EntityTypeFootprintService $footprints = null): int
     {
         $origin = $this->conn->fetchAssociative(
-            'SELECT p.race, p.coords_id, co.plan, co.z, co.x, co.y
+            'SELECT p.race, p.player_type, p.coords_id, co.plan, co.z, co.x, co.y
                FROM players p
                JOIN coords co ON co.id = p.coords_id
               WHERE p.id = ? AND p.coords_id > 0',
@@ -59,6 +69,7 @@ final class EntityCellService
                 (int) $origin['y']
             );
 
+        $default = self::DEFAULT_ROLES[(string) $origin['player_type']] ?? self::ROLE_PART;
         $keep = [];
 
         foreach ($cells as $piece => [$x, $y]) {
@@ -80,7 +91,7 @@ final class EntityCellService
                     'x'     => $x,
                     'y'     => $y,
                     'piece' => (int) $piece,
-                    'role'  => $footprint?->roleOf((int) $piece, self::ROLE_PART) ?? self::ROLE_PART,
+                    'role'  => $footprint?->roleOf((int) $piece, $default) ?? $default,
                 ]
             );
 

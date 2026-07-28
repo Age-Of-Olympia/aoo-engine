@@ -22,8 +22,9 @@ class EntityCellsCmd extends Command
         parent::setDescription(<<<EOT
 État et réparation de l'emprise des entités (table entity_cells).
 Exemple:
-> entity-cells            (état : combien d'ancres divergent)
-> entity-cells repair     (remet les ancres d'aplomb)
+> entity-cells            (état : emprises manquantes ou divergentes)
+> entity-cells repair     (remet les cases d'aplomb)
+> entity-cells convert    (donne une entité au décor posé sans elle)
 EOT);
     }
 
@@ -31,6 +32,14 @@ EOT);
     {
         $service = new EntityCellService();
         $action = strtolower(trim((string) ($argumentValues[0] ?? 'status')));
+
+        if ($action === 'convert') {
+            $converted = (new \App\Service\Map\SceneryObjectService())->convertOrphans();
+
+            return $converted === 0
+                ? 'Aucun décor sans entité.'
+                : $converted . ' décor(s) devenu(s) entité(s) — leurs cases portent enfin leur rôle.';
+        }
 
         $drift = $service->drift();
 

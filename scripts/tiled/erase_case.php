@@ -66,8 +66,13 @@ if($type == 'buildings'){
 
         /* Une seule requête : la boucle de DELETE faisait un aller-retour par
          * case, soit quatorze pour un fort. */
-        $ids = implode(',', array_map('intval', array_unique($toErase)));
+        $cells = array_map('intval', array_unique($toErase));
+        $ids = implode(',', $cells);
         $db->exe("DELETE FROM map_foregrounds WHERE coords_id IN ({$ids})");
+
+        /* L'entité s'en va avec ses morceaux : la laisser derrière ferait
+         * bloquer un décor qui n'est plus dessiné nulle part. */
+        $objects->removeEntitiesOn($cells);
     } else {
         $db->exe('DELETE FROM ' . $type . ' WHERE coords_id = ?', $coordsId);
     }
