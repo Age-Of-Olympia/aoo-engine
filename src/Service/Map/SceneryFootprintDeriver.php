@@ -338,9 +338,9 @@ final class SceneryFootprintDeriver
     }
 
     /**
-     * Composantes 8-connexes d'un ensemble de cases.
+     * Les groupes de cases qui se touchent, dans un ensemble.
      *
-     * Le parcours lui-même vit dans Grid8, partagé avec le service qui
+     * Le parcours lui-même vit dans TouchingCells, partagé avec le service qui
      * retrouve l'objet d'une case : c'était deux fois le même code, à un
      * critère d'arrêt près.
      *
@@ -352,11 +352,11 @@ final class SceneryFootprintDeriver
         $byKey = [];
 
         foreach ($cells as $cell) {
-            $byKey[Grid8::key($cell)] = $cell;
+            $byKey[TouchingCells::key($cell)] = $cell;
         }
 
         /** @var list<list<array{x: int, y: int, z: int, plan: string, piece: int}>> */
-        return Grid8::components($byKey);
+        return TouchingCells::groups($byKey);
     }
 
     /**

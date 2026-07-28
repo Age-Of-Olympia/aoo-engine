@@ -3,7 +3,7 @@
 namespace App\Service\Map;
 
 /**
- * Le parcours de proche en proche, sur une grille, en voisinage 8.
+ * Les cases qui SE TOUCHENT : retrouver le groupe auquel une case appartient.
  *
  * Deux services en avaient chacun leur copie : celui qui dérive les découpes
  * de décor, qui partitionne toute une famille en composantes, et celui qui
@@ -22,7 +22,7 @@ namespace App\Service\Map;
  * clé le dit d'elle-même — plutôt que de scoper la requête en amont et
  * d'espérer que l'appelant y ait pensé.
  */
-final class Grid8
+final class TouchingCells
 {
     /**
      * La clé d'une case, telle que ce parcours l'attend.
@@ -35,45 +35,45 @@ final class Grid8
     }
 
     /**
-     * Toutes les composantes d'un ensemble de cases.
+     * Tous les groupes d'un ensemble de cases.
      *
      * @param array<string, array{plan?: string, z?: int|string, x: int|string, y: int|string}> $byKey
      * @param null|callable(array<string, mixed>, array<string, mixed>): bool $accept
-     *        décide d'absorber une case voisine, connaissant ce que la
-     *        composante contient déjà ; null = tout voisin est absorbé
+     *        décide d'absorber une case voisine, connaissant ce que le groupe
+     *        contient déjà ; null = tout voisin est absorbé
      * @return list<list<array<string, mixed>>>
      */
-    public static function components(array $byKey, ?callable $accept = null): array
+    public static function groups(array $byKey, ?callable $accept = null): array
     {
         $seen = [];
-        $components = [];
+        $groups = [];
 
         foreach (array_keys($byKey) as $start) {
             if (isset($seen[$start])) {
                 continue;
             }
 
-            $component = self::componentFrom($byKey, $start, $accept, $seen);
+            $group = self::groupAround($byKey, $start, $accept, $seen);
 
-            if ($component !== []) {
-                $components[] = $component;
+            if ($group !== []) {
+                $groups[] = $group;
             }
         }
 
-        return $components;
+        return $groups;
     }
 
     /**
-     * La composante qui contient une case donnée.
+     * Le groupe qui contient une case donnée.
      *
      * @param array<string, array{plan?: string, z?: int|string, x: int|string, y: int|string}> $byKey
      * @param null|callable(array<string, mixed>, array<string, mixed>): bool $accept
-     * @param array<string, true> $seen marqueur partagé quand on partitionne
-     *        tout un ensemble ; passé par référence pour qu'une case ne soit
-     *        pas visitée deux fois
+     * @param array<string, true> $seen marqueur partagé quand on parcourt tout
+     *        un ensemble ; passé par référence pour qu'une case ne soit pas
+     *        visitée deux fois
      * @return list<array<string, mixed>>
      */
-    public static function componentFrom(
+    public static function groupAround(
         array $byKey,
         string $start,
         ?callable $accept = null,
@@ -85,7 +85,7 @@ final class Grid8
 
         $seen[$start] = true;
         $queue = [$start];
-        $component = [$byKey[$start]];
+        $group = [$byKey[$start]];
 
         while ($queue !== []) {
             $current = $byKey[array_pop($queue)];
@@ -107,17 +107,17 @@ final class Grid8
                         continue;
                     }
 
-                    if ($accept !== null && !$accept($byKey[$neighbour], $component)) {
+                    if ($accept !== null && !$accept($byKey[$neighbour], $group)) {
                         continue;
                     }
 
                     $seen[$neighbour] = true;
-                    $component[] = $byKey[$neighbour];
+                    $group[] = $byKey[$neighbour];
                     $queue[] = $neighbour;
                 }
             }
         }
 
-        return $component;
+        return $group;
     }
 }

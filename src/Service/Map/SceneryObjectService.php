@@ -130,10 +130,10 @@ final class SceneryObjectService
                 'coords_id' => (int) $row['coords_id'],
             ];
 
-            $byKey[Grid8::key($cell)] = $cell;
+            $byKey[TouchingCells::key($cell)] = $cell;
         }
 
-        $start = Grid8::key($origin);
+        $start = TouchingCells::key($origin);
 
         if (!isset($byKey[$start])) {
             return [$coordsId];
@@ -143,7 +143,7 @@ final class SceneryObjectService
          * composante appartient à l'exemplaire voisin, pas à celui-ci. Deux
          * décors collés sont adjacents ; sans cette règle, retirer l'un
          * emporterait l'autre. */
-        $component = Grid8::componentFrom(
+        $component = TouchingCells::groupAround(
             $byKey,
             $start,
             static function (array $candidate, array $taken): bool {
