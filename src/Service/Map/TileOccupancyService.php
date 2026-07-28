@@ -32,9 +32,39 @@ use Doctrine\DBAL\Connection;
  * avance peut la voir.** Les structures font partie du décor et sont donc
  * toujours vues ; les personnages suivent la visibilité du plan et leur mode
  * discret.
+ *
+ * # Une entité tient plusieurs cases
+ *
+ * L'occupation se lisait sur `players.coords_id` : une entité, une case. Un
+ * bâtiment de 2×2 ne bloquait donc qu'un quart de lui-même, et on lui entrait
+ * dedans par trois côtés. `entity_cells` dit toutes les cases qu'une entité
+ * tient, et c'est elle qu'on interroge désormais.
+ *
+ * Le changement est sans effet visible tant que chaque entité n'a qu'une
+ * ancre — c'est l'état que L3 a laissé, et c'est ce qui rend ce lot sûr : il
+ * ouvre la voie sans rien déplacer. Ce qui change vraiment, c'est qu'une
+ * emprise posée sera désormais respectée.
  */
 final class TileOccupancyService
 {
+    /**
+     * Ce que le rôle d'une case dit du pas, quand il dit quelque chose.
+     *
+     * `anchor` ne décide rien : c'est la case de référence d'une entité, une
+     * position et non une nature. Elle laisse donc le type trancher, comme
+     * avant que les emprises n'existent — d'où son absence de cette table.
+     *
+     * Les autres rôles priment sur le type, et c'est tout leur intérêt : la
+     * base d'un décor barre le chemin pendant que sa partie haute se traverse,
+     * une porte s'ouvre dans un mur qui, lui, bloque partout ailleurs.
+     */
+    private const ROLE_VERDICTS = [
+        'block' => true,
+        'cover' => false,
+        'door'  => false,
+        'open'  => false,
+    ];
+
     private Connection $conn;
     private RaceService $raceService;
 
@@ -95,20 +125,18 @@ final class TileOccupancyService
 
         $passable = $this->raceService->getPassableStructureNames();
 
-        $rows = $this->conn->fetchAllAssociative(
-            "SELECT p.id, p.coords_id, p.race, p.player_type,
-                    (SELECT 1 FROM players_options o
-                      WHERE o.player_id = p.id AND o.name = 'invisibleMode') AS invisible
-             FROM players p
-             WHERE p.coords_id IN ({$in})"
-        );
-
-        foreach ($rows as $row) {
+        foreach ($this->occupations($in) as $row) {
             if ((int) $row['id'] === $moverId) {
                 continue;
             }
 
-            if (in_array((string) $row['race'], $passable, true)) {
+            $verdict = self::ROLE_VERDICTS[(string) $row['role']] ?? null;
+
+            if ($verdict === false) {
+                continue; /* la case se traverse, quoi que fasse le type */
+            }
+
+            if ($verdict === null && in_array((string) $row['race'], $passable, true)) {
                 continue;
             }
 
@@ -127,6 +155,84 @@ final class TileOccupancyService
     }
 
     /**
+     * Ce que chaque entité occupe parmi les cases visées, case par case.
+     *
+     * `entity_cells` dit toutes les cases qu'une entité tient, et non la seule
+     * où son ancre est plantée : un bâtiment de 2×2 ne bloquait jusqu'ici
+     * qu'un quart de lui-même, et on lui entrait dedans par trois côtés.
+     *
+     * # Les deux sources s'ajoutent
+     *
+     * `players.coords_id` reste consulté à côté d'`entity_cells`, et le choix
+     * n'est pas timide. Une entité déplacée sans que `syncAnchor()` soit
+     * appelé garde ses cases à son ancienne position : la retirer de la
+     * seconde source la rendrait traversable là où elle se trouve, ce qui est
+     * la pire façon de découvrir une dérive. En s'ajoutant, les deux sources
+     * ne peuvent que bloquer davantage, jamais moins — la propriété qui rend
+     * ce lot sûr à déployer.
+     *
+     * `entitycells drift` nomme ce qui a échappé ; le jour où elle ne dit plus
+     * rien en production, la seconde branche de l'union s'enlève seule.
+     *
+     * @param string $in liste de coords_id déjà assainis en entiers
+     * @return list<array{id: int|string, coords_id: int|string, role: string, race: string, player_type: ?string, invisible: ?int}>
+     */
+    private function occupations(string $in): array
+    {
+        $rows = $this->conn->fetchAllAssociative(
+            "SELECT p.id, occupied.coords_id, occupied.role, p.race, p.player_type,
+                    (SELECT 1 FROM players_options o
+                      WHERE o.player_id = p.id AND o.name = 'invisibleMode') AS invisible
+               FROM (" . self::heldSql($in) . ") AS occupied
+               JOIN players p ON p.id = occupied.player_id"
+        );
+
+        /* Les deux sources décrivent souvent la même paire (entité, case) —
+         * l'ancre y figure des deux côtés. Un rôle explicite l'emporte alors
+         * sur `anchor`, qui ne décide rien : sans quoi une case ouverte dans
+         * un mur se refermerait par la seule grâce de `players.coords_id`. */
+        $occupations = [];
+
+        foreach ($rows as $row) {
+            $pair = $row['id'] . ':' . $row['coords_id'];
+
+            if (!isset($occupations[$pair]) || (string) $row['role'] !== 'anchor') {
+                $occupations[$pair] = $row;
+            }
+        }
+
+        return array_values($occupations);
+    }
+
+    /**
+     * « Une entité tient-elle cette case ? » — la définition, à un seul endroit.
+     *
+     * Les trois verbes se la posent, et il serait fâcheux qu'ils n'y répondent
+     * pas pareil : on bâtirait dans le corps d'un bâtiment dont on ne peut pas
+     * franchir la façade.
+     *
+     * @param string $in liste de coords_id déjà assainis en entiers
+     */
+    private static function heldSql(string $in): string
+    {
+        return "SELECT player_id, coords_id, role
+                  FROM entity_cells
+                 WHERE coords_id IN ({$in})
+                 UNION ALL
+                SELECT id, coords_id, 'anchor'
+                  FROM players
+                 WHERE coords_id IN ({$in})";
+    }
+
+    /** Une entité — n'importe laquelle, à n'importe quel titre — est-elle là ? */
+    private function heldByAnEntity(int $coordsId): bool
+    {
+        return (bool) $this->conn->fetchOne(
+            'SELECT 1 FROM (' . self::heldSql((string) $coordsId) . ') AS held LIMIT 1'
+        );
+    }
+
+    /**
      * La case est-elle VIDE ? — question des atterrissages.
      *
      * Ce n'est pas celle du pas. Une téléportation, une esquive, un objet qui
@@ -141,10 +247,12 @@ final class TileOccupancyService
      */
     public function isVacant(int $coordsId): bool
     {
+        if ($this->heldByAnEntity($coordsId)) {
+            return false;
+        }
+
         return !(bool) $this->conn->fetchOne(
             'SELECT 1 FROM (
-                 SELECT coords_id FROM players       WHERE coords_id = :c
-                 UNION ALL
                  SELECT coords_id FROM map_resources WHERE coords_id = :c
                  UNION ALL
                  SELECT coords_id FROM map_triggers  WHERE coords_id = :c
@@ -168,7 +276,7 @@ final class TileOccupancyService
      */
     public function buildRefusal(int $coordsId): ?string
     {
-        if ($this->conn->fetchOne('SELECT id FROM players WHERE coords_id = ? LIMIT 1', [$coordsId]) !== false) {
+        if ($this->heldByAnEntity($coordsId)) {
             return 'Case occupée par une entité.';
         }
 

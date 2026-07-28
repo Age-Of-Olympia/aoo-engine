@@ -35,9 +35,38 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
             );
         }
 
+        /* Les cases posées à la main par ces cas : la contrainte sur `coords`
+         * est en RESTRICT, une case encore référencée bloquerait le ménage. */
+        $link->executeStatement(
+            'DELETE ec FROM entity_cells ec JOIN coords c ON c.id = ec.coords_id WHERE c.plan = ?',
+            [self::PLAN]
+        );
+
         parent::tearDown();
 
         $link->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
+    }
+
+    /**
+     * Donne à une entité une case de plus, avec le rôle voulu.
+     *
+     * `EntityCellService` ne sait poser que l'ancre — c'est tout ce que L3
+     * demandait. Les emprises viendront de la conversion des décors ; d'ici
+     * là, ces cas les écrivent à la main pour fixer ce que l'occupation doit
+     * en faire.
+     */
+    private function giveCell(int $entityId, int $x, int $y, string $role): int
+    {
+        $coordsId = $this->coordsId($x, $y);
+
+        $this->link->executeStatement(
+            "INSERT INTO entity_cells (player_id, coords_id, plan, z, x, y, piece, role)
+             VALUES (?, ?, ?, 0, ?, ?, 0, ?)
+             ON DUPLICATE KEY UPDATE role = VALUES(role)",
+            [$entityId, $coordsId, self::PLAN, $x, $y, $role]
+        );
+
+        return $coordsId;
     }
 
     private function coordsId(int $x, int $y): int
@@ -255,6 +284,167 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
     }
 
     /** La visibilité de plan se lit comme au rendu : pas de JSON = cachés. */
+    /**
+     * LE point du lot : une entité barre TOUTES les cases qu'elle tient.
+     *
+     * L'occupation se lisait sur `players.coords_id` — une entité, une case.
+     * Un bâtiment de 2×2 ne bloquait donc qu'un quart de lui-même, et on lui
+     * entrait dedans par trois côtés.
+     */
+    public function testAnEntityBlocksEveryTileItHolds(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $wall = $this->placeStructure('mur_pierre', 20, 0, self::PLAN);
+
+        $spread = $this->giveCell($wall, 21, 0, 'anchor');
+
+        $this->assertNotNull(
+            $this->service()->stepRefusal($spread, 1, true),
+            'la seconde case du mur barre le chemin comme la première'
+        );
+    }
+
+    /**
+     * Le rôle de la case prime sur la nature du type.
+     *
+     * C'est ce qui permet à la base d'un décor de barrer le chemin pendant que
+     * sa partie haute se traverse, et à une porte de s'ouvrir dans un mur qui
+     * bloque partout ailleurs. Sans cela, une emprise ne saurait dire qu'une
+     * seule chose de toutes ses cases.
+     */
+    public function testAnOpenCellIsWalkableThroughABlockingType(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $wall = $this->placeStructure('mur_pierre', 22, 0, self::PLAN);
+
+        $doorway = $this->giveCell($wall, 23, 0, 'door');
+
+        $this->assertNull(
+            $this->service()->stepRefusal($doorway, 1, true),
+            'une porte se franchit, quoi que fasse le mur qui la porte'
+        );
+    }
+
+    /**
+     * Et réciproquement : une case marquée bloquante barre le chemin même
+     * quand son type se traverse. C'est ce que la page d'administration des
+     * décors enregistre — un décor est franchissable par nature, sauf là où
+     * un animateur a dit le contraire.
+     */
+    public function testABlockingCellStopsAPassableType(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $decor = $this->placeStructure('mur_pierre', 24, 0, self::PLAN);
+
+        /* Aucune structure franchissable n'est seedée, et ce cas ne peut pas
+         * s'en remettre au contenu du catalogue sous peine d'être ignoré
+         * partout. On rend donc le type franchissable le temps du cas, et on
+         * le repose.
+         *
+         * Par le domaine et non en SQL : Doctrine garde la race en mémoire, et
+         * une écriture brute lui échapperait — le service continuerait de lire
+         * l'ancienne valeur. */
+        $entityManager = \App\Entity\EntityManagerFactory::getEntityManager();
+        $race = $entityManager->getRepository(\App\Entity\Race::class)->findOneBy(['name' => 'mur_pierre']);
+
+        if ($race === null) {
+            $this->markTestSkipped('type mur_pierre absent du catalogue.');
+        }
+
+        $race->setBlocksPassage(false);
+        $entityManager->flush();
+
+        try {
+            $this->assertNull(
+                $this->service()->stepRefusal($this->coordsId(24, 0), 1, true),
+                'le type se traverse, sans quoi le cas ne prouverait rien'
+            );
+
+            $solid = $this->giveCell($decor, 25, 0, 'block');
+
+            $this->assertNotNull(
+                $this->service()->stepRefusal($solid, 1, true),
+                'la case dite bloquante barre le chemin malgré son type'
+            );
+        } finally {
+            $race->setBlocksPassage(true);
+            $entityManager->flush();
+        }
+    }
+
+    /**
+     * Les trois verbes tiennent la même emprise.
+     *
+     * Chacun demandait à `players.coords_id` si une entité était là. On
+     * pouvait donc bâtir dans le corps d'un bâtiment dont on ne pouvait pas
+     * franchir la façade — trois réponses pour une même question.
+     */
+    public function testTheThreeVerbsAgreeOnTheWholeFootprint(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $wall = $this->placeStructure('mur_pierre', 30, 0, self::PLAN);
+
+        $body = $this->giveCell($wall, 31, 0, 'anchor');
+        $service = $this->service();
+
+        $this->assertNotNull($service->stepRefusal($body, 1, true), 'on n\'y entre pas');
+        $this->assertFalse($service->isVacant($body), 'on n\'y atterrit pas');
+        $this->assertSame(
+            'Case occupée par une entité.',
+            $service->buildRefusal($body),
+            'et on n\'y bâtit pas'
+        );
+    }
+
+    /**
+     * Le rôle ne perce pas la discrétion : bloquer, c'est être vu.
+     *
+     * Un rôle `block` prime sur la NATURE du type, pas sur la visibilité —
+     * sinon une emprise trahirait un personnage discret, et la règle que ce
+     * service porte depuis son extraction ne tiendrait plus.
+     */
+    public function testABlockingCellDoesNotBetrayAHiddenCharacter(): void
+    {
+        $ghost = $this->createRealPlayer('GmOmbre');
+        $cell = $this->giveCell((int) $ghost->id, 28, 0, 'block');
+
+        $this->link->executeStatement(
+            "INSERT INTO players_options (player_id, name) VALUES (?, 'invisibleMode')",
+            [$ghost->id]
+        );
+
+        $this->assertNull(
+            $this->service()->stepRefusal($cell, 1, true),
+            'discret : sa case bloquante ne le dénonce pas'
+        );
+    }
+
+    /**
+     * L'ancre reste lue sur `players.coords_id`, même sans case.
+     *
+     * Une entité déplacée sans que `syncAnchor()` soit appelé garde ses cases
+     * à son ancienne position. Les deux sources s'ajoutent précisément pour
+     * cela : une dérive ne peut pas rendre un mur traversable, elle peut au
+     * pire le faire bloquer à deux endroits — ce qui se voit et se répare.
+     */
+    public function testADriftedEntityStillBlocksWhereItStands(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $wall = $this->placeStructure('mur_pierre', 26, 0, self::PLAN);
+
+        $moved = $this->coordsId(27, 0);
+        $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$moved, $wall]);
+
+        $this->assertNotNull(
+            $this->service()->stepRefusal($moved, 1, true),
+            'là où le mur se trouve vraiment'
+        );
+        $this->assertNotNull(
+            $this->service()->stepRefusal($this->coordsId(26, 0), 1, true),
+            'et là où ses cases le croient encore : jamais moins que la vérité'
+        );
+    }
+
     public function testCharacterVisibilityMatchesTheRenderRule(): void
     {
         $this->assertFalse(TileOccupancyService::charactersVisibleOn(null), 'pas de JSON : cachés');
