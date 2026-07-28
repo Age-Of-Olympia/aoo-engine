@@ -3,6 +3,7 @@
 namespace App\Service\Map;
 
 use App\Entity\EntityManagerFactory;
+use App\Service\TiledMapService;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -46,11 +47,40 @@ use Doctrine\DBAL\Connection;
  */
 final class SceneryFootprintDeriver
 {
-    private Connection $conn;
+    /**
+     * La connexion n'est ouverte QUE si on interroge la carte.
+     *
+     * `imageFootprints()` ne lit que le disque, et la palette de l'éditeur
+     * s'en contente sur un déploiement sans base — comme un test unitaire.
+     * Exiger une connexion pour lire des images était une dépendance de trop.
+     */
+    private ?Connection $conn;
+
+    /**
+     * Le balayage de la carte coûte 68 ms en production, celui du disque une
+     * poignée : les redemander à chaque appel se payait cher. Un clic sur
+     * « Compléter » enchaîne inspect() puis complete(), qui rappelle
+     * inspect() — trois catalogues pour un geste.
+     *
+     * Mémoïsation par INSTANCE et non statique : la carte change entre deux
+     * tests, et un cache global les ferait mentir.
+     *
+     * @var array<string, array{w:int,h:int,cells:int,holed:bool,offsets:array<int,array{0:int,1:int}>,instances:int,truncated:int}>|null
+     */
+    private ?array $mapCache = null;
+
+    /** @var array<string, array{w:int,h:int,cells:int,holed:bool,offsets:array<int,array{0:int,1:int}>}>|null */
+    private ?array $imageCache = null;
 
     public function __construct(?Connection $conn = null)
     {
-        $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
+        $this->conn = $conn;
+    }
+
+    /** La connexion, ouverte au premier besoin. */
+    private function conn(): Connection
+    {
+        return $this->conn ??= EntityManagerFactory::getEntityManager()->getConnection();
     }
 
     /**
@@ -86,6 +116,10 @@ final class SceneryFootprintDeriver
      */
     public function derive(): array
     {
+        if ($this->mapCache !== null) {
+            return $this->mapCache;
+        }
+
         $catalogue = [];
 
         foreach ($this->families() as $family => $cells) {
@@ -123,7 +157,7 @@ final class SceneryFootprintDeriver
 
         ksort($catalogue);
 
-        return $catalogue;
+        return $this->mapCache = $catalogue;
     }
 
     /**
@@ -171,6 +205,10 @@ final class SceneryFootprintDeriver
      */
     public function imageFootprints(): array
     {
+        if ($this->imageCache !== null) {
+            return $this->imageCache;
+        }
+
         /* `DOCUMENT_ROOT` n'existe pas hors du web — console, migration, test.
          * Le dépôt, lui, est toujours à trois niveaux au-dessus de ce fichier :
          * le repli garde la même réponse partout, ce qui compte pour un
@@ -202,12 +240,12 @@ final class SceneryFootprintDeriver
 
             $size = @getimagesize($root . $family . '/' . $family . '.png');
 
-            if (!$size || $size[0] % 50 !== 0 || $size[1] % 50 !== 0) {
+            if (!$size || $size[0] % TiledMapService::TILE_SIZE !== 0 || $size[1] % TiledMapService::TILE_SIZE !== 0) {
                 continue;
             }
 
-            $w = (int) ($size[0] / 50);
-            $h = (int) ($size[1] / 50);
+            $w = (int) ($size[0] / TiledMapService::TILE_SIZE);
+            $h = (int) ($size[1] / TiledMapService::TILE_SIZE);
 
             if ($w * $h < count($indexes)) {
                 continue; /* image incomplète : elle ne décrit pas cette figure */
@@ -234,7 +272,7 @@ final class SceneryFootprintDeriver
             ];
         }
 
-        return $footprints;
+        return $this->imageCache = $footprints;
     }
 
     /**
@@ -280,7 +318,7 @@ final class SceneryFootprintDeriver
     {
         $families = [];
 
-        foreach ($this->conn->fetchAllAssociative(
+        foreach ($this->conn()->fetchAllAssociative(
             'SELECT f.name, c.x, c.y, c.z, c.plan
                FROM map_foregrounds f JOIN coords c ON c.id = f.coords_id'
         ) as $row) {
@@ -302,53 +340,23 @@ final class SceneryFootprintDeriver
     /**
      * Composantes 8-connexes d'un ensemble de cases.
      *
+     * Le parcours lui-même vit dans Grid8, partagé avec le service qui
+     * retrouve l'objet d'une case : c'était deux fois le même code, à un
+     * critère d'arrêt près.
+     *
      * @param list<array{x: int, y: int, z: int, plan: string, piece: int}> $cells
      * @return list<list<array{x: int, y: int, z: int, plan: string, piece: int}>>
      */
     private function components(array $cells): array
     {
         $byKey = [];
+
         foreach ($cells as $cell) {
-            $byKey[$cell['plan'] . '|' . $cell['z'] . '|' . $cell['x'] . '|' . $cell['y']] = $cell;
+            $byKey[Grid8::key($cell)] = $cell;
         }
 
-        $seen = [];
-        $groups = [];
-
-        foreach (array_keys($byKey) as $start) {
-            if (isset($seen[$start])) {
-                continue;
-            }
-
-            $queue = [$start];
-            $seen[$start] = true;
-            $group = [];
-
-            while ($queue !== []) {
-                $key = array_pop($queue);
-                $group[] = $byKey[$key];
-                $cur = $byKey[$key];
-
-                for ($dx = -1; $dx <= 1; $dx++) {
-                    for ($dy = -1; $dy <= 1; $dy++) {
-                        if ($dx === 0 && $dy === 0) {
-                            continue;
-                        }
-
-                        $next = $cur['plan'] . '|' . $cur['z'] . '|' . ($cur['x'] + $dx) . '|' . ($cur['y'] + $dy);
-
-                        if (isset($byKey[$next]) && !isset($seen[$next])) {
-                            $seen[$next] = true;
-                            $queue[] = $next;
-                        }
-                    }
-                }
-            }
-
-            $groups[] = $group;
-        }
-
-        return $groups;
+        /** @var list<list<array{x: int, y: int, z: int, plan: string, piece: int}>> */
+        return Grid8::components($byKey);
     }
 
     /**

@@ -112,7 +112,8 @@ final class SceneryObjectService
             [$origin['plan'], (int) $origin['z']]
         );
 
-        $byPos = [];
+        $byKey = [];
+
         foreach ($rows as $row) {
             [$rowFamily, $piece] = SceneryFootprintDeriver::splitPiece((string) $row['name']);
 
@@ -120,56 +121,46 @@ final class SceneryObjectService
                 continue;
             }
 
-            $byPos[$row['x'] . '|' . $row['y']] = [
-                'coords_id' => (int) $row['coords_id'],
+            $cell = [
+                'plan'      => $origin['plan'],
+                'z'         => (int) $origin['z'],
+                'x'         => (int) $row['x'],
+                'y'         => (int) $row['y'],
                 'piece'     => $piece,
+                'coords_id' => (int) $row['coords_id'],
             ];
+
+            $byKey[Grid8::key($cell)] = $cell;
         }
 
-        $startKey = $origin['x'] . '|' . $origin['y'];
+        $start = Grid8::key($origin);
 
-        if (!isset($byPos[$startKey])) {
+        if (!isset($byKey[$start])) {
             return [$coordsId];
         }
 
-        /* Parcours en largeur, voisinage 8, qui refuse d'absorber un morceau
-         * dont l'indice est déjà pris : c'est là que s'arrête un exemplaire
-         * et que commence son voisin. */
-        $queue = [[$startKey, (int) $origin['x'], (int) $origin['y']]];
-        $taken = [$byPos[$startKey]['piece'] => true];
-        $cells = [$byPos[$startKey]['coords_id']];
-        $seen = [$startKey => true];
-
-        while ($queue !== []) {
-            [, $cx, $cy] = array_pop($queue);
-
-            for ($dx = -1; $dx <= 1; $dx++) {
-                for ($dy = -1; $dy <= 1; $dy++) {
-                    if ($dx === 0 && $dy === 0) {
-                        continue;
+        /* Le critère d'arrêt : un morceau dont l'indice est DÉJÀ dans la
+         * composante appartient à l'exemplaire voisin, pas à celui-ci. Deux
+         * décors collés sont adjacents ; sans cette règle, retirer l'un
+         * emporterait l'autre. */
+        $component = Grid8::componentFrom(
+            $byKey,
+            $start,
+            static function (array $candidate, array $taken): bool {
+                foreach ($taken as $cell) {
+                    if ($cell['piece'] === $candidate['piece']) {
+                        return false;
                     }
-
-                    $key = ($cx + $dx) . '|' . ($cy + $dy);
-
-                    if (!isset($byPos[$key]) || isset($seen[$key])) {
-                        continue;
-                    }
-
-                    $piece = $byPos[$key]['piece'];
-
-                    if (isset($taken[$piece])) {
-                        continue; /* l'exemplaire voisin commence ici */
-                    }
-
-                    $seen[$key] = true;
-                    $taken[$piece] = true;
-                    $cells[] = $byPos[$key]['coords_id'];
-                    $queue[] = [$key, $cx + $dx, $cy + $dy];
                 }
-            }
-        }
 
-        return $cells;
+                return true;
+            }
+        );
+
+        return array_values(array_map(
+            static fn (array $cell): int => (int) $cell['coords_id'],
+            $component
+        ));
     }
 
     /**
