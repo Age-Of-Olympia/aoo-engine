@@ -200,3 +200,40 @@
     flex-wrap: wrap;
     gap: 6px;
 }
+
+/* What a red cell defers to: the type. Shown here so a decor is finished in
+ * one place rather than across two admin pages. */
+.fp-dials {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 4px;
+    padding: 6px 10px 8px;
+    margin: 0 0 10px;
+    font-size: 12px;
+}
+
+.fp-dials legend {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #5a5346;
+    padding: 0 4px;
+}
+
+.fp-dials label {
+    display: block;
+    margin: 3px 0;
+    cursor: pointer;
+}
+
+.fp-dials small {
+    color: #7a7263;
+}
+
+.fp-warn {
+    font-size: 12px;
+    padding: 6px 9px;
+    margin: 0 0 10px;
+    border-left: 3px solid #b8860b;
+    background: rgba(184, 134, 11, 0.09);
+    border-radius: 3px;
+}

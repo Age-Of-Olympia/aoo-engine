@@ -17,6 +17,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 use App\Service\CsrfProtectionService;
 use App\Service\Map\EntityTypeFootprintService;
 use App\Service\Map\Footprint;
+use App\Service\Map\SceneryObjectService;
 use App\Service\Map\SceneryFootprintDeriver;
 
 /** @return array{0: string, 1: string, 2: string} label, css class, tooltip */
@@ -73,6 +74,7 @@ $csrfToken = (new CsrfProtectionService())->generateToken();
 
 $service = new EntityTypeFootprintService();
 $deriver = new SceneryFootprintDeriver();
+$scenery = new SceneryObjectService();
 
 $catalogue = $service->catalogue();
 $onDisk = $deriver->piecesOnDisk();
@@ -163,6 +165,10 @@ ob_start();
 
         $figure = $footprint ?? footprint_in_a_square(array_keys($pieces));
 
+        /* What a red cell defers to. Without a type, nothing marked here has
+         * any effect at all — which is the one thing a cut-out cannot say. */
+        $settings = $scenery->typeSettings($name);
+
         $blocked = array_keys(array_filter(
             $figure->roles(),
             static fn(string $role): bool => $role === 'block'
@@ -184,6 +190,13 @@ ob_start();
                 <span class="fp-badge <?= $originClass ?>" title="<?= e($originHint) ?>"><?= e($originLabel) ?></span>
             </header>
 
+            <?php if ($settings === null): ?>
+                <p class="fp-warn">
+                    Pas encore de type au catalogue : les cases marquées ici resteront sans effet
+                    jusqu'à l'enregistrement, qui le créera.
+                </p>
+            <?php endif; ?>
+
             <form method="post" action="footprints-save.php" class="fp-form">
                 <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
                 <input type="hidden" name="type" value="<?= e($name) ?>" />
@@ -204,6 +217,25 @@ ob_start();
                     <?= count($pieces) ?> morceau<?= count($pieces) > 1 ? 'x' : '' ?><?php
                     if ($pieces === []): ?> sur le disque — la carte seule en parle<?php endif; ?>
                 </p>
+
+                <?php /* The two dials a `block` cell defers to. Marking a cell
+                         says WHICH cells are solid; these say what solid means. */ ?>
+                <fieldset class="fp-dials">
+                    <legend>Ce qu'une case rouge fait</legend>
+
+                    <label>
+                        <input type="checkbox" name="blocks_passage" value="1"
+                               <?= ($settings['blocks_passage'] ?? true) ? 'checked' : '' ?> />
+                        barre le chemin
+                    </label>
+
+                    <label>
+                        <input type="checkbox" name="blocks_projectiles" value="1"
+                               <?= ($settings['blocks_projectiles'] ?? true) ? 'checked' : '' ?> />
+                        arrête les tirs
+                        <small>— décocher pour une arche : on ne passe pas, la flèche si</small>
+                    </label>
+                </fieldset>
 
                 <div class="fp-actions">
                     <button type="submit" name="action" value="save" class="btn btn-sm btn-primary">

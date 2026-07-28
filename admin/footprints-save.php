@@ -16,6 +16,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 use App\Service\CsrfProtectionService;
 use App\Service\Map\EntityCellService;
 use App\Service\Map\EntityTypeFootprintService;
+use App\Service\Map\SceneryObjectService;
 
 /** How many placed instances were taken up, said back to the game master. */
 function reapplied(int $count): string
@@ -71,7 +72,19 @@ try {
 
     $service->declare($type, (int) ($figure['w'] ?? 1), (int) ($figure['h'] ?? 1), $offsets, $roles);
 
+    /* Marking cells says WHICH are solid; the type says what solid means. A
+     * cut-out saved without one would have no effect whatsoever. */
+    $scenery = new SceneryObjectService();
+    $created = $scenery->ensureType($type);
+
+    $scenery->setTypeSettings(
+        $type,
+        !empty($_POST['blocks_passage']),
+        !empty($_POST['blocks_projectiles'])
+    );
+
     setFlash('success', 'La forme de « ' . $type . ' » est enregistrée.'
+        . ($created ? ' Type créé au catalogue.' : '')
         . reapplied($cells->reapplyForType($type)));
 } catch (\Throwable $e) {
     setFlash('danger', $e->getMessage());

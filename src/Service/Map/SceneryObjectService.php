@@ -158,7 +158,9 @@ final class SceneryObjectService
     }
 
     /**
-     * The type a scenery family stands for, created on first placement.
+     * The type a scenery family stands for, created on first need.
+     *
+     * @return bool true when it had to be created
      *
      * Without it the entity's race names nothing, and a cell whose role is
      * `part` — which defers to the type — blocks by default. A decor placed
@@ -169,15 +171,49 @@ final class SceneryObjectService
      * `block` cells are what make it solid, and the catalogue page refines
      * the rest.
      */
-    private function seedType(string $family): void
+    public function ensureType(string $family): bool
     {
-        $this->conn->executeStatement(
+        $created = (int) $this->conn->executeStatement(
             "INSERT IGNORE INTO races
                 (code, name, label, description, playable, hidden, kind, structure_nature,
                  bleeds, wound_color, blocks_passage, blocks_projectiles, bgColor, color,
                  faction, plan, pv)
              VALUES (?, ?, ?, '', 0, 1, 'structure', 'edifice', '', '#cd7f32', 0, 1, '#6b8f5a', 'black', '', '', 10)",
             [strtoupper($family), $family, ucfirst(str_replace('_', ' ', $family))]
+        );
+
+        \App\Service\RaceService::clearCache();
+
+        return $created > 0;
+    }
+
+    /**
+     * What a family's type says about its blocking cells, or null when the
+     * family has no type yet — in which case nothing it is marked with works.
+     *
+     * @return array{blocks_passage: bool, blocks_projectiles: bool}|null
+     */
+    public function typeSettings(string $family): ?array
+    {
+        $row = $this->conn->fetchAssociative(
+            'SELECT blocks_passage, blocks_projectiles FROM races WHERE name = ?',
+            [$family]
+        );
+
+        return $row === false ? null : [
+            'blocks_passage'    => (bool) $row['blocks_passage'],
+            'blocks_projectiles' => (bool) $row['blocks_projectiles'],
+        ];
+    }
+
+    /** Set the two dials a marked cell defers to. */
+    public function setTypeSettings(string $family, bool $blocksPassage, bool $blocksProjectiles): void
+    {
+        $this->ensureType($family);
+
+        $this->conn->executeStatement(
+            'UPDATE races SET blocks_passage = ?, blocks_projectiles = ? WHERE name = ?',
+            [(int) $blocksPassage, (int) $blocksProjectiles, $family]
         );
 
         \App\Service\RaceService::clearCache();
@@ -208,7 +244,7 @@ final class SceneryObjectService
     /** The scenery entity a placed figure belongs to, cells included. */
     private function makeEntity(string $family, int $anchorCoordsId, string $anchorPieceName): void
     {
-        $this->seedType($family);
+        $this->ensureType($family);
 
         $id = $this->nextSceneryId();
 
