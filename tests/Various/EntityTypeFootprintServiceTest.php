@@ -9,25 +9,17 @@ use RuntimeException;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * La découpe déclarée, et son droit de contredire les autres sources.
+ * Declared cut-outs, and their right to contradict the guessed ones.
  *
- * Trois sources savent dire la forme d'un décor multi-cases : la déclaration,
- * la carte, les images d'ensemble. Elles ne se valent pas, et le désaccord
- * n'est pas théorique — l'image de `geant_petrifie` annonce 1×2 cases quand
- * quatre morceaux existent et que la carte en montre une figure de 3×3
- * trouée.
- *
- * Ce qui est fixé ici est donc l'ORDRE, et lui seul importe : une déclaration
- * l'emporte sur ce que la carte montre. Sans cela on ne pourrait jamais
- * réparer un décor mal posé, puisque c'est le décor mal posé qui ferait
- * autorité.
+ * What these cases pin is the ORDER: a declaration wins over what the map
+ * shows, otherwise a badly placed decor would be its own authority.
  */
 #[Group('items-golden-master')]
 class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
 {
     private const PLAN = 'plan_test_decoupes';
 
-    /** @var list<string> les familles déclarées par un cas, à défaire après lui */
+    /** @var list<string> families a case declared, undone afterwards */
     private array $declaredFamilies = [];
 
     protected function tearDown(): void
@@ -67,7 +59,7 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
         $this->service()->declare($family, $w, $h, $offsets, $roles);
     }
 
-    /** Une figure posée sur la carte, dont la découpe se déduit. */
+    /** A figure placed on the map, from which the cut-out derives. */
     private function seedOnMap(string $family): void
     {
         foreach ([[0, 1, '00'], [0, 0, '01']] as [$x, $y, $piece]) {
@@ -81,13 +73,7 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
         }
     }
 
-    /**
-     * LE cas : la déclaration l'emporte sur la carte.
-     *
-     * La carte montre une figure de 1×2 ; on déclare 2×2. C'est la
-     * déclaration qui doit sortir du catalogue, sans quoi corriger un décor
-     * mal posé serait impossible.
-     */
+    /** Otherwise a badly placed decor would be its own authority. */
     public function testADeclarationOverridesWhatTheMapShows(): void
     {
         $this->seedOnMap('gm_decl_tour');
@@ -104,7 +90,7 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(2, $footprint->width());
     }
 
-    /** Oubliée, la famille retombe sur ce que la carte montre. */
+    /** Forgotten, the family falls back to what the map shows. */
     public function testForgettingReturnsTheTypeToTheMap(): void
     {
         $this->seedOnMap('gm_decl_oubli');
@@ -118,13 +104,7 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(2, $this->service()->catalogue()['gm_decl_oubli']->cells());
     }
 
-    /**
-     * Une figure trouée survit à l'aller-retour.
-     *
-     * C'est ce qui justifie de stocker des décalages plutôt qu'une boîte :
-     * le géant est haut de trois cases et large de trois, mais n'en occupe
-     * que quatre. Une boîte 3×3 en promettrait neuf.
-     */
+    /** Why offsets are stored rather than a box: a 3×3 box would promise nine cells. */
     public function testAHoledFigureSurvivesTheRoundTrip(): void
     {
         $offsets = [0 => [0, 0], 1 => [0, -1], 2 => [-1, -2], 3 => [-2, -2]];
@@ -138,13 +118,7 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertTrue($footprint->isHoled(), '4 cases dans une boîte de 9');
     }
 
-    /**
-     * Le rôle se déclare par morceau.
-     *
-     * C'est ce qui permet à la base d'un décor de bloquer pendant que sa
-     * partie haute se traverse : une seule valeur pour toute la figure ne
-     * saurait pas le dire.
-     */
+    /** One value for the whole figure could not say that only its base blocks. */
     public function testRolesAreKeptPieceByPiece(): void
     {
         $this->declare(
@@ -161,14 +135,7 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /**
-     * Une famille absente de `races` se déclare quand même.
-     *
-     * C'est la raison d'être de la clé par nom : sur les découpes connues, la
-     * quasi-totalité des familles de décor n'ont pas encore de ligne dans le
-     * catalogue des types. Leur refuser la déclaration la rendrait inutile
-     * là où elle sert.
-     */
+    /** The reason the key is the name: scenery families have no row in `races` yet. */
     public function testAFamilyAbsentFromTheTypeCatalogueCanStillBeDeclared(): void
     {
         $absent = (int) $this->link->fetchOne(
@@ -183,7 +150,7 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame('declared', $this->service()->sourceOf('gm_decl_inconnue'));
     }
 
-    /** Une découpe sans morceau ne décrit rien : elle est refusée. */
+    /** A cut-out without any piece describes nothing: refused. */
     public function testAnEmptyFootprintIsRefused(): void
     {
         $this->expectException(RuntimeException::class);
@@ -191,7 +158,7 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
         $this->service()->declare('gm_decl_vide', 1, 1, []);
     }
 
-    /** Les dimensions restent dans des bornes qu'un décor peut atteindre. */
+    /** Dimensions stay within what a decor can reach. */
     public function testOutOfRangeDimensionsAreRefused(): void
     {
         $this->expectException(RuntimeException::class);

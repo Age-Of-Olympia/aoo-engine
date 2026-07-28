@@ -7,63 +7,26 @@ use App\Service\TiledMapService;
 use Doctrine\DBAL\Connection;
 
 /**
- * La découpe des décors multi-cases, dérivée de la carte elle-même.
+ * Derives multi-cell scenery cut-outs from the map itself.
  *
- * Un fort, une pyramide, un géant occupent plusieurs cases. Rien ne le dit :
- * on pose autant de morceaux indépendants, nommés `base-00`, `base-01`… et
- * seule leur adjacence les relie. Ce service reconstruit l'objet.
+ * Not from the image files: `TileCatalogService::buildComposites()` only
+ * knows the `-NN` naming (442 pieces on disk use `_NN`) and rejects HOLED
+ * figures, which do exist — `geant_petrifie` fills 4 cells of a 3×3 box.
  *
- * # Pourquoi pas les fichiers d'images
+ * Grouping is NOT plain connectivity: two copies of a decor placed side by
+ * side touch and would merge. The rule is "connected AND all piece indexes
+ * distinct" — a group holding `-00` twice holds two objects.
  *
- * `TileCatalogService::buildComposites()` le fait déjà, depuis le DISQUE :
- * l'image entière divisée par 50 donne w×h, et tous les morceaux doivent
- * exister sous `base-NN.png`. Deux raisons de ne pas s'en servir ici.
- *
- * D'abord il n'en couvre qu'une minorité : **442 fichiers de morceaux sont
- * nommés `_NN` contre 120 en `-NN`**, et il ne connaît que la seconde forme.
- * `unique_fort_turok` porte `_02`…`_16` — il n'a donc aucune tuile composite.
- *
- * Ensuite il refuse les figures TROUÉES : un morceau manquant et la famille
- * entière est écartée. Or elles existent — le géant pétrifié occupe 4 cases
- * dans une boîte de 3×3.
- *
- * La carte, elle, dit ce qui est réellement posé.
- *
- * # Le piège du regroupement
- *
- * Ce n'est PAS la connexité. Deux exemplaires collés d'un même décor sont
- * adjacents et fusionneraient : sur la production, trois groupes avalent
- * 28 géants à elles trois, dont une de 29 cases pour 13 géants.
- *
- * Le critère est **« connexes ET indices de morceaux tous distincts »** : un
- * groupe qui contient deux fois `-00` contient deux objets.
- *
- * # L'ancre
- *
- * C'est le PREMIER MORCEAU, pas le coin de la boîte englobante. Une figure
- * trouée n'a pas forcément de case à son coin bas-gauche — c'est ce qui
- * rendait l'ancre fausse pour cinq familles, et le problème disparaît avec ce
- * choix, sans cas particulier.
+ * The anchor is the FIRST PIECE, not the bounding box corner, since a holed
+ * figure may have no cell at its bottom-left.
  */
 final class SceneryFootprintDeriver
 {
-    /**
-     * La connexion n'est ouverte QUE si on interroge la carte.
-     *
-     * `imageFootprints()` ne lit que le disque, et la palette de l'éditeur
-     * s'en contente sur un déploiement sans base — comme un test unitaire.
-     * Exiger une connexion pour lire des images était une dépendance de trop.
-     */
+    /** Opened only when the map is queried: `imageFootprints()` needs no database. */
     private ?Connection $conn;
 
     /**
-     * Le balayage de la carte coûte 68 ms en production, celui du disque une
-     * poignée : les redemander à chaque appel se payait cher. Un clic sur
-     * « Compléter » enchaîne inspect() puis complete(), qui rappelle
-     * inspect() — trois catalogues pour un geste.
-     *
-     * Mémoïsation par INSTANCE et non statique : la carte change entre deux
-     * tests, et un cache global les ferait mentir.
+     * Memoised per INSTANCE, not statically: the map changes between tests.
      *
      * @var array<string, array{footprint: Footprint, instances: int, truncated: int}>|null
      */
@@ -87,11 +50,8 @@ final class SceneryFootprintDeriver
     }
 
     /**
-     * Sépare un nom de décor en (famille, indice de morceau).
-     *
-     * Trois conventions coexistent sur le disque et dans la carte : `-NN`,
-     * `_NN`, et le chiffre collé au nom. Un décor sans suffixe est une famille
-     * à lui seul, morceau 0.
+     * Split a scenery name into (family, piece index). Three conventions
+     * coexist: `-NN`, `_NN`, and a bare digit; no suffix means piece 0.
      *
      * @return array{0: string, 1: int}
      */
@@ -108,11 +68,7 @@ final class SceneryFootprintDeriver
         return [$name, 0];
     }
 
-    /**
-     * Toutes les découpes dérivables, par famille.
-     *
-     * @return array<string, array{footprint: Footprint, instances: int, truncated: int}>
-     */
+    /** @return array<string, array{footprint: Footprint, instances: int, truncated: int}> */
     public function derive(): array
     {
         if ($this->mapCache !== null) {
@@ -125,14 +81,14 @@ final class SceneryFootprintDeriver
             $pieces = array_values(array_unique(array_column($cells, 'piece')));
 
             if (count($pieces) < 2) {
-                continue; /* une seule pièce : rien à découper */
+                continue; /* single piece: nothing to cut out */
             }
 
             $groups = $this->groupsIn($cells);
             $model = $this->completeModel($groups, count($pieces));
 
             if ($model === null) {
-                continue; /* aucun exemplaire complet : la découpe n'est pas dérivable */
+                continue; /* no complete copy: the cut-out cannot be derived */
             }
 
             [$instances, $truncated] = $this->countInstances($groups, count($pieces));
@@ -150,23 +106,11 @@ final class SceneryFootprintDeriver
     }
 
     /**
-     * Les découpes DEVINÉES : la carte, complétée par les images d'ensemble.
+     * GUESSED cut-outs: the map, completed by whole-object images. Declared
+     * ones are stacked on top by `EntityTypeFootprintService::catalogue()`.
      *
-     * Le nom dit ce qu'elle vaut. Ce n'est pas le catalogue que consultent la
-     * pose et les éditeurs — celui-là est `EntityTypeFootprintService`, qui
-     * pose les découpes DÉCLARÉES par-dessus celles-ci. Les deux portaient le
-     * même nom, `catalogue()`, aux deux bouts d'une délégation : on ne pouvait
-     * pas savoir, en lisant un appel, laquelle des deux faisait autorité.
-     *
-     * `derive()` ne connaît que ce qui est posé — c'est ce qu'il faut pour un
-     * rapport ou une migration, qui parlent de l'existant. Un éditeur, lui,
-     * doit savoir poser une figure qui ne figure encore nulle part.
-     *
-     * L'ordre de préséance n'est pas neutre : **la carte l'emporte**. Les deux
-     * sources se contredisent — l'image d'ensemble de `geant_petrifie` annonce
-     * 1×2 cases quand quatre morceaux existent et que la carte en montre une
-     * figure de 3×3 trouée. L'asset est incomplet ; ce qui est posé ne ment
-     * pas.
+     * The map wins over the images, which contradict it — `geant_petrifie`'s
+     * image claims 1×2 where the map shows a holed 3×3.
      *
      * @return array<string, Footprint>
      */
@@ -188,14 +132,10 @@ final class SceneryFootprintDeriver
     }
 
     /**
-     * Les découpes lisibles sur les images d'ensemble, `base/base.png`.
-     *
-     * Taille divisée par 50, morceaux rangés en lignes depuis le haut-gauche,
-     * décalages ramenés au premier morceau — la convention que Tiled utilise
-     * déjà.
-     *
-     * Une image trop petite pour ses morceaux est ÉCARTÉE plutôt que crue :
-     * c'est le cas du géant, dont l'ensemble ne montre que le corps.
+     * Cut-outs readable on the whole-object images, `base/base.png`: size
+     * divided by 50, pieces laid in rows from the top-left — Tiled's own
+     * convention. An image too small for its pieces is DISCARDED rather than
+     * believed.
      *
      * @return array<string, Footprint>
      */
@@ -228,7 +168,7 @@ final class SceneryFootprintDeriver
             $h = (int) ($size[1] / TiledMapService::TILE_SIZE);
 
             if ($w * $h < count($indexes)) {
-                continue; /* image incomplète : elle ne décrit pas cette figure */
+                continue; /* incomplete image: it does not describe this figure */
             }
 
             $offsets = [];
@@ -237,9 +177,8 @@ final class SceneryFootprintDeriver
                 $offsets[$piece] = [$piece % $w, $h - 1 - intdiv($piece, $w)];
             }
 
-            /* La boîte vient de l'IMAGE et peut dépasser la figure : c'est
-             * ainsi qu'un géant de 3×3 n'occupant que quatre cases se dit
-             * troué. La déduire des décalages effacerait le trou. */
+            /* Box from the IMAGE, which may exceed the figure: that gap is
+             * what makes it holed. Deducing it would erase the holes. */
             $footprints[$family] = Footprint::boxed($w, $h, $offsets);
         }
 
@@ -247,11 +186,7 @@ final class SceneryFootprintDeriver
     }
 
     /**
-     * Les morceaux présents sur le disque, par famille et par indice.
-     *
-     * C'est ce qui EXISTE, par opposition à ce qui est posé : une famille dont
-     * aucun exemplaire ne figure sur la carte est ici, et c'est justement
-     * celle qu'un animateur veut pouvoir régler.
+     * Pieces present on disk — what EXISTS, as opposed to what is placed.
      *
      * @return array<string, array<int, string>> famille → morceau → chemin web
      */
@@ -286,12 +221,8 @@ final class SceneryFootprintDeriver
     }
 
     /**
-     * Le dossier des décors, ou `null` s'il est absent.
-     *
-     * `DOCUMENT_ROOT` n'existe pas hors du web — console, migration, test. Le
-     * dépôt, lui, est toujours à trois niveaux au-dessus de ce fichier : le
-     * repli garde la même réponse partout, ce qui compte pour un catalogue que
-     * l'éditeur ET la ligne de commande consultent.
+     * Scenery directory, or null when absent. `DOCUMENT_ROOT` is unset outside
+     * the web (console, migration, test), hence the repository-relative fallback.
      */
     private static function foregroundsDir(): ?string
     {
@@ -305,13 +236,8 @@ final class SceneryFootprintDeriver
     }
 
     /**
-     * Les familles dont AUCUN exemplaire n'est complet — découpe indérivable.
-     *
-     * Deux cas sur la production, et ils ne demandent pas la même réponse :
-     * `lac_thetis` dont les suffixes `-04`/`-05` sont deux VARIANTES de lac et
-     * non les moitiés d'une figure, et `triton_statue` qui mélange deux
-     * conventions de nommage dans la même famille. Ni l'un ni l'autre ne se
-     * devine : ils se tranchent.
+     * Families whose copies are all incomplete, so no cut-out can be derived:
+     * they need a human decision rather than a guess.
      *
      * @return array<string, array{pieces: int, groups: int}>
      */
@@ -367,12 +293,6 @@ final class SceneryFootprintDeriver
     }
 
     /**
-     * Les groupes de cases qui se touchent, dans un ensemble.
-     *
-     * Le parcours lui-même vit dans TouchingCells, partagé avec le service qui
-     * retrouve l'objet d'une case : c'était deux fois le même code, à un
-     * critère d'arrêt près.
-     *
      * @param list<array{x: int, y: int, z: int, plan: string, piece: int}> $cells
      * @return list<list<array{x: int, y: int, z: int, plan: string, piece: int}>>
      */
@@ -389,10 +309,8 @@ final class SceneryFootprintDeriver
     }
 
     /**
-     * Un groupe portant TOUS les morceaux, chacun une seule fois.
-     *
-     * C'est la figure complète : celle qui sert de modèle au catalogue. Les
-     * exemplaires tronqués ne peuvent pas la donner, et les agrégats non plus.
+     * A group carrying EVERY piece exactly once — the complete figure that
+     * models the catalogue. Truncated copies and clusters cannot give it.
      *
      * @param list<list<array{piece: int, x: int, y: int}>> $groups
      * @return list<array{piece: int, x: int, y: int}>|null
@@ -411,11 +329,8 @@ final class SceneryFootprintDeriver
     }
 
     /**
-     * Combien d'exemplaires, et combien sont tronqués.
-     *
-     * Un exemplaire tronqué est un groupe isolé à qui il manque des morceaux.
-     * Un AGRÉGAT — plusieurs exemplaires collés — compte pour autant
-     * d'exemplaires que son morceau le plus répété.
+     * How many copies, and how many are truncated. A cluster of touching
+     * copies counts as many copies as its most repeated piece.
      *
      * @param list<list<array{piece: int}>> $groups
      * @return array{0: int, 1: int}

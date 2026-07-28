@@ -1,24 +1,13 @@
 <?php
 /**
- * Enregistre la forme et le passage d'un décor (admin → Cartes).
+ * Save or drop a scenery family's shape (admin → Cartes). CSRF + PRG.
  *
- * Deux gestes, en PRG derrière un jeton CSRF :
+ * The figure arrives serialised as the editor built it:
+ * `{family, w, h, offsets: {piece: [dx, dy]}, blocked: [pieces]}`. Blocking
+ * cells become `block` roles; the rest keep the type's default.
  *
- * - `save`   — enregistre la figure telle qu'elle est réglée à l'écran. Elle
- *   cesse alors d'être devinée : reprendre un décor mal posé sur la carte ne
- *   la changera plus.
- * - `forget` — la retire ; la forme redevient celle que la carte ou l'image
- *   d'ensemble racontent.
- *
- * La figure arrive sérialisée dans un seul champ, telle que l'éditeur l'a
- * construite : `{family, w, h, offsets: {morceau: [dx, dy]}, blocked: [morceaux]}`.
- * Les cases qui barrent le chemin deviennent des rôles `block` ; les autres
- * restent au rôle par défaut du type, ce qui évite d'écrire une évidence
- * autant que de figer un défaut qui pourrait changer.
- *
- * Les deux gestes REPOSENT ensuite l'emprise des exemplaires déjà sur la
- * carte. Sans cela, corriger une figure ne corrigerait que les poses à venir,
- * et l'animateur repartirait convaincu d'avoir agi.
+ * Both gestures re-spread the instances already on the map, otherwise a
+ * correction would only apply to future placements.
  */
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
@@ -28,12 +17,7 @@ use App\Service\CsrfProtectionService;
 use App\Service\Map\EntityCellService;
 use App\Service\Map\EntityTypeFootprintService;
 
-/**
- * Ce que la reprise des exemplaires posés a changé, dit à l'animateur.
- *
- * Corriger une figure sans reposer ce qui est déjà sur la carte laisserait la
- * correction invisible ; le taire laisserait croire qu'elle ne fait rien.
- */
+/** How many placed instances were taken up, said back to the game master. */
 function reapplied(int $count): string
 {
     return $count === 0

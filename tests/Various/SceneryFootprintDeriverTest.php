@@ -8,14 +8,9 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * Reconstruire un objet à partir de ses morceaux posés.
- *
- * Un fort, une pyramide, un géant occupent plusieurs cases, et rien ne le
- * dit : on pose des morceaux nommés `base-00`, `base-01`… que seule leur
- * adjacence relie.
- *
- * Ces cas verrouillent les trois décisions qui font marcher la dérivation,
- * chacune tirée d'un défaut mesuré sur la carte de production.
+ * Deriving scenery cut-outs from the map: the three decisions that make it
+ * work — grouping by touching cells, piece-index uniqueness as the stop rule,
+ * and anchoring on the first piece.
  */
 #[Group('items-golden-master')]
 class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
@@ -81,16 +76,10 @@ class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
         $this->assertSame([0 => [0, 0], 1 => [0, -1]], $f->offsets(), 'décalages relatifs au premier morceau');
     }
 
-    /**
-     * LE piège : deux exemplaires COLLÉS ne font pas un objet de quatre cases.
-     *
-     * La connexité seule les fusionnerait — sur la production, une composante
-     * de 29 cases avale treize géants. Le critère est l'unicité de l'indice de
-     * morceau dans le groupe.
-     */
+    /** Grouping is not plain connectivity; piece-index uniqueness is the stop rule. */
     public function testTwoTouchingCopiesAreTwoObjectsNotOne(): void
     {
-        /* un exemplaire à l'écart : c'est lui qui donne la figure */
+        /* a copy standing apart: that one gives the figure */
         $this->put('gm_borne-00', 0, 1);
         $this->put('gm_borne-01', 0, 0);
         /* deux autres, collés l'un à l'autre */
@@ -108,15 +97,7 @@ class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(0, $derived['truncated'], 'aucun n\'est incomplet');
     }
 
-    /**
-     * Une famille dont TOUS les exemplaires se touchent n'est pas dérivable —
-     * et le dire vaut mieux que deviner.
-     *
-     * Sans un exemplaire à l'écart, rien ne dit où s'arrête l'un et où
-     * commence l'autre : un agrégat de deux bornes de deux cases est
-     * indiscernable d'une borne unique de quatre. La famille part alors dans
-     * la liste à trancher, avec `lac_thetis` et `triton_statue`.
-     */
+    /** A cluster carries every piece several times: it is not a model. */
     public function testAFamilyWhoseCopiesAllTouchIsFlaggedRatherThanGuessed(): void
     {
         $this->put('gm_serree-00', 0, 1);
@@ -130,13 +111,7 @@ class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
         $this->assertArrayHasKey('gm_serree', $deriver->undecidable());
     }
 
-    /**
-     * Une figure TROUÉE est légitime, et son ancre n'est pas le coin.
-     *
-     * Le géant pétrifié occupe 4 cases dans une boîte de 3×3 : s'ancrer au
-     * coin bas-gauche — qui n'est pas posé — donnerait un décalage faux. Cinq
-     * familles de production sont dans ce cas.
-     */
+    /** A holed figure may have no cell at its bottom-left corner. */
     public function testAHoledFigureKeepsItsShapeAndAnchorsOnItsFirstPiece(): void
     {
         $this->put('gm_geant-00', 2, 2);
@@ -158,7 +133,7 @@ class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /** Un exemplaire à qui il manque un morceau est signalé, pas pris pour modèle. */
+    /** A copy missing a piece is reported, not taken as the model. */
     public function testATruncatedCopyIsReportedAndNotUsedAsTheModel(): void
     {
         /* complet */
@@ -179,13 +154,6 @@ class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(1, $derived['truncated']);
     }
 
-    /**
-     * Sans aucun exemplaire complet, la découpe n'est pas dérivable — et on
-     * le dit plutôt que de deviner.
-     *
-     * C'est le cas de `lac_thetis`, dont les suffixes sont deux variantes de
-     * lac et non les moitiés d'une figure.
-     */
     public function testAFamilyWithoutAnyCompleteCopyIsFlagged(): void
     {
         $this->put('gm_lac-04', 0, 0);
@@ -197,7 +165,7 @@ class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
         $this->assertArrayHasKey('gm_lac', $deriver->undecidable());
     }
 
-    /** Un décor d'une seule case n'a pas de découpe — et n'encombre pas le catalogue. */
+    /** A single-cell decor has no cut-out, and does not clutter the catalogue. */
     public function testASingleTileDecorHasNoFootprint(): void
     {
         $this->put('gm_rocher', 3, 3);
@@ -206,15 +174,7 @@ class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
         $this->assertArrayNotHasKey('gm_rocher', $this->deriver()->derive());
     }
 
-    /**
-     * Ce qui EXISTE sur le disque, par opposition à ce qui est posé.
-     *
-     * La page d'administration liste les décors à régler, et une famille dont
-     * aucun exemplaire n'est posé est justement la plus concernée : elle ne
-     * peut pas venir de la carte. Ce cas ne fixe donc pas un contenu — il
-     * dépend des assets du déploiement — mais la FORME de la réponse, dont
-     * l'éditeur dépend pour afficher les images.
-     */
+    /** Pins the SHAPE of the answer, not its content, which depends on deployed assets. */
     public function testDiskPiecesAreGroupedByFamilyAndAddressable(): void
     {
         $onDisk = $this->deriver()->piecesOnDisk();

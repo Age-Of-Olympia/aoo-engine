@@ -1,26 +1,14 @@
 <?php
 /**
- * Forme et passage des décors en plusieurs morceaux (admin → Cartes).
+ * Shape and passability of multi-piece scenery (admin → Cartes).
  *
- * Un fort, une pyramide, un géant sont posés en morceaux de 50 px, et rien
- * dans les données ne disait lesquels vont ensemble ni lesquels barrent le
- * chemin. On sait deviner la forme de deux manières — un exemplaire complet
- * posé sur la carte, ou l'image d'ensemble du décor — mais elles se
- * contredisent : celle de `geant_petrifie` annonce deux cases quand quatre
- * morceaux existent et que la carte en montre une figure de 3×3 trouée.
+ * Each family shows its figure recomposed at map scale; a click marks a cell
+ * as blocking, a drag moves a piece. What is saved here overrides the shape
+ * derived from the map and from the whole-object images.
  *
- * Cette page est l'endroit où un humain tranche, en VOYANT le décor. Chaque
- * famille montre sa figure recomposée à l'échelle de la carte ; on clique une
- * case pour dire si elle barre le chemin, on fait glisser un morceau pour
- * corriger la figure. Ce qu'on enregistre l'emporte ensuite sur la carte et
- * sur l'image.
- *
- * Le dessin de la grille appartient au JavaScript, qui doit de toute façon la
- * redessiner à chaque geste : la faire aussi en PHP donnerait deux dessins à
- * garder d'accord. Sans JavaScript, la carte de la famille montre les morceaux
- * — on ne peut simplement pas les déplacer.
- *
- * Les mutations POSTent vers footprints-save.php (CSRF, PRG).
+ * The grid is drawn by JavaScript, which has to redraw it on every gesture
+ * anyway; without it the card still shows the pieces, just not editable.
+ * Mutations POST to footprints-save.php (CSRF, PRG).
  */
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
@@ -31,11 +19,7 @@ use App\Service\Map\EntityTypeFootprintService;
 use App\Service\Map\Footprint;
 use App\Service\Map\SceneryFootprintDeriver;
 
-/**
- * D'où vient la forme, dit en français plutôt qu'en jargon.
- *
- * @return array{0: string, 1: string, 2: string} libellé, classe, explication
- */
+/** @return array{0: string, 1: string, 2: string} label, css class, tooltip */
 function footprint_origin(string $source): array
 {
     return match ($source) {
@@ -63,16 +47,9 @@ function footprint_origin(string $source): array
 }
 
 /**
- * Une figure de repli, quand aucune source ne sait dire la forme.
- *
- * Les morceaux sont rangés en carré, dans l'ordre de lecture : on montre
- * qu'ils vont ensemble, sans prétendre savoir comment. C'est un point de
- * départ qu'un humain corrige en quelques gestes.
- *
- * En carré et non sur une ligne : douze morceaux alignés faisaient une figure
- * de six cents pixels de large, qui débordait sur la carte voisine et rendait
- * ses cases inatteignables. Le carré est de surcroît la meilleure hypothèse —
- * c'est la disposition qu'emploie l'image d'ensemble d'un décor.
+ * Fallback figure when no source knows the shape: pieces laid in a square,
+ * in reading order — the layout whole-object images already use, and narrow
+ * enough not to overflow its card.
  *
  * @param list<int> $pieces
  */
@@ -100,10 +77,8 @@ $deriver = new SceneryFootprintDeriver();
 $catalogue = $service->catalogue();
 $onDisk = $deriver->piecesOnDisk();
 
-/* Les familles à montrer : celles qui ont plusieurs morceaux sur le disque —
- * un décor d'une seule case n'a pas de figure à régler — plus celles que la
- * carte connaît sans que le disque les porte, qui sont justement les plus
- * suspectes. */
+/* Families worth showing: several pieces on disk, plus those the map knows
+ * about without the disk carrying them. */
 $families = [];
 
 foreach ($onDisk as $family => $pieces) {
@@ -116,7 +91,7 @@ foreach (array_keys($catalogue) as $family) {
     $families[(string) $family] ??= $onDisk[$family] ?? [];
 }
 
-/* Ce qui n'est pas réglé passe devant : c'est le travail qui reste. */
+/* Unsettled families first: that is the work left to do. */
 uksort($families, static function (string $a, string $b) use ($service): int {
     $settled = static fn(string $family): int => $service->sourceOf($family) === 'declared' ? 1 : 0;
 
@@ -212,12 +187,12 @@ ob_start();
             <form method="post" action="footprints-save.php" class="fp-form">
                 <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
                 <input type="hidden" name="type" value="<?= e($name) ?>" />
-                <?php /* La figure ne voyage qu'une fois : l'éditeur lit ce champ,
-                         le réécrit à chaque geste, et c'est lui qui part au POST. */ ?>
+                <?php /* The figure travels once: the editor reads this field,
+                         rewrites it on every gesture, and it is what POSTs. */ ?>
                 <input type="hidden" name="figure" class="fp-figure" value="<?= e($editorJson) ?>" />
 
                 <div class="fp-board">
-                    <?php /* Repli sans JavaScript : les morceaux, sans les gestes. */ ?>
+                    <?php /* No-JavaScript fallback: the pieces, without the gestures. */ ?>
                     <?php foreach (array_keys($figure->offsets()) as $piece): ?>
                         <?php if (isset($pieces[$piece])): ?>
                             <img class="fp-fallback" src="<?= e($pieces[$piece]) ?>" alt="" loading="lazy" />

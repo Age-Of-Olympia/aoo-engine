@@ -3,44 +3,25 @@
 namespace App\Service\Map;
 
 /**
- * Les cases qui SE TOUCHENT : retrouver le groupe auquel une case appartient.
+ * 8-connectivity traversal over map cells, keyed `plan|z|x|y` so a group
+ * never crosses a plan or a level.
  *
- * Deux services en avaient chacun leur copie : celui qui dérive les découpes
- * de décor, qui répartit toute une famille en groupes, et celui qui
- * retrouve l'objet auquel une case appartient. Même double boucle, même file,
- * même dictionnaire de positions — et une seule différence, qui est justement
- * le cœur du sujet : le second REFUSE d'absorber un morceau dont l'indice est
- * déjà pris, parce que c'est là que s'arrête un exemplaire et que commence
- * son voisin.
- *
- * Cette différence est passée en paramètre. Le parcours, lui, n'existe plus
- * qu'ici : un défaut de voisinage ne se corrige plus à deux endroits.
- *
- * # La clé
- *
- * `plan|z|x|y`. Un groupe ne traverse ni les plans ni les étages, et la
- * clé le dit d'elle-même — plutôt que de scoper la requête en amont et
- * d'espérer que l'appelant y ait pensé.
+ * Callers differ only in whether they absorb a given neighbour, which is why
+ * that decision is a parameter and the walk lives here alone.
  */
 final class TouchingCells
 {
-    /**
-     * La clé d'une case, telle que ce parcours l'attend.
-     *
-     * @param array{plan?: string, z?: int|string, x: int|string, y: int|string} $cell
-     */
+    /** @param array{plan?: string, z?: int|string, x: int|string, y: int|string} $cell */
     public static function key(array $cell): string
     {
         return ($cell['plan'] ?? '') . '|' . ($cell['z'] ?? 0) . '|' . $cell['x'] . '|' . $cell['y'];
     }
 
     /**
-     * Tous les groupes d'un ensemble de cases.
-     *
      * @param array<string, array{plan?: string, z?: int|string, x: int|string, y: int|string}> $byKey
      * @param null|callable(array<string, mixed>, array<string, mixed>): bool $accept
-     *        décide d'absorber une case voisine, connaissant ce que le groupe
-     *        contient déjà ; null = tout voisin est absorbé
+     *        absorb this neighbour, knowing what the group already holds;
+     *        null absorbs every neighbour
      * @return list<list<array<string, mixed>>>
      */
     public static function groups(array $byKey, ?callable $accept = null): array
@@ -64,13 +45,10 @@ final class TouchingCells
     }
 
     /**
-     * Le groupe qui contient une case donnée.
-     *
      * @param array<string, array{plan?: string, z?: int|string, x: int|string, y: int|string}> $byKey
      * @param null|callable(array<string, mixed>, array<string, mixed>): bool $accept
-     * @param array<string, true> $seen marqueur partagé quand on parcourt tout
-     *        un ensemble ; passé par référence pour qu'une case ne soit pas
-     *        visitée deux fois
+     * @param array<string, true> $seen shared marker when walking a whole set,
+     *        by reference so a cell is not visited twice
      * @return list<array<string, mixed>>
      */
     public static function groupAround(

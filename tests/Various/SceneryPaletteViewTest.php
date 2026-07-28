@@ -8,19 +8,10 @@ use App\View\Tiled\SceneryPaletteView;
 use PHPUnit\Framework\TestCase;
 
 /**
- * La palette de décor — les deux régressions qu'elle a déjà connues.
- *
- * Toutes deux ont été trouvées par un testeur devant son écran, pas par la
- * suite ; ces cas existent pour que cela n'arrive pas une troisième fois.
- *
- * La PREMIÈRE : la palette groupait d'après les découpes dérivées de la
- * CARTE. Sur une base qui ne porte presque pas de décor, presque rien ne se
- * groupait — le géant n'étant posé nulle part, ses quatre morceaux restaient
- * séparés. Une palette montre ce qu'on peut poser, pas ce qui est posé.
- *
- * La SECONDE : la vignette annonçait « 2×2, 4 cases » et la pose ne mettait
- * qu'un morceau, parce que les deux lisaient des sources différentes. Une
- * infobulle qui ment est pire que pas d'infobulle.
+ * The scenery palette, and the two regressions it already went through:
+ * grouping read from the MAP rather than the files, so nothing grouped on a
+ * sparse database; and a tooltip announcing a shape the placement did not
+ * produce, because the two read different sources.
  */
 class SceneryPaletteViewTest extends TestCase
 {
@@ -33,13 +24,7 @@ class SceneryPaletteViewTest extends TestCase
         );
     }
 
-    /**
-     * Les morceaux d'une famille se groupent, MÊME sans découpe connue.
-     *
-     * C'est le premier défaut : le regroupement vient des fichiers, pas de
-     * la carte. Sans découpe, la vignette le dit et la pose reste morceau par
-     * morceau — mais on voit au moins que ces quatre images vont ensemble.
-     */
+    /** Pieces are laid in a row rather than guessed into a shape. */
     public function testPiecesAreGroupedEvenWithoutAKnownFootprint(): void
     {
         $html = SceneryPaletteView::render(
@@ -57,7 +42,7 @@ class SceneryPaletteViewTest extends TestCase
         $this->assertSame(4, substr_count($html, '<img src='), 'les quatre morceaux y figurent');
     }
 
-    /** Un décor d'une seule case n'est pas un objet : il reste une vignette simple. */
+    /** A single-cell decor is not an object: it stays a plain thumbnail. */
     public function testASingleTileDecorStaysOnItsOwn(): void
     {
         $html = SceneryPaletteView::render($this->pieces('gm_rocher'), []);
@@ -66,13 +51,7 @@ class SceneryPaletteViewTest extends TestCase
         $this->assertStringContainsString('data-name="gm_rocher"', $html);
     }
 
-    /**
-     * Avec une découpe connue, la vignette l'annonce ET la décrit en données.
-     *
-     * C'est le second défaut : `data-figure` est ce que le curseur de
-     * l'éditeur reconstruit à l'échelle de la carte. Si la vignette annonce
-     * une forme, la pose et le curseur doivent montrer la même.
-     */
+    /** The tooltip and the placement must read the same source. */
     public function testAKnownFootprintIsAnnouncedAndDescribed(): void
     {
         $html = SceneryPaletteView::render(
@@ -86,7 +65,7 @@ class SceneryPaletteViewTest extends TestCase
         $this->assertStringContainsString('&quot;w&quot;:2', $html, 'la figure voyage en données');
     }
 
-    /** Une figure trouée est signalée : c'est une forme, pas un défaut. */
+    /** A holed figure is reported: it is a shape, not a defect. */
     public function testAHoledFigureSaysSo(): void
     {
         $html = SceneryPaletteView::render(
@@ -97,16 +76,7 @@ class SceneryPaletteViewTest extends TestCase
         $this->assertStringContainsString('figure trouée', $html);
     }
 
-    /**
-     * Le catalogue lu sur les IMAGES écarte celles qui mentent.
-     *
-     * L'image d'ensemble de `geant_petrifie` annonce 1×2 cases quand quatre
-     * morceaux existent : elle ne montre que le corps. La croire ferait poser
-     * des géants tronqués — on préfère ne pas connaître la figure.
-     *
-     * Le cas s'appuie sur les images du dépôt : il saute si elles manquent
-     * (déploiement sans `img/`).
-     */
+    /** `geant_petrifie`'s whole image shows only the body: four pieces, a 1×2 box. */
     public function testAnImageTooSmallForItsPiecesIsRejected(): void
     {
         $root = dirname(__DIR__, 2) . '/img/foregrounds/';

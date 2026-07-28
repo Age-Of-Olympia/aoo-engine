@@ -7,56 +7,18 @@ use App\Service\RaceService;
 use Doctrine\DBAL\Connection;
 
 /**
- * « Peut-on poser le pas sur cette case ? » — source unique.
+ * Single source for "can a step land on this tile?", and its two neighbours
+ * "can something land here?" and "can something be built here?".
  *
- * La règle vivait jusqu'ici dans `go.php`, en trois morceaux qui se
- * refusaient chacun à leur façon : une requête pour les ressources et les
- * entités, un script inclus (`scripts/map/triggers/forbidden.php`) pour les
- * cases interdites, et dans les deux cas un `alert()` suivi d'un `exit()`.
- * Rien de tout cela n'était appelable ailleurs, donc rien n'était testable —
- * le test étalon du blocage a dû laisser `go.php` de côté pour cette raison.
- *
- * # Bloquer, c'est être vu
- *
- * La règle d'entité s'aligne sur celle du RENDU, et c'est ce qui corrige au
- * passage un défaut hérité de la conversion des murs.
- *
- * `go.php` ne construisait sa sous-requête d'entités qu'à l'intérieur d'un
- * `if ($planJson = json()->decode(...))`. Sur les vingt plans dépourvus de
- * fichier JSON, aucune entité ne bloquait donc le pas : on traversait les
- * murs de `praetorium_save`, `praetorium_dark`, `temple`… Le correctif naïf —
- * sortir la sous-requête du `if` — aurait produit l'inverse : le rendu CACHE
- * les joueurs réels de ces plans, on aurait obtenu des murs invisibles.
- *
- * D'où la règle : **une chose bloque le pas si elle bloque ET si celui qui
- * avance peut la voir.** Les structures font partie du décor et sont donc
- * toujours vues ; les personnages suivent la visibilité du plan et leur mode
- * discret.
- *
- * # Une entité tient plusieurs cases
- *
- * L'occupation se lisait sur `players.coords_id` : une entité, une case. Un
- * bâtiment de 2×2 ne bloquait donc qu'un quart de lui-même, et on lui entrait
- * dedans par trois côtés. `entity_cells` dit toutes les cases qu'une entité
- * tient, et c'est elle qu'on interroge désormais.
- *
- * Le changement est sans effet visible tant que chaque entité n'a qu'une
- * ancre — c'est l'état que L3 a laissé, et c'est ce qui rend ce lot sûr : il
- * ouvre la voie sans rien déplacer. Ce qui change vraiment, c'est qu'une
- * emprise posée sera désormais respectée.
+ * Core rule: a thing blocks the step if it blocks AND the mover can see it.
+ * Structures are scenery and always seen; characters follow the plan's
+ * `player_visibility` and their own hidden mode.
  */
 final class TileOccupancyService
 {
     /**
-     * Ce que le rôle d'une case dit du pas, quand il dit quelque chose.
-     *
-     * `anchor` ne décide rien : c'est la case de référence d'une entité, une
-     * position et non une nature. Elle laisse donc le type trancher, comme
-     * avant que les emprises n'existent — d'où son absence de cette table.
-     *
-     * Les autres rôles priment sur le type, et c'est tout leur intérêt : la
-     * base d'un décor barre le chemin pendant que sa partie haute se traverse,
-     * une porte s'ouvre dans un mur qui, lui, bloque partout ailleurs.
+     * Roles that override the entity type's own passability. Roles absent
+     * here — `anchor`, `part` — leave the type to decide.
      */
     private const ROLE_VERDICTS = [
         'block' => true,
@@ -75,13 +37,11 @@ final class TileOccupancyService
     }
 
     /**
-     * Le motif de refus du pas, ou null si la case est franchissable.
+     * @param int  $moverId who is moving (players id; negative = NPC)
+     * @param bool $charactersVisible plan's `player_visibility`; false when the
+     *             plan has no JSON at all, matching the render rule
      *
-     * @param int      $coordsId  la case visée
-     * @param int      $moverId   qui avance (id players ; négatif = PNJ)
-     * @param bool     $charactersVisible visibilité des personnages sur ce
-     *                 plan — `player_visibility` du JSON, faux quand le plan
-     *                 n'a pas de JSON du tout (mêmes conditions que le rendu)
+     * @return string|null refusal reason, or null when the tile is walkable
      */
     public function stepRefusal(int $coordsId, int $moverId, bool $charactersVisible): ?string
     {
@@ -89,17 +49,11 @@ final class TileOccupancyService
     }
 
     /**
-     * Le même verdict, pour TOUT un champ de vision d'un coup.
-     *
-     * Le damier a besoin de marquer ses cases bloquées — six cent vingt-cinq
-     * pour une vue p=12. Les interroger une par une ferait trois requêtes
-     * chacune ; cette forme en fait trois pour l'ensemble.
-     *
-     * C'est la même règle : stepRefusal() n'est plus qu'un appel à un seul
-     * élément. Deux formes, une vérité.
+     * Same rule over a whole field of view — three queries for the lot,
+     * rather than three per tile. `stepRefusal()` calls it with one element.
      *
      * @param list<int> $coordsIds
-     * @return array<int, string> coords_id => motif, pour les seules cases bloquées
+     * @return array<int, string> coords_id => reason, blocked tiles only
      */
     public function blockedForStep(array $coordsIds, int $moverId, bool $charactersVisible): array
     {
@@ -133,7 +87,7 @@ final class TileOccupancyService
             $verdict = self::ROLE_VERDICTS[(string) $row['role']] ?? null;
 
             if ($verdict === false) {
-                continue; /* la case se traverse, quoi que fasse le type */
+                continue; /* walkable whatever the type says */
             }
 
             if ($verdict === null && in_array((string) $row['race'], $passable, true)) {
@@ -155,26 +109,9 @@ final class TileOccupancyService
     }
 
     /**
-     * Ce que chaque entité occupe parmi les cases visées, case par case.
+     * Which entity holds which of the given tiles, cell by cell.
      *
-     * `entity_cells` dit toutes les cases qu'une entité tient, et non la seule
-     * où son ancre est plantée : un bâtiment de 2×2 ne bloquait jusqu'ici
-     * qu'un quart de lui-même, et on lui entrait dedans par trois côtés.
-     *
-     * # Les deux sources s'ajoutent
-     *
-     * `players.coords_id` reste consulté à côté d'`entity_cells`, et le choix
-     * n'est pas timide. Une entité déplacée sans que `syncAnchor()` soit
-     * appelé garde ses cases à son ancienne position : la retirer de la
-     * seconde source la rendrait traversable là où elle se trouve, ce qui est
-     * la pire façon de découvrir une dérive. En s'ajoutant, les deux sources
-     * ne peuvent que bloquer davantage, jamais moins — la propriété qui rend
-     * ce lot sûr à déployer.
-     *
-     * `entitycells drift` nomme ce qui a échappé ; le jour où elle ne dit plus
-     * rien en production, la seconde branche de l'union s'enlève seule.
-     *
-     * @param string $in liste de coords_id déjà assainis en entiers
+     * @param string $in coords_id list, already cast to integers
      * @return list<array{id: int|string, coords_id: int|string, role: string, race: string, player_type: ?string, invisible: ?int}>
      */
     private function occupations(string $in): array
@@ -187,10 +124,8 @@ final class TileOccupancyService
                JOIN players p ON p.id = occupied.player_id"
         );
 
-        /* Les deux sources décrivent souvent la même paire (entité, case) —
-         * l'ancre y figure des deux côtés. Un rôle explicite l'emporte alors
-         * sur `anchor`, qui ne décide rien : sans quoi une case ouverte dans
-         * un mur se refermerait par la seule grâce de `players.coords_id`. */
+        /* Both sources list the anchor, so the same (entity, tile) pair shows
+         * up twice; an explicit role wins over `anchor`, which decides nothing. */
         $occupations = [];
 
         foreach ($rows as $row) {
@@ -205,13 +140,12 @@ final class TileOccupancyService
     }
 
     /**
-     * « Une entité tient-elle cette case ? » — la définition, à un seul endroit.
+     * "Does an entity hold this tile?" — one definition, shared by the three
+     * verbs. `entity_cells` and `players.coords_id` ADD UP: an entity moved
+     * without `syncAnchor()` keeps stale cells, and dropping either source
+     * would make it walk-through where it actually stands.
      *
-     * Les trois verbes se la posent, et il serait fâcheux qu'ils n'y répondent
-     * pas pareil : on bâtirait dans le corps d'un bâtiment dont on ne peut pas
-     * franchir la façade.
-     *
-     * @param string $in liste de coords_id déjà assainis en entiers
+     * @param string $in coords_id list, already cast to integers
      */
     private static function heldSql(string $in): string
     {
@@ -224,7 +158,7 @@ final class TileOccupancyService
                  WHERE coords_id IN ({$in})";
     }
 
-    /** Une entité — n'importe laquelle, à n'importe quel titre — est-elle là ? */
+    /** Any entity, at any title, on this tile. */
     private function heldByAnEntity(int $coordsId): bool
     {
         return (bool) $this->conn->fetchOne(
@@ -233,17 +167,8 @@ final class TileOccupancyService
     }
 
     /**
-     * La case est-elle VIDE ? — question des atterrissages.
-     *
-     * Ce n'est pas celle du pas. Une téléportation, une esquive, un objet qui
-     * tombe ou une réapparition cherchent une case où RIEN ne se trouve, pas
-     * une case franchissable : on n'atterrit pas sur un téléporteur, même si
-     * on peut le traverser à pied.
-     *
-     * Comportement d'origine conservé au détail près, y compris ses angles :
-     * TOUS les déclencheurs comptent — un `grow` ou un `tp` rend la case
-     * occupée —, et ni la discrétion ni la visibilité de plan n'entrent en
-     * ligne de compte, contrairement au pas.
+     * Landing question: is the tile EMPTY? Stricter than the step — every
+     * trigger counts, and neither hidden mode nor plan visibility applies.
      */
     public function isVacant(int $coordsId): bool
     {
@@ -262,17 +187,11 @@ final class TileOccupancyService
     }
 
     /**
-     * Le motif de refus de CONSTRUCTION, ou null si la case est constructible.
+     * Building question: counts elements (water, lava, blood) unless the
+     * catalogue declares them buildable over, and ignores triggers — so a
+     * teleporter can be built on but not landed on. Legacy behaviour, kept.
      *
-     * Troisième question, troisième réponse : elle compte les éléments —
-     * l'eau, la lave, le sang — sauf ceux que le catalogue déclare
-     * constructibles par-dessus, et elle ignore les déclencheurs, que les deux
-     * autres verbes comptent.
-     *
-     * Cette dernière divergence n'a pas été décidée, elle tombe d'une absence
-     * de filtre : on peut bâtir sur un téléporteur, mais pas y atterrir. Elle
-     * est reprise telle quelle ici — l'aligner est un changement de règle, pas
-     * une extraction.
+     * @return string|null refusal reason, or null when buildable
      */
     public function buildRefusal(int $coordsId): ?string
     {
@@ -294,12 +213,7 @@ final class TileOccupancyService
         return null;
     }
 
-    /**
-     * Toute ressource bloque, sans distinction d'état : un filon épuisé barre
-     * le passage comme un filon plein. Comportement d'origine, conservé tel
-     * quel — le changer relève de l'arbitrage « les plantes sont
-     * franchissables », pas de cette extraction.
-     */
+    /** Any resource blocks, exhausted or not. Legacy behaviour, kept. */
     private function hasResource(int $coordsId): bool
     {
         return (bool) $this->conn->fetchOne(
@@ -308,13 +222,7 @@ final class TileOccupancyService
         );
     }
 
-    /**
-     * Les personnages sont-ils visibles sur ce plan ?
-     *
-     * Reprend mot pour mot la condition du rendu (`Classes/View.php`) : pas de
-     * JSON de plan, ou `player_visibility` explicitement à faux, et les autres
-     * personnages disparaissent — donc ne bloquent plus.
-     */
+    /** Same condition as the render (`Classes/View.php`): hidden characters do not block. */
     public static function charactersVisibleOn(?object $planJson): bool
     {
         if (!$planJson) {

@@ -7,34 +7,14 @@ use Doctrine\DBAL\Connection;
 use RuntimeException;
 
 /**
- * Les découpes DÉCLARÉES, et leur place au-dessus des découpes devinées.
+ * Cut-outs DECLARED from the admin, stacked on top of the guessed ones.
  *
- * Trois sources savent dire la forme d'un décor multi-cases, et elles ne se
- * valent pas :
+ * Precedence: declaration, then map, then whole-object image. A declaration
+ * has to be able to correct what the map shows, otherwise a badly placed
+ * scenery object would be its own authority.
  *
- * 1. **La déclaration** — cette table, éditée depuis l'administration. Elle
- *    l'emporte sur tout : c'est une décision humaine, prise une fois.
- * 2. **La carte**, quand un exemplaire complet y figure. Elle montre la
- *    figure telle qu'elle est posée, mais ignore ce qui ne l'a jamais été —
- *    53 familles sur 130 sont dans ce cas.
- * 3. **Les images d'ensemble**, divisées par 50. Utile, mais faillible :
- *    celle de `geant_petrifie` annonce 1×2 cases quand quatre morceaux
- *    existent et que la carte en montre une figure de 3×3 trouée.
- *
- * L'ordre importe. Une déclaration doit pouvoir CORRIGER ce que la carte
- * montre — sinon on ne pourrait jamais réparer un décor mal posé, puisque
- * c'est lui qui ferait autorité.
- *
- * # La clé est le nom
- *
- * Une découpe décrit une famille de morceaux, et ces familles ne sont pas
- * encore des types du catalogue : elles le deviendront à la conversion des
- * décors en entités. Sur les 24 découpes connues, 23 n'ont aucune ligne dans
- * `races` — s'attacher à `races.id` rendrait la déclaration impossible
- * précisément là où elle sert.
- *
- * Le nom est de toute façon la clé de jointure du monde : `map_foregrounds`,
- * `map_resources` et `players.race` s'y réfèrent déjà.
+ * Keyed by family NAME, not `races.id`: most scenery families have no row in
+ * `races` yet, and the name is already the world's join key.
  */
 final class EntityTypeFootprintService
 {
@@ -55,11 +35,7 @@ final class EntityTypeFootprintService
         return $this->conn ??= EntityManagerFactory::getEntityManager()->getConnection();
     }
 
-    /**
-     * Les découpes déclarées, par nom de type.
-     *
-     * @return array<string, Footprint>
-     */
+    /** @return array<string, Footprint> declared cut-outs, by family name */
     public function declared(): array
     {
         if ($this->declaredCache !== null) {
@@ -79,9 +55,8 @@ final class EntityTypeFootprintService
                     self::decodeRoles($row['roles'])
                 );
             } catch (\InvalidArgumentException) {
-                /* Déclaration illisible ou incohérente : on la laisse aux
-                 * sources devinées plutôt que de faire tomber la page qui la
-                 * liste — c'est justement là qu'on vient la réparer. */
+                /* Unreadable declaration: fall back to the guessed sources
+                 * rather than break the page where it gets repaired. */
                 continue;
             }
         }
@@ -90,11 +65,8 @@ final class EntityTypeFootprintService
     }
 
     /**
-     * Le catalogue complet : déclarations d'abord, puis carte, puis images.
-     *
-     * C'est lui que l'éditeur consulte. Un type déclaré ne consulte plus
-     * jamais les autres sources — y compris quand la carte le contredit,
-     * ce qui est précisément le cas qu'on veut pouvoir corriger.
+     * Every cut-out the editors and placement read: declarations override
+     * whatever the map and the images say.
      *
      * @return array<string, Footprint>
      */
@@ -111,11 +83,7 @@ final class EntityTypeFootprintService
         return $catalogue;
     }
 
-    /**
-     * D'où vient la découpe d'un type — pour que l'administration le dise.
-     *
-     * @return 'declared'|'map'|'image'|'none'
-     */
+    /** @return 'declared'|'map'|'image'|'none' which source the cut-out comes from */
     public function sourceOf(string $name): string
     {
         if (isset($this->declared()[$name])) {
@@ -135,14 +103,13 @@ final class EntityTypeFootprintService
     }
 
     /**
-     * Déclare — ou corrige — la découpe d'un type.
+     * Declare — or correct — a type's cut-out.
      *
-     * @param array<int, array{0:int,1:int}> $offsets décalages par morceau,
-     *        relatifs au premier ; ce sont eux qui autorisent les figures
-     *        trouées, une boîte w×h ne disant pas quelles cases sont occupées
-     * @param array<int, string> $roles rôle par morceau ; absent = celui du type
+     * @param array<int, array{0:int,1:int}> $offsets per piece; a w×h box alone
+     *        cannot say which cells are occupied, so holed figures need these
+     * @param array<int, string> $roles per piece; absent means the type decides
      *
-     * @throws RuntimeException découpe vide, ou dimensions hors bornes
+     * @throws RuntimeException on an empty cut-out or out-of-range dimensions
      */
     public function declare(string $typeName, int $w, int $h, array $offsets, array $roles = []): void
     {
@@ -175,7 +142,7 @@ final class EntityTypeFootprintService
         $this->declaredCache = null;
     }
 
-    /** Retire une déclaration : le type retombe sur ce que la carte ou l'image disent. */
+    /** Drop a declaration: the type falls back to map or image. */
     public function forget(string $typeName): void
     {
         $this->conn()->executeStatement(

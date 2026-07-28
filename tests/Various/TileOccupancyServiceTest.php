@@ -8,16 +8,11 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * La règle du PAS, enfin testable.
+ * The STEP rule, extracted from `go.php` where it lived in three pieces that
+ * each refused with an `alert()` and an `exit()`, so none was testable.
  *
- * Elle vivait dans `go.php`, en trois morceaux qui se refusaient chacun par
- * un `alert()` suivi d'un `exit()` — le test étalon du blocage a dû laisser
- * ce prédicat de côté pour cette raison, alors que c'est le plus important
- * des cinq.
- *
- * Ces cas fixent la règle extraite, y compris le point où elle CORRIGE le
- * comportement d'origine : une entité bloquait le pas seulement quand le plan
- * possédait un fichier JSON.
+ * Includes the point where extraction CORRECTED the original: an entity used
+ * to block only on plans that had a JSON file.
  */
 #[Group('items-golden-master')]
 class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
@@ -35,8 +30,8 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
             );
         }
 
-        /* Les cases posées à la main par ces cas : la contrainte sur `coords`
-         * est en RESTRICT, une case encore référencée bloquerait le ménage. */
+        /* Cells written by hand here; the `coords` constraint is RESTRICT, so
+         * a still-referenced cell would block the cleanup. */
         $link->executeStatement(
             'DELETE ec FROM entity_cells ec JOIN coords c ON c.id = ec.coords_id WHERE c.plan = ?',
             [self::PLAN]
@@ -47,14 +42,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $link->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
     }
 
-    /**
-     * Donne à une entité une case de plus, avec le rôle voulu.
-     *
-     * `EntityCellService` ne sait poser que l'ancre — c'est tout ce que L3
-     * demandait. Les emprises viendront de la conversion des décors ; d'ici
-     * là, ces cas les écrivent à la main pour fixer ce que l'occupation doit
-     * en faire.
-     */
+    /** EntityCellService only lays anchors; these cases write the rest by hand. */
     private function giveCell(int $entityId, int $x, int $y, string $role): int
     {
         $coordsId = $this->coordsId($x, $y);
@@ -97,7 +85,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame('Quelque chose obstrue ton chemin.', $this->service()->stepRefusal($id, 1, true));
     }
 
-    /** Une ressource ÉPUISÉE barre le passage comme une autre — d'origine. */
+    /** An EXHAUSTED resource blocks like any other. Legacy behaviour. */
     public function testAnExhaustedResourceStillBlocks(): void
     {
         $id = $this->coordsId(2, 0);
@@ -120,7 +108,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame('Impossible de se rendre à cet endroit.', $this->service()->stepRefusal($id, 1, true));
     }
 
-    /** Un autre déclencheur — un téléporteur — ne barre rien. */
+    /** Another trigger — a teleporter — blocks nothing. */
     public function testANonForbiddenTriggerDoesNotBlock(): void
     {
         $id = $this->coordsId(4, 0);
@@ -132,13 +120,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertNull($this->service()->stepRefusal($id, 1, true));
     }
 
-    /**
-     * LE correctif : une structure bloque même quand le plan n'a pas de JSON.
-     *
-     * `go.php` ne construisait sa sous-requête d'entités que dans le
-     * `if ($planJson = …)`. Sur les vingt plans sans fichier, on traversait
-     * donc les murs — 2 819 entités concernées en production.
-     */
+    /** A structure is scenery: it blocks on plans with no JSON too. */
     public function testAStructureBlocksEvenWhenCharactersAreHidden(): void
     {
         $this->requireBuildingsOrSkip();
@@ -155,11 +137,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /**
-     * Un personnage, lui, suit la visibilité : invisible, il ne barre rien.
-     * C'est l'autre moitié de « bloquer, c'est être vu » — et ce qui interdit
-     * le correctif naïf, qui aurait produit des murs invisibles.
-     */
+    /** The other half of "blocking is being seen". */
     public function testACharacterOnlyBlocksWhenVisible(): void
     {
         $other = $this->createRealPlayer('GmObstacle');
@@ -176,7 +154,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /** Le mode discret retire aussi du passage. */
+    /** Hidden mode also removes someone from the way. */
     public function testAnInvisibleCharacterDoesNotBlock(): void
     {
         $other = $this->createRealPlayer('GmDiscret');
@@ -190,7 +168,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertNull($this->service()->stepRefusal($id, 1, true));
     }
 
-    /** On ne se bloque pas soi-même. */
+    /** One does not block oneself. */
     public function testTheMoverDoesNotBlockHimself(): void
     {
         $me = $this->createRealPlayer('GmMoi');
@@ -200,15 +178,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertNull($this->service()->stepRefusal($id, (int) $me->id, true));
     }
 
-    /**
-     * Les trois verbes ne répondent PAS à la même question, et c'est voulu.
-     *
-     * Un déclencheur — ici un téléporteur — rend la case impropre à
-     * l'atterrissage, laisse passer le pas, et n'empêche pas de bâtir. Cette
-     * dernière asymétrie n'a été décidée par personne : elle tombe d'une
-     * absence de filtre dans `place()`. Elle est épinglée telle quelle,
-     * l'aligner étant un changement de règle et non une extraction.
-     */
+    /** A teleporter cannot be landed on, can be stepped over, and can be built on — a frozen legacy divergence. */
     public function testTheThreeVerbsAnswerDifferentQuestions(): void
     {
         $id = $this->coordsId(9, 0);
@@ -224,14 +194,6 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertNull($service->buildRefusal($id), 'et on peut y bâtir — divergence gelée');
     }
 
-    /**
-     * La forme en lot répond exactement comme la forme unitaire.
-     *
-     * C'est ce que le damier interroge pour marquer ses cases — six cent
-     * vingt-cinq d'un coup. Si les deux formes divergeaient, l'écran
-     * annoncerait un refus que `go.php` n'appliquerait pas, ou l'inverse :
-     * précisément le défaut que la déduction en JavaScript entretenait.
-     */
     public function testTheBatchFormAgreesWithTheSingleOne(): void
     {
         $free = $this->coordsId(11, 0);
@@ -272,7 +234,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame([], $this->service()->blockedForStep([], 1, true));
     }
 
-    /** Une case vraiment vide l'est pour les trois. */
+    /** A genuinely empty tile is empty for all three verbs. */
     public function testAnEmptyTileSatisfiesTheThreeVerbs(): void
     {
         $id = $this->coordsId(10, 0);
@@ -284,13 +246,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
     }
 
     /** La visibilité de plan se lit comme au rendu : pas de JSON = cachés. */
-    /**
-     * LE point du lot : une entité barre TOUTES les cases qu'elle tient.
-     *
-     * L'occupation se lisait sur `players.coords_id` — une entité, une case.
-     * Un bâtiment de 2×2 ne bloquait donc qu'un quart de lui-même, et on lui
-     * entrait dedans par trois côtés.
-     */
+    /** A 2×2 building used to block a quarter of itself. */
     public function testAnEntityBlocksEveryTileItHolds(): void
     {
         $this->requireBuildingsOrSkip();
@@ -304,14 +260,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /**
-     * Le rôle de la case prime sur la nature du type.
-     *
-     * C'est ce qui permet à la base d'un décor de barrer le chemin pendant que
-     * sa partie haute se traverse, et à une porte de s'ouvrir dans un mur qui
-     * bloque partout ailleurs. Sans cela, une emprise ne saurait dire qu'une
-     * seule chose de toutes ses cases.
-     */
+    /** A door opens in a wall that blocks everywhere else. */
     public function testAnOpenCellIsWalkableThroughABlockingType(): void
     {
         $this->requireBuildingsOrSkip();
@@ -325,25 +274,15 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /**
-     * Et réciproquement : une case marquée bloquante barre le chemin même
-     * quand son type se traverse. C'est ce que la page d'administration des
-     * décors enregistre — un décor est franchissable par nature, sauf là où
-     * un animateur a dit le contraire.
-     */
     public function testABlockingCellStopsAPassableType(): void
     {
         $this->requireBuildingsOrSkip();
         $decor = $this->placeStructure('mur_pierre', 24, 0, self::PLAN);
 
-        /* Aucune structure franchissable n'est seedée, et ce cas ne peut pas
-         * s'en remettre au contenu du catalogue sous peine d'être ignoré
-         * partout. On rend donc le type franchissable le temps du cas, et on
-         * le repose.
-         *
-         * Par le domaine et non en SQL : Doctrine garde la race en mémoire, et
-         * une écriture brute lui échapperait — le service continuerait de lire
-         * l'ancienne valeur. */
+        /* No passable structure is seeded, and this case must not depend on
+         * catalogue content or it would be skipped everywhere. Through the
+         * domain rather than SQL: Doctrine holds the race in memory, so a raw
+         * write would escape it. */
         $entityManager = \App\Entity\EntityManagerFactory::getEntityManager();
         $race = $entityManager->getRepository(\App\Entity\Race::class)->findOneBy(['name' => 'mur_pierre']);
 
@@ -372,13 +311,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         }
     }
 
-    /**
-     * Les trois verbes tiennent la même emprise.
-     *
-     * Chacun demandait à `players.coords_id` si une entité était là. On
-     * pouvait donc bâtir dans le corps d'un bâtiment dont on ne pouvait pas
-     * franchir la façade — trois réponses pour une même question.
-     */
+    /** One could build inside a building whose front could not be crossed. */
     public function testTheThreeVerbsAgreeOnTheWholeFootprint(): void
     {
         $this->requireBuildingsOrSkip();
@@ -396,13 +329,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /**
-     * Le rôle ne perce pas la discrétion : bloquer, c'est être vu.
-     *
-     * Un rôle `block` prime sur la NATURE du type, pas sur la visibilité —
-     * sinon une emprise trahirait un personnage discret, et la règle que ce
-     * service porte depuis son extraction ne tiendrait plus.
-     */
+    /** A role overrides the TYPE, never the visibility: blocking is being seen. */
     public function testABlockingCellDoesNotBetrayAHiddenCharacter(): void
     {
         $ghost = $this->createRealPlayer('GmOmbre');
@@ -419,14 +346,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /**
-     * L'ancre reste lue sur `players.coords_id`, même sans case.
-     *
-     * Une entité déplacée sans que `syncAnchor()` soit appelé garde ses cases
-     * à son ancienne position. Les deux sources s'ajoutent précisément pour
-     * cela : une dérive ne peut pas rendre un mur traversable, elle peut au
-     * pire le faire bloquer à deux endroits — ce qui se voit et se répare.
-     */
+    /** Both sources add up, so drift can never make a wall walk-through. */
     public function testADriftedEntityStillBlocksWhereItStands(): void
     {
         $this->requireBuildingsOrSkip();

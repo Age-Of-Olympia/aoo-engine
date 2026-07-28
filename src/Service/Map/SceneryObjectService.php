@@ -6,29 +6,11 @@ use App\Entity\EntityManagerFactory;
 use Doctrine\DBAL\Connection;
 
 /**
- * Poser et retirer un décor multi-cases D'UN SEUL GESTE.
+ * Place and remove a multi-cell scenery object in one gesture.
  *
- * L'éditeur travaille aujourd'hui case par case. Poser un fort demande de
- * placer ses quatorze morceaux à la main ; en effacer un n'en retire qu'un,
- * et laisse treize orphelins derrière. C'est ainsi qu'on a fabriqué la
- * trentaine de fragments incomplets que la carte porte.
- *
- * Ce service donne à l'éditeur les deux gestes qui manquaient. Il s'appuie
- * sur les découpes dérivées de la carte (SceneryFootprintDeriver) et travaille
- * sur `map_foregrounds` tel quel : il n'attend pas que les décors soient
- * devenus des entités.
- *
- * # Poser
- *
- * L'animateur choisit un morceau dans la palette — n'importe lequel — et
- * clique. La figure entière se pose, alignée de sorte que **le morceau choisi
- * tombe sur la case cliquée**. C'est le geste qu'il fait déjà ; seul le
- * résultat change.
- *
- * # Effacer
- *
- * Cliquer sur n'importe quelle case d'un objet le retire en entier. Retirer
- * la tête d'un géant et lui laisser les pieds n'a jamais été un geste voulu.
+ * Works on `map_foregrounds` as it stands, so it does not wait for scenery to
+ * become entities. Placement drops the whole figure with the picked piece on
+ * the clicked tile; removal takes the whole object from any of its cells.
  */
 final class SceneryObjectService
 {
@@ -42,13 +24,10 @@ final class SceneryObjectService
     }
 
     /**
-     * Les cases d'un décor à poser, pour un morceau choisi et une case visée.
+     * Cells to write for a placement. Empty when the family has no known
+     * cut-out — a shape must never be guessed.
      *
-     * Rend une liste `nom => (x, y)` prête à écrire. Vide si la famille n'a
-     * pas de découpe connue : un décor d'une seule case se pose comme avant,
-     * et une famille indérivable ne doit surtout pas être devinée.
-     *
-     * @return array<string, array{0:int,1:int}> nom du morceau => (x, y)
+     * @return array<string, array{0:int,1:int}> piece name => (x, y)
      */
     public function cellsToPlace(string $pickedName, int $x, int $y): array
     {
@@ -62,8 +41,7 @@ final class SceneryObjectService
 
         $cells = [];
 
-        /* Le morceau choisi tombe là où l'animateur a cliqué ; la figure sait
-         * placer les autres autour de lui. */
+        /* The picked piece lands on the clicked tile; the figure places the rest. */
         foreach ($footprint->cellsAround($pickedPiece, $x, $y) as $piece => $position) {
             $cells[$this->pieceName($pickedName, $family, $piece)] = $position;
         }
@@ -72,15 +50,9 @@ final class SceneryObjectService
     }
 
     /**
-     * Les identifiants de case de l'objet auquel appartient une case donnée.
-     *
-     * L'objet est le groupe de cases qui se touchent autour d'elle,
-     * **restreint à un seul exemplaire** : deux décors collés sont adjacents, et les
-     * confondre ferait disparaître le voisin. La restriction se fait en
-     * s'arrêtant au premier morceau déjà rencontré — c'est le même critère
-     * d'unicité qui sert à compter les exemplaires.
-     *
-     * Rend au minimum la case demandée : effacer ne doit jamais ne rien faire.
+     * Cells of the object a given cell belongs to: the touching group around
+     * it, stopped at the first already-seen piece index so a neighbouring
+     * copy is not swallowed. Always returns at least the given cell.
      *
      * @return list<int>
      */
@@ -97,8 +69,7 @@ final class SceneryObjectService
             return [$coordsId];
         }
 
-        /* Toutes les cases de la famille sur ce plan et ce niveau : l'objet
-         * ne s'étend pas au-delà. */
+        /* Every cell of the family on this plan and level: an object stops there. */
         $rows = $this->conn->fetchAllAssociative(
             "SELECT f.name, f.coords_id, c.x, c.y
                FROM map_foregrounds f
@@ -134,10 +105,8 @@ final class SceneryObjectService
             return [$coordsId];
         }
 
-        /* Le critère d'arrêt : un morceau dont l'indice est DÉJÀ dans le
-         * groupe appartient à l'exemplaire voisin, pas à celui-ci. Deux décors
-         * collés se touchent ; sans cette règle, retirer l'un emporterait
-         * l'autre. */
+        /* Stop rule: a piece index already in the group belongs to the
+         * neighbouring copy, not this one. */
         $group = TouchingCells::groupAround(
             $byKey,
             $start,
@@ -159,18 +128,14 @@ final class SceneryObjectService
     }
 
     /**
-     * L'état d'un objet de décor vu depuis l'une de ses cases.
-     *
-     * C'est ce que l'éditeur montre : de quelle figure il s'agit, ce qui est
-     * posé, et ce qui MANQUE. Sur la carte de production, 38 exemplaires sont
-     * incomplets — 21 géants sans leurs pieds — et rien ne le disait à
-     * l'animateur qui passait dessus.
+     * What the editor shows about an object: which figure, what is placed,
+     * and what is MISSING.
      *
      * @return array{
      *     family: string, footprint: Footprint,
      *     present: list<int>, missing: array<int, array{0:int,1:int}>,
      *     coords_ids: list<int>
-     * }|null null quand la case ne porte pas de décor à découpe connue
+     * }|null null when the cell carries no scenery with a known cut-out
      */
     public function inspect(int $coordsId, string $name): ?array
     {
@@ -206,8 +171,7 @@ final class SceneryObjectService
 
             $present[$piece] = true;
 
-            /* La position du premier morceau POSÉ sert de repère pour situer
-             * les manquants : la figure est décrite en décalages relatifs. */
+            /* The lowest PLACED piece is the reference for locating the missing ones. */
             if ($anchorPos === null || $piece < $anchorPos['piece']) {
                 $anchorPos = ['piece' => $piece, 'x' => (int) $row['x'], 'y' => (int) $row['y']];
             }
@@ -216,8 +180,6 @@ final class SceneryObjectService
         $missing = [];
 
         if ($anchorPos !== null) {
-            /* La figure vue depuis le premier morceau POSÉ : c'est lui le
-             * repère, puisque celui d'origine peut justement manquer. */
             foreach ($footprint->cellsAround($anchorPos['piece'], $anchorPos['x'], $anchorPos['y']) as $piece => $position) {
                 if (!isset($present[$piece])) {
                     $missing[$piece] = $position;
@@ -238,13 +200,9 @@ final class SceneryObjectService
     }
 
     /**
-     * Repose les morceaux manquants d'un objet incomplet.
+     * Put back the missing pieces of a truncated object.
      *
-     * C'est le geste qui manque aux animateurs face aux 38 exemplaires
-     * tronqués : la figure complète fait foi, autant pouvoir la compléter
-     * d'un clic plutôt que de replacer les morceaux un à un.
-     *
-     * @return int nombre de morceaux reposés
+     * @return int pieces placed
      */
     public function complete(int $coordsId, string $name): int
     {
@@ -282,11 +240,8 @@ final class SceneryObjectService
     }
 
     /**
-     * Le nom d'un morceau, dans la convention de celui que l'animateur a pris.
-     *
-     * Trois conventions coexistent — `-NN`, `_NN`, et le chiffre collé — et
-     * le catalogue ne les uniformise pas : les fichiers d'images, eux, sont
-     * nommés comme ils sont. On recopie donc la forme du morceau choisi.
+     * Piece name in the same convention as the picked one — `-NN`, `_NN` or a
+     * bare digit all coexist on disk, so the picked name's shape is copied.
      */
     private function pieceName(string $pickedName, string $family, int $piece): string
     {

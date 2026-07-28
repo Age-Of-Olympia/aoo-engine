@@ -6,38 +6,21 @@ use App\Service\Map\Footprint;
 use App\Service\Map\SceneryFootprintDeriver;
 
 /**
- * La palette de décor, par OBJET et non par morceau.
+ * Scenery palette grouped by OBJECT rather than by piece.
  *
- * Elle listait 715 vignettes — un morceau par vignette. On y voyait
- * `geant_petrifie-00`, `-01`, `-02`, `-03` sans savoir qu'ils font UN géant,
- * et il fallait connaître la découpe pour reconstituer la figure à la main.
+ * Grouping comes from the FILE names, not from what the map carries: a
+ * palette shows what can be placed, including families placed nowhere yet.
+ * The shape comes from `EntityTypeFootprintService::catalogue()`, the same
+ * source placement uses, so a tooltip announcing 2×2 places a 2×2.
  *
- * # Ce qui commande le regroupement : les FICHIERS
- *
- * Une palette montre ce qu'on PEUT poser, pas ce qui se trouve déjà posé.
- * Un premier jet groupait d'après les découpes dérivées de la carte : sur une
- * base de développement qui ne porte que trente-sept décors, cinq familles se
- * regroupaient et les sept cent dix autres vignettes restaient éparses. Le
- * géant n'étant posé nulle part, ses quatre morceaux restaient séparés — la
- * palette n'avait pas changé pour qui la regardait.
- *
- * Le regroupement vient donc des noms de fichiers, qui disent ce qui existe.
- *
- * # Et la FORME vient du catalogue, la même que pour la pose
- *
- * `EntityTypeFootprintService::catalogue()` la résout une fois pour toutes —
- * les découpes déclarées, puis la carte, puis les images d'ensemble. La
- * palette et la pose lisent la MÊME source : une infobulle qui annonce 2×2
- * doit poser un 2×2, sinon elle ment.
- *
- * Sans découpe connue, on ne devine pas : la vignette aligne les morceaux
- * pour montrer qu'ils vont ensemble, et la pose reste morceau par morceau.
+ * Without a known cut-out nothing is guessed: pieces are laid in a row to
+ * show they belong together, and placement stays piece by piece.
  */
 final class SceneryPaletteView
 {
     /**
-     * @param list<array{name: string, url: string}> $pieces les vignettes brutes
-     * @param array<string, Footprint> $footprints le catalogue des découpes
+     * @param list<array{name: string, url: string}> $pieces raw thumbnails
+     * @param array<string, Footprint> $footprints cut-out catalogue
      */
     public static function render(array $pieces, array $footprints): string
     {
@@ -54,7 +37,7 @@ final class SceneryPaletteView
         $html = '<div class="scenery-palette">';
 
         foreach ($families as $family => $object) {
-            /* Un seul morceau : ce n'est pas un objet découpé, c'est un décor. */
+            /* One piece: not a cut-out object, just a decor tile. */
             if (count($object) < 2) {
                 $loners[] = reset($object);
                 continue;
@@ -75,7 +58,7 @@ final class SceneryPaletteView
 
 
     /**
-     * Une vignette d'objet : la figure recomposée depuis ses morceaux.
+     * One object thumbnail: the figure recomposed from its pieces.
      *
      * @param array<int, array{name: string, url: string}> $object
      */
@@ -102,8 +85,7 @@ final class SceneryPaletteView
             . ' data-name="' . htmlspecialchars($anchorName, ENT_QUOTES) . '"'
             . ' title="' . htmlspecialchars($title, ENT_QUOTES) . '"';
 
-        /* Sans découpe connue, la vignette aligne les morceaux : on voit
-         * qu'ils vont ensemble, sans prétendre savoir comment. */
+        /* No known cut-out: lay the pieces in a row rather than guess. */
         $offsets = $footprint?->offsets() ?? self::inARow($object);
         $w = $footprint?->width() ?? count($object);
         $h = $footprint?->height() ?? 1;
@@ -138,14 +120,11 @@ final class SceneryPaletteView
         $minX = $xs === [] ? 0 : min($xs);
         $maxY = $ys === [] ? 0 : max($ys);
 
-        /* Vignette bornée : un praetorium de 4×4 ne doit pas occuper la
-         * palette à lui seul. */
+        /* Bounded thumbnail: a 4×4 praetorium must not fill the palette. */
         $cell = $w > 3 || $h > 3 ? 16 : 25;
 
-        /* La figure, en données : le curseur de l'éditeur la reconstruit à
-         * l'échelle de la carte (50 px la case) pour qu'on VOIE ce qu'on
-         * s'apprête à poser. Une vignette de palette est trop petite, et le
-         * curseur ne montrait qu'un morceau — on posait à l'aveugle. */
+        /* The figure as data: the editor cursor rebuilds it at map scale
+         * (50 px a cell) so the whole object is visible before placing. */
         $figure = ['w' => $w, 'h' => $h, 'cells' => []];
 
         $pieces = '';

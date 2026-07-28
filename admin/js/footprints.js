@@ -1,28 +1,17 @@
 /*
- * Décors en plusieurs morceaux : régler la forme et le passage à la souris.
+ * Editing a scenery family's shape and passability with the mouse.
  *
- * La page servait un tableau de chiffres — une grille de numéros de morceaux,
- * un champ JSON pour les rôles. On ne voyait pas le décor, et « déclarer » ne
- * voulait rien dire. Ici on voit la figure à l'échelle de la carte, on clique
- * une case pour la faire barrer le chemin, on fait glisser un morceau pour
- * corriger la figure.
- *
- * L'état part du champ caché `figure`, y revient après chaque geste, et c'est
- * lui que le POST emporte : le formulaire reste ordinaire, sans requête
- * asynchrone ni seconde copie de la figure à garder d'accord.
+ * State starts from the hidden `figure` field, goes back into it after every
+ * gesture, and is what the form POSTs — no asynchronous request, no second
+ * copy of the figure to keep in step.
  */
 (function () {
     'use strict';
 
     var CELL = 50;
 
-    /**
-     * Le damier d'une carte, redessiné après chaque geste.
-     *
-     * Redessiner entièrement plutôt que retoucher : une figure fait au plus
-     * quelques dizaines de cases, et un seul chemin de rendu ne peut pas
-     * diverger de l'état.
-     */
+    /* Redrawn whole on every gesture: a figure is a few dozen cells at most,
+     * and a single render path cannot drift from the state. */
     function Board(root, form) {
         this.root = root;
         this.form = form;
@@ -30,14 +19,12 @@
         this.state = JSON.parse(this.field.value);
         this.dragging = null;
 
-        /* Les décalages arrivent indexés par morceau, en coordonnées de jeu
-         * (y vers le haut). La grille, elle, se lit de haut en bas : on garde
-         * les décalages tels quels et on convertit au dessin, pour que ce qui
-         * est enregistré reste ce que le reste du moteur attend. */
+        /* Offsets stay in game coordinates (y upwards); the conversion to
+         * screen rows happens at draw time only. */
         this.render();
     }
 
-    /** Les bornes de la figure, d'où se déduit la taille du damier. */
+    /* Figure bounds, from which the board size follows. */
     Board.prototype.bounds = function () {
         var xs = [];
         var ys = [];
@@ -62,8 +49,7 @@
     Board.prototype.render = function () {
         var bounds = this.bounds();
 
-        /* Une rangée de cases vides tout autour : sans elle, on ne pourrait
-         * jamais agrandir une figure, faute d'endroit où déposer un morceau. */
+        /* One empty row all around, so there is somewhere to drop a piece. */
         var minX = bounds.minX - 1;
         var maxX = bounds.maxX + 1;
         var minY = bounds.minY - 1;
@@ -82,7 +68,7 @@
         this.root.textContent = '';
         this.root.style.gridTemplateColumns = 'repeat(' + w + ', ' + CELL + 'px)';
 
-        /* De haut en bas : y décroît quand on descend. */
+        /* Top to bottom: y decreases going down. */
         for (var y = maxY; y >= minY; y--) {
             for (var x = minX; x <= maxX; x++) {
                 this.root.appendChild(this.cell(x, y, byCell[x + ',' + y]));
@@ -92,7 +78,7 @@
         this.sync();
     };
 
-    /** Une case : vide, ou porteuse d'un morceau. */
+    /* A cell: empty, or carrying a piece. */
     Board.prototype.cell = function (x, y, piece) {
         var cell = document.createElement(piece === undefined ? 'div' : 'button');
 
@@ -136,7 +122,7 @@
         return cell;
     };
 
-    /** Cliquer une case : elle barre le chemin, ou plus. */
+    /* Clicking a cell toggles whether it blocks the way. */
     Board.prototype.onToggle = function (piece, event) {
         event.preventDefault();
 
@@ -157,7 +143,7 @@
 
         if (event.dataTransfer) {
             event.dataTransfer.effectAllowed = 'move';
-            /* Firefox n'émet pas de `drop` sans charge utile. */
+            /* Firefox emits no `drop` without a payload. */
             event.dataTransfer.setData('text/plain', String(piece));
         }
     };
@@ -180,7 +166,7 @@
         event.currentTarget.classList.remove('fp-cell--drop');
     };
 
-    /** Déposer un morceau sur une case vide : la figure change de forme. */
+    /* Dropping a piece on an empty cell reshapes the figure. */
     Board.prototype.onDrop = function (event) {
         event.preventDefault();
         event.currentTarget.classList.remove('fp-cell--drop');
@@ -198,13 +184,8 @@
         this.render();
     };
 
-    /**
-     * Recale la figure sur son premier morceau et remplit le champ caché.
-     *
-     * Les décalages sont relatifs au premier morceau — c'est la convention du
-     * catalogue, et la pose s'en sert pour faire tomber le morceau choisi sur
-     * la case cliquée. Après un déplacement, ils ne le sont plus : on ramène.
-     */
+    /* Re-anchor on the first piece — the catalogue convention — and write
+     * the hidden field. A drag breaks that relation, so it is restored here. */
     Board.prototype.sync = function () {
         var pieces = Object.keys(this.state.offsets).map(Number).sort(function (a, b) {
             return a - b;
@@ -249,7 +230,7 @@
         }
     };
 
-    /** Filtre et recherche : une liste de cent trente décors se traverse mal. */
+    /* Filter and search: a list of a hundred and thirty families reads badly. */
     function wireFilters(cards) {
         var search = document.getElementById('fp-search');
         var buttons = Array.prototype.slice.call(document.querySelectorAll('.fp-filters [data-filter]'));

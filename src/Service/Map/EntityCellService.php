@@ -6,47 +6,15 @@ use App\Entity\EntityManagerFactory;
 use Doctrine\DBAL\Connection;
 
 /**
- * L'emprise d'une entité — les cases qu'elle occupe.
+ * Sole writer of `entity_cells` — the cells an entity occupies.
  *
- * `players.coords_id` ne sait dire qu'une case. Un fort, une pyramide, un
- * géant en occupent plusieurs, et le contournement d'aujourd'hui consiste à
- * poser autant de morceaux indépendants que rien ne relie : impossible de
- * déplacer, détruire ou interroger l'objet d'un bloc.
- *
- * `entity_cells` porte l'occupation réelle. Ce service en est le seul
- * écrivain.
- *
- * # Où on en est
- *
- * L3 a posé la table et l'a remplie à l'identique : une case par entité,
- * celle de `players.coords_id`, en rôle d'ancre. L'occupation la lit
- * désormais — une entité barre le pas sur toutes les cases qu'elle tient.
- *
- * Ce lot-ci ferme la boucle par l'autre bout : `syncFootprint()` pose
- * l'emprise entière depuis la découpe déclarée du type. Sans lui, un
- * animateur pouvait dessiner une figure de 3×3 dans la page d'administration
- * sans que rien ne l'écrive — la découpe restait un dessin.
- *
- * Les deux méthodes se partagent le travail sans se marcher dessus :
- * `syncAnchor()` ne touche QUE l'ancre, `syncFootprint()` que le reste.
- *
- * # Pourquoi l'ancre reste dans `players`
- *
- * `players.coords_id` est lue par 337 sites du dépôt. La supprimer d'un coup
- * était exclu ; elle reste donc la référence, et `entity_cells` la double.
- * Le jour où les lecteurs auront migré, c'est elle qui s'en ira.
+ * Every entity has exactly one `anchor` cell, mirroring `players.coords_id`;
+ * a footprint adds the others around it. `syncAnchor()` owns the anchor,
+ * `syncFootprint()` owns the rest, so neither undoes the other.
  */
 final class EntityCellService
 {
-    /**
-     * Le rôle d'une case d'emprise sur laquelle personne ne s'est prononcé.
-     *
-     * Elle appartient à l'entité, et ne dit rien de plus : c'est le type qui
-     * tranche le passage, comme pour l'ancre. `block`, `cover`, `door` et
-     * `open` sont les avis explicites d'un humain, posés depuis la page des
-     * décors ; `part` est leur absence, et il fallait pouvoir l'écrire sans
-     * figer une réponse.
-     */
+    /** Cell with no role of its own: the entity type decides whether it blocks. */
     public const ROLE_PART = 'part';
 
     private Connection $conn;
@@ -57,18 +25,9 @@ final class EntityCellService
     }
 
     /**
-     * Pose ou déplace l'ancre d'une entité sur la case que `players` déclare.
+     * Move the anchor onto the cell `players` declares. Idempotent.
      *
-     * Idempotent : appelable après chaque écriture de `players.coords_id`
-     * sans se demander si l'ancre existait déjà.
-     *
-     * Le refus est explicite plutôt que deviné : `players.coords_id` est NOT
-     * NULL et porte une clé étrangère vers `coords`, donc une entité POSÉE a
-     * toujours une case. Reste l'entité qui n'existe pas (ou plus) — on retire
-     * alors son ancre au lieu de la laisser pointer dans le vide.
-     *
-     * @return bool vrai si l'ancre est en place, faux si l'entité est
-     *              introuvable — le refus est silencieux et normal
+     * @return bool false when the entity no longer exists; its anchor is then dropped
      */
     public function syncAnchor(int $playerId): bool
     {
@@ -89,10 +48,8 @@ final class EntityCellService
             return false;
         }
 
-        /* L'ancienne ancre s'en va d'abord : la clé primaire est
-         * (player_id, coords_id), donc une entité qui a bougé en aurait DEUX
-         * si on se contentait d'insérer. On ne touche pas aux autres cases —
-         * ce sont les morceaux de l'emprise, que L4 posera. */
+        /* Primary key is (player_id, coords_id): inserting alone would leave
+         * a second anchor behind whenever the entity moved. */
         $this->conn->executeStatement(
             "DELETE FROM entity_cells WHERE player_id = ? AND role = 'anchor' AND coords_id <> ?",
             [$playerId, (int) $row['coords_id']]
@@ -118,25 +75,11 @@ final class EntityCellService
     }
 
     /**
-     * Pose l'emprise d'une entité depuis la découpe déclarée de son type.
+     * Spread an entity over its type's declared cut-out, around its anchor.
      *
-     * L'ancre reste où `syncAnchor()` l'a mise ; cette méthode ne s'occupe que
-     * des AUTRES cases, celles que la découpe ajoute autour. Les deux se
-     * partagent ainsi la table sans jamais se contredire.
+     * Idempotent: cells the cut-out dropped are released, new ones added.
      *
-     * Idempotent : les cases qui ne figurent plus dans la découpe s'en vont,
-     * les nouvelles arrivent, les inchangées restent. C'est ce qui permet de
-     * reposer une emprise après qu'un animateur a corrigé la figure.
-     *
-     * # Le rôle d'une case sans opinion
-     *
-     * Une découpe ne dit un rôle que pour les morceaux qu'un humain a
-     * marqués. Les autres prennent `part` : la case appartient à l'emprise et
-     * ne prétend rien de plus, donc c'est le type qui tranche — exactement ce
-     * que fait déjà l'ancre. Résoudre le rôle à l'écriture aurait figé une
-     * réponse qui change quand `races.blocks_passage` change.
-     *
-     * @return int le nombre de cases posées autour de l'ancre
+     * @return int cells laid around the anchor
      */
     public function syncFootprint(int $entityId, ?EntityTypeFootprintService $footprints = null): int
     {
@@ -163,10 +106,7 @@ final class EntityCellService
             return 0;
         }
 
-        /* L'ancre est le premier morceau de la figure — c'est la convention
-         * des décalages, et `syncAnchor()` l'a posée à `players.coords_id`.
-         * On demande donc la figure VUE DEPUIS lui : les autres morceaux
-         * tombent alors d'eux-mêmes, sans arithmétique ici. */
+        /* Offsets are relative to the first piece, and the anchor sits on it. */
         $anchorPiece = array_key_first($footprint->offsets());
         $keep = [(int) $anchor['coords_id']];
         $placed = 0;
@@ -174,8 +114,7 @@ final class EntityCellService
         $around = $footprint->cellsAround($anchorPiece, (int) $anchor['x'], (int) $anchor['y']);
 
         foreach ($around as $piece => [$x, $y]) {
-            /* L'ancre est déjà posée, et lui réécrire son rôle romprait
-             * l'invariant « une ancre par entité ». */
+            /* Already laid by syncAnchor(), and it must keep the anchor role. */
             if ($piece === $anchorPiece) {
                 continue;
             }
@@ -212,23 +151,17 @@ final class EntityCellService
     }
 
     /**
-     * Repose l'emprise de tous les exemplaires posés d'un type.
+     * Re-spread every placed instance of a type after its cut-out changed.
      *
-     * Corriger une figure dans la page d'administration ne servirait à rien si
-     * les exemplaires déjà posés gardaient l'ancienne : c'est le geste qui
-     * rend la correction visible.
-     *
-     * @return int le nombre d'exemplaires repris
+     * @return int instances taken up
      */
     public function reapplyForType(string $typeName): int
     {
         $footprints = new EntityTypeFootprintService($this->conn);
         $footprint = $footprints->catalogue()[$typeName] ?? null;
 
-        /* Un type qui retombe à une seule case n'a rien à reposer : il a des
-         * cases à RENDRE. Les rendre d'un seul ordre plutôt qu'une entité à la
-         * fois — `mur_pierre_bleue` compte 99 exemplaires en local, et un
-         * décor courant en aligne des centaines en production. */
+        /* Back to a single cell: nothing to spread, only cells to release —
+         * in one statement rather than one per instance. */
         if ($footprint === null || $footprint->isSingleCell()) {
             return (int) $this->conn->executeStatement(
                 "DELETE ec FROM entity_cells ec
@@ -252,12 +185,9 @@ final class EntityCellService
     }
 
     /**
-     * Retire les cases d'une emprise que la découpe ne réclame plus.
+     * Drop spread cells the cut-out no longer claims. Never the anchor.
      *
-     * L'ancre n'est jamais du lot : elle appartient à `syncAnchor()`, et la
-     * retirer ici la ferait disparaître à chaque découpe rétrécie.
-     *
-     * @param list<int> $keep les cases à conserver
+     * @param list<int> $keep
      */
     private function forgetSpread(int $entityId, array $keep): void
     {
@@ -272,11 +202,8 @@ final class EntityCellService
     }
 
     /**
-     * Retire toute l'emprise d'une entité.
-     *
-     * La clé étrangère `ON DELETE CASCADE` s'en charge quand la ligne
-     * `players` disparaît ; cette méthode sert aux cas où l'entité survit
-     * mais quitte le monde (mise en réserve, dépose).
+     * Drop every cell of an entity that leaves the board but survives
+     * (stored away, picked up). A deleted `players` row cascades on its own.
      */
     public function removeFor(int $playerId): int
     {
@@ -286,11 +213,7 @@ final class EntityCellService
         );
     }
 
-    /**
-     * Les cases d'une entité, ancre comprise.
-     *
-     * @return list<array{coords_id: int, plan: string, z: int, x: int, y: int, piece: int, role: string}>
-     */
+    /** @return list<array{coords_id: int, plan: string, z: int, x: int, y: int, piece: int, role: string}> anchor included */
     public function cellsOf(int $playerId): array
     {
         /** @var list<array{coords_id: int, plan: string, z: int, x: int, y: int, piece: int, role: string}> */
@@ -302,12 +225,8 @@ final class EntityCellService
     }
 
     /**
-     * Ce qui occupe une case — plusieurs entités le peuvent.
-     *
-     * L'empilement sert aux animateurs et aux administrateurs, et la
-     * superposition décor + déclencheur est l'usage NORMAL du monde : sur les
-     * 1 746 téléporteurs de production, ce qui les signale au joueur est un
-     * décor posé par-dessus (9 escaliers, 9 échelles, 14 portes des enfers).
+     * Who holds a cell. Several entities may: scenery stacked over a trigger
+     * is the normal way the world marks a teleporter.
      *
      * @return list<array{player_id: int, piece: int, role: string}>
      */
@@ -321,11 +240,8 @@ final class EntityCellService
     }
 
     /**
-     * Les entités dont l'ancre ne correspond plus à `players.coords_id`.
-     *
-     * Tant que rien ne lit l'emprise, une dérive ne casse rien — mais elle
-     * ferait démarrer L4 d'une base fausse. C'est ce que la commande
-     * `entity-cells` de la console interroge et répare.
+     * Entities whose anchor no longer matches `players.coords_id`. Reported
+     * and repaired by the `entity-cells` console command.
      *
      * @return list<array{player_id: int, expected: int, actual: ?int}>
      */
@@ -342,11 +258,7 @@ final class EntityCellService
         );
     }
 
-    /**
-     * Remet toutes les ancres dérivées d'aplomb.
-     *
-     * @return int nombre d'entités réparées
-     */
+    /** @return int entities whose anchor was put back in place */
     public function reconcile(): int
     {
         $repaired = 0;

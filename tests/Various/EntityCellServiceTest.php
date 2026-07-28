@@ -8,31 +8,18 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * L'emprise : les cases qu'une entité occupe, et comment elles s'y posent.
+ * Emprise: the cells an entity occupies, and how they are laid.
  *
- * L3 a posé la table et l'a remplie à l'identique de l'existant — une case
- * par entité, celle de `players.coords_id`, en rôle d'ancre. L'occupation la
- * lit désormais, et ce lot-ci la remplit vraiment : `syncFootprint()` étend
- * l'entité sur toute la découpe déclarée de son type.
- *
- * Deux familles de cas, donc.
- *
- * L'invariant d'abord, tant qu'il est simple à énoncer : toute entité posée a
- * exactement UNE ancre, à `players.coords_id`, et une emprise ne la lui
- * reprend pas. C'est sur elle que tout le reste s'appuie.
- *
- * La tenue de la table ensuite. Une table mal tenue ment sans bruit :
- * `syncAnchor()` est appelé derrière chaque écriture de `players.coords_id`,
- * `drift()` dit ce qui a échappé, et reposer une figure rétrécie rend les
- * cases abandonnées — sans quoi une emprise ne ferait que grandir, et
- * corriger une erreur en ajouterait une.
+ * Two families of case. The invariant — every placed entity has exactly one
+ * anchor, at `players.coords_id`, and a footprint never takes it away — and
+ * the upkeep, since a badly kept table lies without a sound.
  */
 #[Group('items-golden-master')]
 class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
 {
     private const PLAN = 'plan_test_emprise';
 
-    /** @var list<string> les types dont un cas a déclaré la découpe */
+    /** @var list<string> types a case declared a cut-out for */
     private array $declaredTypes = [];
 
     protected function tearDown(): void
@@ -45,9 +32,8 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
 
         $this->declaredTypes = [];
 
-        /* Les cases partent avec les entités (ON DELETE CASCADE), mais le
-         * ménage des coords vient après : la contrainte sur coords est en
-         * RESTRICT, une case encore référencée bloquerait la suppression. */
+        /* Cells go with their entities (ON DELETE CASCADE), but the coords
+         * cleanup comes after, and that constraint is RESTRICT. */
         $link->executeStatement(
             'DELETE ec FROM entity_cells ec JOIN coords c ON c.id = ec.coords_id WHERE c.plan = ?',
             [self::PLAN]
@@ -70,7 +56,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         return new EntityCellService();
     }
 
-    /** Une entité posée a une ancre, à la case que `players` déclare. */
+    /** A placed entity has an anchor, on the cell `players` declares. */
     public function testAPlacedEntityGetsItsAnchor(): void
     {
         $player = $this->createRealPlayer('GmEmprise');
@@ -86,12 +72,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(self::PLAN, $cells[0]['plan'], 'les colonnes chaudes sont recopiées');
     }
 
-    /**
-     * L'ancre SUIT le pas — elle ne s'ajoute pas.
-     *
-     * La clé primaire étant (player_id, coords_id), se contenter d'insérer
-     * laisserait deux ancres derrière chaque déplacement.
-     */
+    /** The primary key is (player_id, coords_id): inserting alone would leave two. */
     public function testTheAnchorFollowsAndDoesNotAccumulate(): void
     {
         $player = $this->createRealPlayer('GmMarcheur');
@@ -110,7 +91,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         }
     }
 
-    /** Rappeler la synchronisation ne change rien : elle est idempotente. */
+    /** Calling the sync twice changes nothing: it is idempotent. */
     public function testSyncingTwiceChangesNothing(): void
     {
         $player = $this->createRealPlayer('GmIdem');
@@ -124,13 +105,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertCount(1, $service->cellsOf((int) $player->id));
     }
 
-    /**
-     * Plusieurs entités peuvent occuper la MÊME case, et c'est voulu.
-     *
-     * L'empilement sert aux animateurs et aux administrateurs. Une clé
-     * primaire sur `coords_id` seul l'aurait interdit — et aurait cassé la
-     * superposition décor + déclencheur, qui est l'usage normal du monde.
-     */
+    /** Scenery stacked over a trigger is the normal way the world marks a teleporter. */
     public function testTwoEntitiesMayShareOneTile(): void
     {
         $one = $this->createRealPlayer('GmEmpile1');
@@ -147,14 +122,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertContains((int) $two->id, array_map('intval', $occupants));
     }
 
-    /**
-     * Une entité a TOUJOURS une case — le schéma l'impose.
-     *
-     * `players.coords_id` est NOT NULL et porte une clé étrangère vers
-     * `coords` : la détacher est impossible, et `syncAnchor()` n'a donc pas à
-     * gérer une entité posée nulle part. Le cas épinglé ici est l'autre, le
-     * seul atteignable : une entité qui n'existe pas.
-     */
+    /** A placed entity always has a cell; only a missing entity is reachable here. */
     public function testSyncingAnUnknownEntityRefusesInsteadOfGuessing(): void
     {
         $absent = -999123;
@@ -163,13 +131,6 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame([], $this->service()->cellsOf($absent));
     }
 
-    /**
-     * La dérive se voit, et se répare.
-     *
-     * C'est le filet de ce lot : tant que rien ne lit l'emprise, une ancre
-     * perdue ne casse rien à l'écran — elle ferait juste démarrer L4 d'une
-     * carte fausse.
-     */
     public function testDriftIsVisibleAndRepairable(): void
     {
         $player = $this->createRealPlayer('GmDerive');
@@ -177,7 +138,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$id, $player->id]);
         $this->service()->syncAnchor((int) $player->id);
 
-        /* Une écriture qui aurait oublié d'appeler le service */
+        /* A write that forgot to call the service */
         $elsewhere = $this->coordsId(8, 0);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$elsewhere, $player->id]);
 
@@ -194,17 +155,14 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
     /**
      * L'emprise s'en va avec l'entité, et la case ne s'en va pas sous elle.
      *
-     * Les deux règles sont dans le schéma plutôt que dans du code : une
-     * entité supprimée emporte ses cases (CASCADE), et une case encore
-     * occupée refuse de disparaître (RESTRICT) — sans quoi on obtiendrait
-     * des emprises pointant dans le vide.
+     * Both rules live in the schema, not in code: a deleted entity takes its
+     * cells (CASCADE), an occupied cell refuses to vanish (RESTRICT).
      *
-     * Vérifié sur le schéma et non par une suppression : retirer une ligne
-     * `players` demande de démonter au préalable une dizaine de tables
-     * satellites, ce qui n'éprouverait que MariaDB.
+     * Asserted on the schema rather than by deleting, which would only
+     * exercise MariaDB.
      */
     /**
-     * Déclare une découpe pour un type, et la retire au démontage.
+     * Declare a cut-out for a type, dropped on teardown.
      *
      * @param array<int, array{0:int,1:int}> $offsets
      * @param array<int, string> $roles
@@ -216,13 +174,6 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
             ->declare($type, $w, $h, $offsets, $roles);
     }
 
-    /**
-     * L'emprise se pose depuis la découpe du type.
-     *
-     * Sans cela, un animateur pouvait dessiner une figure de 3×3 dans la page
-     * d'administration sans que rien ne l'écrive : la découpe restait un
-     * dessin, et l'occupation ne voyait qu'une case.
-     */
     public function testAFootprintSpreadsTheEntityOverItsCells(): void
     {
         $this->requireBuildingsOrSkip();
@@ -243,7 +194,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(['40,39', '40,40', '41,39', '41,40'], $held);
     }
 
-    /** L'ancre garde son rôle : une entité n'en a jamais deux. */
+    /** The anchor keeps its role: an entity never has two. */
     public function testTheAnchorKeepsItsRoleWithinAFootprint(): void
     {
         $this->requireBuildingsOrSkip();
@@ -258,13 +209,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(1, $roles[\App\Service\Map\EntityCellService::ROLE_PART] ?? 0);
     }
 
-    /**
-     * Un morceau marqué garde son rôle ; les autres n'en prennent aucun.
-     *
-     * `part` est l'absence d'avis : c'est le type qui tranche le passage,
-     * comme pour l'ancre. Résoudre le rôle à l'écriture aurait figé une
-     * réponse qui change avec `races.blocks_passage`.
-     */
+    /** `part` is the absence of an opinion: the type decides passability. */
     public function testADeclaredRoleSurvivesWhileTheRestStaysUndecided(): void
     {
         $this->requireBuildingsOrSkip();
@@ -290,13 +235,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(\App\Service\Map\EntityCellService::ROLE_PART, $byCell['46,44']);
     }
 
-    /**
-     * Reposer une figure rétrécie retire les cases devenues inutiles.
-     *
-     * C'est ce qui rend une correction visible : sans cela l'emprise ne
-     * ferait que grandir, et un animateur qui rectifie une erreur en
-     * ajouterait une.
-     */
+    /** Otherwise an emprise could only grow, and a correction would add an error. */
     public function testShrinkingAFootprintReleasesTheCellsItDropped(): void
     {
         $this->requireBuildingsOrSkip();
@@ -312,7 +251,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertCount(2, $this->service()->cellsOf($wall), 'la case abandonnée est rendue');
     }
 
-    /** Un type sans découpe ne tient qu'une case, comme avant. */
+    /** A type without a cut-out holds a single cell, as before. */
     public function testATypeWithoutAFootprintKeepsASingleCell(): void
     {
         $this->requireBuildingsOrSkip();
@@ -322,7 +261,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertCount(1, $this->service()->cellsOf($wall));
     }
 
-    /** Corriger une figure reprend les exemplaires déjà sur la carte. */
+    /** Correcting a figure takes up the copies already on the map. */
     public function testCorrectingAFootprintTakesUpThePlacedCopies(): void
     {
         $this->requireBuildingsOrSkip();
