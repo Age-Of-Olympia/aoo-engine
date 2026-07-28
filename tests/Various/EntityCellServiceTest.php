@@ -10,9 +10,10 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 /**
  * Emprise: the cells an entity occupies, and how they are laid.
  *
- * Two families of case. The invariant — every placed entity has exactly one
- * anchor, at `players.coords_id`, and a footprint never takes it away — and
- * the upkeep, since a badly kept table lies without a sound.
+ * One writer lays them all, from the entity's origin and its type's cut-out.
+ * These cases pin that a move carries the whole figure, that a shrunk cut-out
+ * releases what it dropped, and that drift is visible and repairable — a badly
+ * kept table lies without a sound.
  */
 #[Group('items-golden-master')]
 class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
@@ -56,19 +57,19 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         return new EntityCellService();
     }
 
-    /** A placed entity has an anchor, on the cell `players` declares. */
+    /** A placed entity holds the cell `players` declares. */
     public function testAPlacedEntityGetsItsAnchor(): void
     {
         $player = $this->createRealPlayer('GmEmprise');
         $id = $this->coordsId(0, 0);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$id, $player->id]);
 
-        $this->service()->syncAnchor((int) $player->id);
+        $this->service()->syncCells((int) $player->id);
 
         $cells = $this->service()->cellsOf((int) $player->id);
         $this->assertCount(1, $cells);
         $this->assertSame($id, (int) $cells[0]['coords_id']);
-        $this->assertSame('anchor', $cells[0]['role']);
+        $this->assertSame(EntityCellService::ROLE_PART, $cells[0]['role']);
         $this->assertSame(self::PLAN, $cells[0]['plan'], 'les colonnes chaudes sont recopiées');
     }
 
@@ -81,10 +82,10 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         foreach ([[0, 1], [0, 2], [3, 3]] as [$x, $y]) {
             $id = $this->coordsId($x, $y);
             $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$id, $player->id]);
-            $service->syncAnchor((int) $player->id);
+            $service->syncCells((int) $player->id);
 
             $cells = $service->cellsOf((int) $player->id);
-            $this->assertCount(1, $cells, 'une seule ancre après un pas en ('. $x .','. $y .')');
+            $this->assertCount(1, $cells, 'one cell only after a step to ('. $x .','. $y .')');
             $this->assertSame($id, (int) $cells[0]['coords_id']);
             $this->assertSame($x, (int) $cells[0]['x']);
             $this->assertSame($y, (int) $cells[0]['y']);
@@ -99,8 +100,8 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$id, $player->id]);
 
         $service = $this->service();
-        $service->syncAnchor((int) $player->id);
-        $service->syncAnchor((int) $player->id);
+        $service->syncCells((int) $player->id);
+        $service->syncCells((int) $player->id);
 
         $this->assertCount(1, $service->cellsOf((int) $player->id));
     }
@@ -114,7 +115,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
 
         foreach ([$one, $two] as $p) {
             $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$id, $p->id]);
-            $this->service()->syncAnchor((int) $p->id);
+            $this->service()->syncCells((int) $p->id);
         }
 
         $occupants = array_column($this->service()->occupantsOf($id), 'player_id');
@@ -127,7 +128,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
     {
         $absent = -999123;
 
-        $this->assertFalse($this->service()->syncAnchor($absent), 'le refus est explicite');
+        $this->assertSame(0, $this->service()->syncCells($absent), 'le refus est explicite');
         $this->assertSame([], $this->service()->cellsOf($absent));
     }
 
@@ -136,7 +137,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $player = $this->createRealPlayer('GmDerive');
         $id = $this->coordsId(7, 0);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$id, $player->id]);
-        $this->service()->syncAnchor((int) $player->id);
+        $this->service()->syncCells((int) $player->id);
 
         /* A write that forgot to call the service */
         $elsewhere = $this->coordsId(8, 0);
@@ -183,7 +184,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
             0 => [0, 0], 1 => [1, 0], 2 => [0, -1], 3 => [1, -1],
         ]);
 
-        $this->assertSame(3, $this->service()->syncFootprint($wall), 'trois cases autour de l\'ancre');
+        $this->assertSame(4, $this->service()->syncCells($wall), 'the whole figure, origin included');
 
         $held = array_map(
             static fn(array $cell): string => $cell['x'] . ',' . $cell['y'],
@@ -194,19 +195,18 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(['40,39', '40,40', '41,39', '41,40'], $held);
     }
 
-    /** The anchor keeps its role: an entity never has two. */
+    /** Without a declared role, every cell is plain `part`. */
     public function testTheAnchorKeepsItsRoleWithinAFootprint(): void
     {
         $this->requireBuildingsOrSkip();
         $wall = $this->placeStructure('mur_pierre', 42, 42, self::PLAN);
 
         $this->declareFootprint('mur_pierre', 2, 1, [0 => [0, 0], 1 => [1, 0]]);
-        $this->service()->syncFootprint($wall);
+        $this->service()->syncCells($wall);
 
         $roles = array_count_values(array_column($this->service()->cellsOf($wall), 'role'));
 
-        $this->assertSame(1, $roles['anchor'] ?? 0, 'une ancre, et une seule');
-        $this->assertSame(1, $roles[\App\Service\Map\EntityCellService::ROLE_PART] ?? 0);
+        $this->assertSame(2, $roles[EntityCellService::ROLE_PART] ?? 0, 'both cells, no special one');
     }
 
     /** `part` is the absence of an opinion: the type decides passability. */
@@ -223,7 +223,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
             [1 => 'door']
         );
 
-        $this->service()->syncFootprint($wall);
+        $this->service()->syncCells($wall);
 
         $byCell = [];
 
@@ -232,7 +232,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         }
 
         $this->assertSame('door', $byCell['45,44'], 'le morceau marqué garde son rôle');
-        $this->assertSame(\App\Service\Map\EntityCellService::ROLE_PART, $byCell['46,44']);
+        $this->assertSame(EntityCellService::ROLE_PART, $byCell['46,44']);
     }
 
     /** Otherwise an emprise could only grow, and a correction would add an error. */
@@ -242,11 +242,11 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $wall = $this->placeStructure('mur_pierre', 46, 46, self::PLAN);
 
         $this->declareFootprint('mur_pierre', 3, 1, [0 => [0, 0], 1 => [1, 0], 2 => [2, 0]]);
-        $this->service()->syncFootprint($wall);
+        $this->service()->syncCells($wall);
         $this->assertCount(3, $this->service()->cellsOf($wall));
 
         $this->declareFootprint('mur_pierre', 2, 1, [0 => [0, 0], 1 => [1, 0]]);
-        $this->service()->syncFootprint($wall);
+        $this->service()->syncCells($wall);
 
         $this->assertCount(2, $this->service()->cellsOf($wall), 'la case abandonnée est rendue');
     }
@@ -257,7 +257,7 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $this->requireBuildingsOrSkip();
         $wall = $this->placeStructure('mur_pierre', 48, 48, self::PLAN);
 
-        $this->assertSame(0, $this->service()->syncFootprint($wall));
+        $this->assertSame(1, $this->service()->syncCells($wall));
         $this->assertCount(1, $this->service()->cellsOf($wall));
     }
 

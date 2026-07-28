@@ -99,7 +99,7 @@ final class Version20260728170000_SceneryBecomesEntities extends AbstractMigrati
                 ]
             );
 
-            foreach ($cells as $index => $cell) {
+            foreach ($cells as $cell) {
                 $this->connection->executeStatement(
                     'INSERT INTO entity_cells (player_id, coords_id, plan, z, x, y, piece, role)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -111,7 +111,7 @@ final class Version20260728170000_SceneryBecomesEntities extends AbstractMigrati
                         $cell['x'],
                         $cell['y'],
                         $cell['piece'],
-                        $index === 0 ? 'anchor' : $this->roleAt((int) $cell['coords_id']),
+                        $this->roleAt((int) $cell['coords_id']),
                     ]
                 );
 

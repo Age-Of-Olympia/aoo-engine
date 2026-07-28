@@ -8,9 +8,9 @@ use Doctrine\DBAL\Connection;
 /**
  * Sole writer of `entity_cells` — the cells an entity occupies.
  *
- * Every entity has exactly one `anchor` cell, mirroring `players.coords_id`;
- * a footprint adds the others around it. `syncAnchor()` owns the anchor,
- * `syncFootprint()` owns the rest, so neither undoes the other.
+ * One method lays them all: the entity's origin is `players.coords_id`, and
+ * its type's cut-out says which further cells it holds. Cells the cut-out no
+ * longer claims are dropped in the same pass.
  */
 final class EntityCellService
 {
@@ -25,65 +25,16 @@ final class EntityCellService
     }
 
     /**
-     * Move the anchor onto the cell `players` declares. Idempotent.
+     * Lay every cell an entity occupies, from its origin and its cut-out.
      *
-     * @return bool false when the entity no longer exists; its anchor is then dropped
+     * Idempotent: call it after any write to `players.coords_id`, or after a
+     * cut-out changed, without asking what was there before.
+     *
+     * @return int cells laid; 0 when the entity is gone, and its cells with it
      */
-    public function syncAnchor(int $playerId): bool
+    public function syncCells(int $entityId, ?EntityTypeFootprintService $footprints = null): int
     {
-        $row = $this->conn->fetchAssociative(
-            'SELECT p.coords_id, co.plan, co.z, co.x, co.y
-               FROM players p
-               JOIN coords co ON co.id = p.coords_id
-              WHERE p.id = ? AND p.coords_id > 0',
-            [$playerId]
-        );
-
-        if ($row === false) {
-            $this->conn->executeStatement(
-                "DELETE FROM entity_cells WHERE player_id = ? AND role = 'anchor'",
-                [$playerId]
-            );
-
-            return false;
-        }
-
-        /* Primary key is (player_id, coords_id): inserting alone would leave
-         * a second anchor behind whenever the entity moved. */
-        $this->conn->executeStatement(
-            "DELETE FROM entity_cells WHERE player_id = ? AND role = 'anchor' AND coords_id <> ?",
-            [$playerId, (int) $row['coords_id']]
-        );
-
-        $this->conn->executeStatement(
-            "INSERT INTO entity_cells (player_id, coords_id, plan, z, x, y, piece, role)
-             VALUES (:p, :c, :plan, :z, :x, :y, 0, 'anchor')
-             ON DUPLICATE KEY UPDATE
-                 plan = VALUES(plan), z = VALUES(z), x = VALUES(x), y = VALUES(y),
-                 role = 'anchor'",
-            [
-                'p'    => $playerId,
-                'c'    => (int) $row['coords_id'],
-                'plan' => (string) $row['plan'],
-                'z'    => (int) $row['z'],
-                'x'    => (int) $row['x'],
-                'y'    => (int) $row['y'],
-            ]
-        );
-
-        return true;
-    }
-
-    /**
-     * Spread an entity over its type's declared cut-out, around its anchor.
-     *
-     * Idempotent: cells the cut-out dropped are released, new ones added.
-     *
-     * @return int cells laid around the anchor
-     */
-    public function syncFootprint(int $entityId, ?EntityTypeFootprintService $footprints = null): int
-    {
-        $anchor = $this->conn->fetchAssociative(
+        $origin = $this->conn->fetchAssociative(
             'SELECT p.race, p.coords_id, co.plan, co.z, co.x, co.y
                FROM players p
                JOIN coords co ON co.id = p.coords_id
@@ -91,63 +42,60 @@ final class EntityCellService
             [$entityId]
         );
 
-        if ($anchor === false) {
-            $this->forgetSpread($entityId, []);
+        if ($origin === false) {
+            $this->conn->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [$entityId]);
 
             return 0;
         }
 
         $footprint = ($footprints ?? new EntityTypeFootprintService($this->conn))
-            ->catalogue()[(string) $anchor['race']] ?? null;
+            ->catalogue()[(string) $origin['race']] ?? null;
 
-        if ($footprint === null || $footprint->isSingleCell()) {
-            $this->forgetSpread($entityId, []);
+        $cells = $footprint === null
+            ? [0 => [(int) $origin['x'], (int) $origin['y']]]
+            : $footprint->cellsAround(
+                (int) array_key_first($footprint->offsets()),
+                (int) $origin['x'],
+                (int) $origin['y']
+            );
 
-            return 0;
-        }
+        $keep = [];
 
-        /* Offsets are relative to the first piece, and the anchor sits on it. */
-        $anchorPiece = array_key_first($footprint->offsets());
-        $keep = [(int) $anchor['coords_id']];
-        $placed = 0;
-
-        $around = $footprint->cellsAround($anchorPiece, (int) $anchor['x'], (int) $anchor['y']);
-
-        foreach ($around as $piece => [$x, $y]) {
-            /* Already laid by syncAnchor(), and it must keep the anchor role. */
-            if ($piece === $anchorPiece) {
-                continue;
-            }
-
+        foreach ($cells as $piece => [$x, $y]) {
             $coordsId = (int) \Classes\View::get_coords_id((object) [
-                'x' => $x, 'y' => $y, 'z' => (int) $anchor['z'], 'plan' => (string) $anchor['plan'],
+                'x' => $x, 'y' => $y, 'z' => (int) $origin['z'], 'plan' => (string) $origin['plan'],
             ]);
 
             $this->conn->executeStatement(
-                "INSERT INTO entity_cells (player_id, coords_id, plan, z, x, y, piece, role)
+                'INSERT INTO entity_cells (player_id, coords_id, plan, z, x, y, piece, role)
                  VALUES (:p, :c, :plan, :z, :x, :y, :piece, :role)
                  ON DUPLICATE KEY UPDATE
                      plan = VALUES(plan), z = VALUES(z), x = VALUES(x), y = VALUES(y),
-                     piece = VALUES(piece), role = VALUES(role)",
+                     piece = VALUES(piece), role = VALUES(role)',
                 [
                     'p'     => $entityId,
                     'c'     => $coordsId,
-                    'plan'  => (string) $anchor['plan'],
-                    'z'     => (int) $anchor['z'],
+                    'plan'  => (string) $origin['plan'],
+                    'z'     => (int) $origin['z'],
                     'x'     => $x,
                     'y'     => $y,
                     'piece' => (int) $piece,
-                    'role'  => $footprint->roleOf((int) $piece, self::ROLE_PART),
+                    'role'  => $footprint?->roleOf((int) $piece, self::ROLE_PART) ?? self::ROLE_PART,
                 ]
             );
 
             $keep[] = $coordsId;
-            $placed++;
         }
 
-        $this->forgetSpread($entityId, $keep);
+        /* A move or a shrunk cut-out leaves cells behind; the primary key is
+         * (player_id, coords_id), so they would simply pile up. */
+        $this->conn->executeStatement(
+            'DELETE FROM entity_cells WHERE player_id = ? AND coords_id NOT IN ('
+                . implode(',', $keep) . ')',
+            [$entityId]
+        );
 
-        return $placed;
+        return count($keep);
     }
 
     /**
@@ -160,45 +108,17 @@ final class EntityCellService
         $footprints = new EntityTypeFootprintService($this->conn);
         $footprint = $footprints->catalogue()[$typeName] ?? null;
 
-        /* Back to a single cell: nothing to spread, only cells to release —
-         * in one statement rather than one per instance. */
-        if ($footprint === null || $footprint->isSingleCell()) {
-            return (int) $this->conn->executeStatement(
-                "DELETE ec FROM entity_cells ec
-                   JOIN players p ON p.id = ec.player_id
-                  WHERE p.race = ? AND ec.role <> 'anchor'",
-                [$typeName]
-            );
-        }
-
         $reapplied = 0;
 
         foreach ($this->conn->fetchFirstColumn(
             'SELECT id FROM players WHERE race = ? AND coords_id > 0',
             [$typeName]
         ) as $entityId) {
-            $this->syncFootprint((int) $entityId, $footprints);
+            $this->syncCells((int) $entityId, $footprints);
             $reapplied++;
         }
 
         return $reapplied;
-    }
-
-    /**
-     * Drop spread cells the cut-out no longer claims. Never the anchor.
-     *
-     * @param list<int> $keep
-     */
-    private function forgetSpread(int $entityId, array $keep): void
-    {
-        $sql = "DELETE FROM entity_cells WHERE player_id = ? AND role <> 'anchor'";
-        $params = [$entityId];
-
-        if ($keep !== []) {
-            $sql .= ' AND coords_id NOT IN (' . implode(',', array_map('intval', $keep)) . ')';
-        }
-
-        $this->conn->executeStatement($sql, $params);
     }
 
     /**
@@ -213,7 +133,7 @@ final class EntityCellService
         );
     }
 
-    /** @return list<array{coords_id: int, plan: string, z: int, x: int, y: int, piece: int, role: string}> anchor included */
+    /** @return list<array{coords_id: int, plan: string, z: int, x: int, y: int, piece: int, role: string}> */
     public function cellsOf(int $playerId): array
     {
         /** @var list<array{coords_id: int, plan: string, z: int, x: int, y: int, piece: int, role: string}> */
@@ -240,8 +160,8 @@ final class EntityCellService
     }
 
     /**
-     * Entities whose anchor no longer matches `players.coords_id`. Reported
-     * and repaired by the `entity-cells` console command.
+     * Entities holding no cell where they stand. Reported and repaired by the
+     * `entity-cells` console command.
      *
      * @return list<array{player_id: int, expected: int, actual: ?int}>
      */
@@ -249,22 +169,22 @@ final class EntityCellService
     {
         /** @var list<array{player_id: int, expected: int, actual: ?int}> */
         return $this->conn->fetchAllAssociative(
-            "SELECT p.id AS player_id, p.coords_id AS expected, ec.coords_id AS actual
+            'SELECT p.id AS player_id, p.coords_id AS expected, ec.coords_id AS actual
                FROM players p
-               LEFT JOIN entity_cells ec ON ec.player_id = p.id AND ec.role = 'anchor'
-              WHERE p.coords_id > 0
-                AND (ec.coords_id IS NULL OR ec.coords_id <> p.coords_id)
-              ORDER BY p.id"
+               LEFT JOIN entity_cells ec
+                      ON ec.player_id = p.id AND ec.coords_id = p.coords_id
+              WHERE p.coords_id > 0 AND ec.coords_id IS NULL
+              ORDER BY p.id'
         );
     }
 
-    /** @return int entities whose anchor was put back in place */
+    /** @return int entities whose cells were put back in place */
     public function reconcile(): int
     {
         $repaired = 0;
 
         foreach ($this->drift() as $row) {
-            if ($this->syncAnchor((int) $row['player_id'])) {
+            if ($this->syncCells((int) $row['player_id']) > 0) {
                 $repaired++;
             }
         }

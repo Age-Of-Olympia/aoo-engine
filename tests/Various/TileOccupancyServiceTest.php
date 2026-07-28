@@ -252,7 +252,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->requireBuildingsOrSkip();
         $wall = $this->placeStructure('mur_pierre', 20, 0, self::PLAN);
 
-        $spread = $this->giveCell($wall, 21, 0, 'anchor');
+        $spread = $this->giveCell($wall, 21, 0, \App\Service\Map\EntityCellService::ROLE_PART);
 
         $this->assertNotNull(
             $this->service()->stepRefusal($spread, 1, true),
@@ -317,7 +317,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->requireBuildingsOrSkip();
         $wall = $this->placeStructure('mur_pierre', 30, 0, self::PLAN);
 
-        $body = $this->giveCell($wall, 31, 0, 'anchor');
+        $body = $this->giveCell($wall, 31, 0, \App\Service\Map\EntityCellService::ROLE_PART);
         $service = $this->service();
 
         $this->assertNotNull($service->stepRefusal($body, 1, true), 'on n\'y entre pas');

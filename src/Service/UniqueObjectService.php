@@ -82,7 +82,7 @@ class UniqueObjectService extends BaseService
                  VALUES (?, 'unique', ?, ?, ?, ?, ?, ?, 0, ?)",
                 [$id, $displayId, $name, self::ITEM_RACE, $avatar, $avatar, $coordsId, time()]
             );
-            (new \App\Service\Map\EntityCellService($conn))->syncAnchor((int) $id);
+            (new \App\Service\Map\EntityCellService($conn))->syncCells((int) $id);
 
             $conn->executeStatement(
                 'INSERT INTO unique_objects (player_id, item_instance_id) VALUES (?, ?)',

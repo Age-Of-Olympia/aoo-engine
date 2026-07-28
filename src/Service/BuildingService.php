@@ -334,12 +334,9 @@ class BuildingService extends BaseService
                 ]
             );
 
-            /* L'emprise de la structure : son ancre, puis les cases que la
-             * découpe déclarée de son type ajoute autour. Un type sans découpe
-             * — l'immense majorité — n'en tient qu'une, comme avant. */
-            $cells = new \App\Service\Map\EntityCellService($conn);
-            $cells->syncAnchor((int) $id);
-            $cells->syncFootprint((int) $id);
+            /* The structure's cells: its origin, plus whatever its type's
+             * cut-out adds around it. A type without one holds a single cell. */
+            (new \App\Service\Map\EntityCellService($conn))->syncCells((int) $id);
 
             $conn->executeStatement(
                 'INSERT INTO buildings (player_id, owner_id, faction, build_state)
@@ -803,7 +800,7 @@ class BuildingService extends BaseService
                 [$tombstoneCoordsId, $playerId]
             );
 
-            (new \App\Service\Map\EntityCellService($conn))->syncAnchor((int) $playerId);
+            (new \App\Service\Map\EntityCellService($conn))->syncCells((int) $playerId);
         });
 
         if ($goCoords !== false) {

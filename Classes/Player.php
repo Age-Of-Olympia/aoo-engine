@@ -763,7 +763,7 @@ class Player implements ActorInterface {
         /* L'emprise suit le pas. Elle ne se lit pas encore (L3 la pose, L4
          * la branchera), mais une ancre laissée derrière ferait démarrer la
          * suite d'une carte fausse. */
-        (new \App\Service\Map\EntityCellService())->syncAnchor((int) $this->id);
+        (new \App\Service\Map\EntityCellService())->syncCells((int) $this->id);
 
 
         // territory change
@@ -2331,7 +2331,7 @@ class Player implements ActorInterface {
         }
 
         /* Le personnage naît avec son emprise — une case, son ancre. */
-        (new \App\Service\Map\EntityCellService())->syncAnchor((int) $id);
+        (new \App\Service\Map\EntityCellService())->syncCells((int) $id);
 
         // ID is already assigned via getNextEntityId()
         $player = new Player($id);

@@ -282,7 +282,7 @@ class NpcAdminService
                 [$coordsId, $pnjId]
             );
 
-            (new \App\Service\Map\EntityCellService())->syncAnchor((int) $pnjId);
+            (new \App\Service\Map\EntityCellService())->syncCells((int) $pnjId);
         }
     }
 

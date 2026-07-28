@@ -123,7 +123,7 @@ if(!empty($_POST['race'])){
             $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
             $db->exe($sql, array($coordsId, $player->id));
 
-            (new \App\Service\Map\EntityCellService())->syncAnchor((int) $player->id);
+            (new \App\Service\Map\EntityCellService())->syncCells((int) $player->id);
 
             // Reload player data with new coordinates
             $player->get_data();

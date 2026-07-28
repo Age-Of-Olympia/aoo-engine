@@ -18,7 +18,7 @@ final class TileOccupancyService
 {
     /**
      * Roles that override the entity type's own passability. Roles absent
-     * here — `anchor`, `part` — leave the type to decide.
+     * here — `part` — leaves the type to decide.
      */
     private const ROLE_VERDICTS = [
         'block' => true,
@@ -124,14 +124,14 @@ final class TileOccupancyService
                JOIN players p ON p.id = occupied.player_id"
         );
 
-        /* Both sources list the anchor, so the same (entity, tile) pair shows
-         * up twice; an explicit role wins over `anchor`, which decides nothing. */
+        /* Both sources list the origin cell, so the same (entity, tile) pair
+         * shows up twice; an explicit role wins over `part`, which decides nothing. */
         $occupations = [];
 
         foreach ($rows as $row) {
             $pair = $row['id'] . ':' . $row['coords_id'];
 
-            if (!isset($occupations[$pair]) || (string) $row['role'] !== 'anchor') {
+            if (!isset($occupations[$pair]) || (string) $row['role'] !== EntityCellService::ROLE_PART) {
                 $occupations[$pair] = $row;
             }
         }
@@ -142,7 +142,7 @@ final class TileOccupancyService
     /**
      * "Does an entity hold this tile?" — one definition, shared by the three
      * verbs. `entity_cells` and `players.coords_id` ADD UP: an entity moved
-     * without `syncAnchor()` keeps stale cells, and dropping either source
+     * without `syncCells()` keeps stale cells, and dropping either source
      * would make it walk-through where it actually stands.
      *
      * @param string $in coords_id list, already cast to integers
@@ -153,7 +153,7 @@ final class TileOccupancyService
                   FROM entity_cells
                  WHERE coords_id IN ({$in})
                  UNION ALL
-                SELECT id, coords_id, 'anchor'
+                SELECT id, coords_id, '" . EntityCellService::ROLE_PART . "'
                   FROM players
                  WHERE coords_id IN ({$in})";
     }
