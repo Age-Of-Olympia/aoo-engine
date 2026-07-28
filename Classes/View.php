@@ -462,7 +462,7 @@ class View{
                     // Les structures (bâtiments, objets uniques) font partie du
                     // décor, comme les murs : toujours visibles, même quand la
                     // visibilité des joueurs est coupée (plans isolés, tutoriel).
-                    $isStructure = in_array($entity->player_type ?? 'real', ['building', 'unique'], true);
+                    $isStructure = \App\Enum\EntityCategory::fromPlayerType($entity->player_type ?? null)->isStructure();
 
                     // Skip invisible players (except when viewing your own character)
                     if (!$isStructure && $row->id != $this->playerId && isset($invisiblePlayers[$row->id])) {

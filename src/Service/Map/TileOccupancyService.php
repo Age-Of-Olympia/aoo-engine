@@ -3,6 +3,7 @@
 namespace App\Service\Map;
 
 use App\Entity\EntityManagerFactory;
+use App\Enum\EntityCategory;
 use App\Service\RaceService;
 use Doctrine\DBAL\Connection;
 
@@ -92,7 +93,7 @@ final class TileOccupancyService
                 continue;
             }
 
-            $isStructure = in_array($row['player_type'] ?? 'real', ['building', 'unique'], true);
+            $isStructure = EntityCategory::fromPlayerType($row['player_type'] ?? null)->isStructure();
 
             if (!$isStructure) {
                 if ($row['invisible'] !== null || !$charactersVisible) {

@@ -7,7 +7,7 @@ namespace App\Enum;
  * (docs/design-buildings-entities.md §4.3/§4.4):
  *
  *   Character — real players, tutorial players, NPCs
- *   Structure — buildings, unique objects
+ *   Structure — buildings, unique objects, scenery
  *
  * Everything data-driven that discriminates by branch (TargetType
  * condition, effect application gates, races.kind) speaks in these two
@@ -27,10 +27,20 @@ enum EntityCategory: string
         // sans étendre ce mapping doit échouer bruyamment, pas passer
         // silencieusement toutes les portes « character ».
         return match ($playerType) {
-            'building', 'unique' => self::Structure,
+            'building', 'unique', 'scenery' => self::Structure,
             'real', 'tutorial', 'npc', null => self::Character,
             default => throw new \ValueError("player_type inconnu : « {$playerType} » — étendre EntityCategory::fromPlayerType."),
         };
+    }
+
+    /**
+     * Part of the scenery: always seen, never an interlocutor. Callers used
+     * to spell out `['building', 'unique']`, which is how `scenery` was
+     * missed in four places at once.
+     */
+    public function isStructure(): bool
+    {
+        return $this === self::Structure;
     }
 
     /** @return array<string, string> value => French label, for admin selects */

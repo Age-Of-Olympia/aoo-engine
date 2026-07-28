@@ -16,6 +16,10 @@ use Doctrine\Migrations\AbstractMigration;
  * it becomes one entity holding fourteen cells. Grouping stops where a piece
  * index repeats, so two objects standing side by side stay two.
  *
+ * A `forbidden` trigger that only existed to fence off a decor is removed:
+ * the object blocks on its own now, so the fence would outlive what it
+ * fenced — and keep barring the way once the decor opens or is taken away.
+ *
  * `map_foregrounds` is LEFT UNTOUCHED. The renderer still reads it, and the
  * new entities are excluded from the board and from the landing and building
  * questions, so this migration changes nothing on screen. The next lot flips
@@ -39,8 +43,13 @@ final class Version20260728170000_SceneryBecomesEntities extends AbstractMigrati
 
     /**
      * A `forbidden` trigger fencing off a decor is a workaround for scenery
-     * that could not block on its own. The rule moves onto the object; the
-     * trigger stays for now, and both say the same thing.
+     * that could not block on its own. The rule moves onto the object, and
+     * the trigger goes: leaving it would keep barring the way once the decor
+     * opens or is removed, which is the fence outliving what it fenced.
+     *
+     * Only the ones sitting on a converted cell are touched. On the
+     * production copy that is 438 of 12 187 — the other 10 237 mark bare
+     * ground out of bounds, which is the trigger's real job.
      */
     private const FENCED_OFF = 'forbidden';
 
@@ -125,6 +134,23 @@ final class Version20260728170000_SceneryBecomesEntities extends AbstractMigrati
             $nextId++;
             $nextDisplayId++;
         }
+
+        $this->releaseFences();
+    }
+
+    /**
+     * Drop the fences the objects now carry themselves. Derived from the
+     * cells rather than remembered, so a re-run finds nothing left to do.
+     */
+    private function releaseFences(): void
+    {
+        $this->connection->executeStatement(
+            "DELETE t FROM map_triggers t
+               JOIN entity_cells ec ON ec.coords_id = t.coords_id
+               JOIN players p ON p.id = ec.player_id
+              WHERE t.name = ? AND ec.role = 'block' AND p.player_type = 'scenery'",
+            [self::FENCED_OFF]
+        );
     }
 
     /**
@@ -133,6 +159,16 @@ final class Version20260728170000_SceneryBecomesEntities extends AbstractMigrati
      */
     public function down(Schema $schema): void
     {
+        /* The fences come back before the cells that describe where they
+         * stood are removed. */
+        $this->addSql(
+            "INSERT INTO map_triggers (name, coords_id, params)
+             SELECT '" . self::FENCED_OFF . "', ec.coords_id, ''
+               FROM entity_cells ec
+               JOIN players p ON p.id = ec.player_id
+              WHERE ec.role = 'block' AND p.player_type = 'scenery'"
+        );
+
         $this->addSql(
             "DELETE ec FROM entity_cells ec
                JOIN players p ON p.id = ec.player_id

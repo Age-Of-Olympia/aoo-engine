@@ -282,7 +282,7 @@ final class EntityCardView
         $y,
         object $coords
     ): string {
-        $isDecor = in_array((string) ($target->data->player_type ?? 'real'), ['building', 'unique'], true);
+        $isDecor = \App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? null)->isStructure();
 
         if (!$isDecor) {
             return Str::richText($target->data->text);
