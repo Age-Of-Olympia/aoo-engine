@@ -84,6 +84,9 @@ final class EntityCardView
 
         $data = (object) [
             'bg' => $target->data->portrait,
+            /* Un décor de plusieurs cases se montre entier, pas par le coin
+             * dont son portrait porte l'image. */
+            'portraitHtml' => (new SceneryPortraitView())->compose((int) $target->id),
             'name' => self::nameWithEffects($target),
             'img' => self::buttonsHtml($player, $target, $buildingDetails, $buildingClosure, $x, $y, $coords),
             'pvPct' => $pvPct,

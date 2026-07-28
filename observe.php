@@ -45,6 +45,16 @@ $player->get_data();
 $coords = $player->getCoords();
 
 
+/* Une entité répond depuis TOUTE case de son emprise, pas seulement celle
+ * où elle se tient. Sans cela, seul le coin haut-gauche d'une bibliothèque de
+ * 3×3 se disait bibliothèque, et ses huit autres cases n'étaient rien.
+ *
+ * `players.coords_id` reste dans la condition : une entité dont l'emprise
+ * n'aurait pas suivi resterait interrogeable là où elle se trouve. */
+$entityOnCell = '(p.coords_id = c.id OR EXISTS (
+        SELECT 1 FROM entity_cells ec WHERE ec.player_id = p.id AND ec.coords_id = c.id
+    ))';
+
 $db = new Db();
 
 
@@ -211,7 +221,7 @@ if($planJson){
         INNER JOIN
         coords AS c
         ON
-        p.coords_id = c.id
+        '. $entityOnCell .'
         LEFT JOIN
         players_options AS po
         ON
@@ -240,7 +250,7 @@ if($planJson){
         INNER JOIN
         coords AS c
         ON
-        p.coords_id = c.id
+        '. $entityOnCell .'
         LEFT JOIN
         players_options AS po
         ON
@@ -284,7 +294,7 @@ elseif(!$planJson){
     INNER JOIN
     coords AS c
     ON
-    p.coords_id = c.id
+    '. $entityOnCell .'
     LEFT JOIN
     players_options AS po
     ON

@@ -220,7 +220,13 @@ class Ui{
                 echo '<div class="card-name">'. $data->name .'</div>';
 
 
-                echo '<div class="card-image"><img src="'. $data->bg .'" class="card-portrait" /><div id="action-data"></div></div>';
+                /* Une figure de plusieurs cases n'a pas d'image unique : la
+                 * carte la recompose depuis ses morceaux. Les autres gardent
+                 * leur portrait tel quel. */
+                $portrait = $data->portraitHtml
+                    ?? '<img src="'. $data->bg .'" class="card-portrait" />';
+
+                echo '<div class="card-image">'. $portrait .'<div id="action-data"></div></div>';
 
 
                 /* isset, pas !empty : à 0 PV — le cas le plus grave —
