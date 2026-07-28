@@ -320,6 +320,29 @@ Dans l'ordre :
    où un `tp` est posé, `cover` ailleurs. Puis remonter le rôle majoritaire au
    catalogue et **signaler les divergences** — c'est la liste de travail des
    animateurs.
+
+   **Règle de conversion : un objet cassé devient une entité ABÎMÉE.** Quand
+   la migration rencontre un `*_broken` posé, elle ne crée pas un type
+   « cassé » : elle pose une entité du TYPE DE BASE, blessée sous la moitié
+   de ses points de vie. Tout le reste suit alors sans qu'on l'écrive —
+   `BuildingService::refreshWoundSprite()` bascule le sprite sur la variante
+   `_broken`, et `closureReason()` répond « endommagé » sous
+   `CLOSED_BELOW_PV_PCT` (50 %), donc l'objet reste fermé comme il l'est
+   aujourd'hui. L'apparence et le comportement sont conservés sans état
+   nouveau, et l'objet devient réparable : c'est ce qu'un objet cassé doit
+   être.
+
+   Le détail qui compte : les PV RESTANTS d'une entité ne sont pas une
+   colonne. `caracs->pv` est le maximum, tiré de `races.pv`, et les dégâts
+   vivent dans `players_bonus`. « Poser sous la moitié » veut donc dire
+   insérer une ligne de bonus négatif — et `putBonus()` est le seul chemin
+   qui déclenche la bascule de sprite.
+
+   Ce que cette règle touche aujourd'hui : **cinq `altar_broken`**, seuls
+   `*_broken` posés sur la carte (rien dans `map_foregrounds`, rien en
+   `players.race`). Les autels étant le sujet d'un lot à part, ces cinq-là
+   s'y rattachent plutôt qu'ici — mais la règle, elle, vaut pour tout
+   `*_broken` que la conversion rencontrera.
 5. **Ajouter `entity_cells` à `place()`**, qui ne consulte aujourd'hui ni
    `map_foregrounds` ni `map_triggers` : sans ça les structures restent
    constructibles par-dessus (50 cases de fragment portent déjà une entité).
