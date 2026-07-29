@@ -52,6 +52,7 @@ class AdminMenuAccessService
         // Couleurs de carte : palette visuelle de la carte monde générée —
         // travail d'animation, même niveau que les tuiles
         'tile-colors.php'          => ['Cartes · Couleurs de carte', 'Cartes', self::LEVEL_ADMIN],
+        'tile-shade.php'           => ['Cartes · Ombres des cases', 'Cartes', self::LEVEL_SUPERADMIN],
         // Éléments posés : pose case par case (boue, feu…) — travail
         // d'animation, même niveau que la pose de bâtiments
         'map-elements.php'         => ['Cartes · Éléments posés', 'Cartes', self::LEVEL_ADMIN],

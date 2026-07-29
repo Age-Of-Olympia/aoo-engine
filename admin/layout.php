@@ -10,7 +10,7 @@ use Classes\Player;
 (new AdminMenuAccessService())->enforce(basename($_SERVER['PHP_SELF']));
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260724a';
+const ADMIN_ASSET_VERSION = '20260729';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -69,28 +69,36 @@ function admin_layout($title, $content, array $assets = []) {
             . "</div>";
     };
 
-    /* A section caption: a rule and a word over a run of groups. Sections do
-     * NOT fold — a second collapsible level would cost two clicks to reach
-     * pages opened all day. They only tell the eye where to look.
+    /* A section: a caption over a run of groups, foldable like a group.
      *
-     * Emitted only when something under it survived the access filter, so a
-     * plain admin never sees a caption over nothing. */
-    $navSection = function(string $title, array $parts): array {
+     * It opens on its own when the current page is inside it — the rendered
+     * children carry `active` or `nav-group-open`, so no page list to keep in
+     * step with the groups. Emitted only when something survived the access
+     * filter, so a plain admin never sees a caption over nothing. */
+    $navSection = function(string $title, array $parts): string {
         $parts = array_filter($parts);
 
         if (!$parts) {
-            return [];
+            return '';
         }
 
-        array_unshift($parts, "<div class=\"nav-section\">{$title}</div>");
+        $children = implode("\n                    ", $parts);
+        $openClass = str_contains($children, 'nav-link active') || str_contains($children, 'nav-group-open')
+            ? ' nav-section-open'
+            : '';
 
-        return $parts;
+        return "<div class=\"nav-section{$openClass}\">\n                "
+            . "    <span class=\"nav-section-title\">{$title}</span>\n                "
+            . "    <div class=\"nav-section-children\">\n                    "
+            . $children . "\n                "
+            . "    </div>\n                "
+            . "</div>";
     };
 
     $tutorialPages = ['tutorial-catalog.php', 'tutorial.php', 'tutorial-step-editor.php',
                       'tutorial-npcs.php', 'tutorial-settings.php'];
     $mapPages = ['world_map.php', 'plans.php', 'local_maps.php', 'terrain-transitions.php', 'tile-assets.php',
-                 'resource-types.php', 'tile-colors.php', 'map-elements.php', 'screenshots.php'];
+                 'resource-types.php', 'tile-colors.php', 'tile-shade.php', 'map-elements.php', 'screenshots.php'];
     $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php', 'passive-workbench.php',
                     'action-import.php', 'action-import-preview.php'];
     $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
@@ -101,10 +109,14 @@ function admin_layout($title, $content, array $assets = []) {
     $dialogPages = ['dialogs.php', 'dialog-seed.php'];
     $sceneryPages = ['scenery-types.php', 'footprints.php'];
 
-    /* Four sections, in the order one thinks about the game: what is placed
-     * on the board, the catalogues that govern it, the people, then the
+    /* The two pages one lands on stay at the top, outside any section.
+     * Then four sections, in the order one thinks about the game: what is
+     * placed on the board, the catalogues that govern it, the people, the
      * tools. `array_filter` still drops what the viewer cannot open. */
-    $navParts = array_filter(array_merge(
+    $navParts = array_filter([
+        $navLink('index.php', 'Tableau de bord', '/admin/index.php'),
+        $navLink('landing.php', 'Page d\'accueil', '/admin/landing.php'),
+
         $navSection('Le monde', [
             $navGroup('Cartes', [
                 ['world_map.php', 'Carte monde', '/admin/world_map.php'],
@@ -114,6 +126,7 @@ function admin_layout($title, $content, array $assets = []) {
                 ['tile-assets.php', 'Tuiles &amp; images', '/admin/tile-assets.php'],
                 ['resource-types.php', 'Ressources (types)', '/admin/resource-types.php'],
                 ['tile-colors.php', 'Couleurs de carte', '/admin/tile-colors.php'],
+                ['tile-shade.php', 'Ombres des cases', '/admin/tile-shade.php'],
                 ['map-elements.php', 'Éléments posés', '/admin/map-elements.php'],
                 ['screenshots.php', 'Captures', '/admin/screenshots.php'],
             ], $mapPages),
@@ -178,8 +191,6 @@ function admin_layout($title, $content, array $assets = []) {
         ]),
 
         $navSection('Outils', [
-            $navLink('index.php', 'Tableau de bord', '/admin/index.php'),
-            $navLink('landing.php', 'Page d\'accueil', '/admin/landing.php'),
             $navGroup('Tutoriel', [
                 ['tutorial-catalog.php', 'Catalogue', '/admin/tutorial-catalog.php'],
                 ['tutorial.php', 'Étapes', '/admin/tutorial.php'],
@@ -187,8 +198,8 @@ function admin_layout($title, $content, array $assets = []) {
                 ['tutorial-settings.php', 'Options', '/admin/tutorial-settings.php'],
             ], $tutorialPages),
             $navLink('wiki.php', 'Wiki', '/admin/wiki.php'),
-        ])
-    ));
+        ]),
+    ]);
 
     $navigation = implode("\n                ", $navParts);
 
@@ -239,14 +250,18 @@ function admin_layout($title, $content, array $assets = []) {
         var KEY = 'adminNavOpen';
         var open = {};
         try { open = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
-        nav.querySelectorAll('.nav-group').forEach(function (g) {
-            var title = g.querySelector('.nav-group-title');
-            if (!title) return;
-            var name = title.textContent.trim();
-            if (open[name]) g.classList.add('nav-group-open');
-            title.addEventListener('click', function () {
-                open[name] = g.classList.toggle('nav-group-open');
-                try { localStorage.setItem(KEY, JSON.stringify(open)); } catch (e) {}
+        /* Sections and groups fold the same way; only their class differs. */
+        [['.nav-group', 'nav-group-title', 'nav-group-open'],
+         ['.nav-section', 'nav-section-title', 'nav-section-open']].forEach(function (kind) {
+            nav.querySelectorAll(kind[0]).forEach(function (box) {
+                var title = box.querySelector('.' + kind[1]);
+                if (!title) return;
+                var name = kind[0] + ' ' + title.textContent.trim();
+                if (open[name]) box.classList.add(kind[2]);
+                title.addEventListener('click', function () {
+                    open[name] = box.classList.toggle(kind[2]);
+                    try { localStorage.setItem(KEY, JSON.stringify(open)); } catch (e) {}
+                });
             });
         });
     })();</script>

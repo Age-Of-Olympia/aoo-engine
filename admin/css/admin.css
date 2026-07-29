@@ -75,23 +75,52 @@ body {
     flex-direction: column;
     gap: 4px;
 }
-/* Section caption: a rule and a word over a run of groups. It does not fold —
- * a second collapsible level would cost two clicks to reach pages opened all
- * day — it only tells the eye where to look. */
+/* A section: a caption over a run of groups, foldable like a group. The
+ * caption stays legible on the dark sidebar — it was set for a light one. */
 .nav-section {
-    margin: 14px 0 2px;
-    padding: 8px 12px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-    color: #9fb0c0;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-size: 10px;
-    font-weight: 700;
+    margin-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-.nav-section:first-child {
-    margin-top: 0;
+.nav-section:first-of-type {
+    margin-top: 4px;
     border-top: 0;
+}
+
+.nav-section-title {
+    display: block;
+    padding: 10px 12px 6px;
+    color: #dfe8f0;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+}
+
+.nav-section-title::after {
+    content: '\25B8';
+    float: right;
+    font-size: 10px;
+    opacity: 0.65;
+    transition: transform 0.15s ease;
+}
+
+.nav-section-open > .nav-section-title::after {
+    transform: rotate(90deg);
+}
+
+.nav-section-title:hover {
+    color: #fff;
+}
+
+.nav-section-children {
+    display: none;
+}
+
+.nav-section-open > .nav-section-children {
+    display: block;
 }
 
 .nav-group-title {
