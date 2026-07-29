@@ -35,6 +35,7 @@ class SetGodOutcomeInstruction extends OutcomeInstruction implements HasParamete
                 self::ACTOR => 'Celui qui agit',
                 self::TARGET => 'La cible',
             ]),
+            new ParameterField('rename', FieldType::STRING, 'Renommer le receveur', help: '{dieu} = nom du Dieu ; vide = ne pas renommer'),
         );
     }
 
@@ -80,6 +81,16 @@ class SetGodOutcomeInstruction extends OutcomeInstruction implements HasParamete
                 'UPDATE players SET godId = ? WHERE id = ?',
                 array($godId, $to->id)
             );
+            $to->refresh_data();
+        }
+
+        // An altar says whose it is: without it, the god is nowhere on screen.
+        $rename = trim((string) ($params['rename'] ?? ''));
+
+        if ($rename !== '') {
+            $name = str_replace('{dieu}', (string) $god->data->name, $rename);
+
+            (new \Classes\Db())->exe('UPDATE players SET name = ? WHERE id = ?', array($name, $to->id));
             $to->refresh_data();
         }
 
