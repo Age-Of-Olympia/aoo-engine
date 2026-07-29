@@ -136,3 +136,8 @@ if($_POST['type'] == 'eraser'){
         }
     } 
 }
+
+/* Idem à la pose : `BuildingService::place` rafraîchit déjà pour les
+ * bâtiments, mais rien ne le faisait pour un sol, un décor ou une
+ * ressource. */
+\Classes\View::refresh_players_svg_at((int) $coordsId);

@@ -88,3 +88,8 @@ if($type == 'buildings'){
         $db->exe('UPDATE coords SET shade = 0 WHERE id = ?', [$coordsId]);
     }
 }
+
+/* Ceux qui regardaient la case revoient la carte. Le damier est en cache par
+ * joueur : sans ça, un joueur immobile gardait sous les yeux ce qui vient
+ * d'être retiré. */
+\Classes\View::refresh_players_svg_at((int) $coordsId);

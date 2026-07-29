@@ -110,6 +110,21 @@ final class TopBarView
                 . '<button class="hud-quick-icon"><span class="ra ra-cog"></span></button></a>';
         }
 
+        /* L'éditeur de carte, pour qui y a droit. Il se trouvait par son
+         * adresse et rien d'autre : même condition d'accès que la page
+         * elle-même (AdminAuthorizationService), pour qu'un bouton affiché
+         * ne mène jamais à un refus. */
+        if ($player->have_option('isAdmin')) {
+            echo '<a href="tiled.php" title="Éditer le damier">'
+                . '<button class="hud-quick-icon"><span class="ra ra-hammer"></span></button></a>';
+        }
+
+        /* Redessiner sa vue depuis la carte : le damier est mis en cache par
+         * joueur, et jusqu'ici on ne pouvait le forcer que depuis la page
+         * Profil — c'est-à-dire en quittant l'écran où le problème se voit. */
+        echo '<a href="refresh_view.php?retour=1" title="Redessiner la vue">'
+            . '<button class="hud-quick-icon"><span class="ra ra-cycle"></span></button></a>';
+
         /* Badge orange : sujets de forum non lus (les missives ont déjà
          * leurs pastilles rouge — personnage courant — et bleue —
          * autres personnages). Rafraîchi à chaud par js/hud.js via

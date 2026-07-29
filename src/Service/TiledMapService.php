@@ -192,7 +192,57 @@ class TiledMapService
             $result['planHealth'] = $health;
         }
 
+        $this->refreshBoardsAround($plan, $z, $layers);
+
         return $result;
+    }
+
+    /**
+     * Redessine les damiers de qui voyait la zone poussée.
+     *
+     * Le damier est mis en cache par joueur, sans expiration : un bâtiment
+     * posé depuis Tiled dans le champ de vision de quelqu'un n'apparaissait
+     * pas tant que ce quelqu'un ne bougeait pas.
+     *
+     * Sur l'étendue de la poussée d'un coup, et non case par case : une
+     * poussée en touche des centaines, qui purgeraient les mêmes fichiers.
+     *
+     * @param array<string, mixed> $layers tel que poussé, donc pas encore de forme sûre
+     */
+    private function refreshBoardsAround(string $plan, int $z, array $layers): void
+    {
+        $xs = [];
+        $ys = [];
+
+        foreach ($layers as $rows) {
+            if (!is_array($rows)) {
+                continue;
+            }
+
+            foreach ($rows as $row) {
+                if (is_array($row) && isset($row['x'], $row['y'])) {
+                    $xs[] = (int) $row['x'];
+                    $ys[] = (int) $row['y'];
+                }
+            }
+        }
+
+        if ($xs === []) {
+            return; /* poussée vide : personne n'a rien vu changer */
+        }
+
+        /* La portée de vue la plus large, pour attraper qui voit le bord de
+         * la zone depuis l'extérieur. */
+        $reach = 20;
+
+        \Classes\View::refresh_players_svg_in_box(
+            min($xs) - $reach,
+            max($xs) + $reach,
+            min($ys) - $reach,
+            max($ys) + $reach,
+            $z,
+            $plan
+        );
     }
 
     /**

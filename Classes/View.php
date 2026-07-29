@@ -1436,12 +1436,54 @@ class View{
 
 
     public static function refresh_players_svg(object $coords,$p=20):void{
-        // based on View::get_coords_id_arround that is the fastest implementation 
+
+        self::refresh_players_svg_in_box(
+            $coords->x - $p,
+            $coords->x + $p,
+            $coords->y - $p,
+            $coords->y + $p,
+            (int) $coords->z,
+            (string) $coords->plan
+        );
+    }
+
+    /**
+     * Même purge, sur une ZONE plutôt qu'autour d'un point.
+     *
+     * Une poussée depuis Tiled touche une région entière : appeler la version
+     * ponctuelle case par case relançait la même requête des centaines de
+     * fois, pour effacer les mêmes fichiers.
+     */
+    /**
+     * Purge autour d'une case désignée par son id.
+     *
+     * Ce que veulent les éditeurs de carte : ils tiennent un `coords_id` et
+     * rien d'autre, et sans ça un joueur immobile ne voyait pas apparaître ce
+     * qu'un animateur venait de poser sous ses yeux.
+     */
+    public static function refresh_players_svg_at(int $coordsId, int $p = 20): void
+    {
+        $res = (new Db())->exe('SELECT x, y, z, plan FROM coords WHERE id = ?', array($coordsId));
+        $row = $res ? $res->fetch_assoc() : null;
+
+        if (!$row) {
+            return;
+        }
+
+        self::refresh_players_svg((object) $row, $p);
+    }
+
+    public static function refresh_players_svg_in_box(
+        int $minX,
+        int $maxX,
+        int $minY,
+        int $maxY,
+        int $z,
+        string $plan
+    ): void {
+        // based on View::get_coords_id_arround that is the fastest implementation
         $db = new Db();
-        $minX = $coords->x - $p;
-        $maxX = $coords->x + $p;
-        $minY = $coords->y - $p;
-        $maxY = $coords->y + $p;
+        $coords = (object) ['z' => $z, 'plan' => $plan];
 
         /* Purge du cache SVG, restreinte à ce qui peut en avoir un.
          *
