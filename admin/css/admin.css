@@ -75,6 +75,25 @@ body {
     flex-direction: column;
     gap: 4px;
 }
+/* Section caption: a rule and a word over a run of groups. It does not fold —
+ * a second collapsible level would cost two clicks to reach pages opened all
+ * day — it only tells the eye where to look. */
+.nav-section {
+    margin: 14px 0 2px;
+    padding: 8px 12px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    color: #9fb0c0;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.nav-section:first-child {
+    margin-top: 0;
+    border-top: 0;
+}
+
 .nav-group-title {
     display: block;
     padding: 8px 12px 4px;

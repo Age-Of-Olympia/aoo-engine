@@ -69,10 +69,28 @@ function admin_layout($title, $content, array $assets = []) {
             . "</div>";
     };
 
+    /* A section caption: a rule and a word over a run of groups. Sections do
+     * NOT fold — a second collapsible level would cost two clicks to reach
+     * pages opened all day. They only tell the eye where to look.
+     *
+     * Emitted only when something under it survived the access filter, so a
+     * plain admin never sees a caption over nothing. */
+    $navSection = function(string $title, array $parts): array {
+        $parts = array_filter($parts);
+
+        if (!$parts) {
+            return [];
+        }
+
+        array_unshift($parts, "<div class=\"nav-section\">{$title}</div>");
+
+        return $parts;
+    };
+
     $tutorialPages = ['tutorial-catalog.php', 'tutorial.php', 'tutorial-step-editor.php',
                       'tutorial-npcs.php', 'tutorial-settings.php'];
     $mapPages = ['world_map.php', 'plans.php', 'local_maps.php', 'terrain-transitions.php', 'tile-assets.php',
-                 'resource-types.php', 'footprints.php', 'scenery-types.php', 'tile-colors.php', 'map-elements.php', 'screenshots.php'];
+                 'resource-types.php', 'tile-colors.php', 'map-elements.php', 'screenshots.php'];
     $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php', 'passive-workbench.php',
                     'action-import.php', 'action-import-preview.php'];
     $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
@@ -81,80 +99,96 @@ function admin_layout($title, $content, array $assets = []) {
     $itemPages = ['items.php', 'item-seed.php', 'recipes.php'];
     $factionPages = ['factions.php', 'faction-members.php', 'faction-seed.php'];
     $dialogPages = ['dialogs.php', 'dialog-seed.php'];
+    $sceneryPages = ['scenery-types.php', 'footprints.php'];
 
-    // array_filter drops links/groups the viewer cannot access.
-    $navParts = array_filter([
-        $navLink('index.php', 'Tableau de bord', '/admin/index.php'),
-        $navLink('landing.php', 'Page d\'accueil', '/admin/landing.php'),
-        $navGroup('Tutoriel', [
-            ['tutorial-catalog.php', 'Catalogue', '/admin/tutorial-catalog.php'],
-            ['tutorial.php', 'Étapes', '/admin/tutorial.php'],
-            ['tutorial-npcs.php', 'PNJ', '/admin/tutorial-npcs.php'],
-            ['tutorial-settings.php', 'Options', '/admin/tutorial-settings.php'],
-        ], $tutorialPages),
-        $navGroup('Cartes', [
-            ['world_map.php', 'Carte monde', '/admin/world_map.php'],
-            ['plans.php', 'Plans', '/admin/plans.php'],
-            ['local_maps.php', 'Cartes locales', '/admin/local_maps.php'],
-            ['terrain-transitions.php', 'Transitions de terrain', '/admin/terrain-transitions.php'],
-            ['tile-assets.php', 'Tuiles &amp; images', '/admin/tile-assets.php'],
-            ['resource-types.php', 'Ressources (types)', '/admin/resource-types.php'],
-            ['footprints.php', 'Décors en morceaux', '/admin/footprints.php'],
-            ['scenery-types.php', 'Types de décor', '/admin/scenery-types.php'],
-            ['tile-colors.php', 'Couleurs de carte', '/admin/tile-colors.php'],
-            ['map-elements.php', 'Éléments posés', '/admin/map-elements.php'],
-            ['screenshots.php', 'Captures', '/admin/screenshots.php'],
-        ], $mapPages),
-        $navGroup('Actions', [
-            ['actions.php', 'Liste', '/admin/actions.php'],
-            ['action-workbench.php', 'Configuration actions', '/admin/action-workbench.php'],
-            ['passive-workbench.php', 'Configuration passifs', '/admin/passive-workbench.php'],
-            ['action-type-defaults.php', 'Défauts par type', '/admin/action-type-defaults.php'],
-            ['action-import.php', 'Importer', '/admin/action-import.php'],
-        ], $actionPages),
-        $navGroup('Personnages', [
-            ['players.php', 'Compétences', '/admin/players.php'],
-            ['pnjs.php', 'PNJ', '/admin/pnjs.php'],
-            ['avatars-portraits.php', 'Avatars &amp; portraits', '/admin/avatars-portraits.php'],
-            ['skill-stats.php', 'Statistiques', '/admin/skill-stats.php'],
-            ['admin-access.php', 'Accès &amp; options', '/admin/admin-access.php'],
-        ], $playerPages),
-        $navGroup('Dialogues', [
-            ['dialogs.php', 'Liste', '/admin/dialogs.php'],
-            ['dialog-seed.php', 'Seed JSON legacy', '/admin/dialog-seed.php'],
-        ], $dialogPages),
-        $navGroup('Races', [
-            ['races.php', 'Liste', '/admin/races.php'],
-            ['race-seed.php', 'Seed JSON legacy', '/admin/race-seed.php'],
-        ], $racePages),
-        $navGroup('Effets', [
-            ['effects.php', 'Liste', '/admin/effects.php'],
-        ], ['effects.php']),
-        $navGroup('Factions', [
-            ['factions.php', 'Liste', '/admin/factions.php'],
-            ['faction-members.php', 'Membres', '/admin/faction-members.php'],
-            ['faction-seed.php', 'Seed JSON legacy', '/admin/faction-seed.php'],
-        ], $factionPages),
-        $navGroup('Bâtiments', [
-            // Pas de « Liste » ici : partout ailleurs elle désigne le
-            // catalogue — le catalogue des bâtiments, ce sont les Types ;
-            // cette page-ci gère les instances posées dans le monde.
-            ['buildings.php', 'Posés', '/admin/buildings.php'],
-            ['structure-types.php', 'Types', '/admin/structure-types.php'],
-            ['structure-images.php', 'Images', '/admin/structure-images.php'],
-            // Reprise ponctuelle des déclencheurs de case hérités : à
-            // retirer du menu une fois la carte reprise partout.
-            ['tile-dialogs-migration.php', 'Dialogues de case', '/admin/tile-dialogs-migration.php'],
-        ], ['buildings.php', 'structure-types.php', 'structure-images.php', 'tile-dialogs-migration.php']),
-        $navGroup('Objets', [
-            ['items.php', 'Liste', '/admin/items.php'],
-            ['recipes.php', 'Recettes', '/admin/recipes.php'],
-            ['item-seed.php', 'Seed JSON legacy', '/admin/item-seed.php'],
-        ], $itemPages),
-        $navLink('wiki.php', 'Wiki', '/admin/wiki.php'),
-        // Superadmin-only: self-hides for plain admins (defaults to superadmin).
-        $navLink('access-control.php', 'Contrôle d\'accès', '/admin/access-control.php'),
-    ]);
+    /* Four sections, in the order one thinks about the game: what is placed
+     * on the board, the catalogues that govern it, the people, then the
+     * tools. `array_filter` still drops what the viewer cannot open. */
+    $navParts = array_filter(array_merge(
+        $navSection('Le monde', [
+            $navGroup('Cartes', [
+                ['world_map.php', 'Carte monde', '/admin/world_map.php'],
+                ['plans.php', 'Plans', '/admin/plans.php'],
+                ['local_maps.php', 'Cartes locales', '/admin/local_maps.php'],
+                ['terrain-transitions.php', 'Transitions de terrain', '/admin/terrain-transitions.php'],
+                ['tile-assets.php', 'Tuiles &amp; images', '/admin/tile-assets.php'],
+                ['resource-types.php', 'Ressources (types)', '/admin/resource-types.php'],
+                ['tile-colors.php', 'Couleurs de carte', '/admin/tile-colors.php'],
+                ['map-elements.php', 'Éléments posés', '/admin/map-elements.php'],
+                ['screenshots.php', 'Captures', '/admin/screenshots.php'],
+            ], $mapPages),
+            $navGroup('Bâtiments', [
+                // Pas de « Liste » ici : partout ailleurs elle désigne le
+                // catalogue — le catalogue des bâtiments, ce sont les Types ;
+                // cette page-ci gère les instances posées dans le monde.
+                ['buildings.php', 'Posés', '/admin/buildings.php'],
+                ['structure-types.php', 'Types', '/admin/structure-types.php'],
+                ['structure-images.php', 'Images', '/admin/structure-images.php'],
+                // Reprise ponctuelle des déclencheurs de case hérités : à
+                // retirer du menu une fois la carte reprise partout.
+                ['tile-dialogs-migration.php', 'Dialogues de case', '/admin/tile-dialogs-migration.php'],
+            ], ['buildings.php', 'structure-types.php', 'structure-images.php', 'tile-dialogs-migration.php']),
+            $navGroup('Décors', [
+                ['scenery-types.php', 'Types', '/admin/scenery-types.php'],
+                ['footprints.php', 'Formes', '/admin/footprints.php'],
+            ], $sceneryPages),
+            $navGroup('Dialogues', [
+                ['dialogs.php', 'Liste', '/admin/dialogs.php'],
+                ['dialog-seed.php', 'Seed JSON legacy', '/admin/dialog-seed.php'],
+            ], $dialogPages),
+        ]),
+
+        $navSection('Les règles', [
+            $navGroup('Races', [
+                ['races.php', 'Liste', '/admin/races.php'],
+                ['race-seed.php', 'Seed JSON legacy', '/admin/race-seed.php'],
+            ], $racePages),
+            $navGroup('Objets', [
+                ['items.php', 'Liste', '/admin/items.php'],
+                ['recipes.php', 'Recettes', '/admin/recipes.php'],
+                ['item-seed.php', 'Seed JSON legacy', '/admin/item-seed.php'],
+            ], $itemPages),
+            $navGroup('Actions', [
+                ['actions.php', 'Liste', '/admin/actions.php'],
+                ['action-workbench.php', 'Configuration actions', '/admin/action-workbench.php'],
+                ['passive-workbench.php', 'Configuration passifs', '/admin/passive-workbench.php'],
+                ['action-type-defaults.php', 'Défauts par type', '/admin/action-type-defaults.php'],
+                ['action-import.php', 'Importer', '/admin/action-import.php'],
+            ], $actionPages),
+            $navGroup('Effets', [
+                ['effects.php', 'Liste', '/admin/effects.php'],
+            ], ['effects.php']),
+            $navGroup('Factions', [
+                ['factions.php', 'Liste', '/admin/factions.php'],
+                ['faction-members.php', 'Membres', '/admin/faction-members.php'],
+                ['faction-seed.php', 'Seed JSON legacy', '/admin/faction-seed.php'],
+            ], $factionPages),
+        ]),
+
+        $navSection('Les gens', [
+            $navGroup('Personnages', [
+                ['players.php', 'Compétences', '/admin/players.php'],
+                ['pnjs.php', 'PNJ', '/admin/pnjs.php'],
+                ['avatars-portraits.php', 'Avatars &amp; portraits', '/admin/avatars-portraits.php'],
+                ['skill-stats.php', 'Statistiques', '/admin/skill-stats.php'],
+                ['admin-access.php', 'Accès &amp; options', '/admin/admin-access.php'],
+            ], $playerPages),
+            // Superadmin-only: self-hides for plain admins (defaults to superadmin).
+            $navLink('access-control.php', 'Contrôle d\'accès', '/admin/access-control.php'),
+        ]),
+
+        $navSection('Outils', [
+            $navLink('index.php', 'Tableau de bord', '/admin/index.php'),
+            $navLink('landing.php', 'Page d\'accueil', '/admin/landing.php'),
+            $navGroup('Tutoriel', [
+                ['tutorial-catalog.php', 'Catalogue', '/admin/tutorial-catalog.php'],
+                ['tutorial.php', 'Étapes', '/admin/tutorial.php'],
+                ['tutorial-npcs.php', 'PNJ', '/admin/tutorial-npcs.php'],
+                ['tutorial-settings.php', 'Options', '/admin/tutorial-settings.php'],
+            ], $tutorialPages),
+            $navLink('wiki.php', 'Wiki', '/admin/wiki.php'),
+        ])
+    ));
 
     $navigation = implode("\n                ", $navParts);
 
