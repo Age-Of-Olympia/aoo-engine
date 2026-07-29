@@ -63,6 +63,17 @@ final class SceneryFiguresInSight
     }
 
     /**
+     * One figure, for whoever asks about an entity rather than a window — the
+     * observation card, which shows the same object in a portrait.
+     *
+     * @return array{id:int, name:string, family:string, image:string, x:int, y:int, w:int, h:int}|null
+     */
+    public function forEntity(int $entityId): ?array
+    {
+        return $this->figuresOf([$entityId])['figures'][0] ?? null;
+    }
+
+    /**
      * @param list<int> $coordsIds
      * @return list<int>
      */

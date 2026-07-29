@@ -2,6 +2,7 @@
 
 namespace Tests\Various;
 
+use App\Service\Map\EntitySpriteService;
 use App\View\Observe\SceneryPortraitView;
 use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
@@ -59,6 +60,51 @@ class SceneryPortraitViewTest extends LegacyPlayerFixtureTestCase
              ON DUPLICATE KEY UPDATE piece = VALUES(piece)',
             [$entityId, $coordsId, self::PLAN, $x, $y, $index, 'cover']
         );
+    }
+
+    /**
+     * The card shows the SAME picture as the board, from the same place, so
+     * the two can no longer disagree about what an object looks like.
+     */
+    public function testThePortraitShowsThePictureTheBoardDraws(): void
+    {
+        $family = 'gm_portrait_compose';
+
+        if (empty($_SERVER['DOCUMENT_ROOT'])) {
+            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
+        }
+
+        $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/foregrounds/_composed';
+
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
+            $this->markTestSkipped('img/ non inscriptible.');
+        }
+
+        $sprite = $dir . '/' . $family . '.png';
+        $image = imagecreatetruecolor(50, 100);
+        imagepng($image, $sprite);
+        imagedestroy($image);
+        EntitySpriteService::forget();
+
+        try {
+            $entity = $this->createRealPlayer('GmPortraitCompose');
+            $this->link->executeStatement(
+                'UPDATE players SET race = ? WHERE id = ?',
+                [$family, (int) $entity->id]
+            );
+
+            $this->piece((int) $entity->id, $family . '-00', 0, 1, 0);
+            $this->piece((int) $entity->id, $family . '-01', 0, 0, 1);
+
+            $html = (new SceneryPortraitView($this->link))->compose((int) $entity->id);
+
+            $this->assertNotNull($html);
+            $this->assertStringContainsString('_composed/' . $family . '.png', $html);
+            $this->assertSame(1, substr_count($html, '<img'), 'une seule image, pas les morceaux');
+        } finally {
+            @unlink($sprite);
+            EntitySpriteService::forget();
+        }
     }
 
     public function testTheWholeFigureIsRecomposed(): void

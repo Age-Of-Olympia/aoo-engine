@@ -7,17 +7,15 @@ use App\View\SceneryFigure;
 use Doctrine\DBAL\Connection;
 
 /**
- * The portrait of a multi-cell scenery object: its whole figure, recomposed.
+ * The portrait of a multi-cell scenery object: its whole figure.
  *
  * A nine-piece library was shown by its top-left ninth, because the entity's
- * `portrait` is one image and a figure of that kind has no single one. The
- * pieces are read from the map rather than guessed from the family name:
- * three suffix conventions coexist on disk, and the map already holds the
- * exact file each cell carries.
+ * `portrait` is one image and a figure of that kind has none.
  *
- * Laid out in percentages, so the figure fits the card's portrait column
- * whatever its size, and a fourteen-piece fort needs no more room than a
- * two-piece tower.
+ * It now shows the same picture the board draws, from the same place, so the
+ * card and the map can no longer disagree about what an object looks like.
+ * Laying the pieces out here is the fallback, for a figure whose picture is
+ * not composed yet.
  */
 final class SceneryPortraitView
 {
@@ -29,10 +27,37 @@ final class SceneryPortraitView
     }
 
     /**
-     * The figure as positioned images, or null when there is nothing to
-     * recompose — a single cell speaks for itself.
+     * The figure as ONE picture, or null when there is nothing to show — a
+     * single cell speaks for itself.
      */
     public function compose(int $entityId): ?string
+    {
+        $figure = (new \App\Service\Map\SceneryFiguresInSight($this->conn))->forEntity($entityId);
+
+        if ($figure !== null) {
+            /* Inline, so it wins over the stylesheet's `height: 100%` — a
+             * figure keeps its proportions instead of being stretched. */
+            return '<span class="card-portrait card-portrait--figure"'
+                . ' style="position:relative;display:block;width:100%;height:auto;'
+                . 'aspect-ratio:' . $figure['w'] . ' / ' . $figure['h'] . ';">'
+                . '<img src="' . htmlspecialchars('/' . $figure['image'], ENT_QUOTES) . '"'
+                . ' style="width:100%;height:100%;" alt="" loading="lazy" />'
+                . '</span>';
+        }
+
+        return $this->fromPieces($entityId);
+    }
+
+    /**
+     * The old way, kept for a figure with no composed picture yet: read the
+     * pieces off the map and lay them out.
+     *
+     * It is a fallback and no longer the rule, which matters — it is the last
+     * thing here that reads `map_foregrounds`, and it fails QUIETLY when the
+     * pieces are gone: fewer than two rows and the card silently falls back
+     * to the anchor's single image.
+     */
+    private function fromPieces(int $entityId): ?string
     {
         $cells = $this->conn->fetchAllAssociative(
             'SELECT f.name, ec.x, ec.y
