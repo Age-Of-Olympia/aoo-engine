@@ -11,6 +11,8 @@ class View{
     private $inSight; // Coordonnées des objets dans le champ de vision
     private $inSightId; // id de ces coordonnées
     private $useTbl; // array qui permettra d'augmenter le z-level des images
+    /** @var list<array{id:int, name:string, family:string, image:string, x:int, y:int, w:int, h:int}> */
+    private $sceneryFigures = []; // scenery drawn whole, across its footprint
     private $options; // player->get_options()
     private $playerId; // ID du joueur pour qui la vue est générée
     private $fullCoordsOnCases; // data-coords-full sur les cases (éditeur + admins)
@@ -238,6 +240,25 @@ class View{
                 }
             }
 
+            /* Whole scenery: one figure per entity, and the cells it takes
+             * over from the piece rows.
+             *
+             * Not in the editor. Tiled works a piece at a time — pieces are
+             * erased, named and placed one cell at a time there — so laying a
+             * single image over the rows an animator is dragging would blind
+             * them to their own work. */
+            $sceneryCovered = [];
+            $this->sceneryFigures = [];
+
+            if (!$this->tiled && !empty($this->inSightId)) {
+                $inSight = (new \App\Service\Map\SceneryFiguresInSight())->forWindow(
+                    array_map('intval', $this->inSightId)
+                );
+
+                $this->sceneryFigures = $inSight['figures'];
+                $sceneryCovered = $inSight['covered'];
+            }
+
             // Safety check: if no coords in sight, skip the query
             if (empty($this->inSightId)) {
                 error_log("[View] No coords found in sight for current position - skipping map elements query");
@@ -351,9 +372,10 @@ class View{
             players
             WHERE
             coords_id IN ('. $inSightIdImploded .')
-            /* Le decor est deja dessine par map_foregrounds, a sa propre
-             * profondeur : le laisser passer ici le dessinerait deux fois.
-             * Ce filtre tombe quand le rendu lira les entites. */
+            /* Scenery has its own pass, after the loop, at its own depth.
+             * Letting it through here would draw it twice — and at 98, so
+             * UNDER the resources and without its footprint: one 50x50 image
+             * on its anchor cell alone. This filter stays. */
             AND player_type <> "scenery"
 
             UNION
@@ -377,6 +399,11 @@ class View{
             map_foregrounds
             WHERE
             coords_id IN ('. $inSightIdImploded .')
+            /* Minus the cells of a figure already drawn whole. Excluded per
+             * FIGURE, not per "an entity holds this cell": scenery that does
+             * NOT draw whole — a single cell, or no composed picture yet —
+             * has to keep its pieces, or it would vanish. */
+            '. ($sceneryCovered === [] ? '' : 'AND coords_id NOT IN ('. implode(',', array_keys($sceneryCovered)) .')') .'
 
             UNION
 
@@ -688,6 +715,37 @@ class View{
             foreach($this->useTbl as $e){
 
                 echo '<use xlink:href="#'. $e .'" />';
+            }
+
+
+            /* Scenery, drawn whole across its footprint.
+             *
+             * Deliberately outside the loop above: that loop is written for
+             * 50x50 tiles — a transparent gradient injected into the href, an
+             * avatar shadow CSS pins to 35px, a race border on one cell. A
+             * three-cell figure would not survive it.
+             *
+             * Painting here is painting at depth 100: the highest the query
+             * reaches in play mode, so scenery covers characters and the
+             * `cover` role keeps hiding whoever stands behind. */
+            foreach($this->sceneryFigures as $figure){
+
+                $fx = ($figure['x'] - $this->coords->x + $this->p) * 50;
+                $fy = (-$figure['y'] + $this->coords->y + $this->p) * 50;
+
+                echo '
+                    <image
+                    id="scenery'. (int) $figure['id'] .'"
+                    data-table="scenery"
+                    data-entity="'. (int) $figure['id'] .'"
+                    width="'. ($figure['w'] * 50) .'"
+                    height="'. ($figure['h'] * 50) .'"
+                    x="'. floor($fx) .'"
+                    y="'. floor($fy) .'"
+                    preserveAspectRatio="none"
+                    href="'. $figure['image'] .'"
+                    />
+                ';
             }
 
 

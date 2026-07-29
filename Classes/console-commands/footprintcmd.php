@@ -28,6 +28,7 @@ Exemple:
 > footprint verify      (l'image d'ensemble redit-elle les morceaux ?)
 > footprint freeze      (ce que « freeze write » enregistrerait)
 > footprint freeze write (met les formes devinées sur la carte à l'abri)
+> footprint compose     (fabrique l'image entière que la carte dessinera)
 EOT);
     }
 
@@ -43,6 +44,10 @@ EOT);
 
         if ($what === 'freeze') {
             return $this->freeze($option === 'write');
+        }
+
+        if ($what === 'compose') {
+            return $this->compose();
         }
 
         $catalogue = $deriver->derive();
@@ -107,6 +112,58 @@ EOT);
                 implode(', ', array_keys($wrong))
             );
             $lines[] = 'Ces figures se composeront depuis leurs morceaux — l\'image ne fait pas foi.';
+        }
+
+        return implode('<br />', $lines);
+    }
+
+    /**
+     * Builds the picture the board draws a figure with.
+     *
+     * Stitched from the family's own pieces, never from the artist's
+     * whole-object drawing: two of those contradict their pieces. Done here
+     * and not on a render, because composing globs a folder and stats every
+     * piece — fine once, absurd on every board.
+     */
+    private function compose(): string
+    {
+        $service = new EntityTypeFootprintService();
+        $sprites = new \App\Service\Map\CompositeSpriteService();
+        $pieces = (new SceneryFootprintDeriver())->piecesOnDisk();
+
+        $made = [];
+        $missed = [];
+
+        foreach ($service->catalogue() as $family => $footprint) {
+            if ($footprint->isSingleCell()) {
+                continue;
+            }
+
+            $image = $sprites->composedSprite('foregrounds', (string) $family, $footprint, $pieces[$family] ?? []);
+
+            if ($image === null) {
+                $missed[] = (string) $family;
+
+                continue;
+            }
+
+            $made[(string) $family] = $image;
+        }
+
+        $lines = ['Images entières fabriquées depuis les morceaux :', ''];
+
+        foreach ($made as $family => $image) {
+            $lines[] = sprintf('  %-28s %s', $family, $image);
+        }
+
+        $lines[] = '';
+        $lines[] = sprintf('%d figure(s) prête(s) à être dessinée d\'un bloc.', count($made));
+
+        if ($missed !== []) {
+            $lines[] = sprintf(
+                'Sans morceaux sur le disque, donc toujours dessinée(s) pièce par pièce : %s.',
+                implode(', ', $missed)
+            );
         }
 
         return implode('<br />', $lines);

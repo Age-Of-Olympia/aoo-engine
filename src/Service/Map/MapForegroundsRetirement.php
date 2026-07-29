@@ -24,10 +24,11 @@ final class MapForegroundsRetirement
     /**
      * Whether the renderer still reads the table.
      *
-     * Turn this off with the change that makes `Classes\View` draw scenery
-     * from the entities — the notice follows on its own.
+     * False since `Classes\View` draws scenery from the entities. It stays a
+     * flag rather than a deletion because the branch is still there, for the
+     * pieces no figure has taken over yet.
      */
-    public const RENDERER_READS_TABLE = true;
+    public const RENDERER_READS_TABLE = false;
 
     private ?Connection $conn;
 

@@ -43,9 +43,27 @@ final class CompositeSpriteService
             return $authored;
         }
 
+        return $this->composedSprite($imageDir, $family, $footprint, $pieceImages);
+    }
+
+    /**
+     * The stitched picture, ignoring whatever the artist drew.
+     *
+     * What the board wants: the authored drawing is a claim about the figure,
+     * this one is made of the figure's own cells. Two families out of
+     * twenty-four have a drawing that contradicts them — see `SceneryArtAudit`.
+     *
+     * @param array<int, string> $pieceImages piece index => web path
+     */
+    public function composedSprite(string $imageDir, string $family, Footprint $footprint, array $pieceImages): ?string
+    {
         if ($pieceImages === []) {
             return null;
         }
+
+        $root = empty($_SERVER['DOCUMENT_ROOT'])
+            ? dirname(__DIR__, 3)
+            : $_SERVER['DOCUMENT_ROOT'];
 
         $cached = 'img/' . $imageDir . '/' . self::CACHE_DIR . '/' . $family . '.png';
         $absolute = $root . '/' . $cached;
@@ -109,7 +127,10 @@ final class CompositeSpriteService
             imagesy($canvas) - 1,
             imagecolorallocatealpha($canvas, 0, 0, 0, 127)
         );
-        imagealphablending($canvas, true);
+        /* Blending stays OFF: a piece must land on the canvas verbatim, alpha
+         * included. Composited instead, a semi-transparent pixel comes out
+         * darker than the piece the board drew — the stitched picture would
+         * no longer BE the pieces. */
 
         $drawn = 0;
 
@@ -124,18 +145,25 @@ final class CompositeSpriteService
                 continue;
             }
 
-            imagecopyresampled(
-                $canvas,
-                $sprite,
-                $col * self::CELL,
-                $row * self::CELL,
-                0,
-                0,
-                self::CELL,
-                self::CELL,
-                imagesx($sprite),
-                imagesy($sprite)
-            );
+            /* A piece already at cell size is copied, not resampled:
+             * resampling interpolates, and the stitched picture has to be the
+             * pieces themselves — it is what makes it trustworthy. */
+            if (imagesx($sprite) === self::CELL && imagesy($sprite) === self::CELL) {
+                imagecopy($canvas, $sprite, $col * self::CELL, $row * self::CELL, 0, 0, self::CELL, self::CELL);
+            } else {
+                imagecopyresampled(
+                    $canvas,
+                    $sprite,
+                    $col * self::CELL,
+                    $row * self::CELL,
+                    0,
+                    0,
+                    self::CELL,
+                    self::CELL,
+                    imagesx($sprite),
+                    imagesy($sprite)
+                );
+            }
             imagedestroy($sprite);
             $drawn++;
         }

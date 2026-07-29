@@ -864,21 +864,27 @@ class BuildingService extends BaseService
                 $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$playerId]);
             }
 
-            /* Scenery is still DRAWN from `map_foregrounds`: without taking
-             * its pieces, the object would leave the rules and stay on
-             * screen. */
+            /* Leftover piece rows go with it: a shelved decor must not stay
+             * on screen. Read through the cells, so this runs BEFORE they are
+             * dropped. */
             $conn->executeStatement(
                 'DELETE m FROM map_foregrounds m
                    JOIN entity_cells ec ON ec.coords_id = m.coords_id
                   WHERE ec.player_id = ?',
                 [$playerId]
             );
+
+            /* Off the board is off the board: an entity waiting on the
+             * tombstone plan holds nothing. Re-laying its cells there used to
+             * be harmless because only the pieces were drawn; now that a
+             * figure is drawn from its cells, it would pile every shelved
+             * decor on the tombstone's origin. */
+            (new \App\Service\Map\EntityCellService($conn))->removeFor((int) $playerId);
+
             $conn->executeStatement(
                 'UPDATE players SET coords_id = ? WHERE id = ?',
                 [$tombstoneCoordsId, $playerId]
             );
-
-            (new \App\Service\Map\EntityCellService($conn))->syncCells((int) $playerId);
         });
 
         if ($goCoords !== false) {
