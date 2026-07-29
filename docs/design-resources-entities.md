@@ -104,10 +104,15 @@ Trois choses, et elles expliquent chacune une classe de bugs.
 **« Cet objet occupe plusieurs cases. »** Le composite existe chez l'artiste
 (une image découpée par `convert.sh`), dans l'éditeur (`TileCatalogService::
 buildComposites()` redéduit la forme en divisant l'image entière par 50) et
-dans le client Tiled (`AoO.addCompositeTiles`). Il est **détruit à
-l'écriture** : `AoO.expandComposite` ré-éclate en N lignes `{x, y, name}` et
-la clé de diff du serveur est `(x, y, name)`. Le guide l'assume : « un pull
-ultérieur ré-affiche les morceaux séparés — c'est normal ».
+dans le client Tiled (`AoO.addCompositeTiles`). Il était **détruit à
+l'écriture** : le client ré-éclatait la tuile en N lignes `{x, y, name}`, et
+l'objet mourait à la porte — il n'arrivait au serveur que des morceaux que
+plus rien ne reliait.
+
+**Corrigé** : le push envoie la tuile telle quelle, marquée `composite`, et
+`TiledMapService::spreadComposites()` la découpe côté serveur avant le diff,
+puis en fait une entité. Une ligne sans le drapeau passe inchangée, de sorte
+qu'un greffon pas encore mis à jour continue de fonctionner.
 
 Conséquences : la forme du monde dépend d'un script shell d'un dépôt non
 versionné avec le moteur, et elle a **déjà dérivé** — `geant_petrifie` porte
@@ -319,8 +324,8 @@ qu'on espère respecter.
 
 Trois surfaces à traiter, pas une :
 
-- **Tiled** (externe) ré-éclate la tuile posée en morceaux au push
-  (`expandComposite`) ;
+- ~~**Tiled** (externe) ré-éclate la tuile posée en morceaux au push~~ —
+  fait : la tuile part entière, le serveur la découpe ;
 - **tiled** (maison) efface le décor case par case
   (`DELETE FROM <table> WHERE coords_id = ?`), alors qu'il sait déjà démonter
   un bâtiment par son service. C'est de là que viennent les fragments

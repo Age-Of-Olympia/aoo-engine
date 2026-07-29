@@ -65,6 +65,9 @@ class TiledMapService
     /** Couche virtuelle des entités bâtiment (pas de table map_*) */
     public const BUILDINGS_LAYER = 'buildings';
 
+    /** The layer whose rows may name a whole object rather than a piece. */
+    public const SCENERY_LAYER = 'foregrounds';
+
     /**
      * Répertoire d'images d'une couche. La couche « resources »
      * (table map_resources, ex-map_walls) garde img/walls : le dépôt
@@ -311,6 +314,15 @@ class TiledMapService
             );
         }
 
+        /* A composite arrives as ONE row — the object, not its pieces — and
+         * the server lays the figure out. The pieces must exist before the
+         * diff runs, or it would delete the ones the push did not mention. */
+        if (isset($incomingLayers[self::SCENERY_LAYER])) {
+            $incomingLayers[self::SCENERY_LAYER] = $this->spreadComposites(
+                $incomingLayers[self::SCENERY_LAYER]
+            );
+        }
+
         $coordsIds = $this->loadCoordsIds($plan, $z);
         $report = [];
 
@@ -329,6 +341,15 @@ class TiledMapService
         // importées valent exactement les lignes reçues (les lignes joueurs,
         // hors diff, sont aussi hors empreinte), les autres n'ont pas bougé
         $postLayers = array_merge($currentLayers, $incomingLayers);
+
+        /* Scenery laid down by a push must become an entity, or its cut-out's
+         * roles are read by nobody. Derived from what is on the map rather
+         * than from what the push said, so it also catches what earlier
+         * pushes left behind. */
+        if (isset($incomingLayers[self::SCENERY_LAYER])) {
+            $report[self::SCENERY_LAYER]['entities'] =
+                (new \App\Service\Map\SceneryObjectService())->convertOrphans();
+        }
 
         if ($incomingBuildings !== null) {
             $report[self::BUILDINGS_LAYER] = $this->importBuildingsLayer(
@@ -638,6 +659,53 @@ class TiledMapService
      * @param array<string, int> $coordsIds cache "x|y" => id, enrichi au fil des créations
      * @return array{inserted: int, deleted: int, kept: int, protected: int}
      */
+    /**
+     * Turn each row flagged `composite` into the pieces of its figure.
+     *
+     * Tiled used to explode a composite tile itself, so the object died at
+     * the door: the server only ever saw loose pieces. It now sends the
+     * object, and the cut-out catalogue lays it out here.
+     *
+     * Rows without the flag pass through untouched, so a plugin that still
+     * explodes keeps working — the two shapes coexist while animators update.
+     *
+     * @param list<array<string, mixed>> $rows
+     * @return list<array<string, mixed>>
+     */
+    private function spreadComposites(array $rows): array
+    {
+        $footprints = null;
+        $spread = [];
+
+        foreach ($rows as $row) {
+            if (empty($row['composite']) || !isset($row['name'])) {
+                unset($row['composite']);
+                $spread[] = $row;
+                continue;
+            }
+
+            $footprints ??= (new \App\Service\Map\EntityTypeFootprintService())->catalogue();
+
+            [$family, $piece] = \App\Service\Map\SceneryFootprintDeriver::splitPiece((string) $row['name']);
+            $footprint = $footprints[$family] ?? null;
+
+            if ($footprint === null) {
+                /* No known cut-out: nothing to lay out, and nothing guessed. */
+                unset($row['composite']);
+                $spread[] = $row;
+                continue;
+            }
+
+            $objects = new \App\Service\Map\SceneryObjectService();
+
+            foreach ($objects->cellsToPlace((string) $row['name'], (int) $row['x'], (int) $row['y']) as $pieceName => [$px, $py]) {
+                $spread[] = ['x' => $px, 'y' => $py, 'name' => $pieceName];
+            }
+        }
+
+        return $spread;
+    }
+
     private function importLayer(string $plan, int $z, string $layer, array $incomingRows, array $currentRows, array &$coordsIds): array
     {
         // Lignes existantes disponibles pour le rapprochement, par clé

@@ -862,10 +862,9 @@ AoO.addCatalogTiles = function(map, data, registry, config) {
 
 /*
  * Structures multi-tuiles : une grande tuile de palette par structure
- * (image entière, ancrée en bas à gauche de sa case), que le push
- * ré-éclate en morceaux « base-NN » individuels — voir
- * AoO.expandComposite. Un pull ultérieur ré-affiche les morceaux, ce qui
- * revient au même visuellement.
+ * (image entière, ancrée en bas à gauche de sa case). Le push l'envoie
+ * TELLE QUELLE, marquée `composite` : le serveur la découpe en morceaux et
+ * en fait une entité. Un pull ultérieur ré-affiche la grande tuile.
  */
 AoO.addCompositeTiles = function(map, data, registry, config) {
     if (!data.composites) {
@@ -879,31 +878,15 @@ AoO.addCompositeTiles = function(map, data, registry, config) {
 
             var tile = entry.tileset.addTile();
             tile.imageFileName = config.gameDir + '/' + composite.image;
+            /* Le push envoie ce nom tel quel : c'est le morceau d'ancrage,
+               dont le serveur déduit la famille et donc la figure. */
+            tile.setProperty(AoO.PROP.name, composite.pieces[0].name);
             tile.setProperty('aooComposite', JSON.stringify({
                 width: composite.width,
                 height: composite.height,
                 pieces: composite.pieces
             }));
         }
-    }
-};
-
-/*
- * Éclate une grande tuile de structure posée en (x, y) Tiled (= sa case
- * d'ancrage, en bas à gauche) en morceaux individuels. Les offsets
- * (dx, dy, relatifs à l'ancre, en coordonnées jeu) sont fournis par le
- * serveur : aucune convention de découpe à connaître ici.
- */
-AoO.expandComposite = function(composite, tiledX, tiledY, rows) {
-    var anchorGameY = -tiledY;
-
-    for (var i = 0; i < composite.pieces.length; i++) {
-        var piece = composite.pieces[i];
-        rows.push({
-            x: tiledX + piece.dx,
-            y: anchorGameY + piece.dy,
-            name: piece.name
-        });
     }
 };
 
@@ -955,18 +938,20 @@ AoO.serializeTileLayer = function(layer) {
                 continue;
             }
 
-            var compositeSpec = tile.property('aooComposite');
-            if (compositeSpec) {
-                AoO.expandComposite(JSON.parse(compositeSpec), x, y, rows);
-                continue;
-            }
-
             var name = tile.property(AoO.PROP.name);
             if (!name) {
                 throw new Error('Tuile sans propriété ' + AoO.PROP.name + ' en ' + x + ',' + (-y) +
                     ' (couche ' + layer.name + ') — utiliser les tuiles des tilesets aoo-*');
             }
-            rows.push({ x: x, y: -y, name: name });
+
+            /* Une structure part ENTIÈRE : le serveur la découpe et en fait
+               une entité. L'éclater ici la tuait à la porte — il n'arrivait
+               que des morceaux, que plus rien ne reliait. */
+            var row = { x: x, y: -y, name: name };
+            if (tile.property('aooComposite')) {
+                row.composite = true;
+            }
+            rows.push(row);
         }
     }
 
