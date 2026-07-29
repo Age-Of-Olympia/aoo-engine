@@ -172,6 +172,37 @@ class ResourceService
             }
     }
 
+    /**
+     * Which nearby resources run out after a harvest, within a budget.
+     *
+     * Extracted from ResourceOutcomeInstruction so the budget rule can be
+     * tested at all: it lived inside a loop that needed a player, a plan and
+     * a database.
+     *
+     * Behaviour FROZEN as it stands, bugs included — the fix comes next, on
+     * its own. The counter counts ATTEMPTS, so a resource whose biome has no
+     * exhaust rate still spends budget without ever running out.
+     *
+     * @param iterable<object> $rows
+     * @return list<int>
+     */
+    public static function pickExhausted(object $planJson, iterable $rows, int $budget): array
+    {
+        $resourcesIdArray = [];
+        $attempts = 0;
+
+        foreach ($rows as $row) {
+            $attempts++;
+            self::createExhaustArray($planJson, $resourcesIdArray, $row);
+
+            if ($attempts >= $budget) {
+                break;
+            }
+        }
+
+        return $resourcesIdArray;
+    }
+
     public static function createRegrowArray(&$planJson, array &$resourcesIdArray, &$row): void
     {
         if(!isset($planJson->biomes)) {

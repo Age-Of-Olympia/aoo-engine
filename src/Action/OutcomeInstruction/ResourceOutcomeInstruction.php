@@ -91,15 +91,12 @@ class ResourceOutcomeInstruction extends OutcomeInstruction implements HasParame
 
         //Une fois la récolte terminée, on regarde si les ressources s'épuisent
         $res = ResourceService::getResourcesAround($actor); //TODO refactor this to avoid double query
-        $resourcesIdArray = [];
-        $countTryExhaust=0;
+        $rows = [];
         while($row = $res->fetch_object()){
-            $countTryExhaust++;
-             ResourceService::createExhaustArray($planJson, $resourcesIdArray, $row);
-             if($countTryExhaust >= $rand) { // On ne veut pas épuiser plus de ressources que le nombre de ressources récoltées
-                 break;
-             }
+            $rows[] = $row;
         }
+
+        $resourcesIdArray = ResourceService::pickExhausted($planJson, $rows, $rand);
     
         if(!empty($resourcesIdArray)){
             if(count($resourcesIdArray) > 1){

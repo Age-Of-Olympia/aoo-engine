@@ -37,6 +37,84 @@ class ResourceExhaustCharacterizationTest extends TestCase
         ResourceService::setDiceForTests(null);
     }
 
+    /** Several nearby resources, each named so the biome can tell them apart. */
+    private function rows(string ...$names): array
+    {
+        $rows = [];
+        $id = 100;
+
+        foreach ($names as $name) {
+            $rows[] = (object) ['id' => $id++, 'name' => $name];
+        }
+
+        return $rows;
+    }
+
+    /** @param array<int, array<string, mixed>> $biomes */
+    private function planWith(array $biomes): object
+    {
+        return (object) ['biomes' => array_map(static fn(array $b): object => (object) $b, $biomes)];
+    }
+
+    /**
+     * GELÉ, ET FAUX — le budget d'épuisement compte les TENTATIVES, pas les
+     * épuisements. Une ressource dont le biome n'a pas de taux ne peut jamais
+     * s'épuiser, et pourtant elle consomme le budget : ici deux pierres sans
+     * taux passent devant l'arbre, le budget de 2 est mangé, et l'arbre —
+     * seul épuisable, à 100 % — survit.
+     */
+    public function testTheBudgetCountsAttemptsAndNotExhaustions(): void
+    {
+        ResourceService::setDiceForTests(new ScriptedDice([[1], [1]]));
+
+        $plan = $this->planWith([
+            ['wall' => 'pierre1', 'ressource' => 'pierre'],
+            ['wall' => 'arbre1', 'ressource' => 'bois', 'exhaust' => 100],
+        ]);
+
+        $picked = ResourceService::pickExhausted($plan, $this->rows('pierre1', 'pierre1', 'arbre1'), 2);
+
+        $this->assertSame([], $picked, 'gelé : les tentatives stériles ont mangé le budget');
+    }
+
+    /**
+     * GELÉ — le budget est celui du DERNIER rendement seulement.
+     *
+     * L'appelant tirait `$rand` dans la boucle des rendements et le relisait
+     * après : avec du bois (5 unités) puis de la pierre (1), le budget vaut 1.
+     * Ce test décrit le budget qu'il reçoit, pas celui qu'il devrait recevoir.
+     */
+    public function testABudgetOfOneExhaustsOnlyOneVein(): void
+    {
+        ResourceService::setDiceForTests(new ScriptedDice([[1]]));
+
+        $plan = $this->planWith([['wall' => 'arbre1', 'ressource' => 'bois', 'exhaust' => 100]]);
+
+        $picked = ResourceService::pickExhausted($plan, $this->rows('arbre1', 'arbre1', 'arbre1'), 1);
+
+        $this->assertCount(1, $picked);
+    }
+
+    /**
+     * GELÉ, ET FAUX — un budget NUL épuise quand même un filon.
+     *
+     * Le budget est éprouvé APRÈS la tentative, donc une fouille qui n'a rien
+     * rapporté peut tarir une veine. C'est le cas du joueur qui fouille une
+     * case sans rendement déclaré.
+     */
+    public function testAnEmptyBudgetStillExhaustsOneVein(): void
+    {
+        ResourceService::setDiceForTests(new ScriptedDice([[1]]));
+
+        $plan = $this->planWith([['wall' => 'arbre1', 'ressource' => 'bois', 'exhaust' => 100]]);
+
+        $this->assertCount(
+            1,
+            ResourceService::pickExhausted($plan, $this->rows('arbre1'), 0),
+            'gelé : rien récolté, un filon tari quand même'
+        );
+    }
+
     /**
      * VOULU — mais décalé d'une unité : « exhaust > 1d100 » donne
      * exhaust - 1 chances sur cent. Un taux annoncé à 75 vaut 74 %.
