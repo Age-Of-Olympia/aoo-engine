@@ -237,3 +237,18 @@
     background: rgba(184, 134, 11, 0.09);
     border-radius: 3px;
 }
+
+/* Ce qui retient encore la table map_foregrounds : une liste courte, lisible
+   d'un coup d'œil, dans le bandeau d'avertissement. */
+.fp-blockers {
+    margin: 6px 0 0;
+    padding-left: 20px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.fp-blockers__hint {
+    margin: 6px 0 0;
+    font-size: 12px;
+    opacity: 0.85;
+}

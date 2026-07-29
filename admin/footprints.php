@@ -18,6 +18,7 @@ use App\Service\CsrfProtectionService;
 use App\Service\Map\EntityTypeFootprintService;
 use App\Service\Map\Footprint;
 use App\Service\Map\SceneryObjectService;
+use App\Service\Map\MapForegroundsRetirement;
 use App\Service\Map\SceneryFootprintDeriver;
 
 /** @return array{0: string, 1: string, 2: string} label, css class, tooltip */
@@ -100,6 +101,8 @@ uksort($families, static function (string $a, string $b) use ($service): int {
     return [$settled($a), $a] <=> [$settled($b), $b];
 });
 
+$retirement = (new MapForegroundsRetirement())->status();
+
 $counts = ['all' => count($families), 'todo' => 0, 'set' => 0];
 
 foreach (array_keys($families) as $family) {
@@ -128,6 +131,34 @@ ob_start();
     </p>
 
     <?= renderFlashMessage() ?>
+
+    <?php if ($retirement['droppable']): ?>
+        <div class="alert alert-success">
+            <strong>La table <code>map_foregrounds</code> peut être supprimée.</strong>
+            Plus rien n'en dépend : le décor est dessiné depuis les entités, et toutes les formes
+            sont réglées ici. Elle porte encore <?= $retirement['rows'] ?> ligne<?= $retirement['rows'] > 1 ? 's' : '' ?>,
+            qui ne servent plus à rien.
+        </div>
+    <?php else: ?>
+        <div class="alert alert-warning">
+            <strong>La table <code>map_foregrounds</code> sert encore — ne la supprimez pas.</strong>
+            <ul class="fp-blockers">
+                <?php foreach ($retirement['blockers'] as $blocker): ?>
+                    <li><?= htmlspecialchars($blocker, ENT_QUOTES, 'UTF-8') ?></li>
+                <?php endforeach; ?>
+            </ul>
+            <?php if ($retirement['shapesFromMap'] !== []): ?>
+                <p class="fp-blockers__hint">
+                    Régler ces formes ici les met à l'abri : <?=
+                        htmlspecialchars(implode(', ', array_slice($retirement['shapesFromMap'], 0, 12)), ENT_QUOTES, 'UTF-8')
+                    ?><?= count($retirement['shapesFromMap']) > 12 ? '…' : '' ?>.
+                </p>
+            <?php endif; ?>
+            <p class="fp-blockers__hint">
+                Ce message deviendra vert de lui-même quand plus rien n'en dépendra.
+            </p>
+        </div>
+    <?php endif; ?>
 
     <div class="fp-toolbar">
         <input type="search" id="fp-search" class="form-select fp-search"
