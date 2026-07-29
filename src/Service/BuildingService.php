@@ -318,7 +318,8 @@ class BuildingService extends BaseService
         object $goCoords,
         ?int $ownerId = null,
         string $faction = '',
-        ?string $name = null
+        ?string $name = null,
+        bool $overScenery = false
     ): int {
         $race = $this->raceService->getRaceByName($type);
         if ($race === null) {
@@ -362,14 +363,14 @@ class BuildingService extends BaseService
         // occupe la case sans apparaître dans listBuildings(). La case doit
         // être LIBRE (ni entité, ni mur) — vérifié ici, source unique de la
         // règle, sous verrou pour resserrer la fenêtre concurrente.
-        $conn->transactional(function ($conn) use ($id, $displayId, $name, $race, $type, $avatar, $coordsId, $ownerId, $faction, $goCoords): void {
+        $conn->transactional(function ($conn) use ($id, $displayId, $name, $race, $type, $avatar, $coordsId, $ownerId, $faction, $goCoords, $overScenery): void {
             /* Le verrou reste ICI : c'est lui qui resserre la fenêtre entre
              * deux poses concurrentes, et il doit vivre dans la transaction.
              * La RÈGLE, elle, est partie dans TileOccupancyService avec les
              * deux autres questions d'occupation. */
             $conn->fetchOne('SELECT id FROM players WHERE coords_id = ? FOR UPDATE', [$coordsId]);
 
-            $refusal = (new \App\Service\Map\TileOccupancyService($conn))->buildRefusal((int) $coordsId);
+            $refusal = (new \App\Service\Map\TileOccupancyService($conn))->buildRefusal((int) $coordsId, $overScenery);
             if ($refusal !== null) {
                 throw new \InvalidArgumentException(
                     "Case ({$goCoords->x}, {$goCoords->y}, {$goCoords->plan}) : " . lcfirst($refusal)

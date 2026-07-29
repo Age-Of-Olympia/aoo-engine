@@ -17,7 +17,12 @@ if($_POST['type'] == 'eraser'){
     $goCoords = (object) $res->fetch_assoc();
 
     try {
-        $buildingId = (new BuildingService())->place($_POST['src'], $goCoords);
+        /* Depuis l'éditeur, on pose PAR-DESSUS le décor : c'est un geste
+         * d'animateur — cacher quelque chose derrière une statue — quand un
+         * joueur, lui, ne bâtit pas au travers. */
+        $buildingId = (new BuildingService())->place(
+            $_POST['src'], $goCoords, null, '', null, overScenery: true
+        );
 
         echo 'bâtiment #'. $buildingId .' ';
     } catch (\InvalidArgumentException $e) {

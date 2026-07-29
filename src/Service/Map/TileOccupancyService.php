@@ -158,16 +158,15 @@ final class TileOccupancyService
     }
 
     /** Any entity, at any title, on this tile. */
-    private function heldByAnEntity(int $coordsId): bool
+    private function heldByAnEntity(int $coordsId, bool $countScenery = false): bool
     {
-        /* Scenery is excluded on purpose: decor never counted for landing or
-         * building, and converting it into entities must not change that on
-         * its own. Making decor unbuildable is a decision of its own lot. */
+        $exceptScenery = $countScenery ? '' : " AND p.player_type <> 'scenery'";
+
         return (bool) $this->conn->fetchOne(
             'SELECT 1
                FROM (' . self::heldSql((string) $coordsId) . ') AS held
                JOIN players p ON p.id = held.player_id
-              WHERE p.player_type <> \'scenery\'
+              WHERE 1' . $exceptScenery . '
               LIMIT 1'
         );
     }
@@ -178,6 +177,7 @@ final class TileOccupancyService
      */
     public function isVacant(int $coordsId): bool
     {
+        /* Decor does not fill a tile: one walks on it, so one lands on it. */
         if ($this->heldByAnEntity($coordsId)) {
             return false;
         }
@@ -199,9 +199,12 @@ final class TileOccupancyService
      *
      * @return string|null refusal reason, or null when buildable
      */
-    public function buildRefusal(int $coordsId): ?string
+    public function buildRefusal(int $coordsId, bool $overScenery = false): ?string
     {
-        if ($this->heldByAnEntity($coordsId)) {
+        /* Decor counts as occupied for a PLAYER: one does not raise a wall
+         * through a statue. An animator placing from the editor may, to tuck
+         * something behind it — hence the flag rather than a blanket rule. */
+        if ($this->heldByAnEntity($coordsId, !$overScenery)) {
             return 'Case occupée par une entité.';
         }
 

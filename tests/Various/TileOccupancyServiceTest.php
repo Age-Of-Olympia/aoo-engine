@@ -370,10 +370,11 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
     }
 
     /**
-     * Converting scenery into entities must not, on its own, make a decor
-     * tile impossible to land on or to build on.
+     * A player does not raise a wall through a statue; decor fills the tile
+     * for building. Landing is another matter — one walks on decor, so one
+     * lands on it.
      */
-    public function testSceneryDoesNotChangeLandingOrBuilding(): void
+    public function testAPlayerCannotBuildOnSceneryButCanLandOnIt(): void
     {
         $this->requireBuildingsOrSkip();
         $decor = $this->placeStructure('mur_pierre', 60, 0, self::PLAN);
@@ -386,8 +387,32 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $id = $this->coordsId(60, 0);
         $service = $this->service();
 
-        $this->assertTrue($service->isVacant($id), 'decor does not fill a tile');
-        $this->assertNull($service->buildRefusal($id), 'and does not forbid building');
+        $this->assertTrue($service->isVacant($id), 'decor does not fill a tile for landing');
+        $this->assertSame(
+            'Case occupée par une entité.',
+            $service->buildRefusal($id),
+            'but a player does not build through it'
+        );
+    }
+
+    /**
+     * An animator placing from the editor may build over decor — tucking
+     * something behind a statue is a legitimate gesture there.
+     */
+    public function testTheEditorMayBuildOverScenery(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $decor = $this->placeStructure('mur_pierre', 62, 0, self::PLAN);
+
+        $this->link->executeStatement(
+            "UPDATE players SET player_type = 'scenery' WHERE id = ?",
+            [$decor]
+        );
+
+        $this->assertNull(
+            $this->service()->buildRefusal($this->coordsId(62, 0), overScenery: true),
+            'the editor is allowed through'
+        );
     }
 
     public function testCharacterVisibilityMatchesTheRenderRule(): void
