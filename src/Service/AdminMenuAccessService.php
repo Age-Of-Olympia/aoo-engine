@@ -109,6 +109,7 @@ class AdminMenuAccessService
         'tile-colors-save.php'       => 'tile-colors.php',
         'dialogs-save.php'           => 'dialogs.php',
         'dialog-seed.php'            => 'dialogs.php',
+        'harvest-seed.php'           => 'resource-types.php',
         'races-save.php'             => 'races.php',
         'race-seed.php'              => 'races.php',
         'effects-save.php'           => 'effects.php',

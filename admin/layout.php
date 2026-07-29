@@ -145,7 +145,8 @@ function admin_layout($title, $content, array $assets = []) {
             ], $sceneryPages),
             $navGroup('Ressources', [
                 ['resource-types.php', 'Types', '/admin/resource-types.php'],
-            ], ['resource-types.php']),
+                ['harvest-seed.php', 'Rendements (seed JSON)', '/admin/harvest-seed.php'],
+            ], ['resource-types.php', 'harvest-seed.php']),
             /* Un élément posé applique l'effet de son nom quand on marche
              * dessus : le catalogue et ce qui en est posé, même sujet. */
             $navGroup('Éléments', [
