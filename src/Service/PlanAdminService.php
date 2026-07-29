@@ -128,6 +128,12 @@ class PlanAdminService
             throw $e;
         }
 
+        /* Les bâtiments ne sont pas une table de carte : ce sont des entités,
+         * donc la boucle ci-dessus ne les voit pas et un clone les perdait.
+         * Sans conséquence tant qu'ils étaient des murs ; le jour où l'autel
+         * devient une entité, cloner un plan lui retire ses autels. */
+        $report['layers'][TiledMapService::BUILDINGS_LAYER] = $this->copyDecorBuildings($sourcePlan, $targetPlan);
+
         // Après commit : un clone en base sans JSON se répare en relançant la
         // copie du fichier, l'inverse (fichier sans base) serait un orphelin
         if (trim((string) ($jsonOverrides['name'] ?? '')) === '') {
@@ -139,9 +145,63 @@ class PlanAdminService
     }
 
     /**
+     * Recopie les bâtiments de DÉCOR d'un plan sur l'autre.
+     *
+     * Le décor seulement — sans propriétaire, sans faction, à l'état bâti —
+     * c'est-à-dire la même définition que celle dont Tiled accepte le diff.
+     * Ce qu'un joueur a bâti reste où il l'a bâti : un clone est une copie du
+     * monde tel que l'animateur l'a dessiné, pas un double des possessions.
+     *
+     * Chaque pose passe par le service : une entité a une plage
+     * d'identifiants, une ligne satellite et une emprise, qu'un INSERT SELECT
+     * ne saurait pas écrire. Une case refusée est comptée, pas fatale — le
+     * plan cloné reste utilisable et le rapport dit ce qui manque.
+     *
+     * @return int bâtiments recopiés
+     */
+    private function copyDecorBuildings(string $sourcePlan, string $targetPlan): int
+    {
+        $res = $this->db->exe(
+            "SELECT p.race, c.x, c.y, c.z
+               FROM buildings b
+               JOIN players p ON p.id = b.player_id
+               JOIN coords c ON c.id = p.coords_id
+              WHERE c.plan = ?
+                AND b.owner_id IS NULL
+                AND b.faction = ''
+                AND b.build_state = 'built'
+              ORDER BY c.z, c.y, c.x, p.id",
+            array($sourcePlan)
+        );
+
+        $buildings = new \App\Service\BuildingService();
+        $copied = 0;
+
+        while ($row = $res->fetch_assoc()) {
+            $goCoords = (object) [
+                'x'    => (int) $row['x'],
+                'y'    => (int) $row['y'],
+                'z'    => (int) $row['z'],
+                'plan' => $targetPlan,
+            ];
+
+            try {
+                $buildings->place((string) $row['race'], $goCoords, null, '', null, overScenery: true);
+                $copied++;
+            } catch (\Throwable $e) {
+                /* Case occupée ou type disparu du catalogue : le clone
+                 * continue, et le compte dit ce qui n'a pas suivi. */
+                continue;
+            }
+        }
+
+        return $copied;
+    }
+
+    /**
      * Joueurs et PNJ présents sur le plan (zone dangereuse de l'admin).
      *
-     * @return array{players: int, npcs: int}
+     * @return array{players: int, npcs: int, structures: int}
      */
     public function countCharactersOnPlan(string $plan): array
     {
@@ -150,16 +210,26 @@ class PlanAdminService
              * comptait les bâtiments comme des joueurs, et l'écran de zone
              * dangereuse annonçait des centaines de joueurs là où il n'y en
              * a aucun (663 sur praetorium_save, 662 sur praetorium_dark). */
+            /* Les structures comptent aussi : elles tiennent une case par
+             * leur `coords_id`, donc elles retiennent la clé étrangère au
+             * moment de supprimer les coordonnées. Absentes de ce compte, la
+             * suppression passait le bilan puis échouait sur une erreur de
+             * base — un message illisible à la place d'un refus clair. */
             'SELECT
                 COALESCE(SUM(p.player_type = "real"), 0) AS players,
-                COALESCE(SUM(p.player_type = "npc"), 0) AS npcs
+                COALESCE(SUM(p.player_type = "npc"), 0) AS npcs,
+                COALESCE(SUM(p.player_type IN ("building", "unique", "scenery")), 0) AS structures
              FROM players p JOIN coords c ON c.id = p.coords_id
              WHERE c.plan = ?',
             array($plan)
         );
         $row = $res->fetch_assoc();
 
-        return ['players' => (int) ($row['players'] ?? 0), 'npcs' => (int) ($row['npcs'] ?? 0)];
+        return [
+            'players' => (int) ($row['players'] ?? 0),
+            'npcs' => (int) ($row['npcs'] ?? 0),
+            'structures' => (int) ($row['structures'] ?? 0),
+        ];
     }
 
     /**
@@ -189,6 +259,16 @@ class PlanAdminService
             $blockers[] = [
                 'check' => 'npcs', 'count' => $characters['npcs'], 'forceable' => true,
                 'detail' => $characters['npcs'] . ' PNJ sur ce plan (supprimés avec leurs données si suppression forcée).',
+            ];
+        }
+        if ($characters['structures'] > 0) {
+            /* Forçable comme les PNJ : la suppression forcée les emporte déjà
+             * avec leurs satellites — ce qui manquait, c'est de le DIRE avant
+             * de le faire. */
+            $blockers[] = [
+                'check' => 'structures', 'count' => $characters['structures'], 'forceable' => true,
+                'detail' => $characters['structures'] . ' structure(s) sur ce plan — bâtiment, objet unique ou décor'
+                    . ' (supprimées avec leurs données si suppression forcée).',
             ];
         }
 

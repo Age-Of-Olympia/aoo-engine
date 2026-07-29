@@ -271,6 +271,76 @@ class PlanAdminServiceTest extends TestCase
      * un construit par un joueur réel existant), un élément avec endTime,
      * et un fichier JSON.
      */
+    /**
+     * Un bâtiment n'est pas une ligne de carte mais une ENTITÉ : la boucle
+     * des couches ne le voyait pas, donc un clone le perdait. Sans effet tant
+     * que c'étaient des murs ; le jour où l'autel devient une entité, cloner
+     * un plan lui retire ses autels.
+     */
+    public function testCloneCarriesDecorBuildingsButNotWhatAPlayerBuilt(): void
+    {
+        $this->seedSourcePlan();
+
+        $coords = (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::SRC];
+        $buildings = new \App\Service\BuildingService();
+        $buildings->place('barricade', $coords, null, '', null, overScenery: true);
+
+        /* Une case libre à soi : (0,1) porte déjà un élément du seed, et une
+           case occupée fait refuser la pose. */
+        $this->link()->executeStatement(
+            'INSERT INTO coords (x, y, z, plan) VALUES (5, 5, 0, ?)',
+            [self::SRC]
+        );
+
+        $owned = (object) ['x' => 5, 'y' => 5, 'z' => 0, 'plan' => self::SRC];
+        $builderId = (int) $this->link()->fetchOne('SELECT id FROM players WHERE player_type = "real" ORDER BY id LIMIT 1');
+        $buildings->place('barricade', $owned, $builderId, '', null, overScenery: true);
+
+        (new PlanAdminService())->clonePlan(self::SRC, self::CLONE);
+
+        $onClone = $this->link()->fetchAllAssociative(
+            "SELECT p.race, b.owner_id FROM buildings b
+               JOIN players p ON p.id = b.player_id
+               JOIN coords c ON c.id = p.coords_id
+              WHERE c.plan = ?",
+            [self::CLONE]
+        );
+
+        $this->assertCount(1, $onClone, 'le décor suit, ce qu\'un joueur a bâti reste chez lui');
+        $this->assertSame('barricade', $onClone[0]['race']);
+        $this->assertNull($onClone[0]['owner_id']);
+    }
+
+    /**
+     * Une structure tient une case par son `coords_id` : elle retient la clé
+     * étrangère au moment de supprimer les coordonnées. Absente du bilan, la
+     * suppression le passait puis échouait sur une erreur de base.
+     */
+    public function testDeletePreflightRefusesAPlanHoldingStructures(): void
+    {
+        $this->seedSourcePlan();
+
+        (new \App\Service\BuildingService())->place(
+            'barricade',
+            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::SRC],
+            null,
+            '',
+            null,
+            overScenery: true
+        );
+
+        $preflight = (new PlanAdminService())->deletePreflight(self::SRC);
+
+        $structures = array_values(array_filter(
+            $preflight['blockers'],
+            static fn(array $b): bool => $b['check'] === 'structures'
+        ));
+
+        $this->assertCount(1, $structures, 'le bilan doit nommer les structures');
+        $this->assertSame(1, $structures[0]['count']);
+        $this->assertTrue($structures[0]['forceable'], 'la suppression forcée les emporte déjà');
+    }
+
     private function seedSourcePlan(): void
     {
         $link = $this->link();
@@ -339,6 +409,23 @@ class PlanAdminServiceTest extends TestCase
                 "DELETE m FROM map_{$layer} m JOIN coords c ON c.id = m.coords_id WHERE c.plan LIKE 'plan_test_adm_%'"
             );
         }
+        /* Le clone POSE des entités : elles retiennent les coordonnées par
+           leur clé étrangère, et sans elles le nettoyage échouait. */
+        foreach ($link->fetchFirstColumn(
+            "SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan LIKE 'plan_test_adm_%'"
+        ) as $entityId) {
+            $link->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [(int) $entityId]);
+            /* Le satellite d'abord : `fk_buildings_player` n'a pas de cascade,
+               c'est le service qui le défait à la main partout ailleurs. */
+            foreach (['buildings', 'unique_objects'] as $satellite) {
+                $link->executeStatement("DELETE FROM {$satellite} WHERE player_id = ?", [(int) $entityId]);
+            }
+            \App\Service\BuildingService::deleteEntityRows($link, (int) $entityId);
+        }
+
+        $link->executeStatement(
+            "DELETE ec FROM entity_cells ec JOIN coords c ON c.id = ec.coords_id WHERE c.plan LIKE 'plan_test_adm_%'"
+        );
         $link->executeStatement("DELETE FROM coords WHERE plan LIKE 'plan_test_adm_%'");
 
         foreach ([self::SRC, self::CLONE, self::BLANK] as $plan) {
