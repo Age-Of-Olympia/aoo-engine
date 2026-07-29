@@ -47,17 +47,12 @@ final class ResourceCardView
             echo '<br />';
             echo self::resourceStatus((int) $row->damages);
 
-            $altarCard = self::altarCard($player, (int) $row->coords_id);
-
             echo '
                 </div>
             </div>
             ';
 
-            // L'autel garde la priorité ; sinon la première carte posée reste.
-            if ($altarCard !== '') {
-                $card = $altarCard;
-            } elseif ($card === '') {
+            if ($card === '') {
                 $card = self::wallCard($row->name, (int) $row->damages);
             }
         }
@@ -98,52 +93,6 @@ final class ResourceCardView
         return '';
     }
 
-    /**
-     * L'autel de la case, s'il y en a un : ligne dans le texte (échouée)
-     * + sa carte avec le bouton Vénérer.
-     *
-     * @return string la carte de l'autel ('' si pas d'autel)
-     */
-    private static function altarCard(Player $player, int $coordsId): string
-    {
-        $res = (new Db())->exe('SELECT * FROM map_triggers WHERE name = "altar" AND coords_id= ?', $coordsId);
-        if (!$res->num_rows) {
-            return '';
-        }
-
-        $row = $res->fetch_object();
-
-        $god = PlayerFactory::legacy($row->params);
-        $god->get_data();
-
-        echo 'Altar du Dieu ' . $god->data->name . '.';
-
-        $actions = '';
-        $dataText = 'Vous vénérez déjà ce Dieu.';
-
-        if ($god->id != $player->data->godId) {
-            $actions = '
-            <button
-                class="action"
-                data-url="worship.php"
-                data-action="worship"
-                data-target-id="' . $row->id . '"
-            ><span class="ra ra-candle"></span>
-            <span class="action-name">Vénérer</span>
-            </button><br/>';
-
-            $dataText = 'Vénérez ce Dieu pour pouvoir lui adresser vos prières.';
-        }
-
-        return Ui::get_card((object) [
-            'bg' => $god->data->portrait,
-            'name' => '<a href="infos.php?targetId=' . $god->id . '">Altar du Dieu ' . $god->data->name . '</a>',
-            'img' => $actions,
-            'type' => 'Altar',
-            'race' => 'dieu',
-            'text' => $dataText,
-        ]);
-    }
 
     /**
      * La carte mutualisée du mur (Ui::get_card — LE composant de la
