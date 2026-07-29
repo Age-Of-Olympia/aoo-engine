@@ -161,13 +161,45 @@ class ConsacrerEtVenererTest extends TestCase
         $this->assertSame('actor', $byAction['venerer']['to']);
     }
 
-    /** Dormant on arrival: nobody holds them until the altars are entities. */
-    public function testTheyAreDormant(): void
+    /**
+     * Both outcomes apply to the TARGET, because that is how the engine
+     * decides what an action may be aimed at (ActionTargeting::scopeOf).
+     *
+     * `venerer` said `self` — worshipping does change the worshipper — and the
+     * button then never appeared on an altar, the one place it belongs. Who is
+     * aimed at and who changes are two questions; the instruction carries the
+     * second through from/to.
+     */
+    public function testBothActionsAreAimedAtTheAltar(): void
     {
-        $held = (int) $this->conn->fetchOne(
-            "SELECT COUNT(*) FROM players_actions WHERE name IN ('consacrer', 'venerer')"
+        $rows = $this->conn->fetchAllAssociative(
+            "SELECT a.name, o.apply_to
+               FROM actions a JOIN action_outcomes o ON o.action_id = a.id
+              WHERE a.name IN ('consacrer', 'venerer')"
         );
 
-        $this->assertSame(0, $held);
+        $this->assertCount(2, $rows);
+
+        foreach ($rows as $row) {
+            $this->assertSame('target', $row['apply_to'], $row['name'] . ' doit viser la cible');
+        }
+    }
+
+    /** An action nobody holds has no button: they go where `prier` goes. */
+    public function testTheyAreGrantedWhereverPrayerIs(): void
+    {
+        foreach (['race_starter_actions', 'players_actions'] as $table) {
+            $reference = (int) $this->conn->fetchOne("SELECT COUNT(*) FROM {$table} WHERE name = 'prier'");
+
+            $this->assertGreaterThan(0, $reference, 'prier doit servir de référence');
+
+            foreach (['consacrer', 'venerer'] as $action) {
+                $this->assertSame(
+                    $reference,
+                    (int) $this->conn->fetchOne("SELECT COUNT(*) FROM {$table} WHERE name = ?", [$action]),
+                    $action . ' doit être distribuée comme prier dans ' . $table
+                );
+            }
+        }
     }
 }

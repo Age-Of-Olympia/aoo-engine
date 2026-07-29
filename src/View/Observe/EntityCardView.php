@@ -92,6 +92,23 @@ final class EntityCardView
     }
 
     /**
+     * The god an entity belongs to, or null — only a consecrated altar has one.
+     */
+    private static function godOf(Player $target): ?Player
+    {
+        $godId = (int) ($target->data->godId ?? 0);
+
+        if ($godId === 0 || ($target->data->race ?? '') !== 'altar') {
+            return null;
+        }
+
+        $god = PlayerFactory::legacy($godId);
+        $god->get_data();
+
+        return empty($god->data->name) ? null : $god;
+    }
+
+    /**
      * La carte complète de la PREMIÈRE entité de la case.
      *
      * @return array{0: string, 1: string} [$card, $equipStrip]
@@ -114,12 +131,20 @@ final class EntityCardView
             }
         }
 
+        /* An altar shows WHOSE it is: its god's portrait behind the card and
+         * a link to their sheet, as the resource card did before the altar
+         * became an entity. */
+        $god = self::godOf($target);
+
         $data = (object) [
-            'bg' => $target->data->portrait,
+            'bg' => $god !== null ? $god->data->portrait : $target->data->portrait,
             /* A multi-cell decor shows whole, not by the corner its
              * portrait happens to name. */
             'portraitHtml' => (new SceneryPortraitView())->compose((int) $target->id),
-            'name' => self::nameWithEffects($target),
+            'name' => $god !== null
+                ? self::nameWithEffects($target) . ' <a href="infos.php?targetId=' . $god->id . '">('
+                    . htmlspecialchars((string) $god->data->name, ENT_QUOTES, 'UTF-8') . ')</a>'
+                : self::nameWithEffects($target),
             'img' => self::buttonsHtml($player, $target, $buildingDetails, $buildingClosure, $x, $y, $coords),
             'pvPct' => $pvPct,
             'type' => self::typeLabel($raceService, $target),
