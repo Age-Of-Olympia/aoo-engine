@@ -39,8 +39,11 @@ class FoiView
         )
         WHERE g.race = "dieu"
         AND EXISTS (
-            SELECT 1 FROM map_triggers
-            WHERE map_triggers.params = g.id AND map_triggers.name = "altar"
+            /* The altar IS the entity now. Reading the trigger meant a god
+               whose altar had been taken away still ranked, and a god given
+               one by consecration did not. */
+            SELECT 1 FROM players AS a
+            WHERE a.race = "altar" AND a.godId = g.id
         )
         GROUP BY g.id, top.id, top.name
         HAVING nb_fideles > 0 AND total_foi > 0
