@@ -20,6 +20,12 @@ class TileCatalogService
     /** Taille maximale d'une image uploadée (stocks d'images de l'admin) */
     public const IMAGE_MAX_BYTES = 4 * 1024 * 1024;
 
+    /**
+     * From how many siblings an undeclared family reads as one object cut up
+     * rather than as that many decor variants.
+     */
+    private const MIN_LOOSE_PIECES = 3;
+
     /** @var array<string, array<string, array{file: string, width: int, height: int}>> */
     private array $scans = [];
 
@@ -111,6 +117,48 @@ class TileCatalogService
         }
 
         return $composites;
+    }
+
+    /**
+     * Names that are a piece of a figure rather than an object of their own.
+     *
+     * The palette is meant to offer things you place in one go. A family cut
+     * into pieces is one object, so its pieces belong beside the palette, not
+     * in it — whether or not the whole is composable today.
+     *
+     * A lone trailing digit also marks decor variants (`arbre1`, `arbre2`),
+     * which are two objects, not one cut in two. A known cut-out settles it;
+     * failing that, a family counts as cut up only from MIN_LOOSE_PIECES on,
+     * where reading it as variants stops being plausible.
+     *
+     * @param array<string, \App\Service\Map\Footprint> $catalogue known cut-outs
+     * @return list<string>
+     */
+    public function loosePieces(string $layer, array $catalogue): array
+    {
+        $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/' . TiledMapService::layerImageDir($layer);
+
+        if (!is_dir($dir)) {
+            return [];
+        }
+
+        $pieces = [];
+
+        foreach ($this->piecesByFamily($dir) as $family => $images) {
+            $known = isset($catalogue[$family]) && !$catalogue[$family]->isSingleCell();
+
+            if (!$known && count($images) < self::MIN_LOOSE_PIECES) {
+                continue;
+            }
+
+            foreach ($images as $image) {
+                $pieces[] = pathinfo($image, PATHINFO_FILENAME);
+            }
+        }
+
+        sort($pieces);
+
+        return $pieces;
     }
 
     /**

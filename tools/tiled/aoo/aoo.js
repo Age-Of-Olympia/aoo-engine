@@ -24,6 +24,10 @@
  *    unique_* — tout sur les plans de tutoriel) : les obstacles sont des
  *    entités bâtiment, posées sur la couche « buildings » ; le serveur
  *    refuse un push qui en réintroduirait dans resources ;
+ *  - la palette d'une couche n'offre que des objets entiers : les morceaux
+ *    d'une figure (enclume_00…) vont dans le tileset « aoo-<couche>-pieces »,
+ *    à garder sous la main pour réparer un exemplaire tronqué ; une figure
+ *    dont la découpe est connue s'y pose d'un geste, entière ;
  *  - la création de plans et leur configuration (fond, ambiance, biomes)
  *    se gèrent dans l'admin du jeu (page Plans) — les propriétés
  *    aooPlan_* restent lisibles/poussables pour les cas avancés ;
@@ -44,6 +48,10 @@ var AoO = {};
    ruine) arrivent dans la couche verrouillée « buildings (joueurs) ». */
 AoO.TILE_LAYERS = ['tiles', 'routes', 'plants', 'resources', 'elements', 'buildings', 'foregrounds'];
 AoO.OBJECT_LAYERS = ['triggers', 'dialogs'];
+
+/* Suffixe du tileset qui recueille les morceaux de figure, à côté de la
+   palette de la couche : « aoo-foregrounds-pieces ». */
+AoO.PIECES_BUCKET = 'pieces';
 
 /* Propriétés custom posées sur les cartes/couches/tuiles générées —
    source unique, une faute de frappe échouerait silencieusement */
@@ -437,21 +445,26 @@ AoO.api = function(config, instance, method, path, body) {
  * Tilesets « collection d'images », un par couche, partagés entre les
  * niveaux z : une tuile par nom distinct, image individuelle du dépôt.
  */
-AoO.layerTileset = function(map, registry, layerName) {
-    var entry = registry[layerName];
+AoO.layerTileset = function(map, registry, layerName, bucket) {
+    /* Un tileset séparé pour les morceaux : même couche de destination, mais
+       une palette à part, pour que celle du décor ne montre que des objets
+       entiers. La clé du registre porte le seau, le tileset garde le nom de
+       couche — le push lit la propriété de la tuile, pas son tileset. */
+    var key = bucket ? layerName + '/' + bucket : layerName;
+    var entry = registry[key];
 
     if (!entry) {
-        var tileset = new Tileset('aoo-' + layerName);
+        var tileset = new Tileset('aoo-' + layerName + (bucket ? '-' + bucket : ''));
         tileset.setProperty(AoO.PROP.layer, layerName);
         map.addTileset(tileset);
-        entry = registry[layerName] = { tileset: tileset, byName: {} };
+        entry = registry[key] = { tileset: tileset, byName: {} };
     }
 
     return entry;
 };
 
-AoO.tileFor = function(map, registry, layerName, name, images, config) {
-    var entry = AoO.layerTileset(map, registry, layerName);
+AoO.tileFor = function(map, registry, layerName, name, images, config, bucket) {
+    var entry = AoO.layerTileset(map, registry, layerName, bucket);
 
     var tile = entry.byName[name];
     if (!tile) {
@@ -474,12 +487,31 @@ AoO.tileFor = function(map, registry, layerName, name, images, config) {
 };
 
 /* Enregistre les tuiles d'une liste de lignes et retourne le dictionnaire
-   nom → tuile de la couche */
-AoO.registerTiles = function(map, registry, layerName, rows, images, config) {
-    for (var i = 0; i < rows.length; i++) {
-        AoO.tileFor(map, registry, layerName, rows[i].name, images, config);
+   nom → tuile de la couche, morceaux compris : un plan déjà posé s'affiche
+   en entier, même là où il ne reste qu'un bout de figure. Les morceaux vont
+   dans le tileset à part, sinon un plan qui en contient les remettrait dans
+   la palette du décor. */
+AoO.registerTiles = function(map, registry, layerName, rows, images, config, pieces) {
+    var isPiece = {};
+    var names = (pieces || {})[layerName] || [];
+    for (var p = 0; p < names.length; p++) {
+        isPiece[names[p]] = true;
     }
-    return registry[layerName] ? registry[layerName].byName : {};
+
+    for (var i = 0; i < rows.length; i++) {
+        AoO.tileFor(map, registry, layerName, rows[i].name, images, config,
+            isPiece[rows[i].name] ? AoO.PIECES_BUCKET : undefined);
+    }
+
+    var tiles = {};
+    var buckets = [registry[layerName], registry[layerName + '/' + AoO.PIECES_BUCKET]];
+    for (var b = 0; b < buckets.length; b++) {
+        for (var name in (buckets[b] || {}).byName || {}) {
+            tiles[name] = buckets[b].byName[name];
+        }
+    }
+
+    return tiles;
 };
 
 AoO.isPlayerRow = function(row) {
@@ -579,14 +611,14 @@ AoO.buildLevel = function(map, container, data, registry, config) {
     for (i = 0; i < AoO.TILE_LAYERS.length; i++) {
         layerName = AoO.TILE_LAYERS[i];
         rows = data.layers[layerName] || [];
-        tiles = AoO.registerTiles(map, registry, layerName, rows, data.images, config);
+        tiles = AoO.registerTiles(map, registry, layerName, rows, data.images, config, data.pieces);
         AoO.buildSplitTileLayers(container, layerName, rows, tiles);
     }
 
     for (i = 0; i < AoO.OBJECT_LAYERS.length; i++) {
         layerName = AoO.OBJECT_LAYERS[i];
         rows = data.layers[layerName] || [];
-        tiles = AoO.registerTiles(map, registry, layerName, rows, data.images, config);
+        tiles = AoO.registerTiles(map, registry, layerName, rows, data.images, config, data.pieces);
         AoO.buildObjectLayer(container, layerName, rows, tiles, data.tileSize);
     }
 };
@@ -855,6 +887,31 @@ AoO.addCatalogTiles = function(map, data, registry, config) {
         for (var i = 0; i < sorted.length; i++) {
             if (!pieceNames[layerName + '/' + sorted[i]] && isRelevant(layerName, sorted[i])) {
                 AoO.tileFor(map, registry, layerName, sorted[i], data.images, config);
+            }
+        }
+    }
+
+    AoO.addLoosePieceTiles(map, data, registry, config);
+};
+
+/*
+ * Les morceaux d'une figure, à côté de la palette et non dedans : on pose un
+ * décor d'un geste, pas case par case. Ils restent à portée dans leur propre
+ * tileset, parce qu'un exemplaire tronqué se répare bien à la pièce et qu'une
+ * figure dont la découpe n'est pas encore déclarée n'a que ce chemin-là.
+ */
+AoO.addLoosePieceTiles = function(map, data, registry, config) {
+    if (!data.pieces) {
+        return;
+    }
+
+    var isRelevant = AoO.transitionFilter(registry, config);
+
+    for (var layerName in data.pieces) {
+        var names = data.pieces[layerName];
+        for (var i = 0; i < names.length; i++) {
+            if (isRelevant(layerName, names[i])) {
+                AoO.tileFor(map, registry, layerName, names[i], data.images, config, AoO.PIECES_BUCKET);
             }
         }
     }

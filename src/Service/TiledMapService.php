@@ -114,6 +114,18 @@ class TiledMapService
         ['catalog' => $catalog, 'images' => $images] = $this->catalog->buildCatalog($layerNames);
         $composites = $this->catalog->buildComposites($compositeLayers);
 
+        // La palette n'offre que ce qui se pose d'un geste : les morceaux d'une
+        // figure passent à côté, dans leur propre tileset. Ils gardent leur
+        // image — un plan pullé qui en contient doit s'afficher, et les
+        // exemplaires tronqués attendent justement d'être réparés à la pièce.
+        $pieces = [];
+        $footprints = (new \App\Service\Map\EntityTypeFootprintService())->catalogue();
+        foreach ($compositeLayers as $layer) {
+            $loose = $this->catalog->loosePieces($layer, $footprints);
+            $pieces[$layer] = array_values(array_intersect($catalog[$layer] ?? [], $loose));
+            $catalog[$layer] = array_values(array_diff($catalog[$layer] ?? [], $loose));
+        }
+
         // Depuis la conversion des obstacles en entités bâtiment, la palette
         // resources ne propose que ce qui reste posable en map_resources sur
         // ce plan (ressources, autels, unique_* — tout sur les plans de
@@ -147,6 +159,7 @@ class TiledMapService
             'catalog'    => $catalog,
             'images'     => $images,
             'composites' => $composites,
+            'pieces'     => $pieces,
             'planConfig' => [
                 'values' => $this->planConfig->read($plan),
             ],
