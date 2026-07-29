@@ -15,10 +15,7 @@ if(!isset($_POST['targetId']) || !is_numeric($_POST['targetId'])){
 $db = new Db();
 
 
-/* Un déclencheur, oui, mais UN AUTEL : la requête acceptait n'importe
-   lequel des 14 233 déclencheurs de la carte, et allait chercher un dieu
-   dans son `params` — un plan pour un téléporteur, un texte pour une
-   pancarte. */
+// An altar, not just any trigger: `params` means a god only here.
 $sql = 'SELECT * FROM map_triggers WHERE id = ? AND name = "altar"';
 
 $res = $db->exe($sql, $_POST['targetId']);
@@ -31,9 +28,7 @@ if(!$res->num_rows){echo $_POST['targetId'];
 
 $row = $res->fetch_object();
 
-/* `params` est du texte libre : il ne désigne un dieu que sur un autel bien
-   formé. Passé tel quel à un chargement par identifiant, il tuait la requête
-   avant même le contrôle de distance. */
+// Free text: passed to a load-by-id it killed the request outright.
 if(!is_numeric($row->params)){
 
     exit('Cet autel ne désigne aucun Dieu.');

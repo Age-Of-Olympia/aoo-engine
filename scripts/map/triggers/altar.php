@@ -1,15 +1,8 @@
 <?php
 
 /*
- * Marcher sur un autel ne fait rien — et surtout ne l'efface plus.
+ * Stepping on an altar does nothing — it used to delete it.
  *
- * Ce fichier supprimait le déclencheur au premier pas, « puisqu'il n'est plus
- * lié à une structure ». Il l'était : c'est lui qui porte le dieu de l'autel,
- * donc le classement de la Foi. Un pas suffisait à retirer un autel du monde,
- * sans trace ; sur une case devenue nue, il ne restait rien à voir.
- *
- * Le fichier reste tant que des lignes `altar` existent : `go.php` refuse le
- * pas quand le script d'un déclencheur manque (« error trigger path »), donc
- * le supprimer maintenant murerait ces cases. Il partira avec la dernière
- * ligne, quand l'autel sera une entité.
+ * Kept until the last `altar` row is gone: go.php refuses the step when a
+ * trigger's script is missing, so removing this file would wall those cells.
  */
