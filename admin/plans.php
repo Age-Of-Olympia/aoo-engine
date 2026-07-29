@@ -288,7 +288,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         'mask'              => ['Masque', 'Superposition (brume, tempête…), niveaux z ≥ 0 uniquement.'],
         'scrollingMask'     => ['Défilement du masque', 'Durée d\'animation du masque (0/vide = statique).'],
         'verticalScrolling' => ['Défilement vertical', 'Direction du défilement du masque.'],
-        'biomes'            => ['Biomes (JSON)', 'Ressources récoltables : [{"wall": "arbre1", "ressource": "bois", "exhaust": 75, "regrow": 20}]. Le mur doit valoir -1 au catalogue resource_types, la ressource exister dans items.'],
+        'biomes'            => ['Biomes (JSON) — repli', 'Les rendements se règlent désormais dans Ressources → Rendements, qui est ce que le jeu lit. Ce JSON ne sert plus que de REPLI, pour un plan dont les rendements n\'ont pas encore été versés. Forme : [{"wall": "arbre1", "ressource": "bois", "exhaust": 75, "regrow": 20}].'],
     ];
 
     $renderField = function (string $key, string $type) use ($values, $fieldHelp): string {

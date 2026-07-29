@@ -21,10 +21,15 @@ use Tests\Action\Mock\ScriptedDice;
  */
 class ResourceExhaustCharacterizationTest extends TestCase
 {
-    /** @param array<string, mixed> $biome */
-    private function plan(array $biome): object
+    /**
+     * The yields map the service now hands the rate helpers: wall => rates.
+     *
+     * @param array<string, mixed> $biome
+     * @return array<string, array{item: string, exhaust: ?int, regrow: ?int}>
+     */
+    private function plan(array $biome): array
     {
-        return (object) ['biomes' => [(object) $biome]];
+        return $this->planWith([$biome]);
     }
 
     private function row(): object
@@ -50,10 +55,23 @@ class ResourceExhaustCharacterizationTest extends TestCase
         return $rows;
     }
 
-    /** @param array<int, array<string, mixed>> $biomes */
-    private function planWith(array $biomes): object
+    /**
+     * @param array<int, array<string, mixed>> $biomes
+     * @return array<string, array{item: string, exhaust: ?int, regrow: ?int}>
+     */
+    private function planWith(array $biomes): array
     {
-        return (object) ['biomes' => array_map(static fn(array $b): object => (object) $b, $biomes)];
+        $yields = [];
+
+        foreach ($biomes as $biome) {
+            $yields[(string) $biome['wall']] ??= [
+                'item' => (string) ($biome['ressource'] ?? ''),
+                'exhaust' => $biome['exhaust'] ?? null,
+                'regrow' => $biome['regrow'] ?? null,
+            ];
+        }
+
+        return $yields;
     }
 
     /**
@@ -194,10 +212,10 @@ class ResourceExhaustCharacterizationTest extends TestCase
         $this->assertSame([], $depleted, 'arbre1 n\'est pas au biome de ce plan');
     }
 
-    /** Un plan sans clé biomes du tout ne fait rien, sans erreur. */
-    public function testPlanWithoutBiomesIsInert(): void
+    /** Un plan sans aucun rendement ne fait rien, sans erreur. */
+    public function testPlanWithoutYieldsIsInert(): void
     {
-        $plan = (object) [];
+        $plan = [];
 
         $depleted = [];
         ResourceService::createExhaustArray($plan, $depleted, $this->row());

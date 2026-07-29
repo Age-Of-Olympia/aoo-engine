@@ -34,18 +34,10 @@ class ResourceService
 
     public static function findResourcesAround(Player $player): mixed
     {
-        $biomes = array();
         $coords = $player->getCoords();
-        $planJson = json()->decode('plans', $coords->plan);
-
-        if (!$planJson) {
-            $planJson = (object) ['biomes' => []];
-        }
-        if(!empty($planJson->biomes)){
-            foreach($planJson->biomes as $e){
-                $biomes[$e->wall] = $e->ressource;
-            }
-        }
+        /* `race_harvest` first, the plan JSON as a fallback — one source, so
+           the two queries cannot disagree about what a plan yields. */
+        $biomes = (new \App\Service\Map\HarvestCatalogService())->yieldsFor((string) $coords->plan);
 
         $coordsArround = null;
         $coordsIdArround=array();
@@ -76,18 +68,10 @@ class ResourceService
 
     public static function getResourcesAround(Player $player): mixed
     {
-        $biomes = array();
         $coords = $player->getCoords();
-        $planJson = json()->decode('plans', $coords->plan);
-
-        if (!$planJson) {
-            $planJson = (object) ['biomes' => []];
-        }
-        if(!empty($planJson->biomes)){
-            foreach($planJson->biomes as $e){
-                $biomes[$e->wall] = $e->ressource;
-            }
-        }
+        /* `race_harvest` first, the plan JSON as a fallback — one source, so
+           the two queries cannot disagree about what a plan yields. */
+        $biomes = (new \App\Service\Map\HarvestCatalogService())->yieldsFor((string) $coords->plan);
 
         $coordsArround = null;
         $coordsIdArround=array();
@@ -147,14 +131,13 @@ class ResourceService
         $res = $db->exe($sql);
     }
 
-    public static function createExhaustArray(&$planJson, array &$resourcesIdArray, &$row): void
+    /**
+     * @param array<string, array{item: string, exhaust: ?int, regrow: ?int}> $yields
+     */
+    public static function createExhaustArray(array $yields, array &$resourcesIdArray, &$row): void
     {
-        if (!isset($planJson->biomes)) {
-            return;
-        }
-
-        foreach($planJson->biomes as $e){
-                if($e->wall == $row->name){
+        foreach($yields as $wall => $e){
+                if($wall == $row->name){
                     /* Comportement GELÉ tel quel, y compris ses deux
                      * bizarreries : l'échelle est le CENT (contre le mille
                      * pour la repousse — voulu, la repousse doit être lente),
@@ -166,7 +149,7 @@ class ResourceService
                      * warning « Undefined property » que les 41 entrées de
                      * biome sans taux déclenchaient à chaque tentative, en
                      * jeu comme au cron. */
-                    if(($e->exhaust ?? 0) > self::roll(100))
+                    if((($e['exhaust'] ?? 0) ?: 0) > self::roll(100))
                         $resourcesIdArray[] = $row->id;
                     break;
                 }
@@ -187,7 +170,7 @@ class ResourceService
      * @param iterable<object> $rows
      * @return list<int>
      */
-    public static function pickExhausted(object $planJson, iterable $rows, int $budget): array
+    public static function pickExhausted(array $yields, iterable $rows, int $budget): array
     {
         $resourcesIdArray = [];
 
@@ -197,7 +180,7 @@ class ResourceService
         }
 
         foreach ($rows as $row) {
-            self::createExhaustArray($planJson, $resourcesIdArray, $row);
+            self::createExhaustArray($yields, $resourcesIdArray, $row);
 
             if (count($resourcesIdArray) >= $budget) {
                 break;
@@ -207,16 +190,16 @@ class ResourceService
         return $resourcesIdArray;
     }
 
-    public static function createRegrowArray(&$planJson, array &$resourcesIdArray, &$row): void
+    /**
+     * @param array<string, array{item: string, exhaust: ?int, regrow: ?int}> $yields
+     */
+    public static function createRegrowArray(array $yields, array &$resourcesIdArray, &$row): void
     {
-        if(!isset($planJson->biomes)) {
-            return;
-        }
-        foreach ($planJson->biomes as $e) {
-            if ($e->wall == $row->name) {
+        foreach ($yields as $wall => $e) {
+            if ($wall == $row->name) {
                 /* Échelle du MILLE, délibérément : regrow=20 vaut donc 1,9 %
                  * par passage du cron, pas 20 %. Voir createExhaustArray. */
-                if (($e->regrow ?? 0) > self::roll(1000))
+                if ((($e['regrow'] ?? 0) ?: 0) > self::roll(1000))
                     $resourcesIdArray[] = $row->id;
                 break;
             }

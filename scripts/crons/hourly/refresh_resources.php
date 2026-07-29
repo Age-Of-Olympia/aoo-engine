@@ -25,12 +25,16 @@ $resourcesIdArray = array();
 
 while ($row = $res->fetch_object()) {
 
-    $planJson = json()->decode('plans', $row->plan);
-    if (!isset($planJson)) {
-        echo 'Error: planJson not found ' . $row->plan . "\n";
+    /* Un plan par passage, pas une requête par ligne : le cron balaie
+       toutes les ressources épuisées du monde. */
+    $yieldsByPlan[$row->plan] ??= (new App\Service\Map\HarvestCatalogService())->yieldsFor((string) $row->plan);
+
+    if ($yieldsByPlan[$row->plan] === []) {
+        echo 'Aucun rendement pour ' . $row->plan . "\n";
         continue;
     }
-    ResourceService::createRegrowArray($planJson, $resourcesIdArray, $row);
+
+    ResourceService::createRegrowArray($yieldsByPlan[$row->plan], $resourcesIdArray, $row);
 }
 ResourceService::regrowResources($resourcesIdArray);
 

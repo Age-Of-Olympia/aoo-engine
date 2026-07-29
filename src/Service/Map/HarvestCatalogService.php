@@ -154,6 +154,139 @@ final class HarvestCatalogService
     }
 
     /**
+     * The rows as configured, plan by plan, for the admin screen.
+     *
+     * @return list<array{plan: string, race_id: int, type: string, item: string, exhaust: ?int, regrow: ?int}>
+     */
+    public function configured(): array
+    {
+        $rows = $this->conn()->fetchAllAssociative(
+            'SELECT h.plan, h.race_id, r.name AS type, h.item, h.exhaust, h.regrow
+               FROM race_harvest h JOIN races r ON r.id = h.race_id
+              ORDER BY h.plan, r.name'
+        );
+
+        return array_map(
+            static fn(array $row): array => [
+                'plan' => (string) $row['plan'],
+                'race_id' => (int) $row['race_id'],
+                'type' => (string) $row['type'],
+                'item' => (string) $row['item'],
+                'exhaust' => $row['exhaust'] === null ? null : (int) $row['exhaust'],
+                'regrow' => $row['regrow'] === null ? null : (int) $row['regrow'],
+            ],
+            $rows
+        );
+    }
+
+    /**
+     * Saves what the screen holds. An empty rate is stored as NULL — "no rate"
+     * and "a rate of zero" both mean never, and the plan files use the absence.
+     *
+     * @param array<int, array<string, mixed>> $rows keyed "plan|race_id"
+     * @return int rows updated
+     */
+    public function save(array $rows): int
+    {
+        $saved = 0;
+
+        foreach ($rows as $key => $row) {
+            [$plan, $raceId] = array_pad(explode('|', (string) $key, 2), 2, '');
+
+            if ($plan === '' || (int) $raceId === 0) {
+                continue;
+            }
+
+            $rate = static function ($value): ?int {
+                $value = trim((string) $value);
+
+                return $value === '' ? null : max(0, (int) $value);
+            };
+
+            $saved += $this->conn()->executeStatement(
+                'UPDATE race_harvest SET item = ?, exhaust = ?, regrow = ?
+                  WHERE plan = ? AND race_id = ?',
+                [
+                    trim((string) ($row['item'] ?? '')),
+                    $rate($row['exhaust'] ?? ''),
+                    $rate($row['regrow'] ?? ''),
+                    $plan,
+                    (int) $raceId,
+                ]
+            );
+        }
+
+        return $saved;
+    }
+
+    /**
+     * What each wall yields on a plan: the table first, the plan JSON as a
+     * fallback.
+     *
+     * The fallback is what makes the seed a migration step rather than a
+     * prerequisite — same arrangement as the dialogs. A plan nobody has poured
+     * yet keeps harvesting exactly as before.
+     *
+     * @return array<string, array{item: string, exhaust: ?int, regrow: ?int}>
+     */
+    public function yieldsFor(string $plan): array
+    {
+        $rows = $this->conn()->fetchAllAssociative(
+            'SELECT r.name, h.item, h.exhaust, h.regrow
+               FROM race_harvest h JOIN races r ON r.id = h.race_id
+              WHERE h.plan = ?',
+            [$plan]
+        );
+
+        if ($rows !== []) {
+            $yields = [];
+
+            foreach ($rows as $row) {
+                $yields[(string) $row['name']] = [
+                    'item' => (string) $row['item'],
+                    'exhaust' => $row['exhaust'] === null ? null : (int) $row['exhaust'],
+                    'regrow' => $row['regrow'] === null ? null : (int) $row['regrow'],
+                ];
+            }
+
+            return $yields;
+        }
+
+        return self::yieldsFromPlanJson($plan);
+    }
+
+    /**
+     * The legacy source, read exactly as the game always read it.
+     *
+     * @return array<string, array{item: string, exhaust: ?int, regrow: ?int}>
+     */
+    public static function yieldsFromPlanJson(string $plan): array
+    {
+        $json = json()->decode('plans', $plan);
+        $yields = [];
+
+        if ($json === false) {
+            return $yields;
+        }
+
+        foreach ($json->biomes ?? [] as $biome) {
+            $wall = (string) ($biome->wall ?? '');
+
+            if ($wall === '' || $wall === '0') {
+                continue;
+            }
+
+            $yields[$wall] ??= [
+                'item' => (string) ($biome->ressource ?? ''),
+                'exhaust' => isset($biome->exhaust) ? (int) $biome->exhaust : null,
+                'regrow' => isset($biome->regrow) ? (int) $biome->regrow : null,
+            ];
+        }
+
+        return $yields;
+    }
+
+    /**
      * Type name => races.id, compared on an explicit collation: the name
      * columns disagree across databases and a bare join errors 1267.
      *

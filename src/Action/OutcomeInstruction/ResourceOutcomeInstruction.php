@@ -47,6 +47,7 @@ class ResourceOutcomeInstruction extends OutcomeInstruction implements HasParame
 
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         $ressources = array();
+        $yields = (new \App\Service\Map\HarvestCatalogService())->yieldsFor((string) $actor->coords->plan);
         $biomes = array();
 
         $coords = $actor->getCoords();
@@ -98,7 +99,7 @@ class ResourceOutcomeInstruction extends OutcomeInstruction implements HasParame
             $rows[] = $row;
         }
 
-        $resourcesIdArray = ResourceService::pickExhausted($planJson, $rows, $harvested);
+        $resourcesIdArray = ResourceService::pickExhausted($yields, $rows, $harvested);
     
         if(!empty($resourcesIdArray)){
             if(count($resourcesIdArray) > 1){
