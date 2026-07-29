@@ -863,11 +863,36 @@
         /* Le clic de case ne bulle pas (view.js return false) : la
          * mémorisation s'accroche à la requête observe.php elle-même. */
         $(document).ajaxSuccess(function (e, xhr, settings) {
-            if (settings.url === 'observe.php'
-                && typeof settings.data === 'string'
-                && settings.data.indexOf('coords=') === 0) {
-                aooStore.set('hudSelCoords',
-                    decodeURIComponent(settings.data.slice('coords='.length)));
+            if (settings.url !== 'observe.php' || typeof settings.data !== 'string') {
+                return;
+            }
+
+            /* Le paramètre est LU, pas découpé au premier « coords= » : la
+               requête en porte un second depuis qu'on peut choisir l'entité
+               d'une case, et tout prendre après « coords= » mémorisait
+               « 3,0&entity=42 » — que le rechargement renvoyait tel quel,
+               d'où « error coords numeric ». */
+            var read = function (name) {
+                var found = new RegExp('(?:^|&)' + name + '=([^&]*)').exec(settings.data);
+                return found ? decodeURIComponent(found[1]) : '';
+            };
+
+            var coords = read('coords');
+
+            if (!coords) {
+                return;
+            }
+
+            aooStore.set('hudSelCoords', coords);
+
+            /* L'entité regardée fait partie de ce qu'on avait sous les yeux :
+               rouvrir la case sans elle ramènerait une autre carte. */
+            var entity = read('entity');
+
+            if (entity) {
+                aooStore.set('hudSelEntity', entity);
+            } else {
+                aooStore.remove('hudSelEntity');
             }
         });
 
@@ -875,13 +900,21 @@
          * refermée, ne pas la rouvrir au prochain chargement. */
         $(document).on('click', '.close-card', function () {
             aooStore.remove('hudSelCoords');
+            aooStore.remove('hudSelEntity');
         });
 
         /* Non restaurée sur mobile (le volet s'ouvrirait tout seul),
          * mais restaurée en fenêtre PC étroite, comme en desktop. */
         var saved = aooStore.get('hudSelCoords');
         if (saved && !isMobileDevice() && !tutorialActive()) {
-            $.post('observe.php', { coords: saved }, function (data) {
+            var payload = { coords: saved };
+            var savedEntity = aooStore.get('hudSelEntity');
+
+            if (savedEntity) {
+                payload.entity = savedEntity;
+            }
+
+            $.post('observe.php', payload, function (data) {
                 $('#ajax-data').html(data);
             });
         }
