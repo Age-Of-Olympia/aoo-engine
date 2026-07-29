@@ -36,27 +36,59 @@ final class EntityCardView
      *
      * @return array{0: string, 1: string} [$card, $equipStrip]
      */
-    public static function render(Player $player, \mysqli_result $res, $x, $y, object $coords): array
+    public static function render(Player $player, \mysqli_result $res, $x, $y, object $coords, int $focusId = 0): array
     {
-        $card = '';
-        $equipStrip = '';
-        $raceService = new RaceService();
+        $ids = [];
 
         while ($row = $res->fetch_object()) {
-            $target = PlayerFactory::legacy($row->id);
-            $target->get_data();
-            $target->get_caracs();
+            $ids[] = (int) $row->id;
+        }
 
-            if (!empty($card)) {
-                echo ' <div class="case-infos">  <div class="text"> autre joueur:  <a href="infos.php?targetId='
-                    . $target->id . '">' . $target->data->name . '</a> [' . $target->getDisplayId() . ']</div> </div>';
+        if ($ids === []) {
+            return ['', ''];
+        }
+
+        /* Whoever was asked for gets the card; failing that, the first. Asking
+         * matters because the card is where the ACTIONS are: without it, the
+         * others could be read but never acted on. */
+        $focus = in_array($focusId, $ids, true) ? $focusId : $ids[0];
+
+        $target = PlayerFactory::legacy($focus);
+        $target->get_data();
+        $target->get_caracs();
+
+        [$card, $equipStrip] = self::renderTarget($player, $target, new RaceService(), $x, $y, $coords);
+
+        self::echoOthers($ids, $focus, $x, $y);
+
+        return [$card, $equipStrip];
+    }
+
+    /**
+     * The rest of the cell, as things one can switch to.
+     *
+     * They used to link to the character sheet, which answered « error target
+     * id » on anything that is not a character, and never let one act on what
+     * was clicked. Clicking now re-opens the panel ON that entity.
+     *
+     * @param list<int> $ids
+     */
+    private static function echoOthers(array $ids, int $focus, $x, $y): void
+    {
+        foreach ($ids as $id) {
+            if ($id === $focus) {
                 continue;
             }
 
-            [$card, $equipStrip] = self::renderTarget($player, $target, $raceService, $x, $y, $coords);
-        }
+            $other = PlayerFactory::legacy($id);
+            $other->get_data();
 
-        return [$card, $equipStrip];
+            echo ' <div class="case-infos"> <div class="text"> aussi ici : '
+                . '<a href="#" class="case-other" data-observe-entity="' . $id . '"'
+                . ' data-observe-coords="' . (int) $x . ',' . (int) $y . '">'
+                . htmlspecialchars((string) $other->data->name, ENT_QUOTES, 'UTF-8') . '</a>'
+                . ' [' . $other->getDisplayId() . ']</div> </div>';
+        }
     }
 
     /**

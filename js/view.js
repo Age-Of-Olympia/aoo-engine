@@ -192,8 +192,17 @@ $(document).ready(function(){
     function openObservation(coords, options){
         options = options || {};
 
-        if(!options.force && window.clickedCases[coords]){
-            $('#ajax-data').html(window.clickedCases[coords]);
+        /* La case et l'entité regardée font DEUX panneaux différents : sans
+           l'entité dans la clé, choisir une enclume puis recliquer la case
+           resservait l'enclume, ou l'inverse. */
+        var entity = options.entity || 0;
+        var cacheKey = entity ? coords + '#' + entity : coords;
+        var payload = {'coords': coords};
+
+        if(entity){ payload.entity = entity; }
+
+        if(!options.force && window.clickedCases[cacheKey]){
+            $('#ajax-data').html(window.clickedCases[cacheKey]);
             if(options.done){ options.done(); }
             return;
         }
@@ -201,14 +210,30 @@ $(document).ready(function(){
         $.ajax({
             type: "POST",
             url: 'observe.php',
-            data: {'coords': coords},
+            data: payload,
             success: function(data){
                 $('#ajax-data').html(data);
-                window.clickedCases[coords] = data;
+                window.clickedCases[cacheKey] = data;
                 if(options.done){ options.done(); }
             }
         });
     }
+
+    /* « aussi ici : … » — rouvrir le panneau SUR cette entité, pour pouvoir
+       agir dessus. Délégué depuis un fichier statique et non depuis le
+       fragment : le fragment est réinjecté à chaque panneau, un handler posé
+       dedans s'empilerait. */
+    $(document).on('click.aooOther', 'a.case-other', function(e){
+        e.preventDefault();
+
+        var $link = $(this);
+        var coords = $link.attr('data-observe-coords');
+        var entity = parseInt($link.attr('data-observe-entity'), 10);
+
+        if(!coords || !entity){ return; }
+
+        openObservation(coords, {force: true, entity: entity});
+    });
 
     function requestLineOfFire($case){
         var coords = $case.attr('data-coords');

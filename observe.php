@@ -328,7 +328,12 @@ if($res->num_rows){
     /* Une ENTITÉ occupe la case (personnage, PNJ, bâtiment, objet
      * unique) : la vue par type rend la carte, les boutons filtrés et
      * la pastille d'état — le contrôleur ne fait qu'assembler. */
-    [$card, $equipStrip] = \App\View\Observe\EntityCardView::render($player, $res, $x, $y, $coords);
+    /* Plusieurs entités sur une case : celle qu'on demande porte la carte,
+     * donc les actions. Sans ça, on lisait les autres sans jamais pouvoir
+     * agir dessus. */
+    [$card, $equipStrip] = \App\View\Observe\EntityCardView::render(
+        $player, $res, $x, $y, $coords, (int) ($_POST['entity'] ?? 0)
+    );
 }
 
 else{
