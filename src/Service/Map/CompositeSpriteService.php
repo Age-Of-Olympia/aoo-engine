@@ -174,10 +174,20 @@ final class CompositeSpriteService
             return null;
         }
 
-        $written = imagepng($canvas, $absolute);
+        /* Written aside then renamed, which is atomic on one filesystem: two
+         * boards composing the same missing figure at once would otherwise
+         * each write half a PNG into the file the other is reading. */
+        $temporary = $absolute . '.' . getmypid() . '.tmp';
+        $written = imagepng($canvas, $temporary);
         imagedestroy($canvas);
 
-        return $written ? $webPath : null;
+        if (!$written || !@rename($temporary, $absolute)) {
+            @unlink($temporary);
+
+            return null;
+        }
+
+        return $webPath;
     }
 
     private function read(string $file): ?\GdImage

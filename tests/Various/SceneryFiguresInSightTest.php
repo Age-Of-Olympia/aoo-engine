@@ -93,6 +93,25 @@ class SceneryFiguresInSightTest extends TestCase
         $this->conn->executeStatement('DELETE FROM races WHERE name = ?', [self::FAMILY]);
 
         @unlink($this->spriteDir . '/' . self::FAMILY . '.png');
+
+        foreach (glob($_SERVER['DOCUMENT_ROOT'] . '/img/foregrounds/' . self::FAMILY . '-*.png') ?: [] as $art) {
+            @unlink($art);
+        }
+
+        EntitySpriteService::forget();
+    }
+
+    /** The per-cell art a figure is stitched from. */
+    private function pieceArt(): void
+    {
+        $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/foregrounds';
+
+        foreach ([0, 1] as $piece) {
+            $image = imagecreatetruecolor(50, 50);
+            imagepng($image, $dir . '/' . self::FAMILY . '-0' . $piece . '.png');
+            imagedestroy($image);
+        }
+
         EntitySpriteService::forget();
     }
 
@@ -187,12 +206,31 @@ class SceneryFiguresInSightTest extends TestCase
     }
 
     /**
-     * No composed picture, no spanning — and no cell taken over either, or
-     * the decor would disappear from the board entirely.
+     * A figure whose picture is missing composes it on the spot, once: `img/`
+     * is not versioned, so a fresh deployment has none and nobody should have
+     * to remember a console command for the decor to appear.
      */
-    public function testWithoutAPictureTheFigureKeepsItsPieces(): void
+    public function testAMissingPictureIsComposedOnDemand(): void
     {
-        $this->figureAt(0, 0); /* deliberately no sprite */
+        $this->pieceArt();
+        $this->figureAt(0, 0);
+
+        $seen = (new SceneryFiguresInSight($this->conn))->forWindow([$this->coordsId(0, 0)]);
+
+        $this->assertCount(1, $seen['figures'], 'la figure se dessine sans commande préalable');
+        $this->assertFileExists(
+            $_SERVER['DOCUMENT_ROOT'] . '/' . $seen['figures'][0]['image'],
+            'et son image reste sur le disque pour les affichages suivants'
+        );
+    }
+
+    /**
+     * Nothing to compose from either: no spanning, and no cell taken over,
+     * or the decor would disappear from the board entirely.
+     */
+    public function testWithoutAnyArtTheFigureKeepsItsPieces(): void
+    {
+        $this->figureAt(0, 0); /* neither sprite nor pieces on disk */
 
         $seen = (new SceneryFiguresInSight($this->conn))->forWindow([$this->coordsId(0, 0)]);
 

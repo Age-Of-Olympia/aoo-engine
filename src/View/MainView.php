@@ -33,7 +33,10 @@ class MainView
 
             $svgUrl = 'datas/private/players/' . $player->id . '.svg';
 
-            if (!file_exists($svgUrl)) {
+            /* Redrawn when the renderer has changed since this board was
+             * cached. The cache has no expiry, so a player who does not move
+             * would otherwise keep a board drawn by code that is gone. */
+            if (\App\Service\Map\BoardRenderStamp::isStale($svgUrl)) {
 
                 $coords = $player->getCoords();
 

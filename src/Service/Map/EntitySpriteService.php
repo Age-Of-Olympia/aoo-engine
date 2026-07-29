@@ -47,7 +47,33 @@ final class EntitySpriteService
 
         $composed = 'img/' . $imageDir . '/_composed/' . $family . '.png';
 
-        return self::$sprites[$key] = is_file($root . '/' . $composed) ? $composed : null;
+        if (is_file($root . '/' . $composed)) {
+            return self::$sprites[$key] = $composed;
+        }
+
+        return self::$sprites[$key] = $this->composeOnce($imageDir, $family);
+    }
+
+    /**
+     * Stitch a figure that has no picture yet — once, then never again.
+     *
+     * `img/` is not versioned, so a fresh deployment starts without any
+     * composed sprite and the decor would draw piece by piece until someone
+     * remembered a console command. It builds its own instead: the cost is
+     * paid once per family, by whoever looks first, and the memo above keeps
+     * a single render from asking twice.
+     */
+    private function composeOnce(string $imageDir, string $family): ?string
+    {
+        $footprint = (new EntityTypeFootprintService())->catalogue()[$family] ?? null;
+
+        if ($footprint === null || $footprint->isSingleCell()) {
+            return null;
+        }
+
+        $pieces = (new SceneryFootprintDeriver())->piecesOnDisk()[$family] ?? [];
+
+        return (new CompositeSpriteService())->composedSprite($imageDir, $family, $footprint, $pieces);
     }
 
     /** Between two renders in one process, and between tests. */
