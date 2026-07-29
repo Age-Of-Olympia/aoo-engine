@@ -29,6 +29,7 @@ class TypeEditorFaceTest extends TestCase
         $this->assertSame(TypeEditorFace::BUILDING, TypeEditorFace::of($this->race('structure'))->key);
         $this->assertSame(TypeEditorFace::BUILDING, TypeEditorFace::of($this->race('structure', 'obstacle'))->key);
         $this->assertSame(TypeEditorFace::SCENERY, TypeEditorFace::of($this->race('structure', 'decor'))->key);
+        $this->assertSame(TypeEditorFace::RESOURCE, TypeEditorFace::of($this->race('structure', 'ressource'))->key);
     }
 
     /** Each list keeps its own, so decor never swells the building types. */
@@ -39,6 +40,7 @@ class TypeEditorFaceTest extends TestCase
             $this->race('structure'),
             $this->race('structure', 'obstacle'),
             $this->race('structure', 'decor'),
+            $this->race('structure', 'ressource'),
         ];
 
         $kept = static fn(TypeEditorFace $face): int => count(array_filter(
@@ -49,6 +51,11 @@ class TypeEditorFaceTest extends TestCase
         $this->assertSame(1, $kept(TypeEditorFace::character()));
         $this->assertSame(2, $kept(TypeEditorFace::building()));
         $this->assertSame(1, $kept(TypeEditorFace::scenery()));
+        $this->assertSame(
+            1,
+            $kept(TypeEditorFace::resource()),
+            'un récoltable ne doit plus grossir la liste des bâtiments'
+        );
     }
 
     public function testTheRequestChoosesTheFace(): void
@@ -62,6 +69,19 @@ class TypeEditorFaceTest extends TestCase
             TypeEditorFace::SCENERY,
             TypeEditorFace::fromRequest(['kind' => 'structure', 'nature' => 'decor'])->key
         );
+        $this->assertSame(
+            TypeEditorFace::RESOURCE,
+            TypeEditorFace::fromRequest(['kind' => 'structure', 'nature' => 'ressource'])->key
+        );
+    }
+
+    /** A resource form must carry its nature back, or it saves onto another list. */
+    public function testTheResourceFaceCarriesItsNatureThroughAPost(): void
+    {
+        $fields = TypeEditorFace::resource()->formFields();
+
+        $this->assertStringContainsString('name="kind" value="structure"', $fields);
+        $this->assertStringContainsString('name="nature" value="ressource"', $fields);
     }
 
     /** A decor form must carry its nature back, or it saves onto another list. */

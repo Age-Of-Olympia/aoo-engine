@@ -10,7 +10,7 @@ use Classes\Player;
 (new AdminMenuAccessService())->enforce(basename($_SERVER['PHP_SELF']));
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260729f';
+const ADMIN_ASSET_VERSION = '20260730a';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -144,9 +144,10 @@ function admin_layout($title, $content, array $assets = []) {
                 ['footprints.php', 'Formes', '/admin/footprints.php'],
             ], $sceneryPages),
             $navGroup('Ressources', [
-                ['resource-types.php', 'Types', '/admin/resource-types.php'],
+                ['harvest-types.php', 'Types récoltables', '/admin/harvest-types.php'],
+                ['resource-types.php', 'PV (table legacy)', '/admin/resource-types.php'],
                 ['harvest-seed.php', 'Rendements (seed JSON)', '/admin/harvest-seed.php'],
-            ], ['resource-types.php', 'harvest-seed.php']),
+            ], ['harvest-types.php', 'resource-types.php', 'harvest-seed.php']),
             /* Un élément posé applique l'effet de son nom quand on marche
              * dessus : le catalogue et ce qui en est posé, même sujet. */
             $navGroup('Éléments', [

@@ -110,6 +110,7 @@ class AdminMenuAccessService
         'dialogs-save.php'           => 'dialogs.php',
         'dialog-seed.php'            => 'dialogs.php',
         'harvest-seed.php'           => 'resource-types.php',
+        'harvest-types.php'          => 'resource-types.php',
         'races-save.php'             => 'races.php',
         'race-seed.php'              => 'races.php',
         'effects-save.php'           => 'effects.php',

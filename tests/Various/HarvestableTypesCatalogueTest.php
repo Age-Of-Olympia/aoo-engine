@@ -72,7 +72,9 @@ class HarvestableTypesCatalogueTest extends TestCase
 
         foreach ($rows as $row) {
             $this->assertSame('structure', $row['kind'], $row['name']);
-            $this->assertSame('obstacle', $row['structure_nature'], $row['name']);
+            /* Their own nature since they left the buildings list: same
+               population, its own face in the type editor. */
+            $this->assertSame('ressource', $row['structure_nature'], $row['name']);
             $this->assertSame(10, (int) $row['pv'], $row['name'] . ' : la valeur de DEFAULT_PV');
             $this->assertSame(1, (int) $row['blocks_passage'], $row['name'] . ' barre le chemin');
             $this->assertSame(0, (int) $row['playable'], $row['name']);

@@ -7,22 +7,24 @@ use App\Entity\Race;
 /**
  * Which face of the type editor is being shown.
  *
- * `races` holds three populations that share one editor: playable races,
- * building types, and scenery types. They differ in their label, their list,
- * and where their images live — nothing else, which is why one page serves
- * all three.
+ * `races` holds four populations that share one editor: playable races,
+ * building types, scenery types and harvestable resources. They differ in
+ * their label, their list, and where their images live — nothing else, which
+ * is why one page serves them all.
  *
  * This replaces a boolean that answered "structure?" in forty-seven places.
- * A boolean could name two faces; the third had nowhere to go.
+ * A boolean could name two faces; the others had nowhere to go.
  */
 final class TypeEditorFace
 {
     public const CHARACTER = 'character';
     public const BUILDING = 'building';
     public const SCENERY = 'scenery';
+    public const RESOURCE = 'resource';
 
-    /** Scenery types are structures too; `structure_nature` tells them apart. */
+    /** All structures; `structure_nature` is what tells the faces apart. */
     public const NATURE_DECOR = 'decor';
+    public const NATURE_RESOURCE = 'ressource';
 
     private function __construct(
         public readonly string $key,
@@ -43,7 +45,11 @@ final class TypeEditorFace
             return self::character();
         }
 
-        return $nature === self::NATURE_DECOR ? self::scenery() : self::building();
+        return match ($nature) {
+            self::NATURE_DECOR => self::scenery(),
+            self::NATURE_RESOURCE => self::resource(),
+            default => self::building(),
+        };
     }
 
     public static function character(): self
@@ -79,6 +85,17 @@ final class TypeEditorFace
         );
     }
 
+    public static function resource(): self
+    {
+        return new self(
+            self::RESOURCE,
+            'Types récoltables',
+            'Type récoltable',
+            '+ Nouveau récoltable',
+            '/admin/harvest-types.php'
+        );
+    }
+
     /** The face a given row belongs to, whichever page one came from. */
     public static function of(Race $race): self
     {
@@ -86,9 +103,11 @@ final class TypeEditorFace
             return self::character();
         }
 
-        return $race->getStructureNature() === self::NATURE_DECOR
-            ? self::scenery()
-            : self::building();
+        return match ($race->getStructureNature()) {
+            self::NATURE_DECOR => self::scenery(),
+            self::NATURE_RESOURCE => self::resource(),
+            default => self::building(),
+        };
     }
 
     public function isScenery(): bool
@@ -122,10 +141,14 @@ final class TypeEditorFace
             return '';
         }
 
+        $nature = match ($this->key) {
+            self::SCENERY => self::NATURE_DECOR,
+            self::RESOURCE => self::NATURE_RESOURCE,
+            default => '',
+        };
+
         return '<input type="hidden" name="kind" value="structure">'
-            . ($this->key === self::SCENERY
-                ? '<input type="hidden" name="nature" value="' . self::NATURE_DECOR . '">'
-                : '');
+            . ($nature === '' ? '' : '<input type="hidden" name="nature" value="' . $nature . '">');
     }
 
     /** The face's own page, with its query, for links and redirects. */
