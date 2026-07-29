@@ -10,7 +10,7 @@ use Classes\Player;
 (new AdminMenuAccessService())->enforce(basename($_SERVER['PHP_SELF']));
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260729b';
+const ADMIN_ASSET_VERSION = '20260729e';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -183,7 +183,7 @@ function admin_layout($title, $content, array $assets = []) {
             ], $factionPages),
         ]),
 
-        $navSection('Les gens', [
+        $navSection('Les joueurs', [
             $navGroup('Personnages', [
                 ['players.php', 'Compétences', '/admin/players.php'],
                 ['pnjs.php', 'PNJ', '/admin/pnjs.php'],

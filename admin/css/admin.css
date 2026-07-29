@@ -45,6 +45,10 @@ body {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    /* main.min.css centre tout le body ; .admin-main se remet à gauche, la
+     * barre latérale ne le faisait pas. Les titres de groupe y échappaient
+     * par accident, étant en flex — un simple bloc, lui, était centré. */
+    text-align: left;
 }
 
 .vertical-nav .nav-link {
@@ -75,8 +79,12 @@ body {
     flex-direction: column;
     gap: 4px;
 }
-/* A section: a caption over a run of groups, foldable like a group. The
- * caption stays legible on the dark sidebar — it was set for a light one. */
+/* A section: a caption over a run of groups, foldable like a group.
+ *
+ * No negative margins: it sits in the sidebar's own padding like everything
+ * else, one notch left of the group titles. The earlier attempts pulled it
+ * out to the column edge while chasing an alignment problem that was really
+ * the body's `text-align: center` (see .vertical-nav). */
 .nav-section {
     margin-top: 12px;
     border-top: 1px solid rgba(255, 255, 255, 0.14);
@@ -88,10 +96,10 @@ body {
 }
 
 .nav-section-title {
-    display: block;
-    /* Flush left, outboard of the group titles: the indent is what says a
-     * section holds groups rather than sitting among them. */
-    padding: 10px 4px 6px 2px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 2px 6px;
     color: #dfe8f0;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -103,7 +111,6 @@ body {
 
 .nav-section-title::after {
     content: '\25B8';
-    float: right;
     font-size: 10px;
     opacity: 0.65;
     transition: transform 0.15s ease;
