@@ -54,6 +54,59 @@ final class TileOccupancyService
      * @param list<int> $coordsIds
      * @return array<int, string> coords_id => reason, blocked tiles only
      */
+    /**
+     * Cells something PERMANENT already refuses the step on.
+     *
+     * Answers what a `forbidden` trigger adds: a fence duplicating a wall is
+     * dead weight now that the wall refuses by itself, and it lies — remove
+     * the wall and the fence keeps standing, invisible.
+     *
+     * Characters are deliberately out: someone standing in a doorway blocks
+     * it for a turn, which is no reason to call a fence redundant.
+     *
+     * @param list<int> $coordsIds
+     * @return array<int, string> coords_id => what blocks it
+     */
+    public function permanentlyBlocked(array $coordsIds): array
+    {
+        $coordsIds = array_values(array_unique(array_map('intval', $coordsIds)));
+
+        if ($coordsIds === []) {
+            return [];
+        }
+
+        $in = implode(',', $coordsIds);
+        $blocked = [];
+
+        foreach ($this->conn->fetchFirstColumn(
+            "SELECT coords_id FROM map_resources WHERE coords_id IN ({$in})"
+        ) as $id) {
+            $blocked[(int) $id] = 'une ressource';
+        }
+
+        $passable = $this->raceService->getPassableStructureNames();
+
+        foreach ($this->occupations($in) as $row) {
+            $verdict = self::ROLE_VERDICTS[(string) $row['role']] ?? null;
+
+            if ($verdict === false) {
+                continue; /* a drawing order screens nothing */
+            }
+
+            if ($verdict === null && in_array((string) $row['race'], $passable, true)) {
+                continue;
+            }
+
+            if (!EntityCategory::fromPlayerType($row['player_type'] ?? null)->isStructure()) {
+                continue; /* a character is not a wall */
+            }
+
+            $blocked[(int) $row['coords_id']] ??= (string) $row['race'];
+        }
+
+        return $blocked;
+    }
+
     public function blockedForStep(array $coordsIds, int $moverId, bool $charactersVisible): array
     {
         $coordsIds = array_values(array_unique(array_map('intval', $coordsIds)));
