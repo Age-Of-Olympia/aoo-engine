@@ -43,9 +43,17 @@
         </include>
     </source>
 
+    <!--
+        Seul le rapport que la CI publie est produit ici. Le rapport HTML
+        rendait un gabarit par fichier couvert et dépassait les 128 Mo du job,
+        APRÈS une suite verte : la couverture ne tourne que sur les branches
+        d'intégration, donc la MR passait et l'intégration cassait.
+
+        Personne ne le lisait : la CI ne publie que junit et cobertura. En
+        local, « make coverage » le demande en ligne de commande.
+    -->
     <coverage>
         <report>
-            <html outputDirectory="tmp/coverage"/>
             <cobertura outputFile="tmp/coverage/cobertura.xml"/>
         </report>
     </coverage>
