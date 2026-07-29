@@ -29,6 +29,8 @@ class ConditionRegistry
             'BuildSite' => new BuildSiteCondition(),
             'DigSite' => new DigSiteCondition(),
             'TargetType' => new TargetTypeCondition(),
+            'TargetRace' => new TargetRaceCondition(),
+            'RequiresFaith' => new RequiresFaithCondition(),
 
             'Compute' => new ComputeCondition(),
             'ComputePure' => new ComputePureCondition(), // Jet pur, sans prise en compte des Malus ou des Effets

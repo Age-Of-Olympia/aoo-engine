@@ -1046,9 +1046,10 @@ class Player implements ActorInterface {
     public function put_pf($pf){
 
 
-        $this->data->pf += $pf;
+        $this->data->pf = max(0, $this->data->pf + $pf);
 
-        $sql = 'UPDATE players SET pf = pf + ? WHERE id = ?';
+        // Floored at zero: faith is spent, never owed.
+        $sql = 'UPDATE players SET pf = GREATEST(pf + ?, 0) WHERE id = ?';
 
         $db = new Db();
 
