@@ -74,15 +74,17 @@ class ResourceOutcomeInstruction extends OutcomeInstruction implements HasParame
         }
 
         $outcomeSuccessMessages = array();
-        // Nombre d'unités récoltées au dernier tirage : borne l'épuisement
-        // plus bas — 0 quand il n'y avait rien à récolter.
-        $rand = 0;
+        // TOTAL des unités récoltées : c'est lui qui borne l'épuisement. Le
+        // tirage était relu après cette boucle, donc seul le dernier rendement
+        // comptait — récolter cinq bois et une pierre n'autorisait qu'un filon.
+        $harvested = 0;
 
         foreach($ressources as $k=>$v){
             $max = $v;
             $item = Item::get_item_by_name($k);
             $item->get_data();
             $rand = $this->roll($max);
+            $harvested += $rand;
 
             $item->add_item($actor, $rand);
 
@@ -96,7 +98,7 @@ class ResourceOutcomeInstruction extends OutcomeInstruction implements HasParame
             $rows[] = $row;
         }
 
-        $resourcesIdArray = ResourceService::pickExhausted($planJson, $rows, $rand);
+        $resourcesIdArray = ResourceService::pickExhausted($planJson, $rows, $harvested);
     
         if(!empty($resourcesIdArray)){
             if(count($resourcesIdArray) > 1){

@@ -57,15 +57,14 @@ class ResourceExhaustCharacterizationTest extends TestCase
     }
 
     /**
-     * GELÉ, ET FAUX — le budget d'épuisement compte les TENTATIVES, pas les
-     * épuisements. Une ressource dont le biome n'a pas de taux ne peut jamais
-     * s'épuiser, et pourtant elle consomme le budget : ici deux pierres sans
-     * taux passent devant l'arbre, le budget de 2 est mangé, et l'arbre —
-     * seul épuisable, à 100 % — survit.
+     * Le budget compte ce qui s'ÉPUISE, pas ce qu'on essaie. Une ressource
+     * dont le biome n'a pas de taux ne peut jamais s'épuiser : l'essayer ne
+     * doit donc rien dépenser, sinon deux pierres stériles protègent l'arbre
+     * qui était le seul épuisable.
      */
-    public function testTheBudgetCountsAttemptsAndNotExhaustions(): void
+    public function testTheBudgetCountsWhatRunsOutAndNotWhatIsTried(): void
     {
-        ResourceService::setDiceForTests(new ScriptedDice([[1], [1]]));
+        ResourceService::setDiceForTests(new ScriptedDice([[1], [1], [1]]));
 
         $plan = $this->planWith([
             ['wall' => 'pierre1', 'ressource' => 'pierre'],
@@ -74,7 +73,7 @@ class ResourceExhaustCharacterizationTest extends TestCase
 
         $picked = ResourceService::pickExhausted($plan, $this->rows('pierre1', 'pierre1', 'arbre1'), 2);
 
-        $this->assertSame([], $picked, 'gelé : les tentatives stériles ont mangé le budget');
+        $this->assertCount(1, $picked, 'l\'arbre s\'épuise : les pierres stériles n\'ont rien coûté');
     }
 
     /**
@@ -95,23 +94,26 @@ class ResourceExhaustCharacterizationTest extends TestCase
         $this->assertCount(1, $picked);
     }
 
-    /**
-     * GELÉ, ET FAUX — un budget NUL épuise quand même un filon.
-     *
-     * Le budget est éprouvé APRÈS la tentative, donc une fouille qui n'a rien
-     * rapporté peut tarir une veine. C'est le cas du joueur qui fouille une
-     * case sans rendement déclaré.
-     */
-    public function testAnEmptyBudgetStillExhaustsOneVein(): void
+    /** Rien récolté, rien d'épuisé : la borne est lue AVANT d'essayer. */
+    public function testAnEmptyBudgetExhaustsNothing(): void
     {
         ResourceService::setDiceForTests(new ScriptedDice([[1]]));
 
         $plan = $this->planWith([['wall' => 'arbre1', 'ressource' => 'bois', 'exhaust' => 100]]);
 
+        $this->assertSame([], ResourceService::pickExhausted($plan, $this->rows('arbre1'), 0));
+    }
+
+    /** Et le total récolté borne bien : deux unités, deux filons au plus. */
+    public function testTheBudgetIsTheTotalHarvested(): void
+    {
+        ResourceService::setDiceForTests(new ScriptedDice([[1], [1], [1]]));
+
+        $plan = $this->planWith([['wall' => 'arbre1', 'ressource' => 'bois', 'exhaust' => 100]]);
+
         $this->assertCount(
-            1,
-            ResourceService::pickExhausted($plan, $this->rows('arbre1'), 0),
-            'gelé : rien récolté, un filon tari quand même'
+            2,
+            ResourceService::pickExhausted($plan, $this->rows('arbre1', 'arbre1', 'arbre1'), 2)
         );
     }
 

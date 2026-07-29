@@ -107,6 +107,7 @@ class ResourceService
         name IN ("'. implode('","', array_keys($biomes)) .'")
         AND
         damages=-1
+        ORDER BY id
         ';
 
         $db = new Db();
@@ -179,9 +180,9 @@ class ResourceService
      * tested at all: it lived inside a loop that needed a player, a plan and
      * a database.
      *
-     * Behaviour FROZEN as it stands, bugs included — the fix comes next, on
-     * its own. The counter counts ATTEMPTS, so a resource whose biome has no
-     * exhaust rate still spends budget without ever running out.
+     * No more veins run out than units were harvested — counting what runs
+     * OUT, not what was tried. A resource whose biome declares no rate can
+     * never run out, so trying it must not spend the budget.
      *
      * @param iterable<object> $rows
      * @return list<int>
@@ -189,13 +190,16 @@ class ResourceService
     public static function pickExhausted(object $planJson, iterable $rows, int $budget): array
     {
         $resourcesIdArray = [];
-        $attempts = 0;
+
+        // Harvested nothing, exhaust nothing: the bound is read BEFORE trying.
+        if ($budget < 1) {
+            return $resourcesIdArray;
+        }
 
         foreach ($rows as $row) {
-            $attempts++;
             self::createExhaustArray($planJson, $resourcesIdArray, $row);
 
-            if ($attempts >= $budget) {
+            if (count($resourcesIdArray) >= $budget) {
                 break;
             }
         }
