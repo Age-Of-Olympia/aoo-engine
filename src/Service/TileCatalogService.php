@@ -71,58 +71,93 @@ class TileCatalogService
     public function buildComposites(array $layers): array
     {
         $composites = [];
+        $sprites = new \App\Service\Map\CompositeSpriteService();
+        $catalogue = null;
 
         foreach ($layers as $layer) {
             $imageDir = TiledMapService::layerImageDir($layer);
             $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $imageDir;
 
-            foreach (is_dir($dir) ? scandir($dir) : [] as $base) {
-                if ($base === '.' || $base === '..'
-                    || !preg_match(self::ASSET_NAME_PATTERN, $base)
-                    || !is_file($dir . '/' . $base . '/' . $base . '.png')
-                ) {
+            if (!is_dir($dir)) {
+                continue;
+            }
+
+            /* The cut-out catalogue, not a lucky asset. Scanning for a
+             * whole-object image only ever found 25 families of ~130, knew
+             * one of the three naming conventions, and refused holed figures
+             * — so an anvil reached the palette as nine loose pieces. */
+            $catalogue ??= (new \App\Service\Map\EntityTypeFootprintService())->catalogue();
+            $onDisk = $this->piecesByFamily($dir);
+
+            foreach ($catalogue as $family => $footprint) {
+                if ($footprint->isSingleCell() || !isset($onDisk[$family])) {
                     continue;
                 }
 
-                $size = @getimagesize($dir . '/' . $base . '/' . $base . '.png');
-                $tileSize = TiledMapService::TILE_SIZE;
-                if (!$size || $size[0] % $tileSize !== 0 || $size[1] % $tileSize !== 0) {
-                    continue;
-                }
+                $image = $sprites->spriteFor($imageDir, (string) $family, $footprint, $onDisk[$family]);
 
-                $width = (int) ($size[0] / $tileSize);
-                $height = (int) ($size[1] / $tileSize);
-                if ($width * $height < 2) {
+                if ($image === null) {
                     continue;
-                }
-
-                // Tous les morceaux doivent exister à la racine (rendu du jeu)
-                $pieces = [];
-                for ($i = 0; $i < $width * $height; $i++) {
-                    $piece = sprintf('%s-%02d', $base, $i);
-                    if (!file_exists($dir . '/' . $piece . '.png')) {
-                        continue 2;
-                    }
-                    // index row-major haut-gauche → offset jeu depuis l'ancre bas-gauche
-                    $row = intdiv($i, $width);
-                    $pieces[] = [
-                        'name' => $piece,
-                        'dx'   => $i % $width,
-                        'dy'   => $height - 1 - $row,
-                    ];
                 }
 
                 $composites[$layer][] = [
-                    'name'   => $base,
-                    'image'  => 'img/' . $imageDir . '/' . $base . '/' . $base . '.png',
-                    'width'  => $width,
-                    'height' => $height,
-                    'pieces' => $pieces,
+                    'name'   => $family,
+                    'image'  => $image,
+                    'width'  => $footprint->width(),
+                    'height' => $footprint->height(),
+                    'pieces' => $this->pieceOffsets($footprint, $onDisk[$family]),
                 ];
             }
         }
 
         return $composites;
+    }
+
+    /**
+     * Piece images present in a layer's folder, by family then piece index.
+     *
+     * @return array<string, array<int, string>>
+     */
+    private function piecesByFamily(string $dir): array
+    {
+        $families = [];
+        $webDir = 'img/' . basename($dir);
+
+        foreach (glob($dir . '/*.png') ?: [] as $file) {
+            $base = pathinfo($file, PATHINFO_FILENAME);
+            [$family, $index] = \App\Service\Map\SceneryFootprintDeriver::splitPiece($base);
+            $families[$family][$index] = $webDir . '/' . $base . '.png';
+        }
+
+        return $families;
+    }
+
+    /**
+     * The pieces Tiled pushes back, with their offsets from the anchor.
+     *
+     * Only the pieces that exist: a figure whose art is incomplete still
+     * places what it has rather than being dropped from the palette.
+     *
+     * @param array<int, string> $pieceImages
+     * @return list<array{name: string, dx: int, dy: int}>
+     */
+    private function pieceOffsets(\App\Service\Map\Footprint $footprint, array $pieceImages): array
+    {
+        $pieces = [];
+
+        foreach ($footprint->offsets() as $index => [$dx, $dy]) {
+            if (!isset($pieceImages[$index])) {
+                continue;
+            }
+
+            $pieces[] = [
+                'name' => pathinfo($pieceImages[$index], PATHINFO_FILENAME),
+                'dx'   => $dx,
+                'dy'   => $dy,
+            ];
+        }
+
+        return $pieces;
     }
 
     /**
