@@ -29,7 +29,8 @@ use Doctrine\ORM\Mapping as ORM;
     'tutorial' => TutorialPlayer::class,
     'npc' => NonPlayerCharacter::class,
     'building' => Building::class,
-    'unique' => UniqueObject::class
+    'unique' => UniqueObject::class,
+    'scenery' => Scenery::class
 ])]
 abstract class GameEntity
 {
