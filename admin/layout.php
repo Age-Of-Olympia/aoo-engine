@@ -149,9 +149,10 @@ function admin_layout($title, $content, array $assets = []) {
             /* Un élément posé applique l'effet de son nom quand on marche
              * dessus : le catalogue et ce qui en est posé, même sujet. */
             $navGroup('Éléments', [
+                ['element-types.php', 'Types', '/admin/element-types.php'],
                 ['effects.php', 'Effets', '/admin/effects.php'],
                 ['map-elements.php', 'Posés', '/admin/map-elements.php'],
-            ], ['effects.php', 'map-elements.php']),
+            ], ['element-types.php', 'effects.php', 'map-elements.php']),
             $navGroup('Dialogues', [
                 ['dialogs.php', 'Liste', '/admin/dialogs.php'],
                 ['dialog-seed.php', 'Seed JSON legacy', '/admin/dialog-seed.php'],

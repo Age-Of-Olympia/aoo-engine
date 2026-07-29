@@ -56,6 +56,7 @@ class AdminMenuAccessService
         // Éléments posés : pose case par case (boue, feu…) — travail
         // d'animation, même niveau que la pose de bâtiments
         'map-elements.php'         => ['Éléments · Posés', 'Éléments', self::LEVEL_ADMIN],
+        'element-types.php'        => ['Éléments · Types', 'Éléments', self::LEVEL_SUPERADMIN],
         'screenshots.php'          => ['Cartes · Captures', 'Cartes', self::LEVEL_ADMIN],
 
         'avatars-portraits.php'    => ['Joueurs · Avatars & portraits', 'Joueurs', self::LEVEL_ADMIN],
