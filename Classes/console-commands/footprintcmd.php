@@ -1,26 +1,33 @@
 <?php
 use Classes\Command;
 use Classes\Argument;
+use App\Service\Map\EntityTypeFootprintService;
+use App\Service\Map\SceneryArtAudit;
 use App\Service\Map\SceneryFootprintDeriver;
 
 /**
- * Les découpes des décors multi-cases, lues sur la carte.
+ * Cut-outs of multi-piece scenery, read off the map.
  *
- * Ne modifie RIEN. Elle sert à regarder avant d'écrire : le catalogue que la
- * conversion posera, et la liste des exemplaires incomplets qu'il faudra
- * reprendre à la main.
+ * Look before writing: the catalogue the conversion will lay down, and the
+ * incomplete instances someone has to redo by hand. Two verbs write or judge,
+ * because the table carrying these figures is on its way out — `freeze` puts
+ * a shape out of its reach, `verify` says whether a family's whole-object
+ * drawing really redraws its pieces.
  */
 class FootprintCmd extends Command
 {
     public function __construct()
     {
-        parent::__construct('footprint', [new Argument('quoi', true)]);
+        parent::__construct('footprint', [new Argument('what', true), new Argument('option', true)]);
         parent::setDescription(<<<EOT
-Découpes des décors multi-cases, dérivées de la carte (lecture seule).
+Découpes des décors multi-cases, dérivées de la carte.
 Exemple:
 > footprint             (le catalogue : taille, cases, exemplaires)
-> footprint tronques    (les exemplaires incomplets, à reprendre)
+> footprint truncated   (les exemplaires incomplets, à reprendre)
 > footprint <famille>   (le détail d'une famille, morceau par morceau)
+> footprint verify      (l'image d'ensemble redit-elle les morceaux ?)
+> footprint freeze      (ce que « freeze write » enregistrerait)
+> footprint freeze write (met les formes devinées sur la carte à l'abri)
 EOT);
     }
 
@@ -28,17 +35,140 @@ EOT);
     {
         $deriver = new SceneryFootprintDeriver();
         $what = trim((string) ($argumentValues[0] ?? ''));
+        $option = trim((string) ($argumentValues[1] ?? ''));
+
+        if ($what === 'verify') {
+            return $this->verify();
+        }
+
+        if ($what === 'freeze') {
+            return $this->freeze($option === 'write');
+        }
+
         $catalogue = $deriver->derive();
 
-        if ($what !== '' && $what !== 'tronques' && isset($catalogue[$what])) {
+        if ($what !== '' && $what !== 'truncated' && isset($catalogue[$what])) {
             return $this->detail($what, $catalogue[$what]);
         }
 
-        if ($what === 'tronques') {
+        if ($what === 'truncated') {
             return $this->truncated($catalogue);
         }
 
         return $this->summary($catalogue, $deriver->undecidable());
+    }
+
+    /**
+     * Does a family's whole-object drawing redraw its pieces?
+     *
+     * In pixels, not in dimensions: `triton_statue`'s measures exactly what
+     * its figure announces, and is still its mirror.
+     */
+    private function verify(): string
+    {
+        $service = new EntityTypeFootprintService();
+        $audit = new SceneryArtAudit();
+        $pieces = (new SceneryFootprintDeriver())->piecesOnDisk();
+
+        $verdicts = [];
+
+        foreach ($service->catalogue() as $family => $footprint) {
+            if ($footprint->isSingleCell()) {
+                continue;
+            }
+
+            $result = $audit->audit('foregrounds', (string) $family, $footprint, $pieces[$family] ?? []);
+            $verdicts[(string) $family] = $result;
+        }
+
+        $wrong = array_filter(
+            $verdicts,
+            static fn (array $v): bool => in_array(
+                $v['verdict'],
+                [SceneryArtAudit::MIRRORED, SceneryArtAudit::MISPLACED, SceneryArtAudit::WRONG_SIZE],
+                true
+            )
+        );
+
+        $lines = ['Image d\'ensemble contre morceaux posés — comparaison pixel à pixel :', ''];
+
+        foreach ($verdicts as $family => $v) {
+            $lines[] = sprintf('  %-28s %-11s %s', $family, $v['verdict'], $v['detail']);
+        }
+
+        $lines[] = '';
+
+        if ($wrong === []) {
+            $lines[] = 'Aucune image d\'ensemble ne contredit ses morceaux.';
+        } else {
+            $lines[] = sprintf(
+                '%d famille(s) dont l\'image contredit les morceaux : %s.',
+                count($wrong),
+                implode(', ', array_keys($wrong))
+            );
+            $lines[] = 'Ces figures se composeront depuis leurs morceaux — l\'image ne fait pas foi.';
+        }
+
+        return implode('<br />', $lines);
+    }
+
+    /**
+     * Puts the shapes only the map knows out of its reach.
+     *
+     * A family whose shape is derived from the pieces standing on the board
+     * loses it the day the scenery table goes. Freezing writes it to the
+     * catalogue as read today — moving nothing: `declare()` writes the shape
+     * alone, and it is the admin saves that re-lay the cells.
+     */
+    private function freeze(bool $write): string
+    {
+        $service = new EntityTypeFootprintService();
+        $catalogue = $service->catalogue();
+
+        $fromMap = [];
+
+        foreach (array_keys($catalogue) as $family) {
+            if ($service->sourceOf((string) $family) === 'map') {
+                $fromMap[(string) $family] = $catalogue[$family];
+            }
+        }
+
+        if ($fromMap === []) {
+            return 'Aucune forme ne dépend plus de la carte : rien à figer.';
+        }
+
+        $lines = [$write
+            ? 'Formes figées au catalogue :'
+            : 'Formes qui ne tiennent qu\'à la carte (essai à blanc — « footprint freeze write » pour enregistrer) :'];
+        $lines[] = '';
+
+        foreach ($fromMap as $family => $footprint) {
+            $lines[] = sprintf(
+                '  %-28s %d×%d, %d case(s)%s',
+                $family,
+                $footprint->width(),
+                $footprint->height(),
+                $footprint->cells(),
+                $footprint->isHoled() ? ' (trouée)' : ''
+            );
+
+            if ($write) {
+                $service->declare(
+                    (string) $family,
+                    $footprint->width(),
+                    $footprint->height(),
+                    $footprint->offsets(),
+                    $footprint->roles()
+                );
+            }
+        }
+
+        $lines[] = '';
+        $lines[] = $write
+            ? sprintf('%d forme(s) enregistrée(s) : la table du décor ne les porte plus.', count($fromMap))
+            : sprintf('%d forme(s) à figer.', count($fromMap));
+
+        return implode('<br />', $lines);
     }
 
     /**
@@ -74,7 +204,7 @@ EOT);
 
         $lines[] = '';
         $lines[] = sprintf('%d découpe(s) dérivée(s), dont %d trouée(s) — marquées *', count($catalogue), $holed);
-        $lines[] = sprintf('%d exemplaire(s) tronqué(s) — voir : footprint tronques', $truncated);
+        $lines[] = sprintf('%d exemplaire(s) tronqué(s) — voir : footprint truncated', $truncated);
 
         if ($undecidable !== []) {
             $lines[] = '';

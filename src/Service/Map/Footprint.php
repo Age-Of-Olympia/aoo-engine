@@ -110,6 +110,29 @@ final class Footprint
         return count($this->offsets);
     }
 
+    /**
+     * Piece index => (column, row) as drawn: y grows upwards on the board and
+     * downwards on an image, so the rows are read the other way round.
+     *
+     * @return array<int, array{0:int,1:int}>
+     */
+    public function grid(): array
+    {
+        $xs = array_column($this->offsets, 0);
+        $ys = array_column($this->offsets, 1);
+
+        $minX = min($xs);
+        $maxY = max($ys);
+
+        $cells = [];
+
+        foreach ($this->offsets as $piece => [$dx, $dy]) {
+            $cells[$piece] = [$dx - $minX, $maxY - $dy];
+        }
+
+        return $cells;
+    }
+
     public function isHoled(): bool
     {
         return $this->cells() < $this->w * $this->h;

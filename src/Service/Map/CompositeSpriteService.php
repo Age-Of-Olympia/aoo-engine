@@ -113,7 +113,7 @@ final class CompositeSpriteService
 
         $drawn = 0;
 
-        foreach ($this->grid($footprint) as $piece => [$col, $row]) {
+        foreach ($footprint->grid() as $piece => [$col, $row]) {
             if (!isset($pieceImages[$piece])) {
                 continue; /* a holed figure simply leaves that cell empty */
             }
@@ -150,30 +150,6 @@ final class CompositeSpriteService
         imagedestroy($canvas);
 
         return $written ? $webPath : null;
-    }
-
-    /**
-     * Piece index => (column, row) on screen: y grows upwards on the board
-     * and downwards on the image.
-     *
-     * @return array<int, array{0:int,1:int}>
-     */
-    private function grid(Footprint $footprint): array
-    {
-        $offsets = $footprint->offsets();
-        $xs = array_column($offsets, 0);
-        $ys = array_column($offsets, 1);
-
-        $minX = min($xs);
-        $maxY = max($ys);
-
-        $cells = [];
-
-        foreach ($offsets as $piece => [$dx, $dy]) {
-            $cells[$piece] = [$dx - $minX, $maxY - $dy];
-        }
-
-        return $cells;
     }
 
     private function read(string $file): ?\GdImage

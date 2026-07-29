@@ -114,10 +114,10 @@ class TiledMapService
         ['catalog' => $catalog, 'images' => $images] = $this->catalog->buildCatalog($layerNames);
         $composites = $this->catalog->buildComposites($compositeLayers);
 
-        // La palette n'offre que ce qui se pose d'un geste : les morceaux d'une
-        // figure passent à côté, dans leur propre tileset. Ils gardent leur
-        // image — un plan pullé qui en contient doit s'afficher, et les
-        // exemplaires tronqués attendent justement d'être réparés à la pièce.
+        // The palette only offers what you place in one go: the pieces of a
+        // figure go beside it, in their own tileset. They keep their image —
+        // a pulled plan containing them has to render, and truncated
+        // instances are waiting to be repaired piece by piece.
         $pieces = [];
         $footprints = (new \App\Service\Map\EntityTypeFootprintService())->catalogue();
         foreach ($compositeLayers as $layer) {
