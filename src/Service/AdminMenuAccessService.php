@@ -46,7 +46,7 @@ class AdminMenuAccessService
         'tile-assets.php'          => ['Cartes · Tuiles & images', 'Cartes', self::LEVEL_ADMIN],
         // Types de ressources : catalogue de gameplay (récoltable/PV) —
         // même politique que races/effets
-        'resource-types.php'       => ['Cartes · Ressources (types)', 'Cartes', self::LEVEL_SUPERADMIN],
+        'resource-types.php'       => ['Ressources · Types', 'Ressources', self::LEVEL_SUPERADMIN],
         'footprints.php'           => ['Décors · Formes', 'Décors', self::LEVEL_SUPERADMIN],
         'scenery-types.php'        => ['Décors · Types', 'Décors', self::LEVEL_SUPERADMIN],
         // Couleurs de carte : palette visuelle de la carte monde générée —
@@ -55,7 +55,7 @@ class AdminMenuAccessService
         'tile-shade.php'           => ['Cartes · Ombres des cases', 'Cartes', self::LEVEL_SUPERADMIN],
         // Éléments posés : pose case par case (boue, feu…) — travail
         // d'animation, même niveau que la pose de bâtiments
-        'map-elements.php'         => ['Cartes · Éléments posés', 'Cartes', self::LEVEL_ADMIN],
+        'map-elements.php'         => ['Éléments · Posés', 'Éléments', self::LEVEL_ADMIN],
         'screenshots.php'          => ['Cartes · Captures', 'Cartes', self::LEVEL_ADMIN],
 
         'avatars-portraits.php'    => ['Joueurs · Avatars & portraits', 'Joueurs', self::LEVEL_ADMIN],
@@ -81,7 +81,7 @@ class AdminMenuAccessService
         'races.php'                => ['Races', 'Divers', self::LEVEL_SUPERADMIN],
         // Effets : catalogue de gameplay (icônes, buffs, corruptions) —
         // même politique que races
-        'effects.php'              => ['Effets', 'Divers', self::LEVEL_SUPERADMIN],
+        'effects.php'              => ['Éléments · Effets', 'Éléments', self::LEVEL_SUPERADMIN],
         'factions.php'             => ['Factions', 'Divers', self::LEVEL_SUPERADMIN],
         // Bâtiments : pose/retrait sur la carte — travail d'animation, même
         // niveau que les PNJ

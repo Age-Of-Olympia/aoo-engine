@@ -89,7 +89,9 @@ body {
 
 .nav-section-title {
     display: block;
-    padding: 10px 12px 6px;
+    /* Flush left, outboard of the group titles: the indent is what says a
+     * section holds groups rather than sitting among them. */
+    padding: 10px 4px 6px 2px;
     color: #dfe8f0;
     text-transform: uppercase;
     letter-spacing: 0.1em;

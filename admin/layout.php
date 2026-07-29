@@ -10,7 +10,7 @@ use Classes\Player;
 (new AdminMenuAccessService())->enforce(basename($_SERVER['PHP_SELF']));
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260729';
+const ADMIN_ASSET_VERSION = '20260729b';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -98,7 +98,7 @@ function admin_layout($title, $content, array $assets = []) {
     $tutorialPages = ['tutorial-catalog.php', 'tutorial.php', 'tutorial-step-editor.php',
                       'tutorial-npcs.php', 'tutorial-settings.php'];
     $mapPages = ['world_map.php', 'plans.php', 'local_maps.php', 'terrain-transitions.php', 'tile-assets.php',
-                 'resource-types.php', 'tile-colors.php', 'tile-shade.php', 'map-elements.php', 'screenshots.php'];
+                 'tile-colors.php', 'tile-shade.php', 'screenshots.php'];
     $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php', 'passive-workbench.php',
                     'action-import.php', 'action-import-preview.php'];
     $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
@@ -124,10 +124,8 @@ function admin_layout($title, $content, array $assets = []) {
                 ['local_maps.php', 'Cartes locales', '/admin/local_maps.php'],
                 ['terrain-transitions.php', 'Transitions de terrain', '/admin/terrain-transitions.php'],
                 ['tile-assets.php', 'Tuiles &amp; images', '/admin/tile-assets.php'],
-                ['resource-types.php', 'Ressources (types)', '/admin/resource-types.php'],
                 ['tile-colors.php', 'Couleurs de carte', '/admin/tile-colors.php'],
                 ['tile-shade.php', 'Ombres des cases', '/admin/tile-shade.php'],
-                ['map-elements.php', 'Éléments posés', '/admin/map-elements.php'],
                 ['screenshots.php', 'Captures', '/admin/screenshots.php'],
             ], $mapPages),
             $navGroup('Bâtiments', [
@@ -145,6 +143,15 @@ function admin_layout($title, $content, array $assets = []) {
                 ['scenery-types.php', 'Types', '/admin/scenery-types.php'],
                 ['footprints.php', 'Formes', '/admin/footprints.php'],
             ], $sceneryPages),
+            $navGroup('Ressources', [
+                ['resource-types.php', 'Types', '/admin/resource-types.php'],
+            ], ['resource-types.php']),
+            /* Un élément posé applique l'effet de son nom quand on marche
+             * dessus : le catalogue et ce qui en est posé, même sujet. */
+            $navGroup('Éléments', [
+                ['effects.php', 'Effets', '/admin/effects.php'],
+                ['map-elements.php', 'Posés', '/admin/map-elements.php'],
+            ], ['effects.php', 'map-elements.php']),
             $navGroup('Dialogues', [
                 ['dialogs.php', 'Liste', '/admin/dialogs.php'],
                 ['dialog-seed.php', 'Seed JSON legacy', '/admin/dialog-seed.php'],
@@ -168,9 +175,6 @@ function admin_layout($title, $content, array $assets = []) {
                 ['action-type-defaults.php', 'Défauts par type', '/admin/action-type-defaults.php'],
                 ['action-import.php', 'Importer', '/admin/action-import.php'],
             ], $actionPages),
-            $navGroup('Effets', [
-                ['effects.php', 'Liste', '/admin/effects.php'],
-            ], ['effects.php']),
             $navGroup('Factions', [
                 ['factions.php', 'Liste', '/admin/factions.php'],
                 ['faction-members.php', 'Membres', '/admin/faction-members.php'],
