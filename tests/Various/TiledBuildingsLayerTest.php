@@ -4,6 +4,7 @@ namespace Tests\Various;
 
 use App\Enum\EntityCategory;
 use App\Service\BuildingService;
+use Tests\Support\PlantsResources;
 use App\Service\RaceService;
 use App\Service\TiledMapService;
 use Doctrine\DBAL\Connection;
@@ -22,6 +23,8 @@ use PHPUnit\Framework\TestCase;
  */
 class TiledBuildingsLayerTest extends TestCase
 {
+    use PlantsResources;
+
     private const PLAN = 'plan_test_tiled_bld';
 
     private string $type;
@@ -128,12 +131,9 @@ class TiledBuildingsLayerTest extends TestCase
     {
         $service = new TiledMapService();
 
-        // Un mur ressource occupe la case visée
-        $coordsId = \Classes\View::get_coords_id((object) ['x' => 7, 'y' => 7, 'z' => 0, 'plan' => self::PLAN]);
-        $this->link()->executeStatement(
-            'INSERT INTO map_resources (name, coords_id, damages) VALUES (?, ?, -1)',
-            ['arbre1', $coordsId]
-        );
+        // Une ressource occupe la case visée
+        $coordsId = (int) \Classes\View::get_coords_id((object) ['x' => 7, 'y' => 7, 'z' => 0, 'plan' => self::PLAN]);
+        $this->plantResource($this->link(), 'arbre1', $coordsId, self::PLAN, 7, 7);
 
         $export = $service->exportPlan(self::PLAN, 0);
         $result = $service->importPlan(self::PLAN, 0, [
@@ -163,12 +163,7 @@ class TiledBuildingsLayerTest extends TestCase
             BuildingService::purgeEntityCaches((int) $id);
         }
 
-        foreach (['map_resources'] as $table) {
-            $link->executeStatement(
-                "DELETE m FROM {$table} m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?",
-                [self::PLAN]
-            );
-        }
+        $this->uprootResources($link, self::PLAN);
         $link->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
 
         @unlink($_SERVER['DOCUMENT_ROOT'] . '/datas/private/plans/' . self::PLAN . '.json');

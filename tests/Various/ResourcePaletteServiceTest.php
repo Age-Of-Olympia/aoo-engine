@@ -14,19 +14,20 @@ class ResourcePaletteServiceTest extends TestCase
 {
     public static function setUpBeforeClass(): void
     {
-        // Miroir minimal du catalogue resource_types (couture de test du
-        // gateway, pas de base ici) : ressources < 0, obstacles > 0
-        \App\Service\ResourceTypeService::setCatalogForTests([
-            'arbre1'     => -1,
-            'pierre1'    => -1,
-            'mur_pierre' => 150,
-            'pilier'     => 10,
+        // Miroir minimal du catalogue des types (couture de test du gateway,
+        // pas de base ici) : la NATURE dit ce qu'un type est, plus le signe
+        // d'un nombre.
+        \App\Service\Map\StructureTypeService::setCatalogForTests([
+            'arbre1'     => ['nature' => 'ressource', 'pv' => 100],
+            'pierre1'    => ['nature' => 'ressource', 'pv' => 100],
+            'mur_pierre' => ['nature' => 'obstacle',  'pv' => 150],
+            'pilier'     => ['nature' => 'obstacle',  'pv' => 10],
         ]);
     }
 
     public static function tearDownAfterClass(): void
     {
-        \App\Service\ResourceTypeService::setCatalogForTests(null);
+        \App\Service\Map\StructureTypeService::setCatalogForTests(null);
     }
 
     public function testResourcesAreAuthorableEverywhere(): void

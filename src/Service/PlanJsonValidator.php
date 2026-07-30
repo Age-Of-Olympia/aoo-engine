@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use App\Service\Map\StructureTypeService;
+
 /**
  * Validates the JSON structure of a plan file.
  * Each z_level must explicitly declare either:
@@ -145,7 +147,7 @@ class PlanJsonValidator
             return;
         }
 
-        $wallsPv = ResourceTypeService::all();
+        $types = StructureTypeService::all();
 
         // Suivi des walls déjà rencontrés pour signaler les doublons : au runtime,
         // ResourceService indexe les biomes par wall ($biomes[$wall] = $ressource),
@@ -177,15 +179,16 @@ class PlanJsonValidator
                 $seenWalls[$wallName] = $i;
             }
 
-            // Vérifier le wall au catalogue resource_types (doit exister ET valoir -1 = récoltable)
+            // Vérifier le wall au catalogue des types (doit exister ET être de nature « ressource »)
             if (!$wallName) {
                 $errors[] = "{$label} : clé 'wall' manquante";
-            } elseif (!array_key_exists($wallName, $wallsPv)) {
-                $errors[] = "{$label} : wall '{$wallEsc}' inconnu du catalogue resource_types, probablement une typo";
-            } elseif ($wallsPv[$wallName] !== -1) {
-                $warnings[] = "{$label} : wall '{$wallEsc}' a pv=" . $wallsPv[$wallName] . " au catalogue (pas -1) → non récoltable en l'état";
+            } elseif (!array_key_exists($wallName, $types)) {
+                $errors[] = "{$label} : wall '{$wallEsc}' inconnu du catalogue des types, probablement une typo";
+            } elseif ($types[$wallName]['nature'] !== StructureTypeService::NATURE_RESOURCE) {
+                $warnings[] = "{$label} : wall '{$wallEsc}' est de nature « " . self::esc($types[$wallName]['nature'])
+                    . " » au catalogue → non récoltable en l'état";
             } else {
-                $ok[] = "{$label} : wall valide (pv=-1 au catalogue)";
+                $ok[] = "{$label} : wall valide (nature « ressource » au catalogue)";
             }
 
             // Vérifier la ressource : elle doit correspondre à un item existant en base.

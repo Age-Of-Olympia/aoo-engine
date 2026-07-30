@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\EntityManagerFactory;
 use RuntimeException;
+use App\Service\Map\StructureTypeService;
 
 /**
  * Migre à la demande un objet de l'ANCIEN système de construction
@@ -64,7 +65,7 @@ class StructureConversionService
         }
 
         // --- 2. pseudo-race structure --------------------------------------
-        $pv = ResourceTypeService::pv($name) ?? 0;
+        $pv = StructureTypeService::pv($name) ?? 0;
         $created = $conn->executeStatement(
             "INSERT IGNORE INTO races
                 (code, name, label, description, playable, hidden, kind, structure_nature,

@@ -7,6 +7,7 @@ use Classes\View;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
+use Tests\Support\PlantsResources;
 
 /**
  * « Qu'est-ce qui bloque une case ? » — la table de vérité, gelée.
@@ -20,14 +21,14 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  *
  * Quatre prédicats serveur, qui ne consultent PAS les mêmes tables :
  *
- *   | prédicat                        | players | map_resources | map_triggers | map_elements |
- *   |---------------------------------|---------|---------------|--------------|--------------|
- *   | View::get_coords_taken (plan)   |   oui   |      oui      |     oui      |     non      |
- *   | View::is_free (une case)        |   oui   |      oui      |     oui      |     non      |
- *   | BuildingService::place          |   oui   |      oui      |     non      |  oui (sauf   |
- *   |                                 |         |               |              |  buildable)  |
- *   | BuildingService::lineOfFireReport| selon  |      oui      |     non      |     non      |
- *   |                                 | la race |               |              |              |
+ *   | prédicat                        | players | map_triggers | map_elements |
+ *   |---------------------------------|---------|--------------|--------------|
+ *   | View::get_coords_taken (plan)   |   oui   |     oui      |     non      |
+ *   | View::is_free (une case)        |   oui   |     oui      |     non      |
+ *   | BuildingService::place          |   oui   |     non      |  oui (sauf   |
+ *   |                                 |         |              |  buildable)  |
+ *   | BuildingService::lineOfFireReport| selon  |     non      |     non      |
+ *   |                                 | la race |              |              |
  *
  * Un déclencheur bloque donc la construction pour `is_free` mais pas pour
  * `place()` ; un mur arrête la flèche, une table non — et rien de tout cela
@@ -57,18 +58,20 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('items-golden-master')]
 class BlockingPredicatesGoldenMasterTest extends LegacyPlayerFixtureTestCase
 {
+    use PlantsResources;
+
     private const PLAN = 'plan_test_blocage';
 
     protected function tearDown(): void
     {
         $link = $this->link;
 
-        foreach (['map_resources', 'map_triggers'] as $layer) {
-            $link->executeStatement(
-                "DELETE l FROM {$layer} l JOIN coords c ON c.id = l.coords_id WHERE c.plan = ?",
-                [self::PLAN]
-            );
-        }
+        $this->uprootResources($link, self::PLAN);
+
+        $link->executeStatement(
+            'DELETE l FROM map_triggers l JOIN coords c ON c.id = l.coords_id WHERE c.plan = ?',
+            [self::PLAN]
+        );
 
         // Le parent supprime les entités de fixture, qui occupent ces cases.
         parent::tearDown();
@@ -88,10 +91,7 @@ class BlockingPredicatesGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
     private function putResource(string $name, int $x, int $y): void
     {
-        $this->link->executeStatement(
-            'INSERT INTO map_resources (name, coords_id, damages) VALUES (?, ?, -1)',
-            [$name, $this->coordsId($x, $y)]
-        );
+        $this->plantResource($this->link, $name, $this->coordsId($x, $y), self::PLAN, $x, $y);
     }
 
     private function putTrigger(string $name, int $x, int $y): void
@@ -198,7 +198,6 @@ class BlockingPredicatesGoldenMasterTest extends LegacyPlayerFixtureTestCase
             2,
             (int) $this->link->fetchOne(
                 'SELECT (SELECT COUNT(*) FROM players WHERE coords_id = c.id)
-                      + (SELECT COUNT(*) FROM map_resources WHERE coords_id = c.id)
                  FROM coords c WHERE c.id = ?',
                 [$this->coordsId(7, 0)]
             ),

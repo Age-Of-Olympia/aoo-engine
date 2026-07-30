@@ -78,12 +78,6 @@ final class TileOccupancyService
         $in = implode(',', $coordsIds);
         $blocked = [];
 
-        foreach ($this->conn->fetchFirstColumn(
-            "SELECT coords_id FROM map_resources WHERE coords_id IN ({$in})"
-        ) as $id) {
-            $blocked[(int) $id] = 'une ressource';
-        }
-
         $passable = $this->raceService->getPassableStructureNames();
 
         foreach ($this->occupations($in) as $row) {
@@ -121,12 +115,6 @@ final class TileOccupancyService
             "SELECT coords_id FROM map_triggers WHERE name = 'forbidden' AND coords_id IN ({$in})"
         ) as $id) {
             $blocked[(int) $id] = 'Impossible de se rendre à cet endroit.';
-        }
-
-        foreach ($this->conn->fetchFirstColumn(
-            "SELECT coords_id FROM map_resources WHERE coords_id IN ({$in})"
-        ) as $id) {
-            $blocked[(int) $id] ??= 'Quelque chose obstrue ton chemin.';
         }
 
         $passable = $this->raceService->getPassableStructureNames();
@@ -236,12 +224,8 @@ final class TileOccupancyService
         }
 
         return !(bool) $this->conn->fetchOne(
-            'SELECT 1 FROM (
-                 SELECT coords_id FROM map_resources WHERE coords_id = :c
-                 UNION ALL
-                 SELECT coords_id FROM map_triggers  WHERE coords_id = :c
-             ) AS occupants LIMIT 1',
-            ['c' => $coordsId]
+            'SELECT 1 FROM map_triggers WHERE coords_id = ? LIMIT 1',
+            [$coordsId]
         );
     }
 
@@ -261,10 +245,6 @@ final class TileOccupancyService
             return 'Case occupée par une entité.';
         }
 
-        if ($this->hasResource($coordsId)) {
-            return 'Case occupée par un mur.';
-        }
-
         $effectService = new \App\Service\EffectService();
         foreach ($this->conn->fetchFirstColumn('SELECT name FROM map_elements WHERE coords_id = ?', [$coordsId]) as $element) {
             if (!$effectService->isBuildableOver((string) $element)) {
@@ -273,15 +253,6 @@ final class TileOccupancyService
         }
 
         return null;
-    }
-
-    /** Any resource blocks, exhausted or not. Legacy behaviour, kept. */
-    private function hasResource(int $coordsId): bool
-    {
-        return (bool) $this->conn->fetchOne(
-            'SELECT 1 FROM map_resources WHERE coords_id = ? LIMIT 1',
-            [$coordsId]
-        );
     }
 
     /** Same condition as the render (`Classes/View.php`): hidden characters do not block. */

@@ -159,10 +159,9 @@ define('DAYS_OF_WEEK', array(
 /*
  * Ressources de carte (map_resources, ex-map_walls).
  *
- * Le catalogue des types (ex-RESOURCES_PV) vit en base : table
- * `resource_types`, servie par App\Service\ResourceTypeService.
- * pv négatif = ressource (-1 récoltable / -2 épuisé), pv positif = PV des
- * survivants destructibles (autels via destroy.php).
+ * Le catalogue des types vit en base, dans `races` (kind = structure),
+ * servi par App\Service\Map\StructureTypeService : la NATURE dit ce qu'un
+ * type est — « ressource » se récolte — et `pv` ne dit plus que la vie.
  */
 
 /*

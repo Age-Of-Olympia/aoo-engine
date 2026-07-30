@@ -840,23 +840,26 @@ class ViewService {
 
         /* Toute la couche, et non « ce dont le nom contient mur ou arbre ».
          *
-         * Ce filtre datait du temps où map_resources portait aussi les murs.
-         * Depuis leur conversion en entités, la moitié « mur » ne correspond
-         * plus à rien — les murs sont dessinés par la couche buildings — et
-         * la moitié « arbre » laissait de côté la pierre, l'herbe, la jungle,
-         * la pierre noire, les rochers, les cocotiers et tous les minerais,
-         * soit près des trois quarts des ressources posées.
+         * Ce filtre datait du temps où la table portait aussi les murs. La
+         * moitié « arbre » laissait de côté la pierre, l'herbe, la jungle, la
+         * pierre noire, les rochers, les cocotiers et tous les minerais, soit
+         * près des trois quarts des ressources posées.
+         *
+         * Lue par case et non par ancrage : une ressource tient une case, et
+         * c'est cette case que la carte doit teinter.
          *
          * Les types absents de tile_colors retombent sur la couleur par
          * défaut (ColorService::colorFor), donc aucun n'est perdu. */
-        $sql = "SELECT mw.*, c.x, c.y
-            FROM map_resources mw
-            JOIN coords c ON c.id = mw.coords_id
-            WHERE c.plan = ?
+        $sql = "SELECT p.id, p.race AS name, c.x, c.y
+            FROM players p
+            JOIN entity_cells ec ON ec.player_id = p.id
+            JOIN coords c ON c.id = ec.coords_id
+            WHERE p.player_type = 'resource'
+            AND c.plan = ?
             AND c.x BETWEEN " . (int) $this->minX . " AND " . (int) $this->maxX . "
             AND c.y BETWEEN " . (int) $this->minY . " AND " . (int) $this->maxY . "
             $zCondition
-            ORDER BY mw.name, mw.id";
+            ORDER BY p.race, p.id";
 
         $result = $this->db->exe($sql, array($plan));
         

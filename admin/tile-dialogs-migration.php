@@ -155,31 +155,4 @@ if ($plan === []) {
     </script>';
 }
 
-/* Signalement à part : ce n'est pas un dialogue, mais ça se découvre en
- * lisant les cases — et une incohérence de nature laisse des objets
- * muets sans qu'on sache pourquoi. */
-$incoherences = (new TileDialogMigrationService())->typeIncoherences();
-
-if ($incoherences !== []) {
-    $lines = '';
-    foreach ($incoherences as $i) {
-        $lines .= '<tr><td><code>' . e($i['name']) . '</code></td>'
-            . '<td>' . (int) $i['pv'] . ' PV — se casse</td>'
-            . '<td>' . (int) $i['rows'] . ' ligne(s) marquée(s) récoltable</td></tr>';
-    }
-
-    $body .= '<div class="card mt-4"><div class="card-body">'
-        . '<h5>Types dont la nature contredit l\'état</h5>'
-        . '<p class="text-muted mb-2">Le catalogue les dit <strong>destructibles</strong> (PV positifs), leurs cases'
-        . ' se disent <strong>récoltables</strong>. Les cas isolés ont été redressés par migration ;'
-        . ' ceux-ci portent trop de lignes pour qu\'un automate tranche — remettre leur état à zéro'
-        . ' retirerait la récolte à autant de cases. C\'est la <em>nature</em> qu\'il faut sans doute'
-        . ' corriger, dans la console des types de ressources.</p>'
-        . '<p class="text-muted mb-2"><small>Certains types sont volontairement mis de côté et n\'apparaissent'
-        . ' pas ici — les cocotiers, en attente d\'un arbitrage de jeu.</small></p>'
-        . '<table class="table table-sm mb-0"><thead><tr><th>Type</th><th>Ce que dit le catalogue</th>'
-        . '<th>Ce que disent les cases</th></tr></thead><tbody>' . $lines . '</tbody></table>'
-        . '</div></div>';
-}
-
 echo admin_layout('Dialogues de case', renderFlashMessage() . $body);

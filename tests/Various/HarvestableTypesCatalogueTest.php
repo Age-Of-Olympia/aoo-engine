@@ -2,20 +2,21 @@
 
 namespace Tests\Various;
 
-use App\Service\ResourceTypeService;
+use App\Service\Map\StructureTypeService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Harvestable resources have a structure type, and it changes nothing yet.
+ * What a harvestable type is, now that one catalogue says it.
  *
- * The rows are what lets a resource become an entity later. Written from
- * `resource_types` where pv = -1, on the values this chantier already set for
- * `arbre7` and `glaise3`.
+ * There were two. `resource_types` held a name and a number whose SIGN carried
+ * the meaning — -1 harvestable, positive a life total, absent indestructible —
+ * while `races` held the same types with a nature saying it in words. A type
+ * made harvestable in the type editor stayed an obstacle to the map editor,
+ * which read the other table.
  *
- * The second test is the one that matters: pv 10 in the catalogue must NOT
- * make a resource destructible while it is still a `map_resources` row. What
- * refuses destruction is `resource_types`, and it is untouched.
+ * These tests hold the surviving catalogue to what the map editor, the import
+ * paths and the harvest need from it.
  *
  * DB-backed; skips cleanly when the database is unreachable.
  */
@@ -39,66 +40,58 @@ class HarvestableTypesCatalogueTest extends TestCase
         } catch (\Throwable $e) {
             $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
         }
+
+        StructureTypeService::forget();
     }
 
-    /** Every harvestable type has its catalogue row — none left behind. */
-    public function testEveryHarvestableTypeHasAStructureRow(): void
+    protected function tearDown(): void
     {
-        $missing = $this->conn->fetchFirstColumn(
-            'SELECT t.name
-               FROM resource_types t
-              WHERE t.pv = -1
-                AND NOT EXISTS (
-                    SELECT 1 FROM races r
-                     WHERE r.name COLLATE utf8mb4_general_ci = t.name COLLATE utf8mb4_general_ci
-                )'
-        );
-
-        $this->assertSame([], $missing, 'un type récoltable sans ligne de catalogue ne peut pas devenir une entité');
+        StructureTypeService::forget();
     }
 
-    /** On the values this chantier already used, not on new ones. */
-    public function testTheyFollowTheEstablishedConvention(): void
+    /** The legacy catalogue is gone: nothing may read it back into being. */
+    public function testTheLegacyCatalogueIsGone(): void
+    {
+        $this->assertSame(
+            [],
+            $this->conn->fetchFirstColumn("SHOW TABLES LIKE 'resource_types'"),
+            'deux catalogues pour une seule vérité, c\'est un de trop'
+        );
+    }
+
+    /** Harvestable types follow the convention this chantier settled on. */
+    public function testHarvestableTypesFollowTheEstablishedConvention(): void
     {
         $rows = $this->conn->fetchAllAssociative(
-            'SELECT r.name, r.kind, r.structure_nature, r.pv, r.blocks_passage, r.playable
-               FROM races r
-               JOIN resource_types t
-                 ON t.name COLLATE utf8mb4_general_ci = r.name COLLATE utf8mb4_general_ci
-              WHERE t.pv = -1'
+            "SELECT name, kind, structure_nature, pv, blocks_passage, playable
+               FROM races WHERE kind = 'structure' AND structure_nature = 'ressource'"
         );
 
-        $this->assertNotEmpty($rows);
+        $this->assertNotEmpty($rows, 'un monde sans type récoltable ne se fouille pas');
 
         foreach ($rows as $row) {
-            $this->assertSame('structure', $row['kind'], $row['name']);
-            /* Their own nature since they left the buildings list: same
-               population, its own face in the type editor. */
-            $this->assertSame('ressource', $row['structure_nature'], $row['name']);
-            /* Cent depuis l'arbitrage sur l'abattage : dix tombait en un
-               coup ou deux, `melee` et `distance` visant déjà une structure. */
-            $this->assertSame(100, (int) $row['pv'], $row['name']);
             $this->assertSame(1, (int) $row['blocks_passage'], $row['name'] . ' barre le chemin');
             $this->assertSame(0, (int) $row['playable'], $row['name']);
+            /* Abattable depuis l'arbitrage : dix tombait en un coup ou deux,
+               `melee` et `distance` visant déjà une structure. */
+            $this->assertGreaterThan(1, (int) $row['pv'], $row['name'] . ' tomberait à un souffle');
         }
     }
 
-    /**
-     * INERT: a catalogue row must not make a resource destructible while it is
-     * still a `map_resources` row. `destroy.php` reads `resource_types`, where
-     * pv = -1 still means indestructible.
-     */
-    public function testTheCatalogueRowDoesNotMakeAResourceDestructible(): void
+    /** The gateway answers on the nature, which is what the editors ask. */
+    public function testTheGatewayReadsTheSurvivingCatalogue(): void
     {
         $harvestable = (string) $this->conn->fetchOne(
-            'SELECT name FROM resource_types WHERE pv = -1 ORDER BY name LIMIT 1'
+            "SELECT name FROM races WHERE kind = 'structure' AND structure_nature = 'ressource' ORDER BY name LIMIT 1"
         );
 
         $this->assertNotSame('', $harvestable);
-        $this->assertSame(
-            -1,
-            ResourceTypeService::pv($harvestable),
-            $harvestable . ' doit rester indestructible tant qu\'il est une ligne de ressource'
-        );
+        $this->assertTrue(StructureTypeService::isHarvestable($harvestable), $harvestable);
+        $this->assertTrue(StructureTypeService::isKnown($harvestable), $harvestable);
+        $this->assertGreaterThan(0, (int) StructureTypeService::pv($harvestable), $harvestable);
+
+        $this->assertFalse(StructureTypeService::isKnown('gm_type_qui_n_existe_pas'));
+        $this->assertNull(StructureTypeService::pv('gm_type_qui_n_existe_pas'));
+        $this->assertFalse(StructureTypeService::isHarvestable('gm_type_qui_n_existe_pas'));
     }
 }

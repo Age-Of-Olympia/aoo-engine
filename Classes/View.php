@@ -380,6 +380,9 @@ class View{
 
             UNION
 
+            /* Lignes posées par l\'éditeur, qui écrit encore ici. Les
+             * ressources du monde sont des entités et passent par la branche
+             * ci-dessus ; cette table est vide partout ailleurs. */
             SELECT
             id, name, coords_id,
             "resources" AS whichTable,
@@ -1062,21 +1065,6 @@ class View{
         FROM
         coords AS c
         INNER JOIN
-        map_resources AS p
-        ON
-        p.coords_id = c.id
-        WHERE
-        z = ?
-        AND
-        plan = ?
-
-        UNION
-
-        SELECT
-        x, y
-        FROM
-        coords AS c
-        INNER JOIN
         map_triggers AS p
         ON
         p.coords_id = c.id
@@ -1088,7 +1076,7 @@ class View{
 
         $db = new Db();
 
-        $res = $db->exe($sql, array($coords->z, $coords->plan, $coords->z, $coords->plan, $coords->z, $coords->plan));
+        $res = $db->exe($sql, array($coords->z, $coords->plan, $coords->z, $coords->plan));
 
         $coordsTaken = array($coords->x .','. $coords->y);
 

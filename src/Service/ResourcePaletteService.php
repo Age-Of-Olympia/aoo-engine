@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use App\Service\Map\StructureTypeService;
+
 /**
  * Règle unique des murs encore authorables dans map_resources, depuis la
  * conversion des obstacles/décor en entités bâtiment
@@ -20,10 +22,10 @@ class ResourcePaletteService
     /** Préfixes de noms qui restent des map_resources quel que soit le plan */
     private const SPECIAL_PREFIXES = ['autel', 'altar', 'unique_'];
 
-    /** Un mur récoltable : pv négatif au catalogue (-1 récoltable / -2 épuisé) */
+    /** Un mur récoltable : le catalogue dit que sa nature est « ressource ». */
     public static function isResourceName(string $name): bool
     {
-        return ResourceTypeService::isResource($name);
+        return StructureTypeService::isHarvestable($name);
     }
 
     /** Les murs des plans de tutoriel sont clonés par session, hors conversion */

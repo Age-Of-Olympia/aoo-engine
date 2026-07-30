@@ -5,6 +5,7 @@ namespace App\Service;
 use Classes\Db;
 use Classes\View;
 use RuntimeException;
+use App\Service\Map\StructureTypeService;
 
 /**
  * Export / import des plans du jeu pour l'extension Tiled (tools/tiled/aoo).
@@ -897,9 +898,9 @@ class TiledMapService
         ];
 
         if ($layer === 'resources') {
-            // Défaut authoré : -1 (récoltable) pour les ressources du
-            // catalogue resource_types, 0 (intact) pour les autres murs
-            $values['damages'] = ResourceTypeService::isHarvestable($row['name']) ? -1 : 0;
+            // Défaut authoré : -1 (récoltable) pour les types dont la nature
+            // dit « ressource », 0 (intact) pour les autres murs
+            $values['damages'] = StructureTypeService::isHarvestable($row['name']) ? -1 : 0;
         }
 
         if (self::AUTHORABLE_LAYERS[$layer]['paramsInKey'] && isset($row['params']) && $row['params'] !== '') {

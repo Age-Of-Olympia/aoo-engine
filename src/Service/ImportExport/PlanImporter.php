@@ -4,7 +4,7 @@ namespace App\Service\ImportExport;
 
 use App\Service\PlanAdminService;
 use App\Service\PlanConfigService;
-use App\Service\ResourceTypeService;
+use App\Service\Map\StructureTypeService;
 use App\Service\TiledMapService;
 use Classes\Db;
 use RuntimeException;
@@ -306,7 +306,7 @@ final class PlanImporter implements ObjectImporter
             // (récoltable) pour les ressources du catalogue, sinon 0
             return isset($row['damages']) && is_numeric($row['damages'])
                 ? (int) $row['damages']
-                : (ResourceTypeService::isHarvestable((string) $row['name']) ? -1 : 0);
+                : (StructureTypeService::isHarvestable((string) $row['name']) ? -1 : 0);
         }
         if ($column === 'foreground') {
             return isset($row['foreground']) && is_numeric($row['foreground']) ? (int) $row['foreground'] : 0;

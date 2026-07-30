@@ -44,9 +44,8 @@ class AdminMenuAccessService
         'local_maps.php'           => ['Cartes · Cartes locales', 'Cartes', self::LEVEL_ADMIN],
         'terrain-transitions.php'  => ['Cartes · Transitions de terrain', 'Cartes', self::LEVEL_ADMIN],
         'tile-assets.php'          => ['Cartes · Tuiles & images', 'Cartes', self::LEVEL_ADMIN],
-        // Types de ressources : catalogue de gameplay (récoltable/PV) —
-        // même politique que races/effets
-        'resource-types.php'       => ['Ressources · Types', 'Ressources', self::LEVEL_SUPERADMIN],
+        // Types récoltables : catalogue de gameplay — même politique que races/effets
+        'harvest-types.php'        => ['Ressources · Types récoltables', 'Ressources', self::LEVEL_SUPERADMIN],
         'footprints.php'           => ['Décors · Formes', 'Décors', self::LEVEL_SUPERADMIN],
         'scenery-types.php'        => ['Décors · Types', 'Décors', self::LEVEL_SUPERADMIN],
         // Couleurs de carte : palette visuelle de la carte monde générée —
@@ -104,13 +103,11 @@ class AdminMenuAccessService
         'upload_image.php'           => 'avatars-portraits.php', // redirection legacy
         'structure-images.php'       => 'avatars-portraits.php', // même stock, visage Bâtiments
         'plans-save.php'             => 'plans.php',
-        'resource-types-save.php'    => 'resource-types.php',
         'footprints-save.php'        => 'footprints.php',
         'tile-colors-save.php'       => 'tile-colors.php',
         'dialogs-save.php'           => 'dialogs.php',
         'dialog-seed.php'            => 'dialogs.php',
-        'harvest-seed.php'           => 'resource-types.php',
-        'harvest-types.php'          => 'resource-types.php',
+        'harvest-seed.php'           => 'harvest-types.php',
         'races-save.php'             => 'races.php',
         'race-seed.php'              => 'races.php',
         'effects-save.php'           => 'effects.php',

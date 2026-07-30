@@ -7,6 +7,7 @@ use App\Service\Map\TileOccupancyService;
 use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
+use Tests\Support\PlantsResources;
 
 /**
  * The STEP rule, extracted from `go.php` where it lived in three pieces that
@@ -18,18 +19,20 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('items-golden-master')]
 class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
 {
+    use PlantsResources;
+
     private const PLAN = 'plan_test_pas';
 
     protected function tearDown(): void
     {
         $link = $this->link;
 
-        foreach (['map_resources', 'map_triggers'] as $layer) {
-            $link->executeStatement(
-                "DELETE l FROM {$layer} l JOIN coords c ON c.id = l.coords_id WHERE c.plan = ?",
-                [self::PLAN]
-            );
-        }
+        $this->uprootResources($link, self::PLAN);
+
+        $link->executeStatement(
+            'DELETE l FROM map_triggers l JOIN coords c ON c.id = l.coords_id WHERE c.plan = ?',
+            [self::PLAN]
+        );
 
         /* Cells written by hand here; the `coords` constraint is RESTRICT, so
          * a still-referenced cell would block the cleanup. */
@@ -78,10 +81,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
     public function testAResourceBlocksTheStep(): void
     {
         $id = $this->coordsId(1, 0);
-        $this->link->executeStatement(
-            'INSERT INTO map_resources (name, coords_id, damages) VALUES (?, ?, -1)',
-            ['arbre1', $id]
-        );
+        $this->plantResource($this->link, 'arbre1', $id, self::PLAN, 1, 0);
 
         $this->assertSame('Quelque chose obstrue ton chemin.', $this->service()->stepRefusal($id, 1, true));
     }
@@ -90,10 +90,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
     public function testAnExhaustedResourceStillBlocks(): void
     {
         $id = $this->coordsId(2, 0);
-        $this->link->executeStatement(
-            'INSERT INTO map_resources (name, coords_id, damages) VALUES (?, ?, -2)',
-            ['arbre1', $id]
-        );
+        $this->plantResource($this->link, 'arbre1', $id, self::PLAN, 2, 0, damages: -2);
 
         $this->assertNotNull($this->service()->stepRefusal($id, 1, true));
     }
@@ -201,10 +198,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $withResource = $this->coordsId(12, 0);
         $forbidden = $this->coordsId(13, 0);
 
-        $this->link->executeStatement(
-            'INSERT INTO map_resources (name, coords_id, damages) VALUES (?, ?, -1)',
-            ['arbre1', $withResource]
-        );
+        $this->plantResource($this->link, 'arbre1', $withResource, self::PLAN, 12, 0);
         $this->link->executeStatement(
             "INSERT INTO map_triggers (name, coords_id, params) VALUES ('forbidden', ?, '')",
             [$forbidden]

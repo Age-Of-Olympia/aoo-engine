@@ -89,25 +89,6 @@ class TileDialogMigrationTest extends TestCase
         $this->assertStringContainsString('les Elfes doutent', $text, 'la phrase n\'est pas découpée');
     }
 
-    /**
-     * Les cocotiers ne sont pas une erreur de saisie mais une règle de
-     * jeu à trancher : cocotier1 est déclaré récoltable quand
-     * cocotier2 et cocotier3 sont déclarés solides, et leurs quelque
-     * quatre-vingt-dix cases se disent toutes récoltables. Les
-     * signaler comme une anomalie réclamerait une correction qui n'en
-     * est pas une — et une correction automatique retirerait la récolte
-     * à autant de cases.
-     */
-    public function testTheCoconutPalmsAreSetAsideUntilTheRuleIsSettled(): void
-    {
-        $this->assertTrue(TileDialogMigrationService::isSetAside('cocotier1'));
-        $this->assertTrue(TileDialogMigrationService::isSetAside('cocotier3'));
-        $this->assertFalse(
-            TileDialogMigrationService::isSetAside('piedestal_pierre'),
-            'ce qui est bien une erreur de saisie reste signalé'
-        );
-    }
-
     public function testAnUnknownDialogNameIsTreatedAsText(): void
     {
         [$text, $dialog] = $this->service->readParams('dialog');

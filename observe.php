@@ -336,51 +336,11 @@ if($res->num_rows){
     );
 }
 
-else{
-
-
-    // no player
-
-    $sql = '
-    SELECT
-    p.id AS id,
-    coords_id,
-    name,
-    damages
-    FROM
-    map_resources AS p
-    INNER JOIN
-    coords AS c
-    ON
-    p.coords_id = c.id
-    WHERE
-    c.x = ?
-    AND
-    c.y = ?
-    AND
-    c.z = ?
-    AND
-    c.plan = ?
-    ';
-
-    $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
-
-
-    if($res->num_rows){
-
-        /* Murs de carte (et autel) : carte mutualisée + script destroy. */
-        $card = \App\View\Observe\ResourceCardView::render($player, $res, $x, $y);
-    }
-    else{
-
-
-        /*
-         * go button is now printed in js in scripts/view.php
-         */
-    }
-
-
-}
+/*
+ * Rien sur la case : le bouton d'avance est imprimé en js dans
+ * scripts/view.php. Une seconde requête cherchait ici les murs de carte,
+ * du temps où ressources et autels vivaient hors des entités.
+ */
 
 /* Dialogue de CASE : rendu QUELLE QUE SOIT l'entité présente. Ce bloc
  * vivait dans la branche « aucune entité », ce qui était sans effet

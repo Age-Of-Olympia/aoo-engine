@@ -5,6 +5,7 @@ namespace Tests\Various;
 use App\Service\Map\TileOccupancyService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\PlantsResources;
 
 /**
  * What a `forbidden` trigger still adds, cell by cell.
@@ -22,6 +23,8 @@ use PHPUnit\Framework\TestCase;
  */
 class PermanentlyBlockedTest extends TestCase
 {
+    use PlantsResources;
+
     private const PLAN = 'plan_test_fences';
 
     private ?Connection $conn = null;
@@ -69,12 +72,12 @@ class PermanentlyBlockedTest extends TestCase
             \App\Service\BuildingService::deleteEntityRows($this->conn, (int) $id);
         }
 
-        foreach (['map_resources', 'map_triggers'] as $table) {
-            $this->conn->executeStatement(
-                "DELETE m FROM {$table} m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?",
-                [self::PLAN]
-            );
-        }
+        $this->uprootResources($this->conn, self::PLAN);
+
+        $this->conn->executeStatement(
+            'DELETE m FROM map_triggers m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
+            [self::PLAN]
+        );
 
         $this->conn->executeStatement(
             'DELETE ec FROM entity_cells ec JOIN coords c ON c.id = ec.coords_id WHERE c.plan = ?',
@@ -120,10 +123,7 @@ class PermanentlyBlockedTest extends TestCase
     {
         $coordsId = $this->coordsId(1, 1);
 
-        $this->conn->executeStatement(
-            'INSERT INTO map_resources (name, coords_id, damages) VALUES (?, ?, 0)',
-            ['gm_fence_arbre', $coordsId]
-        );
+        $this->plantResource($this->conn, 'gm_fence_arbre', $coordsId, self::PLAN, 1, 1);
 
         $this->assertArrayHasKey($coordsId, $this->blocked($coordsId));
     }

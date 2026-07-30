@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\EntityManagerFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
+use App\Service\Map\StructureTypeService;
 
 /**
  * Inventaire et gestion des images de tuiles (img/<couche>) pour le panneau
@@ -375,7 +376,7 @@ class TileAssetService
     /**
      * Références de configuration qu'un renommage NE met PAS à jour : à
      * vérifier à la main. Les biomes des plans (datas/private/plans/*.json)
-     * nomment des murs/ressources ; le catalogue resource_types aussi.
+     * nomment des murs/ressources ; le catalogue des types aussi.
      *
      * @return list<string>
      */
@@ -383,8 +384,8 @@ class TileAssetService
     {
         $warnings = [];
 
-        if (ResourceTypeService::pv($old) !== null) {
-            $warnings[] = "« {$old} » figure au catalogue resource_types — à renommer à la main";
+        if (StructureTypeService::isKnown($old)) {
+            $warnings[] = "« {$old} » figure au catalogue des types — à renommer à la main";
         }
 
         foreach (glob($this->root . '/datas/*/plans/*.json') ?: [] as $file) {
