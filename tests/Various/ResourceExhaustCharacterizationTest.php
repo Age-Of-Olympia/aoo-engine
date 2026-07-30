@@ -146,7 +146,10 @@ class ResourceExhaustCharacterizationTest extends TestCase
         ResourceService::setDiceForTests(new ScriptedDice([[74]]));
         $depleted = [];
         ResourceService::createExhaustArray($plan, $depleted, $this->row());
-        $this->assertSame([42], $depleted, 'un dé de 74 épuise face à un taux de 75');
+        /* « m: » dit la SOURCE : une ligne héritée, pas une entité. Les deux
+           coexistent le temps de la conversion, et leurs identifiants sont de
+           deux espaces différents. */
+        $this->assertSame(['m:42'], $depleted, 'un dé de 74 épuise face à un taux de 75');
 
         ResourceService::setDiceForTests(new ScriptedDice([[75]]));
         $intact = [];
@@ -166,7 +169,7 @@ class ResourceExhaustCharacterizationTest extends TestCase
         ResourceService::setDiceForTests(new ScriptedDice([[19]]));
         $regrown = [];
         ResourceService::createRegrowArray($plan, $regrown, $this->row());
-        $this->assertSame([42], $regrown, 'un dé de 19 fait repousser face à un taux de 20');
+        $this->assertSame(['m:42'], $regrown, 'un dé de 19 fait repousser face à un taux de 20');
 
         // Un dé de 100 ne repousse pas : impossible si l'échelle était le cent.
         ResourceService::setDiceForTests(new ScriptedDice([[100]]));
@@ -210,6 +213,20 @@ class ResourceExhaustCharacterizationTest extends TestCase
         $depleted = [];
         ResourceService::createExhaustArray($plan, $depleted, $this->row());
         $this->assertSame([], $depleted, 'arbre1 n\'est pas au biome de ce plan');
+    }
+
+    /** Une entité porte sa source, pour qu'on l'épuise au bon endroit. */
+    public function testAnEntityRowCarriesItsSource(): void
+    {
+        ResourceService::setDiceForTests(new ScriptedDice([[1]]));
+
+        $plan = $this->plan(['wall' => 'arbre1', 'ressource' => 'bois', 'exhaust' => 100]);
+        $entity = (object) ['id' => 50000001, 'name' => 'arbre1', 'src' => 'e'];
+
+        $depleted = [];
+        ResourceService::createExhaustArray($plan, $depleted, $entity);
+
+        $this->assertSame(['e:50000001'], $depleted);
     }
 
     /** Un plan sans aucun rendement ne fait rien, sans erreur. */

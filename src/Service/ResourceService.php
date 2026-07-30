@@ -45,25 +45,61 @@ class ResourceService
         View::get_coords_id_arround($coordsArround,$coordsIdArround,$coords, p:1);
 
         $sql = '
-        SELECT
-        COUNT(*) AS max,
-        name
-        FROM
-        map_resources
-        WHERE
-        coords_id IN('. implode(',', $coordsIdArround) .')
-        AND
-        name IN ("'. implode('","', array_keys($biomes)) .'")
-        AND
-        damages=-1
-        GROUP BY
-        name
+        SELECT SUM(n) AS max, name FROM (
+            ' . self::harvestableSql($coordsIdArround, array_keys($biomes)) . '
+        ) AS around
+        GROUP BY name
         ';
 
         $db = new Db();
         $res = $db->exe($sql);
 
         return $res;
+    }
+
+    /**
+     * Les voisines récoltables, ligne héritée OU entité.
+     *
+     * Les deux sources coexistent le temps de la conversion : une ressource
+     * est encore une ligne `map_resources` (`damages` = -1) ou déjà une entité
+     * `resource` sans état d'épuisement. La requête ne préjuge pas de laquelle,
+     * et `src` dit d'où vient chaque ligne — jamais la plage d'identifiants,
+     * qui a déjà menti une fois dans ce dépôt.
+     *
+     * @param list<int> $coordsIds
+     * @param list<string> $names
+     */
+    private static function harvestableSql(array $coordsIds, array $names): string
+    {
+        if ($coordsIds === [] || $names === []) {
+            /* Aucune case ou aucun rendement : une union vide, pas une requête
+               invalide (un IN() sans terme est une erreur de syntaxe). */
+            return 'SELECT NULL AS id, NULL AS name, NULL AS src, 0 AS n FROM DUAL WHERE 1 = 0';
+        }
+
+        $in = implode(',', array_map('intval', $coordsIds));
+        $quoted = '"' . implode('","', array_map(
+            static fn(string $name): string => str_replace(['\\', '"'], ['\\\\', '\\"'], $name),
+            $names
+        )) . '"';
+
+        return '
+            SELECT m.id, m.name, "m" AS src, 1 AS n
+              FROM map_resources m
+             WHERE m.coords_id IN(' . $in . ')
+               AND m.name IN (' . $quoted . ')
+               AND m.damages = -1
+
+            UNION ALL
+
+            SELECT p.id, p.race AS name, "e" AS src, 1 AS n
+              FROM entity_cells ec
+              JOIN players p ON p.id = ec.player_id AND p.player_type = "resource"
+              LEFT JOIN resources r ON r.player_id = p.id
+             WHERE ec.coords_id IN(' . $in . ')
+               AND p.race IN (' . $quoted . ')
+               AND r.exhausted_at IS NULL
+        ';
     }
 
     public static function getResourcesAround(Player $player): mixed
@@ -80,18 +116,10 @@ class ResourceService
 
 
         $sql = '
-        SELECT
-        id,
-        name
-        FROM
-        map_resources
-        WHERE
-        coords_id IN('. implode(',', $coordsIdArround) .')
-        AND
-        name IN ("'. implode('","', array_keys($biomes)) .'")
-        AND
-        damages=-1
-        ORDER BY id
+        SELECT id, name, src FROM (
+            ' . self::harvestableSql($coordsIdArround, array_keys($biomes)) . '
+        ) AS around
+        ORDER BY src, id
         ';
 
         $db = new Db();
@@ -100,18 +128,52 @@ class ResourceService
         return $res;
     }
 
+    /**
+     * Ce qu'on épuise ou fait repousser, désigné SANS ambiguïté.
+     *
+     * Une ligne héritée et une entité ont des identifiants de deux espaces
+     * différents. Les distinguer par leur plage serait rejouer « un id négatif
+     * est un PNJ », qui a déjà menti ici : la source est donc écrite.
+     */
+    private static function handle(object $row): string
+    {
+        return ($row->src ?? 'm') . ':' . (int) $row->id;
+    }
+
+    /**
+     * @param list<string> $handles
+     * @return array{m: list<int>, e: list<int>}
+     */
+    private static function bySource(array $handles): array
+    {
+        $split = ['m' => [], 'e' => []];
+
+        foreach ($handles as $handle) {
+            [$src, $id] = array_pad(explode(':', (string) $handle, 2), 2, '');
+
+            if ($id === '' || !isset($split[$src])) {
+                continue;
+            }
+
+            $split[$src][] = (int) $id;
+        }
+
+        return $split;
+    }
+
     public static function exhaustResources(array $resourcesId): void
     {
+        ['m' => $rows, 'e' => $entities] = self::bySource($resourcesId);
 
-        $sql = '
-        UPDATE map_resources
-        SET damages=-2
-        WHERE 
-        id IN('. implode(',', $resourcesId) .')
-        ';
+        if ($rows !== []) {
+            (new Db())->exe(
+                'UPDATE map_resources SET damages = -2 WHERE id IN(' . implode(',', $rows) . ')'
+            );
+        }
 
-        $db = new Db();
-        $res = $db->exe($sql);
+        if ($entities !== []) {
+            (new \App\Service\Map\ResourceStateService())->exhaust($entities);
+        }
     }
 
     public static function regrowResources(array &$resourcesId): void
@@ -120,11 +182,21 @@ class ResourceService
             return;
         }
 
+        ['m' => $rows, 'e' => $entities] = self::bySource($resourcesId);
+
+        if ($entities !== []) {
+            (new \App\Service\Map\ResourceStateService())->regrow($entities);
+        }
+
+        if ($rows === []) {
+            return;
+        }
+
         $sql = '
         UPDATE map_resources
         SET damages=-1
-        WHERE 
-        id IN('. implode(',', $resourcesId) .')
+        WHERE
+        id IN('. implode(',', $rows) .')
         ';
 
         $db = new Db();
@@ -150,7 +222,7 @@ class ResourceService
                      * biome sans taux déclenchaient à chaque tentative, en
                      * jeu comme au cron. */
                     if((($e['exhaust'] ?? 0) ?: 0) > self::roll(100))
-                        $resourcesIdArray[] = $row->id;
+                        $resourcesIdArray[] = self::handle($row);
                     break;
                 }
             }
@@ -200,7 +272,7 @@ class ResourceService
                 /* Échelle du MILLE, délibérément : regrow=20 vaut donc 1,9 %
                  * par passage du cron, pas 20 %. Voir createExhaustArray. */
                 if ((($e['regrow'] ?? 0) ?: 0) > self::roll(1000))
-                    $resourcesIdArray[] = $row->id;
+                    $resourcesIdArray[] = self::handle($row);
                 break;
             }
         }
