@@ -251,25 +251,34 @@ final class HarvestCatalogService
     }
 
     /**
-     * Plans holding harvestable resources with no yields configured — where
-     * harvesting gives nothing at all.
+     * Resources standing on a plan with nothing to give — where fouiller
+     * returns empty-handed.
      *
      * This is what replaces the fallback: the gap is named instead of being
      * quietly filled from a file nobody opens.
      *
-     * @return list<array{plan: string, resources: int, inJson: int}>
+     * Counted per TYPE, not per plan: a plan whose trees yield wood and whose
+     * palms yield nothing is a plan where a player harvests in vain, and a
+     * check for "any row on this plan" would call it settled.
+     *
+     * @return list<array{plan: string, resources: int, types: list<string>, inJson: int}>
      */
     public function plansMissingYields(): array
     {
         $rows = $this->conn()->fetchAllAssociative(
-            "SELECT c.plan, COUNT(*) AS resources
-               FROM map_resources m
-               JOIN coords c ON c.id = m.coords_id
-               JOIN resource_types t
-                 ON t.name COLLATE utf8mb4_general_ci = m.name COLLATE utf8mb4_general_ci
-              WHERE t.pv = -1
-                AND NOT EXISTS (SELECT 1 FROM race_harvest h WHERE h.plan = c.plan)
-              GROUP BY c.plan
+            "SELECT ec.plan, COUNT(*) AS resources, GROUP_CONCAT(DISTINCT p.race ORDER BY p.race) AS types
+               FROM players p
+               JOIN entity_cells ec ON ec.player_id = p.id
+              WHERE p.player_type = 'resource'
+                AND NOT EXISTS (
+                    SELECT 1
+                      FROM race_harvest h
+                      JOIN races r ON r.id = h.race_id
+                     WHERE h.plan = ec.plan
+                       AND r.name COLLATE utf8mb4_general_ci = p.race COLLATE utf8mb4_general_ci
+                       AND TRIM(h.item) <> ''
+                )
+              GROUP BY ec.plan
               ORDER BY resources DESC"
         );
 
@@ -277,6 +286,7 @@ final class HarvestCatalogService
             static fn(array $row): array => [
                 'plan' => (string) $row['plan'],
                 'resources' => (int) $row['resources'],
+                'types' => array_values(array_filter(explode(',', (string) ($row['types'] ?? '')))),
                 'inJson' => count(self::yieldsFromPlanJson((string) $row['plan'])),
             ],
             $rows

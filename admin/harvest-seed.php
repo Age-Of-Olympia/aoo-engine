@@ -68,15 +68,17 @@ ob_start();
 <?php if ($missing !== []): ?>
     <div class="alert alert-danger">
         <strong>Sur <?= count($missing) ?> plan(s), fouiller ne rapporte RIEN.</strong>
-        Ces plans portent des ressources récoltables et aucun rendement réglé. Le jeu ne lit que
-        cette table — il n'y a pas de repli silencieux sur le JSON.
-        <table class="table table-sm mb-0 mt-2" style="max-width: 620px;">
-            <thead><tr><th>Plan</th><th>Ressources posées</th><th>Rendements dans son JSON</th></tr></thead>
+        Ces plans portent des ressources récoltables sans rendement réglé pour leur type. Le jeu ne
+        lit que cette table — il n'y a pas de repli silencieux sur le JSON.
+        <table class="table table-sm mb-0 mt-2" style="max-width: 760px;">
+            <thead><tr><th>Plan</th><th>Ressources posées</th><th>Types sans rendement</th><th>Rendements dans son JSON</th></tr></thead>
             <tbody>
             <?php foreach (array_slice($missing, 0, 25) as $row): ?>
                 <tr>
                     <td><?= e($row['plan']) ?></td>
                     <td><?= (int) $row['resources'] ?></td>
+                    <td><?= e(implode(', ', array_slice($row['types'], 0, 6)))
+                            . (count($row['types']) > 6 ? ', …' : '') ?></td>
                     <td><?= $row['inJson'] > 0
                             ? (int) $row['inJson'] . ' — versables ci-dessous'
                             : '<em>aucun : à saisir à la main</em>' ?></td>

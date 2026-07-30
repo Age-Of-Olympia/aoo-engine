@@ -20,6 +20,9 @@ class HarvestYieldsSourceTest extends TestCase
     private const PLAN = 'plan_test_yields';
     private const TYPE = 'gm_yields_arbre';
 
+    /** Below the resource range's ceiling, out of reach of any converted id. */
+    private const FIXTURE_ID = 59990100;
+
     private ?Connection $conn = null;
     private string $plansDir;
     private int $raceId = 0;
@@ -83,10 +86,9 @@ class HarvestYieldsSourceTest extends TestCase
 
         @unlink($this->plansDir . '/' . self::PLAN . '.json');
         json()->forget('plans', self::PLAN);
-        $this->conn->executeStatement(
-            'DELETE m FROM map_resources m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        );
+        $this->conn->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [self::FIXTURE_ID]);
+        $this->conn->executeStatement('DELETE FROM resources WHERE player_id = ?', [self::FIXTURE_ID]);
+        $this->conn->executeStatement('DELETE FROM players WHERE id = ?', [self::FIXTURE_ID]);
         $this->conn->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
         $this->conn->executeStatement('DELETE FROM race_harvest WHERE plan = ?', [self::PLAN]);
         $this->conn->executeStatement('DELETE FROM races WHERE name = ?', [self::TYPE]);
@@ -101,18 +103,62 @@ class HarvestYieldsSourceTest extends TestCase
     /** And the gap is NAMED, which is what replaces the fallback. */
     public function testAPlanWithResourcesButNoYieldsIsReported(): void
     {
-        $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::PLAN]
+        $this->standAResource();
+
+        $missing = (new HarvestCatalogService($this->conn))->plansMissingYields();
+        $reported = array_column($missing, 'plan');
+
+        $this->assertContains(self::PLAN, $reported, 'un plan qui ne rapporte rien doit être signalé');
+    }
+
+    /**
+     * A type left out is a gap of its own: harvesting IT gives nothing, even
+     * where the plan's other types are settled. Counting rows per plan would
+     * call this plan done — it is how 58 coconut palms yielded nothing while
+     * the board looked configured.
+     */
+    public function testATypeLeftOutIsReportedThoughThePlanHasOtherYields(): void
+    {
+        $this->standAResource();
+
+        /* Some OTHER type settled on this plan, so it is not an empty plan. */
+        $other = (int) $this->conn->fetchOne(
+            "SELECT id FROM races WHERE kind = 'structure' AND name <> ? ORDER BY id LIMIT 1",
+            [self::TYPE]
         );
+        $this->assertGreaterThan(0, $other, 'il faut un second type pour poser le décor du test');
+
         $this->conn->executeStatement(
-            'INSERT INTO map_resources (coords_id, name, damages) VALUES (?, ?, -1)',
-            [$coordsId, 'arbre1']
+            "INSERT INTO race_harvest (plan, race_id, item, exhaust, regrow) VALUES (?, ?, 'bois', 10, NULL)",
+            [self::PLAN, $other]
         );
 
         $missing = (new HarvestCatalogService($this->conn))->plansMissingYields();
-        $plans = array_column($missing, 'plan');
+        $row = array_values(array_filter($missing, static fn(array $r): bool => $r['plan'] === self::PLAN));
 
-        $this->assertContains(self::PLAN, $plans, 'un plan qui ne rapporte rien doit être signalé');
+        $this->assertNotSame([], $row, 'le plan garde un type sans rendement');
+        $this->assertContains(self::TYPE, $row[0]['types'], 'et le type fautif est nommé');
+    }
+
+    /** One harvestable entity standing on the plan. */
+    private function standAResource(): void
+    {
+        $coordsId = (int) \Classes\View::get_coords_id(
+            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::PLAN]
+        );
+
+        $this->conn->executeStatement(
+            "INSERT INTO players (id, player_type, display_id, name, race, avatar, portrait,
+                                  coords_id, nextTurnTime, registerTime, text)
+             VALUES (?, 'resource', 0, 'Gm yields', ?, '', '', ?, 0, ?, '')",
+            [self::FIXTURE_ID, self::TYPE, $coordsId, time()]
+        );
+
+        $this->conn->executeStatement(
+            "INSERT INTO entity_cells (player_id, coords_id, plan, z, x, y, piece, role)
+             VALUES (?, ?, ?, 0, 0, 0, 0, 'block')",
+            [self::FIXTURE_ID, $coordsId, self::PLAN]
+        );
     }
 
     /** Poured: the table answers, and it is what the admin edits. */
