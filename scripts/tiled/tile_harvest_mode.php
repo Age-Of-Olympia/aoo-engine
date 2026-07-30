@@ -1,26 +1,15 @@
 <?php
-use Classes\Db;
+use App\Service\Map\ResourceObjectService;
 
-$db = new Db();
-
-$infos ='';
-
-$db = new Db();
-/* Le cycle revient à 0 : normal → récoltable → épuisé → normal.
+/* Le cycle d'état d'une ressource, depuis l'éditeur.
  *
- * Il bouclait entre -1 et -2, sans jamais repasser par 0. Un clic de
- * trop sur un mur ordinaire le rendait donc récoltable POUR TOUJOURS,
- * du moins depuis ce bouton — c'est ce qui a laissé un piédestal
- * s'annoncer récoltable, et c'est ce qui l'a exclu du passage des murs
- * en entités, qui ne prenait que damages >= 0. */
-$sql = "UPDATE map_resources 
-    SET damages = CASE
-    WHEN damages = 0 THEN -1
-    WHEN damages = -1 THEN -2
-    WHEN damages = -2 THEN 0
-    ELSE damages END
-     where coords_id = ?";
-$db->exe($sql,$coordsId);
-
-
-
+ * Il courait sur trois valeurs de `damages` — normal, récoltable, épuisé —
+ * du temps où une seule table portait les murs ET les ressources, et où le
+ * signe du nombre disait lequel des deux on avait sous le pinceau. Une
+ * entité de type « resource » EST récoltable ; ce qui ne l'est pas est une
+ * structure, et ne passe plus par ce bouton. Il ne reste donc que deux
+ * états, debout ou épuisée, et le même clic pour aller de l'un à l'autre.
+ *
+ * Muet, comme l'était la requête qu'il remplace : tiled.php répond
+ * « harvest » et l'éditeur relit la case. */
+(new ResourceObjectService())->cycleState((int) $coordsId);

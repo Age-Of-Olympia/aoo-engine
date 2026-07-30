@@ -9,7 +9,12 @@ $infos ='';
 $db = new Db();
 $sql = "select coords_id as coords_id, 'map_tiles' as type, name as name, NULL as params from map_tiles where coords_id = ?
 union
-select  coords_id as coords_id, 'map_resources' as type, name as name, CONCAT('damages = ', damages) as params from map_resources where coords_id = ?
+/* Une ressource est une entité : elle se décrit comme un bâtiment, par son
+   type et son état, et non plus par le signe d'un nombre. */
+select p.coords_id as coords_id, 'ressource' as type, CONCAT(p.race, ' #', p.id) as name,
+       IF(r.exhausted_at IS NULL, 'état = debout', CONCAT('état = épuisée depuis ', r.exhausted_at)) as params
+from players p left join resources r on r.player_id = p.id
+where p.player_type = 'resource' and p.coords_id = ?
 union
 select  coords_id as coords_id, 'map_triggers' as type, name as name, params as params from map_triggers where coords_id = ?
 union

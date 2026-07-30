@@ -2,6 +2,7 @@
 use App\Service\BuildingService;
 use App\Service\ResourcePaletteService;
 use App\Service\CellShadeService;
+use App\Service\Map\ResourceObjectService;
 use App\Service\Map\SceneryObjectService;
 use Classes\Db;
 use Classes\View;
@@ -104,6 +105,26 @@ if($_POST['type'] == 'eraser'){
         }
     }
 
+    /* Une ressource est une ENTITÉ depuis sa conversion. La poser en ligne de
+     * couche l'écrivait dans une table que plus personne ne lit : le pinceau
+     * répondait « resources », et la partie ne voyait aucun arbre.
+     *
+     * Du champ « damages » de la palette il ne reste qu'un sens : -2 pose une
+     * ressource déjà épuisée, qui repoussera à son heure. */
+    if ($_POST['type'] === 'resources') {
+        $resourceId = (new ResourceObjectService())->placeAt(
+            $_POST['src'],
+            (int) $coordsId,
+            (int) ($_POST['params'] ?? -1) === -2
+        );
+
+        echo 'ressource #' . $resourceId;
+
+        \Classes\View::refresh_players_svg_at((int) $coordsId);
+
+        return;
+    }
+
     $values = array(
         'name'=>$_POST['src'],
         'coords_id'=>$coordsId
@@ -115,26 +136,18 @@ if($_POST['type'] == 'eraser'){
 
     if(!empty($_POST['params'])){
         
+        /* Le cas particulier des ressources (damages) a disparu avec la ligne
+           de couche : la pose d'une ressource retourne plus haut, et son état
+           part avec elle. */
         $lastId = $db->get_last_id('map_'. $_POST['type']);
 
-        if( $_POST['type'] == 'resources'){
-            //cas particulier des ressources (damages)
-    
-            $sql = 'UPDATE map_resources SET damages = ? WHERE id = ?';
-    
-            $db->exe($sql, array($_POST['params'], $lastId));
-    
-        } else {
-            //Autres tiles 
-            $sql = 'UPDATE map_'. $_POST['type'] .' SET params = ? WHERE id = ?';
-    
-            $db->exe($sql, array($_POST['params'], $lastId));
-    
-            echo '
-                params: '. $_POST['params'];
-            
-        }
-    } 
+        $sql = 'UPDATE map_'. $_POST['type'] .' SET params = ? WHERE id = ?';
+
+        $db->exe($sql, array($_POST['params'], $lastId));
+
+        echo '
+            params: '. $_POST['params'];
+    }
 }
 
 /* Idem à la pose : `BuildingService::place` rafraîchit déjà pour les

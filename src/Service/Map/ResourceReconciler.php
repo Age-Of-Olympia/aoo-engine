@@ -85,7 +85,7 @@ final class ResourceReconciler
             $remove = array_merge($remove, $ids);
         }
 
-        $this->remove($remove);
+        (new ResourceObjectService($this->conn))->removeEntities($remove);
         $created = $this->create($plan, $create, $labels);
 
         return [
@@ -229,40 +229,9 @@ final class ResourceReconciler
             }
         }
 
-        if ($exhausted !== []) {
-            $this->conn->executeStatement(
-                'INSERT INTO resources (player_id, exhausted_at) VALUES '
-                    . implode(', ', array_fill(0, count($exhausted), '(?, NOW())')),
-                $exhausted
-            );
-        }
+        (new ResourceStateService($this->conn))->exhaust($exhausted);
 
         return $ids;
-    }
-
-    /**
-     * Take entities off the board, satellite included.
-     *
-     * `entity_cells` cascades with the entity, `resources` does not — it has
-     * no foreign key, so an unremoved row would claim a state for whatever id
-     * lands there next.
-     *
-     * @param list<int> $ids
-     */
-    private function remove(array $ids): void
-    {
-        if ($ids === []) {
-            return;
-        }
-
-        $placeholders = implode(',', array_fill(0, count($ids), '?'));
-
-        $this->conn->executeStatement("DELETE FROM resources WHERE player_id IN ({$placeholders})", $ids);
-        $this->conn->executeStatement("DELETE FROM players WHERE id IN ({$placeholders})", $ids);
-
-        foreach ($ids as $id) {
-            BuildingService::purgeEntityCaches($id);
-        }
     }
 
     private function key(int $z, int $x, int $y, string $type): string

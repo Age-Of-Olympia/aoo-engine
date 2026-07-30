@@ -1,8 +1,11 @@
 <?php
 use App\Service\BuildingService;
+use App\Service\Map\ResourceObjectService;
 use Classes\Db;
 //delete anything at coords given.
-$mapTypes = array('tiles','resources','triggers','elements','dialogs','plants','foregrounds','routes');
+/* « resources » a quitté cette liste : la table ne reçoit plus rien, ses
+   objets sont des entités et se retirent plus bas, avec le décor. */
+$mapTypes = array('tiles','triggers','elements','dialogs','plants','foregrounds','routes');
 
 $db = new Db();
 
@@ -28,4 +31,9 @@ while($building = $res->fetch_assoc()){
 
     $buildingService->remove((int) $building['player_id']);
 }
+
+/* Les ressources aussi : elles n'ont ni propriétaire ni chantier à protéger,
+   la gomme les emporte comme elle emportait leurs lignes. */
+$resources = new ResourceObjectService();
+$resources->removeEntities($resources->idsOn((int) $coordsId));
 

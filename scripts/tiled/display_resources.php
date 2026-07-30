@@ -42,7 +42,10 @@ foreach(File::scan_dir('img/walls/', $without=".png") as $e){
 
 
 }
-echo '<div>Damages: <input type="text" id="resources-params" /></div>';
+/* Le champ ne porte plus des « damages » : une ressource posée est debout,
+   et le seul réglage qui reste est de la poser déjà sèche (-2), pour qu'elle
+   repousse à son heure au lieu d'être récoltable tout de suite. */
+echo '<div>État : <input type="text" id="resources-params" placeholder="-2 = épuisée" /></div>';
 
 if($hidden > 0){
 

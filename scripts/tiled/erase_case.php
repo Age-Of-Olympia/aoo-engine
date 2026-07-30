@@ -1,5 +1,6 @@
 <?php
 use App\Service\BuildingService;
+use App\Service\Map\ResourceObjectService;
 use App\Service\Map\SceneryObjectService;
 use Classes\Db;
 
@@ -37,6 +38,15 @@ if($type == 'buildings'){
         $buildingService->vanish((int) $building['player_id']);
     }
 
+} elseif ($type === 'ressource') {
+
+    /* Une ressource se retire comme elle se pose : c'est une entité, et le
+       DELETE d'une ligne de couche frappait une table vide — la gomme passait
+       sans rien effacer. Le canal porte le nom de l'objet, pas d'une table :
+       c'est tile_info qui le donne au bouton, comme pour les bâtiments. */
+    $resources = new ResourceObjectService();
+    $resources->removeEntities($resources->idsOn((int) $coordsId));
+
 } elseif ($type === 'ombre') {
     /* Retirer UN cran d'ombre, pas toute l'ombre.
      *
@@ -48,7 +58,9 @@ if($type == 'buildings'){
 } else {
 
     /* Le nom de table vient du POST : liste blanche stricte */
-    if(!in_array($type, array('map_tiles','map_resources','map_triggers','map_dialogs','map_elements','map_routes','map_foregrounds','map_plants'))){
+    /* map_resources a quitté la liste : ses objets sont des entités et
+       passent par le canal « ressource » ci-dessus. */
+    if(!in_array($type, array('map_tiles','map_triggers','map_dialogs','map_elements','map_routes','map_foregrounds','map_plants'))){
 
         exit('error type');
     }
