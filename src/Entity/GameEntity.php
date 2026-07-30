@@ -30,7 +30,8 @@ use Doctrine\ORM\Mapping as ORM;
     'npc' => NonPlayerCharacter::class,
     'building' => Building::class,
     'unique' => UniqueObject::class,
-    'scenery' => Scenery::class
+    'scenery' => Scenery::class,
+    'resource' => Resource::class
 ])]
 abstract class GameEntity
 {

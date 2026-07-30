@@ -27,7 +27,7 @@ enum EntityCategory: string
         // sans étendre ce mapping doit échouer bruyamment, pas passer
         // silencieusement toutes les portes « character ».
         return match ($playerType) {
-            'building', 'unique', 'scenery' => self::Structure,
+            'building', 'unique', 'scenery', 'resource' => self::Structure,
             'real', 'tutorial', 'npc', null => self::Character,
             default => throw new \ValueError("player_type inconnu : « {$playerType} » — étendre EntityCategory::fromPlayerType."),
         };

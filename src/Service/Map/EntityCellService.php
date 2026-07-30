@@ -25,7 +25,9 @@ final class EntityCellService
      * to `part` instead would defer to the type, and an anvil whose base
      * blocks would screen arrows across its whole height.
      */
-    private const DEFAULT_ROLES = ['scenery' => 'cover'];
+    /* A decor is a drawing order; a resource is the wall it came from, so it
+     * refuses the step. */
+    private const DEFAULT_ROLES = ['scenery' => 'cover', 'resource' => 'block'];
 
     private Connection $conn;
 
