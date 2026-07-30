@@ -6,6 +6,7 @@ use App\Service\ImportExport\ExporterRegistry;
 use App\Service\ImportExport\ImporterRegistry;
 use App\Service\ImportExport\PlanExporter;
 use App\Service\ImportExport\PlanImporter;
+use App\Service\Map\EntityPlacementService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 
@@ -139,13 +140,23 @@ class PlanImportExportTest extends TestCase
 
         $importer->import([$payload]);
 
-        $walls = $link->fetchAllAssociative(
-            'SELECT m.name, m.player_id FROM map_resources m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
+        $resources = $link->fetchAllAssociative(
+            'SELECT p.race FROM players p JOIN coords c ON c.id = p.coords_id
+              WHERE p.player_type = "resource" AND c.plan = ?',
             [self::SRC]
         );
-        $this->assertCount(1, $walls, 'le mur authoré est remplacé (supprimé), le mur joueur survit');
-        $this->assertSame('palissade', $walls[0]['name']);
-        $this->assertNotNull($walls[0]['player_id']);
+        $this->assertSame([], $resources, 'la ressource authorée n\'est plus dessinée : elle est retirée');
+
+        $built = $link->fetchAllAssociative(
+            'SELECT p.race, b.owner_id FROM players p
+               JOIN buildings b ON b.player_id = p.id
+               JOIN coords c ON c.id = p.coords_id
+              WHERE c.plan = ?',
+            [self::SRC]
+        );
+        $this->assertCount(1, $built, 'la construction du joueur survit au remplacement');
+        $this->assertSame('palissade', $built[0]['race']);
+        $this->assertNotNull($built[0]['owner_id']);
 
         // Les coords existantes survivent (FK joueurs/logs) même hors payload
         $this->assertSame(
@@ -157,7 +168,14 @@ class PlanImportExportTest extends TestCase
         $this->assertSame('Source remplacée', $json['name'], 'fichier JSON remplacé en entier');
     }
 
-    /** Même fixture que PlanAdminServiceTest : 3 coords, tuile, murs (authoré + joueur), élément. */
+    /**
+     * 3 coords, une tuile, une ressource authorée, une construction de joueur,
+     * un élément.
+     *
+     * Ressource et construction sont posées comme la partie les pose : des
+     * entités, pas des lignes de couche. C'est ce que l'import doit retrouver
+     * — l'une remplaçable, l'autre intouchable.
+     */
     private function seedSourcePlan(): void
     {
         $link = $this->link();
@@ -169,15 +187,30 @@ class PlanImportExportTest extends TestCase
         }
 
         $link->executeStatement('INSERT INTO map_tiles (coords_id, name, foreground) VALUES (?, ?, 0)', [$ids['0,0'], 'grass']);
-        $link->executeStatement('INSERT INTO map_resources (coords_id, name, damages) VALUES (?, ?, -1)', [$ids['1,0'], 'arbre1']);
 
-        $builderId = $link->fetchOne('SELECT id FROM players WHERE id > 0 ORDER BY id LIMIT 1');
+        (new EntityPlacementService($link))->create(
+            'resource',
+            'arbre1',
+            $ids['1,0'],
+            'Arbre',
+            'img/walls/arbre1.png'
+        );
+
+        $builderId = $link->fetchOne('SELECT id FROM players WHERE player_type = "real" ORDER BY id LIMIT 1');
         if ($builderId === false) {
-            $this->markTestSkipped('Aucun joueur en base pour porter le mur player_id.');
+            $this->markTestSkipped('Aucun joueur en base pour porter la construction.');
         }
+
+        $palissadeId = (new EntityPlacementService($link))->create(
+            'building',
+            'palissade',
+            $ids['0,1'],
+            'Palissade',
+            'img/walls/palissade.png'
+        );
         $link->executeStatement(
-            'INSERT INTO map_resources (coords_id, name, damages, player_id) VALUES (?, ?, 0, ?)',
-            [$ids['1,0'], 'palissade', (int) $builderId]
+            'INSERT INTO buildings (player_id, owner_id, faction, build_state) VALUES (?, ?, ?, ?)',
+            [$palissadeId, (int) $builderId, '', 'built']
         );
 
         $link->executeStatement('INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 12345)', [$ids['0,1'], 'feu_test']);
@@ -201,6 +234,23 @@ class PlanImportExportTest extends TestCase
                 "DELETE m FROM map_{$layer} m JOIN coords c ON c.id = m.coords_id WHERE c.plan LIKE 'plan_test_ie_%'"
             );
         }
+        /* Ce qui est posé sur le plan est une entité : ses cases tiennent la FK
+         * vers coords (RESTRICT), et les satellites n'ont pas de FK du tout —
+         * ils ne partent donc avec rien. */
+        foreach (['resources', 'buildings'] as $satellite) {
+            $link->executeStatement(
+                "DELETE s FROM {$satellite} s
+                   JOIN players p ON p.id = s.player_id
+                   JOIN coords c ON c.id = p.coords_id
+                  WHERE c.plan LIKE 'plan_test_ie_%'"
+            );
+        }
+        $link->executeStatement(
+            "DELETE p FROM players p
+               JOIN coords c ON c.id = p.coords_id
+              WHERE p.player_type IN ('resource', 'building') AND c.plan LIKE 'plan_test_ie_%'"
+        );
+
         $link->executeStatement("DELETE FROM coords WHERE plan LIKE 'plan_test_ie_%'");
 
         foreach ([self::SRC, self::IMPORTED] as $plan) {

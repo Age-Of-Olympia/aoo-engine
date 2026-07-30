@@ -522,6 +522,14 @@ class TiledMapService
         $layers = [];
 
         foreach (self::AUTHORABLE_LAYERS as $layer => $spec) {
+            /* Les ressources ne sont plus des lignes de couche : elles sont
+             * lues chez leur écrivain, qui tient la correspondance entre
+             * damages et le satellite d'état. */
+            if ($layer === 'resources') {
+                $layers[$layer] = (new \App\Service\Map\ResourceReconciler())->asPayloadRows($plan);
+                continue;
+            }
+
             $columns = 'm.name, c.x, c.y, c.z';
             $hasPlayerId = in_array('player_id', $spec['columns'], true);
             foreach ($spec['columns'] as $column) {

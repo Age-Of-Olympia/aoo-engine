@@ -206,7 +206,7 @@ class PlanAdminService
             'SELECT
                 COALESCE(SUM(p.player_type = "real"), 0) AS players,
                 COALESCE(SUM(p.player_type = "npc"), 0) AS npcs,
-                COALESCE(SUM(p.player_type IN ("building", "unique", "scenery")), 0) AS structures
+                COALESCE(SUM(p.player_type IN ("building", "unique", "scenery", "resource")), 0) AS structures
              FROM players p JOIN coords c ON c.id = p.coords_id
              WHERE c.plan = ?',
             array($plan)
@@ -253,8 +253,8 @@ class PlanAdminService
             // Forceable like NPCs: a forced deletion already takes them.
             $blockers[] = [
                 'check' => 'structures', 'count' => $characters['structures'], 'forceable' => true,
-                'detail' => $characters['structures'] . ' structure(s) sur ce plan — bâtiment, objet unique ou décor'
-                    . ' (supprimées avec leurs données si suppression forcée).',
+                'detail' => $characters['structures'] . ' structure(s) sur ce plan — bâtiment, objet unique, décor'
+                    . ' ou ressource (supprimées avec leurs données si suppression forcée).',
             ];
         }
 

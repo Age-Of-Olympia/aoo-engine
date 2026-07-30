@@ -4,6 +4,7 @@ namespace App\Service\ImportExport;
 
 use App\Service\PlanAdminService;
 use App\Service\PlanConfigService;
+use App\Service\Map\ResourceReconciler;
 use App\Service\Map\StructureTypeService;
 use App\Service\TiledMapService;
 use Classes\Db;
@@ -30,6 +31,14 @@ final class PlanImporter implements ObjectImporter
 {
     /** Taille des lots d'INSERT multi-lignes (précédent : mapcmd.php). */
     private const INSERT_BATCH = 500;
+
+    /**
+     * La couche dont les lignes sont devenues des entités.
+     *
+     * Elle ne suit plus le chemin générique purge + INSERT : ses objets ont
+     * une identité et un état qu'un remplacement jetterait.
+     */
+    private const ENTITY_LAYER = 'resources';
 
     private ?Db $db;
     private ?PlanConfigService $planConfig;
@@ -70,7 +79,7 @@ final class PlanImporter implements ObjectImporter
         $db->beginTransaction();
         try {
             foreach ($payloads as $payload) {
-                $this->applyPayload($payload);
+                $this->applyPayload($payload, $report);
             }
             $db->commit();
         } catch (Throwable $exception) {
@@ -213,13 +222,17 @@ final class PlanImporter implements ObjectImporter
      *
      * @param array{plan: string, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>} $payload
      */
-    private function applyPayload(array $payload): void
+    private function applyPayload(array $payload, ImportReport $report): void
     {
         $plan = $payload['plan'];
         $db = $this->db();
 
         // 1. Purge du contenu authoré (les lignes joueur restent)
         foreach (array_keys(TiledMapService::AUTHORABLE_LAYERS) as $layer) {
+            if ($layer === self::ENTITY_LAYER) {
+                continue;
+            }
+
             $playerFilter = in_array('player_id', TiledMapService::AUTHORABLE_LAYERS[$layer]['columns'], true)
                 ? ' AND (m.player_id IS NULL OR m.player_id = 0)'
                 : '';
@@ -257,7 +270,25 @@ final class PlanImporter implements ObjectImporter
 
         // 3. Insertion des couches en lots
         foreach ($payload['layers'] as $layer => $rows) {
+            if ($layer === self::ENTITY_LAYER) {
+                continue;
+            }
+
             $this->insertLayerRows($layer, $rows, $coordsIds);
+        }
+
+        /* 4. Les ressources sont des entités : on COMPARE au lieu de remplacer.
+         * Une ressource que le bundle redessine à l'identique garde son id et
+         * son état — épuisée, elle le reste et repousse à son heure. Le
+         * réconciliateur écrit sur la connexion Doctrine, qui est celle que
+         * Classes\Db enveloppe : même transaction, même rollback. */
+        $resources = (new ResourceReconciler())->reconcile($plan, $payload['layers'][self::ENTITY_LAYER] ?? []);
+
+        if ($resources['unknown'] !== []) {
+            $report->warn(
+                $plan,
+                'Types absents du catalogue, non posés : ' . implode(', ', $resources['unknown']) . '.'
+            );
         }
     }
 
@@ -331,9 +362,21 @@ final class PlanImporter implements ObjectImporter
 
     private function countPlayerBuiltRows(string $plan): int
     {
-        $total = 0;
+        /* Ce qu'un joueur a construit n'est plus une ligne de couche mais une
+         * entité bâtiment : sans ce compte, l'avertissement « préservées, hors
+         * import » se tairait sur les seules constructions qui restent. */
+        $built = $this->db()->exe(
+            'SELECT COUNT(*) n FROM buildings b
+               JOIN players p ON p.id = b.player_id
+               JOIN coords c ON c.id = p.coords_id
+              WHERE c.plan = ? AND b.owner_id IS NOT NULL AND b.owner_id <> 0',
+            array($plan)
+        );
+
+        $total = (int) ($built->fetch_assoc()['n'] ?? 0);
+
         foreach (TiledMapService::AUTHORABLE_LAYERS as $layer => $spec) {
-            if (!in_array('player_id', $spec['columns'], true)) {
+            if ($layer === self::ENTITY_LAYER || !in_array('player_id', $spec['columns'], true)) {
                 continue;
             }
             $res = $this->db()->exe(
