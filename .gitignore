@@ -32,8 +32,14 @@ node_modules/
 # Database migrations (generated)
 db/migrations/
 
-# Claude Code local settings
-.claude/
+# Claude Code: local settings stay out, shared rules are versioned.
+# A rule named local-*.md is personal (machine-specific tooling) and stays out too.
+.claude/*
+!.claude/rules/
+.claude/rules/local-*.md
 
 .kr1.yaml
 
+
+# Serena local index and memories
+.serena/
