@@ -9,9 +9,10 @@ use Doctrine\ORM\Mapping as ORM;
  * Discriminator 'resource', id range ENTITY_ID_RANGES['resource']
  * (50 000 000+).
  *
- * A structure like the walls it came from: it blocks the step, it can be hit,
- * and it holds no satellite row. What it yields belongs to the (plan, type)
- * pair in `race_harvest`, not to the instance.
+ * A structure like the walls it came from: it blocks the step and it can be
+ * hit. What it YIELDS belongs to the (plan, type) pair in `race_harvest`; what
+ * it currently IS — dry or standing — belongs to its own `resources` satellite,
+ * because an exhausted resource stays on the board and regrows in place.
  *
  * Declared BEFORE any row wears the type, and that order matters: `scenery`
  * was added to the table before it reached this map, so every lookup through
