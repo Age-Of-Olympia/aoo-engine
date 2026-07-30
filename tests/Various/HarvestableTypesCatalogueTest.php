@@ -75,7 +75,9 @@ class HarvestableTypesCatalogueTest extends TestCase
             /* Their own nature since they left the buildings list: same
                population, its own face in the type editor. */
             $this->assertSame('ressource', $row['structure_nature'], $row['name']);
-            $this->assertSame(10, (int) $row['pv'], $row['name'] . ' : la valeur de DEFAULT_PV');
+            /* Cent depuis l'arbitrage sur l'abattage : dix tombait en un
+               coup ou deux, `melee` et `distance` visant déjà une structure. */
+            $this->assertSame(100, (int) $row['pv'], $row['name']);
             $this->assertSame(1, (int) $row['blocks_passage'], $row['name'] . ' barre le chemin');
             $this->assertSame(0, (int) $row['playable'], $row['name']);
         }

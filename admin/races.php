@@ -280,7 +280,13 @@ function race_render_form(?Race $race, string $csrfToken, TypeEditorFace $face):
     $caracInputs = '';
     foreach (CARACS as $key => $short) {
         $label = CARACS_TXT[$key] ?? $short;
-        $value = $isEdit ? $race->getCarac($key) : 0;
+        /* A new harvestable starts at the admin's default, so creating a
+           type does not silently make a one-blow tree. */
+        $value = $isEdit
+            ? $race->getCarac($key)
+            : ($key === 'pv' && $face->key === \App\View\Admin\TypeEditorFace::RESOURCE
+                ? (new \App\Service\Map\HarvestDefaultsService())->pv()
+                : 0);
 
         /* A structure had only its PV editable, which was true of walls and
          * false as soon as a building defends itself or a decor takes a hit.

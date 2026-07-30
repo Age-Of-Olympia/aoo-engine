@@ -19,9 +19,21 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\CsrfProtectionService;
 use App\Service\DateFormatService;
+use App\Service\Map\HarvestDefaultsService;
 
 $csrf = new CsrfProtectionService();
 $dateFormat = new DateFormatService();
+$harvestDefaults = new HarvestDefaultsService();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['harvest_default_pv'])) {
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        $harvestDefaults->setPv((int) $_POST['harvest_default_pv']);
+        setFlash('success', 'Points de vie par défaut d\'une ressource : ' . $harvestDefaults->pv() . '.');
+    } catch (\Throwable $e) {
+        setFlash('danger', 'Échec : ' . $e->getMessage());
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['date_format'])) {
     try {
@@ -76,6 +88,23 @@ ob_start();
                     Suivi par les affichages passés à <code style="display:inline">DateFormatService</code>
                     (chroniques de l'accueil…) ; la saisie admin reste en JJ/MM/AAAA.
                 </div>
+            </form>
+
+            <hr />
+
+            <form method="post" action="index.php">
+                <?= $csrf->renderTokenField() ?>
+                <label class="form-label mb-0">Points de vie d'une ressource récoltable</label>
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="number" name="harvest_default_pv" min="1" max="10000"
+                           class="form-select" style="max-width: 120px;"
+                           value="<?= (int) $harvestDefaults->pv() ?>" />
+                    <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
+                </div>
+                <small class="form-text text-muted">
+                    Combien de coups il faut pour abattre un arbre. Sert de valeur par défaut à la
+                    <strong>création</strong> d'un type récoltable ; un type déjà réglé garde la sienne.
+                </small>
             </form>
         </div>
     </div>
