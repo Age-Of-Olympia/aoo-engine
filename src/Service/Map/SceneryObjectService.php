@@ -230,55 +230,19 @@ final class SceneryObjectService
         \App\Service\RaceService::clearCache();
     }
 
-    /**
-     * The next free id in the scenery range.
-     *
-     * Not `getNextEntityId()`: that global lives in `config/functions.php`,
-     * loaded by the web entry point only, and this service also runs from the
-     * console. The range is read from the constant when it is there, so the
-     * two never drift apart.
-     */
-    private function nextSceneryId(): int
-    {
-        $range = defined('ENTITY_ID_RANGES')
-            ? ENTITY_ID_RANGES['scenery']
-            : ['start' => 40000000, 'end' => 49999999];
-
-        $max = (int) $this->conn->fetchOne(
-            'SELECT COALESCE(MAX(id), 0) FROM players WHERE id BETWEEN ? AND ?',
-            [$range['start'], $range['end']]
-        );
-
-        return $max === 0 ? (int) $range['start'] : $max + 1;
-    }
-
     /** The scenery entity a placed figure belongs to, cells included. */
     private function makeEntity(string $family, int $anchorCoordsId, string $anchorPieceName): void
     {
         $this->ensureType($family);
 
-        $id = $this->nextSceneryId();
-
-        $this->conn->executeStatement(
-            "INSERT INTO players
-                (id, player_type, display_id, name, race, avatar, portrait,
-                 coords_id, nextTurnTime, registerTime, text)
-             VALUES (?, 'scenery', ?, ?, ?, ?, ?, ?, 0, ?, '')",
-            [
-                $id,
-                (int) $this->conn->fetchOne(
-                    "SELECT COALESCE(MAX(display_id), 0) + 1 FROM players WHERE player_type = 'scenery'"
-                ),
-                ucfirst(str_replace('_', ' ', $family)),
-                $family,
-                'img/foregrounds/' . $anchorPieceName . '.png',
-                'img/foregrounds/' . $anchorPieceName . '.png',
-                $anchorCoordsId,
-                time(),
-            ]
+        (new EntityPlacementService($this->conn))->create(
+            'scenery',
+            $family,
+            $anchorCoordsId,
+            ucfirst(str_replace('_', ' ', $family)),
+            'img/foregrounds/' . $anchorPieceName . '.png',
+            $this->footprints
         );
-
-        (new EntityCellService($this->conn))->syncCells($id, $this->footprints);
     }
 
     /**
