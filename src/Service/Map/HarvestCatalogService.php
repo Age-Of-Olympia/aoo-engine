@@ -220,12 +220,11 @@ final class HarvestCatalogService
     }
 
     /**
-     * What each wall yields on a plan: the table first, the plan JSON as a
-     * fallback.
+     * What each wall yields on a plan. The table, and only the table.
      *
-     * The fallback is what makes the seed a migration step rather than a
-     * prerequisite — same arrangement as the dialogs. A plan nobody has poured
-     * yet keeps harvesting exactly as before.
+     * No fallback to the plan JSON on purpose: a source read but never shown
+     * is a source that rots. A plan whose yields have not been poured yields
+     * NOTHING, and the admin says so loudly — see `plansMissingYields()`.
      *
      * @return array<string, array{item: string, exhaust: ?int, regrow: ?int}>
      */
@@ -238,25 +237,54 @@ final class HarvestCatalogService
             [$plan]
         );
 
-        if ($rows !== []) {
-            $yields = [];
+        $yields = [];
 
-            foreach ($rows as $row) {
-                $yields[(string) $row['name']] = [
-                    'item' => (string) $row['item'],
-                    'exhaust' => $row['exhaust'] === null ? null : (int) $row['exhaust'],
-                    'regrow' => $row['regrow'] === null ? null : (int) $row['regrow'],
-                ];
-            }
-
-            return $yields;
+        foreach ($rows as $row) {
+            $yields[(string) $row['name']] = [
+                'item' => (string) $row['item'],
+                'exhaust' => $row['exhaust'] === null ? null : (int) $row['exhaust'],
+                'regrow' => $row['regrow'] === null ? null : (int) $row['regrow'],
+            ];
         }
 
-        return self::yieldsFromPlanJson($plan);
+        return $yields;
     }
 
     /**
-     * The legacy source, read exactly as the game always read it.
+     * Plans holding harvestable resources with no yields configured — where
+     * harvesting gives nothing at all.
+     *
+     * This is what replaces the fallback: the gap is named instead of being
+     * quietly filled from a file nobody opens.
+     *
+     * @return list<array{plan: string, resources: int, inJson: int}>
+     */
+    public function plansMissingYields(): array
+    {
+        $rows = $this->conn()->fetchAllAssociative(
+            "SELECT c.plan, COUNT(*) AS resources
+               FROM map_resources m
+               JOIN coords c ON c.id = m.coords_id
+               JOIN resource_types t
+                 ON t.name COLLATE utf8mb4_general_ci = m.name COLLATE utf8mb4_general_ci
+              WHERE t.pv = -1
+                AND NOT EXISTS (SELECT 1 FROM race_harvest h WHERE h.plan = c.plan)
+              GROUP BY c.plan
+              ORDER BY resources DESC"
+        );
+
+        return array_map(
+            static fn(array $row): array => [
+                'plan' => (string) $row['plan'],
+                'resources' => (int) $row['resources'],
+                'inJson' => count(self::yieldsFromPlanJson((string) $row['plan'])),
+            ],
+            $rows
+        );
+    }
+
+    /**
+     * The legacy source — read by the SEED only, never at play time.
      *
      * @return array<string, array{item: string, exhaust: ?int, regrow: ?int}>
      */

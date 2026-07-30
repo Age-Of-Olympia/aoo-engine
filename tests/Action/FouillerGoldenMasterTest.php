@@ -80,6 +80,12 @@ class FouillerGoldenMasterTest extends LegacyPlayerFixtureTestCase
         ], JSON_UNESCAPED_UNICODE));
 
         json()->forget('plans', self::PLAN);
+
+        /* Le monde se règle en base : le jeu ne lit plus le JSON de plan pour
+           les rendements, il lit `race_harvest`. Le JSON reste la source du
+           VERSEMENT, donc la fixture verse ce qu'elle vient d'écrire. */
+        $this->link->executeStatement('DELETE FROM race_harvest WHERE plan = ?', [self::PLAN]);
+        (new \App\Service\Map\HarvestCatalogService($this->link))->seed();
     }
 
     /** Pose une ressource récoltable et rend l'id de sa case. */

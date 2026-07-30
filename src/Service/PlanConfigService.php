@@ -34,6 +34,9 @@ class PlanConfigService
         'mask'              => 'image',
         'scrollingMask'     => 'int',
         'verticalScrolling' => 'bool',
+        /* Plus éditable depuis l'admin : les rendements vivent dans
+         * `race_harvest`. La clé reste déclarée pour que le JSON existant se
+         * relise (repli) et que `write()` ne l'efface pas. */
         'biomes'            => 'json',
 
         /* Ombres du plan — une grotte se veut plus sombre qu'une plaine, et

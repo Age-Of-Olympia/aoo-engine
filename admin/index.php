@@ -45,6 +45,20 @@ ob_start();
 
     <?= renderFlashMessage() ?>
 
+    <?php
+    /* Ce qui casse en silence si personne ne regarde : un plan qui porte des
+       ressources sans rendement réglé n'en donne aucune. Le tableau de bord le
+       dit, faute de quoi il faudrait penser à ouvrir la bonne page. */
+    $missingYields = (new \App\Service\Map\HarvestCatalogService())->plansMissingYields();
+    ?>
+    <?php if ($missingYields !== []): ?>
+        <div class="alert alert-danger mt-3" style="max-width: 640px;">
+            <strong>Fouiller ne rapporte rien sur <?= count($missingYields) ?> plan(s).</strong>
+            Ils portent des ressources récoltables sans aucun rendement réglé.
+            <a href="/admin/harvest-seed.php" class="alert-link">Régler les rendements</a>.
+        </div>
+    <?php endif; ?>
+
     <div class="card mt-3" style="max-width: 640px;">
         <div class="card-header"><strong>Options générales</strong></div>
         <div class="card-body">

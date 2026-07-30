@@ -64,6 +64,32 @@ ob_start();
 
 <?= renderFlashMessage() ?>
 
+<?php $missing = $service->plansMissingYields(); ?>
+<?php if ($missing !== []): ?>
+    <div class="alert alert-danger">
+        <strong>Sur <?= count($missing) ?> plan(s), fouiller ne rapporte RIEN.</strong>
+        Ces plans portent des ressources récoltables et aucun rendement réglé. Le jeu ne lit que
+        cette table — il n'y a pas de repli silencieux sur le JSON.
+        <table class="table table-sm mb-0 mt-2" style="max-width: 620px;">
+            <thead><tr><th>Plan</th><th>Ressources posées</th><th>Rendements dans son JSON</th></tr></thead>
+            <tbody>
+            <?php foreach (array_slice($missing, 0, 25) as $row): ?>
+                <tr>
+                    <td><?= e($row['plan']) ?></td>
+                    <td><?= (int) $row['resources'] ?></td>
+                    <td><?= $row['inJson'] > 0
+                            ? (int) $row['inJson'] . ' — versables ci-dessous'
+                            : '<em>aucun : à saisir à la main</em>' ?></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        <?php if (count($missing) > 25): ?>
+            <p class="mb-0 mt-1"><?= count($missing) - 25 ?> autre(s) plan(s) dans le même cas.</p>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
+
 <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
     <strong>Pourquoi cette page ?</strong>
     La migration <code style="display:inline">RaceHarvestTable</code> ne crée que la table

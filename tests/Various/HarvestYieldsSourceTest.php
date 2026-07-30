@@ -7,15 +7,15 @@ use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Where the game reads a plan's yields: the table first, the plan JSON after.
+ * Where the game reads a plan's yields: the table, and nothing else.
  *
- * The fallback is what lets the admin be the real control without the seed
- * being a prerequisite — a plan nobody has poured keeps harvesting exactly as
- * before. Same arrangement as the dialogs.
+ * There is deliberately NO fallback to the plan JSON. A source read but never
+ * shown is a source that rots — so an unpoured plan yields nothing, and the
+ * admin names it instead of quietly filling the gap from a file.
  *
  * DB-backed; skips cleanly when the database is unreachable.
  */
-class HarvestYieldsFallbackTest extends TestCase
+class HarvestYieldsSourceTest extends TestCase
 {
     private const PLAN = 'plan_test_yields';
     private const TYPE = 'gm_yields_arbre';
@@ -83,23 +83,40 @@ class HarvestYieldsFallbackTest extends TestCase
 
         @unlink($this->plansDir . '/' . self::PLAN . '.json');
         json()->forget('plans', self::PLAN);
+        $this->conn->executeStatement(
+            'DELETE m FROM map_resources m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
+            [self::PLAN]
+        );
+        $this->conn->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
         $this->conn->executeStatement('DELETE FROM race_harvest WHERE plan = ?', [self::PLAN]);
         $this->conn->executeStatement('DELETE FROM races WHERE name = ?', [self::TYPE]);
     }
 
-    /** Nothing poured: the plan JSON answers, exactly as before. */
-    public function testWithoutARowThePlanJsonAnswers(): void
+    /** Nothing poured: nothing yielded — no silent read of the JSON. */
+    public function testWithoutARowNothingIsYielded(): void
     {
-        $yields = (new HarvestCatalogService($this->conn))->yieldsFor(self::PLAN);
+        $this->assertSame([], (new HarvestCatalogService($this->conn))->yieldsFor(self::PLAN));
+    }
 
-        $this->assertArrayHasKey(self::TYPE, $yields);
-        $this->assertSame('bois', $yields[self::TYPE]['item']);
-        $this->assertSame(75, $yields[self::TYPE]['exhaust']);
-        $this->assertSame(20, $yields[self::TYPE]['regrow']);
+    /** And the gap is NAMED, which is what replaces the fallback. */
+    public function testAPlanWithResourcesButNoYieldsIsReported(): void
+    {
+        $coordsId = (int) \Classes\View::get_coords_id(
+            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::PLAN]
+        );
+        $this->conn->executeStatement(
+            'INSERT INTO map_resources (coords_id, name, damages) VALUES (?, ?, -1)',
+            [$coordsId, 'arbre1']
+        );
+
+        $missing = (new HarvestCatalogService($this->conn))->plansMissingYields();
+        $plans = array_column($missing, 'plan');
+
+        $this->assertContains(self::PLAN, $plans, 'un plan qui ne rapporte rien doit être signalé');
     }
 
     /** Poured: the table answers, and it is what the admin edits. */
-    public function testARowWinsOverTheJson(): void
+    public function testTheTableIsTheOnlySource(): void
     {
         $this->conn->executeStatement(
             'INSERT INTO race_harvest (plan, race_id, item, exhaust, regrow) VALUES (?, ?, ?, ?, ?)',
@@ -108,7 +125,7 @@ class HarvestYieldsFallbackTest extends TestCase
 
         $yields = (new HarvestCatalogService($this->conn))->yieldsFor(self::PLAN);
 
-        $this->assertSame('pierre', $yields[self::TYPE]['item'], 'la base fait foi');
+        $this->assertSame('pierre', $yields[self::TYPE]['item'], 'la base est la seule source');
         $this->assertSame(10, $yields[self::TYPE]['exhaust']);
         $this->assertNull($yields[self::TYPE]['regrow'], 'un taux vide vaut jamais');
     }

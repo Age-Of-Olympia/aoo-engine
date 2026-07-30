@@ -326,7 +326,27 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
     foreach ($displayKeys as $key) {
         $displayFields .= $renderField($key, PlanConfigService::PLAN_CONFIG_KEYS[$key]);
     }
-    $biomesField = $renderField('biomes', 'json');
+    /* Plus de JSON éditable ici : les rendements se règlent dans
+       Ressources → Rendements, qui est ce que le jeu lit. Le JSON du plan
+       n'est plus lu en jeu : il ne sert qu'au versement. Il n'est pas effacé
+       (write() ne touche que les clés postées), simplement plus modifiable
+       ici — et un plan sans rendement réglé est signalé en rouge. */
+    $harvest = new \App\Service\Map\HarvestCatalogService();
+    $poured = count(array_filter(
+        $harvest->configured(),
+        static fn(array $row): bool => $row['plan'] === $planId
+    ));
+    $fallback = count(\App\Service\Map\HarvestCatalogService::yieldsFromPlanJson($planId));
+
+    $biomesField = '<div class="col-12"><p class="mb-1">'
+        . ($poured > 0
+            ? '<strong>' . $poured . ' rendement(s)</strong> réglé(s) pour ce plan : c\'est ce que le jeu lit.'
+            : '<span class="badge" style="background-color:#c9302c;color:#fff;">Aucun rendement</span> '
+                . 'pour ce plan : <strong>fouiller n\'y rapporte rien</strong>.'
+                . ($fallback > 0
+                    ? ' Son JSON en déclare ' . $fallback . ', versables depuis l\'écran des rendements.'
+                    : ' Rien à verser depuis son JSON : à saisir à la main.'))
+        . '</p><a class="btn btn-sm btn-outline-primary" href="/admin/harvest-seed.php">Régler les rendements</a></div>';
 
     // Niveaux Z : union base ∪ JSON, pour rendre la dérive visible ici aussi
     $raw = json()->decode('plans', $planId);
@@ -425,7 +445,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         . '<div class="card mb-3"><div class="card-header">Affichage</div>'
         . '<div class="card-body"><div class="row">' . $displayFields . '</div></div></div>'
 
-        . '<div class="card mb-3"><div class="card-header">Biomes (ressources récoltables)</div>'
+        . '<div class="card mb-3"><div class="card-header">Rendements (ressources récoltables)</div>'
         . '<div class="card-body"><div class="row">' . $biomesField . '</div></div></div>'
 
         . '<div class="card mb-3"><div class="card-header">Niveaux Z</div>'
