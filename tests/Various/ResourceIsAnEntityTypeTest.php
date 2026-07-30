@@ -99,7 +99,9 @@ class ResourceIsAnEntityTypeTest extends TestCase
         $coordsId = (int) \Classes\View::get_coords_id(
             (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::PLAN]
         );
-        $id = ENTITY_ID_RANGES['resource']['start'];
+        /* Haut de la plage : le bas est désormais occupé par les ressources
+           converties, et une fixture ne doit pas squatter un identifiant réel. */
+        $id = ENTITY_ID_RANGES['resource']['end'] - 1;
 
         $this->conn->executeStatement(
             "INSERT INTO players (id, name, race, coords_id, player_type)

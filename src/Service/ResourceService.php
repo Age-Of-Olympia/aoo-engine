@@ -45,25 +45,51 @@ class ResourceService
         View::get_coords_id_arround($coordsArround,$coordsIdArround,$coords, p:1);
 
         $sql = '
-        SELECT
-        COUNT(*) AS max,
-        name
-        FROM
-        map_resources
-        WHERE
-        coords_id IN('. implode(',', $coordsIdArround) .')
-        AND
-        name IN ("'. implode('","', array_keys($biomes)) .'")
-        AND
-        damages=-1
-        GROUP BY
-        name
+        SELECT COUNT(*) AS max, name FROM (
+            ' . self::harvestableSql($coordsIdArround, array_keys($biomes)) . '
+        ) AS around
+        GROUP BY name
         ';
 
         $db = new Db();
         $res = $db->exe($sql);
 
         return $res;
+    }
+
+    /**
+     * Les voisines récoltables : des ENTITÉS, debout.
+     *
+     * Une ressource n'est plus une ligne de carte. Debout se lit sur son
+     * satellite — pas de ligne, ou une ligne sans date — comme `damages = -1`
+     * le disait avant.
+     *
+     * @param list<int> $coordsIds
+     * @param list<string> $names
+     */
+    private static function harvestableSql(array $coordsIds, array $names): string
+    {
+        if ($coordsIds === [] || $names === []) {
+            /* Un IN() sans terme est une erreur de syntaxe : une requête vide
+               plutôt qu'une requête cassée. */
+            return 'SELECT NULL AS id, NULL AS name FROM DUAL WHERE 1 = 0';
+        }
+
+        $in = implode(',', array_map('intval', $coordsIds));
+        $quoted = '"' . implode('","', array_map(
+            static fn(string $name): string => str_replace(['\\', '"'], ['\\\\', '\\"'], $name),
+            $names
+        )) . '"';
+
+        return '
+            SELECT p.id, p.race AS name
+              FROM entity_cells ec
+              JOIN players p ON p.id = ec.player_id AND p.player_type = "resource"
+              LEFT JOIN resources r ON r.player_id = p.id
+             WHERE ec.coords_id IN(' . $in . ')
+               AND p.race IN (' . $quoted . ')
+               AND r.exhausted_at IS NULL
+        ';
     }
 
     public static function getResourcesAround(Player $player): mixed
@@ -80,17 +106,9 @@ class ResourceService
 
 
         $sql = '
-        SELECT
-        id,
-        name
-        FROM
-        map_resources
-        WHERE
-        coords_id IN('. implode(',', $coordsIdArround) .')
-        AND
-        name IN ("'. implode('","', array_keys($biomes)) .'")
-        AND
-        damages=-1
+        SELECT id, name FROM (
+            ' . self::harvestableSql($coordsIdArround, array_keys($biomes)) . '
+        ) AS around
         ORDER BY id
         ';
 
@@ -100,18 +118,14 @@ class ResourceService
         return $res;
     }
 
+    /** @param list<int> $resourcesId identifiants d'entités */
     public static function exhaustResources(array $resourcesId): void
     {
+        if ($resourcesId === []) {
+            return;
+        }
 
-        $sql = '
-        UPDATE map_resources
-        SET damages=-2
-        WHERE 
-        id IN('. implode(',', $resourcesId) .')
-        ';
-
-        $db = new Db();
-        $res = $db->exe($sql);
+        (new \App\Service\Map\ResourceStateService())->exhaust(array_map('intval', $resourcesId));
     }
 
     public static function regrowResources(array &$resourcesId): void
@@ -120,15 +134,7 @@ class ResourceService
             return;
         }
 
-        $sql = '
-        UPDATE map_resources
-        SET damages=-1
-        WHERE 
-        id IN('. implode(',', $resourcesId) .')
-        ';
-
-        $db = new Db();
-        $res = $db->exe($sql);
+        (new \App\Service\Map\ResourceStateService())->regrow(array_map('intval', $resourcesId));
     }
 
     /**

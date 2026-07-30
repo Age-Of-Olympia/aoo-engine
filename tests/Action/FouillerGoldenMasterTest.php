@@ -30,6 +30,11 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('items-golden-master')]
 class FouillerGoldenMasterTest extends LegacyPlayerFixtureTestCase
 {
+    /** Haut de la plage des ressources : jamais un identifiant converti. */
+    private const FIXTURE_ID_FLOOR = 59990000;
+
+    private int $fixtureResources = 0;
+
     private const PLAN = 'plan_test_fouille';
 
     protected function tearDown(): void
@@ -38,10 +43,18 @@ class FouillerGoldenMasterTest extends LegacyPlayerFixtureTestCase
         ResourceService::setDiceForTests(null);
 
         $link = $this->link;
-        $link->executeStatement(
-            'DELETE r FROM map_resources r JOIN coords c ON c.id = r.coords_id WHERE c.plan = ?',
+
+        /* Les ressources de fixture sont des entités : leur satellite et leur
+           emprise d'abord, les deux clés étant intransigeantes. */
+        foreach ($link->fetchFirstColumn(
+            "SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id
+              WHERE c.plan = ? AND p.player_type = 'resource'",
             [self::PLAN]
-        );
+        ) as $resourceId) {
+            $link->executeStatement('DELETE FROM resources WHERE player_id = ?', [(int) $resourceId]);
+            $link->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [(int) $resourceId]);
+            \App\Service\BuildingService::deleteEntityRows($link, (int) $resourceId);
+        }
 
         /* Le parent D'ABORD : il supprime les joueurs de fixture, qui sont
          * posés sur les cases de ce plan. Les cases ne peuvent partir
@@ -88,16 +101,33 @@ class FouillerGoldenMasterTest extends LegacyPlayerFixtureTestCase
         (new \App\Service\Map\HarvestCatalogService($this->link))->seed();
     }
 
-    /** Pose une ressource récoltable et rend l'id de sa case. */
+    /**
+     * Pose une ressource récoltable et rend l'id de sa case.
+     *
+     * Une ENTITÉ, comme le monde en porte depuis la conversion : `damages` a
+     * disparu, l'épuisement vit sur le satellite `resources`.
+     */
     private function putResource(string $name, int $x, int $y, int $damages = -1): int
     {
-        $coordsId = View::get_coords_id((object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN]);
+        $coordsId = (int) View::get_coords_id((object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN]);
+        $id = self::FIXTURE_ID_FLOOR + $this->fixtureResources++;
+
         $this->link->executeStatement(
-            'INSERT INTO map_resources (name, coords_id, damages) VALUES (?, ?, ?)',
-            [$name, $coordsId, $damages]
+            "INSERT INTO players (id, name, race, coords_id, player_type)
+             VALUES (?, ?, ?, ?, 'resource')",
+            [$id, ucfirst($name), $name, $coordsId]
+        );
+        $this->link->executeStatement(
+            "INSERT INTO entity_cells (player_id, coords_id, plan, z, x, y, piece, role)
+             VALUES (?, ?, ?, 0, ?, ?, 0, 'block')",
+            [$id, $coordsId, self::PLAN, $x, $y]
         );
 
-        return (int) $coordsId;
+        if ($damages === -2) {
+            (new \App\Service\Map\ResourceStateService($this->link))->exhaust([$id]);
+        }
+
+        return $coordsId;
     }
 
     private function harvesterAtOrigin(string $prefix): \Classes\Player
@@ -251,8 +281,10 @@ class FouillerGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->assertSame($before + 1, $bois->get_n($fresh));
 
         $depleted = (int) $this->link->fetchOne(
-            'SELECT COUNT(*) FROM map_resources r JOIN coords c ON c.id = r.coords_id
-             WHERE c.plan = ? AND r.damages = -2',
+            "SELECT COUNT(*) FROM resources s
+               JOIN players p ON p.id = s.player_id
+               JOIN coords c ON c.id = p.coords_id
+              WHERE c.plan = ? AND s.exhausted_at IS NOT NULL",
             [self::PLAN]
         );
         $this->assertSame(
