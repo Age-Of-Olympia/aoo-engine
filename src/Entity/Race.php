@@ -34,6 +34,7 @@ use Doctrine\ORM\Mapping as ORM;
     'building'  => BuildingType::class,
     'scenery'   => SceneryType::class,
     'resource'  => ResourceType::class,
+    'plant'     => PlantType::class,
 ])]
 abstract class Race
 {
@@ -47,6 +48,7 @@ abstract class Race
     public const FAMILY_BUILDING = 'building';
     public const FAMILY_SCENERY = 'scenery';
     public const FAMILY_RESOURCE = 'resource';
+    public const FAMILY_PLANT = 'plant';
 
     /** La famille de CE type — le discriminant, dit par la classe. */
     abstract public function familyKey(): string;
@@ -69,6 +71,7 @@ abstract class Race
             $kind !== 'structure' => new CharacterRace(),
             $structureNature === 'decor' => new SceneryType(),
             $structureNature === 'ressource' => new ResourceType(),
+            $structureNature === 'plante' => new PlantType(),
             default => new BuildingType(),
         };
     }

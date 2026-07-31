@@ -6,6 +6,7 @@ use App\Entity\BuildingType;
 use App\Entity\CharacterRace;
 use App\Entity\Harvestable;
 use App\Entity\ResourceType;
+use App\Entity\PlantType;
 use App\Entity\Race;
 use App\Entity\SceneryType;
 use App\Service\RaceService;
@@ -55,6 +56,7 @@ class TypeInheritanceTest extends TestCase
             Race::FAMILY_BUILDING => BuildingType::class,
             Race::FAMILY_SCENERY => SceneryType::class,
             Race::FAMILY_RESOURCE => ResourceType::class,
+            Race::FAMILY_PLANT => PlantType::class,
         ];
     }
 
@@ -101,6 +103,7 @@ class TypeInheritanceTest extends TestCase
             ['structure', 'obstacle', BuildingType::class, Race::FAMILY_BUILDING],
             ['structure', 'decor', SceneryType::class, Race::FAMILY_SCENERY],
             ['structure', 'ressource', ResourceType::class, Race::FAMILY_RESOURCE],
+            ['structure', 'plante', PlantType::class, Race::FAMILY_PLANT],
         ];
 
         foreach ($cases as [$kind, $nature, $class, $family]) {
@@ -169,6 +172,35 @@ class TypeInheritanceTest extends TestCase
             method_exists(Race::class, 'isReadableFromAfar'),
             'le tronc ne doit plus porter l\'inscription : elle ne concerne que ce qui est posé'
         );
+    }
+
+    /**
+     * Une plante se récolte SANS être une ressource.
+     *
+     * C'est la raison d'être de l'interface, et le cas qu'aucune hiérarchie ne
+     * pouvait exprimer : les deux savent se récolter, aucune ne descend de
+     * l'autre. Une ressource bloque le pas et se frappe ; une plante se
+     * traverse et se ramasse.
+     */
+    public function testAPlantHarvestsWithoutBeingAResource(): void
+    {
+        $name = $this->conn->fetchOne(
+            "SELECT name FROM races WHERE type_kind = ? ORDER BY name LIMIT 1",
+            [Race::FAMILY_PLANT]
+        );
+
+        if ($name === false || $name === null) {
+            $this->markTestSkipped('Aucun type de plante au catalogue.');
+        }
+
+        $type = (new RaceService())->getRaceByName((string) $name);
+
+        $this->assertInstanceOf(PlantType::class, $type);
+        $this->assertInstanceOf(Harvestable::class, $type, 'une plante se récolte');
+        /* Qu'elle ne soit PAS une ressource, l'analyse statique le prouve dès
+         * l'assertion précédente — l'écrire serait une tautologie de plus. Ce
+         * qui se vérifie, c'est la conséquence observable : on marche dessus. */
+        $this->assertFalse($type->blocksPassage(), 'on marche sur une fleur');
     }
 
     /**

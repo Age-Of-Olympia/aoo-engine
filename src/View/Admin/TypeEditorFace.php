@@ -21,10 +21,12 @@ final class TypeEditorFace
     public const BUILDING = 'building';
     public const SCENERY = 'scenery';
     public const RESOURCE = 'resource';
+    public const PLANT = 'plant';
 
     /** All structures; `structure_nature` is what tells the faces apart. */
     public const NATURE_DECOR = 'decor';
     public const NATURE_RESOURCE = 'ressource';
+    public const NATURE_PLANT = 'plante';
 
     private function __construct(
         public readonly string $key,
@@ -48,6 +50,7 @@ final class TypeEditorFace
         return match ($nature) {
             self::NATURE_DECOR => self::scenery(),
             self::NATURE_RESOURCE => self::resource(),
+            self::NATURE_PLANT => self::plant(),
             default => self::building(),
         };
     }
@@ -97,6 +100,24 @@ final class TypeEditorFace
     }
 
     /**
+     * Les plantes ont leur propre liste.
+     *
+     * Elles se récoltent comme les ressources, et c'est tout ce qu'elles
+     * partagent : mêler les deux listes obligerait l'animateur à trier
+     * lui-même ce qui bloque de ce qui se traverse.
+     */
+    public static function plant(): self
+    {
+        return new self(
+            self::PLANT,
+            'Types de plantes',
+            'Type de plante',
+            '+ Nouvelle plante',
+            '/admin/plant-types.php'
+        );
+    }
+
+    /**
      * The face a given row belongs to, whichever page one came from.
      *
      * On DEMANDE sa famille au type, on ne la déduit plus de ses colonnes :
@@ -109,6 +130,7 @@ final class TypeEditorFace
         return match ($race->familyKey()) {
             Race::FAMILY_SCENERY => self::scenery(),
             Race::FAMILY_RESOURCE => self::resource(),
+            Race::FAMILY_PLANT => self::plant(),
             Race::FAMILY_BUILDING => self::building(),
             default => self::character(),
         };
@@ -154,6 +176,7 @@ final class TypeEditorFace
         $nature = match ($this->key) {
             self::SCENERY => self::NATURE_DECOR,
             self::RESOURCE => self::NATURE_RESOURCE,
+            self::PLANT => self::NATURE_PLANT,
             default => '',
         };
 

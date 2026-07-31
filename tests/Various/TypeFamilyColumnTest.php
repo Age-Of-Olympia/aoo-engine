@@ -2,6 +2,7 @@
 
 namespace Tests\Various;
 
+use App\Entity\Race;
 use App\Service\RaceService;
 use App\View\Admin\TypeEditorFace;
 use Doctrine\DBAL\Connection;
@@ -150,8 +151,8 @@ class TypeFamilyColumnTest extends TestCase
         }
     }
 
-    /** Les quatre familles, et rien d'autre. */
-    public function testOnlyTheFourKnownFamiliesAreWritten(): void
+    /** Les familles connues, et rien d'autre. */
+    public function testOnlyKnownFamiliesAreWritten(): void
     {
         $families = $this->conn->fetchFirstColumn('SELECT DISTINCT type_kind FROM races ORDER BY type_kind');
 
@@ -162,6 +163,7 @@ class TypeFamilyColumnTest extends TestCase
                 TypeEditorFace::BUILDING,
                 TypeEditorFace::SCENERY,
                 TypeEditorFace::RESOURCE,
+                Race::FAMILY_PLANT,
             ]),
             'une famille inconnue est apparue dans la colonne'
         );
