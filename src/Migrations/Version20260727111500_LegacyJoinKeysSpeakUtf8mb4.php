@@ -39,6 +39,18 @@ use Doctrine\Migrations\AbstractMigration;
  * où elle tourne. Une colonne accentuée est LAISSÉE en l'état et signalée : le
  * code compare en `CONVERT(... USING utf8mb4)` et n'en dépend pas.
  *
+ * CE QU'ELLE LAISSE SE RELIT EN BASE, et non dans son journal : `write()` passe
+ * par un logger que la fabrique de dépendances du projet ne fournit pas, donc
+ * les messages tombent dans un NullLogger. Ils restent écrits pour le jour où
+ * un logger sera branché, mais l'inventaire fiable est la question posée au
+ * schéma — toute colonne encore hors utf8mb4 après passage est une colonne
+ * laissée :
+ *
+ *   SELECT TABLE_NAME, COLUMN_NAME, CHARACTER_SET_NAME
+ *     FROM information_schema.COLUMNS
+ *    WHERE TABLE_SCHEMA = DATABASE() AND CHARACTER_SET_NAME NOT IN ('utf8mb4')
+ *      AND CHARACTER_SET_NAME IS NOT NULL;
+ *
  * utf8mb3 échappe à ce doute, et c'est le cas le plus répandu en production :
  * c'est le même encodage qu'utf8mb4, borné au plan multilingue de base. Les
  * octets sont déjà de l'UTF-8 valide ; les relire en utf8mb4 ne réécrit rien.
@@ -64,6 +76,11 @@ final class Version20260727111500_LegacyJoinKeysSpeakUtf8mb4 extends AbstractMig
         'map_elements' => ['name'],
         'resource_types' => ['name'],
         'players_actions' => ['name'],
+        /* Cherchée par son nom seulement, jamais jointe à une autre colonne :
+         * elle ne casse rien aujourd'hui. Elle est là parce que c'est un
+         * catalogue à clé textuelle comme les autres, et que la prochaine
+         * jointure par le nom ne se demandera pas si elle en fait partie. */
+        'craft_recipes' => ['name'],
     ];
 
     public function getDescription(): string
@@ -125,6 +142,19 @@ final class Version20260727111500_LegacyJoinKeysSpeakUtf8mb4 extends AbstractMig
             return;
         }
 
+        if ($this->indexKeyWouldOverflow($table, $column)) {
+            $this->write(sprintf(
+                '  <comment>%s.%s laissée en %s : indexée, la clé dépasserait 767 octets en utf8mb4 '
+                . 'sur une table au format %s</comment>',
+                $table,
+                $column,
+                $definition['CHARACTER_SET_NAME'],
+                (string) $this->rowFormat($table)
+            ));
+
+            return;
+        }
+
         /* La définition est reconstruite telle quelle : seul le jeu de
          * caractères change. Un DEFAULT et la nullabilité perdus ici seraient
          * une régression silencieuse sur une colonne de production. */
@@ -145,6 +175,52 @@ final class Version20260727111500_LegacyJoinKeysSpeakUtf8mb4 extends AbstractMig
             $null,
             $default
         ));
+    }
+
+    /**
+     * Une colonne INDEXÉE grandit avec son jeu de caractères : 3 octets par
+     * caractère en utf8mb3, 4 en utf8mb4. Un VARCHAR(255) passe de 765 à 1020.
+     *
+     * Les vieux formats de ligne InnoDB — REDUNDANT, COMPACT — plafonnent une
+     * clé d'index à 767 octets ; DYNAMIC et COMPRESSED montent à 3072. Sur une
+     * table restée au format d'origine, l'ALTER échouerait sur « Specified key
+     * was too long », et un déploiement de plus s'arrêterait là — exactement ce
+     * que cette migration existe pour éviter.
+     *
+     * On préfère alors ne rien faire et le dire : le code compare en CONVERT et
+     * n'attend pas cette conversion. La remettre à niveau demande de toucher au
+     * format de la table, ce qui ne se décide pas au fond d'une migration.
+     */
+    private function indexKeyWouldOverflow(string $table, string $column): bool
+    {
+        if (!in_array($this->rowFormat($table), ['REDUNDANT', 'COMPACT'], true)) {
+            return false;
+        }
+
+        /* Un index de PRÉFIXE ne porte que SUB_PART caractères ; sans préfixe,
+         * c'est toute la colonne qui entre dans la clé. */
+        $indexed = $this->connection->fetchOne(
+            "SELECT MAX(COALESCE(s.SUB_PART, c.CHARACTER_MAXIMUM_LENGTH))
+               FROM information_schema.STATISTICS s
+               JOIN information_schema.COLUMNS c
+                 ON c.TABLE_SCHEMA = s.TABLE_SCHEMA AND c.TABLE_NAME = s.TABLE_NAME
+                AND c.COLUMN_NAME = s.COLUMN_NAME
+              WHERE s.TABLE_SCHEMA = DATABASE() AND s.TABLE_NAME = ? AND s.COLUMN_NAME = ?",
+            [$table, $column]
+        );
+
+        return $indexed !== null && $indexed !== false && ((int) $indexed) * 4 > 767;
+    }
+
+    private function rowFormat(string $table): ?string
+    {
+        $format = $this->connection->fetchOne(
+            "SELECT ROW_FORMAT FROM information_schema.TABLES
+              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?",
+            [$table]
+        );
+
+        return is_string($format) ? strtoupper($format) : null;
     }
 
     /**
