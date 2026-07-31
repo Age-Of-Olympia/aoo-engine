@@ -15,8 +15,13 @@ use Doctrine\ORM\Mapping as ORM;
  * une place dans l'arbre.
  *
  * Elle reste une chose POSÉE, donc une {@see StructureType} : elle occupe une
- * case et porte une emprise. Ce qu'elle ne fait pas, c'est bloquer — ses cases
- * prennent le rôle `cover`, transparent au pas comme aux tirs.
+ * case et porte une emprise. Ce qu'elle ne fait pas, c'est bloquer — et cela
+ * vient de son TYPE (`blocks_passage = 0`), pas d'un rôle de case.
+ *
+ * Ses cases prendront donc `part`, où le type tranche, et surtout PAS `cover` :
+ * `cover` est un ordre de dessin, la portion d'un décor peinte AU-DESSUS du
+ * personnage — on passe derrière, on tire par-dessus. Une fleur se marche
+ * DESSUS ; on ne se cache pas dans les fleurs.
  *
  * Déclarée AVANT qu'une seule ligne ne porte le type, et cet ordre a été payé :
  * `scenery` avait rejoint la table après ses lignes, et toute recherche par le

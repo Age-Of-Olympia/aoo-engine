@@ -27,7 +27,12 @@ use Doctrine\Migrations\AbstractMigration;
  *
  * Les plantes ne bloquent ni le pas ni les tirs : `blocks_passage = 0`,
  * `blocks_projectiles = 0`. C'est la règle du lead — on marche sur une fleur
- * sans la prendre — et elle se traduira en rôle de case `cover` à la pose.
+ * sans la prendre — et elle vient du TYPE, ce qui suffit : à la pose, les cases
+ * prendront `part`, où le type tranche.
+ *
+ * Surtout pas `cover`, qui est un ordre de dessin — la portion d'un décor
+ * peinte AU-DESSUS du personnage, derrière laquelle on passe et par-dessus
+ * laquelle on tire. On marche SUR une fleur ; on ne se cache pas dedans.
  *
  * `harvest_exhaust` et `harvest_regrow` restent nuls : une plante ne s'épuise
  * pas, elle est cueillie et disparaît. Sa repousse est un autre mécanisme
