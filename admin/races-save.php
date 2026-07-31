@@ -195,9 +195,7 @@ if ($action === 'create') {
        qui la dit, et elle ne changera plus — un mur ne devient pas un peuple. */
     $race = Race::ofFamily(
         $face->isStructure() ? 'structure' : 'character',
-        $face->isScenery()
-            ? \App\View\Admin\TypeEditorFace::NATURE_DECOR
-            : ($face->isResource() ? \App\View\Admin\TypeEditorFace::NATURE_RESOURCE : 'edifice')
+        $face->nature()
     );
     $race->setName($name);
     $race->setCode(strtoupper($name));

@@ -46,6 +46,8 @@ class AdminMenuAccessService
         'tile-assets.php'          => ['Cartes · Tuiles & images', 'Cartes', self::LEVEL_ADMIN],
         // Types récoltables : catalogue de gameplay — même politique que races/effets
         'harvest-types.php'        => ['Ressources · Types récoltables', 'Ressources', self::LEVEL_SUPERADMIN],
+        // Types de plantes : même politique que les récoltables — c'est du gameplay
+        'plant-types.php'          => ['Plantes · Types', 'Plantes', self::LEVEL_SUPERADMIN],
         'footprints.php'           => ['Décors · Formes', 'Décors', self::LEVEL_SUPERADMIN],
         'scenery-types.php'        => ['Décors · Types', 'Décors', self::LEVEL_SUPERADMIN],
         // Couleurs de carte : palette visuelle de la carte monde générée —

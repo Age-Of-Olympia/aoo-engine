@@ -147,6 +147,13 @@ function admin_layout($title, $content, array $assets = []) {
                 ['harvest-types.php', 'Types récoltables', '/admin/harvest-types.php'],
                 ['harvest-seed.php', 'Rendements', '/admin/harvest-seed.php'],
             ], ['harvest-types.php', 'harvest-seed.php']),
+            /* Les plantes ont leur propre entrée : elles se récoltent comme les
+               ressources, et c'est tout ce qu'elles partagent — une seule liste
+               obligerait l'animateur à trier ce qui bloque de ce qui se
+               traverse. */
+            $navGroup('Plantes', [
+                ['plant-types.php', 'Types', '/admin/plant-types.php'],
+            ], ['plant-types.php']),
             /* Un élément posé applique l'effet de son nom quand on marche
              * dessus : le catalogue et ce qui en est posé, même sujet. */
             $navGroup('Éléments', [

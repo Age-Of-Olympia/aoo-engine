@@ -147,6 +147,21 @@ final class TypeEditorFace
         return $this->key === self::RESOURCE;
     }
 
+    /**
+     * Ce visage règle-t-il un rendement ?
+     *
+     * Deux familles se récoltent — ressources et plantes — et le pendant côté
+     * entité est l'interface {@see \App\Entity\Harvestable}. Demander la
+     * CAPACITÉ plutôt que nommer une famille évite ce qui vient d'arriver : le
+     * formulaire n'affichait les champs que pour les ressources, quand
+     * l'enregistrement les acceptait de tout récoltable — donc modifier une
+     * plante effaçait son rendement.
+     */
+    public function harvests(): bool
+    {
+        return $this->key === self::RESOURCE || $this->key === self::PLANT;
+    }
+
     public function isStructure(): bool
     {
         return $this->key !== self::CHARACTER;
@@ -166,6 +181,25 @@ final class TypeEditorFace
             : '/admin/avatars-portraits.php';
     }
 
+    /**
+     * La nature qu'un type créé depuis ce visage doit porter.
+     *
+     * Une seule source : le formulaire la transporte, l'enregistrement la
+     * relit. Elle était calculée à deux endroits par des ternaires imbriqués,
+     * et l'un des deux ignorait les plantes — une plante créée depuis sa page
+     * naissait bâtiment.
+     */
+    public function nature(): string
+    {
+        return match ($this->key) {
+            self::SCENERY => self::NATURE_DECOR,
+            self::RESOURCE => self::NATURE_RESOURCE,
+            self::PLANT => self::NATURE_PLANT,
+            self::BUILDING => 'edifice',
+            default => '',
+        };
+    }
+
     /** Hidden fields carrying the face through a form post. */
     public function formFields(): string
     {
@@ -173,12 +207,7 @@ final class TypeEditorFace
             return '';
         }
 
-        $nature = match ($this->key) {
-            self::SCENERY => self::NATURE_DECOR,
-            self::RESOURCE => self::NATURE_RESOURCE,
-            self::PLANT => self::NATURE_PLANT,
-            default => '',
-        };
+        $nature = $this->key === self::BUILDING ? '' : $this->nature();
 
         return '<input type="hidden" name="kind" value="structure">'
             . ($nature === '' ? '' : '<input type="hidden" name="nature" value="' . $nature . '">');

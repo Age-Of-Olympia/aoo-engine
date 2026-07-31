@@ -422,7 +422,7 @@ HTML;
         /* On demande la CAPACITÉ, pas la classe : ce formulaire règle un
            rendement, donc il s'adresse à ce qui se récolte. Le jour où les
            plantes se récolteront aussi, cette ligne n'aura pas à changer. */
-        . ($face->isResource()
+        . ($face->harvests()
             ? '<div class="form-group col-12"><label>Rendement du type</label><div class="form-row">'
                 . '<div class="col-4"><input type="text" class="form-control form-control-sm" name="harvest_item"'
                 . ' value="' . e($race instanceof Harvestable ? $race->getHarvestItem() : '') . '"'
