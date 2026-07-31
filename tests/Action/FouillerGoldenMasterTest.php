@@ -37,12 +37,24 @@ class FouillerGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
     private const PLAN = 'plan_test_fouille';
 
+    /** @var array<string, array<string, mixed>|null> rendement des types touchés, avant */
+    private array $typeYieldBackup = [];
+
     protected function tearDown(): void
     {
         ResourceOutcomeInstruction::setDiceForTests(null);
         ResourceService::setDiceForTests(null);
 
         $link = $this->link;
+
+        /* Le catalogue est partagé : rendre chaque type comme on l'a trouvé. */
+        foreach ($this->typeYieldBackup as $type => $before) {
+            $link->executeStatement(
+                'UPDATE races SET harvest_item = ?, harvest_exhaust = ?, harvest_regrow = ? WHERE name = ?',
+                [$before['harvest_item'] ?? null, $before['harvest_exhaust'] ?? null, $before['harvest_regrow'] ?? null, $type]
+            );
+        }
+        $this->typeYieldBackup = [];
 
         /* Les ressources de fixture sont des entités : leur satellite et leur
            emprise d'abord, les deux clés étant intransigeantes. */
@@ -234,12 +246,39 @@ class FouillerGoldenMasterTest extends LegacyPlayerFixtureTestCase
     }
 
     /**
-     * La ressource posée mais ABSENTE du biome du plan est invisible à la
-     * récolte : c'est le cas des 8 606 lignes « inertes » de production, dont
-     * la carte montre l'arbre mais dont le moteur ignore l'existence.
+     * Le type répond même quand le plan ne dit rien de lui.
+     *
+     * C'était l'inverse : une ressource absente du biome du plan était
+     * invisible à la récolte — les lignes « inertes ». Arbitrage du lead :
+     * ajouter un type doit suffire à ce qu'il rende quelque chose, sans le
+     * déclarer plan par plan.
      */
-    public function testResourceAbsentFromBiomeIsNotHarvestable(): void
+    public function testATypeWithADefaultIsHarvestableThoughThePlanIgnoresIt(): void
     {
+        $this->setTypeYield('arbre1', 'bois', 75, 20);
+        $this->writePlan([['wall' => 'pierre1', 'ressource' => 'pierre', 'exhaust' => 75, 'regrow' => 20]]);
+
+        $this->putResource('arbre1', 0, 1);
+
+        $player = $this->harvesterAtOrigin('GmFouilleDefaut');
+
+        ResourceOutcomeInstruction::setDiceForTests(new ScriptedDice([[2]]));
+        ResourceService::setDiceForTests(new ScriptedDice([[100], [100]]));
+
+        $results = (new ActionExecutorService($this->actionOrSkip(), $player, $player))->executeAction();
+
+        $this->assertFalse($results->isBlocked(), 'le type porte son rendement : la case se fouille');
+    }
+
+    /**
+     * Rien sur le type, rien sur le plan : la case ne se fouille pas.
+     *
+     * Ce que garantissait l'ancien test, là où il vaut encore — un type
+     * réellement muet, et non un type que le plan a seulement oublié.
+     */
+    public function testATypeMuteEverywhereIsNotHarvestable(): void
+    {
+        $this->setTypeYield('arbre1', null, null, null);
         $this->writePlan([['wall' => 'pierre1', 'ressource' => 'pierre', 'exhaust' => 75, 'regrow' => 20]]);
 
         $this->putResource('arbre1', 0, 1);
@@ -249,9 +288,28 @@ class FouillerGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
         $results = (new ActionExecutorService($this->actionOrSkip(), $player, $player))->executeAction();
 
-        $this->assertTrue($results->isBlocked(), 'sans rendement au biome, la case ne se fouille pas');
+        $this->assertTrue($results->isBlocked(), 'sans rendement nulle part, la case ne se fouille pas');
         $fresh = PlayerFactory::legacy($player->id);
         $this->assertSame($maxA, $fresh->getRemaining('a'), 'une fouille refusée ne coûte pas de point d\'action');
+    }
+
+    /**
+     * Règle le rendement d'un TYPE le temps du test, et note son état d'avant
+     * pour le rendre : le catalogue est partagé, une fixture ne le garde pas.
+     */
+    private function setTypeYield(string $type, ?string $item, ?int $exhaust = null, ?int $regrow = null): void
+    {
+        if (!array_key_exists($type, $this->typeYieldBackup)) {
+            $this->typeYieldBackup[$type] = $this->link->fetchAssociative(
+                'SELECT harvest_item, harvest_exhaust, harvest_regrow FROM races WHERE name = ?',
+                [$type]
+            ) ?: null;
+        }
+
+        $this->link->executeStatement(
+            'UPDATE races SET harvest_item = ?, harvest_exhaust = ?, harvest_regrow = ? WHERE name = ?',
+            [$item, $exhaust, $regrow, $type]
+        );
     }
 
     /**

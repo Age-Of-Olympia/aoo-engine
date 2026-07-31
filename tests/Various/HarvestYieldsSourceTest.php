@@ -7,11 +7,16 @@ use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Where the game reads a plan's yields: the table, and nothing else.
+ * Where the game reads a plan's yields: the TYPE says, the plan may deviate.
  *
- * There is deliberately NO fallback to the plan JSON. A source read but never
- * shown is a source that rots — so an unpoured plan yields nothing, and the
- * admin names it instead of quietly filling the gap from a file.
+ * There is still deliberately NO fallback to the plan JSON — a source read but
+ * never shown is a source that rots. A default carried by the type is the
+ * opposite of that: it is edited and it is displayed, and it is what makes a
+ * newly added type work the moment it is posed instead of yielding nothing
+ * until someone declares it plan by plan.
+ *
+ * So a type with nothing anywhere is still mute, and the admin still names the
+ * gap; a `race_harvest` row is now an override, not the only source.
  *
  * DB-backed; skips cleanly when the database is unreachable.
  */
@@ -94,10 +99,52 @@ class HarvestYieldsSourceTest extends TestCase
         $this->conn->executeStatement('DELETE FROM races WHERE name = ?', [self::TYPE]);
     }
 
-    /** Nothing poured: nothing yielded — no silent read of the JSON. */
-    public function testWithoutARowNothingIsYielded(): void
+    /**
+     * Nothing on the type, nothing on the plan: nothing yielded — and still no
+     * silent read of the JSON, which does declare this type.
+     */
+    public function testATypeWithNeitherDefaultNorRowYieldsNothing(): void
     {
-        $this->assertSame([], (new HarvestCatalogService($this->conn))->yieldsFor(self::PLAN));
+        $yields = (new HarvestCatalogService($this->conn))->yieldsFor(self::PLAN);
+
+        $this->assertArrayNotHasKey(self::TYPE, $yields);
+    }
+
+    /**
+     * Le cœur de la règle : poser un type suffit à ce qu'il rende quelque
+     * chose, sans aller le déclarer plan par plan.
+     */
+    public function testTheTypeAnswersWhereThePlanSaysNothing(): void
+    {
+        $this->conn->executeStatement(
+            'UPDATE races SET harvest_item = ?, harvest_exhaust = ?, harvest_regrow = ? WHERE id = ?',
+            ['bois', 75, 20, $this->raceId]
+        );
+
+        $yields = (new HarvestCatalogService($this->conn))->yieldsFor(self::PLAN);
+
+        $this->assertSame('bois', $yields[self::TYPE]['item'], 'le type porte son rendement');
+        $this->assertSame(75, $yields[self::TYPE]['exhaust']);
+        $this->assertSame(20, $yields[self::TYPE]['regrow']);
+    }
+
+    /** Un type qui a un défaut n'est plus un trou à signaler. */
+    public function testATypeWithADefaultIsNotReportedMissing(): void
+    {
+        $this->standAResource();
+
+        $this->conn->executeStatement(
+            'UPDATE races SET harvest_item = ? WHERE id = ?',
+            ['bois', $this->raceId]
+        );
+
+        $missing = (new HarvestCatalogService($this->conn))->plansMissingYields();
+
+        $this->assertNotContains(
+            self::PLAN,
+            array_column($missing, 'plan'),
+            'le catalogue répond : le plan n\'a rien à régler'
+        );
     }
 
     /** And the gap is NAMED, which is what replaces the fallback. */
@@ -161,9 +208,14 @@ class HarvestYieldsSourceTest extends TestCase
         );
     }
 
-    /** Poured: the table answers, and it is what the admin edits. */
-    public function testTheTableIsTheOnlySource(): void
+    /** Une ligne de plan DÉVIE du type : c'est elle qui gagne, en entier. */
+    public function testThePlansRowOverridesTheType(): void
     {
+        $this->conn->executeStatement(
+            'UPDATE races SET harvest_item = ?, harvest_exhaust = ?, harvest_regrow = ? WHERE id = ?',
+            ['bois', 75, 20, $this->raceId]
+        );
+
         $this->conn->executeStatement(
             'INSERT INTO race_harvest (plan, race_id, item, exhaust, regrow) VALUES (?, ?, ?, ?, ?)',
             [self::PLAN, $this->raceId, 'pierre', 10, null]
@@ -171,9 +223,12 @@ class HarvestYieldsSourceTest extends TestCase
 
         $yields = (new HarvestCatalogService($this->conn))->yieldsFor(self::PLAN);
 
-        $this->assertSame('pierre', $yields[self::TYPE]['item'], 'la base est la seule source');
+        $this->assertSame('pierre', $yields[self::TYPE]['item'], 'la surcharge gagne');
         $this->assertSame(10, $yields[self::TYPE]['exhaust']);
-        $this->assertNull($yields[self::TYPE]['regrow'], 'un taux vide vaut jamais');
+        $this->assertNull(
+            $yields[self::TYPE]['regrow'],
+            'un taux vide dans la surcharge vaut jamais — il ne retombe pas sur celui du type'
+        );
     }
 
     /** What the screen saves is what the game then reads. */

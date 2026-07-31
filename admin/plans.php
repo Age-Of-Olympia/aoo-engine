@@ -338,14 +338,16 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
     ));
     $fallback = count(\App\Service\Map\HarvestCatalogService::yieldsFromPlanJson($planId));
 
+    /* Un plan sans ligne n'est plus un plan incomplet : le type porte son
+       rendement, et une ligne ici ne sert qu'à DÉVIER. L'alerte rouge a donc
+       disparu — elle réclamait un réglage qui n'est plus dû. */
     $biomesField = '<div class="col-12"><p class="mb-1">'
         . ($poured > 0
-            ? '<strong>' . $poured . ' rendement(s)</strong> réglé(s) pour ce plan : c\'est ce que le jeu lit.'
-            : '<span class="badge" style="background-color:#c9302c;color:#fff;">Aucun rendement</span> '
-                . 'pour ce plan : <strong>fouiller n\'y rapporte rien</strong>.'
+            ? '<strong>' . $poured . ' rendement(s)</strong> propre(s) à ce plan, qui prennent le pas sur le catalogue des types.'
+            : 'Aucune dérogation : les ressources de ce plan rendent ce que <strong>leur type</strong> dit.'
                 . ($fallback > 0
-                    ? ' Son JSON en déclare ' . $fallback . ', versables depuis l\'écran des rendements.'
-                    : ' Rien à verser depuis son JSON : à saisir à la main.'))
+                    ? ' Son JSON en déclare ' . $fallback . ', versables depuis l\'écran des rendements si ce plan doit dévier.'
+                    : ''))
         . '</p><a class="btn btn-sm btn-outline-primary" href="/admin/harvest-seed.php">Régler les rendements</a></div>';
 
     // Niveaux Z : union base ∪ JSON, pour rendre la dérive visible ici aussi

@@ -414,6 +414,24 @@ HTML;
         . ' le « premier joueur » qui sert de référence au bonus d\'XP de rattrapage'
         . ' (un perso admin très haut niveau ne doit pas gonfler le bonus de tout le serveur).</small>'
         . '</div></div>'
+        /* Le rendement du TYPE : ce qu'un exemplaire posé rend, partout, sans
+           qu'on ait à le déclarer plan par plan. Un plan peut encore dévier
+           depuis Cartes → Rendements, et cette ligne-là prend alors le pas. */
+        . ($face->isResource()
+            ? '<div class="form-group col-12"><label>Rendement du type</label><div class="form-row">'
+                . '<div class="col-4"><input type="text" class="form-control form-control-sm" name="harvest_item"'
+                . ' value="' . e($isEdit ? $race->getHarvestItem() : '') . '"'
+                . ' placeholder="objet récolté (ex. bois)"></div>'
+                . '<div class="col-4"><input type="number" class="form-control form-control-sm" name="harvest_exhaust"'
+                . ' value="' . ($isEdit && $race->getHarvestExhaust() !== null ? (int) $race->getHarvestExhaust() : '') . '"'
+                . ' min="1" max="100" placeholder="épuisement (1-100)"></div>'
+                . '<div class="col-4"><input type="number" class="form-control form-control-sm" name="harvest_regrow"'
+                . ' value="' . ($isEdit && $race->getHarvestRegrow() !== null ? (int) $race->getHarvestRegrow() : '') . '"'
+                . ' min="1" max="1000" placeholder="repousse (1-1000)"></div>'
+                . '</div><small class="form-text text-muted">Laissé vide, ce type ne rend rien :'
+                . ' fouiller reviendra les mains vides, sauf si un plan le déclare.'
+                . ' Les dés sont volontairement dissemblables — épuisement sur 100, repousse sur 1000.</small></div>'
+            : '')
         . ($face->isStructure()
             ? '<div class="form-group col-12"><label>Inscription par défaut</label>'
                 . '<textarea class="form-control" name="default_text" rows="2"'

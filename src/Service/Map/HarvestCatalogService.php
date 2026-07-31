@@ -220,26 +220,39 @@ final class HarvestCatalogService
     }
 
     /**
-     * What each wall yields on a plan. The table, and only the table.
+     * What each type yields on a plan: what the TYPE says, overridden by what
+     * the plan says.
      *
-     * No fallback to the plan JSON on purpose: a source read but never shown
-     * is a source that rots. A plan whose yields have not been poured yields
-     * NOTHING, and the admin says so loudly — see `plansMissingYields()`.
+     * Still no fallback to the plan JSON — a file nobody opens is a source
+     * that rots, and that rule has not moved. A default on the type is the
+     * opposite: it is edited, it is shown, and it is what makes a newly added
+     * type work the moment it is posed, instead of yielding nothing until
+     * someone declares it plan by plan.
      *
      * @return array<string, array{item: string, exhaust: ?int, regrow: ?int}>
      */
     public function yieldsFor(string $plan): array
     {
-        $rows = $this->conn()->fetchAllAssociative(
+        $yields = [];
+
+        foreach ($this->conn()->fetchAllAssociative(
+            "SELECT name, harvest_item AS item, harvest_exhaust AS exhaust, harvest_regrow AS regrow
+               FROM races
+              WHERE harvest_item IS NOT NULL AND TRIM(harvest_item) <> ''"
+        ) as $row) {
+            $yields[(string) $row['name']] = [
+                'item' => (string) $row['item'],
+                'exhaust' => $row['exhaust'] === null ? null : (int) $row['exhaust'],
+                'regrow' => $row['regrow'] === null ? null : (int) $row['regrow'],
+            ];
+        }
+
+        foreach ($this->conn()->fetchAllAssociative(
             'SELECT r.name, h.item, h.exhaust, h.regrow
                FROM race_harvest h JOIN races r ON r.id = h.race_id
               WHERE h.plan = ?',
             [$plan]
-        );
-
-        $yields = [];
-
-        foreach ($rows as $row) {
+        ) as $row) {
             $yields[(string) $row['name']] = [
                 'item' => (string) $row['item'],
                 'exhaust' => $row['exhaust'] === null ? null : (int) $row['exhaust'],
@@ -254,8 +267,10 @@ final class HarvestCatalogService
      * Resources standing on a plan with nothing to give — where fouiller
      * returns empty-handed.
      *
-     * This is what replaces the fallback: the gap is named instead of being
-     * quietly filled from a file nobody opens.
+     * A type without a default AND without a row on this plan is mute. A plan
+     * with no rows at all is no longer incomplete: since the type carries its
+     * yield, saying nothing means "the catalogue answers", not "nobody poured
+     * this one".
      *
      * Counted per TYPE, not per plan: a plan whose trees yield wood and whose
      * palms yield nothing is a plan where a player harvests in vain, and a
@@ -270,6 +285,13 @@ final class HarvestCatalogService
                FROM players p
                JOIN entity_cells ec ON ec.player_id = p.id
               WHERE p.player_type = 'resource'
+                AND NOT EXISTS (
+                    SELECT 1
+                      FROM races d
+                     WHERE d.name COLLATE utf8mb4_general_ci = p.race COLLATE utf8mb4_general_ci
+                       AND d.harvest_item IS NOT NULL
+                       AND TRIM(d.harvest_item) <> ''
+                )
                 AND NOT EXISTS (
                     SELECT 1
                       FROM race_harvest h

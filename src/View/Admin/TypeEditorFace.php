@@ -115,6 +115,12 @@ final class TypeEditorFace
         return $this->key === self::SCENERY;
     }
 
+    /** Seule cette face récolte : elle seule règle un rendement. */
+    public function isResource(): bool
+    {
+        return $this->key === self::RESOURCE;
+    }
+
     public function isStructure(): bool
     {
         return $this->key !== self::CHARACTER;
