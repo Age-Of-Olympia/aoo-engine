@@ -116,6 +116,40 @@ class TypeFamilyColumnTest extends TestCase
         }
     }
 
+    /**
+     * Une famille écrite EXPLICITEMENT est respectée.
+     *
+     * C'est ce qui permet à Doctrine de s'en servir comme discriminant : il
+     * l'écrit, et le filet ne doit pas le contredire. Le déclencheur ne
+     * remplit que le vide — les deux sources se complètent au lieu de se
+     * disputer.
+     */
+    public function testAnExplicitFamilyIsKept(): void
+    {
+        $name = 'gm_famille_' . bin2hex(random_bytes(4));
+
+        try {
+            /* Une ligne dont le couple kind/nature dirait « resource », mais
+             * qui annonce autre chose : c'est l'annonce qui gagne. */
+            $this->conn->executeStatement(
+                "INSERT INTO races (code, name, label, description, playable, hidden, kind,
+                                    structure_nature, bleeds, wound_color, blocks_passage,
+                                    blocks_projectiles, bgColor, color, faction, plan, pv, type_kind)
+                 VALUES ('GM_FAM', ?, 'Gm famille', '', 0, 1, 'structure', 'ressource',
+                         '', '#cd7f32', 1, 1, '#8a8a8a', 'black', '', '', 10, ?)",
+                [$name, TypeEditorFace::BUILDING]
+            );
+
+            $this->assertSame(
+                TypeEditorFace::BUILDING,
+                $this->conn->fetchOne('SELECT type_kind FROM races WHERE name = ?', [$name]),
+                'le déclencheur ne doit pas écraser une famille annoncée'
+            );
+        } finally {
+            $this->conn->executeStatement('DELETE FROM races WHERE name = ?', [$name]);
+        }
+    }
+
     /** Les quatre familles, et rien d'autre. */
     public function testOnlyTheFourKnownFamiliesAreWritten(): void
     {
