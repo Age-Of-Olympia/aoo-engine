@@ -271,11 +271,10 @@ elseif($goCoords->z > 0){
 
 
 
-// loots — piles ET instances au sol, via le service partagé avec
-// pickup.php (ramasser sa propre case).
-(new \App\Service\GroundLootService())->collect($player, (int) $coordsId, $goCoords);
-
-
+/* Marcher sur une case n'en ramasse plus le contenu : c'est le bouton qui
+   ramasse, et lui seul (pickup.php). Traverser un butin n'est pas le
+   prendre — ce que voulait déjà la case observée, qui montre ce qui traîne
+   au sol sans y toucher. */
 
 // Tutorial mode: Check if movements should be consumed for current step
 $consumeMovement = false;

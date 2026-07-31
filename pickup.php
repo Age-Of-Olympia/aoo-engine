@@ -1,8 +1,8 @@
 <?php
 /**
- * Ramasser le contenu de SA PROPRE case — le cas que le ramassage en
- * marchant ne couvre pas (on est déjà dessus, typiquement après un
- * drop accidentel) : sortir puis revenir n'est plus nécessaire.
+ * Ramasser le contenu de sa case — le seul chemin depuis que marcher
+ * dessus ne prend plus rien. Le geste est explicite : on voit ce qui
+ * traîne sur la case observée, et on décide de le prendre.
  *
  * POST sans paramètre : la case est toujours celle du joueur actif
  * (tutoriel compris), rien d'autre n'est atteignable ici.
