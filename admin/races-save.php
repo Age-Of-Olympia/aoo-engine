@@ -131,6 +131,16 @@ $applyForm = static function (Race $race) use ($face): string {
         }
 
         $race->setHarvestItem($harvestItem);
+    }
+
+    /* Combien rend une plante : deux bornes, et un maximum qui ne passe pas
+     * sous le minimum — un intervalle vide ne rendrait rien du tout. */
+    if ($race instanceof \App\Entity\PlantType) {
+        $min = max(1, min(99, (int) ($_POST['harvest_min'] ?? \App\Entity\PlantType::DEFAULT_MIN)));
+        $max = max($min, min(99, (int) ($_POST['harvest_max'] ?? \App\Entity\PlantType::DEFAULT_MAX)));
+
+        $race->setHarvestMin($min);
+        $race->setHarvestMax($max);
         $race->setHarvestExhaust(trim((string) ($_POST['harvest_exhaust'] ?? '')) !== ''
             ? max(1, min(100, (int) $_POST['harvest_exhaust']))
             : null);

@@ -23,6 +23,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Entity\Harvestable;
+use App\Entity\PlantType;
 use App\Entity\Race;
 use App\Entity\StructureType;
 use App\View\Admin\TypeEditorFace;
@@ -459,6 +460,18 @@ HTML;
                    (items.grow_rate + déclencheurs `grow`), qui n'a pas encore
                    rejoint le type. Afficher ces deux cadrans pour une fleur
                    serait offrir des réglages sans effet. */
+                /* Une plante dit COMBIEN elle rend : la quantité est son seul
+                   autre réglage, puisque ni épuisement ni repousse ne la
+                   concernent. Une ressource, elle, tire sur le nombre de
+                   voisines — sa quantité ne se règle pas ici. */
+                . ($face->key === \App\View\Admin\TypeEditorFace::PLANT
+                    ? '<div class="col-2"><input type="number" class="form-control form-control-sm" name="harvest_min"'
+                        . ' value="' . ($race instanceof PlantType ? $race->getHarvestMin() : PlantType::DEFAULT_MIN) . '"'
+                        . ' min="1" max="99" title="Quantité minimale rendue à la cueillette"></div>'
+                        . '<div class="col-2"><input type="number" class="form-control form-control-sm" name="harvest_max"'
+                        . ' value="' . ($race instanceof PlantType ? $race->getHarvestMax() : PlantType::DEFAULT_MAX) . '"'
+                        . ' min="1" max="99" title="Quantité maximale rendue à la cueillette"></div>'
+                    : '')
                 . ($face->isResource()
                     ? '<div class="col-4"><input type="number" class="form-control form-control-sm" name="harvest_exhaust"'
                         . ' value="' . ($race instanceof Harvestable && $race->getHarvestExhaust() !== null ? (int) $race->getHarvestExhaust() : '') . '"'
@@ -471,7 +484,8 @@ HTML;
                 . ' fouiller reviendra les mains vides, sauf si un plan le déclare.'
                 . ($face->isResource()
                     ? ' Les dés sont volontairement dissemblables — épuisement sur 100, repousse sur 1000.'
-                    : ' Une plante cueillie disparaît : elle ne s\'épuise pas et ne repousse pas sur place.'
+                    : ' Les deux nombres sont la quantité rendue, du minimum au maximum.'
+                        . ' Une plante cueillie disparaît : elle ne s\'épuise pas et ne repousse pas sur place.'
                         . ' Sa repousse se règle encore sur l\'objet (grow_rate) et par les déclencheurs « grow ».')
                 . '</small></div>'
             : '')

@@ -127,6 +127,55 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /**
+     * Ce qu'une plante rend suit les bornes de SON type.
+     *
+     * La quantité était en dur — `rand(1, 3)` pour toutes les fleurs du monde.
+     * Elle se règle désormais par type ; ce cas resserre les bornes sur une
+     * seule valeur pour que le tirage n'ait plus de latitude, et vérifie que
+     * c'est bien elle qui sort.
+     */
+    public function testAPlantYieldsWithinItsTypesBounds(): void
+    {
+        $name = $this->somePlantName();
+        $coordsId = $this->coordsId(5, 1);
+
+        $before = $this->link->fetchAssociative(
+            'SELECT harvest_min, harvest_max FROM races WHERE name = ?',
+            [$name]
+        );
+
+        try {
+            $this->link->executeStatement(
+                'UPDATE races SET harvest_min = 7, harvest_max = 7 WHERE name = ?',
+                [$name]
+            );
+
+            $this->plantAt($coordsId, $name);
+
+            $player = $this->createRealPlayer('cueilleur_borne');
+            $player->get_data();
+
+            $picked = (new GroundLootService())->collect(
+                $player,
+                $coordsId,
+                (object) ['x' => 5, 'y' => 1, 'z' => 0, 'plan' => self::PLAN]
+            );
+
+            $this->assertCount(1, $picked);
+            $this->assertStringContainsString(
+                'x7',
+                $picked[0],
+                'la quantité vient du type, plus du code'
+            );
+        } finally {
+            $this->link->executeStatement(
+                'UPDATE races SET harvest_min = ?, harvest_max = ? WHERE name = ?',
+                [$before['harvest_min'] ?? null, $before['harvest_max'] ?? null, $name]
+            );
+        }
+    }
+
     /** Une case sans rien ne rend rien, plantes comprises. */
     public function testAnEmptyTileCollectsNothing(): void
     {

@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Entity\PlantType;
 use Classes\Db;
 use Classes\Item;
 use Classes\Log;
@@ -159,7 +160,9 @@ class GroundLootService
          * dire autre chose. Le repli sur `race` ne sert qu'aux types qu'aucun
          * rendement n'a encore réglés. */
         $res = $db->exe(
-            "SELECT p.id, p.race, COALESCE(NULLIF(TRIM(r.harvest_item), ''), p.race) AS yields
+            "SELECT p.id, p.race,
+                    COALESCE(NULLIF(TRIM(r.harvest_item), ''), p.race) AS yields,
+                    r.harvest_min, r.harvest_max
                FROM players p
                LEFT JOIN races r
                  ON r.name COLLATE utf8mb4_general_ci = p.race COLLATE utf8mb4_general_ci
@@ -185,7 +188,13 @@ class GroundLootService
                 continue;
             }
 
-            $quantity = rand(1, 3);
+            /* Combien, c'est le TYPE qui le dit. Les bornes d'un type qui n'en
+             * porte pas retombent sur ce que le code tirait auparavant, si
+             * bien que rien ne change tant que personne n'y touche. */
+            $min = max(1, (int) ($row->harvest_min ?? PlantType::DEFAULT_MIN));
+            $max = max($min, (int) ($row->harvest_max ?? PlantType::DEFAULT_MAX));
+
+            $quantity = rand($min, $max);
             $item->add_item($player, $quantity);
             $item->get_data();
 
