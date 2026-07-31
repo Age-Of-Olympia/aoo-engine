@@ -114,16 +114,19 @@ $applyForm = static function (Race $race) use ($face): string {
      * son message du jour lui-même. */
     $race->setReadableFromAfar($kind === 'structure' && booleanCheckbox('readable_from_afar'));
     $race->setDefaultText($kind === 'structure' ? trim((string) ($_POST['default_text'] ?? '')) : '');
-    /* Rendement du type : seule la face « récoltable » le règle, et seule
-     * elle le garde — changer un mur en récoltable ne lui invente pas un
-     * butin, le vider le rend muet jusqu'à ce qu'un plan le déclare. */
-    $race->setHarvestItem($face->isResource() ? (string) ($_POST['harvest_item'] ?? '') : '');
-    $race->setHarvestExhaust($face->isResource() && trim((string) ($_POST['harvest_exhaust'] ?? '')) !== ''
-        ? max(1, min(100, (int) $_POST['harvest_exhaust']))
-        : null);
-    $race->setHarvestRegrow($face->isResource() && trim((string) ($_POST['harvest_regrow'] ?? '')) !== ''
-        ? max(1, min(1000, (int) $_POST['harvest_regrow']))
-        : null);
+    /* Rendement du type : seul un récoltable en a un, et c'est la CLASSE qui
+     * le dit désormais — plus le visage d'où l'on vient. Le vider rend le type
+     * muet jusqu'à ce qu'un plan le déclare ; les autres familles n'ont même
+     * plus la question à se poser, elle ne compile pas. */
+    if ($race instanceof \App\Entity\HarvestableType) {
+        $race->setHarvestItem((string) ($_POST['harvest_item'] ?? ''));
+        $race->setHarvestExhaust(trim((string) ($_POST['harvest_exhaust'] ?? '')) !== ''
+            ? max(1, min(100, (int) $_POST['harvest_exhaust']))
+            : null);
+        $race->setHarvestRegrow(trim((string) ($_POST['harvest_regrow'] ?? '')) !== ''
+            ? max(1, min(1000, (int) $_POST['harvest_regrow']))
+            : null);
+    }
     $race->setBlocksPassage(booleanCheckbox('blocks_passage'));
     $race->setBlocksProjectiles(booleanCheckbox('blocks_projectiles'));
     $race->setPlayable($kind === 'character' && booleanCheckbox('playable'));

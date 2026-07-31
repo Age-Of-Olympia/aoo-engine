@@ -111,6 +111,41 @@ class TypeInheritanceTest extends TestCase
     }
 
     /**
+     * Le rendement n'existe QUE chez les récoltables.
+     *
+     * Il vivait sur le tronc, vide pour 86 lignes sur 128 : on pouvait
+     * demander son rendement à une race de nain, qui répondait `null`. Le
+     * déplacement supprime la question — et ce cas empêche qu'elle revienne
+     * par mégarde sur le tronc.
+     */
+    public function testOnlyTheHarvestableCarriesAYield(): void
+    {
+        /* Seule l'assertion NÉGATIVE a du sens : que la déclinaison porte la
+         * méthode, l'analyse statique le sait déjà — et l'appel plus bas le
+         * prouve à l'exécution. */
+        $this->assertFalse(
+            method_exists(Race::class, 'getHarvestItem'),
+            'le tronc ne doit plus porter le rendement : il ne concerne qu\'une famille'
+        );
+
+        $withYield = $this->conn->fetchOne(
+            "SELECT name FROM races
+              WHERE type_kind = ? AND harvest_item IS NOT NULL AND TRIM(harvest_item) <> ''
+              ORDER BY name LIMIT 1",
+            [Race::FAMILY_RESOURCE]
+        );
+
+        if ($withYield === false || $withYield === null) {
+            $this->markTestSkipped('Aucun récoltable avec un rendement au catalogue.');
+        }
+
+        $type = (new RaceService())->getRaceByName((string) $withYield);
+
+        $this->assertInstanceOf(HarvestableType::class, $type);
+        $this->assertNotSame('', $type->getHarvestItem(), 'et il rend bien ce que la base annonce');
+    }
+
+    /**
      * Un personnage se moque de `structure_nature`, et c'est le sujet.
      *
      * Seize races portent `edifice` sans être des bâtiments : la colonne ne

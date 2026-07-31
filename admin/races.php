@@ -22,6 +22,7 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
+use App\Entity\HarvestableType;
 use App\Entity\Race;
 use App\View\Admin\TypeEditorFace;
 use App\Enum\ImageType;
@@ -417,16 +418,20 @@ HTML;
         /* Le rendement du TYPE : ce qu'un exemplaire posé rend, partout, sans
            qu'on ait à le déclarer plan par plan. Un plan peut encore dévier
            depuis Cartes → Rendements, et cette ligne-là prend alors le pas. */
+        /* `instanceof` et non le visage : c'est l'OBJET qui porte le rendement
+           depuis qu'il est descendu chez les récoltables. Le visage disait la
+           page d'où l'on vient, ce qui se trouvait coïncider — la classe, elle,
+           ne peut pas se tromper, et l'analyse statique le vérifie. */
         . ($face->isResource()
             ? '<div class="form-group col-12"><label>Rendement du type</label><div class="form-row">'
                 . '<div class="col-4"><input type="text" class="form-control form-control-sm" name="harvest_item"'
-                . ' value="' . e($isEdit ? $race->getHarvestItem() : '') . '"'
+                . ' value="' . e($race instanceof HarvestableType ? $race->getHarvestItem() : '') . '"'
                 . ' placeholder="objet récolté (ex. bois)"></div>'
                 . '<div class="col-4"><input type="number" class="form-control form-control-sm" name="harvest_exhaust"'
-                . ' value="' . ($isEdit && $race->getHarvestExhaust() !== null ? (int) $race->getHarvestExhaust() : '') . '"'
+                . ' value="' . ($race instanceof HarvestableType && $race->getHarvestExhaust() !== null ? (int) $race->getHarvestExhaust() : '') . '"'
                 . ' min="1" max="100" placeholder="épuisement (1-100)"></div>'
                 . '<div class="col-4"><input type="number" class="form-control form-control-sm" name="harvest_regrow"'
-                . ' value="' . ($isEdit && $race->getHarvestRegrow() !== null ? (int) $race->getHarvestRegrow() : '') . '"'
+                . ' value="' . ($race instanceof HarvestableType && $race->getHarvestRegrow() !== null ? (int) $race->getHarvestRegrow() : '') . '"'
                 . ' min="1" max="1000" placeholder="repousse (1-1000)"></div>'
                 . '</div><small class="form-text text-muted">Laissé vide, ce type ne rend rien :'
                 . ' fouiller reviendra les mains vides, sauf si un plan le déclare.'
