@@ -146,10 +146,13 @@ ob_start();
 <?php if ($configured !== []): ?>
     <div class="card mt-3">
         <div class="card-body">
-            <h5 class="card-title">Rendements en base — c'est ce que le jeu lit</h5>
+            <h5 class="card-title">Dérogations par plan — ce que ce plan change au catalogue</h5>
             <p class="text-muted" style="font-size: 13px;">
-                Un plan sans ligne ici replie sur son JSON : rien ne casse tant qu'il n'est pas versé.
-                Un taux vide vaut « jamais ».
+                Le rendement d'un récoltable se règle sur son TYPE (Types récoltables) : il vaut partout,
+                et un plan n'a rien à déclarer pour que fouiller rapporte.
+                Une ligne ici ne sert qu'à <strong>dévier</strong> — le même arbre donne moins dans le désert
+                que dans la forêt. Chaque case vide reprend ce que dit le type ; <strong>0</strong> veut dire
+                « jamais, ici ».
             </p>
 
             <form method="post">
@@ -157,9 +160,10 @@ ob_start();
 
                 <table class="table table-striped table-sm" style="max-width: 900px;">
                     <thead><tr>
-                        <th>Plan</th><th>Type</th><th>Donne</th>
-                        <th title="Chance sur cent de tarir à la récolte">Épuisement</th>
-                        <th title="Chance sur mille de repousser, par passage du cron">Repousse</th>
+                        <th>Plan</th><th>Type</th>
+                        <th title="Vide : l'objet que donne le type. Rempli : cet objet-ci, sur ce plan.">Donne</th>
+                        <th title="Chance sur cent de tarir à la récolte. Vide : comme le type. 0 : ne tarit jamais ici.">Épuisement</th>
+                        <th title="Chance sur mille de repousser, par passage du cron. Vide : comme le type. 0 : ne repousse jamais ici.">Repousse</th>
                     </tr></thead>
                     <tbody>
                     <?php foreach ($configured as $row): ?>

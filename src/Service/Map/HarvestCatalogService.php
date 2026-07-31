@@ -220,14 +220,17 @@ final class HarvestCatalogService
     }
 
     /**
-     * What each type yields on a plan: what the TYPE says, overridden by what
-     * the plan says.
+     * What each type yields on a plan: what the TYPE says, and what the plan
+     * changes of it — champ par champ.
      *
-     * Still no fallback to the plan JSON — a file nobody opens is a source
-     * that rots, and that rule has not moved. A default on the type is the
-     * opposite: it is edited, it is shown, and it is what makes a newly added
-     * type work the moment it is posed, instead of yielding nothing until
-     * someone declares it plan by plan.
+     * Une surcharge ne dit que ce qu'elle change : le même arbre donne moins
+     * dans le désert que dans la forêt, et le plan n'a qu'un chiffre à porter.
+     * Un taux vide hérite du type ; « jamais » s'écrit 0, et les deux lecteurs
+     * l'entendent déjà ainsi (`(($e['exhaust'] ?? 0) ?: 0) > 1dN`).
+     *
+     * Toujours pas de repli sur le JSON de plan — une source lue mais jamais
+     * montrée pourrit, et cette règle-là n'a pas bougé. Un défaut porté par le
+     * type en est l'inverse : il s'édite, et il s'affiche.
      *
      * @return array<string, array{item: string, exhaust: ?int, regrow: ?int}>
      */
@@ -253,14 +256,21 @@ final class HarvestCatalogService
               WHERE h.plan = ?',
             [$plan]
         ) as $row) {
-            $yields[(string) $row['name']] = [
-                'item' => (string) $row['item'],
-                'exhaust' => $row['exhaust'] === null ? null : (int) $row['exhaust'],
-                'regrow' => $row['regrow'] === null ? null : (int) $row['regrow'],
+            $name = (string) $row['name'];
+            $inherited = $yields[$name] ?? ['item' => '', 'exhaust' => null, 'regrow' => null];
+
+            $item = trim((string) $row['item']);
+
+            $yields[$name] = [
+                'item' => $item !== '' ? $item : $inherited['item'],
+                'exhaust' => $row['exhaust'] === null ? $inherited['exhaust'] : (int) $row['exhaust'],
+                'regrow' => $row['regrow'] === null ? $inherited['regrow'] : (int) $row['regrow'],
             ];
         }
 
-        return $yields;
+        /* Une surcharge qui n'hérite de rien et ne nomme rien ne rend rien :
+         * elle ne doit pas faire croire à un rendement vide. */
+        return array_filter($yields, static fn(array $y): bool => $y['item'] !== '');
     }
 
     /**

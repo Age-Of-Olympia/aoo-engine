@@ -208,7 +208,7 @@ class HarvestYieldsSourceTest extends TestCase
         );
     }
 
-    /** Une ligne de plan DÉVIE du type : c'est elle qui gagne, en entier. */
+    /** Une ligne de plan DÉVIE du type, champ par champ. */
     public function testThePlansRowOverridesTheType(): void
     {
         $this->conn->executeStatement(
@@ -225,10 +225,53 @@ class HarvestYieldsSourceTest extends TestCase
 
         $this->assertSame('pierre', $yields[self::TYPE]['item'], 'la surcharge gagne');
         $this->assertSame(10, $yields[self::TYPE]['exhaust']);
-        $this->assertNull(
+        $this->assertSame(
+            20,
             $yields[self::TYPE]['regrow'],
-            'un taux vide dans la surcharge vaut jamais — il ne retombe pas sur celui du type'
+            'un taux vide hérite du type : le plan ne dit que ce qu\'il change'
         );
+    }
+
+    /**
+     * « Le même arbre donne moins dans le désert » : un seul chiffre à porter,
+     * le reste vient du type.
+     */
+    public function testAPlanCanChangeOneRateAndInheritTheRest(): void
+    {
+        $this->conn->executeStatement(
+            'UPDATE races SET harvest_item = ?, harvest_exhaust = ?, harvest_regrow = ? WHERE id = ?',
+            ['bois', 75, 20, $this->raceId]
+        );
+
+        $this->conn->executeStatement(
+            "INSERT INTO race_harvest (plan, race_id, item, exhaust, regrow) VALUES (?, ?, '', NULL, ?)",
+            [self::PLAN, $this->raceId, 3]
+        );
+
+        $yields = (new HarvestCatalogService($this->conn))->yieldsFor(self::PLAN);
+
+        $this->assertSame('bois', $yields[self::TYPE]['item'], 'l\'objet reste celui du type');
+        $this->assertSame(75, $yields[self::TYPE]['exhaust'], 'l\'épuisement aussi');
+        $this->assertSame(3, $yields[self::TYPE]['regrow'], 'seule la repousse dévie');
+    }
+
+    /** « Jamais » a son écriture : 0, et il ne retombe pas sur le type. */
+    public function testZeroMeansNeverAndDoesNotInherit(): void
+    {
+        $this->conn->executeStatement(
+            'UPDATE races SET harvest_item = ?, harvest_exhaust = ?, harvest_regrow = ? WHERE id = ?',
+            ['bois', 75, 20, $this->raceId]
+        );
+
+        $this->conn->executeStatement(
+            "INSERT INTO race_harvest (plan, race_id, item, exhaust, regrow) VALUES (?, ?, '', 0, 0)",
+            [self::PLAN, $this->raceId]
+        );
+
+        $yields = (new HarvestCatalogService($this->conn))->yieldsFor(self::PLAN);
+
+        $this->assertSame(0, $yields[self::TYPE]['exhaust'], 'ici, cet arbre ne s\'épuise jamais');
+        $this->assertSame(0, $yields[self::TYPE]['regrow'], 'et ne repousse jamais');
     }
 
     /** What the screen saves is what the game then reads. */
