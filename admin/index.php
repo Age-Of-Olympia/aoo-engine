@@ -71,6 +71,26 @@ ob_start();
         </div>
     <?php endif; ?>
 
+    <?php
+    /* Un reste de chantier ne se retient pas de mémoire : il se montre, et il
+       s'efface tout seul le jour du dépôt. */
+    $mapResources = (new \App\Service\Map\MapResourcesRetirement())->status();
+    ?>
+    <?php if ($mapResources['present'] || $mapResources['view']): ?>
+        <div class="alert <?= $mapResources['droppable'] ? 'alert-info' : 'alert-warning' ?> mt-3" style="max-width: 640px;">
+            <?php if ($mapResources['droppable']): ?>
+                <strong>Reste de chantier : <code>map_resources</code><?= $mapResources['view'] ? ' et la vue <code>map_walls</code>' : '' ?>.</strong>
+                Plus aucun lecteur, plus aucun écrivain, zéro ligne : les ressources sont des entités.
+                <strong>Prêtes à être déposées</strong>, une fois le code qui a cessé de les lire déployé
+                partout — migrations après code pour une suppression, l'inverse de l'habitude.
+                Cet avertissement disparaîtra de lui-même.
+            <?php else: ?>
+                <strong><code>map_resources</code> n'est pas encore déposable.</strong>
+                <?= e(implode(' ; ', $mapResources['blockers'])) ?>.
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+
     <div class="card mt-3" style="max-width: 640px;">
         <div class="card-header"><strong>Options générales</strong></div>
         <div class="card-body">
