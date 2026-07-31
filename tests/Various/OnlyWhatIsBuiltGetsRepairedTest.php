@@ -22,14 +22,17 @@ use PHPUnit\Framework\TestCase;
  */
 class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
 {
-    /** Ce qui a été bâti se répare ; ce qui a poussé ou fut posé là, non. */
-    public function testOnlyBuildingsAreRepairableByDefault(): void
+    /**
+     * Ce qui a été DRESSÉ par quelqu'un s'entretient ; ce qui pousse ou gît
+     * là, non — son cycle est l'épuisement puis la repousse.
+     */
+    public function testWhatWasErectedIsRepairableByDefault(): void
     {
         $this->assertTrue((new BuildingType())->isRepairable(), 'un édifice s\'entretient');
+        $this->assertTrue((new SceneryType())->isRepairable(), 'une statue, une clôture aussi');
 
         $this->assertFalse((new PlantType())->isRepairable(), 'on ne répare pas une fleur');
         $this->assertFalse((new ResourceType())->isRepairable(), 'ni un rocher');
-        $this->assertFalse((new SceneryType())->isRepairable(), 'ni un décor');
     }
 
     /**
@@ -40,11 +43,11 @@ class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
      */
     public function testATypeCanOverrideItsFamilyBothWays(): void
     {
-        $scenery = (new SceneryType())->setRepairable(true);
-        $this->assertTrue($scenery->isRepairable());
+        $resource = (new ResourceType())->setRepairable(true);
+        $this->assertTrue($resource->isRepairable(), 'un puits de pierre taillée, pourquoi pas');
 
         $building = (new BuildingType())->setRepairable(false);
-        $this->assertFalse($building->isRepairable(), 'une ruine décorative peut refuser la réparation');
+        $this->assertFalse($building->isRepairable(), 'une ruine se visite, elle ne se relève pas');
     }
 
     /**
