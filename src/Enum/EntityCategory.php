@@ -27,7 +27,12 @@ enum EntityCategory: string
         // sans étendre ce mapping doit échouer bruyamment, pas passer
         // silencieusement toutes les portes « character ».
         return match ($playerType) {
-            'building', 'unique', 'scenery', 'resource' => self::Structure,
+            /* `plant` manquait, et l'avertissement ci-dessus a tenu parole :
+             * cliquer une case fleurie levait, observe.php répondait 500 et le
+             * panneau ne bougeait pas — un clic sans effet, sans message. Une
+             * plante est POSÉE comme le reste (PlantType étend StructureType),
+             * elle n'est pas un interlocuteur. */
+            'building', 'unique', 'scenery', 'resource', 'plant' => self::Structure,
             'real', 'tutorial', 'npc', null => self::Character,
             default => throw new \ValueError("player_type inconnu : « {$playerType} » — étendre EntityCategory::fromPlayerType."),
         };
