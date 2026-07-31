@@ -5,18 +5,22 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Un type récoltable : arbre, pierre, tourbe.
+ * Une ressource : arbre, pierre, tourbe. Elle bloque le pas et se frappe.
  *
- * La seule famille à porter un rendement — ce qu'elle donne, à quel rythme
- * elle s'épuise et repousse. Poser un type suffit à ce qu'il rende quelque
- * chose ; un plan ne fait que dévier.
+ * Le nom dit la FAMILLE, comme son discriminant `resource` — et non ce qu'elle
+ * sait faire. Elle s'appelait `HarvestableType`, ce qui confondait les deux et
+ * serait devenu faux : les plantes se récolteront aussi sans être des
+ * ressources, étant marchables et ramassables.
  *
- * Ces trois colonnes vivaient sur le tronc, vides pour 86 lignes sur 128 : on
- * pouvait demander son rendement à une race de nain, qui répondait `null`.
- * Ici, la question ne se pose plus — elle ne compile pas.
+ * Ce qu'elle sait faire est donc dit par {@see Harvestable}, un contrat que
+ * d'autres familles rempliront sans descendre de celle-ci.
+ *
+ * Le rendement, lui, vivait sur le tronc, vide pour 86 lignes sur 128 : on
+ * pouvait demander le sien à une race de nain, qui répondait `null`. La
+ * question ne se pose plus — elle ne compile pas.
  */
 #[ORM\Entity]
-class HarvestableType extends StructureType
+class ResourceType extends StructureType implements Harvestable
 {
     /**
      * Ce que ce type rend à la récolte, et à quel rythme il s'épuise et

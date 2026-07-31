@@ -4,7 +4,8 @@ namespace Tests\Various;
 
 use App\Entity\BuildingType;
 use App\Entity\CharacterRace;
-use App\Entity\HarvestableType;
+use App\Entity\Harvestable;
+use App\Entity\ResourceType;
 use App\Entity\Race;
 use App\Entity\SceneryType;
 use App\Service\RaceService;
@@ -53,7 +54,7 @@ class TypeInheritanceTest extends TestCase
             Race::FAMILY_CHARACTER => CharacterRace::class,
             Race::FAMILY_BUILDING => BuildingType::class,
             Race::FAMILY_SCENERY => SceneryType::class,
-            Race::FAMILY_RESOURCE => HarvestableType::class,
+            Race::FAMILY_RESOURCE => ResourceType::class,
         ];
     }
 
@@ -99,7 +100,7 @@ class TypeInheritanceTest extends TestCase
             ['structure', 'edifice', BuildingType::class, Race::FAMILY_BUILDING],
             ['structure', 'obstacle', BuildingType::class, Race::FAMILY_BUILDING],
             ['structure', 'decor', SceneryType::class, Race::FAMILY_SCENERY],
-            ['structure', 'ressource', HarvestableType::class, Race::FAMILY_RESOURCE],
+            ['structure', 'ressource', ResourceType::class, Race::FAMILY_RESOURCE],
         ];
 
         foreach ($cases as [$kind, $nature, $class, $family]) {
@@ -141,7 +142,12 @@ class TypeInheritanceTest extends TestCase
 
         $type = (new RaceService())->getRaceByName((string) $withYield);
 
-        $this->assertInstanceOf(HarvestableType::class, $type);
+        $this->assertInstanceOf(ResourceType::class, $type, 'la famille, dite par le discriminant');
+        $this->assertInstanceOf(
+            Harvestable::class,
+            $type,
+            'et la CAPACITÉ, que les plantes rempliront aussi sans être des ressources'
+        );
         $this->assertNotSame('', $type->getHarvestItem(), 'et il rend bien ce que la base annonce');
     }
 

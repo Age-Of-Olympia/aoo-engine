@@ -80,7 +80,7 @@ EntityType (abstrait, table `races`)
 ├── CharacterRace   — jouable, faction, plan de départ, CARACS
 ├── BuildingType    — porte, dialogue, inscription
 ├── SceneryType     — rôle de case (cover), figure découpée
-└── HarvestableType — rendement, épuisement, repousse
+└── ResourceType — rendement, épuisement, repousse
     └── PlantType   — + taux de pousse, marchable (à venir)
 ```
 
@@ -112,9 +112,42 @@ $race->setHarvestItem($face->isResource() ? (string) ($_POST['harvest_item'] ?? 
 $type->applyForm($_POST);   // chaque classe sait ce qu'elle a à lire
 ```
 
-Et surtout, `HarvestableType::yield()` n'existe que là où il veut dire quelque
+Et surtout, `ResourceType::yield()` n'existe que là où il veut dire quelque
 chose. On ne peut plus demander son rendement à une race de nain — ce qui est
 aujourd'hui possible, et rend `null`.
+
+## 4 bis. Trois outils, trois questions
+
+L'héritage seul ne suffit pas, et l'avoir cru a coûté un aller-retour : le
+déplacement de `playable` chez `CharacterRace` a été écrit puis annulé le jour
+même, en apprenant que **les bâtiments défensifs deviendront jouables** par un
+écran de faction. « Jouable » ne désigne pas une branche de l'arbre — c'est une
+capacité que deux familles éloignées partageront.
+
+| Outil | Répond à | Exemple ici |
+|---|---|---|
+| **Héritage** | ce qu'un type EST | le discriminant, `familyKey()`, `StructureType` |
+| **Interface** | ce qu'il SAIT FAIRE | `Harvestable`, et `Playable` le jour venu |
+| **Trait** | comment il le fait | l'implémentation partagée, quand il y a deux implémenteurs |
+
+**Le nom d'une classe dit la FAMILLE, pas la capacité.** `HarvestableType` les
+confondait : son discriminant est `resource`, et les plantes se récolteront
+sans être des ressources. D'où `ResourceType implements Harvestable` — la
+famille dans le nom, la capacité dans le contrat.
+
+**Un trait PEUT porter des colonnes mappées, y compris entre frères d'une même
+table unique.** Je le croyais interdit (« duplicate definition of column ») ;
+c'est faux, vérifié sur une hiérarchie jetable : les métadonnées se chargent,
+le schéma se crée, l'aller-retour écriture/lecture passe. Un champ partagé par
+un ensemble de familles qui n'est PAS un sous-arbre — `playable` pour les
+peuples et les bâtiments défensifs — peut donc vivre dans un trait utilisé par
+ces deux-là seulement, au lieu de traîner sur le tronc où il ne veut rien dire
+pour les 112 autres lignes.
+
+**Quand poser le trait ?** Au deuxième implémenteur, pas au premier. Une
+interface se gagne dès qu'elle existe — un appelant peut dépendre de la capacité
+plutôt que d'une classe. Un trait à un seul utilisateur n'enlève aucune
+duplication et n'ajoute qu'un détour.
 
 ## 5. Stockage : table unique ou satellites ?
 

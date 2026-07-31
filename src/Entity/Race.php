@@ -33,7 +33,7 @@ use Doctrine\ORM\Mapping as ORM;
     'character' => CharacterRace::class,
     'building'  => BuildingType::class,
     'scenery'   => SceneryType::class,
-    'resource'  => HarvestableType::class,
+    'resource'  => ResourceType::class,
 ])]
 abstract class Race
 {
@@ -68,7 +68,7 @@ abstract class Race
         return match (true) {
             $kind !== 'structure' => new CharacterRace(),
             $structureNature === 'decor' => new SceneryType(),
-            $structureNature === 'ressource' => new HarvestableType(),
+            $structureNature === 'ressource' => new ResourceType(),
             default => new BuildingType(),
         };
     }

@@ -116,11 +116,10 @@ $applyForm = static function (Race $race) use ($face): string {
         $race->setReadableFromAfar(booleanCheckbox('readable_from_afar'));
         $race->setDefaultText(trim((string) ($_POST['default_text'] ?? '')));
     }
-    /* Rendement du type : seul un récoltable en a un, et c'est la CLASSE qui
-     * le dit désormais — plus le visage d'où l'on vient. Le vider rend le type
-     * muet jusqu'à ce qu'un plan le déclare ; les autres familles n'ont même
-     * plus la question à se poser, elle ne compile pas. */
-    if ($race instanceof \App\Entity\HarvestableType) {
+    /* Rendement du type : on s'adresse à ce qui SAIT SE RÉCOLTER, pas à une
+     * famille. Le vider rend le type muet jusqu'à ce qu'un plan le déclare ;
+     * ce qui ne se récolte pas n'a même plus la question à se poser. */
+    if ($race instanceof \App\Entity\Harvestable) {
         $race->setHarvestItem((string) ($_POST['harvest_item'] ?? ''));
         $race->setHarvestExhaust(trim((string) ($_POST['harvest_exhaust'] ?? '')) !== ''
             ? max(1, min(100, (int) $_POST['harvest_exhaust']))
