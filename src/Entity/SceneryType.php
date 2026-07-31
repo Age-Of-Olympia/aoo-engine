@@ -18,4 +18,16 @@ class SceneryType extends StructureType
     {
         return self::FAMILY_SCENERY;
     }
+
+    /**
+     * Un décor est POSÉ par quelqu'un : statue, mobilier, clôture. Ce qui a été
+     * dressé s'entretient, au même titre qu'un édifice.
+     *
+     * Ce qui POUSSE ou GÎT là — plantes, ressources — ne se répare pas : leur
+     * cycle est l'épuisement puis la repousse, pas l'entretien.
+     */
+    protected function repairableByDefault(): bool
+    {
+        return true;
+    }
 }

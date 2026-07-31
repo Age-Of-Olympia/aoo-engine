@@ -25,9 +25,11 @@ use Doctrine\Migrations\AbstractMigration;
  * suit tous ceux qui s'en remettent encore à elle, et cocher la case sur un
  * type précis l'emporte.
  *
- * Ce que ce lot CHANGE en jeu : seuls les bâtiments restent réparables. Décors
- * et ressources l'étaient par ricochet, sans que personne l'ait décidé ; ils ne
- * le sont plus, et la case de leur type suffit à le rétablir.
+ * Ce que ce lot CHANGE en jeu : reste réparable ce qui a été DRESSÉ par
+ * quelqu'un — bâtiments et décors. Ce qui pousse ou gît là ne l'est plus :
+ * ressources et plantes suivent l'épuisement et la repousse, pas l'entretien.
+ * Elles l'étaient par ricochet, sans que personne l'ait décidé ; la case de
+ * leur type suffit à le rétablir au cas par cas.
  *
  * La condition est posée en `display_context` : le bouton disparaît sur ce qui
  * ne se répare pas, au lieu de s'afficher et d'échouer au clic. Et en
