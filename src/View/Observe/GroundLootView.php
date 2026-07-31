@@ -50,16 +50,16 @@ final class GroundLootView
                 . $label . $state .'<br />';
         }
 
-        /* Sa propre case : on est déjà dessus, marcher n'est pas une option —
-         * bouton de ramassage direct (drop accidentel, plus besoin de sortir
-         * puis revenir). Ailleurs : le rappel marche-dessus. */
+        /* Le bouton n'apparaît que sur SA case : ramasser demande d'être
+         * dessus. Ailleurs, on dit où aller — et non plus « marchez dessus
+         * pour ramasser », qui décrivait le ramassage automatique. */
         if ($x === (int) $player->coords->x && $y === (int) $player->coords->y) {
             /* action--direct : échappe au cycle en deux temps de
              * js/observe.js — un clic ramasse, point. */
             echo '<button class="action action--direct" id="pickup-own-tile">'
                 . '<span class="ra ra-hand"></span> <span class="action-name">Ramasser</span></button>';
         } else {
-            echo '<sup>Marchez sur la case pour ramasser.</sup>';
+            echo '<sup>Allez sur la case pour pouvoir ramasser.</sup>';
         }
 
         echo '</div></div>';
