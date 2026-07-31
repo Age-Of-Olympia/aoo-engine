@@ -1922,90 +1922,13 @@ class Player implements ActorInterface {
 
     public function death(){
 
-
-        // drop loot
-        $sql = '
-        SELECT
-        item_id, n, equiped,
-        i.name, i.lootChance
-        FROM
-        players_items AS pi
-        INNER JOIN
-        items AS i
-        ON
-        pi.item_id = i.id
-        WHERE
-        player_id = ?
-        ';
+        /* Le butin part d'abord : ce que l'entité possédait tombe au sol,
+         * chaque objet selon sa chance. Le geste vit dans son propre service
+         * — un coffre qu'on casse répand son contenu de la même façon, sans
+         * rien connaître des enfers ni des effets à purger. */
+        (new \App\Service\LootSpillService())->spill($this);
 
         $db = new Db();
-
-        $res = $db->exe($sql, $this->id);
-
-        // loot list
-        $lootList = array();
-
-
-        while($row = $res->fetch_object()){
-
-            $loot = new Item($row->item_id, $row);
-
-            $loot->get_data();
-
-
-            // loot chance default
-            $lootChance = LOOT_CHANCE_DEFAULT;
-
-            // catalog loot chance (items.lootChance, ex-constante LOOT_CHANCE)
-            if(!empty($row->lootChance)){
-
-                $lootChance = (int) $row->lootChance;
-            }
-
-            // custom loot chance (source des stats : JSON legacy possible)
-            if(!empty($loot->data->lootChance)){
-
-                $lootChance = $loot->data->lootChance;
-            }
-
-            // equiped loot chance : half chance
-            if($row->equiped){
-                 // pnj will not drop equiped item
-                if($this->id < 0){
-                    $lootChance = 0;
-                }else{
-                    $lootChance = floor($lootChance / 2);
-                }
-            }else{
-                // if pnj and not equiped, will drop everytime
-                if($this->id < 0){
-                    $lootChance = 100;
-                }
-            }
-
-            // perform loot
-            $nbLoot = 0;
-            if ($lootChance >=100) {
-                $nbLoot= $row->n;
-            } else {
-                for ($i = 0; $i < $row->n; $i++) {
-                    if(random_int(1,100) <= $lootChance){
-                        $nbLoot++;
-                    }
-                }
-            }
-
-            if ($nbLoot > 0) {
-                $this->drop($loot, $nbLoot);
-                // populate lootList
-                $lootList[] = $loot->data->name .' x'. $nbLoot;
-            }
-        }
-
-        if(count($lootList)){
-            $text = $this->data->name .' a perdu des objets: '. implode(', ', $lootList) .'.';
-            Log::put($this, $this, $text, type:"loot");
-        }
 
         // spawn to hell
         $coords = (object) array('x'=>0,'y'=>0,'z'=>0,'plan'=>'enfers');
