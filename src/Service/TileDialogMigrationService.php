@@ -293,21 +293,22 @@ class TileDialogMigrationService
      * Ce qui occupe la case sans être une entité.
      *
      * Le monde a trois familles de choses posées sur une case, et une
-     * seule sait porter quelque chose : les ENTITÉS (players). Les
-     * décors et les ressources sont dessinés, pas incarnés — ils n'ont
-     * ni inscription, ni dialogue, ni état. C'est ce que le passage des
-     * murs en entités avait commencé à corriger ; les décors attendent
-     * encore leur tour.
+     * seule sait porter quelque chose : les ENTITÉS (players). Le décor
+     * est dessiné, pas incarné — ni inscription, ni dialogue, ni état.
+     * C'est ce que le passage des murs puis des ressources en entités a
+     * corrigé pour elles ; les décors attendent encore leur tour.
      *
      * @return array{kind: string, name: string}|null
      */
     private function decorOn(int $coordsId): ?array
     {
-        foreach ([['map_foregrounds', 'le décor'], ['map_resources', 'la ressource']] as [$table, $label]) {
-            $res = $this->db->exe("SELECT name FROM {$table} WHERE coords_id = ? LIMIT 1", [$coordsId]);
-            if ($res && $res->num_rows) {
-                return ['kind' => $label, 'name' => (string) $res->fetch_object()->name];
-            }
+        /* Les ressources ont quitté cette recherche : devenues des entités,
+           elles sont trouvées par le test d'entité en amont, et peuvent donc
+           porter un texte. Reste le décor, qui attend son tour. */
+        $res = $this->db->exe('SELECT name FROM map_foregrounds WHERE coords_id = ? LIMIT 1', [$coordsId]);
+
+        if ($res && $res->num_rows) {
+            return ['kind' => 'le décor', 'name' => (string) $res->fetch_object()->name];
         }
 
         return null;

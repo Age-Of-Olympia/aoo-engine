@@ -116,8 +116,15 @@ class TutorialMapInstance
         }
 
 
-        // Step 4: Copy map_resources (resources like trees/stones)
-        $this->copyMapElements('resources', $coordsMapping, ['name', 'player_id', 'damages'], $templatePlan);
+        /* Step 4: les ressources du modèle, reposées sur l'instance.
+         *
+         * Ce n'est plus une copie de lignes : ce sont des entités, et copier
+         * `map_resources` ne rapportait plus rien — une instance de tutoriel
+         * naissait sans un seul arbre, et l'étape de récolte n'avait rien à
+         * récolter. Le réconciliateur relit le modèle et pose la même chose
+         * ici, aux mêmes (x, y, z). */
+        $resources = new \App\Service\Map\ResourceReconciler();
+        $resources->reconcile($instancePlanName, $resources->asPayloadRows($templatePlan));
 
         // Step 5: Spawn template NPCs from tutorial_npcs config (replaces
         // the legacy "copy any NPC sitting on plan='tutorial'" pass).

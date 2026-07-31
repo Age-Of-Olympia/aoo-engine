@@ -65,16 +65,6 @@ class BuildingService extends BaseService
     }
 
     /**
-     * « statue_heroique » → « Statue heroique », « arbre1 » → « Arbre » :
-     * les map_resources n'ont pas de libellé en base, on humanise leur code
-     * pour le message de tir bloqué.
-     */
-    private static function humanizeWallName(string $name): string
-    {
-        return ucfirst(str_replace('_', ' ', rtrim($name, '0123456789')));
-    }
-
-    /**
      * A cell whose role is only a drawing order never screens anything.
      *
      * The rest is left to `races.blocks_projectiles`, which already tells a
@@ -89,10 +79,11 @@ class BuildingService extends BaseService
      * entité dont la race arrête les projectiles
      * (races.blocks_projectiles : les structures par défaut, un
      * personnage seulement si sa race est cochée — par défaut les tirs
-     * passent), ou n'importe quel map_resources (arbre, pilier, statue… :
-     * tout ce qui bloque le pas bloque la flèche). Sert au refus du tir
-     * (DistanceCompute) et à l'affichage de la trajectoire sur le damier
-     * (observe).
+     * passent). Les ressources en font partie depuis leur conversion :
+     * arbre, pilier, statue arrêtent la flèche parce que leur type le dit,
+     * et non plus parce qu'ils vivaient dans une table à part. Sert au refus
+     * du tir (DistanceCompute) et à l'affichage de la trajectoire sur le
+     * damier (observe).
      *
      * @return array{tiles: list<array{int,int}>, blocker: ?array{int,int}, blockerName: ?string, blockers: list<array{int,int}>}
      */
@@ -150,15 +141,10 @@ class BuildingService extends BaseService
             }
         }
 
-        foreach ($conn->fetchAllAssociative(
-            'SELECT c.x, c.y, w.name
-             FROM map_resources w
-             JOIN coords c ON c.id = w.coords_id
-             WHERE ' . $tileFilter,
-            $tileParams
-        ) as $row) {
-            $blockersByTile[$row['x'] . ',' . $row['y']] ??= self::humanizeWallName((string) $row['name']);
-        }
+        /* La passe `map_resources` a disparu : ses objets sont des entités,
+           et la passe ci-dessus les voit déjà — les 42 types de ressource
+           portent `blocks_projectiles`, donc un arbre arrête toujours la
+           flèche, par la règle du catalogue au lieu d'une table à part. */
 
         /* A shot passes if some traversal is CLEAR — the shooter threads
          * through. Asking it per CELL ("is this one on both traversals?")

@@ -380,20 +380,6 @@ class View{
 
             UNION
 
-            /* Lignes posées par l\'éditeur, qui écrit encore ici. Les
-             * ressources du monde sont des entités et passent par la branche
-             * ci-dessus ; cette table est vide partout ailleurs. */
-            SELECT
-            id, name, coords_id,
-            "resources" AS whichTable,
-            99 AS tableOrder
-            FROM
-            map_resources
-            WHERE
-            coords_id IN ('. $inSightIdImploded .')
-
-            UNION
-
             SELECT
             id, name, coords_id,
             "foregrounds" AS whichTable,
