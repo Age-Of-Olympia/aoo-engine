@@ -28,9 +28,26 @@ final class ResourceReconciler
 {
     private Connection $conn;
 
-    public function __construct(?Connection $conn = null)
-    {
+    /** La famille réconciliée : `resource` par défaut, `plant` pour les fleurs. */
+    private string $family;
+
+    /** Où vivent les sprites de cette famille. */
+    private string $spriteDir;
+
+    public function __construct(
+        ?Connection $conn = null,
+        string $family = 'resource',
+        string $spriteDir = 'img/walls/'
+    ) {
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
+        $this->family = $family;
+        $this->spriteDir = $spriteDir;
+    }
+
+    /** Le réconciliateur des plantes — même geste, autre famille. */
+    public static function forPlants(?Connection $conn = null): self
+    {
+        return new self($conn, 'plant', 'img/plants/');
     }
 
     /**
@@ -113,9 +130,9 @@ final class ResourceReconciler
                FROM players p
                JOIN coords c ON c.id = p.coords_id
           LEFT JOIN resources r ON r.player_id = p.id
-              WHERE p.player_type = 'resource' AND c.plan = ?
+              WHERE p.player_type = ? AND c.plan = ?
            ORDER BY c.z, c.y, c.x, p.id",
-            [$plan]
+            [$this->family, $plan]
         );
 
         return array_map(
@@ -145,9 +162,9 @@ final class ResourceReconciler
             "SELECT p.id, p.race, c.z, c.x, c.y
                FROM players p
                JOIN coords c ON c.id = p.coords_id
-              WHERE p.player_type = 'resource' AND c.plan = ?
+              WHERE p.player_type = ? AND c.plan = ?
               ORDER BY p.id",
-            [$plan]
+            [$this->family, $plan]
         );
 
         $current = [];
@@ -210,11 +227,11 @@ final class ResourceReconciler
                 'race'     => $row['name'],
                 'coordsId' => $coordsId,
                 'name'     => $labels[$row['name']],
-                'avatar'   => 'img/walls/' . $row['name'] . '.png',
+                'avatar'   => $this->spriteDir . $row['name'] . '.png',
             ];
         }
 
-        $ids = (new EntityPlacementService($this->conn))->createMany('resource', $objects);
+        $ids = (new EntityPlacementService($this->conn))->createMany($this->family, $objects);
 
         /* An id can be recycled from a resource removed earlier in this very
          * import; its cached identity would outlive it. */

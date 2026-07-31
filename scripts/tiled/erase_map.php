@@ -5,7 +5,8 @@ use Classes\Db;
 //delete anything at coords given.
 /* « resources » a quitté cette liste : la table ne reçoit plus rien, ses
    objets sont des entités et se retirent plus bas, avec le décor. */
-$mapTypes = array('tiles','triggers','elements','dialogs','plants','foregrounds','routes');
+/* « plants » a quitté la liste avec « resources » : ce sont des entités. */
+$mapTypes = array('tiles','triggers','elements','dialogs','foregrounds','routes');
 
 $db = new Db();
 
@@ -36,4 +37,10 @@ while($building = $res->fetch_assoc()){
    la gomme les emporte comme elle emportait leurs lignes. */
 $resources = new ResourceObjectService();
 $resources->removeEntities($resources->idsOn((int) $coordsId));
+
+/* Et les plantes, pour la même raison. */
+$resources->removeEntities(array_map('intval', $db->exe(
+    "SELECT id FROM players WHERE player_type = 'plant' AND coords_id = ?",
+    array($coordsId)
+)->fetch_all(MYSQLI_COLUMN) ?: []));
 

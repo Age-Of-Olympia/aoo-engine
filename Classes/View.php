@@ -233,7 +233,7 @@ class View{
                     SELECT id, name, player_type, avatar, race
                     FROM players
                     WHERE coords_id IN ('. $inSightIdImploded .')
-                    AND player_type <> "scenery"
+                    AND player_type NOT IN ("scenery", "plant")
                 ');
                 while ($rowE = $resEntities->fetch_object()) {
                     $entitiesInSight[(int) $rowE->id] = $rowE;
@@ -343,14 +343,20 @@ class View{
             
             UNION
 
+            /* Les plantes sont des ENTITÉS, et le damier ignore ce détail :
+               elles gardent leur couche et leur profondeur — 97.5, donc SOUS le
+               personnage, puisque une fleur se marche dessus. Le nom vient de
+               `race` : le sprite se déduit du TYPE (img/plants/…), quand `name`
+               porte le libellé de exemplaire posé. */
             SELECT
-            id, name, coords_id,
+            id, race AS name, coords_id,
             "plants" AS whichTable,
             97.5 AS tableOrder
             FROM
-            map_plants
+            players
             WHERE
             coords_id IN ('. $inSightIdImploded .')
+            AND player_type = "plant"
 
             UNION
 
@@ -376,7 +382,7 @@ class View{
              * Letting it through here would draw it twice — and at 98, so
              * UNDER the resources and without its footprint: one 50x50 image
              * on its anchor cell alone. This filter stays. */
-            AND player_type <> "scenery"
+            AND player_type NOT IN ("scenery", "plant")
 
             UNION
 

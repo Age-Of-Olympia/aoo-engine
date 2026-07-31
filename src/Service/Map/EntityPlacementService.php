@@ -122,6 +122,7 @@ final class EntityPlacementService
         'unique'   => ['start' => 30000000, 'end' => 39999999],
         'scenery'  => ['start' => 40000000, 'end' => 49999999],
         'resource' => ['start' => 50000000, 'end' => 59999999],
+        'plant'    => ['start' => 60000000, 'end' => 69999999],
     ];
 
     /** First free id in the type's range, seen from this connection. */

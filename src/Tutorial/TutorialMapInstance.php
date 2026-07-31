@@ -2,6 +2,8 @@
 
 namespace App\Tutorial;
 
+use App\Service\Map\ResourceReconciler;
+
 use Doctrine\DBAL\Connection;
 use Classes\Db;
 
@@ -123,7 +125,7 @@ class TutorialMapInstance
          * naissait sans un seul arbre, et l'étape de récolte n'avait rien à
          * récolter. Le réconciliateur relit le modèle et pose la même chose
          * ici, aux mêmes (x, y, z). */
-        $resources = new \App\Service\Map\ResourceReconciler();
+        $resources = new ResourceReconciler();
         $resources->reconcile($instancePlanName, $resources->asPayloadRows($templatePlan));
 
         // Step 5: Spawn template NPCs from tutorial_npcs config (replaces
@@ -131,7 +133,11 @@ class TutorialMapInstance
         $this->spawnTemplateNpcs($instancePlanName);
 
         // Step 6: Copy other map elements if they exist on template map
-        $mapElementTypes = ['tiles', 'foregrounds', 'triggers', 'elements', 'dialogs', 'plants', 'routes'];
+        /* « plants » quitte la copie de lignes : ce sont des entités, reposées
+           par le réconciliateur comme les ressources. */
+        $resources->reconcile($instancePlanName, ResourceReconciler::forPlants()->asPayloadRows($templatePlan));
+
+        $mapElementTypes = ['tiles', 'foregrounds', 'triggers', 'elements', 'dialogs', 'routes'];
 
         foreach ($mapElementTypes as $type) {
             $count = $this->conn->fetchOne("

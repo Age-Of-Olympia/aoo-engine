@@ -530,6 +530,12 @@ class TiledMapService
                 continue;
             }
 
+            /* Les plantes aussi : même geste, autre famille. */
+            if ($layer === 'plants') {
+                $layers[$layer] = \App\Service\Map\ResourceReconciler::forPlants()->asPayloadRows($plan);
+                continue;
+            }
+
             $columns = 'm.name, c.x, c.y, c.z';
             $hasPlayerId = in_array('player_id', $spec['columns'], true);
             foreach ($spec['columns'] as $column) {

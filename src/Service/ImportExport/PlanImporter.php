@@ -33,12 +33,12 @@ final class PlanImporter implements ObjectImporter
     private const INSERT_BATCH = 500;
 
     /**
-     * La couche dont les lignes sont devenues des entités.
+     * Les couches dont les lignes sont devenues des entités.
      *
-     * Elle ne suit plus le chemin générique purge + INSERT : ses objets ont
-     * une identité et un état qu'un remplacement jetterait.
+     * Elles ne suivent plus le chemin générique purge + INSERT : leurs objets
+     * ont une identité et un état qu'un remplacement jetterait.
      */
-    private const ENTITY_LAYER = 'resources';
+    private const ENTITY_LAYERS = ['resources', 'plants'];
 
     private ?Db $db;
     private ?PlanConfigService $planConfig;
@@ -229,7 +229,7 @@ final class PlanImporter implements ObjectImporter
 
         // 1. Purge du contenu authoré (les lignes joueur restent)
         foreach (array_keys(TiledMapService::AUTHORABLE_LAYERS) as $layer) {
-            if ($layer === self::ENTITY_LAYER) {
+            if (in_array($layer, self::ENTITY_LAYERS, true)) {
                 continue;
             }
 
@@ -270,7 +270,7 @@ final class PlanImporter implements ObjectImporter
 
         // 3. Insertion des couches en lots
         foreach ($payload['layers'] as $layer => $rows) {
-            if ($layer === self::ENTITY_LAYER) {
+            if (in_array($layer, self::ENTITY_LAYERS, true)) {
                 continue;
             }
 
@@ -282,13 +282,19 @@ final class PlanImporter implements ObjectImporter
          * son état — épuisée, elle le reste et repousse à son heure. Le
          * réconciliateur écrit sur la connexion Doctrine, qui est celle que
          * Classes\Db enveloppe : même transaction, même rollback. */
-        $resources = (new ResourceReconciler())->reconcile($plan, $payload['layers'][self::ENTITY_LAYER] ?? []);
+        foreach ([
+            'resources' => new ResourceReconciler(),
+            'plants'    => ResourceReconciler::forPlants(),
+        ] as $layer => $reconciler) {
+            $result = $reconciler->reconcile($plan, $payload['layers'][$layer] ?? []);
 
-        if ($resources['unknown'] !== []) {
-            $report->warn(
-                $plan,
-                'Types absents du catalogue, non posés : ' . implode(', ', $resources['unknown']) . '.'
-            );
+            if ($result['unknown'] !== []) {
+                $report->warn(
+                    $plan,
+                    'Types absents du catalogue, non posés (' . $layer . ') : '
+                        . implode(', ', $result['unknown']) . '.'
+                );
+            }
         }
     }
 
@@ -376,7 +382,7 @@ final class PlanImporter implements ObjectImporter
         $total = (int) ($built->fetch_assoc()['n'] ?? 0);
 
         foreach (TiledMapService::AUTHORABLE_LAYERS as $layer => $spec) {
-            if ($layer === self::ENTITY_LAYER || !in_array('player_id', $spec['columns'], true)) {
+            if (in_array($layer, self::ENTITY_LAYERS, true) || !in_array('player_id', $spec['columns'], true)) {
                 continue;
             }
             $res = $this->db()->exe(

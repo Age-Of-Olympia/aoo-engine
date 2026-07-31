@@ -30,6 +30,9 @@ class PlantsService
     {
         //on recupère les triggers de type "grow" pour lesquels il n'y a pas de plants correspondant
         //(ni élément ni route : une plante n'y pousse pas)
+        /* Les plantes sont des entités : la case est libre quand aucune entité
+           de type `plant` ne s'y trouve. Chercher encore dans map_plants
+           reviendrait à trouver toutes les cases libres — et à semer partout. */
         $sql = "
         SELECT
         t.id AS id,
@@ -43,8 +46,8 @@ class PlantsService
         coords c
         ON
         t.coords_id = c.id
-        LEFT JOIN map_plants p
-        ON p.coords_id = c.id
+        LEFT JOIN players p
+        ON p.coords_id = c.id AND p.player_type = 'plant'
         LEFT JOIN map_elements e
         ON e.coords_id = c.id
         LEFT JOIN map_routes r
@@ -88,13 +91,20 @@ class PlantsService
         if(AUTO_GROW || self::roll($growTo) == 1)
         {
 
-            $values = array(
-                'name'=>$plante,
-                'coords_id'=>$coords
-            );
+            /* Une pousse est une ENTITÉ, posée comme les autres : le service
+               commun lui donne sa ligne, son identifiant dans la plage des
+               plantes, et sa case — `part`, où le type tranche, et le type dit
+               qu'on marche dessus. */
+            $label = (string) ($db->exe('SELECT label FROM races WHERE name = ?', $plante)
+                ->fetch_object()->label ?? '');
 
-            $db->insert('map_plants', $values);
-            
+            (new \App\Service\Map\EntityPlacementService())->create(
+                'plant',
+                $plante,
+                (int) $coords,
+                $label !== '' ? $label : $plante,
+                'img/plants/' . $plante . '.png'
+            );
         }
     }
 

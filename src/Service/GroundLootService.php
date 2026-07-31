@@ -61,16 +61,17 @@ class GroundLootService
             $instances[] = $row;
         }
 
-        /* Les plantes portent le NOM de l'objet qu'elles rendent : c'est ainsi
-         * que la récolte les traduisait en butin, et rien ne les relie à
-         * `items` autrement. */
+        /* Les plantes sont des entités : on lit `race`, le TYPE, et non plus le
+         * nom d'une ligne de couche. Ce que la plante rend se règle désormais
+         * sur ce type — le nom ne sert plus de configuration. */
         $plants = [];
         $res = $db->exe(
-            'SELECT p.id, p.name
-             FROM map_plants AS p
+            "SELECT p.id, p.race AS name
+             FROM players AS p
              INNER JOIN coords AS c ON p.coords_id = c.id
-             WHERE c.x = ? AND c.y = ? AND c.z = ? AND c.plan = ?
-             ORDER BY p.name',
+             WHERE p.player_type = 'plant'
+               AND c.x = ? AND c.y = ? AND c.z = ? AND c.plan = ?
+             ORDER BY p.race",
             [$x, $y, $z, $plan]
         );
         while ($row = $res->fetch_object()) {
@@ -151,7 +152,21 @@ class GroundLootService
     private function harvestPlants(Player $player, int $coordsId, object $logCoords): array
     {
         $db = new Db();
-        $res = $db->exe('SELECT id, name FROM map_plants WHERE coords_id = ?', $coordsId);
+
+        /* Ce que rend la plante vient de son TYPE, plus de son nom : le
+         * couplage par la chaîne — « une plante rend l'objet qui porte le même
+         * nom qu'elle » — a été rendu explicite au catalogue, et peut désormais
+         * dire autre chose. Le repli sur `race` ne sert qu'aux types qu'aucun
+         * rendement n'a encore réglés. */
+        $res = $db->exe(
+            "SELECT p.id, p.race, COALESCE(NULLIF(TRIM(r.harvest_item), ''), p.race) AS yields
+               FROM players p
+               LEFT JOIN races r
+                 ON r.name COLLATE utf8mb4_general_ci = p.race COLLATE utf8mb4_general_ci
+                AND r.type_kind = 'plant'
+              WHERE p.player_type = 'plant' AND p.coords_id = ?",
+            $coordsId
+        );
 
         if (!$res->num_rows) {
             return [];
@@ -162,7 +177,7 @@ class GroundLootService
 
         while ($row = $res->fetch_object()) {
 
-            $item = Item::get_item_by_name($row->name);
+            $item = Item::get_item_by_name($row->yields);
 
             /* Une plante dont l'objet a disparu du catalogue reste en terre :
              * la retirer sans rien donner en échange serait pire. */
@@ -174,7 +189,8 @@ class GroundLootService
             $item->add_item($player, $quantity);
             $item->get_data();
 
-            $db->delete('map_plants', ['id' => $row->id]);
+            /* L'entité s'en va ; ses cases suivent (ON DELETE CASCADE). */
+            $db->delete('players', ['id' => $row->id]);
 
             $label = ucfirst((string) $item->data->name) . ' x' . $quantity;
             $picked[] = $label;

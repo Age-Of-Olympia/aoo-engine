@@ -47,6 +47,17 @@ if($type == 'buildings'){
     $resources = new ResourceObjectService();
     $resources->removeEntities($resources->idsOn((int) $coordsId));
 
+} elseif ($type === 'plante') {
+
+    /* Une plante se retire comme une ressource : c'est une entité. Le canal
+       porte le nom de l'objet, donné par tile_info au bouton de suppression. */
+    (new \App\Service\Map\ResourceObjectService())->removeEntities(
+        array_map('intval', (new Db())->exe(
+            "SELECT id FROM players WHERE player_type = 'plant' AND coords_id = ?",
+            array($coordsId)
+        )->fetch_all(MYSQLI_COLUMN) ?: [])
+    );
+
 } elseif ($type === 'ombre') {
     /* Retirer UN cran d'ombre, pas toute l'ombre.
      *
@@ -60,7 +71,7 @@ if($type == 'buildings'){
     /* Le nom de table vient du POST : liste blanche stricte */
     /* map_resources a quitté la liste : ses objets sont des entités et
        passent par le canal « ressource » ci-dessus. */
-    if(!in_array($type, array('map_tiles','map_triggers','map_dialogs','map_elements','map_routes','map_foregrounds','map_plants'))){
+    if(!in_array($type, array('map_tiles','map_triggers','map_dialogs','map_elements','map_routes','map_foregrounds'))){
 
         exit('error type');
     }

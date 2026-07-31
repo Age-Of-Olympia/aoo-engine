@@ -26,7 +26,13 @@ select  coords_id as coords_id, 'map_routes' as type, name as name, NULL as para
 union
 select  coords_id as coords_id, 'map_foregrounds' as type, name as name, NULL as params from map_foregrounds where coords_id = ?
 union
-select  coords_id as coords_id, 'map_plants' as type, name as name, NULL as params from map_plants where coords_id = ?
+/* Les plantes sont des entités : elles se décrivent par leur type, comme
+   les ressources et les bâtiments. */
+select p.coords_id as coords_id, 'plante' as type, CONCAT(p.race, ' #', p.id) as name,
+       CONCAT('rend ', COALESCE(NULLIF(TRIM(r.harvest_item), ''), p.race)) as params
+from players p left join races r
+  on r.name COLLATE utf8mb4_general_ci = p.race COLLATE utf8mb4_general_ci and r.type_kind = 'plant'
+where p.player_type = 'plant' and p.coords_id = ?
 union
 select  p.coords_id as coords_id, 'buildings' as type, CONCAT(p.race, ' #', p.id) as name,
         CONCAT('état = ', b.build_state,

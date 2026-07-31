@@ -25,7 +25,12 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
         $link = $this->link;
 
         $link->executeStatement(
-            'DELETE p FROM map_plants p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ?',
+            'DELETE ec FROM entity_cells ec JOIN coords c ON c.id = ec.coords_id WHERE c.plan = ?',
+            [self::PLAN]
+        );
+        $link->executeStatement(
+            "DELETE p FROM players p JOIN coords c ON c.id = p.coords_id
+              WHERE p.player_type = 'plant' AND c.plan = ?",
             [self::PLAN]
         );
 
@@ -41,25 +46,29 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /** Une plante porte le nom de l'objet qu'elle rend : il doit exister. */
+    /** Un TYPE de plante au catalogue : c'est lui qui dit ce qu'elle rend. */
     private function somePlantName(): string
     {
         $name = $this->link->fetchOne(
-            'SELECT i.name FROM items i ORDER BY i.id LIMIT 1'
+            "SELECT name FROM races WHERE type_kind = 'plant' ORDER BY name LIMIT 1"
         );
 
         if ($name === false || $name === null) {
-            $this->markTestSkipped('Aucun objet au catalogue.');
+            $this->markTestSkipped('Aucun type de plante au catalogue.');
         }
 
         return (string) $name;
     }
 
+    /** Une plante posée est une ENTITÉ, comme la partie en pose. */
     private function plantAt(int $coordsId, string $name): void
     {
-        $this->link->executeStatement(
-            'INSERT INTO map_plants (coords_id, name) VALUES (?, ?)',
-            [$coordsId, $name]
+        (new \App\Service\Map\EntityPlacementService($this->link))->create(
+            'plant',
+            $name,
+            $coordsId,
+            ucfirst($name),
+            'img/plants/' . $name . '.png'
         );
     }
 
@@ -94,7 +103,10 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
         $this->assertNotEmpty($picked, 'la cueillette rend ce qu\'elle a pris');
         $this->assertSame(
             0,
-            (int) $this->link->fetchOne('SELECT COUNT(*) FROM map_plants WHERE coords_id = ?', [$coordsId])
+            (int) $this->link->fetchOne(
+                "SELECT COUNT(*) FROM players WHERE player_type = 'plant' AND coords_id = ?",
+                [$coordsId]
+            )
         );
         $this->assertSame([], (new GroundLootService())->listAt(2, 1, 0, self::PLAN)['plants']);
     }
@@ -108,7 +120,10 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
 
         $this->assertSame(
             1,
-            (int) $this->link->fetchOne('SELECT COUNT(*) FROM map_plants WHERE coords_id = ?', [$coordsId])
+            (int) $this->link->fetchOne(
+                "SELECT COUNT(*) FROM players WHERE player_type = 'plant' AND coords_id = ?",
+                [$coordsId]
+            )
         );
     }
 
