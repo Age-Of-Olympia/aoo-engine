@@ -68,7 +68,12 @@ final class Version20260731100000_ResourcesBecomeEntities extends AbstractMigrat
                 y INT NOT NULL,
                 PRIMARY KEY (wall_id),
                 KEY k_entity (entity_id)
-            ) ENGINE=InnoDB"
+            /* Le jeu de caractères est DÉCLARÉ : sans lui, une table aux
+             * colonnes écrites à la main prend le défaut de la BASE, latin1
+             * sur un hébergement ancien. La table naît puis disparaît avec la
+             * migration — le défaut ne laisse donc aucune trace à inspecter,
+             * et c'est ici qu'un déploiement est mort. */
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
         );
 
         $offset = $this->nextId();
