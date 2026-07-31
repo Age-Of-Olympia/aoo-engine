@@ -23,6 +23,23 @@ use PHPUnit\Framework\TestCase;
 class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
 {
     /**
+     * Les cas qui touchent une vraie ligne — ou un objet legacy, qui ouvre une
+     * connexion dès sa naissance — ont besoin du socle. Ailleurs, on saute.
+     */
+    private function bootstrapOrSkip(): \Doctrine\DBAL\Connection
+    {
+        try {
+            require_once __DIR__ . '/../../config/bootstrap.php';
+            $conn = \App\Entity\EntityManagerFactory::getEntityManager()->getConnection();
+            $conn->fetchOne('SELECT 1');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
+        }
+
+        return $conn;
+    }
+
+    /**
      * Ce qui a été DRESSÉ par quelqu'un s'entretient ; ce qui pousse ou gît
      * là, non — son cycle est l'épuisement puis la repousse.
      */
@@ -72,6 +89,49 @@ class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
         $this->assertFalse($plant->isRepairable());
     }
 
+    /**
+     * Un OBJET POSÉ reste réparable, et c'est le cas qui a failli passer.
+     *
+     * Un objet unique — coffre, arme lâchée — est une entité SANS type au
+     * catalogue : `UniqueObjectService` l'inscrit sous la race « objet », qui
+     * n'existe dans `races` pour personne. Une garde qui se contente
+     * d'interroger le catalogue rend donc `null`, refuse, et retire en silence
+     * une capacité que ces objets avaient.
+     *
+     * C'est aussi le seul endroit du jeu où réparer un OBJET a déjà un sens :
+     * posé sur le plateau, il porte sa durabilité comme un édifice ses PV.
+     */
+    public function testADroppedObjectStaysRepairable(): void
+    {
+        $condition = new \App\Action\Condition\RequiresRepairableTargetCondition();
+
+        $this->bootstrapOrSkip();
+
+        $verdict = function (string $playerType, string $race) use ($condition): bool {
+            $actor = new \Classes\Player(1);
+            $target = new \Classes\Player(2);
+            /* On fabrique la seule chose que la garde regarde, sans base :
+             * ce que porte la ligne `players`. */
+            $target->data = (object) ['player_type' => $playerType, 'race' => $race];
+
+            return $condition->check(
+                $actor,
+                $target,
+                new \App\Entity\ActionCondition(),
+                new \App\Action\Condition\ConditionObject()
+            )->isSuccess();
+        };
+
+        $this->assertTrue(
+            $verdict('unique', \App\Service\UniqueObjectService::ITEM_RACE),
+            'un coffre, une arme lâchée : posés, ils se réparent'
+        );
+
+        /* La même race SANS être un objet posé ne passe pas : c'est bien le
+         * player_type qui ouvre la porte, pas une chaîne magique. */
+        $this->assertFalse($verdict('scenery', \App\Service\UniqueObjectService::ITEM_RACE));
+    }
+
     /** La capacité est portée par les choses POSÉES, pas par les peuples. */
     public function testRepairabilityBelongsToPlacedThings(): void
     {
@@ -92,13 +152,7 @@ class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
      */
     public function testReparerCarriesTheConditionBeforeItsCost(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            $conn = \App\Entity\EntityManagerFactory::getEntityManager()->getConnection();
-            $conn->fetchOne('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
-        }
+        $conn = $this->bootstrapOrSkip();
 
         $rows = $conn->fetchAllAssociative(
             "SELECT conditionType, execution_order, blocking, display_context
