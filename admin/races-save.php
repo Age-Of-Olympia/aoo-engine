@@ -115,6 +115,12 @@ $applyForm = static function (Race $race) use ($face): string {
     if ($race instanceof \App\Entity\StructureType) {
         $race->setReadableFromAfar(booleanCheckbox('readable_from_afar'));
         $race->setDefaultText(trim((string) ($_POST['default_text'] ?? '')));
+
+        /* Réparable : TROIS états. Vide veut dire « je m'en remets à ma
+         * famille » et doit rester null — le confondre avec « non » couperait
+         * le type de sa famille à la première sauvegarde, en silence. */
+        $repairable = (string) ($_POST['repairable'] ?? '');
+        $race->setRepairable($repairable === '' ? null : $repairable === '1');
     }
     /* Rendement du type : on s'adresse à ce qui SAIT SE RÉCOLTER, pas à une
      * famille. Le vider rend le type muet jusqu'à ce qu'un plan le déclare ;

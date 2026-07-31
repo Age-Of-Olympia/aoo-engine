@@ -425,6 +425,23 @@ HTML;
         . ' title="Décoché (défaut des personnages) : les tirs passent. Coché : fait écran sur la ligne de tir."> Bloque les tirs</label> '
         . ($face->isStructure() ? '' : '<label class="mr-3"><input type="checkbox" name="playable" '
             . checked($isEdit && $race->getPlayable()) . '> Jouable (proposée à l\'inscription)</label>')
+        /* Trois états et non deux : « selon la famille » n'est pas « non ».
+           Un simple oui/non écraserait la nuance dès la première sauvegarde,
+           et le type cesserait de suivre sa famille sans que personne l'ait
+           demandé. */
+        . ($face->isStructure()
+            ? '<label class="mr-3">Réparable <select name="repairable" class="form-control form-control-sm d-inline-block w-auto"'
+                . ' title="Ce qui a été bâti se répare. Un rocher, un décor ou une fleur, non — sauf à le dire ici.">'
+                . '<option value=""' . (!$isEdit || !($race instanceof StructureType) || $race->getRepairableOverride() === null ? ' selected' : '') . '>'
+                . 'Selon la famille'
+                . ($isEdit && $race instanceof StructureType
+                    ? ' (' . ($race->repairableFamilyDefault() ? 'oui' : 'non') . ')'
+                    : '')
+                . '</option>'
+                . '<option value="1"' . ($isEdit && $race instanceof StructureType && $race->getRepairableOverride() === true ? ' selected' : '') . '>Oui</option>'
+                . '<option value="0"' . ($isEdit && $race instanceof StructureType && $race->getRepairableOverride() === false ? ' selected' : '') . '>Non</option>'
+                . '</select></label> '
+            : '')
         . ($face->isStructure()
             ? '<label class="mr-3"><input type="checkbox" name="readable_from_afar" '
                 . checked($race instanceof StructureType && $race->isReadableFromAfar())
