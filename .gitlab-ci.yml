@@ -313,7 +313,17 @@ deploy-job-non-prod:
   script:
     # Single-quoted: the "X-Deploy-Token: ..." header contains a colon-space,
     # which would otherwise make YAML parse this line as a map, not a string.
-    - 'curl ${CURL_OPTS} -X POST -H "X-Deploy-Token: ${DEPLOY_KEY_PASS}" "https://${DEPLOY_HOST}/admin/deploy.php?type=code&ci&env_branch=${CI_COMMIT_REF_NAME}"'
+    #
+    # --fail-with-body est ESSENTIEL, et son absence a coûté une journée :
+    # deploy.php répond 500 quand le script serveur échoue (branche divergente,
+    # fast-forward impossible, dépendances), mais un curl sans --fail sort avec
+    # le code 0 — le job passait au vert pendant que le serveur restait sur du
+    # code vieux de plusieurs heures. `${CURL_OPTS}` n'était défini nulle part
+    # dans ce fichier : la garde dépendait d'une variable de projet invisible.
+    #
+    # --fail-with-body plutôt que -f : on veut AUSSI le corps de la réponse,
+    # qui porte la sortie du script de déploiement et donc la vraie cause.
+    - 'curl --fail-with-body --show-error --silent ${CURL_OPTS} -X POST -H "X-Deploy-Token: ${DEPLOY_KEY_PASS}" "https://${DEPLOY_HOST}/admin/deploy.php?type=code&ci&env_branch=${CI_COMMIT_REF_NAME}"'
   rules:
     - if: $CI_COMMIT_REF_NAME == "staging" && $CI_MERGE_REQUEST_ID == null
       variables:
