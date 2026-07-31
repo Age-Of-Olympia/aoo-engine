@@ -140,9 +140,20 @@ fait sur les classes — l'inverse n'est pas vrai.
 
 Chaque étape est déployable seule et ne casse rien derrière elle.
 
-1. **Le discriminant.** Migration : colonne `type_kind`, remplie par la règle
-   du §3, plus un test qui vérifie qu'aucune ligne ne reste sans famille.
-   Rien ne le lit encore.
+1. **Le discriminant.** Migration : colonne `type_kind` **générée** — la règle
+   du §3 vit dans la définition de la colonne, pas dans un `UPDATE`. Rien ne
+   la lit encore.
+
+   *La première version remplissait une colonne ordinaire par `UPDATE`. La CI
+   l'a refusée : une suite complète insère des races en cours de route, après
+   le passage de la migration, et ces lignes-là naissaient sans famille. Le
+   trou n'était pas de test — `RaceImporter`, `RaceSeedService` et l'écran
+   d'admin insèrent eux aussi des races sans rien savoir de la colonne. Un
+   écrivain peut oublier, le schéma non.*
+
+   Conséquence pour l'étape 2 : Doctrine devra ÉCRIRE le discriminant, donc
+   une colonne générée ne conviendra plus. La migration de l'étape 2 la fige
+   en colonne ordinaire, en reprenant la valeur calculée ici.
 2. **Le tronc et les classes.** Doctrine : `EntityType` abstrait, quatre
    sous-classes, mêmes getters qu'aujourd'hui. `RaceService` reste la porte
    d'entrée unique et rend désormais des sous-classes.
@@ -214,9 +225,33 @@ lot.
 
 ## 8. Points durs
 
+- **Des associations Doctrine visent déjà `Race`, et par ID.** Recensées avec
+  `find_referencing_symbols` — **81 références dans 29 fichiers** :
+  `RaceNameListEntry` porte un `ManyToOne(targetEntity: Race::class)` avec une
+  vraie clé étrangère `race_id ... onDelete: CASCADE`, et `Recipe` un
+  `ManyToMany(targetEntity: Race::class, mappedBy: "recipes")`.
+
+  C'est le point dur numéro un, et il est contre-intuitif : **une association
+  qui vise un tronc STI ne se résout plus pareil**. Doctrine doit choisir la
+  sous-classe au chargement, les jointures passent par le discriminant, et une
+  relation déclarée vers la racine acceptera désormais n'importe quelle
+  famille — un `RaceNameListEntry` pourrait pointer un type de bâtiment là où
+  seule une race de personnage a du sens.
+
+  À trancher avec l'étape 2 : ces relations visent-elles la RACINE (souple,
+  mais elles cessent de dire ce qu'elles acceptent) ou `CharacterRace`
+  (honnête, et Doctrine le vérifie) ? Réponse a priori : `CharacterRace`, car
+  liste de noms et recettes n'ont de sens que pour des peuples.
+
+  *Note de méthode : deux `grep` bien intentionnés — `new Race(` et une regex
+  de type hints — avaient rendu 9 et 38 résultats et manqué TOUTES ces
+  associations, qu'aucun motif de type hint ne pouvait voir. Recenser un
+  symbole se fait au langage, pas au texte.*
+
 - **`players.race` est une chaîne.** L'identité d'un type est son nom, pas son
-  id. Rien dans ce lot n'y touche, mais il faut le savoir : le discriminant ne
-  devient pas la clé.
+  id — et c'est ce qui rend l'incohérence visible : les entités modernes
+  pointent `races.id`, le legacy pointe `races.name`. Rien dans ce lot n'y
+  touche, mais il faut le savoir : le discriminant ne devient pas la clé.
 - **`RaceService` est la seule porte** (CLAUDE.md) — c'est ce qui rend le lot
   faisable. Toute lecture directe de `races` trouvée en chemin est à ramener
   par là AVANT de déplacer un champ.

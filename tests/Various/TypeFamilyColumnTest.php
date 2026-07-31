@@ -80,6 +80,42 @@ class TypeFamilyColumnTest extends TestCase
         }
     }
 
+    /**
+     * Un type créé APRÈS la migration porte sa famille tout seul.
+     *
+     * C'est le cas que la CI a levé et que la machine de dev ne pouvait pas
+     * voir : une suite complète insère des races en cours de route, sans rien
+     * savoir de cette colonne. Avec un simple `UPDATE` au moment de la
+     * migration, ces lignes-là naissaient sans famille — et `RaceImporter`,
+     * `RaceSeedService` et l'écran d'admin sont dans le même cas en
+     * production. La colonne est donc GÉNÉRÉE : l'écrivain n'a rien à savoir.
+     */
+    public function testARaceInsertedAfterwardsStillHasItsFamily(): void
+    {
+        $name = 'gm_famille_' . bin2hex(random_bytes(4));
+
+        try {
+            /* Volontairement sans mentionner type_kind : c'est le geste des
+             * écrivains existants. */
+            $this->conn->executeStatement(
+                "INSERT INTO races (code, name, label, description, playable, hidden, kind,
+                                    structure_nature, bleeds, wound_color, blocks_passage,
+                                    blocks_projectiles, bgColor, color, faction, plan, pv)
+                 VALUES ('GM_FAM', ?, 'Gm famille', '', 0, 1, 'structure', 'ressource',
+                         '', '#cd7f32', 1, 1, '#8a8a8a', 'black', '', '', 10)",
+                [$name]
+            );
+
+            $this->assertSame(
+                TypeEditorFace::RESOURCE,
+                $this->conn->fetchOne('SELECT type_kind FROM races WHERE name = ?', [$name]),
+                'une race insérée sans connaître la colonne doit tout de même porter sa famille'
+            );
+        } finally {
+            $this->conn->executeStatement('DELETE FROM races WHERE name = ?', [$name]);
+        }
+    }
+
     /** Les quatre familles, et rien d'autre. */
     public function testOnlyTheFourKnownFamiliesAreWritten(): void
     {
