@@ -12,7 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
  * que cette famille.
  */
 #[ORM\Entity]
-class SceneryType extends Race
+class SceneryType extends StructureType
 {
     public function familyKey(): string
     {

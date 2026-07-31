@@ -313,9 +313,12 @@ class BuildingService extends BaseService
                 "Type inconnu : '{$type}' (aucune entrée de ce nom au catalogue races)."
             );
         }
-        if (!$race->isStructureKind()) {
+        /* La CLASSE tranche, plus la colonne `kind` : un type qui n'est pas une
+         * structure ne peut pas être posé, et l'analyse statique le sait — ce
+         * qui rend lisible, plus bas, la lecture de son inscription par défaut. */
+        if (!$race instanceof \App\Entity\StructureType) {
             throw new \InvalidArgumentException(
-                "'{$type}' n'est pas un type de structure (races.kind) — une race de personnage ne peut pas être posée en bâtiment."
+                "'{$type}' n'est pas un type de structure — une race de personnage ne peut pas être posée en bâtiment."
             );
         }
 
@@ -551,7 +554,9 @@ class BuildingService extends BaseService
 
         $race = (new RaceService())->getRaceByName((string) ($entity->data->race ?? ''));
 
-        return $race?->isReadableFromAfar() ?? false;
+        /* Seule une chose posée porte une inscription : un peuple n'en a pas,
+         * et la question ne se pose plus pour lui. */
+        return $race instanceof \App\Entity\StructureType && $race->isReadableFromAfar();
     }
 
     /**

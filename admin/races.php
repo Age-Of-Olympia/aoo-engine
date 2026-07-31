@@ -24,6 +24,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Entity\HarvestableType;
 use App\Entity\Race;
+use App\Entity\StructureType;
 use App\View\Admin\TypeEditorFace;
 use App\Enum\ImageType;
 use App\Service\ActionService;
@@ -405,7 +406,7 @@ HTML;
             . checked($isEdit && $race->getPlayable()) . '> Jouable (proposée à l\'inscription)</label>')
         . ($face->isStructure()
             ? '<label class="mr-3"><input type="checkbox" name="readable_from_afar" '
-                . checked($isEdit && $race->isReadableFromAfar())
+                . checked($race instanceof StructureType && $race->isReadableFromAfar())
                 . ' title="Coché : ce qui est inscrit sur ce type d\'objet se lit sans s\'approcher (pancarte, enseigne).'
                 . ' Décoché : il faut être sur une case voisine (plaque gravée, épitaphe)."> Inscription lisible de loin</label> '
             : '')
@@ -441,7 +442,7 @@ HTML;
             ? '<div class="form-group col-12"><label>Inscription par défaut</label>'
                 . '<textarea class="form-control" name="default_text" rows="2"'
                 . ' placeholder="Ce qu\'un exemplaire NEUF de ce type porte déjà d\'inscrit. Vide : il naît muet.">'
-                . e($isEdit ? $race->getDefaultText() : '') . '</textarea>'
+                . e($race instanceof StructureType ? $race->getDefaultText() : '') . '</textarea>'
                 . '<small class="form-text text-muted">Copiée à la pose, puis libre :'
                 . ' changer ce défaut ne réécrit pas ce qui est déjà posé.</small></div>'
             : '')

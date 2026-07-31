@@ -112,8 +112,10 @@ $applyForm = static function (Race $race) use ($face): string {
     /* Inscription : ce qu'un exemplaire neuf porte déjà, et jusqu'où on
      * peut le lire. Réservé aux types de DÉCOR — un personnage écrit
      * son message du jour lui-même. */
-    $race->setReadableFromAfar($kind === 'structure' && booleanCheckbox('readable_from_afar'));
-    $race->setDefaultText($kind === 'structure' ? trim((string) ($_POST['default_text'] ?? '')) : '');
+    if ($race instanceof \App\Entity\StructureType) {
+        $race->setReadableFromAfar(booleanCheckbox('readable_from_afar'));
+        $race->setDefaultText(trim((string) ($_POST['default_text'] ?? '')));
+    }
     /* Rendement du type : seul un récoltable en a un, et c'est la CLASSE qui
      * le dit désormais — plus le visage d'où l'on vient. Le vider rend le type
      * muet jusqu'à ce qu'un plan le déclare ; les autres familles n'ont même

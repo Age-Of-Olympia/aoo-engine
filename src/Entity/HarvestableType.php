@@ -16,7 +16,7 @@ use Doctrine\ORM\Mapping as ORM;
  * Ici, la question ne se pose plus — elle ne compile pas.
  */
 #[ORM\Entity]
-class HarvestableType extends Race
+class HarvestableType extends StructureType
 {
     /**
      * Ce que ce type rend à la récolte, et à quel rythme il s'épuise et

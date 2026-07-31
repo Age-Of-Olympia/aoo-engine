@@ -11,7 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
  * — alors qu'elle n'en avait aucun pour un personnage.
  */
 #[ORM\Entity]
-class BuildingType extends Race
+class BuildingType extends StructureType
 {
     public function familyKey(): string
     {

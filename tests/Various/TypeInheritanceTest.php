@@ -146,6 +146,26 @@ class TypeInheritanceTest extends TestCase
     }
 
     /**
+     * L'inscription appartient à ce qui est POSÉ, pas à un peuple.
+     *
+     * Les trois familles de choses posées la partagent : elles descendent donc
+     * d'un intermédiaire, miroir de `Structure` du côté objet. Un peuple écrit
+     * son message du jour lui-même et n'a que faire de ces colonnes.
+     *
+     * Une seule assertion, et c'est voulu : que les trois familles descendent
+     * bien de l'intermédiaire, le langage le garantit et PHPStan le prouve —
+     * l'écrire en test n'apprend rien. Reste ce que l'analyse ne peut pas
+     * garder : que personne ne REMETTE l'inscription sur le tronc.
+     */
+    public function testTheTrunkDoesNotCarryAnInscription(): void
+    {
+        $this->assertFalse(
+            method_exists(Race::class, 'isReadableFromAfar'),
+            'le tronc ne doit plus porter l\'inscription : elle ne concerne que ce qui est posé'
+        );
+    }
+
+    /**
      * Un personnage se moque de `structure_nature`, et c'est le sujet.
      *
      * Seize races portent `edifice` sans être des bâtiments : la colonne ne
