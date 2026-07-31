@@ -91,15 +91,16 @@ if($refusal !== null){
 }
 
 
+/* Les plantes ont quitté cette union : marcher sur une fleur ne la cueille
+   plus. Elle rejoint la bourse au sol, et le bouton la ramasse — comme un
+   objet posé là. Restent les déclencheurs, qui eux se déclenchent au pas. */
 $sql = '
 SELECT *, "triggers" AS whichTable FROM map_triggers WHERE coords_id = ? and name != "grow"
-UNION
-SELECT *, "plants" AS whichTable FROM map_plants WHERE coords_id = ?
 
 ORDER BY id DESC
 ';
 
-$res = $db->exe($sql, array($coordsId, $coordsId));
+$res = $db->exe($sql, array($coordsId));
 $db->beginTransaction();
 if($res->num_rows){
 
@@ -107,34 +108,15 @@ if($res->num_rows){
     while($row = $res->fetch_object()){
 
 
-        if($row->whichTable == 'triggers'){
+        $path = 'scripts/map/triggers/'. $row->name .'.php';
 
+        if(!file_exists($path)){
 
-            $path = 'scripts/map/triggers/'. $row->name .'.php';
-
-            if(!file_exists($path)){
-
-                exit('error trigger path');
-            }
-
-            $triggerId = $row->id;
-            $params = $row->params;
+            exit('error trigger path');
         }
 
-        elseif($row->whichTable == 'plants'){
-
-
-            $path = 'scripts/map/plants.php';
-
-            if(!file_exists($path)){
-
-                exit('error plant path');
-            }
-
-            $plantId = $row->id;
-            $name = $row->name;
-        }
-
+        $triggerId = $row->id;
+        $params = $row->params;
 
         include($path);
     }

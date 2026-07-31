@@ -8,10 +8,17 @@ use Classes\Log;
 use Classes\Player;
 
 /**
- * Ramassage du contenu d'une case : piles map_items ET instances au
- * sol, en un seul geste. Extrait de go.php (arrivée sur la case) pour
- * servir aussi pickup.php — ramasser SA PROPRE case (objet lâché par
- * erreur) sans devoir sortir puis revenir.
+ * Ramassage du contenu d'une case : piles map_items, instances au sol ET
+ * plantes, en un seul geste.
+ *
+ * Les plantes ont rejoint la bourse au sol quand marcher a cessé de
+ * ramasser : elles se récoltaient toutes seules au passage, par un chemin
+ * à part (go.php incluait scripts/map/plants.php). Une fleur se cueille
+ * maintenant comme un objet se ramasse — on la voit, on la prend.
+ *
+ * Ce qu'une plante rapporte reste tiré au sort à la récolte, et son
+ * journal reste de type « harvest » : cueillir n'est pas ramasser, même
+ * si le geste est le même.
  */
 class GroundLootService
 {
@@ -20,7 +27,7 @@ class GroundLootService
      * piles map_items et instances — le pendant read-only de collect(),
      * même périmètre.
      *
-     * @return array{stacks: array<int, object>, instances: array<int, object>}
+     * @return array{stacks: array<int, object>, instances: array<int, object>, plants: array<int, object>}
      */
     public function listAt(int $x, int $y, int $z, string $plan): array
     {
@@ -54,7 +61,23 @@ class GroundLootService
             $instances[] = $row;
         }
 
-        return ['stacks' => $stacks, 'instances' => $instances];
+        /* Les plantes portent le NOM de l'objet qu'elles rendent : c'est ainsi
+         * que la récolte les traduisait en butin, et rien ne les relie à
+         * `items` autrement. */
+        $plants = [];
+        $res = $db->exe(
+            'SELECT p.id, p.name
+             FROM map_plants AS p
+             INNER JOIN coords AS c ON p.coords_id = c.id
+             WHERE c.x = ? AND c.y = ? AND c.z = ? AND c.plan = ?
+             ORDER BY p.name',
+            [$x, $y, $z, $plan]
+        );
+        while ($row = $res->fetch_object()) {
+            $plants[] = $row;
+        }
+
+        return ['stacks' => $stacks, 'instances' => $instances, 'plants' => $plants];
     }
 
     /**
@@ -75,8 +98,12 @@ class GroundLootService
         $lootList = (new ItemInstanceService())->collectAt($coordsId, (int) $player->id);
         $hadInstances = count($lootList) > 0;
 
+        /* Les plantes se cueillent dans le même geste, mais gardent leur
+         * journal : la récolte n'est pas le ramassage. */
+        $harvest = $this->harvestPlants($player, $coordsId, $logCoords);
+
         if (!$res->num_rows && !$hadInstances) {
-            return [];
+            return $harvest;
         }
 
         while ($row = $res->fetch_object()) {
@@ -106,6 +133,70 @@ class GroundLootService
             $player->coords = $coordBackup;
         }
 
-        return $lootList;
+        return array_merge($lootList, $harvest);
+    }
+
+    /**
+     * Cueillir les plantes de la case : chacune rend 1 à 3 de l'objet dont
+     * elle porte le nom, puis disparaît.
+     *
+     * Le tirage, le libellé et le journal « harvest » viennent de
+     * scripts/map/plants.php, que le déplacement incluait à l'arrivée. Seul
+     * le déclencheur change : on ne cueille plus en passant.
+     *
+     * @param object $logCoords coords {x,y,z,plan} portées par le journal
+     *
+     * @return string[] libellés de ce qui a été cueilli ([] = aucune plante)
+     */
+    private function harvestPlants(Player $player, int $coordsId, object $logCoords): array
+    {
+        $db = new Db();
+        $res = $db->exe('SELECT id, name FROM map_plants WHERE coords_id = ?', $coordsId);
+
+        if (!$res->num_rows) {
+            return [];
+        }
+
+        $picked = [];
+        $texts = [];
+
+        while ($row = $res->fetch_object()) {
+
+            $item = Item::get_item_by_name($row->name);
+
+            /* Une plante dont l'objet a disparu du catalogue reste en terre :
+             * la retirer sans rien donner en échange serait pire. */
+            if ($item === false) {
+                continue;
+            }
+
+            $quantity = rand(1, 3);
+            $item->add_item($player, $quantity);
+            $item->get_data();
+
+            $db->delete('map_plants', ['id' => $row->id]);
+
+            $label = ucfirst((string) $item->data->name) . ' x' . $quantity;
+            $picked[] = $label;
+            $texts[] = $player->data->name . ' a récolté ' . $label . '.';
+        }
+
+        if ($texts === []) {
+            return [];
+        }
+
+        /* Log::put lit les coords sur l'objet joueur — même substitution que
+         * pour le butin, et même restauration quoi qu'il arrive. */
+        $coordBackup = $player->coords ?? null;
+        $player->coords = $logCoords;
+        try {
+            foreach ($texts as $text) {
+                Log::put($player, $player, $text, 'harvest');
+            }
+        } finally {
+            $player->coords = $coordBackup;
+        }
+
+        return $picked;
     }
 }
