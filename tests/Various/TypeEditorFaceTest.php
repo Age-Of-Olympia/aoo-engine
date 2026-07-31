@@ -14,9 +14,17 @@ use PHPUnit\Framework\TestCase;
  */
 class TypeEditorFaceTest extends TestCase
 {
+    /**
+     * Le type que ce couple de colonnes décrit — classe comprise.
+     *
+     * `of()` ne déduit plus la famille des colonnes : elle la demande à la
+     * classe. Le test passe donc par la seule dérivation qui reste,
+     * {@see Race::ofFamily()}, et vérifie la chaîne entière — couple de
+     * colonnes, classe, visage — au lieu d'une règle recopiée.
+     */
     private function race(string $kind, string $nature = 'edifice'): Race
     {
-        $race = new Race();
+        $race = Race::ofFamily($kind, $nature);
         $race->setKind($kind);
         $race->setStructureNature($nature);
 

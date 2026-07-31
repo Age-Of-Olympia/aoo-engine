@@ -2,6 +2,7 @@
 
 namespace Tests\Various;
 
+use App\Entity\CharacterRace;
 use App\Entity\Race;
 use App\Service\RaceService;
 use Doctrine\DBAL\Connection;
@@ -103,7 +104,7 @@ class RaceServiceTest extends TestCase
         $this->deleteRace($name);
 
         try {
-            $race = new Race();
+            $race = new CharacterRace();
             $race->setName($name);
             $race->setCode(strtoupper($name));
             $race->setLabel('Race de test');

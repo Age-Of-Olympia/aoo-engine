@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Entity\CharacterRace;
 use App\Entity\EntityManagerFactory;
 use App\Entity\Race;
 use Doctrine\ORM\EntityManagerInterface;
@@ -164,7 +165,9 @@ class RaceSeedService
         $isNew = $race === null;
 
         if ($isNew) {
-            $race = new Race();
+            /* Ce semis ne verse que des PEUPLES : il lit les JSON de races,
+               d'où sortent des personnages et rien d'autre. */
+            $race = new CharacterRace();
             $race->setName($name);
             $race->setCode(strtoupper($name));
             $race->setPlayable(in_array($name, self::PLAYABLE, true));

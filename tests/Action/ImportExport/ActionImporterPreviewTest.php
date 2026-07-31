@@ -7,6 +7,7 @@ use App\Action\OutcomeInstruction\LifeLossOutcomeInstruction;
 use App\Entity\Action;
 use App\Entity\ActionCondition;
 use App\Entity\ActionOutcome;
+use App\Entity\CharacterRace;
 use App\Entity\Race;
 use App\Service\ImportExport\ActionExporter;
 use App\Service\ImportExport\ActionImporter;
@@ -170,7 +171,7 @@ class ActionImporterPreviewTest extends TestCase
 
         $raceRepo = $this->createMock(EntityRepository::class);
         $raceRepo->method('findOneBy')->willReturnCallback(
-            static fn (array $criteria): ?Race => in_array($criteria['name'] ?? null, $knownRaces, true) ? new Race() : null
+            static fn (array $criteria): ?Race => in_array($criteria['name'] ?? null, $knownRaces, true) ? new CharacterRace() : null
         );
 
         $em = $this->createMock(EntityManagerInterface::class);

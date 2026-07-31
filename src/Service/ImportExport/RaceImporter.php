@@ -67,7 +67,13 @@ final class RaceImporter extends AbstractObjectImporter
 
         $race = $this->entityManager->getRepository(Race::class)->findOneBy(['name' => $name]);
         if ($race === null) {
-            $race = new Race();
+            /* La famille se fixe à la création, depuis ce que le bundle
+               annonce : un type importé naît dans sa déclinaison, il n'y est
+               pas déplacé après coup. */
+            $race = Race::ofFamily(
+                ($plan['kind'] ?? '') === 'structure' ? 'structure' : 'character',
+                (string) ($plan['structureNature'] ?? '')
+            );
             $race->setName($name);
             $race->setCode(strtoupper($name));
             $race->setPlayable(false);

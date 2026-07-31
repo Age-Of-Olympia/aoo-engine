@@ -187,7 +187,14 @@ if ($action === 'create') {
         redirectTo($backPage);
     }
 
-    $race = new Race();
+    /* La famille se choisit à la création : c'est le visage d'où l'on vient
+       qui la dit, et elle ne changera plus — un mur ne devient pas un peuple. */
+    $race = Race::ofFamily(
+        $face->isStructure() ? 'structure' : 'character',
+        $face->isScenery()
+            ? \App\View\Admin\TypeEditorFace::NATURE_DECOR
+            : ($face->isResource() ? \App\View\Admin\TypeEditorFace::NATURE_RESOURCE : 'edifice')
+    );
     $race->setName($name);
     $race->setCode(strtoupper($name));
     $factionNotice = $applyForm($race);

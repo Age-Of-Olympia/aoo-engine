@@ -3,6 +3,7 @@
 namespace Tests\Action\ImportExport;
 
 use App\Entity\ActionPassive;
+use App\Entity\CharacterRace;
 use App\Entity\Race;
 use App\Service\ImportExport\PassiveExporter;
 use PHPUnit\Framework\Attributes\Group;
@@ -54,7 +55,7 @@ class PassiveExporterTest extends TestCase
     public function testRejectsNonPassiveEntities(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        (new PassiveExporter())->toArray(new Race());
+        (new PassiveExporter())->toArray(new CharacterRace());
     }
 
     private function samplePassive(): ActionPassive

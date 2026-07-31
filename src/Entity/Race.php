@@ -6,15 +6,72 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Mapping as ORM;
 
+/**
+ * Le tronc des types : ce que `races` décrit, quelle que soit la famille.
+ *
+ * Une seule table porte cinq populations — races jouables, bâtiments, décors,
+ * récoltables — et rien ne les séparait qu'un couple de colonnes qui se lit
+ * mal : seize races de personnages portent `structure_nature = 'edifice'`
+ * parce que la colonne est NOT NULL, pas parce qu'elles sont des bâtiments.
+ * Le côté OBJET a son tronc (`GameEntity` et ses déclinaisons) depuis
+ * longtemps ; voici celui du côté TYPE.
+ * Cadrage complet : docs/design-entity-types-inheritance.md.
+ *
+ * Le nom reste `Race`, faux mais écrit dans quatre-vingt-une références : le
+ * renommer ICI mêlerait un renommage mécanique à un changement de mapping, et
+ * rendrait le diff illisible. Il aura son propre lot.
+ *
+ * Les champs ne bougent pas encore : le tronc les garde tous, et l'étape
+ * suivante les fait descendre là où ils veulent dire quelque chose — c'est
+ * PHPStan qui dira alors quels appels devenaient impossibles.
+ */
 #[ORM\Entity]
 #[ORM\Table(name: "races")]
-class Race
+#[ORM\InheritanceType("SINGLE_TABLE")]
+#[ORM\DiscriminatorColumn(name: "type_kind", type: "string", length: 20)]
+#[ORM\DiscriminatorMap([
+    'character' => CharacterRace::class,
+    'building'  => BuildingType::class,
+    'scenery'   => SceneryType::class,
+    'resource'  => HarvestableType::class,
+])]
+abstract class Race
 {
     /**
      * The 16 stat keys, one DB column each — alias de la source unique
      * {@see \App\Enum\Caracs::KEYS} (CARACS garde les libellés UI).
      */
     public const CARAC_KEYS = \App\Enum\Caracs::KEYS;
+
+    public const FAMILY_CHARACTER = 'character';
+    public const FAMILY_BUILDING = 'building';
+    public const FAMILY_SCENERY = 'scenery';
+    public const FAMILY_RESOURCE = 'resource';
+
+    /** La famille de CE type — le discriminant, dit par la classe. */
+    abstract public function familyKey(): string;
+
+    /**
+     * Le type vide de la famille que décrit ce couple de colonnes.
+     *
+     * SEULE dérivation en PHP : un formulaire ou un bundle ne parlent que de
+     * `kind` et de `structure_nature`, il faut bien en tirer une classe. Une
+     * fois l'objet construit, plus personne ne dérive quoi que ce soit — on
+     * demande sa famille à la classe.
+     *
+     * La même règle vit aussi dans les déclencheurs SQL, où elle rattrape les
+     * écrivains qui ignorent la colonne. Les deux ne peuvent pas diverger sans
+     * qu'un test le dise : TypeFamilyColumnTest les compare ligne à ligne.
+     */
+    public static function ofFamily(string $kind, string $structureNature): self
+    {
+        return match (true) {
+            $kind !== 'structure' => new CharacterRace(),
+            $structureNature === 'decor' => new SceneryType(),
+            $structureNature === 'ressource' => new HarvestableType(),
+            default => new BuildingType(),
+        };
+    }
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

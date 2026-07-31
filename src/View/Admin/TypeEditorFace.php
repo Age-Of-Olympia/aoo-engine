@@ -96,17 +96,21 @@ final class TypeEditorFace
         );
     }
 
-    /** The face a given row belongs to, whichever page one came from. */
+    /**
+     * The face a given row belongs to, whichever page one came from.
+     *
+     * On DEMANDE sa famille au type, on ne la déduit plus de ses colonnes :
+     * depuis que `races` a un tronc et des déclinaisons, la classe le sait.
+     * Cette méthode portait une copie de la règle ; il n'en reste qu'une, dans
+     * {@see Race::ofFamily()}, là où un formulaire doit encore la construire.
+     */
     public static function of(Race $race): self
     {
-        if (!$race->isStructureKind()) {
-            return self::character();
-        }
-
-        return match ($race->getStructureNature()) {
-            self::NATURE_DECOR => self::scenery(),
-            self::NATURE_RESOURCE => self::resource(),
-            default => self::building(),
+        return match ($race->familyKey()) {
+            Race::FAMILY_SCENERY => self::scenery(),
+            Race::FAMILY_RESOURCE => self::resource(),
+            Race::FAMILY_BUILDING => self::building(),
+            default => self::character(),
         };
     }
 

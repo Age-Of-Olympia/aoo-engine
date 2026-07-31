@@ -7,6 +7,7 @@ use App\Action\OutcomeInstruction\LifeLossOutcomeInstruction;
 use App\Entity\Action;
 use App\Entity\ActionCondition;
 use App\Entity\ActionOutcome;
+use App\Entity\CharacterRace;
 use App\Entity\Race;
 use App\Enum\OutcomeTarget;
 use App\Service\ImportExport\ActionExporter;
@@ -246,7 +247,7 @@ class ActionImporterCommitTest extends TestCase
 
     private function namedRace(string $name): Race
     {
-        $race = new Race();
+        $race = new CharacterRace();
         $race->setName($name);
 
         return $race;
