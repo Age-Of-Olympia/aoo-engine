@@ -105,6 +105,11 @@ class GroundLootService
         $harvest = $this->harvestPlants($player, $coordsId, $logCoords);
 
         if (!$res->num_rows && !$hadInstances) {
+
+            if ($harvest !== []) {
+                $this->forgetBoards($coordsId);
+            }
+
             return $harvest;
         }
 
@@ -135,7 +140,26 @@ class GroundLootService
             $player->coords = $coordBackup;
         }
 
+        $this->forgetBoards($coordsId);
+
         return array_merge($lootList, $harvest);
+    }
+
+    /**
+     * Le plateau de tous ceux qui voient la case est à refaire.
+     *
+     * Il est mis en cache ENTIER, par spectateur, sans expiration : le fichier
+     * existe, donc il est servi. Ramasser retirait la plante de la base sans
+     * toucher à ces caches — on la voyait encore après l'avoir prise, et
+     * recharger la page n'y changeait rien.
+     *
+     * Pour tout le monde et pas seulement pour celui qui ramasse : la fleur
+     * disparaît aussi de la vue des autres. C'est ce que fait déjà toute
+     * construction ou destruction.
+     */
+    private function forgetBoards(int $coordsId): void
+    {
+        \Classes\View::refresh_players_svg_at($coordsId);
     }
 
     /**

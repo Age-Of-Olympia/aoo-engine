@@ -111,6 +111,47 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
         $this->assertSame([], (new GroundLootService())->listAt(2, 1, 0, self::PLAN)['plants']);
     }
 
+    /**
+     * Cueillir jette le plateau en cache : sinon la fleur se voit encore.
+     *
+     * Le plateau est mis en cache ENTIER, par spectateur, sans expiration — le
+     * fichier existe, donc il est servi. La plante quittait bien la base, et
+     * restait à l'écran ; recharger la page n'y changeait rien, ce qui est la
+     * pire forme du défaut : le joueur croit que son geste a échoué et
+     * recommence.
+     */
+    public function testCollectingThrowsTheCachedBoardAway(): void
+    {
+        $name = $this->somePlantName();
+        $coordsId = $this->coordsId(4, 1);
+        $this->plantAt($coordsId, $name);
+
+        $player = $this->createRealPlayer('cueilleur_cache');
+        $player->get_data();
+
+        /* Le cueilleur doit VOIR la case : le rafraîchissement vise ceux qui
+         * regardent, et non celui qui agit. */
+        $this->link->executeStatement(
+            'UPDATE players SET coords_id = ? WHERE id = ?',
+            [$coordsId, $player->id]
+        );
+
+        $cached = \Classes\Player::cachePath((int) $player->id, '.svg');
+        file_put_contents($cached, '<svg/>');
+        $this->assertFileExists($cached, 'le décor du cas : un plateau en cache');
+
+        (new GroundLootService())->collect(
+            $player,
+            $coordsId,
+            (object) ['x' => 4, 'y' => 1, 'z' => 0, 'plan' => self::PLAN]
+        );
+
+        $this->assertFileDoesNotExist(
+            $cached,
+            'le plateau doit être redessiné, sans quoi la plante cueillie reste affichée'
+        );
+    }
+
     /** Tant que personne ne ramasse, la fleur reste — on peut passer dessus. */
     public function testAnUncollectedPlantStays(): void
     {
