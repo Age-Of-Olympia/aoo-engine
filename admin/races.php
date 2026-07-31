@@ -453,15 +453,27 @@ HTML;
                     'class="form-control form-control-sm"'
                 )
                 . '</div>'
-                . '<div class="col-4"><input type="number" class="form-control form-control-sm" name="harvest_exhaust"'
-                . ' value="' . ($race instanceof Harvestable && $race->getHarvestExhaust() !== null ? (int) $race->getHarvestExhaust() : '') . '"'
-                . ' min="1" max="100" placeholder="épuisement (1-100)"></div>'
-                . '<div class="col-4"><input type="number" class="form-control form-control-sm" name="harvest_regrow"'
-                . ' value="' . ($race instanceof Harvestable && $race->getHarvestRegrow() !== null ? (int) $race->getHarvestRegrow() : '') . '"'
-                . ' min="1" max="1000" placeholder="repousse (1-1000)"></div>'
+                /* Épuisement et repousse décrivent une RESSOURCE : elle tarit
+                   sur place et repousse sur place. Une plante, elle, est
+                   cueillie et disparaît — sa repousse est un autre mécanisme
+                   (items.grow_rate + déclencheurs `grow`), qui n'a pas encore
+                   rejoint le type. Afficher ces deux cadrans pour une fleur
+                   serait offrir des réglages sans effet. */
+                . ($face->isResource()
+                    ? '<div class="col-4"><input type="number" class="form-control form-control-sm" name="harvest_exhaust"'
+                        . ' value="' . ($race instanceof Harvestable && $race->getHarvestExhaust() !== null ? (int) $race->getHarvestExhaust() : '') . '"'
+                        . ' min="1" max="100" placeholder="épuisement (1-100)"></div>'
+                        . '<div class="col-4"><input type="number" class="form-control form-control-sm" name="harvest_regrow"'
+                        . ' value="' . ($race instanceof Harvestable && $race->getHarvestRegrow() !== null ? (int) $race->getHarvestRegrow() : '') . '"'
+                        . ' min="1" max="1000" placeholder="repousse (1-1000)"></div>'
+                    : '')
                 . '</div><small class="form-text text-muted">Laissé vide, ce type ne rend rien :'
                 . ' fouiller reviendra les mains vides, sauf si un plan le déclare.'
-                . ' Les dés sont volontairement dissemblables — épuisement sur 100, repousse sur 1000.</small></div>'
+                . ($face->isResource()
+                    ? ' Les dés sont volontairement dissemblables — épuisement sur 100, repousse sur 1000.'
+                    : ' Une plante cueillie disparaît : elle ne s\'épuise pas et ne repousse pas sur place.'
+                        . ' Sa repousse se règle encore sur l\'objet (grow_rate) et par les déclencheurs « grow ».')
+                . '</small></div>'
             : '')
         . ($face->isStructure()
             ? '<div class="form-group col-12"><label>Inscription par défaut</label>'
