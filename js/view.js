@@ -550,6 +550,26 @@ $(document).ready(function(){
         });
     });
 
+    /* Arriver sur une case, c'est la regarder.
+       Sinon on marche sans savoir ce qu'il y a sous ses pieds : depuis que
+       marcher ne ramasse plus rien, une fleur ou une bourse ne se signalent
+       QUE dans ce panneau, et il fallait penser à cliquer sa propre case.
+
+       Ici plutôt que dans le déplacement : bindMapView est rappelé aussi bien
+       au chargement de la page qu'après l'échange AJAX du damier (js/hud.js),
+       les deux façons d'arriver quelque part. Un seul endroit les couvre.
+
+       force : après un déplacement en AJAX, la page n'a pas été rechargée et
+       window.clickedCases garde le panneau d'AVANT pour cette case. */
+    var ownCoords = $('#current-player-avatar').attr('data-coords');
+
+    /* Le tutoriel conduit ses propres panneaux, à son rythme : lui en ouvrir
+       un dans le dos ferait valider des étapes que le joueur n'a pas faites. */
+    if (ownCoords && !(window.tutorialUI && window.tutorialUI.isActive)) {
+
+        openObservation(ownCoords, {force: true});
+    }
+
     }; // end window.bindMapView
 
     window.bindMapView();
