@@ -38,6 +38,11 @@ use Doctrine\Migrations\AbstractMigration;
  * fait cette migration, colonne par colonne, sur les données de l'environnement
  * où elle tourne. Une colonne accentuée est LAISSÉE en l'état et signalée : le
  * code compare en `CONVERT(... USING utf8mb4)` et n'en dépend pas.
+ *
+ * utf8mb3 échappe à ce doute, et c'est le cas le plus répandu en production :
+ * c'est le même encodage qu'utf8mb4, borné au plan multilingue de base. Les
+ * octets sont déjà de l'UTF-8 valide ; les relire en utf8mb4 ne réécrit rien.
+ * Le contrôle ASCII ne s'applique donc qu'aux jeux non-UTF-8.
  */
 final class Version20260727111500_LegacyJoinKeysSpeakUtf8mb4 extends AbstractMigration
 {
@@ -96,9 +101,15 @@ final class Version20260727111500_LegacyJoinKeysSpeakUtf8mb4 extends AbstractMig
             return;
         }
 
-        /* Non-ASCII : convertir supposerait connaître l'encodage réel du
-         * contenu, ce que le schéma ne dit pas. On laisse, et on le dit. */
-        $accented = (int) $this->connection->fetchOne(
+        /* utf8mb3 est un SOUS-ENSEMBLE strict d'utf8mb4 : même encodage, borné
+         * au plan multilingue de base. Les octets sont déjà de l'UTF-8 valide,
+         * la conversion ne peut rien réécrire — accents compris. Le doute qui
+         * suit ne concerne que les jeux non-UTF-8, latin1 en tête. */
+        $utf8Subset = in_array($definition['CHARACTER_SET_NAME'], ['utf8', 'utf8mb3'], true);
+
+        /* Non-ASCII hors UTF-8 : convertir supposerait connaître l'encodage
+         * réel du contenu, ce que le schéma ne dit pas. On laisse, et on le dit. */
+        $accented = $utf8Subset ? 0 : (int) $this->connection->fetchOne(
             "SELECT COUNT(*) FROM `{$table}` WHERE `{$column}` <> CONVERT(`{$column}` USING ascii)"
         );
 
