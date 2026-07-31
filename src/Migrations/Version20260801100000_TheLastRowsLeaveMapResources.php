@@ -67,7 +67,7 @@ final class Version20260801100000_TheLastRowsLeaveMapResources extends AbstractM
                FROM map_resources m
                JOIN coords c ON c.id = m.coords_id
                JOIN races r
-                 ON r.name COLLATE utf8mb4_general_ci = m.name COLLATE utf8mb4_general_ci"
+                 ON CONVERT(r.name USING utf8mb4) = CONVERT(m.name USING utf8mb4)"
         );
 
         if ($rows === []) {
@@ -195,10 +195,10 @@ final class Version20260801100000_TheLastRowsLeaveMapResources extends AbstractM
             "SELECT DISTINCT m.name, COALESCE(t.pv, 0) AS pv
                FROM map_resources m
                LEFT JOIN resource_types t
-                 ON t.name COLLATE utf8mb4_general_ci = m.name COLLATE utf8mb4_general_ci
+                 ON CONVERT(t.name USING utf8mb4) = CONVERT(m.name USING utf8mb4)
               WHERE NOT EXISTS (
                     SELECT 1 FROM races r
-                     WHERE r.name COLLATE utf8mb4_general_ci = m.name COLLATE utf8mb4_general_ci
+                     WHERE CONVERT(r.name USING utf8mb4) = CONVERT(m.name USING utf8mb4)
                 )"
         );
 

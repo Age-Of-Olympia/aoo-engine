@@ -165,7 +165,11 @@ class GroundLootService
                     r.harvest_min, r.harvest_max
                FROM players p
                LEFT JOIN races r
-                 ON r.name COLLATE utf8mb4_general_ci = p.race COLLATE utf8mb4_general_ci
+                 ON CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4)
+                /* CONVERT et non COLLATE : imposer une collation utf8mb4 à une
+                 * colonne latin1 est une ERREUR, pas un rapprochement. Les vieux
+                 * serveurs en gardent ; convertir les deux côtés d'abord compare
+                 * dans le même jeu, quel que soit celui des colonnes. */
                 AND r.type_kind = 'plant'
               WHERE p.player_type = 'plant' AND p.coords_id = ?",
             $coordsId

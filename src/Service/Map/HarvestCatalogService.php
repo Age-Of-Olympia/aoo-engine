@@ -290,6 +290,9 @@ final class HarvestCatalogService
      */
     public function plansMissingYields(): array
     {
+        /* CONVERT, not COLLATE: forcing a utf8mb4 collation onto a latin1 column
+         * is an error rather than a widening, and old servers still carry such
+         * columns. Converting both sides compares them whatever they are. */
         $rows = $this->conn()->fetchAllAssociative(
             "SELECT ec.plan, COUNT(*) AS resources, GROUP_CONCAT(DISTINCT p.race ORDER BY p.race) AS types
                FROM players p
@@ -298,7 +301,7 @@ final class HarvestCatalogService
                 AND NOT EXISTS (
                     SELECT 1
                       FROM races d
-                     WHERE d.name COLLATE utf8mb4_general_ci = p.race COLLATE utf8mb4_general_ci
+                     WHERE CONVERT(d.name USING utf8mb4) = CONVERT(p.race USING utf8mb4)
                        AND d.harvest_item IS NOT NULL
                        AND TRIM(d.harvest_item) <> ''
                 )
@@ -307,7 +310,7 @@ final class HarvestCatalogService
                       FROM race_harvest h
                       JOIN races r ON r.id = h.race_id
                      WHERE h.plan = ec.plan
-                       AND r.name COLLATE utf8mb4_general_ci = p.race COLLATE utf8mb4_general_ci
+                       AND CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4)
                        AND TRIM(h.item) <> ''
                 )
               GROUP BY ec.plan

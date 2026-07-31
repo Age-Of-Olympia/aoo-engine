@@ -85,7 +85,7 @@ final class Version20260801220000_PlantTypesEnterTheCatalogue extends AbstractMi
                FROM (SELECT DISTINCT name FROM map_plants WHERE TRIM(name) <> '') p
               WHERE NOT EXISTS (
                     SELECT 1 FROM races r
-                     WHERE r.name COLLATE utf8mb4_general_ci = p.name COLLATE utf8mb4_general_ci
+                     WHERE CONVERT(r.name USING utf8mb4) = CONVERT(p.name USING utf8mb4)
                 )"
         );
     }

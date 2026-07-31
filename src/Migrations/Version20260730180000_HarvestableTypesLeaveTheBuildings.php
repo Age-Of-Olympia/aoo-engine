@@ -38,7 +38,7 @@ final class Version20260730180000_HarvestableTypesLeaveTheBuildings extends Abst
                 AND r.structure_nature <> 'ressource'
                 AND EXISTS (
                     SELECT 1 FROM resource_types t
-                     WHERE t.name COLLATE utf8mb4_general_ci = r.name COLLATE utf8mb4_general_ci
+                     WHERE CONVERT(t.name USING utf8mb4) = CONVERT(r.name USING utf8mb4)
                        AND t.pv = -1
                 )"
         );
@@ -50,7 +50,7 @@ final class Version20260730180000_HarvestableTypesLeaveTheBuildings extends Abst
               WHERE name IN ('altar', 'altar_broken')
                 AND NOT EXISTS (
                     SELECT 1 FROM map_resources m
-                     WHERE m.name COLLATE utf8mb4_general_ci = resource_types.name COLLATE utf8mb4_general_ci
+                     WHERE CONVERT(m.name USING utf8mb4) = CONVERT(resource_types.name USING utf8mb4)
                 )"
         );
     }

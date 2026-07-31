@@ -31,7 +31,7 @@ union
 select p.coords_id as coords_id, 'plante' as type, CONCAT(p.race, ' #', p.id) as name,
        CONCAT('rend ', COALESCE(NULLIF(TRIM(r.harvest_item), ''), p.race)) as params
 from players p left join races r
-  on r.name COLLATE utf8mb4_general_ci = p.race COLLATE utf8mb4_general_ci and r.type_kind = 'plant'
+  on CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4) and r.type_kind = 'plant'
 where p.player_type = 'plant' and p.coords_id = ?
 union
 select  p.coords_id as coords_id, 'buildings' as type, CONCAT(p.race, ' #', p.id) as name,

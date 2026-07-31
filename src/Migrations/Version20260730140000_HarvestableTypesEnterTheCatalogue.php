@@ -57,7 +57,7 @@ final class Version20260730140000_HarvestableTypesEnterTheCatalogue extends Abst
               WHERE t.pv = -1
                 AND NOT EXISTS (
                     SELECT 1 FROM races r
-                     WHERE r.name COLLATE utf8mb4_general_ci = t.name COLLATE utf8mb4_general_ci
+                     WHERE CONVERT(r.name USING utf8mb4) = CONVERT(t.name USING utf8mb4)
                 )",
             [self::BG_COLOR, self::PV]
         );
@@ -70,7 +70,7 @@ final class Version20260730140000_HarvestableTypesEnterTheCatalogue extends Abst
         $this->addSql(
             "DELETE r FROM races r
                JOIN resource_types t
-                 ON t.name COLLATE utf8mb4_general_ci = r.name COLLATE utf8mb4_general_ci
+                 ON CONVERT(t.name USING utf8mb4) = CONVERT(r.name USING utf8mb4)
               WHERE t.pv = -1
                 AND r.kind = 'structure'
                 AND r.structure_nature = 'obstacle'
@@ -78,7 +78,7 @@ final class Version20260730140000_HarvestableTypesEnterTheCatalogue extends Abst
                 AND r.description = ''
                 AND NOT EXISTS (
                     SELECT 1 FROM players p
-                     WHERE p.race COLLATE utf8mb4_general_ci = r.name COLLATE utf8mb4_general_ci
+                     WHERE CONVERT(p.race USING utf8mb4) = CONVERT(r.name USING utf8mb4)
                 )",
             [self::PV]
         );

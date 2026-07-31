@@ -83,7 +83,7 @@ final class Version20260731100000_ResourcesBecomeEntities extends AbstractMigrat
                FROM map_resources m
                JOIN coords c ON c.id = m.coords_id
                JOIN races r
-                 ON r.name COLLATE utf8mb4_general_ci = m.name COLLATE utf8mb4_general_ci
+                 ON CONVERT(r.name USING utf8mb4) = CONVERT(m.name USING utf8mb4)
                 AND r.structure_nature = 'ressource'",
             [$offset]
         );
@@ -115,7 +115,7 @@ final class Version20260731100000_ResourcesBecomeEntities extends AbstractMigrat
                     t.coords_id, 0, ?, ''
                FROM tmp_resource_conversion t
                JOIN races r
-                 ON r.name COLLATE utf8mb4_general_ci = t.name COLLATE utf8mb4_general_ci",
+                 ON CONVERT(r.name USING utf8mb4) = CONVERT(t.name USING utf8mb4)",
             [$nextDisplayId, time()]
         );
 

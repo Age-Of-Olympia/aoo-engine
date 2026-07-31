@@ -44,7 +44,7 @@ final class Version20260802000000_PlantsBecomeEntities extends AbstractMigration
                     COALESCE(NULLIF(r.label, ''), p.name) AS label
                FROM map_plants p
                JOIN coords c ON c.id = p.coords_id
-               JOIN races r ON r.name COLLATE utf8mb4_general_ci = p.name COLLATE utf8mb4_general_ci
+               JOIN races r ON CONVERT(r.name USING utf8mb4) = CONVERT(p.name USING utf8mb4)
                            AND r.type_kind = 'plant'"
         );
 

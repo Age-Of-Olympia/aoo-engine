@@ -91,9 +91,9 @@ final class Version20260728110000_BrokenIsAStateNotAType extends AbstractMigrati
         $this->addSql("
             DELETE t FROM resource_types t
             WHERE t.name IN ({$names})
-              AND NOT EXISTS (SELECT 1 FROM map_resources m WHERE m.name = t.name COLLATE utf8mb4_general_ci)
-              AND NOT EXISTS (SELECT 1 FROM map_foregrounds f WHERE f.name = t.name COLLATE utf8mb4_general_ci)
-              AND NOT EXISTS (SELECT 1 FROM players p WHERE p.race = t.name COLLATE utf8mb4_general_ci)
+              AND NOT EXISTS (SELECT 1 FROM map_resources m WHERE CONVERT(m.name USING utf8mb4) = CONVERT(t.name USING utf8mb4))
+              AND NOT EXISTS (SELECT 1 FROM map_foregrounds f WHERE CONVERT(f.name USING utf8mb4) = CONVERT(t.name USING utf8mb4))
+              AND NOT EXISTS (SELECT 1 FROM players p WHERE CONVERT(p.race USING utf8mb4) = CONVERT(t.name USING utf8mb4))
         ");
     }
 

@@ -104,7 +104,7 @@ class PlantTypeAdminTest extends TestCase
               WHERE r.harvest_item IS NOT NULL AND TRIM(r.harvest_item) <> ''
                 AND NOT EXISTS (
                     SELECT 1 FROM items i
-                     WHERE i.name COLLATE utf8mb4_general_ci = r.harvest_item COLLATE utf8mb4_general_ci
+                     WHERE CONVERT(i.name USING utf8mb4) = CONVERT(r.harvest_item USING utf8mb4)
                 )"
         );
 

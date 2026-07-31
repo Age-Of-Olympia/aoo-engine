@@ -48,7 +48,7 @@ final class Version20260801120000_OneCatalogueForTheTypes extends AbstractMigrat
                FROM resource_types t
               WHERE NOT EXISTS (
                     SELECT 1 FROM races r
-                     WHERE r.name COLLATE utf8mb4_general_ci = t.name COLLATE utf8mb4_general_ci
+                     WHERE CONVERT(r.name USING utf8mb4) = CONVERT(t.name USING utf8mb4)
                 )"
         );
 
