@@ -140,6 +140,26 @@ function bleed_options(): array
     return $out;
 }
 
+/**
+ * Objets du catalogue, pour choisir ce qu'un type récoltable rend.
+ *
+ * Une liste plutôt qu'une saisie libre : un nom mal tapé ne casse rien, il
+ * fait simplement qu'on récolte les mains vides — le pire des défauts, celui
+ * qui se voit trois semaines plus tard sur une carte entière.
+ *
+ * @return array<string, string>
+ */
+function item_options(): array
+{
+    $out = [];
+    $res = (new \Classes\Db())->exe('SELECT name FROM items ORDER BY name');
+    while ($row = $res->fetch_object()) {
+        $out[(string) $row->name] = (string) $row->name;
+    }
+
+    return $out;
+}
+
 /** Sortes d'entités — valeurs de la source unique EntityCategory. */
 function kind_select(bool $isStructure): string
 {
@@ -424,9 +444,15 @@ HTML;
            plantes se récolteront aussi, cette ligne n'aura pas à changer. */
         . ($face->harvests()
             ? '<div class="form-group col-12"><label>Rendement du type</label><div class="form-row">'
-                . '<div class="col-4"><input type="text" class="form-control form-control-sm" name="harvest_item"'
-                . ' value="' . e($race instanceof Harvestable ? $race->getHarvestItem() : '') . '"'
-                . ' placeholder="objet récolté (ex. bois)"></div>'
+                . '<div class="col-4">'
+                . formSelect(
+                    'harvest_item',
+                    item_options(),
+                    $race instanceof Harvestable ? $race->getHarvestItem() : '',
+                    '— ne rend rien —',
+                    'class="form-control form-control-sm"'
+                )
+                . '</div>'
                 . '<div class="col-4"><input type="number" class="form-control form-control-sm" name="harvest_exhaust"'
                 . ' value="' . ($race instanceof Harvestable && $race->getHarvestExhaust() !== null ? (int) $race->getHarvestExhaust() : '') . '"'
                 . ' min="1" max="100" placeholder="épuisement (1-100)"></div>'

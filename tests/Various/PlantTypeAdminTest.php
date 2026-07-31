@@ -86,6 +86,32 @@ class PlantTypeAdminTest extends TestCase
     }
 
     /**
+     * Tout rendement réglé nomme un objet qui existe.
+     *
+     * C'est ce que la liste déroulante protège désormais : un nom saisi à la
+     * main ne casse rien, il fait récolter les mains vides — le pire des
+     * défauts, celui qu'on découvre trois semaines plus tard sur une carte
+     * entière. Ce cas garde l'invariant pour les rendements déjà en base, que
+     * la liste n'a pas pu empêcher.
+     */
+    public function testEveryConfiguredYieldNamesARealItem(): void
+    {
+        $conn = \App\Entity\EntityManagerFactory::getEntityManager()->getConnection();
+
+        $orphans = $conn->fetchFirstColumn(
+            "SELECT CONCAT(r.name, ' → ', r.harvest_item)
+               FROM races r
+              WHERE r.harvest_item IS NOT NULL AND TRIM(r.harvest_item) <> ''
+                AND NOT EXISTS (
+                    SELECT 1 FROM items i
+                     WHERE i.name COLLATE utf8mb4_general_ci = r.harvest_item COLLATE utf8mb4_general_ci
+                )"
+        );
+
+        $this->assertSame([], $orphans, 'ces types rendent un objet qui n\'existe pas');
+    }
+
+    /**
      * La page est ATTEIGNABLE : déclarée au contrôle d'accès.
      *
      * Elle existait sans être enregistrée nulle part — donc introuvable au

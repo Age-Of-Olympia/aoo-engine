@@ -120,7 +120,17 @@ $applyForm = static function (Race $race) use ($face): string {
      * famille. Le vider rend le type muet jusqu'à ce qu'un plan le déclare ;
      * ce qui ne se récolte pas n'a même plus la question à se poser. */
     if ($race instanceof \App\Entity\Harvestable) {
-        $race->setHarvestItem((string) ($_POST['harvest_item'] ?? ''));
+        /* L'objet vient d'une liste ; on le valide quand même contre le
+         * catalogue — un POST fabriqué ne doit pas installer un rendement qui
+         * ne rapporte rien. Vide reste vide : c'est « ne rend rien ». */
+        $harvestItem = trim((string) ($_POST['harvest_item'] ?? ''));
+
+        if ($harvestItem !== '' && \Classes\Item::get_item_by_name($harvestItem) === false) {
+            $notice .= " ⚠ Objet « {$harvestItem} » inconnu du catalogue — rendement inchangé.";
+            $harvestItem = $race->getHarvestItem();
+        }
+
+        $race->setHarvestItem($harvestItem);
         $race->setHarvestExhaust(trim((string) ($_POST['harvest_exhaust'] ?? '')) !== ''
             ? max(1, min(100, (int) $_POST['harvest_exhaust']))
             : null);
