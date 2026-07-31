@@ -48,12 +48,18 @@ class RequiresRepairableTargetCondition extends BaseCondition implements HasPara
             return new ConditionResult(false, array(), array("Il n'y a rien à réparer ici."));
         }
 
-        /* Un OBJET POSÉ se répare : c'est un objet manufacturé, et il porte sa
-         * durabilité comme un édifice porte ses PV. Il est traité à part parce
-         * qu'il n'a pas de type au catalogue — `UniqueObjectService` l'inscrit
-         * sous la race « objet », qui n'existe pas dans `races`. Sans cette
-         * ligne, interroger le catalogue rendrait `null` et un coffre cesserait
-         * d'être réparable, ce qu'il était avant ce lot. */
+        /* Un OBJET se répare, point : il a une vie — sa durabilité — et une vie
+         * en dessous de son maximum se soigne. Où il se trouve n'y change rien ;
+         * le plateau est seulement l'endroit où l'on sait le désigner
+         * aujourd'hui.
+         *
+         * Traité à part parce qu'il n'a pas de type au catalogue :
+         * `UniqueObjectService` l'inscrit sous la race « objet », qui n'existe
+         * dans `races` pour personne. Sans cette ligne, la recherche rendrait
+         * `null` et un coffre cesserait d'être réparable.
+         *
+         * COMBIEN il lui reste ne se décide pas ici : c'est
+         * {@see RequiresDamagedTargetCondition} qui refuse l'intact et le brisé. */
         if ((string) ($target->data->player_type ?? '') === 'unique') {
             return new ConditionResult(true, array(), array());
         }
