@@ -159,6 +159,8 @@ final class EntityCardView
             $card .= self::buildingStatusHtml($raceService, $target, $buildingDetails, $buildingClosure, (int) $pvPct);
         }
 
+        $card .= self::harvestStatusHtml($target);
+
         // Équipement porté — alvéoles de la vue de sélection du HUD
         // papier (écrans larges) ; l'habillage hérité garde sa carte.
         $equipStrip = Ui::usesPaperTheme() ? \App\View\EquipmentSlotsView::render($target->id) : '';
@@ -437,6 +439,47 @@ final class EntityCardView
             . ($isEdifice && $closure !== null ? ' building-status--closed' : '') . '">'
             . $door
             . '<span class="building-status-state">' . $stateLabel . ' · PV ' . $pvPct . '%</span>'
+            . '</div>';
+    }
+
+    /**
+     * Pastille de RÉCOLTE : ce qu'on peut encore tirer de la case.
+     *
+     * L'état d'une ressource — debout ou épuisée — était lisible tant que le
+     * mur portait ses dégâts sur la carte. Depuis qu'il vit dans le satellite
+     * `resources`, la carte ne le disait plus : on fouillait un rocher déjà
+     * vidé sans le savoir, et il n'y avait plus aucun moyen de le voir avant
+     * d'y passer son tour.
+     *
+     * Une plante n'a pas cet état : elle est prise d'un coup et disparaît.
+     * Elle est donc toujours récoltable tant qu'elle est là.
+     *
+     * L'habillage est celui de la pastille des bâtiments, à dessein : c'est la
+     * même phrase — « voici l'état de ce qui occupe la case » — et deux styles
+     * pour une seule idée finiraient par diverger.
+     */
+    private static function harvestStatusHtml(Player $target): string
+    {
+        $type = (string) ($target->data->player_type ?? '');
+
+        if ($type === 'plant') {
+            return self::statusBadgeHtml('Récoltable', false);
+        }
+
+        if ($type !== 'resource') {
+            return '';
+        }
+
+        $exhausted = (new \App\Service\Map\ResourceStateService())->isExhausted((int) $target->id);
+
+        return self::statusBadgeHtml($exhausted ? 'Épuisé' : 'Récoltable', $exhausted);
+    }
+
+    /** Pastille sous la carte — `--closed` grise ce dont on ne tire plus rien. */
+    private static function statusBadgeHtml(string $label, bool $spent): string
+    {
+        return '<div class="building-status' . ($spent ? ' building-status--closed' : '') . '">'
+            . '<span class="building-status-state">' . $label . '</span>'
             . '</div>';
     }
 
