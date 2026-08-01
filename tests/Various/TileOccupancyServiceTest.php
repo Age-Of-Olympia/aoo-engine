@@ -78,6 +78,45 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertNull($this->service()->stepRefusal($this->coordsId(0, 0), 1, true));
     }
 
+    /**
+     * What LIES on a tile holds nothing: it neither bars the step nor forbids
+     * building. Ground loot never did, and it only became askable once it
+     * gained a `coords_id` of its own — before that it lived in a table of
+     * its own and no occupancy query could see it.
+     */
+    public function testDroppedLootHoldsNothing(): void
+    {
+        $entity = $this->createRealPlayer('OccupeJete');
+        $coordsId = $this->coordsId(7, 7);
+
+        (new \App\Service\Map\EntityLocationService($this->link))
+            ->dropOnCell((int) $entity->id, $coordsId);
+
+        $this->assertNull(
+            $this->service()->stepRefusal($coordsId, 1, true),
+            'on marche sur ce qui traîne'
+        );
+        $this->assertNull(
+            $this->service()->buildRefusal($coordsId),
+            'et on construit par-dessus'
+        );
+    }
+
+    /** Installed on a tile, the same entity holds it. */
+    public function testAnInstalledEntityHoldsItsTile(): void
+    {
+        $entity = $this->createRealPlayer('OccupePose');
+        $coordsId = $this->coordsId(8, 8);
+
+        (new \App\Service\Map\EntityLocationService($this->link))
+            ->installOnCell((int) $entity->id, $coordsId);
+
+        $this->assertNotNull(
+            $this->service()->buildRefusal($coordsId),
+            'une entité posée occupe sa case'
+        );
+    }
+
     public function testAResourceBlocksTheStep(): void
     {
         $id = $this->coordsId(1, 0);

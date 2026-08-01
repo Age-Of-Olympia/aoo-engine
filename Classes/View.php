@@ -229,11 +229,16 @@ class View{
 
             $entitiesInSight = [];
             if (!empty($this->inSightId)) {
+                /* Ce qui TRAÎNE n'est pas une figure : le damier le montre déjà
+                 * par le repère de bourse de la case, comme toute la ferraille
+                 * au sol. Le dessiner en plus donnerait deux objets là où il
+                 * n'y en a qu'un. */
                 $resEntities = (new Db())->exe('
                     SELECT id, name, player_type, avatar, race
                     FROM players
                     WHERE coords_id IN ('. $inSightIdImploded .')
                     AND player_type NOT IN ("scenery", "plant")
+                    AND slot <> "dropped"
                 ');
                 while ($rowE = $resEntities->fetch_object()) {
                     $entitiesInSight[(int) $rowE->id] = $rowE;

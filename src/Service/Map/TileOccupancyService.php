@@ -185,6 +185,10 @@ final class TileOccupancyService
      * without `syncCells()` keeps stale cells, and dropping either source
      * would make it walk-through where it actually stands.
      *
+     * What is merely DROPPED is excluded: it lies on the tile without holding
+     * it. Counting it would make a sword on the floor block construction and
+     * bar the step, which no ground loot has ever done.
+     *
      * @param string $in coords_id list, already cast to integers
      */
     private static function heldSql(string $in): string
@@ -195,7 +199,8 @@ final class TileOccupancyService
                  UNION ALL
                 SELECT id, coords_id, '" . EntityCellService::ROLE_PART . "'
                   FROM players
-                 WHERE coords_id IN ({$in})";
+                 WHERE coords_id IN ({$in})
+                   AND slot <> '" . EntityLocationService::SLOT_DROPPED . "'";
     }
 
     /** Any entity, at any title, on this tile. */
