@@ -118,9 +118,18 @@ final class TileOccupancyService
         }
 
         $passable = $this->raceService->getPassableStructureNames();
+        $doors = $this->raceService->getDoorRaceNames();
 
         foreach ($this->occupations($in) as $row) {
             if ((int) $row['id'] === $moverId) {
+                continue;
+            }
+
+            /* Une porte OUVERTE se franchit — c'est tout ce qu'une porte
+             * ajoute à un mur. Fermée, elle barre comme le mur qu'elle perce.
+             * Un coffre n'est pas concerné : sa fermeture est un couvercle,
+             * elle décide de son contenu et non du passage. */
+            if (in_array((string) $row['race'], $doors, true) && (int) $row['is_open'] === 1) {
                 continue;
             }
 
@@ -152,12 +161,12 @@ final class TileOccupancyService
      * Which entity holds which of the given tiles, cell by cell.
      *
      * @param string $in coords_id list, already cast to integers
-     * @return list<array{id: int|string, coords_id: int|string, role: string, race: string, player_type: ?string, invisible: ?int}>
+     * @return list<array{id: int|string, coords_id: int|string, role: string, race: string, player_type: ?string, is_open: int|string, invisible: ?int}>
      */
     private function occupations(string $in): array
     {
         $rows = $this->conn->fetchAllAssociative(
-            "SELECT p.id, occupied.coords_id, occupied.role, p.race, p.player_type,
+            "SELECT p.id, occupied.coords_id, occupied.role, p.race, p.player_type, p.is_open,
                     (SELECT 1 FROM players_options o
                       WHERE o.player_id = p.id AND o.name = 'invisibleMode') AS invisible
                FROM (" . self::heldSql($in) . ") AS occupied

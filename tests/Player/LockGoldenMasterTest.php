@@ -129,6 +129,60 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /**
+     * Une porte OUVERTE se franchit ; fermée, elle barre comme le mur qu'elle
+     * perce. C'est tout ce qu'une porte ajoute à un mur.
+     */
+    public function testAnOpenDoorLetsYouThroughAndAShutOneDoesNot(): void
+    {
+        $race = (new \App\Service\RaceService())->getRaceByName('taverne');
+        if ($race === null || !$race->isEdifice() || !$race->isLockable()) {
+            $this->markTestSkipped("aucun type de porte seedé ('taverne').");
+        }
+
+        $mover = $this->createRealPlayer('GmVisiteur');
+        $id = $this->placeStructure('taverne', 3, 3);
+        $coordsId = (int) \Classes\View::get_coords_id(
+            (object) ['x' => 3, 'y' => 3, 'z' => 0, 'plan' => 'gaia']
+        );
+        $occupancy = new \App\Service\Map\TileOccupancyService($this->link);
+
+        (new BuildingService())->setOpen($id, true);
+        $this->assertNull(
+            $occupancy->stepRefusal($coordsId, (int) $mover->id, true),
+            'porte ouverte : on entre'
+        );
+
+        (new BuildingService())->setOpen($id, false);
+        $this->assertNotNull(
+            $occupancy->stepRefusal($coordsId, (int) $mover->id, true),
+            'porte fermée : elle barre'
+        );
+    }
+
+    /**
+     * Un coffre n'est pas une porte : sa fermeture est un COUVERCLE.
+     *
+     * Ouvert, il occupe toujours sa case — sans quoi on traverserait un coffre
+     * ouvert, ce qu'aucun coffre n'a jamais permis.
+     */
+    public function testAnOpenChestStillOccupiesItsTile(): void
+    {
+        $mover = $this->createRealPlayer('GmMarcheur');
+        $id = $this->placeStructure('coffre_bois', 4, 4);
+        $coordsId = (int) \Classes\View::get_coords_id(
+            (object) ['x' => 4, 'y' => 4, 'z' => 0, 'plan' => 'gaia']
+        );
+
+        (new BuildingService())->setOpen($id, true);
+
+        $this->assertNotNull(
+            (new \App\Service\Map\TileOccupancyService($this->link))
+                ->stepRefusal($coordsId, (int) $mover->id, true),
+            'un coffre ouvert barre encore : sa fermeture décide du contenu, pas du pas'
+        );
+    }
+
     /** Un mur ne se ferme pour personne, propriétaire compris. */
     public function testNobodyLocksWhatHasNoDoor(): void
     {

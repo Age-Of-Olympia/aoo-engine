@@ -161,6 +161,29 @@ class RaceService
     }
 
     /**
+     * Les types qui ont une PORTE : un édifice qui se ferme.
+     *
+     * `structure_nature` dit déjà lequel en a une — « edifice » est un vrai
+     * bâtiment où l'on entre, « obstacle » un objet construit qui n'a pas de
+     * porte. `lockable` dit lequel se ferme. Une porte est les deux : c'est
+     * ce qui la sépare d'un coffre, lui aussi fermable, mais dont la
+     * fermeture est un COUVERCLE et ne gouverne pas le passage.
+     *
+     * @return string[] noms des races dont l'ouverture décide du passage
+     */
+    public function getDoorRaceNames(): array
+    {
+        $names = [];
+        foreach ($this->getRacesByKind(\App\Enum\EntityCategory::Structure->value) as $race) {
+            if ($race->isEdifice() && $race->isLockable()) {
+                $names[] = $race->getName();
+            }
+        }
+
+        return $names;
+    }
+
+    /**
      * @return string[] Noms des races — toutes sortes — qui arrêtent les
      *                  projectiles : les structures par défaut (murs…),
      *                  et toute race de personnage cochée explicitement
