@@ -43,7 +43,7 @@ class BuildingOpenStateGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $service = new BuildingService();
         /* Un COFFRE, désormais : une palissade n'a pas de porte, et la
          * fermeture volontaire ne se dit que de ce qui peut se fermer. */
-        $id = $this->placeStructure('coffre_bois', 0, 6);
+        $id = $this->installExemplar('coffre_bois', 0, 6);
         $details = (new BuildingDetails())->setBuildState(BuildingDetails::STATE_BUILT);
 
         $this->assertNull($service->closureReason($id, $details, 100), 'construit, PV pleins, ouvert => ouvert');
@@ -67,10 +67,18 @@ class BuildingOpenStateGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->assertSame('en construction', $service->closureReason($id, $details, 100));
     }
 
-    public function testSetOpenPersistsAndRejectsNonBuildings(): void
+    /**
+     * Ce qui se ferme est ce qui a une porte — plus « ce qui est un bâtiment ».
+     *
+     * Un coffre n'a jamais eu de satellite de bâtiment et n'est même plus un
+     * type de bâtiment ; exiger l'un ou l'autre reviendrait à dire qu'on ne
+     * ferme que ce qui se construit. Le refus tient toujours pour un
+     * personnage, mais il le tient par la bonne raison.
+     */
+    public function testSetOpenPersistsAndRejectsWhatHasNoDoor(): void
     {
         $service = new BuildingService();
-        $id = $this->placeStructure('coffre_bois', 0, 3);
+        $id = $this->installExemplar('coffre_bois', 0, 3);
 
         $this->assertSame(
             1,
@@ -93,9 +101,9 @@ class BuildingOpenStateGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $character = $this->createRealPlayer('GmDoor');
         try {
             $service->setOpen((int) $character->id, false);
-            $this->fail('un personnage n\'a pas de porte de bâtiment');
+            $this->fail('un personnage n\'a pas de porte');
         } catch (\InvalidArgumentException $e) {
-            $this->assertStringContainsString('bâtiment', $e->getMessage());
+            $this->assertStringContainsString('se ferment', $e->getMessage());
         }
     }
 

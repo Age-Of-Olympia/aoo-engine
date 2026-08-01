@@ -46,18 +46,29 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
         (new BuildingService())->setOpen($id, false);
     }
 
-    /** Un coffre en a une, bien qu'il soit un « obstacle » comme le mur. */
-    public function testAChestCanBeShutEvenThoughItIsAnObstacle(): void
+    /**
+     * Un coffre se ferme, et c'est un OBJET qui le dit.
+     *
+     * Il n'a plus de race : son type vit dans `items`. La fermeture est donc
+     * une capacité qui traverse les catalogues — le mur répond par sa race, le
+     * coffre par son objet, et l'appelant ne sait pas lequel a parlé.
+     */
+    public function testAChestShutsThoughItsTypeIsAnItem(): void
     {
-        $id = $this->placeStructure('coffre_bois', 0, 4);
+        $id = $this->installExemplar('coffre_bois', 0, 4);
 
         $this->assertSame(
-            'obstacle',
+            'item',
+            $this->link->fetchOne('SELECT player_type FROM players WHERE id = ?', [$id]),
+            'un coffre est un exemplaire, plus un bâtiment'
+        );
+        $this->assertNull(
             $this->link->fetchOne(
-                'SELECT r.structure_nature FROM races r JOIN players p ON p.race = r.name WHERE p.id = ?',
+                'SELECT name FROM races WHERE CONVERT(name USING utf8mb4) = (
+                     SELECT CONVERT(race USING utf8mb4) FROM players WHERE id = ?)',
                 [$id]
-            ),
-            'le catalogue le range avec les murs — d\'où le drapeau séparé'
+            ) ?: null,
+            'et aucune race ne le type plus'
         );
         $this->assertTrue($this->lock()->isLockable($id), 'et pourtant il se ferme');
 
@@ -72,7 +83,7 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
     public function testOnlyWhatCanBeShutReportsAVoluntaryClosure(): void
     {
         $service = new BuildingService();
-        $chest = $this->placeStructure('coffre_bois', 0, 5);
+        $chest = $this->installExemplar('coffre_bois', 0, 5);
         $wall = $this->placeStructure('palissade', 0, 6);
 
         $service->setOpen($chest, false);
@@ -94,7 +105,7 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
     {
         $owner = $this->createRealPlayer('GmProprio');
         $stranger = $this->createRealPlayer('GmPassant');
-        $id = $this->placeStructure('coffre_bois', 0, 7);
+        $id = $this->installExemplar('coffre_bois', 0, 7);
 
         $this->assertFalse(
             $this->lock()->mayLock($id, (int) $owner->id),
@@ -269,7 +280,7 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
     public function testAnOpenChestStillOccupiesItsTile(): void
     {
         $mover = $this->createRealPlayer('GmMarcheur');
-        $id = $this->placeStructure('coffre_bois', 4, 4);
+        $id = $this->installExemplar('coffre_bois', 4, 4);
         $coordsId = (int) \Classes\View::get_coords_id(
             (object) ['x' => 4, 'y' => 4, 'z' => 0, 'plan' => 'gaia']
         );

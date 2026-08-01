@@ -567,18 +567,16 @@ class BuildingService extends BaseService
     /**
      * Fermeture/ouverture volontaire (admin — un jour le propriétaire).
      *
-     * Écrite sur l'entité : ce geste vaudra tel quel pour un coffre, qui n'a
-     * pas de satellite de bâtiment. La garde reste au bâtiment pour l'instant,
-     * le temps que le TYPE dise ce qui se ferme.
+     * Écrite sur l'entité, et gardée par le seul TYPE : un coffre n'a pas de
+     * satellite de bâtiment, et c'est maintenant un objet. Exiger un bâtiment
+     * reviendrait à dire qu'on ne ferme que ce qui se construit, alors que la
+     * question est « ce type a-t-il une porte ? » — à laquelle les deux
+     * catalogues répondent.
      *
-     * @throws \InvalidArgumentException id non-bâtiment
+     * @throws \InvalidArgumentException ce qui n'a pas de porte
      */
     public function setOpen(int $playerId, bool $open): void
     {
-        if ($this->getDetails($playerId) === null) {
-            throw new \InvalidArgumentException("#{$playerId} n'est pas un bâtiment.");
-        }
-
         /* Ce qui n'a pas de porte ne se ferme pas : refuser plutôt que de poser
          * un drapeau que rien ne lira. */
         if (!(new LockService())->isLockable($playerId)) {
