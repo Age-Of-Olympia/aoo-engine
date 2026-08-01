@@ -74,8 +74,19 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
             );
             if ($instanceIds !== []) {
                 $in = implode(',', array_map('intval', $instanceIds));
+                // Each exemplar owns an entity row; read the ids before the
+                // exemplars go, then drop them after — the FK is RESTRICT.
+                $entityIds = $this->link->fetchFirstColumn(
+                    "SELECT entity_id FROM item_instances WHERE id IN ({$in}) AND entity_id IS NOT NULL"
+                );
                 $this->link->executeStatement("DELETE FROM players_items_instances WHERE instance_id IN ({$in})");
                 $this->link->executeStatement("DELETE FROM item_instances WHERE id IN ({$in})");
+                if ($entityIds !== []) {
+                    $entityIn = implode(',', array_map('intval', $entityIds));
+                    $this->link->executeStatement(
+                        "DELETE FROM players WHERE id IN ({$entityIn}) AND player_type = 'item'"
+                    );
+                }
             }
             $this->link->executeStatement('DELETE FROM buildings WHERE player_id = ? OR owner_id = ?', [$id, $id]);
             $this->link->executeStatement('DELETE FROM unique_objects WHERE player_id = ?', [$id]);

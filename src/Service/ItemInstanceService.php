@@ -71,6 +71,72 @@ class ItemInstanceService extends BaseService
         return $max !== false ? (int) $max : 100;
     }
 
+    /** `players.player_type` of an entity that IS an item exemplar. */
+    public const ENTITY_TYPE = 'item';
+
+    private const ENTITY_RANGE_START = 70000000;
+
+    private const ENTITY_RANGE_END = 79999999;
+
+    /**
+     * Give a fresh exemplar its entity row: identity only, no location.
+     *
+     * Runs inside the caller's transaction and on the caller's connection, so
+     * an exemplar is never visible without its entity. Nothing reads the row
+     * yet — it is the anchor the location, and then the life, will move onto.
+     */
+    private static function attachEntity($conn, int $instanceId, int $itemId, string $customName): void
+    {
+        $catalogName = (string) $conn->fetchOne('SELECT name FROM items WHERE id = ?', [$itemId]);
+
+        $entityId = (int) $conn->fetchOne(
+            'SELECT COALESCE(MAX(id), ?) + 1 FROM players WHERE id BETWEEN ? AND ?',
+            [self::ENTITY_RANGE_START - 1, self::ENTITY_RANGE_START, self::ENTITY_RANGE_END]
+        );
+        $displayId = (int) $conn->fetchOne(
+            'SELECT COALESCE(MAX(display_id), 0) + 1 FROM players WHERE player_type = ?',
+            [self::ENTITY_TYPE]
+        );
+
+        $conn->executeStatement(
+            "INSERT INTO players
+                (id, player_type, display_id, name, race, avatar, portrait,
+                 coords_id, holder_id, slot, nextTurnTime, registerTime, text)
+             VALUES (?, ?, ?, ?, ?, '', '', NULL, NULL, '', 0, ?, '')",
+            [
+                $entityId,
+                self::ENTITY_TYPE,
+                $displayId,
+                $customName !== '' ? $customName : ucfirst($catalogName),
+                $catalogName,
+                time(),
+            ]
+        );
+
+        $conn->executeStatement(
+            'UPDATE item_instances SET entity_id = ? WHERE id = ?',
+            [$entityId, $instanceId]
+        );
+    }
+
+    /**
+     * Drop the entity of an exemplar that is going away.
+     *
+     * Call AFTER the `item_instances` row is gone: the foreign key is RESTRICT,
+     * so an entity still pointed at refuses to be deleted.
+     */
+    private static function detachEntity($conn, ?int $entityId): void
+    {
+        if ($entityId === null) {
+            return;
+        }
+
+        $conn->executeStatement(
+            'DELETE FROM players WHERE id = ? AND player_type = ?',
+            [$entityId, self::ENTITY_TYPE]
+        );
+    }
+
     private EntityManagerInterface $entityManager;
 
     public function __construct()
@@ -123,6 +189,8 @@ class ItemInstanceService extends BaseService
                 [$playerId, $instanceId]
             );
 
+            self::attachEntity($conn, $instanceId, $itemId, '');
+
             return $instanceId;
         });
     }
@@ -148,6 +216,8 @@ class ItemInstanceService extends BaseService
                 [$playerId, $instanceId]
             );
 
+            self::attachEntity($conn, $instanceId, $itemId, $customName);
+
             return $instanceId;
         });
     }
@@ -165,7 +235,8 @@ class ItemInstanceService extends BaseService
         return $conn->transactional(function ($conn) use ($instanceId): bool {
             $row = $conn->fetchAssociative(
                 'SELECT i.id, i.item_id, i.durability, i.durability_max, i.quality, i.custom_name,
-                        i.params, i.destroyed, i.wear_pending, l.player_id, l.equiped, l.location
+                        i.params, i.destroyed, i.wear_pending, i.entity_id,
+                        l.player_id, l.equiped, l.location
                  FROM item_instances i
                  JOIN players_items_instances l ON l.instance_id = i.id
                  WHERE i.id = ? FOR UPDATE',
@@ -201,6 +272,7 @@ class ItemInstanceService extends BaseService
             );
             $conn->executeStatement('DELETE FROM players_items_instances WHERE instance_id = ?', [$instanceId]);
             $conn->executeStatement('DELETE FROM item_instances WHERE id = ?', [$instanceId]);
+            self::detachEntity($conn, isset($row['entity_id']) ? (int) $row['entity_id'] : null);
 
             return true;
         });

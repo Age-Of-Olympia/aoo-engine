@@ -144,9 +144,15 @@ class ItemInstanceServiceGoldenMasterTest extends LegacyPlayerFixtureTestCase
         ), 'the worn instance stays unequipped');
 
         // Stack exhausted: the worn instance becomes the legitimate fallback.
+        // Deleting the exemplar by hand means taking its entity too — teardown
+        // finds entities through the ownership link, which goes first here.
+        $equippedEntity = $this->link->fetchOne('SELECT entity_id FROM item_instances WHERE id = ?', [$equipped]);
         $this->link->executeStatement('DELETE FROM players_items WHERE player_id = ? AND item_id = ?', [$player->id, $bois->id]);
         $this->link->executeStatement('DELETE FROM players_items_instances WHERE instance_id = ?', [$equipped]);
         $this->link->executeStatement('DELETE FROM item_instances WHERE id = ?', [$equipped]);
+        if ($equippedEntity !== false && $equippedEntity !== null) {
+            $this->link->executeStatement('DELETE FROM players WHERE id = ?', [(int) $equippedEntity]);
+        }
         $service->equipCatalogItem($player->id, $bois->id, 'main1');
         $this->assertSame('main1', (string) $this->link->fetchOne(
             'SELECT equiped FROM players_items_instances WHERE instance_id = ?', [$worn]
