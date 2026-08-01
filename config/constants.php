@@ -21,6 +21,7 @@ define('ENTITY_ID_RANGES', [
     'scenery' => ['start' => 40000000, 'end' => 49999999],
     'resource' => ['start' => 50000000, 'end' => 59999999],
     'plant' => ['start' => 60000000, 'end' => 69999999],
+    'item' => ['start' => 70000000, 'end' => 79999999],
     'npc' => ['start' => PHP_INT_MIN, 'end' => -1],
 ]);
 

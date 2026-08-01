@@ -32,7 +32,11 @@ enum EntityCategory: string
              * panneau ne bougeait pas — un clic sans effet, sans message. Une
              * plante est POSÉE comme le reste (PlantType étend StructureType),
              * elle n'est pas un interlocuteur. */
-            'building', 'unique', 'scenery', 'resource', 'plant' => self::Structure,
+            /* An item exemplar is a Structure for the same reasons a wall is:
+             * no dodge, no malus, and destruction shelves it rather than
+             * sending it to the enfers. Whether it can be hit at all follows
+             * from standing on a cell, not from the discriminator. */
+            'building', 'unique', 'scenery', 'resource', 'plant', 'item' => self::Structure,
             'real', 'tutorial', 'npc', null => self::Character,
             default => throw new \ValueError("player_type inconnu : « {$playerType} » — étendre EntityCategory::fromPlayerType."),
         };

@@ -120,12 +120,19 @@ relation gives, as consequences rather than features:
 | an item in a bag | `holder_id` = the character, `slot` = `''` |
 | an item equipped | `slot` = `'main1'` — which is what `players_items_instances.equiped` already stores |
 | a chest's contents | children of the chest |
-| an item on the ground | `coords_id` set, no holder — what `unique_objects` fakes today |
+| an item on the ground | `coords_id` set, no holder — what the `unique_objects` bridge stages today |
 | "a container holding anything cannot be picked up" | it has children |
 | "smashing a chest loots it like a player who dies" | re-parent children to the cell — *the same code* |
 
-Three tables — `players_items_instances`, `map_items_instances`,
-`unique_objects` — are three cases of this one relation, and retire into it.
+`players_items_instances` and `map_items_instances` are two cases of this one
+relation and retire into it.
+
+`unique_objects` does **not** retire, and an earlier draft of this note was
+wrong to say so. It is the 1:1 satellite of the `unique` family — crystals,
+gates, artifacts — carrying `interaction` (free JSON: dialog id, trigger, loot
+table). Its `item_instance_id` is **nullable**: a unique object that wraps
+nothing is a legitimate map object with no item behind it. Only the rows that
+*do* wrap an instance fold into the relation; the family and its satellite stay.
 
 ### 2.4 An individuated item is an entity; a stack is not
 
@@ -202,13 +209,30 @@ players act and `PlanCondition` governs what they may do. Only the fake goes.
 Small, self-contained, and it proves the model on real data before items depend
 on it.
 
-**Phase 3a — instances become entities.**
+**Phase 3a — the type answers its own life.**
+`OwnsCaracs`: a race gives its sixteen caracs, an item gives its
+`durability_max` as life and nothing else. `get_caracs()` asks the type through
+one service and never learns which catalogue replied. `item` joins
+`EntityCategory` and the id ranges (70 000 000+).
+
+*This used to be phase 3b and was swapped deliberately.* An entity whose type
+resolves to nothing takes `get_caracs()`'s "race not found" branch: an
+`error_log` per call and an all-zero stat block — the exact `objet` bug this
+chantier exists to kill, multiplied from "every dropped object" to "every
+instance in the game". The type must be able to answer before anything asks it.
+It also puts the reversible half first: this phase creates no rows.
+
+**Phase 3b — instances become entities.**
 An entity row per `item_instances` row; locations read from wherever the item is
 today (`players_items_instances` → holder + slot, `map_items_instances` → cell,
-`unique_objects` → cell, bridge deleted). `item_instances` demoted to satellite.
-Durability untouched.
+the `unique_objects` rows that wrap an instance → cell, bridge row dropped while
+the family stays). `item_instances` demoted to satellite, keeping its own
+primary key and gaining `entity_id` — four FKs point at it, two carrying live
+market state, so re-keying to save an id is a bad trade. A dropped object's
+existing `players` row is reused, id included: keeping it alive through
+destruction is why `vanish()` shelves instead of deleting.
 
-**Phase 3b — life moves.**
+**Phase 3c — life moves.**
 `durability` becomes a `players_bonus` deficit, the instance's two durability
 columns die, `items.durability_max` → `items.durability`. The rename lands last,
 when nothing else answers to that name.

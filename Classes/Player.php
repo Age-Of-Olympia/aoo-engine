@@ -206,7 +206,10 @@ class Player implements ActorInterface {
         }
 
 
-        $this->raceData = (new RaceService())->getRaceData($this->data->race);
+        // Type block by discriminator: races for entities, items for item
+        // exemplars. Both answer the same question, so nothing here branches.
+        $this->raceData = (new \App\Service\EntityTypeCaracsService())
+            ->ownCaracs($this->getPlayerType(), (string) $this->data->race);
 
         // Initialize caracs object if not exists
         if (!isset($this->caracs) || !is_object($this->caracs)) {

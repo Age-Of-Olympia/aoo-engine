@@ -5,7 +5,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ORM\Table(name: "items")]
-class Item
+class Item implements OwnsCaracs
 {
     public function __construct()
     {
@@ -35,6 +35,10 @@ class Item
 
     #[ORM\Column(type: "string", length: 255)]
     private ?string $spell= null;
+
+    /** Base life of an item of this type — the counterpart of `races.pv`. */
+    #[ORM\Column(type: "integer", name: "durability_max", options: ["default" => 100])]
+    private int $durabilityMax = 100;
 
     //getters and setters
     public function getId(): ?int
@@ -108,6 +112,28 @@ class Item
     public function setSpell(?string $spell): void
     {
         $this->spell = $spell;
+    }
+
+    public function getDurabilityMax(): int
+    {
+        return $this->durabilityMax;
+    }
+
+    public function setDurabilityMax(int $durabilityMax): void
+    {
+        $this->durabilityMax = $durabilityMax;
+    }
+
+    /**
+     * An item owns only its life. The other fifteen columns are what it lends
+     * its bearer, so they stay at zero here — see {@see OwnsCaracs}.
+     */
+    public function ownCaracs(): array
+    {
+        $own = array_fill_keys(\App\Enum\Caracs::KEYS, 0);
+        $own['pv'] = $this->durabilityMax;
+
+        return $own;
     }
 }
 

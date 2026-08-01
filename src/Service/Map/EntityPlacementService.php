@@ -123,6 +123,7 @@ final class EntityPlacementService
         'scenery'  => ['start' => 40000000, 'end' => 49999999],
         'resource' => ['start' => 50000000, 'end' => 59999999],
         'plant'    => ['start' => 60000000, 'end' => 69999999],
+        'item'     => ['start' => 70000000, 'end' => 79999999],
     ];
 
     /** First free id in the type's range, seen from this connection. */

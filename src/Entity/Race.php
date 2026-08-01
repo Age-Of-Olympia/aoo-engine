@@ -36,7 +36,7 @@ use Doctrine\ORM\Mapping as ORM;
     'resource'  => ResourceType::class,
     'plant'     => PlantType::class,
 ])]
-abstract class Race
+abstract class Race implements OwnsCaracs
 {
     /**
      * The 16 stat keys, one DB column each — alias de la source unique
@@ -576,5 +576,15 @@ abstract class Race
         return $this;
     }
 
+    /** A race owns all sixteen of its caracs; an item owns only its life. */
+    public function ownCaracs(): array
+    {
+        $own = [];
 
+        foreach (self::CARAC_KEYS as $key) {
+            $own[$key] = (int) $this->$key;
+        }
+
+        return $own;
+    }
 }
