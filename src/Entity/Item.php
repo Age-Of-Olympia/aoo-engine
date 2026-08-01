@@ -2,12 +2,13 @@
 namespace App\Entity;
 
 use App\Interface\LockableInterface;
+use App\Interface\ObstructsInterface;
 use App\Interface\OwnsCaracsInterface;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ORM\Table(name: "items")]
-class Item implements OwnsCaracsInterface, LockableInterface
+class Item implements OwnsCaracsInterface, LockableInterface, ObstructsInterface
 {
     public function __construct()
     {
@@ -37,6 +38,36 @@ class Item implements OwnsCaracsInterface, LockableInterface
 
     #[ORM\Column(type: "string", length: 255)]
     private ?string $spell= null;
+
+    /**
+     * Ce que ce type obstrue une fois POSÉ. Jeté au sol il n'obstrue rien,
+     * quoi qu'il dise ici : la localisation tranche avant le type.
+     */
+    #[ORM\Column(type: "boolean", name: "blocks_passage", options: ["default" => false])]
+    private bool $blocksPassage = false;
+
+    #[ORM\Column(type: "boolean", name: "blocks_projectiles", options: ["default" => false])]
+    private bool $blocksProjectiles = false;
+
+    public function blocksPassage(): bool
+    {
+        return $this->blocksPassage;
+    }
+
+    public function setBlocksPassage(bool $blocks): void
+    {
+        $this->blocksPassage = $blocks;
+    }
+
+    public function blocksProjectiles(): bool
+    {
+        return $this->blocksProjectiles;
+    }
+
+    public function setBlocksProjectiles(bool $blocks): void
+    {
+        $this->blocksProjectiles = $blocks;
+    }
 
     /** Ce type d'objet se ferme-t-il ? Un coffre oui, une épée non. */
     #[ORM\Column(type: "boolean", options: ["default" => false])]

@@ -78,7 +78,10 @@ final class TileOccupancyService
         $in = implode(',', $coordsIds);
         $blocked = [];
 
-        $passable = $this->raceService->getPassableStructureNames();
+        /* Les deux catalogues, gardés séparés : c'est le discriminant qui dit
+         * lequel interroger, un nom seul ne le dirait pas. */
+        $passableBy = (new \App\Service\ObstructionService($this->conn, $this->raceService))
+            ->passableTypeNames();
 
         foreach ($this->occupations($in) as $row) {
             $verdict = self::ROLE_VERDICTS[(string) $row['role']] ?? null;
@@ -86,6 +89,10 @@ final class TileOccupancyService
             if ($verdict === false) {
                 continue; /* a drawing order screens nothing */
             }
+
+            $passable = (string) ($row['player_type'] ?? '') === \App\Service\ObstructionService::ITEM_TYPE
+                ? $passableBy['item']
+                : $passableBy['race'];
 
             if ($verdict === null && in_array((string) $row['race'], $passable, true)) {
                 continue;
@@ -117,7 +124,10 @@ final class TileOccupancyService
             $blocked[(int) $id] = 'Impossible de se rendre à cet endroit.';
         }
 
-        $passable = $this->raceService->getPassableStructureNames();
+        /* Les deux catalogues, gardés séparés : c'est le discriminant qui dit
+         * lequel interroger, un nom seul ne le dirait pas. */
+        $passableBy = (new \App\Service\ObstructionService($this->conn, $this->raceService))
+            ->passableTypeNames();
         $doors = $this->raceService->getDoorRaceNames();
 
         foreach ($this->occupations($in) as $row) {
@@ -138,6 +148,10 @@ final class TileOccupancyService
             if ($verdict === false) {
                 continue; /* walkable whatever the type says */
             }
+
+            $passable = (string) ($row['player_type'] ?? '') === \App\Service\ObstructionService::ITEM_TYPE
+                ? $passableBy['item']
+                : $passableBy['race'];
 
             if ($verdict === null && in_array((string) $row['race'], $passable, true)) {
                 continue;

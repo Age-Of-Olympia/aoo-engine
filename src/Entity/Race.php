@@ -2,6 +2,7 @@
 namespace App\Entity;
 
 use App\Interface\LockableInterface;
+use App\Interface\ObstructsInterface;
 use App\Interface\OwnsCaracsInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -38,7 +39,7 @@ use Doctrine\ORM\Mapping as ORM;
     'resource'  => ResourceType::class,
     'plant'     => PlantType::class,
 ])]
-abstract class Race implements OwnsCaracsInterface, LockableInterface
+abstract class Race implements OwnsCaracsInterface, LockableInterface, ObstructsInterface
 {
     /**
      * The 16 stat keys, one DB column each — alias de la source unique

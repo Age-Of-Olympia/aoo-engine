@@ -283,6 +283,61 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /**
+     * Un exemplaire POSÉ obstrue selon SON catalogue ; jeté, il n'obstrue rien.
+     *
+     * Un coffre est un objet : installé il tient sa case, tombé au sol il ne
+     * retient personne. La localisation tranche avant le type.
+     */
+    public function testAnInstalledExemplarObstructsAndADroppedOneDoesNot(): void
+    {
+        $bois = $this->itemOrSkip('bois');
+        $player = $this->createRealPlayer('GmPoseur');
+        $mover = $this->createRealPlayer('GmPassant2');
+
+        $instanceId = (new \App\Service\ItemInstanceService())->create($player->id, $bois->id, $player->id, '');
+        $entityId = (int) $this->link->fetchOne(
+            'SELECT entity_id FROM item_instances WHERE id = ?',
+            [$instanceId]
+        );
+        $coordsId = (int) \Classes\View::get_coords_id(
+            (object) ['x' => 7, 'y' => 7, 'z' => 0, 'plan' => 'gaia']
+        );
+        $location = new \App\Service\Map\EntityLocationService($this->link);
+        $occupancy = new \App\Service\Map\TileOccupancyService($this->link);
+
+        // « bois » n'obstrue rien au catalogue : posé, on le traverse.
+        $location->installOnCell($entityId, $coordsId);
+        $this->assertNull(
+            $occupancy->stepRefusal($coordsId, (int) $mover->id, true),
+            'un objet qui ne bloque pas se traverse, même posé'
+        );
+
+        // On lui donne le réglage d'un coffre : posé, il tient sa case.
+        $this->link->executeStatement(
+            'UPDATE items SET blocks_passage = 1 WHERE id = ?',
+            [$bois->id]
+        );
+
+        try {
+            $this->assertNotNull(
+                $occupancy->stepRefusal($coordsId, (int) $mover->id, true),
+                'posé et bloquant, il tient sa case'
+            );
+
+            $location->dropOnCell($entityId, $coordsId);
+            $this->assertNull(
+                $occupancy->stepRefusal($coordsId, (int) $mover->id, true),
+                'jeté au sol, il n\'obstrue plus rien — la localisation tranche avant le type'
+            );
+        } finally {
+            $this->link->executeStatement(
+                'UPDATE items SET blocks_passage = 0 WHERE id = ?',
+                [$bois->id]
+            );
+            }
+    }
+
     /** Un mur ne se ferme pour personne, propriétaire compris. */
     public function testNobodyLocksWhatHasNoDoor(): void
     {

@@ -109,7 +109,9 @@ class BuildingService extends BaseService
 
         $blockersByTile = [];
 
-        $blocking = $this->raceService->getProjectileBlockingRaceNames();
+        $blockingBy = (new \App\Service\ObstructionService($conn, $this->raceService))
+            ->projectileBlockingTypeNames();
+        $blocking = array_merge($blockingBy['race'], $blockingBy['item']);
 
         /* Une porte OUVERTE est un trou dans le mur : la flèche y passe comme
          * le pas. Fermée, elle arrête l'un et l'autre. C'est la même ouverture
@@ -132,8 +134,19 @@ class BuildingService extends BaseService
                  WHERE ' . $tileFilter . '
                    AND ec.role <> ?
                    AND NOT (p.is_open = 1 AND p.race IN (' . $doorPlaceholders . '))
-                   AND p.race IN (' . implode(',', array_fill(0, count($blocking), '?')) . ')',
-                array_merge($tileParams, [self::TRANSPARENT_ROLE], $doors ?: [''], $blocking)
+                   AND (
+                        (p.player_type <> ? AND p.race IN (' . self::placeholders($blockingBy['race']) . '))
+                     OR (p.player_type =  ? AND p.race IN (' . self::placeholders($blockingBy['item']) . '))
+                   )',
+                array_merge(
+                    $tileParams,
+                    [self::TRANSPARENT_ROLE],
+                    $doors ?: [''],
+                    [\App\Service\ObstructionService::ITEM_TYPE],
+                    $blockingBy['race'] ?: [''],
+                    [\App\Service\ObstructionService::ITEM_TYPE],
+                    $blockingBy['item'] ?: ['']
+                )
             );
             /* A target does not screen itself. With a single cell the
              * question did not arise — that cell is an endpoint, excluded
@@ -477,6 +490,12 @@ class BuildingService extends BaseService
         }
 
         return null;
+    }
+
+    /** @param list<string> $values */
+    private static function placeholders(array $values): string
+    {
+        return implode(',', array_fill(0, max(1, count($values)), '?'));
     }
 
     /** La fermeture volontaire, lue là où elle vit désormais : sur l'entité. */
