@@ -2,6 +2,7 @@
 
 namespace App\Service\ImportExport;
 
+use App\Interface\ObjectImporterInterface;
 /**
  * Resolves an {@see ObjectImporterInterface} by objectType. Defaults to the built-in set
  * (action, passive); tests inject their own. Lets the import flow route a bundle

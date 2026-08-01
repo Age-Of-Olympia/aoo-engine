@@ -73,7 +73,7 @@ class ActionDisplayContextGoldenMasterTest extends LegacyPlayerFixtureTestCase
             'UPDATE action_conditions SET display_context = 0 WHERE id = ?',
             [(int) $conditionId]
         );
-        \App\Entity\EntityManagerFactory::getEntityManager()->clear();
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
 
         $actor = $this->createRealPlayer('GmCtx');
         $target = $this->createRealPlayer('GmCtx');
@@ -83,7 +83,7 @@ class ActionDisplayContextGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $target->get_data();
 
         $targeting = new ActionTargeting();
-        $em = \App\Entity\EntityManagerFactory::getEntityManager();
+        $em = \App\Factory\EntityManagerFactory::getEntityManager();
 
         // SANS drapeau : jamais masqué, quelle que soit la distance
         // (comportement historique — la distance refuse à l'exécution).

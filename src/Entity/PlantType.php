@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use App\Trait\HarvestableFieldsTrait;
+use App\Interface\HarvestableInterface;
 use Doctrine\ORM\Mapping as ORM;
 
 /**

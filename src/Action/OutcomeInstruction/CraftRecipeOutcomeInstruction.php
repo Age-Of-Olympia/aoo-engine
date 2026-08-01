@@ -4,7 +4,7 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Action\Condition\ConditionObject;
 use App\Entity\OutcomeInstruction;
-use App\Action\Schema\HasParameterSchemaInterface;
+use App\Interface\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use App\Service\RecipeService;
 use Classes\Player;

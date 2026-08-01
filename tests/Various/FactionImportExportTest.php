@@ -2,7 +2,7 @@
 
 namespace Tests\Various;
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\Faction;
 use App\Service\FactionService;
 use App\Service\ImportExport\ExporterRegistry;

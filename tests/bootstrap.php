@@ -18,7 +18,7 @@ if ($aooTestDb === false) {
     $aooTestDb = 'aoo4_phpunit';
 }
 if ($aooTestDb !== '') {
-    App\Entity\EntityManagerFactory::useDatabase($aooTestDb);
+    App\Factory\EntityManagerFactory::useDatabase($aooTestDb);
 }
 
 // Sous le SAPI cli, error_log() sort sur stderr ; PHPUnit

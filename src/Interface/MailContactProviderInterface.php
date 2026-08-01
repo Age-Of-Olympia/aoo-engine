@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\Mail;
+namespace App\Interface;
 
 /**
  * Liste de contacts des campagnes mail (OneSignal aujourd'hui). Couture qui

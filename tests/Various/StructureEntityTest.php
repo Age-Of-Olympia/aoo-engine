@@ -130,7 +130,7 @@ class StructureEntityTest extends TestCase
             $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
         }
 
-        $em = \App\Entity\EntityManagerFactory::getEntityManager();
+        $em = \App\Factory\EntityManagerFactory::getEntityManager();
 
         try {
             $em->getConnection()->executeQuery('SELECT 1 FROM buildings LIMIT 1');

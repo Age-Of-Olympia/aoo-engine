@@ -3,7 +3,7 @@
 namespace App\Service\Action;
 
 use App\Entity\ActionTypeXp;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Service\Action\Xp\XpCalculatorRegistry;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;

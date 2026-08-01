@@ -3,7 +3,7 @@
 namespace App\Service;
 
 use App\Entity\CharacterRace;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\Race;
 use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;

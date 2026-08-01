@@ -4,7 +4,7 @@ namespace App\View;
 
 use App\Entity\Building;
 use App\Entity\BuildingDetails;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\Structure;
 use App\Service\BuildingService;
 use App\Service\FactionService;

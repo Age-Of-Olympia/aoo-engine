@@ -2,6 +2,7 @@
 
 namespace App\Service\ImportExport;
 
+use App\Interface\ObjectImporterInterface;
 use App\Service\PlanAdminService;
 use App\Service\PlanConfigService;
 use App\Service\Map\ResourceReconciler;

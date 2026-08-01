@@ -2,6 +2,7 @@
 
 namespace App\View\Action;
 
+use App\Trait\RendersOptionsTrait;
 /**
  * The "new action" form shown in the workbench actions column. Lives here so the
  * page controller doesn't build form HTML inline.

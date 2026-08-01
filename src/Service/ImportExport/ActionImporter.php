@@ -3,11 +3,11 @@
 namespace App\Service\ImportExport;
 
 use App\Action\Condition\ConditionRegistry;
-use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
+use App\Factory\OutcomeInstructionFactory;
 use App\Entity\Action;
 use App\Entity\ActionCondition;
 use App\Entity\ActionOutcome;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\OutcomeInstruction;
 use App\Entity\Race;
 use App\Enum\OutcomeTarget;

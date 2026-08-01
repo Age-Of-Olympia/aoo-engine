@@ -2,6 +2,7 @@
 
 namespace App\View\Action;
 
+use App\Trait\RendersOptionsTrait;
 use App\Action\Schema\Form\ParameterFieldRenderer;
 use App\Action\Schema\Form\RawParamsEditor;
 use App\Action\Schema\ParameterSchema;

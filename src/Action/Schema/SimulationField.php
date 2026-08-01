@@ -2,6 +2,7 @@
 
 namespace App\Action\Schema;
 
+use App\Interface\DeclaresSimulationInputsInterface;
 /**
  * One input the simulator needs for an action, declared by the condition /
  * outcome that reads it (see DeclaresSimulationInputsInterface). SimulationFormBuilder

@@ -3,7 +3,7 @@
 namespace App\Service\ImportExport;
 
 use App\Entity\ActionPassive;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Service\Action\ActionPassiveCatalogService;
 use Doctrine\ORM\EntityManagerInterface;
 

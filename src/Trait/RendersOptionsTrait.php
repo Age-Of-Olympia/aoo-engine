@@ -1,6 +1,6 @@
 <?php
 
-namespace App\View\Action;
+namespace App\Trait;
 
 /**
  * Shared <option> / <optgroup> rendering for the workbench and simulator views,

@@ -4,7 +4,7 @@ namespace App\Service;
 
 use App\Action\Combat\PassiveValueCalculator;
 use App\Action\Condition\ConditionObject;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\PlayerPassive;
 use App\Entity\ActionPassive;
 use Classes\Player;

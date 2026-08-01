@@ -1,6 +1,6 @@
 <?php
 
-namespace App\View\Action;
+namespace App\Trait;
 
 /**
  * The "hérité de … / surchargé ici" banner shared by the per-type XP and log

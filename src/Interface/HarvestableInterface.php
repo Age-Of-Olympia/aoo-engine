@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Entity;
+namespace App\Interface;
 
 /**
  * Ce qui se récolte : un contrat, pas une place dans l'arbre.

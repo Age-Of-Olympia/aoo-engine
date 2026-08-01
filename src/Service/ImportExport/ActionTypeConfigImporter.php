@@ -4,7 +4,7 @@ namespace App\Service\ImportExport;
 
 use App\Entity\ActionTypeLog;
 use App\Entity\ActionTypeXp;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Service\Action\ActionTypeRegistry;
 use App\Service\Action\Xp\XpCalculatorRegistry;
 use Doctrine\ORM\EntityManagerInterface;

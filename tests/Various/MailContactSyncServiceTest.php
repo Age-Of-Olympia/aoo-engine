@@ -2,7 +2,7 @@
 
 namespace Tests\Various;
 
-use App\Service\Mail\MailContactProviderInterface;
+use App\Interface\MailContactProviderInterface;
 use App\Service\Mail\MailContactSyncService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;

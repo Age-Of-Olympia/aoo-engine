@@ -1,6 +1,6 @@
 <?php
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use Doctrine\Migrations\Configuration\EntityManager\ExistingEntityManager;
 use Doctrine\Migrations\Configuration\Migration\JsonFile;
 use Doctrine\Migrations\DependencyFactory;

@@ -119,7 +119,7 @@ $applyForm = static function (Race $race) use ($face): string {
     /* Rendement du type : on s'adresse à ce qui SAIT SE RÉCOLTER, pas à une
      * famille. Le vider rend le type muet jusqu'à ce qu'un plan le déclare ;
      * ce qui ne se récolte pas n'a même plus la question à se poser. */
-    if ($race instanceof \App\Entity\HarvestableInterface) {
+    if ($race instanceof \App\Interface\HarvestableInterface) {
         /* L'objet vient d'une liste ; on le valide quand même contre le
          * catalogue — un POST fabriqué ne doit pas installer un rendement qui
          * ne rapporte rien. Vide reste vide : c'est « ne rend rien ». */

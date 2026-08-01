@@ -2,6 +2,7 @@
 
 namespace App\View\Action;
 
+use App\Trait\EscapesHtmlTrait;
 /**
  * The two-column workbench shell shared by the action and passive editors: a
  * foldable list column on the left (head with title + fold toggle, then the

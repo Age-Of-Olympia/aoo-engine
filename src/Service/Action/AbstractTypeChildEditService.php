@@ -3,8 +3,8 @@
 namespace App\Service\Action;
 
 use App\Action\Schema\ParameterSchema;
-use App\Entity\EntityManagerFactory;
-use App\Entity\TypeChildConfigInterface;
+use App\Factory\EntityManagerFactory;
+use App\Interface\TypeChildConfigInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Throwable;

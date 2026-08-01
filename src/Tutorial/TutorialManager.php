@@ -2,7 +2,8 @@
 
 namespace App\Tutorial;
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\TutorialStepFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\TutorialPlayer;
 use App\Factory\PlayerFactory;
 use Classes\Player;

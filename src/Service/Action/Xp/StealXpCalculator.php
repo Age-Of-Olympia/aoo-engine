@@ -2,6 +2,7 @@
 
 namespace App\Service\Action\Xp;
 
+use App\Interface\XpCalculatorInterface;
 use App\Interface\ActorInterface;
 
 /**

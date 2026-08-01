@@ -2,6 +2,7 @@
 
 namespace App\View\Action;
 
+use App\Trait\EscapesHtmlTrait;
 use App\Service\ImportExport\ImportReport;
 
 /**

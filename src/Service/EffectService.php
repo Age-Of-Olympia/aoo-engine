@@ -3,7 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Effect;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use RuntimeException;
 
 /**

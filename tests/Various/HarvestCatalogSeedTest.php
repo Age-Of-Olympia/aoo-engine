@@ -40,7 +40,7 @@ class HarvestCatalogSeedTest extends TestCase
         }
 
         try {
-            $this->conn = \App\Entity\EntityManagerFactory::getEntityManager()->getConnection();
+            $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
             $this->conn->fetchOne('SELECT 1');
         } catch (\Throwable $e) {
             $this->markTestSkipped('Database unreachable: ' . $e->getMessage());

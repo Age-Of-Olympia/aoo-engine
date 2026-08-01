@@ -2,7 +2,7 @@
 
 namespace App\Service\ImportExport;
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\Faction;
 use App\Entity\FactionRole;
 use App\Service\FactionService;

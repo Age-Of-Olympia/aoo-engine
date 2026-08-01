@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Action\Schema;
+namespace App\Interface;
+
+use App\Action\Schema\ParameterSchema;
 
 interface HasParameterSchemaInterface
 {

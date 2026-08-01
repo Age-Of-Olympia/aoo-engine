@@ -2,6 +2,8 @@
 
 namespace App\Action\Schema;
 
+use App\Enum\FieldType;
+use App\Interface\DeclaresSimulationInputsInterface;
 /**
  * Derives the simulator's editable caracs from a parameter schema + stored params,
  * so the form follows the schema instead of a hand-maintained per-instruction list.

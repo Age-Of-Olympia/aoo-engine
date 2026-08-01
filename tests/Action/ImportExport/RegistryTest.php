@@ -5,8 +5,8 @@ namespace Tests\Action\ImportExport;
 use App\Service\ImportExport\ExporterRegistry;
 use App\Service\ImportExport\ImportReport;
 use App\Service\ImportExport\ImporterRegistry;
-use App\Service\ImportExport\ObjectExporterInterface;
-use App\Service\ImportExport\ObjectImporterInterface;
+use App\Interface\ObjectExporterInterface;
+use App\Interface\ObjectImporterInterface;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 

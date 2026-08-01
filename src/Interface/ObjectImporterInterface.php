@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Service\ImportExport;
+namespace App\Interface;
+
+use App\Service\ImportExport\ImportReport;
 
 /**
  * Imports a family of natural-key payloads (the counterpart of {@see ObjectExporterInterface}).

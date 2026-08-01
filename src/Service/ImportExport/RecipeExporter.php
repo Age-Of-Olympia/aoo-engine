@@ -2,7 +2,8 @@
 
 namespace App\Service\ImportExport;
 
-use App\Entity\EntityManagerFactory;
+use App\Interface\ObjectExporterInterface;
+use App\Factory\EntityManagerFactory;
 use Doctrine\DBAL\Connection;
 use InvalidArgumentException;
 

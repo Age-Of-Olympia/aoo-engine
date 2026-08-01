@@ -2,6 +2,7 @@
 
 namespace App\Service\ImportExport;
 
+use App\Interface\ObjectExporterInterface;
 use App\Entity\ActionPassive;
 use App\Service\Action\ActionPassiveCatalogService;
 use InvalidArgumentException;

@@ -2,6 +2,7 @@
 
 namespace App\Service\Wiki;
 
+use App\Interface\WikiSheetRendererInterface;
 /**
  * Registre des renderers wiki, clé = objectType — le miroir de
  * ExporterRegistry côté mise en forme. Ajouter une famille = une classe

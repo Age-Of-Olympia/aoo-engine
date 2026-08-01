@@ -2,7 +2,7 @@
 
 namespace Tests\Action\Combat;
 
-use App\Action\ActionFactory;
+use App\Factory\ActionFactory;
 use App\Action\ActionResults;
 use App\Action\Condition\ConditionObject;
 use App\Action\Condition\TargetTypeCondition;

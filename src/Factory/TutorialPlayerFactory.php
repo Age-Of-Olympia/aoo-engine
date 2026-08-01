@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Tutorial;
+namespace App\Factory;
 
-use App\Entity\EntityManagerFactory;
+use App\Tutorial\TutorialMapInstance;
+use App\Factory\EntityManagerFactory;
 use App\Entity\TutorialPlayer;
 use Doctrine\DBAL\Connection;
 

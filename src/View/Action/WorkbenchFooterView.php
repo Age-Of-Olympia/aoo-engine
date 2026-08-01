@@ -2,6 +2,7 @@
 
 namespace App\View\Action;
 
+use App\Trait\EscapesHtmlTrait;
 /**
  * The workbench's single footer action bar, shared by the action and passive
  * editors: the primary Enregistrer on the left, any extra controls (e.g. an

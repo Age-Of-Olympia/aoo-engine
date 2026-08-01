@@ -1,6 +1,9 @@
 <?php
 
-namespace App\Service\Action\Xp;
+namespace App\Interface;
+
+use App\Entity\Action;
+use Classes\Player;
 
 use App\Interface\ActorInterface;
 

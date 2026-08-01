@@ -2,6 +2,7 @@
 
 namespace App\View\Action;
 
+use App\Trait\RendersOptionsTrait;
 use App\Action\Schema\OptionCatalog;
 use App\Service\Action\SimulationWeaponCatalog;
 

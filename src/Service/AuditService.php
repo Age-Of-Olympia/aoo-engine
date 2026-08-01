@@ -3,7 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Audit;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 
 class AuditService
 {

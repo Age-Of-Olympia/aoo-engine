@@ -5,8 +5,8 @@ namespace App\Service\Action;
 use App\Entity\Action;
 use App\Entity\ActionTypeXp;
 use App\Interface\ActorInterface;
-use App\Service\Action\Xp\MutatesActorsInterface;
-use App\Service\Action\Xp\XpCalculatorInterface;
+use App\Interface\MutatesActorsInterface;
+use App\Interface\XpCalculatorInterface;
 use App\Service\Action\Xp\XpCalculatorRegistry;
 use Doctrine\ORM\EntityManagerInterface;
 

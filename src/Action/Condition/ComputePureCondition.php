@@ -7,7 +7,7 @@ use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetailView;
-use App\Action\Schema\HasParameterSchemaInterface;
+use App\Interface\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use Classes\Dice;
 use Classes\View;

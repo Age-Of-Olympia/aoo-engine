@@ -1,6 +1,9 @@
 <?php
 
-namespace App\Service\Action\Xp;
+namespace App\Interface;
+
+use App\Interface\XpCalculatorInterface;
+use App\Entity\Action;
 
 use App\Interface\ActorInterface;
 

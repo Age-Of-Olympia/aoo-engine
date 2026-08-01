@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Entity;
+namespace App\Interface;
 
 /**
  * A row of type-scoped config edited by the type-defaults page: an instruction

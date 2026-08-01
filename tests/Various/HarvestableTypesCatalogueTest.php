@@ -2,6 +2,7 @@
 
 namespace Tests\Various;
 
+use App\Interface\HarvestableInterface;
 use App\Service\Map\StructureTypeService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
@@ -35,7 +36,7 @@ class HarvestableTypesCatalogueTest extends TestCase
         }
 
         try {
-            $this->conn = \App\Entity\EntityManagerFactory::getEntityManager()->getConnection();
+            $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
             $this->conn->fetchOne('SELECT 1');
         } catch (\Throwable $e) {
             $this->markTestSkipped('Database unreachable: ' . $e->getMessage());

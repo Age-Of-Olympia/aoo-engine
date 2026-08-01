@@ -2,6 +2,8 @@
 
 namespace App\Service\Mail;
 
+use App\Factory\MailContactProviderFactory;
+use App\Interface\MailContactProviderInterface;
 /**
  * Traduit l'état du jeu en appels au fournisseur (inscription, suppression,
  * annulation, cron). L'abonnement passe toujours par un upsert clé email

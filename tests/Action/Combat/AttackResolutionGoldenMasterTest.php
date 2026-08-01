@@ -2,7 +2,7 @@
 
 namespace Tests\Action\Combat;
 
-use App\Action\ActionFactory;
+use App\Factory\ActionFactory;
 use App\Action\ActionResults;
 use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;

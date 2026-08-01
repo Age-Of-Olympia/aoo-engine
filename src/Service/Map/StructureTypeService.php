@@ -2,7 +2,8 @@
 
 namespace App\Service\Map;
 
-use App\Entity\EntityManagerFactory;
+use App\Interface\HarvestableInterface;
+use App\Factory\EntityManagerFactory;
 
 /**
  * What a structure type IS, read from the one catalogue that holds it.

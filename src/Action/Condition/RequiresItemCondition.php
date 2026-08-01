@@ -3,8 +3,8 @@ namespace App\Action\Condition;
 
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
-use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchemaInterface;
+use App\Enum\FieldType;
+use App\Interface\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use Classes\Item;

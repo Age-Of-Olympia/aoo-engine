@@ -31,7 +31,7 @@ class TileDialogMigrationTest extends TestCase
             require_once __DIR__ . '/../../config/bootstrap.php';
             require_once __DIR__ . '/../../config/functions.php';
             require_once __DIR__ . '/../../config/constants.php';
-            $GLOBALS['link'] = \App\Entity\EntityManagerFactory::getEntityManager()->getConnection();
+            $GLOBALS['link'] = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
             $GLOBALS['link']->executeQuery('SELECT 1');
 
             $this->service = new TileDialogMigrationService(new Db());

@@ -2,6 +2,7 @@
 
 namespace App\Service\Mail;
 
+use App\Interface\MailContactProviderInterface;
 use GuzzleHttp\Client;
 use onesignal\client\api\DefaultApi;
 use onesignal\client\Configuration;

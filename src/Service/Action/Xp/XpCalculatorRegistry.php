@@ -2,6 +2,7 @@
 
 namespace App\Service\Action\Xp;
 
+use App\Interface\XpCalculatorInterface;
 /**
  * Maps an XP "mode" to its calculator. The mode is stored per action type in
  * action_type_xp; the resolver and the editor both go through here so the set of

@@ -40,7 +40,7 @@ class SceneryIsAnEntityTest extends TestCase
         }
 
         try {
-            $this->conn = \App\Entity\EntityManagerFactory::getEntityManager()->getConnection();
+            $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
             $this->conn->fetchOne('SELECT 1');
         } catch (\Throwable $e) {
             $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
@@ -89,7 +89,7 @@ class SceneryIsAnEntityTest extends TestCase
     {
         $id = $this->sceneryOnTheBoard();
 
-        \App\Entity\EntityManagerFactory::getEntityManager()->clear();
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
         $entity = PlayerFactory::gameEntity($id);
 
         $this->assertNotNull($entity, 'un décor doit répondre comme toute entité');
@@ -101,7 +101,7 @@ class SceneryIsAnEntityTest extends TestCase
     {
         $id = $this->sceneryOnTheBoard();
 
-        \App\Entity\EntityManagerFactory::getEntityManager()->clear();
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
         $entity = PlayerFactory::gameEntity($id);
 
         $this->assertInstanceOf(Structure::class, $entity);

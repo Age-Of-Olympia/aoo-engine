@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Service\Wiki;
+namespace App\Interface;
 
+use App\Interface\ObjectExporterInterface;
 /**
  * Rend une famille du catalogue en fiche « wiki compatible »
  * (markup DokuWiki, collé tel quel sur age-of-olympia.net/wiki).

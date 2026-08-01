@@ -2,7 +2,7 @@
 
 namespace Tests\Action\View;
 
-use App\View\Action\RendersOptionsTrait;
+use App\Trait\RendersOptionsTrait;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 

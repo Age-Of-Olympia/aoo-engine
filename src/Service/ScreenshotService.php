@@ -2,7 +2,7 @@
 
 namespace App\Service;
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Factory\PlayerFactory;
 use Classes\Player;
 use Classes\View;

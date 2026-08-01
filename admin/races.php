@@ -22,7 +22,7 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
-use App\Entity\HarvestableInterface;
+use App\Interface\HarvestableInterface;
 use App\Entity\PlantType;
 use App\Entity\Race;
 use App\Entity\StructureType;

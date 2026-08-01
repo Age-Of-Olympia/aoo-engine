@@ -2,6 +2,7 @@
 
 namespace App\Tutorial;
 
+use App\Factory\TutorialStepFactory;
 use App\Tutorial\Steps\AbstractStep;
 use App\Tutorial\Exceptions\TutorialStepException;
 use App\Tutorial\Exceptions\TutorialValidationException;

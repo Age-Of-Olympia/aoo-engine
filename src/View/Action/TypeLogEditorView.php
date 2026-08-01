@@ -2,6 +2,8 @@
 
 namespace App\View\Action;
 
+use App\Trait\RendersInheritanceBannerTrait;
+use App\Trait\EscapesHtmlTrait;
 /**
  * The log-template editor for one action type, shown on the type-defaults page.
  * Two templates (actor / target line) with the supported placeholders. Posts to

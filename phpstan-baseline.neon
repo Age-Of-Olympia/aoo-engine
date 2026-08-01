@@ -37,10 +37,10 @@ parameters:
 			path: api/tutorial/jump-to-step.php
 
 		-
-			message: '#^Static property App\\Action\\ActionFactory\:\:\$actionClasses is never read, only written\.$#'
+			message: '#^Static property App\\Factory\\ActionFactory\:\:\$actionClasses is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
-			path: src/Action/ActionFactory.php
+			path: src/Factory/ActionFactory.php
 
 
 		-
@@ -193,7 +193,7 @@ parameters:
 			message: '#^Constant DB_CONSTANTS not found\.$#'
 			identifier: constant.notFound
 			count: 1
-			path: src/Entity/EntityManagerFactory.php
+			path: src/Factory/EntityManagerFactory.php
 
 		-
 			message: '#^Property App\\Entity\\Effect\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
@@ -362,7 +362,7 @@ parameters:
 			message: '#^Method Doctrine\\ORM\\EntityManager\:\:clear\(\) invoked with 1 parameter, 0 required\.$#'
 			identifier: arguments.count
 			count: 1
-			path: src/Tutorial/TutorialPlayerFactory.php
+			path: src/Factory/TutorialPlayerFactory.php
 
 		-
 			message: '#^Right side of && is always true\.$#'

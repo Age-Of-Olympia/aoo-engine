@@ -325,7 +325,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
          * catalogue content or it would be skipped everywhere. Through the
          * domain rather than SQL: Doctrine holds the race in memory, so a raw
          * write would escape it. */
-        $entityManager = \App\Entity\EntityManagerFactory::getEntityManager();
+        $entityManager = \App\Factory\EntityManagerFactory::getEntityManager();
         $race = $entityManager->getRepository(\App\Entity\Race::class)->findOneBy(['name' => 'mur_pierre']);
 
         if ($race === null) {

@@ -2,6 +2,7 @@
 
 namespace App\Service\Wiki;
 
+use App\Interface\WikiSheetRendererInterface;
 use App\Service\ImportExport\ExporterRegistry;
 
 /**

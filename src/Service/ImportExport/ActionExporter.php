@@ -2,7 +2,8 @@
 
 namespace App\Service\ImportExport;
 
-use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
+use App\Interface\ObjectExporterInterface;
+use App\Factory\OutcomeInstructionFactory;
 use App\Entity\Action;
 use App\Entity\ActionCondition;
 use App\Entity\ActionOutcome;

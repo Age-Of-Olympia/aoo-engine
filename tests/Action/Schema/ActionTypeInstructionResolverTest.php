@@ -3,7 +3,7 @@
 namespace Tests\Action\Schema;
 
 use App\Action\MeleeAction;
-use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
+use App\Factory\OutcomeInstructionFactory;
 use App\Entity\ActionTypeInstruction;
 use App\Service\Action\ActionTypeInstructionResolver;
 use Doctrine\ORM\EntityManagerInterface;

@@ -2,6 +2,7 @@
 
 namespace App\Service\ImportExport;
 
+use App\Interface\ObjectExporterInterface;
 /**
  * Resolves an {@see ObjectExporterInterface} by objectType. Defaults to the built-in set
  * (action, passive); tests inject their own. The seam that lets the export UI be

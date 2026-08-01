@@ -2,7 +2,7 @@
 
 namespace Tests\Action\ImportExport;
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Service\ImportExport\ItemExporter;
 use App\Service\ImportExport\ItemImporter;
 use App\Service\ImportExport\RecipeExporter;

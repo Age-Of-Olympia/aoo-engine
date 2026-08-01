@@ -2,7 +2,7 @@
 
 namespace Tests\Action\Schema;
 
-use App\Action\Schema\FieldType;
+use App\Enum\FieldType;
 use App\Action\Schema\Form\ParameterFieldRenderer;
 use App\Action\Schema\OptionCatalog;
 use App\Action\Schema\ParameterField;

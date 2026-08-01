@@ -1,6 +1,6 @@
 <?php
 use App\Service\RaceService;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use Classes\AdminCommand;
 use Classes\Argument;
 use Classes\Item;

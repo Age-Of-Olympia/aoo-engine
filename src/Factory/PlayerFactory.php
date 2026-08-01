@@ -2,7 +2,7 @@
 
 namespace App\Factory;
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\Character;
 use App\Entity\GameEntity;
 use App\Tutorial\TutorialHelper;

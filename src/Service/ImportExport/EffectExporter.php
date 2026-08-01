@@ -2,8 +2,9 @@
 
 namespace App\Service\ImportExport;
 
+use App\Interface\ObjectExporterInterface;
 use App\Entity\Effect;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Entity;
+namespace App\Interface;
 
 /**
  * What a TYPE gives to the individual that belongs to it.

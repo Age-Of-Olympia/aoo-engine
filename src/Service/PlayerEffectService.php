@@ -4,7 +4,7 @@ namespace App\Service;
 
 use Classes\Db;
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\PlayerEffect;
 
 class PlayerEffectService

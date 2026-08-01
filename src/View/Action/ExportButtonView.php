@@ -2,6 +2,7 @@
 
 namespace App\View\Action;
 
+use App\Trait\EscapesHtmlTrait;
 /**
  * Renders the admin "export" controls: a single-action download link and the
  * "export all" link. Both point at admin/action-export.php (a GET download), so

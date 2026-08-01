@@ -2,6 +2,7 @@
 
 namespace App\Service\ImportExport;
 
+use App\Interface\ObjectImporterInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Throwable;
 

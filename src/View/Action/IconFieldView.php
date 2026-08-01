@@ -2,6 +2,7 @@
 
 namespace App\View\Action;
 
+use App\Trait\EscapesHtmlTrait;
 /**
  * The action icon field: a trigger showing the current icon, a hidden input that
  * carries the value, a popover the client fills with a searchable grid of the

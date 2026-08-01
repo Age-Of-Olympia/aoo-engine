@@ -2,10 +2,10 @@
 
 namespace App\Service\Action;
 
-use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
+use App\Factory\OutcomeInstructionFactory;
 use App\Entity\Action;
 use App\Entity\ActionTypeInstruction;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\OutcomeInstruction;
 use Doctrine\ORM\EntityManagerInterface;
 

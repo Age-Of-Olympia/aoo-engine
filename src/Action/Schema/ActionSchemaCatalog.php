@@ -2,8 +2,9 @@
 
 namespace App\Action\Schema;
 
+use App\Interface\HasParameterSchemaInterface;
 use App\Action\Condition\ConditionRegistry;
-use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
+use App\Factory\OutcomeInstructionFactory;
 
 final class ActionSchemaCatalog
 {

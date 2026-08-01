@@ -2,7 +2,7 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
-use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
+use App\Factory\OutcomeInstructionFactory;
 use App\Action\Schema\ActionSchemaCatalog;
 use App\Action\Schema\Form\ParameterFieldRenderer;
 use App\Action\Schema\Form\RawParamsEditor;
@@ -159,7 +159,7 @@ if ($action === null) {
     // (ciblage, instructions héritées). Rebasculable, mais engageant :
     // confirmation au changement, les conditions/outcomes en place sont
     // conservés et à revoir sous le nouveau type.
-    $currentType = (string) \App\Entity\EntityManagerFactory::getEntityManager()
+    $currentType = (string) \App\Factory\EntityManagerFactory::getEntityManager()
         ->getClassMetadata(get_class($action))->discriminatorValue;
     echo '<label class="wb-field"><span>Type</span>'
         . formSelect('type', $actionTypes, $currentType !== '' ? $currentType : null, null,

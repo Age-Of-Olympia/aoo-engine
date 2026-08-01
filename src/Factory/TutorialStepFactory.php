@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tutorial;
+namespace App\Factory;
 
 use App\Tutorial\Steps\AbstractStep;
 use App\Tutorial\Steps\GenericStep;

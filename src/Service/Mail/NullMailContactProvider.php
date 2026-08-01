@@ -2,6 +2,7 @@
 
 namespace App\Service\Mail;
 
+use App\Interface\MailContactProviderInterface;
 /** No-op quand aucun fournisseur n'est configuré (ex. devcontainer). */
 class NullMailContactProvider implements MailContactProviderInterface
 {

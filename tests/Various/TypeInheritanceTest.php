@@ -4,7 +4,7 @@ namespace Tests\Various;
 
 use App\Entity\BuildingType;
 use App\Entity\CharacterRace;
-use App\Entity\HarvestableInterface;
+use App\Interface\HarvestableInterface;
 use App\Entity\ResourceType;
 use App\Entity\PlantType;
 use App\Entity\Race;
@@ -39,7 +39,7 @@ class TypeInheritanceTest extends TestCase
         }
 
         try {
-            $this->conn = \App\Entity\EntityManagerFactory::getEntityManager()->getConnection();
+            $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
             $this->conn->fetchOne('SELECT 1');
         } catch (\Throwable $e) {
             $this->markTestSkipped('Database unreachable: ' . $e->getMessage());

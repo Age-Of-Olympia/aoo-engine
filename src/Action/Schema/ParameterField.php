@@ -2,6 +2,7 @@
 
 namespace App\Action\Schema;
 
+use App\Enum\FieldType;
 final class ParameterField
 {
     /**

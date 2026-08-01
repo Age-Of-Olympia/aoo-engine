@@ -4,7 +4,7 @@ namespace App\Service\Action;
 
 use App\Action\Condition\ConditionRegistry;
 use App\Entity\ActionConditionPrecondition;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Interface\ConditionInterface;
 use Doctrine\ORM\EntityManagerInterface;
 

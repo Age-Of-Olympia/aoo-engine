@@ -155,7 +155,7 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         $arch = $this->placeStructure('mur_pierre', 2, 1);
         $cell = $this->giveCellTo($arch, 2, 0, 'block');
 
-        $entityManager = \App\Entity\EntityManagerFactory::getEntityManager();
+        $entityManager = \App\Factory\EntityManagerFactory::getEntityManager();
         $race = $entityManager->getRepository(\App\Entity\Race::class)->findOneBy(['name' => 'mur_pierre']);
 
         if ($race === null) {

@@ -3,7 +3,7 @@
 namespace Tests\Action\Schema;
 
 use App\Action\Schema\ActionSchemaCatalog;
-use App\Action\Schema\FieldType;
+use App\Enum\FieldType;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 

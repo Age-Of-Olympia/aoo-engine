@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Action;
+namespace App\Factory;
 
 use App\Interface\ActionInterface;
 use App\Service\ActionService;

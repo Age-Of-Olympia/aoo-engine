@@ -2,7 +2,7 @@
 
 namespace Tests\Various;
 
-use App\Entity\HarvestableInterface;
+use App\Interface\HarvestableInterface;
 use App\Entity\PlantType;
 use App\Entity\Race;
 use App\Service\AdminMenuAccessService;
@@ -34,7 +34,7 @@ class PlantTypeAdminTest extends TestCase
     {
         try {
             require_once __DIR__ . '/../../config/bootstrap.php';
-            \App\Entity\EntityManagerFactory::getEntityManager()->getConnection()->fetchOne('SELECT 1');
+            \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()->fetchOne('SELECT 1');
         } catch (\Throwable $e) {
             $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
         }
@@ -96,7 +96,7 @@ class PlantTypeAdminTest extends TestCase
      */
     public function testEveryConfiguredYieldNamesARealItem(): void
     {
-        $conn = \App\Entity\EntityManagerFactory::getEntityManager()->getConnection();
+        $conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
 
         $orphans = $conn->fetchFirstColumn(
             "SELECT CONCAT(r.name, ' → ', r.harvest_item)

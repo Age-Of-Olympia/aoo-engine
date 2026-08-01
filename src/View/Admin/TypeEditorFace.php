@@ -2,6 +2,7 @@
 
 namespace App\View\Admin;
 
+use App\Interface\HarvestableInterface;
 use App\Entity\Race;
 
 /**
@@ -151,7 +152,7 @@ final class TypeEditorFace
      * Ce visage règle-t-il un rendement ?
      *
      * Deux familles se récoltent — ressources et plantes — et le pendant côté
-     * entité est l'interface {@see \App\Entity\HarvestableInterface}. Demander la
+     * entité est l'interface {@see \App\Interface\HarvestableInterface}. Demander la
      * CAPACITÉ plutôt que nommer une famille évite ce qui vient d'arriver : le
      * formulaire n'affichait les champs que pour les ressources, quand
      * l'enregistrement les acceptait de tout récoltable — donc modifier une

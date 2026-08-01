@@ -2,11 +2,11 @@
 
 namespace App\Service\Action;
 
-use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
+use App\Factory\OutcomeInstructionFactory;
 use App\Action\Schema\ActionSchemaCatalog;
 use App\Action\Schema\ParameterSchema;
 use App\Entity\ActionTypeInstruction;
-use App\Entity\TypeChildConfigInterface;
+use App\Interface\TypeChildConfigInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 

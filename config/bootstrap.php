@@ -2,7 +2,7 @@
 use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Proxy\ProxyFactory;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use Doctrine\ORM\ORMSetup;
 
 require_once dirname(__FILE__)."/../vendor/autoload.php";

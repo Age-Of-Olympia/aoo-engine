@@ -2,6 +2,7 @@
 
 namespace App\View\Action;
 
+use App\Trait\RendersOptionsTrait;
 /**
  * Workbench controls for adding/removing an action's conditions. These render
  * INSIDE the Configurer save form, so they are not <form> elements themselves:

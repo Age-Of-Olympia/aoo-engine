@@ -41,7 +41,7 @@ class ResourceIsAnEntityTypeTest extends TestCase
         }
 
         try {
-            $this->conn = \App\Entity\EntityManagerFactory::getEntityManager()->getConnection();
+            $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
             $this->conn->fetchOne('SELECT 1');
         } catch (\Throwable $e) {
             $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
@@ -109,7 +109,7 @@ class ResourceIsAnEntityTypeTest extends TestCase
             [$id, $coordsId]
         );
 
-        \App\Entity\EntityManagerFactory::getEntityManager()->clear();
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
         $entity = PlayerFactory::gameEntity($id);
 
         $this->assertNotNull($entity, 'une ressource doit répondre comme toute entité');

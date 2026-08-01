@@ -2,7 +2,8 @@
 
 namespace App\Service\ImportExport;
 
-use App\Entity\EntityManagerFactory;
+use App\Interface\ObjectImporterInterface;
+use App\Factory\EntityManagerFactory;
 use Doctrine\DBAL\Connection;
 
 /**

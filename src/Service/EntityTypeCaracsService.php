@@ -2,7 +2,8 @@
 
 namespace App\Service;
 
-use App\Entity\EntityManagerFactory;
+use App\Interface\OwnsCaracsInterface;
+use App\Factory\EntityManagerFactory;
 use App\Entity\Item;
 
 /**
@@ -10,7 +11,7 @@ use App\Entity\Item;
  *
  * Entities take their type from `races`, items from `items`. Which table to
  * read is the only thing decided here; what the type gives is answered by the
- * type itself, through {@see \App\Entity\OwnsCaracsInterface}. Callers pass their
+ * type itself, through {@see \App\Interface\OwnsCaracsInterface}. Callers pass their
  * discriminator and get a block, without knowing either catalogue exists.
  *
  * Returns null for a type the catalogue does not know, so the caller can warn

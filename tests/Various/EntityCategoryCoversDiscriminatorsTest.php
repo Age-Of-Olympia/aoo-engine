@@ -26,7 +26,7 @@ class EntityCategoryCoversDiscriminatorsTest extends TestCase
     {
         try {
             require_once __DIR__ . '/../../config/bootstrap.php';
-            \App\Entity\EntityManagerFactory::getEntityManager()->getConnection()->fetchOne('SELECT 1');
+            \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()->fetchOne('SELECT 1');
         } catch (\Throwable $e) {
             $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
         }
@@ -34,7 +34,7 @@ class EntityCategoryCoversDiscriminatorsTest extends TestCase
 
     public function testEveryDiscriminatorInUseMapsToACategory(): void
     {
-        $inUse = \App\Entity\EntityManagerFactory::getEntityManager()->getConnection()
+        $inUse = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()
             ->fetchFirstColumn('SELECT DISTINCT player_type FROM players');
 
         if ($inUse === []) {

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\ImportExport;
+namespace App\Interface;
 
 /**
  * Turns one family of domain entities into a natural-key payload array suitable

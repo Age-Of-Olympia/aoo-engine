@@ -23,7 +23,7 @@ class OutcomeInstructionMetadataListener {
             if (!class_exists($fullClassName)) {
                 require_once $file;
             }
-            $metadata->discriminatorMap[\App\Action\OutcomeInstruction\OutcomeInstructionFactory::discriminatorKey($className)] = $fullClassName;
+            $metadata->discriminatorMap[\App\Factory\OutcomeInstructionFactory::discriminatorKey($className)] = $fullClassName;
 
             // Register concrete subclasses so STI root queries (e.g. the one in
             // OutcomeInstructionService) include their discriminators in the

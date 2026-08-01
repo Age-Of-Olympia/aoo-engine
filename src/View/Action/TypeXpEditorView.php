@@ -2,6 +2,8 @@
 
 namespace App\View\Action;
 
+use App\Trait\RendersInheritanceBannerTrait;
+use App\Trait\RendersOptionsTrait;
 use App\Service\Action\Xp\XpCalculatorRegistry;
 
 /**

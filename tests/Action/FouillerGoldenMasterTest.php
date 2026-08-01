@@ -2,7 +2,7 @@
 
 namespace Tests\Action;
 
-use App\Action\ActionFactory;
+use App\Factory\ActionFactory;
 use App\Action\OutcomeInstruction\ResourceOutcomeInstruction;
 use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;

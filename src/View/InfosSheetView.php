@@ -2,7 +2,7 @@
 
 namespace App\View;
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\Character;
 use App\Entity\RealPlayer;
 use App\Service\FactionService;

@@ -3,7 +3,7 @@
 namespace App\Service;
 
 use App\Entity\BuildingDetails;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Service\DialogService;
 use Classes\View;
 use Doctrine\ORM\EntityManagerInterface;

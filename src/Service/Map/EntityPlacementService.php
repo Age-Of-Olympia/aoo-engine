@@ -2,7 +2,7 @@
 
 namespace App\Service\Map;
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use Doctrine\DBAL\Connection;
 
 /**

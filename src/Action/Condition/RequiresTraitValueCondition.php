@@ -5,8 +5,8 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
-use App\Action\Schema\DeclaresSimulationInputsInterface;
-use App\Action\Schema\HasParameterSchemaInterface;
+use App\Interface\DeclaresSimulationInputsInterface;
+use App\Interface\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use App\Action\Schema\SimulationField;
 

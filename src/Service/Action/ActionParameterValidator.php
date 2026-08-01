@@ -2,7 +2,7 @@
 
 namespace App\Service\Action;
 
-use App\Action\Schema\FieldType;
+use App\Enum\FieldType;
 use App\Action\Schema\OptionCatalog;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;

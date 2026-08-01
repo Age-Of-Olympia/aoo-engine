@@ -1,6 +1,9 @@
 <?php
 
-namespace App\Action\Schema;
+namespace App\Interface;
+
+use App\Interface\HasParameterSchemaInterface;
+use App\Action\Schema\SimulationField;
 
 /**
  * Implemented by condition handlers and outcome instructions that read actor /

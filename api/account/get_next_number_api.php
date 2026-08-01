@@ -2,7 +2,7 @@
 require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
 
 use App\Service\AdminAuthorizationService;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\Race;
 use App\Enum\ImageType;
 

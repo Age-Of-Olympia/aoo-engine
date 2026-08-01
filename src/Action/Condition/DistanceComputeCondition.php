@@ -4,7 +4,7 @@ namespace App\Action\Condition;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetail;
 use App\Action\Combat\RollDetailView;
-use App\Action\Schema\DeclaresSimulationInputsInterface;
+use App\Interface\DeclaresSimulationInputsInterface;
 
 class DistanceComputeCondition extends ComputeCondition implements DeclaresSimulationInputsInterface
 {

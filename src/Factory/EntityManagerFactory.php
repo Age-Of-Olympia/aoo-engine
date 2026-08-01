@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Entity;
+namespace App\Factory;
 
 use App\Listener\ActionMetadataListener;
 use App\Listener\OutcomeInstructionMetadataListener;
@@ -92,8 +92,10 @@ final class EntityManagerFactory
         }
         $isDevMode = defined('DEV_MODE') && DEV_MODE;
 
+        /* Le dossier des ENTITÉS, nommé et non déduit de l'emplacement de
+         * cette fabrique : elle a déménagé, Doctrine ne doit pas la suivre. */
         self::$orm_db_config = ORMSetup::createAttributeMetadataConfiguration(
-            paths: [__DIR__],
+            paths: [dirname(__DIR__) . '/Entity'],
             isDevMode: $isDevMode
         );
         $proxyDir = __DIR__ . '/../../var/proxies';

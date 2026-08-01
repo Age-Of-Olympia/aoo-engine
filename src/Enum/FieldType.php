@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Action\Schema;
+namespace App\Enum;
 
 enum FieldType: string
 {

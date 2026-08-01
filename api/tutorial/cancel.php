@@ -10,7 +10,7 @@ use App\Tutorial\TutorialHelper;
 use App\Tutorial\TutorialSessionManager;
 use App\Tutorial\TutorialMapInstance;
 use App\Tutorial\TutorialEnemyCleanup;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use Classes\Db;
 use Psr\Log\NullLogger;
 

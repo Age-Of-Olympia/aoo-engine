@@ -2,7 +2,8 @@
 
 namespace App\Action\Schema;
 
-use App\Entity\EntityManagerFactory;
+use App\Enum\FieldType;
+use App\Factory\EntityManagerFactory;
 use App\Service\ActionPassiveService;
 use App\Service\RecipeService;
 

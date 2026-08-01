@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Entity;
+namespace App\Trait;
 
+use App\Interface\HarvestableInterface;
 use Doctrine\ORM\Mapping as ORM;
 
 /**

@@ -20,7 +20,7 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\FactionService;

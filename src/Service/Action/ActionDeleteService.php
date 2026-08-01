@@ -3,7 +3,7 @@
 namespace App\Service\Action;
 
 use App\Entity\Action;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Throwable;
 

@@ -3,8 +3,8 @@
 namespace App\Service\Action;
 
 use App\Action\Condition\ConditionRegistry;
-use App\Action\Schema\DeclaresSimulationInputsInterface;
-use App\Action\Schema\HasParameterSchemaInterface;
+use App\Interface\DeclaresSimulationInputsInterface;
+use App\Interface\HasParameterSchemaInterface;
 use App\Action\Schema\SchemaSimulationInputs;
 use App\Action\Schema\SimulationField;
 use App\Entity\Action;

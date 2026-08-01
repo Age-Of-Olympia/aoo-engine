@@ -2,7 +2,7 @@
 
 namespace App\Service;
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\ForumCookie;
 use Classes\Player;
 use Exception;

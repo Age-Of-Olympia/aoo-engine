@@ -2,7 +2,8 @@
 
 namespace App\View\Action;
 
-use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
+use App\Trait\EscapesHtmlTrait;
+use App\Factory\OutcomeInstructionFactory;
 use App\Entity\OutcomeInstruction;
 
 /**

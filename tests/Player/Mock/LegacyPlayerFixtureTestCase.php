@@ -55,7 +55,7 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         // EntityManager: when a later test reuses a freed id, stale
         // identity-map entries (e.g. a PlayerEffect from a previous attack)
         // collide with the new rows. Start every test with a clean map.
-        \App\Entity\EntityManagerFactory::getEntityManager()->clear();
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
     }
 
     protected function tearDown(): void
@@ -388,7 +388,7 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         // previous value is restored in tearDown.
         $this->previousLink = $GLOBALS['link'] ?? null;
         try {
-            $link = \App\Entity\EntityManagerFactory::getEntityManager()->getConnection();
+            $link = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
             $link->executeQuery('SELECT 1');
         } catch (\Throwable $e) {
             $this->markTestSkipped('Legacy DB unreachable: ' . $e->getMessage());

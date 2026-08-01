@@ -2,7 +2,7 @@
 namespace App\Form;
 use App\Entity\Race;
 use App\View\ModalView;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 
 
 

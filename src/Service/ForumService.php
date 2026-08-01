@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Service;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use Classes\Player;
 use Exception;
 

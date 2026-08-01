@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Migrations;
 
+use App\Interface\OwnsCaracsInterface;
 use App\Service\ItemInstanceService;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
@@ -22,7 +23,7 @@ use Doctrine\Migrations\AbstractMigration;
  *
  * Its type stops being the phantom race `objet`, which no `races` row ever
  * defined, and becomes the item's own catalogue name — so it finally answers
- * for its own life through {@see \App\Entity\OwnsCaracsInterface} instead of falling
+ * for its own life through {@see \App\Interface\OwnsCaracsInterface} instead of falling
  * into the "race not found" branch with a stat block of zeros.
  *
  * `unique_objects` SURVIVES for what it also is: the satellite of animator

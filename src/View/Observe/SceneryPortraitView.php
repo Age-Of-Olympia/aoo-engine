@@ -2,7 +2,7 @@
 
 namespace App\View\Observe;
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\View\SceneryFigure;
 use Doctrine\DBAL\Connection;
 

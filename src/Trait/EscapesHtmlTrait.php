@@ -1,6 +1,6 @@
 <?php
 
-namespace App\View\Action;
+namespace App\Trait;
 
 /**
  * Shared HTML-escape helper for the action workbench views, which all need the

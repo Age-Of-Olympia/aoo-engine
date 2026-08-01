@@ -2,7 +2,7 @@
 
 namespace App\Service;
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\Race;
 use App\Enum\ImageType;
 use Doctrine\ORM\EntityManagerInterface;

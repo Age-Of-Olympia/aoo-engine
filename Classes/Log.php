@@ -199,7 +199,7 @@ class Log{
     public static function get2(ActorInterface $player,$maxLogAge=THREE_DAYS,$type='', ?array& $steps=null){
         
         $return = array();
-        $em = \App\Entity\EntityManagerFactory::getEntityManager();
+        $em = \App\Factory\EntityManagerFactory::getEntityManager();
         $connection = $em->getConnection();
         
         $timeLimit = time()-$maxLogAge;

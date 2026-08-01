@@ -1,7 +1,10 @@
 <?php
 
-namespace App\Service\Mail;
+namespace App\Factory;
 
+use App\Service\Mail\NullMailContactProvider;
+use App\Service\Mail\OneSignalProvider;
+use App\Interface\MailContactProviderInterface;
 /**
  * Construit le fournisseur configuré (MAIL_CONTACT_PROVIDER) — seul point de
  * choix du vendeur. Se rabat sur NullMailContactProvider si non configuré.

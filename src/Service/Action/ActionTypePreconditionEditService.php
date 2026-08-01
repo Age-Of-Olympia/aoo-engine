@@ -6,7 +6,7 @@ use App\Action\Condition\ConditionRegistry;
 use App\Action\Schema\ActionSchemaCatalog;
 use App\Action\Schema\ParameterSchema;
 use App\Entity\ActionTypePrecondition;
-use App\Entity\TypeChildConfigInterface;
+use App\Interface\TypeChildConfigInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 

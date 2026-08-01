@@ -12,7 +12,7 @@ use App\Tutorial\TutorialManager;
 use App\Tutorial\TutorialFeatureFlag;
 use App\Tutorial\TutorialHelper;
 use App\Tutorial\TutorialMapInstance;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 
 // No login check - we'll handle it ourselves
 define('NO_LOGIN', true);

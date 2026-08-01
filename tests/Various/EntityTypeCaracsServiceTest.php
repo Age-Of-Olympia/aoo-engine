@@ -2,7 +2,7 @@
 
 namespace Tests\Various;
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\Item;
 use App\Service\EntityTypeCaracsService;
 use App\Service\RaceService;

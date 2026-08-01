@@ -2,10 +2,10 @@
 
 namespace App\Service\Action;
 
-use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
+use App\Factory\OutcomeInstructionFactory;
 use App\Action\Schema\ActionSchemaCatalog;
 use App\Entity\Action;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Enum\OutcomeTarget;
 use App\Service\OutcomeInstructionService;
 use Doctrine\ORM\EntityManagerInterface;
