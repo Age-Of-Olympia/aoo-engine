@@ -259,6 +259,28 @@ opened; `owner_id` and `is_open` move from `buildings` onto the entity, so
 anything can be owned by a **character or a faction** and shut; and
 `closureReason()` becomes the shared rule.
 
+**What closing DOES follows from the thing's other capabilities**, which is why
+no door/chest distinction is needed anywhere:
+
+| it also… | …so being shut means |
+|---|---|
+| blocks passage | shut blocks, open lets through — a **door** |
+| holds children | shut denies its contents — a **chest** |
+| offers services (dialog) | shut denies them — already true today |
+
+A door is therefore not a family. It is anything shuttable that also blocks, and
+it can live in either catalogue: a stone doorway in a rampart and a gate carried
+in a bag are the same rule read from two type tables. That costs one thing —
+`blocks_passage` lives only on `races` today and has to cross to `items`, the
+same move `OwnsCaracs` already made. It also buys a crate that blocks a corridor
+without inventing a family for it.
+
+**Closed doors stop people.** They do not today: `TileOccupancyService` never
+reads `is_open`, so closure gates services and nothing else, and a shut door is
+walked through. Making the step rule ask the closure question is a **rule
+change**, not a refactor, and it lands in the file that decides every step —
+switched on deliberately, with its own tests.
+
 *Why it follows 3c and not the reverse:* the `endommagé` clause reads a
 percentage of life. Wire it before life is one thing and a battered exemplar
 reports itself pristine and stays open. And `build_state = 'ruin'` and
@@ -320,6 +342,10 @@ Decisions taken, not to be re-litigated without new information.
 - **Being shut is one mechanism** for buildings and objects alike, and ownership
   with it — a character or a faction, exactly as buildings already do it. Locking
   a chest and locking a forge are the same rule read through the same contract.
+- **A closed door stops people.** What closing does follows from what else the
+  thing is: a barrier blocks, a container withholds, a shop stops serving. A door
+  is not a family — it is anything shuttable that also blocks passage, and it may
+  come from either catalogue.
 - **A placed object is never a building.** Placing installs the exemplar itself,
   so it keeps its wear, its name and its contents through the round trip.
 - **The world map shows no dropped or placed objects.** It is for orientation,
