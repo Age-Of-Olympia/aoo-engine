@@ -116,9 +116,12 @@ class BuildingService extends BaseService
         /* Une porte OUVERTE est un trou dans le mur : la flèche y passe comme
          * le pas. Fermée, elle arrête l'un et l'autre. C'est la même ouverture
          * qui décide des deux — un seuil qu'on franchit à pied mais pas du
-         * regard n'aurait aucun sens. */
+         * regard n'aurait aucun sens.
+         *
+         * Une porte est un type de RACE : `opens_the_way` n'existe pas côté
+         * objets. Le discriminant le dit ici aussi, comme pour les listes
+         * bloquantes — un nom seul confondrait les homonymes. */
         $doors = $this->raceService->getDoorRaceNames();
-        $doorPlaceholders = implode(',', array_fill(0, max(1, count($doors)), '?'));
 
         if ($blocking !== []) {
             // An entity screens every cell it HOLDS, not just the one it
@@ -133,7 +136,7 @@ class BuildingService extends BaseService
                  JOIN coords c ON c.id = ec.coords_id
                  WHERE ' . $tileFilter . '
                    AND ec.role <> ?
-                   AND NOT (p.is_open = 1 AND p.race IN (' . $doorPlaceholders . '))
+                   AND NOT (p.is_open = 1 AND p.player_type <> ? AND p.race IN (' . self::placeholders($doors) . '))
                    AND (
                         (p.player_type <> ? AND p.race IN (' . self::placeholders($blockingBy['race']) . '))
                      OR (p.player_type =  ? AND p.race IN (' . self::placeholders($blockingBy['item']) . '))
@@ -141,6 +144,7 @@ class BuildingService extends BaseService
                 array_merge(
                     $tileParams,
                     [self::TRANSPARENT_ROLE],
+                    [\App\Service\ObstructionService::ITEM_TYPE],
                     $doors ?: [''],
                     [\App\Service\ObstructionService::ITEM_TYPE],
                     $blockingBy['race'] ?: [''],
