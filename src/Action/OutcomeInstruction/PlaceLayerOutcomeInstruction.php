@@ -6,7 +6,7 @@ use App\Entity\OutcomeInstruction;
 use App\Action\Condition\BuildSitePick;
 use App\Action\Condition\ConditionObject;
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use Classes\Db;
@@ -25,7 +25,7 @@ use Doctrine\ORM\Mapping as ORM;
  * déjà cette couche.
  */
 #[ORM\Entity]
-class PlaceLayerOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class PlaceLayerOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

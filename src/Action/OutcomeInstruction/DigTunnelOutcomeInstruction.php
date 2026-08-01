@@ -4,7 +4,7 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Action\Condition\ConditionObject;
 use App\Entity\OutcomeInstruction;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use Classes\Db;
 use Classes\Item;
@@ -26,7 +26,7 @@ use Doctrine\ORM\Mapping as ORM;
  * = XP_PER_MINE) vient de la règle du type 'search' — pas de put_xp ici.
  */
 #[ORM\Entity]
-class DigTunnelOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class DigTunnelOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

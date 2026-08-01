@@ -6,14 +6,14 @@ use Classes\View;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
-use App\Action\Schema\DeclaresSimulationInputs;
+use App\Action\Schema\DeclaresSimulationInputsInterface;
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use App\Action\Schema\SimulationField;
 
-class RequiresDistanceCondition extends BaseCondition implements HasParameterSchema, DeclaresSimulationInputs
+class RequiresDistanceCondition extends BaseCondition implements HasParameterSchemaInterface, DeclaresSimulationInputsInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

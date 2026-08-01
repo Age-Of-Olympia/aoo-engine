@@ -11,7 +11,7 @@ use App\Service\ImportExport\RaceImporter;
 use App\Service\RaceService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
-use Tests\Support\SeedsCharacters;
+use Tests\Support\SeedsCharactersTrait;
 
 /**
  * Import/export de races par bundles JSON (framework ImportExport) : le
@@ -23,7 +23,7 @@ use Tests\Support\SeedsCharacters;
  */
 class RaceImportExportTest extends TestCase
 {
-    use SeedsCharacters;
+    use SeedsCharactersTrait;
 
     protected function setUp(): void
     {

@@ -7,7 +7,7 @@ use App\Service\RaceImageService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use Tests\Support\SeedsCharacters;
+use Tests\Support\SeedsCharactersTrait;
 
 /**
  * Avatars et portraits de race (panneau « Avatars & portraits ») :
@@ -19,7 +19,7 @@ use Tests\Support\SeedsCharacters;
  */
 class RaceImageServiceTest extends TestCase
 {
-    use SeedsCharacters;
+    use SeedsCharactersTrait;
 
     private RaceImageService $service;
     private string $root;

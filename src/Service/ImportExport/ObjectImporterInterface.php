@@ -3,9 +3,9 @@
 namespace App\Service\ImportExport;
 
 /**
- * Imports a family of natural-key payloads (the counterpart of {@see ObjectExporter}).
+ * Imports a family of natural-key payloads (the counterpart of {@see ObjectExporterInterface}).
  */
-interface ObjectImporter
+interface ObjectImporterInterface
 {
     /**
      * The bundle objectType this importer handles (e.g. "action").

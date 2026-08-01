@@ -44,7 +44,7 @@ final class ActionSchemaCatalog
 
     private function schemaForClass(?string $class): ParameterSchema
     {
-        if ($class !== null && is_subclass_of($class, HasParameterSchema::class)) {
+        if ($class !== null && is_subclass_of($class, HasParameterSchemaInterface::class)) {
             return $class::parameterSchema();
         }
 

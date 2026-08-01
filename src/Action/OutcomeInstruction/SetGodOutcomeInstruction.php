@@ -5,7 +5,7 @@ namespace App\Action\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
 use App\Entity\OutcomeInstruction;
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use Classes\Player;
@@ -19,7 +19,7 @@ use Doctrine\ORM\Mapping as ORM;
  * structure is written directly — an altar earns none.
  */
 #[ORM\Entity]
-class SetGodOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class SetGodOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     private const ACTOR = 'actor';
     private const TARGET = 'target';

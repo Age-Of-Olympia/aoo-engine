@@ -3,7 +3,7 @@
 namespace App\Action\Condition;
 
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use App\Entity\ActionCondition;
@@ -14,7 +14,7 @@ use App\Interface\ActorInterface;
  *
  * Reads `players.race`, which for a structure is its type.
  */
-class TargetRaceCondition extends BaseCondition implements HasParameterSchema
+class TargetRaceCondition extends BaseCondition implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

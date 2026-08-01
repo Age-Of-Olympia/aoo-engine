@@ -12,9 +12,9 @@ use ReflectionProperty;
  * flat entity (no STI, no child collections), so the payload is just its scalars
  * plus the two JSON columns (traits, conditions). Identity is the passive `name`.
  *
- * Proves the {@see ObjectExporter} seam generalises beyond actions.
+ * Proves the {@see ObjectExporterInterface} seam generalises beyond actions.
  */
-final class PassiveExporter implements ObjectExporter
+final class PassiveExporter implements ObjectExporterInterface
 {
     private ?ActionPassiveCatalogService $catalog;
 

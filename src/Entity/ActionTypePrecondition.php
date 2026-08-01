@@ -19,7 +19,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\Table(name: "action_type_preconditions")]
 #[ORM\Index(name: "idx_action_type_preconditions_type_key", columns: ["type_key"])]
-class ActionTypePrecondition implements TypeChildConfig
+class ActionTypePrecondition implements TypeChildConfigInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]

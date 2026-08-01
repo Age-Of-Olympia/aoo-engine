@@ -4,7 +4,7 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use Classes\Item;
@@ -21,7 +21,7 @@ use Classes\Item;
  * des piles à zéro) ; en simulation, l'écriture est absorbée par le
  * SimulationGuard comme tous les coûts.
  */
-class RequiresItemCondition extends BaseCondition implements HasParameterSchema
+class RequiresItemCondition extends BaseCondition implements HasParameterSchemaInterface
 {
     public bool $toRemove = false;
 

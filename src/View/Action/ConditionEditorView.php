@@ -11,7 +11,7 @@ namespace App\View\Action;
  */
 final class ConditionEditorView
 {
-    use RendersOptions;
+    use RendersOptionsTrait;
 
     /**
      * @param array<int, string> $types available condition types

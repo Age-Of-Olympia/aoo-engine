@@ -8,7 +8,7 @@ use App\Interface\ActorInterface;
  * A flat reward: actor/target XP on success vs failure. Covers the non-combat
  * types whose XP was a constant (buff 2, heal 3, pray 1, rest 0, run/search 1).
  */
-final class FixedXpCalculator implements XpCalculator
+final class FixedXpCalculator implements XpCalculatorInterface
 {
     public function calculate(array $params, bool $success, ActorInterface $actor, ActorInterface $target): array
     {

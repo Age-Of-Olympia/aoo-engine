@@ -9,7 +9,7 @@ use App\Interface\ActorInterface;
  * its action-XP against the target, capped (was MAX_XP_FOR_STEALING); the target
  * gains targetFail XP only when the steal fails.
  */
-final class StealXpCalculator implements XpCalculator
+final class StealXpCalculator implements XpCalculatorInterface
 {
     public function calculate(array $params, bool $success, ActorInterface $actor, ActorInterface $target): array
     {

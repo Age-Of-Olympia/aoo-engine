@@ -13,7 +13,7 @@ use App\Service\EffectService;
  * mentir sur les mécaniques. Les fiches de personnage pointent les
  * ancres #nom_de_l_effet.
  */
-final class EffectWikiRenderer implements WikiSheetRenderer
+final class EffectWikiRenderer implements WikiSheetRendererInterface
 {
     public function objectType(): string
     {

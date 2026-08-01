@@ -14,7 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * Unlike its neighbours it is usually NOWHERE: held in a bag, its location is a
  * holder rather than a cell. It takes its life from the `items` catalogue
- * through {@see OwnsCaracs}, not from `races`.
+ * through {@see OwnsCaracsInterface}, not from `races`.
  *
  * Named for what it is rather than `Item`, which is already the catalogue row —
  * the type, not the individual.

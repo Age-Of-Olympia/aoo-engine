@@ -14,7 +14,7 @@ use Throwable;
  * or null to reject) and applyPlan() (write one accepted plan). They set the
  * inherited $entityManager in their constructor.
  */
-abstract class AbstractObjectImporter implements ObjectImporter
+abstract class AbstractObjectImporter implements ObjectImporterInterface
 {
     protected EntityManagerInterface $entityManager;
 

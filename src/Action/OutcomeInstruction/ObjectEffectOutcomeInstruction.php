@@ -4,14 +4,14 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 use Classes\Str;
 
 #[ORM\Entity]
-class ObjectEffectOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class ObjectEffectOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

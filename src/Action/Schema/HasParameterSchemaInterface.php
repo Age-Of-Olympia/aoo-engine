@@ -2,7 +2,7 @@
 
 namespace App\Action\Schema;
 
-interface HasParameterSchema
+interface HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema;
 }

@@ -4,7 +4,7 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Action\Condition\ConditionObject;
 use App\Entity\OutcomeInstruction;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use App\Service\RecipeService;
 use Classes\Player;
@@ -21,7 +21,7 @@ use Doctrine\ORM\Mapping as ORM;
  * qui s'exprimera ici en CONDITIONS (proximité de l'atelier).
  */
 #[ORM\Entity]
-class CraftRecipeOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class CraftRecipeOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

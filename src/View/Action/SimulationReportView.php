@@ -11,7 +11,7 @@ use App\View\ActionResultsView;
  */
 final class SimulationReportView
 {
-    use EscapesHtml;
+    use EscapesHtmlTrait;
 
     public function __construct(private readonly SimulationReport $report)
     {

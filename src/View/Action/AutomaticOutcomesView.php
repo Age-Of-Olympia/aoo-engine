@@ -14,7 +14,7 @@ use App\Entity\OutcomeInstruction;
  */
 final class AutomaticOutcomesView
 {
-    use EscapesHtml;
+    use EscapesHtmlTrait;
 
     /**
      * @param iterable<OutcomeInstruction> $instructions

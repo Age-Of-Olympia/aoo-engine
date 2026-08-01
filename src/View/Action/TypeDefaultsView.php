@@ -14,7 +14,7 @@ use App\Entity\ActionTypeInstruction;
  */
 final class TypeDefaultsView
 {
-    use EscapesHtml;
+    use EscapesHtmlTrait;
 
     private ActionSchemaCatalog $catalog;
     private TypeChildFormView $form;

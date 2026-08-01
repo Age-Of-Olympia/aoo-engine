@@ -5,13 +5,13 @@ use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 
 //add enum to display correctly the weapon type names (melee, distance, multipurpose, etc)
 
-class RequiresWeaponCraftedWithCondition extends BaseCondition implements HasParameterSchema
+class RequiresWeaponCraftedWithCondition extends BaseCondition implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

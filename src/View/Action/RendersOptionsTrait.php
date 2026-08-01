@@ -7,9 +7,9 @@ namespace App\View\Action;
  * which all rebuilt the same `<option value="…"[ selected]>…</option>` string by
  * hand. Selection is compared as strings so 0/'0' and int/string keys match.
  */
-trait RendersOptions
+trait RendersOptionsTrait
 {
-    use EscapesHtml;
+    use EscapesHtmlTrait;
 
     /**
      * A single <option>.

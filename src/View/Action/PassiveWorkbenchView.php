@@ -15,7 +15,7 @@ use App\Entity\ActionPassive;
  */
 final class PassiveWorkbenchView
 {
-    use RendersOptions;
+    use RendersOptionsTrait;
 
     private const TYPES = ['att' => 'Attaque', 'def' => 'Défense', 'mixte' => 'Mixte'];
     /** Passives have no stored icon; fall back to a glyph per type for the list / folded rail. */

@@ -5,7 +5,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ORM\Table(name: "items")]
-class Item implements OwnsCaracs
+class Item implements OwnsCaracsInterface
 {
     public function __construct()
     {
@@ -126,7 +126,7 @@ class Item implements OwnsCaracs
 
     /**
      * An item owns only its life. The other fifteen columns are what it lends
-     * its bearer, so they stay at zero here — see {@see OwnsCaracs}.
+     * its bearer, so they stay at zero here — see {@see OwnsCaracsInterface}.
      */
     public function ownCaracs(): array
     {

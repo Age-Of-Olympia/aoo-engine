@@ -7,7 +7,7 @@ namespace App\Service\ImportExport;
  * for a {@see BundleEnvelope}. Implementations never emit DB ids — identity is
  * carried by natural keys so a bundle is portable across environments.
  */
-interface ObjectExporter
+interface ObjectExporterInterface
 {
     /**
      * The bundle's `objectType` discriminator (e.g. "action").

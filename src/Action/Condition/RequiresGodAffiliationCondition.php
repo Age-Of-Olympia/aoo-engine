@@ -5,7 +5,7 @@ use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 
@@ -14,7 +14,7 @@ use App\Action\Schema\ParameterSchema;
  *
  * Without parameters it answers as it always did, so `prier` is unchanged.
  */
-class RequiresGodAffiliationCondition extends BaseCondition implements HasParameterSchema
+class RequiresGodAffiliationCondition extends BaseCondition implements HasParameterSchemaInterface
 {
     /** Whose god is examined. */
     public const SIDE_ACTOR = 'actor';

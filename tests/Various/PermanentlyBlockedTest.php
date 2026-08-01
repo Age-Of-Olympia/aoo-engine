@@ -5,7 +5,7 @@ namespace Tests\Various;
 use App\Service\Map\TileOccupancyService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
-use Tests\Support\PlantsResources;
+use Tests\Support\PlantsResourcesTrait;
 
 /**
  * What a `forbidden` trigger still adds, cell by cell.
@@ -23,7 +23,7 @@ use Tests\Support\PlantsResources;
  */
 class PermanentlyBlockedTest extends TestCase
 {
-    use PlantsResources;
+    use PlantsResourcesTrait;
 
     private const PLAN = 'plan_test_fences';
 

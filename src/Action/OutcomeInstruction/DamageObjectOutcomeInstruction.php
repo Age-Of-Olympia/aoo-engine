@@ -5,7 +5,7 @@ namespace App\Action\OutcomeInstruction;
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use App\Interface\ActorInterface;
@@ -14,7 +14,7 @@ use Classes\Item;
 use Classes\Player;
 
 #[ORM\Entity]
-class DamageObjectOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class DamageObjectOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

@@ -7,12 +7,12 @@ use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetailView;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use Classes\Dice;
 use Classes\View;
 
-class ComputePureCondition extends AbstractComputeCondition implements HasParameterSchema
+class ComputePureCondition extends AbstractComputeCondition implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

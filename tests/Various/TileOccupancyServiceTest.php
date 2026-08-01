@@ -7,7 +7,7 @@ use App\Service\Map\TileOccupancyService;
 use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
-use Tests\Support\PlantsResources;
+use Tests\Support\PlantsResourcesTrait;
 
 /**
  * The STEP rule, extracted from `go.php` where it lived in three pieces that
@@ -19,7 +19,7 @@ use Tests\Support\PlantsResources;
 #[Group('items-golden-master')]
 class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
 {
-    use PlantsResources;
+    use PlantsResourcesTrait;
 
     private const PLAN = 'plan_test_pas';
 

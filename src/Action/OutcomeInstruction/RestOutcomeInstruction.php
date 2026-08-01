@@ -4,15 +4,15 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
-use App\Action\Schema\DeclaresSimulationInputs;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\DeclaresSimulationInputsInterface;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use App\Action\Schema\SimulationField;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
 #[ORM\Entity]
-class RestOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema, DeclaresSimulationInputs
+class RestOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface, DeclaresSimulationInputsInterface
 {
     /**
      * Recovery is recup PV = remaining(a) × R / 4, recup PM = remaining(a) × RM

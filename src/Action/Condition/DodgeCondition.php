@@ -7,7 +7,7 @@ use App\Entity\ActionCondition;
 use App\Entity\Effect;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use App\Service\EffectService;
 use Classes\View;
@@ -20,7 +20,7 @@ use Classes\View;
  * bras, pas de côté) ne sont plus codées par nom : l'admin peut en
  * composer d'autres.
  */
-class DodgeCondition extends BaseCondition implements HasParameterSchema
+class DodgeCondition extends BaseCondition implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

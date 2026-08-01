@@ -4,7 +4,7 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use App\Service\InventoryService;
@@ -22,7 +22,7 @@ use Classes\Item;
  * `kind` restreint ce que l'action accepte : un itemId forgé ne doit
  * permettre ni de bâtir l'inconstructible, ni de « consommer » l'or.
  */
-class ItemPickCondition extends BaseCondition implements HasParameterSchema
+class ItemPickCondition extends BaseCondition implements HasParameterSchemaInterface
 {
     public const KIND_CONSTRUCTIBLE = 'constructible';
     public const KIND_CONSOMMABLE = 'consommable';

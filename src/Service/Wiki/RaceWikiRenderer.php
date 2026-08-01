@@ -11,7 +11,7 @@ use App\Service\ImportExport\ExporterRegistry;
  * structures avec PV et nature. Données : RaceExporter (une seule
  * source de vérité, famille bundle `race`).
  */
-final class RaceWikiRenderer implements WikiSheetRenderer
+final class RaceWikiRenderer implements WikiSheetRendererInterface
 {
     public function objectType(): string
     {

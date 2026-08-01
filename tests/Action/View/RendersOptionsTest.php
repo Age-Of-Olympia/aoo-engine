@@ -2,7 +2,7 @@
 
 namespace Tests\Action\View;
 
-use App\View\Action\RendersOptions;
+use App\View\Action\RendersOptionsTrait;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
@@ -14,7 +14,7 @@ class RendersOptionsTest extends TestCase
     protected function setUp(): void
     {
         $this->view = new class {
-            use RendersOptions {
+            use RendersOptionsTrait {
                 option as public;
                 options as public;
                 optionsList as public;

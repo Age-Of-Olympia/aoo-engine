@@ -4,7 +4,7 @@ namespace Tests\Various;
 
 use App\Enum\EntityCategory;
 use App\Service\BuildingService;
-use Tests\Support\PlantsResources;
+use Tests\Support\PlantsResourcesTrait;
 use App\Service\RaceService;
 use App\Service\TiledMapService;
 use Doctrine\DBAL\Connection;
@@ -23,7 +23,7 @@ use PHPUnit\Framework\TestCase;
  */
 class TiledBuildingsLayerTest extends TestCase
 {
-    use PlantsResources;
+    use PlantsResourcesTrait;
 
     private const PLAN = 'plan_test_tiled_bld';
 

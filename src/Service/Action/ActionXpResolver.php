@@ -5,8 +5,8 @@ namespace App\Service\Action;
 use App\Entity\Action;
 use App\Entity\ActionTypeXp;
 use App\Interface\ActorInterface;
-use App\Service\Action\Xp\MutatesActors;
-use App\Service\Action\Xp\XpCalculator;
+use App\Service\Action\Xp\MutatesActorsInterface;
+use App\Service\Action\Xp\XpCalculatorInterface;
 use App\Service\Action\Xp\XpCalculatorRegistry;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -21,7 +21,7 @@ final class ActionXpResolver
     private XpCalculatorRegistry $calculators;
     private TypeConfigLocator $locator;
 
-    /** @var array<int, array{0: ?ActionTypeXp, 1: ?XpCalculator}> */
+    /** @var array<int, array{0: ?ActionTypeXp, 1: ?XpCalculatorInterface}> */
     private array $ruleCache = [];
 
     public function __construct(
@@ -36,7 +36,7 @@ final class ActionXpResolver
 
     /**
      * The XP this action grants. Pure: it never mutates the fighters — resource
-     * spends are a {@see MutatesActors} rule, applied separately via applyMutations().
+     * spends are a {@see MutatesActorsInterface} rule, applied separately via applyMutations().
      *
      * @return array{actor: int, target: int}
      */
@@ -60,7 +60,7 @@ final class ActionXpResolver
     {
         [$config, $calculator] = $this->ruleFor($action);
 
-        if ($config === null || !$calculator instanceof MutatesActors) {
+        if ($config === null || !$calculator instanceof MutatesActorsInterface) {
             return;
         }
 
@@ -71,7 +71,7 @@ final class ActionXpResolver
      * Resolve (and memoise) the [config, calculator] pair for an action, so
      * calculate() and applyMutations() share a single lookup per action.
      *
-     * @return array{0: ?ActionTypeXp, 1: ?XpCalculator}
+     * @return array{0: ?ActionTypeXp, 1: ?XpCalculatorInterface}
      */
     private function ruleFor(Action $action): array
     {

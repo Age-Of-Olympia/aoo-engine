@@ -17,7 +17,7 @@ use Doctrine\DBAL\Connection;
  * Shared rather than copied a seventh time: the shape of a resource is one
  * fact, and when it moves again it should move in one place.
  */
-trait PlantsResources
+trait PlantsResourcesTrait
 {
     /** Well above any converted id, below the range's ceiling. */
     private static int $resourceFixtureNext = 59995000;

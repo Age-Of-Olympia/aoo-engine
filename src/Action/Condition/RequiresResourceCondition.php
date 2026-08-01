@@ -4,11 +4,11 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use App\Service\ResourceService;
 
-class RequiresResourceCondition extends BaseCondition implements HasParameterSchema
+class RequiresResourceCondition extends BaseCondition implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

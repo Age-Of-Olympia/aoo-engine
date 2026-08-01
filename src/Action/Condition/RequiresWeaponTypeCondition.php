@@ -4,16 +4,16 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
-use App\Action\Schema\DeclaresSimulationInputs;
+use App\Action\Schema\DeclaresSimulationInputsInterface;
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use App\Action\Schema\SimulationField;
 
 //add enum to display correctly the weapon type names (melee, distance, multipurpose, etc)
 
-class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterSchema, DeclaresSimulationInputs
+class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterSchemaInterface, DeclaresSimulationInputsInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

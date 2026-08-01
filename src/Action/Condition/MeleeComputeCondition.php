@@ -4,9 +4,9 @@ namespace App\Action\Condition;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetail;
 use App\Action\Combat\RollDetailView;
-use App\Action\Schema\DeclaresSimulationInputs;
+use App\Action\Schema\DeclaresSimulationInputsInterface;
 
-class MeleeComputeCondition extends ComputeCondition implements DeclaresSimulationInputs
+class MeleeComputeCondition extends ComputeCondition implements DeclaresSimulationInputsInterface
 {
     public static function targetDefenseValue(int $cc, int $agi): int
     {

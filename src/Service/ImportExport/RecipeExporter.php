@@ -11,7 +11,7 @@ use InvalidArgumentException;
  * (`name`). Ingrédients, résultats et races voyagent par NOMS d'objets
  * et de races — les ids sont propres à chaque environnement.
  */
-final class RecipeExporter implements ObjectExporter
+final class RecipeExporter implements ObjectExporterInterface
 {
     private ?Connection $connection;
 

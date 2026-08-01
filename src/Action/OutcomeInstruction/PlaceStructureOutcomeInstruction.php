@@ -6,7 +6,7 @@ use App\Entity\OutcomeInstruction;
 use App\Action\Condition\BuildSitePick;
 use App\Action\Condition\ConditionObject;
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use App\Service\BuildingService;
@@ -29,7 +29,7 @@ use Doctrine\ORM\Mapping as ORM;
  * - sinon, automatique : première case libre adjacente, rayon 1.
  */
 #[ORM\Entity]
-class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

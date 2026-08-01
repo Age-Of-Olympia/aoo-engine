@@ -8,13 +8,13 @@ namespace App\Service\Wiki;
  *
  * Décision du 2026-07-19 : MÊME PROCESSUS que l'export de bundles,
  * AUTRE FORMAT — chaque renderer consomme les tableaux de l'exporter de
- * sa famille (ObjectExporter::exportAll, clés naturelles) et ne fait
+ * sa famille (ObjectExporterInterface::exportAll, clés naturelles) et ne fait
  * que la mise en forme. Une seule source de vérité par catalogue :
  * JSON pour les machines, DokuWiki pour les humains, garantis
  * cohérents. Modèle : le wiki des effets (description rédigée + faits
  * dérivés du moteur — « le wiki ne peut pas mentir »).
  */
-interface WikiSheetRenderer
+interface WikiSheetRendererInterface
 {
     /** La famille servie — même clé que l'ExporterRegistry ('action'…). */
     public function objectType(): string;

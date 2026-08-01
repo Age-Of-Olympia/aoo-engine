@@ -13,7 +13,7 @@ namespace App\View\Action;
  */
 final class WorkbenchLayoutView
 {
-    use EscapesHtml;
+    use EscapesHtmlTrait;
 
     public function render(
         string $listTitle,

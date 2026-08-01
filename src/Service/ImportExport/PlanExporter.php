@@ -24,7 +24,7 @@ use InvalidArgumentException;
  * Contrairement aux autres familles, « exporter tout » est lourd : l'admin
  * propose surtout l'export unitaire via exportOne().
  */
-final class PlanExporter implements ObjectExporter
+final class PlanExporter implements ObjectExporterInterface
 {
     private ?Db $db;
     private ?TiledMapService $tiledMap;

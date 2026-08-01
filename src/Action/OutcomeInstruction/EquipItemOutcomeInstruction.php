@@ -4,7 +4,7 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Action\Condition\ConditionObject;
 use App\Entity\OutcomeInstruction;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use App\Enum\EquipResult;
 use Classes\Player;
@@ -22,7 +22,7 @@ use Doctrine\ORM\Mapping as ORM;
  * elle ne rapporte aucune XP.
  */
 #[ORM\Entity]
-class EquipItemOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class EquipItemOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

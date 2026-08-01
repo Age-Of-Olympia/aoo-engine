@@ -3,17 +3,17 @@
 namespace App\Service\ImportExport;
 
 /**
- * Resolves an {@see ObjectImporter} by objectType. Defaults to the built-in set
+ * Resolves an {@see ObjectImporterInterface} by objectType. Defaults to the built-in set
  * (action, passive); tests inject their own. Lets the import flow route a bundle
  * to the right importer from its `objectType`, instead of hardcoding actions.
  */
 final class ImporterRegistry
 {
-    /** @var array<string, ObjectImporter> */
+    /** @var array<string, ObjectImporterInterface> */
     private array $importers = [];
 
     /**
-     * @param array<int, ObjectImporter>|null $importers null = the built-in set
+     * @param array<int, ObjectImporterInterface>|null $importers null = the built-in set
      */
     public function __construct(?array $importers = null)
     {
@@ -22,12 +22,12 @@ final class ImporterRegistry
         }
     }
 
-    public function register(ObjectImporter $importer): void
+    public function register(ObjectImporterInterface $importer): void
     {
         $this->importers[$importer->objectType()] = $importer;
     }
 
-    public function importerFor(string $objectType): ?ObjectImporter
+    public function importerFor(string $objectType): ?ObjectImporterInterface
     {
         return $this->importers[$objectType] ?? null;
     }

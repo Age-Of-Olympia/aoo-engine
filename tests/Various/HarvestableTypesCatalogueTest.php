@@ -59,7 +59,7 @@ class HarvestableTypesCatalogueTest extends TestCase
         );
     }
 
-    /** Harvestable types follow the convention this chantier settled on. */
+    /** HarvestableInterface types follow the convention this chantier settled on. */
     public function testHarvestableTypesFollowTheEstablishedConvention(): void
     {
         $rows = $this->conn->fetchAllAssociative(

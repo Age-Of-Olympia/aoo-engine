@@ -7,7 +7,7 @@ namespace App\View\Action;
  * same htmlspecialchars(ENT_QUOTES) one-liner. Accepts int|string so numeric
  * ids/values can be escaped without a cast at the call site.
  */
-trait EscapesHtml
+trait EscapesHtmlTrait
 {
     private function esc(int|string $value): string
     {

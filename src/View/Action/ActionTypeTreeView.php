@@ -14,7 +14,7 @@ use App\Service\Action\ActionTypeNode;
  */
 final class ActionTypeTreeView
 {
-    use EscapesHtml;
+    use EscapesHtmlTrait;
 
     /**
      * @param array<int, ActionTypeNode> $nodes

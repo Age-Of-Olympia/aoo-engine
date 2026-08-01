@@ -3,7 +3,7 @@ namespace App\Action\Condition;
 
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 
 /**
@@ -17,7 +17,7 @@ use App\Action\Schema\ParameterSchema;
  * Sans coordonnées fournies (mode automatique) : laisse passer,
  * PlaceStructure choisira.
  */
-class BuildSiteCondition extends BaseCondition implements HasParameterSchema
+class BuildSiteCondition extends BaseCondition implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

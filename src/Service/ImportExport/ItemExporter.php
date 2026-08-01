@@ -14,7 +14,7 @@ use InvalidArgumentException;
  * fourre-tout extra — reservi verbatim, la garantie sans-perte suit
  * l'objet dans le bundle.
  */
-final class ItemExporter implements ObjectExporter
+final class ItemExporter implements ObjectExporterInterface
 {
     private ?Connection $connection;
 

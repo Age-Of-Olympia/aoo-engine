@@ -16,7 +16,7 @@ use Doctrine\DBAL\Connection;
  * REMONTE » (jamais un rapport contradictoire) vivent ici. Le pendant
  * Doctrine (races, factions) reste AbstractObjectImporter.
  */
-abstract class AbstractDbalImporter implements ObjectImporter
+abstract class AbstractDbalImporter implements ObjectImporterInterface
 {
     private ?Connection $connection;
 

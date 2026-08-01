@@ -17,7 +17,7 @@ use App\Service\Action\SimulationWeaponCatalog;
  */
 final class SimulationFormView
 {
-    use RendersOptions;
+    use RendersOptionsTrait;
 
     /** Friendly French labels for the equipment slots (emplacement keys). */
     private const SLOT_LABELS = [

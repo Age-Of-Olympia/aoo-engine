@@ -11,7 +11,7 @@ use App\Interface\ActorInterface;
  * "1" floor for same-faction / inactive targets), diffCap (rank gap above which
  * no XP), targetFail.
  */
-final class AttackXpCalculator implements XpCalculator
+final class AttackXpCalculator implements XpCalculatorInterface
 {
     public function calculate(array $params, bool $success, ActorInterface $actor, ActorInterface $target): array
     {

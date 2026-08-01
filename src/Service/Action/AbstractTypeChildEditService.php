@@ -4,7 +4,7 @@ namespace App\Service\Action;
 
 use App\Action\Schema\ParameterSchema;
 use App\Entity\EntityManagerFactory;
-use App\Entity\TypeChildConfig;
+use App\Entity\TypeChildConfigInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Throwable;
@@ -16,7 +16,7 @@ use Throwable;
  * validation; everything else — list, count, add, remove, save-params — lives
  * here so the two editors don't diverge.
  *
- * @template T of TypeChildConfig
+ * @template T of TypeChildConfigInterface
  */
 abstract class AbstractTypeChildEditService
 {
@@ -33,7 +33,7 @@ abstract class AbstractTypeChildEditService
     abstract protected function entityClass(): string;
 
     /** @param T $entity */
-    abstract protected function childTypeOf(TypeChildConfig $entity): string;
+    abstract protected function childTypeOf(TypeChildConfigInterface $entity): string;
 
     abstract protected function schemaFor(string $childType): ParameterSchema;
 
@@ -44,7 +44,7 @@ abstract class AbstractTypeChildEditService
     abstract protected function assertScope(string $typeKey): void;
 
     /** @return T a new, unpersisted row for the given scope/child type */
-    abstract protected function makeChild(string $typeKey, string $childType, int $orderIndex): TypeChildConfig;
+    abstract protected function makeChild(string $typeKey, string $childType, int $orderIndex): TypeChildConfigInterface;
 
     /** @return array<int, T> ordered by orderIndex */
     public function forType(string $typeKey): array
@@ -71,7 +71,7 @@ abstract class AbstractTypeChildEditService
     }
 
     /** @return T */
-    public function add(string $typeKey, string $childType): TypeChildConfig
+    public function add(string $typeKey, string $childType): TypeChildConfigInterface
     {
         $this->assertScope($typeKey);
         $this->assertChildType($childType);
@@ -132,7 +132,7 @@ abstract class AbstractTypeChildEditService
      * @param T                        $child
      * @param array<int|string, mixed> $extraById
      */
-    protected function applyExtra(TypeChildConfig $child, int|string|null $id, array $extraById): void
+    protected function applyExtra(TypeChildConfigInterface $child, int|string|null $id, array $extraById): void
     {
     }
 }

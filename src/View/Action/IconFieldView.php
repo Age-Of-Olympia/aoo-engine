@@ -15,7 +15,7 @@ namespace App\View\Action;
  */
 final class IconFieldView
 {
-    use EscapesHtml;
+    use EscapesHtmlTrait;
 
     public function render(string $current, string $name = 'icon', ?string $currentColor = null, string $colorName = 'icon_color', bool $withColor = true): string
     {

@@ -12,7 +12,7 @@ use Classes\Db;
  * mentir. Remplace scripts/tools/generate_actions_wiki.php (mort :
  * condition toujours vraie, propriété indéfinie).
  */
-final class ActionWikiRenderer implements WikiSheetRenderer
+final class ActionWikiRenderer implements WikiSheetRendererInterface
 {
     private const TARGET_LABELS = [
         'character' => 'Personnage',

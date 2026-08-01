@@ -5,7 +5,7 @@ namespace App\Action\OutcomeInstruction;
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use Doctrine\ORM\Mapping as ORM;
@@ -13,7 +13,7 @@ use Classes\Player;
 use Classes\Str;
 
 #[ORM\Entity]
-class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

@@ -20,7 +20,7 @@ use Doctrine\DBAL\Connection;
  * The rows are minimal on purpose — a name, a race, a cell. Anything else a
  * case needs, it passes in.
  */
-trait SeedsCharacters
+trait SeedsCharactersTrait
 {
     /** @var list<int> ids handed out here, removed by removeSeededCharacters() */
     private array $seededCharacterIds = [];

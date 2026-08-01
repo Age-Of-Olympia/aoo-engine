@@ -5,14 +5,14 @@ namespace App\Action\OutcomeInstruction;
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
 #[ORM\Entity]
-class ManaLossOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class ManaLossOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     // The simulator derives its input from this schema: `value` is TRAIT_OR_INT,
     // so lossType=carac (value="m") surfaces the actor's M, while fixed/lifeloss/

@@ -13,7 +13,7 @@ use App\Service\ImportExport\ExporterRegistry;
  * Données : PassiveExporter (une seule source de vérité, famille
  * bundle `passive`).
  */
-final class PassiveWikiRenderer implements WikiSheetRenderer
+final class PassiveWikiRenderer implements WikiSheetRendererInterface
 {
     private const TYPE_LABELS = ['att' => 'Attaque', 'def' => 'Défense', 'mixte' => 'Mixte'];
 

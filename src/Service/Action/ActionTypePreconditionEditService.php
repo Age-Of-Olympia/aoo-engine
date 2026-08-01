@@ -6,7 +6,7 @@ use App\Action\Condition\ConditionRegistry;
 use App\Action\Schema\ActionSchemaCatalog;
 use App\Action\Schema\ParameterSchema;
 use App\Entity\ActionTypePrecondition;
-use App\Entity\TypeChildConfig;
+use App\Entity\TypeChildConfigInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 
@@ -61,7 +61,7 @@ final class ActionTypePreconditionEditService extends AbstractTypeChildEditServi
         return ActionTypePrecondition::class;
     }
 
-    protected function childTypeOf(TypeChildConfig $entity): string
+    protected function childTypeOf(TypeChildConfigInterface $entity): string
     {
         /** @var ActionTypePrecondition $entity */
         return $entity->getConditionType();
@@ -86,7 +86,7 @@ final class ActionTypePreconditionEditService extends AbstractTypeChildEditServi
         }
     }
 
-    protected function makeChild(string $typeKey, string $childType, int $orderIndex): TypeChildConfig
+    protected function makeChild(string $typeKey, string $childType, int $orderIndex): TypeChildConfigInterface
     {
         return (new ActionTypePrecondition())
             ->setTypeKey($typeKey)
@@ -102,7 +102,7 @@ final class ActionTypePreconditionEditService extends AbstractTypeChildEditServi
      *
      * @param array<int|string, mixed> $extraById
      */
-    protected function applyExtra(TypeChildConfig $child, int|string|null $id, array $extraById): void
+    protected function applyExtra(TypeChildConfigInterface $child, int|string|null $id, array $extraById): void
     {
         /** @var ActionTypePrecondition $child */
         $child->setBlocking(!empty($extraById[$id]));

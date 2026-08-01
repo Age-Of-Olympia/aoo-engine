@@ -4,11 +4,11 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
-use App\Action\Schema\DeclaresSimulationInputs;
+use App\Action\Schema\DeclaresSimulationInputsInterface;
 use App\Action\Schema\SimulationField;
 use Classes\Dice;
 
-class BuffComputeCondition extends ComputeCondition implements DeclaresSimulationInputs
+class BuffComputeCondition extends ComputeCondition implements DeclaresSimulationInputsInterface
 {
     protected string $throwName = "Le sort de soutien";
 

@@ -5,9 +5,9 @@ namespace App\Action\Schema;
 /**
  * Implemented by condition handlers and outcome instructions that read actor /
  * target state, so the simulator's form can be derived from the action's actual
- * conditions + outcomes (same incremental-adoption model as HasParameterSchema).
+ * conditions + outcomes (same incremental-adoption model as HasParameterSchemaInterface).
  */
-interface DeclaresSimulationInputs
+interface DeclaresSimulationInputsInterface
 {
     /**
      * @param array<string, mixed> $params the condition/outcome's stored parameters

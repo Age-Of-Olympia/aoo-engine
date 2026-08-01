@@ -656,14 +656,14 @@ ob_start();
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="ensure_harvestable_tree_x">Harvestable Tree X</label>
+                                    <label for="ensure_harvestable_tree_x">HarvestableInterface Tree X</label>
                                     <input type="number" class="form-control" id="ensure_harvestable_tree_x" name="ensure_harvestable_tree_x"
                                            value="<?= $hasFormData && $stepPrerequisites && $stepPrerequisites['ensure_harvestable_tree_x'] !== null ? $stepPrerequisites['ensure_harvestable_tree_x'] : '' ?>">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="ensure_harvestable_tree_y">Harvestable Tree Y</label>
+                                    <label for="ensure_harvestable_tree_y">HarvestableInterface Tree Y</label>
                                     <input type="number" class="form-control" id="ensure_harvestable_tree_y" name="ensure_harvestable_tree_y"
                                            value="<?= $hasFormData && $stepPrerequisites && $stepPrerequisites['ensure_harvestable_tree_y'] !== null ? $stepPrerequisites['ensure_harvestable_tree_y'] : '' ?>">
                                 </div>

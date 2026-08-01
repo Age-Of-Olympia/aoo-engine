@@ -7,7 +7,7 @@ use Classes\View;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
-use Tests\Support\PlantsResources;
+use Tests\Support\PlantsResourcesTrait;
 
 /**
  * « Qu'est-ce qui bloque une case ? » — la table de vérité, gelée.
@@ -58,7 +58,7 @@ use Tests\Support\PlantsResources;
 #[Group('items-golden-master')]
 class BlockingPredicatesGoldenMasterTest extends LegacyPlayerFixtureTestCase
 {
-    use PlantsResources;
+    use PlantsResourcesTrait;
 
     private const PLAN = 'plan_test_blocage';
 

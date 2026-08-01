@@ -8,7 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Harvestable resources become structure types, so they can become entities.
+ * HarvestableInterface resources become structure types, so they can become entities.
  *
  * Derived from `resource_types` where pv = -1 — the flag that already means
  * "harvestable, indestructible" — rather than from a list frozen here: each
@@ -36,7 +36,7 @@ final class Version20260730140000_HarvestableTypesEnterTheCatalogue extends Abst
 
     public function getDescription(): string
     {
-        return 'Harvestable resource types enter the races catalogue as structures';
+        return 'HarvestableInterface resource types enter the races catalogue as structures';
     }
 
     public function up(Schema $schema): void

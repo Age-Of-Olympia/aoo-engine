@@ -15,14 +15,14 @@ namespace App\Entity;
  * interface dit ce qu'il SAIT FAIRE, et cela traverse les familles sans les
  * ranger l'une sous l'autre.
  *
- * Un appelant qui veut un rendement demande donc `Harvestable`, jamais une
+ * Un appelant qui veut un rendement demande donc `HarvestableInterface`, jamais une
  * classe : le jour où les plantes arrivent, il n'a rien à changer.
  *
  * Pas de trait derrière, pour l'instant : avec un seul implémenteur il n'y
  * aurait rien à mutualiser. Il viendra avec le deuxième, et l'extraction sera
  * mécanique — l'interface, elle, se gagne dès maintenant.
  */
-interface Harvestable
+interface HarvestableInterface
 {
     /** L'objet que ce type rend ; '' = il ne rend rien. */
     public function getHarvestItem(): string;

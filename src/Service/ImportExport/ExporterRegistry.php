@@ -3,17 +3,17 @@
 namespace App\Service\ImportExport;
 
 /**
- * Resolves an {@see ObjectExporter} by objectType. Defaults to the built-in set
+ * Resolves an {@see ObjectExporterInterface} by objectType. Defaults to the built-in set
  * (action, passive); tests inject their own. The seam that lets the export UI be
  * objectType-driven instead of hardcoded to actions.
  */
 final class ExporterRegistry
 {
-    /** @var array<string, ObjectExporter> */
+    /** @var array<string, ObjectExporterInterface> */
     private array $exporters = [];
 
     /**
-     * @param array<int, ObjectExporter>|null $exporters null = the built-in set
+     * @param array<int, ObjectExporterInterface>|null $exporters null = the built-in set
      */
     public function __construct(?array $exporters = null)
     {
@@ -22,12 +22,12 @@ final class ExporterRegistry
         }
     }
 
-    public function register(ObjectExporter $exporter): void
+    public function register(ObjectExporterInterface $exporter): void
     {
         $this->exporters[$exporter->objectType()] = $exporter;
     }
 
-    public function exporterFor(string $objectType): ?ObjectExporter
+    public function exporterFor(string $objectType): ?ObjectExporterInterface
     {
         return $this->exporters[$objectType] ?? null;
     }

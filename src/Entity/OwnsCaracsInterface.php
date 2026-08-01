@@ -16,7 +16,7 @@ namespace App\Entity;
  * Always sixteen keys: combat reads `caracs->{trait}` for whichever trait the
  * action names, so a short block is an undefined property mid-fight.
  */
-interface OwnsCaracs
+interface OwnsCaracsInterface
 {
     /** @return array<string, int> the sixteen CARACS keys, complete */
     public function ownCaracs(): array;

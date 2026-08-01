@@ -4,9 +4,9 @@ namespace App\Action\Condition;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetail;
 use App\Action\Combat\RollDetailView;
-use App\Action\Schema\DeclaresSimulationInputs;
+use App\Action\Schema\DeclaresSimulationInputsInterface;
 
-class DistanceComputeCondition extends ComputeCondition implements DeclaresSimulationInputs
+class DistanceComputeCondition extends ComputeCondition implements DeclaresSimulationInputsInterface
 {
     /**
      * Ligne de tir : une structure qui arrête les projectiles

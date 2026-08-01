@@ -5,8 +5,8 @@ namespace Tests\Action\ImportExport;
 use App\Service\ImportExport\ExporterRegistry;
 use App\Service\ImportExport\ImportReport;
 use App\Service\ImportExport\ImporterRegistry;
-use App\Service\ImportExport\ObjectExporter;
-use App\Service\ImportExport\ObjectImporter;
+use App\Service\ImportExport\ObjectExporterInterface;
+use App\Service\ImportExport\ObjectImporterInterface;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
@@ -50,9 +50,9 @@ class RegistryTest extends TestCase
         $this->assertSame($replacement, $registry->exporterFor('action'));
     }
 
-    private function exporter(string $type): ObjectExporter
+    private function exporter(string $type): ObjectExporterInterface
     {
-        return new class ($type) implements ObjectExporter {
+        return new class ($type) implements ObjectExporterInterface {
             public function __construct(private string $type)
             {
             }
@@ -74,9 +74,9 @@ class RegistryTest extends TestCase
         };
     }
 
-    private function importer(string $type): ObjectImporter
+    private function importer(string $type): ObjectImporterInterface
     {
-        return new class ($type) implements ObjectImporter {
+        return new class ($type) implements ObjectImporterInterface {
             public function __construct(private string $type)
             {
             }

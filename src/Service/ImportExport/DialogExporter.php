@@ -10,7 +10,7 @@ use InvalidArgumentException;
  * naturelle : l'identité est le code du dialogue (`name`) — aucun id de
  * base, le bundle est portable entre environnements.
  */
-final class DialogExporter implements ObjectExporter
+final class DialogExporter implements ObjectExporterInterface
 {
     private ?DialogService $dialogs;
 

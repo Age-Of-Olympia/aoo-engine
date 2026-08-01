@@ -16,7 +16,7 @@ use App\Service\Action\SimulationWeaponCatalog;
  */
 final class PassiveConditionEditorView
 {
-    use RendersOptions;
+    use RendersOptionsTrait;
 
     /** Bare-handed pseudo-weapon: the engine treats "poing" as "no weapon equipped". */
     private const BARE_HANDS = 'poing';

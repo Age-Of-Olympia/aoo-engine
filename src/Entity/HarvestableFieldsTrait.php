@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Le rendement, tel que le portent ceux qui savent se récolter.
  *
- * L'implémentation partagée derrière {@see Harvestable}. Elle naît maintenant
+ * L'implémentation partagée derrière {@see HarvestableInterface}. Elle naît maintenant
  * et pas plus tôt : à un seul implémenteur il n'y avait rien à mutualiser,
  * seulement un détour à ajouter. Les plantes en font le deuxième, et le trait
  * cesse d'être spéculatif.
@@ -19,7 +19,7 @@ use Doctrine\ORM\Mapping as ORM;
  * C'est ce qui permet à une capacité de traverser des familles qui ne forment
  * pas un sous-arbre.
  */
-trait HarvestableFields
+trait HarvestableFieldsTrait
 {
     /**
      * Ce que ce type rend à la récolte, et à quel rythme il s'épuise et

@@ -16,7 +16,7 @@ use InvalidArgumentException;
  * drapeaux de permissions (booléens explicites — contrairement au read model
  * runtime, le bundle n'omet rien).
  */
-final class FactionExporter implements ObjectExporter
+final class FactionExporter implements ObjectExporterInterface
 {
     private ?EntityManagerInterface $entityManager;
 

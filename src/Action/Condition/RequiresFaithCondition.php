@@ -3,7 +3,7 @@
 namespace App\Action\Condition;
 
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use App\Entity\ActionCondition;
@@ -15,7 +15,7 @@ use App\Interface\ActorInterface;
  * `pf` is not a turn characteristic: `putBonus` ignores it, so the generic
  * cost path charges nothing at all. Hence its own condition.
  */
-class RequiresFaithCondition extends BaseCondition implements HasParameterSchema
+class RequiresFaithCondition extends BaseCondition implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

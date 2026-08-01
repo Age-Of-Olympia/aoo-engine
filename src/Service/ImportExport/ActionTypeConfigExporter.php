@@ -16,7 +16,7 @@ use InvalidArgumentException;
  *
  * Round-trips with {@see ActionTypeConfigImporter}.
  */
-final class ActionTypeConfigExporter implements ObjectExporter
+final class ActionTypeConfigExporter implements ObjectExporterInterface
 {
     private ?EntityManagerInterface $entityManager;
 

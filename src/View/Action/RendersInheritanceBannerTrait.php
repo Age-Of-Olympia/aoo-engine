@@ -4,9 +4,9 @@ namespace App\View\Action;
 
 /**
  * The "hérité de … / surchargé ici" banner shared by the per-type XP and log
- * editors. Expects the using class to provide esc() (via {@see EscapesHtml}).
+ * editors. Expects the using class to provide esc() (via {@see EscapesHtmlTrait}).
  */
-trait RendersInheritanceBanner
+trait RendersInheritanceBannerTrait
 {
     private function inheritanceBanner(string $typeKey, ?string $inheritedFrom, ?string $overriddenParent): string
     {

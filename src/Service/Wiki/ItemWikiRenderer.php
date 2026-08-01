@@ -11,7 +11,7 @@ use App\Service\ImportExport\ExporterRegistry;
  * générateur JSON legacy (scripts/tools/generate_items_wiki.php, races
  * codées en dur, source crafts obsolète).
  */
-final class ItemWikiRenderer implements WikiSheetRenderer
+final class ItemWikiRenderer implements WikiSheetRendererInterface
 {
     private const TYPE_ORDER = ['equipement', 'consommable', 'constructible', 'matiere', 'quete'];
 

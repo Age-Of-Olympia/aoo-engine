@@ -4,7 +4,7 @@ namespace App\Action\Schema;
 
 /**
  * One input the simulator needs for an action, declared by the condition /
- * outcome that reads it (see DeclaresSimulationInputs). SimulationFormBuilder
+ * outcome that reads it (see DeclaresSimulationInputsInterface). SimulationFormBuilder
  * unions these across an action's conditions + outcomes to render the form.
  */
 final class SimulationField

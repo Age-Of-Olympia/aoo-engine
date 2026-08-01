@@ -4,7 +4,7 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Action\Condition\ConditionObject;
 use App\Entity\OutcomeInstruction;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use App\Service\InventoryService;
 use Classes\Player;
@@ -22,7 +22,7 @@ use Doctrine\ORM\Mapping as ORM;
  * ferait doublon aux événements.
  */
 #[ORM\Entity]
-class ApplyConsumableOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class ApplyConsumableOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

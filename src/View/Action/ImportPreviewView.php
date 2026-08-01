@@ -12,7 +12,7 @@ use App\Service\ImportExport\ImportReport;
  */
 final class ImportPreviewView
 {
-    use EscapesHtml;
+    use EscapesHtmlTrait;
 
     public function render(ImportReport $report, string $filename, string $csrfTokenField, string $bundleHash = ''): string
     {

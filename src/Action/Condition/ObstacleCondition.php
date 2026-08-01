@@ -4,7 +4,7 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use App\Service\BuildingService;
 
@@ -40,7 +40,7 @@ use App\Service\BuildingService;
  * pointillés du tireur à la cible, un point sur chaque obstacle. Il est
  * transitoire, là où l'ancien clignotement durait jusqu'au rechargement.
  */
-class ObstacleCondition extends BaseCondition implements HasParameterSchema
+class ObstacleCondition extends BaseCondition implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

@@ -10,7 +10,7 @@ use App\Interface\ActorInterface;
  * per action type in action_type_xp). A fixed-reward mode is just constants; the
  * combat/steal/train modes are real algorithms reading rank/faction/energie.
  */
-interface XpCalculator
+interface XpCalculatorInterface
 {
     /**
      * @param array<string, int> $params the configured knobs (merged over defaults())

@@ -22,7 +22,7 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
-use App\Entity\Harvestable;
+use App\Entity\HarvestableInterface;
 use App\Entity\PlantType;
 use App\Entity\Race;
 use App\Entity\StructureType;
@@ -449,7 +449,7 @@ HTML;
                 . formSelect(
                     'harvest_item',
                     item_options(),
-                    $race instanceof Harvestable ? $race->getHarvestItem() : '',
+                    $race instanceof HarvestableInterface ? $race->getHarvestItem() : '',
                     '— ne rend rien —',
                     'class="form-control form-control-sm"'
                 )
@@ -474,10 +474,10 @@ HTML;
                     : '')
                 . ($face->isResource()
                     ? '<div class="col-4"><input type="number" class="form-control form-control-sm" name="harvest_exhaust"'
-                        . ' value="' . ($race instanceof Harvestable && $race->getHarvestExhaust() !== null ? (int) $race->getHarvestExhaust() : '') . '"'
+                        . ' value="' . ($race instanceof HarvestableInterface && $race->getHarvestExhaust() !== null ? (int) $race->getHarvestExhaust() : '') . '"'
                         . ' min="1" max="100" placeholder="épuisement (1-100)"></div>'
                         . '<div class="col-4"><input type="number" class="form-control form-control-sm" name="harvest_regrow"'
-                        . ' value="' . ($race instanceof Harvestable && $race->getHarvestRegrow() !== null ? (int) $race->getHarvestRegrow() : '') . '"'
+                        . ' value="' . ($race instanceof HarvestableInterface && $race->getHarvestRegrow() !== null ? (int) $race->getHarvestRegrow() : '') . '"'
                         . ' min="1" max="1000" placeholder="repousse (1-1000)"></div>'
                     : '')
                 . '</div><small class="form-text text-muted">Laissé vide, ce type ne rend rien :'

@@ -7,12 +7,12 @@ use App\Interface\ActorInterface;
 /**
  * Training XP, ported from TrainAction::calculate*Xp. Both fighters gain base XP
  * plus bonuses for spare energie and for sparring up in rank. Both also spend
- * one energie point — a separate fighter mutation ({@see MutatesActors}) the
+ * one energie point — a separate fighter mutation ({@see MutatesActorsInterface}) the
  * executor applies after the (pure) XP is computed, so the energie read by
  * calculate() is always the pre-spend value (matching the old in-calculateXp
  * behaviour). base / energieHighBonus / energieAnyBonus / rankBonus are knobs.
  */
-final class TrainXpCalculator implements XpCalculator, MutatesActors
+final class TrainXpCalculator implements XpCalculatorInterface, MutatesActorsInterface
 {
     public function calculate(array $params, bool $success, ActorInterface $actor, ActorInterface $target): array
     {

@@ -8,7 +8,7 @@ namespace App\View\Action;
  */
 final class NewActionFormView
 {
-    use RendersOptions;
+    use RendersOptionsTrait;
 
     private IconFieldView $iconField;
 

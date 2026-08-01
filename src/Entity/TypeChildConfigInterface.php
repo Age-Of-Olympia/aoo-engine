@@ -10,7 +10,7 @@ namespace App\Entity;
  * generically; the per-kind "which condition/instruction" field stays on the
  * concrete entity.
  */
-interface TypeChildConfig
+interface TypeChildConfigInterface
 {
     public function getId(): ?int;
 

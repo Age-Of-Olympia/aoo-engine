@@ -5,7 +5,7 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 
 /**
@@ -21,7 +21,7 @@ use App\Action\Schema\ParameterSchema;
  * blessure d'un personnage que les PV entamés d'une structure : les deux
  * vivent dans players_bonus et passent par getRemaining().
  */
-class RequiresDamagedTargetCondition extends BaseCondition implements HasParameterSchema
+class RequiresDamagedTargetCondition extends BaseCondition implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

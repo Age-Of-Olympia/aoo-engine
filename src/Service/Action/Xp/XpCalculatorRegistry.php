@@ -14,7 +14,7 @@ final class XpCalculatorRegistry
     public const MODE_STEAL = 'steal';
     public const MODE_TRAIN = 'train';
 
-    /** @var array<string, XpCalculator> */
+    /** @var array<string, XpCalculatorInterface> */
     private array $calculators;
 
     public function __construct()
@@ -32,7 +32,7 @@ final class XpCalculatorRegistry
         return isset($this->calculators[$mode]);
     }
 
-    public function get(string $mode): ?XpCalculator
+    public function get(string $mode): ?XpCalculatorInterface
     {
         return $this->calculators[$mode] ?? null;
     }

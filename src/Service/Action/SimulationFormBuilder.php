@@ -3,8 +3,8 @@
 namespace App\Service\Action;
 
 use App\Action\Condition\ConditionRegistry;
-use App\Action\Schema\DeclaresSimulationInputs;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\DeclaresSimulationInputsInterface;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\SchemaSimulationInputs;
 use App\Action\Schema\SimulationField;
 use App\Entity\Action;
@@ -16,8 +16,8 @@ use App\Service\OutcomeInstructionService;
  * action needs; add a condition, its inputs appear.
  *
  * Each condition/outcome contributes its inputs one of two ways: a
- * HasParameterSchema one has its TRAIT fields derived from the schema
- * ({@see SchemaSimulationInputs}); a DeclaresSimulationInputs one supplies them by
+ * HasParameterSchemaInterface one has its TRAIT fields derived from the schema
+ * ({@see SchemaSimulationInputs}); a DeclaresSimulationInputsInterface one supplies them by
  * hand (for caracs read with no backing param, e.g. Rest, or a roll that reads
  * nothing, e.g. BuffCompute). The hand-written declaration wins when both apply.
  */
@@ -69,10 +69,10 @@ final class SimulationFormBuilder
      */
     private function inputsFor(object $handler, array $params): array
     {
-        if ($handler instanceof DeclaresSimulationInputs) {
+        if ($handler instanceof DeclaresSimulationInputsInterface) {
             return $handler::simulationInputs($params);
         }
-        if ($handler instanceof HasParameterSchema) {
+        if ($handler instanceof HasParameterSchemaInterface) {
             return SchemaSimulationInputs::derive($handler::parameterSchema(), $params);
         }
 

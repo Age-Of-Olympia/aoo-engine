@@ -26,7 +26,7 @@ final class Version20260730200000_HarvestablesAreFellable extends AbstractMigrat
 
     public function getDescription(): string
     {
-        return 'Harvestable types go from 10 to 100 life points; the default becomes a setting';
+        return 'HarvestableInterface types go from 10 to 100 life points; the default becomes a setting';
     }
 
     public function up(Schema $schema): void

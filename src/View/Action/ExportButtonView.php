@@ -9,7 +9,7 @@ namespace App\View\Action;
  */
 final class ExportButtonView
 {
-    use EscapesHtml;
+    use EscapesHtmlTrait;
 
     private const ENDPOINT = '/admin/action-export.php';
 

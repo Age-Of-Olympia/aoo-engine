@@ -8,7 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Harvestable types get their own nature, and leave the buildings list.
+ * HarvestableInterface types get their own nature, and leave the buildings list.
  *
  * Entering the catalogue as `obstacle` put 39 trees, stones and peat bogs in
  * the building types — the list an animator scrolls to place a wall. Exactly
@@ -26,7 +26,7 @@ final class Version20260730180000_HarvestableTypesLeaveTheBuildings extends Abst
 {
     public function getDescription(): string
     {
-        return 'Harvestable types move to structure_nature = ressource; dead altar rows leave resource_types';
+        return 'HarvestableInterface types move to structure_nature = ressource; dead altar rows leave resource_types';
     }
 
     public function up(Schema $schema): void

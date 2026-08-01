@@ -6,7 +6,7 @@ use App\Action\Combat\DamageCalculator;
 use App\Action\Combat\DamageModifiers;
 use App\Action\Condition\ConditionObject;
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use App\Entity\OutcomeInstruction;
@@ -16,7 +16,7 @@ use Classes\Player;
 use Classes\View;
 
 #[ORM\Entity]
-class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

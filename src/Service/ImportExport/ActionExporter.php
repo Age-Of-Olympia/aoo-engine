@@ -21,7 +21,7 @@ use ReflectionProperty;
  * `type`. DB ids and the transient `automaticOutcomeInstructions` are never
  * exported, and type-level instructions belong to the type, not the action.
  */
-final class ActionExporter implements ObjectExporter
+final class ActionExporter implements ObjectExporterInterface
 {
     private const ACTION_SUFFIX = 'Action';
 

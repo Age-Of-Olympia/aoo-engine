@@ -4,7 +4,7 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use App\Service\UniqueObjectService;
 use Classes\Player;
@@ -18,7 +18,7 @@ use Doctrine\ORM\Mapping as ORM;
  * l'aller-retour.
  */
 #[ORM\Entity]
-class TakeItemOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class TakeItemOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

@@ -15,7 +15,7 @@ use App\Action\Schema\ParameterSchema;
  */
 final class TypeChildFormView
 {
-    use RendersOptions;
+    use RendersOptionsTrait;
 
     private ParameterFieldRenderer $renderer;
     private RawParamsEditor $rawEditor;

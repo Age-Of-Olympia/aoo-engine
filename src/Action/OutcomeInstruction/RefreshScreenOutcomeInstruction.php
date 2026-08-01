@@ -4,13 +4,13 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
 #[ORM\Entity]
-class RefreshScreenOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class RefreshScreenOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

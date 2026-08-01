@@ -4,7 +4,7 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 
@@ -33,7 +33,7 @@ use App\Action\Schema\ParameterSchema;
  * on simulated targets, which default to 'real' — simulations always
  * model characters).
  */
-class TargetTypeCondition extends BaseCondition implements HasParameterSchema
+class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInterface
 {
     public const KIND_SELF = 'self';
     public const KIND_NONE = 'none';

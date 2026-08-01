@@ -4,7 +4,7 @@ namespace Tests\Various;
 
 use App\Entity\BuildingType;
 use App\Entity\CharacterRace;
-use App\Entity\Harvestable;
+use App\Entity\HarvestableInterface;
 use App\Entity\ResourceType;
 use App\Entity\PlantType;
 use App\Entity\Race;
@@ -147,7 +147,7 @@ class TypeInheritanceTest extends TestCase
 
         $this->assertInstanceOf(ResourceType::class, $type, 'la famille, dite par le discriminant');
         $this->assertInstanceOf(
-            Harvestable::class,
+            HarvestableInterface::class,
             $type,
             'et la CAPACITÉ, que les plantes rempliront aussi sans être des ressources'
         );
@@ -196,7 +196,7 @@ class TypeInheritanceTest extends TestCase
         $type = (new RaceService())->getRaceByName((string) $name);
 
         $this->assertInstanceOf(PlantType::class, $type);
-        $this->assertInstanceOf(Harvestable::class, $type, 'une plante se récolte');
+        $this->assertInstanceOf(HarvestableInterface::class, $type, 'une plante se récolte');
         /* Qu'elle ne soit PAS une ressource, l'analyse statique le prouve dès
          * l'assertion précédente — l'écrire serait une tautologie de plus. Ce
          * qui se vérifie, c'est la conséquence observable : on marche dessus. */

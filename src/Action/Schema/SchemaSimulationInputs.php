@@ -11,7 +11,7 @@ namespace App\Action\Schema;
  * ($actor->caracs->{trait}), so the simulator must expose it. A field set to a
  * fixed number reads nothing and is skipped. This is the default for any
  * schema-backed condition/outcome; only genuinely special cases (caracs read with
- * no backing param, or a roll that reads nothing) implement DeclaresSimulationInputs.
+ * no backing param, or a roll that reads nothing) implement DeclaresSimulationInputsInterface.
  */
 final class SchemaSimulationInputs
 {

@@ -14,7 +14,7 @@ use InvalidArgumentException;
  * (label, description, icône), drapeaux (caché, marqueur), buff/debuff,
  * la liste des effets annulés et la corruption (chance + matériaux).
  */
-final class EffectExporter implements ObjectExporter
+final class EffectExporter implements ObjectExporterInterface
 {
     private ?EntityManagerInterface $entityManager;
 

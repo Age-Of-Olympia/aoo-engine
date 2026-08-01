@@ -3,7 +3,7 @@ namespace App\Action\Condition;
 
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use Classes\Db;
 
@@ -13,7 +13,7 @@ use Classes\Db;
  * POST, souterrain (z < 0), adjacente ou sous ses pieds, pas déjà
  * creusée. L'instruction digtunnel ne fait ensuite que l'effet.
  */
-class DigSiteCondition extends BaseCondition implements HasParameterSchema
+class DigSiteCondition extends BaseCondition implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

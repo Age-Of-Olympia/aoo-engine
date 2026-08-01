@@ -14,7 +14,7 @@ use App\Enum\OutcomeTarget;
  */
 final class OutcomeEditorView
 {
-    use RendersOptions;
+    use RendersOptionsTrait;
 
     public function addOutcomeControls(): string
     {

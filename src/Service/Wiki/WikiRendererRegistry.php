@@ -5,15 +5,15 @@ namespace App\Service\Wiki;
 /**
  * Registre des renderers wiki, clé = objectType — le miroir de
  * ExporterRegistry côté mise en forme. Ajouter une famille = une classe
- * WikiSheetRenderer + une entrée ici ; la page admin/wiki.php suit
+ * WikiSheetRendererInterface + une entrée ici ; la page admin/wiki.php suit
  * toute seule.
  */
 final class WikiRendererRegistry
 {
-    /** @var array<string, WikiSheetRenderer> */
+    /** @var array<string, WikiSheetRendererInterface> */
     private array $renderers = [];
 
-    /** @param WikiSheetRenderer[]|null $renderers injection de test */
+    /** @param WikiSheetRendererInterface[]|null $renderers injection de test */
     public function __construct(?array $renderers = null)
     {
         foreach ($renderers ?? [
@@ -27,12 +27,12 @@ final class WikiRendererRegistry
         }
     }
 
-    public function register(WikiSheetRenderer $renderer): void
+    public function register(WikiSheetRendererInterface $renderer): void
     {
         $this->renderers[$renderer->objectType()] = $renderer;
     }
 
-    public function rendererFor(string $objectType): ?WikiSheetRenderer
+    public function rendererFor(string $objectType): ?WikiSheetRendererInterface
     {
         return $this->renderers[$objectType] ?? null;
     }

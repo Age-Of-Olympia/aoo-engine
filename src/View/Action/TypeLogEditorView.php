@@ -9,8 +9,8 @@ namespace App\View\Action;
  */
 final class TypeLogEditorView
 {
-    use EscapesHtml;
-    use RendersInheritanceBanner;
+    use EscapesHtmlTrait;
+    use RendersInheritanceBannerTrait;
 
     public function render(string $typeKey, ?string $actorTemplate, ?string $targetTemplate, string $csrfTokenField, ?string $inheritedFrom = null, ?string $overriddenParent = null): string
     {

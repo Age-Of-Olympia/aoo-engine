@@ -36,7 +36,7 @@ use Doctrine\ORM\Mapping as ORM;
     'resource'  => ResourceType::class,
     'plant'     => PlantType::class,
 ])]
-abstract class Race implements OwnsCaracs
+abstract class Race implements OwnsCaracsInterface
 {
     /**
      * The 16 stat keys, one DB column each — alias de la source unique

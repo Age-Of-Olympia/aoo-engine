@@ -10,7 +10,7 @@ use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetail;
 use App\Action\Combat\RollDetailView;
 use App\Action\Schema\FieldType;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use App\Action\Schema\SchemaSimulationInputs;
@@ -18,7 +18,7 @@ use App\Action\Schema\SimulationField;
 use Classes\Dice;
 use Classes\View;
 
-class ComputeCondition extends AbstractComputeCondition implements HasParameterSchema
+class ComputeCondition extends AbstractComputeCondition implements HasParameterSchemaInterface
 {
     public static function parameterSchema(): ParameterSchema
     {

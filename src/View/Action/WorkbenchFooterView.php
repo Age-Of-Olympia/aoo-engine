@@ -11,7 +11,7 @@ namespace App\View\Action;
  */
 final class WorkbenchFooterView
 {
-    use EscapesHtml;
+    use EscapesHtmlTrait;
 
     public function render(string $saveFormId, string $deleteFormId, string $deleteLabel, string $extra = ''): string
     {

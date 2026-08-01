@@ -2,7 +2,7 @@
 
 namespace Tests\Various;
 
-use App\Entity\Harvestable;
+use App\Entity\HarvestableInterface;
 use App\Entity\PlantType;
 use App\Entity\Race;
 use App\Service\AdminMenuAccessService;
@@ -73,7 +73,7 @@ class PlantTypeAdminTest extends TestCase
         $type = Race::ofFamily($face->isStructure() ? 'structure' : 'character', $face->nature());
 
         $this->assertInstanceOf(PlantType::class, $type, 'et non un bâtiment');
-        $this->assertInstanceOf(Harvestable::class, $type);
+        $this->assertInstanceOf(HarvestableInterface::class, $type);
     }
 
     /** Le formulaire renvoie la nature, sans quoi l'enregistrement la perd. */

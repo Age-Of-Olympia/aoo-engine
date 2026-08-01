@@ -19,7 +19,7 @@ use Throwable;
  * existantes sont conservées (les FK qui les visent — joueurs, logs —
  * restent valides), les manquantes sont créées.
  *
- * Implémente ObjectImporter directement plutôt que d'étendre
+ * Implémente ObjectImporterInterface directement plutôt que d'étendre
  * AbstractObjectImporter : le squelette abstrait transactionne l'EntityManager
  * Doctrine alors que les écritures map_* passent par Classes\Db (mysqli) —
  * la transaction doit vivre sur la même connexion que les écritures.
@@ -27,7 +27,7 @@ use Throwable;
  * Le fichier JSON du plan est remplacé APRÈS le commit : une base importée
  * sans JSON se répare en réimportant, l'inverse non.
  */
-final class PlanImporter implements ObjectImporter
+final class PlanImporter implements ObjectImporterInterface
 {
     /** Taille des lots d'INSERT multi-lignes (précédent : mapcmd.php). */
     private const INSERT_BATCH = 500;

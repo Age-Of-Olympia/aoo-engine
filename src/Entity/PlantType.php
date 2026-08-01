@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Une plante : fleur, herbe, ronce. On lui marche dessus sans la prendre.
  *
- * Elle se récolte comme une ressource — d'où {@see Harvestable}, partagé — mais
+ * Elle se récolte comme une ressource — d'où {@see HarvestableInterface}, partagé — mais
  * elle ne lui ressemble en rien d'autre : une ressource bloque le pas et se
  * frappe, une plante se traverse et se ramasse, comme un objet posé au sol.
  * Faire descendre l'une de l'autre aurait imposé à la fleur les mœurs du
@@ -28,9 +28,9 @@ use Doctrine\ORM\Mapping as ORM;
  * tronc rendait `null` pour un décor jusqu'à ce que quelqu'un le remarque.
  */
 #[ORM\Entity]
-class PlantType extends StructureType implements Harvestable
+class PlantType extends StructureType implements HarvestableInterface
 {
-    use HarvestableFields;
+    use HarvestableFieldsTrait;
 
     /**
      * Combien cette plante rend, à la cueillette.

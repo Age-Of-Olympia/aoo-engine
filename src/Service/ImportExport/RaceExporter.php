@@ -15,7 +15,7 @@ use InvalidArgumentException;
  * Les compteurs de portraits/avatars sont volontairement absents : état
  * d'environnement, pas de la définition de la race.
  */
-final class RaceExporter implements ObjectExporter
+final class RaceExporter implements ObjectExporterInterface
 {
     private ?EntityManagerInterface $entityManager;
 

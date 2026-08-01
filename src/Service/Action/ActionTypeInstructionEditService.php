@@ -6,7 +6,7 @@ use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
 use App\Action\Schema\ActionSchemaCatalog;
 use App\Action\Schema\ParameterSchema;
 use App\Entity\ActionTypeInstruction;
-use App\Entity\TypeChildConfig;
+use App\Entity\TypeChildConfigInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 
@@ -55,7 +55,7 @@ final class ActionTypeInstructionEditService extends AbstractTypeChildEditServic
         return ActionTypeInstruction::class;
     }
 
-    protected function childTypeOf(TypeChildConfig $entity): string
+    protected function childTypeOf(TypeChildConfigInterface $entity): string
     {
         /** @var ActionTypeInstruction $entity */
         return $entity->getInstructionType();
@@ -80,7 +80,7 @@ final class ActionTypeInstructionEditService extends AbstractTypeChildEditServic
         }
     }
 
-    protected function makeChild(string $typeKey, string $childType, int $orderIndex): TypeChildConfig
+    protected function makeChild(string $typeKey, string $childType, int $orderIndex): TypeChildConfigInterface
     {
         return (new ActionTypeInstruction())
             ->setTypeKey($typeKey)

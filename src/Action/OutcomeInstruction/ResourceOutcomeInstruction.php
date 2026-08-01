@@ -4,7 +4,7 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
-use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
 use App\Service\ResourceService;
 use Doctrine\ORM\Mapping as ORM;
@@ -13,7 +13,7 @@ use Classes\Item;
 use Classes\Player;
 
 #[ORM\Entity]
-class ResourceOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class ResourceOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     /**
      * Dé injectable. Nul en jeu — un dé de la bonne taille est fabriqué à

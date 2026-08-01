@@ -11,8 +11,8 @@ use App\Service\Action\Xp\XpCalculatorRegistry;
  */
 final class TypeXpEditorView
 {
-    use RendersOptions;
-    use RendersInheritanceBanner;
+    use RendersOptionsTrait;
+    use RendersInheritanceBannerTrait;
 
     private XpCalculatorRegistry $calculators;
 

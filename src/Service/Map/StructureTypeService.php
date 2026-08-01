@@ -73,7 +73,7 @@ final class StructureTypeService
         return isset(self::all()[$name]);
     }
 
-    /** Harvestable: what fouiller takes from, and what regrows. */
+    /** HarvestableInterface: what fouiller takes from, and what regrows. */
     public static function isHarvestable(string $name): bool
     {
         return (self::all()[$name]['nature'] ?? '') === self::NATURE_RESOURCE;
