@@ -617,7 +617,7 @@ class TiledMapService
     private function fetchBuildingRows(string $plan, int $z): array
     {
         $res = $this->db->exe(
-            "SELECT p.id, p.race AS name, c.x, c.y, p.owner_id, b.faction, b.build_state
+            "SELECT p.id, p.race AS name, c.x, c.y, p.owner_id, p.faction, b.build_state
              FROM buildings b
              JOIN players p ON p.id = b.player_id
              JOIN coords c ON c.id = p.coords_id

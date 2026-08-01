@@ -160,7 +160,7 @@ class PlanAdminService
                JOIN coords c ON c.id = p.coords_id
               WHERE c.plan = ?
                 AND p.owner_id IS NULL
-                AND b.faction = ''
+                AND p.faction = ''
                 AND b.build_state = 'built'
               ORDER BY c.z, c.y, c.x, p.id",
             array($sourcePlan)

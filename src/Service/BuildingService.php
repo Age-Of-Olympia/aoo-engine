@@ -396,9 +396,13 @@ class BuildingService extends BaseService
             (new \App\Service\Map\EntityCellService($conn))->syncCells((int) $id);
 
             $conn->executeStatement(
-                'INSERT INTO buildings (player_id, faction, build_state) VALUES (?, ?, ?)',
-                [$id, $faction, BuildingDetails::STATE_BUILT]
+                'INSERT INTO buildings (player_id, build_state) VALUES (?, ?)',
+                [$id, BuildingDetails::STATE_BUILT]
             );
+
+            if ($faction !== '') {
+                $conn->executeStatement('UPDATE players SET faction = ? WHERE id = ?', [$faction, $id]);
+            }
 
             // Le propriétaire est porté par l'entité, comme pour tout ce qui
             // peut appartenir à quelqu'un.
@@ -511,8 +515,10 @@ class BuildingService extends BaseService
 
         // Le propriétaire vit sur l'entité ; la faction reste au satellite tant
         // que players.faction et buildings.faction ne se sont pas accordées.
-        $conn->executeStatement('UPDATE players SET owner_id = ? WHERE id = ?', [$ownerId, $playerId]);
-        $details->setFaction($faction);
+        $conn->executeStatement(
+            'UPDATE players SET owner_id = ?, faction = ? WHERE id = ?',
+            [$ownerId, $faction, $playerId]
+        );
         $this->entityManager->flush();
 
         // Seul le cache de données (.json, lu par get_data) est concerné —
@@ -659,7 +665,7 @@ class BuildingService extends BaseService
         // created under a newer default collation than players and a SQL
         // join on r.name = p.race trips "illegal mix of collations".
         $rows = $this->entityManager->getConnection()->fetchAllAssociative(
-            "SELECT p.id, p.name, p.race, b.build_state, b.faction, p.owner_id, b.dialog, p.is_open,
+            "SELECT p.id, p.name, p.race, b.build_state, p.faction, p.owner_id, b.dialog, p.is_open,
                     b.readable_from_afar,
                     o.name AS owner_name, c.x, c.y, c.z, c.plan,
                     COALESCE(pb.n, 0) AS pv_bonus

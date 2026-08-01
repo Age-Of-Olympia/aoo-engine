@@ -109,11 +109,11 @@ final class StructureSheetView
                 }
             }
 
-            $factionJson = $details->getFaction() !== ''
-                ? (new FactionService())->getFactionData($details->getFaction())
+            $factionJson = $entity->getFaction() !== ''
+                ? (new FactionService())->getFactionData($entity->getFaction())
                 : null;
             if ($factionJson !== null && isset($factionJson->raFont)) {
-                echo '<p><small>Faction : <a href="faction.php?faction=' . $details->getFaction() . '">'
+                echo '<p><small>Faction : <a href="faction.php?faction=' . $entity->getFaction() . '">'
                     . '<span class="ra ' . $factionJson->raFont . '"></span></a></small></p>';
             }
         }

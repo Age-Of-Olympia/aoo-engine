@@ -53,9 +53,9 @@ class BuildingSocialGateTest extends LegacyPlayerFixtureTestCase
         $before = $service->countPlayersUsingFaction($faction)['members'];
 
         $buildingId = $this->placeStructure('palissade', 0, 3);
-        $this->link->executeStatement('UPDATE buildings SET faction = ? WHERE player_id = ?', [$faction, $buildingId]);
-        // la faction du satellite ne vit pas dans players ; forcer le cas
-        // où une ligne players de structure porterait aussi la colonne
+        /* Le cas que ce test forçait est devenu le seul : la faction vit sur
+         * l'entité, pour une forge comme pour un personnage. Porter une
+         * faction n'est toujours pas en être MEMBRE — c'est ce qu'on vérifie. */
         $this->link->executeStatement('UPDATE players SET faction = ? WHERE id = ?', [$faction, $buildingId]);
 
         $this->assertSame(

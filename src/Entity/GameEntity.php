@@ -135,8 +135,8 @@ abstract class GameEntity
      *
      * On the entity rather than the building satellite, because being owned is
      * not a building's privilege — a chest is shut by whoever owns it exactly
-     * as a forge is. Faction ownership is the other half and is NOT settled:
-     * `players.faction` and `buildings.faction` still disagree.
+     * as a forge is. Its other half is {@see $faction}: a thing belongs to
+     * someone, or to a faction.
      */
     #[ORM\Column(type: "integer", name: "owner_id", nullable: true)]
     protected ?int $ownerId = null;
@@ -148,6 +148,30 @@ abstract class GameEntity
      */
     #[ORM\Column(type: "boolean", name: "is_open", options: ["default" => true])]
     protected bool $isOpen = true;
+
+    /**
+     * The faction a thing belongs to, '' for nobody's.
+     *
+     * One column for every entity. It used to live twice — here for characters,
+     * on the building satellite for buildings — and the two had drifted apart.
+     *
+     * Carrying a faction is NOT being a member of one: `FactionService` counts
+     * members among `real` and `npc` only, so a forge belongs to a faction
+     * without joining it, inflating its rolls, or keeping it from deletion.
+     */
+    #[ORM\Column(type: "string", length: 255, options: ["default" => ""])]
+    protected string $faction = '';
+
+    public function getFaction(): string
+    {
+        return $this->faction;
+    }
+
+    public function setFaction(string $faction): self
+    {
+        $this->faction = $faction;
+        return $this;
+    }
 
     public function getOwnerId(): ?int
     {

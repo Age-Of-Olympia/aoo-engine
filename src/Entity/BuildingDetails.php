@@ -14,8 +14,6 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * - owner_id: FK players.id of the owning character, nullable — a
  *   building can be faction-held or ownerless (quest/admin placed).
- * - faction: faction CODE from the factions catalog (same convention
- *   as players.faction), empty when neutral. Validated in the service
  *   layer against FactionService, no DB FK — codes are the game-wide
  *   join key, mirroring races/factions seeding.
  * - build_state: lifecycle state, free string on purpose so future
@@ -28,7 +26,8 @@ use Doctrine\ORM\Mapping as ORM;
  * Le propriétaire et la fermeture volontaire ont quitté ce satellite pour
  * l'ENTITÉ : être possédé et être fermé ne sont pas des privilèges de
  * bâtiment. Ce qui reste ici est ce qu'un bâtiment seul connaît — son état
- * de construction, son dialogue, sa faction.
+ * de construction et son dialogue. Sa faction est partie aussi : elle vivait
+ * ici ET sur l'entité, et les deux avaient divergé.
  */
 #[ORM\Entity]
 #[ORM\Table(name: "buildings")]
@@ -41,9 +40,6 @@ class BuildingDetails
     #[ORM\Id]
     #[ORM\Column(type: "integer", name: "player_id")]
     private int $playerId;
-
-    #[ORM\Column(type: "string", length: 100, options: ["default" => ""])]
-    private string $faction = '';
 
     #[ORM\Column(type: "string", length: 20, name: "build_state", options: ["default" => self::STATE_BUILT])]
     private string $buildState = self::STATE_BUILT;
@@ -70,17 +66,6 @@ class BuildingDetails
     public function setPlayerId(int $playerId): self
     {
         $this->playerId = $playerId;
-        return $this;
-    }
-
-    public function getFaction(): string
-    {
-        return $this->faction;
-    }
-
-    public function setFaction(string $faction): self
-    {
-        $this->faction = $faction;
         return $this;
     }
 

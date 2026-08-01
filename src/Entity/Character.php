@@ -11,7 +11,8 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * Carries what a map STRUCTURE must not: account data (psw/mail — the
  * §3 ideal eventually splits these into their own table, Phase D),
- * progression (xp, pi, rank…), faction membership and turn timing.
+ * progression (xp, pi, rank…), faction RANK and turn timing — belonging to a
+ * faction is on GameEntity, since a forge belongs to one too.
  *
  * No discriminator entry of its own — Doctrine allows abstract
  * intermediate classes in an STI hierarchy; querying Character returns
@@ -62,9 +63,9 @@ abstract class Character extends GameEntity
     #[ORM\Column(type: "string", length: 255, nullable: true)]
     protected ?string $quest = 'gaia';
 
-    #[ORM\Column(type: "string", length: 255)]
-    protected string $faction = '';
-
+    /* `faction` est monté sur GameEntity : une chose appartient à une
+     * faction, qu'elle soit personnage ou forge. Le RÔLE, lui, reste ici —
+     * porter une faction n'est pas y tenir un rang. */
     #[ORM\Column(type: "integer")]
     protected int $factionRole = 0;
 
@@ -260,17 +261,6 @@ abstract class Character extends GameEntity
     public function setQuest(?string $quest): self
     {
         $this->quest = $quest;
-        return $this;
-    }
-
-    public function getFaction(): string
-    {
-        return $this->faction;
-    }
-
-    public function setFaction(string $faction): self
-    {
-        $this->faction = $faction;
         return $this;
     }
 
