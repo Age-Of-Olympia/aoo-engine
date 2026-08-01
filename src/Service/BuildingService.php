@@ -110,6 +110,14 @@ class BuildingService extends BaseService
         $blockersByTile = [];
 
         $blocking = $this->raceService->getProjectileBlockingRaceNames();
+
+        /* Une porte OUVERTE est un trou dans le mur : la flèche y passe comme
+         * le pas. Fermée, elle arrête l'un et l'autre. C'est la même ouverture
+         * qui décide des deux — un seuil qu'on franchit à pied mais pas du
+         * regard n'aurait aucun sens. */
+        $doors = $this->raceService->getDoorRaceNames();
+        $doorPlaceholders = implode(',', array_fill(0, max(1, count($doors)), '?'));
+
         if ($blocking !== []) {
             // An entity screens every cell it HOLDS, not just the one it
             // stands on: a 2×2 wall used to stop arrows on a quarter of
@@ -123,8 +131,9 @@ class BuildingService extends BaseService
                  JOIN coords c ON c.id = ec.coords_id
                  WHERE ' . $tileFilter . '
                    AND ec.role <> ?
+                   AND NOT (p.is_open = 1 AND p.race IN (' . $doorPlaceholders . '))
                    AND p.race IN (' . implode(',', array_fill(0, count($blocking), '?')) . ')',
-                array_merge($tileParams, [self::TRANSPARENT_ROLE], $blocking)
+                array_merge($tileParams, [self::TRANSPARENT_ROLE], $doors ?: [''], $blocking)
             );
             /* A target does not screen itself. With a single cell the
              * question did not arise — that cell is an endpoint, excluded

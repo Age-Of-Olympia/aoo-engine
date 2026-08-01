@@ -150,6 +150,7 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
             "UPDATE races SET lockable = 1, opens_the_way = 1 WHERE name = 'palissade'"
         );
         \App\Service\RaceService::clearCache();
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
 
         try {
             $occupancy = new \App\Service\Map\TileOccupancyService($this->link);
@@ -170,6 +171,60 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
                 "UPDATE races SET lockable = 0, opens_the_way = 0 WHERE name = 'palissade'"
             );
             \App\Service\RaceService::clearCache();
+            \App\Factory\EntityManagerFactory::getEntityManager()->clear();
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
+        }
+    }
+
+    /**
+     * La même ouverture décide du pas ET du tir.
+     *
+     * Une porte ouverte est un trou dans le mur : la flèche y passe comme le
+     * pied. Un seuil qu'on franchirait à pied mais pas du regard n'aurait
+     * aucun sens.
+     */
+    public function testAnOpenDoorLetsArrowsThroughToo(): void
+    {
+        $this->placeStructure('palissade', 3, 9);
+        $from = (object) ['x' => 0, 'y' => 9, 'z' => 0, 'plan' => 'gaia'];
+        $to   = (object) ['x' => 6, 'y' => 9, 'z' => 0, 'plan' => 'gaia'];
+        $id = (int) $this->link->fetchOne(
+            "SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id
+              WHERE c.x = 3 AND c.y = 9 AND c.plan = 'gaia' AND p.race = 'palissade'"
+        );
+
+        $service = new BuildingService();
+
+        $this->assertNotNull(
+            $service->lineOfFireReport($from, $to)['blocker'],
+            'un mur ordinaire arrête la flèche'
+        );
+
+        $this->link->executeStatement(
+            "UPDATE races SET lockable = 1, opens_the_way = 1 WHERE name = 'palissade'"
+        );
+        \App\Service\RaceService::clearCache();
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
+
+        try {
+            $service->setOpen($id, true);
+            $this->assertNull(
+                (new BuildingService())->lineOfFireReport($from, $to)['blocker'],
+                'porte ouverte : la flèche passe'
+            );
+
+            $service->setOpen($id, false);
+            $this->assertNotNull(
+                (new BuildingService())->lineOfFireReport($from, $to)['blocker'],
+                'porte fermée : elle arrête de nouveau'
+            );
+        } finally {
+            $this->link->executeStatement(
+                "UPDATE races SET lockable = 0, opens_the_way = 0 WHERE name = 'palissade'"
+            );
+            \App\Service\RaceService::clearCache();
+            \App\Factory\EntityManagerFactory::getEntityManager()->clear();
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
         }
     }
 
