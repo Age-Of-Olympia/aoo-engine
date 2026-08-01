@@ -42,7 +42,17 @@ final class Version20260803180000_TheTypeSaysWhatCanBeShut extends AbstractMigra
             'ALTER TABLE items ADD COLUMN IF NOT EXISTS lockable TINYINT(1) NOT NULL DEFAULT 0'
         );
 
-        /* Un édifice a une porte : le jeu l'ouvre et la ferme déjà. */
+        /* Ce que fermer FAIT ne se déduit pas : un édifice fermé cesse de
+         * servir, un coffre fermé retient son contenu, une porte fermée barre
+         * le chemin. Seule la dernière touche au passage, et aucun type ne le
+         * revendique encore — marquer un type de mur en fera une porte. */
+        $this->addSql(
+            'ALTER TABLE races ADD COLUMN IF NOT EXISTS opens_the_way TINYINT(1) NOT NULL DEFAULT 0'
+        );
+
+        /* Un édifice s'ouvre et se ferme déjà : le jeu tait son dialogue
+         * quand il est clos. Sa fermeture décide de ses SERVICES, jamais du
+         * passage — on n'a jamais marché à travers une taverne. */
         $this->addSql(
             "UPDATE races SET lockable = 1 WHERE kind = 'structure' AND structure_nature = 'edifice'"
         );
@@ -55,6 +65,7 @@ final class Version20260803180000_TheTypeSaysWhatCanBeShut extends AbstractMigra
 
     public function down(Schema $schema): void
     {
+        $this->addSql('ALTER TABLE races DROP COLUMN IF EXISTS opens_the_way');
         $this->addSql('ALTER TABLE races DROP COLUMN IF EXISTS lockable');
         $this->addSql('ALTER TABLE items DROP COLUMN IF EXISTS lockable');
     }

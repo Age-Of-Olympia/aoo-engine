@@ -161,13 +161,21 @@ class RaceService
     }
 
     /**
-     * Les types qui ont une PORTE : un édifice qui se ferme.
+     * Les types dont la fermeture décide du PASSAGE : les portes.
      *
-     * `structure_nature` dit déjà lequel en a une — « edifice » est un vrai
-     * bâtiment où l'on entre, « obstacle » un objet construit qui n'a pas de
-     * porte. `lockable` dit lequel se ferme. Une porte est les deux : c'est
-     * ce qui la sépare d'un coffre, lui aussi fermable, mais dont la
-     * fermeture est un COUVERCLE et ne gouverne pas le passage.
+     * Fermer ne veut pas dire la même chose partout, et cela ne se DÉDUIT pas :
+     *
+     *  - un ÉDIFICE fermé cesse de rendre ses services — on n'a jamais marché
+     *    à travers une taverne, ouverte ou non ;
+     *  - un COFFRE fermé retient son contenu — son couvercle n'a jamais laissé
+     *    passer personne non plus ;
+     *  - une PORTE fermée barre le chemin, et c'est tout ce qu'elle ajoute au
+     *    mur qu'elle perce.
+     *
+     * Les trois se ferment ; aucune colonne existante ne les sépare, puisque
+     * `structure_nature` répond à une autre question. Le type le dit donc
+     * lui-même, et aucun ne le dit encore : marquer un type de mur
+     * `opens_the_way` en fera une porte, sans rien changer au reste.
      *
      * @return string[] noms des races dont l'ouverture décide du passage
      */
@@ -175,7 +183,7 @@ class RaceService
     {
         $names = [];
         foreach ($this->getRacesByKind(\App\Enum\EntityCategory::Structure->value) as $race) {
-            if ($race->isEdifice() && $race->isLockable()) {
+            if ($race->opensTheWay() && $race->isLockable()) {
                 $names[] = $race->getName();
             }
         }

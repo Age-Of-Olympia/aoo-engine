@@ -130,33 +130,78 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
     }
 
     /**
-     * Une porte OUVERTE se franchit ; fermée, elle barre comme le mur qu'elle
+     * Une PORTE ouverte se franchit ; fermée, elle barre comme le mur qu'elle
      * perce. C'est tout ce qu'une porte ajoute à un mur.
+     *
+     * Aucun type ne se déclare porte aujourd'hui : le cas en fabrique une, ce
+     * qui est aussi la démonstration qu'il suffit de le dire au type.
      */
     public function testAnOpenDoorLetsYouThroughAndAShutOneDoesNot(): void
     {
-        $race = (new \App\Service\RaceService())->getRaceByName('taverne');
-        if ($race === null || !$race->isEdifice() || !$race->isLockable()) {
-            $this->markTestSkipped("aucun type de porte seedé ('taverne').");
-        }
-
         $mover = $this->createRealPlayer('GmVisiteur');
-        $id = $this->placeStructure('taverne', 3, 3);
+        $id = $this->placeStructure('palissade', 3, 3);
         $coordsId = (int) \Classes\View::get_coords_id(
             (object) ['x' => 3, 'y' => 3, 'z' => 0, 'plan' => 'gaia']
         );
-        $occupancy = new \App\Service\Map\TileOccupancyService($this->link);
 
-        (new BuildingService())->setOpen($id, true);
-        $this->assertNull(
-            $occupancy->stepRefusal($coordsId, (int) $mover->id, true),
-            'porte ouverte : on entre'
+        // Une palissade qui devient porte : elle se ferme, et sa fermeture
+        // décide du passage.
+        $this->link->executeStatement(
+            "UPDATE races SET lockable = 1, opens_the_way = 1 WHERE name = 'palissade'"
+        );
+        \App\Service\RaceService::clearCache();
+
+        try {
+            $occupancy = new \App\Service\Map\TileOccupancyService($this->link);
+
+            (new BuildingService())->setOpen($id, true);
+            $this->assertNull(
+                $occupancy->stepRefusal($coordsId, (int) $mover->id, true),
+                'porte ouverte : on passe'
+            );
+
+            (new BuildingService())->setOpen($id, false);
+            $this->assertNotNull(
+                $occupancy->stepRefusal($coordsId, (int) $mover->id, true),
+                'porte fermée : elle barre'
+            );
+        } finally {
+            $this->link->executeStatement(
+                "UPDATE races SET lockable = 0, opens_the_way = 0 WHERE name = 'palissade'"
+            );
+            \App\Service\RaceService::clearCache();
+        }
+    }
+
+    /**
+     * Un ÉDIFICE ne se traverse pas, ouvert ou fermé.
+     *
+     * Sa fermeture décide de ses SERVICES — il tait son dialogue — jamais du
+     * passage : on n'a jamais marché à travers une taverne.
+     */
+    public function testAnOpenBuildingIsStillNotWalkable(): void
+    {
+        $race = (new \App\Service\RaceService())->getRaceByName('taverne');
+        if ($race === null || !$race->isEdifice()) {
+            $this->markTestSkipped("type 'taverne' non seedé.");
+        }
+
+        $mover = $this->createRealPlayer('GmClient');
+        $id = $this->placeStructure('taverne', 5, 5);
+        $coordsId = (int) \Classes\View::get_coords_id(
+            (object) ['x' => 5, 'y' => 5, 'z' => 0, 'plan' => 'gaia']
         );
 
-        (new BuildingService())->setOpen($id, false);
+        (new BuildingService())->setOpen($id, true);
+
+        $this->assertNull(
+            (new BuildingService())->closureReason($id, (new BuildingService())->getDetails($id), 100),
+            'ouverte, elle rend ses services'
+        );
         $this->assertNotNull(
-            $occupancy->stepRefusal($coordsId, (int) $mover->id, true),
-            'porte fermée : elle barre'
+            (new \App\Service\Map\TileOccupancyService($this->link))
+                ->stepRefusal($coordsId, (int) $mover->id, true),
+            'et on ne la traverse pas pour autant'
         );
     }
 

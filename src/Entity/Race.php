@@ -171,6 +171,15 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface
     #[ORM\Column(type: "boolean", options: ["default" => false])]
     private bool $lockable = false;
 
+    /**
+     * La fermeture de ce type décide-t-elle du PASSAGE ?
+     *
+     * Une porte, et elle seule. Un édifice fermé cesse de servir, un coffre
+     * fermé retient son contenu : ni l'un ni l'autre ne s'est jamais traversé.
+     */
+    #[ORM\Column(type: "boolean", name: "opens_the_way", options: ["default" => false])]
+    private bool $opensTheWay = false;
+
     #[ORM\Column(type: "string", length: 50, options: ["default" => ""])]
     private string $faction = '';
 
@@ -591,6 +600,17 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface
     public function isLockable(): bool
     {
         return $this->lockable;
+    }
+
+    public function opensTheWay(): bool
+    {
+        return $this->opensTheWay;
+    }
+
+    public function setOpensTheWay(bool $opensTheWay): self
+    {
+        $this->opensTheWay = $opensTheWay;
+        return $this;
     }
 
     public function setLockable(bool $lockable): self
