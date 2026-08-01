@@ -810,19 +810,20 @@ class BuildingService extends BaseService
     }
 
     /**
-     * Plan hors-plateau où la ligne players d'un bâtiment détruit est
-     * remisée : elle SURVIT pour que les événements restent vrais (les
-     * FK de players_logs pointent toujours une ligne réelle) et pour que
-     * l'id ne soit jamais recyclé (getNextEntityId lit MAX(id)) — mais
-     * aucune requête de plateau (jointure coords) ne la voit plus.
-     */
-    public const VANISHED_PLAN = 'limbes_batiments';
-
-    /**
      * Mort d'un bâtiment : il DISPARAÎT du plateau — pas d'enfers, c'est
      * le chemin des personnages. Satellite et composants supprimés, la
-     * ligne players remisée sur VANISHED_PLAN (tombstone). Chemin de
-     * mort seulement — le retrait administratif complet est remove().
+     * ligne players remisée NULLE PART. Chemin de mort seulement — le
+     * retrait administratif complet est remove().
+     *
+     * Elle SURVIT pour que les événements restent vrais (les FK de
+     * players_logs pointent toujours une ligne réelle) et pour que l'id ne
+     * soit jamais recyclé (getNextEntityId lit MAX(id)).
+     *
+     * Elle ne part plus sur un plan `limbes_batiments` inventé pour
+     * l'occasion : « hors du plateau » se dit maintenant, au lieu de se
+     * mimer par une case où personne ne va. Les requêtes de plateau ne la
+     * voyaient pas parce qu'elles filtraient un plan ; elles ne la voient
+     * plus parce qu'elle n'est nulle part.
      */
     public function vanish(int $playerId): bool
     {
@@ -842,14 +843,7 @@ class BuildingService extends BaseService
             [$playerId]
         );
 
-        $tombstoneCoordsId = View::get_coords_id(
-            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::VANISHED_PLAN]
-        );
-        if ($tombstoneCoordsId === null) {
-            throw new \RuntimeException('Limbes des bâtiments inaccessibles (coords).');
-        }
-
-        $conn->transactional(function ($conn) use ($playerId, $tombstoneCoordsId): void {
+        $conn->transactional(function ($conn) use ($playerId): void {
             $conn->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$playerId]);
             foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
                 $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$playerId]);
@@ -865,17 +859,10 @@ class BuildingService extends BaseService
                 [$playerId]
             );
 
-            /* Off the board is off the board: an entity waiting on the
-             * tombstone plan holds nothing. Re-laying its cells there used to
-             * be harmless because only the pieces were drawn; now that a
-             * figure is drawn from its cells, it would pile every shelved
-             * decor on the tombstone's origin. */
-            (new \App\Service\Map\EntityCellService($conn))->removeFor((int) $playerId);
-
-            $conn->executeStatement(
-                'UPDATE players SET coords_id = ? WHERE id = ?',
-                [$tombstoneCoordsId, $playerId]
-            );
+            /* Shelving drops the cells with the location: what is nowhere
+             * occupies nothing. Le faire ici, dans la transaction, plutôt que
+             * de laisser le service rouvrir sa propre connexion. */
+            (new \App\Service\Map\EntityLocationService($conn))->shelve((int) $playerId);
         });
 
         if ($goCoords !== false) {

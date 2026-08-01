@@ -9,7 +9,6 @@ use App\Action\Condition\TargetTypeCondition;
 use App\Entity\ActionCondition;
 use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
-use App\Service\BuildingService;
 use App\Service\PlayerService;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
@@ -235,13 +234,17 @@ class BuildingCombatGoldenMasterTest extends LegacyPlayerFixtureTestCase
             $this->link->fetchOne('SELECT 1 FROM buildings WHERE player_id = ?', [$buildingId]),
             'destruction must drop the buildings satellite row'
         );
-        $this->assertSame(
-            BuildingService::VANISHED_PLAN,
-            $this->link->fetchOne(
-                'SELECT c.plan FROM coords c JOIN players p ON p.coords_id = c.id WHERE p.id = ?',
-                [$buildingId]
-            ),
-            'the players row must survive destruction, parked off-board (log FKs, id never recycled)'
+        $shelved = $this->link->fetchAssociative(
+            'SELECT coords_id FROM players WHERE id = ?',
+            [$buildingId]
+        );
+        $this->assertNotFalse(
+            $shelved,
+            'the players row must survive destruction (log FKs, id never recycled)'
+        );
+        $this->assertNull(
+            $shelved['coords_id'],
+            'a destroyed building is nowhere — no cell, and no plan invented to hold it'
         );
         $this->assertSame(
             2,

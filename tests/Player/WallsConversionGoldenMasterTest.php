@@ -110,13 +110,14 @@ class WallsConversionGoldenMasterTest extends LegacyPlayerFixtureTestCase
             ob_end_clean();
         }
 
-        $this->assertSame(
-            \App\Service\BuildingService::VANISHED_PLAN,
-            $this->link->fetchOne(
-                'SELECT c.plan FROM coords c JOIN players p ON p.coords_id = c.id WHERE p.id = ?',
-                [$cloneId]
-            ),
-            'un obstacle converti meurt comme un bâtiment : disparu, remisé aux limbes'
+        $shelved = $this->link->fetchAssociative(
+            'SELECT coords_id FROM players WHERE id = ?',
+            [$cloneId]
+        );
+        $this->assertNotFalse($shelved, 'sa ligne survit à sa destruction');
+        $this->assertNull(
+            $shelved['coords_id'],
+            'un obstacle converti meurt comme un bâtiment : disparu, remisé nulle part'
         );
     }
 }

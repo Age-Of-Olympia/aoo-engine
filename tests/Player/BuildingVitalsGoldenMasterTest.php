@@ -237,11 +237,11 @@ class BuildingVitalsGoldenMasterTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    public function testVanishTombstonesTheBuildingOffBoardAndKeepsItsLogs(): void
+    public function testVanishShelvesTheBuildingNowhereAndKeepsItsLogs(): void
     {
         // La mort d'un bâtiment le fait DISPARAÎTRE du plateau — mais sa
-        // ligne players survit hors-plateau (limbes) : les événements qui
-        // le citent gardent une FK vraie et son id n'est jamais recyclé.
+        // ligne players survit, nulle part : les événements qui le citent
+        // gardent une FK vraie et son id n'est jamais recyclé.
         $service = new BuildingService();
         $id = $this->placeStructure('palissade', 0, 3);
 
@@ -257,14 +257,9 @@ class BuildingVitalsGoldenMasterTest extends LegacyPlayerFixtureTestCase
             $this->link->fetchOne('SELECT 1 FROM buildings WHERE player_id = ?', [$id]),
             'the buildings satellite row is gone'
         );
-        $this->assertSame(
-            BuildingService::VANISHED_PLAN,
-            $this->link->fetchOne(
-                'SELECT c.plan FROM coords c JOIN players p ON p.coords_id = c.id WHERE p.id = ?',
-                [$id]
-            ),
-            'the players row survives, parked off-board in the limbes'
-        );
+        $shelved = $this->link->fetchAssociative('SELECT coords_id FROM players WHERE id = ?', [$id]);
+        $this->assertNotFalse($shelved, 'the players row survives its destruction');
+        $this->assertNull($shelved['coords_id'], 'it is shelved nowhere, not parked on a made-up plan');
         $this->assertNotFalse(
             $this->link->fetchOne('SELECT 1 FROM players_logs WHERE target_id = ?', [$id]),
             'events citing the building are preserved'
