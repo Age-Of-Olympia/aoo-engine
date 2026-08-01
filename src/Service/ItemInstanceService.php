@@ -853,8 +853,15 @@ class ItemInstanceService extends BaseService
             [$coordsId, \App\Service\Map\EntityLocationService::SLOT_DROPPED]
         );
 
+        $location = new \App\Service\Map\EntityLocationService($conn);
         $labels = [];
         foreach ($rows as $row) {
+            // A container still holding something is not picked up: pocketing
+            // it would take its contents along without anyone deciding to.
+            if ($location->holdsAnything((int) $row['entity_id'])) {
+                continue;
+            }
+
             $taken = false;
             $conn->transactional(function ($conn) use ($row, $playerId, $coordsId, &$taken): void {
                 // Deux marcheurs simultanés : seul celui dont l'UPDATE trouve

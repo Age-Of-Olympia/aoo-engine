@@ -900,6 +900,9 @@ class BuildingService extends BaseService
             [$playerId]
         );
 
+        // Spill before the transaction below, which deletes what is left.
+        $spilled = (new \App\Service\LootSpillService())->spill(\App\Factory\PlayerFactory::legacy($playerId));
+
         $conn->transactional(function ($conn) use ($playerId): void {
             $conn->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$playerId]);
             foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
@@ -930,7 +933,10 @@ class BuildingService extends BaseService
         // caches par-entité du bâtiment disparu se purgent explicitement.
         self::purgeEntityCaches($playerId);
 
-        $this->addAuditLog("BuildingService::vanish #{$playerId}");
+        $this->addAuditLog(
+            "BuildingService::vanish #{$playerId}"
+            . ($spilled === [] ? '' : ' — répand : ' . implode(', ', $spilled))
+        );
 
         return true;
     }

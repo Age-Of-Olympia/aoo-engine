@@ -30,6 +30,11 @@ final class LootSpillService
      */
     public function spill(Player $entity): array
     {
+        // death() loads data first; vanish() does not.
+        if (!isset($entity->data)) {
+            $entity->get_data();
+        }
+
         $db = new Db();
 
         $res = $db->exe(
@@ -47,18 +52,7 @@ final class LootSpillService
             $loot = new Item($row->item_id, $row);
             $loot->get_data();
 
-            $lootChance = $this->chanceFor($entity, $loot, $row);
-
-            $nbLoot = 0;
-            if ($lootChance >= 100) {
-                $nbLoot = $row->n;
-            } else {
-                for ($i = 0; $i < $row->n; $i++) {
-                    if (random_int(1, 100) <= $lootChance) {
-                        $nbLoot++;
-                    }
-                }
-            }
+            $nbLoot = $this->rollFor((int) $row->n, $this->chanceFor($entity, $loot, $row));
 
             if ($nbLoot > 0) {
                 $entity->drop($loot, $nbLoot);
@@ -66,12 +60,100 @@ final class LootSpillService
             }
         }
 
+        $lootList = array_merge($lootList, $this->spillChildren($entity));
+
         if (count($lootList)) {
             $text = $entity->data->name . ' a perdu des objets: ' . implode(', ', $lootList) . '.';
             Log::put($entity, $entity, $text, type: "loot");
         }
 
         return $lootList;
+    }
+
+    /**
+     * How many of $n units survive the fall, at $chance percent each.
+     *
+     * @return int units that drop
+     */
+    private function rollFor(int $n, int $chance): int
+    {
+        if ($chance >= 100) {
+            return $n;
+        }
+
+        $dropped = 0;
+        for ($i = 0; $i < $n; $i++) {
+            if (random_int(1, 100) <= $chance) {
+                $dropped++;
+            }
+        }
+
+        return $dropped;
+    }
+
+    /**
+     * Held entities take the same roll as a stack unit, and the same chance
+     * rules — the exemplar keeps its identity when it lands, and is lost
+     * outright when the roll fails, exactly as an undropped unit is.
+     *
+     * @return string[] labels of what fell
+     */
+    private function spillChildren(Player $entity): array
+    {
+        $coordsId = (int) ($entity->data->coords_id ?? 0);
+
+        if ($coordsId === 0) {
+            return array();
+        }
+
+        $location = new \App\Service\Map\EntityLocationService();
+        $fallen = array();
+
+        foreach ($this->heldExemplars((int) $entity->id) as $child) {
+            $loot = new Item((int) $child['item_id'], (object) $child);
+            $loot->get_data();
+
+            if ($this->rollFor(1, $this->chanceFor($entity, $loot, (object) $child)) === 0) {
+                // Lost with its holder, like a unit the roll left behind.
+                $location->shelve((int) $child['id']);
+                continue;
+            }
+
+            $location->dropOnCell((int) $child['id'], $coordsId);
+            $fallen[] = $child['label'];
+        }
+
+        return $fallen;
+    }
+
+    /**
+     * What the entity holds, shaped like a `players_items` row so the chance
+     * rules read it without knowing it is an exemplar.
+     *
+     * @return list<array{id: int, item_id: int, n: int, equiped: string, name: string, lootChance: int|null, label: string}>
+     */
+    private function heldExemplars(int $entityId): array
+    {
+        $rows = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()
+            ->fetchAllAssociative(
+                "SELECT p.id, ii.item_id, 1 AS n,
+                        IF(p.slot IN (?, ?, ?), '', p.slot) AS equiped,
+                        it.name, it.lootChance,
+                        IF(ii.custom_name <> '', ii.custom_name, it.name) AS label
+                   FROM players p
+                   JOIN item_instances ii ON ii.entity_id = p.id
+                   JOIN items it ON it.id = ii.item_id
+                  WHERE p.holder_id = ?",
+                [
+                    \App\Service\Map\EntityLocationService::SLOT_CARRIED,
+                    \App\Service\Map\EntityLocationService::SLOT_DROPPED,
+                    \App\Service\Map\EntityLocationService::SLOT_INSTALLED,
+                    $entityId,
+                ]
+            );
+
+        /** @var list<array{id: int, item_id: int, n: int, equiped: string, name: string, lootChance: int|null, label: string}> */
+        return $rows;
     }
 
     /**
