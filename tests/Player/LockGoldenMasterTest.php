@@ -7,14 +7,8 @@ use App\Service\LockService;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
-/**
- * Ce qui se ferme, et qui a le droit de le fermer.
- *
- * Deux questions, une par niveau : le TYPE dit ce qui a une porte, l'ENTITÉ dit
- * à qui elle appartient. Un coffre et un mur sont tous deux des « obstacles »
- * au catalogue — c'est précisément pourquoi la fermeture ne peut pas se déduire
- * de `structure_nature` et demande son propre drapeau.
- */
+/** What shuts, and who holds the key: the type answers the first, the entity
+ *  the second. */
 #[Group('entities-structure')]
 class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
 {
@@ -35,7 +29,6 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
         return new LockService($this->link);
     }
 
-    /** Un mur n'a pas de porte : rien à fermer. */
     public function testAWallCannotBeShut(): void
     {
         $id = $this->placeStructure('palissade', 0, 3);
@@ -46,13 +39,8 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
         (new BuildingService())->setOpen($id, false);
     }
 
-    /**
-     * Un coffre se ferme, et c'est un OBJET qui le dit.
-     *
-     * Il n'a plus de race : son type vit dans `items`. La fermeture est donc
-     * une capacité qui traverse les catalogues — le mur répond par sa race, le
-     * coffre par son objet, et l'appelant ne sait pas lequel a parlé.
-     */
+    /** Shutting crosses catalogues: the wall answers by race, the chest by
+     *  its item, and the caller cannot tell which spoke. */
     public function testAChestShutsThoughItsTypeIsAnItem(): void
     {
         $id = $this->installExemplar('coffre_bois', 0, 4);
@@ -79,7 +67,6 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /** Fermé volontairement ne se dit que de ce qui peut l'être. */
     public function testOnlyWhatCanBeShutReportsAVoluntaryClosure(): void
     {
         $service = new BuildingService();
@@ -100,7 +87,6 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /** La clé est à qui possède : en propre, ou par sa faction. */
     public function testTheKeyBelongsToTheOwnerOrToTheFaction(): void
     {
         $owner = $this->createRealPlayer('GmProprio');
@@ -271,12 +257,7 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /**
-     * Un coffre n'est pas une porte : sa fermeture est un COUVERCLE.
-     *
-     * Ouvert, il occupe toujours sa case — sans quoi on traverserait un coffre
-     * ouvert, ce qu'aucun coffre n'a jamais permis.
-     */
+    /** A chest's closure is a lid, not a doorway. */
     public function testAnOpenChestStillOccupiesItsTile(): void
     {
         $mover = $this->createRealPlayer('GmMarcheur');
@@ -294,12 +275,7 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /**
-     * Un exemplaire POSÉ obstrue selon SON catalogue ; jeté, il n'obstrue rien.
-     *
-     * Un coffre est un objet : installé il tient sa case, tombé au sol il ne
-     * retient personne. La localisation tranche avant le type.
-     */
+    /** Location settles it before the type is consulted. */
     public function testAnInstalledExemplarObstructsAndADroppedOneDoesNot(): void
     {
         $bois = $this->itemOrSkip('bois');
@@ -350,14 +326,7 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
     }
 
     /** Un mur ne se ferme pour personne, propriétaire compris. */
-    /**
-     * Un matériau extrait n'hérite pas du filon dont il sort.
-     *
-     * Les deux catalogues partagent des noms : « bronze » est un filon qu'on
-     * mine ET le lingot qui en tombe. Semer le blocage des objets depuis la
-     * race homonyme a fait porter le mur au lingot. La nature tranche : on
-     * pose un `obstacle` ou un `decor`, on mine une `ressource`.
-     */
+    /** Both catalogues share names: 'bronze' is a vein and the ingot from it. */
     public function testAGatheredMaterialDoesNotObstructLikeItsVein(): void
     {
         $offenders = $this->link->fetchFirstColumn(

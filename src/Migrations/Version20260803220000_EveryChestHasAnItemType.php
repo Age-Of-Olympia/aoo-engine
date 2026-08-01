@@ -8,23 +8,8 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Every standing chest gets a type in the items catalogue.
- *
- * A chest exists twice: an `items` row and a `races` row of kind structure.
- * Three of the four match — `coffre_humain` is a race only, so the one that
- * stands on the board has no item type to become. It gets its row here, cloned
- * from the wooden chest so no column is forgotten as the table grows; the
- * display name and the sprite come from `extra`, which is what the board reads.
- *
- * No recipe produces a chest and no bag holds one, so adding the row makes
- * nothing obtainable that was not — it gives the entity something to point at.
- *
- * The life is set here too, before anything converts, because converting is
- * what makes it visible. A built chest draws its max life from `races.pv`,
- * which reads 1 for wood, metal and petrified wood — one hit and the chest is
- * gone — while `items.durability_max` reads 100 for all three, the seeder's
- * default. Neither is a decision. The material now decides, which is the whole
- * point of a type carrying its own configuration.
+ * Give `coffre_humain` an items row and every chest a durability its material
+ * decides, before the conversion makes the value visible.
  */
 final class Version20260803220000_EveryChestHasAnItemType extends AbstractMigration
 {
@@ -46,8 +31,7 @@ final class Version20260803220000_EveryChestHasAnItemType extends AbstractMigrat
 
     public function up(Schema $schema): void
     {
-        /* Cloned rather than spelled out: `items` carries some fifty columns
-         * and a hand-written INSERT rots the day one is added. */
+        // Cloned rather than spelled out: `items` carries some fifty columns.
         $this->addSql('CREATE TEMPORARY TABLE tmp_coffre_humain LIKE items');
         $this->addSql(
             "INSERT INTO tmp_coffre_humain

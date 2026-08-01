@@ -8,29 +8,11 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * A built chest stops being a building and becomes the object it is.
+ * Turn standing chest buildings into installed exemplars.
  *
- * Standing chests were `building` entities typed by a `races` row, with no
- * exemplar behind them. Nothing recorded which object they were, so wear, a
- * custom name and — the day containment lands — their contents had nowhere to
- * live. They become installed exemplars: an `item_instances` row bound to the
- * entity that is already there, and the discriminator flipped.
- *
- * THE ENTITY KEEPS ITS ID. The ranges in ENTITY_ID_RANGES allocate, they do not
- * classify: both readers ask for the next free id in a range, none derives a
- * type from one. Re-numbering would buy tidiness and cost the truth of every
- * event that already names #20000217, so the discriminator carries the type and
- * the id stays what it was.
- *
- * `display_id` is not an identity but a per-type counter, so it is re-issued
- * in the exemplar sequence — leaving it would collide with the buildings that
- * kept theirs.
- *
- * Location, open state, owner and name are already on the entity and are not
- * touched: that is the point of the previous phases. No chest carries a life
- * deficit today (`players_bonus` has no `pv` row for any of them), so raising
- * the max from `races.pv` to `items.durability_max` cannot resurrect or wound
- * anything — a deficit would have kept its meaning anyway, being a deficit.
+ * The entity keeps its id: ENTITY_ID_RANGES allocates, it does not classify,
+ * and events already name these ids. `display_id` is a per-type counter and is
+ * re-issued in the exemplar sequence.
  */
 final class Version20260803230000_ABuiltChestIsTheObjectItself extends AbstractMigration
 {
@@ -86,11 +68,8 @@ final class Version20260803230000_ABuiltChestIsTheObjectItself extends AbstractM
 
     public function down(Schema $schema): void
     {
-        /* Only what CAME from a building goes back to being one. A chest
-         * created as an exemplar lives in the item range and never had a
-         * satellite; reverting it would invent a building that never was.
-         * The range, useless for classifying, is exactly right for saying
-         * where a row was born. */
+        // Only what came from a building goes back to being one; the range
+        // says where a row was born.
         $born = 'p.id BETWEEN 20000000 AND 29999999';
 
         $this->addSql(

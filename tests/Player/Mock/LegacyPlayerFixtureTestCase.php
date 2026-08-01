@@ -147,11 +147,9 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
                 $this->link->executeStatement("UPDATE {$table} SET player_id = NULL WHERE player_id = ?", [$id]);
             }
 
-            /* Un exemplaire POSÉ n'est plus dans un sac : le nettoyage par le
-             * porteur, plus haut, ne le voit pas. Son instance pointe pourtant
-             * encore sur cette ligne, et la clé est RESTRICT — elle part donc
-             * d'abord, sans quoi la suppression échoue et abandonne le reste du
-             * teardown avec elle. */
+            // A placed exemplar is in no bag, so the owner-keyed cleanup above
+            // misses it; its instance still points here and the key is
+            // RESTRICT, so it must go first.
             $this->link->executeStatement(
                 'DELETE FROM players_items_instances
                   WHERE instance_id IN (SELECT id FROM item_instances WHERE entity_id = ?)',
@@ -322,15 +320,10 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
     }
 
     /**
-     * Installe un exemplaire d'objet sur une case, comme un conteneur s'y tient.
+     * Install an item exemplar on a cell, the way a container now stands.
      *
-     * Un coffre n'est plus un type de bâtiment : c'est un objet dont
-     * l'exemplaire est POSÉ. Ce qui passait par `placeStructure` pour un
-     * conteneur passe par ici — et l'entité obtenue répond aux mêmes questions,
-     * ce qui est tout l'intérêt des contrats qui traversent les catalogues.
-     *
-     * Un porteur est créé à défaut : `create()` range l'exemplaire dans un sac
-     * avant qu'on l'en sorte, et il lui faut donc quelqu'un.
+     * A holder is created when none is given: `create()` files the exemplar in
+     * a bag before it is taken out again.
      */
     protected function installExemplar(
         string $itemName,

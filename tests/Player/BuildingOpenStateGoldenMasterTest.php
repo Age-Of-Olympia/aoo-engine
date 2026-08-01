@@ -67,14 +67,7 @@ class BuildingOpenStateGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->assertSame('en construction', $service->closureReason($id, $details, 100));
     }
 
-    /**
-     * Ce qui se ferme est ce qui a une porte — plus « ce qui est un bâtiment ».
-     *
-     * Un coffre n'a jamais eu de satellite de bâtiment et n'est même plus un
-     * type de bâtiment ; exiger l'un ou l'autre reviendrait à dire qu'on ne
-     * ferme que ce qui se construit. Le refus tient toujours pour un
-     * personnage, mais il le tient par la bonne raison.
-     */
+    /** What shuts is what has a door, not what is a building. */
     public function testSetOpenPersistsAndRejectsWhatHasNoDoor(): void
     {
         $service = new BuildingService();

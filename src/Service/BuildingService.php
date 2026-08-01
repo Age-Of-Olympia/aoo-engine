@@ -113,14 +113,8 @@ class BuildingService extends BaseService
             ->projectileBlockingTypeNames();
         $blocking = array_merge($blockingBy['race'], $blockingBy['item']);
 
-        /* Une porte OUVERTE est un trou dans le mur : la flèche y passe comme
-         * le pas. Fermée, elle arrête l'un et l'autre. C'est la même ouverture
-         * qui décide des deux — un seuil qu'on franchit à pied mais pas du
-         * regard n'aurait aucun sens.
-         *
-         * Une porte est un type de RACE : `opens_the_way` n'existe pas côté
-         * objets. Le discriminant le dit ici aussi, comme pour les listes
-         * bloquantes — un nom seul confondrait les homonymes. */
+        // The same opening governs step and shot. Doors are race types only,
+        // so the discriminator guards against homonymous items.
         $doors = $this->raceService->getDoorRaceNames();
 
         if ($blocking !== []) {
@@ -166,11 +160,6 @@ class BuildingService extends BaseService
                 }
             }
         }
-
-        /* La passe `map_resources` a disparu : ses objets sont des entités,
-           et la passe ci-dessus les voit déjà — les 42 types de ressource
-           portent `blocks_projectiles`, donc un arbre arrête toujours la
-           flèche, par la règle du catalogue au lieu d'une table à part. */
 
         /* A shot passes if some traversal is CLEAR — the shooter threads
          * through. Asking it per CELL ("is this one on both traversals?")
@@ -567,18 +556,14 @@ class BuildingService extends BaseService
     /**
      * Fermeture/ouverture volontaire (admin — un jour le propriétaire).
      *
-     * Écrite sur l'entité, et gardée par le seul TYPE : un coffre n'a pas de
-     * satellite de bâtiment, et c'est maintenant un objet. Exiger un bâtiment
-     * reviendrait à dire qu'on ne ferme que ce qui se construit, alors que la
-     * question est « ce type a-t-il une porte ? » — à laquelle les deux
-     * catalogues répondent.
+     * Written on the entity and guarded by the type alone: a chest has no
+     * building satellite.
      *
-     * @throws \InvalidArgumentException ce qui n'a pas de porte
+     * @throws \InvalidArgumentException when the type has no door
      */
     public function setOpen(int $playerId, bool $open): void
     {
-        /* Ce qui n'a pas de porte ne se ferme pas : refuser plutôt que de poser
-         * un drapeau que rien ne lira. */
+        // Refuse rather than set a flag nothing will read.
         if (!(new LockService())->isLockable($playerId)) {
             throw new \InvalidArgumentException("#{$playerId} n'est pas de ceux qui se ferment.");
         }
