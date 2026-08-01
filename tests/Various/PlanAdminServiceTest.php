@@ -197,7 +197,7 @@ class PlanAdminServiceTest extends TestCase
         );
         // Les satellites qui bloquaient la suppression avant correction.
         $link->executeStatement(
-            "INSERT INTO buildings (player_id, faction, build_state) VALUES (?, '', 'built')",
+            "INSERT INTO buildings (player_id, build_state) VALUES (?, 'built')",
             [self::BUILDING_ID]
         );
         $link->executeStatement(

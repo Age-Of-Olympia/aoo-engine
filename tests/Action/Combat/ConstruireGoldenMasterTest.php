@@ -109,7 +109,7 @@ class ConstruireGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->assertTrue($results->isSuccess(), 'construire has no dice: passing conditions means success');
 
         $building = $this->link->fetchAssociative(
-            "SELECT p.id, p.race, b.faction, c.x, c.y, c.plan
+            "SELECT p.id, p.race, p.faction, c.x, c.y, c.plan
              FROM buildings b
              JOIN players p ON p.id = b.player_id
              JOIN coords c ON c.id = p.coords_id

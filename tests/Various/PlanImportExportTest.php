@@ -209,8 +209,8 @@ class PlanImportExportTest extends TestCase
             'img/walls/palissade.png'
         );
         $link->executeStatement(
-            'INSERT INTO buildings (player_id, faction, build_state) VALUES (?, ?, ?)',
-            [$palissadeId, '', 'built']
+            'INSERT INTO buildings (player_id, build_state) VALUES (?, ?)',
+            [$palissadeId, 'built']
         );
         // Le propriétaire vit sur l'entité depuis qu'être possédé a cessé
         // d'être un privilège de bâtiment.
