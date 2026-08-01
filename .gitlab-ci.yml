@@ -143,6 +143,11 @@ test_job:
     DB_HOST: mariadb
     DB_USER: root
     DB_PASS: passwordRoot
+    # La suite se donne d'office une base jetable (aoo4_phpunit) pour ne pas
+    # salir un monde de développement. En CI, la base EST jetable : elle naît
+    # avec le service MariaDB et meurt avec lui. Vide = celle qui est
+    # configurée, donc aucune seconde base à créer ici.
+    AOO_TEST_DB: ""
     # Surchargée par les règles ci-dessous sur les branches d'intégration.
     TEST_TARGET: test-ci
   before_script:
