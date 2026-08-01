@@ -32,14 +32,13 @@ class ExchangeInstanceGoldenMasterTest extends LegacyPlayerFixtureTestCase
     }
 
     /** Un exemplaire usé, rangé en banque — l'état de départ. */
-    private function bankedInstance(int $playerId, Item $item, int $durability = 7): int
+    private function bankedInstance(int $playerId, Item $item, int $durability = 35): int
     {
         $service = new ItemInstanceService();
         $instanceId = $service->promote($playerId, $item->id);
-        $this->link->executeStatement(
-            'UPDATE item_instances SET durability = ?, durability_max = 20 WHERE id = ?',
-            [$durability, $instanceId]
-        );
+        /* Plus de maximum par exemplaire — il vient du type. La consigne
+         * devient donc « ce qu'il lui reste », exprimé sur ce maximum. */
+        $this->setRemainingLife($instanceId, $durability);
         $service->storeInBank($instanceId, $playerId);
 
         return $instanceId;
@@ -117,7 +116,7 @@ class ExchangeInstanceGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $after = $this->link->fetchAssociative('SELECT * FROM item_instances WHERE id = ?', [$instanceId]);
         $this->assertSame($before, $after, 'usure et identité inchangées');
 
-        $this->assertStringContainsString('Durabilité 7/20', $recap, 'le journal nomme CE qui est parti');
+        $this->assertStringContainsString('Durabilité 35/100', $recap, 'le journal nomme CE qui est parti');
 
         $this->assertSame(0, (int) $this->link->fetchOne(
             'SELECT COUNT(*) FROM players_items_exchanges WHERE exchange_id = ?',
@@ -181,7 +180,7 @@ class ExchangeInstanceGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
         $bank = $service->listForBank($offering->id);
         $this->assertCount(1, $bank);
-        $this->assertSame(7, (int) $bank[0]['durability'], 'avec son usure');
+        $this->assertSame(35, (int) $bank[0]['durability'], 'avec son usure');
     }
 
     public function testTheDatabaseRefusesOneInstanceInTwoExchanges(): void

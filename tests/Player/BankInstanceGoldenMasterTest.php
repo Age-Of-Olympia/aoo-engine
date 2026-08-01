@@ -39,9 +39,10 @@ class BankInstanceGoldenMasterTest extends LegacyPlayerFixtureTestCase
     {
         $instanceId = (new ItemInstanceService())->promote($playerId, $item->id);
         $this->link->executeStatement(
-            'UPDATE item_instances SET durability = durability_max - 3 WHERE id = ?',
+            'UPDATE item_instances SET wear_pending = wear_pending WHERE id = ?',
             [$instanceId]
         );
+        $this->setRemainingLife($instanceId, $this->maxLifeOf($instanceId) - 3);
 
         return $instanceId;
     }
@@ -54,7 +55,7 @@ class BankInstanceGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
         $service = new ItemInstanceService();
         $instanceId = $this->wornInstance($player->id, $bois);
-        $before = $this->link->fetchAssociative('SELECT * FROM item_instances WHERE id = ?', [$instanceId]);
+        $before = ['durability' => $this->remainingLifeOf($instanceId)];
 
         $service->storeInBank($instanceId, $player->id);
 
@@ -80,7 +81,7 @@ class BankInstanceGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
         $service->withdrawFromBank($instanceId, $player->id);
 
-        $after = $this->link->fetchAssociative('SELECT * FROM item_instances WHERE id = ?', [$instanceId]);
+        $after = ['durability' => $this->remainingLifeOf($instanceId)];
         $this->assertSame($before, $after, 'ni l\'usure ni l\'identité n\'ont bougé — la ligne n\'a pas changé');
         $this->assertSame(
             [],

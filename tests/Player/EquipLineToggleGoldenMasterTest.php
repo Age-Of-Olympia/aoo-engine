@@ -40,7 +40,7 @@ class EquipLineToggleGoldenMasterTest extends LegacyPlayerFixtureTestCase
             [$player->id]
         );
         $this->assertGreaterThan(0, $worn, 'un exemplaire est porté après le premier équipement');
-        $this->link->executeStatement('UPDATE item_instances SET durability = durability - 20 WHERE id = ?', [$worn]);
+        $this->setRemainingLife($worn, $this->maxLifeOf($worn) - 20);
 
         // Geste « équiper » sur la ligne de PILE (non portée, pas d'instance).
         $result = $player->equip($item, instanceId: null, clickedEquippedLine: false);
@@ -51,8 +51,11 @@ class EquipLineToggleGoldenMasterTest extends LegacyPlayerFixtureTestCase
         ), "l'exemplaire abîmé est remplacé : déséquipé, pas détruit");
 
         $equipped = $this->link->fetchAssociative(
-            "SELECT l.instance_id, i.durability, i.durability_max
-             FROM players_items_instances l JOIN item_instances i ON i.id = l.instance_id
+            "SELECT l.instance_id, " . \App\Service\ItemInstanceService::WEAR_SELECT . "
+             FROM players_items_instances l
+             JOIN item_instances i ON i.id = l.instance_id
+             JOIN items it ON it.id = i.item_id
+             " . \App\Service\ItemInstanceService::WEAR_JOIN . "
              WHERE l.player_id = ? AND l.equiped != ''",
             [$player->id]
         );

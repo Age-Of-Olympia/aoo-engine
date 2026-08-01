@@ -87,7 +87,7 @@ class WearEngineGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
     private function durabilityOf(int $instanceId): int
     {
-        return (int) $this->link->fetchOne('SELECT durability FROM item_instances WHERE id = ?', [$instanceId]);
+        return $this->remainingLifeOf($instanceId);
     }
 
     public function testArmFlagsOnlyTheDeclaredTriggerOnEquippedInstances(): void
@@ -137,7 +137,7 @@ class WearEngineGoldenMasterTest extends LegacyPlayerFixtureTestCase
         [$player, , $instanceId] = $this->wearingGladius(rate: 5);
         $wear = new WearService();
 
-        $this->link->executeStatement('UPDATE item_instances SET durability = 3 WHERE id = ?', [$instanceId]);
+        $this->setRemainingLife($instanceId, 3);
         $wear->arm($player->id, 'attack');
         $recap = $wear->applyNewTurnWear($player->id);
 

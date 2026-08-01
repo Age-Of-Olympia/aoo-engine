@@ -83,6 +83,10 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
                 $this->link->executeStatement("DELETE FROM item_instances WHERE id IN ({$in})");
                 if ($entityIds !== []) {
                     $entityIn = implode(',', array_map('intval', $entityIds));
+                    // Wear is a players_bonus row now: it holds the entity down.
+                    $this->link->executeStatement(
+                        "DELETE FROM players_bonus WHERE player_id IN ({$entityIn})"
+                    );
                     $this->link->executeStatement(
                         "DELETE FROM players WHERE id IN ({$entityIn}) AND player_type = 'item'"
                     );
@@ -222,6 +226,53 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         self::purgeEntityCache($id);
 
         return new Player($id);
+    }
+
+    /**
+     * Set what an exemplar has left of its life.
+     *
+     * Wear is a deficit against the maximum its TYPE gives, like every other
+     * wound, so a fixture states the remaining life and the deficit follows.
+     * A per-instance maximum cannot be arranged any more — that was the frozen
+     * snapshot, and it is gone.
+     */
+    protected function setRemainingLife(int $instanceId, int $remaining): void
+    {
+        $row = $this->link->fetchAssociative(
+            'SELECT i.entity_id, it.durability_max
+               FROM item_instances i JOIN items it ON it.id = i.item_id
+              WHERE i.id = ?',
+            [$instanceId]
+        );
+
+        $this->link->executeStatement(
+            "INSERT INTO players_bonus (player_id, name, n) VALUES (?, 'pv', ?)
+             ON DUPLICATE KEY UPDATE n = VALUES(n)",
+            [(int) $row['entity_id'], $remaining - (int) $row['durability_max']]
+        );
+    }
+
+    /** What an exemplar has left, rebuilt the way every reader now rebuilds it. */
+    protected function remainingLifeOf(int $instanceId): int
+    {
+        return (int) $this->link->fetchOne(
+            'SELECT ' . \App\Service\ItemInstanceService::WEAR_CURRENT . '
+               FROM item_instances i
+               JOIN items it ON it.id = i.item_id
+               ' . \App\Service\ItemInstanceService::WEAR_JOIN . '
+              WHERE i.id = ?',
+            [$instanceId]
+        );
+    }
+
+    /** The maximum an exemplar's type gives it. */
+    protected function maxLifeOf(int $instanceId): int
+    {
+        return (int) $this->link->fetchOne(
+            'SELECT it.durability_max FROM item_instances i
+               JOIN items it ON it.id = i.item_id WHERE i.id = ?',
+            [$instanceId]
+        );
     }
 
     /**

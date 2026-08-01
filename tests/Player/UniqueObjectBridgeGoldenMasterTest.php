@@ -56,6 +56,7 @@ class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
                 $in = implode(',', array_map(static fn ($r) => (int) $r['id'], $rows));
                 $entityIn = implode(',', array_map(static fn ($r) => (int) $r['entity_id'], $rows));
                 $this->link->executeStatement("DELETE FROM item_instances WHERE id IN ({$in})");
+                $this->link->executeStatement("DELETE FROM players_bonus WHERE player_id IN ({$entityIn})");
                 $this->link->executeStatement("DELETE FROM players WHERE id IN ({$entityIn})");
             }
         }
@@ -81,7 +82,7 @@ class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
              JOIN item_instances i ON i.id = l.instance_id WHERE l.player_id = ? AND i.item_id = ?',
             [$player->id, $item->id]
         );
-        $this->link->executeStatement('UPDATE item_instances SET durability = 60 WHERE id = ?', [$instanceId]);
+        $this->setRemainingLife($instanceId, 60);
         $player->equip($item); // unequip — worn, stays an instance
 
         return [$player, $item, $instanceId];
@@ -140,11 +141,7 @@ class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
             (int) $this->link->fetchOne('SELECT player_id FROM players_items_instances WHERE instance_id = ?', [$instanceId]),
             'the instance is back in the walker inventory'
         );
-        $this->assertSame(
-            60,
-            (int) $this->link->fetchOne('SELECT durability FROM item_instances WHERE id = ?', [$instanceId]),
-            'identity — the wear — survived the round trip'
-        );
+        $this->assertSame(60, $this->remainingLifeOf($instanceId), 'identity — the wear — survived the round trip');
         $picked = $this->link->fetchAssociative(
             'SELECT e.coords_id, e.holder_id FROM players e
                JOIN item_instances i ON i.entity_id = e.id WHERE i.id = ?',
@@ -197,11 +194,7 @@ class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
         $taken = (new UniqueObjectService())->takeInstance($entityId, $player->id);
         $this->assertSame($instanceId, $taken);
-        $this->assertSame(
-            60,
-            (int) $this->link->fetchOne('SELECT durability FROM item_instances WHERE id = ?', [$instanceId]),
-            'identity survives the entity round trip too'
-        );
+        $this->assertSame(60, $this->remainingLifeOf($instanceId), 'identity survives the entity round trip too');
 
         $carried = $this->link->fetchAssociative(
             'SELECT coords_id, holder_id FROM players WHERE id = ?',

@@ -53,7 +53,18 @@ class ItemInstanceServiceGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $instance = $this->link->fetchAssociative('SELECT * FROM item_instances WHERE id = ?', [$instanceId]);
         $this->assertNotFalse($instance);
         $this->assertSame($bois->id, (int) $instance['item_id']);
-        $this->assertSame((int) $instance['durability_max'], (int) $instance['durability'], 'born pristine');
+        $this->assertSame(
+            $this->maxLifeOf($instanceId),
+            $this->remainingLifeOf($instanceId),
+            'born pristine — and pristine means no deficit row at all'
+        );
+        $this->assertFalse(
+            $this->link->fetchOne(
+                "SELECT 1 FROM players_bonus WHERE player_id = ? AND name = 'pv'",
+                [(int) $instance['entity_id']]
+            ),
+            'un exemplaire neuf ne porte aucune ligne, comme un personnage indemne'
+        );
 
         $this->assertSame($player->id, (int) $this->link->fetchOne(
             'SELECT player_id FROM players_items_instances WHERE instance_id = ?',
@@ -110,7 +121,7 @@ class ItemInstanceServiceGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
         // Diverged state refuses: wear...
         $worn = $service->promote($player->id, $bois->id);
-        $this->link->executeStatement('UPDATE item_instances SET durability = durability - 10 WHERE id = ?', [$worn]);
+        $this->setRemainingLife($worn, $this->maxLifeOf($worn) - 10);
         $this->assertFalse($service->demote($worn), 'a worn instance must NOT demote');
 
         // ...and a name set at creation.
@@ -130,7 +141,7 @@ class ItemInstanceServiceGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
         $service = new ItemInstanceService();
         $worn = $service->promote($player->id, $bois->id);
-        $this->link->executeStatement('UPDATE item_instances SET durability = durability - 10 WHERE id = ?', [$worn]);
+        $this->setRemainingLife($worn, $this->maxLifeOf($worn) - 10);
 
         $equipped = $service->equipCatalogItem($player->id, $bois->id, 'main1');
 

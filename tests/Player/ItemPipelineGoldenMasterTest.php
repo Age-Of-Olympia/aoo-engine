@@ -161,7 +161,7 @@ class ItemPipelineGoldenMasterTest extends LegacyPlayerFixtureTestCase
              JOIN item_instances i ON i.id = l.instance_id WHERE l.player_id = ? AND i.item_id = ?',
             [$player->id, $item->id]
         );
-        $this->link->executeStatement('UPDATE item_instances SET durability = 40 WHERE id = ?', [$instanceId]);
+        $this->setRemainingLife($instanceId, 40);
 
         $player->equip($item); // unequip
 
@@ -177,7 +177,7 @@ class ItemPipelineGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
         // Re-equip reuses the worn instance; broken (<= 0) stops contributing caracs.
         $player->equip($item);
-        $this->link->executeStatement('UPDATE item_instances SET durability = 0 WHERE id = ?', [$instanceId]);
+        $this->setRemainingLife($instanceId, 0);
         $player->get_caracs();
         $this->assertSame($nudeCc, (int) $player->caracs->cc, 'a broken weapon contributes no caracs');
         $this->assertSame('gladius', (string) $player->emplacements->main1->row->name, 'but it is still worn/visible');

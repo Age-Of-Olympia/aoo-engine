@@ -74,19 +74,13 @@ class ItemInstanceService extends BaseService
      * Expects `item_instances i` and `items it` in the query, and adds the
      * deficit join itself.
      */
-    public const WEAR_SELECT = 'it.durability_max AS durability_max,
-                                it.durability_max + COALESCE(wear.n, 0) AS durability';
+    public const WEAR_CURRENT = 'it.durability_max + COALESCE(wear.n, 0) AS durability';
+
+    /** Use WEAR_CURRENT alone where the query already selects `it.*`. */
+    public const WEAR_SELECT = self::WEAR_CURRENT . ', it.durability_max AS durability_max';
 
     public const WEAR_JOIN = "LEFT JOIN players_bonus wear
                                      ON wear.player_id = i.entity_id AND wear.name = 'pv'";
-
-    /** La vie de départ d'une instance : items.durability_max (catalogue). */
-    private static function catalogDurabilityMax($conn, int $itemId): int
-    {
-        $max = $conn->fetchOne('SELECT durability_max FROM items WHERE id = ?', [$itemId]);
-
-        return $max !== false ? (int) $max : 100;
-    }
 
     /** `players.player_type` of an entity that IS an item exemplar. */
     public const ENTITY_TYPE = 'item';
@@ -224,10 +218,11 @@ class ItemInstanceService extends BaseService
                 [$playerId, $itemId]
             );
 
-            $durabilityMax = self::catalogDurabilityMax($conn, $itemId);
+            /* Born pristine: no deficit row at all, exactly as an unwounded
+             * character has none. Its maximum comes from its type. */
             $conn->executeStatement(
-                'INSERT INTO item_instances (item_id, durability, durability_max, created_at) VALUES (?, ?, ?, ?)',
-                [$itemId, $durabilityMax, $durabilityMax, time()]
+                'INSERT INTO item_instances (item_id, created_at) VALUES (?, ?)',
+                [$itemId, time()]
             );
             $instanceId = (int) $conn->lastInsertId();
 
@@ -251,10 +246,9 @@ class ItemInstanceService extends BaseService
         $conn = $this->entityManager->getConnection();
 
         return $conn->transactional(function ($conn) use ($playerId, $itemId, $creatorId, $customName): int {
-            $durabilityMax = self::catalogDurabilityMax($conn, $itemId);
             $conn->executeStatement(
-                'INSERT INTO item_instances (item_id, custom_name, creator_id, durability, durability_max, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-                [$itemId, $customName, $creatorId, $durabilityMax, $durabilityMax, time()]
+                'INSERT INTO item_instances (item_id, custom_name, creator_id, created_at) VALUES (?, ?, ?, ?)',
+                [$itemId, $customName, $creatorId, time()]
             );
             $instanceId = (int) $conn->lastInsertId();
 
@@ -281,11 +275,13 @@ class ItemInstanceService extends BaseService
 
         return $conn->transactional(function ($conn) use ($instanceId): bool {
             $row = $conn->fetchAssociative(
-                'SELECT i.id, i.item_id, i.durability, i.durability_max, i.quality, i.custom_name,
+                'SELECT i.id, i.item_id, ' . self::WEAR_SELECT . ', i.quality, i.custom_name,
                         i.params, i.destroyed, i.wear_pending, i.entity_id,
                         l.player_id, l.equiped, l.location
                  FROM item_instances i
+                 JOIN items it ON it.id = i.item_id
                  JOIN players_items_instances l ON l.instance_id = i.id
+                 ' . self::WEAR_JOIN . '
                  WHERE i.id = ? FOR UPDATE',
                 [$instanceId]
             );
@@ -456,12 +452,13 @@ class ItemInstanceService extends BaseService
         $equipedFilter = $equipedOnly ? "AND l.equiped != ''" : '';
 
         return $this->entityManager->getConnection()->fetchAllAssociative(
-            "SELECT it.*, i.item_id, i.id AS instance_id, i.durability, i.durability_max, i.quality,
+            "SELECT it.*, i.item_id, i.id AS instance_id, " . self::WEAR_CURRENT . ", i.quality,
                     i.custom_name, i.params AS instance_params, i.creator_id, i.wear_pending,
                     l.equiped, 1 AS n
              FROM players_items_instances l
              JOIN item_instances i ON i.id = l.instance_id
              JOIN items it ON it.id = i.item_id
+             " . self::WEAR_JOIN . "
              WHERE l.player_id = ? AND i.destroyed = 0
                AND l.location = '" . self::LOCATION_INVENTORY . "' {$equipedFilter}
              ORDER BY l.equiped DESC, i.id",
@@ -482,12 +479,13 @@ class ItemInstanceService extends BaseService
     public function listForBank(int $playerId): array
     {
         return $this->entityManager->getConnection()->fetchAllAssociative(
-            "SELECT it.*, i.item_id, i.id AS instance_id, i.durability, i.durability_max, i.quality,
+            "SELECT it.*, i.item_id, i.id AS instance_id, " . self::WEAR_CURRENT . ", i.quality,
                     i.custom_name, i.params AS instance_params, i.creator_id, i.wear_pending,
                     '' AS equiped, 1 AS n
              FROM players_items_instances l
              JOIN item_instances i ON i.id = l.instance_id
              JOIN items it ON it.id = i.item_id
+             " . self::WEAR_JOIN . "
              WHERE l.player_id = ? AND i.destroyed = 0
                AND l.location = '" . self::LOCATION_BANK . "'
              ORDER BY it.name, i.id",
@@ -649,8 +647,9 @@ class ItemInstanceService extends BaseService
     public function describe(int $instanceId): string
     {
         $row = $this->entityManager->getConnection()->fetchAssociative(
-            'SELECT i.custom_name, i.durability, i.durability_max, it.name AS catalog_name
-             FROM item_instances i JOIN items it ON it.id = i.item_id WHERE i.id = ?',
+            'SELECT i.custom_name, ' . self::WEAR_SELECT . ', it.name AS catalog_name
+             FROM item_instances i JOIN items it ON it.id = i.item_id ' . self::WEAR_JOIN . '
+             WHERE i.id = ?',
             [$instanceId]
         );
 

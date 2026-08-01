@@ -94,10 +94,16 @@ class Market
          * catalogue ; joindre sur une colonne qu'elle n'a pas faisait
          * planter toute la page des demandes. */
         $instanceJoin = $table == 'bids'
-            ? ', i.durability, i.durability_max, i.quality, i.custom_name, i.destroyed'
+            ? ', ' . \App\Service\ItemInstanceService::WEAR_SELECT
+                . ', i.quality, i.custom_name, i.destroyed'
             : '';
+        /* L'usure vit dans la vie de l'exemplaire : il faut donc son type pour
+         * le maximum, et son déficit pour le restant. LEFT JOIN de bout en
+         * bout — une offre peut viser une pile, qui n'a pas d'exemplaire. */
         $instanceFrom = $table == 'bids'
-            ? ' LEFT JOIN item_instances i ON i.id = o.instance_id'
+            ? ' LEFT JOIN item_instances i ON i.id = o.instance_id
+                LEFT JOIN items it ON it.id = i.item_id
+                LEFT JOIN players_bonus wear ON wear.player_id = i.entity_id AND wear.name = "pv"'
             : '';
 
         $sql = '

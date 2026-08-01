@@ -177,7 +177,11 @@ class UniqueObjectService extends BaseService
 
         $conn->transactional(function ($conn) use ($uniqueId, $instanceId, $coordsId): void {
             $conn->executeStatement(
-                'UPDATE item_instances SET durability = 0 WHERE id = ? AND durability > 0',
+                "INSERT INTO players_bonus (player_id, name, n)
+                 SELECT i.entity_id, 'pv', -it.durability_max
+                   FROM item_instances i JOIN items it ON it.id = i.item_id
+                  WHERE i.id = ?
+                 ON DUPLICATE KEY UPDATE n = VALUES(n)",
                 [(int) $instanceId]
             );
 

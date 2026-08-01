@@ -44,11 +44,12 @@ class WearService extends BaseService
             "UPDATE item_instances i
              JOIN players_items_instances l ON l.instance_id = i.id
              JOIN items it ON it.id = i.item_id
+             " . ItemInstanceService::WEAR_JOIN . "
              SET i.wear_pending = 1
              WHERE l.player_id = ?
                AND l.equiped != ''
                AND i.destroyed = 0
-               AND i.durability > 0
+               AND it.durability_max + COALESCE(wear.n, 0) > 0
                AND it.wear_rate > 0
                AND FIND_IN_SET(?, it.wear_triggers)",
             [$playerId, $trigger]
@@ -66,10 +67,12 @@ class WearService extends BaseService
         $conn = $this->entityManager->getConnection();
 
         $armed = $conn->fetchAllAssociative(
-            "SELECT i.id, i.durability, i.custom_name, it.name AS catalog_name, it.wear_rate
+            "SELECT i.id, i.entity_id, " . ItemInstanceService::WEAR_SELECT . ",
+                    i.custom_name, it.name AS catalog_name, it.wear_rate
              FROM item_instances i
              JOIN players_items_instances l ON l.instance_id = i.id
              JOIN items it ON it.id = i.item_id
+             " . ItemInstanceService::WEAR_JOIN . "
              WHERE l.player_id = ? AND i.wear_pending = 1 AND i.destroyed = 0",
             [$playerId]
         );
@@ -79,9 +82,16 @@ class WearService extends BaseService
             $before = (int) $row['durability'];
             $after = max(0, $before - (int) $row['wear_rate']);
 
+            /* Wear is a deficit now, like every other wound: the row carries
+             * how far below its maximum the exemplar sits. */
             $conn->executeStatement(
-                'UPDATE item_instances SET durability = ?, wear_pending = 0 WHERE id = ?',
-                [$after, (int) $row['id']]
+                "INSERT INTO players_bonus (player_id, name, n) VALUES (?, 'pv', ?)
+                 ON DUPLICATE KEY UPDATE n = VALUES(n)",
+                [(int) $row['entity_id'], $after - (int) $row['durability_max']]
+            );
+            $conn->executeStatement(
+                'UPDATE item_instances SET wear_pending = 0 WHERE id = ?',
+                [(int) $row['id']]
             );
 
             $label = ItemInstanceService::label($row['custom_name'], (string) $row['catalog_name']);

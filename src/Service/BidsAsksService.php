@@ -263,7 +263,10 @@ class BidsAsksService
 
                     $instanceService = new ItemInstanceService();
                     $state = (new Db())->exe(
-                        'SELECT i.durability, i.durability_max FROM item_instances i
+                        'SELECT ' . ItemInstanceService::WEAR_SELECT . '
+                           FROM item_instances i
+                           JOIN items it ON it.id = i.item_id
+                           ' . ItemInstanceService::WEAR_JOIN . '
                          JOIN players_items_instances l ON l.instance_id = i.id
                          WHERE i.id = ? AND l.player_id = ? AND i.destroyed = 0',
                         array($instanceId, $player->id)

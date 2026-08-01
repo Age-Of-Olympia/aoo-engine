@@ -36,10 +36,7 @@ class MarketInstanceGoldenMasterTest extends LegacyPlayerFixtureTestCase
     {
         $service = new ItemInstanceService();
         $instanceId = $service->promote($playerId, $item->id);
-        $this->link->executeStatement(
-            'UPDATE item_instances SET durability = 7, durability_max = 20 WHERE id = ?',
-            [$instanceId]
-        );
+        $this->setRemainingLife($instanceId, 35);
         $service->storeInBank($instanceId, $playerId);
 
         return $instanceId;
@@ -149,7 +146,7 @@ class MarketInstanceGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $bank = $service->listForBank($seller->id);
         $this->assertCount(1, $bank);
         $this->assertSame($instanceId, (int) $bank[0]['instance_id']);
-        $this->assertSame(7, (int) $bank[0]['durability'], 'et il revient avec son usure');
+        $this->assertSame(35, (int) $bank[0]['durability'], 'et il revient avec son usure');
     }
 
     public function testTheDatabaseItselfRefusesTwoOffersOnOneInstance(): void

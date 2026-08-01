@@ -50,11 +50,12 @@ class GroundLootService
 
         $instances = [];
         $res = $db->exe(
-            'SELECT i.id, i.custom_name, i.durability, i.durability_max, it.name
+            'SELECT i.id, i.custom_name, ' . \App\Service\ItemInstanceService::WEAR_SELECT . ', it.name
              FROM players AS e
              INNER JOIN coords AS c ON c.id = e.coords_id
              INNER JOIN item_instances AS i ON i.entity_id = e.id
              INNER JOIN items AS it ON it.id = i.item_id
+             ' . \App\Service\ItemInstanceService::WEAR_JOIN . '
              WHERE c.x = ? AND c.y = ? AND c.z = ? AND c.plan = ? AND e.slot = ?',
             [$x, $y, $z, $plan, \App\Service\Map\EntityLocationService::SLOT_DROPPED]
         );

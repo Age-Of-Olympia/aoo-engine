@@ -64,9 +64,12 @@ class Exchange{
          * JOIN — une ligne de pile n'a pas d'instance. */
         $sql = '
             SELECT e.id, e.exchange_id, e.item_id, e.n, e.player_id, e.target_id, e.instance_id,
-                   i.durability, i.durability_max, i.quality, i.custom_name, i.destroyed
+                   ' . \App\Service\ItemInstanceService::WEAR_SELECT . ',
+                   i.quality, i.custom_name, i.destroyed
             FROM players_items_exchanges e
             LEFT JOIN item_instances i ON i.id = e.instance_id
+            LEFT JOIN items it ON it.id = i.item_id
+            LEFT JOIN players_bonus wear ON wear.player_id = i.entity_id AND wear.name = "pv"
             WHERE e.exchange_id = ?
         ';
 
