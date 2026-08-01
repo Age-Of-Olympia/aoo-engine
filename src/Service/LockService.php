@@ -7,16 +7,10 @@ use App\Interface\LockableInterface;
 use Doctrine\DBAL\Connection;
 
 /**
- * Qui peut fermer quoi — et si cela se ferme seulement.
+ * Who may shut what, and whether it shuts at all.
  *
- * Deux questions, une par niveau. Le TYPE dit ce qui peut se fermer : un coffre
- * et une porte oui, un mur non, et il le dit depuis son catalogue, `races` ou
- * `items` selon la famille — l'appelant ne l'apprend jamais. L'ENTITÉ dit à qui
- * elle appartient, et c'est de là que vient le droit de tourner la clé.
- *
- * Appartenir se lit de deux façons, comme pour un bâtiment depuis toujours : un
- * PROPRIÉTAIRE nommé, ou une FACTION. La seconde est ce qui permet à une forge
- * d'être la forge de tous les siens sans appartenir à personne en particulier.
+ * The TYPE says what has a door, from either catalogue; the ENTITY says who
+ * owns it, by named owner or by shared faction.
  */
 final class LockService extends BaseService
 {

@@ -802,16 +802,10 @@ class ItemInstanceService extends BaseService
     }
 
     /**
-     * Build path: a fresh exemplar of a catalogue item, born standing on a cell.
+     * Build path: a fresh exemplar born standing on a cell.
      *
-     * Building an object PLACES that object. It used to consume the item and
-     * mint a building from a race of the same name, which threw away everything
-     * the object was — its wear, its name, and tomorrow its contents.
-     *
-     * The unit has already left the bag when this runs (`RequiresItem` consumed
-     * it at the payment), so the exemplar is created straight onto the tile
-     * rather than passing through an inventory it would leave in the same
-     * breath. Pristine, like anything the catalogue has just made.
+     * The unit has already left the bag (`RequiresItem` consumed it at the
+     * payment), so it never passes through an inventory.
      *
      * @return int the exemplar's entity id
      */

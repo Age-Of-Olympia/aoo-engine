@@ -8,17 +8,10 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * The wooden chest gets a recipe, so that building one can be exercised.
+ * Make the wooden chest craftable, so the build path can be exercised.
  *
- * No recipe produced a chest and no bag held one, which is what made retiring
- * the `coffre_*` races harmless — the build path had never been walked for a
- * container. That also meant the new path could not be walked ON PURPOSE, and
- * an untested path is the one that breaks.
- *
- * Twenty planks, following the wall recipes that are the only precedent: a
- * palisade costs ten, a wooden wall fifteen. A chest is the dearer of the
- * three, which is the whole of the reasoning — this is a number to play with,
- * not a balance decision, and it belongs to whoever tunes the economy.
+ * Twenty planks, against ten for a palisade and fifteen for a wooden wall —
+ * a placeholder for whoever tunes the economy.
  */
 final class Version20260803250000_AWoodenChestCanBeCrafted extends AbstractMigration
 {

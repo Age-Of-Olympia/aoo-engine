@@ -8,22 +8,10 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * A gathered material does not obstruct like the vein it came from.
+ * Clear the obstruction flags on items whose homonymous race is a resource
+ * node: one places an `obstacle` or a `decor`, one mines a `ressource`.
  *
- * `Version20260803200000` seeded `items.blocks_passage` / `blocks_projectiles`
- * by joining on the homonymous `races` row, restricted to `kind = 'structure'`.
- * Resource nodes are structures too — a bronze vein is one — so six materials
- * inherited the blocking of the node they are mined from: bronze, cendre,
- * cuir, nickel, salpetre, tourbe. An ingot in a bag was carrying a wall.
- *
- * Nothing installs a material today, so nothing showed. It would have shown
- * the day something did, as an arrow stopped by a pile of leather.
- *
- * The rule the seed should have carried: only `obstacle` and `decor` describe
- * something one PLACES. A `ressource` nature is a node one mines, and the item
- * of the same name is what falls out of it — the two share a name and nothing
- * else. Reset from the nature rather than from a list of six, so a resource
- * added later cannot repeat it.
+ * Keyed on the nature so a resource added later cannot re-inherit.
  */
 final class Version20260803210000_AGatheredMaterialIsNotItsVein extends AbstractMigration
 {

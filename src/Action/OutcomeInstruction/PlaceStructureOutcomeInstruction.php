@@ -85,17 +85,9 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
             View::get_free_coords_id_arround($goCoords, 1);
         }
 
-        /* Deux poses, et c'est le CATALOGUE qui tranche : un type encore décrit
-         * par une race donne un bâtiment, tout le reste pose l'objet lui-même.
-         *
-         * La règle se vide d'elle-même. Chaque famille qui quitte `races` —
-         * les conteneurs viennent de le faire — bascule du premier cas au
-         * second sans qu'on revienne ici, et le jour où plus rien n'est décrit
-         * par une race, il ne reste que la pose d'objet.
-         *
-         * Bâtir un objet POSE cet objet : le geste consommait l'exemplaire pour
-         * frapper un bâtiment d'après une race homonyme, jetant au passage tout
-         * ce que l'objet était. */
+        // A type still described by a race mints a building; anything else
+        // places the object itself. Families leaving `races` switch sides here
+        // on their own.
         $isRaceTyped = $this->raceService()->getRaceByName($type)?->isStructureKind() ?? false;
 
         try {
@@ -121,13 +113,9 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
     }
 
     /**
-     * Pose l'objet lui-même : son exemplaire naît debout sur la case.
+     * Place the object itself: its exemplar is born standing on the cell.
      *
-     * L'unité a déjà quitté le sac — `RequiresItem` l'a consommée au paiement —
-     * si bien qu'il n'y a rien à y reprendre : ce qui est posé est l'objet
-     * qu'on vient de dépenser, et il garde désormais une identité propre.
-     *
-     * @throws \RuntimeException type absent du catalogue des objets
+     * @throws \RuntimeException when the type is in neither catalogue
      */
     private function placeTheObjectItself(string $type, object $coords, int $actorId): int
     {
@@ -143,7 +131,7 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
             ->installFromCatalogAt((int) $item->id, $coordsId, $actorId, $actorId);
     }
 
-    /** Le catalogue des races, instancié à la demande — la classe est une entité Doctrine. */
+    /** Instantiated on demand: this class is a Doctrine entity. */
     private function raceService(): \App\Service\RaceService
     {
         return new \App\Service\RaceService();

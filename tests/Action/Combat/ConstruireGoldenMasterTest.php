@@ -75,14 +75,8 @@ class ConstruireGoldenMasterTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /**
-     * Bâtir un CONTENEUR pose l'objet lui-même, pas un bâtiment homonyme.
-     *
-     * La même boucle que la palissade, mais le coffre a quitté `races` : plus
-     * aucune race ne le décrit, et c'est ce qui fait basculer la pose. Ce qui
-     * se dresse est un exemplaire — il a une instance, donc une identité qui
-     * survivra à l'usure, au nom propre et, demain, à un contenu.
-     */
+    /** Same loop as the palisade, but no race describes a chest any more, so
+     *  the placement switches to the object itself. */
     public function testBuildingAContainerPlacesTheObjectItself(): void
     {
         $builder = $this->createRealPlayer('GmCoffrier');

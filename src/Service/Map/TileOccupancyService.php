@@ -135,14 +135,9 @@ final class TileOccupancyService
                 continue;
             }
 
-            /* Une porte OUVERTE se franchit — c'est tout ce qu'une porte
-             * ajoute à un mur. Fermée, elle barre comme le mur qu'elle perce.
-             * Un coffre n'est pas concerné : sa fermeture est un couvercle,
-             * elle décide de son contenu et non du passage.
-             *
-             * Une porte est un type de RACE — `opens_the_way` n'existe que là.
-             * Le discriminant le dit, faute de quoi un objet homonyme d'une
-             * porte s'ouvrirait un passage qu'aucun catalogue ne lui donne. */
+            // An open door is walked through; a chest's lid decides its
+            // contents, not passage. Doors are race types only, hence the
+            // discriminator check against homonymous items.
             if ((string) ($row['player_type'] ?? '') !== \App\Service\ObstructionService::ITEM_TYPE
                 && in_array((string) $row['race'], $doors, true)
                 && (int) $row['is_open'] === 1) {

@@ -42,11 +42,8 @@ class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
          * would sit there forever, holding a tile other cases build on. The
          * exemplar goes first, then its entity; the foreign key is RESTRICT.
          *
-         * SEULEMENT ce qu'une fixture a créé. La condition portait aussi sur
-         * `creator_id IS NULL`, ce qui est la signature d'un objet POSÉ PAR
-         * L'ADMINISTRATION : lancée sur la base de développement, la suite a
-         * ainsi détaché les sept coffres du monde de leur exemplaire. Un
-         * teardown ne nettoie que derrière lui. */
+         * Fixture-created rows only: `creator_id IS NULL` is the signature of
+         * an admin-placed object, not of a test. */
         if ($this->link !== null) {
             $rows = $this->link->fetchAllAssociative(
                 'SELECT i.id, i.entity_id FROM players e
