@@ -1,6 +1,7 @@
 <?php
 namespace App\Entity;
 
+use App\Interface\LockableInterface;
 use App\Interface\OwnsCaracsInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -37,7 +38,7 @@ use Doctrine\ORM\Mapping as ORM;
     'resource'  => ResourceType::class,
     'plant'     => PlantType::class,
 ])]
-abstract class Race implements OwnsCaracsInterface
+abstract class Race implements OwnsCaracsInterface, LockableInterface
 {
     /**
      * The 16 stat keys, one DB column each — alias de la source unique
@@ -159,6 +160,16 @@ abstract class Race implements OwnsCaracsInterface
 
     #[ORM\Column(type: "string", length: 20, options: ["default" => "black"])]
     private string $color = 'black';
+
+    /**
+     * Ce type se ferme-t-il ? Un coffre et une porte oui, un mur non.
+     *
+     * Pas déduit de `structure_nature` : celle-ci sépare un vrai bâtiment d'un
+     * objet construit, et tous les coffres du jeu sont du côté « obstacle »,
+     * avec les murs. Deux questions différentes.
+     */
+    #[ORM\Column(type: "boolean", options: ["default" => false])]
+    private bool $lockable = false;
 
     #[ORM\Column(type: "string", length: 50, options: ["default" => ""])]
     private string $faction = '';
@@ -574,6 +585,17 @@ abstract class Race implements OwnsCaracsInterface
         if ($this->recipes->removeElement($recipe)) {
             $recipe->removeRace($this); //
         }
+        return $this;
+    }
+
+    public function isLockable(): bool
+    {
+        return $this->lockable;
+    }
+
+    public function setLockable(bool $lockable): self
+    {
+        $this->lockable = $lockable;
         return $this;
     }
 

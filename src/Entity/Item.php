@@ -1,12 +1,13 @@
 <?php
 namespace App\Entity;
 
+use App\Interface\LockableInterface;
 use App\Interface\OwnsCaracsInterface;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ORM\Table(name: "items")]
-class Item implements OwnsCaracsInterface
+class Item implements OwnsCaracsInterface, LockableInterface
 {
     public function __construct()
     {
@@ -36,6 +37,20 @@ class Item implements OwnsCaracsInterface
 
     #[ORM\Column(type: "string", length: 255)]
     private ?string $spell= null;
+
+    /** Ce type d'objet se ferme-t-il ? Un coffre oui, une épée non. */
+    #[ORM\Column(type: "boolean", options: ["default" => false])]
+    private bool $lockable = false;
+
+    public function isLockable(): bool
+    {
+        return $this->lockable;
+    }
+
+    public function setLockable(bool $lockable): void
+    {
+        $this->lockable = $lockable;
+    }
 
     /** Base life of an item of this type — the counterpart of `races.pv`. */
     #[ORM\Column(type: "integer", name: "durability_max", options: ["default" => 100])]

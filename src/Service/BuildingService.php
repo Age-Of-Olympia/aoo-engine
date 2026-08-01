@@ -460,7 +460,10 @@ class BuildingService extends BaseService
         if ($pvPct < self::CLOSED_BELOW_PV_PCT) {
             return 'endommagé';
         }
-        if (!$this->isEntityOpen($entityId)) {
+        /* Fermée volontairement seulement si elle PEUT l'être : un mur dont
+         * le drapeau traînerait à zéro ne se déclare pas fermé, il n'a pas de
+         * porte à fermer. */
+        if (!$this->isEntityOpen($entityId) && (new LockService())->isLockable($entityId)) {
             return 'fermé volontairement';
         }
 
@@ -542,6 +545,12 @@ class BuildingService extends BaseService
     {
         if ($this->getDetails($playerId) === null) {
             throw new \InvalidArgumentException("#{$playerId} n'est pas un bâtiment.");
+        }
+
+        /* Ce qui n'a pas de porte ne se ferme pas : refuser plutôt que de poser
+         * un drapeau que rien ne lira. */
+        if (!(new LockService())->isLockable($playerId)) {
+            throw new \InvalidArgumentException("#{$playerId} n'est pas de ceux qui se ferment.");
         }
 
         $this->entityManager->getConnection()->executeStatement(

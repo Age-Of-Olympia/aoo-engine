@@ -41,7 +41,9 @@ class BuildingOpenStateGoldenMasterTest extends LegacyPlayerFixtureTestCase
     public function testClosureReasonMatrix(): void
     {
         $service = new BuildingService();
-        $id = $this->placeStructure('palissade', 0, 6);
+        /* Un COFFRE, désormais : une palissade n'a pas de porte, et la
+         * fermeture volontaire ne se dit que de ce qui peut se fermer. */
+        $id = $this->placeStructure('coffre_bois', 0, 6);
         $details = (new BuildingDetails())->setBuildState(BuildingDetails::STATE_BUILT);
 
         $this->assertNull($service->closureReason($id, $details, 100), 'construit, PV pleins, ouvert => ouvert');
@@ -68,7 +70,7 @@ class BuildingOpenStateGoldenMasterTest extends LegacyPlayerFixtureTestCase
     public function testSetOpenPersistsAndRejectsNonBuildings(): void
     {
         $service = new BuildingService();
-        $id = $this->placeStructure('palissade', 0, 3);
+        $id = $this->placeStructure('coffre_bois', 0, 3);
 
         $this->assertSame(
             1,
