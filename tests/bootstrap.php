@@ -2,6 +2,25 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+/* A database the suite may RUIN.
+ *
+ * The legacy fixtures write real rows through the production paths, and their
+ * teardown deletes across some twenty-five tables with no transaction: the
+ * first foreign-key refusal abandons the rest. Run against the development
+ * world, an interrupted teardown therefore leaves entities standing on tiles
+ * that later cases build on — and each poisoned run poisons the next.
+ *
+ * `AOO_TEST_DB=` (empty) puts the suite back on the configured database, which
+ * is how one reproduces something seen only against real data.
+ */
+$aooTestDb = getenv('AOO_TEST_DB');
+if ($aooTestDb === false) {
+    $aooTestDb = 'aoo4_phpunit';
+}
+if ($aooTestDb !== '') {
+    App\Entity\EntityManagerFactory::useDatabase($aooTestDb);
+}
+
 // Sous le SAPI cli, error_log() sort sur stderr ; PHPUnit
 // (beStrictAboutOutputDuringTests + failOnRisky) compte cette sortie comme
 // du bruit de test et marque le test risky → run en échec. Les messages

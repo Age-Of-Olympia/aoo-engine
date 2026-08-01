@@ -15,11 +15,45 @@ final class EntityManagerFactory
 {
     private static ?EntityManager $em = null;
     private static ?Configuration $orm_db_config = null;
+    private static ?string $database = null;
+
+    /**
+     * Point every connection at another database, for the duration of the
+     * process. The legacy stack follows: `config/bootstrap.php` takes its
+     * `$link` from here and `db()` hands that to `Classes\Db`.
+     *
+     * The test harness is the only caller. Its fixtures write real rows through
+     * the production paths, so they need a database they may ruin — running
+     * them against the development world leaves debris behind whenever a
+     * teardown is interrupted, and that debris then breaks later runs.
+     */
+    public static function useDatabase(?string $name): void
+    {
+        if ($name === self::$database) {
+            return;
+        }
+
+        self::$database = $name;
+        self::$em = null; // rebuilt on the next call, against the new database
+    }
+
+    public static function currentDatabase(): string
+    {
+        return self::$database ?? (string) (DB_CONSTANTS['dbname'] ?? DB_CONSTANTS['db'] ?? '');
+    }
+
     public static function getEntityManager(): EntityManager
     {
         if (self::$em === null) {
             EntityManagerFactory::InitOrmConfig();
-            $connection = DriverManager::getConnection(DB_CONSTANTS, self::$orm_db_config);
+
+            $params = DB_CONSTANTS;
+            if (self::$database !== null) {
+                $params['dbname'] = self::$database;
+                $params['db'] = self::$database;
+            }
+
+            $connection = DriverManager::getConnection($params, self::$orm_db_config);
 
             // CRITICAL: Force UTF-8mb4 charset for migrations
             // This fixes "Data truncated" errors when inserting French characters
