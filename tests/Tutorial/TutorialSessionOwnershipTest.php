@@ -90,13 +90,20 @@ class TutorialSessionOwnershipTest extends TutorialIntegrationTestCase
 
     private function seedPlayer(): int
     {
-        $this->conn->insert('coords', [
-            'x'    => 0,
-            'y'    => 0,
-            'z'    => 0,
-            'plan' => 'test-ownership',
-        ]);
-        $coordsId = (int) $this->conn->lastInsertId();
+        /* La case est UNIQUE par (plan, z, x, y) : deux joueurs semés pour le
+         * même cas la partagent, au lieu de la réinsérer. */
+        $coordsId = (int) $this->conn->fetchOne(
+            "SELECT id FROM coords WHERE plan = 'test-ownership' AND z = 0 AND x = 0 AND y = 0"
+        );
+        if ($coordsId === 0) {
+            $this->conn->insert('coords', [
+                'x'    => 0,
+                'y'    => 0,
+                'z'    => 0,
+                'plan' => 'test-ownership',
+            ]);
+            $coordsId = (int) $this->conn->lastInsertId();
+        }
 
         $this->conn->insert('players', [
             'name'        => 'OwnershipTest_' . bin2hex(random_bytes(4)),

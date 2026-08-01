@@ -7,6 +7,7 @@ use App\Service\RaceImageService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Tests\Support\SeedsCharacters;
 
 /**
  * Avatars et portraits de race (panneau « Avatars & portraits ») :
@@ -18,6 +19,8 @@ use RuntimeException;
  */
 class RaceImageServiceTest extends TestCase
 {
+    use SeedsCharacters;
+
     private RaceImageService $service;
     private string $root;
 
@@ -32,6 +35,11 @@ class RaceImageServiceTest extends TestCase
 
     protected function tearDown(): void
     {
+        global $link;
+        if (isset($link) && $link instanceof Connection) {
+            $this->removeSeededCharacters($link);
+        }
+
         foreach (glob($this->root . '/img/*/*/*') ?: [] as $file) {
             unlink($file);
         }
@@ -68,8 +76,11 @@ class RaceImageServiceTest extends TestCase
 
     public function testInventoryReportsPlayersPointingAtMissingFiles(): void
     {
-        // La base de test a des joueurs avec un portrait img/portraits/ame/…
-        // qui n'existe pas dans l'arborescence temporaire
+        /* Un joueur qui DÉSIGNE un portrait absent de l'arborescence : le cas
+         * le pose, au lieu d'espérer qu'un compte du monde le fasse. */
+        global $link;
+        $this->seedCharacter($link, 'ame', ['portrait' => 'img/portraits/ame/introuvable.jpeg']);
+
         mkdir($this->root . '/img/portraits/ame', 0777, true);
         $entries = $this->service->inventory(ImageType::PORTRAIT, 'ame');
 
@@ -132,10 +143,11 @@ class RaceImageServiceTest extends TestCase
 
     public function testDeleteRefusesImagesChosenByPlayers(): void
     {
-        // Cradek & co ont un portrait en base : recréer le fichier pointé
+        /* Un portrait CHOISI par quelqu'un, posé ici : c'est le refus de le
+         * supprimer qu'on vérifie, pas la présence d'un joueur historique. */
         global $link;
-        $path = (string) $link->fetchOne("SELECT portrait FROM players WHERE portrait != '' LIMIT 1");
-        $this->assertNotSame('', $path);
+        $path = 'img/portraits/nain/choisi_par_un_joueur.jpeg';
+        $this->seedCharacter($link, 'nain', ['portrait' => $path]);
         [$dir, $race, $file] = array_slice(explode('/', $path), 1);
         mkdir($this->root . '/img/' . $dir . '/' . $race, 0777, true);
         $this->writeImage('img/' . $dir . '/' . $race . '/' . $file, 210, 320);

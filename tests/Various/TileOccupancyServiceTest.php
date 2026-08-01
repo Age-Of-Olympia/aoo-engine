@@ -181,12 +181,17 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $id = $this->coordsId(6, 0);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$id, $other->id]);
 
+        /* Un marcheur qui n'est PAS l'obstacle : on ne se barre pas soi-même.
+         * Le `1` codé en dur ne marchait que par hasard, tant que l'id 1 était
+         * un personnage du monde — sur une base neuve, la fixture le reçoit. */
+        $mover = $this->createRealPlayer('GmMarcheur');
+
         $this->assertNotNull(
-            $this->service()->stepRefusal($id, 1, true),
+            $this->service()->stepRefusal($id, (int) $mover->id, true),
             'personnage visible : il barre'
         );
         $this->assertNull(
-            $this->service()->stepRefusal($id, 1, false),
+            $this->service()->stepRefusal($id, (int) $mover->id, false),
             'personnages cachés sur ce plan : il ne barre plus'
         );
     }

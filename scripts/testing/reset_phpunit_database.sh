@@ -44,8 +44,12 @@ echo "🔄 Reconstruction de $TEST_DB depuis $SOURCE_DB"
     -e "DROP DATABASE IF EXISTS $TEST_DB;
         CREATE DATABASE $TEST_DB CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
 
-echo "📋 Structure…"
-"$DUMP" -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" --no-data --skip-triggers "$SOURCE_DB" \
+# Les DÉCLENCHEURS viennent avec la structure : certains portent une règle que
+# le schéma seul ne dit pas — celui qui remplit `races.type_kind` pour un
+# écrivain qui ignore la colonne, par exemple. Les omettre donnait une base qui
+# ressemble à la vraie et ne se comporte pas comme elle.
+echo "📋 Structure et déclencheurs…"
+"$DUMP" -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" --no-data --triggers --routines "$SOURCE_DB" \
     | "$MYSQL" -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$TEST_DB"
 
 # Catalogues only: what the game IS, never what has happened in it. A fixture

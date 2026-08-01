@@ -29,6 +29,13 @@ class TileAssetServiceTest extends TestCase
 
     protected function tearDown(): void
     {
+        global $link;
+        foreach ($this->placedTileNames as $name) {
+            $link->executeStatement('DELETE FROM map_tiles WHERE name = ?', [$name]);
+        }
+        $link->executeStatement("DELETE FROM coords WHERE plan = 'plan_test_tuiles'");
+        $this->placedTileNames = [];
+
         foreach (glob($this->root . '/img/*/*') ?: [] as $file) {
             unlink($file);
         }
@@ -78,8 +85,11 @@ class TileAssetServiceTest extends TestCase
         );
         $this->assertSame([], $paletteProblems, 'une image vraies couleurs n\'est pas signalée palette');
 
-        // Les tuiles réellement posées en base (caverne…) n'existent pas dans
-        // l'img temporaire : signalées « image absente », le vrai danger
+        /* Une tuile POSÉE dont l'image manque : le vrai danger, et le cas la
+         * pose lui-même plutôt que d'espérer en trouver une dans le monde. */
+        $this->placeTileOnAMap('tuile_test_posee_sans_image');
+        ['entries' => $entries] = $this->service->inventory('tiles');
+
         $missing = array_filter($entries, fn(array $entry) => $entry['missing']);
         $this->assertNotEmpty($missing, 'les noms posés en base sans image sont remontés');
     }
@@ -103,10 +113,29 @@ class TileAssetServiceTest extends TestCase
         $this->assertEqualsWithDelta(174, $pixel['red'], 2);
     }
 
+    /** Une tuile POSÉE, mise là par le cas : le garde-fou porte sur elle. */
+    private function placeTileOnAMap(string $name): void
+    {
+        global $link;
+
+        $coordsId = (int) $link->fetchOne(
+            "SELECT id FROM coords WHERE plan = 'plan_test_tuiles' LIMIT 1"
+        );
+        if ($coordsId === 0) {
+            $link->insert('coords', ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'plan_test_tuiles']);
+            $coordsId = (int) $link->lastInsertId();
+        }
+
+        $link->insert('map_tiles', ['name' => $name, 'coords_id' => $coordsId, 'foreground' => 0]);
+        $this->placedTileNames[] = $name;
+    }
+
+    /** @var list<string> tuiles posées ici, retirées au démontage */
+    private array $placedTileNames = [];
+
     public function testDeleteRefusesTilesStillPlacedOnMaps(): void
     {
-        // caverne est posée sur les cartes de la base de test : même sans
-        // image dans l'img temporaire, on la recrée pour tester le garde-fou
+        $this->placeTileOnAMap('caverne');
         $this->writeTruecolorPng('caverne');
 
         $this->expectException(RuntimeException::class);
@@ -124,7 +153,8 @@ class TileAssetServiceTest extends TestCase
         $this->assertFileDoesNotExist($this->root . '/img/tiles/tuile_test_move.png');
         $this->assertFileExists($this->root . '/img/foregrounds/tuile_test_move.png');
 
-        // caverne est posée sur les cartes : le changement de type est refusé
+        // Une tuile posée refuse de changer de couche.
+        $this->placeTileOnAMap('caverne');
         $this->writeTruecolorPng('caverne');
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/encore posée/');

@@ -11,6 +11,7 @@ use App\Service\ImportExport\RaceImporter;
 use App\Service\RaceService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\SeedsCharacters;
 
 /**
  * Import/export de races par bundles JSON (framework ImportExport) : le
@@ -22,6 +23,8 @@ use PHPUnit\Framework\TestCase;
  */
 class RaceImportExportTest extends TestCase
 {
+    use SeedsCharacters;
+
     protected function setUp(): void
     {
         $this->bootstrapOrSkip();
@@ -33,6 +36,7 @@ class RaceImportExportTest extends TestCase
         // Nettoie la race créée par le test d'import (cascade sur les listes)
         global $link;
         if (isset($link) && $link instanceof Connection) {
+            $this->removeSeededCharacters($link);
             $link->executeStatement(
                 "DELETE FROM races WHERE name = 'race_test_import'"
             );
@@ -140,7 +144,12 @@ class RaceImportExportTest extends TestCase
 
     public function testDeleteRefusesARaceStillUsedByCharacters(): void
     {
-        // Le compte de test Cradek est un nain : la race est référencée
+        /* La race doit être RÉFÉRENCÉE : le cas s'en charge lui-même, au lieu
+         * de compter sur le monde de développement pour héberger un nain. */
+        global $link;
+        $this->seedCharacter($link, 'nain');
+        RaceService::clearCache();
+
         $service = new RaceService();
         $race = $service->getRaceByName('nain');
         $this->assertNotNull($race);
