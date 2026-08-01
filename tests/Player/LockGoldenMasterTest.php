@@ -339,6 +339,32 @@ class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
     }
 
     /** Un mur ne se ferme pour personne, propriétaire compris. */
+    /**
+     * Un matériau extrait n'hérite pas du filon dont il sort.
+     *
+     * Les deux catalogues partagent des noms : « bronze » est un filon qu'on
+     * mine ET le lingot qui en tombe. Semer le blocage des objets depuis la
+     * race homonyme a fait porter le mur au lingot. La nature tranche : on
+     * pose un `obstacle` ou un `decor`, on mine une `ressource`.
+     */
+    public function testAGatheredMaterialDoesNotObstructLikeItsVein(): void
+    {
+        $offenders = $this->link->fetchFirstColumn(
+            "SELECT i.name
+               FROM items i
+               JOIN races r ON CONVERT(r.name USING utf8mb4) = CONVERT(i.name USING utf8mb4)
+              WHERE r.kind = 'structure'
+                AND r.structure_nature = 'ressource'
+                AND (i.blocks_passage = 1 OR i.blocks_projectiles = 1)"
+        );
+
+        $this->assertSame(
+            [],
+            $offenders,
+            'un matériau ne barre ni le pas ni la flèche : ' . implode(', ', $offenders)
+        );
+    }
+
     public function testNobodyLocksWhatHasNoDoor(): void
     {
         $owner = $this->createRealPlayer('GmMaçon');
