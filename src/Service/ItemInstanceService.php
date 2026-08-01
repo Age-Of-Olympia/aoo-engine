@@ -63,6 +63,23 @@ class ItemInstanceService extends BaseService
         return $durability <= self::BROKEN_AT;
     }
 
+    /**
+     * The wear pair, rebuilt from the shared life.
+     *
+     * An exemplar no longer stores its durability: its maximum comes from its
+     * type and its wear is a `players_bonus` deficit, like every other wound in
+     * the game. These fragments produce the same two column names the readers
+     * have always used, so what changed is where the numbers come from.
+     *
+     * Expects `item_instances i` and `items it` in the query, and adds the
+     * deficit join itself.
+     */
+    public const WEAR_SELECT = 'it.durability_max AS durability_max,
+                                it.durability_max + COALESCE(wear.n, 0) AS durability';
+
+    public const WEAR_JOIN = "LEFT JOIN players_bonus wear
+                                     ON wear.player_id = i.entity_id AND wear.name = 'pv'";
+
     /** La vie de départ d'une instance : items.durability_max (catalogue). */
     private static function catalogDurabilityMax($conn, int $itemId): int
     {

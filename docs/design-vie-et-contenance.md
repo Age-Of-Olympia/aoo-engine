@@ -222,28 +222,70 @@ chantier exists to kill, multiplied from "every dropped object" to "every
 instance in the game". The type must be able to answer before anything asks it.
 It also puts the reversible half first: this phase creates no rows.
 
-**Phase 3b — instances become entities.**
-An entity row per `item_instances` row; locations read from wherever the item is
-today (`players_items_instances` → holder + slot, `map_items_instances` → cell,
-the `unique_objects` rows that wrap an instance → cell, bridge row dropped while
-the family stays). `item_instances` demoted to satellite, keeping its own
-primary key and gaining `entity_id` — four FKs point at it, two carrying live
-market state, so re-keying to save an id is a bad trade. A dropped object's
-existing `players` row is reused, id included: keeping it alive through
-destruction is why `vanish()` shelves instead of deleting.
+**Phase 3b — instances become entities.** *(delivered in three)*
+`3b-1` an entity row per `item_instances` row, identity only, no location — plus
+the three lifecycle sites, because a migration alone leaves every exemplar born
+after it without one. `item_instances` keeps its primary key and gains
+`entity_id`: four FKs point at it, two carrying live market state, so re-keying
+to save an id is a bad trade. `3b-2a` `slot` learns `installed` vs `dropped`.
+`3b-2b` ground loot moves onto the entity, `map_items_instances` retires.
+`3b-2c` a placed exemplar reclaims its `players` row — id included, since
+keeping it alive is why `vanish()` shelves instead of deleting — and the
+`unique_objects` bridge rows go while the family stays.
 
 **Phase 3c — life moves.**
-`durability` becomes a `players_bonus` deficit, the instance's two durability
-columns die, `items.durability_max` → `items.durability`. The rename lands last,
-when nothing else answers to that name.
+`durability` becomes a `players_bonus` deficit and the instance's two durability
+columns die. Every reader keeps its column names: `WEAR_SELECT` / `WEAR_JOIN`
+rebuild the pair from the shared life, so what changes is where the numbers come
+from, not what the views ask for.
 
-**Phase 4 — capabilities land.**
+The `items.durability_max` → `items.durability` rename is **deferred**, not
+dropped. It reaches the admin screens, the wiki generator and the JSON bundle
+keys in `ItemExporter`/`ItemImporter`, where renaming a key is a compatibility
+question that deserves its own answer rather than riding along with a data
+migration.
+
+**Phase 4 — lockable.**
+Being shut is one mechanism for a building and for an object, and it already
+exists: `BuildingService::closureReason()` returns *en ruine* / *en construction*
+/ *endommagé* (under half PV) / *fermé volontairement*. Nothing in that logic is
+building-specific — only its signature, which takes a `BuildingDetails`. Same
+shape as `HealingOutcomeInstruction` being typed `Classes\Player`: the rule was
+always general, the parameter made it narrow.
+
+So: the **type** says whether it can be shut at all (a chest and a door can, a
+wall cannot), implemented by `Race` and by `Item` through the seam `OwnsCaracs`
+opened; `owner_id` and `is_open` move from `buildings` onto the entity, so
+anything can be owned by a **character or a faction** and shut; and
+`closureReason()` becomes the shared rule.
+
+*Why it follows 3c and not the reverse:* the `endommagé` clause reads a
+percentage of life. Wire it before life is one thing and a battered exemplar
+reports itself pristine and stays open. And `build_state = 'ruin'` and
+`durability <= 0` are the same idea — once life is unified the clause becomes a
+question about life instead of a state string, so the per-family branch is never
+written rather than written then deleted.
+
+`'en construction'` stays building-only and untouched: it is a placeholder for
+the coming work-quantity mechanic, not something an exemplar should fake.
+
+**Phase 5 — containers stop being building types.**
+A chest exists twice today: an `items` row (constructible) and a `races` row of
+kind `building`. Building one **consumes the item** to produce a building entity
+with no exemplar behind it, so placing a chest destroys its wear, its name and
+tomorrow its contents. The `coffre_*` building types retire and built chests
+convert to installed exemplars.
+
+*Why it follows phase 4:* `buildings` carries `owner_id` and `is_open`, and an
+exemplar has nowhere to put either until the entity does. Converting first would
+silently strip every standing chest of its owner and its lock.
+
+**Phase 6 — the rest of the capabilities land.**
 Damage, heal and repair go through the one life; every `player_type === 'unique'`
-branch dies with them, `RequiresDamagedTargetCondition::checkObjectWear`
-included. Inventory becomes children, so `LootSpillService` becomes "re-parent my
-children to my cell", and a smashed chest spilling its contents is the same code
-as a player dying. `reparer` reaches a bagged sword because a bagged sword is an
-entity below its max life.
+branch dies with them. Inventory becomes children, so `LootSpillService` becomes
+"re-parent my children to my cell", and a smashed chest spilling its contents is
+the same code as a player dying. `reparer` reaches a bagged sword because a
+bagged sword is an entity below its max life.
 
 ---
 
@@ -275,3 +317,10 @@ Decisions taken, not to be re-litigated without new information.
 - Broken is terminal.
 - A container holding anything cannot be picked up. Generic, not chest-specific.
 - Smashing a container kills it: it spills its contents like a player who dies.
+- **Being shut is one mechanism** for buildings and objects alike, and ownership
+  with it — a character or a faction, exactly as buildings already do it. Locking
+  a chest and locking a forge are the same rule read through the same contract.
+- **A placed object is never a building.** Placing installs the exemplar itself,
+  so it keeps its wear, its name and its contents through the round trip.
+- **The world map shows no dropped or placed objects.** It is for orientation,
+  and a chest is not a landmark at that zoom. Reversible if play disagrees.
