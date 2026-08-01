@@ -239,7 +239,10 @@ class PlayerService
     {
         $timestamp = time();
 
-        if ($target->getPlayerType() === 'unique') {
+        /* Un exemplaire POSÉ ne disparaît pas : il tombe brisé sur sa case et
+         * garde sa ligne. Les objets uniques d'animateur suivent le même
+         * chemin tant qu'ils enveloppent un exemplaire. */
+        if (in_array($target->getPlayerType(), ['unique', \App\Service\ItemInstanceService::ENTITY_TYPE], true)) {
             // L'entité disparaît (sa ligne players et ses logs avec) : on
             // détruit d'abord, puis on journalise côté attaquant seulement
             // — un log ciblant la ligne supprimée violerait la FK.

@@ -30,9 +30,12 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
         if ($link !== null) {
             /* La clé étrangère est RESTRICT : un porteur encore chargé refuse
              * d'être supprimé, et c'est voulu. Le harnais relâche donc avant
-             * de démonter. */
+             * de démonter — mais SES fixtures seulement. Relâcher tous les
+             * porteurs de la base détachait au passage les exemplaires que
+             * d'autres cas venaient de faire ramasser, et les laissait
+             * orphelins derrière eux. */
             $link->executeStatement(
-                "UPDATE players SET holder_id = NULL, slot = '' WHERE holder_id IS NOT NULL"
+                "UPDATE players SET holder_id = NULL, slot = '' WHERE name LIKE 'Contenance%'"
             );
             $link->executeStatement(
                 'DELETE ec FROM entity_cells ec JOIN coords c ON c.id = ec.coords_id WHERE c.plan = ?',

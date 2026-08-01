@@ -36,15 +36,21 @@ class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
     protected function tearDown(): void
     {
-        // Exemplars left lying on the floor by a failed test: the exemplar
-        // goes first, then its entity — the foreign key is RESTRICT.
+        /* Exemplars a failed test left on a tile, dropped OR installed. Placing
+         * releases the ownership link, so the fixture teardown — which finds
+         * exemplars through their owner — cannot see them: an installed one
+         * would sit there forever, holding a tile other cases build on. The
+         * exemplar goes first, then its entity; the foreign key is RESTRICT. */
         if ($this->link !== null) {
             $rows = $this->link->fetchAllAssociative(
                 'SELECT i.id, i.entity_id FROM players e
                    JOIN item_instances i ON i.entity_id = e.id
-                  WHERE e.slot = ?
+                  WHERE e.slot IN (?, ?)
                     AND (i.creator_id IS NULL OR i.creator_id IN (SELECT id FROM players WHERE name LIKE "Gm%"))',
-                [\App\Service\Map\EntityLocationService::SLOT_DROPPED]
+                [
+                    \App\Service\Map\EntityLocationService::SLOT_DROPPED,
+                    \App\Service\Map\EntityLocationService::SLOT_INSTALLED,
+                ]
             );
             if ($rows !== []) {
                 $in = implode(',', array_map(static fn ($r) => (int) $r['id'], $rows));
@@ -148,36 +154,61 @@ class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->assertSame($player->id, (int) $picked['holder_id'], 'its holder is the walker');
     }
 
-    public function testEntityWrapperStillWorksForAnimatorArtifacts(): void
+    /**
+     * Placing an exemplar installs the exemplar itself — no shell, no bridge.
+     *
+     * The entity SURVIVES the pickup, because it is the object rather than a
+     * stand-in for it. That is what lets a placed thing carry anything at all:
+     * a shell deleted on pickup could never hold a life, let alone contents.
+     */
+    public function testPlacingInstallsTheExemplarItselfAndSurvivesThePickup(): void
     {
-        // The UniqueObject ENTITY path stays available (attackable artifact):
-        // place, verify wrap + release, take back — service level.
         [$player, , $instanceId] = $this->playerWithWornGladius();
 
         ob_start();
         try {
-            $uniqueId = (new UniqueObjectService())->placeInstance(
+            $entityId = (new UniqueObjectService())->placeInstance(
                 $instanceId,
                 (object) ['x' => 0, 'y' => 5, 'z' => 0, 'plan' => 'gaia']
             );
         } finally {
             ob_end_clean();
         }
-        $this->trackEntityId($uniqueId);
+        /* Pas de trackEntityId : cette entité EST l'exemplaire, et le ménage
+         * de son porteur l'emporte avec lui. La suivre à part la ferait
+         * supprimer avant son exemplaire, que la clé étrangère protège. */
 
-        $this->assertSame('unique', $this->link->fetchOne('SELECT player_type FROM players WHERE id = ?', [$uniqueId]));
+        $placed = $this->link->fetchAssociative(
+            'SELECT player_type, race, slot FROM players WHERE id = ?',
+            [$entityId]
+        );
+        $this->assertSame(ItemInstanceService::ENTITY_TYPE, $placed['player_type']);
+        $this->assertSame('gladius', $placed['race'], 'son type est celui du catalogue, plus la race fantôme « objet »');
+        $this->assertSame(\App\Service\Map\EntityLocationService::SLOT_INSTALLED, $placed['slot']);
         $this->assertSame(
-            $instanceId,
-            (int) $this->link->fetchOne('SELECT item_instance_id FROM unique_objects WHERE player_id = ?', [$uniqueId])
+            $entityId,
+            (int) $this->link->fetchOne('SELECT entity_id FROM item_instances WHERE id = ?', [$instanceId]),
+            'l\'entité posée EST l\'exemplaire'
+        );
+        $this->assertFalse(
+            $this->link->fetchOne('SELECT 1 FROM unique_objects WHERE player_id = ?', [$entityId]),
+            'plus de pont : il n\'enveloppe rien, il est'
         );
 
-        $taken = (new UniqueObjectService())->takeInstance($uniqueId, $player->id);
+        $taken = (new UniqueObjectService())->takeInstance($entityId, $player->id);
         $this->assertSame($instanceId, $taken);
         $this->assertSame(
             60,
             (int) $this->link->fetchOne('SELECT durability FROM item_instances WHERE id = ?', [$instanceId]),
             'identity survives the entity round trip too'
         );
-        $this->assertFalse($this->link->fetchOne('SELECT 1 FROM players WHERE id = ?', [$uniqueId]));
+
+        $carried = $this->link->fetchAssociative(
+            'SELECT coords_id, holder_id FROM players WHERE id = ?',
+            [$entityId]
+        );
+        $this->assertNotFalse($carried, 'ramassé, il existe toujours — ce n\'était pas une doublure');
+        $this->assertNull($carried['coords_id'], 'il ne tient plus sa case');
+        $this->assertSame($player->id, (int) $carried['holder_id'], 'son porteur est celui qui l\'a pris');
     }
 }

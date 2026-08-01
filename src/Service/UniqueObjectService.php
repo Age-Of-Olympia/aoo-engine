@@ -61,13 +61,6 @@ class UniqueObjectService extends BaseService
         }
 
         $name = $row['custom_name'] !== '' ? $row['custom_name'] : ucfirst((string) $row['catalog_name']);
-
-        $id = getNextEntityId('unique');
-        // Id recyclé : purge des caches par-entité, sinon l'objet posé
-        // ressert l'identité de l'ancienne entité (même garde que
-        // BuildingService::place).
-        BuildingService::purgeEntityCaches($id);
-        $displayId = getNextDisplayId('unique');
         $coordsId = View::get_coords_id($goCoords);
 
         $avatar = 'img/items/' . $row['catalog_name'] . '.webp';
@@ -75,51 +68,64 @@ class UniqueObjectService extends BaseService
             $avatar = BuildingService::NO_IMAGE;
         }
 
-        $conn->transactional(function ($conn) use ($id, $displayId, $name, $avatar, $coordsId, $instanceId): void {
-            $conn->executeStatement(
-                "INSERT INTO players
-                    (id, player_type, display_id, name, race, avatar, portrait, coords_id, slot, nextTurnTime, registerTime)
-                 VALUES (?, 'unique', ?, ?, ?, ?, ?, ?, ?, 0, ?)",
-                [
-                    $id, $displayId, $name, self::ITEM_RACE, $avatar, $avatar, $coordsId,
-                    \App\Service\Map\EntityLocationService::SLOT_INSTALLED, time(),
-                ]
-            );
-            (new \App\Service\Map\EntityCellService($conn))->syncCells((int) $id);
+        $id = 0;
+        $conn->transactional(function ($conn) use (&$id, $name, $avatar, $coordsId, $instanceId): void {
+            /* The exemplar's OWN entity is installed: no shell to mint, no
+             * bridge to keep. What is placed is the sword itself, so its wear,
+             * its name and its contents come along and survive the pickup. */
+            $id = ItemInstanceService::ensureEntity($conn, $instanceId);
 
             $conn->executeStatement(
-                'INSERT INTO unique_objects (player_id, item_instance_id) VALUES (?, ?)',
-                [$id, $instanceId]
+                'UPDATE players SET name = ?, avatar = ?, portrait = ? WHERE id = ?',
+                [$name, $avatar, $avatar, $id]
             );
-            // The instance's location is now the map: release the owner link.
+
+            (new \App\Service\Map\EntityLocationService($conn))->installOnCell($id, (int) $coordsId);
+
+            // The exemplar's location is now the map: release the owner link.
             $conn->executeStatement('DELETE FROM players_items_instances WHERE instance_id = ?', [$instanceId]);
         });
 
         View::refresh_players_svg($goCoords);
 
-        $this->addAuditLog("UniqueObjectService::placeInstance #{$instanceId} as unique #{$id}");
+        $this->addAuditLog("UniqueObjectService::placeInstance #{$instanceId} as item #{$id}");
 
         return $id;
     }
 
     /**
-     * Take a wrapped instance back: link it to the taker's inventory and
-     * remove the map entity (component rows first, cache files purged —
-     * same hygiene as BuildingService::remove()).
+     * The exemplar an INSTALLED entity is, or null when it is not one.
      *
-     * @return int|null the taken instance id, null when the target wraps nothing
+     * The bridge is gone: a placed object no longer wraps an exemplar, it IS
+     * one. The question is therefore asked of `item_instances.entity_id`.
+     */
+    public static function instanceIdOf(\Doctrine\DBAL\Connection $conn, int $entityId): ?int
+    {
+        $instanceId = $conn->fetchOne(
+            'SELECT i.id FROM item_instances i
+               JOIN players p ON p.id = i.entity_id
+              WHERE p.id = ? AND p.player_type = ?',
+            [$entityId, ItemInstanceService::ENTITY_TYPE]
+        );
+
+        return ($instanceId === false || $instanceId === null) ? null : (int) $instanceId;
+    }
+
+    /**
+     * Take a placed exemplar back into a bag.
+     *
+     * The entity SURVIVES — it is the exemplar. Only its location changes, from
+     * a cell to the taker, which is what makes the round trip keep everything
+     * the object is.
+     *
+     * @return int|null the taken instance id, null when the target is not an exemplar
      */
     public function takeInstance(int $uniqueId, int $takerId): ?int
     {
         $conn = $this->entityManager->getConnection();
 
-        $instanceId = $conn->fetchOne(
-            "SELECT u.item_instance_id
-             FROM unique_objects u JOIN players p ON p.id = u.player_id
-             WHERE u.player_id = ? AND p.player_type = 'unique'",
-            [$uniqueId]
-        );
-        if ($instanceId === false || $instanceId === null) {
+        $instanceId = self::instanceIdOf($conn, $uniqueId);
+        if ($instanceId === null) {
             return null;
         }
 
@@ -133,8 +139,8 @@ class UniqueObjectService extends BaseService
                 'INSERT INTO players_items_instances (player_id, instance_id) VALUES (?, ?)',
                 [$takerId, (int) $instanceId]
             );
-            $conn->executeStatement('DELETE FROM unique_objects WHERE player_id = ?', [$uniqueId]);
-            BuildingService::deleteEntityRows($conn, $uniqueId);
+
+            (new \App\Service\Map\EntityLocationService($conn))->putInside($uniqueId, $takerId);
         });
 
         BuildingService::purgeEntityCaches($uniqueId);
@@ -148,24 +154,18 @@ class UniqueObjectService extends BaseService
     }
 
     /**
-     * Destruction en jeu (0 PV) : l'entité disparaît de la carte et
-     * l'instance enveloppée tombe BRISÉE au sol (durabilité 0, bourse)
-     * — l'identité survit et reste réparable, cohérent avec les deux
-     * états posé/construit.
+     * Destruction en jeu (0 PV) : l'exemplaire posé tombe BRISÉ sur sa case
+     * (durabilité 0). Son identité survit — il ne cesse pas d'exister, il
+     * cesse de tenir sa case.
      *
-     * @return int|null the broken instance id, null when the target wraps nothing
+     * @return int|null the broken instance id, null when the target is not an exemplar
      */
     public function destroyToGround(int $uniqueId): ?int
     {
         $conn = $this->entityManager->getConnection();
 
-        $instanceId = $conn->fetchOne(
-            "SELECT u.item_instance_id
-             FROM unique_objects u JOIN players p ON p.id = u.player_id
-             WHERE u.player_id = ? AND p.player_type = 'unique'",
-            [$uniqueId]
-        );
-        if ($instanceId === false || $instanceId === null) {
+        $instanceId = self::instanceIdOf($conn, $uniqueId);
+        if ($instanceId === null) {
             return null;
         }
 
@@ -181,15 +181,9 @@ class UniqueObjectService extends BaseService
                 [(int) $instanceId]
             );
 
-            /* The wrapper dies and the exemplar falls on its own, so this is
-             * where it stops being an entity only through its wrapper. */
-            (new \App\Service\Map\EntityLocationService($conn))->dropOnCell(
-                ItemInstanceService::ensureEntity($conn, (int) $instanceId),
-                (int) $coordsId
-            );
-
-            $conn->executeStatement('DELETE FROM unique_objects WHERE player_id = ?', [$uniqueId]);
-            BuildingService::deleteEntityRows($conn, $uniqueId);
+            /* Smashed, it stops holding its tile and lies on it instead. The
+             * same entity throughout: nothing is deleted, nothing re-created. */
+            (new \App\Service\Map\EntityLocationService($conn))->dropOnCell($uniqueId, (int) $coordsId);
         });
 
         BuildingService::purgeEntityCaches($uniqueId);
