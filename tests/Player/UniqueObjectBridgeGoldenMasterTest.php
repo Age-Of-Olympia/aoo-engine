@@ -40,13 +40,19 @@ class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
          * releases the ownership link, so the fixture teardown — which finds
          * exemplars through their owner — cannot see them: an installed one
          * would sit there forever, holding a tile other cases build on. The
-         * exemplar goes first, then its entity; the foreign key is RESTRICT. */
+         * exemplar goes first, then its entity; the foreign key is RESTRICT.
+         *
+         * SEULEMENT ce qu'une fixture a créé. La condition portait aussi sur
+         * `creator_id IS NULL`, ce qui est la signature d'un objet POSÉ PAR
+         * L'ADMINISTRATION : lancée sur la base de développement, la suite a
+         * ainsi détaché les sept coffres du monde de leur exemplaire. Un
+         * teardown ne nettoie que derrière lui. */
         if ($this->link !== null) {
             $rows = $this->link->fetchAllAssociative(
                 'SELECT i.id, i.entity_id FROM players e
                    JOIN item_instances i ON i.entity_id = e.id
                   WHERE e.slot IN (?, ?)
-                    AND (i.creator_id IS NULL OR i.creator_id IN (SELECT id FROM players WHERE name LIKE "Gm%"))',
+                    AND i.creator_id IN (SELECT id FROM players WHERE name LIKE "Gm%")',
                 [
                     \App\Service\Map\EntityLocationService::SLOT_DROPPED,
                     \App\Service\Map\EntityLocationService::SLOT_INSTALLED,
