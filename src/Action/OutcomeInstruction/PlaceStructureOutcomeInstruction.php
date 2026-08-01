@@ -85,15 +85,30 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
             View::get_free_coords_id_arround($goCoords, 1);
         }
 
+        /* Deux poses, et c'est le CATALOGUE qui tranche : un type encore décrit
+         * par une race donne un bâtiment, tout le reste pose l'objet lui-même.
+         *
+         * La règle se vide d'elle-même. Chaque famille qui quitte `races` —
+         * les conteneurs viennent de le faire — bascule du premier cas au
+         * second sans qu'on revienne ici, et le jour où plus rien n'est décrit
+         * par une race, il ne reste que la pose d'objet.
+         *
+         * Bâtir un objet POSE cet objet : le geste consommait l'exemplaire pour
+         * frapper un bâtiment d'après une race homonyme, jetant au passage tout
+         * ce que l'objet était. */
+        $isRaceTyped = $this->raceService()->getRaceByName($type)?->isStructureKind() ?? false;
+
         try {
-            $id = (new BuildingService())->place(
-                $type,
-                $goCoords,
-                $actor->id,
-                (string) ($actor->data->faction ?? ''),
-                $name !== '' ? $name : null
-            );
-        } catch (\InvalidArgumentException $e) {
+            $id = $isRaceTyped
+                ? (new BuildingService())->place(
+                    $type,
+                    $goCoords,
+                    $actor->id,
+                    (string) ($actor->data->faction ?? ''),
+                    $name !== '' ? $name : null
+                )
+                : $this->placeTheObjectItself($type, $goCoords, (int) $actor->id);
+        } catch (\InvalidArgumentException | \RuntimeException $e) {
             return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: [$e->getMessage()]);
         }
 
@@ -103,5 +118,34 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
             . ' <span class="ra ra-tower"></span> en (' . $goCoords->x . ', ' . $goCoords->y . ') — structure #' . $id . '.';
 
         return new OutcomeResult(true, outcomeSuccessMessages: [$message], outcomeFailureMessages: array());
+    }
+
+    /**
+     * Pose l'objet lui-même : son exemplaire naît debout sur la case.
+     *
+     * L'unité a déjà quitté le sac — `RequiresItem` l'a consommée au paiement —
+     * si bien qu'il n'y a rien à y reprendre : ce qui est posé est l'objet
+     * qu'on vient de dépenser, et il garde désormais une identité propre.
+     *
+     * @throws \RuntimeException type absent du catalogue des objets
+     */
+    private function placeTheObjectItself(string $type, object $coords, int $actorId): int
+    {
+        $item = \Classes\Item::get_item_by_name($type);
+
+        if (!$item instanceof \Classes\Item) {
+            throw new \RuntimeException("« {$type} » n'est ni une race de structure, ni un objet du catalogue.");
+        }
+
+        $coordsId = (int) View::get_coords_id($coords);
+
+        return (new \App\Service\ItemInstanceService())
+            ->installFromCatalogAt((int) $item->id, $coordsId, $actorId, $actorId);
+    }
+
+    /** Le catalogue des races, instancié à la demande — la classe est une entité Doctrine. */
+    private function raceService(): \App\Service\RaceService
+    {
+        return new \App\Service\RaceService();
     }
 }

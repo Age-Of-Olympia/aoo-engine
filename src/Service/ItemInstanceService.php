@@ -802,6 +802,45 @@ class ItemInstanceService extends BaseService
     }
 
     /**
+     * Build path: a fresh exemplar of a catalogue item, born standing on a cell.
+     *
+     * Building an object PLACES that object. It used to consume the item and
+     * mint a building from a race of the same name, which threw away everything
+     * the object was — its wear, its name, and tomorrow its contents.
+     *
+     * The unit has already left the bag when this runs (`RequiresItem` consumed
+     * it at the payment), so the exemplar is created straight onto the tile
+     * rather than passing through an inventory it would leave in the same
+     * breath. Pristine, like anything the catalogue has just made.
+     *
+     * @return int the exemplar's entity id
+     */
+    public function installFromCatalogAt(
+        int $itemId,
+        int $coordsId,
+        ?int $creatorId = null,
+        ?int $ownerId = null
+    ): int {
+        $conn = $this->entityManager->getConnection();
+
+        return $conn->transactional(function ($conn) use ($itemId, $coordsId, $creatorId, $ownerId): int {
+            $conn->executeStatement(
+                'INSERT INTO item_instances (item_id, creator_id, created_at) VALUES (?, ?, ?)',
+                [$itemId, $creatorId, time()]
+            );
+            $entityId = self::ensureEntity($conn, (int) $conn->lastInsertId());
+
+            (new \App\Service\Map\EntityLocationService($conn))->installOnCell($entityId, $coordsId);
+
+            if ($ownerId !== null) {
+                $conn->executeStatement('UPDATE players SET owner_id = ? WHERE id = ?', [$ownerId, $entityId]);
+            }
+
+            return $entityId;
+        });
+    }
+
+    /**
      * Walk-on pickup: every ground instance of the tile joins the
      * walker's inventory. Returns display labels for the loot recap.
      *
