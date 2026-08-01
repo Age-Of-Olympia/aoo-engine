@@ -176,6 +176,11 @@ final class EntityCellService
      * Entities holding no cell where they stand. Reported and repaired by the
      * `entity-cells` console command.
      *
+     * Only INSTALLED entities are considered. Something merely dropped on a
+     * tile holds no cell by definition, so without this filter every piece of
+     * loot on the floor would read as corruption — and `reconcile()` would
+     * repair it into a figure standing on the board.
+     *
      * @return list<array{player_id: int, expected: int, actual: ?int}>
      */
     public function drift(): array
@@ -186,8 +191,9 @@ final class EntityCellService
                FROM players p
                LEFT JOIN entity_cells ec
                       ON ec.player_id = p.id AND ec.coords_id = p.coords_id
-              WHERE p.coords_id > 0 AND ec.coords_id IS NULL
-              ORDER BY p.id'
+              WHERE p.coords_id > 0 AND ec.coords_id IS NULL AND p.slot = ?
+              ORDER BY p.id',
+            [EntityLocationService::SLOT_INSTALLED]
         );
     }
 

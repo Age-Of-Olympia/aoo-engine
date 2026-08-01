@@ -78,9 +78,12 @@ class UniqueObjectService extends BaseService
         $conn->transactional(function ($conn) use ($id, $displayId, $name, $avatar, $coordsId, $instanceId): void {
             $conn->executeStatement(
                 "INSERT INTO players
-                    (id, player_type, display_id, name, race, avatar, portrait, coords_id, nextTurnTime, registerTime)
-                 VALUES (?, 'unique', ?, ?, ?, ?, ?, ?, 0, ?)",
-                [$id, $displayId, $name, self::ITEM_RACE, $avatar, $avatar, $coordsId, time()]
+                    (id, player_type, display_id, name, race, avatar, portrait, coords_id, slot, nextTurnTime, registerTime)
+                 VALUES (?, 'unique', ?, ?, ?, ?, ?, ?, ?, 0, ?)",
+                [
+                    $id, $displayId, $name, self::ITEM_RACE, $avatar, $avatar, $coordsId,
+                    \App\Service\Map\EntityLocationService::SLOT_INSTALLED, time(),
+                ]
             );
             (new \App\Service\Map\EntityCellService($conn))->syncCells((int) $id);
 

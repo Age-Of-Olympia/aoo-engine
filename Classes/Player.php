@@ -2323,6 +2323,9 @@ class Player implements ActorInterface {
             'avatar'=>'img/avatars/ame/'. $race .'.webp',
             'portrait'=>'img/portraits/ame/1.jpeg',
             'coords_id'=>$coordsId,
+            // On a cell means installed on it: an empty slot there would read
+            // as "lying on the floor" once items became entities.
+            'slot'=>\App\Service\Map\EntityLocationService::SLOT_INSTALLED,
             'faction'=>$raceData->faction ?? '',
             'nextTurnTime'=>$time,
             'registerTime'=>$time

@@ -374,8 +374,8 @@ class BuildingService extends BaseService
                  * nouveau, frappez-moi! » — qui a du sens pour un
                  * personnage naissant et aucun pour un mur. */
                 'INSERT INTO players
-                    (id, player_type, display_id, name, race, avatar, portrait, coords_id, nextTurnTime, registerTime, text)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)',
+                    (id, player_type, display_id, name, race, avatar, portrait, coords_id, slot, nextTurnTime, registerTime, text)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)',
                 [
                     $id,
                     'building',
@@ -385,6 +385,7 @@ class BuildingService extends BaseService
                     $avatar,
                     $avatar,
                     $coordsId,
+                    \App\Service\Map\EntityLocationService::SLOT_INSTALLED,
                     time(),
                     $race->getDefaultText(),
                 ]

@@ -26,6 +26,23 @@ final class EntityLocationService
     public const SLOT_CARRIED = '';
 
     /**
+     * On a cell and part of it: drawn as a figure, occupies `entity_cells`,
+     * can be hit. Every entity that stood on a cell before items arrived.
+     */
+    public const SLOT_INSTALLED = 'installed';
+
+    /**
+     * On a cell but only lying there: a tile marker, picked up freely,
+     * occupying nothing.
+     *
+     * Stored rather than inferred from "has no cells", because that absence
+     * already means something else: {@see EntityCellService::drift()} reads it
+     * as corruption and `reconcile()` repairs it by laying cells — which would
+     * quietly promote every dropped sword into a figure on the board.
+     */
+    public const SLOT_DROPPED = 'dropped';
+
+    /**
      * How far a holder chain may be climbed.
      *
      * A bag in a chest on a cart is three; the guard exists for the cycle a bug
@@ -42,19 +59,37 @@ final class EntityLocationService
     }
 
     /**
-     * Stand an entity on a cell, taking it out of whatever held it.
+     * Install an entity on a cell: it becomes part of the tile.
      *
-     * Its cells are re-laid: `entity_cells` is what the board reads, and a
+     * Its cells are re-laid — `entity_cells` is what the board reads, and a
      * figure that moved without them stays drawn where it was.
      */
-    public function placeOnCell(int $entityId, int $coordsId): void
+    public function installOnCell(int $entityId, int $coordsId): void
     {
-        $this->conn->executeStatement(
-            "UPDATE players SET coords_id = ?, holder_id = NULL, slot = '' WHERE id = ?",
-            [$coordsId, $entityId]
-        );
+        $this->moveToCell($entityId, $coordsId, self::SLOT_INSTALLED);
 
         (new EntityCellService($this->conn))->syncCells($entityId);
+    }
+
+    /**
+     * Drop an entity on a cell: it lies there without being part of it.
+     *
+     * No cells: dropped loot is a marker on the tile, not a figure standing on
+     * it, and it must not block, screen or be hit.
+     */
+    public function dropOnCell(int $entityId, int $coordsId): void
+    {
+        $this->moveToCell($entityId, $coordsId, self::SLOT_DROPPED);
+
+        (new EntityCellService($this->conn))->removeFor($entityId);
+    }
+
+    private function moveToCell(int $entityId, int $coordsId, string $slot): void
+    {
+        $this->conn->executeStatement(
+            'UPDATE players SET coords_id = ?, holder_id = NULL, slot = ? WHERE id = ?',
+            [$coordsId, $slot, $entityId]
+        );
     }
 
     /**

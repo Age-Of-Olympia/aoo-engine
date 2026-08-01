@@ -68,8 +68,8 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
         return [(int) $row['coords_id'], (int) $row['holder_id']];
     }
 
-    /** Standing somewhere means standing nowhere else, and holding your cells. */
-    public function testPlacingOnACellClearsAnyHolderAndLaysTheCells(): void
+    /** Installed somewhere means installed nowhere else, and holding your cells. */
+    public function testInstallingOnACellClearsAnyHolderAndLaysTheCells(): void
     {
         $carrier = $this->createRealPlayer('ContenanceP');
         $carried = $this->createRealPlayer('ContenanceE');
@@ -77,7 +77,7 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
 
         $service->putInside((int) $carried->id, (int) $carrier->id, 'main1');
         $cell = $this->coordsId(1, 1);
-        $service->placeOnCell((int) $carried->id, $cell);
+        $service->installOnCell((int) $carried->id, $cell);
 
         [$coordsId, $holderId] = $this->rawLocation((int) $carried->id);
         $this->assertSame($cell, $coordsId);
@@ -90,6 +90,70 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /** Dropped lies on the tile: marked as such, occupying nothing. */
+    public function testDroppingOnACellOccupiesNothing(): void
+    {
+        $entity = $this->createRealPlayer('ContenanceJete');
+        $service = $this->service();
+        $cell = $this->coordsId(5, 5);
+
+        $service->installOnCell((int) $entity->id, $cell);
+        $service->dropOnCell((int) $entity->id, $cell);
+
+        $row = $this->link->fetchAssociative(
+            'SELECT coords_id, slot FROM players WHERE id = ?',
+            [$entity->id]
+        );
+
+        $this->assertSame($cell, (int) $row['coords_id'], 'il est bien sur la case');
+        $this->assertSame(EntityLocationService::SLOT_DROPPED, $row['slot']);
+        $this->assertSame(
+            [],
+            (new EntityCellService($this->link))->cellsOf((int) $entity->id),
+            'ce qui traîne n\'occupe pas la case : ni figure, ni blocage, ni cible'
+        );
+    }
+
+    /**
+     * The trap the marker exists for: drift() must not see dropped loot.
+     *
+     * Without it, anything lying on a tile matches "on a cell with no cell of
+     * its own" — the definition of corruption — and reconcile() would lay its
+     * cells, promoting the whole floor into figures on the board.
+     */
+    public function testDroppedLootIsNotReadAsDrift(): void
+    {
+        $entity = $this->createRealPlayer('ContenanceDerive');
+        $service = $this->service();
+
+        $service->dropOnCell((int) $entity->id, $this->coordsId(6, 6));
+
+        $drifting = array_column((new EntityCellService($this->link))->drift(), 'player_id');
+
+        $this->assertNotContains(
+            (int) $entity->id,
+            array_map('intval', $drifting),
+            'ce qui traîne n\'est pas une emprise à réparer'
+        );
+    }
+
+    /** An installed entity that lost its cells IS drift, and stays repairable. */
+    public function testAnInstalledEntityWithoutItsCellsIsStillDrift(): void
+    {
+        $entity = $this->createRealPlayer('ContenanceAncre');
+        $service = $this->service();
+
+        $service->installOnCell((int) $entity->id, $this->coordsId(7, 7));
+        (new EntityCellService($this->link))->removeFor((int) $entity->id);
+
+        $drifting = array_map(
+            'intval',
+            array_column((new EntityCellService($this->link))->drift(), 'player_id')
+        );
+
+        $this->assertContains((int) $entity->id, $drifting, 'une ancre perdue reste signalée');
+    }
+
     /** Picked up is off the board: no cell of its own, and none left behind. */
     public function testBeingHeldReleasesTheCellAndItsFootprint(): void
     {
@@ -97,7 +161,7 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
         $carried = $this->createRealPlayer('ContenanceTenu');
         $service = $this->service();
 
-        $service->placeOnCell((int) $carried->id, $this->coordsId(2, 2));
+        $service->installOnCell((int) $carried->id, $this->coordsId(2, 2));
         $service->putInside((int) $carried->id, (int) $carrier->id);
 
         $row = $this->link->fetchAssociative(
@@ -124,7 +188,7 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
         $service = $this->service();
 
         $cell = $this->coordsId(3, 3);
-        $service->placeOnCell((int) $bearer->id, $cell);
+        $service->installOnCell((int) $bearer->id, $cell);
         $service->putInside((int) $bag->id, (int) $bearer->id);
         $service->putInside((int) $sword->id, (int) $bag->id);
 
@@ -153,7 +217,7 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
         $entity = $this->createRealPlayer('ContenanceLimbes');
         $service = $this->service();
 
-        $service->placeOnCell((int) $entity->id, $this->coordsId(4, 4));
+        $service->installOnCell((int) $entity->id, $this->coordsId(4, 4));
         $service->shelve((int) $entity->id);
 
         $row = $this->link->fetchAssociative(

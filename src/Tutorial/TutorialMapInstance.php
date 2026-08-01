@@ -216,6 +216,7 @@ class TutorialMapInstance
                 'player_type' => 'npc',
                 'name' => $npc['name'],
                 'coords_id' => (int) $coordsId,
+                'slot' => \App\Service\Map\EntityLocationService::SLOT_INSTALLED,
                 'race' => $npc['race'],
                 'psw' => '',
                 'mail' => '',

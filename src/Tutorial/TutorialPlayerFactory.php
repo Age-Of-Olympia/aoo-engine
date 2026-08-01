@@ -100,6 +100,7 @@ class TutorialPlayerFactory
             'mail'                => '',
             'plain_mail'          => '',
             'coords_id'           => $startingCoordsId,
+            'slot'                => \App\Service\Map\EntityLocationService::SLOT_INSTALLED,
             'race'                => $race,
             'xp'                  => 0,
             'pi'                  => 0,

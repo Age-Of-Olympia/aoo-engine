@@ -140,6 +140,7 @@ class TutorialResourceManager
                     'display_id'  => $displayId,
                     'name'        => $npc['name'],
                     'coords_id'   => $enemyCoordsId,
+                    'slot'        => \App\Service\Map\EntityLocationService::SLOT_INSTALLED,
                     'race'        => $npc['race'],
                     'xp'          => 0,
                     'pi'          => 0,
