@@ -39,7 +39,31 @@ final class EntityManagerFactory
 
     public static function currentDatabase(): string
     {
-        return self::$database ?? (string) (DB_CONSTANTS['dbname'] ?? DB_CONSTANTS['db'] ?? '');
+        $params = self::connectionParams();
+
+        return (string) ($params['dbname'] ?? $params['db'] ?? '');
+    }
+
+    /**
+     * The configured connection, with the override applied when one is set.
+     *
+     * Single reader of DB_CONSTANTS: the constant is defined by a gitignored
+     * config file, so static analysis cannot see it and the exception is
+     * declared once rather than everywhere it would otherwise be touched.
+     *
+     * @return array<string, mixed>
+     */
+    private static function connectionParams(): array
+    {
+        /** @var array<string, mixed> $params */
+        $params = DB_CONSTANTS;
+
+        if (self::$database !== null) {
+            $params['dbname'] = self::$database;
+            $params['db'] = self::$database;
+        }
+
+        return $params;
     }
 
     public static function getEntityManager(): EntityManager
@@ -47,13 +71,7 @@ final class EntityManagerFactory
         if (self::$em === null) {
             EntityManagerFactory::InitOrmConfig();
 
-            $params = DB_CONSTANTS;
-            if (self::$database !== null) {
-                $params['dbname'] = self::$database;
-                $params['db'] = self::$database;
-            }
-
-            $connection = DriverManager::getConnection($params, self::$orm_db_config);
+            $connection = DriverManager::getConnection(self::connectionParams(), self::$orm_db_config);
 
             // CRITICAL: Force UTF-8mb4 charset for migrations
             // This fixes "Data truncated" errors when inserting French characters
