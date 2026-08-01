@@ -31,7 +31,13 @@ use Doctrine\ORM\Mapping as ORM;
     'building' => Building::class,
     'unique' => UniqueObject::class,
     'scenery' => Scenery::class,
-    'resource' => Resource::class
+    'resource' => Resource::class,
+    /* Declared here BEFORE any row wears the type, and the order matters:
+     * `scenery` reached the table first and every lookup through the entity
+     * root returned null for a decor until someone noticed. `plant` and
+     * `item` had just repeated it. */
+    'plant' => Plant::class,
+    'item' => Exemplar::class,
 ])]
 abstract class GameEntity
 {
@@ -46,8 +52,14 @@ abstract class GameEntity
     #[ORM\Column(type: "string", length: 255)]
     protected string $name = '';
 
-    #[ORM\Column(type: "integer", name: "coords_id")]
-    protected int $coordsId = 0;
+    /**
+     * The cell this entity stands on, or null when it is nowhere: shelved
+     * off the world, or held inside another entity. Nullable since the
+     * limbes plan retired — a shelved building really has no cell, and a
+     * non-nullable mapping made loading one throw.
+     */
+    #[ORM\Column(type: "integer", name: "coords_id", nullable: true)]
+    protected ?int $coordsId = null;
 
     /**
      * Pointer into the `races` catalog — the base-stats row of this entity.
@@ -100,12 +112,19 @@ abstract class GameEntity
         return $this;
     }
 
+    /** 0 rather than null for callers that only ask "where", never "whether". */
     public function getCoordsId(): int
+    {
+        return (int) $this->coordsId;
+    }
+
+    /** Null = nowhere. {@see \App\Service\Map\EntityLocationService} owns the invariant. */
+    public function getCoordsIdOrNull(): ?int
     {
         return $this->coordsId;
     }
 
-    public function setCoordsId(int $coordsId): self
+    public function setCoordsId(?int $coordsId): self
     {
         $this->coordsId = $coordsId;
         return $this;
