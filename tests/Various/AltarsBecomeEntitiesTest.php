@@ -155,7 +155,7 @@ class AltarsBecomeEntitiesTest extends TestCase
     private function altarAt(int $x, int $y)
     {
         return $this->conn->fetchAssociative(
-            "SELECT p.id, p.name, p.race, p.godId, p.avatar, b.owner_id,
+            "SELECT p.id, p.name, p.race, p.godId, p.avatar, p.owner_id,
                     (SELECT COALESCE(SUM(n), 0) FROM players_bonus pb WHERE pb.player_id = p.id AND pb.name = 'pv') AS wound,
                     (SELECT COUNT(*) FROM entity_cells ec WHERE ec.player_id = p.id) AS cells
                FROM players p

@@ -148,7 +148,7 @@ class PlanImportExportTest extends TestCase
         $this->assertSame([], $resources, 'la ressource authorée n\'est plus dessinée : elle est retirée');
 
         $built = $link->fetchAllAssociative(
-            'SELECT p.race, b.owner_id FROM players p
+            'SELECT p.race, p.owner_id FROM players p
                JOIN buildings b ON b.player_id = p.id
                JOIN coords c ON c.id = p.coords_id
               WHERE c.plan = ?',
@@ -209,8 +209,14 @@ class PlanImportExportTest extends TestCase
             'img/walls/palissade.png'
         );
         $link->executeStatement(
-            'INSERT INTO buildings (player_id, owner_id, faction, build_state) VALUES (?, ?, ?, ?)',
-            [$palissadeId, (int) $builderId, '', 'built']
+            'INSERT INTO buildings (player_id, faction, build_state) VALUES (?, ?, ?)',
+            [$palissadeId, '', 'built']
+        );
+        // Le propriétaire vit sur l'entité depuis qu'être possédé a cessé
+        // d'être un privilège de bâtiment.
+        $link->executeStatement(
+            'UPDATE players SET owner_id = ? WHERE id = ?',
+            [(int) $builderId, $palissadeId]
         );
 
         $link->executeStatement('INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 12345)', [$ids['0,1'], 'feu_test']);

@@ -299,7 +299,7 @@ class PlanAdminServiceTest extends TestCase
         (new PlanAdminService())->clonePlan(self::SRC, self::CLONE);
 
         $onClone = $this->link()->fetchAllAssociative(
-            "SELECT p.race, b.owner_id FROM buildings b
+            "SELECT p.race, p.owner_id FROM buildings b
                JOIN players p ON p.id = b.player_id
                JOIN coords c ON c.id = p.coords_id
               WHERE c.plan = ?",

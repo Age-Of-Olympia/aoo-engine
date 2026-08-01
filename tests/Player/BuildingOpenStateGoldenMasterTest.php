@@ -27,33 +27,42 @@ class BuildingOpenStateGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->requireBuildingsOrSkip();
 
         try {
-            $this->link->executeQuery('SELECT is_open FROM buildings LIMIT 1');
+            $this->link->executeQuery('SELECT is_open FROM players LIMIT 1');
         } catch (\Throwable $e) {
-            $this->markTestSkipped('buildings.is_open unavailable (run migrations): ' . $e->getMessage());
+            $this->markTestSkipped('players.is_open unavailable (run migrations): ' . $e->getMessage());
         }
     }
 
+    /**
+     * La fermeture volontaire se lit sur l'ENTITÉ : le cas a donc besoin d'une
+     * vraie ligne, là où un satellite détaché suffisait. C'est le prix de la
+     * règle qui vaudra pour un coffre — lui n'aura jamais de satellite.
+     */
     public function testClosureReasonMatrix(): void
     {
         $service = new BuildingService();
+        $id = $this->placeStructure('palissade', 0, 6);
         $details = (new BuildingDetails())->setBuildState(BuildingDetails::STATE_BUILT);
 
-        $this->assertNull($service->closureReason($details, 100), 'construit, PV pleins, ouvert => ouvert');
+        $this->assertNull($service->closureReason($id, $details, 100), 'construit, PV pleins, ouvert => ouvert');
         $this->assertNull(
-            $service->closureReason($details, BuildingService::CLOSED_BELOW_PV_PCT),
+            $service->closureReason($id, $details, BuildingService::CLOSED_BELOW_PV_PCT),
             'au seuil exactement, encore ouvert'
         );
-        $this->assertSame('endommagé', $service->closureReason($details, BuildingService::CLOSED_BELOW_PV_PCT - 1));
+        $this->assertSame(
+            'endommagé',
+            $service->closureReason($id, $details, BuildingService::CLOSED_BELOW_PV_PCT - 1)
+        );
 
-        $details->setIsOpen(false);
-        $this->assertSame('fermé volontairement', $service->closureReason($details, 100));
+        $service->setOpen($id, false);
+        $this->assertSame('fermé volontairement', $service->closureReason($id, $details, 100));
 
         // Les états priment sur la fermeture volontaire et les dégâts.
         $details->setBuildState(BuildingDetails::STATE_RUIN);
-        $this->assertSame('en ruine', $service->closureReason($details, 0));
+        $this->assertSame('en ruine', $service->closureReason($id, $details, 0));
 
         $details->setBuildState(BuildingDetails::STATE_CONSTRUCTION);
-        $this->assertSame('en construction', $service->closureReason($details, 100));
+        $this->assertSame('en construction', $service->closureReason($id, $details, 100));
     }
 
     public function testSetOpenPersistsAndRejectsNonBuildings(): void
@@ -61,18 +70,22 @@ class BuildingOpenStateGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $service = new BuildingService();
         $id = $this->placeStructure('palissade', 0, 3);
 
-        $this->assertTrue($service->getDetails($id)?->isOpen(), 'posé ouvert par défaut');
+        $this->assertSame(
+            1,
+            (int) $this->link->fetchOne('SELECT is_open FROM players WHERE id = ?', [$id]),
+            'posé ouvert par défaut'
+        );
 
         $service->setOpen($id, false);
         $this->assertSame(
             0,
-            (int) $this->link->fetchOne('SELECT is_open FROM buildings WHERE player_id = ?', [$id])
+            (int) $this->link->fetchOne('SELECT is_open FROM players WHERE id = ?', [$id])
         );
 
         $service->setOpen($id, true);
         $this->assertSame(
             1,
-            (int) $this->link->fetchOne('SELECT is_open FROM buildings WHERE player_id = ?', [$id])
+            (int) $this->link->fetchOne('SELECT is_open FROM players WHERE id = ?', [$id])
         );
 
         $character = $this->createRealPlayer('GmDoor');

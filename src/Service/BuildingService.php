@@ -396,10 +396,15 @@ class BuildingService extends BaseService
             (new \App\Service\Map\EntityCellService($conn))->syncCells((int) $id);
 
             $conn->executeStatement(
-                'INSERT INTO buildings (player_id, owner_id, faction, build_state)
-                 VALUES (?, ?, ?, ?)',
-                [$id, $ownerId, $faction, BuildingDetails::STATE_BUILT]
+                'INSERT INTO buildings (player_id, faction, build_state) VALUES (?, ?, ?)',
+                [$id, $faction, BuildingDetails::STATE_BUILT]
             );
+
+            // Le propriétaire est porté par l'entité, comme pour tout ce qui
+            // peut appartenir à quelqu'un.
+            if ($ownerId !== null) {
+                $conn->executeStatement('UPDATE players SET owner_id = ? WHERE id = ?', [$ownerId, $id]);
+            }
         });
 
         // Le damier de chaque joueur est un SVG caché : invalider le
@@ -428,29 +433,43 @@ class BuildingService extends BaseService
     public const CLOSED_BELOW_PV_PCT = 50;
 
     /**
-     * Pourquoi ce bâtiment est-il fermé — ou null s'il est OUVERT.
-     * Source unique de la règle d'ouverture (observe, HUD, admin) :
-     * un bâtiment fermé tait son dialogue.
+     * Pourquoi cette entité est-elle fermée — ou null si elle est OUVERTE.
+     * Source unique de la règle d'ouverture (observe, HUD, admin) : ce qui est
+     * fermé tait son dialogue.
+     *
+     * La fermeture volontaire se lit sur l'ENTITÉ, si bien que la règle vaut
+     * déjà pour ce qui n'a pas de satellite de bâtiment. L'état de
+     * construction reste propre au bâtiment : un exemplaire n'est jamais à
+     * demi forgé, et la quantité de travail viendra en son temps.
      *
      * @param int $pvPct PV restants en % (l'appelant les a déjà —
      *                   observe.php les calcule pour le voile de dégâts)
      */
-    public function closureReason(BuildingDetails $details, int $pvPct): ?string
+    public function closureReason(int $entityId, ?BuildingDetails $details, int $pvPct): ?string
     {
-        if ($details->getBuildState() === BuildingDetails::STATE_RUIN) {
+        if ($details !== null && $details->getBuildState() === BuildingDetails::STATE_RUIN) {
             return 'en ruine';
         }
-        if ($details->getBuildState() === BuildingDetails::STATE_CONSTRUCTION) {
+        if ($details !== null && $details->getBuildState() === BuildingDetails::STATE_CONSTRUCTION) {
             return 'en construction';
         }
         if ($pvPct < self::CLOSED_BELOW_PV_PCT) {
             return 'endommagé';
         }
-        if (!$details->isOpen()) {
+        if (!$this->isEntityOpen($entityId)) {
             return 'fermé volontairement';
         }
 
         return null;
+    }
+
+    /** La fermeture volontaire, lue là où elle vit désormais : sur l'entité. */
+    private function isEntityOpen(int $entityId): bool
+    {
+        return (bool) $this->entityManager->getConnection()->fetchOne(
+            'SELECT is_open FROM players WHERE id = ?',
+            [$entityId]
+        );
     }
 
     /**
@@ -490,7 +509,9 @@ class BuildingService extends BaseService
 
         $conn->executeStatement('UPDATE players SET name = ?, text = ? WHERE id = ?', [$name, $text, $playerId]);
 
-        $details->setOwnerId($ownerId);
+        // Le propriétaire vit sur l'entité ; la faction reste au satellite tant
+        // que players.faction et buildings.faction ne se sont pas accordées.
+        $conn->executeStatement('UPDATE players SET owner_id = ? WHERE id = ?', [$ownerId, $playerId]);
         $details->setFaction($faction);
         $this->entityManager->flush();
 
@@ -505,17 +526,22 @@ class BuildingService extends BaseService
     /**
      * Fermeture/ouverture volontaire (admin — un jour le propriétaire).
      *
+     * Écrite sur l'entité : ce geste vaudra tel quel pour un coffre, qui n'a
+     * pas de satellite de bâtiment. La garde reste au bâtiment pour l'instant,
+     * le temps que le TYPE dise ce qui se ferme.
+     *
      * @throws \InvalidArgumentException id non-bâtiment
      */
     public function setOpen(int $playerId, bool $open): void
     {
-        $details = $this->getDetails($playerId);
-        if ($details === null) {
+        if ($this->getDetails($playerId) === null) {
             throw new \InvalidArgumentException("#{$playerId} n'est pas un bâtiment.");
         }
 
-        $details->setIsOpen($open);
-        $this->entityManager->flush();
+        $this->entityManager->getConnection()->executeStatement(
+            'UPDATE players SET is_open = ? WHERE id = ?',
+            [$open ? 1 : 0, $playerId]
+        );
 
         $this->addAuditLog('BuildingService::setOpen #' . $playerId . ' ' . ($open ? 'ouvert' : 'fermé'));
     }
@@ -633,14 +659,14 @@ class BuildingService extends BaseService
         // created under a newer default collation than players and a SQL
         // join on r.name = p.race trips "illegal mix of collations".
         $rows = $this->entityManager->getConnection()->fetchAllAssociative(
-            "SELECT p.id, p.name, p.race, b.build_state, b.faction, b.owner_id, b.dialog, b.is_open,
+            "SELECT p.id, p.name, p.race, b.build_state, b.faction, p.owner_id, b.dialog, p.is_open,
                     b.readable_from_afar,
                     o.name AS owner_name, c.x, c.y, c.z, c.plan,
                     COALESCE(pb.n, 0) AS pv_bonus
              FROM buildings b
              JOIN players p ON p.id = b.player_id
              JOIN coords c ON c.id = p.coords_id
-             LEFT JOIN players o ON o.id = b.owner_id
+             LEFT JOIN players o ON o.id = p.owner_id
              LEFT JOIN players_bonus pb ON pb.player_id = p.id AND pb.name = 'pv'
              ORDER BY c.plan, p.id"
         );

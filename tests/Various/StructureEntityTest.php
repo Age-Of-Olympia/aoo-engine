@@ -103,7 +103,10 @@ class StructureEntityTest extends TestCase
             $details = $em->find(BuildingDetails::class, $id);
             $this->assertInstanceOf(BuildingDetails::class, $details);
             $this->assertSame(BuildingDetails::STATE_BUILT, $details->getBuildState());
-            $this->assertNull($details->getOwnerId());
+            // Le propriétaire a quitté le satellite : il vit sur l'entité.
+            $this->assertNull(
+                $conn->fetchOne('SELECT owner_id FROM players WHERE id = ?', [$id])
+            );
         } finally {
             if ($id !== null) {
                 $conn->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$id]);

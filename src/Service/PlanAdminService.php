@@ -159,7 +159,7 @@ class PlanAdminService
                JOIN players p ON p.id = b.player_id
                JOIN coords c ON c.id = p.coords_id
               WHERE c.plan = ?
-                AND b.owner_id IS NULL
+                AND p.owner_id IS NULL
                 AND b.faction = ''
                 AND b.build_state = 'built'
               ORDER BY c.z, c.y, c.x, p.id",

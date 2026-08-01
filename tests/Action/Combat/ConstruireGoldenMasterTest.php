@@ -65,7 +65,7 @@ class ConstruireGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->assertTrue($results->isBlocked(), 'no palissade object must block the action (ItemPick possession)');
         $this->assertSame(
             0,
-            (int) $this->link->fetchOne('SELECT COUNT(*) FROM buildings b JOIN players p ON p.id = b.player_id WHERE b.owner_id = ?', [$builder->id]),
+            (int) $this->link->fetchOne('SELECT COUNT(*) FROM buildings b JOIN players p ON p.id = b.player_id WHERE p.owner_id = ?', [$builder->id]),
             'nothing may be built'
         );
         $this->assertSame(
@@ -113,7 +113,7 @@ class ConstruireGoldenMasterTest extends LegacyPlayerFixtureTestCase
              FROM buildings b
              JOIN players p ON p.id = b.player_id
              JOIN coords c ON c.id = p.coords_id
-             WHERE b.owner_id = ?",
+             WHERE p.owner_id = ?",
             [$builder->id]
         );
         $this->assertNotFalse($building, 'a building owned by the builder must exist');

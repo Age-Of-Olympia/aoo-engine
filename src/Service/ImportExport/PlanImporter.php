@@ -375,7 +375,7 @@ final class PlanImporter implements ObjectImporter
             'SELECT COUNT(*) n FROM buildings b
                JOIN players p ON p.id = b.player_id
                JOIN coords c ON c.id = p.coords_id
-              WHERE c.plan = ? AND b.owner_id IS NOT NULL AND b.owner_id <> 0',
+              WHERE c.plan = ? AND p.owner_id IS NOT NULL AND p.owner_id <> 0',
             array($plan)
         );
 

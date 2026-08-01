@@ -127,7 +127,8 @@ final class EntityCardView
         if (($target->data->player_type ?? '') === 'building') {
             $buildingDetails = (new BuildingService())->getDetails($target->id);
             if ($buildingDetails !== null) {
-                $buildingClosure = (new BuildingService())->closureReason($buildingDetails, (int) $pvPct);
+                $buildingClosure = (new BuildingService())
+                    ->closureReason((int) $target->id, $buildingDetails, (int) $pvPct);
             }
         }
 

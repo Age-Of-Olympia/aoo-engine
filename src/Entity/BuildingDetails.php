@@ -25,9 +25,10 @@ use Doctrine\ORM\Mapping as ORM;
  * - dialog: code du dialogue porté par le bâtiment (clé naturelle
  *   dialogs.name, '' = aucun) — le lien vit sur l'entité, pas sur la
  *   case (contrairement aux déclencheurs map_dialogs). Muet en ruine.
- * - is_open: fermeture VOLONTAIRE (admin, un jour le propriétaire).
- *   L'ouverture effective combine ce drapeau et l'état — règle unique
- *   dans BuildingService::closureReason().
+ * Le propriétaire et la fermeture volontaire ont quitté ce satellite pour
+ * l'ENTITÉ : être possédé et être fermé ne sont pas des privilèges de
+ * bâtiment. Ce qui reste ici est ce qu'un bâtiment seul connaît — son état
+ * de construction, son dialogue, sa faction.
  */
 #[ORM\Entity]
 #[ORM\Table(name: "buildings")]
@@ -41,9 +42,6 @@ class BuildingDetails
     #[ORM\Column(type: "integer", name: "player_id")]
     private int $playerId;
 
-    #[ORM\Column(type: "integer", name: "owner_id", nullable: true)]
-    private ?int $ownerId = null;
-
     #[ORM\Column(type: "string", length: 100, options: ["default" => ""])]
     private string $faction = '';
 
@@ -52,9 +50,6 @@ class BuildingDetails
 
     #[ORM\Column(type: "string", length: 100, options: ["default" => ""])]
     private string $dialog = '';
-
-    #[ORM\Column(type: "boolean", name: "is_open", options: ["default" => true])]
-    private bool $isOpen = true;
 
     /**
      * Ce qui est inscrit sur cet exemplaire se lit-il sans s'approcher ?
@@ -75,17 +70,6 @@ class BuildingDetails
     public function setPlayerId(int $playerId): self
     {
         $this->playerId = $playerId;
-        return $this;
-    }
-
-    public function getOwnerId(): ?int
-    {
-        return $this->ownerId;
-    }
-
-    public function setOwnerId(?int $ownerId): self
-    {
-        $this->ownerId = $ownerId;
         return $this;
     }
 
@@ -122,11 +106,6 @@ class BuildingDetails
         return $this;
     }
 
-    public function isOpen(): bool
-    {
-        return $this->isOpen;
-    }
-
     /** null = suit sa race. */
     public function isReadableFromAfar(): ?bool
     {
@@ -140,9 +119,4 @@ class BuildingDetails
         return $this;
     }
 
-    public function setIsOpen(bool $isOpen): self
-    {
-        $this->isOpen = $isOpen;
-        return $this;
-    }
 }

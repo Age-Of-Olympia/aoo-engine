@@ -130,6 +130,47 @@ abstract class GameEntity
         return $this;
     }
 
+    /**
+     * Whose it is: a character id, or null for nobody's.
+     *
+     * On the entity rather than the building satellite, because being owned is
+     * not a building's privilege — a chest is shut by whoever owns it exactly
+     * as a forge is. Faction ownership is the other half and is NOT settled:
+     * `players.faction` and `buildings.faction` still disagree.
+     */
+    #[ORM\Column(type: "integer", name: "owner_id", nullable: true)]
+    protected ?int $ownerId = null;
+
+    /**
+     * Voluntary closure. Effective openness combines this with the entity's
+     * state — a ruin is shut whatever the flag says — and that combination is
+     * the one rule in {@see \App\Service\BuildingService::closureReason()}.
+     */
+    #[ORM\Column(type: "boolean", name: "is_open", options: ["default" => true])]
+    protected bool $isOpen = true;
+
+    public function getOwnerId(): ?int
+    {
+        return $this->ownerId;
+    }
+
+    public function setOwnerId(?int $ownerId): self
+    {
+        $this->ownerId = $ownerId;
+        return $this;
+    }
+
+    public function isOpen(): bool
+    {
+        return $this->isOpen;
+    }
+
+    public function setIsOpen(bool $isOpen): self
+    {
+        $this->isOpen = $isOpen;
+        return $this;
+    }
+
     public function getRace(): string
     {
         return $this->race;

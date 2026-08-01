@@ -53,7 +53,9 @@ final class StructureSheetView
 
         $buildingService = new BuildingService();
         $details = $entity instanceof Building ? $buildingService->getDetails($entity->getId()) : null;
-        $closure = $details !== null ? $buildingService->closureReason($details, $pvPct) : null;
+        $closure = $details !== null
+            ? $buildingService->closureReason($entity->getId(), $details, $pvPct)
+            : null;
         $isEdifice = (bool) $race?->isEdifice();
 
         ob_start();
@@ -99,10 +101,10 @@ final class StructureSheetView
             }
             echo '<span class="building-status-state">' . $stateLabel . ' · PV ' . $pvPct . '%</span></div>';
 
-            if ($details->getOwnerId() !== null) {
-                $owner = \App\Factory\PlayerFactory::entity($details->getOwnerId());
+            if ($entity->getOwnerId() !== null) {
+                $owner = \App\Factory\PlayerFactory::entity($entity->getOwnerId());
                 if ($owner !== null) {
-                    echo '<p><small>Propriétaire : <a href="infos.php?targetId=' . $details->getOwnerId() . '">'
+                    echo '<p><small>Propriétaire : <a href="infos.php?targetId=' . $entity->getOwnerId() . '">'
                         . htmlspecialchars($owner->getName(), ENT_QUOTES, 'UTF-8') . '</a></small></p>';
                 }
             }

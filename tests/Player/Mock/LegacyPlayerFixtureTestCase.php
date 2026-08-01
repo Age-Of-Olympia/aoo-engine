@@ -92,7 +92,10 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
                     );
                 }
             }
-            $this->link->executeStatement('DELETE FROM buildings WHERE player_id = ? OR owner_id = ?', [$id, $id]);
+            /* Plus de `OR owner_id` : la propriété vit sur l'entité, et sa clé
+             * étrangère est ON DELETE SET NULL — ce qu'un disparu possédait
+             * devient sans maître au lieu de le retenir. */
+            $this->link->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$id]);
             $this->link->executeStatement('DELETE FROM unique_objects WHERE player_id = ?', [$id]);
             foreach ([
                 'players_bonus',
