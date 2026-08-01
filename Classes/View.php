@@ -34,6 +34,21 @@ class View{
         $this->playerId = $playerId ?? ($_SESSION['playerId'] ?? null);
     }
    
+    /**
+     * Assemble un attribut class, ou rien du tout si la liste est vide.
+     *
+     * Un seul point de composition : c'est ce qui garantit qu'un élément ne
+     * peut plus sortir avec deux attributs class.
+     *
+     * @param array<int, string> $classes
+     */
+    private static function class_attr(array $classes): string
+    {
+        $classes = array_values(array_unique(array_filter($classes)));
+
+        return $classes ? ' class="'. implode(' ', $classes) .'"' : '';
+    }
+
     //outCoords && $outCoordsId are passed by reference initialized is resposability of caller
     public static function get_coords_id_arround(&$outCoords,&$outCoordsId,$coords,$p){
         $minX = $coords->x - $p;
@@ -310,6 +325,10 @@ class View{
 
                 $img = 'img/'. $row->whichTable .'/'. $row->name .'.png';
 
+                // Classes portées par l'image de cette case. Réinitialisées à
+                // chaque tour, comme $img dont elles suivent le sort.
+                $imgClasses = [];
+
 
                 if($row->whichTable == 'items'){
 
@@ -384,7 +403,17 @@ class View{
                 // transparent gradient
                 if(!empty($classTransparent[$x .','. $y]) && $row->whichTable != 'tiles'){
 
-                    $img .= '" class="transparent-gradient';
+                    // Cette classe s'écrivait auparavant DANS $img, en accolant
+                    // '" class="transparent-gradient' à la fin de l'URL : le
+                    // guillemet injecté refermait le href et ouvrait l'attribut.
+                    // Le balisage sortait juste, sauf sur les deux éléments qui
+                    // posent déjà leur propre classe (l'ombre d'avatar, toujours,
+                    // et l'avatar du joueur courant). Ils recevaient alors DEUX
+                    // attributs class. Un navigateur en mode HTML garde le premier
+                    // et continue, mais un .svg lu seul ou via <img> est parsé en
+                    // XML strict, où "Attribute class redefined" est fatale : une
+                    // balise fautive sur treize cents et plus rien ne s'affiche.
+                    $imgClasses[] = 'transparent-gradient';
                 }
 
 
@@ -406,6 +435,15 @@ class View{
 
                         $img = 'img/elements/'. $row->name .'.'. $k;
 
+                        // Cette réassignation écrasait $img, donc AUSSI la classe
+                        // qui y avait été accolée plus haut : malgré la condition
+                        // "!= tiles", les éléments de décor n'ont jamais reçu
+                        // transparent-gradient. On restitue cet effacement à
+                        // l'identique plutôt que de changer le rendu au passage.
+                        // Si un jour on veut le dégradé sur les éléments, c'est
+                        // cette ligne qu'il faut retirer.
+                        $imgClasses = [];
+
                         if(file_exists($img)){
 
                             echo '
@@ -424,6 +462,7 @@ class View{
                                 pointer-events="none"
 
                                 href="'. $img .'"
+                                '. self::class_attr($imgClasses) .'
                                 />
                             ';
                         }
@@ -467,7 +506,7 @@ class View{
 
                             href="'. $img .'"
 
-                            class="avatar-shadow"
+                            '. self::class_attr(array_merge($imgClasses, ['avatar-shadow'])) .'
                             />
                         ';
                     }
@@ -475,14 +514,14 @@ class View{
 
                     // Full-size avatar (50x50, no offsets). All tutorial
                     // selectors target this so highlights stay aligned.
-                    $avatarClasses = [];
+                    $avatarClasses = $imgClasses;
                     if ($isCurrentPlayer) {
                         $avatarClasses[] = 'current-player';
                     }
                     if ($isTutorialEnemy) {
                         $avatarClasses[] = 'tutorial-enemy';
                     }
-                    $avatarClassAttr = $avatarClasses ? ' class="'. implode(' ', $avatarClasses) .'"' : '';
+                    $avatarClassAttr = self::class_attr($avatarClasses);
 
                     echo '
                     <image
