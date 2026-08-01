@@ -56,21 +56,35 @@ echo "📋 Structure et déclencheurs…"
 # needs its race and its item to exist; it must never meet another test's
 # character, nor anybody's buildings.
 echo "📦 Catalogues…"
+MISSING=""
 for table in \
-    races race_starter_actions race_spells race_harvest race_footprint \
-    entity_type_footprints type_child_config \
-    items recipes recipe_ingredients recipe_results \
+    races race_starter_actions race_spells race_harvest race_recipes \
+    entity_type_footprints \
+    items craft_recipes craft_recipes_ingredients craft_recipes_results \
     actions action_conditions action_outcomes outcome_instructions \
     action_type_logs action_type_xp action_type_instructions action_type_preconditions \
     action_condition_preconditions action_passives \
-    effects effect_controls effect_corruption_materials effect_name_list \
-    factions faction_roles dialogs dialog_lines skills passives \
-    tile_colors tile_catalog migration_versions
+    effects effect_controls effect_corruption_materials \
+    factions faction_roles dialogs \
+    tile_colors doctrine_migration_versions
 do
-    "$MYSQL" -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$TEST_DB" \
-        -e "INSERT IGNORE INTO \`$table\` SELECT * FROM \`$SOURCE_DB\`.\`$table\`;" 2>/dev/null \
-        && echo "  ✔ $table" || true
+    # Une table mal nommée se taisait : la copie échouait, `|| true` avalait
+    # l'erreur, et la suite tournait sans recettes — d'où des cas qui se
+    # sautaient ici et tournaient en intégration. Ce qui manque se dit.
+    if "$MYSQL" -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$TEST_DB" \
+        -e "INSERT IGNORE INTO \`$table\` SELECT * FROM \`$SOURCE_DB\`.\`$table\`;" 2>/dev/null
+    then
+        echo "  ✔ $table"
+    else
+        MISSING="$MISSING $table"
+    fi
 done
+
+if [ -n "$MISSING" ]; then
+    echo ""
+    echo "⚠️  Catalogues non copiés (table absente ou renommée) :$MISSING"
+    echo "   Corriger la liste — un catalogue manquant fait SAUTER des cas."
+fi
 
 COUNT=$("$MYSQL" -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -N \
     -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$TEST_DB';")
