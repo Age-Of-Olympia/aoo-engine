@@ -147,6 +147,18 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
                 $this->link->executeStatement("UPDATE {$table} SET player_id = NULL WHERE player_id = ?", [$id]);
             }
 
+            /* Un exemplaire POSÉ n'est plus dans un sac : le nettoyage par le
+             * porteur, plus haut, ne le voit pas. Son instance pointe pourtant
+             * encore sur cette ligne, et la clé est RESTRICT — elle part donc
+             * d'abord, sans quoi la suppression échoue et abandonne le reste du
+             * teardown avec elle. */
+            $this->link->executeStatement(
+                'DELETE FROM players_items_instances
+                  WHERE instance_id IN (SELECT id FROM item_instances WHERE entity_id = ?)',
+                [$id]
+            );
+            $this->link->executeStatement('DELETE FROM item_instances WHERE entity_id = ?', [$id]);
+
             $this->link->executeStatement('DELETE FROM players WHERE id = ?', [$id]);
 
             // Purge every per-entity file cache: .json is the get_data()
@@ -307,6 +319,44 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         $item->get_data();
 
         return $item;
+    }
+
+    /**
+     * Installe un exemplaire d'objet sur une case, comme un conteneur s'y tient.
+     *
+     * Un coffre n'est plus un type de bâtiment : c'est un objet dont
+     * l'exemplaire est POSÉ. Ce qui passait par `placeStructure` pour un
+     * conteneur passe par ici — et l'entité obtenue répond aux mêmes questions,
+     * ce qui est tout l'intérêt des contrats qui traversent les catalogues.
+     *
+     * Un porteur est créé à défaut : `create()` range l'exemplaire dans un sac
+     * avant qu'on l'en sorte, et il lui faut donc quelqu'un.
+     */
+    protected function installExemplar(
+        string $itemName,
+        int $x,
+        int $y,
+        ?int $holderId = null,
+        string $plan = 'gaia'
+    ): int {
+        $item = $this->itemOrSkip($itemName);
+        $holderId ??= (int) $this->createRealPlayer('GmPorteur' . $x . 'x' . $y)->id;
+
+        $instanceId = (new \App\Service\ItemInstanceService())
+            ->create($holderId, (int) $item->id, $holderId, '');
+
+        $entityId = (int) $this->link->fetchOne(
+            'SELECT entity_id FROM item_instances WHERE id = ?',
+            [$instanceId]
+        );
+
+        $coordsId = (int) View::get_coords_id(
+            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => $plan]
+        );
+        (new \App\Service\Map\EntityLocationService($this->link))->installOnCell($entityId, $coordsId);
+        $this->trackEntityId($entityId);
+
+        return $entityId;
     }
 
     /**
