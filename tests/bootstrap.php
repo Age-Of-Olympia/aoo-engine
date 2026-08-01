@@ -19,6 +19,46 @@ if ($aooTestDb === false) {
 }
 if ($aooTestDb !== '') {
     App\Factory\EntityManagerFactory::useDatabase($aooTestDb);
+
+    /* Une base jetable RETARDE d'une migration ressemble à un bug de code : la
+     * colonne manque, le cas rougit, et on cherche dans le mauvais fichier.
+     * Trois fois de suite sur un seul lot. Elle se compare donc à la base
+     * configurée — même serveur, une requête — et dit quoi taper.
+     */
+    /* La config n'est pas encore chargée ici : chaque cas requiert la sienne.
+     * Le fichier est gitignoré — absent, on ne compare rien. */
+    if (!defined('DB_CONSTANTS') && file_exists(__DIR__ . '/../config/db_constants.php')) {
+        require_once __DIR__ . '/../config/db_constants.php';
+    }
+
+    try {
+        $conn = App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
+        $source = defined('DB_CONSTANTS')
+            ? (string) (DB_CONSTANTS['dbname'] ?? DB_CONSTANTS['db'] ?? '')
+            : '';
+
+        if ($source !== '' && $source !== $aooTestDb) {
+            $counts = $conn->fetchAllKeyValue(
+                'SELECT TABLE_SCHEMA, COUNT(*) FROM information_schema.COLUMNS
+                  WHERE TABLE_SCHEMA IN (?, ?) GROUP BY TABLE_SCHEMA',
+                [$source, $aooTestDb]
+            );
+
+            if (($counts[$source] ?? 0) !== ($counts[$aooTestDb] ?? 0)) {
+                fwrite(STDERR, sprintf(
+                    "\n  La base de test « %s » ne suit plus le schéma de « %s ».\n"
+                    . "  Reconstruire :\n"
+                    . "    docker exec -i -e DB_HOST=127.0.0.1 aoo-engine-mariadb-aoo4-1 \\\n"
+                    . "      bash -s < scripts/testing/reset_phpunit_database.sh\n\n",
+                    $aooTestDb,
+                    $source
+                ));
+                exit(1);
+            }
+        }
+    } catch (\Throwable) {
+        // Base injoignable : les cas savent déjà se sauter proprement.
+    }
 }
 
 // Sous le SAPI cli, error_log() sort sur stderr ; PHPUnit

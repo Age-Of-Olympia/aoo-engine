@@ -1,4 +1,4 @@
-.PHONY: all phpstan test test-ci test-ci-coverage coverage testf setup-ci-env coverage-report migration-status migration-check new-sql stale-branches release-check cypress-tutorial-ci
+.PHONY: all phpstan test test-db test-ci test-ci-coverage coverage testf setup-ci-env coverage-report migration-status migration-check new-sql stale-branches release-check cypress-tutorial-ci
 
 PHPUNIT = XDEBUG_MODE=coverage ./vendor/bin/phpunit --testdox
 
@@ -13,6 +13,14 @@ setup-ci-env:
 
 phpstan:
 	./vendor/bin/phpstan analyse -c phpstan.neon --memory-limit 1G
+
+# La base jetable de la suite se reconstruit depuis le schéma VIVANT, donc
+# après chaque migration. Le client MariaDB n'existe pas dans le devcontainer :
+# la commande se lance depuis l'hôte, et tests/bootstrap.php refuse de tourner
+# sur une base en retard plutôt que de laisser croire à un bug de code.
+test-db:
+	docker exec -i -e DB_HOST=127.0.0.1 aoo-engine-mariadb-aoo4-1 \
+	  bash -s < scripts/testing/reset_phpunit_database.sh
 
 test:
 	mkdir -p tmp/coverage
