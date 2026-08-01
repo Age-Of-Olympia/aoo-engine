@@ -28,25 +28,29 @@ class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
         parent::setUp();
 
         try {
-            $this->link->executeQuery('SELECT instance_id FROM map_items_instances LIMIT 1');
+            $this->link->executeQuery('SELECT entity_id FROM item_instances LIMIT 1');
         } catch (\Throwable $e) {
-            $this->markTestSkipped('map_items_instances unavailable (run migrations): ' . $e->getMessage());
+            $this->markTestSkipped('item_instances.entity_id unavailable (run migrations): ' . $e->getMessage());
         }
     }
 
     protected function tearDown(): void
     {
-        // Ground instances left by a failed test: unlink then orphan rows.
+        // Exemplars left lying on the floor by a failed test: the exemplar
+        // goes first, then its entity — the foreign key is RESTRICT.
         if ($this->link !== null) {
-            $ids = $this->link->fetchFirstColumn(
-                'SELECT g.instance_id FROM map_items_instances g
-                 JOIN item_instances i ON i.id = g.instance_id
-                 WHERE i.creator_id IS NULL OR i.creator_id IN (SELECT id FROM players WHERE name LIKE "Gm%")'
+            $rows = $this->link->fetchAllAssociative(
+                'SELECT i.id, i.entity_id FROM players e
+                   JOIN item_instances i ON i.entity_id = e.id
+                  WHERE e.slot = ?
+                    AND (i.creator_id IS NULL OR i.creator_id IN (SELECT id FROM players WHERE name LIKE "Gm%"))',
+                [\App\Service\Map\EntityLocationService::SLOT_DROPPED]
             );
-            if ($ids !== []) {
-                $in = implode(',', array_map('intval', $ids));
-                $this->link->executeStatement("DELETE FROM map_items_instances WHERE instance_id IN ({$in})");
+            if ($rows !== []) {
+                $in = implode(',', array_map(static fn ($r) => (int) $r['id'], $rows));
+                $entityIn = implode(',', array_map(static fn ($r) => (int) $r['entity_id'], $rows));
                 $this->link->executeStatement("DELETE FROM item_instances WHERE id IN ({$in})");
+                $this->link->executeStatement("DELETE FROM players WHERE id IN ({$entityIn})");
             }
         }
         parent::tearDown();
@@ -105,10 +109,16 @@ class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $service = new ItemInstanceService();
         $service->dropAt($instanceId, $coordsId);
 
+        $ground = $this->link->fetchAssociative(
+            'SELECT e.coords_id, e.slot FROM players e
+               JOIN item_instances i ON i.entity_id = e.id WHERE i.id = ?',
+            [$instanceId]
+        );
+        $this->assertSame($coordsId, (int) $ground['coords_id'], 'the instance is part of the tile bourse');
         $this->assertSame(
-            $coordsId,
-            (int) $this->link->fetchOne('SELECT coords_id FROM map_items_instances WHERE instance_id = ?', [$instanceId]),
-            'the instance is part of the tile bourse'
+            \App\Service\Map\EntityLocationService::SLOT_DROPPED,
+            $ground['slot'],
+            'it lies on the tile rather than standing on it'
         );
         $this->assertFalse(
             $this->link->fetchOne('SELECT 1 FROM players_items_instances WHERE instance_id = ?', [$instanceId]),
@@ -129,10 +139,13 @@ class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
             (int) $this->link->fetchOne('SELECT durability FROM item_instances WHERE id = ?', [$instanceId]),
             'identity — the wear — survived the round trip'
         );
-        $this->assertFalse(
-            $this->link->fetchOne('SELECT 1 FROM map_items_instances WHERE instance_id = ?', [$instanceId]),
-            'the ground row is gone'
+        $picked = $this->link->fetchAssociative(
+            'SELECT e.coords_id, e.holder_id FROM players e
+               JOIN item_instances i ON i.entity_id = e.id WHERE i.id = ?',
+            [$instanceId]
         );
+        $this->assertNull($picked['coords_id'], 'it no longer lies on any tile');
+        $this->assertSame($player->id, (int) $picked['holder_id'], 'its holder is the walker');
     }
 
     public function testEntityWrapperStillWorksForAnimatorArtifacts(): void

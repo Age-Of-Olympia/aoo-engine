@@ -21,7 +21,7 @@ use Doctrine\ORM\EntityManagerInterface;
  *     conversion reversible while nothing has diverged.
  *
  * Invariant owned here: an instance has exactly ONE location. Le sol
- * s'exprime par la table map_items_instances ; côté joueur, la colonne
+ * s'exprime par l'entité posée au sol ; côté joueur, la colonne
  * players_items_instances.location distingue ce qu'il PORTE de ce qu'il
  * a rangé en BANQUE. Tout ce qui répond « le joueur a-t-il cet objet
  * sous la main » doit donc filtrer sur LOCATION_INVENTORY : sans ce
@@ -117,6 +117,36 @@ class ItemInstanceService extends BaseService
             'UPDATE item_instances SET entity_id = ? WHERE id = ?',
             [$entityId, $instanceId]
         );
+    }
+
+    /**
+     * The entity of an exemplar, created if it has none.
+     *
+     * Exemplars wrapped by a `unique_objects` row were left without one, being
+     * already an entity on the map. When such a wrapper dies its exemplar falls
+     * to the floor on its own, and that is the moment it needs one.
+     *
+     * @return int the exemplar's entity id
+     */
+    public static function ensureEntity($conn, int $instanceId): int
+    {
+        $entityId = $conn->fetchOne('SELECT entity_id FROM item_instances WHERE id = ?', [$instanceId]);
+
+        if ($entityId !== false && $entityId !== null) {
+            return (int) $entityId;
+        }
+
+        $row = $conn->fetchAssociative(
+            'SELECT item_id, custom_name FROM item_instances WHERE id = ?',
+            [$instanceId]
+        );
+        if ($row === false) {
+            throw new \InvalidArgumentException("Exemplaire #{$instanceId} introuvable.");
+        }
+
+        self::attachEntity($conn, $instanceId, (int) $row['item_id'], (string) $row['custom_name']);
+
+        return (int) $conn->fetchOne('SELECT entity_id FROM item_instances WHERE id = ?', [$instanceId]);
     }
 
     /**
@@ -749,10 +779,9 @@ class ItemInstanceService extends BaseService
             }
 
             $conn->executeStatement('DELETE FROM players_items_instances WHERE instance_id = ?', [$instanceId]);
-            $conn->executeStatement(
-                'INSERT INTO map_items_instances (instance_id, coords_id) VALUES (?, ?)',
-                [$instanceId, $coordsId]
-            );
+
+            (new \App\Service\Map\EntityLocationService($conn))
+                ->dropOnCell(self::ensureEntity($conn, $instanceId), $coordsId);
         });
     }
 
@@ -767,24 +796,32 @@ class ItemInstanceService extends BaseService
         $conn = $this->entityManager->getConnection();
 
         $rows = $conn->fetchAllAssociative(
-            'SELECT g.instance_id, i.custom_name, it.name AS catalog_name
-             FROM map_items_instances g
-             JOIN item_instances i ON i.id = g.instance_id
-             JOIN items it ON it.id = i.item_id
-             WHERE g.coords_id = ?',
-            [$coordsId]
+            'SELECT i.id AS instance_id, i.entity_id, i.custom_name, it.name AS catalog_name
+               FROM players e
+               JOIN item_instances i ON i.entity_id = e.id
+               JOIN items it ON it.id = i.item_id
+              WHERE e.coords_id = ? AND e.slot = ?',
+            [$coordsId, \App\Service\Map\EntityLocationService::SLOT_DROPPED]
         );
 
         $labels = [];
         foreach ($rows as $row) {
             $taken = false;
-            $conn->transactional(function ($conn) use ($row, $playerId, &$taken): void {
-                // Deux marcheurs simultanés : seul celui dont le DELETE
-                // emporte la ligne sol ramasse — l'autre passe son chemin
-                // au lieu de violer la PK du lien de possession.
+            $conn->transactional(function ($conn) use ($row, $playerId, $coordsId, &$taken): void {
+                // Deux marcheurs simultanés : seul celui dont l'UPDATE trouve
+                // encore l'objet sur la case le ramasse — l'autre passe son
+                // chemin au lieu de violer la PK du lien de possession. La
+                // condition porte la course, comme le DELETE la portait.
                 $affected = $conn->executeStatement(
-                    'DELETE FROM map_items_instances WHERE instance_id = ?',
-                    [(int) $row['instance_id']]
+                    'UPDATE players SET coords_id = NULL, holder_id = ?, slot = ?
+                      WHERE id = ? AND coords_id = ? AND slot = ?',
+                    [
+                        $playerId,
+                        \App\Service\Map\EntityLocationService::SLOT_CARRIED,
+                        (int) $row['entity_id'],
+                        $coordsId,
+                        \App\Service\Map\EntityLocationService::SLOT_DROPPED,
+                    ]
                 );
                 if ($affected === 0) {
                     return;

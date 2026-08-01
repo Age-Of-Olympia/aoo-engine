@@ -14,7 +14,7 @@ class InventoryService
     /**
      * @param int|null $instanceId instance PRÉCISE à jeter (clic sur une
      *        ligne d'instance — arme usée…) : elle descend au sol avec
-     *        son identité via dropAt (map_items_instances), là où la
+     *        son identité via dropAt (entité posée au sol), là où la
      *        pile part en bourse de case (map_items)
      */
     public static function dropItem(Player $player, Item $item, ?int $instanceId = null)

@@ -321,12 +321,14 @@ class View{
             UNION
 
             SELECT
-            MIN(instance_id) AS id, "bourse" AS name, coords_id,
+            MIN(id) AS id, "bourse" AS name, coords_id,
             "items" AS whichTable,
             96 AS tableOrder
             FROM
-            map_items_instances
+            players
             WHERE
+            slot = "dropped"
+            AND
             coords_id IN ('. $inSightIdImploded .')
             GROUP BY coords_id
 

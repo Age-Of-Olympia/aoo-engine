@@ -41,7 +41,7 @@ class UniqueObjectService extends BaseService
         $conn = $this->entityManager->getConnection();
 
         // INNER JOIN sur le lien de possession : une instance déjà au sol
-        // (map_items_instances) ou déjà enveloppée (unique_objects) n'a
+        // (entité au sol) ou déjà enveloppée (unique_objects) n'a
         // pas de ligne ici et ne peut pas gagner une seconde localisation.
         $row = $conn->fetchAssociative(
             "SELECT i.id, i.custom_name, i.destroyed, it.name AS catalog_name, l.equiped
@@ -180,10 +180,14 @@ class UniqueObjectService extends BaseService
                 'UPDATE item_instances SET durability = 0 WHERE id = ? AND durability > 0',
                 [(int) $instanceId]
             );
-            $conn->executeStatement(
-                'INSERT INTO map_items_instances (coords_id, instance_id) VALUES (?, ?)',
-                [(int) $coordsId, (int) $instanceId]
+
+            /* The wrapper dies and the exemplar falls on its own, so this is
+             * where it stops being an entity only through its wrapper. */
+            (new \App\Service\Map\EntityLocationService($conn))->dropOnCell(
+                ItemInstanceService::ensureEntity($conn, (int) $instanceId),
+                (int) $coordsId
             );
+
             $conn->executeStatement('DELETE FROM unique_objects WHERE player_id = ?', [$uniqueId]);
             BuildingService::deleteEntityRows($conn, $uniqueId);
         });

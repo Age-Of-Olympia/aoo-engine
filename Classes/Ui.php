@@ -553,7 +553,7 @@ class Ui{
                 /* Jeter vaut pour les deux représentations : la pile part
                  * en bourse de case (map_items), l'instance individualisée
                  * (arme usée…) descend au sol avec son identité (dropAt →
-                 * map_items_instances) — une instance encore portée se
+                 * entité au sol) — une instance encore portée se
                  * déséquipe d'abord. L'Artisanat, lui, n'opère que sur la
                  * PILE (décrément) : masqué sur une ligne d'instance. */
                 $stackActions = '';
