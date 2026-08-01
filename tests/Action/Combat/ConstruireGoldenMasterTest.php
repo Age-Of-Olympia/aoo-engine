@@ -75,6 +75,74 @@ class ConstruireGoldenMasterTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /**
+     * Bâtir un CONTENEUR pose l'objet lui-même, pas un bâtiment homonyme.
+     *
+     * La même boucle que la palissade, mais le coffre a quitté `races` : plus
+     * aucune race ne le décrit, et c'est ce qui fait basculer la pose. Ce qui
+     * se dresse est un exemplaire — il a une instance, donc une identité qui
+     * survivra à l'usure, au nom propre et, demain, à un contenu.
+     */
+    public function testBuildingAContainerPlacesTheObjectItself(): void
+    {
+        $builder = $this->createRealPlayer('GmCoffrier');
+        $builder->getCoords();
+        $builder->get_caracs();
+
+        $bois = $this->itemOrSkip('bois');
+        $chestItem = $this->itemOrSkip('coffre_bois');
+        $bois->add_item($builder, 20);
+
+        $recipes = (new \App\Service\RecipeService())->getRecipes($builder, forItemId: (int) $chestItem->id);
+        if ($recipes === []) {
+            $this->markTestSkipped('recette coffre_bois absente.');
+        }
+        $message = '';
+        $this->assertTrue(
+            (new \App\Service\RecipeService())->TryCraftRecipe($recipes[0], $builder, $message),
+            'fabriquer le coffre avec 20 bois doit réussir : ' . $message
+        );
+        $this->assertSame(1, $chestItem->get_n(PlayerFactory::legacy($builder->id)), 'le coffre est au sac');
+
+        $_POST['itemId'] = (string) $chestItem->id;
+        $results = (new ActionExecutorService($this->actionOrSkip(), $builder, $builder))->executeAction();
+
+        $this->assertFalse($results->isBlocked(), 'avec le coffre en main, l\'action passe');
+        $this->assertTrue($results->isSuccess());
+
+        $placed = $this->link->fetchAssociative(
+            "SELECT p.id, p.player_type, p.race, p.slot, ii.id AS instance, c.x, c.y, c.plan
+               FROM players p
+               JOIN coords c ON c.id = p.coords_id
+               LEFT JOIN item_instances ii ON ii.entity_id = p.id
+              WHERE p.owner_id = ? AND p.race = 'coffre_bois'",
+            [$builder->id]
+        );
+        $this->assertNotFalse($placed, 'un coffre posé par le bâtisseur doit exister');
+        $this->trackEntityId((int) $placed['id']);
+
+        $this->assertSame('item', $placed['player_type'], 'ce qui se dresse est un OBJET');
+        $this->assertSame('installed', $placed['slot'], 'posé, donc il tient sa case');
+        $this->assertNotNull($placed['instance'], 'et il a une instance : une identité, pas un décor');
+
+        $this->assertFalse(
+            (bool) $this->link->fetchOne('SELECT 1 FROM buildings WHERE player_id = ?', [$placed['id']]),
+            'aucun satellite de bâtiment : ce n\'est plus un bâtiment'
+        );
+
+        $distance = abs((int) $placed['x'] - (int) $builder->coords->x)
+            + abs((int) $placed['y'] - (int) $builder->coords->y);
+        $this->assertSame($builder->coords->plan, $placed['plan']);
+        $this->assertGreaterThan(0, $distance, 'pas sur la case du bâtisseur');
+        $this->assertLessThanOrEqual(2, $distance, 'sur une case libre adjacente');
+
+        $this->assertSame(
+            0,
+            $chestItem->get_n(PlayerFactory::legacy($builder->id)),
+            'le coffre a quitté le sac : ce qui est posé est ce qu\'on a dépensé'
+        );
+    }
+
     public function testCraftThenBuildTheFullBuildableObjectLoop(): void
     {
         // Décision de revue : la palissade est un OBJET CONSTRUCTIBLE —
