@@ -128,6 +128,47 @@ class ItemInstanceService extends BaseService
             'UPDATE item_instances SET entity_id = ? WHERE id = ?',
             [$entityId, $instanceId]
         );
+
+        // Covers promote() and create(), which both link before attaching.
+        self::syncHolder($conn, $instanceId);
+    }
+
+    /**
+     * Write the entity's holder from the ownership link.
+     *
+     * Scaffolding: both halves are written while the readers move over, and
+     * this goes when players_items_instances does.
+     */
+    public static function syncHolder($conn, int $instanceId): void
+    {
+        $entityId = $conn->fetchOne('SELECT entity_id FROM item_instances WHERE id = ?', [$instanceId]);
+
+        if ($entityId === false || $entityId === null) {
+            return;
+        }
+
+        $link = $conn->fetchAssociative(
+            'SELECT player_id, equiped, location FROM players_items_instances WHERE instance_id = ?',
+            [$instanceId]
+        );
+
+        if ($link === false) {
+            return;
+        }
+
+        $equiped = (string) $link['equiped'];
+        $location = (string) $link['location'];
+
+        $slot = match (true) {
+            $equiped !== '' => $equiped,
+            $location !== self::LOCATION_INVENTORY => $location,
+            default => \App\Service\Map\EntityLocationService::SLOT_CARRIED,
+        };
+
+        $conn->executeStatement(
+            'UPDATE players SET coords_id = NULL, holder_id = ?, slot = ? WHERE id = ?',
+            [(int) $link['player_id'], $slot, (int) $entityId]
+        );
     }
 
     /**
@@ -376,6 +417,7 @@ class ItemInstanceService extends BaseService
             'UPDATE players_items_instances SET equiped = ? WHERE instance_id = ?',
             [$emplacement, $instanceId]
         );
+        self::syncHolder($conn, $instanceId);
 
         return $instanceId;
     }
@@ -409,10 +451,12 @@ class ItemInstanceService extends BaseService
      */
     public function unequipInstance(int $instanceId): bool
     {
-        $this->entityManager->getConnection()->executeStatement(
+        $conn = $this->entityManager->getConnection();
+        $conn->executeStatement(
             "UPDATE players_items_instances SET equiped = '' WHERE instance_id = ?",
             [$instanceId]
         );
+        self::syncHolder($conn, $instanceId);
 
         return $this->demote($instanceId);
     }
@@ -592,6 +636,8 @@ class ItemInstanceService extends BaseService
             if ($affected === 0) {
                 throw new \InvalidArgumentException("Exemplaire #{$instanceId} emporté entre-temps.");
             }
+
+            self::syncHolder($conn, $instanceId);
         });
     }
 
@@ -742,6 +788,8 @@ class ItemInstanceService extends BaseService
             if ($affected === 0) {
                 throw new \InvalidArgumentException("Exemplaire #{$instanceId} déplacé entre-temps.");
             }
+
+            self::syncHolder($conn, $instanceId);
         });
     }
 
@@ -886,6 +934,7 @@ class ItemInstanceService extends BaseService
                     'INSERT INTO players_items_instances (player_id, instance_id) VALUES (?, ?)',
                     [$playerId, (int) $row['instance_id']]
                 );
+                self::syncHolder($conn, (int) $row['instance_id']);
                 $taken = true;
             });
             if ($taken) {

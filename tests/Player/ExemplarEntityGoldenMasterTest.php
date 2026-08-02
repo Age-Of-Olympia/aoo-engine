@@ -60,8 +60,8 @@ class ExemplarEntityGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->assertLessThanOrEqual(79999999, (int) $entity['id']);
     }
 
-    /** It is nowhere: no cell, no holder — the location has not moved yet. */
-    public function testTheExemplarEntityIsNowhere(): void
+    /** Carried, not nowhere: the holder now lives on the entity too. */
+    public function testTheExemplarEntityCarriesItsHolder(): void
     {
         $player = $this->createRealPlayer('GmExemplaireB');
         $bois = $this->boisOrSkip();
@@ -70,17 +70,18 @@ class ExemplarEntityGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $instanceId = (new ItemInstanceService())->promote($player->id, $bois->id);
         $entity = $this->entityOf($instanceId);
 
-        $this->assertNull($entity['coords_id'], 'aucune case');
-        $this->assertNull($entity['holder_id'], 'aucun porteur : la localisation vit encore dans l\'ancienne table');
-        $this->assertSame('', $entity['slot']);
+        $this->assertNull($entity['coords_id'], 'aucune case : il est porté, pas posé');
+        $this->assertSame((int) $player->id, (int) $entity['holder_id'], 'son porteur est sur l\'entité');
+        $this->assertSame('', $entity['slot'], 'en main, dans aucun emplacement');
 
+        // Both halves are written while the readers move over.
         $this->assertSame(
             $player->id,
             (int) $this->link->fetchOne(
                 'SELECT player_id FROM players_items_instances WHERE instance_id = ?',
                 [$instanceId]
             ),
-            'la possession n\'a pas bougé de table'
+            'et l\'ancien lien dit toujours la même chose'
         );
     }
 

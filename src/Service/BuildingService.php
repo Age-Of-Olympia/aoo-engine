@@ -867,20 +867,13 @@ class BuildingService extends BaseService
     }
 
     /**
-     * Mort d'un bâtiment : il DISPARAÎT du plateau — pas d'enfers, c'est
-     * le chemin des personnages. Satellite et composants supprimés, la
-     * ligne players remisée NULLE PART. Chemin de mort seulement — le
-     * retrait administratif complet est remove().
+     * Death of a structure: it leaves the board and is shelved nowhere. The
+     * enfers are the character path; the full administrative removal is
+     * remove().
      *
-     * Elle SURVIT pour que les événements restent vrais (les FK de
-     * players_logs pointent toujours une ligne réelle) et pour que l'id ne
-     * soit jamais recyclé (getNextEntityId lit MAX(id)).
-     *
-     * Elle ne part plus sur un plan `limbes_batiments` inventé pour
-     * l'occasion : « hors du plateau » se dit maintenant, au lieu de se
-     * mimer par une case où personne ne va. Les requêtes de plateau ne la
-     * voyaient pas parce qu'elles filtraient un plan ; elles ne la voient
-     * plus parce qu'elle n'est nulle part.
+     * The players row survives so events naming it stay true (players_logs
+     * foreign keys) and its id is never recycled (getNextEntityId reads
+     * MAX(id)).
      */
     public function vanish(int $playerId): bool
     {

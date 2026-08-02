@@ -122,11 +122,10 @@ final class EntityLocationService
     }
 
     /**
-     * Take an entity off the world without deleting it.
+     * Take an entity off the world without deleting it: it is nowhere.
      *
-     * What `BuildingService::vanish()` means when it shelves a row on
-     * `limbes_batiments`: the events naming it stay true, the id is not
-     * recycled, and it is nowhere. Said plainly rather than mimed on a plan.
+     * The row survives so events naming it stay true and its id is never
+     * recycled.
      */
     public function shelve(int $entityId): void
     {
