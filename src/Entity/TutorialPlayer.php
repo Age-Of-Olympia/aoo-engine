@@ -79,11 +79,18 @@ class TutorialPlayer extends Character
             throw new \RuntimeException("Cannot transfer rewards: real_player_id_ref is null");
         }
 
-        $conn->executeStatement('
-            UPDATE players
-            SET xp = xp + ?, pi = pi + ?
-            WHERE id = ? AND player_type = "real"
-        ', [$xpEarned, $piEarned, $this->realPlayerIdRef]);
+        /* A tutorial's earnings land on a real character, and nowhere else. */
+        $isRealPlayer = $conn->fetchOne(
+            "SELECT 1 FROM players WHERE id = ? AND player_type = 'real'",
+            [$this->realPlayerIdRef]
+        );
+
+        if ($isRealPlayer === false) {
+            return;
+        }
+
+        (new \App\Service\ProgressionService($conn))
+            ->gain($this->realPlayerIdRef, $xpEarned, $piEarned);
     }
 
     public function deleteWithRelatedData(\Doctrine\DBAL\Connection $conn): void

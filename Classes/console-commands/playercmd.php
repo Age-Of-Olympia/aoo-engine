@@ -127,12 +127,7 @@ EOT);
 
 
         if($alsoFixPi && $offsetPi!=0){
-            $sql = 'UPDATE players SET pi = pi + ? WHERE id = ?';
-
-            $stm=$this->db->prepare($sql);
-            $stm->bindValue(1,$offsetPi);
-            $stm->bindValue(2, $player->id);
-            $stm->executeQuery();
+            (new \App\Service\ProgressionService())->addPi((int) $player->id, (int) $offsetPi);
             $this->result->log( $player->data->name .' adding '. $offsetPi .'pi');
             $player->refresh_data();
         }

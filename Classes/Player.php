@@ -158,13 +158,14 @@ class Player implements ActorInterface {
 
         $db = new Db();
 
-        /* Credentials live in `accounts`; the join keeps `->row` (and the JSON
-         * cache built from it) carrying the same fields as before.
+        /* Credentials live in `accounts`, the turn clock in `turns`, what is
+         * earned in `progression`; the joins keep `->row` (and the JSON cache
+         * built from it) carrying the same fields as before.
          *
          * NULLIF, not plain COALESCE: the backfill gives every character a row,
-         * so an untouched account holds '' — which would win over a `players`
-         * column a path not yet routed through AccountService has just written.
-         * Empty means "nothing here", and the column answers. */
+         * so an untouched satellite holds ''/0 — which would win over a
+         * `players` column a path not yet routed through the services has just
+         * written. Empty means "nothing here", and the column answers. */
         $sql = '
         SELECT
         p.*,
@@ -172,10 +173,20 @@ class Player implements ActorInterface {
         COALESCE(NULLIF(a.mail, \'\'), p.mail) AS mail,
         COALESCE(NULLIF(a.plain_mail, \'\'), p.plain_mail) AS plain_mail,
         COALESCE(a.email_bonus, p.email_bonus) AS email_bonus,
-        COALESCE(NULLIF(a.last_login_time, 0), p.lastLoginTime) AS lastLoginTime
+        COALESCE(NULLIF(a.last_login_time, 0), p.lastLoginTime) AS lastLoginTime,
+        COALESCE(NULLIF(t.next_turn_time, 0), p.nextTurnTime) AS nextTurnTime,
+        COALESCE(NULLIF(t.last_action_time, 0), p.lastActionTime) AS lastActionTime,
+        COALESCE(NULLIF(t.next_turn_rescheduled, 0), p.nextTurnRescheduled) AS nextTurnRescheduled,
+        COALESCE(NULLIF(t.anti_berserk_time, 0), p.antiBerserkTime) AS antiBerserkTime,
+        COALESCE(NULLIF(g.xp, 0), p.xp) AS xp,
+        COALESCE(NULLIF(g.`rank`, 0), p.`rank`) AS `rank`,
+        COALESCE(NULLIF(g.bonus_points, 0), p.bonus_points) AS bonus_points,
+        COALESCE(NULLIF(g.pi, 0), p.pi) AS pi
         FROM
         players p
         LEFT JOIN accounts a ON a.player_id = p.id
+        LEFT JOIN turns t ON t.player_id = p.id
+        LEFT JOIN progression g ON g.player_id = p.id
         WHERE
         p.id = ?
         ';
@@ -920,11 +931,7 @@ class Player implements ActorInterface {
         // update rank
         $rank = Str::get_rank($this->data->xp);
 
-        $sql = 'UPDATE players SET xp = xp + ?, pi = pi + ?, rank = ? WHERE id = ?';
-
-        $db = new Db();
-
-        $db->exe($sql, array($xp, $pi, $rank, $this->id));
+        (new \App\Service\ProgressionService())->gain((int) $this->id, $xp, $pi, $rank);
 
 
         $this->refresh_data();
@@ -1123,15 +1130,7 @@ class Player implements ActorInterface {
 
             $total_pi_rembouser = $row->total;
 
-            $sql = '
-            UPDATE players
-            SET
-            pi = pi + ?
-            WHERE
-            id = ?
-            ';
-
-            $sql = $db->exe($sql, array($total_pi_rembouser, $this->id));
+            (new \App\Service\ProgressionService())->addPi((int) $this->id, (int) $total_pi_rembouser);
 
 
             $sql = 'delete from players_upgrades where player_id = ? and name = ? order by cost desc limit ?';

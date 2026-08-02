@@ -10,10 +10,11 @@ namespace App\Simulation;
  * paths a DB-free SimulatedPlayer cannot override (notably a real
  * Classes\Item::add_item). The per-method no-ops on SimulatedPlayer avoid DB
  * reads and heavy work; this guard is the persistence boundary checked by the
- * two write chokepoints — Classes\Db::exe() (all SQL) and Classes\Json's file
- * writes — so a preview persists nothing through them. Reads are unaffected.
- * (A write via a path that bypasses both — e.g. a future Doctrine flush() — would
- * not be caught; the engine currently writes only through those two.)
+ * write chokepoints — Classes\Db::exe() (all SQL), Classes\Json's file writes,
+ * and the services that hold a DBAL connection of their own and so reach
+ * neither — so a preview persists nothing through them. Reads are unaffected.
+ * (A write via a path that asks none of them — e.g. a future Doctrine flush()
+ * — would not be caught.)
  */
 final class SimulationGuard
 {
@@ -45,6 +46,22 @@ final class SimulationGuard
     public static function recordBlockedWrite(): void
     {
         self::$blockedWrites++;
+    }
+
+    /**
+     * Whether the write about to be issued must be swallowed — and count it
+     * if so. The form used by services that write through DBAL directly and
+     * so never reach Classes\Db::exe().
+     */
+    public static function blocksWrite(): bool
+    {
+        if (!self::$active) {
+            return false;
+        }
+
+        self::recordBlockedWrite();
+
+        return true;
     }
 
     public static function blockedWrites(): int

@@ -2,8 +2,6 @@
 
 namespace App\Service;
 
-use Classes\Db;
-
 /**
  * Turn scheduling rules: how long a player's turn lasts (driven by the
  * speed carac) and the window inside which a player may manually move
@@ -85,20 +83,12 @@ class TurnScheduleService
      * Persist a new next-turn time. Callers must have validated the value
      * with isWithinRescheduleWindow() first.
      *
-     * Raises nextTurnRescheduled in the same statement: one reschedule per
-     * turn cycle, the flag is cleared when the turn refreshes (NewTurnView).
+     * The right to reschedule is spent along with it: one reschedule per turn
+     * cycle, the flag cleared when the turn refreshes (NewTurnView). Where the
+     * turn is stored is TurnService's business — the rules stay here.
      */
     public function reschedule(int $playerId, int $newNextTurnTime): void
     {
-        $db = new Db();
-
-        $sql = '
-        UPDATE players
-        SET nextTurnTime = ?,
-        nextTurnRescheduled = 1
-        WHERE id = ?
-        ';
-
-        $db->exe($sql, array($newNextTurnTime, $playerId));
+        (new TurnService())->reschedule($playerId, $newNextTurnTime);
     }
 }

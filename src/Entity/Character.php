@@ -16,12 +16,16 @@ use Doctrine\ORM\Mapping as ORM;
  * progression (xp, pi, rank…), faction RANK and turn timing — belonging to a
  * faction is on GameEntity, since a forge belongs to one too.
  *
- * Two of those are NOT character-ness, and now say so out loud: taking turns
- * and progressing are capabilities, held here today and by playable buildings
- * tomorrow (docs/design-playable-buildings.md). Nothing moves yet — the point
- * is that a reader can already ask "does this take turns?" instead of "is this
- * a character?", so the gates written from now on do not have to be swept
- * later.
+ * Two of those are NOT character-ness, and say so out loud: taking turns and
+ * progressing are capabilities, held here today and by playable buildings
+ * tomorrow (docs/design-playable-buildings.md). A reader asks "does this take
+ * turns?" instead of "is this a character?", so the gates written from now on
+ * do not have to be swept later.
+ *
+ * The columns behind those two capabilities are mapped here but no longer own
+ * their value: `turns` and `progression` do, through TurnService and
+ * ProgressionService, and the columns are mirrors kept alive until the
+ * post-deployment drop. The same holds for psw/mail and `accounts`.
  *
  * No discriminator entry of its own — Doctrine allows abstract
  * intermediate classes in an STI hierarchy; querying Character returns

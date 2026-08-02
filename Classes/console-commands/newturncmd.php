@@ -1,7 +1,6 @@
 <?php
 use Classes\Command;
 use Classes\Argument;
-use Classes\Db;
 use Classes\Player;
 
 class NewTurnCmd extends Command
@@ -19,17 +18,15 @@ EOT);
     public function execute(  array $argumentValues ) : string
     {
         $player = new Player($_SESSION['playerId']);
+        $turns = new \App\Service\TurnService();
 
         if(isset($argumentValues[0]) && $argumentValues[0] == 'real'){
-            $sql = 'UPDATE players SET nextTurnTime = ? WHERE id = ?';
+            $turns->setNextTurnTime((int) $player->id, time());
         }
         else
         {
-            $sql = 'UPDATE players SET nextTurnTime = ?, lastActionTime = 0, antiBerserkTime = 0 WHERE id = ?';
+            $turns->restartTurnClock((int) $player->id, time());
         }
-        $db = new Db();
-
-        $db->exe($sql, array(time(), $player->id));
 
         $player->refresh_data();
 

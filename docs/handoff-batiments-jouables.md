@@ -13,57 +13,63 @@ touched on the way.
 |---|---|
 | **L0** — credentials leave `players` | ✅ `accounts` table, `AccountService`, mirrored writes, join in `Player::get_row()` |
 | **L1** — capabilities named | ✅ `TakesTurnsInterface`, `ProgressesInterface`, implemented by `Character` only |
-| **L2** — turn and progression satellites | ⬜ **next**, described below |
+| **L2** — turn and progression satellites | ✅ `turns` + `progression`, `TurnService` / `ProgressionService`, mirrored writes, joins in `Player::get_row()` |
 | **L3** — turn rule freed of the session | ✅ `isDue()` / `processDue()`; `processIfDue()` keeps the session gates |
 | **L4** — the faction screen drives one building type | ⬜ needs the screen, which does not exist |
 | **L5** — branch gates become capability gates | ⬜ after L2/L4 |
 
 ---
 
-## 2. L2 — the scope
+## 2. L2 — as delivered
 
-Move to satellites what `Character` holds and a playable building will need:
+Two satellites hold what `Character` used to carry alone and a playable building will need:
 
-| satellite | columns taken from `players` |
-|---|---|
-| `turns` | `nextTurnTime`, `lastActionTime`, `nextTurnRescheduled`, `antiBerserkTime` |
-| `progression` | `xp`, `rank`, `bonus_points`, `pi` |
+| satellite | columns taken from `players` | written through |
+|---|---|---|
+| `turns` | `nextTurnTime`, `lastActionTime`, `nextTurnRescheduled`, `antiBerserkTime` | `TurnService` |
+| `progression` | `xp`, `rank`, `bonus_points`, `pi` | `ProgressionService` |
 
-**`pi` comes along.** `Player::put_xp()` mints it in the same statement as experience, capped
+**`pi` came along.** `Player::put_xp()` mints it in the same statement as experience, capped
 at the season's XP ceiling, and characteristic upgrades spend it. Gold is an item; PI is the
 currency progression itself produces. Whether a *building* spends PI on its own stats is a
 game-design question for the evolution work, not a reason to file the column elsewhere.
 
-**Take the chance to make the debit atomic.** `scripts/upgrades/carac.php` guards with
-`WHERE pi >= ?` but never checks affected rows: two concurrent requests both pass the PHP
-check, one `UPDATE` matches nothing, and the caller proceeds as if it had paid. PHP's
-session-file lock hides it today, and `session_write_close()` — which the tutorial APIs
-already call — unhides it. Moving PI is the moment to debit in one conditional statement and
-read the affected-row count.
+**The PI debit is now atomic.** `scripts/upgrades/carac.php` used to read the balance in PHP
+and guard the `UPDATE` with `WHERE pi >= ?` without reading the affected-row count: two
+concurrent requests both passed, one statement matched nothing, and the caller proceeded as
+if it had paid. `ProgressionService::spendPi()` debits in one conditional statement and
+answers from the row count; the caller branches on that answer.
 
-### Copy the L0 shape — it is what kept that step small
+### The L0 shape, copied — it is what kept both steps small
 
 1. **Migration**: create the satellite, backfill from the `players` columns, **keep the
    columns**. Idempotent (`INSERT IGNORE`, `CREATE TABLE IF NOT EXISTS`), FK
    `ON DELETE CASCADE`, characters only.
 2. **One service per satellite**, the single gateway for writes. Each write **also updates
    the legacy column** — code still reads it. When the columns drop, the mirror drops with
-   them and one statement per method remains.
-3. **Reads keep working through the join in `Player::get_row()`.** That is the trick: some
-   120 call sites read `$player->data->xp`, `->nextTurnTime` and friends, and none of them
-   moved for L0. Add the two joins there.
+   them and exactly one statement per method disappears.
+3. **Reads keep working through the joins in `Player::get_row()`.** That is the trick: some
+   120 call sites read `$player->data->xp`, `->nextTurnTime` and friends, and **none of them
+   moved**, for L0 or for L2.
 4. **`NULLIF`, not plain `COALESCE`.** The backfill gives every character a row, so an
    untouched satellite value is `''`/`0`, which would beat a `players` column a path not yet
    routed through the service has just written. Empty means *nothing written here*.
-5. Column drop is a **post-deployment** pass, never in the same MR.
+5. `ensureRow()` seeds a late satellite row **from the columns it mirrors**, not from
+   defaults — an increment (`xp = xp + ?`) on a blank row would silently reset a character.
+   `accounts` never needed this; a satellite with increments does.
+6. Column drop is a **post-deployment** pass, never in the same MR.
 
-### Where the writes are
+### Two things L0 did not have to face
 
-Use `mcp__serena__replace_in_files` in **dry-run** to inventory — it returns the whole
-project unshredded, unlike `grep` through the rtk proxy. `TurnProcessingService::process()`
-is the main writer of turn columns (one `UPDATE players SET nextTurnTime, …`);
-`Player::put_xp()` writes `xp`, `pi` and `rank` together, and `seasoncmd.php` writes
-`bonus_points`.
+- **The simulator's boundary.** `SimulationGuard` swallows writes at
+  `Classes\Db::exe()` and `Classes\Json`; a service holding its own DBAL connection reaches
+  neither, so a preview would have persisted XP and turn times. Both services ask
+  `SimulationGuard::blocksWrite()` before writing. Any future service that moves off
+  `Classes\Db` inherits that obligation.
+- **`seasoncmd`'s overflow statement** assigns `xp` before it reads it back for
+  `bonus_points`, and MariaDB evaluates `SET` left to right — so the banked excess is
+  computed after the ceiling is in place. `bankOverflowXp()` keeps that behaviour exactly;
+  changing it is a game-data decision, not a refactor.
 
 ---
 
@@ -121,6 +127,10 @@ green**, then delete the local branch.
 ## 5. Post-deployment queue (unrelated to L2, do not start early)
 
 Waiting on the season deploy: dropping `unique_objects`, `map_resources`, the `map_walls`
-view, `players_items_instances` (6 rows to fold into the containment relation first), and the
-`players` credential columns now mirrored by `accounts` — each drop taking its mirror or its
-cascade delete with it.
+view, `players_items_instances` (6 rows to fold into the containment relation first), the
+`players` credential columns now mirrored by `accounts`, and the eight now mirrored by
+`turns` and `progression` — each drop taking its mirror or its cascade delete with it.
+
+For the L2 columns the pass is mechanical: delete the mirror statement in each service method
+(one per method, marked `/* The mirror: … */`), drop the `COALESCE(NULLIF(…))` wrappers in
+`Player::get_row()` so the satellite answers alone, then `ALTER TABLE players DROP COLUMN`.

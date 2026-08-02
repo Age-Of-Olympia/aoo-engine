@@ -112,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['player_save'])) {
         // Tour : l'horloge repasse dans le passé, le prochain chargement
         // du jeu déclenche un nouveau tour (points, usure, effets).
         if (!empty($_POST['turn_now'])) {
-            $db->exe('UPDATE players SET nextTurnTime = ? WHERE id = ?', array(time() - 1, $id));
+            (new \App\Service\TurnService())->setNextTurnTime($id, time() - 1);
         }
 
         setFlash('success', "Personnage « {$name} » enregistré.");

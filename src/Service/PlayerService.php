@@ -128,16 +128,7 @@ class PlayerService
     }
     
     public function updateLastActionTime(): void {
-        $sql = '
-            UPDATE
-            players
-            SET
-            lastActionTime = '. time() .'
-            WHERE
-            id = ?
-            ';
-
-        $this->db->exe($sql, $this->playerId);
+        (new TurnService())->touchLastAction($this->playerId);
     }
 
     public function getNumberOfSpellAvailable() : int{

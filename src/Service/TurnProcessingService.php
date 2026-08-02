@@ -166,17 +166,17 @@ class TurnProcessingService
         // les événements du tour ont armé.
         $wearRecap = (new WearService())->applyNewTurnWear($player->id);
 
+        // The turn's own clock belongs to `turns`; malus and energie describe
+        // the character and stay on its row.
+        (new TurnService())->openTurn(
+            (int) $player->id,
+            $nextTurnTime,
+            (int) ($player->data->lastActionTime + (0.25 * $playerTurn))
+        );
+
         $db->exe(
-            'UPDATE players
-             SET nextTurnTime = ?, nextTurnRescheduled = 0, lastActionTime = 0, antiBerserkTime = ?, malus = malus - ?, energie = ?
-             WHERE id = ?',
-            [
-                $nextTurnTime,
-                $player->data->lastActionTime + (0.25 * $playerTurn),
-                $recovMalus,
-                $recovEnergie,
-                $player->id,
-            ]
+            'UPDATE players SET malus = malus - ?, energie = ? WHERE id = ?',
+            [$recovMalus, $recovEnergie, $player->id]
         );
 
         $player->put_xp($gainXp);

@@ -132,10 +132,9 @@ function refund_deprecated_objects(bool $bank)
 function update_overxP_players()
 {
     // si un joueur as + de 3500, set son xp a 3500 etmet l'overflow dans bonus_points
-    $sql = 'UPDATE players SET xp = 3500, bonus_points = bonus_points + (xp - 3500) WHERE xp > 3500';
-    $res =  $this->db->executeQuery($sql);
-    $this->result->Log($res->rowCount().' joueurs avec trop d\'xp convertis');
-    return $res;
+    $banked = (new \App\Service\ProgressionService())->bankOverflowXp(3500);
+    $this->result->Log($banked.' joueurs avec trop d\'xp convertis');
+    return $banked;
 }
 
 function get_deprecated_objects(bool $bank)

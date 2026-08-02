@@ -1,5 +1,5 @@
 <?php
-use Classes\Db;
+use App\Service\ProgressionService;
 if(!isset(CARACS[$_POST['carac']])){
 
     exit('error carac');
@@ -18,26 +18,12 @@ if($k == 'spd'){
 $cost = \App\View\UpgradesView::returnCost(\App\View\UpgradesView::TRIO[$k], $player->upgrades->$k);
 
 
-if($player->row->pi < $cost){
+// The balance is checked by the debit itself: two requests arriving together
+// must not both take the last Pi.
+if(!(new ProgressionService())->spendPi((int) $player->id, $cost)){
 
     exit('Pas assez de Pi.');
 }
-
-
-$db = new Db();
-
-$sql = '
-UPDATE
-players
-SET
-pi = pi - ?
-WHERE
-id = ?
-AND
-pi >= ?
-';
-
-$db->exe($sql, array($cost, $player->id, $cost));
 
 
 $player->put_upgrade($k,$cost);
