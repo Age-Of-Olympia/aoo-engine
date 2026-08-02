@@ -107,18 +107,91 @@ class EntityCapabilitiesTest extends LegacyPlayerFixtureTestCase
     }
 
     /**
-     * A structure holds neither capability TODAY — this case dates that state,
-     * and is where to come when a playable building takes them on.
+     * A building holds both, without being a character and without an account —
+     * the point the whole strand was aiming at.
      *
-     * Asked of the CLASS, not an instance: `assertNotInstanceOf` on a Building
-     * is true by construction and static analysis says so before it runs.
+     * Asked of the CLASS, not an instance: static analysis settles an
+     * assertInstanceOf before it ever runs.
      */
-    public function testAStructureHoldsNeitherCapabilityYet(): void
+    public function testABuildingHoldsBothCapabilitiesWithoutBeingACharacter(): void
     {
         $implemented = class_implements(\App\Entity\Building::class);
 
+        $this->assertContains(TakesTurnsInterface::class, $implemented);
+        $this->assertContains(ProgressesInterface::class, $implemented);
+        $this->assertNotContains(\App\Entity\Character::class, class_parents(\App\Entity\Building::class));
+    }
+
+    /**
+     * The other structures hold neither: a tree does not take turns and a
+     * dropped sword earns nothing. Being a structure is not the capability —
+     * holding it is.
+     *
+     * @param class-string $class
+     */
+    #[DataProvider('structuresThatDoNotPlay')]
+    public function testTheOtherStructuresHoldNeitherCapability(string $class): void
+    {
+        $implemented = class_implements($class);
+
         $this->assertNotContains(TakesTurnsInterface::class, $implemented);
         $this->assertNotContains(ProgressesInterface::class, $implemented);
+    }
+
+    /** @return array<string, array{0: class-string}> */
+    public static function structuresThatDoNotPlay(): array
+    {
+        return [
+            'décor'     => [\App\Entity\Scenery::class],
+            'ressource' => [\App\Entity\Resource::class],
+            'plante'    => [\App\Entity\Plant::class],
+            'exemplaire' => [\App\Entity\Exemplar::class],
+        ];
+    }
+
+    /**
+     * And they map none of the columns either: the traits carry them into the
+     * two classes that hold the capability rather than onto the shared root, so
+     * a decor has no experience to hold — not even an unread one.
+     *
+     * @param class-string $class
+     */
+    #[DataProvider('structuresThatDoNotPlay')]
+    public function testTheOtherStructuresMapNoneOfTheColumns(string $class): void
+    {
+        $mapped = \App\Factory\EntityManagerFactory::getEntityManager()
+            ->getClassMetadata($class)
+            ->getFieldNames();
+
+        $this->assertSame(
+            [],
+            array_values(array_intersect(
+                ['xp', 'rank', 'pi', 'bonusPoints', 'nextTurnTime', 'lastActionTime'],
+                $mapped
+            ))
+        );
+    }
+
+    /** The two that do hold it map them, into the one shared table. */
+    #[DataProvider('classesThatPlay')]
+    public function testWhatPlaysMapsTheColumnsIntoTheSharedTable(string $class): void
+    {
+        $metadata = \App\Factory\EntityManagerFactory::getEntityManager()->getClassMetadata($class);
+
+        $this->assertSame('players', $metadata->getTableName());
+
+        foreach (['xp', 'rank', 'pi', 'bonusPoints', 'nextTurnTime', 'lastActionTime'] as $field) {
+            $this->assertContains($field, $metadata->getFieldNames());
+        }
+    }
+
+    /** @return array<string, array{0: class-string}> */
+    public static function classesThatPlay(): array
+    {
+        return [
+            'joueur'    => [RealPlayer::class],
+            'bâtiment'  => [\App\Entity\Building::class],
+        ];
     }
 
     private function reloadCharacter(int $id): RealPlayer

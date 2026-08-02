@@ -129,6 +129,14 @@ classDiagram
         owner_id, faction, is_open
         avatar, portrait, text
     }
+    class TakesTurnsInterface {
+        <<interface>>
+        next turn, last action, reschedule
+    }
+    class ProgressesInterface {
+        <<interface>>
+        xp, rank, bonus points, pi
+    }
     class Character {
         <<abstract>>
         person: story, quest, godId, pf
@@ -187,9 +195,16 @@ classDiagram
     Structure <|-- Plant
     Structure <|-- Exemplar
 
+    TakesTurnsInterface <|.. Character
+    ProgressesInterface <|.. Character
+    TakesTurnsInterface <|.. Building
+    ProgressesInterface <|.. Building
+
     Character ..> Account : 1..1
     Character ..> TurnState : 1..1
     Character ..> ProgressionState : 1..1
+    Building ..> TurnState : 0..1 si son type est jouable
+    Building ..> ProgressionState : 0..1
     Building ..> BuildingDetails : 1..1
     Resource ..> ResourceState : 0..1
     Exemplar ..> ItemInstance : 1..1
@@ -213,13 +228,39 @@ counting along with it.
 So the type tree shares behaviour through interfaces (§2.1), and the object tree now does the
 same for what is a *capability* rather than a branch:
 
-| interface | who holds it today | what it means |
+| interface | who holds it | what it means |
 |---|---|---|
-| `TakesTurnsInterface` | `Character` | has a next turn, a reschedule flag, a memory of its last action |
-| `ProgressesInterface` | `Character` | earns experience, holds a level and unspent points |
+| `TakesTurnsInterface` | `Character`, **`Building`** | has a next turn, a reschedule flag, a memory of its last action |
+| `ProgressesInterface` | `Character`, **`Building`** | earns experience, holds a level and unspent points |
 
 Both **read only**: the state lives in satellites and the services below are the writers, so
 a setter on the contract would reach the mirror column alone and leave the satellite behind.
+
+**A building holds both, and is not a character.** That is the whole strand landing: no
+reparenting, no account, no enfers death path — just the two contracts and the two satellite
+rows. `Scenery`, `Resource`, `Plant` and `Exemplar` hold neither; being a structure is not the
+capability, holding it is.
+
+Holding the capability says a building **may** play. Whether a given one **does** is its
+type's answer, and it follows the §8.2 rule like every other configurable behaviour:
+
+| question | answered by |
+|---|---|
+| may this *kind* of thing play? | the class, through the interface |
+| does *this type* play? | `races.playable`, via `App\Service\PlaysTurns` |
+| who may act with it? | `LockService::mayLock()` — owner, or faction member |
+
+`PlaysTurns` is the one predicate: **a character plays by nature** — the hidden system races
+`ame`, `dieu`, `animal` carry `playable = 0` and still take turns — **plus anything its type
+declares playable**. It is a constant rather than inline SQL because the two services that
+seed satellites and the migrations that backfill them must say it word for word.
+
+The columns behind both capabilities are mapped by **traits** — `TakesTurnsFieldsTrait` and
+`ProgressesFieldsTrait` — used by `Character` and `Building`, exactly as
+`HarvestableFieldsTrait` is used by `ResourceType` and `PlantType` on the type side. Doctrine
+maps them into the one `players` table for both families, so a capability crosses families
+that do not form a subtree **without climbing onto the trunk**: `Scenery` maps none of them,
+because a decor has no experience to hold. Same pattern, both trees.
 
 Neither is character-ness: a playable building will take turns and earn its own experience
 without ever having an account. Naming the contracts is what lets the gates switch from
@@ -284,6 +325,8 @@ erDiagram
 | `Map\HarvestCatalogService` | yields per (plan, type), field-by-field override |
 | `AccountService` | credentials: the hash a login is checked against, mail, mail bonus, last login, and the RGPD wipe |
 | `TurnService` | when an entity plays: opening a turn, rescheduling it, touching the last action |
+| `PlaysTurns` | the one predicate for *who owns a turn and a progression* — a character by nature, plus anything its type declares playable |
+| `TurnProcessingService` | what a turn refreshes, and the fork between a character's (a body to recover) and a structure's (its pool and its clock) |
 | `ProgressionService` | what an entity earns: the xp/pi/rank gain, the **conditional** PI debit, the season's ceiling |
 | `PlayerService::ProcessTargetDeath` | the fork between character death and structure destruction |
 
@@ -417,6 +460,7 @@ keeps it, in the void, with its surviving row (§6.4).
 | holds an inventory | yes | yes | yes | yes | yes | yes (a chest) | yes, but that blocks pickup |
 | at 0 PV | enfers + XP loss | `vanish` | `vanish` | `vanish` | `vanish` | falls **broken** on its own cell | already there — stays broken |
 | repairable | heal | yes, unless broken | yes — a chipped statue is re-carved | **no** — a vein runs out and grows back | **no** | yes, unless broken | no — cannot be targeted at all |
+| takes turns / progresses | **yes**, by nature | **if its type is `playable`** — turn = pool + clock, no XP for standing still | no | no | no | no | no |
 
 Repairability is declared **on the type** (`races.repairable`, nullable = ask the family), not
 deduced from the branch. See §7.

@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Interface\ProgressesInterface;
 use App\Interface\TakesTurnsInterface;
+use App\Trait\ProgressesFieldsTrait;
+use App\Trait\TakesTurnsFieldsTrait;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -38,6 +40,9 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 abstract class Character extends GameEntity implements TakesTurnsInterface, ProgressesInterface
 {
+    use TakesTurnsFieldsTrait;
+    use ProgressesFieldsTrait;
+
     #[ORM\Column(type: "string", length: 255)]
     protected string $psw = '';
 
@@ -46,15 +51,6 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
 
     #[ORM\Column(type: "string", length: 255, name: "plain_mail")]
     protected string $plainMail = '';
-
-    #[ORM\Column(type: "integer")]
-    protected int $xp = 0;
-
-    #[ORM\Column(type: "integer", name: "bonus_points")]
-    protected int $bonusPoints = 0;
-
-    #[ORM\Column(type: "integer")]
-    protected int $pi = 0;
 
     #[ORM\Column(type: "integer")]
     protected int $pr = 0;
@@ -70,9 +66,6 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
 
     #[ORM\Column(type: "integer")]
     protected int $pf = 0;
-
-    #[ORM\Column(type: "integer")]
-    protected int $rank = 1;
 
     #[ORM\Column(type: "text")]
     protected string $story = 'Je préfère garder cela pour moi.';
@@ -93,19 +86,7 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
     protected int $secretFactionRole = 0;
 
     #[ORM\Column(type: "integer")]
-    protected int $nextTurnTime = 0;
-
-    #[ORM\Column(type: "boolean")]
-    protected bool $nextTurnRescheduled = false;
-
-    #[ORM\Column(type: "integer")]
-    protected int $lastActionTime = 0;
-
-    #[ORM\Column(type: "integer")]
     protected int $lastLoginTime = 0;
-
-    #[ORM\Column(type: "integer")]
-    protected int $antiBerserkTime = 0;
 
     #[ORM\Column(type: "integer")]
     protected int $lastTravelTime = 0;
@@ -146,21 +127,6 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
     {
         $this->plainMail = $plainMail;
         return $this;
-    }
-
-    public function getXp(): int
-    {
-        return $this->xp;
-    }
-
-    public function getBonusPoints(): int
-    {
-        return $this->bonusPoints;
-    }
-
-    public function getPi(): int
-    {
-        return $this->pi;
     }
 
     public function getPr(): int
@@ -218,11 +184,6 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
         return $this;
     }
 
-    public function getRank(): int
-    {
-        return $this->rank;
-    }
-
     public function getStory(): string
     {
         return $this->story;
@@ -278,21 +239,6 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
         return $this;
     }
 
-    public function getNextTurnTime(): int
-    {
-        return $this->nextTurnTime;
-    }
-
-    public function isNextTurnRescheduled(): bool
-    {
-        return $this->nextTurnRescheduled;
-    }
-
-    public function getLastActionTime(): int
-    {
-        return $this->lastActionTime;
-    }
-
     public function getLastLoginTime(): int
     {
         return $this->lastLoginTime;
@@ -302,11 +248,6 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
     {
         $this->lastLoginTime = $lastLoginTime;
         return $this;
-    }
-
-    public function getAntiBerserkTime(): int
-    {
-        return $this->antiBerserkTime;
     }
 
     public function getLastTravelTime(): int

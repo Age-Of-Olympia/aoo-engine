@@ -13,8 +13,13 @@ use Doctrine\ORM\Mapping as ORM;
  *     position, presentation, and the PV surface. `race` lives here on
  *     purpose: it points into the `races` catalog, which is the max-PV
  *     source for characters AND for structures (pseudo-races, §4.6).
- *   - Character: what only played/playing characters have — account,
- *     progression, faction, turn timing.
+ *   - Character: what only a person has — an account, a story, a god,
+ *     a faction rank.
+ *
+ * Taking turns and progressing live on NEITHER: they are capabilities, carried
+ * by TakesTurnsFieldsTrait / ProgressesFieldsTrait into the classes that hold
+ * them — Character and Building, which do not form a subtree
+ * (docs/design-playable-buildings.md).
  *
  * Hard rule from the plan: the hierarchy never grows a third level.
  * When a new type doesn't fit Character/Structure, add a component
@@ -355,4 +360,5 @@ abstract class GameEntity
     {
         return $caracs->computeNudeCaracs((int) $this->id, $this->race);
     }
+
 }
