@@ -1027,6 +1027,12 @@ const FEATURES = [
     player:"Poser des altars dans les plans pour augmenter l'influence d'un dieu.",
     enables:[] },
 
+  { id:'playable-buildings', title:"Bâtiments jouables (écran de faction)", category:'faction-race', status:'planned',
+    quarter:6.7, date:'Sept 2026 (S3)',
+    tech:"Un bâtiment jouable est une ENTITÉ QUI AGIT, pas un personnage : il reste dans la branche Structure et gagne deux capacités que Character portait seul — prendre des tours (DLA, A, MVT) et progresser (XP, niveau). Jamais de compte : on le pilote par l'écran de faction, et « qui a le droit » est la règle qui décide déjà des serrures (propriétaire ou faction). La réserve d'actions appartient au bâtiment : qui que ce soit qui les dépense, elles sont dépensées. MVT reste dans la capacité — une machine de siège est littéralement un bâtiment qui bouge. Cadrage : docs/design-playable-buildings.md.",
+    player:"Les bâtiments d'une faction cessent d'être des décors qu'on répare : ils jouent. Un fortin gagne de l'expérience, monte en niveau, et dépense ses propres points d'action — que ce soit vous ou un autre membre qui s'en serve. Ce qu'il a appris lui reste, même détruit.",
+    enables:['outposts'] },
+
   /* ─────────────────────────── LONG-TERM ─────────────────────────── */
   { id:'tile-composition', title:"⭐ Refonte case / tuile (état de base + diff joueur)", category:'map-tiles', status:'longterm',
     quarter:10, date:'Long terme',
