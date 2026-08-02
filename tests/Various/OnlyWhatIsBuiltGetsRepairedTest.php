@@ -30,7 +30,7 @@ class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
     {
         try {
             require_once __DIR__ . '/../../config/bootstrap.php';
-            $conn = \App\Entity\EntityManagerFactory::getEntityManager()->getConnection();
+            $conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
             $conn->fetchOne('SELECT 1');
         } catch (\Throwable $e) {
             $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
@@ -92,14 +92,15 @@ class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
     /**
      * Un OBJET POSÉ reste réparable, et c'est le cas qui a failli passer.
      *
-     * Un objet unique — coffre, arme lâchée — est une entité SANS type au
-     * catalogue : `UniqueObjectService` l'inscrit sous la race « objet », qui
-     * n'existe dans `races` pour personne. Une garde qui se contente
-     * d'interroger le catalogue rend donc `null`, refuse, et retire en silence
-     * une capacité que ces objets avaient.
+     * Un exemplaire est une entité dont le type vit dans l'AUTRE catalogue :
+     * un coffre de bois est une ligne d'`items`, que `getRaceByName()` ne
+     * trouvera jamais — et depuis que les types de contenants ont quitté
+     * `races`, c'est vrai de tous. Une garde qui se contente d'interroger
+     * `races` rend donc `null`, refuse, et retire en silence une capacité que
+     * ces objets avaient.
      *
-     * C'est aussi le seul endroit du jeu où réparer un OBJET a déjà un sens :
-     * posé sur le plateau, il porte sa durabilité comme un édifice ses PV.
+     * Un objet manufacturé se rafistole : la question ne se pose que pour ce
+     * qui pousse.
      */
     public function testADroppedObjectStaysRepairable(): void
     {
@@ -123,13 +124,14 @@ class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
         };
 
         $this->assertTrue(
-            $verdict('unique', \App\Service\UniqueObjectService::ITEM_RACE),
+            $verdict(\App\Service\ItemInstanceService::ENTITY_TYPE, 'coffre_bois'),
             'un coffre, une arme lâchée : posés, ils se réparent'
         );
 
-        /* La même race SANS être un objet posé ne passe pas : c'est bien le
-         * player_type qui ouvre la porte, pas une chaîne magique. */
-        $this->assertFalse($verdict('scenery', \App\Service\UniqueObjectService::ITEM_RACE));
+        /* Le même NOM de type sans être un exemplaire ne passe pas : c'est le
+         * discriminant qui ouvre la porte, pas une chaîne magique — et un décor
+         * mal nommé ne doit pas pouvoir l'emprunter. */
+        $this->assertFalse($verdict('scenery', 'coffre_bois'));
     }
 
     /** La capacité est portée par les choses POSÉES, pas par les peuples. */

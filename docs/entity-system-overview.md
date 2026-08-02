@@ -359,8 +359,8 @@ Life lives in `players_bonus`, for every family alike.
 | at 0 PV | enfers + XP loss | `vanish` | `vanish` | `vanish` | `vanish` | falls **broken** on its own cell | already there — stays broken |
 | repairable | heal | yes, unless broken | yes — a chipped statue is re-carved | **no** — a vein runs out and grows back | **no** | yes, unless broken | no — cannot be targeted at all |
 
-Repairability is declared, not deduced: `reparer` names the families it reaches
-(`['building','scenery','item']`). See §7.
+Repairability is declared **on the type** (`races.repairable`, nullable = ask the family), not
+deduced from the branch. See §7.
 
 ---
 
@@ -558,10 +558,27 @@ be damaged, and not broken* — never *what kind of thing may be repaired at all
 **The declaration now names families.** `TargetType.allowed` accepts, alongside the two
 branches, the five structure discriminators — `building`, `scenery`, `resource`, `plant`,
 `item` (`EntityCategory::structureFamilies()`). A named family is enough; the branch stays
-the umbrella. `reparer` reads `['building','scenery','item']`: a chipped statue is re-carved,
-a vein is not repaired — it runs out and grows back.
+the umbrella.
 
-Three consequences worth knowing:
+**But repair is not settled there** — two answers to the same question had been written in
+parallel, and the finer one wins:
+
+| gate | question | for `reparer` |
+|---|---|---|
+| `TargetType.allowed` | which **kinds** does this action reach? | `['structure']` — the wide envelope |
+| `races.repairable` + `RequiresRepairableTarget` | does **this type** mend? | family default (built and scenery yes, what grows no), overridable per type |
+
+The envelope has to stay wide: a list of families frozen in an action's data cannot be
+contradicted by a type, and the promise of the column is that a type may contradict its
+family *in both directions* — a carved stone well that does mend, a shack that does not.
+The condition is declared `display_context`, so the button disappears from what cannot be
+mended instead of appearing and failing on click.
+
+A plant is a case where both gates agree for different reasons: no plant type exceeds 1 PV,
+so a damaged plant is already broken, and `RequiresDamagedTarget` refuses it before the type
+is ever consulted.
+
+Three consequences of the family vocabulary, worth knowing:
 
 - **One matcher, two readers.** `TargetTypeCondition::reaches()` is the rule, and
   `ActionTargeting::canTargetEntity()` calls it. The two used to each read `allowed` their
@@ -577,9 +594,8 @@ The vocabulary is spelled in three places — the discriminator that creates a f
 label that offers it in the workbench, the article that refuses it —
 and `EntityFamiliesVocabularyTest` fails if they drift apart.
 
-If repairability ever has to vary *within* a family — a repairable statue, an irreparable
-shack — it stops being a family question and becomes a column on the type, like `lockable`
-and `opens_the_way` before it.
+*(That last consequence now applies to every action but `reparer`, whose refusal comes from
+the type gate: "Cela ne se répare pas.")*
 
 ---
 

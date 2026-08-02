@@ -44,41 +44,88 @@ class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
 
         $this->assertTrue($results->isBlocked(), 'un filon ne se répare pas');
         $this->assertStringContainsString(
-            'une ressource',
+            'ne se répare pas',
             $this->refusalOf($results),
-            'et le refus nomme la cible, pas la branche entière'
+            'et c\'est le TYPE qui le dit, pas la visée'
         );
     }
 
+    /**
+     * Aucun type de plante ne dépasse 1 PV : une plante entamée est déjà
+     * BRISÉE, si bien que l'exécution la refuse à ce titre avant d'interroger
+     * son type. La démonstration porte donc sur le bouton — qui est de toute
+     * façon ce que le joueur voit.
+     */
     public function testAPlantIsNotRepaired(): void
     {
-        [$actor, $plantId] = $this->anActorFacing('plant', 24);
+        [$actor, $plantId] = $this->anActorFacing('plant', 24, minPv: 1);
+        $plant = PlayerFactory::legacy($plantId);
+        $plant->get_data();
 
-        $results = (new ActionExecutorService($this->repairer(), $actor, PlayerFactory::legacy($plantId)))
-            ->executeAction();
+        $this->assertFalse(
+            (new ActionTargeting())->matchesDisplayContext($this->repairer(), $actor, $plant),
+            'pas de bouton Réparer sur une fleur'
+        );
 
-        $this->assertTrue($results->isBlocked(), 'une plante pousse et se cueille, elle ne se répare pas');
-        $this->assertStringContainsString('une plante', $this->refusalOf($results));
+        $this->assertTrue(
+            (new ActionExecutorService($this->repairer(), $actor, $plant))->executeAction()->isBlocked(),
+            'et l\'exécution la refuse aussi'
+        );
     }
 
     /**
-     * Le bouton suit la même liste que l'exécution.
+     * L'enveloppe reste LARGE, et c'est le type qui tranche.
      *
-     * Les deux lisaient `allowed` chacun de leur côté, la vue à la seule
-     * branche : « Réparer » se serait affiché sur l'arbre pour n'y produire
-     * qu'un refus.
+     * La visée a nommé les familles réparables un temps ; une liste gravée dans
+     * la donnée d'une action ne peut pas être contredite par un type, alors que
+     * la promesse est qu'un type puisse contredire sa famille dans les deux
+     * sens. Elle dit donc seulement ce que l'action ATTEINT.
      */
-    public function testTheDisplayedButtonsFollowTheSameList(): void
+    public function testTheEnvelopeStaysWideAndTheTypeDecides(): void
     {
         $targeting = new ActionTargeting();
         $repair = $this->repairer();
 
-        $this->assertTrue($targeting->canTargetEntity($repair, 'building'));
-        $this->assertTrue($targeting->canTargetEntity($repair, 'scenery'));
-        $this->assertTrue($targeting->canTargetEntity($repair, 'item'));
-        $this->assertFalse($targeting->canTargetEntity($repair, 'resource'));
-        $this->assertFalse($targeting->canTargetEntity($repair, 'plant'));
-        $this->assertFalse($targeting->canTargetEntity($repair, 'real'));
+        foreach (['building', 'scenery', 'item', 'resource', 'plant'] as $family) {
+            $this->assertTrue(
+                $targeting->canTargetEntity($repair, $family),
+                "la visée atteint {$family} : cocher « réparable » sur un tel type doit pouvoir servir"
+            );
+        }
+
+        $this->assertFalse(
+            $targeting->canTargetEntity($repair, 'real'),
+            'un personnage se soigne, il ne se répare pas'
+        );
+    }
+
+    /**
+     * Le bouton ne s'affiche pas sur ce qui ne s'entretient pas.
+     *
+     * La garde est posée en `display_context` : elle disparaît de la carte
+     * plutôt que d'y proposer une action qui ne peut qu'échouer.
+     */
+    public function testTheButtonHidesOnWhatDoesNotMend(): void
+    {
+        $targeting = new ActionTargeting();
+
+        [$actor, $resourceId] = $this->anActorFacing('resource', 26);
+        $resource = PlayerFactory::legacy($resourceId);
+        $resource->get_data();
+
+        $this->assertFalse(
+            $targeting->matchesDisplayContext($this->repairer(), $actor, $resource),
+            'pas de bouton Réparer sur un filon'
+        );
+
+        [$actor2, $sceneryId] = $this->anActorFacing('scenery', 28);
+        $scenery = PlayerFactory::legacy($sceneryId);
+        $scenery->get_data();
+
+        $this->assertTrue(
+            $targeting->matchesDisplayContext($this->repairer(), $actor2, $scenery),
+            'mais bien sur une statue ébréchée'
+        );
     }
 
     /**
@@ -116,13 +163,14 @@ class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
      *
      * L'entité est blessée d'un seul point : entamée sans être brisée, les
      * deux états que RequiresDamagedTarget refuse par ailleurs — ce qui reste
-     * en jeu est bien la famille.
+     * en jeu est bien le type. D'où le seuil de PV du type : à 1 PV, entamer
+     * c'est déjà briser, et le cas prouverait autre chose que ce qu'il dit.
      *
      * @return array{0: \Classes\Player, 1: int}
      */
-    private function anActorFacing(string $family, int $x): array
+    private function anActorFacing(string $family, int $x, int $minPv = 2): array
     {
-        $entityId = $this->placeEntityOfFamily($family, $x, 1);
+        $entityId = $this->placeEntityOfFamily($family, $x, 1, $minPv);
 
         $actor = $this->createRealPlayer('GmRepare' . ucfirst($family));
         $this->movePlayerTo((int) $actor->id, $x, 0);
@@ -136,16 +184,16 @@ class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
         return [$actor, $entityId];
     }
 
-    /** Pose une entité d'une famille dont un type est seedé AVEC des PV. */
-    private function placeEntityOfFamily(string $family, int $x, int $y): int
+    /** Pose une entité d'une famille dont un type est seedé avec assez de PV. */
+    private function placeEntityOfFamily(string $family, int $x, int $y, int $minPv = 2): int
     {
         $type = $this->link->fetchOne(
-            'SELECT name FROM races WHERE type_kind = ? AND pv > 0 ORDER BY name LIMIT 1',
-            [$family]
+            'SELECT name FROM races WHERE type_kind = ? AND pv >= ? ORDER BY name LIMIT 1',
+            [$family, $minPv]
         );
 
         if ($type === false || $type === null) {
-            $this->markTestSkipped("aucun type « {$family} » avec des PV au catalogue.");
+            $this->markTestSkipped("aucun type « {$family} » d'au moins {$minPv} PV au catalogue.");
         }
 
         $coordsId = (int) View::get_coords_id(
