@@ -134,6 +134,19 @@ class ItemInstanceService extends BaseService
     }
 
     /**
+     * The link's two columns, derived from `slot` so callers keep their shape:
+     * `equiped` is empty unless the slot is an equipment emplacement, and
+     * `location` reads 'inventory' unless the exemplar sits elsewhere.
+     */
+    private static function linkColumnsFromSlot(string $entity = 'e'): string
+    {
+        $elsewhere = $entity . ".slot IN (" . self::heldElsewhereSlots() . ")";
+
+        return "IF({$elsewhere}, '', {$entity}.slot) AS equiped,
+                IF({$elsewhere}, {$entity}.slot, '" . self::LOCATION_INVENTORY . "') AS location";
+    }
+
+    /**
      * Slots that put an exemplar out of the carried inventory: the bank and the
      * two escrows. Quoted for inlining, so callers stay single statements.
      */
@@ -331,12 +344,12 @@ class ItemInstanceService extends BaseService
             $row = $conn->fetchAssociative(
                 'SELECT i.id, i.item_id, ' . self::WEAR_SELECT . ', i.quality, i.custom_name,
                         i.params, i.destroyed, i.wear_pending, i.entity_id,
-                        l.player_id, l.equiped, l.location
+                        e.holder_id AS player_id, ' . self::linkColumnsFromSlot() . '
                  FROM item_instances i
                  JOIN items it ON it.id = i.item_id
-                 JOIN players_items_instances l ON l.instance_id = i.id
+                 JOIN players e ON e.id = i.entity_id
                  ' . self::WEAR_JOIN . '
-                 WHERE i.id = ? FOR UPDATE',
+                 WHERE i.id = ? AND e.holder_id IS NOT NULL FOR UPDATE',
                 [$instanceId]
             );
             if ($row === false) {
@@ -412,12 +425,11 @@ class ItemInstanceService extends BaseService
                 $instanceId = $this->promote($playerId, $itemId);
             } else {
                 $existing = $conn->fetchOne(
-                    "SELECT l.instance_id
-                     FROM players_items_instances l
-                     JOIN item_instances i ON i.id = l.instance_id
-                     WHERE l.player_id = ? AND i.item_id = ? AND l.equiped = '' AND i.destroyed = 0
-                       AND l.location = '" . self::LOCATION_INVENTORY . "'
-                     ORDER BY l.instance_id LIMIT 1",
+                    "SELECT i.id
+                     FROM players e
+                     JOIN item_instances i ON i.entity_id = e.id
+                     WHERE e.holder_id = ? AND i.item_id = ? AND e.slot = '' AND i.destroyed = 0
+                     ORDER BY i.id LIMIT 1",
                     [$playerId, $itemId]
                 );
 
@@ -487,8 +499,9 @@ class ItemInstanceService extends BaseService
         }
 
         $ids = $this->entityManager->getConnection()->fetchFirstColumn(
-            'SELECT instance_id FROM players_items_instances
-             WHERE player_id = ? AND equiped IN (' . implode(',', array_fill(0, count($emplacements), '?')) . ')',
+            'SELECT i.id FROM players e
+             JOIN item_instances i ON i.entity_id = e.id
+             WHERE e.holder_id = ? AND e.slot IN (' . implode(',', array_fill(0, count($emplacements), '?')) . ')',
             array_merge([$playerId], $emplacements)
         );
 
@@ -625,10 +638,10 @@ class ItemInstanceService extends BaseService
 
         $conn->transactional(function ($conn) use ($instanceId, $fromPlayerId, $toPlayerId, $from): void {
             $row = $conn->fetchAssociative(
-                'SELECT l.location, i.destroyed
-                 FROM players_items_instances l
-                 JOIN item_instances i ON i.id = l.instance_id
-                 WHERE l.instance_id = ? AND l.player_id = ? FOR UPDATE',
+                'SELECT ' . self::linkColumnsFromSlot() . ', i.destroyed
+                 FROM players e
+                 JOIN item_instances i ON i.entity_id = e.id
+                 WHERE i.id = ? AND e.holder_id = ? FOR UPDATE',
                 [$instanceId, $fromPlayerId]
             );
 
@@ -774,10 +787,10 @@ class ItemInstanceService extends BaseService
 
         $conn->transactional(function ($conn) use ($instanceId, $playerId, $from, $to): void {
             $row = $conn->fetchAssociative(
-                'SELECT l.equiped, l.location, i.destroyed
-                 FROM players_items_instances l
-                 JOIN item_instances i ON i.id = l.instance_id
-                 WHERE l.instance_id = ? AND l.player_id = ? FOR UPDATE',
+                'SELECT ' . self::linkColumnsFromSlot() . ', i.destroyed
+                 FROM players e
+                 JOIN item_instances i ON i.entity_id = e.id
+                 WHERE i.id = ? AND e.holder_id = ? FOR UPDATE',
                 [$instanceId, $playerId]
             );
 
@@ -836,10 +849,10 @@ class ItemInstanceService extends BaseService
 
         $conn->transactional(function ($conn) use ($instanceId, $coordsId): void {
             $row = $conn->fetchAssociative(
-                'SELECT l.equiped, l.location, i.destroyed
-                 FROM players_items_instances l
-                 JOIN item_instances i ON i.id = l.instance_id
-                 WHERE l.instance_id = ? FOR UPDATE',
+                'SELECT ' . self::linkColumnsFromSlot() . ', i.destroyed
+                 FROM players e
+                 JOIN item_instances i ON i.entity_id = e.id
+                 WHERE i.id = ? AND e.holder_id IS NOT NULL FOR UPDATE',
                 [$instanceId]
             );
             if ($row === false || (int) $row['destroyed'] === 1) {
@@ -982,12 +995,12 @@ class ItemInstanceService extends BaseService
     public function getInstances(int $playerId): array
     {
         return $this->entityManager->getConnection()->fetchAllAssociative(
-            'SELECT i.*, l.equiped, l.location, it.name AS catalog_name
-             FROM players_items_instances l
-             JOIN item_instances i ON i.id = l.instance_id
+            'SELECT i.*, ' . self::linkColumnsFromSlot() . ', it.name AS catalog_name
+             FROM players e
+             JOIN item_instances i ON i.entity_id = e.id
              JOIN items it ON it.id = i.item_id
-             WHERE l.player_id = ?
-             ORDER BY l.equiped DESC, i.id',
+             WHERE e.holder_id = ?
+             ORDER BY e.slot DESC, i.id',
             [$playerId]
         );
     }

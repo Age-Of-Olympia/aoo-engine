@@ -136,8 +136,11 @@ class BankInstanceBaselineTest extends LegacyPlayerFixtureTestCase
 
         $service = new ItemInstanceService();
         $instanceId = $service->promote($player->id, $bois->id);
+        // The entity carries the slot now, so arranging an equipped exemplar
+        // means writing it there.
         $this->link->executeStatement(
-            "UPDATE players_items_instances SET equiped = 'main1' WHERE instance_id = ?",
+            "UPDATE players e JOIN item_instances i ON i.entity_id = e.id
+                SET e.slot = 'main1' WHERE i.id = ?",
             [$instanceId]
         );
 
