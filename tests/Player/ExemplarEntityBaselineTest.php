@@ -18,8 +18,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * is that the entity is NOWHERE: no cell, no holder. An entity that quietly
  * claimed a cell would put the same sword in two places.
  */
-#[Group('items-golden-master')]
-class ExemplarEntityGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class ExemplarEntityBaselineTest extends LegacyPlayerFixtureTestCase
 {
     private function boisOrSkip(): Item
     {

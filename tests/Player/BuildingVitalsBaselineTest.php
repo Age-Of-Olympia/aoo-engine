@@ -18,13 +18,13 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  *   - putBonus(['pv' => -x]) wounds it through players_bonus;
  *   - getRemaining('pv') reads the wound back, same-instance and fresh.
  *
- * Mirrors PlayerVitalsGoldenMasterTest on purpose: same pins, other
+ * Mirrors PlayerVitalsBaselineTest on purpose: same pins, other
  * entity branch. Skips when the palissade pseudo-race or the buildings
  * table is absent (migrations Version20260716120000/130000 not run).
  */
-#[Group('entities-golden-master')]
+#[Group('entities-baseline')]
 #[Group('entities-structure')]
-class BuildingVitalsGoldenMasterTest extends LegacyPlayerFixtureTestCase
+class BuildingVitalsBaselineTest extends LegacyPlayerFixtureTestCase
 {
     private const TYPE = 'palissade';
 

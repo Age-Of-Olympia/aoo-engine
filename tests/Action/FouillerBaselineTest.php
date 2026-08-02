@@ -27,8 +27,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * gaia ne doit pas être touché, et les taux réels ne doivent pas décider du
  * résultat des assertions.
  */
-#[Group('items-golden-master')]
-class FouillerGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class FouillerBaselineTest extends LegacyPlayerFixtureTestCase
 {
     /** Haut de la plage des ressources : jamais un identifiant converti. */
     private const FIXTURE_ID_FLOOR = 59990000;

@@ -15,8 +15,8 @@ use PHPUnit\Framework\TestCase;
  * 3/20 sans que l'acheteur ait son mot à dire. Il déclare donc le PIRE
  * état qu'il accepte, et c'est cette règle qui est épinglée ici.
  */
-#[Group('items-golden-master')]
-class AskConditionGoldenMasterTest extends TestCase
+#[Group('items-baseline')]
+class AskConditionBaselineTest extends TestCase
 {
     public function testAStackAlwaysSatisfiesEveryThreshold(): void
     {

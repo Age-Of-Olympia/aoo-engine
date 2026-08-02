@@ -11,8 +11,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * personnages (comportement historique), rien pour les structures
  * (un mur ne saigne pas). Le déclencheur reste dans putBonus.
  */
-#[Group('entities-golden-master')]
-class EntityBleedsGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('entities-baseline')]
+class EntityBleedsBaselineTest extends LegacyPlayerFixtureTestCase
 {
     /** Contenu témoin : distingue « jamais purgé » de « purgé puis reconstruit ». */
     private const CACHE_MARKER = '<svg data-temoin="1"/>';

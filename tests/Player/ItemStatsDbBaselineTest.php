@@ -19,8 +19,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * JSON (identity + flags whose DB is already the source, and stray
  * copies of joined rows found in some legacy files).
  */
-#[Group('items-golden-master')]
-class ItemStatsDbGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class ItemStatsDbBaselineTest extends LegacyPlayerFixtureTestCase
 {
     public function testDbServedDataMatchesEveryHistoricalJsonKey(): void
     {

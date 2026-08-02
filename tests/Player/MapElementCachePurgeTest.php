@@ -22,7 +22,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * jeu, pour un résultat identique. D'où l'exclusion — et ces tests, qui
  * pinnent les deux moitiés de la règle.
  */
-#[Group('entities-golden-master')]
+#[Group('entities-baseline')]
 class MapElementCachePurgeTest extends LegacyPlayerFixtureTestCase
 {
     /** Cache SVG du joueur, au chemin RELATIF utilisé en production. */

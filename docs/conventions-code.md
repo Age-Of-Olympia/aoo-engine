@@ -73,7 +73,7 @@ référence outillage/process).
 
 | Terme | Sens |
 |---|---|
-| **Test étalon** (golden master) | Photographie du comportement existant, figée par un test AVANT de refactorer : le refactoring doit laisser le comportement identique au bit près. Groupe PHPUnit `entities-golden-master`. |
+| **Baseline** | Photographie du comportement existant, figée par un test AVANT de refactorer : le refactoring doit laisser le comportement identique au bit près. Classes suffixées `…BaselineTest`, groupes PHPUnit `entities-baseline` / `items-baseline`. On dit « baseline », jamais « golden master » : le jargon anglais ne porte rien pour l'équipe. |
 | **Strangler** | Remplacement progressif d'un god class (Classes/Player) : le neuf pousse autour du vieux, méthode par méthode, jusqu'à l'étouffer — jamais de réécriture big-bang. |
 | **STI** | Single Table Inheritance : une table (`players`), un discriminateur (`player_type`), plusieurs classes (Character/Structure…). |
 | **Satellite** | Table 1:1 qui complète une ligne `players` pour un type d'entité (`buildings`, `unique_objects`) — le « component pattern ». |

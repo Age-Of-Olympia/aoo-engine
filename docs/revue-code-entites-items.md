@@ -99,7 +99,7 @@ correctifs de correction sont dans la MR `fix/entities-items-review`.
 - Harnais de test : `requireBuildingsOrSkip()`, `itemOrSkip($name)`,
   `placeStructure($type, $x, $y)` dans `LegacyPlayerFixtureTestCase` —
   cinq copies de guards/fixtures suppprimées dans les classes
-  golden-master, ainsi qu'un tearDown redondant.
+  baseline, ainsi qu'un tearDown redondant.
 
 ## Backlog (constats retenus, non corrigés ici)
 

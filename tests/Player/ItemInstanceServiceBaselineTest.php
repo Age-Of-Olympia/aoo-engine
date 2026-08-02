@@ -20,8 +20,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  *   - countOwned(): the future dual-read contract of get_n — stack
  *     units + live instances, destroyed excluded (P2).
  */
-#[Group('items-golden-master')]
-class ItemInstanceServiceGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class ItemInstanceServiceBaselineTest extends LegacyPlayerFixtureTestCase
 {
     private function boisOrSkip(): Item
     {

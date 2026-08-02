@@ -19,8 +19,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  *     catalogue demeure — mort, désarmement, revert Ae et munitions
  *     auto en dépendent.
  */
-#[Group('items-golden-master')]
-class EquipLineToggleGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class EquipLineToggleBaselineTest extends LegacyPlayerFixtureTestCase
 {
     public function testEquipGestureOnAFreshLineReplacesTheWornEquippedInstance(): void
     {

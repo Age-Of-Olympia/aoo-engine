@@ -11,7 +11,7 @@ use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Base class for golden-master tests that exercise the LEGACY player stack
+ * Base class for baseline tests that exercise the LEGACY player stack
  * (Classes\Player + mysqli Db) against the devcontainer aoo4 database.
  *
  * Phase 0 of the buildings-as-entities plan (docs/design-buildings-entities.md

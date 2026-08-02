@@ -14,11 +14,11 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * de DialogService (même règle que les déclencheurs map_dialogs).
  *
  * Skips propres quand les migrations structures/dialogues n'ont pas
- * tourné — même convention que BuildingVitalsGoldenMasterTest.
+ * tourné — même convention que BuildingVitalsBaselineTest.
  */
-#[Group('entities-golden-master')]
+#[Group('entities-baseline')]
 #[Group('entities-structure')]
-class BuildingDialogGoldenMasterTest extends LegacyPlayerFixtureTestCase
+class BuildingDialogBaselineTest extends LegacyPlayerFixtureTestCase
 {
     private const TYPE = 'palissade';
     private const DIALOG = 'test_dialogue_batiment';

@@ -17,8 +17,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * toutes ses jumelles — et ses lignes n'étaient JAMAIS supprimées après
  * règlement, ce qui rend indécidable la légitimité d'un séquestre.
  */
-#[Group('items-golden-master')]
-class ExchangeInstanceGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class ExchangeInstanceBaselineTest extends LegacyPlayerFixtureTestCase
 {
     private function boisOrSkip(): Item
     {

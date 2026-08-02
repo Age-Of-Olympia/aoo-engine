@@ -18,7 +18,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * l'objet n'a RIEN à dire — sans quoi les 13 549 murs du monde se
  * mettraient à afficher « Je suis nouveau, frappez-moi! ».
  */
-#[Group('entities-golden-master')]
+#[Group('entities-baseline')]
 class BuildingInscriptionTest extends LegacyPlayerFixtureTestCase
 {
     public function testTheCreationDefaultIsNotAnInscription(): void

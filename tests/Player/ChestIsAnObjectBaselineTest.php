@@ -8,7 +8,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /** A chest is an object, no longer a building type. */
 #[Group('entities-structure')]
-class ChestIsAnObjectGoldenMasterTest extends LegacyPlayerFixtureTestCase
+class ChestIsAnObjectBaselineTest extends LegacyPlayerFixtureTestCase
 {
     /** Durability per material. */
     private const LIFE = [

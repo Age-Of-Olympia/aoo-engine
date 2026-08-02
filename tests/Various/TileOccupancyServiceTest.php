@@ -16,7 +16,7 @@ use Tests\Support\PlantsResourcesTrait;
  * Includes the point where extraction CORRECTED the original: an entity used
  * to block only on plans that had a JSON file.
  */
-#[Group('items-golden-master')]
+#[Group('items-baseline')]
 class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
 {
     use PlantsResourcesTrait;

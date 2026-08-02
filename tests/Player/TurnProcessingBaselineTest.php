@@ -12,8 +12,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * journalise le récap en ÉVÉNEMENT type 'turn', relisible dans les
  * Évènements. Pas dû : rien ne bouge, pas d'événement.
  */
-#[Group('entities-golden-master')]
-class TurnProcessingGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('entities-baseline')]
+class TurnProcessingBaselineTest extends LegacyPlayerFixtureTestCase
 {
     private array $sessionBackup = [];
 

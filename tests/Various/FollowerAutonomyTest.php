@@ -23,7 +23,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * production, 19 décors `marchand` n'appartiennent à personne et étaient à
  * portée de ce geste.
  */
-#[Group('items-golden-master')]
+#[Group('items-baseline')]
 class FollowerAutonomyTest extends LegacyPlayerFixtureTestCase
 {
     private const PLAN = 'plan_test_suivants';

@@ -343,7 +343,7 @@ component model as the destination.
 3. **One concern per PR, each PR releasable.** No long-lived migration branch.
 4. **Characterization tests before each extraction**: pin the current
    behavior of the methods being moved (the existing PHPUnit + Cypress setup
-   covers the harness; add golden-master tests for caracs/combat math).
+   covers the harness; add baseline tests for caracs/combat math).
 5. **New features are built the new way** (services + interfaces). Buildings
    (§4) is deliberately the pilot: it exercises every seam and proves them.
 

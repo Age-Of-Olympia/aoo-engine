@@ -15,8 +15,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * gratuit, et le type 'equip' (sans ligne action_type_xp) ne rapporte
  * AUCUNE XP : pas de fermier de garde-robe.
  */
-#[Group('items-golden-master')]
-class EquiperGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class EquiperBaselineTest extends LegacyPlayerFixtureTestCase
 {
     private function actionOrSkip(): \App\Interface\ActionInterface
     {

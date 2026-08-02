@@ -191,17 +191,17 @@ tout ce qui lit `datas/`).
 
 **Tests étalons** — au sens de `docs/conventions-code.md` : une photographie du
 comportement existant, figée AVANT de refactorer. Les classes gardent le suffixe
-anglais des vingt-six qui existent déjà (`CreuserGoldenMasterTest`…) ; c'est le
+anglais des vingt-six qui existent déjà (`CreuserBaselineTest`…) ; c'est le
 vocabulaire de prose qui reste français.
 
-- `FouillerGoldenMasterTest` — N=1, N=6, N=8, **la case à 1d16 de `fort_turok`
+- `FouillerBaselineTest` — N=1, N=6, N=8, **la case à 1d16 de `fort_turok`
   (-22, 47)**, case mêlant deux rendements, case inerte, case à `damages=0`.
 - `ExhaustCapCharacterizationTest` — **pinne** le plafond d'épuisement par le dé
   du dernier type parcouru, en le documentant comme bug gelé.
 - `NeverExhaustCharacterizationTest` — pinne les 3 476 ressources sans
   `exhaust`/`regrow`. Sans lui, le passage au catalogue leur donne
   silencieusement l'épuisement.
-- `BlockingSsotGoldenMasterTest` — table de vérité occupant × verbe × les sept
+- `BlockingSsotBaselineTest` — table de vérité occupant × verbe × les sept
   prédicats, plan **avec** et **sans** JSON, `player_visibility` à `false`.
 **La spec Cypress est reportée à la toute fin de la saison** (arbitrage du
 2026-07-27). Elle attend 121 coords et 41 murs quand la graine en produit 81 et
@@ -531,7 +531,7 @@ L'insensibilité au passage s'obtient par **suppression** de
 (absente d'`AUTHORABLE_LAYERS`, donc `copyPlan` perd les autels devenus
 entités) ; créer l'action `venerer` **avant** la bascule, parce qu'
 `observe.php:308` court-circuite `ResourceCardView` dès qu'une entité occupe la
-case ; retourner `WallsConversionGoldenMasterTest`.
+case ; retourner `WallsConversionBaselineTest`.
 
 **Cas à traiter à part** : le trigger #16206 (Thétis, `lac_thetis_s2`) ne repose
 sur aucune ressource `altar` — sa case porte `jungle1` et `herbe3`. C'est le seul

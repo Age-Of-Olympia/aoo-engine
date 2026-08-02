@@ -12,7 +12,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * l'exporter (même processus que l'export, autre format), coûts et
  * visées dérivés des conditions — le wiki ne peut pas mentir.
  */
-#[Group('items-golden-master')]
+#[Group('items-baseline')]
 class ActionWikiRendererTest extends LegacyPlayerFixtureTestCase
 {
     public function testTheSheetIsDokuWikiWithDerivedFacts(): void

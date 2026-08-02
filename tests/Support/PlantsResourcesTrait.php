@@ -23,7 +23,7 @@ trait PlantsResourcesTrait
     private static int $resourceFixtureNext = 59995000;
 
     /**
-     * @param int $damages legacy dialect kept for the golden masters: -1 stands, -2 dry
+     * @param int $damages legacy dialect kept for the baselines: -1 stands, -2 dry
      * @return int the entity's id
      */
     protected function plantResource(

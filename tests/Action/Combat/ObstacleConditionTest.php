@@ -23,7 +23,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * à distance — qui passaient déjà par `lineOfFireReport` — étaient bien
  * arrêtés. Ces tests épinglent le comportement rétabli et unifié.
  */
-#[Group('items-golden-master')]
+#[Group('items-baseline')]
 class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
 {
     private function condition(): ActionCondition

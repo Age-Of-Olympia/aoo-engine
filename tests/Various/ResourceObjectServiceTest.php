@@ -16,7 +16,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * eraser passed, and the map never changed. These cases pin that the gesture
  * now reaches the entity.
  */
-#[Group('items-golden-master')]
+#[Group('items-baseline')]
 class ResourceObjectServiceTest extends LegacyPlayerFixtureTestCase
 {
     private const PLAN = 'plan_test_pose_tiled';

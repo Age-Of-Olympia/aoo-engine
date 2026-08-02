@@ -13,7 +13,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * The case that matters most is the neighbour: two touching objects are
  * adjacent, and confusing them would erase the one not aimed at.
  */
-#[Group('items-golden-master')]
+#[Group('items-baseline')]
 class SceneryObjectServiceTest extends LegacyPlayerFixtureTestCase
 {
     private const PLAN = 'plan_test_objets';

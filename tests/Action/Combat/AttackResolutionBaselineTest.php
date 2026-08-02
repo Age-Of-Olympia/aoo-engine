@@ -31,9 +31,9 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * so this contract must survive the Structure/TargetTypeCondition work
  * unchanged.
  */
-#[Group('entities-golden-master')]
+#[Group('entities-baseline')]
 #[Group('action-combat')]
-class AttackResolutionGoldenMasterTest extends LegacyPlayerFixtureTestCase
+class AttackResolutionBaselineTest extends LegacyPlayerFixtureTestCase
 {
     public function testAdjacentMeleeAttackResolvesEndToEnd(): void
     {

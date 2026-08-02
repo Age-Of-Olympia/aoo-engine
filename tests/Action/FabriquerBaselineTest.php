@@ -17,8 +17,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * MOTEUR. Type 'craft' sans règle d'XP : aucune XP (parité craft
  * historique, gratuit).
  */
-#[Group('items-golden-master')]
-class FabriquerGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class FabriquerBaselineTest extends LegacyPlayerFixtureTestCase
 {
     private function actionOrSkip(): \App\Interface\ActionInterface
     {

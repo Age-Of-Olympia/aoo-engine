@@ -26,8 +26,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  *   - damage drops a 'sang' element on the tile (the destruction branch of
  *     the buildings plan hooks right next to this side effect)
  */
-#[Group('entities-golden-master')]
-class PlayerVitalsGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('entities-baseline')]
+class PlayerVitalsBaselineTest extends LegacyPlayerFixtureTestCase
 {
     public function testFreshPlayerCaracsAreTheRaceBaseWithAnEmptyTurnOverlay(): void
     {

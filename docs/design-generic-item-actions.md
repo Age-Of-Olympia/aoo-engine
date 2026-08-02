@@ -129,6 +129,6 @@ d'action), et l'admin règle le comportement en données.
 ## Estimation
 
 Chantier M : 2–3 jours dev (mécanique ItemPick + les deux actions + UI
-+ migration + golden masters), à faire AVANT l'ouverture de la Saison 3
++ migration + baselines), à faire AVANT l'ouverture de la Saison 3
 tant que les `construire_*` n'existent qu'en préproduction — après, la
 migration devra tourner en prod.

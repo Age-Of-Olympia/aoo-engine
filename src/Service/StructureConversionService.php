@@ -103,7 +103,7 @@ class StructureConversionService
 
         // --- 5. le seed JSON suit la base ----------------------------------
         // La base est désormais la source ; le JSON historique reste comme
-        // seed et le golden master vérifie qu'ils concordent — la divergence
+        // seed et le baseline vérifie qu'ils concordent — la divergence
         // voulue (type constructible) doit donc y couler aussi.
         if (is_array($json)) {
             $json['type'] = 'constructible';

@@ -15,7 +15,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * ces cas épinglent que la plante se voit dans la bourse au sol, qu'elle part
  * quand on ramasse, et qu'elle reste tant qu'on ne ramasse pas.
  */
-#[Group('items-golden-master')]
+#[Group('items-baseline')]
 class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
 {
     private const PLAN = 'plan_test_cueillette';

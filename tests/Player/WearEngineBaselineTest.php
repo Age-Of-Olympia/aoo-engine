@@ -23,8 +23,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * Configures gladius wear in the catalog for the test and restores the
  * previous values afterward.
  */
-#[Group('items-golden-master')]
-class WearEngineGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class WearEngineBaselineTest extends LegacyPlayerFixtureTestCase
 {
     /** @var array{0:string,1:int}|null previous gladius wear config */
     private ?array $previousWear = null;

@@ -14,7 +14,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * A nine-piece library was shown by its top-left ninth, since an entity's
  * `portrait` is a single image and such a figure has none.
  */
-#[Group('items-golden-master')]
+#[Group('items-baseline')]
 class SceneryPortraitViewTest extends LegacyPlayerFixtureTestCase
 {
     private const PLAN = 'plan_test_portrait';

@@ -20,8 +20,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * revient avec son usure et son identité intactes, parce qu'il n'a
  * jamais changé de ligne.
  */
-#[Group('items-golden-master')]
-class BankInstanceGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class BankInstanceBaselineTest extends LegacyPlayerFixtureTestCase
 {
     private function boisOrSkip(): Item
     {

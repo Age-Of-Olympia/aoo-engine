@@ -55,8 +55,8 @@ use Tests\Support\PlantsResourcesTrait;
  * exemple de structure passable est faux : `table_bois` bloque le pas, elle ne
  * laisse passer que les projectiles.
  */
-#[Group('items-golden-master')]
-class BlockingPredicatesGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class BlockingPredicatesBaselineTest extends LegacyPlayerFixtureTestCase
 {
     use PlantsResourcesTrait;
 

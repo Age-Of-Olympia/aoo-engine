@@ -10,7 +10,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 /** What shuts, and who holds the key: the type answers the first, the entity
  *  the second. */
 #[Group('entities-structure')]
-class LockGoldenMasterTest extends LegacyPlayerFixtureTestCase
+class LockBaselineTest extends LegacyPlayerFixtureTestCase
 {
     protected function setUp(): void
     {

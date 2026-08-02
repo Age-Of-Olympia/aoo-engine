@@ -17,9 +17,9 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * n'a pas de porte. L'inactivité, elle, est réservée aux joueurs
  * réels : une entité structure n'est jamais « inactive ».
  */
-#[Group('entities-golden-master')]
+#[Group('entities-baseline')]
 #[Group('entities-structure')]
-class BuildingOpenStateGoldenMasterTest extends LegacyPlayerFixtureTestCase
+class BuildingOpenStateBaselineTest extends LegacyPlayerFixtureTestCase
 {
     protected function setUp(): void
     {

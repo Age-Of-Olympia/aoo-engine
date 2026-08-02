@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /** The entity says who holds an exemplar; the link table must agree with it. */
-#[Group('items-golden-master')]
+#[Group('items-baseline')]
 class HolderLivesOnTheEntityTest extends LegacyPlayerFixtureTestCase
 {
     /** @return array{0:int,1:int} instance id, entity id */

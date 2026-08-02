@@ -16,8 +16,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * (1 = XP_PER_MINE). La case visée arrive par POST digX/digY — mêmes
  * gardes que le pas légitime (souterrain, adjacente, pas déjà creusée).
  */
-#[Group('items-golden-master')]
-class CreuserGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class CreuserBaselineTest extends LegacyPlayerFixtureTestCase
 {
     private function actionOrSkip(): \App\Interface\ActionInterface
     {

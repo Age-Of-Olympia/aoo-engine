@@ -16,8 +16,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * planter toute la page des demandes sur « Unknown column
  * o.instance_id » — d'où ce test, qui lit simplement les deux.
  */
-#[Group('items-golden-master')]
-class MarketTablesGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class MarketTablesBaselineTest extends LegacyPlayerFixtureTestCase
 {
     public function testBothMarketTablesCanBeRead(): void
     {

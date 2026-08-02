@@ -15,7 +15,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * releases what it dropped, and that drift is visible and repairable — a badly
  * kept table lies without a sound.
  */
-#[Group('items-golden-master')]
+#[Group('items-baseline')]
 class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
 {
     private const PLAN = 'plan_test_emprise';

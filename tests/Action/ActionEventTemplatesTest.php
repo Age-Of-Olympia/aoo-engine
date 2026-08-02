@@ -13,7 +13,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * sous-types héritent du plus proche ancêtre. Un nouveau type sans
  * gabarit casserait ce test au lieu de produire des actions muettes.
  */
-#[Group('items-golden-master')]
+#[Group('items-baseline')]
 class ActionEventTemplatesTest extends LegacyPlayerFixtureTestCase
 {
     public function testEveryRootActionTypeHasAnEventTemplate(): void

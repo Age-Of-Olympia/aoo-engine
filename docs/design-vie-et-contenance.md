@@ -348,7 +348,7 @@ table needs: `player_id` → `holder_id`, `equiped` → `slot` (`'main1'`, `'tro
 
 1. make `holder_id` + `slot` the truth on write, both halves still written;
 2. backfill the exemplars that have a bag link and no holder;
-3. repoint the readers, one at a time, each with its own golden master;
+3. repoint the readers, one at a time, each with its own baseline;
 4. stop writing the old half, then drop the table.
 
 Then, riding the same relation: damage, heal and repair through the one life,

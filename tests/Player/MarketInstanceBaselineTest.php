@@ -17,8 +17,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * marché, sans message. Ce qui est épinglé ici est donc moins « la
  * vente marche » que « le bon objet part, et un seul ».
  */
-#[Group('items-golden-master')]
-class MarketInstanceGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
 {
     private function boisOrSkip(): Item
     {

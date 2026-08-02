@@ -106,7 +106,7 @@ radius, and no player would see a difference.
   admin tri-state select. PHPStan clean, 1303 tests green.
 - **Branch `refactor/le-butin-quitte-la-mort`** (`dd7f33b6`), pushed, **no MR**:
   extracts the loot spill out of `Player::death()` into
-  `src/Service/LootSpillService.php`. Behaviour unchanged, golden masters pass.
+  `src/Service/LootSpillService.php`. Behaviour unchanged, baselines pass.
   This is the piece a chest needs to die like a player — build step 2 on it.
 
 ## Working conventions

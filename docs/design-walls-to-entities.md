@@ -128,7 +128,7 @@ d'avatars copiés en base.
 
 ## Estimation
 
-M–L : 3–5 jours (migration + nettoyage + golden masters « un pilier
+M–L : 3–5 jours (migration + nettoyage + baselines « un pilier
 converti s'attaque et disparaît » + passe Tiled), PUIS du temps de
 playtest — d'où l'intérêt de lancer tôt dans la fenêtre S3 (merge
 staging en septembre).

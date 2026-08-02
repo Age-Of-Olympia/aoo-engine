@@ -21,8 +21,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * est livrée contextuelle, et une prémisse implicite sur la donnée
  * seedée rendrait le test faux sans que le mécanisme ait bougé.
  */
-#[Group('entities-golden-master')]
-class ActionDisplayContextGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('entities-baseline')]
+class ActionDisplayContextBaselineTest extends LegacyPlayerFixtureTestCase
 {
     private ?int $flaggedConditionId = null;
 

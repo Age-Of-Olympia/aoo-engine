@@ -19,9 +19,9 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * item_instance_id) remains available for future animator-placed
  * attackable artifacts/chests; its invariants stay pinned here.
  */
-#[Group('items-golden-master')]
+#[Group('items-baseline')]
 #[Group('entities-structure')]
-class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
+class UniqueObjectBridgeBaselineTest extends LegacyPlayerFixtureTestCase
 {
     protected function setUp(): void
     {

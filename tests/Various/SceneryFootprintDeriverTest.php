@@ -12,7 +12,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * work — grouping by touching cells, piece-index uniqueness as the stop rule,
  * and anchoring on the first piece.
  */
-#[Group('items-golden-master')]
+#[Group('items-baseline')]
 class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
 {
     private const PLAN = 'plan_test_decoupes';

@@ -14,7 +14,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * What these cases pin is the ORDER: a declaration wins over what the map
  * shows, otherwise a badly placed decor would be its own authority.
  */
-#[Group('items-golden-master')]
+#[Group('items-baseline')]
 class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
 {
     private const PLAN = 'plan_test_decoupes';

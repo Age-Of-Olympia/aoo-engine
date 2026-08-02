@@ -24,9 +24,9 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  *
  * This is the data-driven replacement of build.php's dumb walls.
  */
-#[Group('entities-golden-master')]
-#[Group('items-golden-master')]
-class ConstruireGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('entities-baseline')]
+#[Group('items-baseline')]
+class ConstruireBaselineTest extends LegacyPlayerFixtureTestCase
 {
     protected function setUp(): void
     {

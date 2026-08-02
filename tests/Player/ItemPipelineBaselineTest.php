@@ -25,8 +25,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * Uses the real 'gladius' catalog row (main1, cc +1). Skips cleanly
  * when the catalog isn't seeded.
  */
-#[Group('items-golden-master')]
-class ItemPipelineGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class ItemPipelineBaselineTest extends LegacyPlayerFixtureTestCase
 {
     private function gladiusOrSkip(): Item
     {

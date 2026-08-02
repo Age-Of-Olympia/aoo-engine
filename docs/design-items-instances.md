@@ -9,7 +9,7 @@ item interaction expressible through the data-driven action system.
 
 Companion of [design-buildings-entities.md](design-buildings-entities.md);
 uses the same method (measure → smallest structural move → strangler
-migration, golden masters first).
+migration, baselines first).
 
 ---
 
@@ -238,7 +238,7 @@ legitimately UI.
 
 Each step releasable; `staging` shippable at every commit.
 
-- **Phase 0 — golden masters** (this MR): pin stack arithmetic
+- **Phase 0 — baselines** (this MR): pin stack arithmetic
   (`add_item`/`get_n`), equip/unequip + `applyItemCaracs` effect on
   caracs, `give_item` transfer. Guards every later step.
 - **Phase 1 — instances** (policy DECIDED 2026-07-17: lazy promotion,
@@ -312,8 +312,8 @@ instance state equals pristine.
 
 | # | Problem | Mitigation |
 |---|---|---|
-| P1 | **The `equiped`-on-stack wart**: today `equiped` sits ON the stack row — `(n=3, equiped='main1')` is legal, the whole stack is "equipped". The migration must SPLIT: 1 instance (equipped) + n−1 stack | one-shot in the Phase 1 migration; golden masters already pin `get_n(equiped)` behavior |
-| P2 | **Dual representation lives for a long time**: every read path must see stacks AND instance links, or counts go wrong (`get_n`, craft ingredients, market quantities) | funnel reads through `Item`/`ItemInstanceService` shims FIRST (query-gateway step), before any promotion exists; golden masters guard the totals |
+| P1 | **The `equiped`-on-stack wart**: today `equiped` sits ON the stack row — `(n=3, equiped='main1')` is legal, the whole stack is "equipped". The migration must SPLIT: 1 instance (equipped) + n−1 stack | one-shot in the Phase 1 migration; baselines already pin `get_n(equiped)` behavior |
+| P2 | **Dual representation lives for a long time**: every read path must see stacks AND instance links, or counts go wrong (`get_n`, craft ingredients, market quantities) | funnel reads through `Item`/`ItemInstanceService` shims FIRST (query-gateway step), before any promotion exists; baselines guard the totals |
 | P3 | **Promotion atomicity**: splitting a stack + creating the instance must be one transaction or a crash duplicates/loses a unit | `add_item` already runs transactions; promotion goes through the same `Db` transaction helper |
 | P4 | **Dual identifiers in the UI**: views/JS pass `item_id` today; instance paths need `instance_id`. Mixing them up equips/sells the wrong object | explicit separate parameter (`instanceId`), never overloading `itemId`; server rejects ambiguous requests |
 | P5 | **"Give me 1 gladius" ambiguity**: when a player owns 2 worn instances + a stack, transfers/sales must pick WHICH unit | rule: stack units first (pristine), instances only when explicitly selected (P4's `instanceId`) — matches the market decision (stock OR specific sword) |

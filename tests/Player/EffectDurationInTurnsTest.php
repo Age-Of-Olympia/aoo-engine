@@ -21,7 +21,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * Ces tests tiennent les deux moitiés de la règle : ce qui doit
  * s'user s'use, ce qui ne doit pas s'user ne s'use pas.
  */
-#[Group('entities-golden-master')]
+#[Group('entities-baseline')]
 class EffectDurationInTurnsTest extends LegacyPlayerFixtureTestCase
 {
     private const EFFECT = 'adrenaline';

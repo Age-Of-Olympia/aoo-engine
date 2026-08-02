@@ -16,7 +16,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * gives them all the same one, and nothing complains until the second entity
  * overwrites the first.
  */
-#[Group('items-golden-master')]
+#[Group('items-baseline')]
 class EntityPlacementServiceTest extends LegacyPlayerFixtureTestCase
 {
     private const PLAN = 'plan_test_pose';

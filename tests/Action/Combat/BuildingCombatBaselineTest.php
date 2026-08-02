@@ -27,10 +27,10 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  *    tile occupancy), and none of the character-death machinery runs
  *    (no XP share, no kill counters, no death()).
  */
-#[Group('entities-golden-master')]
+#[Group('entities-baseline')]
 #[Group('entities-structure')]
 #[Group('action-combat')]
-class BuildingCombatGoldenMasterTest extends LegacyPlayerFixtureTestCase
+class BuildingCombatBaselineTest extends LegacyPlayerFixtureTestCase
 {
     private const TYPE = 'palissade';
 

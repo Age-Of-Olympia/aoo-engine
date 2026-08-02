@@ -15,8 +15,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * sont des conditions, la charge (bonus, effets) une instruction —
  * même résultat observable que le geste d'inventaire historique.
  */
-#[Group('items-golden-master')]
-class ConsommerGoldenMasterTest extends LegacyPlayerFixtureTestCase
+#[Group('items-baseline')]
+class ConsommerBaselineTest extends LegacyPlayerFixtureTestCase
 {
     private function actionOrSkip(): \App\Interface\ActionInterface
     {

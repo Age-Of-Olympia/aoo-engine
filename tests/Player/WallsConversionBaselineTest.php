@@ -14,7 +14,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * et un obstacle converti vit et meurt comme tout bâtiment.
  */
 #[Group('entities-structure')]
-class WallsConversionGoldenMasterTest extends LegacyPlayerFixtureTestCase
+class WallsConversionBaselineTest extends LegacyPlayerFixtureTestCase
 {
     /** Types RESSOURCE gelés par la migration (RESOURCES_PV < 0). */
     private const RESOURCE_PREFIXES = [
