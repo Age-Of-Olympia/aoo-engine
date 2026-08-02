@@ -183,6 +183,66 @@ test_job:
 # `- when: manual` as a fallback would make the job appear on every feature
 # branch's pipeline as a manual-only job, which produces a "skipped"
 # pipeline status that the project's merge policy then refuses to accept.
+# L'endpoint action.php, exercé par HTTP sur CHAQUE merge request.
+#
+# Même infrastructure que cypress_tutorial_job — mariadb jetable, base semée,
+# php -S — mais sans rien du tutoriel : ni fixture de plan, ni drapeau
+# ENABLE_TUTORIAL_V2. C'est ce qui lui permet de tourner automatiquement là où
+# le job tutoriel reste manuel en attendant sa régression de plan.
+#
+# Il garde ce qu'aucun test PHPUnit ne regarde : le contrôleur lui-même. Un
+# import périmé y passait inaperçu — 1345 tests verts, et une fatale au premier
+# clic sur « attaquer ».
+cypress_endpoint_job:
+  <<: *php-job-template
+  stage: test
+  services:
+    - name: mariadb:11
+      alias: mariadb
+      command:
+        - "--innodb-flush-log-at-trx-commit=0"
+        - "--innodb-doublewrite=0"
+        - "--sync-binlog=0"
+        - "--skip-log-bin"
+        - "--performance-schema=OFF"
+      variables:
+        MARIADB_ROOT_PASSWORD: passwordRoot
+        MARIADB_DATABASE: aoo4
+  variables:
+    DB_HOST: mariadb
+    DB_USER: root
+    DB_PASS: passwordRoot
+    # reset_test_database.sh sème son personnage dans DB_NAME ; on le pointe
+    # sur la base que l'application sert, sans quoi la connexion échoue.
+    DB_NAME: aoo4
+    TEST_DB_HOST: mariadb
+    TEST_DB_USER: root
+    TEST_DB_PASS: passwordRoot
+    TEST_DB_NAME: aoo4
+    CYPRESS_CONTAINER: "true"
+    CYPRESS_PLAYER_NAME: TestFreshPlayer
+    CYPRESS_PLAYER_PASSWORD: testpass
+  before_script:
+    - make setup-ci-env
+    - composer install --no-progress --no-interaction
+    - npm ci --no-audit --no-fund
+  script:
+    - bash scripts/testing/setup_ci_database.sh
+    - bash scripts/testing/reset_test_database.sh
+    - php -S 0.0.0.0:80 -t . > /tmp/php-server.log 2>&1 &
+    - sleep 2
+    - make cypress-endpoint-ci
+  after_script:
+    - cat /tmp/php-server.log 2>/dev/null || true
+  artifacts:
+    when: always
+    reports:
+      junit: cypress-endpoint-report.xml
+    paths:
+      - data_tests/cypress/screenshots/
+      - data_tests/cypress/videos/
+    expire_in: 1 week
+
 cypress_tutorial_job:
   <<: *php-job-template
   stage: test

@@ -8,7 +8,12 @@
  */
 
 describe('Endpoint action.php', () => {
-  const ACCOUNT = { name: 'Cradek', password: 'test' };
+  /* Devcontainer defaults; CI seeds its own and passes them through
+   * CYPRESS_PLAYER_NAME / CYPRESS_PLAYER_PASSWORD. */
+  const ACCOUNT = {
+    name: Cypress.env('PLAYER_NAME') || 'Cradek',
+    password: Cypress.env('PLAYER_PASSWORD') || 'test'
+  };
 
   /* What PHP prints when it dies. `not found` catches a missing class, which
    * is the failure a moved file leaves behind. */

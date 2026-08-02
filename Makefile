@@ -1,4 +1,4 @@
-.PHONY: all phpstan test test-db test-ci test-ci-coverage coverage testf setup-ci-env coverage-report migration-status migration-check new-sql stale-branches release-check cypress-tutorial-ci
+.PHONY: all phpstan test test-db test-ci test-ci-coverage coverage testf setup-ci-env coverage-report migration-status migration-check new-sql stale-branches release-check cypress-tutorial-ci cypress-endpoint-ci
 
 PHPUNIT = XDEBUG_MODE=coverage ./vendor/bin/phpunit --testdox
 
@@ -83,6 +83,16 @@ cypress-tutorial-ci:
 		--browser electron \
 		--reporter junit \
 		--reporter-options "mochaFile=cypress-report.xml,toConsole=true"
+
+# L'endpoint action.php, exercé par HTTP. Ne dépend d'aucune fixture de
+# tutoriel : c'est ce qui lui permet de tourner sur les merge requests, là
+# où le job tutoriel reste en attente.
+cypress-endpoint-ci:
+	CYPRESS_CONTAINER=true xvfb-run --auto-servernum npx cypress run \
+		--spec "cypress/e2e/action-endpoint.cy.js" \
+		--browser electron \
+		--reporter junit \
+		--reporter-options "mochaFile=cypress-endpoint-report.xml,toConsole=true"
 
 sqlmap-login:
 	python3 gitlab-ci/sqlmap-dev/sqlmap.py -u "http://localhost:80/login.php" \
