@@ -444,11 +444,10 @@ class ItemInstanceService extends BaseService
     {
         return (bool) $this->entityManager->getConnection()->fetchOne(
             "SELECT 1
-             FROM players_items_instances l
-             JOIN item_instances i ON i.id = l.instance_id
-             WHERE l.instance_id = ? AND l.player_id = ? AND i.item_id = ?
-               AND l.equiped = '' AND i.destroyed = 0
-               AND l.location = '" . self::LOCATION_INVENTORY . "'",
+             FROM players e
+             JOIN item_instances i ON i.entity_id = e.id
+             WHERE i.id = ? AND e.holder_id = ? AND i.item_id = ?
+               AND e.slot = '' AND i.destroyed = 0",
             [$instanceId, $playerId, $itemId]
         );
     }
@@ -812,13 +811,13 @@ class ItemInstanceService extends BaseService
      */
     public function countInstances(int $playerId, int $itemId, bool $equipedOnly = false): int
     {
-        $equipedFilter = $equipedOnly ? "AND l.equiped != ''" : '';
+        $equipedFilter = $equipedOnly ? "AND e.slot != ''" : '';
 
         return (int) $this->entityManager->getConnection()->fetchOne(
-            "SELECT COUNT(*) FROM players_items_instances l
-             JOIN item_instances i ON i.id = l.instance_id
-             WHERE l.player_id = ? AND i.item_id = ? AND i.destroyed = 0
-               AND l.location = '" . self::LOCATION_INVENTORY . "' {$equipedFilter}",
+            "SELECT COUNT(*) FROM players e
+             JOIN item_instances i ON i.entity_id = e.id
+             WHERE e.holder_id = ? AND i.item_id = ? AND i.destroyed = 0
+               AND e.slot NOT IN (" . self::heldElsewhereSlots() . ") {$equipedFilter}",
             [$playerId, $itemId]
         );
     }
@@ -1010,11 +1009,10 @@ class ItemInstanceService extends BaseService
         $conn = $this->entityManager->getConnection();
 
         $free = $conn->fetchOne(
-            "SELECT l.instance_id
-             FROM players_items_instances l
-             JOIN item_instances i ON i.id = l.instance_id
-             WHERE l.player_id = ? AND i.item_id = ? AND l.equiped = '' AND i.destroyed = 0
-               AND l.location = '" . self::LOCATION_INVENTORY . "'
+            "SELECT i.id
+             FROM players e
+             JOIN item_instances i ON i.entity_id = e.id
+             WHERE e.holder_id = ? AND i.item_id = ? AND e.slot = '' AND i.destroyed = 0
              LIMIT 1",
             [$playerId, $itemId]
         );
@@ -1044,9 +1042,9 @@ class ItemInstanceService extends BaseService
         ) ?: 0);
 
         $instances = (int) $conn->fetchOne(
-            'SELECT COUNT(*) FROM players_items_instances l
-             JOIN item_instances i ON i.id = l.instance_id
-             WHERE l.player_id = ? AND i.item_id = ? AND i.destroyed = 0',
+            'SELECT COUNT(*) FROM players e
+             JOIN item_instances i ON i.entity_id = e.id
+             WHERE e.holder_id = ? AND i.item_id = ? AND i.destroyed = 0',
             [$playerId, $itemId]
         );
 
