@@ -15,7 +15,7 @@ define('NO_LOGIN', true);
 require_once __DIR__ . '/../../config.php';
 
 use App\Tutorial\TutorialMapInstance;
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use Classes\Db;
 
 $db = new Db();

@@ -33,7 +33,7 @@
 define('NO_LOGIN', true);
 require_once __DIR__ . '/../../config.php';
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Tutorial\TutorialEnemyCleanup;
 use App\Tutorial\TutorialPlayerCleanup;
 use Classes\Db;

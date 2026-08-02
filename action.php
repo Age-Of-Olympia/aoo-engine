@@ -2,7 +2,7 @@
 
 require_once('config.php');
 
-use App\Action\ActionFactory;
+use App\Factory\ActionFactory;
 use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
 use App\Service\ActionService;

@@ -1,6 +1,6 @@
 <?php
 
-use App\Entity\EntityManagerFactory;
+use App\Factory\EntityManagerFactory;
 use App\Entity\Race;
 use App\Service\RaceService;
 use Classes\File;
