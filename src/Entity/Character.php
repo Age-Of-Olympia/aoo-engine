@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use App\Interface\ProgressesInterface;
+use App\Interface\TakesTurnsInterface;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -14,12 +16,19 @@ use Doctrine\ORM\Mapping as ORM;
  * progression (xp, pi, rank…), faction RANK and turn timing — belonging to a
  * faction is on GameEntity, since a forge belongs to one too.
  *
+ * Two of those are NOT character-ness, and now say so out loud: taking turns
+ * and progressing are capabilities, held here today and by playable buildings
+ * tomorrow (docs/design-playable-buildings.md). Nothing moves yet — the point
+ * is that a reader can already ask "does this take turns?" instead of "is this
+ * a character?", so the gates written from now on do not have to be swept
+ * later.
+ *
  * No discriminator entry of its own — Doctrine allows abstract
  * intermediate classes in an STI hierarchy; querying Character returns
  * every row whose type maps into this subtree.
  */
 #[ORM\Entity]
-abstract class Character extends GameEntity
+abstract class Character extends GameEntity implements TakesTurnsInterface, ProgressesInterface
 {
     #[ORM\Column(type: "string", length: 255)]
     protected string $psw = '';
