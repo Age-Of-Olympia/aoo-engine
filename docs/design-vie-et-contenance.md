@@ -351,6 +351,12 @@ table needs: `player_id` → `holder_id`, `equiped` → `slot` (`'main1'`, `'tro
 3. repoint the readers, one at a time, each with its own baseline;
 4. stop writing the old half, then drop the table.
 
+Steps 1–4 are merged. The DROP itself is deliberately **not** in them: a
+removal is the one migration that must land AFTER the code, not before, and the
+project already has the pattern for saying so —
+`App\Service\OwnershipLinkRetirement` reports readiness on the admin dashboard
+and the notice erases itself the day the table goes.
+
 Then, riding the same relation: damage, heal and repair through the one life,
 retiring the five `player_type === 'unique'` branches; and `reparer` reaching a
 bagged sword, because a bagged sword becomes an entity below its max life.

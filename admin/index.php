@@ -91,6 +91,22 @@ ob_start();
         </div>
     <?php endif; ?>
 
+    <?php $ownershipLink = (new \App\Service\OwnershipLinkRetirement())->status(); ?>
+    <?php if ($ownershipLink['present']): ?>
+        <div class="alert <?= $ownershipLink['droppable'] ? 'alert-info' : 'alert-warning' ?> mt-3" style="max-width: 640px;">
+            <?php if ($ownershipLink['droppable']): ?>
+                <strong>Reste de chantier : <code>players_items_instances</code>.</strong>
+                Plus aucun lecteur, plus aucun écrivain : le porteur d'un exemplaire vit sur l'entité.
+                <strong>Prête à être déposée</strong>, une fois le code qui a cessé de la lire déployé
+                partout — migrations après code pour une suppression, l'inverse de l'habitude.
+                Cet avertissement disparaîtra de lui-même.
+            <?php else: ?>
+                <strong><code>players_items_instances</code> n'est pas encore déposable.</strong>
+                <?= e(implode(' ; ', $ownershipLink['blockers'])) ?>.
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+
     <div class="card mt-3" style="max-width: 640px;">
         <div class="card-header"><strong>Options générales</strong></div>
         <div class="card-body">
