@@ -40,15 +40,14 @@ class UniqueObjectService extends BaseService
     {
         $conn = $this->entityManager->getConnection();
 
-        // INNER JOIN sur le lien de possession : une instance déjà au sol
-        // (entité au sol) ou déjà enveloppée (unique_objects) n'a
-        // pas de ligne ici et ne peut pas gagner une seconde localisation.
+        // Held by somebody: an instance already on a cell, or already wrapped,
+        // has no holder and cannot gain a second location.
         $row = $conn->fetchAssociative(
-            "SELECT i.id, i.custom_name, i.destroyed, it.name AS catalog_name, l.equiped
+            "SELECT i.id, i.custom_name, i.destroyed, it.name AS catalog_name, e.slot AS equiped
              FROM item_instances i
              JOIN items it ON it.id = i.item_id
-             JOIN players_items_instances l ON l.instance_id = i.id
-             WHERE i.id = ?",
+             JOIN players e ON e.id = i.entity_id
+             WHERE i.id = ? AND e.holder_id IS NOT NULL",
             [$instanceId]
         );
         if ($row === false || (int) $row['destroyed'] === 1) {

@@ -267,8 +267,8 @@ class BidsAsksService
                            FROM item_instances i
                            JOIN items it ON it.id = i.item_id
                            ' . ItemInstanceService::WEAR_JOIN . '
-                         JOIN players_items_instances l ON l.instance_id = i.id
-                         WHERE i.id = ? AND l.player_id = ? AND i.destroyed = 0',
+                         JOIN players e ON e.id = i.entity_id
+                         WHERE i.id = ? AND e.holder_id = ? AND i.destroyed = 0',
                         array($instanceId, $player->id)
                     )->fetch_object();
 

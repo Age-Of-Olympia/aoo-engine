@@ -137,7 +137,7 @@ class ItemInstanceService extends BaseService
      * Slots that put an exemplar out of the carried inventory: the bank and the
      * two escrows. Quoted for inlining, so callers stay single statements.
      */
-    private static function heldElsewhereSlots(): string
+    public static function heldElsewhereSlots(): string
     {
         return "'" . implode("','", [
             self::LOCATION_BANK,

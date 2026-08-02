@@ -784,8 +784,9 @@ class Item{
         (SELECT COUNT(*) FROM players_items
          WHERE player_id = ? AND equiped IN('. Db::print_in($values) .'))
         +
-        (SELECT COUNT(*) FROM players_items_instances
-         WHERE player_id = ? AND equiped IN('. Db::print_in($values) .'))
+        (SELECT COUNT(*) FROM players AS e
+         INNER JOIN item_instances AS ii ON ii.entity_id = e.id
+         WHERE e.holder_id = ? AND e.slot IN('. Db::print_in($values) .'))
         AS n
         ';
 

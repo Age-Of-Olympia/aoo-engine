@@ -43,16 +43,17 @@ class ItemOwnershipService
     {
         $sql = "SELECT p.id, p.name, p.race,
                        COALESCE(pi.n, 0)
-                           + COALESCE((SELECT COUNT(*) FROM players_items_instances li
-                                       JOIN item_instances ii ON ii.id = li.instance_id
-                                       WHERE li.player_id = p.id AND ii.item_id = ?
-                                         AND ii.destroyed = 0 AND li.location = 'inventory'), 0) AS inv,
+                           + COALESCE((SELECT COUNT(*) FROM players ei
+                                       JOIN item_instances ii ON ii.entity_id = ei.id
+                                       WHERE ei.holder_id = p.id AND ii.item_id = ?
+                                         AND ii.destroyed = 0
+                                         AND ei.slot NOT IN (" . \App\Service\ItemInstanceService::heldElsewhereSlots() . ")), 0) AS inv,
                        COALESCE(pi.equiped, '') AS equiped,
                        COALESCE(pb.n, 0)
-                           + COALESCE((SELECT COUNT(*) FROM players_items_instances lb
-                                       JOIN item_instances ib ON ib.id = lb.instance_id
-                                       WHERE lb.player_id = p.id AND ib.item_id = ?
-                                         AND ib.destroyed = 0 AND lb.location = 'bank'), 0) AS bank,
+                           + COALESCE((SELECT COUNT(*) FROM players eb
+                                       JOIN item_instances ib ON ib.entity_id = eb.id
+                                       WHERE eb.holder_id = p.id AND ib.item_id = ?
+                                         AND ib.destroyed = 0 AND eb.slot = 'bank'), 0) AS bank,
                        COALESCE((SELECT SUM(b.stock) FROM items_bids b
                                  WHERE b.player_id = p.id AND b.item_id = ?), 0) AS market,
                        COALESCE((SELECT SUM(e.n) FROM players_items_exchanges e

@@ -1694,8 +1694,8 @@ class Player implements ActorInterface {
             +
             (SELECT COUNT(*) FROM items AS i
              INNER JOIN item_instances AS ii ON ii.item_id = i.id
-             INNER JOIN players_items_instances AS l ON l.instance_id = ii.id
-             WHERE l.player_id = ? AND l.equiped = ? AND i.cursed = 1)
+             INNER JOIN players AS e ON e.id = ii.entity_id
+             WHERE e.holder_id = ? AND e.slot = ? AND i.cursed = 1)
             AS n
             ';
 

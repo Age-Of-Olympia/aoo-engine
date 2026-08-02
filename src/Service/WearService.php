@@ -42,12 +42,13 @@ class WearService extends BaseService
     {
         $this->entityManager->getConnection()->executeStatement(
             "UPDATE item_instances i
-             JOIN players_items_instances l ON l.instance_id = i.id
+             JOIN players e ON e.id = i.entity_id
              JOIN items it ON it.id = i.item_id
              " . ItemInstanceService::WEAR_JOIN . "
              SET i.wear_pending = 1
-             WHERE l.player_id = ?
-               AND l.equiped != ''
+             WHERE e.holder_id = ?
+               AND e.slot != ''
+               AND e.slot NOT IN (" . ItemInstanceService::heldElsewhereSlots() . ")
                AND i.destroyed = 0
                AND it.durability_max + COALESCE(wear.n, 0) > 0
                AND it.wear_rate > 0
@@ -70,10 +71,10 @@ class WearService extends BaseService
             "SELECT i.id, i.entity_id, " . ItemInstanceService::WEAR_SELECT . ",
                     i.custom_name, it.name AS catalog_name, it.wear_rate
              FROM item_instances i
-             JOIN players_items_instances l ON l.instance_id = i.id
+             JOIN players e ON e.id = i.entity_id
              JOIN items it ON it.id = i.item_id
              " . ItemInstanceService::WEAR_JOIN . "
-             WHERE l.player_id = ? AND i.wear_pending = 1 AND i.destroyed = 0",
+             WHERE e.holder_id = ? AND i.wear_pending = 1 AND i.destroyed = 0",
             [$playerId]
         );
 
