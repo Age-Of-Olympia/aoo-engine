@@ -476,12 +476,21 @@ class Player implements ActorInterface {
     }
 
     /**
+     * Where this entity stands: its own cell, or the cell of whatever holds it —
+     * a sword in a hand is on its bearer's tile, a coin in a chest on the
+     * chest's. Null when nothing in the chain stands anywhere: shelved off the
+     * world, or held by something shelved.
+     *
+     * A pure read. {@see \App\Service\Map\EntityLocationService} owns both the
+     * chain walk and the writing of a location; asking where something is never
+     * puts it somewhere.
+     *
      * Mémoïsé par défaut : la barre de statut, la minimap et la vue
      * relisaient chacune les coordonnées (3 requêtes par page). go()
      * invalide le memo après déplacement ; $refresh=true force la
      * relecture.
      */
-    public function getCoords(bool $refresh = false): object{
+    public function getCoords(bool $refresh = false): ?object{
 
 
         if (!$refresh && isset($this->coords)) {
@@ -490,49 +499,47 @@ class Player implements ActorInterface {
         }
 
         $this->get_data(false);
-        $db = new Db();
 
+        /* db() and not the default connection: the legacy stack is pointed at
+         * another database in places (the tutorial runs on its own), and the
+         * chain walk has to read the same rows as the query below. */
+        $coordsId = (new \App\Service\Map\EntityLocationService(db()))->cellOf((int) $this->id);
 
-        // first coords
-        if ($this->data->coords_id == NULL) {
+        if ($coordsId === null) {
 
+            unset($this->coords);
 
-            $coords = (object) array(
-                'x' => 0,
-                'y' => 0,
-                'z' => 0,
-                'plan' => 'olympia'
-            );
-
-            // spawn player
-            $this->move_player($coords);
+            return null;
         }
+
+        $db = new Db();
 
         $sql = '
             SELECT
             x, y, z, plan
             FROM
-            coords AS c
-            INNER JOIN
-            players AS p
-            ON
-            p.coords_id = c.id
+            coords
             WHERE
-            p.id = ?
+            id = ?
             ';
 
-        $res = $db->exe($sql, $this->id);
+        $res = $db->exe($sql, $coordsId);
 
         $row = $res->fetch_object();
 
-        $coords = (object) array(
+        if (!$row) {
+
+            unset($this->coords);
+
+            return null;
+        }
+
+        $this->coords = (object) array(
             'x' => $row->x,
             'y' => $row->y,
             'z' => $row->z,
             'plan' => $row->plan
         );
-
-        $this->coords = $coords;
 
 
         return $this->coords;

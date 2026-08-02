@@ -468,6 +468,12 @@ Consequences that fall out of the single relation rather than being coded as fea
 `putInside()` refuses self-holding and cycles; `cellOf()` and `holds()` walk at most 16
 levels deep.
 
+**Asking where something is never puts it somewhere.** `Player::getCoords()` reads the same
+chain — its own cell, else its holder's, else null — through `EntityLocationService::cellOf()`,
+so a carried sword answers its bearer's tile and a shelved building answers *nowhere*. It is a
+pure read: nothing places an entity as a side effect of being asked about. Callers therefore
+handle `null`, and `ActorInterface::getCoords()` says `?object`.
+
 **Installed vs dropped is the whole difference** between a placed object and litter: what
 is `dropped` occupies no cell (`entity_cells` removed), so it blocks nothing, screens
 nothing, is not a valid target, and blocks no construction.

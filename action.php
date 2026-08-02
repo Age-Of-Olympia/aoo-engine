@@ -62,16 +62,25 @@ if (!$selfDefaulted && !isset($_POST['coordsX'])) {
 
     exit('error coords');
 }
+// Une cible sans case n'est sur aucune tuile : rangée hors du monde, ou
+// portée par quelque chose. Elle ne peut donc pas être celle qu'on visait.
+$targetCoords = $target->getCoords();
+
+if ($targetCoords === null) {
+
+    exit('Votre cible s\'est déplacée.');
+}
+
 if (isset($_POST['coordsX'])
-    && (($_POST['coordsX'] != $target->getCoords()->x)
-    ||($_POST['coordsY'] != $target->getCoords(refresh:false)->y)
-    ||($_POST['coordsZ'] != $target->getCoords(refresh:false)->z)
-    ||($_POST['coordsPlan'] != $target->getCoords(refresh:false)->plan))) {
+    && (($_POST['coordsX'] != $targetCoords->x)
+    ||($_POST['coordsY'] != $targetCoords->y)
+    ||($_POST['coordsZ'] != $targetCoords->z)
+    ||($_POST['coordsPlan'] != $targetCoords->plan))) {
     exit('Votre cible s\'est déplacée.');
 }
 
 // distance
-$distance = View::get_distance($player->getCoords(), $target->getCoords());
+$distance = View::get_distance($player->getCoords(), $targetCoords);
 
 $playerService = new PlayerService($player->id);
 //$numberOfSpellAvailable = $playerService->getNumberOfSpellAvailable();

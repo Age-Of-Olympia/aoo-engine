@@ -18,7 +18,8 @@ interface ActorInterface
   /** @return list<\App\Entity\PlayerEffect> effets portés (catalogue via EffectService) */
   public function getEffects(): array;
   public function get_caracs(bool $nude=false): bool;
-  public function getCoords(bool $refresh = true): object;
+  /** Null when it stands nowhere: shelved off the world, or held by something shelved. */
+  public function getCoords(bool $refresh = true): ?object;
   public function getRemaining(string $trait): int;
   public function equip(Item $item, bool $doNotRefresh = false): EquipResult;
   public function getMunition(Item $object, bool $equiped=false): ?Item;

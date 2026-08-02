@@ -34,7 +34,10 @@ if (!$player->get_data(false)) {
     redirectTo('players.php');
 }
 $player->get_caracs();
-$player->getCoords();
+
+// Une entité rangée hors du monde n'a pas de case : le formulaire la montre
+// vide, et lui en donner une la repose sur le plateau.
+$coords = $player->getCoords() ?? (object) ['x' => '', 'y' => '', 'z' => '', 'plan' => ''];
 
 $backTo = 'player-edit.php?id=' . $id;
 
@@ -68,10 +71,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['player_save'])) {
         $z = (int) ($_POST['z'] ?? 0);
         $plan = trim((string) ($_POST['plan'] ?? ''));
 
-        $moved = $x !== (int) $player->coords->x
-            || $y !== (int) $player->coords->y
-            || $z !== (int) $player->coords->z
-            || $plan !== (string) $player->coords->plan;
+        $moved = $x !== (int) $coords->x
+            || $y !== (int) $coords->y
+            || $z !== (int) $coords->z
+            || $plan !== (string) $coords->plan;
 
         if ($moved) {
             $known = $db->exe('SELECT 1 FROM coords WHERE plan = ? LIMIT 1', $plan);
@@ -246,10 +249,10 @@ $identity = formCard('Identité', ''
     . ' · ' . e((string) ($player->data->player_type ?? 'real')) . '</p>');
 
 $position = formCard('Position', '<div class="d-flex flex-wrap" style="gap:.5rem">'
-    . formField('X', formInput('x', (string) $player->coords->x, 'type="number"'))
-    . formField('Y', formInput('y', (string) $player->coords->y, 'type="number"'))
-    . formField('Z', formInput('z', (string) $player->coords->z, 'type="number"'))
-    . formField('Plan', formInput('plan', (string) $player->coords->plan))
+    . formField('X', formInput('x', (string) $coords->x, 'type="number"'))
+    . formField('Y', formInput('y', (string) $coords->y, 'type="number"'))
+    . formField('Z', formInput('z', (string) $coords->z, 'type="number"'))
+    . formField('Plan', formInput('plan', (string) $coords->plan))
     . '</div>'
     . '<p class="text-muted mb-0">Téléportation directe : aucune règle de déplacement appliquée.</p>');
 

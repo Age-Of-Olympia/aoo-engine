@@ -396,12 +396,19 @@ private static function filterRows(array $rows, int $playerId): array {
     public static function put(ActorInterface $player, $target, $text, $type='', $hiddenText='', $logTime=''){
 
 
-        if(!isset($player->coords)){
+        $coords = $player->getCoords();
 
-            $player->getCoords();
+        /* Une entité sans case — rangée hors du monde, ou portée par une autre —
+         * n'apporte pas de plan. Celui de l'autre partie le remplace, faute de
+         * quoi l'entrée n'apparaîtrait sur aucun plan. */
+        $plan = $coords->plan ?? null;
+
+        if ($plan === null && $target instanceof ActorInterface) {
+
+            $plan = $target->getCoords()->plan ?? null;
         }
 
-        $plan = $player->coords->plan;
+        $plan ??= '';
 
         // hide log in incognitoMode or invisibleMode
         if($player->have_option('incognitoMode') || $player->have_option('invisibleMode')){
