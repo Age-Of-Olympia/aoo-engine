@@ -15,10 +15,10 @@ namespace App\Interface;
  * deletes `players_bonus`, `players_effects` and `players_items`. A life
  * deficit belongs there and SHOULD be wiped; a level must not.
  *
- * Deliberately NOT here: `pi`, which `Player::put_xp()` grants alongside
- * experience but which is also spent as currency. Whether a playable building
- * has a purse is its own question, and answering it by accident — through a
- * getter added for symmetry — is how it would get answered wrong.
+ * `pi` belongs here too: `Player::put_xp()` mints it in the same statement as
+ * experience, capped at the season's XP ceiling, and it buys characteristic
+ * upgrades. It is not a purse — gold is an item — but the currency progression
+ * itself produces.
  */
 interface ProgressesInterface
 {
@@ -37,4 +37,11 @@ interface ProgressesInterface
     public function getBonusPoints(): int;
 
     public function setBonusPoints(int $bonusPoints): self;
+
+    /** What experience mints and characteristic upgrades spend. */
+    public function getPi(): int;
+
+    public function setPi(int $pi): self;
+
+    public function addPi(int $amount): self;
 }

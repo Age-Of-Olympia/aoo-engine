@@ -27,11 +27,19 @@ Move to satellites what `Character` holds and a playable building will need:
 | satellite | columns taken from `players` |
 |---|---|
 | `turns` | `nextTurnTime`, `lastActionTime`, `nextTurnRescheduled`, `antiBerserkTime` |
-| `progression` | `xp`, `rank`, `bonus_points` |
+| `progression` | `xp`, `rank`, `bonus_points`, `pi` |
 
-**`pi` stays out.** `Player::put_xp()` grants it alongside experience, but it is *spent* as
-currency. Whether a playable building has a purse is a separate decision, and adding a getter
-for symmetry would answer it by accident.
+**`pi` comes along.** `Player::put_xp()` mints it in the same statement as experience, capped
+at the season's XP ceiling, and characteristic upgrades spend it. Gold is an item; PI is the
+currency progression itself produces. Whether a *building* spends PI on its own stats is a
+game-design question for the evolution work, not a reason to file the column elsewhere.
+
+**Take the chance to make the debit atomic.** `scripts/upgrades/carac.php` guards with
+`WHERE pi >= ?` but never checks affected rows: two concurrent requests both pass the PHP
+check, one `UPDATE` matches nothing, and the caller proceeds as if it had paid. PHP's
+session-file lock hides it today, and `session_write_close()` — which the tutorial APIs
+already call — unhides it. Moving PI is the moment to debit in one conditional statement and
+read the affected-row count.
 
 ### Copy the L0 shape — it is what kept that step small
 

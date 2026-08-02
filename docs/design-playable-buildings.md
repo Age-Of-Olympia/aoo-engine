@@ -32,16 +32,20 @@ missing is a contract. Sorted by what a building can honestly carry:
 | **account** | `psw`, `mail`, `plainMail`, `emailBonus`, `lastLoginTime` | **never** — and it is already slated to leave `Character` for its own table |
 | **person** | `story`, `quest`, `godId`, `pf`, `secretFaction*`, `malus` | no — `put_malus()` already early-returns on structures |
 | **playing** | `nextTurnTime`, `lastActionTime`, `nextTurnRescheduled`, `antiBerserkTime` | **yes** |
-| **progressing** | `xp`, `rank`, `bonusPoints` | **yes** |
-| **money** | `pi` | **its own question** |
+| **progressing** | `xp`, `rank`, `bonusPoints`, `pi` | **yes** |
 
-Two capabilities, ~7 fields. That is the whole ask, and none of it is character-ish by
+Two capabilities, ~8 fields. That is the whole ask, and none of it is character-ish by
 nature.
 
-`pi` was nearly filed under progression, and it does not belong there: `Player::put_xp()`
-grants it alongside experience (capped by `SEASON_XP`), but it is then *spent* as currency.
-Whether a playable building has a purse is a separate decision, and answering it by accident
-— through a getter added for symmetry — is how it would get answered wrong.
+`pi` belongs with progression, not beside gold: `Player::put_xp()` mints it in the same
+statement as experience, capped at the season's XP ceiling, and characteristic upgrades spend
+it. Gold is an item; PI is the currency progression itself produces, so the loop is one
+thing — XP raises the rank and mints PI, PI buys upgrades, and the season's overflow XP is
+banked into `bonus_points`.
+
+What *is* a separate question: whether a playable building spends PI to raise its own
+characteristics. That is plausibly the heart of building evolution, but it asks who **uses**
+the capability, not where the column lives.
 
 ```mermaid
 classDiagram
