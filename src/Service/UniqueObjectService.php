@@ -166,6 +166,12 @@ class UniqueObjectService extends BaseService
             [(int) $coordsId]
         );
 
+        /* Broken open, it spills before it falls: what it held must not stay
+         * shut inside an object that lies on the ground — a container holding
+         * anything cannot be picked up, so its contents would be stuck. Same
+         * service, same loot rules, as a dying player. */
+        (new LootSpillService())->spill(\App\Factory\PlayerFactory::legacy($uniqueId));
+
         $conn->transactional(function ($conn) use ($uniqueId, $instanceId, $coordsId): void {
             $conn->executeStatement(
                 "INSERT INTO players_bonus (player_id, name, n)
