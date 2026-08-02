@@ -43,25 +43,16 @@ class RequiresDamagedTargetCondition extends BaseCondition implements HasParamet
             return new ConditionResult(false, array(), array("Il n'y a rien à réparer ici."));
         }
 
-        /* Un objet au sol EST une entité, comme un personnage ou un édifice, et
-         * se répare de la même façon. Mais son entité est un ÉTUI TEMPORAIRE :
-         * `UniqueObjectService::takeInstance` la supprime dès qu'on ramasse.
-         * Une vie portée par elle serait oubliée au ramassage — les coups pris
-         * au sol comme la réparation qu'on vient d'y faire.
+        /* Un objet se lit ICI comme tout le reste, et c'est neuf.
          *
-         * La durabilité est le registre qui SURVIT à l'étui ; c'est pourquoi le
-         * code existant synchronise « entité détruite → durabilité 0 », et
-         * jamais l'inverse. On lit donc la vie là où elle dure.
-         *
-         * Accessoirement l'étui n'a même pas de PV à lire : il porte la race
-         * « objet », que le catalogue ne connaît pas. Lire ses PV laissait
-         * passer n'importe quel objet, intact compris — et réparer un objet
-         * intact rend l'XP sans rien soigner, le défaut même que cette
-         * condition existe pour fermer. */
-        if ((string) ($target->data->player_type ?? '') === 'unique') {
-            return $this->checkObjectWear($target);
-        }
-
+         * Il fallait une seconde lecture — la durabilité, dans `item_instances`
+         * — parce que l'entité d'un objet posé n'était qu'un ÉTUI temporaire
+         * portant la race « objet », inconnue du catalogue : ses PV valaient
+         * zéro, et l'objet intact passait. Depuis « une seule vie », un
+         * exemplaire EST une entité où qu'il soit, son maximum vient de son
+         * type (`items.durability_max`) et son entame du même `players_bonus`
+         * que la blessure d'un personnage. La double lecture n'a plus d'objet,
+         * et ses colonnes n'existent plus. */
         $target->get_caracs();
 
         $max = (int) ($target->caracs->pv ?? 0);
@@ -73,44 +64,6 @@ class RequiresDamagedTargetCondition extends BaseCondition implements HasParamet
 
         if (\App\Service\ItemInstanceService::isBroken($left)) {
             return new ConditionResult(false, array(), array('La cible est brisée : on ne la répare plus.'));
-        }
-
-        return new ConditionResult(true, array(), array());
-    }
-
-    /**
-     * Un objet s'use et se répare entre 0 exclu et son maximum.
-     *
-     * Deux bornes, deux refus différents :
-     *  - à son maximum, il n'y a rien à réparer ;
-     *  - BRISÉ (durabilité tombée à 0), il ne se répare plus — décision de jeu,
-     *    c'est ce qui donne son prix à l'artisanat.
-     */
-    private function checkObjectWear(ActorInterface $target): ConditionResult
-    {
-        $conn = \App\Entity\EntityManagerFactory::getEntityManager()->getConnection();
-
-        $instanceId = \App\Service\UniqueObjectService::instanceIdOf($conn, (int) $target->getId());
-
-        if ($instanceId === null) {
-            return new ConditionResult(false, array(), array("Il n'y a rien à réparer ici."));
-        }
-
-        $wear = $conn->fetchAssociative(
-            'SELECT durability, durability_max FROM item_instances WHERE id = ?',
-            [$instanceId]
-        );
-
-        if ($wear === false) {
-            return new ConditionResult(false, array(), array("Il n'y a rien à réparer ici."));
-        }
-
-        if (\App\Service\ItemInstanceService::isBroken((int) $wear['durability'])) {
-            return new ConditionResult(false, array(), array('Brisé : cela ne se répare plus.'));
-        }
-
-        if ((int) $wear['durability'] >= (int) $wear['durability_max']) {
-            return new ConditionResult(false, array(), array('La cible est intacte.'));
         }
 
         return new ConditionResult(true, array(), array());
