@@ -127,18 +127,29 @@ owner nor faction belongs to everyone. Reuse it rather than growing a second ans
 > turn, what fires it is being *touched* — its screen opened, an action attempted with it —
 > exactly as lazily as a player's turn fires on page load. No cron is needed for that.
 
-### 3.5 Ruin and void are not the same state, and one of them is vestigial
+### 3.5 `build_state` is scaffolding — do not clean it up
 
-Two lifecycle states coexist today:
+`buildings.build_state` has three values and, today, **nothing writes two of them**:
 
-- `buildings.build_state = 'ruin'` — **stands on its tile**, wears the `_broken` sprite,
-  shuts itself (`closureReason` reads it first), restorable by an admin;
-- shelved by `vanish()` — **off the board entirely**, which is where destruction leads.
+| state | written by | read by |
+|---|---|---|
+| `built` | `place()` | everything; all 228 buildings hold it |
+| `construction` | **nobody** | `closureReason()` (a site is shut), three label maps |
+| `ruin` | `markDestroyed()`, called **only from a test** | `closureReason()` (a ruin is shut), three label maps |
 
-A ruin that stays on the tile is not what destruction produces, and the intent is that a
-destroyed building leaves the tile. So `'ruin'` is closer to an admin state than to a game
-state. **Not resolved here** — but the evolution work will touch this lifecycle, and it
-should reconcile the two rather than add a third.
+Destruction does not produce a ruin: it goes through `vanish()`, which takes the building
+off the board and keeps the row. A ruin standing on its tile is therefore not a state the
+game can currently reach.
+
+**Both states stay** (decision, 2026-08-02). They are the display and closure half of the
+building-evolution work — raising a keep will take time, and what is half-built is shut —
+and the machinery that honours them is already correct. What is missing is only the code
+that *puts* a building into them, which that work brings.
+
+> **Door-keeping rule**: this is the same shape as `players.bonus_points` — written and never
+> read, kept on purpose. A sweep that looks for "nothing writes it" will find these two and
+> want to delete them. It must not. The test is whether something is *intended* to write it,
+> and here the answer is yes.
 
 ---
 
