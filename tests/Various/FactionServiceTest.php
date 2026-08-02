@@ -28,6 +28,9 @@ use PHPUnit\Framework\TestCase;
  */
 class FactionServiceTest extends TestCase
 {
+    /** Id de fixture, hors de portée des ids réels. */
+    private const MEMBER_ID = 990101;
+
     private FactionService $service;
 
     protected function setUp(): void
@@ -177,24 +180,24 @@ class FactionServiceTest extends TestCase
         $faction->setName('Faction à supprimer');
         $this->service->save($faction);
 
-        // Borrow an existing character instead of fabricating one (players
-        // has many NOT NULL columns); restored in finally.
-        $playerId = $link->fetchOne('SELECT id FROM players ORDER BY id LIMIT 1');
-        if ($playerId === false) {
-            $this->deleteFaction($code);
-            $this->markTestSkipped('No player row available to reference the faction.');
-        }
-        $previous = $link->fetchAssociative(
-            'SELECT faction, factionRole FROM players WHERE id = ?',
-            [$playerId]
+        /* Le personnage est SEMÉ, plus emprunté à la base.
+         *
+         * Il l'était pour éviter de fabriquer une ligne « aux nombreuses
+         * colonnes NOT NULL » — cinq suffisent, et PlanAdminServiceTest le
+         * fait déjà. L'emprunt, lui, prenait la PREMIÈRE ligne de `players`,
+         * qui n'est pas forcément un personnage : `players` porte aussi les
+         * structures, et countPlayersUsingFaction() ne compte ses membres que
+         * parmi `real` et `npc` — une forge porte une faction sans y adhérer.
+         * Le compte tombait donc à zéro dès qu'un décor occupait le plus petit
+         * id, et à rien du tout sur une base neuve, où le cas se sautait. */
+        $playerId = self::MEMBER_ID;
+        $link->executeStatement(
+            "INSERT INTO players (id, player_type, name, race, faction)
+             VALUES (?, 'real', ?, ?, ?)",
+            [$playerId, 'Membre de test factions', 'nain', $code]
         );
 
         try {
-            $link->executeStatement(
-                'UPDATE players SET faction = ? WHERE id = ?',
-                [$code, $playerId]
-            );
-
             $counts = $this->service->countPlayersUsingFaction($code);
             $this->assertSame(1, $counts['members']);
 
@@ -205,10 +208,7 @@ class FactionServiceTest extends TestCase
                 $this->assertStringContainsString($code, $e->getMessage());
             }
         } finally {
-            $link->executeStatement(
-                'UPDATE players SET faction = ?, factionRole = ? WHERE id = ?',
-                [$previous['faction'] ?? '', $previous['factionRole'] ?? 0, $playerId]
-            );
+            $link->executeStatement('DELETE FROM players WHERE id = ?', [$playerId]);
             $this->deleteFaction($code);
             FactionService::clearCache();
         }
