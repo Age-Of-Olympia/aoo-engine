@@ -260,10 +260,8 @@ final class EntityCardView
             ? $actionTargeting->canTargetSelf($actionData)
             : $actionTargeting->canTargetOther($actionData);
 
-        $targetCategory = EntityCategory::fromPlayerType($target->data->player_type ?? 'real');
-
         return $allowed
-            && $actionTargeting->canTargetCategory($actionData, $targetCategory)
+            && $actionTargeting->canTargetEntity($actionData, $target->data->player_type ?? 'real')
             && $actionTargeting->matchesDisplayContext($actionData, $player, $target);
     }
 

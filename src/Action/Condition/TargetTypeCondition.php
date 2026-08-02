@@ -14,12 +14,19 @@ use App\Action\Schema\ParameterSchema;
  * replacement for id-sign conventions:
  *
  *   'character' — real players, tutorial players, NPCs
- *   'structure' — buildings, unique objects
+ *   'structure' — buildings, scenery, resources, plants, placed objects
  *
  * A heal keeps ['character']; an attack that may also raze a palisade
- * declares ['character', 'structure']; a future repair action declares
- * ['structure']. Rows predating the param keep today's behavior via
- * the ['character'] default.
+ * declares ['character', 'structure']. Rows predating the param keep
+ * today's behavior via the ['character'] default.
+ *
+ * La branche seule ne suffit pas toujours : `reparer` la déclarait, et
+ * remettait donc en état un arbre ou une plante — tout ce qui n'est pas un
+ * personnage vit sous `structure`. Les FAMILLES s'écrivent donc aussi, par
+ * discriminant ({@see \App\Enum\EntityCategory::structureFamilies()}) :
+ * `['building','scenery','item']` répare ce qui se répare et rien d'autre.
+ * Les deux vocabulaires cohabitent — une famille nommée suffit, la branche
+ * reste le parapluie.
  *
  * Two SORTES DE VISÉE s'ajoutent aux catégories d'entités (décision du
  * 2026-07-19, actions génériques) :
@@ -38,6 +45,39 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInt
     public const KIND_SELF = 'self';
     public const KIND_NONE = 'none';
 
+    /**
+     * Ce qu'un refus nomme. Mêmes clés que les familles de structures, avec
+     * leur article : un message parle de « une ressource », pas de
+     * « Ressource ». EntityFamiliesVocabularyTest tient les deux listes
+     * alignées.
+     */
+    private const REFUSAL_LABELS = [
+        'building' => 'un bâtiment',
+        'scenery'  => 'un décor',
+        'resource' => 'une ressource',
+        'plant'    => 'une plante',
+        'item'     => 'un objet posé',
+    ];
+
+    /**
+     * Le vocabulaire de la visée, en un seul endroit : branches, familles et
+     * les deux visées exclusives. Le wiki des actions le lit aussi — deux
+     * tables de libellés avaient déjà divergé.
+     *
+     * @return array<string, string>
+     */
+    public static function targetLabels(): array
+    {
+        return array_merge(
+            \App\Enum\EntityCategory::options(),
+            \App\Enum\EntityCategory::structureFamilies(),
+            [
+                self::KIND_SELF => 'Soi-même',
+                self::KIND_NONE => 'Sans cible',
+            ],
+        );
+    }
+
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema(
@@ -47,11 +87,38 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInt
                 'Catégories de cibles autorisées',
                 default: ['character'],
                 multiple: true,
-                options: array_merge(\App\Enum\EntityCategory::options(), [
+                /* L'admin dit « seulement » là où le wiki dit la visée : la
+                 * liste des valeurs, elle, reste la même. */
+                options: array_merge(self::targetLabels(), [
                     self::KIND_SELF => 'Soi-même seulement',
-                    self::KIND_NONE => 'Sans cible',
                 ]),
             ),
+        );
+    }
+
+    /**
+     * La cible est-elle atteinte par cette déclaration ? Règle UNIQUE, lue
+     * aussi par {@see \App\Service\Action\ActionTargeting} : un bouton qui
+     * s'affiche et une exécution qui refuse, c'est la même liste lue deux fois.
+     *
+     * Une famille nommée suffit ; sinon la branche répond.
+     *
+     * @param array<int, string> $allowed
+     */
+    public static function reaches(?string $playerType, array $allowed): bool
+    {
+        if ($allowed === []) {
+            $allowed = [\App\Enum\EntityCategory::Character->value];
+        }
+
+        if (in_array((string) ($playerType ?? 'real'), $allowed, true)) {
+            return true;
+        }
+
+        return in_array(
+            \App\Enum\EntityCategory::fromPlayerType($playerType)->value,
+            $allowed,
+            true
         );
     }
 
@@ -79,13 +146,13 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInt
             return new ConditionResult(false, array(), $errorMessage);
         }
 
-        $category = \App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? 'real')->value;
+        $playerType = (string) ($target->data->player_type ?? 'real');
 
-        if (in_array($category, $allowed, true)) {
+        if (self::reaches($playerType, $allowed)) {
             /* A structure must hold its tile to be aimed at. What lies dropped
              * on the ground occupies nothing and is picked up, not targeted —
              * the same cells that decide obstruction decide this. */
-            if ($category === \App\Enum\EntityCategory::Structure->value && !$this->holdsATile($target)) {
+            if (\App\Enum\EntityCategory::fromPlayerType($playerType)->isStructure() && !$this->holdsATile($target)) {
                 $condition->setBlocking(true);
 
                 return new ConditionResult(false, array(), ['Cet objet est au sol : on le ramasse, on ne le vise pas.']);
@@ -96,11 +163,23 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInt
 
         $condition->setBlocking(true);
 
-        $errorMessage = $category === 'structure'
-            ? ['Cette action ne peut pas viser une structure.']
-            : ['Cette action ne peut viser qu\'une structure.'];
+        /* Le refus nomme la CIBLE, pas la branche : « ne peut pas viser une
+         * structure » sur un arbre, alors que l'action répare les bâtiments,
+         * décrivait mal ce qu'elle refusait. */
+        return new ConditionResult(
+            false,
+            array(),
+            ['Cette action ne peut pas viser ' . self::refusalLabel($playerType) . '.']
+        );
+    }
 
-        return new ConditionResult(false, array(), $errorMessage);
+    /** Comment nommer ce qu'on refuse ; la branche répond pour ce qui n'a pas de libellé. */
+    private static function refusalLabel(string $playerType): string
+    {
+        return self::REFUSAL_LABELS[$playerType]
+            ?? (\App\Enum\EntityCategory::fromPlayerType($playerType)->isStructure()
+                ? 'une structure'
+                : 'un personnage');
     }
 
     /** Simulated targets have no cells and are not meant to be looked up. */

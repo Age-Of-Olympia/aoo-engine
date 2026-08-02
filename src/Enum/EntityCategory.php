@@ -62,6 +62,32 @@ enum EntityCategory: string
     }
 
     /**
+     * Les familles de structures, par discriminant, avec leur libellé.
+     *
+     * La branche ne suffit plus dès qu'une règle vaut pour un bâtiment et pas
+     * pour un arbre : `structure` les tient toutes les cinq, si bien que
+     * `reparer` — déclaré sur la seule branche — remettait en état une plante
+     * à coups de marteau et de planches. Ce que le discriminant distingue déjà
+     * devient donc du vocabulaire pour les portes data-driven.
+     *
+     * Ces clés SONT les discriminants côté structure de {@see \App\Entity\GameEntity} :
+     * en ajouter un sans l'écrire ici casse EntityFamiliesVocabularyTest, pas
+     * le jeu en silence.
+     *
+     * @return array<string, string> player_type => libellé
+     */
+    public static function structureFamilies(): array
+    {
+        return [
+            'building' => 'Bâtiment',
+            'scenery'  => 'Décor',
+            'resource' => 'Ressource',
+            'plant'    => 'Plante',
+            'item'     => 'Objet posé',
+        ];
+    }
+
+    /**
      * Acteur SOCIAL : peut échanger des missives, compter dans une
      * faction, apparaître dans les surfaces de personnages. Un bâtiment
      * ou un objet unique porte une faction et des options (isMerchant…)

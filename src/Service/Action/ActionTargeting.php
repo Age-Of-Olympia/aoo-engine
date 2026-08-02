@@ -76,14 +76,19 @@ final class ActionTargeting
     }
 
     /**
-     * True when the action may target an entity of the given category
-     * (character / structure), mirroring what TargetTypeCondition will
-     * decide at execution time: an action WITHOUT a TargetType condition
-     * is unrestricted (legacy behavior), one WITH it only reaches the
-     * declared categories. Lets observe.php hide the Barbier button on a
+     * True when the action may target THIS entity, mirroring what
+     * TargetTypeCondition will decide at execution time: an action WITHOUT a
+     * TargetType condition is unrestricted (legacy behavior), one WITH it only
+     * reaches what it declares. Lets observe.php hide the Barbier button on a
      * palissade instead of showing a button that can only block.
+     *
+     * Le DISCRIMINANT passe, pas la branche : depuis que la déclaration nomme
+     * aussi les familles, réduire la cible à `structure` ici aurait laissé le
+     * bouton « Réparer » sur un arbre, pour un refus à l'exécution.
+     *
+     * @param ?string $playerType players.player_type de la cible (null = legacy)
      */
-    public function canTargetCategory(Action $action, \App\Enum\EntityCategory $category): bool
+    public function canTargetEntity(Action $action, ?string $playerType): bool
     {
         foreach ($action->getConditions() as $condition) {
             if ($condition->getConditionType() !== 'TargetType') {
@@ -91,17 +96,15 @@ final class ActionTargeting
             }
 
             $params = $condition->getParameters();
-            $allowed = is_array($params['allowed'] ?? null) && $params['allowed'] !== []
-                ? $params['allowed']
-                : [\App\Enum\EntityCategory::Character->value];
+            $allowed = is_array($params['allowed'] ?? null) ? $params['allowed'] : [];
 
-            return in_array($category->value, $allowed, true);
+            return \App\Action\Condition\TargetTypeCondition::reaches($playerType, $allowed);
         }
 
         // Sans condition TargetType : PERSONNAGES seulement — le défaut
         // sûr. Une action voulant viser les structures le déclare
         // (['character','structure']), comme melee/distance au backfill.
-        return $category === \App\Enum\EntityCategory::Character;
+        return \App\Enum\EntityCategory::fromPlayerType($playerType) === \App\Enum\EntityCategory::Character;
     }
 
     /**

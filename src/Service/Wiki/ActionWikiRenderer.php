@@ -15,12 +15,17 @@ use Classes\Db;
  */
 final class ActionWikiRenderer implements WikiSheetRendererInterface
 {
-    private const TARGET_LABELS = [
-        'character' => 'Personnage',
-        'structure' => 'Structure',
-        'self' => 'Soi-même',
-        'none' => 'Sans cible',
-    ];
+    /**
+     * Les libellés de visée viennent de la condition elle-même : cette table
+     * les recopiait, et n'a donc pas suivi quand les familles de structures
+     * sont devenues déclarables — le wiki aurait affiché « building ».
+     *
+     * @return array<string, string>
+     */
+    private static function targetLabels(): array
+    {
+        return \App\Action\Condition\TargetTypeCondition::targetLabels();
+    }
 
     private const TRAIT_LABELS = [
         'a' => 'A', 'ae' => 'Ae', 'mvt' => 'Mvt', 'pm' => 'PM',
@@ -93,15 +98,17 @@ final class ActionWikiRenderer implements WikiSheetRendererInterface
                 $allowed = ['character'];
             }
 
+            $labels = self::targetLabels();
+
             return implode(' / ', array_map(
-                static fn ($kind): string => self::TARGET_LABELS[$kind] ?? (string) $kind,
+                static fn ($kind): string => $labels[$kind] ?? (string) $kind,
                 $allowed
             ));
         }
 
         // Sans condition TargetType : personnages seulement (défaut sûr
         // d'ActionTargeting) — le wiki dit la même chose que le moteur.
-        return self::TARGET_LABELS['character'];
+        return self::targetLabels()['character'];
     }
 
     /**
