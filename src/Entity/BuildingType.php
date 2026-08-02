@@ -18,11 +18,7 @@ class BuildingType extends StructureType
         return self::FAMILY_BUILDING;
     }
 
-    /**
-     * Ce qui a été BÂTI se répare : c'est la seule famille dont l'entretien
-     * est un geste du jeu. Un rocher ne se rafistole pas, un décor non plus,
-     * et une fleur encore moins — pour eux, la case reste décochée.
-     */
+    /** What was built is maintained. */
     protected function repairableByDefault(): bool
     {
         return true;
