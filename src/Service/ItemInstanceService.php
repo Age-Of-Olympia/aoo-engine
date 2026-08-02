@@ -134,6 +134,19 @@ class ItemInstanceService extends BaseService
     }
 
     /**
+     * Slots that put an exemplar out of the carried inventory: the bank and the
+     * two escrows. Quoted for inlining, so callers stay single statements.
+     */
+    private static function heldElsewhereSlots(): string
+    {
+        return "'" . implode("','", [
+            self::LOCATION_BANK,
+            self::LOCATION_MARKET,
+            self::LOCATION_EXCHANGE,
+        ]) . "'";
+    }
+
+    /**
      * Write the entity's holder from the ownership link.
      *
      * Scaffolding: both halves are written while the readers move over, and
@@ -493,19 +506,19 @@ class ItemInstanceService extends BaseService
      */
     public function listForInventory(int $playerId, bool $equipedOnly): array
     {
-        $equipedFilter = $equipedOnly ? "AND l.equiped != ''" : '';
+        $equipedFilter = $equipedOnly ? "AND e.slot != ''" : '';
 
         return $this->entityManager->getConnection()->fetchAllAssociative(
             "SELECT it.*, i.item_id, i.id AS instance_id, " . self::WEAR_CURRENT . ", i.quality,
                     i.custom_name, i.params AS instance_params, i.creator_id, i.wear_pending,
-                    l.equiped, 1 AS n
-             FROM players_items_instances l
-             JOIN item_instances i ON i.id = l.instance_id
+                    e.slot AS equiped, 1 AS n
+             FROM players e
+             JOIN item_instances i ON i.entity_id = e.id
              JOIN items it ON it.id = i.item_id
              " . self::WEAR_JOIN . "
-             WHERE l.player_id = ? AND i.destroyed = 0
-               AND l.location = '" . self::LOCATION_INVENTORY . "' {$equipedFilter}
-             ORDER BY l.equiped DESC, i.id",
+             WHERE e.holder_id = ? AND i.destroyed = 0
+               AND e.slot NOT IN (" . self::heldElsewhereSlots() . ") {$equipedFilter}
+             ORDER BY e.slot DESC, i.id",
             [$playerId]
         );
     }
@@ -526,12 +539,12 @@ class ItemInstanceService extends BaseService
             "SELECT it.*, i.item_id, i.id AS instance_id, " . self::WEAR_CURRENT . ", i.quality,
                     i.custom_name, i.params AS instance_params, i.creator_id, i.wear_pending,
                     '' AS equiped, 1 AS n
-             FROM players_items_instances l
-             JOIN item_instances i ON i.id = l.instance_id
+             FROM players e
+             JOIN item_instances i ON i.entity_id = e.id
              JOIN items it ON it.id = i.item_id
              " . self::WEAR_JOIN . "
-             WHERE l.player_id = ? AND i.destroyed = 0
-               AND l.location = '" . self::LOCATION_BANK . "'
+             WHERE e.holder_id = ? AND i.destroyed = 0
+               AND e.slot = '" . self::LOCATION_BANK . "'
              ORDER BY it.name, i.id",
             [$playerId]
         );
