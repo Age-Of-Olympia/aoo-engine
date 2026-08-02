@@ -7,12 +7,9 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * Whether a turn is due is a rule about the ENTITY, not about a session.
- *
- * It used to be reachable only through `processIfDue()`, behind the tutorial
- * check, the admin flag and `$_SESSION['playerId']`. A playable building has
- * none of those (docs/design-playable-buildings.md §3.4), so the rule answers
- * on its own.
+ * Whether a turn is due is a rule about the ENTITY, not about a session — a
+ * playable building will have no browser behind it
+ * (docs/design-playable-buildings.md §3.4).
  */
 #[Group('entities-baseline')]
 class TurnDueRuleTest extends LegacyPlayerFixtureTestCase
@@ -62,40 +59,23 @@ class TurnDueRuleTest extends LegacyPlayerFixtureTestCase
         }
     }
 
-    /** Les limbes suspendent le tour ; nulle part ne le suspend pas. */
-    public function testLimboSuspendsTheTurnButNowhereDoesNot(): void
+    /** An entity on no cell is still due: nowhere is not a waiting room. */
+    public function testAnEntityOnNoCellIsStillDue(): void
     {
-        $player = $this->createRealPlayer('GmLimbes');
+        $player = $this->createRealPlayer('GmNullePart');
         $now = 1_800_000_000;
-        $service = new TurnProcessingService();
 
         $this->link->executeStatement(
-            'UPDATE players SET nextTurnTime = ? WHERE id = ?',
+            'UPDATE players SET nextTurnTime = ?, coords_id = NULL WHERE id = ?',
             [$now - 1, (int) $player->id]
         );
 
-        $limbo = (int) \Classes\View::get_coords_id(
-            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'limbes']
-        );
-        $this->link->executeStatement(
-            'UPDATE players SET coords_id = ? WHERE id = ?',
-            [$limbo, (int) $player->id]
-        );
-
-        $this->assertFalse($service->isDue($this->freshPlayer((int) $player->id), $now), 'aux limbes, le tour attend');
-
-        $this->link->executeStatement(
-            'UPDATE players SET coords_id = NULL WHERE id = ?',
-            [(int) $player->id]
-        );
-
         $this->assertTrue(
-            $service->isDue($this->freshPlayer((int) $player->id), $now),
-            'remisée hors du plateau, une entité n\'est pas aux limbes : son tour tourne'
+            (new TurnProcessingService())->isDue($this->freshPlayer((int) $player->id), $now)
         );
     }
 
-    /** Pas encore l'heure : rien ne se passe, et rien n'est écrit. */
+    /** Before its hour: nothing runs, and nothing is written. */
     public function testProcessDueDoesNothingBeforeItsTime(): void
     {
         $player = $this->createRealPlayer('GmPatient');

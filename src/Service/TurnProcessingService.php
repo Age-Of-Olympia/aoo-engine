@@ -24,17 +24,16 @@ use Classes\View;
 class TurnProcessingService
 {
     /**
-     * Traite le tour s'il est dû, pour la session en cours.
+     * Process the turn if due, for the browsing session.
      *
-     * Ce que la session décide s'arrête ici : le tutoriel, le drapeau admin
-     * « nonewturn », l'absence de connexion. Ce qui relève du TOUR lui-même vit
-     * dans {@see isDue()} et {@see processDue()}, appelables par une entité qui
-     * n'a pas de navigateur derrière elle.
+     * Session concerns stop here — the tutorial, the admin `nonewturn` flag, an
+     * absent login. The turn itself lives in {@see isDue()} and
+     * {@see processDue()}, which no session can reach into.
      *
-     * @return object|null récap présentable :
+     * @return object|null a displayable recap:
      *   {nextTurnTime: int, rows: array<int, array{0: ?string, 1: string, 2: string}>,
      *    wearRecap: string[], showMailPrompt: bool}
-     *   — rows = [cléTooltip|null, libellé, valeur (HTML léger)]
+     *   — rows = [tooltipKey|null, label, value (light HTML)]
      */
     public function processIfDue(Player $player): ?object
     {
@@ -53,41 +52,18 @@ class TurnProcessingService
     }
 
     /**
-     * Le tour est-il dû ? La règle seule : l'heure est passée, et l'entité
-     * n'est pas aux limbes.
+     * Is this entity's turn due? Its hour has passed — nothing else.
      *
-     * Le plan se lit en base plutôt que par `getCoords()`, qui FAIT QUELQUE
-     * CHOSE : sans case, il replace l'entité sur olympia. Demander si un tour
-     * est dû ne doit rien déplacer — et une entité remisée hors du plateau y
-     * envoyait le legacy en récursion.
-     *
-     * Nulle part n'est pas les limbes : le tour d'une entité sans case tourne.
-     * C'est ce qu'il faut pour ce qui jouera un jour sans être un personnage.
+     * Asks no session, so anything that takes turns can be given one.
      */
     public function isDue(Player $entity, int $time): bool
     {
         $entity->get_data(false);
 
-        if ($entity->data->nextTurnTime > $time) {
-            return false;
-        }
-
-        return $this->planOf((int) ($entity->data->coords_id ?? 0)) !== 'limbes';
+        return $entity->data->nextTurnTime <= $time;
     }
 
-    /** The plan a cell belongs to; '' when the entity stands on none. */
-    private function planOf(int $coordsId): string
-    {
-        if ($coordsId === 0) {
-            return '';
-        }
-
-        $row = (new Db())->exe('SELECT plan FROM coords WHERE id = ?', $coordsId)->fetch_object();
-
-        return $row === null ? '' : (string) $row->plan;
-    }
-
-    /** Traite le tour s'il est dû, sans rien demander à une session. */
+    /** Process the turn if due, asking nothing of a session. */
     public function processDue(Player $entity, ?int $time = null): ?object
     {
         $time ??= time();
