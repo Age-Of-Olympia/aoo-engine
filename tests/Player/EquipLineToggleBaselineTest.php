@@ -36,7 +36,8 @@ class EquipLineToggleBaselineTest extends LegacyPlayerFixtureTestCase
 
         $player->equip($item);
         $worn = (int) $this->link->fetchOne(
-            "SELECT instance_id FROM players_items_instances WHERE player_id = ? AND equiped != ''",
+            "SELECT i.id FROM players e JOIN item_instances i ON i.entity_id = e.id
+              WHERE e.holder_id = ? AND e.slot != ''",
             [$player->id]
         );
         $this->assertGreaterThan(0, $worn, 'un exemplaire est porté après le premier équipement');
@@ -47,16 +48,16 @@ class EquipLineToggleBaselineTest extends LegacyPlayerFixtureTestCase
 
         $this->assertSame(EquipResult::Equip, $result, 'le geste équipe au lieu de basculer en déséquipement');
         $this->assertSame('', (string) $this->link->fetchOne(
-            'SELECT equiped FROM players_items_instances WHERE instance_id = ?', [$worn]
+            'SELECT e.slot FROM players e JOIN item_instances i ON i.entity_id = e.id WHERE i.id = ?', [$worn]
         ), "l'exemplaire abîmé est remplacé : déséquipé, pas détruit");
 
         $equipped = $this->link->fetchAssociative(
-            "SELECT l.instance_id, " . \App\Service\ItemInstanceService::WEAR_SELECT . "
-             FROM players_items_instances l
-             JOIN item_instances i ON i.id = l.instance_id
+            "SELECT i.id AS instance_id, " . \App\Service\ItemInstanceService::WEAR_SELECT . "
+             FROM players e
+             JOIN item_instances i ON i.entity_id = e.id
              JOIN items it ON it.id = i.item_id
              " . \App\Service\ItemInstanceService::WEAR_JOIN . "
-             WHERE l.player_id = ? AND l.equiped != ''",
+             WHERE e.holder_id = ? AND e.slot != ''",
             [$player->id]
         );
         $this->assertNotFalse($equipped, 'un exemplaire est porté après le remplacement');
@@ -71,7 +72,8 @@ class EquipLineToggleBaselineTest extends LegacyPlayerFixtureTestCase
         // (désarmement, mort, revert Ae).
         $this->assertSame(EquipResult::Unequip, $player->equip($item));
         $this->assertFalse($this->link->fetchOne(
-            "SELECT 1 FROM players_items_instances WHERE player_id = ? AND equiped != ''",
+            "SELECT 1 FROM players e JOIN item_instances i ON i.entity_id = e.id
+              WHERE e.holder_id = ? AND e.slot != ''",
             [$player->id]
         ), 'plus rien de porté après la bascule héritée');
     }

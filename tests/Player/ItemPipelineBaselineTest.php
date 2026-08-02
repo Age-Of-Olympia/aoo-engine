@@ -81,9 +81,9 @@ class ItemPipelineBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(
             'main1',
             $this->link->fetchOne(
-                'SELECT l.equiped FROM players_items_instances l
-                 JOIN item_instances i ON i.id = l.instance_id
-                 WHERE l.player_id = ? AND i.item_id = ?',
+                'SELECT e.slot FROM players e
+                 JOIN item_instances i ON i.entity_id = e.id
+                 WHERE e.holder_id = ? AND i.item_id = ?',
                 [$player->id, $item->id]
             ),
             'equipping must create an equipped instance'
@@ -134,8 +134,8 @@ class ItemPipelineBaselineTest extends LegacyPlayerFixtureTestCase
         );
         $this->assertFalse(
             $this->link->fetchOne(
-                'SELECT 1 FROM players_items_instances l JOIN item_instances i ON i.id = l.instance_id
-                 WHERE l.player_id = ? AND i.item_id = ?',
+                'SELECT 1 FROM players e JOIN item_instances i ON i.entity_id = e.id
+                 WHERE e.holder_id = ? AND i.item_id = ?',
                 [$player->id, $item->id]
             ),
             'no instance may linger after a pristine unequip'
@@ -156,11 +156,7 @@ class ItemPipelineBaselineTest extends LegacyPlayerFixtureTestCase
         $nudeCc = (int) $player->nude->cc;
         $player->equip($item);
 
-        $instanceId = (int) $this->link->fetchOne(
-            'SELECT l.instance_id FROM players_items_instances l
-             JOIN item_instances i ON i.id = l.instance_id WHERE l.player_id = ? AND i.item_id = ?',
-            [$player->id, $item->id]
-        );
+        $instanceId = $this->instanceHeldBy((int) $player->id, (int) $item->id);
         $this->setRemainingLife($instanceId, 40);
 
         $player->equip($item); // unequip

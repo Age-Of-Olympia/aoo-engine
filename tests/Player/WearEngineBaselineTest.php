@@ -74,12 +74,7 @@ class WearEngineBaselineTest extends LegacyPlayerFixtureTestCase
         $player->get_caracs();
         $player->equip($item);
 
-        $instanceId = (int) $this->link->fetchOne(
-            'SELECT l.instance_id FROM players_items_instances l
-             JOIN item_instances i ON i.id = l.instance_id
-             WHERE l.player_id = ? AND i.item_id = ?',
-            [$player->id, $item->id]
-        );
+        $instanceId = $this->instanceHeldBy((int) $player->id, (int) $item->id);
         $this->assertGreaterThan(0, $instanceId, 'equip must have created the instance');
 
         return [$player, $item, $instanceId];

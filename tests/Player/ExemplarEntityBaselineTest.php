@@ -77,11 +77,8 @@ class ExemplarEntityBaselineTest extends LegacyPlayerFixtureTestCase
         // Both halves are written while the readers move over.
         $this->assertSame(
             $player->id,
-            (int) $this->link->fetchOne(
-                'SELECT player_id FROM players_items_instances WHERE instance_id = ?',
-                [$instanceId]
-            ),
-            'et l\'ancien lien dit toujours la même chose'
+            $this->holderOfInstance($instanceId),
+            'et le porteur est bien celui-là'
         );
     }
 

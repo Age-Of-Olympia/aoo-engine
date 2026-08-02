@@ -80,11 +80,7 @@ class UniqueObjectBridgeBaselineTest extends LegacyPlayerFixtureTestCase
         $player->get_caracs();
         $player->equip($item);
 
-        $instanceId = (int) $this->link->fetchOne(
-            'SELECT l.instance_id FROM players_items_instances l
-             JOIN item_instances i ON i.id = l.instance_id WHERE l.player_id = ? AND i.item_id = ?',
-            [$player->id, $item->id]
-        );
+        $instanceId = $this->instanceHeldBy((int) $player->id, (int) $item->id);
         $this->setRemainingLife($instanceId, 60);
         $player->equip($item); // unequip — worn, stays an instance
 
@@ -103,7 +99,8 @@ class UniqueObjectBridgeBaselineTest extends LegacyPlayerFixtureTestCase
         $player->get_caracs();
         $player->equip($item);
         $instanceId = (int) $this->link->fetchOne(
-            'SELECT instance_id FROM players_items_instances WHERE player_id = ?', [$player->id]
+            'SELECT i.id FROM players e JOIN item_instances i ON i.entity_id = e.id
+              WHERE e.holder_id = ?', [$player->id]
         );
         $coordsId = (int) $this->link->fetchOne("SELECT id FROM coords WHERE x = 0 AND y = 0 AND z = 0 AND plan = 'gaia'");
 
@@ -131,7 +128,8 @@ class UniqueObjectBridgeBaselineTest extends LegacyPlayerFixtureTestCase
             'it lies on the tile rather than standing on it'
         );
         $this->assertFalse(
-            $this->link->fetchOne('SELECT 1 FROM players_items_instances WHERE instance_id = ?', [$instanceId]),
+            $this->link->fetchOne('SELECT 1 FROM players e JOIN item_instances i ON i.entity_id = e.id
+                 WHERE i.id = ? AND e.holder_id IS NOT NULL', [$instanceId]),
             'the owner link is released — the ground IS the location'
         );
 
@@ -141,7 +139,7 @@ class UniqueObjectBridgeBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(['Gladius'], $labels, 'the loot recap names the instance');
         $this->assertSame(
             $player->id,
-            (int) $this->link->fetchOne('SELECT player_id FROM players_items_instances WHERE instance_id = ?', [$instanceId]),
+            (int) $this->link->fetchOne('SELECT e.holder_id FROM players e JOIN item_instances i ON i.entity_id = e.id WHERE i.id = ?', [$instanceId]),
             'the instance is back in the walker inventory'
         );
         $this->assertSame(60, $this->remainingLifeOf($instanceId), 'identity — the wear — survived the round trip');

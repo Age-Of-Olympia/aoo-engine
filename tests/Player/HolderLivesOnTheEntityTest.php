@@ -11,7 +11,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('items-baseline')]
 class HolderLivesOnTheEntityTest extends LegacyPlayerFixtureTestCase
 {
-    /** @return array{0:int,1:int} instance id, entity id */
+    /** @return array{0:int,1:int,2:int} instance id, entity id, owner id */
     private function ownedGladius(string $name): array
     {
         $player = $this->createRealPlayer($name);
@@ -25,7 +25,7 @@ class HolderLivesOnTheEntityTest extends LegacyPlayerFixtureTestCase
         );
         $this->trackEntityId($entityId);
 
-        return [$instanceId, $entityId];
+        return [$instanceId, $entityId, (int) $player->id];
     }
 
     /** @return array{holder_id: ?int, slot: string} */
@@ -44,12 +44,7 @@ class HolderLivesOnTheEntityTest extends LegacyPlayerFixtureTestCase
 
     public function testCreatingAnInstanceRecordsItsHolderOnTheEntity(): void
     {
-        [$instanceId, $entityId] = $this->ownedGladius('GmPorteurA');
-
-        $owner = (int) $this->link->fetchOne(
-            'SELECT player_id FROM players_items_instances WHERE instance_id = ?',
-            [$instanceId]
-        );
+        [, $entityId, $owner] = $this->ownedGladius('GmPorteurA');
 
         $this->assertSame(
             ['holder_id' => $owner, 'slot' => EntityLocationService::SLOT_CARRIED],
@@ -60,12 +55,8 @@ class HolderLivesOnTheEntityTest extends LegacyPlayerFixtureTestCase
 
     public function testTheBankIsASlotLikeAnyOther(): void
     {
-        [$instanceId, $entityId] = $this->ownedGladius('GmPorteurB');
+        [$instanceId, $entityId, $owner] = $this->ownedGladius('GmPorteurB');
         $service = new ItemInstanceService();
-        $owner = (int) $this->link->fetchOne(
-            'SELECT player_id FROM players_items_instances WHERE instance_id = ?',
-            [$instanceId]
-        );
 
         $service->storeInBank($instanceId, $owner);
         $this->assertSame(
@@ -84,7 +75,7 @@ class HolderLivesOnTheEntityTest extends LegacyPlayerFixtureTestCase
 
     public function testDroppingClearsTheHolderAndPuttingItBackRestoresIt(): void
     {
-        [$instanceId, $entityId] = $this->ownedGladius('GmPorteurC');
+        [$instanceId, $entityId, ] = $this->ownedGladius('GmPorteurC');
         $service = new ItemInstanceService();
 
         $coordsId = (int) \Classes\View::get_coords_id(
@@ -106,22 +97,21 @@ class HolderLivesOnTheEntityTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /** Nothing anywhere may disagree — the invariant the collapse rests on. */
-    public function testNoExemplarDisagreesWithItsLink(): void
+    /** Nothing writes the link any more: the entity is the only record. */
+    public function testTheLinkTableIsNoLongerWritten(): void
     {
-        $disagreeing = $this->link->fetchAllAssociative(
-            "SELECT p.id, p.holder_id, p.slot, l.player_id, l.equiped, l.location
-               FROM players p
-               JOIN item_instances ii ON ii.entity_id = p.id
-               JOIN players_items_instances l ON l.instance_id = ii.id
-              WHERE p.holder_id <> l.player_id
-                 OR p.slot <> CASE
-                                  WHEN l.equiped <> '' THEN l.equiped
-                                  WHEN l.location <> 'inventory' THEN l.location
-                                  ELSE ''
-                              END"
-        );
+        [, $entityId, $owner] = $this->ownedGladius('GmPorteurD');
 
-        $this->assertSame([], $disagreeing, json_encode($disagreeing));
+        $this->assertSame(
+            0,
+            (int) $this->link->fetchOne(
+                'SELECT COUNT(*) FROM players_items_instances l
+                   JOIN item_instances i ON i.id = l.instance_id
+                  WHERE i.entity_id = ?',
+                [$entityId]
+            ),
+            'creating an exemplar leaves no row in the old table'
+        );
+        $this->assertSame($owner, $this->locationOf($entityId)['holder_id']);
     }
 }

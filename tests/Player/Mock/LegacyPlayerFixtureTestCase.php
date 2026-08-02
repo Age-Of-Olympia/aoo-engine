@@ -67,30 +67,19 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         // Reverse creation order: a building placed after its owner
         // references it via buildings.owner_id and must go first.
         foreach (array_reverse($this->createdPlayerIds) as $id) {
-            // Item instances: links first (FK), then the orphaned rows.
-            $instanceIds = $this->link->fetchFirstColumn(
-                'SELECT instance_id FROM players_items_instances WHERE player_id = ?',
+            /* What this fixture holds, read on the entity: `holder_id` is a
+             * real foreign key, so an exemplar left behind blocks the delete. */
+            $entityIds = $this->link->fetchFirstColumn(
+                "SELECT id FROM players WHERE holder_id = ? AND player_type = 'item'",
                 [$id]
             );
-            if ($instanceIds !== []) {
-                $in = implode(',', array_map('intval', $instanceIds));
-                // Each exemplar owns an entity row; read the ids before the
-                // exemplars go, then drop them after — the FK is RESTRICT.
-                $entityIds = $this->link->fetchFirstColumn(
-                    "SELECT entity_id FROM item_instances WHERE id IN ({$in}) AND entity_id IS NOT NULL"
-                );
-                $this->link->executeStatement("DELETE FROM players_items_instances WHERE instance_id IN ({$in})");
-                $this->link->executeStatement("DELETE FROM item_instances WHERE id IN ({$in})");
-                if ($entityIds !== []) {
-                    $entityIn = implode(',', array_map('intval', $entityIds));
-                    // Wear is a players_bonus row now: it holds the entity down.
-                    $this->link->executeStatement(
-                        "DELETE FROM players_bonus WHERE player_id IN ({$entityIn})"
-                    );
-                    $this->link->executeStatement(
-                        "DELETE FROM players WHERE id IN ({$entityIn}) AND player_type = 'item'"
-                    );
-                }
+            if ($entityIds !== []) {
+                $entityIn = implode(',', array_map('intval', $entityIds));
+                $this->link->executeStatement("DELETE FROM item_instances WHERE entity_id IN ({$entityIn})");
+                // Wear is a players_bonus row: it holds the entity down.
+                $this->link->executeStatement("DELETE FROM players_bonus WHERE player_id IN ({$entityIn})");
+                $this->link->executeStatement("DELETE FROM entity_cells WHERE player_id IN ({$entityIn})");
+                $this->link->executeStatement("DELETE FROM players WHERE id IN ({$entityIn})");
             }
             /* Plus de `OR owner_id` : la propriété vit sur l'entité, et sa clé
              * étrangère est ON DELETE SET NULL — ce qu'un disparu possédait
@@ -305,6 +294,42 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         } catch (\Throwable $e) {
             $this->markTestSkipped('buildings table unavailable (run migrations): ' . $e->getMessage());
         }
+    }
+
+    /** The exemplar a player holds of a catalogue item, 0 when none. */
+    protected function instanceHeldBy(int $playerId, int $itemId, bool $equippedOnly = false): int
+    {
+        $slotFilter = $equippedOnly ? "AND e.slot != ''" : '';
+
+        return (int) $this->link->fetchOne(
+            "SELECT i.id FROM players e
+               JOIN item_instances i ON i.entity_id = e.id
+              WHERE e.holder_id = ? AND i.item_id = ? {$slotFilter}
+              ORDER BY i.id LIMIT 1",
+            [$playerId, $itemId]
+        );
+    }
+
+    /** The slot an exemplar sits in: '' carried, an emplacement, bank, escrow. */
+    protected function slotOfInstance(int $instanceId): string
+    {
+        return (string) $this->link->fetchOne(
+            'SELECT e.slot FROM players e
+               JOIN item_instances i ON i.entity_id = e.id
+              WHERE i.id = ?',
+            [$instanceId]
+        );
+    }
+
+    /** Who holds an exemplar, 0 when nobody does. */
+    protected function holderOfInstance(int $instanceId): int
+    {
+        return (int) $this->link->fetchOne(
+            'SELECT e.holder_id FROM players e
+               JOIN item_instances i ON i.entity_id = e.id
+              WHERE i.id = ?',
+            [$instanceId]
+        );
     }
 
     /** Objet du catalogue, données chargées — skip si non seedé. */

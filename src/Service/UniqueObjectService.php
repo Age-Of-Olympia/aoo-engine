@@ -80,9 +80,6 @@ class UniqueObjectService extends BaseService
             );
 
             (new \App\Service\Map\EntityLocationService($conn))->installOnCell($id, (int) $coordsId);
-
-            // The exemplar's location is now the map: release the owner link.
-            $conn->executeStatement('DELETE FROM players_items_instances WHERE instance_id = ?', [$instanceId]);
         });
 
         View::refresh_players_svg($goCoords);
@@ -133,12 +130,7 @@ class UniqueObjectService extends BaseService
             [$uniqueId]
         );
 
-        $conn->transactional(function ($conn) use ($uniqueId, $takerId, $instanceId): void {
-            $conn->executeStatement(
-                'INSERT INTO players_items_instances (player_id, instance_id) VALUES (?, ?)',
-                [$takerId, (int) $instanceId]
-            );
-
+        $conn->transactional(function ($conn) use ($uniqueId, $takerId): void {
             (new \App\Service\Map\EntityLocationService($conn))->putInside($uniqueId, $takerId);
         });
 

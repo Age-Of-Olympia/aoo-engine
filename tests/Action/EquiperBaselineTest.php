@@ -57,8 +57,8 @@ class EquiperBaselineTest extends LegacyPlayerFixtureTestCase
             "SELECT 1 FROM players_items WHERE player_id = ? AND item_id = ? AND equiped != ''",
             [$bearer->id, $gladius->id]
         ) !== false || $this->link->fetchOne(
-            "SELECT 1 FROM players_items_instances l JOIN item_instances i ON i.id = l.instance_id
-             WHERE l.player_id = ? AND i.item_id = ? AND l.equiped != ''",
+            "SELECT 1 FROM players e JOIN item_instances i ON i.entity_id = e.id
+             WHERE e.holder_id = ? AND i.item_id = ? AND e.slot != ''",
             [$bearer->id, $gladius->id]
         ) !== false);
         $this->assertTrue($worn(), 'the gladius must be worn');

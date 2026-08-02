@@ -64,7 +64,8 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(
             ItemInstanceService::LOCATION_MARKET,
             (string) $this->link->fetchOne(
-                'SELECT location FROM players_items_instances WHERE instance_id = ?',
+                "SELECT IF(e.slot IN ('bank','market','exchange'), e.slot, 'inventory')
+               FROM players e JOIN item_instances i ON i.entity_id = e.id WHERE i.id = ?",
                 [$instanceId]
             )
         );
@@ -102,7 +103,9 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
         $service->deliverEscrow($instanceId, $seller->id, $buyer->id, ItemInstanceService::LOCATION_MARKET);
 
         $link = $this->link->fetchAssociative(
-            'SELECT player_id, location FROM players_items_instances WHERE instance_id = ?',
+            "SELECT e.holder_id AS player_id,
+                     IF(e.slot IN ('bank','market','exchange'), e.slot, 'inventory') AS location
+               FROM players e JOIN item_instances i ON i.entity_id = e.id WHERE i.id = ?",
             [$instanceId]
         );
         $this->assertSame($buyer->id, (int) $link['player_id'], 'l\'acheteur en est propriétaire');

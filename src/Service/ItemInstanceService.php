@@ -96,8 +96,13 @@ class ItemInstanceService extends BaseService
      * an exemplar is never visible without its entity. Nothing reads the row
      * yet — it is the anchor the location, and then the life, will move onto.
      */
-    private static function attachEntity($conn, int $instanceId, int $itemId, string $customName): void
-    {
+    private static function attachEntity(
+        $conn,
+        int $instanceId,
+        int $itemId,
+        string $customName,
+        ?int $holderId = null
+    ): void {
         $catalogName = (string) $conn->fetchOne('SELECT name FROM items WHERE id = ?', [$itemId]);
 
         $entityId = (int) $conn->fetchOne(
@@ -113,13 +118,14 @@ class ItemInstanceService extends BaseService
             "INSERT INTO players
                 (id, player_type, display_id, name, race, avatar, portrait,
                  coords_id, holder_id, slot, nextTurnTime, registerTime, text)
-             VALUES (?, ?, ?, ?, ?, '', '', NULL, NULL, '', 0, ?, '')",
+             VALUES (?, ?, ?, ?, ?, '', '', NULL, ?, '', 0, ?, '')",
             [
                 $entityId,
                 self::ENTITY_TYPE,
                 $displayId,
                 $customName !== '' ? $customName : ucfirst($catalogName),
                 $catalogName,
+                $holderId,
                 time(),
             ]
         );
@@ -128,9 +134,6 @@ class ItemInstanceService extends BaseService
             'UPDATE item_instances SET entity_id = ? WHERE id = ?',
             [$entityId, $instanceId]
         );
-
-        // Covers promote() and create(), which both link before attaching.
-        self::syncHolder($conn, $instanceId);
     }
 
     /**
@@ -159,41 +162,21 @@ class ItemInstanceService extends BaseService
         ]) . "'";
     }
 
-    /**
-     * Write the entity's holder from the ownership link.
-     *
-     * Scaffolding: both halves are written while the readers move over, and
-     * this goes when players_items_instances does.
-     */
-    public static function syncHolder($conn, int $instanceId): void
+    /** The slot a location name stands for; carried has no name of its own. */
+    private static function slotFor(string $location): string
     {
-        $entityId = $conn->fetchOne('SELECT entity_id FROM item_instances WHERE id = ?', [$instanceId]);
+        return $location === self::LOCATION_INVENTORY
+            ? \App\Service\Map\EntityLocationService::SLOT_CARRIED
+            : $location;
+    }
 
-        if ($entityId === false || $entityId === null) {
-            return;
-        }
-
-        $link = $conn->fetchAssociative(
-            'SELECT player_id, equiped, location FROM players_items_instances WHERE instance_id = ?',
-            [$instanceId]
-        );
-
-        if ($link === false) {
-            return;
-        }
-
-        $equiped = (string) $link['equiped'];
-        $location = (string) $link['location'];
-
-        $slot = match (true) {
-            $equiped !== '' => $equiped,
-            $location !== self::LOCATION_INVENTORY => $location,
-            default => \App\Service\Map\EntityLocationService::SLOT_CARRIED,
-        };
-
+    /** Move an exemplar between slots of the same holder. */
+    private static function writeSlot($conn, int $instanceId, string $slot): void
+    {
         $conn->executeStatement(
-            'UPDATE players SET coords_id = NULL, holder_id = ?, slot = ? WHERE id = ?',
-            [(int) $link['player_id'], $slot, (int) $entityId]
+            'UPDATE players e JOIN item_instances i ON i.entity_id = e.id
+                SET e.slot = ? WHERE i.id = ?',
+            [$slot, $instanceId]
         );
     }
 
@@ -293,12 +276,7 @@ class ItemInstanceService extends BaseService
             );
             $instanceId = (int) $conn->lastInsertId();
 
-            $conn->executeStatement(
-                'INSERT INTO players_items_instances (player_id, instance_id) VALUES (?, ?)',
-                [$playerId, $instanceId]
-            );
-
-            self::attachEntity($conn, $instanceId, $itemId, '');
+            self::attachEntity($conn, $instanceId, $itemId, '', $playerId);
 
             return $instanceId;
         });
@@ -319,12 +297,7 @@ class ItemInstanceService extends BaseService
             );
             $instanceId = (int) $conn->lastInsertId();
 
-            $conn->executeStatement(
-                'INSERT INTO players_items_instances (player_id, instance_id) VALUES (?, ?)',
-                [$playerId, $instanceId]
-            );
-
-            self::attachEntity($conn, $instanceId, $itemId, $customName);
+            self::attachEntity($conn, $instanceId, $itemId, $customName, $playerId);
 
             return $instanceId;
         });
@@ -380,7 +353,6 @@ class ItemInstanceService extends BaseService
                  ON DUPLICATE KEY UPDATE n = n + 1',
                 [(int) $row['player_id'], (int) $row['item_id']]
             );
-            $conn->executeStatement('DELETE FROM players_items_instances WHERE instance_id = ?', [$instanceId]);
             $conn->executeStatement('DELETE FROM item_instances WHERE id = ?', [$instanceId]);
             self::detachEntity($conn, isset($row['entity_id']) ? (int) $row['entity_id'] : null);
 
@@ -438,11 +410,7 @@ class ItemInstanceService extends BaseService
             }
         }
 
-        $conn->executeStatement(
-            'UPDATE players_items_instances SET equiped = ? WHERE instance_id = ?',
-            [$emplacement, $instanceId]
-        );
-        self::syncHolder($conn, $instanceId);
+        self::writeSlot($conn, $instanceId, $emplacement);
 
         return $instanceId;
     }
@@ -476,11 +444,7 @@ class ItemInstanceService extends BaseService
     public function unequipInstance(int $instanceId): bool
     {
         $conn = $this->entityManager->getConnection();
-        $conn->executeStatement(
-            "UPDATE players_items_instances SET equiped = '' WHERE instance_id = ?",
-            [$instanceId]
-        );
-        self::syncHolder($conn, $instanceId);
+        self::writeSlot($conn, $instanceId, \App\Service\Map\EntityLocationService::SLOT_CARRIED);
 
         return $this->demote($instanceId);
     }
@@ -653,16 +617,15 @@ class ItemInstanceService extends BaseService
             }
 
             $affected = $conn->executeStatement(
-                'UPDATE players_items_instances SET player_id = ?, location = ?
-                 WHERE instance_id = ? AND player_id = ? AND location = ?',
-                [$toPlayerId, self::LOCATION_BANK, $instanceId, $fromPlayerId, $from]
+                'UPDATE players e JOIN item_instances i ON i.entity_id = e.id
+                    SET e.holder_id = ?, e.slot = ?
+                  WHERE i.id = ? AND e.holder_id = ? AND e.slot = ?',
+                [$toPlayerId, self::LOCATION_BANK, $instanceId, $fromPlayerId, self::slotFor($from)]
             );
 
             if ($affected === 0) {
                 throw new \InvalidArgumentException("Exemplaire #{$instanceId} emporté entre-temps.");
             }
-
-            self::syncHolder($conn, $instanceId);
         });
     }
 
@@ -805,16 +768,15 @@ class ItemInstanceService extends BaseService
             }
 
             $affected = $conn->executeStatement(
-                'UPDATE players_items_instances SET location = ?
-                 WHERE instance_id = ? AND player_id = ? AND location = ?',
-                [$to, $instanceId, $playerId, $from]
+                'UPDATE players e JOIN item_instances i ON i.entity_id = e.id
+                    SET e.slot = ?
+                  WHERE i.id = ? AND e.holder_id = ? AND e.slot = ?',
+                [self::slotFor($to), $instanceId, $playerId, self::slotFor($from)]
             );
 
             if ($affected === 0) {
                 throw new \InvalidArgumentException("Exemplaire #{$instanceId} déplacé entre-temps.");
             }
-
-            self::syncHolder($conn, $instanceId);
         });
     }
 
@@ -866,8 +828,6 @@ class ItemInstanceService extends BaseService
             if ((string) $row['location'] !== self::LOCATION_INVENTORY) {
                 throw new \InvalidArgumentException("Instance #{$instanceId} est en banque — la retirer d'abord.");
             }
-
-            $conn->executeStatement('DELETE FROM players_items_instances WHERE instance_id = ?', [$instanceId]);
 
             (new \App\Service\Map\EntityLocationService($conn))
                 ->dropOnCell(self::ensureEntity($conn, $instanceId), $coordsId);
@@ -955,11 +915,6 @@ class ItemInstanceService extends BaseService
                 if ($affected === 0) {
                     return;
                 }
-                $conn->executeStatement(
-                    'INSERT INTO players_items_instances (player_id, instance_id) VALUES (?, ?)',
-                    [$playerId, (int) $row['instance_id']]
-                );
-                self::syncHolder($conn, (int) $row['instance_id']);
                 $taken = true;
             });
             if ($taken) {

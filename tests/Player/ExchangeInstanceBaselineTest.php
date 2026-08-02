@@ -77,7 +77,8 @@ class ExchangeInstanceBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(
             ItemInstanceService::LOCATION_EXCHANGE,
             (string) $this->link->fetchOne(
-                'SELECT location FROM players_items_instances WHERE instance_id = ?',
+                "SELECT IF(e.slot IN ('bank','market','exchange'), e.slot, 'inventory')
+               FROM players e JOIN item_instances i ON i.entity_id = e.id WHERE i.id = ?",
                 [$instanceId]
             )
         );
@@ -107,7 +108,9 @@ class ExchangeInstanceBaselineTest extends LegacyPlayerFixtureTestCase
         $exchange->purge_items();
 
         $link = $this->link->fetchAssociative(
-            'SELECT player_id, location FROM players_items_instances WHERE instance_id = ?',
+            "SELECT e.holder_id AS player_id,
+                     IF(e.slot IN ('bank','market','exchange'), e.slot, 'inventory') AS location
+               FROM players e JOIN item_instances i ON i.entity_id = e.id WHERE i.id = ?",
             [$instanceId]
         );
         $this->assertSame($target->id, (int) $link['player_id'], 'le destinataire en est propriétaire');
