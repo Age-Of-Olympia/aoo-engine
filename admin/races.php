@@ -191,7 +191,7 @@ function race_render_list(array $races, TypeEditorFace $face): string
         // « Posés » : entités de ce type actuellement dans le monde.
         $placedByType = [];
         $res = (new \Classes\Db())->exe(
-            "SELECT race, COUNT(*) AS n FROM players WHERE player_type IN ('building', 'unique') GROUP BY race"
+            "SELECT race, COUNT(*) AS n FROM players WHERE player_type IN ('building') GROUP BY race"
         );
         while ($row = $res->fetch_object()) {
             $placedByType[(string) $row->race] = (int) $row->n;

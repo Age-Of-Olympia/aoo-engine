@@ -36,7 +36,7 @@ enum EntityCategory: string
              * no dodge, no malus, and destruction shelves it rather than
              * sending it to the enfers. Whether it can be hit at all follows
              * from standing on a cell, not from the discriminator. */
-            'building', 'unique', 'scenery', 'resource', 'plant', 'item' => self::Structure,
+            'building', 'scenery', 'resource', 'plant', 'item' => self::Structure,
             'real', 'tutorial', 'npc', null => self::Character,
             default => throw new \ValueError("player_type inconnu : « {$playerType} » — étendre EntityCategory::fromPlayerType."),
         };

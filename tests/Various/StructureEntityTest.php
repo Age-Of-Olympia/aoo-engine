@@ -7,7 +7,7 @@ use App\Entity\BuildingDetails;
 use App\Entity\Character;
 use App\Entity\GameEntity;
 use App\Entity\Structure;
-use App\Entity\UniqueObject;
+use App\Entity\Exemplar;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -31,7 +31,7 @@ class StructureEntityTest extends TestCase
 {
     public function testHierarchyShape(): void
     {
-        foreach ([Building::class, UniqueObject::class] as $class) {
+        foreach ([Building::class, Exemplar::class] as $class) {
             $parents = class_parents($class);
             $this->assertContains(Structure::class, $parents, "$class must be a Structure");
             $this->assertContains(GameEntity::class, $parents, "$class must be a GameEntity");
@@ -41,7 +41,7 @@ class StructureEntityTest extends TestCase
 
     public function testTypeProbesAllAnswerFalse(): void
     {
-        foreach ([new Building(), new UniqueObject()] as $structure) {
+        foreach ([new Building(), new Exemplar()] as $structure) {
             $this->assertFalse($structure->isRealPlayer());
             $this->assertFalse($structure->isTutorialPlayer());
             $this->assertFalse($structure->isNPC());
@@ -56,7 +56,8 @@ class StructureEntityTest extends TestCase
 
         $map = $attrs[0]->newInstance()->value;
         $this->assertSame(Building::class, $map['building'] ?? null);
-        $this->assertSame(UniqueObject::class, $map['unique'] ?? null);
+        $this->assertSame(Exemplar::class, $map['item'] ?? null);
+        $this->assertArrayNotHasKey('unique', $map, 'la famille unique est retirée');
     }
 
     public function testBuildingRowHydratesAsBuildingAndStaysOutOfCharacterLookups(): void

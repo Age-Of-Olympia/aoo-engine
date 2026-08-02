@@ -924,7 +924,7 @@ class ViewService {
             FROM players p
             JOIN coords c ON c.id = p.coords_id
             WHERE c.plan = '" . $plan . "'
-            AND p.player_type IN ('building', 'unique')
+            AND p.player_type = 'building'
             AND c.x BETWEEN " . $minX . " AND " . $maxX . "
             AND c.y BETWEEN " . $minY . " AND " . $maxY . "
             $zCondition";

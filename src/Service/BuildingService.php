@@ -747,7 +747,7 @@ class BuildingService extends BaseService
         $conn = $this->entityManager->getConnection();
 
         $isStructure = $conn->fetchOne(
-            "SELECT id FROM players WHERE id = ? AND player_type IN ('building', 'unique')",
+            "SELECT id FROM players WHERE id = ? AND player_type = 'building'",
             [$playerId]
         );
         if ($isStructure === false) {

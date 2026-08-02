@@ -206,7 +206,7 @@ class PlanAdminService
             'SELECT
                 COALESCE(SUM(p.player_type = "real"), 0) AS players,
                 COALESCE(SUM(p.player_type = "npc"), 0) AS npcs,
-                COALESCE(SUM(p.player_type IN ("building", "unique", "scenery", "resource")), 0) AS structures
+                COALESCE(SUM(p.player_type IN ("building", "scenery", "resource")), 0) AS structures
              FROM players p JOIN coords c ON c.id = p.coords_id
              WHERE c.plan = ?',
             array($plan)

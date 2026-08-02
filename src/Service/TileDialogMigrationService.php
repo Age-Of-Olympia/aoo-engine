@@ -326,7 +326,7 @@ class TileDialogMigrationService
     private function occupantOf(int $coordsId): ?array
     {
         $res = $this->db->exe(
-            "SELECT id, race FROM players WHERE coords_id = ? AND player_type IN ('building', 'unique') LIMIT 1",
+            "SELECT id, race FROM players WHERE coords_id = ? AND player_type = 'building' LIMIT 1",
             [$coordsId]
         );
 

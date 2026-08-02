@@ -127,8 +127,19 @@ relation gives, as consequences rather than features:
 `players_items_instances` and `map_items_instances` are two cases of this one
 relation and retire into it.
 
-`unique_objects` does **not** retire, and an earlier draft of this note was
-wrong to say so. It is the 1:1 satellite of the `unique` family — crystals,
+`unique_objects` **retires after all** — this note said twice that it would not,
+and both drafts were wrong for the same reason: the family was described by what
+it was *for*, never counted. It holds zero rows on the development database and
+zero on the experimental copy (13 549 buildings, 379 characters), and no entity
+carries the `unique` discriminator anywhere. What it was meant to carry —
+crystals, gates, artifacts — an installed exemplar now carries, keeping its
+identity through being placed and picked up.
+
+The discriminator and its ten branches are gone. The table itself waits for the
+same post-deployment pass as `players_items_instances`: a removal lands after
+the code, never before.
+
+For the record, what the wrong version said: It is the 1:1 satellite of the `unique` family — crystals,
 gates, artifacts — carrying `interaction` (free JSON: dialog id, trigger, loot
 table). Its `item_instance_id` is **nullable**: a unique object that wraps
 nothing is a legitimate map object with no item behind it. Only the rows that

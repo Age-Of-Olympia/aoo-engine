@@ -91,7 +91,7 @@ EOT);
     private function repairAvatars(): string
     {
         $db = new \Classes\Db();
-        $res = $db->exe("SELECT id, race, avatar FROM players WHERE player_type IN ('building', 'unique')");
+        $res = $db->exe("SELECT id, race, avatar FROM players WHERE player_type = 'building'");
 
         $healed = 0;
         $bare = 0;
