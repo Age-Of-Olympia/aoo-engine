@@ -141,18 +141,9 @@ if(!empty($_POST['race'])){
         $hashedMail = password_hash($plainMail, PASSWORD_DEFAULT);
 
 
-        $sql = '
-        UPDATE
-        players
-        SET
-        psw = ?,
-        mail = ?,
-        plain_mail = ?
-        WHERE
-        id = ?
-        ';
-
-        $db->exe($sql, array($hashedPsw, $hashedMail, $plainMail, $player->id));
+        $accounts = new \App\Service\AccountService();
+        $accounts->setPassword((int) $player->id, $hashedPsw);
+        $accounts->setMail((int) $player->id, $hashedMail, $plainMail);
 
         // Enregistre le contact de campagnes mail (non bloquant).
         (new MailContactSyncService())->onRegister(

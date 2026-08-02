@@ -25,17 +25,16 @@ if(!empty($_POST['confirmChange'])){
     // Hash the new email
     $mail = password_hash($_POST['new'], PASSWORD_DEFAULT);
 
-    $db = new Db();
+    $accounts = new \App\Service\AccountService();
+
+    $accounts->setMail((int) $player->id, $mail, $_POST['new']);
 
     // Give XP bonus if first time setting email
     if(empty($player->data->plain_mail) && !$player->data->email_bonus) {
         $player->put_xp(20);
-        $sql = 'UPDATE players SET mail = ?, plain_mail = ?, email_bonus = TRUE WHERE id = ?';
-        $db->exe($sql, array($mail, $_POST['new'], $player->id));
+        $accounts->grantEmailBonus((int) $player->id);
         echo '<div id="data">Mail changé avec succès!<br/>Bonus de 20 XP reçu pour avoir renseigné votre email!</div>';
     } else {
-        $sql = 'UPDATE players SET mail = ?, plain_mail = ? WHERE id = ?';
-        $db->exe($sql, array($mail, $_POST['new'], $player->id));
         echo '<div id="data">Mail changé avec succès!</div>';
     }
     $player->refresh_data();

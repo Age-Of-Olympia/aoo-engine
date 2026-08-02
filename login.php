@@ -68,23 +68,16 @@ $row = $result->fetch_assoc();
 
 
 // wrong password
-if( !password_verify($_POST['psw'], $row['psw'])){
+$accounts = new \App\Service\AccountService();
+$storedPassword = $accounts->passwordHashOf((int) $row['id']);
+
+if( $storedPassword === null || !password_verify($_POST['psw'], $storedPassword)){
     $firewall->RecordFailedAttempt();
     exit('Mauvais mot de passe.');
 }
 
 
-// last login time
-$sql = '
-UPDATE
-players
-SET
-lastLoginTime = '. time() .'
-WHERE
-id = ?
-';
-
-$db->exe($sql, $row['id']);
+$accounts->touchLastLogin((int) $row['id']);
 
 
 // Regenerate the session id on privilege change (anonymous -> authenticated)

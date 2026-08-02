@@ -167,7 +167,7 @@ Sketched so the first step is obvious, not so it is scheduled:
 
 | # | step | witness |
 |---|---|---|
-| L0 | account (`psw`, `mail`, `plain_mail`, `email_bonus`, `last_login_time`) leaves `Character` for its own table | suite green, zero behaviour change — and a security win on its own |
+| **L0** | ✅ **done** — credentials moved to `accounts` (player_id), reached through `AccountService`; every write still mirrors the `players` column, and `Player::get_row()` joins so the legacy read surface is untouched. Columns drop in a post-deployment pass, taking the mirror with them | `AccountServiceTest`, plus the whole suite unchanged |
 | **L1** | ✅ **done** — `TakesTurnsInterface` / `ProgressesInterface` introduced, implemented by `Character` only | `EntityCapabilitiesTest`: the contracts are read and written without naming `Character`, and a `Building` holds neither *yet* |
 | L2 | satellites for turn and progression, populated from the existing columns, readers switched | the usual post-deploy column drop |
 | L3 | turn computation freed of session/tutorial gating, callable for any entity that takes turns | a building can be given a DLA in a test |

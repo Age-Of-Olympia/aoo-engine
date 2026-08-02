@@ -158,7 +158,29 @@ class Player implements ActorInterface {
 
         $db = new Db();
 
-        $res = $db->get_single('players', $this->id);
+        /* Credentials live in `accounts`; the join keeps `->row` (and the JSON
+         * cache built from it) carrying the same fields as before.
+         *
+         * NULLIF, not plain COALESCE: the backfill gives every character a row,
+         * so an untouched account holds '' — which would win over a `players`
+         * column a path not yet routed through AccountService has just written.
+         * Empty means "nothing here", and the column answers. */
+        $sql = '
+        SELECT
+        p.*,
+        COALESCE(NULLIF(a.psw, \'\'), p.psw) AS psw,
+        COALESCE(NULLIF(a.mail, \'\'), p.mail) AS mail,
+        COALESCE(NULLIF(a.plain_mail, \'\'), p.plain_mail) AS plain_mail,
+        COALESCE(a.email_bonus, p.email_bonus) AS email_bonus,
+        COALESCE(NULLIF(a.last_login_time, 0), p.lastLoginTime) AS lastLoginTime
+        FROM
+        players p
+        LEFT JOIN accounts a ON a.player_id = p.id
+        WHERE
+        p.id = ?
+        ';
+
+        $res = $db->exe($sql, $this->id);
 
 
         if(!$res->num_rows){

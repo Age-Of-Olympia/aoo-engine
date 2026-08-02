@@ -17,7 +17,9 @@ if( !empty( $_POST['confirmChange'] ) ){
 
     if( empty( $_POST['old'] ) ) exit('Entrez le mot de passe actuel.');
 
-    if( !password_verify($_POST['old'], $player->row->psw) ) exit('Le mot de passe actuel n\'est pas le bon.');
+    $currentHash = (new \App\Service\AccountService())->passwordHashOf((int) $player->id);
+
+    if( $currentHash === null || !password_verify($_POST['old'], $currentHash) ) exit('Le mot de passe actuel n\'est pas le bon.');
 
     if( empty( $_POST['new'] ) ) exit('Entrez le nouveau mot de passe.');
 
@@ -27,18 +29,7 @@ if( !empty( $_POST['confirmChange'] ) ){
 
     $hashedPsw = password_hash( $_POST['new'], PASSWORD_DEFAULT );
 
-    $sql = '
-    UPDATE
-    players
-    SET
-    psw = ?
-    WHERE
-    id = ?
-    ';
-
-    $db = new Db();
-
-    $db->exe($sql, array($hashedPsw, $player->id));
+    (new \App\Service\AccountService())->setPassword((int) $player->id, $hashedPsw);
 
     echo '
     <div id="account-change-psw">

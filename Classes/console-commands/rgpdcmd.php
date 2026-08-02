@@ -108,12 +108,16 @@ EOT);
 
 
         $data = $player->data;
-        // Anonymisation des données    
-        $sql = 'UPDATE players SET name = ? , mail = ? , plain_mail = ?, text = ?, story = ?, psw = ?  WHERE id = ?';
+
+        // What identifies the ACCOUNT goes through its own service, so the
+        // erasure reaches `accounts` and not just the mirrored columns.
+        (new \App\Service\AccountService())->forget((int) $player->id, $deleted_text);
+
+        $sql = 'UPDATE players SET name = ? , text = ?, story = ?  WHERE id = ?';
 
         $db = new Db();
 
-        $db->exe($sql, array($deleted_text,'','',$deleted_text ,$deleted_text ,$deleted_text ,$player->id));
+        $db->exe($sql, array($deleted_text, $deleted_text, $deleted_text, $player->id));
 
         $player->refresh_data();
 
