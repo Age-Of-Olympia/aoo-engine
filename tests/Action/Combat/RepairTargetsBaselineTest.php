@@ -12,12 +12,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * Ce que « réparer » atteint, famille par famille.
- *
- * L'action visait la BRANCHE `structure`, qui tient aussi les filons et les
- * plantes : un arbre entamé se réparait au marteau. Un décor, lui, se répare —
- * une statue ébréchée se retaille. La visée nomme donc les familles, et ces
- * cas disent lesquelles.
+ * What `reparer` reaches, family by family: scenery mends, what grows does not.
  */
 #[Group('entities-baseline')]
 class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
@@ -51,10 +46,9 @@ class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
     }
 
     /**
-     * Aucun type de plante ne dépasse 1 PV : une plante entamée est déjà
-     * BRISÉE, si bien que l'exécution la refuse à ce titre avant d'interroger
-     * son type. La démonstration porte donc sur le bouton — qui est de toute
-     * façon ce que le joueur voit.
+     * No plant type exceeds 1 PV, so a damaged plant is already broken and gets
+     * refused as such before its type is consulted. Assert on the button, which
+     * is what a player sees anyway.
      */
     public function testAPlantIsNotRepaired(): void
     {
@@ -73,14 +67,7 @@ class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /**
-     * L'enveloppe reste LARGE, et c'est le type qui tranche.
-     *
-     * La visée a nommé les familles réparables un temps ; une liste gravée dans
-     * la donnée d'une action ne peut pas être contredite par un type, alors que
-     * la promesse est qu'un type puisse contredire sa famille dans les deux
-     * sens. Elle dit donc seulement ce que l'action ATTEINT.
-     */
+    /** The envelope only says what the action REACHES; the type decides the rest. */
     public function testTheEnvelopeStaysWideAndTheTypeDecides(): void
     {
         $targeting = new ActionTargeting();
@@ -99,12 +86,7 @@ class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /**
-     * Le bouton ne s'affiche pas sur ce qui ne s'entretient pas.
-     *
-     * La garde est posée en `display_context` : elle disparaît de la carte
-     * plutôt que d'y proposer une action qui ne peut qu'échouer.
-     */
+    /** The guard is `display_context`: the button leaves the card entirely. */
     public function testTheButtonHidesOnWhatDoesNotMend(): void
     {
         $targeting = new ActionTargeting();
@@ -128,10 +110,7 @@ class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /**
-     * Le sens INVERSE ne bouge pas : abattre un arbre reste voulu, seule la
-     * réparation n'avait rien à faire sur une plante.
-     */
+    /** Attacks keep the whole branch: felling a tree is intended. */
     public function testAttackingStillReachesTheWholeBranch(): void
     {
         $attack = ActionFactory::getAction('melee');
@@ -159,12 +138,11 @@ class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
     }
 
     /**
-     * Un acteur en (x, 0), une entité entamée de cette famille en (x, 1).
+     * An actor at (x, 0) facing a damaged entity of that family at (x, 1).
      *
-     * L'entité est blessée d'un seul point : entamée sans être brisée, les
-     * deux états que RequiresDamagedTarget refuse par ailleurs — ce qui reste
-     * en jeu est bien le type. D'où le seuil de PV du type : à 1 PV, entamer
-     * c'est déjà briser, et le cas prouverait autre chose que ce qu'il dit.
+     * One point of damage only: damaged but not broken, the two states
+     * RequiresDamagedTarget refuses on its own. Hence $minPv — at 1 PV,
+     * damaging is breaking and the case would prove something else.
      *
      * @return array{0: \Classes\Player, 1: int}
      */
@@ -184,7 +162,7 @@ class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
         return [$actor, $entityId];
     }
 
-    /** Pose une entité d'une famille dont un type est seedé avec assez de PV. */
+    /** Place an entity of that family, from a seeded type with enough PV. */
     private function placeEntityOfFamily(string $family, int $x, int $y, int $minPv = 2): int
     {
         $type = $this->link->fetchOne(
@@ -212,7 +190,7 @@ class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
         return $id;
     }
 
-    /** Les refus d'une exécution, aplatis. */
+    /** Every refusal of one execution, flattened. */
     private function refusalOf(\App\Action\ActionResults $results): string
     {
         $messages = [];

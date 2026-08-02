@@ -37,17 +37,11 @@ abstract class StructureType extends Race
     private ?string $defaultText = null;
 
     /**
-     * Ce type se répare-t-il ? `null` = ce que dit sa FAMILLE.
+     * Does this type mend? `null` = whatever its family says.
      *
-     * Réparer visait « toute structure », ce qui était vrai tant que les seules
-     * structures étaient bâties. Depuis que ressources, décors et plantes sont
-     * des entités, la même porte s'est ouverte sur eux : on pouvait réparer une
-     * fleur — et payer une action pour le faire.
-     *
-     * Nullable À DESSEIN : une colonne semée à la main aurait figé la règle du
-     * jour de la migration. Ici, un type qui n'a rien décidé suit sa famille,
-     * et changer la règle d'une famille suit tous ceux qui s'en remettent à
-     * elle. Cocher la case sur un type précis reste possible et l'emporte.
+     * Nullable on purpose: an undecided type follows its family, so changing a
+     * family default carries every type that never overrode it. Ticking the box
+     * on one type still wins.
      */
     #[ORM\Column(type: "boolean", name: "repairable", nullable: true)]
     private ?bool $repairable = null;
@@ -57,29 +51,28 @@ abstract class StructureType extends Race
         return $this->repairable ?? $this->repairableByDefault();
     }
 
-    /** Ce que la famille dit, faute de décision sur le type. */
+    /** The family's answer, when the type has not decided. */
     protected function repairableByDefault(): bool
     {
         return false;
     }
 
     /**
-     * Ce qui est ÉCRIT sur ce type, sans la réponse de la famille : `null`
-     * quand rien n'a été décidé. L'écran de réglage en a besoin — proposer
-     * « Oui / Non » seulement effacerait la nuance dès la première sauvegarde.
+     * What is written on the type, `null` when undecided — the settings screen
+     * needs the third state, or saving once would cut the type off its family.
      */
     public function getRepairableOverride(): ?bool
     {
         return $this->repairable;
     }
 
-    /** Ce que la famille répondrait, pour l'afficher en face du « défaut ». */
+    /** The family's answer, to show beside the "default" option. */
     public function repairableFamilyDefault(): bool
     {
         return $this->repairableByDefault();
     }
 
-    /** `null` rend la décision à la famille. */
+    /** `null` hands the decision back to the family. */
     public function setRepairable(?bool $repairable): self
     {
         $this->repairable = $repairable;

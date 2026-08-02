@@ -43,16 +43,9 @@ class RequiresDamagedTargetCondition extends BaseCondition implements HasParamet
             return new ConditionResult(false, array(), array("Il n'y a rien à réparer ici."));
         }
 
-        /* Un objet se lit ICI comme tout le reste, et c'est neuf.
-         *
-         * Il fallait une seconde lecture — la durabilité, dans `item_instances`
-         * — parce que l'entité d'un objet posé n'était qu'un ÉTUI temporaire
-         * portant la race « objet », inconnue du catalogue : ses PV valaient
-         * zéro, et l'objet intact passait. Depuis « une seule vie », un
-         * exemplaire EST une entité où qu'il soit, son maximum vient de son
-         * type (`items.durability_max`) et son entame du même `players_bonus`
-         * que la blessure d'un personnage. La double lecture n'a plus d'objet,
-         * et ses colonnes n'existent plus. */
+        /* One reading for every target, item exemplars included: their max is
+         * items.durability_max, their damage the same players_bonus deficit as
+         * a character's wound. */
         $target->get_caracs();
 
         $max = (int) ($target->caracs->pv ?? 0);
