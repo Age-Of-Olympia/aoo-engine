@@ -11,14 +11,11 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Prendre un tour et progresser sont des CAPACITÉS, pas une branche.
- *
- * Les deux contrats ne sont portés que par `Character` aujourd'hui ; un
- * bâtiment jouable les portera sans jamais devenir un personnage
- * (docs/design-playable-buildings.md). Ces cas vérifient ce qui compte
- * maintenant : qu'un lecteur puisse poser la question par le CONTRAT, sans
- * connaître l'arbre — c'est tout ce qui permettra de basculer les gardes une à
- * une plus tard, au lieu d'un balayage.
+ * Taking turns and progressing are CAPABILITIES, not a branch: only `Character`
+ * holds them today, a playable building will hold them without ever becoming a
+ * character (docs/design-playable-buildings.md). What matters here is that a
+ * reader can ask through the CONTRACT, which is what lets the gates switch one
+ * at a time later.
  */
 #[Group('entities-baseline')]
 class EntityCapabilitiesTest extends TestCase
@@ -45,7 +42,7 @@ class EntityCapabilitiesTest extends TestCase
         $this->assertInstanceOf(ProgressesInterface::class, $entity);
     }
 
-    /** Le tour se lit et s'écrit par le contrat, sans nommer Character. */
+    /** The turn is read and written through the contract, without naming Character. */
     public function testATurnIsReadAndWrittenThroughTheContract(): void
     {
         $entity = new RealPlayer();
@@ -61,7 +58,7 @@ class EntityCapabilitiesTest extends TestCase
         $this->assertTrue($entity->isNextTurnRescheduled());
     }
 
-    /** La progression aussi : de l'XP, un niveau, des points à dépenser. */
+    /** Progression too: experience, a level, points left to spend. */
     public function testProgressionIsReadAndWrittenThroughTheContract(): void
     {
         $entity = new RealPlayer();
@@ -77,15 +74,11 @@ class EntityCapabilitiesTest extends TestCase
     }
 
     /**
-     * Une structure ne prend pas de tour AUJOURD'HUI.
+     * A structure holds neither capability TODAY — this case dates that state,
+     * and is where to come when a playable building takes them on.
      *
-     * Le cas n'interdit rien : il date l'état. Le jour où un bâtiment jouable
-     * porte les contrats, c'est ici qu'on vient le dire, et non pas au détour
-     * d'un comportement qui aurait changé sans témoin.
-     *
-     * La question est posée à la CLASSE et non à une instance : demander
-     * `assertNotInstanceOf` sur un `Building` est vrai par construction, et
-     * l'analyse statique le dit avant même que le cas tourne.
+     * Asked of the CLASS, not an instance: `assertNotInstanceOf` on a Building
+     * is true by construction and static analysis says so before it runs.
      */
     public function testAStructureHoldsNeitherCapabilityYet(): void
     {

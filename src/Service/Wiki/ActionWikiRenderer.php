@@ -16,9 +16,8 @@ use Classes\Db;
 final class ActionWikiRenderer implements WikiSheetRendererInterface
 {
     /**
-     * Les libellés de visée viennent de la condition elle-même : cette table
-     * les recopiait, et n'a donc pas suivi quand les familles de structures
-     * sont devenues déclarables — le wiki aurait affiché « building ».
+     * Targeting labels come from the condition itself: a copy here would fall
+     * behind the day a new target kind becomes declarable.
      *
      * @return array<string, string>
      */

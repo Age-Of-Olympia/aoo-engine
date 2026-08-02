@@ -8,28 +8,12 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Ce qui se répare, et ce qui ne se répare pas.
+ * `reparer` reaches only the families that mend: buildings, scenery and placed
+ * objects. Attacks keep the whole branch — felling a tree is intended.
  *
- * `reparer` est né avec `TargetType{allowed:['structure']}` — la BRANCHE. Tout
- * ce qui n'est pas un personnage y vit : bâtiments, décors, mais aussi filons
- * et plantes. On remettait donc un arbre en état à coups de marteau et de
- * planches, au meilleur rapport XP du jeu (3 XP par point d'action).
- *
- * L'autre moitié de la règle avait pourtant été resserrée en son temps
- * (`RequiresDamagedTarget` : quelque chose doit être entamé, et pas brisé) ;
- * ce qu'aucune condition ne disait, c'est QUOI se répare.
- *
- * La visée nomme désormais les familles. Un décor se répare — une statue
- * ébréchée se retaille ; une ressource et une plante, non : un filon
- * s'épuise et repousse, il ne se répare pas.
- *
- * L'attaque, elle, garde `['character','structure']` : abattre un arbre est
- * voulu, c'est le sens INVERSE qui n'avait rien à faire là.
- *
- * Fenêtre de déploiement : entre cette migration et le code qui lit les
- * familles, l'ancien code ne reconnaît plus `building` et refuse `reparer`
- * partout. Une action momentanément bloquée, jamais une donnée fausse — et
- * l'ordre inverse (code d'abord) aurait laissé la plante réparable.
+ * Deployment window: between this migration and the code that reads families,
+ * the old code does not recognise `building` and refuses `reparer` everywhere.
+ * The reverse order would leave plants repairable.
  */
 final class Version20260803270000_APlantIsNotRepaired extends AbstractMigration
 {
@@ -37,7 +21,7 @@ final class Version20260803270000_APlantIsNotRepaired extends AbstractMigration
 
     public function getDescription(): string
     {
-        return "reparer vise les familles réparables, plus la branche entière";
+        return 'reparer targets the families that mend, not the whole branch';
     }
 
     public function up(Schema $schema): void

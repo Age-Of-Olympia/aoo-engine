@@ -180,16 +180,10 @@ class FactionServiceTest extends TestCase
         $faction->setName('Faction à supprimer');
         $this->service->save($faction);
 
-        /* Le personnage est SEMÉ, plus emprunté à la base.
-         *
-         * Il l'était pour éviter de fabriquer une ligne « aux nombreuses
-         * colonnes NOT NULL » — cinq suffisent, et PlanAdminServiceTest le
-         * fait déjà. L'emprunt, lui, prenait la PREMIÈRE ligne de `players`,
-         * qui n'est pas forcément un personnage : `players` porte aussi les
-         * structures, et countPlayersUsingFaction() ne compte ses membres que
-         * parmi `real` et `npc` — une forge porte une faction sans y adhérer.
-         * Le compte tombait donc à zéro dès qu'un décor occupait le plus petit
-         * id, et à rien du tout sur une base neuve, où le cas se sautait. */
+        /* Seed the character rather than borrowing one: `players` holds
+         * structures too, and countPlayersUsingFaction() counts members among
+         * `real` and `npc` only — a forge carries a faction without joining
+         * it. Five columns are enough to fabricate one. */
         $playerId = self::MEMBER_ID;
         $link->executeStatement(
             "INSERT INTO players (id, player_type, name, race, faction)

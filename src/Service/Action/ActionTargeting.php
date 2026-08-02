@@ -82,11 +82,11 @@ final class ActionTargeting
      * reaches what it declares. Lets observe.php hide the Barbier button on a
      * palissade instead of showing a button that can only block.
      *
-     * Le DISCRIMINANT passe, pas la branche : depuis que la déclaration nomme
-     * aussi les familles, réduire la cible à `structure` ici aurait laissé le
-     * bouton « Réparer » sur un arbre, pour un refus à l'exécution.
+     * Pass the DISCRIMINATOR, not the branch: declarations name families too,
+     * and narrowing to `structure` here would show buttons the execution
+     * refuses.
      *
-     * @param ?string $playerType players.player_type de la cible (null = legacy)
+     * @param ?string $playerType the target's players.player_type (null = legacy)
      */
     public function canTargetEntity(Action $action, ?string $playerType): bool
     {

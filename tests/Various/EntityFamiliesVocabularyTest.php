@@ -10,14 +10,10 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Les familles de structures sont nommées à trois endroits — le discriminant
- * qui les crée, le libellé qui les propose au workbench, l'article qui les
- * refuse — et rien n'obligeait les trois listes à se ressembler.
- *
- * Ajouter une sixième famille sans la déclarer donnerait une action qu'on ne
- * peut pas viser, ou un refus qui dit « une structure » là où l'action répare
- * les bâtiments. Le mapping du discriminant est la source : les deux autres
- * s'alignent dessus ou ce cas échoue.
+ * Structure families are named in three places — the discriminator that creates
+ * them, the label offering them in the workbench, the article refusing them.
+ * The discriminator map is the source; the other two must match it or a new
+ * family ships unaimable, or refused with the wrong words.
  */
 #[Group('entities-baseline')]
 class EntityFamiliesVocabularyTest extends TestCase
@@ -43,7 +39,7 @@ class EntityFamiliesVocabularyTest extends TestCase
     }
 
     /**
-     * Les discriminants de `players` que EntityCategory range du côté structure.
+     * The `players` discriminators EntityCategory files under structure.
      *
      * @return list<string>
      */

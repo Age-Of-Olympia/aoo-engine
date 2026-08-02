@@ -20,13 +20,11 @@ use App\Action\Schema\ParameterSchema;
  * declares ['character', 'structure']. Rows predating the param keep
  * today's behavior via the ['character'] default.
  *
- * La branche seule ne suffit pas toujours : `reparer` la déclarait, et
- * remettait donc en état un arbre ou une plante — tout ce qui n'est pas un
- * personnage vit sous `structure`. Les FAMILLES s'écrivent donc aussi, par
- * discriminant ({@see \App\Enum\EntityCategory::structureFamilies()}) :
- * `['building','scenery','item']` répare ce qui se répare et rien d'autre.
- * Les deux vocabulaires cohabitent — une famille nommée suffit, la branche
- * reste le parapluie.
+ * FAMILIES may be named too, by discriminator
+ * ({@see \App\Enum\EntityCategory::structureFamilies()}), for rules the branch
+ * cannot express — everything that is not a character lives under `structure`.
+ * Both vocabularies coexist: a named family is enough, the branch stays the
+ * umbrella.
  *
  * Two SORTES DE VISÉE s'ajoutent aux catégories d'entités (décision du
  * 2026-07-19, actions génériques) :
@@ -46,10 +44,8 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInt
     public const KIND_NONE = 'none';
 
     /**
-     * Ce qu'un refus nomme. Mêmes clés que les familles de structures, avec
-     * leur article : un message parle de « une ressource », pas de
-     * « Ressource ». EntityFamiliesVocabularyTest tient les deux listes
-     * alignées.
+     * What a refusal names: same keys as the structure families, with their
+     * article. EntityFamiliesVocabularyTest keeps the two lists aligned.
      */
     private const REFUSAL_LABELS = [
         'building' => 'un bâtiment',
@@ -60,9 +56,8 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInt
     ];
 
     /**
-     * Le vocabulaire de la visée, en un seul endroit : branches, familles et
-     * les deux visées exclusives. Le wiki des actions le lit aussi — deux
-     * tables de libellés avaient déjà divergé.
+     * The targeting vocabulary in one place: branches, families and the two
+     * exclusive kinds. The action wiki reads it too — keep it the only table.
      *
      * @return array<string, string>
      */
@@ -87,8 +82,8 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInt
                 'Catégories de cibles autorisées',
                 default: ['character'],
                 multiple: true,
-                /* L'admin dit « seulement » là où le wiki dit la visée : la
-                 * liste des valeurs, elle, reste la même. */
+                /* The admin says "seulement" where the wiki states the aim;
+                 * the set of values is the same. */
                 options: array_merge(self::targetLabels(), [
                     self::KIND_SELF => 'Soi-même seulement',
                 ]),
@@ -97,11 +92,11 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInt
     }
 
     /**
-     * La cible est-elle atteinte par cette déclaration ? Règle UNIQUE, lue
-     * aussi par {@see \App\Service\Action\ActionTargeting} : un bouton qui
-     * s'affiche et une exécution qui refuse, c'est la même liste lue deux fois.
+     * Is the target reached by this declaration? The single rule, read by
+     * {@see \App\Service\Action\ActionTargeting} as well, so the button shown
+     * and the execution allowed cannot disagree.
      *
-     * Une famille nommée suffit ; sinon la branche répond.
+     * A named family is enough; otherwise the branch answers.
      *
      * @param array<int, string> $allowed
      */
@@ -163,9 +158,8 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInt
 
         $condition->setBlocking(true);
 
-        /* Le refus nomme la CIBLE, pas la branche : « ne peut pas viser une
-         * structure » sur un arbre, alors que l'action répare les bâtiments,
-         * décrivait mal ce qu'elle refusait. */
+        /* Name the TARGET, not the branch: "une structure" reads wrong on a
+         * tree when the action repairs buildings. */
         return new ConditionResult(
             false,
             array(),
@@ -173,7 +167,7 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInt
         );
     }
 
-    /** Comment nommer ce qu'on refuse ; la branche répond pour ce qui n'a pas de libellé. */
+    /** How to name what is refused; the branch answers for anything unlabelled. */
     private static function refusalLabel(string $playerType): string
     {
         return self::REFUSAL_LABELS[$playerType]

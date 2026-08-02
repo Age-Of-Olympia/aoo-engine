@@ -294,10 +294,8 @@ class PlanAdminServiceTest extends TestCase
 
         $owned = (object) ['x' => 5, 'y' => 5, 'z' => 0, 'plan' => self::SRC];
 
-        /* Le bâtisseur est SEMÉ, comme partout ailleurs dans ce fichier. Il
-           était emprunté — « le premier joueur réel de la base » — et une base
-           de test neuve n'en a aucun : l'id valait 0, et la pose refusait un
-           propriétaire inconnu. Le cas ne passait que derrière un autre. */
+        /* Seed the builder, as everywhere else in this file: a fresh test
+           database holds no real player to borrow. */
         $builderId = self::PLAYER_ID;
         $this->link()->executeStatement(
             "INSERT INTO players (id, player_type, name, coords_id, race) VALUES (?, 'real', ?, ?, ?)",

@@ -62,19 +62,14 @@ enum EntityCategory: string
     }
 
     /**
-     * Les familles de structures, par discriminant, avec leur libellé.
+     * Structure families by discriminator, for gates finer than the branch —
+     * a rule that holds for a building but not for a tree cannot be expressed
+     * with `structure` alone.
      *
-     * La branche ne suffit plus dès qu'une règle vaut pour un bâtiment et pas
-     * pour un arbre : `structure` les tient toutes les cinq, si bien que
-     * `reparer` — déclaré sur la seule branche — remettait en état une plante
-     * à coups de marteau et de planches. Ce que le discriminant distingue déjà
-     * devient donc du vocabulaire pour les portes data-driven.
+     * These keys ARE the structure discriminators of {@see \App\Entity\GameEntity};
+     * adding one without listing it here fails EntityFamiliesVocabularyTest.
      *
-     * Ces clés SONT les discriminants côté structure de {@see \App\Entity\GameEntity} :
-     * en ajouter un sans l'écrire ici casse EntityFamiliesVocabularyTest, pas
-     * le jeu en silence.
-     *
-     * @return array<string, string> player_type => libellé
+     * @return array<string, string> player_type => label
      */
     public static function structureFamilies(): array
     {
