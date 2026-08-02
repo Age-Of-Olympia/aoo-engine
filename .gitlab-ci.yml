@@ -212,13 +212,13 @@ cypress_endpoint_job:
     DB_HOST: mariadb
     DB_USER: root
     DB_PASS: passwordRoot
-    # reset_test_database.sh sème son personnage dans DB_NAME ; on le pointe
-    # sur la base que l'application sert, sans quoi la connexion échoue.
-    DB_NAME: aoo4
+    # DB_NAME reste `aoo4_test`, le défaut du script de remise à zéro : il
+    # commence par un DROP DATABASE, et le pointer sur la base servie la
+    # détruisait avant de la cloner depuis elle-même.
     TEST_DB_HOST: mariadb
     TEST_DB_USER: root
     TEST_DB_PASS: passwordRoot
-    TEST_DB_NAME: aoo4
+    TEST_DB_NAME: aoo4_test
     CYPRESS_CONTAINER: "true"
     CYPRESS_PLAYER_NAME: TestFreshPlayer
     CYPRESS_PLAYER_PASSWORD: testpass
@@ -228,7 +228,11 @@ cypress_endpoint_job:
     - npm ci --no-audit --no-fund
   script:
     - bash scripts/testing/setup_ci_database.sh
+    # Clone `aoo4` vers `aoo4_test` et y sème le personnage de test.
     - bash scripts/testing/reset_test_database.sh
+    # L'application doit servir la base SEMÉE, pas celle qui a servi de
+    # modèle : sans cela le spec se connecte là où aucun joueur n'existe.
+    - sed -i "s/'aoo4'/'aoo4_test'/g" config/db_constants.php
     - php -S 0.0.0.0:80 -t . > /tmp/php-server.log 2>&1 &
     - sleep 2
     - make cypress-endpoint-ci
