@@ -104,10 +104,11 @@ class ActionExecutorService
         // 5) LOG — from the action's per-type templates (action_type_logs).
         $logsArray = $this->logResolver->resolve($this->action, $this->actor, $this->target);
 
-        // 6) Trigger automatic screenshot if action occurred on arene_s2
-        if (!$this->simulationMode) {
-            $this->triggerAutomaticScreenshot();
-        }
+        // La capture d'arène n'est PLUS déclenchée ici. Elle l'était avant que
+        // action.php n'écrive les logs de l'action, si bien que l'image existait
+        // avant la ligne qui l'explique et que rien ne les reliait. Elle se
+        // déclenche donc désormais depuis action.php, après les Log::put, où le
+        // texte des events est disponible sans requête ni jointure.
 
         // contains conditionsResults, effectsResults, costsResults, xpResults and logs
         return new ActionResults($this->globalConditionsResult, $this->blocked, $this->conditionResultsArray, $this->outcomeResultsArray, $costsResultsArray, $xpResultsArray, $logsArray);
@@ -250,22 +251,6 @@ class ActionExecutorService
     {
         $result = $outcomeInstruction->execute($this->actor, $this->target, $this->conditionObject);
         array_push($this->outcomeResultsArray, $result);
-    }
-
-    private function triggerAutomaticScreenshot(): void
-    {
-        try {
-            $screenshotService = new ScreenshotService();
-            $actionName = $this->action->getName() ?? 'unknown';
-
-            $result = $screenshotService->generateAutomaticScreenshot($this->actor, $actionName);
-
-            if (!$result['success'] && $result['error'] !== 'Action not on arene_s2 map') {
-                error_log("Automatic screenshot failed: " . $result['error']);
-            }
-        } catch (Exception $e) {
-            error_log("Error triggering automatic screenshot: " . $e->getMessage());
-        }
     }
 
     public function getInitialTargetPv(): int

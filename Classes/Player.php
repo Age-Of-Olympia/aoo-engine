@@ -826,7 +826,12 @@ class Player implements ActorInterface {
         if ($goCoords->plan === 'arene_s2' && $this->id >= 0) {
             try {
                 $screenshotService = new \App\Service\ScreenshotService();
-                $screenshotService->generateAutomaticScreenshot($this, 'move');
+                $screenshotService->generateAutomaticScreenshot($this, 'deplacement', [[
+                    'type'      => 'move',
+                    'at'        => time(),
+                    'player_id' => (int) $this->id,
+                    'text'      => $text,
+                ]]);
             } catch (Exception $e) {
                 error_log("Error triggering automatic screenshot for movement: " . $e->getMessage());
             }

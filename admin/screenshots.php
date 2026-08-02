@@ -41,7 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_screenshot']
         ];
         $timestamp = date('Y-m-d_H-i-s');
         $filename  = "screenshot_{$selectedPlanId}_{$selectedX}_{$selectedY}_{$selectedZ}_{$timestamp}";
-        $result    = $screenshotService->generateScreenshot($coords, $selectedRange, $filename);
+        // selfContained : l'aperçu ci-dessous passe par <img src="....svg">, où
+        // le SVG est parsé en XML strict et ne charge aucune ressource externe.
+        // Sans styles ni images embarqués, la balise n'affiche rien du tout.
+        $result    = $screenshotService->generateScreenshot(
+            $coords,
+            $selectedRange,
+            $filename,
+            selfContained: true
+        );
 
         if ($result['success']) {
             $success     = "Capture d'écran générée avec succès : " . basename($result['filepath']);

@@ -22,6 +22,21 @@ if(!empty($_POST['text'])){
 
     Log::put($player, $player, $log, type:"mdj", hiddenText:$details);
 
+    // Un changement de message du jour ne déplace rien et ne modifie aucun
+    // pixel de la carte : il n'a pas d'image à lui. On le rattache donc au
+    // fichier d'events de la dernière capture, dont l'état visuel est encore
+    // celui qui vaut. Au montage il devient une bulle sur cette image.
+    try {
+        (new \App\Service\ScreenshotService())->attachEventToLastCapture([
+            'type'      => 'mdj',
+            'at'        => time(),
+            'player_id' => (int) $player->id,
+            'text'      => $_POST['text'],
+        ], $player);
+    } catch (Throwable $e) {
+        error_log('Rattachement du mdj a la derniere capture impossible : ' . $e->getMessage());
+    }
+
     exit();
 }
 

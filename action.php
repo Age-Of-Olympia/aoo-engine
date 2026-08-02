@@ -7,6 +7,7 @@ use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
 use App\Service\ActionService;
 use App\Service\PlayerService;
+use App\Service\ScreenshotService;
 use App\View\ActionResultsView;
 use App\View\OnHideReloadView;
 use Classes\Log;
@@ -138,6 +139,56 @@ try {
                 $type = "action_other_player";
             }
             Log::put($target, $player, $targetMainLog, $type, $logDetails, $logTime);
+        }
+    }
+
+    // Capture d'arène. Elle vit ici, et non dans ActionExecutorService, parce
+    // qu'à ce point les logs de l'action sont écrits et leur texte disponible
+    // sous la main : le fichier d'events de l'image se remplit sans requête ni
+    // jointure, et sans dépendre d'un rapprochement par horodatage que les
+    // tours de 18h rendent ambigu dès que les joueurs cumulent leurs actions.
+    //
+    // Une action BLOQUÉE est écartée : faute de PA, de portée ou de condition,
+    // elle ne modifie aucun pixel de la carte. La capturer produisait une image
+    // en tout point identique à la précédente. Vérifié en jeu : sur une session
+    // de test, six frames sur douze venaient de tentatives refusées.
+    if (!$actionResults->isBlocked()) {
+        try {
+            $arenaEvents = [];
+
+            // Une action à log masqué (le vol, via hideOnSuccess) ne dit pas
+            // son texte à la capture : les fichiers d'events vivent sous
+            // img/arene/, que Apache sert sans restriction, et le montage est
+            // public. Le jeu la range en "hidden_action" pour la soustraire aux
+            // autres joueurs ; la recopier ici en "action" la leur rendrait.
+            // L'image, elle, est conservée : le vol déplace bien des objets, la
+            // frame est donc un état de l'arène qui a existé, simplement sans
+            // réplique. Même condition que les Log::put ci-dessus, à dessein.
+            if (!$hideLogsCondition && !empty($actorMainLog)) {
+                $arenaEvents[] = [
+                    'type'      => 'action',
+                    'at'        => $logTime,
+                    'player_id' => (int) $player->id,
+                    'text'      => $actorMainLog,
+                ];
+            }
+
+            if (!$hideLogsCondition && $target->id != $player->id && !empty($targetMainLog)) {
+                $arenaEvents[] = [
+                    'type'      => 'action_other_player',
+                    'at'        => $logTime,
+                    'player_id' => (int) $target->id,
+                    'text'      => $targetMainLog,
+                ];
+            }
+
+            (new ScreenshotService())->generateAutomaticScreenshot(
+                $player,
+                $action->getName(),
+                $arenaEvents
+            );
+        } catch (Throwable $e) {
+            error_log('Capture arene impossible : ' . $e->getMessage());
         }
     }
 

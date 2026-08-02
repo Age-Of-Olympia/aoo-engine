@@ -280,12 +280,6 @@ parameters:
 			path: src/Entity/RecipeResult.php
 
 		-
-			message: '#^Expression on left side of \?\? is not nullable\.$#'
-			identifier: nullCoalesce.expr
-			count: 1
-			path: src/Service/ActionExecutorService.php
-
-		-
 			message: '#^Negated boolean expression is always false\.$#'
 			identifier: booleanNot.alwaysFalse
 			count: 1
@@ -311,21 +305,9 @@ parameters:
 
 
 		-
-			message: '#^Method App\\Service\\ScreenshotService\:\:convertImagesToBase64\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: src/Service/ScreenshotService.php
-
-		-
-			message: '#^Method App\\Service\\ScreenshotService\:\:savePlayerPosition\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: src/Service/ScreenshotService.php
-
-		-
 			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
 			identifier: notIdentical.alwaysTrue
-			count: 2
+			count: 1
 			path: src/Service/ScreenshotService.php
 
 		-
