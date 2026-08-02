@@ -15,8 +15,9 @@ touched on the way.
 | **L1** — capabilities named | ✅ `TakesTurnsInterface`, `ProgressesInterface`, implemented by `Character` only |
 | **L2** — turn and progression satellites | ✅ `turns` + `progression`, `TurnService` / `ProgressionService`, mirrored writes, joins in `Player::get_row()` |
 | **L3** — turn rule freed of the session | ✅ `isDue()` / `processDue()`; `processIfDue()` keeps the session gates |
-| **L4** — the faction screen drives one building type | ⬜ needs the screen, which does not exist |
-| **L5** — branch gates become capability gates | ⬜ after L2/L4 |
+| **L4a** — the engine plays a building | ✅ `PlaysTurns`, `Building` holds both contracts, a structure's turn = pool + clock |
+| **L4b** — the faction screen drives it | ⬜ needs the screen, which does not exist |
+| **L5** — branch gates become capability gates | ⬜ after L4b |
 
 ---
 

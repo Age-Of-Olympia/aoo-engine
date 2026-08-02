@@ -13,8 +13,12 @@ use Doctrine\ORM\Mapping as ORM;
  *     position, presentation, and the PV surface. `race` lives here on
  *     purpose: it points into the `races` catalog, which is the max-PV
  *     source for characters AND for structures (pseudo-races, §4.6).
- *   - Character: what only played/playing characters have — account,
- *     progression, faction, turn timing.
+ *   - Character: what only a person has — an account, a story, a god,
+ *     a faction rank.
+ *
+ * Turn timing and progression came back down here when buildings became
+ * playable: they are shared columns, and the CAPABILITY to use them is
+ * declared by the classes that have it (docs/design-playable-buildings.md).
  *
  * Hard rule from the plan: the hierarchy never grows a third level.
  * When a new type doesn't fit Character/Structure, add a component
@@ -50,6 +54,39 @@ abstract class GameEntity
 
     #[ORM\Column(type: "string", length: 255)]
     protected string $name = '';
+
+    /* The turn and progression columns sit on the shared table for EVERY row,
+     * so they are mapped here rather than on Character — an STI subtree cannot
+     * map a column its sibling also needs. Which entities actually own a turn
+     * is a different question, answered by App\Service\PlaysTurns; declaring
+     * the capability is the classes' job (Character, Building).
+     *
+     * These are mirrors: `turns` and `progression` hold the value, TurnService
+     * and ProgressionService write it, and the columns go in a post-deployment
+     * pass — at which point these eight move to the satellites in one place. */
+    #[ORM\Column(type: "integer")]
+    protected int $xp = 0;
+
+    #[ORM\Column(type: "integer", name: "bonus_points")]
+    protected int $bonusPoints = 0;
+
+    #[ORM\Column(type: "integer")]
+    protected int $pi = 0;
+
+    #[ORM\Column(type: "integer")]
+    protected int $rank = 1;
+
+    #[ORM\Column(type: "integer")]
+    protected int $nextTurnTime = 0;
+
+    #[ORM\Column(type: "boolean")]
+    protected bool $nextTurnRescheduled = false;
+
+    #[ORM\Column(type: "integer")]
+    protected int $lastActionTime = 0;
+
+    #[ORM\Column(type: "integer")]
+    protected int $antiBerserkTime = 0;
 
     /**
      * The cell this entity stands on, or null when it is nowhere: shelved
@@ -355,4 +392,47 @@ abstract class GameEntity
     {
         return $caracs->computeNudeCaracs((int) $this->id, $this->race);
     }
+
+    /* Turn and progression read here; the services write (see the note on
+     * the columns above). */
+    public function getXp(): int
+    {
+        return $this->xp;
+    }
+
+    public function getBonusPoints(): int
+    {
+        return $this->bonusPoints;
+    }
+
+    public function getPi(): int
+    {
+        return $this->pi;
+    }
+
+    public function getRank(): int
+    {
+        return $this->rank;
+    }
+
+    public function getNextTurnTime(): int
+    {
+        return $this->nextTurnTime;
+    }
+
+    public function isNextTurnRescheduled(): bool
+    {
+        return $this->nextTurnRescheduled;
+    }
+
+    public function getLastActionTime(): int
+    {
+        return $this->lastActionTime;
+    }
+
+    public function getAntiBerserkTime(): int
+    {
+        return $this->antiBerserkTime;
+    }
+
 }
