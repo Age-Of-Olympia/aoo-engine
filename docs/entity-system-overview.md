@@ -4,6 +4,11 @@
 **Scope**: everything that is an entity on the board — characters, buildings, scenery,
 resources, plants, walls and placed objects — and what each of them can do.
 
+> **Version française : [panorama-systeme-entites.md](panorama-systeme-entites.md).** Both
+> documents carry the same section numbering — `§6.3` points at the same passage in either.
+> When the system moves, both move together: a half-updated overview misleads more than it
+> informs.
+
 Design notes behind it: [design-buildings-entities.md](design-buildings-entities.md),
 [design-entity-types-inheritance.md](design-entity-types-inheritance.md),
 [design-resources-entities.md](design-resources-entities.md),
