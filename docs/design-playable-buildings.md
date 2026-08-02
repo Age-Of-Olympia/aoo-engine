@@ -155,22 +155,50 @@ that *puts* a building into them, which that work brings.
 > want to delete them. It must not. The test is whether something is *intended* to write it,
 > and here the answer is yes.
 
+### 3.6 A playable building is driven, never registered as — so it is `playable` *and* `hidden`
+
+Decision, 2026-08-03. A building is not a race someone picks: **you play it through faction
+access**, from a screen that does not exist yet (§3.4). It is therefore never offered at
+character creation, never listed among players, never shown as one.
+
+That splits two flags which have coincided perfectly until now:
+
+| flag | asks | a playable building type |
+|---|---|---|
+| `races.playable` | may this type be **driven**? | **yes** |
+| `races.hidden` | is it kept out of what a player is shown? | **yes** |
+
+Today every `playable` race is visible and every `hidden` one is not — the two are exactly
+anti-correlated across all 16 character races and 100+ structure types. A playable building
+is the **first row where they part**, and that is why the coincidence was load-bearing
+without anyone deciding it should be.
+
+> **Door-keeping rule**: anything meaning *"offered at registration"* asks **both** flags.
+> `RaceService::getPlayableRaces()` filtered on `playable` alone, and its four callers
+> — registration validation, the landing background, the dialogue race loop and the actions
+> wiki — would each have accepted a forge the day the flag was set. It now asks for
+> `playable AND NOT hidden`, and `RaceServiceTest` pins it with a type carrying both.
+> A future reader meaning *"may take turns"* asks `playable` alone; do not merge the two.
+
 ---
 
 ## 4. What NOT to do now
 
 The point of this note. Today's work only has to avoid foreclosing:
 
-1. **Do not move fields and do not create the satellites.** The two interfaces exist (L1
-   below) because naming a contract costs nothing and buys the gate-by-gate switch later;
-   moving state is a different bet, and it waits for the evolution plan.
+1. **Do not write a capability's state outside its service.** The satellites exist (L2
+   below) and `TurnService` / `ProgressionService` are their only writers, each keeping the
+   `players` column it still mirrors in step. The contracts therefore **read only**: a setter
+   on `TakesTurnsInterface` would reach the mirror alone and leave the satellite behind, which
+   is why `Character`'s capability setters were removed rather than left as a convenience.
 2. **New gates ask the capability, not the branch.** Writing `if (character) { take a turn }`
    or `if (structure) { no XP }` costs nothing today and costs a sweep later. When a branch
    test is genuinely about the branch — bleeding, missives, the enfers — it stays.
 3. **Nothing new goes into `players_bonus` that must survive destruction** (§3.1).
 4. **No new read-then-write on a shared pool** (§3.2).
 5. **`races.playable` stays on the trunk** — do not push it down to `CharacterRace` in a
-   tidy-up; it is the opt-in flag.
+   tidy-up; it is the opt-in flag. And it means **may be driven**, not *is offered at
+   registration* — see §3.6.
 6. **Do not add per-controller state to the building.** The pool is the entity's; a
    "member's remaining points on this forge" table is the design this note refuses.
 

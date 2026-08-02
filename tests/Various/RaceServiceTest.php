@@ -98,6 +98,36 @@ class RaceServiceTest extends TestCase
         $this->assertSame(array_intersect($all, $playable), array_intersect($playable, $all));
     }
 
+    /**
+     * `playable` says a type may be driven; `hidden` says it is not put in
+     * front of a player. A playable building type carries both — it is driven
+     * through faction access, never registered as — so registration has to ask
+     * the second question too. Today every playable race happens to be visible,
+     * which is exactly why this would go unnoticed.
+     */
+    public function testAPlayableButHiddenTypeIsNeverOfferedAtRegistration(): void
+    {
+        $name = 'test_race_pilotee';
+        $this->deleteRace($name);
+
+        try {
+            $race = new CharacterRace();
+            $race->setName($name);
+            $race->setCode(strtoupper($name));
+            $race->setLabel('Type piloté de test');
+            $race->setPlayable(true);
+            $race->setHidden(true);
+            $this->service->save($race);
+
+            RaceService::clearCache();
+
+            $this->assertNotContains($name, (new RaceService())->getPlayableRaceNames());
+        } finally {
+            $this->deleteRace($name);
+            RaceService::clearCache();
+        }
+    }
+
     public function testReplaceNameListsRoundTripOnAThrowawayRace(): void
     {
         $name = 'test_race_svc';

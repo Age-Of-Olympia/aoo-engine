@@ -223,12 +223,18 @@ class RaceService
     /**
      * Races offered at registration (replaces the RACES constant).
      *
+     * `playable` says a type may be *driven*; `hidden` says it is not put in
+     * front of a player. Registration needs both answers, because they are
+     * about to stop coinciding: a playable building type is driven through
+     * faction access, never registered as and never listed as a player, so it
+     * carries `playable` and `hidden` together.
+     *
      * @return Race[]
      */
     public function getPlayableRaces(): array
     {
         return $this->entityManager->getRepository(Race::class)
-            ->findBy(['playable' => true], ['id' => 'ASC']);
+            ->findBy(['playable' => true, 'hidden' => false], ['id' => 'ASC']);
     }
 
     /**

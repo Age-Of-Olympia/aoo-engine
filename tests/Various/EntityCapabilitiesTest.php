@@ -7,8 +7,11 @@ use App\Entity\RealPlayer;
 use App\Entity\TutorialPlayer;
 use App\Interface\ProgressesInterface;
 use App\Interface\TakesTurnsInterface;
+use App\Service\ProgressionService;
+use App\Service\TurnService;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\TestCase;
+use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
  * Taking turns and progressing are CAPABILITIES, not a branch: only `Character`
@@ -16,9 +19,13 @@ use PHPUnit\Framework\TestCase;
  * character (docs/design-playable-buildings.md). What matters here is that a
  * reader can ask through the CONTRACT, which is what lets the gates switch one
  * at a time later.
+ *
+ * The contracts read; the services write. These cases go through both halves —
+ * a service writes, the contract answers — because that agreement is what would
+ * rot silently if a write ever went round the service.
  */
 #[Group('entities-baseline')]
-class EntityCapabilitiesTest extends TestCase
+class EntityCapabilitiesTest extends LegacyPlayerFixtureTestCase
 {
     /** @return array<string, array{0: class-string}> */
     public static function characterClasses(): array
@@ -33,44 +40,70 @@ class EntityCapabilitiesTest extends TestCase
     /**
      * @param class-string $class
      */
-    #[\PHPUnit\Framework\Attributes\DataProvider('characterClasses')]
+    #[DataProvider('characterClasses')]
     public function testEveryCharacterHoldsBothCapabilities(string $class): void
     {
-        $entity = new $class();
+        $implemented = class_implements($class);
 
-        $this->assertInstanceOf(TakesTurnsInterface::class, $entity);
-        $this->assertInstanceOf(ProgressesInterface::class, $entity);
+        $this->assertContains(TakesTurnsInterface::class, $implemented);
+        $this->assertContains(ProgressesInterface::class, $implemented);
     }
 
-    /** The turn is read and written through the contract, without naming Character. */
-    public function testATurnIsReadAndWrittenThroughTheContract(): void
+    /** The service writes the turn; the contract answers, without naming Character. */
+    public function testATurnIsWrittenByTheServiceAndReadThroughTheContract(): void
     {
-        $entity = new RealPlayer();
+        $id = (int) $this->createRealPlayer('GmContratTour')->id;
 
-        $this->assertSame(0, $this->whenIsItsTurn($entity), 'une entité neuve joue tout de suite');
+        (new TurnService($this->link))->openTurn($id, 1_800_000_000, 1_800_005_400);
 
-        $entity->setNextTurnTime(1_800_000_000)
-            ->setLastActionTime(1_799_999_000)
-            ->setNextTurnRescheduled(true);
+        $entity = $this->reloadCharacter($id);
 
         $this->assertSame(1_800_000_000, $this->whenIsItsTurn($entity));
-        $this->assertSame(1_799_999_000, $entity->getLastActionTime());
-        $this->assertTrue($entity->isNextTurnRescheduled());
+        $this->assertSame(0, $entity->getLastActionTime(), 'a fresh turn has taken no action');
+        $this->assertFalse($entity->isNextTurnRescheduled());
     }
 
     /** Progression too: experience, a level, points left to spend. */
-    public function testProgressionIsReadAndWrittenThroughTheContract(): void
+    public function testProgressionIsWrittenByTheServiceAndReadThroughTheContract(): void
     {
-        $entity = new RealPlayer();
+        $id = (int) $this->createRealPlayer('GmContratXp')->id;
 
-        $this->assertSame(0, $this->howFarAlong($entity));
+        $this->assertSame(0, $this->howFarAlong($this->reloadCharacter($id)));
 
-        $entity->addXp(150);
-        $entity->setRank(3)->setBonusPoints(2);
+        (new ProgressionService($this->link))->gain($id, 150, 150, 3);
+
+        $entity = $this->reloadCharacter($id);
 
         $this->assertSame(150, $this->howFarAlong($entity));
         $this->assertSame(3, $entity->getRank());
-        $this->assertSame(2, $entity->getBonusPoints());
+        $this->assertSame(150, $entity->getPi());
+    }
+
+    /**
+     * The contract offers no setter, so nothing can write the mirror column and
+     * leave the satellite behind. The services are the writers.
+     */
+    #[DataProvider('writeMethodsThatMustNotExist')]
+    public function testTheContractsOfferNoWrite(string $interface, string $method): void
+    {
+        $this->assertFalse(
+            method_exists($interface, $method),
+            "{$interface}::{$method}() would reach the mirror column alone"
+        );
+    }
+
+    /** @return array<string, array{0: class-string, 1: string}> */
+    public static function writeMethodsThatMustNotExist(): array
+    {
+        $cases = [];
+        foreach (['setNextTurnTime', 'setLastActionTime', 'setNextTurnRescheduled'] as $method) {
+            $cases[$method] = [TakesTurnsInterface::class, $method];
+        }
+        foreach (['setXp', 'addXp', 'setRank', 'setBonusPoints', 'setPi', 'addPi'] as $method) {
+            $cases[$method] = [ProgressesInterface::class, $method];
+        }
+
+        return $cases;
     }
 
     /**
@@ -86,6 +119,14 @@ class EntityCapabilitiesTest extends TestCase
 
         $this->assertNotContains(TakesTurnsInterface::class, $implemented);
         $this->assertNotContains(ProgressesInterface::class, $implemented);
+    }
+
+    private function reloadCharacter(int $id): RealPlayer
+    {
+        $em = \App\Factory\EntityManagerFactory::getEntityManager();
+        $em->clear();
+
+        return $em->find(RealPlayer::class, $id);
     }
 
     private function whenIsItsTurn(TakesTurnsInterface $entity): int

@@ -11,37 +11,32 @@ namespace App\Interface;
  * (docs/design-playable-buildings.md §3.1).
  *
  * That last point is the reason the contract is worth naming early: whatever
- * ends up storing a level must survive `BuildingService::vanish()`, which
- * deletes `players_bonus`, `players_effects` and `players_items`. A life
- * deficit belongs there and SHOULD be wiped; a level must not.
+ * stores a level must survive `BuildingService::vanish()`, which deletes
+ * `players_bonus`, `players_effects` and `players_items`. A life deficit
+ * belongs there and SHOULD be wiped; a level must not — which is why
+ * progression is a satellite of its own.
  *
  * `pi` belongs here too: `Player::put_xp()` mints it in the same statement as
  * experience, capped at the season's XP ceiling, and it buys characteristic
  * upgrades. It is not a purse — gold is an item — but the currency progression
  * itself produces.
+ *
+ * **Reading only.** The state lives in the `progression` satellite, and
+ * {@see \App\Service\ProgressionService} is its only writer — it keeps the
+ * satellite and the `players` columns it still mirrors in step, and spends PI
+ * with a conditional statement rather than a read-then-write. A setter here
+ * would offer a write that reaches the columns alone.
  */
 interface ProgressesInterface
 {
     public function getXp(): int;
 
-    public function setXp(int $xp): self;
-
-    public function addXp(int $amount): self;
-
     /** The level, as the game names it. */
     public function getRank(): int;
-
-    public function setRank(int $rank): self;
 
     /** Unspent points a level grants. */
     public function getBonusPoints(): int;
 
-    public function setBonusPoints(int $bonusPoints): self;
-
     /** What experience mints and characteristic upgrades spend. */
     public function getPi(): int;
-
-    public function setPi(int $pi): self;
-
-    public function addPi(int $amount): self;
 }

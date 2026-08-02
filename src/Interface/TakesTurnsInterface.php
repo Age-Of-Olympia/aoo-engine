@@ -15,6 +15,11 @@ namespace App\Interface;
  * this act?" types on this interface, and stops asking what branch of the tree
  * answered.
  *
+ * **Reading only.** The state lives in the `turns` satellite, and
+ * {@see \App\Service\TurnService} is its only writer — it keeps the satellite
+ * and the `players` column it still mirrors in step. A setter here would offer
+ * a write that reaches the column alone and silently desynchronises the two.
+ *
  * Deliberately NOT here: the action pool itself (A, MVT), which lives in the
  * `players.turn` JSON and is still read through the legacy player. Naming a
  * contract over state that has not been extracted yet would describe a design
@@ -25,15 +30,9 @@ interface TakesTurnsInterface
     /** Unix time at which the next turn falls due; 0 = due now. */
     public function getNextTurnTime(): int;
 
-    public function setNextTurnTime(int $nextTurnTime): self;
-
     /** True when this turn's schedule was already pushed once. */
     public function isNextTurnRescheduled(): bool;
 
-    public function setNextTurnRescheduled(bool $nextTurnRescheduled): self;
-
     /** Unix time of the last action taken, 0 if it never acted. */
     public function getLastActionTime(): int;
-
-    public function setLastActionTime(int $lastActionTime): self;
 }

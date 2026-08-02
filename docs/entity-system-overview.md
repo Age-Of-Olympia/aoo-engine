@@ -1,6 +1,6 @@
 # Entity system — overview and capability reference
 
-**Status**: synthesis of the delivered work (2026-08-02)
+**Status**: synthesis of the delivered work (2026-08-03)
 **Scope**: everything that is an entity on the board — characters, buildings, scenery,
 resources, plants, walls and placed objects — and what each of them can do.
 
@@ -131,7 +131,8 @@ classDiagram
     }
     class Character {
         <<abstract>>
-        account, xp, rank, turn, DLA
+        person: story, quest, godId, pf
+        malus, energie, faction role
     }
     class RealPlayer      { real }
     class TutorialPlayer  { tutorial }
@@ -146,6 +147,20 @@ classDiagram
     class Plant    { plant }
     class Exemplar { item }
 
+    class Account {
+        satellite accounts
+        psw, mail, plain_mail
+        email_bonus, last_login_time
+    }
+    class TurnState {
+        satellite turns
+        next_turn_time, last_action_time
+        next_turn_rescheduled, anti_berserk_time
+    }
+    class ProgressionState {
+        satellite progression
+        xp, rank, bonus_points, pi
+    }
     class BuildingDetails {
         satellite buildings
         build_state: construction|built|ruin
@@ -172,6 +187,9 @@ classDiagram
     Structure <|-- Plant
     Structure <|-- Exemplar
 
+    Character ..> Account : 1..1
+    Character ..> TurnState : 1..1
+    Character ..> ProgressionState : 1..1
     Building ..> BuildingDetails : 1..1
     Resource ..> ResourceState : 0..1
     Exemplar ..> ItemInstance : 1..1
@@ -185,19 +203,47 @@ for it (no malus, no bleeding, the `vanish` death path rather than the enfers on
 
 ### 2.3 Capabilities on the object side
 
-The type tree shares behaviour through interfaces (§2.1); the object tree has begun to do the
-same, for what is a *capability* rather than a branch:
+**Where this came from: a building cannot level up.** That is the observation the whole
+strand started at. A forge already *has* `xp`, `rank`, `nextTurnTime` — `Character` is STI on
+the same `players` table — so the data was never the obstacle. The obstacle was that those
+fields were spelled as character-ness: to make anything else play, one had to make it a
+character, and drag in an account, the enfers death path, missives and faction-membership
+counting along with it.
+
+So the type tree shares behaviour through interfaces (§2.1), and the object tree now does the
+same for what is a *capability* rather than a branch:
 
 | interface | who holds it today | what it means |
 |---|---|---|
 | `TakesTurnsInterface` | `Character` | has a next turn, a reschedule flag, a memory of its last action |
 | `ProgressesInterface` | `Character` | earns experience, holds a level and unspent points |
 
+Both **read only**: the state lives in satellites and the services below are the writers, so
+a setter on the contract would reach the mirror column alone and leave the satellite behind.
+
 Neither is character-ness: a playable building will take turns and earn its own experience
-without ever having an account. Naming the contracts early is what lets the gates switch from
+without ever having an account. Naming the contracts is what lets the gates switch from
 *"is this a character?"* to *"does this take turns?"* one at a time, instead of in a sweep.
-Nothing has moved — `Character` still owns the columns.
-See [design-playable-buildings.md](design-playable-buildings.md).
+
+**The state has now moved to match.** Three satellites hold what `Character` used to carry on
+its own row, each reached through one service that is the only writer:
+
+| satellite | holds | gateway |
+|---|---|---|
+| `accounts` | psw, mail, plain mail, mail bonus, last login | `AccountService` |
+| `turns` | next turn, last action, reschedule flag, anti-berserk | `TurnService` |
+| `progression` | xp, rank, bonus points, pi | `ProgressionService` |
+
+The `players` columns are still there and still written, as **mirrors**: `Player::get_row()`
+joins the satellites with `COALESCE(NULLIF(…))`, so the ~120 call sites reading
+`$player->data->xp` never moved. Dropping the columns is a post-deployment pass that deletes
+one statement per service method. Until then, treat the satellite as the truth and the column
+as its echo.
+
+A building that levels up therefore needs no reparenting under `Character` — it needs a row
+in `turns` and `progression`, and a controller, since it has no session. See
+[design-playable-buildings.md](design-playable-buildings.md) and
+[handoff-batiments-jouables.md](handoff-batiments-jouables.md).
 
 ### 2.4 Tables
 
@@ -209,6 +255,9 @@ erDiagram
     coords ||--o{ entity_cells : ""
     races ||--o{ players : "players.race"
     items ||--o{ players : "players.race when player_type='item'"
+    players ||--o| accounts : "satellite — credentials, characters only"
+    players ||--o| turns : "satellite — when it plays"
+    players ||--o| progression : "satellite — what it earns"
     players ||--o| buildings : "satellite"
     players ||--o| resources : "satellite"
     players ||--o| item_instances : "satellite"
@@ -233,6 +282,9 @@ erDiagram
 | `LootSpillService` | what falls when anything dies — a character or a smashed chest, same code |
 | `Map\ResourceStateService` / `ResourceService` | standing vs exhausted, harvest budget, regrow rolls |
 | `Map\HarvestCatalogService` | yields per (plan, type), field-by-field override |
+| `AccountService` | credentials: the hash a login is checked against, mail, mail bonus, last login, and the RGPD wipe |
+| `TurnService` | when an entity plays: opening a turn, rescheduling it, touching the last action |
+| `ProgressionService` | what an entity earns: the xp/pi/rank gain, the **conditional** PI debit, the season's ceiling |
 | `PlayerService::ProcessTargetDeath` | the fork between character death and structure destruction |
 
 ---
@@ -322,7 +374,8 @@ individual immediately — there is no frozen snapshot anywhere.
 | `readable_from_afar`, `default_text` | inscription visible without stepping in | structures |
 | `harvest_item` / `harvest_exhaust` / `harvest_regrow` | what it yields, per-thousand odds of running out and of coming back | resources, plants |
 | `harvest_min` / `harvest_max` | how much one picking gives | plants |
-| `playable`, `hidden` | character creation | character races |
+| `playable` | may this type be **driven** — by a registering player, or (to come) through faction access | character races, and playable building types |
+| `hidden` | kept out of what a player is shown: creation, lists, rankings | all |
 | `faction`, `plan`, `animateur_id`, colors, portrait/avatar counters | presentation and ownership defaults | all |
 | footprint (`entity_type_footprint`) | which cells a type occupies, and the role of each piece | multi-cell structures |
 | `race_harvest` (plan, type) | per-plan override of the yield, **field by field** | resources, plants |
@@ -338,10 +391,16 @@ plus the fifteen conferred caracs.
 
 On `players`: `name`, `display_id`, location triple, `race` (its type), `owner_id`,
 `faction`, `is_open`, `avatar`, `portrait`, `text`.
-On satellites: `buildings.build_state` / `dialog` / `readable_from_afar` (per-entity
-override), `resources.exhausted_at`, `item_instances.quality` / `params` / `creator_id` /
-`created_at` / `wear_pending`.
+On satellites: `accounts` (credentials), `turns` (next turn, last action, reschedule flag,
+anti-berserk), `progression` (xp, rank, bonus points, pi), `buildings.build_state` / `dialog`
+/ `readable_from_afar` (per-entity override), `resources.exhausted_at`,
+`item_instances.quality` / `params` / `creator_id` / `created_at` / `wear_pending`.
 Life lives in `players_bonus`, for every family alike.
+
+**A level is not life.** Progression is filed in its own satellite precisely because
+`vanish()` deletes `players_bonus`, `players_effects` and `players_items` for the entity. Life
+is a deficit and *should* be wiped on destruction; a level must not be — a destroyed building
+keeps it, in the void, with its surviving row (§6.4).
 
 ### 5.4 Behaviour by family
 
@@ -612,3 +671,10 @@ the type gate: "Cela ne se répare pas.")*
 7. **Nothing derives a family from columns after construction** — ask the class.
 8. **A gate declares what it reaches**, at the finest level it means (family before branch),
    and the display reads the same matcher as the execution.
+9. **A capability is a satellite plus a service, never a branch.** What only some entities do
+   moves off the `players` row into its own table, with one service as the sole writer. New
+   gates ask the capability (`TakesTurnsInterface`), not the class.
+10. **While a column is mirrored, the satellite is the truth and the column is the echo.** A
+    write that skips the service desynchronises them silently, and the `NULLIF` join is what
+    keeps the column winning until the service has caught up. Route the write; never patch the
+    column.

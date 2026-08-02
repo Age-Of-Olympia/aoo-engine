@@ -27,6 +27,10 @@ use Doctrine\ORM\Mapping as ORM;
  * ProgressionService, and the columns are mirrors kept alive until the
  * post-deployment drop. The same holds for psw/mail and `accounts`.
  *
+ * So the capability accessors READ only. Their setters are gone: assigning a
+ * mapped property and flushing would reach the mirror alone and leave the
+ * satellite behind, and the satellite is what answers.
+ *
  * No discriminator entry of its own — Doctrine allows abstract
  * intermediate classes in an STI hierarchy; querying Character returns
  * every row whose type maps into this subtree.
@@ -149,44 +153,14 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
         return $this->xp;
     }
 
-    public function setXp(int $xp): self
-    {
-        $this->xp = $xp;
-        return $this;
-    }
-
-    public function addXp(int $amount): self
-    {
-        $this->xp += $amount;
-        return $this;
-    }
-
     public function getBonusPoints(): int
     {
         return $this->bonusPoints;
     }
 
-    public function setBonusPoints(int $bonusPoints): self
-    {
-        $this->bonusPoints = $bonusPoints;
-        return $this;
-    }
-
     public function getPi(): int
     {
         return $this->pi;
-    }
-
-    public function setPi(int $pi): self
-    {
-        $this->pi = $pi;
-        return $this;
-    }
-
-    public function addPi(int $amount): self
-    {
-        $this->pi += $amount;
-        return $this;
     }
 
     public function getPr(): int
@@ -249,12 +223,6 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
         return $this->rank;
     }
 
-    public function setRank(int $rank): self
-    {
-        $this->rank = $rank;
-        return $this;
-    }
-
     public function getStory(): string
     {
         return $this->story;
@@ -315,32 +283,14 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
         return $this->nextTurnTime;
     }
 
-    public function setNextTurnTime(int $nextTurnTime): self
-    {
-        $this->nextTurnTime = $nextTurnTime;
-        return $this;
-    }
-
     public function isNextTurnRescheduled(): bool
     {
         return $this->nextTurnRescheduled;
     }
 
-    public function setNextTurnRescheduled(bool $nextTurnRescheduled): self
-    {
-        $this->nextTurnRescheduled = $nextTurnRescheduled;
-        return $this;
-    }
-
     public function getLastActionTime(): int
     {
         return $this->lastActionTime;
-    }
-
-    public function setLastActionTime(int $lastActionTime): self
-    {
-        $this->lastActionTime = $lastActionTime;
-        return $this;
     }
 
     public function getLastLoginTime(): int
@@ -357,12 +307,6 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
     public function getAntiBerserkTime(): int
     {
         return $this->antiBerserkTime;
-    }
-
-    public function setAntiBerserkTime(int $antiBerserkTime): self
-    {
-        $this->antiBerserkTime = $antiBerserkTime;
-        return $this;
     }
 
     public function getLastTravelTime(): int
