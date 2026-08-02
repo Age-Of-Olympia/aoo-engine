@@ -6,7 +6,7 @@ use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
 use App\Interface\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
-use App\Service\UniqueObjectService;
+use App\Service\PlacedExemplarService;
 use Classes\Player;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -33,7 +33,7 @@ class TakeItemOutcomeInstruction extends OutcomeInstruction implements HasParame
 
         $targetName = htmlspecialchars((string) ($target->data->name ?? ''), ENT_QUOTES, 'UTF-8');
 
-        $instanceId = (new UniqueObjectService())->takeInstance((int) $target->id, (int) $actor->id);
+        $instanceId = (new PlacedExemplarService())->takeInstance((int) $target->id, (int) $actor->id);
         if ($instanceId === null) {
             return new OutcomeResult(
                 false,

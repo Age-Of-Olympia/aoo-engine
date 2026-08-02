@@ -246,7 +246,7 @@ class PlayerService
             // L'entité disparaît (sa ligne players et ses logs avec) : on
             // détruit d'abord, puis on journalise côté attaquant seulement
             // — un log ciblant la ligne supprimée violerait la FK.
-            (new UniqueObjectService())->destroyToGround($target->id);
+            (new PlacedExemplarService())->destroyToGround($target->id);
 
             $text = $player->data->name . ' a détruit ' . $target->data->name . '.';
             Log::put($player, $player, $text, type: "kill", hiddenText: '', logTime: $timestamp);

@@ -3,25 +3,24 @@
 namespace Tests\Player;
 
 use App\Service\ItemInstanceService;
-use App\Service\UniqueObjectService;
+use App\Service\PlacedExemplarService;
 use Classes\Item;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * Items Phase 3 golden masters — the ground bridge, revised after
- * review (2026-07-17): an instance ON THE GROUND is part of the tile's
- * BOURSE like any loot — dropped via dropAt(), collected by WALKING on
- * the tile (collectAt(), wired in go.php). No dedicated action.
- * Identity — wear, name, provenance — survives the round trip.
+ * Baseline for an exemplar's two lives on the board.
  *
- * The ENTITY wrapper (UniqueObjectService, unique_objects.
- * item_instance_id) remains available for future animator-placed
- * attackable artifacts/chests; its invariants stay pinned here.
+ * DROPPED, it belongs to the tile's loot: it lands through dropAt() and is
+ * picked up by collecting the tile, with no action of its own. PLACED, it
+ * stands on the tile and can be aimed at.
+ *
+ * Identity — wear, name, provenance — survives the whole round trip, which is
+ * what these cases pin.
  */
 #[Group('items-baseline')]
 #[Group('entities-structure')]
-class UniqueObjectBridgeBaselineTest extends LegacyPlayerFixtureTestCase
+class PlacedExemplarBaselineTest extends LegacyPlayerFixtureTestCase
 {
     protected function setUp(): void
     {
@@ -165,7 +164,7 @@ class UniqueObjectBridgeBaselineTest extends LegacyPlayerFixtureTestCase
 
         ob_start();
         try {
-            $entityId = (new UniqueObjectService())->placeInstance(
+            $entityId = (new PlacedExemplarService())->placeInstance(
                 $instanceId,
                 (object) ['x' => 0, 'y' => 5, 'z' => 0, 'plan' => 'gaia']
             );
@@ -193,7 +192,7 @@ class UniqueObjectBridgeBaselineTest extends LegacyPlayerFixtureTestCase
             'plus de pont : il n\'enveloppe rien, il est'
         );
 
-        $taken = (new UniqueObjectService())->takeInstance($entityId, $player->id);
+        $taken = (new PlacedExemplarService())->takeInstance($entityId, $player->id);
         $this->assertSame($instanceId, $taken);
         $this->assertSame(60, $this->remainingLifeOf($instanceId), 'identity survives the entity round trip too');
 

@@ -7,13 +7,17 @@ use Classes\View;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Pont carte des objets (docs/design-items-instances.md §3.3) — the map bridge:
- * a UniqueObject wraps an item INSTANCE. The location invariant moves
- * with it: placing releases the owner link (the instance's location IS
- * the map), taking re-links it to the taker and removes the map entity.
- * Identity — wear, name, provenance — survives the round trip.
+ * An exemplar standing ON the board: placing it, taking it back, and what
+ * becomes of it at zero life.
+ *
+ * The exemplar IS the entity — there is no wrapper around it — so placing and
+ * taking only move where it is held: a placed one belongs to its cell, a taken
+ * one to its taker. Identity (wear, name, provenance) survives the round trip.
+ *
+ * Its bag-side counterpart is {@see ItemInstanceService}, which creates,
+ * equips, banks and collects.
  */
-class UniqueObjectService extends BaseService
+class PlacedExemplarService extends BaseService
 {
 
     private EntityManagerInterface $entityManager;
@@ -25,9 +29,9 @@ class UniqueObjectService extends BaseService
     }
 
     /**
-     * Put an owned instance on the map as a UniqueObject.
+     * Put an owned instance on the map, where it stands as itself.
      *
-     * @return int the new unique object's players.id
+     * @return int the exemplar's players.id
      *
      * @throws \InvalidArgumentException when the instance doesn't exist,
      *         is destroyed, is still equipped, or is not held by a player
@@ -82,7 +86,7 @@ class UniqueObjectService extends BaseService
 
         View::refresh_players_svg($goCoords);
 
-        $this->addAuditLog("UniqueObjectService::placeInstance #{$instanceId} as item #{$id}");
+        $this->addAuditLog("PlacedExemplarService::placeInstance #{$instanceId} as item #{$id}");
 
         return $id;
     }
@@ -114,51 +118,50 @@ class UniqueObjectService extends BaseService
      *
      * @return int|null the taken instance id, null when the target is not an exemplar
      */
-    public function takeInstance(int $uniqueId, int $takerId): ?int
+    public function takeInstance(int $exemplarId, int $takerId): ?int
     {
         $conn = $this->entityManager->getConnection();
 
-        $instanceId = self::instanceIdOf($conn, $uniqueId);
+        $instanceId = self::instanceIdOf($conn, $exemplarId);
         if ($instanceId === null) {
             return null;
         }
 
         $goCoords = $conn->fetchAssociative(
             'SELECT c.x, c.y, c.z, c.plan FROM coords c JOIN players p ON p.coords_id = c.id WHERE p.id = ?',
-            [$uniqueId]
+            [$exemplarId]
         );
 
-        $conn->transactional(function ($conn) use ($uniqueId, $takerId): void {
-            (new \App\Service\Map\EntityLocationService($conn))->putInside($uniqueId, $takerId);
+        $conn->transactional(function ($conn) use ($exemplarId, $takerId): void {
+            (new \App\Service\Map\EntityLocationService($conn))->putInside($exemplarId, $takerId);
         });
 
-        BuildingService::purgeEntityCaches($uniqueId);
+        BuildingService::purgeEntityCaches($exemplarId);
         if ($goCoords !== false) {
             View::refresh_players_svg((object) $goCoords);
         }
 
-        $this->addAuditLog("UniqueObjectService::takeInstance unique #{$uniqueId} -> player #{$takerId}");
+        $this->addAuditLog("PlacedExemplarService::takeInstance exemplar #{$exemplarId} -> player #{$takerId}");
 
         return (int) $instanceId;
     }
 
     /**
-     * Destruction en jeu (0 PV) : l'exemplaire posé tombe BRISÉ sur sa case
-     * (durabilité 0). Son identité survit — il ne cesse pas d'exister, il
-     * cesse de tenir sa case.
+     * At zero life, a placed exemplar falls BROKEN onto its own cell. It does
+     * not stop existing, it stops holding the tile — so its identity survives.
      *
      * @return int|null the broken instance id, null when the target is not an exemplar
      */
-    public function destroyToGround(int $uniqueId): ?int
+    public function destroyToGround(int $exemplarId): ?int
     {
         $conn = $this->entityManager->getConnection();
 
-        $instanceId = self::instanceIdOf($conn, $uniqueId);
+        $instanceId = self::instanceIdOf($conn, $exemplarId);
         if ($instanceId === null) {
             return null;
         }
 
-        $coordsId = $conn->fetchOne('SELECT coords_id FROM players WHERE id = ?', [$uniqueId]);
+        $coordsId = $conn->fetchOne('SELECT coords_id FROM players WHERE id = ?', [$exemplarId]);
         $goCoords = $conn->fetchAssociative(
             'SELECT x, y, z, plan FROM coords WHERE id = ?',
             [(int) $coordsId]
@@ -168,9 +171,9 @@ class UniqueObjectService extends BaseService
          * shut inside an object that lies on the ground — a container holding
          * anything cannot be picked up, so its contents would be stuck. Same
          * service, same loot rules, as a dying player. */
-        (new LootSpillService())->spill(\App\Factory\PlayerFactory::legacy($uniqueId));
+        (new LootSpillService())->spill(\App\Factory\PlayerFactory::legacy($exemplarId));
 
-        $conn->transactional(function ($conn) use ($uniqueId, $instanceId, $coordsId): void {
+        $conn->transactional(function ($conn) use ($exemplarId, $instanceId, $coordsId): void {
             $conn->executeStatement(
                 "INSERT INTO players_bonus (player_id, name, n)
                  SELECT i.entity_id, 'pv', -it.durability_max
@@ -182,15 +185,15 @@ class UniqueObjectService extends BaseService
 
             /* Smashed, it stops holding its tile and lies on it instead. The
              * same entity throughout: nothing is deleted, nothing re-created. */
-            (new \App\Service\Map\EntityLocationService($conn))->dropOnCell($uniqueId, (int) $coordsId);
+            (new \App\Service\Map\EntityLocationService($conn))->dropOnCell($exemplarId, (int) $coordsId);
         });
 
-        BuildingService::purgeEntityCaches($uniqueId);
+        BuildingService::purgeEntityCaches($exemplarId);
         if ($goCoords !== false) {
             View::refresh_players_svg((object) $goCoords);
         }
 
-        $this->addAuditLog("UniqueObjectService::destroyToGround unique #{$uniqueId} instance #{$instanceId}");
+        $this->addAuditLog("PlacedExemplarService::destroyToGround exemplar #{$exemplarId} instance #{$instanceId}");
 
         return (int) $instanceId;
     }
