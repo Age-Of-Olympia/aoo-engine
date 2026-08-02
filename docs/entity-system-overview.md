@@ -183,7 +183,23 @@ fit `Character` / `Structure` gets a **satellite table**, not a new branch. `Ent
 `item` is filed under `structure` on purpose, so it inherits the behaviours already right
 for it (no malus, no bleeding, the `vanish` death path rather than the enfers one).
 
-### 2.3 Tables
+### 2.3 Capabilities on the object side
+
+The type tree shares behaviour through interfaces (§2.1); the object tree has begun to do the
+same, for what is a *capability* rather than a branch:
+
+| interface | who holds it today | what it means |
+|---|---|---|
+| `TakesTurnsInterface` | `Character` | has a next turn, a reschedule flag, a memory of its last action |
+| `ProgressesInterface` | `Character` | earns experience, holds a level and unspent points |
+
+Neither is character-ness: a playable building will take turns and earn its own experience
+without ever having an account. Naming the contracts early is what lets the gates switch from
+*"is this a character?"* to *"does this take turns?"* one at a time, instead of in a sweep.
+Nothing has moved — `Character` still owns the columns.
+See [design-playable-buildings.md](design-playable-buildings.md).
+
+### 2.4 Tables
 
 ```mermaid
 erDiagram
@@ -201,7 +217,7 @@ erDiagram
     races ||--o| entity_type_footprint : "multi-cell cut-out"
 ```
 
-### 2.4 Services that own a rule
+### 2.5 Services that own a rule
 
 | Service | Sole owner of |
 |---|---|
