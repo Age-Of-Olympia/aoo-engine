@@ -111,7 +111,8 @@ classDiagram
 ```
 
 `HarvestableFieldsTrait` carries the three shared harvest columns for the two families that
-implement `HarvestableInterface`. `Race::ofFamily()` is the **only** place in PHP that
+implement `HarvestableInterface` — the pattern §2.6 spells out, and the one the object tree
+copied for turns and progression. `Race::ofFamily()` is the **only** place in PHP that
 derives a family from `(kind, structure_nature)`; once the object exists, its class answers
 `familyKey()`. The same rule lives in SQL triggers, and `TypeFamilyColumnTest` compares the
 two line by line.
@@ -257,10 +258,9 @@ seed satellites and the migrations that backfill them must say it word for word.
 
 The columns behind both capabilities are mapped by **traits** — `TakesTurnsFieldsTrait` and
 `ProgressesFieldsTrait` — used by `Character` and `Building`, exactly as
-`HarvestableFieldsTrait` is used by `ResourceType` and `PlantType` on the type side. Doctrine
-maps them into the one `players` table for both families, so a capability crosses families
-that do not form a subtree **without climbing onto the trunk**: `Scenery` maps none of them,
-because a decor has no experience to hold. Same pattern, both trees.
+`HarvestableFieldsTrait` is used on the type side. A capability crosses families that do not
+form a subtree **without climbing onto the trunk**: `Scenery` maps none of them, because a
+decor has no experience to hold. Same pattern, both trees — see **§2.6**.
 
 Neither is character-ness: a playable building will take turns and earn its own experience
 without ever having an account. Naming the contracts is what lets the gates switch from
@@ -329,6 +329,100 @@ erDiagram
 | `TurnProcessingService` | what a turn refreshes, and the fork between a character's (a body to recover) and a structure's (its pool and its clock) |
 | `ProgressionService` | what an entity earns: the xp/pi/rank gain, the **conditional** PI debit, the season's ceiling |
 | `PlayerService::ProcessTargetDeath` | the fork between character death and structure destruction |
+
+### 2.6 Traits — a capability crossing families
+
+Both trees are single-table inheritance, and in both of them the classes that share a
+capability **do not form a subtree**. `ResourceType` and `PlantType` are siblings; so are
+`Character` and `Building`. There are only two ways to give siblings the same columns, and
+one of them is wrong:
+
+| | |
+|---|---|
+| put the columns on the **trunk** | every family inherits them — a decor carries an `xp` it will never read, a dwarf race carries a `harvest_item` that answers `null`. The question becomes askable where it has no meaning |
+| put them in a **trait** the holders use | only the holders map them. The question does not compile where it has no meaning |
+
+The second is the rule here. **An interface names the capability, a trait carries its
+columns, and the classes that hold it use both.** Doctrine maps a trait's columns into the
+one table for each class that uses it — verified on the metadata rather than assumed, both
+times.
+
+```mermaid
+classDiagram
+    class HarvestableInterface {
+        <<interface>>
+        what it yields
+    }
+    class HarvestableFieldsTrait {
+        <<trait>>
+        harvest_item
+        harvest_exhaust / harvest_regrow
+        into table races
+    }
+    class ResourceType { type_kind = resource }
+    class PlantType {
+        type_kind = plant
+        + harvest_min / harvest_max of its own
+    }
+
+    class TakesTurnsInterface {
+        <<interface>>
+        when may it act
+    }
+    class ProgressesInterface {
+        <<interface>>
+        what has it earned
+    }
+    class TakesTurnsFieldsTrait {
+        <<trait>>
+        nextTurnTime / lastActionTime
+        nextTurnRescheduled / antiBerserkTime
+        into table players
+    }
+    class ProgressesFieldsTrait {
+        <<trait>>
+        xp / rank / bonus_points / pi
+        into table players
+    }
+    class Character { <<abstract>> }
+    class Building { building }
+
+    HarvestableInterface <|.. ResourceType
+    HarvestableInterface <|.. PlantType
+    HarvestableFieldsTrait <.. ResourceType : use
+    HarvestableFieldsTrait <.. PlantType : use
+
+    TakesTurnsInterface <|.. Character
+    TakesTurnsInterface <|.. Building
+    ProgressesInterface <|.. Character
+    ProgressesInterface <|.. Building
+    TakesTurnsFieldsTrait <.. Character : use
+    TakesTurnsFieldsTrait <.. Building : use
+    ProgressesFieldsTrait <.. Character : use
+    ProgressesFieldsTrait <.. Building : use
+```
+
+| trait | contract | used by | maps into |
+|---|---|---|---|
+| `HarvestableFieldsTrait` | `HarvestableInterface` | `ResourceType`, `PlantType` | `races` |
+| `TakesTurnsFieldsTrait` | `TakesTurnsInterface` | `Character`, `Building` | `players` |
+| `ProgressesFieldsTrait` | `ProgressesInterface` | `Character`, `Building` | `players` |
+
+**What does not use them maps nothing.** `Scenery`, `Resource`, `Plant` and `Exemplar` have
+no `xp` column at all; `CharacterRace` and `BuildingType` have no `harvest_item`. That is the
+whole benefit over the trunk, and it is pinned twice — by the interfaces, and by the columns
+Doctrine actually maps, because those two can drift apart if a trait quietly goes missing.
+
+Three notes worth keeping:
+
+- **A trait is not the whole capability.** `PlantType` adds `harvest_min` / `harvest_max` of
+  its own beside the shared three; a trait is the common floor, not a ceiling.
+- **The trait carries state, the service carries writes.** These three are read-only:
+  `TurnService`, `ProgressionService` and the harvest catalogue own the writing. A setter in
+  the trait would reach the mirror column and leave the satellite behind (§2.3).
+- **Neither trait was written before its second user.** `HarvestableFieldsTrait` says so in
+  its own docblock — with one implementer there is nothing to share, only a detour to add.
+  The same held here: the turn columns lived on `Character` until a building needed them.
 
 ---
 
@@ -722,3 +816,7 @@ the type gate: "Cela ne se répare pas.")*
     write that skips the service desynchronises them silently, and the `NULLIF` join is what
     keeps the column winning until the service has caught up. Route the write; never patch the
     column.
+11. **A shared capability goes in a trait, never on the trunk** (§2.6). The classes that hold
+    it rarely form a subtree; a trait gives them the columns without giving them to everything
+    else. And it waits for its **second** user — with one implementer there is nothing to
+    share, only a detour to add.
