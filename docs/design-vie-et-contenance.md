@@ -170,11 +170,13 @@ Checked against the running database and the code, not assumed.
   convenience. `EntityCellService` tests `coords_id > 0` throughout, guarding
   against a state the schema already forbids; the test stays true and stops
   being the way absence is written.
-- **Off-board entities already exist.** `BuildingService::vanish()` shelves a
-  building on plan `limbes_batiments` with its `entity_cells` removed — five
-  buildings sit there now. A dead character goes to plan `enfers`
-  (`Player.php:1934`). There is a `pnjdump` plan. Every non-map location is
-  currently faked as a sentinel plan.
+- **Off-board entities already exist.** *(superseded — kept because it is why
+  the model says what it says.)* `vanish()` used to shelve a building on a
+  sentinel plan `limbes_batiments`; every non-map location was faked that way. It
+  now writes the absence — `coords_id` and `holder_id` both NULL, `entity_cells`
+  removed — and the plan holds no coords at all (checked 2026-08-02). A dead
+  character still goes to plan `enfers` (`Player.php`), which is a character
+  path and stays.
 - **Characters, NPCs and structures already share one life store.**
   `players_bonus` holds `pv` deficits for a character (`4 → −4`), an NPC
   (`−1 → −16`), buildings (`20000004 → −55`) and scenery (`40000016 → −1`).
@@ -182,13 +184,17 @@ Checked against the running database and the code, not assumed.
   `ae`, `a`, `mvt`. A wound persists across turns — which is what wear needs.
 - **`players.malus` is not life.** It is the defence-roll penalty; `put_malus()`
   early-returns for every Structure. (The 2026-08-01 handoff note had this wrong.)
-- **The frozen max has never diverged.** Every `item_instances.durability_max` is
-  100, the catalogue default, and every `quality` is 0. Nothing is lost by
-  dropping the snapshot.
+- **The frozen max never diverged, and the snapshot is gone.** When this was
+  written every max was 100, the catalogue default, so dropping the per-instance
+  snapshot cost nothing. The max now lives only on the type, and it does vary:
+  25 / 40 / 100 across the chests (checked 2026-08-02). `quality` is still 0
+  everywhere, so the per-individual bonus remains untested by real data.
 - `takeInstance()` has exactly one caller, `TakeItemOutcomeInstruction`.
 - `BuildingService::deleteEntityRows()` deletes the entity's `players_items`, so
-  **picking up or destroying a full chest destroys its contents today** — unseen
-  only because no unique object exists on the development database.
+  **picking up or destroying a full chest destroyed its contents** — unseen only
+  because no unique object existed on the development database. Fixed for the
+  death path: `vanish()` spills first, and a container holding anything cannot be
+  picked up at all.
 
 ---
 
@@ -196,6 +202,10 @@ Checked against the running database and the code, not assumed.
 
 Each of the three jobs on the original list arrives as a *consequence* of a
 phase, not as a feature bolted onto it.
+
+**Status at 2026-08-02.** Phases 1 to 5 are merged, plus the first half of
+phase 6. What each phase says below is what was *decided*; where the shipped
+work diverged, the phase text says so. Only phase 6 still has work in it.
 
 **Phase 1 — containment exists, nobody uses it.**
 `holder_id` + `slot` on the entity, `coords_id` nullable, one service holding the
@@ -245,7 +255,7 @@ keys in `ItemExporter`/`ItemImporter`, where renaming a key is a compatibility
 question that deserves its own answer rather than riding along with a data
 migration.
 
-**Phase 4 — lockable.**
+**Phase 4 — lockable.** *(merged: !864)*
 Being shut is one mechanism for a building and for an object, and it already
 exists: `BuildingService::closureReason()` returns *en ruine* / *en construction*
 / *endommagé* (under half PV) / *fermé volontairement*. Nothing in that logic is
@@ -291,7 +301,7 @@ written rather than written then deleted.
 `'en construction'` stays building-only and untouched: it is a placeholder for
 the coming work-quantity mechanic, not something an exemplar should fake.
 
-**Phase 5 — containers stop being building types.**
+**Phase 5 — containers stop being building types.** *(merged: !866, !867)*
 A chest exists twice today: an `items` row (constructible) and a `races` row of
 kind `building`. Building one **consumes the item** to produce a building entity
 with no exemplar behind it, so placing a chest destroys its wear, its name and
@@ -302,12 +312,52 @@ convert to installed exemplars.
 exemplar has nowhere to put either until the entity does. Converting first would
 silently strip every standing chest of its owner and its lock.
 
-**Phase 6 — the rest of the capabilities land.**
-Damage, heal and repair go through the one life; every `player_type === 'unique'`
-branch dies with them. Inventory becomes children, so `LootSpillService` becomes
-"re-parent my children to my cell", and a smashed chest spilling its contents is
-the same code as a player dying. `reparer` reaches a bagged sword because a
-bagged sword is an entity below its max life.
+*What shipped beyond the plan:* the seven standing chests kept their ids —
+`ENTITY_ID_RANGES` allocates, it does not classify, and events already name
+those ids. The material decides durability (40 / 70 / 100, 25 for the human
+chest) instead of inheriting either catalogue's placeholder. Building an object
+now **places that object**: a type still described by a race mints a building,
+anything else installs its exemplar, so each family leaving `races` switches
+sides on its own. A wooden-chest recipe exists so that path is exercised.
+
+**Phase 6 — one way to say who holds a thing.**
+
+Delivered already: `LootSpillService` spills children to the holder's cell, by
+the same roll and the same `chanceFor()` rules as a stack unit; a container
+holding anything cannot be picked up; `vanish()` spills instead of deleting.
+
+What remains is a **collapse, not a build**, and §2.3 already called for it —
+"`players_items_instances` and `map_items_instances` are two cases of this one
+relation and retire into it". The new half was built and the old half was not
+retired, so today there are two records of who holds an exemplar:
+
+| | records | written by | read by |
+|---|---|---|---|
+| `players_items_instances(player_id, instance_id, equiped, location)` | ownership, equipped state, bank/market/exchange escrow | every legacy path | every inventory reader |
+| `players.holder_id` + `slot` | containment | `putInside()`, `collectAt()` | `childrenOf()`, `holdsAnything()`, `cellOf()` |
+
+`collectAt()` writes both. `putInside()` writes only the second — which is why a
+sword placed in a chest is invisible to every inventory reader. **Nothing is
+missing from entities**: both ownership tables are keyed on `player_id`, which is
+any `players` row, so a chest can already own stacks and exemplars. The defect is
+the duplication, not an absence.
+
+The columns fold cleanly, because `slot` was defined with the vocabulary the old
+table needs: `player_id` → `holder_id`, `equiped` → `slot` (`'main1'`, `'tronc'`),
+`location` → `slot` (`'bank'`), the escrow states likewise. Strangler order:
+
+1. make `holder_id` + `slot` the truth on write, both halves still written;
+2. backfill the exemplars that have a bag link and no holder;
+3. repoint the readers, one at a time, each with its own golden master;
+4. stop writing the old half, then drop the table.
+
+Then, riding the same relation: damage, heal and repair through the one life,
+retiring the five `player_type === 'unique'` branches; and `reparer` reaching a
+bagged sword, because a bagged sword becomes an entity below its max life.
+
+*Verified against the database before writing this:* zero rows carry a
+`holder_id`, 15 stack rows belong to characters and 1 to an NPC, 6 exemplars sit
+in a bag link. Nothing has to be preserved through the collapse except those 6.
 
 ---
 
@@ -322,9 +372,15 @@ Genuinely undecided — not deferred implementation.
 - **What `quality` does to max life.** It is the natural per-individual bonus,
   the analogue of `players_upgrades` for a character, and it is 0 everywhere
   today. What it should be worth is game design.
-- **Broken is terminal** (`durability <= 0` cannot be repaired) versus
-  `destroyToGround()`'s docblock, which says a smashed object falls at 0 and
-  *"reste réparable"*. The two must be reconciled once a chest dies by spilling.
+- **Is broken terminal, and where is that enforced?** The contradiction this
+  note described is half stale, checked 2026-08-02: `destroyToGround()` no
+  longer claims a smashed object *"reste réparable"* — it sets the deficit to
+  `-durability_max`, drops the exemplar on its cell and says only that its
+  identity survives. But **nothing enforces terminality either**. `BROKEN_AT`
+  gates equipping and the state line, never repair, and `reparer` asks only for
+  a damaged target. So a broken exemplar is repairable today by omission, not by
+  decision. Either the settled rule gains a guard in the repair path, or the
+  rule changes — a call for whoever tunes the economy.
 
 ---
 
