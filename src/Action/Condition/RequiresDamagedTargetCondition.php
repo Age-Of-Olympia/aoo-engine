@@ -20,6 +20,9 @@ use App\Action\Schema\ParameterSchema;
  * La condition compare le restant au maximum, ce qui couvre aussi bien la
  * blessure d'un personnage que les PV entamés d'une structure : les deux
  * vivent dans players_bonus et passent par getRemaining().
+ *
+ * Elle refuse aussi le BRISÉ : à zéro, une chose ne se répare plus. Le seuil
+ * vient de ItemInstanceService::BROKEN_AT, source unique de la règle.
  */
 class RequiresDamagedTargetCondition extends BaseCondition implements HasParameterSchemaInterface
 {
@@ -47,6 +50,10 @@ class RequiresDamagedTargetCondition extends BaseCondition implements HasParamet
 
         if ($max > 0 && $left >= $max) {
             return new ConditionResult(false, array(), array('La cible est intacte.'));
+        }
+
+        if (\App\Service\ItemInstanceService::isBroken($left)) {
+            return new ConditionResult(false, array(), array('La cible est brisée : on ne la répare plus.'));
         }
 
         return new ConditionResult(true, array(), array());

@@ -61,6 +61,47 @@ class RepairExemplarBaselineTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /** Broken is terminal: at zero, a thing is not repaired any more. */
+    public function testABrokenObjectIsNotRepaired(): void
+    {
+        $action = ActionFactory::getAction('reparer');
+        if ($action === null) {
+            $this->markTestSkipped("actions catalog not seeded (no 'reparer' row).");
+        }
+
+        $actor = $this->createRealPlayer('GmRepareur3');
+        $chestId = $this->installExemplar('coffre_bois', 5, 1);
+
+        $this->movePlayerTo((int) $actor->id, 5, 0);
+        $actor->getCoords();
+        $actor->get_caracs();
+
+        $chest = PlayerFactory::legacy($chestId);
+        $chest->get_caracs();
+
+        // Wounded, it is repairable...
+        $chest->putBonus(['pv' => -10]);
+        $this->assertFalse(
+            (new ActionExecutorService($action, $actor, $chest))->executeAction()->isBlocked(),
+            'un coffre entamé se répare'
+        );
+
+        // ...at zero, it is not.
+        $chest = PlayerFactory::legacy($chestId);
+        $chest->get_caracs();
+        $chest->putBonus(['pv' => -40]);
+        $this->assertSame(0, $chest->getRemaining('pv'), 'le coffre est bien à zéro');
+
+        $results = (new ActionExecutorService($action, $actor, $chest))->executeAction();
+
+        $this->assertTrue($results->isBlocked(), 'le brisé ne se répare plus');
+        $this->assertSame(
+            0,
+            PlayerFactory::legacy($chestId)->getRemaining('pv'),
+            'et rien ne le relève au passage'
+        );
+    }
+
     /**
      * A dropped object is picked up, never aimed at.
      *

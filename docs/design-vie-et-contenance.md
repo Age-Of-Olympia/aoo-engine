@@ -389,15 +389,12 @@ Genuinely undecided — not deferred implementation.
 - **What `quality` does to max life.** It is the natural per-individual bonus,
   the analogue of `players_upgrades` for a character, and it is 0 everywhere
   today. What it should be worth is game design.
-- **Is broken terminal, and where is that enforced?** The contradiction this
-  note described is half stale, checked 2026-08-02: `destroyToGround()` no
-  longer claims a smashed object *"reste réparable"* — it sets the deficit to
-  `-durability_max`, drops the exemplar on its cell and says only that its
-  identity survives. But **nothing enforces terminality either**. `BROKEN_AT`
-  gates equipping and the state line, never repair, and `reparer` asks only for
-  a damaged target. So a broken exemplar is repairable today by omission, not by
-  decision. Either the settled rule gains a guard in the repair path, or the
-  rule changes — a call for whoever tunes the economy.
+- ~~**Is broken terminal?**~~ **Settled and enforced.** `RequiresDamagedTarget`
+  now refuses a target at zero, reading the threshold from
+  `ItemInstanceService::BROKEN_AT` — the same constant that gates equipping and
+  the state line. What remains open is not the rule but **what becomes of a
+  terminated object**: it lies broken on its cell, and whether it can be
+  salvaged, scrapped or cleared belongs to a later phase.
 
 ---
 
