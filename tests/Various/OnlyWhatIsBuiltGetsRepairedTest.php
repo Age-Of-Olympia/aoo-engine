@@ -10,22 +10,13 @@ use App\Entity\StructureType;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Ce qui se répare est une propriété du TYPE, pas de la catégorie.
- *
- * `reparer` ne filtrait que par catégorie — `TargetType: structure`. C'était
- * juste tant que les seules structures étaient bâties ; ressources, décors et
- * plantes sont devenus des entités et sont tombés du même côté de l'arbre. On
- * pouvait réparer une fleur, et y laisser une action.
- *
- * La catégorie ne peut pas trancher : elle n'a que deux valeurs, et les deux
- * sont justes. Ces cas épinglent où la réponse vit désormais.
+ * Repairability is a property of the TYPE, not of the category — which has two
+ * values and cannot tell a forge from a flower. These cases pin where the
+ * answer lives.
  */
 class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
 {
-    /**
-     * Les cas qui touchent une vraie ligne — ou un objet legacy, qui ouvre une
-     * connexion dès sa naissance — ont besoin du socle. Ailleurs, on saute.
-     */
+    /** Cases touching a real row, or a legacy object that connects on birth. */
     private function bootstrapOrSkip(): \Doctrine\DBAL\Connection
     {
         try {
@@ -39,10 +30,7 @@ class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
         return $conn;
     }
 
-    /**
-     * Ce qui a été DRESSÉ par quelqu'un s'entretient ; ce qui pousse ou gît
-     * là, non — son cycle est l'épuisement puis la repousse.
-     */
+    /** What someone erected is maintained; what grows follows exhaustion and regrowth. */
     public function testWhatWasErectedIsRepairableByDefault(): void
     {
         $this->assertTrue((new BuildingType())->isRepairable(), 'un édifice s\'entretient');
@@ -53,10 +41,8 @@ class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
     }
 
     /**
-     * Le type peut contredire sa famille — dans les deux sens.
-     *
-     * C'est la raison d'être de la colonne : une palissade de décor qu'on veut
-     * pouvoir rafistoler ne doit pas obliger à déplacer toute une famille.
+     * A type may contradict its family both ways — the reason the column
+     * exists: one mendable fence must not force a whole family to move.
      */
     public function testATypeCanOverrideItsFamilyBothWays(): void
     {
@@ -68,11 +54,8 @@ class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
     }
 
     /**
-     * Rien de décidé = la FAMILLE répond, et on peut le relire tel quel.
-     *
-     * L'écran de réglage a besoin de la nuance : proposer « oui / non » sans
-     * troisième choix couperait le type de sa famille dès la première
-     * sauvegarde, sans que personne l'ait demandé.
+     * Undecided means the FAMILY answers, and the override reads back as null —
+     * the settings screen needs that third state.
      */
     public function testUndecidedStaysUndecidedAndFollowsTheFamily(): void
     {
@@ -90,17 +73,8 @@ class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
     }
 
     /**
-     * Un OBJET POSÉ reste réparable, et c'est le cas qui a failli passer.
-     *
-     * Un exemplaire est une entité dont le type vit dans l'AUTRE catalogue :
-     * un coffre de bois est une ligne d'`items`, que `getRaceByName()` ne
-     * trouvera jamais — et depuis que les types de contenants ont quitté
-     * `races`, c'est vrai de tous. Une garde qui se contente d'interroger
-     * `races` rend donc `null`, refuse, et retire en silence une capacité que
-     * ces objets avaient.
-     *
-     * Un objet manufacturé se rafistole : la question ne se pose que pour ce
-     * qui pousse.
+     * A placed object stays repairable: its type lives in `items`, which
+     * getRaceByName() never finds, so a guard reading `races` alone refuses it.
      */
     public function testADroppedObjectStaysRepairable(): void
     {
@@ -128,13 +102,12 @@ class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
             'un coffre, une arme lâchée : posés, ils se réparent'
         );
 
-        /* Le même NOM de type sans être un exemplaire ne passe pas : c'est le
-         * discriminant qui ouvre la porte, pas une chaîne magique — et un décor
-         * mal nommé ne doit pas pouvoir l'emprunter. */
+        /* The same type NAME without being an exemplar is refused: the
+         * discriminator opens the door, not a magic string. */
         $this->assertFalse($verdict('scenery', 'coffre_bois'));
     }
 
-    /** La capacité est portée par les choses POSÉES, pas par les peuples. */
+    /** The capability belongs to PLACED things, not to peoples. */
     public function testRepairabilityBelongsToPlacedThings(): void
     {
         $this->assertInstanceOf(StructureType::class, new BuildingType());
@@ -145,12 +118,9 @@ class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
     }
 
     /**
-     * L'action porte la condition, AVANT le coût et en contexte d'affichage.
-     *
-     * L'ordre n'est pas cosmétique : posée après `RequiresTraitValue`
-     * (ordre 3), l'action serait facturée avant d'être refusée. Et sans
-     * `display_context`, le bouton s'afficherait sur une fleur pour échouer au
-     * clic — une affordance qui ment.
+     * The action carries the guard BEFORE its cost and in display context:
+     * ordered after RequiresTraitValue it would bill before refusing, and
+     * without display_context the button would show on a flower and fail.
      */
     public function testReparerCarriesTheConditionBeforeItsCost(): void
     {
