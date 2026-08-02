@@ -18,6 +18,11 @@ use ReflectionClass;
  */
 class PlayerFactoryTest extends TestCase
 {
+    /** Fixture ids, out of reach of real ones. */
+    private const REAL_ID = 990201;
+    private const NPC_ID = -990201;
+    private const TUTORIAL_ID = 990202;
+
     protected function setUp(): void
     {
         $_SESSION = [];
@@ -26,6 +31,32 @@ class PlayerFactoryTest extends TestCase
     protected function tearDown(): void
     {
         $_SESSION = [];
+
+        global $link;
+        if (isset($link) && $link instanceof Connection) {
+            $link->executeStatement(
+                'DELETE FROM players WHERE id IN (?, ?, ?)',
+                [self::REAL_ID, self::NPC_ID, self::TUTORIAL_ID]
+            );
+        }
+    }
+
+    /**
+     * Seed one character of the given kind and return its name.
+     *
+     * The lookup cases used to borrow whichever row came first, which made them
+     * skip on a database holding no character — and silently test a structure's
+     * row on one where a decor had the lowest id.
+     */
+    private function seedCharacter(Connection $link, int $id, string $type, string $name): string
+    {
+        $link->executeStatement('DELETE FROM players WHERE id = ?', [$id]);
+        $link->executeStatement(
+            'INSERT INTO players (id, player_type, name, race) VALUES (?, ?, ?, ?)',
+            [$id, $type, $name, 'nain']
+        );
+
+        return $name;
     }
 
     #[Group('player-factory')]
@@ -84,17 +115,12 @@ class PlayerFactoryTest extends TestCase
     {
         $link = $this->bootstrapOrSkip();
 
-        $row = $link->fetchAssociative(
-            "SELECT id, name FROM players WHERE id > 0 AND (player_type IS NULL OR player_type = 'real') ORDER BY id ASC LIMIT 1"
-        );
-        if (empty($row['name'])) {
-            $this->markTestSkipped('No real player available for lookup test.');
-        }
+        $name = $this->seedCharacter($link, self::REAL_ID, 'real', 'GmFabriqueLegacy');
 
-        $player = PlayerFactory::legacyByName((string) $row['name']);
+        $player = PlayerFactory::legacyByName($name);
 
         $this->assertInstanceOf(Player::class, $player);
-        $this->assertSame((int) $row['id'], $player->id);
+        $this->assertSame(self::REAL_ID, $player->id);
     }
 
     #[Group('player-factory')]
@@ -112,17 +138,12 @@ class PlayerFactoryTest extends TestCase
     {
         $link = $this->bootstrapOrSkip();
 
-        $row = $link->fetchAssociative(
-            "SELECT id, name FROM players WHERE id > 0 AND player_type = 'real' ORDER BY id ASC LIMIT 1"
-        );
-        if (empty($row['name'])) {
-            $this->markTestSkipped('No real player available for lookup test.');
-        }
+        $name = $this->seedCharacter($link, self::REAL_ID, 'real', 'GmFabriqueEntite');
 
-        $entity = PlayerFactory::entityByName((string) $row['name']);
+        $entity = PlayerFactory::entityByName($name);
 
         $this->assertInstanceOf(\App\Entity\RealPlayer::class, $entity);
-        $this->assertSame((int) $row['id'], $entity->getId());
+        $this->assertSame(self::REAL_ID, $entity->getId());
     }
 
     #[Group('player-factory')]
@@ -155,17 +176,12 @@ class PlayerFactoryTest extends TestCase
     {
         $link = $this->bootstrapOrSkip();
 
-        $row = $link->fetchAssociative(
-            "SELECT id FROM players WHERE id > 0 AND player_type = 'real' ORDER BY id ASC LIMIT 1"
-        );
-        if (empty($row['id'])) {
-            $this->markTestSkipped('No real player available for lookup test.');
-        }
+        $this->seedCharacter($link, self::REAL_ID, 'real', 'GmFabriqueReel');
 
-        $entity = PlayerFactory::realPlayerById((int) $row['id']);
+        $entity = PlayerFactory::realPlayerById(self::REAL_ID);
 
         $this->assertInstanceOf(\App\Entity\RealPlayer::class, $entity);
-        $this->assertSame((int) $row['id'], $entity->getId());
+        $this->assertSame(self::REAL_ID, $entity->getId());
     }
 
     #[Group('player-factory')]
@@ -177,15 +193,10 @@ class PlayerFactoryTest extends TestCase
         // ResetPasswordView from password-resetting an NPC "account".
         $link = $this->bootstrapOrSkip();
 
-        $row = $link->fetchAssociative(
-            "SELECT id FROM players WHERE player_type = 'npc' ORDER BY id ASC LIMIT 1"
-        );
-        if (empty($row['id'])) {
-            $this->markTestSkipped('No NPC row available for STI-narrowing test.');
-        }
+        $this->seedCharacter($link, self::NPC_ID, 'npc', 'GmFabriquePnj');
 
         $this->assertNull(
-            PlayerFactory::realPlayerById((int) $row['id']),
+            PlayerFactory::realPlayerById(self::NPC_ID),
             'realPlayerById must not return NonPlayerCharacter rows'
         );
     }
@@ -195,15 +206,10 @@ class PlayerFactoryTest extends TestCase
     {
         $link = $this->bootstrapOrSkip();
 
-        $row = $link->fetchAssociative(
-            "SELECT id FROM players WHERE player_type = 'tutorial' AND id > 0 ORDER BY id ASC LIMIT 1"
-        );
-        if (empty($row['id'])) {
-            $this->markTestSkipped('No tutorial player row available for STI-narrowing test.');
-        }
+        $this->seedCharacter($link, self::TUTORIAL_ID, 'tutorial', 'GmFabriqueTuto');
 
         $this->assertNull(
-            PlayerFactory::realPlayerById((int) $row['id']),
+            PlayerFactory::realPlayerById(self::TUTORIAL_ID),
             'realPlayerById must not return TutorialPlayer rows'
         );
     }

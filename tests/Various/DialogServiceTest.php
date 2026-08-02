@@ -87,9 +87,12 @@ class DialogServiceTest extends TestCase
     public function testRefreshRegisterDialogRewritesTheDbRow(): void
     {
         $link = $this->link();
-        if ($link->fetchOne("SELECT 1 FROM dialogs WHERE name = 'register'") !== false) {
-            $this->markTestSkipped('Ligne register déjà en base — on ne la clobbe pas depuis un test.');
-        }
+
+        /* The row is seeded on every real database, so skipping when it exists
+         * meant never running. Snapshot it instead and put it back verbatim:
+         * `refreshRegisterDialog()` works on that one fixed name and cannot be
+         * pointed at a fixture of our own. */
+        $existing = $link->fetchAssociative("SELECT * FROM dialogs WHERE name = 'register'");
 
         $service = new DialogService();
         $registerNodes = [[
@@ -114,6 +117,17 @@ class DialogServiceTest extends TestCase
             }
         } finally {
             $link->executeStatement("DELETE FROM dialogs WHERE name = 'register'");
+
+            if ($existing !== false) {
+                $columns = array_keys($existing);
+                $link->executeStatement(
+                    'INSERT INTO dialogs (' . implode(', ', $columns) . ') VALUES ('
+                        . implode(', ', array_fill(0, count($columns), '?')) . ')',
+                    array_values($existing)
+                );
+            }
+
+            DialogService::clearCache();
         }
     }
 

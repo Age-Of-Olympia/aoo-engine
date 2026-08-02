@@ -25,6 +25,9 @@ class PlanImportExportTest extends TestCase
     private const SRC = 'plan_test_ie_src';
     private const IMPORTED = 'plan_test_ie_imp';
 
+    /** Fixture id, out of reach of real ones. */
+    private const BUILDER_ID = 990301;
+
     protected function setUp(): void
     {
         $this->bootstrapOrSkip();
@@ -196,10 +199,14 @@ class PlanImportExportTest extends TestCase
             'img/walls/arbre1.png'
         );
 
-        $builderId = $link->fetchOne('SELECT id FROM players WHERE player_type = "real" ORDER BY id LIMIT 1');
-        if ($builderId === false) {
-            $this->markTestSkipped('Aucun joueur en base pour porter la construction.');
-        }
+        /* Seed the builder: a fresh database holds no player to borrow, and the
+         * case exists to prove a player-built row does NOT travel. */
+        $builderId = self::BUILDER_ID;
+        $link->executeStatement('DELETE FROM players WHERE id = ?', [$builderId]);
+        $link->executeStatement(
+            "INSERT INTO players (id, player_type, name, race) VALUES (?, 'real', ?, ?)",
+            [$builderId, 'Bâtisseur de test plans', 'nain']
+        );
 
         $palissadeId = (new EntityPlacementService($link))->create(
             'building',
@@ -256,6 +263,9 @@ class PlanImportExportTest extends TestCase
                JOIN coords c ON c.id = p.coords_id
               WHERE p.player_type IN ('resource', 'building') AND c.plan LIKE 'plan_test_ie_%'"
         );
+
+        /* The builder stands on no cell, so the join above never reaches it. */
+        $link->executeStatement('DELETE FROM players WHERE id = ?', [self::BUILDER_ID]);
 
         $link->executeStatement("DELETE FROM coords WHERE plan LIKE 'plan_test_ie_%'");
 
