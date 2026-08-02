@@ -293,7 +293,22 @@ class PlanAdminServiceTest extends TestCase
         );
 
         $owned = (object) ['x' => 5, 'y' => 5, 'z' => 0, 'plan' => self::SRC];
-        $builderId = (int) $this->link()->fetchOne('SELECT id FROM players WHERE player_type = "real" ORDER BY id LIMIT 1');
+
+        /* Le bâtisseur est SEMÉ, comme partout ailleurs dans ce fichier. Il
+           était emprunté — « le premier joueur réel de la base » — et une base
+           de test neuve n'en a aucun : l'id valait 0, et la pose refusait un
+           propriétaire inconnu. Le cas ne passait que derrière un autre. */
+        $builderId = self::PLAYER_ID;
+        $this->link()->executeStatement(
+            "INSERT INTO players (id, player_type, name, coords_id, race) VALUES (?, 'real', ?, ?, ?)",
+            [
+                $builderId,
+                'Bâtisseur de test plans',
+                (int) $this->link()->fetchOne('SELECT id FROM coords WHERE plan = ? LIMIT 1', [self::SRC]),
+                'nain',
+            ]
+        );
+
         $buildings->place('barricade', $owned, $builderId, '', null, overScenery: true);
 
         (new PlanAdminService())->clonePlan(self::SRC, self::CLONE);
