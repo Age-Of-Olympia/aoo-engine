@@ -89,18 +89,18 @@ final class TurnService extends BaseService
      * Give the entity its satellite row, seeded from the columns it mirrors,
      * so an increment or a conditional write never starts from a blank slate.
      *
-     * Characters only, like the backfill: a structure has no row here and
-     * keeps answering from `players` through the join.
+     * Who gets one: {@see PlaysTurns::SQL_PREDICATE}. Anything else has no row
+     * here and keeps answering from `players` through the join.
      */
     public function ensureRow(int $playerId): void
     {
         $this->conn->executeStatement(
             "INSERT IGNORE INTO turns
                  (player_id, next_turn_time, last_action_time, next_turn_rescheduled, anti_berserk_time)
-             SELECT id, nextTurnTime, lastActionTime, nextTurnRescheduled, antiBerserkTime
-               FROM players
-              WHERE id = ?
-                AND (player_type IN ('real', 'tutorial', 'npc') OR player_type IS NULL)",
+             SELECT p.id, p.nextTurnTime, p.lastActionTime, p.nextTurnRescheduled, p.antiBerserkTime
+               FROM players p
+               LEFT JOIN races r ON r.name = p.race
+              WHERE p.id = ? AND " . PlaysTurns::SQL_PREDICATE,
             [$playerId]
         );
     }

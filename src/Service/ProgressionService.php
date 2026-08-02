@@ -136,17 +136,17 @@ final class ProgressionService extends BaseService
      * Give the entity its satellite row, seeded from the columns it mirrors,
      * so an increment or a conditional write never starts from a blank slate.
      *
-     * Characters only, like the backfill: a structure has no row here and
-     * keeps answering from `players` through the join.
+     * Who gets one: {@see PlaysTurns::SQL_PREDICATE}. Anything else has no row
+     * here and keeps answering from `players` through the join.
      */
     public function ensureRow(int $playerId): void
     {
         $this->conn->executeStatement(
             "INSERT IGNORE INTO progression (player_id, xp, `rank`, bonus_points, pi)
-             SELECT id, xp, `rank`, bonus_points, pi
-               FROM players
-              WHERE id = ?
-                AND (player_type IN ('real', 'tutorial', 'npc') OR player_type IS NULL)",
+             SELECT p.id, p.xp, p.`rank`, p.bonus_points, p.pi
+               FROM players p
+               LEFT JOIN races r ON r.name = p.race
+              WHERE p.id = ? AND " . PlaysTurns::SQL_PREDICATE,
             [$playerId]
         );
     }

@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Enum\EntityCategory;
 use App\Service\Action\EnergieRule;
 use App\Service\TurnScheduleService;
 use App\Tutorial\TutorialHelper;
@@ -68,7 +69,68 @@ class TurnProcessingService
     {
         $time ??= time();
 
-        return $this->isDue($entity, $time) ? $this->process($entity, $time) : null;
+        if (!$this->isDue($entity, $time)) {
+            return null;
+        }
+
+        /* A character's turn recovers a body: caracs, malus, energie, effects,
+         * wear. A structure has none of that — its turn is its action pool and
+         * its clock (docs/design-playable-buildings.md §3.2). */
+        return EntityCategory::fromPlayerType($entity->getPlayerType())->isStructure()
+            ? $this->restartPool($entity, $time)
+            : $this->process($entity, $time);
+    }
+
+    /**
+     * A turn for something with no body to recover: the pool starts again and
+     * the clock moves on.
+     *
+     * The pool belongs to the entity, so whoever drives it — the owner, a
+     * faction member, another member a minute later — spends from the same one
+     * and spent is spent until this runs.
+     */
+    private function restartPool(Player $entity, int $time): object
+    {
+        $entity->get_caracs();
+
+        $nextTurnTime = $this->nextSlot(
+            (int) $entity->data->nextTurnTime,
+            TurnScheduleService::turnDurationSeconds((int) $entity->caracs->spd),
+            $time
+        );
+
+        (new Db())->exe(
+            'DELETE FROM players_bonus WHERE player_id = ? AND name IN("ae","a","mvt")',
+            $entity->id
+        );
+
+        (new TurnService())->openTurn((int) $entity->id, $nextTurnTime, 0);
+
+        $entity->refresh_data();
+        $entity->refresh_caracs();
+
+        return (object) [
+            'nextTurnTime' => $nextTurnTime,
+            'rows' => [],
+            'wearRecap' => [],
+            'showMailPrompt' => false,
+        ];
+    }
+
+    /**
+     * The next slot on a fixed cadence anchored on the previous turn, skipping
+     * any slot already past — an entity untouched for a week gets one turn, not
+     * seven.
+     */
+    private function nextSlot(int $previousTurnTime, int $turnSeconds, int $time): int
+    {
+        $next = $previousTurnTime + $turnSeconds;
+
+        while ($next <= $time) {
+            $next += $turnSeconds;
+        }
+
+        return $next;
     }
 
     private function process(Player $player, int $time): object
@@ -82,11 +144,7 @@ class TurnProcessingService
         // décale lui-même son prochain tour via api/player/set_next_turn.php
         // (ex « DLA glissante », remplacée par ce décalage manuel).
         $playerTurn = TurnScheduleService::turnDurationSeconds($player->caracs->spd);
-        $nextTurnTime = $player->data->nextTurnTime + $playerTurn;
-
-        while ($nextTurnTime <= $time) {
-            $nextTurnTime += $playerTurn;
-        }
+        $nextTurnTime = $this->nextSlot((int) $player->data->nextTurnTime, $playerTurn, $time);
 
         foreach ($player->effectService->getHiddenNames() as $effect) {
             $player->end_effect($effect);
