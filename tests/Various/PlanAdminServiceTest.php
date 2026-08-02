@@ -156,9 +156,12 @@ class PlanAdminServiceTest extends TestCase
         $this->seedSourcePlan();
         $link = $this->link();
         $coordsId = (int) $link->fetchOne('SELECT id FROM coords WHERE plan = ? LIMIT 1', [self::SRC]);
+        /* The shared seed already minted this character; put it on the plan,
+           which is what this case is about. */
+        $this->seedBuilder();
         $link->executeStatement(
-            'INSERT INTO players (id, name, coords_id, race) VALUES (?, ?, ?, ?)',
-            [self::PLAYER_ID, 'Joueur de test plans', $coordsId, 'nain']
+            'UPDATE players SET coords_id = ? WHERE id = ?',
+            [$coordsId, self::PLAYER_ID]
         );
 
         $service = new PlanAdminService();
@@ -294,20 +297,7 @@ class PlanAdminServiceTest extends TestCase
 
         $owned = (object) ['x' => 5, 'y' => 5, 'z' => 0, 'plan' => self::SRC];
 
-        /* Seed the builder, as everywhere else in this file: a fresh test
-           database holds no real player to borrow. */
-        $builderId = self::PLAYER_ID;
-        $this->link()->executeStatement(
-            "INSERT INTO players (id, player_type, name, coords_id, race) VALUES (?, 'real', ?, ?, ?)",
-            [
-                $builderId,
-                'Bâtisseur de test plans',
-                (int) $this->link()->fetchOne('SELECT id FROM coords WHERE plan = ? LIMIT 1', [self::SRC]),
-                'nain',
-            ]
-        );
-
-        $buildings->place('barricade', $owned, $builderId, '', null, overScenery: true);
+        $buildings->place('barricade', $owned, $this->seedBuilder(), '', null, overScenery: true);
 
         (new PlanAdminService())->clonePlan(self::SRC, self::CLONE);
 
@@ -376,14 +366,13 @@ class PlanAdminServiceTest extends TestCase
             [$ids['1,0'], 'arbre1']
         );
 
-        // Mur « construit par un joueur » : FK players → un joueur réel du seed
-        $builderId = $link->fetchOne('SELECT id FROM players WHERE id > 0 ORDER BY id LIMIT 1');
-        if ($builderId === false) {
-            $this->markTestSkipped('Aucun joueur en base pour porter le mur player_id.');
-        }
+        /* A player-built wall needs a player to carry its FK. Seed one rather
+           than borrow whichever row comes first: on a database holding no
+           character, every case in this class went silent. */
+        $builderId = $this->seedBuilder();
         $link->executeStatement(
             'INSERT INTO map_resources (coords_id, name, damages, player_id) VALUES (?, ?, 0, ?)',
-            [$ids['1,0'], 'palissade', (int) $builderId]
+            [$ids['1,0'], 'palissade', $builderId]
         );
 
         $link->executeStatement(
@@ -398,11 +387,30 @@ class PlanAdminServiceTest extends TestCase
         json()->forget('plans', self::SRC);
     }
 
+    /** The fixture character every player-built row hangs from. */
+    private function seedBuilder(): int
+    {
+        $this->link()->executeStatement(
+            "INSERT IGNORE INTO players (id, player_type, name, race) VALUES (?, 'real', ?, ?)",
+            [self::PLAYER_ID, 'Bâtisseur de test plans', 'nain']
+        );
+
+        return self::PLAYER_ID;
+    }
+
     private function cleanupFixtures(): void
     {
         global $link;
         if (!isset($link) || !$link instanceof Connection) {
             return;
+        }
+
+        /* Map layers first: a player-built wall holds its builder by foreign
+           key, so the character cannot leave before what it built. */
+        foreach (['tiles', 'routes', 'plants', 'resources', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {
+            $link->executeStatement(
+                "DELETE m FROM map_{$layer} m JOIN coords c ON c.id = m.coords_id WHERE c.plan LIKE 'plan_test_adm_%'"
+            );
         }
 
         foreach (['buildings', 'players_options', 'players_bonus'] as $satellite) {
@@ -416,12 +424,6 @@ class PlanAdminServiceTest extends TestCase
             'DELETE FROM players WHERE id IN (?, ?, ?)',
             [self::PLAYER_ID, self::NPC_ID, self::BUILDING_ID]
         );
-
-        foreach (['tiles', 'routes', 'plants', 'resources', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {
-            $link->executeStatement(
-                "DELETE m FROM map_{$layer} m JOIN coords c ON c.id = m.coords_id WHERE c.plan LIKE 'plan_test_adm_%'"
-            );
-        }
         /* Le clone POSE des entités : elles retiennent les coordonnées par
            leur clé étrangère, et sans elles le nettoyage échouait. */
         foreach ($link->fetchFirstColumn(
