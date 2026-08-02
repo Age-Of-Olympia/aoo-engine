@@ -116,9 +116,9 @@ $applyForm = static function (Race $race) use ($face): string {
         $race->setReadableFromAfar(booleanCheckbox('readable_from_afar'));
         $race->setDefaultText(trim((string) ($_POST['default_text'] ?? '')));
 
-        /* Réparable : TROIS états. Vide veut dire « je m'en remets à ma
-         * famille » et doit rester null — le confondre avec « non » couperait
-         * le type de sa famille à la première sauvegarde, en silence. */
+        /* Three states: empty means "follow my family" and must stay null.
+         * Reading it as "no" would cut the type off its family on the first
+         * save, silently. */
         $repairable = (string) ($_POST['repairable'] ?? '');
         $race->setRepairable($repairable === '' ? null : $repairable === '1');
     }
