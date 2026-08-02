@@ -183,9 +183,8 @@ class ItemInstanceService extends BaseService
     /**
      * The entity of an exemplar, created if it has none.
      *
-     * Exemplars wrapped by a `unique_objects` row were left without one, being
-     * already an entity on the map. When such a wrapper dies its exemplar falls
-     * to the floor on its own, and that is the moment it needs one.
+     * An exemplar reaching the floor on its own — spilled by a container that
+     * broke — is the case that needs one minted late.
      *
      * @return int the exemplar's entity id
      */

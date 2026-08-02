@@ -17,6 +17,8 @@ define('ENTITY_ID_RANGES', [
     'real' => ['start' => 1, 'end' => 9999999],
     'tutorial' => ['start' => 10000000, 'end' => 19999999],
     'building' => ['start' => 20000000, 'end' => 29999999],
+    /* Retired family: no entity is minted here any more, and the range stays
+       reserved so its numbers are never handed to another family. */
     'unique' => ['start' => 30000000, 'end' => 39999999],
     'scenery' => ['start' => 40000000, 'end' => 49999999],
     'resource' => ['start' => 50000000, 'end' => 59999999],

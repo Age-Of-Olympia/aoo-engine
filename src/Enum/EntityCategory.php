@@ -43,9 +43,8 @@ enum EntityCategory: string
     }
 
     /**
-     * Part of the scenery: always seen, never an interlocutor. Callers used
-     * to spell out `['building', 'unique']`, which is how `scenery` was
-     * missed in four places at once.
+     * Part of the scenery: always seen, never an interlocutor. Ask this rather
+     * than listing discriminators, or the next family added is missed.
      */
     public function isStructure(): bool
     {

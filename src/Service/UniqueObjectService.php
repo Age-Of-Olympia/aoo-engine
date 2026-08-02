@@ -15,8 +15,6 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 class UniqueObjectService extends BaseService
 {
-    /** Base-stats row of a wrapped item on the map (seeded by migration). */
-    public const ITEM_RACE = 'objet';
 
     private EntityManagerInterface $entityManager;
 

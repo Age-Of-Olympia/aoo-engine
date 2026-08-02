@@ -18,8 +18,8 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * What a structure does NOT have lives on Character: account data,
  * progression, faction membership, turn timing. Type-specific data
- * (owner, build state) lives in satellite tables
- * (buildings / unique_objects), never as new players columns (§4.5).
+ * (owner, build state) lives in satellite tables, never as new players
+ * columns (§4.5).
  */
 #[ORM\Entity]
 abstract class Structure extends GameEntity
