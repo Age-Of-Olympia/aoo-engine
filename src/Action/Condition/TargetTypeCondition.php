@@ -82,6 +82,15 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInt
         $category = \App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? 'real')->value;
 
         if (in_array($category, $allowed, true)) {
+            /* A structure must hold its tile to be aimed at. What lies dropped
+             * on the ground occupies nothing and is picked up, not targeted —
+             * the same cells that decide obstruction decide this. */
+            if ($category === \App\Enum\EntityCategory::Structure->value && !$this->holdsATile($target)) {
+                $condition->setBlocking(true);
+
+                return new ConditionResult(false, array(), ['Cet objet est au sol : on le ramasse, on ne le vise pas.']);
+            }
+
             return new ConditionResult(true, array(), array());
         }
 
@@ -92,5 +101,18 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInt
             : ['Cette action ne peut viser qu\'une structure.'];
 
         return new ConditionResult(false, array(), $errorMessage);
+    }
+
+    /** Simulated targets have no cells and are not meant to be looked up. */
+    private function holdsATile(ActorInterface $target): bool
+    {
+        if ($target->isSimulated()) {
+            return true;
+        }
+
+        return (int) \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()->fetchOne(
+            'SELECT COUNT(*) FROM entity_cells WHERE player_id = ?',
+            [$target->getId()]
+        ) > 0;
     }
 }

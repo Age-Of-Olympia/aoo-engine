@@ -62,11 +62,12 @@ class RepairExemplarBaselineTest extends LegacyPlayerFixtureTestCase
     }
 
     /**
-     * Settled rule: an object below its max life is repairable WHEREVER it is.
-     * A dropped one lies on the tile without holding it — this pins whether
-     * the board can still designate it.
+     * A dropped object is picked up, never aimed at.
+     *
+     * It holds no tile: it lies on one. The cells that decide obstruction
+     * decide this too, so the refusal costs no new state.
      */
-    public function testRepairingADroppedObject(): void
+    public function testADroppedObjectCannotBeTargeted(): void
     {
         $action = ActionFactory::getAction('reparer');
         if ($action === null) {
@@ -89,9 +90,14 @@ class RepairExemplarBaselineTest extends LegacyPlayerFixtureTestCase
 
         $results = (new ActionExecutorService($action, $actor, $chest))->executeAction();
 
-        $this->assertFalse(
-            $results->isBlocked(),
-            'refusé : ' . json_encode($results->getConditionsResultsArray())
+        $this->assertTrue($results->isBlocked(), 'ce qui traîne au sol ne se vise pas');
+        $this->assertSame(
+            20,
+            (int) $this->link->fetchOne(
+                "SELECT -n FROM players_bonus WHERE player_id = ? AND name = 'pv'",
+                [$chestId]
+            ),
+            'et rien ne le soigne au passage'
         );
     }
 }
