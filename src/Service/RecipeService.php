@@ -78,6 +78,50 @@ class RecipeService
         $repo = $this->entityManager->getRepository(Recipe::class);
         return $repo->findOneBy(['id' => $id]);;
     }
+
+    /**
+     * Ingredients required to craft one item, as name => count.
+     *
+     * The craft_recipes catalog is the single recipe source. When several
+     * recipes yield the same item, the one bearing the item's name wins,
+     * then the oldest — a later variant never changes what an existing
+     * object is considered made of.
+     *
+     * @return array<string, int>
+     */
+    public function ingredientsForResult(string $itemName): array
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+        $qb->select('re, ri, ii')
+            ->from(Recipe::class, 're')
+            ->join('re.recipeResults', 'rr')
+            ->join('rr.item', 'ir')
+            ->leftJoin('re.recipeIngredients', 'ri')
+            ->leftJoin('ri.item', 'ii')
+            ->where('ir.name = :name')
+            ->orderBy('re.id', 'ASC')
+            ->setParameter('name', $itemName);
+
+        $recipes = $qb->getQuery()->getResult();
+        if ($recipes === []) {
+            return [];
+        }
+
+        $recipe = $recipes[0];
+        foreach ($recipes as $candidate) {
+            if ($candidate->getName() === $itemName) {
+                $recipe = $candidate;
+                break;
+            }
+        }
+
+        $ingredients = [];
+        foreach ($recipe->getRecipeIngredients() as $ingredient) {
+            $ingredients[$ingredient->getItem()->getName()] = $ingredient->getCount();
+        }
+
+        return $ingredients;
+    }
     /**
      * Checks if the player can craft the given recipe. knowledge, not ingredients
      */

@@ -1,6 +1,7 @@
 <?php
 namespace Classes;
 
+use App\Service\RecipeService;
 use Exception;
 
 class Item{
@@ -34,6 +35,9 @@ class Item{
     public $id;
     public $row;
     public $data;
+
+    /** Memo of the catalog recipe resolved for this object (name => count). */
+    private ?array $recipeFromCatalog = null;
 
     function __construct($itemId, $row=false,$checked=false){
 
@@ -313,14 +317,29 @@ class Item{
         return true;
     }
 
+    /**
+     * What this object is crafted from, as ingredient name => count.
+     * The craft_recipes catalog answers; the deprecated flag reads the
+     * oldcrafts archive kept for season refunds.
+     */
     public function get_recipe(bool $deprecated=false) : array{
 
 
-        $craftJson = json()->decode('', $deprecated? 'oldcrafts': 'crafts');
+        if(!$deprecated){
+
+            if($this->recipeFromCatalog === null){
+
+                $this->recipeFromCatalog = (new RecipeService())->ingredientsForResult($this->row->name);
+            }
+
+            return $this->recipeFromCatalog;
+        }
+
+        $craftJson = json()->decode('', 'oldcrafts');
 
         if(!$craftJson){
 
-           throw new Exception(($deprecated? 'oldcrafts': 'crafts').' json not found');
+           throw new Exception('oldcrafts json not found');
         }
         $return = array();
 
