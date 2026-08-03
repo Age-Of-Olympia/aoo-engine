@@ -29,6 +29,7 @@ class ConditionRegistry
             'ItemPick' => new ItemPickCondition(),
             'BuildSite' => new BuildSiteCondition(),
             'DigSite' => new DigSiteCondition(),
+            'RequiresBuilding' => new RequiresBuildingCondition(),
             'TargetType' => new TargetTypeCondition(),
             'TargetRace' => new TargetRaceCondition(),
             'RequiresFaith' => new RequiresFaithCondition(),

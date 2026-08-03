@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\BuildingDetails;
 use App\Factory\EntityManagerFactory;
+use App\Factory\PlayerFactory;
 use App\Service\DialogService;
 use Classes\View;
 use Doctrine\ORM\EntityManagerInterface;
@@ -483,6 +484,65 @@ class BuildingService extends BaseService
         }
 
         return null;
+    }
+
+    /**
+     * The nearest OPEN building around a cell — or why the way is barred.
+     *
+     * Every cell the building holds counts for the distance (a 2×2 forge
+     * is reachable from each of its sides), Chebyshev like every range in
+     * the game. An empty type list accepts any building type. The one
+     * closure rule answers for the state; the nearest shut candidate
+     * lends the refusal its reason.
+     *
+     * @param array<int, string> $typeNames races.name codes (kind building)
+     * @return array{open: ?int, shut: ?string}
+     */
+    public function openBuildingNearby(object $coords, array $typeNames, int $range): array
+    {
+        $x = (int) $coords->x;
+        $y = (int) $coords->y;
+
+        $rows = $this->entityManager->getConnection()->fetchAllAssociative(
+            'SELECT ec.player_id AS id, p.race,
+                    MIN(GREATEST(ABS(c.x - ?), ABS(c.y - ?))) AS distance
+               FROM entity_cells ec
+               JOIN coords c ON c.id = ec.coords_id
+               JOIN players p ON p.id = ec.player_id
+              WHERE p.player_type = \'building\'
+                AND c.plan = ? AND c.z = ?
+                AND c.x BETWEEN ? AND ? AND c.y BETWEEN ? AND ?
+              GROUP BY ec.player_id, p.race
+              ORDER BY distance ASC, ec.player_id ASC',
+            [
+                $x, $y,
+                (string) $coords->plan, (int) $coords->z,
+                $x - $range, $x + $range,
+                $y - $range, $y + $range,
+            ]
+        );
+
+        $shut = null;
+        foreach ($rows as $row) {
+            if ($typeNames !== [] && !in_array((string) $row['race'], $typeNames, true)) {
+                continue;
+            }
+
+            $id = (int) $row['id'];
+            $legacy = PlayerFactory::legacy($id);
+            $legacy->get_data();
+            $legacy->get_caracs();
+            $maxPv = (int) ($legacy->caracs->pv ?? 0);
+            $pvPct = $maxPv > 0 ? (int) floor($legacy->getRemaining('pv') / $maxPv * 100) : 100;
+
+            $reason = $this->closureReason($id, $this->getDetails($id), $pvPct);
+            if ($reason === null) {
+                return ['open' => $id, 'shut' => null];
+            }
+            $shut ??= $reason;
+        }
+
+        return ['open' => null, 'shut' => $shut];
     }
 
     /** @param list<string> $values */
