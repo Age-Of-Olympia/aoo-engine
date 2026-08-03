@@ -51,6 +51,22 @@ describe('Endpoint action.php', () => {
     });
   });
 
+  it('refuses fabriquer without a recipe, gracefully', () => {
+    /* The craft panel posts here since the legacy craft_item endpoint
+     * died — the engine must answer a message, never a fatal. */
+    cy.request({
+      method: 'POST',
+      url: '/action.php',
+      form: true,
+      body: { action: 'fabriquer' },
+      failOnStatusCode: false
+    }).then((response) => {
+      expect(response.status).to.eq(200);
+      expectNoFatal(response.body);
+      expect(response.body).to.include('Aucune recette');
+    });
+  });
+
   it('refuses an unknown action without dying', () => {
     cy.request({
       method: 'POST',

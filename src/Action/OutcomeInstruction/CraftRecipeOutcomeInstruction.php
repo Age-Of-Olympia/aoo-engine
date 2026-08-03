@@ -11,14 +11,14 @@ use Classes\Player;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Fabrique la recette désignée au geste (POST recipeId) via
- * RecipeService::TryCraftRecipe — la SOURCE UNIQUE des règles de craft
- * (connaissance, ingrédients, résultat), qui valide et consomme
- * atomiquement : un refus (triche, ingrédients manquants) ne coûte
- * rien, l'action `fabriquer` n'a pas d'autre coût. L'artisanat restant
- * en sommeil (CRAFT_ENABLED), cette action câble le moteur sans
- * exposer d'UI : le bouton reviendra avec le bâtiment d'artisanat —
- * qui s'exprimera ici en CONDITIONS (proximité de l'atelier).
+ * Crafts the recipe named by the gesture (POST recipeId) through
+ * RecipeService::TryCraftRecipe — the single source of the craft rules
+ * (knowledge, ingredients, result), which validates and consumes
+ * atomically: a refusal (cheating, missing ingredients) costs nothing,
+ * and `fabriquer` has no other cost. The craft panel (CraftView) posts
+ * here; its entries stay hidden while CRAFT_ENABLED is off. The
+ * atelier building will express itself as CONDITIONS (workshop
+ * proximity), not here.
  */
 #[ORM\Entity]
 class CraftRecipeOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface

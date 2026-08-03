@@ -268,36 +268,35 @@ class CraftView
         <script>
             $('input[type="button"]').click(function(e) {
 
-                var artId = $(this).attr('itemId');
+                var recipeId = $(this).attr('itemId');
 
                 $(this).attr('disabled', true);
 
                 /* Notify tutorial of craft action before page reload */
                 if (typeof window.notifyTutorial === 'function') {
-                    window.notifyTutorial('craft', { item_id: artId }, true);
+                    window.notifyTutorial('craft', { item_id: recipeId }, true);
                 }
 
-                aooFetch('api/player/craft_item.php', {
-                        'craft_id': artId
-                    }, null)
-                    .then(function(data) {
+                /* Crafting goes through the action engine: the generic
+                 * `fabriquer` action receives the recipe via recipeId —
+                 * rules and consumption stay in RecipeService, the event
+                 * is logged like any action. */
+                $.post('action.php', { action: 'fabriquer', recipeId: recipeId }, function(data){
 
-                        /* Panneau HUD : message + rechargement du
-                         * panneau — le redirect inventory.php de l'API
-                         * renvoyait sur la page héritée (retours
-                         * joueurs juillet 2026). */
-                        if (window.hudReloadPanels && data.result) {
+                    if(window.hudShowActionResult){
 
-                            if (data.result.message) {
-                                aooAlert(data.result.message);
-                            }
-                            aooReload();
-                            return;
+                        window.hudShowActionResult(data, true);
+                        /* the inventory panel reloads under the modal:
+                         * the ingredient counts are up to date */
+                        if(window.hudReloadPanels){
+                            window.hudReloadPanels();
                         }
+                        return;
+                    }
 
-                        autoModal(data);
-                    })
-                    .catch(autoError());
+                    var text = $('<div></div>').html(data).text().trim();
+                    aooAlert(text || 'Fabriqué.').then(aooReload);
+                });
             });
         </script>
 <?php
