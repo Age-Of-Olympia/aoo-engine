@@ -4,6 +4,7 @@ namespace App\View;
 
 use App\Action\ActionResults;
 use App\Action\Condition\ConditionResult;
+use App\Action\OutcomeInstruction\OutcomeResult;
 
 class ActionResultsView
 {
@@ -67,6 +68,10 @@ class ActionResultsView
     private function renderHeader(): string
     {
         if ($this->actionResults->isSuccess()) {
+            if ($this->everyOutcomeRefused()) {
+                return '<div style="color: red;">Echec !</div>';
+            }
+
             return '<div style="color: #66ccff;">Réussite !</div>';
         }
         if ($this->actionResults->isBlocked()) {
@@ -76,11 +81,36 @@ class ActionResultsView
         return '<div style="color: red;">Echec !</div>';
     }
 
+    /**
+     * The action's success is its roll; an outcome may still refuse
+     * afterwards (a recipe short of ingredients, an occupied build site).
+     * A success whose every outcome refused did nothing the player asked:
+     * its header must not read as a win.
+     */
+    private function everyOutcomeRefused(): bool
+    {
+        $refusedOne = false;
+        foreach ($this->actionResults->getOutcomesResultsArray() as $outcomeResult) {
+            if (!$outcomeResult instanceof OutcomeResult) {
+                continue;
+            }
+            if ($outcomeResult->isSuccess()) {
+                return false;
+            }
+            $refusedOne = true;
+        }
+
+        return $refusedOne;
+    }
+
     private function renderEffectMessages(): string
     {
         $html = '';
         foreach ($this->actionResults->getOutcomesResultsArray() as $effectResult) {
-            $messages = $this->actionResults->isSuccess()
+            // An outcome that refused shows its refusal even when the roll
+            // succeeded — it used to render its (empty) success messages.
+            $refused = $effectResult instanceof OutcomeResult && !$effectResult->isSuccess();
+            $messages = $this->actionResults->isSuccess() && !$refused
                 ? $effectResult->getOutcomeSuccessMessages()
                 : $effectResult->getOutcomeFailureMessages();
             foreach ($messages as $message) {
