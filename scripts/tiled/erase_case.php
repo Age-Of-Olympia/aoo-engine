@@ -14,7 +14,7 @@ if($type == 'buildings'){
        propriétaire ni faction, état built) se retire d'ici : le reste
        relève de admin → Bâtiments. */
     $res = $db->exe(
-        "SELECT b.player_id, b.owner_id, b.faction, b.build_state
+        "SELECT b.player_id, p.owner_id, p.faction, b.build_state
          FROM buildings b JOIN players p ON p.id = b.player_id
          WHERE p.coords_id = ?",
         array($coordsId)

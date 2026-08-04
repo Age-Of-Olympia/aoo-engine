@@ -7,43 +7,47 @@ $db = new Db();
 $infos ='';
 
 $db = new Db();
-$sql = "select coords_id as coords_id, 'map_tiles' as type, name as name, NULL as params from map_tiles where coords_id = ?
+/* Chaque branche du UNION sort ses colonnes textuelles en utf8mb4 : les
+   tables mêlent des collations d'époques différentes, et un UNION refuse
+   le mélange — jamais de collation plaquée, toujours CONVERT. */
+$sql = "select coords_id as coords_id, 'map_tiles' as type, CONVERT(name USING utf8mb4) as name, NULL as params from map_tiles where coords_id = ?
 union
 /* Une ressource est une entité : elle se décrit comme un bâtiment, par son
    type et son état, et non plus par le signe d'un nombre. */
-select p.coords_id as coords_id, 'ressource' as type, CONCAT(p.race, ' #', p.id) as name,
-       IF(r.exhausted_at IS NULL, 'état = debout', CONCAT('état = épuisée depuis ', r.exhausted_at)) as params
+select p.coords_id as coords_id, 'ressource' as type, CONVERT(CONCAT(p.race, ' #', p.id) USING utf8mb4) as name,
+       CONVERT(IF(r.exhausted_at IS NULL, 'état = debout', CONCAT('état = épuisée depuis ', r.exhausted_at)) USING utf8mb4) as params
 from players p left join resources r on r.player_id = p.id
 where p.player_type = 'resource' and p.coords_id = ?
 union
-select  coords_id as coords_id, 'map_triggers' as type, name as name, params as params from map_triggers where coords_id = ?
+select  coords_id as coords_id, 'map_triggers' as type, CONVERT(name USING utf8mb4) as name, CONVERT(params USING utf8mb4) as params from map_triggers where coords_id = ?
 union
-select  coords_id as coords_id, 'map_dialogs' as type, name as name, params as params  from map_dialogs where coords_id = ?
+select  coords_id as coords_id, 'map_dialogs' as type, CONVERT(name USING utf8mb4) as name, CONVERT(params USING utf8mb4) as params  from map_dialogs where coords_id = ?
 union
-select  coords_id as coords_id, 'map_elements' as type, name as name, NULL as params from map_elements where coords_id = ?
+select  coords_id as coords_id, 'map_elements' as type, CONVERT(name USING utf8mb4) as name, NULL as params from map_elements where coords_id = ?
 union
-select  coords_id as coords_id, 'map_routes' as type, name as name, NULL as params from map_routes where coords_id = ?
+select  coords_id as coords_id, 'map_routes' as type, CONVERT(name USING utf8mb4) as name, NULL as params from map_routes where coords_id = ?
 union
-select  coords_id as coords_id, 'map_foregrounds' as type, name as name, NULL as params from map_foregrounds where coords_id = ?
+select  coords_id as coords_id, 'map_foregrounds' as type, CONVERT(name USING utf8mb4) as name, NULL as params from map_foregrounds where coords_id = ?
 union
 /* Les plantes sont des entités : elles se décrivent par leur type, comme
    les ressources et les bâtiments. */
-select p.coords_id as coords_id, 'plante' as type, CONCAT(p.race, ' #', p.id) as name,
-       CONCAT('rend ', COALESCE(NULLIF(TRIM(r.harvest_item), ''), p.race)) as params
+select p.coords_id as coords_id, 'plante' as type, CONVERT(CONCAT(p.race, ' #', p.id) USING utf8mb4) as name,
+       CONVERT(CONCAT('rend ', COALESCE(NULLIF(TRIM(r.harvest_item), ''), p.race)) USING utf8mb4) as params
 from players p left join races r
   on CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4) and r.type_kind = 'plant'
 where p.player_type = 'plant' and p.coords_id = ?
 union
-select  p.coords_id as coords_id, 'buildings' as type, CONCAT(p.race, ' #', p.id) as name,
-        CONCAT('état = ', b.build_state,
-               IF(b.owner_id IS NULL, '', CONCAT(', propriétaire #', b.owner_id)),
-               IF(b.faction = '', '', CONCAT(', faction ', b.faction))) as params
+select  p.coords_id as coords_id, 'buildings' as type, CONVERT(CONCAT(p.race, ' #', p.id) USING utf8mb4) as name,
+        CONVERT(CONCAT('état = ', b.build_state,
+               IF(p.owner_id IS NULL, '', CONCAT(', propriétaire #', p.owner_id)),
+               IF(CONVERT(p.faction USING utf8mb4) = '', '',
+                  CONCAT(', faction ', CONVERT(p.faction USING utf8mb4)))) USING utf8mb4) as params
 from buildings b join players p on p.id = b.player_id where p.coords_id = ?
 union
 /* L'ombre n'est plus un décor mais une intensité portée par la case
    (coords.shade). Sans cette ligne, une case ombrée n'aurait plus rien à
    dire d'elle-même : on ne saurait ni qu'elle l'est, ni de combien. */
-select id as coords_id, 'ombre' as type, CONCAT('niveau ', shade) as name,
+select id as coords_id, 'ombre' as type, CONVERT(CONCAT('niveau ', shade) USING utf8mb4) as name,
        '« −1 niveau » éclaircit d\'un cran' as params
 from coords where id = ? and shade > 0";
 $res = $db->exe($sql, array($coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId));

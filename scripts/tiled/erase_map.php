@@ -22,7 +22,7 @@ foreach ($mapTypes as $type){
    bâtiments de joueurs/factions et les chantiers restent. */
 $res = $db->exe(
     "SELECT b.player_id FROM buildings b JOIN players p ON p.id = b.player_id
-     WHERE p.coords_id = ? AND b.owner_id IS NULL AND b.faction = '' AND b.build_state = 'built'",
+     WHERE p.coords_id = ? AND p.owner_id IS NULL AND p.faction = '' AND b.build_state = 'built'",
     array($coordsId)
 );
 
