@@ -310,7 +310,7 @@ foreach (\Classes\Item::FLAG_KEYS as $flag) {
 
 $set = array_merge($set, [
     'element = ?', 'spell = ?', 'exotique = ?',
-    'wear_triggers = ?', 'wear_rate = ?', 'durability_max = ?',
+    'wear_triggers = ?', 'wear_rate = ?', 'durability_max = ?', 'capacity = ?',
     'text = ?', 'price = ?', 'emplacement = ?', 'type = ?', 'subtype = ?', 'race = ?',
     'munitions = ?', 'add_effects = ?', 'forbid = ?', 'extra = ?',
     'stats_in_db = 1',
@@ -322,6 +322,8 @@ $params = array_merge($params, [
     implode(',', $triggers),
     max(0, (int) ($_POST['wear_rate'] ?? 0)),
     max(1, (int) ($_POST['durability_max'] ?? 100)),
+    // '' = unlimited (NULL); a number is the content-line ceiling.
+    trim((string) ($_POST['capacity'] ?? '')) === '' ? null : max(0, (int) $_POST['capacity']),
     trim((string) ($_POST['text'] ?? '')),
     max(0, (int) ($_POST['price'] ?? 1)),
     trim((string) ($_POST['emplacement'] ?? '')),

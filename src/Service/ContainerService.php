@@ -126,6 +126,17 @@ final class ContainerService extends BaseService
     public function depositStack(int $containerId, int $actorId, int $itemId, int $n): void
     {
         $this->assertUsable($containerId, $actorId);
+
+        /* A stack joining an EXISTING line takes no room; a new line
+         * asks the capacity. */
+        $existingLine = $this->conn->fetchOne(
+            "SELECT 1 FROM players_items WHERE player_id = ? AND item_id = ? AND slot = '' AND equiped = ''",
+            [$containerId, $itemId]
+        );
+        if ($existingLine === false) {
+            $this->assertRoomForALine($containerId);
+        }
+
         $this->moveStack($actorId, $containerId, $itemId, $n, 'Vous n\'avez pas cela.');
         $this->addAuditLog("container #{$containerId}: #{$actorId} y dépose {$n} × item #{$itemId}");
     }
@@ -142,6 +153,7 @@ final class ContainerService extends BaseService
     public function depositExemplar(int $containerId, int $actorId, int $instanceId): void
     {
         $this->assertUsable($containerId, $actorId);
+        $this->assertRoomForALine($containerId);
         $entityId = $this->entityOfCarriedInstance($instanceId, $actorId, 'Vous ne portez pas cet objet.');
 
         /* Self-holding and cycles are putInside()'s own refusals. */
@@ -293,6 +305,37 @@ final class ContainerService extends BaseService
                 [$fromId, $itemId]
             );
         });
+    }
+
+    /**
+     * The container's capacity in content LINES — its item type's
+     * `capacity` column. Null (unlimited) for buildings and for types
+     * the admin left unset.
+     */
+    public function capacityOf(int $containerId): ?int
+    {
+        $capacity = $this->conn->fetchOne(
+            'SELECT it.capacity FROM item_instances i
+               JOIN items it ON it.id = i.item_id
+              WHERE i.entity_id = ?',
+            [$containerId]
+        );
+
+        return ($capacity === false || $capacity === null) ? null : (int) $capacity;
+    }
+
+    /** One more line must fit — a stack line or an exemplar, one each. */
+    private function assertRoomForALine(int $containerId): void
+    {
+        $capacity = $this->capacityOf($containerId);
+        if ($capacity === null) {
+            return;
+        }
+
+        $contents = $this->contentsOf($containerId);
+        if (count($contents['stacks']) + count($contents['exemplars']) >= $capacity) {
+            throw new RuntimeException('Le contenant est plein.');
+        }
     }
 
     /**

@@ -220,6 +220,34 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         (new ContainerService())->depositStack($chest, (int) $actor->id, $bois, 1);
     }
 
+    public function testACapacityCountsLinesAndAFullChestRefusesNewOnes(): void
+    {
+        $chest = $this->chestAt(48, 30);
+        $actor = $this->actorNextTo(48, 30, 'GmPlein');
+        $bois = $this->giveStack($actor, 'bois', 4);
+        $pierre = $this->giveStack($actor, 'pierre', 2);
+
+        $before = $this->link->fetchOne("SELECT capacity FROM items WHERE name = 'coffre_bois'");
+        $this->link->executeStatement("UPDATE items SET capacity = 1 WHERE name = 'coffre_bois'");
+
+        try {
+            $service = new ContainerService();
+            $service->depositStack($chest, $actor, $bois, 2);
+
+            // The line exists: more of the same takes no room.
+            $service->depositStack($chest, $actor, $bois, 1);
+            $this->assertSame(3, $this->stackOf($chest, $bois));
+
+            $this->expectExceptionMessage('Le contenant est plein.');
+            $service->depositStack($chest, $actor, $pierre, 1);
+        } finally {
+            $this->link->executeStatement(
+                'UPDATE items SET capacity = ? WHERE name = \'coffre_bois\'',
+                [$before === false ? null : $before]
+            );
+        }
+    }
+
     public function testAFactionChestFollowsTheRank(): void
     {
         $code = $this->factionWithRanks();
