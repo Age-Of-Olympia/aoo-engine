@@ -272,6 +272,130 @@ class FactionService
     }
 
     /**
+     * The role row a member holds — players.faction + players.factionRole
+     * (a POSITION in the faction's ordered role list). Null when factionless
+     * or when the position points at no row (a reordered list can orphan it).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function roleOf(int $playerId): ?array
+    {
+        $row = $this->entityManager->getConnection()->fetchAssociative(
+            'SELECT fr.* FROM players p
+               JOIN factions f ON CONVERT(f.code USING utf8mb4) = CONVERT(p.faction USING utf8mb4)
+               JOIN faction_roles fr ON fr.faction_id = f.id AND fr.position = p.factionRole
+              WHERE p.id = ?',
+            [$playerId]
+        );
+
+        return $row ?: null;
+    }
+
+    /**
+     * May this member perform a management gesture? The flag lives on the
+     * ROLE (faction_roles) — the game finally reads what the admin edits.
+     */
+    public function mayManage(int $actorId, string $flag): bool
+    {
+        if (!in_array($flag, FactionRole::FLAG_KEYS, true)) {
+            return false;
+        }
+
+        $role = $this->roleOf($actorId);
+
+        return $role !== null && !empty($role[$flag]);
+    }
+
+    /**
+     * Enrolls a factionless character into the actor's faction, at the
+     * default role. Refusals throw, with the words the player reads.
+     */
+    public function addMember(int $actorId, string $targetName): string
+    {
+        if (!$this->mayManage($actorId, 'addMember')) {
+            throw new RuntimeException('Votre rang ne permet pas de recruter.');
+        }
+
+        $conn = $this->entityManager->getConnection();
+        $factionCode = (string) $conn->fetchOne('SELECT faction FROM players WHERE id = ?', [$actorId]);
+
+        $target = $conn->fetchAssociative(
+            "SELECT id, name, faction FROM players
+              WHERE CONVERT(name USING utf8mb4) = CONVERT(? USING utf8mb4) AND player_type = 'real'",
+            [trim($targetName)]
+        );
+        if ($target === false) {
+            throw new RuntimeException('Personne de ce nom.');
+        }
+        if ((string) $target['faction'] !== '') {
+            throw new RuntimeException($target['name'] . ' appartient déjà à une faction.');
+        }
+
+        $faction = $this->getFactionByCode($factionCode);
+        $conn->executeStatement(
+            'UPDATE players SET faction = ?, factionRole = ? WHERE id = ?',
+            [$factionCode, $faction !== null ? $this->getDefaultRolePosition($faction) : 0, (int) $target['id']]
+        );
+        (new AuditService())->addAuditLog("faction {$factionCode}: #{$actorId} recrute #{$target['id']}");
+
+        return (string) $target['name'];
+    }
+
+    /** Removes a member of the actor's faction. One does not banish oneself. */
+    public function kickMember(int $actorId, int $targetId): void
+    {
+        if (!$this->mayManage($actorId, 'kickMember')) {
+            throw new RuntimeException('Votre rang ne permet pas de renvoyer.');
+        }
+        if ($targetId === $actorId) {
+            throw new RuntimeException('On ne se bannit pas soi-même.');
+        }
+
+        $conn = $this->entityManager->getConnection();
+        $factionCode = (string) $conn->fetchOne('SELECT faction FROM players WHERE id = ?', [$actorId]);
+        $targetFaction = $conn->fetchOne('SELECT faction FROM players WHERE id = ?', [$targetId]);
+
+        if ($targetFaction === false || (string) $targetFaction !== $factionCode) {
+            throw new RuntimeException('Cette personne n\'est pas des vôtres.');
+        }
+
+        $conn->executeStatement(
+            "UPDATE players SET faction = '', factionRole = 0 WHERE id = ?",
+            [$targetId]
+        );
+        (new AuditService())->addAuditLog("faction {$factionCode}: #{$actorId} renvoie #{$targetId}");
+    }
+
+    /** Moves a member of the actor's faction to another of its roles. */
+    public function assignRole(int $actorId, int $targetId, int $position): void
+    {
+        if (!$this->mayManage($actorId, 'editRole')) {
+            throw new RuntimeException('Votre rang ne permet pas de changer les rangs.');
+        }
+
+        $conn = $this->entityManager->getConnection();
+        $factionCode = (string) $conn->fetchOne('SELECT faction FROM players WHERE id = ?', [$actorId]);
+        $targetFaction = $conn->fetchOne('SELECT faction FROM players WHERE id = ?', [$targetId]);
+
+        if ($targetFaction === false || (string) $targetFaction !== $factionCode) {
+            throw new RuntimeException('Cette personne n\'est pas des vôtres.');
+        }
+
+        $known = $conn->fetchOne(
+            'SELECT fr.id FROM faction_roles fr
+               JOIN factions f ON f.id = fr.faction_id
+              WHERE CONVERT(f.code USING utf8mb4) = CONVERT(? USING utf8mb4) AND fr.position = ?',
+            [$factionCode, $position]
+        );
+        if ($known === false) {
+            throw new RuntimeException('Ce rang n\'existe pas.');
+        }
+
+        $conn->executeStatement('UPDATE players SET factionRole = ? WHERE id = ?', [$position, $targetId]);
+        (new AuditService())->addAuditLog("faction {$factionCode}: #{$actorId} donne le rang {$position} à #{$targetId}");
+    }
+
+    /**
      * Supprime une faction qu'aucun personnage ne référence. players.faction
      * et players.secretFaction étant des colonnes texte sans contrainte, une
      * suppression avec des membres restants les laisserait avec une faction

@@ -61,7 +61,13 @@ if(isset($facJson->secret)){
 
     $res = $db->exe($sql, array($timeLimit, $_GET['faction']));
 
-    FactionView::renderFaction($player,$facJson,$res);
+    /* Les gestes de gestion suivent le RANG du visiteur (faction_roles) :
+     * la vue ne montre que ce que son drapeau permet, l'endpoint revérifie. */
+    $manage = ($player->data->faction === ($_GET['faction'] ?? ''))
+        ? (new FactionService())->roleOf((int) $player->id)
+        : null;
+
+    FactionView::renderFaction($player,$facJson,$res,$manage);
 }
 
 /* Les bâtiments de la faction — ses murs. Réservés à ses MEMBRES, par
