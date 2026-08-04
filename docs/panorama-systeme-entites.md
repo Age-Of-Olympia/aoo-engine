@@ -311,10 +311,11 @@ erDiagram
     players ||--o| progression : "satellite — ce qu'elle gagne"
     players ||--o| buildings : "satellite"
     players ||--o| resources : "satellite"
+    players ||--o| construction_sites : "satellite — l'avancement du chantier"
     players ||--o| item_instances : "satellite"
     players ||--o{ players_bonus : "déficit pv = vie courante"
     races ||--o{ race_harvest : "rendement dévié par plan"
-    races ||--o| entity_type_footprint : "gabarit multi-cases"
+    races ||--o| entity_type_footprints : "gabarit multi-cases"
 ```
 
 ### 2.5 Les services qui possèdent une règle
@@ -327,6 +328,7 @@ erDiagram
 | `Map\TileOccupancyService` | « peut-on poser le pas ici ? », « est-ce libre ? », « peut-on construire ici ? » |
 | `ObstructionService` | la réponse des deux catalogues à *ce qui se traverse / ce qui arrête une flèche* |
 | `BuildingService` | poser, ouvrir, ligne de tir, ruine, `vanish`, retrait par l'animation |
+| `ConstructionSiteService` | le chantier : seul écrivain de `construction_sites` et des transitions de `build_state` qu'il conduit — travail par case × emprise, PV au plancher de l'avancement |
 | `LockService` | ce qui a une porte, et qui a le droit de la tourner |
 | `ItemInstanceService` | cycle de vie d'un exemplaire : créer, équiper, mettre en banque, jeter, poser, ramasser, seuil de brisure |
 | `WearService` | armer et appliquer l'usure au changement de tour |
@@ -534,9 +536,11 @@ exemplaires existants — il n'y a d'instantané figé nulle part.
 | `harvest_item` / `harvest_exhaust` / `harvest_regrow` | ce que ça rend, chances pour mille de s'épuiser et de repousser | ressources, plantes |
 | `harvest_min` / `harvest_max` | ce qu'une cueillette donne | plantes |
 | `playable` | ce type peut-il être **piloté** — par un joueur qui s'inscrit, ou (à venir) par l'accès de faction | races de personnage, et types de bâtiment jouables |
+| `build_work` | unités de travail **par case** pour le dresser — l'emprise multiplie ; 0 = construit d'un geste. En déclarer fait de construire l'ouverture d'un **chantier** que l'action `travailler` avance | types de bâtiment |
+| `workshop` *(sur `craft_recipes`)* | le type de bâtiment où une recette avancée se façonne — un exemplaire OUVERT à portée ; NULL = de base, fabricable partout. La recette de l'atelier reste de base (amorçage) | recettes |
 | `hidden` | tenu hors de ce qu'on montre à un joueur : création, listes, classements | tous |
 | `faction`, `plan`, `animateur_id`, couleurs, compteurs de portrait/avatar | présentation et possession par défaut | tous |
-| gabarit (`entity_type_footprint`) | quelles cases un type occupe, et le rôle de chaque morceau | structures multi-cases |
+| gabarit (`entity_type_footprints`) | quelles cases un type occupe, et le rôle de chaque morceau — **tout type d'édifice est semé 2×2** ; les obstacles (murs) restent 1×1 ; réglable dans l'éditeur des types, figures ajourées dans Cartes → Emprises | structures multi-cases |
 | `race_harvest` (plan, type) | déviation du rendement par plan, **champ par champ** | ressources, plantes |
 
 ### 5.2 Ce qui est configurable — sur le type OBJET (`items`)
@@ -578,6 +582,10 @@ pas l'être — un bâtiment détruit le garde, dans le vide, avec sa ligne surv
 | à 0 PV | enfers + perte d'xp | `vanish` | `vanish` | `vanish` | `vanish` | tombe **brisé** sur sa propre case | déjà là — reste brisé |
 | se répare | soin | oui, sauf si brisé | oui — une statue ébréchée se retaille | **non** — un filon s'épuise et repousse | **non** | oui, sauf si brisé | non — ne peut pas être visé du tout |
 | prend des tours / progresse | **oui**, par nature | **si son type est `playable`** — tour = réserve + horloge, pas d'xp à rester debout | non | non | non | non | non |
+
+Un bâtiment dont le type déclare `build_work` **naît chantier** sous le construire du
+joueur : fermé (« en construction »), PV au plancher qui monte avec l'ouvrage, bloquant
+le pas mais pas la flèche — voir §6.8.
 
 La réparabilité est déclarée **sur le type** (`races.repairable`, nullable = demander à la
 famille), pas déduite de la branche. Voir §7.
@@ -635,6 +643,9 @@ des deux.
   l'arrière d'un bâtiment ne doit pas rendre injoignable qui s'y tient.
 - Une **porte ouverte laisse aussi passer la flèche** — la même ouverture gouverne le pas et le
   tir.
+- Un **chantier ne masque rien** : poteaux nus et échafaudages laissent passer la flèche
+  quand le pas reste bloqué — la ligne `construction_sites` est l'état, et la dernière
+  pierre qui la retire dresse les murs qui arrêtent.
 - **Une cible ne se masque jamais elle-même** (ses propres cases sont soustraites), ce qui
   n'apparaissait que sur les objets multi-cases.
 - Les portes sont des types de race seulement ; le discriminant protège des objets homonymes.
@@ -645,7 +656,9 @@ Une seule fonction répond *pourquoi est-ce fermé*, pour observe, le HUD et l'a
 ordre :
 
 1. `build_state = ruin` → **« en ruine »**
-2. `build_state = construction` → **« en construction »**
+2. `build_state = construction` → **« en construction »** — écrit par `place()` quand le
+   type déclare du travail (voir §6.8), levé par le dernier geste de `travailler` ou le
+   *Restaurer* de l'admin
 3. **PV sous 50 %** (`CLOSED_BELOW_PV_PCT`) → **« endommagé »** — c'est la fermeture
    automatique : rien n'écrit de drapeau, les dégâts seuls ferment la place, et réparer la
    rouvre
@@ -780,6 +793,34 @@ partie des matériaux de la recette — les matériaux corrompus sont perdus. Il
 emplacements d'équipement (`main1`, `main2`, `tronc`, `tete`) et retire l'unité au lieu de la
 mettre à zéro : les deux chemins ne doivent pas être confondus, et aucun des deux ne peut
 atteindre une pile au sac.
+
+---
+
+### 6.8 Construire prend du temps — le chantier
+
+Le TYPE déclare son travail : `races.build_work`, **par case**, multiplié par
+l'emprise — un donjon 3×3 coûte neuf fois les gestes de sa guérite ; 0 (tout type
+tant qu'on ne dit rien) garde le dressage d'un geste. Quand du travail est déclaré,
+le construire du joueur consomme l'objet fabriqué comme avant mais ouvre un
+**chantier** :
+
+| tant que le chantier dure | règle |
+|---|---|
+| état | `buildings.build_state = 'construction'`, le satellite `construction_sites` porte `work_done / work_total` — la ligne EST l'état |
+| services | fermé, par la règle de fermeture unique — un atelier inachevé ne fabrique rien |
+| PV | plancher à `max × fait/total` (min 1), relevé à chaque geste — œuvrer répare aussi les dégâts subis entre-temps, jusqu'au plancher ; la dernière pierre donne les PV pleins |
+| pas | bloqué, comme son type le dit |
+| flèches | **passent** — des poteaux nus ne masquent rien (§6.2) |
+| tours | un type jouable en chantier ne tique pas — son horloge démarre à la dernière pierre |
+| qui œuvre | `travailler` (1 point d'action, XP au tarif de la réparation, tous les personnages l'ont) : la règle du foyer `LockService::mayActOn` — le propriétaire, un membre de la faction du site, et un chantier sans l'un ni l'autre appartient à tout le monde |
+| concurrence | chaque avance est un UPDATE conditionnel lu par ses lignes affectées — deux ouvriers ne posent pas la même dernière pierre |
+
+`ConstructionSiteService` est le seul écrivain ; `vanish()`, `restore()` et
+`markDestroyed()` effacent tous le satellite (une place rasée, remise à neuf ou en
+ruine n'est pas un chantier). Le *Restaurer* de l'admin **achève** donc un site.
+L'artisanat porte deux niveaux là-dessus : une recette qui nomme son `workshop`
+exige un bâtiment OUVERT de ce type à portée — et la recette de l'atelier reste de
+base, sans quoi aucun atelier ne pourrait exister.
 
 ---
 

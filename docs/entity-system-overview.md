@@ -306,10 +306,11 @@ erDiagram
     players ||--o| progression : "satellite — what it earns"
     players ||--o| buildings : "satellite"
     players ||--o| resources : "satellite"
+    players ||--o| construction_sites : "satellite — the site's progress"
     players ||--o| item_instances : "satellite"
     players ||--o{ players_bonus : "pv deficit = current life"
     races ||--o{ race_harvest : "per-plan yield override"
-    races ||--o| entity_type_footprint : "multi-cell cut-out"
+    races ||--o| entity_type_footprints : "multi-cell cut-out"
 ```
 
 ### 2.5 Services that own a rule
@@ -322,6 +323,7 @@ erDiagram
 | `Map\TileOccupancyService` | "can a step land here?", "is it vacant?", "can I build here?" |
 | `ObstructionService` | the two catalogues' answer to *what is passable / what stops arrows* |
 | `BuildingService` | placing, opening, line of fire, ruin, vanish, admin removal |
+| `ConstructionSiteService` | the construction site: sole writer of `construction_sites` and of the `build_state` transitions it drives — work per cell × footprint, PV rising to the progress floor |
 | `LockService` | what has a door at all, and who may turn it |
 | `ItemInstanceService` | exemplar life-cycle: create, equip, bank, drop, install, collect, broken-at |
 | `WearService` | arming and applying wear on turn change |
@@ -523,9 +525,11 @@ individual immediately — there is no frozen snapshot anywhere.
 | `harvest_item` / `harvest_exhaust` / `harvest_regrow` | what it yields, per-thousand odds of running out and of coming back | resources, plants |
 | `harvest_min` / `harvest_max` | how much one picking gives | plants |
 | `playable` | may this type be **driven** — by a registering player, or (to come) through faction access | character races, and playable building types |
+| `build_work` | work units **per cell** to raise one — the footprint multiplies; 0 = built in one gesture. Declaring any makes construire open a **construction site** the `travailler` action advances | building types |
+| `workshop` *(on `craft_recipes`)* | the building type an advanced recipe is crafted at — an OPEN specimen within reach; NULL = basic, crafted anywhere. The atelier's own recipe stays basic (bootstrap) | recipes |
 | `hidden` | kept out of what a player is shown: creation, lists, rankings | all |
 | `faction`, `plan`, `animateur_id`, colors, portrait/avatar counters | presentation and ownership defaults | all |
-| footprint (`entity_type_footprint`) | which cells a type occupies, and the role of each piece | multi-cell structures |
+| footprint (`entity_type_footprints`) | which cells a type occupies, and the role of each piece — **every édifice type is seeded 2×2**; obstacles (walls) stay 1×1; settable in the type editor, holed figures in Cartes → Emprises | multi-cell structures |
 | `race_harvest` (plan, type) | per-plan override of the yield, **field by field** | resources, plants |
 
 ### 5.2 What is configurable — on the ITEM type (`items`)
@@ -566,6 +570,10 @@ keeps it, in the void, with its surviving row (§6.4).
 | at 0 PV | enfers + XP loss | `vanish` | `vanish` | `vanish` | `vanish` | falls **broken** on its own cell | already there — stays broken |
 | repairable | heal | yes, unless broken | yes — a chipped statue is re-carved | **no** — a vein runs out and grows back | **no** | yes, unless broken | no — cannot be targeted at all |
 | takes turns / progresses | **yes**, by nature | **if its type is `playable`** — turn = pool + clock, no XP for standing still | no | no | no | no | no |
+
+A building whose type declares `build_work` is **born a construction site** under the
+player's construire: shut ("en construction"), PV at a floor that rises with the work,
+blocking the step but not the arrow — see §6.8.
 
 Repairability is declared **on the type** (`races.repairable`, nullable = ask the family), not
 deduced from the branch. See §7.
@@ -617,6 +625,9 @@ it really stands. What is merely `dropped` is excluded from both.
   arrows on a quarter of itself. `cover` cells are excluded: the back of a building must not
   make whoever stands there unreachable.
 - An **open door lets the arrow through too** — same opening governs step and shot.
+- A **construction site screens nothing**: bare posts and scaffolds let the arrow
+  through while the step stays blocked — the `construction_sites` row is the state,
+  and the last stone that removes it raises the walls that stop.
 - **A target never screens itself** (its own cells are subtracted), which only showed up on
   multi-cell objects.
 - Doors are race types only; the discriminator guards against homonymous items.
@@ -626,7 +637,9 @@ it really stands. What is merely `dropped` is excluded from both.
 One function answers *why is this shut*, for observe, HUD and admin alike, in this order:
 
 1. `build_state = ruin` → **"en ruine"**
-2. `build_state = construction` → **"en construction"**
+2. `build_state = construction` → **"en construction"** — written by `place()` when the
+   type declares work (see §6.8), cleared by the last `travailler` gesture or the
+   admin's *Restaurer*
 3. **PV below 50 %** (`CLOSED_BELOW_PV_PCT`) → **"endommagé"** — this is the automatic
    closure: nothing writes a flag, damage alone shuts the place, and repairing reopens it
 4. `is_open = 0` **and** the type is `lockable` → **"fermé volontairement"**
@@ -702,8 +715,14 @@ flowchart TD
 
 `PlaceStructureOutcomeInstruction` is the data-driven outcome of *construire*:
 
-- Target cell is either **chosen** (`build_picker.js` → validated by `BuildSiteCondition`
-  before any payment) or the first free adjacent cell.
+- Target cell is either **chosen** (`build_picker.js` — the picker ghosts the built
+  form's sprite over its emprise, and accepts any origin whose **footprint touches the
+  builder**, validated by `BuildSiteCondition` before any payment) or the first free
+  adjacent cell.
+- **Every cell of the footprint must be free**: `place()` locks and verifies each one
+  (same source `syncCells` lays them from), and the refusal names the busy cell.
+  Admin and Tiled placements raise finished buildings; only the player's gesture
+  passes `asConstructionSite`.
 - If the type is a **race** of kind structure → `BuildingService::place()` mints a building
   (actor becomes owner, faction copied).
 - Otherwise the type is an **item** → `installFromCatalogAt()`: the exemplar is *born
@@ -751,6 +770,31 @@ Separately, `DamageObjectOutcomeInstruction` breaks *equipment* outright on a ro
 recipe's materials — corrupted materials are lost. It reads the equipment slots
 (`main1`, `main2`, `tronc`, `tete`) and removes the unit instead of zeroing it, so the two
 paths must not be confused — and neither of them can reach a stack in the bag.
+
+### 6.8 Building takes time — the construction site
+
+The TYPE declares its work: `races.build_work`, **per cell**, multiplied by the
+footprint — a 3×3 keep costs nine times the gestures of its gatehouse; 0 (every
+type until told otherwise) keeps today's one-gesture raise. When work is declared,
+the player's construire consumes the crafted object as before but opens a **site**:
+
+| while under construction | rule |
+|---|---|
+| state | `buildings.build_state = 'construction'`, satellite `construction_sites` carries `work_done / work_total` — the row IS the state |
+| services | shut, by the one closure rule — an unfinished atelier crafts nothing |
+| PV | floor at `max × done/total` (min 1), raised by each gesture — working also mends damage taken meanwhile, up to the floor; the last stone brings full PV |
+| step | blocked, as its type says |
+| arrows | **pass** — bare posts screen nothing (§6.2) |
+| turns | a playable type under construction does not tick — its clock starts with the last stone |
+| who works | `travailler` (1 action point, XP at the repair rate, every character has it): the household rule `LockService::mayActOn` — the owner, a member of the site's faction, and a site with neither belongs to everyone |
+| concurrency | each advance is a conditional UPDATE read by its affected rows — two workers cannot lay the same last stone |
+
+`ConstructionSiteService` is the sole writer; `vanish()`, `restore()` and
+`markDestroyed()` all clear the satellite (a razed, renewed or ruined place is not a
+site). The admin's *Restaurer* therefore **finishes** a site. Crafting has two
+levels riding on this: a recipe naming its `workshop` demands an OPEN building of
+that type within reach — and the atelier's own recipe stays basic, or no atelier
+could ever exist.
 
 ---
 
