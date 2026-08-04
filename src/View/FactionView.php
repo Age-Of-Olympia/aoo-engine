@@ -232,19 +232,23 @@ class FactionView
 
         echo '
     <table border="1" class="marbre" align="center">
-    <tr><th>Rang</th><th>Second nom</th><th>Autorise</th><th></th></tr>
+    <tr><th>Rang</th><th>Autorise</th><th></th></tr>
     ';
 
         foreach ($editable as $role) {
             $isOwn = (int) $role['position'] === $actorPosition;
 
+            /* Both names share the rank's cell, stacked — two columns of
+             * inputs forced a sideways scroll on half a screen. */
             echo '
         <tr class="faction-ladder-row" data-position="' . (int) $role['position'] . '">
-            <td><input type="text" class="faction-ladder-name" maxlength="100"
-                 value="' . htmlspecialchars((string) $role['name'], ENT_QUOTES, 'UTF-8') . '"></td>
-            <td><input type="text" class="faction-ladder-name-alt" maxlength="100"
-                 placeholder="Roi / Reine — vide : un seul nom"
-                 value="' . htmlspecialchars((string) ($role['name_alt'] ?? ''), ENT_QUOTES, 'UTF-8') . '"></td>
+            <td class="faction-ladder-names">
+                <input type="text" class="faction-ladder-name" maxlength="100"
+                 value="' . htmlspecialchars((string) $role['name'], ENT_QUOTES, 'UTF-8') . '">
+                <input type="text" class="faction-ladder-name-alt" maxlength="100"
+                 placeholder="Second nom (Roi / Reine)"
+                 value="' . htmlspecialchars((string) ($role['name_alt'] ?? ''), ENT_QUOTES, 'UTF-8') . '">
+            </td>
             <td>';
 
             // One's own flags freeze: names rename, power does not self-grant.
@@ -254,18 +258,26 @@ class FactionView
                     . (!empty($role[$flag]) ? ' checked' : '') . ($isOwn ? ' disabled' : '') . '> ' . $label . '</label> ';
             }
 
+            /* One gesture per line: the row of five controls pushed the
+             * table past the panel. The arrows stay paired — they are
+             * one gesture with two directions. */
             echo '</td>
-            <td style="white-space: nowrap;"><button class="faction-ladder-save">Enregistrer</button>';
+            <td><div class="faction-ladder-actions">
+                <button class="faction-ladder-save">Enregistrer</button>';
 
             if ($isTop && !$isOwn) {
-                echo ' <button class="faction-ladder-move" data-direction="1" title="Monter d\'un cran">&#8593;</button>'
-                    . '<button class="faction-ladder-move" data-direction="-1" title="Descendre d\'un cran">&#8595;</button>'
-                    . ' <label style="white-space: nowrap;"><input type="radio" name="faction-ladder-landing" class="faction-ladder-landing"'
-                    . (!empty($role['defaultRole']) ? ' checked' : '') . '> Accueil</label>'
-                    . ' <button class="faction-ladder-remove" data-name="' . htmlspecialchars((string) $role['name'], ENT_QUOTES, 'UTF-8') . '">Retirer</button>';
+                echo '
+                <span class="faction-ladder-arrows">
+                    <button class="faction-ladder-move" data-direction="1" title="Monter d\'un cran">&#8593;</button>
+                    <button class="faction-ladder-move" data-direction="-1" title="Descendre d\'un cran">&#8595;</button>
+                </span>
+                <label style="white-space: nowrap;"><input type="radio" name="faction-ladder-landing" class="faction-ladder-landing"'
+                    . (!empty($role['defaultRole']) ? ' checked' : '') . '> Accueil</label>
+                <button class="faction-ladder-remove" data-name="' . htmlspecialchars((string) $role['name'], ENT_QUOTES, 'UTF-8') . '">Retirer</button>';
             }
 
-            echo '</td>
+            echo '
+            </div></td>
         </tr>
         ';
         }

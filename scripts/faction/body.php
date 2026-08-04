@@ -24,13 +24,18 @@ if(!$facJson){
  * DANS son cadre au lieu de déborder du panneau ou du mobile. */
 echo '<div class="faction-page">
 <style>
-    .faction-page { text-align: center; }
+    /* Titles read from the left, like the rest of the game; only the
+     * tables keep their centred marble. */
     .faction-page .faction-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .faction-page table.marbre { margin: 0 auto; }
     .faction-page details.faction-section { margin: 0.6em 0; }
     .faction-page details.faction-section summary { cursor: pointer; }
     .faction-page details.faction-section summary h2 { display: inline-block; margin: 0.2em 0; }
     .faction-page td img { max-height: 40px; }
+    .faction-page .faction-ladder-names input { display: block; width: 100%; min-width: 9em; box-sizing: border-box; margin: 2px 0; }
+    .faction-page .faction-ladder-actions { display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
+    .faction-page .faction-ladder-arrows { display: flex; gap: 4px; }
+    .faction-page .faction-ladder-arrows button { flex: 1; }
     @media (max-width: 700px) {
         .faction-page table.marbre { font-size: 0.85em; }
         .faction-page td, .faction-page th { padding: 2px 4px; }
@@ -44,7 +49,7 @@ echo '<h1>'. htmlspecialchars((string) $facJson->name, ENT_QUOTES, 'UTF-8')
     .' <span class="ra '. $facJson->raFont .'"></span></h1>';
 
 if (!empty($facJson->text)) {
-    echo '<p style="max-width: 640px; margin: 0 auto 1em;"><small>'
+    echo '<p style="max-width: 640px; margin: 0 0 1em;"><small>'
         . nl2br(htmlspecialchars((string) $facJson->text, ENT_QUOTES, 'UTF-8'))
         . '</small></p>';
 }
