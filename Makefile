@@ -47,7 +47,7 @@ test-ci:
 # du job (migrations, PHPStan).
 test-ci-coverage:
 	mkdir -p tmp/coverage
-	php -d pcov.enabled=1 -d pcov.directory=src ./vendor/bin/phpunit -c phpunit.xml \
+	php -d pcov.enabled=1 -d pcov.directory=src -d memory_limit=512M ./vendor/bin/phpunit -c phpunit.xml \
 		--log-junit phpunit-report.xml --coverage-text --colors=never
 
 phpstan-ci:
