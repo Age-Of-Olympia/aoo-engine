@@ -83,6 +83,15 @@ final class Version20260805120000_TheLockBecomesAGesture extends AbstractMigrati
                  WHERE a.name = ? AND o.name = 'serrure'",
                 [json_encode(['open' => $open]), $name]
             );
+            /* A door decides passage: the board reloads so the tile
+             * turns walkable (or barred) before the next step. */
+            $conn->executeStatement(
+                "INSERT INTO outcome_instructions (type, parameters, orderIndex, outcome_id)
+                 SELECT 'refreshscreen', '{}', 1, o.id
+                 FROM action_outcomes o JOIN actions a ON a.id = o.action_id
+                 WHERE a.name = ? AND o.name = 'serrure'",
+                [$name]
+            );
 
             // Every current character carries the gesture...
             $conn->executeStatement(
