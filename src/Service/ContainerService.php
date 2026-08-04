@@ -103,7 +103,7 @@ final class ContainerService extends BaseService
             "SELECT pi.item_id, it.name, pi.n
                FROM players_items pi
                JOIN items it ON it.id = pi.item_id
-              WHERE pi.player_id = ? AND pi.slot = '' AND pi.n > 0
+              WHERE pi.player_id = ? AND pi.slot = '' AND pi.equiped = '' AND pi.n > 0
               ORDER BY it.name",
             [$containerId]
         );

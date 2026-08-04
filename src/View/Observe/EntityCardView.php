@@ -221,7 +221,54 @@ final class EntityCardView
             $html .= '<a href="warschool.php?targetId=' . $target->id . '"><button class="action"><span class="ra ra-axe"></span> <span class="action-name">Apprendre</span></button></a>';
         }
 
+        $html .= self::containerBlockHtml($player, $target);
+
         $html .= self::parlerButtonHtml($player, $target, $buildingDetails, $buildingClosure, $x, $y, $coords);
+
+        return $html;
+    }
+
+    /**
+     * The way into a container: an "Ouvrir" button and a glance at what
+     * it holds, on anything the type says can be shut — a chest, an
+     * édifice. Quiet when unusable from here (too far, shut, not one of
+     * its people): the refusal already speaks on the screen itself.
+     */
+    private static function containerBlockHtml(Player $player, Player $target): string
+    {
+        if (!(new \App\Service\LockService())->isLockable((int) $target->id)) {
+            return '';
+        }
+
+        $service = new \App\Service\ContainerService();
+
+        try {
+            $service->assertUsable((int) $target->id, (int) $player->id);
+        } catch (\RuntimeException $e) {
+            return '';
+        }
+
+        $html = '<a href="container.php?targetId=' . (int) $target->id . '"><button class="action">'
+            . '<span class="ra ra-ammo-bag"></span> <span class="action-name">Ouvrir</span></button></a>';
+
+        $contents = $service->contentsOf((int) $target->id);
+        $names = array_merge(
+            array_map(
+                static fn (array $s): string => ucfirst((string) $s['name']) . ' ×' . (int) $s['n'],
+                $contents['stacks']
+            ),
+            array_map(
+                static fn (array $x): string => (string) ($x['custom_name'] ?? '') !== ''
+                    ? (string) $x['custom_name']
+                    : ucfirst((string) $x['name']),
+                $contents['exemplars']
+            )
+        );
+
+        if ($names !== []) {
+            $peek = implode(', ', array_slice($names, 0, 3)) . (count($names) > 3 ? '…' : '');
+            $html .= '<div class="container-peek"><small>' . htmlspecialchars($peek, ENT_QUOTES, 'UTF-8') . '</small></div>';
+        }
 
         return $html;
     }
