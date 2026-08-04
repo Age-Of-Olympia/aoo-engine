@@ -453,6 +453,12 @@ class View{
                 $x = ($x - $this->coords->x + $this->p) * 50;
                 $y = (-$y + $this->coords->y + $this->p) * 50;
 
+                /* One sprite may span several tiles: a 2×2 édifice covers
+                 * its whole box. Screen y inverts game y, so the ORIGIN row
+                 * is already the top-left of the box. */
+                $spanW = 50;
+                $spanH = 50;
+
 
                 // La couche resources garde ses images dans img/walls
                 // (dépôt d'assets + avatars copiés en base — voir
@@ -530,6 +536,17 @@ class View{
                         $img = self::structureSprite((string) $entity->race, (string) $entity->name);
                     }
 
+                    if($isStructure){
+
+                        $footprint = self::typeFootprints()[(string) $entity->race] ?? null;
+
+                        if($footprint !== null && !$footprint->isSingleCell()){
+
+                            $spanW = 50 * $footprint->width();
+                            $spanH = 50 * $footprint->height();
+                        }
+                    }
+
                     /* La bordure de race dit d'un coup d'œil À QUI on a
                      * affaire : elle a du sens sur un personnage, moins sur
                      * un mur ou un coffre, où elle encombre le décor. Elle
@@ -562,8 +579,8 @@ class View{
                             x="' . $x . '"
                             y="' . $y . '"
 
-                            width="50"
-                            height="50"
+                            width="'. $spanW .'"
+                            height="'. $spanH .'"
 
                             style="'. $style .'"
                             />
@@ -654,8 +671,8 @@ class View{
 
                             id="'. $id .'-shadow"
 
-                            width="50"
-                            height="50"
+                            width="'. $spanW .'"
+                            height="'. $spanH .'"
 
                             data-table="'. $row->whichTable .'"
                             data-coords="'. $coords->x .','. $coords->y .'"
@@ -672,6 +689,8 @@ class View{
 
                     // Full-size avatar (50x50, no offsets). All tutorial
                     // selectors target this so highlights stay aligned.
+                    // A spanned sprite fills its box even when not square.
+                    $spanAttr = ($spanW !== 50 || $spanH !== 50) ? ' preserveAspectRatio="none"' : '';
                     $avatarClasses = [];
                     if ($isCurrentPlayer) {
                         $avatarClasses[] = 'current-player';
@@ -686,8 +705,8 @@ class View{
 
                         id="'. ($isCurrentPlayer ? 'current-player-avatar' : $id) .'"
 
-                        width="50"
-                        height="50"
+                        width="'. $spanW .'"
+                        height="'. $spanH .'"
 
                         data-table="'. $row->whichTable .'"
                         data-coords="'. $coords->x .','. $coords->y .'"
@@ -695,7 +714,7 @@ class View{
                         x="'. floor($x) .'"
                         y="'. floor($y) .'"
 
-                        href="'. $img .'"'. $avatarClassAttr .'
+                        href="'. $img .'"'. $avatarClassAttr . $spanAttr .'
                         />
                     ';
                 }
@@ -1391,6 +1410,15 @@ class View{
      * <image data-table="players"> (bouton Aller de js/view.js, ombre
      * .avatar-shadow), et la fiche peut l'afficher en grand.
      */
+    /** Per-request memo of the type cut-outs, for the multi-cell sprites. */
+    private static ?array $typeFootprints = null;
+
+    /** @return array<string, \App\Service\Map\Footprint> */
+    private static function typeFootprints(): array{
+
+        return self::$typeFootprints ??= (new \App\Service\Map\EntityTypeFootprintService())->catalogue();
+    }
+
     /**
      * The one rule for what a structure SHOWS: its type's avatar
      * (resolveAvatar's fallback chain), else the initials frame. The
