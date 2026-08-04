@@ -22,6 +22,8 @@ class View{
     private $options; // player->get_options()
     private $playerId; // ID du joueur pour qui la vue est générée
     private $fullCoordsOnCases; // data-coords-full sur les cases (éditeur + admins)
+    private $footW = 1; // the viewer's footprint, in tiles — a 2×2
+    private $footH = 1; // building senses from its whole box
 
 
     function __construct($coords, $p, $tiled=false, $options=array(), $playerId=null){
@@ -31,9 +33,33 @@ class View{
         $this->p = $p;
         $this->tiled = $tiled;
 
+        // Use provided playerId or fall back to session
+        $this->playerId = $playerId ?? ($_SESSION['playerId'] ?? null);
+
+        /* A multi-cell viewer SENSES from its whole footprint: the zone
+         * is the footprint's box grown by p, not a square around the
+         * anchor cell. The origin cell stays (x-p, y+p) — the box only
+         * gains columns rightward and rows downward, where a figure
+         * extends — so every screen transform below holds unchanged. */
+        $this->footW = 1;
+        $this->footH = 1;
+        if($this->playerId !== null){
+
+            $db = new Db();
+            $res = $db->exe('SELECT race FROM players WHERE id = ?', [(int) $this->playerId]);
+            $race = ($res && ($row = $res->fetch_object())) ? (string) $row->race : '';
+            $foot = self::typeFootprints()[$race] ?? null;
+
+            if($foot !== null){
+
+                $this->footW = $foot->width();
+                $this->footH = $foot->height();
+            }
+        }
+
         $this->inSight = array();
         $this->inSightId = array();
-        View::get_coords_id_arround($this->inSight, $this->inSightId, $coords, $p);
+        View::get_coords_id_arround($this->inSight, $this->inSightId, $coords, $p, $this->footW - 1, $this->footH - 1);
 
         $this->useTbl = array();
         $this->options = $options;
@@ -42,16 +68,14 @@ class View{
          * de map en a besoin pour ses outils, et les admins en jeu pour
          * l'outil clic droit (format directement collable en console). */
         $this->fullCoordsOnCases = $tiled || in_array('isAdmin', $options);
-
-        // Use provided playerId or fall back to session
-        $this->playerId = $playerId ?? ($_SESSION['playerId'] ?? null);
     }
    
     //outCoords && $outCoordsId are passed by reference initialized is resposability of caller
-    public static function get_coords_id_arround(&$outCoords,&$outCoordsId,$coords,$p){
+    // extraX/extraY widen the box rightward and downward for a multi-cell viewer
+    public static function get_coords_id_arround(&$outCoords,&$outCoordsId,$coords,$p,$extraX=0,$extraY=0){
         $minX = $coords->x - $p;
-        $maxX = $coords->x + $p;
-        $minY = $coords->y - $p;
+        $maxX = $coords->x + $p + $extraX;
+        $minY = $coords->y - $p - $extraY;
         $maxY = $coords->y + $p;
 
         $sql = '
@@ -92,7 +116,8 @@ class View{
         ob_start();
 
 
-        $size = (($this->p * 2) + 1) * self::TILE_PX;
+        $sizeW = (($this->p * 2) + $this->footW) * self::TILE_PX;
+        $sizeH = (($this->p * 2) + $this->footH) * self::TILE_PX;
 
 
         $planJson = json()->decode('plans', $this->coords->plan);
@@ -130,14 +155,14 @@ class View{
         <svg
             xmlns="http://www.w3.org/2000/svg"
             xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
-            viewBox="0 0 '. $size .' '. $size .'"
+            viewBox="0 0 '. $sizeW .' '. $sizeH .'"
             
             id="svg-view"
 
             width="100%"
             height="100%"
 
-            style="max-width: '. $size .'px;"
+            style="max-width: '. $sizeW .'px;"
 
             class="box-shadow"
             >
@@ -175,7 +200,7 @@ class View{
                            width="'. $tileW .'" height="'. $tileH .'" />
                 </pattern>
             </defs>
-            <rect x="-200" y="-200" width="'. ($size + 400) .'" height="'. ($size + 400) .'"
+            <rect x="-200" y="-200" width="'. ($sizeW + 400) .'" height="'. ($sizeH + 400) .'"
                   fill="url(#ground-pattern)" />
             ';
 
@@ -824,10 +849,10 @@ class View{
             $coordsArround = View::get_coords_arround($this->coords, 1);
 
 
-            // grid or empty clickable cases
-            for ($i = 0; $i < $this->p*2+1; $i++) {
+            // grid or empty clickable cases — the box carries the viewer's footprint
+            for ($i = 0; $i < $this->p*2 + $this->footW; $i++) {
 
-                for ($j = 0; $j < $this->p*2+1; $j++) {
+                for ($j = 0; $j < $this->p*2 + $this->footH; $j++) {
 
 
                     $coordX = $i + $this->coords->x - $this->p;
@@ -998,7 +1023,7 @@ class View{
             echo '
             <div
                 class="view-mask scrolling-mask"
-                style="background: url(\''. $planJson->mask .'\'); max-width:'. $size .'px; max-height:'. $size .'px; "
+                style="background: url(\''. $planJson->mask .'\'); max-width:'. $sizeW .'px; max-height:'. $sizeH .'px; "
                 >
             </div>
             ';
