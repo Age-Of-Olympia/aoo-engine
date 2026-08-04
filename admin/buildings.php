@@ -120,6 +120,11 @@ function building_render_list(array $buildings, array $dialogNames, string $csrf
             . '<td>' . e($b['name']) . '</td>'
             . '<td>' . e($b['type']) . '</td>'
             . '<td>' . building_state_badge($b['build_state'])
+            // A site tells where it stands: work done over the footprint total.
+            . ($b['site_total'] !== null
+                ? ' <small class="text-muted" title="Travail accompli / total du chantier (l\'emprise multiplie le travail par case du type)">'
+                    . (int) $b['site_done'] . '/' . (int) $b['site_total'] . '</small>'
+                : '')
             . ($isEdifice && !$b['is_open'] ? ' <span class="badge badge-dark" title="Fermeture volontaire — le dialogue se tait">Fermé</span>' : '') . '</td>'
             . '<td>' . $pvCell . '</td>'
             . '<td>(' . (int) $b['x'] . ', ' . (int) $b['y'] . ', ' . (int) $b['z'] . ') · ' . e($b['plan']) . '</td>'

@@ -156,6 +156,11 @@ $applyForm = static function (Race $race) use ($face): string {
     }
     $race->setBlocksPassage(booleanCheckbox('blocks_passage'));
     $race->setBlocksProjectiles(booleanCheckbox('blocks_projectiles'));
+    // Only the building form shows the field; an absent input must not
+    // zero what another face never offered to edit.
+    if (isset($_POST['build_work'])) {
+        $race->setBuildWork(max(0, min(999, (int) $_POST['build_work'])));
+    }
     $race->setPlayable($kind === 'character' && booleanCheckbox('playable'));
     $race->setHidden(booleanCheckbox('hidden'));
     $race->setBgColor((string) $_POST['bgColor']);

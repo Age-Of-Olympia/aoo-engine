@@ -318,6 +318,11 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
         return $this->buildWork;
     }
 
+    public function setBuildWork(int $buildWork): void
+    {
+        $this->buildWork = max(0, $buildWork);
+    }
+
     public function setLabel(string $label): void
     {
         $this->label = $label;

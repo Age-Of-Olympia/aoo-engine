@@ -440,6 +440,14 @@ HTML;
                 . '<option value="0"' . ($isEdit && $race instanceof StructureType && $race->getRepairableOverride() === false ? ' selected' : '') . '>Non</option>'
                 . '</select></label> '
             : '')
+        . ($face->key === \App\View\Admin\TypeEditorFace::BUILDING
+            ? '<label class="mr-3">Travail de construction '
+                . '<input type="number" class="form-control form-control-sm d-inline-block" style="width:80px" name="build_work"'
+                . ' min="0" max="999" value="' . ($isEdit ? (int) $race->getBuildWork() : 0) . '"'
+                . ' title="Unités de travail PAR CASE pour le dresser — l\'emprise multiplie. 0 : construit en un geste.'
+                . ' Sinon, construire ouvre un chantier fermé, à PV plancher, que l\'action travailler fait avancer.">'
+                . ' <small class="text-muted">par case, 0 = instantané</small></label> '
+            : '')
         . ($face->isStructure()
             ? '<label class="mr-3"><input type="checkbox" name="readable_from_afar" '
                 . checked($race instanceof StructureType && $race->isReadableFromAfar())

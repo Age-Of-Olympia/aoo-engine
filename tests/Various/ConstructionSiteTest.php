@@ -69,6 +69,13 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
             $buildingService->closureReason($id, $buildingService->getDetails($id), 1)
         );
 
+        // The admin dashboard sees the site's progress on its row.
+        $rows = array_filter($buildingService->listBuildings(), static fn (array $b): bool => $b['id'] === $id);
+        $row = array_values($rows)[0] ?? null;
+        $this->assertNotNull($row);
+        $this->assertSame(0, $row['site_done']);
+        $this->assertSame(10, $row['site_total']);
+
         // Shut means shut everywhere: an atelier mid-build crafts nothing.
         $nearby = $buildingService->openBuildingNearby(
             (object) ['x' => 70, 'y' => 71, 'z' => 0, 'plan' => 'gaia'],

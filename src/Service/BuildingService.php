@@ -750,7 +750,7 @@ class BuildingService extends BaseService
      * @return array<int, array{id:int, name:string, type:string, build_state:string,
      *                          dialog:string, is_open:bool, faction:string, owner_id:?int,
      *                          owner_name:?string, x:int, y:int, z:int, plan:string,
-     *                          max_pv:int, current_pv:int}>
+     *                          max_pv:int, current_pv:int, site_done:?int, site_total:?int}>
      */
     public function listBuildings(): array
     {
@@ -761,12 +761,14 @@ class BuildingService extends BaseService
             "SELECT p.id, p.name, p.race, b.build_state, p.faction, p.owner_id, b.dialog, p.is_open,
                     b.readable_from_afar,
                     o.name AS owner_name, c.x, c.y, c.z, c.plan,
-                    COALESCE(pb.n, 0) AS pv_bonus
+                    COALESCE(pb.n, 0) AS pv_bonus,
+                    cs.work_done AS site_done, cs.work_total AS site_total
              FROM buildings b
              JOIN players p ON p.id = b.player_id
              JOIN coords c ON c.id = p.coords_id
              LEFT JOIN players o ON o.id = p.owner_id
              LEFT JOIN players_bonus pb ON pb.player_id = p.id AND pb.name = 'pv'
+             LEFT JOIN construction_sites cs ON cs.player_id = p.id
              ORDER BY c.plan, p.id"
         );
 
@@ -797,6 +799,8 @@ class BuildingService extends BaseService
                 'plan' => (string) $row['plan'],
                 'max_pv' => $maxPv,
                 'current_pv' => $maxPv + (int) $row['pv_bonus'],
+                'site_done' => $row['site_done'] !== null ? (int) $row['site_done'] : null,
+                'site_total' => $row['site_total'] !== null ? (int) $row['site_total'] : null,
             ];
         }, $rows);
     }
