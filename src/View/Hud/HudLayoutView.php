@@ -48,9 +48,7 @@ final class HudLayoutView
          * hérité n'est pas modifié. */
         echo '<nav id="hud-rail"><div id="menu">';
         MenuView::renderMenu();
-        /* Artisanat en sommeil (CRAFT_ENABLED) : l'entrée reviendra
-         * portée par un bâtiment dédié — le code reste en place. */
-        echo (Ui::craftEnabled() ? '<a href="inventory.php?craft" id="show-craft" title="Artisanat"><button><span class="ra ra-forging"></span></button></a>' : '')
+        echo '<a href="inventory.php?craft" id="show-craft" title="Artisanat"><button><span class="ra ra-forging"></span></button></a>'
             . '<a href="inventory.php?bank" id="show-bank" title="Banque"><button><span class="ra ra-gold-bar"></span></button></a>'
             . '<a href="upgrades.php?spells" id="show-spells" title="Sorts &amp; Techniques"><button><span class="ra ra-fairy-wand"></span></button></a>';
         /* Fiche de la faction du personnage — page de lecture, ouverte

@@ -2,13 +2,6 @@
 
 define('DOMAIN', 'http://localhost/www/aoo4/');
 
-/* Artisanat en sommeil : les entrées d'interface (rail HUD, onglet
- * Inventaire, boutons de ligne, bouton d'aperçu) sont masquées tant que
- * la refonte portée par un bâtiment dédié n'est pas prête. La route
- * inventory.php?craft et CraftView restent fonctionnelles. */
-define('CRAFT_ENABLED', false);
-
-
 /*
  * Entity ID Ranges
  * Separate ID ranges for different entity types to ensure real players have sequential IDs
