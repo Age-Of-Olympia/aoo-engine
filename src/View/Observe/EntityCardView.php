@@ -174,6 +174,8 @@ final class EntityCardView
             $card .= self::buildingStatusHtml($raceService, $target, $buildingDetails, $buildingClosure, (int) $pvPct);
         }
 
+        $card .= self::lockStatusHtml($target, (int) $pvPct);
+
         $card .= self::harvestStatusHtml($target);
 
         // Équipement porté — alvéoles de la vue de sélection du HUD
@@ -243,13 +245,11 @@ final class EntityCardView
     }
 
     /**
-     * The way into a container and the hand on its lock, on anything
-     * the type says can be shut — a chest, an édifice, a door.
-     *
-     * "Ouvrir" (the screen) shows when the container serves from here;
-     * the lock button shows to whoever CONTROLS the thing and stands
-     * next to it — shut included, since that is exactly when unlocking
-     * serves. The faction panel keeps the remote lock gesture.
+     * The way into a container, on anything the type says can be shut —
+     * a chest, an édifice: "Ouvrir" (the two-pane screen) shows when
+     * the container serves from here. The LOCK is not this button's
+     * business: `fermer` / `ouvrir` are engine actions whose display
+     * conditions put them in the grid.
      */
     private static function containerBlockHtml(Player $player, Player $target): string
     {
@@ -273,39 +273,9 @@ final class EntityCardView
             // Too far, shut, or not one of its people: no way in from here.
         }
 
-        if (
-            $service->mayTurnLock((int) $target->id, (int) $player->id)
-            && \Classes\View::get_distance_to_entity((array) $player->coords, (int) $target->id) <= 1
-        ) {
-            $isOpen = (bool) \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()
-                ->fetchOne('SELECT is_open FROM players WHERE id = ?', [(int) $target->id]);
-
-            /* A DIRECT action: one click turns the lock (.action--direct
-             * escapes both armed cycles). Fragment script: delegated,
-             * namespaced, off() before on() — the card re-renders at
-             * every observation. */
-            $html .= '<button class="action action--direct container-lock-btn"'
-                . ' data-target="' . (int) $target->id . '" data-open="' . ($isOpen ? 0 : 1) . '"'
-                . ' title="' . ($isOpen ? 'Fermer' : 'Ouvrir') . '">'
-                . '<span class="ra ra-key"></span> <span class="action-name">'
-                . ($isOpen ? 'Fermer' : 'Ouvrir') . '</span></button>'
-                . '<script>
-                    $(document).off("click.containerLock", ".container-lock-btn")
-                        .on("click.containerLock", ".container-lock-btn", function(){
-                            aooFetch("api/container/flows.php", {
-                                action: "lock",
-                                containerId: $(this).data("target"),
-                                open: $(this).data("open")
-                            }, null)
-                                .then(function(data){
-                                    var message = data && data.result && data.result.message ? data.result.message : "";
-                                    (message ? aooAlert(message) : Promise.resolve()).then(aooReload);
-                                })
-                                .catch(autoError());
-                        });
-                </script>';
-        }
-
+        /* The LOCK is a real engine action — `fermer` / `ouvrir`, whose
+         * display conditions (reach, control, state) put the button in
+         * the grid like any other gesture. Nothing to add here. */
         return $html;
     }
 
@@ -527,6 +497,32 @@ final class EntityCardView
             . ($isEdifice && $closure !== null ? ' building-status--closed' : '') . '">'
             . $door
             . '<span class="building-status-state">' . $stateLabel . ' · PV ' . $pvPct . '%</span>'
+            . '</div>';
+    }
+
+    /**
+     * The building pastille's phrase, for every OTHER lockable thing —
+     * a chest: open or shut, read on the tile card the same way a door
+     * is. One style for one idea, as the harvest pastille already says.
+     */
+    private static function lockStatusHtml(Player $target, int $pvPct): string
+    {
+        if (($target->data->player_type ?? '') === 'building') {
+            return ''; // the building pastille already speaks
+        }
+        if (!(new \App\Service\LockService())->isLockable((int) $target->id)) {
+            return '';
+        }
+
+        $closure = (new \App\Service\ContainerService())->closureReasonOf((int) $target->id);
+        $door = $closure === null
+            ? '<span class="building-status-door building-status-door--open">Ouvert</span>'
+            : '<span class="building-status-door building-status-door--closed">Fermé'
+                . ($closure !== 'fermé volontairement' ? ' (' . $closure . ')' : '') . '</span>';
+
+        return '<div class="building-status' . ($closure !== null ? ' building-status--closed' : '') . '">'
+            . $door
+            . '<span class="building-status-state">PV ' . $pvPct . '%</span>'
             . '</div>';
     }
 

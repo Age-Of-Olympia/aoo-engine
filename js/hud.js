@@ -2055,14 +2055,6 @@
                     return;
                 }
 
-                /* DIRECT buttons (.action--direct: the lock…): one click
-                 * is the gesture, handled by their own delegated handler —
-                 * same contract as observe.js, no armed two-step cycle. */
-                if (btn.classList.contains('action--direct')) {
-                    disarmActions();
-                    return;
-                }
-
                 if (e.target.closest('.hud-action-cancel')) {
                     e.preventDefault();
                     e.stopPropagation();

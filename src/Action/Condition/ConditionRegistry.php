@@ -25,6 +25,7 @@ class ConditionRegistry
             'RequiresResource' => new RequiresResourceCondition(),
             'RequiresDamagedTarget' => new RequiresDamagedTargetCondition(),
             'RequiresRepairableTarget' => new RequiresRepairableTargetCondition(),
+            'RequiresLockControl' => new RequiresLockControlCondition(),
             'RequiresItem' => new RequiresItemCondition(),
             'ItemPick' => new ItemPickCondition(),
             'BuildSite' => new BuildSiteCondition(),
