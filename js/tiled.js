@@ -197,8 +197,15 @@ $(document).on("click", ".delete-btn", function () {
       'coord-id':$(this).data("coord-id"),
       'type': $(this).data("type")
     },
-    success: function()
+    success: function(response)
     {
+      /* A refused erase says WHY (protected building…) — without this
+         the modal closed on silence and the tool looked broken. */
+      var notice = $('<div>').html(response).find('.erase-notice').first().text();
+      if(notice && typeof aooAlert === 'function'){
+        aooAlert(notice);
+      }
+
       // Reload only the map view
       $.ajax({
         type: "GET",

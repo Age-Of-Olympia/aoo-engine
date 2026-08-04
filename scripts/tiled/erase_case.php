@@ -21,7 +21,10 @@ if($type == 'buildings'){
 
         if($building['owner_id'] !== null || $building['faction'] !== '' || $building['build_state'] !== 'built'){
 
-            echo 'bâtiment #'. $building['player_id'] .' protégé (propriétaire/faction/état) — passer par admin → Bâtiments';
+            /* The refusal must REACH the editor: the delete handler shows
+               any .erase-notice, a bare echo drowned in the page. */
+            echo '<div class="erase-notice">bâtiment #'. $building['player_id']
+                .' protégé (propriétaire/faction/état) — passer par admin → Bâtiments</div>';
             continue;
         }
 
