@@ -15,16 +15,21 @@ if($type == 'buildings'){
        relève de admin → Bâtiments. */
     $buildingService = new BuildingService();
 
+    /* The animator may OVERRIDE the protection knowingly: the first click
+       refuses and says why, the confirm re-posts with force=1. */
+    $force = !empty($_POST['force']);
+
     /* Par l'EMPRISE : un édifice 2×2 tient quatre cases, la gomme le
        trouve depuis chacune — la recherche vit chez le service. */
     foreach($buildingService->holdingCell((int) $coordsId) as $building){
 
-        if($building['owner_id'] !== null || $building['faction'] !== '' || $building['build_state'] !== 'built'){
+        if(!$force
+            && ($building['owner_id'] !== null || $building['faction'] !== '' || $building['build_state'] !== 'built')){
 
             /* The refusal must REACH the editor: the delete handler shows
                any .erase-notice, a bare echo drowned in the page. */
             echo '<div class="erase-notice">bâtiment #'. $building['player_id']
-                .' protégé (propriétaire/faction/état) — passer par admin → Bâtiments</div>';
+                .' protégé (propriétaire/faction/état)</div>';
             continue;
         }
 

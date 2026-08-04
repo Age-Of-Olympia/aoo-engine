@@ -189,21 +189,34 @@ $(document).on("click", ".delete-btn", function () {
   var selectedToolSrc = $selected.attr('src');
   var selectedParams = $selected.data('params') ? $('#' + $selected.data('type') + '-params').val() : '';
 
+  var deleteData = {
+    'delete': 1,
+    'coord-id': $(this).data("coord-id"),
+    'type': $(this).data("type")
+  };
+
   $.ajax({
     type: "POST",
     url: 'tiled.php',
-    data: {
-      'delete':1,
-      'coord-id':$(this).data("coord-id"),
-      'type': $(this).data("type")
-    },
+    data: deleteData,
     success: function(response)
     {
-      /* A refused erase says WHY (protected building…) — without this
-         the modal closed on silence and the tool looked broken. */
+      /* A refused erase says WHY (protected building…) and offers the
+         override: the animator confirms, the same request leaves with
+         force=1 — no detour through the admin panel. */
       var notice = $('<div>').html(response).find('.erase-notice').first().text();
-      if(notice && typeof aooAlert === 'function'){
-        aooAlert(notice);
+      if(notice && typeof aooConfirm === 'function'){
+        aooConfirm(notice + ' — supprimer quand même ?').then(function(ok){
+          if(!ok){
+            return;
+          }
+          deleteData.force = 1;
+          $.post('tiled.php', deleteData, function(){
+            $.get('tiled.php', {'view_only': 1}, function(viewHtml){
+              $('#map-view-container').html(viewHtml);
+            });
+          });
+        });
       }
 
       // Reload only the map view
