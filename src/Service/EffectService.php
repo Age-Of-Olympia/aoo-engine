@@ -39,7 +39,16 @@ class EffectService
     {
         if (self::$catalog === null) {
             try {
-                $effects = $this->entityManager()->getRepository(Effect::class)->findBy([], ['id' => 'ASC']);
+                /* One block, controls included. The static catalog outlives
+                 * EntityManager clears (every fixture test starts with one):
+                 * a lazy collection initialized AFTER such a clear enters
+                 * the identity map MANAGED while its parent stays detached,
+                 * and the next flush dies on the "new" entity it finds
+                 * through EffectControl#effect. Fetch-joined, parent and
+                 * controls detach together. */
+                $effects = $this->entityManager()->createQuery(
+                    'SELECT e, c FROM ' . Effect::class . ' e LEFT JOIN e.controls c ORDER BY e.id ASC'
+                )->getResult();
             } catch (\Throwable) {
                 // Base indisponible (bootstrap de tests unitaires) : catalogue
                 // vide, NON mis en cache pour ne pas empoisonner une lecture
