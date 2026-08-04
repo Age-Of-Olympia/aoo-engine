@@ -105,7 +105,15 @@ function renderContainerScript(int $containerId): string
         function containerCall(payload){
             payload.containerId = containerId;
             aooFetch('api/container/flows.php', payload, null)
-                .then(function(){ aooReload(); })
+                .then(function(){
+                    /* Back to the same panel, like the faction gestures;
+                     * the full page (no HUD) reloads instead. */
+                    if(window.hudOpenPanel){
+                        window.hudOpenPanel('load_container.php?targetId=' + containerId, 'Contenant');
+                    } else {
+                        document.location.reload();
+                    }
+                })
                 .catch(autoError());
         }
 

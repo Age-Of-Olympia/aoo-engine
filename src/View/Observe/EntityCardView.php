@@ -248,8 +248,19 @@ final class EntityCardView
             return '';
         }
 
-        $html = '<a href="container.php?targetId=' . (int) $target->id . '"><button class="action">'
-            . '<span class="ra ra-ammo-bag"></span> <span class="action-name">Ouvrir</span></button></a>';
+        /* A sliding HUD panel, like every screen of this version; the
+         * full page stays the no-HUD fallback. Fragment script:
+         * delegated, namespaced, off() before on(). */
+        $html = '<button class="action container-open-btn" data-target="' . (int) $target->id . '">'
+            . '<span class="ra ra-ammo-bag"></span> <span class="action-name">Ouvrir</span></button>'
+            . '<script>
+                $(document).off("click.containerOpen", ".container-open-btn")
+                    .on("click.containerOpen", ".container-open-btn", function(){
+                        var url = "load_container.php?targetId=" + $(this).data("target");
+                        if(window.hudOpenPanel){ window.hudOpenPanel(url, "Contenant"); }
+                        else{ document.location = "container.php?targetId=" + $(this).data("target"); }
+                    });
+            </script>';
 
         $contents = $service->contentsOf((int) $target->id);
         $names = array_merge(
