@@ -377,6 +377,10 @@ $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
 // marcher sur la case ramasse (go.php) — ou le bouton sur sa propre case.
 \App\View\Observe\GroundLootView::render($player, (int) $x, (int) $y, $coords);
 
+// Ce que tiennent les contenants de la case — visible seulement ouvert
+// et pour les siens (règle du foyer).
+\App\View\Observe\ContainerPeekView::render($player, (int) $x, (int) $y, $coords);
+
 
 // forbidden trigger
 $sql = '

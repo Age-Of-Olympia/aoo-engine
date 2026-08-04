@@ -64,8 +64,11 @@ class PlacedExemplarService extends BaseService
         $name = $row['custom_name'] !== '' ? $row['custom_name'] : ucfirst((string) $row['catalog_name']);
         $coordsId = View::get_coords_id($goCoords);
 
-        $avatar = 'img/items/' . $row['catalog_name'] . '.webp';
-        if (!is_file(dirname(__DIR__, 2) . '/' . $avatar)) {
+        /* The one sprite rule for a placed object: its item art, else
+         * the structure chain. The initials frame is drawn at render
+         * time, never stored — the column carries a path or nothing. */
+        $avatar = View::exemplarSprite((string) $row['catalog_name'], $name);
+        if (!str_starts_with($avatar, 'img/')) {
             $avatar = BuildingService::NO_IMAGE;
         }
 

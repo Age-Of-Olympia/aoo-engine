@@ -564,7 +564,9 @@ class View{
                      * exactement le même calcul, une fois. */
                     if($isStructure && (empty($img) || !file_exists($img))){
 
-                        $img = self::structureSprite((string) $entity->race, (string) $entity->name);
+                        $img = ((string) ($entity->player_type ?? '') === 'item')
+                            ? self::exemplarSprite((string) $entity->race, (string) $entity->name)
+                            : self::structureSprite((string) $entity->race, (string) $entity->name);
                     }
 
                     if($isStructure){
@@ -1461,6 +1463,27 @@ class View{
         $resolved = \App\Service\BuildingService::resolveAvatar($type);
 
         return $resolved !== '' ? $resolved : self::structureInitialsAvatar($name);
+    }
+
+    /**
+     * The one rule for what a placed OBJECT shows: its item art
+     * (img/items/{type}), else the structure chain — a chest without a
+     * picture wears its initials frame like any structure. The board,
+     * the entity card and the container screen all read HERE.
+     */
+    public static function exemplarSprite(string $itemName, string $label): string{
+
+        foreach(['webp', 'png'] as $ext){
+
+            $img = 'img/items/'. $itemName .'.'. $ext;
+
+            if(file_exists($img)){
+
+                return $img;
+            }
+        }
+
+        return self::structureSprite($itemName, $label);
     }
 
     public static function structureInitialsAvatar(string $name): string{

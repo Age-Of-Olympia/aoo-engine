@@ -18,13 +18,22 @@ $player->get_data();
 $containerId = (int) ($_GET['targetId'] ?? 0);
 $service = new ContainerService();
 
-$row = (new \Classes\Db())->exe('SELECT name, is_open FROM players WHERE id = ?', [$containerId])->fetch_object();
+$row = (new \Classes\Db())->exe('SELECT name, race, player_type, is_open FROM players WHERE id = ?', [$containerId])->fetch_object();
 
 if ($row === null) {
     exit('error container');
 }
 
-echo '<h1>' . htmlspecialchars((string) $row->name !== '' ? (string) $row->name : 'Contenant', ENT_QUOTES, 'UTF-8') . '</h1>';
+$containerName = (string) $row->name !== '' ? (string) $row->name : 'Contenant';
+
+/* The container's face: the same sprite rule as the board and the card. */
+$sprite = ((string) $row->player_type === 'item')
+    ? \Classes\View::exemplarSprite((string) $row->race, $containerName)
+    : \Classes\View::structureSprite((string) $row->race, $containerName);
+
+echo '<h1><img src="' . htmlspecialchars($sprite, ENT_QUOTES, 'UTF-8') . '"'
+    . ' style="max-height:48px;vertical-align:middle;margin-right:8px;" alt="" />'
+    . htmlspecialchars($containerName, ENT_QUOTES, 'UTF-8') . '</h1>';
 
 /* The lock, to its people: shown even when the container refuses —
  * shut is exactly when the owner needs the button. */

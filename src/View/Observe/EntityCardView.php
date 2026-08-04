@@ -137,8 +137,22 @@ final class EntityCardView
          * became an entity. */
         $god = self::godOf($target);
 
+        /* Same resolution as the board: a structure whose stored
+         * portrait is empty or points nowhere shows its sprite chain,
+         * down to the initials frame — a chest without art included. */
+        $bg = $god !== null ? (string) $god->data->portrait : (string) ($target->data->portrait ?? '');
+        if (
+            $god === null
+            && \App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? null)->isStructure()
+            && ($bg === '' || !file_exists($bg))
+        ) {
+            $bg = (($target->data->player_type ?? '') === 'item')
+                ? \Classes\View::exemplarSprite((string) $target->data->race, (string) $target->data->name)
+                : \Classes\View::structureSprite((string) $target->data->race, (string) $target->data->name);
+        }
+
         $data = (object) [
-            'bg' => $god !== null ? $god->data->portrait : $target->data->portrait,
+            'bg' => $bg,
             /* A multi-cell decor shows whole, not by the corner its
              * portrait happens to name. */
             'portraitHtml' => (new SceneryPortraitView())->compose((int) $target->id),
@@ -252,29 +266,10 @@ final class EntityCardView
          * data-action, so both action handlers step aside and the HUD
          * panel router (panelUrl in js/hud.js) slides the fragment in.
          * The full page stays the no-JS fallback. */
-        $html = '<a href="container.php?targetId=' . (int) $target->id . '"><button class="action">'
+        /* The glance at what it holds lives in the TILE section
+         * (ContainerPeekView), not among the actions. */
+        return '<a href="container.php?targetId=' . (int) $target->id . '"><button class="action">'
             . '<span class="ra ra-ammo-bag"></span> <span class="action-name">Ouvrir</span></button></a>';
-
-        $contents = $service->contentsOf((int) $target->id);
-        $names = array_merge(
-            array_map(
-                static fn (array $s): string => ucfirst((string) $s['name']) . ' ×' . (int) $s['n'],
-                $contents['stacks']
-            ),
-            array_map(
-                static fn (array $x): string => (string) ($x['custom_name'] ?? '') !== ''
-                    ? (string) $x['custom_name']
-                    : ucfirst((string) $x['name']),
-                $contents['exemplars']
-            )
-        );
-
-        if ($names !== []) {
-            $peek = implode(', ', array_slice($names, 0, 3)) . (count($names) > 3 ? '…' : '');
-            $html .= '<div class="container-peek"><small>' . htmlspecialchars($peek, ENT_QUOTES, 'UTF-8') . '</small></div>';
-        }
-
-        return $html;
     }
 
     /** Les boutons d'action du joueur, passés au triple filtre d'affichage. */
