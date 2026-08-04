@@ -30,11 +30,11 @@ class FactionMembershipTest extends LegacyPlayerFixtureTestCase
         );
         $this->factionId = (int) $this->link->fetchOne('SELECT id FROM factions WHERE code = ?', [self::CODE]);
 
-        // Position 0: the chief, every management flag. Position 1: the
-        // recruit, default landing role, no flag.
+        // The ladder ascends: position 0 is the recruit (default landing
+        // role, no flag), position 1 the chief (every flag, ladder included).
         $this->link->executeStatement(
-            'INSERT INTO faction_roles (faction_id, position, name, defaultRole, addMember, editRole, kickMember)
-             VALUES (?, 0, "Chef", 0, 1, 1, 1), (?, 1, "Recrue", 1, 0, 0, 0)',
+            'INSERT INTO faction_roles (faction_id, position, name, defaultRole, addMember, editRole, kickMember, initRole)
+             VALUES (?, 0, "Recrue", 1, 0, 0, 0, 0), (?, 1, "Chef", 0, 1, 1, 1, 1)',
             [$this->factionId, $this->factionId]
         );
         FactionService::clearCache();
@@ -63,7 +63,7 @@ class FactionMembershipTest extends LegacyPlayerFixtureTestCase
     public function testTheChiefRecruitsAFactionlessCharacterAtTheDefaultRole(): void
     {
         $chief = $this->createRealPlayer('GmChef');
-        $this->enroll($chief->id, 0);
+        $this->enroll($chief->id, 1);
         $lone = $this->createRealPlayer('GmSansMaison');
         $lone->get_data();
         // A nain is born into forge_sacree: the race copies its faction.
@@ -73,13 +73,13 @@ class FactionMembershipTest extends LegacyPlayerFixtureTestCase
 
         $row = $this->link->fetchAssociative('SELECT faction, factionRole FROM players WHERE id = ?', [$lone->id]);
         $this->assertSame(self::CODE, $row['faction']);
-        $this->assertSame(1, (int) $row['factionRole'], 'a newcomer lands at the default role');
+        $this->assertSame(0, (int) $row['factionRole'], 'a newcomer lands at the default role');
     }
 
     public function testARecruitMayNotRecruit(): void
     {
         $recruit = $this->createRealPlayer('GmRecrue');
-        $this->enroll($recruit->id, 1);
+        $this->enroll($recruit->id, 0);
         $lone = $this->createRealPlayer('GmDehors');
         $lone->get_data();
         $this->link->executeStatement("UPDATE players SET faction = '' WHERE id = ?", [$lone->id]);
@@ -91,7 +91,7 @@ class FactionMembershipTest extends LegacyPlayerFixtureTestCase
     public function testNobodyIsRecruitedAwayFromTheirFaction(): void
     {
         $chief = $this->createRealPlayer('GmChef2');
-        $this->enroll($chief->id, 0);
+        $this->enroll($chief->id, 1);
         $taken = $this->createRealPlayer('GmDejaPris');
         $taken->get_data();
         $this->link->executeStatement("UPDATE players SET faction = 'autre' WHERE id = ?", [$taken->id]);
@@ -103,9 +103,9 @@ class FactionMembershipTest extends LegacyPlayerFixtureTestCase
     public function testTheChiefKicksAMemberButNeverThemself(): void
     {
         $chief = $this->createRealPlayer('GmChef3');
-        $this->enroll($chief->id, 0);
+        $this->enroll($chief->id, 1);
         $member = $this->createRealPlayer('GmMembre');
-        $this->enroll($member->id, 1);
+        $this->enroll($member->id, 0);
 
         $service = new FactionService();
         $service->kickMember($chief->id, $member->id);
@@ -118,9 +118,9 @@ class FactionMembershipTest extends LegacyPlayerFixtureTestCase
     public function testRolesMoveOnlyWithinTheFactionAndItsLadder(): void
     {
         $chief = $this->createRealPlayer('GmChef4');
-        $this->enroll($chief->id, 0);
+        $this->enroll($chief->id, 1);
         $member = $this->createRealPlayer('GmPromu');
-        $this->enroll($member->id, 1);
+        $this->enroll($member->id, 0);
 
         $service = new FactionService();
         $service->assignRole($chief->id, $member->id, 0);
@@ -133,7 +133,7 @@ class FactionMembershipTest extends LegacyPlayerFixtureTestCase
     public function testAStrangerIsNotYours(): void
     {
         $chief = $this->createRealPlayer('GmChef5');
-        $this->enroll($chief->id, 0);
+        $this->enroll($chief->id, 1);
         $stranger = $this->createRealPlayer('GmEtranger');
 
         $this->expectExceptionMessage('Cette personne n\'est pas des vôtres.');

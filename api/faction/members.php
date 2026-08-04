@@ -29,6 +29,15 @@ try {
             $service->assignRole($actorId, (int) ($POST_DATA['targetId'] ?? 0), (int) ($POST_DATA['position'] ?? -1));
             ExitSuccess(['message' => 'Rang changé.']);
             break;
+        case 'role-def':
+            $service->updateRoleDefinition(
+                $actorId,
+                (int) ($POST_DATA['position'] ?? -1),
+                (string) ($POST_DATA['name'] ?? ''),
+                is_array($POST_DATA['flags'] ?? null) ? $POST_DATA['flags'] : []
+            );
+            ExitSuccess(['message' => 'Rang réglé.']);
+            break;
         default:
             ExitError('action inconnue');
     }

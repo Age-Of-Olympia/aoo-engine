@@ -341,10 +341,16 @@ class FactionService
         return (string) $target['name'];
     }
 
-    /** Removes a member of the actor's faction. One does not banish oneself. */
+    /**
+     * Removes a member of the actor's faction. One does not banish oneself,
+     * nor anyone at one's rank or above: the LADDER is the hierarchy
+     * (position ascends — Forgeron 0, Roi at the top), and every gesture
+     * reaches strictly below.
+     */
     public function kickMember(int $actorId, int $targetId): void
     {
-        if (!$this->mayManage($actorId, 'kickMember')) {
+        $actorRole = $this->roleOf($actorId);
+        if ($actorRole === null || empty($actorRole['kickMember'])) {
             throw new RuntimeException('Votre rang ne permet pas de renvoyer.');
         }
         if ($targetId === $actorId) {
@@ -353,10 +359,13 @@ class FactionService
 
         $conn = $this->entityManager->getConnection();
         $factionCode = (string) $conn->fetchOne('SELECT faction FROM players WHERE id = ?', [$actorId]);
-        $targetFaction = $conn->fetchOne('SELECT faction FROM players WHERE id = ?', [$targetId]);
+        $target = $conn->fetchAssociative('SELECT faction, factionRole FROM players WHERE id = ?', [$targetId]);
 
-        if ($targetFaction === false || (string) $targetFaction !== $factionCode) {
+        if ($target === false || (string) $target['faction'] !== $factionCode) {
             throw new RuntimeException('Cette personne n\'est pas des vôtres.');
+        }
+        if ((int) $target['factionRole'] >= (int) $actorRole['position']) {
+            throw new RuntimeException('Cette personne vous dépasse.');
         }
 
         $conn->executeStatement(
@@ -366,18 +375,23 @@ class FactionService
         (new AuditService())->addAuditLog("faction {$factionCode}: #{$actorId} renvoie #{$targetId}");
     }
 
-    /** Moves a member of the actor's faction to another of its roles. */
+    /**
+     * Moves a member of the actor's faction to another of its roles —
+     * a member strictly below, toward a rank strictly below: nobody
+     * raises a peer, nobody raises anyone to their own rank.
+     */
     public function assignRole(int $actorId, int $targetId, int $position): void
     {
-        if (!$this->mayManage($actorId, 'editRole')) {
+        $actorRole = $this->roleOf($actorId);
+        if ($actorRole === null || empty($actorRole['editRole'])) {
             throw new RuntimeException('Votre rang ne permet pas de changer les rangs.');
         }
 
         $conn = $this->entityManager->getConnection();
         $factionCode = (string) $conn->fetchOne('SELECT faction FROM players WHERE id = ?', [$actorId]);
-        $targetFaction = $conn->fetchOne('SELECT faction FROM players WHERE id = ?', [$targetId]);
+        $target = $conn->fetchAssociative('SELECT faction, factionRole FROM players WHERE id = ?', [$targetId]);
 
-        if ($targetFaction === false || (string) $targetFaction !== $factionCode) {
+        if ($target === false || (string) $target['faction'] !== $factionCode) {
             throw new RuntimeException('Cette personne n\'est pas des vôtres.');
         }
 
@@ -391,8 +405,86 @@ class FactionService
             throw new RuntimeException('Ce rang n\'existe pas.');
         }
 
+        $actorPosition = (int) $actorRole['position'];
+        if ((int) $target['factionRole'] >= $actorPosition) {
+            throw new RuntimeException('Cette personne vous dépasse.');
+        }
+        if ($position >= $actorPosition) {
+            throw new RuntimeException('On n\'élève personne à son propre rang.');
+        }
+
         $conn->executeStatement('UPDATE players SET factionRole = ? WHERE id = ?', [$position, $targetId]);
         (new AuditService())->addAuditLog("faction {$factionCode}: #{$actorId} donne le rang {$position} à #{$targetId}");
+    }
+
+    /** The capability flags a ladder-holder may grant — the landing rank
+     *  (defaultRole) is the ladder's structure, not a capability. */
+    public const GRANTABLE_FLAGS = ['showPosition', 'showForum', 'addMember', 'editRole', 'kickMember', 'initRole'];
+
+    /**
+     * Renames a rank and sets what it authorizes — the ladder-holder's
+     * gesture (initRole), on ranks strictly below their own: nobody
+     * rewrites their own charter, nor a superior's.
+     *
+     * @param array<string, mixed> $flags flag => truthy, GRANTABLE_FLAGS only
+     */
+    public function updateRoleDefinition(int $actorId, int $position, string $name, array $flags): void
+    {
+        $actorRole = $this->roleOf($actorId);
+        if ($actorRole === null || empty($actorRole['initRole'])) {
+            throw new RuntimeException('Votre rang ne permet pas de régler l\'échelle.');
+        }
+        if ($position >= (int) $actorRole['position']) {
+            throw new RuntimeException('Ce rang vous dépasse.');
+        }
+
+        $name = trim($name);
+        if ($name === '') {
+            throw new RuntimeException('Un rang porte un nom.');
+        }
+
+        $conn = $this->entityManager->getConnection();
+        $factionCode = (string) $conn->fetchOne('SELECT faction FROM players WHERE id = ?', [$actorId]);
+
+        $sets = ['fr.name = ?'];
+        $params = [$name];
+        foreach (self::GRANTABLE_FLAGS as $flag) {
+            $sets[] = "fr.{$flag} = ?";
+            $params[] = empty($flags[$flag]) ? 0 : 1;
+        }
+        $params[] = $factionCode;
+        $params[] = $position;
+
+        $affected = $conn->executeStatement(
+            'UPDATE faction_roles fr
+               JOIN factions f ON f.id = fr.faction_id
+                SET ' . implode(', ', $sets) . '
+              WHERE CONVERT(f.code USING utf8mb4) = CONVERT(? USING utf8mb4) AND fr.position = ?',
+            $params
+        );
+        if ($affected === 0) {
+            throw new RuntimeException('Ce rang n\'existe pas.');
+        }
+
+        self::clearCache();
+        (new AuditService())->addAuditLog("faction {$factionCode}: #{$actorId} règle le rang {$position} « {$name} »");
+    }
+
+    /**
+     * The ladder itself, position-ascending — full rows, flags included,
+     * for the panel's ladder editor.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function rolesOf(string $code): array
+    {
+        return $this->entityManager->getConnection()->fetchAllAssociative(
+            'SELECT fr.* FROM faction_roles fr
+               JOIN factions f ON f.id = fr.faction_id
+              WHERE CONVERT(f.code USING utf8mb4) = CONVERT(? USING utf8mb4)
+              ORDER BY fr.position ASC',
+            [strtolower(trim($code))]
+        );
     }
 
     /**

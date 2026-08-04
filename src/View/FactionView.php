@@ -135,9 +135,70 @@ class FactionView
     ';
         }
 
-        if ($manages || $mayAdd) {
+        if (!empty($manage['initRole'])) {
+            self::renderLadder((string) ($_GET['faction'] ?? ''), (int) $manage['position']);
+        }
+
+        if ($manages || $mayAdd || !empty($manage['initRole'])) {
             self::renderManageScript((string) ($_GET['faction'] ?? ''));
         }
+    }
+
+    /**
+     * The ladder editor — the initRole holder's gesture, on ranks strictly
+     * below their own: nobody rewrites their own charter. The endpoint
+     * re-checks everything.
+     */
+    private static function renderLadder(string $factionCode, int $actorPosition): void
+    {
+        $flagLabels = [
+            'showPosition' => 'Voir les positions',
+            'showForum'    => 'Voir le forum',
+            'addMember'    => 'Recruter',
+            'kickMember'   => 'Renvoyer',
+            'editRole'     => 'Changer les rangs',
+            'initRole'     => 'Régler l\'échelle',
+        ];
+
+        $editable = array_filter(
+            (new \App\Service\FactionService())->rolesOf($factionCode),
+            static fn (array $role): bool => (int) $role['position'] < $actorPosition
+        );
+
+        if ($editable === []) {
+            return;
+        }
+
+        echo '
+    <h2>Échelle des rangs</h2>
+    <table border="1" class="marbre" align="center">
+    <tr><th>Rang</th><th>Autorise</th><th></th></tr>
+    ';
+
+        foreach ($editable as $role) {
+            echo '
+        <tr class="faction-ladder-row" data-position="' . (int) $role['position'] . '">
+            <td><input type="text" class="faction-ladder-name" maxlength="100"
+                 value="' . htmlspecialchars((string) $role['name'], ENT_QUOTES, 'UTF-8') . '"></td>
+            <td>';
+
+            foreach ($flagLabels as $flag => $label) {
+                echo '<label style="margin-right: 8px; white-space: nowrap;">'
+                    . '<input type="checkbox" class="faction-ladder-flag" data-flag="' . $flag . '"'
+                    . (!empty($role[$flag]) ? ' checked' : '') . '> ' . $label . '</label> ';
+            }
+
+            echo '</td>
+            <td><button class="faction-ladder-save">Enregistrer</button></td>
+        </tr>
+        ';
+        }
+
+        echo '
+    </table>
+    <p><small>Seuls les rangs sous le vôtre se règlent ici — l\'échelle elle-même (ajout,
+    ordre, rang d\'accueil) reste à l\'administration.</small></p>
+    ';
     }
 
     /**
@@ -186,6 +247,21 @@ class FactionView
             $(document).off('change.factionManage', '.faction-role-select')
                 .on('change.factionManage', '.faction-role-select', function(){
                     factionManageCall({ action: 'role', targetId: $(this).data('target'), position: parseInt($(this).val(), 10) });
+                });
+
+            $(document).off('click.factionManage', '.faction-ladder-save')
+                .on('click.factionManage', '.faction-ladder-save', function(){
+                    var $row = $(this).closest('.faction-ladder-row');
+                    var flags = {};
+                    $row.find('.faction-ladder-flag').each(function(){
+                        flags[$(this).data('flag')] = $(this).prop('checked') ? 1 : 0;
+                    });
+                    factionManageCall({
+                        action: 'role-def',
+                        position: $row.data('position'),
+                        name: ($row.find('.faction-ladder-name').val() || '').trim(),
+                        flags: flags
+                    });
                 });
         })();
         </script>
