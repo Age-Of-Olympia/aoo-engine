@@ -81,6 +81,40 @@ final class LockService extends BaseService
             return false;
         }
 
+        return $this->isOneOfTheirs($ownerId, $faction, $actorId);
+    }
+
+    /**
+     * Does $actorId count among $entityId's people? The owner, a member of
+     * its faction — and a thing with neither owner nor faction belongs to
+     * everyone: yes for all.
+     *
+     * This is mayLock()'s rule without the latch: working on a palissade's
+     * construction site asks this question, not the lock's.
+     */
+    public function mayActOn(int $entityId, int $actorId): bool
+    {
+        $thing = $this->conn->fetchAssociative(
+            'SELECT owner_id, faction FROM players WHERE id = ?',
+            [$entityId]
+        );
+        if ($thing === false) {
+            return false;
+        }
+
+        $ownerId = $thing['owner_id'] === null ? null : (int) $thing['owner_id'];
+        $faction = (string) $thing['faction'];
+
+        if ($ownerId === null && $faction === '') {
+            return true;
+        }
+
+        return $this->isOneOfTheirs($ownerId, $faction, $actorId);
+    }
+
+    /** The household rule shared by the lock and the construction site. */
+    private function isOneOfTheirs(?int $ownerId, string $faction, int $actorId): bool
+    {
         if ($ownerId !== null && $ownerId === $actorId) {
             return true;
         }

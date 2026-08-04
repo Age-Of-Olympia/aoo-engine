@@ -88,7 +88,8 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
         // A type still described by a race mints a building; anything else
         // places the object itself. Families leaving `races` switch sides here
         // on their own.
-        $isRaceTyped = $this->raceService()->getRaceByName($type)?->isStructureKind() ?? false;
+        $race = $this->raceService()->getRaceByName($type);
+        $isRaceTyped = $race?->isStructureKind() ?? false;
 
         try {
             $id = $isRaceTyped
@@ -97,7 +98,8 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
                     $goCoords,
                     $actor->id,
                     (string) ($actor->data->faction ?? ''),
-                    $name !== '' ? $name : null
+                    $name !== '' ? $name : null,
+                    asConstructionSite: true
                 )
                 : $this->placeTheObjectItself($type, $goCoords, (int) $actor->id);
         } catch (\InvalidArgumentException | \RuntimeException $e) {
@@ -106,7 +108,19 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
 
         $this->getOutcome()?->getAction()?->setRefreshScreen(true);
 
-        $message = 'Vous construisez ' . htmlspecialchars($name !== '' ? $name : $type, ENT_QUOTES, 'UTF-8')
+        $label = htmlspecialchars($name !== '' ? $name : $type, ENT_QUOTES, 'UTF-8');
+
+        // A type declaring work was born a SITE (place, asConstructionSite):
+        // `travailler` will raise it gesture by gesture.
+        $work = $isRaceTyped ? $race->getBuildWork() : 0;
+        if ($work > 0) {
+            $message = 'Vous ouvrez le chantier de ' . $label
+                . ' <span class="ra ra-hammer"></span> en (' . $goCoords->x . ', ' . $goCoords->y . ') — 0/' . $work . '.';
+
+            return new OutcomeResult(true, outcomeSuccessMessages: [$message], outcomeFailureMessages: array());
+        }
+
+        $message = 'Vous construisez ' . $label
             . ' <span class="ra ra-tower"></span> en (' . $goCoords->x . ', ' . $goCoords->y . ') — structure #' . $id . '.';
 
         return new OutcomeResult(true, outcomeSuccessMessages: [$message], outcomeFailureMessages: array());

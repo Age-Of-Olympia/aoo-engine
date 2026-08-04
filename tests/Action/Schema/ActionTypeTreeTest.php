@@ -16,7 +16,7 @@ class ActionTypeTreeTest extends TestCase
 
         // Sorted, and every concrete/abstract type directly under App\Entity\Action.
         $this->assertSame(
-            ['attack', 'buff', 'craft', 'equip', 'pray', 'rest', 'run', 'search', 'steal', 'train'],
+            ['attack', 'buff', 'craft', 'equip', 'pray', 'rest', 'run', 'search', 'steal', 'train', 'work'],
             $roots
         );
     }

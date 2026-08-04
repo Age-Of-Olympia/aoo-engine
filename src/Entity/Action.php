@@ -23,6 +23,8 @@ use Doctrine\Common\Collections\Collection;
     'buff' => \App\Action\BuffAction::class,
     'spell' => \App\Action\SpellAction::class,
     'heal' => \App\Action\HealAction::class,
+    'craft' => \App\Action\CraftAction::class,
+    'work' => \App\Action\WorkAction::class,
 ])]
 abstract class Action implements ActionInterface
 {

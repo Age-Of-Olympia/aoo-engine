@@ -30,6 +30,7 @@ class ConditionRegistry
             'BuildSite' => new BuildSiteCondition(),
             'DigSite' => new DigSiteCondition(),
             'RequiresBuilding' => new RequiresBuildingCondition(),
+            'RequiresConstructionSite' => new RequiresConstructionSiteCondition(),
             'TargetType' => new TargetTypeCondition(),
             'TargetRace' => new TargetRaceCondition(),
             'RequiresFaith' => new RequiresFaithCondition(),

@@ -309,6 +309,10 @@ class BuildingService extends BaseService
      * @param int|null    $ownerId  players.id of the owning character, if any
      * @param string      $faction  faction CODE from the catalog, '' = neutral
      * @param string|null $name     display name; defaults to the race label
+     * @param bool $asConstructionSite the player's construire gesture: a type
+     *                         declaring work (build_work > 0) is then born a
+     *                         SITE — admin and editor placements keep raising
+     *                         finished buildings
      *
      * @return int the new building's players.id (ENTITY_ID_RANGES['building'])
      *
@@ -321,7 +325,8 @@ class BuildingService extends BaseService
         ?int $ownerId = null,
         string $faction = '',
         ?string $name = null,
-        bool $overScenery = false
+        bool $overScenery = false,
+        bool $asConstructionSite = false
     ): int {
         $race = $this->raceService->getRaceByName($type);
         if ($race === null) {
@@ -426,6 +431,10 @@ class BuildingService extends BaseService
                 $conn->executeStatement('UPDATE players SET owner_id = ? WHERE id = ?', [$ownerId, $id]);
             }
         });
+
+        if ($asConstructionSite && $race->getBuildWork() > 0) {
+            (new ConstructionSiteService())->open($id, $race->getBuildWork());
+        }
 
         // Le damier de chaque joueur est un SVG caché : invalider le
         // voisinage pour que le bâtiment apparaisse sans attendre un
@@ -958,6 +967,7 @@ class BuildingService extends BaseService
 
         $conn->transactional(function ($conn) use ($playerId): void {
             $conn->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$playerId]);
+            $conn->executeStatement('DELETE FROM construction_sites WHERE player_id = ?', [$playerId]);
             foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
                 $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$playerId]);
             }

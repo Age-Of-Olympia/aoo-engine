@@ -381,7 +381,7 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
      * Pose une structure jetable via BuildingService (skip si le type
      * n'est pas seedé), trackée pour le teardown du harnais.
      */
-    protected function placeStructure(string $type, int $x, int $y, string $plan = 'gaia'): int
+    protected function placeStructure(string $type, int $x, int $y, string $plan = 'gaia', bool $asConstructionSite = false): int
     {
         $race = (new RaceService())->getRaceByName($type);
         if ($race === null || !$race->isStructureKind()) {
@@ -396,7 +396,8 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
 
         $id = (new BuildingService())->place(
             $type,
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => $plan]
+            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => $plan],
+            asConstructionSite: $asConstructionSite
         );
         $this->trackEntityId($id);
 

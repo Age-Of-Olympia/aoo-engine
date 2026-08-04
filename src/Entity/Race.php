@@ -104,6 +104,13 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     #[ORM\Column(type: "boolean")]
     private bool $playable;
 
+    /**
+     * Work units to raise one: 0 = built in one gesture, > 0 = construire
+     * opens a construction site that `travailler` advances.
+     */
+    #[ORM\Column(name: "build_work", type: "integer", options: ["default" => 0])]
+    private int $buildWork = 0;
+
     #[ORM\Column(type: "boolean")]
     private bool $hidden;
 
@@ -304,6 +311,11 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     public function getLabel(): string
     {
         return $this->label !== '' ? $this->label : ucfirst($this->name);
+    }
+
+    public function getBuildWork(): int
+    {
+        return $this->buildWork;
     }
 
     public function setLabel(string $label): void
