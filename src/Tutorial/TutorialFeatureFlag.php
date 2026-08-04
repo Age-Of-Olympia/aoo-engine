@@ -65,6 +65,15 @@ class TutorialFeatureFlag
             return false;
         }
 
+        // A structure never sees it either: the tutorial teaches a person.
+        // A driven building lands on the map, not in a spawn flow.
+        $db = new Db();
+        $res = $db->exe('SELECT player_type FROM players WHERE id = ?', [$playerId]);
+        $row = $res ? $res->fetch_assoc() : null;
+        if ($row && \App\Enum\EntityCategory::fromPlayerType($row['player_type'])->isStructure()) {
+            return false;
+        }
+
         // If globally enabled, everyone gets it
         if (self::isEnabled()) {
             return true;
