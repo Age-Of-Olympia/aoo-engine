@@ -26,7 +26,12 @@ try {
             ExitSuccess(['message' => 'Membre renvoyé.']);
             break;
         case 'role':
-            $service->assignRole($actorId, (int) ($POST_DATA['targetId'] ?? 0), (int) ($POST_DATA['position'] ?? -1));
+            $service->assignRole(
+                $actorId,
+                (int) ($POST_DATA['targetId'] ?? 0),
+                (int) ($POST_DATA['position'] ?? -1),
+                (int) ($POST_DATA['variant'] ?? 0)
+            );
             ExitSuccess(['message' => 'Rang changé.']);
             break;
         case 'role-def':

@@ -100,12 +100,50 @@ class FactionHierarchyTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(0, (int) $row['editRole'], 'a granted flag can be withdrawn');
     }
 
-    public function testNobodyRewritesTheirOwnCharterNorASuperiors(): void
+    public function testOwnNamesRenameButOwnFlagsFreeze(): void
     {
         $king = $this->enrolled('GmRoi2', 2);
 
+        (new FactionService())->updateRoleDefinition(
+            $king, 2, 'Empereur', ['editRole' => 0, 'initRole' => 0], 'Impératrice'
+        );
+
+        $row = $this->link->fetchAssociative(
+            'SELECT name, name_alt, editRole, initRole FROM faction_roles WHERE faction_id = ? AND position = 2',
+            [$this->factionId]
+        );
+        $this->assertSame('Empereur', $row['name'], 'names are cosmetic: one\'s own rank renames');
+        $this->assertSame('Impératrice', $row['name_alt']);
+        $this->assertSame(1, (int) $row['editRole'], 'power does not self-strip…');
+        $this->assertSame(1, (int) $row['initRole'], '…nor self-grant: own flags freeze');
+    }
+
+    public function testASuperiorsCharterIsOutOfReach(): void
+    {
+        $this->link->executeStatement(
+            'UPDATE faction_roles SET initRole = 1 WHERE faction_id = ? AND position = 1',
+            [$this->factionId]
+        );
+        FactionService::clearCache();
+        $captain = $this->enrolled('GmCapitaineInit', 1);
+
         $this->expectExceptionMessage('Ce rang vous dépasse.');
-        (new FactionService())->updateRoleDefinition($king, 2, 'Empereur', []);
+        (new FactionService())->updateRoleDefinition($captain, 2, 'Usurpateur', []);
+    }
+
+    public function testAMemberBearsTheChosenHalf(): void
+    {
+        $king = $this->enrolled('GmRoi8', 2);
+        $member = $this->enrolled('GmMoitie', 0);
+
+        (new FactionService())->updateRoleDefinition($king, 0, 'Roi de camp', [], 'Reine de camp');
+        (new FactionService())->assignRole($king, $member, 0, 1);
+
+        $row = $this->link->fetchAssociative(
+            'SELECT factionRole, factionRoleVariant FROM players WHERE id = ?',
+            [$member]
+        );
+        $this->assertSame(['factionRole' => 0, 'factionRoleVariant' => 1], array_map('intval', $row));
     }
 
     public function testTheLadderIsTheInitRoleHoldersAlone(): void

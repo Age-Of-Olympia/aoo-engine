@@ -69,7 +69,7 @@ class FactionView
                 ' . $row->xp . '
             </td>
             <td>
-                ' . self::roleLabel($facJson->role[$row->factionRole] ?? null) . '
+                ' . self::roleTitle($facJson->role[$row->factionRole] ?? null, (int) ($row->factionRoleVariant ?? 0)) . '
             </td>
             <td>
                 ';
@@ -99,11 +99,22 @@ class FactionView
                 echo '<td>';
 
                 if ($mayEditRole) {
+                    /* Highest rank first, and BOTH names of a rank offered as
+                     * if they were two — the member bears the chosen one. */
                     echo '<select class="faction-role-select" data-target="' . (int) $row->id . '">';
-                    foreach ($facJson->role as $position => $role) {
-                        echo '<option value="' . (int) $position . '"'
-                            . ((int) $position === (int) $row->factionRole ? ' selected' : '') . '>'
-                            . htmlspecialchars(self::roleLabel($role), ENT_QUOTES, 'UTF-8') . '</option>';
+                    foreach (array_reverse(array_keys($facJson->role)) as $position) {
+                        $role = $facJson->role[$position];
+                        $memberVariant = (int) ($row->factionRoleVariant ?? 0);
+
+                        echo '<option value="' . (int) $position . ':0"'
+                            . ((int) $position === (int) $row->factionRole && $memberVariant === 0 ? ' selected' : '') . '>'
+                            . htmlspecialchars($role->name, ENT_QUOTES, 'UTF-8') . '</option>';
+
+                        if (!empty($role->nameAlt)) {
+                            echo '<option value="' . (int) $position . ':1"'
+                                . ((int) $position === (int) $row->factionRole && $memberVariant === 1 ? ' selected' : '') . '>'
+                                . htmlspecialchars($role->nameAlt, ENT_QUOTES, 'UTF-8') . '</option>';
+                        }
                     }
                     echo '</select> ';
                 }
@@ -144,18 +155,16 @@ class FactionView
         }
     }
 
-    /** A rank's display name — both halves when it bears two (Roi / Reine). */
-    public static function roleLabel(?object $role): string
+    /** The title a MEMBER bears: the half their variant chose (Roi or Reine). */
+    public static function roleTitle(?object $role, int $variant): string
     {
         if ($role === null) {
             return '?';
         }
 
-        return htmlspecialchars(
-            $role->name . (!empty($role->nameAlt) ? ' / ' . $role->nameAlt : ''),
-            ENT_QUOTES,
-            'UTF-8'
-        );
+        $title = $variant === 1 && !empty($role->nameAlt) ? $role->nameAlt : $role->name;
+
+        return htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
     }
 
     /**
@@ -178,12 +187,15 @@ class FactionView
         $service = new \App\Service\FactionService();
         $isTop = $actorPosition === $service->topPositionOf($factionCode);
 
+        // One's own rank joins the list: its NAMES rename, its flags freeze.
+        // Highest rung first — the ladder reads down from the summit.
         $editable = array_filter(
             $service->rolesOf($factionCode),
-            static fn (array $role): bool => (int) $role['position'] < $actorPosition
+            static fn (array $role): bool => (int) $role['position'] <= $actorPosition
         );
+        usort($editable, static fn (array $a, array $b): int => $b['position'] <=> $a['position']);
 
-        if ($editable === [] && !$isTop) {
+        if ($editable === []) {
             return;
         }
 
@@ -194,6 +206,8 @@ class FactionView
     ';
 
         foreach ($editable as $role) {
+            $isOwn = (int) $role['position'] === $actorPosition;
+
             echo '
         <tr class="faction-ladder-row" data-position="' . (int) $role['position'] . '">
             <td><input type="text" class="faction-ladder-name" maxlength="100"
@@ -203,16 +217,17 @@ class FactionView
                  value="' . htmlspecialchars((string) ($role['name_alt'] ?? ''), ENT_QUOTES, 'UTF-8') . '"></td>
             <td>';
 
+            // One's own flags freeze: names rename, power does not self-grant.
             foreach ($flagLabels as $flag => $label) {
                 echo '<label style="margin-right: 8px; white-space: nowrap;">'
                     . '<input type="checkbox" class="faction-ladder-flag" data-flag="' . $flag . '"'
-                    . (!empty($role[$flag]) ? ' checked' : '') . '> ' . $label . '</label> ';
+                    . (!empty($role[$flag]) ? ' checked' : '') . ($isOwn ? ' disabled' : '') . '> ' . $label . '</label> ';
             }
 
             echo '</td>
             <td style="white-space: nowrap;"><button class="faction-ladder-save">Enregistrer</button>';
 
-            if ($isTop) {
+            if ($isTop && !$isOwn) {
                 echo ' <button class="faction-ladder-move" data-direction="1" title="Monter d\'un cran">&#8593;</button>'
                     . '<button class="faction-ladder-move" data-direction="-1" title="Descendre d\'un cran">&#8595;</button>'
                     . ' <label style="white-space: nowrap;"><input type="radio" name="faction-ladder-landing" class="faction-ladder-landing"'
@@ -291,7 +306,13 @@ class FactionView
 
             $(document).off('change.factionManage', '.faction-role-select')
                 .on('change.factionManage', '.faction-role-select', function(){
-                    factionManageCall({ action: 'role', targetId: $(this).data('target'), position: parseInt($(this).val(), 10) });
+                    var parts = String($(this).val()).split(':');
+                    factionManageCall({
+                        action: 'role',
+                        targetId: $(this).data('target'),
+                        position: parseInt(parts[0], 10),
+                        variant: parseInt(parts[1] || '0', 10)
+                    });
                 });
 
             $(document).off('click.factionManage', '.faction-ladder-save')

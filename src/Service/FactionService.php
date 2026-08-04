@@ -380,7 +380,7 @@ class FactionService
      * a member strictly below, toward a rank strictly below: nobody
      * raises a peer, nobody raises anyone to their own rank.
      */
-    public function assignRole(int $actorId, int $targetId, int $position): void
+    public function assignRole(int $actorId, int $targetId, int $position, int $variant = 0): void
     {
         $actorRole = $this->roleOf($actorId);
         if ($actorRole === null || empty($actorRole['editRole'])) {
@@ -413,7 +413,10 @@ class FactionService
             throw new RuntimeException('On n\'élève personne à son propre rang.');
         }
 
-        $conn->executeStatement('UPDATE players SET factionRole = ? WHERE id = ?', [$position, $targetId]);
+        $conn->executeStatement(
+            'UPDATE players SET factionRole = ?, factionRoleVariant = ? WHERE id = ?',
+            [$position, $variant === 1 ? 1 : 0, $targetId]
+        );
         (new AuditService())->addAuditLog("faction {$factionCode}: #{$actorId} donne le rang {$position} à #{$targetId}");
     }
 
@@ -435,7 +438,7 @@ class FactionService
         if ($actorRole === null || empty($actorRole['initRole'])) {
             throw new RuntimeException('Votre rang ne permet pas de régler l\'échelle.');
         }
-        if ($position >= (int) $actorRole['position']) {
+        if ($position > (int) $actorRole['position']) {
             throw new RuntimeException('Ce rang vous dépasse.');
         }
 
@@ -449,9 +452,14 @@ class FactionService
 
         $sets = ['fr.name = ?', 'fr.name_alt = ?'];
         $params = [$name, trim($nameAlt)];
-        foreach (self::GRANTABLE_FLAGS as $flag) {
-            $sets[] = "fr.{$flag} = ?";
-            $params[] = empty($flags[$flag]) ? 0 : 1;
+
+        /* One's OWN rank renames — names are cosmetic — but its flags stay
+         * untouchable: nobody grants themself power. */
+        if ($position < (int) $actorRole['position']) {
+            foreach (self::GRANTABLE_FLAGS as $flag) {
+                $sets[] = "fr.{$flag} = ?";
+                $params[] = empty($flags[$flag]) ? 0 : 1;
+            }
         }
         $params[] = $factionCode;
         $params[] = $position;

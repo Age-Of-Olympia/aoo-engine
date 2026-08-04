@@ -37,7 +37,7 @@ if(!empty($facJson->hidden) && !$player->have_option('isAdmin')){
 if(isset($facJson->secret)){
 
     if($player->data->secretFaction == $_GET['faction'] || $player->have_option('isAdmin')){
-        $sql = 'SELECT players.id AS id,avatar,name,race,xp,secretFactionRole as factionRole,plan FROM players INNER JOIN coords ON coords_id = coords.id WHERE nextTurnTime > ? AND secretFaction = ? AND player_type = "real" ORDER BY name';
+        $sql = 'SELECT players.id AS id,avatar,name,race,xp,secretFactionRole as factionRole,0 as factionRoleVariant,plan FROM players INNER JOIN coords ON coords_id = coords.id WHERE nextTurnTime > ? AND secretFaction = ? AND player_type = "real" ORDER BY factionRole DESC, name';
 
         $db = new Db();
 
@@ -53,7 +53,7 @@ if(isset($facJson->secret)){
 
 }else{
 
-    $sql = 'SELECT players.id AS id,avatar,name,race,xp,factionRole,plan FROM players INNER JOIN coords ON coords_id = coords.id WHERE nextTurnTime > ? AND faction = ? AND player_type = "real" ORDER BY name';
+    $sql = 'SELECT players.id AS id,avatar,name,race,xp,factionRole,factionRoleVariant,plan FROM players INNER JOIN coords ON coords_id = coords.id WHERE nextTurnTime > ? AND faction = ? AND player_type = "real" ORDER BY factionRole DESC, name';
 
     $db = new Db();
 
