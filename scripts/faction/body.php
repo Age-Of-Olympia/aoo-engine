@@ -63,3 +63,10 @@ if(isset($facJson->secret)){
 
     FactionView::renderFaction($player,$facJson,$res);
 }
+
+/* Les bâtiments de la faction — ses murs. Réservés à ses MEMBRES, par
+ * la règle qui cache déjà le territoire des autres ; l'admin voit tout. */
+if ($player->data->faction === ($_GET['faction'] ?? '') || $player->have_option('isAdmin')) {
+
+    FactionView::renderBuildings((new FactionService())->buildingsOf((string) $_GET['faction']));
+}

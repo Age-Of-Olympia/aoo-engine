@@ -230,6 +230,48 @@ class FactionService
     }
 
     /**
+     * The faction's buildings standing on the board — its assets, for the
+     * faction panel. Carrying the faction is enough (a building is never a
+     * MEMBER, the counts above say so on purpose); what is shelved or
+     * vanished stands nowhere and is not listed.
+     *
+     * @return array<int, array{id: int, name: string, type: string, label: string,
+     *                          playable: bool, build_state: string, site_done: ?int,
+     *                          site_total: ?int, x: int, y: int, plan: string}>
+     */
+    public function buildingsOf(string $code): array
+    {
+        $rows = $this->entityManager->getConnection()->fetchAllAssociative(
+            "SELECT p.id, p.name, p.race, r.label, r.playable,
+                    b.build_state, cs.work_done AS site_done, cs.work_total AS site_total,
+                    c.x, c.y, c.plan
+               FROM players p
+               JOIN buildings b ON b.player_id = p.id
+               JOIN coords c ON c.id = p.coords_id
+               LEFT JOIN races r ON CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4)
+               LEFT JOIN construction_sites cs ON cs.player_id = p.id
+              WHERE p.player_type = 'building'
+                AND CONVERT(p.faction USING utf8mb4) = CONVERT(? USING utf8mb4)
+              ORDER BY c.plan, p.name",
+            [strtolower(trim($code))]
+        );
+
+        return array_map(static fn (array $row): array => [
+            'id'          => (int) $row['id'],
+            'name'        => (string) $row['name'],
+            'type'        => (string) $row['race'],
+            'label'       => (string) ($row['label'] ?? '') !== '' ? (string) $row['label'] : ucfirst((string) $row['race']),
+            'playable'    => (bool) ($row['playable'] ?? false),
+            'build_state' => (string) $row['build_state'],
+            'site_done'   => $row['site_done'] !== null ? (int) $row['site_done'] : null,
+            'site_total'  => $row['site_total'] !== null ? (int) $row['site_total'] : null,
+            'x'           => (int) $row['x'],
+            'y'           => (int) $row['y'],
+            'plan'        => (string) $row['plan'],
+        ], $rows);
+    }
+
+    /**
      * Supprime une faction qu'aucun personnage ne référence. players.faction
      * et players.secretFaction étant des colonnes texte sans contrainte, une
      * suppression avec des membres restants les laisserait avec une faction
