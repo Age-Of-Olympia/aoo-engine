@@ -124,12 +124,18 @@ class BuildingService extends BaseService
             // itself. `cover` is excluded — it is a drawing order, so the
             // back of a building must not make whoever stands there
             // unreachable.
+            /* A construction SITE screens nothing: bare posts and scaffolds
+             * let the arrow through — while still blocking the step. The
+             * satellite row is the state; the last stone removes it and the
+             * finished walls start screening. */
             $rows = $conn->fetchAllAssociative(
                 'SELECT c.x, c.y, p.name
                  FROM players p
                  JOIN entity_cells ec ON ec.player_id = p.id
                  JOIN coords c ON c.id = ec.coords_id
+                 LEFT JOIN construction_sites cs ON cs.player_id = p.id
                  WHERE ' . $tileFilter . '
+                   AND cs.player_id IS NULL
                    AND ec.role <> ?
                    AND NOT (p.is_open = 1 AND p.player_type <> ? AND p.race IN (' . self::placeholders($doors) . '))
                    AND (

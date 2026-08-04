@@ -196,6 +196,28 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
         }
     }
 
+    public function testASiteLetsTheShotThroughAndTheFinishedBuildingStopsIt(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $id = $this->placeStructure('atelier', 84, 84, asConstructionSite: true);
+
+        $buildingService = new BuildingService();
+        $from = (object) ['x' => 83, 'y' => 84, 'z' => 0, 'plan' => 'gaia'];
+        $to = (object) ['x' => 87, 'y' => 84, 'z' => 0, 'plan' => 'gaia'];
+
+        $this->assertNull(
+            $buildingService->lineOfFireReport($from, $to)['blocker'],
+            'bare posts and scaffolds: the arrow crosses a construction site'
+        );
+
+        (new ConstructionSiteService())->advance($id, 40);
+
+        $this->assertNotNull(
+            $buildingService->lineOfFireReport($from, $to)['blocker'],
+            'the last stone raises the walls: the finished atelier screens'
+        );
+    }
+
     public function testATypeDeclaringNothingStillRisesInOneGesture(): void
     {
         $this->requireBuildingsOrSkip();
