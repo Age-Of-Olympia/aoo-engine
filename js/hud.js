@@ -1315,6 +1315,10 @@
         if (/^faction\.php\?faction=/.test(href)) {
             return href.replace(/^faction\.php/, 'load_faction.php');
         }
+        /* Contenants (coffres, édifices) : l'écran deux volets. */
+        if (/^container\.php\?targetId=\d+$/.test(href)) {
+            return href.replace(/^container\.php/, 'load_container.php');
+        }
         if (/^logs\.php/.test(href)) {
             return href.replace(/^logs\.php/, 'load_logs.php');
         }
@@ -1397,6 +1401,9 @@
         }
         if (href.indexOf('faction') !== -1) {
             return 'Faction';
+        }
+        if (href.indexOf('container') !== -1) {
+            return 'Contenant';
         }
         if (href.indexOf('logs') !== -1) {
             return 'Évènements';
