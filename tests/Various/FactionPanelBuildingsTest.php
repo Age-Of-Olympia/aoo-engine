@@ -62,4 +62,35 @@ class FactionPanelBuildingsTest extends LegacyPlayerFixtureTestCase
             'vanished, it stands nowhere and is no asset'
         );
     }
+
+    public function testAStandingChestIsAmongTheFactionsAssets(): void
+    {
+        $code = $this->factionOrSkip();
+
+        $chestId = $this->installExemplar('coffre_bois', 108, 108);
+        $this->link->executeStatement(
+            'UPDATE players SET faction = ?, owner_id = NULL WHERE id = ?',
+            [$code, $chestId]
+        );
+
+        $rows = array_values(array_filter(
+            (new FactionService())->containersOf($code),
+            static fn (array $c): bool => $c['id'] === $chestId
+        ));
+
+        $this->assertCount(1, $rows, "the faction's chest is among its assets");
+        $this->assertTrue($rows[0]['isOpen']);
+        $this->assertSame('gaia', $rows[0]['plan']);
+
+        (new \App\Service\Map\EntityLocationService($this->link))->shelve($chestId);
+
+        $this->assertSame(
+            [],
+            array_values(array_filter(
+                (new FactionService())->containersOf($code),
+                static fn (array $c): bool => $c['id'] === $chestId
+            )),
+            'shelved, it stands nowhere and is not listed'
+        );
+    }
 }

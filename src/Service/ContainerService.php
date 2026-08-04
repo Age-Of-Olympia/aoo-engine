@@ -57,8 +57,9 @@ final class ContainerService extends BaseService
             throw new RuntimeException('Ce contenant est ' . $reason . '.');
         }
 
-        if (!(new LockService())->mayActOn($containerId, $actorId)) {
-            throw new RuntimeException('Vous n\'êtes pas des siens.');
+        $refusal = $this->householdRefusal($containerId, $actorId);
+        if ($refusal !== null) {
+            throw new RuntimeException($refusal);
         }
 
         $actorCoords = $this->conn->fetchAssociative(
@@ -182,8 +183,62 @@ final class ContainerService extends BaseService
             throw new RuntimeException('Cette serrure ne vous connaît pas.');
         }
 
+        /* Within a faction, the lock follows the same rank flag as the
+         * contents — one flag governs the chest whole. */
+        $refusal = $this->factionRankRefusal($containerId, $actorId);
+        if ($refusal !== null) {
+            throw new RuntimeException($refusal);
+        }
+
         (new BuildingService())->setOpen($containerId, $open);
         $this->addAuditLog("container #{$containerId}: #{$actorId} " . ($open ? 'ouvre' : 'ferme'));
+    }
+
+    /**
+     * May $actorId see inside and use this container, standing aside
+     * the where-and-reach questions? The peek on the observation panel
+     * asks this — seeing follows the same rule as using.
+     */
+    public function mayUse(int $containerId, int $actorId): bool
+    {
+        return $this->householdRefusal($containerId, $actorId) === null;
+    }
+
+    /**
+     * The household rule, refined by RANK: the owner is at home; within
+     * a faction, the useChest flag says who uses its containers; a
+     * thing with neither owner nor faction serves everyone.
+     */
+    private function householdRefusal(int $containerId, int $actorId): ?string
+    {
+        if (!(new LockService())->mayActOn($containerId, $actorId)) {
+            return 'Vous n\'êtes pas des siens.';
+        }
+
+        return $this->factionRankRefusal($containerId, $actorId);
+    }
+
+    /** The rank half of the household rule, alone — mayLock has its own first half. */
+    private function factionRankRefusal(int $containerId, int $actorId): ?string
+    {
+        $thing = $this->conn->fetchAssociative(
+            'SELECT owner_id, faction FROM players WHERE id = ?',
+            [$containerId]
+        );
+        if ($thing === false) {
+            return 'Ce contenant n\'existe pas.';
+        }
+
+        $ownerId = $thing['owner_id'] === null ? null : (int) $thing['owner_id'];
+        if (
+            (string) $thing['faction'] !== ''
+            && $ownerId !== $actorId
+            && !(new FactionService())->mayManage($actorId, 'useChest')
+        ) {
+            return 'Votre rang n\'use pas des coffres de la faction.';
+        }
+
+        return null;
     }
 
     /**

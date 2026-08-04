@@ -40,7 +40,7 @@ final class ContainerPeekView
             if (!$lock->isLockable($entityId)) {
                 continue;
             }
-            if ($service->closureReasonOf($entityId) !== null || !$lock->mayActOn($entityId, (int) $player->id)) {
+            if ($service->closureReasonOf($entityId) !== null || !$service->mayUse($entityId, (int) $player->id)) {
                 continue;
             }
 

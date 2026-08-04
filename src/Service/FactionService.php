@@ -168,7 +168,7 @@ class FactionService
             $connection->executeStatement(
                 'INSERT INTO faction_roles (faction_id, position, name, '
                     . implode(', ', FactionRole::FLAG_KEYS) . ')
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                 VALUES (' . implode(', ', array_fill(0, count($params), '?')) . ')',
                 $params
             );
         }
@@ -268,6 +268,37 @@ class FactionService
             'x'           => (int) $row['x'],
             'y'           => (int) $row['y'],
             'plan'        => (string) $row['plan'],
+        ], $rows);
+    }
+
+    /**
+     * The faction's CONTAINERS — its chests: standing lockable objects
+     * carrying the faction. Same door as buildingsOf: what is shelved,
+     * held or vanished stands nowhere and is not listed.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function containersOf(string $code): array
+    {
+        $rows = $this->entityManager->getConnection()->fetchAllAssociative(
+            "SELECT p.id, p.name, p.is_open, c.x, c.y, c.plan
+               FROM players p
+               JOIN item_instances i ON i.entity_id = p.id AND i.destroyed = 0
+               JOIN items it ON it.id = i.item_id AND it.lockable = 1
+               JOIN coords c ON c.id = p.coords_id
+              WHERE p.player_type = 'item'
+                AND CONVERT(p.faction USING utf8mb4) = CONVERT(? USING utf8mb4)
+              ORDER BY c.plan, p.name",
+            [strtolower(trim($code))]
+        );
+
+        return array_map(static fn (array $row): array => [
+            'id'     => (int) $row['id'],
+            'name'   => (string) $row['name'],
+            'isOpen' => (bool) $row['is_open'],
+            'x'      => (int) $row['x'],
+            'y'      => (int) $row['y'],
+            'plan'   => (string) $row['plan'],
         ], $rows);
     }
 
@@ -436,7 +467,10 @@ class FactionService
 
     /** The capability flags a ladder-holder may grant — the landing rank
      *  (defaultRole) is the ladder's structure, not a capability. */
-    public const GRANTABLE_FLAGS = ['showPosition', 'showForum', 'addMember', 'editRole', 'kickMember', 'initRole'];
+    public const GRANTABLE_FLAGS = [
+        'showPosition', 'showForum', 'addMember', 'editRole', 'kickMember', 'initRole',
+        'driveBuilding', 'useChest',
+    ];
 
     /**
      * Renames a rank and sets what it authorizes — the ladder-holder's

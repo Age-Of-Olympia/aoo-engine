@@ -616,7 +616,7 @@ class BuildingService extends BaseService
     public function assertDrivable(int $buildingId, int $actorId): void
     {
         $row = $this->entityManager->getConnection()->fetchAssociative(
-            'SELECT p.player_type, p.coords_id, b.build_state, r.playable
+            'SELECT p.player_type, p.coords_id, p.owner_id, p.faction, b.build_state, r.playable
                FROM players p
                JOIN buildings b ON b.player_id = p.id
                LEFT JOIN races r ON CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4)
@@ -641,6 +641,17 @@ class BuildingService extends BaseService
         }
         if (!(new LockService())->mayActOn($buildingId, $actorId)) {
             throw new \RuntimeException('Vous n\'êtes pas des siens.');
+        }
+
+        /* Within a faction, the RANK says who takes the commands: the
+         * owner is at home, everyone else needs the flag. */
+        $ownerId = $row['owner_id'] === null ? null : (int) $row['owner_id'];
+        if (
+            (string) $row['faction'] !== ''
+            && $ownerId !== $actorId
+            && !$this->factionService->mayManage($actorId, 'driveBuilding')
+        ) {
+            throw new \RuntimeException('Votre rang ne permet pas de piloter les bâtiments.');
         }
     }
 

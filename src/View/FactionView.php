@@ -176,12 +176,14 @@ class FactionView
     private static function renderLadder(string $factionCode, int $actorPosition): void
     {
         $flagLabels = [
-            'showPosition' => 'Voir les positions',
-            'showForum'    => 'Voir le forum',
-            'addMember'    => 'Recruter',
-            'kickMember'   => 'Renvoyer',
-            'editRole'     => 'Changer les rangs',
-            'initRole'     => 'Régler l\'échelle',
+            'showPosition'  => 'Voir les positions',
+            'showForum'     => 'Voir le forum',
+            'addMember'     => 'Recruter',
+            'kickMember'    => 'Renvoyer',
+            'editRole'      => 'Changer les rangs',
+            'initRole'      => 'Régler l\'échelle',
+            'driveBuilding' => 'Piloter les bâtiments',
+            'useChest'      => 'User des coffres',
         ];
 
         $service = new \App\Service\FactionService();
@@ -392,10 +394,11 @@ class FactionView
     <tr>
         <th>Nom</th>
         <th>Type</th>
-        <th>État</th>
-        <th>Territoire</th>'
+        <th>État</th>'
         . ($mayDrive ? '
+        <th>Contenu</th>
         <th>Commandes</th>' : '') . '
+        <th>Territoire</th>
     </tr>
     ';
 
@@ -414,12 +417,12 @@ class FactionView
             <td><a href="infos.php?targetId=' . (int) $b['id'] . '">' . htmlspecialchars((string) $b['name'], ENT_QUOTES, 'UTF-8') . '</a></td>
             <td>' . htmlspecialchars((string) $b['label'], ENT_QUOTES, 'UTF-8')
                 . ($b['playable'] ? ' <span class="ra ra-castle-flag" title="Pilotable par la faction"></span>' : '') . '</td>
-            <td>' . $state . '</td>
-            <td>' . htmlspecialchars((string) ($planJson->name ?? '?'), ENT_QUOTES, 'UTF-8')
-                . ' (' . (int) $b['x'] . ', ' . (int) $b['y'] . ')</td>';
+            <td>' . $state
+                . ($mayDrive ? self::lockCellHtml((int) $b['id'], $drivenId) : '') . '</td>';
 
             if ($mayDrive) {
                 echo '
+            <td>' . self::contentsCellHtml((int) $b['id'], $drivenId) . '</td>
             <td>';
                 if ((int) $b['id'] === $drivenId) {
                     echo '<button class="faction-drive-release">Reprendre son personnage</button>';
@@ -430,6 +433,8 @@ class FactionView
             }
 
             echo '
+            <td>' . htmlspecialchars((string) ($planJson->name ?? '?'), ENT_QUOTES, 'UTF-8')
+                . ' (' . (int) $b['x'] . ', ' . (int) $b['y'] . ')</td>
         </tr>
         ';
         }
@@ -441,6 +446,76 @@ class FactionView
         if ($mayDrive) {
             self::renderDriveScript();
         }
+    }
+
+    /**
+     * The lock, from the panel: Fermer/Ouvrir beside the state, for
+     * whoever the rank lets turn it — a remote gesture on purpose, the
+     * server re-checks. Nothing for what cannot be shut.
+     */
+    private static function lockCellHtml(int $entityId, int $actorId): string
+    {
+        $lock = new \App\Service\LockService();
+        $container = new \App\Service\ContainerService();
+
+        if (!$lock->isLockable($entityId)
+            || !$lock->mayLock($entityId, $actorId)
+            || !$container->mayUse($entityId, $actorId)
+        ) {
+            return '';
+        }
+
+        $isOpen = (bool) \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()
+            ->fetchOne('SELECT is_open FROM players WHERE id = ?', [$entityId]);
+
+        return ' <button class="faction-lock-toggle" data-target="' . $entityId . '"'
+            . ' data-open="' . ($isOpen ? 0 : 1) . '">'
+            . '<span class="ra ra-key"></span> ' . ($isOpen ? 'Fermer' : 'Ouvrir') . '</button>';
+    }
+
+    /**
+     * What the asset HOLDS, for eyes the rank allows: a short list, or
+     * why it stays unseen. Empty for what cannot be shut (no lid, no
+     * inside).
+     */
+    private static function contentsCellHtml(int $entityId, int $actorId): string
+    {
+        $lock = new \App\Service\LockService();
+        if (!$lock->isLockable($entityId)) {
+            return '';
+        }
+
+        $container = new \App\Service\ContainerService();
+        if (!$container->mayUse($entityId, $actorId)) {
+            return '—';
+        }
+        if ($container->closureReasonOf($entityId) !== null) {
+            return '<small>(fermé)</small>';
+        }
+
+        $contents = $container->contentsOf($entityId);
+        $names = array_merge(
+            array_map(
+                static fn (array $s): string => ucfirst((string) $s['name']) . ' ×' . (int) $s['n'],
+                $contents['stacks']
+            ),
+            array_map(
+                static fn (array $e): string => (string) ($e['custom_name'] ?? '') !== ''
+                    ? (string) $e['custom_name']
+                    : ucfirst((string) $e['name']),
+                $contents['exemplars']
+            )
+        );
+
+        if ($names === []) {
+            return '<small>Rien</small>';
+        }
+
+        return '<small>' . htmlspecialchars(
+            implode(', ', array_slice($names, 0, 5)) . (count($names) > 5 ? '…' : ''),
+            ENT_QUOTES,
+            'UTF-8'
+        ) . '</small>';
     }
 
     /**
@@ -473,6 +548,86 @@ class FactionView
             $(document).off('click.factionDrive', '.faction-drive-release')
                 .on('click.factionDrive', '.faction-drive-release', function(){
                     factionDriveCall({ action: 'release' });
+                });
+        })();
+        </script>
+        <?php
+    }
+
+    /**
+     * The faction's chests — its standing containers, shown to its
+     * members like the buildings: what each holds (for eyes the rank
+     * allows), its lock turnable from HERE, and where it stands.
+     *
+     * @param array<int, array<string, mixed>> $containers FactionService::containersOf() rows
+     */
+    public static function renderContainers(array $containers, bool $member = false, int $actorId = 0): void
+    {
+        if ($containers === []) {
+            return;
+        }
+
+        echo '
+    <h2>Coffres</h2>
+    <table border="1" class="marbre" align="center">
+    <tr>
+        <th>Nom</th>'
+        . ($member ? '
+        <th>Contenu</th>' : '') . '
+        <th>État</th>
+        <th>Territoire</th>
+    </tr>
+    ';
+
+        foreach ($containers as $chest) {
+            $planJson = json()->decode('plans', (string) $chest['plan']);
+
+            echo '
+        <tr>
+            <td><a href="infos.php?targetId=' . (int) $chest['id'] . '">'
+                . htmlspecialchars((string) $chest['name'], ENT_QUOTES, 'UTF-8') . '</a></td>'
+            . ($member ? '
+            <td>' . self::contentsCellHtml((int) $chest['id'], $actorId) . '</td>' : '') . '
+            <td>' . ($chest['isOpen'] ? 'Ouvert' : '<span class="ra ra-key"></span> Fermé')
+                . ($member ? self::lockCellHtml((int) $chest['id'], $actorId) : '') . '</td>
+            <td>' . htmlspecialchars((string) ($planJson->name ?? '?'), ENT_QUOTES, 'UTF-8')
+                . ' (' . (int) $chest['x'] . ', ' . (int) $chest['y'] . ')</td>
+        </tr>
+        ';
+        }
+
+        echo '
+    </table>
+    ';
+    }
+
+    /**
+     * The lock gestures of the assets tables post to the container
+     * endpoint and reopen the panel. Fragment script: delegated,
+     * namespaced, off() before on() — it re-executes at every load.
+     */
+    public static function renderAssetsScript(string $factionCode): void
+    {
+        ?>
+        <script>
+        (function(){
+            var factionCode = <?php echo json_encode($factionCode); ?>;
+
+            $(document).off('click.factionAssets', '.faction-lock-toggle')
+                .on('click.factionAssets', '.faction-lock-toggle', function(){
+                    aooFetch('api/container/flows.php', {
+                        action: 'lock',
+                        containerId: $(this).data('target'),
+                        open: $(this).data('open')
+                    }, null)
+                        .then(function(){
+                            if(window.hudOpenPanel){
+                                window.hudOpenPanel('load_faction.php?faction=' + encodeURIComponent(factionCode), 'Faction');
+                            } else {
+                                document.location.reload();
+                            }
+                        })
+                        .catch(autoError());
                 });
         })();
         </script>

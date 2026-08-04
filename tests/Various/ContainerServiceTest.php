@@ -16,6 +16,49 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('entities-structure')]
 class ContainerServiceTest extends LegacyPlayerFixtureTestCase
 {
+    private const FACTION = 'faction_test_c';
+
+    private ?int $factionId = null;
+
+    protected function tearDown(): void
+    {
+        if ($this->factionId !== null) {
+            $this->link->executeStatement("UPDATE players SET faction = '', factionRole = 0 WHERE faction = ?", [self::FACTION]);
+            $this->link->executeStatement('DELETE FROM faction_roles WHERE faction_id = ?', [$this->factionId]);
+            $this->link->executeStatement('DELETE FROM factions WHERE id = ?', [$this->factionId]);
+            $this->factionId = null;
+            \App\Service\FactionService::clearCache();
+        }
+        parent::tearDown();
+    }
+
+    /** A faction whose ladder splits on the useChest flag: Recrue 0 no, Garde 1 yes. */
+    private function factionWithRanks(): string
+    {
+        $this->link->executeStatement(
+            "INSERT INTO factions (code, name) VALUES (?, 'Coffres de test')
+             ON DUPLICATE KEY UPDATE name = VALUES(name)",
+            [self::FACTION]
+        );
+        $this->factionId = (int) $this->link->fetchOne('SELECT id FROM factions WHERE code = ?', [self::FACTION]);
+        $this->link->executeStatement(
+            'INSERT INTO faction_roles (faction_id, position, name, defaultRole, useChest)
+             VALUES (?, 0, "Recrue", 1, 0), (?, 1, "Garde", 0, 1)',
+            [$this->factionId, $this->factionId]
+        );
+        \App\Service\FactionService::clearCache();
+
+        return self::FACTION;
+    }
+
+    private function enrolled(int $playerId, int $position): void
+    {
+        $this->link->executeStatement(
+            'UPDATE players SET faction = ?, factionRole = ? WHERE id = ?',
+            [self::FACTION, $position, $playerId]
+        );
+    }
+
     private function chestAt(int $x, int $y): int
     {
         $chestId = $this->installExemplar('coffre_bois', $x, $y);
@@ -175,6 +218,53 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
 
         $this->expectExceptionMessage('Approchez-vous pour l\'ouvrir.');
         (new ContainerService())->depositStack($chest, (int) $actor->id, $bois, 1);
+    }
+
+    public function testAFactionChestFollowsTheRank(): void
+    {
+        $code = $this->factionWithRanks();
+        $chest = $this->chestAt(44, 30);
+        $this->link->executeStatement('UPDATE players SET faction = ? WHERE id = ?', [$code, $chest]);
+
+        $guard = $this->actorNextTo(44, 30, 'GmGardeC');
+        $this->enrolled($guard, 1);
+        $recruit = $this->actorNextTo(44, 30, 'GmRecrueC');
+        $this->enrolled($recruit, 0);
+        $bois = $this->giveStack($guard, 'bois', 2);
+        $this->giveStack($recruit, 'bois', 2);
+
+        $service = new ContainerService();
+        $service->depositStack($chest, $guard, $bois, 1);
+        $this->assertSame(1, $this->stackOf($chest, $bois), 'the flagged rank uses the chest');
+
+        $this->assertFalse($service->mayUse($chest, $recruit), 'seeing inside follows the same rule');
+
+        $this->expectExceptionMessage('Votre rang n\'use pas des coffres de la faction.');
+        $service->depositStack($chest, $recruit, $bois, 1);
+    }
+
+    public function testTheFactionLockFollowsTheSameRank(): void
+    {
+        $code = $this->factionWithRanks();
+        $chest = $this->chestAt(46, 30);
+        $this->link->executeStatement('UPDATE players SET faction = ? WHERE id = ?', [$code, $chest]);
+
+        $guard = $this->actorNextTo(46, 30, 'GmGardeL');
+        $this->enrolled($guard, 1);
+        $recruit = $this->actorNextTo(46, 30, 'GmRecrueL');
+        $this->enrolled($recruit, 0);
+
+        $service = new ContainerService();
+        $service->toggleOpen($chest, $guard, false);
+        $this->assertSame(
+            0,
+            (int) $this->link->fetchOne('SELECT is_open FROM players WHERE id = ?', [$chest]),
+            'the flagged rank turns the faction lock'
+        );
+        $service->toggleOpen($chest, $guard, true);
+
+        $this->expectExceptionMessage('Votre rang n\'use pas des coffres de la faction.');
+        $service->toggleOpen($chest, $recruit, false);
     }
 
     public function testTheLockKnowsItsPeopleAlone(): void

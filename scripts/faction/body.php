@@ -81,4 +81,16 @@ if ($player->data->faction === ($_GET['faction'] ?? '') || $player->have_option(
         $player->data->faction === ($_GET['faction'] ?? ''),
         (int) $player->id
     );
+
+    /* Ses coffres, au même titre que ses murs : le contenu pour les
+     * yeux que le rang autorise, la serrure tournable d'ici. */
+    FactionView::renderContainers(
+        (new FactionService())->containersOf((string) $_GET['faction']),
+        $player->data->faction === ($_GET['faction'] ?? ''),
+        (int) $player->id
+    );
+
+    if ($player->data->faction === ($_GET['faction'] ?? '')) {
+        FactionView::renderAssetsScript((string) $_GET['faction']);
+    }
 }
