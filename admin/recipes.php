@@ -20,6 +20,20 @@ use Classes\Db;
 const RECIPE_INGREDIENT_SLOTS = 5;
 const RECIPE_RESULT_SLOTS = 2;
 
+/**
+ * Building types that can host an advanced recipe.
+ * @return array<string, string> races.name => label
+ */
+function recipe_workshop_options(): array
+{
+    $out = [];
+    $res = (new Db())->exe("SELECT name, label FROM races WHERE type_kind = 'building' ORDER BY label");
+    while ($row = $res->fetch_object()) {
+        $out[$row->name] = $row->label . ' (' . $row->name . ')';
+    }
+    return $out;
+}
+
 /** @return array<int, string> item id => name, trié */
 function recipe_item_options(): array
 {
@@ -46,7 +60,7 @@ function recipe_render_list(string $csrfToken): string
 {
     $db = new Db();
     $res = $db->exe(
-        'SELECT r.id, r.name,
+        'SELECT r.id, r.name, r.workshop,
             (SELECT GROUP_CONCAT(CONCAT(i.name, " x", ri.count) SEPARATOR ", ")
              FROM craft_recipes_ingredients ri JOIN items i ON i.id = ri.item_id WHERE ri.recipe_id = r.id) AS ingredients,
             (SELECT GROUP_CONCAT(CONCAT(i.name, " x", rr.count) SEPARATOR ", ")
@@ -63,6 +77,7 @@ function recipe_render_list(string $csrfToken): string
             . '<td>' . e((string) ($r->ingredients ?? '—')) . '</td>'
             . '<td>' . e((string) ($r->results ?? '—')) . '</td>'
             . '<td>' . ($r->races ? e($r->races) : '<span class="text-muted">toutes</span>') . '</td>'
+            . '<td>' . ($r->workshop ? e($r->workshop) : '<span class="text-muted">partout</span>') . '</td>'
             . '<td class="text-nowrap">'
             . '<a class="btn btn-sm btn-outline-primary" href="/admin/recipes.php?action=edit&id=' . (int) $r->id . '">Éditer</a> '
             . '<a class="btn btn-sm btn-outline-secondary" title="Exporter le bundle JSON"'
@@ -78,7 +93,7 @@ function recipe_render_list(string $csrfToken): string
     return '<p><a class="btn btn-primary" href="/admin/recipes.php?action=new">Nouvelle recette</a> '
         . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=recipe">Exporter tout (JSON)</a> '
         . '<a class="btn btn-outline-secondary" href="/admin/action-import.php">Importer</a></p>'
-        . renderTable(['Recette', 'Ingrédients', 'Résultats', 'Races', ''], $rows);
+        . renderTable(['Recette', 'Ingrédients', 'Résultats', 'Races', 'Atelier', ''], $rows);
 }
 
 function recipe_item_select(string $name, int $selected, array $items): string
@@ -144,6 +159,14 @@ function recipe_render_form(?object $recipe, string $csrfToken): string
         . ($isEdit ? '<input type="hidden" name="id" value="' . (int) $recipe->id . '">' : '')
         . '<div class="form-group"><label>Nom</label>'
         . '<input type="text" class="form-control" name="name" required maxlength="255" value="' . e($isEdit ? $recipe->name : '') . '"></div>'
+        . '<div class="form-group"><label>Atelier requis <small class="text-muted">(vide = recette de base, fabricable partout)</small></label>'
+        . formSelect(
+            'workshop',
+            recipe_workshop_options(),
+            $isEdit && $recipe->workshop !== null && $recipe->workshop !== '' ? $recipe->workshop : null,
+            '— aucune : recette de base —',
+            'class="form-control"'
+        ) . '</div>'
         . '<div class="row"><div class="col-md-4"><h5>Ingrédients</h5>' . $ingredientRows . '</div>'
         . '<div class="col-md-4"><h5>Résultats</h5>' . $resultRows . '</div>'
         . '<div class="col-md-4"><h5>Races <small class="text-muted">(aucune = toutes)</small></h5>' . $raceBoxes . '</div></div>'

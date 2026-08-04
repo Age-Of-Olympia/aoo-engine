@@ -12,6 +12,9 @@ use Exception;
 
 class RecipeService
 {
+    /** How far the crafter may stand from the workshop, in cells. */
+    public const WORKSHOP_RANGE = 1;
+
     private $entityManager;
 
     public function __construct()
@@ -151,6 +154,9 @@ class RecipeService
             $message = "Vous ne pouvez pas créer cette recette.";
             return false;
         }
+        if (!$this->workshopReached($recipe, $player, $message)) {
+            return false;
+        }
         $recipeIngredients = $recipe->GetRecipeIngredients();
         $recipeResults = $recipe->GetRecipeResults();
         $db = new Db();
@@ -182,6 +188,39 @@ class RecipeService
             $db->rollback();
             $message = "Erreur lors de la création de l\'objet: {$e->getMessage()}";
         }
+        return false;
+    }
+
+    /**
+     * The advanced level's gate: a recipe naming a workshop is crafted at
+     * one — an OPEN building of that type within WORKSHOP_RANGE of the
+     * crafter. Server-side truth; the craft panel only mirrors it.
+     */
+    public function workshopReached(Recipe $recipe, Player $player, &$message): bool
+    {
+        $workshop = $recipe->getWorkshop();
+        if ($workshop === null) {
+            return true;
+        }
+
+        $coords = $player->getCoords();
+        $nearby = $coords !== null
+            ? (new BuildingService())->openBuildingNearby($coords, [$workshop], self::WORKSHOP_RANGE)
+            : ['open' => null, 'shut' => null];
+
+        if ($nearby['open'] !== null) {
+            return true;
+        }
+
+        if ($nearby['shut'] !== null) {
+            $message = "Le bâtiment est {$nearby['shut']}.";
+            return false;
+        }
+
+        $race = (new RaceService())->getRaceByName($workshop);
+        $label = $race !== null ? $race->getLabel() : $workshop;
+        $message = "Il faut être près de : {$label}.";
+
         return false;
     }
 }

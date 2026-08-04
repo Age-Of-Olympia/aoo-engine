@@ -183,6 +183,12 @@ class CraftView
             $recipeId = $recipe->getId();
             $artItem = self::itemReadModel($recipe->getRecipeResults()[0]->GetItem());
 
+            /* Advanced level: the recipe names its workshop. The server
+             * decides again at craft time (TryCraftRecipe) — this only
+             * spares a click that would be refused. */
+            $workshopMessage = '';
+            $workshopReady = $recipeService->workshopReached($recipe, $player, $workshopMessage);
+
             // print
             echo '
         <tr>
@@ -231,12 +237,16 @@ class CraftView
             </td>
             ';
 
-            if ($hasAllIngredients) {
+            if ($hasAllIngredients && $workshopReady) {
 
                 echo '
                 <td valign="top">
                     <input type="button" value="Créer" itemId="' . $recipeId . '" data-item-name="' . $recipeName . '" style="width: 100%; height: 50px;" />
                 </td>
+                ';
+            } elseif ($hasAllIngredients) {
+                echo '
+                <td valign="top"><small>' . $workshopMessage . '</small></td>
                 ';
             } else {
                 echo '

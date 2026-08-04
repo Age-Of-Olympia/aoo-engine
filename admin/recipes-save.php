@@ -75,6 +75,18 @@ $collect = static function (string $itemKey, string $countKey) use ($db): array 
 $ingredients = $collect('ing_item', 'ing_count');
 $results = $collect('res_item', 'res_count');
 
+/* Required workshop: empty = basic recipe (NULL). A name is validated
+ * against the building-type catalog — a typo would make the recipe
+ * craftable nowhere. */
+$workshop = trim((string) ($_POST['workshop'] ?? ''));
+if ($workshop !== '') {
+    $known = $db->exe("SELECT id FROM races WHERE name = ? AND type_kind = 'building'", $workshop);
+    if (!$known->num_rows) {
+        setFlash('warning', "Type de bâtiment inconnu : « {$workshop} ».");
+        redirectTo('/admin/recipes.php');
+    }
+}
+
 if ($ingredients === [] || $results === []) {
     setFlash('warning', 'Une recette exige au moins un ingrédient et un résultat.');
     redirectTo('/admin/recipes.php');
@@ -88,7 +100,7 @@ if ($action === 'create') {
         setFlash('warning', "Une recette « {$name} » existe déjà.");
         redirectTo('/admin/recipes.php?action=new');
     }
-    $db->exe('INSERT INTO craft_recipes (name) VALUES (?)', $name);
+    $db->exe('INSERT INTO craft_recipes (name, workshop) VALUES (?, ?)', [$name, $workshop !== '' ? $workshop : null]);
     $id = $db->insertId();
 } else {
     $id = (int) ($_POST['id'] ?? 0);
@@ -97,7 +109,7 @@ if ($action === 'create') {
         setFlash('warning', 'Recette introuvable.');
         redirectTo('/admin/recipes.php');
     }
-    $db->exe('UPDATE craft_recipes SET name = ? WHERE id = ?', [$name, $id]);
+    $db->exe('UPDATE craft_recipes SET name = ?, workshop = ? WHERE id = ?', [$name, $workshop !== '' ? $workshop : null, $id]);
 }
 
 foreach (['craft_recipes_ingredients', 'craft_recipes_results', 'race_recipes'] as $table) {

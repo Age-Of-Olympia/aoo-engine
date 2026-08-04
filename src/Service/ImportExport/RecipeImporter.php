@@ -61,6 +61,14 @@ final class RecipeImporter extends AbstractDbalImporter
                     break;
                 }
             }
+            $workshop = (string) ($object['workshop'] ?? '');
+            if ($workshop !== '' && $conn->fetchOne(
+                "SELECT id FROM races WHERE name = ? AND type_kind = 'building'",
+                [$workshop]
+            ) === false) {
+                $report->reject($name, "type de bâtiment inconnu : « {$workshop} »");
+                $rejected = true;
+            }
             if ($rejected) {
                 continue;
             }
@@ -91,6 +99,12 @@ final class RecipeImporter extends AbstractDbalImporter
             $id = $conn->lastInsertId();
         }
         $id = (int) $id;
+
+        $workshop = (string) ($payload['workshop'] ?? '');
+        $conn->executeStatement(
+            'UPDATE craft_recipes SET workshop = ? WHERE id = ?',
+            [$workshop !== '' ? $workshop : null, $id]
+        );
 
         foreach (['craft_recipes_ingredients', 'craft_recipes_results', 'race_recipes'] as $table) {
             $conn->executeStatement("DELETE FROM {$table} WHERE recipe_id = ?", [$id]);

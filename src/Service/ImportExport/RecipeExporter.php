@@ -36,6 +36,14 @@ final class RecipeExporter implements ObjectExporterInterface
         );
     }
 
+    /** The required workshop travels by type NAME, like the races. */
+    private function workshopOf(int $id): ?string
+    {
+        $workshop = $this->connection()->fetchOne('SELECT workshop FROM craft_recipes WHERE id = ?', [$id]);
+
+        return is_string($workshop) && $workshop !== '' ? $workshop : null;
+    }
+
     public function exportOne(string $name): array
     {
         $id = $this->connection()->fetchOne('SELECT id FROM craft_recipes WHERE name = ?', [$name]);
@@ -53,6 +61,7 @@ final class RecipeExporter implements ObjectExporterInterface
 
         return [
             'name' => $name,
+            'workshop' => $this->workshopOf($id),
             'ingredients' => $conn->fetchAllAssociative(
                 'SELECT i.name AS item, ri.count FROM craft_recipes_ingredients ri
                  JOIN items i ON i.id = ri.item_id WHERE ri.recipe_id = ? ORDER BY i.name',

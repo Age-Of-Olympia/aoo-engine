@@ -24,6 +24,14 @@ class Recipe
     #[ORM\Column(type: "string", length: 255)]
     private ?string $name = null;
 
+    /**
+     * Building type (races, kind building) an OPEN specimen of which must
+     * stand within reach of the crafter. NULL = basic recipe, crafted
+     * anywhere.
+     */
+    #[ORM\Column(type: "string", length: 255, nullable: true)]
+    private ?string $workshop = null;
+
 
     #[ORM\ManyToMany(targetEntity: Race::class, mappedBy: "recipes")]
     protected Collection $races;
@@ -60,6 +68,14 @@ class Recipe
     public function setName(string $name): void
     {
         $this->name = $name;
+    }
+    public function getWorkshop(): ?string
+    {
+        return $this->workshop;
+    }
+    public function setWorkshop(?string $workshop): void
+    {
+        $this->workshop = $workshop === '' ? null : $workshop;
     }
       /**
      * @return Collection<int, Race>
