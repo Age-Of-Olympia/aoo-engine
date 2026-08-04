@@ -59,7 +59,7 @@ class ItemOwnershipService
                        COALESCE((SELECT SUM(e.n) FROM players_items_exchanges e
                                  WHERE e.player_id = p.id AND e.item_id = ?), 0) AS exchange
                 FROM players p
-                LEFT JOIN players_items pi ON pi.player_id = p.id AND pi.item_id = ?
+                LEFT JOIN players_items pi ON pi.player_id = p.id AND pi.item_id = ? AND pi.slot = ''
                 LEFT JOIN players_items_bank pb ON pb.player_id = p.id AND pb.item_id = ?
                 HAVING inv > 0 OR bank > 0 OR market > 0 OR exchange > 0
                 ORDER BY p.name ASC";

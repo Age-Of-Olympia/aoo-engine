@@ -82,24 +82,15 @@ class Item{
         }
 
 
-        // first player json
+        /* No JSON and no DB stats: serve the row as-is, in memory. The old
+         * path WROTE a placeholder file here — whatever partial row built
+         * this object became a definition on disk, poisoning every later
+         * read. No file cache until a real cache system exists. */
         if(!$itemJson){
 
-
-            $dir = ($this->row->private) ? 'private' : 'public';
-
-            $path = 'datas/'. $dir .'/items/'. $this->row->name .'.json';
-
-
-            $this->row->price = 1;
-            $this->row->text = "Description de l'objet.";
-
-
-            $data = Json::encode($this->row);
-
-            Json::write_json($path, $data);
-
-            $itemJson = json()->decode('items', $this->row->name);
+            $itemJson = clone $this->row;
+            $itemJson->price ??= 1;
+            $itemJson->text ??= "Description de l'objet.";
         }
 
 
@@ -200,9 +191,10 @@ class Item{
         $db->exe($sql, array($player->id, $this->id, $n));
 
         if ($n < 0) {
+            // Bag rows only: the walls (slot fabric) are not the bag's to purge.
             $sql = '
             DELETE FROM players_items' . $bankSuffix . '
-            WHERE player_id = ? AND n <= 0
+            WHERE player_id = ? AND n <= 0' . ($bankSuffix === '' ? ' AND slot = \'\'' : '') . '
             ';
             $db->exe($sql, $player->id);
         }
@@ -246,7 +238,8 @@ class Item{
         SELECT n, name
         FROM players_items' . $bankSuffix . '
         INNER JOIN items ON item_id = items.id
-        WHERE player_id = ? AND name = ? ' . $equipedCondition . '
+        WHERE player_id = ? AND name = ? ' . $equipedCondition
+            . ($bankSuffix === '' ? ' AND slot = \'\'' : '') . '
         ';
 
         $db = new Db();
@@ -540,6 +533,7 @@ class Item{
         WHERE
         player_id = ?
         '. $equiped .'
+        '. ($bank === '' ? 'AND slot = \'\'' : '') .'
         ORDER BY
         '. $equipedOrder .' items.name
         ';

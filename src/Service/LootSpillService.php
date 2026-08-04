@@ -41,7 +41,7 @@ final class LootSpillService
             'SELECT item_id, n, equiped, i.name, i.lootChance
                FROM players_items AS pi
                INNER JOIN items AS i ON pi.item_id = i.id
-              WHERE player_id = ?',
+              WHERE player_id = ? AND pi.slot = \'\'',
             $entity->id
         );
 
@@ -60,6 +60,7 @@ final class LootSpillService
             }
         }
 
+        $lootList = array_merge($lootList, $this->spillFabric($entity, $db));
         $lootList = array_merge($lootList, $this->spillChildren($entity));
 
         if (count($lootList)) {
@@ -89,6 +90,55 @@ final class LootSpillService
         }
 
         return $dropped;
+    }
+
+    /**
+     * The walls' materials take the same per-unit roll; what does not drop
+     * is dust. The rows go with the fall either way — a broken chest keeps
+     * no fabric, a vanished building even less.
+     *
+     * @return string[] labels of what fell
+     */
+    private function spillFabric(Player $entity, Db $db): array
+    {
+        $coordsId = (int) ($entity->data->coords_id ?? 0);
+
+        $res = $db->exe(
+            'SELECT f.item_id, f.n, 0 AS equiped, i.name, i.lootChance
+               FROM players_items f
+               INNER JOIN items i ON i.id = f.item_id
+              WHERE f.player_id = ? AND f.slot = ?',
+            [$entity->id, \App\Service\FabricService::SLOT]
+        );
+
+        $fallen = array();
+
+        while ($row = $res->fetch_object()) {
+
+            /* No get_data() here: on an item without a JSON file it would
+             * CACHE one from this partial row (a loot line, not an item
+             * definition) and poison every later read. The catalog column
+             * is the chance; the row carries the name. */
+            $loot = new Item($row->item_id, $row);
+
+            $nbLoot = $this->rollFor((int) $row->n, $this->chanceFor($entity, $loot, $row));
+
+            if ($nbLoot > 0 && $coordsId > 0) {
+                $db->insert('map_items', array(
+                    'item_id' => $loot->id,
+                    'coords_id' => $coordsId,
+                    'n' => $nbLoot,
+                ));
+                $fallen[] = $row->name . ' x' . $nbLoot;
+            }
+        }
+
+        $db->exe(
+            'DELETE FROM players_items WHERE player_id = ? AND slot = ?',
+            [$entity->id, \App\Service\FabricService::SLOT]
+        );
+
+        return $fallen;
     }
 
     /**

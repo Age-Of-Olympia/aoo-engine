@@ -150,15 +150,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['inventory_add']) || 
         } else {
             $itemId = (int) ($_POST['item_id'] ?? 0);
             $n = max(1, (int) ($_POST['n'] ?? 1));
-            $res = $db->exe('SELECT i.name, pi.n FROM players_items pi JOIN items i ON i.id = pi.item_id WHERE pi.player_id = ? AND pi.item_id = ?', array($id, $itemId));
+            $res = $db->exe('SELECT i.name, pi.n FROM players_items pi JOIN items i ON i.id = pi.item_id WHERE pi.player_id = ? AND pi.item_id = ? AND pi.slot = ""', array($id, $itemId));
             $row = $res ? $res->fetch_object() : null;
             if ($row === null) {
                 throw new RuntimeException('Cet objet n\'est pas dans la pile du personnage.');
             }
             if ($n >= (int) $row->n) {
-                $db->exe('DELETE FROM players_items WHERE player_id = ? AND item_id = ?', array($id, $itemId));
+                $db->exe('DELETE FROM players_items WHERE player_id = ? AND item_id = ? AND slot = ""', array($id, $itemId));
             } else {
-                $db->exe('UPDATE players_items SET n = n - ? WHERE player_id = ? AND item_id = ?', array($n, $id, $itemId));
+                $db->exe('UPDATE players_items SET n = n - ? WHERE player_id = ? AND item_id = ? AND slot = ""', array($n, $id, $itemId));
             }
             setFlash('success', "-{$n} × {$row->name} pour « {$player->data->name} ».");
         }

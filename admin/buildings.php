@@ -204,6 +204,56 @@ function building_render_place_form(array $types, array $plans, array $factions,
  * @param array<string, string> $factions    code => nom
  * @param array<int, string>    $dialogNames
  */
+/**
+ * « Dans les murs » : la fabrique de l'entité — matériaux de construction
+ * et trésors glissés par l'animation. Invisible aux joueurs, répandue avec
+ * les règles de butin quand le bâtiment tombe (FabricService).
+ */
+function building_render_fabric(int $buildingId, string $csrfToken): string
+{
+    $rows = '';
+    foreach ((new \App\Service\FabricService())->contentsOf($buildingId) as $line) {
+        $rows .= '<tr><td><code>' . e($line['name']) . '</code></td><td>' . (int) $line['n'] . '</td>'
+            . '<td><form method="post" action="/admin/buildings-save.php?action=fabric" class="d-inline">'
+            . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+            . '<input type="hidden" name="id" value="' . $buildingId . '">'
+            . '<input type="hidden" name="item_id" value="' . (int) $line['item_id'] . '">'
+            . '<input type="hidden" name="n" value="0">'
+            . '<button class="btn btn-sm btn-outline-danger" type="submit">Retirer</button></form></td></tr>';
+    }
+
+    $itemOptions = [];
+    foreach (building_item_options() as $id => $name) {
+        $itemOptions[$id] = $name;
+    }
+
+    $body = ($rows !== ''
+            ? '<table class="table table-sm"><thead><tr><th>Objet</th><th>Unités</th><th></th></tr></thead><tbody>' . $rows . '</tbody></table>'
+            : '<p class="text-muted">Rien dans les murs.</p>')
+        . '<form method="post" action="/admin/buildings-save.php?action=fabric" class="form-inline">'
+        . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+        . '<input type="hidden" name="id" value="' . $buildingId . '">'
+        . formSelect('item_id', array_map('strval', $itemOptions), null, '— objet —', 'class="form-control form-control-sm mr-2"')
+        . '<input type="number" name="n" min="1" max="9999" value="1" class="form-control form-control-sm mr-2" style="width:90px">'
+        . '<button class="btn btn-sm btn-outline-primary" type="submit">Poser dans les murs</button>'
+        . '</form>';
+
+    return '<div class="card mt-4"><div class="card-header">Dans les murs'
+        . ' <small class="text-muted">— invisible aux joueurs, répandu (règles de butin) quand le bâtiment tombe</small></div>'
+        . '<div class="card-body">' . $body . '</div></div>';
+}
+
+/** @return array<int, string> item id => name, trié */
+function building_item_options(): array
+{
+    $out = [];
+    $res = (new \Classes\Db())->exe('SELECT id, name FROM items ORDER BY name');
+    while ($row = $res->fetch_object()) {
+        $out[(int) $row->id] = $row->name;
+    }
+    return $out;
+}
+
 function building_render_edit(array $b, string $description, array $factions, array $dialogNames, bool $isEdifice, string $csrfToken): string
 {
     $factionOptions = renderSelectOptions($factions, $b['faction'] !== '' ? (string) $b['faction'] : null, '— neutre —');
@@ -283,7 +333,8 @@ if (($_GET['action'] ?? '') === 'edit') {
     $isEdifice = (bool) (new RaceService())->getRaceByName((string) $row['type'])?->isEdifice();
 
     echo admin_layout('Bâtiments posés', renderFlashMessage()
-        . building_render_edit($row, $description, $factions, $dialogNames, $isEdifice, $csrfToken));
+        . building_render_edit($row, $description, $factions, $dialogNames, $isEdifice, $csrfToken)
+        . building_render_fabric((int) $row['id'], $csrfToken));
     exit();
 }
 

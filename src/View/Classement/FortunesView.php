@@ -31,7 +31,7 @@ class FortunesView
     player_id, item_id, n
     FROM players_items
     WHERE
-    item_id = 1
+    item_id = 1 AND slot = \'\'
 
     UNION
 

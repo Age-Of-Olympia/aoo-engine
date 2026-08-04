@@ -140,7 +140,8 @@ function update_overxP_players()
 function get_deprecated_objects(bool $bank)
 {
     $bankTable = ($bank) ? '_bank' : '';
-    $sql = 'SELECT player_id, item_id,n FROM players_items' . $bankTable . ' INNER JOIN items ON item_id = items.id WHERE items.is_deprecated = 1';
+    $sql = 'SELECT player_id, item_id,n FROM players_items' . $bankTable . ' INNER JOIN items ON item_id = items.id WHERE items.is_deprecated = 1'
+        . ($bankTable === '' ? ' AND slot = ""' : '');
 
     $res =  $this->db->fetchAllAssociative($sql);
 
@@ -149,7 +150,8 @@ function get_deprecated_objects(bool $bank)
 function get_objects_by_name(bool $bank,string $name)
 {
     $bankTable = ($bank) ? '_bank' : '';
-    $sql = 'SELECT player_id, item_id,n FROM players_items' . $bankTable . ' INNER JOIN items ON item_id = items.id WHERE items.name = ?';
+    $sql = 'SELECT player_id, item_id,n FROM players_items' . $bankTable . ' INNER JOIN items ON item_id = items.id WHERE items.name = ?'
+        . ($bankTable === '' ? ' AND slot = ""' : '');
 
     $res =  $this->db->fetchAllAssociative($sql, array($name));
 

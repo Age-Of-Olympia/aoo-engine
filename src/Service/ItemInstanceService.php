@@ -249,7 +249,7 @@ class ItemInstanceService extends BaseService
         return $conn->transactional(function ($conn) use ($playerId, $itemId): int {
             // Lock the stack row and check availability atomically.
             $n = $conn->fetchOne(
-                'SELECT n FROM players_items WHERE player_id = ? AND item_id = ? FOR UPDATE',
+                'SELECT n FROM players_items WHERE player_id = ? AND item_id = ? AND slot = "" FOR UPDATE',
                 [$playerId, $itemId]
             );
             if ($n === false || (int) $n < 1) {
@@ -259,11 +259,11 @@ class ItemInstanceService extends BaseService
             }
 
             $conn->executeStatement(
-                'UPDATE players_items SET n = n - 1 WHERE player_id = ? AND item_id = ?',
+                'UPDATE players_items SET n = n - 1 WHERE player_id = ? AND item_id = ? AND slot = ""',
                 [$playerId, $itemId]
             );
             $conn->executeStatement(
-                'DELETE FROM players_items WHERE player_id = ? AND item_id = ? AND n <= 0 AND equiped = ""',
+                'DELETE FROM players_items WHERE player_id = ? AND item_id = ? AND n <= 0 AND equiped = "" AND slot = ""',
                 [$playerId, $itemId]
             );
 
@@ -388,7 +388,7 @@ class ItemInstanceService extends BaseService
         } else {
             $stacked = (int) $conn->fetchOne(
                 "SELECT COALESCE(SUM(n), 0) FROM players_items
-                 WHERE player_id = ? AND item_id = ? AND equiped = ''",
+                 WHERE player_id = ? AND item_id = ? AND equiped = '' AND slot = ''",
                 [$playerId, $itemId]
             );
 
@@ -988,7 +988,7 @@ class ItemInstanceService extends BaseService
         }
 
         return (int) ($conn->fetchOne(
-            'SELECT n FROM players_items WHERE player_id = ? AND item_id = ?',
+            'SELECT n FROM players_items WHERE player_id = ? AND item_id = ? AND slot = ""',
             [$playerId, $itemId]
         ) ?: 0) > 0;
     }
@@ -1004,7 +1004,7 @@ class ItemInstanceService extends BaseService
         $conn = $this->entityManager->getConnection();
 
         $stack = (int) ($conn->fetchOne(
-            'SELECT n FROM players_items WHERE player_id = ? AND item_id = ?',
+            'SELECT n FROM players_items WHERE player_id = ? AND item_id = ? AND slot = ""',
             [$playerId, $itemId]
         ) ?: 0);
 

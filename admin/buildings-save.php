@@ -171,6 +171,23 @@ if ($action === 'restore') {
     redirectTo('/admin/buildings.php');
 }
 
+if ($action === 'fabric') {
+    $id = (int) ($_POST['id'] ?? 0);
+    $itemId = (int) ($_POST['item_id'] ?? 0);
+    $n = max(0, min(9999, (int) ($_POST['n'] ?? 0)));
+
+    if ($id <= 0 || $itemId <= 0) {
+        setFlash('warning', 'Bâtiment ou objet manquant.');
+        redirectTo('/admin/buildings.php');
+    }
+
+    (new \App\Service\FabricService())->setUnits($id, $itemId, $n);
+    setFlash('success', $n > 0
+        ? "Posé dans les murs du bâtiment #{$id}."
+        : "Retiré des murs du bâtiment #{$id}.");
+    redirectTo('/admin/buildings.php?action=edit&id=' . $id);
+}
+
 if ($action === 'remove') {
     $id = (int) ($_POST['id'] ?? 0);
     if ($service->remove($id)) {

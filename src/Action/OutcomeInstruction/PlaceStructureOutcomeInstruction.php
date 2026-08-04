@@ -106,6 +106,15 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
             return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: [$e->getMessage()]);
         }
 
+        /* The recipe's materials go INTO the walls: razed later, the entity
+         * spills them with the loot rules — a partial refund, and the same
+         * place the admin hides treasure. Player gesture only: admin and
+         * editor placements dress sets, their walls hold nothing. */
+        $ingredients = (new \App\Service\RecipeService())->ingredientsForResult($type);
+        if ($ingredients !== []) {
+            (new \App\Service\FabricService())->storeByName($id, $ingredients);
+        }
+
         $this->getOutcome()?->getAction()?->setRefreshScreen(true);
 
         $label = htmlspecialchars($name !== '' ? $name : $type, ENT_QUOTES, 'UTF-8');
