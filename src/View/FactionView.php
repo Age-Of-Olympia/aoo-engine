@@ -654,6 +654,42 @@ class FactionView
     }
 
     /**
+     * The faction's JOURNAL — what happened to the house's things:
+     * takings, locks turned, commands taken. Members only (the caller
+     * gates), newest first, internal theft plainly visible: that is
+     * the point.
+     *
+     * @param array<int, array{time: int, message: string}> $rows FactionLogService::listOf()
+     */
+    public static function renderJournal(array $rows): void
+    {
+        if ($rows === []) {
+            return;
+        }
+
+        self::sectionOpen('journal', 'Journal');
+
+        echo '
+    <table border="1" class="marbre" align="center">
+    ';
+
+        foreach ($rows as $row) {
+            echo '
+        <tr>
+            <td><small>' . date('d/m H:i', $row['time']) . '</small></td>
+            <td>' . htmlspecialchars($row['message'], ENT_QUOTES, 'UTF-8') . '</td>
+        </tr>
+        ';
+        }
+
+        echo '
+    </table>
+    ';
+
+        self::sectionClose();
+    }
+
+    /**
      * The lock gestures of the assets tables post to the container
      * endpoint and reopen the panel. Fragment script: delegated,
      * namespaced, off() before on() — it re-executes at every load.

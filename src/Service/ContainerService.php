@@ -138,6 +138,7 @@ final class ContainerService extends BaseService
         }
 
         $this->moveStack($actorId, $containerId, $itemId, $n, 'Vous n\'avez pas cela.');
+        $this->journal($containerId, $actorId, 'a déposé ' . $n . ' × ' . $this->itemLabel($itemId) . ' dans');
         $this->addAuditLog("container #{$containerId}: #{$actorId} y dépose {$n} × item #{$itemId}");
     }
 
@@ -146,6 +147,7 @@ final class ContainerService extends BaseService
     {
         $this->assertUsable($containerId, $actorId);
         $this->moveStack($containerId, $actorId, $itemId, $n, 'Le contenant n\'a pas cela.');
+        $this->journal($containerId, $actorId, 'a pris ' . $n . ' × ' . $this->itemLabel($itemId) . ' dans');
         $this->addAuditLog("container #{$containerId}: #{$actorId} en retire {$n} × item #{$itemId}");
     }
 
@@ -160,6 +162,7 @@ final class ContainerService extends BaseService
         $this->conn->transactional(function (Connection $conn) use ($entityId, $containerId): void {
             (new EntityLocationService($conn))->putInside($entityId, $containerId);
         });
+        $this->journal($containerId, $actorId, 'a déposé ' . $this->exemplarLabel($instanceId) . ' dans');
         $this->addAuditLog("container #{$containerId}: #{$actorId} y dépose l'exemplaire #{$instanceId}");
     }
 
@@ -181,6 +184,7 @@ final class ContainerService extends BaseService
         $this->conn->transactional(function (Connection $conn) use ($entityId, $actorId): void {
             (new EntityLocationService($conn))->putInside((int) $entityId, $actorId);
         });
+        $this->journal($containerId, $actorId, 'a pris ' . $this->exemplarLabel($instanceId) . ' dans');
         $this->addAuditLog("container #{$containerId}: #{$actorId} en retire l'exemplaire #{$instanceId}");
     }
 
@@ -211,6 +215,7 @@ final class ContainerService extends BaseService
         }
 
         (new BuildingService())->setOpen($containerId, $open);
+        $this->journal($containerId, $actorId, $open ? 'a ouvert' : 'a fermé');
         $this->addAuditLog("container #{$containerId}: #{$actorId} " . ($open ? 'ouvre' : 'ferme'));
     }
 
@@ -336,6 +341,52 @@ final class ContainerService extends BaseService
         if (count($contents['stacks']) + count($contents['exemplars']) >= $capacity) {
             throw new RuntimeException('Le contenant est plein.');
         }
+    }
+
+    /**
+     * One line in the faction's journal, when the container is the
+     * faction's: "{Actor} {verb phrase} {Container}." — the house sees
+     * what happened to its things, internal takings included.
+     */
+    private function journal(int $containerId, int $actorId, string $verbPhrase): void
+    {
+        $thing = $this->conn->fetchAssociative(
+            'SELECT name, faction FROM players WHERE id = ?',
+            [$containerId]
+        );
+        if ($thing === false || (string) $thing['faction'] === '') {
+            return;
+        }
+
+        $actorName = (string) $this->conn->fetchOne('SELECT name FROM players WHERE id = ?', [$actorId]);
+
+        (new FactionLogService())->add(
+            (string) $thing['faction'],
+            $actorId,
+            $actorName . ' ' . $verbPhrase . ' ' . $thing['name'] . '.'
+        );
+    }
+
+    /** The item's display name, for a journal line. */
+    private function itemLabel(int $itemId): string
+    {
+        return ucfirst((string) $this->conn->fetchOne('SELECT name FROM items WHERE id = ?', [$itemId]));
+    }
+
+    /** The exemplar's name — its own if christened, its type's otherwise. */
+    private function exemplarLabel(int $instanceId): string
+    {
+        $row = $this->conn->fetchAssociative(
+            'SELECT i.custom_name, it.name FROM item_instances i JOIN items it ON it.id = i.item_id WHERE i.id = ?',
+            [$instanceId]
+        );
+        if ($row === false) {
+            return 'un objet';
+        }
+
+        return (string) $row['custom_name'] !== ''
+            ? '« ' . $row['custom_name'] . ' »'
+            : ucfirst((string) $row['name']);
     }
 
     /**

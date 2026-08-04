@@ -122,6 +122,8 @@ if ($player->data->faction === ($_GET['faction'] ?? '') || $player->have_option(
     );
 
     if ($player->data->faction === ($_GET['faction'] ?? '')) {
+        /* The journal is the house's eyes: members only. */
+        FactionView::renderJournal((new \App\Service\FactionLogService())->listOf((string) $_GET['faction']));
         FactionView::renderAssetsScript((string) $_GET['faction']);
     }
 }

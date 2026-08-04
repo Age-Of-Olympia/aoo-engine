@@ -22,6 +22,18 @@ try {
             $buildingId = (int) ($POST_DATA['buildingId'] ?? 0);
             (new BuildingService())->assertDrivable($buildingId, $actorId);
 
+            /* The house sees who sits at the commands. */
+            $conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
+            $building = $conn->fetchAssociative('SELECT name, faction FROM players WHERE id = ?', [$buildingId]);
+            if ($building !== false && (string) $building['faction'] !== '') {
+                $actorName = (string) $conn->fetchOne('SELECT name FROM players WHERE id = ?', [$actorId]);
+                (new \App\Service\FactionLogService())->add(
+                    (string) $building['faction'],
+                    $actorId,
+                    $actorName . ' prend les commandes de ' . $building['name'] . '.'
+                );
+            }
+
             /* Same gesture as the PNJ switch, one method (the door —
              * assertDrivable here, the PNJ list there — stays each
              * caller's own). */
