@@ -40,6 +40,9 @@ class RaceImportExportTest extends TestCase
             $link->executeStatement(
                 "DELETE FROM races WHERE name = 'race_test_import'"
             );
+            $link->executeStatement(
+                "DELETE FROM entity_type_footprints WHERE type_name = 'race_test_import'"
+            );
         }
         RaceService::clearCache();
     }
@@ -112,6 +115,40 @@ class RaceImportExportTest extends TestCase
         RaceService::clearCache();
         $this->assertSame('Race de test v2',
             (new RaceService())->getRaceByName('race_test_import')->getLabel());
+    }
+
+    public function testBuildWorkAndFootprintTravelWithTheType(): void
+    {
+        // Export side: the atelier carries its work and its declared cut-out.
+        $atelier = EntityManagerFactory::getEntityManager()
+            ->getRepository(Race::class)->findOneBy(['name' => 'atelier']);
+        if ($atelier === null) {
+            $this->markTestSkipped("type 'atelier' not seeded (run migrations).");
+        }
+
+        $payload = (new RaceExporter())->toArray($atelier);
+        $this->assertSame(10, $payload['build_work'], 'the migration seed travels');
+        $this->assertSame(2, $payload['footprint']['w'] ?? null);
+        $this->assertSame(2, $payload['footprint']['h'] ?? null);
+
+        // Import side: both land on a fresh type, keyed by its name.
+        $payload['name'] = 'race_test_import';
+        $payload['label'] = 'Type de test';
+        $payload['build_work'] = 7;
+        $payload['footprint'] = ['w' => 3, 'h' => 1, 'offsets' => [[0, 0], [1, 0], [2, 0]], 'roles' => []];
+        $payload['starterActions'] = [];
+        $payload['spells'] = [];
+
+        (new RaceImporter())->import([$payload]);
+
+        RaceService::clearCache();
+        $this->assertSame(7, (new RaceService())->getRaceByName('race_test_import')->getBuildWork());
+
+        global $link;
+        $row = $link->fetchAssociative(
+            "SELECT w, h FROM entity_type_footprints WHERE type_name = 'race_test_import'"
+        );
+        $this->assertSame(['w' => 3, 'h' => 1], array_map('intval', $row ?: []), 'the cut-out lands with its type');
     }
 
     public function testDeleteRemovesAnUnreferencedRaceAndItsLists(): void

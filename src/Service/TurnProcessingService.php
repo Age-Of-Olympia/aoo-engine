@@ -76,9 +76,17 @@ class TurnProcessingService
         /* A character's turn recovers a body: caracs, malus, energie, effects,
          * wear. A structure has none of that — its turn is its action pool and
          * its clock (docs/design-playable-buildings.md §3.2). */
-        return EntityCategory::fromPlayerType($entity->getPlayerType())->isStructure()
-            ? $this->restartPool($entity, $time)
-            : $this->process($entity, $time);
+        if (EntityCategory::fromPlayerType($entity->getPlayerType())->isStructure()) {
+            /* An unfinished playable building does not tick: shut, it renders
+             * no service — its clock starts with the last stone. */
+            if ((new ConstructionSiteService())->isUnderConstruction((int) $entity->id)) {
+                return null;
+            }
+
+            return $this->restartPool($entity, $time);
+        }
+
+        return $this->process($entity, $time);
     }
 
     /**

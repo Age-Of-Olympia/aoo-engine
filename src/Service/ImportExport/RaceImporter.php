@@ -102,6 +102,26 @@ final class RaceImporter extends AbstractObjectImporter
             $race->setCarac($key, (int) ($caracs[$key] ?? 0));
         }
 
+        $race->setBuildWork(max(0, (int) ($plan['build_work'] ?? $race->getBuildWork())));
+
+        /* The cut-out lands with its type, keyed by name — absent from the
+         * bundle, whatever the target install declares stays. */
+        $footprint = $plan['footprint'] ?? null;
+        if (is_array($footprint) && is_array($footprint['offsets'] ?? null) && $footprint['offsets'] !== []) {
+            (new \App\Service\Map\EntityTypeFootprintService())->declare(
+                $name,
+                max(1, (int) ($footprint['w'] ?? 1)),
+                max(1, (int) ($footprint['h'] ?? 1)),
+                array_map(
+                    static fn ($offset): array => [(int) ($offset[0] ?? 0), (int) ($offset[1] ?? 0)],
+                    array_values($footprint['offsets'])
+                ),
+                is_array($footprint['roles'] ?? null)
+                    ? array_map('strval', $footprint['roles'])
+                    : []
+            );
+        }
+
         // Flush intermédiaire (dans la transaction du lot) : les listes
         // s'écrivent en SQL direct et exigent l'id de la race.
         $this->races->save($race);

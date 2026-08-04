@@ -424,6 +424,12 @@ final class EntityCardView
         ];
         $stateLabel = $stateLabels[$details->getBuildState()] ?? ucfirst($details->getBuildState());
 
+        // The tile card tells where the site stands, like the sheet.
+        $progress = (new \App\Service\ConstructionSiteService())->progressOf((int) $target->id);
+        if ($progress !== null) {
+            $stateLabel .= ' (' . $progress['done'] . '/' . $progress['total'] . ')';
+        }
+
         $isEdifice = (bool) $raceService->getRaceByName((string) $target->data->race)?->isEdifice();
 
         $door = '';

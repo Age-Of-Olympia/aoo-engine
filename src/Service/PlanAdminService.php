@@ -153,6 +153,9 @@ class PlanAdminService
      */
     private function copyDecorBuildings(string $sourcePlan, string $targetPlan): int
     {
+        /* Copies are FINISHED buildings on purpose: place() without
+         * asConstructionSite — a plan clone dresses a set, it does not
+         * reopen the sites. The built-only filter below skips them too. */
         $res = $this->db->exe(
             "SELECT p.race, c.x, c.y, c.z
                FROM buildings b

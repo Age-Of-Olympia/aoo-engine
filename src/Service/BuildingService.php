@@ -493,7 +493,8 @@ class BuildingService extends BaseService
      * La fermeture volontaire se lit sur l'ENTITÉ, si bien que la règle vaut
      * déjà pour ce qui n'a pas de satellite de bâtiment. L'état de
      * construction reste propre au bâtiment : un exemplaire n'est jamais à
-     * demi forgé, et la quantité de travail viendra en son temps.
+     * demi forgé — et la quantité de travail existe désormais, portée par
+     * le satellite construction_sites (ConstructionSiteService).
      *
      * @param int $pvPct PV restants en % (l'appelant les a déjà —
      *                   observe.php les calcule pour le voile de dégâts)
@@ -887,6 +888,10 @@ class BuildingService extends BaseService
             'UPDATE buildings SET build_state = ? WHERE player_id = ?',
             [BuildingDetails::STATE_BUILT, $playerId]
         );
+        /* Remise à neuf FINISHES a construction site: leaving the satellite
+         * row would keep the place "under construction" for every reader
+         * (travailler, closure, line of fire) while the state says built. */
+        $conn->executeStatement('DELETE FROM construction_sites WHERE player_id = ?', [$playerId]);
         $this->swapAvatar($playerId, broken: false);
 
         $this->addAuditLog("BuildingService::restore #{$playerId}");
@@ -908,6 +913,10 @@ class BuildingService extends BaseService
             'UPDATE buildings SET build_state = ? WHERE player_id = ?',
             [BuildingDetails::STATE_RUIN, $playerId]
         );
+
+        /* A ruin is not a site: without this, a later travailler gesture
+         * would flip the ruin back to built through the completion path. */
+        $conn->executeStatement('DELETE FROM construction_sites WHERE player_id = ?', [$playerId]);
 
         if ($affected > 0) {
             // Bascule visuelle : la ruine prend le sprite _broken de son type

@@ -218,6 +218,47 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    public function testAdminRestoreFinishesTheSite(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $id = $this->placeStructure('atelier', 86, 86, asConstructionSite: true);
+
+        (new BuildingService())->restore($id);
+
+        $this->assertNull(
+            (new ConstructionSiteService())->progressOf($id),
+            'remise à neuf finishes the site — a built place under construction reads nowhere'
+        );
+        $this->assertSame(
+            'built',
+            (string) $this->link->fetchOne('SELECT build_state FROM buildings WHERE player_id = ?', [$id])
+        );
+    }
+
+    public function testAnUnfinishedBuildingDoesNotTick(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $id = $this->placeStructure('atelier', 88, 88, asConstructionSite: true);
+        $this->link->executeStatement('UPDATE players SET nextTurnTime = 1 WHERE id = ?', [$id]);
+        $this->link->executeStatement('UPDATE turns SET next_turn_time = 1 WHERE player_id = ?', [$id]);
+
+        $site = PlayerFactory::legacy($id);
+        $site->get_data();
+        $this->assertNull(
+            (new \App\Service\TurnProcessingService())->processDue($site),
+            'shut and unfinished, a site renders no service: its clock waits'
+        );
+
+        (new ConstructionSiteService())->advance($id, 40);
+
+        $built = PlayerFactory::legacy($id);
+        $built->get_data();
+        $this->assertNotNull(
+            (new \App\Service\TurnProcessingService())->processDue($built),
+            'the last stone starts the clock'
+        );
+    }
+
     public function testATypeDeclaringNothingStillRisesInOneGesture(): void
     {
         $this->requireBuildingsOrSkip();

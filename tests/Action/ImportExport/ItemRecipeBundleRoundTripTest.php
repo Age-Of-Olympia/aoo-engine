@@ -106,6 +106,7 @@ class ItemRecipeBundleRoundTripTest extends TestCase
 
         $payload = [
             'name' => self::RECIPE,
+            'workshop' => 'atelier',
             'ingredients' => [['item' => self::INGREDIENT, 'count' => 3]],
             'results' => [['item' => self::ITEM, 'count' => 1]],
             'races' => [],
@@ -119,6 +120,7 @@ class ItemRecipeBundleRoundTripTest extends TestCase
         $exported = (new RecipeExporter($this->conn))->exportOne(self::RECIPE);
 
         $this->assertSame(self::RECIPE, $exported['name']);
+        $this->assertSame('atelier', $exported['workshop'], 'the required workshop travels by type name');
         $this->assertEquals([['item' => self::INGREDIENT, 'count' => 3]], $exported['ingredients']);
         $this->assertEquals([['item' => self::ITEM, 'count' => 1]], $exported['results']);
         $this->assertSame([], $exported['races']);

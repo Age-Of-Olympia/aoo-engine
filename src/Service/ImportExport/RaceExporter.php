@@ -66,8 +66,28 @@ final class RaceExporter implements ObjectExporterInterface
             'plan'           => $entity->getPlan(),
             'animateurId'    => $entity->getAnimateurId(),
             'caracs'         => $entity->getCaracs(),
+            'build_work'     => $entity->getBuildWork(),
+            /* The DECLARED cut-out travels with its type — guessed shapes
+             * stay home, the target install derives its own. */
+            'footprint'      => $this->footprintOf($entity->getName()),
             'starterActions' => $entity->getStarterActionNames(),
             'spells'         => $entity->getSpellNames(),
+        ];
+    }
+
+    /** @return array{w: int, h: int, offsets: array<int, array{0: int, 1: int}>, roles: array<int, string>}|null */
+    private function footprintOf(string $typeName): ?array
+    {
+        $declared = (new \App\Service\Map\EntityTypeFootprintService())->declared()[$typeName] ?? null;
+        if ($declared === null) {
+            return null;
+        }
+
+        return [
+            'w'       => $declared->width(),
+            'h'       => $declared->height(),
+            'offsets' => array_values($declared->offsets()),
+            'roles'   => $declared->roles(),
         ];
     }
 }

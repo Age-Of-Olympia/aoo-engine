@@ -91,6 +91,13 @@ final class StructureSheetView
         if ($details !== null) {
             $stateLabel = $stateLabels[$details->getBuildState()] ?? ucfirst($details->getBuildState());
 
+            /* The one swinging the hammer sees where the site stands — the
+             * admin dashboard already did. */
+            $progress = (new \App\Service\ConstructionSiteService())->progressOf($entity->getId());
+            if ($progress !== null) {
+                $stateLabel .= ' (' . $progress['done'] . '/' . $progress['total'] . ')';
+            }
+
             echo '<div class="building-status'
                 . ($isEdifice && $closure !== null ? ' building-status--closed' : '') . '">';
             if ($isEdifice) {
