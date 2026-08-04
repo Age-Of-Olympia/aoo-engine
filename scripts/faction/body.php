@@ -71,8 +71,14 @@ if(isset($facJson->secret)){
 }
 
 /* Les bâtiments de la faction — ses murs. Réservés à ses MEMBRES, par
- * la règle qui cache déjà le territoire des autres ; l'admin voit tout. */
+ * la règle qui cache déjà le territoire des autres ; l'admin voit tout.
+ * Le geste « prendre les commandes » n'appartient qu'aux membres — et
+ * l'entité pilotée en ce moment porte le chemin du retour. */
 if ($player->data->faction === ($_GET['faction'] ?? '') || $player->have_option('isAdmin')) {
 
-    FactionView::renderBuildings((new FactionService())->buildingsOf((string) $_GET['faction']));
+    FactionView::renderBuildings(
+        (new FactionService())->buildingsOf((string) $_GET['faction']),
+        $player->data->faction === ($_GET['faction'] ?? ''),
+        (int) $player->id
+    );
 }

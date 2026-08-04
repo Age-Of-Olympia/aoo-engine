@@ -374,11 +374,13 @@ class FactionView
     /**
      * The faction's buildings — its assets, shown to its members only (the
      * caller applies that rule, the same one that hides the territory).
-     * The playable ones will carry the "take command" gesture (L4b).
+     * A member sees the "take command" gesture on the playable, finished
+     * ones; the server re-checks everything on the way in. Whoever is
+     * currently AT a building's commands sees the way back instead.
      *
      * @param array<int, array<string, mixed>> $buildings FactionService::buildingsOf() rows
      */
-    public static function renderBuildings(array $buildings): void
+    public static function renderBuildings(array $buildings, bool $mayDrive = false, int $drivenId = 0): void
     {
         if ($buildings === []) {
             return;
@@ -391,7 +393,9 @@ class FactionView
         <th>Nom</th>
         <th>Type</th>
         <th>État</th>
-        <th>Territoire</th>
+        <th>Territoire</th>'
+        . ($mayDrive ? '
+        <th>Commandes</th>' : '') . '
     </tr>
     ';
 
@@ -412,7 +416,20 @@ class FactionView
                 . ($b['playable'] ? ' <span class="ra ra-castle-flag" title="Pilotable par la faction"></span>' : '') . '</td>
             <td>' . $state . '</td>
             <td>' . htmlspecialchars((string) ($planJson->name ?? '?'), ENT_QUOTES, 'UTF-8')
-                . ' (' . (int) $b['x'] . ', ' . (int) $b['y'] . ')</td>
+                . ' (' . (int) $b['x'] . ', ' . (int) $b['y'] . ')</td>';
+
+            if ($mayDrive) {
+                echo '
+            <td>';
+                if ((int) $b['id'] === $drivenId) {
+                    echo '<button class="faction-drive-release">Reprendre son personnage</button>';
+                } elseif ($b['playable'] && $b['build_state'] !== 'ruin' && $b['site_total'] === null) {
+                    echo '<button class="faction-drive-take" data-building="' . (int) $b['id'] . '">Prendre les commandes</button>';
+                }
+                echo '</td>';
+            }
+
+            echo '
         </tr>
         ';
         }
@@ -420,5 +437,45 @@ class FactionView
         echo '
     </table>
     ';
+
+        if ($mayDrive) {
+            self::renderDriveScript();
+        }
+    }
+
+    /**
+     * Taking or leaving the commands posts to api/faction/drive.php and
+     * lands on the map as whoever the session now drives. Fragment
+     * script: delegated, namespaced, off() before on() — it re-executes
+     * at every panel load.
+     */
+    private static function renderDriveScript(): void
+    {
+        ?>
+        <script>
+        (function(){
+            function factionDriveCall(payload){
+                aooFetch('api/faction/drive.php', payload, null)
+                    .then(function(data){
+                        var message = data && data.result && data.result.message ? data.result.message : '';
+                        (message ? aooAlert(message) : Promise.resolve()).then(function(){
+                            document.location = 'index.php';
+                        });
+                    })
+                    .catch(autoError());
+            }
+
+            $(document).off('click.factionDrive', '.faction-drive-take')
+                .on('click.factionDrive', '.faction-drive-take', function(){
+                    factionDriveCall({ action: 'take', buildingId: $(this).data('building') });
+                });
+
+            $(document).off('click.factionDrive', '.faction-drive-release')
+                .on('click.factionDrive', '.faction-drive-release', function(){
+                    factionDriveCall({ action: 'release' });
+                });
+        })();
+        </script>
+        <?php
     }
 }

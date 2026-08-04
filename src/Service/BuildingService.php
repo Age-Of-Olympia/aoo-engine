@@ -606,6 +606,44 @@ class BuildingService extends BaseService
         ], $rows);
     }
 
+    /**
+     * May $actorId take this building's commands? Refusals speak the
+     * words the player reads. Driving asks the household rule — the
+     * owner, a member of its faction, and a thing with neither belongs
+     * to everyone — plus what the thing itself must be: a playable
+     * type, standing, finished, not a ruin.
+     */
+    public function assertDrivable(int $buildingId, int $actorId): void
+    {
+        $row = $this->entityManager->getConnection()->fetchAssociative(
+            'SELECT p.player_type, p.coords_id, b.build_state, r.playable
+               FROM players p
+               JOIN buildings b ON b.player_id = p.id
+               LEFT JOIN races r ON CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4)
+              WHERE p.id = ?',
+            [$buildingId]
+        );
+
+        if ($row === false || (string) $row['player_type'] !== 'building') {
+            throw new \RuntimeException('Ce n\'est pas un bâtiment.');
+        }
+        if (empty($row['playable'])) {
+            throw new \RuntimeException('Ce bâtiment ne se pilote pas.');
+        }
+        if ($row['coords_id'] === null) {
+            throw new \RuntimeException('Ce bâtiment ne tient plus debout.');
+        }
+        if ((string) $row['build_state'] === 'ruin') {
+            throw new \RuntimeException('Une ruine ne se pilote pas.');
+        }
+        if ((new ConstructionSiteService())->isUnderConstruction($buildingId)) {
+            throw new \RuntimeException('Un chantier ne se pilote pas.');
+        }
+        if (!(new LockService())->mayActOn($buildingId, $actorId)) {
+            throw new \RuntimeException('Vous n\'êtes pas des siens.');
+        }
+    }
+
     /** @param list<string> $values */
     private static function placeholders(array $values): string
     {
