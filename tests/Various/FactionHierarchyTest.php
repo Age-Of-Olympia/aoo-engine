@@ -96,6 +96,36 @@ class FactionHierarchyTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    public function testACoRoiMayDeposeOrDemoteTheOther(): void
+    {
+        $king = $this->enrolled('GmRoiA', 2);
+        $rival = $this->enrolled('GmRoiB', 2);
+        $victim = $this->enrolled('GmRoiC', 2);
+
+        $service = new FactionService();
+        $service->assignRole($king, $rival, 0);
+        $this->assertSame(
+            0,
+            (int) $this->link->fetchOne('SELECT factionRole FROM players WHERE id = ?', [$rival]),
+            'betrayal: a co-Roi demotes the other'
+        );
+
+        $service->kickMember($king, $victim);
+        $this->assertSame(
+            '',
+            (string) $this->link->fetchOne('SELECT faction FROM players WHERE id = ?', [$victim]),
+            'takeover: a co-Roi deposes the other'
+        );
+    }
+
+    public function testNobodyAbdicates(): void
+    {
+        $king = $this->enrolled('GmRoiSeul', 2);
+
+        $this->expectExceptionMessage('On ne change pas son propre rang.');
+        (new FactionService())->assignRole($king, $king, 0);
+    }
+
     public function testTheKingSettlesALowerCharter(): void
     {
         $king = $this->enrolled('GmRoi', 2);

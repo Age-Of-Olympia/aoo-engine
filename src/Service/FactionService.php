@@ -345,7 +345,8 @@ class FactionService
      * Removes a member of the actor's faction. One does not banish oneself,
      * nor anyone at one's rank or above: the LADDER is the hierarchy
      * (position ascends — Forgeron 0, Roi at the top), and every gesture
-     * reaches strictly below.
+     * reaches strictly below. Except at the SUMMIT: a co-Roi may depose
+     * the other — takeover and betrayal are part of the game.
      */
     public function kickMember(int $actorId, int $targetId): void
     {
@@ -364,7 +365,11 @@ class FactionService
         if ($target === false || (string) $target['faction'] !== $factionCode) {
             throw new RuntimeException('Cette personne n\'est pas des vôtres.');
         }
-        if ((int) $target['factionRole'] >= (int) $actorRole['position']) {
+        $actorPosition = (int) $actorRole['position'];
+        $targetPosition = (int) $target['factionRole'];
+        if ($targetPosition > $actorPosition
+            || ($targetPosition === $actorPosition && $actorPosition !== $this->topPositionOf($factionCode))
+        ) {
             throw new RuntimeException('Cette personne vous dépasse.');
         }
 
@@ -377,9 +382,11 @@ class FactionService
 
     /**
      * Moves a member of the actor's faction to another of its roles —
-     * a member strictly below, toward a rank strictly below. One
-     * exception: the SUMMIT may crown an equal (a co-Roi) — knowing
-     * that peers are out of each other's reach ever after.
+     * a member strictly below, toward a rank strictly below. At the
+     * SUMMIT the reach widens both ways: a Roi may crown an equal
+     * (a co-Roi) and may demote one — takeover and betrayal are part
+     * of the game. Never oneself: an abdication could leave the summit
+     * unheld and the ladder without a hand to rule it.
      */
     public function assignRole(int $actorId, int $targetId, int $position, int $variant = 0): void
     {
@@ -406,12 +413,17 @@ class FactionService
             throw new RuntimeException('Ce rang n\'existe pas.');
         }
 
+        if ($targetId === $actorId) {
+            throw new RuntimeException('On ne change pas son propre rang.');
+        }
+
         $actorPosition = (int) $actorRole['position'];
-        if ((int) $target['factionRole'] >= $actorPosition) {
+        $targetPosition = (int) $target['factionRole'];
+        $isSummit = $actorPosition === $this->topPositionOf($factionCode);
+        if ($targetPosition > $actorPosition || ($targetPosition === $actorPosition && !$isSummit)) {
             throw new RuntimeException('Cette personne vous dépasse.');
         }
-        $mayCrownEqual = $actorPosition === $this->topPositionOf($factionCode);
-        if ($position > $actorPosition || ($position === $actorPosition && !$mayCrownEqual)) {
+        if ($position > $actorPosition || ($position === $actorPosition && !$isSummit)) {
             throw new RuntimeException('On n\'élève personne à son propre rang.');
         }
 
