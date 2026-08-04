@@ -19,9 +19,9 @@ if(!$facJson){
 }
 
 
-/* La page vit dans le panneau du HUD comme en plein écran : chaque
- * section se replie (details natif) et son tableau défile en large
- * DANS son cadre au lieu de déborder du panneau ou du mobile. */
+/* The page lives in the HUD side panel as well as full screen: each
+ * section folds (native details) and its table scrolls sideways INSIDE
+ * its frame instead of overflowing the panel or a mobile screen. */
 echo '<div class="faction-page">
 <style>
     /* Titles read from the left, like the rest of the game; only the
@@ -43,8 +43,8 @@ echo '<div class="faction-page">
     }
 </style>';
 
-/* Le blason SUIT le titre, sur sa ligne — en 5em au-dessus, il
- * mangeait un quart de l'écran avant le premier membre. */
+/* The crest FOLLOWS the title, on its line — as a 5em block above it
+ * ate a quarter of the screen before the first member. */
 echo '<h1>'. htmlspecialchars((string) $facJson->name, ENT_QUOTES, 'UTF-8')
     .' <span class="ra '. $facJson->raFont .'"></span></h1>';
 
@@ -113,8 +113,8 @@ if ($player->data->faction === ($_GET['faction'] ?? '') || $player->have_option(
         (int) $player->id
     );
 
-    /* Ses coffres, au même titre que ses murs : le contenu pour les
-     * yeux que le rang autorise, la serrure tournable d'ici. */
+    /* Its chests, listed like its walls: contents for the eyes the
+     * rank allows, and the lock turnable from here. */
     FactionView::renderContainers(
         (new FactionService())->containersOf((string) $_GET['faction']),
         $player->data->faction === ($_GET['faction'] ?? ''),

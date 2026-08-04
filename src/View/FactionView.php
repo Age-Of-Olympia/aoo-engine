@@ -503,10 +503,7 @@ class FactionView
         $lock = new \App\Service\LockService();
         $container = new \App\Service\ContainerService();
 
-        if (!$lock->isLockable($entityId)
-            || !$lock->mayLock($entityId, $actorId)
-            || !$container->mayUse($entityId, $actorId)
-        ) {
+        if (!$lock->isLockable($entityId) || !$container->mayTurnLock($entityId, $actorId)) {
             return '';
         }
 

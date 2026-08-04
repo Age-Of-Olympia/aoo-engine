@@ -243,10 +243,13 @@ final class EntityCardView
     }
 
     /**
-     * The way into a container: an "Ouvrir" button and a glance at what
-     * it holds, on anything the type says can be shut — a chest, an
-     * édifice. Quiet when unusable from here (too far, shut, not one of
-     * its people): the refusal already speaks on the screen itself.
+     * The way into a container and the hand on its lock, on anything
+     * the type says can be shut — a chest, an édifice, a door.
+     *
+     * "Ouvrir" (the screen) shows when the container serves from here;
+     * the lock button shows to whoever CONTROLS the thing and stands
+     * next to it — shut included, since that is exactly when unlocking
+     * serves. The faction panel keeps the remote lock gesture.
      */
     private static function containerBlockHtml(Player $player, Player $target): string
     {
@@ -255,21 +258,55 @@ final class EntityCardView
         }
 
         $service = new \App\Service\ContainerService();
+        $html = '';
 
         try {
             $service->assertUsable((int) $target->id, (int) $player->id);
-        } catch (\RuntimeException $e) {
-            return '';
+
+            /* A navigation button, like Marchander: a link around it and
+             * no data-action, so both action handlers step aside and the
+             * HUD panel router (panelUrl in js/hud.js) slides the
+             * fragment in. The full page stays the no-JS fallback. */
+            $html .= '<a href="container.php?targetId=' . (int) $target->id . '"><button class="action">'
+                . '<span class="ra ra-ammo-bag"></span> <span class="action-name">Ouvrir</span></button></a>';
+        } catch (\RuntimeException) {
+            // Too far, shut, or not one of its people: no way in from here.
         }
 
-        /* A navigation button, like Marchander: a link around it and no
-         * data-action, so both action handlers step aside and the HUD
-         * panel router (panelUrl in js/hud.js) slides the fragment in.
-         * The full page stays the no-JS fallback. */
-        /* The glance at what it holds lives in the TILE section
-         * (ContainerPeekView), not among the actions. */
-        return '<a href="container.php?targetId=' . (int) $target->id . '"><button class="action">'
-            . '<span class="ra ra-ammo-bag"></span> <span class="action-name">Ouvrir</span></button></a>';
+        if (
+            $service->mayTurnLock((int) $target->id, (int) $player->id)
+            && \Classes\View::get_distance_to_entity((array) $player->coords, (int) $target->id) <= 1
+        ) {
+            $isOpen = (bool) \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()
+                ->fetchOne('SELECT is_open FROM players WHERE id = ?', [(int) $target->id]);
+
+            /* A DIRECT action: one click turns the lock (.action--direct
+             * escapes both armed cycles). Fragment script: delegated,
+             * namespaced, off() before on() — the card re-renders at
+             * every observation. */
+            $html .= '<button class="action action--direct container-lock-btn"'
+                . ' data-target="' . (int) $target->id . '" data-open="' . ($isOpen ? 0 : 1) . '"'
+                . ' title="' . ($isOpen ? 'Fermer' : 'Ouvrir') . '">'
+                . '<span class="ra ra-key"></span> <span class="action-name">'
+                . ($isOpen ? 'Fermer' : 'Ouvrir') . '</span></button>'
+                . '<script>
+                    $(document).off("click.containerLock", ".container-lock-btn")
+                        .on("click.containerLock", ".container-lock-btn", function(){
+                            aooFetch("api/container/flows.php", {
+                                action: "lock",
+                                containerId: $(this).data("target"),
+                                open: $(this).data("open")
+                            }, null)
+                                .then(function(data){
+                                    var message = data && data.result && data.result.message ? data.result.message : "";
+                                    (message ? aooAlert(message) : Promise.resolve()).then(aooReload);
+                                })
+                                .catch(autoError());
+                        });
+                </script>';
+        }
+
+        return $html;
     }
 
     /** Les boutons d'action du joueur, passés au triple filtre d'affichage. */

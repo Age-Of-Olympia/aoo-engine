@@ -205,6 +205,17 @@ final class ContainerService extends BaseService
     }
 
     /**
+     * May $actorId turn this lock at all — its owner, or a member whose
+     * rank carries the flag? Where the gesture happens (beside it, or
+     * from the faction panel) is the caller's affair.
+     */
+    public function mayTurnLock(int $containerId, int $actorId): bool
+    {
+        return (new LockService())->mayLock($containerId, $actorId)
+            && $this->factionRankRefusal($containerId, $actorId) === null;
+    }
+
+    /**
      * The household rule, refined by RANK: the owner is at home; within
      * a faction, the useChest flag says who uses its containers; a
      * thing with neither owner nor faction serves everyone.
