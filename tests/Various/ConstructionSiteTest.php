@@ -56,7 +56,7 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
         $id = $this->placeStructure('atelier', 70, 70, asConstructionSite: true);
 
         $service = new ConstructionSiteService();
-        $this->assertSame(['done' => 0, 'total' => 10], $service->progressOf($id));
+        $this->assertSame(['done' => 0, 'total' => 40], $service->progressOf($id));
         $this->assertSame(
             'construction',
             (string) $this->link->fetchOne('SELECT build_state FROM buildings WHERE player_id = ?', [$id])
@@ -74,7 +74,7 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
         $row = array_values($rows)[0] ?? null;
         $this->assertNotNull($row);
         $this->assertSame(0, $row['site_done']);
-        $this->assertSame(10, $row['site_total']);
+        $this->assertSame(40, $row['site_total']);
 
         // Shut means shut everywhere: an atelier mid-build crafts nothing.
         $nearby = $buildingService->openBuildingNearby(
@@ -108,8 +108,8 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
         }
         $this->assertFalse($results->isBlocked(), 'blocked: ' . implode(' | ', $blockedWhy));
         $this->assertTrue($results->isSuccess());
-        $this->assertSame(['done' => 1, 'total' => 10], (new ConstructionSiteService())->progressOf($id));
-        $this->assertSame(15, $this->buildingPv($id), 'PV follow the work: floor(150 × 1/10)');
+        $this->assertSame(['done' => 1, 'total' => 40], (new ConstructionSiteService())->progressOf($id));
+        $this->assertSame(3, $this->buildingPv($id), 'PV follow the work: floor(150 × 1/40) — the 2×2 emprise quadruples the work');
     }
 
     public function testAStrangerMayNotWorkOnAnOwnedSite(): void
@@ -136,7 +136,7 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
         $results = (new ActionExecutorService($this->travaillerOrSkip(), $stranger, $target))->executeAction();
 
         $this->assertTrue($results->isBlocked(), 'the mayLock rule bars a stranger from an owned site');
-        $this->assertSame(['done' => 0, 'total' => 10], (new ConstructionSiteService())->progressOf($id));
+        $this->assertSame(['done' => 0, 'total' => 40], (new ConstructionSiteService())->progressOf($id));
     }
 
     public function testTheLastStoneMakesTheBuilding(): void
@@ -145,8 +145,8 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
         $id = $this->placeStructure('atelier', 76, 76, asConstructionSite: true);
 
         $service = new ConstructionSiteService();
-        $service->advance($id, 9);
-        $this->assertSame(['done' => 9, 'total' => 10], $service->progressOf($id));
+        $service->advance($id, 39);
+        $this->assertSame(['done' => 39, 'total' => 40], $service->progressOf($id));
 
         $final = $service->advance($id, 1);
         $this->assertTrue($final['completed']);
@@ -174,25 +174,25 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
         );
 
         $service->advance($id, 1);
-        $this->assertSame(90, $this->buildingPv($id), 'work rebuilds the fabric: back to floor(150 × 6/10)');
+        $this->assertSame(22, $this->buildingPv($id), 'work rebuilds the fabric: back to floor(150 × 6/40)');
     }
 
     public function testWorkScalesWithTheFootprint(): void
     {
         $this->requireBuildingsOrSkip();
-        $this->link->executeStatement(
-            "INSERT INTO entity_type_footprints (type_name, w, h, offsets) VALUES ('atelier', 2, 1, '[[0,0],[1,0]]')"
-        );
+        $footprints = new \App\Service\Map\EntityTypeFootprintService();
+        $footprints->declare('atelier', 3, 1, [[0, 0], [1, 0], [2, 0]]);
         try {
             $id = $this->placeStructure('atelier', 82, 82, asConstructionSite: true);
 
             $this->assertSame(
-                ['done' => 0, 'total' => 20],
+                ['done' => 0, 'total' => 30],
                 (new ConstructionSiteService())->progressOf($id),
-                'the type declares work per cell: two cells, twice the gestures'
+                'the type declares work per cell: three cells, thirty gestures'
             );
         } finally {
-            $this->link->executeStatement("DELETE FROM entity_type_footprints WHERE type_name = 'atelier'");
+            // The migration's 2×2 floor, restored for the other cases.
+            $footprints->declare('atelier', 2, 2, [[0, 0], [1, 0], [0, -1], [1, -1]]);
         }
     }
 

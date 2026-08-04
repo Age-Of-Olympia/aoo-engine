@@ -78,7 +78,7 @@ class AdvancedRecipeNeedsWorkshopTest extends LegacyPlayerFixtureTestCase
     {
         $this->requireBuildingsOrSkip();
         [$crafter, $recipe, $bois, $pierre] = $this->crafterWithAdvancedRecipe(50, 50);
-        $this->placeStructure('taverne', 50, 51);
+        $this->placeStructure('taverne', 51, 51);
 
         $message = '';
         $ok = (new RecipeService())->TryCraftRecipe($recipe, $crafter, $message);
@@ -92,7 +92,7 @@ class AdvancedRecipeNeedsWorkshopTest extends LegacyPlayerFixtureTestCase
     {
         $this->requireBuildingsOrSkip();
         [$crafter, $recipe, $bois] = $this->crafterWithAdvancedRecipe(50, 50);
-        $id = $this->placeStructure('taverne', 50, 51);
+        $id = $this->placeStructure('taverne', 51, 51);
         (new BuildingService())->markDestroyed($id);
 
         $message = '';

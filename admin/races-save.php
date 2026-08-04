@@ -161,6 +161,22 @@ $applyForm = static function (Race $race) use ($face): string {
     if (isset($_POST['build_work'])) {
         $race->setBuildWork(max(0, min(999, (int) $_POST['build_work'])));
     }
+    /* The footprint: a full w×h box, only when the dimensions CHANGED —
+     * a hand-tuned figure (holes, per-cell roles from Cartes → Emprises)
+     * keeps its shape as long as the box stays the same. */
+    if (isset($_POST['fp_w'], $_POST['fp_h'])) {
+        $fpW = max(1, min(8, (int) $_POST['fp_w']));
+        $fpH = max(1, min(8, (int) $_POST['fp_h']));
+        if ($fpW !== (int) ($_POST['fp_prev_w'] ?? 0) || $fpH !== (int) ($_POST['fp_prev_h'] ?? 0)) {
+            $offsets = [];
+            for ($dy = 0; $dy > -$fpH; $dy--) {
+                for ($dx = 0; $dx < $fpW; $dx++) {
+                    $offsets[] = [$dx, $dy];
+                }
+            }
+            (new \App\Service\Map\EntityTypeFootprintService())->declare($race->getName(), $fpW, $fpH, $offsets);
+        }
+    }
     $race->setPlayable($kind === 'character' && booleanCheckbox('playable'));
     $race->setHidden(booleanCheckbox('hidden'));
     $race->setBgColor((string) $_POST['bgColor']);

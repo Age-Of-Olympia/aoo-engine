@@ -360,6 +360,18 @@ class BuildingService extends BaseService
         $displayId = getNextDisplayId('building');
         $coordsId = View::get_coords_id($goCoords);
 
+        /* Every cell of the type's cut-out, from the same source syncCells
+         * will lay them from — a 2×2 édifice claims four cells, and each
+         * must be free, not just the origin. */
+        $footprint = (new \App\Service\Map\EntityTypeFootprintService())->catalogue()[$type] ?? null;
+        $siteCells = $footprint === null
+            ? [[(int) $goCoords->x, (int) $goCoords->y]]
+            : $footprint->cellsAround(
+                (int) array_key_first($footprint->offsets()),
+                (int) $goCoords->x,
+                (int) $goCoords->y
+            );
+
         // Un id recyclé (fixture de test, entité retirée hors remove())
         // peut laisser de vieux caches par-entité : sans purge, le
         // nouveau bâtiment ressert l'IDENTITÉ du précédent (get_data lit
@@ -373,18 +385,24 @@ class BuildingService extends BaseService
         // occupe la case sans apparaître dans listBuildings(). La case doit
         // être LIBRE (ni entité, ni mur) — vérifié ici, source unique de la
         // règle, sous verrou pour resserrer la fenêtre concurrente.
-        $conn->transactional(function ($conn) use ($id, $displayId, $name, $race, $type, $avatar, $coordsId, $ownerId, $faction, $goCoords, $overScenery): void {
+        $conn->transactional(function ($conn) use ($id, $displayId, $name, $race, $type, $avatar, $coordsId, $ownerId, $faction, $goCoords, $overScenery, $siteCells): void {
             /* Le verrou reste ICI : c'est lui qui resserre la fenêtre entre
              * deux poses concurrentes, et il doit vivre dans la transaction.
              * La RÈGLE, elle, est partie dans TileOccupancyService avec les
              * deux autres questions d'occupation. */
-            $conn->fetchOne('SELECT id FROM players WHERE coords_id = ? FOR UPDATE', [$coordsId]);
+            $occupancy = new \App\Service\Map\TileOccupancyService($conn);
+            foreach ($siteCells as [$cellX, $cellY]) {
+                $cellCoordsId = (int) View::get_coords_id((object) [
+                    'x' => $cellX, 'y' => $cellY, 'z' => (int) $goCoords->z, 'plan' => (string) $goCoords->plan,
+                ]);
+                $conn->fetchOne('SELECT id FROM players WHERE coords_id = ? FOR UPDATE', [$cellCoordsId]);
 
-            $refusal = (new \App\Service\Map\TileOccupancyService($conn))->buildRefusal((int) $coordsId, $overScenery);
-            if ($refusal !== null) {
-                throw new \InvalidArgumentException(
-                    "Case ({$goCoords->x}, {$goCoords->y}, {$goCoords->plan}) : " . lcfirst($refusal)
-                );
+                $refusal = $occupancy->buildRefusal($cellCoordsId, $overScenery);
+                if ($refusal !== null) {
+                    throw new \InvalidArgumentException(
+                        "Case ({$cellX}, {$cellY}, {$goCoords->plan}) : " . lcfirst($refusal)
+                    );
+                }
             }
 
             $conn->executeStatement(

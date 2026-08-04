@@ -441,12 +441,30 @@ HTML;
                 . '</select></label> '
             : '')
         . ($face->key === \App\View\Admin\TypeEditorFace::BUILDING
-            ? '<label class="mr-3">Travail de construction '
-                . '<input type="number" class="form-control form-control-sm d-inline-block" style="width:80px" name="build_work"'
-                . ' min="0" max="999" value="' . ($isEdit ? (int) $race->getBuildWork() : 0) . '"'
-                . ' title="Unités de travail PAR CASE pour le dresser — l\'emprise multiplie. 0 : construit en un geste.'
-                . ' Sinon, construire ouvre un chantier fermé, à PV plancher, que l\'action travailler fait avancer.">'
-                . ' <small class="text-muted">par case, 0 = instantané</small></label> '
+            ? (static function () use ($isEdit, $race): string {
+                $declared = $isEdit
+                    ? ((new \App\Service\Map\EntityTypeFootprintService())->declared()[$race->getName()] ?? null)
+                    : null;
+                // A new building type starts at the game's floor: 2×2.
+                $w = $declared !== null ? $declared->width() : ($isEdit ? 1 : 2);
+                $h = $declared !== null ? $declared->height() : ($isEdit ? 1 : 2);
+
+                return '<label class="mr-3">Travail de construction '
+                    . '<input type="number" class="form-control form-control-sm d-inline-block" style="width:80px" name="build_work"'
+                    . ' min="0" max="999" value="' . ($isEdit ? (int) $race->getBuildWork() : 0) . '"'
+                    . ' title="Unités de travail PAR CASE pour le dresser — l\'emprise multiplie. 0 : construit en un geste.'
+                    . ' Sinon, construire ouvre un chantier fermé, à PV plancher, que l\'action travailler fait avancer.">'
+                    . ' <small class="text-muted">par case, 0 = instantané</small></label> '
+                    . '<label class="mr-3">Emprise '
+                    . '<input type="number" class="form-control form-control-sm d-inline-block" style="width:64px" name="fp_w"'
+                    . ' min="1" max="8" value="' . $w . '" title="Largeur en cases"> × '
+                    . '<input type="number" class="form-control form-control-sm d-inline-block" style="width:64px" name="fp_h"'
+                    . ' min="1" max="8" value="' . $h . '" title="Hauteur en cases">'
+                    . ' <small class="text-muted">cases — une figure ajourée se règle dans '
+                    . '<a href="/admin/footprints.php">Cartes → Emprises</a></small></label> '
+                    . '<input type="hidden" name="fp_prev_w" value="' . $w . '">'
+                    . '<input type="hidden" name="fp_prev_h" value="' . $h . '">';
+            })()
             : '')
         . ($face->isStructure()
             ? '<label class="mr-3"><input type="checkbox" name="readable_from_afar" '

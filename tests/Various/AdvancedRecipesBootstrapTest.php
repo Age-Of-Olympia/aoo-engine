@@ -91,7 +91,7 @@ class AdvancedRecipesBootstrapTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(1, $atelierItem->get_n($crafter));
 
         // The built form stands; the advanced level opens beside it.
-        $this->placeStructure('atelier', 60, 61);
+        $this->placeStructure('atelier', 61, 61);
 
         $this->link->executeStatement(
             "INSERT INTO craft_recipes (name, workshop) VALUES ('taille_fine_test', 'atelier')"

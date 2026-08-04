@@ -95,7 +95,7 @@ class RequiresBuildingConditionTest extends LegacyPlayerFixtureTestCase
     {
         $this->requireBuildingsOrSkip();
         $actor = $this->actorAt(40, 40);
-        $id = $this->placeStructure('taverne', 40, 41);
+        $id = $this->placeStructure('taverne', 41, 41);
         (new BuildingService())->markDestroyed($id);
 
         $result = $this->checkFor($actor, ['types' => 'taverne', 'range' => 1]);
