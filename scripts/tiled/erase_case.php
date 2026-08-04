@@ -13,16 +13,11 @@ if($type == 'buildings'){
        caches SVG) — jamais par un DELETE brut. Seul le décor (sans
        propriétaire ni faction, état built) se retire d'ici : le reste
        relève de admin → Bâtiments. */
-    $res = $db->exe(
-        "SELECT b.player_id, p.owner_id, p.faction, b.build_state
-         FROM buildings b JOIN players p ON p.id = b.player_id
-         WHERE p.coords_id = ?",
-        array($coordsId)
-    );
-
     $buildingService = new BuildingService();
 
-    while($building = $res->fetch_assoc()){
+    /* Par l'EMPRISE : un édifice 2×2 tient quatre cases, la gomme le
+       trouve depuis chacune — la recherche vit chez le service. */
+    foreach($buildingService->holdingCell((int) $coordsId) as $building){
 
         if($building['owner_id'] !== null || $building['faction'] !== '' || $building['build_state'] !== 'built'){
 

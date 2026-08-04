@@ -20,15 +20,14 @@ foreach ($mapTypes as $type){
 /* La gomme retire aussi le DÉCOR bâtiment (entité sans propriétaire ni
    faction, état built) — via le service, jamais en DELETE brut. Les
    bâtiments de joueurs/factions et les chantiers restent. */
-$res = $db->exe(
-    "SELECT b.player_id FROM buildings b JOIN players p ON p.id = b.player_id
-     WHERE p.coords_id = ? AND p.owner_id IS NULL AND p.faction = '' AND b.build_state = 'built'",
-    array($coordsId)
-);
-
 $buildingService = new BuildingService();
 
-while($building = $res->fetch_assoc()){
+foreach($buildingService->holdingCell((int) $coordsId) as $building){
+
+    if($building['owner_id'] !== null || $building['faction'] !== '' || $building['build_state'] !== 'built'){
+
+        continue;
+    }
 
     $buildingService->remove((int) $building['player_id']);
 }

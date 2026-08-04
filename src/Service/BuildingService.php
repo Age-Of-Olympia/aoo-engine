@@ -572,6 +572,33 @@ class BuildingService extends BaseService
         return ['open' => null, 'shut' => $shut];
     }
 
+    /**
+     * Building entities holding a cell, through their EMPRISE — every cell
+     * laid in entity_cells counts, the origin stays as a fallback for an
+     * entity whose cells were never synced. The one lookup the editor's
+     * erasers share; each applies its own policy to the rows.
+     *
+     * @return array<int, array{player_id: int, owner_id: ?int, faction: string, build_state: string}>
+     */
+    public function holdingCell(int $coordsId): array
+    {
+        $rows = $this->entityManager->getConnection()->fetchAllAssociative(
+            'SELECT DISTINCT b.player_id, p.owner_id, p.faction, b.build_state
+               FROM buildings b
+               JOIN players p ON p.id = b.player_id
+               LEFT JOIN entity_cells ec ON ec.player_id = p.id
+              WHERE p.coords_id = ? OR ec.coords_id = ?',
+            [$coordsId, $coordsId]
+        );
+
+        return array_map(static fn (array $row): array => [
+            'player_id'   => (int) $row['player_id'],
+            'owner_id'    => $row['owner_id'] !== null ? (int) $row['owner_id'] : null,
+            'faction'     => (string) $row['faction'],
+            'build_state' => (string) $row['build_state'],
+        ], $rows);
+    }
+
     /** @param list<string> $values */
     private static function placeholders(array $values): string
     {
