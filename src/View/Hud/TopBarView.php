@@ -58,6 +58,14 @@ final class TopBarView
         echo '<div class="hud-pills">';
         foreach (self::CONSUMABLE_PILLS as $k) {
             $total = (int) $caracsJson->$k;
+
+            /* A pool the TYPE does not grant stays off the bar: a
+             * building with only A and PV shows only A and PV. A
+             * character's four maxima are never zero — no change. */
+            if ($total === 0) {
+                continue;
+            }
+
             $remaining = isset($turnJson->$k) ? (int) $turnJson->$k : $total;
             $value = isset($turnJson->$k)
                 ? $turnJson->$k . '/' . $caracsJson->$k
@@ -67,11 +75,17 @@ final class TopBarView
              * dépense) — pleine, la pilule reste papier vierge. Les
              * dégâts se voient d'un coup d'œil dès la connexion
              * (retours joueurs juillet 2026). */
-            $missing = $total > 0 ? (int) round(100 - $remaining / $total * 100) : 0;
+            $missing = (int) round(100 - $remaining / $total * 100);
             echo self::pill($k, CARACS[$k], $value, CARACS_TXT[$k], '', $missing);
         }
-        echo self::pill('pf', 'PF', (string) $player->data->pf, 'Points de Foi');
-        echo self::pill('en', 'EN', (string) $player->data->energie, 'Énergie');
+
+        /* Faith and energy belong to PERSONS (the entity design's own
+         * grouping — put_malus already early-returns on structures): a
+         * driven building carries neither. */
+        if (!\App\Enum\EntityCategory::fromPlayerType($player->data->player_type ?? null)->isStructure()) {
+            echo self::pill('pf', 'PF', (string) $player->data->pf, 'Points de Foi');
+            echo self::pill('en', 'EN', (string) $player->data->energie, 'Énergie');
+        }
         if ($player->data->malus > 0) {
             echo self::pill(
                 'malus',
