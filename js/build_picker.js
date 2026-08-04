@@ -36,12 +36,71 @@ $(document).ready(function(){
         return;
     }
 
-    var highlighter = new TutorialHighlighter();
-    highlighter.highlight('#current-player-avatar', { padding: 50, pulsate: true });
-
     /* The built form's cut-out: the clicked cell is the ORIGIN, the other
        offsets follow it. A single cell needs no ghost. */
     var footprint = (pending.footprint && pending.footprint.length) ? pending.footprint : [[0, 0]];
+
+    /* The zone follows the emprise: a 2×2 form may put its ORIGIN two
+       cells away and still touch the builder — the spotlight widens with
+       the footprint's extent, the acceptance rule below does the rest. */
+    var maxExtent = footprint.reduce(function(m, off){
+        return Math.max(m, Math.abs(off[0]), Math.abs(off[1]));
+    }, 0);
+
+    var highlighter = new TutorialHighlighter();
+    highlighter.highlight('#current-player-avatar', { padding: 50 * (1 + maxExtent), pulsate: true });
+
+    /* Picker view only: the wrong-way signs give way to a red filter on
+       the blocked tiles — the signs stay for the tutorial and map tools.
+       The highlighter REDRAWS them during its pulsate loop, so a one-time
+       clear is not enough: the draw hook is muted for the whole picking. */
+    var savedDrawMarkers = window.drawBlockedTileMarkers;
+    if(typeof savedDrawMarkers === 'function'){
+        window.clearBlockedTileMarkers('blocked-tile-marker');
+        window.drawBlockedTileMarkers = function(){};
+    }
+
+    var playerCoords = (function(){
+        var avatar = document.getElementById('current-player-avatar');
+        if(!avatar){ return null; }
+        /* The avatar lives in the SVG overlay, not inside a .case: the
+           builder's cell is the one whose rect contains its center. */
+        var r = avatar.getBoundingClientRect();
+        var cx = r.left + r.width / 2;
+        var cy = r.top + r.height / 2;
+        var found = null;
+        document.querySelectorAll('.case[data-coords]').forEach(function(el){
+            if(found){ return; }
+            var cr = el.getBoundingClientRect();
+            if(cx >= cr.left && cx < cr.right && cy >= cr.top && cy < cr.bottom){
+                found = el;
+            }
+        });
+        var c = found ? (found.getAttribute('data-coords') || '').split(',') : [];
+        return c.length === 2 ? { x: parseInt(c[0], 10), y: parseInt(c[1], 10) } : null;
+    })();
+
+    /* Same rule as the server (BuildSitePick): some cell of the built
+       form within one step of the builder. */
+    function footprintTouchesPlayer(x, y){
+        if(!playerCoords){ return false; }
+        return footprint.some(function(off){
+            return Math.max(Math.abs((x + off[0]) - playerCoords.x),
+                            Math.abs((y + off[1]) - playerCoords.y)) <= 1;
+        });
+    }
+
+    if(playerCoords){
+        var reach = 1 + maxExtent;
+        document.querySelectorAll('.case[data-blocked]').forEach(function(el){
+            var c = (el.getAttribute('data-coords') || '').split(',');
+            if(c.length !== 2){ return; }
+            if(Math.max(Math.abs(parseInt(c[0], 10) - playerCoords.x),
+                        Math.abs(parseInt(c[1], 10) - playerCoords.y)) <= reach){
+                el.classList.add('build-blocked-tint');
+            }
+        });
+    }
 
     var $banner = $(
         '<div id="build-picker-banner" style="position:fixed;top:12px;left:50%;transform:translateX(-50%);' +
@@ -57,8 +116,9 @@ $(document).ready(function(){
 
     $('head').append(
         '<style id="build-ghost-style">' +
-        '.build-ghost-ok{box-shadow: inset 0 0 0 3px rgba(40,167,69,.85);}' +
-        '.build-ghost-bad{box-shadow: inset 0 0 0 3px rgba(220,53,69,.85);}' +
+        '.build-ghost-ok{outline:3px solid rgba(40,167,69,.85);outline-offset:-3px;}' +
+        '.build-ghost-bad{outline:3px solid rgba(220,53,69,.85);outline-offset:-3px;}' +
+        '.build-blocked-tint{box-shadow: inset 0 0 0 999px rgba(220,53,69,.32);}' +
         '#build-ghost-img{position:fixed;pointer-events:none;opacity:.55;z-index:99990;display:none;}' +
         '</style>'
     );
@@ -81,12 +141,18 @@ $(document).ready(function(){
         }
     }
 
+    function clearBlockedTint(){
+        document.querySelectorAll('.build-blocked-tint').forEach(function(el){
+            el.classList.remove('build-blocked-tint');
+        });
+    }
+
     /* Preview only — the server stays the judge at the click: an element
        (water, lava) refuses a cell the ghost may still paint green. */
     function onHover(e){
         var caseEl = e.target.closest ? e.target.closest('.case') : null;
         clearGhost();
-        if(!caseEl || !caseEl.classList.contains('go')){
+        if(!caseEl){
             return;
         }
         var coords = (caseEl.getAttribute('data-coords') || '').split(',');
@@ -95,6 +161,9 @@ $(document).ready(function(){
         }
         var x = parseInt(coords[0], 10);
         var y = parseInt(coords[1], 10);
+        if(!footprintTouchesPlayer(x, y)){
+            return;
+        }
         var cells = footprint.map(function(off){
             return document.querySelector('.case[data-coords="' + (x + off[0]) + ',' + (y + off[1]) + '"]');
         });
@@ -131,12 +200,21 @@ $(document).ready(function(){
         document.removeEventListener('keydown', onKey, true);
         document.removeEventListener('mouseover', onHover, true);
         clearGhost();
+        clearBlockedTint();
         if($ghostImg){
             $ghostImg.remove();
         }
         $('#build-ghost-style').remove();
         $banner.remove();
         highlighter.clearAll();
+
+        /* Give the signs back to whoever displays them. */
+        if(typeof savedDrawMarkers === 'function'){
+            window.drawBlockedTileMarkers = savedDrawMarkers;
+            if(window.showBlockedTiles){
+                savedDrawMarkers(null, 'blocked-tile-marker', $('#svg-container'));
+            }
+        }
     }
 
     function onKey(e){
@@ -163,12 +241,23 @@ $(document).ready(function(){
         e.preventDefault();
         e.stopImmediatePropagation();
 
-        if(!caseEl.classList.contains('go')){
+        var coords = (caseEl.getAttribute('data-coords') || '').split(',');
+        if(coords.length !== 2){
             return;
         }
 
-        var coords = (caseEl.getAttribute('data-coords') || '').split(',');
-        if(coords.length !== 2){
+        /* Same gate as the ghost: the form must touch the builder and no
+           cell of it may be blocked — the server re-judges either way. */
+        var ox = parseInt(coords[0], 10);
+        var oy = parseInt(coords[1], 10);
+        if(!footprintTouchesPlayer(ox, oy)){
+            return;
+        }
+        var blockedCell = footprint.some(function(off){
+            var el = document.querySelector('.case[data-coords="' + (ox + off[0]) + ',' + (oy + off[1]) + '"]');
+            return !el || el.hasAttribute('data-blocked');
+        });
+        if(blockedCell){
             return;
         }
 

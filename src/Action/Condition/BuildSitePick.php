@@ -21,10 +21,18 @@ final class BuildSitePick
     }
 
     /**
-     * Coordonnées validées de la case choisie, ou null quand le choix est
-     * absent, illisible (non numérique) ou refusé (ni adjacente ni libre).
+     * Coordonnées validées de la case ORIGINE choisie, ou null quand le
+     * choix est absent, illisible (non numérique) ou refusé.
+     *
+     * La règle est portée par l'EMPRISE : une case de la forme bâtie doit
+     * toucher le bâtisseur (distance ≤ 1) — pour un édifice 2×2, l'origine
+     * peut donc se poser à deux cases. La liberté de CHAQUE case reste le
+     * travail de place(), qui verrouille et refuse en nommant la case.
+     *
+     * @param string|null $type type de structure en cours de construction —
+     *        null : emprise d'une case (règle historique)
      */
-    public static function resolve(object $actorCoords): ?object
+    public static function resolve(object $actorCoords, ?string $type = null): ?object
     {
         if (!self::requested()) {
             return null;
@@ -34,21 +42,38 @@ final class BuildSitePick
             return null;
         }
 
-        $requested = ((int) $_POST['buildX']) . ',' . ((int) $_POST['buildY']);
-        $around = View::get_coords_arround(clone $actorCoords, 1);
+        $x = (int) $_POST['buildX'];
+        $y = (int) $_POST['buildY'];
+
+        $offsets = [[0, 0]];
+        if ($type !== null) {
+            $footprint = (new \App\Service\Map\EntityTypeFootprintService())->catalogue()[$type] ?? null;
+            if ($footprint !== null) {
+                $offsets = array_values($footprint->offsets());
+            }
+        }
+
+        $touches = false;
+        foreach ($offsets as [$dx, $dy]) {
+            if (max(abs(($x + $dx) - (int) $actorCoords->x), abs(($y + $dy) - (int) $actorCoords->y)) <= 1) {
+                $touches = true;
+                break;
+            }
+        }
+
         $taken = View::get_coords_taken(clone $actorCoords);
 
-        if (!in_array($requested, $around, true) || in_array($requested, $taken, true)) {
+        if (!$touches || in_array($x . ',' . $y, $taken, true)) {
             return null;
         }
 
         $goCoords = clone $actorCoords;
-        $goCoords->x = (int) $_POST['buildX'];
-        $goCoords->y = (int) $_POST['buildY'];
+        $goCoords->x = $x;
+        $goCoords->y = $y;
 
         return $goCoords;
     }
 
     /** Message de refus commun aux deux consommateurs. */
-    public const REFUSAL = 'Impossible de construire là — la case doit être adjacente et libre.';
+    public const REFUSAL = 'Impossible de construire là — l\'édifice doit toucher son bâtisseur, sur des cases libres.';
 }

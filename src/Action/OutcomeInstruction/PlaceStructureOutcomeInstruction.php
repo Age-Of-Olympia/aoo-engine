@@ -70,7 +70,7 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
             /* Priorité au résultat déposé par BuildSiteCondition (déjà
              * validé, avant tout paiement) ; repli sur le résolveur
              * partagé pour une action sans la condition attachée. */
-            $picked = $conditionObject->getBuildCoords() ?? BuildSitePick::resolve($actor->coords);
+            $picked = $conditionObject->getBuildCoords() ?? BuildSitePick::resolve($actor->coords, $type);
 
             if ($picked === null) {
                 return new OutcomeResult(
