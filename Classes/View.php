@@ -5,6 +5,12 @@ use App\Enum\CoordType;
 
 class View{
 
+    /**
+     * Side of one board tile, in pixels. Every screen measure of the
+     * board derives from it — change the UI scale here, nowhere else.
+     */
+    public const TILE_PX = 50;
+
     private $coords; // Coordonnées de la vue
     private $p; // Portée de la vue
     private $tiled; // Indique si la vue est dans l'éditeur de map
@@ -86,7 +92,7 @@ class View{
         ob_start();
 
 
-        $size = (($this->p * 2) + 1) * 50;
+        $size = (($this->p * 2) + 1) * self::TILE_PX;
 
 
         $planJson = json()->decode('plans', $this->coords->plan);
@@ -154,8 +160,8 @@ class View{
              * fait 500 (dix cases), underground et sky en font 50. La
              * figer aurait changé l\'échelle du décor selon le plan. */
             $tileSize = @getimagesize($tile);
-            $tileW = ($tileSize[0] ?? 0) ?: 50;
-            $tileH = ($tileSize[1] ?? 0) ?: 50;
+            $tileW = ($tileSize[0] ?? 0) ?: self::TILE_PX;
+            $tileH = ($tileSize[1] ?? 0) ?: self::TILE_PX;
 
             /* Débordement large : buildMapRulers (js/hud.js) agrandit le
              * viewBox pour loger les coordonnées en marge, et cette marge
@@ -450,14 +456,14 @@ class View{
                 $y = $coords->y;
 
 
-                $x = ($x - $this->coords->x + $this->p) * 50;
-                $y = (-$y + $this->coords->y + $this->p) * 50;
+                $x = ($x - $this->coords->x + $this->p) * self::TILE_PX;
+                $y = (-$y + $this->coords->y + $this->p) * self::TILE_PX;
 
                 /* One sprite may span several tiles: a 2×2 édifice covers
                  * its whole box. Screen y inverts game y, so the ORIGIN row
                  * is already the top-left of the box. */
-                $spanW = 50;
-                $spanH = 50;
+                $spanW = self::TILE_PX;
+                $spanH = self::TILE_PX;
 
 
                 // La couche resources garde ses images dans img/walls
@@ -542,8 +548,8 @@ class View{
 
                         if($footprint !== null && !$footprint->isSingleCell()){
 
-                            $spanW = 50 * $footprint->width();
-                            $spanH = 50 * $footprint->height();
+                            $spanW = self::TILE_PX * $footprint->width();
+                            $spanH = self::TILE_PX * $footprint->height();
                         }
                     }
 
@@ -625,8 +631,8 @@ class View{
                             echo '
                             <image
 
-                                width="50"
-                                height="50"
+                                width="'. self::TILE_PX .'"
+                                height="'. self::TILE_PX .'"
 
                                 data-table="'. $row->whichTable .'"
                                 data-coords="'. $coords->x .','. $coords->y .'"
@@ -690,7 +696,7 @@ class View{
                     // Full-size avatar (50x50, no offsets). All tutorial
                     // selectors target this so highlights stay aligned.
                     // A spanned sprite fills its box even when not square.
-                    $spanAttr = ($spanW !== 50 || $spanH !== 50) ? ' preserveAspectRatio="none"' : '';
+                    $spanAttr = ($spanW !== self::TILE_PX || $spanH !== self::TILE_PX) ? ' preserveAspectRatio="none"' : '';
                     $avatarClasses = [];
                     if ($isCurrentPlayer) {
                         $avatarClasses[] = 'current-player';
@@ -741,16 +747,16 @@ class View{
              * `cover` role keeps hiding whoever stands behind. */
             foreach($this->sceneryFigures as $figure){
 
-                $fx = ($figure['x'] - $this->coords->x + $this->p) * 50;
-                $fy = (-$figure['y'] + $this->coords->y + $this->p) * 50;
+                $fx = ($figure['x'] - $this->coords->x + $this->p) * self::TILE_PX;
+                $fy = (-$figure['y'] + $this->coords->y + $this->p) * self::TILE_PX;
 
                 echo '
                     <image
                     id="scenery'. (int) $figure['id'] .'"
                     data-table="scenery"
                     data-entity="'. (int) $figure['id'] .'"
-                    width="'. ($figure['w'] * 50) .'"
-                    height="'. ($figure['h'] * 50) .'"
+                    width="'. ($figure['w'] * self::TILE_PX) .'"
+                    height="'. ($figure['h'] * self::TILE_PX) .'"
                     x="'. floor($fx) .'"
                     y="'. floor($fy) .'"
                     preserveAspectRatio="none"
@@ -796,16 +802,16 @@ class View{
 
                 $opacity = $shadeService->opacityOnPlan($this->coords->plan, $level);
 
-                $sx = ($row->x - $this->coords->x + $this->p) * 50;
-                $sy = ($this->coords->y - $row->y + $this->p) * 50;
+                $sx = ($row->x - $this->coords->x + $this->p) * self::TILE_PX;
+                $sy = ($this->coords->y - $row->y + $this->p) * self::TILE_PX;
 
                 echo '
                 <rect
                     class="cell-shade"
                     x="'. $sx .'"
                     y="'. $sy .'"
-                    width="50"
-                    height="50"
+                    width="'. self::TILE_PX .'"
+                    height="'. self::TILE_PX .'"
                     fill="'. $shadeColor .'"
                     fill-opacity="'. $opacity .'"
                     pointer-events="none"
@@ -827,8 +833,8 @@ class View{
                     $coordX = $i + $this->coords->x - $this->p;
                     $coordY = -$j + $this->coords->y + $this->p;
 
-                    $x = $i * 50;
-                    $y = $j * 50;
+                    $x = $i * self::TILE_PX;
+                    $y = $j * self::TILE_PX;
 
                     $goCase = '';
 
@@ -876,8 +882,8 @@ class View{
                             echo ' x="' . $x . '"
                             y="' . $y . '"
 
-                            width="50"
-                            height="50"
+                            width="'. self::TILE_PX .'"
+                            height="'. self::TILE_PX .'"
 
                             fill="transparent"
                             />
@@ -893,11 +899,11 @@ class View{
                 data-coords=""
                 id="go-rect"
 
-                x="50"
-                y="50"
+                x="'. self::TILE_PX .'"
+                y="'. self::TILE_PX .'"
 
-                width="50"
-                height="50"
+                width="'. self::TILE_PX .'"
+                height="'. self::TILE_PX .'"
 
                 fill="green"
                 style="opacity: 0.3; display: none;"
@@ -908,7 +914,7 @@ class View{
             <image
                 id="go-img"
 
-                x="50"
+                x="'. self::TILE_PX .'"
                 y="30"
 
                 style="opacity: 0.8; display: none; pointer-events: none;"
@@ -923,11 +929,11 @@ class View{
                 data-coords=""
                 id="destroy-rect"
 
-                x="50"
-                y="50"
+                x="'. self::TILE_PX .'"
+                y="'. self::TILE_PX .'"
 
-                width="50"
-                height="50"
+                width="'. self::TILE_PX .'"
+                height="'. self::TILE_PX .'"
 
                 fill="red"
                 style="opacity: 0.3; display: none;"
@@ -938,7 +944,7 @@ class View{
             <image
                 id="destroy-img"
 
-                x="50"
+                x="'. self::TILE_PX .'"
                 y="30"
 
                 style="opacity: 0.8; display: none; pointer-events: none; filter: hue-rotate(-100deg); z-index: 100;"
