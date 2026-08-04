@@ -85,7 +85,9 @@ $(document).ready(function(){
             aooStore.set('pendingBuild', JSON.stringify({
                 'action': window.buildAction,
                 'itemId': window.id,
-                'name': window.name
+                'name': window.name,
+                'footprint': window.buildFootprint || null,
+                'ghostImg': window.buildGhostImg || null
             }));
 
             document.location = 'index.php';

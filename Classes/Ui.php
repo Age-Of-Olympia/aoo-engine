@@ -87,7 +87,7 @@ class Ui{
                 <script src="js/tutorial/TutorialInit.js?v=' . $tutorialVersion . '"></script>
 
                 <!-- Choix de case de construction (réutilise le spotlight tutoriel) -->
-                <script src="js/build_picker.js?v=20260727"></script>
+                <script src="js/build_picker.js?v=20260804"></script>
         ';
 
         echo '    </head>
@@ -182,6 +182,35 @@ class Ui{
         } catch (\Throwable $e) {
             return false;
         }
+    }
+
+    /**
+     * The cut-out a constructible's built form will claim, as offsets JSON
+     * for the build picker's ghost — '' when single-cell (no ghost needed).
+     */
+    private static function constructibleFootprint(string $itemName): string
+    {
+        static $catalogue = null;
+        if ($catalogue === null) {
+            $catalogue = (new \App\Service\Map\EntityTypeFootprintService())->catalogue();
+        }
+
+        $footprint = $catalogue[$itemName] ?? null;
+        if ($footprint === null || $footprint->isSingleCell()) {
+            return '';
+        }
+
+        return htmlspecialchars((string) json_encode(array_values($footprint->offsets())), ENT_QUOTES, 'UTF-8');
+    }
+
+    /**
+     * Sprite the picker ghosts over the chosen cells — the board's own
+     * rule (View::structureSprite), never a copy of it: an imageless
+     * type shows the same initials frame it will stand with.
+     */
+    private static function constructibleGhostImage(string $itemName, string $label): string
+    {
+        return htmlspecialchars(View::structureSprite($itemName, $label), ENT_QUOTES, 'UTF-8');
     }
 
     public static function get_card($data) : string{
@@ -458,6 +487,8 @@ class Ui{
                 data-bankable="'. $item->row->is_bankable .'"
                 data-state="'. $stateAttr .'"
                 data-build-action="'. ($type == Item::TYPE_CONSTRUCTIBLE ? 'construire' : '') .'"
+                data-fp="'. ($type == Item::TYPE_CONSTRUCTIBLE ? self::constructibleFootprint((string) $item->row->name) : '') .'"
+                data-fp-img="'. ($type == Item::TYPE_CONSTRUCTIBLE ? self::constructibleGhostImage((string) $item->row->name, (string) $itemName) : '') .'"
                 data-img="img/items/'. $item->row->name .'.webp"
             >
                 <td width="50">
@@ -596,7 +627,7 @@ class Ui{
         window.n =    <?php echo $defaultItemN ?>;
         window.price =    1;
         </script>
-        <script src="js/inventUi.js?v=20260722"></script>
+        <script src="js/inventUi.js?v=20260804"></script>
         <?php
 
         return Str::minify(ob_get_clean());

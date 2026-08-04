@@ -103,7 +103,7 @@ window.aLeft = ' . $player->getRemaining('a') . ';
 
 ?>
         <script src="js/progressive_loader.js?v=20260716"></script>
-        <script src="js/inventory.js?v=20260727"></script>
+        <script src="js/inventory.js?v=20260804"></script>
 <?php
     }
 }

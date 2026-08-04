@@ -31,6 +31,10 @@ $(document).ready(function(){
         let text =  $item.data("text");
         window.price = $item.data("price");
         window.buildAction = $item.data("build-action");
+        /* Cut-out of the built form (offsets JSON) and its sprite — the
+           avatar, or the initials-frame data URI — for the picker's ghost. */
+        window.buildFootprint = $item.data("fp") || null;
+        window.buildGhostImg = $item.attr("data-fp-img") || null;
         let infos = $item.data("infos");
         let img =   $item.data("img");
         let bankable = $item.data("bankable") ;

@@ -527,17 +527,7 @@ class View{
                      * exactement le même calcul, une fois. */
                     if($isStructure && (empty($img) || !file_exists($img))){
 
-                        $resolved = \App\Service\BuildingService::resolveAvatar((string) $entity->race);
-
-                        if($resolved !== ''){
-
-                            $img = $resolved;
-                        }
-                        else{
-
-                            // Vraiment sans visuel (taverne…) : initiales.
-                            $img = self::structureInitialsAvatar((string) $entity->name);
-                        }
+                        $img = self::structureSprite((string) $entity->race, (string) $entity->name);
                     }
 
                     /* La bordure de race dit d'un coup d'œil À QUI on a
@@ -1401,6 +1391,19 @@ class View{
      * <image data-table="players"> (bouton Aller de js/view.js, ombre
      * .avatar-shadow), et la fiche peut l'afficher en grand.
      */
+    /**
+     * The one rule for what a structure SHOWS: its type's avatar
+     * (resolveAvatar's fallback chain), else the initials frame. The
+     * board and the build picker's ghost read HERE — a second copy of
+     * the chain would drift.
+     */
+    public static function structureSprite(string $type, string $name): string{
+
+        $resolved = \App\Service\BuildingService::resolveAvatar($type);
+
+        return $resolved !== '' ? $resolved : self::structureInitialsAvatar($name);
+    }
+
     public static function structureInitialsAvatar(string $name): string{
 
         $name = trim($name);
