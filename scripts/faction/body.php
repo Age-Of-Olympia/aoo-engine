@@ -19,9 +19,16 @@ if(!$facJson){
 }
 
 
-echo '<h1>'. $facJson->name .'</h1>';
+/* Le blason SUIT le titre, sur sa ligne — en 5em au-dessus, il
+ * mangeait un quart de l'écran avant le premier membre. */
+echo '<h1>'. htmlspecialchars((string) $facJson->name, ENT_QUOTES, 'UTF-8')
+    .' <span class="ra '. $facJson->raFont .'"></span></h1>';
 
-echo '<div style="font-size: 5em;"><span class="ra '. $facJson->raFont .'"></span></div>';
+if (!empty($facJson->text)) {
+    echo '<p style="max-width: 640px; margin: 0 auto 1em;"><small>'
+        . nl2br(htmlspecialchars((string) $facJson->text, ENT_QUOTES, 'UTF-8'))
+        . '</small></p>';
+}
 
 
 $player = PlayerFactory::legacy($_SESSION['playerId']);

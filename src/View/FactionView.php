@@ -21,6 +21,7 @@ class FactionView
         $manages = $mayKick || $mayEditRole;
 
         echo '
+    <h2>Membres</h2>
     <table border="1" class="marbre" align="center">
     ';
 
