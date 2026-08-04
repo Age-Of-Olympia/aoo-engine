@@ -82,6 +82,20 @@ class FactionHierarchyTest extends LegacyPlayerFixtureTestCase
         (new FactionService())->assignRole($captain, $recruit, 1);
     }
 
+    public function testTheSummitAloneCrownsAnEqual(): void
+    {
+        $king = $this->enrolled('GmRoi9', 2);
+        $heir = $this->enrolled('GmDauphin', 0);
+
+        (new FactionService())->assignRole($king, $heir, 2);
+
+        $this->assertSame(
+            2,
+            (int) $this->link->fetchOne('SELECT factionRole FROM players WHERE id = ?', [$heir]),
+            'the summit may name a co-Roi at its own rank'
+        );
+    }
+
     public function testTheKingSettlesALowerCharter(): void
     {
         $king = $this->enrolled('GmRoi', 2);

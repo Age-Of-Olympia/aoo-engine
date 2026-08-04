@@ -377,8 +377,9 @@ class FactionService
 
     /**
      * Moves a member of the actor's faction to another of its roles —
-     * a member strictly below, toward a rank strictly below: nobody
-     * raises a peer, nobody raises anyone to their own rank.
+     * a member strictly below, toward a rank strictly below. One
+     * exception: the SUMMIT may crown an equal (a co-Roi) — knowing
+     * that peers are out of each other's reach ever after.
      */
     public function assignRole(int $actorId, int $targetId, int $position, int $variant = 0): void
     {
@@ -409,7 +410,8 @@ class FactionService
         if ((int) $target['factionRole'] >= $actorPosition) {
             throw new RuntimeException('Cette personne vous dépasse.');
         }
-        if ($position >= $actorPosition) {
+        $mayCrownEqual = $actorPosition === $this->topPositionOf($factionCode);
+        if ($position > $actorPosition || ($position === $actorPosition && !$mayCrownEqual)) {
             throw new RuntimeException('On n\'élève personne à son propre rang.');
         }
 
