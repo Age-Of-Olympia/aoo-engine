@@ -190,6 +190,14 @@ final class ContainerService extends BaseService
             throw new RuntimeException($refusal);
         }
 
+        /* A closure the latch does not explain — ruin, construction,
+         * damage — jams the lock for every path, the remote faction
+         * gesture included. */
+        $closure = $this->closureReasonOf($containerId);
+        if ($closure !== null && $closure !== BuildingService::CLOSED_BY_HAND) {
+            throw new RuntimeException('La serrure ne répond plus : c\'est ' . $closure . '.');
+        }
+
         (new BuildingService())->setOpen($containerId, $open);
         $this->addAuditLog("container #{$containerId}: #{$actorId} " . ($open ? 'ouvre' : 'ferme'));
     }

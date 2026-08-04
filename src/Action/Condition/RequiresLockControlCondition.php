@@ -51,8 +51,18 @@ class RequiresLockControlCondition extends BaseCondition implements HasParameter
             return new ConditionResult(false, array(), array('Cela ne se ferme pas.'));
         }
 
-        if (!(new ContainerService())->mayTurnLock($targetId, (int) $actor->getId())) {
+        $container = new ContainerService();
+
+        if (!$container->mayTurnLock($targetId, (int) $actor->getId())) {
             return new ConditionResult(false, array(), array('Cette serrure ne vous connaît pas.'));
+        }
+
+        /* A closure the latch does not explain — ruin, construction,
+         * damage — JAMS the lock: no hand turns it, and being
+         * display_context, neither button shows on the wreck. */
+        $closure = $container->closureReasonOf($targetId);
+        if ($closure !== null && $closure !== \App\Service\BuildingService::CLOSED_BY_HAND) {
+            return new ConditionResult(false, array(), array('La serrure ne répond plus : c\'est ' . $closure . '.'));
         }
 
         $producesOpen = !empty($condition->getParameters()['open']);

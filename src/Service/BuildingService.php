@@ -486,6 +486,13 @@ class BuildingService extends BaseService
     public const CLOSED_BELOW_PV_PCT = 50;
 
     /**
+     * The one closure a LATCH explains — every other closureReason()
+     * answer (ruin, construction, damage) jams the lock: the state
+     * shuts the thing, no hand reopens it.
+     */
+    public const CLOSED_BY_HAND = 'fermé volontairement';
+
+    /**
      * Pourquoi cette entité est-elle fermée — ou null si elle est OUVERTE.
      * Source unique de la règle d'ouverture (observe, HUD, admin) : ce qui est
      * fermé tait son dialogue.
@@ -514,7 +521,7 @@ class BuildingService extends BaseService
          * le drapeau traînerait à zéro ne se déclare pas fermé, il n'a pas de
          * porte à fermer. */
         if (!$this->isEntityOpen($entityId) && (new LockService())->isLockable($entityId)) {
-            return 'fermé volontairement';
+            return self::CLOSED_BY_HAND;
         }
 
         return null;
@@ -742,6 +749,19 @@ class BuildingService extends BaseService
             'UPDATE players SET is_open = ? WHERE id = ?',
             [$open ? 1 : 0, $playerId]
         );
+
+        /* A DOOR's opening decides passage: the boards rendered around
+         * it carry data-blocked, so they must be redrawn — otherwise a
+         * door opened stays barred on screen until something else
+         * refreshes the cache. Cheap for chests and édifices too. */
+        self::purgeEntityCaches($playerId);
+        $goCoords = $this->entityManager->getConnection()->fetchAssociative(
+            'SELECT c.x, c.y, c.z, c.plan FROM coords c JOIN players p ON p.coords_id = c.id WHERE p.id = ?',
+            [$playerId]
+        );
+        if ($goCoords !== false) {
+            View::refresh_players_svg((object) $goCoords);
+        }
 
         $this->addAuditLog('BuildingService::setOpen #' . $playerId . ' ' . ($open ? 'ouvert' : 'fermé'));
     }

@@ -25,6 +25,7 @@ use Doctrine\Common\Collections\Collection;
     'heal' => \App\Action\HealAction::class,
     'craft' => \App\Action\CraftAction::class,
     'work' => \App\Action\WorkAction::class,
+    'gesture' => \App\Action\GestureAction::class,
 ])]
 abstract class Action implements ActionInterface
 {

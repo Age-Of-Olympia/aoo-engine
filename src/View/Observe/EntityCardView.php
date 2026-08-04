@@ -483,18 +483,21 @@ final class EntityCardView
             $stateLabel .= ' (' . $progress['done'] . '/' . $progress['total'] . ')';
         }
 
-        $isEdifice = (bool) $raceService->getRaceByName((string) $target->data->race)?->isEdifice();
+        /* One predicate for the Ouvert/Fermé span, everywhere: the TYPE
+         * says what can be shut (isLockable) — an édifice, a door in a
+         * wall, and the chest pastille below reads the same rule. */
+        $lockable = (new \App\Service\LockService())->isLockable((int) $target->id);
 
         $door = '';
-        if ($isEdifice) {
+        if ($lockable) {
             $door = $closure === null
                 ? '<span class="building-status-door building-status-door--open">Ouvert</span>'
                 : '<span class="building-status-door building-status-door--closed">Fermé'
-                    . ($closure !== 'fermé volontairement' ? ' (' . $closure . ')' : '') . '</span>';
+                    . ($closure !== \App\Service\BuildingService::CLOSED_BY_HAND ? ' (' . $closure . ')' : '') . '</span>';
         }
 
         return '<div class="building-status'
-            . ($isEdifice && $closure !== null ? ' building-status--closed' : '') . '">'
+            . ($lockable && $closure !== null ? ' building-status--closed' : '') . '">'
             . $door
             . '<span class="building-status-state">' . $stateLabel . ' · PV ' . $pvPct . '%</span>'
             . '</div>';
@@ -518,7 +521,7 @@ final class EntityCardView
         $door = $closure === null
             ? '<span class="building-status-door building-status-door--open">Ouvert</span>'
             : '<span class="building-status-door building-status-door--closed">Fermé'
-                . ($closure !== 'fermé volontairement' ? ' (' . $closure . ')' : '') . '</span>';
+                . ($closure !== \App\Service\BuildingService::CLOSED_BY_HAND ? ' (' . $closure . ')' : '') . '</span>';
 
         return '<div class="building-status' . ($closure !== null ? ' building-status--closed' : '') . '">'
             . $door

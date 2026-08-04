@@ -507,6 +507,13 @@ class FactionView
             return '';
         }
 
+        /* A closure the latch does not explain jams the lock: no button
+         * on a ruin, a site, a wreck — here as on the tile card. */
+        $closure = $container->closureReasonOf($entityId);
+        if ($closure !== null && $closure !== \App\Service\BuildingService::CLOSED_BY_HAND) {
+            return '';
+        }
+
         $isOpen = (bool) \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()
             ->fetchOne('SELECT is_open FROM players WHERE id = ?', [$entityId]);
 

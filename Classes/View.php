@@ -1590,7 +1590,9 @@ class View{
 
 
         while ($row = $res->fetch_object()) {
-            $file = 'datas/private/players/' . $row->id . '.svg';
+            /* Absolute: an api/ endpoint's working directory is its own
+             * folder, and a relative path silently purged nothing. */
+            $file = dirname(__DIR__) . '/datas/private/players/' . $row->id . '.svg';
             if (is_file($file)) {
                 unlink($file); // Delete the file
             }

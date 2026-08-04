@@ -34,14 +34,24 @@ final class Version20260805120000_TheLockBecomesAGesture extends AbstractMigrati
     {
         $conn = $this->connection;
 
+        /* Every root action type speaks in the events log —
+         * ActionEventTemplatesTest holds actions to it. */
+        $conn->executeStatement(
+            "INSERT INTO action_type_logs (type_key, actor_template)
+             SELECT 'gesture', '{actor} a manœuvré {target}.'
+              WHERE NOT EXISTS (SELECT 1 FROM action_type_logs WHERE type_key = 'gesture')"
+        );
+
         foreach (self::ACTIONS as [$name, $display, $open, $text]) {
             if ($conn->fetchOne('SELECT id FROM actions WHERE name = ?', [$name]) !== false) {
                 continue;
             }
 
+            /* Type `gesture`: free, and no action_type_xp rule binds to
+             * it — an unlimited gesture must not mint experience. */
             $conn->executeStatement(
                 "INSERT INTO actions (name, icon, type, display_name, text, level)
-                 VALUES (?, 'ra-key', 'buff', ?, ?, 1)",
+                 VALUES (?, 'ra-key', 'gesture', ?, ?, 1)",
                 [$name, $display, $text]
             );
 

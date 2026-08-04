@@ -98,6 +98,46 @@ class LockGestureTest extends LegacyPlayerFixtureTestCase
         $this->assertContains('Cette serrure ne vous connaît pas.', $result->getConditionFailureMessages());
     }
 
+    public function testAJammedLockAnswersNoHand(): void
+    {
+        [$chestId, $owner] = $this->ownedChest(58, 30);
+
+        // Wounded below the closure threshold: the STATE shuts it.
+        $this->link->executeStatement(
+            "INSERT INTO players_bonus (player_id, name, n) VALUES (?, 'pv', -30)
+             ON DUPLICATE KEY UPDATE n = -30",
+            [$chestId]
+        );
+        $chest = PlayerFactory::legacy($chestId);
+        $chest->get_data();
+
+        $result = (new RequiresLockControlCondition())
+            ->check($owner, $chest, $this->conditionWith(0), new ConditionObject());
+        $this->assertFalse($result->isSuccess(), 'display_context: no button on a wreck');
+
+        $this->expectExceptionMessage('La serrure ne répond plus');
+        (new \App\Service\ContainerService())->toggleOpen($chestId, (int) $owner->id, false);
+    }
+
+    public function testTheGestureMintsNoExperience(): void
+    {
+        $action = \App\Factory\EntityManagerFactory::getEntityManager()
+            ->getRepository(\App\Entity\Action::class)->findOneBy(['name' => 'fermer']);
+        if ($action === null) {
+            $this->markTestSkipped('actions fermer/ouvrir not seeded (run migrations).');
+        }
+
+        $this->assertInstanceOf(
+            \App\Action\GestureAction::class,
+            $action,
+            'the lock is a gesture: the type no XP rule binds to'
+        );
+
+        $anyone = $this->createRealPlayer('GmSansXp');
+        $xp = (new \App\Service\Action\ActionXpResolver())->calculate($action, true, $anyone, $anyone);
+        $this->assertSame(['actor' => 0, 'target' => 0], $xp, 'an unlimited gesture mints nothing');
+    }
+
     public function testWhatCannotBeShutHasNoLockToTurn(): void
     {
         $owner = $this->createRealPlayer('GmSansSerrure');
