@@ -20,8 +20,9 @@ class FactionView
         $mayAdd = !empty($manage['addMember']);
         $manages = $mayKick || $mayEditRole;
 
+        self::sectionOpen('membres', 'Membres', open: true);
+
         echo '
-    <h2>Membres</h2>
     <table border="1" class="marbre" align="center">
     ';
 
@@ -147,6 +148,8 @@ class FactionView
     ';
         }
 
+        self::sectionClose();
+
         if (!empty($manage['initRole'])) {
             self::renderLadder((string) ($_GET['faction'] ?? ''), (int) $manage['position']);
         }
@@ -154,6 +157,29 @@ class FactionView
         if ($manages || $mayAdd || !empty($manage['initRole'])) {
             self::renderManageScript((string) ($_GET['faction'] ?? ''));
         }
+    }
+
+    /**
+     * A collapsible SECTION of the page: native details/summary — no
+     * JS needed to fold — whose content scrolls sideways inside the
+     * panel instead of overflowing it. The page script remembers each
+     * section's state per session.
+     */
+    private static function sectionOpen(string $key, string $title, bool $open = false): void
+    {
+        echo '
+    <details class="faction-section" data-section="' . $key . '"' . ($open ? ' open' : '') . '>
+    <summary><h2>' . $title . '</h2></summary>
+    <div class="faction-scroll">
+    ';
+    }
+
+    private static function sectionClose(): void
+    {
+        echo '
+    </div>
+    </details>
+    ';
     }
 
     /** The title a MEMBER bears: the half their variant chose (Roi or Reine). */
@@ -202,8 +228,9 @@ class FactionView
             return;
         }
 
+        self::sectionOpen('echelle', 'Échelle des rangs');
+
         echo '
-    <h2>Échelle des rangs</h2>
     <table border="1" class="marbre" align="center">
     <tr><th>Rang</th><th>Second nom</th><th>Autorise</th><th></th></tr>
     ';
@@ -262,6 +289,8 @@ class FactionView
     (ajout, ordre, rang d\'accueil) appartient au rang le plus haut.</small></p>
     ';
         }
+
+        self::sectionClose();
     }
 
     /**
@@ -389,8 +418,9 @@ class FactionView
             return;
         }
 
+        self::sectionOpen('batiments', 'Bâtiments');
+
         echo '
-    <h2>Bâtiments</h2>
     <table border="1" class="marbre" align="center">
     <tr>
         <th>Nom</th>
@@ -443,6 +473,8 @@ class FactionView
         echo '
     </table>
     ';
+
+        self::sectionClose();
 
         if ($mayDrive) {
             self::renderDriveScript();
@@ -568,8 +600,9 @@ class FactionView
             return;
         }
 
+        self::sectionOpen('coffres', 'Coffres');
+
         echo '
-    <h2>Coffres</h2>
     <table border="1" class="marbre" align="center">
     <tr>
         <th>Nom</th>'
@@ -600,6 +633,8 @@ class FactionView
         echo '
     </table>
     ';
+
+        self::sectionClose();
     }
 
     /**
