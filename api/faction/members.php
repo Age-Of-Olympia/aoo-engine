@@ -34,9 +34,26 @@ try {
                 $actorId,
                 (int) ($POST_DATA['position'] ?? -1),
                 (string) ($POST_DATA['name'] ?? ''),
-                is_array($POST_DATA['flags'] ?? null) ? $POST_DATA['flags'] : []
+                is_array($POST_DATA['flags'] ?? null) ? $POST_DATA['flags'] : [],
+                (string) ($POST_DATA['nameAlt'] ?? '')
             );
             ExitSuccess(['message' => 'Rang réglé.']);
+            break;
+        case 'rank-landing':
+            $service->setLandingRank($actorId, (int) ($POST_DATA['position'] ?? -1));
+            ExitSuccess(['message' => 'Rang d\'accueil désigné.']);
+            break;
+        case 'rank-add':
+            $service->addRank($actorId, (string) ($POST_DATA['name'] ?? ''));
+            ExitSuccess(['message' => 'Rang ajouté, juste sous le sommet.']);
+            break;
+        case 'rank-remove':
+            $service->removeRank($actorId, (int) ($POST_DATA['position'] ?? -1));
+            ExitSuccess(['message' => 'Rang retiré.']);
+            break;
+        case 'rank-move':
+            $service->moveRank($actorId, (int) ($POST_DATA['position'] ?? -1), (int) ($POST_DATA['direction'] ?? 0));
+            ExitSuccess(['message' => 'Rangs échangés.']);
             break;
         default:
             ExitError('action inconnue');

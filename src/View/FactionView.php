@@ -69,7 +69,7 @@ class FactionView
                 ' . $row->xp . '
             </td>
             <td>
-                ' . $facJson->role[$row->factionRole]->name . '
+                ' . self::roleLabel($facJson->role[$row->factionRole] ?? null) . '
             </td>
             <td>
                 ';
@@ -103,7 +103,7 @@ class FactionView
                     foreach ($facJson->role as $position => $role) {
                         echo '<option value="' . (int) $position . '"'
                             . ((int) $position === (int) $row->factionRole ? ' selected' : '') . '>'
-                            . htmlspecialchars($role->name, ENT_QUOTES, 'UTF-8') . '</option>';
+                            . htmlspecialchars(self::roleLabel($role), ENT_QUOTES, 'UTF-8') . '</option>';
                     }
                     echo '</select> ';
                 }
@@ -144,10 +144,25 @@ class FactionView
         }
     }
 
+    /** A rank's display name — both halves when it bears two (Roi / Reine). */
+    public static function roleLabel(?object $role): string
+    {
+        if ($role === null) {
+            return '?';
+        }
+
+        return htmlspecialchars(
+            $role->name . (!empty($role->nameAlt) ? ' / ' . $role->nameAlt : ''),
+            ENT_QUOTES,
+            'UTF-8'
+        );
+    }
+
     /**
      * The ladder editor — the initRole holder's gesture, on ranks strictly
-     * below their own: nobody rewrites their own charter. The endpoint
-     * re-checks everything.
+     * below their own: nobody rewrites their own charter. The SUMMIT alone
+     * also rules the structure: landing rank, order, add and remove. The
+     * endpoint re-checks everything.
      */
     private static function renderLadder(string $factionCode, int $actorPosition): void
     {
@@ -160,19 +175,22 @@ class FactionView
             'initRole'     => 'Régler l\'échelle',
         ];
 
+        $service = new \App\Service\FactionService();
+        $isTop = $actorPosition === $service->topPositionOf($factionCode);
+
         $editable = array_filter(
-            (new \App\Service\FactionService())->rolesOf($factionCode),
+            $service->rolesOf($factionCode),
             static fn (array $role): bool => (int) $role['position'] < $actorPosition
         );
 
-        if ($editable === []) {
+        if ($editable === [] && !$isTop) {
             return;
         }
 
         echo '
     <h2>Échelle des rangs</h2>
     <table border="1" class="marbre" align="center">
-    <tr><th>Rang</th><th>Autorise</th><th></th></tr>
+    <tr><th>Rang</th><th>Second nom</th><th>Autorise</th><th></th></tr>
     ';
 
         foreach ($editable as $role) {
@@ -180,6 +198,9 @@ class FactionView
         <tr class="faction-ladder-row" data-position="' . (int) $role['position'] . '">
             <td><input type="text" class="faction-ladder-name" maxlength="100"
                  value="' . htmlspecialchars((string) $role['name'], ENT_QUOTES, 'UTF-8') . '"></td>
+            <td><input type="text" class="faction-ladder-name-alt" maxlength="100"
+                 placeholder="Roi / Reine — vide : un seul nom"
+                 value="' . htmlspecialchars((string) ($role['name_alt'] ?? ''), ENT_QUOTES, 'UTF-8') . '"></td>
             <td>';
 
             foreach ($flagLabels as $flag => $label) {
@@ -189,16 +210,40 @@ class FactionView
             }
 
             echo '</td>
-            <td><button class="faction-ladder-save">Enregistrer</button></td>
+            <td style="white-space: nowrap;"><button class="faction-ladder-save">Enregistrer</button>';
+
+            if ($isTop) {
+                echo ' <button class="faction-ladder-move" data-direction="1" title="Monter d\'un cran">&#8593;</button>'
+                    . '<button class="faction-ladder-move" data-direction="-1" title="Descendre d\'un cran">&#8595;</button>'
+                    . ' <label style="white-space: nowrap;"><input type="radio" name="faction-ladder-landing" class="faction-ladder-landing"'
+                    . (!empty($role['defaultRole']) ? ' checked' : '') . '> Accueil</label>'
+                    . ' <button class="faction-ladder-remove" data-name="' . htmlspecialchars((string) $role['name'], ENT_QUOTES, 'UTF-8') . '">Retirer</button>';
+            }
+
+            echo '</td>
         </tr>
         ';
         }
 
         echo '
     </table>
-    <p><small>Seuls les rangs sous le vôtre se règlent ici — l\'échelle elle-même (ajout,
-    ordre, rang d\'accueil) reste à l\'administration.</small></p>
     ';
+
+        if ($isTop) {
+            echo '
+    <p>
+        <input type="text" id="faction-ladder-add-name" placeholder="Nom du nouveau rang" maxlength="100">
+        <button id="faction-ladder-add">Ajouter un rang</button>
+        <small>Il entre juste sous le sommet — les flèches le placent ensuite.
+        Un rang ne se retire que vide, et jamais le rang d\'accueil.</small>
+    </p>
+    ';
+        } else {
+            echo '
+    <p><small>Seuls les rangs sous le vôtre se règlent ici — la structure de l\'échelle
+    (ajout, ordre, rang d\'accueil) appartient au rang le plus haut.</small></p>
+    ';
+        }
     }
 
     /**
@@ -260,8 +305,45 @@ class FactionView
                         action: 'role-def',
                         position: $row.data('position'),
                         name: ($row.find('.faction-ladder-name').val() || '').trim(),
+                        nameAlt: ($row.find('.faction-ladder-name-alt').val() || '').trim(),
                         flags: flags
                     });
+                });
+
+            $(document).off('click.factionManage', '.faction-ladder-move')
+                .on('click.factionManage', '.faction-ladder-move', function(){
+                    factionManageCall({
+                        action: 'rank-move',
+                        position: $(this).closest('.faction-ladder-row').data('position'),
+                        direction: $(this).data('direction')
+                    });
+                });
+
+            $(document).off('change.factionManage', '.faction-ladder-landing')
+                .on('change.factionManage', '.faction-ladder-landing', function(){
+                    factionManageCall({
+                        action: 'rank-landing',
+                        position: $(this).closest('.faction-ladder-row').data('position')
+                    });
+                });
+
+            $(document).off('click.factionManage', '.faction-ladder-remove')
+                .on('click.factionManage', '.faction-ladder-remove', function(){
+                    var $btn = $(this);
+                    aooConfirm('Retirer le rang « ' + $btn.data('name') + ' » ?').then(function(ok){
+                        if(!ok){ return; }
+                        factionManageCall({
+                            action: 'rank-remove',
+                            position: $btn.closest('.faction-ladder-row').data('position')
+                        });
+                    });
+                });
+
+            $(document).off('click.factionManage', '#faction-ladder-add')
+                .on('click.factionManage', '#faction-ladder-add', function(){
+                    var name = ($('#faction-ladder-add-name').val() || '').trim();
+                    if(!name){ return; }
+                    factionManageCall({ action: 'rank-add', name: name });
                 });
         })();
         </script>

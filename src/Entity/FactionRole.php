@@ -37,6 +37,10 @@ class FactionRole
     #[ORM\Column(type: "string", length: 100)]
     private string $name;
 
+    /** The rank's second name — Roi / Reine. '' = a single name. */
+    #[ORM\Column(name: "name_alt", type: "string", length: 100, options: ["default" => ""])]
+    private string $nameAlt = '';
+
     #[ORM\Column(type: "boolean", options: ["default" => false])]
     private bool $defaultRole = false;
 
@@ -127,6 +131,10 @@ class FactionRole
     public function toJsonObject(): object
     {
         $role = ['name' => $this->name];
+        if ($this->nameAlt !== '') {
+            // Additive key: legacy readers keep testing name alone.
+            $role['nameAlt'] = $this->nameAlt;
+        }
         foreach (self::FLAG_KEYS as $key) {
             if ($this->{$key}) {
                 $role[$key] = 1;

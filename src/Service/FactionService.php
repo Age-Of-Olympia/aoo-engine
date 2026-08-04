@@ -427,8 +427,9 @@ class FactionService
      * rewrites their own charter, nor a superior's.
      *
      * @param array<string, mixed> $flags flag => truthy, GRANTABLE_FLAGS only
+     * @param string $nameAlt the rank's second name (Roi / Reine), '' = single
      */
-    public function updateRoleDefinition(int $actorId, int $position, string $name, array $flags): void
+    public function updateRoleDefinition(int $actorId, int $position, string $name, array $flags, string $nameAlt = ''): void
     {
         $actorRole = $this->roleOf($actorId);
         if ($actorRole === null || empty($actorRole['initRole'])) {
@@ -446,8 +447,8 @@ class FactionService
         $conn = $this->entityManager->getConnection();
         $factionCode = (string) $conn->fetchOne('SELECT faction FROM players WHERE id = ?', [$actorId]);
 
-        $sets = ['fr.name = ?'];
-        $params = [$name];
+        $sets = ['fr.name = ?', 'fr.name_alt = ?'];
+        $params = [$name, trim($nameAlt)];
         foreach (self::GRANTABLE_FLAGS as $flag) {
             $sets[] = "fr.{$flag} = ?";
             $params[] = empty($flags[$flag]) ? 0 : 1;
@@ -485,6 +486,201 @@ class FactionService
               ORDER BY fr.position ASC',
             [strtolower(trim($code))]
         );
+    }
+
+    /** The summit of a faction's ladder. */
+    public function topPositionOf(string $code): int
+    {
+        return (int) $this->entityManager->getConnection()->fetchOne(
+            'SELECT COALESCE(MAX(fr.position), 0) FROM faction_roles fr
+               JOIN factions f ON f.id = fr.faction_id
+              WHERE CONVERT(f.code USING utf8mb4) = CONVERT(? USING utf8mb4)',
+            [strtolower(trim($code))]
+        );
+    }
+
+    /**
+     * The STRUCTURE of the ladder belongs to the main role alone — the
+     * summit. Lower initRole holders settle charters, never the frame.
+     *
+     * @return array{role: array<string, mixed>, code: string}
+     */
+    private function requireTop(int $actorId): array
+    {
+        $role = $this->roleOf($actorId);
+        $code = (string) $this->entityManager->getConnection()
+            ->fetchOne('SELECT faction FROM players WHERE id = ?', [$actorId]);
+
+        if ($role === null || (int) $role['position'] !== $this->topPositionOf($code)) {
+            throw new RuntimeException('Seul le plus haut rang règle la structure de l\'échelle.');
+        }
+
+        return ['role' => $role, 'code' => $code];
+    }
+
+    /** The landing rank: where a newcomer arrives. One rung, below the summit. */
+    public function setLandingRank(int $actorId, int $position): void
+    {
+        ['role' => $role, 'code' => $code] = $this->requireTop($actorId);
+
+        if ($position >= (int) $role['position']) {
+            throw new RuntimeException('Le sommet n\'accueille pas les nouveaux venus.');
+        }
+
+        $conn = $this->entityManager->getConnection();
+        $factionId = (int) $conn->fetchOne('SELECT id FROM factions WHERE code = ?', [$code]);
+
+        $known = $conn->fetchOne(
+            'SELECT id FROM faction_roles WHERE faction_id = ? AND position = ?',
+            [$factionId, $position]
+        );
+        if ($known === false) {
+            throw new RuntimeException('Ce rang n\'existe pas.');
+        }
+
+        $conn->transactional(static function ($conn) use ($factionId, $position): void {
+            $conn->executeStatement('UPDATE faction_roles SET defaultRole = 0 WHERE faction_id = ?', [$factionId]);
+            $conn->executeStatement(
+                'UPDATE faction_roles SET defaultRole = 1 WHERE faction_id = ? AND position = ?',
+                [$factionId, $position]
+            );
+        });
+
+        self::clearCache();
+        (new AuditService())->addAuditLog("faction {$code}: #{$actorId} fait du rang {$position} le rang d'accueil");
+    }
+
+    /** A new rung enters just below the summit; reorder places it after. */
+    public function addRank(int $actorId, string $name): void
+    {
+        ['role' => $role, 'code' => $code] = $this->requireTop($actorId);
+
+        $name = trim($name);
+        if ($name === '') {
+            throw new RuntimeException('Un rang porte un nom.');
+        }
+
+        $conn = $this->entityManager->getConnection();
+        $factionId = (int) $conn->fetchOne('SELECT id FROM factions WHERE code = ?', [$code]);
+        $top = (int) $role['position'];
+
+        $conn->transactional(static function ($conn) use ($factionId, $top, $name): void {
+            // The summit slides up one, its holders with it.
+            $conn->executeStatement(
+                'UPDATE faction_roles SET position = position + 1 WHERE faction_id = ? AND position = ?',
+                [$factionId, $top]
+            );
+            $conn->executeStatement(
+                'UPDATE players p JOIN factions f ON CONVERT(f.code USING utf8mb4) = CONVERT(p.faction USING utf8mb4)
+                    SET p.factionRole = p.factionRole + 1
+                  WHERE f.id = ? AND p.factionRole = ?',
+                [$factionId, $top]
+            );
+            $conn->executeStatement(
+                'INSERT INTO faction_roles (faction_id, position, name) VALUES (?, ?, ?)',
+                [$factionId, $top, $name]
+            );
+        });
+
+        self::clearCache();
+        (new AuditService())->addAuditLog("faction {$code}: #{$actorId} ajoute le rang « {$name} »");
+    }
+
+    /** A rung leaves only empty, and never the landing one; the gap closes. */
+    public function removeRank(int $actorId, int $position): void
+    {
+        ['role' => $role, 'code' => $code] = $this->requireTop($actorId);
+
+        if ($position >= (int) $role['position']) {
+            throw new RuntimeException('Ce rang vous dépasse.');
+        }
+
+        $conn = $this->entityManager->getConnection();
+        $factionId = (int) $conn->fetchOne('SELECT id FROM factions WHERE code = ?', [$code]);
+
+        $rung = $conn->fetchAssociative(
+            'SELECT id, defaultRole FROM faction_roles WHERE faction_id = ? AND position = ?',
+            [$factionId, $position]
+        );
+        if ($rung === false) {
+            throw new RuntimeException('Ce rang n\'existe pas.');
+        }
+        if (!empty($rung['defaultRole'])) {
+            throw new RuntimeException('C\'est le rang d\'accueil — désignez-en un autre d\'abord.');
+        }
+
+        $held = (int) $conn->fetchOne(
+            'SELECT COUNT(*) FROM players p JOIN factions f ON CONVERT(f.code USING utf8mb4) = CONVERT(p.faction USING utf8mb4)
+              WHERE f.id = ? AND p.factionRole = ?',
+            [$factionId, $position]
+        );
+        if ($held > 0) {
+            throw new RuntimeException('Des membres tiennent ce rang.');
+        }
+
+        $conn->transactional(static function ($conn) use ($factionId, $position): void {
+            $conn->executeStatement(
+                'DELETE FROM faction_roles WHERE faction_id = ? AND position = ?',
+                [$factionId, $position]
+            );
+            $conn->executeStatement(
+                'UPDATE faction_roles SET position = position - 1 WHERE faction_id = ? AND position > ?',
+                [$factionId, $position]
+            );
+            $conn->executeStatement(
+                'UPDATE players p JOIN factions f ON CONVERT(f.code USING utf8mb4) = CONVERT(p.faction USING utf8mb4)
+                    SET p.factionRole = p.factionRole - 1
+                  WHERE f.id = ? AND p.factionRole > ?',
+                [$factionId, $position]
+            );
+        });
+
+        self::clearCache();
+        (new AuditService())->addAuditLog("faction {$code}: #{$actorId} retire le rang {$position}");
+    }
+
+    /**
+     * Swaps a rung with its neighbor, members riding their rung — the
+     * summit never moves.
+     */
+    public function moveRank(int $actorId, int $position, int $direction): void
+    {
+        ['role' => $role, 'code' => $code] = $this->requireTop($actorId);
+
+        $other = $position + ($direction >= 0 ? 1 : -1);
+        $top = (int) $role['position'];
+
+        if ($position >= $top || $other >= $top || $other < 0) {
+            throw new RuntimeException('Ce mouvement sort de l\'échelle.');
+        }
+
+        $conn = $this->entityManager->getConnection();
+        $factionId = (int) $conn->fetchOne('SELECT id FROM factions WHERE code = ?', [$code]);
+
+        $both = (int) $conn->fetchOne(
+            'SELECT COUNT(*) FROM faction_roles WHERE faction_id = ? AND position IN (?, ?)',
+            [$factionId, $position, $other]
+        );
+        if ($both !== 2) {
+            throw new RuntimeException('Ce rang n\'existe pas.');
+        }
+
+        $conn->transactional(static function ($conn) use ($factionId, $position, $other): void {
+            // Through -1: the swap never collides with itself.
+            $conn->executeStatement('UPDATE faction_roles SET position = -1 WHERE faction_id = ? AND position = ?', [$factionId, $position]);
+            $conn->executeStatement('UPDATE faction_roles SET position = ? WHERE faction_id = ? AND position = ?', [$position, $factionId, $other]);
+            $conn->executeStatement('UPDATE faction_roles SET position = ? WHERE faction_id = ? AND position = -1', [$other, $factionId]);
+
+            $conn->executeStatement(
+                'UPDATE players p JOIN factions f ON CONVERT(f.code USING utf8mb4) = CONVERT(p.faction USING utf8mb4)
+                    SET p.factionRole = CASE p.factionRole WHEN ? THEN ? ELSE ? END
+                  WHERE f.id = ? AND p.factionRole IN (?, ?)',
+                [$position, $other, $position, $factionId, $position, $other]
+            );
+        });
+
+        self::clearCache();
+        (new AuditService())->addAuditLog("faction {$code}: #{$actorId} échange les rangs {$position} et {$other}");
     }
 
     /**

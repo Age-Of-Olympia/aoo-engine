@@ -123,4 +123,96 @@ class FactionHierarchyTest extends LegacyPlayerFixtureTestCase
         $this->expectExceptionMessage('Un rang porte un nom.');
         (new FactionService())->updateRoleDefinition($king, 0, '   ', []);
     }
+
+    public function testARankMayBearTwoNames(): void
+    {
+        $king = $this->enrolled('GmRoi4', 2);
+
+        (new FactionService())->updateRoleDefinition($king, 1, 'Prince', [], 'Princesse');
+
+        $row = $this->link->fetchAssociative(
+            'SELECT name, name_alt FROM faction_roles WHERE faction_id = ? AND position = 1',
+            [$this->factionId]
+        );
+        $this->assertSame(['name' => 'Prince', 'name_alt' => 'Princesse'], $row);
+    }
+
+    public function testTheSummitAloneRulesTheStructure(): void
+    {
+        $captain = $this->enrolled('GmCapitaine4', 1);
+
+        $this->expectExceptionMessage('Seul le plus haut rang règle la structure de l\'échelle.');
+        (new FactionService())->setLandingRank($captain, 0);
+    }
+
+    public function testTheKingMovesTheLandingRank(): void
+    {
+        $king = $this->enrolled('GmRoi5', 2);
+
+        (new FactionService())->setLandingRank($king, 1);
+
+        $defaults = $this->link->fetchAllKeyValue(
+            'SELECT position, defaultRole FROM faction_roles WHERE faction_id = ? ORDER BY position',
+            [$this->factionId]
+        );
+        $this->assertSame([0 => 0, 1 => 1, 2 => 0], array_map('intval', $defaults), 'one landing rung, the chosen one');
+    }
+
+    public function testARungEntersBelowTheSummitAndTheArrowsPlaceIt(): void
+    {
+        $king = $this->enrolled('GmRoi6', 2);
+
+        $service = new FactionService();
+        $service->addRank($king, 'Baron');
+
+        $ladder = $this->link->fetchAllKeyValue(
+            'SELECT position, name FROM faction_roles WHERE faction_id = ? ORDER BY position',
+            [$this->factionId]
+        );
+        $this->assertSame([0 => 'Recrue', 1 => 'Capitaine', 2 => 'Baron', 3 => 'Roi'], $ladder);
+        $this->assertSame(
+            3,
+            (int) $this->link->fetchOne('SELECT factionRole FROM players WHERE id = ?', [$king]),
+            'the summit slid up one, its holder with it'
+        );
+
+        $service->moveRank($king, 2, -1);
+
+        $ladder = $this->link->fetchAllKeyValue(
+            'SELECT position, name FROM faction_roles WHERE faction_id = ? ORDER BY position',
+            [$this->factionId]
+        );
+        $this->assertSame([0 => 'Recrue', 1 => 'Baron', 2 => 'Capitaine', 3 => 'Roi'], $ladder);
+    }
+
+    public function testARungLeavesOnlyEmptyAndNeverTheLanding(): void
+    {
+        $king = $this->enrolled('GmRoi7', 2);
+        $this->enrolled('GmTenant', 1);
+
+        $service = new FactionService();
+
+        try {
+            $service->removeRank($king, 1);
+            $this->fail('a held rung must refuse');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('Des membres tiennent ce rang.', $e->getMessage());
+        }
+
+        try {
+            $service->removeRank($king, 0);
+            $this->fail('the landing rung must refuse');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('rang d\'accueil', $e->getMessage());
+        }
+
+        $service->addRank($king, 'Éphémère');
+        $service->removeRank($king, 2);
+
+        $ladder = $this->link->fetchAllKeyValue(
+            'SELECT position, name FROM faction_roles WHERE faction_id = ? ORDER BY position',
+            [$this->factionId]
+        );
+        $this->assertSame([0 => 'Recrue', 1 => 'Capitaine', 2 => 'Roi'], $ladder, 'the gap closes behind it');
+    }
 }
