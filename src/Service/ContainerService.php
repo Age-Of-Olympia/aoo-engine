@@ -189,6 +189,45 @@ final class ContainerService extends BaseService
     }
 
     /**
+     * Empties the container into the actor's bag — what fits. Composes
+     * the unit withdrawals so every guard, journal line and audit entry
+     * stays theirs; a full bag skips the line instead of aborting, like
+     * the ground sweep: what does not fit stays in the chest.
+     *
+     * @return array{taken: string[], full: bool}
+     */
+    public function withdrawAll(int $containerId, int $actorId): array
+    {
+        $this->assertUsable($containerId, $actorId);
+
+        $taken = [];
+        $full = false;
+        $contents = $this->contentsOf($containerId);
+
+        foreach ($contents['stacks'] as $row) {
+            if ($this->stackNeedsRoom($actorId, (int) $row['item_id']) && !$this->hasRoomForALine($actorId)) {
+                $full = true;
+                continue;
+            }
+            $this->withdrawStack($containerId, $actorId, (int) $row['item_id'], (int) $row['n']);
+            $taken[] = self::stackLabel($row);
+        }
+
+        foreach ($contents['exemplars'] as $row) {
+            /* Every exemplar is a new line: once the bag is at its
+             * ceiling, none of the remaining ones can enter. */
+            if (!$this->hasRoomForALine($actorId)) {
+                $full = true;
+                break;
+            }
+            $this->withdrawExemplar($containerId, $actorId, (int) $row['instance_id']);
+            $taken[] = self::exemplarEntryLabel($row);
+        }
+
+        return ['taken' => $taken, 'full' => $full];
+    }
+
+    /**
      * Turns the lock: the container's people (mayLock — its owner, a
      * member of its faction) shut or open it themselves. What is shut
      * denies its contents to everyone, holder included.

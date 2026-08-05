@@ -67,14 +67,23 @@ $paneGauge = static function (int $holderId) use ($service): string {
         . ($capacity !== null ? '/' . $capacity : '') . ')';
 };
 
+/** The line's 22px face — the peek rule: item art, else the exemplar chain. */
+function containerRowSprite(string $itemName): string
+{
+    $sprite = \Classes\View::exemplarSprite($itemName, $itemName);
+
+    return '<img src="' . htmlspecialchars($sprite, ENT_QUOTES, 'UTF-8')
+        . '" style="max-height:22px;vertical-align:middle;margin-right:6px;" alt="" /> ';
+}
+
 /**
- * One pane: what a holder has, each line with its move button.
+ * One pane: what a holder has, each line with its face and its move button.
  *
  * @param array{stacks: array<int, array<string, mixed>>, exemplars: array<int, array<string, mixed>>} $contents
  */
 function renderContainerPane(string $title, array $contents, string $direction, string $label): void
 {
-    echo '<div style="display:inline-block; vertical-align:top; margin: 0 12px;">';
+    echo '<div style="min-width:0;">';
     echo '<h2>' . $title . '</h2>';
 
     if ($contents['stacks'] === [] && $contents['exemplars'] === []) {
@@ -85,13 +94,15 @@ function renderContainerPane(string $title, array $contents, string $direction, 
     echo '<table border="1" class="marbre">';
 
     foreach ($contents['stacks'] as $row) {
-        echo '<tr><td>' . htmlspecialchars(\App\Service\ContainerService::stackLabel($row), ENT_QUOTES, 'UTF-8') . '</td>'
+        echo '<tr><td>' . containerRowSprite((string) $row['name'])
+            . htmlspecialchars(\App\Service\ContainerService::stackLabel($row), ENT_QUOTES, 'UTF-8') . '</td>'
             . '<td><button class="container-move" data-kind="stack" data-direction="' . $direction . '"'
             . ' data-item="' . (int) $row['item_id'] . '" data-max="' . (int) $row['n'] . '">' . $label . '</button></td></tr>';
     }
 
     foreach ($contents['exemplars'] as $row) {
-        echo '<tr><td>' . htmlspecialchars(\App\Service\ContainerService::exemplarEntryLabel($row), ENT_QUOTES, 'UTF-8') . '</td>'
+        echo '<tr><td>' . containerRowSprite((string) $row['name'])
+            . htmlspecialchars(\App\Service\ContainerService::exemplarEntryLabel($row), ENT_QUOTES, 'UTF-8') . '</td>'
             . '<td><button class="container-move" data-kind="exemplar" data-direction="' . $direction . '"'
             . ' data-instance="' . (int) $row['instance_id'] . '">' . $label . '</button></td></tr>';
     }
@@ -99,8 +110,18 @@ function renderContainerPane(string $title, array $contents, string $direction, 
     echo '</table></div>';
 }
 
+/* Flex, never wrapping: the two panes stay side by side even in the
+ * half-screen panel — the sprites made inline-blocks overflow to a
+ * stack. The wrapper scrolls if a screen is truly too narrow. */
+echo '<div style="display:flex; flex-wrap:nowrap; gap:0 24px; align-items:flex-start; overflow-x:auto;">';
 renderContainerPane('Sac' . $paneGauge((int) $player->id), $bag, 'deposit', 'Déposer →');
 renderContainerPane('Coffre' . $paneGauge($containerId), $held, 'withdraw', '← Prendre');
+echo '</div>';
+
+/* The chest-side sweep, like « Tout ramasser » on the ground. */
+if ($held['stacks'] !== [] || $held['exemplars'] !== []) {
+    echo '<p><button id="container-take-all"><span class="ra ra-ammo-bag"></span> Tout prendre</button></p>';
+}
 
 echo renderContainerScript($containerId);
 
@@ -118,18 +139,10 @@ function renderContainerScript(int $containerId): string
 
         function containerCall(payload){
             payload.containerId = containerId;
-            aooFetch('api/container/flows.php', payload, null)
-                .then(function(data){
-                    /* A refusal answers 200 with {error}: SAY it —
-                     * a silent reload looked like nothing happened. */
-                    if(data && data.error){
-                        aooAlert(data.error);
-                        return;
-                    }
-                    /* Back to the same panel, like the faction gestures. */
-                    aooPanelOrReload('load_container.php?targetId=' + containerId, 'Contenant');
-                })
-                .catch(autoError());
+            aooGestureFetch('api/container/flows.php', payload, function(){
+                /* Back to the same panel, like the faction gestures. */
+                aooPanelOrReload('load_container.php?targetId=' + containerId, 'Contenant');
+            });
         }
 
         $(document).off('click.containerFlows', '.container-move')
@@ -143,11 +156,27 @@ function renderContainerScript(int $containerId): string
                 }
 
                 var max = parseInt($btn.data('max'), 10);
+                /* A single unit has nothing to ask. */
+                if(max === 1){
+                    containerCall({ action: action, itemId: $btn.data('item'), n: 1 });
+                    return;
+                }
                 aooPrompt('Combien ?', max).then(function(n){
                     if(n == null || n === ''){ return; }
                     n = parseInt(n, 10);
                     if(!(n >= 1) || n > max){ aooAlert('Nombre invalide !'); return; }
                     containerCall({ action: action, itemId: $btn.data('item'), n: n });
+                });
+            });
+
+        $(document).off('click.containerFlows', '#container-take-all')
+            .on('click.containerFlows', '#container-take-all', function(){
+                /* The sweep SAYS what it took — a partial one must
+                 * explain what stayed behind. */
+                aooGestureFetch('api/container/flows.php', { action: 'withdraw-all', containerId: containerId }, function(data){
+                    aooResultMessage(data).then(function(){
+                        aooPanelOrReload('load_container.php?targetId=' + containerId, 'Contenant');
+                    });
                 });
             });
 

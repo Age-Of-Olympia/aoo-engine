@@ -34,6 +34,17 @@ try {
             $service->withdrawExemplar($containerId, $actorId, (int) ($POST_DATA['instanceId'] ?? 0));
             ExitSuccess(['message' => 'Pris.']);
             break;
+        case 'withdraw-all':
+            $sweep = $service->withdrawAll($containerId, $actorId);
+            if ($sweep['taken'] === []) {
+                ExitError($sweep['full'] ? 'Votre sac est plein.' : 'Rien à prendre.');
+            }
+            $message = 'Pris : ' . implode(', ', $sweep['taken']) . '.';
+            if ($sweep['full']) {
+                $message .= ' Sac plein — le reste attend.';
+            }
+            ExitSuccess(['message' => $message]);
+            break;
         case 'lock':
             $open = (int) ($POST_DATA['open'] ?? 0) === 1;
             $service->toggleOpen($containerId, $actorId, $open);

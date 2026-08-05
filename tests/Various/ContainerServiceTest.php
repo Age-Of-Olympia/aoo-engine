@@ -286,6 +286,44 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         }
     }
 
+    public function testTheSweepTakesWhatFitsAndSaysTheRest(): void
+    {
+        $chest = $this->chestAt(66, 30);
+        $actor = $this->actorNextTo(66, 30, 'GmToutPrendre');
+        $race = (string) $this->link->fetchOne('SELECT race FROM players WHERE id = ?', [$actor]);
+        $before = (int) $this->link->fetchOne('SELECT capacity FROM races WHERE name = ?', [$race]);
+
+        $bois = $this->giveStack($actor, 'bois', 1);
+        $this->giveStack($chest, 'bois', 3);
+        $pierre = $this->giveStack($chest, 'pierre', 2);
+
+        $instances = new \App\Service\ItemInstanceService();
+        $gladius = $this->itemOrSkip('gladius');
+        $instanceId = $instances->create($actor, (int) $gladius->id, $actor, '');
+        $service = new ContainerService();
+        $service->depositExemplar($chest, $actor, $instanceId);
+
+        $this->link->executeStatement('UPDATE races SET capacity = 1 WHERE name = ?', [$race]);
+
+        try {
+            // The bois joins its line; everything else would be a new one.
+            $sweep = $service->withdrawAll($chest, $actor);
+            $this->assertSame(['Bois ×3'], $sweep['taken']);
+            $this->assertTrue($sweep['full'], 'the sweep must say what stayed behind');
+            $this->assertSame(4, $this->stackOf($actor, $bois));
+            $this->assertSame(2, $this->stackOf($chest, $pierre), 'what does not fit stays in the chest');
+        } finally {
+            $this->link->executeStatement('UPDATE races SET capacity = ? WHERE name = ?', [$before, $race]);
+        }
+
+        // Ceiling lifted: the rest follows, exemplar included.
+        $sweep = $service->withdrawAll($chest, $actor);
+        $this->assertSame(['Pierre ×2', 'Gladius'], $sweep['taken']);
+        $this->assertFalse($sweep['full']);
+        $this->assertSame(2, $this->stackOf($actor, $pierre));
+        $this->assertSame(1, $instances->countInstances($actor, (int) $gladius->id));
+    }
+
     public function testAFactionChestFollowsTheRank(): void
     {
         $code = $this->factionWithRanks();
