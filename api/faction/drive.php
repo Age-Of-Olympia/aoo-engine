@@ -22,15 +22,15 @@ try {
             $buildingId = (int) ($POST_DATA['buildingId'] ?? 0);
             (new BuildingService())->assertDrivable($buildingId, $actorId);
 
-            $_SESSION['playerId'] = $buildingId;
+            /* Same gesture as the PNJ switch, one method (the door —
+             * assertDrivable here, the PNJ list there — stays each
+             * caller's own). */
+            (new \App\Service\ImpersonationService())->driveAs($buildingId);
             (new AuditService())->addAuditLog("#{$actorId} prend les commandes du bâtiment #{$buildingId}");
             ExitSuccess(['message' => 'Vous prenez les commandes.']);
             break;
         case 'release':
-            if (empty($_SESSION['mainPlayerId'])) {
-                ExitError('Aucun personnage à reprendre.');
-            }
-            $_SESSION['playerId'] = (int) $_SESSION['mainPlayerId'];
+            (new \App\Service\ImpersonationService())->release();
             ExitSuccess(['message' => 'Vous reprenez votre personnage.']);
             break;
         default:

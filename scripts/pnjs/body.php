@@ -47,15 +47,9 @@ if(!empty($_POST['switch'])){
         exit('error pnj');
     }
 
-    $_SESSION['playerId'] = $_POST['switch'];
-
-    // update lastLoginTime
-
-    $sql = 'UPDATE players SET lastLoginTime = ? WHERE id = ?';
-
-    $time = time();
-
-    $db->exe($sql, array($time, $_SESSION['playerId']));
+    /* The switch itself is the SAME gesture as taking a building's
+     * commands — one method, whatever the mask. */
+    (new \App\Service\ImpersonationService())->driveAs((int) $_POST['switch']);
 
     exit();
 }
