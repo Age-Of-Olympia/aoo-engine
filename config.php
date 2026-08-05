@@ -24,20 +24,36 @@ if (PHP_SAPI !== 'cli') {
         }
     }
 
-    // Harden the session cookie. Secure only under HTTPS so local http works.
+    // Harden the session cookie. Secure only under HTTPS so local http works;
+    // behind the host's TLS-terminating front-end $_SERVER['HTTPS'] is empty,
+    // so X-Forwarded-Proto counts as HTTPS too.
     // domain '' keeps the cookie host-only: do NOT scope it to
     // .age-of-olympia.net or it would bleed across the subdomains.
+    $aooHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
     session_set_cookie_params([
         'lifetime' => 0,
         'path'     => '/',
         'domain'   => '',
-        'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+        'secure'   => $aooHttps,
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
+
+    // Refuse attacker-chosen session ids instead of adopting them.
+    ini_set('session.use_strict_mode', '1');
 }
 
 session_start();
+
+// Authenticated, per-user responses: say so to every cache on the path.
+// The prod cross-account incident was a host-level full-page cache storing
+// a logged-in page — PHP's implicit nocache limiter is exactly what such
+// caches ignore, so the headers are asserted explicitly.
+if (PHP_SAPI !== 'cli') {
+    header('Cache-Control: private, no-store, max-age=0');
+    header('Vary: Cookie');
+}
 
 require_once(__DIR__.'/config/constants.php');
 require_once(__DIR__.'/config/db_constants.php');

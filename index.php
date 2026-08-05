@@ -61,6 +61,17 @@ elseif(isset($_GET['logout'])){
     unset($_SESSION['nonewturn']);
     session_destroy();
 
+    /* Expire the cookie too: destroy() alone leaves the browser holding
+     * the old SID, which the next request would happily re-create. */
+    setcookie(session_name(), '', [
+        'expires'  => time() - 3600,
+        'path'     => '/',
+        'domain'   => '',
+        'secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+
     ob_clean();
 
     header('location:index.php');

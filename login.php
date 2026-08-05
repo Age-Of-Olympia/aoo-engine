@@ -95,7 +95,7 @@ unset($_SESSION['nonewturn']);
 $values = array(
     'player_id'=> $row['id'],
     'ip'=>md5($firewall->ip),
-    'footprint'=>md5( $_POST['footprint']),
+    'footprint'=>md5($_POST['footprint'] ?? ''),
     'time'=>time()
 );
 
@@ -119,10 +119,10 @@ if($res->num_rows){
 
     $bannedIps = explode(',', $row->ips);
 
-    if(!in_array($ip, $bannedIps)){
+    if(!in_array($firewall->ip, $bannedIps)){
 
 
-        array_push($bannedIps, $ip);
+        array_push($bannedIps, $firewall->ip);
 
         $bannedIps = array_filter($bannedIps, function($value) {
             return $value !== ""; // Filtre les valeurs qui ne sont pas des chaînes vides

@@ -22,6 +22,13 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 # Configurer le chemin de sauvegarde des sessions PHP
 # php_value session.save_path "/home/leo/Documents/Prog/www/aoo4/sessions"
 
+# Pages de jeu = réponses par joueur : interdire le cache pleine page du
+# serveur LiteSpeed de l'hébergeur (incident prod : la page d'un joueur
+# servie à un autre). Sans effet sous Apache local (module absent).
+<IfModule LiteSpeed>
+CacheDisable public /
+</IfModule>
+
 # Limites d'upload : les aperçus de la page d'accueil (admin/landing.php)
 # sont des captures du plateau de plusieurs Mo — le défaut PHP (2M) les
 # refusait. post_max_size garde une marge au-dessus du fichier seul.

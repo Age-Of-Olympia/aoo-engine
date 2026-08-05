@@ -45,6 +45,9 @@ EOT);
                AdminAuthorizationService::DoSuperAdminCheck();
             }
 
+            // Identity changes hands: a fresh SID, like the login gives.
+            session_regenerate_id(true);
+
             $_SESSION['playerId'] = $_SESSION['mainPlayerId'] = $player->id;
             if(isset($argumentValues[2]) && $argumentValues[2] == '-reactive'){
                unset($_SESSION['nonewturn']);
