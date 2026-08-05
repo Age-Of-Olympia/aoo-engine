@@ -37,7 +37,9 @@ final class ContainerPeekView
         foreach ($entities as $entity) {
             $entityId = (int) $entity['id'];
 
-            if (!$lock->isLockable($entityId)) {
+            /* Verrouillable ET contenant : une banque a une porte mais
+             * pas de coffre à montrer (ContainerService::isContainer). */
+            if (!$lock->isLockable($entityId) || !$service->isContainer($entityId)) {
                 continue;
             }
             if ($service->closureReasonOf($entityId) !== null || !$service->mayUse($entityId, (int) $player->id)) {

@@ -10,7 +10,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 /**
  * Une structure n'est pas un acteur social (revue du 2026-07-19) : ni
  * missives, ni compte de membres de faction — un bâtiment porte une
- * faction et des options (isMerchant…) mais n'est pas un interlocuteur.
+ * faction et un dialogue (qui fait ses comptoirs) mais n'est pas un
+ * interlocuteur.
  */
 #[Group('entities-structure')]
 class BuildingSocialGateTest extends LegacyPlayerFixtureTestCase

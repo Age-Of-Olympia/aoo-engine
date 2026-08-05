@@ -21,7 +21,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       ExitError($marketAccessError);
   }
-  
+
+  // Chaque comptoir ne sert que SES onglets (le dialogue fait foi).
+  if (!(new \App\Service\BuildingService())->servesCounter((int) $target->id, 'merchant.php', 'exchanges')) {
+      ExitError('On ne sert pas cela à ce comptoir.');
+  }
+
   $recipient = PlayerFactory::legacyByName($_POST['recipient'] ?? '');
   if($recipient === null){
     ExitError('Destinataire inconnu');

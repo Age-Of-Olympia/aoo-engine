@@ -31,6 +31,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($POST_DATA['type']) || !in_array($POST_DATA['type'], ['bids', 'asks'])) {
         ExitError(INVALID_REQ);
     }
+
+    // Chaque comptoir ne sert que SES onglets (le dialogue fait foi) :
+    // pas d'offre ni de demande au guichet de la banque par l'API.
+    if (!(new \App\Service\BuildingService())->servesCounter((int) $target->id, 'merchant.php', $POST_DATA['type'])) {
+        ExitError('On ne sert pas cela à ce comptoir.');
+    }
+
     $bidsAsksService = new BidsAsksService();
 
     if ($POST_DATA['action'] == 'cancel') {

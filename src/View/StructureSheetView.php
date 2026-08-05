@@ -143,8 +143,10 @@ final class StructureSheetView
 
             $player->getCoords();
             $inscriptionCoords = $entity->getCoords(EntityManagerFactory::getEntityManager()->getConnection());
+            /* À l'ENTITÉ entière, comme le bouton Lire de la carte : une
+             * bâtisse 2×2 se lit depuis chacune de ses cases. */
             $inscriptionDistance = $inscriptionCoords !== null
-                ? View::get_distance($player->coords, $inscriptionCoords)
+                ? View::get_distance_to_entity($player->coords, (int) $entity->getId(), $inscriptionCoords)
                 : PHP_INT_MAX;
 
             $readableHere = \App\Service\BuildingService::readsFromAfar($target, $details)
@@ -169,8 +171,11 @@ final class StructureSheetView
 
             $player->getCoords();
             $targetCoords = $entity->getCoords(EntityManagerFactory::getEntityManager()->getConnection());
+            /* À l'ENTITÉ entière — même règle que le bouton Parler de la
+             * carte et que les gardes d'accès : le tenancier sert par
+             * chaque case de l'emprise. */
             $distance = $targetCoords !== null
-                ? View::get_distance($player->coords, $targetCoords)
+                ? View::get_distance_to_entity($player->coords, (int) $entity->getId(), $targetCoords)
                 : PHP_INT_MAX;
 
             if ($closure !== null) {

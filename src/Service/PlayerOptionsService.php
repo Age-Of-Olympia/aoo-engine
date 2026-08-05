@@ -18,12 +18,6 @@ use Classes\Db;
  *
  * Characterization tests:
  *   tests/Various/PlayerOptionsCharacterizationTest.php
- *
- * Side-effect note: the `isMerchant` option carries a `marchand`
- * follower hook (add on set, delete on unset). That hook stays in
- * Classes\Player where the follower methods live — this service owns
- * ONLY the table access, keeping the boundary clean for future
- * extractions.
  */
 class PlayerOptionsService
 {
@@ -54,7 +48,7 @@ class PlayerOptionsService
      * two surfaces can never disagree on what is a valid option.
      */
     public const MANAGEABLE_OPTIONS = [
-        'isSuperAdmin', 'isAdmin', 'isMerchant', 'isTrainer', 'showActionDetails',
+        'isSuperAdmin', 'isAdmin', 'showActionDetails',
         'alreadyFished', 'incognitoMode', 'invisibleMode', 'showBlockedTiles',
         'doubleUpload', 'alreadyChanged',
     ];

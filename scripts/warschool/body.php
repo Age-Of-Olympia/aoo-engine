@@ -32,6 +32,33 @@ if ($accessError !== null) {
     exit($accessError);
 }
 
+/* Chaque école n'enseigne que SES disciplines — celles que son dialogue
+ * mentionne (BuildingService::servesCounter). Le menu suit, et la
+ * branche refuse ce que le menu ne propose pas. */
+$buildingService = new \App\Service\BuildingService();
+
+$disciplineTabs = [
+    'melee'    => '<button><span class="ra ra-crossed-swords"></span> Mêlée</button>',
+    'distance' => '<button><span class="ra ra-archer"></span> Distance</button>',
+    'magic'    => '<button><span class="ra ra-fairy-wand"></span> Magie</button>',
+    'spells'   => '<button><span class="ra ra-book"></span> Sorts</button>',
+    'stealth'  => '<button><span class="ra ra-hood"></span> Furtivité</button>',
+    'survival' => '<button><span class="ra ra-campfire"></span> Survie</button>',
+];
+
+$servedTabs = [];
+foreach (array_keys($disciplineTabs) as $tab) {
+    if ($buildingService->servesCounter((int) $trainer->id, 'warschool.php', $tab)) {
+        $servedTabs[] = $tab;
+    }
+}
+
+foreach (array_keys($disciplineTabs) as $tab) {
+    if (isset($_GET[$tab]) && !in_array($tab, $servedTabs, true)) {
+        exit('On n\'enseigne pas cela dans cette école.');
+    }
+}
+
 // menu
 if (!isset($_GET['hideMenu'])) {
 
@@ -43,31 +70,16 @@ if (!isset($_GET['hideMenu'])) {
 
         <a href="warschool.php?targetId=' . $trainer->id . '">
             <button><span class="ra ra-speech-bubbles"></span></button>
-        </a>
+        </a>';
 
-        <a href="warschool.php?targetId=' . $trainer->id . '&melee">
-            <button><span class="ra ra-crossed-swords"></span> Mêlée</button>
-        </a>
+    foreach ($servedTabs as $tab) {
+        echo '
+        <a href="warschool.php?targetId=' . $trainer->id . '&' . $tab . '">
+            ' . $disciplineTabs[$tab] . '
+        </a>';
+    }
 
-        <a href="warschool.php?targetId=' . $trainer->id . '&distance">
-            <button><span class="ra ra-archer"></span> Distance</button>
-        </a>
-
-        <a href="warschool.php?targetId=' . $trainer->id . '&magic">
-            <button><span class="ra ra-fairy-wand"></span> Magie</button>
-        </a>
-
-        <a href="warschool.php?targetId=' . $trainer->id . '&spells">
-            <button><span class="ra ra-book"></span> Sorts</button>
-        </a>
-
-        <a href="warschool.php?targetId=' . $trainer->id . '&stealth">
-            <button><span class="ra ra-hood"></span> Furtivité</button>
-        </a>
-
-        <a href="warschool.php?targetId=' . $trainer->id . '&survival">
-            <button><span class="ra ra-campfire"></span> Survie</button>
-        </a>
+    echo '
     </div>';
 }
 
@@ -116,13 +128,25 @@ elseif (isset($_GET['survival'])) {
     SurvivalView::render($player, $trainer);
 }
 else {
+    /* L'école est un BÂTIMENT (la garde ne laisse passer que lui) :
+     * son dialogue (buildings.dialog) et son visuel. */
+    $details = (new \App\Service\BuildingService())->getDetails((int) $trainer->id);
+    $dialog = (string) $details?->getDialog();
+
     $bg = 'img/dialogs/bg/' . $trainer->id . '.webp';
-    if (!file_exists($bg)) { $bg = 'img/dialogs/bg/marchande.webp'; }
+    if (!file_exists($bg)) {
+        /* Sprite du type, sinon le même repli « initiales dans un
+         * cadre » que la fiche (un type sans visuel résout à ''). */
+        $bg = \App\Service\BuildingService::resolveAvatar((string) ($trainer->data->race ?? ''));
+        if ($bg === '') {
+            $bg = \Classes\View::structureInitialsAvatar((string) $trainer->data->name);
+        }
+    }
 
     $options = [
         'name'   => $trainer->data->name,
         'avatar' => $bg,
-        'dialog' => 'trainer',
+        'dialog' => $dialog,
         'text'   => 'C\'est un plaisir de te revoir. Besoin d\'un entraînement ?',
         'player' => $player,
         'target' => $trainer

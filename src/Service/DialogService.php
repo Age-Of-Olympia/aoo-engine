@@ -242,6 +242,50 @@ class DialogService
     }
 
     /**
+     * Ce dialogue mène-t-il à cet écran — et, si demandé, à cet ONGLET ?
+     * Une option d'un de ses nœuds pointe `<script>` (« merchant.php »,
+     * « warschool.php ») ; l'onglet est le drapeau de requête de l'URL
+     * (`&bank`, `&bids`, `&melee`…).
+     *
+     * C'est la règle des COMPTOIRS : un bâtiment n'est marchand ou
+     * entraîneur par aucune option de personne — son dialogue porte le
+     * rôle, onglet par onglet : la banque dépose et retire, l'échoppe
+     * tient les étals, chacune est sourde au comptoir de l'autre. Les
+     * gardes d'accès (Market, WarSchool), les corps de page et les API
+     * d'écriture lisent la même réponse.
+     */
+    public function opensScreen(string $dialogName, string $script, ?string $tab = null): bool
+    {
+        if ($dialogName === '') {
+            return false;
+        }
+
+        $dialogJson = $this->loadDialog($dialogName);
+        if ($dialogJson === null || empty($dialogJson->dialog)) {
+            return false;
+        }
+
+        foreach ($dialogJson->dialog as $node) {
+            foreach (($node->options ?? []) as $option) {
+                if (empty($option->url) || !str_starts_with((string) $option->url, $script)) {
+                    continue;
+                }
+
+                if ($tab === null) {
+                    return true;
+                }
+
+                parse_str((string) parse_url((string) $option->url, PHP_URL_QUERY), $params);
+                if (array_key_exists($tab, $params)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Régénère les options du dialogue d'inscription (races jouables avec
      * compteurs d'âmes et bonus de rattrapage) — reprend la logique
      * historique de Dialog::refresh_register_dialog(), qui délègue ici.

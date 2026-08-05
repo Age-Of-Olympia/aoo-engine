@@ -582,16 +582,12 @@ class Player implements ActorInterface {
 
 
     // options shortcuts — delegate to PlayerOptionsService.
-    // The isMerchant → marchand follower hook stays here because the
-    // follower methods live on Player; the service owns table access only.
     public function add_option($name){
-        if($name == 'isMerchant'){ $this->add_follower('marchand', params:'on'); }
         (new PlayerOptionsService())->addOption($this->id, $name);
     }
     public function have_option($name): int{ return (new PlayerOptionsService())->hasOption($this->id, $name); }
     public function end_option($name){
         (new PlayerOptionsService())->endOption($this->id, $name);
-        if($name == 'isMerchant'){ $this->delete_follower('marchand'); }
     }
     public function get_options(){ return (new PlayerOptionsService())->getOptions($this->id); }
 

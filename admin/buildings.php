@@ -186,7 +186,9 @@ function building_render_place_form(array $types, array $plans, array $factions,
         . '<select name="faction" class="form-control">' . $factionOptions . '</select></div>'
         . '<div class="col-md-2"><label class="form-label">Dialogue (optionnel)</label>'
         . building_dialog_select('dialog', '', $dialogNames)
-        . '<small class="text-muted d-block">Porté par le bâtiment — muet en ruine.</small></div>'
+        . '<small class="text-muted d-block">Porté par le bâtiment — muet en ruine.'
+        . ' Le dialogue fait aussi le comptoir : s\'il mène au marché ou à l\'école,'
+        . ' le bâtiment sert.</small></div>'
         . '<div class="col-12"><button class="btn btn-primary" type="submit">Poser le bâtiment</button></div>'
         . '</form>';
 

@@ -228,13 +228,24 @@ final class EntityCardView
         $html .= self::actionButtonsHtml($player, $target);
 
         /* class="action" comme Missive : sans elle, la grille d'actions
-         * du HUD ignore ces boutons (nom toujours affiché, taille libre). */
-        if ($target->have_option('isMerchant')) {
-            $html .= '<a href="merchant.php?targetId=' . $target->id . '"><button class="action"><span class="ra ra-ammo-bag"></span> <span class="action-name">Marchander</span></button></a>';
-        }
+         * du HUD ignore ces boutons (nom toujours affiché, taille libre).
+         * Le rôle n'est plus une option de personne : le DIALOGUE du
+         * bâtiment porte ses comptoirs (DialogService::opensScreen) —
+         * fermé, il les tait, même règle que Parler. */
+        $counterDialog = ($buildingClosure === null && $buildingDetails !== null)
+            ? $buildingDetails->getDialog()
+            : '';
 
-        if ($target->have_option('isTrainer')) {
-            $html .= '<a href="warschool.php?targetId=' . $target->id . '"><button class="action"><span class="ra ra-axe"></span> <span class="action-name">Apprendre</span></button></a>';
+        if ($counterDialog !== '') {
+            $dialogService = new \App\Service\DialogService();
+
+            if ($dialogService->opensScreen($counterDialog, 'merchant.php')) {
+                $html .= '<a href="merchant.php?targetId=' . $target->id . '"><button class="action"><span class="ra ra-ammo-bag"></span> <span class="action-name">Marchander</span></button></a>';
+            }
+
+            if ($dialogService->opensScreen($counterDialog, 'warschool.php')) {
+                $html .= '<a href="warschool.php?targetId=' . $target->id . '"><button class="action"><span class="ra ra-axe"></span> <span class="action-name">Apprendre</span></button></a>';
+            }
         }
 
         $html .= self::containerBlockHtml($player, $target);

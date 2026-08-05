@@ -24,6 +24,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       ExitError($marketAccessError);
   }
 
+  // Chaque comptoir ne sert que SES onglets (le dialogue fait foi).
+  if (!(new \App\Service\BuildingService())->servesCounter((int) $target->id, 'merchant.php', 'exchanges')) {
+      ExitError('On ne sert pas cela à ce comptoir.');
+  }
+
   $POST_DATA = json_decode(file_get_contents('php://input'), true);
   if(!isset($POST_DATA['action']) || !in_array($POST_DATA['action'], ['accept', 'refuse', 'cancel', 'objects'])) {
     ExitError('Invalid request');

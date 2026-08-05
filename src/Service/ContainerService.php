@@ -52,6 +52,12 @@ final class ContainerService extends BaseService
             throw new RuntimeException('Ce contenant n\'est posé nulle part.');
         }
 
+        // Une porte n'est pas un coffre : seul ce qui peut contenir
+        // s'ouvre en contenant — la banque garde sa porte, pas de malle.
+        if (!$this->isContainer($containerId)) {
+            throw new RuntimeException('Ceci n\'a pas de coffre.');
+        }
+
         $reason = $this->closureReasonOf($containerId);
         if ($reason !== null) {
             throw new RuntimeException('Ce contenant est ' . $reason . '.');
@@ -380,6 +386,32 @@ final class ContainerService extends BaseService
         }
 
         return (int) ($row['race_capacity'] ?? 0) > 0 ? (int) $row['race_capacity'] : null;
+    }
+
+    /**
+     * Ce qui PEUT contenir : un exemplaire d'objet posé (le coffre — sa
+     * capacité vient de l'objet), ou une entité dont le TYPE donne des
+     * lignes (races.capacity > 0 : la tour de garde et son sac). Un
+     * édifice à capacité nulle (banque, échoppe, atelier, porte) a une
+     * PORTE mais pas de coffre : la fermeture reste, le contenant non —
+     * le 0 « illimité » de capacityOf est le sac des PERSONNAGES, il ne
+     * fait pas d'un comptoir une malle publique.
+     */
+    public function isContainer(int $containerId): bool
+    {
+        $row = $this->conn->fetchAssociative(
+            'SELECT i.id AS instance_id, r.capacity AS race_capacity
+               FROM players p
+               LEFT JOIN item_instances i ON i.entity_id = p.id
+               LEFT JOIN races r ON CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4)
+              WHERE p.id = ?',
+            [$containerId]
+        );
+        if ($row === false) {
+            return false;
+        }
+
+        return $row['instance_id'] !== null || (int) ($row['race_capacity'] ?? 0) > 0;
     }
 
     /**

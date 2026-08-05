@@ -12,7 +12,7 @@ class OptionCmd extends Command
 Ajout ou suppression d'une option à un joueur (si il a l'option, ça lui enlève s'il ne l'a pas ça a ajoute).
 Exemple:
 > option [matricule ou nom] [nom option]
-> option 1 isMerchant
+> option 1 showBlockedTiles
 EOT);
     }
 

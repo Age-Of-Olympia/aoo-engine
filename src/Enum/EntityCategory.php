@@ -84,8 +84,8 @@ enum EntityCategory: string
     /**
      * Acteur SOCIAL : peut échanger des missives, compter dans une
      * faction, apparaître dans les surfaces de personnages. Un bâtiment
-     * ou un objet unique porte une faction et des options (isMerchant…)
-     * mais n'est pas un interlocuteur.
+     * ou un objet unique porte une faction et un dialogue (qui fait ses
+     * comptoirs) mais n'est pas un interlocuteur.
      */
     public function isSocialActor(): bool
     {

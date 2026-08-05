@@ -544,12 +544,28 @@ class Market
     //null if no error else return reason
     public static function CheckMarketAccess($player, $potentialMerchant): ?string
     {
-        if (!$potentialMerchant->have_option('isMerchant')) {
+        // Le rôle n'est plus une option de personne : un BÂTIMENT est
+        // marchand parce que son dialogue mène au marché.
+        $buildingService = new \App\Service\BuildingService();
+        if (!$buildingService->servesCounter((int) $potentialMerchant->id, 'merchant.php')) {
             return 'error not merchant';
         }
 
-        // distance
-        $distance = View::get_distance($player->getCoords(), $potentialMerchant->getCoords());
+        // Fermé (ruine, chantier, endommagé, porte close), le comptoir ne
+        // sert personne — l'URL directe ne contourne pas la fiche (règle de
+        // fermeture unique, BuildingService).
+        $closedNotice = $buildingService->closedCounterNotice($potentialMerchant);
+        if ($closedNotice !== null) {
+            return $closedNotice;
+        }
+
+        // distance à la case la plus proche : une bâtisse multi-cases sert
+        // par chacun de ses côtés (point déclaré pour un personnage)
+        $distance = View::get_distance_to_entity(
+            $player->getCoords(),
+            (int) $potentialMerchant->id,
+            $potentialMerchant->getCoords()
+        );
 
         if ($distance > 1) {
 

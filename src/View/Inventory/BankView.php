@@ -106,94 +106,45 @@ class BankView
             exit();
         }
 
-        if($market===null){
-         exit('error no market');
-        }
-        
-        echo '<h1>Banque</h1>';
+        /* L'écran du coffre en banque : le MÊME motif à deux volets que
+         * le contenant (ExchangePanesView) — sac d'un côté, coffre de
+         * l'autre, chaque ligne se déplace. Au guichet ($target), les
+         * gestes postent sur api/bank/flows.php ; à distance
+         * (inventory.php?bank), consultation seule. */
+        $container = new \App\Service\ContainerService();
+        $bank = new \App\Service\BankService();
 
+        echo '<h1>Banque</h1>';
         echo '<sup>Votre Or en Banque augmente de ' . BANK_PCT . '% chaque jour passé sans combattre.</sup>';
 
-        echo $market->print_bank($player);
+        $atCounter = $target !== null;
+        $bagGauge = ' (' . $container->lineCountOf((int) $player->id)
+            . (($capacity = $container->capacityOf((int) $player->id)) !== null ? '/' . $capacity : '') . ')';
 
+        \App\View\ExchangePanesView::openPanes();
+        \App\View\ExchangePanesView::pane(
+            'Sac' . $bagGauge,
+            $container->contentsOf((int) $player->id),
+            $atCounter ? 'deposit' : '',
+            'Déposer →'
+        );
+        \App\View\ExchangePanesView::pane(
+            'Coffre en banque',
+            $bank->contentsOf((int) $player->id),
+            $atCounter ? 'withdraw' : '',
+            '← Retirer'
+        );
+        \App\View\ExchangePanesView::closePanes();
 
-?>
-        <script src="js/progressive_loader.js?v=20260716"></script>
-        <?php
-        if ($market->HasTarget()) {
-        ?>
-            <script>
-                $(document).ready(function() {
-
-                    var $actions = $('.preview-action');
-
-                    $actions
-                        .append('<button class="action" data-action="withdraw">←Retirer</button><br />');
-
-                    /* Sélecteur restreint au bouton posé juste au-dessus :
-                     * « action » seule est partagée avec l'inventaire et
-                     * les contrats du marché. */
-                    $('.preview-action .action[data-action="withdraw"]').click(function(e) {
-
-
-                        var action = $(this).data('action');
-                        var url = 'merchant.php?targetId=<?php echo isset($target) ? $target->id : "0" ?>&bank'; /* 0 allow valid link even if code should not be used in that case */
-
-                        function send(n) {
-
-                            $.ajax({
-                                type: "POST",
-                                url: url,
-                                data: {
-                                    'action': action,
-                                    'itemId': window.id,
-                                    'instanceId': window.instanceId || '',
-                                    'n': n
-                                },
-                                success: function(data) {
-
-                                    /* Erreur métier : le serveur renvoie sa
-                                     * raison en clair plutôt qu'une page. */
-                                    var text = $('<div></div>').html(data).text().trim();
-
-                                    if (text) {
-
-                                        aooAlert(text).then(aooReload);
-                                        return;
-                                    }
-
-                                    /* Panneau HUD ou page (main.js) */
-                                    aooReload();
-                                }
-                            });
-                        }
-
-                        /* Un objet individualisé est unique : il n'y a
-                         * pas de quantité à demander. */
-                        if (window.instanceId) {
-
-                            send(1);
-                            return;
-                        }
-
-                        aooPrompt('Combien?', window.n).then(function(n) {
-
-                            if (n == null) {
-
-                                return;
-                            }
-                            if (n == '' || n < 1 || n > window.n) {
-
-                                aooAlert('Nombre invalide!');
-                                return;
-                            }
-
-                            send(n);
-                        });
-                    });
-                });
-            </script>
-<?php
+        if ($atCounter) {
+            echo \App\View\ExchangePanesView::script(
+                'api/bank/flows.php',
+                ['targetId' => (int) $target->id],
+                'load_merchant.php?targetId=' . (int) $target->id . '&bank',
+                'Marchand'
+            );
+        } else {
+            echo '<p><sup>Allez au guichet d\'une banque pour déposer ou retirer.</sup></p>';
         }
     }
 }

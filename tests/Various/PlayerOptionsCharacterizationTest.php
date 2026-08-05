@@ -19,10 +19,10 @@ use PHPUnit\Framework\TestCase;
  *
  * Covers the four branches the roadmap calls out (option missing,
  * option exists, duplicate add, end on absent) plus get_options sort
- * order and the hidden-trap isMerchant → marchand follower side effect
- * (Player.php:519-527, :545-548). Any extraction that treats options
- * as a "thin SQL wrapper" and drops the follower hook silently breaks
- * merchant state in prod.
+ * order. The historic isMerchant → marchand follower side effect is
+ * GONE with the counter roles (the building's dialogue carries them,
+ * Version20260806150000) — pinned by its inverse below: options are a
+ * plain SQL wrapper now, no hidden hooks.
  *
  * Requires an initialized aoo4 DB with at least one real player. Skips
  * cleanly otherwise. Every test wraps its mutations in a transaction
@@ -134,38 +134,29 @@ class PlayerOptionsCharacterizationTest extends TestCase
 
     #[Group('player-options-characterization')]
     #[Group('dismantling-phase-2')]
-    public function testIsMerchantOptionManagesMarchandFollowerSideEffect(): void
+    public function testOptionsCarryNoFollowerSideEffectAnymore(): void
     {
-        // Clean pre-existing isMerchant state inside the transaction so
-        // the add/end deltas are unambiguous. Rollback restores the
-        // original rows after the test.
+        // L'inverse de l'ancien piège : le crochet isMerchant → suiveur
+        // « marchand » est parti avec les rôles de comptoir (le dialogue
+        // du bâtiment fait foi). Poser/retirer une option ne touche plus
+        // aucune autre table.
         $this->link->executeStatement(
             "DELETE FROM players_followers WHERE player_id = ? AND name = 'marchand'",
-            [$this->playerId]
-        );
-        $this->link->executeStatement(
-            "DELETE FROM players_options WHERE player_id = ? AND name = 'isMerchant'",
             [$this->playerId]
         );
 
         $player = PlayerFactory::legacy($this->playerId);
         $player->get_data();
 
-        $this->assertSame(0, $this->marchandFollowerCount());
-
         $player->add_option('isMerchant');
-        $this->assertSame(
-            1,
-            $this->marchandFollowerCount(),
-            'add_option(isMerchant) must create a marchand follower row'
-        );
-
-        $player->end_option('isMerchant');
         $this->assertSame(
             0,
             $this->marchandFollowerCount(),
-            'end_option(isMerchant) must delete the marchand follower row'
+            'add_option ne crée plus de suiveur : les options sont un pur wrapper SQL'
         );
+
+        $player->end_option('isMerchant');
+        $this->assertSame(0, $this->marchandFollowerCount());
     }
 
     /**

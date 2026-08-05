@@ -54,7 +54,9 @@ class BuildingService extends BaseService
      */
     public static function deleteEntityRows(\Doctrine\DBAL\Connection $conn, int $playerId): void
     {
-        foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
+        // players_options aussi : toute ligne d'option restée sur l'entité
+        // (héritage d'anciennes données) bloquait le DELETE par sa FK.
+        foreach (['players_bonus', 'players_effects', 'players_items', 'players_options'] as $table) {
             $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$playerId]);
         }
         // Kills et assists référencent players des deux côtés : une entité
@@ -528,6 +530,62 @@ class BuildingService extends BaseService
     }
 
     /**
+     * La même règle de fermeture, calculée depuis la seule entité — pour
+     * les appelants qui n'ont pas déjà les PV sous la main (gardes
+     * d'accès, recherche de bâtiment ouvert).
+     */
+    public function closureReasonOf(int $entityId): ?string
+    {
+        $legacy = PlayerFactory::legacy($entityId);
+        $legacy->get_data();
+        $legacy->get_caracs();
+        $maxPv = (int) ($legacy->caracs->pv ?? 0);
+        $pvPct = $maxPv > 0 ? (int) floor($legacy->getRemaining('pv') / $maxPv * 100) : 100;
+
+        return $this->closureReason($entityId, $this->getDetails($entityId), $pvPct);
+    }
+
+    /**
+     * Refus de comptoir : la cible est un BÂTIMENT fermé — ou null (pas un
+     * bâtiment, ou ouvert). Partagé par les gardes d'accès Market et
+     * WarSchool : l'URL directe ne contourne pas la fiche, qui tait déjà
+     * le dialogue d'un bâtiment fermé (StructureSheetView).
+     */
+    public function closedCounterNotice(\Classes\Player $target): ?string
+    {
+        if ((($target->get_data(false)->player_type) ?? 'real') !== 'building') {
+            return null;
+        }
+
+        $closure = $this->closureReasonOf((int) $target->id);
+        if ($closure === null) {
+            return null;
+        }
+
+        return 'Fermé' . ($closure !== self::CLOSED_BY_HAND ? ' (' . $closure . ')' : '') . ' — personne ne répond.';
+    }
+
+    /**
+     * L'entité tient-elle ce comptoir — et, si demandé, cet ONGLET ?
+     * C'est un BÂTIMENT dont le dialogue mène à l'écran
+     * (« merchant.php », « warschool.php »), voire au drapeau (`bank`,
+     * `bids`, `melee`…).
+     *
+     * Le rôle n'est plus une option de personne : le dialogue du
+     * bâtiment fait foi, une seule source pour les gardes d'accès, la
+     * carte de la case, les corps de page et les API d'écriture.
+     */
+    public function servesCounter(int $entityId, string $script, ?string $tab = null): bool
+    {
+        $details = $this->getDetails($entityId);
+        if ($details === null) {
+            return false;
+        }
+
+        return $this->dialogService->opensScreen($details->getDialog(), $script, $tab);
+    }
+
+    /**
      * The nearest OPEN building around a cell — or why the way is barred.
      *
      * Every cell the building holds counts for the distance (a 2×2 forge
@@ -570,13 +628,7 @@ class BuildingService extends BaseService
             }
 
             $id = (int) $row['id'];
-            $legacy = PlayerFactory::legacy($id);
-            $legacy->get_data();
-            $legacy->get_caracs();
-            $maxPv = (int) ($legacy->caracs->pv ?? 0);
-            $pvPct = $maxPv > 0 ? (int) floor($legacy->getRemaining('pv') / $maxPv * 100) : 100;
-
-            $reason = $this->closureReason($id, $this->getDetails($id), $pvPct);
+            $reason = $this->closureReasonOf($id);
             if ($reason === null) {
                 return ['open' => $id, 'shut' => null];
             }

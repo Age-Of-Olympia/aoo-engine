@@ -36,10 +36,45 @@ if($marketAccessError !=null){
 }
 
 
+/* Chaque comptoir ne sert que SES onglets — ceux que son dialogue
+ * mentionne (BuildingService::servesCounter) : la banque dépose et
+ * retire, l'échoppe tient les étals, chacune est sourde au comptoir
+ * de l'autre. Le menu suit, et la branche refuse ce que le menu ne
+ * propose pas : l'URL directe ne sert à rien. */
+$buildingService = new \App\Service\BuildingService();
+
+$merchantTabs = array(
+    'bids'      => '<button class="sell-button"><span class="ra ra-gavel"></span> Offres de Vente</button>',
+    'asks'      => '<button class="buy-button"><span class="ra ra-scroll-unfurled"></span> Demandes d\'Achat</button>',
+    'exchanges' => '<button class="exchange-button"><span class="ra ra-x-mark"></span> Echanges</button>',
+    'bank'      => '<button><span class="ra ra-gold-bar"></span> Banque</button>',
+    'inventory' => '<button><span class="ra ra-key"></span> Inventaire</button>',
+);
+
+$servedTabs = array();
+foreach(array_keys($merchantTabs) as $tab){
+    if($buildingService->servesCounter((int) $target->id, 'merchant.php', $tab)){
+        $servedTabs[] = $tab;
+    }
+}
+
+foreach(array_keys($merchantTabs) as $tab){
+    if(isset($_GET[$tab]) && !in_array($tab, $servedTabs, true)){
+        exit('On ne sert pas cela à ce comptoir.');
+    }
+}
+
+
 // menu
 if(!isset($_GET['hideMenu'])){
 
-    echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="merchant.php?targetId='. $target->id .'"><button><span class="ra ra-speech-bubbles"></span> </button></a><a href="merchant.php?targetId='. $target->id .'&bids"><button class="sell-button"><span class="ra ra-gavel"></span> Offres de Vente</button></a><a href="merchant.php?targetId='. $target->id .'&asks"><button class="buy-button"><span class="ra ra-scroll-unfurled"></span> Demandes d\'Achat</button></a><a href="merchant.php?targetId='. $target->id .'&exchanges"><button class="exchange-button"><span class="ra ra-x-mark"></span> Echanges</button></a><a href="merchant.php?targetId='. $target->id .'&bank"><button><span class="ra ra-gold-bar"></span> Banque</button></a><a href="merchant.php?targetId='. $target->id .'&inventory"><button><span class="ra ra-key"></span> Inventaire</button></a></div>';
+    echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="merchant.php?targetId='. $target->id .'"><button><span class="ra ra-speech-bubbles"></span> </button></a>';
+
+    foreach($servedTabs as $tab){
+        echo '<a href="merchant.php?targetId='. $target->id .'&'. $tab .'">'. $merchantTabs[$tab] .'</a>';
+    }
+
+    echo '</div>';
 }
 
 
@@ -78,9 +113,10 @@ elseif(isset($_GET['inventory'])){
     InventoryView::renderInventory(itemsFromBank:false);
 }
 else{
-    echo '<h1>Saruta & Frères</h1>
-    Marchands d\'Olympia
-    ';
+    /* Le comptoir est un BÂTIMENT (la garde ne laisse passer que lui) :
+     * son dialogue (buildings.dialog — échoppe, banque…) et son visuel. */
+    $details = (new \App\Service\BuildingService())->getDetails((int) $target->id);
+    $dialog = (string) $details?->getDialog();
 
     $player->get_data();
 
@@ -89,14 +125,19 @@ else{
 
     if(!file_exists($bg)){
 
-        $bg = 'img/dialogs/bg/marchand.webp';
+        /* Sprite du type, sinon le même repli « initiales dans un
+         * cadre » que la fiche (un type sans visuel résout à ''). */
+        $bg = \App\Service\BuildingService::resolveAvatar((string) ($target->data->race ?? ''));
+        if ($bg === '') {
+            $bg = \Classes\View::structureInitialsAvatar((string) $target->data->name);
+        }
     }
 
 
     $options = array(
         'name'=>$target->data->name,
         'avatar'=>$bg,
-        'dialog'=>'marchand',
+        'dialog'=>$dialog,
         'text'=>'',
         'player'=>$player,
         'target'=>$target

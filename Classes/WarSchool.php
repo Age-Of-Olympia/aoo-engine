@@ -29,13 +29,25 @@ class WarSchool
      */
     public static function checkAccess(Player $player, Player $potentialTrainer): ?string
     {
-        if (!$potentialTrainer->have_option('isTrainer')) {
+        // Le rôle n'est plus une option de personne : un BÂTIMENT enseigne
+        // parce que son dialogue mène à l'école.
+        $buildingService = new \App\Service\BuildingService();
+        if (!$buildingService->servesCounter((int) $potentialTrainer->id, 'warschool.php')) {
             return 'error not trainer';
         }
 
-        // distance
-        $distance = View::get_distance(
+        // Fermée, l'école n'enseigne à personne — même règle de fermeture
+        // unique que le comptoir du marchand.
+        $closedNotice = $buildingService->closedCounterNotice($potentialTrainer);
+        if ($closedNotice !== null) {
+            return $closedNotice;
+        }
+
+        // distance à la case la plus proche : une bâtisse multi-cases
+        // enseigne par chacun de ses côtés (point déclaré pour un personnage)
+        $distance = View::get_distance_to_entity(
             $player->getCoords(),
+            (int) $potentialTrainer->id,
             $potentialTrainer->getCoords()
         );
 
