@@ -318,7 +318,10 @@ if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMod
     if ($player->have_effect("boue")) {
         $footstepDuration = 2;
     }
-    if(!$player->have_effect("leger")){
+    /* Sans direction, pas de trace : emprunter le passage de SA case
+     * (escalier, tp) n'est pas un pas — et l'élément « trace_pas_ » nu
+     * n'existe pas au catalogue. */
+    if($footstep !== 'trace_pas_' && !$player->have_effect("leger")){
         /* Pas de purge de cache ici : Player::go() ci-dessous purge déjà
          * la case d'origine (celle de la trace) et la destination. La
          * demander une seconde fois doublerait, à CHAQUE déplacement, la

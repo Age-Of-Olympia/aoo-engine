@@ -377,6 +377,10 @@ $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
 // marcher sur la case ramasse (go.php) — ou le bouton sur sa propre case.
 \App\View\Observe\GroundLootView::render($player, (int) $x, (int) $y, $coords);
 
+// Le passage sous ses pieds (tp de SA case) : Monter / Descendre —
+// l'arrivée d'un escalier est sa propre case, aucun pas n'y repasse.
+\App\View\Observe\PassageView::render($player, (int) $x, (int) $y, $coords);
+
 // Ce que tiennent les contenants de la case — visible seulement ouvert
 // et pour les siens (règle du foyer).
 \App\View\Observe\ContainerPeekView::render($player, (int) $x, (int) $y, $coords);
@@ -431,7 +435,7 @@ if(!empty($card)){
     }
 
     ?>
-    <script src="js/observe.js?v=20260805a"></script>
+    <script src="js/observe.js?v=20260805b"></script>
     <?php
 }
 

@@ -156,6 +156,22 @@ $(document).off('click.pickupOwnTile').on('click.pickupOwnTile', '#pickup-own-ti
         .then(function(t){ aooAlert(t).then(function(){ document.location.reload(); }); });
 });
 
+/* Emprunter le passage sous ses pieds (tp de SA case) : rejoue le
+   déplacement vers sa propre case — go.php accepte la distance 0 et
+   déclenche les triggers de la case. Réponse vide = parti : on
+   rafraîchit ; sinon go.php raconte (alerte, refus). */
+$(document).off('click.takePassage').on('click.takePassage', '#take-passage', function(){
+
+    var b = this;
+    b.disabled = true;
+
+    $.post('go.php', {coords: this.getAttribute('data-coords')}, function(data){
+        if($.trim(data) !== ''){ $('#ajax-data').html(data); return; }
+        if(typeof window.hudRefreshAfterMove === 'function'){ window.hudRefreshAfterMove(); }
+        else{ document.location.reload(); }
+    });
+});
+
 /* Ramasser LIGNE À LIGNE : le bois sans le baril. Même délégué
    nettoyé que le balai — le script se ré-exécute à chaque panneau. */
 $(document).off('click.pickupLine').on('click.pickupLine', '.ground-take', function(){
