@@ -321,6 +321,10 @@ class FactionView
             function factionManageCall(payload){
                 aooFetch('api/faction/members.php', payload, null)
                     .then(function(data){
+                        if(data && data.error){
+                            aooAlert(data.error);
+                            return;
+                        }
                         var message = data && data.result && data.result.message ? data.result.message : '';
                         (message ? aooAlert(message) : Promise.resolve()).then(function(){
                             aooPanelOrReload('load_faction.php?faction=' + encodeURIComponent(factionCode), 'Faction');
@@ -570,6 +574,10 @@ class FactionView
             function factionDriveCall(payload){
                 aooFetch('api/faction/drive.php', payload, null)
                     .then(function(data){
+                        if(data && data.error){
+                            aooAlert(data.error);
+                            return;
+                        }
                         var message = data && data.result && data.result.message ? data.result.message : '';
                         (message ? aooAlert(message) : Promise.resolve()).then(function(){
                             document.location = 'index.php';
@@ -697,7 +705,11 @@ class FactionView
                         containerId: $(this).data('target'),
                         open: $(this).data('open')
                     }, null)
-                        .then(function(){
+                        .then(function(data){
+                            if(data && data.error){
+                                aooAlert(data.error);
+                                return;
+                            }
                             aooPanelOrReload('load_faction.php?faction=' + encodeURIComponent(factionCode), 'Faction');
                         })
                         .catch(autoError());

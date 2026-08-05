@@ -130,7 +130,10 @@ final class TopBarView
                     $(document).off("click.stopImpersonation", "#hud-stop-impersonation")
                         .on("click.stopImpersonation", "#hud-stop-impersonation", function(){
                             aooFetch("api/faction/drive.php", { action: "release" }, null)
-                                .then(function(){ document.location = "index.php"; })
+                                .then(function(data){
+                                    if(data && data.error){ aooAlert(data.error); return; }
+                                    document.location = "index.php";
+                                })
                                 .catch(autoError());
                         });
                 </script>';

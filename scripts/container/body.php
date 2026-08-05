@@ -119,7 +119,13 @@ function renderContainerScript(int $containerId): string
         function containerCall(payload){
             payload.containerId = containerId;
             aooFetch('api/container/flows.php', payload, null)
-                .then(function(){
+                .then(function(data){
+                    /* A refusal answers 200 with {error}: SAY it —
+                     * a silent reload looked like nothing happened. */
+                    if(data && data.error){
+                        aooAlert(data.error);
+                        return;
+                    }
                     /* Back to the same panel, like the faction gestures. */
                     aooPanelOrReload('load_container.php?targetId=' + containerId, 'Contenant');
                 })
