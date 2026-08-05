@@ -95,14 +95,14 @@ class RequiresAmmoCondition extends BaseCondition implements HasParameterSchemaI
                     if (!$actor->isSimulated()) {
                         $dropCoords = clone $target->coords;
                         $coordsId = View::get_free_coords_id_arround($dropCoords, $p=1);
-                        $values = array(
-                        'item_id'=>$actor->emplacements->main1->id,
-                        'coords_id'=>$coordsId,
-                        'n'=>1
-                        );
-
+                        /* Upsert: the unique key merges the thrown weapon
+                         * into the tile's existing stack line, if any. */
                         $db = new Db();
-                        $db->insert('map_items', $values);
+                        $db->exe(
+                            'INSERT INTO map_items (item_id, coords_id, n) VALUES (?, ?, 1)
+                             ON DUPLICATE KEY UPDATE n = n + 1',
+                            [$actor->emplacements->main1->id, $coordsId]
+                        );
 
                         $actor->emplacements->main1->add_item($actor, -1);
 

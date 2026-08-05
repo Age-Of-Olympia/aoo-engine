@@ -101,9 +101,8 @@ class GroundLootService
     {
         $db = new Db();
 
-        /* SUM, not first row: map_items has no unique key — repeated
-         * drops pile rows for the same item, and crediting one while
-         * deleting all would eat the rest. */
+        /* One row per (tile, item) since the unique key; SUM keeps
+         * tolerating an absent line without a special case. */
         $total = (int) $db->exe(
             'SELECT COALESCE(SUM(n), 0) AS n FROM map_items WHERE coords_id = ? AND item_id = ?',
             [$coordsId, $itemId]
