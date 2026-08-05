@@ -2014,6 +2014,34 @@ body:has(#hud) #load-caracs .progress-bar {
     float: none;
 }
 
+/* The preview reads like a card: image LEFT, description RIGHT — the
+ * stacked legacy layout wasted the panel's width, and a long text
+ * spilled over the row below (the AE counter). The grid grows with
+ * the text instead of overflowing a fixed 250px box; the action
+ * buttons keep their absolute top-right corner, cleared by the
+ * padding. */
+.hud-panel-content .inventory-container {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    grid-template-areas:
+        "n n"
+        "img text"
+        "state text";
+    column-gap: 14px;
+    height: auto;
+    min-height: 175px;
+    padding-right: 112px;
+}
+.hud-panel-content .preview-n { position: static; grid-area: n; margin: 0 0 4px; }
+.hud-panel-content .preview-img { grid-area: img; }
+.hud-panel-content .preview-state { grid-area: state; }
+.hud-panel-content .preview-text {
+    grid-area: text;
+    margin-top: 0;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
 body:has(#hud) #load-caracs table {
     width: 100%;
     box-sizing: border-box;
