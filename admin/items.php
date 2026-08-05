@@ -595,10 +595,13 @@ function items_render_edit(object $row, string $csrfToken): string
             'form-group', '0 = ne s\'use jamais.')
         . formField('Durabilité max (vie de l\'objet)',
             formInput('durability_max', (string) (int) ($row->durability_max ?? 100), 'type="number" min="1"'),
-            'form-group', 'Vie de départ des exemplaires individualisés — les instances déjà nées gardent la leur.')
-        . formField('Contenance (lignes)',
-            formInput('capacity', $row->capacity === null ? '' : (string) (int) $row->capacity, 'type="number" min="0"'),
-            'form-group', 'Coffres : nombre de LIGNES de contenu (une pile d\'un objet = une ligne, un exemplaire = une ligne). Vide = illimité.');
+            'form-group', 'Vie de départ des exemplaires individualisés — les instances déjà nées gardent la leur.');
+
+    /* Its own section, not a line lost in the folded wear block: a
+     * chest wears nothing, so « Usure » stays shut and hid the field. */
+    $contenant = formField('Contenance (lignes)',
+        formInput('capacity', $row->capacity === null ? '' : (string) (int) $row->capacity, 'type="number" min="0"'),
+        'form-group', 'Nombre de LIGNES de contenu (une pile d\'un objet = une ligne, un exemplaire = une ligne). Vide = illimité — ce que tout objet non-contenant garde.');
 
     $caracsCol = '<p class="text-muted mb-2" style="font-size:88%">Double lecture selon le type :'
         . ' sur un <b>équipement</b>, modificateurs du porteur tant que l\'objet est porté ;'
@@ -677,6 +680,9 @@ function items_render_edit(object $row, string $csrfToken): string
             $wearRate > 0 || $triggers !== [], $usure, 'equipement',
             $wearRate > 0 || $triggers !== [],
             ($wearRate > 0 || $triggers !== []) && $typeValue !== 'equipement')
+        . items_edit_section('Contenant <small class="text-muted">(coffres)</small>',
+            $row->capacity !== null ? (int) $row->capacity . ' lignes' : 'sans limite',
+            $row->capacity !== null, $contenant)
         . items_edit_section('Caractéristiques',
             $caracsCount > 0 ? $caracsCount . ' modificateur' . ($caracsCount > 1 ? 's' : '') : '—',
             $caracsCount > 0, $caracsCol)
