@@ -192,7 +192,7 @@ if($goCoords->z < 0){
         $_POST['digX'] = (string) $goCoords->x;
         $_POST['digY'] = (string) $goCoords->y;
 
-        $digAction = \App\Action\ActionFactory::getAction('creuser');
+        $digAction = \App\Factory\ActionFactory::getAction('creuser');
         if($digAction === null){
 
             exit('error creuser action missing (run migrations)');
