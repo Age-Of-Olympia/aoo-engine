@@ -48,8 +48,12 @@ if(!empty($_POST['switch'])){
     }
 
     /* The switch itself is the SAME gesture as taking a building's
-     * commands — one method, whatever the mask. */
-    (new \App\Service\ImpersonationService())->driveAs((int) $_POST['switch']);
+     * commands — one method, whatever the mask, depth one included. */
+    try {
+        (new \App\Service\ImpersonationService())->driveAs((int) $_POST['switch']);
+    } catch (\RuntimeException $e) {
+        exit($e->getMessage());
+    }
 
     exit();
 }

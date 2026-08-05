@@ -15,6 +15,20 @@ final class ImpersonationService
     /** Puts the session at the entity's commands. */
     public function driveAs(int $entityId): void
     {
+        $mainId = (int) ($_SESSION['mainPlayerId'] ?? 0);
+
+        /* Depth ONE: a mask is worn from one's own face only — going
+         * home is always allowed. Chaining masks (a building from a
+         * building, a PNJ's borrowed rights) would let a worn identity
+         * open doors its wearer never owned. */
+        if (
+            $entityId !== $mainId
+            && $mainId > 0
+            && (int) ($_SESSION['playerId'] ?? 0) !== $mainId
+        ) {
+            throw new \RuntimeException('On ne porte pas un masque par-dessus un autre.');
+        }
+
         $_SESSION['playerId'] = $entityId;
 
         // The driven entity wakes: same touch as a login.
