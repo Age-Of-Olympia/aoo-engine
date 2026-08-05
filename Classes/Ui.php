@@ -38,7 +38,7 @@ class Ui{
                 <script src="js/main.js?v=20260805"></script>
                 <script src="js/console.js?v=20260614"></script>
                 ' . self::characterStoreTag() . '
-                <link href="css/main.min.css?v=20260719" rel="stylesheet">
+                <link href="css/main.min.css?v=20260805" rel="stylesheet">
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
         // Environment-specific body background: test/experimental get a distinct
@@ -365,20 +365,25 @@ class Ui{
             ';
 
 
+        /* Two explicit columns: the image block LEFT, the description
+         * RIGHT — structure in the markup, so no stylesheet cascade can
+         * stack them again. */
         echo '
             <div class="inventory-preview">
 
-                <div class="preview-n">x'. $defaultItemN .'</div>
+                <div class="preview-left">
+                    <div class="preview-n">x'. $defaultItemN .'</div>
 
-                <div class="preview-img">
-                    <img
-                        src="img/items/'. $defaultItem->row->name .'.webp"
-                        data-filler="img/ui/fillers/150.png"
-                        width="150"
-                        height="150"
-                    />
+                    <div class="preview-img">
+                        <img
+                            src="img/items/'. $defaultItem->row->name .'.webp"
+                            data-filler="img/ui/fillers/150.png"
+                            width="150"
+                            height="150"
+                        />
+                    </div>
+                    <div class="preview-state" style="color:#7a4a12;font-weight:bold;"></div>
                 </div>
-                <div class="preview-state" style="color:#7a4a12;font-weight:bold;"></div>
                 <div class="preview-text">
                     '. $defaultItem->data->text .'
                 </div>

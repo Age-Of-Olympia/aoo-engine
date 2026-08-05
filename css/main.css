@@ -1148,12 +1148,27 @@ article.pnj {
     position: relative;
 }
 
+/* Image block LEFT, description RIGHT: the preview is a flex row of
+ * [.preview-left | .preview-text], the action buttons keep their
+ * absolute top-right corner (padding clears them). */
+.inventory-preview {
+
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    height: 100%;
+    padding-right: 110px;
+    box-sizing: border-box;
+}
+
+.preview-left {
+
+    flex: 0 0 150px;
+}
+
 .preview-n{
 
-    position: absolute;
-    top: 0;
-    left: 0;
-    margin: 5px;
+    margin: 0 0 4px;
 }
 
 .preview-img img {
@@ -1163,9 +1178,10 @@ article.pnj {
 
 .preview-text {
 
-    margin-top: 10px;
-    max-height: 90px;
-    overflow-y: scroll;
+    flex: 1 1 auto;
+    margin-top: 0;
+    height: 100%;
+    overflow-y: auto;
 }
 
 .preview-action {
