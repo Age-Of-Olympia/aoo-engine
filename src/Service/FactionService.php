@@ -368,6 +368,11 @@ class FactionService
             [$factionCode, $faction !== null ? $this->getDefaultRolePosition($faction) : 0, (int) $target['id']]
         );
         (new AuditService())->addAuditLog("faction {$factionCode}: #{$actorId} recrute #{$target['id']}");
+        (new FactionLogService())->add(
+            $factionCode,
+            $actorId,
+            $this->nameOf($actorId) . ' a recruté ' . $target['name'] . '.'
+        );
 
         return (string) $target['name'];
     }
@@ -391,7 +396,7 @@ class FactionService
 
         $conn = $this->entityManager->getConnection();
         $factionCode = (string) $conn->fetchOne('SELECT faction FROM players WHERE id = ?', [$actorId]);
-        $target = $conn->fetchAssociative('SELECT faction, factionRole FROM players WHERE id = ?', [$targetId]);
+        $target = $conn->fetchAssociative('SELECT name, faction, factionRole FROM players WHERE id = ?', [$targetId]);
 
         if ($target === false || (string) $target['faction'] !== $factionCode) {
             throw new RuntimeException('Cette personne n\'est pas des vôtres.');
@@ -409,6 +414,11 @@ class FactionService
             [$targetId]
         );
         (new AuditService())->addAuditLog("faction {$factionCode}: #{$actorId} renvoie #{$targetId}");
+        (new FactionLogService())->add(
+            $factionCode,
+            $actorId,
+            $this->nameOf($actorId) . ' a renvoyé ' . $target['name'] . '.'
+        );
     }
 
     /**
@@ -428,14 +438,14 @@ class FactionService
 
         $conn = $this->entityManager->getConnection();
         $factionCode = (string) $conn->fetchOne('SELECT faction FROM players WHERE id = ?', [$actorId]);
-        $target = $conn->fetchAssociative('SELECT faction, factionRole FROM players WHERE id = ?', [$targetId]);
+        $target = $conn->fetchAssociative('SELECT name, faction, factionRole FROM players WHERE id = ?', [$targetId]);
 
         if ($target === false || (string) $target['faction'] !== $factionCode) {
             throw new RuntimeException('Cette personne n\'est pas des vôtres.');
         }
 
-        $known = $conn->fetchOne(
-            'SELECT fr.id FROM faction_roles fr
+        $known = $conn->fetchAssociative(
+            'SELECT fr.id, fr.name, fr.name_alt FROM faction_roles fr
                JOIN factions f ON f.id = fr.faction_id
               WHERE CONVERT(f.code USING utf8mb4) = CONVERT(? USING utf8mb4) AND fr.position = ?',
             [$factionCode, $position]
@@ -463,6 +473,22 @@ class FactionService
             [$position, $variant === 1 ? 1 : 0, $targetId]
         );
         (new AuditService())->addAuditLog("faction {$factionCode}: #{$actorId} donne le rang {$position} à #{$targetId}");
+
+        $rankLabel = $variant === 1 && (string) $known['name_alt'] !== ''
+            ? (string) $known['name_alt']
+            : (string) $known['name'];
+        (new FactionLogService())->add(
+            $factionCode,
+            $actorId,
+            $this->nameOf($actorId) . ' a nommé ' . $target['name'] . ' ' . $rankLabel . '.'
+        );
+    }
+
+    /** The display name behind an id — journal lines resolve names at the gesture. */
+    private function nameOf(int $playerId): string
+    {
+        return (string) $this->entityManager->getConnection()
+            ->fetchOne('SELECT name FROM players WHERE id = ?', [$playerId]);
     }
 
     /** The capability flags a ladder-holder may grant — the landing rank

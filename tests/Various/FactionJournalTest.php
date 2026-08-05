@@ -89,6 +89,44 @@ class FactionJournalTest extends LegacyPlayerFixtureTestCase
         $this->assertStringContainsString($member->data->name, $messages[2], 'names resolved at the gesture');
     }
 
+    public function testTheHouseSeesItsComingsAndGoings(): void
+    {
+        // A summit rank that manages: recruits, names, banishes.
+        $this->link->executeStatement(
+            'INSERT INTO faction_roles (faction_id, position, name, name_alt, defaultRole, addMember, kickMember, editRole)
+             VALUES (?, 1, "Chef", "Cheffe", 0, 1, 1, 1)',
+            [$this->factionId]
+        );
+        \App\Service\FactionService::clearCache();
+
+        $chief = $this->createRealPlayer('GmChefJournal');
+        $chief->get_data();
+        $this->link->executeStatement(
+            'UPDATE players SET faction = ?, factionRole = 1 WHERE id = ?',
+            [self::CODE, $chief->id]
+        );
+        $recruit = $this->createRealPlayer('GmRecrueJournal');
+        $recruit->get_data();
+        // The fixture race may carry a faction: recruits come factionless.
+        $this->link->executeStatement(
+            "UPDATE players SET faction = '', factionRole = 0 WHERE id = ?",
+            [$recruit->id]
+        );
+
+        $service = new \App\Service\FactionService();
+        $service->addMember((int) $chief->id, $recruit->data->name);
+        $service->assignRole((int) $chief->id, (int) $recruit->id, 0);
+        $service->kickMember((int) $chief->id, (int) $recruit->id);
+
+        $messages = array_column((new FactionLogService())->listOf(self::CODE), 'message');
+
+        $this->assertCount(3, $messages, 'three gestures, three lines');
+        $this->assertStringContainsString('a renvoyé ' . $recruit->data->name, $messages[0], 'newest first');
+        $this->assertStringContainsString('a nommé ' . $recruit->data->name . ' Garde', $messages[1]);
+        $this->assertStringContainsString('a recruté ' . $recruit->data->name, $messages[2]);
+        $this->assertStringContainsString($chief->data->name, $messages[2], 'names resolved at the gesture');
+    }
+
     public function testTheJournalHasItsReaders(): void
     {
         // The fixture rank (Garde, position 0) holds useChest but not showLogs.
