@@ -127,13 +127,9 @@ final class ContainerService extends BaseService
     {
         $this->assertUsable($containerId, $actorId);
 
-        /* A stack joining an EXISTING line takes no room; a new line
-         * asks the capacity. */
-        $existingLine = $this->conn->fetchOne(
-            "SELECT 1 FROM players_items WHERE player_id = ? AND item_id = ? AND slot = '' AND equiped = ''",
-            [$containerId, $itemId]
-        );
-        if ($existingLine === false) {
+        /* A stack joining an EXISTING line takes no room, the coin
+         * never does; a new line asks the capacity. */
+        if ($this->stackNeedsRoom($containerId, $itemId)) {
             $this->assertRoomForALine($containerId);
         }
 
@@ -146,6 +142,9 @@ final class ContainerService extends BaseService
     public function withdrawStack(int $containerId, int $actorId, int $itemId, int $n): void
     {
         $this->assertUsable($containerId, $actorId);
+        if ($this->stackNeedsRoom($actorId, $itemId)) {
+            $this->assertRoomForALine($actorId, 'Votre sac est plein.');
+        }
         $this->moveStack($containerId, $actorId, $itemId, $n, 'Le contenant n\'a pas cela.');
         $this->journal($containerId, $actorId, 'a pris ' . $n . ' × ' . $this->itemLabel($itemId) . ' dans');
         $this->addAuditLog("container #{$containerId}: #{$actorId} en retire {$n} × item #{$itemId}");
@@ -170,6 +169,7 @@ final class ContainerService extends BaseService
     public function withdrawExemplar(int $containerId, int $actorId, int $instanceId): void
     {
         $this->assertUsable($containerId, $actorId);
+        $this->assertRoomForALine($actorId, 'Votre sac est plein.');
 
         $entityId = $this->conn->fetchOne(
             "SELECT e.id FROM players e
@@ -312,34 +312,89 @@ final class ContainerService extends BaseService
         });
     }
 
+    /** The coin: it counts for no line, in a bag or in a chest. */
+    private const COIN = 'or';
+
     /**
-     * The container's capacity in content LINES — its item type's
-     * `capacity` column. Null (unlimited) for buildings and for types
-     * the admin left unset.
+     * The capacity in content LINES — one rule for every holder: an
+     * OBJECT container reads its item type (`items.capacity`, NULL =
+     * unlimited); everything else reads its race (`races.capacity`,
+     * 0 = unlimited) — which is how a CHARACTER's bag gets its lines.
      */
     public function capacityOf(int $containerId): ?int
     {
-        $capacity = $this->conn->fetchOne(
-            'SELECT it.capacity FROM item_instances i
-               JOIN items it ON it.id = i.item_id
-              WHERE i.entity_id = ?',
+        $row = $this->conn->fetchAssociative(
+            'SELECT it.capacity AS item_capacity, i.id AS instance_id, r.capacity AS race_capacity
+               FROM players p
+               LEFT JOIN item_instances i ON i.entity_id = p.id
+               LEFT JOIN items it ON it.id = i.item_id
+               LEFT JOIN races r ON CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4)
+              WHERE p.id = ?',
             [$containerId]
         );
+        if ($row === false) {
+            return null;
+        }
 
-        return ($capacity === false || $capacity === null) ? null : (int) $capacity;
+        if ($row['instance_id'] !== null) {
+            return $row['item_capacity'] === null ? null : (int) $row['item_capacity'];
+        }
+
+        return (int) ($row['race_capacity'] ?? 0) > 0 ? (int) $row['race_capacity'] : null;
+    }
+
+    /**
+     * How many lines a holder carries — the coin and what is equipped
+     * count for nothing, exactly what capacityOf() limits.
+     */
+    public function lineCountOf(int $holderId): int
+    {
+        return (int) $this->conn->fetchOne(
+            "SELECT
+                (SELECT COUNT(*) FROM players_items pi
+                   JOIN items it ON it.id = pi.item_id
+                  WHERE pi.player_id = ? AND pi.slot = '' AND pi.equiped = '' AND pi.n > 0
+                    AND it.name != '" . self::COIN . "')
+              + (SELECT COUNT(*) FROM players e
+                   JOIN item_instances ii ON ii.entity_id = e.id
+                  WHERE e.holder_id = ? AND e.slot = '' AND ii.destroyed = 0)",
+            [$holderId, $holderId]
+        );
+    }
+
+    /** May one more line enter — or is the holder at its ceiling? */
+    public function hasRoomForALine(int $holderId): bool
+    {
+        $capacity = $this->capacityOf($holderId);
+
+        return $capacity === null || $this->lineCountOf($holderId) < $capacity;
+    }
+
+    /**
+     * Would this stack need a NEW line in that holder's bag? The coin
+     * never does, nor does a stack joining its existing line.
+     */
+    public function stackNeedsRoom(int $holderId, int $itemId): bool
+    {
+        $isCoin = (bool) $this->conn->fetchOne(
+            "SELECT 1 FROM items WHERE id = ? AND name = '" . self::COIN . "'",
+            [$itemId]
+        );
+        if ($isCoin) {
+            return false;
+        }
+
+        return $this->conn->fetchOne(
+            "SELECT 1 FROM players_items WHERE player_id = ? AND item_id = ? AND slot = '' AND equiped = ''",
+            [$holderId, $itemId]
+        ) === false;
     }
 
     /** One more line must fit — a stack line or an exemplar, one each. */
-    private function assertRoomForALine(int $containerId): void
+    private function assertRoomForALine(int $holderId, string $refusal = 'Le contenant est plein.'): void
     {
-        $capacity = $this->capacityOf($containerId);
-        if ($capacity === null) {
-            return;
-        }
-
-        $contents = $this->contentsOf($containerId);
-        if (count($contents['stacks']) + count($contents['exemplars']) >= $capacity) {
-            throw new RuntimeException('Le contenant est plein.');
+        if (!$this->hasRoomForALine($holderId)) {
+            throw new RuntimeException($refusal);
         }
     }
 

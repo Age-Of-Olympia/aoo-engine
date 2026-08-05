@@ -886,12 +886,18 @@ class ItemInstanceService extends BaseService
         );
 
         $location = new \App\Service\Map\EntityLocationService($conn);
+        $capacity = new ContainerService();
         $labels = [];
         foreach ($rows as $row) {
             // A container still holding something is not picked up: pocketing
             // it would take its contents along without anyone deciding to.
             if ($location->holdsAnything((int) $row['entity_id'])) {
                 continue;
+            }
+
+            // A full bag takes nothing more: the rest stays on the ground.
+            if (!$capacity->hasRoomForALine($playerId)) {
+                break;
             }
 
             $taken = false;

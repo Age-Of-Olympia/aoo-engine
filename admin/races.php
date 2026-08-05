@@ -322,6 +322,14 @@ function race_render_form(?Race $race, string $csrfToken, TypeEditorFace $face):
             . '</div>';
     }
 
+    /* The bag joins the caracs grid: its lines are a stat of the
+     * people, like its legs or its eyes. 0 = unlimited. */
+    $caracInputs .= '<div class="form-group col-md-3 col-6">'
+        . '<label title="Contenance du sac, en lignes de contenu (une pile d\'un objet = une ligne, un exemplaire = une ligne ; l\'or et l\'équipé ne comptent pas). 0 = sans limite.">Sac</label>'
+        . '<input type="number" class="form-control" name="capacity" min="0"'
+        . ' value="' . (int) ($isEdit ? $race->getCapacity() : 0) . '">'
+        . '</div>';
+
     $starterActions = $isEdit ? implode("\n", $race->getStarterActionNames()) : '';
     $spells = $isEdit ? implode("\n", $race->getSpellNames()) : '';
 

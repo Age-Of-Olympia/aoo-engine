@@ -248,6 +248,44 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         }
     }
 
+    public function testABagHasItsLinesToo(): void
+    {
+        $chest = $this->chestAt(50, 32);
+        $actor = $this->actorNextTo(50, 32, 'GmSacPlein');
+        $race = (string) $this->link->fetchOne('SELECT race FROM players WHERE id = ?', [$actor]);
+        $before = (int) $this->link->fetchOne('SELECT capacity FROM races WHERE name = ?', [$race]);
+
+        $bois = $this->giveStack($actor, 'bois', 2);
+        $pierre = $this->giveStack($chest, 'pierre', 3);
+        $or = $this->giveStack($chest, 'or', 5);
+        $this->link->executeStatement('UPDATE races SET capacity = 1 WHERE name = ?', [$race]);
+
+        try {
+            $service = new ContainerService();
+
+            $this->assertSame(1, $service->lineCountOf($actor), 'one bois line');
+            $this->assertSame(1, $service->capacityOf($actor), 'the race grants the lines');
+
+            // A new line into a full bag refuses; joining a line passes.
+            try {
+                $service->withdrawStack($chest, $actor, $pierre, 1);
+                $this->fail('a full bag must refuse a new line');
+            } catch (\RuntimeException $e) {
+                $this->assertSame('Votre sac est plein.', $e->getMessage());
+            }
+
+            $service->depositStack($chest, $actor, $bois, 1);
+            $this->assertSame(1, $this->stackOf($actor, $bois), 'giving away is never barred');
+
+            // The coin counts for nothing: it enters a full bag freely.
+            $service->withdrawStack($chest, $actor, $or, 5);
+            $this->assertSame(5, $this->stackOf($actor, $or));
+            $this->assertSame(1, $service->lineCountOf($actor), 'gold is no line');
+        } finally {
+            $this->link->executeStatement('UPDATE races SET capacity = ? WHERE name = ?', [$before, $race]);
+        }
+    }
+
     public function testAFactionChestFollowsTheRank(): void
     {
         $code = $this->factionWithRanks();

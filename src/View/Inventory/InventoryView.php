@@ -74,6 +74,15 @@ class InventoryView
         /* Compteur d'Actions d'Équipement : la carac n'apparaît plus
          * dans le nouveau HUD (pilules et page d'amélioration l'ignorent),
          * on l'affiche là où elle sert — équiper/déséquiper un objet. */
+        /* The bag section carries its own gauge (Ui::print_inventory,
+         * $bagLabel): the limit reads exactly on what it counts —
+         * ContainerService is the one rule that also refuses the line. */
+        $capacityService = new \App\Service\ContainerService();
+        $bagCapacity = $capacityService->capacityOf((int) $player->id);
+        $bagLabel = $itemsFromBank ? null
+            : 'Dans votre sac (' . $capacityService->lineCountOf((int) $player->id)
+                . ($bagCapacity !== null ? '/' . $bagCapacity : '') . ' lignes)';
+
         $aeInfo = '<span class="inventory-ae" style="float: left; line-height: 28px;" flow="right" tooltip="'
             . CARACS_TXT_LONG['ae'] . '">'
             . 'Actions d\'équipement : ' . $player->getRemaining('ae') . '/' . $player->get_caracsJson()->ae
@@ -84,7 +93,8 @@ class InventoryView
             $aeInfo,
             rowActions: $hudPanel,
             aeLeft: $player->getRemaining('ae'),
-            aLeft: $player->getRemaining('a')
+            aLeft: $player->getRemaining('a'),
+            bagLabel: $bagLabel
         );
         $data .= '
 <script>

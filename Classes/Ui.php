@@ -341,7 +341,7 @@ class Ui{
      * @param int|null    $aLeft      Actions restantes : grise Utiliser
      *                                des consommables/structures.
      */
-    public static function print_inventory($itemList, ?string $aeInfo = null, bool $rowActions = false, ?int $aeLeft = null, ?int $aLeft = null){
+    public static function print_inventory($itemList, ?string $aeInfo = null, bool $rowActions = false, ?int $aeLeft = null, ?int $aLeft = null, ?string $bagLabel = null){
 
 
         $defaultItem = new Item(1);
@@ -413,7 +413,35 @@ class Ui{
                 <table border="1">
                     ';
 
-        foreach($itemList as $row){
+        /* Two sections when asked (the inventory page): what is WORN
+         * above, the BAG below with its line gauge in the header — the
+         * limit reads exactly on what it counts. Other callers (bank,
+         * craft, market) keep the flat list. */
+        $groups = [[null, $itemList]];
+        if ($bagLabel !== null) {
+            $worn = [];
+            $bag = [];
+            foreach ($itemList as $k => $r) {
+                if (!empty($r->equiped)) {
+                    $worn[$k] = $r;
+                } else {
+                    $bag[$k] = $r;
+                }
+            }
+            $groups = [['Équipé', $worn], [$bagLabel, $bag]];
+        }
+
+        foreach ($groups as [$sectionTitle, $sectionRows]) {
+
+            if ($sectionTitle !== null && $sectionRows === []) {
+                continue;
+            }
+            if ($sectionTitle !== null) {
+                echo '<tr class="inventory-section"><td colspan="9" style="text-align:center; font-weight:bold; padding: 6px 4px;">'
+                    . $sectionTitle . '</td></tr>';
+            }
+
+        foreach($sectionRows as $row){
 
 
             $item = new Item($row->id, $row);
@@ -602,6 +630,8 @@ class Ui{
             </tr>
             ';
         }
+        }
+
 
         echo '
                 </table>

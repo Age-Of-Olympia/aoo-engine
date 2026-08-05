@@ -58,6 +58,15 @@ try {
 $bag = $service->contentsOf((int) $player->id);
 $held = $service->contentsOf($containerId);
 
+/* Each pane says where it stands: « 3/10 » under a ceiling, a plain
+ * count without one — the same rule that refuses the extra line. */
+$paneGauge = static function (int $holderId) use ($service): string {
+    $capacity = $service->capacityOf($holderId);
+
+    return ' (' . $service->lineCountOf($holderId)
+        . ($capacity !== null ? '/' . $capacity : '') . ')';
+};
+
 /**
  * One pane: what a holder has, each line with its move button.
  *
@@ -90,8 +99,8 @@ function renderContainerPane(string $title, array $contents, string $direction, 
     echo '</table></div>';
 }
 
-renderContainerPane('Votre sac', $bag, 'deposit', 'Déposer →');
-renderContainerPane('Dedans', $held, 'withdraw', '← Prendre');
+renderContainerPane('Sac' . $paneGauge((int) $player->id), $bag, 'deposit', 'Déposer →');
+renderContainerPane('Coffre' . $paneGauge($containerId), $held, 'withdraw', '← Prendre');
 
 echo renderContainerScript($containerId);
 

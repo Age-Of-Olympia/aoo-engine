@@ -114,14 +114,28 @@ class GroundLootService
             return $harvest;
         }
 
+        $capacity = new \App\Service\ContainerService();
+        $bagFull = false;
         while ($row = $res->fetch_object()) {
+            /* A stack joining its line (or the coin) is free; a NEW line
+             * asks the bag — what does not fit stays on the ground. */
+            if ($capacity->stackNeedsRoom((int) $player->id, (int) $row->item_id)
+                && !$capacity->hasRoomForALine((int) $player->id)
+            ) {
+                $bagFull = true;
+                continue;
+            }
+
             $item = new Item($row->item_id);
             $item->get_data();
             $item->add_item($player, $row->n);
             $lootList[] = $item->data->name . ' x' . $row->n;
+            $db->exe('DELETE FROM map_items WHERE coords_id = ? AND item_id = ?', [$coordsId, $row->item_id]);
         }
 
-        $db->delete('map_items', ['coords_id' => $coordsId]);
+        if ($bagFull) {
+            $lootList[] = 'sac plein — le reste attend au sol';
+        }
 
         // add_item invalide le cache pour les piles ; les instances doivent
         // aussi apparaître dès l'ouverture de l'inventaire.

@@ -33,6 +33,12 @@ class TakeItemOutcomeInstruction extends OutcomeInstruction implements HasParame
 
         $targetName = htmlspecialchars((string) ($target->data->name ?? ''), ENT_QUOTES, 'UTF-8');
 
+        // The bag's lines are the race's to grant (ContainerService,
+        // the one capacity rule for bags and chests alike).
+        if (!(new \App\Service\ContainerService())->hasRoomForALine((int) $actor->id)) {
+            return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: ['Votre sac est plein.']);
+        }
+
         $instanceId = (new PlacedExemplarService())->takeInstance((int) $target->id, (int) $actor->id);
         if ($instanceId === null) {
             return new OutcomeResult(
