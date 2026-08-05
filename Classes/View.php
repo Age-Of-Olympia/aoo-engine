@@ -1214,12 +1214,37 @@ class View{
     public static function get_free_coords_id_arround(&$goCoords, $p=1){
 
 
+        /* Sous terre, une case sans sol creusé (map_tiles) est de la roche
+         * pleine : on n'y débarque pas. Sans ce filtre, l'arrivée d'un
+         * escalier tombait dans la roche et go.php démarrait `creuser`
+         * depuis la surface — refusé, l'escalier ne menait jamais en bas. */
+        $dug = null;
 
-        $coordsArround = View::get_coords_arround($goCoords, $p);
+        if($goCoords->z < 0){
+
+            $dug = array();
+
+            $res = (new Db())->exe(
+                'SELECT c.x, c.y FROM map_tiles t INNER JOIN coords c ON c.id = t.coords_id WHERE c.z = ? AND c.plan = ?',
+                array($goCoords->z, $goCoords->plan)
+            );
+
+            while($row = $res->fetch_object()){
+
+                $dug[] = $row->x .','. $row->y;
+            }
+        }
+
 
         $coordsTaken = View::get_coords_taken($goCoords);
 
+        $coordsArround = View::get_coords_arround($goCoords, $p);
         $coordsArround = array_diff($coordsArround, $coordsTaken);
+
+        if($dug !== null){
+
+            $coordsArround = array_intersect($coordsArround, $dug);
+        }
 
 
         while(true){
@@ -1227,11 +1252,33 @@ class View{
 
             if(!count($coordsArround)){
 
+                /* Sous terre : pas de voisine libre au sol creusé — la
+                 * destination elle-même dès qu'elle a un sol (la case de
+                 * l'escalier), plutôt que d'élargir et débarquer à
+                 * plusieurs cases de là. */
+                if($dug !== null && in_array($goCoords->x .','. $goCoords->y, $dug)){
+
+                    break;
+                }
+
                 $p++;
+
+                /* Rien de libre (et creusé, sous terre) à portée. */
+                if($p > 10){
+
+                    break;
+                }
 
                 $coordsArround = View::get_coords_arround($goCoords, $p);
 
                 $coordsArround = array_diff($coordsArround, $coordsTaken);
+
+                if($dug !== null){
+
+                    $coordsArround = array_intersect($coordsArround, $dug);
+                }
+
+                continue;
             }
 
 
