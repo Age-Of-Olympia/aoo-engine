@@ -45,9 +45,11 @@ class PlacedExemplarService extends BaseService
         // Held by somebody: an instance already on a cell, or already wrapped,
         // has no holder and cannot gain a second location.
         $row = $conn->fetchAssociative(
-            "SELECT i.id, i.custom_name, i.destroyed, it.name AS catalog_name, e.slot AS equiped
+            "SELECT i.id, i.custom_name, i.destroyed, it.name AS catalog_name, e.slot AS equiped,
+                    " . ItemInstanceService::WEAR_CURRENT . "
              FROM item_instances i
              JOIN items it ON it.id = i.item_id
+             " . ItemInstanceService::WEAR_JOIN . "
              JOIN players e ON e.id = i.entity_id
              WHERE i.id = ? AND e.holder_id IS NOT NULL",
             [$instanceId]
@@ -59,6 +61,10 @@ class PlacedExemplarService extends BaseService
         }
         if (($row['equiped'] ?? '') !== '') {
             throw new \InvalidArgumentException("Instance #{$instanceId} encore équipée — déséquiper d'abord.");
+        }
+        // What is smashed does not stand back up by being posed: repair first.
+        if (ItemInstanceService::isBroken((int) $row['durability'])) {
+            throw new \InvalidArgumentException('Brisé, cela ne se pose plus — réparez-le d\'abord.');
         }
 
         $name = $row['custom_name'] !== '' ? $row['custom_name'] : ucfirst((string) $row['catalog_name']);

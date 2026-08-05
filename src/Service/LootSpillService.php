@@ -45,6 +45,11 @@ final class LootSpillService
             $entity->id
         );
 
+        /* A corpse is LOOTED — the rolls; a CONTAINER is EMPTIED: its
+         * stored goods drop whole, they are cargo, not battle wreckage.
+         * The walls' fabric keeps its partial-refund roll below. */
+        $isContainer = \App\Enum\EntityCategory::fromPlayerType($entity->data->player_type ?? null)->isStructure();
+
         $lootList = array();
 
         while ($row = $res->fetch_object()) {
@@ -52,7 +57,7 @@ final class LootSpillService
             $loot = new Item($row->item_id, $row);
             $loot->get_data();
 
-            $nbLoot = $this->rollFor((int) $row->n, $this->chanceFor($entity, $loot, $row));
+            $nbLoot = $this->rollFor((int) $row->n, $isContainer ? 100 : $this->chanceFor($entity, $loot, $row));
 
             if ($nbLoot > 0) {
                 $entity->drop($loot, $nbLoot);
@@ -159,11 +164,14 @@ final class LootSpillService
         $location = new \App\Service\Map\EntityLocationService();
         $fallen = array();
 
+        // Same emptied-not-looted rule as the stacks above.
+        $isContainer = \App\Enum\EntityCategory::fromPlayerType($entity->data->player_type ?? null)->isStructure();
+
         foreach ($this->heldExemplars((int) $entity->id) as $child) {
             $loot = new Item((int) $child['item_id'], (object) $child);
             $loot->get_data();
 
-            if ($this->rollFor(1, $this->chanceFor($entity, $loot, (object) $child)) === 0) {
+            if ($this->rollFor(1, $isContainer ? 100 : $this->chanceFor($entity, $loot, (object) $child)) === 0) {
                 // Lost with its holder, like a unit the roll left behind.
                 $location->shelve((int) $child['id']);
                 continue;

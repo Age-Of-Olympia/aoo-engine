@@ -202,11 +202,23 @@ final class EntityLocationService
         return $this->conn->fetchAllAssociative($sql . ' ORDER BY slot, id', $params);
     }
 
-    /** Does this entity hold anything at all? The question a container is asked before it is picked up. */
+    /**
+     * Does this entity hold anything at all? The question a container is
+     * asked before it is picked up — and STACKS count as much as held
+     * exemplars: a chest full of wood was pocketed whole because only
+     * its children were asked.
+     */
     public function holdsAnything(int $entityId): bool
     {
-        return (int) $this->conn->fetchOne(
+        if ((int) $this->conn->fetchOne(
             'SELECT COUNT(*) FROM players WHERE holder_id = ?',
+            [$entityId]
+        ) > 0) {
+            return true;
+        }
+
+        return (int) $this->conn->fetchOne(
+            "SELECT COUNT(*) FROM players_items WHERE player_id = ? AND slot = '' AND n > 0",
             [$entityId]
         ) > 0;
     }
