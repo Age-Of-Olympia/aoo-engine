@@ -2005,6 +2005,15 @@ body:has(#hud) #load-caracs .progress-bar {
     box-sizing: border-box;
 }
 
+/* The panel is the ONE scroller: the legacy page capped .item-list at
+ * 375px with its own scrollbar, which cut the list short mid-screen
+ * inside the sliding panel. */
+.hud-panel-content .item-list {
+    max-height: none;
+    overflow-y: visible;
+    float: none;
+}
+
 body:has(#hud) #load-caracs table {
     width: 100%;
     box-sizing: border-box;
