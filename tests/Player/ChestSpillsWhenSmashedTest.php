@@ -57,8 +57,16 @@ class ChestSpillsWhenSmashedTest extends LegacyPlayerFixtureTestCase
             'the sword starts inside the chest'
         );
 
-        /* No lootChance pin: a container is EMPTIED, not looted — its
-         * stored goods drop whole, whatever the catalog chance says. */
+        // Contents take the CHARACTER loot rules — the chance is pinned
+        // to make the case deterministic.
+        $itemId = (int) $this->link->fetchOne(
+            'SELECT item_id FROM item_instances WHERE entity_id = ?',
+            [$swordId]
+        );
+        $before = $this->link->fetchOne('SELECT lootChance FROM items WHERE id = ?', [$itemId]);
+        $this->link->executeStatement('UPDATE items SET lootChance = 100 WHERE id = ?', [$itemId]);
+
+        try {
         $this->assertTrue((new BuildingService())->vanish($chestId), 'a chest dies like any structure');
 
         $sword = $this->link->fetchAssociative(
@@ -73,6 +81,12 @@ class ChestSpillsWhenSmashedTest extends LegacyPlayerFixtureTestCase
             $sword['slot'],
             'dropped, so it can be picked up — not installed'
         );
+        } finally {
+            $this->link->executeStatement(
+                'UPDATE items SET lootChance = ? WHERE id = ?',
+                [$before, $itemId]
+            );
+        }
     }
 
     public function testASmashedChestEmptiesItsStacksWhole(): void
@@ -89,6 +103,9 @@ class ChestSpillsWhenSmashedTest extends LegacyPlayerFixtureTestCase
              ON DUPLICATE KEY UPDATE n = 7",
             [$chestId, (int) $bois['id']]
         );
+        // Character loot rules, pinned to be deterministic.
+        $chanceBefore = $this->link->fetchOne('SELECT lootChance FROM items WHERE id = ?', [(int) $bois['id']]);
+        $this->link->executeStatement('UPDATE items SET lootChance = 100 WHERE id = ?', [(int) $bois['id']]);
 
         $onTile = fn (): int => (int) $this->link->fetchOne(
             'SELECT COALESCE(SUM(n), 0) FROM map_items WHERE coords_id = ? AND item_id = ?',
@@ -96,13 +113,61 @@ class ChestSpillsWhenSmashedTest extends LegacyPlayerFixtureTestCase
         );
         $before = $onTile();
 
-        $this->assertTrue((new BuildingService())->vanish($chestId));
+        try {
+            $this->assertTrue((new BuildingService())->vanish($chestId));
 
-        $this->assertSame(
-            $before + 7,
-            $onTile(),
-            'every unit lands on the tile: cargo, not battle wreckage'
+            $this->assertSame(
+                $before + 7,
+                $onTile(),
+                'the stacks take the same rolls as a character inventory'
+            );
+        } finally {
+            $this->link->executeStatement(
+                'UPDATE items SET lootChance = ? WHERE id = ?',
+                [$chanceBefore, (int) $bois['id']]
+            );
+        }
+    }
+
+    public function testABrokenChestVanishesButABrokenSwordLies(): void
+    {
+        // The chest: vanish_on_break (seeded) — spills, then erases itself.
+        [$chestId, $swordId, $coordsId] = $this->chestHoldingASword(6, 13);
+        $this->trackEntityId($swordId);
+        $instanceId = (int) $this->link->fetchOne(
+            'SELECT id FROM item_instances WHERE entity_id = ?',
+            [$chestId]
         );
+
+        $service = new \App\Service\PlacedExemplarService();
+        $this->assertSame($instanceId, $service->destroyToGround($chestId));
+
+        $husk = $this->link->fetchAssociative(
+            'SELECT p.coords_id, p.holder_id, i.destroyed FROM players p
+               JOIN item_instances i ON i.entity_id = p.id WHERE p.id = ?',
+            [$chestId]
+        );
+        $this->assertNull($husk['coords_id'], 'no wreck on the tile');
+        $this->assertNull($husk['holder_id'], 'held by nobody');
+        $this->assertSame(1, (int) $husk['destroyed'], 'the object is gone for good');
+
+        // The sword: vanish_on_break = 0 — it lies broken where it stood.
+        $owner = $this->createRealPlayer('GmEpee');
+        $lyingId = $this->installExemplar('gladius', 6, 15, (int) $owner->id);
+        $lyingInstance = (int) $this->link->fetchOne(
+            'SELECT id FROM item_instances WHERE entity_id = ?',
+            [$lyingId]
+        );
+
+        $this->assertSame($lyingInstance, $service->destroyToGround($lyingId));
+        $lying = $this->link->fetchAssociative(
+            'SELECT p.coords_id, p.slot, i.destroyed FROM players p
+               JOIN item_instances i ON i.entity_id = p.id WHERE p.id = ?',
+            [$lyingId]
+        );
+        $this->assertNotNull($lying['coords_id'], 'the sword stays on its tile');
+        $this->assertSame(EntityLocationService::SLOT_DROPPED, $lying['slot']);
+        $this->assertSame(0, (int) $lying['destroyed'], 'broken, not erased — reparable');
     }
 
     public function testAStackFilledContainerIsNotPocketedEither(): void
@@ -128,7 +193,7 @@ class ChestSpillsWhenSmashedTest extends LegacyPlayerFixtureTestCase
     public function testBrokenDoesNotStandBackUp(): void
     {
         $owner = $this->createRealPlayer('GmBrise');
-        $chestId = $this->installExemplar('coffre_bois', 6, 11, (int) $owner->id);
+        $chestId = $this->installExemplar('gladius', 6, 11, (int) $owner->id);
         $instanceId = (int) $this->link->fetchOne(
             'SELECT id FROM item_instances WHERE entity_id = ?',
             [$chestId]

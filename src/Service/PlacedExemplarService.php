@@ -176,13 +176,34 @@ class PlacedExemplarService extends BaseService
             [(int) $coordsId]
         );
 
-        /* Broken open, it spills before it falls: what it held must not stay
-         * shut inside an object that lies on the ground — a container holding
-         * anything cannot be picked up, so its contents would be stuck. Same
-         * service, same loot rules, as a dying player. */
+        /* Broken open, it spills before anything else: inventory with the
+         * CHARACTER loot rules (same service, same rolls), hidden slots
+         * (the walls' fabric) included — what it held must not stay shut
+         * inside a wreck. */
         (new LootSpillService())->spill(\App\Factory\PlayerFactory::legacy($exemplarId));
 
-        $conn->transactional(function ($conn) use ($exemplarId, $instanceId, $coordsId): void {
+        /* Then the item type decides the wreck's fate: vanish_on_break
+         * erases the husk — the loot on the ground is all that remains —
+         * while the default lies broken on its tile, repairable. */
+        $vanishes = (bool) $conn->fetchOne(
+            'SELECT it.vanish_on_break FROM item_instances i JOIN items it ON it.id = i.item_id WHERE i.id = ?',
+            [(int) $instanceId]
+        );
+
+        $conn->transactional(function ($conn) use ($exemplarId, $instanceId, $coordsId, $vanishes): void {
+            if ($vanishes) {
+                $conn->executeStatement(
+                    'UPDATE item_instances SET destroyed = 1 WHERE id = ?',
+                    [(int) $instanceId]
+                );
+                foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
+                    $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$exemplarId]);
+                }
+                (new \App\Service\Map\EntityLocationService($conn))->shelve($exemplarId);
+
+                return;
+            }
+
             $conn->executeStatement(
                 "INSERT INTO players_bonus (player_id, name, n)
                  SELECT i.entity_id, 'pv', -it.durability_max

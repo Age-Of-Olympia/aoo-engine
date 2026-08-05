@@ -34,6 +34,7 @@ const ITEM_FLAG_LABELS = [
     'vorpal' => 'Vorpal',
     'is_bankable' => 'Stockable en banque',
     'is_deprecated' => 'Déprécié',
+    'vanish_on_break' => 'Disparaît brisé (répand son butin puis s\'efface, pas d\'épave au sol)',
 ];
 
 /** @return array<int, object> catalog rows ordered by name */

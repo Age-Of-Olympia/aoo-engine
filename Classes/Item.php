@@ -28,7 +28,7 @@ class Item{
         'esquive', 'pr', 'pf', 'malus', 'spellMalus', 'fixedF', 'mDamage',
         'demolition', 'craftedByN', 'lootChance', 'grow_rate',
     ];
-    public const FLAG_KEYS = ['cursed', 'enchanted', 'vorpal', 'is_bankable', 'is_deprecated'];
+    public const FLAG_KEYS = ['cursed', 'enchanted', 'vorpal', 'is_bankable', 'is_deprecated', 'vanish_on_break'];
     public const WEAR_TRIGGERS = ['attack', 'defense', 'move', 'usage'];
     public const JSON_COLUMNS = ['add_effects', 'forbid', 'extra'];
 
