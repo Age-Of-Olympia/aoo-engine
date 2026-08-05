@@ -67,10 +67,12 @@ class TutorialFeatureFlag
 
         // A structure never sees it either: the tutorial teaches a person.
         // A driven building lands on the map, not in a spawn flow.
-        $db = new Db();
-        $res = $db->exe('SELECT player_type FROM players WHERE id = ?', [$playerId]);
-        $row = $res ? $res->fetch_assoc() : null;
-        if ($row && \App\Enum\EntityCategory::fromPlayerType($row['player_type'])->isStructure()) {
+        // DBAL, not Classes\Db: this runs in contexts (CI tests) where
+        // the legacy global link is not set, and db() exits the process.
+        $playerType = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()
+            ->fetchOne('SELECT player_type FROM players WHERE id = ?', [$playerId]);
+        if ($playerType !== false
+            && \App\Enum\EntityCategory::fromPlayerType($playerType ?: null)->isStructure()) {
             return false;
         }
 
