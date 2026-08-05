@@ -60,6 +60,14 @@ class BankView
                     exit('error n');
                 }
 
+                /* The bag-lines rule, as at the chest and on pickup —
+                 * BEFORE the debit, or the units would be destroyed. */
+                $capacity = new \App\Service\ContainerService();
+                if ($capacity->stackNeedsRoom((int) $player->id, (int) $item->id)
+                    && !$capacity->hasRoomForALine((int) $player->id)
+                ) {
+                    exit('Votre sac est plein.');
+                }
 
                 if (!$item->add_item($player, -$_POST['n'], bank: true)) {
 

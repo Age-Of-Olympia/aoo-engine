@@ -159,6 +159,45 @@ class RecipeService
         }
         $recipeIngredients = $recipe->GetRecipeIngredients();
         $recipeResults = $recipe->GetRecipeResults();
+
+        /* The bag-lines rule, decided BEFORE the transaction (capacity
+         * reads go through the Doctrine connection, blind to uncommitted
+         * legacy writes): the outputs must fit once the ingredients are
+         * gone — a wholly consumed stack frees its line. */
+        $capacityService = new ContainerService();
+        $bagCapacity = $capacityService->capacityOf((int) $player->id);
+        if ($bagCapacity !== null) {
+            $resultIds = [];
+            foreach ($recipeResults as $result) {
+                $resultIds[] = (int) $result->getItem()->getId();
+            }
+            $newLines = 0;
+            foreach (array_unique($resultIds) as $resultId) {
+                if ($capacityService->stackNeedsRoom((int) $player->id, $resultId)) {
+                    $newLines++;
+                }
+            }
+            $freedLines = 0;
+            foreach ($recipeIngredients as $ingredient) {
+                $ingredientId = (int) $ingredient->getItem()->getId();
+                if ($ingredient->getItem()->getName() === 'or' || in_array($ingredientId, $resultIds, true)) {
+                    continue;
+                }
+                $stock = (new \Classes\Item($ingredientId))->get_n($player, includeInstances: false);
+                if (!$capacityService->stackNeedsRoom((int) $player->id, $ingredientId)
+                    && $ingredient->GetCount() >= $stock
+                ) {
+                    $freedLines++;
+                }
+            }
+            if ($newLines > 0
+                && $capacityService->lineCountOf((int) $player->id) - $freedLines + $newLines > $bagCapacity
+            ) {
+                $message = 'Votre sac est plein.';
+                return false;
+            }
+        }
+
         $db = new Db();
         $db->beginTransaction();
         try {

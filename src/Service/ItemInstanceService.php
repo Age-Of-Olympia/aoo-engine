@@ -542,11 +542,16 @@ class ItemInstanceService extends BaseService
      * Reprendre un exemplaire rangé : il retrouve l'inventaire avec son
      * usure et son identité, qui n'ont jamais bougé de ligne.
      *
-     * @throws \InvalidArgumentException quand l'exemplaire n'est pas en
-     *         banque chez ce joueur
+     * @throws \InvalidArgumentException when the exemplar is not in this
+     *         player's vault, or the bag is at its line ceiling (an
+     *         exemplar is always one more line)
      */
     public function withdrawFromBank(int $instanceId, int $playerId): void
     {
+        if (!(new ContainerService())->hasRoomForALine($playerId)) {
+            throw new \InvalidArgumentException('Votre sac est plein.');
+        }
+
         $this->moveTo($instanceId, $playerId, self::LOCATION_BANK, self::LOCATION_INVENTORY);
     }
 
