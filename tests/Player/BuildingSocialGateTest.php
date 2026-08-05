@@ -26,7 +26,8 @@ class BuildingSocialGateTest extends LegacyPlayerFixtureTestCase
         $writer = $this->createRealPlayer('GmScribe');
         $writer->get_data();
 
-        $buildingId = $this->placeStructure('palissade', 0, 3);
+        [$x, $y] = $this->farTile();
+        $buildingId = $this->placeStructure('palissade', $x, $y);
         $building = PlayerFactory::legacy($buildingId);
         $building->get_data();
 
@@ -52,7 +53,8 @@ class BuildingSocialGateTest extends LegacyPlayerFixtureTestCase
 
         $before = $service->countPlayersUsingFaction($faction)['members'];
 
-        $buildingId = $this->placeStructure('palissade', 0, 3);
+        [$x, $y] = $this->farTile();
+        $buildingId = $this->placeStructure('palissade', $x, $y);
         /* Le cas que ce test forçait est devenu le seul : la faction vit sur
          * l'entité, pour une forge comme pour un personnage. Porter une
          * faction n'est toujours pas en être MEMBRE — c'est ce qu'on vérifie. */

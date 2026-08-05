@@ -54,7 +54,9 @@ class BuildingDialogBaselineTest extends LegacyPlayerFixtureTestCase
 
     private function placePalissade(): int
     {
-        return $this->placeStructure(self::TYPE, 0, 3);
+        [$x, $y] = $this->farTile();
+
+        return $this->placeStructure(self::TYPE, $x, $y);
     }
 
     public function testSetDialogAttachesValidatesAndDetaches(): void

@@ -89,7 +89,7 @@ cypress-tutorial-ci:
 # où le job tutoriel reste en attente.
 cypress-endpoint-ci:
 	CYPRESS_CONTAINER=true xvfb-run --auto-servernum npx cypress run \
-		--spec "cypress/e2e/action-endpoint.cy.js" \
+		--spec "cypress/e2e/action-endpoint.cy.js,cypress/e2e/gesture-endpoints.cy.js" \
 		--browser electron \
 		--reporter junit \
 		--reporter-options "mochaFile=cypress-endpoint-report.xml,toConsole=true"

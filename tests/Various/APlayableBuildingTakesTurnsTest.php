@@ -45,7 +45,8 @@ class APlayableBuildingTakesTurnsTest extends LegacyPlayerFixtureTestCase
 
     public function testAnUnplayableBuildingGetsNoSatellites(): void
     {
-        $id = $this->placeStructure(self::TYPE, 51, 51);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure(self::TYPE, $x, $y);
 
         (new TurnService($this->link))->ensureRow($id);
         (new ProgressionService($this->link))->ensureRow($id);
@@ -56,7 +57,8 @@ class APlayableBuildingTakesTurnsTest extends LegacyPlayerFixtureTestCase
 
     public function testDeclaringTheTypePlayableIsWhatGivesItTheSatellites(): void
     {
-        $id = $this->placeStructure(self::TYPE, 53, 53);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure(self::TYPE, $x, $y);
         $this->makeTypePlayable();
 
         (new TurnService($this->link))->ensureRow($id);
@@ -69,7 +71,8 @@ class APlayableBuildingTakesTurnsTest extends LegacyPlayerFixtureTestCase
     /** A building earns its own experience — the same gateway, no account. */
     public function testItEarnsItsOwnExperience(): void
     {
-        $id = $this->placeStructure(self::TYPE, 55, 55);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure(self::TYPE, $x, $y);
         $this->makeTypePlayable();
 
         (new ProgressionService($this->link))->gain($id, 40, 40, 2);
@@ -87,7 +90,8 @@ class APlayableBuildingTakesTurnsTest extends LegacyPlayerFixtureTestCase
      */
     public function testItsTurnRestartsThePoolAndMovesTheClock(): void
     {
-        $id = $this->placeStructure(self::TYPE, 57, 57);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure(self::TYPE, $x, $y);
         $this->makeTypePlayable();
 
         $now = 1_800_000_000;
@@ -124,7 +128,8 @@ class APlayableBuildingTakesTurnsTest extends LegacyPlayerFixtureTestCase
     /** A structure recovers no body: no experience for merely standing there. */
     public function testItsTurnGrantsNoExperienceForStandingStill(): void
     {
-        $id = $this->placeStructure(self::TYPE, 59, 59);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure(self::TYPE, $x, $y);
         $this->makeTypePlayable();
 
         $now = 1_800_000_000;

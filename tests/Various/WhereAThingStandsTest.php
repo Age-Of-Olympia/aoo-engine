@@ -21,10 +21,11 @@ class WhereAThingStandsTest extends LegacyPlayerFixtureTestCase
     /** A sword in a hand is on its bearer's tile. */
     public function testAHeldExemplarStandsWhereItsHolderStands(): void
     {
+        [$x, $y] = $this->farTile();
         $bearer = $this->createRealPlayer('GmPorteur');
-        $this->movePlayerTo((int) $bearer->id, 12, 7);
+        $this->movePlayerTo((int) $bearer->id, $x, $y);
 
-        $entityId = $this->installExemplar('baton_marche', 12, 7, (int) $bearer->id);
+        $entityId = $this->installExemplar('baton_marche', $x, $y, (int) $bearer->id);
 
         // Held, not installed: no cell of its own any more.
         $this->link->executeStatement(
@@ -36,17 +37,18 @@ class WhereAThingStandsTest extends LegacyPlayerFixtureTestCase
         $coords = (new Player($entityId))->getCoords();
 
         $this->assertNotNull($coords, 'what is carried is where its bearer is');
-        $this->assertSame(12, (int) $coords->x);
-        $this->assertSame(7, (int) $coords->y);
+        $this->assertSame($x, (int) $coords->x);
+        $this->assertSame($y, (int) $coords->y);
     }
 
     /** And asking did not put it on the board. */
     public function testAskingWhereAHeldExemplarIsDoesNotPlaceIt(): void
     {
+        [$x, $y] = $this->farTile();
         $bearer = $this->createRealPlayer('GmPorteur2');
-        $this->movePlayerTo((int) $bearer->id, 14, 9);
+        $this->movePlayerTo((int) $bearer->id, $x, $y);
 
-        $entityId = $this->installExemplar('baton_marche', 14, 9, (int) $bearer->id);
+        $entityId = $this->installExemplar('baton_marche', $x, $y, (int) $bearer->id);
         $this->link->executeStatement(
             "UPDATE players SET coords_id = NULL, holder_id = ?, slot = '' WHERE id = ?",
             [(int) $bearer->id, $entityId]
@@ -75,7 +77,8 @@ class WhereAThingStandsTest extends LegacyPlayerFixtureTestCase
      */
     public function testAShelvedBuildingStandsNowhereAndStaysThere(): void
     {
-        $id = $this->placeStructure('mur_pierre', 61, 61);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('mur_pierre', $x, $y);
 
         (new BuildingService())->vanish($id);
 
@@ -97,14 +100,15 @@ class WhereAThingStandsTest extends LegacyPlayerFixtureTestCase
     /** A placed entity still answers its own cell. */
     public function testAPlacedEntityAnswersItsOwnCell(): void
     {
+        [$x, $y] = $this->farTile();
         $player = $this->createRealPlayer('GmPose');
-        $this->movePlayerTo((int) $player->id, 3, 4);
+        $this->movePlayerTo((int) $player->id, $x, $y);
 
         $coords = (new Player((int) $player->id))->getCoords();
 
         $this->assertNotNull($coords);
-        $this->assertSame(3, (int) $coords->x);
-        $this->assertSame(4, (int) $coords->y);
+        $this->assertSame($x, (int) $coords->x);
+        $this->assertSame($y, (int) $coords->y);
         $this->assertSame('gaia', $coords->plan);
     }
 }

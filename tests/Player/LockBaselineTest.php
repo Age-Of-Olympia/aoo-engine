@@ -31,7 +31,8 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
 
     public function testAWallCannotBeShut(): void
     {
-        $id = $this->placeStructure('palissade', 0, 3);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('palissade', $x, $y);
 
         $this->assertFalse($this->lock()->isLockable($id), 'une palissade ne se ferme pas');
 
@@ -43,7 +44,8 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
      *  its item, and the caller cannot tell which spoke. */
     public function testAChestShutsThoughItsTypeIsAnItem(): void
     {
-        $id = $this->installExemplar('coffre_bois', 0, 4);
+        [$x, $y] = $this->farTile();
+        $id = $this->installExemplar('coffre_bois', $x, $y);
 
         $this->assertSame(
             'item',
@@ -70,8 +72,9 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
     public function testOnlyWhatCanBeShutReportsAVoluntaryClosure(): void
     {
         $service = new BuildingService();
-        $chest = $this->installExemplar('coffre_bois', 0, 5);
-        $wall = $this->placeStructure('palissade', 0, 6);
+        [$x, $y] = $this->farTile();
+        $chest = $this->installExemplar('coffre_bois', $x, $y);
+        $wall = $this->placeStructure('palissade', $x, $y + 1);
 
         $service->setOpen($chest, false);
         // Le mur reçoit le drapeau par la bande : la règle doit l'ignorer.
@@ -91,7 +94,8 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
     {
         $owner = $this->createRealPlayer('GmProprio');
         $stranger = $this->createRealPlayer('GmPassant');
-        $id = $this->installExemplar('coffre_bois', 0, 7);
+        [$x, $y] = $this->farTile();
+        $id = $this->installExemplar('coffre_bois', $x, $y);
 
         $this->assertFalse(
             $this->lock()->mayLock($id, (int) $owner->id),
@@ -136,9 +140,10 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
     public function testAnOpenDoorLetsYouThroughAndAShutOneDoesNot(): void
     {
         $mover = $this->createRealPlayer('GmVisiteur');
-        $id = $this->placeStructure('palissade', 3, 3);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('palissade', $x, $y);
         $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => 3, 'y' => 3, 'z' => 0, 'plan' => 'gaia']
+            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
         );
 
         // Une palissade qui devient porte : elle se ferme, et sa fermeture
@@ -182,12 +187,14 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
      */
     public function testAnOpenDoorLetsArrowsThroughToo(): void
     {
-        $this->placeStructure('palissade', 3, 9);
-        $from = (object) ['x' => 0, 'y' => 9, 'z' => 0, 'plan' => 'gaia'];
-        $to   = (object) ['x' => 6, 'y' => 9, 'z' => 0, 'plan' => 'gaia'];
+        [$x, $y] = $this->farTile();
+        $this->placeStructure('palissade', $x + 3, $y);
+        $from = (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'];
+        $to   = (object) ['x' => $x + 6, 'y' => $y, 'z' => 0, 'plan' => 'gaia'];
         $id = (int) $this->link->fetchOne(
             "SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id
-              WHERE c.x = 3 AND c.y = 9 AND c.plan = 'gaia' AND p.race = 'palissade'"
+              WHERE c.x = ? AND c.y = ? AND c.plan = 'gaia' AND p.race = 'palissade'",
+            [$x + 3, $y]
         );
 
         $service = new BuildingService();
@@ -239,9 +246,10 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
         }
 
         $mover = $this->createRealPlayer('GmClient');
-        $id = $this->placeStructure('taverne', 5, 5);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('taverne', $x, $y);
         $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => 5, 'y' => 5, 'z' => 0, 'plan' => 'gaia']
+            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
         );
 
         (new BuildingService())->setOpen($id, true);
@@ -261,9 +269,10 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
     public function testAnOpenChestStillOccupiesItsTile(): void
     {
         $mover = $this->createRealPlayer('GmMarcheur');
-        $id = $this->installExemplar('coffre_bois', 4, 4);
+        [$x, $y] = $this->farTile();
+        $id = $this->installExemplar('coffre_bois', $x, $y);
         $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => 4, 'y' => 4, 'z' => 0, 'plan' => 'gaia']
+            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
         );
 
         (new BuildingService())->setOpen($id, true);
@@ -287,8 +296,9 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
             'SELECT entity_id FROM item_instances WHERE id = ?',
             [$instanceId]
         );
+        [$x, $y] = $this->farTile();
         $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => 7, 'y' => 7, 'z' => 0, 'plan' => 'gaia']
+            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
         );
         $location = new \App\Service\Map\EntityLocationService($this->link);
         $occupancy = new \App\Service\Map\TileOccupancyService($this->link);
@@ -348,7 +358,8 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
     public function testNobodyLocksWhatHasNoDoor(): void
     {
         $owner = $this->createRealPlayer('GmMaçon');
-        $id = $this->placeStructure('palissade', 0, 8);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('palissade', $x, $y);
         $this->link->executeStatement('UPDATE players SET owner_id = ? WHERE id = ?', [$owner->id, $id]);
 
         $this->assertFalse($this->lock()->mayLock($id, (int) $owner->id));

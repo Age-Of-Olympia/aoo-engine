@@ -136,7 +136,8 @@ class EntityBleedsBaselineTest extends LegacyPlayerFixtureTestCase
     public function testAStructureDoesNotBleed(): void
     {
         $this->requireBuildingsOrSkip();
-        $id = $this->placeStructure('palissade', 0, 3);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('palissade', $x, $y);
 
         $building = \App\Factory\PlayerFactory::legacy($id);
         $building->get_data();

@@ -42,8 +42,9 @@ class RequiresBuildingConditionTest extends LegacyPlayerFixtureTestCase
     public function testPassesBesideAnOpenBuildingOfTheType(): void
     {
         $this->requireBuildingsOrSkip();
-        $actor = $this->actorAt(40, 40);
-        $this->placeStructure('palissade', 40, 41);
+        [$x, $y] = $this->farTile();
+        $actor = $this->actorAt($x, $y);
+        $this->placeStructure('palissade', $x, $y + 1);
 
         $result = $this->checkFor($actor, ['types' => 'palissade', 'range' => 1]);
 
@@ -53,8 +54,9 @@ class RequiresBuildingConditionTest extends LegacyPlayerFixtureTestCase
     public function testAnEmptyTypeListAcceptsAnyBuilding(): void
     {
         $this->requireBuildingsOrSkip();
-        $actor = $this->actorAt(40, 40);
-        $this->placeStructure('palissade', 40, 41);
+        [$x, $y] = $this->farTile();
+        $actor = $this->actorAt($x, $y);
+        $this->placeStructure('palissade', $x, $y + 1);
 
         $this->assertTrue($this->checkFor($actor, [])->isSuccess());
     }
@@ -62,7 +64,8 @@ class RequiresBuildingConditionTest extends LegacyPlayerFixtureTestCase
     public function testRefusesWhenNothingStandsInRange(): void
     {
         $this->requireBuildingsOrSkip();
-        $actor = $this->actorAt(44, 44);
+        [$x, $y] = $this->farTile();
+        $actor = $this->actorAt($x, $y);
 
         $result = $this->checkFor($actor, ['types' => 'palissade', 'range' => 1]);
 
@@ -73,8 +76,9 @@ class RequiresBuildingConditionTest extends LegacyPlayerFixtureTestCase
     public function testTheTypeFilterRefusesAnotherBuilding(): void
     {
         $this->requireBuildingsOrSkip();
-        $actor = $this->actorAt(40, 40);
-        $this->placeStructure('palissade', 40, 41);
+        [$x, $y] = $this->farTile();
+        $actor = $this->actorAt($x, $y);
+        $this->placeStructure('palissade', $x, $y + 1);
 
         $result = $this->checkFor($actor, ['types' => 'taverne', 'range' => 1]);
 
@@ -84,8 +88,9 @@ class RequiresBuildingConditionTest extends LegacyPlayerFixtureTestCase
     public function testTheRangeIsChebyshevOverTheBuildingCells(): void
     {
         $this->requireBuildingsOrSkip();
-        $actor = $this->actorAt(40, 40);
-        $this->placeStructure('palissade', 40, 42);
+        [$x, $y] = $this->farTile();
+        $actor = $this->actorAt($x, $y);
+        $this->placeStructure('palissade', $x, $y + 2);
 
         $this->assertFalse($this->checkFor($actor, ['types' => 'palissade', 'range' => 1])->isSuccess());
         $this->assertTrue($this->checkFor($actor, ['types' => 'palissade', 'range' => 2])->isSuccess());
@@ -94,8 +99,9 @@ class RequiresBuildingConditionTest extends LegacyPlayerFixtureTestCase
     public function testAShutBuildingRefusesWithItsReason(): void
     {
         $this->requireBuildingsOrSkip();
-        $actor = $this->actorAt(40, 40);
-        $id = $this->placeStructure('taverne', 41, 41);
+        [$x, $y] = $this->farTile();
+        $actor = $this->actorAt($x, $y);
+        $id = $this->placeStructure('taverne', $x + 1, $y + 1);
         (new BuildingService())->markDestroyed($id);
 
         $result = $this->checkFor($actor, ['types' => 'taverne', 'range' => 1]);

@@ -74,7 +74,8 @@ class BuildingInscriptionTest extends LegacyPlayerFixtureTestCase
     public function testANewBuildingSaysNothingAtAll(): void
     {
         $this->requireBuildingsOrSkip();
-        $id = $this->placeStructure('palissade', 0, 4);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('palissade', $x, $y);
 
         $building = \App\Factory\PlayerFactory::legacy($id);
         $building->get_data();
@@ -115,7 +116,8 @@ class BuildingInscriptionTest extends LegacyPlayerFixtureTestCase
     public function testRangeComesFromTheKindUnlessTheOneAtHandDisagrees(): void
     {
         $this->requireBuildingsOrSkip();
-        $id = $this->placeStructure('palissade', 0, 5);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('palissade', $x, $y);
 
         $service = new BuildingService();
         $building = \App\Factory\PlayerFactory::legacy($id);
@@ -161,7 +163,8 @@ class BuildingInscriptionTest extends LegacyPlayerFixtureTestCase
     public function testTheAdminReadModelCarriesTheThreeStates(): void
     {
         $this->requireBuildingsOrSkip();
-        $id = $this->placeStructure('palissade', 0, 6);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('palissade', $x, $y);
 
         $service = new BuildingService();
         $rowOf = static function (array $rows, int $id): ?array {

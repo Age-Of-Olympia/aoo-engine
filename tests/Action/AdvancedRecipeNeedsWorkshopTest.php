@@ -64,7 +64,8 @@ class AdvancedRecipeNeedsWorkshopTest extends LegacyPlayerFixtureTestCase
     public function testFarFromAnyWorkshopTheRecipeRefusesAndNamesIt(): void
     {
         $this->requireBuildingsOrSkip();
-        [$crafter, $recipe, $bois] = $this->crafterWithAdvancedRecipe(50, 50);
+        [$x, $y] = $this->farTile();
+        [$crafter, $recipe, $bois] = $this->crafterWithAdvancedRecipe($x, $y);
 
         $message = '';
         $ok = (new RecipeService())->TryCraftRecipe($recipe, $crafter, $message);
@@ -77,8 +78,9 @@ class AdvancedRecipeNeedsWorkshopTest extends LegacyPlayerFixtureTestCase
     public function testBesideAnOpenWorkshopTheRecipeCrafts(): void
     {
         $this->requireBuildingsOrSkip();
-        [$crafter, $recipe, $bois, $pierre] = $this->crafterWithAdvancedRecipe(50, 50);
-        $this->placeStructure('taverne', 51, 51);
+        [$x, $y] = $this->farTile();
+        [$crafter, $recipe, $bois, $pierre] = $this->crafterWithAdvancedRecipe($x, $y);
+        $this->placeStructure('taverne', $x + 1, $y + 1);
 
         $message = '';
         $ok = (new RecipeService())->TryCraftRecipe($recipe, $crafter, $message);
@@ -91,8 +93,9 @@ class AdvancedRecipeNeedsWorkshopTest extends LegacyPlayerFixtureTestCase
     public function testAShutWorkshopRefusesWithItsReason(): void
     {
         $this->requireBuildingsOrSkip();
-        [$crafter, $recipe, $bois] = $this->crafterWithAdvancedRecipe(50, 50);
-        $id = $this->placeStructure('taverne', 51, 51);
+        [$x, $y] = $this->farTile();
+        [$crafter, $recipe, $bois] = $this->crafterWithAdvancedRecipe($x, $y);
+        $id = $this->placeStructure('taverne', $x + 1, $y + 1);
         (new BuildingService())->markDestroyed($id);
 
         $message = '';

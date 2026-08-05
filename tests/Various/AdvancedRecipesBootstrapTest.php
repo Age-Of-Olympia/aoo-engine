@@ -79,8 +79,9 @@ class AdvancedRecipesBootstrapTest extends LegacyPlayerFixtureTestCase
         }
 
         // From nothing: craft the atelier object in the open field.
+        [$x, $y] = $this->farTile();
         $crafter = $this->createRealPlayer('GmPioneer');
-        $this->movePlayerTo($crafter->id, 60, 60);
+        $this->movePlayerTo($crafter->id, $x, $y);
         $crafter->getCoords();
         $crafter->get_caracs();
         $bois->add_item($crafter, 35);
@@ -91,7 +92,7 @@ class AdvancedRecipesBootstrapTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(1, $atelierItem->get_n($crafter));
 
         // The built form stands; the advanced level opens beside it.
-        $this->placeStructure('atelier', 61, 61);
+        $this->placeStructure('atelier', $x + 1, $y + 1);
 
         $this->link->executeStatement(
             "INSERT INTO craft_recipes (name, workshop) VALUES ('taille_fine_test', 'atelier')"

@@ -43,7 +43,8 @@ class BuildingOpenStateBaselineTest extends LegacyPlayerFixtureTestCase
         $service = new BuildingService();
         /* Un COFFRE, désormais : une palissade n'a pas de porte, et la
          * fermeture volontaire ne se dit que de ce qui peut se fermer. */
-        $id = $this->installExemplar('coffre_bois', 0, 6);
+        [$x, $y] = $this->farTile();
+        $id = $this->installExemplar('coffre_bois', $x, $y);
         $details = (new BuildingDetails())->setBuildState(BuildingDetails::STATE_BUILT);
 
         $this->assertNull($service->closureReason($id, $details, 100), 'construit, PV pleins, ouvert => ouvert');
@@ -71,7 +72,8 @@ class BuildingOpenStateBaselineTest extends LegacyPlayerFixtureTestCase
     public function testSetOpenPersistsAndRejectsWhatHasNoDoor(): void
     {
         $service = new BuildingService();
-        $id = $this->installExemplar('coffre_bois', 0, 3);
+        [$x, $y] = $this->farTile();
+        $id = $this->installExemplar('coffre_bois', $x, $y);
 
         $this->assertSame(
             1,
@@ -118,7 +120,8 @@ class BuildingOpenStateBaselineTest extends LegacyPlayerFixtureTestCase
 
     public function testAStructureEntityIsNeverInactive(): void
     {
-        $id = $this->placeStructure('palissade', 0, 3);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('palissade', $x, $y);
 
         $building = \App\Factory\PlayerFactory::legacy($id);
         $building->get_data();

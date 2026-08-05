@@ -56,29 +56,31 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         return $coordsId;
     }
 
-    /** Place le tireur en (0,0) et rend sa cible en (4,0). */
+    /** Place le tireur en ($x, $y) et rend sa cible en ($x+4, $y). */
     private function shooterAndTarget(): array
     {
         $this->requireBuildingsOrSkip();
 
+        [$x, $y] = $this->farTile();
+
         $shooter = $this->createRealPlayer('GmTireur');
         $victim = $this->createRealPlayer('GmCible');
 
-        $this->movePlayerTo($shooter->id, 0, 0);
-        $this->movePlayerTo($victim->id, 4, 0);
+        $this->movePlayerTo($shooter->id, $x, $y);
+        $this->movePlayerTo($victim->id, $x + 4, $y);
 
         $shooter->getCoords();
         $victim->getCoords();
 
-        return [$shooter, $victim];
+        return [$shooter, $victim, $x, $y];
     }
 
     public function testAWallStopsTheShot(): void
     {
-        [$shooter, $victim] = $this->shooterAndTarget();
+        [$shooter, $victim, $x, $y] = $this->shooterAndTarget();
 
         // Plein milieu de la trajectoire, et un type qui arrête les projectiles.
-        $this->placeStructure('mur_pierre', 2, 0);
+        $this->placeStructure('mur_pierre', $x + 2, $y);
 
         $result = (new ObstacleCondition())->check(
             $shooter, $victim, $this->condition(), new ConditionObject()
@@ -87,7 +89,11 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         $this->assertFalse($result->isSuccess(), 'un mur de pierre doit arrêter le tir');
         $messages = $result->getConditionFailureMessages();
         $this->assertStringContainsString('s\'écrase sur', $messages[0]);
-        $this->assertStringContainsString('(2, 0)', $messages[0], 'le message situe l\'obstacle');
+        $this->assertStringContainsString(
+            '(' . ($x + 2) . ', ' . $y . ')',
+            $messages[0],
+            'le message situe l\'obstacle'
+        );
     }
 
     /**
@@ -96,9 +102,9 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
      */
     public function testFurnitureDoesNotStopTheShot(): void
     {
-        [$shooter, $victim] = $this->shooterAndTarget();
+        [$shooter, $victim, $x, $y] = $this->shooterAndTarget();
 
-        $this->placeStructure('table_bois', 2, 0);
+        $this->placeStructure('table_bois', $x + 2, $y);
 
         $result = (new ObstacleCondition())->check(
             $shooter, $victim, $this->condition(), new ConditionObject()
@@ -113,11 +119,11 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
      */
     public function testAnEntityScreensEveryCellItHolds(): void
     {
-        [$shooter, $victim] = $this->shooterAndTarget();
+        [$shooter, $victim, $x, $y] = $this->shooterAndTarget();
 
         /* The wall stands aside; only its emprise crosses the line. */
-        $wall = $this->placeStructure('mur_pierre', 2, 1);
-        $this->giveCellTo($wall, 2, 0, \App\Service\Map\EntityCellService::ROLE_PART);
+        $wall = $this->placeStructure('mur_pierre', $x + 2, $y + 1);
+        $this->giveCellTo($wall, $x + 2, $y, \App\Service\Map\EntityCellService::ROLE_PART);
 
         $result = (new ObstacleCondition())->check(
             $shooter, $victim, $this->condition(), new ConditionObject()
@@ -132,10 +138,10 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
      */
     public function testACoverCellLetsTheShotThrough(): void
     {
-        [$shooter, $victim] = $this->shooterAndTarget();
+        [$shooter, $victim, $x, $y] = $this->shooterAndTarget();
 
-        $wall = $this->placeStructure('mur_pierre', 2, 1);
-        $this->giveCellTo($wall, 2, 0, 'cover');
+        $wall = $this->placeStructure('mur_pierre', $x + 2, $y + 1);
+        $this->giveCellTo($wall, $x + 2, $y, 'cover');
 
         $result = (new ObstacleCondition())->check(
             $shooter, $victim, $this->condition(), new ConditionObject()
@@ -150,10 +156,10 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
      */
     public function testAnArchBlocksTheStepButNotTheShot(): void
     {
-        [$shooter, $victim] = $this->shooterAndTarget();
+        [$shooter, $victim, $x, $y] = $this->shooterAndTarget();
 
-        $arch = $this->placeStructure('mur_pierre', 2, 1);
-        $cell = $this->giveCellTo($arch, 2, 0, 'block');
+        $arch = $this->placeStructure('mur_pierre', $x + 2, $y + 1);
+        $cell = $this->giveCellTo($arch, $x + 2, $y, 'block');
 
         $entityManager = \App\Factory\EntityManagerFactory::getEntityManager();
         $race = $entityManager->getRepository(\App\Entity\Race::class)->findOneBy(['name' => 'mur_pierre']);
@@ -191,21 +197,22 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
     {
         $this->requireBuildingsOrSkip();
 
+        [$x, $y] = $this->farTile();
         $shooter = $this->createRealPlayer('GmPente');
         $victim = $this->createRealPlayer('GmPenteCible');
-        $this->movePlayerTo($shooter->id, 0, 0);
-        $this->movePlayerTo($victim->id, 2, 4);
+        $this->movePlayerTo($shooter->id, $x, $y);
+        $this->movePlayerTo($victim->id, $x + 2, $y + 4);
         $shooter->getCoords();
         $victim->getCoords();
 
         /* Trois cases de large en travers du corridor, à mi-chemin. */
-        $wall = $this->placeStructure('mur_pierre', 0, 2);
-        $this->giveCellTo($wall, 1, 2, \App\Service\Map\EntityCellService::ROLE_PART);
-        $this->giveCellTo($wall, 2, 2, \App\Service\Map\EntityCellService::ROLE_PART);
+        $wall = $this->placeStructure('mur_pierre', $x, $y + 2);
+        $this->giveCellTo($wall, $x + 1, $y + 2, \App\Service\Map\EntityCellService::ROLE_PART);
+        $this->giveCellTo($wall, $x + 2, $y + 2, \App\Service\Map\EntityCellService::ROLE_PART);
 
         $report = (new BuildingService())->lineOfFireReport(
-            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'gaia'],
-            (object) ['x' => 2, 'y' => 4, 'z' => 0, 'plan' => 'gaia']
+            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'],
+            (object) ['x' => $x + 2, 'y' => $y + 4, 'z' => 0, 'plan' => 'gaia']
         );
 
         $this->assertNotNull($report['blocker'], 'aucun tracé ne contourne un mur de trois cases');
@@ -220,19 +227,20 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
     {
         $this->requireBuildingsOrSkip();
 
+        [$x, $y] = $this->farTile();
         $shooter = $this->createRealPlayer('GmProjection');
         $victim = $this->createRealPlayer('GmProjectionCible');
-        $this->movePlayerTo($shooter->id, 0, 0);
-        $this->movePlayerTo($victim->id, 2, 4);
+        $this->movePlayerTo($shooter->id, $x, $y);
+        $this->movePlayerTo($victim->id, $x + 2, $y + 4);
         $shooter->getCoords();
         $victim->getCoords();
 
-        $wall = $this->placeStructure('mur_pierre', 0, 2);
-        $this->giveCellTo($wall, 1, 2, \App\Service\Map\EntityCellService::ROLE_PART);
+        $wall = $this->placeStructure('mur_pierre', $x, $y + 2);
+        $this->giveCellTo($wall, $x + 1, $y + 2, \App\Service\Map\EntityCellService::ROLE_PART);
 
         $report = (new BuildingService())->lineOfFireReport(
-            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'gaia'],
-            (object) ['x' => 2, 'y' => 4, 'z' => 0, 'plan' => 'gaia']
+            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'],
+            (object) ['x' => $x + 2, 'y' => $y + 4, 'z' => 0, 'plan' => 'gaia']
         );
 
         $this->assertNotNull($report['blocker']);
@@ -257,15 +265,16 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
     {
         $this->requireBuildingsOrSkip();
 
+        [$x, $y] = $this->farTile();
         $shooter = $this->createRealPlayer('GmVisee');
-        $this->movePlayerTo((int) $shooter->id, 0, 0);
+        $this->movePlayerTo((int) $shooter->id, $x, $y);
         $shooter->getCoords();
 
         /* Un mur large, dont on vise la case la PLUS LOINTAINE. */
-        $wall = $this->placeStructure('mur_pierre', 0, 3);
-        $this->giveCellTo($wall, 0, 2, \App\Service\Map\EntityCellService::ROLE_PART);
+        $wall = $this->placeStructure('mur_pierre', $x, $y + 3);
+        $this->giveCellTo($wall, $x, $y + 2, \App\Service\Map\EntityCellService::ROLE_PART);
 
-        $far = (object) ['x' => 0, 'y' => 3, 'z' => 0, 'plan' => 'gaia'];
+        $far = (object) ['x' => $x, 'y' => $y + 3, 'z' => 0, 'plan' => 'gaia'];
         $service = new BuildingService();
 
         $this->assertNotNull(
@@ -284,20 +293,21 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
     {
         $this->requireBuildingsOrSkip();
 
+        [$x, $y] = $this->farTile();
         $shooter = $this->createRealPlayer('GmViseeProche');
-        $this->movePlayerTo((int) $shooter->id, 0, 0);
+        $this->movePlayerTo((int) $shooter->id, $x, $y);
         $shooter->getCoords();
 
-        $wall = $this->placeStructure('mur_pierre', 0, 5);
-        $this->giveCellTo($wall, 0, 1, \App\Service\Map\EntityCellService::ROLE_PART);
+        $wall = $this->placeStructure('mur_pierre', $x, $y + 5);
+        $this->giveCellTo($wall, $x, $y + 1, \App\Service\Map\EntityCellService::ROLE_PART);
 
         $aim = \Classes\View::get_nearest_cell_of(
             $shooter->getCoords(),
             (int) $wall,
-            (object) ['x' => 0, 'y' => 5, 'z' => 0, 'plan' => 'gaia']
+            (object) ['x' => $x, 'y' => $y + 5, 'z' => 0, 'plan' => 'gaia']
         );
 
-        $this->assertSame(1, (int) $aim->y, 'la case collée, pas celle du fond');
+        $this->assertSame($y + 1, (int) $aim->y, 'la case collée, pas celle du fond');
     }
 
     public function testAClearLineIsNotBlocked(): void
@@ -318,8 +328,8 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
      */
     public function testBlockingIsSymmetric(): void
     {
-        [$shooter, $victim] = $this->shooterAndTarget();
-        $this->placeStructure('mur_pierre', 2, 0);
+        [$shooter, $victim, $x, $y] = $this->shooterAndTarget();
+        $this->placeStructure('mur_pierre', $x + 2, $y);
 
         $service = new BuildingService();
         $there = $service->lineOfFireReport($shooter->coords, $victim->coords);
@@ -336,8 +346,8 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
     /** L'échec porte le tracé, rendu par le même code que le clic droit. */
     public function testFailureCarriesTheTrace(): void
     {
-        [$shooter, $victim] = $this->shooterAndTarget();
-        $this->placeStructure('mur_pierre', 2, 0);
+        [$shooter, $victim, $x, $y] = $this->shooterAndTarget();
+        $this->placeStructure('mur_pierre', $x + 2, $y);
 
         $result = (new ObstacleCondition())->check(
             $shooter, $victim, $this->condition(), new ConditionObject()

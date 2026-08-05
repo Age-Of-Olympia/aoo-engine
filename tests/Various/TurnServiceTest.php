@@ -107,7 +107,8 @@ class TurnServiceTest extends LegacyPlayerFixtureTestCase
     /** A structure takes no turn of its own yet: it keeps answering from its row. */
     public function testAStructureGetsNoSatelliteRow(): void
     {
-        $id = $this->placeStructure('mur_pierre', 41, 41);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('mur_pierre', $x, $y);
 
         (new TurnService($this->link))->ensureRow($id);
 

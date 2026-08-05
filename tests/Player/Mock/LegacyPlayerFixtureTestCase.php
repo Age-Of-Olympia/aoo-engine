@@ -344,6 +344,25 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         return $item;
     }
 
+    /** Tile allocator cursor — never reset within the run. */
+    private static int $farTileCursor = 0;
+
+    /**
+     * Every scene its own corner of the board: far gaia coordinates,
+     * never served twice in a run. Tests sharing a hardcoded tile
+     * inherit each other's leftovers — the manual cleanup only covers
+     * tracked rows. The 8-step between scenes leaves room for reach
+     * and footprints without touching the next one.
+     *
+     * @return array{int, int} [$x, $y]
+     */
+    protected function farTile(): array
+    {
+        $i = self::$farTileCursor++;
+
+        return [400 + ($i % 40) * 8, 400 + intdiv($i, 40) * 8];
+    }
+
     /**
      * Install an item exemplar on a cell, the way a container now stands.
      *

@@ -36,7 +36,9 @@ class BuildingVitalsBaselineTest extends LegacyPlayerFixtureTestCase
 
     private function placePalissade(): int
     {
-        return $this->placeStructure(self::TYPE, 0, 3);
+        [$x, $y] = $this->farTile();
+
+        return $this->placeStructure(self::TYPE, $x, $y);
     }
 
     public function testBuildingCaracsAreThePseudoRaceBase(): void
@@ -84,7 +86,8 @@ class BuildingVitalsBaselineTest extends LegacyPlayerFixtureTestCase
     public function testPlaceRejectsUnknownAndCharacterKindTypes(): void
     {
         $service = new BuildingService();
-        $coords = (object) ['x' => 0, 'y' => 3, 'z' => 0, 'plan' => 'gaia'];
+        [$x, $y] = $this->farTile();
+        $coords = (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'];
 
         try {
             $service->place('race_inexistante_' . bin2hex(random_bytes(3)), $coords);
@@ -128,9 +131,10 @@ class BuildingVitalsBaselineTest extends LegacyPlayerFixtureTestCase
     public function testListBuildingsReportsPositionStateAndCurrentPv(): void
     {
         $owner = $this->createRealPlayer('GmOwner');
+        [$x, $y] = $this->farTile();
         $id = (new BuildingService())->place(
             self::TYPE,
-            (object) ['x' => 0, 'y' => 3, 'z' => 0, 'plan' => 'gaia'],
+            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'],
             $owner->id
         );
         $this->trackEntityId($id);
@@ -149,7 +153,7 @@ class BuildingVitalsBaselineTest extends LegacyPlayerFixtureTestCase
         $row = $rows[0];
         $this->assertSame(self::TYPE, $row['type']);
         $this->assertSame('built', $row['build_state']);
-        $this->assertSame(['x' => 0, 'y' => 3, 'plan' => 'gaia'], ['x' => $row['x'], 'y' => $row['y'], 'plan' => $row['plan']]);
+        $this->assertSame(['x' => $x, 'y' => $y, 'plan' => 'gaia'], ['x' => $row['x'], 'y' => $row['y'], 'plan' => $row['plan']]);
         $this->assertSame(100, $row['max_pv']);
         $this->assertSame(60, $row['current_pv'], 'current PV must reflect the players_bonus ledger');
         $this->assertSame($owner->id, $row['owner_id']);
@@ -213,7 +217,8 @@ class BuildingVitalsBaselineTest extends LegacyPlayerFixtureTestCase
         }
 
         $service = new BuildingService();
-        $id = $service->place('mur_bois', (object) ['x' => 0, 'y' => 3, 'z' => 0, 'plan' => 'gaia']);
+        [$x, $y] = $this->farTile();
+        $id = $service->place('mur_bois', (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']);
         $this->trackEntityId($id);
 
         $this->assertSame(
@@ -243,7 +248,8 @@ class BuildingVitalsBaselineTest extends LegacyPlayerFixtureTestCase
         // ligne players survit, nulle part : les événements qui le citent
         // gardent une FK vraie et son id n'est jamais recyclé.
         $service = new BuildingService();
-        $id = $this->placeStructure('palissade', 0, 3);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('palissade', $x, $y);
 
         $this->link->executeStatement(
             "INSERT INTO players_logs (player_id, target_id, text, hiddenText, type, plan, time, coords_id)

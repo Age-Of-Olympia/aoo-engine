@@ -90,7 +90,8 @@ class WallsConversionBaselineTest extends LegacyPlayerFixtureTestCase
         // Mort de bâtiment : on ne sacrifie PAS un mur du monde — un
         // CLONE jetable de la même race convertie meurt à sa place,
         // par le même chemin que tout bâtiment (tombstone limbes).
-        $cloneId = $this->placeStructure((string) $entity->data->race, 0, 3);
+        [$x, $y] = $this->farTile();
+        $cloneId = $this->placeStructure((string) $entity->data->race, $x, $y);
         $clone = PlayerFactory::legacy($cloneId);
         $clone->get_data();
         $clone->get_caracs();
