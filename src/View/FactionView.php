@@ -322,11 +322,7 @@ class FactionView
                     .then(function(data){
                         var message = data && data.result && data.result.message ? data.result.message : '';
                         (message ? aooAlert(message) : Promise.resolve()).then(function(){
-                            if(window.hudOpenPanel){
-                                window.hudOpenPanel('load_faction.php?faction=' + encodeURIComponent(factionCode), 'Faction');
-                            } else {
-                                document.location.reload();
-                            }
+                            aooPanelOrReload('load_faction.php?faction=' + encodeURIComponent(factionCode), 'Faction');
                         });
                     })
                     .catch(autoError());
@@ -544,16 +540,8 @@ class FactionView
 
         $contents = $container->contentsOf($entityId);
         $names = array_merge(
-            array_map(
-                static fn (array $s): string => ucfirst((string) $s['name']) . ' ×' . (int) $s['n'],
-                $contents['stacks']
-            ),
-            array_map(
-                static fn (array $e): string => (string) ($e['custom_name'] ?? '') !== ''
-                    ? (string) $e['custom_name']
-                    : ucfirst((string) $e['name']),
-                $contents['exemplars']
-            )
+            array_map([\App\Service\ContainerService::class, 'stackLabel'], $contents['stacks']),
+            array_map([\App\Service\ContainerService::class, 'exemplarEntryLabel'], $contents['exemplars'])
         );
 
         if ($names === []) {
@@ -709,11 +697,7 @@ class FactionView
                         open: $(this).data('open')
                     }, null)
                         .then(function(){
-                            if(window.hudOpenPanel){
-                                window.hudOpenPanel('load_faction.php?faction=' + encodeURIComponent(factionCode), 'Faction');
-                            } else {
-                                document.location.reload();
-                            }
+                            aooPanelOrReload('load_faction.php?faction=' + encodeURIComponent(factionCode), 'Faction');
                         })
                         .catch(autoError());
                 });

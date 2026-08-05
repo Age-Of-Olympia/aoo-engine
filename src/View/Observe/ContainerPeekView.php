@@ -55,16 +55,12 @@ final class ContainerPeekView
 
             foreach ($contents['stacks'] as $row) {
                 echo '<img src="img/items/' . $row['name'] . '.webp" style="max-height:22px;vertical-align:middle;" alt="" /> '
-                    . htmlspecialchars(ucfirst((string) $row['name']), ENT_QUOTES, 'UTF-8')
-                    . ' x' . (int) $row['n'] . '<br />';
+                    . htmlspecialchars(ContainerService::stackLabel($row), ENT_QUOTES, 'UTF-8') . '<br />';
             }
 
             foreach ($contents['exemplars'] as $row) {
-                $label = (string) ($row['custom_name'] ?? '') !== ''
-                    ? '« ' . htmlspecialchars((string) $row['custom_name'], ENT_QUOTES, 'UTF-8') . ' » (' . ucfirst((string) $row['name']) . ')'
-                    : ucfirst((string) $row['name']);
                 echo '<img src="img/items/' . $row['name'] . '.webp" style="max-height:22px;vertical-align:middle;" alt="" /> '
-                    . $label . '<br />';
+                    . htmlspecialchars(ContainerService::exemplarEntryLabel($row), ENT_QUOTES, 'UTF-8') . '<br />';
             }
 
             echo '</div></div>';

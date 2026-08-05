@@ -343,6 +343,20 @@ final class ContainerService extends BaseService
         }
     }
 
+    /** One content line's label — a stack: « Bois ×3 ». */
+    public static function stackLabel(array $row): string
+    {
+        return ucfirst((string) $row['name']) . ' ×' . (int) $row['n'];
+    }
+
+    /** One content line's label — an exemplar: its own name if christened. */
+    public static function exemplarEntryLabel(array $row): string
+    {
+        return (string) ($row['custom_name'] ?? '') !== ''
+            ? '« ' . $row['custom_name'] . ' »'
+            : ucfirst((string) $row['name']);
+    }
+
     /**
      * One line in the faction's journal, when the container is the
      * faction's: "{Actor} {verb phrase} {Container}." — the house sees

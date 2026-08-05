@@ -76,17 +76,13 @@ function renderContainerPane(string $title, array $contents, string $direction, 
     echo '<table border="1" class="marbre">';
 
     foreach ($contents['stacks'] as $row) {
-        echo '<tr><td>' . htmlspecialchars(ucfirst((string) $row['name']), ENT_QUOTES, 'UTF-8')
-            . ' ×' . (int) $row['n'] . '</td>'
+        echo '<tr><td>' . htmlspecialchars(\App\Service\ContainerService::stackLabel($row), ENT_QUOTES, 'UTF-8') . '</td>'
             . '<td><button class="container-move" data-kind="stack" data-direction="' . $direction . '"'
             . ' data-item="' . (int) $row['item_id'] . '" data-max="' . (int) $row['n'] . '">' . $label . '</button></td></tr>';
     }
 
     foreach ($contents['exemplars'] as $row) {
-        $name = (string) ($row['custom_name'] ?? '') !== ''
-            ? (string) $row['custom_name']
-            : ucfirst((string) $row['name']);
-        echo '<tr><td>' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>'
+        echo '<tr><td>' . htmlspecialchars(\App\Service\ContainerService::exemplarEntryLabel($row), ENT_QUOTES, 'UTF-8') . '</td>'
             . '<td><button class="container-move" data-kind="exemplar" data-direction="' . $direction . '"'
             . ' data-instance="' . (int) $row['instance_id'] . '">' . $label . '</button></td></tr>';
     }
@@ -115,13 +111,8 @@ function renderContainerScript(int $containerId): string
             payload.containerId = containerId;
             aooFetch('api/container/flows.php', payload, null)
                 .then(function(){
-                    /* Back to the same panel, like the faction gestures;
-                     * the full page (no HUD) reloads instead. */
-                    if(window.hudOpenPanel){
-                        window.hudOpenPanel('load_container.php?targetId=' + containerId, 'Contenant');
-                    } else {
-                        document.location.reload();
-                    }
+                    /* Back to the same panel, like the faction gestures. */
+                    aooPanelOrReload('load_container.php?targetId=' + containerId, 'Contenant');
                 })
                 .catch(autoError());
         }

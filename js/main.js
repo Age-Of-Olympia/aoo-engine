@@ -26,6 +26,17 @@ function load_data(data, element){
     $(element).html(data);
 }
 
+/* Reopen a HUD panel on the fragment URL — or reload the page when
+ * no panel host exists (full-page fallback). One copy of the dance
+ * every gesture script used to carry inline. */
+function aooPanelOrReload(url, title) {
+    if (window.hudOpenPanel) {
+        window.hudOpenPanel(url, title);
+    } else {
+        document.location.reload();
+    }
+}
+
 function aooFetch(url,  payload = null, method = null,autoProcess = true) {
     const headers = { 'Content-Type': 'application/json' }
     const config = {

@@ -488,19 +488,25 @@ final class EntityCardView
          * wall, and the chest pastille below reads the same rule. */
         $lockable = (new \App\Service\LockService())->isLockable((int) $target->id);
 
-        $door = '';
-        if ($lockable) {
-            $door = $closure === null
-                ? '<span class="building-status-door building-status-door--open">Ouvert</span>'
-                : '<span class="building-status-door building-status-door--closed">Fermé'
-                    . ($closure !== \App\Service\BuildingService::CLOSED_BY_HAND ? ' (' . $closure . ')' : '') . '</span>';
-        }
+        $door = $lockable ? self::doorSpanHtml($closure) : '';
 
         return '<div class="building-status'
             . ($lockable && $closure !== null ? ' building-status--closed' : '') . '">'
             . $door
             . '<span class="building-status-state">' . $stateLabel . ' · PV ' . $pvPct . '%</span>'
             . '</div>';
+    }
+
+    /**
+     * The Ouvert/Fermé span, one builder for every pastille that says
+     * it — the reason joins when the latch does not explain it alone.
+     */
+    private static function doorSpanHtml(?string $closure): string
+    {
+        return $closure === null
+            ? '<span class="building-status-door building-status-door--open">Ouvert</span>'
+            : '<span class="building-status-door building-status-door--closed">Fermé'
+                . ($closure !== \App\Service\BuildingService::CLOSED_BY_HAND ? ' (' . $closure . ')' : '') . '</span>';
     }
 
     /**
@@ -518,10 +524,7 @@ final class EntityCardView
         }
 
         $closure = (new \App\Service\ContainerService())->closureReasonOf((int) $target->id);
-        $door = $closure === null
-            ? '<span class="building-status-door building-status-door--open">Ouvert</span>'
-            : '<span class="building-status-door building-status-door--closed">Fermé'
-                . ($closure !== \App\Service\BuildingService::CLOSED_BY_HAND ? ' (' . $closure . ')' : '') . '</span>';
+        $door = self::doorSpanHtml($closure);
 
         return '<div class="building-status' . ($closure !== null ? ' building-status--closed' : '') . '">'
             . $door
