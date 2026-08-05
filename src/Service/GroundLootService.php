@@ -50,7 +50,7 @@ class GroundLootService
 
         $instances = [];
         $res = $db->exe(
-            'SELECT i.id, i.custom_name, ' . \App\Service\ItemInstanceService::WEAR_SELECT . ', it.name
+            'SELECT i.id AS instance_id, i.custom_name, ' . \App\Service\ItemInstanceService::WEAR_SELECT . ', it.name
              FROM players AS e
              INNER JOIN coords AS c ON c.id = e.coords_id
              INNER JOIN item_instances AS i ON i.entity_id = e.id
