@@ -86,6 +86,7 @@ final class GroundLootView
             return $preferred;
         }
 
-        return 'img/items/' . $name . '.webp';
+        // The exemplar chain: items art, walls sprite, initials frame.
+        return \Classes\View::exemplarSprite($name, $name);
     }
 }

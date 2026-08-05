@@ -54,12 +54,12 @@ final class ContainerPeekView
                 . htmlspecialchars((string) $entity['name'], ENT_QUOTES, 'UTF-8') . ' :</b><br />';
 
             foreach ($contents['stacks'] as $row) {
-                echo '<img src="img/items/' . $row['name'] . '.webp" style="max-height:22px;vertical-align:middle;" alt="" /> '
+                echo '<img src="' . htmlspecialchars(\Classes\View::exemplarSprite((string) $row['name'], (string) $row['name']), ENT_QUOTES, 'UTF-8') . '" style="max-height:22px;vertical-align:middle;" alt="" /> '
                     . htmlspecialchars(ContainerService::stackLabel($row), ENT_QUOTES, 'UTF-8') . '<br />';
             }
 
             foreach ($contents['exemplars'] as $row) {
-                echo '<img src="img/items/' . $row['name'] . '.webp" style="max-height:22px;vertical-align:middle;" alt="" /> '
+                echo '<img src="' . htmlspecialchars(\Classes\View::exemplarSprite((string) $row['name'], (string) $row['name']), ENT_QUOTES, 'UTF-8') . '" style="max-height:22px;vertical-align:middle;" alt="" /> '
                     . htmlspecialchars(ContainerService::exemplarEntryLabel($row), ENT_QUOTES, 'UTF-8') . '<br />';
             }
 

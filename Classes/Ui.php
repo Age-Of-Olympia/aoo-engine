@@ -503,6 +503,13 @@ class Ui{
              * vide : rien, le bouton doit rester grisé partout. */
             $useKind = (string) \App\Service\InventoryService::useKind($item);
 
+            /* The item's face, wherever it shows: its art, else the
+             * exemplar chain (walls sprite, initials frame) — a chest
+             * has no img/items file and showed a broken-image glyph. */
+            $rowSprite = \Classes\View::exemplarSprite((string) $item->row->name, strip_tags((string) $itemName));
+            $miniCandidate = 'img/items/'. $row->name .'_mini.webp';
+            $rowMini = file_exists($miniCandidate) ? $miniCandidate : $rowSprite;
+
             echo '
             <tr
                 class="item-case"
@@ -522,14 +529,14 @@ class Ui{
                 data-build-action="'. ($type == Item::TYPE_CONSTRUCTIBLE ? 'construire' : '') .'"
                 data-fp="'. ($type == Item::TYPE_CONSTRUCTIBLE ? self::constructibleFootprint((string) $item->row->name) : '') .'"
                 data-fp-img="'. ($type == Item::TYPE_CONSTRUCTIBLE ? self::constructibleGhostImage((string) $item->row->name, (string) $itemName) : '') .'"
-                data-img="img/items/'. $item->row->name .'.webp"
+                data-img="'. htmlspecialchars($rowSprite, ENT_QUOTES, 'UTF-8') .'"
             >
                 <td width="50">
                     <div>
                         <img
                             src="img/ui/fillers/50.png"
                             height="50"
-                            data-src="img/items/'. $row->name .'_mini.webp"
+                            data-src="'. htmlspecialchars($rowMini, ENT_QUOTES, 'UTF-8') .'"
                         />
                     </div>
                 </td>
