@@ -89,6 +89,33 @@ class FactionJournalTest extends LegacyPlayerFixtureTestCase
         $this->assertStringContainsString($member->data->name, $messages[2], 'names resolved at the gesture');
     }
 
+    public function testTheJournalHasItsReaders(): void
+    {
+        // The fixture rank (Garde, position 0) holds useChest but not showLogs.
+        $member = $this->createRealPlayer('GmLecteur');
+        $this->link->executeStatement(
+            'UPDATE players SET faction = ?, factionRole = 0 WHERE id = ?',
+            [self::CODE, $member->id]
+        );
+
+        $service = new \App\Service\FactionService();
+        $this->assertFalse(
+            $service->mayManage((int) $member->id, 'showLogs'),
+            'a rank without the flag does not open the journal'
+        );
+
+        $this->link->executeStatement(
+            'UPDATE faction_roles SET showLogs = 1 WHERE faction_id = ? AND position = 0',
+            [$this->factionId]
+        );
+        \App\Service\FactionService::clearCache();
+
+        $this->assertTrue(
+            $service->mayManage((int) $member->id, 'showLogs'),
+            'the flag opens it — settable from the ladder like every other'
+        );
+    }
+
     public function testAThingOfNobodysWritesNowhere(): void
     {
         $chestId = $this->installExemplar('coffre_bois', 62, 30);

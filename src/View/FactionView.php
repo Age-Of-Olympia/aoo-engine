@@ -211,6 +211,7 @@ class FactionView
             'initRole'      => 'Régler l\'échelle',
             'driveBuilding' => 'Piloter les bâtiments',
             'useChest'      => 'User des coffres',
+            'showLogs'      => 'Voir le journal',
         ];
 
         $service = new \App\Service\FactionService();

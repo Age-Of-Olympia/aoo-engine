@@ -20,7 +20,7 @@ class FactionRole
     public const FLAG_KEYS = [
         'defaultRole', 'showPosition', 'showForum', 'addMember',
         'editRole', 'kickMember', 'initRole',
-        'driveBuilding', 'useChest',
+        'driveBuilding', 'useChest', 'showLogs',
     ];
 
     #[ORM\Id]
@@ -70,6 +70,10 @@ class FactionRole
     /** May see inside, use and lock the faction's containers. */
     #[ORM\Column(type: "boolean", options: ["default" => false])]
     private bool $useChest = false;
+
+    /** May read the faction's journal. */
+    #[ORM\Column(type: "boolean", options: ["default" => false])]
+    private bool $showLogs = false;
 
     public function __construct(Faction $faction, string $name, int $position)
     {
