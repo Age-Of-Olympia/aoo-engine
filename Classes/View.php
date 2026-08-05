@@ -565,7 +565,7 @@ class View{
                     if($isStructure && (empty($img) || !file_exists($img))){
 
                         $img = ((string) ($entity->player_type ?? '') === 'item')
-                            ? self::exemplarSprite((string) $entity->race, (string) $entity->name)
+                            ? self::boardExemplarSprite((string) $entity->race, (string) $entity->name)
                             : self::structureSprite((string) $entity->race, (string) $entity->name);
                     }
 
@@ -1466,10 +1466,10 @@ class View{
     }
 
     /**
-     * The one rule for what a placed OBJECT shows: its item art
+     * The one rule for what a placed OBJECT shows in VIGNETTES
+     * (inventory rows, previews, peeks): its item art
      * (img/items/{type}), else the structure chain — a chest without a
-     * picture wears its initials frame like any structure. The board,
-     * the entity card and the container screen all read HERE.
+     * picture wears its initials frame like any structure.
      */
     public static function exemplarSprite(string $itemName, string $label): string{
 
@@ -1484,6 +1484,34 @@ class View{
         }
 
         return self::structureSprite($itemName, $label);
+    }
+
+    /**
+     * The same object on the BOARD: the structure art first — a placed
+     * chest is scenery-scale, its walls sprite fills the tile where the
+     * item icon is a small vignette — then the item art, then the
+     * initials frame.
+     */
+    public static function boardExemplarSprite(string $itemName, string $label): string{
+
+        $resolved = \App\Service\BuildingService::resolveAvatar($itemName);
+
+        if($resolved !== ''){
+
+            return $resolved;
+        }
+
+        foreach(['webp', 'png'] as $ext){
+
+            $img = 'img/items/'. $itemName .'.'. $ext;
+
+            if(file_exists($img)){
+
+                return $img;
+            }
+        }
+
+        return self::structureInitialsAvatar($label);
     }
 
     public static function structureInitialsAvatar(string $name): string{

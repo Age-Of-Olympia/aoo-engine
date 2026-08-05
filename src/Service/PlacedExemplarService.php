@@ -70,10 +70,11 @@ class PlacedExemplarService extends BaseService
         $name = $row['custom_name'] !== '' ? $row['custom_name'] : ucfirst((string) $row['catalog_name']);
         $coordsId = View::get_coords_id($goCoords);
 
-        /* The one sprite rule for a placed object: its item art, else
-         * the structure chain. The initials frame is drawn at render
-         * time, never stored — the column carries a path or nothing. */
-        $avatar = View::exemplarSprite((string) $row['catalog_name'], $name);
+        /* The BOARD sprite rule for a placed object: structure art
+         * first (a chest fills its tile), then item art. The initials
+         * frame is drawn at render time, never stored — the column
+         * carries a path or nothing. */
+        $avatar = View::boardExemplarSprite((string) $row['catalog_name'], $name);
         if (!str_starts_with($avatar, 'img/')) {
             $avatar = BuildingService::NO_IMAGE;
         }

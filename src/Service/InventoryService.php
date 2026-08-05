@@ -36,6 +36,8 @@ class InventoryService
             $text = $player->data->name . ' a déposé ' . $item->data->name . '.';
 
             Log::put($player, $player, $text, type: 'use');
+            // The bourse marker joins the boards: purge the cached views.
+            \Classes\View::refresh_players_svg($player->getCoords());
             return;
         }
 
@@ -45,6 +47,8 @@ class InventoryService
         }
         $countToDrop=(int)$_POST['n'];
         $player->drop($item, $countToDrop);
+        // The bourse marker joins the boards: purge the cached views.
+        \Classes\View::refresh_players_svg($player->getCoords());
 
 
         $text = $player->data->name . ' a déposé ' . $item->data->name . ' x' . $countToDrop . '.';

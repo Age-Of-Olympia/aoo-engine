@@ -238,6 +238,14 @@ $(document).ready(function(){
 
                         if(!contentData.html()){
 
+                            /* Jeter change le DAMIER (la bourse au sol), pas
+                             * seulement le panneau : recharger la page — les
+                             * panneaux ouverts survivent au rechargement. */
+                            if(action == 'drop'){
+                                document.location.reload();
+                                return;
+                            }
+
                             aooReload();
                             return;
                         }
