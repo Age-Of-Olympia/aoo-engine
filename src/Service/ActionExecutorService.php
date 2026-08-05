@@ -73,17 +73,25 @@ class ActionExecutorService
         if (!$this->blocked) {
             $this->action->initAutomaticOutcomeInstructions();
 
-            // 2) apply each effect
-            $this->applyOutcomes();
-            $this->finalTargetPv = $this->target->getRemaining('pv');
+            /* Effects before costs — rest and status magnitudes read the
+             * LIVE pool, so the debit must not precede them. But an
+             * outcome that throws midway must not leave its applied
+             * effects unpaid: costs and the anti-berserk mark belong to
+             * the ATTEMPT; XP and logs to the completion. */
+            try {
+                // 2) apply each effect
+                $this->applyOutcomes();
+            } finally {
+                $this->finalTargetPv = $this->target->getRemaining('pv');
 
-            // update Last Action Time (used on new turn to set antiberserk time)
-            if (!$this->simulationMode && $this->action->activateAntiBerserk()) {
-                $this->playerService->updateLastActionTime();
+                // 3) apply costs
+                $costsResultsArray = $this->applyCosts();
+
+                // update Last Action Time (used on new turn to set antiberserk time)
+                if (!$this->simulationMode && $this->action->activateAntiBerserk()) {
+                    $this->playerService->updateLastActionTime();
+                }
             }
-
-            // 3) apply costs
-            $costsResultsArray = $this->applyCosts();
 
             // 4) calculate XP — from the action's per-type rule (action_type_xp).
             $xpResultsArray = $this->xpResolver->calculate($this->action, $this->globalConditionsResult, $this->actor, $this->target);

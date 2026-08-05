@@ -50,6 +50,12 @@ class RequiresFaithCondition extends BaseCondition implements HasParameterSchema
         ]);
     }
 
+    /** The price is a debit: without this the executor never queues it. */
+    public function toRemove(): bool
+    {
+        return true;
+    }
+
     public function applyCosts(ActorInterface $actor, ?ActorInterface $target, ActionCondition $conditionToPay): array
     {
         $price = self::parameterCost($conditionToPay);

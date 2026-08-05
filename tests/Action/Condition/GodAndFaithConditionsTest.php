@@ -154,6 +154,15 @@ class GodAndFaithConditionsTest extends TestCase
         $this->assertStringContainsString('49', $refused->getConditionFailureMessages()[0], 'dire ce qu\'on a');
     }
 
+    /** The executor only queues what declares itself a debit. */
+    public function testFaithDeclaresItselfADebit(): void
+    {
+        $this->assertTrue(
+            (new RequiresFaithCondition())->toRemove(),
+            'toRemove() false means checked-but-never-charged through the executor'
+        );
+    }
+
     /** And it is actually spent, through the only method that knows how. */
     public function testFaithIsSpentOnPayment(): void
     {
