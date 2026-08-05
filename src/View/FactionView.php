@@ -319,18 +319,11 @@ class FactionView
             var factionCode = <?php echo json_encode($factionCode); ?>;
 
             function factionManageCall(payload){
-                aooFetch('api/faction/members.php', payload, null)
-                    .then(function(data){
-                        if(data && data.error){
-                            aooAlert(data.error);
-                            return;
-                        }
-                        var message = data && data.result && data.result.message ? data.result.message : '';
-                        (message ? aooAlert(message) : Promise.resolve()).then(function(){
-                            aooPanelOrReload('load_faction.php?faction=' + encodeURIComponent(factionCode), 'Faction');
-                        });
-                    })
-                    .catch(autoError());
+                aooGestureFetch('api/faction/members.php', payload, function(data){
+                    aooResultMessage(data).then(function(){
+                        aooPanelOrReload('load_faction.php?faction=' + encodeURIComponent(factionCode), 'Faction');
+                    });
+                });
             }
 
             $(document).off('click.factionManage', '#faction-add-btn')
@@ -572,18 +565,11 @@ class FactionView
         <script>
         (function(){
             function factionDriveCall(payload){
-                aooFetch('api/faction/drive.php', payload, null)
-                    .then(function(data){
-                        if(data && data.error){
-                            aooAlert(data.error);
-                            return;
-                        }
-                        var message = data && data.result && data.result.message ? data.result.message : '';
-                        (message ? aooAlert(message) : Promise.resolve()).then(function(){
-                            document.location = 'index.php';
-                        });
-                    })
-                    .catch(autoError());
+                aooGestureFetch('api/faction/drive.php', payload, function(data){
+                    aooResultMessage(data).then(function(){
+                        document.location = 'index.php';
+                    });
+                });
             }
 
             $(document).off('click.factionDrive', '.faction-drive-take')
@@ -700,19 +686,13 @@ class FactionView
 
             $(document).off('click.factionAssets', '.faction-lock-toggle')
                 .on('click.factionAssets', '.faction-lock-toggle', function(){
-                    aooFetch('api/container/flows.php', {
+                    aooGestureFetch('api/container/flows.php', {
                         action: 'lock',
                         containerId: $(this).data('target'),
                         open: $(this).data('open')
-                    }, null)
-                        .then(function(data){
-                            if(data && data.error){
-                                aooAlert(data.error);
-                                return;
-                            }
-                            aooPanelOrReload('load_faction.php?faction=' + encodeURIComponent(factionCode), 'Faction');
-                        })
-                        .catch(autoError());
+                    }, function(){
+                        aooPanelOrReload('load_faction.php?faction=' + encodeURIComponent(factionCode), 'Faction');
+                    });
                 });
         })();
         </script>

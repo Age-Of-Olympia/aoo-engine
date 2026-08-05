@@ -92,6 +92,31 @@ function aooGoto(url) {
     document.location = url;
 }
 
+/* The endpoint's result message, shown as a modal when there is one;
+ * resolves either way so the continuation can chain after it. */
+function aooResultMessage(data) {
+    var message = data && data.result && data.result.message ? data.result.message : '';
+    return message ? aooAlert(message) : Promise.resolve();
+}
+
+/* One gesture call: a refusal (HTTP 200 + {error}) is SAID — a silent
+ * reload looked like nothing happened — a network failure goes through
+ * autoError, and the continuation runs only on success. One copy of
+ * the branch every gesture script used to carry inline. */
+function aooGestureFetch(url, payload, onSuccess) {
+    return aooFetch(url, payload, null)
+        .then(function (data) {
+            if (data && data.error) {
+                aooAlert(data.error);
+                return;
+            }
+            if (onSuccess) {
+                onSuccess(data);
+            }
+        })
+        .catch(autoError());
+}
+
 function autoModal(data) {
     if (data.error) {
         aooAlert(data.error);
