@@ -102,6 +102,26 @@ final class TopBarView
 
         echo '<div class="hud-quick">';
 
+        /* Impersonation STOP — one return gesture for every mask: a PNJ
+         * or a driven building alike go back to the account's main
+         * character. Hidden when playing oneself; a full identity
+         * switch (session open) moves mainPlayerId too and shows
+         * nothing. Fragment script: delegated, namespaced. */
+        $mainId = (int) ($_SESSION['mainPlayerId'] ?? 0);
+        if ($mainId > 0 && (int) $player->id !== $mainId) {
+            echo '<button id="hud-stop-impersonation" class="hud-quick-icon"'
+                . ' title="Reprendre son personnage">'
+                . '<span class="ra ra-player"></span>&#10005;</button>'
+                . '<script>
+                    $(document).off("click.stopImpersonation", "#hud-stop-impersonation")
+                        .on("click.stopImpersonation", "#hud-stop-impersonation", function(){
+                            aooFetch("api/faction/drive.php", { action: "release" }, null)
+                                .then(function(){ document.location = "index.php"; })
+                                .catch(autoError());
+                        });
+                </script>';
+        }
+
         /* Panneau d'administration (/admin : actions, tutoriel,
          * joueurs…) pour les super-administrateurs. La console texte
          * reste sur la touche ² et la page Profil. */
