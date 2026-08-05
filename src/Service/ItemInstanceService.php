@@ -872,7 +872,7 @@ class ItemInstanceService extends BaseService
      *
      * @return string[]
      */
-    public function collectAt(int $coordsId, int $playerId): array
+    public function collectAt(int $coordsId, int $playerId, ?int $onlyInstanceId = null): array
     {
         $conn = $this->entityManager->getConnection();
 
@@ -881,7 +881,8 @@ class ItemInstanceService extends BaseService
                FROM players e
                JOIN item_instances i ON i.entity_id = e.id
                JOIN items it ON it.id = i.item_id
-              WHERE e.coords_id = ? AND e.slot = ?',
+              WHERE e.coords_id = ? AND e.slot = ?'
+            . ($onlyInstanceId !== null ? ' AND i.id = ' . (int) $onlyInstanceId : ''),
             [$coordsId, \App\Service\Map\EntityLocationService::SLOT_DROPPED]
         );
 
@@ -895,8 +896,12 @@ class ItemInstanceService extends BaseService
                 continue;
             }
 
-            // A full bag takes nothing more: the rest stays on the ground.
+            // A full bag takes nothing more: the rest stays on the ground —
+            // and a line-by-line take says WHY it refused.
             if (!$capacity->hasRoomForALine($playerId)) {
+                if ($onlyInstanceId !== null) {
+                    throw new \RuntimeException('Votre sac est plein.');
+                }
                 break;
             }
 

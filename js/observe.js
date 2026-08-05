@@ -155,3 +155,19 @@ $(document).off('click.pickupOwnTile').on('click.pickupOwnTile', '#pickup-own-ti
     fetch('pickup.php', {method: 'POST'}).then(function(r){ return r.text(); })
         .then(function(t){ aooAlert(t).then(function(){ document.location.reload(); }); });
 });
+
+/* Ramasser LIGNE À LIGNE : le bois sans le baril. Même délégué
+   nettoyé que le balai — le script se ré-exécute à chaque panneau. */
+$(document).off('click.pickupLine').on('click.pickupLine', '.ground-take', function(){
+
+    var b = this;
+    b.disabled = true;
+
+    var body = new URLSearchParams();
+    if(this.hasAttribute('data-item')){ body.set('itemId', this.getAttribute('data-item')); }
+    if(this.hasAttribute('data-instance')){ body.set('instanceId', this.getAttribute('data-instance')); }
+
+    fetch('pickup.php', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: body.toString()})
+        .then(function(r){ return r.text(); })
+        .then(function(t){ aooAlert(t).then(function(){ document.location.reload(); }); });
+});

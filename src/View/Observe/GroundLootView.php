@@ -23,6 +23,14 @@ final class GroundLootView
             return;
         }
 
+        /* On one's own tile, every LINE takes alone — the wood without
+         * the barrel; the sweep button stays for the greedy hand. */
+        $onOwnTile = $x === (int) $player->coords->x && $y === (int) $player->coords->y;
+        $lineButton = static fn (string $attr, int $id): string => $onOwnTile
+            ? ' <button class="ground-take" ' . $attr . '="' . $id . '" title="Ramasser cette ligne">'
+                . '<span class="ra ra-hand"></span></button>'
+            : '';
+
         echo '<div class="case-infos">';
         echo '<img src="img/tiles/loot.png" title="Bourse" />';
         echo '<div class="text"><b>Au sol :</b><br />';
@@ -33,7 +41,8 @@ final class GroundLootView
             $groundItem->get_data();
 
             echo '<img src="'. self::mini((string) $row->name, (string) ($groundItem->data->mini ?? '')) .'" style="max-height:22px;vertical-align:middle;" alt="" /> '
-                . $groundItem->data->name .' x'. (int) $row->n .'<br />';
+                . $groundItem->data->name .' x'. (int) $row->n
+                . $lineButton('data-item', (int) $row->item_id) .'<br />';
         }
 
         foreach ($loot['instances'] as $row) {
@@ -47,7 +56,8 @@ final class GroundLootView
                 : ' — durabilité '. (int) $row->durability .'/'. (int) $row->durability_max;
 
             echo '<img src="'. self::mini((string) $row->name, 'img/items/'. $row->name .'_mini.webp') .'" style="max-height:22px;vertical-align:middle;" alt="" /> '
-                . $label . $state .'<br />';
+                . $label . $state
+                . $lineButton('data-instance', (int) $row->instance_id) .'<br />';
         }
 
         /* Les plantes se montrent avec le reste : on ne les cueille plus en
@@ -63,11 +73,11 @@ final class GroundLootView
         /* Le bouton n'apparaît que sur SA case : ramasser demande d'être
          * dessus. Ailleurs, on dit où aller — et non plus « marchez dessus
          * pour ramasser », qui décrivait le ramassage automatique. */
-        if ($x === (int) $player->coords->x && $y === (int) $player->coords->y) {
+        if ($onOwnTile) {
             /* action--direct : échappe au cycle en deux temps de
              * js/observe.js — un clic ramasse, point. */
             echo '<button class="action action--direct" id="pickup-own-tile">'
-                . '<span class="ra ra-hand"></span> <span class="action-name">Ramasser</span></button>';
+                . '<span class="ra ra-hand"></span> <span class="action-name">Tout ramasser</span></button>';
         } else {
             echo '<sup>Allez sur la case pour pouvoir ramasser.</sup>';
         }

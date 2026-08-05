@@ -22,13 +22,26 @@ $player = PlayerFactory::legacy(TutorialHelper::getActivePlayerId());
 $player->get_data();
 $player->getCoords();
 
-$lootList = (new GroundLootService())->collect(
-    $player,
-    (int) $player->data->coords_id,
-    $player->coords
-);
+/* Line-by-line when asked (the wood without the barrel): a stack by
+ * its item, an exemplar by its instance; the full sweep otherwise. */
+$itemId = (int) ($_POST['itemId'] ?? 0);
+$instanceId = (int) ($_POST['instanceId'] ?? 0);
+$service = new GroundLootService();
 
 header('Content-Type: text/plain; charset=utf-8');
+
+try {
+    if ($instanceId > 0) {
+        $lootList = $service->collectInstance($player, (int) $player->data->coords_id, $instanceId, $player->coords);
+    } elseif ($itemId > 0) {
+        $lootList = $service->collectStack($player, (int) $player->data->coords_id, $itemId, $player->coords);
+    } else {
+        $lootList = $service->collect($player, (int) $player->data->coords_id, $player->coords);
+    }
+} catch (\RuntimeException $e) {
+    echo $e->getMessage();
+    exit();
+}
 
 if ($lootList === []) {
     echo 'Rien à ramasser ici.';

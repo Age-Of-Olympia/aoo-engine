@@ -91,6 +91,66 @@ class GroundLootService
      *
      * @return string[] display labels of what was taken ([] = nothing)
      */
+    /**
+     * Take ONE stack line from the tile — the wood without the barrel.
+     * Same guards as the full sweep: a new line asks the bag.
+     *
+     * @return string[] display labels ([] = nothing there)
+     */
+    public function collectStack(Player $player, int $coordsId, int $itemId, object $logCoords): array
+    {
+        $db = new Db();
+
+        /* SUM, not first row: map_items has no unique key — repeated
+         * drops pile rows for the same item, and crediting one while
+         * deleting all would eat the rest. */
+        $total = (int) $db->exe(
+            'SELECT COALESCE(SUM(n), 0) AS n FROM map_items WHERE coords_id = ? AND item_id = ?',
+            [$coordsId, $itemId]
+        )->fetch_object()->n;
+        if ($total <= 0) {
+            return [];
+        }
+
+        $capacity = new \App\Service\ContainerService();
+        if ($capacity->stackNeedsRoom((int) $player->id, $itemId)
+            && !$capacity->hasRoomForALine((int) $player->id)
+        ) {
+            throw new \RuntimeException('Votre sac est plein.');
+        }
+
+        $item = new Item($itemId);
+        $item->get_data();
+        $item->add_item($player, $total);
+        $db->exe('DELETE FROM map_items WHERE coords_id = ? AND item_id = ?', [$coordsId, $itemId]);
+
+        $label = $item->data->name . ' x' . $total;
+        Log::put($player, $player, $player->data->name . ' a ramassé des objets: ' . $label . '.', type: 'loot');
+        $this->forgetBoards($coordsId);
+
+        return [$label];
+    }
+
+    /**
+     * Take ONE dropped exemplar from the tile, by its instance id —
+     * same guards as the sweep (a held container stays, a full bag
+     * refuses with its reason).
+     *
+     * @return string[] display labels ([] = nothing there)
+     */
+    public function collectInstance(Player $player, int $coordsId, int $instanceId, object $logCoords): array
+    {
+        $labels = (new ItemInstanceService())->collectAt($coordsId, (int) $player->id, $instanceId);
+
+        if ($labels !== []) {
+            $player->refresh_invent();
+            Log::put($player, $player, $player->data->name . ' a ramassé des objets: ' . implode(', ', $labels) . '.', type: 'loot');
+            $this->forgetBoards($coordsId);
+        }
+
+        return $labels;
+    }
+
     public function collect(Player $player, int $coordsId, object $logCoords): array
     {
         $db = new Db();
