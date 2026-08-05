@@ -2023,23 +2023,22 @@ body:has(#hud) #load-caracs .progress-bar {
 .hud-panel-content .inventory-container {
     display: grid;
     grid-template-columns: 150px 1fr;
-    grid-template-areas:
-        "n n"
-        "img text"
-        "state text";
+    grid-template-rows: auto 150px 1fr;
     column-gap: 14px;
-    height: auto;
-    min-height: 175px;
+    height: 230px;
     padding-right: 112px;
 }
-.hud-panel-content .preview-n { position: static; grid-area: n; margin: 0 0 4px; }
-.hud-panel-content .preview-img { grid-area: img; }
-.hud-panel-content .preview-state { grid-area: state; }
+.hud-panel-content .preview-n { position: static; grid-column: 1 / -1; grid-row: 1; margin: 0 0 4px; }
+.hud-panel-content .preview-img { grid-column: 1; grid-row: 2; }
+.hud-panel-content .preview-state { grid-column: 1; grid-row: 3; }
 .hud-panel-content .preview-text {
-    grid-area: text;
+    grid-column: 2;
+    grid-row: 2 / span 2;
     margin-top: 0;
-    max-height: 220px;
+    max-height: none;
+    height: 100%;
     overflow-y: auto;
+    box-sizing: border-box;
 }
 
 body:has(#hud) #load-caracs table {
