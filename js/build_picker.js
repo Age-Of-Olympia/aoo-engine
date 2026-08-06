@@ -116,30 +116,13 @@ $(document).ready(function(){
 
     $('head').append(
         '<style id="build-ghost-style">' +
-        '.build-ghost-ok{outline:3px solid rgba(40,167,69,.85);outline-offset:-3px;}' +
-        '.build-ghost-bad{outline:3px solid rgba(220,53,69,.85);outline-offset:-3px;}' +
         '.build-blocked-tint{box-shadow: inset 0 0 0 999px rgba(220,53,69,.32);}' +
-        '#build-ghost-img{position:fixed;pointer-events:none;opacity:.55;z-index:99990;display:none;}' +
         '</style>'
     );
 
-    /* The building itself, ghosted over the hovered cells — its avatar, or
-       the initials frame an imageless type already shows on the board. */
-    var $ghostImg = null;
-    if(pending.ghostImg){
-        $ghostImg = $('<img id="build-ghost-img" alt="">').attr('src', pending.ghostImg);
-        $('body').append($ghostImg);
-    }
-
-    function clearGhost(){
-        document.querySelectorAll('.build-ghost-ok, .build-ghost-bad').forEach(function(el){
-            el.classList.remove('build-ghost-ok');
-            el.classList.remove('build-ghost-bad');
-        });
-        if($ghostImg){
-            $ghostImg.hide();
-        }
-    }
+    /* The building itself, ghosted over the hovered cells — the shared
+       footprint ghost (même dessin que le pinceau bâtiments de tiled). */
+    var ghost = FootprintGhost.make({ footprint: footprint, imgSrc: pending.ghostImg || null });
 
     function clearBlockedTint(){
         document.querySelectorAll('.build-blocked-tint').forEach(function(el){
@@ -151,7 +134,7 @@ $(document).ready(function(){
        (water, lava) refuses a cell the ghost may still paint green. */
     function onHover(e){
         var caseEl = e.target.closest ? e.target.closest('.case') : null;
-        clearGhost();
+        ghost.clear();
         if(!caseEl){
             return;
         }
@@ -164,34 +147,7 @@ $(document).ready(function(){
         if(!footprintTouchesPlayer(x, y)){
             return;
         }
-        var cells = footprint.map(function(off){
-            return document.querySelector('.case[data-coords="' + (x + off[0]) + ',' + (y + off[1]) + '"]');
-        });
-        var allFree = cells.every(function(el){ return el && !el.hasAttribute('data-blocked'); });
-        cells.forEach(function(el){
-            if(el){ el.classList.add(allFree ? 'build-ghost-ok' : 'build-ghost-bad'); }
-        });
-
-        /* Stretch the sprite over the union of the cells actually on
-           screen — measured from their rects, so the board's orientation
-           never enters the computation. */
-        if($ghostImg && cells.some(function(el){ return !!el; })){
-            var left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
-            cells.forEach(function(el){
-                if(!el){ return; }
-                var r = el.getBoundingClientRect();
-                left = Math.min(left, r.left);
-                top = Math.min(top, r.top);
-                right = Math.max(right, r.right);
-                bottom = Math.max(bottom, r.bottom);
-            });
-            $ghostImg.css({
-                left: left + 'px',
-                top: top + 'px',
-                width: (right - left) + 'px',
-                height: (bottom - top) + 'px'
-            }).show();
-        }
+        ghost.preview(x, y);
     }
 
     function cleanup(){
@@ -199,11 +155,8 @@ $(document).ready(function(){
         document.removeEventListener('click', onClick, true);
         document.removeEventListener('keydown', onKey, true);
         document.removeEventListener('mouseover', onHover, true);
-        clearGhost();
+        ghost.destroy();
         clearBlockedTint();
-        if($ghostImg){
-            $ghostImg.remove();
-        }
         $('#build-ghost-style').remove();
         $banner.remove();
         highlighter.clearAll();

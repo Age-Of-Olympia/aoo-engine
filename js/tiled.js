@@ -8,10 +8,12 @@ function selectPreviousTool($customCursor){
     }).each(function() {
       $(this).addClass('selected').css('border', '1px solid red');
 
-      $customCursor.attr('src', $(this).attr('src')).show();
+      /* La figure entière (data-figure) quand l'outil en porte une —
+         même curseur d'objet que le clic sur la palette. */
+      var $cursor = window.tiledShowCursorFor ? window.tiledShowCursorFor($(this)) : $customCursor.attr('src', $(this).attr('src')).show();
 
       $('body').on('mousemove', function(e) {
-        $customCursor.css({
+        $cursor.css({
           left: e.pageX - 25 +'px',
           top: e.pageY - 25+'px'
         });
@@ -296,7 +298,7 @@ $(document).ready(function(){
       var f;
       try { f = JSON.parse(figure); } catch (e) { f = null; }
 
-      if (!f || !f.cells || !f.cells.length) {
+      if (!f || (!f.img && (!f.cells || !f.cells.length))) {
           $objectCursor.hide().empty();
           $customCursor.attr('src', $tool.find('img').first().attr('src') || '').show();
           return $customCursor;
@@ -305,7 +307,13 @@ $(document).ready(function(){
       var CELL = 50;
       var html = '';
 
-      f.cells.forEach(function (c) {
+      if (f.img) {
+          /* Un seul sprite couvrant toute l'emprise (bâtiments) : étiré sur
+             la figure, là où un décor arrive en morceaux par case. */
+          html = '<img src="' + f.img + '" style="position:absolute;left:0;top:0;width:'
+              + (f.w * CELL) + 'px;height:' + (f.h * CELL) + 'px;" alt="" />';
+      }
+      else f.cells.forEach(function (c) {
           html += '<img src="' + c.u + '" style="position:absolute;width:' + CELL + 'px;height:' + CELL
                 + 'px;left:' + (c.x * CELL) + 'px;top:' + (c.y * CELL) + 'px;" alt="" />';
       });

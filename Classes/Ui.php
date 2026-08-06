@@ -87,7 +87,8 @@ class Ui{
                 <script src="js/tutorial/TutorialInit.js?v=' . $tutorialVersion . '"></script>
 
                 <!-- Choix de case de construction (réutilise le spotlight tutoriel) -->
-                <script src="js/build_picker.js?v=20260804c"></script>
+                <script src="js/footprint_ghost.js?v=20260806"></script>
+                <script src="js/build_picker.js?v=20260806"></script>
         ';
 
         echo '    </head>

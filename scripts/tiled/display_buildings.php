@@ -15,6 +15,11 @@ echo '
 <p style="font-size: 0.85em; color: #999; margin: 5px 0;">Chaque pose crée une entité (PV de son type, attaquable). Propriétaire, faction et dialogue se règlent dans admin → Bâtiments.</p>
 ';
 
+/* L'emprise du type accompagne l'outil (data-figure) : le curseur d'objet
+   de l'éditeur montre la figure entière avant la pose — même source que la
+   pose elle-même. */
+$footprints = (new \App\Service\Map\EntityTypeFootprintService())->catalogue();
+
 foreach((new RaceService())->getRacesByKind(EntityCategory::Structure->value) as $race){
 
     $name = $race->getName();
@@ -25,10 +30,19 @@ foreach((new RaceService())->getRacesByKind(EntityCategory::Structure->value) as
         continue; /* sans visuel : posable via admin → Bâtiments, pas au pinceau */
     }
 
+    $footprint = $footprints[$name] ?? null;
+
     echo '<img
         class="map wall select-name"
         data-type="buildings"
-        data-name="'. $name .'"
+        data-name="'. $name .'"'
+        . ($footprint !== null && $footprint->cells() > 1
+            ? ' data-figure=\''. json_encode([
+                'w' => $footprint->width(),
+                'h' => $footprint->height(),
+                'img' => $sprite,
+            ], JSON_UNESCAPED_SLASHES) .'\''
+            : '') . '
         title="'. htmlspecialchars($race->getLabel(), ENT_QUOTES) .'"
         src="'. $sprite .'"
         loading="lazy"
