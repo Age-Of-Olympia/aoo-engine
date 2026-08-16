@@ -12,7 +12,7 @@ use App\View\Action\ActionCostView;
 
 class StealthView
 {
-    public static function render(Player $player, Player $target): void
+    public static function render(Player $player): void
     {
         $actionService = new ActionService();
         $costView = new ActionCostView($actionService);

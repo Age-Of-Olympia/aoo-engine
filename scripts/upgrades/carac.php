@@ -1,4 +1,5 @@
 <?php
+use App\Service\PlayerCaracsService;
 use App\Service\ProgressionService;
 if(!isset(CARACS[$_POST['carac']])){
 
@@ -15,7 +16,7 @@ if($k == 'spd'){
 }
 
 
-$cost = \App\View\UpgradesView::returnCost(\App\View\UpgradesView::TRIO[$k], $player->upgrades->$k);
+$cost = (new PlayerCaracsService())->returnCost($k, $player->upgrades->$k);
 
 
 // The balance is checked by the debit itself: two requests arriving together

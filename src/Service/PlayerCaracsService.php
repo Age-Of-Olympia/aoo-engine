@@ -33,6 +33,31 @@ use Classes\Db;
 class PlayerCaracsService
 {
     /**
+     * Cost grid per carac: [first rank, ranks 2-3, ranks 4 and up].
+     * It lives with the upgrades it prices, so that the table showing
+     * them and the endpoints charging them read the same figures.
+     *
+     * @var array<string, array{0: int, 1: int, 2: int}>
+     */
+    private const UPGRADE_COSTS = [
+        'pv' => [4, 2, 1],
+        'ct' => [110, 50, 30],
+        'f' => [120, 55, 30],
+        'agi' => [95, 45, 25],
+        'e' => [120, 55, 30],
+        'pm' => [5, 3, 1],
+        'fm' => [100, 50, 30],
+        'm' => [110, 55, 35],
+        'a' => [800, 200, 100],
+        'mvt' => [100, 50, 30],
+        'r' => [40, 30, 15],
+        'rm' => [50, 40, 20],
+        'cc' => [100, 50, 30],
+        'p' => [110, 85, 78],
+        'spd' => [400, 100, 50],
+    ];
+
+    /**
      * Return a stdClass with every CARACS key populated as
      * race base stat + upgrade count. Matches the shape of
      * `$player->caracs` after `$player->get_caracs(nude: true)`.
@@ -87,5 +112,37 @@ class PlayerCaracsService
         }
 
         return $counts;
+    }
+
+    /**
+     * The cost grid of a carac, or null when it has no rank to buy —
+     * `ae` is read from the equipment, never bought.
+     *
+     * @return array{0: int, 1: int, 2: int}|null
+     */
+    public function getUpgradeProgress(string $carac): ?array
+    {
+        return self::UPGRADE_COSTS[$carac] ?? null;
+    }
+
+    /**
+     * Price of the next rank: full fare for the first, then the
+     * degressive steps of the grid. What is not sold costs nothing.
+     */
+    public function returnCost(string $carac, int $upgraded): int
+    {
+        $progress = $this->getUpgradeProgress($carac);
+
+        if ($progress === null) {
+            return 0;
+        }
+
+        $total = $progress[0];
+
+        for ($i = 1; $i <= $upgraded; $i++) {
+            $total += $i < 3 ? $progress[1] : $progress[2];
+        }
+
+        return $total;
     }
 }

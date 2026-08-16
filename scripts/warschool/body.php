@@ -9,6 +9,7 @@ use App\View\WarSchool\MagicView;
 use App\View\WarSchool\SpellView;
 use App\View\WarSchool\StealthView;
 use App\View\WarSchool\SurvivalView;
+use App\View\WarSchool\ReassignationView;
 
 /*
  * Corps de la page école de guerre, partagé entre la page complète
@@ -79,6 +80,14 @@ if (!isset($_GET['hideMenu'])) {
         </a>';
     }
 
+    /* Reassignment is no discipline: it undoes what the Pi bought,
+     * wherever they were spent. Every school offers it, served counters
+     * or not — it is deliberately outside $servedTabs. */
+    echo '
+        <a href="warschool.php?targetId=' . $trainer->id . '&reassignation">
+            <button><span class="ra ra-regeneration"></span> Réassignation</button>
+        </a>';
+
     echo '
     </div>';
 }
@@ -86,17 +95,14 @@ if (!isset($_GET['hideMenu'])) {
 $warschool = new WarSchool($trainer);
 
 /*
- * Habillage commun aux six onglets de compétences.
+ * Typography shared by the school's tabs. This body is the single way in,
+ * full page as well as HUD panel: dress the tabs here rather than in each
+ * view, and a new tab joins the list to get the same look.
  *
- * Chacune des six vues portait sa propre copie de ces quatre règles et du
- * conteneur qui les porte — six fois la même chaîne, à corriger six fois.
- * Le corps de page est déjà le point de passage unique, en page complète
- * comme en panneau HUD : c'est ici que l'habillage a sa place.
- *
- * Le style reste en ligne plutôt qu'en feuille : le panneau du HUD arrive
- * par AJAX, sans passer par l'enveloppe Ui qui charge les feuilles.
+ * The rules stay inline rather than in a sheet: the HUD panel arrives by
+ * AJAX, without the Ui wrapper that loads the sheets.
  */
-$skillTabs = ['melee', 'distance', 'magic', 'spells', 'stealth', 'survival'];
+$skillTabs = ['melee', 'distance', 'magic', 'spells', 'stealth', 'survival', 'reassignation'];
 $onSkillTab = (bool) array_intersect($skillTabs, array_keys($_GET));
 
 if ($onSkillTab) {
@@ -110,22 +116,25 @@ if ($onSkillTab) {
 }
 
 if (isset($_GET['melee'])) {
-    MeleeView::render($player, $trainer);
+    MeleeView::render($player);
 }
 elseif (isset($_GET['distance'])) {
-    DistanceView::render($player, $trainer);
+    DistanceView::render($player);
 }
 elseif (isset($_GET['magic'])) {
-    MagicView::render($player, $trainer);
+    MagicView::render($player);
 }
 elseif (isset($_GET['spells'])) {
-    SpellView::render($player, $trainer);
+    SpellView::render($player);
 }
 elseif (isset($_GET['stealth'])) {
-    StealthView::render($player, $trainer);
+    StealthView::render($player);
 }
 elseif (isset($_GET['survival'])) {
-    SurvivalView::render($player, $trainer);
+    SurvivalView::render($player);
+}
+elseif (isset($_GET['reassignation'])) {
+    ReassignationView::render($player);
 }
 else {
     /* L'école est un BÂTIMENT (la garde ne laisse passer que lui) :

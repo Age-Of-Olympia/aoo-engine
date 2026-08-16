@@ -1,5 +1,6 @@
 <?php
 use App\Factory\PlayerFactory;
+use App\Service\PlayerCaracsService;
 use App\View\UpgradesView;
 use Classes\Ui;
 use Classes\Str;
@@ -28,10 +29,16 @@ if(!empty($_POST['carac'])){
 if( !empty($_GET['caracTables']) ){
 
 
+    $caracsService = new PlayerCaracsService();
+
+
     foreach( CARACS as $e=>$k ){
 
 
-        if(!isset(UpgradesView::TRIO[$e])){
+        $progress = $caracsService->getUpgradeProgress($e);
+
+
+        if($progress === null){
 
             continue;
         }
@@ -44,7 +51,7 @@ if( !empty($_GET['caracTables']) ){
 
 
         echo '
-        ^    ^ '. implode('/', UpgradesView::TRIO[$e]) .' ^^<br />
+        ^    ^ '. implode('/', $progress) .' ^^<br />
         ^ Augm. ^ Coût ^ Coût total ^<br />
         ';
 
@@ -56,7 +63,7 @@ if( !empty($_GET['caracTables']) ){
 
             $n = $i - 1;
 
-            $cost = UpgradesView::returnCost( UpgradesView::TRIO[$e], $n );
+            $cost = $caracsService->returnCost($e, $n);
             $total += $cost;
 
             echo '
