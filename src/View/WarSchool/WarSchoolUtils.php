@@ -2,112 +2,33 @@
 
 namespace App\View\WarSchool;
 
-use Classes\Player;
-use Classes\Str;
-use App\Service\ActionService;
-use App\Service\RaceService;
-
+/**
+ * Shared bits of the war school views. A skill row takes its colour from
+ * the second half of its category (`magic-off`, `magic-support`…), so a
+ * new sub-category needs a case here or it renders in black.
+ */
 class WarSchoolUtils
 {
-    public static function render(Player $player, Player $target): void
+    public static function getColor(?string $category): string
     {
-        $actionService = new ActionService();
-        $actions = $actionService->getActionsByCategory('distance');
-        $passives = NULL;
-
-        ob_start();
-
-        echo '<h1>Compétences de Distance</h1>';
-
-        echo '<div class="section">';
-        echo '<h2>Compétences actives</h2>';
-
-        if (empty($actions)) {
-        echo '<p>Aucune compétence active de distance disponible.</p>';
-        } else {
-        echo '<table border="1" align="center" class="marbre">';
-            echo '<thead>
-                    <tr>
-                        <th>Icône</th>
-                        <th>Nom</th>
-                        <th>Effet</th>
-                        <th>Race</th>
-                        <th>Prix</th>
-                    </tr>
-                  </thead>';
-            echo '<tbody>';
-
-            foreach ($actions as $action) {
-                $actionName = $action->getName();
-                $color = self::getColor($action->getCategory());
-                $raceColor = RaceService::getRaceColor($action->getRace());
-
-                $race = $action->getRace();
-                $raceTxt = (!empty($race)) ? ucfirst($race) : 'Commun';
-                
-                $price = $actionService->getPrice($action->getLevel());
-
-                $imagePath = 'img/spells/' . $actionName . '.jpeg';
-                $imageSrc = file_exists($imagePath) ? $actionName : 'todo';
-
-                echo '<tr>';
-                echo '<td>';
-                echo '<img src="img/spells/' . $imageSrc . '.jpeg" />';
-                echo '</td>';
-
-                echo '<td align="left">';
-                echo '<strong style="color: ' . $color . ';">' . htmlspecialchars($action->getDisplayName()) . '</strong><br />';
-                echo '<sup>Niveau ' . $action->getLevel() . '</sup>';
-                echo '</td>';
-
-                echo '<td align="left" style="max-width: 400px; padding: 10px;">';
-                echo '<i>' . htmlspecialchars($action->getText()) . '</i>';
-                echo '</td>';
-
-                echo '<td align="center"><strong style="color: ' . $raceColor . ';">' . $raceTxt . '</strong></td>';
-
-                echo '<td>';
-                echo '<button class="create">' . 'Acheter : ' . $price . ' Po</button>';
-                echo '</td>';
-
-                echo '</tr>';
-            }
-
-            echo '</tbody>';
-            echo '</table>';
-        }
-
-        echo '</div>';
-
-        echo '<div class="section">';
-        echo '<h2>Compétences passives</h2>';
-        // Pas de passives dans cette vue pour l'instant : placeholder constant
-        // (l'ancien if testait une variable jamais remplie).
-        echo '<p>Aucune compétence passive de magie disponible.</p>';
-        echo '</div>';
-
-    echo Str::minify(ob_get_clean());
-    }
-
-    public static function getColor(?string $category): string {
         if (empty($category)) {
             return '#000000';
         }
 
         $parts = explode('-', $category);
         $subCategory = $parts[1] ?? '';
+
         switch ($subCategory) {
-        case 'off':
-            return '#c0392b'; 
-        case 'support':
-            return '#27ae60'; 
-        case 'buff':
-            return '#2980b9'; 
-        case 'curse':
-            return '#8e44ad'; 
-        default:
-            return '#000000'; 
+            case 'off':
+                return '#c0392b';
+            case 'support':
+                return '#27ae60';
+            case 'buff':
+                return '#2980b9';
+            case 'curse':
+                return '#8e44ad';
+            default:
+                return '#000000';
         }
     }
-
 }

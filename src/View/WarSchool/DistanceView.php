@@ -4,7 +4,6 @@ namespace App\View\WarSchool;
 
 use Classes\Player;
 use Classes\Str;
-use Classes\Item;
 use App\Service\ActionService;
 use App\Service\ActionPassiveService;
 use App\Service\RaceService;
@@ -44,19 +43,18 @@ class DistanceView
                     ? $actionService->getPrice($skillToBuy->getLevel()) 
                     : $actionPassiveService->getPrice($skillToBuy->getLevel());
 
-                if ($playerGold < $price) {
-                    echo '<div id="data">Or insuffisant !</div>';
-                    exit;
-                }
-
                 $alreadyHas = ($type === 'active') ? $player->have_action($skillName) : $player->have_action_passive($skillName);
                 if ($alreadyHas) {
                     echo '<div id="data">Compétence déjà connue.</div>';
                     exit;
                 }
 
-                $goldItem = new Item(1);
-                $goldItem->add_item($player, -$price);
+                /* The debit answers for itself: it refuses when the purse no
+                 * longer covers the price, so a second click buys nothing. */
+                if (!$player->spendGold($price)) {
+                    echo '<div id="data">Or insuffisant !</div>';
+                    exit;
+                }
 
                 if ($type === 'active') {
                     $player->add_action($skillName); 
