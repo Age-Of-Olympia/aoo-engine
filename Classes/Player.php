@@ -1374,6 +1374,25 @@ class Player implements ActorInterface {
     }
 
 
+    /* Every gold spend goes through here: the service pays in one
+     * conditional write and answers whether it happened. Reading the
+     * purse then subtracting lets two concurrent spends both pass. */
+    public function spendGold(int $cost, bool $bank = false): bool
+    {
+        if (!(new \App\Service\GoldService())->spend((int) $this->id, $cost, $bank)) {
+
+            return false;
+        }
+
+        if (!$bank) {
+
+            $this->refresh_invent();
+        }
+
+        return true;
+    }
+
+
     public function drop($item, $n){
 
 
