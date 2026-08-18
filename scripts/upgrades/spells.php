@@ -190,8 +190,8 @@ foreach($spellList as $e){
         </td>
         ';
 
-        // Le bonus peut être un entier (+4, -3), un trait nu ("m" => +M)
-        // ou un tableau [trait, diviseur] (["m", 3] => +M/3, bonus basé sur une carac)
+        // Le bonus peut être un entier (+4, -3), un trait nu ("pui" => +Pui)
+        // ou un tableau [trait, diviseur] (["pui", 3] => +Pui/3, bonus basé sur une carac)
         $bonus = '';
         $bonusValue = ($bonusHeal !== "") ? $bonusHeal : $bonusDamages;
 

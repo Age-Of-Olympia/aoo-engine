@@ -156,13 +156,13 @@ class LifeLossExecuteCharacterizationTest extends TestCase
         $this->assertContains(['pv' => 3], $actorBonus);
     }
 
-    public function testIsMagicalSwapsActorTraitFromForceToMagic(): void
+    public function testIsMagicalSwapsActorTraitFromForceToPuissance(): void
     {
         $actorBonus = [];
         $targetBonus = [];
 
-        // On donne à l'acteur 2 en Force ('f') mais 20 en Magie ('m')
-        $actor = $this->player('Actor', ['f' => 2, 'm' => 20], $actorBonus);
+        // On donne à l'acteur 2 en Force ('f') mais 20 en Puissance ('pui')
+        $actor = $this->player('Actor', ['f' => 2, 'pui' => 20], $actorBonus);
         $target = $this->player('Target', ['e' => 4], $targetBonus);
 
         // L'instruction demande initialement de la Force ('f')
@@ -175,12 +175,12 @@ class LifeLossExecuteCharacterizationTest extends TestCase
         $result = $instruction->execute($actor, $target, $conditionObject);
 
         // Si l'attaque était restée sur la Force : (2 - 4) + 3 crit = 1 dégât (car flooré à 1 min).
-        // Comme isMagical bascule sur la Magie ('m') : (20 - 4) + 3 crit = 19 dégâts.
+        // Comme isMagical bascule sur la Puissance ('pui') : (20 - 4) + 3 crit = 19 dégâts.
         $this->assertSame(19, $result->getTotalDamages());
         $this->assertContains(['pv' => -19], $targetBonus);
 
-        // Optionnel : On s'assure que le tooltip de log affiche bien la caractéristique 'M'
+        // Optionnel : On s'assure que le tooltip de log affiche bien la caractéristique 'Pui'
         $message = $result->getOutcomeSuccessMessages()[1];
-        $this->assertStringContainsString('M vs E :', $message);
+        $this->assertStringContainsString('Pui vs E :', $message);
     }
 }

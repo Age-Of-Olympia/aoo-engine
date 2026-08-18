@@ -48,7 +48,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         
         // Récupération des paramètres
         $params = $this->getParameters();
-        $actorTraitDamages = ($conditionObject->getIsMagical() === true) ? 'm' : ($params['actorDamagesTrait'] ?? 0);
+        $actorTraitDamages = ($conditionObject->getIsMagical() === true) ? 'pui' : ($params['actorDamagesTrait'] ?? 0);
         $targetTraitDamagesTaken = $params['targetDamagesTrait'] ?? 0;
         $bonusTraitDamagesParameters = $params['bonusDamagesTrait'] ?? 0;
         $isDrain = $params["drain"] ?? false;
