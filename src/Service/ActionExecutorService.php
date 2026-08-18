@@ -16,6 +16,7 @@ use App\Service\Action\ActionXpResolver;
 use App\Service\Action\ActionTypeInstructionResolver;
 use App\Service\Action\ActionTypePreconditionResolver;
 use App\Service\Action\ConditionPreconditionResolver;
+use App\Action\OutcomeInstruction\OutcomeResult;
 use Exception;
 
 class ActionExecutorService
@@ -140,6 +141,7 @@ class ActionExecutorService
             foreach ($this->action->getOnSuccessOutcomes() as $outcomeEntity) {
                 $this->applyActionOutcome($outcomeEntity);
             }
+            $this->applyEquippedItemsEffects();
         } else {
             foreach ($this->action->getOnSuccessOutcomes(false) as $outcomeEntity) {
                 $this->applyActionOutcome($outcomeEntity);
@@ -273,6 +275,38 @@ class ActionExecutorService
             }
         } catch (Exception $e) {
             error_log("Error triggering automatic screenshot: " . $e->getMessage());
+        }
+    }
+
+    private function applyEquippedItemsEffects(): void
+    {
+        if ($this->action instanceof \App\Action\MeleeAction || $this->action instanceof \App\Action\DistanceAction) {
+            
+            $effectList = $this->conditionObject->getAttackEffects();
+            $effectService = new EffectService();
+            $outcomeSuccessMessages = [];
+            
+            foreach ($effectList as $effect) {
+                
+                $this->target->playerEffectService->addEffectByPlayerId($this->target->id,$effect->name, $effect->duration,1,false);
+                
+                $statusLabel = htmlspecialchars((string) $effect->name, ENT_QUOTES, 'UTF-8');
+                $timeMessage = 'pour ' . \Classes\Str::displaySeconds($effect->duration);
+                
+                $iconMarkup = !empty($effectService->getIcon($effect->name)) ? ' <span class="ra ' . $effectService->getIcon($effect->name) . '"></span>' : '';
+                
+                $outcomeSuccessMessages[] = 'L\'effet ' . $statusLabel . $iconMarkup . ' (x1) est appliqué ' . $timeMessage . ' à ' . $this->target->data->name;
+            }
+            
+            if (!empty($outcomeSuccessMessages)) {
+                $itemOutcomeResult = new OutcomeResult(
+                    true, 
+                    outcomeSuccessMessages: $outcomeSuccessMessages, 
+                    outcomeFailureMessages: []
+                );
+                
+                array_push($this->outcomeResultsArray, $itemOutcomeResult);
+            }
         }
     }
 

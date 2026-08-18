@@ -1,16 +1,10 @@
 <?php
 namespace App\Action\Condition;
 
-use App\Action\OutcomeInstruction\MalusOutcomeInstruction;
-use App\Entity\ActionCondition;
-use App\Interface\ActorInterface;
-use App\Action\Condition\ConditionObject;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetailView;
 use App\Interface\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
-use Classes\Dice;
-use Classes\View;
 
 class ComputePureCondition extends AbstractComputeCondition implements HasParameterSchemaInterface
 {
@@ -37,6 +31,8 @@ class ComputePureCondition extends AbstractComputeCondition implements HasParame
         $actorTxt = 'Jet '. $actor->data->name .' = ' . '<span style="text-decoration: underline;" flow="up" tooltip="' . $distanceMalusTxt . (($distanceMalusTxt) ? ', ' . $tooltipOtherTxt : $tooltipOtherTxt) . RollDetailView::advantageTooltip($actorRoll) . '">' . $actorTotal . '</span> (Jet pur)';
 
         $conditionObject->setActorRoll($actorTotal);
+        $conditionObject->setIsMagical($actor->hasMagicalItemEquipped());
+        $conditionObject->setAttackEffects($actor->getEquipedItemsEffects());
 
         return array($actorRoll->roll, $actorTotal, $actorTxt);
     }

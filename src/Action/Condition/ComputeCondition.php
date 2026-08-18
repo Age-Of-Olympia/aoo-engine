@@ -1,11 +1,6 @@
 <?php
 namespace App\Action\Condition;
 
-use App\Action\OutcomeInstruction\MalusOutcomeInstruction;
-
-use App\Entity\ActionCondition;
-use App\Interface\ActorInterface;
-use App\Action\Condition\ConditionObject;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetail;
 use App\Action\Combat\RollDetailView;
@@ -15,8 +10,6 @@ use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use App\Action\Schema\SchemaSimulationInputs;
 use App\Action\Schema\SimulationField;
-use Classes\Dice;
-use Classes\View;
 
 class ComputeCondition extends AbstractComputeCondition implements HasParameterSchemaInterface
 {
@@ -86,6 +79,8 @@ class ComputeCondition extends AbstractComputeCondition implements HasParameterS
         );
 
         $conditionObject->setActorRoll($total);
+        $conditionObject->setIsMagical($actor->hasMagicalItemEquipped());
+        $conditionObject->setAttackEffects($actor->getEquipedItemsEffects());
 
         return array($actorRoll->roll, $total, (new RollDetailView())->renderActor($detail));
     }

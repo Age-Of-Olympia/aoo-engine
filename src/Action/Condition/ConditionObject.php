@@ -28,6 +28,8 @@ class ConditionObject
      *  équiper/déséquiper ; null = contexte de ligne inconnu (bascule
      *  héritée par objet catalogue dans Player::equip). */
     protected ?bool $pickedEquippedLine = null;
+    protected ?bool $isMagical = null;
+    protected ?array $attackEffects = null;
 
 
     public function __construct() {
@@ -218,6 +220,28 @@ class ConditionObject
     public function setLifeloss(int $lifeloss): self
     {
         $this->lifeloss = $lifeloss;
+        return $this;
+    }
+
+    public function getIsMagical(): ?bool
+    {
+        return $this->isMagical;
+    }
+
+    public function setIsMagical(bool $isMagical): self
+    {
+        $this->isMagical = $isMagical;
+        return $this;
+    }
+
+    public function getAttackEffects(): ?array
+    {
+        return $this->attackEffects;
+    }
+
+    public function setAttackEffects(array $attackEffects): self
+    {
+        $this->attackEffects = $attackEffects;
         return $this;
     }
 

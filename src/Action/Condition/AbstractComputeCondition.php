@@ -151,4 +151,5 @@ abstract class AbstractComputeCondition extends BaseCondition
     {
         return 0;
     }
+    
 }

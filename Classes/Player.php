@@ -3,7 +3,6 @@ namespace Classes;
 
 use App\Enum\EquipResult;
 use App\Interface\ActorInterface;
-use App\Service\ActionService;
 use App\Service\ActionPassiveService;
 use App\Service\PlayerActionsService;
 use App\Service\PlayerOptionsService;
@@ -2546,6 +2545,30 @@ class Player implements ActorInterface {
     public function getEquipedItems(): array {
         return Item::get_equiped_list($this);
     }
+
+    public function hasMagicalItemEquipped(): bool
+    {
+        foreach ($this->getEquipedItems() as $item) {
+            $item = new \Classes\Item($item->id, $item);
+            if ($item->isMagical()) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    public function getEquipedItemsEffects(): array {
+        $equipedItems = $this->getEquipedItems();
+        $effectsList = [];
+        foreach ($equipedItems as $item) {
+            $item = new \Classes\Item($item->id, $item);
+            $effectsList += $item->getItemEffects();
+        }
+        
+        return $effectsList;
+    }
+    
 
     public function getPush(Player $target): bool {
         $att = $this->caracs->f;

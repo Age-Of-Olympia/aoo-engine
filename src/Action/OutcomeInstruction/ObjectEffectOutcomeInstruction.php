@@ -24,12 +24,13 @@ class ObjectEffectOutcomeInstruction extends OutcomeInstruction implements HasPa
 
         $outcomeSuccessMessages = array();
 
-        $itemJson = $main1->data;
+        // Mise en commentaire, l'ajout d'effets est géré autrement maintenant.
+        /*$itemJson = $main1->data;
         if($itemJson)
         {
             if(!empty($itemJson->addEffects)){
                 foreach($itemJson->addEffects as $e){
-                    /* Durée en TOURS, même convention que ApplyStatus. */
+                    // Durée en TOURS, même convention que ApplyStatus.
                     $duration = (int) ($e->duration ?? 0);
                     if (\App\Service\PlayerEffectService::isInfinite($duration)) {
                         $timeMessage = 'sans limite de durée';
@@ -55,7 +56,7 @@ class ObjectEffectOutcomeInstruction extends OutcomeInstruction implements HasPa
                 }
             }
             
-        }
+        }*/
 
         
     

@@ -165,4 +165,22 @@ class PlayerMock implements ActorInterface
   {
     return $this->passivesList;
   }
+
+  public function getEquipedItems(): array
+  {
+    return Item::get_equiped_list($this);
+  }
+
+  public function hasMagicalItemEquipped(): bool
+  {
+    return false;
+  }
+
+  /** @var array */
+public array $mockedEffects = [];
+
+public function getEquipedItemsEffects(): array
+{
+    return $this->mockedEffects;
+}
 }

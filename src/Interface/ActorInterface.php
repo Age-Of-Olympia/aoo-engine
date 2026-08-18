@@ -31,4 +31,6 @@ interface ActorInterface
   public function get_data(bool $forceRefresh=true);
   public function get_upgrades();
   public function getPassives(int $id): array;
+  public function getEquipedItems(): array;
+  public function hasMagicalItemEquipped(): bool;
 }
