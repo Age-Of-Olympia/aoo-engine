@@ -35,6 +35,7 @@ const ITEM_FLAG_LABELS = [
     'is_bankable' => 'Stockable en banque',
     'is_deprecated' => 'Déprécié',
     'vanish_on_break' => 'Disparaît brisé (répand son butin puis s\'efface, pas d\'épave au sol)',
+    'magique' => 'Magique (équipé, les dégâts d\'attaque passent sur la M)',
 ];
 
 /** @return array<int, object> catalog rows ordered by name */
@@ -90,6 +91,7 @@ function item_flag_badges(object $row): string
         'cursed' => ['Maudit', 'danger'],
         'enchanted' => ['Enchanté', 'info'],
         'vorpal' => ['Vorpal', 'info'],
+        'magique' => ['Magique', 'success'],
         'is_deprecated' => ['Déprécié', 'secondary'],
     ] as $col => [$label, $style]) {
         if (!empty($row->$col)) {

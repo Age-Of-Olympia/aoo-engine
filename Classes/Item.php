@@ -28,7 +28,7 @@ class Item{
         'esquive', 'pr', 'pf', 'malus', 'spellMalus', 'fixedF', 'mDamage',
         'demolition', 'craftedByN', 'lootChance', 'grow_rate',
     ];
-    public const FLAG_KEYS = ['cursed', 'enchanted', 'vorpal', 'is_bankable', 'is_deprecated', 'vanish_on_break'];
+    public const FLAG_KEYS = ['cursed', 'enchanted', 'vorpal', 'is_bankable', 'is_deprecated', 'vanish_on_break', 'magique'];
     public const WEAR_TRIGGERS = ['attack', 'defense', 'move', 'usage'];
     public const JSON_COLUMNS = ['add_effects', 'forbid', 'extra'];
 
@@ -93,6 +93,12 @@ class Item{
             $itemJson->text ??= "Description de l'objet.";
         }
 
+
+        // magique is a flag column, absent from buildDataFromRow and from the
+        // frozen JSON copies: surfaced here so get_item_carac sees it.
+        if (!empty($this->row->magique)) {
+            $itemJson->magique = 1;
+        }
 
         $itemJson->img = (!empty($itemJson->img)) ? $itemJson->img : 'img/items/'. $this->row->name .'.webp';
 
@@ -839,8 +845,8 @@ class Item{
     }
 
     public function isMagical() : bool {
-        $itemJson = json()->decode('items', $this->row->name);
-        return !empty($itemJson->magique);
+        // Flag column: the DB is its source, whatever the stats storage path.
+        return !empty($this->row->magique);
     }
 
     public function getItemEffects() : array {
