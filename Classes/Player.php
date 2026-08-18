@@ -2563,7 +2563,7 @@ class Player implements ActorInterface {
         $effectsList = [];
         foreach ($equipedItems as $item) {
             $item = new \Classes\Item($item->id, $item);
-            $effectsList += $item->getItemEffects();
+            $effectsList = array_merge($effectsList, $item->getItemEffects());
         }
         
         return $effectsList;

@@ -282,7 +282,7 @@ class ActionExecutorService
     {
         if ($this->action instanceof \App\Action\MeleeAction || $this->action instanceof \App\Action\DistanceAction) {
             
-            $effectList = $this->conditionObject->getAttackEffects();
+            $effectList = $this->conditionObject->getAttackEffects() ?? [];
             $effectService = new EffectService();
             $outcomeSuccessMessages = [];
             

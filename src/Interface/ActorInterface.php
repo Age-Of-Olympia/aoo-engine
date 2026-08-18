@@ -33,4 +33,5 @@ interface ActorInterface
   public function getPassives(int $id): array;
   public function getEquipedItems(): array;
   public function hasMagicalItemEquipped(): bool;
+  public function getEquipedItemsEffects(): array;
 }
