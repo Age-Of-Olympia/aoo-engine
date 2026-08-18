@@ -6,9 +6,10 @@ use Classes\Player;
 use Classes\Str;
 use Classes\Item;
 use App\Service\ActionService;
-use App\Service\ActionPassiveService;
 use App\Service\RaceService;
 use App\View\Action\ActionCostView;
+use App\Service\PlayerPassiveService;
+use App\Service\PlayerActionsService;
 
 class SpellView
 {
@@ -16,16 +17,18 @@ class SpellView
     {
         $actionService = new ActionService();
         $costView = new ActionCostView($actionService);
-        $actionPassiveService = new ActionPassiveService();
+        $playerActionsService = new PlayerActionsService();
         $actions = $actionService->getActionsByCategory('spell');
+        $playerPassiveService = new PlayerPassiveService();
 
-        $nb_comp = $actionPassiveService->getActionPassiveCount($player->getId()) + $player->get_spells_count();
+        $nbSpells = $playerActionsService->getSpellsArray($player->getId());
+        $spellSlots = $playerPassiveService->getSpellSlotsCount($player->getId());
 
         $playerGold = $player->get_gold();
 
         if (!empty($_POST['buySkillId'])) {
             if (ob_get_length()) ob_clean();
-            if ($nb_comp >= NUMBER_MAX_COMP) {
+            if ($player->get_skills_count() >= NUMBER_MAX_COMP) {
                 echo '<div id="data">Limite de compétences atteinte (max ' . NUMBER_MAX_COMP . ') !</div>';
                 exit;
             }
@@ -48,6 +51,11 @@ class SpellView
                     exit;
                 }
 
+                if ((bool)$actionService->isActionUsable($player->getId(), $skillName)) {
+                    echo '<div id="data">Pré-requis non remplis pour apprendre ce sort.</div>';
+                    exit;
+                }
+
                 $goldItem = new Item(1);
                 $goldItem->add_item($player, -$price);
 
@@ -63,7 +71,12 @@ class SpellView
         ob_start();
 
         echo '<h1>Sorts</h1>';
-        echo '<p class="ws-info">Vous avez ' . $playerGold . ' Po&nbsp;&middot;&nbsp;Compétences apprises : ' . $nb_comp . '/' . NUMBER_MAX_COMP . ' (sorts + passifs cumulés)</p>';
+        $slots = [];
+        foreach ($nbSpells as $i => $count) {
+            $full = ($count >= $spellSlots[$i]) ? ' style="color: red;"' : '';
+            $slots[] = 'lvl ' . ($i + 1) . ' : <span' . $full . '>' . $count . '/' . $spellSlots[$i] . '</span>';
+        }
+        echo '<p class="ws-info">Vous avez ' . $playerGold . ' Po&nbsp;&middot;&nbsp;Emplacements de sorts : ' . implode('&nbsp;&middot;&nbsp;', $slots) . '</p>';
         echo '<details style="cursor: pointer; margin-bottom: 20px; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 5px;">';
             echo '<summary style="display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; margin: 15px 0; outline: none;">';
                 echo '<span style="display: list-item; list-item-type: disclosure-closed; margin-right: 10px;"></span>';
@@ -71,7 +84,7 @@ class SpellView
             echo '</summary>';
             echo '<h3 style="margin: 5px 0;">Les sorts touchent avec la <strong>FM</strong> et s\'esquivent avec la <strong>FM</strong></h3>';
             echo '<h3 style="margin: 5px 0;">Les sorts <strong style="color: #c0392b;">offensives</strong> sont en rouge et font des dégâts basés sur la <strong>Pui</strong> et réduits par la <strong>Rés</strong></h3>';
-            echo '<h3 style="margin: 5px 0;">Les <strong style="color: #8e44ad;">malédictions</strong> sont en violet et ne font pas de dégâts</h3>';
+            echo '<h3 style="margin: 5px 0;">Les <strong style="color: #8e44ad;">malédictions</strong> sont en violet et ne font pas de dégâts directs</h3>';
             echo '<h3 style="margin: 5px 0;">Les sorts de <strong style="color: #27ae60;">soutien</strong> sont en vert et appliquent un bonus à une cible alliée</h3>';
             echo '<h3 style="margin: 5px 0;">Les sorts <strong style="color: #2980b9;">personnels</strong> sont en bleu et appliquent un bonus personnel</h3>';
             echo '<h3 style="margin: 5px 0;">Les différents Effets sont décrits sur la <a href="https://age-of-olympia.net/wiki/doku.php?id=regles:effets" target="_blank" style="text-decoration: underline; color: #2980b9;">page correspondante</a> du Wiki</h3>';
@@ -94,7 +107,6 @@ class SpellView
                   </thead>';
             echo '<tbody>';
 
-            $isFull = ($nb_comp >= NUMBER_MAX_COMP);
 
             foreach ($actions as $action) {
                 $actionName = $action->getName();
@@ -104,7 +116,7 @@ class SpellView
                 $actionRace = $action->getRace();
                 $isRaceLearnable = (empty($actionRace) || $player->data->race == $actionRace);
                 $raceTxt = (!empty($actionRace)) ? ucfirst($actionRace) : 'Commun';
-                
+                $isFull = $nbSpells[$action->getLevel() - 1] >= $spellSlots[$action->getLevel() - 1];
                 $price = $actionService->getPrice($action->getLevel());
 
                 $imagePath = 'img/spells/' . $actionName . '.jpeg';
@@ -138,8 +150,17 @@ class SpellView
                             Impossible à apprendre
                         </button>';
                 } else {
-                    $disabled = ($playerGold < $price || $isFull) ? 'disabled' : '';
-                    $btnText = $isFull ? 'Max atteint' : 'Acheter : ' . $price . ' Po';
+                    $hasPrerequisites = (bool)$actionService->isActionUsable($player->getId(), $actionName);
+                    $disabled = (($playerGold < $price) || $isFull || !$hasPrerequisites) ? 'disabled' : '';
+
+                    if ($isFull) {
+                        $btnText = 'Max atteint';
+                    } elseif (!$hasPrerequisites) {
+                        $btnText = 'Pré-requis manquants';
+                    } else {
+                        $btnText = 'Acheter : ' . $price . ' Po';
+                    }
+
                     echo '<button class="create buy-skill-btn" data-id="' . $actionName . '" data-type="active" ' . $disabled . '>' . $btnText . '</button>';
                 }
                 echo '</td>';

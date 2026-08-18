@@ -18,7 +18,9 @@ interface ActionInterface
     public function getIcon(): string;
     public function getDisplayName(): string;
     public function getCost(): ?string;
+    public function getPrerequisites(): ?string;
     public function getRace(): ?string;
+    public function getCategory(): ?string;
     public function getConditions(): Collection;
     public function getLevel(): int;
     public function initAutomaticOutcomeInstructions(): self;

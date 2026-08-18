@@ -6,6 +6,7 @@ use Classes\Player;
 use Classes\Str;
 use Classes\Item;
 use App\Service\ActionService;
+use App\Service\PlayerService;
 use App\Service\ActionPassiveService;
 use App\Service\RaceService;
 use App\View\Action\ActionCostView;
@@ -17,12 +18,12 @@ class MeleeView
         $actionService = new ActionService();
         $costView = new ActionCostView($actionService);
         $actionPassiveService = new ActionPassiveService();
+        $playerService = new PlayerService($player->getId());
         $actions = $actionService->getActionsByCategory('melee');
         $passives = $actionPassiveService->getActionPassivesByCategory('melee');
 
-        $nb_comp = $actionPassiveService->getActionPassiveCount($player->getId()) + $player->get_spells_count();
+        $nb_comp = $playerService->getNbComp();
         $isFull = ($nb_comp >= NUMBER_MAX_COMP);
-
         $playerGold = $player->get_gold();
 
         if (!empty($_POST['buySkillId']) || !empty($_POST['buyPassiveId'])) {
@@ -55,6 +56,12 @@ class MeleeView
                     exit;
                 }
 
+                $isUsable = ($type === 'active') ? (bool)$actionService->isActionUsable($player->getId(), $skillName) : (bool)$actionPassiveService->isActionPassiveUsable($player->getId(), $skillName);
+                if ($isUsable) {
+                    echo '<div id="data">Pré-requis non remplis pour apprendre cette compétence.</div>';
+                    exit;
+                }
+                
                 $goldItem = new Item(1);
                 $goldItem->add_item($player, -$price);
 
@@ -147,8 +154,17 @@ class MeleeView
                             Impossible à apprendre
                         </button>';
                 } else {
-                    $disabled = (($playerGold < $price) || $isFull) ? 'disabled' : '';
-                    $btnText = $isFull ? 'Max atteint' : 'Acheter : ' . $price . ' Po';
+                    $hasPrerequisites = (bool)$actionService->isActionUsable($player->getId(), $actionName);
+                    $disabled = (($playerGold < $price) || $isFull || !$hasPrerequisites) ? 'disabled' : '';
+
+                    if ($isFull) {
+                        $btnText = 'Max atteint';
+                    } elseif (!$hasPrerequisites) {
+                        $btnText = 'Pré-requis manquants';
+                    } else {
+                        $btnText = 'Acheter : ' . $price . ' Po';
+                    }
+
                     echo '<button class="create buy-skill-btn" data-id="' . $actionName . '" data-type="active" ' . $disabled . '>' . $btnText . '</button>';
                 }
                 echo '</td>';
@@ -221,8 +237,15 @@ class MeleeView
                             Impossible à apprendre
                         </button>';
                 } else {
-                    $disabled = (($playerGold < $price) || $isFull) ? 'disabled' : '';
-                    $btnText = $isFull ? 'Max atteint' : 'Acheter : ' . $price . ' Po';
+                    $hasPrerequisites = (bool)$actionPassiveService->isActionPassiveUsable($player->getId(), $passiveName);
+                    $disabled = (($playerGold < $price) || $isFull || !$hasPrerequisites) ? 'disabled' : '';
+                    if ($isFull) {
+                        $btnText = 'Max atteint';
+                    } elseif (!$hasPrerequisites) {
+                        $btnText = 'Pré-requis manquants';
+                    } else {
+                        $btnText = 'Acheter : ' . $price . ' Po';
+                    }
                     echo '<button class="create buy-skill-btn" data-id="' . $passiveName . '" data-type="passive" ' . $disabled . '>' . $btnText . '</button>';
                 }
                 echo '</td>';

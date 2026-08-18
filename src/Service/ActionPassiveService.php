@@ -104,4 +104,102 @@ class ActionPassiveService
         }
     }
 
+    public function isActionPassiveUsable(int $playerId, string $passiveName): bool
+    {
+        $passive = $this->getActionPassiveByName($passiveName);
+        if ($passive === null) {
+            return false; 
+        }
+
+        $actionService = new ActionService();
+        $skillList = $actionService->getSkillList($playerId);
+
+        if (!$this->checkDefaultPassivePrerequisites($passive, $skillList)) {
+            return false;
+        }
+
+        $prerequisites = $passive->getPrerequisites(); 
+        if (is_string($prerequisites)) {
+            $prerequisites = json_decode($prerequisites, true);
+        }
+        
+        $neededSkills = $prerequisites['need'] ?? [];
+        $forbiddenSkills = $prerequisites['forbidden'] ?? [];
+
+        if (!$actionService->checkNeededPrerequisites($skillList, $neededSkills)) {
+            return false;
+        }
+
+        if (!$actionService->checkForbiddenPrerequisites($skillList, $forbiddenSkills)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function checkDefaultPassivePrerequisites(ActionPassive $passive, array $skillList): bool
+    {
+        $actionService = new ActionService();
+        
+        return $this->isChildNodesPassivePrerequisitesOK($passive, $actionService->getTreeType($passive->getCategory()), $skillList);
+    }
+
+    function isChildNodesPassivePrerequisitesOK(ActionPassive $passive, string $treeType, array $skillList): bool
+    {
+        $actionService = new ActionService();
+        $actionTree = $actionService->extractTreeFromCategory($passive->getCategory());
+
+        $countLvl = [0,0,0,0];
+
+        foreach ($skillList as $skill) {
+            $skillName = $skill['name'];
+
+            if ($skill['type'] === 'action') {
+                $sk = $actionService->getActionByName($skillName);
+            } else {
+                $sk = $this->getActionPassiveByName($skillName);
+            }
+
+            if ($sk === null) {
+                continue;
+            }
+
+            $category = $sk->getCategory();
+            if (empty($category)) {
+                continue; 
+            }
+
+            $skillTree = $actionService->extractTreeFromCategory($category);
+            
+            if ($skillTree === $actionTree) {
+                // Potentiellement à ajouter plus tard si on met l'activation/désactivation des compétences
+                // Check si l'action est activée ou non
+                $levelIndex = $sk->getLevel() - 1;
+                $countLvl[$levelIndex] += 1;
+            }
+        }
+
+        $n = 1;
+        switch ($treeType) {
+            case 'primary':
+                while($n < $passive->getLevel()){
+                    if (($countLvl[$n - 1] ?? 0) < 2) {
+                        return false;
+                    }
+                    $n++;
+                }
+                return true;
+            case 'secondary':
+                while($n < $passive->getLevel()){
+                    if (($countLvl[$n - 1] ?? 0) < 1) {
+                        return false;
+                    }
+                    $n++;
+                }
+                return true;
+            default:
+                return false;
+        }
+    }
+
 }

@@ -626,7 +626,7 @@ class Player implements ActorInterface {
         return $return;
     }
 
-    public function get_spells_count() {
+    public function get_skills_count() {
         $sql = 'SELECT COUNT(*) as total FROM players_actions WHERE player_id = ? AND type = "sort"';
         
         $db = new Db();
