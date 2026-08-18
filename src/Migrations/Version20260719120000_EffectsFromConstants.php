@@ -53,7 +53,7 @@ final class Version20260719120000_EffectsFromConstants extends AbstractMigration
         'eau' => ['icon' => 'ra-water-drop', 'debuff' => 'mvt', 'controls' => 'feu', 'description' => 'Diminue les Mouvements de 1.'],
         'ronce' => ['icon' => 'ra-vine-whip', 'debuff' => 'agi', 'controls' => 'boue', 'description' => "Diminue l'Agilité de 1."],
         'boue' => ['icon' => 'ra-shoe-prints', 'debuff' => 'f', 'controls' => 'eau', 'description' => 'Diminue la Force de 1.'],
-        'diamant' => ['icon' => 'ra-sapphire', 'debuff' => 'res', 'controls' => 'ronce', 'description' => 'Diminue la Résistance de 1.'],
+        'diamant' => ['icon' => 'ra-sapphire', 'debuff' => 'm', 'controls' => 'ronce', 'description' => 'Diminue la Magie de 1.'],
         'styx' => ['icon' => 'ra-water-drop', 'debuff' => 'mvt'],
         'sang' => ['icon' => 'ra-gloop', 'debuff' => 'fm', 'description' => 'Diminue Force Mentale de 1.'],
         'lave' => ['icon' => 'ra-fire-bomb', 'debuff' => 'a', 'description' => 'Diminue les Actions de 1.'],

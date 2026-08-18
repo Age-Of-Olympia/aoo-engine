@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Update the 'diamant' effect debuff_carac and description.
  */
-final class Version20260721300000_CleanMFromEffects extends AbstractMigration
+final class Version20260721900000_CleanMFromEffects extends AbstractMigration
 {
     public function getDescription(): string
     {

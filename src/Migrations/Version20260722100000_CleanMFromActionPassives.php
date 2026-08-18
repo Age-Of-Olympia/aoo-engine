@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Update traits for action_passives with ID 3.
  */
-final class Version20260722100000_CleanMFromActionPassivesy extends AbstractMigration
+final class Version20260722100000_CleanMFromActionPassives extends AbstractMigration
 {
     public function getDescription(): string
     {
