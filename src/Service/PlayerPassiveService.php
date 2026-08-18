@@ -188,19 +188,4 @@ class PlayerPassiveService
         
             return false; 
     }
-
-    public function getSpellSlotsCount(int $playerId): array
-    {
-        $passives = $this->getPassivesByPlayerId($playerId);
-        $spellSlots = [0,0,0,0,0];
-        
-        foreach($passives as $passive){
-            if($passive->getType() == "spell-slot"){
-                $spellSlots[(int)$passive->getCarac()] += (int)$passive->getValue();
-            }
-        }
-
-        return $spellSlots;
-    }
-
 }

@@ -4,12 +4,10 @@ namespace App\View\WarSchool;
 
 use Classes\Player;
 use Classes\Str;
-use Classes\Item;
 use App\Service\ActionService;
 use App\Service\RaceService;
 use App\View\Action\ActionCostView;
-use App\Service\PlayerPassiveService;
-use App\Service\PlayerActionsService;
+use App\Service\WarSchool\SkillPrerequisiteService;
 
 class SpellView
 {
@@ -17,64 +15,20 @@ class SpellView
     {
         $actionService = new ActionService();
         $costView = new ActionCostView($actionService);
-        $playerActionsService = new PlayerActionsService();
         $actions = $actionService->getActionsByCategory('spell');
-        $playerPassiveService = new PlayerPassiveService();
 
-        $nbSpells = $playerActionsService->getSpellsArray($player->getId());
-        $spellSlots = $playerPassiveService->getSpellSlotsCount($player->getId());
-
+        $prereqs = SkillPrerequisiteService::forPlayer($player->getId());
         $playerGold = $player->get_gold();
 
-        if (!empty($_POST['buySkillId'])) {
-            if (ob_get_length()) ob_clean();
-            if ($player->get_skills_count() >= NUMBER_MAX_COMP) {
-                echo '<div id="data">Limite de compétences atteinte (max ' . NUMBER_MAX_COMP . ') !</div>';
-                exit;
-            }
-
-            $skillName = $_POST['buySkillId'];
-
-            $skillToBuy = $actionService->getActionByName($skillName);
-
-            if ($skillToBuy) {
-                $price = $actionService->getPrice($skillToBuy->getLevel());
-
-                if ($playerGold < $price) {
-                    echo '<div id="data">Or insuffisant !</div>';
-                    exit;
-                }
-
-                $alreadyHas = $player->have_action($skillName);
-                if ($alreadyHas) {
-                    echo '<div id="data">Compétence déjà connue.</div>';
-                    exit;
-                }
-
-                if ((bool)$actionService->isActionUsable($player->getId(), $skillName)) {
-                    echo '<div id="data">Pré-requis non remplis pour apprendre ce sort.</div>';
-                    exit;
-                }
-
-                $goldItem = new Item(1);
-                $goldItem->add_item($player, -$price);
-
-                $player->add_action($skillName);
-
-                echo '<div id="data">Sort appris !</div>';
-                exit;
-            }
-            echo '<div id="data">Erreur : Sort introuvable.</div>';
-            exit;
-        }
+        SkillPurchaseHandler::handlePost($player, $prereqs);
 
         ob_start();
 
         echo '<h1>Sorts</h1>';
         $slots = [];
-        foreach ($nbSpells as $i => $count) {
-            $full = ($count >= $spellSlots[$i]) ? ' style="color: red;"' : '';
-            $slots[] = 'lvl ' . ($i + 1) . ' : <span' . $full . '>' . $count . '/' . $spellSlots[$i] . '</span>';
+        for ($level = 1; $level <= 5; $level++) {
+            $full = $prereqs->hasFreeSpellSlot($level) ? '' : ' style="color: red;"';
+            $slots[] = 'lvl ' . $level . ' : <span' . $full . '>' . $prereqs->spellCountAt($level) . '/' . $prereqs->spellSlotsAt($level) . '</span>';
         }
         echo '<p class="ws-info">Vous avez ' . $playerGold . ' Po&nbsp;&middot;&nbsp;Emplacements de sorts : ' . implode('&nbsp;&middot;&nbsp;', $slots) . '</p>';
         echo '<details style="cursor: pointer; margin-bottom: 20px; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 5px;">';
@@ -112,11 +66,11 @@ class SpellView
                 $actionName = $action->getName();
                 $color = WarSchoolUtils::getColor($action->getCategory());
                 $raceColor = RaceService::getRaceColor($action->getRace());
-                $alreadyLearned = (bool)$player->have_action($action->getName());
+                $alreadyLearned = $prereqs->owns($actionName);
                 $actionRace = $action->getRace();
                 $isRaceLearnable = (empty($actionRace) || $player->data->race == $actionRace);
                 $raceTxt = (!empty($actionRace)) ? ucfirst($actionRace) : 'Commun';
-                $isFull = $nbSpells[$action->getLevel() - 1] >= $spellSlots[$action->getLevel() - 1];
+                $isFull = !$prereqs->hasFreeSpellSlot($action->getLevel());
                 $price = $actionService->getPrice($action->getLevel());
 
                 $imagePath = 'img/spells/' . $actionName . '.jpeg';
@@ -141,28 +95,8 @@ class SpellView
                 echo '<td align="center"><strong style="color: ' . $raceColor . ';">' . $raceTxt . '</strong></td>';
 
                 echo '<td>';
-                if ($alreadyLearned) {
-                    echo '<button class="create" disabled>
-                            Déjà apprise
-                        </button>';
-                } elseif (!$isRaceLearnable) {
-                    echo '<button class="create" disabled>
-                            Impossible à apprendre
-                        </button>';
-                } else {
-                    $hasPrerequisites = (bool)$actionService->isActionUsable($player->getId(), $actionName);
-                    $disabled = (($playerGold < $price) || $isFull || !$hasPrerequisites) ? 'disabled' : '';
-
-                    if ($isFull) {
-                        $btnText = 'Max atteint';
-                    } elseif (!$hasPrerequisites) {
-                        $btnText = 'Pré-requis manquants';
-                    } else {
-                        $btnText = 'Acheter : ' . $price . ' Po';
-                    }
-
-                    echo '<button class="create buy-skill-btn" data-id="' . $actionName . '" data-type="active" ' . $disabled . '>' . $btnText . '</button>';
-                }
+                echo SkillPurchaseHandler::buyButton($actionName, 'active', $price, $playerGold,
+                    $alreadyLearned, $isRaceLearnable, $isFull, $prereqs->isUsable($action));
                 echo '</td>';
 
                 echo '</tr>';

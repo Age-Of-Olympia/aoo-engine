@@ -6,10 +6,10 @@ use Classes\Player;
 use Classes\Str;
 use Classes\Item;
 use App\Service\ActionService;
-use App\Service\PlayerService;
 use App\Service\ActionPassiveService;
 use App\Service\RaceService;
 use App\View\Action\ActionCostView;
+use App\Service\WarSchool\SkillPrerequisiteService;
 
 class DistanceView
 {
@@ -18,65 +18,15 @@ class DistanceView
         $actionService = new ActionService();
         $costView = new ActionCostView($actionService);
         $actionPassiveService = new ActionPassiveService();
-        $playerService = new PlayerService($player->getId());
         $actions = $actionService->getActionsByCategory('distance');
         $passives = $actionPassiveService->getActionPassivesByCategory('distance');
 
-        $nb_comp = $playerService->getNbComp();
-        $isFull = $nb_comp >= NUMBER_MAX_COMP;
+        $prereqs = SkillPrerequisiteService::forPlayer($player->getId());
+        $nb_comp = $prereqs->capCount();
+        $isFull = $prereqs->isFull();
         $playerGold = $player->get_gold();
 
-        if (!empty($_POST['buySkillId']) || !empty($_POST['buyPassiveId'])) {
-            if (ob_get_length()) ob_clean();
-            if ($nb_comp >= NUMBER_MAX_COMP) {
-                echo '<div id="data">Limite de compétences atteinte (max ' . NUMBER_MAX_COMP . ') !</div>';
-                exit;
-            }
-
-            $type = !empty($_POST['buyPassiveId']) ? 'passive' : 'active';
-            $skillName = $_POST['buyPassiveId'] ?? $_POST['buySkillId'];
-
-            $skillToBuy = ($type === 'active') 
-                ? $actionService->getActionByName($skillName)
-                : $actionPassiveService->getActionPassiveByName($skillName);
-
-            if ($skillToBuy) {
-                $price = ($type === 'active') 
-                    ? $actionService->getPrice($skillToBuy->getLevel()) 
-                    : $actionPassiveService->getPrice($skillToBuy->getLevel());
-
-                if ($playerGold < $price) {
-                    echo '<div id="data">Or insuffisant !</div>';
-                    exit;
-                }
-
-                $alreadyHas = ($type === 'active') ? $player->have_action($skillName) : $player->have_action_passive($skillName);
-                if ($alreadyHas) {
-                    echo '<div id="data">Compétence déjà connue.</div>';
-                    exit;
-                }
-                
-                $isUsable = ($type === 'active') ? (bool)$actionService->isActionUsable($player->getId(), $skillName) : (bool)$actionPassiveService->isActionPassiveUsable($player->getId(), $skillName);
-                if ($isUsable) {
-                    echo '<div id="data">Pré-requis non remplis pour apprendre cette compétence.</div>';
-                    exit;
-                }
-
-                $goldItem = new Item(1);
-                $goldItem->add_item($player, -$price);
-
-                if ($type === 'active') {
-                    $player->add_action($skillName); 
-                } else {
-                    $player->add_action_passive($skillName); 
-                }
-
-                echo '<div id="data">Compétence ' . $type . ' apprise !</div>';
-                exit;
-            }
-            echo '<div id="data">Erreur : Compétence introuvable.</div>';
-            exit;
-        }
+        SkillPurchaseHandler::handlePost($player, $prereqs);
 
         ob_start();
 
@@ -117,7 +67,7 @@ class DistanceView
                 $actionName = $action->getName();
                 $color = WarSchoolUtils::getColor($action->getCategory());
                 $raceColor = RaceService::getRaceColor($action->getRace());
-                $alreadyLearned = (bool)$player->have_action($action->getName());
+                $alreadyLearned = $prereqs->owns($actionName);
                 $actionRace = $action->getRace();
                 $isRaceLearnable = (empty($actionRace) || $player->data->race == $actionRace);
                 $raceTxt = (!empty($actionRace)) ? ucfirst($actionRace) : 'Commun';
@@ -146,28 +96,8 @@ class DistanceView
                 echo '<td align="center"><strong style="color: ' . $raceColor . ';">' . $raceTxt . '</strong></td>';
 
                 echo '<td>';
-                if ($alreadyLearned) {
-                    echo '<button class="create" disabled>
-                            Déjà apprise
-                        </button>';
-                } elseif (!$isRaceLearnable) {
-                    echo '<button class="create" disabled>
-                            Impossible à apprendre
-                        </button>';
-                } else {
-                    $hasPrerequisites = (bool)$actionService->isActionUsable($player->getId(), $actionName);
-                    $disabled = (($playerGold < $price) || $isFull || !$hasPrerequisites) ? 'disabled' : '';
-
-                    if ($isFull) {
-                        $btnText = 'Max atteint';
-                    } elseif (!$hasPrerequisites) {
-                        $btnText = 'Pré-requis manquants';
-                    } else {
-                        $btnText = 'Acheter : ' . $price . ' Po';
-                    }
-
-                    echo '<button class="create buy-skill-btn" data-id="' . $actionName . '" data-type="active" ' . $disabled . '>' . $btnText . '</button>';
-                }
+                echo SkillPurchaseHandler::buyButton($actionName, 'active', $price, $playerGold,
+                    $alreadyLearned, $isRaceLearnable, $isFull, $prereqs->isUsable($action));
                 echo '</td>';
 
                 echo '</tr>';
@@ -200,7 +130,7 @@ class DistanceView
                 $passiveName = $passive->getName();
                 $color = WarSchoolUtils::getColor($passive->getCategory());
                 $raceColor = RaceService::getRaceColor($passive->getRace());
-                $alreadyLearned = (bool)$player->have_action_passive($passive->getName());
+                $alreadyLearned = $prereqs->owns($passiveName);
                 $passiveRace = $passive->getRace();
                 $isRaceLearnable = (empty($passiveRace) || $player->data->race == $passiveRace);
 
@@ -230,28 +160,8 @@ class DistanceView
                 echo '<td align="center"><strong style="color: ' . $raceColor . ';">' . $raceTxt . '</strong></td>';
 
                 echo '<td>';
-                if ($alreadyLearned) {
-                    echo '<button class="create" disabled>
-                            Déjà apprise
-                        </button>';
-                } elseif (!$isRaceLearnable) {
-                    echo '<button class="create" disabled>
-                            Impossible à apprendre
-                        </button>';
-                } else {
-                    $hasPrerequisites = (bool)$actionPassiveService->isActionPassiveUsable($player->getId(), $passiveName);
-                    $disabled = (($playerGold < $price) || $isFull || !$hasPrerequisites) ? 'disabled' : '';
-                    
-                    if ($isFull) {
-                        $btnText = 'Max atteint';
-                    } elseif (!$hasPrerequisites) {
-                        $btnText = 'Pré-requis manquants';
-                    } else {
-                        $btnText = 'Acheter : ' . $price . ' Po';
-                    }
-                    
-                    echo '<button class="create buy-skill-btn" data-id="' . $passiveName . '" data-type="passive" ' . $disabled . '>' . $btnText . '</button>';
-                }
+                echo SkillPurchaseHandler::buyButton($passiveName, 'passive', $price, $playerGold,
+                    $alreadyLearned, $isRaceLearnable, $isFull, $prereqs->isPassiveUsable($passive));
                 echo '</td>';
 
                 echo '</tr>';

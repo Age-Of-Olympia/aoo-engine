@@ -237,12 +237,6 @@ define('MAX_XP_FOR_STEALING', 3);
 define('NUMBER_MAX_COMP', 15);
 
 /*
- * Compétences/Sorts
- */
-define('SKILL_MAX_LEVEL', 4);
-define('SPELL_MAX_LEVEL', 5);
-
-/*
  * errors
  */
 

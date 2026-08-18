@@ -3,8 +3,6 @@
 namespace App\Service;
 
 use Classes\Db;
-use App\Service\PlayerPassiveService;
-use App\Service\ActionService;
 
 /**
  * SQL access for the `players_actions` table.
@@ -149,36 +147,21 @@ class PlayerActionsService
         return $return;
     }
 
-    public function getNbAuthorizedSpells(int $playerId, int $level): int
+    /**
+     * Owned action names with their players_actions.type, in one query —
+     * 'sort' marks a war-school purchase, '' a granted starter action.
+     * @return array<string, string>
+     */
+    public function getActionsWithType(int $playerId): array
     {
-        $playerPassiveService = new PlayerPassiveService();
-        $spellSlots = $playerPassiveService->getSpellSlotsCount($playerId);
-    
-        return $spellSlots[$level - 1];
-    }
+        $return = [];
 
-    public function getSpellsArray(int $playerId): array
-    {
-        $actionService = new ActionService();
-        $spells = [0,0,0,0,0];
-        $actions = $this->getActions($playerId);
-        foreach ($actions as $action){
-            $a = $actionService->getActionByName($action);
-            if ($a === null) {
-                continue;
-            }
-            if ($actionService->extractTreeFromCategory($a->getCategory()) === 'spell') {
-                $levelIndex = $a->getLevel() - 1;
-                $spells[$levelIndex]++;
-            }
+        $res = (new Db())->get_single_player_id('players_actions', $playerId);
+
+        while ($row = $res->fetch_object()) {
+            $return[$row->name] = (string) ($row->type ?? '');
         }
-        return $spells;
-    }
 
-    public function getNbSpells(int $playerId): int
-    {
-        $spells = $this->getSpellsArray($playerId);
-        
-        return $spells[0]+$spells[1]+$spells[2]+$spells[3]+$spells[4];
+        return $return;
     }
 }

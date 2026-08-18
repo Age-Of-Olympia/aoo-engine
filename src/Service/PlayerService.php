@@ -269,17 +269,4 @@ class PlayerService
 
         $this->db->exe($sql, array($value, $this->playerId));
     }
-
-    public function getNbComp(): int
-    {
-        $playerActionsService = new PlayerActionsService();
-        $actionPassiveService = new ActionPassiveService();
-
-        $passiveCount = $actionPassiveService->getActionPassiveCount($this->playerId);
-        $skillsCount  = $this->GetPlayer($this->playerId)->get_skills_count();
-        $spellsCount  = $playerActionsService->getNbSpells($this->playerId);
-
-        return $passiveCount + $skillsCount - $spellsCount;
-    }
-
 }

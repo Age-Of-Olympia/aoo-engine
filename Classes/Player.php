@@ -626,19 +626,6 @@ class Player implements ActorInterface {
         return $return;
     }
 
-    public function get_skills_count() {
-        $sql = 'SELECT COUNT(*) as total FROM players_actions WHERE player_id = ? AND type = "sort"';
-        
-        $db = new Db();
-        $res = $db->exe($sql, $this->id);
-        
-        if ($row = $res->fetch_object()) {
-            return (int) $row->total;
-        }
-        
-        return 0;
-    }
-
     public function get_passives(){
 
 
