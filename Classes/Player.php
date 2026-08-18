@@ -2549,12 +2549,12 @@ class Player implements ActorInterface {
     public function hasMagicalItemEquipped(): bool
     {
         foreach ($this->getEquipedItems() as $item) {
-            $item = new \Classes\Item($item->id, $item);
+            $item = new Item($item->id, $item);
             if ($item->isMagical()) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -2562,13 +2562,12 @@ class Player implements ActorInterface {
         $equipedItems = $this->getEquipedItems();
         $effectsList = [];
         foreach ($equipedItems as $item) {
-            $item = new \Classes\Item($item->id, $item);
+            $item = new Item($item->id, $item);
             $effectsList = array_merge($effectsList, $item->getItemEffects());
         }
-        
+
         return $effectsList;
     }
-    
 
     public function getPush(Player $target): bool {
         $att = $this->caracs->f;

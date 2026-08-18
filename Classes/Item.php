@@ -746,7 +746,7 @@ class Item{
         }
 
         // special magique
-         if(!empty($itemJson->magique)){
+        if(!empty($itemJson->magique)){
             $return[] = '<font color="green">Magique</font>';
         }
         
@@ -840,24 +840,17 @@ class Item{
 
     public function isMagical() : bool {
         $itemJson = json()->decode('items', $this->row->name);
-        if(!empty($itemJson->magique)){
-            return $itemJson->magique;
-        }
-        return false;
+        return !empty($itemJson->magique);
     }
 
     public function getItemEffects() : array {
-    $effects = [];
-    $itemJson = json()->decode('items', $this->row->name);
-    
-    if (!empty($itemJson->addEffects)) {
-        $rawEffects = is_array($itemJson->addEffects) 
-            ? $itemJson->addEffects 
-            : (array) $itemJson->addEffects;
+        $itemJson = json()->decode('items', $this->row->name);
+        if (empty($itemJson->addEffects)) {
+            return [];
+        }
 
-        $effects = array_merge($effects, $rawEffects);
+        return is_array($itemJson->addEffects)
+            ? $itemJson->addEffects
+            : (array) $itemJson->addEffects;
     }
-    
-    return $effects;
-}
 }

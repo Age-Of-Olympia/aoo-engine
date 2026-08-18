@@ -160,14 +160,14 @@ class LifeLossExecuteCharacterizationTest extends TestCase
     {
         $actorBonus = [];
         $targetBonus = [];
-        
+
         // On donne à l'acteur 2 en Force ('f') mais 20 en Magie ('m')
         $actor = $this->player('Actor', ['f' => 2, 'm' => 20], $actorBonus);
         $target = $this->player('Target', ['e' => 4], $targetBonus);
 
         // L'instruction demande initialement de la Force ('f')
         $instruction = $this->instruction(['actorDamagesTrait' => 'f']);
-        
+
         // On active le drapeau magique dans le ConditionObject
         $conditionObject = new ConditionObject();
         $conditionObject->setIsMagical(true);
@@ -178,7 +178,7 @@ class LifeLossExecuteCharacterizationTest extends TestCase
         // Comme isMagical bascule sur la Magie ('m') : (20 - 4) + 3 crit = 19 dégâts.
         $this->assertSame(19, $result->getTotalDamages());
         $this->assertContains(['pv' => -19], $targetBonus);
-        
+
         // Optionnel : On s'assure que le tooltip de log affiche bien la caractéristique 'M'
         $message = $result->getOutcomeSuccessMessages()[1];
         $this->assertStringContainsString('M vs E :', $message);

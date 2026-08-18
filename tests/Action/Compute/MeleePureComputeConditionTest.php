@@ -102,16 +102,16 @@ class MeleePureComputeConditionTest extends TestCase
             ->setConstructorArgs([1, 'Cradek'])
             ->onlyMethods(['getEquipedItemsEffects'])
             ->getMock();
-            
+
         $actor->caracs->force = 1;
         $actor->method('getEquipedItemsEffects')->willReturn([$mockEffect]);
 
         // 3. On lance le check avec un jet victorieux
         $checkData = $this->check(new ScriptedDice([[10], [5]]), $actor);
-        
+
         // 4. On vérifie que le tableau d'effets du conditionObject contient bien notre effet 'feu'
         $attackEffects = $checkData['conditionObject']->getAttackEffects();
-        
+
         $this->assertCount(1, $attackEffects);
         $this->assertEquals('feu', $attackEffects[0]->name);
     }
@@ -125,7 +125,7 @@ class MeleePureComputeConditionTest extends TestCase
             ->setConstructorArgs([1, 'Cradek'])
             ->onlyMethods(['getEquipedItemsEffects'])
             ->getMock();
-            
+
         $actor->caracs->force = 1;
 
         // On prépare nos deux effets distincts
