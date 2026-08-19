@@ -66,6 +66,10 @@ if ($layer === false) {
     report('t4 imageaffine identity (8,8)', sample($layer, 8, 8));
 }
 
+// t4b: the pure-PHP fallback on the same identity — expect same as t3
+$manual = affineManualLayer($tex, [1, 0, 0, 1, 0, 0]);
+report('t4b affineManualLayer identity (8,8)', $manual === false ? [0, 0, 0, -1] : sample($manual, 8, 8));
+
 // t5: pasteQuad onto the canvas — expect the shaded red at the quad center
 $tex2 = newImage(16, 16, [40, 180, 90]);
 pasteQuad($canvas, $tex2, [4, 4], [36, 4], [4, 36], 1.0);

@@ -833,6 +833,60 @@ function occlude(GdImage $tex, int $eavePx): void
 // ---------------------------------------------------------------- compositing
 
 /**
+ * imageaffine(), or a manual rasterizer where the host's libgd is broken:
+ * some system builds (libgd 2.3.3 on o2switch) return a blank transparent
+ * layer even for an identity transform — probed once with a 2x2 image.
+ */
+function affineLayer(GdImage $tex, array $m): GdImage|false
+{
+    static $native = null;
+    if ($native === null) {
+        $probe = imagecreatetruecolor(2, 2);
+        imagefill($probe, 0, 0, 0xFF0000);
+        $t = imageaffine($probe, [1, 0, 0, 1, 0, 0]);
+        $native = $t !== false && (imagecolorat($t, 0, 0) & 0xFFFFFF) === 0xFF0000;
+    }
+    if ($native) {
+        return imageaffine($tex, $m);
+    }
+
+    return affineManualLayer($tex, $m);
+}
+
+/** Pure-PHP affine: inverse mapping, nearest neighbour — the 4x downscale smooths the edges. */
+function affineManualLayer(GdImage $tex, array $m): GdImage|false
+{
+    [$ma, $mb, $mc, $md, $tx, $ty] = [$m[0], $m[1], $m[2], $m[3], $m[4], $m[5]];
+    $det = $ma * $md - $mb * $mc;
+    if (abs($det) < 1e-9) {
+        return false;
+    }
+    $tw = imagesx($tex);
+    $th = imagesy($tex);
+    $w = $h = 0;
+    foreach ([[0, 0], [$tw, 0], [$tw, $th], [0, $th]] as [$sx, $sy]) {
+        $w = max($w, (int) ceil($ma * $sx + $mc * $sy + $tx));
+        $h = max($h, (int) ceil($mb * $sx + $md * $sy + $ty));
+    }
+    $layer = newImage($w, $h);
+    imagealphablending($layer, false);
+    for ($y = 0; $y < $h; $y++) {
+        for ($x = 0; $x < $w; $x++) {
+            $rx = $x + 0.5 - $tx;
+            $ry = $y + 0.5 - $ty;
+            $sx = (int) (($md * $rx - $mc * $ry) / $det);
+            $sy = (int) (($ma * $ry - $mb * $rx) / $det);
+            if ($sx >= 0 && $sx < $tw && $sy >= 0 && $sy < $th) {
+                imagesetpixel($layer, $x, $y, imagecolorat($tex, $sx, $sy));
+            }
+        }
+    }
+    imagealphablending($layer, true);
+
+    return $layer;
+}
+
+/**
  * Affine-map $tex onto the parallelogram $a -> $b (u axis) -> $d (v axis),
  * optionally clipped to a convex polygon in canvas coordinates.
  */
@@ -865,7 +919,7 @@ function pasteQuad(GdImage $canvas, GdImage $tex, array $a, array $b, array $d,
     }
     $m[4] = $a[0] - $minX;
     $m[5] = $a[1] - $minY;
-    $layer = imageaffine($tex, $m);
+    $layer = affineLayer($tex, $m);
     if ($layer === false) {
         return;
     }
