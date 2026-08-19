@@ -14,6 +14,8 @@ Avec le devcontainer démarré :
 
 Aperçu en direct (zoom ×2/×4/×6 sur damier de transparence), tous les réglages
 du CLI, et « Enregistrer » qui écrit `out/<nom>.png` plus les tuiles 50×50.
+Le sélecteur « Aperçu » bascule entre brut (instantané, par défaut) et peint
+(fidèle mais ~3 s) ; les enregistrements sont toujours peints.
 La page refuse toute adresse hors réseau privé : c'est un outil d'atelier,
 pas une page du jeu.
 
@@ -42,7 +44,8 @@ Options de `build` :
 parapet sur les quatre côtés ; banque = même toit-parapet mais fronton modeste
 centré sur l'entrée ; attique = pignon rectangulaire pleine largeur ; temple
 se marie avec `--facade columns`, qui supprime les fenêtres — la colonnade
-est l'ouverture), `--windows simple|arche|hautes|aucune`, `--label TEXTE`
+est l'ouverture), `--brut` (désactive la passe peinture, voir plus bas),
+`--windows simple|arche|hautes|aucune`, `--label TEXTE`
 (plaque sombre sur l'attique, lettres blanches ; deux lignes avec `LIGNE1|LIGNE2`,
 la lisibilité est meilleure sur une seule ligne courte ; 💰 dessine une pièce d'or,
 les autres emojis sont ignorés),
@@ -73,6 +76,21 @@ Après toute retouche de `FORMS` ou de la projection, vérifier avec :
 ```bash
 docker exec PHP-AOO4-Local php /var/www/html/tools/building-composer/check_fit.php
 ```
+
+## Passe peinture
+
+Chaque `build` se termine par une passe « peinture » (`postpass.php`, requis par
+`compose.php`), appliquée sur le canevas de travail avant la réduction et la
+découpe en tuiles : palette calée sur les peintures de référence déposées dans
+`out/refs/` (dossier absent = pas de calage, le reste s'applique), dégradé
+vertical de lumière, occlusion ambiante le long des arêtes, grain, ombre de
+pied de mur et contour irrégulier. `--brut` la désactive. Les murs reçoivent
+aussi un habillage procédural (lierre au pied, fissures), remplacé par les
+tampons peints déposés dans `parts/stamps/` quand il y en a (peints ~2× plus
+larges que hauts, comme les façades — la projection les resserre).
+`postpass.php compare` génère
+`out/compare.png` : brut / peint / référence peinte. En CLI autonome,
+`postpass.php run in.png out.png` applique la passe à un PNG déjà réduit.
 
 ## Circuit graphiste
 

@@ -87,6 +87,8 @@ class Projection
     }
 }
 
+require_once __DIR__ . '/postpass.php';
+
 // ---------------------------------------------------------------- GD helpers
 
 function newImage(int $w, int $h, ?array $rgb = null): GdImage
@@ -394,20 +396,55 @@ function texColombage(int $w, int $h, int $seed): GdImage
     return $im;
 }
 
+/** Clusters of moss and lichen blobs, the weathering every painted roof has. */
+function weather(GdImage $im, int $seed, array $moss, array $lichen): void
+{
+    mt_srand($seed);
+    $w = imagesx($im);
+    $h = imagesy($im);
+    for ($i = 0, $n = max(2, intdiv($w * $h, 60000)); $i < $n; $i++) {
+        $cx = mt_rand(0, $w - 1);
+        $cy = mt_rand(0, $h - 1);
+        $rgb = mt_rand(0, 2) ? $moss : $lichen;
+        for ($b = 0, $m = mt_rand(3, 7); $b < $m; $b++) {
+            $col = imagecolorallocatealpha($im, $rgb[0] + mt_rand(-10, 10),
+                $rgb[1] + mt_rand(-10, 10), $rgb[2] + mt_rand(-10, 10), mt_rand(88, 108));
+            imagefilledellipse($im, $cx + mt_rand(-6 * S, 6 * S), $cy + mt_rand(-3 * S, 3 * S),
+                mt_rand(3 * S, 7 * S), mt_rand(2 * S, 4 * S), $col);
+        }
+    }
+}
+
 function roofRows(int $w, int $h, int $seed, array $base, int $jitter, array $line, int $rowH): GdImage
 {
     mt_srand($seed);
     $im = newImage($w, $h, $base);
     $lineC = imagecolorallocate($im, ...$line);
+    $c = fn (int $v): int => max(0, min(255, $v));
+    $drift = 0;
     for ($j = 0, $top = 0; $top < $h; $top += $rowH, $j++) {
+        // each course carries its own tint: brightness wanders row to row,
+        // warmth is drawn per row, and tiles add their own hue jitter
+        $drift = max(-14, min(14, $drift + mt_rand(-6, 6)));
+        $warm = mt_rand(-7, 7);
         $offset = ($j % 2) * 4 * S;
         for ($left = -$offset; $left < $w; $left += 8 * S) {
-            $v = mt_rand(-$jitter, $jitter);
+            $v = mt_rand(-$jitter, $jitter) + $drift;
+            $hue = mt_rand(-6, 6) + $warm;
+            if (mt_rand(0, 17) === 0) {
+                $v -= 26; // a slipped, darker tile here and there
+            }
             imagefilledrectangle($im, $left, $top, $left + 8 * S, $top + $rowH,
-                imagecolorallocate($im, $base[0] + $v, $base[1] + $v, $base[2] + $v));
+                imagecolorallocate($im, $c($base[0] + $v + $hue), $c($base[1] + $v),
+                    $c($base[2] + $v - $hue)));
             imageline($im, $left, $top, $left, $top + $rowH, $lineC);
         }
-        imageline($im, 0, $top + $rowH, $w, $top + $rowH, $lineC);
+        // the course line sags a little as it runs
+        $sag = 0;
+        for ($x = 0; $x < $w; $x += 8 * S) {
+            $sag = max(-4, min(4, $sag + mt_rand(-2, 2)));
+            imageline($im, $x, $top + $rowH + $sag, $x + 8 * S, $top + $rowH + $sag, $lineC);
+        }
     }
     speckle($im, 22, $seed);
 
@@ -416,12 +453,18 @@ function roofRows(int $w, int $h, int $seed, array $base, int $jitter, array $li
 
 function texTiles(int $w, int $h, int $seed): GdImage
 {
-    return roofRows($w, $h, $seed, [164, 96, 70], 16, [110, 62, 46], 4 * S);
+    $im = roofRows($w, $h, $seed, [164, 96, 70], 16, [110, 62, 46], 4 * S);
+    weather($im, $seed + 13, [96, 112, 70], [176, 168, 136]);
+
+    return $im;
 }
 
 function texSlate(int $w, int $h, int $seed): GdImage
 {
-    return roofRows($w, $h, $seed, [104, 110, 122], 12, [70, 74, 84], 4 * S);
+    $im = roofRows($w, $h, $seed, [104, 110, 122], 12, [70, 74, 84], 4 * S);
+    weather($im, $seed + 13, [90, 104, 78], [150, 155, 140]);
+
+    return $im;
 }
 
 function texThatch(int $w, int $h, int $seed): GdImage
@@ -440,6 +483,7 @@ function texThatch(int $w, int $h, int $seed): GdImage
     for ($top = 10 * S; $top < $h; $top += 10 * S) {
         imagefilledrectangle($im, 0, $top, $w, $top + S, $band);
     }
+    weather($im, $seed + 13, [104, 94, 48], [88, 74, 40]);
 
     return $im;
 }
@@ -448,6 +492,7 @@ function texFlat(int $w, int $h, int $seed): GdImage
 {
     $im = newImage($w, $h, [150, 138, 118]);
     speckle($im, 26, $seed);
+    weather($im, $seed + 13, [124, 112, 90], [140, 132, 108]);
 
     return $im;
 }
@@ -499,6 +544,67 @@ function loadScaled(string $file, int $w, int $h): GdImage
 
 // ---------------------------------------------------------------- wall dressing
 
+/**
+ * Recess shading over an opening whose INTERIOR is x0..x1 / y0..y1, framed
+ * by $out px: the wall has thickness, so the lintel casts a shadow down
+ * across the frame and into the opening, the left jamb sits in shadow while
+ * the right one catches light. Only the interior sinks — the frame's right
+ * and bottom stay lit, keeping the opening's silhouette (arch included).
+ * $archH > 0 shades an arched top springing at $y0 instead of a flat lintel.
+ * Horizontal depths are doubled: the map squeezes textures 2x horizontally.
+ * $deep is for doors — a doorway reads as a space one could enter.
+ */
+function recess(GdImage $tex, int $x0, int $y0, int $x1, int $y1, int $archH = 0,
+    bool $deep = false, int $out = 0): void
+{
+    $w = $x1 - $x0;
+    $h = $y1 - $y0 + $archH;
+    $d = min($deep ? 12 * S : (int) (7.5 * S),
+        max(2 * S, (int) (1.5 * intdiv($h, $deep ? 3 : 4))), intdiv($h, 2));
+    $shadow = fn (int $a): int => imagecolorallocatealpha($tex, 10, 10, 14, min(127, $a));
+    // quadratic falloff: the darkness holds against the edge, then lets go
+    $ramp = fn (int $start, int $i, int $len): int => $start
+        + (int) ((127 - $start) * ($i / max(1, $len)) ** 2);
+
+    // the interior as a whole sinks into the wall
+    imagefilledrectangle($tex, $x0, $y0, $x1, $y1, $shadow($deep ? 43 : 64));
+
+    // lintel (or arch underside) shadow, darkest against the edge of the wall
+    $lintel = $d + $out;
+    if ($archH > 0) {
+        imagesetthickness($tex, 3);
+        $mid = intdiv($x0 + $x1, 2);
+        for ($i = 0; $i < $lintel; $i++) {
+            imagearc($tex, $mid, $y0, $w + 2 * $out - 4 * $i, 2 * max(1, $archH + $out - $i),
+                180, 360, $shadow($ramp($deep ? 20 : 29, $i, $lintel)));
+        }
+        imagesetthickness($tex, 1);
+    } else {
+        for ($i = 0; $i < $lintel; $i++) {
+            imageline($tex, $x0 - $out, $y0 - $out + $i, $x1 + $out, $y0 - $out + $i,
+                $shadow($ramp($deep ? 20 : 29, $i, $lintel)));
+        }
+    }
+
+    // jambs: shadowed away from the light, a lit sliver on the far side
+    $dw = min(2 * $d, intdiv($w, 3)) + $out;
+    for ($i = 0; $i < $dw; $i++) {
+        imageline($tex, $x0 - $out + $i, $y0, $x0 - $out + $i, $y1,
+            $shadow($ramp($deep ? 33 : 41, $i, $dw)));
+    }
+    imagefilledrectangle($tex, $x1 - max(S, intdiv($dw, 3)), $y0 + $d, $x1, $y1,
+        imagecolorallocatealpha($tex, 250, 242, 220, 80));
+}
+
+/** Protruding sill under a window: a lit ledge and the shadow it casts. */
+function sill(GdImage $tex, int $x0, int $x1, int $y): void
+{
+    imagefilledrectangle($tex, $x0 - 2 * S, $y, $x1 + 2 * S, $y + 2 * S,
+        imagecolorallocate($tex, 214, 204, 180));
+    imagefilledrectangle($tex, $x0 - 2 * S, $y + 2 * S, $x1 + 2 * S, $y + 3 * S,
+        imagecolorallocatealpha($tex, 10, 10, 14, 88));
+}
+
 function drawDoor(GdImage $tex, string $style, int $cx, int $base, int $storeyH): array
 {
     // widths are ~2x heights: the map squeezes textures horizontally
@@ -517,6 +623,7 @@ function drawDoor(GdImage $tex, string $style, int $cx, int $base, int $storeyH)
         imagefilledrectangle($tex, $cx - $half - 3 * S, $cy, $cx + $half + 3 * S, $base, $frame);
         imagefilledarc($tex, $cx, $cy, 2 * $half, 2 * ($archH - 3 * S), 180, 360, $leaf, IMG_ARC_PIE);
         imagefilledrectangle($tex, $cx - $half, $cy, $cx + $half, $base, $leaf);
+        $recessBox = [$cx - $half, $cy, $cx + $half, $base, $archH - 3 * S, 3 * S];
     } else {
         if ($style === 'double') {
             $frame = imagecolorallocate($tex, 190, 184, 168);
@@ -526,10 +633,13 @@ function drawDoor(GdImage $tex, string $style, int $cx, int $base, int $storeyH)
         imagefilledrectangle($tex, $cx - $half - 2 * S, $base - $h - 2 * S,
             $cx + $half + 2 * S, $base, $frame);
         imagefilledrectangle($tex, $cx - $half, $base - $h, $cx + $half, $base, $leaf);
+        $recessBox = [$cx - $half, $base - $h, $cx + $half, $base, 0, 2 * S];
     }
     imagesetthickness($tex, S);
     imageline($tex, $cx, $base - $h + ($style === 'arche' ? 3 * S : 0), $cx, $base, $split);
     imagesetthickness($tex, 1);
+    recess($tex, $recessBox[0], $recessBox[1], $recessBox[2], $recessBox[3], $recessBox[4],
+        true, $recessBox[5]);
 
     return [$cx - $half - 4 * S, $cx + $half + 4 * S];
 }
@@ -562,6 +672,9 @@ function drawWindow(GdImage $tex, string $style, int $cx, int $base, int $storey
         imagefilledarc($tex, $cx, $spring, 2 * $half, 2 * $archH, 180, 360, $glass, IMG_ARC_PIE);
         imagefilledrectangle($tex, $cx - $half, $spring, $cx + $half, $bot, $glass);
         imageline($tex, $cx, $spring - $archH + S, $cx, $bot, $bar);
+        imagesetthickness($tex, 1);
+        recess($tex, $cx - $half, $spring, $cx + $half, $bot, $archH, false, 3 * S);
+        sill($tex, $cx - $half, $cx + $half, $bot + 2 * S);
     } else {
         imagefilledrectangle($tex, $cx - $half - 2 * S, $top - 2 * S,
             $cx + $half + 2 * S, $bot + 2 * S, $frame);
@@ -570,13 +683,18 @@ function drawWindow(GdImage $tex, string $style, int $cx, int $base, int $storey
         if ($style === 'hautes') {
             imageline($tex, $cx - $half, $cy, $cx + $half, $cy, $bar);
         }
+        imagesetthickness($tex, 1);
+        recess($tex, $cx - $half, $top, $cx + $half, $bot, 0, false, 2 * S);
+        sill($tex, $cx - $half, $cx + $half, $bot + 2 * S);
     }
-    imagesetthickness($tex, 1);
 }
 
-/** Draw a door and windows in flat texture space; an artist swatch replaces this. */
+/**
+ * Draw a door and windows in flat texture space; an artist swatch replaces
+ * this. Returns the door's blocked x range, null without a door.
+ */
 function stampOpenings(GdImage $tex, int $lenTiles, int $storeys, int $storeyH, ?array $door,
-    string $windows = 'simple'): void
+    string $windows = 'simple'): ?array
 {
     $width = imagesx($tex);
     $height = imagesy($tex);
@@ -588,7 +706,7 @@ function stampOpenings(GdImage $tex, int $lenTiles, int $storeys, int $storeyH, 
         $blocked = drawDoor($tex, $door['style'], $cx, $height, $storeyH);
     }
     if ($windows === 'aucune') {
-        return;
+        return $blocked;
     }
     for ($storey = 0; $storey < $storeys; $storey++) {
         $base = $height - $storey * $storeyH;
@@ -599,6 +717,94 @@ function stampOpenings(GdImage $tex, int $lenTiles, int $storeys, int $storeyH, 
                 continue;
             }
             drawWindow($tex, $windows, $cx, $base, $storeyH);
+        }
+    }
+
+    return $blocked;
+}
+
+/** A tuft of ivy climbing the wall from its base at $x, up to $climb px. */
+function ivy(GdImage $tex, int $x, int $base, int $climb): void
+{
+    $leaves = [[86, 108, 62], [64, 88, 52], [118, 132, 72]];
+    for ($y = $base - 1; $y > $base - $climb; $y -= mt_rand(2, 3)) {
+        $t = ($base - $y) / $climb;          // 0 at the base, 1 at the tip
+        $x += mt_rand(-2, 2);
+        $spread = (int) round((1 - $t) * 7 * S) + 2 * S;
+        for ($i = 0, $n = mt_rand(1, 3); $i < $n; $i++) {
+            $rgb = $leaves[mt_rand(0, 2)];
+            imagefilledellipse($tex, $x + mt_rand(-$spread, $spread), $y,
+                mt_rand(2 * S, 4 * S), mt_rand(S, 2 * S),
+                imagecolorallocatealpha($tex, $rgb[0] + mt_rand(-12, 12),
+                    $rgb[1] + mt_rand(-12, 12), $rgb[2] + mt_rand(-12, 12), mt_rand(30, 70)));
+        }
+    }
+}
+
+/** A hairline crack wandering down the wall from ($x, $y0) to $y1. */
+function crack(GdImage $tex, int $x, int $y0, int $y1): void
+{
+    $ink = imagecolorallocatealpha($tex, 30, 26, 22, 92);
+    for ($y = $y0; $y < $y1; $y += mt_rand(3, 5)) {
+        $nx = $x + mt_rand(-3, 3);
+        imageline($tex, $x, $y, $nx, min($y1, $y + 5), $ink);
+        if (mt_rand(0, 6) === 0) {
+            imageline($tex, $nx, $y, $nx + mt_rand(-6, 6), $y + mt_rand(3, 8), $ink);
+        }
+        $x = $nx;
+    }
+}
+
+/**
+ * Wall dressing: the life every painted facade has. Hand-painted stamps
+ * dropped in parts/stamps/ take over from the procedural ivy when present
+ * (painted ~2x wide like the facades — the projection squeezes them back).
+ * Everything stays clear of the door and is seeded like the rest.
+ */
+function dressWall(GdImage $tex, int $lenTiles, int $storeyH, int $seed, ?array $doorBlock): void
+{
+    mt_srand($seed);
+    $w = imagesx($tex);
+    $h = imagesy($tex);
+    $stamps = glob(__DIR__ . '/parts/stamps/*.png') ?: [];
+    for ($i = 0, $n = mt_rand(1, max(1, $lenTiles)); $i < $n; $i++) {
+        $x = mt_rand(6 * S, $w - 6 * S);
+        if ($doorBlock !== null && $x >= $doorBlock[0] - 10 * S && $x <= $doorBlock[1] + 10 * S) {
+            continue;
+        }
+        if ($stamps !== []) {
+            $src = imagecreatefrompng($stamps[mt_rand(0, count($stamps) - 1)]);
+            if ($src !== false) {
+                $sh = intdiv($storeyH, 2);
+                $sw = (int) round($sh * imagesx($src) / imagesy($src));
+                imagecopyresampled($tex, $src, $x - intdiv($sw, 2), $h - $sh, 0, 0,
+                    $sw, $sh, imagesx($src), imagesy($src));
+            }
+        } else {
+            ivy($tex, $x, $h, mt_rand((int) (0.25 * $storeyH), (int) (0.55 * $storeyH)));
+        }
+    }
+    for ($i = 0, $n = mt_rand(0, 2); $i < $n; $i++) {
+        crack($tex, mt_rand(6 * S, $w - 6 * S), mt_rand(0, intdiv($h, 3)),
+            mt_rand(intdiv($h, 2), (int) (0.85 * $h)));
+    }
+}
+
+/**
+ * Light holds at the near corner of the building and falls off as the face
+ * recedes: multiply each column by a quadratic falloff toward the far end.
+ */
+function recedeShade(GdImage $tex, bool $farAtLeft, float $strength): void
+{
+    $w = imagesx($tex);
+    $h = imagesy($tex);
+    for ($i = 0; $i < $w; $i++) {
+        $rel = $i / max(1, $w - 1);
+        $far = $farAtLeft ? 1 - $rel : $rel;
+        $f = 1 - $strength * $far ** 2;
+        if ($f < 0.999) {
+            imagefilledrectangle($tex, $i, 0, $i, $h,
+                imagecolorallocatealpha($tex, 0, 0, 0, (int) round(127 * $f)));
         }
     }
 }
@@ -711,7 +917,7 @@ function edgeLine(GdImage $canvas, array $a, array $b, int $width = S): void
 function build(string $form, string $facade = 'stone', string $roofMat = 'tiles',
     ?string $shape = null, ?string $facadeImg = null, ?string $roofImg = null,
     bool $mirror = false, int $seed = 1, string $door = 'simple', float $doorFrac = 0.5,
-    string $windows = 'simple', string $label = ''): GdImage
+    string $windows = 'simple', string $label = '', bool $paint = true): GdImage
 {
     [$w, $d, $cols, $rows, $storeys, $storeyF, $roofF, $defaultShape] = FORMS[$form];
     $shape = $shape ?? $defaultShape;
@@ -766,11 +972,15 @@ function build(string $form, string $facade = 'stone', string $roofMat = 'tiles'
 
     $winStyle = $facade === 'columns' ? 'aucune' : $windows;
     $wall = function (int $lenTiles, array $a, array $b, float $shadeF, ?array $doorSpec,
-        ?array $clip = null)
+        float $recede = 0.0, bool $farAtLeft = false, ?array $clip = null)
     use ($canvas, $facade, $facadeImg, $storeys, $storeyH, $h, $seed, $winStyle): void {
         $tex = facadeTexture($facade, $facadeImg, $lenTiles * TILE * S * 2, $h, $seed);
-        stampOpenings($tex, $lenTiles, $storeys, $storeyH, $doorSpec, $winStyle);
+        $doorBlock = stampOpenings($tex, $lenTiles, $storeys, $storeyH, $doorSpec, $winStyle);
+        dressWall($tex, $lenTiles, $storeyH, $seed * 31 + ($farAtLeft ? 21 : 22), $doorBlock);
         occlude($tex, 6 * S);
+        if ($recede > 0) {
+            recedeShade($tex, $farAtLeft, $recede);
+        }
         pasteQuad($canvas, $tex, [$a[0], $a[1] - $h], [$b[0], $b[1] - $h], $a, $shadeF, $clip);
     };
 
@@ -796,8 +1006,9 @@ function build(string $form, string $facade = 'stone', string $roofMat = 'tiles'
     }
 
     // left wall carries the door; right wall only windows
-    $wall($w, $pr->p(0, $d), $pr->p($w, $d), SHADE_LEFT, ['style' => $door, 'frac' => $doorFrac]);
-    $wall($d, $pr->p($w, $d), $pr->p($w, 0), SHADE_RIGHT, null);
+    $wall($w, $pr->p(0, $d), $pr->p($w, $d), SHADE_LEFT, ['style' => $door, 'frac' => $doorFrac],
+        0.18, true);
+    $wall($d, $pr->p($w, $d), $pr->p($w, 0), SHADE_RIGHT, null, 0.24, false);
     $corner = $pr->p($w, $d);
     edgeLine($canvas, [$corner[0], $corner[1] - $h], $corner, intdiv(S, 2));
 
@@ -928,6 +1139,10 @@ function build(string $form, string $facade = 'stone', string $roofMat = 'tiles'
 
     if ($mirror) {
         imageflip($canvas, IMG_FLIP_HORIZONTAL);
+    }
+    if ($paint) {
+        // painterly finishing at working scale: downscale and tile cut inherit it
+        paintPass($canvas, __DIR__ . '/out/refs', $seed, S);
     }
     $final = newImage($cols * TILE, $rows * TILE);
     imagecopyresampled($final, $canvas, 0, 0, 0, 0, $cols * TILE, $rows * TILE,
@@ -1121,10 +1336,13 @@ function main(array $argv): void
             'facade-img' => null, 'roof-img' => null, 'seed' => '1', 'name' => 'composed',
             'door' => 'simple', 'door-pos' => 'centre', 'windows' => 'simple', 'label' => ''];
         $mirror = false;
+        $brut = false;
         $args = array_slice($argv, 3);
         for ($i = 0; $i < count($args); $i++) {
             if ($args[$i] === '--mirror') {
                 $mirror = true;
+            } elseif ($args[$i] === '--brut') {
+                $brut = true;
             } else {
                 $opts[ltrim($args[$i], '-')] = $args[++$i];
             }
@@ -1134,7 +1352,8 @@ function main(array $argv): void
             in_array($opts['door'], DOORS, true) ? $opts['door'] : 'simple',
             DOOR_POS[$opts['door-pos']] ?? 0.5,
             in_array($opts['windows'], WINDOWS, true) ? $opts['windows'] : 'simple',
-            mb_substr(preg_replace('/[^A-Za-z0-9 \'\-|\n💰]/u', '', $opts['label']), 0, 34));
+            mb_substr(preg_replace('/[^A-Za-z0-9 \'\-|\n💰]/u', '', $opts['label']), 0, 34),
+            !$brut);
         @mkdir(__DIR__ . '/out');
         imagepng($img, __DIR__ . "/out/{$opts['name']}.png");
         cropTiles($img, __DIR__ . '/out', $opts['name']);

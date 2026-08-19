@@ -75,13 +75,15 @@ $label = mb_substr(preg_replace('/[^A-Za-z0-9 \'\-|\n💰]/u', '', $_REQUEST['la
 $facadeImg = param('facade_img', swatches(), null);
 $roofImg = param('roof_img', swatches(), null);
 $mirror = ($_REQUEST['mirror'] ?? '') === '1';
+$brut = ($_REQUEST['brut'] ?? '1') === '1';
 $seed = max(0, (int) ($_REQUEST['seed'] ?? 1));
 
 if (isset($_GET['render'])) {
+    // the brut preview skips the paint pass for a fast loop; saves stay painted
     $img = build($form, $facade, $roof, $shape,
         $facadeImg === null ? null : __DIR__ . '/parts/' . $facadeImg,
         $roofImg === null ? null : __DIR__ . '/parts/' . $roofImg,
-        $mirror, $seed, $door, DOOR_POS[$doorPos], $windows, $label);
+        $mirror, $seed, $door, DOOR_POS[$doorPos], $windows, $label, !$brut);
     header('Content-Type: image/png');
     header('Cache-Control: no-store');
     imagepng($img);
@@ -236,6 +238,13 @@ function options(array $values, ?string $selected, ?string $emptyLabel = null): 
     <select name="mirror">
       <option value="">normale</option>
       <option value="1"<?= $mirror ? ' selected' : '' ?>>miroir</option>
+    </select>
+  </div>
+  <div>
+    <label>Aperçu</label>
+    <select name="brut">
+      <option value="1"<?= $brut ? ' selected' : '' ?>>brut (rapide)</option>
+      <option value=""<?= $brut ? '' : ' selected' ?>>peint (lent)</option>
     </select>
   </div>
   <div>
