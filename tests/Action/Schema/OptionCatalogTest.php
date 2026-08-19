@@ -38,10 +38,13 @@ class OptionCatalogTest extends TestCase
         $this->assertSame('Maladresse', $effects['maladresse']);
     }
 
-    public function testPassivesDegradeToEmptyWhenTheDatabaseIsUnavailable(): void
+    public function testPassivesDegradeToEmptyWhenTheSourceIsUnavailable(): void
     {
-        // No DB under the unit bootstrap: the lookup must not throw.
-        $this->assertSame([], (new OptionCatalog())->passives());
+        // A failing source must degrade to an empty list, never throw.
+        $passiveService = $this->createStub(\App\Service\ActionPassiveService::class);
+        $passiveService->method('getAllNames')->willThrowException(new \RuntimeException('DB unreachable'));
+
+        $this->assertSame([], (new OptionCatalog(passiveService: $passiveService))->passives());
     }
 
     public function testRendererBuildsACatalogMultiSelectWithSelectedValues(): void
