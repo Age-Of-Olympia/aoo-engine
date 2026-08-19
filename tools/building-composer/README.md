@@ -16,8 +16,10 @@ Aperçu en direct (zoom ×2/×4/×6 sur damier de transparence), tous les régla
 du CLI, et « Enregistrer » qui écrit `out/<nom>.png` plus les tuiles 50×50.
 Le sélecteur « Aperçu » bascule entre brut (instantané, par défaut) et peint
 (fidèle mais ~3 s) ; les enregistrements sont toujours peints.
-La page refuse toute adresse hors réseau privé : c'est un outil d'atelier,
-pas une page du jeu.
+Depuis un réseau privé la page est libre (atelier local) ; sur un hôte
+public (experimental), l'auth admin du jeu prend le relais — superadmin,
+le niveau par défaut des pages non listées. Le déploiement ne copie que
+`tools/building-composer/`, le reste de `tools/` reste local.
 
 ## Lancer l'outil en ligne de commande
 
@@ -82,7 +84,9 @@ docker exec PHP-AOO4-Local php /var/www/html/tools/building-composer/check_fit.p
 Chaque `build` se termine par une passe « peinture » (`postpass.php`, requis par
 `compose.php`), appliquée sur le canevas de travail avant la réduction et la
 découpe en tuiles : palette calée sur les peintures de référence déposées dans
-`out/refs/` (dossier absent = pas de calage, le reste s'applique), dégradé
+`out/refs/` (à défaut, repli sur les bâtiments peints du jeu,
+`img/foregrounds/*_olympienne_*.png` ; rien trouvé = pas de calage, le reste
+s'applique), dégradé
 vertical de lumière, occlusion ambiante le long des arêtes, grain, ombre de
 pied de mur et contour irrégulier. `--brut` la désactive. Les murs reçoivent
 aussi un habillage procédural (lierre au pied, fissures), remplacé par les

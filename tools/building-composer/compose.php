@@ -1142,7 +1142,7 @@ function build(string $form, string $facade = 'stone', string $roofMat = 'tiles'
     }
     if ($paint) {
         // painterly finishing at working scale: downscale and tile cut inherit it
-        paintPass($canvas, __DIR__ . '/out/refs', $seed, S);
+        paintPass($canvas, refsPattern(), $seed, S);
     }
     $final = newImage($cols * TILE, $rows * TILE);
     imagecopyresampled($final, $canvas, 0, 0, 0, 0, $cols * TILE, $rows * TILE,

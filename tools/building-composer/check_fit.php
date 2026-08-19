@@ -1,6 +1,10 @@
 <?php
 // verifies every form x roof shape stays inside its canvas (run after
 // touching FORMS, EAVE or the projection): reports opaque bbox margins
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit('cli only');
+}
 require __DIR__ . '/compose.php';
 
 foreach (array_keys(FORMS) as $form) {

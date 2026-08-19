@@ -3,7 +3,8 @@
  * Building composer GUI - dev-only front end over compose.php.
  *
  * Served by the devcontainer Apache: http://localhost:9000/tools/building-composer/gui.php
- * Refused outside private networks: this is a workshop tool, not a game page.
+ * Private networks pass as-is (local workshop); on a public host (experimental)
+ * the game's admin auth takes over — super-admin, the default for unlisted pages.
  *
  * ?render=1&...   streams the composed PNG for the live preview
  * POST save       writes out/<name>.png + the 50x50 tiles
@@ -13,8 +14,8 @@ $remote = $_SERVER['REMOTE_ADDR'] ?? '';
 $private = $remote === '127.0.0.1' || $remote === '::1'
     || preg_match('/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/', $remote) === 1;
 if (!$private) {
-    http_response_code(403);
-    exit('dev only');
+    require_once dirname(__DIR__, 2) . '/config.php';
+    (new \App\Service\AdminMenuAccessService())->enforce(basename(__FILE__));
 }
 
 require __DIR__ . '/compose.php';

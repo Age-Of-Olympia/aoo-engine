@@ -26,10 +26,14 @@ aoo_assert_branch
 
 # Dependencies first: copy the composer manifests and the vendor/ built in the
 # checkout, then regenerate the optimized autoloader in the docroot.
+# tools/: only the building composer is served (its gui enforces admin auth on
+# public hosts); the rest of tools/ is local workshop material, never deployed.
 echo -e "copie des dependances :\n " \
 && cp -a "$SRC/aoo-engine/composer.json" "$SRC/aoo-engine/composer.lock" "$DOCROOT/" \
 && cp -ra "$SRC/aoo-engine/vendor" "$DOCROOT/" \
 && echo -e "copie du code :\n " \
 && cp -ra "$SRC/aoo-engine"/{scripts,*.html,*.php,admin,api,config,Classes,css,js,src} "$DOCROOT/" \
+&& mkdir -p "$DOCROOT/tools" \
+&& cp -ra "$SRC/aoo-engine/tools/building-composer" "$DOCROOT/tools/" \
 && cd "$DOCROOT" \
 && "$COMPOSER" dump-autoload -o

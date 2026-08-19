@@ -142,15 +142,29 @@ function yccStats(array $images): array
     return $stats;
 }
 
-/** Stats of the reference paintings in $dir, memoized per directory. */
-function refStats(string $dir): ?array
+/** Stats of the reference paintings matching a glob pattern, memoized. */
+function refStats(string $pattern): ?array
 {
     static $cache = [];
-    if (!array_key_exists($dir, $cache)) {
-        $files = is_dir($dir) ? (glob("$dir/*.png") ?: []) : [];
-        $cache[$dir] = $files === [] ? null : yccStats(array_map('loadPng', $files));
+    if (!array_key_exists($pattern, $cache)) {
+        $files = glob($pattern) ?: [];
+        $cache[$pattern] = $files === [] ? null : yccStats(array_map('loadPng', $files));
     }
-    return $cache[$dir];
+    return $cache[$pattern];
+}
+
+/**
+ * Where the reference paintings live: out/refs/ when the workshop has some,
+ * else the game's own painted buildings shipped with the assets — so the
+ * palette grade works on a deployed host without any setup.
+ */
+function refsPattern(): string
+{
+    $local = __DIR__ . '/out/refs/*.png';
+    if (glob($local)) {
+        return $local;
+    }
+    return dirname(__DIR__, 2) . '/img/foregrounds/*_olympienne_*.png';
 }
 
 /**
@@ -382,13 +396,14 @@ function outlineAndSoften(GdImage $im, int $seed, int $scale = 1): void
 // ---------------------------------------------------------------- entry points
 
 /**
- * The full painterly pass, in place. $scale is the px size of one final px
- * (compose.php passes S for its working canvas, standalone use passes 1).
+ * The full painterly pass, in place. $refsPattern globs the reference
+ * paintings; $scale is the px size of one final px (compose.php passes S
+ * for its working canvas, standalone use passes 1).
  */
-function paintPass(GdImage $im, string $refsDir, int $seed, int $scale = 1): void
+function paintPass(GdImage $im, string $refsPattern, int $seed, int $scale = 1): void
 {
     imagealphablending($im, false);
-    $refs = refStats($refsDir);
+    $refs = refStats($refsPattern);
     if ($refs !== null) {
         paletteGrade($im, $refs);
     }
@@ -402,10 +417,11 @@ function paintPass(GdImage $im, string $refsDir, int $seed, int $scale = 1): voi
 function runPass(string $in, string $out, string $refsDir, int $seed): void
 {
     $im = loadPng($in);
-    if (refStats($refsDir) === null) {
-        fwrite(STDERR, "refs dir $refsDir missing, skipping palette grade\n");
+    $pattern = "$refsDir/*.png";
+    if (refStats($pattern) === null) {
+        fwrite(STDERR, "no reference paintings in $refsDir, skipping palette grade\n");
     }
-    paintPass($im, $refsDir, $seed);
+    paintPass($im, $pattern, $seed);
     imagepng($im, $out);
     echo "$out\n";
 }
