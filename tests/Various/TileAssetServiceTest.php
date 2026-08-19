@@ -44,8 +44,7 @@ class TileAssetServiceTest extends TestCase
         }
         rmdir($this->root . '/img');
         if (is_dir($this->root . '/tools')) {
-            @unlink($this->root . '/tools/tiled/aoo/terrains.json');
-            rmdir($this->root . '/tools/tiled/aoo');
+            @unlink($this->root . '/tools/tiled/terrains.json');
             rmdir($this->root . '/tools/tiled');
             rmdir($this->root . '/tools');
         }
@@ -172,8 +171,8 @@ class TileAssetServiceTest extends TestCase
         $this->assertFileExists($this->root . '/img/tiles/tuile_test_apres.png');
 
         // Avec un fondu généré qui embarque le nom : refus explicite
-        mkdir($this->root . '/tools/tiled/aoo', 0777, true);
-        file_put_contents($this->root . '/tools/tiled/aoo/terrains.json', json_encode([
+        mkdir($this->root . '/tools/tiled', 0777, true);
+        file_put_contents($this->root . '/tools/tiled/terrains.json', json_encode([
             'tiles' => [
                 'name' => 'Terrains', 'type' => 'corner',
                 'colors' => ['tuile_test_apres', 'autre'],

@@ -8,16 +8,22 @@ technique (le pourquoi, ce qui reste, le déploiement).
 
 1. **Installer Tiled** : https://www.mapeditor.org/download (dans le
    devcontainer : `~/opt/tiled/tiled-headless`).
-2. **Lier l'extension** : Édition → Préférences → Plugins → « Ouvrir le
-   dossier d'extensions », y créer un lien vers `tools/tiled/aoo` du dépôt.
+2. **Installer l'extension** : télécharger la
+   [dernière release](https://gitlab.com/age-of-olympia/aoo-tiled-extension/-/releases/permalink/latest/downloads/aoo-tiled-extension.zip),
+   puis dans Tiled : Édition → Préférences → Plugins → « Ouvrir le
+   dossier d'extensions », y extraire le zip (dossier `aoo`) et
+   redémarrer Tiled. (Pour développer l'extension : cloner
+   https://gitlab.com/age-of-olympia/aoo-tiled-extension et lier le
+   clone sous le nom `aoo` à la place du dossier.)
 3. **Configurer** : **Fichier → AoO : Configuration…** — renseigner le
-   dossier du dépôt (`gameDir`, chemin absolu) et les instances
-   (`nom=url`, séparées par des virgules). Écrit `config.json` tout seul,
-   pas besoin d'éditer un fichier à la main. (Alternative : copier
-   `config.json.exemple` en `config.json`.)
+   dossier des images du jeu (`gameDir`, chemin absolu d'un dossier
+   contenant `img/` — typiquement un checkout du dépôt moteur) et les
+   instances (`nom=url`, séparées par des virgules). Écrit `config.json`
+   tout seul, pas besoin d'éditer un fichier à la main. (Alternative :
+   copier `config.json.exemple` en `config.json`.)
 4. **Ouvrir le projet** : Fichier → Ouvrir un projet… →
-   `tools/tiled/aoo/aoo.tiled-project`. C'est lui qui apporte les classes
-   typées des déclencheurs et référence le dossier des cartes pullées.
+   `aoo.tiled-project` du clone. C'est lui qui apporte les classes
+   typées des déclencheurs.
 
 Les actions AoO vivent en bas du menu **Fichier** :
 
@@ -39,7 +45,8 @@ contenu des couches.
 ### Le monde (tous les plans en un espace)
 
 **Fichier → AoO : Générer le monde…** pull tous les plans de l'instance et
-écrit un fichier `.world` (`tools/tiled/maps/<instance>/<instance>.world`) qui
+écrit un fichier `.world` (`maps/<instance>/<instance>.world` dans le dossier
+de l'extension) qui
 les dispose côte à côte : chaque territoire à sa position (`x`/`y`) de la
 carte du monde, et les donjons hors grille (atteints par un `tp`) sous leur
 plan d'entrée. Charger via **Carte → Charger le monde…** (*Load World*) : on
@@ -136,8 +143,8 @@ sélectionner plusieurs (**Ctrl+clic** dans le panneau Calques) :
   couches sélectionnées = **tampon multi-couches** (sol + murs + décor en un
   seul pinceau) ;
 - les bons tampons se conservent : panneau **Affichage → Tile Stamps** →
-  enregistrer (pointer le dossier des tampons sur `tools/tiled/stamps/` pour
-  les partager via git) ;
+  enregistrer (pointer le dossier des tampons sur `stamps/` du dépôt de
+  l'extension pour les partager via git) ;
 - pour dupliquer un niveau entier : tout sélectionner (**Ctrl+A**) avec les
   couches voulues, copier, sélectionner les couches de destination (autre
   groupe z ou autre carte), coller.
@@ -312,17 +319,21 @@ tables de couches `map_*`. Flux **pull → édition → push**, pas de synchro
 temps réel.
 
 Emplacements :
-- Extension + projet : `tools/tiled/aoo/` (`aoo.js`, `aoo.tiled-project`,
-  `config.json`/`session.json` locaux gitignorés, `.exemple` fournis).
-- Endpoints : `api/admin/map/{auth,export,import,plans,world}.php`
+- Extension + projet : dépôt dédié
+  https://gitlab.com/age-of-olympia/aoo-tiled-extension (`aoo.js`,
+  `aoo.tiled-project`, `stamps/` ; `config.json`/`session.json` locaux
+  gitignorés, `.exemple` fournis ; cartes pullées dans `maps/<instance>/`).
+- Endpoints : `api/admin/map/{auth,export,import,plans,world,terrains}.php`
   (socle commun `_common.php`). La création/configuration des plans et la
   gestion des images passent par l'admin du jeu (pages Plans et
   Tuiles & images).
 - Services : `TiledMapService` (diff transactionnel `map_*`),
   `PlanConfigService` (JSON de plan), `TileCatalogService` (scan `img/`),
   `TiledAuthService` (jetons), plus `ColorService`/`PlanJsonValidator` existants.
-- Secret : `config/tiled_constants.php` (gitignoré). Cartes/tampons :
-  `tools/tiled/maps/<instance>/`, `tools/tiled/stamps/`.
+- Secret : `config/tiled_constants.php` (gitignoré). Sets de terrain :
+  `tools/tiled/terrains.json` par instance (état runtime, servi à
+  l'extension par `terrains.php` au pull — une instance sans l'endpoint se
+  pull sans pinceau Terrain).
 
 ## Décisions structurantes
 

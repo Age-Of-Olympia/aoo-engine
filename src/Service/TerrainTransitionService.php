@@ -9,7 +9,7 @@ use RuntimeException;
 /**
  * Tuiles de transition entre biomes pour l'autotiling Tiled (pinceau
  * Terrain) : analyse d'un plan, génération des fondus PNG et déclaration des
- * wangId dans tools/tiled/aoo/terrains.json.
+ * wangId dans tools/tiled/terrains.json.
  *
  * Principe : sur une grille de tuiles pleines, chaque point de coin
  * (intersection de 4 cases) où 2 à 4 biomes se rencontrent exige que toutes
@@ -57,13 +57,18 @@ class TerrainTransitionService
 
     public function terrainsPath(): string
     {
-        return $this->root . '/tools/tiled/aoo/terrains.json';
+        return $this->root . '/tools/tiled/terrains.json';
     }
 
     /** @return array<string, mixed> */
     public function loadTerrains(): array
     {
         $raw = @file_get_contents($this->terrainsPath());
+        if ($raw === false) {
+            // Deployed servers built their runtime state under the old
+            // extension folder; keep reading it until the next save.
+            $raw = @file_get_contents($this->root . '/tools/tiled/aoo/terrains.json');
+        }
         $terrains = $raw === false ? [] : json_decode($raw, true);
         if (!is_array($terrains)) {
             throw new RuntimeException('terrains.json illisible : ' . $this->terrainsPath());

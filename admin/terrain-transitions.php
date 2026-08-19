@@ -6,7 +6,7 @@
  * Pour un plan sélectionné, trois étapes sur la couche sol :
  *  1. Classer les tuiles posées : terrain (biome fondable) ou hors terrain
  *     (décor, escaliers, runes…). C'est ce classement — persisté dans
- *     tools/tiled/aoo/terrains.json — qui pilote l'analyse ; sur un serveur
+ *     tools/tiled/terrains.json — qui pilote l'analyse ; sur un serveur
  *     fraîchement déployé le fichier peut être vide : tout classer ici.
  *  2. Auditer : chaque point de coin où 2 à 4 terrains se rencontrent exige
  *     ses tuiles de fondu, sinon le pinceau Terrain de Tiled pose la tuile
@@ -143,7 +143,7 @@ ob_start();
     <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
         <strong>Trois étapes :</strong>
         <ol class="mb-0 mt-1">
-            <li><strong>Classer</strong> les tuiles du plan : terrain (biome fondable) ou hors terrain (décor, escaliers, runes…). Le classement vit dans <code style="display:inline">tools/tiled/aoo/terrains.json</code> — sur un serveur neuf ce fichier est vide, tout se classe ici.</li>
+            <li><strong>Classer</strong> les tuiles du plan : terrain (biome fondable) ou hors terrain (décor, escaliers, runes…). Le classement vit dans <code style="display:inline">tools/tiled/terrains.json</code> — sur un serveur neuf ce fichier est vide, tout se classe ici.</li>
             <li><strong>Auditer</strong> : chaque endroit où 2 à 4 terrains se touchent exige ses tuiles de fondu, sinon le pinceau Terrain pose la tuile la plus proche (morceaux d'autres biomes).</li>
             <li><strong>Générer</strong> les fondus manquants (<code style="display:inline">img/tiles/</code> + wangId) et les vérifier dans la galerie.</li>
         </ol>
@@ -227,7 +227,7 @@ ob_start();
                         <button type="submit" name="classify_tiles" class="btn btn-primary btn-sm">
                             <i class="fas fa-tags"></i> Enregistrer la classification
                         </button>
-                        <small class="text-muted ml-2">Écrit tools/tiled/aoo/terrains.json sur ce serveur.</small>
+                        <small class="text-muted ml-2">Écrit tools/tiled/terrains.json sur ce serveur.</small>
                     </form>
 
                     <?php $transitionTiles = array_filter($classification, fn(array $t) => $t['isTransition']); ?>

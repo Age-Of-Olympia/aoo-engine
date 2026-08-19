@@ -31,8 +31,7 @@ class TerrainTransitionServiceTest extends TestCase
         rmdir($this->root . '/img/tiles');
         rmdir($this->root . '/img');
         if (is_dir($this->root . '/tools')) {
-            @unlink($this->root . '/tools/tiled/aoo/terrains.json');
-            rmdir($this->root . '/tools/tiled/aoo');
+            @unlink($this->root . '/tools/tiled/terrains.json');
             rmdir($this->root . '/tools/tiled');
             rmdir($this->root . '/tools');
         }
@@ -181,7 +180,7 @@ class TerrainTransitionServiceTest extends TestCase
 
     public function testRegenerateTransitionImagesRepairsCorruptedPngs(): void
     {
-        mkdir($this->root . '/tools/tiled/aoo', 0777, true);
+        mkdir($this->root . '/tools/tiled', 0777, true);
         $this->writeSolidTile('rouge', 255, 0, 0);
         $this->writeSolidTile('bleu', 0, 0, 255);
 

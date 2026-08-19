@@ -8,7 +8,7 @@ use RuntimeException;
 use App\Service\Map\StructureTypeService;
 
 /**
- * Export / import des plans du jeu pour l'extension Tiled (tools/tiled/aoo).
+ * Export / import des plans du jeu pour l'extension Tiled (dépôt aoo-tiled-extension).
  *
  * Ce service porte le moteur de diff transactionnel sur les tables map_* et
  * compose deux services voisins : TileCatalogService (images de img/) et

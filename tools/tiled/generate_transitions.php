@@ -1,7 +1,7 @@
 <?php
 /**
  * Génère les tuiles de transition entre biomes pour l'autotiling Tiled
- * (pinceau Terrain), et déclare leurs wangId dans tools/tiled/aoo/terrains.json.
+ * (pinceau Terrain), et déclare leurs wangId dans tools/tiled/terrains.json.
  * Le moteur (analyse de coins, fondus, wangId) vit dans
  * App\Service\TerrainTransitionService — partagé avec le panneau admin des
  * cartes locales (admin/local_maps.php), qui fait la même chose sur un plan
@@ -11,7 +11,7 @@
  *   php tools/tiled/generate_transitions.php tiles carreaux desert_de_l_egeon
  *   php tools/tiled/generate_transitions.php --all tiles   # toutes les paires
  *   php tools/tiled/generate_transitions.php --seed tiles [exclues...]
- *   php tools/tiled/generate_transitions.php --map tiles tools/tiled/maps/test/olympia.tmj
+ *   php tools/tiled/generate_transitions.php --map tiles chemin/vers/olympia.tmj
  *
  * Produit img/<couche>/trans_<A>_<B>[_<C>[_<D>]]_<code>.png : une tuile par
  * affectation de coins (code = 4 lettres a/b/c/d dans l'ordre TL,TR,BR,BL,
@@ -33,7 +33,8 @@
  * ~50x50), sauf les noms passés en arguments et les transitions générées.
  * Ne produit aucun PNG : générer ensuite les transitions des paires utiles.
  *
- * --map analyse une ou plusieurs cartes .tmj pullées (tools/tiled/maps/) et
+ * --map analyse une ou plusieurs cartes .tmj pullées (dossier maps/ de
+ * l'extension aoo-tiled-extension) et
  * génère exactement ce que le pinceau Terrain y requiert : pour chaque point
  * de coin de la carte (intersection de 4 cases), les 2, 3 ou 4 biomes qui s'y
  * rencontrent forment un ensemble dont toutes les tuiles de transition
