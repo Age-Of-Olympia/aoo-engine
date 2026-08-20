@@ -9,7 +9,7 @@ use Doctrine\DBAL\Connection;
  *   - TutorialMapInstance: pulls template-mode rows to spawn NPCs on
  *     the per-session map at fixed (x,y).
  *   - TutorialResourceManager: pulls dynamic-mode rows to spawn NPCs
- *     per session relative to the player tile.
+ *     per session at their (x, y) on the arena, when their step opens.
  *
  * Returns plain associative arrays — keeps the surface tiny and
  * mirrors how the rest of TutorialStepRepository* hands rows back.
@@ -56,7 +56,7 @@ class TutorialNpcRepository
         }
         $rows = $stmt->executeQuery()->fetchAllAssociative();
 
-        return array_map([$this, 'normalize'], $rows);
+        return $this->dedupe(array_map([$this, 'normalize'], $rows));
     }
 
     /**
@@ -89,7 +89,43 @@ class TutorialNpcRepository
         $stmt->bindValue(4, $version);
         $rows = $stmt->executeQuery()->fetchAllAssociative();
 
-        return array_map([$this, 'normalize'], $rows);
+        return $this->dedupe(array_map([$this, 'normalize'], $rows));
+    }
+
+    /**
+     * Two rows describing the same NPC on the same tile are one NPC.
+     *
+     * A re-run of a consolidated seed migration doubled the roster once —
+     * every session then spawned two Gaïa on (1,0). The oldest row wins;
+     * rows that differ on any placement or identity field both stand.
+     *
+     * @param list<array> $npcs normalized rows, oldest first
+     * @return list<array>
+     */
+    private function dedupe(array $npcs): array
+    {
+        $seen = [];
+        $unique = [];
+
+        foreach ($npcs as $npc) {
+            $key = implode('|', [
+                $npc['role'],
+                $npc['spawn_mode'],
+                $npc['name'],
+                $npc['race'],
+                $npc['x'],
+                $npc['y'],
+                $npc['spawn_at_step_id'] ?? '',
+            ]);
+
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $unique[] = $npc;
+        }
+
+        return $unique;
     }
 
     private function normalize(array $r): array

@@ -39,10 +39,10 @@ class TutorialResourceManager
     /**
      * Spawn the dynamic NPCs configured for this tutorial version.
      *
-     * Replaces the old hardcoded "spawn the dummy at offset (2,1)"
+     * Replaces the old hardcoded "spawn the dummy at (2,1)"
      * path. Reads tutorial_npcs (spawn_mode='dynamic',
      * spawn_at_step_id IS NULL = at session start) — each row gets
-     * a fresh players row at (player.x + npc.x, player.y + npc.y).
+     * a fresh players row at its (x, y) on the arena.
      *
      * Each spawn is recorded in tutorial_enemies so the existing
      * cleanup paths still find them on session end.
@@ -79,8 +79,14 @@ class TutorialResourceManager
 
     /**
      * Insert a players row + tutorial_enemies bookkeeping row for each
-     * config in $npcs. Each NPC's (x,y) is treated as an OFFSET from
-     * the tutorial player's current tile.
+     * config in $npcs. Each NPC's (x,y) is an ABSOLUTE arena tile.
+     *
+     * It used to be an offset from the player's current tile — a relic
+     * of « the dummy appears at (2,1) from spawn » when the player was
+     * guaranteed to stand at (0,0). The gather flow no longer pins the
+     * player anywhere, so an offset drifted away from the step's fixed
+     * validation coordinates (adjacent_to_position 2,1) and from the
+     * step text — the arena is a fixed stage, the roster places on it.
      *
      * Failures swallow + log — a missing dynamic NPC shouldn't break
      * tutorial progression.
@@ -92,7 +98,7 @@ class TutorialResourceManager
         }
         try {
             $playerData = $this->conn->fetchAssociative("
-                SELECT p.coords_id, c.x, c.y, c.plan
+                SELECT c.plan
                 FROM tutorial_players tp
                 JOIN players p ON tp.player_id = p.id
                 JOIN coords c ON p.coords_id = c.id
@@ -101,15 +107,13 @@ class TutorialResourceManager
             if (!$playerData) {
                 throw new \RuntimeException("Tutorial player not found for session {$sessionId}");
             }
-            $playerX = (int) $playerData['x'];
-            $playerY = (int) $playerData['y'];
             $plan = $playerData['plan'];
 
             require_once dirname(__FILE__) . '/../../Classes/Player.php';
 
             foreach ($npcs as $npc) {
-                $enemyX = $playerX + $npc['x'];
-                $enemyY = $playerY + $npc['y'];
+                $enemyX = (int) $npc['x'];
+                $enemyY = (int) $npc['y'];
 
                 $coords = $this->conn->fetchAssociative(
                     "SELECT id FROM coords WHERE x = ? AND y = ? AND plan = ?",
