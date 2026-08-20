@@ -118,25 +118,30 @@ class TutorialMapInstance
         }
 
 
-        /* Step 4: les ressources du modèle, reposées sur l'instance.
+        /* Step 4: les entités du modèle, reposées sur l'instance.
          *
-         * Ce n'est plus une copie de lignes : ce sont des entités, et copier
-         * `map_resources` ne rapportait plus rien — une instance de tutoriel
-         * naissait sans un seul arbre, et l'étape de récolte n'avait rien à
-         * récolter. Le réconciliateur relit le modèle et pose la même chose
-         * ici, aux mêmes (x, y, z). */
-        $resources = new ResourceReconciler();
-        $resources->reconcile($instancePlanName, $resources->asPayloadRows($templatePlan));
+         * Ce n'est plus une copie de lignes map_* : ressources, murs
+         * d'enceinte et plantes sont des entités. Chaque famille passe par
+         * SON réconciliateur, et le résultat se vérifie — une instance née
+         * sans son arbre cassait la récolte en silence. */
+        $this->cloneTemplateEntities($instancePlanName, $templatePlan);
+
+        /* Step 4.6: les rendements du modèle suivent — les surcharges
+         * `race_harvest` sont par NOM de plan, une instance `tut_*` ne
+         * verrait sinon que les défauts de type du monde (dont la chance
+         * d'épuisement, fatale à un arbre de tutoriel sans tours). */
+        $this->conn->executeStatement("
+            INSERT INTO race_harvest (plan, race_id, item, exhaust, regrow)
+            SELECT ?, race_id, item, exhaust, regrow
+              FROM race_harvest
+             WHERE plan = ?
+        ", [$instancePlanName, $templatePlan]);
 
         // Step 5: Spawn template NPCs from tutorial_npcs config (replaces
         // the legacy "copy any NPC sitting on plan='tutorial'" pass).
         $this->spawnTemplateNpcs($instancePlanName);
 
         // Step 6: Copy other map elements if they exist on template map
-        /* « plants » quitte la copie de lignes : ce sont des entités, reposées
-           par le réconciliateur comme les ressources. */
-        $resources->reconcile($instancePlanName, ResourceReconciler::forPlants()->asPayloadRows($templatePlan));
-
         $mapElementTypes = ['tiles', 'foregrounds', 'triggers', 'elements', 'dialogs', 'routes'];
 
         foreach ($mapElementTypes as $type) {
@@ -168,6 +173,64 @@ class TutorialMapInstance
             'plan_name' => $instancePlanName,
             'starting_coords_id' => (int) $startingCoordsId
         ];
+    }
+
+    /**
+     * Re-lay the template plan's entities on the instance, family by family.
+     *
+     * Each family gets its own reconciler: reconcile() removes whatever its
+     * payload does not name, so applying the plants payload with the resource
+     * reconciler erased every resource it had just laid. The reconcilers run
+     * on OUR connection — a lookup through another one would not see the
+     * coords this transaction just copied.
+     *
+     * The report is checked, not ignored: a type missing from the `races`
+     * catalog, or a pass that laid nothing where the template has entities,
+     * aborts session creation instead of producing a tutorial with nothing
+     * to harvest and no enclosure.
+     */
+    private function cloneTemplateEntities(string $instancePlanName, string $templatePlan): void
+    {
+        $families = [
+            'resource' => new ResourceReconciler($this->conn),
+            'building' => ResourceReconciler::forBuildings($this->conn),
+            'plant'    => ResourceReconciler::forPlants($this->conn),
+        ];
+
+        foreach ($families as $family => $reconciler) {
+            $wanted = $reconciler->asPayloadRows($templatePlan);
+            $report = $reconciler->reconcile($instancePlanName, $wanted);
+
+            if ($report['unknown'] !== []) {
+                throw new \RuntimeException(sprintf(
+                    "Template '%s' has %s entities of types absent from the races catalog: %s",
+                    $templatePlan,
+                    $family,
+                    implode(', ', $report['unknown'])
+                ));
+            }
+
+            if ($wanted !== [] && $report['created'] + $report['kept'] === 0) {
+                throw new \RuntimeException(sprintf(
+                    "Cloning %s entities from template '%s' onto '%s' laid nothing",
+                    $family,
+                    $templatePlan,
+                    $instancePlanName
+                ));
+            }
+        }
+
+        /* Un mur cloné reste un bâtiment entier : son satellite `buildings`
+         * dit qu'il est construit. Sans lui, les lecteurs d'état (chantiers,
+         * vues de faction) le prendraient pour un fantôme. */
+        $this->conn->executeStatement("
+            INSERT INTO buildings (player_id, build_state)
+            SELECT p.id, 'built'
+            FROM players p
+            JOIN coords c ON c.id = p.coords_id
+            WHERE c.plan = ? AND p.player_type = 'building'
+              AND NOT EXISTS (SELECT 1 FROM buildings b WHERE b.player_id = p.id)
+        ", [$instancePlanName]);
     }
 
     /**
@@ -337,12 +400,7 @@ class TutorialMapInstance
             DELETE FROM coords WHERE plan = ?
         ", [$instancePlanName]);
 
-        // Delete plan JSON file
-        $instanceJsonPath = __DIR__ . '/../../datas/private/plans/' . $instancePlanName . '.json';
-        if (file_exists($instanceJsonPath)) {
-            unlink($instanceJsonPath);
-        }
-
+        $this->removeInstanceLeftovers($instancePlanName);
     }
 
     /**
@@ -393,12 +451,27 @@ class TutorialMapInstance
             DELETE FROM coords WHERE plan = ?
         ", [$planName]);
 
-        // Delete plan JSON file
-        $instanceJsonPath = __DIR__ . '/../../datas/private/plans/' . $planName . '.json';
-        if (file_exists($instanceJsonPath)) {
-            unlink($instanceJsonPath);
+        $this->removeInstanceLeftovers($planName);
+    }
+
+    /**
+     * Les fichiers qu'une instance laisse derrière elle : son JSON de
+     * plan, et les couches PNG de sa minimap (générées au premier
+     * affichage du HUD, une par calque et par horodatage).
+     */
+    private function removeInstanceLeftovers(string $planName): void
+    {
+        // Les surcharges de rendement clonées à la création.
+        $this->conn->executeStatement('DELETE FROM race_harvest WHERE plan = ?', [$planName]);
+
+        $jsonPath = __DIR__ . '/../../datas/private/plans/' . $planName . '.json';
+        if (file_exists($jsonPath)) {
+            unlink($jsonPath);
         }
 
+        foreach (glob(__DIR__ . '/../../img/maps/local/local_' . $planName . '_*.png') ?: [] as $layerFile) {
+            unlink($layerFile);
+        }
     }
 
     /**
@@ -422,7 +495,10 @@ class TutorialMapInstance
 
         $idList = implode(',', array_map('intval', $entityIds));
 
-        foreach (['buildings', 'unique_objects'] as $satellite) {
+        /* `resources` manquait : l'id d'une entité supprimée se recycle
+         * (MAX+1 dans sa plage), et le satellite orphelin — « épuisé le… »
+         * — collait son état au prochain arbre né sous le même id. */
+        foreach (['buildings', 'unique_objects', 'resources'] as $satellite) {
             $this->conn->executeStatement("DELETE FROM {$satellite} WHERE player_id IN ({$idList})");
         }
 

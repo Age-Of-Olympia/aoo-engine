@@ -50,6 +50,12 @@ final class ResourceReconciler
         return new self($conn, 'plant', 'img/plants/');
     }
 
+    /** Le réconciliateur des bâtiments — les murs d'enceinte en font partie. */
+    public static function forBuildings(?Connection $conn = null): self
+    {
+        return new self($conn, 'building', 'img/walls/');
+    }
+
     /**
      * @param list<array{name: string, x: int, y: int, z: int, damages?: int}> $wanted
      *        the resources the bundle draws on this plan
