@@ -54,9 +54,8 @@ class MeleeComputeCondition extends ComputeCondition implements DeclaresSimulati
 
     protected function getDistanceMalus(): int {
         $distanceMalus = 0;
-        $cellCount = $this->distance - 1;
-        if($cellCount > 1){
-            $distanceMalus = ($cellCount - 1) * 4;
+        if($this->distance > 2){
+            $distanceMalus = $this->distance * ($this->distance - 1);
         }
         return $distanceMalus;
     }
