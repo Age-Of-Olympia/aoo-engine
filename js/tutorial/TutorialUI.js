@@ -118,6 +118,14 @@ class TutorialUI {
 
                 return true;
             } else {
+                /* The server no longer holds a session (cancelled or
+                 * completed elsewhere): the resume flag is stale. Left in
+                 * place, every HUD compat branch keyed on tutorial_active
+                 * keeps the page in tutorial mode forever. */
+                this.isActive = false;
+                this.currentSession = null;
+                sessionStorage.removeItem('tutorial_active');
+                sessionStorage.removeItem('tutorial_session_id');
                 return false;
             }
         } catch (error) {
@@ -217,8 +225,10 @@ class TutorialUI {
      * @param {object} validationData - Data to validate the current step
      * @param {boolean} skipUIUpdate - If true, save progress but don't update UI
      * @param {boolean} showFeedbackOnFailure - If true, show hint and shake when validation fails (for manual button clicks)
+     * @param {boolean} hideTooltip - False for silent on-entry probes: a failed
+     *                                probe must leave the step's tooltip in place
      */
-    async next(validationData = {}, skipUIUpdate = false, showFeedbackOnFailure = false) {
+    async next(validationData = {}, skipUIUpdate = false, showFeedbackOnFailure = false, hideTooltip = true) {
         /* Re-entrancy guard: rapid double-clicks on "Suivant" or two
          * notifyAction() events firing in the same frame would otherwise
          * launch parallel POSTs to /api/tutorial/advance.php, awarding
@@ -237,12 +247,6 @@ class TutorialUI {
                 return false;
             }
 
-            // Hide tooltip immediately when validation is triggered
-            // This prevents confusion during the API call / page reload
-            if (this.tooltip && !skipUIUpdate) {
-                this.tooltip.hide();
-            }
-
             // Use special handling for advance - don't throw on validation failures
             const response = await this.apiCallWithValidation('/api/tutorial/advance.php', {
                 session_id: this.currentSession,
@@ -251,6 +255,13 @@ class TutorialUI {
 
 
             if (response.success) {
+
+                /* Hide the tooltip only once the step actually advanced: a
+                 * FAILED attempt (stray click, entry probe) must leave the
+                 * current step's tooltip standing, not blank the screen. */
+                if (this.tooltip && !skipUIUpdate && hideTooltip) {
+                    this.tooltip.hide();
+                }
 
                 /* Check if the COMPLETED step requires page reload for next step (e.g., MVT restoration) */
                 if (this.stepData?.config?.prepare_next_step?.reload === 'true' || this.stepData?.config?.prepare_next_step?.reload === true) {
@@ -403,9 +414,15 @@ class TutorialUI {
         // Note: auto_close_card is now handled when the step COMPLETES in next() function,
         // not when the step STARTS. This matches the UI label "Auto-close action card on step complete".
 
-        // Clear previous highlights (wait for fade animation to complete)
+        // Clear previous highlights (wait for fade animation to complete).
+        // Race-guarded: a fade whose callback never fires (animation timer
+        // stalled, element already gone) must not freeze the whole step
+        // chain — the fade lasts 200ms, anything past 800ms is a hang.
         if (this.highlighter) {
-            await this.highlighter.clearAll();
+            await Promise.race([
+                this.highlighter.clearAll(),
+                new Promise(resolve => setTimeout(resolve, 800))
+            ]);
         }
 
         // Clear previous allowed interactions
@@ -427,8 +444,13 @@ class TutorialUI {
         }
 
         // Ensure required panels are in correct state BEFORE applying interaction mode
-        // Wait for panels to be ready before showing tooltip/highlight
-        await this.ensurePanelVisibility(stepData);
+        // Wait for panels to be ready before showing tooltip/highlight.
+        // Race-guarded: a panel-ready callback that never fires must not
+        // freeze the step (the rest of the step degrades gracefully).
+        await Promise.race([
+            this.ensurePanelVisibility(stepData),
+            new Promise(resolve => setTimeout(resolve, 4000))
+        ]);
 
         // Apply interaction mode (blocking, semi-blocking, or open)
         this.applyInteractionMode(stepData);
@@ -817,9 +839,14 @@ class TutorialUI {
 
                     // Track click for UI interaction validation
                     if (validationType === 'ui_interaction') {
-                        // Check if this is a navigation link - prevent default to let trackElementClick handle navigation
+                        /* Navigation link. Legacy layout: intercept, validate,
+                         * THEN navigate (the page unload would race the
+                         * validation POST). HUD: the panel router turns the
+                         * link into a sliding panel — no unload, so the click
+                         * flows on and the validation runs alongside. */
                         const $link = $(target).closest('a[href]');
-                        if ($link.length > 0 && $link.attr('href') && !$link.attr('href').startsWith('#')) {
+                        const isNavLink = $link.length > 0 && $link.attr('href') && !$link.attr('href').startsWith('#');
+                        if (isNavLink && !document.getElementById('hud')) {
                             e.preventDefault();
                             e.stopPropagation();
                         }
@@ -898,8 +925,11 @@ class TutorialUI {
     trackElementClick(selector, targetElement, stepData) {
 
         // Check if this is a navigation link - if so, we need to wait for validation
+        // (legacy layout only: in the HUD the router opens links as sliding
+        // panels — nothing unloads, the plain notify path below suffices)
         const $link = $(targetElement).closest('a[href]');
-        const isNavigationLink = $link.length > 0 && $link.attr('href') && !$link.attr('href').startsWith('#');
+        const isNavigationLink = $link.length > 0 && $link.attr('href') && !$link.attr('href').startsWith('#')
+            && !document.getElementById('hud');
 
         if (isNavigationLink) {
             const href = $link.attr('href');
@@ -1009,6 +1039,31 @@ class TutorialUI {
     }
 
     /**
+     * Whether an element is actually displayed.
+     *
+     * jQuery's :visible relies on the element having a BOX — the HUD's
+     * recomposed selection band styles #ui-card with `display: contents`
+     * (no box of its own, children rendered in the parent grid), which
+     * :visible reports as hidden while the card is plainly on screen.
+     * Here "displayed" means: exists, not display:none, and — for a
+     * boxless contents element — its parent is visible.
+     */
+    isElementDisplayed(selector) {
+        const el = document.querySelector(selector);
+        if (!el) {
+            return false;
+        }
+        const style = window.getComputedStyle(el);
+        if (style.display === 'none' || style.visibility === 'hidden') {
+            return false;
+        }
+        if (style.display === 'contents') {
+            return el.parentElement ? $(el.parentElement).is(':visible') : true;
+        }
+        return $(el).is(':visible');
+    }
+
+    /**
      * Setup MutationObserver to watch for panel visibility
      * Automatically sends validation when panel becomes visible
      */
@@ -1078,25 +1133,43 @@ class TutorialUI {
          * getting skipped after close_card_for_tree). The tutorial step must
          * actually open a fresh card to validate. */
         const isActionsPanelOpen = () => {
+            /* NOT .case-infos: the HUD's recomposed selection band keeps
+             * the tile content visible after "Fermer" (by design), so it
+             * would count as an open panel forever and auto-validate the
+             * next panel step. A fresh card is signalled by a VISIBLE
+             * #ui-card (both layouts) or actions still inside #ajax-data
+             * (legacy layout, before the HUD relocates them). */
             const hasActions = $('#ajax-data .action, #ajax-data button.action').length > 0;
-            const hasCaseInfos = $('#ajax-data .case-infos').length > 0;
-            const hasUiCardVisible = $('#ui-card').length > 0 && $('#ui-card').is(':visible');
-            return hasActions || hasCaseInfos || hasUiCardVisible;
+            const hasUiCardVisible = this.isElementDisplayed('#ui-card');
+            return hasActions || hasUiCardVisible;
         };
 
-        this.panelObserver = new MutationObserver(() => {
-            if (isActionsPanelOpen() && this.isActive) {
-                window.notifyTutorial('ui_interaction', {
-                    panel: 'actions',
-                    panel_visible: true,
-                    timestamp: Date.now()
-                });
-                if (this.panelObserver) {
-                    this.panelObserver.disconnect();
-                    this.panelObserver = null;
-                }
+        /* The observer must SURVIVE a failed attempt: a stray notify (a
+         * tile click is also a .case.go click) can hold the re-entrancy
+         * guard at the exact moment the panel opens — disconnecting on
+         * first fire then left the step stuck with no observer alive.
+         * Disconnect only once the step actually advanced; while another
+         * advance is in flight, retry shortly after. */
+        const tryValidatePanel = async () => {
+            if (!this.isActive || !isActionsPanelOpen()) {
+                return;
             }
-        });
+            if (this.isAdvancing) {
+                setTimeout(tryValidatePanel, 400);
+                return;
+            }
+            const advanced = await this.next({
+                panel: 'actions',
+                panel_visible: true,
+                timestamp: Date.now()
+            }, false, false, false);
+            if (advanced && this.panelObserver) {
+                this.panelObserver.disconnect();
+                this.panelObserver = null;
+            }
+        };
+
+        this.panelObserver = new MutationObserver(() => tryValidatePanel());
 
         this.panelObserver.observe(ajaxData, {
             childList: true,
@@ -1127,7 +1200,7 @@ class TutorialUI {
         const targetElement = document.querySelector(elementSelector);
 
         // Check immediately if element is already hidden/doesn't exist
-        const isAlreadyHidden = !targetElement || !$(elementSelector).is(':visible');
+        const isAlreadyHidden = !this.isElementDisplayed(elementSelector);
         if (isAlreadyHidden && this.isActive) {
             window.notifyTutorial('ui_interaction', {
                 element: elementSelector,
@@ -1145,8 +1218,7 @@ class TutorialUI {
 
         this.panelObserver = new MutationObserver((mutations) => {
             // Check if element is now hidden
-            const element = document.querySelector(elementSelector);
-            const isHidden = !element || !$(elementSelector).is(':visible');
+            const isHidden = !this.isElementDisplayed(elementSelector);
 
             if (isHidden && this.isActive) {
 
@@ -1298,14 +1370,14 @@ class TutorialUI {
 
         // If step targets an action button, ensure correct actions panel is open
         if (targetSelector.includes('.action[data-action=')) {
-            const $actionsPanel = $('#ui-card');
-
             // Check if this is a combat step targeting enemy actions
             const isCombatStep = stepData.step_type === 'combat' ||
                                  stepData.action_name === 'attaquer' ||
                                  stepData.action_name === 'attaque_double';
 
-            if (!$actionsPanel.is(':visible')) {
+            /* isElementDisplayed, pas :visible — la carte recomposée du HUD
+             * est en display:contents et passait pour fermée à tort. */
+            if (!this.isElementDisplayed('#ui-card')) {
 
                 // Return a promise that resolves when panel is ready
                 return new Promise((resolve) => {
@@ -2049,22 +2121,34 @@ class TutorialUI {
      * Used for steps like "deplete movements" where validation should happen automatically
      */
     async checkAutoValidation(stepData) {
-        // Only auto-validate for specific step types
-        const autoValidateTypes = ['movement_limit'];
+        /* Steps whose condition the SERVER reads in the database can
+         * already hold when the step opens — a player finishing the
+         * deplete bounce diagonally beside the tree is asked to « aller
+         * vers l'arbre » while already standing there. Probe once on
+         * entry: satisfied → the step passes on its own; not satisfied →
+         * silent, tooltip left in place (hideTooltip=false).
+         *
+         * Only DB-backed validations belong here: any_movement & co
+         * validate a client-reported gesture, which an entry probe
+         * cannot honestly claim. */
+        const dbBackedValidations = ['adjacent_to_position', 'position', 'movements_depleted'];
+        const isDbBackedMovement = stepData.step_type === 'movement'
+            && dbBackedValidations.includes(stepData.config?.validation_type);
 
-        if (!autoValidateTypes.includes(stepData.step_type)) {
+        if (!isDbBackedMovement && stepData.step_type !== 'movement_limit') {
             return; // This step type doesn't support auto-validation
         }
 
+        if (!this.stepData || !this.currentSession) {
+            return;
+        }
 
-        // Try to validate automatically (e.g., movements_depleted)
-        // Use notifyAction which calls this.next() internally
         try {
-            // Call notifyAction like the game would, but with auto-validation flag
-            this.notifyAction('auto_validation', {
+            await this.next({
+                auto_validation: true,
                 step_type: stepData.step_type,
                 timestamp: Date.now()
-            }, false); // Don't skip UI update - we want to advance if valid
+            }, false, false, false);
         } catch (error) {
             console.error('[TutorialUI] Auto-validation error:', error);
             // Don't show error to user - just silently continue

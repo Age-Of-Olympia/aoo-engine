@@ -285,11 +285,16 @@
      * papier, fermeture par ×, clic sur le fond ou Échap.
      */
     window.hudShowActionResult = function (html, isFinal) {
-        /* Tutoriel : ses étapes observent la carte héritée — le
-         * résultat y reste écrit comme avant, pas de modale. */
+        /* Tutoriel : pas de modale — elle recouvrirait l'infobulle de
+         * l'étape. Le résultat s'écrit dans la fiche recomposée du
+         * bandeau, et les pilules se rafraîchissent quand même (l'étape
+         * suivante surligne la pilule A après fouiller). */
         if (sessionStorage.getItem('tutorial_active') === 'true') {
             $('.card-text').html('').addClass('action-text')
                 .append($('<div></div>').html(html));
+            if (isFinal) {
+                refreshAfterAction();
+            }
             return;
         }
 
@@ -1042,14 +1047,12 @@
      * de main.css ne matche plus) : on force window.visible pour que le
      * premier clic exécute l'action au lieu de "révéler" les noms.
      *
-     * Pendant le tutoriel on ne déplace rien : ses surlignages ciblent
-     * #ui-card .card-actions dans la carte.
+     * Le tutoriel suit le même chemin : ses sélecteurs sont par classe
+     * (button.close-card, .action[data-action=…], .building-status) et
+     * retrouvent les nœuds déplacés — la carte héritée ne doit plus
+     * réapparaître dans le bandeau.
      */
     function relocateCardActions() {
-        if (sessionStorage.getItem('tutorial_active') === 'true') {
-            return;
-        }
-
         var $actions = $('#ajax-data .card-actions');
         var $panel = $('#hud-actions');
 
@@ -1818,36 +1821,28 @@
          * Seul Caractéristiques garde le sien (ancre href="#",
          * bascule flyout pendant le tutoriel). */
 
-        /* Rail : Caractéristiques en panneau (hors tutoriel).
+        /* Rail : Caractéristiques en panneau.
          * On débranche le toggle flyout de MenuView et on route vers le
          * panneau ; le flyout #load-caracs est vidé pour ne jamais
          * dupliquer #mvt-counter / #action-counter dans le DOM. Pendant
-         * le tutoriel, comportement flyout d'origine (ses steps
-         * observent #load-caracs et y surlignent les compteurs). */
-        if (!tutorialActive()) {
-            $('#show-caracs').off('click');
+         * le tutoriel le bouton est inerte : les pilules du bandeau
+         * portent déjà les caracs, et ses étapes les ciblent —
+         * l'ancien volet ne doit plus jamais réapparaître. */
+        $('#show-caracs').off('click');
 
-            $(document).on('click', '#show-caracs', function (e) {
-                e.preventDefault();
+        $(document).on('click', '#show-caracs', function (e) {
+            e.preventDefault();
 
-                if (tutorialActive()) {
-                    /* Tutoriel lancé depuis cette page : retomber sur le
-                     * comportement flyout via les helpers de view.js. */
-                    if ($('#load-caracs').is(':visible')) {
-                        window.closeCaracsPanel();
-                    } else {
-                        window.openCaracsPanel();
-                    }
-                    return;
-                }
+            if (tutorialActive()) {
+                return;
+            }
 
-                $('#load-caracs').hide().empty();
-                /* Directement la page d'amélioration (dépense d'XP) :
-                 * l'ancien volet de lecture seule faisait doublon avec
-                 * les pilules du bandeau haut (retour testeur). */
-                togglePanel('load_upgrades.php', 'Caractéristiques');
-            });
-        }
+            $('#load-caracs').hide().empty();
+            /* Directement la page d'amélioration (dépense d'XP) :
+             * l'ancien volet de lecture seule faisait doublon avec
+             * les pilules du bandeau haut (retour testeur). */
+            togglePanel('load_upgrades.php', 'Caractéristiques');
+        });
 
         /* Rail : Évènements → onglet Événements du panneau latéral
          * (la page complète logs.php reste accessible via « Tout voir »). */
@@ -1887,10 +1882,11 @@
          * Dans un panneau, « Retour » (index.php) referme le panneau.
          * Le reste (wiki, formulaires, récompenses, déconnexion…)
          * navigue normalement. */
+        /* Le routeur travaille AUSSI pendant le tutoriel : ses étapes
+         * suivent la présentation du HUD (l'inventaire s'ouvre en
+         * panneau, pas en pleine page). C'est l'overlay du tutoriel qui
+         * décide quels clics passent, pas le routeur. */
         $(document).on('click', 'a[href]', function (e) {
-            if (tutorialActive()) {
-                return;
-            }
             var href = $(this).attr('href');
 
             /* « Retour » est le lien NU vers index.php ; une URL avec

@@ -148,7 +148,15 @@
 
             setTimeout(async () => {
                 try {
-                    await window.resumeTutorial();
+                    const resumed = await window.resumeTutorial();
+                    if (!resumed) {
+                        /* Stale flag: the HUD already booted in tutorial
+                         * mode (legacy card, no panel routing) — one clean
+                         * reload puts it back in normal mode. The flag was
+                         * cleared by resume(), so this cannot loop. */
+                        sessionStorage.removeItem('tutorial_active');
+                        window.location.reload();
+                    }
                 } catch (error) {
                     console.error('[Tutorial] Auto-resume failed:', error);
                     /* Clear the flag if resume fails (e.g., not logged in) */
