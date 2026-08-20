@@ -90,7 +90,7 @@ class TutorialLinkColumnCollapseTest extends TutorialIntegrationTestCase
             'name'        => 'CollapseReal_' . bin2hex(random_bytes(4)),
             'race'        => 'Humain',
             'player_type' => 'real',
-            'coords_id'   => $this->anyCoordsId(),
+            'coords_id'   => $this->seedTile(),
         ]);
 
         return (int) $this->conn->lastInsertId();
@@ -104,7 +104,7 @@ class TutorialLinkColumnCollapseTest extends TutorialIntegrationTestCase
             'name'                => 'CollapseTut_' . bin2hex(random_bytes(4)),
             'race'                => 'Humain',
             'player_type'         => 'tutorial',
-            'coords_id'           => $this->anyCoordsId(),
+            'coords_id'           => $this->seedTile(),
             'tutorial_session_id' => $sessionId,
             'real_player_id_ref'  => $realPlayerId,
         ]);
@@ -119,10 +119,5 @@ class TutorialLinkColumnCollapseTest extends TutorialIntegrationTestCase
         $tutRowId = (int) $this->conn->lastInsertId();
 
         return [$tutPlayerId, $tutRowId];
-    }
-
-    private function anyCoordsId(): int
-    {
-        return (int) $this->conn->fetchOne('SELECT id FROM coords ORDER BY id ASC LIMIT 1');
     }
 }

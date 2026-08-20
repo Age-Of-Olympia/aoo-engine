@@ -76,7 +76,7 @@ class TutorialRealPlayerFkTest extends TutorialIntegrationTestCase
             'name'               => 'DanglingTut_' . bin2hex(random_bytes(4)),
             'race'               => 'Humain',
             'player_type'        => 'tutorial',
-            'coords_id'          => $this->anyCoordsId(),
+            'coords_id'          => $this->seedTile(),
             'real_player_id_ref' => 999999999,
         ]);
     }
@@ -104,7 +104,7 @@ class TutorialRealPlayerFkTest extends TutorialIntegrationTestCase
             'name'        => 'PhaseFkReal_' . bin2hex(random_bytes(4)),
             'race'        => 'Humain',
             'player_type' => 'real',
-            'coords_id'   => $this->anyCoordsId(),
+            'coords_id'   => $this->seedTile(),
         ]);
 
         return (int) $this->conn->lastInsertId();
@@ -116,15 +116,11 @@ class TutorialRealPlayerFkTest extends TutorialIntegrationTestCase
             'name'                => 'PhaseFkTut_' . bin2hex(random_bytes(4)),
             'race'                => 'Humain',
             'player_type'         => 'tutorial',
-            'coords_id'           => $this->anyCoordsId(),
+            'coords_id'           => $this->seedTile(),
             'real_player_id_ref'  => $realPlayerId,
         ]);
 
         return (int) $this->conn->lastInsertId();
     }
 
-    private function anyCoordsId(): int
-    {
-        return (int) $this->conn->fetchOne('SELECT id FROM coords ORDER BY id ASC LIMIT 1');
-    }
 }

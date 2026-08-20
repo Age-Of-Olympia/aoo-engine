@@ -157,7 +157,7 @@ class TutorialManagerCompletionFlowTest extends TutorialIntegrationTestCase
             'name'        => 'PhaseCComp_' . bin2hex(random_bytes(4)),
             'race'        => 'nain',
             'player_type' => 'real',
-            'coords_id'   => (int) $this->conn->fetchOne('SELECT id FROM coords ORDER BY id ASC LIMIT 1'),
+            'coords_id'   => $this->seedTile(),
         ]);
 
         return (int) $this->conn->lastInsertId();

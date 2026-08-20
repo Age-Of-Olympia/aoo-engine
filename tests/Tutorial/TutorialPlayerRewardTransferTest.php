@@ -154,7 +154,7 @@ class TutorialPlayerRewardTransferTest extends TutorialIntegrationTestCase
      */
     private function seedRealAndTutorialPlayers(): array
     {
-        $coordsId = (int) $this->conn->fetchOne('SELECT id FROM coords ORDER BY id ASC LIMIT 1');
+        $coordsId = $this->seedTile();
 
         $this->conn->insert('players', [
             'name'        => 'Phase41Real_' . bin2hex(random_bytes(4)),

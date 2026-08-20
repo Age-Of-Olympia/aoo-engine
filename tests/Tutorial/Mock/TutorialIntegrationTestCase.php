@@ -57,10 +57,18 @@ abstract class TutorialIntegrationTestCase extends TestCase
 {
     protected ?Connection $conn = null;
 
+    /** Per-test plan for seedTile() — keeps sown tiles collision-free. */
+    private ?string $seedPlan = null;
+
+    /** Next auto-allocated x for seedTile() calls without coordinates. */
+    private int $nextSeedX = 0;
+
     protected function setUp(): void
     {
         $this->conn = $this->openTestDbOrSkip();
         $this->conn->beginTransaction();
+        $this->seedPlan = null;
+        $this->nextSeedX = 0;
     }
 
     protected function tearDown(): void
@@ -69,6 +77,36 @@ abstract class TutorialIntegrationTestCase extends TestCase
             $this->conn->rollBack();
         }
         $this->conn = null;
+    }
+
+    /**
+     * Sow a tile this test owns and return its coords id.
+     *
+     * The database the suite runs against holds catalogs only — there is
+     * no world to borrow a tile from, and `players.coords_id` carries a
+     * foreign key since the entity refactor. Each test sows what it
+     * needs; the rollback takes it away again.
+     *
+     * Without arguments every call yields a FRESH tile (auto-incremented
+     * x on a per-test plan). Explicit coordinates are reused when already
+     * sown, so two seeds can share a tile on purpose.
+     */
+    protected function seedTile(?int $x = null, int $y = 0, int $z = 0, ?string $plan = null): int
+    {
+        $x ??= $this->nextSeedX++;
+        $plan ??= $this->seedPlan ??= 'tut_t_' . bin2hex(random_bytes(4));
+
+        $existing = $this->conn->fetchOne(
+            'SELECT id FROM coords WHERE x = ? AND y = ? AND z = ? AND plan = ?',
+            [$x, $y, $z, $plan]
+        );
+        if ($existing !== false) {
+            return (int) $existing;
+        }
+
+        $this->conn->insert('coords', ['x' => $x, 'y' => $y, 'z' => $z, 'plan' => $plan]);
+
+        return (int) $this->conn->lastInsertId();
     }
 
     /**

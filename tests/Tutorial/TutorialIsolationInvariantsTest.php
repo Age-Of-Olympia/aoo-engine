@@ -146,11 +146,13 @@ class TutorialIsolationInvariantsTest extends TutorialIntegrationTestCase
 
     private function seedRealPlayer(?string $name = null): int
     {
+        // A tile of its own — grabbing "any" coords could land the real
+        // player on the very tile a test's assertion queries.
         $this->conn->insert('players', [
             'name'        => $name ?? 'IsoReal_' . bin2hex(random_bytes(4)),
             'race'        => 'Humain',
             'player_type' => 'real',
-            'coords_id'   => $this->anyCoordsId(),
+            'coords_id'   => $this->seedTile(),
         ]);
 
         return (int) $this->conn->lastInsertId();
@@ -167,7 +169,7 @@ class TutorialIsolationInvariantsTest extends TutorialIntegrationTestCase
      */
     private function seedTutorialPlayerWithId(int $realPlayerId, string $name): array
     {
-        return $this->seedTutorialPlayerAtCoords($realPlayerId, $name, $this->anyCoordsId());
+        return $this->seedTutorialPlayerAtCoords($realPlayerId, $name, $this->seedTile());
     }
 
     /**
@@ -216,10 +218,5 @@ class TutorialIsolationInvariantsTest extends TutorialIntegrationTestCase
         ]);
 
         return (int) $this->conn->lastInsertId();
-    }
-
-    private function anyCoordsId(): int
-    {
-        return (int) $this->conn->fetchOne('SELECT id FROM coords ORDER BY id ASC LIMIT 1');
     }
 }

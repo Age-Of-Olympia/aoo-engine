@@ -140,19 +140,10 @@ class TutorialPlayerCleanupIntegrationTest extends TutorialIntegrationTestCase
             'name'        => 'PhaseCReal_' . bin2hex(random_bytes(4)),
             'race'        => 'Humain',
             'player_type' => 'real',
-            'coords_id'   => $this->anyCoordsId(),
+            'coords_id'   => $this->seedTile(),
         ]);
 
         return (int) $this->conn->lastInsertId();
-    }
-
-    /**
-     * Any existing coords.id so the players.coords_id FK is satisfied.
-     * aoo4_test ships with ~130 rows; picking the first works.
-     */
-    private function anyCoordsId(): int
-    {
-        return (int) $this->conn->fetchOne('SELECT id FROM coords ORDER BY id ASC LIMIT 1');
     }
 
     /**
@@ -169,7 +160,7 @@ class TutorialPlayerCleanupIntegrationTest extends TutorialIntegrationTestCase
             'name'               => 'PhaseCTut_' . bin2hex(random_bytes(4)),
             'race'               => 'Humain',
             'player_type'        => 'tutorial',
-            'coords_id'          => $this->anyCoordsId(),
+            'coords_id'          => $this->seedTile(),
             'real_player_id_ref' => $realPlayerId,
         ]);
         $tutPlayerId = (int) $this->conn->lastInsertId();
