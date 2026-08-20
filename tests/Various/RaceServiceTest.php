@@ -44,11 +44,11 @@ class RaceServiceTest extends TestCase
         $this->assertSame('#FF0000', $data->bgColor);
         $this->assertSame('forge_sacree', $data->faction);
 
+        /* Shape only: the values themselves are game balance, owned by the
+         * seed and its rebalancing migrations, not by this contract. */
         foreach (array_keys(CARACS) as $key) {
             $this->assertIsInt($data->{$key}, "carac '{$key}' present and int");
         }
-        $this->assertSame(4, $data->mvt);
-        $this->assertSame(50, $data->pv);
 
         $this->assertIsArray($data->actions);
         /* Attaque de base : deux actions du catalogue depuis la scission
