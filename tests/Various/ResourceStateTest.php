@@ -40,6 +40,7 @@ class ResourceStateTest extends TestCase
         }
 
         $this->cleanup();
+        $this->seedEntities();
     }
 
     protected function tearDown(): void
@@ -47,10 +48,31 @@ class ResourceStateTest extends TestCase
         $this->cleanup();
     }
 
+    /**
+     * L'état porte une clé étrangère vers l'entité : il se teste sur des
+     * entités RÉELLES, pas sur des ids en l'air. coords_id nullable —
+     * aucun monde à semer pour autant.
+     */
+    private function seedEntities(): void
+    {
+        foreach ([self::A, self::B] as $id) {
+            $this->conn->executeStatement(
+                "INSERT INTO players (id, player_type, name, race) VALUES (?, 'resource', ?, 'arbre1')",
+                [$id, 'ResourceStateTest_' . $id]
+            );
+        }
+    }
+
     private function cleanup(): void
     {
         $this->conn?->executeStatement(
             'DELETE FROM resources WHERE player_id IN (?, ?)',
+            [self::A, self::B]
+        );
+        // La FK en cascade s'en chargerait, mais une base d'avant la
+        // migration doit se nettoyer aussi.
+        $this->conn?->executeStatement(
+            'DELETE FROM players WHERE id IN (?, ?)',
             [self::A, self::B]
         );
     }
