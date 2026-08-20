@@ -1893,7 +1893,11 @@
             }
             var href = $(this).attr('href');
 
-            if (/^index\.php/.test(href) && $(this).closest('.hud-panel-content').length) {
+            /* « Retour » est le lien NU vers index.php ; une URL avec
+             * paramètres (?replay_tutorial, ?menu, ?logout…) est une vraie
+             * destination — l'avaler laissait le bouton Tutoriel du Profil
+             * sans effet. */
+            if (href === 'index.php' && $(this).closest('.hud-panel-content').length) {
                 e.preventDefault();
                 closePanelAt($(this).closest('.hud-panel').data('slot'));
                 return;
