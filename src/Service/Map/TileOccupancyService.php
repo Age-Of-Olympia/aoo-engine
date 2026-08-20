@@ -161,7 +161,13 @@ final class TileOccupancyService
             $isStructure = EntityCategory::fromPlayerType($row['player_type'] ?? null)->isStructure();
 
             if (!$isStructure) {
-                if ($row['invisible'] !== null || !$charactersVisible) {
+                /* Un plan qui masque les personnages (isolation du tutoriel)
+                 * masque les AUTRES joueurs — les PNJ y restent dessinés
+                 * (View.php n'écarte que id > 0), donc ils barrent le pas :
+                 * on ne traverse pas la Gaïa qu'on a devant soi. */
+                $isNpc = (string) ($row['player_type'] ?? '') === 'npc';
+
+                if ($row['invisible'] !== null || (!$charactersVisible && !$isNpc)) {
                     continue;
                 }
             }
