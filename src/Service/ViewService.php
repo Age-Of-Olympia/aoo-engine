@@ -365,6 +365,13 @@ class ViewService {
     }
 
     public function generateLocalMap(?array $selectedLayers = null) {
+        // No configured bounds (plan JSON without z_levels — tutorial
+        // instances among others): nothing can be drawn, dimensions are
+        // null and GD would reject them.
+        if (!$this->localBoundsAvailable) {
+            return [];
+        }
+
         $selectedLayers = $selectedLayers ?? ['tiles', 'elements', 'foregrounds', 'resources', 'routes', 'buildings'];
 
         // Crée l'image de base

@@ -66,6 +66,13 @@ final class MinimapView
                     $mapResult = $viewService->getGlobalMap();
                 }
             } else {
+                /* Plan sans carte locale configurée (pas de z_levels dans
+                 * son JSON — instances de tutoriel notamment) : même repli
+                 * que map.php, le pictogramme. */
+                if (!$viewService->isLocalMapAvailable()) {
+                    throw new \RuntimeException('plan sans carte locale');
+                }
+
                 $mapResult = $viewService->getLocalMap();
                 $layers = self::LOCAL_LAYERS;
                 $href = 'map.php?local=1';
