@@ -66,6 +66,10 @@ for table in \
     action_condition_preconditions action_passives \
     effects effect_controls effect_corruption_materials \
     factions faction_roles dialogs \
+    tutorial_catalog tutorial_steps tutorial_step_ui tutorial_step_validation \
+    tutorial_step_prerequisites tutorial_step_features tutorial_step_highlights \
+    tutorial_step_interactions tutorial_step_context_changes \
+    tutorial_step_next_preparation tutorial_npcs tutorial_dialogs tutorial_settings \
     tile_colors doctrine_migration_versions
 do
     # Une table mal nommée se taisait : la copie échouait, `|| true` avalait

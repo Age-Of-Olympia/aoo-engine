@@ -171,6 +171,13 @@ class TutorialProgressManager
 
         if ($applyPrerequisites) {
             $this->applyStepPrerequisites($step);
+        } else {
+            /* La reprise (session PHP neuve : re-login, autre onglet) passe
+             * ici sans rejouer les prérequis — restaurer les ressources à
+             * chaque reprise ne serait pas idempotent. Le drapeau de
+             * consommation des pas, lui, l'est : sans cette resynchro,
+             * « épuisez vos mouvements » repris ne consommait plus rien. */
+            $this->syncMovementConsumption($step);
         }
 
         return $this->prepareStepForClient($step, $version);
@@ -279,9 +286,25 @@ class TutorialProgressManager
             }
         }
 
-        // Set consume_movements flag in session
-        // PRIORITY: context_changes table takes precedence over prerequisites table
-        // This allows the step editor checkboxes to override old configurations
+        $this->syncMovementConsumption($step);
+    }
+
+    /**
+     * Align the session's movement-consumption flag with the step's config.
+     *
+     * PRIORITY: context_changes table takes precedence over prerequisites
+     * table — the step editor checkboxes override old configurations.
+     * Default: tutorial does NOT consume movements (legacy behavior).
+     *
+     * Kept separate from the other entry effects because it is the only
+     * IDEMPOTENT one: it is re-applied on every read of the current step,
+     * so a resume in a fresh PHP session keeps consuming where it should.
+     */
+    private function syncMovementConsumption(AbstractStep $step): void
+    {
+        $config = $step->getConfig();
+        $prerequisites = $config['prerequisites'] ?? [];
+
         $consumeMovements = null;
 
         if (isset($config['context_changes']['consume_movements'])) {
@@ -298,7 +321,6 @@ class TutorialProgressManager
 
             $_SESSION['tutorial_consume_movements'] = $consumeBool;
         } else {
-            // Default: tutorial does NOT consume movements (legacy behavior)
             $_SESSION['tutorial_consume_movements'] = false;
         }
     }
