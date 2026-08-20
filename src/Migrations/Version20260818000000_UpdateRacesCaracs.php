@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Rééquilibrage des caractéristiques des races après séparation de la M en Pui/Rés.
  */
-final class Version20260818120000_UpdateRacesStatsBalancing extends AbstractMigration
+final class Version20260818000000_UpdateRacesCaracs extends AbstractMigration
 {
     /** Nouvelles valeurs pour la méthode up() [code_race => [colonne => valeur]] */
     private const RACES_UP_VALUES = [
