@@ -14,7 +14,7 @@ class PlanCondition extends BaseCondition implements HasParameterSchemaInterface
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema(
-            new ParameterField('plan', FieldType::PLAN, 'Plan interdit', default: 'enfers'),
+            new ParameterField('plan', FieldType::PLAN, 'Plan interdit', default: plans()->deathPlan()),
             new ParameterField('allowed', FieldType::ACTION, 'Actions autorisées (aux Enfers)', default: ['prier'], multiple: true, help: 'Actions exemptées du blocage'),
         );
     }
@@ -24,18 +24,19 @@ class PlanCondition extends BaseCondition implements HasParameterSchemaInterface
         $result = new ConditionResult(true, array(), array());
 
         $params = $condition->getParameters();
-        $plan = $params["plan"] ?? "enfers";
+        $plan = $params["plan"] ?? plans()->deathPlan();
         // Data-driven exemption list (editable on the preconditions tab); defaults
         // to ['prier'] for any row that predates the param.
         $allowedInEnfers = is_array($params['allowed'] ?? null) ? $params['allowed'] : ['prier'];
 
         $actionName = $condition->getAction()?->getName();
+        $isDeathPlan = $plan === plans()->deathPlan();
 
         if ($actor->coords->plan == $plan) {
-            if ($plan === 'enfers' && in_array($actionName, $allowedInEnfers, true)) {
+            if ($isDeathPlan && in_array($actionName, $allowedInEnfers, true)) {
                 return $result;
             }
-            if ($plan === 'enfers') {
+            if ($isDeathPlan) {
                 $errorMessage[0] = 'Impossible d\'agir aux Enfers.';
             } else {
                 $errorMessage[0] = 'Impossible d\'agir sur ce plan : ' . $plan;

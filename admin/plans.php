@@ -46,7 +46,7 @@ function plans_build_inventory(Db $db): array
 {
     $byId = [];
 
-    foreach ((new ViewService($db, 0, 0, 0, 0, 'olympia'))->getAllPlans() as $p) {
+    foreach ((new ViewService($db))->getAllPlans() as $p) {
         $byId[$p->id] = (object) [
             'id' => $p->id, 'name' => $p->name, 'season' => $p->season, 'isS2' => $p->isS2,
             'hasConfig' => true, 'hasCoords' => false, 'zLevels' => [], 'coordsCount' => 0,
@@ -190,15 +190,11 @@ function plans_render_list(array $inventory, Db $db): string
 
         . '<div class="card mb-3"><div class="card-body py-2 d-flex align-items-center justify-content-between flex-wrap gap-3">'
         . render_season_filter($seasonFilter)
-        /* The GLOBAL setting, next to the display filter: every
-           season-scoped list defaults to it. */
-        . '<form method="post" action="/admin/plans-save.php?action=set_season" class="d-flex align-items-center gap-2" style="font-size:13px;">'
-        . (new CsrfProtectionService())->renderTokenField()
-        . '<span class="text-muted"><i class="fas fa-globe"></i> Saison courante du jeu :</span>'
-        . '<input type="number" min="1" step="1" name="game_season" class="form-control form-control-sm" style="width:70px;"'
-        . ' value="' . e((string) (new \App\Service\SeasonService())->current()) . '">'
-        . '<button type="submit" class="btn btn-sm btn-outline-primary">Régler</button>'
-        . '</form>'
+        /* The GLOBAL settings (current season, world and death plans) live
+           on the dashboard: admin → Réglages du monde. */
+        . '<a class="btn btn-sm btn-outline-secondary" href="/admin/index.php" style="font-size:13px;">'
+        . '<i class="fas fa-globe"></i> Saison courante : ' . e((string) (new \App\Service\SeasonService())->current())
+        . ' — régler</a>'
         . '</div></div>'
 
         . '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'

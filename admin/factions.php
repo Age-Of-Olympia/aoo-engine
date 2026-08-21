@@ -238,7 +238,7 @@ HTML;
         . ' les cartes et les forums.</small></div>'
         . '<div class="form-group col-md-3"><label>Plan de respawn</label>'
         . '<input type="text" class="form-control" name="respawnPlan" value="'
-        . e($isEdit ? $faction->getRespawnPlan() : 'olympia') . '">'
+        . e($isEdit ? $faction->getRespawnPlan() : plans()->worldPlan()) . '">'
         . '<small class="form-text text-muted">Destination à la sortie des enfers.</small></div>'
         . '<div class="form-group col-md-8"><label>Lore</label>'
         . '<textarea class="form-control" name="text" rows="4">'

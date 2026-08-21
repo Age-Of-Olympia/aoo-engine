@@ -1962,7 +1962,7 @@ class Player implements ActorInterface {
         $db = new Db();
 
         // spawn to hell
-        $coords = (object) array('x'=>0,'y'=>0,'z'=>0,'plan'=>'enfers');
+        $coords = (object) array('x'=>0,'y'=>0,'z'=>0,'plan'=>plans()->deathPlan());
 
         $oneDayOfWalk = $this->caracs->mvt;
         $distance = $oneDayOfWalk * $this->data->rank;

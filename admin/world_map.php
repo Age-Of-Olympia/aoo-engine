@@ -8,7 +8,7 @@ use App\Service\ViewService;
 use Classes\Db;
 
 $database = new Db();
-$viewService = new ViewService($database, 0, 0, 0, 0, 'olympia');
+$viewService = new ViewService($database);
 $csrf = new CsrfProtectionService();
 
 // Clear any local map layers when loading world maps

@@ -12,7 +12,7 @@ use Classes\View;
 $factionJson = (new FactionService())->getFactionData($player->data->faction);
 
 
-$spawnPlan = $factionJson->respawnPlan??"olympia";
+$spawnPlan = $factionJson->respawnPlan ?? plans()->worldPlan();
 
 
 $goCoords = (object) array(

@@ -165,7 +165,7 @@ class FactionSeedService
 
         $faction->setName((string) ($json->name ?? ucwords(str_replace('_', ' ', $code))));
         $faction->setRaFont((string) ($json->raFont ?? ''));
-        $faction->setRespawnPlan((string) ($json->respawnPlan ?? 'olympia'));
+        $faction->setRespawnPlan((string) ($json->respawnPlan ?? plans()->worldPlan()));
 
         $this->factions->save($faction);
 

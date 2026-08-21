@@ -68,7 +68,7 @@ final class FactionImporter extends AbstractObjectImporter
         $faction->setText((string) ($plan['text'] ?? ''));
         $faction->setRaFont((string) ($plan['raFont'] ?? ''));
         $respawnPlan = trim((string) ($plan['respawnPlan'] ?? ''));
-        $faction->setRespawnPlan($respawnPlan !== '' ? $respawnPlan : 'olympia');
+        $faction->setRespawnPlan($respawnPlan !== '' ? $respawnPlan : plans()->worldPlan());
         $faction->setHidden((bool) ($plan['hidden'] ?? false));
         $faction->setSecret((bool) ($plan['secret'] ?? false));
 

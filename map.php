@@ -5,11 +5,11 @@ use Classes\Str;
 use Classes\Db;
 require_once('config.php');
 
-$worldPlan = 'olympia';
+$worldPlan = plans()->worldPlan();
 $player = PlayerFactory::legacy($_SESSION['playerId']);
 $player->getCoords();
 
-$isInHell = (isset($player->coords->plan) && $player->coords->plan === 'enfers');
+$isInHell = (isset($player->coords->plan) && $player->coords->plan === plans()->deathPlan());
 
 $planJson = plans()->read($player->coords->plan);
 if (!$planJson) {

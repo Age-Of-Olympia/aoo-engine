@@ -280,8 +280,23 @@ class PlanAdminService
 
         // Plan de résurrection des factions — table factions (source de
         // vérité depuis la migration FactionsFromJson), colonne NOT NULL
-        // DEFAULT 'olympia' : une faction sans respawn explicite bloque
-        // donc la suppression d'olympia
+        /* The game's structural plans (world map, death plan — dashboard
+         * settings): never deletable, not even forced. Repoint the setting
+         * first. */
+        $structural = array_filter([
+            'plan principal (carte du monde)' => plans()->worldPlan(),
+            'plan des morts' => plans()->deathPlan(),
+        ], static fn(string $slug): bool => $slug === $plan);
+        if ($structural !== []) {
+            $blockers[] = [
+                'check' => 'structural_plan', 'count' => count($structural), 'forceable' => false,
+                'detail' => ucfirst(implode(' et ', array_keys($structural)))
+                    . ' du jeu — changez le réglage (admin → Réglages du monde) d\'abord.',
+            ];
+        }
+
+        // A faction without an explicit respawn blocks the deletion of the
+        // default respawn plan through the rows below
         $factionNames = [];
         $res = $this->db->exe('SELECT name FROM factions WHERE respawnPlan = ?', array($plan));
         while ($row = $res->fetch_assoc()) {
@@ -492,14 +507,41 @@ class PlanAdminService
                 $report['teleports']++;
             }
 
+            // Dashboard settings naming this plan (world_plan, death_plan)
+            $n = (int) $this->db->exe(
+                "UPDATE admin_settings SET value = ? WHERE name IN ('world_plan', 'death_plan') AND value = ?",
+                array($to, $from),
+                false,
+                true
+            );
+            if ($n > 0) {
+                $report['references']['admin_settings'] = $n;
+            }
+
+            /* Forbidden-plan action conditions keep the plan inside their
+             * JSON parameters — a rename must follow it there too. */
+            $res = $this->db->exe("SELECT id, parameters FROM action_conditions WHERE conditionType = 'PlanCondition'");
+            while ($row = $res->fetch_assoc()) {
+                $params = json_decode((string) $row['parameters'], true);
+                if (!is_array($params) || ($params['plan'] ?? null) !== $from) {
+                    continue;
+                }
+                $params['plan'] = $to;
+                $this->db->exe(
+                    'UPDATE action_conditions SET parameters = ? WHERE id = ?',
+                    array(json_encode($params, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), (int) $row['id'])
+                );
+                $report['references']['action_conditions'] = ($report['references']['action_conditions'] ?? 0) + 1;
+            }
+
             $this->db->commit();
         } catch (\Throwable $e) {
             $this->db->rollBack();
             throw $e;
         }
 
-        PlanService::forget($from);
-        PlanService::forget($to);
+        // Full flush: the memoized world/death slugs may have been renamed.
+        PlanService::forget();
 
         // Fichiers en dernier et best-effort — même politique que deletePlan
         $pngPrefix = $_SERVER['DOCUMENT_ROOT'] . '/img/maps/local/local_';

@@ -18,7 +18,7 @@ if (isset($_SESSION['generated_layers']) && strpos(json_encode($_SESSION['genera
 
 $database = new Db();
 $csrf = new CsrfProtectionService();
-$viewService = new ViewService($database, 0, 0, 0, 0, $selectedPlan ?? 'olympia');
+$viewService = new ViewService($database, 0, 0, 0, 0, $selectedPlan ?? null);
 
 // Get all available plans (local maps)
 $allPlans = $viewService->getAllPlans('all');

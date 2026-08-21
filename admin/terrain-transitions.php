@@ -27,7 +27,7 @@ use App\Service\ViewService;
 
 $database = new Db();
 $csrf = new CsrfProtectionService();
-$viewService = new ViewService($database, 0, 0, 0, 0, 'olympia');
+$viewService = new ViewService($database);
 
 $allPlans = $viewService->getAllPlans();
 usort($allPlans, function ($a, $b) {

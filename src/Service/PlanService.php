@@ -20,8 +20,15 @@ use Doctrine\DBAL\Connection;
  */
 class PlanService
 {
+    /** Admin-dashboard settings naming the game's structural plans. */
+    public const SETTING_WORLD = 'world_plan';
+    public const SETTING_DEATH = 'death_plan';
+
     /** @var array<string, object|false> Per-request cache, keyed by slug. */
     private static array $cache = [];
+
+    /** @var array<string, string> Per-request cache of the structural slugs. */
+    private static array $structural = [];
 
     private Connection $conn;
 
@@ -47,6 +54,31 @@ class PlanService
     public function exists(string $slug): bool
     {
         return $this->read($slug) !== false;
+    }
+
+    /**
+     * Slug of the world-map plan (admin dashboard → Réglages du monde).
+     * Falls back to the historical slug when the setting is unset.
+     */
+    public function worldPlan(): string
+    {
+        return $this->structuralPlan(self::SETTING_WORLD, 'olympia');
+    }
+
+    /** Slug of the plan the dead wake up on. Same fallback rule. */
+    public function deathPlan(): string
+    {
+        return $this->structuralPlan(self::SETTING_DEATH, 'enfers');
+    }
+
+    private function structuralPlan(string $setting, string $fallback): string
+    {
+        if (!isset(self::$structural[$setting])) {
+            $slug = (new AdminSettingsService())->get($setting, $fallback);
+            self::$structural[$setting] = $slug !== '' ? $slug : $fallback;
+        }
+
+        return self::$structural[$setting];
     }
 
     /**
@@ -89,6 +121,7 @@ class PlanService
     {
         if ($slug === null) {
             self::$cache = [];
+            self::$structural = [];
         } else {
             unset(self::$cache[$slug]);
         }

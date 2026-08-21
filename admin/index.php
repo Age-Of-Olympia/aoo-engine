@@ -17,13 +17,47 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
+use App\Service\AdminSettingsService;
 use App\Service\CsrfProtectionService;
 use App\Service\DateFormatService;
 use App\Service\Map\HarvestDefaultsService;
+use App\Service\PlanService;
+use App\Service\SeasonService;
 
 $csrf = new CsrfProtectionService();
 $dateFormat = new DateFormatService();
 $harvestDefaults = new HarvestDefaultsService();
+$seasonService = new SeasonService();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['world_settings'])) {
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+
+        $season = (int) ($_POST['game_season'] ?? 0);
+        if ($season < 1) {
+            throw new \RuntimeException('Saison invalide (numéro attendu, 1 ou plus).');
+        }
+
+        // Both slugs must be real plans: the world map and the death
+        // teleport point at them.
+        $settings = new AdminSettingsService();
+        foreach ([PlanService::SETTING_WORLD => 'plan principal', PlanService::SETTING_DEATH => 'plan des morts'] as $key => $label) {
+            $slug = trim((string) ($_POST[$key] ?? ''));
+            if (!plans()->exists($slug)) {
+                throw new \RuntimeException("Plan inconnu pour le {$label} : {$slug}");
+            }
+            $settings->set($key, $slug);
+        }
+
+        $seasonService->setCurrent($season);
+        PlanService::forget();
+
+        setFlash('success', 'Réglages du monde enregistrés.');
+    } catch (\Throwable $e) {
+        setFlash('danger', 'Échec : ' . $e->getMessage());
+    }
+    redirectTo('/admin/index.php');
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['harvest_default_pv'])) {
     try {
@@ -106,6 +140,53 @@ ob_start();
             <?php endif; ?>
         </div>
     <?php endif; ?>
+
+    <div class="card mt-3" style="max-width: 640px;">
+        <div class="card-header"><strong>Réglages du monde</strong></div>
+        <div class="card-body">
+            <form method="post" action="index.php">
+                <?= $csrf->renderTokenField() ?>
+                <input type="hidden" name="world_settings" value="1">
+                <?php
+                // Every configured plan except the ephemeral tutorial
+                // instances, labeled with its season.
+                $planChoices = [];
+                foreach (plans()->all() as $slug => $planData) {
+                    if (str_starts_with($slug, 'tut_')) {
+                        continue;
+                    }
+                    $seasonLabel = isset($planData->season) ? 'S' . $planData->season : 'toutes saisons';
+                    $planChoices[$slug] = ($planData->name ?? $slug) . ' (' . $slug . ') — ' . $seasonLabel;
+                }
+                ?>
+                <div class="d-flex gap-3 flex-wrap align-items-end">
+                    <div>
+                        <label class="form-label mb-0">Saison courante</label><br />
+                        <input type="number" name="game_season" min="1" step="1" class="form-select" style="max-width: 100px;"
+                               value="<?= (int) $seasonService->current() ?>" />
+                    </div>
+                    <div>
+                        <label class="form-label mb-0">Plan principal (carte du monde)</label>
+                        <select name="<?= e(PlanService::SETTING_WORLD) ?>" class="form-select" style="max-width: 340px;">
+                            <?= renderSelectOptions($planChoices, plans()->worldPlan()) ?>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label mb-0">Plan des morts</label>
+                        <select name="<?= e(PlanService::SETTING_DEATH) ?>" class="form-select" style="max-width: 340px;">
+                            <?= renderSelectOptions($planChoices, plans()->deathPlan()) ?>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
+                </div>
+                <small class="form-text text-muted">
+                    La saison courante est celle que prennent par défaut les listes de plans (carte du monde,
+                    pages Cartes). Le plan principal porte la carte du monde ; le plan des morts accueille
+                    les personnages tombés. Un plan référencé ici ne peut pas être supprimé.
+                </small>
+            </form>
+        </div>
+    </div>
 
     <div class="card mt-3" style="max-width: 640px;">
         <div class="card-header"><strong>Options générales</strong></div>

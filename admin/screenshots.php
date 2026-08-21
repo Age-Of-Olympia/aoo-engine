@@ -17,7 +17,7 @@ $database = new Db();
 $screenshotService = new ScreenshotService();
 $csrf = new CsrfProtectionService();
 
-$viewService = new ViewService($database, 0, 0, 0, 0, 'olympia');
+$viewService = new ViewService($database);
 $allPlans = $viewService->getAllPlans('all');
 
 // Filtre de saison partagé de la section « Cartes » (défaut : s2)

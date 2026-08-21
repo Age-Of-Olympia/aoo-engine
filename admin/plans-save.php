@@ -39,20 +39,6 @@ try {
 }
 
 $action = $_GET['action'] ?? '';
-
-/* Current game season: a global setting, not a plan mutation — handled
- * before the plan-code validation, absent from this POST. */
-if ($action === 'set_season') {
-    $season = (int) ($_POST['game_season'] ?? 0);
-    if ($season >= 1) {
-        (new \App\Service\SeasonService())->setCurrent($season);
-        setFlash('success', "Saison courante du jeu : {$season}.");
-    } else {
-        setFlash('warning', 'Saison invalide (numéro attendu, 1 ou plus).');
-    }
-    redirectTo('/admin/plans.php');
-}
-
 $plan = strtolower(trim((string) ($_POST['plan'] ?? '')));
 
 if (!preg_match(TiledMapService::PLAN_NAME_PATTERN, $plan)) {

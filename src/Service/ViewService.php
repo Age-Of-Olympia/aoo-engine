@@ -28,7 +28,7 @@ class ViewService {
     private $playerZ;
     private $playerId;
     private $raceService;
-    private $worldPlan = 'olympia';
+    private $worldPlan;
     private $localMinX;
     private $localMaxX;
     private $localMinY;
@@ -43,13 +43,14 @@ class ViewService {
     private $localCenterY = 0;
     private $localBoundsAvailable = false;
 
-    public function __construct($db, $playerX = null, $playerY = null, $playerZ = null, $playerId = null, $plan = 'olympia') {
+    public function __construct($db, $playerX = null, $playerY = null, $playerZ = null, $playerId = null, $plan = null) {
         $this->db = $db;
         $this->playerX = $playerX;
         $this->playerY = $playerY;
         $this->playerZ = $playerZ;
         $this->playerId = $playerId;
-        $this->currentPlan = $plan;
+        $this->worldPlan = plans()->worldPlan();
+        $this->currentPlan = $plan ?? $this->worldPlan;
         $this->raceService = new RaceService();
         $this->calculateBounds();
         $this->colors = ColorService::palette();
@@ -1058,7 +1059,7 @@ class ViewService {
         // avant c'était une variable indéfinie).
         $x = 0;
         $y = 0;
-        if ($this->currentPlan !== 'olympia') {
+        if ($this->currentPlan !== $this->worldPlan) {
             $location = $this->getLocationFromPlan($this->currentPlan);
             if (isset($location[0]) && is_array($location[0])) {
                 $x = (int)$this->transformX($location[0]['x'], $mapType);
@@ -1089,7 +1090,7 @@ class ViewService {
 
     private function calculateWorldPlayerLayerBounds() {
         // Get the plan bounds
-        if ($this->currentPlan !== 'olympia') {
+        if ($this->currentPlan !== $this->worldPlan) {
             $planBounds = $this->getBoundsFromPlan($this->worldPlan);
         } else {
             $planBounds = $this->getBoundsFromPlan($this->currentPlan);

@@ -86,7 +86,7 @@ $applyForm = static function (Faction $faction): void {
     $faction->setName(trim((string) $_POST['name']));
     $faction->setText(trim((string) ($_POST['text'] ?? '')));
     $faction->setRaFont(trim((string) ($_POST['raFont'] ?? '')));
-    $faction->setRespawnPlan(stringWithDefault('respawnPlan', 'olympia'));
+    $faction->setRespawnPlan(stringWithDefault('respawnPlan', plans()->worldPlan()));
     $faction->setHidden(booleanCheckbox('hidden'));
     $faction->setSecret(booleanCheckbox('secret'));
 };
