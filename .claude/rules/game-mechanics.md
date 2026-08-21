@@ -54,7 +54,7 @@ Age of Olympia is a **turn-based survival RPG** where players:
 **Resource Gathering**:
 - Resources are **entities** (`App\Entity\Resource extends Structure`, discriminator `resource`), NOT items and no longer walls
 - Trees, stones and the like block the step and can be hit, like the structures they came from
-- What a resource *yields* belongs to the (plan, type) pair in `race_harvest`, read through `HarvestCatalogService::yieldsFor()`; plan JSON biomes are only the seed, replayable from admin → Cartes → Rendements
+- What a resource *yields* belongs to the (plan, type) pair in `race_harvest`, read through `HarvestCatalogService::yieldsFor()`; the plan's biome list (`plans.biomes`) is only the seed, replayable from admin → Cartes → Rendements
 - What a resource *is* right now — standing or exhausted — lives in its own `resources` satellite: an exhausted resource stays on the board and regrows in place
 - Players must move **adjacent** to the resource, then use the `fouiller` action
 - Gathered materials (wood, stone) go to player inventory as items
@@ -112,6 +112,7 @@ Age of Olympia is a **turn-based survival RPG** where players:
 - `players_logs`: Event logs (player_id, target_id, message, timestamp)
 
 **Map**:
+- `plans` + `plan_z_levels`: per-plan configuration (name, player_visibility, bounds, bg, z levels…), ex `datas/private/plans/*.json` — single read gateway `plans()->read($slug)` (`App\Service\PlanService`), writes via `PlanConfigService`
 - `coords`: Coordinate entries (id, x, y, z, plan)
 - `entities` + `entity_cells`: every object on the board (structures, resources, scenery…) and the cells it occupies
 - `resources`: per-resource state satellite (standing / exhausted, regrow)

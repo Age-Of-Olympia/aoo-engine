@@ -93,24 +93,21 @@ Steps are accessed via `TutorialStepRepository::getStepById($stepId, $version)` 
 - All tutorial data cleaned up on cancel or completion
 
 **Player Visibility System**:
-The tutorial implements complete player isolation using the `player_visibility` setting in plan JSON:
+The tutorial implements complete player isolation using the `player_visibility` flag of the
+plan configuration (table `plans`, read through `plans()->read($slug)` — the JSON files are
+gone):
 
-1. **Plan Configuration** (`datas/private/plans/tutorial.json`):
-   ```json
-   {
-       "player_visibility": false,  // Hide other players
-       "biomes": [...]              // Resource definitions
-   }
-   ```
+1. **Plan Configuration** (`plans` row for slug `tutorial`): `player_visibility = 0` hides
+   other players; `biomes` (seed of `race_harvest`) carries the resource definitions.
 
 2. **Three-Layer Isolation**:
-   - **Map Rendering** (`Classes/View.php:290`): Other players not drawn on map
-   - **Movement Blocking** (`go.php:70`): Other players don't block coordinates
-   - **Character Card** (`observe.php:125`): Other players not listed in observation panel
+   - **Map Rendering** (`Classes/View.php`): Other players not drawn on map
+   - **Movement Blocking** (`go.php`): Other players don't block coordinates
+   - **Character Card** (`observe.php`): Other players not listed in observation panel
 
 3. **Implementation Pattern** (consistent across all three):
    ```php
-   $planJson = json()->decode('plans', $player->coords->plan);
+   $planJson = plans()->read($player->coords->plan);
    $playerVisibilityEnabled = !isset($planJson->player_visibility) || $planJson->player_visibility !== false;
 
    if ($playerVisibilityEnabled) {
@@ -197,18 +194,18 @@ $player = new Player($activePlayerId);
 
 | Issue | Symptom | Solution |
 |-------|---------|----------|
-| **"Coordonnées invalides"** | Movement blocked during tutorial | Check `player_visibility` in plan JSON and `go.php` isolation logic |
+| **"Coordonnées invalides"** | Movement blocked during tutorial | Check `player_visibility` in the plan config (table `plans`) and `go.php` isolation logic |
 | **Wrong player inventory** | Main player items shown instead of tutorial player's | Use `TutorialHelper::getActivePlayerId()` instead of `$_SESSION['playerId']` |
 | **Encoding issues** | French accents display as "rÃ©coltable" | Add `charset=utf-8` to `Content-Type` header in API responses |
 | **Hints persist** | Previous step hints visible on new step | Call `$('.tooltip-blocked-message').remove()` in `renderStep()` |
 | **Highlight wrong position** | Element highlighted 3 tiles away | Use `getBoundingClientRect()` for positioning, check selector matches single element |
 | **Tooltip appears too fast** | Tooltip before UI ready | Add `show_delay: 500` to step config |
-| **Movement always consumed** | Can't have unlimited movement with plan JSON | Exclude tutorial from auto-consumption: `($planJson && !$isTutorial)` |
+| **Movement always consumed** | Can't have unlimited movement with a configured plan | Exclude tutorial from auto-consumption: `($planJson && !$isTutorial)` |
 
 **Resource Gathering Setup**:
-1. Create plan JSON: `datas/private/plans/tutorial.json`
-2. Add `player_visibility: false` to hide other players
-3. Define biomes with wall types and resources:
+1. Configure the plan (admin → Cartes → Plans, table `plans`)
+2. Set `player_visibility` to false to hide other players
+3. Define biomes with wall types and resources (column `plans.biomes`, seed of `race_harvest`):
    ```json
    {"wall": "arbre1", "ressource": "bois", "exhaust": 75, "regrow": 20}
    ```
