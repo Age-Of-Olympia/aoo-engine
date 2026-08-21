@@ -10,10 +10,12 @@ class SessionCmd extends Command
         parent::__construct("session",[new Argument('action',false), new Argument('mat',true)]);
         parent::setDescription(<<<EOT
 open: permet de se connecter au compte d'un personnage (sans login)
+  -reactive: réactive le traitement des tours et l'écran de mort
 destroy: ferme la session (logout)
 Exemple:
 > session open Orcrist
-> session destroy 
+> session open Orcrist -reactive
+> session destroy
 EOT);
     }
 
@@ -51,9 +53,11 @@ EOT);
             $_SESSION['playerId'] = $_SESSION['mainPlayerId'] = $player->id;
             if(isset($argumentValues[2]) && $argumentValues[2] == '-reactive'){
                unset($_SESSION['nonewturn']);
+               unset($_SESSION['deathScreenSeen']);
             }
             else{
                 $_SESSION['nonewturn'] = true;
+                $_SESSION['deathScreenSeen'] = true;
             }
 
             return 'Session ouverte pour joueur '. $player->data->name .'.';
@@ -65,6 +69,7 @@ EOT);
             unset($_SESSION['mainPlayerId']);
             unset($_SESSION['playerId']);
             unset($_SESSION['nonewturn']);
+            unset($_SESSION['deathScreenSeen']);
             session_destroy();
 
             return 'session destroyed';

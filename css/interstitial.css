@@ -1,0 +1,183 @@
+/* ============================================================
+ * Announcement sheet for full-page interstitials ("Vous êtes
+ * mort", "Nouveau Tour"): one parchment card centered on the
+ * page, same materials as css/hud.css (olympia-tests.psd).
+ * The sheet carries its own paper texture so it reads on both
+ * skins. Loaded by DeathView and NewTurnView only.
+ * ============================================================ */
+
+@font-face {
+    font-family: 'Gloock';
+    src: url('fonts/gloock.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+
+.aoo-notice {
+    --an-ink: #1d1c1b;
+    --an-ink-soft: rgba(29, 28, 27, 0.6);
+    --an-bronze: #8d6839;
+    --an-bronze-bright: #b98a1c;
+    --an-line: rgba(93, 74, 42, 0.55);
+    --an-line-soft: rgba(93, 74, 42, 0.3);
+    --an-parchment: #f7e7c9;
+    --an-blood: #770001;
+    /* Feed items (hud.min.css) rendered inside the sheet read this
+     * token; their HUD scope body:has(#hud) does not exist here. */
+    --hud-line-soft: rgba(93, 74, 42, 0.3);
+
+    box-sizing: border-box;
+    width: min(620px, 94vw);
+    margin: clamp(14px, 4vh, 44px) auto;
+    padding: clamp(22px, 5vw, 40px) clamp(16px, 5vw, 46px) clamp(24px, 5vw, 38px);
+    background: #efe4cd url('../img/ui/paper/paper.jpg') center / cover;
+    border: 1px solid var(--an-bronze);
+    border-radius: 10px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45), inset 0 0 70px rgba(141, 104, 57, 0.16);
+    color: var(--an-ink);
+    text-align: center;
+    line-height: 1.5;
+    animation: an-settle 0.45s ease-out;
+}
+
+.aoo-notice * {
+    box-sizing: border-box;
+}
+
+/* Death only: the room goes dark around the sheet. The shorthand also
+ * clears the grey (main.css) or paper (paper-app.css) body image. */
+body:has(.aoo-notice--death) {
+    background: #0a0806;
+}
+
+@keyframes an-settle {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .aoo-notice {
+        animation: none;
+    }
+}
+
+.aoo-notice h1 {
+    font-family: 'Gloock', goudy, serif;
+    font-weight: 400;
+    font-size: clamp(32px, 7vw, 46px);
+    letter-spacing: 0.02em;
+    margin: 0;
+    color: var(--an-ink);
+}
+
+.aoo-notice--death h1 {
+    color: var(--an-blood);
+}
+
+.aoo-notice h2 {
+    font-family: 'Gloock', goudy, serif;
+    font-weight: 400;
+    font-size: 21px;
+    margin: 30px 0 10px;
+}
+
+.aoo-notice-flourish {
+    display: block;
+    margin: 4px auto 16px;
+    width: 190px;
+    max-width: 60%;
+    opacity: 0.6;
+    mix-blend-mode: multiply;
+}
+
+.aoo-notice-medallion {
+    display: inline-block;
+    width: 170px;
+    max-width: 40vw;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid var(--an-bronze);
+    box-shadow: 0 0 0 6px var(--an-parchment), 0 0 0 7px var(--an-line), 0 10px 24px rgba(0, 0, 0, 0.35);
+    margin: 8px auto 6px;
+}
+
+.aoo-notice--death .aoo-notice-medallion {
+    border-color: var(--an-blood);
+}
+
+.aoo-notice-lead {
+    font-style: italic;
+    color: var(--an-ink-soft);
+    max-width: 46ch;
+    margin: 16px auto 20px;
+}
+
+.aoo-notice-meta {
+    font-size: 92%;
+    color: var(--an-ink-soft);
+    margin: 12px auto;
+}
+
+.aoo-notice button {
+    font-family: inherit;
+    font-size: 16px;
+    background: var(--an-parchment);
+    border: 1px solid var(--an-bronze);
+    border-radius: 6px;
+    color: var(--an-ink);
+    padding: 9px 26px;
+    cursor: pointer;
+}
+
+.aoo-notice button:hover {
+    background: #fdf6e5;
+    border-color: var(--an-bronze-bright);
+}
+
+.aoo-notice a {
+    color: var(--an-bronze);
+}
+
+/* Recap ledger (new turn): crème veil, ruled lines, figures right. */
+.aoo-notice-ledger {
+    margin: 12px auto;
+    border-collapse: collapse;
+    background: rgba(252, 248, 238, 0.55);
+    border: 1px solid var(--an-line);
+    min-width: min(320px, 100%);
+}
+
+.aoo-notice-ledger td {
+    border-bottom: 1px solid var(--an-line-soft);
+    padding: 6px 16px;
+    text-align: left;
+}
+
+.aoo-notice-ledger td + td {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.aoo-notice-ledger tr:last-child td {
+    border-bottom: none;
+}
+
+.aoo-notice .new-turn-wear {
+    font-size: 92%;
+    color: var(--an-ink-soft);
+    margin: 10px 0 14px;
+}
+
+.aoo-notice-events {
+    max-width: 460px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.aoo-notice-empty {
+    font-style: italic;
+    opacity: 0.6;
+}

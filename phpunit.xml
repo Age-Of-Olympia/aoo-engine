@@ -35,6 +35,9 @@
          <testsuite name="Account">
             <directory suffix="Test.php">./tests/Account</directory>
         </testsuite>
+         <testsuite name="View">
+            <directory suffix="Test.php">./tests/View</directory>
+        </testsuite>
     </testsuites>
 
     <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">

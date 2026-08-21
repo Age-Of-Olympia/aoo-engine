@@ -5,6 +5,7 @@ use App\View\Hud\HudLayoutView;
 use App\View\InfosView;
 use App\View\MainView;
 use App\View\MenuView;
+use App\View\DeathView;
 use App\View\NewTurnView;
 use App\Factory\PlayerFactory;
 use App\Tutorial\TutorialHelper;
@@ -38,6 +39,9 @@ if (isset($_GET['replay_tutorial']) && $_GET['replay_tutorial'] == '1' && !empty
 }
 
 
+// Death screen dismissal: POST + redirect, must run before any output.
+DeathView::handleDismissRequest();
+
 $ui = new Ui($title="Index");
 
 
@@ -59,6 +63,7 @@ elseif(isset($_GET['logout'])){
     unset($_SESSION['mainPlayerId']);
     unset($_SESSION['playerId']);
     unset($_SESSION['nonewturn']);
+    unset($_SESSION['deathScreenSeen']);
     session_destroy();
 
     /* Expire the cookie too: destroy() alone leaves the browser holding
@@ -325,6 +330,8 @@ if (isset($_GET['hud'])) {
     $useNewHud = $_GET['hud'] === '1';
 }
 ?>
+<?php DeathView::renderDeathScreen($player) ?>
+
 <div id="new-turn"><?php NewTurnView::renderNewTurn($player) ?></div>
 
 <?php if ($useNewHud) { ?>

@@ -91,6 +91,7 @@ $_SESSION['mainPlayerId'] = $row['id'];
 $_SESSION['playerId'] = $row['id'];
 $_SESSION['originalPlayerId'] = $row['id'];
 unset($_SESSION['nonewturn']);
+unset($_SESSION['deathScreenSeen']);
 
 $values = array(
     'player_id'=> $row['id'],

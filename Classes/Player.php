@@ -1967,6 +1967,9 @@ class Player implements ActorInterface {
         $values = array('target_id'=>$this->id);
         $db->delete('players_assists', $values);
 
+        // arm the death screen for this new death
+        \App\View\DeathView::armFor($this);
+
 
         // refresh
         $this->refresh_view();
