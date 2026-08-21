@@ -29,7 +29,6 @@ class HarvestYieldsSourceTest extends TestCase
     private const FIXTURE_ID = 59990100;
 
     private ?Connection $conn = null;
-    private string $plansDir;
     private int $raceId = 0;
 
     protected function setUp(): void
@@ -49,12 +48,6 @@ class HarvestYieldsSourceTest extends TestCase
             $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
         }
 
-        $this->plansDir = dirname(__DIR__, 2) . '/datas/private/plans';
-
-        if (!is_dir($this->plansDir) || !is_writable($this->plansDir)) {
-            $this->markTestSkipped('datas/private/plans non inscriptible.');
-        }
-
         $this->cleanup();
 
         $this->conn->executeStatement(
@@ -68,14 +61,12 @@ class HarvestYieldsSourceTest extends TestCase
 
         $this->raceId = (int) $this->conn->fetchOne('SELECT id FROM races WHERE name = ?', [self::TYPE]);
 
-        file_put_contents(
-            $this->plansDir . '/' . self::PLAN . '.json',
-            json_encode([
-                'name' => self::PLAN,
-                'biomes' => [['wall' => self::TYPE, 'ressource' => 'bois', 'exhaust' => 75, 'regrow' => 20]],
-            ], JSON_PRETTY_PRINT)
-        );
-        json()->forget('plans', self::PLAN);
+        $this->conn->insert('plans', [
+            'slug'   => self::PLAN,
+            'name'   => self::PLAN,
+            'biomes' => json_encode([['wall' => self::TYPE, 'ressource' => 'bois', 'exhaust' => 75, 'regrow' => 20]]),
+        ]);
+        \App\Service\PlanService::forget(self::PLAN);
     }
 
     protected function tearDown(): void
@@ -89,8 +80,8 @@ class HarvestYieldsSourceTest extends TestCase
             return;
         }
 
-        @unlink($this->plansDir . '/' . self::PLAN . '.json');
-        json()->forget('plans', self::PLAN);
+        $this->conn->executeStatement('DELETE FROM plans WHERE slug = ?', [self::PLAN]);
+        \App\Service\PlanService::forget(self::PLAN);
         $this->conn->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [self::FIXTURE_ID]);
         $this->conn->executeStatement('DELETE FROM resources WHERE player_id = ?', [self::FIXTURE_ID]);
         $this->conn->executeStatement('DELETE FROM players WHERE id = ?', [self::FIXTURE_ID]);

@@ -7,6 +7,8 @@ use App\Service\ImportExport\ImporterRegistry;
 use App\Service\ImportExport\PlanExporter;
 use App\Service\ImportExport\PlanImporter;
 use App\Service\Map\EntityPlacementService;
+use App\Service\PlanConfigService;
+use App\Service\PlanService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 
@@ -167,8 +169,9 @@ class PlanImportExportTest extends TestCase
             (int) $link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::SRC])
         );
 
-        $json = json_decode((string) file_get_contents($this->jsonPath(self::SRC)), true);
-        $this->assertSame('Source remplacée', $json['name'], 'fichier JSON remplacé en entier');
+        PlanService::forget(self::SRC);
+        $config = (new PlanConfigService())->readFull(self::SRC);
+        $this->assertSame('Source remplacée', $config['name'], 'config remplacée en entier');
     }
 
     /**
@@ -228,11 +231,7 @@ class PlanImportExportTest extends TestCase
 
         $link->executeStatement('INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 12345)', [$ids['0,1'], 'feu_test']);
 
-        file_put_contents(
-            $this->jsonPath(self::SRC),
-            json_encode(['name' => 'Source de test', 'player_visibility' => false], JSON_PRETTY_PRINT) . "\n"
-        );
-        json()->forget('plans', self::SRC);
+        (new PlanConfigService())->replace(self::SRC, ['name' => 'Source de test', 'player_visibility' => false]);
     }
 
     private function cleanupFixtures(): void
@@ -269,17 +268,11 @@ class PlanImportExportTest extends TestCase
 
         $link->executeStatement("DELETE FROM coords WHERE plan LIKE 'plan_test_ie_%'");
 
-        foreach ([self::SRC, self::IMPORTED] as $plan) {
-            if (file_exists($this->jsonPath($plan))) {
-                unlink($this->jsonPath($plan));
-            }
-            json()->forget('plans', $plan);
-        }
-    }
-
-    private function jsonPath(string $plan): string
-    {
-        return $_SERVER['DOCUMENT_ROOT'] . '/datas/private/plans/' . $plan . '.json';
+        $link->executeStatement("DELETE FROM plans WHERE slug LIKE 'plan_test_ie_%'");
+        PlanService::forget();
+        // L'identity map gagnerait sur la base : une entité Plan d'un test
+        // précédent masquerait la ligne recréée.
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
     }
 
     private function link(): Connection
@@ -314,8 +307,5 @@ class PlanImportExportTest extends TestCase
             $this->markTestSkipped('coords table unreachable: ' . $e->getMessage());
         }
 
-        if (!is_dir($_SERVER['DOCUMENT_ROOT'] . '/datas/private/plans')) {
-            $this->markTestSkipped('datas/private/plans absent (datas non provisionné).');
-        }
     }
 }

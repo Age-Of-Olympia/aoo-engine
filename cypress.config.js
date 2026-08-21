@@ -57,47 +57,69 @@ module.exports = defineConfig({
           }
         },
 
-        /* Read a player's current turn state from disk.
+        /* Read a player's current turn state.
          *
-         * Turn data lives in JSON files, not the `players` table (the `turn`
-         * column from older CLAUDE.md docs does not exist). Classes/Player
-         * writes datas/private/players/<id>.turn.json after every get_caracs()
-         * call, containing the post-bonus remaining values.
+         * Remaining = caracs base + players_bonus rows (consumption is a
+         * negative `n`), the exact computation of Player::get_caracs. Read
+         * from the DATABASE: the .turn.json files are a per-request cache
+         * only refreshed by the next get_caracs() call — reading them races
+         * the game and shows stale values.
          *
-         * Returns { mvt, pa } with:
-         *   mvt = turn.mvt if set, else caracs.mvt (race max)
-         *   pa  = turn.a   if set, else caracs.a   (race max)
-         * This mirrors Player::getRemaining() semantics.
+         * Caracs base still comes from the .caracs.json cache (it carries
+         * the computed values, passives included) with the races table as
+         * fallback for a player whose cache was never written.
          */
-        readPlayerTurn({ playerId }) {
+        async readPlayerTurn({ playerId }) {
           const playersDir = path.join(__dirname, 'datas/private/players');
-          const turnPath = path.join(playersDir, `${playerId}.turn.json`);
           const caracsPath = path.join(playersDir, `${playerId}.caracs.json`);
 
           const readJson = (p) => {
-            if (!fs.existsSync(p)) return { __missing: true };
+            if (!fs.existsSync(p)) return null;
             const raw = fs.readFileSync(p, 'utf8').trim();
-            if (!raw) return {};
-            try { return JSON.parse(raw); } catch { return {}; }
+            if (!raw) return null;
+            try { return JSON.parse(raw); } catch { return null; }
           };
 
-          const turn = readJson(turnPath);
-          const caracs = readJson(caracsPath);
+          const connection = await mysql.createConnection({
+            host:     process.env.TEST_DB_HOST || 'mariadb-aoo4',
+            user:     process.env.TEST_DB_USER || 'root',
+            password: process.env.TEST_DB_PASS || 'passwordRoot',
+            database: process.env.TEST_DB_NAME || 'aoo4_test',
+            charset:  'utf8mb4'
+          });
 
-          const pick = (key, fallbackKey = key) =>
-            turn[key] !== undefined ? turn[key]
-              : caracs[fallbackKey] !== undefined ? caracs[fallbackKey]
-              : 0;
+          try {
+            let caracs = readJson(caracsPath);
+            if (!caracs) {
+              const [raceRows] = await connection.execute(
+                'SELECT r.mvt, r.a FROM races r JOIN players p ON p.race = r.name WHERE p.id = ?',
+                [playerId]
+              );
+              caracs = raceRows[0] || {};
+            }
 
-          const result = {
-            mvt: pick('mvt'),
-            pa: pick('a'),
-            turnMissing: turn.__missing === true,
-            caracsMissing: caracs.__missing === true
-          };
-          /* Log inputs/outputs so test output exposes player-id mismatches */
-          console.log(`[readPlayerTurn] playerId=${playerId} → ${JSON.stringify(result)}`);
-          return result;
+            const [bonusRows] = await connection.execute(
+              'SELECT name, n FROM players_bonus WHERE player_id = ? AND name IN (\'mvt\', \'a\')',
+              [playerId]
+            );
+            await connection.end();
+
+            const bonus = { mvt: 0, a: 0 };
+            for (const row of bonusRows) {
+              bonus[row.name] += Number(row.n);
+            }
+
+            const result = {
+              mvt: Number(caracs.mvt || 0) + bonus.mvt,
+              pa: Number(caracs.a || 0) + bonus.a
+            };
+            /* Log inputs/outputs so test output exposes player-id mismatches */
+            console.log(`[readPlayerTurn] playerId=${playerId} → ${JSON.stringify(result)}`);
+            return result;
+          } catch (error) {
+            await connection.end();
+            throw error;
+          }
         }
       });
 

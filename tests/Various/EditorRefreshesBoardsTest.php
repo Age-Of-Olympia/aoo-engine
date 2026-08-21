@@ -84,8 +84,8 @@ class EditorRefreshesBoardsTest extends TestCase
         );
         $this->conn->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
 
-        @unlink($_SERVER['DOCUMENT_ROOT'] . '/datas/private/plans/' . self::PLAN . '.json');
-        json()->forget('plans', self::PLAN);
+        $this->conn->executeStatement('DELETE FROM plans WHERE slug = ?', [self::PLAN]);
+        \App\Service\PlanService::forget(self::PLAN);
     }
 
     private function coordsId(int $x, int $y): int

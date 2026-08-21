@@ -70,12 +70,21 @@ echo "📦 Copying essential data..."
 mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$TEST_DB" <<SQL
 -- Copy reference data from source database
 INSERT IGNORE INTO races SELECT * FROM $SOURCE_DB.races;
+-- Plan configuration (ex plan JSON files): the tutorial needs its plan row
+-- (player_visibility, z levels, biomes) to clone instances
+INSERT IGNORE INTO plans SELECT * FROM $SOURCE_DB.plans;
+INSERT IGNORE INTO plan_z_levels SELECT * FROM $SOURCE_DB.plan_z_levels;
 INSERT IGNORE INTO items SELECT * FROM $SOURCE_DB.items;
 INSERT IGNORE INTO actions SELECT * FROM $SOURCE_DB.actions;
 INSERT IGNORE INTO action_outcomes SELECT * FROM $SOURCE_DB.action_outcomes;
 INSERT IGNORE INTO outcome_instructions SELECT * FROM $SOURCE_DB.outcome_instructions;
 INSERT IGNORE INTO action_conditions SELECT * FROM $SOURCE_DB.action_conditions;
 INSERT IGNORE INTO race_actions SELECT * FROM $SOURCE_DB.race_actions;
+-- Effects catalog: Player::go poses footstep traces (trace_pas_*) through
+-- Element::put, which exits the request when the effect is unknown
+INSERT IGNORE INTO effects SELECT * FROM $SOURCE_DB.effects;
+INSERT IGNORE INTO effect_controls SELECT * FROM $SOURCE_DB.effect_controls;
+INSERT IGNORE INTO effect_corruption_materials SELECT * FROM $SOURCE_DB.effect_corruption_materials;
 
 -- Copy tutorial configuration
 INSERT IGNORE INTO tutorial_steps SELECT * FROM $SOURCE_DB.tutorial_steps;
@@ -88,6 +97,8 @@ INSERT IGNORE INTO tutorial_step_interactions SELECT * FROM $SOURCE_DB.tutorial_
 INSERT IGNORE INTO tutorial_step_context_changes SELECT * FROM $SOURCE_DB.tutorial_step_context_changes;
 INSERT IGNORE INTO tutorial_step_next_preparation SELECT * FROM $SOURCE_DB.tutorial_step_next_preparation;
 INSERT IGNORE INTO tutorial_dialogs SELECT * FROM $SOURCE_DB.tutorial_dialogs;
+-- Template NPCs (Gaïa…) spawn from this config at instance creation
+INSERT IGNORE INTO tutorial_npcs SELECT * FROM $SOURCE_DB.tutorial_npcs;
 
 -- Create and copy tutorial catalog if it exists
 CREATE TABLE IF NOT EXISTS tutorial_catalog (
@@ -305,19 +316,42 @@ VALUES (103, UUID(), '29.0', TRUE, 'first_time', '1.0.0', 500);
 -- Clear firewall blocks
 DELETE FROM players_ips WHERE failed > 0;
 
--- Populate tutorial template map (boundary walls, resources, NPCs)
--- Boundary walls (North, South, East, West borders of 11x11 grid: -5 to 5)
-INSERT IGNORE INTO map_walls (name, coords_id, damages)
-SELECT 'mur_pierre', c.id, 0
-FROM coords c
-WHERE c.plan = 'tutorial' AND c.z = 0
-  AND ((c.x = -5 OR c.x = 5) OR (c.y = -5 OR c.y = 5));
+-- Populate tutorial template map (boundary walls, resources) by copying the
+-- ENTITIES of the source world: walls and trees are players rows + entity_cells
+-- since the map_resources conversion — the old map_walls layer renders nothing.
+-- Anchor cells are remapped by (x, y, z) onto this database's tutorial coords;
+-- FK checks are off during the copy because the rows arrive with source ids.
+SET FOREIGN_KEY_CHECKS = 0;
 
--- Gatherable tree for resource tutorial at (0, 1)
-INSERT IGNORE INTO map_walls (name, coords_id, damages)
-SELECT 'arbre1', c.id, -1
-FROM coords c
-WHERE c.plan = 'tutorial' AND c.x = 0 AND c.y = 1 AND c.z = 0;
+INSERT IGNORE INTO players
+SELECT p.*
+  FROM $SOURCE_DB.players p
+  JOIN $SOURCE_DB.coords sc ON sc.id = p.coords_id
+ WHERE sc.plan = 'tutorial'
+   AND p.player_type IN ('resource', 'building', 'plant', 'scenery');
+
+UPDATE players pt
+  JOIN $SOURCE_DB.coords sc ON sc.id = pt.coords_id AND sc.plan = 'tutorial'
+  JOIN coords tc ON tc.plan = 'tutorial' AND tc.x = sc.x AND tc.y = sc.y AND tc.z = sc.z
+   SET pt.coords_id = tc.id
+ WHERE pt.player_type IN ('resource', 'building', 'plant', 'scenery');
+
+-- An entity whose cell has no counterpart here cannot stand anywhere
+DELETE pt FROM players pt
+  LEFT JOIN coords tc ON tc.id = pt.coords_id AND tc.plan = 'tutorial'
+ WHERE pt.player_type IN ('resource', 'building', 'plant', 'scenery')
+   AND tc.id IS NULL;
+
+INSERT IGNORE INTO entity_cells (player_id, coords_id, plan, z, x, y, piece, role)
+SELECT ec.player_id, tc.id, ec.plan, ec.z, ec.x, ec.y, ec.piece, ec.role
+  FROM $SOURCE_DB.entity_cells ec
+  JOIN coords tc ON tc.plan = 'tutorial' AND tc.x = ec.x AND tc.y = ec.y AND tc.z = ec.z
+  JOIN players pt ON pt.id = ec.player_id
+ WHERE ec.plan = 'tutorial';
+
+-- No resources-state satellite copy: template resources start standing
+
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- Add Gaïa NPC (tutorial guide) at (1, 0)
 INSERT IGNORE INTO players (id, player_type, display_id, name, coords_id, race, xp, pi, energie, psw, mail, plain_mail, avatar, portrait, text)

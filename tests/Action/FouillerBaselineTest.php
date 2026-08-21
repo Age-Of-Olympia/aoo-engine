@@ -76,39 +76,31 @@ class FouillerBaselineTest extends LegacyPlayerFixtureTestCase
 
         $link->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
 
-        if (file_exists($this->jsonPath())) {
-            unlink($this->jsonPath());
-        }
-        json()->forget('plans', self::PLAN);
+        $link->executeStatement('DELETE FROM plans WHERE slug = ?', [self::PLAN]);
+        \App\Service\PlanService::forget(self::PLAN);
     }
 
     /**
-     * Même résolution que Classes\Json::decode() — racine du dépôt, pas
-     * DOCUMENT_ROOT, qui est vide en ligne de commande.
-     */
-    private function jsonPath(): string
-    {
-        return dirname(__DIR__, 2) . '/datas/private/plans/' . self::PLAN . '.json';
-    }
-
-    /**
-     * Écrit le JSON de plan et vide la mémoïsation : `json()` garde ses
-     * décodages, un fichier posé après un premier accès resterait invisible.
+     * Écrit la config de plan (table plans) et vide la mémoïsation : le
+     * gateway garde ses lectures, une ligne posée après un premier accès
+     * resterait invisible.
      *
      * @param list<array<string, mixed>> $biomes
      */
     private function writePlan(array $biomes): void
     {
-        file_put_contents($this->jsonPath(), json_encode([
-            'name' => 'Plan de test fouille',
-            'biomes' => $biomes,
-        ], JSON_UNESCAPED_UNICODE));
+        $this->link->executeStatement('DELETE FROM plans WHERE slug = ?', [self::PLAN]);
+        $this->link->insert('plans', [
+            'slug'   => self::PLAN,
+            'name'   => 'Plan de test fouille',
+            'biomes' => json_encode($biomes, JSON_UNESCAPED_UNICODE),
+        ]);
+        \App\Service\PlanService::forget(self::PLAN);
 
-        json()->forget('plans', self::PLAN);
-
-        /* Le monde se règle en base : le jeu ne lit plus le JSON de plan pour
-           les rendements, il lit `race_harvest`. Le JSON reste la source du
-           VERSEMENT, donc la fixture verse ce qu'elle vient d'écrire. */
+        /* Le monde se règle en base : le jeu ne lit pas les biomes pour les
+           rendements, il lit `race_harvest`. La colonne biomes reste la
+           source du VERSEMENT, donc la fixture verse ce qu'elle vient
+           d'écrire. */
         $this->link->executeStatement('DELETE FROM race_harvest WHERE plan = ?', [self::PLAN]);
         (new \App\Service\Map\HarvestCatalogService($this->link))->seed();
     }

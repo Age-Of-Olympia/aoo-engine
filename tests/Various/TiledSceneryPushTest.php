@@ -89,8 +89,8 @@ class TiledSceneryPushTest extends TestCase
         $this->conn->executeStatement('DELETE FROM entity_type_footprints WHERE type_name = ?', [self::FAMILY]);
         $this->conn->executeStatement('DELETE FROM races WHERE name = ?', [self::FAMILY]);
 
-        @unlink($_SERVER['DOCUMENT_ROOT'] . '/datas/private/plans/' . self::PLAN . '.json');
-        json()->forget('plans', self::PLAN);
+        $this->conn->executeStatement('DELETE FROM plans WHERE slug = ?', [self::PLAN]);
+        \App\Service\PlanService::forget(self::PLAN);
     }
 
     /** @return list<string> the piece names lying on the plan */

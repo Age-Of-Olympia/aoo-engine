@@ -7,16 +7,16 @@ use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Pouring the per-plan yields out of the legacy plan JSONs.
+ * Pouring the per-plan yields out of the biome lists the plans carry
+ * (plans.biomes, formerly the plan JSON files).
  *
  * The yield belongs to the (plan, type) pair, not to the type: on the real
  * data 28 of the 39 harvestable types give something different depending on
  * where they stand.
  *
- * What matters here is what the seed does with imperfect data — and the real
- * files are imperfect: two are zero bytes, five carry an empty biome entry,
- * and one wall name is a typo repeated across five plans. None of that may
- * turn into invented rates.
+ * What matters here is what the seed does with imperfect data — the real
+ * corpus carries empty biome entries and a wall-name typo repeated across
+ * five plans. None of that may turn into invented rates.
  *
  * DB-backed; skips cleanly when the database is unreachable.
  */
@@ -27,7 +27,6 @@ class HarvestCatalogSeedTest extends TestCase
     private const TYPE = 'gm_harvest_arbre';
 
     private ?Connection $conn = null;
-    private string $plansDir;
 
     protected function setUp(): void
     {
@@ -44,12 +43,6 @@ class HarvestCatalogSeedTest extends TestCase
             $this->conn->fetchOne('SELECT 1');
         } catch (\Throwable $e) {
             $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
-        }
-
-        $this->plansDir = dirname(__DIR__, 2) . '/datas/private/plans';
-
-        if (!is_dir($this->plansDir) || !is_writable($this->plansDir)) {
-            $this->markTestSkipped('datas/private/plans non inscriptible.');
         }
 
         $this->cleanup();
@@ -76,22 +69,24 @@ class HarvestCatalogSeedTest extends TestCase
         }
 
         foreach ([self::PLAN_OK, self::PLAN_BROKEN] as $plan) {
-            @unlink($this->plansDir . '/' . $plan . '.json');
-            json()->forget('plans', $plan);
+            $this->conn->executeStatement('DELETE FROM plans WHERE slug = ?', [$plan]);
+            \App\Service\PlanService::forget($plan);
             $this->conn->executeStatement('DELETE FROM race_harvest WHERE plan = ?', [$plan]);
         }
 
         $this->conn->executeStatement('DELETE FROM races WHERE name = ?', [self::TYPE]);
     }
 
-    /** @param array<int, array<string, mixed>> $biomes */
-    private function writePlan(string $name, array $biomes): void
+    /** @param array<int, array<string, mixed>>|null $biomes */
+    private function writePlan(string $name, ?array $biomes): void
     {
-        file_put_contents(
-            $this->plansDir . '/' . $name . '.json',
-            json_encode(['name' => $name, 'biomes' => $biomes], JSON_PRETTY_PRINT)
-        );
-        json()->forget('plans', $name);
+        $this->conn->executeStatement('DELETE FROM plans WHERE slug = ?', [$name]);
+        $this->conn->insert('plans', [
+            'slug'   => $name,
+            'name'   => $name,
+            'biomes' => $biomes === null ? null : json_encode($biomes),
+        ]);
+        \App\Service\PlanService::forget($name);
     }
 
     /** @return array<string, mixed>|false */
@@ -136,17 +131,16 @@ class HarvestCatalogSeedTest extends TestCase
     }
 
     /**
-     * An unreadable plan is NAMED and skipped. Two of the real files are zero
-     * bytes; guessing rates for them would put silent numbers into the world.
+     * A plan without biomes pours nothing — never a guessed rate. The
+     * zero-byte files of the JSON era became NULL columns; the property
+     * they tested (no invented numbers) still holds.
      */
-    public function testAnUnreadablePlanIsNamedAndNotGuessed(): void
+    public function testAPlanWithoutBiomesPoursNothing(): void
     {
-        file_put_contents($this->plansDir . '/' . self::PLAN_BROKEN . '.json', '');
-        json()->forget('plans', self::PLAN_BROKEN);
+        $this->writePlan(self::PLAN_BROKEN, null);
 
-        $report = (new HarvestCatalogService($this->conn))->seed();
+        (new HarvestCatalogService($this->conn))->seed();
 
-        $this->assertContains(self::PLAN_BROKEN, $report['unreadable']);
         $this->assertFalse($this->poured(self::PLAN_BROKEN));
     }
 

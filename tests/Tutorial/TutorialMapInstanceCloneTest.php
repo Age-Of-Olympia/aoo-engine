@@ -33,8 +33,6 @@ class TutorialMapInstanceCloneTest extends TestCase
 
     private string $sessionId;
 
-    /** @var list<string> JSON files to remove, template and instance */
-    private array $jsonFiles = [];
 
     protected function setUp(): void
     {
@@ -57,11 +55,11 @@ class TutorialMapInstanceCloneTest extends TestCase
         $this->templatePlan = 'tpl_' . $suffix;
         $this->sessionId = $suffix . '-clone-test';
 
-        $this->writePlanJson($this->templatePlan);
-        // createInstance dérive son nom d'instance du début du session id.
-        $this->jsonFiles[] = $this->planJsonPath('tut_' . substr($this->sessionId, 0, 10));
-
         $this->conn->beginTransaction();
+
+        // Dans la transaction : le rollback du tearDown emporte la config
+        // du modèle comme celle de l'instance clonée.
+        $this->writePlanConfig($this->templatePlan);
     }
 
     protected function tearDown(): void
@@ -71,11 +69,9 @@ class TutorialMapInstanceCloneTest extends TestCase
         }
         $GLOBALS['link'] = $this->previousLink;
 
-        foreach ($this->jsonFiles as $path) {
-            if (file_exists($path)) {
-                unlink($path);
-            }
-        }
+        // Les caches de lecture et l'identity map survivent au rollback.
+        \App\Service\PlanService::forget();
+        EntityManagerFactory::getEntityManager()->clear();
     }
 
     public function testInstanceCarriesEveryEntityFamilyOfTheTemplate(): void
@@ -150,15 +146,15 @@ class TutorialMapInstanceCloneTest extends TestCase
         $this->assertSame('bois', $yield['item']);
         $this->assertSame(0, (int) $yield['exhaust'], 'l\'arbre d\'instance ne s\'épuise jamais');
 
-        // La minimap du HUD vit de ces champs : la copie du JSON doit les
-        // transporter tels quels.
-        $instanceJson = json_decode((string) file_get_contents($this->planJsonPath($plan)), true);
+        // La minimap du HUD vit de ces champs : la copie de la config doit
+        // les transporter tels quels.
+        $instanceConfig = (new \App\Service\PlanConfigService())->readFull($plan);
         $this->assertSame(
-            [['z' => 0, 'visibleBoundsMinX' => -5, 'visibleBoundsMaxX' => 5, 'visibleBoundsMinY' => -5, 'visibleBoundsMaxY' => 5]],
-            $instanceJson['z_levels'] ?? null,
+            [['z' => 0, 'z-name' => 'Niveau 0', 'visibleBoundsMinX' => -5, 'visibleBoundsMaxX' => 5, 'visibleBoundsMinY' => -5, 'visibleBoundsMaxY' => 5]],
+            $instanceConfig['z_levels'] ?? null,
             'l\'instance hérite des z_levels du modèle (carte locale du HUD)'
         );
-        $this->assertSame('eryn_dolen', $instanceJson['bg'] ?? null, 'l\'instance hérite du fond de carte');
+        $this->assertSame('eryn_dolen', $instanceConfig['bg'] ?? null, 'l\'instance hérite du fond de carte');
     }
 
     public function testATypeAbsentFromTheCatalogAbortsCreationLoudly(): void
@@ -209,24 +205,23 @@ class TutorialMapInstanceCloneTest extends TestCase
         return array_map('intval', $counts);
     }
 
-    private function planJsonPath(string $plan): string
+    private function writePlanConfig(string $plan): void
     {
-        return dirname(__DIR__, 2) . '/datas/private/plans/' . $plan . '.json';
-    }
-
-    private function writePlanJson(string $plan): void
-    {
-        $path = $this->planJsonPath($plan);
-        file_put_contents($path, json_encode([
+        $this->conn->insert('plans', [
+            'slug'              => $plan,
             'name'              => 'Clone test',
-            'player_visibility' => false,
+            'player_visibility' => 0,
             'bg'                => 'eryn_dolen',
-            'z_levels'          => [[
-                'z' => 0,
-                'visibleBoundsMinX' => -5, 'visibleBoundsMaxX' => 5,
-                'visibleBoundsMinY' => -5, 'visibleBoundsMaxY' => 5,
-            ]],
-        ]));
-        $this->jsonFiles[] = $path;
+        ]);
+        $this->conn->insert('plan_z_levels', [
+            'plan_id'              => (int) $this->conn->lastInsertId(),
+            'z'                    => 0,
+            'name'                 => 'Niveau 0',
+            'visible_bounds_min_x' => -5,
+            'visible_bounds_max_x' => 5,
+            'visible_bounds_min_y' => -5,
+            'visible_bounds_max_y' => 5,
+        ]);
+        \App\Service\PlanService::forget($plan);
     }
 }

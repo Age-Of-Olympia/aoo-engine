@@ -3,14 +3,16 @@
 namespace Tests\Various;
 
 use App\Service\PlanAdminService;
+use App\Service\PlanConfigService;
+use App\Service\PlanService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 /**
  * Cycle de vie admin des plans (PlanAdminService) : création vierge (coord
- * d'amorce + JSON minimal), clonage ensembliste (lignes joueur exclues,
- * endTime non copié, JSON surchargé) et suppression avec bilan préalable
+ * d'amorce + config minimale), clonage ensembliste (lignes joueur exclues,
+ * endTime non copié, config surchargée) et suppression avec bilan préalable
  * (joueur = blocage absolu, PNJ = forçable avec cascade).
  *
  * DB-backed ; skip propre quand la base est inaccessible — même convention
@@ -40,15 +42,15 @@ class PlanAdminServiceTest extends TestCase
         $this->cleanupFixtures();
     }
 
-    public function testCreateBlankPlanWritesJsonAndSeedCoord(): void
+    public function testCreateBlankPlanWritesConfigAndSeedCoord(): void
     {
         // View::get_coords_id() trace la coord d'amorce via error_log ;
         (new PlanAdminService())->createBlankPlan(self::BLANK, ['name' => 'Plan de test', 'player_visibility' => 'false']);
 
-        $this->assertFileExists($this->jsonPath(self::BLANK));
-        $json = json_decode((string) file_get_contents($this->jsonPath(self::BLANK)), true);
-        $this->assertSame('Plan de test', $json['name']);
-        $this->assertFalse($json['player_visibility']);
+        $config = $this->readConfig(self::BLANK);
+        $this->assertNotNull($config);
+        $this->assertSame('Plan de test', $config['name']);
+        $this->assertFalse($config['player_visibility']);
 
         $link = $this->link();
         $this->assertSame(
@@ -85,11 +87,11 @@ class PlanAdminServiceTest extends TestCase
             $this->assertSame(409, $e->getCode());
         }
 
-        // Fichier JSON orphelin, sans coords — le trou que createPlan() seul ne voit pas
-        file_put_contents($this->jsonPath(self::BLANK), '{"name": "Orphelin"}');
+        // Config orpheline, sans coords — le trou que createPlan() seul ne voit pas
+        (new PlanConfigService())->replace(self::BLANK, ['name' => 'Orphelin']);
         try {
             $service->createBlankPlan(self::BLANK);
-            $this->fail('Plan à JSON orphelin accepté');
+            $this->fail('Plan à config orpheline accepté');
         } catch (RuntimeException $e) {
             $this->assertSame(409, $e->getCode());
         }
@@ -125,10 +127,10 @@ class PlanAdminServiceTest extends TestCase
         );
         $this->assertSame(0, (int) $endTime);
 
-        // JSON copié avec surcharge du nom
-        $json = json_decode((string) file_get_contents($this->jsonPath(self::CLONE)), true);
-        $this->assertSame('Clone de test', $json['name']);
-        $this->assertFalse($json['player_visibility'], 'le reste du JSON source voyage');
+        // Config copiée avec surcharge du nom
+        $config = $this->readConfig(self::CLONE);
+        $this->assertSame('Clone de test', $config['name']);
+        $this->assertFalse($config['player_visibility'], 'le reste de la config source voyage');
     }
 
     public function testClonePlanRefusesExistingTargetAndUnknownSource(): void
@@ -265,14 +267,14 @@ class PlanAdminServiceTest extends TestCase
                 )
             );
         }
-        $this->assertFileDoesNotExist($this->jsonPath(self::SRC));
-        $this->assertContains('datas/private/plans/' . self::SRC . '.json', $report['files']);
+        $this->assertNull($this->readConfig(self::SRC));
+        $this->assertContains('config du plan (base)', $report['files']);
     }
 
     /**
      * Plan source de fixture : 3 coords en z=0, une tuile, deux murs (dont
      * un construit par un joueur réel existant), un élément avec endTime,
-     * et un fichier JSON.
+     * et une config de plan.
      */
     /**
      * Un bâtiment n'est pas une ligne de carte mais une ENTITÉ : la boucle
@@ -380,11 +382,7 @@ class PlanAdminServiceTest extends TestCase
             [$ids['0,1'], 'feu_test']
         );
 
-        file_put_contents(
-            $this->jsonPath(self::SRC),
-            json_encode(['name' => 'Source de test', 'player_visibility' => false], JSON_PRETTY_PRINT) . "\n"
-        );
-        json()->forget('plans', self::SRC);
+        (new PlanConfigService())->replace(self::SRC, ['name' => 'Source de test', 'player_visibility' => false]);
     }
 
     /** The fixture character every player-built row hangs from. */
@@ -443,17 +441,19 @@ class PlanAdminServiceTest extends TestCase
         );
         $link->executeStatement("DELETE FROM coords WHERE plan LIKE 'plan_test_adm_%'");
 
-        foreach ([self::SRC, self::CLONE, self::BLANK] as $plan) {
-            if (file_exists($this->jsonPath($plan))) {
-                unlink($this->jsonPath($plan));
-            }
-            json()->forget('plans', $plan);
-        }
+        $link->executeStatement("DELETE FROM plans WHERE slug LIKE 'plan_test_adm_%'");
+        PlanService::forget();
+        // L'identity map gagnerait sur la base : une entité Plan d'un test
+        // précédent masquerait la ligne recréée.
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
     }
 
-    private function jsonPath(string $plan): string
+    /** Config courante du plan (forme JSON legacy), ou null. */
+    private function readConfig(string $plan): ?array
     {
-        return $_SERVER['DOCUMENT_ROOT'] . '/datas/private/plans/' . $plan . '.json';
+        PlanService::forget($plan);
+
+        return (new PlanConfigService())->readFull($plan);
     }
 
     private function link(): Connection
@@ -490,8 +490,5 @@ class PlanAdminServiceTest extends TestCase
             $this->markTestSkipped('coords table unreachable: ' . $e->getMessage());
         }
 
-        if (!is_dir($_SERVER['DOCUMENT_ROOT'] . '/datas/private/plans')) {
-            $this->markTestSkipped('datas/private/plans absent (datas non provisionné).');
-        }
     }
 }
