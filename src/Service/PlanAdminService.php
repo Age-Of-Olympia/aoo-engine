@@ -38,7 +38,7 @@ class PlanAdminService
         $this->tiledMap = $tiledMap ?? new TiledMapService();
     }
 
-    /** Le plan existe-t-il, côté coords OU côté fichier JSON ? */
+    /** Le plan existe-t-il, côté coords OU côté config (table plans) ? */
     public function planExists(string $plan): bool
     {
         $res = $this->db->exe('SELECT 1 FROM coords WHERE plan = ? LIMIT 1', array($plan));
@@ -46,7 +46,7 @@ class PlanAdminService
             return true;
         }
 
-        return file_exists($this->jsonPath($plan));
+        return plans()->exists($plan);
     }
 
     /**
@@ -131,8 +131,8 @@ class PlanAdminService
         // Buildings are entities, not a map table: the loop above misses them.
         $report['layers'][TiledMapService::BUILDINGS_LAYER] = $this->copyDecorBuildings($sourcePlan, $targetPlan);
 
-        // Après commit : un clone en base sans JSON se répare en relançant la
-        // copie du fichier, l'inverse (fichier sans base) serait un orphelin
+        // Après commit : un clone de coords sans config se répare en
+        // relançant la copie, l'inverse (config sans coords) serait un orphelin
         if (trim((string) ($jsonOverrides['name'] ?? '')) === '') {
             $jsonOverrides['name'] = $targetPlan;
         }
@@ -357,12 +357,20 @@ class PlanAdminService
 
         $report = $this->purgePlanRows($plan, $force);
 
+        // La config du plan part avec lui (les niveaux z suivent en cascade)
+        $configDeleted = (int) $this->db->exe(
+            'DELETE FROM plans WHERE slug = ?',
+            array($plan),
+            false,
+            true
+        );
+        if ($configDeleted > 0) {
+            $report['files'][] = 'config du plan (base)';
+        }
+        PlanService::forget($plan);
+
         // Fichiers en dernier et best-effort : la base fait foi, un fichier
         // survivant se renettoie, une base à moitié supprimée non
-        $jsonPath = $this->jsonPath($plan);
-        if (file_exists($jsonPath) && @unlink($jsonPath)) {
-            $report['files'][] = 'datas/private/plans/' . $plan . '.json';
-        }
         foreach (glob($_SERVER['DOCUMENT_ROOT'] . '/img/maps/local/local_' . $plan . '_*.png') ?: [] as $png) {
             if (@unlink($png)) {
                 $report['files'][] = 'img/maps/local/' . basename($png);
@@ -426,7 +434,7 @@ class PlanAdminService
         if ($from === $to) {
             throw new RuntimeException('Le nouveau nom est identique.', 400);
         }
-        if ($this->planExists($to) || file_exists($this->jsonPath($to))) {
+        if ($this->planExists($to)) {
             throw new RuntimeException("Le plan « {$to} » existe déjà.", 409);
         }
 
@@ -446,6 +454,7 @@ class PlanAdminService
             // réécriture, l'historique filtré par plan (Log.php) perdrait
             // tout ce qui précède le renommage.
             $byName = [
+                'plans'                  => 'slug',
                 'factions'               => 'respawnPlan',
                 'races'                  => 'plan',
                 'tutorial_catalog'       => 'plan',
@@ -489,11 +498,10 @@ class PlanAdminService
             throw $e;
         }
 
+        PlanService::forget($from);
+        PlanService::forget($to);
+
         // Fichiers en dernier et best-effort — même politique que deletePlan
-        $fromJson = $this->jsonPath($from);
-        if (file_exists($fromJson) && @rename($fromJson, $this->jsonPath($to))) {
-            $report['files'][] = 'datas/private/plans/' . $to . '.json';
-        }
         $pngPrefix = $_SERVER['DOCUMENT_ROOT'] . '/img/maps/local/local_';
         foreach (glob($pngPrefix . $from . '_*.png') ?: [] as $png) {
             $target = $pngPrefix . $to . '_' . substr(basename($png), strlen('local_' . $from . '_'));
@@ -632,11 +640,6 @@ class PlanAdminService
                 400
             );
         }
-    }
-
-    private function jsonPath(string $plan): string
-    {
-        return $_SERVER['DOCUMENT_ROOT'] . '/datas/private/plans/' . $plan . '.json';
     }
 
     /**

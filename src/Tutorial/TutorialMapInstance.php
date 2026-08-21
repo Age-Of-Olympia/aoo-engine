@@ -68,21 +68,15 @@ class TutorialMapInstance
             throw new \RuntimeException("Template tutorial map (plan='{$templatePlan}') not found.");
         }
 
-        // Step 1.5: Copy plan JSON file for resource definitions
-        $templateJsonPath = __DIR__ . '/../../datas/private/plans/' . $templatePlan . '.json';
-        $instanceJsonPath = __DIR__ . '/../../datas/private/plans/' . $instancePlanName . '.json';
-
-        if (!file_exists($templateJsonPath)) {
-            throw new \RuntimeException("Template plan JSON not found: {$templateJsonPath}");
+        // Step 1.5: Clone the plan configuration (z levels, biomes, visibility)
+        if (!plans()->exists($templatePlan)) {
+            throw new \RuntimeException("Template plan config not found: {$templatePlan}");
         }
 
-        // Read template JSON and modify plan name
-        $templateJson = json_decode(file_get_contents($templateJsonPath), true);
-        $templateJson['name'] = 'Tutoriel Instance';
-        $templateJson['shortName'] = 'Tuto';
-
-        // Write instance JSON
-        file_put_contents($instanceJsonPath, json_encode($templateJson, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        (new \App\Service\PlanConfigService())->copy($templatePlan, $instancePlanName, [
+            'name' => 'Tutoriel Instance',
+            'shortName' => 'Tuto',
+        ]);
 
         // Step 2: Copy coords from template
         $sql = "
@@ -455,19 +449,18 @@ class TutorialMapInstance
     }
 
     /**
-     * Les fichiers qu'une instance laisse derrière elle : son JSON de
-     * plan, et les couches PNG de sa minimap (générées au premier
-     * affichage du HUD, une par calque et par horodatage).
+     * Ce qu'une instance laisse derrière elle : sa ligne de config de plan
+     * (les niveaux z suivent en cascade), ses surcharges de rendement, et
+     * les couches PNG de sa minimap (générées au premier affichage du HUD,
+     * une par calque et par horodatage).
      */
     private function removeInstanceLeftovers(string $planName): void
     {
         // Les surcharges de rendement clonées à la création.
         $this->conn->executeStatement('DELETE FROM race_harvest WHERE plan = ?', [$planName]);
 
-        $jsonPath = __DIR__ . '/../../datas/private/plans/' . $planName . '.json';
-        if (file_exists($jsonPath)) {
-            unlink($jsonPath);
-        }
+        $this->conn->executeStatement('DELETE FROM plans WHERE slug = ?', [$planName]);
+        \App\Service\PlanService::forget($planName);
 
         foreach (glob(__DIR__ . '/../../img/maps/local/local_' . $planName . '_*.png') ?: [] as $layerFile) {
             unlink($layerFile);

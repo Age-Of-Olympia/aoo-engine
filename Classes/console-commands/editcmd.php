@@ -14,8 +14,7 @@ Exemple:
 > edit items (liste les .json du repertoire "datas/public/items/")
 > edit items private (liste les .json du repertoire "datas/private/items/")
 > edit items/adonis (édite le .json "datas/public/items/adonis.json")
-> edit plans/faille_naine private (édite le .json "datas/private/plans/faille_naine.json")
-> edit plan (édite le .json du plan actuel)
+> edit plan (ouvre la config du plan actuel dans l'admin — les plans vivent en base)
 EOT);
     }
 
@@ -40,8 +39,9 @@ EOT);
 
             $plan = $admin->coords->plan;
 
+            // La config des plans vit en base : l'éditeur est la page admin
             echo '
-            <script>document.location = "tools.php?edit&dir=private&subDir=plans&finalDir='. $plan .'";</script>
+            <script>document.location = "admin/plans.php?action=edit&plan='. $plan .'";</script>
             ';
         }
 
