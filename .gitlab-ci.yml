@@ -155,8 +155,9 @@ test_job:
     TEST_DB_USER: root
     TEST_DB_PASS: passwordRoot
     TEST_DB_NAME: aoo4_test
-    # Surchargée par les règles ci-dessous sur les branches d'intégration.
-    TEST_TARGET: test-ci
+    # La couverture partout : sur le job d'aujourd'hui (~80 s), pcov ne
+    # coûte que ~20 % — le « sept fois plus cher » datait du job à 400 s.
+    TEST_TARGET: test-ci-coverage
   before_script:
     - make setup-ci-env
     - composer install --no-progress --no-interaction
@@ -172,15 +173,9 @@ test_job:
       coverage_report:
         coverage_format: cobertura
         path: tmp/coverage/cobertura.xml
-  # Les branches de travail passent la suite SANS couverture : c'est le
-  # retour rapide. La couverture, sept fois plus chère en calcul, n'est
-  # mesurée que là où on la lit — les branches d'intégration.
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $CI_COMMIT_BRANCH == "staging" || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "saison-3" || $CI_COMMIT_BRANCH == "integration/hud-redesign"
-      variables:
-        TEST_TARGET: test-ci-coverage
     - if: $CI_COMMIT_BRANCH
 
 # Cypress tutorial E2E test. Manual trigger initially: confirm Dockerfile.test
