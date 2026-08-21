@@ -20,22 +20,23 @@ class NewTurnView
             return;
         }
 
-        echo '<h1><font color="red">Nouveau Tour</font></h1>';
+        echo '<link rel="stylesheet" href="css/interstitial.css?v=20260821b" />';
 
-        echo '<div style="text-align: center;">';
-        echo '<a href="index.php"><img class="box-shadow" src="img/ui/illustrations/sunset.webp" /></a>';
-        echo '</div>';
+        echo '<div class="aoo-notice aoo-notice--turn">';
 
-        echo '<br />Prochain Tour le ' . date('d/m/Y à H:i', $recap->nextTurnTime) . '.';
+        echo '<h1>Nouveau Tour</h1>';
+        echo '<img class="aoo-notice-flourish" src="img/ui/paper/flourish-sep.png" alt="" />';
+        echo '<a href="index.php"><img class="aoo-notice-medallion" src="img/ui/illustrations/sunset.webp" alt="" /></a>';
 
-        echo '
-        <table border="1" align="center" class="marbre">';
+        echo '<p class="aoo-notice-meta">Prochain Tour le ' . date('d/m/Y à H:i', $recap->nextTurnTime) . '.</p>';
+
+        echo '<table class="aoo-notice-ledger">';
 
         foreach ($recap->rows as [$tooltipKey, $label, $value]) {
             $tooltip = $tooltipKey !== null
                 ? ' flow="right" tooltip="' . CARACS_TXT[$tooltipKey] . '"'
                 : '';
-            echo '<tr><td' . $tooltip . '>' . $label . '</td><td align="right">' . $value . '</td></tr>';
+            echo '<tr><td' . $tooltip . '>' . $label . '</td><td>' . $value . '</td></tr>';
         }
 
         echo '</table>';
@@ -48,11 +49,13 @@ class NewTurnView
             echo '</div>';
         }
 
-        echo '<br /><a href="index.php"><button>Jouer</button></a>';
+        echo '<a href="index.php"><button>Jouer</button></a>';
 
         if ($recap->showMailPrompt) {
             echo ' <a href="account.php?changeMail"><button>Renseigner mon mail (+20 XP)</button></a>';
         }
+
+        echo '</div>';
 
         self::renderAutoTutorialRedirect();
 
