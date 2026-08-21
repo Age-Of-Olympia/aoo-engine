@@ -480,6 +480,26 @@ select.form-control {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+    /* The vertical scrollbar steals ~15px of width; without this the
+     * squeezed links overflow sideways and spawn a second, horizontal
+     * scrollbar under the menu. */
+    overflow-x: hidden;
+    /* Browser-default scrollbars are thick and pale on the dark slate. */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+.admin-sidebar .vertical-nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-sidebar .vertical-nav::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 3px;
+}
+
+.admin-sidebar .vertical-nav::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .admin-sidebar .sidebar-footer {
