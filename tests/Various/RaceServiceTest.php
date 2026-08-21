@@ -95,7 +95,9 @@ class RaceServiceTest extends TestCase
 
         $this->assertContains('ame', $all);
         $this->assertContains('lutin', $all);
-        $this->assertSame(array_intersect($all, $playable), array_intersect($playable, $all));
+        /* Inclusion, pas égalité indexée : la composition du roster est de
+         * l'équilibrage, et array_intersect garde des clés qui bougent avec. */
+        $this->assertSame([], array_diff($playable, $all), 'toute race jouable figure au catalogue complet');
     }
 
     /**
