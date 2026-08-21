@@ -8,12 +8,13 @@
 # scripts/testing/reset_test_database.sh.
 set -e
 
-# 1. CI database config, pointing at the mariadb service alias.
-cat > config/db_constants.php <<'PHPEOF'
+# 1. CI database config, pointing at the job's database (DB_HOST:
+#    127.0.0.1 for the in-container MariaDB, see start_ci_mariadb.sh).
+cat > config/db_constants.php <<PHPEOF
 <?php
 define('DEV_MODE', true);
 define('DB_CONSTANTS', array(
-    'host'     => 'mariadb',
+    'host'     => '${DB_HOST:-127.0.0.1}',
     'user'     => 'root',
     'psw'      => 'passwordRoot',
     'db'       => 'aoo4',

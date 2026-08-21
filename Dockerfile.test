@@ -43,6 +43,17 @@ RUN apt-get update && apt-get install -y \
     libxtst6 \
     && rm -rf /var/lib/apt/lists/*
 
+# Layer 1b (stable): MariaDB server, run INSIDE the job container
+# (scripts/testing/start_ci_mariadb.sh) instead of a GitLab service.
+# A service is a separate container behind the Docker network: the
+# suite's ~15k queries paid that hop at ~17ms each on a shared runner —
+# 65x the loopback latency (#288). Bookworm ships MariaDB 10.11 LTS
+# (the retired service ran mariadb:11); the suite's SQL, uca1400
+# collations included, is supported by both.
+RUN apt-get update && apt-get install -y \
+    mariadb-server \
+    && rm -rf /var/lib/apt/lists/*
+
 # Layer 2 (stable): coverage drivers — slow PECL compiles (~22s each);
 # rarely change. Placed BEFORE docker-php-ext-install so adding/removing
 # PHP exts in the layer below does not invalidate these.

@@ -13,7 +13,7 @@ variables:
   # runner, un tag mutable (latest) resservait indéfiniment sa copie locale
   # périmée ; un tag neuf n'existe pas localement, donc il est tiré une fois,
   # puis plus jamais — zéro pull en régime permanent, zéro image périmée.
-  TEST_IMAGE_TAG: "test-20260726"
+  TEST_IMAGE_TAG: "test-20260821"
 
 # stan_job et test_job partagent l'étape test : ils ne dépendent que de
 # l'image, pas l'un de l'autre — les sérialiser doublait la durée du pipeline.
@@ -122,25 +122,11 @@ stan_job:
 test_job:
   <<: *php-job-template
   stage: test
-  services:
-    - name: mariadb:11
-      alias: mariadb
-      # Base JETABLE : rien à préserver en cas de coupure, donc aucune
-      # raison de payer les garanties de durabilité. La suite provoque
-      # ~2 300 fsyncs (fixtures : ~4 000 DELETE), qui coûtent une
-      # fraction de seconde en local et bien davantage sur le disque
-      # d'un runner partagé.
-      command:
-        - "--innodb-flush-log-at-trx-commit=0"
-        - "--innodb-doublewrite=0"
-        - "--sync-binlog=0"
-        - "--skip-log-bin"
-        - "--performance-schema=OFF"
-      variables:
-        MARIADB_ROOT_PASSWORD: passwordRoot
-        MARIADB_DATABASE: aoo4
+  # The database runs INSIDE the job container (start_ci_mariadb.sh): a
+  # GitLab service is a separate container behind the Docker network, and
+  # the suite's ~15,000 queries paid that hop at ~17ms each (#288).
   variables:
-    DB_HOST: mariadb
+    DB_HOST: 127.0.0.1
     DB_USER: root
     DB_PASS: passwordRoot
     # La suite se donne d'office une base jetable (aoo4_phpunit) pour ne pas
@@ -151,6 +137,7 @@ test_job:
     # Surchargée par les règles ci-dessous sur les branches d'intégration.
     TEST_TARGET: test-ci
   before_script:
+    - bash scripts/testing/start_ci_mariadb.sh
     - make setup-ci-env
     - composer install --no-progress --no-interaction
     - bash scripts/testing/setup_ci_database.sh
@@ -196,26 +183,17 @@ test_job:
 cypress_endpoint_job:
   <<: *php-job-template
   stage: test
-  services:
-    - name: mariadb:11
-      alias: mariadb
-      command:
-        - "--innodb-flush-log-at-trx-commit=0"
-        - "--innodb-doublewrite=0"
-        - "--sync-binlog=0"
-        - "--skip-log-bin"
-        - "--performance-schema=OFF"
-      variables:
-        MARIADB_ROOT_PASSWORD: passwordRoot
-        MARIADB_DATABASE: aoo4
+  # The database runs INSIDE the job container (start_ci_mariadb.sh): a
+  # GitLab service is a separate container behind the Docker network, and
+  # the suite's ~15,000 queries paid that hop at ~17ms each (#288).
   variables:
-    DB_HOST: mariadb
+    DB_HOST: 127.0.0.1
     DB_USER: root
     DB_PASS: passwordRoot
     # DB_NAME reste `aoo4_test`, le défaut du script de remise à zéro : il
     # commence par un DROP DATABASE, et le pointer sur la base servie la
     # détruisait avant de la cloner depuis elle-même.
-    TEST_DB_HOST: mariadb
+    TEST_DB_HOST: 127.0.0.1
     TEST_DB_USER: root
     TEST_DB_PASS: passwordRoot
     TEST_DB_NAME: aoo4_test
@@ -223,6 +201,7 @@ cypress_endpoint_job:
     CYPRESS_PLAYER_NAME: TestFreshPlayer
     CYPRESS_PLAYER_PASSWORD: testpass
   before_script:
+    - bash scripts/testing/start_ci_mariadb.sh
     - make setup-ci-env
     - composer install --no-progress --no-interaction
     - npm ci --no-audit --no-fund
@@ -250,32 +229,18 @@ cypress_endpoint_job:
 cypress_tutorial_job:
   <<: *php-job-template
   stage: test
-  services:
-    - name: mariadb:11
-      alias: mariadb
-      # Base JETABLE : rien à préserver en cas de coupure, donc aucune
-      # raison de payer les garanties de durabilité. La suite provoque
-      # ~2 300 fsyncs (fixtures : ~4 000 DELETE), qui coûtent une
-      # fraction de seconde en local et bien davantage sur le disque
-      # d'un runner partagé.
-      command:
-        - "--innodb-flush-log-at-trx-commit=0"
-        - "--innodb-doublewrite=0"
-        - "--sync-binlog=0"
-        - "--skip-log-bin"
-        - "--performance-schema=OFF"
-      variables:
-        MARIADB_ROOT_PASSWORD: passwordRoot
-        MARIADB_DATABASE: aoo4
+  # The database runs INSIDE the job container (start_ci_mariadb.sh): a
+  # GitLab service is a separate container behind the Docker network, and
+  # the suite's ~15,000 queries paid that hop at ~17ms each (#288).
   variables:
-    DB_HOST: mariadb
+    DB_HOST: 127.0.0.1
     DB_USER: root
     DB_PASS: passwordRoot
     # cypress.config.js reads TEST_DB_* (same contract as
     # scripts/testing/reset_test_database.sh). Without these aliases the
     # cy.task('queryDatabase') defaults kick in and try to reach the
     # devcontainer host `mariadb-aoo4`, which doesn't exist in CI.
-    TEST_DB_HOST: mariadb
+    TEST_DB_HOST: 127.0.0.1
     TEST_DB_USER: root
     TEST_DB_PASS: passwordRoot
     TEST_DB_NAME: aoo4
@@ -284,6 +249,7 @@ cypress_tutorial_job:
     # (TutorialFeatureFlagTest exercises the disabled paths).
     ENABLE_TUTORIAL_V2: "1"
   before_script:
+    - bash scripts/testing/start_ci_mariadb.sh
     # Stage the data + image fixtures the app expects.
     - make setup-ci-env
     - composer install --no-progress --no-interaction
