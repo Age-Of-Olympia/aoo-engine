@@ -4,8 +4,9 @@
  * Character edit sheet (admin dashboard → Personnages → Compétences →
  * Éditer): name, position (teleport), remaining vitals (PV, PM, MVT, A,
  * Ae — written to players_bonus, the same mechanic as wounds and point
- * spending), turn reset, inventory and effects. Built for playtesting:
- * wound a character, give their points back, move them — without
+ * spending), turn reset, progression (XP, PI, carac ranks, XP/PI audit),
+ * inventory and effects. Built for playtesting: wound a character, give
+ * their points back, move them, adjust their progression — without
  * touching the database by hand.
  */
 require_once __DIR__ . '/layout.php';
@@ -14,7 +15,9 @@ require_once __DIR__ . '/helpers.php';
 use App\Factory\PlayerFactory;
 use App\Service\CsrfProtectionService;
 use App\Service\EffectService;
+use App\Service\PlayerCaracsService;
 use App\Service\PlayerEffectService;
+use App\Service\ProgressionService;
 use Classes\Db;
 use Classes\Str;
 use Classes\View;
@@ -230,6 +233,106 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
     redirectTo($backTo); // PRG
 }
 
+// Progression: XP, PI and carac ranks — the console's "checkpi" audit,
+// brought onto the sheet. XP goes through put_xp (PI follows the season
+// cap, the rank is recomputed), ranks go through put_upgrade /
+// remove_upgrade (PI is paid and refunded) — never a direct UPDATE, which
+// the progression table would contradict on the next read.
+
+/** PI offset = min(XP, season cap) − PI − cost of purchased ranks. */
+$piOffset = static function () use ($db, $player, $id): int {
+    $paid = (int) $db->exe(
+        'SELECT COALESCE(SUM(cost), 0) AS total FROM players_upgrades WHERE player_id = ?',
+        $id
+    )->fetch_object()->total;
+
+    return min((int) $player->data->xp, SEASON_XP) - (int) $player->data->pi - $paid;
+};
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST'
+    && (isset($_POST['xp_add']) || isset($_POST['pi_fix']) || isset($_POST['pi_add'])
+        || isset($_POST['upgrade_add']) || isset($_POST['upgrade_remove']))) {
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+
+        if (isset($_POST['xp_add'])) {
+            $delta = (int) ($_POST['xp_delta'] ?? 0);
+            if ($delta === 0) {
+                throw new RuntimeException('Écart d\'XP nul : rien à appliquer.');
+            }
+            // put_xp keeps PI tied to XP (CapPI) — reading the actual delta
+            // before/after avoids re-deriving the formula here.
+            $piBefore = (int) $player->data->pi;
+            $player->put_xp($delta);
+            $piDelta = (int) $player->data->pi - $piBefore;
+            setFlash('success', sprintf(
+                'XP %+d pour « %s » — PI %+d, rang recalculé.',
+                $delta, $player->data->name, $piDelta
+            ));
+        } elseif (isset($_POST['pi_add'])) {
+            // PNJ only: their XP and PI are legitimately decorrelated, so PI
+            // is granted or taken directly. A player's PI must keep tracking
+            // XP — adjust through XP or the offset fix instead.
+            if (($player->data->player_type ?? 'real') !== 'npc') {
+                throw new RuntimeException(
+                    'L\'ajustement direct des PI est réservé aux PNJ — pour un joueur, passez par l\'XP ou la correction d\'écart.'
+                );
+            }
+            $delta = (int) ($_POST['pi_delta'] ?? 0);
+            if ($delta === 0) {
+                throw new RuntimeException('Écart de PI nul : rien à appliquer.');
+            }
+            if ($delta > 0) {
+                (new ProgressionService())->addPi($id, $delta);
+            } elseif (!(new ProgressionService())->spendPi($id, -$delta)) {
+                throw new RuntimeException(
+                    'PI insuffisants : le PNJ en a ' . (int) $player->data->pi . '.'
+                );
+            }
+            setFlash('success', sprintf('PI %+d pour « %s ».', $delta, $player->data->name));
+        } elseif (isset($_POST['pi_fix'])) {
+            // Always recomputed server-side: the displayed value may have
+            // gone stale between render and click.
+            $offset = $piOffset();
+            if ($offset === 0) {
+                setFlash('success', 'XP et PI déjà en phase, rien à corriger.');
+            } else {
+                (new ProgressionService())->addPi($id, $offset);
+                setFlash('success', sprintf(
+                    'PI %+d : le solde retrouve min(XP, plafond) − rangs payés.', $offset
+                ));
+            }
+        } else {
+            $carac = (string) ($_POST['carac'] ?? '');
+            $caracsService = new PlayerCaracsService();
+            if ($caracsService->getUpgradeProgress($carac) === null) {
+                throw new RuntimeException("Caractéristique inconnue ou non achetable : « {$carac} ».");
+            }
+            $owned = (int) ($player->get_upgrades()->$carac ?? 0);
+
+            if (isset($_POST['upgrade_add'])) {
+                $cost = $caracsService->returnCost($carac, $owned);
+                if (!(new ProgressionService())->spendPi($id, $cost)) {
+                    throw new RuntimeException(
+                        "PI insuffisants : le rang de " . CARACS[$carac] . " coûte {$cost}, le personnage en a "
+                        . (int) $player->data->pi . '. Ajoutez de l\'XP d\'abord pour rester en phase.'
+                    );
+                }
+                $player->put_upgrade($carac, $cost);
+                setFlash('success', '+1 rang de ' . CARACS[$carac] . " pour {$cost} PI.");
+            } else {
+                if ($owned < 1) {
+                    throw new RuntimeException('Aucun rang de ' . CARACS[$carac] . ' à retirer.');
+                }
+                $player->remove_upgrade($carac, 1);
+                setFlash('success', '−1 rang de ' . CARACS[$carac] . ', coût remboursé en PI.');
+            }
+        }
+    } catch (Throwable $e) {
+        setFlash('danger', $e->getMessage());
+    }
+    redirectTo($backTo); // PRG
+}
 
 // ----- Affichage -----
 
@@ -275,6 +378,109 @@ $vitals = formCard('Vitalités restantes', ''
 $turn = formCard('Tour', ''
     . '<p class="mb-2">' . e($turnInfo) . '</p>'
     . formCheckbox('turn_now', false, 'Rendre le tour disponible maintenant'));
+
+// ----- Progression (forms separate from the main form) -----
+
+$caracsService = new PlayerCaracsService();
+
+$paidByCarac = [];
+$paidRes = $db->exe(
+    'SELECT name, COUNT(*) AS n, COALESCE(SUM(cost), 0) AS total
+     FROM players_upgrades WHERE player_id = ? GROUP BY name',
+    $id
+);
+while ($paidRow = $paidRes->fetch_object()) {
+    $paidByCarac[$paidRow->name] = $paidRow;
+}
+
+$upgradeRows = '';
+foreach (CARACS as $k => $short) {
+    if ($caracsService->getUpgradeProgress($k) === null) {
+        continue; // ae: read from equipment, never bought
+    }
+    $owned = (int) ($paidByCarac[$k]->n ?? 0);
+    $paid = (int) ($paidByCarac[$k]->total ?? 0);
+    $next = $caracsService->returnCost($k, $owned);
+
+    $upgradeRows .= '<tr' . ($owned > 0 ? '' : ' class="text-muted"') . '>'
+        . '<td><strong>' . e($short) . '</strong> <small class="text-muted">' . e(CARACS_TXT[$k] ?? '') . '</small></td>'
+        . '<td>' . $owned . '</td>'
+        . '<td>' . ($paid > 0 ? $paid . ' PI' : '—') . '</td>'
+        . '<td>' . $next . ' PI</td>'
+        . '<td><form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex" style="gap:.25rem">'
+        . $csrf->renderTokenField()
+        . '<input type="hidden" name="id" value="' . (int) $id . '">'
+        . '<input type="hidden" name="carac" value="' . e($k) . '">'
+        . '<button type="submit" name="upgrade_add" value="1" class="btn btn-sm btn-outline-primary"'
+        . ' title="Acheter le rang suivant (' . $next . ' PI)">+1</button>'
+        . ($owned > 0
+            ? '<button type="submit" name="upgrade_remove" value="1" class="btn btn-sm btn-outline-danger"'
+                . ' title="Retirer le rang le plus cher, coût remboursé en PI"'
+                . ' onclick="return confirm(\'Retirer un rang de ' . e($short) . ' ?\');">−1</button>'
+            : '')
+        . '</form></td>'
+        . '</tr>';
+}
+
+// The console "checkpi" invariant: min(XP, cap) = PI + paid ranks. It only
+// binds real characters — a PNJ's PI is granted directly, so the sheet
+// shows the theoretical XP its PI represents instead of an offset warning.
+$totalPaid = 0;
+foreach ($paidByCarac as $paidRow) {
+    $totalPaid += (int) $paidRow->total;
+}
+$isPnj = ($player->data->player_type ?? 'real') === 'npc';
+
+$offset = $piOffset();
+if ($isPnj) {
+    $coherence = '<p class="mb-2"><span class="badge badge-info">PNJ : XP et PI décorrélés</span>'
+        . ' <small class="text-muted">XP théorique des rangs achetés : <strong>' . $totalPaid . '</strong>'
+        . ' · rangs + réserve de PI : <strong>' . ($totalPaid + (int) $player->data->pi) . '</strong>'
+        . ' (1 PI = 1 XP sous le plafond de saison)</small></p>';
+} elseif ($offset === 0) {
+    $coherence = '<p class="mb-2"><span class="badge badge-success">XP et PI en phase</span>'
+        . ' <small class="text-muted">min(XP, plafond de saison) = PI disponibles + coût des rangs achetés</small></p>';
+} else {
+    $coherence = '<div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between mb-2" style="gap:.5rem">'
+        . '<span>Écart de <strong>' . sprintf('%+d', $offset) . ' PI</strong> — attendu :'
+        . ' PI disponibles = min(XP, ' . SEASON_XP . ') − coût des rangs achetés.</span>'
+        . '<form method="post" action="player-edit.php?id=' . (int) $id . '">'
+        . $csrf->renderTokenField()
+        . '<input type="hidden" name="id" value="' . (int) $id . '">'
+        . '<button type="submit" name="pi_fix" value="1" class="btn btn-sm btn-warning">'
+        . 'Corriger (PI ' . sprintf('%+d', $offset) . ')</button>'
+        . '</form></div>';
+}
+
+$progression = formCard('Progression (XP / PI)', ''
+    . '<p class="mb-2">XP <strong>' . (int) $player->data->xp . '</strong>'
+    . ' <small class="text-muted">/ plafond de saison ' . SEASON_XP . '</small>'
+    . ' · Rang <strong>' . (int) $player->data->rank . '</strong>'
+    . ' · PI disponibles <strong>' . (int) $player->data->pi . '</strong>'
+    . ' · Points bonus <strong>' . (int) $player->data->bonus_points . '</strong></p>'
+    . $coherence
+    . '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex flex-wrap align-items-end" style="gap:.5rem">'
+    . $csrf->renderTokenField()
+    . '<input type="hidden" name="id" value="' . (int) $id . '">'
+    . formField('Écart d\'XP (±)', formInput('xp_delta', '', 'type="number" placeholder="+500" required style="max-width:8rem"'))
+    . '<button type="submit" name="xp_add" value="1" class="btn btn-outline-primary mb-3">Appliquer</button>'
+    . '</form>'
+    . ($isPnj
+        ? '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex flex-wrap align-items-end" style="gap:.5rem">'
+            . $csrf->renderTokenField()
+            . '<input type="hidden" name="id" value="' . (int) $id . '">'
+            . formField('Écart de PI (±)', formInput('pi_delta', '', 'type="number" placeholder="+200" required style="max-width:8rem"'),
+                'form-group', 'PNJ seulement : PI sans XP')
+            . '<button type="submit" name="pi_add" value="1" class="btn btn-outline-primary mb-3">Appliquer</button>'
+            . '</form>'
+        : '')
+    . '<table class="table table-sm mb-2"><thead><tr><th>Carac</th><th>Rangs achetés</th><th>PI payés</th>'
+    . '<th>Rang suivant</th><th></th></tr></thead>'
+    . '<tbody>' . $upgradeRows . '</tbody></table>'
+    . '<p class="text-muted mb-1">L\'XP passe par le moteur : sous le plafond de saison, 1 XP ajoute 1 PI'
+    . ' (et l\'inverse en retirant) ; le rang est recalculé.</p>'
+    . '<p class="text-muted mb-0">« +1 » achète le rang au prix du barème en dépensant les PI ;'
+    . ' « −1 » retire le rang le plus cher et rembourse son coût — l\'équilibre XP/PI tient dans les deux sens.</p>');
 
 // ----- Inventaire (piles ; formulaires séparés du formulaire principal) -----
 
@@ -403,6 +609,7 @@ $body = '<form method="post" action="player-edit.php?id=' . (int) $id . '">'
     . '<button type="submit" name="player_save" value="1" class="btn btn-primary">Enregistrer</button> '
     . '<a class="btn btn-outline-secondary" href="players.php">Retour à la liste</a>'
     . '</form>'
+    . $progression
     . $inventory
     . $effects;
 
