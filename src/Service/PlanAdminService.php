@@ -472,6 +472,7 @@ class PlanAdminService
                 'plans'                  => 'slug',
                 'factions'               => 'respawnPlan',
                 'races'                  => 'plan',
+                'race_harvest'           => 'plan',
                 'tutorial_catalog'       => 'plan',
                 'tutorial_map_instances' => 'plan_name',
                 'players_logs'           => 'plan',
@@ -505,6 +506,25 @@ class PlanAdminService
                     array(implode(',', $parts), (int) $row['id'])
                 );
                 $report['teleports']++;
+            }
+
+            /* The perception key of a log row is "x_y_z_plan" (coords_computed):
+             * without this rewrite, the proximity filter of the history stops
+             * matching everything logged before the rename. The plan is the
+             * tail after the third underscore — x, y and z never contain one,
+             * plan names can (fort_turok). */
+            foreach (['players_logs', 'players_logs_archives'] as $table) {
+                $n = (int) $this->db->exe(
+                    "UPDATE {$table}
+                        SET coords_computed = CONCAT(SUBSTRING_INDEX(coords_computed, '_', 3), '_', ?)
+                      WHERE SUBSTRING(coords_computed, CHAR_LENGTH(SUBSTRING_INDEX(coords_computed, '_', 3)) + 2) = ?",
+                    array($to, $from),
+                    false,
+                    true
+                );
+                if ($n > 0) {
+                    $report['references'][$table . '.coords_computed'] = $n;
+                }
             }
 
             // Dashboard settings naming this plan (world_plan, death_plan)

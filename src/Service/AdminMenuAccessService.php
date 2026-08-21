@@ -106,6 +106,7 @@ class AdminMenuAccessService
         'structure-images.php'       => 'avatars-portraits.php', // même stock, visage Bâtiments
         'plans-save.php'             => 'plans.php',
         'plan-seed.php'              => 'plans.php',
+        'plan-season-rename.php'     => 'plans.php',
         'footprints-save.php'        => 'footprints.php',
         'tile-colors-save.php'       => 'tile-colors.php',
         'dialogs-save.php'           => 'dialogs.php',
