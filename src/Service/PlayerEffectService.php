@@ -178,6 +178,32 @@ class PlayerEffectService
         $this->entityManager->flush();
     }
 
+    /**
+     * Overwrite duration AND value of an effect already carried (admin tool).
+     *
+     * addEffectByPlayerId only knows how to increase (a weaker re-application
+     * is ignored): shortening a poison or lowering its value goes through
+     * here. No cancellation rules — the effect is already in place, only its
+     * counters are corrected.
+     */
+    public function updateEffectByPlayerId(int $playerId, string $name, int $endTime, int $value): bool
+    {
+        $existingEffect = $this->entityManager->getRepository(PlayerEffect::class)->findOneBy([
+            'player_id' => $playerId,
+            'name' => $name,
+        ]);
+
+        if ($existingEffect === null) {
+            return false;
+        }
+
+        $existingEffect->setEndTime($endTime);
+        $existingEffect->setValue($value);
+        $this->entityManager->flush();
+
+        return true;
+    }
+
     public function removeEffectByPlayerId(int $playerId, string $name): void
     {
         $repo = $this->entityManager->getRepository(PlayerEffect::class);

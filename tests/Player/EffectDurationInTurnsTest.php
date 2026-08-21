@@ -109,6 +109,35 @@ class EffectDurationInTurnsTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(0, $this->remainingTurns((int) $player->id), 'zéro reste zéro');
     }
 
+    /**
+     * addEffectByPlayerId only knows how to increase — a weaker
+     * re-application is ignored. The admin sheet edits a carried effect
+     * through updateEffectByPlayerId, which must overwrite in BOTH
+     * directions, shortening included.
+     */
+    public function testUpdateOverwritesDurationAndValueEvenDownwards(): void
+    {
+        $player = $this->createRealPlayer('GmTurns');
+        $player->get_data();
+        $player->add_effect(self::EFFECT, 5, 3);
+
+        $service = new PlayerEffectService();
+        $this->assertTrue($service->updateEffectByPlayerId((int) $player->id, self::EFFECT, 1, 2));
+
+        $this->assertSame(1, $this->remainingTurns((int) $player->id), 'the duration was shortened');
+        $this->assertSame(2, $service->getEffectValueByPlayerIdByEffectName((int) $player->id, self::EFFECT), 'the value was lowered');
+    }
+
+    public function testUpdateRefusesAnEffectTheCharacterDoesNotCarry(): void
+    {
+        $player = $this->createRealPlayer('GmTurns');
+        $player->get_data();
+
+        $service = new PlayerEffectService();
+        $this->assertFalse($service->updateEffectByPlayerId((int) $player->id, self::EFFECT, 1, 1));
+        $this->assertNull($this->remainingTurns((int) $player->id), 'nothing was created behind the refusal');
+    }
+
     public function testTheRemainingTimeIsSpelledInTurns(): void
     {
         $this->assertSame('∞', PlayerEffectService::describeRemaining(PlayerEffectService::DURATION_INFINITE));

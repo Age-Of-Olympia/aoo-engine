@@ -1,12 +1,12 @@
 <?php
 // admin/player-edit.php
 /**
- * Fiche d'édition d'un personnage (admin dashboard → Personnages →
- * Compétences → Éditer) : nom, position (téléportation), vitalités
- * restantes (PV, PM, MVT, A, Ae — écrites dans players_bonus, la même
- * mécanique que les blessures et la dépense de points) et remise à
- * disposition du tour. Pensé pour le playtest : blesser un personnage,
- * lui rendre ses points, le déplacer — sans toucher à la base à la main.
+ * Character edit sheet (admin dashboard → Personnages → Compétences →
+ * Éditer): name, position (teleport), remaining vitals (PV, PM, MVT, A,
+ * Ae — written to players_bonus, the same mechanic as wounds and point
+ * spending), turn reset, inventory and effects. Built for playtesting:
+ * wound a character, give their points back, move them — without
+ * touching the database by hand.
  */
 require_once __DIR__ . '/layout.php';
 require_once __DIR__ . '/helpers.php';
@@ -168,8 +168,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['inventory_add']) || 
     redirectTo($backTo); // PRG
 }
 
-// Effets : poser ou lever un effet — le geste d'animation (geler un
-// personnage, lui retirer une malédiction) sans passer par SQL.
+// Effects: apply, adjust or lift an effect — the animation gesture (freeze
+// a character, shorten a poison, remove a curse) without SQL.
 //
 // On passe par Player::add_effect et end_effect, PAS par un INSERT
 // direct : ce sont eux qui convertissent la durée en échéance et qui
@@ -177,7 +177,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['inventory_add']) || 
 // qu'il annule, et tombe s'il en subit un qui le contredit). Une
 // écriture directe en base produirait des états que le jeu ne sait pas
 // produire — exactement ce qu'un outil d'admin ne doit pas fabriquer.
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['effect_add']) || isset($_POST['effect_remove']))) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST'
+    && (isset($_POST['effect_add']) || isset($_POST['effect_update']) || isset($_POST['effect_remove']))) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
 
@@ -193,21 +194,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['effect_add']) || iss
 
         $label = $effectService->getLabel($effectName);
 
-        if (isset($_POST['effect_add'])) {
-            /* Durée en TOURS. Sans fin est une case à cocher plutôt
-             * qu'une valeur à deviner : zéro veut dire « expiré au
-             * prochain tour », l'inverse de l'ancienne convention. */
-            $duration = empty($_POST['duration_infinite'])
-                ? max(0, (int) ($_POST['duration'] ?? 1))
-                : PlayerEffectService::DURATION_INFINITE;
-            $value = max(1, (int) ($_POST['effect_value'] ?? 1));
+        /* Duration in TURNS. "Sans fin" is a checkbox rather than a
+         * value to guess: zero means "expired at the next turn", the
+         * inverse of the old convention. */
+        $duration = empty($_POST['duration_infinite'])
+            ? max(0, (int) ($_POST['duration'] ?? 1))
+            : PlayerEffectService::DURATION_INFINITE;
+        $value = max(1, (int) ($_POST['effect_value'] ?? 1));
 
+        if (isset($_POST['effect_add'])) {
             $player->add_effect($effectName, $duration, $value);
 
             setFlash('success', PlayerEffectService::isInfinite($duration)
                 ? "« {$label} » posé sans limite de durée sur « {$player->data->name} »."
                 : "« {$label} » posé sur « {$player->data->name} » pour "
                     . PlayerEffectService::describeRemaining($duration) . '.');
+        } elseif (isset($_POST['effect_update'])) {
+            // Direct overwrite: add_effect ignores a weaker re-application,
+            // only updateEffectByPlayerId can shorten or weaken.
+            if (!(new PlayerEffectService())->updateEffectByPlayerId($id, $effectName, $duration, $value)) {
+                throw new RuntimeException("« {$label} » n'est plus porté par ce personnage.");
+            }
+
+            setFlash('success', "« {$label} » ajusté : valeur {$value}, "
+                . (PlayerEffectService::isInfinite($duration)
+                    ? 'sans limite de durée.'
+                    : PlayerEffectService::describeRemaining($duration) . '.'));
         } else {
             $player->end_effect($effectName);
             setFlash('success', "« {$label} » levé sur « {$player->data->name} ».");
@@ -217,6 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['effect_add']) || iss
     }
     redirectTo($backTo); // PRG
 }
+
 
 // ----- Affichage -----
 
@@ -318,27 +331,37 @@ foreach ($player->getEffects() as $carried) {
     $endTime = (int) $carried->getEndTime();
     /* Durée en TOURS : négatif = sans fin, zéro = terminé (retiré au
      * prochain tour par TurnProcessingService). */
-    if (PlayerEffectService::isInfinite($endTime)) {
-        $remaining = '<span class="badge badge-secondary">illimité</span>';
-    } elseif ($endTime === 0) {
-        $remaining = '<span class="badge badge-warning">expiré</span>'
-            . ' <small class="text-muted">(retiré au prochain tour)</small>';
-    } else {
-        $remaining = e(PlayerEffectService::describeRemaining($endTime));
-    }
+    $infinite = PlayerEffectService::isInfinite($endTime);
+    $expiredHint = $endTime === 0
+        ? ' <small class="text-muted">(expiré : retiré au prochain tour)</small>'
+        : '';
+
+    // Value and duration are edited in place: the row's form carries
+    // both buttons (Modifier overwrites, Lever removes).
+    $updateForm = '<form method="post" action="player-edit.php?id=' . (int) $id . '"'
+        . ' id="effect-row-' . e($carried->getName()) . '" class="d-flex align-items-center" style="gap:.25rem">'
+        . $csrf->renderTokenField()
+        . '<input type="hidden" name="id" value="' . (int) $id . '">'
+        . '<input type="hidden" name="effect_name" value="' . e($carried->getName()) . '">';
 
     $effectRows .= '<tr>'
         . '<td><span class="ra ' . e($effectService->getIcon($carried->getName())) . '"></span> '
         . e($effectService->getLabel($carried->getName()))
-        . ' <code>' . e($carried->getName()) . '</code></td>'
-        . '<td>' . (int) $carried->getValue() . '</td>'
-        . '<td>' . $remaining . '</td>'
-        . '<td><form method="post" action="player-edit.php?id=' . (int) $id . '"'
-        . ' onsubmit="return confirm(\'Lever « ' . e($effectService->getLabel($carried->getName())) . ' » ?\');">'
-        . $csrf->renderTokenField()
-        . '<input type="hidden" name="id" value="' . (int) $id . '">'
-        . '<input type="hidden" name="effect_name" value="' . e($carried->getName()) . '">'
-        . '<button type="submit" name="effect_remove" value="1" class="btn btn-sm btn-outline-danger">Lever</button>'
+        . ' <code>' . e($carried->getName()) . '</code>' . $expiredHint . '</td>'
+        . '<td><input type="number" class="form-control form-control-sm" name="effect_value" min="1"'
+        . ' value="' . (int) $carried->getValue() . '" style="width:5rem"'
+        . ' form="effect-row-' . e($carried->getName()) . '"></td>'
+        . '<td><div class="d-flex align-items-center" style="gap:.5rem">'
+        . '<input type="number" class="form-control form-control-sm" name="duration" min="0"'
+        . ' value="' . ($infinite ? '' : $endTime) . '" style="width:5rem"'
+        . ' form="effect-row-' . e($carried->getName()) . '">'
+        . '<label class="mb-0 text-nowrap"><input type="checkbox" name="duration_infinite" value="1"'
+        . ($infinite ? ' checked' : '') . ' form="effect-row-' . e($carried->getName()) . '"> ∞</label>'
+        . '</div></td>'
+        . '<td>' . $updateForm
+        . '<button type="submit" name="effect_update" value="1" class="btn btn-sm btn-outline-primary">Modifier</button>'
+        . '<button type="submit" name="effect_remove" value="1" class="btn btn-sm btn-outline-danger"'
+        . ' onclick="return confirm(\'Lever « ' . e($effectService->getLabel($carried->getName())) . ' » ?\');">Lever</button>'
         . '</form></td>'
         . '</tr>';
 }
@@ -354,7 +377,7 @@ asort($effectOptions);
 $effects = formCard('Effets', ''
     . ($effectRows === ''
         ? '<p class="text-muted">Aucun effet en cours.</p>'
-        : '<table class="table table-sm mb-2"><thead><tr><th>Effet</th><th>Valeur</th><th>Échéance</th><th></th></tr></thead>'
+        : '<table class="table table-sm mb-2"><thead><tr><th>Effet</th><th>Valeur</th><th>Durée restante (tours)</th><th></th></tr></thead>'
             . '<tbody>' . $effectRows . '</tbody></table>')
     . '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex flex-wrap align-items-end" style="gap:.5rem">'
     . $csrf->renderTokenField()
@@ -367,9 +390,11 @@ $effects = formCard('Effets', ''
     . '</form>'
     . '<p class="text-muted mb-1">Poser un effet applique les règles du catalogue, annulations comprises :'
     . ' un effet qui en neutralise un autre le lève, et tombe lui-même s\'il en subit un qui le contredit.</p>'
-    . '<p class="text-muted mb-0">La durée se compte en <strong>tours</strong> du joueur : elle perd un point à'
-    . ' chaque tour et l\'effet tombe à zéro. « Sans fin » pose un effet que le temps n\'use pas —'
-    . ' un trait permanent, qu\'il faut lever à la main.</p>');
+    . '<p class="text-muted mb-1">La durée se compte en <strong>tours</strong> du joueur : elle perd un point à'
+    . ' chaque tour et l\'effet tombe à zéro. « Sans fin » (∞) pose un effet que le temps n\'use pas —'
+    . ' un trait permanent, qu\'il faut lever à la main.</p>'
+    . '<p class="text-muted mb-0">« Modifier » écrase valeur et durée de l\'effet porté, sans repasser par les'
+    . ' règles de pose — c\'est le seul chemin pour écourter ou affaiblir un effet en cours.</p>');
 
 $body = '<form method="post" action="player-edit.php?id=' . (int) $id . '">'
     . $csrfField
