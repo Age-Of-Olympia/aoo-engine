@@ -349,7 +349,6 @@ if (isset($_SESSION['auto_start_tutorial'])) {
 
 echo '<div id="debug-flags" style="color: red;">';
 
-if(!CACHED_INVENT) echo 'CACHED_INVENT = false<br />';
 if(!CACHED_KILLS) echo 'CACHED_KILLS = false<br />';
 if(!CACHED_CLASSEMENTS) echo 'CACHED_CLASSEMENTS = false<br />';
 if(!CACHED_QUESTS) echo 'CACHED_QUESTS = false<br />';

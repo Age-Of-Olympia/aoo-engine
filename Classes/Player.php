@@ -366,11 +366,6 @@ class Player implements ActorInterface {
         }
 
 
-        // save .turn
-        $data = Json::encode($this->turn);
-        Json::write_json('datas/private/players/'. $this->id .'.turn.json', $data);
-
-
         // fist
         if(!isset($this->emplacements->main1)){
 
@@ -386,12 +381,9 @@ class Player implements ActorInterface {
 
         /* Esquive (passifs à trait « esquive ») : fait partie des
          * caracs — calculée ici, elle est présente dès que les caracs
-         * le sont, et part dans le cache .caracs.json. */
+         * le sont. */
         $this->playerPassiveService->setEsquivePlayer($this);
 
-        // save .caracs
-        $data = Json::encode($this->caracs);
-        Json::write_json('datas/private/players/'. $this->id .'.caracs.json', $data);
         return true;
     }
 
@@ -401,42 +393,22 @@ class Player implements ActorInterface {
 
     public function get_caracsJson(){
 
-
-        if(!$caracsJson = json()->decode('players', $this->id .'.caracs')){
-
-            $this->get_caracs();
-
-            $caracsJson = json()->decode('players', $this->id .'.caracs');
-        }
-
-        return $caracsJson;
-    }
-
-    public function get_turnTurnJson(){
-
-
-        if(!$turnJson = json()->decode('players', $this->id .'.turn')){
+        if(!isset($this->caracs)){
 
             $this->get_caracs();
-
-            $turnJson = json()->decode('players', $this->id .'.turn');
         }
 
-        return $turnJson;
+        return $this->caracs;
     }
-
 
     public function get_turnJson(){
 
-
-        if(!$turnJson = json()->decode('players', $this->id .'.turn')){
+        if(!isset($this->turn)){
 
             $this->get_caracs();
-
-            $turnJson = json()->decode('players', $this->id .'.turn');
         }
 
-        return $turnJson;
+        return $this->turn;
     }
 
 
@@ -1025,29 +997,30 @@ class Player implements ActorInterface {
      * racine du projet, PAS depuis DOCUMENT_ROOT : vide en CLI, il
      * rendait les refresh_*() muets hors web (caches fantômes dans les
      * tests et les scripts).
+     *
+     * Also guarantees the directory: that used to be a get_data() side
+     * effect back when the JSON cache existed, and the remaining writers
+     * (.svg, .kills.html, .msg.html) rely on it — a fresh working copy
+     * (CI) does not have the directory, which git ignores.
      */
     public static function cachePath(int $playerId, string $suffix): string
     {
         $root = ($_SERVER['DOCUMENT_ROOT'] ?? '') !== '' ? $_SERVER['DOCUMENT_ROOT'] : dirname(__DIR__);
 
-        return $root . '/datas/private/players/' . $playerId . $suffix;
+        $dir = $root . '/datas/private/players';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0777, true);
+        }
+
+        return $dir . '/' . $playerId . $suffix;
     }
 
     public function refresh_data(){
-        $file = self::cachePath((int) $this->id, '.json');
-        if (is_file($file)) {
-            unlink($file);
-        }
-        // Le décodeur JSON garde un cache mémoire par process : sans cet
-        // oubli, un process long (tests, scripts) ressert l'ancien état.
-        json()->forget('players', (string) $this->id);
-    }
-
-    public function refresh_invent(){
-        $file = self::cachePath((int) $this->id, '.invent.html');
-        if(file_exists($file)){
-            unlink($file);
-        }
+        // No more file cache: reload from the database right away —
+        // historic callers read ->data directly, without going through
+        // get_data().
+        unset($this->data);
+        $this->get_data();
     }
 
     public function refresh_kills(){
@@ -1368,11 +1341,6 @@ class Player implements ActorInterface {
         if (!(new \App\Service\GoldService())->spend((int) $this->id, $cost, $bank)) {
 
             return false;
-        }
-
-        if (!$bank) {
-
-            $this->refresh_invent();
         }
 
         return true;
@@ -1834,7 +1802,6 @@ class Player implements ActorInterface {
 
 
             // in both case, refresh
-            $this->refresh_invent();
             $this->refresh_caracs();
             $this->refresh_view();
         }
@@ -2302,7 +2269,7 @@ class Player implements ActorInterface {
         (new PlayerActionsService())->grantRaceStarterPack($id, $race);
 
 
-        Player::refresh_list();
+        Player::refresh_classements();
 
 
         if($pnj){
@@ -2394,65 +2361,47 @@ class Player implements ActorInterface {
 
     public function get_data(bool $forceRefresh=true){
 
-        if(!$forceRefresh && isset($this->data)){
+        /* The object is the only memo: the first read comes from the
+         * database, refresh_data() drops the state and the next read
+         * starts over. No more file cache — it outlived writes and
+         * served stale data from one request to the next. */
+        if(isset($this->data)){
 
             return $this->data;
         }
-        // first create dir
-        if(!file_exists(dirname(self::cachePath(0, '')))){
 
-            mkdir(dirname(self::cachePath(0, '')));
+        $this->get_row();
+
+        // The rest of the code must never see the account secrets.
+        $data = clone $this->row;
+        unset($data->psw);
+        unset($data->mail);
+        unset($data->ip);
+
+        // Empty portrait (structure without art, initials fallback at
+        // render time): no _mini variant to derive.
+        if ($data->portrait !== '' && $data->portrait !== null) {
+            $pathInfo = pathinfo($data->portrait);
+            $data->mini = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_mini.' . $pathInfo['extension'];
+        } else {
+            $data->mini = '';
         }
 
-        $playerJson = json()->decode('players', $this->id);
-
-
-        // first player json
-        if(!$playerJson){
-
-            $this->get_row();
-
-            // unset some unwanted var
-            unset($this->row->psw);
-            unset($this->row->mail);
-            unset($this->row->ip);
-            // Portrait vide (structure sans visuel, repli initiales au
-            // rendu) : pas de déclinaison _mini à dériver.
-            if ($this->row->portrait !== '' && $this->row->portrait !== null) {
-                $pathInfo = pathinfo($this->row->portrait);
-                $this->row->mini = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_mini.' . $pathInfo['extension'];
-            } else {
-                $this->row->mini = '';
-            }
-            $this->row->faction_img = 'img/factions/'. $this->row->faction .'.png';
-            $this->row->faction_mini = 'img/factions/'. $this->row->faction .'_mini.png';
-
-            $path = 'datas/private/players/'. $this->id .'.json';
-            $data = Json::encode($this->row);
-
-            Json::write_json($path, $data);
-
-            $playerJson = json()->decode('players',  $this->id);
-        }
-
-        $this->data = $playerJson;
-
-        // L'inactivité n'a de sens que pour un JOUEUR RÉEL (dernière
-        // connexion) : jamais pour un PNJ, un personnage de tutoriel ou
-        // une entité structure (bâtiment/objet unique, lastLoginTime 0
-        // — ils ressortaient « inactifs »).
-        $this->data->isInactive = ($this->id > 0 && ($this->data->player_type ?? 'real') === 'real')
-            ? $this->playerService->isInactive($this->data->lastLoginTime)
+        // Inactivity only makes sense for a REAL player (last login):
+        // never for an NPC, a tutorial character or a structure entity
+        // (building/unique object, lastLoginTime 0 — they used to come
+        // out « inactive »).
+        $data->isInactive = ($this->id > 0 && ($data->player_type ?? 'real') === 'real')
+            ? $this->playerService->isInactive($data->lastLoginTime)
             : false;
 
-       
+        $this->data = $data;
 
-
-        return $playerJson;
+        return $this->data;
     }
 
     //called by cron & register
-    public static function refresh_list(){
+    public static function get_player_list(){
 
 
         // CRITICAL: Filter by player_type to exclude tutorial players and NPCs from public lists
@@ -2490,31 +2439,23 @@ class Player implements ActorInterface {
         }
         $data['list']=$list;
         $data['first']=$firstData;
-        $data = Json::encode($data);
 
-        Json::write_json('datas/private/players/list.json', $data);
+        return (object) $data;
     }
-    
-    public static function get_player_list(){
-        
-        $list = json()->decode('players', 'list');
 
-        if(!$list){
-            // refresh all classements (once per day, done with cron)
+    /**
+     * The roster changed (registration, turn, GDPR purge): the cached
+     * ranking pages must rebuild on the next visit.
+     */
+    public static function refresh_classements(): void{
 
-            Player::refresh_list();
-
-            $list = json()->decode('players', 'list');
-
-            $fileRankList = array('general','bourrins','reputation','fortunes');
-            foreach($fileRankList as $file) {
-                $filePath = 'datas/public/classements/'.$file.'.html';
-                if (file_exists($filePath)) {
-                    unlink($filePath); // Delete the file
-                }
+        $fileRankList = array('general','bourrins','reputation','fortunes');
+        foreach($fileRankList as $file) {
+            $filePath = 'datas/public/classements/'.$file.'.html';
+            if (file_exists($filePath)) {
+                unlink($filePath); // Delete the file
             }
         }
-        return $list;
     }
 
     public static function clean_players_assists(){

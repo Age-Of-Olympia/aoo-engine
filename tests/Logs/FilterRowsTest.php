@@ -5,7 +5,6 @@ use PHPUnit\Framework\TestCase;
 use Tests\Logs\Mock\PlayerMock;
 use Tests\Logs\Mock\TestDatabase;
 use Tests\Logs\Mock\ViewMock;
-use Tests\Logs\Mock\JsonMock;
 use PHPUnit\Framework\Attributes\Group;
 use Classes\Log;
 
@@ -25,7 +24,6 @@ class FilterRowsTest extends TestCase
         // Injection des mocks
         Log::setDbInstance($this->testDb);
         Log::setViewClass('Tests\Logs\Mock\ViewMock');
-        Log::setJsonInstance(new JsonMock());
         // La config de plan vit en base : on stub le lecteur, pas le Json
         Log::setPlanReader(fn (string $plan): object => (object) ['player_visibility' => true]);
 

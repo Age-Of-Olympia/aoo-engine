@@ -243,13 +243,13 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
     #[Group('d4-phase-c')]
     public function testMovementsDepletedBranchRejectsPlayerWithMvtBudgetRemaining(): void
     {
-        // Without a turn.json file, Player::getRemaining('mvt') falls
+        // Without a players_bonus row, Player::getRemaining('mvt') falls
         // back to $this->caracs->mvt (the race max — 4 for nain). That
         // is NOT zero, so `movements_depleted` must return false.
         //
         // The inverse assertion (returns true when mvt == 0) would
-        // require writing a turn.json file, which the transactional
-        // rollback can't undo. Exercised end-to-end by Cypress instead.
+        // require a players_bonus row, which the transactional rollback
+        // can't keep. Exercised end-to-end by Cypress instead.
         $step = $this->makeStepWithConfig(['validation_type' => 'movements_depleted']);
 
         $this->assertFalse($step->validate([]));

@@ -25,8 +25,6 @@ module.exports = defineConfig({
     pageLoadTimeout: 30000,
     setupNodeEvents(on, config) {
       const mysql = require('mysql2/promise');
-      const fs = require('fs');
-      const path = require('path');
 
       /* Database query task for validation.
        *
@@ -60,26 +58,13 @@ module.exports = defineConfig({
         /* Read a player's current turn state.
          *
          * Remaining = caracs base + players_bonus rows (consumption is a
-         * negative `n`), the exact computation of Player::get_caracs. Read
-         * from the DATABASE: the .turn.json files are a per-request cache
-         * only refreshed by the next get_caracs() call — reading them races
-         * the game and shows stale values.
-         *
-         * Caracs base still comes from the .caracs.json cache (it carries
-         * the computed values, passives included) with the races table as
-         * fallback for a player whose cache was never written.
+         * negative `n`), the exact computation of Player::get_caracs.
+         * Everything comes from the DATABASE — player data is no longer
+         * cached in files. Base mvt/a come from the races catalog, which
+         * is enough for the tutorial players these tests drive (no
+         * upgrades, no equipment bonuses on those traits).
          */
         async readPlayerTurn({ playerId }) {
-          const playersDir = path.join(__dirname, 'datas/private/players');
-          const caracsPath = path.join(playersDir, `${playerId}.caracs.json`);
-
-          const readJson = (p) => {
-            if (!fs.existsSync(p)) return null;
-            const raw = fs.readFileSync(p, 'utf8').trim();
-            if (!raw) return null;
-            try { return JSON.parse(raw); } catch { return null; }
-          };
-
           const connection = await mysql.createConnection({
             host:     process.env.TEST_DB_HOST || 'mariadb-aoo4',
             user:     process.env.TEST_DB_USER || 'root',
@@ -89,14 +74,11 @@ module.exports = defineConfig({
           });
 
           try {
-            let caracs = readJson(caracsPath);
-            if (!caracs) {
-              const [raceRows] = await connection.execute(
-                'SELECT r.mvt, r.a FROM races r JOIN players p ON p.race = r.name WHERE p.id = ?',
-                [playerId]
-              );
-              caracs = raceRows[0] || {};
-            }
+            const [raceRows] = await connection.execute(
+              'SELECT r.mvt, r.a FROM races r JOIN players p ON p.race = r.name WHERE p.id = ?',
+              [playerId]
+            );
+            const caracs = raceRows[0] || {};
 
             const [bonusRows] = await connection.execute(
               'SELECT name, n FROM players_bonus WHERE player_id = ? AND name IN (\'mvt\', \'a\')',

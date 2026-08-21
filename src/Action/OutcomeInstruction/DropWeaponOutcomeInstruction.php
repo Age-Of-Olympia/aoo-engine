@@ -60,7 +60,6 @@ class DropWeaponOutcomeInstruction extends OutcomeInstruction implements HasPara
                         // Instance détruite ou introuvable : rien ne tombe.
                     }
                 }
-                $target->refresh_invent();
                 $target->refresh_caracs();
             } else {
                 $target->drop($item, 1);

@@ -272,7 +272,6 @@ function unequip_player($argumentValues, $player){
 
         $db->exe($sql, array($player->id, $data));
 
-        $player->refresh_invent();
         $player->refresh_caracs();
         $player->refresh_view();
 
@@ -295,6 +294,10 @@ function purge_player($argumentValues, $player){
         return '<font color="red">error: invalid arg2 "'. $targetPlayer .'", must be "target" or "allplayers"</font>';
     }
 
+    /* Player data is no longer cached in files: only the board (.svg)
+     * and the kills page (.kills.html) remain. .msg.html is NOT a cache
+     * (landing message), never delete it. "playerdata" stays accepted
+     * and purges leftover .json files from the old system. */
     if($targetPlayer=='target')
     {
         if($cacheName == 'view'){
@@ -303,11 +306,14 @@ function purge_player($argumentValues, $player){
         }
         elseif($cacheName == 'allcaches'){
 
-            $files = glob('datas/private/players/'. $player->id .'*');
+            $files = array_merge(
+                glob('datas/private/players/'. $player->id .'.svg'),
+                glob('datas/private/players/'. $player->id .'.kills.html')
+            );
         }
         elseif($cacheName == 'playerdata'){
 
-            $files = glob('datas/private/players/'. $player->id .'*');
+            $files = glob('datas/private/players/'. $player->id .'*.json');
         }
     }
     elseif($targetPlayer == 'allplayers'){
@@ -318,7 +324,10 @@ function purge_player($argumentValues, $player){
         }
         elseif($cacheName == 'allcaches'){
 
-            $files = glob('datas/private/players/*');
+            $files = array_merge(
+                glob('datas/private/players/*.svg'),
+                glob('datas/private/players/*.kills.html')
+            );
         }
         elseif($cacheName == 'playerdata'){
 

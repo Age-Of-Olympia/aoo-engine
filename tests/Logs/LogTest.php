@@ -5,7 +5,6 @@ use PHPUnit\Framework\TestCase;
 use Tests\Logs\Mock\PlayerMock;
 use Tests\Logs\Mock\TestDatabase;
 use Tests\Logs\Mock\ViewMock;
-use Tests\Logs\Mock\JsonMock;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Classes\Log;
@@ -14,24 +13,20 @@ class LogTest extends TestCase
 {
     private PlayerMock $player;
     private TestDatabase $testDb;
-    private JsonMock $jsonMock;
 
     protected function setUp(): void
     {
         $this->player = new PlayerMock(1, 'TestPlayer');
         $this->testDb = new TestDatabase();
-        $this->jsonMock = new JsonMock();
         
         // Injection des mocks dans Log
         Log::setDbInstance($this->testDb);
         Log::setViewClass('Tests\Logs\Mock\ViewMock');
-        Log::setJsonInstance($this->jsonMock);
         // La config de plan vit en base : on stub le lecteur, pas le Json
         Log::setPlanReader(fn (string $plan): object => (object) ['player_visibility' => true]);
 
         // Reset des mocks
         ViewMock::reset();
-        JsonMock::reset();
 
         // Mock des constantes si nécessaire
         if (!defined('THREE_DAYS')) {
@@ -43,7 +38,6 @@ class LogTest extends TestCase
     {
         Log::resetTestInstances();
         ViewMock::reset();
-        JsonMock::reset();
     }
 
     #[Group('log-get')]

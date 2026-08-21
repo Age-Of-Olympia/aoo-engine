@@ -162,9 +162,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['inventory_add']) || 
             }
             setFlash('success', "-{$n} × {$row->name} pour « {$player->data->name} ».");
         }
-
-        // le fragment d'inventaire est un cache par personnage
-        @unlink($_SERVER['DOCUMENT_ROOT'] . '/datas/private/players/' . $id . '.invent.html');
     } catch (Throwable $e) {
         setFlash('danger', $e->getMessage());
     }

@@ -24,7 +24,6 @@ use Classes\Db;
  *   - equipped item bonuses (Item::get_equiped_list loop)
  *   - buff/debuff effects (EffectService::getBuffCaracs/getDebuffCaracs)
  *   - turn bonuses from `players_bonus`
- *   - JSON cache writes to `datas/private/players/*.caracs.json`
  *
  * Matches the legacy `Player::get_caracs(nude: true)` path, which
  * BourrinsView is the only caller of today. Characterization test

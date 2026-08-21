@@ -181,9 +181,9 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
 
         if ($this->createdPlayerIds !== []) {
             try {
-                Player::refresh_list();
+                Player::refresh_classements();
             } catch (\Throwable) {
-                // The list cache is cosmetic for tests; never fail teardown on it.
+                // Classements pages are cosmetic for tests; never fail teardown on them.
             }
         }
 
@@ -219,25 +219,13 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
      * teardown. Returns a fresh legacy Player.
      */
     /**
-     * Caches fichier par entité : .json est celui de get_data(), .svg le
-     * damier rendu, les autres les caracs / le tour / l'inventaire. Un id
-     * recyclé qui les retrouve ressuscite l'entité précédente.
+     * The rendered board (.svg) is the only file cache left: a recycled
+     * id that finds one would serve the previous entity's render. Player
+     * data reads the database, nothing else to purge.
      */
     protected static function purgeEntityCache(int $id): void
     {
-        foreach (['.json', '.svg', '.turn.json', '.caracs.json', '.invent.html'] as $suffix) {
-            @unlink(__DIR__ . '/../../../datas/private/players/' . $id . $suffix);
-        }
-
-        /* Le fichier ne suffit pas : Json::decode garde un cache MÉMOIRE
-         * par chemin, sur un singleton global qui vit tout le process.
-         * Supprimer le fichier ne le vide pas — le décodeur ressert
-         * l'objet déjà lu. Sur une base neuve, où les ids sont recyclés
-         * d'un test à l'autre, le joueur suivant héritait ainsi de
-         * l'identité (et donc de la position) du précédent. */
-        foreach (['', '.turn', '.caracs'] as $variant) {
-            json()->forget('players', $id . $variant);
-        }
+        @unlink(__DIR__ . '/../../../datas/private/players/' . $id . '.svg');
     }
 
     protected function createRealPlayer(string $prefix, string $race = 'nain'): Player

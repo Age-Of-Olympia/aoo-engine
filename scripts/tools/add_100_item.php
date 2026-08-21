@@ -33,7 +33,5 @@ items
 $db->exe($sql, $player->id);
 
 
-$player->refresh_invent();
-
 
 echo 'done!';

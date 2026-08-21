@@ -61,6 +61,11 @@ if ($aooTestDb !== '') {
     }
 }
 
+/* The per-player files directory (.svg, .kills.html, .msg.html) is
+ * ignored by git: a fresh working copy (CI) does not have it, and the
+ * scenes that prime a cached board could not write it. */
+@mkdir(__DIR__ . '/../datas/private/players', 0777, true);
+
 // Sous le SAPI cli, error_log() sort sur stderr ; PHPUnit
 // (beStrictAboutOutputDuringTests + failOnRisky) compte cette sortie comme
 // du bruit de test et marque le test risky → run en échec. Les messages

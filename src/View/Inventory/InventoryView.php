@@ -65,8 +65,6 @@ class InventoryView
 
         $activePlayerId = TutorialHelper::getActivePlayerId();
 
-        $path = 'datas/private/players/' . $activePlayerId . '.invent.html';
-
         $player = PlayerFactory::legacy($activePlayerId);
 
         $itemList = Item::get_item_list($player->id, bank: $itemsFromBank);
@@ -103,10 +101,6 @@ window.aeLeft = ' . $player->getRemaining('ae') . ';
 window.aLeft = ' . $player->getRemaining('a') . ';
 </script>
 ';
-
-        $myfile = fopen($path, "w") or die("Unable to open file!");
-        fwrite($myfile, $data);
-        fclose($myfile);
 
         echo $data;
 

@@ -207,9 +207,6 @@ class Item{
 
         $db->commit_transaction('add_item');
 
-        if(!$bank)
-            $player->refresh_invent();
-
         return true;
     }
 

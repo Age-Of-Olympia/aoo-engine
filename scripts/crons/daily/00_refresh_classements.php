@@ -1,6 +1,6 @@
 <?php
 use Classes\Player;
-Player::refresh_list();
+Player::refresh_classements();
 
 @unlink(__DIR__ .'/../../../datas/public/classements/general.html');
 @unlink(__DIR__ .'/../../../datas/public/classements/bourrins.html');

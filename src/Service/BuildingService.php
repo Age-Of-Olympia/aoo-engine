@@ -292,17 +292,13 @@ class BuildingService extends BaseService
     }
 
     /**
-     * Purge every per-entity file cache of an id (.json = get_data,
-     * .svg = damier, .turn/.caracs/.invent) — appelée à la POSE (id
-     * recyclé) comme au retrait, sinon la nouvelle entité ressert
-     * l'identité de l'ancienne.
+     * Purge an id's cached board (.svg, the only file cache left) —
+     * called at PLACEMENT (recycled id) as at removal, otherwise the new
+     * entity serves the previous one's render.
      */
     public static function purgeEntityCaches(int $playerId): void
     {
-        foreach (['.json', '.svg', '.turn.json', '.caracs.json', '.invent.html'] as $suffix) {
-            @unlink(\Classes\Player::cachePath($playerId, $suffix));
-        }
-        json()->forget('players', (string) $playerId);
+        @unlink(\Classes\Player::cachePath($playerId, '.svg'));
     }
 
     /**

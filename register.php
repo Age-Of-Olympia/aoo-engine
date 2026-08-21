@@ -167,7 +167,7 @@ if(!empty($_POST['race'])){
         }
 
         // refresh general classement
-        Player::refresh_list();
+        Player::refresh_classements();
         @unlink('datas/public/classements/general.html');
 
         // welcome missive (copy from player 1 if exists)

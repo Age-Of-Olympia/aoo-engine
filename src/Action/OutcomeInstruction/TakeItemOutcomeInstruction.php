@@ -48,7 +48,6 @@ class TakeItemOutcomeInstruction extends OutcomeInstruction implements HasParame
             );
         }
 
-        $actor->refresh_invent();
         $this->getOutcome()?->getAction()?->setRefreshScreen(true);
 
         return new OutcomeResult(

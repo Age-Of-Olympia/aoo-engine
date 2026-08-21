@@ -12,36 +12,31 @@ class Log{
     // Propriétés pour l'injection de dépendances (tests)
     private static $dbInstance = null;
     private static $viewClass = null;
-    private static $jsonInstance = null;
     /** @var callable|null (string $plan) => object|false, ex plan JSON read */
     private static $planReader = null;
 
     // Méthodes pour les tests
     public static function setDbInstance($db): void { self::$dbInstance = $db; }
     public static function setViewClass(string $class): void { self::$viewClass = $class; }
-    public static function setJsonInstance($json): void { self::$jsonInstance = $json; }
     public static function setPlanReader(?callable $reader): void { self::$planReader = $reader; }
     public static function resetTestInstances(): void {
         self::$dbInstance = null;
         self::$viewClass = null;
-        self::$jsonInstance = null;
         self::$planReader = null;
     }
 
     // Getters pour les dépendances
     private static function getDb() { return self::$dbInstance ?? new Db(); }
     private static function getViewClass(): string { return self::$viewClass ?? 'Classes\View'; }
-    private static function json() { return self::$jsonInstance ?? json(); }
     private static function planConfig(string $plan) { return self::$planReader ? (self::$planReader)($plan) : plans()->read($plan); }
 
     private static function getPerception(ActorInterface $player)
     {
-        $caracsJson = self::json()->decode('players', $player->id .'.caracs');
-        if (!$caracsJson) {
+        if (!isset($player->caracs)) {
             $player->get_caracs();
-            return $player->caracs->p;
         }
-        return $caracsJson->p;
+
+        return $player->caracs->p;
     }
 
     /**

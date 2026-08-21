@@ -29,16 +29,6 @@ class TurnProcessingBaselineTest extends LegacyPlayerFixtureTestCase
         parent::tearDown();
     }
 
-    /**
-     * Player::refresh_data dépend de DOCUMENT_ROOT (vide en CLI) : purge
-     * par le chemin du dépôt, comme le teardown du harnais — ET le cache
-     * mémoire du décodeur JSON, partagé sur tout le process de test.
-     */
-    private function purgeDataCache(int $playerId): void
-    {
-        @unlink(__DIR__ . '/../../datas/private/players/' . $playerId . '.json');
-        json()->forget('players', (string) $playerId);
-    }
 
     public function testADueTurnMutatesAndLogsATurnEvent(): void
     {
@@ -49,7 +39,7 @@ class TurnProcessingBaselineTest extends LegacyPlayerFixtureTestCase
             'UPDATE players SET nextTurnTime = ? WHERE id = ?',
             [time() - 60, (int) $player->id]
         );
-        $this->purgeDataCache((int) $player->id);
+        $player->refresh_data();
 
         $xpBefore = (int) $this->link->fetchOne('SELECT xp FROM players WHERE id = ?', [(int) $player->id]);
 
@@ -88,7 +78,7 @@ class TurnProcessingBaselineTest extends LegacyPlayerFixtureTestCase
             'UPDATE players SET nextTurnTime = ? WHERE id = ?',
             [$future, (int) $player->id]
         );
-        $this->purgeDataCache((int) $player->id);
+        $player->refresh_data();
 
         $this->assertNull((new TurnProcessingService())->processIfDue($player));
 

@@ -266,7 +266,7 @@ class Market
             else $color = '';
 
 
-            $playerJson = json()->decode('players', $row->player_id);
+            $playerJson = \App\Factory\PlayerFactory::legacy((int) $row->player_id)->get_data();
 
             $txt = ($table == 'bids') ? 'Acheter' : 'Vendre';
             $action = 'accept';

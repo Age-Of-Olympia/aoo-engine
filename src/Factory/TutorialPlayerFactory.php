@@ -114,13 +114,7 @@ class TutorialPlayerFactory
             'real_player_id_ref'  => $realPlayerId,
         ]);
 
-        // Step 7: Remove any stale JSON cache file
-        $cacheFile = $_SERVER['DOCUMENT_ROOT'] . '/datas/private/players/' . $actualPlayerId . '.json';
-        if (file_exists($cacheFile)) {
-            unlink($cacheFile);
-        }
-
-        /* Step 8: Grant basic actions.
+        /* Step 7: Grant basic actions.
          *
          * melee + distance, et non plus « attaquer » : ce nom n'a jamais
          * eu de ligne au catalogue et se résolvait par un repli sur la

@@ -250,7 +250,6 @@ define('consoleEnvKey', 'consoleENV');
 
 define('AUTO_GROW', false); // si true, les plantes poussent dès qu'on les met en terre
 define('FISHING', false); // si true, les players pêchent constemment
-define('CACHED_INVENT', true); // si false, l'inventaire n'est pas cached
 define('CACHED_KILLS', true); // si false, infos>kills n'est pas cached
 define('CACHED_QUESTS', true); // si false, logs>quests n'est pas cached
 define('CACHED_CLASSEMENTS', true); // si false, classemens.php n'est pas cached

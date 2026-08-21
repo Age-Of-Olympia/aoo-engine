@@ -293,9 +293,8 @@ Cypress.Commands.add('validateTutorialEnemy', (sessionId) => {
 /**
  * Get the player's current remaining PA and MVT, matching Player::getRemaining().
  *
- * Turn data lives in datas/private/players/<id>.turn.json (rewritten every time
- * get_caracs() runs), not in a DB column. The `readPlayerTurn` Node task reads
- * both turn.json and caracs.json and returns the same value getRemaining() would.
+ * Remaining = race base + players_bonus rows; the `readPlayerTurn` Node task
+ * reads both from the database and returns the value getRemaining() would.
  */
 Cypress.Commands.add('getPlayerResources', (playerId) => {
   return cy.task('readPlayerTurn', { playerId }).then((res) => {

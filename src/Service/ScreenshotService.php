@@ -187,10 +187,7 @@ class ScreenshotService
     private function generateSvgData(Player $player, object $coords, int $range): ?string
     {
         $playerOptions = $player->get_options();
-        $caracsJson = json()->decode('players', $player->id .'.caracs');
-        if (!$caracsJson) {
-            $player->get_caracs();
-        }
+        $player->get_caracs();
 
         $view = new View($coords, $range, false, $playerOptions);
         $data = $view->get_view();

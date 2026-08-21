@@ -142,7 +142,6 @@ class GroundLootService
         $labels = (new ItemInstanceService())->collectAt($coordsId, (int) $player->id, $instanceId);
 
         if ($labels !== []) {
-            $player->refresh_invent();
             Log::put($player, $player, $player->data->name . ' a ramassé des objets: ' . implode(', ', $labels) . '.', type: 'loot');
             $this->forgetBoards($coordsId);
         }
@@ -194,12 +193,6 @@ class GroundLootService
 
         if ($bagFull) {
             $lootList[] = 'sac plein — le reste attend au sol';
-        }
-
-        // add_item invalide le cache pour les piles ; les instances doivent
-        // aussi apparaître dès l'ouverture de l'inventaire.
-        if ($hadInstances) {
-            $player->refresh_invent();
         }
 
         $text = $player->data->name . ' a ramassé des objets: ' . implode(', ', $lootList) . '.';

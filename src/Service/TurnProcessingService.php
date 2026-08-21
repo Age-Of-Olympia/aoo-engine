@@ -261,7 +261,6 @@ class TurnProcessingService
 
         $player->refresh_data();
         $player->refresh_caracs();
-        $player->refresh_invent(); // for Ae
 
         return $recap;
     }

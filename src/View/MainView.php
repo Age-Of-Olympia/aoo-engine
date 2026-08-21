@@ -40,18 +40,9 @@ class MainView
 
                 $coords = $player->getCoords();
 
+                $player->get_caracs();
 
-                $caracsJson = json()->decode('players', $player->id . '.caracs');
-
-                if (!$caracsJson) {
-
-                    $player->get_caracs();
-
-                    $p = $player->caracs->p;
-                } else {
-
-                    $p = $caracsJson->p;
-                }
+                $p = $player->caracs->p;
 
 
                 $playerOptions = $player->get_options();
