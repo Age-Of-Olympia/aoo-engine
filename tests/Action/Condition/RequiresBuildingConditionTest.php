@@ -99,6 +99,7 @@ class RequiresBuildingConditionTest extends LegacyPlayerFixtureTestCase
     public function testAShutBuildingRefusesWithItsReason(): void
     {
         $this->requireBuildingsOrSkip();
+        $this->sowStructureType('taverne');
         [$x, $y] = $this->farTile();
         $actor = $this->actorAt($x, $y);
         $id = $this->placeStructure('taverne', $x + 1, $y + 1);

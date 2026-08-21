@@ -140,10 +140,10 @@ class BuildingCombatBaselineTest extends LegacyPlayerFixtureTestCase
         $actor->get_caracs();
         $building->get_caracs();
 
-        $action = ActionFactory::getAction('soins/barbier');
-        if ($action === null) {
-            $this->markTestSkipped("actions catalog not seeded (no 'soins/barbier' row).");
-        }
+        // A heal declares ['character']: the catalogue soin rotates with the
+        // season balancing, so the test sows its own.
+        $this->sowCatalogAction('soin_de_test', 'heal', ['TargetType' => ['allowed' => ['character']]]);
+        $action = ActionFactory::getAction('soin_de_test');
 
         $results = (new ActionExecutorService($action, $actor, $building))->executeAction();
 

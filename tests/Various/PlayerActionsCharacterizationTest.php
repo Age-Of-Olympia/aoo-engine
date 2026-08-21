@@ -37,6 +37,16 @@ class PlayerActionsCharacterizationTest extends TestCase
     private int $playerId = 0;
     private string $unknownActionName = '';
 
+    /** Learned-skill fixture rows: name => ormType (STI discriminator). */
+    private const FIXTURE_ACTIONS = [
+        'sort_de_test' => 'spell',
+        'technique_de_test' => 'technique',
+        'soin_de_test' => 'heal',
+    ];
+
+    /** @var int[] fixture action ids sown in bootstrapOrSkip, removed in tearDown */
+    private array $sownActionIds = [];
+
     protected function setUp(): void
     {
         $this->bootstrapOrSkip();
@@ -58,6 +68,11 @@ class PlayerActionsCharacterizationTest extends TestCase
         if ($this->link !== null && $this->link->isTransactionActive()) {
             $this->link->rollBack();
         }
+        // Fixture actions were committed outside the transaction.
+        foreach ($this->sownActionIds as $id) {
+            $this->link?->executeStatement('DELETE FROM actions WHERE id = ?', [$id]);
+        }
+        $this->sownActionIds = [];
         $this->link = null;
     }
 
@@ -144,26 +159,26 @@ class PlayerActionsCharacterizationTest extends TestCase
     #[Group('dismantling-phase-2b')]
     public function testAddActionWithSpellNameSetsTypeSort(): void
     {
-        // 'dmg1/pic_de_pierre' is seeded in `actions` with ormType='spell'.
+        // 'sort_de_test' is sown in `actions` with ormType='spell'.
         // Player::add()'s ActionService lookup must persist type='sort'.
         $player = PlayerFactory::legacy($this->playerId);
 
-        $player->add_action('dmg1/pic_de_pierre');
+        $player->add_action('sort_de_test');
 
-        $this->assertSame('sort', $this->fetchActionType('dmg1/pic_de_pierre'));
+        $this->assertSame('sort', $this->fetchActionType('sort_de_test'));
     }
 
     #[Group('player-actions-characterization')]
     #[Group('dismantling-phase-2b')]
     public function testAddActionWithTechniqueNameSetsTypeSort(): void
     {
-        // 'epuisement' is seeded in `actions` with ormType='technique'.
-        // Same 'sort' storage type — the branch covers both in one arm.
+        // 'technique_de_test' is sown with ormType='technique'. Same
+        // 'sort' storage type — the branch covers both in one arm.
         $player = PlayerFactory::legacy($this->playerId);
 
-        $player->add_action('epuisement');
+        $player->add_action('technique_de_test');
 
-        $this->assertSame('sort', $this->fetchActionType('epuisement'));
+        $this->assertSame('sort', $this->fetchActionType('technique_de_test'));
     }
 
     #[Group('player-actions-characterization')]
@@ -171,15 +186,11 @@ class PlayerActionsCharacterizationTest extends TestCase
     {
         // A defensive spell (ormType='heal') must persist with type='sort' too,
         // else the owned-spells page hides it and it escapes NUMBER_MAX_COMP (#264).
-        if ($this->link->fetchOne("SELECT name FROM actions WHERE name = 'soins/barbier'") === false) {
-            $this->markTestSkipped('heal fixture (soins/barbier) not seeded');
-        }
-
         $player = PlayerFactory::legacy($this->playerId);
 
-        $player->add_action('soins/barbier');
+        $player->add_action('soin_de_test');
 
-        $this->assertSame('sort', $this->fetchActionType('soins/barbier'));
+        $this->assertSame('sort', $this->fetchActionType('soin_de_test'));
     }
 
     #[Group('player-actions-characterization')]
@@ -244,21 +255,22 @@ class PlayerActionsCharacterizationTest extends TestCase
             );
         }
 
-        // Sanity-check the spell/technique fixture rows are seeded. If
-        // someone's reset_test_database.sh didn't run the actions seed,
-        // skip loudly rather than fail mysteriously.
+        // The learned-skill rows the type-mapping branch reads: sown here
+        // rather than read from the world — the spell catalogue rotates
+        // with the season balancing. Committed before the per-test
+        // transaction so the ActionService lookup (its own connection)
+        // sees them; removed in tearDown after the rollback.
         try {
-            $actions = $link->fetchFirstColumn(
-                "SELECT name FROM actions WHERE name IN ('dmg1/pic_de_pierre', 'epuisement')"
-            );
+            foreach (self::FIXTURE_ACTIONS as $name => $ormType) {
+                $exists = $link->fetchOne('SELECT id FROM actions WHERE name = ?', [$name]);
+                if ($exists === false) {
+                    // icon is NOT NULL without default on the CI schema
+                    $link->insert('actions', ['name' => $name, 'icon' => '', 'type' => $ormType]);
+                    $this->sownActionIds[] = (int) $link->lastInsertId();
+                }
+            }
         } catch (\Throwable $e) {
-            $this->markTestSkipped('actions table unreadable: ' . $e->getMessage());
-        }
-
-        if (count($actions) < 2) {
-            $this->markTestSkipped(
-                'Spell/technique fixture rows missing — reseed the DB.'
-            );
+            $this->markTestSkipped('actions table unwritable: ' . $e->getMessage());
         }
 
         $this->link = $link;

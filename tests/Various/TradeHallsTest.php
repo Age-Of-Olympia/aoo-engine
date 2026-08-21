@@ -222,6 +222,7 @@ class TradeHallsTest extends LegacyPlayerFixtureTestCase
         }
 
         [$x2, $y2] = $this->farTile();
+        $this->sowStructureType('tour_garde', ['capacity' => 10]);
         $tourId = $this->placeStructure('tour_garde', $x2, $y2);
         $this->assertTrue(
             $service->isContainer($tourId),

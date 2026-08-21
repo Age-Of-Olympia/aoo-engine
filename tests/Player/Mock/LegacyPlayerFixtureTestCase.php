@@ -47,6 +47,15 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
     /** @var array<int, int|null> coords_id => pre-existing sang endTime (null = absent) */
     private array $bloodSnapshots = [];
 
+    /** @var string[] structure type names sown via sowStructureType(), removed in tearDown */
+    private array $sownTypeNames = [];
+
+    /** @var string[] catalogue item names sown via sowCatalogItem(), removed in tearDown */
+    private array $sownItemNames = [];
+
+    /** @var int[] action ids sown via sowCatalogAction(), removed in tearDown */
+    private array $sownActionIds = [];
+
     protected function setUp(): void
     {
         $this->link = $this->bootstrapLegacyOrSkip();
@@ -178,8 +187,27 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
             }
         }
 
+        // Sown catalogue rows go last: the entities standing on them are
+        // already gone by now.
+        foreach ($this->sownTypeNames as $name) {
+            $this->link->executeStatement('DELETE FROM races WHERE name = ?', [$name]);
+        }
+        if ($this->sownTypeNames !== []) {
+            RaceService::clearCache();
+        }
+        foreach ($this->sownItemNames as $name) {
+            $this->link->executeStatement('DELETE FROM items WHERE name = ?', [$name]);
+        }
+        foreach ($this->sownActionIds as $id) {
+            $this->link->executeStatement('DELETE FROM action_conditions WHERE action_id = ?', [$id]);
+            $this->link->executeStatement('DELETE FROM actions WHERE id = ?', [$id]);
+        }
+
         $this->createdPlayerIds = [];
         $this->bloodSnapshots = [];
+        $this->sownTypeNames = [];
+        $this->sownItemNames = [];
+        $this->sownActionIds = [];
         $this->link = null;
         $GLOBALS['link'] = $this->previousLink;
         $this->previousLink = null;
@@ -330,6 +358,98 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
               WHERE i.id = ?',
             [$instanceId]
         );
+    }
+
+    /**
+     * Sème un type de structure absent du catalogue, sur le modèle des
+     * migrations qui en créent (TradeHallsEnterTheWorld) : un édifice
+     * verrouillable d'une case, 150 PV. `$overrides` surcharge colonne
+     * par colonne (capacity, structure_nature…). Un type déjà seedé est
+     * laissé tel quel — il appartient au monde, pas au test.
+     */
+    protected function sowStructureType(string $name, array $overrides = []): void
+    {
+        if ((new RaceService())->getRaceByName($name) !== null) {
+            return;
+        }
+
+        $this->link->insert('races', array_merge([
+            'code' => strtoupper($name),
+            'name' => $name,
+            'label' => ucfirst($name),
+            'description' => 'Type semé par le harnais de test.',
+            'playable' => 0,
+            'hidden' => 1,
+            'kind' => 'structure',
+            'type_kind' => 'building',
+            'structure_nature' => 'edifice',
+            'bleeds' => '',
+            'wound_color' => '#cd7f32',
+            'blocks_passage' => 1,
+            'blocks_projectiles' => 1,
+            'lockable' => 1,
+            'opens_the_way' => 0,
+            'readable_from_afar' => 1,
+            'bgColor' => '#8b6d43',
+            'color' => 'black',
+            'faction' => '',
+            'plan' => '',
+            'pv' => 150,
+        ], $overrides));
+        $this->sownTypeNames[] = $name;
+
+        // The guard lookup above cached the absence; the identity map may
+        // hold stale catalogue reads.
+        RaceService::clearCache();
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
+    }
+
+    /**
+     * Sème une action de catalogue absente, avec ses conditions
+     * ([conditionType => parameters]), retirée au teardown. Le type est
+     * un discriminant de la carte STI d'Action (heal, spell, gesture…).
+     */
+    protected function sowCatalogAction(string $name, string $type, array $conditions = []): void
+    {
+        if (\App\Factory\ActionFactory::getAction($name) !== null) {
+            return;
+        }
+
+        // icon is NOT NULL without default on the CI schema.
+        $this->link->insert('actions', ['name' => $name, 'icon' => '', 'type' => $type]);
+        $id = (int) $this->link->lastInsertId();
+        $this->sownActionIds[] = $id;
+
+        foreach ($conditions as $conditionType => $parameters) {
+            $this->link->insert('action_conditions', [
+                'action_id' => $id,
+                'conditionType' => $conditionType,
+                'parameters' => json_encode($parameters),
+            ]);
+        }
+
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
+    }
+
+    /**
+     * Sème un objet de catalogue absent et le retourne chargé. Le monde
+     * réel importe ses objets par bundle ; le harnais ne crée que la
+     * ligne dont le test a besoin, retirée au teardown.
+     */
+    protected function sowCatalogItem(string $name, array $overrides = []): Item
+    {
+        $existing = Item::get_item_by_name($name);
+        if (!empty($existing)) {
+            $existing->get_data();
+
+            return $existing;
+        }
+
+        $this->link->insert('items', array_merge(['name' => $name], $overrides));
+        $this->sownItemNames[] = $name;
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
+
+        return $this->itemOrSkip($name);
     }
 
     /** Objet du catalogue, données chargées — skip si non seedé. */

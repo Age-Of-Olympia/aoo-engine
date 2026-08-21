@@ -33,6 +33,7 @@ class AdvancedRecipeNeedsWorkshopTest extends LegacyPlayerFixtureTestCase
     /** Seeds an advanced pierre recipe (5 bois, at a taverne) and a stocked crafter. */
     private function crafterWithAdvancedRecipe(int $x, int $y): array
     {
+        $this->sowStructureType('taverne');
         $bois = $this->itemOrSkip('bois');
         $pierre = $this->itemOrSkip('pierre');
 

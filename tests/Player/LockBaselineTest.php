@@ -240,10 +240,7 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
      */
     public function testAnOpenBuildingIsStillNotWalkable(): void
     {
-        $race = (new \App\Service\RaceService())->getRaceByName('taverne');
-        if ($race === null || !$race->isEdifice()) {
-            $this->markTestSkipped("type 'taverne' non seedé.");
-        }
+        $this->sowStructureType('taverne');
 
         $mover = $this->createRealPlayer('GmClient');
         [$x, $y] = $this->farTile();

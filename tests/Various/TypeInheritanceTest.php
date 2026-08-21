@@ -30,6 +30,18 @@ class TypeInheritanceTest extends TestCase
 {
     private ?Connection $conn = null;
 
+    /** Récoltable semé quand le catalogue n'en offre aucun avec rendement. */
+    private ?int $sownTypeId = null;
+
+    protected function tearDown(): void
+    {
+        if ($this->sownTypeId !== null) {
+            $this->conn?->executeStatement('DELETE FROM races WHERE id = ?', [$this->sownTypeId]);
+            $this->sownTypeId = null;
+        }
+        $this->conn = null;
+    }
+
     protected function setUp(): void
     {
         try {
@@ -140,7 +152,17 @@ class TypeInheritanceTest extends TestCase
         );
 
         if ($withYield === false || $withYield === null) {
-            $this->markTestSkipped('Aucun récoltable avec un rendement au catalogue.');
+            /* Aucun récoltable dans ce monde : on en sème un — le contrat
+             * porte sur la famille et sa capacité, pas sur la flore. */
+            $this->conn->insert('races', [
+                'code' => 'RESSOURCE_DE_TEST', 'name' => 'ressource_de_test',
+                'label' => 'Ressource de test', 'playable' => 0, 'hidden' => 1,
+                'kind' => 'structure', 'type_kind' => Race::FAMILY_RESOURCE,
+                'harvest_item' => 'bois',
+            ]);
+            $this->sownTypeId = (int) $this->conn->lastInsertId();
+            \App\Factory\EntityManagerFactory::getEntityManager()->clear();
+            $withYield = 'ressource_de_test';
         }
 
         $type = (new RaceService())->getRaceByName((string) $withYield);

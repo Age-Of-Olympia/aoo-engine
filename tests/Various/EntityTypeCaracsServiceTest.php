@@ -17,9 +17,21 @@ use PHPUnit\Framework\TestCase;
  */
 class EntityTypeCaracsServiceTest extends TestCase
 {
+    /** Cuirasse fixture sown when the catalogue holds no pv-lending item. */
+    private ?int $sownItemId = null;
+
     private function service(): EntityTypeCaracsService
     {
         return new EntityTypeCaracsService();
+    }
+
+    protected function tearDown(): void
+    {
+        if ($this->sownItemId !== null) {
+            EntityManagerFactory::getEntityManager()->getConnection()
+                ->executeStatement('DELETE FROM items WHERE id = ?', [$this->sownItemId]);
+            $this->sownItemId = null;
+        }
     }
 
     protected function setUp(): void
@@ -83,7 +95,15 @@ class EntityTypeCaracsServiceTest extends TestCase
         );
 
         if ($lender === false) {
-            $this->markTestSkipped('no item lending pv in this catalog.');
+            // No breastplate in this catalogue: sow one — the contract under
+            // test is the service's reading, not the world's wardrobe.
+            $conn->insert('items', [
+                'name' => 'cuirasse_de_test', 'emplacement' => 'tronc',
+                'pv' => 8, 'durability_max' => 25,
+            ]);
+            $this->sownItemId = (int) $conn->lastInsertId();
+            EntityManagerFactory::getEntityManager()->clear();
+            $lender = ['name' => 'cuirasse_de_test', 'pv' => 8, 'durability_max' => 25];
         }
 
         $block = $this->service()->ownCaracs(
