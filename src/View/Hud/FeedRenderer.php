@@ -53,25 +53,7 @@ final class FeedRenderer
 
         ob_start();
         foreach ($logs as $e) {
-            $planJson = plans()->read($e->plan);
-            $planName = is_object($planJson) ? $planJson->name : '?';
-
-            /* data-time : js/hud.js s'en sert pour le compteur d'évènements
-             * non lus (comparaison au dernier passage, localStorage).
-             * data-own : nos propres actions ne comptent pas comme non
-             * lues — seul ce que les autres nous font mérite le badge. */
-            $isOwn = ((int) $e->player_id === (int) $player->id);
-            $own = $isOwn ? ' data-own="1"' : '';
-
-            echo '<div class="hud-feed-item' . self::outcomeClass((string) $e->hiddenText) . '" data-time="' . (int) $e->time . '"' . $own . '>'
-                . '<span class="log-' . $e->type . '">' . $e->text . '</span>'
-                . self::renderDetail($isOwn, (string) $e->hiddenText)
-                . '<div class="hud-feed-meta">'
-                . self::authorName($playerService, (int) $e->player_id)
-                . ' · ' . self::humanDate((int) $e->time)
-                . ' · ' . $planName
-                . '</div>'
-                . '</div>';
+            echo self::renderEventItem($playerService, $player, $e);
         }
 
         /* Le seul accès à la page complète était une icône de livre
@@ -81,6 +63,30 @@ final class FeedRenderer
         echo '<a class="hud-feed-all" href="logs.php?light">Tout voir</a>';
 
         return Str::minify(ob_get_clean());
+    }
+
+    /** One feed item — shared with the death screen, which lists the same rows. */
+    public static function renderEventItem(PlayerService $playerService, Player $viewer, object $e): string
+    {
+        $planJson = plans()->read($e->plan);
+        $planName = is_object($planJson) ? $planJson->name : '?';
+
+        /* data-time : js/hud.js s'en sert pour le compteur d'évènements
+         * non lus (comparaison au dernier passage, localStorage).
+         * data-own : nos propres actions ne comptent pas comme non
+         * lues — seul ce que les autres nous font mérite le badge. */
+        $isOwn = ((int) $e->player_id === (int) $viewer->id);
+        $own = $isOwn ? ' data-own="1"' : '';
+
+        return '<div class="hud-feed-item' . self::outcomeClass((string) $e->hiddenText) . '" data-time="' . (int) $e->time . '"' . $own . '>'
+            . '<span class="log-' . $e->type . '">' . $e->text . '</span>'
+            . self::renderDetail($isOwn, (string) $e->hiddenText)
+            . '<div class="hud-feed-meta">'
+            . self::authorName($playerService, (int) $e->player_id)
+            . ' · ' . self::humanDate((int) $e->time)
+            . ' · ' . $planName
+            . '</div>'
+            . '</div>';
     }
 
     /**
