@@ -32,7 +32,8 @@ class Log{
 
     private static function getPerception(ActorInterface $player)
     {
-        if (!isset($player->caracs)) {
+        // Player initializes caracs as an empty object: probe the property.
+        if (!isset($player->caracs->p)) {
             $player->get_caracs();
         }
 
