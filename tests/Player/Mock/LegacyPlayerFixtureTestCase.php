@@ -361,11 +361,11 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
     }
 
     /**
-     * Sème un type de structure absent du catalogue, sur le modèle des
-     * migrations qui en créent (TradeHallsEnterTheWorld) : un édifice
-     * verrouillable d'une case, 150 PV. `$overrides` surcharge colonne
-     * par colonne (capacity, structure_nature…). Un type déjà seedé est
-     * laissé tel quel — il appartient au monde, pas au test.
+     * Sow a structure type the catalogue lacks, shaped like the
+     * migrations that create some (TradeHallsEnterTheWorld): a lockable
+     * single-cell edifice, 150 PV. `$overrides` replaces columns
+     * (capacity, structure_nature…). An already-seeded type is left
+     * alone — it belongs to the world, not to the test.
      */
     protected function sowStructureType(string $name, array $overrides = []): void
     {
@@ -405,9 +405,9 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
     }
 
     /**
-     * Sème une action de catalogue absente, avec ses conditions
-     * ([conditionType => parameters]), retirée au teardown. Le type est
-     * un discriminant de la carte STI d'Action (heal, spell, gesture…).
+     * Sow a catalogue action the world lacks, with its conditions
+     * ([conditionType => parameters]), removed in tearDown. The type is
+     * a discriminator of Action's STI map (heal, spell, gesture…).
      */
     protected function sowCatalogAction(string $name, string $type, array $conditions = []): void
     {
@@ -432,9 +432,9 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
     }
 
     /**
-     * Sème un objet de catalogue absent et le retourne chargé. Le monde
-     * réel importe ses objets par bundle ; le harnais ne crée que la
-     * ligne dont le test a besoin, retirée au teardown.
+     * Sow a catalogue item the world lacks and return it loaded. Real
+     * worlds import their items by bundle; the harness only creates the
+     * row the test needs, removed in tearDown.
      */
     protected function sowCatalogItem(string $name, array $overrides = []): Item
     {

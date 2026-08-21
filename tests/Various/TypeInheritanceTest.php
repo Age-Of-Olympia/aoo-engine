@@ -30,7 +30,7 @@ class TypeInheritanceTest extends TestCase
 {
     private ?Connection $conn = null;
 
-    /** Récoltable semé quand le catalogue n'en offre aucun avec rendement. */
+    /** Harvestable sown when the catalogue offers none with a yield. */
     private ?int $sownTypeId = null;
 
     protected function tearDown(): void
@@ -152,8 +152,8 @@ class TypeInheritanceTest extends TestCase
         );
 
         if ($withYield === false || $withYield === null) {
-            /* Aucun récoltable dans ce monde : on en sème un — le contrat
-             * porte sur la famille et sa capacité, pas sur la flore. */
+            /* No harvestable in this world: sow one — the contract is
+             * about the family and its capability, not the flora. */
             $this->conn->insert('races', [
                 'code' => 'RESSOURCE_DE_TEST', 'name' => 'ressource_de_test',
                 'label' => 'Ressource de test', 'playable' => 0, 'hidden' => 1,
