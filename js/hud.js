@@ -2062,6 +2062,14 @@
                     return;
                 }
 
+                /* Fermer ne se confirme pas : le clic file directement vers
+                 * observe.js (qui cache #ui-card) — c'est aussi le chemin de
+                 * l'auto_close_card du tutoriel, qui ne clique qu'une fois. */
+                if (btn.classList.contains('close-card')) {
+                    disarmActions();
+                    return;
+                }
+
                 if (!btn.classList.contains('hud-action--armed')) {
                     e.preventDefault();
                     e.stopPropagation();

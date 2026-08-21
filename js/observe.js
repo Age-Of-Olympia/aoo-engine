@@ -7,8 +7,13 @@ $(document).ready(function(){
        case…) : un clic = le geste, via leur gestionnaire délégué
        dédié — ils échappent au cycle en deux temps (élargir puis
        confirmer) des actions de case, qui avalait le premier clic
-       puis POSTait un data-action vide (« error action »). */
-    $('.action').not('.action--direct').click(function(e){
+       puis POSTait un data-action vide (« error action »).
+
+       off() d'abord : ce script est ré-exécuté par chaque fragment
+       d'observation et par les résultats d'action — sans lui, les
+       gestionnaires s'empilent sur les mêmes boutons et UN clic
+       exécute l'action plusieurs fois (autant de PA payés). */
+    $('.action').not('.action--direct').off('click.observe').on('click.observe', function(e){
 
 
         if($(this).find('.action-name').html() != 'Fermer'){
