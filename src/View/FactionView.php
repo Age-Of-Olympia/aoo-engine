@@ -45,7 +45,7 @@ class FactionView
 
             $raceJson = $raceService->getRaceData($row->race);
 
-            $planJson = json()->decode('plans', $row->plan);
+            $planJson = plans()->read($row->plan);
 
             if (!$planJson) {
 
@@ -447,7 +447,7 @@ class FactionView
                 default => 'Construit',
             };
 
-            $planJson = json()->decode('plans', (string) $b['plan']);
+            $planJson = plans()->read((string) $b['plan']);
 
             echo '
         <tr>
@@ -613,7 +613,7 @@ class FactionView
     ';
 
         foreach ($containers as $chest) {
-            $planJson = json()->decode('plans', (string) $chest['plan']);
+            $planJson = plans()->read((string) $chest['plan']);
 
             echo '
         <tr>

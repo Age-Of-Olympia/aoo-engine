@@ -75,7 +75,7 @@ $db = new Db();
  * du plan et leur mode discret. Sortir simplement la sous-requête du `if`
  * aurait produit l'inverse — le rendu cache les joueurs de ces plans, on
  * aurait obtenu des murs invisibles. */
-$planJson = json()->decode('plans', $player->coords->plan);
+$planJson = plans()->read($player->coords->plan);
 
 $refusal = (new \App\Service\Map\TileOccupancyService())->stepRefusal(
     (int) $coordsId,

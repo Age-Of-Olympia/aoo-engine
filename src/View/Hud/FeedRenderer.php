@@ -53,7 +53,7 @@ final class FeedRenderer
 
         ob_start();
         foreach ($logs as $e) {
-            $planJson = json()->decode('plans', $e->plan);
+            $planJson = plans()->read($e->plan);
             $planName = is_object($planJson) ? $planJson->name : '?';
 
             /* data-time : js/hud.js s'en sert pour le compteur d'évènements

@@ -375,8 +375,8 @@ class TileAssetService
 
     /**
      * Références de configuration qu'un renommage NE met PAS à jour : à
-     * vérifier à la main. Les biomes des plans (datas/private/plans/*.json)
-     * nomment des murs/ressources ; le catalogue des types aussi.
+     * vérifier à la main. Les biomes des plans (plans.biomes) nomment des
+     * murs/ressources ; le catalogue des types aussi.
      *
      * @return list<string>
      */

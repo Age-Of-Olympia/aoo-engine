@@ -34,7 +34,7 @@ final class TopBarView
         $raceJson = (new RaceService())->getRaceData($player->data->race);
         $raceName = is_object($raceJson) ? $raceJson->name : $player->data->race;
 
-        $planJson = json()->decode('plans', $coords->plan);
+        $planJson = plans()->read($coords->plan);
         $planName = is_object($planJson) ? $planJson->name : '?';
 
         ob_start();

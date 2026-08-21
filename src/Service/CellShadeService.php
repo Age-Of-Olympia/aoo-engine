@@ -14,8 +14,8 @@ use RuntimeException;
  *
  * # Trois étages, du plus précis au plus général
  *
- * 1. **Le plan** (`datas/private/plans/<plan>.json`, clés `shade_*`, éditées
- *    depuis admin → Plans et depuis Tiled). C'est le bon niveau : une grotte
+ * 1. **Le plan** (table `plans`, colonnes `shade_*`, éditées depuis
+ *    admin → Plans et depuis Tiled). C'est le bon niveau : une grotte
  *    se veut plus sombre qu'une plaine, un plan de glace plus bleu. L'ombre
  *    est un réglage de CARTE.
  * 2. **Le tableau de bord admin** (`admin_settings`) : le défaut de tous les
@@ -100,13 +100,13 @@ class CellShadeService
         $key = (string) $plan;
 
         if (!isset(self::$planCache[$key])) {
-            /* `json()` est une fonction globale du bootstrap hérité
+            /* `plans()` est une fonction globale du bootstrap hérité
              * (config/functions.php). Hors de ce contexte — console isolée,
-             * test unitaire — il n'y a tout simplement pas de JSON de plan à
-             * lire, donc pas de surcharge : le défaut global s'applique. */
-            $json = ($plan === null || !function_exists('json'))
+             * test unitaire — il n'y a tout simplement pas de config de plan
+             * à lire, donc pas de surcharge : le défaut global s'applique. */
+            $json = ($plan === null || !function_exists('plans'))
                 ? null
-                : json()->decode('plans', $plan);
+                : plans()->read($plan);
 
             $step  = isset($json->shade_step) ? (float) $json->shade_step : $this->step();
             $max   = isset($json->shade_max) ? (int) $json->shade_max : $this->maxLevel();

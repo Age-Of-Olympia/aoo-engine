@@ -203,7 +203,7 @@ while($row = $res->fetch_object()){
 
 
 // plan exceptions
-$planJson = json()->decode('plans', $player->coords->plan);
+$planJson = plans()->read($player->coords->plan);
 
 
 if($planJson){

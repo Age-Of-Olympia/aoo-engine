@@ -136,11 +136,11 @@ ob_start();
         <strong>Qu'est-ce qu'une carte locale ?</strong>
         Elle est constituée de deux éléments qui doivent être cohérents :
         <ul class="mb-1 mt-1">
-            <li><strong>Un fichier JSON</strong> (<code style="display:inline;white-space:nowrap">private/plans/&lt;id&gt;.json</code>) : nom, niveaux Z, bornes visibles, biomes…</li>
+            <li><strong>Une config de plan</strong> (tables <code style="display:inline;white-space:nowrap">plans</code> / <code style="display:inline;white-space:nowrap">plan_z_levels</code>) : nom, niveaux Z, bornes visibles, biomes…</li>
             <li><strong>Des coordonnées en base</strong> : chaque case dans la table <code style="display:inline;white-space:nowrap">coords</code> (tiles, éléments, murs…)</li>
         </ul>
-        Un niveau Z peut exister en base sans être déclaré dans le JSON (et inversement) : la validation ci-dessous détecte ces incohérences.
-        Si un niveau n'a volontairement pas de carte, déclarez-le avec <code style="display:inline;white-space:nowrap">"MapUnavailable": true</code> dans le JSON.
+        Un niveau Z peut exister côté coords sans être déclaré dans la config (et inversement) : la validation ci-dessous détecte ces incohérences.
+        Si un niveau n'a volontairement pas de carte, cochez « Pas de carte » dans l'édition du plan (drapeau MapUnavailable).
     </div>
 
     <div class="card mt-3">
@@ -168,12 +168,12 @@ ob_start();
         $plansWithIssues = [];
         $okCount = 0;
         foreach ($overviewPlans as $p) {
-            $raw = json()->decode('plans', $p->id);
+            $raw = plans()->read($p->id);
             if ($raw === null || $raw === false) {
-                // JSON vide/invalide : problème de plan (ni Z ni biome), rendu à part.
+                // Config absente : problème de plan (ni Z ni biome), rendu à part.
                 $plansWithIssues[] = [
                     'plan' => $p, 'errCount' => 1, 'warnCount' => 0, 'v' => null,
-                    'emptyMsg' => 'Fichier JSON du plan vide ou invalide, aucune récolte possible sur ce plan.',
+                    'emptyMsg' => 'Config du plan absente, aucune récolte possible sur ce plan.',
                 ];
                 continue;
             }
@@ -313,13 +313,13 @@ ob_start();
                     </div>
 
                     <?php
-                    // Validation du JSON du plan
-                    $rawPlanData = json()->decode('plans', $plan->id);
+                    // Validation de la config du plan
+                    $rawPlanData = plans()->read($plan->id);
                     if ($rawPlanData === null || $rawPlanData === false) {
-                        // JSON vide (0 octet) ou invalide → décodage null/false : aucun biome
-                        // chargé, donc aucune récolte possible. On le signale explicitement
-                        // plutôt que d'ignorer silencieusement le bloc de validation.
-                        echo '<div class="alert alert-danger mt-3 py-1 my-1"><i class="fas fa-times-circle"></i> Fichier JSON du plan vide ou invalide, aucune récolte possible sur ce plan.</div>';
+                        // Pas de ligne plans : aucun biome chargé, donc aucune récolte
+                        // possible. On le signale explicitement plutôt que d'ignorer
+                        // silencieusement le bloc de validation.
+                        echo '<div class="alert alert-danger mt-3 py-1 my-1"><i class="fas fa-times-circle"></i> Config du plan absente, aucune récolte possible sur ce plan.</div>';
                     } else {
                         $validation = PlanJsonValidator::validate($rawPlanData, $plan->id, $database);
 
@@ -355,7 +355,7 @@ ob_start();
                                 ?>
                             </div>
                             <?php if ($selectedZLevel !== null && $selectedZLevel !== ''):
-                                $rawZ = json()->decode('plans', $selectedPlan);
+                                $rawZ = plans()->read($selectedPlan);
                                 $zEntry = null;
                                 foreach (($rawZ->z_levels ?? []) as $zl) {
                                     if ($zl->z == $selectedZLevel) { $zEntry = $zl; break; }

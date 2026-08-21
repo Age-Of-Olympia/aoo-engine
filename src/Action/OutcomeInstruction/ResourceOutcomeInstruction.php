@@ -48,25 +48,16 @@ class ResourceOutcomeInstruction extends OutcomeInstruction implements HasParame
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         $ressources = array();
         $yields = (new \App\Service\Map\HarvestCatalogService())->yieldsFor((string) $actor->coords->plan);
-        $biomes = array();
-
-        $coords = $actor->getCoords();
-        $planJson = json()->decode('plans', $coords->plan);
-        if(!empty($planJson->biomes)){
-            foreach($planJson->biomes as $e){
-                $biomes[$e->wall] = $e->ressource;
-            }
-        }
 
         $res = ResourceService::findResourcesAround($actor);
         while($row = $res->fetch_object()){
 
-            /* Skip if this wall type has no resource defined in biomes */
-            if(!isset($biomes[$row->name])){
+            /* Skip if this wall type has no resource in the harvest catalog */
+            if(!isset($yields[$row->name])){
                 continue;
             }
 
-            $resourceName = $biomes[$row->name];
+            $resourceName = $yields[$row->name]['item'];
             if(array_key_exists($resourceName, $ressources))
                 $ressources[$resourceName] += $row->max;
             else

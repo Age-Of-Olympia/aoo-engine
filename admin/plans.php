@@ -3,14 +3,14 @@
  * Gestion des plans (admin dashboard → Cartes → Plans).
  *
  * Trois vues, routées sur ?action :
- *   - list (défaut) : inventaire réconcilié des plans — union des fichiers
- *     JSON (datas/private/plans) et des plans présents en base (coords) —
- *     avec statut de cohérence et bilan de validation.
- *   - new  : création d'un plan, vierge (JSON minimal + case d'amorce) ou
- *     par clonage d'un plan modèle (JSON + coords + couches map_*).
+ *   - list (défaut) : inventaire réconcilié des plans — union des configs
+ *     (table plans) et des plans présents en base (coords) — avec statut de
+ *     cohérence et bilan de validation.
+ *   - new  : création d'un plan, vierge (config minimale + case d'amorce) ou
+ *     par clonage d'un plan modèle (config + coords + couches map_*).
  *   - edit : édition de la configuration du plan (PLAN_CONFIG_KEYS + niveaux
- *     Z), remplaçant l'édition du JSON brut via tools.php ; zone dangereuse
- *     de suppression avec bilan préalable (PlanAdminService::deletePreflight).
+ *     Z) ; zone dangereuse de suppression avec bilan préalable
+ *     (PlanAdminService::deletePreflight).
  *
  * Le contenu des cartes (tuiles, murs…) reste authoré via l'extension Tiled
  * (docs/tiled-editor-guide.md) ; cette page gère le cycle de vie et la
@@ -35,11 +35,11 @@ use App\Service\ViewService;
 use Classes\Db;
 
 /**
- * Inventaire réconcilié : un plan peut exister côté fichier JSON, côté coords
- * en base, ou les deux — les incohérences (moitié manquante) sont le premier
- * diagnostic de la page.
+ * Inventaire réconcilié : un plan peut exister côté config (table plans),
+ * côté coords, ou les deux — les incohérences (moitié manquante) sont le
+ * premier diagnostic de la page.
  *
- * @return array<string, object{id: string, name: string, isS2: bool, hasJson: bool,
+ * @return array<string, object{id: string, name: string, isS2: bool, hasConfig: bool,
  *                              hasCoords: bool, zLevels: int[], coordsCount: int}> par id, trié
  */
 function plans_build_inventory(Db $db): array
@@ -49,14 +49,14 @@ function plans_build_inventory(Db $db): array
     foreach ((new ViewService($db, 0, 0, 0, 0, 'olympia'))->getAllPlans() as $p) {
         $byId[$p->id] = (object) [
             'id' => $p->id, 'name' => $p->name, 'isS2' => $p->isS2,
-            'hasJson' => true, 'hasCoords' => false, 'zLevels' => [], 'coordsCount' => 0,
+            'hasConfig' => true, 'hasCoords' => false, 'zLevels' => [], 'coordsCount' => 0,
         ];
     }
 
     foreach ((new TiledMapService())->listPlans() as $planId => $info) {
         $row = $byId[$planId] ?? (object) [
             'id' => $planId, 'name' => $planId, 'isS2' => str_contains($planId, '_s2'),
-            'hasJson' => false, 'hasCoords' => false, 'zLevels' => [], 'coordsCount' => 0,
+            'hasConfig' => false, 'hasCoords' => false, 'zLevels' => [], 'coordsCount' => 0,
         ];
         $row->hasCoords = true;
         $row->zLevels = $info['zLevels'];
@@ -77,28 +77,28 @@ function plans_build_inventory(Db $db): array
     return $byId;
 }
 
-/** Badge de cohérence JSON/coords d'un plan de l'inventaire. */
+/** Badge de cohérence config/coords d'un plan de l'inventaire. */
 function plans_status_badge(object $plan): string
 {
-    if ($plan->hasJson && $plan->hasCoords) {
+    if ($plan->hasConfig && $plan->hasCoords) {
         return '<span class="badge" style="background-color:#198754;color:#fff;">cohérent</span>';
     }
     if ($plan->hasCoords) {
         return '<span class="badge" style="background-color:#dc3545;color:#fff;" title="Des coordonnées existent en base'
-            . ' mais le fichier datas/private/plans/' . e($plan->id) . '.json manque : aucune récolte, pas de bornes de carte.">'
-            . 'coords sans JSON</span>';
+            . ' mais la table plans n\'a pas de ligne « ' . e($plan->id) . ' » : aucune récolte, pas de bornes de carte.">'
+            . 'coords sans config</span>';
     }
-    return '<span class="badge" style="background-color:#f0ad4e;color:#fff;" title="Un fichier JSON existe mais aucune'
-        . ' coordonnée en base : plan orphelin (jamais créé, ou base purgée).">JSON sans coords</span>';
+    return '<span class="badge" style="background-color:#f0ad4e;color:#fff;" title="Une config existe mais aucune'
+        . ' coordonnée en base : plan orphelin (jamais créé, ou base purgée).">config sans coords</span>';
 }
 
 /** Rapport PlanJsonValidator d'un plan, en chaîne (les helpers echo-ent). */
 function plans_validation_html(string $planId, Db $db, bool $includeOk): string
 {
-    $raw = json()->decode('plans', $planId);
+    $raw = plans()->read($planId);
     if ($raw === null || $raw === false) {
         return '<div class="alert alert-danger py-1 my-1"><i class="fas fa-times-circle"></i>'
-            . ' Fichier JSON du plan vide ou invalide, aucune récolte possible sur ce plan.</div>';
+            . ' Config du plan absente, aucune récolte possible sur ce plan.</div>';
     }
 
     $validation = PlanJsonValidator::validate($raw, $planId, $db);
@@ -131,10 +131,10 @@ function plans_render_list(array $inventory, Db $db): string
     $rows = '';
     foreach ($filtered as $plan) {
         $validationCell = '<span class="text-muted">—</span>';
-        if ($plan->hasJson) {
-            $raw = json()->decode('plans', $plan->id);
+        if ($plan->hasConfig) {
+            $raw = plans()->read($plan->id);
             if ($raw === null || $raw === false) {
-                $validationCell = '<span class="badge" style="background-color:#dc3545;color:#fff;">JSON invalide</span>';
+                $validationCell = '<span class="badge" style="background-color:#dc3545;color:#fff;">config absente</span>';
             } else {
                 $v = PlanJsonValidator::validate($raw, $plan->id, $db, $knownItemNames);
                 $badges = '';
@@ -178,7 +178,8 @@ function plans_render_list(array $inventory, Db $db): string
 
         . '<div class="alert alert-info" style="font-size:13px;line-height:1.5;">'
         . '<strong>Qu\'est-ce qu\'un plan ?</strong> Deux moitiés qui doivent rester cohérentes : '
-        . '<strong>un fichier JSON</strong> (<code style="display:inline;white-space:nowrap">private/plans/&lt;id&gt;.json</code>'
+        . '<strong>une config</strong> (tables <code style="display:inline;white-space:nowrap">plans</code> /'
+        . ' <code style="display:inline;white-space:nowrap">plan_z_levels</code>'
         . ' — nom, niveaux Z, bornes visibles, biomes…) et <strong>des coordonnées en base</strong>'
         . ' (table <code style="display:inline;white-space:nowrap">coords</code> + couches'
         . ' <code style="display:inline;white-space:nowrap">map_*</code>).'
@@ -198,7 +199,7 @@ function plans_render_list(array $inventory, Db $db): string
  */
 function plans_render_new_form(array $inventory, string $csrfToken): string
 {
-    $templates = array_filter($inventory, fn(object $p) => $p->hasJson && $p->hasCoords);
+    $templates = array_filter($inventory, fn(object $p) => $p->hasConfig && $p->hasCoords);
 
     $templateChoices = [];
     foreach ($templates as $p) {
@@ -350,8 +351,8 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
                     : ''))
         . '</p><a class="btn btn-sm btn-outline-primary" href="/admin/harvest-seed.php">Régler les rendements</a></div>';
 
-    // Niveaux Z : union base ∪ JSON, pour rendre la dérive visible ici aussi
-    $raw = json()->decode('plans', $planId);
+    // Niveaux Z : union coords ∪ config, pour rendre la dérive visible ici aussi
+    $raw = plans()->read($planId);
     $jsonZ = [];
     foreach (($raw->z_levels ?? []) as $level) {
         if (isset($level->z)) {
@@ -424,17 +425,15 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         . ' href="/admin/action-export.php?type=plan&amp;plan=' . e(urlencode($planId)) . '">'
         . '<i class="fas fa-download"></i> JSON</a>'
         . '<a class="btn btn-sm btn-outline-secondary" href="/admin/local_maps.php" title="Génération des PNG de carte">Cartes locales</a>'
-        . '<a class="btn btn-sm btn-outline-secondary" target="_blank" title="Éditer le fichier JSON brut (tools.php)"'
-        . ' href="/tools.php?edit&amp;dir=private&amp;subDir=plans&amp;finalDir=' . e(urlencode($planId)) . '">JSON brut</a>'
         . '</div></div>'
 
         . (!$plan->hasCoords
-            ? '<div class="alert alert-warning" style="font-size:13px;">Plan orphelin : fichier JSON sans aucune'
+            ? '<div class="alert alert-warning" style="font-size:13px;">Plan orphelin : config sans aucune'
                 . ' coordonnée en base. Importez un bundle, ou créez la case d\'amorce en le recréant après suppression.</div>'
             : '')
-        . (!$plan->hasJson
-            ? '<div class="alert alert-danger" style="font-size:13px;">Ce plan n\'a pas de fichier JSON'
-                . ' (datas/private/plans/' . e($planId) . '.json). Enregistrer ce formulaire le créera.</div>'
+        . (!$plan->hasConfig
+            ? '<div class="alert alert-danger" style="font-size:13px;">Ce plan n\'a pas de config'
+                . ' (table plans). Enregistrer ce formulaire la créera.</div>'
             : '')
 
         . '<form method="post" action="/admin/plans-save.php?action=update">'

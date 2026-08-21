@@ -26,6 +26,8 @@ class FilterRowsTest extends TestCase
         Log::setDbInstance($this->testDb);
         Log::setViewClass('Tests\Logs\Mock\ViewMock');
         Log::setJsonInstance(new JsonMock());
+        // La config de plan vit en base : on stub le lecteur, pas le Json
+        Log::setPlanReader(fn (string $plan): object => (object) ['player_visibility' => true]);
 
         // Reset et nettoyage
         ViewMock::reset();

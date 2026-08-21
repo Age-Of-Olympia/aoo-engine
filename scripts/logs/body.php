@@ -200,7 +200,7 @@ echo '
             </td>
         ';
 
-        $planJson = json()->decode('plans', $e->plan);
+        $planJson = plans()->read($e->plan);
 
         
         if (is_bool($planJson)) {

@@ -19,7 +19,7 @@ require_once('config.php');
 $player = PlayerFactory::legacy(TutorialHelper::getActivePlayerId());
 $coords = $player->getCoords();
 
-$planJson = json()->decode('plans', $coords->plan);
+$planJson = plans()->read($coords->plan);
 $planId = is_object($planJson) ? ($planJson->id ?? $coords->plan) : $coords->plan;
 $planName = is_object($planJson) ? $planJson->name : $coords->plan;
 

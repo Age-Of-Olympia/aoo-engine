@@ -5,7 +5,6 @@ namespace App\Service;
 use DateTime;
 use DateTimeZone;
 use Exception;
-use Classes\Json;
 
 class ViewService {
     private $width = 700;
@@ -1210,8 +1209,7 @@ class ViewService {
 
 
     private function getBoundsFromPlan($planName) {
-        $jsonHelper = new Json();
-        $planData = $jsonHelper->decode('plans', $planName);
+        $planData = plans()->read($planName);
 
         if (!$planData) {
             return null;
@@ -1235,8 +1233,7 @@ class ViewService {
     }
 
     private function getPlanData($planName) {
-        $jsonHelper = new Json();
-        $planData = $jsonHelper->decode('plans', $planName);
+        $planData = plans()->read($planName);
         
         if (!$planData) {
             return null;
@@ -1278,8 +1275,7 @@ class ViewService {
     }
 
     private function getLocationFromPlan($planName) {
-        $jsonHelper = new Json();
-        $planData = $jsonHelper->decode('plans', $planName);
+        $planData = plans()->read($planName);
         
         if (!$planData) {
             return [];
@@ -1294,8 +1290,7 @@ class ViewService {
     }
 
     private function getAllLocationsFromPlans() {
-        $jsonHelper = new Json();
-        $plans = $jsonHelper->get_all('plans', true);
+        $plans = plans()->all(true);
         $allLocations = [];
 
         foreach ($plans as $planName => $planData) {
@@ -1309,14 +1304,12 @@ class ViewService {
     }
 
     public function getAllPlans() {
-        $jsonHelper = new Json();
         $allPlans = [];
 
-        // Tous les plans, toutes saisons : le second paramètre de get_all
-        // restreindrait aux seuls fichiers *_s2.json (excluant même olympia
-        // et enfers). Le filtrage par saison est l'affaire des pages admin
-        // (admin/helpers.php : plan_matches_season_filter, défaut s2).
-        foreach ($jsonHelper->get_all('plans') as $planId => $planData) {
+        // Tous les plans, toutes saisons : le filtre s2 de all() exclurait
+        // même olympia et enfers. Le filtrage par saison est l'affaire des
+        // pages admin (admin/helpers.php : plan_matches_season_filter).
+        foreach (plans()->all() as $planId => $planData) {
             $fullPlanData = $this->getPlanData($planId);
             $isS2 = strpos($planId, '_s2') !== false;
             $seasonName = $isS2 ? 'S2' : 'S1';

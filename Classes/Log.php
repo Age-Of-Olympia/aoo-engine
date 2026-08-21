@@ -13,21 +13,26 @@ class Log{
     private static $dbInstance = null;
     private static $viewClass = null;
     private static $jsonInstance = null;
+    /** @var callable|null (string $plan) => object|false, ex plan JSON read */
+    private static $planReader = null;
 
     // Méthodes pour les tests
     public static function setDbInstance($db): void { self::$dbInstance = $db; }
     public static function setViewClass(string $class): void { self::$viewClass = $class; }
     public static function setJsonInstance($json): void { self::$jsonInstance = $json; }
+    public static function setPlanReader(?callable $reader): void { self::$planReader = $reader; }
     public static function resetTestInstances(): void {
         self::$dbInstance = null;
         self::$viewClass = null;
         self::$jsonInstance = null;
+        self::$planReader = null;
     }
 
     // Getters pour les dépendances
     private static function getDb() { return self::$dbInstance ?? new Db(); }
     private static function getViewClass(): string { return self::$viewClass ?? 'Classes\View'; }
     private static function json() { return self::$jsonInstance ?? json(); }
+    private static function planConfig(string $plan) { return self::$planReader ? (self::$planReader)($plan) : plans()->read($plan); }
 
     private static function getPerception(ActorInterface $player)
     {
@@ -82,8 +87,6 @@ class Log{
         }
 
         // Otherwise, display only if it happened within the player's perception radius
-        $jsonInstance = self::json();
-
         $last_player_coords = (object) array(
             'x'=>$row->movement_x,
             'y'=>$row->movement_y,
@@ -94,7 +97,7 @@ class Log{
         $viewClass = self::getViewClass();
         $arrayCoordsId = $viewClass::get_coords_arround($last_player_coords, $perception, CoordType::XYZPLAN, separator:'_');
 
-        $planJson = $jsonInstance->decode('plans', $row->plan);
+        $planJson = self::planConfig($row->plan);
 
         // For PNJs, check if event is in their current plan
         if ($player->id <= 0) {

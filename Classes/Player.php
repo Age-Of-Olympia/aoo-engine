@@ -852,7 +852,7 @@ class Player implements ActorInterface {
 
 
         // void plan
-        $planJson = json()->decode('plans', $this->coords->plan);
+        $planJson = plans()->read($this->coords->plan);
 
         if(!$planJson){
             $this->refresh_view();
@@ -862,7 +862,7 @@ class Player implements ActorInterface {
         }
 
         if ($goCoords->plan != $this->coords->plan || $zChange) {
-            $goPlanJson = json()->decode('plans', $goCoords->plan);
+            $goPlanJson = plans()->read($goCoords->plan);
             if ($goPlanJson) {
                 View::refresh_players_svg($goCoords);
             }

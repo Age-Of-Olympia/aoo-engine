@@ -36,7 +36,7 @@ final class MinimapView
         echo '<div id="hud-minimap">';
 
         try {
-            $planJson = json()->decode('plans', $coords->plan);
+            $planJson = plans()->read($coords->plan);
             if (!is_object($planJson)) {
                 throw new \RuntimeException('plan sans carte');
             }

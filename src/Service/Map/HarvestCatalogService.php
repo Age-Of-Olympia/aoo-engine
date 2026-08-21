@@ -6,18 +6,9 @@ use App\Factory\EntityManagerFactory;
 use Doctrine\DBAL\Connection;
 
 /**
- * Seeds the per-plan yields from the legacy plan JSONs into `race_harvest`.
- *
- * Same shape as DialogSeedService, and for the same reason: a migration runs
- * from the git checkout where `datas/` does not exist, so the seed is offered
- * from the web root instead — admin → Cartes → Rendements.
- *
- * Read through the game's own decoder, not a raw JSON parse: plan files carry
- * comments, and the seed must see exactly what the game sees.
- *
- * A plan it cannot read is REPORTED, never guessed at — two plan files are
- * zero bytes on the real data, and inventing rates for them would put silent
- * numbers into the world.
+ * Seeds the per-plan yields into `race_harvest`, from the biome lists the
+ * plans carry (`plans.biomes`, formerly the plan JSON files — PlanSeedService
+ * moved them to the DB verbatim). Offered from admin → Cartes → Rendements.
  */
 final class HarvestCatalogService
 {
@@ -33,22 +24,13 @@ final class HarvestCatalogService
         return $this->conn ??= EntityManagerFactory::getEntityManager()->getConnection();
     }
 
-    /** Plan names on disk, from both the public and the private folders. */
+    /** Configured plan slugs (ex plan JSON files on disk). */
     public function planNames(): array
     {
-        $root = dirname(__DIR__, 3);
-        $names = [];
-
-        foreach (['public', 'private'] as $where) {
-            foreach (glob($root . '/datas/' . $where . '/plans/*.json') ?: [] as $file) {
-                $names[basename($file, '.json')] = true;
-            }
-        }
-
-        $names = array_keys($names);
-        sort($names);
-
-        return $names;
+        return array_map(
+            static fn($slug): string => (string) $slug,
+            $this->conn()->fetchFirstColumn('SELECT slug FROM plans ORDER BY slug')
+        );
     }
 
     /**
@@ -69,7 +51,7 @@ final class HarvestCatalogService
         $unknown = [];
 
         foreach ($this->planNames() as $plan) {
-            $json = json()->decode('plans', $plan);
+            $json = plans()->read($plan);
 
             if ($json === false) {
                 $unreadable[] = $plan;
@@ -329,13 +311,14 @@ final class HarvestCatalogService
     }
 
     /**
-     * The legacy source — read by the SEED only, never at play time.
+     * The seed source (plans.biomes) — read by the SEED only, never at play
+     * time.
      *
      * @return array<string, array{item: string, exhaust: ?int, regrow: ?int}>
      */
     public static function yieldsFromPlanJson(string $plan): array
     {
-        $json = json()->decode('plans', $plan);
+        $json = plans()->read($plan);
         $yields = [];
 
         if ($json === false) {

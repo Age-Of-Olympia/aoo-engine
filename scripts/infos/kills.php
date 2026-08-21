@@ -42,7 +42,7 @@ if(!file_exists($path) || !CACHED_KILLS){
 
         $killed = new Player($row->target_id);
         $killed->get_data();
-        $planJson = json()->decode('plans', $row->plan);
+        $planJson = plans()->read($row->plan);
 
         $killsTxt .= '
         <tr>
@@ -85,7 +85,7 @@ if(!file_exists($path) || !CACHED_KILLS){
             $assistant = $target;
             $killed = new Player($row->target_id);
             $killed->get_data();
-            $planJson = json()->decode('plans', $row->plan);
+            $planJson = plans()->read($row->plan);
 
             echo '
             <tr>
@@ -125,7 +125,7 @@ if(!file_exists($path) || !CACHED_KILLS){
             $assistant = new Player($row->player_id);
             $assistant->get_data();
             $killed = $target;
-            $planJson = json()->decode('plans', $row->plan);
+            $planJson = plans()->read($row->plan);
 
             echo '
             <tr>

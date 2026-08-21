@@ -29,8 +29,6 @@ class JsonMock
                     return (object) ['p' => 3]; // Perception par défaut
                 }
                 break;
-            case 'plans':
-                return (object) ['player_visibility' => true];
             case 'races':
                 return (object) ['plan' => 'test_plan'];
         }

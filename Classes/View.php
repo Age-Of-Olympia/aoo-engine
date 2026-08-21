@@ -120,7 +120,7 @@ class View{
         $sizeH = (($this->p * 2) + $this->footH) * self::TILE_PX;
 
 
-        $planJson = json()->decode('plans', $this->coords->plan);
+        $planJson = plans()->read($this->coords->plan);
 
         // Load invisible players to filter them from view
         $invisiblePlayers = array();
@@ -1007,7 +1007,7 @@ class View{
                     100% {
                     ';
 
-                    if(!isset($planJson->verticalScrolling)){
+                    if(empty($planJson->verticalScrolling)){
 
                         echo 'background-position: -'. $maskW .'px 0;';
                     }
