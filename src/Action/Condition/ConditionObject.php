@@ -20,6 +20,8 @@ class ConditionObject
     protected ?int $lifeloss = null;
     /** Case de construction validée par BuildSiteCondition (x/y/z/plan). */
     protected ?object $buildCoords = null;
+    /** Chest owner choice validated by ChestSiteCondition ('self'|'faction'). */
+    protected ?string $buildFor = null;
     /** Objet du catalogue validé par ItemPickCondition (possession + admissibilité). */
     protected ?\Classes\Item $pickedItem = null;
     /** Instance PRÉCISE désignée au geste (ligne d'instance cliquée), sinon null. */
@@ -43,6 +45,17 @@ class ConditionObject
     public function setBuildCoords(object $buildCoords): self
     {
         $this->buildCoords = $buildCoords;
+        return $this;
+    }
+
+    public function getBuildFor(): ?string
+    {
+        return $this->buildFor;
+    }
+
+    public function setBuildFor(string $buildFor): self
+    {
+        $this->buildFor = $buildFor;
         return $this;
     }
 

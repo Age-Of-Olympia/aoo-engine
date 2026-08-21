@@ -88,7 +88,7 @@ class Ui{
 
                 <!-- Choix de case de construction (réutilise le spotlight tutoriel) -->
                 <script src="js/footprint_ghost.js?v=20260806"></script>
-                <script src="js/build_picker.js?v=20260806"></script>
+                <script src="js/build_picker.js?v=20260821"></script>
         ';
 
         echo '    </head>
@@ -526,6 +526,7 @@ class Ui{
                 data-price="'. $item->data->price .'"
                 data-type="'. $type .'"
                 data-bankable="'. $item->row->is_bankable .'"
+                data-lockable="'. (!empty($item->row->lockable) ? '1' : '0') .'"
                 data-state="'. $stateAttr .'"
                 data-build-action="'. ($type == Item::TYPE_CONSTRUCTIBLE ? 'construire' : '') .'"
                 data-fp="'. ($type == Item::TYPE_CONSTRUCTIBLE ? self::constructibleFootprint((string) $item->row->name) : '') .'"
@@ -670,7 +671,7 @@ class Ui{
         window.n =    <?php echo $defaultItemN ?>;
         window.price =    1;
         </script>
-        <script src="js/inventUi.js?v=20260804"></script>
+        <script src="js/inventUi.js?v=20260821"></script>
         <?php
 
         return Str::minify(ob_get_clean());

@@ -223,7 +223,7 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
      * damier rendu, les autres les caracs / le tour / l'inventaire. Un id
      * recyclé qui les retrouve ressuscite l'entité précédente.
      */
-    private static function purgeEntityCache(int $id): void
+    protected static function purgeEntityCache(int $id): void
     {
         foreach (['.json', '.svg', '.turn.json', '.caracs.json', '.invent.html'] as $suffix) {
             @unlink(__DIR__ . '/../../../datas/private/players/' . $id . $suffix);

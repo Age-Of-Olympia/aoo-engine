@@ -101,7 +101,7 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
                     $name !== '' ? $name : null,
                     asConstructionSite: true
                 )
-                : $this->placeTheObjectItself($type, $goCoords, (int) $actor->id);
+                : $this->placeTheObjectItself($type, $goCoords, $actor, $conditionObject->getBuildFor());
         } catch (\InvalidArgumentException | \RuntimeException $e) {
             return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: [$e->getMessage()]);
         }
@@ -138,9 +138,14 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
     /**
      * Place the object itself: its exemplar is born standing on the cell.
      *
+     * Ownership follows the validated choice (ChestSite,
+     * ConditionObject::getBuildFor): 'faction' gives the object to the
+     * builder's faction with no personal owner; anything else keeps the
+     * builder as owner — today's personal chest.
+     *
      * @throws \RuntimeException when the type is in neither catalogue
      */
-    private function placeTheObjectItself(string $type, object $coords, int $actorId): int
+    private function placeTheObjectItself(string $type, object $coords, Player $actor, ?string $buildFor): int
     {
         $item = \Classes\Item::get_item_by_name($type);
 
@@ -149,9 +154,15 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
         }
 
         $coordsId = (int) View::get_coords_id($coords);
+        $forFaction = $buildFor === \App\Action\Condition\ChestSiteCondition::FOR_FACTION;
 
-        return (new \App\Service\ItemInstanceService())
-            ->installFromCatalogAt((int) $item->id, $coordsId, $actorId, $actorId);
+        return (new \App\Service\ItemInstanceService())->installFromCatalogAt(
+            (int) $item->id,
+            $coordsId,
+            (int) $actor->id,
+            $forFaction ? null : (int) $actor->id,
+            $forFaction ? (string) ($actor->data->faction ?? '') : ''
+        );
     }
 
     /** Instantiated on demand: this class is a Doctrine entity. */

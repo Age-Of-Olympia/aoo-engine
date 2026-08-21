@@ -83,6 +83,11 @@ class ConstruireBaselineTest extends LegacyPlayerFixtureTestCase
         $builder->getCoords();
         $builder->get_caracs();
 
+        // A chest can only be built when a bank stands on the plan
+        // (RequiresPlanBuilding): the scene places one far away.
+        [$bx, $by] = $this->farTile();
+        $this->placeStructure('banque', $bx, $by);
+
         $bois = $this->itemOrSkip('bois');
         $chestItem = $this->itemOrSkip('coffre_bois');
         $bois->add_item($builder, 20);

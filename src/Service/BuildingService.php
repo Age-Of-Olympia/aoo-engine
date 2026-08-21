@@ -639,6 +639,35 @@ class BuildingService extends BaseService
     }
 
     /**
+     * The first BUILT building of one of the given types standing on the
+     * plan — the patron-building lookup (RequiresPlanBuilding). The origin
+     * cell is enough: plan membership is no matter of footprint. A site or
+     * a ruin does not count. Race filtered in PHP — races and players
+     * collate differently.
+     *
+     * @param array<int, string> $typeNames races.name codes; [] accepts any
+     */
+    public function builtBuildingInPlan(string $plan, array $typeNames): ?int
+    {
+        $rows = $this->entityManager->getConnection()->fetchAllAssociative(
+            "SELECT p.id, p.race
+               FROM players p
+               JOIN buildings b ON b.player_id = p.id
+               JOIN coords c ON c.id = p.coords_id
+              WHERE p.player_type = 'building' AND b.build_state = ? AND c.plan = ?",
+            [BuildingDetails::STATE_BUILT, $plan]
+        );
+
+        foreach ($rows as $row) {
+            if ($typeNames === [] || in_array((string) $row['race'], $typeNames, true)) {
+                return (int) $row['id'];
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Building entities holding a cell, through their EMPRISE — every cell
      * laid in entity_cells counts, the origin stays as a fallback for an
      * entity whose cells were never synced. The one lookup the editor's

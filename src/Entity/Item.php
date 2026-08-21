@@ -83,6 +83,25 @@ class Item implements OwnsCaracsInterface, LockableInterface, ObstructsInterface
         $this->lockable = $lockable;
     }
 
+    /**
+     * Building (races.name) that must stand FINISHED on the plan before
+     * this type can be built — 'banque' for chests; null = no requirement.
+     * Read by the RequiresPlanBuilding condition: enabling the rule for a
+     * new object type is a catalog value, not code.
+     */
+    #[ORM\Column(type: "string", length: 50, name: "requires_building", nullable: true)]
+    private ?string $requiresBuilding = null;
+
+    public function getRequiresBuilding(): ?string
+    {
+        return $this->requiresBuilding;
+    }
+
+    public function setRequiresBuilding(?string $requiresBuilding): void
+    {
+        $this->requiresBuilding = $requiresBuilding;
+    }
+
     /** Base life of an item of this type — the counterpart of `races.pv`. */
     #[ORM\Column(type: "integer", name: "durability_max", options: ["default" => 100])]
     private int $durabilityMax = 100;

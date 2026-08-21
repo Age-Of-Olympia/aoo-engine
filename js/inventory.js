@@ -87,7 +87,8 @@ $(document).ready(function(){
                 'itemId': window.id,
                 'name': window.name,
                 'footprint': window.buildFootprint || null,
-                'ghostImg': window.buildGhostImg || null
+                'ghostImg': window.buildGhostImg || null,
+                'lockable': !!window.lockable
             }));
 
             document.location = 'index.php';

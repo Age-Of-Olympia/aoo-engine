@@ -109,6 +109,13 @@ $(document).ready(function(){
         '<span class="ra ra-tower"></span> Construire ' + pending.name +
         ' : cliquez une case libre adjacente' +
         (footprint.length > 1 ? ' (emprise de ' + footprint.length + ' cases, la case cliquée est l’origine)' : '') +
+        /* A lockable type (chest) picks its owner — the server
+           revalidates (ChestSite): a faction chest requires a faction. */
+        (pending.lockable ?
+            ' <label style="margin-left:10px;">Pour : <select id="build-for">' +
+            '<option value="self">Moi</option>' +
+            '<option value="faction">Ma faction</option>' +
+            '</select></label>' : '') +
         ' <button id="build-picker-cancel" style="margin-left:10px;">Annuler</button>' +
         '</div>'
     );
@@ -214,9 +221,12 @@ $(document).ready(function(){
             return;
         }
 
+        /* Read BEFORE cleanup(): the banner (and its select) goes with it. */
+        var buildFor = $('#build-for').val() || 'self';
+
         cleanup();
 
-        $.post('action.php', { action: pending.action, itemId: pending.itemId, buildX: coords[0], buildY: coords[1] }, function(data){
+        $.post('action.php', { action: pending.action, itemId: pending.itemId, buildX: coords[0], buildY: coords[1], buildFor: buildFor }, function(data){
 
             var text = $('<div></div>').html(
                 data.replace(/<script[\s\S]*?<\/script>/gi, '')

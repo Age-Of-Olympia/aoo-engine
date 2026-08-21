@@ -850,11 +850,12 @@ class ItemInstanceService extends BaseService
         int $itemId,
         int $coordsId,
         ?int $creatorId = null,
-        ?int $ownerId = null
+        ?int $ownerId = null,
+        string $faction = ''
     ): int {
         $conn = $this->entityManager->getConnection();
 
-        return $conn->transactional(function ($conn) use ($itemId, $coordsId, $creatorId, $ownerId): int {
+        return $conn->transactional(function ($conn) use ($itemId, $coordsId, $creatorId, $ownerId, $faction): int {
             $conn->executeStatement(
                 'INSERT INTO item_instances (item_id, creator_id, created_at) VALUES (?, ?, ?)',
                 [$itemId, $creatorId, time()]
@@ -865,6 +866,11 @@ class ItemInstanceService extends BaseService
 
             if ($ownerId !== null) {
                 $conn->executeStatement('UPDATE players SET owner_id = ? WHERE id = ?', [$ownerId, $entityId]);
+            }
+
+            // A faction chest: owned by the faction, not by a person.
+            if ($faction !== '') {
+                $conn->executeStatement('UPDATE players SET faction = ? WHERE id = ?', [$faction, $entityId]);
             }
 
             return $entityId;
