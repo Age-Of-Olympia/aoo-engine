@@ -95,6 +95,9 @@ class AdminMenuAccessService
         'items.php'                => ['Objets', 'Divers', self::LEVEL_SUPERADMIN],
         // Wiki : génération de fiches en lecture seule — niveau admin
         'wiki.php'                 => ['Wiki', 'Divers', self::LEVEL_ADMIN],
+        // Crons : rejoue les scripts planifiés (suppressions comprises) —
+        // superadmin par défaut, ajustable via access-control.php
+        'crons.php'                => ['Outils · Crons', 'Divers', self::LEVEL_SUPERADMIN],
     ];
 
     /**

@@ -213,6 +213,7 @@ function admin_layout($title, $content, array $assets = []) {
                 ['tutorial-settings.php', 'Options', '/admin/tutorial-settings.php'],
             ], $tutorialPages),
             $navLink('wiki.php', 'Wiki', '/admin/wiki.php'),
+            $navLink('crons.php', 'Crons', '/admin/crons.php'),
         ]),
     ]);
 
