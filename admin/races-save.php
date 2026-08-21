@@ -101,11 +101,11 @@ $applyForm = static function (Race $race) use ($face): string {
     $kind = ($_POST['kind'] ?? 'character') === 'structure' ? 'structure' : 'character';
     $race->setKind($kind);
     // Nature (structures seulement) : édifice (porte) ou obstacle (mur).
-    /* The decor face keeps its own nature: that is what puts a type on that
-     * list rather than among the building types. */
-    $race->setStructureNature($face->isScenery()
-        ? \App\View\Admin\TypeEditorFace::NATURE_DECOR
-        : (($_POST['structure_nature'] ?? 'edifice') === 'obstacle' ? 'obstacle' : 'edifice'));
+    /* Every non-building face pins its own nature — décor, ressource,
+     * plante. The old scenery-only guard clamped the others to édifice:
+     * a type created from Types récoltables was corrupted one line after
+     * its creation and never reached the resources palette. */
+    $race->setStructureNature($face->resolveNature($_POST['structure_nature'] ?? null));
     // Saignement : un élément de carte connu, ou rien.
     $bleeds = trim((string) ($_POST['bleeds'] ?? ''));
     $race->setBleeds($bleeds !== '' && (new \App\Service\EffectService())->exists($bleeds) ? $bleeds : '');

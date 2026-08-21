@@ -104,6 +104,34 @@ class TypeEditorFaceTest extends TestCase
         $this->assertSame('', TypeEditorFace::character()->formFields());
     }
 
+    /**
+     * La sauvegarde écrit la nature que le visage impose.
+     *
+     * L'ancien garde ne couvrait que le décor : un type créé depuis Types
+     * récoltables naissait « ressource » puis se faisait rabattre sur
+     * « edifice » par le formulaire — et disparaissait de la palette des
+     * ressources des deux éditeurs. Chaque visage hors bâtiments impose sa
+     * nature ; seul le visage bâtiments offre le choix édifice/obstacle.
+     */
+    public function testASaveKeepsTheNatureOfItsFace(): void
+    {
+        // Le formulaire ne poste rien, ou poste la valeur d'un autre visage :
+        // la nature du visage gagne toujours.
+        foreach ([null, '', 'edifice', 'obstacle'] as $posted) {
+            $this->assertSame(TypeEditorFace::NATURE_RESOURCE, TypeEditorFace::resource()->resolveNature($posted));
+            $this->assertSame(TypeEditorFace::NATURE_PLANT, TypeEditorFace::plant()->resolveNature($posted));
+            $this->assertSame(TypeEditorFace::NATURE_DECOR, TypeEditorFace::scenery()->resolveNature($posted));
+        }
+
+        // Le visage bâtiments est le seul à offrir un choix.
+        $this->assertSame('obstacle', TypeEditorFace::building()->resolveNature('obstacle'));
+        $this->assertSame('edifice', TypeEditorFace::building()->resolveNature('edifice'));
+        $this->assertSame('edifice', TypeEditorFace::building()->resolveNature(null));
+
+        // Les personnages gardent le défaut historique de la colonne.
+        $this->assertSame('edifice', TypeEditorFace::character()->resolveNature(null));
+    }
+
     /** Scenery is a structure: its images come from the structure stock. */
     public function testSceneryCountsAsAStructure(): void
     {

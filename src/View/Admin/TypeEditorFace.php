@@ -201,6 +201,26 @@ final class TypeEditorFace
         };
     }
 
+    /**
+     * The structure_nature a save through this face must write.
+     *
+     * Every face but the buildings one pins its own nature — that is what
+     * keeps a row on its list. Only the buildings face offers a choice
+     * (édifice/obstacle); the character face keeps the historical 'edifice'
+     * default. Without this, the shared save clamped every face to
+     * édifice/obstacle: a type created from Types récoltables was born
+     * 'edifice' and never reached the resources palette of the editors.
+     */
+    public function resolveNature(?string $posted): string
+    {
+        return match ($this->key) {
+            self::SCENERY => self::NATURE_DECOR,
+            self::RESOURCE => self::NATURE_RESOURCE,
+            self::PLANT => self::NATURE_PLANT,
+            default => $posted === 'obstacle' ? 'obstacle' : 'edifice',
+        };
+    }
+
     /** Hidden fields carrying the face through a form post. */
     public function formFields(): string
     {
