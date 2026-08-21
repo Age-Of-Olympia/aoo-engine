@@ -133,7 +133,8 @@ class WorldDeathPlanSettingsTest extends TestCase
         (new AdminSettingsService())->set(PlanService::SETTING_DEATH, self::PLAN);
         PlanService::forget();
 
-        $this->conn->insert('actions', ['name' => self::ACTION, 'type' => 'melee']);
+        // icon is NOT NULL without default on the CI schema
+        $this->conn->insert('actions', ['name' => self::ACTION, 'type' => 'melee', 'icon' => '']);
         $this->conn->insert('action_conditions', [
             'conditionType' => 'PlanCondition',
             'parameters' => json_encode(['plan' => self::PLAN]),
