@@ -49,10 +49,10 @@ function effect_modifiers(Effect $effect): string
 {
     $parts = [];
     if ($effect->getBuffCarac() !== null) {
-        $parts[] = '<span class="text-success">+1 ' . e(strtoupper($effect->getBuffCarac())) . '</span>';
+        $parts[] = '<span class="text-success">+valeur ' . e(strtoupper($effect->getBuffCarac())) . '</span>';
     }
     if ($effect->getDebuffCarac() !== null) {
-        $parts[] = '<span class="text-danger">−1 ' . e(strtoupper($effect->getDebuffCarac())) . '</span>';
+        $parts[] = '<span class="text-danger">−valeur ' . e(strtoupper($effect->getDebuffCarac())) . '</span>';
     }
 
     foreach ([
@@ -231,10 +231,12 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
         . '</div>';
 
     $comportement = '<div class="row">'
-        . formField('Carac augmentée (+1)', effect_carac_select('buff_carac', $isEdit ? $effect->getBuffCarac() : null),
+        . formField('Carac augmentée (+valeur)', effect_carac_select('buff_carac', $isEdit ? $effect->getBuffCarac() : null),
             'form-group col-md-4')
-        . formField('Carac diminuée (−1)', effect_carac_select('debuff_carac', $isEdit ? $effect->getDebuffCarac() : null),
-            'form-group col-md-4', 'Appliquée tant que l\'effet dure (la valeur portée sert de multiplicateur).')
+        . formField('Carac diminuée (−valeur)', effect_carac_select('debuff_carac', $isEdit ? $effect->getDebuffCarac() : null),
+            'form-group col-md-4',
+            'Appliquée tant que l\'effet dure : la carac bouge de la VALEUR portée par l\'effet'
+            . ' (poser avec valeur 3 → ±3).')
         . formField('Annule les effets',
             '<select name="controls[]" class="form-control" multiple size="6">' . $controlOptions . '</select>',
             'form-group col-md-4',

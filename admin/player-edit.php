@@ -591,7 +591,8 @@ $effects = formCard('Effets', ''
     . formField('Effet', formSelect('effect_name', $effectOptions, null, '— choisir —', 'required'))
     . formField('Durée (tours)', formInput('duration', '1', 'type="number" min="0" style="max-width:6rem"'), 'form-group', '0 = expire au prochain tour')
     . formField('Sans fin', '<input type="checkbox" name="duration_infinite" value="1" class="form-check-input">', 'form-group', 'ignore la durée')
-    . formField('Valeur', formInput('effect_value', '1', 'type="number" min="1" style="max-width:6rem"'))
+    . formField('Valeur', formInput('effect_value', '1', 'type="number" min="1" style="max-width:6rem"'),
+        'form-group', 'multiplicateur : carac ±valeur, mods × valeur')
     . '<button type="submit" name="effect_add" value="1" class="btn btn-outline-primary mb-3">Poser</button>'
     . '</form>'
     . '<p class="text-muted mb-1">Poser un effet applique les règles du catalogue, annulations comprises :'
