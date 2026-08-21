@@ -52,10 +52,9 @@ class PlanService
     /**
      * Every configured plan, keyed by slug (formerly Json::get_all('plans')).
      *
-     * @param bool $s2Only restrict to season-2 slugs (ex-glob *_s2.json)
      * @return array<string, object>
      */
-    public function all(bool $s2Only = false): array
+    public function all(): array
     {
         $rows = $this->conn->fetchAllAssociative('SELECT * FROM plans ORDER BY slug');
         $levels = $this->levelsFor(array_map(static fn(array $r): int => (int) $r['id'], $rows));
@@ -63,14 +62,26 @@ class PlanService
         $models = [];
         foreach ($rows as $row) {
             $slug = (string) $row['slug'];
-            if ($s2Only && !str_ends_with($slug, '_s2')) {
-                continue;
-            }
-
             $models[$slug] = self::$cache[$slug] = $this->buildModel($row, $levels);
         }
 
         return $models;
+    }
+
+    /**
+     * The plans of one season, keyed by slug — the current game season when
+     * none is given. A plan without a season (NULL) belongs to all of them.
+     *
+     * @return array<string, object>
+     */
+    public function forSeason(?int $season = null): array
+    {
+        $season ??= (new SeasonService())->current();
+
+        return array_filter(
+            $this->all(),
+            static fn(object $plan): bool => !isset($plan->season) || (int) $plan->season === $season
+        );
     }
 
     /** Invalidate the per-request cache after a write (one slug, or all). */
@@ -123,6 +134,7 @@ class PlanService
         ];
 
         foreach ([
+            'season'        => ['season', 'int'],
             'shortName'     => ['short_name', 'string'],
             'x'             => ['x', 'int'],
             'y'             => ['y', 'int'],

@@ -213,7 +213,7 @@ ob_start();
                 <?php foreach ($plansWithIssues as $x):
                     $p = $x['plan'];
                     $variant = $x['errCount'] > 0 ? 'danger' : 'warning';
-                    $season  = $p->isS2 ? 'S2' : 'S1';
+                    $season  = ($p->season ?? null) === null ? 'toutes' : 'S' . $p->season;
                 ?>
                     <details class="alert alert-<?= $variant ?> mb-2" style="padding:0;">
                         <summary style="cursor:pointer;padding:.5rem .75rem;font-weight:600;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
@@ -298,7 +298,7 @@ ob_start();
                     <?php
                         $selectedPlanData = array_filter($allPlans, fn($p) => $p->id === $selectedPlan);
                         $plan = reset($selectedPlanData);
-                        $seasonBadge = $plan->isS2 ? ' <span class="badge bg-success">S2</span>' : ' <span class="badge bg-secondary">S1</span>';
+                        $seasonBadge = ' ' . season_badge($plan->season ?? null);
                     ?>
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <div>

@@ -30,6 +30,8 @@ class PlanConfigService
     public const PLAN_CONFIG_KEYS = [
         'name'              => 'string',
         'shortName'         => 'string',
+        /* NULL (key removed) = the plan exists in every season. */
+        'season'            => 'int',
         'x'                 => 'int',
         'y'                 => 'int',
         'player_visibility' => 'bool',
@@ -430,6 +432,7 @@ class PlanConfigService
         return match ($key) {
             'name'              => $entity->getName(),
             'shortName'         => $entity->getShortName(),
+            'season'            => $entity->getSeason(),
             'x'                 => $entity->getX(),
             'y'                 => $entity->getY(),
             'player_visibility' => $entity->isPlayerVisibility(),
@@ -456,6 +459,9 @@ class PlanConfigService
                 break;
             case 'shortName':
                 $entity->setShortName($value === null ? null : (string) $value);
+                break;
+            case 'season':
+                $entity->setSeason($value === null ? null : (int) $value);
                 break;
             case 'x':
                 $entity->setX($value === null ? null : (int) $value);

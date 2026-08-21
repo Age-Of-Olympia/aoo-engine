@@ -172,14 +172,14 @@ couche, le décor multi-tuiles vit en `foregrounds`/`elements`.
 
 ### Les propriétés du plan (nom, fond, visibilité, biomes…)
 
-Le JSON de plan est éditable directement : chaque clé apparaît en
-**propriété de la carte** préfixée `aooPlan_` — `name`, `shortName`,
-`x`/`y` (position sur la carte du monde), `player_visibility`
-(`true`/`false`), `pnj`, `size`, `bg`, `mask`, `scrollingMask`,
-`verticalScrolling`, `biomes` (JSON des ressources). Une valeur vide =
-clé retirée. Tout est validé et appliqué au push ; le rapport remonte le
-bilan de santé du plan (`PlanJsonValidator` : biomes en doublon,
-ressources inconnues…).
+La configuration du plan est éditable directement : chaque clé apparaît
+en **propriété de la carte** préfixée `aooPlan_` — `name`, `shortName`,
+`season` (numéro de saison ; vide = toutes les saisons), `x`/`y`
+(position sur la carte du monde), `player_visibility` (`true`/`false`),
+`pnj`, `size`, `bg`, `mask`, `scrollingMask`, `verticalScrolling`,
+`biomes` (JSON des ressources). Une valeur vide = clé retirée. Tout est
+validé et appliqué au push ; le rapport remonte le bilan de santé du
+plan (`PlanJsonValidator` : biomes en doublon, ressources inconnues…).
 
 > **Revenir aux propriétés de la carte** : le panneau Propriétés suit ce
 > qui est sélectionné (objet, calque…). Pour retrouver les `aooPlan_*`

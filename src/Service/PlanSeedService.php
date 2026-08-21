@@ -33,6 +33,9 @@ class PlanSeedService
     /** Vestigial keys, dropped on purpose (inter-plan travel died in 066f7b6c). */
     private const DEAD_KEYS = ['exits', 'enters', 'id', 'num_z_levels'];
 
+    /** Plans that exist in every season (season = NULL), like the tut_* family. */
+    private const ALL_SEASON_SLUGS = ['olympia', 'enfers', 'tutorial'];
+
     private ?EntityManagerInterface $em;
 
     public function __construct(?EntityManagerInterface $em = null)
@@ -170,6 +173,15 @@ class PlanSeedService
         }
 
         $plan = new Plan($slug, trim((string) ($json->name ?? '')) !== '' ? (string) $json->name : $slug);
+
+        /* The files never carried a season — it lived in the slug (_s2
+         * suffix); the seed translates that convention. */
+        $plan->setSeason(match (true) {
+            in_array($slug, self::ALL_SEASON_SLUGS, true),
+            str_starts_with($slug, 'tut_') => null,
+            str_ends_with($slug, '_s2') => 2,
+            default => 1,
+        });
 
         $shortName = trim((string) ($json->shortName ?? ''));
         $plan->setShortName($shortName !== '' ? $shortName : null);

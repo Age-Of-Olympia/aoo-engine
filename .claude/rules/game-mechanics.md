@@ -112,7 +112,7 @@ Age of Olympia is a **turn-based survival RPG** where players:
 - `players_logs`: Event logs (player_id, target_id, message, timestamp)
 
 **Map**:
-- `plans` + `plan_z_levels`: per-plan configuration (name, player_visibility, bounds, bg, z levels…), ex `datas/private/plans/*.json` — single read gateway `plans()->read($slug)` (`App\Service\PlanService`), writes via `PlanConfigService`
+- `plans` + `plan_z_levels`: per-plan configuration (name, season — NULL = every season, player_visibility, bounds, bg, z levels…), ex `datas/private/plans/*.json` — single read gateway `plans()->read($slug)` (`App\Service\PlanService`), season-filtered lists via `plans()->forSeason()` defaulting to the game's current season (`SeasonService`), writes via `PlanConfigService`
 - `coords`: Coordinate entries (id, x, y, z, plan)
 - `entities` + `entity_cells`: every object on the board (structures, resources, scenery…) and the cells it occupies
 - `resources`: per-resource state satellite (standing / exhausted, regrow)

@@ -336,64 +336,87 @@ function render_validation_report(array $validation, bool $includeOk = true): vo
 /* ------------------------------------------------------------------ */
 
 /**
- * Plans hors « _s2 » qui font tout de même partie de la saison 2 :
- * la map globale (olympia) et les enfers.
- */
-const SEASON2_EXTRA_PLANS = ['olympia', 'enfers'];
-
-/**
- * Un plan relève-t-il de la saison 2 ? Vrai pour tout id « _s2 » et pour
- * les plans hors-saison listés dans SEASON2_EXTRA_PLANS.
+ * The seasons the selector offers: those carried by plans (plans.season),
+ * plus the game's current one.
  *
- * @param object $plan Plan issu de ViewService::getAllPlans()
+ * @return list<int>
  */
-function is_season2_plan(object $plan): bool
+function known_seasons(): array
 {
-    return $plan->isS2 || in_array($plan->id, SEASON2_EXTRA_PLANS, true);
+    $seasons = [(new \App\Service\SeasonService())->current()];
+
+    try {
+        $res = (new \Classes\Db())->exe('SELECT DISTINCT season FROM plans WHERE season IS NOT NULL');
+        while ($row = $res->fetch_assoc()) {
+            $seasons[] = (int) $row['season'];
+        }
+    } catch (\Throwable $e) {
+        // Column not migrated yet: the current season is enough.
+    }
+
+    $seasons = array_values(array_unique($seasons));
+    sort($seasons);
+
+    return $seasons;
 }
 
 /**
- * Filtre de saison courant des pages « Cartes » : « s2 » (saison en cours,
- * défaut), « s1 » (plans sans suffixe _s2) ou « all ». Le choix, posté via
- * season_filter, persiste en session pour survivre à la navigation par
- * formulaires POST et s'appliquer à toutes les pages de la section.
+ * Season filter of the « Cartes » pages: a season number (default: the
+ * game's current season, SeasonService) or « all ». Posted via
+ * season_filter, kept in session so it survives POST-form navigation and
+ * applies to every page of the section.
  */
 function current_season_filter(): string
 {
-    $valid = ['s2', 's1', 'all'];
-
     $requested = $_REQUEST['season_filter'] ?? null;
-    if (is_string($requested) && in_array($requested, $valid, true)) {
+    if (is_string($requested) && ($requested === 'all' || ctype_digit($requested))) {
         $_SESSION['admin_season_filter'] = $requested;
     }
 
-    $current = $_SESSION['admin_season_filter'] ?? 's2';
-    return in_array($current, $valid, true) ? $current : 's2';
+    $current = $_SESSION['admin_season_filter'] ?? null;
+    // Pre-column values still sitting in sessions: converted once.
+    $current = match ($current) {
+        's1' => '1',
+        's2' => '2',
+        default => $current,
+    };
+
+    if (!is_string($current) || ($current !== 'all' && !ctype_digit($current))) {
+        $current = (string) (new \App\Service\SeasonService())->current();
+    }
+
+    return $current;
 }
 
 /**
- * Un plan passe-t-il le filtre de saison ? « s1 » = plans sans _s2 (la map
- * globale et les enfers, jouables dans les deux saisons, y figurent aussi).
+ * Does a plan pass the season filter? A season-less plan (olympia, enfers,
+ * the tutorial family) belongs to all of them.
  *
  * @param object $plan Plan issu de ViewService::getAllPlans()
  */
 function plan_matches_season_filter(object $plan, string $filter): bool
 {
-    return match ($filter) {
-        's2'    => is_season2_plan($plan),
-        's1'    => !$plan->isS2,
-        default => true,
-    };
+    return $filter === 'all'
+        || ($plan->season ?? null) === null
+        || (int) $plan->season === (int) $filter;
 }
 
 /** Libellé humain d'un filtre de saison (titres de sections). */
 function season_filter_label(string $filter): string
 {
-    return match ($filter) {
-        's2'    => 'saison 2',
-        's1'    => 'saison 1',
-        default => 'toutes saisons',
-    };
+    return $filter === 'all' ? 'toutes saisons' : 'saison ' . $filter;
+}
+
+/** Season badge of a plan: « S{n} » (green for the current one), or « toutes ». */
+function season_badge(?int $season): string
+{
+    if ($season === null) {
+        return '<span class="badge bg-info">toutes</span>';
+    }
+
+    $isCurrent = $season === (new \App\Service\SeasonService())->current();
+
+    return '<span class="badge ' . ($isCurrent ? 'bg-success' : 'bg-secondary') . '">S' . $season . '</span>';
 }
 
 /**
@@ -404,7 +427,13 @@ function season_filter_label(string $filter): string
  */
 function render_season_filter(string $current): string
 {
-    $choices = ['s2' => 'Saison 2 (courante)', 's1' => 'Saison 1', 'all' => 'Toutes'];
+    $gameSeason = (new \App\Service\SeasonService())->current();
+
+    $choices = [];
+    foreach (known_seasons() as $season) {
+        $choices[(string) $season] = 'Saison ' . $season . ($season === $gameSeason ? ' (courante)' : '');
+    }
+    $choices['all'] = 'Toutes';
 
     $html = '<form method="post" class="d-flex align-items-center gap-3 flex-wrap" style="font-size:13px;">';
     $html .= '<span class="text-muted"><i class="fas fa-filter"></i> Plans affichés :</span>';

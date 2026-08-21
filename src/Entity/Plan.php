@@ -25,6 +25,10 @@ class Plan
     #[ORM\Column(type: "string", length: 100, unique: true)]
     private string $slug;
 
+    /** Season the plan belongs to; null = playable in every season. */
+    #[ORM\Column(type: "integer", nullable: true)]
+    private ?int $season = null;
+
     /** Display name shown to players ("Olympia", "Tutoriel"…). */
     #[ORM\Column(type: "string", length: 255)]
     private string $name;
@@ -129,6 +133,16 @@ class Plan
     public function setSlug(string $slug): void
     {
         $this->slug = $slug;
+    }
+
+    public function getSeason(): ?int
+    {
+        return $this->season;
+    }
+
+    public function setSeason(?int $season): void
+    {
+        $this->season = $season;
     }
 
     public function getName(): string

@@ -1290,7 +1290,9 @@ class ViewService {
     }
 
     private function getAllLocationsFromPlans() {
-        $plans = plans()->all(true);
+        // World-map locations: the current season only (season-less plans
+        // like olympia and enfers always qualify).
+        $plans = plans()->forSeason();
         $allLocations = [];
 
         foreach ($plans as $planName => $planData) {
@@ -1306,21 +1308,19 @@ class ViewService {
     public function getAllPlans() {
         $allPlans = [];
 
-        // Tous les plans, toutes saisons : le filtre s2 de all() exclurait
-        // même olympia et enfers. Le filtrage par saison est l'affaire des
-        // pages admin (admin/helpers.php : plan_matches_season_filter).
+        // Every plan, every season: season filtering belongs to the admin
+        // pages (admin/helpers.php: plan_matches_season_filter).
         foreach (plans()->all() as $planId => $planData) {
             $fullPlanData = $this->getPlanData($planId);
-            $isS2 = strpos($planId, '_s2') !== false;
-            $seasonName = $isS2 ? 'S2' : 'S1';
+            $season = isset($planData->season) ? (int) $planData->season : null;
             $allPlans[] = (object)[
                 'id' => $planId,
                 'name' => $planData->name ?? $planId,
                 'shortName' => $planData->shortName ?? $planId,
                 'hasZLevels' => !empty($planData->z_levels),
                 'visibleByDefault' => $planData->visibleByDefault ?? false,
-                'season' => $seasonName,
-                'isS2' => $isS2,
+                'season' => $season,
+                'isS2' => $season === 2,
                 'fullData' => $fullPlanData
             ];
         }

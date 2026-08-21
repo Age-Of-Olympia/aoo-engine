@@ -39,7 +39,7 @@ use Classes\Db;
  * côté coords, ou les deux — les incohérences (moitié manquante) sont le
  * premier diagnostic de la page.
  *
- * @return array<string, object{id: string, name: string, isS2: bool, hasConfig: bool,
+ * @return array<string, object{id: string, name: string, season: ?int, isS2: bool, hasConfig: bool,
  *                              hasCoords: bool, zLevels: int[], coordsCount: int}> par id, trié
  */
 function plans_build_inventory(Db $db): array
@@ -48,14 +48,16 @@ function plans_build_inventory(Db $db): array
 
     foreach ((new ViewService($db, 0, 0, 0, 0, 'olympia'))->getAllPlans() as $p) {
         $byId[$p->id] = (object) [
-            'id' => $p->id, 'name' => $p->name, 'isS2' => $p->isS2,
+            'id' => $p->id, 'name' => $p->name, 'season' => $p->season, 'isS2' => $p->isS2,
             'hasConfig' => true, 'hasCoords' => false, 'zLevels' => [], 'coordsCount' => 0,
         ];
     }
 
     foreach ((new TiledMapService())->listPlans() as $planId => $info) {
         $row = $byId[$planId] ?? (object) [
-            'id' => $planId, 'name' => $planId, 'isS2' => str_contains($planId, '_s2'),
+            // Coords without config: season unknown (null = shown under
+            // every filter — an anomaly to see, not to hide)
+            'id' => $planId, 'name' => $planId, 'season' => null, 'isS2' => str_contains($planId, '_s2'),
             'hasConfig' => false, 'hasCoords' => false, 'zLevels' => [], 'coordsCount' => 0,
         ];
         $row->hasCoords = true;
@@ -156,7 +158,7 @@ function plans_render_list(array $inventory, Db $db): string
         $rows .= '<tr>'
             . '<td><code>' . e($plan->id) . '</code></td>'
             . '<td>' . e($plan->name) . '</td>'
-            . '<td>' . ($plan->isS2 ? '<span class="badge bg-success">S2</span>' : '<span class="badge bg-secondary">S1</span>') . '</td>'
+            . '<td>' . season_badge($plan->season) . '</td>'
             . '<td>' . plans_status_badge($plan) . '</td>'
             . '<td>' . $coordsCell . '</td>'
             . '<td>' . $validationCell . '</td>'
@@ -186,7 +188,18 @@ function plans_render_list(array $inventory, Db $db): string
         . ' Le contenu des cartes s\'édite via l\'extension Tiled ; la génération des PNG se fait sur'
         . ' <a href="/admin/local_maps.php">Cartes locales</a>.</div>'
 
-        . '<div class="card mb-3"><div class="card-body py-2">' . render_season_filter($seasonFilter) . '</div></div>'
+        . '<div class="card mb-3"><div class="card-body py-2 d-flex align-items-center justify-content-between flex-wrap gap-3">'
+        . render_season_filter($seasonFilter)
+        /* The GLOBAL setting, next to the display filter: every
+           season-scoped list defaults to it. */
+        . '<form method="post" action="/admin/plans-save.php?action=set_season" class="d-flex align-items-center gap-2" style="font-size:13px;">'
+        . (new CsrfProtectionService())->renderTokenField()
+        . '<span class="text-muted"><i class="fas fa-globe"></i> Saison courante du jeu :</span>'
+        . '<input type="number" min="1" step="1" name="game_season" class="form-control form-control-sm" style="width:70px;"'
+        . ' value="' . e((string) (new \App\Service\SeasonService())->current()) . '">'
+        . '<button type="submit" class="btn btn-sm btn-outline-primary">Régler</button>'
+        . '</form>'
+        . '</div></div>'
 
         . '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
         . '<th>Code</th><th>Nom</th><th>Saison</th><th>Statut</th><th>Coords</th>'
@@ -280,6 +293,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
     $fieldHelp = [
         'name'              => ['Nom affiché', 'Nom complet du plan (cartes, journaux).'],
         'shortName'         => ['Nom court', 'Carte du monde, liste des lieux.'],
+        'season'            => ['Saison', 'Numéro de saison du plan ; vide = toutes les saisons (olympia, enfers, tutoriel).'],
         'x'                 => ['X (carte monde)', 'Position du territoire sur la carte du monde ; vide = donjon hors grille.'],
         'y'                 => ['Y (carte monde)', 'Position du territoire sur la carte du monde ; vide = donjon hors grille.'],
         'player_visibility' => ['Visibilité des joueurs', 'false = les autres personnages sont masqués et ne bloquent pas les cases (mode tutoriel).'],
@@ -316,7 +330,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
     };
 
     // Cartes de champs par thème (l'ordre suit l'usage, pas PLAN_CONFIG_KEYS)
-    $identityKeys = ['name', 'shortName', 'x', 'y', 'size', 'pnj'];
+    $identityKeys = ['name', 'shortName', 'season', 'x', 'y', 'size', 'pnj'];
     $displayKeys = ['player_visibility', 'bg', 'mask', 'scrollingMask', 'verticalScrolling'];
 
     $identityFields = '';
