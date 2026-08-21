@@ -148,12 +148,21 @@ test_job:
     # avec le service MariaDB et meurt avec lui. Vide = celle qui est
     # configurée, donc aucune seconde base à créer ici.
     AOO_TEST_DB: ""
+    # La base d'intégration aoo4_test, que Tests\Support\TestDb sonde : sans
+    # elle, ~60 tests d'intégration (tutoriel, entité Player) se sautent.
+    # Semée ci-dessous par reset_test_database.sh, comme dans le job endpoint.
+    TEST_DB_HOST: mariadb
+    TEST_DB_USER: root
+    TEST_DB_PASS: passwordRoot
+    TEST_DB_NAME: aoo4_test
     # Surchargée par les règles ci-dessous sur les branches d'intégration.
     TEST_TARGET: test-ci
   before_script:
     - make setup-ci-env
     - composer install --no-progress --no-interaction
     - bash scripts/testing/setup_ci_database.sh
+    # Clone aoo4 vers aoo4_test et y sème les personnages de test.
+    - bash scripts/testing/reset_test_database.sh
   script:
     - make $TEST_TARGET
   coverage: '/^\s*Lines:\s*\d+.\d+\%/'

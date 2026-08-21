@@ -38,9 +38,11 @@ testf:
 # Mesurer la couverture multiplie le temps de calcul par ~7 (2,3 s de CPU
 # contre 16,3 s sur cette suite), pour un chiffre qui n'intéresse que les
 # branches d'intégration.
+# --display-skipped : le rapport junit que GitLab conserve perd le motif des
+# sauts ; seul le log du job peut dire POURQUOI un test s'est sauté.
 test-ci:
 	mkdir -p tmp/coverage
-	./vendor/bin/phpunit -c phpunit.xml --log-junit phpunit-report.xml --colors=never --no-coverage
+	./vendor/bin/phpunit -c phpunit.xml --log-junit phpunit-report.xml --colors=never --no-coverage --display-skipped
 
 # Couverture par pcov plutôt que Xdebug, et activée à la demande :
 # l'extension est chargée avec pcov.enabled=0 pour ne rien coûter au reste
@@ -48,7 +50,7 @@ test-ci:
 test-ci-coverage:
 	mkdir -p tmp/coverage
 	php -d pcov.enabled=1 -d pcov.directory=src -d memory_limit=512M ./vendor/bin/phpunit -c phpunit.xml \
-		--log-junit phpunit-report.xml --coverage-text --colors=never
+		--log-junit phpunit-report.xml --coverage-text --colors=never --display-skipped
 
 phpstan-ci:
 	composer install --no-progress --no-interaction
