@@ -613,4 +613,6 @@ $body = '<form method="post" action="player-edit.php?id=' . (int) $id . '">'
     . $inventory
     . $effects;
 
-echo admin_layout('Édition — ' . $player->data->name, renderFlashMessage() . $body);
+echo admin_layout('Édition — ' . $player->data->name, renderFlashMessage() . $body, [
+    'scripts' => ['/admin/js/scroll-keeper.js'],
+]);
