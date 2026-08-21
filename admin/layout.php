@@ -97,8 +97,8 @@ function admin_layout($title, $content, array $assets = []) {
 
     $tutorialPages = ['tutorial-catalog.php', 'tutorial.php', 'tutorial-step-editor.php',
                       'tutorial-npcs.php', 'tutorial-settings.php'];
-    $mapPages = ['world_map.php', 'plans.php', 'local_maps.php', 'terrain-transitions.php', 'tile-assets.php',
-                 'tile-colors.php', 'tile-shade.php', 'screenshots.php'];
+    $mapPages = ['world_map.php', 'plans.php', 'plan-seed.php', 'local_maps.php', 'terrain-transitions.php',
+                 'tile-assets.php', 'tile-colors.php', 'tile-shade.php', 'screenshots.php'];
     $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php', 'passive-workbench.php',
                     'action-import.php', 'action-import-preview.php'];
     $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
@@ -121,6 +121,7 @@ function admin_layout($title, $content, array $assets = []) {
             $navGroup('Cartes', [
                 ['world_map.php', 'Carte monde', '/admin/world_map.php'],
                 ['plans.php', 'Plans', '/admin/plans.php'],
+                ['plan-seed.php', 'Seed JSON legacy', '/admin/plan-seed.php'],
                 ['local_maps.php', 'Cartes locales', '/admin/local_maps.php'],
                 ['terrain-transitions.php', 'Transitions de terrain', '/admin/terrain-transitions.php'],
                 ['tile-assets.php', 'Tuiles &amp; images', '/admin/tile-assets.php'],

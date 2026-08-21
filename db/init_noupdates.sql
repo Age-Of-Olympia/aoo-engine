@@ -2162,6 +2162,10 @@ INSERT INTO `doctrine_migration_versions` VALUES ('App\\Migrations\\Version20260
 -- base fraîche plante. Son effet (run/train → self) est répliqué dans la
 -- même section de patch, sur apply_to.
 INSERT INTO `doctrine_migration_versions` VALUES ('App\\Migrations\\Version20260622180000_FixSelfActionOutcomesTargeting','2026-06-22 18:00:00',0);
+-- Enregistrée d'office : les tables plans / plan_z_levels sont bakées plus
+-- bas dans ce dump (avec les trois plans standalone). La migration reste
+-- idempotente (IF NOT EXISTS) mais l'enregistrer évite de la rejouer.
+INSERT INTO `doctrine_migration_versions` VALUES ('App\\Migrations\\Version20260821100000_PlansLeaveTheirJson','2026-08-21 10:00:00',0);
 /*!40000 ALTER TABLE `doctrine_migration_versions` ENABLE KEYS */;
 COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
@@ -4699,6 +4703,69 @@ INSERT INTO `outcome_instructions` VALUES (24,'damageobject','{}',0,10);
 INSERT INTO `outcome_instructions` VALUES (28,'lifeloss','{ \"actorDamagesTrait\": \"f\", \"targetDamagesTrait\": \"e\", \"bonusDamagesTrait\": 2, \"targetIgnore\": [\"tronc\"] }',3,20);
 INSERT INTO `outcome_instructions` VALUES (29,'applystatus','{ \"corruption_du_bois\": true, \"player\": \"target\", \"duration\": 259200 }',0,21);
 /*!40000 ALTER TABLE `outcome_instructions` ENABLE KEYS */;
+COMMIT;
+SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+-- Configuration des plans (ex datas/private/plans/*.json) — les trois plans
+-- du monde standalone sont semés ici, le reste vient du seed
+-- (admin/plan-seed.php ou scripts/seed-plans.php) sur les environnements
+-- qui portent un datas/ réel. Migration enregistrée d'office plus haut.
+CREATE TABLE `plans` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `slug` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `short_name` varchar(255) DEFAULT NULL,
+  `x` int(11) DEFAULT NULL,
+  `y` int(11) DEFAULT NULL,
+  `player_visibility` tinyint(1) NOT NULL DEFAULT 1,
+  `visible_by_default` tinyint(1) NOT NULL DEFAULT 0,
+  `pnj` int(11) DEFAULT NULL,
+  `size` int(11) DEFAULT NULL,
+  `bg` varchar(255) DEFAULT NULL,
+  `mask` varchar(255) DEFAULT NULL,
+  `scrolling_mask` double DEFAULT NULL,
+  `vertical_scrolling` tinyint(1) NOT NULL DEFAULT 0,
+  `shade_step` double DEFAULT NULL,
+  `shade_max` int(11) DEFAULT NULL,
+  `shade_color` varchar(7) DEFAULT NULL,
+  `visible_bounds_min_x` int(11) DEFAULT NULL,
+  `visible_bounds_max_x` int(11) DEFAULT NULL,
+  `visible_bounds_min_y` int(11) DEFAULT NULL,
+  `visible_bounds_max_y` int(11) DEFAULT NULL,
+  `biomes` longtext DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_plans_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+SET AUTOCOMMIT=0;
+/*!40000 ALTER TABLE `plans` DISABLE KEYS */;
+INSERT INTO `plans` VALUES (1,'arcadia','Arcadia',NULL,0,0,1,0,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'[]');
+INSERT INTO `plans` VALUES (2,'banque_des_lutins','Banque des Lutins','Banque des Lutins',0,0,1,0,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,-10,10,-10,10,'[{"wall":"arbre3","ressource":"bois","exhaust":75,"regrow":20},{"wall":"pierre1","ressource":"pierre","exhaust":75,"regrow":20},{"wall":"pierre2","ressource":"pierre","exhaust":75,"regrow":20},{"wall":"pierre3","ressource":"pierre","exhaust":75,"regrow":20}]');
+INSERT INTO `plans` VALUES (3,'tutorial','Tutoriel','Tuto',0,0,0,0,NULL,NULL,'eryn_dolen',NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'[{"wall":"arbre1","ressource":"bois","exhaust":75,"regrow":20},{"wall":"arbre2","ressource":"bois","exhaust":75,"regrow":20},{"wall":"pierre1","ressource":"pierre","exhaust":75,"regrow":20},{"wall":"pierre2","ressource":"pierre","exhaust":75,"regrow":20}]');
+/*!40000 ALTER TABLE `plans` ENABLE KEYS */;
+COMMIT;
+SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `plan_z_levels` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `plan_id` int(11) NOT NULL,
+  `z` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL DEFAULT '',
+  `map_unavailable` tinyint(1) NOT NULL DEFAULT 0,
+  `visible_bounds_min_x` int(11) DEFAULT NULL,
+  `visible_bounds_max_x` int(11) DEFAULT NULL,
+  `visible_bounds_min_y` int(11) DEFAULT NULL,
+  `visible_bounds_max_y` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_plan_z` (`plan_id`,`z`),
+  CONSTRAINT `fk_plan_z_levels_plan` FOREIGN KEY (`plan_id`) REFERENCES `plans` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+SET AUTOCOMMIT=0;
+/*!40000 ALTER TABLE `plan_z_levels` DISABLE KEYS */;
+INSERT INTO `plan_z_levels` VALUES (1,2,0,'Banque',0,-10,10,-10,10);
+INSERT INTO `plan_z_levels` VALUES (2,3,0,'Arène',0,-5,5,-5,5);
+/*!40000 ALTER TABLE `plan_z_levels` ENABLE KEYS */;
 COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

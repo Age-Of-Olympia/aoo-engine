@@ -33,6 +33,19 @@ function json()
     return $json;
 }
 
+// plan configuration — DB-backed read gateway (ex plan JSON files)
+function plans()
+{
+    global $plansService;
+
+    if(!isset($plansService)){
+
+        $plansService = new \App\Service\PlanService();
+    }
+
+    return $plansService;
+}
+
 // printr
 function printr($text){
 
