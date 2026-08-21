@@ -33,6 +33,10 @@ class PlanZLevel
     #[ORM\Column(name: "map_unavailable", type: "boolean", options: ["default" => false])]
     private bool $mapUnavailable = false;
 
+    /** May chests be placed on this floor? (ChestSiteCondition; default yes) */
+    #[ORM\Column(name: "chests_allowed", type: "boolean", options: ["default" => true])]
+    private bool $chestsAllowed = true;
+
     #[ORM\Column(name: "visible_bounds_min_x", type: "integer", nullable: true)]
     private ?int $visibleBoundsMinX = null;
 
@@ -89,6 +93,16 @@ class PlanZLevel
     public function setMapUnavailable(bool $mapUnavailable): void
     {
         $this->mapUnavailable = $mapUnavailable;
+    }
+
+    public function allowsChests(): bool
+    {
+        return $this->chestsAllowed;
+    }
+
+    public function setAllowsChests(bool $chestsAllowed): void
+    {
+        $this->chestsAllowed = $chestsAllowed;
     }
 
     public function getVisibleBoundsMinX(): ?int

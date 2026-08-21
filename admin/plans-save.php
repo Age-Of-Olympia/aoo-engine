@@ -116,6 +116,7 @@ if ($action === 'update') {
             $zLevels[(int) $z] = [
                 'name'           => (string) ($row['name'] ?? ''),
                 'mapUnavailable' => isset($row['mapUnavailable']) ? 'true' : 'false',
+                'chestsAllowed'  => isset($row['chestsAllowed']) ? 'true' : 'false',
                 'bounds'         => $bounds,
             ];
         }

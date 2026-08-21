@@ -57,6 +57,26 @@ class PlanService
     }
 
     /**
+     * May a chest be placed on this floor? A plan without configuration, or a
+     * level without its row, restricts nothing — the flag only ever forbids.
+     */
+    public function chestsAllowedAt(string $slug, int $z): bool
+    {
+        $plan = $this->read($slug);
+        if ($plan === false) {
+            return true;
+        }
+
+        foreach ($plan->z_levels ?? [] as $level) {
+            if ((int) $level->z === $z) {
+                return ($level->chestsAllowed ?? true) !== false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Slug of the world-map plan (admin dashboard → Réglages du monde).
      * Falls back to the historical slug when the setting is unset.
      */
@@ -208,6 +228,11 @@ class PlanService
                 'z'      => (int) $level['z'],
                 'z-name' => (string) $level['name'],
             ];
+            // Key omitted at default, like every optional of the legacy shape.
+            // The ?? covers a read before the column's migration runs.
+            if (($level['chests_allowed'] ?? 1) == 0) {
+                $entry['chestsAllowed'] = false;
+            }
             if ($level['map_unavailable']) {
                 $entry['MapUnavailable'] = true;
             } elseif ($level['visible_bounds_min_x'] !== null && $level['visible_bounds_max_x'] !== null

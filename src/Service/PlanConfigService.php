@@ -272,6 +272,7 @@ class PlanConfigService
             }
             $zLevel->setName((string) ($level['z-name'] ?? 'Niveau ' . $z));
             $zLevel->setMapUnavailable(!empty($level['MapUnavailable']));
+            $zLevel->setAllowsChests(($level['chestsAllowed'] ?? true) !== false);
             if (!$zLevel->isMapUnavailable()
                 && isset($level['visibleBoundsMinX'], $level['visibleBoundsMaxX'], $level['visibleBoundsMinY'], $level['visibleBoundsMaxY'])
             ) {
@@ -293,7 +294,7 @@ class PlanConfigService
      * Configuration d'un niveau z pour l'éditeur : nom affiché, drapeau
      * « pas de carte » et bornes visibles (« auto » quand recalculées au push).
      *
-     * @return array{name: string, mapUnavailable: string, bounds: string}
+     * @return array{name: string, mapUnavailable: string, chestsAllowed: string, bounds: string}
      */
     public function readZLevel(string $plan, int $z): array
     {
@@ -311,6 +312,7 @@ class PlanConfigService
         return [
             'name'           => $level?->getName() ?? '',
             'mapUnavailable' => ($level !== null && $level->isMapUnavailable()) ? 'true' : 'false',
+            'chestsAllowed'  => ($level === null || $level->allowsChests()) ? 'true' : 'false',
             'bounds'         => $bounds,
         ];
     }
@@ -349,6 +351,12 @@ class PlanConfigService
             : $level->isMapUnavailable();
 
         $level->setMapUnavailable($mapUnavailable);
+
+        if (isset($zConfig['chestsAllowed'])) {
+            $level->setAllowsChests(
+                !in_array(strtolower((string) $zConfig['chestsAllowed']), ['false', '0'], true)
+            );
+        }
         if ($mapUnavailable) {
             $level->setVisibleBounds(null, null, null, null);
         } else {
