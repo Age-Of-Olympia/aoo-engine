@@ -35,27 +35,10 @@ class ChestUnderTheBankTest extends LegacyPlayerFixtureTestCase
         $this->requireBuildingsOrSkip();
     }
 
-    /** @var list<string> */
-    private array $sownFactionCodes = [];
-
     protected function tearDown(): void
     {
         unset($_POST['itemId'], $_POST['buildFor']);
-        foreach ($this->sownFactionCodes as $code) {
-            $this->link->executeStatement('DELETE FROM factions WHERE code = ?', [$code]);
-        }
-        $this->sownFactionCodes = [];
         parent::tearDown();
-    }
-
-    /** A faction catalogue row for the scene — place() validates the code. */
-    private function sowFaction(string $code): void
-    {
-        if ((bool) $this->link->fetchOne('SELECT 1 FROM factions WHERE code = ?', [$code])) {
-            return;
-        }
-        $this->link->insert('factions', ['code' => $code, 'name' => ucfirst($code), 'raFont' => '']);
-        $this->sownFactionCodes[] = $code;
     }
 
     private function actionOrSkip(): \App\Interface\ActionInterface
@@ -95,14 +78,10 @@ class ChestUnderTheBankTest extends LegacyPlayerFixtureTestCase
         return $this->reload($builder->id);
     }
 
-    /**
-     * Change a fixture player's faction — raw UPDATE plus cache purge:
-     * get_data() serves the per-entity .json cache before the base.
-     */
+    /** Change a fixture player's faction — reload() rereads the base after. */
     private function setFaction(int $playerId, string $faction): void
     {
         $this->link->executeStatement('UPDATE players SET faction = ? WHERE id = ?', [$faction, $playerId]);
-        self::purgeEntityCache($playerId);
     }
 
     /** Fresh legacy object, data/coords/caracs loaded — after any raw SQL. */

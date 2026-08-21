@@ -456,6 +456,10 @@ class BuildingService extends BaseService
 
         if ($asConstructionSite && $race->getBuildWork() > 0) {
             (new ConstructionSiteService())->open($id, $race->getBuildWork());
+        } else {
+            // Born built (direct placement or workless type): its type's
+            // completion behavior fires.
+            BuildingLifecycleRegistry::dispatchRose($id);
         }
 
         // Le damier de chaque joueur est un SVG caché : invalider le

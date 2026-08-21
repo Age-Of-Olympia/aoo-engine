@@ -89,6 +89,9 @@ class ConstructionSiteService extends BaseService
             $db->exe('DELETE FROM construction_sites WHERE player_id = ?', $entityId);
             $db->exe("UPDATE buildings SET build_state = 'built' WHERE player_id = ?", $entityId);
 
+            // The building is finished: its type's behavior fires.
+            BuildingLifecycleRegistry::dispatchRose($entityId);
+
             return ['done' => $progress['done'], 'total' => $progress['total'], 'completed' => true];
         }
 

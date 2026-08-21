@@ -56,6 +56,9 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
     /** @var int[] action ids sown via sowCatalogAction(), removed in tearDown */
     private array $sownActionIds = [];
 
+    /** @var string[] faction codes sown via sowFaction(), removed in tearDown */
+    private array $sownFactionCodes = [];
+
     protected function setUp(): void
     {
         $this->link = $this->bootstrapLegacyOrSkip();
@@ -202,12 +205,16 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
             $this->link->executeStatement('DELETE FROM action_conditions WHERE action_id = ?', [$id]);
             $this->link->executeStatement('DELETE FROM actions WHERE id = ?', [$id]);
         }
+        foreach ($this->sownFactionCodes as $code) {
+            $this->link->executeStatement('DELETE FROM factions WHERE code = ?', [$code]);
+        }
 
         $this->createdPlayerIds = [];
         $this->bloodSnapshots = [];
         $this->sownTypeNames = [];
         $this->sownItemNames = [];
         $this->sownActionIds = [];
+        $this->sownFactionCodes = [];
         $this->link = null;
         $GLOBALS['link'] = $this->previousLink;
         $this->previousLink = null;
@@ -438,6 +445,20 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         \App\Factory\EntityManagerFactory::getEntityManager()->clear();
 
         return $this->itemOrSkip($name);
+    }
+
+    /**
+     * Sow a faction catalogue row for the scene, removed in tearDown —
+     * BuildingService::place() validates faction codes against it.
+     */
+    protected function sowFaction(string $code): void
+    {
+        if ((bool) $this->link->fetchOne('SELECT 1 FROM factions WHERE code = ?', [$code])) {
+            return;
+        }
+
+        $this->link->insert('factions', ['code' => $code, 'name' => ucfirst($code), 'raFont' => '']);
+        $this->sownFactionCodes[] = $code;
     }
 
     /** Objet du catalogue, données chargées — skip si non seedé. */

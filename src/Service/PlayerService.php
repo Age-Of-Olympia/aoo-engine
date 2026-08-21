@@ -248,7 +248,18 @@ class PlayerService
             $text = $target->data->name . ' a été détruit par ' . $player->data->name . '.';
             Log::put($target, $player, $text, type: "kill", hiddenText: '', logTime: $timestamp);
 
+            /* Type/plan/faction BEFORE vanish: the row is shelved off the
+             * board (coords gone). The type's behavior fires AFTER, so it
+             * sees the world without the destroyed building. */
+            $lifecycle = (new BuildingLifecycleRegistry())->of((string) $target->data->race);
+            $goCoords = $lifecycle !== null ? $target->getCoords() : null;
+            $faction = (string) ($target->data->faction ?? '');
+
             (new BuildingService())->vanish($target->id);
+
+            if ($lifecycle !== null && $goCoords !== null) {
+                $lifecycle->fell((int) $target->id, (string) $goCoords->plan, $faction);
+            }
         }
 
         echo '<b><font color="red">Vous détruisez la structure.</font></b>';
