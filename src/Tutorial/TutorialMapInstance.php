@@ -352,6 +352,10 @@ class TutorialMapInstance
         ", [$instancePlanName]);
 
         if (empty($coordsIds)) {
+            // No board left, but the config row, the yield overrides and the
+            // minimap PNGs can still be there (half-failed teardown).
+            $this->removeInstanceLeftovers($instancePlanName);
+
             return;
         }
 
@@ -411,6 +415,10 @@ class TutorialMapInstance
         ", [$planName]);
 
         if (empty($coordsIds)) {
+            // No board left, but the config row, the yield overrides and the
+            // minimap PNGs can still be there (half-failed teardown).
+            $this->removeInstanceLeftovers($planName);
+
             return;
         }
 

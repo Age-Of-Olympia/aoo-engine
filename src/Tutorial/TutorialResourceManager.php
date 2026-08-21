@@ -309,6 +309,115 @@ class TutorialResourceManager
     }
 
     /**
+     * Global sweep of stale tutorial instances — the ones no per-player
+     * path ever reclaims.
+     *
+     * complete.php and cancel.php tear their session down, and start.php
+     * cleans a player's PREVIOUS sessions; but a player who abandons the
+     * tutorial and never comes back leaves an instance forever, and a
+     * teardown that failed halfway (its errors are logged, not rethrown)
+     * leaves an instance that no is_active=1 query will ever find again.
+     *
+     * A tut_* plan is swept unless a session is genuinely IN PROGRESS on
+     * it: an active tutorial player, not completed, younger than
+     * $maxAgeHours. Everything else goes — completed sessions, sessions
+     * past the age limit, and plans with no session at all (including the
+     * files-era leftovers imported by the plan seed). A real player
+     * standing on the plan blocks the sweep and is reported instead.
+     *
+     * @return array{swept: list<string>, skipped: array<string, string>}
+     */
+    public function cleanupStale(int $maxAgeHours = 48): array
+    {
+        $report = ['swept' => [], 'skipped' => []];
+
+        // Instance identity is derived from the session id (tut_ + its 10
+        // first chars); enumerate every plan that LOOKS like an instance,
+        // config row or coords, so orphans of either half are seen.
+        $plans = $this->conn->fetchFirstColumn("
+            SELECT slug FROM plans WHERE slug LIKE 'tut\\_%'
+            UNION
+            SELECT DISTINCT plan FROM coords WHERE plan LIKE 'tut\\_%'
+        ");
+
+        $enemyCleanup = new TutorialEnemyCleanup($this->conn, new NullLogger());
+        $playerCleanup = new TutorialPlayerCleanup($this->conn, new NullLogger());
+        $mapInstance = new TutorialMapInstance($this->conn);
+
+        foreach ($plans as $plan) {
+            $plan = (string) $plan;
+            $sessionPrefix = substr($plan, strlen('tut_'));
+
+            $sessions = $this->conn->fetchAllAssociative(
+                "SELECT tp.id, tp.player_id, tp.tutorial_session_id,
+                        (tp.created_at >= (NOW() - INTERVAL ? HOUR)) AS recent,
+                        COALESCE((SELECT MAX(pr.completed) FROM tutorial_progress pr
+                                   WHERE pr.tutorial_session_id = tp.tutorial_session_id), 0) AS completed
+                   FROM tutorial_players tp
+                  WHERE tp.is_active = 1 AND tp.deleted_at IS NULL
+                    AND SUBSTRING(tp.tutorial_session_id, 1, 10) = ?",
+                [$maxAgeHours, $sessionPrefix]
+            );
+
+            $inProgress = array_filter(
+                $sessions,
+                static fn(array $s): bool => (int) $s['completed'] === 0 && (int) $s['recent'] === 1
+            );
+            if ($inProgress !== []) {
+                continue; // someone is playing here
+            }
+
+            try {
+                // Stale sessions first: enemies, then their tutorial player
+                // (players holds coords by foreign key, it must leave before
+                // the instance).
+                foreach ($sessions as $session) {
+                    $enemyCleanup->removeBySessionId((string) $session['tutorial_session_id']);
+                    $playerCleanup->deleteTutorialPlayer((int) $session['id'], (int) $session['player_id']);
+                }
+
+                // Leftover tutorial characters whose bookkeeping row is
+                // already inactive or gone (a half-failed teardown).
+                $leftovers = $this->conn->fetchAllAssociative(
+                    "SELECT p.id,
+                            (SELECT tp.id FROM tutorial_players tp WHERE tp.player_id = p.id LIMIT 1) AS tp_id
+                       FROM players p
+                       JOIN coords c ON c.id = p.coords_id
+                      WHERE c.plan = ? AND p.player_type = 'tutorial'",
+                    [$plan]
+                );
+                foreach ($leftovers as $leftover) {
+                    $playerCleanup->deleteTutorialPlayer((int) ($leftover['tp_id'] ?? 0), (int) $leftover['id']);
+                }
+
+                // A real player on the plan is not ours to delete: report,
+                // and leave the instance standing.
+                $realCount = (int) $this->conn->fetchOne(
+                    "SELECT COUNT(*) FROM players p JOIN coords c ON c.id = p.coords_id
+                      WHERE c.plan = ? AND p.player_type = 'real'",
+                    [$plan]
+                );
+                if ($realCount > 0) {
+                    $report['skipped'][$plan] = $realCount . ' joueur(s) réel(s) sur le plan';
+
+                    continue;
+                }
+
+                $mapInstance->deleteInstanceByPlan($plan);
+                $report['swept'][] = $plan;
+            } catch (\Exception $e) {
+                $report['skipped'][$plan] = $e->getMessage();
+                error_log("[TutorialResourceManager] Error sweeping stale instance {$plan}: " . $e->getMessage());
+            }
+        }
+
+        // Enemies whose session vanished entirely, wherever they stand.
+        $enemyCleanup->removeOrphanedEnemies();
+
+        return $report;
+    }
+
+    /**
      * Create the tutorial player for a session and return the hydrated
      * TutorialPlayer. Creates the isolated map instance, seeds
      * the players + players_actions + players_options + tutorial_players
