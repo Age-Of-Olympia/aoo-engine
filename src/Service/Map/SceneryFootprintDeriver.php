@@ -158,7 +158,14 @@ final class SceneryFootprintDeriver
                 continue;
             }
 
-            $size = @getimagesize($root . $family . '/' . $family . '.png');
+            $whole = $root . $family . '/' . $family . '.png';
+
+            // Optional artist art: most families never had their whole image
+            if (!is_file($whole)) {
+                continue;
+            }
+
+            $size = @getimagesize($whole);
 
             if (!$size || $size[0] % TiledMapService::TILE_SIZE !== 0 || $size[1] % TiledMapService::TILE_SIZE !== 0) {
                 continue;

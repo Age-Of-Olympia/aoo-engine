@@ -18,6 +18,12 @@ if(!isset($_SESSION['playerId'])){
 AdminAuthorizationService::DoAdminCheck();
 set_error_handler("warning_handler", E_WARNING);
 function warning_handler($errno, $errstr, $errfile, $errline) {
+    /* A custom handler runs even for @-suppressed warnings; since PHP 8,
+     * @ only clears the level from error_reporting(). Honor the
+     * suppression — those callers carry their own fallback. */
+    if (!(error_reporting() & $errno)) {
+        return false;
+    }
     throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
 }
 // get cmd history
