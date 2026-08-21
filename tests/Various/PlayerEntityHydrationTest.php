@@ -171,6 +171,12 @@ class PlayerEntityHydrationTest extends TestCase
      */
     private function bootstrapOrSkip(): array
     {
+        // One process-wide probe (Tests\Support\TestDb): an absent test DB
+        // host must not cost a connect timeout per test.
+        if (\Tests\Support\TestDb::connectionOrNull() === null) {
+            $this->markTestSkipped(\Tests\Support\TestDb::failure());
+        }
+
         $params = [
             'host'     => getenv('TEST_DB_HOST') ?: 'mariadb-aoo4',
             'user'     => getenv('TEST_DB_USER') ?: 'root',

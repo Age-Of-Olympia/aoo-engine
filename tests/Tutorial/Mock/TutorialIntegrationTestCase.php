@@ -121,29 +121,14 @@ abstract class TutorialIntegrationTestCase extends TestCase
      */
     private function openTestDbOrSkip(): Connection
     {
-        $params = [
-            'host'     => getenv('TEST_DB_HOST') ?: 'mariadb-aoo4',
-            'user'     => getenv('TEST_DB_USER') ?: 'root',
-            'password' => getenv('TEST_DB_PASS') ?: 'passwordRoot',
-            'dbname'   => getenv('TEST_DB_NAME') ?: 'aoo4_test',
-            'driver'   => 'mysqli',
-            'charset'  => 'utf8mb4',
-        ];
-
-        try {
-            $conn = DriverManager::getConnection($params);
-            // Force-connect by running a sanity query — DriverManager is
-            // lazy and won't surface "host unreachable" until first use.
-            $conn->executeQuery('SELECT 1');
-            return $conn;
-        } catch (\Throwable $e) {
-            $this->markTestSkipped(sprintf(
-                'Test DB %s@%s/%s unavailable (%s). Run scripts/testing/reset_test_database.sh.',
-                $params['user'],
-                $params['host'],
-                $params['dbname'],
-                $e->getMessage()
-            ));
+        // Probed once for the whole process (Tests\Support\TestDb): where
+        // the host does not exist — the CI test job — the first test pays
+        // a short timeout and every later one skips for free.
+        $conn = \Tests\Support\TestDb::connectionOrNull();
+        if ($conn === null) {
+            $this->markTestSkipped(\Tests\Support\TestDb::failure());
         }
+
+        return $conn;
     }
 }
