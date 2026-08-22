@@ -6,6 +6,7 @@
  */
 
 use App\Service\TiledAuthService;
+use App\Service\TiledExtensionService;
 use App\Service\TiledMapService;
 
 require_once __DIR__ . '/../../../config/bootstrap.php';
@@ -34,6 +35,22 @@ function tiledSucceed(array $data = []): never
     exit;
 }
 
+/**
+ * Version guard: the extension announces its version, the instance says
+ * from which one it speaks the same protocol. The bar is an admin
+ * setting (dashboard → Options générales), so raising it needs no
+ * deployment. See TiledExtensionService.
+ */
+function tiledRequireExtensionVersion(): void
+{
+    $service = new TiledExtensionService();
+    $announced = TiledExtensionService::normalize($_SERVER['HTTP_X_AOO_TILED_VERSION'] ?? null);
+
+    if (!$service->accepts($announced)) {
+        tiledFail(426, $service->refusalMessage($announced));
+    }
+}
+
 /** Garde d'authentification : jeton valide + droits admin, sinon 401. */
 function tiledRequireAdmin(): int
 {
@@ -57,3 +74,6 @@ function tiledValidPlanName(string $plan): bool
 {
     return (bool) preg_match(TiledMapService::PLAN_NAME_PATTERN, $plan);
 }
+
+// Runs on include: every endpoint requires this file, so none can skip the guard.
+tiledRequireExtensionVersion();

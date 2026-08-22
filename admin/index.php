@@ -1,17 +1,26 @@
 <?php
 /**
- * Tableau de bord admin : accueil du dashboard + options générales du jeu.
+ * Admin dashboard: the entry page, plus the settings that hold for the
+ * whole game.
  *
- * Options générales — réglages globaux d'affichage, stockés dans
- * admin_settings (AdminSettingsService) :
- *   - Format des dates (DateFormatService) : suivi par tout affichage
- *     de date passant par DateFormatService::format() — aujourd'hui les
- *     chroniques de l'accueil ; les date() hérités migrent au fil de l'eau.
+ * Each setting is one form, posted here and redirected after (CSRF, PRG:
+ * a refresh must not resubmit), and stored in admin_settings through
+ * AdminSettingsService:
+ *   - World (SeasonService, PlanService): current season, main plan
+ *     carrying the world map, plan the dead land on.
+ *   - Date format (DateFormatService): followed by every display going
+ *     through format(); legacy date() calls move over as they are touched.
+ *   - Life of a harvestable resource (HarvestDefaultsService): a default
+ *     read at creation, never applied back to placed types.
+ *   - Minimum Tiled extension version (TiledExtensionService): raising it
+ *     after an extension release is an edit here, not a deployment.
  *
- * L'ombre des cases est partie dans Cartes → Ombres (admin/tile-shade.php) :
- * c'est un réglage de CARTE, pas une option générale du jeu.
+ * A setting that belongs to a map goes on that map's page, not here: cell
+ * shade lives in Cartes → Ombres (admin/tile-shade.php).
  *
- * Le POST est traité ici même (CSRF, PRG), comme admin/tile-assets.php.
+ * The banners above the forms watch what would otherwise break in
+ * silence — a plan carrying resources with no yields, a table left over
+ * from a finished chantier.
  */
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
@@ -23,11 +32,13 @@ use App\Service\DateFormatService;
 use App\Service\Map\HarvestDefaultsService;
 use App\Service\PlanService;
 use App\Service\SeasonService;
+use App\Service\TiledExtensionService;
 
 $csrf = new CsrfProtectionService();
 $dateFormat = new DateFormatService();
 $harvestDefaults = new HarvestDefaultsService();
 $seasonService = new SeasonService();
+$tiledExtension = new TiledExtensionService();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['world_settings'])) {
     try {
@@ -67,6 +78,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['harvest_default_pv'])
     } catch (\Throwable $e) {
         setFlash('danger', 'Échec : ' . $e->getMessage());
     }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tiled_min_extension'])) {
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        $tiledExtension->setMinimum((string) $_POST['tiled_min_extension']);
+        setFlash('success', 'Extension Tiled : version minimale portée à ' . $tiledExtension->minimum() . '.');
+    } catch (\Throwable $e) {
+        setFlash('danger', 'Échec : ' . $e->getMessage());
+    }
+    redirectTo('/admin/index.php');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['date_format'])) {
@@ -221,6 +243,28 @@ ob_start();
                 <small class="form-text text-muted">
                     Combien de coups il faut pour abattre un arbre. Sert de valeur par défaut à la
                     <strong>création</strong> d'un type récoltable ; un type déjà réglé garde la sienne.
+                </small>
+            </form>
+
+            <hr />
+
+            <form method="post" action="index.php">
+                <?= $csrf->renderTokenField() ?>
+                <label class="form-label mb-0">Version minimale de l'extension Tiled</label>
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="text" name="tiled_min_extension" pattern="v?[0-9]+(\.[0-9]+){0,2}"
+                           class="form-select" style="max-width: 120px;"
+                           value="<?= e($tiledExtension->minimum()) ?>" />
+                    <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
+                </div>
+                <small class="form-text text-muted">
+                    Les éditeurs plus anciens que ce numéro sont refusés par les endpoints Tiled, avec un
+                    message qui dit quoi télécharger — une extension d'un autre âge parle un protocole
+                    changé et se trompe en silence. À relever <strong>après</strong> la publication de la
+                    <a href="<?= e(TiledExtensionService::DOWNLOAD_URL) ?>">release correspondante</a>,
+                    jamais avant : la barre ferme la porte à tout le monde tant que le zip n'est pas en
+                    ligne. Avant la v<?= e(TiledExtensionService::FIRST_VERSIONED) ?>, une extension
+                    n'annonçait pas sa version : elle est refusée quoi qu'il arrive.
                 </small>
             </form>
         </div>

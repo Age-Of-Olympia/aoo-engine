@@ -362,6 +362,7 @@ CREATE TABLE IF NOT EXISTS `admin_settings` (
   PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 INSERT IGNORE INTO `admin_settings` (`name`,`value`) VALUES ('pnj_retire_plan','pnjs');
+INSERT IGNORE INTO `admin_settings` (`name`,`value`) VALUES ('tiled_min_extension','0.4.0');
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;

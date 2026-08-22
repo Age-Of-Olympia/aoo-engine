@@ -15,15 +15,24 @@ technique (le pourquoi, ce qui reste, le déploiement).
    redémarrer Tiled. (Pour développer l'extension : cloner
    https://gitlab.com/age-of-olympia/aoo-tiled-extension et lier le
    clone sous le nom `aoo` à la place du dossier.)
-3. **Configurer** : **Fichier → AoO : Configuration…** — renseigner le
-   dossier des images du jeu (`gameDir`, chemin absolu d'un dossier
-   contenant `img/` — typiquement un checkout du dépôt moteur) et les
+3. **Configurer** : **Fichier → AoO : Configuration…** — renseigner les
    instances (`nom=url`, séparées par des virgules). Écrit `config.json`
-   tout seul, pas besoin d'éditer un fichier à la main. (Alternative :
-   copier `config.json.exemple` en `config.json`.)
+   tout seul, pas besoin d'éditer un fichier à la main. Les images de
+   tuiles se rapatrient toutes seules au pull, dans un magasin par
+   instance (`images/<instance>/`) ; le dossier d'appoint (`gameDir`,
+   chemin absolu d'un dossier contenant `img/` — typiquement un checkout
+   du dépôt moteur) est optionnel, réservé aux développeurs.
 4. **Ouvrir le projet** : Fichier → Ouvrir un projet… →
    `aoo.tiled-project` du clone. C'est lui qui apporte les classes
    typées des déclencheurs.
+
+**Se maintenir à jour** : dézipper la nouvelle release par-dessus le
+dossier `aoo` (config, session, cartes et images sont conservés), puis
+re-puller les plans ouverts. L'extension annonce sa version à chaque
+appel : une instance qui en exige une plus récente refuse la requête en
+disant quoi télécharger, plutôt que de la laisser parler un protocole
+qu'elle ne connaît plus. La version installée s'affiche dans le titre de
+la fenêtre de configuration et au chargement, dans la Console.
 
 Les actions AoO vivent en bas du menu **Fichier** :
 
@@ -301,6 +310,8 @@ Garanties :
 | Le formulaire de connexion n'apparaît pas | Un jeton valide est en cache (`session.json`) — passer par « AoO : Connexion… » pour changer de compte ou d'instance |
 | Une couche est grisée/inéditable | C'est une couche « (joueurs) » verrouillée : constructions des joueurs, volontairement intouchables |
 | Nouvelles images dans `img/` invisibles | Re-puller le plan (les tilesets sont reconstruits au pull) |
+| Tuiles présentes dans la palette mais sans image | Le magasin d'images n'a pas l'art : re-puller (la synchronisation tourne au pull). Si le pull annonce « les *undefined* images sont déjà toutes présentes », l'extension date d'avant la v0.4.0 — mettre à jour |
+| « Extension Tiled trop ancienne » (426) | L'instance exige une version plus récente : dézipper la dernière release par-dessus le dossier `aoo`, redémarrer Tiled, re-puller. Côté serveur, la barre se règle dans le tableau de bord admin (Options générales) |
 
 ---
 
@@ -330,6 +341,13 @@ Emplacements :
 - Services : `TiledMapService` (diff transactionnel `map_*`),
   `PlanConfigService` (JSON de plan), `TileCatalogService` (scan `img/`),
   `TiledAuthService` (jetons), plus `ColorService`/`PlanJsonValidator` existants.
+- Version de l'extension : elle l'annonce en en-tête `X-AoO-Tiled-Version`,
+  `_common.php` refuse (426) en dessous de la barre — une extension d'un
+  autre âge parlerait un protocole changé et se tromperait en silence. La
+  barre est un **réglage** (`TiledExtensionService`, `admin_settings`),
+  pas une constante : publier une release de l'extension ne demande ni
+  commit ni déploiement, seulement de la relever depuis le tableau de
+  bord (Options générales).
 - Secret : `config/tiled_constants.php` (gitignoré). Sets de terrain :
   `tools/tiled/terrains.json` par instance (état runtime, servi à
   l'extension par `terrains.php` au pull — une instance sans l'endpoint se
@@ -384,6 +402,11 @@ Emplacements :
 - `img/` **n'est pas versionné** : reporter dans la source d'assets déployée
   les tuiles de transition générées (`img/tiles/trans_*`), l'arbre sacré
   déplacé en `img/foregrounds/`, et le retrait de `img/triggers/{enter,exit}.png`.
+- Relever la version minimale de l'extension (tableau de bord → Options
+  générales) **après** la publication de la release correspondante,
+  jamais avant : la barre ferme la porte à tout le monde tant que le zip
+  n'est pas téléchargeable. Réglage par instance : l'expérimental peut
+  exiger plus récent que la prod.
 - Pour viser une **instance déployée** (test suit `staging`), y créer
   `config/tiled_constants.php` avec son propre secret (`openssl rand -hex 32`) ;
   secret vide/absent = endpoints désactivés.
