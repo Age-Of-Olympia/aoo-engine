@@ -96,8 +96,11 @@ Chaque niveau z est un groupe `z=0`, `z=-1`… contenant, de bas en haut :
 | `xxx (joueurs)` 🔒 | constructions des joueurs — intouchables | tuiles |
 
 Règle d'or : **la tuile doit venir du tileset de sa couche** (un arbre
-d'`aoo-resources` se pose sur `resources`). Sinon le push refuse avec un message
-clair.
+d'`aoo-resources` se pose sur `resources`). L'extension le signale **dès le
+geste**, et le push refuse d'envoyer quoi que ce soit tant qu'une tuile est
+ailleurs que chez elle — compte et première coordonnée dans le message. Une
+couche qui n'apparaît pas dans le panneau signale une extension plus ancienne
+qu'elle : mettre à jour et re-puller.
 
 Depuis la conversion des murs en entités, les **obstacles et le décor**
 (murs d'enceinte, statues, coffres…) sont des **bâtiments** : ils se posent
@@ -310,6 +313,8 @@ Garanties :
 | Le formulaire de connexion n'apparaît pas | Un jeton valide est en cache (`session.json`) — passer par « AoO : Connexion… » pour changer de compte ou d'instance |
 | Une couche est grisée/inéditable | C'est une couche « (joueurs) » verrouillée : constructions des joueurs, volontairement intouchables |
 | Nouvelles images dans `img/` invisibles | Re-puller le plan (les tilesets sont reconstruits au pull) |
+| Une couche attendue n'apparaît pas (`buildings`…) | L'extension est plus ancienne que la couche : mettre à jour, redémarrer Tiled, re-puller |
+| « Tuiles sur la mauvaise couche » au push | Une palette a servi sur la couche d'une autre (un mur `aoo-buildings` posé sur `resources`) : le message donne le compte et la première coordonnée. Ctrl+Z, sélectionner la couche du nom de la palette, repeindre. Rien n'est parti au jeu |
 | Tuiles présentes dans la palette mais sans image | Le magasin d'images n'a pas l'art : re-puller (la synchronisation tourne au pull). Si le pull annonce « les *undefined* images sont déjà toutes présentes », l'extension date d'avant la v0.4.0 — mettre à jour |
 | « Extension Tiled trop ancienne » (426) | L'instance exige une version plus récente : dézipper la dernière release par-dessus le dossier `aoo`, redémarrer Tiled, re-puller. Côté serveur, la barre se règle dans le tableau de bord admin (Options générales) |
 
