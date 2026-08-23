@@ -105,10 +105,24 @@ qu'elle : mettre à jour et re-puller.
 Depuis la conversion des murs en entités, les **obstacles et le décor**
 (murs d'enceinte, statues, coffres…) sont des **bâtiments** : ils se posent
 sur la couche `buildings`, pas sur `resources`. La palette `aoo-resources` ne
-propose donc que ce qui reste des `map_resources` (ex-`map_walls`) — les ressources récoltables,
-les autels et les types `unique_*` (tout, sur les plans de tutoriel, dont
-les murs sont clonés par session) — et le serveur refuse un push qui
-réintroduirait un obstacle dans `resources`.
+propose donc que ce qui s'y pose encore — les ressources récoltables, les
+autels et les types `unique_*` (tout, sur les plans de tutoriel, dont les murs
+sont clonés par session) — et le serveur refuse un push qui réintroduirait un
+obstacle dans `resources`.
+
+### Les couches `resources` et `plants` (entités)
+
+Elles se peignent comme des couches de tuiles, mais chaque tuile est une
+**entité**, comme sur `buildings` :
+
+- le pull montre ce que le jeu tient réellement debout sur le niveau ;
+- au push, une tuile ajoutée devient une ressource posée (récoltable), une
+  tuile effacée la retire du plateau, et une tuile **inchangée garde son
+  entité** — son id et son état : une ressource épuisée par les joueurs ne
+  repousse pas parce qu'on a poussé la carte ;
+- un type absent du catalogue n'est pas posé : le rapport le dit (⚠) sans
+  faire échouer le push ;
+- le push ne compare **que le niveau poussé** : les autres z ne bougent pas.
 
 ### La couche `buildings` (entités)
 

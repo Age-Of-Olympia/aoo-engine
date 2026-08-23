@@ -61,13 +61,13 @@ class LoosePiecesTest extends TestCase
      * @param array<string, Footprint> $catalogue
      * @return list<string>
      */
-    private function loose(array $names, array $catalogue = []): array
+    private function loose(array $names, array $catalogue = [], bool $guessRuns = true): array
     {
         foreach ($names as $name) {
             $this->image($name);
         }
 
-        return (new TileCatalogService())->loosePieces($this->layer, $catalogue);
+        return (new TileCatalogService())->loosePieces($this->layer, $catalogue, $guessRuns);
     }
 
     /** A cut-out settles it: those are pieces, however few. */
@@ -81,7 +81,7 @@ class LoosePiecesTest extends TestCase
         $this->assertSame(['gm_loose_tour-00', 'gm_loose_tour-01'], $loose);
     }
 
-    /** A separator plus a run of siblings: a figure, not a collection. */
+    /** In the scenery folder, a separator plus a run of siblings: a figure. */
     public function testASeparatedRunReadsAsAFigure(): void
     {
         $loose = $this->loose(['gm_loose_mur-00', 'gm_loose_mur-01', 'gm_loose_mur-02']);
@@ -98,7 +98,7 @@ class LoosePiecesTest extends TestCase
         $this->assertSame([], $this->loose(['gm_loose_arbre1', 'gm_loose_arbre2']));
     }
 
-    /** Zero-padded runs without a separator are figures too (`fondateur00`). */
+    /** In the scenery folder, zero-padded runs are figures too (`fondateur00`). */
     public function testABareDigitRunReadsAsAFigure(): void
     {
         $loose = $this->loose(['gm_loose_geant00', 'gm_loose_geant01', 'gm_loose_geant02']);
@@ -110,6 +110,33 @@ class LoosePiecesTest extends TestCase
     public function testAPlainNameIsNeverAPiece(): void
     {
         $this->assertSame([], $this->loose(['gm_loose_tonneau', 'gm_loose_ombre']));
+    }
+
+    /**
+     * Outside the scenery folder nothing is guessed at.
+     *
+     * `img/walls/` holds three of everything — `pierre1..3`, `arbre1..3` — and
+     * counting siblings there swept the resources out of their own palette,
+     * which is how an animator ended up painting stones from the pieces
+     * tileset onto a layer that dropped them.
+     */
+    public function testARunStaysInThePaletteWhereFiguresAreNotGuessed(): void
+    {
+        $names = ['gm_loose_pierre1', 'gm_loose_pierre2', 'gm_loose_pierre3'];
+
+        $this->assertSame([], $this->loose($names, [], false));
+    }
+
+    /** A cut-out still settles it, guess or no guess. */
+    public function testADeclaredCutOutIsPiecesEvenWhereNothingIsGuessed(): void
+    {
+        $loose = $this->loose(
+            ['gm_loose_pont-00', 'gm_loose_pont-01'],
+            ['gm_loose_pont' => Footprint::fromOffsets([0 => [0, 0], 1 => [1, 0]])],
+            false
+        );
+
+        $this->assertSame(['gm_loose_pont-00', 'gm_loose_pont-01'], $loose);
     }
 
     /** A single-cell type is an object of its own, not a figure to cut. */

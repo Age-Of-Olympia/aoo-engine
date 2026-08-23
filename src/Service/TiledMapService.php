@@ -5,7 +5,6 @@ namespace App\Service;
 use Classes\Db;
 use Classes\View;
 use RuntimeException;
-use App\Service\Map\StructureTypeService;
 
 /**
  * Export / import des plans du jeu pour l'extension Tiled (dépôt aoo-tiled-extension).
@@ -55,13 +54,28 @@ class TiledMapService
     public const AUTHORABLE_LAYERS = [
         'tiles'       => ['columns' => ['foreground', 'player_id'], 'paramsInKey' => false, 'composites' => false],
         'routes'      => ['columns' => ['player_id'],               'paramsInKey' => false, 'composites' => true],
-        'plants'      => ['columns' => ['params'],                  'paramsInKey' => true,  'composites' => true],
-        'resources'   => ['columns' => ['damages', 'player_id'],    'paramsInKey' => false, 'composites' => true],
+        'plants'      => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
+        'resources'   => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
         'elements'    => ['columns' => ['endTime'],                 'paramsInKey' => false, 'composites' => true],
         'foregrounds' => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
         'triggers'    => ['columns' => ['params'],                  'paramsInKey' => true,  'composites' => false],
         'dialogs'     => ['columns' => ['params'],                  'paramsInKey' => true,  'composites' => false],
     ];
+
+    /**
+     * Les couches dont les lignes sont des ENTITÉS, avec leur famille.
+     *
+     * Leur table map_* est vide et sans lecteur depuis la conversion : une
+     * ressource est un joueur de type `resource`, avec sa case, son satellite
+     * d'état et sa repousse. Elles sortent donc du diff de lignes — qui
+     * jetterait cette identité — pour passer par {@see ResourceReconciler},
+     * comme l'import de bundle ({@see \App\Service\ImportExport\PlanImporter}).
+     *
+     * Le pull les lit au même endroit : la couche montrait un plan vide là où
+     * le jeu tenait des arbres et des pierres, et ce que le push y posait
+     * n'arrivait nulle part.
+     */
+    public const ENTITY_LAYERS = ['resources' => 'resource', 'plants' => 'plant'];
 
     /** Couche virtuelle des entités bâtiment (pas de table map_*) */
     public const BUILDINGS_LAYER = 'buildings';
@@ -70,11 +84,10 @@ class TiledMapService
     public const SCENERY_LAYER = 'foregrounds';
 
     /**
-     * Répertoire d'images d'une couche. La couche « resources »
-     * (table map_resources, ex-map_walls) garde img/walls : le dépôt
-     * d'assets n'est pas versionné ici et les avatars des entités
-     * converties pointent des chemins img/walls/… copiés en base —
-     * renommer le dossier casserait les deux.
+     * Répertoire d'images d'une couche. La couche « resources » (ex-walls)
+     * garde img/walls : le dépôt d'assets n'est pas versionné ici et les
+     * avatars des entités converties pointent des chemins img/walls/… copiés
+     * en base — renommer le dossier casserait les deux.
      */
     public static function layerImageDir(string $layer): string
     {
@@ -122,16 +135,23 @@ class TiledMapService
         $pieces = [];
         $footprints = (new \App\Service\Map\EntityTypeFootprintService())->catalogue();
         foreach ($compositeLayers as $layer) {
-            $loose = $this->catalog->loosePieces($layer, $footprints);
+            /* Only the scenery folder is guessed at: elsewhere a run of
+             * numbered siblings is a run of VARIANTS — three stones, three
+             * trees — and reading it as one figure emptied the palette. */
+            $loose = $this->catalog->loosePieces(
+                $layer,
+                $footprints,
+                $layer === self::SCENERY_LAYER
+            );
             $pieces[$layer] = array_values(array_intersect($catalog[$layer] ?? [], $loose));
             $catalog[$layer] = array_values(array_diff($catalog[$layer] ?? [], $loose));
         }
 
         // Depuis la conversion des obstacles en entités bâtiment, la palette
-        // resources ne propose que ce qui reste posable en map_resources sur
-        // ce plan (ressources, autels, unique_* — tout sur les plans de
-        // tutoriel). Les murs déjà posés restent visibles : buildLevel les
-        // tient des lignes du plan, pas du catalogue.
+        // resources ne propose que ce qui s'y pose encore sur ce plan
+        // (ressources, autels, unique_* — tout sur les plans de tutoriel).
+        // Les murs déjà posés restent visibles : buildLevel les tient des
+        // lignes du plan, pas du catalogue.
         $catalog['resources'] = ResourcePaletteService::filterNames($catalog['resources'] ?? [], $plan);
         $composites['resources'] = array_values(array_filter(
             $composites['resources'] ?? [],
@@ -369,6 +389,16 @@ class TiledMapService
             unset($incomingLayers[self::BUILDINGS_LAYER]);
         }
 
+        /* Ressources et plantes non plus ne sont pas des lignes : elles
+         * passent par le réconciliateur, hors du diff map_*. */
+        $incomingEntities = [];
+        foreach (array_keys(self::ENTITY_LAYERS) as $layer) {
+            if (array_key_exists($layer, $incomingLayers)) {
+                $incomingEntities[$layer] = $incomingLayers[$layer];
+                unset($incomingLayers[$layer]);
+            }
+        }
+
         $currentLayers = $this->fetchLayers($plan, $z);
 
         if (!hash_equals($this->computeVersion($currentLayers), $expectedVersion)) {
@@ -385,6 +415,15 @@ class TiledMapService
             $incomingLayers[self::SCENERY_LAYER] = $this->spreadComposites(
                 $incomingLayers[self::SCENERY_LAYER]
             );
+        }
+
+        /* Les lignes d'entités sont validées AVANT la transaction : elles
+         * s'écrivent après le commit des couches, donc un refus tardif
+         * laisserait le reste appliqué. Même règle que la configuration de
+         * plan dans applyPush(). */
+        $wantedEntities = [];
+        foreach ($incomingEntities as $layer => $rows) {
+            $wantedEntities[$layer] = $this->validateEntityRows($plan, $z, $layer, $rows);
         }
 
         $coordsIds = $this->loadCoordsIds($plan, $z);
@@ -415,6 +454,13 @@ class TiledMapService
                 (new \App\Service\Map\SceneryObjectService())->convertOrphans();
         }
 
+        /* Avant les bâtiments : une ressource retirée dans le même push
+         * libère sa case avant qu'on y pose autre chose. */
+        foreach ($wantedEntities as $layer => $wanted) {
+            $report[$layer] = $this->reconcileEntityLayer($plan, $z, $layer, $wanted);
+            $postLayers[$layer] = self::reconcilerFor($layer)->asPayloadRows($plan, $z);
+        }
+
         if ($incomingBuildings !== null) {
             $report[self::BUILDINGS_LAYER] = $this->importBuildingsLayer(
                 $plan,
@@ -430,6 +476,92 @@ class TiledMapService
         return [
             'layers'     => $report,
             'newVersion' => $this->computeVersion($postLayers),
+        ];
+    }
+
+    /**
+     * Le réconciliateur d'une couche d'entités : sa famille, et le dossier
+     * où vivent ses sprites (celui de la couche, via layerImageDir()).
+     *
+     * Publique parce que le pull, le push, le clonage de plan et l'import de
+     * bundle veulent tous le même : une couche d'entités a UN écrivain.
+     */
+    public static function reconcilerFor(string $layer): \App\Service\Map\ResourceReconciler
+    {
+        return new \App\Service\Map\ResourceReconciler(
+            null,
+            self::ENTITY_LAYERS[$layer],
+            'img/' . self::layerImageDir($layer) . '/'
+        );
+    }
+
+    /**
+     * Lignes d'une couche d'entités reçues du push, validées et mises en forme
+     * pour le réconciliateur.
+     *
+     * @param list<array<string, mixed>> $incomingRows
+     * @return list<array{name: string, x: int, y: int, z: int}>
+     * @throws RuntimeException code 400
+     */
+    private function validateEntityRows(string $plan, int $z, string $layer, array $incomingRows): array
+    {
+        $wanted = [];
+
+        foreach ($incomingRows as $row) {
+            self::validateIncomingRow($layer, $row);
+
+            // Les obstacles/décor sont des bâtiments depuis leur conversion :
+            // la couche resources ne reçoit que ce qui s'y pose encore.
+            if ($layer === 'resources' && !ResourcePaletteService::isAuthorable((string) $row['name'], $plan)) {
+                throw new RuntimeException(
+                    'Mur « ' . $row['name'] . ' » en ' . $row['x'] . ',' . $row['y']
+                        . ' : les obstacles se posent sur la couche buildings (ou admin → Bâtiments) — '
+                        . 'la couche resources ne reçoit que les ressources récoltables, les autels et les unique_*.',
+                    400
+                );
+            }
+
+            $wanted[] = [
+                'name' => (string) $row['name'],
+                'x'    => (int) $row['x'],
+                'y'    => (int) $row['y'],
+                'z'    => $z,
+            ];
+        }
+
+        return $wanted;
+    }
+
+    /**
+     * Diff d'une couche d'entités — ressources, plantes.
+     *
+     * Même clé d'identité que les couches de tuiles (x, y, name), mais la
+     * comparaison est celle du réconciliateur : ce que les deux côtés
+     * dessinent pareil garde son id ET son état, si bien qu'une ressource
+     * épuisée le reste et repousse à son heure. Ce que le push ne nomme plus
+     * est retiré du plateau, satellite compris.
+     *
+     * Restreint au niveau poussé : l'éditeur envoie un z à la fois, et ce
+     * qu'il ne regarde pas ne doit pas se lire comme « supprimé ».
+     *
+     * @param list<array{name: string, x: int, y: int, z: int}> $wanted
+     * @return array{inserted: int, deleted: int, kept: int, protected: int, skipped: list<string>}
+     */
+    private function reconcileEntityLayer(string $plan, int $z, string $layer, array $wanted): array
+    {
+        $result = self::reconcilerFor($layer)->reconcile($plan, $wanted, $z);
+
+        return [
+            'inserted'  => $result['created'],
+            'deleted'   => $result['removed'],
+            'kept'      => $result['kept'],
+            'protected' => 0,
+            /* Un type que le catalogue ne connaît pas n'est pas posé : le
+               push le dit, comme une pose de bâtiment refusée. */
+            'skipped'   => array_map(
+                static fn(string $name): string => $name . ' — type inconnu du catalogue, non posé',
+                $result['unknown']
+            ),
         ];
     }
 
@@ -522,17 +654,10 @@ class TiledMapService
         $layers = [];
 
         foreach (self::AUTHORABLE_LAYERS as $layer => $spec) {
-            /* Les ressources ne sont plus des lignes de couche : elles sont
-             * lues chez leur écrivain, qui tient la correspondance entre
-             * damages et le satellite d'état. */
-            if ($layer === 'resources') {
-                $layers[$layer] = (new \App\Service\Map\ResourceReconciler())->asPayloadRows($plan);
-                continue;
-            }
-
-            /* Les plantes aussi : même geste, autre famille. */
-            if ($layer === 'plants') {
-                $layers[$layer] = \App\Service\Map\ResourceReconciler::forPlants()->asPayloadRows($plan);
+            /* Les couches d'entités sont lues chez leur écrivain, qui tient
+             * la correspondance entre damages et le satellite d'état. */
+            if (isset(self::ENTITY_LAYERS[$layer])) {
+                $layers[$layer] = self::reconcilerFor($layer)->asPayloadRows($plan);
                 continue;
             }
 
@@ -573,6 +698,10 @@ class TiledMapService
         $layers = [];
 
         foreach (self::AUTHORABLE_LAYERS as $layer => $spec) {
+            if (isset(self::ENTITY_LAYERS[$layer])) {
+                $layers[$layer] = self::reconcilerFor($layer)->asPayloadRows($plan, $z);
+                continue;
+            }
 
             $columns = 'm.id, m.name, c.x, c.y';
             foreach ($spec['columns'] as $column) {
@@ -876,19 +1005,6 @@ class TiledMapService
     /** @param array<string, int> $coordsIds cache "x|y" => id, enrichi au fil des créations */
     private function insertRow(string $plan, int $z, string $layer, array $row, array &$coordsIds): void
     {
-        // Les obstacles/décor sont des entités bâtiment depuis leur
-        // conversion : map_resources ne reçoit plus que les ressources et les
-        // survivants (autels, unique_*, plans de tutoriel). Avant toute
-        // écriture : la création de coords vit hors transaction.
-        if ($layer === 'resources' && !ResourcePaletteService::isAuthorable($row['name'], $plan)) {
-            throw new RuntimeException(
-                'Mur « ' . $row['name'] . ' » en ' . $row['x'] . ',' . $row['y']
-                    . ' : les obstacles se posent sur la couche buildings (ou admin → Bâtiments) — '
-                    . 'la couche resources ne reçoit que les ressources récoltables, les autels et les unique_*.',
-                400
-            );
-        }
-
         $coordsKey = (int) $row['x'] . '|' . (int) $row['y'];
 
         if (!isset($coordsIds[$coordsKey])) {
@@ -910,12 +1026,6 @@ class TiledMapService
             'name'      => $row['name'],
             'coords_id' => $coordsIds[$coordsKey],
         ];
-
-        if ($layer === 'resources') {
-            // Défaut authoré : -1 (récoltable) pour les types dont la nature
-            // dit « ressource », 0 (intact) pour les autres murs
-            $values['damages'] = StructureTypeService::isHarvestable($row['name']) ? -1 : 0;
-        }
 
         if (self::AUTHORABLE_LAYERS[$layer]['paramsInKey'] && isset($row['params']) && $row['params'] !== '') {
             $values['params'] = (string) $row['params'];

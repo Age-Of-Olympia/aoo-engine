@@ -59,14 +59,18 @@ final class ResourceReconciler
     /**
      * @param list<array{name: string, x: int, y: int, z: int, damages?: int}> $wanted
      *        the resources the bundle draws on this plan
+     * @param int|null $z restrict the comparison to one level, or null for the
+     *        whole plan. A bundle redraws a plan entire; the map editor pushes
+     *        one level at a time, and what it says nothing about — the levels
+     *        it is not looking at — must not be read as « removed ».
      *
      * @return array{created: int, removed: int, kept: int, unknown: list<string>}
      *         unknown holds the type names absent from the `races` catalog,
      *         which cannot be posed and are reported rather than guessed at
      */
-    public function reconcile(string $plan, array $wanted): array
+    public function reconcile(string $plan, array $wanted, ?int $z = null): array
     {
-        $current = $this->current($plan);
+        $current = $this->current($plan, $z);
         $labels = $this->labels($wanted);
 
         $seen = [];
@@ -126,9 +130,11 @@ final class ResourceReconciler
      * how `damages` maps to the state satellite, or a bundle exported from a
      * world and imported back would not describe the same map.
      *
+     * @param int|null $z restrict to one level, or null for the whole plan
+     *
      * @return list<array{name: string, x: int, y: int, z: int, damages: int}>
      */
-    public function asPayloadRows(string $plan): array
+    public function asPayloadRows(string $plan, ?int $z = null): array
     {
         $rows = $this->conn->fetchAllAssociative(
             "SELECT p.race AS name, c.x, c.y, c.z,
@@ -136,9 +142,9 @@ final class ResourceReconciler
                FROM players p
                JOIN coords c ON c.id = p.coords_id
           LEFT JOIN resources r ON r.player_id = p.id
-              WHERE p.player_type = ? AND c.plan = ?
+              WHERE p.player_type = ? AND c.plan = ?" . ($z === null ? '' : ' AND c.z = ?') . "
            ORDER BY c.z, c.y, c.x, p.id",
-            [$this->family, $plan]
+            $z === null ? [$this->family, $plan] : [$this->family, $plan, $z]
         );
 
         return array_map(
@@ -162,15 +168,15 @@ final class ResourceReconciler
      *
      * @return array<string, list<int>> identity => entity ids, oldest first
      */
-    private function current(string $plan): array
+    private function current(string $plan, ?int $z = null): array
     {
         $rows = $this->conn->fetchAllAssociative(
             "SELECT p.id, p.race, c.z, c.x, c.y
                FROM players p
                JOIN coords c ON c.id = p.coords_id
-              WHERE p.player_type = ? AND c.plan = ?
+              WHERE p.player_type = ? AND c.plan = ?" . ($z === null ? '' : ' AND c.z = ?') . "
               ORDER BY p.id",
-            [$this->family, $plan]
+            $z === null ? [$this->family, $plan] : [$this->family, $plan, $z]
         );
 
         $current = [];

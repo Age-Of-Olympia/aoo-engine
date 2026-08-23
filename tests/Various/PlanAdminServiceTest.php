@@ -8,6 +8,7 @@ use App\Service\PlanService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Tests\Support\PlantsResourcesTrait;
 
 /**
  * Cycle de vie admin des plans (PlanAdminService) : création vierge (coord
@@ -21,6 +22,8 @@ use RuntimeException;
  */
 class PlanAdminServiceTest extends TestCase
 {
+    use PlantsResourcesTrait;
+
     private const SRC = 'plan_test_adm_src';
     private const CLONE = 'plan_test_adm_clone';
     private const BLANK = 'plan_test_adm_blank';
@@ -100,25 +103,41 @@ class PlanAdminServiceTest extends TestCase
     public function testClonePlanCopiesAuthoredContentOnly(): void
     {
         $this->seedSourcePlan();
+        $this->seedSourceResources();
         $link = $this->link();
 
         $report = (new PlanAdminService())->clonePlan(self::SRC, self::CLONE, ['name' => 'Clone de test']);
 
         $this->assertSame(3, $report['coords']);
         $this->assertSame(1, $report['layers']['tiles']);
-        $this->assertSame(1, $report['layers']['resources'], 'le mur construit par un joueur n\'est pas copié');
+        $this->assertSame(2, $report['layers']['resources'], 'les ressources voyagent, entités comprises');
         $this->assertSame(1, $report['layers']['elements']);
 
-        // Le mur restant est bien l'authoré, et player_id n'a pas voyagé
-        $walls = $link->fetchAllAssociative(
-            'SELECT m.name, m.player_id, m.damages FROM map_resources m
-             JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
+        /* Les ressources du clone sont des ENTITÉS, debout au même endroit,
+           et celle qui était à sec l'est restée. */
+        $resources = $link->fetchAllAssociative(
+            "SELECT p.race, c.x, c.y, r.exhausted_at
+               FROM players p
+               JOIN coords c ON c.id = p.coords_id
+          LEFT JOIN resources r ON r.player_id = p.id
+              WHERE p.player_type = 'resource' AND c.plan = ?
+           ORDER BY p.race",
             [self::CLONE]
         );
-        $this->assertCount(1, $walls);
-        $this->assertSame('arbre1', $walls[0]['name']);
-        $this->assertNull($walls[0]['player_id']);
-        $this->assertSame(-1, (int) $walls[0]['damages'], 'damages (intention d\'auteur) copié tel quel');
+        $this->assertCount(2, $resources);
+        $this->assertSame('arbre1', $resources[0]['race']);
+        $this->assertNull($resources[0]['exhausted_at'], 'la ressource debout le reste');
+        $this->assertSame('arbre2', $resources[1]['race']);
+        $this->assertNotNull($resources[1]['exhausted_at'], 'la ressource à sec aussi');
+
+        $this->assertSame(
+            0,
+            (int) $link->fetchOne(
+                'SELECT COUNT(*) FROM map_resources m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
+                [self::CLONE]
+            ),
+            'rien n\'atterrit dans la table retirée'
+        );
 
         // endTime est de l'état runtime : jamais copié (défaut schéma)
         $endTime = $link->fetchOne(
@@ -364,25 +383,32 @@ class PlanAdminServiceTest extends TestCase
             [$ids['0,0'], 'grass']
         );
         $link->executeStatement(
-            'INSERT INTO map_resources (coords_id, name, damages) VALUES (?, ?, -1)',
-            [$ids['1,0'], 'arbre1']
-        );
-
-        /* A player-built wall needs a player to carry its FK. Seed one rather
-           than borrow whichever row comes first: on a database holding no
-           character, every case in this class went silent. */
-        $builderId = $this->seedBuilder();
-        $link->executeStatement(
-            'INSERT INTO map_resources (coords_id, name, damages, player_id) VALUES (?, ?, 0, ?)',
-            [$ids['1,0'], 'palissade', $builderId]
-        );
-
-        $link->executeStatement(
             'INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 12345)',
             [$ids['0,1'], 'feu_test']
         );
 
         (new PlanConfigService())->replace(self::SRC, ['name' => 'Source de test', 'player_visibility' => false]);
+    }
+
+    /**
+     * Deux ressources sur le plan source : une debout, une à sec.
+     *
+     * À part du seed commun : une ressource est une ENTITÉ, et les cas de
+     * suppression comptent les habitants d'un plan — leur faire porter des
+     * arbres leur ferait dire autre chose que ce qu'ils vérifient.
+     */
+    private function seedSourceResources(): void
+    {
+        $link = $this->link();
+
+        foreach ([['arbre1', 1, 0, -1], ['arbre2', 0, 1, -2]] as [$name, $x, $y, $damages]) {
+            $coordsId = (int) $link->fetchOne(
+                'SELECT id FROM coords WHERE plan = ? AND z = 0 AND x = ? AND y = ?',
+                [self::SRC, $x, $y]
+            );
+
+            $this->plantResource($link, $name, $coordsId, self::SRC, $x, $y, 0, $damages);
+        }
     }
 
     /** The fixture character every player-built row hangs from. */
@@ -430,7 +456,7 @@ class PlanAdminServiceTest extends TestCase
             $link->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [(int) $entityId]);
             /* Le satellite d'abord : `fk_buildings_player` n'a pas de cascade,
                c'est le service qui le défait à la main partout ailleurs. */
-            foreach (['buildings', 'unique_objects'] as $satellite) {
+            foreach (['buildings', 'unique_objects', 'resources'] as $satellite) {
                 $link->executeStatement("DELETE FROM {$satellite} WHERE player_id = ?", [(int) $entityId]);
             }
             \App\Service\BuildingService::deleteEntityRows($link, (int) $entityId);

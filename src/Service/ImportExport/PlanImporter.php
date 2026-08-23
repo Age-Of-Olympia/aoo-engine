@@ -5,7 +5,6 @@ namespace App\Service\ImportExport;
 use App\Interface\ObjectImporterInterface;
 use App\Service\PlanAdminService;
 use App\Service\PlanConfigService;
-use App\Service\Map\ResourceReconciler;
 use App\Service\Map\StructureTypeService;
 use App\Service\TiledMapService;
 use Classes\Db;
@@ -32,14 +31,6 @@ final class PlanImporter implements ObjectImporterInterface
 {
     /** Taille des lots d'INSERT multi-lignes (précédent : mapcmd.php). */
     private const INSERT_BATCH = 500;
-
-    /**
-     * Les couches dont les lignes sont devenues des entités.
-     *
-     * Elles ne suivent plus le chemin générique purge + INSERT : leurs objets
-     * ont une identité et un état qu'un remplacement jetterait.
-     */
-    private const ENTITY_LAYERS = ['resources', 'plants'];
 
     private ?Db $db;
     private ?PlanConfigService $planConfig;
@@ -230,7 +221,7 @@ final class PlanImporter implements ObjectImporterInterface
 
         // 1. Purge du contenu authoré (les lignes joueur restent)
         foreach (array_keys(TiledMapService::AUTHORABLE_LAYERS) as $layer) {
-            if (in_array($layer, self::ENTITY_LAYERS, true)) {
+            if (isset(TiledMapService::ENTITY_LAYERS[$layer])) {
                 continue;
             }
 
@@ -271,7 +262,7 @@ final class PlanImporter implements ObjectImporterInterface
 
         // 3. Insertion des couches en lots
         foreach ($payload['layers'] as $layer => $rows) {
-            if (in_array($layer, self::ENTITY_LAYERS, true)) {
+            if (isset(TiledMapService::ENTITY_LAYERS[$layer])) {
                 continue;
             }
 
@@ -283,11 +274,10 @@ final class PlanImporter implements ObjectImporterInterface
          * son état — épuisée, elle le reste et repousse à son heure. Le
          * réconciliateur écrit sur la connexion Doctrine, qui est celle que
          * Classes\Db enveloppe : même transaction, même rollback. */
-        foreach ([
-            'resources' => new ResourceReconciler(),
-            'plants'    => ResourceReconciler::forPlants(),
-        ] as $layer => $reconciler) {
-            $result = $reconciler->reconcile($plan, $payload['layers'][$layer] ?? []);
+        foreach (array_keys(TiledMapService::ENTITY_LAYERS) as $layer) {
+            /* Sans niveau : un bundle redessine le plan entier. */
+            $result = TiledMapService::reconcilerFor($layer)
+                ->reconcile($plan, $payload['layers'][$layer] ?? []);
 
             if ($result['unknown'] !== []) {
                 $report->warn(
@@ -383,7 +373,7 @@ final class PlanImporter implements ObjectImporterInterface
         $total = (int) ($built->fetch_assoc()['n'] ?? 0);
 
         foreach (TiledMapService::AUTHORABLE_LAYERS as $layer => $spec) {
-            if (in_array($layer, self::ENTITY_LAYERS, true) || !in_array('player_id', $spec['columns'], true)) {
+            if (isset(TiledMapService::ENTITY_LAYERS[$layer]) || !in_array('player_id', $spec['columns'], true)) {
                 continue;
             }
             $res = $this->db()->exe(

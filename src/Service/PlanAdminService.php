@@ -119,6 +119,12 @@ class PlanAdminService
             );
 
             foreach (TiledMapService::AUTHORABLE_LAYERS as $layer => $spec) {
+                /* Ressources et plantes sont des entités : la copie de lignes
+                 * ne les voit pas — elles passent après le commit. */
+                if (isset(TiledMapService::ENTITY_LAYERS[$layer])) {
+                    continue;
+                }
+
                 $report['layers'][$layer] = $this->copyLayer($layer, $spec, $sourcePlan, $targetPlan);
             }
 
@@ -131,6 +137,12 @@ class PlanAdminService
         // Buildings are entities, not a map table: the loop above misses them.
         $report['layers'][TiledMapService::BUILDINGS_LAYER] = $this->copyDecorBuildings($sourcePlan, $targetPlan);
 
+        // Resources and plants are entities too — a clone without them was a
+        // plan with no trees, no stones and no flowers.
+        foreach (array_keys(TiledMapService::ENTITY_LAYERS) as $layer) {
+            $report['layers'][$layer] = $this->copyEntityLayer($layer, $sourcePlan, $targetPlan);
+        }
+
         // Après commit : un clone de coords sans config se répare en
         // relançant la copie, l'inverse (config sans coords) serait un orphelin
         if (trim((string) ($jsonOverrides['name'] ?? '')) === '') {
@@ -139,6 +151,22 @@ class PlanAdminService
         $this->planConfig->copy($sourcePlan, $targetPlan, $jsonOverrides);
 
         return $report;
+    }
+
+    /**
+     * Copies one entity layer — the resources, the plants.
+     *
+     * Read from their writer and handed straight back to it: the payload says
+     * where each one stands and whether it has run dry, which is what a clone
+     * has to reproduce. The target plan is fresh, so everything is created.
+     *
+     * @return int entities copied
+     */
+    private function copyEntityLayer(string $layer, string $sourcePlan, string $targetPlan): int
+    {
+        $reconciler = TiledMapService::reconcilerFor($layer);
+
+        return $reconciler->reconcile($targetPlan, $reconciler->asPayloadRows($sourcePlan))['created'];
     }
 
     /**

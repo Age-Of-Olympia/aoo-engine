@@ -5,12 +5,12 @@ namespace App\Service;
 use App\Service\Map\StructureTypeService;
 
 /**
- * Règle unique des murs encore authorables dans map_resources, depuis la
+ * Règle unique de ce qui se pose encore sur la couche « resources », depuis la
  * conversion des obstacles/décor en entités bâtiment
  * (Version20260719280000_WallsToEntities, docs/design-walls-to-entities.md) :
- * map_resources est la table des RESSOURCES récoltables, plus deux survivants
- * (autels, types unique_*) et les plans de tutoriel, dont les murs
- * d'enceinte sont clonés par session et restent hors conversion.
+ * la couche porte les RESSOURCES récoltables, plus deux survivants (autels,
+ * types unique_*) et les plans de tutoriel, dont les murs d'enceinte sont
+ * clonés par session et restent hors conversion.
  *
  * Les obstacles (mur_*, statues, coffres…) se posent en tant que
  * bâtiments : admin → Bâtiments. Cette règle est partagée par les deux
@@ -19,7 +19,7 @@ use App\Service\Map\StructureTypeService;
  */
 class ResourcePaletteService
 {
-    /** Préfixes de noms qui restent des map_resources quel que soit le plan */
+    /** Préfixes de noms qui restent des ressources quel que soit le plan */
     private const SPECIAL_PREFIXES = ['autel', 'altar', 'unique_'];
 
     /** Un mur récoltable : le catalogue dit que sa nature est « ressource ». */
@@ -34,7 +34,7 @@ class ResourcePaletteService
         return $plan === 'tutorial' || str_starts_with($plan, 'tut_');
     }
 
-    /** Le nom est-il encore posable dans map_resources sur ce plan ? */
+    /** Le nom est-il encore posable sur la couche resources de ce plan ? */
     public static function isAuthorable(string $name, string $plan): bool
     {
         if (self::isTutorialPlan($plan)) {

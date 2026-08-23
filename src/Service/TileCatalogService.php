@@ -127,14 +127,23 @@ class TileCatalogService
      * in it — whether or not the whole is composable today.
      *
      * A lone trailing digit also marks decor variants (`arbre1`, `arbre2`),
-     * which are two objects, not one cut in two. A known cut-out settles it;
-     * failing that, a family counts as cut up only from MIN_LOOSE_PIECES on,
-     * where reading it as variants stops being plausible.
+     * which are two objects, not one cut in two. A known cut-out settles it.
+     * Failing that, only the scenery folder is guessed at — a family there
+     * counts as cut up from MIN_LOOSE_PIECES on, where reading it as variants
+     * stops being plausible.
+     *
+     * Elsewhere the guess was simply wrong. In `img/walls/` three numbered
+     * siblings are the normal shape of a RESOURCE — `pierre1..3`, `arbre1..3`,
+     * `cocotier1..3` — and the count rule swept 29 of them out of the palette,
+     * leaving five names in it. No resource family is composite, so nothing
+     * there needs guessing: a piece is a piece when the catalogue says so.
      *
      * @param array<string, \App\Service\Map\Footprint> $catalogue known cut-outs
+     * @param bool $guessUndeclaredRuns read a run of siblings as a figure even
+     *        when no cut-out declares it — true for the scenery folder only
      * @return list<string>
      */
-    public function loosePieces(string $layer, array $catalogue): array
+    public function loosePieces(string $layer, array $catalogue, bool $guessUndeclaredRuns = false): array
     {
         $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/' . TiledMapService::layerImageDir($layer);
 
@@ -147,7 +156,7 @@ class TileCatalogService
         foreach ($this->piecesByFamily($dir) as $family => $images) {
             $known = isset($catalogue[$family]) && !$catalogue[$family]->isSingleCell();
 
-            if (!$known && count($images) < self::MIN_LOOSE_PIECES) {
+            if (!$known && (!$guessUndeclaredRuns || count($images) < self::MIN_LOOSE_PIECES)) {
                 continue;
             }
 
