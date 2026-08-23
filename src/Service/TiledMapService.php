@@ -96,6 +96,16 @@ class TiledMapService
 
     public const TILE_SIZE = 50;
 
+    /**
+     * Taille des lots d'écriture (même valeur que PlanImporter).
+     *
+     * Une ligne = une requête, c'était tenable tant qu'un push tenait dans
+     * quelques centaines de lignes. Un collage de zone en apporte des dizaines
+     * de milliers : PHP y laissait sa limite de temps ou de mémoire, et
+     * l'extension n'avait qu'une « réponse illisible » à montrer.
+     */
+    private const INSERT_BATCH = 500;
+
     private Db $db;
     private TileCatalogService $catalog;
     private PlanConfigService $planConfig;
@@ -427,12 +437,16 @@ class TiledMapService
         }
 
         $coordsIds = $this->loadCoordsIds($plan, $z);
+
+        // Les cases naissent d'un coup, avant les couches qui s'y posent
+        $this->ensureCoords($plan, $z, $incomingLayers, $coordsIds);
+
         $report = [];
 
         $this->db->beginTransaction();
         try {
             foreach ($incomingLayers as $layer => $rows) {
-                $report[$layer] = $this->importLayer($plan, $z, $layer, $rows, $currentLayers[$layer], $coordsIds);
+                $report[$layer] = $this->importLayer($layer, $rows, $currentLayers[$layer], $coordsIds);
             }
             $this->db->commit();
         } catch (\Throwable $e) {
@@ -863,10 +877,6 @@ class TiledMapService
     }
 
     /**
-     * @param array<string, int> $coordsIds cache "x|y" => id, enrichi au fil des créations
-     * @return array{inserted: int, deleted: int, kept: int, protected: int}
-     */
-    /**
      * Turn each row flagged `composite` into the pieces of its figure.
      *
      * Tiled used to explode a composite tile itself, so the object died at
@@ -913,7 +923,13 @@ class TiledMapService
         return $spread;
     }
 
-    private function importLayer(string $plan, int $z, string $layer, array $incomingRows, array $currentRows, array &$coordsIds): array
+    /**
+     * @param list<array<string, mixed>>  $incomingRows
+     * @param list<array<string, mixed>>  $currentRows
+     * @param array<string, int>          $coordsIds cache "x|y" => id, complet à ce stade
+     * @return array{inserted: int, deleted: int, kept: int, protected: int}
+     */
+    private function importLayer(string $layer, array $incomingRows, array $currentRows, array $coordsIds): array
     {
         // Lignes existantes disponibles pour le rapprochement, par clé
         $available = [];
@@ -929,11 +945,22 @@ class TiledMapService
 
         $kept = 0;
         $toInsert = [];
+        $seen = [];
 
         foreach ($incomingRows as $row) {
             self::validateIncomingRow($layer, $row);
 
             $key = $this->rowKey($layer, $row);
+
+            /* Deux fois la même chose sur la même case, c'est une fois. Un
+             * collage qui recouvre sa propre zone en envoie deux, et
+             * map_elements — dont la clé primaire est (name, coords_id) —
+             * refusait la seconde en emportant tout le push. */
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
 
             if (!empty($available[$key])) {
                 array_pop($available[$key]);
@@ -943,15 +970,17 @@ class TiledMapService
             }
         }
 
-        foreach ($toInsert as $row) {
-            $this->insertRow($plan, $z, $layer, $row, $coordsIds);
-        }
+        $this->insertRows($layer, $toInsert, $coordsIds);
 
         $toDelete = array_merge([], ...array_values($available));
 
-        if ($toDelete !== []) {
-            $placeholders = implode(',', array_fill(0, count($toDelete), '?'));
-            $this->db->exe('DELETE FROM map_' . $layer . ' WHERE id IN (' . $placeholders . ')', $toDelete);
+        /* Par lots : au-delà de 65 535 paramètres, MySQL refuse de préparer
+         * la requête — un grand plan effacé d'un coup y arrivait. */
+        foreach (array_chunk($toDelete, self::INSERT_BATCH) as $chunk) {
+            $this->db->exe(
+                'DELETE FROM map_' . $layer . ' WHERE id IN (' . implode(',', array_fill(0, count($chunk), '?')) . ')',
+                $chunk
+            );
         }
 
         return [
@@ -1002,35 +1031,108 @@ class TiledMapService
         }
     }
 
-    /** @param array<string, int> $coordsIds cache "x|y" => id, enrichi au fil des créations */
-    private function insertRow(string $plan, int $z, string $layer, array $row, array &$coordsIds): void
+    /**
+     * Crée d'un coup les cases que la poussée nomme et qui n'existent pas.
+     *
+     * Une par une, c'était deux à trois requêtes par case
+     * ({@see View::get_coords_id}) : un collage de quelques milliers de cases
+     * y passait la limite de temps de PHP. L'upsert garde l'idempotence de
+     * l'original — deux poussées qui découvrent la même case ne la créent
+     * qu'une fois, la clé unique (plan, z, x, y) tranche.
+     *
+     * @param array<string, mixed> $layers couches telles que poussées
+     * @param array<string, int>   $coordsIds cache "x|y" => id, rechargé si des cases naissent
+     */
+    private function ensureCoords(string $plan, int $z, array $layers, array &$coordsIds): void
     {
-        $coordsKey = (int) $row['x'] . '|' . (int) $row['y'];
+        $missing = [];
 
-        if (!isset($coordsIds[$coordsKey])) {
-            $coordsId = View::get_coords_id((object) [
-                'x'    => (int) $row['x'],
-                'y'    => (int) $row['y'],
-                'z'    => $z,
-                'plan' => $plan,
-            ]);
-
-            if (!$coordsId) {
-                throw new RuntimeException('Création de coordonnées impossible en ' . $row['x'] . ',' . $row['y'], 500);
+        foreach ($layers as $rows) {
+            if (!is_array($rows)) {
+                continue;
             }
 
-            $coordsIds[$coordsKey] = (int) $coordsId;
+            foreach ($rows as $row) {
+                if (!is_array($row) || !isset($row['x'], $row['y']) || !is_numeric($row['x']) || !is_numeric($row['y'])) {
+                    continue;
+                }
+
+                $key = (int) $row['x'] . '|' . (int) $row['y'];
+
+                if (!isset($coordsIds[$key])) {
+                    $missing[$key] = [(int) $row['x'], (int) $row['y']];
+                }
+            }
         }
 
-        $values = [
-            'name'      => $row['name'],
-            'coords_id' => $coordsIds[$coordsKey],
-        ];
-
-        if (self::AUTHORABLE_LAYERS[$layer]['paramsInKey'] && isset($row['params']) && $row['params'] !== '') {
-            $values['params'] = (string) $row['params'];
+        if ($missing === []) {
+            return;
         }
 
-        $this->db->insert('map_' . $layer, $values);
+        foreach (array_chunk(array_values($missing), self::INSERT_BATCH) as $chunk) {
+            $params = [];
+
+            foreach ($chunk as [$x, $y]) {
+                array_push($params, $x, $y, $z, $plan);
+            }
+
+            $this->db->exe(
+                'INSERT INTO coords (x, y, z, plan) VALUES '
+                    . implode(', ', array_fill(0, count($chunk), '(?, ?, ?, ?)'))
+                    . ' ON DUPLICATE KEY UPDATE id = id',
+                $params
+            );
+        }
+
+        $coordsIds = $this->loadCoordsIds($plan, $z);
+    }
+
+    /**
+     * Insère les lignes d'une couche par lots.
+     *
+     * Colonnes uniformes : `name` et la case, plus `params` pour les couches
+     * qui en portent (défaut '' en base, comme l'insertion ligne à ligne qui
+     * l'omettait). Le reste — foreground, endTime — prend le défaut du schéma.
+     *
+     * @param list<array<string, mixed>> $rows
+     * @param array<string, int>         $coordsIds cache "x|y" => id, complet à ce stade
+     */
+    private function insertRows(string $layer, array $rows, array $coordsIds): void
+    {
+        if ($rows === []) {
+            return;
+        }
+
+        $withParams = self::AUTHORABLE_LAYERS[$layer]['paramsInKey'];
+        $columns = $withParams ? '(`name`, coords_id, `params`)' : '(`name`, coords_id)';
+        $placeholder = $withParams ? '(?, ?, ?)' : '(?, ?)';
+
+        foreach (array_chunk($rows, self::INSERT_BATCH) as $chunk) {
+            $params = [];
+
+            foreach ($chunk as $row) {
+                $coordsKey = (int) $row['x'] . '|' . (int) $row['y'];
+
+                if (!isset($coordsIds[$coordsKey])) {
+                    throw new RuntimeException(
+                        'Création de coordonnées impossible en ' . $row['x'] . ',' . $row['y'],
+                        500
+                    );
+                }
+
+                $params[] = (string) $row['name'];
+                $params[] = $coordsIds[$coordsKey];
+
+                if ($withParams) {
+                    $params[] = (string) ($row['params'] ?? '');
+                }
+            }
+
+            $this->db->exe(
+                'INSERT INTO map_' . $layer . ' ' . $columns . ' VALUES '
+                    . implode(', ', array_fill(0, count($chunk), $placeholder)),
+                $params
+            );
+        }
     }
 }
