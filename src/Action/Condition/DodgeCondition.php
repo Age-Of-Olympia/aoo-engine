@@ -3,6 +3,7 @@
 namespace App\Action\Condition;
 
 use App\Action\SpellAction;
+use App\Action\DistanceAction;
 use App\Entity\ActionCondition;
 use App\Entity\Effect;
 use App\Interface\ActorInterface;
@@ -31,7 +32,11 @@ class DodgeCondition extends BaseCondition implements HasParameterSchemaInterfac
     {
         $result = new ConditionResult(true, array(), array());
 
-        $attackKind = $condition->getAction() instanceof SpellAction ? 'spell' : 'physical';
+        $attackKind = match (true) {
+            $condition->getAction() instanceof SpellAction => 'spell',
+            $condition->getAction() instanceof DistanceAction => 'distance',
+            default => 'physical',
+        };
 
         $errorMessages = array();
 
