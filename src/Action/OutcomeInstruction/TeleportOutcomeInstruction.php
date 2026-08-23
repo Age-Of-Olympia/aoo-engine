@@ -56,8 +56,39 @@ class TeleportOutcomeInstruction extends OutcomeInstruction implements HasParame
                         $outcomeSuccessMessages[0] = $target->data->name . ' reste stable.';
                     }
                 }
-                
                 break;
+            case 'dist-opposite':
+                $goCoords = (object) array(
+                            'x' => $target->coords->x + self::direction($target->coords->x, $actor->coords->x),
+                            'y' => $target->coords->y + self::direction($target->coords->y, $actor->coords->y),
+                            'z' => $target->coords->z + self::direction($target->coords->z, $actor->coords->z),
+                            'plan' => $target->coords->plan);
+                if(View::is_free($goCoords)){
+                    if($actor->getPush($target)){
+                        $target->go($goCoords);
+                        $outcomeSuccessMessages[0] = $target->data->name . ' est repoussé !';
+                    }
+                    else{
+                        $outcomeSuccessMessages[0] = $target->data->name . ' reste stable.';
+                    }
+                }
+                break;  
+            case 'harpoon':
+                $goCoords = (object) array(
+                            'x' => $target->coords->x - self::direction($target->coords->x, $actor->coords->x),
+                            'y' => $target->coords->y - self::direction($target->coords->y, $actor->coords->y),
+                            'z' => $target->coords->z - self::direction($target->coords->z, $actor->coords->z),
+                            'plan' => $target->coords->plan);
+                if(View::is_free($goCoords)){
+                    if($actor->getPush($target)){
+                        $target->go($goCoords);
+                        $outcomeSuccessMessages[0] = $target->data->name . ' est repoussé !';
+                    }
+                    else{
+                        $outcomeSuccessMessages[0] = $target->data->name . ' reste stable.';
+                    }
+                }
+                break;   
             default:
                 $explodedCoord = explode(',', $coords);
                 $coordX = $explodedCoord[0] == "x"?$actor->coords->x:$explodedCoord[0];
@@ -77,6 +108,15 @@ class TeleportOutcomeInstruction extends OutcomeInstruction implements HasParame
         $this->getOutcome()->getAction()->setRefreshScreen(true);
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array());
+    }
+
+    private static function direction(int|float $target, int|float $actor): int
+    {
+        return match (true) {
+            $target > $actor => 1,
+            $target < $actor => -1,
+            default => 0,
+        };
     }
 
 }
