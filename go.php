@@ -95,7 +95,7 @@ if($refusal !== null){
    plus. Elle rejoint la bourse au sol, et le bouton la ramasse — comme un
    objet posé là. Restent les déclencheurs, qui eux se déclenchent au pas. */
 $sql = '
-SELECT *, "triggers" AS whichTable FROM map_triggers WHERE coords_id = ? and name != "grow"
+SELECT *, "triggers" AS whichTable FROM map_triggers WHERE coords_id = ?
 
 ORDER BY id DESC
 ';
@@ -110,9 +110,23 @@ if($res->num_rows){
 
         $path = 'scripts/map/triggers/'. $row->name .'.php';
 
+        /* Un déclencheur dont le gestionnaire n'existe plus ne fait rien, il
+         * n'arrête pas le joueur. Trois noms ont survécu au retrait de leur
+         * code — altar, enter, exit — et marcher sur l'un d'eux répondait
+         * « error trigger path » au lieu du déplacement. Le nom reste posé et
+         * visible dans les éditeurs, pour qu'on puisse le retirer.
+         *
+         * `grow` passe aussi par là sans être une anomalie : c'est un point de
+         * pousse, lu par le cron des plantes, jamais au pas. D'où le journal
+         * réservé aux noms dont PLUS PERSONNE ne se sert. */
         if(!file_exists($path)){
 
-            exit('error trigger path');
+            if(!\App\Service\TriggerPaletteService::isKnown($row->name)){
+
+                error_log('[go] déclencheur sans consommateur, ignoré : '. $row->name);
+            }
+
+            continue;
         }
 
         $triggerId = $row->id;

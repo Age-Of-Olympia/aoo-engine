@@ -163,6 +163,11 @@ class TiledMapService
         // Les murs déjà posés restent visibles : buildLevel les tient des
         // lignes du plan, pas du catalogue.
         $catalog['resources'] = ResourcePaletteService::filterNames($catalog['resources'] ?? [], $plan);
+
+        // Même règle pour les déclencheurs : la palette ne propose que ceux
+        // que le jeu sait exécuter (un gestionnaire dans scripts/map/triggers).
+        // Les lignes déjà posées restent pullées : on doit pouvoir les retirer.
+        $catalog['triggers'] = TriggerPaletteService::filterNames($catalog['triggers'] ?? []);
         $composites['resources'] = array_values(array_filter(
             $composites['resources'] ?? [],
             fn(array $composite) => ResourcePaletteService::isAuthorable($composite['name'], $plan)
