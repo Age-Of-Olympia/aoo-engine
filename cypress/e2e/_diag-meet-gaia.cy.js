@@ -1,6 +1,6 @@
 /**
- * Harnais local (non suivi) : rejoue les étapes 1 → 9 du tutoriel dans un
- * vrai navigateur, sur le HUD recomposé.
+ * Harnais : rejoue le tutoriel entier dans un vrai navigateur, sur le HUD
+ * recomposé, jusqu'à la modale de fin.
  *
  * Deux particularités d'exécution :
  *  - le volet Actions du HUD ARME au premier clic (capture sur
@@ -9,7 +9,7 @@
  *    les étapes à spotlight (les clics réels d'un joueur passent — vérifié
  *    à la main) : les cases se cliquent via trigger('click') de la page.
  */
-describe('Tutorial HUD — étapes 1 à 9', () => {
+describe('Tutorial HUD — le tutoriel de bout en bout', () => {
   before(() => {
     cy.clearCookies();
     cy.clearLocalStorage();
@@ -72,8 +72,9 @@ describe('Tutorial HUD — étapes 1 à 9', () => {
     step('close_card');
     cy.screenshot('hud-03-gaia-card', { capture: 'viewport', overwrite: true });
 
-    /* 4 close_card : Fermer vit dans le volet Actions. */
-    clickAction('#hud-actions button.close-card');
+    /* 4 close_card : le HUD n'a plus de croix — cliquer une case vide
+     * change la sélection, et la fiche de Gaïa part avec elle. */
+    cy.window().then((win) => win.jQuery('.case[data-coords="-1,0"]').trigger('click'));
     step('movement_intro');
     next();
 
@@ -117,9 +118,10 @@ describe('Tutorial HUD — étapes 1 à 9', () => {
     cy.screenshot('hud-13-actions-panel-info', { capture: 'viewport', overwrite: true });
     next();
 
-    /* 14 : fermer la fiche. */
+    /* 14 : simple annonce de l'arbre — rien à fermer, la fiche se
+     * referme d'elle-même (auto_close_card) en quittant l'étape. */
     step('close_card_for_tree');
-    clickAction('#hud-actions button.close-card');
+    next();
 
     /* 15 : le nain fini son épuisement en (-1,0), DIAGONALEMENT voisin de
      * l'arbre (0,1) — la sonde d'entrée doit faire passer l'étape seule,
