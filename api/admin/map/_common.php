@@ -9,6 +9,11 @@ use App\Service\TiledAuthService;
 use App\Service\TiledExtensionService;
 use App\Service\TiledMapService;
 
+/* Mêmes fichiers de configuration qu'une page du jeu, dans le même ordre
+ * (voir config.php). constants.php manquait : getNextEntityId() y lit
+ * ENTITY_ID_RANGES sans garde, donc poser un bâtiment depuis Tiled levait
+ * « Undefined constant » au lieu de créer l'entité. */
+require_once __DIR__ . '/../../../config/constants.php';
 require_once __DIR__ . '/../../../config/bootstrap.php';
 require_once __DIR__ . '/../../../config/functions.php';
 
