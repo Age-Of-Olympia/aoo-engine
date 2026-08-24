@@ -62,6 +62,8 @@ class ActionExecutorService
         $this->initialTargetPv = $target->getRemaining('pv');
         $this->conditionObject = new ConditionObject();
         $this->conditionObject->setAction($this->action);
+        $this->conditionObject->setActorPassives($actor->getPassives($actor->getId()));
+        $this->conditionObject->setTargetPassives($target->getPassives($target->getId()));
     }
 
     public function executeAction(): ActionResults
