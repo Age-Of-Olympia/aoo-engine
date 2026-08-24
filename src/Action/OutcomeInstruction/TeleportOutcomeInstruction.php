@@ -28,6 +28,24 @@ class TeleportOutcomeInstruction extends OutcomeInstruction implements HasParame
 
         $coords = $params['coords'];
         $outcomeSuccessMessages = array();
+        $bonusActor = 0;
+        $bonusTarget = 0;
+
+        foreach ($conditionObject->getActorPassives() as $actorPassive) {
+            if($actorPassive->getName() == "brute" && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+                $bonusActor += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
+            }
+            if($actorPassive->getName() == "musculeux" && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+                $bonusActor += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
+            }
+        }
+        
+        foreach ($conditionObject->getTargetPassives() as $targetPassive) {
+            if($targetPassive->getName() == "inebranlable" && $target->playerPassiveService->checkPassiveConditionsByPlayerById($target,$targetPassive,$conditionObject)){
+                $bonusTarget += $target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId());
+            }
+        }
+
         switch ($coords) {
             case 'target':
                 $goCoords = $target->coords;
@@ -48,7 +66,7 @@ class TeleportOutcomeInstruction extends OutcomeInstruction implements HasParame
                             'z' => $target->coords->z+($target->coords->z-$actor->coords->z),
                             'plan' => $target->coords->plan);
                 if(View::is_free($goCoords)){
-                    if($actor->getPush($target)){
+                    if($actor->getPush($target, $bonusActor, $bonusTarget)){
                         $target->go($goCoords);
                         $outcomeSuccessMessages[0] = $target->data->name . ' est repoussé !';
                     }
@@ -64,7 +82,7 @@ class TeleportOutcomeInstruction extends OutcomeInstruction implements HasParame
                             'z' => $target->coords->z + self::direction($target->coords->z, $actor->coords->z),
                             'plan' => $target->coords->plan);
                 if(View::is_free($goCoords)){
-                    if($actor->getPush($target)){
+                    if($actor->getPush($target, $bonusActor, $bonusTarget)){
                         $target->go($goCoords);
                         $outcomeSuccessMessages[0] = $target->data->name . ' est repoussé !';
                     }
@@ -80,7 +98,7 @@ class TeleportOutcomeInstruction extends OutcomeInstruction implements HasParame
                             'z' => $target->coords->z - self::direction($target->coords->z, $actor->coords->z),
                             'plan' => $target->coords->plan);
                 if(View::is_free($goCoords)){
-                    if($actor->getPush($target)){
+                    if($actor->getPush($target, $bonusActor, $bonusTarget)){
                         $target->go($goCoords);
                         $outcomeSuccessMessages[0] = $target->data->name . ' est repoussé !';
                     }

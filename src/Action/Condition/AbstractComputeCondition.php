@@ -73,7 +73,7 @@ abstract class AbstractComputeCondition extends BaseCondition
 
     private function applyActorPassives(ActorInterface $actor, ConditionObject $conditionObject): void
     {
-        foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
+        foreach ($conditionObject->getActorPassives() as $actorPassive) {
             if (in_array($this->actorRollTrait, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte")) {
                 if ($actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor, $actorPassive, $conditionObject)) {
                     if ($actorPassive->getCarac() == "advantage") {
@@ -88,7 +88,7 @@ abstract class AbstractComputeCondition extends BaseCondition
 
     private function applyTargetPassives(ActorInterface $target, ConditionObject $conditionObject): void
     {
-        foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
+        foreach ($conditionObject->getTargetPassives() as $targetPassive) {
             if (in_array($this->targetRollTrait, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte")) {
                 if ($target->playerPassiveService->checkPassiveConditionsByPlayerById($target, $targetPassive, $conditionObject)) {
                     if ($targetPassive->getCarac() == "advantage") {

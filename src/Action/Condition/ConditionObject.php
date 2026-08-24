@@ -30,6 +30,8 @@ class ConditionObject
     protected ?bool $pickedEquippedLine = null;
     protected ?bool $isMagical = null;
     protected ?array $attackEffects = null;
+    protected ?array $actorPassives = null;
+    protected ?array $targetPassives = null;
 
 
     public function __construct() {
@@ -242,6 +244,28 @@ class ConditionObject
     public function setAttackEffects(array $attackEffects): self
     {
         $this->attackEffects = $attackEffects;
+        return $this;
+    }
+
+    public function getActorPassives(): ?array
+    {
+        return $this->actorPassives;
+    }
+
+    public function setActorPassives(array $actorPassives): self
+    {
+        $this->actorPassives = $actorPassives;
+        return $this;
+    }
+
+    public function getTargetPassives(): ?array
+    {
+        return $this->targetPassives;
+    }
+
+    public function setTargetPassives(array $targetPassives): self
+    {
+        $this->targetPassives = $targetPassives;
         return $this;
     }
 

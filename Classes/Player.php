@@ -2556,7 +2556,7 @@ class Player implements ActorInterface {
         return $effectsList;
     }
 
-    public function getPush(Player $target): bool {
+    public function getPush(Player $target, int $bonusActor, int $bonusTarget): bool {
         $att = $this->caracs->f;
         $def = max($target->caracs->e + 4,$target->caracs->agi);
         $pv = floor($target->getRemaining('pv')/10);
@@ -2565,6 +2565,6 @@ class Player implements ActorInterface {
         // stabilite, instabilite codés en dur).
         $attMods = $this->effectService->modifierContributions($this->getEffects(), 'getPushAttackMod');
         $defMods = $this->effectService->modifierContributions($target->getEffects(), 'getPushDefenseMod');
-        return $att + $attMods['pos'] - $attMods['neg'] >= $def + $pv + $defMods['pos'] - $defMods['neg'];
+        return $att + $bonusActor + $attMods['pos'] - $attMods['neg'] >= $def + $pv + $bonusTarget + $defMods['pos'] - $defMods['neg'];
     }
 }

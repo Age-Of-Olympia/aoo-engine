@@ -36,9 +36,31 @@ class RestOutcomeInstruction extends OutcomeInstruction implements HasParameterS
 
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         
-        $recupPV = floor($actor->getRemaining("a")*$actor->caracs->r/4);
-        $recupPM = floor($actor->getRemaining("a")*$actor->caracs->rm/4);
-        $recupMalus = floor($actor->getRemaining("mvt")/3);
+        $actor->get_caracs();
+
+        $bonusPV = 0.0;
+        $bonusPM = 0.0;
+        $bonusMalus = 0.0;
+
+        foreach ($conditionObject->getActorPassives() as $actorPassive) {
+            $nomPassif = $actorPassive->getName();
+            $traitsArray = json_decode($actorPassive->getTraits(), true);
+            $trait = $traitsArray[0];
+
+            if(($nomPassif == "meditation_arcanique" || $nomPassif == "meditation_somatique") && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+                $bonusPM += $actor->caracs->$actorPassive->{$trait} / $actorPassive->getValue();
+            }
+            if(($nomPassif == "recuperation_arcanique" || $nomPassif == "recuperation_somatique") && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+                $bonusPV += $actor->caracs->$actorPassive->{$trait} / $actorPassive->getValue();
+            }
+            if($$nomPassif == "retablissement_rapide" && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+                $bonusMalus += $actor->caracs->$actorPassive->{$trait} / $actorPassive->getValue();
+            }
+        }
+
+        $recupPV = floor($actor->getRemaining("a")*$actor->caracs->r/4 + $bonusPV);
+        $recupPM = floor($actor->getRemaining("a")*$actor->caracs->rm/4 + $bonusPM);
+        $recupMalus = floor($actor->getRemaining("mvt")/3 + $bonusMalus);
 
         $actor->putBonus(array('pv'=>$recupPV));
         $actor->putBonus(array('pm'=>$recupPM));
@@ -50,6 +72,7 @@ class RestOutcomeInstruction extends OutcomeInstruction implements HasParameterS
         $outcomeMalusMessages[] = 'Votre repos vous rend '. $recupPM .' PM.';
 
         return new OutcomeResult(true, $outcomeMalusMessages, $outcomeMalusMessages);
-    }
+
+        }
 
 }

@@ -46,7 +46,7 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         [
             'name'         => 'parade',
             'icon'         => 'ra-sword',
-            'type'         => 'technique',
+            'type'         => 'buff',
             'display_name' => 'Parade',
             'text'         => 'Pare la prochaine attaque de corps-à-corps si vous êtes équipé d\'une arme de corps-à-corps.',
             'level'        => 1,
@@ -56,7 +56,7 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         [
             'name'         => 'pas_de_cote',
             'icon'         => 'ra-player-dodge',
-            'type'         => 'technique',
+            'type'         => 'buff',
             'display_name' => 'Pas de côté',
             'text'         => 'Esquive le prochain tir en vous déplaçant sur une case adjacente.',
             'level'        => 1,
@@ -66,7 +66,7 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         [
             'name'         => 'dissipation',
             'icon'         => 'ra-lava',
-            'type'         => 'technique',
+            'type'         => 'buff',
             'display_name' => 'Dissipation',
             'text'         => 'Dissipe le prochain sort lancé sur vous.',
             'level'        => 1,
@@ -76,12 +76,22 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         [
             'name'         => 'dedoublement',
             'icon'         => 'ra-double-team',
-            'type'         => 'technique',
+            'type'         => 'buff',
             'display_name' => 'Dédoublement',
             'text'         => 'Crée un double illusoire qui va encaisser la prochaine attaque à votre place.',
             'level'        => 3,
             'category'     => 'survival-buff',
             'cost'         => '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">10 PM</span>',
+        ],
+        [
+            'name'         => 'posture_defensive',
+            'icon'         => 'ra-castle-flag',
+            'type'         => 'buff',
+            'display_name' => 'Posture défensive',
+            'text'         => 'Protection(x2)',
+            'level'        => 2,
+            'category'     => 'survival-buff',
+            'cost'         => '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">4 PM</span>',
         ],
     ];
 
@@ -168,6 +178,13 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         ],
         // --- PARADE (ID 128) ---
         [
+            'conditionType'   => 'RequiresDistance',
+            'parameters'      => '{"max":0}',
+            'action_id'       => 128,
+            'execution_order' => 0,
+            'blocking'        => 1,
+        ],
+        [
             'conditionType'   => 'ForbidIfHasEffect',
             'parameters'      => '{"actorEffect": "parade"}',
             'action_id'       => 128,
@@ -182,6 +199,13 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'blocking'        => 1,
         ],
         // --- PAS DE COTE (ID 129) ---
+        [
+            'conditionType'   => 'RequiresDistance',
+            'parameters'      => '{"max":0}',
+            'action_id'       => 129,
+            'execution_order' => 0,
+            'blocking'        => 1,
+        ],
         [
             'conditionType'   => 'ForbidIfHasEffect',
             'parameters'      => '{"actorEffect": "pas_de_cote"}',
@@ -198,6 +222,13 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         ],
         // --- DISSIPATION (ID 130) ---
         [
+            'conditionType'   => 'RequiresDistance',
+            'parameters'      => '{"max":0}',
+            'action_id'       => 130,
+            'execution_order' => 0,
+            'blocking'        => 1,
+        ],
+        [
             'conditionType'   => 'ForbidIfHasEffect',
             'parameters'      => '{"actorEffect": "dissipation"}',
             'action_id'       => 130,
@@ -213,6 +244,13 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         ],
         // --- DEDOUBLEMENT (ID 131) ---
         [
+            'conditionType'   => 'RequiresDistance',
+            'parameters'      => '{"max":0}',
+            'action_id'       => 131,
+            'execution_order' => 0,
+            'blocking'        => 1,
+        ],
+        [
             'conditionType'   => 'ForbidIfHasEffect',
             'parameters'      => '{"actorEffect": "dedoublement"}',
             'action_id'       => 131,
@@ -225,6 +263,21 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'action_id'       => 131,
             'execution_order' => 9,
             'blocking'        => 1,
+        ],
+        // --- POSTURE DEFENSIVE (ID 132) ---
+        [
+            'conditionType'   => 'RequiresDistance',
+            'parameters'      => '{"max":0}',
+            'action_id'       => 132,
+            'execution_order' => 0,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'RequiresTraitValue',
+            'parameters'      => '{"a": 1, "pm": 4}',
+            'action_id'       => 132,
+            'execution_order' => 9,
+            'blocking'        => 0,
         ],
         
     ];
@@ -261,23 +314,30 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         // --- PAS DE COTE (ID 129) ---
         [
             'apply_to'   => 'target',
-            'name'       => 'buff_parade',
+            'name'       => 'buff_pas_de_cot',
             'on_success' => 1,
             'action_id'  => 129,
         ],
         // --- DISSIPATION (ID 130) ---
         [
             'apply_to'   => 'target',
-            'name'       => 'buff_parade',
+            'name'       => 'buff_dissipation',
             'on_success' => 1,
             'action_id'  => 130,
         ],
         // --- DEDOUBLEMENT (ID 131) ---
         [
             'apply_to'   => 'target',
-            'name'       => 'buff_parade',
+            'name'       => 'buff_dedoublement',
             'on_success' => 1,
             'action_id'  => 131,
+        ],
+        // --- POSTURE DEFENSIVE (ID 132) ---
+        [
+            'apply_to'   => 'target',
+            'name'       => 'buff_posture_defensive',
+            'on_success' => 1,
+            'action_id'  => 132,
         ],
         
     ];
@@ -350,12 +410,19 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'orderIndex' => 0,
             'outcome_id' => 145,
         ],
+        // --- POSTURE DEFENSIVE (Outcome ID 146) ---
+        [
+            'type'       => 'applystatus',
+            'parameters' => '{"effect": "protection", "apply": true, "stackable": false, "value": 2, "player": "target", "duration": 1}',
+            'orderIndex' => 0,
+            'outcome_id' => 146,
+        ],
         
     ];
 
     public function getDescription(): string
     {
-        return 'Ajout des actions Encaisser et Tir puissant, ainsi que leurs propriétés techniques (conditions, outcomes, instructions).';
+        return 'Ajout de nouvelles actions, ainsi que leurs propriétés techniques (conditions, outcomes, instructions).';
     }
 
     public function up(Schema $schema): void
@@ -406,13 +473,13 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         // On effectue le rollback dans l'ordre inverse des insertions
 
         // 4. Suppression des instructions (liées aux nouvelles actions)
-        $this->addSql('DELETE FROM outcome_instructions WHERE outcome_id IN (139, 140, 141)');
+        $this->addSql('DELETE FROM outcome_instructions WHERE outcome_id IN (139, 140, 141, 142, 143, 144, 145)');
 
         // 3. Suppression des outcomes (liés aux nouvelles actions)
-        $this->addSql('DELETE FROM action_outcomes WHERE action_id IN (125, 126, 127)');
+        $this->addSql('DELETE FROM action_outcomes WHERE action_id IN (125, 126, 127, 128, 129, 130, 131)');
 
         // 2. Suppression des conditions (liées aux nouvelles actions)
-        $this->addSql('DELETE FROM action_conditions WHERE action_id IN (125, 126, 127)');
+        $this->addSql('DELETE FROM action_conditions WHERE action_id IN (125, 126, 127, 128, 129, 130, 131)');
 
         // 1. Suppression des actions
         foreach (self::ACTIONS_DATA as $action) {
