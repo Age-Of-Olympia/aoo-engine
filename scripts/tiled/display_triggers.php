@@ -26,7 +26,7 @@ foreach(TriggerPaletteService::playableNames() as $e){
     }
     elseif($e == 'grow'){
 
-        /* Point de pousse : params = la plante semée par le cron nocturne */
+        /* Growth spot: params is the plant the nightly cron sows here */
         $params = 'adonis';
     }
 
@@ -43,6 +43,16 @@ foreach(TriggerPaletteService::playableNames() as $e){
 
 
 echo '<div>Params: <input type="text" id="triggers-params" /></div>';
+
+/* The prefilled template shows one format only; the variants are listed
+   next to the palette that asks for them. */
+echo '<div style="font-size: 0.85em; opacity: 0.8; margin-top: 4px;">'
+    . '<code>tp</code> : <code>x,y,z,plan</code> — un segment non numérique (ou <code>plan</code>)'
+    . ' garde la valeur du joueur. Une condition facultative se met en cinquième :'
+    . ' <code>x,y,z,plan,item:clef:1</code>, et le passage se refuse sans elle.<br />'
+    . '<code>need</code> : <code>item:nom:n,spell:nom</code> — les termes se cumulent.<br />'
+    . '<code>grow</code> : le nom de la plante qui pousse là.'
+    . '</div>';
 
 
 echo '

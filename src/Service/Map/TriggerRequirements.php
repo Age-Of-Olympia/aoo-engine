@@ -6,30 +6,18 @@ use Classes\Item;
 use Classes\Player;
 
 /**
- * Ce qu'il faut porter pour passer : « item:nom:n,spell:nom ».
+ * What a player must carry to pass: "item:name:n,spell:name".
  *
- * La règle vient du déclencheur `need`, qui la gardait pour lui. Le
- * téléporteur en a besoin aussi : un `need` et un `tp` posés sur la même case
- * font une porte gardée, or l'éditeur ne montre qu'un déclencheur par case
- * depuis que la couche se peint. Plutôt que d'obliger l'animateur à empiler
- * deux objets, `tp` accepte la condition en dernier paramètre — et la lit
- * ici, à l'identique.
- *
- * `need` reste : toutes les portes gardées ne téléportent pas.
+ * Read by the `need` trigger and by `tp`, whose fifth parameter holds the
+ * same syntax. Terms are cumulative; an unknown term is ignored.
  */
 final class TriggerRequirements
 {
-    /** Ce que voit le joueur quand il lui manque quelque chose. */
+    /** Shown to the player when a term is not satisfied. */
     public const REFUSAL = 'Le passage reste clos.';
 
     /**
-     * Le joueur satisfait-il toutes les conditions ?
-     *
-     * Une chaîne vide n'exige rien. Un terme inconnu est ignoré plutôt que
-     * refusé : une condition mal tapée ne doit pas murer une case.
-     *
-     * @param string $params « item:pomme:3,spell:feu » — les termes se
-     *        cumulent, il les faut tous
+     * @param string $params comma-separated terms, all of them required
      */
     public static function met(Player $player, string $params): bool
     {

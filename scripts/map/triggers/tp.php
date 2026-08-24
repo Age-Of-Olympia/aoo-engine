@@ -2,11 +2,8 @@
 use App\Service\Map\TriggerRequirements;
 use Classes\View;
 
-/* params : « x,y,z,plan » et, depuis que la couche des déclencheurs se peint,
-   une condition facultative en cinquième position. Un `need` et un `tp` sur
-   la même case faisaient une porte gardée ; une case ne portant qu'une tuile,
-   le tp porte la condition lui-même. La limite de explode() garde les virgules
-   de la condition : « item:clef:1,spell:feu » reste d'un seul tenant. */
+/* params: "x,y,z,plan[,condition]". The explode limit keeps the condition
+   whole, commas included. */
 $coordsTbl = explode(',', $params, 5);
 
 $need = trim((string) ($coordsTbl[4] ?? ''));
