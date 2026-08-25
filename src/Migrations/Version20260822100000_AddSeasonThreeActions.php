@@ -93,6 +93,16 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'category'     => 'survival-buff',
             'cost'         => '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">4 PM</span>',
         ],
+        [
+            'name'         => 'jet_brutal',
+            'icon'         => 'ra-splash',
+            'type'         => 'technique',
+            'display_name' => 'Jet brutal',
+            'text'         => 'Avec une arme de jet, ignore les malus de distance aux dégâts.',
+            'level'        => 3,
+            'category'     => 'distance-off',
+            'cost'         => '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>',
+        ],
     ];
 
     private const ACTION_CONDITIONS = [
@@ -279,6 +289,35 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'execution_order' => 9,
             'blocking'        => 0,
         ],
+        // --- TIR PUISSANT (ID 133) ---
+        [
+            'conditionType'   => 'RequiresDistance',
+            'parameters'      => '{"min":2}',
+            'action_id'       => 133,
+            'execution_order' => 0,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'RequiresWeaponType',
+            'parameters'      => '{"type": ["jet"]}',
+            'action_id'       => 133,
+            'execution_order' => 1,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'RequiresAmmo',
+            'parameters'      => '{}',
+            'action_id'       => 133,
+            'execution_order' => 4,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'RequiresTraitValue',
+            'parameters'      => '{"a": 1, "pm": 6}',
+            'action_id'       => 133,
+            'execution_order' => 9,
+            'blocking'        => 1,
+        ],
         
     ];
 
@@ -339,10 +378,30 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'on_success' => 1,
             'action_id'  => 132,
         ],
+        // --- JET BRUTAL (ID 133) ---
+        [
+            'apply_to'   => 'target',
+            'name'       => 'dtechnique_jet_brutal',
+            'on_success' => 1,
+            'action_id'  => 133,
+        ],
         
     ];
 
     private const OUTCOME_INSTRUCTIONS = [
+        // --- SAUT D'ATTAQUE (Outcome ID 89) ---
+        [
+            'type'       => 'lifeloss',
+            'parameters' => '{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "saut": true }',
+            'orderIndex' => 1,
+            'outcome_id' => 89,
+        ],
+        [
+            'type'       => 'teleport',
+            'parameters' => '{ "coords": "target" }',
+            'orderIndex' => 3,
+            'outcome_id' => 89,
+        ],
         // --- ENCAISSER (Outcome ID 139) ---
         [
             'type'       => 'applystatus',
@@ -416,6 +475,13 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'parameters' => '{"effect": "protection", "apply": true, "stackable": false, "value": 2, "player": "target", "duration": 1}',
             'orderIndex' => 0,
             'outcome_id' => 146,
+        ],
+        // --- JET BRUTAL (Outcome ID 147) ---
+        [
+            'type'       => 'lifeloss',
+            'parameters' => '{ "actorDamagesTrait": "f", "targetDamagesTrait": "e" }',
+            'orderIndex' => 3,
+            'outcome_id' => 147,
         ],
         
     ];

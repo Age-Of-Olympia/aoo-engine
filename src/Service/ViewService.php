@@ -6,6 +6,7 @@ use DateTime;
 use DateTimeZone;
 use Exception;
 use Classes\Json;
+use Classes\Player;
 
 class ViewService {
     private $width = 700;
@@ -201,6 +202,17 @@ class ViewService {
     private function visiblePlayers(string $scope): array
     {
         $isGlobal = $scope === 'global';
+        $player = new Player($this->playerId);
+        $passives = $player->getPassives($this->playerId);
+        $maxViewBonus = 0;
+
+        foreach ($passives as $passive) {
+            $passiveName = $passive->getName();
+
+            if($passiveName == "oeil_percant" || $passiveName == "oeil_aigle" || $passiveName == "oeil_ultime"){
+                $maxViewBonus += (int) $passive->getValue();
+            }
+        }
 
         if ($isGlobal) {
             if (empty($this->scaleX) || empty($this->scaleY)) {
@@ -258,7 +270,7 @@ class ViewService {
              * couvre des étendues où l'on ne reconnaît pas un individu à
              * vue. La carte locale tient dans la portée de perception. */
             $known = !$isGlobal
-                || ($this->getPlayersDistance($this->playerX, $this->playerY, $row['x'], $row['y']) <= DIST_MAP_MAX
+                || ($this->getPlayersDistance($this->playerX, $this->playerY, $row['x'], $row['y']) <= DIST_MAP_MAX + $maxViewBonus
                     && $this->playerZ == 0
                     && $this->currentPlan == $this->worldPlan);
 

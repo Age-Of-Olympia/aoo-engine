@@ -43,17 +43,17 @@ class RestOutcomeInstruction extends OutcomeInstruction implements HasParameterS
         $bonusMalus = 0.0;
 
         foreach ($conditionObject->getActorPassives() as $actorPassive) {
-            $nomPassif = $actorPassive->getName();
+            $passiveName = $actorPassive->getName();
             $traitsArray = json_decode($actorPassive->getTraits(), true);
             $trait = $traitsArray[0];
 
-            if(($nomPassif == "meditation_arcanique" || $nomPassif == "meditation_somatique") && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+            if(($passiveName == "meditation_arcanique" || $passiveName == "meditation_somatique") && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
                 $bonusPM += $actor->caracs->$actorPassive->{$trait} / $actorPassive->getValue();
             }
-            if(($nomPassif == "recuperation_arcanique" || $nomPassif == "recuperation_somatique") && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+            if(($passiveName == "recuperation_arcanique" || $passiveName == "recuperation_somatique") && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
                 $bonusPV += $actor->caracs->$actorPassive->{$trait} / $actorPassive->getValue();
             }
-            if($$nomPassif == "retablissement_rapide" && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+            if($$passiveName == "retablissement_rapide" && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
                 $bonusMalus += $actor->caracs->$actorPassive->{$trait} / $actorPassive->getValue();
             }
         }
