@@ -28,13 +28,22 @@ class ObjectOutcomeInstruction extends OutcomeInstruction implements HasParamete
         // e.g. {"action":"steal", "object": 1 }
         $action = $this->getParameters()['action'] ?? '';
         $object = $this->getParameters()['object'] ?? 1;
+        $stealMultiply = 1;
+
+        foreach ($conditionObject->getActorPassives() as $actorPassive) {
+            $passiveName = $actorPassive->getName();
+
+            if($passiveName == "pickpocket" && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+                $stealMultiply = (int) $actorPassive->getValue();
+            }
+        }
 
         $outcomeSuccessMessages = array();
         $gain = 0;
         if(!empty($action)){
             $gold = new Item($object);
             $goldInTargetInventory = $gold->get_n($target);
-            $takenFromInventory = floor($goldInTargetInventory * 0.1);
+            $takenFromInventory = floor($goldInTargetInventory * 0.1 * $stealMultiply);
 
             if($takenFromInventory < 1){
                 $takenFromInventory = 1;
