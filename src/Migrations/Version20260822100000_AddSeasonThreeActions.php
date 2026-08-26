@@ -8,7 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Ajout de nouvelles actions pour la saison 3
+ * Ajout de nouvelles actions pour la saison 3 et mise à jour de conditions d'action existantes
  */
 final class Version20260822100000_AddSeasonThreeActions extends AbstractMigration
 {
@@ -174,7 +174,7 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
-            'parameters'      => '{"a": 1, "pm": 8, "mvt":1}',
+            'parameters'      => '{"a": 1, "pm": [["voie_eau",5],["none",8]], "mvt":1}',
             'action_id'       => 127,
             'execution_order' => 9,
             'blocking'        => 1,
@@ -289,7 +289,7 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'execution_order' => 9,
             'blocking'        => 0,
         ],
-        // --- TIR PUISSANT (ID 133) ---
+        // --- JET BRUTAL (ID 133) ---
         [
             'conditionType'   => 'RequiresDistance',
             'parameters'      => '{"min":2}',
@@ -313,12 +313,20 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
-            'parameters'      => '{"a": 1, "pm": 6}',
+            'parameters'      => '{"a": 1, "pm": [["voie_eau",5],["none",8]]}',
             'action_id'       => 133,
             'execution_order' => 9,
             'blocking'        => 1,
         ],
-        
+    ];
+
+    private const ACTION_CONDITION_UPDATES = [
+        [
+            'action_id'      => 58,
+            'conditionType'  => 'RequiresTraitValue',
+            'old_parameters' => '{"a":1, "pm":10}',
+            'new_parameters' => '{"a": 1, "pm": [["voie_eau",7],["none",10]]}',
+        ],
     ];
 
     private const ACTION_OUTCOMES = [
@@ -385,7 +393,6 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'on_success' => 1,
             'action_id'  => 133,
         ],
-        
     ];
 
     private const OUTCOME_INSTRUCTIONS = [
@@ -483,12 +490,11 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'orderIndex' => 3,
             'outcome_id' => 147,
         ],
-        
     ];
 
     public function getDescription(): string
     {
-        return 'Ajout de nouvelles actions, ainsi que leurs propriétés techniques (conditions, outcomes, instructions).';
+        return 'Ajout de nouvelles actions, mise à jour des conditions existantes et de leurs propriétés techniques (conditions, outcomes, instructions).';
     }
 
     public function up(Schema $schema): void
@@ -513,7 +519,19 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             );
         }
 
-        // 3. Ajout des résultats d'action (outcomes)
+        // 3. Mise à jour des conditions d'action existantes
+        foreach (self::ACTION_CONDITION_UPDATES as $update) {
+            $this->addSql(
+                'UPDATE action_conditions SET parameters = ? WHERE action_id = ? AND conditionType = ?',
+                [
+                    $update['new_parameters'],
+                    $update['action_id'],
+                    $update['conditionType'],
+                ]
+            );
+        }
+
+        // 4. Ajout des résultats d'action (outcomes)
         foreach (self::ACTION_OUTCOMES as $outcome) {
             $cols = implode(', ', array_keys($outcome));
             $vals = implode(', ', array_fill(0, count($outcome), '?'));
@@ -523,7 +541,7 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             );
         }
 
-        // 4. Ajout des instructions
+        // 5. Ajout des instructions
         foreach (self::OUTCOME_INSTRUCTIONS as $instruction) {
             $cols = implode(', ', array_keys($instruction));
             $vals = implode(', ', array_fill(0, count($instruction), '?'));
@@ -536,16 +554,28 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
 
     public function down(Schema $schema): void
     {
-        // On effectue le rollback dans l'ordre inverse des insertions
+        // Rollback dans l'ordre inverse des opérations
 
-        // 4. Suppression des instructions (liées aux nouvelles actions)
-        $this->addSql('DELETE FROM outcome_instructions WHERE outcome_id IN (139, 140, 141, 142, 143, 144, 145)');
+        // 5. Suppression des instructions (liées aux nouvelles actions)
+        $this->addSql('DELETE FROM outcome_instructions WHERE outcome_id IN (139, 140, 141, 142, 143, 144, 145, 146, 147)');
 
-        // 3. Suppression des outcomes (liés aux nouvelles actions)
-        $this->addSql('DELETE FROM action_outcomes WHERE action_id IN (125, 126, 127, 128, 129, 130, 131)');
+        // 4. Suppression des outcomes (liés aux nouvelles actions)
+        $this->addSql('DELETE FROM action_outcomes WHERE action_id IN (125, 126, 127, 128, 129, 130, 131, 132, 133)');
+
+        // 3. Annulation des mises à jour des conditions d'action
+        foreach (self::ACTION_CONDITION_UPDATES as $update) {
+            $this->addSql(
+                'UPDATE action_conditions SET parameters = ? WHERE action_id = ? AND conditionType = ?',
+                [
+                    $update['old_parameters'],
+                    $update['action_id'],
+                    $update['conditionType'],
+                ]
+            );
+        }
 
         // 2. Suppression des conditions (liées aux nouvelles actions)
-        $this->addSql('DELETE FROM action_conditions WHERE action_id IN (125, 126, 127, 128, 129, 130, 131)');
+        $this->addSql('DELETE FROM action_conditions WHERE action_id IN (125, 126, 127, 128, 129, 130, 131, 132, 133)');
 
         // 1. Suppression des actions
         foreach (self::ACTIONS_DATA as $action) {

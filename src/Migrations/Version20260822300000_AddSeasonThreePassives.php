@@ -8,7 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Ajout de nouveaux passifs pour la saison 3 et mise à jour de textes existants
+ * Ajout de nouveaux passifs pour la saison 3 et mise à jour de passifs existants
  */
 final class Version20260822300000_AddSeasonThreePassives extends AbstractMigration
 {
@@ -169,34 +169,142 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
             'display_name'  => 'Oeil ultime',
             'text'          => 'Le personnage voit à +5 cases sur la carte générale',
         ],
+        [
+            'name'          => 'guerrier_beni',
+            'traits'        => '["cc","esquive"]',
+            'type'          => 'att',
+            'carac'         => 'effects',
+            'value'         => 1.00,
+            'level'         => 2,
+            'category'      => 'melee',
+            'race'          => 'olympien',
+            'prerequisites' => '{"forbidden": ["mage_sacre"]}',
+            'display_name'  => 'Guerrier béni',
+            'text'          => 'Gagne +1 pour toucher à la CC et +1 Esquive pour chaque Effet sur le personnage',
+        ],
+        [
+            'name'          => 'maitre_lame',
+            'traits'        => '[]',
+            'type'          => 'buff',
+            'carac'         => '',
+            'value'         => 0.00,
+            'level'         => 2,
+            'category'      => 'melee',
+            'race'          => 'nain',
+            'prerequisites' => '{"forbidden": ["recuperation_runique"]}',
+            'display_name'  => 'Maître-lame',
+            'text'          => '-2 aux coûts en PM des attaques/techniques basées sur la CC, min 1. Doublé pour le Saut d\'attaque',
+        ],
+        [
+            'name'          => 'voie_eau',
+            'traits'        => '[]',
+            'type'          => 'buff',
+            'carac'         => '',
+            'value'         => 0.00,
+            'level'         => 2,
+            'category'      => 'distance',
+            'race'          => 'geant',
+            'prerequisites' => '{"forbidden": ["berserker","voie_air"]}',
+            'display_name'  => 'Voie de l\'Eau',
+            'text'          => '-2 aux coûts en PM des attaques/techniques basées sur la CT, min 1',
+        ],
+        [
+            'name'          => 'maitre_archer',
+            'traits'        => '["f"]',
+            'type'          => 'att',
+            'carac'         => 'mvt',
+            'value'         => 0.143,
+            'level'         => 2,
+            'category'      => 'distance',
+            'race'          => 'elfe',
+            'prerequisites' => '{"forbidden": ["fulgurance", "pouvoir_titanique"]}',
+            'display_name'  => 'Maître archer',
+            'text'          => 'Gagne +1Dmg sur les tirs avec arme à munition tous les 7 Mvt max',
+        ],
+        [
+            'name'          => 'pouvoir_titanique',
+            'traits'        => '["fm"]',
+            'type'          => 'att',
+            'carac'         => 'effects',
+            'value'         => 1.00,
+            'level'         => 2,
+            'category'      => 'magic',
+            'race'          => 'elfe',
+            'prerequisites' => '{"forbidden": ["fulgurance", "maitre_archer"]}',
+            'display_name'  => 'Pouvoir titanique',
+            'text'          => 'Gagne +1 pour toucher à la FM pour chaque Effet sur le personnage',
+        ],
+        [
+            'name'          => 'voie_air',
+            'traits'        => '["fm"]',
+            'type'          => 'att',
+            'carac'         => 'fixed',
+            'value'         => 6.00,
+            'level'         => 2,
+            'category'      => 'magic',
+            'race'          => 'geant',
+            'conditions'    => '{"category":["spell-curse"]}',
+            'prerequisites' => '{"forbidden": ["berserker", "voie_eau"]}',
+            'display_name'  => 'Voie de l\'Air',
+            'text'          => 'Gagne +6 pour toucher avec les Malédictions',
+        ],
+        [
+            'name'          => 'recuperation_runique',
+            'traits'        => '["pui"]',
+            'type'          => 'buff',
+            'carac'         => '',
+            'value'         => 4.00,
+            'level'         => 2,
+            'category'      => 'magic',
+            'race'          => 'nain',
+            'prerequisites' => '{"forbidden": ["maitre_lame"]}',
+            'display_name'  => 'Récupération runique',
+            'text'          => 'Ajoute Pui/4 PM par action dépensée lors d\'un Repos',
+        ],
     ];
 
     private const UPDATES_DATA = [
         [
-            'name'     => 'duelliste',
-            'old_text' => 'Gagne Avantage sur la CC',
-            'new_text' => 'Gagne Avantage en attaquant avec la CC',
+            'name'      => 'duelliste',
+            'column'    => 'text',
+            'old_value' => 'Gagne Avantage sur la CC',
+            'new_value' => 'Gagne Avantage en attaquant avec la CC',
         ],
         [
-            'name'     => 'lancer',
-            'old_text' => 'Gagne Avantage sur la CT avec les armes de jet',
-            'new_text' => 'Gagne Avantage en attaquant avec la CT avec les armes de jet',
+            'name'      => 'lancer',
+            'column'    => 'text',
+            'old_value' => 'Gagne Avantage sur la CT avec les armes de jet',
+            'new_value' => 'Gagne Avantage en attaquant avec la CT avec les armes de jet',
         ],
         [
-            'name'     => 'tireur_elite',
-            'old_text' => 'Gagne Avantage sur la CC',
-            'new_text' => 'Gagne Avantage en attaquant avec la CC',
+            'name'      => 'tireur_elite',
+            'column'    => 'text',
+            'old_value' => 'Gagne Avantage sur la CC',
+            'new_value' => 'Gagne Avantage en attaquant avec la CC',
         ],
         [
-            'name'     => 'lancer', // TODO: Vérifier s'il ne s'agit pas d'un autre nom (ex: archerie)
-            'old_text' => 'Gagne Avantage sur la CT avec les armes à munitions',
-            'new_text' => 'Gagne Avantage en attaquant avec la CT avec les armes à munitions',
+            'name'      => 'lancer', // TODO: Vérifier s'il ne s'agit pas d'un autre nom (ex: archerie)
+            'column'    => 'text',
+            'old_value' => 'Gagne Avantage sur la CT avec les armes à munitions',
+            'new_value' => 'Gagne Avantage en attaquant avec la CT avec les armes à munitions',
+        ],
+        [
+            'name'      => 'mage_sacre',
+            'column'    => 'prerequisites',
+            'old_value' => null,
+            'new_value' => '{"forbidden": ["guerrier_beni"]}',
+        ],
+        [
+            'name'      => 'fulgurance',
+            'column'    => 'prerequisites',
+            'old_value' => null,
+            'new_value' => '{"forbidden": ["pouvoir_titanique", "maitre_archer"]}',
         ],
     ];
 
     public function getDescription(): string
     {
-        return 'Ajout des compétences passives pour la saison 3 et mise à jour de la description de certains passifs existants.';
+        return 'Ajout des compétences passives pour la saison 3 et mise à jour de passifs existants.';
     }
 
     public function up(Schema $schema): void
@@ -212,22 +320,22 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
             );
         }
 
-        // 2. Mise à jour des textes des passifs existants
+        // 2. Mises à jour des passifs existants
         foreach (self::UPDATES_DATA as $update) {
             $this->addSql(
-                'UPDATE action_passives SET text = ? WHERE name = ?',
-                [$update['new_text'], $update['name']]
+                sprintf('UPDATE action_passives SET %s = ? WHERE name = ?', $update['column']),
+                [$update['new_value'], $update['name']]
             );
         }
     }
 
     public function down(Schema $schema): void
     {
-        // 2. Annulation des mises à jour (on remet les anciens textes)
+        // 2. Annulation des mises à jour (restauration des anciennes valeurs)
         foreach (self::UPDATES_DATA as $update) {
             $this->addSql(
-                'UPDATE action_passives SET text = ? WHERE name = ?',
-                [$update['old_text'], $update['name']]
+                sprintf('UPDATE action_passives SET %s = ? WHERE name = ?', $update['column']),
+                [$update['old_value'], $update['name']]
             );
         }
 
