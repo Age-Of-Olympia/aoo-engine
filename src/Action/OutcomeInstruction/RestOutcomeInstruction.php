@@ -47,7 +47,7 @@ class RestOutcomeInstruction extends OutcomeInstruction implements HasParameterS
             $traitsArray = json_decode($actorPassive->getTraits(), true);
             $trait = $traitsArray[0];
 
-            if(($passiveName == "meditation_arcanique" || $passiveName == "meditation_somatique") && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+            if(($passiveName == "meditation_arcanique" || $passiveName == "meditation_somatique" || $passiveName == "recuperation_runique") && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
                 $bonusPM += $actor->caracs->$actorPassive->{$trait} / $actorPassive->getValue();
             }
             if(($passiveName == "recuperation_arcanique" || $passiveName == "recuperation_somatique") && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
