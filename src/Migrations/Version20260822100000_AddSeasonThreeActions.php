@@ -133,6 +133,26 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'category'     => 'spell-off',
             'cost'         => '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">8 PM</span>',
         ],
+        [
+            'name'         => 'arcane_maladroite',
+            'icon'         => 'ra-sheep',
+            'type'         => 'spell',
+            'display_name' => 'Arcane maladroite',
+            'text'         => '-6 pour toucher, +3 Dmg',
+            'level'        => 3,
+            'category'     => 'spell-off',
+            'cost'         => '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>',
+        ],
+        [
+            'name'         => 'aiguilles',
+            'icon'         => 'ra-focused-lightning',
+            'type'         => 'spell',
+            'display_name' => 'Aiguilles',
+            'text'         => '+6 Dmg',
+            'level'        => 3,
+            'category'     => 'spell-off',
+            'cost'         => '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">8 PM</span>',
+        ],
     ];
 
     private const ACTION_CONDITIONS = [
@@ -359,7 +379,7 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         [
             'conditionType'   => 'RequiresWeaponType',
             'parameters'      => '{"type": ["melee"]}',
-            'action_id'       => 133,
+            'action_id'       => 134,
             'execution_order' => 1,
             'blocking'        => 1,
         ],
@@ -432,6 +452,50 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'conditionType'   => 'SpellCompute',
             'parameters'      => '{"actorRollType":"fm", "targetRollType": "fm"}',
             'action_id'       => 136,
+            'execution_order' => 10,
+            'blocking'        => 0,
+        ],
+        // --- ARCANE MALADROITE (ID 137) ---
+        [
+            'conditionType'   => 'RequiresDistance',
+            'parameters'      => '{"max":1}',
+            'action_id'       => 137,
+            'execution_order' => 0,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'RequiresTraitValue',
+            'parameters'      => '{"a": 1, "pm": 6}',
+            'action_id'       => 137,
+            'execution_order' => 9,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'SpellCompute',
+            'parameters'      => '{"actorRollType":"fm", "targetRollType": "fm", "actorRollBonus" : -6}',
+            'action_id'       => 137,
+            'execution_order' => 10,
+            'blocking'        => 0,
+        ],
+        // --- AIGUILLES (ID 138) ---
+        [
+            'conditionType'   => 'RequiresDistance',
+            'parameters'      => '{"min":2}',
+            'action_id'       => 138,
+            'execution_order' => 0,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'RequiresTraitValue',
+            'parameters'      => '{"a": 1, "pm": 8}',
+            'action_id'       => 138,
+            'execution_order' => 9,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'SpellCompute',
+            'parameters'      => '{"actorRollType":"fm", "targetRollType": "fm"}',
+            'action_id'       => 138,
             'execution_order' => 10,
             'blocking'        => 0,
         ],
@@ -532,7 +596,7 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         // --- PAS DE COTE (ID 129) ---
         [
             'apply_to'   => 'self',
-            'name'       => 'buff_pas_de_cot',
+            'name'       => 'buff_pas_de_cote',
             'on_success' => 1,
             'action_id'  => 129,
         ],
@@ -585,6 +649,20 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'on_success' => 1,
             'action_id'  => 136,
         ],
+        // --- ARCANE MALADROITE (ID 137) ---
+        [
+            'apply_to'   => 'target',
+            'name'       => 'spell_arcane_maladroite',
+            'on_success' => 1,
+            'action_id'  => 137,
+        ],
+        // --- AIGUILLES (ID 138) ---
+        [
+            'apply_to'   => 'target',
+            'name'       => 'spell_aiguilles',
+            'on_success' => 1,
+            'action_id'  => 138,
+        ],
     ];
 
     private const OUTCOME_INSTRUCTIONS = [
@@ -604,7 +682,7 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         // --- ENCAISSER (Outcome ID 139) ---
         [
             'type'       => 'applystatus',
-            'parameters' => '{ "encaisse": true, "stackable": false, "value": 1, "player": "target", "duration": 1}',
+            'parameters' => '{ "encaisse": true, "stackable": false, "value": 1, "player": "actor", "duration": 1}',
             'orderIndex' => 10,
             'outcome_id' => 139,
         ],
@@ -671,7 +749,7 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         // --- POSTURE DEFENSIVE (Outcome ID 146) ---
         [
             'type'       => 'applystatus',
-            'parameters' => '{"effect": "protection", "apply": true, "stackable": false, "value": 2, "player": "target", "duration": 1}',
+            'parameters' => '{"effect": "protection", "apply": true, "stackable": false, "value": 2, "player": "actor", "duration": 1}',
             'orderIndex' => 0,
             'outcome_id' => 146,
         ],
@@ -692,7 +770,7 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         // --- OPPORTUNISME (Outcome ID 149) ---
         [
             'type'       => 'lifeloss',
-            'parameters' => '{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", distance: "true", "bonusTargetTraitDamages": ["malus",5] }',
+            'parameters' => '{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "distance": true, "bonusTargetTraitDamages": ["malus",5] }',
             'orderIndex' => 3,
             'outcome_id' => 149,
         ],
@@ -702,6 +780,20 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'parameters' => '{ "actorDamagesTrait": "pui", "targetDamagesTrait": "res", "bonusTargetTraitDamages": ["pm",5] }',
             'orderIndex' => 3,
             'outcome_id' => 150,
+        ],
+        // --- ARCANE MALADROITE (Outcome ID 151) ---
+        [
+            'type'       => 'lifeloss',
+            'parameters' => '{ "actorDamagesTrait": "pui", "targetDamagesTrait": "res", "bonusDamagesTrait": 3 }',
+            'orderIndex' => 3,
+            'outcome_id' => 151,
+        ],
+        // --- AIGUILLES (Outcome ID 152) ---
+        [
+            'type'       => 'lifeloss',
+            'parameters' => '{ "actorDamagesTrait": "pui", "targetDamagesTrait": "res", "bonusDamagesTrait": 6 }',
+            'orderIndex' => 3,
+            'outcome_id' => 152,
         ],
     ];
 
