@@ -103,6 +103,36 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'category'     => 'distance-off',
             'cost'         => '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>',
         ],
+        [
+            'name'         => 'coup_grace',
+            'icon'         => 'ra-decapitation',
+            'type'         => 'technique',
+            'display_name' => 'Coup de grâce',
+            'text'         => 'Inflige +1 Dmg par tranche de 25 PV manquants à la cible.',
+            'level'        => 3,
+            'category'     => 'melee-off',
+            'cost'         => '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>',
+        ],
+        [
+            'name'         => 'opportunisme',
+            'icon'         => 'ra-player-shot',
+            'type'         => 'technique',
+            'display_name' => 'Opportunisme',
+            'text'         => 'Inflige +1 Dmg par tranche de 5 Malus de la cible.',
+            'level'        => 3,
+            'category'     => 'distance-off',
+            'cost'         => '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">8 PM</span>',
+        ],
+        [
+            'name'         => 'mine_esprit',
+            'icon'         => 'ra-broken-skull',
+            'type'         => 'spell',
+            'display_name' => 'Mine de l\'esprit',
+            'text'         => '+X Dmg. X vaut le nombre de PM manquants de la cible divisé par 5.',
+            'level'        => 3,
+            'category'     => 'spell-off',
+            'cost'         => '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">8 PM</span>',
+        ],
     ];
 
     private const ACTION_CONDITIONS = [
@@ -318,6 +348,93 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'execution_order' => 9,
             'blocking'        => 1,
         ],
+        // --- COUP DE GRACE (ID 134) ---
+        [
+            'conditionType'   => 'RequiresDistance',
+            'parameters'      => '{"max":1}',
+            'action_id'       => 134,
+            'execution_order' => 0,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'RequiresWeaponType',
+            'parameters'      => '{"type": ["melee"]}',
+            'action_id'       => 133,
+            'execution_order' => 1,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'RequiresTraitValue',
+            'parameters'      => '{"a": 1, "pm": [["maitre_lame",4],["none",6]]}',
+            'action_id'       => 134,
+            'execution_order' => 9,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'MeleeCompute',
+            'parameters'      => '{"actorRollType":"cc", "targetRollType": "cc/agi"}',
+            'action_id'       => 134,
+            'execution_order' => 10,
+            'blocking'        => 0,
+        ],
+        // --- OPPORTUNISME (ID 135) ---
+        [
+            'conditionType'   => 'RequiresDistance',
+            'parameters'      => '{"min":2}',
+            'action_id'       => 135,
+            'execution_order' => 0,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'RequiresWeaponType',
+            'parameters'      => '{"type": ["tir","jet"]}',
+            'action_id'       => 135,
+            'execution_order' => 1,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'RequiresAmmo',
+            'parameters'      => '{}',
+            'action_id'       => 135,
+            'execution_order' => 4,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'RequiresTraitValue',
+            'parameters'      => '{"a": 1, "pm": [["voie_eau",5],["none",8]]}',
+            'action_id'       => 135,
+            'execution_order' => 9,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'DistanceCompute',
+            'parameters'      => '{"actorRollType":"ct", "targetRollType": "cc/agi"}',
+            'action_id'       => 135,
+            'execution_order' => 10,
+            'blocking'        => 0,
+        ],
+        // --- MINE ESPRIT (ID 136) ---
+        [
+            'conditionType'   => 'RequiresDistance',
+            'parameters'      => '{"min":2}',
+            'action_id'       => 136,
+            'execution_order' => 0,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'RequiresTraitValue',
+            'parameters'      => '{"a": 1, "pm": 8}',
+            'action_id'       => 136,
+            'execution_order' => 9,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'SpellCompute',
+            'parameters'      => '{"actorRollType":"fm", "targetRollType": "fm"}',
+            'action_id'       => 136,
+            'execution_order' => 10,
+            'blocking'        => 0,
+        ],
     ];
 
     private const ACTION_CONDITION_UPDATES = [
@@ -327,12 +444,66 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'old_parameters' => '{"a":1, "pm":10}',
             'new_parameters' => '{"a": 1, "pm": [["voie_eau",7],["none",10]]}',
         ],
+        [
+            'action_id'      => 47,
+            'conditionType'  => 'RequiresTraitValue',
+            'old_parameters' => '{"a":1, "pm":2}',
+            'new_parameters' => '{"a":1, "pm":[["maitre_lame",1],["none",2]]}',
+        ],
+        [
+            'action_id'      => 48,
+            'conditionType'  => 'RequiresTraitValue',
+            'old_parameters' => '{"a":1, "pm":2}',
+            'new_parameters' => '{"a":1, "pm":[["maitre_lame",1],["none",2]]}',
+        ],
+        [
+            'action_id'      => 49,
+            'conditionType'  => 'RequiresTraitValue',
+            'old_parameters' => '{"a":1, "pm":6}',
+            'new_parameters' => '{"a":1, "pm":[["maitre_lame",4],["none",6]]}',
+        ],
+        [
+            'action_id'      => 50,
+            'conditionType'  => 'RequiresTraitValue',
+            'old_parameters' => '{"a":1, "pm":2}',
+            'new_parameters' => '{"a":1, "pm":[["maitre_lame",1],["none",2]]}',
+        ],
+        [
+            'action_id'      => 52,
+            'conditionType'  => 'RequiresTraitValue',
+            'old_parameters' => '{"a":1, "pm":8}',
+            'new_parameters' => '{"a":1, "pm":[["maitre_lame",6],["none",8]]}',
+        ],
+        [
+            'action_id'      => 77,
+            'conditionType'  => 'RequiresTraitValue',
+            'old_parameters' => '{"a":1, "pm":2}',
+            'new_parameters' => '{"a":1, "pm":[["maitre_lame",1],["none",2]]}',
+        ],
+        [
+            'action_id'      => 107,
+            'conditionType'  => 'RequiresTraitValue',
+            'old_parameters' => '{"a":1, "pm":4}',
+            'new_parameters' => '{"a":1, "pm":[["maitre_lame",2],["none",4]]}',
+        ],
+        [
+            'action_id'      => 109,
+            'conditionType'  => 'RequiresTraitValue',
+            'old_parameters' => '{"a":1, "pm":4}',
+            'new_parameters' => '{"a":1, "pm":[["maitre_lame",2],["none",4]]}',
+        ],
+        [
+            'action_id'      => 79,
+            'conditionType'  => 'RequiresTraitValue',
+            'old_parameters' => '{"a":1, "pm":15, "mvt":1}',
+            'new_parameters' => '{"a":1, "pm":[["maitre_lame",11],["none",15]], "mvt":1}',
+        ],
     ];
 
     private const ACTION_OUTCOMES = [
         // --- ENCAISSER (ID 125) ---
         [
-            'apply_to'   => 'target',
+            'apply_to'   => 'self',
             'name'       => 'buff_encaisse',
             'on_success' => 1,
             'action_id'  => 125,
@@ -353,35 +524,35 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
         ],
         // --- PARADE (ID 128) ---
         [
-            'apply_to'   => 'target',
+            'apply_to'   => 'self',
             'name'       => 'buff_parade',
             'on_success' => 1,
             'action_id'  => 128,
         ],
         // --- PAS DE COTE (ID 129) ---
         [
-            'apply_to'   => 'target',
+            'apply_to'   => 'self',
             'name'       => 'buff_pas_de_cot',
             'on_success' => 1,
             'action_id'  => 129,
         ],
         // --- DISSIPATION (ID 130) ---
         [
-            'apply_to'   => 'target',
+            'apply_to'   => 'self',
             'name'       => 'buff_dissipation',
             'on_success' => 1,
             'action_id'  => 130,
         ],
         // --- DEDOUBLEMENT (ID 131) ---
         [
-            'apply_to'   => 'target',
+            'apply_to'   => 'self',
             'name'       => 'buff_dedoublement',
             'on_success' => 1,
             'action_id'  => 131,
         ],
         // --- POSTURE DEFENSIVE (ID 132) ---
         [
-            'apply_to'   => 'target',
+            'apply_to'   => 'self',
             'name'       => 'buff_posture_defensive',
             'on_success' => 1,
             'action_id'  => 132,
@@ -392,6 +563,27 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'name'       => 'dtechnique_jet_brutal',
             'on_success' => 1,
             'action_id'  => 133,
+        ],
+        // --- COUP DE GRACE (ID 134) ---
+        [
+            'apply_to'   => 'target',
+            'name'       => 'mtechnique_coup_grace',
+            'on_success' => 1,
+            'action_id'  => 134,
+        ],
+        // --- OPPORTUNISME (ID 135) ---
+        [
+            'apply_to'   => 'target',
+            'name'       => 'dtechnique_opportunisme',
+            'on_success' => 1,
+            'action_id'  => 135,
+        ],
+        // --- MINE ESPRIT (ID 136) ---
+        [
+            'apply_to'   => 'target',
+            'name'       => 'spell_mine_esprit',
+            'on_success' => 1,
+            'action_id'  => 136,
         ],
     ];
 
@@ -489,6 +681,27 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
             'parameters' => '{ "actorDamagesTrait": "f", "targetDamagesTrait": "e" }',
             'orderIndex' => 3,
             'outcome_id' => 147,
+        ],
+        // --- COUP GRACE (Outcome ID 148) ---
+        [
+            'type'       => 'lifeloss',
+            'parameters' => '{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusTargetTraitDamages": ["pv",25] }',
+            'orderIndex' => 3,
+            'outcome_id' => 148,
+        ],
+        // --- OPPORTUNISME (Outcome ID 149) ---
+        [
+            'type'       => 'lifeloss',
+            'parameters' => '{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", distance: "true", "bonusTargetTraitDamages": ["malus",5] }',
+            'orderIndex' => 3,
+            'outcome_id' => 149,
+        ],
+        // --- MINE ESPRIT (Outcome ID 150) ---
+        [
+            'type'       => 'lifeloss',
+            'parameters' => '{ "actorDamagesTrait": "pui", "targetDamagesTrait": "res", "bonusTargetTraitDamages": ["pm",5] }',
+            'orderIndex' => 3,
+            'outcome_id' => 150,
         ],
     ];
 

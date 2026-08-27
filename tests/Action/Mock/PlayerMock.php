@@ -4,6 +4,7 @@ namespace Tests\Action\Mock;
 
 use App\Enum\EquipResult;
 use App\Interface\ActorInterface;
+use App\Service\PlayerPassiveService;
 use Classes\Item;
 
 class PlayerMock implements ActorInterface
@@ -166,6 +167,11 @@ class PlayerMock implements ActorInterface
     return $this->passivesList;
   }
 
+  public function getPlayerPassiveService(): PlayerPassiveService
+  {
+        return new PlayerPassiveService();
+  }
+    
   public function getEquipedItems(): array
   {
     return Item::get_equiped_list($this);

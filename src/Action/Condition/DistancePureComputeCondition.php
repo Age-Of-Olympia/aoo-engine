@@ -8,7 +8,7 @@ use Classes\View;
 class DistancePureComputeCondition extends ComputePureCondition
 {
 
-    protected function getDistanceTreshold() : int {
+    protected function getDistanceTreshold(ConditionObject $conditionObject) : int {
         return floor(($this->distance) * 2.5);
     }
 
@@ -50,10 +50,10 @@ class DistancePureComputeCondition extends ComputePureCondition
         return array($targetRoll->roll, $targetTotal, $targetTxt);
     }
 
-    protected function checkDistanceCondition(int $actorTotal): bool {
+    protected function checkDistanceCondition(int $actorTotal, ConditionObject $conditionObject): bool {
         $checkAboveDistance = true;
         if($this->distance > 1){
-            $distanceTreshold = $this->getDistanceTreshold();
+            $distanceTreshold = $this->getDistanceTreshold($conditionObject);
             $checkAboveDistance = $actorTotal >= $distanceTreshold;
         }
         return $checkAboveDistance;
