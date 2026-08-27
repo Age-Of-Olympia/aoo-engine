@@ -3,6 +3,7 @@
 namespace App\Interface;
 
 use App\Enum\EquipResult;
+use App\Service\PlayerPassiveService;
 use Classes\Item;
 
 interface ActorInterface
@@ -31,6 +32,7 @@ interface ActorInterface
   public function get_data(bool $forceRefresh=true);
   public function get_upgrades();
   public function getPassives(int $id): array;
+  public function getPlayerPassiveService(): PlayerPassiveService;
   public function getEquipedItems(): array;
   public function hasMagicalItemEquipped(): bool;
   public function getEquipedItemsEffects(): array;

@@ -75,11 +75,11 @@ abstract class AbstractComputeCondition extends BaseCondition
     {
         foreach ($conditionObject->getActorPassives() as $actorPassive) {
             if (in_array($this->actorRollTrait, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte")) {
-                if ($actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor, $actorPassive, $conditionObject)) {
+                if ($actor->getPlayerPassiveService()->checkPassiveConditionsByPlayerById($actor, $actorPassive, $conditionObject)) {
                     if ($actorPassive->getCarac() == "advantage") {
                         $conditionObject->setActorAdvantage(true);
                     } else {
-                        $conditionObject->addActorRollBonus($actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id, $actorPassive->getId()));
+                        $conditionObject->addActorRollBonus($actor->getPlayerPassiveService()->getComputedValueByPlayerIdById($actor->id, $actorPassive->getId()));
                     }
                 }
             }
@@ -90,11 +90,11 @@ abstract class AbstractComputeCondition extends BaseCondition
     {
         foreach ($conditionObject->getTargetPassives() as $targetPassive) {
             if (in_array($this->targetRollTrait, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte")) {
-                if ($target->playerPassiveService->checkPassiveConditionsByPlayerById($target, $targetPassive, $conditionObject)) {
+                if ($target->getPlayerPassiveService()->checkPassiveConditionsByPlayerById($target, $targetPassive, $conditionObject)) {
                     if ($targetPassive->getCarac() == "advantage") {
                         $conditionObject->setTargetAdvantage(true);
                     } else {
-                        $conditionObject->addTargetRollBonus($target->playerPassiveService->getComputedValueByPlayerIdById($target->id, $targetPassive->getId()));
+                        $conditionObject->addTargetRollBonus($target->getPlayerPassiveService()->getComputedValueByPlayerIdById($target->id, $targetPassive->getId()));
                     }
                 }
             }
@@ -115,7 +115,7 @@ abstract class AbstractComputeCondition extends BaseCondition
             $conditionDetailsSuccess[1] = $targetTxt;
         }
 
-        $checkAboveDistance = $this->checkDistanceCondition($actorTotal);
+        $checkAboveDistance = $this->checkDistanceCondition($actorTotal, $conditionObject);
 
         $rollResult = (new CombatResolver())->resolve($actorTotal, $targetTotal, $checkAboveDistance);
         $success = !AUTO_FAIL && $rollResult->hit;
@@ -124,7 +124,7 @@ abstract class AbstractComputeCondition extends BaseCondition
         if (!$success) {
             $conditionDetailsFailure = $conditionDetailsSuccess;
             if (!$checkAboveDistance) {
-                $conditionDetailsFailure[] = $this->throwName." n'atteint pas sa cible ! Il fallait un jet supérieur à ". $this->getDistanceTreshold() . ".";
+                $conditionDetailsFailure[] = $this->throwName." n'atteint pas sa cible ! Il fallait un jet supérieur à ". $this->getDistanceTreshold($conditionObject) . ".";
             }
         }
 
@@ -137,12 +137,12 @@ abstract class AbstractComputeCondition extends BaseCondition
     /** @return array [rolls, total, tooltip html] */
     abstract protected function computeTarget($target, $dice, $conditionObject);
 
-    protected function getDistanceTreshold(): int
+    protected function getDistanceTreshold(ConditionObject $conditionObject): int
     {
         return 0;
     }
 
-    protected function checkDistanceCondition(int $actorTotal): bool
+    protected function checkDistanceCondition(int $actorTotal, ConditionObject $conditionObject): bool
     {
         return true;
     }

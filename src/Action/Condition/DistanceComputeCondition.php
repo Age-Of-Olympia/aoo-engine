@@ -48,7 +48,7 @@ class DistanceComputeCondition extends ComputeCondition implements DeclaresSimul
         return (int) floor($distance * 2.5);
     }
 
-    protected function getDistanceTreshold() : int {
+    protected function getDistanceTreshold(ConditionObject $conditionObject) : int {
         return self::distanceThresholdFor($this->distance);
     }
 
@@ -99,10 +99,10 @@ class DistanceComputeCondition extends ComputeCondition implements DeclaresSimul
         return array($targetRoll->roll, $total, (new RollDetailView())->renderTarget($detail));
     }
 
-    protected function checkDistanceCondition(int $actorTotal): bool {
+    protected function checkDistanceCondition(int $actorTotal, ConditionObject $conditionObject): bool {
         $checkAboveDistance = true;
         if($this->distance > 1){
-            $distanceTreshold = $this->getDistanceTreshold();
+            $distanceTreshold = $this->getDistanceTreshold($conditionObject);
             $checkAboveDistance = $actorTotal >= $distanceTreshold;
         }
         return $checkAboveDistance;

@@ -2529,6 +2529,11 @@ class Player implements ActorInterface {
         return $this->playerPassiveService->getPassivesByPlayerId($playerId);
     }
 
+    public function getPlayerPassiveService(): PlayerPassiveService
+    {
+        return $this->playerPassiveService;
+    }
+
     public function getEquipedItems(): array {
         return Item::get_equiped_list($this);
     }

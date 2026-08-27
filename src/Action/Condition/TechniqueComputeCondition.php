@@ -5,14 +5,22 @@ class TechniqueComputeCondition extends ComputeCondition
 {
     protected string $throwName = "La technique";
 
-    protected function getDistanceTreshold() : int {
-        return (4 * ($this->distance - 1));
+    protected function getDistanceTreshold(ConditionObject $conditionObject) : int {
+        $bonusTreshold = 0;
+        foreach ($conditionObject->getActorPassives() as $actorPassive) {
+            $passiveName = $actorPassive->getName();
+
+            if($passiveName == "retrait"){
+                $bonusTreshold += (int) $actorPassive->getValue();
+            }
+        }
+        return (4 * ($this->distance - 1) - $bonusTreshold);
     }
 
-    protected function checkDistanceCondition(int $actorTotal): bool {
+    protected function checkDistanceCondition(int $actorTotal, ConditionObject $conditionObject): bool {
         $checkAboveDistance = true;
         if($this->distance > 1){
-            $distanceTreshold = $this->getDistanceTreshold();
+            $distanceTreshold = $this->getDistanceTreshold($conditionObject);
             $checkAboveDistance = $actorTotal >= $distanceTreshold;
         }
         return $checkAboveDistance;

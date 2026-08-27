@@ -50,8 +50,8 @@ class BuffComputeCondition extends ComputeCondition implements DeclaresSimulatio
 
         foreach ($conditionObject->getActorPassives() as $actorPassive) {
             if (in_array($this->actorRollTrait, $actorPassive->getTraits()) && ($actorPassive->getType() == "buff")) {
-                if($actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
-                    $conditionObject->addActorRollBonus($actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId()));
+                if($actor->getPlayerPassiveService()->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+                    $conditionObject->addActorRollBonus($actor->getPlayerPassiveService()->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId()));
                 }
             }
         }

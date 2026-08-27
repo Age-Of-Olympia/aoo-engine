@@ -64,7 +64,7 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
         [
             'name'          => 'meditation_arcanique',
             'traits'        => '["rm"]',
-            'type'          => 'buff',
+            'type'          => '',
             'carac'         => '',
             'value'         => 8.00,
             'level'         => 1,
@@ -76,7 +76,7 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
         [
             'name'          => 'meditation_somatique',
             'traits'        => '["r"]',
-            'type'          => 'buff',
+            'type'          => '',
             'carac'         => '',
             'value'         => 8.00,
             'level'         => 1,
@@ -88,7 +88,7 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
         [
             'name'          => 'recuperation_arcanique',
             'traits'        => '["rm"]',
-            'type'          => 'buff',
+            'type'          => '',
             'carac'         => '',
             'value'         => 8.00,
             'level'         => 1,
@@ -100,7 +100,7 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
         [
             'name'          => 'recuperation_somatique',
             'traits'        => '["r"]',
-            'type'          => 'buff',
+            'type'          => '',
             'carac'         => '',
             'value'         => 8.00,
             'level'         => 1,
@@ -112,7 +112,7 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
         [
             'name'          => 'retablissement_rapide',
             'traits'        => '["r"]',
-            'type'          => 'buff',
+            'type'          => '',
             'carac'         => '',
             'value'         => 5.00,
             'level'         => 2,
@@ -124,7 +124,7 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
         [
             'name'          => 'pickpocket',
             'traits'        => '[]',
-            'type'          => 'buff',
+            'type'          => '',
             'carac'         => '',
             'value'         => 2.00,
             'level'         => 2,
@@ -136,7 +136,7 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
         [
             'name'          => 'oeil_percant',
             'traits'        => '[]',
-            'type'          => 'buff',
+            'type'          => '',
             'carac'         => '',
             'value'         => 5.00,
             'level'         => 2,
@@ -148,7 +148,7 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
         [
             'name'          => 'oeil_aigle',
             'traits'        => '[]',
-            'type'          => 'buff',
+            'type'          => '',
             'carac'         => '',
             'value'         => 5.00,
             'level'         => 3,
@@ -160,7 +160,7 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
         [
             'name'          => 'oeil_ultime',
             'traits'        => '[]',
-            'type'          => 'buff',
+            'type'          => '',
             'carac'         => '',
             'value'         => 5.00,
             'level'         => 4,
@@ -185,9 +185,9 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
         [
             'name'          => 'maitre_lame',
             'traits'        => '[]',
-            'type'          => 'buff',
+            'type'          => '',
             'carac'         => '',
-            'value'         => 0.00,
+            'value'         => 2.00,
             'level'         => 2,
             'category'      => 'melee',
             'race'          => 'nain',
@@ -198,9 +198,9 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
         [
             'name'          => 'voie_eau',
             'traits'        => '[]',
-            'type'          => 'buff',
+            'type'          => '',
             'carac'         => '',
-            'value'         => 0.00,
+            'value'         => 3.00,
             'level'         => 2,
             'category'      => 'distance',
             'race'          => 'geant',
@@ -251,7 +251,7 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
         [
             'name'          => 'recuperation_runique',
             'traits'        => '["pui"]',
-            'type'          => 'buff',
+            'type'          => '',
             'carac'         => '',
             'value'         => 4.00,
             'level'         => 2,
@@ -260,6 +260,19 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
             'prerequisites' => '{"forbidden": ["maitre_lame"]}',
             'display_name'  => 'Récupération runique',
             'text'          => 'Ajoute Pui/4 PM par action dépensée lors d\'un Repos',
+        ],
+        [
+            'name'          => 'retrait',
+            'traits'        => '["fm"]',
+            'type'          => '',
+            'carac'         => 'fixed',
+            'value'         => 4.00,
+            'level'         => 2,
+            'category'      => 'magic',
+            'race'          => 'hs',
+            'prerequisites' => '{"forbidden": ["griffes"]}',
+            'display_name'  => 'Retrait',
+            'text'          => 'Réduit de 4 le seuil du jet de FM de distance',
         ],
     ];
 

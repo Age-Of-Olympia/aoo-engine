@@ -7,6 +7,7 @@ use App\Action\Condition\ConditionObject;
 use App\Factory\EntityManagerFactory;
 use App\Entity\PlayerPassive;
 use App\Entity\ActionPassive;
+use App\Interface\ActorInterface;
 use Classes\Player;
 use Classes\Db;
 
@@ -87,7 +88,7 @@ class PlayerPassiveService
         $player->caracs->esquive = $esquive;
     }
 
-    public function checkPassiveConditionsByPlayerById(Player $player, ActionPassive $passive, ConditionObject $conditionObject): bool
+    public function checkPassiveConditionsByPlayerById(ActorInterface $player, ActionPassive $passive, ConditionObject $conditionObject): bool
     {
         $conditions = $passive->getConditions();
         if(is_null($conditions)){
