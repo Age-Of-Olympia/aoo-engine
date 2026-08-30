@@ -96,6 +96,7 @@ RUN adduser --home /home/vscode --gid ${GID} --uid ${UID} vscode
 
 COPY --chown=${UID}:${GID} config/docker-php-ext-xdebug.ini /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 COPY --chown=${UID}:${GID} config/docker-php-ext-gd.ini /usr/local/etc/php/conf.d/docker-php-ext-gd.ini
+COPY --chown=${UID}:${GID} config/docker-php-memory.ini /usr/local/etc/php/conf.d/docker-php-memory.ini
 
 # Set the working directory to /var/www/html
 WORKDIR /var/www/html
