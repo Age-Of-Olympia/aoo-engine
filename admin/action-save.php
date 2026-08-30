@@ -26,6 +26,7 @@ try {
 
     $conditionParams = is_array($_POST['cond'] ?? null) ? $_POST['cond'] : [];
     $conditionContext = is_array($_POST['cond_ctx'] ?? null) ? $_POST['cond_ctx'] : [];
+    $conditionBlocking = is_array($_POST['cond_block'] ?? null) ? $_POST['cond_block'] : [];
     $instructionParams = is_array($_POST['inst'] ?? null) ? $_POST['inst'] : [];
     $conditionRaw = is_array($_POST['cond_raw'] ?? null) ? $_POST['cond_raw'] : [];
     $instructionRaw = is_array($_POST['inst_raw'] ?? null) ? $_POST['inst_raw'] : [];
@@ -47,7 +48,7 @@ try {
     if (array_key_exists('category', $_POST)) {
         $saveService->saveCategory($actionId, (string) $_POST['category']);
     }
-    $saveService->saveParameters($actionId, $conditionParams, $instructionParams, $conditionRaw, $instructionRaw, $conditionContext);
+    $saveService->saveParameters($actionId, $conditionParams, $instructionParams, $conditionRaw, $instructionRaw, $conditionContext, $conditionBlocking);
     $saveService->saveOutcomeTargets($actionId, $outcomeTargets);
     // Type STI en DERNIER : saveType() clear() l'EntityManager — les
     // enregistrements précédents doivent d'abord flusher leurs entités.

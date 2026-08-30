@@ -46,6 +46,7 @@ final class ActionSaveService
         array $conditionRaw = [],
         array $instructionRaw = [],
         array $conditionContext = [],
+        array $conditionBlocking = [],
     ): void {
         $action = EntityFinder::orFail($this->entityManager, Action::class, $actionId, 'Action');
 
@@ -64,6 +65,7 @@ final class ActionSaveService
                 // Case décochée absente du POST : le formulaire de save
                 // porte TOUTES les conditions, l'absence vaut false.
                 $condition->setDisplayContext(!empty($conditionContext[$condition->getId()]));
+                $condition->setBlocking(!empty($conditionBlocking[$condition->getId()]));
             }
 
             foreach ($action->getOutcomes() as $outcome) {

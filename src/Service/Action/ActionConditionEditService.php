@@ -33,6 +33,12 @@ final class ActionConditionEditService
     /**
      * Add an empty condition of the given type to an action; its parameters are
      * configured afterwards via the normal save flow.
+     *
+     * It is born BLOCKING. A requirement that fails must refuse the action, and
+     * a fresh condition is a requirement far more often than it is a roll — the
+     * compute family is the handful of exceptions, and the workbench checkbox
+     * exists to say so. Born non-blocking, an unfinished condition let the
+     * action run and charged the player for it, silently.
      */
     public function addCondition(int $actionId, string $conditionType): ActionCondition
     {
@@ -44,7 +50,7 @@ final class ActionConditionEditService
         $condition = new ActionCondition();
         $condition->setConditionType($conditionType);
         $condition->setParameters([]);
-        $condition->setBlocking(false);
+        $condition->setBlocking(true);
         $condition->setAction($action);
         $action->addCondition($condition);
 

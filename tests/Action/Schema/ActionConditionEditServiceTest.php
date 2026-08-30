@@ -40,6 +40,20 @@ class ActionConditionEditServiceTest extends TestCase
         $this->assertSame([], $condition->getParameters());
     }
 
+    /**
+     * A fresh condition refuses the action until told otherwise. Born
+     * non-blocking, a half-configured requirement let the action run and
+     * charged the player for it without a word.
+     */
+    public function testANewConditionIsBornBlocking(): void
+    {
+        $action = $this->createMock(Action::class);
+        $em = $this->entityManager();
+        $em->method('find')->willReturn($action);
+
+        $this->assertTrue($this->service($em)->addCondition(5, 'Plan')->isBlocking());
+    }
+
     public function testRejectsAnUnknownConditionType(): void
     {
         $em = $this->entityManager();

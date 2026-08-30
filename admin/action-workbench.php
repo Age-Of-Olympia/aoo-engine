@@ -207,6 +207,14 @@ if ($action === null) {
             . $conditionEditor->removeButton((int) $condition->getId()) . '</div>';
         echo '<div class="wb-block-body">';
         echo $renderParams($schema, $params, 'cond[' . (int) $condition->getId() . ']', 'cond_raw[' . (int) $condition->getId() . ']');
+        /* Blocking: an unmet condition REFUSES the action — the executor
+         * stops before the outcomes and before the costs. Unchecked, the
+         * action runs and is paid for even though the condition failed,
+         * which is what a compute roll wants and a requirement never does. */
+        echo '<label class="wb-field"><span>Bloquante</span>'
+            . '<span><input type="checkbox" name="cond_block[' . (int) $condition->getId() . ']" value="1" '
+            . ($condition->isBlocking() ? 'checked' : '') . '>'
+            . ' l\'action est refusée, sans coût, si la condition échoue</span></label>';
         /* Contexte d'affichage : le bouton du panneau n'apparaît que si
          * cette condition passe (évaluée au rendu, en plus du refus à
          * l'exécution). */

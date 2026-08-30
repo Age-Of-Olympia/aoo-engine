@@ -56,6 +56,37 @@ class ActionSaveServiceTest extends TestCase
         $this->assertSame(['a' => 1, 'pm' => 8], $condition->getParameters());
     }
 
+    /**
+     * Blocking is editable from the workbench. An unchecked box is absent from
+     * the POST, and the form carries every condition, so absence means false.
+     */
+    public function testSavesTheBlockingFlagFromTheForm(): void
+    {
+        $becomesBlocking = new ActionCondition();
+        $becomesBlocking->setConditionType('RequiresItem');
+        $this->setId($becomesBlocking, ActionCondition::class, 5);
+
+        $becomesFailing = (new ActionCondition())->setBlocking(true);
+        $becomesFailing->setConditionType('MeleeCompute');
+        $this->setId($becomesFailing, ActionCondition::class, 6);
+
+        $action = $this->createMock(Action::class);
+        $action->method('getConditions')->willReturn(new ArrayCollection([$becomesBlocking, $becomesFailing]));
+        $action->method('getOutcomes')->willReturn(new ArrayCollection());
+
+        $service = new ActionSaveService(
+            $this->entityManagerReturning($action),
+            null,
+            null,
+            $this->createMock(OutcomeInstructionService::class),
+        );
+
+        $service->saveParameters(1, [], [], [], [], [], [5 => '1']);
+
+        $this->assertTrue($becomesBlocking->isBlocking(), 'la case cochée rend la condition bloquante');
+        $this->assertFalse($becomesFailing->isBlocking(), 'la case décochée est absente du POST');
+    }
+
     public function testSavesEachOutcomesApplyToValue(): void
     {
         $toSelf = new ActionOutcome();
