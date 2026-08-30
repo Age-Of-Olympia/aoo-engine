@@ -1,5 +1,4 @@
 <?php
-use Classes\Db;
 $mvt = 1;
 
 // pouvoir divin
@@ -20,15 +19,7 @@ if($player->data->godId == '4'){
 // route
 $route = '';
 
-$sql = 'SELECT COUNT(*) AS n FROM map_routes WHERE coords_id = ?';
-
-$db = new Db();
-
-$res = $db->exe($sql, $player->data->coords_id);
-
-$row = $res->fetch_object();
-
-if($row->n){
+if ((new \App\Service\Map\RoadService())->hasRoadAt((int) $player->data->coords_id)) {
 
     $route = '+1 (route)';
 
