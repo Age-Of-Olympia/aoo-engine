@@ -92,6 +92,19 @@ class ActionExecutorService
                 if (!$this->simulationMode && $this->action->activateAntiBerserk()) {
                     $this->playerService->updateLastActionTime();
                 }
+
+                /* Acting on a construction IS using it, and using it holds
+                 * it together: the horizon moves, nothing is healed. Silent
+                 * for anything not enrolled, so acting on a Tiled wall never
+                 * enrols it.
+                 *
+                 * An ATTACK is not use. The executor already knows the
+                 * target's life before and after, so the question needs no
+                 * new notion of hostility: a blow that took life does not
+                 * maintain what it damaged. */
+                if (!$this->simulationMode && $this->finalTargetPv >= $this->initialTargetPv) {
+                    (new \App\Service\Decay\StructureDecayService())->touch((int) $this->target->id);
+                }
             }
 
             // 4) calculate XP — from the action's per-type rule (action_type_xp).

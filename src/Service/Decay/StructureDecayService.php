@@ -112,12 +112,6 @@ final class StructureDecayService
         );
     }
 
-    /** A construction removed by other means takes its row with it. */
-    public function forget(int $entityId): void
-    {
-        $this->conn->executeStatement('DELETE FROM entity_decay WHERE player_id = ?', [$entityId]);
-    }
-
     /**
      * Apply every turn owed to every enrolled construction, then destroy
      * what this pass — and only this pass — brought to zero.

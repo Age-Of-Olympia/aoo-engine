@@ -469,6 +469,16 @@ class BuildingService extends BaseService
             }
         });
 
+        /* Only a player's `construire` gesture enrols a construction in
+         * decay, and $asConstructionSite is exactly that gesture — admin and
+         * editor placements never pass it. Provenance is known HERE and
+         * nowhere later: a finished site cannot tell how it was raised.
+         * A site carries its row while still being built; the decay pass
+         * leaves it alone until the last stone. */
+        if ($asConstructionSite) {
+            (new \App\Service\Decay\StructureDecayService())->enrol($id);
+        }
+
         if ($asConstructionSite && $race->getBuildWork() > 0) {
             (new ConstructionSiteService())->open($id, $race->getBuildWork());
         } else {

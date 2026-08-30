@@ -222,6 +222,47 @@ class StructureDecayTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /**
+     * Enrolment follows the PLAYER's gesture, not ownership.
+     *
+     * `asConstructionSite` is that gesture: only the build action passes it,
+     * while the admin page and `buildingcmd` raise finished buildings
+     * without it. This is the whole criterion, so it is pinned where it is
+     * decided rather than where it is read.
+     */
+    public function testOnlyThePlayerGestureEnrols(): void
+    {
+        [$x, $y] = $this->farTile();
+
+        $admin = $this->placeStructure(self::TYPE, $x, $y);
+        $this->assertSame(
+            0,
+            (int) $this->link->fetchOne('SELECT COUNT(*) FROM entity_decay WHERE player_id = ?', [$admin]),
+            'an admin placement enrols nothing'
+        );
+
+        $built = $this->placeStructure(self::TYPE, $x + 1, $y, asConstructionSite: true);
+        $this->assertSame(
+            1,
+            (int) $this->link->fetchOne('SELECT COUNT(*) FROM entity_decay WHERE player_id = ?', [$built]),
+            'the construire gesture enrols'
+        );
+    }
+
+    /** Its horizon starts one grace away, not at zero. */
+    public function testEnrolmentSetsTheHorizonOneGraceAway(): void
+    {
+        [$x, $y] = $this->farTile();
+        $before = time();
+        $id = $this->placeStructure(self::TYPE, $x, $y, asConstructionSite: true);
+
+        $from = (int) $this->link->fetchOne('SELECT decay_from FROM entity_decay WHERE player_id = ?', [$id]);
+        $grace = (new DecayDefaultsService())->graceTurns() * $this->turn();
+
+        $this->assertGreaterThanOrEqual($before + $grace, $from);
+        $this->assertLessThanOrEqual(time() + $grace, $from);
+    }
+
     /** The type overrides the global dial. */
     public function testATypeMayCarryItsOwnRate(): void
     {

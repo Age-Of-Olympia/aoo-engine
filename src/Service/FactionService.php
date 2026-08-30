@@ -237,19 +237,24 @@ class FactionService
      *
      * @return array<int, array{id: int, name: string, type: string, label: string,
      *                          playable: bool, build_state: string, site_done: ?int,
-     *                          site_total: ?int, x: int, y: int, plan: string}>
+     *                          site_total: ?int, x: int, y: int, plan: string,
+     *                          life_pct: int, decays: bool}>
      */
     public function buildingsOf(string $code): array
     {
         $rows = $this->entityManager->getConnection()->fetchAllAssociative(
             "SELECT p.id, p.name, p.race, r.label, r.playable,
                     b.build_state, cs.work_done AS site_done, cs.work_total AS site_total,
-                    c.x, c.y, c.plan
+                    c.x, c.y, c.plan,
+                    r.pv AS pv_max, COALESCE(pb.n, 0) AS pv_deficit,
+                    ed.player_id IS NOT NULL AS decays
                FROM players p
                JOIN buildings b ON b.player_id = p.id
                JOIN coords c ON c.id = p.coords_id
                LEFT JOIN races r ON CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4)
                LEFT JOIN construction_sites cs ON cs.player_id = p.id
+               LEFT JOIN players_bonus pb ON pb.player_id = p.id AND pb.name = 'pv'
+               LEFT JOIN entity_decay ed ON ed.player_id = p.id
               WHERE p.player_type = 'building'
                 AND CONVERT(p.faction USING utf8mb4) = CONVERT(? USING utf8mb4)
               ORDER BY c.plan, p.name",
@@ -268,6 +273,13 @@ class FactionService
             'x'           => (int) $row['x'],
             'y'           => (int) $row['y'],
             'plan'        => (string) $row['plan'],
+            /* Life as a share of the type's maximum: this is the only place
+               a faction is told a construction is going soft, so it carries
+               the figure rather than a bare "damaged". */
+            'life_pct'    => (int) $row['pv_max'] > 0
+                ? (int) floor(((int) $row['pv_max'] + (int) $row['pv_deficit']) / (int) $row['pv_max'] * 100)
+                : 100,
+            'decays'      => (bool) $row['decays'],
         ], $rows);
     }
 

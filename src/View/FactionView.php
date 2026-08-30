@@ -410,6 +410,42 @@ class FactionView
     }
 
     /**
+     * How a construction is holding up.
+     *
+     * The faction page is the ONLY place decay is announced: a construction
+     * attached to no faction warns nobody, deliberately — a faction is a
+     * group of people, and several pairs of eyes notice a wall going soft.
+     * Build alone and you do not know what happens while you are away.
+     *
+     * Flagged below 75 %, which leaves 25 points before
+     * BuildingService::CLOSED_BELOW_PV_PCT shuts the counter: the faction
+     * hears about it while the building still works, and while repairing
+     * still costs less than rebuilding.
+     *
+     * @param array<string, mixed> $building a FactionService::buildingsOf() row
+     */
+    private static function upkeepCellHtml(array $building): string
+    {
+        if (empty($building['decays'])) {
+            return '<span style="opacity: 0.5;">—</span>';
+        }
+
+        $pct = (int) $building['life_pct'];
+
+        if ($pct >= \App\Service\Decay\StructureDecayService::ALERT_BELOW_PCT) {
+            return $pct . '&nbsp;%';
+        }
+
+        $colour = $pct < \App\Service\BuildingService::CLOSED_BELOW_PV_PCT ? 'red' : '#b45f06';
+
+        return '<span style="color: ' . $colour . '; font-weight: bold;" title="'
+            . ($pct < \App\Service\BuildingService::CLOSED_BELOW_PV_PCT
+                ? 'Trop abîmé pour servir : à réparer.'
+                : 'Se dégrade faute d\'entretien — s\'en servir suffit à l\'entretenir.')
+            . '">' . $pct . '&nbsp;% <span class="ra ra-bleeding-eye"></span></span>';
+    }
+
+    /**
      * The faction's buildings — its assets, shown to its members only (the
      * caller applies that rule, the same one that hides the territory).
      * A member sees the "take command" gesture on the playable, finished
@@ -431,7 +467,8 @@ class FactionView
     <tr>
         <th>Nom</th>
         <th>Type</th>
-        <th>État</th>'
+        <th>État</th>
+        <th>Entretien</th>'
         . ($mayDrive ? '
         <th>Contenu</th>
         <th>Commandes</th>' : '') . '
@@ -455,7 +492,8 @@ class FactionView
             <td>' . htmlspecialchars((string) $b['label'], ENT_QUOTES, 'UTF-8')
                 . ($b['playable'] ? ' <span class="ra ra-castle-flag" title="Pilotable par la faction"></span>' : '') . '</td>
             <td>' . $state
-                . ($mayDrive ? self::lockCellHtml((int) $b['id'], $drivenId) : '') . '</td>';
+                . ($mayDrive ? self::lockCellHtml((int) $b['id'], $drivenId) : '') . '</td>
+            <td>' . self::upkeepCellHtml($b) . '</td>';
 
             if ($mayDrive) {
                 echo '
