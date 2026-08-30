@@ -44,17 +44,28 @@ class RestOutcomeInstruction extends OutcomeInstruction implements HasParameterS
 
         foreach ($conditionObject->getActorPassives() as $actorPassive) {
             $passiveName = $actorPassive->getName();
-            $traitsArray = json_decode($actorPassive->getTraits(), true);
-            $trait = $traitsArray[0];
 
-            if(($passiveName == "meditation_arcanique" || $passiveName == "meditation_somatique" || $passiveName == "recuperation_runique") && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
-                $bonusPM += $actor->caracs->$actorPassive->{$trait} / $actorPassive->getValue();
+            if (!$actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor, $actorPassive, $conditionObject)) {
+                continue;
             }
-            if(($passiveName == "recuperation_arcanique" || $passiveName == "recuperation_somatique") && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
-                $bonusPV += $actor->caracs->$actorPassive->{$trait} / $actorPassive->getValue();
+
+            $traitsArray = $actorPassive->getTraits();
+            $trait = $traitsArray[0] ?? null;
+            $passiveValue = $actorPassive->getValue();
+
+            if (!$trait || empty($passiveValue) || !isset($actor->caracs->{$trait})) {
+                continue;
             }
-            if($$passiveName == "retablissement_rapide" && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
-                $bonusMalus += $actor->caracs->$actorPassive->{$trait} / $actorPassive->getValue();
+
+            $statValue = $actor->caracs->{$trait};
+            $bonusRatio = $statValue / $passiveValue;
+
+            if(in_array($passiveName, ["meditation_arcanique", "meditation_somatique", "recuperation_runique"], true)){
+                $bonusPM += $bonusRatio;
+            } elseif (in_array($passiveName, ["recuperation_arcanique", "recuperation_somatique"], true)) {
+                $bonusPV += $bonusRatio;
+            } elseif ($passiveName === "retablissement_rapide") {
+                $bonusMalus += $bonusRatio;
             }
         }
 

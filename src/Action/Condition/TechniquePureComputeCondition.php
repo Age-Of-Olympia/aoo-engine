@@ -16,7 +16,7 @@ class TechniquePureComputeCondition extends ComputePureCondition
             }
         }
         
-        return (4 * ($this->distance - 1));
+        return (4 * ($this->distance - 1) - $bonusTreshold);
     }
 
     protected function checkDistanceCondition(int $actorTotal, ConditionObject $conditionObject): bool {
