@@ -25,7 +25,7 @@ class NoBerserkCondition extends BaseCondition implements HasParameterSchemaInte
             <font color="red">Mesure anti-Berserk!</font><br />
             Prochaine Action possible dans :<br />
             '.$this->convertToHoursMins($timeLeft, '%02d heures et %02d minutes.');
-            $condition->setBlocking(true);
+            // Refusal: its config row is blocking, so nothing is paid.
             $result = new ConditionResult(false, array(), $errorMessage);
         }
 

@@ -194,7 +194,10 @@ class ActionExecutorService
             $result = $result && $conditionResult->isSuccess();
             array_push($this->conditionResultsArray, $conditionResult);
 
-            if (!$conditionResult->isSuccess() && $condEntity->isBlocking()) {
+            /* Two sources of refusal, never conflated: what the condition IS
+             * (its own immutable flag) and what just happened (a blocking
+             * precondition refused this particular attempt). */
+            if (!$conditionResult->isSuccess() && ($condEntity->isBlocking() || $conditionResult->isBlocking())) {
                 $this->blocked = true;
                 break;
             }
@@ -226,20 +229,23 @@ class ActionExecutorService
         }
 
         $success = true;
+        $blocking = false;
         $successMessages = [];
         $failureMessages = [];
         foreach ($preconditions as $precondition) {
-            $preResult = $precondition->check($this->actor, $this->target, $condEntity, $this->conditionObject);
+            $preResult = $precondition->handler()->check($this->actor, $this->target, $condEntity, $this->conditionObject);
             if ($preResult->isSuccess()) {
                 $successMessages = array_merge($successMessages, $preResult->getConditionSuccessMessages());
             } else {
                 $failureMessages = array_merge($failureMessages, $preResult->getConditionFailureMessages());
+                // The config row says whether THIS failure refuses the action.
+                $blocking = $blocking || $precondition->isBlocking();
             }
             $success = $success && $preResult->isSuccess();
         }
 
         if (!$success) {
-            return new ConditionResult(false, $successMessages, $failureMessages);
+            return new ConditionResult(false, $successMessages, $failureMessages, $blocking);
         }
 
         return $condition->check($this->actor, $this->target, $condEntity, $this->conditionObject);

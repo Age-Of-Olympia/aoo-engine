@@ -36,6 +36,18 @@ use App\Service\BuildingService;
  * d'obstacles (`races.blocks_projectiles` — une table ou un tonneau laisse
  * passer), un message qui nomme l'obstacle et le situe.
  *
+ * # An obstacle REFUSES the shot, it does not receive it
+ *
+ * The shot used to leave anyway and fail like a dodge: the projectile
+ * crashed into the obstacle and the action was paid for. Testers read that
+ * as an attack against the obstacle — an action and its cost lost on a
+ * gesture the character can see to be impossible.
+ *
+ * It is therefore declared BLOCKING in `action_condition_preconditions`:
+ * the executor stops before the outcomes and before the costs. Nothing is
+ * loosed, nothing is paid. A dodge stays a paid failure — the arrow did
+ * leave, and its row is not blocking.
+ *
  * Le tracé est rendu par `window.showLineOfFire`, celui du clic droit :
  * pointillés du tireur à la cible, un point sur chaque obstacle. Il est
  * transitoire, là où l'ancien clignotement durait jusqu'au rechargement.
@@ -67,9 +79,9 @@ class ObstacleCondition extends BaseCondition implements HasParameterSchemaInter
 
         [$blockerX, $blockerY] = $report['blocker'];
 
-        $message = 'Votre tir s\'écrase sur '
-            . htmlspecialchars((string) $report['blockerName'], ENT_QUOTES, 'UTF-8')
-            . ' en (' . $blockerX . ', ' . $blockerY . ') !'
+        $message = htmlspecialchars((string) $report['blockerName'], ENT_QUOTES, 'UTF-8')
+            . ' bloque la ligne de tir en (' . $blockerX . ', ' . $blockerY . ')'
+            . ' : vous ne tirez pas.'
             . $this->traceScript($from, $to, $report);
 
         return new ConditionResult(false, array(), array($message));

@@ -213,7 +213,7 @@ class ActionSimulationServiceTest extends TestCase
         $input = new SimulationInput(actorCaracs: ['cc' => 10], targetCaracs: ['cc' => 1], actorEquipment: ['tete' => 'casque']);
 
         $antiSpell = (new ActionConditionPrecondition())->setParentConditionType('SpellCompute')
-            ->setPreconditionType('AntiSpell')->setOrderIndex(0);
+            ->setPreconditionType('AntiSpell')->setOrderIndex(0)->setBlocking(true);
         $casque = ['casque' => (object) ['type' => 'equipement', 'emplacement' => 'tete', 'subtype' => 'casque', 'name' => 'Casque', 'spellMalus' => 1]];
 
         $results = $this->simulationServiceWith(conditionPreconditions: [$antiSpell], weapons: $casque)->simulate($action, $input);
@@ -248,7 +248,7 @@ class ActionSimulationServiceTest extends TestCase
             actorEquipment: ['main2' => 'bouclier', 'deuxmains' => 'lame', 'tete' => 'casque'],
         );
         $antiSpell = (new ActionConditionPrecondition())->setParentConditionType('SpellCompute')
-            ->setPreconditionType('AntiSpell')->setOrderIndex(0);
+            ->setPreconditionType('AntiSpell')->setOrderIndex(0)->setBlocking(true);
         $weapons = [
             'gladius' => (object) ['type' => 'equipement', 'emplacement' => 'main1', 'subtype' => 'melee', 'name' => 'Gladius'],
             'bouclier' => (object) ['type' => 'equipement', 'emplacement' => 'main2', 'subtype' => 'bouclier', 'name' => 'Bouclier'],
@@ -281,7 +281,7 @@ class ActionSimulationServiceTest extends TestCase
         $input = new SimulationInput(actorCaracs: ['cc' => 10], targetCaracs: ['cc' => 1], actorWeapon: 'gladius');
 
         $antiSpell = (new ActionConditionPrecondition())->setParentConditionType('SpellCompute')
-            ->setPreconditionType('AntiSpell')->setOrderIndex(0);
+            ->setPreconditionType('AntiSpell')->setOrderIndex(0)->setBlocking(true);
         $gladius = ['gladius' => (object) ['type' => 'equipement', 'emplacement' => 'main1', 'subtype' => 'melee', 'name' => 'Gladius', 'spellMalus' => 1]];
 
         $results = $this->simulationServiceWith(conditionPreconditions: [$antiSpell], weapons: $gladius)->simulate($action, $input);
@@ -296,7 +296,7 @@ class ActionSimulationServiceTest extends TestCase
         $input = new SimulationInput(actorCaracs: ['cc' => 10], targetCaracs: ['cc' => 1], actorWeapon: 'melee', actorBerserk: true);
 
         $noBerserk = (new ActionConditionPrecondition())->setParentConditionType('MeleeCompute')
-            ->setPreconditionType('NoBerserk')->setOrderIndex(0);
+            ->setPreconditionType('NoBerserk')->setOrderIndex(0)->setBlocking(true);
 
         $results = $this->simulationServiceWith(conditionPreconditions: [$noBerserk])->simulate($action, $input);
 

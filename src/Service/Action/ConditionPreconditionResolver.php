@@ -5,7 +5,6 @@ namespace App\Service\Action;
 use App\Action\Condition\ConditionRegistry;
 use App\Entity\ActionConditionPrecondition;
 use App\Factory\EntityManagerFactory;
-use App\Interface\ConditionInterface;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
@@ -19,6 +18,9 @@ use Doctrine\ORM\EntityManagerInterface;
  * The handlers read their parameters from the parent condition they precede (as
  * Dodge/NoBerserk/Obstacle/AntiSpell always have), so only the type + order are
  * needed to reproduce the current behaviour.
+ *
+ * Each row also carries what its failure costs ({@see ResolvedPrecondition}):
+ * a refusal of the action, or a paid failure.
  */
 final class ConditionPreconditionResolver
 {
@@ -32,7 +34,7 @@ final class ConditionPreconditionResolver
     }
 
     /**
-     * @return array<int, ConditionInterface>
+     * @return array<int, ResolvedPrecondition>
      */
     public function resolve(string $conditionType): array
     {
@@ -40,14 +42,14 @@ final class ConditionPreconditionResolver
         $rows = $this->entityManager->getRepository(ActionConditionPrecondition::class)
             ->findBy(['parentConditionType' => $conditionType], ['orderIndex' => 'ASC']);
 
-        $handlers = [];
+        $preconditions = [];
         foreach ($rows as $row) {
             $handler = $this->registry->getCondition($row->getPreconditionType());
             if ($handler !== null) {
-                $handlers[] = $handler;
+                $preconditions[] = new ResolvedPrecondition($handler, $row->isBlocking());
             }
         }
 
-        return $handlers;
+        return $preconditions;
     }
 }

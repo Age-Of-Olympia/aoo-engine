@@ -34,7 +34,7 @@ class AntiSpellCondition extends BaseCondition implements HasParameterSchemaInte
         }
 
         if($blocked){
-            $condition->setBlocking(true);
+            // Refusal: its config row is blocking, so nothing is paid.
             return new ConditionResult(false, array(), $errorMessages);
         }
 

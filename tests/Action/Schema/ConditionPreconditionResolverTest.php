@@ -25,12 +25,29 @@ class ConditionPreconditionResolverTest extends TestCase
             $this->row('SpellCompute', 'AntiSpell', 3),
         ]);
 
-        $handlers = $resolver->resolve('SpellCompute');
+        $resolved = $resolver->resolve('SpellCompute');
 
-        $this->assertInstanceOf(DodgeCondition::class, $handlers[0]);
-        $this->assertInstanceOf(NoBerserkCondition::class, $handlers[1]);
-        $this->assertInstanceOf(ObstacleCondition::class, $handlers[2]);
-        $this->assertInstanceOf(AntiSpellCondition::class, $handlers[3]);
+        $this->assertInstanceOf(DodgeCondition::class, $resolved[0]->handler());
+        $this->assertInstanceOf(NoBerserkCondition::class, $resolved[1]->handler());
+        $this->assertInstanceOf(ObstacleCondition::class, $resolved[2]->handler());
+        $this->assertInstanceOf(AntiSpellCondition::class, $resolved[3]->handler());
+    }
+
+    /**
+     * Each row says what its failure costs. A dodge is a paid failure; an
+     * obstacle refuses the action before any cost is taken.
+     */
+    public function testEachRowCarriesWhatItsFailureCosts(): void
+    {
+        $resolver = $this->resolver([
+            $this->row('DistanceCompute', 'Dodge', 0),
+            $this->row('DistanceCompute', 'Obstacle', 1, blocking: true),
+        ]);
+
+        $resolved = $resolver->resolve('DistanceCompute');
+
+        $this->assertFalse($resolved[0]->isBlocking(), 'une esquive est un échec payé');
+        $this->assertTrue($resolved[1]->isBlocking(), 'un obstacle refuse le tir');
     }
 
     public function testQueriesByParentConditionTypeOrderedByOrderIndex(): void
@@ -53,18 +70,19 @@ class ConditionPreconditionResolverTest extends TestCase
             $this->row('MeleeCompute', 'NotARealCondition', 1),
         ]);
 
-        $handlers = $resolver->resolve('MeleeCompute');
+        $resolved = $resolver->resolve('MeleeCompute');
 
-        $this->assertCount(1, $handlers);
-        $this->assertInstanceOf(DodgeCondition::class, $handlers[0]);
+        $this->assertCount(1, $resolved);
+        $this->assertInstanceOf(DodgeCondition::class, $resolved[0]->handler());
     }
 
-    private function row(string $parent, string $precondition, int $order): ActionConditionPrecondition
+    private function row(string $parent, string $precondition, int $order, bool $blocking = false): ActionConditionPrecondition
     {
         return (new ActionConditionPrecondition())
             ->setParentConditionType($parent)
             ->setPreconditionType($precondition)
-            ->setOrderIndex($order);
+            ->setOrderIndex($order)
+            ->setBlocking($blocking);
     }
 
     /**

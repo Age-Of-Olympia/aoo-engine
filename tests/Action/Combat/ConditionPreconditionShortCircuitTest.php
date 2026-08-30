@@ -61,13 +61,13 @@ class ConditionPreconditionShortCircuitTest extends TestCase
             typeInstructionResolver: new ActionTypeInstructionResolver($this->em([])),
             preconditionResolver: new ActionTypePreconditionResolver($this->em([])),
             conditionPreconditionResolver: new ConditionPreconditionResolver($this->em([
-                $this->precondition('MeleeCompute', 'NoBerserk'),
+                $this->precondition('MeleeCompute', 'NoBerserk', blocking: true),
             ])),
             logResolver: new ActionLogResolver($this->em([])),
             xpResolver: new ActionXpResolver($this->em([])),
         ))->executeAction();
 
-        // NoBerserk failing sets the parent condition blocking → the action blocks.
+        // NoBerserk's row is blocking, so its failure refuses the action.
         $this->assertTrue($results->isBlocked());
         // The result is the NoBerserk failure, not a compute roll — proving the
         // roll was short-circuited.
@@ -88,12 +88,51 @@ class ConditionPreconditionShortCircuitTest extends TestCase
         return $text;
     }
 
-    private function precondition(string $parent, string $precondition): ActionConditionPrecondition
+    /**
+     * A non-blocking precondition still short-circuits the roll, but the action
+     * goes on and pays: that is a dodge. Only a blocking row refuses.
+     */
+    public function testANonBlockingPreconditionFailsWithoutRefusingTheAction(): void
+    {
+        $action = new MeleeAction();
+        $action->setName('attaquer');
+        $compute = new ActionCondition();
+        $compute->setConditionType('MeleeCompute');
+        $compute->setParameters(['actorRollType' => 'cc', 'targetRollType' => 'cc']);
+        $compute->setExecutionOrder(0);
+        $compute->setBlocking(false);
+        $action->addCondition($compute);
+
+        $coords = (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'gaia'];
+        $weapon = (object) ['main1' => (object) ['data' => (object) ['name' => 'épée']]];
+        $actor = new SimulatedPlayer(1, ['cc' => 10], ['pv' => 20, 'pa' => 10], $coords, ['name' => 'Acteur', 'antiBerserkTime' => time() + 3600], $weapon);
+        $target = new SimulatedPlayer(2, ['cc' => 1], ['pv' => 20], $coords, ['name' => 'Cible'], $weapon);
+
+        $results = (new ActionExecutorService(
+            $action,
+            $actor,
+            $target,
+            simulationMode: true,
+            typeInstructionResolver: new ActionTypeInstructionResolver($this->em([])),
+            preconditionResolver: new ActionTypePreconditionResolver($this->em([])),
+            conditionPreconditionResolver: new ConditionPreconditionResolver($this->em([
+                $this->precondition('MeleeCompute', 'NoBerserk'),
+            ])),
+            logResolver: new ActionLogResolver($this->em([])),
+            xpResolver: new ActionXpResolver($this->em([])),
+        ))->executeAction();
+
+        $this->assertFalse($results->isSuccess(), 'la précondition a bien échoué');
+        $this->assertFalse($results->isBlocked(), 'sans ligne bloquante, l\'action est payée');
+    }
+
+    private function precondition(string $parent, string $precondition, bool $blocking = false): ActionConditionPrecondition
     {
         return (new ActionConditionPrecondition())
             ->setParentConditionType($parent)
             ->setPreconditionType($precondition)
-            ->setOrderIndex(0);
+            ->setOrderIndex(0)
+            ->setBlocking($blocking);
     }
 
     /**

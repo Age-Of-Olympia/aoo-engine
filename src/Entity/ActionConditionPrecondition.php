@@ -38,6 +38,23 @@ class ActionConditionPrecondition
     #[ORM\Column(type: "integer", name: "order_index", options: ["default" => 0])]
     private int $orderIndex = 0;
 
+    /**
+     * A failure here REFUSES the action rather than failing it: the executor
+     * stops before the outcomes and before the costs.
+     *
+     * The distinction is the player's. A dodge is a paid failure — the arrow
+     * did leave. An obstacle on the line of fire, an anti-Berserk window, a
+     * helmet that forbids magic: the character sees the gesture is
+     * impossible and does not attempt it.
+     *
+     * The flag lives HERE and not on the parent condition, whose `blocking`
+     * states what that condition IS for its whole existence — a
+     * DistanceCompute is not blocking, or a missed shot would be free. The
+     * refusal belongs to the precondition that pronounced it.
+     */
+    #[ORM\Column(type: "boolean", options: ["default" => false])]
+    private bool $blocking = false;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -96,6 +113,17 @@ class ActionConditionPrecondition
     public function setOrderIndex(int $orderIndex): self
     {
         $this->orderIndex = $orderIndex;
+        return $this;
+    }
+
+    public function isBlocking(): bool
+    {
+        return $this->blocking;
+    }
+
+    public function setBlocking(bool $blocking): self
+    {
+        $this->blocking = $blocking;
         return $this;
     }
 }

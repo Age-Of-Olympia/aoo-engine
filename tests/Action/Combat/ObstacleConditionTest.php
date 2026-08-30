@@ -82,17 +82,58 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         // Plein milieu de la trajectoire, et un type qui arrête les projectiles.
         $this->placeStructure('mur_pierre', $x + 2, $y);
 
+        $condition = $this->condition();
         $result = (new ObstacleCondition())->check(
-            $shooter, $victim, $this->condition(), new ConditionObject()
+            $shooter, $victim, $condition, new ConditionObject()
         );
 
         $this->assertFalse($result->isSuccess(), 'un mur de pierre doit arrêter le tir');
         $messages = $result->getConditionFailureMessages();
-        $this->assertStringContainsString('s\'écrase sur', $messages[0]);
+        $this->assertStringContainsString('bloque la ligne de tir', $messages[0]);
         $this->assertStringContainsString(
             '(' . ($x + 2) . ', ' . $y . ')',
             $messages[0],
             'le message situe l\'obstacle'
+        );
+    }
+
+    /**
+     * The message says the shot did not happen. It used to read "votre tir
+     * s'écrase sur X", which testers took for an attack against the obstacle.
+     */
+    public function testTheMessageSaysNoShotWasFired(): void
+    {
+        [$shooter, $victim, $x, $y] = $this->shooterAndTarget();
+
+        $this->placeStructure('mur_pierre', $x + 2, $y);
+
+        $result = (new ObstacleCondition())->check(
+            $shooter, $victim, $this->condition(), new ConditionObject()
+        );
+
+        $this->assertStringContainsString(
+            'vous ne tirez pas',
+            $result->getConditionFailureMessages()[0]
+        );
+    }
+
+    /**
+     * The condition never touches the parent's flag: what a condition IS does
+     * not change during its existence. The refusal is carried by the
+     * precondition row, and read by the executor.
+     */
+    public function testTheParentConditionFlagIsLeftAlone(): void
+    {
+        [$shooter, $victim, $x, $y] = $this->shooterAndTarget();
+
+        $this->placeStructure('mur_pierre', $x + 2, $y);
+
+        $condition = $this->condition();
+        (new ObstacleCondition())->check($shooter, $victim, $condition, new ConditionObject());
+
+        $this->assertFalse(
+            $condition->isBlocking(),
+            'le refus vit sur la ligne de précondition, pas sur la condition'
         );
     }
 

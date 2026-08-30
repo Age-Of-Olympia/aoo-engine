@@ -153,21 +153,22 @@ CREATE TABLE IF NOT EXISTS `action_condition_preconditions` (
   `precondition_type` varchar(100) NOT NULL,
   `parameters` longtext DEFAULT NULL,
   `order_index` int(11) NOT NULL DEFAULT 0,
+  `blocking` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `idx_action_condition_preconditions_parent` (`parent_condition_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-INSERT INTO `action_condition_preconditions` (`parent_condition_type`,`precondition_type`,`parameters`,`order_index`) VALUES
-('Compute','Dodge',NULL,0),('Compute','NoBerserk',NULL,1),
-('ComputePure','Dodge',NULL,0),('ComputePure','NoBerserk',NULL,1),
-('MeleeCompute','Dodge',NULL,0),('MeleeCompute','NoBerserk',NULL,1),
-('MeleePureCompute','Dodge',NULL,0),('MeleePureCompute','NoBerserk',NULL,1),
-('DistanceCompute','Dodge',NULL,0),('DistanceCompute','NoBerserk',NULL,1),('DistanceCompute','Obstacle',NULL,2),
-('DistancePureCompute','Dodge',NULL,0),('DistancePureCompute','NoBerserk',NULL,1),('DistancePureCompute','Obstacle',NULL,2),
-('TechniqueCompute','Dodge',NULL,0),('TechniqueCompute','NoBerserk',NULL,1),('TechniqueCompute','Obstacle',NULL,2),
-('TechniquePureCompute','Dodge',NULL,0),('TechniquePureCompute','NoBerserk',NULL,1),('TechniquePureCompute','Obstacle',NULL,2),
-('SpellCompute','Dodge',NULL,0),('SpellCompute','NoBerserk',NULL,1),('SpellCompute','Obstacle',NULL,2),('SpellCompute','AntiSpell',NULL,3),
-('SpellPureCompute','Dodge',NULL,0),('SpellPureCompute','NoBerserk',NULL,1),('SpellPureCompute','Obstacle',NULL,2),('SpellPureCompute','AntiSpell',NULL,3),
-('BuffCompute','Dodge',NULL,0),('BuffCompute','NoBerserk',NULL,1),('BuffCompute','AntiSpell',NULL,2);
+INSERT INTO `action_condition_preconditions` (`parent_condition_type`,`precondition_type`,`parameters`,`order_index`,`blocking`) VALUES
+('Compute','Dodge',NULL,0,0),('Compute','NoBerserk',NULL,1,1),
+('ComputePure','Dodge',NULL,0,0),('ComputePure','NoBerserk',NULL,1,1),
+('MeleeCompute','Dodge',NULL,0,0),('MeleeCompute','NoBerserk',NULL,1,1),
+('MeleePureCompute','Dodge',NULL,0,0),('MeleePureCompute','NoBerserk',NULL,1,1),
+('DistanceCompute','Dodge',NULL,0,0),('DistanceCompute','NoBerserk',NULL,1,1),('DistanceCompute','Obstacle',NULL,2,1),
+('DistancePureCompute','Dodge',NULL,0,0),('DistancePureCompute','NoBerserk',NULL,1,1),('DistancePureCompute','Obstacle',NULL,2,1),
+('TechniqueCompute','Dodge',NULL,0,0),('TechniqueCompute','NoBerserk',NULL,1,1),('TechniqueCompute','Obstacle',NULL,2,1),
+('TechniquePureCompute','Dodge',NULL,0,0),('TechniquePureCompute','NoBerserk',NULL,1,1),('TechniquePureCompute','Obstacle',NULL,2,1),
+('SpellCompute','Dodge',NULL,0,0),('SpellCompute','NoBerserk',NULL,1,1),('SpellCompute','Obstacle',NULL,2,1),('SpellCompute','AntiSpell',NULL,3,1),
+('SpellPureCompute','Dodge',NULL,0,0),('SpellPureCompute','NoBerserk',NULL,1,1),('SpellPureCompute','Obstacle',NULL,2,1),('SpellPureCompute','AntiSpell',NULL,3,1),
+('BuffCompute','Dodge',NULL,0,0),('BuffCompute','NoBerserk',NULL,1,1),('BuffCompute','AntiSpell',NULL,2,1);
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `action_outcomes` (
