@@ -265,6 +265,12 @@ body {
     font-weight: 600;
 }
 
+/* A class selector outranks the browser's [hidden] { display: none }, so a
+   badge carrying the attribute stayed visible: every section warning showed
+   permanently, on every item, and the script toggling `hidden` had no effect
+   anyone could see. Restore the attribute's authority for anything hidden. */
+[hidden] { display: none !important; }
+
 .form-group { margin-bottom: 1rem; }
 
 .form-control {
