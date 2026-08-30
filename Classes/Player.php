@@ -568,7 +568,25 @@ class Player implements ActorInterface {
     public function add_action($name){ (new PlayerActionsService())->addAction($this->id, $name); }
     public function have_action($name){ return (new PlayerActionsService())->hasAction($this->id, $name); }
     public function end_action($name){ (new PlayerActionsService())->endAction($this->id, $name); }
-    public function get_actions(){ return (new PlayerActionsService())->getActions($this->id); }
+    /**
+     * Usable actions: the learned ones, plus the spells an equipped item
+     * lends (items.spell). The borrowed ones are not rows in
+     * players_actions, so they never count toward the competence cap and
+     * they leave with the item.
+     */
+    public function get_actions(){
+        $learned = (new PlayerActionsService())->getActions($this->id);
+        $granted = (new \App\Service\ItemGrantedSpellService())->namesForPlayer($this);
+        $all = array_values(array_unique(array_merge($learned, $granted)));
+        sort($all);
+
+        return $all;
+    }
+
+    /** Spell name => the item lending it, for the owned-spells screen. */
+    public function get_item_granted_spells(): array {
+        return (new \App\Service\ItemGrantedSpellService())->forPlayer($this);
+    }
 
     // passive actions shortcuts
     public function add_action_passive($name){ $this->playerPassiveService->addPassiveByPlayerId($this->id,$this->actionPassiveService->getIdByName($name)); }
@@ -577,7 +595,14 @@ class Player implements ActorInterface {
 
     // spells shortcuts
     public function add_spell($name){ $this->add_action($name); }
-    public function have_spell($name){ return $this->have_action($name); }
+    public function have_spell($name){
+        if ($this->have_action($name)) {
+            return 1;
+        }
+
+        // A borrowed spell is had while the item is worn.
+        return in_array($name, (new \App\Service\ItemGrantedSpellService())->namesForPlayer($this), true) ? 1 : 0;
+    }
     public function end_spell($name){ $this->end_action($name); }
     public function get_spells(){
 

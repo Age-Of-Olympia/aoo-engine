@@ -63,7 +63,6 @@ final class ItemExporter implements ObjectExporterInterface
             'enchanted' => (int) $entity->enchanted,
             'vorpal' => (int) $entity->vorpal,
             'cursed' => (int) $entity->cursed,
-            'element' => (string) ($entity->element ?? ''),
             'spell' => (string) ($entity->spell ?? ''),
             'is_deprecated' => (int) $entity->is_deprecated,
             'is_bankable' => (int) $entity->is_bankable,

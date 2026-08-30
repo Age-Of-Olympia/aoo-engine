@@ -242,7 +242,6 @@ function items_render_list(array $items, string $csrfToken): string
             . '<td>' . item_type_badge($type) . $issuesBadge . '</td>'
             . '<td>' . $statsBadge . '</td>'
             . '<td>' . item_flag_badges($row) . '</td>'
-            . '<td>' . ($row->element !== '' && $row->element !== null ? e($row->element) : '<span class="text-muted">—</span>') . '</td>'
             . '<td>' . ($row->spell !== '' && $row->spell !== null ? e($row->spell) : '<span class="text-muted">—</span>') . '</td>'
             . '<td>' . item_wear_cell($row) . '</td>'
             . '<td title="Joueurs distincts en possédant (inventaire ou banque)">'
@@ -269,7 +268,7 @@ function items_render_list(array $items, string $csrfToken): string
         . '<input type="text" class="form-control mb-2" id="items-filter" placeholder="filtrer…"'
         . ' onkeyup="itemsApplyFilters();">'
         . renderTable(
-            ['Objet', 'Type', 'Stats', 'Flags', 'Élément', 'Sort lié', 'Usure', 'Joueurs', ''],
+            ['Objet', 'Type', 'Stats', 'Flags', 'Sort lié', 'Usure', 'Joueurs', ''],
             $rows,
             'class="table table-sm table-striped align-middle" id="items-table"'
         );
@@ -342,6 +341,29 @@ function item_effect_multiselect(string $field, array $selected, string $label, 
     return '<div class="form-group"><label>' . $label . '</label>'
         . '<select name="' . $field . '[]" class="form-control" multiple size="5">' . $options . '</select>'
         . '<small class="text-muted">' . $hint . '</small></div>';
+}
+
+/**
+ * The spell an item carries, picked from the actions catalogue in DB.
+ *
+ * It used to be a free-text field resolved through the legacy JSON gateway:
+ * an unknown name reached `$spellJson->name` and fataled on the item line.
+ * A picker cannot name a spell that does not exist.
+ */
+function item_spell_select(string $field, string $selected): string
+{
+    $spells = (new \App\Service\ActionService())->getCastableSpellNames();
+
+    $options = '<option value="">— aucun —</option>';
+    if ($selected !== '' && !array_key_exists($selected, $spells)) {
+        $options .= '<option value="' . e($selected) . '" selected>⚠ inconnu : ' . e($selected) . '</option>';
+    }
+    foreach ($spells as $name => $label) {
+        $options .= '<option value="' . e($name) . '"' . ($name === $selected ? ' selected' : '') . '>'
+            . e($label) . ' (' . e($name) . ')</option>';
+    }
+
+    return '<select name="' . $field . '" class="form-control">' . $options . '</select>';
 }
 
 /**
@@ -650,12 +672,11 @@ function items_render_edit(object $row, string $csrfToken): string
             'form-group', 'Code de race (nain, elfe…) : colore le nom de l\'objet — vide : commun.');
 
     $flags = $flagBoxes
-        . formField('Élément', formInput('element', (string) $row->element),
-            'form-group mt-2', 'Élément porté par l\'objet (feu, eau…) — marque le nom et joue avec les règles élémentaires.')
-        . formField('Sort lié', formInput('spell', (string) $row->spell),
-            'form-group',
-            'Objet à sort intégré : le sort est affiché sur l\'objet'
-            . ' (l\'apprentissage des sorts passe par les écoles de guerre).')
+        . formField('Sort lié', item_spell_select('spell', (string) $row->spell),
+            'form-group mt-2',
+            'Objet à sort intégré : porté, il ACCORDE ce sort — en plus du'
+            . ' plafond de compétences, et sans occuper de place. Le sort'
+            . ' disparaît quand l\'objet est retiré.')
         . formField('Exotique (race)', formInput('exotique', (string) $row->exotique),
             'form-group', 'Code de race : SEULE cette race peut équiper l\'objet.');
 
@@ -716,7 +737,7 @@ function items_render_edit(object $row, string $csrfToken): string
      * type de l'objet appelle) démarrent dépliés. */
     $emplacementValue = (string) ($row->emplacement ?? '');
     $flagCount = count(array_filter(Item::FLAG_KEYS, static fn (string $c): bool => !empty($row->$c)));
-    $magie = array_filter([(string) $row->element, (string) $row->spell, (string) $row->exotique]);
+    $magie = array_filter([(string) $row->spell, (string) $row->exotique]);
     $wearRate = (int) $row->wear_rate;
     $caracsCount = count(array_filter(\App\Enum\Caracs::KEYS, static fn (string $k): bool => (int) ($row->$k ?? 0) !== 0));
     $specialCount = count(array_filter(Item::SPECIAL_KEYS, static fn (string $k): bool => (int) ($row->$k ?? 0) !== 0));
@@ -841,7 +862,7 @@ $action = $_GET['action'] ?? 'list';
 
 if ($action === 'new') {
     $blank = (object) array_fill_keys(array_merge(
-        ['name', 'element', 'spell', 'exotique', 'wear_triggers', 'munitions'],
+        ['name', 'spell', 'exotique', 'wear_triggers', 'munitions'],
         \App\Service\ItemStatsSeeder::STRING_KEYS,
         Item::JSON_COLUMNS
     ), '');

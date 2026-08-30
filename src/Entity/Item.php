@@ -34,9 +34,6 @@ class Item implements OwnsCaracsInterface, LockableInterface, ObstructsInterface
     private bool $cursed = false;
 
     #[ORM\Column(type: "string", length: 255)]
-    private string $element = '';
-
-    #[ORM\Column(type: "string", length: 255)]
     private ?string $spell= null;
 
     /**
@@ -158,16 +155,6 @@ class Item implements OwnsCaracsInterface, LockableInterface, ObstructsInterface
     public function setCursed(bool $cursed): void
     {
         $this->cursed = $cursed;
-    }
-
-    public function getElement(): string
-    {
-        return $this->element;
-    }
-
-    public function setElement(string $element): void
-    {
-        $this->element = $element;
     }
 
     public function getSpell(): ?string

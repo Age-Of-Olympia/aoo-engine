@@ -367,14 +367,13 @@ foreach (\Classes\Item::FLAG_KEYS as $flag) {
 }
 
 $set = array_merge($set, [
-    'element = ?', 'spell = ?', 'exotique = ?',
+    'spell = ?', 'exotique = ?',
     'wear_triggers = ?', 'wear_rate = ?', 'durability_max = ?', 'capacity = ?',
     'text = ?', 'price = ?', 'emplacement = ?', 'type = ?', 'subtype = ?', 'race = ?',
     'munitions = ?', 'add_effects = ?', 'forbid = ?', 'extra = ?',
     'stats_in_db = 1',
 ]);
 $params = array_merge($params, [
-    trim((string) ($_POST['element'] ?? '')),
     trim((string) ($_POST['spell'] ?? '')),
     trim((string) ($_POST['exotique'] ?? '')),
     implode(',', $triggers),

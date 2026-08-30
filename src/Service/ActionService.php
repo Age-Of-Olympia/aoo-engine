@@ -201,6 +201,34 @@ class ActionService
      * Tree data of the whole catalog in one query: name => category + level.
      * @return array<string, array{category: ?string, level: int}>
      */
+    /**
+     * The learned combat skills an item may carry, name => display name.
+     *
+     * The same classes PlayerActionsService marks as `type = 'sort'` when a
+     * player learns one — so an item grants exactly what a war school could
+     * teach, and nothing else (no `attaquer`, no `fouiller`).
+     *
+     * @return array<string, string>
+     */
+    public function getCastableSpellNames(): array
+    {
+        $rows = $this->entityManager->createQuery(
+            'SELECT a.name, a.displayName FROM App\Entity\Action a
+              WHERE a INSTANCE OF App\Action\SpellAction
+                 OR a INSTANCE OF App\Action\BuffAction
+                 OR a INSTANCE OF App\Action\HealAction
+                 OR a INSTANCE OF App\Action\TechniqueAction
+              ORDER BY a.name ASC'
+        )->getArrayResult();
+
+        $names = [];
+        foreach ($rows as $row) {
+            $names[$row['name']] = (string) ($row['displayName'] ?: $row['name']);
+        }
+
+        return $names;
+    }
+
     public function getCatalogMeta(): array
     {
         $rows = $this->entityManager->createQuery(

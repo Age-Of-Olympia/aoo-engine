@@ -648,15 +648,14 @@ class Item{
         // objet à sort intégré (items.spell) — le sort s'affiche en bleu
         elseif(!empty($itemJson->spell)){
 
+            /* Resolved against the actions catalogue in DB. The legacy JSON
+             * gateway fataled on $spellJson->name for a name it did not
+             * know; an unknown one is simply not shown. */
+            $spell = (new \App\Service\ActionService())->getCastableSpellNames()[$itemJson->spell] ?? null;
 
-            // json
-            $json = new Json();
-
-            // spell Json
-            $spellJson = $json->decode('spell', $itemJson->spell);
-
-            // return spell name
-            $return[] = '<font color="blue">'. $spellJson->name .'</font>';
+            if ($spell !== null) {
+                $return[] = '<font color="blue">'. htmlspecialchars($spell, ENT_QUOTES, 'UTF-8') .'</font>';
+            }
         }
 
 

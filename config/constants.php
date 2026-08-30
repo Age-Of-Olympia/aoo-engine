@@ -183,7 +183,6 @@ define('ITEMS_OPT', array(
     'enchanted'=>'*',
     'vorpal'=>'~',
     'cursed'=>'',
-    'element'=>'',
     'blessed_by_id'=>'+',
     'spell'=>'§'
 ));

@@ -38,6 +38,11 @@ if (isset($_GET['forget_p']) && !empty($_POST['passive'])) {
 
 $spellList = $player->get_spells();
 $spellsN = count($spellList);
+
+/* Sorts prêtés par un objet porté (items.spell) : ils se listent avec les
+ * autres, mais ne sont pas des lignes apprises — ni dans le décompte du
+ * plafond, ni oubliables. Un sort déjà appris n'est pas doublé. */
+$grantedSpells = array_diff_key($player->get_item_granted_spells(), array_flip($spellList));
 $trStyle = '';
 $buttonClass = '';
 
@@ -69,7 +74,8 @@ echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Bonus</th><th>Effe
 $actionService = new ActionService();
 $costView = new ActionCostView($actionService);
 $effectService = new \App\Service\EffectService();
-foreach($spellList as $e){
+foreach(array_merge($spellList, array_keys($grantedSpells)) as $e){
+    $grantedBy = $grantedSpells[$e] ?? null;
     $spell = $actionService->getActionByName($e);
 
     if ($spell == null) {
@@ -227,7 +233,18 @@ foreach($spellList as $e){
         ';
 
 
-        echo '
+        /* Un sort prêté ne s'oublie pas : il part avec l'objet. La cellule
+         * dit d'où il vient, à la place du bouton. */
+        if ($grantedBy !== null) {
+            echo '
+        <td class="item-actions">
+            <span class="text-muted" title="Sort accordé par un objet porté — hors plafond de compétences">
+                <span class="ra ra-vest"></span> '. htmlspecialchars($grantedBy, ENT_QUOTES) .'
+            </span>
+        </td>
+        ';
+        } else {
+            echo '
         <td class="item-actions">
             <button
                 class="row-action forget'. $buttonClass .'"
@@ -237,6 +254,7 @@ foreach($spellList as $e){
                 ><span class="ra ra-burning-book"></span>Oublier</button>
         </td>
         ';
+        }
 
         echo '
     </tr>
