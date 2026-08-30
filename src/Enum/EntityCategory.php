@@ -36,7 +36,10 @@ enum EntityCategory: string
              * no dodge, no malus, and destruction shelves it rather than
              * sending it to the enfers. Whether it can be hit at all follows
              * from standing on a cell, not from the discriminator. */
-            'building', 'scenery', 'resource', 'plant', 'item' => self::Structure,
+            /* A road is a Structure for the same reason a plant is: it is
+               POSED, not spoken to. Its type blocks nothing, so one walks on
+               it — which the discriminator has no say in. */
+            'building', 'scenery', 'resource', 'plant', 'item', 'route' => self::Structure,
             'real', 'tutorial', 'npc', null => self::Character,
             default => throw new \ValueError("player_type inconnu : « {$playerType} » — étendre EntityCategory::fromPlayerType."),
         };
@@ -78,6 +81,7 @@ enum EntityCategory: string
             'resource' => 'Ressource',
             'plant'    => 'Plante',
             'item'     => 'Objet posé',
+            'route'    => 'Route',
         ];
     }
 

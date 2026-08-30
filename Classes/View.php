@@ -268,7 +268,7 @@ class View{
                     SELECT id, name, player_type, avatar, race
                     FROM players
                     WHERE coords_id IN ('. $inSightIdImploded .')
-                    AND player_type NOT IN ("scenery", "plant")
+                    AND player_type NOT IN ("scenery", "plant", "route")
                     AND slot <> "dropped"
                 ');
                 while ($rowE = $resEntities->fetch_object()) {
@@ -398,14 +398,20 @@ class View{
 
             UNION
 
+            /* Roads are ENTITIES now, and the board ignores that detail: they
+               keep their layer and their depth — 97.6, so UNDER the character,
+               since a road is walked on. The name comes from `race`, as for
+               plants: the sprite follows the TYPE (img/routes/...). Mind the
+               quotes here — this SQL lives in a single-quoted PHP string. */
             SELECT
-            id, name, coords_id,
+            id, race AS name, coords_id,
             "routes" AS whichTable,
             97.6 AS tableOrder
             FROM
-            map_routes
+            players
             WHERE
             coords_id IN ('. $inSightIdImploded .')
+            AND player_type = "route"
             UNION
 
             SELECT

@@ -147,6 +147,23 @@ if($_POST['type'] == 'eraser'){
         return;
     }
 
+    /* A road is an entity like a plant is: walked on, blocking nothing, and
+       now carrying life, an owner and decay. The brush is unchanged — the
+       palette still says "routes" — only what the server stores differs, so
+       whoever draws maps sees no difference. */
+    if ($_POST['type'] === 'routes') {
+        $laid = (new \App\Service\Map\GroundLayerService())->lay(
+            'routes',
+            (string) $_POST['src'],
+            $db->exe('SELECT x, y, z, plan FROM coords WHERE id = ?', [$coordsId])->fetch_object(),
+            (int) $player->id
+        );
+
+        echo $laid['ok'] ? 'route' : $laid['message'];
+
+        return;
+    }
+
     $values = array(
         'name'=>$_POST['src'],
         'coords_id'=>$coordsId

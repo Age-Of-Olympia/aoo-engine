@@ -42,6 +42,10 @@ use Doctrine\ORM\Mapping as ORM;
      * `item` had just repeated it. */
     'plant' => Plant::class,
     'item' => Exemplar::class,
+    /* A road is walked ON: a structure whose type blocks nothing, like a
+       plant. It is an entity so it can carry life, an owner and decay —
+       which a `map_routes` line never could. */
+    'route' => Road::class,
 ])]
 abstract class GameEntity
 {

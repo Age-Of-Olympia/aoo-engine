@@ -26,10 +26,31 @@ class GroundLayerTest extends LegacyPlayerFixtureTestCase
     protected function tearDown(): void
     {
         foreach ($this->laidAt as $coordsId) {
-            $this->link->executeStatement('DELETE FROM map_routes WHERE coords_id = ?', [$coordsId]);
+            $this->link->executeStatement(
+                "DELETE ec FROM entity_cells ec
+                   JOIN players p ON p.id = ec.player_id
+                  WHERE p.player_type = 'route' AND ec.coords_id = ?",
+                [$coordsId]
+            );
+            $this->link->executeStatement(
+                "DELETE FROM players WHERE player_type = 'route' AND coords_id = ?",
+                [$coordsId]
+            );
         }
 
         parent::tearDown();
+    }
+
+    /** The road entity standing on that cell, 0 when there is none. */
+    private function roadOn(int $coordsId): int
+    {
+        return (int) $this->link->fetchOne(
+            "SELECT COALESCE(MAX(p.id), 0)
+               FROM players p
+               JOIN entity_cells ec ON ec.player_id = p.id
+              WHERE p.player_type = 'route' AND ec.coords_id = ?",
+            [$coordsId]
+        );
     }
 
     private function cell(int $dx = 0): object
@@ -62,22 +83,78 @@ class GroundLayerTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(1, (int) (new MapService())->getTileTypeAtCoord('routes', $coordsId)->n);
     }
 
-    /** The layer records who laid it — a road stays its builder's. */
-    public function testTheLayerKeepsItsBuilder(): void
+    /** A road stays its builder's — that is what lets it decay when abandoned. */
+    public function testTheRoadKeepsItsBuilder(): void
     {
         $coords = $this->cell(1);
+        $coordsId = (int) View::get_coords_id($coords);
         $player = $this->createRealPlayer('GmProprio');
 
         (new GroundLayerService())->lay('routes', 'route', $coords, (int) $player->id);
-        $this->laidAt[] = (int) View::get_coords_id($coords);
+        $this->laidAt[] = $coordsId;
 
+        $road = $this->roadOn($coordsId);
+        $this->assertGreaterThan(0, $road, 'laying one mints an entity');
         $this->assertSame(
             (int) $player->id,
-            (int) $this->link->fetchOne(
-                'SELECT player_id FROM map_routes WHERE coords_id = ?',
-                [(int) View::get_coords_id($coords)]
-            )
+            (int) $this->link->fetchOne('SELECT owner_id FROM players WHERE id = ?', [$road])
         );
+    }
+
+    /**
+     * A road a PLAYER lays decays; one the map editor lays does not.
+     *
+     * The editor uses the same gesture — its palette is unchanged — so the
+     * difference cannot come from the code path. It comes from the caller
+     * saying which it is.
+     */
+    public function testOnlyAPlayerLaidRoadDecays(): void
+    {
+        $service = new GroundLayerService();
+        $player = $this->createRealPlayer('GmVoyer');
+
+        $byEditor = $this->cell(3);
+        $service->lay('routes', 'route', $byEditor, (int) $player->id);
+        $this->laidAt[] = (int) View::get_coords_id($byEditor);
+
+        $byPlayer = $this->cell(4);
+        $service->lay('routes', 'route', $byPlayer, (int) $player->id, byPlayer: true);
+        $this->laidAt[] = (int) View::get_coords_id($byPlayer);
+
+        $this->assertSame(
+            0,
+            $this->enrolled($this->roadOn((int) View::get_coords_id($byEditor))),
+            'what the editor lays is not perishable'
+        );
+        $this->assertSame(
+            1,
+            $this->enrolled($this->roadOn((int) View::get_coords_id($byPlayer))),
+            'what a player lays is'
+        );
+    }
+
+    private function enrolled(int $entityId): int
+    {
+        return (int) $this->link->fetchOne(
+            'SELECT COUNT(*) FROM entity_decay WHERE player_id = ?',
+            [$entityId]
+        );
+    }
+
+    /** It is walked on, not stood in: its type blocks nothing. */
+    public function testARoadBlocksNothing(): void
+    {
+        $blocks = $this->link->fetchAssociative(
+            'SELECT blocks_passage, blocks_projectiles FROM races WHERE name = ?',
+            ['route']
+        );
+
+        if ($blocks === false) {
+            $this->markTestSkipped('road type not seeded (run migrations).');
+        }
+
+        $this->assertSame(0, (int) $blocks['blocks_passage']);
+        $this->assertSame(0, (int) $blocks['blocks_projectiles']);
     }
 
     /** One road per cell. */
@@ -96,7 +173,10 @@ class GroundLayerTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(
             1,
             (int) $this->link->fetchOne(
-                'SELECT COUNT(*) FROM map_routes WHERE coords_id = ?',
+                "SELECT COUNT(*)
+                   FROM players p
+                   JOIN entity_cells ec ON ec.player_id = p.id
+                  WHERE p.player_type = 'route' AND ec.coords_id = ?",
                 [(int) View::get_coords_id($coords)]
             )
         );

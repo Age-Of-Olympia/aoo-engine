@@ -50,8 +50,10 @@ class PlantsService
         ON p.coords_id = c.id AND p.player_type = 'plant'
         LEFT JOIN map_elements e
         ON e.coords_id = c.id
-        LEFT JOIN map_routes r
-        ON r.coords_id = c.id
+        LEFT JOIN entity_cells rc
+        ON rc.coords_id = c.id
+        LEFT JOIN players r
+        ON r.id = rc.player_id AND r.player_type = 'route'
         WHERE
         t.name = 'grow'
         and p.id is null

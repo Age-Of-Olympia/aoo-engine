@@ -53,6 +53,7 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInt
         'resource' => 'une ressource',
         'plant'    => 'une plante',
         'item'     => 'un objet posé',
+        'route'    => 'une route',
     ];
 
     /**

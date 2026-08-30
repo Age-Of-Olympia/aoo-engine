@@ -40,27 +40,19 @@ and decay.
 
 ## Steps
 
-0. **Roads are ground again.** — **done**
-1. **Point the producer at entities**: placing a `route` mints a road entity
-   instead of an installed exemplar.
-2. **Pseudo-races for road types**, a family rather than one row — several
-   kinds are planned. Template: the walls migration.
-3. **Convert the rows.** Each `map_routes` line becomes an entity; `player_id`
-   becomes the owner, `NULL` for the editor's.
-4. **The six readers.** `courir` (does this cell carry a road?), `observe`,
-   `PlantsService`, `Classes/View.php`, and the two `scripts/tiled/` endpoints.
-5. **Rendering.** Smaller than I first said: `generateResourceLayer` already
-   reads entities and keeps its GD layer, so `generateRoutesLayer` copies it —
-   swap `map_routes` for `players JOIN entity_cells WHERE player_type = 'route'`.
-6. **Tiled keeps its palette, the server changes what it stores.** The editor
-   goes on sending a routes layer; the endpoint that receives it mints road
-   entities instead of `map_routes` rows, the way it already handles buildings
-   in `erase_case.php`. Nothing changes for whoever draws maps, no extension
-   release — and `map_routes` can then be dropped, since nothing writes it any
-   more.
-7. **Repair** accepts roads, like buildings.
-8. **Decay**, then three lines: `enrol()` when a player lays one,
-   `touchAndHeal()` on the step in `go.php`. Both already written and tested.
+0. **Roads are ground again.** — **done** (previous MR)
+1. **The producer mints entities.** — **done**
+2. **Road types are races**, a family with `route` as its first member. — **done**
+3. **Every line converted**, keeping its builder. — **done**
+4. **The readers moved**: the running bonus, `observe`, `PlantsService`, the
+   board, and the two Tiled endpoints. — **done**
+5. **Rendering**: the map layer reads entities by cell, like resources. — **done**
+6. **Tiled keeps its palette**, and the endpoint stores an entity. — **done**
+7. **Repair** accepts roads. — **pending**
+8. **Decay**: a player-laid road decays, a step mends it. — **done**
+
+`map_routes` still stands, empty and unread. Dropping it is a separate,
+one-line migration once this has lived a while.
 
 ## Two details that will bite
 

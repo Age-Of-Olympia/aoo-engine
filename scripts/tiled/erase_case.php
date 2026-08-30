@@ -61,6 +61,19 @@ if($type == 'buildings'){
         )->fetch_all(MYSQLI_COLUMN) ?: [])
     );
 
+} elseif ($type === 'route') {
+
+    /* A road is removed the way it is laid: it is an entity, and a DELETE on
+       the old layer table would strike nothing. Its cells go with it. */
+    (new \App\Service\Map\ResourceObjectService())->removeEntities(
+        array_map('intval', (new Db())->exe(
+            "SELECT p.id FROM players p
+               JOIN entity_cells ec ON ec.player_id = p.id
+              WHERE p.player_type = 'route' AND ec.coords_id = ?",
+            array($coordsId)
+        )->fetch_all(MYSQLI_COLUMN) ?: [])
+    );
+
 } elseif ($type === 'ombre') {
     /* Retirer UN cran d'ombre, pas toute l'ombre.
      *
@@ -74,7 +87,9 @@ if($type == 'buildings'){
     /* Le nom de table vient du POST : liste blanche stricte */
     /* map_resources a quitté la liste : ses objets sont des entités et
        passent par le canal « ressource » ci-dessus. */
-    if(!in_array($type, array('map_tiles','map_triggers','map_dialogs','map_elements','map_routes','map_foregrounds'))){
+    /* map_routes left the list too: roads are entities and go through the
+       'route' channel above. */
+    if(!in_array($type, array('map_tiles','map_triggers','map_dialogs','map_elements','map_foregrounds'))){
 
         exit('error type');
     }

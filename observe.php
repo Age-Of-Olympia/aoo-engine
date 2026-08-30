@@ -127,19 +127,26 @@ if($res->num_rows){
 }
 
 
-/* Routes aménagées (map_routes) : visibles sur la carte, elles doivent
- * aussi se lire dans le panneau de case — c'est là qu'on comprend
- * pourquoi courir est possible ici. */
+/* Roads: drawn on the map, and read in the tile panel too — that is where
+ * one understands why running is possible here. They are entities since
+ * they gained life and an owner, so the panel reads the family rather than
+ * the old layer table. */
 $sql = '
 SELECT
 p.name
 FROM
-map_routes AS p
+players AS p
+INNER JOIN
+entity_cells AS ec
+ON
+ec.player_id = p.id
 INNER JOIN
 coords AS c
 ON
-p.coords_id = c.id
+ec.coords_id = c.id
 WHERE
+p.player_type = "route"
+AND
 c.x = ?
 AND
 c.y = ?

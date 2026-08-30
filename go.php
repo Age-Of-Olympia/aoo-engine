@@ -346,3 +346,10 @@ if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMod
 }
 $db->commit();
 $player->go($goCoords);
+
+/* Walking a road keeps it: the step pushes its horizon AND mends the wear,
+   which is the only upkeep a road has. Silent for anything not enrolled, so
+   the map editor's roads are untouched. */
+foreach ((new \App\Service\Map\GroundLayerService())->roadsOn((int) View::get_coords_id($goCoords)) as $roadId) {
+    (new \App\Service\Decay\StructureDecayService())->touchAndHeal($roadId);
+}

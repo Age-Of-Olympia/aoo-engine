@@ -93,7 +93,13 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
         $layerName = $this->groundLayerOf($type);
 
         if ($layerName !== null) {
-            $laid = (new \App\Service\Map\GroundLayerService())->lay($layerName, $type, $goCoords, (int) $actor->id);
+            $laid = (new \App\Service\Map\GroundLayerService())->lay(
+                $layerName,
+                $type,
+                $goCoords,
+                (int) $actor->id,
+                byPlayer: true
+            );
 
             $this->getOutcome()?->getAction()?->setRefreshScreen(true);
 

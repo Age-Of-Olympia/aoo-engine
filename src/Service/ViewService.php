@@ -795,15 +795,19 @@ class ViewService {
             : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
         $mapType = $plan === $this->worldPlan ? "global" : "local";
 
-        // Requête les routes à partir de map_routes
-        $sql = "SELECT mr.*, c.x, c.y
-            FROM map_routes mr
-            JOIN coords c ON c.id = mr.coords_id
-            WHERE c.plan = '" . $plan . "'
-            AND c.x BETWEEN " . $this->minX . " AND " . $this->maxX . "
-            AND c.y BETWEEN " . $this->minY . " AND " . $this->maxY . "
+        /* Roads are entities, and read by CELL rather than by anchor: one
+           covering several cells must tint them all — the same reading the
+           resource layer uses. */
+        $sql = "SELECT p.id, p.race AS name, c.x, c.y
+            FROM players p
+            JOIN entity_cells ec ON ec.player_id = p.id
+            JOIN coords c ON c.id = ec.coords_id
+            WHERE p.player_type = 'route'
+            AND c.plan = '" . $plan . "'
+            AND c.x BETWEEN " . (int) $this->minX . " AND " . (int) $this->maxX . "
+            AND c.y BETWEEN " . (int) $this->minY . " AND " . (int) $this->maxY . "
             $zCondition
-            ORDER BY mr.name, mr.id";
+            ORDER BY p.race, p.id";
         $result = $this->db->exe($sql);
         
         // Crée les couleurs pour les routes

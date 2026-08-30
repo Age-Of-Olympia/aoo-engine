@@ -25,7 +25,12 @@ select  coords_id as coords_id, 'map_dialogs' as type, CONVERT(name USING utf8mb
 union
 select  coords_id as coords_id, 'map_elements' as type, CONVERT(name USING utf8mb4) as name, NULL as params from map_elements where coords_id = ?
 union
-select  coords_id as coords_id, 'map_routes' as type, CONVERT(name USING utf8mb4) as name, NULL as params from map_routes where coords_id = ?
+/* Roads are entities, described by their type like resources and plants.
+   The channel name the erase button receives is 'route', not a table. */
+select ec.coords_id as coords_id, 'route' as type,
+       CONVERT(CONCAT(p.race, ' #', p.id) USING utf8mb4) as name, NULL as params
+  from players p join entity_cells ec on ec.player_id = p.id
+ where p.player_type = 'route' and ec.coords_id = ?
 union
 select  coords_id as coords_id, 'map_foregrounds' as type, CONVERT(name USING utf8mb4) as name, NULL as params from map_foregrounds where coords_id = ?
 union
