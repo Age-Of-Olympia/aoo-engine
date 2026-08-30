@@ -8,68 +8,83 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * Items JSON→DB — the equivalence proof: for EVERY catalog item whose
- * stats were seeded into columns (stats_in_db = 1), the DB-served
- * Item::get_data() must expose the exact values of its historical JSON
- * file, key by key — including the keys that only travelled through
- * the lossless `extra` catch-all. If this holds for the whole seeded
- * catalog, the ~110 Item call sites are safe by construction.
+ * Items JSON→DB — the equivalence proof: what the seeder writes, get_data()
+ * serves back, key by key, including the keys that only travel through the
+ * lossless `extra` catch-all. If that holds, the ~110 Item call sites are
+ * safe by construction.
+ *
+ * Proved on a fixture rather than on the live catalog. The sweep over every
+ * `stats_in_db = 1` row proved the migration when it ran and then became a
+ * trap: the admin sheet is the source of truth now, so an edited item is
+ * SUPPOSED to differ from its frozen JSON, and any ordinary admin edit
+ * turned the suite red.
  *
  * Skipped keys are the ones the seed deliberately does not source from
- * JSON (identity + flags whose DB is already the source, and stray
- * copies of joined rows found in some legacy files).
+ * JSON (identity + flags whose DB is already the source, and stray copies
+ * of joined rows found in some legacy files).
  */
 #[Group('items-baseline')]
 class ItemStatsDbBaselineTest extends LegacyPlayerFixtureTestCase
 {
-    public function testDbServedDataMatchesEveryHistoricalJsonKey(): void
+    /**
+     * The seeder is lossless: every key of an item JSON reaches get_data().
+     *
+     * This used to sweep the LIVE catalog, comparing each `stats_in_db = 1`
+     * row against its historical JSON. That proved the migration at the time
+     * and then rotted into a trap: the admin sheet is the source of truth
+     * now, so any legitimate item edit made the suite red — the DB is
+     * SUPPOSED to diverge from a frozen JSON once someone edits it. It fired
+     * the day a torch was given an equip slot.
+     *
+     * The property worth keeping is the seeder's, not the catalog's, so it
+     * is proved on a fixture: a JSON built here, seeded, read back key by
+     * key. Deterministic, and indifferent to what admins do afterwards.
+     */
+    public function testTheSeederCarriesEveryJsonKeyThrough(): void
     {
-        try {
-            $rows = $this->link->fetchAllAssociative(
-                'SELECT id, name, private FROM items WHERE stats_in_db = 1'
+        $name = 'zz_baseline_' . bin2hex(random_bytes(4));
+        $docroot = sys_get_temp_dir() . '/baseline_' . $name;
+        mkdir($docroot . '/datas/public/items', 0777, true);
+
+        $json = [
+            'name' => $name,
+            'price' => 42,
+            'pv' => 3,
+            'cc' => -2,
+            'text' => 'Une relique de test.',
+            'emplacement' => 'main1',
+            'type' => 'equipement',
+            'subtype' => 'melee',
+            'race' => 'nain',
+            'munitions' => ['fleche'],
+            'addEffects' => [['name' => 'feu', 'duration' => 2]],
+            // A key no column owns travels through the lossless `extra`.
+            'uneProprieteInconnue' => 'gardee telle quelle',
+        ];
+        file_put_contents(
+            $docroot . '/datas/public/items/' . $name . '.json',
+            (string) json_encode($json)
+        );
+
+        $this->sowCatalogItem($name, ['stats_in_db' => 0]);
+        (new ItemStatsSeeder())->seed($this->link, $docroot);
+
+        $item = Item::get_item_by_name($name);
+        $this->assertNotFalse($item, 'the fixture item exists');
+        $data = $item->get_data();
+
+        foreach ($json as $key => $expected) {
+            if (in_array($key, ItemStatsSeeder::SKIP_KEYS, true)) {
+                continue;
+            }
+            $this->assertEquals(
+                $expected,
+                json_decode((string) json_encode($data->$key ?? null), true),
+                "key '{$key}' did not survive the JSON -> DB -> get_data() trip"
             );
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('items stats columns unavailable (run migrations): ' . $e->getMessage());
         }
 
-        if ($rows === []) {
-            $this->markTestSkipped('no seeded item in this environment (run admin/item-seed.php).');
-        }
-
-        $root = dirname(__DIR__, 2);
-        $checked = 0;
-
-        foreach ($rows as $row) {
-            $dir = ((int) $row['private']) ? 'private' : 'public';
-            $path = $root . '/datas/' . $dir . '/items/' . $row['name'] . '.json';
-            if (!is_file($path)) {
-                continue; // seeded elsewhere; nothing to compare against here
-            }
-
-            $json = json_decode((string) file_get_contents($path));
-            $item = new Item((int) $row['id']);
-            $data = $item->get_data();
-
-            foreach (get_object_vars($json) as $key => $expected) {
-                if (in_array($key, ItemStatsSeeder::SKIP_KEYS, true)) {
-                    continue;
-                }
-                // get_data() post-processing: name is ucfirst'd, img/mini defaulted.
-                if (in_array($key, ['name', 'img', 'mini'], true)) {
-                    continue;
-                }
-
-                $actual = $data->$key ?? null;
-                $this->assertEquals(
-                    $expected,
-                    $actual,
-                    "item '{$row['name']}' key '{$key}': DB-served data diverged from the historical JSON"
-                );
-            }
-            $checked++;
-        }
-
-        $this->assertGreaterThan(0, $checked, 'at least one seeded item must have been compared');
+        unlink($docroot . '/datas/public/items/' . $name . '.json');
     }
 
     public function testAppliedCaracsAreIdenticalThroughTheDbPath(): void
