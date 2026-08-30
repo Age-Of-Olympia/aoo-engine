@@ -11,6 +11,9 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\Table(name: "effect_corruption_materials")]
 #[ORM\UniqueConstraint(name: "UNIQ_effect_corruption_materials_effect_name", columns: ["effect_id", "name"])]
+/* The association lives on the mapped superclass, shared by two subclasses:
+ * only the child can name its own inverse side (effect -> corruptionMaterials). */
+#[ORM\AssociationOverrides([new ORM\AssociationOverride(name: "effect", inversedBy: "corruptionMaterials")])]
 class EffectCorruptionMaterial extends EffectNameListEntry
 {
 }

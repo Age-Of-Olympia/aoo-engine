@@ -11,6 +11,9 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\Table(name: "race_spells")]
 #[ORM\UniqueConstraint(name: "UNIQ_race_spells_race_name", columns: ["race_id", "name"])]
+/* The association lives on the mapped superclass, shared by two subclasses:
+ * only the child can name its own inverse side (race -> spells). */
+#[ORM\AssociationOverrides([new ORM\AssociationOverride(name: "race", inversedBy: "spells")])]
 class RaceSpell extends RaceNameListEntry
 {
 }
