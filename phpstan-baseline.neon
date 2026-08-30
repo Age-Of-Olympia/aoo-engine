@@ -136,12 +136,6 @@ parameters:
 			path: src/Action/Condition/RequiresAmmoCondition.php
 
 		-
-			message: '#^Class App\\Action\\Condition\\ConditionResult constructor invoked with 6 parameters, 3 required\.$#'
-			identifier: arguments.count
-			count: 1
-			path: src/Action/Condition/RequiresResourceCondition.php
-
-		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'
 			identifier: property.notFound
 			count: 1

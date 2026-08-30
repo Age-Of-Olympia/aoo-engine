@@ -23,7 +23,9 @@ class RequiresResourceCondition extends BaseCondition implements HasParameterSch
             $errorMessages[0] = 'Il n\'y a rien par ici.';
             $result = new ConditionResult(false, array(), $errorMessages);
         } else {
-            $result = new ConditionResult(true, array(), array(), null, null, $res->num_rows);
+            // ConditionResult carries success and messages, nothing else: the
+            // three extra arguments here were silently discarded.
+            $result = new ConditionResult(true, array(), array());
         }
 
         return $result;
