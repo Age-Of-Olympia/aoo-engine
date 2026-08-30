@@ -48,7 +48,8 @@ and decay.
    board, and the two Tiled endpoints. — **done**
 5. **Rendering**: the map layer reads entities by cell, like resources. — **done**
 6. **Tiled keeps its palette**, and the endpoint stores an entity. — **done**
-7. **Repair** accepts roads. — **pending**
+7. **Repair** accepts roads. — **done, for free**: `reparer` targets the
+   `structure` branch, and a road belongs to it.
 8. **Decay**: a player-laid road decays, a step mends it. — **done**
 
 `map_routes` still stands, empty and unread. Dropping it is a separate,

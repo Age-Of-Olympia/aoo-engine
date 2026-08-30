@@ -40,10 +40,15 @@ final class Version20260831140000_RoadsBecomeEntities extends AbstractMigration
     {
         foreach (self::TYPES as $name => $type) {
             $this->addSql(
+                /* `spd` 16 explicitly: the migration that moved every
+                   structure type to the players' 18 h turn ran BEFORE this
+                   one, so a type created here would have kept the 0 the
+                   column defaults to — a 34 h turn, and decay counting at
+                   the wrong pace for ever. */
                 "INSERT INTO races (code, name, label, description, playable, hidden, kind, type_kind,
                                     structure_nature, bleeds, wound_color, blocks_passage, blocks_projectiles,
-                                    pv, bgColor, color, repairable)
-                 SELECT ?, ?, ?, ?, 0, 1, 'structure', 'scenery', 'decor', '', '#8b4513', 0, 0, ?, ?, 'black', 1
+                                    pv, spd, bgColor, color, repairable)
+                 SELECT ?, ?, ?, ?, 0, 1, 'structure', 'scenery', 'decor', '', '#8b4513', 0, 0, ?, 16, ?, 'black', 1
                   WHERE NOT EXISTS (SELECT 1 FROM races r WHERE CONVERT(r.name USING utf8mb4) = CONVERT(? USING utf8mb4))",
                 [
                     strtoupper($name),

@@ -252,7 +252,8 @@ Everything else in this note is settled.
 2. The faction page column, remaining life flagged below 75 %. — **done**
 3. The cron, the collapse loop, `touch()` on building use. — **done**
 4. Roads, once they are entities: `touch()` on the step, and the heal.
-   — **pending**, blocked on entification.
+   — **done**. Only a road a PLAYER lays enrols; the map editor uses the same
+   gesture, so the caller says which it is.
 
 Where the pieces live: `App\Service\Decay\StructureDecayService` (rule),
 `DecayDefaultsService` (the two dials, edited from `admin/index.php`),
@@ -260,5 +261,8 @@ Where the pieces live: `App\Service\Decay\StructureDecayService` (rule),
 `BuildingService::place()` (enrolment),
 `ActionExecutorService` (use), `FactionView::upkeepCellHtml()` (alert).
 
-`touchAndHeal()` already exists for roads and is tested; it has no caller
-until they are entities.
+A road tells nobody it is rotting: the faction page lists buildings, and a
+road is not one. Accepted — a road is re-walked rather than reported on.
+
+Manual repair accepts roads without any work: `reparer` targets the
+`structure` BRANCH, not a family.

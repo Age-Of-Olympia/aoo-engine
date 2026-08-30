@@ -263,6 +263,52 @@ class StructureDecayTest extends LegacyPlayerFixtureTestCase
         $this->assertLessThanOrEqual(time() + $grace, $from);
     }
 
+    /**
+     * A road at zero vanishes too.
+     *
+     * The removal primitive accepted buildings alone, so decay could bring a
+     * road to zero and then leave it standing at zero life for ever — the one
+     * family whose whole rule is that it disappears.
+     */
+    public function testARoadAtZeroVanishes(): void
+    {
+        /* Its own cell: a road left standing on the shared one would make
+           every later placement refuse it. */
+        [$x, $y] = $this->farTile();
+        $coords = (object) ['x' => $x + 7, 'y' => $y + 7, 'z' => 0, 'plan' => 'gaia'];
+
+        $player = $this->createRealPlayer('GmRouteMorte');
+        $laid = (new \App\Service\Map\GroundLayerService())
+            ->lay('routes', 'route', $coords, (int) $player->id, byPlayer: true);
+
+        if (!$laid['ok']) {
+            $this->markTestSkipped('road type not seeded: ' . $laid['message']);
+        }
+
+        $coordsId = (int) \Classes\View::get_coords_id($coords);
+        $road = (int) $this->link->fetchOne(
+            "SELECT p.id FROM players p JOIN entity_cells ec ON ec.player_id = p.id
+              WHERE p.player_type = 'route' AND ec.coords_id = ?",
+            [$coordsId]
+        );
+        $this->assertGreaterThan(0, $road);
+        $this->trackEntityId($road);
+
+        $service = new StructureDecayService();
+        /* A road has 60 PV and loses one a turn: a hundred turns buries it
+           with room to spare. Winding the clock much further would push
+           `decay_from` past what an INT holds — the pass never can, since it
+           only ever advances the clock up to now. */
+        $result = $service->run(time() + 100 * $this->turn());
+
+        $this->assertContains($road, $result['collapsed']);
+        $this->assertSame(
+            0,
+            (int) $this->link->fetchOne('SELECT COUNT(*) FROM players WHERE id = ?', [$road]),
+            'the road is gone from the map'
+        );
+    }
+
     /** The type overrides the global dial. */
     public function testATypeMayCarryItsOwnRate(): void
     {

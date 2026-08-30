@@ -1244,21 +1244,30 @@ class BuildingService extends BaseService
     }
 
     /**
-     * Remove a building: satellite row + players row. Wounds and other
+     * Remove a POSED structure: satellite row + players row. Wounds and other
      * component rows are deleted first so no FK is left dangling. The
      * destruction GAME flow (drop materials, ruin state…) is the death-path
      * branch of roadmap step 6 — this is only the bare removal primitive
      * it will build on.
+     *
+     * It accepted buildings alone, which read as prudence and behaved as a
+     * hole: decay brought a road to zero and this refused it, so the road
+     * stayed on the map at zero life for ever, when a road at zero is
+     * supposed to vanish. The guard is there to protect CHARACTERS, and
+     * naming the branch says so. `DELETE FROM buildings` is a no-op for a
+     * family that has no satellite row.
      */
     public function remove(int $playerId): bool
     {
         $conn = $this->entityManager->getConnection();
 
-        $isBuilding = $conn->fetchOne(
-            "SELECT id FROM players WHERE id = ? AND player_type = 'building'",
+        $playerType = $conn->fetchOne(
+            'SELECT player_type FROM players WHERE id = ?',
             [$playerId]
         );
-        if ($isBuilding === false) {
+
+        if ($playerType === false
+            || !\App\Enum\EntityCategory::fromPlayerType((string) $playerType)->isStructure()) {
             return false;
         }
 
