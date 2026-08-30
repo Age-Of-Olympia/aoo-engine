@@ -227,6 +227,10 @@ class InventoryService
                     break;
 
                 case "effet":
+                    /* Durations, when the item carries them, sit beside the
+                       names in `effetDuree` — a name-keyed map, so an entry
+                       without one keeps the historical default below. */
+                    $durations = (array) ($item->data->effetDuree ?? []);
                     //dans le json de l'objet, les effet sont dans un tableau du type ["-sang","poison"]
                     foreach ($qte as $effet) {
                         //supression d'un effet
@@ -237,16 +241,20 @@ class InventoryService
                         }
                         //ajout d'un effet
                         else {
-                            if ($player->effectService->isHidden($effet) || $effet == "poison" || $effet == "poison_magique") {
+                            $hidden = $player->effectService->isHidden($effet)
+                                || $effet == "poison" || $effet == "poison_magique";
 
-                                /* Les effets cachés (poison…) ne s'éteignent
-                                 * pas d'eux-mêmes : il faut être soigné. Avec
-                                 * les durées en tours, zéro veut dire
-                                 * « terminé » — l'infini est explicite. */
-                                $player->add_effect($effet, PlayerEffectService::DURATION_INFINITE);
-                            } else {
+                            /* Les effets cachés (poison…) ne s'éteignent pas
+                             * d'eux-mêmes : il faut être soigné. Avec les
+                             * durées en tours, zéro veut dire « terminé » —
+                             * l'infini est explicite. C'est le défaut : une
+                             * durée réglée sur l'objet le remplace. */
+                            $duration = array_key_exists($effet, $durations)
+                                ? (int) $durations[$effet]
+                                : ($hidden ? PlayerEffectService::DURATION_INFINITE : 1);
 
-                                $player->add_effect($effet, 1);
+                            $player->add_effect($effet, $duration);
+                            if (!$hidden) {
                                 /* les effets cachés (poison…) restent
                                  * muets dans le message de retour */
                                 $details[] = 'effet ' . $effet;

@@ -345,6 +345,48 @@ function item_effect_multiselect(string $field, array $selected, string $label, 
 }
 
 /**
+ * Effect + duration rows, shared by the weapon strike effects and the
+ * consumable ones. A duration is a TURN COUNT since the effects engine
+ * moved to turns: 0 lasts until the next turn, -1 never ends.
+ *
+ * @param list<array{name: string, duration: ?int, extra: array<string, mixed>}> $entries
+ */
+function item_effect_duration_rows(string $field, array $entries, string $header): string
+{
+    $known = (new \App\Service\EffectService())->getGameplayEffectNames();
+
+    $rows = '<div class="d-flex gap-2 text-muted" style="font-size:85%;">'
+        . '<span style="flex:2;">' . $header . '</span>'
+        . '<span style="flex:1;">Durée (tours)</span></div>';
+
+    foreach (array_merge($entries, [['name' => '', 'duration' => null, 'extra' => []]]) as $entry) {
+        $options = '<option value="">—</option>';
+        if ($entry['name'] !== '' && !in_array($entry['name'], $known, true)) {
+            $options .= '<option value="' . e($entry['name']) . '" selected>⚠ inconnue : ' . e($entry['name']) . '</option>';
+        }
+        foreach ($known as $effectName) {
+            $options .= '<option value="' . e($effectName) . '"'
+                . ($effectName === $entry['name'] ? ' selected' : '') . '>' . e($effectName) . '</option>';
+        }
+
+        /* Keys nothing reads today travel in a hidden field rather than
+           being dropped: the column was hand-written JSON before this form. */
+        $rows .= '<div class="d-flex gap-2 mb-1">'
+            . '<select class="form-control form-control-sm" name="' . $field . '_name[]" style="flex:2;">' . $options . '</select>'
+            . '<input class="form-control form-control-sm" type="number" name="' . $field . '_duration[]" style="flex:1;"'
+            . ' value="' . ($entry['duration'] === null ? '' : (int) $entry['duration']) . '" placeholder="1">'
+            . '<input type="hidden" name="' . $field . '_extra[]" value="'
+            . e($entry['extra'] === [] ? '' : (string) json_encode($entry['extra'], JSON_UNESCAPED_UNICODE)) . '">'
+            . '</div>';
+    }
+
+    return '<div class="form-group">' . $rows
+        . '<small class="text-muted">Durée en <b>tours</b> : vide ou <code>1</code> pour un tour,'
+        . ' <code>0</code> jusqu\'au prochain tour, <code>-1</code> sans fin.'
+        . ' Ligne au nom vidé = supprimée ; la ligne vierge sert à en ajouter une.</small></div>';
+}
+
+/**
  * Lignes d'édition des pousses d'une graine (extra.growTo) : nom posé,
  * table de carte cible, taux « 1 chance sur N par jour » — plus une
  * ligne vierge pour l'ajout.
@@ -463,11 +505,36 @@ function items_render_edit(object $row, string $csrfToken): string
      * l'enregistrement. */
     $extraJson = json_decode((string) ($row->extra ?? ''));
     $consumeEffects = (is_object($extraJson) && !empty($extraJson->effet)) ? array_map('strval', (array) $extraJson->effet) : [];
-    $effectsApplied = array_values(array_filter($consumeEffects, static fn (string $e): bool => !str_starts_with($e, '-')));
+    /* Durations live in a parallel map keyed by effect name: `effet` keeps
+       its historical shape, so a reader that ignores durations still works. */
+    $consumeDurations = (is_object($extraJson) && !empty($extraJson->effetDuree))
+        ? (array) $extraJson->effetDuree : [];
+    $effectsApplied = array_values(array_map(
+        static fn (string $e): array => [
+            'name' => $e,
+            'duration' => array_key_exists($e, $consumeDurations) ? (int) $consumeDurations[$e] : null,
+            'extra' => [],
+        ],
+        array_filter($consumeEffects, static fn (string $e): bool => !str_starts_with($e, '-'))
+    ));
     $effectsRemoved = array_values(array_map(
         static fn (string $e): string => substr($e, 1),
         array_filter($consumeEffects, static fn (string $e): bool => str_starts_with($e, '-'))
     ));
+
+    /* Weapon strike effects: [{"name": "poison", "duration": 3}] — edited as
+       rows since the raw JSON taught a seconds-era duration nobody honours. */
+    $strikeEffects = [];
+    foreach ((array) json_decode((string) ($row->add_effects ?? ''), true) as $entry) {
+        if (!is_array($entry) || trim((string) ($entry['name'] ?? '')) === '') {
+            continue;
+        }
+        $strikeEffects[] = [
+            'name' => (string) $entry['name'],
+            'duration' => array_key_exists('duration', $entry) ? (int) $entry['duration'] : null,
+            'extra' => array_diff_key($entry, ['name' => null, 'duration' => null]),
+        ];
+    }
     /* Graine : growTo (pousses possibles, table cible, 1 chance sur N par
      * jour — cron daily 20_grow_crops) et growZMin, éclatés en champs
      * dédiés — même contrat que les effets : le textarea Extra n'affiche
@@ -617,8 +684,10 @@ function items_render_edit(object $row, string $csrfToken): string
         . formField('Munitions (noms, séparés par des virgules)', formInput('munitions', $munitions),
             'form-group', 'Arme de tir : les objets-munitions qu\'elle accepte.');
 
-    $consommation = item_effect_multiselect('effets_appliques', $effectsApplied, 'Effets appliqués',
-            'Posés sur le buveur à la consommation (potion de poison, de régénération…). Ctrl+clic pour plusieurs.')
+    $consommation = formField('Effets appliqués',
+            item_effect_duration_rows('effets_appliques', $effectsApplied, 'Effet posé sur le buveur'),
+            'form-group',
+            'Posés sur le buveur à la consommation (potion de poison, de régénération…).')
         . item_effect_multiselect('effets_retires', $effectsRemoved, 'Effets retirés',
             'Purgés du buveur à la consommation (antidote…). Catalogue : admin → Effets.');
 
@@ -631,11 +700,10 @@ function items_render_edit(object $row, string $csrfToken): string
             formInput('grow_z_min', $growZMin === null ? '' : (string) $growZMin, 'type="number"'),
             'form-group', 'La graine ne germe qu\'à partir de ce niveau Z — vide : partout.');
 
-    $jsonAvance = formField('Effets d\'arme au coup porté (JSON)',
-            formTextarea('add_effects', (string) ($row->add_effects ?? ''), 2),
+    $jsonAvance = formField('Effets d\'arme au coup porté',
+            item_effect_duration_rows('strike_effects', $strikeEffects, 'Effet posé sur la cible'),
             'form-group',
-            'Arme équipée : effets posés quand le coup touche —'
-            . ' <code>[{"name":"poison","on":"target","duration":86400}]</code>.')
+            'Arme équipée : effets posés sur la cible quand le coup touche.')
         . formField('Interdits (JSON)', formTextarea('forbid', (string) ($row->forbid ?? ''), 2),
             'form-group', '<code>{"market":1}</code> : invendable au marché et aux contrats (ex : l\'or).')
         . formField('Extra (JSON, clés héritées — sans perte)', formTextarea('extra', $extraDisplay, 2),

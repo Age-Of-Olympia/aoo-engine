@@ -208,8 +208,9 @@ $triggers = array_values(array_intersect(
 ));
 
 // Colonnes JSON : validées ou refusées — jamais de JSON cassé en base.
+// add_effects en est sorti : il s'édite en lignes (effet + durée).
 $jsonColumns = [];
-foreach (\Classes\Item::JSON_COLUMNS as $col) {
+foreach (array_diff(\Classes\Item::JSON_COLUMNS, ['add_effects']) as $col) {
     $raw = trim((string) ($_POST[$col] ?? ''));
     if ($raw === '') {
         $jsonColumns[$col] = null;
@@ -227,10 +228,18 @@ foreach (\Classes\Item::JSON_COLUMNS as $col) {
 // une faute de frappe rendait la potion silencieuse. Recomposés dans
 // extra.effet : le textarea Extra n'édite plus cette clé.
 $effectService = new \App\Service\EffectService();
-$consumeEffects = [];
-foreach ([['effets_appliques', ''], ['effets_retires', '-']] as [$field, $prefix]) {
-    foreach ((array) ($_POST[$field] ?? []) as $effectName) {
-        $effectName = strtolower(trim((string) $effectName));
+
+/**
+ * Read the effect + duration rows of one field. An emptied name drops the
+ * row; a blank duration means "unset", which each reader defaults its own
+ * way. Keys the form does not edit travel back through the hidden field.
+ *
+ * @return list<array{name: string, duration: ?int, extra: array<string, mixed>}>
+ */
+$readEffectRows = static function (string $field) use ($effectService, $id): array {
+    $rows = [];
+    foreach (array_values((array) ($_POST[$field . '_name'] ?? [])) as $i => $rawName) {
+        $effectName = strtolower(trim((string) $rawName));
         if ($effectName === '') {
             continue;
         }
@@ -238,8 +247,54 @@ foreach ([['effets_appliques', ''], ['effets_retires', '-']] as [$field, $prefix
             setFlash('warning', "Effet inconnu du catalogue : « {$effectName} » — rien n'a été enregistré.");
             redirectTo('/admin/items.php?action=edit&id=' . $id);
         }
-        $consumeEffects[] = $prefix . $effectName;
+        $rawDuration = trim((string) ($_POST[$field . '_duration'][$i] ?? ''));
+        $extra = json_decode((string) ($_POST[$field . '_extra'][$i] ?? ''), true);
+        $rows[] = [
+            'name' => $effectName,
+            'duration' => $rawDuration === '' ? null : (int) $rawDuration,
+            'extra' => is_array($extra) ? $extra : [],
+        ];
     }
+
+    return $rows;
+};
+
+// Effets d'arme au coup porté : lignes effet + durée, recomposées en JSON.
+$strikeRows = $readEffectRows('strike_effects');
+$strikeEffects = array_map(
+    static fn (array $row): array => $row['extra'] + array_filter(
+        ['name' => $row['name'], 'duration' => $row['duration']],
+        static fn ($v): bool => $v !== null
+    ),
+    $strikeRows
+);
+$jsonColumns['add_effects'] = $strikeEffects === []
+    ? null
+    : json_encode(array_values($strikeEffects), JSON_UNESCAPED_UNICODE);
+
+// Effets de consommation : les effets appliqués s'éditent en lignes (avec
+// leur durée), les retirés restent un sélecteur — on ne règle pas la durée
+// de ce qu'on dissipe. Recomposés dans extra.effet, préfixe « - »
+// historique ; les durées dans extra.effetDuree, à côté et non dedans, pour
+// qu'un lecteur qui les ignore continue de fonctionner.
+$appliedRows = $readEffectRows('effets_appliques');
+$consumeEffects = array_map(static fn (array $row): string => $row['name'], $appliedRows);
+$consumeDurations = [];
+foreach ($appliedRows as $row) {
+    if ($row['duration'] !== null) {
+        $consumeDurations[$row['name']] = $row['duration'];
+    }
+}
+foreach ((array) ($_POST['effets_retires'] ?? []) as $effectName) {
+    $effectName = strtolower(trim((string) $effectName));
+    if ($effectName === '') {
+        continue;
+    }
+    if (!$effectService->exists($effectName)) {
+        setFlash('warning', "Effet inconnu du catalogue : « {$effectName} » — rien n'a été enregistré.");
+        redirectTo('/admin/items.php?action=edit&id=' . $id);
+    }
+    $consumeEffects[] = '-' . $effectName;
 }
 
 $extraObject = $jsonColumns['extra'] !== null ? json_decode($jsonColumns['extra']) : null;
@@ -248,9 +303,12 @@ if ($extraObject !== null && !is_object($extraObject)) {
     redirectTo('/admin/items.php?action=edit&id=' . $id);
 }
 $extraObject ??= new stdClass();
-unset($extraObject->effet);
+unset($extraObject->effet, $extraObject->effetDuree);
 if ($consumeEffects !== []) {
     $extraObject->effet = $consumeEffects;
+}
+if ($consumeDurations !== []) {
+    $extraObject->effetDuree = (object) $consumeDurations;
 }
 
 // Graine : growTo / growZMin recomposés depuis les champs dédiés du
