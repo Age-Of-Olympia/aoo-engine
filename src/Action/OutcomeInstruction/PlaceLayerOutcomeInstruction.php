@@ -70,38 +70,14 @@ class PlaceLayerOutcomeInstruction extends OutcomeInstruction implements HasPara
             View::get_free_coords_id_arround($goCoords, 1);
         }
 
-        $coordsId = View::get_coords_id($goCoords);
-        $db = new Db();
+        $laid = (new \App\Service\Map\GroundLayerService())->lay($layer, $name, $goCoords, (int) $actor->id);
 
-        $already = $db->exe('SELECT id FROM map_' . $layer . ' WHERE coords_id = ?', $coordsId);
-        if ($already && $already->num_rows) {
-            return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: ['Il y a déjà cela ici.']);
+        if (!$laid['ok']) {
+            return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: [$laid['message']]);
         }
-
-        // Un élément interdit l'aménagement SAUF si son effet est marqué
-        // constructible par-dessus (sang, boue, traces —
-        // effects.buildable_over) : même règle que BuildingService::place
-        // pour les structures.
-        $effectService = new \App\Service\EffectService();
-        $element = $db->exe('SELECT name FROM map_elements WHERE coords_id = ?', $coordsId);
-        while ($element && ($row = $element->fetch_object())) {
-            if (!$effectService->isBuildableOver((string) $row->name)) {
-                return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: ['Un élément occupe cette case.']);
-            }
-        }
-
-        $db->insert('map_' . $layer, [
-            'name' => $name,
-            'coords_id' => $coordsId,
-            'player_id' => $actor->id,
-        ]);
-        View::refresh_players_svg($goCoords);
 
         $this->getOutcome()?->getAction()?->setRefreshScreen(true);
 
-        $message = 'Vous aménagez ' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8')
-            . ' <span class="ra ra-implosion"></span> en (' . $goCoords->x . ', ' . $goCoords->y . ').';
-
-        return new OutcomeResult(true, outcomeSuccessMessages: [$message], outcomeFailureMessages: array());
+        return new OutcomeResult(true, outcomeSuccessMessages: [$laid['message']], outcomeFailureMessages: array());
     }
 }

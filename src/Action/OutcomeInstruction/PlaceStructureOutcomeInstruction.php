@@ -85,6 +85,23 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
             View::get_free_coords_id_arround($goCoords, 1);
         }
 
+        /* A road is walked on, not stood in. Its catalogue subtype says so,
+           and it goes to the ground layer the map editor writes — the one
+           the running bonus, the drawn map and `observe` all read. Installed
+           as an object instead, it put a THING on the cell: the board drew
+           an object, and no reader of roads saw a road. */
+        $layerName = $this->groundLayerOf($type);
+
+        if ($layerName !== null) {
+            $laid = (new \App\Service\Map\GroundLayerService())->lay($layerName, $type, $goCoords, (int) $actor->id);
+
+            $this->getOutcome()?->getAction()?->setRefreshScreen(true);
+
+            return $laid['ok']
+                ? new OutcomeResult(true, outcomeSuccessMessages: [$laid['message']], outcomeFailureMessages: array())
+                : new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: [$laid['message']]);
+        }
+
         // A type still described by a race mints a building; anything else
         // places the object itself. Families leaving `races` switch sides here
         // on their own.
@@ -163,6 +180,24 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
             $forFaction ? null : (int) $actor->id,
             $forFaction ? (string) ($actor->data->faction ?? '') : ''
         );
+    }
+
+    /**
+     * The ground layer this catalogue type belongs to, or null when it is an
+     * object like any other. Read from `items.subtype`, the vocabulary the
+     * workbench field already documents ("walls, routes…").
+     */
+    private function groundLayerOf(string $type): ?string
+    {
+        $item = \Classes\Item::get_item_by_name($type);
+
+        if (!$item instanceof \Classes\Item) {
+            return null;
+        }
+
+        $subtype = (string) ($item->row->subtype ?? '');
+
+        return \App\Service\Map\GroundLayerService::isLayer($subtype) ? $subtype : null;
     }
 
     /** Instantiated on demand: this class is a Doctrine entity. */
