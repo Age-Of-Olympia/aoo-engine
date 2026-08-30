@@ -37,6 +37,7 @@ use App\Service\TiledExtensionService;
 $csrf = new CsrfProtectionService();
 $dateFormat = new DateFormatService();
 $harvestDefaults = new HarvestDefaultsService();
+$decayDefaults = new \App\Service\Decay\DecayDefaultsService();
 $seasonService = new SeasonService();
 $tiledExtension = new TiledExtensionService();
 
@@ -78,6 +79,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['harvest_default_pv'])
     } catch (\Throwable $e) {
         setFlash('danger', 'Échec : ' . $e->getMessage());
     }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['decay_rate_default'])) {
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        $decayDefaults->setRate((int) $_POST['decay_rate_default']);
+        $decayDefaults->setGraceTurns((int) ($_POST['decay_grace_turns'] ?? 0));
+        setFlash('success', 'Décrépitude : ' . $decayDefaults->rate() . ' PV par tour après '
+            . $decayDefaults->graceTurns() . ' tour(s) sans usage.');
+    } catch (\Throwable $e) {
+        setFlash('danger', 'Échec : ' . $e->getMessage());
+    }
+    redirectTo('/admin/index.php');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tiled_min_extension'])) {
@@ -243,6 +257,32 @@ ob_start();
                 <small class="form-text text-muted">
                     Combien de coups il faut pour abattre un arbre. Sert de valeur par défaut à la
                     <strong>création</strong> d'un type récoltable ; un type déjà réglé garde la sienne.
+                </small>
+            </form>
+
+            <hr />
+
+            <form method="post" action="index.php">
+                <?= $csrf->renderTokenField() ?>
+                <label class="form-label mb-0">Décrépitude des constructions</label>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                    <input type="number" name="decay_rate_default" min="1" max="1000"
+                           class="form-select" style="max-width: 100px;"
+                           value="<?= (int) $decayDefaults->rate() ?>" />
+                    <span class="text-muted">PV par tour, après</span>
+                    <input type="number" name="decay_grace_turns" min="0" max="1000"
+                           class="form-select" style="max-width: 100px;"
+                           value="<?= (int) $decayDefaults->graceTurns() ?>" />
+                    <span class="text-muted">tour(s) sans usage</span>
+                    <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
+                </div>
+                <small class="form-text text-muted">
+                    Ce que les <strong>joueurs</strong> ont bâti se dégrade ; ce que Tiled a posé, non.
+                    S'en servir repousse l'échéance — marcher sur une route la répare même. Un mur,
+                    lui, ne s'entretient qu'en le réparant. Un type peut porter ses propres valeurs.
+                    À zéro, la construction est détruite.
+                    <strong>Lu à chaque usage</strong> : changer ces valeurs déplace le monde,
+                    progressivement, sans migration.
                 </small>
             </form>
 

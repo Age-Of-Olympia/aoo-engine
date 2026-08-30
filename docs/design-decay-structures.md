@@ -246,13 +246,19 @@ Everything else in this note is settled.
 
 ## Slicing
 
-0. Structure types to `spd` 16.
+0. Structure types to `spd` 16. — **done**
 1. `entity_decay`, the two `admin_settings` dials and their `races`
-   overrides, the pass — no caller. Testable, world unchanged, values
-   tunable before anything bites.
-2. The faction page column — remaining life, flagged below 75 %. Before
-   the cron, so a faction can see the state of its constructions the day
-   decay starts to matter.
-3. The cron, the collapse loop, `touch()` on building use. Walls and
-   buildings decay for real.
+   overrides, the pass — no caller. — **done**
+2. The faction page column, remaining life flagged below 75 %. — **done**
+3. The cron, the collapse loop, `touch()` on building use. — **done**
 4. Roads, once they are entities: `touch()` on the step, and the heal.
+   — **pending**, blocked on entification.
+
+Where the pieces live: `App\Service\Decay\StructureDecayService` (rule),
+`DecayDefaultsService` (the two dials, edited from `admin/index.php`),
+`scripts/crons/daily/15_decay_structures.php` (driver),
+`BuildingService::place()` (enrolment),
+`ActionExecutorService` (use), `FactionView::upkeepCellHtml()` (alert).
+
+`touchAndHeal()` already exists for roads and is tested; it has no caller
+until they are entities.
