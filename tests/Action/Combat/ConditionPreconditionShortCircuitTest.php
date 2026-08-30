@@ -122,8 +122,8 @@ class ConditionPreconditionShortCircuitTest extends TestCase
             xpResolver: new ActionXpResolver($this->em([])),
         ))->executeAction();
 
-        $this->assertFalse($results->isSuccess(), 'la précondition a bien échoué');
-        $this->assertFalse($results->isBlocked(), 'sans ligne bloquante, l\'action est payée');
+        $this->assertFalse($results->isSuccess(), 'the precondition did fail');
+        $this->assertFalse($results->isBlocked(), 'without a blocking row the action is paid for');
     }
 
     private function precondition(string $parent, string $precondition, bool $blocking = false): ActionConditionPrecondition

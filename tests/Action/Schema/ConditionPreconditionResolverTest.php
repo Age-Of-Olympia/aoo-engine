@@ -46,8 +46,8 @@ class ConditionPreconditionResolverTest extends TestCase
 
         $resolved = $resolver->resolve('DistanceCompute');
 
-        $this->assertFalse($resolved[0]->isBlocking(), 'une esquive est un échec payé');
-        $this->assertTrue($resolved[1]->isBlocking(), 'un obstacle refuse le tir');
+        $this->assertFalse($resolved[0]->isBlocking(), 'a dodge is a paid failure');
+        $this->assertTrue($resolved[1]->isBlocking(), 'an obstacle refuses the shot');
     }
 
     public function testQueriesByParentConditionTypeOrderedByOrderIndex(): void

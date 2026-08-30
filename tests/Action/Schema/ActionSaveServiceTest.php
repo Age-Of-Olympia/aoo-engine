@@ -83,8 +83,8 @@ class ActionSaveServiceTest extends TestCase
 
         $service->saveParameters(1, [], [], [], [], [], [5 => '1']);
 
-        $this->assertTrue($becomesBlocking->isBlocking(), 'la case cochée rend la condition bloquante');
-        $this->assertFalse($becomesFailing->isBlocking(), 'la case décochée est absente du POST');
+        $this->assertTrue($becomesBlocking->isBlocking(), 'a ticked box makes the condition blocking');
+        $this->assertFalse($becomesFailing->isBlocking(), 'an unticked box is absent from the POST');
     }
 
     public function testSavesEachOutcomesApplyToValue(): void

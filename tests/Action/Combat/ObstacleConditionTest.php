@@ -133,7 +133,7 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
 
         $this->assertFalse(
             $condition->isBlocking(),
-            'le refus vit sur la ligne de précondition, pas sur la condition'
+            'the refusal lives on the precondition row, not on the condition'
         );
     }
 
