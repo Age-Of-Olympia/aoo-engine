@@ -88,7 +88,6 @@ CREATE TABLE `action_type_instructions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 INSERT INTO `action_type_instructions` VALUES (1,'attack','applystatus','{"adrenaline":true,"duration":172800}',0);
-INSERT INTO `action_type_instructions` VALUES (2,'attack','objecteffect',NULL,1);
 
 --
 -- Action-system per-type config tables (kept in sync with src/Migrations so a

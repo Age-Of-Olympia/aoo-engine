@@ -82,7 +82,7 @@ class ActionTypeInstructionEditServiceTest extends TestCase
     {
         $instruction = (new ActionTypeInstruction())
             ->setTypeKey('attack')
-            ->setInstructionType('objecteffect')
+            ->setInstructionType('applystatus')
             ->setOrderIndex(0)
             ->setParameters([]);
         $instruction->setId(7);
