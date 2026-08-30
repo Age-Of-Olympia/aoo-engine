@@ -23,7 +23,7 @@ class ItemStatsSeeder
 {
     /** Colonnes scalaires seedées 1:1 depuis la clé JSON homonyme. */
     public const SCALAR_KEYS = [
-        'text', 'price', 'emplacement', 'type', 'subtype', 'race',
+        'text', 'price', 'emplacement', 'type', 'subtype', 'race', 'wear_profile',
         ...\Classes\Item::SPECIAL_KEYS,
         ...\App\Enum\Caracs::KEYS,
     ];
@@ -33,7 +33,7 @@ class ItemStatsSeeder
      * — déclaré ICI pour qu'une future colonne texte ne soit pas
      * silencieusement défaut-ée à 0 par les consommateurs (ItemImporter).
      */
-    public const STRING_KEYS = ['text', 'emplacement', 'type', 'subtype', 'race'];
+    public const STRING_KEYS = ['text', 'emplacement', 'type', 'subtype', 'race', 'wear_profile'];
 
     /** Clés complexes stockées en colonnes JSON dédiées. */
     public const JSON_KEYS = ['munitions', 'addEffects', 'forbid'];

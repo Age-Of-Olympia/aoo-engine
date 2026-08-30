@@ -21,10 +21,17 @@ use Classes\Item;
 
 /** Libellés UI des déclencheurs — les CLÉS viennent de Item::WEAR_TRIGGERS. */
 const ITEM_WEAR_TRIGGER_LABELS = [
-    'attack'  => 'Attaque (porter un coup)',
-    'defense' => 'Défense (encaisser un coup)',
     'move'    => 'Déplacement',
     'usage'   => 'Utilisation',
+];
+
+/** UI labels for the combat roles — the KEYS come from WearService::PROFILES. */
+const ITEM_WEAR_PROFILE_LABELS = [
+    ''           => 'D\'après l\'emplacement (recommandé)',
+    'weapon'     => 'Arme — s\'use en frappant',
+    'protection' => 'Protection — s\'use en encaissant',
+    'neutral'    => 'Ni l\'un ni l\'autre — ne s\'use qu\'à la mort',
+    'none'       => 'Ne s\'use jamais au combat',
 ];
 
 /** Libellés UI des flags — les CLÉS viennent de Item::FLAG_KEYS. */
@@ -109,10 +116,55 @@ function item_flag_badges(object $row): string
 
 function item_wear_cell(object $row): string
 {
-    if ((int) $row->wear_rate <= 0 || trim((string) $row->wear_triggers) === '') {
-        return '<span class="text-muted">ne s\'use pas</span>';
+    $profile = (string) ($row->wear_profile ?? '');
+
+    if ($profile === \App\Service\WearService::PROFILE_NONE) {
+        return '<span class="text-muted">exempté</span>';
     }
-    return '<b>−' . (int) $row->wear_rate . '/tour</b> sur ' . e($row->wear_triggers);
+
+    /* Combat wears BY DEFAULT: the cell says what the object is, and keeps
+     * "never wears" for the objects standing outside every rule. */
+    $parts = [];
+
+    if ($profile !== '') {
+        $parts[] = e(ITEM_WEAR_PROFILE_LABELS[$profile] ?? $profile);
+    }
+
+    $rate = (int) ($row->wear_rate ?? 1);
+    if ($rate > 1) {
+        $parts[] = '<b>×' . $rate . '</b> par point';
+    }
+
+    $triggers = trim((string) $row->wear_triggers);
+    if ($triggers !== '') {
+        $parts[] = 'par tour sur ' . e($triggers);
+    }
+
+    return $parts === [] ? '<span class="text-muted">règles par défaut</span>' : implode(' · ', $parts);
+}
+
+/**
+ * Folded summary of the Usure section.
+ *
+ * @param list<string> $triggers per-turn triggers still ticked
+ */
+function items_wear_digest(string $profile, int $rate, array $triggers, int $durabilityMax): string
+{
+    if ($profile === \App\Service\WearService::PROFILE_NONE) {
+        return 'exempté · vie ' . $durabilityMax;
+    }
+
+    $parts = [$profile === '' ? 'règles par défaut' : (ITEM_WEAR_PROFILE_LABELS[$profile] ?? $profile)];
+
+    if ($rate > 1) {
+        $parts[] = '×' . $rate . ' par point';
+    }
+    if ($triggers !== []) {
+        $parts[] = 'par tour : ' . implode(', ', $triggers);
+    }
+    $parts[] = 'vie ' . $durabilityMax;
+
+    return implode(' · ', $parts);
 }
 
 /**
@@ -153,7 +205,9 @@ function items_type_inconsistencies(object $row, string $type): array
     $extra = json_decode((string) ($row->extra ?? ''));
 
     $issues = [];
-    if (((int) ($row->wear_rate ?? 0) > 0 || trim((string) ($row->wear_triggers ?? '')) !== '')
+    if (((int) ($row->wear_rate ?? 1) > 1
+            || trim((string) ($row->wear_triggers ?? '')) !== ''
+            || (string) ($row->wear_profile ?? '') !== '')
         && $type !== 'equipement') {
         $issues[] = 'usure';
     }
@@ -678,10 +732,17 @@ function items_render_edit(object $row, string $csrfToken): string
         . formField('Exotique (race)', formInput('exotique', (string) $row->exotique),
             'form-group', 'Code de race : SEULE cette race peut équiper l\'objet.');
 
-    $usure = '<div class="form-group">' . $triggerBoxes . '</div>'
-        . formField('Points perdus par tour armé',
-            formInput('wear_rate', (string) (int) $row->wear_rate, 'type="number" min="0" data-fills'),
-            'form-group', '0 = ne s\'use jamais.')
+    $usure = '<p class="text-muted mb-2" style="font-size:88%">Frapper, encaisser et mourir usent'
+        . ' l\'équipement <b>par défaut</b> : rien à cocher ici pour que cela marche. Les cases'
+        . ' ci-dessous ne concernent que l\'usure <b>par tour</b>, celle des bottes et des outils.</p>'
+        . formField('Rôle au combat',
+            formSelect('wear_profile', ITEM_WEAR_PROFILE_LABELS, (string) ($row->wear_profile ?? ''), null, 'data-fills'),
+            'form-group',
+            'Ce que l\'objet est quand les coups tombent. Laissé sur « d\'après l\'emplacement », main1 et deux-mains sont des armes, munitions et anneaux sont épargnés par les coups, le reste encaisse.')
+        . '<div class="form-group">' . $triggerBoxes . '</div>'
+        . formField('Fragilité',
+            formInput('wear_rate', (string) max(1, (int) $row->wear_rate), 'type="number" min="1"'),
+            'form-group', 'Ce que l\'objet perd pour UN point d\'usure reçu : 1 = ordinaire, 3 = trois fois plus fragile. Pour qu\'un objet ne s\'use pas, c\'est le rôle au combat qui le dit, pas ce champ.')
         . formField('Durabilité max (vie de l\'objet)',
             formInput('durability_max', (string) (int) ($row->durability_max ?? 100), 'type="number" min="1"'),
             'form-group', 'Vie de départ des exemplaires individualisés — les instances déjà nées gardent la leur.');
@@ -737,6 +798,7 @@ function items_render_edit(object $row, string $csrfToken): string
     $flagCount = count(array_filter(Item::FLAG_KEYS, static fn (string $c): bool => !empty($row->$c)));
     $magie = array_filter([(string) $row->spell, (string) $row->exotique]);
     $wearRate = (int) $row->wear_rate;
+    $wearProfile = (string) ($row->wear_profile ?? '');
     $caracsCount = count(array_filter(\App\Enum\Caracs::KEYS, static fn (string $k): bool => (int) ($row->$k ?? 0) !== 0));
     $specialCount = count(array_filter(Item::SPECIAL_KEYS, static fn (string $k): bool => (int) ($row->$k ?? 0) !== 0));
     $munitionsCount = $munitions === '' ? 0 : count(explode(',', $munitions));
@@ -765,10 +827,10 @@ function items_render_edit(object $row, string $csrfToken): string
         . items_edit_section('Flags &amp; magie',
             $flagsDigestParts !== [] ? implode(' · ', $flagsDigestParts) : '—',
             $flagCount > 0 || $magie !== [], $flags)
-        . items_edit_section('Usure <small class="text-muted">(par tour)</small>',
-            $wearRate > 0 ? $wearRate . ' pt/tour · vie ' . (int) ($row->durability_max ?? 100) : 'ne s\'use pas',
-            $wearRate > 0 || $triggers !== [], $usure, 'equipement',
-            ($wearRate > 0 || $triggers !== []) && $typeValue !== 'equipement')
+        . items_edit_section('Usure',
+            items_wear_digest($wearProfile, $wearRate, $triggers, (int) ($row->durability_max ?? 100)),
+            $wearRate > 1 || $triggers !== [] || $wearProfile !== '', $usure, 'equipement',
+            ($wearRate > 1 || $triggers !== [] || $wearProfile !== '') && $typeValue !== 'equipement')
         . items_edit_section('Contenant <small class="text-muted">(coffres)</small>',
             $row->capacity !== null ? (int) $row->capacity . ' lignes' : 'sans limite',
             $row->capacity !== null, $contenant)
@@ -829,7 +891,7 @@ function items_render_edit(object $row, string $csrfToken): string
                         var v = (el.value || "").trim();
                         if (v === "") { return false; }
                         /* On a number, zero is how this form spells "unset"
-                           (0 pt/tour = ne s\'use pas). */
+                           (0 ligne de contenance = pas un contenant). */
                         return el.type === "number" ? Number(v) !== 0 : true;
                     }
                 );
@@ -887,7 +949,7 @@ $action = $_GET['action'] ?? 'list';
 
 if ($action === 'new') {
     $blank = (object) array_fill_keys(array_merge(
-        ['name', 'spell', 'exotique', 'wear_triggers', 'munitions'],
+        ['name', 'spell', 'exotique', 'wear_triggers', 'wear_profile', 'munitions'],
         \App\Service\ItemStatsSeeder::STRING_KEYS,
         Item::JSON_COLUMNS
     ), '');
@@ -901,6 +963,7 @@ if ($action === 'new') {
     }
     $blank->is_bankable = 1;
     $blank->price = 1;
+    $blank->wear_rate = 1;
     $blank->durability_max = 100;
     $blank->capacity = null;
     $content = items_render_edit($blank, $csrfToken);

@@ -207,6 +207,14 @@ $triggers = array_values(array_intersect(
     array_map('strval', (array) ($_POST['wear_triggers'] ?? []))
 ));
 
+/* Combat role: whitelisted too. An unknown value would fall through to
+ * the ELSE of the SQL classification and make a weapon take the blows —
+ * the exact opposite of what the admin meant. */
+$wearProfile = (string) ($_POST['wear_profile'] ?? '');
+if (!in_array($wearProfile, \App\Service\WearService::PROFILES, true)) {
+    $wearProfile = \App\Service\WearService::PROFILE_AUTO;
+}
+
 // Colonnes JSON : validées ou refusées — jamais de JSON cassé en base.
 // add_effects en est sorti : il s'édite en lignes (effet + durée).
 $jsonColumns = [];
@@ -368,7 +376,7 @@ foreach (\Classes\Item::FLAG_KEYS as $flag) {
 
 $set = array_merge($set, [
     'spell = ?', 'exotique = ?',
-    'wear_triggers = ?', 'wear_rate = ?', 'durability_max = ?', 'capacity = ?',
+    'wear_triggers = ?', 'wear_profile = ?', 'wear_rate = ?', 'durability_max = ?', 'capacity = ?',
     'text = ?', 'price = ?', 'emplacement = ?', 'type = ?', 'subtype = ?', 'race = ?',
     'munitions = ?', 'add_effects = ?', 'forbid = ?', 'extra = ?',
     'stats_in_db = 1',
@@ -377,7 +385,8 @@ $params = array_merge($params, [
     trim((string) ($_POST['spell'] ?? '')),
     trim((string) ($_POST['exotique'] ?? '')),
     implode(',', $triggers),
-    max(0, (int) ($_POST['wear_rate'] ?? 0)),
+    $wearProfile,
+    max(1, (int) ($_POST['wear_rate'] ?? 1)),
     max(1, (int) ($_POST['durability_max'] ?? 100)),
     // '' = unlimited (NULL); a number is the content-line ceiling.
     trim((string) ($_POST['capacity'] ?? '')) === '' ? null : max(0, (int) $_POST['capacity']),

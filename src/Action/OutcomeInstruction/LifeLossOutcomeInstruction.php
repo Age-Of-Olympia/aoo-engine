@@ -154,15 +154,14 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
             }
             $target->putBonus(array('pv'=>-$totalDamages));
 
-            /* Usure : porter un coup ARME l'arme de l'attaquant
-             * (déclencheur « attack »), l'encaisser ARME les protections de
-             * la cible (« defense ») — le décrément tombe au passage de
-             * tour. WearService n'est pas intercepté par le SimulationGuard,
-             * la garde est ici. */
+            /* Wear: the blow wears the weapon that lands it and the
+             * protections that take it RIGHT AWAY — a die roll cannot be
+             * deferred to the turn boundary. WearService is not intercepted
+             * by the SimulationGuard, so the guard belongs here. */
             if (!$actor->isSimulated() && !$target->isSimulated()) {
                 $wear = new \App\Service\WearService();
-                $wear->arm($actor->id, 'attack');
-                $wear->arm($target->id, 'defense');
+                $wear->wearWeaponOnAttack($actor->id);
+                $wear->wearProtectionOnHit($target->id);
             }
 
             // Gestion des logs

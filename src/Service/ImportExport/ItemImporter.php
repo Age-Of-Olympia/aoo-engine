@@ -79,7 +79,7 @@ final class ItemImporter extends AbstractDbalImporter
         // forçage, un payload sans la clé retomberait à 0 et le jeu
         // chercherait un JSON legacy qui n'existe pas ici.
         $set[] = '`stats_in_db` = 1';
-        foreach (['spell', 'exotique', 'wear_triggers'] as $col) {
+        foreach (['spell', 'exotique', 'wear_triggers', 'wear_profile'] as $col) {
             $set[] = "`{$col}` = ?";
             $params[] = (string) ($payload[$col] ?? '');
         }

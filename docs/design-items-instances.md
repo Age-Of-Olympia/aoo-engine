@@ -146,23 +146,53 @@ fungibles stay `map_items` untouched.
 which events arm its wear and how fast it wears (columns shipped with
 the items JSON→DB move):
 
-- `wear_triggers` — set of {`attack`, `defense`, `move`, `usage`}:
-  a sword arms on attack, an armor when its wearer takes a hit, boots
-  on movement, a tool on usage. Empty = never wears (gold, trophies).
-- `wear_rate` — durability points lost **per turn** in which at least
-  one armed trigger fired.
+- `wear_triggers` — set of {`move`, `usage`}: boots arm on movement, a
+  tool on usage. Empty = never wears per turn (gold, trophies). The set
+  used to hold `attack` and `defense` too; those events became the
+  immediate rules below.
+- `wear_rate` — durability points lost per wear point received (see
+  below); it used to mean "per turn".
 
-Everything about wear is CONFIGURABLE per object and defaults to « ne
-s'use pas » (`wear_rate` 0, no triggers) : the engine ships inert, and
-WHICH objects wear at WHAT rate is admin/balance content tuned later —
-deliberately not decided now (décision 2026-07-17).
+Per-turn wear is CONFIGURABLE per object and defaults to « ne s'use
+pas » (`wear_rate` 0, no triggers) : that half of the engine ships
+inert, and WHICH objects wear on movement or usage stays admin/balance
+content (décision 2026-07-17). Combat wear went the other way on
+2026-08-30 — on by default, opt-OUT per object — because a rule nobody
+ticks is a rule nobody has.
 
-**The unit of decay is the TURN**: events during a turn only FLAG the
-instance (`worn_this_turn` / last-armed timestamp); the decrement is
-applied once, at new-turn processing — the same pass that refreshes
-PA/MVT. Ten attacks in one turn wear the sword once. This keeps wear
-predictable, cheap (one pass), and turn-native like everything else in
-AoO. The new-turn recap logs it (« Votre gladius s'use (−2) »).
+**The unit of decay is the TURN** — for what wears by being *used*:
+events during a turn only FLAG the instance; the decrement is applied
+once, at new-turn processing, the same pass that refreshes PA/MVT. Ten
+steps in one turn wear the boots once. This keeps that wear
+predictable, cheap (one pass), and turn-native. The new-turn recap logs
+it (« Vos bottes s'usent (−2) »).
+
+**Combat wears IMMEDIATELY** (règles décidées le 2026-08-30). Three
+rules, applied by default with nothing to configure:
+
+- striking wears the striker's weapon;
+- taking a hit scatters 1D3 points at random over the protections worn;
+- dying costs 1D3 to every object still worn, after the loot has
+  fallen — so it lands on what is left.
+
+They are immediate because a die roll cannot be deferred to the turn
+boundary without storing the roll, and because a death does not wait.
+`attack` and `defense` therefore LEFT `wear_triggers`, which keeps
+`move` and `usage`: one event, one engine, never both.
+
+**What an object is** is read from its slot (`main1`/`deuxmains` are
+weapons, `doigt` and `munition` are spared by blows, the rest takes
+them), and `items.wear_profile` overrides that where the slot lies —
+`main2` holds a shield today and will hold an off-hand weapon later.
+The same column carries the way out: `none` exempts an object from
+combat wear entirely, which is what a divine artefact wants.
+
+`wear_rate` survives and changes meaning: no longer "per turn" but how
+much this object loses per wear point RECEIVED. The gladius costs 3 a
+swing where a plain blade costs 1. Its floor is 1: zero used to say
+"never wears", which `wear_profile = none` now says properly, and a
+field where 0 and 1 mean the same thing is a trap for whoever sets it
+next.
 
 A wear trigger on a still-stacked unit promotes it first (§5c) — in
 practice equip already promoted weapons/armor, movement wear concerns

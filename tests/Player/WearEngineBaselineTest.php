@@ -8,20 +8,22 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * Items Phase 2 golden masters — the wear engine
- * (docs/design-items-instances.md §3.4): « le tour est l'unité
- * d'usure ».
+ * The PER-TURN wear engine (docs/design-items-instances.md §3.4):
+ * « le tour est l'unité d'usure ».
  *
- *   - arm() flags ONLY the equipped instances whose catalog declares
- *     the trigger — wrong trigger, unequipped, other player, broken:
- *     none arm;
- *   - arming twice in a turn is one flag — ten attacks wear once;
+ *   - arm() flags ONLY the WORN exemplars whose catalogue declares the
+ *     trigger — wrong trigger, unequipped, other player, broken: none
+ *     arm;
+ *   - arming ten times in a turn is one flag — ten steps wear the boots
+ *     once;
  *   - applyNewTurnWear() decrements by wear_rate, floors at 0 (brisé),
- *     clears the flag, and narrates (recap lines);
- *   - inert by default: an item without wear config never wears.
+ *     clears the flag and narrates;
+ *   - inert by default: with no trigger, nothing wears per turn.
  *
- * Configures gladius wear in the catalog for the test and restores the
- * previous values afterward.
+ * These tests used to run on « attack », which left the vocabulary:
+ * combat now wears immediately (WearRulesTest). They run on « move »,
+ * the boots' trigger — the machinery pinned is the same, and it is the
+ * one that remains.
  */
 #[Group('items-baseline')]
 class WearEngineBaselineTest extends LegacyPlayerFixtureTestCase
@@ -53,7 +55,7 @@ class WearEngineBaselineTest extends LegacyPlayerFixtureTestCase
         parent::tearDown();
     }
 
-    private function wearingGladius(int $rate = 5): array
+    private function wearingGladius(int $rate = 5, string $trigger = 'move'): array
     {
         $item = Item::get_item_by_name('gladius');
         if ($item === false || $item === null) {
@@ -65,8 +67,8 @@ class WearEngineBaselineTest extends LegacyPlayerFixtureTestCase
         $prev = $this->link->fetchAssociative('SELECT wear_triggers, wear_rate FROM items WHERE id = ?', [$item->id]);
         $this->previousWear = [(string) $prev['wear_triggers'], (int) $prev['wear_rate']];
         $this->link->executeStatement(
-            "UPDATE items SET wear_triggers = 'attack', wear_rate = ? WHERE id = ?",
-            [$rate, $item->id]
+            'UPDATE items SET wear_triggers = ?, wear_rate = ? WHERE id = ?',
+            [$trigger, $rate, $item->id]
         );
 
         $player = $this->createRealPlayer('GmVeteran');
@@ -90,14 +92,14 @@ class WearEngineBaselineTest extends LegacyPlayerFixtureTestCase
         [$player, , $instanceId] = $this->wearingGladius();
         $wear = new WearService();
 
-        $wear->arm($player->id, 'move');
+        $wear->arm($player->id, 'usage');
         $this->assertSame(0, (int) $this->link->fetchOne('SELECT wear_pending FROM item_instances WHERE id = ?', [$instanceId]), 'an undeclared trigger must not arm');
 
-        $wear->arm($player->id, 'attack');
+        $wear->arm($player->id, 'move');
         $this->assertSame(1, (int) $this->link->fetchOne('SELECT wear_pending FROM item_instances WHERE id = ?', [$instanceId]), 'the declared trigger arms');
 
         $other = $this->createRealPlayer('GmBystander');
-        $wear->arm($other->id, 'attack');
+        $wear->arm($other->id, 'move');
         $this->assertSame(
             0,
             (int) $this->link->fetchOne(
@@ -109,13 +111,13 @@ class WearEngineBaselineTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    public function testTenAttacksInATurnWearTheSwordOnce(): void
+    public function testTenStepsInATurnWearTheGearOnce(): void
     {
         [$player, , $instanceId] = $this->wearingGladius(rate: 5);
         $wear = new WearService();
 
         for ($i = 0; $i < 10; $i++) {
-            $wear->arm($player->id, 'attack');
+            $wear->arm($player->id, 'move');
         }
         $recap = $wear->applyNewTurnWear($player->id);
 
@@ -133,13 +135,13 @@ class WearEngineBaselineTest extends LegacyPlayerFixtureTestCase
         $wear = new WearService();
 
         $this->setRemainingLife($instanceId, 3);
-        $wear->arm($player->id, 'attack');
+        $wear->arm($player->id, 'move');
         $recap = $wear->applyNewTurnWear($player->id);
 
         $this->assertSame(0, $this->durabilityOf($instanceId), 'per-turn wear floors at 0 — détruit needs bigger, immediate hits');
         $this->assertStringContainsString('brisé', $recap[0]);
 
-        $wear->arm($player->id, 'attack');
+        $wear->arm($player->id, 'move');
         $this->assertSame(
             0,
             (int) $this->link->fetchOne('SELECT wear_pending FROM item_instances WHERE id = ?', [$instanceId]),

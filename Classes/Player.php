@@ -1957,6 +1957,11 @@ class Player implements ActorInterface {
          * rien connaître des enfers ni des effets à purger. */
         (new \App\Service\LootSpillService())->spill($this);
 
+        /* Then death wears what is STILL worn: the loot has already
+         * fallen, and what lies on the ground is no longer the dead
+         * player's. */
+        (new \App\Service\WearService())->wearEverythingOnDeath((int) $this->id);
+
         $db = new Db();
 
         // spawn to hell

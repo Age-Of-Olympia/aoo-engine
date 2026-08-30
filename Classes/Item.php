@@ -29,7 +29,12 @@ class Item{
         'demolition', 'craftedByN', 'lootChance', 'grow_rate',
     ];
     public const FLAG_KEYS = ['cursed', 'enchanted', 'vorpal', 'is_bankable', 'is_deprecated', 'vanish_on_break', 'magique'];
-    public const WEAR_TRIGGERS = ['attack', 'defense', 'move', 'usage'];
+    /**
+     * The events the PER-TURN engine still covers. `attack` and `defense`
+     * left it: striking and taking a hit now wear immediately, by the
+     * WearService rules, without the catalogue having to ask for them.
+     */
+    public const WEAR_TRIGGERS = ['move', 'usage'];
     public const JSON_COLUMNS = ['add_effects', 'forbid', 'extra'];
 
     public $id;

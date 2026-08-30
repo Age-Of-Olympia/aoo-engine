@@ -142,16 +142,43 @@ final class ItemWikiRenderer implements WikiSheetRendererInterface
         return $parts === [] ? '—' : implode(', ', $parts);
     }
 
-    /** @param array<string, mixed> $item */
+    /**
+     * Ce que le joueur doit savoir de l'usure d'un objet : ce qu'il est
+     * quand les coups tombent, sa fragilité si elle sort de l'ordinaire,
+     * et ce qui l'use encore au passage de tour.
+     *
+     * @param array<string, mixed> $item
+     */
     private function wearLabel(array $item): string
     {
-        $rate = (int) ($item['wear_rate'] ?? 0);
-        $triggers = trim((string) ($item['wear_triggers'] ?? ''));
-        if ($rate <= 0 || $triggers === '') {
-            return '—';
+        $durability = ', durabilité ' . (int) ($item['durability_max'] ?? 100);
+        $profile = (string) ($item['wear_profile'] ?? '');
+
+        if ($profile === \App\Service\WearService::PROFILE_NONE) {
+            return 'ne s\'use pas' . $durability;
         }
 
-        return '−' . $rate . '/tour (' . $triggers . '), durabilité ' . (int) ($item['durability_max'] ?? 100);
+        $parts = [];
+
+        if ($profile !== '') {
+            $parts[] = $profile === \App\Service\WearService::PROFILE_WEAPON
+                ? 's\'use en frappant'
+                : ($profile === \App\Service\WearService::PROFILE_PROTECTION
+                    ? 's\'use en encaissant'
+                    : 'ne s\'use qu\'à la mort');
+        }
+
+        $rate = (int) ($item['wear_rate'] ?? 1);
+        if ($rate > 1) {
+            $parts[] = '×' . $rate . ' par point';
+        }
+
+        $triggers = trim((string) ($item['wear_triggers'] ?? ''));
+        if ($triggers !== '') {
+            $parts[] = '−' . $rate . '/tour (' . $triggers . ')';
+        }
+
+        return ($parts === [] ? 'usure ordinaire' : implode(', ', $parts)) . $durability;
     }
 
     private function cell(string $value): string
