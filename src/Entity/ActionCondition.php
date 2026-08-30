@@ -18,7 +18,10 @@ class ActionCondition
     #[ORM\Column(type: "json", nullable: true)]
     private ?array $parameters = null;
 
-    #[ORM\ManyToOne(targetEntity: Action::class, inversedBy: "conditions")]
+    // The inverse side is Action::$actionConditions; getConditions() is only its
+    // accessor. Naming the accessor here left Doctrine looking up an association
+    // that does not exist, and removing a condition warned instead of working.
+    #[ORM\ManyToOne(targetEntity: Action::class, inversedBy: "actionConditions")]
     #[ORM\JoinColumn(nullable: false)]
     private ?Action $action = null;
 
