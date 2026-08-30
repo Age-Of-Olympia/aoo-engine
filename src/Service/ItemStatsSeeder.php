@@ -125,6 +125,15 @@ class ItemStatsSeeder
                         $skipped[$key] = true;
                         continue;
                     }
+                    /* A JSON null means "not set", and so does an empty
+                     * string on a numeric column: both used to be cast to ''
+                     * and rejected by MySQL ("Incorrect integer value: ''"),
+                     * which failed the WHOLE seed on the first such file.
+                     * Skipping leaves the column at its default. */
+                    if ($value === null
+                        || ($value === '' && !in_array($key, self::STRING_KEYS, true))) {
+                        continue;
+                    }
                     $set[] = "`{$key}` = ?";
                     $params[] = is_numeric($value) ? $value : (string) $value;
                 } elseif (in_array($key, self::JSON_KEYS, true)) {
