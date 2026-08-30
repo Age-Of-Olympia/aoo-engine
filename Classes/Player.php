@@ -393,7 +393,13 @@ class Player implements ActorInterface {
 
     public function get_caracsJson(){
 
-        if(!isset($this->caracs)){
+        /* The constructor pre-creates an empty object, so isset() is always
+           true here: the lazy load has to look at the CONTENT. With the
+           isset() guard the caracs stayed empty, every read returned null,
+           and each caller comparing against one silently took the wrong
+           branch — the character sheet declared every neighbour out of
+           perception range. */
+        if((array) $this->caracs === array()){
 
             $this->get_caracs();
         }
