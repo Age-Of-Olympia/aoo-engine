@@ -176,7 +176,7 @@ class BuildingService extends BaseService
          * avoidable, no traversal avoids them all, and the shot went through
          * the wall. On exact 1:2 slopes the intersection was even empty, so
          * nothing could block at all. */
-        $blockers = [];
+        $hits = [];
 
         foreach (\App\Action\Combat\LineOfFire::paths(
             (int) $from->x, (int) $from->y, (int) $to->x, (int) $to->y
@@ -195,13 +195,28 @@ class BuildingService extends BaseService
                 return ['tiles' => $tiles, 'blocker' => null, 'blockerName' => null, 'blockers' => []];
             }
 
-            $blockers[] = $hit;
+            $hits[] = $hit;
         }
         /* Both traversals are barred. Name the one the shooter sees step in
          * FIRST, and "first" is measured along the shot line, not in corridor
          * order — the board draws by projecting onto that line, and departing
          * from it ran the green trace past the first impact. */
-        $first = self::nearestAlongTheShot($blockers, $from, $to);
+        $first = self::nearestAlongTheShot($hits, $from, $to);
+
+        /* The dots are one per OBSTACLE, and the two traversals each stop at
+         * their own first one: a corridor holding three walls in a row named
+         * at most two cells, and one single cell whenever both traversals
+         * met the same wall — which is most of the time. The screen promises
+         * a mark on everything in the way, so the list is the whole corridor
+         * that screens, in trajectory order. The impact point stays the
+         * nearest hit: that is where the trace turns red. */
+        $blockers = [];
+
+        foreach ($tiles as $tile) {
+            if (isset($blockersByTile[$tile[0] . ',' . $tile[1]])) {
+                $blockers[] = $tile;
+            }
+        }
 
         return [
             'tiles' => $tiles,

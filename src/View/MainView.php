@@ -107,7 +107,7 @@ class MainView
 ?>
             <script src="js/admin-tools.js?v=20260715"></script>
             <script src="js/blocked-tiles.js?v=20260727"></script>
-            <script src="js/view.js?v=20260731a"></script>
+            <script src="js/view.js?v=20260830"></script>
 <?php
         }
     }

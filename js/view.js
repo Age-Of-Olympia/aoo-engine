@@ -356,10 +356,11 @@ $(document).ready(function(){
             segment(hit, b, 'rgba(205, 40, 40, 0.85)');
             arrowHead(a, b, 'rgba(205, 40, 40, 0.9)');
 
-            /* Un point par case bloquante (repli : la première seule
-               si l'API ne fournit pas encore la liste), projeté sur la
-               droite du tir plutôt qu'au centre de sa case. */
-            (blockers && blockers.length ? blockers : [blocker]).forEach(function(tile){
+            /* Un point par case bloquante, projeté sur la droite du tir
+               plutôt qu'au centre de sa case. La liste est non vide dès
+               qu'il y a un obstacle : elle contient au moins celui qu'on
+               nomme. */
+            blockers.forEach(function(tile){
                 var center = tileCenter(tile);
                 if(center){
                     blockerDot(projectOnLine(center));

@@ -299,6 +299,69 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
     }
 
     /**
+     * Every obstacle on the way gets its own mark, not one per traversal.
+     *
+     * The report used to walk the two traversals and keep the FIRST hit of
+     * each, so it could never name more than two cells — and named exactly
+     * one whenever both traversals met the same wall, which is the common
+     * case of a straight shot. Three walls in a row lit a single dot on the
+     * board, and the shooter could not see what else stood behind it.
+     */
+    public function testEveryScreeningCellOnTheWayIsReported(): void
+    {
+        $this->requireBuildingsOrSkip();
+
+        [$x, $y] = $this->farTile();
+        $shooter = $this->createRealPlayer('GmMurs');
+        $victim = $this->createRealPlayer('GmMursCible');
+        $this->movePlayerTo($shooter->id, $x, $y);
+        $this->movePlayerTo($victim->id, $x + 4, $y);
+
+        /* Straight line: both traversals are the same three cells. */
+        $this->placeStructure('mur_pierre', $x + 1, $y);
+        $this->placeStructure('mur_pierre', $x + 2, $y);
+        $this->placeStructure('mur_pierre', $x + 3, $y);
+
+        $report = (new BuildingService())->lineOfFireReport(
+            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'],
+            (object) ['x' => $x + 4, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
+        );
+
+        $this->assertSame([$x + 1, $y], $report['blocker'], 'the impact is the nearest wall');
+        $this->assertSame(
+            [[$x + 1, $y], [$x + 2, $y], [$x + 3, $y]],
+            $report['blockers'],
+            'the three walls are reported, in trajectory order'
+        );
+    }
+
+    /** A corridor cell that screens nothing is not reported. */
+    public function testAClearCorridorCellIsNotReported(): void
+    {
+        $this->requireBuildingsOrSkip();
+
+        [$x, $y] = $this->farTile();
+        $shooter = $this->createRealPlayer('GmTrou');
+        $victim = $this->createRealPlayer('GmTrouCible');
+        $this->movePlayerTo($shooter->id, $x, $y);
+        $this->movePlayerTo($victim->id, $x + 4, $y);
+
+        $this->placeStructure('mur_pierre', $x + 1, $y);
+        $this->placeStructure('mur_pierre', $x + 3, $y);
+
+        $report = (new BuildingService())->lineOfFireReport(
+            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'],
+            (object) ['x' => $x + 4, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
+        );
+
+        $this->assertSame(
+            [[$x + 1, $y], [$x + 3, $y]],
+            $report['blockers'],
+            'the empty cell between the two walls carries no mark'
+        );
+    }
+
+    /**
      * A target does not screen itself. With a single cell the question did
      * not arise — that cell is an endpoint, excluded from the corridor.
      */
