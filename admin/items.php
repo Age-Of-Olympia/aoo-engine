@@ -339,7 +339,7 @@ function item_effect_multiselect(string $field, array $selected, string $label, 
     }
 
     return '<div class="form-group"><label>' . $label . '</label>'
-        . '<select name="' . $field . '[]" class="form-control" multiple size="5">' . $options . '</select>'
+        . '<select data-fills name="' . $field . '[]" class="form-control" multiple size="5">' . $options . '</select>'
         . '<small class="text-muted">' . $hint . '</small></div>';
 }
 
@@ -394,7 +394,7 @@ function item_effect_duration_rows(string $field, array $entries, string $header
         /* Keys nothing reads today travel in a hidden field rather than
            being dropped: the column was hand-written JSON before this form. */
         $rows .= '<div class="d-flex gap-2 mb-1">'
-            . '<select class="form-control form-control-sm" name="' . $field . '_name[]" style="flex:2;">' . $options . '</select>'
+            . '<select class="form-control form-control-sm" data-fills name="' . $field . '_name[]" style="flex:2;">' . $options . '</select>'
             . '<input class="form-control form-control-sm" type="number" name="' . $field . '_duration[]" style="flex:1;"'
             . ' value="' . ($entry['duration'] === null ? '' : (int) $entry['duration']) . '" placeholder="1">'
             . '<input type="hidden" name="' . $field . '_extra[]" value="'
@@ -424,7 +424,7 @@ function items_grow_rows(array $growTo): string
 
     foreach (array_merge($growTo, [null]) as $entry) {
         $rows .= '<div class="d-flex gap-2 mb-1">'
-            . '<input class="form-control form-control-sm" name="grow_name[]" style="flex:2;"'
+            . '<input class="form-control form-control-sm" data-fills name="grow_name[]" style="flex:2;"'
             . ' value="' . e((string) ($entry->name ?? '')) . '" placeholder="ex : arbre1">'
             . '<input class="form-control form-control-sm" name="grow_table[]" list="grow-tables" style="flex:2;"'
             . ' value="' . e((string) ($entry->table ?? '')) . '" placeholder="plants, resources…">'
@@ -450,15 +450,13 @@ function items_grow_rows(array $growTo): string
  * @param string|null $forType section liée à un type d'objet : le
  *        sélecteur Type l'ouvre quand il prend cette valeur et la
  *        replie/estompe sinon (les champs restent soumis et éditables)
- * @param bool $filled la section liée porte des valeurs — renseignée
- *        mais hors type, elle reste dépliée et affiche l'avertissement
- *        « hors type » (même convention que les warnings des plans)
- *        au lieu de s'estomper : une incohérence se montre, ne se
- *        cache pas
- * @param bool $warnNow état initial de l'avertissement (avant JS)
+ * @param bool $warnNow état initial de l'avertissement, avant que le script
+ *        ne reprenne la main : il relit les contrôles marqués data-fills,
+ *        donc l'état « renseignée » suit l'édition au lieu d'être figé au
+ *        rendu
  */
 function items_edit_section(string $title, string $digest, bool $open, string $html,
-    ?string $forType = null, bool $filled = false, bool $warnNow = false): string
+    ?string $forType = null, bool $warnNow = false): string
 {
     $warnBadge = $forType !== null
         ? '<span class="badge item-section-warn" style="background-color:#f0ad4e;color:#fff;"'
@@ -469,7 +467,7 @@ function items_edit_section(string $title, string $digest, bool $open, string $h
         : '';
 
     return '<details class="item-section"' . ($open || $warnNow ? ' open' : '')
-        . ($forType !== null ? ' data-for-type="' . e($forType) . '" data-filled="' . ($filled ? '1' : '0') . '"' : '')
+        . ($forType !== null ? ' data-for-type="' . e($forType) . '"' : '')
         . '>'
         . '<summary><span class="item-section-title">' . $title . '</span>'
         . $warnBadge
@@ -484,7 +482,7 @@ function items_render_edit(object $row, string $csrfToken): string
 
     $triggerBoxes = '';
     foreach (Item::WEAR_TRIGGERS as $key) {
-        $triggerBoxes .= '<label class="mr-3"><input type="checkbox" name="wear_triggers[]" value="' . $key . '" '
+        $triggerBoxes .= '<label class="mr-3"><input type="checkbox" data-fills name="wear_triggers[]" value="' . $key . '" '
             . checked(in_array($key, $triggers, true)) . '> ' . ITEM_WEAR_TRIGGER_LABELS[$key] . '</label> ';
     }
 
@@ -682,7 +680,7 @@ function items_render_edit(object $row, string $csrfToken): string
 
     $usure = '<div class="form-group">' . $triggerBoxes . '</div>'
         . formField('Points perdus par tour armé',
-            formInput('wear_rate', (string) (int) $row->wear_rate, 'type="number" min="0"'),
+            formInput('wear_rate', (string) (int) $row->wear_rate, 'type="number" min="0" data-fills'),
             'form-group', '0 = ne s\'use jamais.')
         . formField('Durabilité max (vie de l\'objet)',
             formInput('durability_max', (string) (int) ($row->durability_max ?? 100), 'type="number" min="1"'),
@@ -770,7 +768,6 @@ function items_render_edit(object $row, string $csrfToken): string
         . items_edit_section('Usure <small class="text-muted">(par tour)</small>',
             $wearRate > 0 ? $wearRate . ' pt/tour · vie ' . (int) ($row->durability_max ?? 100) : 'ne s\'use pas',
             $wearRate > 0 || $triggers !== [], $usure, 'equipement',
-            $wearRate > 0 || $triggers !== [],
             ($wearRate > 0 || $triggers !== []) && $typeValue !== 'equipement')
         . items_edit_section('Contenant <small class="text-muted">(coffres)</small>',
             $row->capacity !== null ? (int) $row->capacity . ' lignes' : 'sans limite',
@@ -784,12 +781,10 @@ function items_render_edit(object $row, string $csrfToken): string
         . items_edit_section('À la consommation',
             $consoDigestParts !== [] ? implode(' · ', $consoDigestParts) : '—',
             $effectsApplied !== [] || $effectsRemoved !== [] || $typeValue === 'consommable', $consommation, 'consommable',
-            $effectsApplied !== [] || $effectsRemoved !== [],
             ($effectsApplied !== [] || $effectsRemoved !== []) && $typeValue !== 'consommable')
         . items_edit_section('Graine <small class="text-muted">(pousse quotidienne)</small>',
             $growTo !== [] ? count($growTo) . ' pousse' . (count($growTo) > 1 ? 's' : '') : '—',
             $growTo !== [] || $growZMin !== null || $typeValue === 'graine', $graine, 'graine',
-            $growTo !== [] || $growZMin !== null,
             ($growTo !== [] || $growZMin !== null) && $typeValue !== 'graine')
         . items_edit_section('JSON avancé',
             $jsonSet !== [] ? implode(', ', $jsonSet) : '—',
@@ -819,17 +814,47 @@ function items_render_edit(object $row, string $csrfToken): string
         (function () {
             var select = document.getElementById("item-type-select");
             if (!select) { return; }
+
+            /* What a section HOLDS is read from its own controls, marked
+               data-fills — not from the server snapshot, which only knows
+               the state at page load. Both halves of the warning are then
+               live: tick a wear trigger and the section counts as filled at
+               once, clear it and the badge goes, saved or not. */
+            function filledNow(section) {
+                return Array.prototype.some.call(
+                    section.querySelectorAll("[data-fills]"),
+                    function (el) {
+                        if (el.type === "checkbox" || el.type === "radio") { return el.checked; }
+                        if (el.multiple) { return el.selectedOptions.length > 0; }
+                        var v = (el.value || "").trim();
+                        if (v === "") { return false; }
+                        /* On a number, zero is how this form spells "unset"
+                           (0 pt/tour = ne s\'use pas). */
+                        return el.type === "number" ? Number(v) !== 0 : true;
+                    }
+                );
+            }
+
             function apply(fold) {
                 document.querySelectorAll(".item-section[data-for-type]").forEach(function (section) {
                     var match = section.dataset.forType === select.value;
-                    var filled = section.dataset.filled === "1";
+                    var filled = filledNow(section);
                     section.classList.toggle("item-section--off", !match && !filled);
                     var warn = section.querySelector(".item-section-warn");
                     if (warn) { warn.hidden = match || !filled; }
                     if (fold) { section.open = match || filled; }
                 });
             }
+
             select.addEventListener("change", function () { apply(true); });
+            /* Editing inside a section re-reads it, without folding anything
+               under the cursor. */
+            document.addEventListener("input", function (e) {
+                if (e.target.closest && e.target.closest(".item-section[data-for-type]")) { apply(false); }
+            });
+            document.addEventListener("change", function (e) {
+                if (e.target !== select && e.target.closest && e.target.closest(".item-section[data-for-type]")) { apply(false); }
+            });
             apply(false);
         })();
     </script>';
