@@ -40,12 +40,32 @@ final class StructureDecayService
     /** Below this share of its life, a construction is flagged to its faction. */
     public const ALERT_BELOW_PCT = 75;
 
-    /** @var list<int> BASE, BASELINE, PER_POINT — bound wherever a turn is computed. */
-    private const TURN_PARAMS = [
-        TurnScheduleService::BASE_TURN_SECONDS,
-        TurnScheduleService::SPD_BASELINE,
-        TurnScheduleService::SECONDS_PER_SPD_POINT,
-    ];
+    /**
+     * A turn lasts what the TYPE says — `turnDurationSeconds` written in SQL,
+     * so decay counts at the same pace as the rest of the game.
+     *
+     * The shape of that formula is the one thing living in two languages; the
+     * numbers are bound from TurnScheduleService, so only the shape could
+     * drift, and that would take the turn economy ceasing to be linear.
+     */
+    private const TURN = '(:base - (r.spd - :baseline) * :perPoint)';
+
+    /** Whole turns this construction owes. */
+    private const OWED = 'FLOOR((:now - d.decay_from) / ' . self::TURN . ')';
+
+    /** Its own figure when it has one, the global dial otherwise. */
+    private const RATE = 'COALESCE(r.decay_rate, :rate)';
+
+    /**
+     * The constructions that owe a turn: enrolled (so player-built), not
+     * still a building site, and past their horizon.
+     */
+    private const DUE_FROM = "FROM players e
+                JOIN races r        ON CONVERT(r.name USING utf8mb4) = CONVERT(e.race USING utf8mb4)
+                JOIN entity_decay d ON d.player_id = e.id
+                LEFT JOIN players_bonus b ON b.player_id = e.id AND b.name = 'pv'
+               WHERE NOT EXISTS (SELECT 1 FROM construction_sites cs WHERE cs.player_id = e.id)
+                 AND d.decay_from <= :now - " . self::TURN;
 
     private Connection $conn;
 
@@ -118,7 +138,7 @@ final class StructureDecayService
      *
      * @return array{decayed: int, collapsed: list<int>}
      */
-    public function run(?int $now = null, int $collapseCap = 200): array
+    public function run(?int $now = null): array
     {
         $now ??= time();
 
@@ -126,22 +146,18 @@ final class StructureDecayService
            among those still STANDING: a building already at zero from a
            siege is none of decay's business — the game leaves it « en
            ruine », and felling it here would quietly change how sieges
-           end. */
+           end.
+           No ceiling on this list. Capping it stranded whatever fell past
+           the cap: those rows still decayed to zero, and the next run could
+           not see them again, since it only looks at what is standing. The
+           set is empty on almost every run and bounded by how many things
+           can die at once. */
         $doomed = $this->conn->fetchFirstColumn(
-            'SELECT e.id ' . $this->dueFrom() . '
+            'SELECT e.id ' . self::DUE_FROM . '
                 AND r.pv + COALESCE(b.n, 0) > 0
-                AND r.pv + COALESCE(b.n, 0) - ' . $this->rateExpr() . ' * ' . $this->owedExpr() . ' <= 0
-              ORDER BY e.id
-              LIMIT ' . max(1, $collapseCap),
-            /* Bindings follow the STRING, and here the WHERE of dueFrom()
-               comes before the projection — the reverse of the INSERT, whose
-               SELECT list is written first. Reusing dueParams() here fed the
-               rate to a turn length and nothing ever matched. */
-            array_merge(
-                [$now], self::TURN_PARAMS,
-                [$this->defaults->rate()],
-                [$now], self::TURN_PARAMS
-            )
+                AND r.pv + COALESCE(b.n, 0) - ' . self::RATE . ' * ' . self::OWED . ' <= 0
+              ORDER BY e.id',
+            $this->bindings($now)
         );
 
         $decayed = $this->applyDue($now);
@@ -179,10 +195,10 @@ final class StructureDecayService
             $applied = (int) $conn->executeStatement(
                 "INSERT INTO players_bonus (player_id, name, n)
                  SELECT e.id, 'pv',
-                        GREATEST(-r.pv, COALESCE(b.n, 0) - " . $this->rateExpr() . ' * ' . $this->owedExpr() . ')
-                 ' . $this->dueFrom() . '
+                        GREATEST(-r.pv, COALESCE(b.n, 0) - " . self::RATE . ' * ' . self::OWED . ')
+                 ' . self::DUE_FROM . '
                  ON DUPLICATE KEY UPDATE n = VALUES(n)',
-                $this->dueParams($now, [$this->defaults->rate()])
+                $this->bindings($now)
             );
 
             /* The clock moves by WHOLE turns, never to now: the turn grid
@@ -192,66 +208,36 @@ final class StructureDecayService
                 'UPDATE entity_decay d
                    JOIN players e ON e.id = d.player_id
                    JOIN races r   ON CONVERT(r.name USING utf8mb4) = CONVERT(e.race USING utf8mb4)
-                    SET d.decay_from = d.decay_from + ' . $this->turnExpr() . ' * ' . $this->owedExpr() . '
+                    SET d.decay_from = d.decay_from + ' . self::TURN . ' * ' . self::OWED . '
                   WHERE NOT EXISTS (SELECT 1 FROM construction_sites cs WHERE cs.player_id = e.id)
-                    AND d.decay_from <= ? - ' . $this->turnExpr(),
-                array_merge(
-                    self::TURN_PARAMS,
-                    [$now], self::TURN_PARAMS,
-                    [$now], self::TURN_PARAMS
-                )
+                    AND d.decay_from <= :now - ' . self::TURN,
+                $this->bindings($now)
             );
 
             return $applied;
         });
     }
 
-    /** Turn length, per row, from the type's own speed. */
-    private function turnExpr(): string
-    {
-        return '(? - (r.spd - ?) * ?)';
-    }
-
-    /** Whole turns owed by this construction. */
-    private function owedExpr(): string
-    {
-        return 'FLOOR((? - d.decay_from) / ' . $this->turnExpr() . ')';
-    }
-
-    /** Its own figure when it has one, the global dial otherwise. */
-    private function rateExpr(): string
-    {
-        return 'COALESCE(r.decay_rate, ?)';
-    }
-
     /**
-     * The constructions that owe a turn: enrolled (so player-built), not
-     * still a building site, and past their horizon.
-     */
-    private function dueFrom(): string
-    {
-        return "FROM players e
-                JOIN races r        ON CONVERT(r.name USING utf8mb4) = CONVERT(e.race USING utf8mb4)
-                JOIN entity_decay d ON d.player_id = e.id
-                LEFT JOIN players_bonus b ON b.player_id = e.id AND b.name = 'pv'
-               WHERE NOT EXISTS (SELECT 1 FROM construction_sites cs WHERE cs.player_id = e.id)
-                 AND d.decay_from <= ? - " . $this->turnExpr();
-    }
-
-    /**
-     * Positional bindings for rate + owed + the due filter, in the order the
-     * expressions above appear.
+     * Every value the three statements can ask for, by NAME.
      *
-     * @param list<int> $rate
-     * @return list<int>
+     * They were positional, and the fragments below are reused in different
+     * ORDERS: the projection writes its WHERE before its arithmetic, the
+     * INSERT the other way round. One list served both, so the decay rate
+     * was handed to a turn length and nothing ever collapsed. Naming them
+     * removes the ordering entirely — an unused name costs nothing.
+     *
+     * @return array<string, int>
      */
-    private function dueParams(int $now, array $rate): array
+    private function bindings(int $now): array
     {
-        return array_merge(
-            $rate,
-            [$now], self::TURN_PARAMS,
-            [$now], self::TURN_PARAMS
-        );
+        return [
+            'now' => $now,
+            'rate' => $this->defaults->rate(),
+            'base' => TurnScheduleService::BASE_TURN_SECONDS,
+            'baseline' => TurnScheduleService::SPD_BASELINE,
+            'perPoint' => TurnScheduleService::SECONDS_PER_SPD_POINT,
+        ];
     }
 
     /**

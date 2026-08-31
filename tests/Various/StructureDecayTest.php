@@ -309,6 +309,51 @@ class StructureDecayTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /**
+     * A pass that kills many kills them ALL.
+     *
+     * The collapse list used to carry a ceiling. What fell past it still
+     * decayed to zero and was never removed — and no later run could see it
+     * again, since the projection only looks at what is still standing. The
+     * ceiling stranded exactly what it was meant to protect.
+     *
+     * This does NOT reproduce that: the ceiling stood at 200, and sowing two
+     * hundred constructions to prove it would cost more CI time than the
+     * proof is worth. It guards the property — everything that falls in a
+     * pass is removed in that pass — at a size worth paying for.
+     */
+    public function testEveryConstructionThatFallsInOnePassIsRemoved(): void
+    {
+        $player = $this->createRealPlayer('GmHecatombe');
+        [$x, $y] = $this->farTile();
+        $service = new StructureDecayService();
+        $now = time();
+
+        $ids = [];
+        for ($i = 0; $i < 12; $i++) {
+            $id = $this->placeStructure(self::TYPE, $x + 10 + $i, $y + 10);
+            $service->enrol($id, $now);
+            $ids[] = $id;
+        }
+
+        $grace = (new DecayDefaultsService())->graceTurns() * $this->turn();
+        $result = $service->run($now + $grace + 200 * $this->turn());
+
+        foreach ($ids as $id) {
+            $this->assertContains($id, $result['collapsed'], "la construction #{$id} devait tomber");
+        }
+
+        $this->assertSame(
+            0,
+            (int) $this->link->fetchOne(
+                'SELECT COUNT(*) FROM players WHERE id IN (?)',
+                [$ids],
+                [\Doctrine\DBAL\ArrayParameterType::INTEGER]
+            ),
+            'aucune ne reste debout à zéro'
+        );
+    }
+
     /** The type overrides the global dial. */
     public function testATypeMayCarryItsOwnRate(): void
     {

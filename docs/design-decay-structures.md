@@ -119,7 +119,11 @@ UPDATE players_bonus b
   backfill, and makes the pass idempotent.
 
 Then one `SELECT` lists rows that reached zero — usually none — and PHP
-loops over those alone to destroy them. That loop is the only one.
+loops over those alone to destroy them. That loop is the only one, and it
+carries no ceiling: a cap looked like a safety valve and was a trap, since
+what fell past it still decayed to zero, was never removed, and no later
+run could see it again — the projection only looks at what is still
+standing.
 
 ## Cost
 
@@ -128,7 +132,7 @@ loops over those alone to destroy them. That loop is the only one.
 | the pass | one indexed set-based UPDATE, whatever the world size |
 | scenery | absent from the join, never read |
 | buildings in use | not due, never read |
-| PHP loop | collapses only, capped per run |
+| PHP loop | collapses only, and no ceiling on them |
 | cache | none — see below |
 
 A structure's PV are read by `StructureSheetView`, `EntityCardView`,
