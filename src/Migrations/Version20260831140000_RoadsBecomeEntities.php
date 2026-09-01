@@ -66,14 +66,24 @@ final class Version20260831140000_RoadsBecomeEntities extends AbstractMigration
            come from the road range; the cells follow in the next statement. */
         $this->addSql(
             "INSERT INTO players (id, player_type, name, race, avatar, portrait, coords_id, slot, registerTime, text, owner_id)
-             SELECT 80000000 + (@rn := @rn + 1) - 1,
+             SELECT @next := @next + 1,
                     'route', r.label, mr.name,
                     CONCAT('img/routes/', mr.name, '.png'),
                     CONCAT('img/routes/', mr.name, '.png'),
                     mr.coords_id, 'installed', UNIX_TIMESTAMP(), '', mr.player_id
                FROM map_routes mr
                JOIN races r ON CONVERT(r.name USING utf8mb4) = CONVERT(mr.name USING utf8mb4)
-               CROSS JOIN (SELECT @rn := 0) init
+               CROSS JOIN (
+                    /* Start AFTER whatever the road range already holds, not
+                       at its floor. Starting at the floor collides on the
+                       primary key the moment a single road entity exists —
+                       a re-run after a half-applied attempt, or a second
+                       environment. */
+                    SELECT @next := COALESCE(
+                        (SELECT MAX(id) FROM players WHERE id BETWEEN 80000000 AND 89999999),
+                        79999999
+                    )
+               ) init
               WHERE NOT EXISTS (
                     SELECT 1 FROM players p
                      WHERE p.player_type = 'route' AND p.coords_id = mr.coords_id
