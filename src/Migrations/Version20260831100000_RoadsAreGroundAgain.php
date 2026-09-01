@@ -37,6 +37,18 @@ final class Version20260831100000_RoadsAreGroundAgain extends AbstractMigration
         return 'une route posée redevient du sol (map_routes) : sous-type « routes » sur les objets, et les routes déjà posées en objet sont récupérées';
     }
 
+    /**
+     * The road exemplars this migration retires: installed, and of a type the
+     * catalogue calls a ground layer. Written once — the rescue reads it, then
+     * every dependent row is cleared through it, then the rows themselves.
+     */
+    private const ROAD_EXEMPLARS = "SELECT e.id
+           FROM players e
+           JOIN item_instances i ON i.entity_id = e.id
+           JOIN items it ON it.id = i.item_id
+          WHERE e.slot = 'installed'
+            AND CONVERT(it.subtype USING utf8mb4) = CONVERT('routes' USING utf8mb4)";
+
     public function up(Schema $schema): void
     {
         $this->addSql(
@@ -64,21 +76,42 @@ final class Version20260831100000_RoadsAreGroundAgain extends AbstractMigration
                 )"
         );
 
-        /* Then the exemplars go: the road is the layer now, and leaving the
-           object behind would draw a thing on top of it. */
+        /* Then the exemplars go, dependents first.
+         *
+         * An entity row is referenced from a dozen tables, so a bare DELETE on
+         * `players` fails on a foreign key — which is what happened on the
+         * experimental server. The sweep that followed was worse: it removed
+         * every installed exemplar with no instance row, not just the roads,
+         * and a chest keeps its contents in `players_items`. Both faults are
+         * the same one — the delete was not scoped to what this migration
+         * touches. It is now, and it clears each dependent table the way
+         * BuildingService::deleteEntityRows does. */
+        $ids = 'IN (SELECT id FROM (' . self::ROAD_EXEMPLARS . ') AS road_ids)';
+
+        foreach (['players_bonus', 'players_effects', 'players_items', 'players_options', 'entity_cells'] as $table) {
+            $this->addSql("DELETE FROM {$table} WHERE player_id {$ids}");
+        }
+
+        foreach (['players_logs', 'players_kills', 'players_assists'] as $table) {
+            $this->addSql("DELETE FROM {$table} WHERE player_id {$ids} OR target_id {$ids}");
+        }
+
+        $this->addSql("DELETE FROM item_instances WHERE entity_id {$ids}");
+
+        /* The exemplar rows last.
+         *
+         * Found by "installed, no instance left, standing on a road cell"
+         * rather than through ROAD_EXEMPLARS, because this has to survive a
+         * PARTIAL previous run: the failed attempt on experimental may have
+         * deleted the instance rows before dying on the foreign key, and
+         * those exemplars no longer join `items` to say they were roads. The
+         * `map_routes` cell is what still identifies them. */
         $this->addSql(
-            "DELETE i FROM item_instances i
-               JOIN players e ON e.id = i.entity_id
-               JOIN items it ON it.id = i.item_id
-              WHERE e.slot = 'installed'
-                AND CONVERT(it.subtype USING utf8mb4) = CONVERT('routes' USING utf8mb4)"
-        );
-        $this->addSql(
-            "DELETE e FROM players e
-               LEFT JOIN item_instances i ON i.entity_id = e.id
-              WHERE e.player_type = 'item'
-                AND e.slot = 'installed'
-                AND i.id IS NULL"
+            "DELETE FROM players
+              WHERE player_type = 'item'
+                AND slot = 'installed'
+                AND id NOT IN (SELECT entity_id FROM item_instances WHERE entity_id IS NOT NULL)
+                AND coords_id IN (SELECT coords_id FROM map_routes)"
         );
     }
 
