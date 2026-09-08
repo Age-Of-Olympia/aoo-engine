@@ -22,6 +22,14 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
 
     private const PLAN = 'plan_test_pas';
 
+    private TileOccupancyService $service;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->service = new TileOccupancyService();
+    }
+
     protected function tearDown(): void
     {
         $link = $this->link;
@@ -47,7 +55,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
 
     public function testAnEmptyTileIsWalkable(): void
     {
-        $this->assertNull((new TileOccupancyService())->stepRefusal($this->coordsIdOn(self::PLAN, 0, 0), 1, true));
+        $this->assertNull($this->service->stepRefusal($this->coordsIdOn(self::PLAN, 0, 0), 1, true));
     }
 
     /**
@@ -65,11 +73,11 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
             ->dropOnCell((int) $entity->id, $coordsId);
 
         $this->assertNull(
-            (new TileOccupancyService())->stepRefusal($coordsId, 1, true),
+            $this->service->stepRefusal($coordsId, 1, true),
             'on marche sur ce qui traîne'
         );
         $this->assertNull(
-            (new TileOccupancyService())->buildRefusal($coordsId),
+            $this->service->buildRefusal($coordsId),
             'et on construit par-dessus'
         );
     }
@@ -84,7 +92,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
             ->installOnCell((int) $entity->id, $coordsId);
 
         $this->assertNotNull(
-            (new TileOccupancyService())->buildRefusal($coordsId),
+            $this->service->buildRefusal($coordsId),
             'une entité posée occupe sa case'
         );
     }
@@ -94,7 +102,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $id = $this->coordsIdOn(self::PLAN, 1, 0);
         $this->plantResource($this->link, 'arbre1', $id, self::PLAN, 1, 0);
 
-        $this->assertSame('Quelque chose obstrue ton chemin.', (new TileOccupancyService())->stepRefusal($id, 1, true));
+        $this->assertSame('Quelque chose obstrue ton chemin.', $this->service->stepRefusal($id, 1, true));
     }
 
     /** An EXHAUSTED resource blocks like any other. Legacy behaviour. */
@@ -103,7 +111,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $id = $this->coordsIdOn(self::PLAN, 2, 0);
         $this->plantResource($this->link, 'arbre1', $id, self::PLAN, 2, 0, damages: -2);
 
-        $this->assertNotNull((new TileOccupancyService())->stepRefusal($id, 1, true));
+        $this->assertNotNull($this->service->stepRefusal($id, 1, true));
     }
 
     public function testAForbiddenTriggerBlocksTheStep(): void
@@ -114,7 +122,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
             [$id]
         );
 
-        $this->assertSame('Impossible de se rendre à cet endroit.', (new TileOccupancyService())->stepRefusal($id, 1, true));
+        $this->assertSame('Impossible de se rendre à cet endroit.', $this->service->stepRefusal($id, 1, true));
     }
 
     /** Another trigger — a teleporter — blocks nothing. */
@@ -126,7 +134,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
             [$id]
         );
 
-        $this->assertNull((new TileOccupancyService())->stepRefusal($id, 1, true));
+        $this->assertNull($this->service->stepRefusal($id, 1, true));
     }
 
     /** A structure is scenery: it blocks on plans with no JSON too. */
@@ -137,11 +145,11 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $id = $this->coordsIdOn(self::PLAN, 5, 0);
 
         $this->assertNotNull(
-            (new TileOccupancyService())->stepRefusal($id, 1, true),
+            $this->service->stepRefusal($id, 1, true),
             'un mur bloque, plan visible'
         );
         $this->assertNotNull(
-            (new TileOccupancyService())->stepRefusal($id, 1, false),
+            $this->service->stepRefusal($id, 1, false),
             'et il bloque AUSSI quand les personnages sont cachés — c\'est le décor'
         );
     }
@@ -159,11 +167,11 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $mover = $this->createRealPlayer('GmMarcheur');
 
         $this->assertNotNull(
-            (new TileOccupancyService())->stepRefusal($id, (int) $mover->id, true),
+            $this->service->stepRefusal($id, (int) $mover->id, true),
             'personnage visible : il barre'
         );
         $this->assertNull(
-            (new TileOccupancyService())->stepRefusal($id, (int) $mover->id, false),
+            $this->service->stepRefusal($id, (int) $mover->id, false),
             'personnages cachés sur ce plan : il ne barre plus'
         );
     }
@@ -179,7 +187,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
             [$other->id]
         );
 
-        $this->assertNull((new TileOccupancyService())->stepRefusal($id, 1, true));
+        $this->assertNull($this->service->stepRefusal($id, 1, true));
     }
 
     /** One does not block oneself. */
@@ -189,7 +197,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $id = $this->coordsIdOn(self::PLAN, 8, 0);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$id, $me->id]);
 
-        $this->assertNull((new TileOccupancyService())->stepRefusal($id, (int) $me->id, true));
+        $this->assertNull($this->service->stepRefusal($id, (int) $me->id, true));
     }
 
     /** A teleporter cannot be landed on, can be stepped over, and can be built on — a frozen legacy divergence. */
@@ -201,11 +209,9 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
             [$id]
         );
 
-        $service = new TileOccupancyService();
-
-        $this->assertNull($service->stepRefusal($id, 1, true), 'on marche sur un téléporteur');
-        $this->assertFalse($service->isVacant($id), 'on n\'y atterrit pas');
-        $this->assertNull($service->buildRefusal($id), 'et on peut y bâtir — divergence gelée');
+        $this->assertNull($this->service->stepRefusal($id, 1, true), 'on marche sur un téléporteur');
+        $this->assertFalse($this->service->isVacant($id), 'on n\'y atterrit pas');
+        $this->assertNull($this->service->buildRefusal($id), 'et on peut y bâtir — divergence gelée');
     }
 
     public function testTheBatchFormAgreesWithTheSingleOne(): void
@@ -219,10 +225,8 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
             "INSERT INTO map_triggers (name, coords_id, params) VALUES ('forbidden', ?, '')",
             [$forbidden]
         );
-
-        $service = new TileOccupancyService();
         $ids = [$free, $withResource, $forbidden];
-        $batch = $service->blockedForStep($ids, 1, true);
+        $batch = $this->service->blockedForStep($ids, 1, true);
 
         $this->assertSame(
             [$withResource, $forbidden],
@@ -232,7 +236,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
 
         foreach ($ids as $id) {
             $this->assertSame(
-                $service->stepRefusal($id, 1, true),
+                $this->service->stepRefusal($id, 1, true),
                 $batch[$id] ?? null,
                 'même verdict, même motif, pour la case '. $id
             );
@@ -242,18 +246,17 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
     /** Un lot vide ne pose aucune question à la base. */
     public function testTheBatchFormAcceptsAnEmptyList(): void
     {
-        $this->assertSame([], (new TileOccupancyService())->blockedForStep([], 1, true));
+        $this->assertSame([], $this->service->blockedForStep([], 1, true));
     }
 
     /** A genuinely empty tile is empty for all three verbs. */
     public function testAnEmptyTileSatisfiesTheThreeVerbs(): void
     {
         $id = $this->coordsIdOn(self::PLAN, 10, 0);
-        $service = new TileOccupancyService();
 
-        $this->assertNull($service->stepRefusal($id, 1, true));
-        $this->assertTrue($service->isVacant($id));
-        $this->assertNull($service->buildRefusal($id));
+        $this->assertNull($this->service->stepRefusal($id, 1, true));
+        $this->assertTrue($this->service->isVacant($id));
+        $this->assertNull($this->service->buildRefusal($id));
     }
 
     /** A 2×2 building used to block a quarter of itself. */
@@ -265,7 +268,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $spread = $this->giveCell($wall, 21, 0, EntityCellService::ROLE_PART, self::PLAN);
 
         $this->assertNotNull(
-            (new TileOccupancyService())->stepRefusal($spread, 1, true),
+            $this->service->stepRefusal($spread, 1, true),
             'la seconde case du mur barre le chemin comme la première'
         );
     }
@@ -282,7 +285,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $body = $this->giveCell($wall, 23, 0, EntityCellService::ROLE_PART, self::PLAN);
 
         $this->assertNotNull(
-            (new TileOccupancyService())->stepRefusal($body, 1, true),
+            $this->service->stepRefusal($body, 1, true),
             'the type decides, and this one blocks'
         );
     }
@@ -308,14 +311,14 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
 
         try {
             $this->assertNull(
-                (new TileOccupancyService())->stepRefusal($this->coordsIdOn(self::PLAN, 24, 0), 1, true),
+                $this->service->stepRefusal($this->coordsIdOn(self::PLAN, 24, 0), 1, true),
                 'le type se traverse, sans quoi le cas ne prouverait rien'
             );
 
             $solid = $this->giveCell($decor, 25, 0, 'block', self::PLAN);
 
             $this->assertNotNull(
-                (new TileOccupancyService())->stepRefusal($solid, 1, true),
+                $this->service->stepRefusal($solid, 1, true),
                 'la case dite bloquante barre le chemin malgré son type'
             );
         } finally {
@@ -331,13 +334,12 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $wall = $this->placeStructure('mur_pierre', 30, 0, self::PLAN);
 
         $body = $this->giveCell($wall, 31, 0, EntityCellService::ROLE_PART, self::PLAN);
-        $service = new TileOccupancyService();
 
-        $this->assertNotNull($service->stepRefusal($body, 1, true), 'on n\'y entre pas');
-        $this->assertFalse($service->isVacant($body), 'on n\'y atterrit pas');
+        $this->assertNotNull($this->service->stepRefusal($body, 1, true), 'on n\'y entre pas');
+        $this->assertFalse($this->service->isVacant($body), 'on n\'y atterrit pas');
         $this->assertSame(
             'Case occupée par une entité.',
-            $service->buildRefusal($body),
+            $this->service->buildRefusal($body),
             'et on n\'y bâtit pas'
         );
     }
@@ -354,7 +356,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         );
 
         $this->assertNull(
-            (new TileOccupancyService())->stepRefusal($cell, 1, true),
+            $this->service->stepRefusal($cell, 1, true),
             'discret : sa case bloquante ne le dénonce pas'
         );
     }
@@ -369,11 +371,11 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$moved, $wall]);
 
         $this->assertNotNull(
-            (new TileOccupancyService())->stepRefusal($moved, 1, true),
+            $this->service->stepRefusal($moved, 1, true),
             'là où le mur se trouve vraiment'
         );
         $this->assertNotNull(
-            (new TileOccupancyService())->stepRefusal($this->coordsIdOn(self::PLAN, 26, 0), 1, true),
+            $this->service->stepRefusal($this->coordsIdOn(self::PLAN, 26, 0), 1, true),
             'et là où ses cases le croient encore : jamais moins que la vérité'
         );
     }
@@ -394,12 +396,11 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         );
 
         $id = $this->coordsIdOn(self::PLAN, 60, 0);
-        $service = new TileOccupancyService();
 
-        $this->assertTrue($service->isVacant($id), 'decor does not fill a tile for landing');
+        $this->assertTrue($this->service->isVacant($id), 'decor does not fill a tile for landing');
         $this->assertSame(
             'Case occupée par une entité.',
-            $service->buildRefusal($id),
+            $this->service->buildRefusal($id),
             'but a player does not build through it'
         );
     }
@@ -419,7 +420,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         );
 
         $this->assertNull(
-            (new TileOccupancyService())->buildRefusal($this->coordsIdOn(self::PLAN, 62, 0), overScenery: true),
+            $this->service->buildRefusal($this->coordsIdOn(self::PLAN, 62, 0), overScenery: true),
             'the editor is allowed through'
         );
     }

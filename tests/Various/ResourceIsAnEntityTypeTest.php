@@ -80,7 +80,7 @@ class ResourceIsAnEntityTypeTest extends TestCase
     public function testItResolvesThroughTheEntityRoot(): void
     {
         $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::PLAN]
+            $this->tile(0, 0, self::PLAN)
         );
         /* Haut de la plage : le bas est désormais occupé par les ressources
            converties, et une fixture ne doit pas squatter un identifiant réel. */

@@ -211,7 +211,7 @@ class ChestSpillsWhenSmashedTest extends LegacyPlayerFixtureTestCase
         $this->expectExceptionMessage('Brisé, cela ne se pose plus');
         (new \App\Service\PlacedExemplarService())->placeInstance(
             $instanceId,
-            (object) ['x' => 7, 'y' => 11, 'z' => 0, 'plan' => 'gaia']
+            $this->tile(7, 11)
         );
     }
 

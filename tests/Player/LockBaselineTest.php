@@ -143,7 +143,7 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
         [$x, $y] = $this->farTile();
         $id = $this->placeStructure('palissade', $x, $y);
         $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
+            $this->tile($x, $y)
         );
 
         // Une palissade qui devient porte : elle se ferme, et sa fermeture
@@ -188,8 +188,8 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
     {
         [$x, $y] = $this->farTile();
         $this->placeStructure('palissade', $x + 3, $y);
-        $from = (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'];
-        $to   = (object) ['x' => $x + 6, 'y' => $y, 'z' => 0, 'plan' => 'gaia'];
+        $from = $this->tile($x, $y);
+        $to   = $this->tile($x + 6, $y);
         $id = (int) $this->link->fetchOne(
             "SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id
               WHERE c.x = ? AND c.y = ? AND c.plan = 'gaia' AND p.race = 'palissade'",
@@ -244,7 +244,7 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
         [$x, $y] = $this->farTile();
         $id = $this->placeStructure('taverne', $x, $y);
         $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
+            $this->tile($x, $y)
         );
 
         (new BuildingService())->setOpen($id, true);
@@ -267,7 +267,7 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
         [$x, $y] = $this->farTile();
         $id = $this->installExemplar('coffre_bois', $x, $y);
         $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
+            $this->tile($x, $y)
         );
 
         (new BuildingService())->setOpen($id, true);
@@ -293,7 +293,7 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
         );
         [$x, $y] = $this->farTile();
         $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
+            $this->tile($x, $y)
         );
         $location = new \App\Service\Map\EntityLocationService($this->link);
         $occupancy = new \App\Service\Map\TileOccupancyService($this->link);

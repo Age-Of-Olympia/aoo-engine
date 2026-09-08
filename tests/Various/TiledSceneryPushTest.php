@@ -42,7 +42,7 @@ class TiledSceneryPushTest extends TestCase
 
         $this->cleanup();
 
-        \Classes\View::get_coords_id((object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::PLAN]);
+        $this->coordsIdOn(self::PLAN, 0, 0);
 
         /* A two-piece tower, declared so the server knows how to lay it out. */
         (new EntityTypeFootprintService($this->conn))->declare(

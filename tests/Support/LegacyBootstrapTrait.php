@@ -35,12 +35,11 @@ trait LegacyBootstrapTrait
             $this->markTestSkipped('Global $link not populated by bootstrap.');
         }
 
+        $probe = $probeTable === null ? 'SELECT 1' : "SELECT 1 FROM {$probeTable} LIMIT 1";
         try {
-            $link->executeQuery($probeTable === null ? 'SELECT 1' : "SELECT 1 FROM {$probeTable} LIMIT 1");
+            $link->executeQuery($probe);
         } catch (\Throwable $e) {
-            $this->markTestSkipped(
-                ($probeTable === null ? 'Legacy DB' : "{$probeTable} table") . ' unreachable (run migrations?): ' . $e->getMessage()
-            );
+            $this->markTestSkipped("{$probe} failed (run migrations?): " . $e->getMessage());
         }
 
         $this->link = $link;
@@ -51,14 +50,9 @@ trait LegacyBootstrapTrait
     /** The lowest real character id the world holds, or skip. */
     protected function firstRealPlayerIdOrSkip(): int
     {
-        try {
-            $id = $this->link->fetchOne(
-                "SELECT id FROM players WHERE id > 0 AND (player_type IS NULL OR player_type = 'real') ORDER BY id ASC LIMIT 1"
-            );
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('players table unreadable: ' . $e->getMessage());
-        }
-
+        $id = $this->link->fetchOne(
+            "SELECT id FROM players WHERE id > 0 AND (player_type IS NULL OR player_type = 'real') ORDER BY id ASC LIMIT 1"
+        );
         if (empty($id)) {
             $this->markTestSkipped('No real player row available — run scripts/testing/reset_test_database.sh.');
         }

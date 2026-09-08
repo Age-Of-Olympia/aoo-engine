@@ -5,7 +5,6 @@ namespace Tests\Action;
 use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
 use Classes\Player;
-use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
@@ -67,7 +66,7 @@ class ChestUnderTheBankTest extends LegacyPlayerFixtureTestCase
     {
         $builder = $this->createRealPlayer('GmCoffreur');
         [$x, $y] = $this->farTile();
-        $coordsId = (int) View::get_coords_id((object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => $plan]);
+        $coordsId = $this->coordsIdOn($plan, $x, $y);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$coordsId, $builder->id]);
         (new \App\Service\Map\EntityCellService($this->link))->syncCells($builder->id);
 

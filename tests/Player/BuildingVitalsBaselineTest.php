@@ -87,7 +87,7 @@ class BuildingVitalsBaselineTest extends LegacyPlayerFixtureTestCase
     {
         $service = new BuildingService();
         [$x, $y] = $this->farTile();
-        $coords = (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'];
+        $coords = $this->tile($x, $y);
 
         try {
             $service->place('race_inexistante_' . bin2hex(random_bytes(3)), $coords);
@@ -131,7 +131,7 @@ class BuildingVitalsBaselineTest extends LegacyPlayerFixtureTestCase
         [$x, $y] = $this->farTile();
         $id = (new BuildingService())->place(
             self::TYPE,
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'],
+            $this->tile($x, $y),
             $owner->id
         );
         $this->trackEntityId($id);
@@ -215,7 +215,7 @@ class BuildingVitalsBaselineTest extends LegacyPlayerFixtureTestCase
 
         $service = new BuildingService();
         [$x, $y] = $this->farTile();
-        $id = $service->place('mur_bois', (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']);
+        $id = $service->place('mur_bois', $this->tile($x, $y));
         $this->trackEntityId($id);
 
         $this->assertSame(

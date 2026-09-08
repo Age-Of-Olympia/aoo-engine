@@ -59,7 +59,7 @@ class MapForegroundsRetirementTest extends TestCase
     {
         foreach ([[3, 3, '-00'], [3, 4, '-01']] as [$x, $y, $suffix]) {
             $coordsId = \Classes\View::get_coords_id(
-                (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN]
+                $this->tile($x, $y, self::PLAN)
             );
 
             $this->conn->executeStatement(

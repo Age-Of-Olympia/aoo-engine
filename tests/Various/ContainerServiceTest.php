@@ -76,7 +76,7 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
     {
         $player = $this->createRealPlayer($prefix);
         $coordsId = (int) View::get_coords_id(
-            (object) ['x' => $x + 1, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
+            $this->tile($x + 1, $y)
         );
         $this->link->executeStatement(
             'UPDATE players SET coords_id = ? WHERE id = ?',
@@ -211,7 +211,7 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         $chest = $this->chestAt(40, 30);
         $actor = $this->createRealPlayer('GmLoin');
         $farId = (int) View::get_coords_id(
-            (object) ['x' => 45, 'y' => 30, 'z' => 0, 'plan' => 'gaia']
+            $this->tile(45, 30)
         );
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$farId, $actor->id]);
         $bois = $this->giveStack((int) $actor->id, 'bois', 1);

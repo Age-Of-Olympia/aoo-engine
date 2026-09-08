@@ -79,10 +79,6 @@ class BlockingPredicatesBaselineTest extends LegacyPlayerFixtureTestCase
         $link->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
     }
 
-    private function tile(int $x, int $y): object
-    {
-        return (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN];
-    }
 
     private function putResource(string $name, int $x, int $y): void
     {
@@ -101,7 +97,7 @@ class BlockingPredicatesBaselineTest extends LegacyPlayerFixtureTestCase
     private function buildRefused(int $x, int $y): bool
     {
         try {
-            $id = (new BuildingService())->place('mur_pierre', $this->tile($x, $y));
+            $id = (new BuildingService())->place('mur_pierre', $this->tile($x, $y, self::PLAN));
             $this->trackEntityId($id);
 
             return false;
@@ -115,7 +111,7 @@ class BlockingPredicatesBaselineTest extends LegacyPlayerFixtureTestCase
         $this->requireBuildingsOrSkip();
         $this->coordsIdOn(self::PLAN, 0, 0);
 
-        $this->assertTrue(View::is_free($this->tile(0, 0)), 'case vide : libre');
+        $this->assertTrue(View::is_free($this->tile(0, 0, self::PLAN)), 'case vide : libre');
         $this->assertFalse($this->buildRefused(0, 0), 'case vide : constructible');
     }
 
@@ -125,8 +121,8 @@ class BlockingPredicatesBaselineTest extends LegacyPlayerFixtureTestCase
         $this->requireBuildingsOrSkip();
         $this->putResource('arbre1', 1, 0);
 
-        $this->assertFalse(View::is_free($this->tile(1, 0)), 'is_free voit la ressource');
-        $this->assertContains('1,0', View::get_coords_taken($this->tile(0, 0)), 'get_coords_taken aussi');
+        $this->assertFalse(View::is_free($this->tile(1, 0, self::PLAN)), 'is_free voit la ressource');
+        $this->assertContains('1,0', View::get_coords_taken($this->tile(0, 0, self::PLAN)), 'get_coords_taken aussi');
         $this->assertTrue($this->buildRefused(1, 0), 'place() refuse');
     }
 
@@ -140,8 +136,8 @@ class BlockingPredicatesBaselineTest extends LegacyPlayerFixtureTestCase
         $this->requireBuildingsOrSkip();
         $this->putTrigger('forbidden', 2, 0);
 
-        $this->assertFalse(View::is_free($this->tile(2, 0)), 'is_free compte les déclencheurs');
-        $this->assertContains('2,0', View::get_coords_taken($this->tile(0, 0)), 'get_coords_taken aussi');
+        $this->assertFalse(View::is_free($this->tile(2, 0, self::PLAN)), 'is_free compte les déclencheurs');
+        $this->assertContains('2,0', View::get_coords_taken($this->tile(0, 0, self::PLAN)), 'get_coords_taken aussi');
         $this->assertFalse($this->buildRefused(2, 0), 'place() les ignore — divergence gelée');
     }
 
@@ -151,8 +147,8 @@ class BlockingPredicatesBaselineTest extends LegacyPlayerFixtureTestCase
         $this->requireBuildingsOrSkip();
         $this->placeStructure('mur_pierre', 3, 0, self::PLAN);
 
-        $this->assertFalse(View::is_free($this->tile(3, 0)));
-        $this->assertContains('3,0', View::get_coords_taken($this->tile(0, 0)));
+        $this->assertFalse(View::is_free($this->tile(3, 0, self::PLAN)));
+        $this->assertContains('3,0', View::get_coords_taken($this->tile(0, 0, self::PLAN)));
         $this->assertTrue($this->buildRefused(3, 0));
     }
 
@@ -168,11 +164,11 @@ class BlockingPredicatesBaselineTest extends LegacyPlayerFixtureTestCase
         $service = new BuildingService();
 
         $this->placeStructure('mur_pierre', 5, 0, self::PLAN);
-        $mur = $service->lineOfFireReport($this->tile(4, 0), $this->tile(6, 0));
+        $mur = $service->lineOfFireReport($this->tile(4, 0, self::PLAN), $this->tile(6, 0, self::PLAN));
         $this->assertNotNull($mur['blocker'], 'un mur arrête la flèche');
 
         $this->placeStructure('table_bois', 5, 2, self::PLAN);
-        $table = $service->lineOfFireReport($this->tile(4, 2), $this->tile(6, 2));
+        $table = $service->lineOfFireReport($this->tile(4, 2, self::PLAN), $this->tile(6, 2, self::PLAN));
         $this->assertNull($table['blocker'], 'une table la laisse passer');
     }
 
@@ -198,6 +194,6 @@ class BlockingPredicatesBaselineTest extends LegacyPlayerFixtureTestCase
             ),
             'la base accepte deux occupants sur une case'
         );
-        $this->assertFalse(View::is_free($this->tile(7, 0)));
+        $this->assertFalse(View::is_free($this->tile(7, 0, self::PLAN)));
     }
 }

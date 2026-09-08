@@ -79,7 +79,7 @@ class HolderLivesOnTheEntityTest extends LegacyPlayerFixtureTestCase
         $service = new ItemInstanceService();
 
         $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => 9, 'y' => 2, 'z' => 0, 'plan' => 'gaia']
+            $this->tile(9, 2)
         );
         $service->dropAt($instanceId, $coordsId);
 

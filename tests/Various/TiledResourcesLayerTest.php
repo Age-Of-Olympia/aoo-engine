@@ -57,7 +57,7 @@ class TiledResourcesLayerTest extends TestCase
         $this->type = $harvestable[0];
 
         // Coord d'amorce : le plan doit exister pour être exportable
-        \Classes\View::get_coords_id((object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::PLAN]);
+        $this->coordsIdOn(self::PLAN, 0, 0);
     }
 
     protected function tearDown(): void
@@ -69,7 +69,7 @@ class TiledResourcesLayerTest extends TestCase
     public function testPullShowsTheResourcesStandingOnTheLevel(): void
     {
         $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => 4, 'y' => 4, 'z' => 0, 'plan' => self::PLAN]
+            $this->tile(4, 4, self::PLAN)
         );
         $this->plantResource($this->link, $this->type, $coordsId, self::PLAN, 4, 4);
 
@@ -145,7 +145,7 @@ class TiledResourcesLayerTest extends TestCase
     public function testAnExhaustedResourceSurvivesAPushThatRedrawsIt(): void
     {
         $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => 6, 'y' => 1, 'z' => 0, 'plan' => self::PLAN]
+            $this->tile(6, 1, self::PLAN)
         );
         $entityId = $this->plantResource($this->link, $this->type, $coordsId, self::PLAN, 6, 1, 0, -2);
 

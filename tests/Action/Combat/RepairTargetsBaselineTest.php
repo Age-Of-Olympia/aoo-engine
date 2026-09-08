@@ -175,7 +175,7 @@ class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
         }
 
         $coordsId = (int) View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
+            $this->tile($x, $y)
         );
 
         $id = (new EntityPlacementService($this->link))->create(

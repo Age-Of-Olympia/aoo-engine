@@ -58,7 +58,7 @@ class FactionDriveTest extends LegacyPlayerFixtureTestCase
 
         $id = (new BuildingService())->place(
             'atelier',
-            (object) ['x' => 104, 'y' => 104, 'z' => 0, 'plan' => 'gaia'],
+            $this->tile(104, 104),
             null,
             self::CODE,
             'Forge pilotable',

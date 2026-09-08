@@ -7,7 +7,6 @@ use App\Service\ConstructionSiteService;
 use App\Service\ItemInstanceService;
 use App\Service\PlayerService;
 use App\Service\RaceService;
-use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
@@ -43,7 +42,7 @@ class BankLifecycleTest extends LegacyPlayerFixtureTestCase
     private function placeChest(string $plan, ?int $ownerId, string $faction, bool $open = true): int
     {
         [$x, $y] = $this->farTile();
-        $coordsId = (int) View::get_coords_id((object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => $plan]);
+        $coordsId = $this->coordsIdOn($plan, $x, $y);
         $item = $this->itemOrSkip('coffre_bois');
 
         $entityId = (new ItemInstanceService())

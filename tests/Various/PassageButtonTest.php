@@ -3,7 +3,6 @@
 namespace Tests\Various;
 
 use App\View\Observe\PassageView;
-use Classes\View;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
@@ -27,7 +26,7 @@ class PassageButtonTest extends LegacyPlayerFixtureTestCase
 
     private function seedTp(int $x, int $y, int $z, string $params): void
     {
-        $coordsId = (int) View::get_coords_id((object) ['x' => $x, 'y' => $y, 'z' => $z, 'plan' => 'gaia']);
+        $coordsId = $this->coordsIdOn('gaia', $x, $y, $z);
         $this->link->executeStatement(
             "INSERT INTO map_triggers (name, coords_id, params) VALUES ('tp', ?, ?)",
             [$coordsId, $params]
@@ -38,7 +37,7 @@ class PassageButtonTest extends LegacyPlayerFixtureTestCase
     private function renderAt(\Classes\Player $player, int $x, int $y, int $z): string
     {
         ob_start();
-        PassageView::render($player, $x, $y, (object) ['x' => $x, 'y' => $y, 'z' => $z, 'plan' => 'gaia']);
+        PassageView::render($player, $x, $y, $this->tile($x, $y, z: $z));
 
         return (string) ob_get_clean();
     }

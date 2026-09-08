@@ -57,7 +57,7 @@ class SceneryIsAnEntityTest extends TestCase
     private function sceneryOnTheBoard(): int
     {
         $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::PLAN]
+            $this->tile(0, 0, self::PLAN)
         );
 
         $this->conn->executeStatement(

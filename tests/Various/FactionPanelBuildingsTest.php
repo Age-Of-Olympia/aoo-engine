@@ -32,7 +32,7 @@ class FactionPanelBuildingsTest extends LegacyPlayerFixtureTestCase
 
         $id = (new BuildingService())->place(
             'atelier',
-            (object) ['x' => 102, 'y' => 102, 'z' => 0, 'plan' => 'gaia'],
+            $this->tile(102, 102),
             null,
             $code,
             'Atelier du bastion',

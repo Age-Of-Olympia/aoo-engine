@@ -44,7 +44,7 @@ class TiledBuildingsLayerTest extends TestCase
         $this->type = $structures[0]->getName();
 
         // Coord d'amorce : le plan doit exister pour être exportable
-        \Classes\View::get_coords_id((object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::PLAN]);
+        $this->coordsIdOn(self::PLAN, 0, 0);
     }
 
     protected function tearDown(): void
@@ -114,7 +114,7 @@ class TiledBuildingsLayerTest extends TestCase
             $this->markTestSkipped('Aucun joueur en base pour porter le bâtiment.');
         }
 
-        $buildings->place($this->type, (object) ['x' => 5, 'y' => 5, 'z' => 0, 'plan' => self::PLAN], $ownerId);
+        $buildings->place($this->type, $this->tile(5, 5, self::PLAN), $ownerId);
 
         $service = new TiledMapService();
         $export = $service->exportPlan(self::PLAN, 0);
@@ -135,7 +135,7 @@ class TiledBuildingsLayerTest extends TestCase
         $service = new TiledMapService();
 
         // Une ressource occupe la case visée
-        $coordsId = (int) \Classes\View::get_coords_id((object) ['x' => 7, 'y' => 7, 'z' => 0, 'plan' => self::PLAN]);
+        $coordsId = $this->coordsIdOn(self::PLAN, 7, 7);
         $this->plantResource($this->link, 'arbre1', $coordsId, self::PLAN, 7, 7);
 
         $export = $service->exportPlan(self::PLAN, 0);

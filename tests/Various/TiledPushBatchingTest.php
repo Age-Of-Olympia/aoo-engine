@@ -34,7 +34,7 @@ class TiledPushBatchingTest extends TestCase
         $this->bootstrapLegacyOrSkip('coords');
         $this->cleanupFixtures();
 
-        \Classes\View::get_coords_id((object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::PLAN]);
+        $this->coordsIdOn(self::PLAN, 0, 0);
     }
 
     protected function tearDown(): void

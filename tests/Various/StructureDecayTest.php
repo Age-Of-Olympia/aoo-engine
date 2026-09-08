@@ -275,7 +275,7 @@ class StructureDecayTest extends LegacyPlayerFixtureTestCase
         /* Its own cell: a road left standing on the shared one would make
            every later placement refuse it. */
         [$x, $y] = $this->farTile();
-        $coords = (object) ['x' => $x + 7, 'y' => $y + 7, 'z' => 0, 'plan' => 'gaia'];
+        $coords = $this->tile($x + 7, $y + 7);
 
         $player = $this->createRealPlayer('GmRouteMorte');
         $laid = (new \App\Service\Map\GroundLayerService())

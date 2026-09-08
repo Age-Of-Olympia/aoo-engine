@@ -89,7 +89,7 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
         $picked = (new GroundLootService())->collect(
             $player,
             $coordsId,
-            (object) ['x' => 2, 'y' => 1, 'z' => 0, 'plan' => self::PLAN]
+            $this->tile(2, 1, self::PLAN)
         );
 
         $this->assertNotEmpty($picked, 'la cueillette rend ce qu\'elle a pris');
@@ -135,7 +135,7 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
         (new GroundLootService())->collect(
             $player,
             $coordsId,
-            (object) ['x' => 4, 'y' => 1, 'z' => 0, 'plan' => self::PLAN]
+            $this->tile(4, 1, self::PLAN)
         );
 
         $this->assertFileDoesNotExist(
@@ -192,7 +192,7 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
             $picked = (new GroundLootService())->collect(
                 $player,
                 $coordsId,
-                (object) ['x' => 5, 'y' => 1, 'z' => 0, 'plan' => self::PLAN]
+                $this->tile(5, 1, self::PLAN)
             );
 
             $this->assertCount(1, $picked);
@@ -220,7 +220,7 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
             (new GroundLootService())->collect(
                 $player,
                 $this->coordsIdOn(self::PLAN, 4, 1),
-                (object) ['x' => 4, 'y' => 1, 'z' => 0, 'plan' => self::PLAN]
+                $this->tile(4, 1, self::PLAN)
             )
         );
     }

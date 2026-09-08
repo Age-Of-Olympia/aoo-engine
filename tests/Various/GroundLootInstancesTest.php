@@ -4,7 +4,6 @@ namespace Tests\Various;
 
 use App\Service\GroundLootService;
 use App\Service\Map\EntityLocationService;
-use Classes\View;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
@@ -24,7 +23,7 @@ class GroundLootInstancesTest extends LegacyPlayerFixtureTestCase
         $entityId = $this->installExemplar('coffre_bois', $x, $y);
 
         /* Au sol, pas installé : la bourse ne liste que le slot dropped. */
-        $coordsId = (int) View::get_coords_id((object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']);
+        $coordsId = $this->coordsIdOn('gaia', $x, $y);
         (new EntityLocationService($this->link))->dropOnCell($entityId, $coordsId);
 
         $instanceId = (int) $this->link->fetchOne(

@@ -62,7 +62,7 @@ class FactionJournalTest extends LegacyPlayerFixtureTestCase
         $member = $this->createRealPlayer('GmJournal');
         $member->get_data();
         $coordsId = (int) View::get_coords_id(
-            (object) ['x' => 61, 'y' => 30, 'z' => 0, 'plan' => 'gaia']
+            $this->tile(61, 30)
         );
         $this->link->executeStatement(
             'UPDATE players SET faction = ?, factionRole = 0, coords_id = ? WHERE id = ?',
@@ -164,7 +164,7 @@ class FactionJournalTest extends LegacyPlayerFixtureTestCase
 
         $lone = $this->createRealPlayer('GmSeul');
         $coordsId = (int) View::get_coords_id(
-            (object) ['x' => 63, 'y' => 30, 'z' => 0, 'plan' => 'gaia']
+            $this->tile(63, 30)
         );
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$coordsId, $lone->id]);
         $bois = $this->itemOrSkip('bois');

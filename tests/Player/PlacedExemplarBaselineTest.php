@@ -166,7 +166,7 @@ class PlacedExemplarBaselineTest extends LegacyPlayerFixtureTestCase
         try {
             $entityId = (new PlacedExemplarService())->placeInstance(
                 $instanceId,
-                (object) ['x' => 0, 'y' => 5, 'z' => 0, 'plan' => 'gaia']
+                $this->tile(0, 5)
             );
         } finally {
             ob_end_clean();

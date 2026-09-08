@@ -67,7 +67,7 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
 
         // Shut means shut everywhere: an atelier mid-build crafts nothing.
         $nearby = $buildingService->openBuildingNearby(
-            (object) ['x' => 70, 'y' => 71, 'z' => 0, 'plan' => 'gaia'],
+            $this->tile(70, 71),
             ['atelier'],
             RecipeService::WORKSHOP_RANGE
         );
@@ -107,7 +107,7 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
         $owner = $this->createRealPlayer('GmProprio');
         $id = (new BuildingService())->place(
             'atelier',
-            (object) ['x' => 74, 'y' => 74, 'z' => 0, 'plan' => 'gaia'],
+            $this->tile(74, 74),
             $owner->id,
             asConstructionSite: true
         );
@@ -191,8 +191,8 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
         $id = $this->placeStructure('atelier', 84, 84, asConstructionSite: true);
 
         $buildingService = new BuildingService();
-        $from = (object) ['x' => 83, 'y' => 84, 'z' => 0, 'plan' => 'gaia'];
-        $to = (object) ['x' => 87, 'y' => 84, 'z' => 0, 'plan' => 'gaia'];
+        $from = $this->tile(83, 84);
+        $to = $this->tile(87, 84);
 
         $this->assertNull(
             $buildingService->lineOfFireReport($from, $to)['blocker'],

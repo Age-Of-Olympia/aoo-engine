@@ -4,7 +4,6 @@ namespace Tests\Action;
 
 use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
-use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
@@ -31,7 +30,7 @@ class CreuserBaselineTest extends LegacyPlayerFixtureTestCase
     /** Téléporte le joueur de fixture sous terre (z = -1, gaia). */
     private function sendUnderground(\Classes\Player $digger, int $x, int $y): void
     {
-        $coordsId = View::get_coords_id((object) ['x' => $x, 'y' => $y, 'z' => -1, 'plan' => 'gaia']);
+        $coordsId = $this->coordsIdOn('gaia', $x, $y, -1);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$coordsId, $digger->id]);
         $digger->getCoords();
     }
@@ -55,7 +54,7 @@ class CreuserBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertTrue($results->isSuccess());
 
         $fresh = PlayerFactory::legacy($digger->id);
-        $dugId = View::get_coords_id((object) ['x' => 1, 'y' => 3, 'z' => -1, 'plan' => 'gaia']);
+        $dugId = $this->coordsIdOn('gaia', 1, 3, -1);
         $this->assertNotFalse(
             $this->link->fetchOne("SELECT 1 FROM map_tiles WHERE coords_id = ? AND name = 'caverne'", [$dugId]),
             'a caverne tile must be dug'

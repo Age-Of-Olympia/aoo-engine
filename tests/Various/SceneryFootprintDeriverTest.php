@@ -35,7 +35,7 @@ class SceneryFootprintDeriverTest extends LegacyPlayerFixtureTestCase
     private function put(string $name, int $x, int $y): void
     {
         $coordsId = (int) View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN]
+            $this->tile($x, $y, self::PLAN)
         );
 
         $this->link->executeStatement(

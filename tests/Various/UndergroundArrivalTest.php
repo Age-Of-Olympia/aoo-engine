@@ -35,7 +35,7 @@ class UndergroundArrivalTest extends LegacyPlayerFixtureTestCase
 
     private function digTile(int $x, int $y, int $z, string $name = 'caverne'): int
     {
-        $coordsId = (int) View::get_coords_id((object) ['x' => $x, 'y' => $y, 'z' => $z, 'plan' => 'gaia']);
+        $coordsId = $this->coordsIdOn('gaia', $x, $y, $z);
         $this->link->executeStatement(
             'INSERT INTO map_tiles (name, coords_id) VALUES (?, ?)',
             [$name, $coordsId]
@@ -50,7 +50,7 @@ class UndergroundArrivalTest extends LegacyPlayerFixtureTestCase
         [$x, $y] = $this->farTile();
         $stairsId = $this->digTile($x, $y, -1, 'escalier_vers_le_haut');
 
-        $goCoords = (object) ['x' => $x, 'y' => $y, 'z' => -1, 'plan' => 'gaia'];
+        $goCoords = $this->tile($x, $y, z: -1);
         $landedId = (int) View::get_free_coords_id_arround($goCoords);
 
         $this->assertSame(
@@ -66,7 +66,7 @@ class UndergroundArrivalTest extends LegacyPlayerFixtureTestCase
         $this->digTile($x, $y, -1, 'escalier_vers_le_haut');
         $dugNeighbourId = $this->digTile($x + 1, $y, -1);
 
-        $goCoords = (object) ['x' => $x, 'y' => $y, 'z' => -1, 'plan' => 'gaia'];
+        $goCoords = $this->tile($x, $y, z: -1);
         $landedId = (int) View::get_free_coords_id_arround($goCoords);
 
         $this->assertSame(
@@ -82,7 +82,7 @@ class UndergroundArrivalTest extends LegacyPlayerFixtureTestCase
         $stairsId = $this->digTile($x, $y, -1, 'escalier_vers_le_haut');
         $this->digTile($x + 3, $y, -1);
 
-        $goCoords = (object) ['x' => $x, 'y' => $y, 'z' => -1, 'plan' => 'gaia'];
+        $goCoords = $this->tile($x, $y, z: -1);
 
         $this->assertSame(
             $stairsId,
@@ -95,7 +95,7 @@ class UndergroundArrivalTest extends LegacyPlayerFixtureTestCase
     {
         [$x, $y] = $this->farTile();
 
-        $goCoords = (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'];
+        $goCoords = $this->tile($x, $y);
         View::get_free_coords_id_arround($goCoords);
 
         $this->assertNotSame(

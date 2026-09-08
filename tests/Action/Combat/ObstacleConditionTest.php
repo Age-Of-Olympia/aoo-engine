@@ -231,8 +231,8 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         $this->giveCell($wall, $x + 2, $y + 2, \App\Service\Map\EntityCellService::ROLE_PART);
 
         $report = (new BuildingService())->lineOfFireReport(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'],
-            (object) ['x' => $x + 2, 'y' => $y + 4, 'z' => 0, 'plan' => 'gaia']
+            $this->tile($x, $y),
+            $this->tile($x + 2, $y + 4)
         );
 
         $this->assertNotNull($report['blocker'], 'aucun tracé ne contourne un mur de trois cases');
@@ -259,8 +259,8 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         $this->giveCell($wall, $x + 1, $y + 2, \App\Service\Map\EntityCellService::ROLE_PART);
 
         $report = (new BuildingService())->lineOfFireReport(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'],
-            (object) ['x' => $x + 2, 'y' => $y + 4, 'z' => 0, 'plan' => 'gaia']
+            $this->tile($x, $y),
+            $this->tile($x + 2, $y + 4)
         );
 
         $this->assertNotNull($report['blocker']);
@@ -302,8 +302,8 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         $this->placeStructure('mur_pierre', $x + 3, $y);
 
         $report = (new BuildingService())->lineOfFireReport(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'],
-            (object) ['x' => $x + 4, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
+            $this->tile($x, $y),
+            $this->tile($x + 4, $y)
         );
 
         $this->assertSame([$x + 1, $y], $report['blocker'], 'the impact is the nearest wall');
@@ -329,8 +329,8 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         $this->placeStructure('mur_pierre', $x + 3, $y);
 
         $report = (new BuildingService())->lineOfFireReport(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'],
-            (object) ['x' => $x + 4, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
+            $this->tile($x, $y),
+            $this->tile($x + 4, $y)
         );
 
         $this->assertSame(
@@ -357,7 +357,7 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         $wall = $this->placeStructure('mur_pierre', $x, $y + 3);
         $this->giveCell($wall, $x, $y + 2, \App\Service\Map\EntityCellService::ROLE_PART);
 
-        $far = (object) ['x' => $x, 'y' => $y + 3, 'z' => 0, 'plan' => 'gaia'];
+        $far = $this->tile($x, $y + 3);
         $service = new BuildingService();
 
         $this->assertNotNull(
@@ -387,7 +387,7 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         $aim = \Classes\View::get_nearest_cell_of(
             $shooter->getCoords(),
             (int) $wall,
-            (object) ['x' => $x, 'y' => $y + 5, 'z' => 0, 'plan' => 'gaia']
+            $this->tile($x, $y + 5)
         );
 
         $this->assertSame($y + 1, (int) $aim->y, 'la case collée, pas celle du fond');

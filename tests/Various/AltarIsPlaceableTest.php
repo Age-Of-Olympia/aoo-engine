@@ -68,7 +68,7 @@ class AltarIsPlaceableTest extends TestCase
     {
         $id = (new BuildingService())->place(
             'altar',
-            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::PLAN],
+            $this->tile(0, 0, self::PLAN),
             null,
             '',
             null,

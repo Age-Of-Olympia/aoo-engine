@@ -57,7 +57,7 @@ class GroundLayerTest extends LegacyPlayerFixtureTestCase
     {
         [$x, $y] = $this->farTile();
 
-        return (object) ['x' => $x + $dx, 'y' => $y, 'z' => 0, 'plan' => 'gaia'];
+        return $this->tile($x + $dx, $y);
     }
 
     public function testARoadSubtypeNamesALayer(): void

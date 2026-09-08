@@ -17,10 +17,16 @@ use Doctrine\DBAL\Connection;
  */
 trait PlanFixtureTrait
 {
-    /** The coords id of (x, y, z) on a plan, created when absent. */
+    /** A tile, the way the legacy services take one. */
+    protected function tile(int $x, int $y, string $plan = 'gaia', int $z = 0): object
+    {
+        return (object) ['x' => $x, 'y' => $y, 'z' => $z, 'plan' => $plan];
+    }
+
+    /** The coords id of a tile on a plan, created when absent. */
     protected function coordsIdOn(string $plan, int $x, int $y, int $z = 0): int
     {
-        return (int) View::get_coords_id((object) ['x' => $x, 'y' => $y, 'z' => $z, 'plan' => $plan]);
+        return (int) View::get_coords_id($this->tile($x, $y, $plan, $z));
     }
 
     /** Nullable so a tearDown after a skipped setUp needs no guard of its own. */

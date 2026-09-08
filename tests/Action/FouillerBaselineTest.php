@@ -6,7 +6,6 @@ use App\Action\OutcomeInstruction\ResourceOutcomeInstruction;
 use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
 use App\Service\ResourceService;
-use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Action\Mock\ScriptedDice;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
@@ -111,7 +110,7 @@ class FouillerBaselineTest extends LegacyPlayerFixtureTestCase
     private function harvesterAtOrigin(string $prefix): \Classes\Player
     {
         $player = $this->createRealPlayer($prefix);
-        $coordsId = View::get_coords_id((object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::PLAN]);
+        $coordsId = $this->coordsIdOn(self::PLAN, 0, 0);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$coordsId, $player->id]);
         /* The harvester changes PLAN: without a resync its cell stays on
          * gaia and every distance about it becomes infinite. */

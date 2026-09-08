@@ -556,7 +556,7 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         );
 
         $coordsId = (int) View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => $plan]
+            $this->tile($x, $y, $plan)
         );
         (new \App\Service\Map\EntityLocationService($this->link))->installOnCell($entityId, $coordsId);
         $this->trackEntityId($entityId);
@@ -578,12 +578,12 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         /* Un élément seedé sur la case (sang, boue…) la rendrait
          * inconstructible depuis la règle map_elements de place() —
          * ces tests exercent le bâtiment, pas le terrain : on nettoie. */
-        $coordsId = View::get_coords_id((object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => $plan]);
+        $coordsId = $this->coordsIdOn($plan, $x, $y);
         (new \Classes\Db())->exe('DELETE FROM map_elements WHERE coords_id = ?', $coordsId);
 
         $id = (new BuildingService())->place(
             $type,
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => $plan],
+            $this->tile($x, $y, $plan),
             asConstructionSite: $asConstructionSite
         );
         $this->trackEntityId($id);
@@ -597,7 +597,7 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
      */
     protected function movePlayerTo(int $playerId, int $x, int $y): void
     {
-        $coordsId = View::get_coords_id((object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']);
+        $coordsId = $this->coordsIdOn('gaia', $x, $y);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$coordsId, $playerId]);
 
         /* Cells follow, as behind every production write to coords_id:
