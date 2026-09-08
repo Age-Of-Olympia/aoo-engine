@@ -42,7 +42,8 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
     public function testATypeDeclaringWorkIsBornAShutSiteAtMinimalPv(): void
     {
         $this->requireBuildingsOrSkip();
-        $id = $this->placeStructure('atelier', 70, 70, asConstructionSite: true);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('atelier', $x, $y, asConstructionSite: true);
 
         $service = new ConstructionSiteService();
         $this->assertSame(['done' => 0, 'total' => 40], $service->progressOf($id));
@@ -67,7 +68,7 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
 
         // Shut means shut everywhere: an atelier mid-build crafts nothing.
         $nearby = $buildingService->openBuildingNearby(
-            $this->tile(70, 71),
+            $this->tile($x, $y + 1),
             ['atelier'],
             RecipeService::WORKSHOP_RANGE
         );
@@ -78,10 +79,11 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
     public function testTravaillerAdvancesTheSiteAndItsPv(): void
     {
         $this->requireBuildingsOrSkip();
-        $id = $this->placeStructure('atelier', 72, 72, asConstructionSite: true);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('atelier', $x, $y, asConstructionSite: true);
 
         $worker = $this->createRealPlayer('GmCharpentier');
-        $this->movePlayerTo($worker->id, 72, 73);
+        $this->movePlayerTo($worker->id, $x, $y + 1);
         $worker->getCoords();
         $worker->get_caracs();
 
@@ -104,17 +106,18 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
     public function testAStrangerMayNotWorkOnAnOwnedSite(): void
     {
         $this->requireBuildingsOrSkip();
+        [$x, $y] = $this->farTile();
         $owner = $this->createRealPlayer('GmProprio');
         $id = (new BuildingService())->place(
             'atelier',
-            $this->tile(74, 74),
+            $this->tile($x, $y),
             $owner->id,
             asConstructionSite: true
         );
         $this->trackEntityId($id);
 
         $stranger = $this->createRealPlayer('GmPassant');
-        $this->movePlayerTo($stranger->id, 74, 75);
+        $this->movePlayerTo($stranger->id, $x, $y + 1);
         $stranger->getCoords();
         $stranger->get_caracs();
 
@@ -131,7 +134,8 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
     public function testTheLastStoneMakesTheBuilding(): void
     {
         $this->requireBuildingsOrSkip();
-        $id = $this->placeStructure('atelier', 76, 76, asConstructionSite: true);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('atelier', $x, $y, asConstructionSite: true);
 
         $service = new ConstructionSiteService();
         $service->advance($id, 39);
@@ -153,7 +157,8 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
     public function testAWorkGestureMendsBattleDamageUpToTheFloor(): void
     {
         $this->requireBuildingsOrSkip();
-        $id = $this->placeStructure('atelier', 78, 78, asConstructionSite: true);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('atelier', $x, $y, asConstructionSite: true);
 
         $service = new ConstructionSiteService();
         $service->advance($id, 5);
@@ -169,10 +174,11 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
     public function testWorkScalesWithTheFootprint(): void
     {
         $this->requireBuildingsOrSkip();
+        [$x, $y] = $this->farTile();
         $footprints = new \App\Service\Map\EntityTypeFootprintService();
         $footprints->declare('atelier', 3, 1, [[0, 0], [1, 0], [2, 0]]);
         try {
-            $id = $this->placeStructure('atelier', 82, 82, asConstructionSite: true);
+            $id = $this->placeStructure('atelier', $x, $y, asConstructionSite: true);
 
             $this->assertSame(
                 ['done' => 0, 'total' => 30],
@@ -188,11 +194,12 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
     public function testASiteLetsTheShotThroughAndTheFinishedBuildingStopsIt(): void
     {
         $this->requireBuildingsOrSkip();
-        $id = $this->placeStructure('atelier', 84, 84, asConstructionSite: true);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('atelier', $x, $y, asConstructionSite: true);
 
         $buildingService = new BuildingService();
-        $from = $this->tile(83, 84);
-        $to = $this->tile(87, 84);
+        $from = $this->tile($x - 1, $y);
+        $to = $this->tile($x + 3, $y);
 
         $this->assertNull(
             $buildingService->lineOfFireReport($from, $to)['blocker'],
@@ -210,7 +217,8 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
     public function testAdminRestoreFinishesTheSite(): void
     {
         $this->requireBuildingsOrSkip();
-        $id = $this->placeStructure('atelier', 86, 86, asConstructionSite: true);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('atelier', $x, $y, asConstructionSite: true);
 
         (new BuildingService())->restore($id);
 
@@ -227,7 +235,8 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
     public function testAnUnfinishedBuildingDoesNotTick(): void
     {
         $this->requireBuildingsOrSkip();
-        $id = $this->placeStructure('atelier', 88, 88, asConstructionSite: true);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('atelier', $x, $y, asConstructionSite: true);
         $this->link->executeStatement('UPDATE players SET nextTurnTime = 1 WHERE id = ?', [$id]);
         $this->link->executeStatement('UPDATE turns SET next_turn_time = 1 WHERE player_id = ?', [$id]);
 
@@ -251,7 +260,8 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
     public function testATypeDeclaringNothingStillRisesInOneGesture(): void
     {
         $this->requireBuildingsOrSkip();
-        $id = $this->placeStructure('palissade', 80, 80);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('palissade', $x, $y);
 
         $this->assertNull((new ConstructionSiteService())->progressOf($id), 'build_work 0: no site, built at once');
         $this->assertSame(
