@@ -2,11 +2,9 @@
 
 namespace Tests\Tutorial;
 
-use App\Factory\EntityManagerFactory;
 use App\Tutorial\TutorialMapInstance;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\TestCase;
+use Tests\Tutorial\Mock\SuiteDbTransactionTestCase;
 
 /**
  * Une instance de tutoriel naît avec TOUT ce que porte son modèle.
@@ -23,55 +21,27 @@ use PHPUnit\Framework\TestCase;
  * connexion ne verrait pas les lignes de cette transaction.
  */
 #[Group('tutorial')]
-class TutorialMapInstanceCloneTest extends TestCase
+class TutorialMapInstanceCloneTest extends SuiteDbTransactionTestCase
 {
-    private Connection $conn;
-
-    private mixed $previousLink = null;
-
     private string $templatePlan;
 
     private string $sessionId;
 
-
     protected function setUp(): void
     {
-        try {
-            $this->conn = EntityManagerFactory::getEntityManager()->getConnection();
-            $this->conn->executeQuery('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('suite DB unreachable: ' . $e->getMessage());
-        }
+        parent::setUp();
 
         if ($this->conn->fetchOne("SELECT COUNT(*) FROM races WHERE name = 'arbre1'") == 0) {
             $this->markTestSkipped('races catalog not seeded — rebuild the suite database');
         }
 
-        // db() (donc View::get_coords_id) doit voir NOTRE transaction.
-        $this->previousLink = $GLOBALS['link'] ?? null;
-        $GLOBALS['link'] = $this->conn;
-
         $suffix = bin2hex(random_bytes(4));
         $this->templatePlan = 'tpl_' . $suffix;
         $this->sessionId = $suffix . '-clone-test';
 
-        $this->conn->beginTransaction();
-
         // Dans la transaction : le rollback du tearDown emporte la config
         // du modèle comme celle de l'instance clonée.
         $this->writePlanConfig($this->templatePlan);
-    }
-
-    protected function tearDown(): void
-    {
-        if (isset($this->conn) && $this->conn->isTransactionActive()) {
-            $this->conn->rollBack();
-        }
-        $GLOBALS['link'] = $this->previousLink;
-
-        // Les caches de lecture et l'identity map survivent au rollback.
-        \App\Service\PlanService::forget();
-        EntityManagerFactory::getEntityManager()->clear();
     }
 
     public function testInstanceCarriesEveryEntityFamilyOfTheTemplate(): void

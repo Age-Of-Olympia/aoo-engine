@@ -2,11 +2,9 @@
 
 namespace Tests\Tutorial;
 
-use App\Factory\EntityManagerFactory;
 use App\Tutorial\TutorialResourceManager;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\TestCase;
+use Tests\Tutorial\Mock\SuiteDbTransactionTestCase;
 
 /**
  * Le balayage global des instances de tutoriel (cleanupStale).
@@ -21,45 +19,19 @@ use PHPUnit\Framework\TestCase;
  * TutorialMapInstanceCloneTest : le rollback emporte les fixtures.
  */
 #[Group('tutorial')]
-class TutorialInstanceSweepTest extends TestCase
+class TutorialInstanceSweepTest extends SuiteDbTransactionTestCase
 {
-    private Connection $conn;
-
-    private mixed $previousLink = null;
-
     private string $sessionId;
 
     private string $plan;
 
     protected function setUp(): void
     {
-        try {
-            $this->conn = EntityManagerFactory::getEntityManager()->getConnection();
-            $this->conn->executeQuery('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('suite DB unreachable: ' . $e->getMessage());
-        }
-
-        // db() (utilisé par les chemins de démontage) doit voir NOTRE transaction.
-        $this->previousLink = $GLOBALS['link'] ?? null;
-        $GLOBALS['link'] = $this->conn;
+        parent::setUp();
 
         $suffix = bin2hex(random_bytes(5));
         $this->sessionId = $suffix . '-sweep-test';
         $this->plan = 'tut_' . substr($this->sessionId, 0, 10);
-
-        $this->conn->beginTransaction();
-    }
-
-    protected function tearDown(): void
-    {
-        if (isset($this->conn) && $this->conn->isTransactionActive()) {
-            $this->conn->rollBack();
-        }
-        $GLOBALS['link'] = $this->previousLink;
-
-        \App\Service\PlanService::forget();
-        EntityManagerFactory::getEntityManager()->clear();
     }
 
     public function testAnInProgressSessionIsLeftAlone(): void
