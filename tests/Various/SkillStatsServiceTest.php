@@ -3,9 +3,9 @@
 namespace Tests\Various;
 
 use App\Service\SkillStatsService;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Functional test for SkillStatsService — the per-player counts behind the
@@ -15,14 +15,17 @@ use PHPUnit\Framework\TestCase;
  * Read-only service; the test only verifies aggregates against known seed
  * mutations inside a rolled-back transaction. Skips when no aoo4 DB is reachable.
  */
+#[Group('skill-stats')]
 class SkillStatsServiceTest extends TestCase
 {
-    private ?Connection $link = null;
+    use LegacyBootstrapTrait;
+
     private int $realPlayerId = 0;
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip();
+        $this->realPlayerId = $this->firstRealPlayerIdOrSkip();
         $this->link->beginTransaction();
     }
 
@@ -34,7 +37,6 @@ class SkillStatsServiceTest extends TestCase
         $this->link = null;
     }
 
-    #[Group('skill-stats')]
     public function testRealPlayerCountMatchesDirectQuery(): void
     {
         $expected = (int) $this->link->fetchOne("SELECT COUNT(*) FROM players WHERE player_type = 'real'");
@@ -42,7 +44,6 @@ class SkillStatsServiceTest extends TestCase
         $this->assertSame($expected, (new SkillStatsService())->realPlayerCount());
     }
 
-    #[Group('skill-stats')]
     public function testPlayerActionCountsCoverRealPlayersAndExcludeNonReal(): void
     {
         $counts = (new SkillStatsService())->playerActionCounts();
@@ -54,34 +55,5 @@ class SkillStatsServiceTest extends TestCase
         foreach ($nonRealIds as $nonReal) {
             $this->assertNotContains((int) $nonReal, $ids, 'Non-real players must be excluded.');
         }
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $real = $link->fetchOne("SELECT id FROM players WHERE player_type = 'real' ORDER BY id ASC LIMIT 1");
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy DB unreachable: ' . $e->getMessage());
-        }
-
-        if (empty($real)) {
-            $this->markTestSkipped('No real player available — reseed the DB.');
-        }
-
-        $this->link = $link;
-        $this->realPlayerId = (int) $real;
     }
 }

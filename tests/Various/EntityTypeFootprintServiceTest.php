@@ -42,11 +42,6 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
         $link->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
     }
 
-    private function service(): EntityTypeFootprintService
-    {
-        return new EntityTypeFootprintService($this->link);
-    }
-
     /**
      * Une famille déclarée par le cas courant, défaite au démontage.
      *
@@ -56,7 +51,7 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
     private function declare(string $family, int $w, int $h, array $offsets, array $roles = []): void
     {
         $this->declaredFamilies[] = $family;
-        $this->service()->declare($family, $w, $h, $offsets, $roles);
+        (new EntityTypeFootprintService($this->link))->declare($family, $w, $h, $offsets, $roles);
     }
 
     /** A figure placed on the map, from which the cut-out derives. */
@@ -78,14 +73,14 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
     {
         $this->seedOnMap('gm_decl_tour');
 
-        $this->assertSame('map', $this->service()->sourceOf('gm_decl_tour'));
-        $this->assertSame(2, $this->service()->catalogue()['gm_decl_tour']->cells());
+        $this->assertSame('map', (new EntityTypeFootprintService($this->link))->sourceOf('gm_decl_tour'));
+        $this->assertSame(2, (new EntityTypeFootprintService($this->link))->catalogue()['gm_decl_tour']->cells());
 
         $this->declare('gm_decl_tour', 2, 2, [0 => [0, 0], 1 => [0, -1], 2 => [1, 0], 3 => [1, -1]]);
 
-        $footprint = $this->service()->catalogue()['gm_decl_tour'];
+        $footprint = (new EntityTypeFootprintService($this->link))->catalogue()['gm_decl_tour'];
 
-        $this->assertSame('declared', $this->service()->sourceOf('gm_decl_tour'));
+        $this->assertSame('declared', (new EntityTypeFootprintService($this->link))->sourceOf('gm_decl_tour'));
         $this->assertSame(4, $footprint->cells(), 'la déclaration, pas les deux cases de la carte');
         $this->assertSame(2, $footprint->width());
     }
@@ -96,12 +91,12 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
         $this->seedOnMap('gm_decl_oubli');
         $this->declare('gm_decl_oubli', 3, 3, [0 => [0, 0], 1 => [1, 1]]);
 
-        $this->assertSame('declared', $this->service()->sourceOf('gm_decl_oubli'));
+        $this->assertSame('declared', (new EntityTypeFootprintService($this->link))->sourceOf('gm_decl_oubli'));
 
-        $this->service()->forget('gm_decl_oubli');
+        (new EntityTypeFootprintService($this->link))->forget('gm_decl_oubli');
 
-        $this->assertSame('map', $this->service()->sourceOf('gm_decl_oubli'));
-        $this->assertSame(2, $this->service()->catalogue()['gm_decl_oubli']->cells());
+        $this->assertSame('map', (new EntityTypeFootprintService($this->link))->sourceOf('gm_decl_oubli'));
+        $this->assertSame(2, (new EntityTypeFootprintService($this->link))->catalogue()['gm_decl_oubli']->cells());
     }
 
     /** Why offsets are stored rather than a box: a 3×3 box would promise nine cells. */
@@ -111,7 +106,7 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
 
         $this->declare('gm_decl_geant', 3, 3, $offsets);
 
-        $footprint = $this->service()->catalogue()['gm_decl_geant'];
+        $footprint = (new EntityTypeFootprintService($this->link))->catalogue()['gm_decl_geant'];
 
         $this->assertSame($offsets, $footprint->offsets(), 'les décalages, au morceau près');
         $this->assertSame(4, $footprint->cells());
@@ -131,7 +126,7 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
 
         $this->assertSame(
             [0 => 'block', 1 => 'cover'],
-            $this->service()->declared()['gm_decl_arche']->roles()
+            (new EntityTypeFootprintService($this->link))->declared()['gm_decl_arche']->roles()
         );
     }
 
@@ -147,7 +142,7 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
 
         $this->declare('gm_decl_inconnue', 1, 2, [0 => [0, 0], 1 => [0, -1]]);
 
-        $this->assertSame('declared', $this->service()->sourceOf('gm_decl_inconnue'));
+        $this->assertSame('declared', (new EntityTypeFootprintService($this->link))->sourceOf('gm_decl_inconnue'));
     }
 
     /** A cut-out without any piece describes nothing: refused. */
@@ -155,7 +150,7 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
     {
         $this->expectException(RuntimeException::class);
 
-        $this->service()->declare('gm_decl_vide', 1, 1, []);
+        (new EntityTypeFootprintService($this->link))->declare('gm_decl_vide', 1, 1, []);
     }
 
     /** Dimensions stay within what a decor can reach. */
@@ -163,6 +158,6 @@ class EntityTypeFootprintServiceTest extends LegacyPlayerFixtureTestCase
     {
         $this->expectException(RuntimeException::class);
 
-        $this->service()->declare('gm_decl_immense', 99, 99, [0 => [0, 0]]);
+        (new EntityTypeFootprintService($this->link))->declare('gm_decl_immense', 99, 99, [0 => [0, 0]]);
     }
 }

@@ -8,6 +8,8 @@ use App\Enum\EntityCategory;
 use App\Factory\PlayerFactory;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
+use Tests\Support\PlanFixtureTrait;
 
 /**
  * The `resource` entity type answers everywhere, before any row wears it.
@@ -22,23 +24,16 @@ use PHPUnit\Framework\TestCase;
  */
 class ResourceIsAnEntityTypeTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+    use PlanFixtureTrait;
+
     private const PLAN = 'plan_test_resource_entity';
 
     private ?Connection $conn = null;
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
+        $this->bootstrapLegacyOrSkip();
 
         try {
             $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
@@ -57,19 +52,7 @@ class ResourceIsAnEntityTypeTest extends TestCase
 
     private function cleanup(): void
     {
-        if ($this->conn === null) {
-            return;
-        }
-
-        foreach ($this->conn->fetchFirstColumn(
-            'SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        ) as $id) {
-            $this->conn->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [(int) $id]);
-            \App\Service\BuildingService::deleteEntityRows($this->conn, (int) $id);
-        }
-
-        $this->conn->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
+        $this->purgePlan($this->conn, self::PLAN);
     }
 
     /** The type has a range of its own, next to the others. */

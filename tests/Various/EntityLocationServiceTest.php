@@ -4,7 +4,6 @@ namespace Tests\Various;
 
 use App\Service\Map\EntityCellService;
 use App\Service\Map\EntityLocationService;
-use Classes\View;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
@@ -48,18 +47,6 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
         $link?->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
     }
 
-    private function coordsId(int $x, int $y): int
-    {
-        return (int) View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN]
-        );
-    }
-
-    private function service(): EntityLocationService
-    {
-        return new EntityLocationService($this->link);
-    }
-
     /** @return array{0: int, 1: int} raw coords_id and holder_id as stored */
     private function rawLocation(int $entityId): array
     {
@@ -76,10 +63,10 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
     {
         $carrier = $this->createRealPlayer('ContenanceP');
         $carried = $this->createRealPlayer('ContenanceE');
-        $service = $this->service();
+        $service = new EntityLocationService($this->link);
 
         $service->putInside((int) $carried->id, (int) $carrier->id, 'main1');
-        $cell = $this->coordsId(1, 1);
+        $cell = $this->coordsIdOn(self::PLAN, 1, 1);
         $service->installOnCell((int) $carried->id, $cell);
 
         [$coordsId, $holderId] = $this->rawLocation((int) $carried->id);
@@ -97,8 +84,8 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
     public function testDroppingOnACellOccupiesNothing(): void
     {
         $entity = $this->createRealPlayer('ContenanceJete');
-        $service = $this->service();
-        $cell = $this->coordsId(5, 5);
+        $service = new EntityLocationService($this->link);
+        $cell = $this->coordsIdOn(self::PLAN, 5, 5);
 
         $service->installOnCell((int) $entity->id, $cell);
         $service->dropOnCell((int) $entity->id, $cell);
@@ -127,9 +114,9 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
     public function testDroppedLootIsNotReadAsDrift(): void
     {
         $entity = $this->createRealPlayer('ContenanceDerive');
-        $service = $this->service();
+        $service = new EntityLocationService($this->link);
 
-        $service->dropOnCell((int) $entity->id, $this->coordsId(6, 6));
+        $service->dropOnCell((int) $entity->id, $this->coordsIdOn(self::PLAN, 6, 6));
 
         $drifting = array_column((new EntityCellService($this->link))->drift(), 'player_id');
 
@@ -144,9 +131,9 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
     public function testAnInstalledEntityWithoutItsCellsIsStillDrift(): void
     {
         $entity = $this->createRealPlayer('ContenanceAncre');
-        $service = $this->service();
+        $service = new EntityLocationService($this->link);
 
-        $service->installOnCell((int) $entity->id, $this->coordsId(7, 7));
+        $service->installOnCell((int) $entity->id, $this->coordsIdOn(self::PLAN, 7, 7));
         (new EntityCellService($this->link))->removeFor((int) $entity->id);
 
         $drifting = array_map(
@@ -162,9 +149,9 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
     {
         $carrier = $this->createRealPlayer('ContenancePorteur');
         $carried = $this->createRealPlayer('ContenanceTenu');
-        $service = $this->service();
+        $service = new EntityLocationService($this->link);
 
-        $service->installOnCell((int) $carried->id, $this->coordsId(2, 2));
+        $service->installOnCell((int) $carried->id, $this->coordsIdOn(self::PLAN, 2, 2));
         $service->putInside((int) $carried->id, (int) $carrier->id);
 
         $row = $this->link->fetchAssociative(
@@ -188,9 +175,9 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
         $bearer = $this->createRealPlayer('ContenanceChaineA');
         $bag    = $this->createRealPlayer('ContenanceChaineB');
         $sword  = $this->createRealPlayer('ContenanceChaineC');
-        $service = $this->service();
+        $service = new EntityLocationService($this->link);
 
-        $cell = $this->coordsId(3, 3);
+        $cell = $this->coordsIdOn(self::PLAN, 3, 3);
         $service->installOnCell((int) $bearer->id, $cell);
         $service->putInside((int) $bag->id, (int) $bearer->id);
         $service->putInside((int) $sword->id, (int) $bag->id);
@@ -205,7 +192,7 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
     {
         $shelved = $this->createRealPlayer('ContenanceRemise');
         $held    = $this->createRealPlayer('ContenanceDedans');
-        $service = $this->service();
+        $service = new EntityLocationService($this->link);
 
         $service->putInside((int) $held->id, (int) $shelved->id);
         $service->shelve((int) $shelved->id);
@@ -218,9 +205,9 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
     public function testShelvingLeavesTheRowAndTakesTheCells(): void
     {
         $entity = $this->createRealPlayer('ContenanceLimbes');
-        $service = $this->service();
+        $service = new EntityLocationService($this->link);
 
-        $service->installOnCell((int) $entity->id, $this->coordsId(4, 4));
+        $service->installOnCell((int) $entity->id, $this->coordsIdOn(self::PLAN, 4, 4));
         $service->shelve((int) $entity->id);
 
         $row = $this->link->fetchAssociative(
@@ -240,7 +227,7 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
         $chest  = $this->createRealPlayer('ContenanceCoffre');
         $inBag  = $this->createRealPlayer('ContenanceSac');
         $worn   = $this->createRealPlayer('ContenancePorte');
-        $service = $this->service();
+        $service = new EntityLocationService($this->link);
 
         $this->assertFalse($service->holdsAnything((int) $chest->id), 'vide au départ');
 
@@ -260,7 +247,7 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
     {
         $outer = $this->createRealPlayer('ContenanceBoucleA');
         $inner = $this->createRealPlayer('ContenanceBoucleB');
-        $service = $this->service();
+        $service = new EntityLocationService($this->link);
 
         $service->putInside((int) $inner->id, (int) $outer->id);
 
@@ -273,7 +260,7 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
         $lonely = $this->createRealPlayer('ContenanceSoi');
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->service()->putInside((int) $lonely->id, (int) $lonely->id);
+        (new EntityLocationService($this->link))->putInside((int) $lonely->id, (int) $lonely->id);
     }
 
     /**
@@ -294,7 +281,7 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
             [(int) $a->id, (int) $b->id]
         );
 
-        $this->assertNull($this->service()->cellOf((int) $a->id));
+        $this->assertNull((new EntityLocationService($this->link))->cellOf((int) $a->id));
     }
 
     /**
@@ -309,7 +296,7 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
         $chest   = $this->createRealPlayer('ContenanceRestrictA');
         $content = $this->createRealPlayer('ContenanceRestrictB');
 
-        $this->service()->putInside((int) $content->id, (int) $chest->id);
+        (new EntityLocationService($this->link))->putInside((int) $content->id, (int) $chest->id);
 
         $this->expectException(\Doctrine\DBAL\Exception::class);
         $this->link->executeStatement('DELETE FROM players WHERE id = ?', [(int) $chest->id]);

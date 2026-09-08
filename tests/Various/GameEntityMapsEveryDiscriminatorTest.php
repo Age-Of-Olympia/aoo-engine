@@ -5,6 +5,7 @@ namespace Tests\Various;
 use App\Factory\EntityManagerFactory;
 use App\Entity\GameEntity;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Tout `player_type` en base est mappé par l'arbre Doctrine.
@@ -23,14 +24,11 @@ use PHPUnit\Framework\TestCase;
  */
 class GameEntityMapsEveryDiscriminatorTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            EntityManagerFactory::getEntityManager()->getConnection()->fetchOne('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
-        }
+        $this->bootstrapLegacyOrSkip();
     }
 
     public function testEveryDiscriminatorInUseIsMapped(): void

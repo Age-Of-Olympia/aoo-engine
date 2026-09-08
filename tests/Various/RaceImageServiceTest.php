@@ -4,10 +4,10 @@ namespace Tests\Various;
 
 use App\Enum\ImageType;
 use App\Service\RaceImageService;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Tests\Support\SeedsCharactersTrait;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Avatars et portraits de race (panneau « Avatars & portraits ») :
@@ -19,6 +19,7 @@ use Tests\Support\SeedsCharactersTrait;
  */
 class RaceImageServiceTest extends TestCase
 {
+    use LegacyBootstrapTrait;
     use SeedsCharactersTrait;
 
     private RaceImageService $service;
@@ -26,7 +27,7 @@ class RaceImageServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip('players');
         $this->root = sys_get_temp_dir() . '/race_images_' . uniqid();
         mkdir($this->root . '/img/avatars/nain', 0777, true);
         mkdir($this->root . '/img/portraits/nain', 0777, true);
@@ -35,9 +36,8 @@ class RaceImageServiceTest extends TestCase
 
     protected function tearDown(): void
     {
-        global $link;
-        if (isset($link) && $link instanceof Connection) {
-            $this->removeSeededCharacters($link);
+        if ($this->link !== null) {
+            $this->removeSeededCharacters($this->link);
         }
 
         foreach (glob($this->root . '/img/*/*/*') ?: [] as $file) {
@@ -78,8 +78,7 @@ class RaceImageServiceTest extends TestCase
     {
         /* Un joueur qui DÉSIGNE un portrait absent de l'arborescence : le cas
          * le pose, au lieu d'espérer qu'un compte du monde le fasse. */
-        global $link;
-        $this->seedCharacter($link, 'ame', ['portrait' => 'img/portraits/ame/introuvable.jpeg']);
+        $this->seedCharacter($this->link, 'ame', ['portrait' => 'img/portraits/ame/introuvable.jpeg']);
 
         mkdir($this->root . '/img/portraits/ame', 0777, true);
         $entries = $this->service->inventory(ImageType::PORTRAIT, 'ame');
@@ -145,9 +144,8 @@ class RaceImageServiceTest extends TestCase
     {
         /* Un portrait CHOISI par quelqu'un, posé ici : c'est le refus de le
          * supprimer qu'on vérifie, pas la présence d'un joueur historique. */
-        global $link;
         $path = 'img/portraits/nain/choisi_par_un_joueur.jpeg';
-        $this->seedCharacter($link, 'nain', ['portrait' => $path]);
+        $this->seedCharacter($this->link, 'nain', ['portrait' => $path]);
         [$dir, $race, $file] = array_slice(explode('/', $path), 1);
         mkdir($this->root . '/img/' . $dir . '/' . $race, 0777, true);
         $this->writeImage('img/' . $dir . '/' . $race . '/' . $file, 210, 320);
@@ -155,27 +153,5 @@ class RaceImageServiceTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/joueur/');
         $this->service->delete(ImageType::PORTRAIT, $race, $file);
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery("SELECT 1 FROM players LIMIT 1");
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('players table unreachable: ' . $e->getMessage());
-        }
     }
 }

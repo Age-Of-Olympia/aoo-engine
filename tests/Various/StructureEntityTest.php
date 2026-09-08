@@ -11,6 +11,7 @@ use App\Entity\Exemplar;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Pins the Structure branch of the GameEntity STI
@@ -29,6 +30,8 @@ use ReflectionClass;
 #[Group('entities-structure')]
 class StructureEntityTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     public function testHierarchyShape(): void
     {
         foreach ([Building::class, Exemplar::class] as $class) {
@@ -123,13 +126,7 @@ class StructureEntityTest extends TestCase
      */
     private function bootstrapEmOrSkip(): \Doctrine\ORM\EntityManagerInterface
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
+        $this->bootstrapLegacyOrSkip();
 
         $em = \App\Factory\EntityManagerFactory::getEntityManager();
 

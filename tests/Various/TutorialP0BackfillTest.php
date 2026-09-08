@@ -13,13 +13,13 @@ use ReflectionProperty;
 /**
  * Contract backfill for the P0 fixes of MRs !330 and !331.
  */
+#[Group('p0-backfill')]
 class TutorialP0BackfillTest extends TestCase
 {
     /**
      * MR !330 — jump-to-step depends on getActiveSession(int): ?array;
      * a rename or signature drift must fail immediately.
      */
-    #[Group('p0-backfill')]
     #[Group('mr-330')]
     public function testGetActiveSessionContractMatchesJumpToStepCall(): void
     {
@@ -35,7 +35,6 @@ class TutorialP0BackfillTest extends TestCase
      * MR !331 — ActionStep::validate must not leave a debug log file
      * behind (the fwrite to tmp/action_debug.log was removed).
      */
-    #[Group('p0-backfill')]
     #[Group('mr-331')]
     public function testActionStepValidateLeavesNoDebugLogFile(): void
     {

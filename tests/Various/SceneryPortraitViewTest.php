@@ -4,7 +4,6 @@ namespace Tests\Various;
 
 use App\Service\Map\EntitySpriteService;
 use App\View\Observe\SceneryPortraitView;
-use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
@@ -37,17 +36,10 @@ class SceneryPortraitViewTest extends LegacyPlayerFixtureTestCase
         $link->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
     }
 
-    private function coordsId(int $x, int $y): int
-    {
-        return (int) View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN]
-        );
-    }
-
     /** Lay a piece on the map and give the entity the cell that holds it. */
     private function piece(int $entityId, string $name, int $x, int $y, int $index): void
     {
-        $coordsId = $this->coordsId($x, $y);
+        $coordsId = $this->coordsIdOn(self::PLAN, $x, $y);
 
         $this->link->executeStatement(
             'INSERT INTO map_foregrounds (name, coords_id) VALUES (?, ?)',
@@ -69,10 +61,6 @@ class SceneryPortraitViewTest extends LegacyPlayerFixtureTestCase
     public function testThePortraitShowsThePictureTheBoardDraws(): void
     {
         $family = 'gm_portrait_compose';
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
 
         $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/foregrounds/_composed';
 

@@ -5,6 +5,8 @@ namespace Tests\Various;
 use App\Service\BuildingService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
+use Tests\Support\PlanFixtureTrait;
 
 /**
  * Controlled plans: a god holds a plan when they are the ONLY one with a
@@ -20,6 +22,9 @@ use PHPUnit\Framework\TestCase;
  */
 class PlansControlesTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+    use PlanFixtureTrait;
+
     private const PLAN_A = 'plan_test_ctrl_a';
     private const PLAN_B = 'plan_test_ctrl_b';
     private const GOD_ONE = -990701;
@@ -30,17 +35,7 @@ class PlansControlesTest extends TestCase
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
+        $this->bootstrapLegacyOrSkip();
 
         try {
             $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
@@ -55,7 +50,7 @@ class PlansControlesTest extends TestCase
             $this->conn->executeStatement(
                 "INSERT INTO players (id, name, race, coords_id, player_type)
                  VALUES (?, ?, 'dieu', ?, 'npc')",
-                [$god, 'GmDieu' . abs($god), $this->coordsId(self::PLAN_A, 9, 9)]
+                [$god, 'GmDieu' . abs($god), $this->coordsIdOn(self::PLAN_A, 9, 9)]
             );
         }
     }
@@ -67,24 +62,8 @@ class PlansControlesTest extends TestCase
 
     private function cleanup(): void
     {
-        if ($this->conn === null) {
-            return;
-        }
-
         foreach ([self::PLAN_A, self::PLAN_B] as $plan) {
-            foreach ($this->conn->fetchFirstColumn(
-                'SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ?',
-                [$plan]
-            ) as $id) {
-                $this->conn->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [(int) $id]);
-                BuildingService::deleteEntityRows($this->conn, (int) $id);
-            }
-
-            $this->conn->executeStatement(
-                'DELETE ec FROM entity_cells ec JOIN coords c ON c.id = ec.coords_id WHERE c.plan = ?',
-                [$plan]
-            );
-            $this->conn->executeStatement('DELETE FROM coords WHERE plan = ?', [$plan]);
+            $this->purgePlan($this->conn, $plan);
         }
 
         foreach ([self::GOD_ONE, self::GOD_TWO] as $god) {
@@ -92,18 +71,11 @@ class PlansControlesTest extends TestCase
         }
     }
 
-    private function coordsId(string $plan, int $x, int $y): int
-    {
-        return (int) \Classes\View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => $plan]
-        );
-    }
-
     /** An altar on a plan, belonging to a god or to nobody. */
     private function altarOn(string $plan, int $x, int $godId): void
     {
         $id = $this->nextAltar++;
-        $coordsId = $this->coordsId($plan, $x, 0);
+        $coordsId = $this->coordsIdOn($plan, $x, 0);
 
         $this->conn->executeStatement(
             "INSERT INTO players (id, name, race, coords_id, player_type, godId)

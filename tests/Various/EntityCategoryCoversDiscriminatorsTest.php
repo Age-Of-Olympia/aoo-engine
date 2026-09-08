@@ -4,6 +4,7 @@ namespace Tests\Various;
 
 use App\Enum\EntityCategory;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Tout `player_type` POSÉ SUR LE PLATEAU se range dans une catégorie.
@@ -22,14 +23,11 @@ use PHPUnit\Framework\TestCase;
  */
 class EntityCategoryCoversDiscriminatorsTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()->fetchOne('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
-        }
+        $this->bootstrapLegacyOrSkip();
     }
 
     public function testEveryDiscriminatorInUseMapsToACategory(): void

@@ -3,9 +3,9 @@
 namespace Tests\Various;
 
 use App\Service\PlayerSkillsService;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Functional test for PlayerSkillsService::applySkills — the admin skills
@@ -23,9 +23,11 @@ use PHPUnit\Framework\TestCase;
  * transaction holds, so seeded rows are visible to the service and vice versa.
  * Skips cleanly when no initialized aoo4 DB is reachable.
  */
+#[Group('player-skills')]
 class PlayerSkillsServiceTest extends TestCase
 {
-    private ?Connection $link = null;
+    use LegacyBootstrapTrait;
+
     private int $playerId = 0;
     private string $catalogAction = '';
     private string $orphanName = '';
@@ -33,7 +35,15 @@ class PlayerSkillsServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip();
+        $this->playerId = $this->firstRealPlayerIdOrSkip();
+
+        $catalog = $this->link->fetchOne('SELECT name FROM actions ORDER BY name ASC LIMIT 1');
+        if (empty($catalog)) {
+            $this->markTestSkipped('No catalog action rows — reseed the DB.');
+        }
+        $this->catalogAction = (string) $catalog;
+
         $this->link->beginTransaction();
 
         $this->link->executeStatement(
@@ -53,7 +63,6 @@ class PlayerSkillsServiceTest extends TestCase
         $this->link = null;
     }
 
-    #[Group('player-skills')]
     public function testApplySkillsAddsDesiredCatalogAction(): void
     {
         (new PlayerSkillsService())->applySkills($this->playerId, [$this->catalogAction], []);
@@ -61,7 +70,6 @@ class PlayerSkillsServiceTest extends TestCase
         $this->assertContains($this->catalogAction, $this->ownedActionNames());
     }
 
-    #[Group('player-skills')]
     public function testApplySkillsRemovesCatalogActionWhenOmitted(): void
     {
         $this->seedOwned($this->catalogAction);
@@ -72,7 +80,6 @@ class PlayerSkillsServiceTest extends TestCase
         $this->assertNotContains($this->catalogAction, $this->ownedActionNames());
     }
 
-    #[Group('player-skills')]
     public function testApplySkillsPreservesOwnedOrphanOnEmptySave(): void
     {
         // An owned action with no catalog row — the base-attack case.
@@ -87,7 +94,6 @@ class PlayerSkillsServiceTest extends TestCase
         );
     }
 
-    #[Group('player-skills')]
     public function testApplySkillsIgnoresNonCatalogDesiredName(): void
     {
         (new PlayerSkillsService())->applySkills($this->playerId, [$this->bogusName], []);
@@ -116,49 +122,5 @@ class PlayerSkillsServiceTest extends TestCase
             "INSERT INTO players_actions (player_id, name, type) VALUES (?, ?, '')",
             [$this->playerId, $name]
         );
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy DB unreachable: ' . $e->getMessage());
-        }
-
-        try {
-            $row = $link->fetchAssociative(
-                "SELECT id FROM players WHERE id > 0 AND (player_type IS NULL OR player_type = 'real') ORDER BY id ASC LIMIT 1"
-            );
-            $catalog = $link->fetchOne('SELECT name FROM actions ORDER BY name ASC LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('players/actions table unreadable: ' . $e->getMessage());
-        }
-
-        if (empty($row['id'])) {
-            $this->markTestSkipped(
-                'No real player row available — run scripts/testing/reset_test_database.sh.'
-            );
-        }
-        if (empty($catalog)) {
-            $this->markTestSkipped('No catalog action rows — reseed the DB.');
-        }
-
-        $this->link = $link;
-        $this->playerId = (int) $row['id'];
-        $this->catalogAction = (string) $catalog;
     }
 }

@@ -9,6 +9,8 @@ use App\Service\Map\SceneryFiguresInSight;
 use App\Service\Map\SceneryObjectService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
+use Tests\Support\PlanFixtureTrait;
 
 /**
  * The scenery a board window draws, one picture per figure.
@@ -22,6 +24,9 @@ use PHPUnit\Framework\TestCase;
  */
 class SceneryFiguresInSightTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+    use PlanFixtureTrait;
+
     private const PLAN = 'plan_test_figures';
     private const FAMILY = 'gm_figure_tour';
 
@@ -30,17 +35,7 @@ class SceneryFiguresInSightTest extends TestCase
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
+        $this->bootstrapLegacyOrSkip();
 
         try {
             $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
@@ -67,30 +62,9 @@ class SceneryFiguresInSightTest extends TestCase
 
     private function cleanup(): void
     {
-        if ($this->conn === null) {
-            return;
-        }
-
-        foreach ($this->conn->fetchFirstColumn(
-            'SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        ) as $id) {
-            $this->conn->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [(int) $id]);
-            \App\Service\BuildingService::deleteEntityRows($this->conn, (int) $id);
-        }
-
-        /* Cells and piece rows before coords: both keys are RESTRICT. */
-        $this->conn->executeStatement(
-            'DELETE ec FROM entity_cells ec JOIN coords c ON c.id = ec.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        );
-        $this->conn->executeStatement(
-            'DELETE f FROM map_foregrounds f JOIN coords c ON c.id = f.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        );
-        $this->conn->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
-        $this->conn->executeStatement('DELETE FROM entity_type_footprints WHERE type_name = ?', [self::FAMILY]);
-        $this->conn->executeStatement('DELETE FROM races WHERE name = ?', [self::FAMILY]);
+        $this->purgePlan($this->conn, self::PLAN);
+        $this->conn?->executeStatement('DELETE FROM entity_type_footprints WHERE type_name = ?', [self::FAMILY]);
+        $this->conn?->executeStatement('DELETE FROM races WHERE name = ?', [self::FAMILY]);
 
         @unlink($this->spriteDir . '/' . self::FAMILY . '.png');
 
@@ -129,13 +103,6 @@ class SceneryFiguresInSightTest extends TestCase
         EntitySpriteService::forget();
     }
 
-    private function coordsId(int $x, int $y): int
-    {
-        return (int) \Classes\View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN]
-        );
-    }
-
     /**
      * A two-cell figure anchored at (x, y), its second cell one south — the
      * declared offset is dy = -1.
@@ -164,7 +131,7 @@ class SceneryFiguresInSightTest extends TestCase
         $id = $this->figureAt(0, 0);
 
         $seen = (new SceneryFiguresInSight($this->conn))->forWindow(
-            [$this->coordsId(0, 0), $this->coordsId(0, -1)]
+            [$this->coordsIdOn(self::PLAN, 0, 0), $this->coordsIdOn(self::PLAN, 0, -1)]
         );
 
         $this->assertCount(1, $seen['figures']);
@@ -187,7 +154,7 @@ class SceneryFiguresInSightTest extends TestCase
         $this->composedSprite();
         $this->figureAt(0, 0);
 
-        $seen = (new SceneryFiguresInSight($this->conn))->forWindow([$this->coordsId(0, -1)]);
+        $seen = (new SceneryFiguresInSight($this->conn))->forWindow([$this->coordsIdOn(self::PLAN, 0, -1)]);
 
         $this->assertCount(1, $seen['figures'], 'la case hors ancrage suffit à la faire voir');
         $this->assertSame(2, $seen['figures'][0]['h'], 'et elle est dessinée entière');
@@ -199,10 +166,10 @@ class SceneryFiguresInSightTest extends TestCase
         $this->composedSprite();
         $this->figureAt(0, 0);
 
-        $seen = (new SceneryFiguresInSight($this->conn))->forWindow([$this->coordsId(0, 0)]);
+        $seen = (new SceneryFiguresInSight($this->conn))->forWindow([$this->coordsIdOn(self::PLAN, 0, 0)]);
 
-        $this->assertArrayHasKey($this->coordsId(0, 0), $seen['covered']);
-        $this->assertArrayHasKey($this->coordsId(0, -1), $seen['covered'], 'toute l\'emprise, pas la seule case vue');
+        $this->assertArrayHasKey($this->coordsIdOn(self::PLAN, 0, 0), $seen['covered']);
+        $this->assertArrayHasKey($this->coordsIdOn(self::PLAN, 0, -1), $seen['covered'], 'toute l\'emprise, pas la seule case vue');
     }
 
     /**
@@ -215,7 +182,7 @@ class SceneryFiguresInSightTest extends TestCase
         $this->pieceArt();
         $this->figureAt(0, 0);
 
-        $seen = (new SceneryFiguresInSight($this->conn))->forWindow([$this->coordsId(0, 0)]);
+        $seen = (new SceneryFiguresInSight($this->conn))->forWindow([$this->coordsIdOn(self::PLAN, 0, 0)]);
 
         $this->assertCount(1, $seen['figures'], 'la figure se dessine sans commande préalable');
         $this->assertFileExists(
@@ -232,7 +199,7 @@ class SceneryFiguresInSightTest extends TestCase
     {
         $this->figureAt(0, 0); /* neither sprite nor pieces on disk */
 
-        $seen = (new SceneryFiguresInSight($this->conn))->forWindow([$this->coordsId(0, 0)]);
+        $seen = (new SceneryFiguresInSight($this->conn))->forWindow([$this->coordsIdOn(self::PLAN, 0, 0)]);
 
         $this->assertSame([], $seen['figures']);
         $this->assertSame([], $seen['covered'], 'rien ne doit être masqué si rien ne le remplace');

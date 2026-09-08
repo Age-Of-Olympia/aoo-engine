@@ -3,9 +3,9 @@
 namespace Tests\Various;
 
 use App\Service\TileAssetService;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Inventaire et gestion des images de tuiles (panneau « Tuiles & images ») :
@@ -16,12 +16,14 @@ use RuntimeException;
  */
 class TileAssetServiceTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private TileAssetService $service;
     private string $root;
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip('map_tiles');
         $this->root = sys_get_temp_dir() . '/tile_assets_' . uniqid();
         mkdir($this->root . '/img/tiles', 0777, true);
         $this->service = new TileAssetService(null, $this->root);
@@ -29,11 +31,10 @@ class TileAssetServiceTest extends TestCase
 
     protected function tearDown(): void
     {
-        global $link;
         foreach ($this->placedTileNames as $name) {
-            $link->executeStatement('DELETE FROM map_tiles WHERE name = ?', [$name]);
+            $this->link->executeStatement('DELETE FROM map_tiles WHERE name = ?', [$name]);
         }
-        $link->executeStatement("DELETE FROM coords WHERE plan = 'plan_test_tuiles'");
+        $this->link->executeStatement("DELETE FROM coords WHERE plan = 'plan_test_tuiles'");
         $this->placedTileNames = [];
 
         foreach (glob($this->root . '/img/*/*') ?: [] as $file) {
@@ -115,17 +116,15 @@ class TileAssetServiceTest extends TestCase
     /** Une tuile POSÉE, mise là par le cas : le garde-fou porte sur elle. */
     private function placeTileOnAMap(string $name): void
     {
-        global $link;
-
-        $coordsId = (int) $link->fetchOne(
+        $coordsId = (int) $this->link->fetchOne(
             "SELECT id FROM coords WHERE plan = 'plan_test_tuiles' LIMIT 1"
         );
         if ($coordsId === 0) {
-            $link->insert('coords', ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'plan_test_tuiles']);
-            $coordsId = (int) $link->lastInsertId();
+            $this->link->insert('coords', ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'plan_test_tuiles']);
+            $coordsId = (int) $this->link->lastInsertId();
         }
 
-        $link->insert('map_tiles', ['name' => $name, 'coords_id' => $coordsId, 'foreground' => 0]);
+        $this->link->insert('map_tiles', ['name' => $name, 'coords_id' => $coordsId, 'foreground' => 0]);
         $this->placedTileNames[] = $name;
     }
 
@@ -186,27 +185,5 @@ class TileAssetServiceTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/fondu/');
         $this->service->rename('tiles', 'tuile_test_apres', 'tuile_test_final');
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1 FROM map_tiles LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('map_tiles table unreachable: ' . $e->getMessage());
-        }
     }
 }

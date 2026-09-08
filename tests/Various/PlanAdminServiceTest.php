@@ -5,10 +5,10 @@ namespace Tests\Various;
 use App\Service\PlanAdminService;
 use App\Service\PlanConfigService;
 use App\Service\PlanService;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Tests\Support\PlantsResourcesTrait;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Cycle de vie admin des plans (PlanAdminService) : création vierge (coord
@@ -22,6 +22,7 @@ use Tests\Support\PlantsResourcesTrait;
  */
 class PlanAdminServiceTest extends TestCase
 {
+    use LegacyBootstrapTrait;
     use PlantsResourcesTrait;
 
     private const SRC = 'plan_test_adm_src';
@@ -36,7 +37,7 @@ class PlanAdminServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip('coords');
         $this->cleanupFixtures();
     }
 
@@ -54,27 +55,22 @@ class PlanAdminServiceTest extends TestCase
         $this->assertNotNull($config);
         $this->assertSame('Plan de test', $config['name']);
         $this->assertFalse($config['player_visibility']);
-
-        $link = $this->link();
         $this->assertSame(
             1,
-            (int) $link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::BLANK]),
+            (int) $this->link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::BLANK]),
             'une seule coord d\'amorce'
         );
         $this->assertEquals(
             ['x' => 0, 'y' => 0, 'z' => 0],
-            array_map('intval', $link->fetchAssociative('SELECT x, y, z FROM coords WHERE plan = ?', [self::BLANK]))
+            array_map('intval', $this->link->fetchAssociative('SELECT x, y, z FROM coords WHERE plan = ?', [self::BLANK]))
         );
     }
 
     public function testCreateBlankPlanRejectsInvalidNameAndWritesNothing(): void
     {
-        try {
-            (new PlanAdminService())->createBlankPlan('Pas Un Plan');
-            $this->fail('Nom invalide accepté');
-        } catch (RuntimeException $e) {
-            $this->assertSame(400, $e->getCode());
-        }
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionCode(400);
+        (new PlanAdminService())->createBlankPlan('Pas Un Plan');
     }
 
     public function testCreateBlankPlanRefusesExistingCoordsOrOrphanJson(): void
@@ -92,19 +88,15 @@ class PlanAdminServiceTest extends TestCase
 
         // Config orpheline, sans coords — le trou que createPlan() seul ne voit pas
         (new PlanConfigService())->replace(self::BLANK, ['name' => 'Orphelin']);
-        try {
-            $service->createBlankPlan(self::BLANK);
-            $this->fail('Plan à config orpheline accepté');
-        } catch (RuntimeException $e) {
-            $this->assertSame(409, $e->getCode());
-        }
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionCode(409);
+        $service->createBlankPlan(self::BLANK);
     }
 
     public function testClonePlanCopiesAuthoredContentOnly(): void
     {
         $this->seedSourcePlan();
         $this->seedSourceResources();
-        $link = $this->link();
 
         $report = (new PlanAdminService())->clonePlan(self::SRC, self::CLONE, ['name' => 'Clone de test']);
 
@@ -115,7 +107,7 @@ class PlanAdminServiceTest extends TestCase
 
         /* Les ressources du clone sont des ENTITÉS, debout au même endroit,
            et celle qui était à sec l'est restée. */
-        $resources = $link->fetchAllAssociative(
+        $resources = $this->link->fetchAllAssociative(
             "SELECT p.race, c.x, c.y, r.exhausted_at
                FROM players p
                JOIN coords c ON c.id = p.coords_id
@@ -132,7 +124,7 @@ class PlanAdminServiceTest extends TestCase
 
         $this->assertSame(
             0,
-            (int) $link->fetchOne(
+            (int) $this->link->fetchOne(
                 'SELECT COUNT(*) FROM map_resources m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
                 [self::CLONE]
             ),
@@ -140,7 +132,7 @@ class PlanAdminServiceTest extends TestCase
         );
 
         // endTime est de l'état runtime : jamais copié (défaut schéma)
-        $endTime = $link->fetchOne(
+        $endTime = $this->link->fetchOne(
             'SELECT m.endTime FROM map_elements m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
             [self::CLONE]
         );
@@ -164,23 +156,19 @@ class PlanAdminServiceTest extends TestCase
             $this->assertSame(409, $e->getCode());
         }
 
-        try {
-            $service->clonePlan('plan_test_adm_absent', self::CLONE);
-            $this->fail('Source inconnue acceptée');
-        } catch (RuntimeException $e) {
-            $this->assertSame(404, $e->getCode());
-        }
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionCode(404);
+        $service->clonePlan('plan_test_adm_absent', self::CLONE);
     }
 
     public function testDeletePlanIsBlockedByARealPlayerEvenForced(): void
     {
         $this->seedSourcePlan();
-        $link = $this->link();
-        $coordsId = (int) $link->fetchOne('SELECT id FROM coords WHERE plan = ? LIMIT 1', [self::SRC]);
+        $coordsId = (int) $this->link->fetchOne('SELECT id FROM coords WHERE plan = ? LIMIT 1', [self::SRC]);
         /* The shared seed already minted this character; put it on the plan,
            which is what this case is about. */
         $this->seedBuilder();
-        $link->executeStatement(
+        $this->link->executeStatement(
             'UPDATE players SET coords_id = ? WHERE id = ?',
             [$coordsId, self::PLAYER_ID]
         );
@@ -196,7 +184,7 @@ class PlanAdminServiceTest extends TestCase
         } catch (RuntimeException $e) {
             $this->assertSame(409, $e->getCode());
         }
-        $this->assertGreaterThan(0, (int) $link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::SRC]));
+        $this->assertGreaterThan(0, (int) $this->link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::SRC]));
     }
 
     /**
@@ -212,23 +200,22 @@ class PlanAdminServiceTest extends TestCase
     public function testBuildingIsNotCountedAsPlayerAndIsCascaded(): void
     {
         $this->seedSourcePlan();
-        $link = $this->link();
-        $coordsId = (int) $link->fetchOne('SELECT id FROM coords WHERE plan = ? LIMIT 1', [self::SRC]);
+        $coordsId = (int) $this->link->fetchOne('SELECT id FROM coords WHERE plan = ? LIMIT 1', [self::SRC]);
 
-        $link->executeStatement(
+        $this->link->executeStatement(
             'INSERT INTO players (id, player_type, name, coords_id, race) VALUES (?, ?, ?, ?, ?)',
             [self::BUILDING_ID, 'building', 'Mur de test plans', $coordsId, 'mur_pierre']
         );
         // Les satellites qui bloquaient la suppression avant correction.
-        $link->executeStatement(
+        $this->link->executeStatement(
             "INSERT INTO buildings (player_id, build_state) VALUES (?, 'built')",
             [self::BUILDING_ID]
         );
-        $link->executeStatement(
+        $this->link->executeStatement(
             "INSERT INTO players_options (player_id, name) VALUES (?, 'raceHint')",
             [self::BUILDING_ID]
         );
-        $link->executeStatement(
+        $this->link->executeStatement(
             "INSERT INTO players_bonus (player_id, name, n) VALUES (?, 'pv', -12)",
             [self::BUILDING_ID]
         );
@@ -240,19 +227,18 @@ class PlanAdminServiceTest extends TestCase
 
         $report = $service->deletePlan(self::SRC, true);
 
-        $this->assertSame(0, (int) $link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::SRC]));
-        $this->assertSame(0, (int) $link->fetchOne('SELECT COUNT(*) FROM players WHERE id = ?', [self::BUILDING_ID]));
-        $this->assertSame(0, (int) $link->fetchOne('SELECT COUNT(*) FROM buildings WHERE player_id = ?', [self::BUILDING_ID]));
-        $this->assertSame(0, (int) $link->fetchOne('SELECT COUNT(*) FROM players_options WHERE player_id = ?', [self::BUILDING_ID]));
-        $this->assertSame(0, (int) $link->fetchOne('SELECT COUNT(*) FROM players_bonus WHERE player_id = ?', [self::BUILDING_ID]));
+        $this->assertSame(0, (int) $this->link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::SRC]));
+        $this->assertSame(0, (int) $this->link->fetchOne('SELECT COUNT(*) FROM players WHERE id = ?', [self::BUILDING_ID]));
+        $this->assertSame(0, (int) $this->link->fetchOne('SELECT COUNT(*) FROM buildings WHERE player_id = ?', [self::BUILDING_ID]));
+        $this->assertSame(0, (int) $this->link->fetchOne('SELECT COUNT(*) FROM players_options WHERE player_id = ?', [self::BUILDING_ID]));
+        $this->assertSame(0, (int) $this->link->fetchOne('SELECT COUNT(*) FROM players_bonus WHERE player_id = ?', [self::BUILDING_ID]));
     }
 
     public function testDeletePlanForcedCascadesNpcsAndRemovesEverything(): void
     {
         $this->seedSourcePlan();
-        $link = $this->link();
-        $coordsId = (int) $link->fetchOne('SELECT id FROM coords WHERE plan = ? LIMIT 1', [self::SRC]);
-        $link->executeStatement(
+        $coordsId = (int) $this->link->fetchOne('SELECT id FROM coords WHERE plan = ? LIMIT 1', [self::SRC]);
+        $this->link->executeStatement(
             /* player_type explicite : le service ne reconnaît plus un PNJ au
              * signe de son identifiant. Player::put_player($name,$race,pnj:true)
              * écrit 'npc' depuis toujours ; la fixture s'appuyait sur la seule
@@ -275,12 +261,12 @@ class PlanAdminServiceTest extends TestCase
 
         $this->assertSame(1, $report['npcs']);
         $this->assertSame(3, $report['coords']);
-        $this->assertNull($link->fetchOne('SELECT 1 FROM players WHERE id = ?', [self::NPC_ID]) ?: null);
-        $this->assertSame(0, (int) $link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::SRC]));
+        $this->assertNull($this->link->fetchOne('SELECT 1 FROM players WHERE id = ?', [self::NPC_ID]) ?: null);
+        $this->assertSame(0, (int) $this->link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::SRC]));
         foreach (['tiles', 'resources', 'elements'] as $layer) {
             $this->assertSame(
                 0,
-                (int) $link->fetchOne(
+                (int) $this->link->fetchOne(
                     'SELECT COUNT(*) FROM map_' . $layer . ' m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
                     [self::SRC]
                 )
@@ -290,11 +276,6 @@ class PlanAdminServiceTest extends TestCase
         $this->assertContains('config du plan (base)', $report['files']);
     }
 
-    /**
-     * Plan source de fixture : 3 coords en z=0, une tuile, deux murs (dont
-     * un construit par un joueur réel existant), un élément avec endTime,
-     * et une config de plan.
-     */
     /**
      * Un bâtiment n'est pas une ligne de carte mais une ENTITÉ : la boucle
      * des couches ne le voyait pas, donc un clone le perdait. Sans effet tant
@@ -311,7 +292,7 @@ class PlanAdminServiceTest extends TestCase
 
         /* Une case libre à soi : (0,1) porte déjà un élément du seed, et une
            case occupée fait refuser la pose. */
-        $this->link()->executeStatement(
+        $this->link->executeStatement(
             'INSERT INTO coords (x, y, z, plan) VALUES (5, 5, 0, ?)',
             [self::SRC]
         );
@@ -322,7 +303,7 @@ class PlanAdminServiceTest extends TestCase
 
         (new PlanAdminService())->clonePlan(self::SRC, self::CLONE);
 
-        $onClone = $this->link()->fetchAllAssociative(
+        $onClone = $this->link->fetchAllAssociative(
             "SELECT p.race, p.owner_id FROM buildings b
                JOIN players p ON p.id = b.player_id
                JOIN coords c ON c.id = p.coords_id
@@ -365,24 +346,27 @@ class PlanAdminServiceTest extends TestCase
         $this->assertTrue($structures[0]['forceable'], 'la suppression forcée les emporte déjà');
     }
 
+    /**
+     * Plan source de fixture : 3 coords en z=0, une tuile, deux murs (dont
+     * un construit par un joueur réel existant), un élément avec endTime,
+     * et une config de plan.
+     */
     private function seedSourcePlan(): void
     {
-        $link = $this->link();
-
         $ids = [];
         foreach ([[0, 0], [1, 0], [0, 1]] as [$x, $y]) {
-            $link->executeStatement(
+            $this->link->executeStatement(
                 'INSERT INTO coords (x, y, z, plan) VALUES (?, ?, 0, ?)',
                 [$x, $y, self::SRC]
             );
-            $ids[$x . ',' . $y] = (int) $link->lastInsertId();
+            $ids[$x . ',' . $y] = (int) $this->link->lastInsertId();
         }
 
-        $link->executeStatement(
+        $this->link->executeStatement(
             'INSERT INTO map_tiles (coords_id, name, foreground) VALUES (?, ?, 0)',
             [$ids['0,0'], 'grass']
         );
-        $link->executeStatement(
+        $this->link->executeStatement(
             'INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 12345)',
             [$ids['0,1'], 'feu_test']
         );
@@ -399,22 +383,20 @@ class PlanAdminServiceTest extends TestCase
      */
     private function seedSourceResources(): void
     {
-        $link = $this->link();
-
         foreach ([['arbre1', 1, 0, -1], ['arbre2', 0, 1, -2]] as [$name, $x, $y, $damages]) {
-            $coordsId = (int) $link->fetchOne(
+            $coordsId = (int) $this->link->fetchOne(
                 'SELECT id FROM coords WHERE plan = ? AND z = 0 AND x = ? AND y = ?',
                 [self::SRC, $x, $y]
             );
 
-            $this->plantResource($link, $name, $coordsId, self::SRC, $x, $y, 0, $damages);
+            $this->plantResource($this->link, $name, $coordsId, self::SRC, $x, $y, 0, $damages);
         }
     }
 
     /** The fixture character every player-built row hangs from. */
     private function seedBuilder(): int
     {
-        $this->link()->executeStatement(
+        $this->link->executeStatement(
             "INSERT IGNORE INTO players (id, player_type, name, race) VALUES (?, 'real', ?, ?)",
             [self::PLAYER_ID, 'Bâtisseur de test plans', 'nain']
         );
@@ -424,50 +406,49 @@ class PlanAdminServiceTest extends TestCase
 
     private function cleanupFixtures(): void
     {
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
+        if ($this->link === null) {
             return;
         }
 
         /* Map layers first: a player-built wall holds its builder by foreign
            key, so the character cannot leave before what it built. */
         foreach (['tiles', 'routes', 'plants', 'resources', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {
-            $link->executeStatement(
+            $this->link->executeStatement(
                 "DELETE m FROM map_{$layer} m JOIN coords c ON c.id = m.coords_id WHERE c.plan LIKE 'plan_test_adm_%'"
             );
         }
 
         foreach (['buildings', 'players_options', 'players_bonus'] as $satellite) {
-            $link->executeStatement(
+            $this->link->executeStatement(
                 "DELETE FROM {$satellite} WHERE player_id IN (?, ?, ?)",
                 [self::PLAYER_ID, self::NPC_ID, self::BUILDING_ID]
             );
         }
 
-        $link->executeStatement(
+        $this->link->executeStatement(
             'DELETE FROM players WHERE id IN (?, ?, ?)',
             [self::PLAYER_ID, self::NPC_ID, self::BUILDING_ID]
         );
         /* Le clone POSE des entités : elles retiennent les coordonnées par
            leur clé étrangère, et sans elles le nettoyage échouait. */
-        foreach ($link->fetchFirstColumn(
+        foreach ($this->link->fetchFirstColumn(
             "SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan LIKE 'plan_test_adm_%'"
         ) as $entityId) {
-            $link->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [(int) $entityId]);
+            $this->link->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [(int) $entityId]);
             /* Le satellite d'abord : `fk_buildings_player` n'a pas de cascade,
                c'est le service qui le défait à la main partout ailleurs. */
             foreach (['buildings', 'unique_objects', 'resources'] as $satellite) {
-                $link->executeStatement("DELETE FROM {$satellite} WHERE player_id = ?", [(int) $entityId]);
+                $this->link->executeStatement("DELETE FROM {$satellite} WHERE player_id = ?", [(int) $entityId]);
             }
-            \App\Service\BuildingService::deleteEntityRows($link, (int) $entityId);
+            \App\Service\BuildingService::deleteEntityRows($this->link, (int) $entityId);
         }
 
-        $link->executeStatement(
+        $this->link->executeStatement(
             "DELETE ec FROM entity_cells ec JOIN coords c ON c.id = ec.coords_id WHERE c.plan LIKE 'plan_test_adm_%'"
         );
-        $link->executeStatement("DELETE FROM coords WHERE plan LIKE 'plan_test_adm_%'");
+        $this->link->executeStatement("DELETE FROM coords WHERE plan LIKE 'plan_test_adm_%'");
 
-        $link->executeStatement("DELETE FROM plans WHERE slug LIKE 'plan_test_adm_%'");
+        $this->link->executeStatement("DELETE FROM plans WHERE slug LIKE 'plan_test_adm_%'");
         PlanService::forget();
         // L'identity map gagnerait sur la base : une entité Plan d'un test
         // précédent masquerait la ligne recréée.
@@ -480,41 +461,5 @@ class PlanAdminServiceTest extends TestCase
         PlanService::forget($plan);
 
         return (new PlanConfigService())->readFull($plan);
-    }
-
-    private function link(): Connection
-    {
-        global $link;
-
-        return $link;
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        // Les services de plan résolvent fichiers JSON et PNG via
-        // DOCUMENT_ROOT ; en CLI il vaut la racine du dépôt (== docroot web)
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1 FROM coords LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('coords table unreachable: ' . $e->getMessage());
-        }
-
     }
 }

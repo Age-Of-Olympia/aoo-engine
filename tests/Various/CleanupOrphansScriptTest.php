@@ -13,9 +13,9 @@ use ReflectionMethod;
  * scripts/tutorial/cleanup_orphans.php depends on: a rename or
  * signature drift must fail in CI instead of the cron throwing fatals.
  */
+#[Group('cleanup-orphans')]
 class CleanupOrphansScriptTest extends TestCase
 {
-    #[Group('cleanup-orphans')]
     public function testRequiredEnemyCleanupContractMatches(): void
     {
         // Use reflection so PHPStan does not narrow this away; we want
@@ -30,7 +30,6 @@ class CleanupOrphansScriptTest extends TestCase
         $this->assertSame('string', (string) $params[0]->getType());
     }
 
-    #[Group('cleanup-orphans')]
     public function testRequiredPlayerCleanupContractMatches(): void
     {
         $method = new ReflectionMethod(TutorialPlayerCleanup::class, 'deleteTutorialPlayer');

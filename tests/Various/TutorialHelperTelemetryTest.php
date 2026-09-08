@@ -26,6 +26,7 @@ use ReflectionMethod;
  * Tutorial-mode resolution that hits validateTutorialPlayer (DB query)
  * is exercised by the Cypress tutorial-production-ready spec.
  */
+#[Group('tutorial-helper-telemetry')]
 class TutorialHelperTelemetryTest extends TestCase
 {
     private string $logFile;
@@ -46,14 +47,12 @@ class TutorialHelperTelemetryTest extends TestCase
         $_SESSION = [];
     }
 
-    #[Group('tutorial-helper-telemetry')]
     public function testReturnsZeroWhenSessionEmpty(): void
     {
         $this->assertSame(0, TutorialHelper::getActivePlayerId());
         $this->assertSame('', (string) file_get_contents($this->logFile));
     }
 
-    #[Group('tutorial-helper-telemetry')]
     public function testReturnsMainPlayerIdWhenNotInTutorial(): void
     {
         $_SESSION['playerId'] = 42;
@@ -62,7 +61,6 @@ class TutorialHelperTelemetryTest extends TestCase
         $this->assertSame('', (string) file_get_contents($this->logFile));
     }
 
-    #[Group('tutorial-helper-telemetry')]
     public function testFallsBackToMainWhenTutorialFlagSetButPlayerIdMissing(): void
     {
         // `in_tutorial` is truthy but `tutorial_player_id` is absent —
@@ -76,7 +74,6 @@ class TutorialHelperTelemetryTest extends TestCase
         $this->assertSame('', (string) file_get_contents($this->logFile));
     }
 
-    #[Group('tutorial-helper-telemetry')]
     public function testFallsBackToMainWhenTutorialPlayerIdIsZero(): void
     {
         $_SESSION['playerId'] = 99;
@@ -97,7 +94,6 @@ class TutorialHelperTelemetryTest extends TestCase
      * signal. Pin the contract: a well-formed JSON line containing the
      * event discriminator must land in the configured error_log.
      */
-    #[Group('tutorial-helper-telemetry')]
     public function testLogTelemetryEmitsJsonLineToErrorLog(): void
     {
         // Re-assert the ini inside the test body: PHPUnit can reset

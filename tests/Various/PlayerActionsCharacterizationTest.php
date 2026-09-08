@@ -3,9 +3,9 @@
 namespace Tests\Various;
 
 use App\Factory\PlayerFactory;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Characterization test pinning Player::have_action / add_action /
@@ -31,9 +31,11 @@ use PHPUnit\Framework\TestCase;
  * players_actions rows inside the transaction so add_action calls
  * don't collide with seeded PK rows.
  */
+#[Group('player-actions-characterization')]
 class PlayerActionsCharacterizationTest extends TestCase
 {
-    private ?Connection $link = null;
+    use LegacyBootstrapTrait;
+
     private int $playerId = 0;
     private string $unknownActionName = '';
 
@@ -49,7 +51,27 @@ class PlayerActionsCharacterizationTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip();
+        $this->playerId = $this->firstRealPlayerIdOrSkip();
+
+        // The learned-skill rows the type-mapping branch reads: sown here
+        // rather than read from the world — the spell catalogue rotates
+        // with the season balancing. Committed before the per-test
+        // transaction so the ActionService lookup (its own connection)
+        // sees them; removed in tearDown after the rollback.
+        try {
+            foreach (self::FIXTURE_ACTIONS as $name => $ormType) {
+                $exists = $this->link->fetchOne('SELECT id FROM actions WHERE name = ?', [$name]);
+                if ($exists === false) {
+                    // icon is NOT NULL without default on the CI schema
+                    $this->link->insert('actions', ['name' => $name, 'icon' => '', 'type' => $ormType]);
+                    $this->sownActionIds[] = (int) $this->link->lastInsertId();
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('actions table unwritable: ' . $e->getMessage());
+        }
+
         $this->link->beginTransaction();
 
         // Clear the test player's existing actions inside the transaction
@@ -76,8 +98,6 @@ class PlayerActionsCharacterizationTest extends TestCase
         $this->link = null;
     }
 
-    #[Group('player-actions-characterization')]
-    #[Group('dismantling-phase-2b')]
     public function testHaveActionReturnsZeroWhenActionAbsent(): void
     {
         $player = PlayerFactory::legacy($this->playerId);
@@ -85,8 +105,6 @@ class PlayerActionsCharacterizationTest extends TestCase
         $this->assertSame(0, $player->have_action($this->unknownActionName));
     }
 
-    #[Group('player-actions-characterization')]
-    #[Group('dismantling-phase-2b')]
     public function testAddActionMakesHaveActionReturnOne(): void
     {
         $player = PlayerFactory::legacy($this->playerId);
@@ -96,8 +114,6 @@ class PlayerActionsCharacterizationTest extends TestCase
         $this->assertSame(1, $player->have_action($this->unknownActionName));
     }
 
-    #[Group('player-actions-characterization')]
-    #[Group('dismantling-phase-2b')]
     public function testDuplicateAddActionThrowsOnPrimaryKeyConflict(): void
     {
         // players_actions has PRIMARY KEY (player_id, name). A second
@@ -113,8 +129,6 @@ class PlayerActionsCharacterizationTest extends TestCase
         $player->add_action($this->unknownActionName);
     }
 
-    #[Group('player-actions-characterization')]
-    #[Group('dismantling-phase-2b')]
     public function testEndActionOnAbsentRowIsNoOp(): void
     {
         $player = PlayerFactory::legacy($this->playerId);
@@ -124,8 +138,6 @@ class PlayerActionsCharacterizationTest extends TestCase
         $this->assertSame(0, $player->have_action($this->unknownActionName));
     }
 
-    #[Group('player-actions-characterization')]
-    #[Group('dismantling-phase-2b')]
     public function testEndActionRemovesExistingRow(): void
     {
         $player = PlayerFactory::legacy($this->playerId);
@@ -136,8 +148,6 @@ class PlayerActionsCharacterizationTest extends TestCase
         $this->assertSame(0, $player->have_action($this->unknownActionName));
     }
 
-    #[Group('player-actions-characterization')]
-    #[Group('dismantling-phase-2b')]
     public function testGetActionsReflectsAdditionAndReturnsSortedList(): void
     {
         $player = PlayerFactory::legacy($this->playerId);
@@ -155,8 +165,6 @@ class PlayerActionsCharacterizationTest extends TestCase
         $this->assertSame($sorted, $after, 'get_actions must return an ascending sort');
     }
 
-    #[Group('player-actions-characterization')]
-    #[Group('dismantling-phase-2b')]
     public function testAddActionWithSpellNameSetsTypeSort(): void
     {
         // 'sort_de_test' is sown in `actions` with ormType='spell'.
@@ -168,8 +176,6 @@ class PlayerActionsCharacterizationTest extends TestCase
         $this->assertSame('sort', $this->fetchActionType('sort_de_test'));
     }
 
-    #[Group('player-actions-characterization')]
-    #[Group('dismantling-phase-2b')]
     public function testAddActionWithTechniqueNameSetsTypeSort(): void
     {
         // 'technique_de_test' is sown with ormType='technique'. Same
@@ -181,7 +187,6 @@ class PlayerActionsCharacterizationTest extends TestCase
         $this->assertSame('sort', $this->fetchActionType('technique_de_test'));
     }
 
-    #[Group('player-actions-characterization')]
     public function testAddActionWithHealNameSetsTypeSort(): void
     {
         // A defensive spell (ormType='heal') must persist with type='sort' too,
@@ -193,8 +198,6 @@ class PlayerActionsCharacterizationTest extends TestCase
         $this->assertSame('sort', $this->fetchActionType('soin_de_test'));
     }
 
-    #[Group('player-actions-characterization')]
-    #[Group('dismantling-phase-2b')]
     public function testAddActionWithUnknownNameDefaultsTypeToEmptyString(): void
     {
         // getActionByName returns null for a name absent from `actions`,
@@ -218,62 +221,5 @@ class PlayerActionsCharacterizationTest extends TestCase
         $this->assertNotFalse($row, "players_actions row for {$name} not found");
 
         return (string) $row['type'];
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy DB unreachable: ' . $e->getMessage());
-        }
-
-        try {
-            $row = $link->fetchAssociative(
-                "SELECT id FROM players WHERE id > 0 AND (player_type IS NULL OR player_type = 'real') ORDER BY id ASC LIMIT 1"
-            );
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('players table unreadable: ' . $e->getMessage());
-        }
-
-        if (empty($row['id'])) {
-            $this->markTestSkipped(
-                'No real player row available — run scripts/testing/reset_test_database.sh.'
-            );
-        }
-
-        // The learned-skill rows the type-mapping branch reads: sown here
-        // rather than read from the world — the spell catalogue rotates
-        // with the season balancing. Committed before the per-test
-        // transaction so the ActionService lookup (its own connection)
-        // sees them; removed in tearDown after the rollback.
-        try {
-            foreach (self::FIXTURE_ACTIONS as $name => $ormType) {
-                $exists = $link->fetchOne('SELECT id FROM actions WHERE name = ?', [$name]);
-                if ($exists === false) {
-                    // icon is NOT NULL without default on the CI schema
-                    $link->insert('actions', ['name' => $name, 'icon' => '', 'type' => $ormType]);
-                    $this->sownActionIds[] = (int) $link->lastInsertId();
-                }
-            }
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('actions table unwritable: ' . $e->getMessage());
-        }
-
-        $this->link = $link;
-        $this->playerId = (int) $row['id'];
     }
 }

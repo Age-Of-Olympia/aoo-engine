@@ -2,7 +2,6 @@
 
 namespace Tests\Various;
 
-use App\Factory\ActionFactory;
 use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
 use App\Service\BuildingService;
@@ -38,16 +37,6 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
             'SELECT r.pv FROM players p JOIN races r ON r.name = p.race WHERE p.id = ?',
             [$id]
         );
-    }
-
-    private function travaillerOrSkip(): \App\Interface\ActionInterface
-    {
-        $action = ActionFactory::getAction('travailler');
-        if ($action === null) {
-            $this->markTestSkipped("actions catalog not seeded (no 'travailler' row — run migrations).");
-        }
-
-        return $action;
     }
 
     public function testATypeDeclaringWorkIsBornAShutSiteAtMinimalPv(): void
@@ -100,7 +89,7 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
         $target->get_data();
         $target->get_caracs();
 
-        $results = (new ActionExecutorService($this->travaillerOrSkip(), $worker, $target))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('travailler'), $worker, $target))->executeAction();
 
         $blockedWhy = [];
         foreach ($results->getConditionsResultsArray() as $conditionResult) {
@@ -133,7 +122,7 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
         $target->get_data();
         $target->get_caracs();
 
-        $results = (new ActionExecutorService($this->travaillerOrSkip(), $stranger, $target))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('travailler'), $stranger, $target))->executeAction();
 
         $this->assertTrue($results->isBlocked(), 'the mayLock rule bars a stranger from an owned site');
         $this->assertSame(['done' => 0, 'total' => 40], (new ConstructionSiteService())->progressOf($id));

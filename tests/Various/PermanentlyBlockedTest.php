@@ -6,6 +6,8 @@ use App\Service\Map\TileOccupancyService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use Tests\Support\PlantsResourcesTrait;
+use Tests\Support\LegacyBootstrapTrait;
+use Tests\Support\PlanFixtureTrait;
 
 /**
  * What a `forbidden` trigger still adds, cell by cell.
@@ -23,7 +25,9 @@ use Tests\Support\PlantsResourcesTrait;
  */
 class PermanentlyBlockedTest extends TestCase
 {
+    use LegacyBootstrapTrait;
     use PlantsResourcesTrait;
+    use PlanFixtureTrait;
 
     private const PLAN = 'plan_test_fences';
 
@@ -31,17 +35,7 @@ class PermanentlyBlockedTest extends TestCase
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
+        $this->bootstrapLegacyOrSkip();
 
         try {
             $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
@@ -60,37 +54,7 @@ class PermanentlyBlockedTest extends TestCase
 
     private function cleanup(): void
     {
-        if ($this->conn === null) {
-            return;
-        }
-
-        foreach ($this->conn->fetchFirstColumn(
-            'SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        ) as $id) {
-            $this->conn->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [(int) $id]);
-            \App\Service\BuildingService::deleteEntityRows($this->conn, (int) $id);
-        }
-
-        $this->uprootResources($this->conn, self::PLAN);
-
-        $this->conn->executeStatement(
-            'DELETE m FROM map_triggers m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        );
-
-        $this->conn->executeStatement(
-            'DELETE ec FROM entity_cells ec JOIN coords c ON c.id = ec.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        );
-        $this->conn->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
-    }
-
-    private function coordsId(int $x, int $y): int
-    {
-        return (int) \Classes\View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN]
-        );
+        $this->purgePlan($this->conn, self::PLAN);
     }
 
     /** An entity of the given type, holding one cell in the given role. */
@@ -121,7 +85,7 @@ class PermanentlyBlockedTest extends TestCase
     /** A resource refuses the step on its own, so a fence over it says nothing. */
     public function testAResourceBlocksPermanently(): void
     {
-        $coordsId = $this->coordsId(1, 1);
+        $coordsId = $this->coordsIdOn(self::PLAN, 1, 1);
 
         $this->plantResource($this->conn, 'gm_fence_arbre', $coordsId, self::PLAN, 1, 1);
 
@@ -131,7 +95,7 @@ class PermanentlyBlockedTest extends TestCase
     /** A structure holding the cell as `block` does too. */
     public function testABlockingStructureBlocksPermanently(): void
     {
-        $coordsId = $this->coordsId(2, 2);
+        $coordsId = $this->coordsIdOn(self::PLAN, 2, 2);
         $this->entityOn($coordsId, 'building', 'block');
 
         $this->assertArrayHasKey($coordsId, $this->blocked($coordsId));
@@ -140,7 +104,7 @@ class PermanentlyBlockedTest extends TestCase
     /** `cover` is a drawing order: one can stand there, so the fence stays. */
     public function testACoverCellIsNotBlocked(): void
     {
-        $coordsId = $this->coordsId(3, 3);
+        $coordsId = $this->coordsIdOn(self::PLAN, 3, 3);
         $this->entityOn($coordsId, 'scenery', 'cover');
 
         $this->assertSame([], $this->blocked($coordsId));
@@ -153,7 +117,7 @@ class PermanentlyBlockedTest extends TestCase
      */
     public function testACharacterIsNeverAPermanentBlocker(): void
     {
-        $coordsId = $this->coordsId(4, 4);
+        $coordsId = $this->coordsIdOn(self::PLAN, 4, 4);
         $this->entityOn($coordsId, 'real', 'block', 'nain');
 
         $this->assertSame([], $this->blocked($coordsId), 'un personnage n\'est pas un mur');
@@ -162,6 +126,6 @@ class PermanentlyBlockedTest extends TestCase
     /** An empty cell blocks nothing, so a fence on it is the only thing said. */
     public function testAnEmptyCellIsNotBlocked(): void
     {
-        $this->assertSame([], $this->blocked($this->coordsId(5, 5)));
+        $this->assertSame([], $this->blocked($this->coordsIdOn(self::PLAN, 5, 5)));
     }
 }

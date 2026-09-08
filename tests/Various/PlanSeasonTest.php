@@ -8,6 +8,7 @@ use App\Service\PlanService;
 use App\Service\SeasonService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * A plan's season is a column, the current season a setting.
@@ -19,6 +20,8 @@ use PHPUnit\Framework\TestCase;
  */
 class PlanSeasonTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private const PREFIX = 'plan_test_season_';
 
     private ?Connection $conn = null;
@@ -27,20 +30,7 @@ class PlanSeasonTest extends TestCase
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        try {
-            $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
-            $this->conn->fetchOne('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
-        }
+        $this->conn = $this->bootstrapLegacyOrSkip();
 
         // The setting is GLOBAL: restore it no matter what.
         $this->previousSetting = (new AdminSettingsService())->get(SeasonService::SETTING_CURRENT, '');

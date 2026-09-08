@@ -7,6 +7,7 @@ use App\Service\PlanAdminService;
 use App\Service\PlanService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * The world and death plans are dashboard settings, not hardcoded slugs.
@@ -18,6 +19,8 @@ use PHPUnit\Framework\TestCase;
  */
 class WorldDeathPlanSettingsTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private const PLAN = 'plan_test_world_a';
     private const RENAMED = 'plan_test_world_b';
     private const ACTION = 'gm_world_action';
@@ -29,20 +32,7 @@ class WorldDeathPlanSettingsTest extends TestCase
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        try {
-            $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
-            $this->conn->fetchOne('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
-        }
+        $this->conn = $this->bootstrapLegacyOrSkip();
 
         $settings = new AdminSettingsService();
         foreach ([PlanService::SETTING_WORLD, PlanService::SETTING_DEATH] as $key) {

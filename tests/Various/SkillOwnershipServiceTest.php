@@ -3,9 +3,9 @@
 namespace Tests\Various;
 
 use App\Service\SkillOwnershipService;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Functional test for SkillOwnershipService — the "Qui a ça ?" reverse lookup.
@@ -15,16 +15,21 @@ use PHPUnit\Framework\TestCase;
  * Mutations run inside a transaction rolled back in tearDown; the service reads
  * through the same global Doctrine connection. Skips when no aoo4 DB is reachable.
  */
+#[Group('skill-ownership')]
 class SkillOwnershipServiceTest extends TestCase
 {
-    private ?Connection $link = null;
+    use LegacyBootstrapTrait;
+
     private int $realPlayerId = 0;
     private int $nonRealPlayerId = 0;
     private string $actionName = '';
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip();
+        $this->realPlayerId = $this->firstRealPlayerIdOrSkip();
+        $nonReal = $this->link->fetchOne("SELECT id FROM players WHERE player_type <> 'real' ORDER BY id ASC LIMIT 1");
+        $this->nonRealPlayerId = $nonReal !== false ? (int) $nonReal : 0;
         $this->link->beginTransaction();
         $this->actionName = 'ownTest_' . bin2hex(random_bytes(4));
     }
@@ -37,7 +42,6 @@ class SkillOwnershipServiceTest extends TestCase
         $this->link = null;
     }
 
-    #[Group('skill-ownership')]
     public function testCountAndRosterIncludeRealOwner(): void
     {
         $this->grant($this->realPlayerId);
@@ -49,7 +53,6 @@ class SkillOwnershipServiceTest extends TestCase
         $this->assertContains($this->realPlayerId, $ownerIds);
     }
 
-    #[Group('skill-ownership')]
     public function testNonRealOwnerIsExcluded(): void
     {
         if ($this->nonRealPlayerId === 0) {
@@ -72,37 +75,5 @@ class SkillOwnershipServiceTest extends TestCase
             "INSERT INTO players_actions (player_id, name, type) VALUES (?, ?, '')",
             [$playerId, $this->actionName]
         );
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1');
-            $real = $link->fetchOne("SELECT id FROM players WHERE player_type = 'real' ORDER BY id ASC LIMIT 1");
-            $nonReal = $link->fetchOne("SELECT id FROM players WHERE player_type <> 'real' ORDER BY id ASC LIMIT 1");
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy DB unreachable: ' . $e->getMessage());
-        }
-
-        if (empty($real)) {
-            $this->markTestSkipped('No real player available — reseed the DB.');
-        }
-
-        $this->link = $link;
-        $this->realPlayerId = (int) $real;
-        $this->nonRealPlayerId = $nonReal !== false ? (int) $nonReal : 0;
     }
 }

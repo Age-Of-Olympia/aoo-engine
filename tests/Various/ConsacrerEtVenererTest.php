@@ -2,9 +2,10 @@
 
 namespace Tests\Various;
 
-use App\Service\BuildingService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
+use Tests\Support\PlanFixtureTrait;
 
 /**
  * Consecrating an altar, and worshipping at one.
@@ -18,23 +19,16 @@ use PHPUnit\Framework\TestCase;
  */
 class ConsacrerEtVenererTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+    use PlanFixtureTrait;
+
     private const PLAN = 'plan_test_consacrer';
 
     private ?Connection $conn = null;
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
+        $this->bootstrapLegacyOrSkip();
 
         try {
             $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
@@ -53,20 +47,7 @@ class ConsacrerEtVenererTest extends TestCase
 
     private function cleanup(): void
     {
-        if ($this->conn === null) {
-            return;
-        }
-
-        foreach ($this->conn->fetchFirstColumn(
-            'SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        ) as $id) {
-            $this->conn->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [(int) $id]);
-            $this->conn->executeStatement('DELETE FROM buildings WHERE player_id = ?', [(int) $id]);
-            BuildingService::deleteEntityRows($this->conn, (int) $id);
-        }
-
-        $this->conn->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
+        $this->purgePlan($this->conn, self::PLAN);
     }
 
     /** @return array<string, mixed> the conditions of an action, by type */

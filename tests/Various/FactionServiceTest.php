@@ -4,8 +4,8 @@ namespace Tests\Various;
 
 use App\Entity\Faction;
 use App\Service\FactionService;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * DB-backed FactionService (factions / faction_roles), the replacement for
@@ -28,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 class FactionServiceTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     /** Id de fixture, hors de portée des ids réels. */
     private const MEMBER_ID = 990101;
 
@@ -35,7 +37,7 @@ class FactionServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip('factions');
         FactionService::clearCache();
         $this->service = new FactionService();
     }
@@ -170,8 +172,6 @@ class FactionServiceTest extends TestCase
 
     public function testDeleteFactionRefusesWhileCharactersReferenceIt(): void
     {
-        global $link;
-
         $code = 'test_faction_del';
         $this->deleteFaction($code);
 
@@ -185,7 +185,7 @@ class FactionServiceTest extends TestCase
          * `real` and `npc` only — a forge carries a faction without joining
          * it. Five columns are enough to fabricate one. */
         $playerId = self::MEMBER_ID;
-        $link->executeStatement(
+        $this->link->executeStatement(
             "INSERT INTO players (id, player_type, name, race, faction)
              VALUES (?, 'real', ?, ?, ?)",
             [$playerId, 'Membre de test factions', 'nain', $code]
@@ -202,7 +202,7 @@ class FactionServiceTest extends TestCase
                 $this->assertStringContainsString($code, $e->getMessage());
             }
         } finally {
-            $link->executeStatement('DELETE FROM players WHERE id = ?', [$playerId]);
+            $this->link->executeStatement('DELETE FROM players WHERE id = ?', [$playerId]);
             $this->deleteFaction($code);
             FactionService::clearCache();
         }
@@ -210,30 +210,7 @@ class FactionServiceTest extends TestCase
 
     private function deleteFaction(string $code): void
     {
-        global $link;
         // faction_roles rows follow via ON DELETE CASCADE.
-        $link->executeStatement('DELETE FROM factions WHERE code = ?', [$code]);
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1 FROM factions LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('factions table unreachable: ' . $e->getMessage());
-        }
+        $this->link->executeStatement('DELETE FROM factions WHERE code = ?', [$code]);
     }
 }

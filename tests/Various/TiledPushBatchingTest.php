@@ -3,8 +3,9 @@
 namespace Tests\Various;
 
 use App\Service\TiledMapService;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
+use Tests\Support\PlanFixtureTrait;
 
 /**
  * Ce qu'un collage de zone fait au push.
@@ -23,11 +24,14 @@ use PHPUnit\Framework\TestCase;
  */
 class TiledPushBatchingTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+    use PlanFixtureTrait;
+
     private const PLAN = 'plan_test_tiled_batch';
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip('coords');
         $this->cleanupFixtures();
 
         \Classes\View::get_coords_id((object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::PLAN]);
@@ -55,7 +59,7 @@ class TiledPushBatchingTest extends TestCase
         $this->assertSame(2, $result['layers']['elements']['inserted'], 'le doublon ne compte pas deux fois');
         $this->assertSame(
             2,
-            (int) $this->link()->fetchOne(
+            (int) $this->link->fetchOne(
                 'SELECT COUNT(*) FROM map_elements m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
                 [self::PLAN]
             )
@@ -86,14 +90,14 @@ class TiledPushBatchingTest extends TestCase
         $this->assertSame(1500, $result['layers']['tiles']['inserted']);
         $this->assertSame(
             1500,
-            (int) $this->link()->fetchOne(
+            (int) $this->link->fetchOne(
                 'SELECT COUNT(*) FROM map_tiles m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
                 [self::PLAN]
             )
         );
         $this->assertSame(
             1501, // les 1500 collées, plus la coord d'amorce
-            (int) $this->link()->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::PLAN])
+            (int) $this->link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::PLAN])
         );
 
         // Et le geste inverse : la zone repart d'un coup
@@ -105,50 +109,6 @@ class TiledPushBatchingTest extends TestCase
 
     private function cleanupFixtures(): void
     {
-        $link = $this->link();
-
-        foreach (['tiles', 'elements'] as $layer) {
-            $link->executeStatement(
-                "DELETE m FROM map_{$layer} m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?",
-                [self::PLAN]
-            );
-        }
-
-        $link->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
-        $link->executeStatement('DELETE FROM plans WHERE slug = ?', [self::PLAN]);
-        \App\Service\PlanService::forget(self::PLAN);
-    }
-
-    private function link(): Connection
-    {
-        global $link;
-
-        return $link;
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1 FROM coords LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('coords table unreachable: ' . $e->getMessage());
-        }
+        $this->purgePlan($this->link, self::PLAN);
     }
 }

@@ -7,6 +7,7 @@ use App\Service\RaceService;
 use App\View\Admin\TypeEditorFace;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * `races.type_kind` dit la même chose que le code, pour chaque ligne.
@@ -24,24 +25,13 @@ use PHPUnit\Framework\TestCase;
  */
 class TypeFamilyColumnTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private ?Connection $conn = null;
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        try {
-            $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
-            $this->conn->fetchOne('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
-        }
+        $this->conn = $this->bootstrapLegacyOrSkip();
 
         $column = $this->conn->fetchOne("SHOW COLUMNS FROM races LIKE 'type_kind'");
 

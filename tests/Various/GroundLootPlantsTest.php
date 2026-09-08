@@ -3,7 +3,6 @@
 namespace Tests\Various;
 
 use App\Service\GroundLootService;
-use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
@@ -39,13 +38,6 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
         $link->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
     }
 
-    private function coordsId(int $x, int $y): int
-    {
-        return (int) View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN]
-        );
-    }
-
     /** Un TYPE de plante au catalogue : c'est lui qui dit ce qu'elle rend. */
     private function somePlantName(): string
     {
@@ -76,7 +68,7 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
     public function testPlantsShowInTheGroundList(): void
     {
         $name = $this->somePlantName();
-        $this->plantAt($this->coordsId(1, 1), $name);
+        $this->plantAt($this->coordsIdOn(self::PLAN, 1, 1), $name);
 
         $loot = (new GroundLootService())->listAt(1, 1, 0, self::PLAN);
 
@@ -88,7 +80,7 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
     public function testCollectingTakesThePlantOffTheTile(): void
     {
         $name = $this->somePlantName();
-        $coordsId = $this->coordsId(2, 1);
+        $coordsId = $this->coordsIdOn(self::PLAN, 2, 1);
         $this->plantAt($coordsId, $name);
 
         $player = $this->createRealPlayer('cueilleur');
@@ -123,7 +115,7 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
     public function testCollectingThrowsTheCachedBoardAway(): void
     {
         $name = $this->somePlantName();
-        $coordsId = $this->coordsId(4, 1);
+        $coordsId = $this->coordsIdOn(self::PLAN, 4, 1);
         $this->plantAt($coordsId, $name);
 
         $player = $this->createRealPlayer('cueilleur_cache');
@@ -156,7 +148,7 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
     public function testAnUncollectedPlantStays(): void
     {
         $name = $this->somePlantName();
-        $coordsId = $this->coordsId(3, 1);
+        $coordsId = $this->coordsIdOn(self::PLAN, 3, 1);
         $this->plantAt($coordsId, $name);
 
         $this->assertSame(
@@ -179,7 +171,7 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
     public function testAPlantYieldsWithinItsTypesBounds(): void
     {
         $name = $this->somePlantName();
-        $coordsId = $this->coordsId(5, 1);
+        $coordsId = $this->coordsIdOn(self::PLAN, 5, 1);
 
         $before = $this->link->fetchAssociative(
             'SELECT harvest_min, harvest_max FROM races WHERE name = ?',
@@ -227,7 +219,7 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
             [],
             (new GroundLootService())->collect(
                 $player,
-                $this->coordsId(4, 1),
+                $this->coordsIdOn(self::PLAN, 4, 1),
                 (object) ['x' => 4, 'y' => 1, 'z' => 0, 'plan' => self::PLAN]
             )
         );

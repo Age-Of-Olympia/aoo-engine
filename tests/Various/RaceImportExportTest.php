@@ -9,9 +9,9 @@ use App\Service\ImportExport\ImporterRegistry;
 use App\Service\ImportExport\RaceExporter;
 use App\Service\ImportExport\RaceImporter;
 use App\Service\RaceService;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use Tests\Support\SeedsCharactersTrait;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Import/export de races par bundles JSON (framework ImportExport) : le
@@ -23,24 +23,24 @@ use Tests\Support\SeedsCharactersTrait;
  */
 class RaceImportExportTest extends TestCase
 {
+    use LegacyBootstrapTrait;
     use SeedsCharactersTrait;
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip('races');
         RaceService::clearCache();
     }
 
     protected function tearDown(): void
     {
         // Nettoie la race créée par le test d'import (cascade sur les listes)
-        global $link;
-        if (isset($link) && $link instanceof Connection) {
-            $this->removeSeededCharacters($link);
-            $link->executeStatement(
+        if ($this->link !== null) {
+            $this->removeSeededCharacters($this->link);
+            $this->link->executeStatement(
                 "DELETE FROM races WHERE name = 'race_test_import'"
             );
-            $link->executeStatement(
+            $this->link->executeStatement(
                 "DELETE FROM entity_type_footprints WHERE type_name = 'race_test_import'"
             );
         }
@@ -143,9 +143,7 @@ class RaceImportExportTest extends TestCase
 
         RaceService::clearCache();
         $this->assertSame(7, (new RaceService())->getRaceByName('race_test_import')->getBuildWork());
-
-        global $link;
-        $row = $link->fetchAssociative(
+        $row = $this->link->fetchAssociative(
             "SELECT w, h FROM entity_type_footprints WHERE type_name = 'race_test_import'"
         );
         $this->assertSame(['w' => 3, 'h' => 1], array_map('intval', $row ?: []), 'the cut-out lands with its type');
@@ -173,8 +171,7 @@ class RaceImportExportTest extends TestCase
 
         RaceService::clearCache();
         $this->assertNull((new RaceService())->getRaceByName('race_test_import'));
-        global $link;
-        $this->assertSame(0, (int) $link->fetchOne(
+        $this->assertSame(0, (int) $this->link->fetchOne(
             'SELECT COUNT(*) FROM race_starter_actions WHERE race_id = ?', [$raceId]
         ), 'les listes partent en cascade');
     }
@@ -183,8 +180,7 @@ class RaceImportExportTest extends TestCase
     {
         /* La race doit être RÉFÉRENCÉE : le cas s'en charge lui-même, au lieu
          * de compter sur le monde de développement pour héberger un nain. */
-        global $link;
-        $this->seedCharacter($link, 'nain');
+        $this->seedCharacter($this->link, 'nain');
         RaceService::clearCache();
 
         $service = new RaceService();
@@ -219,27 +215,5 @@ class RaceImportExportTest extends TestCase
         RaceService::clearCache();
         $this->assertNull((new RaceService())->getRaceByName('race_test_import'),
             'tout-ou-rien : rien d\'écrit sur rejet');
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1 FROM races LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('races table unreachable: ' . $e->getMessage());
-        }
     }
 }

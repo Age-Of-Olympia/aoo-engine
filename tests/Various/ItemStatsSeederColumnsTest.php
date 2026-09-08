@@ -5,6 +5,7 @@ namespace Tests\Various;
 use App\Service\ItemStatsSeeder;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Le seeder d'objets n'écrit que des colonnes qui existent.
@@ -23,6 +24,8 @@ use PHPUnit\Framework\TestCase;
  */
 class ItemStatsSeederColumnsTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     public function testEveryWritableKeyHasItsColumn(): void
     {
         $columns = $this->itemColumnsOrSkip();
@@ -47,11 +50,7 @@ class ItemStatsSeederColumnsTest extends TestCase
     /** @return list<string> */
     private function itemColumnsOrSkip(): array
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
+        $this->bootstrapLegacyOrSkip();
 
         global $link;
         if (!isset($link) || !$link instanceof Connection) {

@@ -6,6 +6,7 @@ use App\Interface\HarvestableInterface;
 use App\Service\Map\StructureTypeService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * What a harvestable type is, now that one catalogue says it.
@@ -23,24 +24,13 @@ use PHPUnit\Framework\TestCase;
  */
 class HarvestableTypesCatalogueTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private ?Connection $conn = null;
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        try {
-            $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
-            $this->conn->fetchOne('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
-        }
+        $this->conn = $this->bootstrapLegacyOrSkip();
 
         StructureTypeService::forget();
     }

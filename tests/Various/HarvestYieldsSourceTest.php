@@ -5,6 +5,9 @@ namespace Tests\Various;
 use App\Service\Map\HarvestCatalogService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
+use Tests\Support\PlanFixtureTrait;
+use Tests\Support\PlantsResourcesTrait;
 
 /**
  * Where the game reads a plan's yields: the TYPE says, the plan may deviate.
@@ -22,31 +25,19 @@ use PHPUnit\Framework\TestCase;
  */
 class HarvestYieldsSourceTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+    use PlanFixtureTrait;
+    use PlantsResourcesTrait;
+
     private const PLAN = 'plan_test_yields';
     private const TYPE = 'gm_yields_arbre';
-
-    /** Below the resource range's ceiling, out of reach of any converted id. */
-    private const FIXTURE_ID = 59990100;
 
     private ?Connection $conn = null;
     private int $raceId = 0;
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        try {
-            $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
-            $this->conn->fetchOne('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
-        }
+        $this->conn = $this->bootstrapLegacyOrSkip();
 
         $this->cleanup();
 
@@ -76,18 +67,9 @@ class HarvestYieldsSourceTest extends TestCase
 
     private function cleanup(): void
     {
-        if ($this->conn === null) {
-            return;
-        }
-
-        $this->conn->executeStatement('DELETE FROM plans WHERE slug = ?', [self::PLAN]);
-        \App\Service\PlanService::forget(self::PLAN);
-        $this->conn->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [self::FIXTURE_ID]);
-        $this->conn->executeStatement('DELETE FROM resources WHERE player_id = ?', [self::FIXTURE_ID]);
-        $this->conn->executeStatement('DELETE FROM players WHERE id = ?', [self::FIXTURE_ID]);
-        $this->conn->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
-        $this->conn->executeStatement('DELETE FROM race_harvest WHERE plan = ?', [self::PLAN]);
-        $this->conn->executeStatement('DELETE FROM races WHERE name = ?', [self::TYPE]);
+        $this->purgePlan($this->conn, self::PLAN);
+        $this->conn?->executeStatement('DELETE FROM race_harvest WHERE plan = ?', [self::PLAN]);
+        $this->conn?->executeStatement('DELETE FROM races WHERE name = ?', [self::TYPE]);
     }
 
     /**
@@ -181,22 +163,7 @@ class HarvestYieldsSourceTest extends TestCase
     /** One harvestable entity standing on the plan. */
     private function standAResource(): void
     {
-        $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::PLAN]
-        );
-
-        $this->conn->executeStatement(
-            "INSERT INTO players (id, player_type, display_id, name, race, avatar, portrait,
-                                  coords_id, nextTurnTime, registerTime, text)
-             VALUES (?, 'resource', 0, 'Gm yields', ?, '', '', ?, 0, ?, '')",
-            [self::FIXTURE_ID, self::TYPE, $coordsId, time()]
-        );
-
-        $this->conn->executeStatement(
-            "INSERT INTO entity_cells (player_id, coords_id, plan, z, x, y, piece, role)
-             VALUES (?, ?, ?, 0, 0, 0, 0, 'block')",
-            [self::FIXTURE_ID, $coordsId, self::PLAN]
-        );
+        $this->plantResource($this->conn, self::TYPE, $this->coordsIdOn(self::PLAN, 0, 0), self::PLAN, 0, 0);
     }
 
     /** Une ligne de plan DÉVIE du type, champ par champ. */

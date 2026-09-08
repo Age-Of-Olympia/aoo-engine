@@ -6,6 +6,7 @@ use App\Service\TileDialogMigrationService;
 use Classes\Db;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Lecture d'un `map_dialogs.params`, la partie de la reprise où l'on
@@ -23,21 +24,14 @@ use PHPUnit\Framework\TestCase;
 #[Group('dialogs')]
 class TileDialogMigrationTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private ?TileDialogMigrationService $service = null;
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-            $GLOBALS['link'] = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
-            $GLOBALS['link']->executeQuery('SELECT 1');
-
-            $this->service = new TileDialogMigrationService(new Db());
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('base indisponible : ' . $e->getMessage());
-        }
+        $this->bootstrapLegacyOrSkip();
+        $this->service = new TileDialogMigrationService(new Db());
     }
 
     public function testATextKeepsItsCommas(): void

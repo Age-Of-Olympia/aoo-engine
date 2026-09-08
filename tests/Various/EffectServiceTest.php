@@ -3,8 +3,8 @@
 namespace Tests\Various;
 
 use App\Service\EffectService;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * DB-backed EffectService (effects / effect_corruption_materials), the
@@ -27,11 +27,13 @@ use PHPUnit\Framework\TestCase;
  */
 class EffectServiceTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private EffectService $service;
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip('effects');
         EffectService::clearCache();
         $this->service = new EffectService();
     }
@@ -175,27 +177,5 @@ class EffectServiceTest extends TestCase
         $this->assertContains('feu', $names);
         $this->assertNotContains('trace_pas', $names);
         $this->assertNotContains('trace_pas_so', $names);
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1 FROM effects LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('effects table unreachable: ' . $e->getMessage());
-        }
     }
 }

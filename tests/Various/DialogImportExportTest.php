@@ -7,8 +7,8 @@ use App\Service\ImportExport\DialogExporter;
 use App\Service\ImportExport\DialogImporter;
 use App\Service\ImportExport\ExporterRegistry;
 use App\Service\ImportExport\ImporterRegistry;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Import/export de dialogues par bundles JSON : identité par code naturel
@@ -20,6 +20,8 @@ use PHPUnit\Framework\TestCase;
  */
 class DialogImportExportTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private const NAME = 'dialog_test_ie';
 
     private const NODES = [
@@ -34,7 +36,7 @@ class DialogImportExportTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip('dialogs');
         $this->cleanupFixtures();
         DialogService::clearCache();
     }
@@ -77,7 +79,7 @@ class DialogImportExportTest extends TestCase
         $payload = $exporter->exportOne(self::NAME);
 
         // Suppression puis ré-import : création à l'identique
-        $this->link()->executeStatement('DELETE FROM dialogs WHERE name = ?', [self::NAME]);
+        $this->link->executeStatement('DELETE FROM dialogs WHERE name = ?', [self::NAME]);
         DialogService::clearCache();
 
         $preview = $importer->preview([$payload]);
@@ -119,42 +121,8 @@ class DialogImportExportTest extends TestCase
 
     private function cleanupFixtures(): void
     {
-        global $link;
-        if (isset($link) && $link instanceof Connection) {
-            $link->executeStatement("DELETE FROM dialogs WHERE name LIKE 'dialog_test_%'");
-        }
-    }
-
-    private function link(): Connection
-    {
-        global $link;
-
-        return $link;
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1 FROM dialogs LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('dialogs table unreachable (migration non appliquée ?): ' . $e->getMessage());
+        if ($this->link !== null) {
+            $this->link->executeStatement("DELETE FROM dialogs WHERE name LIKE 'dialog_test_%'");
         }
     }
 }

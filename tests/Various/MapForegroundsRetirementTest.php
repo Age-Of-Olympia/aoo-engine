@@ -6,6 +6,8 @@ use App\Service\Map\EntityTypeFootprintService;
 use App\Service\Map\MapForegroundsRetirement;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
+use Tests\Support\PlanFixtureTrait;
 
 /**
  * The notice that tells an admin whether `map_foregrounds` can go.
@@ -19,6 +21,9 @@ use PHPUnit\Framework\TestCase;
  */
 class MapForegroundsRetirementTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+    use PlanFixtureTrait;
+
     private const PLAN = 'plan_test_retirement';
     private const FAMILY = 'gm_retire_famille';
 
@@ -26,17 +31,7 @@ class MapForegroundsRetirementTest extends TestCase
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
+        $this->bootstrapLegacyOrSkip();
 
         try {
             $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
@@ -55,16 +50,8 @@ class MapForegroundsRetirementTest extends TestCase
 
     private function cleanup(): void
     {
-        if ($this->conn === null) {
-            return;
-        }
-
-        $this->conn->executeStatement(
-            'DELETE f FROM map_foregrounds f JOIN coords c ON c.id = f.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        );
-        $this->conn->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
-        $this->conn->executeStatement('DELETE FROM entity_type_footprints WHERE type_name = ?', [self::FAMILY]);
+        $this->purgePlan($this->conn, self::PLAN);
+        $this->conn?->executeStatement('DELETE FROM entity_type_footprints WHERE type_name = ?', [self::FAMILY]);
     }
 
     /** Lays a two-piece figure on the board, the way an animator would have. */

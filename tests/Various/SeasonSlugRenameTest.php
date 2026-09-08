@@ -10,6 +10,7 @@ use App\Service\PlanService;
 use App\Service\SeasonService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * The season-suffix rename ceremony, and the by-name references a rename
@@ -22,6 +23,8 @@ use PHPUnit\Framework\TestCase;
  */
 class SeasonSlugRenameTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private const PREFIX = 'plan_test_ssr';
     private const LOG_PLAYER = 990601;
 
@@ -31,24 +34,7 @@ class SeasonSlugRenameTest extends TestCase
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        try {
-            $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
-            $this->conn->fetchOne('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
-        }
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
+        $this->conn = $this->bootstrapLegacyOrSkip();
 
         $this->previousSeason = (new AdminSettingsService())->get(SeasonService::SETTING_CURRENT, '');
         $this->cleanup();

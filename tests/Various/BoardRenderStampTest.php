@@ -19,9 +19,6 @@ class BoardRenderStampTest extends TestCase
 
     protected function setUp(): void
     {
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
 
         $this->cached = sys_get_temp_dir() . '/gm_board_' . getmypid() . '.svg';
         BoardRenderStamp::forget();

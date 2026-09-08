@@ -3,9 +3,9 @@
 namespace Tests\Various;
 
 use Classes\Forum;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Regression guard: Forum::add_dest must not TypeError on an unknown
@@ -25,10 +25,12 @@ use PHPUnit\Framework\TestCase;
  */
 class ForumAddDestNullNameTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     #[Group('forum-add-dest-null')]
     public function testAddDestReturnsErrorStringForUnknownName(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip();
 
         $senderStub = new \stdClass();
         $topJson = (object) ['name' => 'characterization-test-topic'];
@@ -48,34 +50,5 @@ class ForumAddDestNullNameTest extends TestCase
             $result,
             'error string must match the sibling error-return shapes (error already in dest, error dest forbidden, …)'
         );
-    }
-
-    /**
-     * Bootstrap legacy globals + legacy DB connection so the call chain
-     * Forum::add_dest → PlayerFactory::legacyByName → Player::get_player_by_name
-     * has a live $GLOBALS['link']. Same shape as PlayerFactoryTest.
-     */
-    private function bootstrapOrSkip(): Connection
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy DB unreachable: ' . $e->getMessage());
-        }
-
-        return $link;
     }
 }

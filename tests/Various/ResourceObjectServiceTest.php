@@ -4,7 +4,6 @@ namespace Tests\Various;
 
 use App\Service\Map\ResourceObjectService;
 use App\Service\Map\ResourceStateService;
-use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
@@ -47,13 +46,6 @@ class ResourceObjectServiceTest extends LegacyPlayerFixtureTestCase
         $link->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
     }
 
-    private function coordsId(int $x, int $y): int
-    {
-        return (int) View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN]
-        );
-    }
-
     private function someResourceType(): string
     {
         $name = $this->link->fetchOne(
@@ -67,17 +59,12 @@ class ResourceObjectServiceTest extends LegacyPlayerFixtureTestCase
         return (string) $name;
     }
 
-    private function service(): ResourceObjectService
-    {
-        return new ResourceObjectService($this->link);
-    }
-
     /** A posed resource is an entity holding its cell, standing. */
     public function testPosingPutsAnEntityOnTheCell(): void
     {
-        $coordsId = $this->coordsId(4, 4);
+        $coordsId = $this->coordsIdOn(self::PLAN, 4, 4);
 
-        $id = $this->service()->placeAt($this->someResourceType(), $coordsId);
+        $id = (new ResourceObjectService($this->link))->placeAt($this->someResourceType(), $coordsId);
         $this->trackEntityId($id);
 
         $row = $this->link->fetchAssociative(
@@ -97,7 +84,7 @@ class ResourceObjectServiceTest extends LegacyPlayerFixtureTestCase
     /** The palette's `damages = -2` poses a resource already dry. */
     public function testPosingExhaustedIsHonoured(): void
     {
-        $id = $this->service()->placeAt($this->someResourceType(), $this->coordsId(5, 4), true);
+        $id = (new ResourceObjectService($this->link))->placeAt($this->someResourceType(), $this->coordsIdOn(self::PLAN, 5, 4), true);
         $this->trackEntityId($id);
 
         $this->assertTrue((new ResourceStateService($this->link))->isExhausted($id));
@@ -106,28 +93,28 @@ class ResourceObjectServiceTest extends LegacyPlayerFixtureTestCase
     /** The harvest button walks standing → exhausted → standing. */
     public function testCyclingTogglesTheStateBothWays(): void
     {
-        $coordsId = $this->coordsId(6, 4);
-        $id = $this->service()->placeAt($this->someResourceType(), $coordsId);
+        $coordsId = $this->coordsIdOn(self::PLAN, 6, 4);
+        $id = (new ResourceObjectService($this->link))->placeAt($this->someResourceType(), $coordsId);
         $this->trackEntityId($id);
 
-        $this->assertTrue($this->service()->cycleState($coordsId), 'premier clic : épuisée');
+        $this->assertTrue((new ResourceObjectService($this->link))->cycleState($coordsId), 'premier clic : épuisée');
         $this->assertTrue((new ResourceStateService($this->link))->isExhausted($id));
 
-        $this->assertFalse($this->service()->cycleState($coordsId), 'second clic : debout');
+        $this->assertFalse((new ResourceObjectService($this->link))->cycleState($coordsId), 'second clic : debout');
         $this->assertFalse((new ResourceStateService($this->link))->isExhausted($id));
     }
 
     /** Cycling an empty cell says so instead of pretending. */
     public function testCyclingAnEmptyCellReportsNothingThere(): void
     {
-        $this->assertNull($this->service()->cycleState($this->coordsId(7, 4)));
+        $this->assertNull((new ResourceObjectService($this->link))->cycleState($this->coordsIdOn(self::PLAN, 7, 4)));
     }
 
     /** Erasing takes the entity, its cells and its state away together. */
     public function testErasingTakesTheEntityAndItsState(): void
     {
-        $coordsId = $this->coordsId(8, 4);
-        $service = $this->service();
+        $coordsId = $this->coordsIdOn(self::PLAN, 8, 4);
+        $service = new ResourceObjectService($this->link);
 
         $id = $service->placeAt($this->someResourceType(), $coordsId, true);
         $this->trackEntityId($id);

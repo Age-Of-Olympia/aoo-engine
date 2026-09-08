@@ -18,6 +18,7 @@ use ReflectionProperty;
  * getter/setter are inherited from GameEntity, so any subclass
  * exercises the same code path.
  */
+#[Group('player-display-id')]
 class PlayerEntityDisplayIdTest extends TestCase
 {
     private function setEntityField(object $entity, string $field, $value): void
@@ -26,7 +27,6 @@ class PlayerEntityDisplayIdTest extends TestCase
         $prop->setValue($entity, $value);
     }
 
-    #[Group('player-display-id')]
     public function testGetterReturnsExplicitDisplayIdWhenSet(): void
     {
         $player = new RealPlayer();
@@ -36,7 +36,6 @@ class PlayerEntityDisplayIdTest extends TestCase
         $this->assertSame(42, $player->getDisplayId());
     }
 
-    #[Group('player-display-id')]
     public function testGetterFallsBackToIdWhenDisplayIdIsZero(): void
     {
         // Legacy/real-player row: display_id is NULL in DB (column is
@@ -49,14 +48,12 @@ class PlayerEntityDisplayIdTest extends TestCase
         $this->assertSame(7, $player->getDisplayId());
     }
 
-    #[Group('player-display-id')]
     public function testSetterIsFluentForChaining(): void
     {
         $player = new RealPlayer();
         $this->assertSame($player, $player->setDisplayId(99));
     }
 
-    #[Group('player-display-id')]
     public function testFallbackHandlesNullId(): void
     {
         // A freshly-instantiated entity that was never persisted has id=null.

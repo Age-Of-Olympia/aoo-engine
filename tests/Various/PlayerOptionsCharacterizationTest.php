@@ -3,9 +3,9 @@
 namespace Tests\Various;
 
 use App\Factory\PlayerFactory;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Characterization test pinning Player::have_option / add_option / end_option
@@ -30,15 +30,18 @@ use PHPUnit\Framework\TestCase;
  * mysqli connection Doctrine manages, so the rollback undoes both
  * Doctrine and legacy writes in one go.
  */
+#[Group('player-options-characterization')]
 class PlayerOptionsCharacterizationTest extends TestCase
 {
-    private ?Connection $link = null;
+    use LegacyBootstrapTrait;
+
     private int $playerId = 0;
     private string $optionName = '';
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip();
+        $this->playerId = $this->firstRealPlayerIdOrSkip();
         $this->link->beginTransaction();
 
         // Per-test random name so that even if the rollback misbehaves on
@@ -54,8 +57,6 @@ class PlayerOptionsCharacterizationTest extends TestCase
         $this->link = null;
     }
 
-    #[Group('player-options-characterization')]
-    #[Group('dismantling-phase-2')]
     public function testHaveOptionReturnsZeroWhenOptionAbsent(): void
     {
         $player = PlayerFactory::legacy($this->playerId);
@@ -63,8 +64,6 @@ class PlayerOptionsCharacterizationTest extends TestCase
         $this->assertSame(0, $player->have_option($this->optionName));
     }
 
-    #[Group('player-options-characterization')]
-    #[Group('dismantling-phase-2')]
     public function testAddOptionMakesHaveOptionReturnPositive(): void
     {
         $player = PlayerFactory::legacy($this->playerId);
@@ -74,8 +73,6 @@ class PlayerOptionsCharacterizationTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $player->have_option($this->optionName));
     }
 
-    #[Group('player-options-characterization')]
-    #[Group('dismantling-phase-2')]
     public function testDuplicateAddYieldsCountOfTwo(): void
     {
         // The schema has no UNIQUE(player_id, name) on players_options, so
@@ -90,8 +87,6 @@ class PlayerOptionsCharacterizationTest extends TestCase
         $this->assertSame(2, $player->have_option($this->optionName));
     }
 
-    #[Group('player-options-characterization')]
-    #[Group('dismantling-phase-2')]
     public function testEndOptionOnAbsentRowIsNoOp(): void
     {
         $player = PlayerFactory::legacy($this->playerId);
@@ -101,8 +96,6 @@ class PlayerOptionsCharacterizationTest extends TestCase
         $this->assertSame(0, $player->have_option($this->optionName));
     }
 
-    #[Group('player-options-characterization')]
-    #[Group('dismantling-phase-2')]
     public function testEndOptionRemovesExistingRow(): void
     {
         $player = PlayerFactory::legacy($this->playerId);
@@ -113,8 +106,6 @@ class PlayerOptionsCharacterizationTest extends TestCase
         $this->assertSame(0, $player->have_option($this->optionName));
     }
 
-    #[Group('player-options-characterization')]
-    #[Group('dismantling-phase-2')]
     public function testGetOptionsReflectsAdditionAndReturnsSortedList(): void
     {
         $player = PlayerFactory::legacy($this->playerId);
@@ -132,8 +123,6 @@ class PlayerOptionsCharacterizationTest extends TestCase
         $this->assertSame($sorted, $after, 'get_options must return an ascending sort');
     }
 
-    #[Group('player-options-characterization')]
-    #[Group('dismantling-phase-2')]
     public function testOptionsCarryNoFollowerSideEffectAnymore(): void
     {
         // L'inverse de l'ancien piège : le crochet isMerchant → suiveur
@@ -172,44 +161,5 @@ class PlayerOptionsCharacterizationTest extends TestCase
             "SELECT COUNT(*) FROM players_followers WHERE player_id = ? AND name = 'marchand'",
             [$this->playerId]
         );
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy DB unreachable: ' . $e->getMessage());
-        }
-
-        try {
-            $row = $link->fetchAssociative(
-                "SELECT id FROM players WHERE id > 0 AND (player_type IS NULL OR player_type = 'real') ORDER BY id ASC LIMIT 1"
-            );
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('players table unreadable: ' . $e->getMessage());
-        }
-
-        if (empty($row['id'])) {
-            $this->markTestSkipped(
-                'No real player row available — run scripts/testing/reset_test_database.sh.'
-            );
-        }
-
-        $this->link = $link;
-        $this->playerId = (int) $row['id'];
     }
 }

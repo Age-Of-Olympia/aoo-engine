@@ -7,8 +7,9 @@ use App\Service\BuildingService;
 use Tests\Support\PlantsResourcesTrait;
 use App\Service\RaceService;
 use App\Service\TiledMapService;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
+use Tests\Support\PlanFixtureTrait;
 
 /**
  * Couche « buildings » de l'éditeur Tiled : les entités bâtiment d'un
@@ -23,7 +24,9 @@ use PHPUnit\Framework\TestCase;
  */
 class TiledBuildingsLayerTest extends TestCase
 {
+    use LegacyBootstrapTrait;
     use PlantsResourcesTrait;
+    use PlanFixtureTrait;
 
     private const PLAN = 'plan_test_tiled_bld';
 
@@ -31,7 +34,7 @@ class TiledBuildingsLayerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip('coords');
         $this->cleanupFixtures();
 
         $structures = (new RaceService())->getRacesByKind(EntityCategory::Structure->value);
@@ -64,7 +67,7 @@ class TiledBuildingsLayerTest extends TestCase
         $this->assertSame(1, $result['layers']['buildings']['inserted']);
         $this->assertSame([], $result['layers']['buildings']['skipped']);
 
-        $entity = $this->link()->fetchAssociative(
+        $entity = $this->link->fetchAssociative(
             "SELECT p.id, p.race, b.build_state FROM buildings b
              JOIN players p ON p.id = b.player_id
              JOIN coords c ON c.id = p.coords_id
@@ -86,7 +89,7 @@ class TiledBuildingsLayerTest extends TestCase
         $this->assertSame(1, $result['layers']['buildings']['kept']);
         $this->assertSame(
             (int) $entity['id'],
-            (int) $this->link()->fetchOne(
+            (int) $this->link->fetchOne(
                 'SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ? AND c.x = 2 AND c.y = 3',
                 [self::PLAN]
             ),
@@ -98,7 +101,7 @@ class TiledBuildingsLayerTest extends TestCase
         $result = $service->importPlan(self::PLAN, 0, ['buildings' => []], $export['version']);
         $this->assertSame(1, $result['layers']['buildings']['deleted']);
         $this->assertFalse(
-            $this->link()->fetchOne('SELECT b.player_id FROM buildings b WHERE b.player_id = ?', [(int) $entity['id']]),
+            $this->link->fetchOne('SELECT b.player_id FROM buildings b WHERE b.player_id = ?', [(int) $entity['id']]),
             'satellite supprimé'
         );
     }
@@ -106,7 +109,7 @@ class TiledBuildingsLayerTest extends TestCase
     public function testOwnedBuildingsAreProtectedFromTheDiff(): void
     {
         $buildings = new BuildingService();
-        $ownerId = (int) $this->link()->fetchOne('SELECT id FROM players WHERE id > 0 ORDER BY id LIMIT 1');
+        $ownerId = (int) $this->link->fetchOne('SELECT id FROM players WHERE id > 0 ORDER BY id LIMIT 1');
         if ($ownerId === 0) {
             $this->markTestSkipped('Aucun joueur en base pour porter le bâtiment.');
         }
@@ -121,7 +124,7 @@ class TiledBuildingsLayerTest extends TestCase
         $result = $service->importPlan(self::PLAN, 0, ['buildings' => []], $export['version']);
         $this->assertSame(1, $result['layers']['buildings']['protected']);
         $this->assertSame(0, $result['layers']['buildings']['deleted']);
-        $this->assertNotFalse($this->link()->fetchOne(
+        $this->assertNotFalse($this->link->fetchOne(
             'SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ? AND c.x = 5 AND c.y = 5',
             [self::PLAN]
         ));
@@ -133,7 +136,7 @@ class TiledBuildingsLayerTest extends TestCase
 
         // Une ressource occupe la case visée
         $coordsId = (int) \Classes\View::get_coords_id((object) ['x' => 7, 'y' => 7, 'z' => 0, 'plan' => self::PLAN]);
-        $this->plantResource($this->link(), 'arbre1', $coordsId, self::PLAN, 7, 7);
+        $this->plantResource($this->link, 'arbre1', $coordsId, self::PLAN, 7, 7);
 
         $export = $service->exportPlan(self::PLAN, 0);
         $result = $service->importPlan(self::PLAN, 0, [
@@ -150,56 +153,6 @@ class TiledBuildingsLayerTest extends TestCase
 
     private function cleanupFixtures(): void
     {
-        $link = $this->link();
-
-        $ids = $link->fetchFirstColumn(
-            'SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        );
-        foreach ($ids as $id) {
-            // Même ordre que BuildingService::remove() : satellite d'abord
-            $link->executeStatement('DELETE FROM buildings WHERE player_id = ?', [(int) $id]);
-            BuildingService::deleteEntityRows($link, (int) $id);
-            BuildingService::purgeEntityCaches((int) $id);
-        }
-
-        $this->uprootResources($link, self::PLAN);
-        $link->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
-
-        $link->executeStatement('DELETE FROM plans WHERE slug = ?', [self::PLAN]);
-        \App\Service\PlanService::forget(self::PLAN);
-    }
-
-    private function link(): Connection
-    {
-        global $link;
-
-        return $link;
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1 FROM coords LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('coords table unreachable: ' . $e->getMessage());
-        }
+        $this->purgePlan($this->link, self::PLAN);
     }
 }

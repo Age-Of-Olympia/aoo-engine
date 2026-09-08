@@ -3,7 +3,6 @@
 namespace Tests\Various;
 
 use App\Service\Map\EntityCellService;
-use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
@@ -45,28 +44,16 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $link->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
     }
 
-    private function coordsId(int $x, int $y): int
-    {
-        return (int) View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN]
-        );
-    }
-
-    private function service(): EntityCellService
-    {
-        return new EntityCellService();
-    }
-
     /** A placed entity holds the cell `players` declares. */
     public function testAPlacedEntityGetsItsAnchor(): void
     {
         $player = $this->createRealPlayer('GmEmprise');
-        $id = $this->coordsId(0, 0);
+        $id = $this->coordsIdOn(self::PLAN, 0, 0);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$id, $player->id]);
 
-        $this->service()->syncCells((int) $player->id);
+        (new EntityCellService())->syncCells((int) $player->id);
 
-        $cells = $this->service()->cellsOf((int) $player->id);
+        $cells = (new EntityCellService())->cellsOf((int) $player->id);
         $this->assertCount(1, $cells);
         $this->assertSame($id, (int) $cells[0]['coords_id']);
         $this->assertSame(EntityCellService::ROLE_PART, $cells[0]['role']);
@@ -77,10 +64,10 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
     public function testTheAnchorFollowsAndDoesNotAccumulate(): void
     {
         $player = $this->createRealPlayer('GmMarcheur');
-        $service = $this->service();
+        $service = new EntityCellService();
 
         foreach ([[0, 1], [0, 2], [3, 3]] as [$x, $y]) {
-            $id = $this->coordsId($x, $y);
+            $id = $this->coordsIdOn(self::PLAN, $x, $y);
             $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$id, $player->id]);
             $service->syncCells((int) $player->id);
 
@@ -96,10 +83,10 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
     public function testSyncingTwiceChangesNothing(): void
     {
         $player = $this->createRealPlayer('GmIdem');
-        $id = $this->coordsId(4, 0);
+        $id = $this->coordsIdOn(self::PLAN, 4, 0);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$id, $player->id]);
 
-        $service = $this->service();
+        $service = new EntityCellService();
         $service->syncCells((int) $player->id);
         $service->syncCells((int) $player->id);
 
@@ -111,14 +98,14 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
     {
         $one = $this->createRealPlayer('GmEmpile1');
         $two = $this->createRealPlayer('GmEmpile2');
-        $id = $this->coordsId(5, 5);
+        $id = $this->coordsIdOn(self::PLAN, 5, 5);
 
         foreach ([$one, $two] as $p) {
             $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$id, $p->id]);
-            $this->service()->syncCells((int) $p->id);
+            (new EntityCellService())->syncCells((int) $p->id);
         }
 
-        $occupants = array_column($this->service()->occupantsOf($id), 'player_id');
+        $occupants = array_column((new EntityCellService())->occupantsOf($id), 'player_id');
         $this->assertContains((int) $one->id, array_map('intval', $occupants));
         $this->assertContains((int) $two->id, array_map('intval', $occupants));
     }
@@ -128,40 +115,31 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
     {
         $absent = -999123;
 
-        $this->assertSame(0, $this->service()->syncCells($absent), 'le refus est explicite');
-        $this->assertSame([], $this->service()->cellsOf($absent));
+        $this->assertSame(0, (new EntityCellService())->syncCells($absent), 'le refus est explicite');
+        $this->assertSame([], (new EntityCellService())->cellsOf($absent));
     }
 
     public function testDriftIsVisibleAndRepairable(): void
     {
         $player = $this->createRealPlayer('GmDerive');
-        $id = $this->coordsId(7, 0);
+        $id = $this->coordsIdOn(self::PLAN, 7, 0);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$id, $player->id]);
-        $this->service()->syncCells((int) $player->id);
+        (new EntityCellService())->syncCells((int) $player->id);
 
         /* A write that forgot to call the service */
-        $elsewhere = $this->coordsId(8, 0);
+        $elsewhere = $this->coordsIdOn(self::PLAN, 8, 0);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$elsewhere, $player->id]);
 
-        $drifted = array_column($this->service()->drift(), 'player_id');
+        $drifted = array_column((new EntityCellService())->drift(), 'player_id');
         $this->assertContains((int) $player->id, array_map('intval', $drifted), 'la dérive est signalée');
 
-        $this->service()->reconcile();
+        (new EntityCellService())->reconcile();
 
-        $drifted = array_column($this->service()->drift(), 'player_id');
+        $drifted = array_column((new EntityCellService())->drift(), 'player_id');
         $this->assertNotContains((int) $player->id, array_map('intval', $drifted), 'et réparée');
-        $this->assertSame($elsewhere, (int) $this->service()->cellsOf((int) $player->id)[0]['coords_id']);
+        $this->assertSame($elsewhere, (int) (new EntityCellService())->cellsOf((int) $player->id)[0]['coords_id']);
     }
 
-    /**
-     * L'emprise s'en va avec l'entité, et la case ne s'en va pas sous elle.
-     *
-     * Both rules live in the schema, not in code: a deleted entity takes its
-     * cells (CASCADE), an occupied cell refuses to vanish (RESTRICT).
-     *
-     * Asserted on the schema rather than by deleting, which would only
-     * exercise MariaDB.
-     */
     /**
      * Declare a cut-out for a type, dropped on teardown.
      *
@@ -184,11 +162,11 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
             0 => [0, 0], 1 => [1, 0], 2 => [0, -1], 3 => [1, -1],
         ]);
 
-        $this->assertSame(4, $this->service()->syncCells($wall), 'the whole figure, origin included');
+        $this->assertSame(4, (new EntityCellService())->syncCells($wall), 'the whole figure, origin included');
 
         $held = array_map(
             static fn(array $cell): string => $cell['x'] . ',' . $cell['y'],
-            $this->service()->cellsOf($wall)
+            (new EntityCellService())->cellsOf($wall)
         );
         sort($held);
 
@@ -202,9 +180,9 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $wall = $this->placeStructure('mur_pierre', 42, 42, self::PLAN);
 
         $this->declareFootprint('mur_pierre', 2, 1, [0 => [0, 0], 1 => [1, 0]]);
-        $this->service()->syncCells($wall);
+        (new EntityCellService())->syncCells($wall);
 
-        $roles = array_count_values(array_column($this->service()->cellsOf($wall), 'role'));
+        $roles = array_count_values(array_column((new EntityCellService())->cellsOf($wall), 'role'));
 
         $this->assertSame(2, $roles[EntityCellService::ROLE_PART] ?? 0, 'both cells, no special one');
     }
@@ -223,11 +201,11 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
             [1 => 'door']
         );
 
-        $this->service()->syncCells($wall);
+        (new EntityCellService())->syncCells($wall);
 
         $byCell = [];
 
-        foreach ($this->service()->cellsOf($wall) as $cell) {
+        foreach ((new EntityCellService())->cellsOf($wall) as $cell) {
             $byCell[$cell['x'] . ',' . $cell['y']] = $cell['role'];
         }
 
@@ -242,13 +220,13 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $wall = $this->placeStructure('mur_pierre', 46, 46, self::PLAN);
 
         $this->declareFootprint('mur_pierre', 3, 1, [0 => [0, 0], 1 => [1, 0], 2 => [2, 0]]);
-        $this->service()->syncCells($wall);
-        $this->assertCount(3, $this->service()->cellsOf($wall));
+        (new EntityCellService())->syncCells($wall);
+        $this->assertCount(3, (new EntityCellService())->cellsOf($wall));
 
         $this->declareFootprint('mur_pierre', 2, 1, [0 => [0, 0], 1 => [1, 0]]);
-        $this->service()->syncCells($wall);
+        (new EntityCellService())->syncCells($wall);
 
-        $this->assertCount(2, $this->service()->cellsOf($wall), 'la case abandonnée est rendue');
+        $this->assertCount(2, (new EntityCellService())->cellsOf($wall), 'la case abandonnée est rendue');
     }
 
     /** A type without a cut-out holds a single cell, as before. */
@@ -257,8 +235,8 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
         $this->requireBuildingsOrSkip();
         $wall = $this->placeStructure('mur_pierre', 48, 48, self::PLAN);
 
-        $this->assertSame(1, $this->service()->syncCells($wall));
-        $this->assertCount(1, $this->service()->cellsOf($wall));
+        $this->assertSame(1, (new EntityCellService())->syncCells($wall));
+        $this->assertCount(1, (new EntityCellService())->cellsOf($wall));
     }
 
     /** Correcting a figure takes up the copies already on the map. */
@@ -270,13 +248,22 @@ class EntityCellServiceTest extends LegacyPlayerFixtureTestCase
 
         $this->declareFootprint('mur_pierre', 2, 1, [0 => [0, 0], 1 => [1, 0]]);
 
-        $reapplied = $this->service()->reapplyForType('mur_pierre');
+        $reapplied = (new EntityCellService())->reapplyForType('mur_pierre');
 
         $this->assertGreaterThanOrEqual(2, $reapplied, 'les deux exemplaires au moins');
-        $this->assertCount(2, $this->service()->cellsOf($first));
-        $this->assertCount(2, $this->service()->cellsOf($second));
+        $this->assertCount(2, (new EntityCellService())->cellsOf($first));
+        $this->assertCount(2, (new EntityCellService())->cellsOf($second));
     }
 
+    /**
+     * L'emprise s'en va avec l'entité, et la case ne s'en va pas sous elle.
+     *
+     * Both rules live in the schema, not in code: a deleted entity takes its
+     * cells (CASCADE), an occupied cell refuses to vanish (RESTRICT).
+     *
+     * Asserted on the schema rather than by deleting, which would only
+     * exercise MariaDB.
+     */
     public function testTheSchemaCarriesTheLifecycleRules(): void
     {
         $rules = [];

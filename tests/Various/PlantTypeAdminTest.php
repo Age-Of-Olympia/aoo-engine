@@ -8,6 +8,7 @@ use App\Entity\Race;
 use App\Service\AdminMenuAccessService;
 use App\View\Admin\TypeEditorFace;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Une plante se règle dans l'admin — page atteignable, champs affichés.
@@ -26,18 +27,15 @@ use PHPUnit\Framework\TestCase;
  */
 class PlantTypeAdminTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     /**
      * Le contrôle d'accès lit ses dérogations en base : sans elle, il sort du
      * processus au lieu de lever. D'où le bootstrap, et le skip propre.
      */
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()->fetchOne('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
-        }
+        $this->bootstrapLegacyOrSkip();
     }
 
     /** Le visage des plantes règle un rendement, comme celui des ressources. */

@@ -6,6 +6,8 @@ use App\Service\TiledMapService;
 use Classes\View;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
+use Tests\Support\PlanFixtureTrait;
 
 /**
  * What an animator changes, the people looking at it see.
@@ -21,6 +23,9 @@ use PHPUnit\Framework\TestCase;
  */
 class EditorRefreshesBoardsTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+    use PlanFixtureTrait;
+
     private const PLAN = 'plan_test_refresh_edit';
 
     private ?Connection $conn = null;
@@ -28,17 +33,7 @@ class EditorRefreshesBoardsTest extends TestCase
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
+        $this->bootstrapLegacyOrSkip();
 
         try {
             $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
@@ -58,47 +53,17 @@ class EditorRefreshesBoardsTest extends TestCase
 
     private function cleanup(): void
     {
-        if ($this->conn === null) {
-            return;
-        }
-
         if ($this->watcherId !== 0) {
             @unlink($this->boardOf($this->watcherId));
         }
 
-        foreach ($this->conn->fetchFirstColumn(
-            'SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        ) as $id) {
-            $this->conn->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [(int) $id]);
-            \App\Service\BuildingService::deleteEntityRows($this->conn, (int) $id);
-        }
-
-        $this->conn->executeStatement(
-            'DELETE f FROM map_foregrounds f JOIN coords c ON c.id = f.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        );
-        $this->conn->executeStatement(
-            'DELETE t FROM map_tiles t JOIN coords c ON c.id = t.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        );
-        $this->conn->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
-
-        $this->conn->executeStatement('DELETE FROM plans WHERE slug = ?', [self::PLAN]);
-        \App\Service\PlanService::forget(self::PLAN);
-    }
-
-    private function coordsId(int $x, int $y): int
-    {
-        return (int) View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN]
-        );
+        $this->purgePlan($this->conn, self::PLAN);
     }
 
     /** Someone standing on the plan, with a board already drawn. */
     private function watcherAt(int $x, int $y): int
     {
-        $coordsId = $this->coordsId($x, $y);
+        $coordsId = $this->coordsIdOn(self::PLAN, $x, $y);
 
         $this->conn->executeStatement(
             "INSERT INTO players (name, race, coords_id, player_type) VALUES (?, 'nain', ?, 'real')",
@@ -124,7 +89,7 @@ class EditorRefreshesBoardsTest extends TestCase
     {
         $this->boardIsCached($this->watcherId);
 
-        View::refresh_players_svg_at($this->coordsId(2, 2));
+        View::refresh_players_svg_at($this->coordsIdOn(self::PLAN, 2, 2));
 
         $this->assertFileDoesNotExist($this->boardOf($this->watcherId));
     }
@@ -134,7 +99,7 @@ class EditorRefreshesBoardsTest extends TestCase
     {
         $this->boardIsCached($this->watcherId);
 
-        View::refresh_players_svg_at($this->coordsId(500, 500));
+        View::refresh_players_svg_at($this->coordsIdOn(self::PLAN, 500, 500));
 
         $this->assertFileExists($this->boardOf($this->watcherId));
     }
@@ -152,7 +117,7 @@ class EditorRefreshesBoardsTest extends TestCase
     /** And the push from Tiled, which is the whole point. */
     public function testAPushFromTiledRedrawsTheBoardsAround(): void
     {
-        $this->coordsId(0, 0);
+        $this->coordsIdOn(self::PLAN, 0, 0);
         $service = new TiledMapService();
         $export = $service->exportPlan(self::PLAN, 0);
 

@@ -9,8 +9,8 @@ use App\Service\ImportExport\ExporterRegistry;
 use App\Service\ImportExport\FactionExporter;
 use App\Service\ImportExport\FactionImporter;
 use App\Service\ImportExport\ImporterRegistry;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Import/export de factions par bundles JSON (framework ImportExport) : le
@@ -23,18 +23,19 @@ use PHPUnit\Framework\TestCase;
  */
 class FactionImportExportTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip('factions');
         FactionService::clearCache();
     }
 
     protected function tearDown(): void
     {
         // Nettoie la faction créée par le test d'import (cascade sur les rôles)
-        global $link;
-        if (isset($link) && $link instanceof Connection) {
-            $link->executeStatement(
+        if ($this->link !== null) {
+            $this->link->executeStatement(
                 "DELETE FROM factions WHERE code = 'faction_test_import'"
             );
         }
@@ -139,27 +140,5 @@ class FactionImportExportTest extends TestCase
         ]]);
 
         $this->assertTrue($report->hasRejections());
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1 FROM factions LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('factions table unreachable: ' . $e->getMessage());
-        }
     }
 }

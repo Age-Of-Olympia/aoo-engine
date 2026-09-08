@@ -17,9 +17,9 @@ use PHPUnit\Framework\TestCase;
  * the entity layer can't hydrate), so the carac aggregator never wrote
  * an entry for any key.
  */
+#[Group('bourrins-view-empty')]
 class BourrinsViewEmptyCaracTest extends TestCase
 {
-    #[Group('bourrins-view-empty')]
     public function testPrintBestCaracDoesNotCrashOnMissingCaracKey(): void
     {
         ob_start();
@@ -35,7 +35,6 @@ class BourrinsViewEmptyCaracTest extends TestCase
         $this->assertIsString($output);
     }
 
-    #[Group('bourrins-view-empty')]
     public function testPrintBestCaracDoesNotCrashWhenCaracKeyExistsButIsEmpty(): void
     {
         // Adjacent edge case: a key was registered with an empty

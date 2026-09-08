@@ -25,9 +25,6 @@ class CompositePaletteTest extends TestCase
             $this->markTestSkipped('GD absent.');
         }
 
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
         $this->dir = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $this->layer;
 
         if (!is_dir($this->dir) && !@mkdir($this->dir, 0775, true)) {

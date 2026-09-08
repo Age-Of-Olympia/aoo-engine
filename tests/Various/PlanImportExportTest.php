@@ -9,8 +9,8 @@ use App\Service\ImportExport\PlanImporter;
 use App\Service\Map\EntityPlacementService;
 use App\Service\PlanConfigService;
 use App\Service\PlanService;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Import/export de plans par bundles JSON : le payload porte l'identité par
@@ -24,6 +24,8 @@ use PHPUnit\Framework\TestCase;
  */
 class PlanImportExportTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private const SRC = 'plan_test_ie_src';
     private const IMPORTED = 'plan_test_ie_imp';
 
@@ -32,7 +34,7 @@ class PlanImportExportTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip('coords');
         $this->cleanupFixtures();
     }
 
@@ -82,7 +84,7 @@ class PlanImportExportTest extends TestCase
         $this->assertFalse($preview->hasRejections());
         $this->assertSame(
             0,
-            (int) $this->link()->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::IMPORTED]),
+            (int) $this->link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::IMPORTED]),
             'preview : rien d\'écrit'
         );
 
@@ -120,7 +122,7 @@ class PlanImportExportTest extends TestCase
 
         $this->assertSame(
             0,
-            (int) $this->link()->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::IMPORTED]),
+            (int) $this->link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::IMPORTED]),
             'tout-ou-rien : rien d\'écrit sur rejet'
         );
     }
@@ -128,7 +130,6 @@ class PlanImportExportTest extends TestCase
     public function testReplacePreservesPlayerBuiltRowsAndWarns(): void
     {
         $this->seedSourcePlan();
-        $link = $this->link();
         $importer = new PlanImporter();
 
         // Remplacement : une seule tuile, plus aucun mur authoré
@@ -145,14 +146,14 @@ class PlanImportExportTest extends TestCase
 
         $importer->import([$payload]);
 
-        $resources = $link->fetchAllAssociative(
+        $resources = $this->link->fetchAllAssociative(
             'SELECT p.race FROM players p JOIN coords c ON c.id = p.coords_id
               WHERE p.player_type = "resource" AND c.plan = ?',
             [self::SRC]
         );
         $this->assertSame([], $resources, 'la ressource authorée n\'est plus dessinée : elle est retirée');
 
-        $built = $link->fetchAllAssociative(
+        $built = $this->link->fetchAllAssociative(
             'SELECT p.race, p.owner_id FROM players p
                JOIN buildings b ON b.player_id = p.id
                JOIN coords c ON c.id = p.coords_id
@@ -166,7 +167,7 @@ class PlanImportExportTest extends TestCase
         // Les coords existantes survivent (FK joueurs/logs) même hors payload
         $this->assertSame(
             3,
-            (int) $link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::SRC])
+            (int) $this->link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::SRC])
         );
 
         PlanService::forget(self::SRC);
@@ -184,17 +185,15 @@ class PlanImportExportTest extends TestCase
      */
     private function seedSourcePlan(): void
     {
-        $link = $this->link();
-
         $ids = [];
         foreach ([[0, 0], [1, 0], [0, 1]] as [$x, $y]) {
-            $link->executeStatement('INSERT INTO coords (x, y, z, plan) VALUES (?, ?, 0, ?)', [$x, $y, self::SRC]);
-            $ids[$x . ',' . $y] = (int) $link->lastInsertId();
+            $this->link->executeStatement('INSERT INTO coords (x, y, z, plan) VALUES (?, ?, 0, ?)', [$x, $y, self::SRC]);
+            $ids[$x . ',' . $y] = (int) $this->link->lastInsertId();
         }
 
-        $link->executeStatement('INSERT INTO map_tiles (coords_id, name, foreground) VALUES (?, ?, 0)', [$ids['0,0'], 'grass']);
+        $this->link->executeStatement('INSERT INTO map_tiles (coords_id, name, foreground) VALUES (?, ?, 0)', [$ids['0,0'], 'grass']);
 
-        (new EntityPlacementService($link))->create(
+        (new EntityPlacementService($this->link))->create(
             'resource',
             'arbre1',
             $ids['1,0'],
@@ -205,44 +204,43 @@ class PlanImportExportTest extends TestCase
         /* Seed the builder: a fresh database holds no player to borrow, and the
          * case exists to prove a player-built row does NOT travel. */
         $builderId = self::BUILDER_ID;
-        $link->executeStatement('DELETE FROM players WHERE id = ?', [$builderId]);
-        $link->executeStatement(
+        $this->link->executeStatement('DELETE FROM players WHERE id = ?', [$builderId]);
+        $this->link->executeStatement(
             "INSERT INTO players (id, player_type, name, race) VALUES (?, 'real', ?, ?)",
             [$builderId, 'Bâtisseur de test plans', 'nain']
         );
 
-        $palissadeId = (new EntityPlacementService($link))->create(
+        $palissadeId = (new EntityPlacementService($this->link))->create(
             'building',
             'palissade',
             $ids['0,1'],
             'Palissade',
             'img/walls/palissade.png'
         );
-        $link->executeStatement(
+        $this->link->executeStatement(
             'INSERT INTO buildings (player_id, build_state) VALUES (?, ?)',
             [$palissadeId, 'built']
         );
         // Le propriétaire vit sur l'entité depuis qu'être possédé a cessé
         // d'être un privilège de bâtiment.
-        $link->executeStatement(
+        $this->link->executeStatement(
             'UPDATE players SET owner_id = ? WHERE id = ?',
             [(int) $builderId, $palissadeId]
         );
 
-        $link->executeStatement('INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 12345)', [$ids['0,1'], 'feu_test']);
+        $this->link->executeStatement('INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 12345)', [$ids['0,1'], 'feu_test']);
 
         (new PlanConfigService())->replace(self::SRC, ['name' => 'Source de test', 'player_visibility' => false]);
     }
 
     private function cleanupFixtures(): void
     {
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
+        if ($this->link === null) {
             return;
         }
 
         foreach (['tiles', 'routes', 'plants', 'resources', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {
-            $link->executeStatement(
+            $this->link->executeStatement(
                 "DELETE m FROM map_{$layer} m JOIN coords c ON c.id = m.coords_id WHERE c.plan LIKE 'plan_test_ie_%'"
             );
         }
@@ -250,62 +248,28 @@ class PlanImportExportTest extends TestCase
          * vers coords (RESTRICT), et les satellites n'ont pas de FK du tout —
          * ils ne partent donc avec rien. */
         foreach (['resources', 'buildings'] as $satellite) {
-            $link->executeStatement(
+            $this->link->executeStatement(
                 "DELETE s FROM {$satellite} s
                    JOIN players p ON p.id = s.player_id
                    JOIN coords c ON c.id = p.coords_id
                   WHERE c.plan LIKE 'plan_test_ie_%'"
             );
         }
-        $link->executeStatement(
+        $this->link->executeStatement(
             "DELETE p FROM players p
                JOIN coords c ON c.id = p.coords_id
               WHERE p.player_type IN ('resource', 'building') AND c.plan LIKE 'plan_test_ie_%'"
         );
 
         /* The builder stands on no cell, so the join above never reaches it. */
-        $link->executeStatement('DELETE FROM players WHERE id = ?', [self::BUILDER_ID]);
+        $this->link->executeStatement('DELETE FROM players WHERE id = ?', [self::BUILDER_ID]);
 
-        $link->executeStatement("DELETE FROM coords WHERE plan LIKE 'plan_test_ie_%'");
+        $this->link->executeStatement("DELETE FROM coords WHERE plan LIKE 'plan_test_ie_%'");
 
-        $link->executeStatement("DELETE FROM plans WHERE slug LIKE 'plan_test_ie_%'");
+        $this->link->executeStatement("DELETE FROM plans WHERE slug LIKE 'plan_test_ie_%'");
         PlanService::forget();
         // L'identity map gagnerait sur la base : une entité Plan d'un test
         // précédent masquerait la ligne recréée.
         \App\Factory\EntityManagerFactory::getEntityManager()->clear();
-    }
-
-    private function link(): Connection
-    {
-        global $link;
-
-        return $link;
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1 FROM coords LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('coords table unreachable: ' . $e->getMessage());
-        }
-
     }
 }

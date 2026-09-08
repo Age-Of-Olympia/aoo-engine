@@ -7,11 +7,12 @@ use App\Entity\RealPlayer;
 use App\Service\PlayerOptionsService;
 use App\Service\PlayerService;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMSetup;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
+use Tests\Support\TestDb;
 
 /**
  * Phase 3.2 — tests the three domain methods added to the
@@ -26,8 +27,11 @@ use PHPUnit\Framework\TestCase;
  * standalone EntityManager against aoo4_test and exercises the methods
  * end-to-end. Skips cleanly when the DB is unreachable.
  */
+#[Group('player-entity-domain')]
 class PlayerEntityDomainMethodsTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private ?EntityManager $em = null;
     private ?Connection $conn = null;
     private int $playerId = 0;
@@ -55,8 +59,6 @@ class PlayerEntityDomainMethodsTest extends TestCase
         $this->previousLink = null;
     }
 
-    #[Group('player-entity-domain')]
-    #[Group('phase-3-2')]
     public function testHasOptionReturnsFalseWhenOptionAbsent(): void
     {
         $entity = $this->em->find(GameEntity::class, $this->playerId);
@@ -68,8 +70,6 @@ class PlayerEntityDomainMethodsTest extends TestCase
         $this->assertFalse($entity->hasOption($options, $name));
     }
 
-    #[Group('player-entity-domain')]
-    #[Group('phase-3-2')]
     public function testHasOptionReturnsTrueWhenOptionPresent(): void
     {
         // Seed a row in players_options inside a transaction so this
@@ -100,8 +100,6 @@ class PlayerEntityDomainMethodsTest extends TestCase
         }
     }
 
-    #[Group('player-entity-domain')]
-    #[Group('phase-3-2')]
     public function testGetCoordsPlanReturnsPlanForValidCoordsId(): void
     {
         $entity = $this->em->find(GameEntity::class, $this->playerId);
@@ -118,8 +116,6 @@ class PlayerEntityDomainMethodsTest extends TestCase
         $this->assertSame($expected, $entity->getCoordsPlan($this->conn));
     }
 
-    #[Group('player-entity-domain')]
-    #[Group('phase-3-2')]
     public function testGetCoordsPlanReturnsNullForOrphanedCoordsId(): void
     {
         // Synthesise an entity whose coords_id is off the end of the
@@ -131,8 +127,6 @@ class PlayerEntityDomainMethodsTest extends TestCase
         $this->assertNull($entity->getCoordsPlan($this->conn));
     }
 
-    #[Group('player-entity-domain')]
-    #[Group('phase-3-4')]
     public function testGetCoordsReturnsValueObjectMatchingDbRow(): void
     {
         $entity = $this->em->find(GameEntity::class, $this->playerId);
@@ -152,8 +146,6 @@ class PlayerEntityDomainMethodsTest extends TestCase
         $this->assertSame((string) $expected['plan'], $coords->plan);
     }
 
-    #[Group('player-entity-domain')]
-    #[Group('phase-3-4')]
     public function testGetCoordsReturnsNullForOrphanedCoordsId(): void
     {
         $entity = new RealPlayer();
@@ -162,8 +154,6 @@ class PlayerEntityDomainMethodsTest extends TestCase
         $this->assertNull($entity->getCoords($this->conn));
     }
 
-    #[Group('player-entity-domain')]
-    #[Group('phase-3-4')]
     public function testGetOptionsReturnsSortedListDelegatingToService(): void
     {
         // Seed two options with non-sorted names; getOptions must return
@@ -209,8 +199,6 @@ class PlayerEntityDomainMethodsTest extends TestCase
         }
     }
 
-    #[Group('player-entity-domain')]
-    #[Group('phase-3-2')]
     public function testIsInactiveDelegatesToPlayerService(): void
     {
         // RealPlayer::isInactive is a one-liner over
@@ -232,8 +220,6 @@ class PlayerEntityDomainMethodsTest extends TestCase
         $this->assertTrue($ancient->isInactive($svc));
     }
 
-    #[Group('player-entity-domain')]
-    #[Group('phase-3-2')]
     public function testIsInactiveRespectsHydratedLastLoginTime(): void
     {
         // Integration path: entity loaded from DB, last_login_time
@@ -252,75 +238,35 @@ class PlayerEntityDomainMethodsTest extends TestCase
     }
 
     /**
-     * Same bootstrap pattern as PlayerEntityHydrationTest — standalone
-     * EntityManager targeting aoo4_test.
+     * The probed aoo4_test connection (Tests\Support\TestDb) — the
+     * schema-of-record CI and fresh devcontainers use — and an EntityManager
+     * over it; skips cleanly when unreachable or holding no character.
      *
      * @return array{0: EntityManager, 1: Connection, 2: int}
      */
     private function bootstrapOrSkip(): array
     {
-        // One process-wide probe (Tests\Support\TestDb): an absent test DB
-        // host must not cost a connect timeout per test.
-        if (\Tests\Support\TestDb::connectionOrNull() === null) {
-            $this->markTestSkipped(\Tests\Support\TestDb::failure());
+        $conn = TestDb::connectionOrNull();
+        if ($conn === null) {
+            $this->markTestSkipped(TestDb::failure());
         }
 
-        $params = [
-            'host'     => getenv('TEST_DB_HOST') ?: 'mariadb-aoo4',
-            'user'     => getenv('TEST_DB_USER') ?: 'root',
-            'password' => getenv('TEST_DB_PASS') ?: 'passwordRoot',
-            'dbname'   => getenv('TEST_DB_NAME') ?: 'aoo4_test',
-            'driver'   => 'mysqli',
-            'charset'  => 'utf8mb4',
-        ];
-
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        // Snapshot the bootstrap-default $link now so tearDown can put
-        // it back after this test overrides it with aoo4_test.
+        // PlayerOptionsService reads db() = $GLOBALS['link']: point it at the
+        // same database for the test, restored in tearDown.
+        $this->bootstrapLegacyOrSkip();
         $this->previousLink = $GLOBALS['link'] ?? null;
-
-        try {
-            $config = ORMSetup::createAttributeMetadataConfiguration(
-                paths:     [dirname(__DIR__, 2) . '/src/Entity'],
-                isDevMode: true
-            );
-            $conn = DriverManager::getConnection($params, $config);
-            $conn->executeQuery('SELECT 1');
-            $em = new EntityManager($conn, $config);
-        } catch (\Throwable $e) {
-            $this->markTestSkipped(sprintf(
-                'Test DB %s@%s/%s unavailable (%s).',
-                $params['user'],
-                $params['host'],
-                $params['dbname'],
-                $e->getMessage()
-            ));
-        }
-
-        // PlayerOptionsService uses Classes\Db via $GLOBALS['link'] (the
-        // db() helper). Point that at our test connection so the
-        // service reads/writes the same DB.
         $GLOBALS['link'] = $conn;
 
-        try {
-            $row = $conn->fetchAssociative(
-                "SELECT id FROM players WHERE id > 0 AND (player_type IS NULL OR player_type = 'real') ORDER BY id ASC LIMIT 1"
-            );
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('players table unreadable: ' . $e->getMessage());
-        }
+        $em = new EntityManager($conn, ORMSetup::createAttributeMetadataConfiguration(
+            paths:     [dirname(__DIR__, 2) . '/src/Entity'],
+            isDevMode: true
+        ));
 
+        $row = $conn->fetchAssociative(
+            "SELECT id FROM players WHERE id > 0 AND (player_type IS NULL OR player_type = 'real') ORDER BY id ASC LIMIT 1"
+        );
         if (empty($row['id'])) {
-            $this->markTestSkipped(
-                'No real player row available — run scripts/testing/reset_test_database.sh.'
-            );
+            $this->markTestSkipped('No real player row available — run scripts/testing/reset_test_database.sh.');
         }
 
         return [$em, $conn, (int) $row['id']];

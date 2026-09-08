@@ -7,6 +7,7 @@ use App\Entity\Item;
 use App\Service\EntityTypeCaracsService;
 use App\Service\RaceService;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * A type answers what it gives; the reader never asks which catalogue it is.
@@ -17,13 +18,10 @@ use PHPUnit\Framework\TestCase;
  */
 class EntityTypeCaracsServiceTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     /** Cuirasse fixture sown when the catalogue holds no pv-lending item. */
     private ?int $sownItemId = null;
-
-    private function service(): EntityTypeCaracsService
-    {
-        return new EntityTypeCaracsService();
-    }
 
     protected function tearDown(): void
     {
@@ -36,19 +34,13 @@ class EntityTypeCaracsServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/constants.php';
-            EntityManagerFactory::getEntityManager()->getConnection()->executeQuery('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('DB unreachable: ' . $e->getMessage());
-        }
+        $this->bootstrapLegacyOrSkip();
     }
 
     /** A race gives all sixteen of its caracs, as before. */
     public function testARaceStillGivesItsWholeStatBlock(): void
     {
-        $block = $this->service()->ownCaracs('real', 'nain');
+        $block = (new EntityTypeCaracsService())->ownCaracs('real', 'nain');
 
         $this->assertIsObject($block);
         $this->assertSame(
@@ -69,7 +61,7 @@ class EntityTypeCaracsServiceTest extends TestCase
             $this->markTestSkipped('items catalog not seeded (no gladius row).');
         }
 
-        $block = $this->service()->ownCaracs(EntityTypeCaracsService::ITEM_TYPE, 'gladius');
+        $block = (new EntityTypeCaracsService())->ownCaracs(EntityTypeCaracsService::ITEM_TYPE, 'gladius');
 
         $this->assertIsObject($block);
         $this->assertSame($item->getDurabilityMax(), (int) $block->pv, 'sa vie est sa durabilité');
@@ -106,7 +98,7 @@ class EntityTypeCaracsServiceTest extends TestCase
             $lender = ['name' => 'cuirasse_de_test', 'pv' => 8, 'durability_max' => 25];
         }
 
-        $block = $this->service()->ownCaracs(
+        $block = (new EntityTypeCaracsService())->ownCaracs(
             EntityTypeCaracsService::ITEM_TYPE,
             (string) $lender['name']
         );
@@ -127,8 +119,8 @@ class EntityTypeCaracsServiceTest extends TestCase
     /** An unknown type answers null, so the caller can warn instead of guessing. */
     public function testAnUnknownTypeAnswersNull(): void
     {
-        $this->assertNull($this->service()->ownCaracs('real', 'race_qui_nexiste_pas'));
-        $this->assertNull($this->service()->ownCaracs(EntityTypeCaracsService::ITEM_TYPE, 'objet_qui_nexiste_pas'));
-        $this->assertNull($this->service()->ownCaracs(EntityTypeCaracsService::ITEM_TYPE, ''));
+        $this->assertNull((new EntityTypeCaracsService())->ownCaracs('real', 'race_qui_nexiste_pas'));
+        $this->assertNull((new EntityTypeCaracsService())->ownCaracs(EntityTypeCaracsService::ITEM_TYPE, 'objet_qui_nexiste_pas'));
+        $this->assertNull((new EntityTypeCaracsService())->ownCaracs(EntityTypeCaracsService::ITEM_TYPE, ''));
     }
 }

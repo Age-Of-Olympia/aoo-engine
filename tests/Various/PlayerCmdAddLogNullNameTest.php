@@ -2,9 +2,9 @@
 
 namespace Tests\Various;
 
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Regression guard: the `player addlog` console command must not
@@ -24,10 +24,12 @@ use PHPUnit\Framework\TestCase;
  */
 class PlayerCmdAddLogNullNameTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     #[Group('playercmd-addlog-null')]
     public function testAddLogReturnsErrorStringForUnknownTargetName(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip();
 
         // add_log is a free function defined in playercmd.php (not a
         // method on PlayerCmd). Load the file once so the function is
@@ -55,29 +57,5 @@ class PlayerCmdAddLogNullNameTest extends TestCase
             $result,
             'error return shape should match the sibling <font color="red">...</font> errors in add_log'
         );
-    }
-
-    private function bootstrapOrSkip(): Connection
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy DB unreachable: ' . $e->getMessage());
-        }
-
-        return $link;
     }
 }

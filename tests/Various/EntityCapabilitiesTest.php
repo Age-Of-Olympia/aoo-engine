@@ -58,7 +58,7 @@ class EntityCapabilitiesTest extends LegacyPlayerFixtureTestCase
 
         $entity = $this->reloadCharacter($id);
 
-        $this->assertSame(1_800_000_000, $this->whenIsItsTurn($entity));
+        $this->assertSame(1_800_000_000, $entity->getNextTurnTime());
         $this->assertSame(0, $entity->getLastActionTime(), 'a fresh turn has taken no action');
         $this->assertFalse($entity->isNextTurnRescheduled());
     }
@@ -68,13 +68,13 @@ class EntityCapabilitiesTest extends LegacyPlayerFixtureTestCase
     {
         $id = (int) $this->createRealPlayer('GmContratXp')->id;
 
-        $this->assertSame(0, $this->howFarAlong($this->reloadCharacter($id)));
+        $this->assertSame(0, $this->reloadCharacter($id)->getXp());
 
         (new ProgressionService($this->link))->gain($id, 150, 150, 3);
 
         $entity = $this->reloadCharacter($id);
 
-        $this->assertSame(150, $this->howFarAlong($entity));
+        $this->assertSame(150, $entity->getXp());
         $this->assertSame(3, $entity->getRank());
         $this->assertSame(150, $entity->getPi());
     }
@@ -200,15 +200,5 @@ class EntityCapabilitiesTest extends LegacyPlayerFixtureTestCase
         $em->clear();
 
         return $em->find(RealPlayer::class, $id);
-    }
-
-    private function whenIsItsTurn(TakesTurnsInterface $entity): int
-    {
-        return $entity->getNextTurnTime();
-    }
-
-    private function howFarAlong(ProgressesInterface $entity): int
-    {
-        return $entity->getXp();
     }
 }

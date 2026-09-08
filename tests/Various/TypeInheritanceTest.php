@@ -12,6 +12,7 @@ use App\Entity\SceneryType;
 use App\Service\RaceService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Le tronc et ses déclinaisons : un type chargé SAIT ce qu'il est.
@@ -28,6 +29,8 @@ use PHPUnit\Framework\TestCase;
  */
 class TypeInheritanceTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private ?Connection $conn = null;
 
     /** Harvestable sown when the catalogue offers none with a yield. */
@@ -44,18 +47,7 @@ class TypeInheritanceTest extends TestCase
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        try {
-            $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
-            $this->conn->fetchOne('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
-        }
+        $this->conn = $this->bootstrapLegacyOrSkip();
     }
 
     /**

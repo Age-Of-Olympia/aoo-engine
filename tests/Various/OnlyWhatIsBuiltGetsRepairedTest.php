@@ -8,6 +8,7 @@ use App\Entity\ResourceType;
 use App\Entity\SceneryType;
 use App\Entity\StructureType;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Repairability is a property of the TYPE, not of the category — which has two
@@ -16,19 +17,7 @@ use PHPUnit\Framework\TestCase;
  */
 class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
 {
-    /** Cases touching a real row, or a legacy object that connects on birth. */
-    private function bootstrapOrSkip(): \Doctrine\DBAL\Connection
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            $conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
-            $conn->fetchOne('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Database unreachable: ' . $e->getMessage());
-        }
-
-        return $conn;
-    }
+    use LegacyBootstrapTrait;
 
     /** What someone erected is maintained; what grows follows exhaustion and regrowth. */
     public function testWhatWasErectedIsRepairableByDefault(): void
@@ -80,7 +69,7 @@ class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
     {
         $condition = new \App\Action\Condition\RequiresRepairableTargetCondition();
 
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip();
 
         $verdict = function (string $playerType, string $race) use ($condition): bool {
             $actor = new \Classes\Player(1);
@@ -124,7 +113,7 @@ class OnlyWhatIsBuiltGetsRepairedTest extends TestCase
      */
     public function testReparerCarriesTheConditionBeforeItsCost(): void
     {
-        $conn = $this->bootstrapOrSkip();
+        $conn = $this->bootstrapLegacyOrSkip();
 
         $rows = $conn->fetchAllAssociative(
             "SELECT conditionType, execution_order, blocking, display_context

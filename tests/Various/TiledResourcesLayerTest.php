@@ -2,14 +2,14 @@
 
 namespace Tests\Various;
 
-use App\Service\BuildingService;
 use App\Service\Map\ResourceStateService;
 use App\Service\Map\StructureTypeService;
 use App\Service\TiledMapService;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Tests\Support\PlantsResourcesTrait;
+use Tests\Support\LegacyBootstrapTrait;
+use Tests\Support\PlanFixtureTrait;
 
 /**
  * Couche « resources » de l'éditeur Tiled : elle parle aux ENTITÉS.
@@ -30,7 +30,9 @@ use Tests\Support\PlantsResourcesTrait;
  */
 class TiledResourcesLayerTest extends TestCase
 {
+    use LegacyBootstrapTrait;
     use PlantsResourcesTrait;
+    use PlanFixtureTrait;
 
     private const PLAN = 'plan_test_tiled_res';
 
@@ -39,7 +41,7 @@ class TiledResourcesLayerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip('coords');
         $this->cleanupFixtures();
 
         $harvestable = array_keys(array_filter(
@@ -69,7 +71,7 @@ class TiledResourcesLayerTest extends TestCase
         $coordsId = (int) \Classes\View::get_coords_id(
             (object) ['x' => 4, 'y' => 4, 'z' => 0, 'plan' => self::PLAN]
         );
-        $this->plantResource($this->link(), $this->type, $coordsId, self::PLAN, 4, 4);
+        $this->plantResource($this->link, $this->type, $coordsId, self::PLAN, 4, 4);
 
         $export = (new TiledMapService())->exportPlan(self::PLAN, 0);
 
@@ -82,7 +84,6 @@ class TiledResourcesLayerTest extends TestCase
     public function testPushPlacesKeepsAndRemovesEntities(): void
     {
         $service = new TiledMapService();
-        $link = $this->link();
 
         $export = $service->exportPlan(self::PLAN, 0);
         $this->assertSame([], $export['layers']['resources'], 'plan neuf : aucune ressource');
@@ -93,7 +94,7 @@ class TiledResourcesLayerTest extends TestCase
         $this->assertSame(1, $result['layers']['resources']['inserted']);
         $this->assertSame([], $result['layers']['resources']['skipped']);
 
-        $entityId = (int) $link->fetchOne(
+        $entityId = (int) $this->link->fetchOne(
             "SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id
               WHERE p.player_type = 'resource' AND c.plan = ? AND c.x = 2 AND c.y = 3",
             [self::PLAN]
@@ -101,7 +102,7 @@ class TiledResourcesLayerTest extends TestCase
         $this->assertGreaterThan(0, $entityId, 'le push pose une entité, pas une ligne');
         $this->assertSame(
             0,
-            (int) $link->fetchOne(
+            (int) $this->link->fetchOne(
                 'SELECT COUNT(*) FROM map_resources m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
                 [self::PLAN]
             ),
@@ -117,7 +118,7 @@ class TiledResourcesLayerTest extends TestCase
         $this->assertSame(0, $result['layers']['resources']['inserted']);
         $this->assertSame(
             $entityId,
-            (int) $link->fetchOne(
+            (int) $this->link->fetchOne(
                 "SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id
                   WHERE p.player_type = 'resource' AND c.plan = ? AND c.x = 2 AND c.y = 3",
                 [self::PLAN]
@@ -131,11 +132,11 @@ class TiledResourcesLayerTest extends TestCase
         $this->assertSame(1, $result['layers']['resources']['deleted']);
         $this->assertSame(
             0,
-            (int) $link->fetchOne('SELECT COUNT(*) FROM players WHERE id = ?', [$entityId])
+            (int) $this->link->fetchOne('SELECT COUNT(*) FROM players WHERE id = ?', [$entityId])
         );
         $this->assertSame(
             0,
-            (int) $link->fetchOne('SELECT COUNT(*) FROM resources WHERE player_id = ?', [$entityId]),
+            (int) $this->link->fetchOne('SELECT COUNT(*) FROM resources WHERE player_id = ?', [$entityId]),
             'satellite d\'état supprimé'
         );
     }
@@ -146,7 +147,7 @@ class TiledResourcesLayerTest extends TestCase
         $coordsId = (int) \Classes\View::get_coords_id(
             (object) ['x' => 6, 'y' => 1, 'z' => 0, 'plan' => self::PLAN]
         );
-        $entityId = $this->plantResource($this->link(), $this->type, $coordsId, self::PLAN, 6, 1, 0, -2);
+        $entityId = $this->plantResource($this->link, $this->type, $coordsId, self::PLAN, 6, 1, 0, -2);
 
         $service = new TiledMapService();
         $export = $service->exportPlan(self::PLAN, 0);
@@ -158,7 +159,7 @@ class TiledResourcesLayerTest extends TestCase
 
         $this->assertSame(1, $result['layers']['resources']['kept']);
         $this->assertTrue(
-            (new ResourceStateService($this->link()))->isExhausted($entityId),
+            (new ResourceStateService($this->link))->isExhausted($entityId),
             'épuisée avant le push, épuisée après'
         );
     }
@@ -166,11 +167,10 @@ class TiledResourcesLayerTest extends TestCase
     /** L'éditeur pousse un niveau à la fois : les autres ne s'effacent pas. */
     public function testPushingOneLevelLeavesTheOthersAlone(): void
     {
-        $link = $this->link();
         $below = (int) \Classes\View::get_coords_id(
             (object) ['x' => 1, 'y' => 1, 'z' => -1, 'plan' => self::PLAN]
         );
-        $this->plantResource($link, $this->type, $below, self::PLAN, 1, 1, -1);
+        $this->plantResource($this->link, $this->type, $below, self::PLAN, 1, 1, -1);
 
         $service = new TiledMapService();
         $export = $service->exportPlan(self::PLAN, 0);
@@ -180,7 +180,7 @@ class TiledResourcesLayerTest extends TestCase
 
         $this->assertSame(
             1,
-            (int) $link->fetchOne(
+            (int) $this->link->fetchOne(
                 "SELECT COUNT(*) FROM players p JOIN coords c ON c.id = p.coords_id
                   WHERE p.player_type = 'resource' AND c.plan = ? AND c.z = -1",
                 [self::PLAN]
@@ -223,7 +223,7 @@ class TiledResourcesLayerTest extends TestCase
 
         $this->assertSame(
             0,
-            (int) $this->link()->fetchOne(
+            (int) $this->link->fetchOne(
                 'SELECT COUNT(*) FROM map_tiles m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
                 [self::PLAN]
             ),
@@ -233,57 +233,6 @@ class TiledResourcesLayerTest extends TestCase
 
     private function cleanupFixtures(): void
     {
-        $link = $this->link();
-
-        foreach ($link->fetchFirstColumn(
-            'SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        ) as $id) {
-            $link->executeStatement('DELETE FROM buildings WHERE player_id = ?', [(int) $id]);
-            $link->executeStatement('DELETE FROM resources WHERE player_id = ?', [(int) $id]);
-            BuildingService::deleteEntityRows($link, (int) $id);
-            BuildingService::purgeEntityCaches((int) $id);
-        }
-
-        $link->executeStatement(
-            'DELETE m FROM map_resources m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        );
-        $link->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
-        $link->executeStatement('DELETE FROM plans WHERE slug = ?', [self::PLAN]);
-        \App\Service\PlanService::forget(self::PLAN);
-    }
-
-    private function link(): Connection
-    {
-        global $link;
-
-        return $link;
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1 FROM coords LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('coords table unreachable: ' . $e->getMessage());
-        }
+        $this->purgePlan($this->link, self::PLAN);
     }
 }

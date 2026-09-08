@@ -6,6 +6,8 @@ use App\Service\Map\EntityTypeFootprintService;
 use App\Service\TiledMapService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
+use Tests\Support\PlanFixtureTrait;
 
 /**
  * Pushing a multi-piece object from Tiled.
@@ -19,6 +21,9 @@ use PHPUnit\Framework\TestCase;
  */
 class TiledSceneryPushTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+    use PlanFixtureTrait;
+
     private const PLAN = 'plan_test_tiled_scenery';
     private const FAMILY = 'gm_push_tour';
 
@@ -26,17 +31,7 @@ class TiledSceneryPushTest extends TestCase
 
     protected function setUp(): void
     {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
+        $this->bootstrapLegacyOrSkip();
 
         try {
             $this->conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
@@ -65,32 +60,9 @@ class TiledSceneryPushTest extends TestCase
 
     private function cleanup(): void
     {
-        if ($this->conn === null) {
-            return;
-        }
-
-        foreach ($this->conn->fetchFirstColumn(
-            'SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        ) as $id) {
-            $this->conn->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [(int) $id]);
-            \App\Service\BuildingService::deleteEntityRows($this->conn, (int) $id);
-        }
-
-        $this->conn->executeStatement(
-            'DELETE m FROM map_foregrounds m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        );
-        $this->conn->executeStatement(
-            'DELETE ec FROM entity_cells ec JOIN coords c ON c.id = ec.coords_id WHERE c.plan = ?',
-            [self::PLAN]
-        );
-        $this->conn->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
-        $this->conn->executeStatement('DELETE FROM entity_type_footprints WHERE type_name = ?', [self::FAMILY]);
-        $this->conn->executeStatement('DELETE FROM races WHERE name = ?', [self::FAMILY]);
-
-        $this->conn->executeStatement('DELETE FROM plans WHERE slug = ?', [self::PLAN]);
-        \App\Service\PlanService::forget(self::PLAN);
+        $this->purgePlan($this->conn, self::PLAN);
+        $this->conn?->executeStatement('DELETE FROM entity_type_footprints WHERE type_name = ?', [self::FAMILY]);
+        $this->conn?->executeStatement('DELETE FROM races WHERE name = ?', [self::FAMILY]);
     }
 
     /** @return list<string> the piece names lying on the plan */

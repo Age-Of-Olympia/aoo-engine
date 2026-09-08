@@ -6,6 +6,7 @@ use App\Factory\PlayerFactory;
 use Classes\Player;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Characterization smoke test pinning the Phase 1 migration invariant.
@@ -26,17 +27,19 @@ use PHPUnit\Framework\TestCase;
  * missing, so `make test` stays green in fresh checkouts and CI jobs that
  * do not provision `aoo4` (the phpunit stage has no mariadb service).
  */
+#[Group('player-factory')]
 class PlayerFactoryLegacyEquivalenceTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private int $sampleId = 0;
 
     protected function setUp(): void
     {
-        $this->sampleId = $this->bootstrapLegacyOrSkip();
+        $this->bootstrapLegacyOrSkip();
+        $this->sampleId = $this->firstRealPlayerIdOrSkip();
     }
 
-    #[Group('player-factory')]
-    #[Group('dismantling-phase-1')]
     public function testLegacyReturnsPlayerInstanceWithMatchingId(): void
     {
         $direct  = new Player($this->sampleId);
@@ -49,8 +52,6 @@ class PlayerFactoryLegacyEquivalenceTest extends TestCase
         $this->assertSame($direct->getId(), $factory->getId());
     }
 
-    #[Group('player-factory')]
-    #[Group('dismantling-phase-1')]
     public function testDataIsIdenticalAfterGetData(): void
     {
         $direct  = new Player($this->sampleId);
@@ -64,8 +65,6 @@ class PlayerFactoryLegacyEquivalenceTest extends TestCase
         $this->assertEquals($direct->data, $factory->data);
     }
 
-    #[Group('player-factory')]
-    #[Group('dismantling-phase-1')]
     public function testCaracsIsIdenticalAfterGetCaracs(): void
     {
         $direct  = new Player($this->sampleId);
@@ -77,8 +76,6 @@ class PlayerFactoryLegacyEquivalenceTest extends TestCase
         $this->assertEquals($direct->caracs, $factory->caracs);
     }
 
-    #[Group('player-factory')]
-    #[Group('dismantling-phase-1')]
     public function testCoordsIsIdenticalAfterGetCoords(): void
     {
         $direct  = new Player($this->sampleId);
@@ -88,48 +85,5 @@ class PlayerFactoryLegacyEquivalenceTest extends TestCase
         $factory->getCoords();
 
         $this->assertEquals($direct->coords, $factory->coords);
-    }
-
-    /**
-     * Bootstrap the legacy environment (Doctrine connection, global $link,
-     * constants, functions) and return the id of a real player suitable for
-     * the equivalence checks, or markTestSkipped if anything is missing.
-     */
-    private function bootstrapLegacyOrSkip(): int
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link)) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy DB unreachable: ' . $e->getMessage());
-        }
-
-        try {
-            $row = $link->fetchAssociative(
-                "SELECT id FROM players WHERE id > 0 AND (player_type IS NULL OR player_type = 'real') ORDER BY id ASC LIMIT 1"
-            );
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('players table unreadable: ' . $e->getMessage());
-        }
-
-        if (empty($row['id'])) {
-            $this->markTestSkipped(
-                'No real player row available — run scripts/testing/reset_test_database.sh.'
-            );
-        }
-
-        return (int) $row['id'];
     }
 }

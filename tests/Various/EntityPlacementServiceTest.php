@@ -3,7 +3,6 @@
 namespace Tests\Various;
 
 use App\Service\Map\EntityPlacementService;
-use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
@@ -35,13 +34,6 @@ class EntityPlacementServiceTest extends LegacyPlayerFixtureTestCase
         parent::tearDown();
 
         $link->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
-    }
-
-    private function coordsId(int $x, int $y): int
-    {
-        return (int) View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN]
-        );
     }
 
     /** A race name the catalog really carries, since `players.race` points at it. */
@@ -78,7 +70,7 @@ class EntityPlacementServiceTest extends LegacyPlayerFixtureTestCase
         foreach ([[1, 1], [2, 1], [3, 1]] as $index => [$x, $y]) {
             $objects[] = [
                 'race'     => $type,
-                'coordsId' => $this->coordsId($x, $y),
+                'coordsId' => $this->coordsIdOn(self::PLAN, $x, $y),
                 'name'     => 'Pose ' . $index,
                 'avatar'   => 'img/walls/' . $type . '.png',
             ];
@@ -169,7 +161,7 @@ class EntityPlacementServiceTest extends LegacyPlayerFixtureTestCase
 
         (new EntityPlacementService($this->link))->createMany(
             'chimere',
-            [['race' => 'arbre1', 'coordsId' => $this->coordsId(9, 9), 'name' => 'X', 'avatar' => '']]
+            [['race' => 'arbre1', 'coordsId' => $this->coordsIdOn(self::PLAN, 9, 9), 'name' => 'X', 'avatar' => '']]
         );
     }
 }

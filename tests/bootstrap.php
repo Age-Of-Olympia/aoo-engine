@@ -61,6 +61,12 @@ if ($aooTestDb !== '') {
     }
 }
 
+/* The services resolve JSON, PNG and datas/ through DOCUMENT_ROOT; under the
+ * CLI it is the repository root, which is also the web docroot. */
+if (empty($_SERVER['DOCUMENT_ROOT'])) {
+    $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__);
+}
+
 /* The per-player files directory (.svg, .kills.html, .msg.html) is
  * ignored by git: a fresh working copy (CI) does not have it, and the
  * scenes that prime a cached board could not write it. */

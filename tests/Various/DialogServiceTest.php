@@ -4,9 +4,9 @@ namespace Tests\Various;
 
 use App\Service\DialogSeedService;
 use App\Service\DialogService;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Passerelle des dialogues de jeu (DialogService) : la table `dialogs` prime
@@ -20,6 +20,8 @@ use RuntimeException;
  */
 class DialogServiceTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private const NODES = [
         ['id' => 'bonjour', 'text' => 'Salut PLAYER_NAME', 'options' => [
             ['go' => 'suite', 'text' => 'Continuer'],
@@ -32,7 +34,10 @@ class DialogServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip('dialogs');
+        if (!is_dir($_SERVER['DOCUMENT_ROOT'] . '/datas/public/dialogs')) {
+            $this->markTestSkipped('datas/public/dialogs absent (datas non provisionné).');
+        }
         $this->cleanupFixtures();
         DialogService::clearCache();
     }
@@ -86,13 +91,11 @@ class DialogServiceTest extends TestCase
 
     public function testRefreshRegisterDialogRewritesTheDbRow(): void
     {
-        $link = $this->link();
-
         /* The row is seeded on every real database, so skipping when it exists
          * meant never running. Snapshot it instead and put it back verbatim:
          * `refreshRegisterDialog()` works on that one fixed name and cannot be
          * pointed at a fixture of our own. */
-        $existing = $link->fetchAssociative("SELECT * FROM dialogs WHERE name = 'register'");
+        $existing = $this->link->fetchAssociative("SELECT * FROM dialogs WHERE name = 'register'");
 
         $service = new DialogService();
         $registerNodes = [[
@@ -105,7 +108,7 @@ class DialogServiceTest extends TestCase
             $service->refreshRegisterDialog();
             DialogService::clearCache();
 
-            $row = $link->fetchAssociative("SELECT npc_name, dialog_data FROM dialogs WHERE name = 'register'");
+            $row = $this->link->fetchAssociative("SELECT npc_name, dialog_data FROM dialogs WHERE name = 'register'");
             $this->assertSame('La Gardienne', $row['npc_name'], 'identité préservée');
 
             $nodes = json_decode($row['dialog_data'], true);
@@ -116,11 +119,11 @@ class DialogServiceTest extends TestCase
                 $this->assertMatchesRegularExpression('/âmes/u', $option['text']);
             }
         } finally {
-            $link->executeStatement("DELETE FROM dialogs WHERE name = 'register'");
+            $this->link->executeStatement("DELETE FROM dialogs WHERE name = 'register'");
 
             if ($existing !== false) {
                 $columns = array_keys($existing);
-                $link->executeStatement(
+                $this->link->executeStatement(
                     'INSERT INTO dialogs (' . implode(', ', $columns) . ') VALUES ('
                         . implode(', ', array_fill(0, count($columns), '?')) . ')',
                     array_values($existing)
@@ -169,11 +172,10 @@ class DialogServiceTest extends TestCase
         }
 
         // Dialogue référencé par un déclencheur map_dialogs
-        $link = $this->link();
         $service->saveGameDialog('dialog_test_ref', self::NODES);
-        $link->executeStatement("INSERT INTO coords (x, y, z, plan) VALUES (0, 0, 0, 'dialog_test_plan')");
-        $coordsId = (int) $link->lastInsertId();
-        $link->executeStatement(
+        $this->link->executeStatement("INSERT INTO coords (x, y, z, plan) VALUES (0, 0, 0, 'dialog_test_plan')");
+        $coordsId = (int) $this->link->lastInsertId();
+        $this->link->executeStatement(
             'INSERT INTO map_dialogs (coords_id, name, params) VALUES (?, ?, ?)',
             [$coordsId, 'pnj', 'Un PNJ,gaia,dialog_test_ref']
         );
@@ -185,7 +187,7 @@ class DialogServiceTest extends TestCase
             $this->assertSame(409, $e->getCode());
         }
 
-        $link->executeStatement('DELETE FROM map_dialogs WHERE coords_id = ?', [$coordsId]);
+        $this->link->executeStatement('DELETE FROM map_dialogs WHERE coords_id = ?', [$coordsId]);
         $service->deleteGameDialog('dialog_test_ref');
         $this->assertFalse($service->gameDialogExists('dialog_test_ref'));
     }
@@ -213,7 +215,7 @@ class DialogServiceTest extends TestCase
         $this->assertContains('dialog_test_seed', $again['kept']);
         $this->assertSame(
             'Édité en admin',
-            $this->link()->fetchOne("SELECT npc_name FROM dialogs WHERE name = 'dialog_test_seed'")
+            $this->link->fetchOne("SELECT npc_name FROM dialogs WHERE name = 'dialog_test_seed'")
         );
 
         unlink($root . '/datas/public/dialogs/dialog_test_seed.json');
@@ -222,16 +224,15 @@ class DialogServiceTest extends TestCase
 
     private function cleanupFixtures(): void
     {
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
+        if ($this->link === null) {
             return;
         }
 
-        $link->executeStatement("DELETE FROM dialogs WHERE name LIKE 'dialog_test_%'");
-        $link->executeStatement(
+        $this->link->executeStatement("DELETE FROM dialogs WHERE name LIKE 'dialog_test_%'");
+        $this->link->executeStatement(
             "DELETE m FROM map_dialogs m JOIN coords c ON c.id = m.coords_id WHERE c.plan = 'dialog_test_plan'"
         );
-        $link->executeStatement("DELETE FROM coords WHERE plan = 'dialog_test_plan'");
+        $this->link->executeStatement("DELETE FROM coords WHERE plan = 'dialog_test_plan'");
 
         if (file_exists($this->jsonPath('dialog_test_svc'))) {
             unlink($this->jsonPath('dialog_test_svc'));
@@ -242,42 +243,5 @@ class DialogServiceTest extends TestCase
     private function jsonPath(string $name): string
     {
         return $_SERVER['DOCUMENT_ROOT'] . '/datas/public/dialogs/' . $name . '.json';
-    }
-
-    private function link(): Connection
-    {
-        global $link;
-
-        return $link;
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 2);
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1 FROM dialogs LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('dialogs table unreachable (migration non appliquée ?): ' . $e->getMessage());
-        }
-
-        if (!is_dir($_SERVER['DOCUMENT_ROOT'] . '/datas/public/dialogs')) {
-            $this->markTestSkipped('datas/public/dialogs absent (datas non provisionné).');
-        }
     }
 }

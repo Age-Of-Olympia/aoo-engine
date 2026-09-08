@@ -5,8 +5,8 @@ namespace Tests\Various;
 use App\Entity\CharacterRace;
 use App\Entity\Race;
 use App\Service\RaceService;
-use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * DB-backed RaceService (races / race_starter_actions / race_spells), the
@@ -26,11 +26,13 @@ use PHPUnit\Framework\TestCase;
  */
 class RaceServiceTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private RaceService $service;
 
     protected function setUp(): void
     {
-        $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip('races');
         RaceService::clearCache();
         $this->service = new RaceService();
     }
@@ -165,30 +167,7 @@ class RaceServiceTest extends TestCase
 
     private function deleteRace(string $name): void
     {
-        global $link;
         // race_starter_actions / race_spells rows follow via ON DELETE CASCADE.
-        $link->executeStatement('DELETE FROM races WHERE name = ?', [$name]);
-    }
-
-    private function bootstrapOrSkip(): void
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1 FROM races LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('races table unreachable: ' . $e->getMessage());
-        }
+        $this->link->executeStatement('DELETE FROM races WHERE name = ?', [$name]);
     }
 }

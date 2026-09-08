@@ -2,16 +2,13 @@
 
 namespace Tests\Various;
 
-
 use App\Factory\PlayerFactory;
 use App\Service\PlayerCaracsService;
 use Classes\Player;
-use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
-use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\ORMSetup;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Characterization test for Phase 3.4b's PlayerCaracsService extraction.
@@ -32,17 +29,19 @@ use PHPUnit\Framework\TestCase;
  * seeded `races` table, which the devcontainer aoo4 has populated but
  * aoo4_test doesn't guarantee.
  */
+#[Group('player-caracs-characterization')]
 class PlayerCaracsServiceCharacterizationTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private int $playerId = 0;
 
     protected function setUp(): void
     {
-        $this->playerId = $this->bootstrapOrSkip();
+        $this->bootstrapLegacyOrSkip();
+        $this->playerId = $this->firstRealPlayerIdOrSkip();
     }
 
-    #[Group('player-caracs-characterization')]
-    #[Group('phase-3-4b')]
     public function testServiceOutputMatchesLegacyNudeCaracs(): void
     {
         // Legacy side: full Player construction, then get_caracs(nude: true),
@@ -68,8 +67,6 @@ class PlayerCaracsServiceCharacterizationTest extends TestCase
         }
     }
 
-    #[Group('player-caracs-characterization')]
-    #[Group('phase-3-4b')]
     public function testServiceHandlesUnknownRaceWithZeroedRaceContribution(): void
     {
         // Use a synthetic player id with no rows in players_upgrades —
@@ -97,8 +94,6 @@ class PlayerCaracsServiceCharacterizationTest extends TestCase
         }
     }
 
-    #[Group('player-caracs-characterization')]
-    #[Group('phase-3-4b')]
     public function testEntityDelegatesToServiceWithOwnIdAndRace(): void
     {
         // Bridge pin: GameEntity::getNudeCaracs delegates 1:1 to the
@@ -131,47 +126,5 @@ class PlayerCaracsServiceCharacterizationTest extends TestCase
     {
         $ref = new \ReflectionProperty($instance, $name);
         $ref->setValue($instance, $value);
-    }
-
-    /**
-     * Bootstrap legacy and locate a real player. Skips cleanly on any
-     * failure.
-     */
-    private function bootstrapOrSkip(): int
-    {
-        try {
-            require_once __DIR__ . '/../../config/bootstrap.php';
-            require_once __DIR__ . '/../../config/functions.php';
-            require_once __DIR__ . '/../../config/constants.php';
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
-        }
-
-        global $link;
-        if (!isset($link) || !$link instanceof Connection) {
-            $this->markTestSkipped('Global $link not populated by bootstrap.');
-        }
-
-        try {
-            $link->executeQuery('SELECT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Legacy DB unreachable: ' . $e->getMessage());
-        }
-
-        try {
-            $row = $link->fetchAssociative(
-                "SELECT id FROM players WHERE id > 0 AND (player_type IS NULL OR player_type = 'real') ORDER BY id ASC LIMIT 1"
-            );
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('players table unreadable: ' . $e->getMessage());
-        }
-
-        if (empty($row['id'])) {
-            $this->markTestSkipped(
-                'No real player row available — run scripts/testing/reset_test_database.sh.'
-            );
-        }
-
-        return (int) $row['id'];
     }
 }

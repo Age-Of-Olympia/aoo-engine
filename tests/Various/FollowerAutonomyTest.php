@@ -2,7 +2,6 @@
 
 namespace Tests\Various;
 
-use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
@@ -46,13 +45,6 @@ class FollowerAutonomyTest extends LegacyPlayerFixtureTestCase
         $link->executeStatement('DELETE FROM coords WHERE plan = ?', [self::PLAN]);
     }
 
-    private function coordsId(int $x, int $y): int
-    {
-        return (int) View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN]
-        );
-    }
-
     /** @return list<array{name: string, coords_id: int, params: string}> */
     private function followersOf(int $playerId): array
     {
@@ -65,7 +57,7 @@ class FollowerAutonomyTest extends LegacyPlayerFixtureTestCase
 
     private function placeOn(\Classes\Player $player, int $x, int $y): int
     {
-        $id = $this->coordsId($x, $y);
+        $id = $this->coordsIdOn(self::PLAN, $x, $y);
         $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$id, $player->id]);
         $player->get_data();
 
@@ -131,7 +123,7 @@ class FollowerAutonomyTest extends LegacyPlayerFixtureTestCase
         $player->add_follower('doubles/' . $player->id, 'on');
         $player->add_follower('marchand', 'last');
 
-        $arrivee = $this->coordsId(3, 0);
+        $arrivee = $this->coordsIdOn(self::PLAN, 3, 0);
         $player->move_followers($arrivee);
 
         $positions = [];
