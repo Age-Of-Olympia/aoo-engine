@@ -82,91 +82,7 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         // Reverse creation order: a building placed after its owner
         // references it via buildings.owner_id and must go first.
         foreach (array_reverse($this->createdPlayerIds) as $id) {
-            /* What this fixture holds, read on the entity: `holder_id` is a
-             * real foreign key, so an exemplar left behind blocks the delete. */
-            $entityIds = $this->link->fetchFirstColumn(
-                "SELECT id FROM players WHERE holder_id = ? AND player_type = 'item'",
-                [$id]
-            );
-            if ($entityIds !== []) {
-                $entityIn = implode(',', array_map('intval', $entityIds));
-                $this->link->executeStatement("DELETE FROM item_instances WHERE entity_id IN ({$entityIn})");
-                // Wear is a players_bonus row: it holds the entity down.
-                $this->link->executeStatement("DELETE FROM players_bonus WHERE player_id IN ({$entityIn})");
-                $this->link->executeStatement("DELETE FROM entity_cells WHERE player_id IN ({$entityIn})");
-                $this->link->executeStatement("DELETE FROM players WHERE id IN ({$entityIn})");
-            }
-            /* Plus de `OR owner_id` : la propriété vit sur l'entité, et sa clé
-             * étrangère est ON DELETE SET NULL — ce qu'un disparu possédait
-             * devient sans maître au lieu de le retenir. */
-            $this->link->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$id]);
-            $this->link->executeStatement('DELETE FROM unique_objects WHERE player_id = ?', [$id]);
-            foreach ([
-                'players_bonus',
-                'players_effects',
-                'players_actions',
-                'players_options',
-                'players_items',
-                'players_items_bank',
-                // Depuis la consolidation db/updates, players(id) est visé
-                // par des FK : une ligne orpheline (id recyclé par
-                // l'auto-incrément, la base de dev en garde des années)
-                // sur n'importe laquelle de ces tables bloquerait le
-                // DELETE players ci-dessous.
-                'players_connections',
-                'players_banned',
-                'players_upgrades',
-                'players_followers',
-                'players_quests_steps',
-                'players_quests',
-                'players_forum_missives',
-                'tutorial_progress',
-                'items_asks',
-                'items_bids',
-            ] as $table) {
-                $this->link->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$id]);
-            }
-            foreach ([
-                'players_logs',
-                'players_assists',
-                'players_kills',
-                'players_items_exchanges',
-                'items_exchanges',
-            ] as $table) {
-                $this->link->executeStatement(
-                    "DELETE FROM {$table} WHERE player_id = ? OR target_id = ?",
-                    [$id, $id]
-                );
-            }
-            $this->link->executeStatement('DELETE FROM players_pnjs WHERE player_id = ? OR pnj_id = ?', [$id, $id]);
-            $this->link->executeStatement(
-                'DELETE FROM players_forum_rewards WHERE from_player_id = ? OR to_player_id = ?',
-                [$id, $id]
-            );
-            $this->link->executeStatement('DELETE FROM tutorial_enemies WHERE enemy_player_id = ?', [$id]);
-
-            // Provenance de carte (« posé par ») : on détache la référence,
-            // on ne détruit pas le contenu qu'un id orphelin squatterait.
-            foreach (['map_resources', 'map_tiles', 'map_routes'] as $table) {
-                $this->link->executeStatement("UPDATE {$table} SET player_id = NULL WHERE player_id = ?", [$id]);
-            }
-
-            // A placed exemplar is in no bag, so the owner-keyed cleanup above
-            // misses it; its instance still points here and the key is
-            // RESTRICT, so it must go first.
-            $this->link->executeStatement(
-                'DELETE FROM players_items_instances
-                  WHERE instance_id IN (SELECT id FROM item_instances WHERE entity_id = ?)',
-                [$id]
-            );
-            $this->link->executeStatement('DELETE FROM item_instances WHERE entity_id = ?', [$id]);
-
-            $this->link->executeStatement('DELETE FROM players WHERE id = ?', [$id]);
-
-            // Purge every per-entity file cache: .json is the get_data()
-            // cache, .svg the board render — a recycled id would otherwise
-            // resurrect the previous fixture's identity.
-            self::purgeEntityCache($id);
+            $this->removeEntity($id);
         }
 
         // Restore the map_elements 'sang' rows the exercised putBonus() calls
@@ -221,6 +137,71 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         $this->link = null;
         $GLOBALS['link'] = $this->previousLink;
         $this->previousLink = null;
+    }
+
+    /**
+     * Every RESTRICT key onto players(id), read from the schema once per run,
+     * dependants before the tables they point at: the hand-kept list this
+     * replaces fell behind every time a key was added.
+     *
+     * @var list<array{0: string, 1: string}>|null (table, column)
+     */
+    private static ?array $restrictingReferences = null;
+
+    /** @return list<array{0: string, 1: string}> */
+    private function restrictingReferences(): array
+    {
+        return self::$restrictingReferences ??= $this->link->fetchAllNumeric(
+            "SELECT k.TABLE_NAME, k.COLUMN_NAME
+               FROM information_schema.KEY_COLUMN_USAGE k
+               JOIN information_schema.REFERENTIAL_CONSTRAINTS r
+                 ON r.CONSTRAINT_SCHEMA = k.TABLE_SCHEMA AND r.CONSTRAINT_NAME = k.CONSTRAINT_NAME
+              WHERE k.TABLE_SCHEMA = DATABASE()
+                AND k.REFERENCED_TABLE_NAME = 'players'
+                AND k.TABLE_NAME <> 'players'
+                AND r.DELETE_RULE IN ('RESTRICT', 'NO ACTION')
+              ORDER BY (SELECT COUNT(*) FROM information_schema.KEY_COLUMN_USAGE d
+                         WHERE d.TABLE_SCHEMA = k.TABLE_SCHEMA AND d.REFERENCED_TABLE_NAME = k.TABLE_NAME),
+                       k.TABLE_NAME, k.COLUMN_NAME"
+        );
+    }
+
+    /**
+     * Delete a fixture entity and whatever holds it down: its own rows first,
+     * then what it holds (an exemplar is an entity of its own), then the row.
+     * CASCADE and SET NULL keys look after themselves.
+     */
+    private function removeEntity(int $id): void
+    {
+        // One key deeper: a bag row on an exemplar of this entity holds its
+        // instance, which holds the entity.
+        $this->link->executeStatement(
+            'DELETE FROM players_items_instances
+              WHERE instance_id IN (SELECT id FROM item_instances WHERE entity_id = ?)',
+            [$id]
+        );
+
+        foreach ($this->restrictingReferences() as [$table, $column]) {
+            // Map provenance ("laid by") is detached, not destroyed: the
+            // content outlives its author.
+            if (str_starts_with($table, 'map_')) {
+                $this->link->executeStatement("UPDATE {$table} SET {$column} = NULL WHERE {$column} = ?", [$id]);
+            } else {
+                $this->link->executeStatement("DELETE FROM {$table} WHERE {$column} = ?", [$id]);
+            }
+        }
+        // No key on this one; a recycled id would inherit the rows.
+        $this->link->executeStatement('DELETE FROM players_items_bank WHERE player_id = ?', [$id]);
+
+        foreach ($this->link->fetchFirstColumn('SELECT id FROM players WHERE holder_id = ?', [$id]) as $held) {
+            $this->removeEntity((int) $held);
+        }
+
+        $this->link->executeStatement('DELETE FROM players WHERE id = ?', [$id]);
+
+        // Purge the per-entity file cache: a recycled id would otherwise
+        // resurrect the previous fixture's render.
+        self::purgeEntityCache($id);
     }
 
     /**
