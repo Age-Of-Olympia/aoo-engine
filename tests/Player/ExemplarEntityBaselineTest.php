@@ -21,15 +21,11 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('items-baseline')]
 class ExemplarEntityBaselineTest extends LegacyPlayerFixtureTestCase
 {
-    private function boisOrSkip(): Item
-    {
-        try {
-            $this->link->executeQuery('SELECT entity_id FROM item_instances LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('item_instances.entity_id absent (run migrations): ' . $e->getMessage());
-        }
 
-        return $this->itemOrSkip('bois');
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->requireTableOrSkip('item_instances', 'entity_id');
     }
 
     /** @return array<string, mixed> */
@@ -48,7 +44,7 @@ class ExemplarEntityBaselineTest extends LegacyPlayerFixtureTestCase
     public function testPromotingGivesTheExemplarAnEntity(): void
     {
         $player = $this->createRealPlayer('GmExemplaireA');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($player, 2);
 
         $instanceId = (new ItemInstanceService())->promote($player->id, $bois->id);
@@ -64,7 +60,7 @@ class ExemplarEntityBaselineTest extends LegacyPlayerFixtureTestCase
     public function testTheExemplarEntityCarriesItsHolder(): void
     {
         $player = $this->createRealPlayer('GmExemplaireB');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($player, 1);
 
         $instanceId = (new ItemInstanceService())->promote($player->id, $bois->id);
@@ -86,7 +82,7 @@ class ExemplarEntityBaselineTest extends LegacyPlayerFixtureTestCase
     public function testACraftedExemplarKeepsItsNameOnItsEntity(): void
     {
         $player = $this->createRealPlayer('GmExemplaireC');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
 
         $instanceId = (new ItemInstanceService())->create($player->id, $bois->id, $player->id, 'Éclat de Dorna');
         $entity = $this->entityOf($instanceId);
@@ -99,7 +95,7 @@ class ExemplarEntityBaselineTest extends LegacyPlayerFixtureTestCase
     public function testDemotingRemovesTheEntityToo(): void
     {
         $player = $this->createRealPlayer('GmExemplaireD');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($player, 1);
 
         $service = new ItemInstanceService();
@@ -122,7 +118,7 @@ class ExemplarEntityBaselineTest extends LegacyPlayerFixtureTestCase
     public function testTwoExemplarsGetTwoEntities(): void
     {
         $player = $this->createRealPlayer('GmExemplaireE');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($player, 2);
 
         $service = new ItemInstanceService();

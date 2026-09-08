@@ -2,7 +2,6 @@
 
 namespace Tests\Action;
 
-use App\Factory\ActionFactory;
 use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
 use Classes\View;
@@ -19,15 +18,6 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('items-baseline')]
 class CreuserBaselineTest extends LegacyPlayerFixtureTestCase
 {
-    private function actionOrSkip(): \App\Interface\ActionInterface
-    {
-        $action = ActionFactory::getAction('creuser');
-        if ($action === null) {
-            $this->markTestSkipped("actions catalog not seeded (no 'creuser' row — run migrations).");
-        }
-
-        return $action;
-    }
 
     protected function tearDown(): void
     {
@@ -59,7 +49,7 @@ class CreuserBaselineTest extends LegacyPlayerFixtureTestCase
         $_POST['digX'] = '1';
         $_POST['digY'] = '3';
 
-        $results = (new ActionExecutorService($this->actionOrSkip(), $digger, $digger))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('creuser'), $digger, $digger))->executeAction();
 
         $this->assertFalse($results->isBlocked(), 'underground and adjacent: the dig must pass');
         $this->assertTrue($results->isSuccess());
@@ -95,7 +85,7 @@ class CreuserBaselineTest extends LegacyPlayerFixtureTestCase
         $_POST['digY'] = (string) $digger->coords->y;
 
         $tilesBefore = (int) $this->link->fetchOne('SELECT COUNT(*) FROM map_tiles');
-        $results = (new ActionExecutorService($this->actionOrSkip(), $digger, $digger))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('creuser'), $digger, $digger))->executeAction();
 
         $this->assertTrue($results->isBlocked(), 'digging at z >= 0 must be BLOCKED (DigSite, before any payment)');
         $this->assertSame(

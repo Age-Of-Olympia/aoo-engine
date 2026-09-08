@@ -2,7 +2,6 @@
 
 namespace Tests\Action;
 
-use App\Factory\ActionFactory;
 use App\Action\OutcomeInstruction\ResourceOutcomeInstruction;
 use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
@@ -11,6 +10,7 @@ use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Action\Mock\ScriptedDice;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
+use Tests\Support\PlantsResourcesTrait;
 
 /**
  * `fouiller` de bout en bout — test étalon au sens du glossaire : une
@@ -30,10 +30,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('items-baseline')]
 class FouillerBaselineTest extends LegacyPlayerFixtureTestCase
 {
-    /** Haut de la plage des ressources : jamais un identifiant converti. */
-    private const FIXTURE_ID_FLOOR = 59990000;
-
-    private int $fixtureResources = 0;
+    use PlantsResourcesTrait;
 
     private const PLAN = 'plan_test_fouille';
 
@@ -105,33 +102,10 @@ class FouillerBaselineTest extends LegacyPlayerFixtureTestCase
         (new \App\Service\Map\HarvestCatalogService($this->link))->seed();
     }
 
-    /**
-     * Pose une ressource récoltable et rend l'id de sa case.
-     *
-     * Une ENTITÉ, comme le monde en porte depuis la conversion : `damages` a
-     * disparu, l'épuisement vit sur le satellite `resources`.
-     */
-    private function putResource(string $name, int $x, int $y, int $damages = -1): int
+    /** Une ressource récoltable sur une case du plan. */
+    private function putResource(string $name, int $x, int $y, int $damages = -1): void
     {
-        $coordsId = (int) View::get_coords_id((object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN]);
-        $id = self::FIXTURE_ID_FLOOR + $this->fixtureResources++;
-
-        $this->link->executeStatement(
-            "INSERT INTO players (id, name, race, coords_id, player_type)
-             VALUES (?, ?, ?, ?, 'resource')",
-            [$id, ucfirst($name), $name, $coordsId]
-        );
-        $this->link->executeStatement(
-            "INSERT INTO entity_cells (player_id, coords_id, plan, z, x, y, piece, role)
-             VALUES (?, ?, ?, 0, ?, ?, 0, 'block')",
-            [$id, $coordsId, self::PLAN, $x, $y]
-        );
-
-        if ($damages === -2) {
-            (new \App\Service\Map\ResourceStateService($this->link))->exhaust([$id]);
-        }
-
-        return $coordsId;
+        $this->plantResource($this->link, $name, $this->coordsIdOn(self::PLAN, $x, $y), self::PLAN, $x, $y, 0, $damages);
     }
 
     private function harvesterAtOrigin(string $prefix): \Classes\Player
@@ -146,16 +120,6 @@ class FouillerBaselineTest extends LegacyPlayerFixtureTestCase
         $player->get_caracs();
 
         return $player;
-    }
-
-    private function actionOrSkip(): \App\Interface\ActionInterface
-    {
-        $action = ActionFactory::getAction('fouiller');
-        if ($action === null) {
-            $this->markTestSkipped("catalogue d'actions non seedé (pas de ligne 'fouiller').");
-        }
-
-        return $action;
     }
 
     /**
@@ -179,7 +143,7 @@ class FouillerBaselineTest extends LegacyPlayerFixtureTestCase
         ResourceOutcomeInstruction::setDiceForTests(new ScriptedDice([[3]]));
         ResourceService::setDiceForTests(new ScriptedDice([[100], [100], [100]]));
 
-        $results = (new ActionExecutorService($this->actionOrSkip(), $player, $player))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('fouiller'), $player, $player))->executeAction();
 
         $this->assertFalse($results->isBlocked(), 'trois ressources autour : la fouille doit passer');
         $fresh = PlayerFactory::legacy($player->id);
@@ -203,7 +167,7 @@ class FouillerBaselineTest extends LegacyPlayerFixtureTestCase
         ResourceOutcomeInstruction::setDiceForTests(new ScriptedDice([[1]]));
         ResourceService::setDiceForTests(new ScriptedDice([[100]]));
 
-        (new ActionExecutorService($this->actionOrSkip(), $player, $player))->executeAction();
+        (new ActionExecutorService($this->actionOrSkip('fouiller'), $player, $player))->executeAction();
 
         $fresh = PlayerFactory::legacy($player->id);
         $this->assertSame($before + 1, $pierre->get_n($fresh));
@@ -231,7 +195,7 @@ class FouillerBaselineTest extends LegacyPlayerFixtureTestCase
         ResourceOutcomeInstruction::setDiceForTests(new ScriptedDice([[2]]));
         ResourceService::setDiceForTests(new ScriptedDice([[100], [100]]));
 
-        (new ActionExecutorService($this->actionOrSkip(), $player, $player))->executeAction();
+        (new ActionExecutorService($this->actionOrSkip('fouiller'), $player, $player))->executeAction();
 
         $fresh = PlayerFactory::legacy($player->id);
         $this->assertSame($before + 2, $bois->get_n($fresh), 'un seul dé pour les deux essences');
@@ -257,7 +221,7 @@ class FouillerBaselineTest extends LegacyPlayerFixtureTestCase
         ResourceOutcomeInstruction::setDiceForTests(new ScriptedDice([[2]]));
         ResourceService::setDiceForTests(new ScriptedDice([[100], [100]]));
 
-        $results = (new ActionExecutorService($this->actionOrSkip(), $player, $player))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('fouiller'), $player, $player))->executeAction();
 
         $this->assertFalse($results->isBlocked(), 'le type porte son rendement : la case se fouille');
     }
@@ -278,7 +242,7 @@ class FouillerBaselineTest extends LegacyPlayerFixtureTestCase
         $player = $this->harvesterAtOrigin('GmFouilleInerte');
         $maxA = (int) $player->caracs->a;
 
-        $results = (new ActionExecutorService($this->actionOrSkip(), $player, $player))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('fouiller'), $player, $player))->executeAction();
 
         $this->assertTrue($results->isBlocked(), 'sans rendement nulle part, la case ne se fouille pas');
         $fresh = PlayerFactory::legacy($player->id);
@@ -325,7 +289,7 @@ class FouillerBaselineTest extends LegacyPlayerFixtureTestCase
         ResourceOutcomeInstruction::setDiceForTests(new ScriptedDice([[1]]));
         ResourceService::setDiceForTests(new ScriptedDice([[1]]));
 
-        (new ActionExecutorService($this->actionOrSkip(), $player, $player))->executeAction();
+        (new ActionExecutorService($this->actionOrSkip('fouiller'), $player, $player))->executeAction();
 
         $fresh = PlayerFactory::legacy($player->id);
         $this->assertSame($before + 1, $bois->get_n($fresh));

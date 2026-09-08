@@ -95,12 +95,9 @@ class BuildingDialogBaselineTest extends LegacyPlayerFixtureTestCase
         }
 
         $character = $this->createRealPlayer('bdlg');
-        try {
-            $service->setDialog((int) $character->id, self::DIALOG);
-            $this->fail('un personnage ne porte pas de dialogue de bâtiment');
-        } catch (\InvalidArgumentException $e) {
-            $this->assertStringContainsString('bâtiment', $e->getMessage());
-        }
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('bâtiment');
+        $service->setDialog((int) $character->id, self::DIALOG);
     }
 
     public function testDialogDeleteGuardCountsCarryingBuildings(): void

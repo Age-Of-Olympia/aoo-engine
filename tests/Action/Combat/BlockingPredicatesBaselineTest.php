@@ -84,21 +84,16 @@ class BlockingPredicatesBaselineTest extends LegacyPlayerFixtureTestCase
         return (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => self::PLAN];
     }
 
-    private function coordsId(int $x, int $y): int
-    {
-        return (int) View::get_coords_id($this->tile($x, $y));
-    }
-
     private function putResource(string $name, int $x, int $y): void
     {
-        $this->plantResource($this->link, $name, $this->coordsId($x, $y), self::PLAN, $x, $y);
+        $this->plantResource($this->link, $name, $this->coordsIdOn(self::PLAN, $x, $y), self::PLAN, $x, $y);
     }
 
     private function putTrigger(string $name, int $x, int $y): void
     {
         $this->link->executeStatement(
             'INSERT INTO map_triggers (name, coords_id, params) VALUES (?, ?, \'\')',
-            [$name, $this->coordsId($x, $y)]
+            [$name, $this->coordsIdOn(self::PLAN, $x, $y)]
         );
     }
 
@@ -118,7 +113,7 @@ class BlockingPredicatesBaselineTest extends LegacyPlayerFixtureTestCase
     public function testEmptyTileIsFreeForEveryone(): void
     {
         $this->requireBuildingsOrSkip();
-        $this->coordsId(0, 0);
+        $this->coordsIdOn(self::PLAN, 0, 0);
 
         $this->assertTrue(View::is_free($this->tile(0, 0)), 'case vide : libre');
         $this->assertFalse($this->buildRefused(0, 0), 'case vide : constructible');
@@ -199,7 +194,7 @@ class BlockingPredicatesBaselineTest extends LegacyPlayerFixtureTestCase
             (int) $this->link->fetchOne(
                 'SELECT (SELECT COUNT(*) FROM players WHERE coords_id = c.id)
                  FROM coords c WHERE c.id = ?',
-                [$this->coordsId(7, 0)]
+                [$this->coordsIdOn(self::PLAN, 7, 0)]
             ),
             'la base accepte deux occupants sur une case'
         );

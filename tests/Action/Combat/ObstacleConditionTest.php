@@ -35,27 +35,6 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         return $condition;
     }
 
-    /**
-     * Give an entity one more cell, with the role wanted.
-     *
-     * @return int the coords id of that cell
-     */
-    private function giveCellTo(int $entityId, int $x, int $y, string $role): int
-    {
-        $coordsId = (int) \Classes\View::get_coords_id(
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
-        );
-
-        $this->link->executeStatement(
-            'INSERT INTO entity_cells (player_id, coords_id, plan, z, x, y, piece, role)
-             VALUES (?, ?, ?, 0, ?, ?, 0, ?)
-             ON DUPLICATE KEY UPDATE role = VALUES(role)',
-            [$entityId, $coordsId, 'gaia', $x, $y, $role]
-        );
-
-        return $coordsId;
-    }
-
     /** Place le tireur en ($x, $y) et rend sa cible en ($x+4, $y). */
     private function shooterAndTarget(): array
     {
@@ -164,7 +143,7 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
 
         /* The wall stands aside; only its emprise crosses the line. */
         $wall = $this->placeStructure('mur_pierre', $x + 2, $y + 1);
-        $this->giveCellTo($wall, $x + 2, $y, \App\Service\Map\EntityCellService::ROLE_PART);
+        $this->giveCell($wall, $x + 2, $y, \App\Service\Map\EntityCellService::ROLE_PART);
 
         $result = (new ObstacleCondition())->check(
             $shooter, $victim, $this->condition(), new ConditionObject()
@@ -182,7 +161,7 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         [$shooter, $victim, $x, $y] = $this->shooterAndTarget();
 
         $wall = $this->placeStructure('mur_pierre', $x + 2, $y + 1);
-        $this->giveCellTo($wall, $x + 2, $y, 'cover');
+        $this->giveCell($wall, $x + 2, $y, 'cover');
 
         $result = (new ObstacleCondition())->check(
             $shooter, $victim, $this->condition(), new ConditionObject()
@@ -200,7 +179,7 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         [$shooter, $victim, $x, $y] = $this->shooterAndTarget();
 
         $arch = $this->placeStructure('mur_pierre', $x + 2, $y + 1);
-        $cell = $this->giveCellTo($arch, $x + 2, $y, 'block');
+        $cell = $this->giveCell($arch, $x + 2, $y, 'block');
 
         $entityManager = \App\Factory\EntityManagerFactory::getEntityManager();
         $race = $entityManager->getRepository(\App\Entity\Race::class)->findOneBy(['name' => 'mur_pierre']);
@@ -248,8 +227,8 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
 
         /* Trois cases de large en travers du corridor, à mi-chemin. */
         $wall = $this->placeStructure('mur_pierre', $x, $y + 2);
-        $this->giveCellTo($wall, $x + 1, $y + 2, \App\Service\Map\EntityCellService::ROLE_PART);
-        $this->giveCellTo($wall, $x + 2, $y + 2, \App\Service\Map\EntityCellService::ROLE_PART);
+        $this->giveCell($wall, $x + 1, $y + 2, \App\Service\Map\EntityCellService::ROLE_PART);
+        $this->giveCell($wall, $x + 2, $y + 2, \App\Service\Map\EntityCellService::ROLE_PART);
 
         $report = (new BuildingService())->lineOfFireReport(
             (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'],
@@ -277,7 +256,7 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         $victim->getCoords();
 
         $wall = $this->placeStructure('mur_pierre', $x, $y + 2);
-        $this->giveCellTo($wall, $x + 1, $y + 2, \App\Service\Map\EntityCellService::ROLE_PART);
+        $this->giveCell($wall, $x + 1, $y + 2, \App\Service\Map\EntityCellService::ROLE_PART);
 
         $report = (new BuildingService())->lineOfFireReport(
             (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia'],
@@ -376,7 +355,7 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
 
         /* Un mur large, dont on vise la case la PLUS LOINTAINE. */
         $wall = $this->placeStructure('mur_pierre', $x, $y + 3);
-        $this->giveCellTo($wall, $x, $y + 2, \App\Service\Map\EntityCellService::ROLE_PART);
+        $this->giveCell($wall, $x, $y + 2, \App\Service\Map\EntityCellService::ROLE_PART);
 
         $far = (object) ['x' => $x, 'y' => $y + 3, 'z' => 0, 'plan' => 'gaia'];
         $service = new BuildingService();
@@ -403,7 +382,7 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         $shooter->getCoords();
 
         $wall = $this->placeStructure('mur_pierre', $x, $y + 5);
-        $this->giveCellTo($wall, $x, $y + 1, \App\Service\Map\EntityCellService::ROLE_PART);
+        $this->giveCell($wall, $x, $y + 1, \App\Service\Map\EntityCellService::ROLE_PART);
 
         $aim = \Classes\View::get_nearest_cell_of(
             $shooter->getCoords(),

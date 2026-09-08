@@ -23,15 +23,11 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('items-baseline')]
 class BankInstanceBaselineTest extends LegacyPlayerFixtureTestCase
 {
-    private function boisOrSkip(): Item
-    {
-        try {
-            $this->link->executeQuery('SELECT location FROM players_items_instances LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('players_items_instances.location unavailable (run migrations): ' . $e->getMessage());
-        }
 
-        return $this->itemOrSkip('bois');
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->requireTableOrSkip('players_items_instances', 'location');
     }
 
     /** Un exemplaire usé, donc non démotable : le cas qui motive la fonctionnalité. */
@@ -50,7 +46,7 @@ class BankInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     public function testABankedInstanceKeepsItsWearAndComesBackIdentical(): void
     {
         $player = $this->createRealPlayer('GmSmith');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($player, 1);
 
         $service = new ItemInstanceService();
@@ -93,7 +89,7 @@ class BankInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     public function testABankedInstanceIsOutOfReachOfEveryGameGesture(): void
     {
         $player = $this->createRealPlayer('GmSmith');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($player, 1);
 
         $service = new ItemInstanceService();
@@ -113,7 +109,7 @@ class BankInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     public function testABankedInstanceCannotBeDroppedOnTheGround(): void
     {
         $player = $this->createRealPlayer('GmSmith');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($player, 1);
 
         $service = new ItemInstanceService();
@@ -131,7 +127,7 @@ class BankInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     public function testAnEquippedInstanceIsRefusedAtTheCounter(): void
     {
         $player = $this->createRealPlayer('GmSmith');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($player, 1);
 
         $service = new ItemInstanceService();
@@ -151,7 +147,7 @@ class BankInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     public function testDepositingTwiceIsRefusedRatherThanSilentlyIgnored(): void
     {
         $player = $this->createRealPlayer('GmSmith');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($player, 1);
 
         $service = new ItemInstanceService();
@@ -166,7 +162,7 @@ class BankInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     {
         $owner = $this->createRealPlayer('GmSmith');
         $thief = $this->createRealPlayer('GmThief');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($owner, 1);
 
         $service = new ItemInstanceService();

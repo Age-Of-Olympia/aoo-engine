@@ -58,8 +58,7 @@ class ActionSimulationServiceTest extends TestCase
      * The sim service with a DB-free type-instruction resolver (no type-level
      * instructions configured), so these tests exercise the legacy automatic
      * path without hitting the database.
-     */
-    /**
+     *
      * @param array<int, \App\Entity\ActionTypeInstruction> $typeConfigs
      */
     private function simulationService(array $typeConfigs = []): ActionSimulationService

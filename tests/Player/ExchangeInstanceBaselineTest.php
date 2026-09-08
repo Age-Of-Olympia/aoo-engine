@@ -20,15 +20,11 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('items-baseline')]
 class ExchangeInstanceBaselineTest extends LegacyPlayerFixtureTestCase
 {
-    private function boisOrSkip(): Item
-    {
-        try {
-            $this->link->executeQuery('SELECT instance_id FROM players_items_exchanges LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('players_items_exchanges.instance_id unavailable: ' . $e->getMessage());
-        }
 
-        return $this->itemOrSkip('bois');
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->requireTableOrSkip('players_items_exchanges', 'instance_id');
     }
 
     /** Un exemplaire usé, rangé en banque — l'état de départ. */
@@ -57,7 +53,7 @@ class ExchangeInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     {
         $offering = $this->createRealPlayer('GmOffer');
         $target = $this->createRealPlayer('GmTarget');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
 
         $bois->add_item($offering, 1);
         $instanceId = $this->bankedInstance($offering->id, $bois);
@@ -90,7 +86,7 @@ class ExchangeInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     {
         $offering = $this->createRealPlayer('GmOffer');
         $target = $this->createRealPlayer('GmTarget');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($offering, 1);
 
         $service = new ItemInstanceService();
@@ -131,7 +127,7 @@ class ExchangeInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     {
         $offering = $this->createRealPlayer('GmOffer');
         $target = $this->createRealPlayer('GmTarget');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($offering, 2);
 
         $service = new ItemInstanceService();
@@ -173,7 +169,7 @@ class ExchangeInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     {
         $offering = $this->createRealPlayer('GmOffer');
         $target = $this->createRealPlayer('GmTarget');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($offering, 1);
 
         $service = new ItemInstanceService();
@@ -190,7 +186,7 @@ class ExchangeInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     {
         $offering = $this->createRealPlayer('GmOffer');
         $target = $this->createRealPlayer('GmTarget');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($offering, 1);
         $instanceId = $this->bankedInstance($offering->id, $bois);
 

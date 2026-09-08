@@ -2,7 +2,6 @@
 
 namespace Tests\Action\Combat;
 
-use App\Factory\ActionFactory;
 use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
 use Classes\Item;
@@ -35,16 +34,6 @@ class ConstruireBaselineTest extends LegacyPlayerFixtureTestCase
         $this->requireBuildingsOrSkip();
     }
 
-    private function actionOrSkip(): \App\Interface\ActionInterface
-    {
-        $action = ActionFactory::getAction('construire');
-        if ($action === null) {
-            $this->markTestSkipped("actions catalog not seeded (no generic 'construire' row — run migrations).");
-        }
-
-        return $action;
-    }
-
     protected function tearDown(): void
     {
         unset($_POST['itemId']);
@@ -60,7 +49,7 @@ class ConstruireBaselineTest extends LegacyPlayerFixtureTestCase
         $palissadeItem = $this->itemOrSkip('palissade');
         $_POST['itemId'] = (string) $palissadeItem->id;
 
-        $results = (new ActionExecutorService($this->actionOrSkip(), $builder, $builder))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('construire'), $builder, $builder))->executeAction();
 
         $this->assertTrue($results->isBlocked(), 'no palissade object must block the action (ItemPick possession)');
         $this->assertSame(
@@ -104,7 +93,7 @@ class ConstruireBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(1, $chestItem->get_n(PlayerFactory::legacy($builder->id)), 'le coffre est au sac');
 
         $_POST['itemId'] = (string) $chestItem->id;
-        $results = (new ActionExecutorService($this->actionOrSkip(), $builder, $builder))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('construire'), $builder, $builder))->executeAction();
 
         $this->assertFalse($results->isBlocked(), 'avec le coffre en main, l\'action passe');
         $this->assertTrue($results->isSuccess());
@@ -170,7 +159,7 @@ class ConstruireBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(1, $palissadeItem->get_n(PlayerFactory::legacy($builder->id)), 'the palissade object is in the inventory');
 
         $_POST['itemId'] = (string) $palissadeItem->id;
-        $results = (new ActionExecutorService($this->actionOrSkip(), $builder, $builder))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('construire'), $builder, $builder))->executeAction();
 
         $this->assertFalse($results->isBlocked(), 'with the palissade object the action must pass');
         $this->assertTrue($results->isSuccess(), 'construire has no dice: passing conditions means success');

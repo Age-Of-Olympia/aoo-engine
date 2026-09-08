@@ -11,6 +11,7 @@ use Classes\Log;
 /**
  * Tests spécifiques pour la méthode filterRows
  */
+#[Group('filter-rows')]
 class FilterRowsTest extends TestCase
 {
     private PlayerMock $player;
@@ -41,7 +42,6 @@ class FilterRowsTest extends TestCase
         Log::resetTestInstances();
     }
 
-    #[Group('filter-rows')]
     public function testFilterRowsRemovesActionPair(): void
     {
         // Arrange - Créer une paire action/action_other_player
@@ -71,7 +71,6 @@ class FilterRowsTest extends TestCase
         $this->assertEquals('Player action', $result[0]->text);
     }
 
-    #[Group('filter-rows')]
     public function testFilterRowsRemovesHiddenActionPair(): void
     {
         // Arrange
@@ -100,7 +99,6 @@ class FilterRowsTest extends TestCase
         $this->assertEquals($this->player->id, $result[0]->player_id);
     }
 
-    #[Group('filter-rows')]
     public function testFilterRowsHandlesKillPairs(): void
     {
         // Arrange
@@ -129,7 +127,6 @@ class FilterRowsTest extends TestCase
         $this->assertEquals($this->player->id, $result[0]->player_id);
     }
 
-    #[Group('filter-rows')]
     public function testFilterRowsKeepsNonPairs(): void
     {
         // Arrange - Events with different timestamps
@@ -157,7 +154,6 @@ class FilterRowsTest extends TestCase
         $this->assertCount(2, $result);
     }
 
-    #[Group('filter-rows')]
     public function testFilterRowsKeepsSingleEvents(): void
     {
         // Arrange
@@ -187,7 +183,6 @@ class FilterRowsTest extends TestCase
         $this->assertCount(2, $result);
     }
 
-    #[Group('filter-rows')]
     public function testFilterRowsWhenPlayerNotInvolved(): void
     {
         // Arrange - Paire entre deux autres joueurs
@@ -220,7 +215,6 @@ class FilterRowsTest extends TestCase
         $this->assertEquals('action', $result[0]->type);
     }
 
-    #[Group('filter-rows')]
     public function testFilterRowsWithWrongTargetRelation(): void
     {
         // Arrange - Même timestamp mais mauvaise relation player/target
@@ -252,7 +246,6 @@ class FilterRowsTest extends TestCase
         $this->assertCount(2, $result);
     }
 
-    #[Group('filter-rows')]
     public function testFilterRowsWithMultiplePairs(): void
     {
         // Arrange - Plusieurs paires mélangées

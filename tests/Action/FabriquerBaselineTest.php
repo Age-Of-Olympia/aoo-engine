@@ -2,7 +2,6 @@
 
 namespace Tests\Action;
 
-use App\Factory\ActionFactory;
 use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
 use App\Service\RecipeService;
@@ -20,15 +19,6 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('items-baseline')]
 class FabriquerBaselineTest extends LegacyPlayerFixtureTestCase
 {
-    private function actionOrSkip(): \App\Interface\ActionInterface
-    {
-        $action = ActionFactory::getAction('fabriquer');
-        if ($action === null) {
-            $this->markTestSkipped("actions catalog not seeded (no 'fabriquer' row — run migrations).");
-        }
-
-        return $action;
-    }
 
     protected function tearDown(): void
     {
@@ -53,7 +43,7 @@ class FabriquerBaselineTest extends LegacyPlayerFixtureTestCase
         }
         $_POST['recipeId'] = (string) $recipes[0]->getId();
 
-        $results = (new ActionExecutorService($this->actionOrSkip(), $crafter, $crafter))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('fabriquer'), $crafter, $crafter))->executeAction();
 
         $this->assertFalse($results->isBlocked());
         $this->assertTrue($results->isSuccess(), 'with the ingredients, crafting must succeed');
@@ -82,7 +72,7 @@ class FabriquerBaselineTest extends LegacyPlayerFixtureTestCase
         $_POST['recipeId'] = (string) $recipes[0]->getId();
 
         $bois = $this->itemOrSkip('bois');
-        $results = (new ActionExecutorService($this->actionOrSkip(), $crafter, $crafter))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('fabriquer'), $crafter, $crafter))->executeAction();
 
         // Les conditions passent (fabriquer n'en a pas d'autre) : le refus
         // est un ÉCHEC D'OUTCOME (TryCraftRecipe) — l'observable est

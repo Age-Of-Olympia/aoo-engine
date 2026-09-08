@@ -9,6 +9,7 @@ use Classes\Player;
 use Classes\View;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\PlanFixtureTrait;
 
 /**
  * Base class for baseline tests that exercise the LEGACY player stack
@@ -36,6 +37,8 @@ use PHPUnit\Framework\TestCase;
  */
 abstract class LegacyPlayerFixtureTestCase extends TestCase
 {
+    use PlanFixtureTrait;
+
     protected ?Connection $link = null;
 
     /** @var mixed $GLOBALS['link'] as found in setUp, restored in tearDown */
@@ -221,11 +224,6 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
     }
 
     /**
-     * Create a throwaway real player through the production factory path
-     * (players row + starter actions + default options) and register it for
-     * teardown. Returns a fresh legacy Player.
-     */
-    /**
      * The rendered board (.svg) is the only file cache left: a recycled
      * id that finds one would serve the previous entity's render. Player
      * data reads the database, nothing else to purge.
@@ -235,6 +233,11 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         @unlink(__DIR__ . '/../../../datas/private/players/' . $id . '.svg');
     }
 
+    /**
+     * Create a throwaway real player through the production factory path
+     * (players row + starter actions + default options) and register it for
+     * teardown. Returns a fresh legacy Player.
+     */
     protected function createRealPlayer(string $prefix, string $race = 'nain'): Player
     {
         $name = $prefix . '_' . bin2hex(random_bytes(4));
@@ -309,14 +312,50 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         $this->createdPlayerIds[] = $id;
     }
 
-    /** Skip proprement quand les tables structures ne sont pas migrées. */
-    protected function requireBuildingsOrSkip(): void
+    /** Skip cleanly when a table — or one of its columns — is not migrated yet. */
+    protected function requireTableOrSkip(string $table, string $column = '1'): void
     {
         try {
-            $this->link->executeQuery('SELECT 1 FROM buildings LIMIT 1');
+            $this->link->executeQuery("SELECT {$column} FROM {$table} LIMIT 1");
         } catch (\Throwable $e) {
-            $this->markTestSkipped('buildings table unavailable (run migrations): ' . $e->getMessage());
+            $this->markTestSkipped("{$table}.{$column} unavailable (run migrations): " . $e->getMessage());
         }
+    }
+
+    protected function requireBuildingsOrSkip(): void
+    {
+        $this->requireTableOrSkip('buildings');
+    }
+
+    /** A catalogue action, or skip when the world lacks it. */
+    protected function actionOrSkip(string $name): \App\Interface\ActionInterface
+    {
+        $action = \App\Factory\ActionFactory::getAction($name);
+        if ($action === null) {
+            $this->markTestSkipped("actions catalog not seeded (no '{$name}' row — run migrations).");
+        }
+
+        return $action;
+    }
+
+    /**
+     * Give an entity one more cell, with the role wanted — EntityCellService
+     * only lays anchors.
+     *
+     * @return int the coords id of that cell
+     */
+    protected function giveCell(int $entityId, int $x, int $y, string $role, string $plan = 'gaia'): int
+    {
+        $coordsId = $this->coordsIdOn($plan, $x, $y);
+
+        $this->link->executeStatement(
+            'INSERT INTO entity_cells (player_id, coords_id, plan, z, x, y, piece, role)
+             VALUES (?, ?, ?, 0, ?, ?, 0, ?)
+             ON DUPLICATE KEY UPDATE role = VALUES(role)',
+            [$entityId, $coordsId, $plan, $x, $y, $role]
+        );
+
+        return $coordsId;
     }
 
     /** The exemplar a player holds of a catalogue item, 0 when none. */

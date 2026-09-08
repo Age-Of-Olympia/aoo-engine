@@ -174,7 +174,6 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
             );
             \App\Service\RaceService::clearCache();
             \App\Factory\EntityManagerFactory::getEntityManager()->clear();
-        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
         }
     }
 
@@ -228,7 +227,6 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
             );
             \App\Service\RaceService::clearCache();
             \App\Factory\EntityManagerFactory::getEntityManager()->clear();
-        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
         }
     }
 
@@ -332,7 +330,6 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
             }
     }
 
-    /** Un mur ne se ferme pour personne, propriétaire compris. */
     /** Both catalogues share names: 'bronze' is a vein and the ingot from it. */
     public function testAGatheredMaterialDoesNotObstructLikeItsVein(): void
     {
@@ -352,6 +349,7 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /** Un mur ne se ferme pour personne, propriétaire compris. */
     public function testNobodyLocksWhatHasNoDoor(): void
     {
         $owner = $this->createRealPlayer('GmMaçon');

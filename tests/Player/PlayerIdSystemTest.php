@@ -14,6 +14,7 @@ use PHPUnit\Framework\Attributes\Group;
  * - NPCs get negative IDs
  * - Display IDs are sequential within each type
  */
+#[Group('player-id')]
 class PlayerIdSystemTest extends TestCase
 {
     private TestDatabase $testDb;
@@ -51,7 +52,6 @@ class PlayerIdSystemTest extends TestCase
         $this->previousLink = null;
     }
 
-    #[Group('player-id')]
     public function testGetNextEntityIdForRealPlayer(): void
     {
         // Arrange: Create 3 real players
@@ -66,7 +66,6 @@ class PlayerIdSystemTest extends TestCase
         $this->assertEquals(4, $nextId, 'Next real player should have ID 4');
     }
 
-    #[Group('player-id')]
     public function testGetNextEntityIdForTutorialPlayer(): void
     {
         // Arrange: Create 2 tutorial players
@@ -82,7 +81,6 @@ class PlayerIdSystemTest extends TestCase
         $this->assertLessThanOrEqual(ENTITY_ID_RANGES['tutorial']['end'], $nextId);
     }
 
-    #[Group('player-id')]
     public function testGetNextEntityIdForNpc(): void
     {
         // Arrange: Create 2 NPCs
@@ -97,7 +95,6 @@ class PlayerIdSystemTest extends TestCase
         $this->assertLessThan(0, $nextId, 'NPC IDs must be negative');
     }
 
-    #[Group('player-id')]
     public function testGetNextNpcIdFillsGaps(): void
     {
         $this->testDb->insertPlayer(['id' => -1, 'player_type' => 'npc', 'display_id' => 1]);
@@ -110,7 +107,6 @@ class PlayerIdSystemTest extends TestCase
         $this->assertEquals(-3, $nextId, 'Next NPC should fill the gap closest to zero, not extend the far cluster');
     }
 
-    #[Group('player-id')]
     public function testGetNextEntityIdWhenTableEmpty(): void
     {
         // Act
@@ -124,7 +120,6 @@ class PlayerIdSystemTest extends TestCase
         $this->assertEquals(-2, $nextNpcId, 'First NPC should have ID -2 (since -1 is default minimum)');
     }
 
-    #[Group('player-id')]
     public function testGetNextDisplayIdForRealPlayer(): void
     {
         // Arrange: Create 3 real players
@@ -139,7 +134,6 @@ class PlayerIdSystemTest extends TestCase
         $this->assertEquals(4, $nextDisplayId, 'Next real player display ID should be 4');
     }
 
-    #[Group('player-id')]
     public function testGetNextDisplayIdForTutorialPlayer(): void
     {
         // Arrange: Create 2 tutorial players with high IDs but low display IDs
@@ -153,7 +147,6 @@ class PlayerIdSystemTest extends TestCase
         $this->assertEquals(3, $nextDisplayId, 'Tutorial display IDs should be sequential (1, 2, 3...)');
     }
 
-    #[Group('player-id')]
     public function testDisplayIdIsIndependentPerType(): void
     {
         // Arrange: Create players of different types all with display_id 1
@@ -172,7 +165,6 @@ class PlayerIdSystemTest extends TestCase
         $this->assertEquals(2, $nextNpcDisplay, 'Each type maintains separate display ID sequence');
     }
 
-    #[Group('player-id')]
     public function testIdRangesDoNotOverlap(): void
     {
         // Arrange
@@ -197,7 +189,6 @@ class PlayerIdSystemTest extends TestCase
         $this->assertGreaterThan(0, $ranges['real']['start']);
     }
 
-    #[Group('player-id')]
     public function testRealPlayersHaveSequentialIds(): void
     {
         // Simulate creating multiple real players
@@ -221,7 +212,6 @@ class PlayerIdSystemTest extends TestCase
         $this->assertEquals(5, $this->testDb->getPlayerCount('real'));
     }
 
-    #[Group('player-id')]
     public function testTutorialPlayersDoNotAffectRealPlayerSequence(): void
     {
         // Create real player 1
@@ -239,7 +229,6 @@ class PlayerIdSystemTest extends TestCase
         $this->assertGreaterThanOrEqual(10000000, $tutorialId1, 'Tutorial player should have ID in tutorial range');
     }
 
-    #[Group('player-id')]
     public function testInvalidEntityTypeThrowsException(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -248,7 +237,6 @@ class PlayerIdSystemTest extends TestCase
         \getNextEntityId('invalid_type');
     }
 
-    #[Group('player-id')]
     public function testConcurrentPlayerCreation(): void
     {
         // Simulate concurrent creation of different player types

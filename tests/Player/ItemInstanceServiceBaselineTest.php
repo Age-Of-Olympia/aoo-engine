@@ -23,23 +23,17 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('items-baseline')]
 class ItemInstanceServiceBaselineTest extends LegacyPlayerFixtureTestCase
 {
-    private function boisOrSkip(): Item
-    {
-        // Le nettoyage des instances des joueurs jetables est porté par le
-        // teardown du harnais (liens puis lignes orphelines, par id tracké).
-        try {
-            $this->link->executeQuery('SELECT 1 FROM item_instances LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('item_instances table unavailable (run migrations): ' . $e->getMessage());
-        }
 
-        return $this->itemOrSkip('bois');
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->requireTableOrSkip('item_instances');
     }
 
     public function testPromoteMovesOneUnitFromStackToInstance(): void
     {
         $player = $this->createRealPlayer('GmSmith');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($player, 3);
 
         $service = new ItemInstanceService();
@@ -77,7 +71,7 @@ class ItemInstanceServiceBaselineTest extends LegacyPlayerFixtureTestCase
     public function testPromoteRefusesAnEmptyStack(): void
     {
         $player = $this->createRealPlayer('GmSmith');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
 
         $this->expectException(\RuntimeException::class);
         (new ItemInstanceService())->promote($player->id, $bois->id);
@@ -86,7 +80,7 @@ class ItemInstanceServiceBaselineTest extends LegacyPlayerFixtureTestCase
     public function testCreateBirthsANamedInstanceWithProvenance(): void
     {
         $player = $this->createRealPlayer('GmSmith');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
 
         $instanceId = (new ItemInstanceService())->create($player->id, $bois->id, $player->id, 'Dette de Thétis');
 
@@ -99,7 +93,7 @@ class ItemInstanceServiceBaselineTest extends LegacyPlayerFixtureTestCase
     public function testDemoteReturnsAPristineInstanceToTheStackAndRefusesDivergedState(): void
     {
         $player = $this->createRealPlayer('GmSmith');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($player, 1);
 
         $service = new ItemInstanceService();
@@ -136,7 +130,7 @@ class ItemInstanceServiceBaselineTest extends LegacyPlayerFixtureTestCase
         // choisie, la pile prime ; l'instance usée ne s'équipe qu'en
         // cliquant SA ligne (instanceId explicite).
         $player = $this->createRealPlayer('GmSmith');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($player, 3);
 
         $service = new ItemInstanceService();
@@ -176,7 +170,7 @@ class ItemInstanceServiceBaselineTest extends LegacyPlayerFixtureTestCase
     public function testCountOwnedExcludesDestroyedInstances(): void
     {
         $player = $this->createRealPlayer('GmSmith');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($player, 2);
 
         $service = new ItemInstanceService();

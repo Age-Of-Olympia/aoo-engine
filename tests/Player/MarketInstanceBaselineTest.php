@@ -20,15 +20,11 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('items-baseline')]
 class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
 {
-    private function boisOrSkip(): Item
-    {
-        try {
-            $this->link->executeQuery('SELECT instance_id FROM items_bids LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('items_bids.instance_id unavailable (run migrations): ' . $e->getMessage());
-        }
 
-        return $this->itemOrSkip('bois');
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->requireTableOrSkip('items_bids', 'instance_id');
     }
 
     /** Un exemplaire usé, rangé en banque — l'état de départ d'une vente. */
@@ -45,7 +41,7 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     public function testSellingAnInstanceNeverTouchesTheStackOfTheSameItem(): void
     {
         $seller = $this->createRealPlayer('GmSeller');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
 
         // Le cas qui produisait la perte silencieuse : une pile ET un
         // exemplaire du même objet catalogue, tous deux en banque.
@@ -74,7 +70,7 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     public function testAnInstanceOnSaleIsOutOfReachButStillOwned(): void
     {
         $seller = $this->createRealPlayer('GmSeller');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($seller, 1);
 
         $service = new ItemInstanceService();
@@ -92,7 +88,7 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     {
         $seller = $this->createRealPlayer('GmSeller');
         $buyer = $this->createRealPlayer('GmBuyer');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($seller, 1);
 
         $service = new ItemInstanceService();
@@ -120,7 +116,7 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
         $seller = $this->createRealPlayer('GmSeller');
         $first = $this->createRealPlayer('GmBuyerA');
         $second = $this->createRealPlayer('GmBuyerB');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($seller, 1);
 
         $service = new ItemInstanceService();
@@ -138,7 +134,7 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     public function testCancellingAnOfferBringsTheInstanceBackToTheVault(): void
     {
         $seller = $this->createRealPlayer('GmSeller');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($seller, 1);
 
         $service = new ItemInstanceService();
@@ -155,7 +151,7 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
     public function testTheDatabaseItselfRefusesTwoOffersOnOneInstance(): void
     {
         $seller = $this->createRealPlayer('GmSeller');
-        $bois = $this->boisOrSkip();
+        $bois = $this->itemOrSkip('bois');
         $bois->add_item($seller, 1);
         $instanceId = $this->bankedInstance($seller->id, $bois);
 

@@ -2,7 +2,6 @@
 
 namespace Tests\Action;
 
-use App\Factory\ActionFactory;
 use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
 use PHPUnit\Framework\Attributes\Group;
@@ -18,15 +17,6 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('items-baseline')]
 class EquiperBaselineTest extends LegacyPlayerFixtureTestCase
 {
-    private function actionOrSkip(): \App\Interface\ActionInterface
-    {
-        $action = ActionFactory::getAction('equiper');
-        if ($action === null) {
-            $this->markTestSkipped("actions catalog not seeded (no generic 'equiper' row — run migrations).");
-        }
-
-        return $action;
-    }
 
     protected function tearDown(): void
     {
@@ -47,7 +37,7 @@ class EquiperBaselineTest extends LegacyPlayerFixtureTestCase
         $_POST['itemId'] = (string) $gladius->id;
 
         // Équiper : 1 Ae
-        $results = (new ActionExecutorService($this->actionOrSkip(), $bearer, $bearer))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('equiper'), $bearer, $bearer))->executeAction();
         $this->assertTrue($results->isSuccess(), 'owning the gladius, equipping must succeed');
 
         $fresh = PlayerFactory::legacy($bearer->id);
@@ -69,7 +59,7 @@ class EquiperBaselineTest extends LegacyPlayerFixtureTestCase
         $bearer2->get_data();
         $bearer2->getCoords();
         $bearer2->get_caracs();
-        $results = (new ActionExecutorService($this->actionOrSkip(), $bearer2, $bearer2))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('equiper'), $bearer2, $bearer2))->executeAction();
         $this->assertTrue($results->isSuccess(), 'unequipping must succeed');
 
         $fresh = PlayerFactory::legacy($bearer->id);
@@ -92,7 +82,7 @@ class EquiperBaselineTest extends LegacyPlayerFixtureTestCase
         $gladius = $this->itemOrSkip('gladius');
         $_POST['itemId'] = (string) $gladius->id;
 
-        $results = (new ActionExecutorService($this->actionOrSkip(), $bearer, $bearer))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('equiper'), $bearer, $bearer))->executeAction();
 
         $this->assertTrue($results->isBlocked(), 'no gladius owned: ItemPick must block');
     }

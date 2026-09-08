@@ -96,12 +96,9 @@ class BuildingVitalsBaselineTest extends LegacyPlayerFixtureTestCase
             $this->assertStringContainsString('Type inconnu', $e->getMessage());
         }
 
-        try {
-            $service->place('nain', $coords);
-            $this->fail('a character race must be rejected as structure type');
-        } catch (\InvalidArgumentException $e) {
-            $this->assertStringContainsString('type de structure', $e->getMessage());
-        }
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('type de structure');
+        $service->place('nain', $coords);
     }
 
     public function testRemoveDeletesTheBuildingAndItsComponentRows(): void

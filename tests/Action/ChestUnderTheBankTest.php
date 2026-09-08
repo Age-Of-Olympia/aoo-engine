@@ -2,7 +2,6 @@
 
 namespace Tests\Action;
 
-use App\Factory\ActionFactory;
 use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
 use Classes\Player;
@@ -41,12 +40,9 @@ class ChestUnderTheBankTest extends LegacyPlayerFixtureTestCase
         parent::tearDown();
     }
 
-    private function actionOrSkip(): \App\Interface\ActionInterface
+    private function construireWithChestSiteOrSkip(): \App\Interface\ActionInterface
     {
-        $action = ActionFactory::getAction('construire');
-        if ($action === null) {
-            $this->markTestSkipped("actions catalog not seeded (no generic 'construire' row — run migrations).");
-        }
+        $action = $this->actionOrSkip('construire');
 
         $attached = $this->link->fetchOne(
             "SELECT ac.id FROM action_conditions ac
@@ -104,7 +100,7 @@ class ChestUnderTheBankTest extends LegacyPlayerFixtureTestCase
             $_POST['buildFor'] = $buildFor;
         }
 
-        return (new ActionExecutorService($this->actionOrSkip(), $builder, $builder))->executeAction();
+        return (new ActionExecutorService($this->construireWithChestSiteOrSkip(), $builder, $builder))->executeAction();
     }
 
     /** The chest standing on the plan for this builder's scene, or null. */
