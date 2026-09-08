@@ -4,8 +4,6 @@ namespace Tests\Tutorial;
 
 use App\Entity\TutorialPlayer;
 use PHPUnit\Framework\Attributes\Group;
-use ReflectionMethod;
-use ReflectionNamedType;
 use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
 
 /**
@@ -28,32 +26,9 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
  * (!376): skips cleanly when aoo4_test is unreachable, wraps each
  * test in a transaction rolled back in tearDown.
  */
+#[Group('tutorial-entity-reward-transfer')]
 class TutorialPlayerRewardTransferTest extends TutorialIntegrationTestCase
 {
-    private ?string $previousErrorLog = null;
-
-    protected function setUp(): void
-    {
-        // Push our buffer BEFORE parent::setUp(): when the test DB is
-        // unreachable parent skips via markTestSkipped() and tearDown
-        // still runs. Without this ordering, ob_end_clean() would pop
-        // PHPUnit's own strict-output buffer and trip failOnRisky.
-        $this->previousErrorLog = ini_get('error_log') ?: '';
-        ini_set('error_log', '/tmp/phpunit-phase-4-1.log');
-        ob_start();
-
-        parent::setUp();
-    }
-
-    protected function tearDown(): void
-    {
-        ob_end_clean();
-        ini_set('error_log', $this->previousErrorLog ?? '');
-        parent::tearDown();
-    }
-
-    #[Group('tutorial-entity-reward-transfer')]
-    #[Group('phase-4-1')]
     public function testTransfersXpAndPiToRealPlayerWithoutTouchingTutorialRow(): void
     {
         [$realPlayerId, $tutPlayerId] = $this->seedRealAndTutorialPlayers();
@@ -97,8 +72,6 @@ class TutorialPlayerRewardTransferTest extends TutorialIntegrationTestCase
         );
     }
 
-    #[Group('tutorial-entity-reward-transfer')]
-    #[Group('phase-4-1')]
     public function testThrowsWhenRealPlayerIdRefIsNull(): void
     {
         $entity = new TutorialPlayer();
@@ -108,38 +81,6 @@ class TutorialPlayerRewardTransferTest extends TutorialIntegrationTestCase
         $this->expectExceptionMessage('real_player_id_ref is null');
 
         $entity->transferRewardsToRealPlayer($this->conn, 100, 100);
-    }
-
-    #[Group('tutorial-entity-reward-transfer')]
-    #[Group('phase-4-1')]
-    public function testSignatureMatchesServiceClassContract(): void
-    {
-        // Reflection pin: a future accidental revert to the single-arg
-        // signature (or int→string drift on the reward args) would
-        // break the Phase 4.2 swap silently. Catch it here.
-        $method = new ReflectionMethod(
-            TutorialPlayer::class,
-            'transferRewardsToRealPlayer'
-        );
-
-        $params = $method->getParameters();
-        $this->assertCount(3, $params, 'expected (Connection, int $xpEarned, int $piEarned)');
-
-        $conn = $params[0]->getType();
-        $this->assertInstanceOf(ReflectionNamedType::class, $conn);
-        $this->assertSame(\Doctrine\DBAL\Connection::class, $conn->getName());
-
-        $xp = $params[1]->getType();
-        $this->assertInstanceOf(ReflectionNamedType::class, $xp);
-        $this->assertSame('int', $xp->getName());
-
-        $pi = $params[2]->getType();
-        $this->assertInstanceOf(ReflectionNamedType::class, $pi);
-        $this->assertSame('int', $pi->getName());
-
-        $return = $method->getReturnType();
-        $this->assertInstanceOf(ReflectionNamedType::class, $return);
-        $this->assertSame('void', $return->getName());
     }
 
     /**

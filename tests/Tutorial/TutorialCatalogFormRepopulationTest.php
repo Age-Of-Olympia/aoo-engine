@@ -12,9 +12,9 @@ use PHPUnit\Framework\TestCase;
  * everything the admin typed. The form must repopulate from the
  * submitted values, mapped by TutorialCatalogService::mapFormData().
  */
+#[Group('tutorial-catalog-repopulation')]
 class TutorialCatalogFormRepopulationTest extends TestCase
 {
-    #[Group('tutorial-catalog-repopulation')]
     public function testMapFormDataMapsSubmittedValues(): void
     {
         $data = TutorialCatalogService::mapFormData([
@@ -46,7 +46,6 @@ class TutorialCatalogFormRepopulationTest extends TestCase
         $this->assertSame(7, $data['display_order']);
     }
 
-    #[Group('tutorial-catalog-repopulation')]
     public function testMapFormDataAppliesDefaults(): void
     {
         $data = TutorialCatalogService::mapFormData([]);

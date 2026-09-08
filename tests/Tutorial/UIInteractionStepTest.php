@@ -30,6 +30,7 @@ use ReflectionProperty;
  *
  * Same reflection-priming pattern as the other Phase B tests.
  */
+#[Group('ui-interaction-step')]
 class UIInteractionStepTest extends TestCase
 {
     private function makeStepWithConfig(array $config): UIInteractionStep
@@ -48,7 +49,6 @@ class UIInteractionStepTest extends TestCase
      *  ui_panel_opened — restricted-allowlist branch                  *
      * -------------------------------------------------------------- */
 
-    #[Group('ui-interaction-step')]
     public function testPanelOpenedAcceptsCharacteristics(): void
     {
         $step = $this->makeStepWithConfig([
@@ -62,7 +62,6 @@ class UIInteractionStepTest extends TestCase
         ]));
     }
 
-    #[Group('ui-interaction-step')]
     public function testPanelOpenedAcceptsActions(): void
     {
         $step = $this->makeStepWithConfig([
@@ -73,7 +72,6 @@ class UIInteractionStepTest extends TestCase
         $this->assertTrue($step->validate(['panel' => 'actions', 'panel_visible' => true]));
     }
 
-    #[Group('ui-interaction-step')]
     public function testPanelOpenedAcceptsInventory(): void
     {
         $step = $this->makeStepWithConfig([
@@ -84,7 +82,6 @@ class UIInteractionStepTest extends TestCase
         $this->assertTrue($step->validate(['panel' => 'inventory', 'panel_visible' => true]));
     }
 
-    #[Group('ui-interaction-step')]
     public function testPanelOpenedRejectsUnknownPanelNames(): void
     {
         // Allowlist of 3 panels. A malicious client cannot satisfy a
@@ -101,7 +98,6 @@ class UIInteractionStepTest extends TestCase
         ]));
     }
 
-    #[Group('ui-interaction-step')]
     public function testPanelOpenedRejectsWrongPanelInData(): void
     {
         // Required panel = characteristics, client reports actions →
@@ -114,7 +110,6 @@ class UIInteractionStepTest extends TestCase
         $this->assertFalse($step->validate(['panel' => 'actions', 'panel_visible' => true]));
     }
 
-    #[Group('ui-interaction-step')]
     public function testPanelOpenedRejectsHiddenPanel(): void
     {
         // Right panel name but panel_visible=false → must reject.
@@ -132,7 +127,6 @@ class UIInteractionStepTest extends TestCase
      *  ui_button_clicked                                              *
      * -------------------------------------------------------------- */
 
-    #[Group('ui-interaction-step')]
     public function testButtonClickedAcceptsMatch(): void
     {
         $step = $this->makeStepWithConfig([
@@ -143,7 +137,6 @@ class UIInteractionStepTest extends TestCase
         $this->assertTrue($step->validate(['button' => 'commencer-tutoriel']));
     }
 
-    #[Group('ui-interaction-step')]
     public function testButtonClickedRejectsMissingRequiredConfig(): void
     {
         // No required button → validation must NOT auto-pass (unlike
@@ -155,7 +148,6 @@ class UIInteractionStepTest extends TestCase
         $this->assertFalse($step->validate(['button' => 'anything']));
     }
 
-    #[Group('ui-interaction-step')]
     public function testButtonClickedRejectsNonMatch(): void
     {
         $step = $this->makeStepWithConfig([
@@ -170,7 +162,6 @@ class UIInteractionStepTest extends TestCase
      *  ui_setting_changed — two-key match (name AND value)            *
      * -------------------------------------------------------------- */
 
-    #[Group('ui-interaction-step')]
     public function testSettingChangedRequiresBothNameAndValue(): void
     {
         $step = $this->makeStepWithConfig([
@@ -189,7 +180,6 @@ class UIInteractionStepTest extends TestCase
      *  ui_element_hidden / ui_element_visible                         *
      * -------------------------------------------------------------- */
 
-    #[Group('ui-interaction-step')]
     public function testElementHiddenAcceptsHiddenFlag(): void
     {
         $step = $this->makeStepWithConfig([
@@ -201,7 +191,6 @@ class UIInteractionStepTest extends TestCase
         $this->assertFalse($step->validate(['element' => '#welcome-banner', 'is_hidden' => false]));
     }
 
-    #[Group('ui-interaction-step')]
     public function testElementVisibleAcceptsVisibleFlag(): void
     {
         $step = $this->makeStepWithConfig([
@@ -217,7 +206,6 @@ class UIInteractionStepTest extends TestCase
      *  ui_interaction — generic element click                         *
      * -------------------------------------------------------------- */
 
-    #[Group('ui-interaction-step')]
     public function testInteractionAcceptsMatchingElementClick(): void
     {
         $step = $this->makeStepWithConfig([
@@ -228,7 +216,6 @@ class UIInteractionStepTest extends TestCase
         $this->assertTrue($step->validate(['element_clicked' => 'tutorial_next']));
     }
 
-    #[Group('ui-interaction-step')]
     public function testInteractionRejectsMissingRequiredConfig(): void
     {
         // Same safety as ui_button_clicked: no required element → no
@@ -242,7 +229,6 @@ class UIInteractionStepTest extends TestCase
      *  Defaults + safety                                              *
      * -------------------------------------------------------------- */
 
-    #[Group('ui-interaction-step')]
     public function testDefaultsToPanelOpenedWhenTypeMissing(): void
     {
         // Missing validation_type → ui_panel_opened (the most-used
@@ -252,7 +238,6 @@ class UIInteractionStepTest extends TestCase
         $this->assertTrue($step->validate(['panel' => 'inventory', 'panel_visible' => true]));
     }
 
-    #[Group('ui-interaction-step')]
     public function testUnknownValidationTypeRejects(): void
     {
         // UIInteractionStep follows MovementStep's stricter posture
@@ -263,7 +248,6 @@ class UIInteractionStepTest extends TestCase
         $this->assertFalse($step->validate([]));
     }
 
-    #[Group('ui-interaction-step')]
     public function testRequiresValidationDefaultsToTrue(): void
     {
         $step = $this->makeStepWithConfig([]);
@@ -271,7 +255,6 @@ class UIInteractionStepTest extends TestCase
         $this->assertTrue($step->requiresValidation());
     }
 
-    #[Group('ui-interaction-step')]
     public function testRequiresValidationHonorsConfigOverride(): void
     {
         // Some informational tutorial steps don't need validation —
@@ -285,7 +268,6 @@ class UIInteractionStepTest extends TestCase
      *  getValidationHint                                              *
      * -------------------------------------------------------------- */
 
-    #[Group('ui-interaction-step')]
     public function testHintForPanelOpenedIncludesPanelName(): void
     {
         $step = $this->makeStepWithConfig([
@@ -296,7 +278,6 @@ class UIInteractionStepTest extends TestCase
         $this->assertSame('Ouvrez inventory pour continuer.', $step->getValidationHint());
     }
 
-    #[Group('ui-interaction-step')]
     public function testHintForButtonClickedIncludesButtonName(): void
     {
         $step = $this->makeStepWithConfig([
@@ -307,7 +288,6 @@ class UIInteractionStepTest extends TestCase
         $this->assertSame('Cliquez sur fouiller pour continuer.', $step->getValidationHint());
     }
 
-    #[Group('ui-interaction-step')]
     public function testHintForElementVisibleUsesCustomWhenProvided(): void
     {
         // ui_element_visible and ui_interaction both let a custom hint
@@ -322,7 +302,6 @@ class UIInteractionStepTest extends TestCase
         $this->assertSame("Attendez que l'arbre apparaisse.", $step->getValidationHint());
     }
 
-    #[Group('ui-interaction-step')]
     public function testHintForElementVisibleFallsBackWhenNoCustom(): void
     {
         $step = $this->makeStepWithConfig(['validation_type' => 'ui_element_visible']);
@@ -330,7 +309,6 @@ class UIInteractionStepTest extends TestCase
         $this->assertSame("Attendez que l'élément apparaisse.", $step->getValidationHint());
     }
 
-    #[Group('ui-interaction-step')]
     public function testHintForInteractionFallsBackWhenNoCustom(): void
     {
         $step = $this->makeStepWithConfig(['validation_type' => 'ui_interaction']);

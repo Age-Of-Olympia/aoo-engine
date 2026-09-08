@@ -109,6 +109,49 @@ abstract class TutorialIntegrationTestCase extends TestCase
         return (int) $this->conn->lastInsertId();
     }
 
+    /** A throwaway real character on a tile of its own. */
+    protected function seedRealPlayer(?string $name = null, string $race = 'Humain'): int
+    {
+        $this->conn->insert('players', [
+            'name'        => $name ?? 'Real_' . bin2hex(random_bytes(4)),
+            'race'        => $race,
+            'player_type' => 'real',
+            'coords_id'   => $this->seedTile(),
+        ]);
+
+        return (int) $this->conn->lastInsertId();
+    }
+
+    /**
+     * A tutorial character bound to a real one, with its session row.
+     *
+     * @return array{0: int, 1: int} [players.id, tutorial_players.id]
+     */
+    protected function seedTutorialPlayer(int $realPlayerId, ?string $name = null, ?int $coordsId = null): array
+    {
+        $name ??= 'Tut_' . bin2hex(random_bytes(4));
+        $sessionId = 'tut-' . bin2hex(random_bytes(6));
+
+        $this->conn->insert('players', [
+            'name'                => $name,
+            'race'                => 'Humain',
+            'player_type'         => 'tutorial',
+            'coords_id'           => $coordsId ?? $this->seedTile(),
+            'tutorial_session_id' => $sessionId,
+            'real_player_id_ref'  => $realPlayerId,
+        ]);
+        $tutPlayerId = (int) $this->conn->lastInsertId();
+
+        $this->conn->insert('tutorial_players', [
+            'tutorial_session_id' => $sessionId,
+            'player_id'           => $tutPlayerId,
+            'name'                => $name,
+            'is_active'           => 1,
+        ]);
+
+        return [$tutPlayerId, (int) $this->conn->lastInsertId()];
+    }
+
     /**
      * Open a Doctrine DBAL connection to the test database, or call
      * markTestSkipped() if it's unreachable.

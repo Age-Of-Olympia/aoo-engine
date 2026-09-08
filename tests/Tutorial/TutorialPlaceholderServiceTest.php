@@ -25,6 +25,7 @@ use ReflectionProperty;
  *     introducing a Tests\Player\Mock\TestDatabase dependency to the
  *     tutorial suite.
  */
+#[Group('tutorial-placeholders')]
 class TutorialPlaceholderServiceTest extends TestCase
 {
     /**
@@ -44,7 +45,6 @@ class TutorialPlaceholderServiceTest extends TestCase
         return [$service, $cacheProp];
     }
 
-    #[Group('tutorial-placeholders')]
     public function testReturnsTextUnchangedWhenNoPlaceholders(): void
     {
         [$service, $cache] = $this->makeServiceWithPrimedCache();
@@ -56,7 +56,6 @@ class TutorialPlaceholderServiceTest extends TestCase
         );
     }
 
-    #[Group('tutorial-placeholders')]
     public function testKeepsUnknownPlaceholderInBraces(): void
     {
         // Unknown placeholders fall through the match()'s default arm,
@@ -71,7 +70,6 @@ class TutorialPlaceholderServiceTest extends TestCase
         );
     }
 
-    #[Group('tutorial-placeholders')]
     public function testReplacesKnownPlaceholderFromCache(): void
     {
         // Pre-priming the cache short-circuits the data lookup branch
@@ -86,7 +84,6 @@ class TutorialPlaceholderServiceTest extends TestCase
         );
     }
 
-    #[Group('tutorial-placeholders')]
     public function testReplacesMultiplePlaceholdersInSingleString(): void
     {
         [$service, $cache] = $this->makeServiceWithPrimedCache();

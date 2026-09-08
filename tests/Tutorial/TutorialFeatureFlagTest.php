@@ -31,6 +31,7 @@ use ReflectionProperty;
  * and the cache-fallback behaviour, which are the actual mistakes
  * future refactors are likely to make.
  */
+#[Group('tutorial-feature-flag')]
 class TutorialFeatureFlagTest extends TestCase
 {
     private ReflectionProperty $cacheProp;
@@ -65,7 +66,6 @@ class TutorialFeatureFlagTest extends TestCase
         ]);
     }
 
-    #[Group('tutorial-feature-flag')]
     public function testEnvVarTrueEnablesGlobally(): void
     {
         $_ENV['TUTORIAL_V2_ENABLED'] = 'true';
@@ -73,7 +73,6 @@ class TutorialFeatureFlagTest extends TestCase
         $this->assertTrue(TutorialFeatureFlag::isEnabled());
     }
 
-    #[Group('tutorial-feature-flag')]
     public function testEnvVarFalseDisablesGlobally(): void
     {
         $_ENV['TUTORIAL_V2_ENABLED'] = 'false';
@@ -84,7 +83,6 @@ class TutorialFeatureFlagTest extends TestCase
         $this->assertFalse(TutorialFeatureFlag::isEnabled());
     }
 
-    #[Group('tutorial-feature-flag')]
     public function testFallsBackToCachedDbSettingWhenEnvAbsent(): void
     {
         $this->primeCache(['global_enabled' => 'true']);
@@ -92,7 +90,6 @@ class TutorialFeatureFlagTest extends TestCase
         $this->assertTrue(TutorialFeatureFlag::isEnabled());
     }
 
-    #[Group('tutorial-feature-flag')]
     public function testReturnsFalseWhenNoSourceProvidesValue(): void
     {
         // Empty cache simulates "DB query returned no rows" — the safe
@@ -102,7 +99,6 @@ class TutorialFeatureFlagTest extends TestCase
         $this->assertFalse(TutorialFeatureFlag::isEnabled());
     }
 
-    #[Group('tutorial-feature-flag')]
     public function testWhitelistFromCachedCsvSetting(): void
     {
         $this->primeCache(['whitelisted_players' => '10,20,30']);
@@ -110,7 +106,6 @@ class TutorialFeatureFlagTest extends TestCase
         $this->assertSame([10, 20, 30], TutorialFeatureFlag::getWhitelistedPlayers());
     }
 
-    #[Group('tutorial-feature-flag')]
     public function testWhitelistDropsZeroAndNegativeIdsFromCsv(): void
     {
         // intval('abc') is 0, then array_filter drops <=0. Same for
@@ -122,7 +117,6 @@ class TutorialFeatureFlagTest extends TestCase
         $this->assertSame([10, 20], $result);
     }
 
-    #[Group('tutorial-feature-flag')]
     public function testWhitelistDefaultsToEmptyWhenSettingMissing(): void
     {
         // Empty cache + no constant defined → empty whitelist.
@@ -134,7 +128,6 @@ class TutorialFeatureFlagTest extends TestCase
         $this->assertSame([], TutorialFeatureFlag::getWhitelistedPlayers());
     }
 
-    #[Group('tutorial-feature-flag')]
     public function testIsEnabledForPlayerHonorsWhitelistWhenGloballyDisabled(): void
     {
         // global_enabled missing → isEnabled() returns false → the
@@ -146,7 +139,6 @@ class TutorialFeatureFlagTest extends TestCase
         $this->assertFalse(TutorialFeatureFlag::isEnabledForPlayer(100));
     }
 
-    #[Group('tutorial-feature-flag')]
     public function testIsEnabledForPlayerRejectsNpcs(): void
     {
         // NPCs use negative IDs — globally enabled OR whitelisted, they
@@ -160,7 +152,6 @@ class TutorialFeatureFlagTest extends TestCase
         $this->assertFalse(TutorialFeatureFlag::isEnabledForPlayer(-1000023));
     }
 
-    #[Group('tutorial-feature-flag')]
     public function testClearCacheResetsState(): void
     {
         $this->primeCache(['global_enabled' => 'true']);
@@ -171,7 +162,6 @@ class TutorialFeatureFlagTest extends TestCase
         $this->assertFalse(TutorialFeatureFlag::getCacheStats()['cached']);
     }
 
-    #[Group('tutorial-feature-flag')]
     public function testGetCacheStatsShapeIsStable(): void
     {
         // Empty state — public consumers (admin dashboard, ops scripts)

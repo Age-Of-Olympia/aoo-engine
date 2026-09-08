@@ -34,6 +34,7 @@ use ReflectionProperty;
  * reflection. Same as TutorialPlaceholderServiceTest /
  * TutorialFeatureFlagTest / MovementStepTest.
  */
+#[Group('action-step')]
 class ActionStepTest extends TestCase
 {
     private function makeStepWithConfig(array $config): ActionStep
@@ -52,7 +53,6 @@ class ActionStepTest extends TestCase
      *  validate() — action_used branch                               *
      * -------------------------------------------------------------- */
 
-    #[Group('action-step')]
     public function testActionUsedAcceptsExactMatch(): void
     {
         $step = $this->makeStepWithConfig([
@@ -63,7 +63,6 @@ class ActionStepTest extends TestCase
         $this->assertTrue($step->validate(['action_name' => 'fouiller']));
     }
 
-    #[Group('action-step')]
     public function testActionUsedRejectsDifferentAction(): void
     {
         $step = $this->makeStepWithConfig([
@@ -74,7 +73,6 @@ class ActionStepTest extends TestCase
         $this->assertFalse($step->validate(['action_name' => 'attaquer']));
     }
 
-    #[Group('action-step')]
     public function testActionUsedPassesThroughWhenNoActionRequired(): void
     {
         // No action_name configured → step is a "any action will do"
@@ -88,7 +86,6 @@ class ActionStepTest extends TestCase
         $this->assertTrue($step->validate([]));
     }
 
-    #[Group('action-step')]
     public function testActionUsedReadsActionNameFromLegacyRootKey(): void
     {
         // Legacy format (action_name at root of config). New format
@@ -102,7 +99,6 @@ class ActionStepTest extends TestCase
         $this->assertTrue($step->validate(['action_name' => 'prier']));
     }
 
-    #[Group('action-step')]
     public function testActionUsedPrefersNewFormatOverLegacy(): void
     {
         // When BOTH formats are present (admin migrated a step but
@@ -127,7 +123,6 @@ class ActionStepTest extends TestCase
      *  must accept either direction — config can spell it either way. *
      * -------------------------------------------------------------- */
 
-    #[Group('action-step')]
     public function testAttaquerRequiredAcceptsMeleeUsed(): void
     {
         $step = $this->makeStepWithConfig([
@@ -138,7 +133,6 @@ class ActionStepTest extends TestCase
         $this->assertTrue($step->validate(['action_name' => 'melee']));
     }
 
-    #[Group('action-step')]
     public function testAttaquerRequiredAcceptsDistanceUsed(): void
     {
         $step = $this->makeStepWithConfig([
@@ -149,7 +143,6 @@ class ActionStepTest extends TestCase
         $this->assertTrue($step->validate(['action_name' => 'distance']));
     }
 
-    #[Group('action-step')]
     public function testMeleeRequiredAcceptsAttaquerUsed(): void
     {
         // Reverse direction of the alias: config spelled the specific
@@ -162,7 +155,6 @@ class ActionStepTest extends TestCase
         $this->assertTrue($step->validate(['action_name' => 'attaquer']));
     }
 
-    #[Group('action-step')]
     public function testDistanceRequiredAcceptsAttaquerUsed(): void
     {
         $step = $this->makeStepWithConfig([
@@ -177,7 +169,6 @@ class ActionStepTest extends TestCase
      *  validate() — action_available branch + unknown branch          *
      * -------------------------------------------------------------- */
 
-    #[Group('action-step')]
     public function testActionAvailablePlaceholderAlwaysReturnsTrue(): void
     {
         // Documented as "would need to check player's available
@@ -193,7 +184,6 @@ class ActionStepTest extends TestCase
         $this->assertTrue($step->validate([]));
     }
 
-    #[Group('action-step')]
     public function testUnknownValidationTypePassesByDesign(): void
     {
         // ActionStep DIVERGES from MovementStep here: unknown types
@@ -208,7 +198,6 @@ class ActionStepTest extends TestCase
         $this->assertTrue($step->validate(['action_name' => 'whatever']));
     }
 
-    #[Group('action-step')]
     public function testDefaultsToActionUsedWhenTypeMissing(): void
     {
         // Missing validation_type → treated as action_used (the same
@@ -225,7 +214,6 @@ class ActionStepTest extends TestCase
      *  getValidationHint                                              *
      * -------------------------------------------------------------- */
 
-    #[Group('action-step')]
     public function testValidationHintUsesCustomWhenProvided(): void
     {
         // Custom hint short-circuits the per-type default formatting.
@@ -237,7 +225,6 @@ class ActionStepTest extends TestCase
         $this->assertSame('Cliquez sur le bouton vert.', $step->getValidationHint());
     }
 
-    #[Group('action-step')]
     public function testValidationHintForActionUsedIncludesActionName(): void
     {
         $step = $this->makeStepWithConfig([
@@ -251,7 +238,6 @@ class ActionStepTest extends TestCase
         );
     }
 
-    #[Group('action-step')]
     public function testValidationHintForActionAvailableIncludesActionName(): void
     {
         $step = $this->makeStepWithConfig([
@@ -265,7 +251,6 @@ class ActionStepTest extends TestCase
         );
     }
 
-    #[Group('action-step')]
     public function testValidationHintFallsBackToGenericWhenActionNameMissing(): void
     {
         // No action_name in config → the formatted hint substitutes
@@ -279,7 +264,6 @@ class ActionStepTest extends TestCase
         );
     }
 
-    #[Group('action-step')]
     public function testValidationHintForUnknownTypeReturnsGeneric(): void
     {
         $step = $this->makeStepWithConfig(['validation_type' => 'invented_type']);

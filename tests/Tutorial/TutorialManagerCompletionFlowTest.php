@@ -34,21 +34,12 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
  * Classes\Db is pointed at $this->conn via $GLOBALS['link'] so the
  * writes inside TutorialSessionManager share the test transaction.
  */
+#[Group('tutorial-completion-integration')]
 class TutorialManagerCompletionFlowTest extends TutorialIntegrationTestCase
 {
     private int $realPlayerId = 0;
-    private ?string $previousErrorLog = null;
-
     protected function setUp(): void
     {
-        // Push our buffer BEFORE parent::setUp(): when the test DB is
-        // unreachable parent skips via markTestSkipped() and tearDown
-        // still runs. Without this ordering, ob_end_clean() would pop
-        // PHPUnit's own strict-output buffer and trip failOnRisky.
-        $this->previousErrorLog = ini_get('error_log') ?: '';
-        ini_set('error_log', '/tmp/phpunit-completion-flow.log');
-        ob_start();
-
         parent::setUp();
 
         // TutorialSessionManager instantiates Classes\Db which reads
@@ -60,18 +51,9 @@ class TutorialManagerCompletionFlowTest extends TutorialIntegrationTestCase
         require_once __DIR__ . '/../../config/functions.php';
         $GLOBALS['link'] = $this->conn;
 
-        $this->realPlayerId = $this->seedRealPlayer();
+        $this->realPlayerId = $this->seedRealPlayer(race: 'nain');
     }
 
-    protected function tearDown(): void
-    {
-        ob_end_clean();
-        ini_set('error_log', $this->previousErrorLog ?? '');
-        parent::tearDown();
-    }
-
-    #[Group('tutorial-completion-integration')]
-    #[Group('d4-phase-c')]
     public function testHasCompletedBeforeReturnsFalseWhenNoProgressRows(): void
     {
         $sessionManager = new TutorialSessionManager();
@@ -79,8 +61,6 @@ class TutorialManagerCompletionFlowTest extends TutorialIntegrationTestCase
         $this->assertFalse($sessionManager->hasCompletedBefore($this->realPlayerId));
     }
 
-    #[Group('tutorial-completion-integration')]
-    #[Group('d4-phase-c')]
     public function testCompleteSessionSetsCompletedFlagAndXp(): void
     {
         $sessionManager = new TutorialSessionManager();
@@ -97,8 +77,6 @@ class TutorialManagerCompletionFlowTest extends TutorialIntegrationTestCase
         $this->assertNotNull($row['completed_at']);
     }
 
-    #[Group('tutorial-completion-integration')]
-    #[Group('d4-phase-c')]
     public function testHasCompletedBeforeReturnsTrueAfterFirstTimeCompletion(): void
     {
         // This is the contract TutorialManager::completeTutorial relies
@@ -113,8 +91,6 @@ class TutorialManagerCompletionFlowTest extends TutorialIntegrationTestCase
         $this->assertTrue($sessionManager->hasCompletedBefore($this->realPlayerId));
     }
 
-    #[Group('tutorial-completion-integration')]
-    #[Group('d4-phase-c')]
     public function testHasCompletedBeforeIgnoresReplaySessions(): void
     {
         // Only `first_time` sessions gate the reward-transfer. A prior
@@ -130,8 +106,6 @@ class TutorialManagerCompletionFlowTest extends TutorialIntegrationTestCase
         $this->assertFalse($sessionManager->hasCompletedBefore($this->realPlayerId));
     }
 
-    #[Group('tutorial-completion-integration')]
-    #[Group('d4-phase-c')]
     public function testCompleteSessionIsIdempotentOnRepeatCalls(): void
     {
         // Double-clicking "Terminer" shouldn't corrupt state. Second
@@ -149,18 +123,6 @@ class TutorialManagerCompletionFlowTest extends TutorialIntegrationTestCase
             [$sessionId]
         );
         $this->assertSame(1, $count, 'completeSession must not duplicate the progress row');
-    }
-
-    private function seedRealPlayer(): int
-    {
-        $this->conn->insert('players', [
-            'name'        => 'PhaseCComp_' . bin2hex(random_bytes(4)),
-            'race'        => 'nain',
-            'player_type' => 'real',
-            'coords_id'   => $this->seedTile(),
-        ]);
-
-        return (int) $this->conn->lastInsertId();
     }
 
     private function seedTutorialProgress(int $playerId, string $mode): string

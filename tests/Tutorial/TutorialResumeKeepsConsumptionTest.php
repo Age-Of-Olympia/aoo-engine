@@ -26,8 +26,6 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
 #[Group('tutorial')]
 class TutorialResumeKeepsConsumptionTest extends TutorialIntegrationTestCase
 {
-    private ?string $previousErrorLog = null;
-
     /** @var mixed */
     private mixed $previousLink = null;
 
@@ -35,10 +33,6 @@ class TutorialResumeKeepsConsumptionTest extends TutorialIntegrationTestCase
 
     protected function setUp(): void
     {
-        $this->previousErrorLog = ini_get('error_log') ?: '';
-        ini_set('error_log', '/tmp/phpunit-resume-consumption.log');
-        ob_start();
-
         parent::setUp();
 
         require_once __DIR__ . '/../../config/db_constants.php';
@@ -66,9 +60,7 @@ class TutorialResumeKeepsConsumptionTest extends TutorialIntegrationTestCase
 
     protected function tearDown(): void
     {
-        ob_end_clean();
         $_SESSION = [];
-        ini_set('error_log', $this->previousErrorLog ?? '');
         $GLOBALS['link'] = $this->previousLink;
         $this->previousLink = null;
         parent::tearDown();

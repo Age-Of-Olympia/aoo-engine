@@ -31,10 +31,9 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
  * row must be gone too — that's the proof the cleanup honours its
  * ~25-table cascade list.
  */
+#[Group('tutorial-cleanup-integration')]
 class TutorialPlayerCleanupIntegrationTest extends TutorialIntegrationTestCase
 {
-    #[Group('tutorial-cleanup-integration')]
-    #[Group('d4-phase-c')]
     public function testDeleteTutorialPlayerSoftDeletesAndHardDeletesWithCascade(): void
     {
         [$realPlayerId, $tutPlayerId, $tutPlayersRowId] = $this->seedTutorialPlayerWithFkRow();
@@ -66,8 +65,6 @@ class TutorialPlayerCleanupIntegrationTest extends TutorialIntegrationTestCase
         $this->assertSame(0, $optionCount, 'players_options FK rows must cascade-delete');
     }
 
-    #[Group('tutorial-cleanup-integration')]
-    #[Group('d4-phase-c')]
     public function testCleanupOrphanedTutorialPlayersReturnsZeroWhenNoneActive(): void
     {
         $realPlayerId = $this->seedRealPlayer();
@@ -78,15 +75,13 @@ class TutorialPlayerCleanupIntegrationTest extends TutorialIntegrationTestCase
         $this->assertSame(0, $cleaned);
     }
 
-    #[Group('tutorial-cleanup-integration')]
-    #[Group('d4-phase-c')]
     public function testCleanupOrphanedTutorialPlayersCleansAllActiveForRealPlayer(): void
     {
         // Two active tutorial players for the same real player (e.g.
         // from two interrupted tutorial attempts). Both must go.
         $realPlayerId = $this->seedRealPlayer();
-        [$tutPlayerId1, $tutRowId1] = $this->seedTutorialPlayer($realPlayerId, 'sess-a');
-        [$tutPlayerId2, $tutRowId2] = $this->seedTutorialPlayer($realPlayerId, 'sess-b');
+        [$tutPlayerId1, $tutRowId1] = $this->seedTutorialPlayer($realPlayerId);
+        [$tutPlayerId2, $tutRowId2] = $this->seedTutorialPlayer($realPlayerId);
 
         $cleanup = new TutorialPlayerCleanup($this->conn);
         $cleaned = $cleanup->cleanupOrphanedTutorialPlayers($realPlayerId);
@@ -109,8 +104,6 @@ class TutorialPlayerCleanupIntegrationTest extends TutorialIntegrationTestCase
         }
     }
 
-    #[Group('tutorial-cleanup-integration')]
-    #[Group('d4-phase-c')]
     public function testHardDeleteSkipsWhenPlayerIdIsInvalid(): void
     {
         // The service guards against accidental destructive calls on
@@ -129,54 +122,6 @@ class TutorialPlayerCleanupIntegrationTest extends TutorialIntegrationTestCase
     }
 
     /**
-     * Seed a minimal real player (positive id, player_type='real').
-     * Most columns have defaults; we only need a unique name.
-     *
-     * @return int newly created player id
-     */
-    private function seedRealPlayer(): int
-    {
-        $this->conn->insert('players', [
-            'name'        => 'PhaseCReal_' . bin2hex(random_bytes(4)),
-            'race'        => 'Humain',
-            'player_type' => 'real',
-            'coords_id'   => $this->seedTile(),
-        ]);
-
-        return (int) $this->conn->lastInsertId();
-    }
-
-    /**
-     * Seed a tutorial player: a `players` row (player_type='tutorial')
-     * plus the matching `tutorial_players` bookkeeping row.
-     *
-     * @return array{0: int, 1: int} [tutorial players.id, tutorial_players.id]
-     */
-    private function seedTutorialPlayer(int $realPlayerId, string $sessionId): array
-    {
-        // Phase 4.5: real↔tutorial link lives on players.real_player_id_ref
-        // (tutorial_players.real_player_id was dropped).
-        $this->conn->insert('players', [
-            'name'               => 'PhaseCTut_' . bin2hex(random_bytes(4)),
-            'race'               => 'Humain',
-            'player_type'        => 'tutorial',
-            'coords_id'          => $this->seedTile(),
-            'real_player_id_ref' => $realPlayerId,
-        ]);
-        $tutPlayerId = (int) $this->conn->lastInsertId();
-
-        $this->conn->insert('tutorial_players', [
-            'tutorial_session_id' => $sessionId . '_' . bin2hex(random_bytes(4)),
-            'player_id'           => $tutPlayerId,
-            'name'                => 'PhaseCTutName',
-            'is_active'           => 1,
-        ]);
-        $tutRowId = (int) $this->conn->lastInsertId();
-
-        return [$tutPlayerId, $tutRowId];
-    }
-
-    /**
      * Seed a full fixture: real player + tutorial player + one FK row
      * in players_options (to prove the ~25-table cascade ran).
      *
@@ -185,7 +130,7 @@ class TutorialPlayerCleanupIntegrationTest extends TutorialIntegrationTestCase
     private function seedTutorialPlayerWithFkRow(): array
     {
         $realPlayerId = $this->seedRealPlayer();
-        [$tutPlayerId, $tutRowId] = $this->seedTutorialPlayer($realPlayerId, 'sess-fk');
+        [$tutPlayerId, $tutRowId] = $this->seedTutorialPlayer($realPlayerId);
 
         $this->conn->insert('players_options', [
             'player_id' => $tutPlayerId,

@@ -26,6 +26,7 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
  *   2. caller does NOT own the session  → false
  *   3. session_id does not exist at all → false
  */
+#[Group('tutorial-session-ownership')]
 class TutorialSessionOwnershipTest extends TutorialIntegrationTestCase
 {
     /** @var mixed original $GLOBALS['link'] before we overrode it */
@@ -48,7 +49,6 @@ class TutorialSessionOwnershipTest extends TutorialIntegrationTestCase
         parent::tearDown();
     }
 
-    #[Group('tutorial-session-ownership')]
     public function testPlayerOwnsSessionReturnsTrueForCallerOwnedSession(): void
     {
         $ownerId = $this->seedPlayer();
@@ -60,7 +60,6 @@ class TutorialSessionOwnershipTest extends TutorialIntegrationTestCase
         );
     }
 
-    #[Group('tutorial-session-ownership')]
     public function testPlayerOwnsSessionReturnsFalseForCrossPlayerAccess(): void
     {
         $ownerId = $this->seedPlayer();
@@ -76,7 +75,6 @@ class TutorialSessionOwnershipTest extends TutorialIntegrationTestCase
         );
     }
 
-    #[Group('tutorial-session-ownership')]
     public function testPlayerOwnsSessionReturnsFalseForUnknownSessionId(): void
     {
         $playerId = $this->seedPlayer();
@@ -117,14 +115,7 @@ class TutorialSessionOwnershipTest extends TutorialIntegrationTestCase
 
     private function seedProgressFor(int $playerId): string
     {
-        $sessionId = sprintf(
-            '%08x-%04x-4%03x-%04x-%012x',
-            random_int(0, 0xffffffff),
-            random_int(0, 0xffff),
-            random_int(0, 0xfff),
-            random_int(0x8000, 0xbfff),
-            random_int(0, 0xffffffffffff),
-        );
+        $sessionId = bin2hex(random_bytes(16));
 
         $this->conn->insert('tutorial_progress', [
             'player_id'           => $playerId,

@@ -20,14 +20,13 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
  *   - TutorialPlayerCleanup::cleanupOrphanedTutorialPlayers
  *   - TutorialResourceManager::cleanupPrevious (delegates to cleanup)
  */
+#[Group('tutorial-link-collapse')]
 class TutorialLinkColumnCollapseTest extends TutorialIntegrationTestCase
 {
-    #[Group('phase-4-5')]
-    #[Group('tutorial-link-collapse')]
     public function testCleanupDiscoversTutorialPlayerViaRealPlayerIdRef(): void
     {
         $realPlayerId = $this->seedRealPlayer();
-        [$tutPlayerId, $tutRowId] = $this->seedTutorialPlayer($realPlayerId, 'collapse-sess');
+        [$tutPlayerId, $tutRowId] = $this->seedTutorialPlayer($realPlayerId);
 
         $cleanup = new TutorialPlayerCleanup($this->conn);
         $cleaned = $cleanup->cleanupOrphanedTutorialPlayers($realPlayerId);
@@ -45,8 +44,6 @@ class TutorialLinkColumnCollapseTest extends TutorialIntegrationTestCase
         );
     }
 
-    #[Group('phase-4-5')]
-    #[Group('tutorial-link-collapse')]
     public function testCleanupIgnoresTutorialPlayersOwnedByOtherRealPlayers(): void
     {
         // Two real players, each owns a distinct tutorial player.
@@ -54,8 +51,8 @@ class TutorialLinkColumnCollapseTest extends TutorialIntegrationTestCase
         $realA = $this->seedRealPlayer();
         $realB = $this->seedRealPlayer();
 
-        [$tutA, ] = $this->seedTutorialPlayer($realA, 'coll-a');
-        [$tutB, $rowB] = $this->seedTutorialPlayer($realB, 'coll-b');
+        [$tutA, ] = $this->seedTutorialPlayer($realA);
+        [$tutB, $rowB] = $this->seedTutorialPlayer($realB);
 
         $cleanup = new TutorialPlayerCleanup($this->conn);
         $cleaned = $cleanup->cleanupOrphanedTutorialPlayers($realA);
@@ -83,41 +80,4 @@ class TutorialLinkColumnCollapseTest extends TutorialIntegrationTestCase
      * `tutorial_players.real_player_id` column is dropped by Phase 4.5's
      * migration, so seeding it would fail against a migrated schema.
      */
-
-    private function seedRealPlayer(): int
-    {
-        $this->conn->insert('players', [
-            'name'        => 'CollapseReal_' . bin2hex(random_bytes(4)),
-            'race'        => 'Humain',
-            'player_type' => 'real',
-            'coords_id'   => $this->seedTile(),
-        ]);
-
-        return (int) $this->conn->lastInsertId();
-    }
-
-    private function seedTutorialPlayer(int $realPlayerId, string $sessionSeed): array
-    {
-        $sessionId = $sessionSeed . '_' . bin2hex(random_bytes(4));
-
-        $this->conn->insert('players', [
-            'name'                => 'CollapseTut_' . bin2hex(random_bytes(4)),
-            'race'                => 'Humain',
-            'player_type'         => 'tutorial',
-            'coords_id'           => $this->seedTile(),
-            'tutorial_session_id' => $sessionId,
-            'real_player_id_ref'  => $realPlayerId,
-        ]);
-        $tutPlayerId = (int) $this->conn->lastInsertId();
-
-        $this->conn->insert('tutorial_players', [
-            'tutorial_session_id' => $sessionId,
-            'player_id'           => $tutPlayerId,
-            'name'                => 'CollapseTutName',
-            'is_active'           => 1,
-        ]);
-        $tutRowId = (int) $this->conn->lastInsertId();
-
-        return [$tutPlayerId, $tutRowId];
-    }
 }

@@ -26,10 +26,9 @@ use ReflectionNamedType;
  * require overriding the EntityManagerFactory singleton to point at
  * aoo4_test — out of scope for Phase 4.3.
  */
+#[Group('tutorial-resource-adapters')]
 class TutorialResourceManagerEntityAdaptersTest extends TestCase
 {
-    #[Group('tutorial-resource-adapters')]
-    #[Group('phase-4-3')]
     public function testCreateAsEntitySignature(): void
     {
         $method = new ReflectionMethod(
@@ -55,8 +54,6 @@ class TutorialResourceManagerEntityAdaptersTest extends TestCase
         );
     }
 
-    #[Group('tutorial-resource-adapters')]
-    #[Group('phase-4-3')]
     public function testGetAsEntitySignature(): void
     {
         $method = new ReflectionMethod(
@@ -75,8 +72,6 @@ class TutorialResourceManagerEntityAdaptersTest extends TestCase
         );
     }
 
-    #[Group('tutorial-resource-adapters')]
-    #[Group('phase-4-3')]
     public function testDeleteAsEntitySignature(): void
     {
         $method = new ReflectionMethod(

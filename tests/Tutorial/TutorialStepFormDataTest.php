@@ -12,9 +12,9 @@ use PHPUnit\Framework\TestCase;
  * instead of wiping the admin's input. Numeric fields are cast (they
  * are echoed raw by the template) and enums whitelisted.
  */
+#[Group('tutorial-step-form-data')]
 class TutorialStepFormDataTest extends TestCase
 {
-    #[Group('tutorial-step-form-data')]
     public function testStepMapsCoreFields(): void
     {
         $row = TutorialStepFormData::step([
@@ -40,7 +40,6 @@ class TutorialStepFormDataTest extends TestCase
         $this->assertSame(1, $row['is_active']);
     }
 
-    #[Group('tutorial-step-form-data')]
     public function testStepCastsNonNumericRawEchoedFields(): void
     {
         $row = TutorialStepFormData::step([
@@ -53,7 +52,6 @@ class TutorialStepFormDataTest extends TestCase
         $this->assertSame(0, $row['is_active']);
     }
 
-    #[Group('tutorial-step-form-data')]
     public function testUiMapsFieldsAndCastsNumerics(): void
     {
         $row = TutorialStepFormData::ui([
@@ -84,7 +82,6 @@ class TutorialStepFormDataTest extends TestCase
         $this->assertSame('open', $row['caracs_panel_state']);
     }
 
-    #[Group('tutorial-step-form-data')]
     public function testUiWhitelistsCaracsPanelState(): void
     {
         $row = TutorialStepFormData::ui(['caracs_panel_state' => '"><script>']);
@@ -92,7 +89,6 @@ class TutorialStepFormDataTest extends TestCase
         $this->assertNull($row['caracs_panel_state']);
     }
 
-    #[Group('tutorial-step-form-data')]
     public function testValidationMapsFieldsIncludingNegativeCoordinates(): void
     {
         $row = TutorialStepFormData::validation([
@@ -126,7 +122,6 @@ class TutorialStepFormDataTest extends TestCase
         $this->assertSame('npc_intro', $row['dialog_id']);
     }
 
-    #[Group('tutorial-step-form-data')]
     public function testPrerequisitesMapsFields(): void
     {
         $row = TutorialStepFormData::prerequisites([
@@ -150,7 +145,6 @@ class TutorialStepFormDataTest extends TestCase
         $this->assertSame(1, $row['ensure_harvestable_tree_y']);
     }
 
-    #[Group('tutorial-step-form-data')]
     public function testFeaturesMapsFields(): void
     {
         $row = TutorialStepFormData::features([
@@ -163,7 +157,6 @@ class TutorialStepFormDataTest extends TestCase
         $this->assertSame(3000, $row['redirect_delay']);
     }
 
-    #[Group('tutorial-step-form-data')]
     public function testSelectorListsSkipBlanksAndKeepShape(): void
     {
         $post = ['interactions' => ['.case', '', '#btn'], 'highlights' => ['']];
@@ -176,7 +169,6 @@ class TutorialStepFormDataTest extends TestCase
         $this->assertSame([], TutorialStepFormData::selectorList([], 'interactions'));
     }
 
-    #[Group('tutorial-step-form-data')]
     public function testKeyValueListsPairKeysWithValues(): void
     {
         $post = [

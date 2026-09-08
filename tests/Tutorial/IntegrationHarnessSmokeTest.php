@@ -19,9 +19,9 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
  * that follow (TutorialPlayerCleanupIntegrationTest, MovementStepDb-
  * BranchesIntegrationTest, etc.) build on this foundation.
  */
+#[Group('tutorial-integration-smoke')]
 class IntegrationHarnessSmokeTest extends TutorialIntegrationTestCase
 {
-    #[Group('tutorial-integration-smoke')]
     public function testConnectionOpensAndAcceptsQueries(): void
     {
         $value = $this->conn->fetchOne('SELECT 1');
@@ -29,7 +29,6 @@ class IntegrationHarnessSmokeTest extends TutorialIntegrationTestCase
         $this->assertSame(1, (int) $value);
     }
 
-    #[Group('tutorial-integration-smoke')]
     public function testTransactionIsActiveDuringTest(): void
     {
         // setUp opened a transaction; tearDown will roll it back. If
@@ -39,7 +38,6 @@ class IntegrationHarnessSmokeTest extends TutorialIntegrationTestCase
         $this->assertTrue($this->conn->isTransactionActive());
     }
 
-    #[Group('tutorial-integration-smoke')]
     public function testWritesAreRolledBackBetweenTests(): void
     {
         // Write a row to a table that always exists (information_schema

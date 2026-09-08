@@ -34,6 +34,7 @@ use ReflectionProperty;
  * TutorialFeatureFlagTest. No TutorialContext stub needed because
  * the tested branches don't read $this->context.
  */
+#[Group('movement-step')]
 class MovementStepTest extends TestCase
 {
     /**
@@ -52,7 +53,6 @@ class MovementStepTest extends TestCase
         return $step;
     }
 
-    #[Group('movement-step')]
     public function testRequiresValidationAlwaysTrue(): void
     {
         $step = $this->makeStepWithConfig([]);
@@ -60,7 +60,6 @@ class MovementStepTest extends TestCase
         $this->assertTrue($step->requiresValidation());
     }
 
-    #[Group('movement-step')]
     public function testAnyMovementAcceptsMoveAction(): void
     {
         $step = $this->makeStepWithConfig(['validation_type' => 'any_movement']);
@@ -68,7 +67,6 @@ class MovementStepTest extends TestCase
         $this->assertTrue($step->validate(['action' => 'move']));
     }
 
-    #[Group('movement-step')]
     public function testAnyMovementRejectsNonMoveAction(): void
     {
         $step = $this->makeStepWithConfig(['validation_type' => 'any_movement']);
@@ -76,7 +74,6 @@ class MovementStepTest extends TestCase
         $this->assertFalse($step->validate(['action' => 'attack']));
     }
 
-    #[Group('movement-step')]
     public function testAnyMovementIsTheDefaultValidationType(): void
     {
         // Empty config → defaults to any_movement. Pinning this matters
@@ -88,7 +85,6 @@ class MovementStepTest extends TestCase
         $this->assertFalse($step->validate([]));
     }
 
-    #[Group('movement-step')]
     public function testSpecificCountAcceptsExactMatch(): void
     {
         $step = $this->makeStepWithConfig([
@@ -99,7 +95,6 @@ class MovementStepTest extends TestCase
         $this->assertTrue($step->validate(['move_count' => 3]));
     }
 
-    #[Group('movement-step')]
     public function testSpecificCountAcceptsOvershoot(): void
     {
         // Documented contract: >= required_moves, not == . So a player
@@ -112,7 +107,6 @@ class MovementStepTest extends TestCase
         $this->assertTrue($step->validate(['move_count' => 5]));
     }
 
-    #[Group('movement-step')]
     public function testSpecificCountRejectsUndershoot(): void
     {
         $step = $this->makeStepWithConfig([
@@ -123,7 +117,6 @@ class MovementStepTest extends TestCase
         $this->assertFalse($step->validate(['move_count' => 2]));
     }
 
-    #[Group('movement-step')]
     public function testSpecificCountDefaultsToOneRequiredMove(): void
     {
         // No required_moves in config → defaults to 1.
@@ -133,7 +126,6 @@ class MovementStepTest extends TestCase
         $this->assertFalse($step->validate(['move_count' => 0]));
     }
 
-    #[Group('movement-step')]
     public function testSpecificCountTreatsMissingMoveCountAsZero(): void
     {
         $step = $this->makeStepWithConfig([
@@ -144,7 +136,6 @@ class MovementStepTest extends TestCase
         $this->assertFalse($step->validate([]));
     }
 
-    #[Group('movement-step')]
     public function testUnknownValidationTypeRejects(): void
     {
         // Defensive: a typo in the admin step editor must not silently
@@ -154,7 +145,6 @@ class MovementStepTest extends TestCase
         $this->assertFalse($step->validate(['action' => 'move', 'move_count' => 99]));
     }
 
-    #[Group('movement-step')]
     public function testValidationHintForSpecificCountIncludesRequiredCount(): void
     {
         $step = $this->makeStepWithConfig([
@@ -168,7 +158,6 @@ class MovementStepTest extends TestCase
         );
     }
 
-    #[Group('movement-step')]
     public function testValidationHintForPositionUsesPlaceholdersWhenCoordsMissing(): void
     {
         // No validation_params at all → hint substitutes "?" for the
@@ -182,7 +171,6 @@ class MovementStepTest extends TestCase
         );
     }
 
-    #[Group('movement-step')]
     public function testValidationHintForAdjacentToPositionUsesConfigHintWhenProvided(): void
     {
         $step = $this->makeStepWithConfig([

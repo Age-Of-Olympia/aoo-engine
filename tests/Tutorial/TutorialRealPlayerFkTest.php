@@ -21,16 +21,15 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
  * migration may not have been run locally. Once the migration runs,
  * these tests start asserting.
  */
+#[Group('tutorial-link-fk')]
 class TutorialRealPlayerFkTest extends TutorialIntegrationTestCase
 {
-    #[Group('phase-4-6')]
-    #[Group('tutorial-link-fk')]
     public function testFkSetsTutorialRefToNullWhenRealPlayerDeleted(): void
     {
         $this->requireFk();
 
         $realPlayerId = $this->seedRealPlayer();
-        $tutPlayerId = $this->seedTutorialPlayer($realPlayerId);
+        [$tutPlayerId] = $this->seedTutorialPlayer($realPlayerId);
 
         // Sanity: ref is set pre-delete.
         $this->assertSame(
@@ -62,8 +61,6 @@ class TutorialRealPlayerFkTest extends TutorialIntegrationTestCase
         );
     }
 
-    #[Group('phase-4-6')]
-    #[Group('tutorial-link-fk')]
     public function testFkRejectsDanglingReferenceOnInsert(): void
     {
         $this->requireFk();
@@ -96,31 +93,6 @@ class TutorialRealPlayerFkTest extends TutorialIntegrationTestCase
                 . 'run Version20260419210000 against this DB first.'
             );
         }
-    }
-
-    private function seedRealPlayer(): int
-    {
-        $this->conn->insert('players', [
-            'name'        => 'PhaseFkReal_' . bin2hex(random_bytes(4)),
-            'race'        => 'Humain',
-            'player_type' => 'real',
-            'coords_id'   => $this->seedTile(),
-        ]);
-
-        return (int) $this->conn->lastInsertId();
-    }
-
-    private function seedTutorialPlayer(int $realPlayerId): int
-    {
-        $this->conn->insert('players', [
-            'name'                => 'PhaseFkTut_' . bin2hex(random_bytes(4)),
-            'race'                => 'Humain',
-            'player_type'         => 'tutorial',
-            'coords_id'           => $this->seedTile(),
-            'real_player_id_ref'  => $realPlayerId,
-        ]);
-
-        return (int) $this->conn->lastInsertId();
     }
 
 }

@@ -131,14 +131,7 @@ class TutorialEnemyIdentificationTest extends TutorialIntegrationTestCase
 
     private function newSessionId(): string
     {
-        return sprintf(
-            '%08x-%04x-4%03x-%04x-%012x',
-            random_int(0, 0xffffffff),
-            random_int(0, 0xffff),
-            random_int(0, 0xfff),
-            random_int(0x8000, 0xbfff),
-            random_int(0, 0xffffffffffff),
-        );
+        return bin2hex(random_bytes(16));
     }
 
     /** Ouvre une session de tutoriel côté PHP et rend son identifiant. */

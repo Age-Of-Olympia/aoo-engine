@@ -28,28 +28,18 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
  * at them. MovementStep then reads the player's real state and the
  * test asserts the expected outcome for each config.
  */
+#[Group('movement-step-db')]
 class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
 {
     private int $playerId = 0;
     private int $coordX = 0;
     private int $coordY = 0;
 
-    /** @var string|null previous ini value for error_log */
-    private ?string $previousErrorLog = null;
-
     /** @var mixed $GLOBALS['link'] as found in setUp, restored in tearDown */
     private mixed $previousLink = null;
 
     protected function setUp(): void
     {
-        // Push our buffer BEFORE parent::setUp(): if the test DB is
-        // unreachable, parent skips via markTestSkipped() and tearDown
-        // still runs. If ob_start() hadn't fired, ob_end_clean() would
-        // pop PHPUnit's own strict-output buffer and trip failOnRisky.
-        $this->previousErrorLog = ini_get('error_log') ?: '';
-        ini_set('error_log', '/tmp/phpunit-movement-step.log');
-        ob_start();
-
         parent::setUp();
 
         // Legacy helpers (functions.php defines `db()` which returns
@@ -83,12 +73,7 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
 
     protected function tearDown(): void
     {
-        // Close only our buffer — PHPUnit runs each test inside its
-        // own buffer for the beStrictAboutOutputDuringTests check, and
-        // closing past that leaks into the runner.
-        ob_end_clean();
         $_SESSION = [];
-        ini_set('error_log', $this->previousErrorLog ?? '');
         // Restore whatever db() was pointing at — leaving the aoo4_test
         // connection in $GLOBALS['link'] poisons every later legacy-stack test.
         $GLOBALS['link'] = $this->previousLink;
@@ -96,8 +81,6 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
         parent::tearDown();
     }
 
-    #[Group('movement-step-db')]
-    #[Group('d4-phase-c')]
     public function testPositionBranchAcceptsMatchingCoords(): void
     {
         $step = $this->makeStepWithConfig([
@@ -108,8 +91,6 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
         $this->assertTrue($step->validate([]));
     }
 
-    #[Group('movement-step-db')]
-    #[Group('d4-phase-c')]
     public function testPositionBranchRejectsNonMatchingCoords(): void
     {
         $step = $this->makeStepWithConfig([
@@ -123,8 +104,6 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
         $this->assertFalse($step->validate([]));
     }
 
-    #[Group('movement-step-db')]
-    #[Group('d4-phase-c')]
     public function testPositionBranchRejectsWhenValidationParamsMissing(): void
     {
         $step = $this->makeStepWithConfig(['validation_type' => 'position']);
@@ -144,8 +123,6 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
      * false and the tutorial UX stalls with no error. Pin the repo
      * shape explicitly.
      */
-    #[Group('movement-step-db')]
-    #[Group('d4-phase-c')]
     public function testPositionBranchAcceptsRepoShapeCoords(): void
     {
         $step = $this->makeStepWithConfig([
@@ -159,8 +136,6 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
         $this->assertTrue($step->validate([]));
     }
 
-    #[Group('movement-step-db')]
-    #[Group('d4-phase-c')]
     public function testPositionBranchRejectsNonMatchingRepoShapeCoords(): void
     {
         $step = $this->makeStepWithConfig([
@@ -174,8 +149,6 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
         $this->assertFalse($step->validate([]));
     }
 
-    #[Group('movement-step-db')]
-    #[Group('d4-phase-c')]
     public function testAdjacentToPositionAcceptsOrthogonalNeighbour(): void
     {
         // Chebyshev distance = 1: the tile directly east should match.
@@ -190,8 +163,6 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
         $this->assertTrue($step->validate([]));
     }
 
-    #[Group('movement-step-db')]
-    #[Group('d4-phase-c')]
     public function testAdjacentToPositionAcceptsDiagonalNeighbour(): void
     {
         // Contract says "including diagonals" — the north-east tile counts.
@@ -206,8 +177,6 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
         $this->assertTrue($step->validate([]));
     }
 
-    #[Group('movement-step-db')]
-    #[Group('d4-phase-c')]
     public function testAdjacentToPositionRejectsSelfPosition(): void
     {
         // (deltaX + deltaY > 0) — being AT the target is not adjacent
@@ -224,8 +193,6 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
         $this->assertFalse($step->validate([]));
     }
 
-    #[Group('movement-step-db')]
-    #[Group('d4-phase-c')]
     public function testAdjacentToPositionRejectsDistantTarget(): void
     {
         $step = $this->makeStepWithConfig([
@@ -239,8 +206,6 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
         $this->assertFalse($step->validate([]));
     }
 
-    #[Group('movement-step-db')]
-    #[Group('d4-phase-c')]
     public function testMovementsDepletedBranchRejectsPlayerWithMvtBudgetRemaining(): void
     {
         // Without a players_bonus row, Player::getRemaining('mvt') falls

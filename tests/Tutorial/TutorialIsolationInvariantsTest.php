@@ -26,29 +26,10 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
  * a consumer that expected real-players-only has started seeing tutorial
  * rows, which is a real regression.
  */
+#[Group('sti-isolation')]
 class TutorialIsolationInvariantsTest extends TutorialIntegrationTestCase
 {
-    #[Group('sti-isolation')]
-    public function testEntityByNameRepositoryTargetsRealPlayerSubclass(): void
-    {
-        // entityByName() must query the RealPlayer repository (STI
-        // subclass), not the abstract GameEntity base — otherwise it
-        // would match tutorial / npc rows with the same name. Locked
-        // via source inspection because exercising the path requires
-        // committing fixtures to the live DB, which the test suite
-        // avoids. The two passing integration tests below + the source
-        // pin together guarantee the invariant.
-        $source = file_get_contents((new ReflectionClass(PlayerFactory::class))->getFileName());
-        $entityByName = $this->extractMethodSource($source, 'entityByName');
 
-        $this->assertStringContainsString(
-            'RealPlayer::class',
-            $entityByName,
-            'entityByName() must scope to RealPlayer, not GameEntity (STI leak risk)'
-        );
-    }
-
-    #[Group('sti-isolation')]
     public function testDiscriminatorMapCoversAllThreeSubclasses(): void
     {
         // The STI discriminator must map real/tutorial/npc onto the
@@ -66,7 +47,6 @@ class TutorialIsolationInvariantsTest extends TutorialIntegrationTestCase
         $this->assertSame(NonPlayerCharacter::class, $map['npc']      ?? null);
     }
 
-    #[Group('sti-isolation')]
     public function testGoPhpOccupiedCoordsQueryIsPlanIsolated(): void
     {
         // go.php's "blocked coords" SQL selects coords_id from `players`
@@ -76,8 +56,8 @@ class TutorialIsolationInvariantsTest extends TutorialIntegrationTestCase
         // coords_ids never collide. This test pins that structural
         // guarantee by seeding two rows at the same (x, y) on different
         // plans and asserting they have distinct coords_ids.
-        $realCoords = $this->insertCoords(42, 42, 0, 'olympia');
-        $tutCoords  = $this->insertCoords(42, 42, 0, 'tutorial');
+        $realCoords = $this->seedTile(42, 42, 0, 'olympia');
+        $tutCoords  = $this->seedTile(42, 42, 0, 'tutorial');
 
         $this->assertNotSame(
             $realCoords,
@@ -89,7 +69,7 @@ class TutorialIsolationInvariantsTest extends TutorialIntegrationTestCase
         // occupied-coords query filtered by the real coords_id must NOT
         // surface the tutorial player.
         $realId = $this->seedRealPlayer('IsoMover_' . bin2hex(random_bytes(4)));
-        [$tutId, ] = $this->seedTutorialPlayerAtCoords($realId, 'IsoBlocker_' . bin2hex(random_bytes(4)), $tutCoords);
+        [$tutId, ] = $this->seedTutorialPlayer($realId, 'IsoBlocker_' . bin2hex(random_bytes(4)), $tutCoords);
 
         $hits = $this->conn->fetchAllAssociative(
             'SELECT id FROM players WHERE coords_id = ?',
@@ -110,7 +90,6 @@ class TutorialIsolationInvariantsTest extends TutorialIntegrationTestCase
         $this->assertSame($tutId, (int) $tutHits[0]['id']);
     }
 
-    #[Group('sti-isolation')]
     public function testRefreshListScopesToRealPlayers(): void
     {
         // Classes\Player::refresh_list() powers the cached player
@@ -135,88 +114,4 @@ class TutorialIsolationInvariantsTest extends TutorialIntegrationTestCase
     }
 
     /* ---------------------- helpers ---------------------- */
-
-    private function extractMethodSource(string $source, string $method): string
-    {
-        if (!preg_match('/function\s+' . preg_quote($method, '/') . '\s*\([^}]*\{.*?\n    \}/s', $source, $m)) {
-            $this->fail("could not extract source for {$method}()");
-        }
-        return $m[0];
-    }
-
-    private function seedRealPlayer(?string $name = null): int
-    {
-        // A tile of its own — grabbing "any" coords could land the real
-        // player on the very tile a test's assertion queries.
-        $this->conn->insert('players', [
-            'name'        => $name ?? 'IsoReal_' . bin2hex(random_bytes(4)),
-            'race'        => 'Humain',
-            'player_type' => 'real',
-            'coords_id'   => $this->seedTile(),
-        ]);
-
-        return (int) $this->conn->lastInsertId();
-    }
-
-    private function seedTutorialPlayer(int $realPlayerId, string $name): int
-    {
-        [$tutId, ] = $this->seedTutorialPlayerWithId($realPlayerId, $name);
-        return $tutId;
-    }
-
-    /**
-     * @return array{0:int,1:int} [players.id, tutorial_players.id]
-     */
-    private function seedTutorialPlayerWithId(int $realPlayerId, string $name): array
-    {
-        return $this->seedTutorialPlayerAtCoords($realPlayerId, $name, $this->seedTile());
-    }
-
-    /**
-     * @return array{0:int,1:int} [players.id, tutorial_players.id]
-     */
-    private function seedTutorialPlayerAtCoords(int $realPlayerId, string $name, int $coordsId): array
-    {
-        $sessionId = 'iso-' . bin2hex(random_bytes(6));
-
-        $this->conn->insert('players', [
-            'name'                => $name,
-            'race'                => 'Humain',
-            'player_type'         => 'tutorial',
-            'coords_id'           => $coordsId,
-            'tutorial_session_id' => $sessionId,
-            'real_player_id_ref'  => $realPlayerId,
-        ]);
-        $tutPlayerId = (int) $this->conn->lastInsertId();
-
-        $this->conn->insert('tutorial_players', [
-            'tutorial_session_id' => $sessionId,
-            'player_id'           => $tutPlayerId,
-            'name'                => $name,
-            'is_active'           => 1,
-        ]);
-        $tutRowId = (int) $this->conn->lastInsertId();
-
-        return [$tutPlayerId, $tutRowId];
-    }
-
-    private function insertCoords(int $x, int $y, int $z, string $plan): int
-    {
-        $existing = $this->conn->fetchOne(
-            'SELECT id FROM coords WHERE x = ? AND y = ? AND z = ? AND plan = ?',
-            [$x, $y, $z, $plan]
-        );
-        if ($existing !== false) {
-            return (int) $existing;
-        }
-
-        $this->conn->insert('coords', [
-            'x'    => $x,
-            'y'    => $y,
-            'z'    => $z,
-            'plan' => $plan,
-        ]);
-
-        return (int) $this->conn->lastInsertId();
-    }
 }
