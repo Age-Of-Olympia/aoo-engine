@@ -46,7 +46,7 @@ class DodgeCondition extends BaseCondition implements HasParameterSchemaInterfac
             }
 
             $target->end_effect($stance->getName());
-            $this->applyReaction($stance, $actor, $target);
+            $this->applyReaction($stance, $actor, $target, $condition);
 
             $errorMessages[sizeof($errorMessages)] = $this->message($stance, $actor, $target);
             $result = new ConditionResult(false, array(), $errorMessages);
@@ -85,7 +85,7 @@ class DodgeCondition extends BaseCondition implements HasParameterSchemaInterfac
         };
     }
 
-    private function applyReaction(Effect $stance, ActorInterface $actor, ActorInterface $target): void
+    private function applyReaction(Effect $stance, ActorInterface $actor, ActorInterface $target, ActionCondition $condition): void
     {
         switch ($stance->getDodgeReaction()) {
             case 'immobilize_attacker':
@@ -96,12 +96,12 @@ class DodgeCondition extends BaseCondition implements HasParameterSchemaInterfac
                 $goCoords = $target->coords;
                 $goCoords->id = View::get_free_coords_id_arround($target->coords);
                 $target->go($goCoords);
-                $this->shouldRefresh = true;
+                $condition->getAction()->setRefreshScreen(true);
                 break;
 
             case 'delete_double':
                 View::delete_double($target);
-                $this->shouldRefresh = true;
+                $condition->getAction()->setRefreshScreen(true);
                 break;
         }
     }

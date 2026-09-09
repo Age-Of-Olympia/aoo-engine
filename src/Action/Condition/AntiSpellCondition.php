@@ -16,10 +16,6 @@ class AntiSpellCondition extends BaseCondition implements HasParameterSchemaInte
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);
-        if (!$preConditionResult->isSuccess()) {
-            return $preConditionResult;
-        }
         
         $result = new ConditionResult(true, array(), array());
         $errorMessages = array();

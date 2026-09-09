@@ -32,11 +32,6 @@ class BuffComputeCondition extends ComputeCondition implements DeclaresSimulatio
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);
-        if (!$preConditionResult->isSuccess()) {
-            return $preConditionResult;
-        }
-
         if (!$target) {
             return new ConditionResult(false, ["Aucune cible spécifiée."], []);
         }

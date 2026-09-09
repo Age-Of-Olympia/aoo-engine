@@ -9,8 +9,6 @@ use App\Entity\ActionCondition;
 
 interface ConditionInterface
 {
-    public function checkPreconditions(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult;
-
     /**
      * Return true ConditionResult if the condition is satisfied, false otherwise.
      */
@@ -22,7 +20,4 @@ interface ConditionInterface
     public function toRemove(): bool;
 
     public function applyCosts(ActorInterface $actor, ?ActorInterface $target, ActionCondition $conditionToPay): array;
-
-    public function shouldRefreshUi(): bool;
-    
 }

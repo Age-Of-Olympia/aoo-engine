@@ -35,12 +35,6 @@ class RequiresLockControlCondition extends BaseCondition implements HasParameter
         ActionCondition $condition,
         ConditionObject $conditionObject
     ): ConditionResult {
-        $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);
-
-        if (!$preConditionResult->isSuccess()) {
-            return $preConditionResult;
-        }
-
         if ($target === null) {
             return new ConditionResult(false, array(), array('Il n\'y a pas de serrure ici.'));
         }

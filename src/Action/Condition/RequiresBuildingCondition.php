@@ -45,11 +45,6 @@ class RequiresBuildingCondition extends BaseCondition implements HasParameterSch
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);
-        if (!$preConditionResult->isSuccess()) {
-            return $preConditionResult;
-        }
-
         // The workbench simulation stands on no board.
         if ($actor->isSimulated()) {
             return new ConditionResult(true, array(), array());

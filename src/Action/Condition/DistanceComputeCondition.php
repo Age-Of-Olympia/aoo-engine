@@ -8,24 +8,6 @@ use App\Interface\DeclaresSimulationInputsInterface;
 
 class DistanceComputeCondition extends ComputeCondition implements DeclaresSimulationInputsInterface
 {
-    /**
-     * Ligne de tir : une structure qui arrête les projectiles
-     * (races.blocks_projectiles — un mur, pas une table) entre le
-     * tireur et la cible fait échouer le tir. La flèche part quand
-     * même : l'échec suit le drapeau blocking de la condition, comme
-     * une esquive.
-     */
-    public function check(\App\Interface\ActorInterface $actor, ?\App\Interface\ActorInterface $target, \App\Entity\ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
-    {
-        /* Le contrôle de ligne de tir a été retiré d'ici : il vivait en
-         * double, une fois ici pour le tir à distance et une fois dans
-         * ObstacleCondition pour les cinq autres types de calcul — avec deux
-         * géométries et deux catalogues d'obstacles différents. Il est
-         * désormais dans ObstacleCondition seule, déclarée en précondition
-         * des six types. */
-        return parent::check($actor, $target, $condition, $conditionObject);
-    }
-
     public static function targetDefenseValue(int $cc, int $agi): int
     {
         return (int) floor(max(3 / 4 * $cc + 1 / 4 * $agi, 1 / 4 * $cc + 3 / 4 * $agi));

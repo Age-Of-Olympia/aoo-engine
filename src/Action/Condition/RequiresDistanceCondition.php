@@ -36,11 +36,6 @@ class RequiresDistanceCondition extends BaseCondition implements HasParameterSch
             return new ConditionResult(false, array(), $errorMessage);
         }
 
-        $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);
-        if (!$preConditionResult->isSuccess()) {
-            return new ConditionResult(false, array(), $preConditionResult->getConditionFailureMessages() ?? array(), blocking: true);
-        }
-
         $params = $condition->getParameters(); // e.g. { "max": 1 }
         $maxDist = $params['max'] ?? null;
         $minDist = $params['min'] ?? null;

@@ -40,11 +40,6 @@ class RequiresFactionCondition extends BaseCondition implements HasParameterSche
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);
-        if (!$preConditionResult->isSuccess()) {
-            return $preConditionResult;
-        }
-
         $scope = (string) ($condition->getParameters()['scope'] ?? self::SCOPE_ALWAYS);
 
         if ($scope === self::SCOPE_EDIFICE) {

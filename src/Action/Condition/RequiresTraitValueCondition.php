@@ -35,12 +35,6 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);
-
-        if (!$preConditionResult->isSuccess()) {
-            return $preConditionResult;
-        }
-
         $result = new ConditionResult(true, array(), array());
         $params = $condition->getParameters(); // e.g. { "a": 1, "pm": 10 }
 

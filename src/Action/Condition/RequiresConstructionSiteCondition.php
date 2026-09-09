@@ -32,11 +32,6 @@ class RequiresConstructionSiteCondition extends BaseCondition implements HasPara
         ActionCondition $condition,
         ConditionObject $conditionObject
     ): ConditionResult {
-        $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);
-        if (!$preConditionResult->isSuccess()) {
-            return $preConditionResult;
-        }
-
         if ($target === null) {
             return new ConditionResult(false, array(), ["Il n'y a pas de chantier ici."]);
         }

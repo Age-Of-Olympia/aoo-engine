@@ -29,11 +29,6 @@ class RequiresPlanBuildingCondition extends BaseCondition implements HasParamete
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);
-        if (!$preConditionResult->isSuccess()) {
-            return $preConditionResult;
-        }
-
         $required = trim((string) ($conditionObject->getPickedItem()?->row->requires_building ?? ''));
         if ($required === '') {
             return new ConditionResult(true, array(), array());
