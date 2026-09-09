@@ -3,7 +3,6 @@
 namespace App\Tutorial;
 
 use App\Factory\TutorialStepFactory;
-use App\Factory\EntityManagerFactory;
 use App\Entity\TutorialPlayer;
 use App\Factory\PlayerFactory;
 use Classes\Player;
@@ -366,27 +365,16 @@ class TutorialManager
             : $this->context->getPlayer()->id;
         $isReplay = $this->sessionManager->hasCompletedBefore($realPlayerId);
 
-        $actualXpAwarded = 0;
-        $actualPiAwarded = 0;
-
-        if (!$isReplay && $this->tutorialPlayer) {
-            $this->tutorialPlayer->transferRewardsToRealPlayer(
-                EntityManagerFactory::getEntityManager()->getConnection(),
-                $xpEarned,
-                $piEarned
-            );
-            $actualXpAwarded = $xpEarned;
-            $actualPiAwarded = $piEarned;
-
-            $realPlayer = PlayerFactory::legacy($realPlayerId);
-            $realPlayer->end_option('invisibleMode');
-
-            // Race-action seeding is best-effort; tutorial completion must
-            // not block on it (grantRaceStarterPack logs failures and continues).
-            $realPlayer->get_data();
-            (new \App\Service\PlayerActionsService())
-                ->grantRaceStarterPack($realPlayer->id, $realPlayer->data->race);
-        }
+        // The same exit as skip and cancel: leave waiting_room, race actions,
+        // and on a first run the XP plus the starter pack. Must run before
+        // completeSession(), which makes this run count as "completed before".
+        $earned = TutorialHelper::finalizeExitToGame(
+            PlayerFactory::legacy($realPlayerId),
+            ['xp' => $xpEarned, 'pi' => $piEarned],
+            $isReplay
+        );
+        $actualXpAwarded = $earned['xp'];
+        $actualPiAwarded = $earned['pi'];
 
         if ($this->tutorialPlayer) {
             $this->resourceManager->deleteTutorialPlayerAsEntity($this->tutorialPlayer, $this->sessionId);

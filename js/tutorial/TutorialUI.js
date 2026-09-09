@@ -1991,15 +1991,10 @@ class TutorialUI {
     /**
      * Complete tutorial and redirect to main game.
      *
-     * Calls /api/tutorial/complete.php so the server-side completion work runs:
-     *   - award first-time completion reward (XP/PI)
-     *   - remove invisibleMode option
-     *   - move player from waiting_room to faction's respawnPlan
-     *   - add race actions
-     *
-     * Without this API call, tutorial_progress.completed gets set by advance.php
-     * but the player stays stuck on waiting_room with invisibleMode on, which
-     * contradicts the tutorial's "Bonne chance dans Olympia !" finale.
+     * Calls /api/tutorial/complete.php to leave tutorial mode and clean up
+     * the tutorial player. The exit itself (reward, waiting_room, race
+     * actions) already ran server-side when advance.php completed the last
+     * step; complete.php only re-asserts it, and grants nothing twice.
      */
     async completeTutorialAndRedirect() {
         const $modal = $('#tutorial-complete-modal');

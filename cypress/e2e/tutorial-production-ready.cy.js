@@ -572,6 +572,18 @@ describe('Tutorial System - Production Readiness Test', () => {
       });
     });
 
+    /* First completion grants the starter pack (the walking stick is the
+     * item no other path gives). */
+    cy.then(() => {
+      cy.task('queryDatabase', {
+        query: `SELECT pi.n FROM players_items pi JOIN items i ON i.id = pi.item_id
+                WHERE pi.player_id = ? AND i.name = 'baton_marche'`,
+        params: [TEST_ACCOUNT.playerId]
+      }).then((rows) => {
+        expect(Number(rows[0]?.n ?? 0), 'first completion must grant the walking stick').to.be.greaterThan(0);
+      });
+    });
+
     /* Tutorial player must be deactivated (isolation guardrail) */
     cy.then(() => {
       cy.task('queryDatabase', {
