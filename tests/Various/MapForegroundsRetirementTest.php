@@ -70,33 +70,19 @@ class MapForegroundsRetirementTest extends TestCase
     }
 
     /** A fresh service each time: both cache, and this is what a page load says. */
-    private function verdict(?bool $rendererReadsTable = null): array
+    private function verdict(): array
     {
         return (new MapForegroundsRetirement(
             $this->conn,
-            new EntityTypeFootprintService($this->conn),
-            $rendererReadsTable
+            new EntityTypeFootprintService($this->conn)
         ))->status();
     }
 
-    /** While the renderer reads the table, the answer is no, whatever else holds. */
-    public function testTheRendererAloneHoldsTheTable(): void
-    {
-        $status = $this->verdict(true);
-
-        $this->assertFalse($status['droppable']);
-        $this->assertContains('le rendu de la carte y lit encore le décor', $status['blockers']);
-    }
-
-    /**
-     * And once it no longer does — the day the flip lands — the notice turns
-     * green by itself on a board with nothing else holding the table.
-     */
+    /** The notice is green on a board with nothing holding the table. */
     public function testTheNoticeClearsOnceNothingHoldsTheTable(): void
     {
-        $status = $this->verdict(false);
+        $status = $this->verdict();
 
-        $this->assertNotContains('le rendu de la carte y lit encore le décor', $status['blockers']);
         $this->assertSame($status['blockers'] === [], $status['droppable']);
     }
 

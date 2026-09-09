@@ -5,27 +5,16 @@ namespace App\Factory;
 use App\Service\Mail\NullMailContactProvider;
 use App\Service\Mail\OneSignalProvider;
 use App\Interface\MailContactProviderInterface;
-/**
- * Construit le fournisseur configuré (MAIL_CONTACT_PROVIDER) — seul point de
- * choix du vendeur. Se rabat sur NullMailContactProvider si non configuré.
- */
+/** Le fournisseur configuré (OneSignal), ou un no-op quand les clés manquent. */
 class MailContactProviderFactory
 {
-    public const PROVIDER_ONESIGNAL = 'onesignal';
-
     public static function create(): MailContactProviderInterface
     {
-        $provider = defined('MAIL_CONTACT_PROVIDER') ? MAIL_CONTACT_PROVIDER : self::PROVIDER_ONESIGNAL;
-
-        switch ($provider) {
-            case self::PROVIDER_ONESIGNAL:
-                if (self::oneSignalConfigured()) {
-                    return new OneSignalProvider(
-                        (string) constant('ONESIGNAL_APP_ID'),
-                        (string) constant('ONESIGNAL_REST_API_KEY')
-                    );
-                }
-                break;
+        if (self::oneSignalConfigured()) {
+            return new OneSignalProvider(
+                (string) constant('ONESIGNAL_APP_ID'),
+                (string) constant('ONESIGNAL_REST_API_KEY')
+            );
         }
 
         return new NullMailContactProvider();

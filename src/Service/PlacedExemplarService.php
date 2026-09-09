@@ -17,14 +17,13 @@ use Doctrine\ORM\EntityManagerInterface;
  * Its bag-side counterpart is {@see ItemInstanceService}, which creates,
  * equips, banks and collects.
  */
-class PlacedExemplarService extends BaseService
+class PlacedExemplarService
 {
 
     private EntityManagerInterface $entityManager;
 
     public function __construct()
     {
-        parent::__construct();
         $this->entityManager = EntityManagerFactory::getEntityManager();
     }
 
@@ -96,7 +95,7 @@ class PlacedExemplarService extends BaseService
 
         View::refresh_players_svg($goCoords);
 
-        $this->addAuditLog("PlacedExemplarService::placeInstance #{$instanceId} as item #{$id}");
+        (new AuditService())->addAuditLog("PlacedExemplarService::placeInstance #{$instanceId} as item #{$id}");
 
         return $id;
     }
@@ -151,7 +150,7 @@ class PlacedExemplarService extends BaseService
             View::refresh_players_svg((object) $goCoords);
         }
 
-        $this->addAuditLog("PlacedExemplarService::takeInstance exemplar #{$exemplarId} -> player #{$takerId}");
+        (new AuditService())->addAuditLog("PlacedExemplarService::takeInstance exemplar #{$exemplarId} -> player #{$takerId}");
 
         return (int) $instanceId;
     }
@@ -224,7 +223,7 @@ class PlacedExemplarService extends BaseService
             View::refresh_players_svg((object) $goCoords);
         }
 
-        $this->addAuditLog("PlacedExemplarService::destroyToGround exemplar #{$exemplarId} instance #{$instanceId}");
+        (new AuditService())->addAuditLog("PlacedExemplarService::destroyToGround exemplar #{$exemplarId} instance #{$instanceId}");
 
         return (int) $instanceId;
     }

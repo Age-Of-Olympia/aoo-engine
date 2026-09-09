@@ -21,13 +21,12 @@ use Doctrine\DBAL\Connection;
  * satellite, so everything reading `$player->data->xp` and friends keeps
  * working unchanged.
  */
-final class ProgressionService extends BaseService
+final class ProgressionService
 {
     private Connection $conn;
 
     public function __construct(?Connection $conn = null)
     {
-        parent::__construct();
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
     }
 

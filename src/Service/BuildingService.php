@@ -20,7 +20,7 @@ use Doctrine\ORM\EntityManagerInterface;
  * pipeline, so damage works with zero new code
  * (putBonus / getRemaining on the legacy Player).
  */
-class BuildingService extends BaseService
+class BuildingService
 {
     /**
      * Valeur d'avatar/portrait d'un type sans visuel dédié : vide — le
@@ -39,7 +39,6 @@ class BuildingService extends BaseService
         ?FactionService $factionService = null,
         ?DialogService $dialogService = null,
     ) {
-        parent::__construct();
         $this->entityManager = EntityManagerFactory::getEntityManager();
         $this->raceService = $raceService ?? new RaceService();
         $this->factionService = $factionService ?? new FactionService();
@@ -492,7 +491,7 @@ class BuildingService extends BaseService
         // déplacement.
         View::refresh_players_svg($goCoords);
 
-        $this->addAuditLog("BuildingService::place {$type} #{$id} at ({$goCoords->x},{$goCoords->y},{$goCoords->plan})");
+        (new AuditService())->addAuditLog("BuildingService::place {$type} #{$id} at ({$goCoords->x},{$goCoords->y},{$goCoords->plan})");
 
         return $id;
     }
@@ -833,7 +832,7 @@ class BuildingService extends BaseService
         @unlink(\Classes\Player::cachePath($playerId, '.json'));
         json()->forget('players', (string) $playerId);
 
-        $this->addAuditLog("BuildingService::updateInfo #{$playerId} '{$name}'");
+        (new AuditService())->addAuditLog("BuildingService::updateInfo #{$playerId} '{$name}'");
     }
 
     /**
@@ -869,7 +868,7 @@ class BuildingService extends BaseService
             View::refresh_players_svg((object) $goCoords);
         }
 
-        $this->addAuditLog('BuildingService::setOpen #' . $playerId . ' ' . ($open ? 'ouvert' : 'fermé'));
+        (new AuditService())->addAuditLog('BuildingService::setOpen #' . $playerId . ' ' . ($open ? 'ouvert' : 'fermé'));
     }
 
     /**
@@ -940,7 +939,7 @@ class BuildingService extends BaseService
         $details->setReadableFromAfar($readable);
         $this->entityManager->flush();
 
-        $this->addAuditLog('BuildingService::setReadableFromAfar #' . $playerId . ' '
+        (new AuditService())->addAuditLog('BuildingService::setReadableFromAfar #' . $playerId . ' '
             . ($readable === null ? 'comme sa nature' : ($readable ? 'oui' : 'non')));
     }
 
@@ -966,7 +965,7 @@ class BuildingService extends BaseService
         $details->setDialog($dialogName);
         $this->entityManager->flush();
 
-        $this->addAuditLog("BuildingService::setDialog #{$playerId} '{$dialogName}'");
+        (new AuditService())->addAuditLog("BuildingService::setDialog #{$playerId} '{$dialogName}'");
     }
 
     /**
@@ -1069,7 +1068,7 @@ class BuildingService extends BaseService
         $conn->executeStatement('DELETE FROM construction_sites WHERE player_id = ?', [$playerId]);
         $this->swapAvatar($playerId, broken: false);
 
-        $this->addAuditLog("BuildingService::restore #{$playerId}");
+        (new AuditService())->addAuditLog("BuildingService::restore #{$playerId}");
 
         return true;
     }
@@ -1097,7 +1096,7 @@ class BuildingService extends BaseService
             // Bascule visuelle : la ruine prend le sprite _broken de son type
             // quand il existe (même mécanisme que les murs de carte).
             $this->swapAvatar($playerId, broken: true);
-            $this->addAuditLog("BuildingService::markDestroyed #{$playerId}");
+            (new AuditService())->addAuditLog("BuildingService::markDestroyed #{$playerId}");
         }
 
         return $affected > 0;
@@ -1235,7 +1234,7 @@ class BuildingService extends BaseService
         // caches par-entité du bâtiment disparu se purgent explicitement.
         self::purgeEntityCaches($playerId);
 
-        $this->addAuditLog(
+        (new AuditService())->addAuditLog(
             "BuildingService::vanish #{$playerId}"
             . ($spilled === [] ? '' : ' — répand : ' . implode(', ', $spilled))
         );
@@ -1292,7 +1291,7 @@ class BuildingService extends BaseService
         // recyclé ressert le vieux SVG.
         self::purgeEntityCaches($playerId);
 
-        $this->addAuditLog("BuildingService::remove #{$playerId}");
+        (new AuditService())->addAuditLog("BuildingService::remove #{$playerId}");
 
         return true;
     }

@@ -19,7 +19,7 @@ use Doctrine\DBAL\Connection;
  * Gold is a stack, never an instance: the debit reaches the bag line
  * (`slot = ''`) and no worn copy.
  */
-final class GoldService extends BaseService
+final class GoldService
 {
     private const GOLD = 'or';
 
@@ -27,7 +27,6 @@ final class GoldService extends BaseService
 
     public function __construct(?Connection $conn = null)
     {
-        parent::__construct();
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
     }
 

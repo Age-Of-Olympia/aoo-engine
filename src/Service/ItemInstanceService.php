@@ -28,7 +28,7 @@ use Doctrine\ORM\EntityManagerInterface;
  * filtre, une arme déposée en banque resterait équipable, jetable et
  * vendable depuis n'importe où sur la carte.
  */
-class ItemInstanceService extends BaseService
+class ItemInstanceService
 {
     /**
      * Seuils d'état d'une instance : brisée à 0 (réparable, ne
@@ -231,7 +231,6 @@ class ItemInstanceService extends BaseService
 
     public function __construct()
     {
-        parent::__construct();
         $this->entityManager = EntityManagerFactory::getEntityManager();
     }
 

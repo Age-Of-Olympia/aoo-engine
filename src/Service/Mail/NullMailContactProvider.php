@@ -9,8 +9,4 @@ class NullMailContactProvider implements MailContactProviderInterface
     public function upsertContact(int $playerId, string $email, array $tags, bool $subscribed = true): void
     {
     }
-
-    public function updateTags(int $playerId, array $tags): void
-    {
-    }
 }

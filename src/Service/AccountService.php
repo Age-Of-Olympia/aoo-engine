@@ -14,7 +14,7 @@ use Doctrine\DBAL\Connection;
  * with them and only the first statement of each method remains — that is the
  * whole point of routing writes through here first.
  */
-final class AccountService extends BaseService
+final class AccountService
 {
     /** players columns still mirrored, keyed by their accounts counterpart. */
     private const MIRRORED = [
@@ -29,7 +29,6 @@ final class AccountService extends BaseService
 
     public function __construct(?Connection $conn = null)
     {
-        parent::__construct();
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
     }
 

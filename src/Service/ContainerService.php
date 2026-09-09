@@ -25,7 +25,7 @@ use RuntimeException;
  * the giver's row is debited only while it still holds enough, so two
  * hands taking the last unit cannot both walk away with it.
  */
-final class ContainerService extends BaseService
+final class ContainerService
 {
     /** Within reach: on the container's cell or the one next to it. */
     private const REACH = 1;
@@ -34,7 +34,6 @@ final class ContainerService extends BaseService
 
     public function __construct(?Connection $conn = null)
     {
-        parent::__construct();
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
     }
 
@@ -141,7 +140,7 @@ final class ContainerService extends BaseService
 
         $this->moveStack($actorId, $containerId, $itemId, $n, 'Vous n\'avez pas cela.');
         $this->journal($containerId, $actorId, 'a déposé ' . $n . ' × ' . $this->itemLabel($itemId) . ' dans');
-        $this->addAuditLog("container #{$containerId}: #{$actorId} y dépose {$n} × item #{$itemId}");
+        (new AuditService())->addAuditLog("container #{$containerId}: #{$actorId} y dépose {$n} × item #{$itemId}");
     }
 
     /** Takes $n units of a stack out of the container, into the bag. */
@@ -153,7 +152,7 @@ final class ContainerService extends BaseService
         }
         $this->moveStack($containerId, $actorId, $itemId, $n, 'Le contenant n\'a pas cela.');
         $this->journal($containerId, $actorId, 'a pris ' . $n . ' × ' . $this->itemLabel($itemId) . ' dans');
-        $this->addAuditLog("container #{$containerId}: #{$actorId} en retire {$n} × item #{$itemId}");
+        (new AuditService())->addAuditLog("container #{$containerId}: #{$actorId} en retire {$n} × item #{$itemId}");
     }
 
     /** Puts an exemplar from the actor's bag inside the container. */
@@ -168,7 +167,7 @@ final class ContainerService extends BaseService
             (new EntityLocationService($conn))->putInside($entityId, $containerId);
         });
         $this->journal($containerId, $actorId, 'a déposé ' . $this->exemplarLabel($instanceId) . ' dans');
-        $this->addAuditLog("container #{$containerId}: #{$actorId} y dépose l'exemplaire #{$instanceId}");
+        (new AuditService())->addAuditLog("container #{$containerId}: #{$actorId} y dépose l'exemplaire #{$instanceId}");
     }
 
     /** Takes an exemplar out of the container, into the actor's bag. */
@@ -191,7 +190,7 @@ final class ContainerService extends BaseService
             (new EntityLocationService($conn))->putInside((int) $entityId, $actorId);
         });
         $this->journal($containerId, $actorId, 'a pris ' . $this->exemplarLabel($instanceId) . ' dans');
-        $this->addAuditLog("container #{$containerId}: #{$actorId} en retire l'exemplaire #{$instanceId}");
+        (new AuditService())->addAuditLog("container #{$containerId}: #{$actorId} en retire l'exemplaire #{$instanceId}");
     }
 
     /**
@@ -261,7 +260,7 @@ final class ContainerService extends BaseService
 
         (new BuildingService())->setOpen($containerId, $open);
         $this->journal($containerId, $actorId, $open ? 'a ouvert' : 'a fermé');
-        $this->addAuditLog("container #{$containerId}: #{$actorId} " . ($open ? 'ouvre' : 'ferme'));
+        (new AuditService())->addAuditLog("container #{$containerId}: #{$actorId} " . ($open ? 'ouvre' : 'ferme'));
     }
 
     /**

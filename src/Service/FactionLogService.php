@@ -12,13 +12,12 @@ use Doctrine\DBAL\Connection;
  * the gesture, and the page shows the house what happened while it
  * slept — internal theft included: that is the point.
  */
-final class FactionLogService extends BaseService
+final class FactionLogService
 {
     private Connection $conn;
 
     public function __construct(?Connection $conn = null)
     {
-        parent::__construct();
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
     }
 

@@ -22,7 +22,7 @@ use Doctrine\DBAL\Connection;
  * race, equipment and effects) plus the `players_bonus` row (negative =
  * spent, positive = a buff beyond the maximum).
  */
-final class PoolSpendService extends BaseService
+final class PoolSpendService
 {
     /** The per-turn pool; spending any other trait is not this service's job. */
     public const POOL_TRAITS = ['a', 'mvt', 'pm', 'ae'];
@@ -34,7 +34,6 @@ final class PoolSpendService extends BaseService
 
     public function __construct(?Connection $conn = null)
     {
-        parent::__construct();
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
     }
 

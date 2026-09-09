@@ -12,14 +12,13 @@ use Doctrine\DBAL\Connection;
  * Both catalogues answer, and the sets stay separate: a name alone does not
  * say which one it came from, so callers select by `players.player_type`.
  */
-final class ObstructionService extends BaseService
+final class ObstructionService
 {
     private Connection $conn;
     private RaceService $raceService;
 
     public function __construct(?Connection $conn = null, ?RaceService $raceService = null)
     {
-        parent::__construct();
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
         $this->raceService = $raceService ?? new RaceService();
     }

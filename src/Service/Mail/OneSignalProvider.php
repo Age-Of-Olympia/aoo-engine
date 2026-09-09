@@ -70,17 +70,6 @@ class OneSignalProvider implements MailContactProviderInterface
         }
     }
 
-    public function updateTags(int $playerId, array $tags): void
-    {
-        try {
-            $request = (new UpdateUserRequest())
-                ->setProperties((new PropertiesObject())->setTags($this->stringifyTags($tags)));
-
-            $this->api->updateUser($this->appId, self::ALIAS_EXTERNAL_ID, (string) $playerId, $request);
-        } catch (\Throwable $e) {
-            error_log("[OneSignal] updateTags échoué pour #{$playerId} : " . $e->getMessage());
-        }
-    }
 
     /**
      * Les tags OneSignal sont des chaînes.

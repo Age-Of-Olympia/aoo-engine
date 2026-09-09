@@ -227,14 +227,6 @@ class MailContactSyncServiceTest extends TestCase
                 ];
             }
 
-            public function updateTags(int $playerId, array $tags): void
-            {
-                $this->calls[] = [
-                    'method' => 'updateTags',
-                    'id' => $playerId,
-                    'tags' => $tags,
-                ];
-            }
         };
     }
 }

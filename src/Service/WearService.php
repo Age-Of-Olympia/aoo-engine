@@ -42,7 +42,7 @@ use Doctrine\ORM\EntityManagerInterface;
  * possible only through bigger immediate decrements (DamageObject),
  * never through wear, which floors at 0.
  */
-class WearService extends BaseService
+class WearService
 {
     /** What the object is as far as combat goes. '' = read from the slot. */
     public const PROFILE_AUTO = '';
@@ -90,7 +90,6 @@ class WearService extends BaseService
 
     public function __construct()
     {
-        parent::__construct();
         $this->entityManager = EntityManagerFactory::getEntityManager();
     }
 

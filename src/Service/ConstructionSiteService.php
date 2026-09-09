@@ -18,7 +18,7 @@ use Classes\Db;
  * cannot both lay the last stone. Writes go through Classes\Db, which
  * the simulation guard already intercepts.
  */
-class ConstructionSiteService extends BaseService
+class ConstructionSiteService
 {
     /**
      * Opens the site on a freshly placed entity: progress 0, PV at the floor.

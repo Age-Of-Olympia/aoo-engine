@@ -5,12 +5,26 @@ namespace App\Service;
 use Classes\File;
 use mysqli_sql_exception;
 
-class DataBaseUpdateService extends BaseService
+class DataBaseUpdateService
 {
+    private AuditService $audit;
+
+    public function __construct()
+    {
+        $this->audit = new AuditService();
+    }
+
+    /** admin/deploy.php chains this run's entries under its own audit key. */
+    public function setCurrentAuditKey(?int $currentKey): self
+    {
+        $this->audit->setCurrentAuditKey($currentKey);
+
+        return $this;
+    }
+
     public function updateDb(): bool {
         ob_start();
-        $res = $this->executeAndLog(
-            function() {
+        $res = (function() {
                 $res = false;
                 $updateDir = $_SERVER['DOCUMENT_ROOT'].'/db/updates';
                 $doneDir = $_SERVER['DOCUMENT_ROOT'].'/db/updates_done';
@@ -53,8 +67,8 @@ class DataBaseUpdateService extends BaseService
                     echo 'db not updated';
                 }
                 return $res;
-            }
-        );
+            })();
+        $this->audit->addAuditLog(self::class . " : Execute And Log has been called");
         return $res;
     }
 }

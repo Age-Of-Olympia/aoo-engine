@@ -9,4 +9,3 @@ define('ONESIGNAL_APP_ID', '');
 define('ONESIGNAL_REST_API_KEY', '');
 
 /* Fournisseur de contacts (cf. MailContactProviderFactory). */
-define('MAIL_CONTACT_PROVIDER', 'onesignal');

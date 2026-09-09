@@ -12,13 +12,12 @@ use Doctrine\DBAL\Connection;
  * The TYPE says what has a door, from either catalogue; the ENTITY says who
  * owns it, by named owner or by shared faction.
  */
-final class LockService extends BaseService
+final class LockService
 {
     private Connection $conn;
 
     public function __construct(?Connection $conn = null)
     {
-        parent::__construct();
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
     }
 

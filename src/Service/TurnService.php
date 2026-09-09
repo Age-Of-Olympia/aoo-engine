@@ -20,7 +20,7 @@ use Doctrine\DBAL\Connection;
  * satellite, so everything reading `$player->data->nextTurnTime` and friends
  * keeps working unchanged.
  */
-final class TurnService extends BaseService
+final class TurnService
 {
     /** players columns still mirrored, keyed by their `turns` counterpart. */
     private const MIRRORED = [
@@ -34,7 +34,6 @@ final class TurnService extends BaseService
 
     public function __construct(?Connection $conn = null)
     {
-        parent::__construct();
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
     }
 

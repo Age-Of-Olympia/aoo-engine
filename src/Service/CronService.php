@@ -2,14 +2,20 @@
 
 namespace App\Service;
 
-use App\Service\BaseService;
 use Classes\Db;
 use Exception;
 use Classes\File;
 use Throwable;
 
-class CronService extends BaseService
+class CronService
 {
+    private AuditService $auditService;
+
+    public function __construct()
+    {
+        $this->auditService = new AuditService();
+    }
+
     public function executeCron($type): void {
         $this->auditService->addAuditLog('Cron '.$type.' started !');
         // $db is in fact used in the loaded scripts !

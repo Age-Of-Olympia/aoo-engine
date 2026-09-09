@@ -21,30 +21,16 @@ use Doctrine\DBAL\Connection;
  */
 final class MapForegroundsRetirement
 {
-    /**
-     * Whether the renderer still reads the table.
-     *
-     * False since `Classes\View` draws scenery from the entities. It stays a
-     * flag rather than a deletion because the branch is still there, for the
-     * pieces no figure has taken over yet.
-     */
-    public const RENDERER_READS_TABLE = false;
-
     private ?Connection $conn;
 
     private ?EntityTypeFootprintService $footprints;
 
-    /** Whether the renderer still reads the table — see the constant. */
-    private bool $rendererReadsTable;
-
     public function __construct(
         ?Connection $conn = null,
-        ?EntityTypeFootprintService $footprints = null,
-        ?bool $rendererReadsTable = null
+        ?EntityTypeFootprintService $footprints = null
     ) {
         $this->conn = $conn;
         $this->footprints = $footprints;
-        $this->rendererReadsTable = $rendererReadsTable ?? self::RENDERER_READS_TABLE;
     }
 
     private function conn(): Connection
@@ -68,10 +54,6 @@ final class MapForegroundsRetirement
         $shapesFromMap = $this->shapesFromMap();
 
         $blockers = [];
-
-        if ($this->rendererReadsTable) {
-            $blockers[] = 'le rendu de la carte y lit encore le décor';
-        }
 
         if ($shapesFromMap !== []) {
             $blockers[] = count($shapesFromMap) . ' '

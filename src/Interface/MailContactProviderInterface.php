@@ -19,10 +19,4 @@ interface MailContactProviderInterface
      */
     public function upsertContact(int $playerId, string $email, array $tags, bool $subscribed = true): void;
 
-    /**
-     * Rafraîchit les tags (via external_id), sans toucher à l'abonnement.
-     *
-     * @param array<string,string> $tags
-     */
-    public function updateTags(int $playerId, array $tags): void;
 }

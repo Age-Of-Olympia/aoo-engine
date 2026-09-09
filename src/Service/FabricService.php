@@ -14,7 +14,7 @@ use Classes\Db;
  * there. LootSpillService rolls it with the loot rules when the walls
  * fall; future modes have their dimension ready.
  */
-class FabricService extends BaseService
+class FabricService
 {
     public const SLOT = 'fabric';
 
