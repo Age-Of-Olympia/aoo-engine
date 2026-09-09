@@ -18,14 +18,13 @@ final class ActionCreateService
 
     /**
      * The action types that can be created, discriminator => display label.
-     * Sourced from the STI DiscriminatorMap so it never drifts from the entity.
      *
      * @return array<string, string>
      */
     public function availableTypes(): array
     {
         $types = [];
-        foreach (array_keys($this->entityManager->getClassMetadata(Action::class)->discriminatorMap) as $type) {
+        foreach (array_keys(ActionTypeRegistry::concreteOnly($this->entityManager->getClassMetadata(Action::class)->discriminatorMap)) as $type) {
             $types[(string) $type] = ucfirst((string) $type);
         }
 
@@ -39,7 +38,7 @@ final class ActionCreateService
      */
     public function create(string $type, string $name, string $displayName, int $level, ?string $category = null, string $icon = '', ?string $iconColor = null): Action
     {
-        $map = $this->entityManager->getClassMetadata(Action::class)->discriminatorMap;
+        $map = ActionTypeRegistry::concreteOnly($this->entityManager->getClassMetadata(Action::class)->discriminatorMap);
         if (!isset($map[$type])) {
             throw new InvalidArgumentException("Type d'action inconnu : {$type}.");
         }

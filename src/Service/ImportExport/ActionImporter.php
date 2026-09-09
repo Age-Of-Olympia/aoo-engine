@@ -16,7 +16,6 @@ use App\Service\Action\ActionParameterValidator;
 use App\Service\Action\ActionTypeRegistry;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
-use ReflectionClass;
 use ReflectionProperty;
 
 /**
@@ -110,9 +109,7 @@ final class ActionImporter extends AbstractObjectImporter
             $report->reject($name, "Type d'action inconnu : « {$type} ».");
             return null;
         }
-        // classForTypeKey also resolves abstract grouping types (e.g. "attack");
-        // reject those cleanly instead of letting `new $class()` throw a fatal.
-        if (!(new ReflectionClass($class))->isInstantiable()) {
+        if (!isset($this->typeRegistry->concreteTypes()[$type])) {
             $report->reject($name, "Type d'action non instanciable : « {$type} ».");
             return null;
         }

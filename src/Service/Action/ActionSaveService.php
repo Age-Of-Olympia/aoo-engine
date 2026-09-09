@@ -185,7 +185,7 @@ final class ActionSaveService
 
         $type = trim($type);
         $metadata = $this->entityManager->getClassMetadata(Action::class);
-        if (!isset($metadata->discriminatorMap[$type])) {
+        if (!isset(ActionTypeRegistry::concreteOnly($metadata->discriminatorMap)[$type])) {
             throw new \InvalidArgumentException("Type d'action inconnu : {$type}.");
         }
         if ($type === (string) $this->entityManager->getClassMetadata(get_class($action))->discriminatorValue) {

@@ -36,4 +36,12 @@ class ActionTypeRegistryTest extends TestCase
 
         $this->assertSame(['steal'], $keys);
     }
+
+    public function testConcreteTypesLeaveOutTheAbstractGroupingTypes(): void
+    {
+        $types = (new ActionTypeRegistry())->concreteTypes();
+
+        $this->assertArrayHasKey('melee', $types);
+        $this->assertArrayNotHasKey('attack', $types);
+    }
 }

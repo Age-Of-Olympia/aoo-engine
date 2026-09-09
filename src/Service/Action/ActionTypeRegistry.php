@@ -32,6 +32,29 @@ final class ActionTypeRegistry
     }
 
     /**
+     * The types an action can be created as or switched to: the map without
+     * its abstract grouping classes ("attack"), which have no rows.
+     *
+     * @return array<string, class-string>
+     */
+    public function concreteTypes(): array
+    {
+        return self::concreteOnly($this->typeMap());
+    }
+
+    /**
+     * The same rule on any key => class map, e.g. the one an EntityManager
+     * reports for the Action metadata.
+     *
+     * @param array<string, class-string> $map
+     * @return array<string, class-string>
+     */
+    public static function concreteOnly(array $map): array
+    {
+        return array_filter($map, static fn (string $class): bool => (new ReflectionClass($class))->isInstantiable());
+    }
+
+    /**
      * Type keys in an action's class ancestry (closest first), filtered to the
      * assignable set — e.g. a MeleeAction resolves to ['melee', 'attack'].
      *

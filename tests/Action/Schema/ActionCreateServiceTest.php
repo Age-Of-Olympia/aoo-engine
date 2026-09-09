@@ -69,4 +69,14 @@ class ActionCreateServiceTest extends TestCase
 
         $this->assertSame(['melee' => 'Melee', 'heal' => 'Heal'], $types);
     }
+
+    public function testAvailableTypesLeaveOutTheAbstractGroupingTypes(): void
+    {
+        $metadata = $this->createMock(ClassMetadata::class);
+        $metadata->discriminatorMap = ['attack' => \App\Action\AttackAction::class, 'melee' => MeleeAction::class];
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getClassMetadata')->willReturn($metadata);
+
+        $this->assertSame(['melee' => 'Melee'], (new ActionCreateService($em))->availableTypes());
+    }
 }
