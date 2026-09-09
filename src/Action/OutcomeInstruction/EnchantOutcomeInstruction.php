@@ -24,20 +24,15 @@ class EnchantOutcomeInstruction extends OutcomeInstruction implements HasParamet
     }
 
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
-        $outcomeSuccessMessages = array();
-        $outcomeFailureMessages = array();
-        $params =$this->getParameters();
-        $result = true;
-        $location = $params["location"] ?? "";
-
+        $location = $this->getParameters()["location"] ?? "";
         $itemToEnchant = $actor->emplacements->{$location};
 
-        $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous enchantez l\'objet: *'. $itemToEnchant->data->name .'*. Cet objet est désormais incassable!';
-        $enchantedItemId = $itemToEnchant->get_version($params=array('enchanted'=>1));
-
-        if(!$enchantedItemId){
-            $result = true;
-            $outcomeFailureMessages[sizeof($outcomeFailureMessages)] = 'L\'enchantement de l\'objet: *'. $itemToEnchant->data->name .'* a échoué pour une raison technique, contactez l\'équipe technique du jeu !';
+        // No variant row, no swap: the player keeps the item they had.
+        $enchantedItemId = $itemToEnchant->get_version(array('enchanted' => 1));
+        if (!$enchantedItemId) {
+            return new OutcomeResult(false, array(), [
+                'L\'enchantement de l\'objet: *' . $itemToEnchant->data->name . '* a échoué pour une raison technique, contactez l\'équipe technique du jeu !',
+            ]);
         }
 
         $enchantedItem = new Item($enchantedItemId);
@@ -45,7 +40,9 @@ class EnchantOutcomeInstruction extends OutcomeInstruction implements HasParamet
         $enchantedItem->add_item($actor, 1);
         $actor->equip($enchantedItem);
 
-        return new OutcomeResult($result, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: $outcomeFailureMessages);
+        return new OutcomeResult(true, [
+            'Vous enchantez l\'objet: *' . $itemToEnchant->data->name . '*. Cet objet est désormais incassable!',
+        ], array());
     }
 
 }
