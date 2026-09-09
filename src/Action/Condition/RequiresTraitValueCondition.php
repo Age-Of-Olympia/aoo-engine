@@ -52,23 +52,23 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
                 if($actor->getRemaining("pm") < (floor($value[0]*$impostureValue))){
                     array_push($details, "Pas assez de PM");
                     $costIsAffordable = false;
-                    break;
+                    continue;
                 }
                 if($actor->getRemaining("mvt") < (floor($value[1]*$impostureValue))){
                     array_push($details, "Pas assez de Mvt");
                     $costIsAffordable = false;
-                    break;
+                    continue;
                 }
             }   
             else if($key == "remaining"){
                 if($actor->getRemaining($value) < 1){
                     array_push($details, "Pas assez de ".CARACS[$value]);
                     $costIsAffordable = false;
-                    break;
+                    continue;
                 }
             }    
             else if($key == "remainingNullable"){
-                    break;
+                    continue;
             }   
             else if(is_array($value)){
                 if ($actor->getRemaining($key) < $this->costForActorPassive($actor, $value)) {
@@ -106,7 +106,7 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
                 array_push($result, "Vous avez dépensé " . $pmSpent . " PM.");
                 $mvtSpent = $this->pay($actor, "mvt", (int) floor($value[1]*$impostureValue));
                 array_push($result, "Vous avez dépensé " . $mvtSpent . " Mvt.");
-                break;
+                continue;
             }
             if ($key == "remaining" || $key == "remainingNullable") {
                 if (in_array($value, \App\Service\PoolSpendService::POOL_TRAITS, true)) {
@@ -117,13 +117,13 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
                 }
                 $text = "Vous avez dépensé " . $nb . " " . CARACS[$value] . ".";
                 array_push($result, $text);
-                break;
+                continue;
             }
             if(is_array($value)){
                 $spent = $this->pay($actor, $key, $this->costForActorPassive($actor, $value));
                 $text = "Vous avez dépensé " . $spent . " " . (CARACS[$key] ?? $key).".";
                 array_push($result, $text);
-                break;
+                continue;
             }
             if (!is_numeric($value)) {
                 continue; // marker (e.g. {"repos":"effets"}), nothing to spend
