@@ -7,11 +7,9 @@ use App\Service\ActionPassiveService;
 use App\Service\PlayerActionsService;
 use App\Service\PlayerOptionsService;
 use App\Service\PlayerService;
-use App\Service\MapService;
 use App\Service\PlayerPassiveService;
 use App\Service\EffectService;
 use App\Service\PlayerEffectService;
-use App\Service\PlayerBonusService;
 use App\Service\RaceService;
 use Exception;
 use Throwable;
@@ -37,7 +35,6 @@ class Player implements ActorInterface {
     public $playerPassiveService;
     public $playerEffectService;
     public $effectService;
-    public $playerBonusService;
     public $actionPassiveService;
     
     function __construct($playerId){
@@ -51,7 +48,6 @@ class Player implements ActorInterface {
         $this->playerPassiveService = new PlayerPassiveService();
         $this->playerEffectService = new PlayerEffectService();
         $this->effectService = new EffectService();
-        $this->playerBonusService = new PlayerBonusService();
         $this->actionPassiveService = new ActionPassiveService();
 
         /* L'esquive est calculée en fin de get_caracs() — la calculer
@@ -449,7 +445,7 @@ class Player implements ActorInterface {
     {
         $this->get_data(false);
 
-        return (bool) (new MapService())->getTileTypeAtCoord($type, (int) $this->data->coords_id)->n;
+        return (new \App\Service\Map\GroundLayerService())->hasAt($type, (int) $this->data->coords_id);
     }
 
     /**

@@ -21,43 +21,6 @@ class PlayerService
         $this->db = new Db();
     }
 
-    private function getPlayerField(string $field): mixed
-    {
-        $fields = $this->getPlayerFields([$field]);
-        return $fields[$field] ?? null;
-    }
-
-    public function getPlainEmail(int $playerId): ?string
-    {
-        return $this->getPlayerField( 'plain_mail');
-    }
-
-    public function getEmailBonus(int $playerId): bool
-    {
-        return $this->getPlayerField( 'email_bonus') ?? false;
-    }
-
-    public function getPlayerFields(array $fields): array
-    {
-        if (empty($fields)) {
-            return [];
-        }
-
-        $sql = "SELECT " . implode(', ', $fields) . " FROM players WHERE id = ?";
-        $res = $this->db->exe($sql, array($this->playerId));
-
-        if ($res && $res->num_rows > 0) {
-            $row = $res->fetch_object();
-            $result = [];
-            foreach ($fields as $field) {
-                $result[$field] = $row->$field ?? null;
-            }
-            return $result;
-        }
-
-        return array_fill_keys($fields, null);
-    }
-
     /**
      * The one definition of the "inactive" cutoff: no login within INACTIVE_TIME.
      * Static so roster/list code can reuse it without constructing a
@@ -113,30 +76,8 @@ class PlayerService
         return $result;
     }
 
-    public function getAllPlayers(): array
-    {
-        $sql = "SELECT * FROM players ORDER BY name ASC";
-        $db = new Db();
-        $result = $db->exe($sql);
-        
-        $players = [];
-        while ($row = $result->fetch_assoc()) {
-            $players[] = $row;
-        }
-        
-        return $players;
-    }
-    
     public function updateLastActionTime(): void {
         (new TurnService())->touchLastAction($this->playerId);
-    }
-
-    public function getNumberOfSpellAvailable() : int{
-        $player = $this->GetPlayer($this->playerId);
-        $spellList = $player->get_spells();
-        $spellsN = count($spellList);
-        $numberOfSpellsAvailable = $player->get_spells_available($spellsN);
-        return $numberOfSpellsAvailable;
     }
 
     public static function ProcessTargetDeath(Player $player, Player $target): void

@@ -74,7 +74,6 @@ class RaceServiceTest extends TestCase
         $this->assertNull($this->service->getRaceData('atlante_inconnu'));
         $this->assertNull($this->service->getRaceByName('atlante_inconnu'));
         $this->assertSame(4, $this->service->getRaceMaxMvt('atlante_inconnu'));
-        $this->assertSame('#FFFFFF', $this->service->getRaceBackgroundColor('atlante_inconnu'));
         $this->assertSame('#000000', RaceService::getRaceColor('atlante_inconnu'));
         $this->assertSame('#000000', RaceService::getRaceColor(null), 'empty race = "commun" = black');
         $this->assertSame('#000000', RaceService::getRaceColor(''));

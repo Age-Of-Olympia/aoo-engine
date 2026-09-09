@@ -2,12 +2,12 @@
 
 namespace Tests\Various;
 
-use App\Service\MapService;
+use App\Service\Map\GroundLayerService;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-class MapServiceTileGuardTest extends TestCase
+class GroundLayerNameGuardTest extends TestCase
 {
     /**
      * @return array<string, array{string}>
@@ -30,6 +30,6 @@ class MapServiceTileGuardTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         // Throws on the guard, before any Db access, so no database is needed.
-        (new MapService())->getTileTypeAtCoord($name, 1);
+        (new GroundLayerService())->hasAt($name, 1);
     }
 }

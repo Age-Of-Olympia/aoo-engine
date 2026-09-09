@@ -205,7 +205,7 @@ class TurnProcessingService
         // Malus de mouvement au tour (catalogue : turn_mvt_malus,
         // ex-ralentissement codé en dur) — la valeur portée fait le malus.
         foreach ($player->effectService->turnEffects($player->getEffects(), 'turn_mvt_malus') as $effect) {
-            $player->playerBonusService->setBonusByPlayerIdByName(
+            (new PlayerBonusService())->setBonusByPlayerIdByName(
                 $player->id,
                 'mvt',
                 -$player->playerEffectService->getEffectValueByPlayerIdByEffectName($player->id, $effect->getName())

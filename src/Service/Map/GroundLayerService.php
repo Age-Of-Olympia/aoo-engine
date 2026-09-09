@@ -10,7 +10,7 @@ use Classes\View;
  *
  * A road is walked ON, not stood in: it belongs to `map_routes`, the layer
  * the map editor writes and that everything already reads — the running
- * bonus through `MapService::getTileTypeAtCoord`, the drawn map, `observe`,
+ * bonus through `Player::isOnTileType`, the drawn map, `observe`,
  * and the rule keeping plants off roads.
  *
  * Placing one as an installed object instead puts a THING on the cell: the

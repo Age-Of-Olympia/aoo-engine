@@ -3,7 +3,6 @@
 namespace Tests\Various;
 
 use App\Service\Map\GroundLayerService;
-use App\Service\MapService;
 use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
@@ -12,7 +11,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * A road is ground, not an object standing on it.
  *
  * Everything that knows about roads reads `map_routes`: the running bonus
- * (`courir` → TileTypeOutcomeInstruction → MapService), the drawn map,
+ * (`courir` → TileTypeOutcomeInstruction → GroundLayerService), the drawn map,
  * `observe`, and the rule keeping plants off roads. A road installed as an
  * object is invisible to every one of them — which is what happened when the
  * placement action moved to `placestructure`.
@@ -74,13 +73,13 @@ class GroundLayerTest extends LegacyPlayerFixtureTestCase
         $coordsId = (int) View::get_coords_id($coords);
         $player = $this->createRealPlayer('GmPaveur');
 
-        $this->assertSame(0, (int) (new MapService())->getTileTypeAtCoord('routes', $coordsId)->n);
+        $this->assertFalse((new GroundLayerService())->hasAt('routes', $coordsId));
 
         $laid = (new GroundLayerService())->lay('routes', 'route', $coords, (int) $player->id);
         $this->laidAt[] = $coordsId;
 
         $this->assertTrue($laid['ok'], $laid['message']);
-        $this->assertSame(1, (int) (new MapService())->getTileTypeAtCoord('routes', $coordsId)->n);
+        $this->assertTrue((new GroundLayerService())->hasAt('routes', $coordsId));
     }
 
     /** A road stays its builder's — that is what lets it decay when abandoned. */

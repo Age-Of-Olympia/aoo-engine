@@ -16,7 +16,6 @@ use RuntimeException;
 class RaceService
 {
     private const DEFAULT_COLOR = '#000000';
-    private const DEFAULT_BG_COLOR = '#FFFFFF';
     private const DEFAULT_MAX_MVT = 4;
 
     /** Le rouge sang du voile de blessure historique. */
@@ -68,15 +67,6 @@ class RaceService
     }
 
     /**
-     * Returns the ID of the Race that matches the given name, or null if not found.
-     */
-    public function getRaceIdByName(string $name): ?int
-    {
-        $race = $this->getRaceByName($name);
-        return $race ? $race->getId() : null;
-    }
-
-    /**
      * Full race data in the shape the race JSON files used to have — the
      * historical read model most call sites consume (->name is the display
      * label, ->text the lore, ->actions/->spells the name lists,
@@ -119,16 +109,6 @@ class RaceService
         $entity = (new self())->getRaceByName($race);
 
         return $entity ? $entity->getBgColor() : self::DEFAULT_COLOR;
-    }
-
-    /**
-     * Returns the background color of the Race that matches the given name.
-     */
-    public function getRaceBackgroundColor(string $raceName): string
-    {
-        $race = $this->getRaceByName($raceName);
-
-        return $race ? $race->getBgColor() : self::DEFAULT_BG_COLOR;
     }
 
     /**

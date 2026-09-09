@@ -22,9 +22,6 @@ namespace App\Service;
  */
 final class PlaysTurns
 {
-    /** Discriminators that play by nature, whatever their type says. */
-    public const CHARACTER_TYPES = ['real', 'tutorial', 'npc'];
-
     public const SQL_PREDICATE =
         "(p.player_type IN ('real', 'tutorial', 'npc')
           OR p.player_type IS NULL

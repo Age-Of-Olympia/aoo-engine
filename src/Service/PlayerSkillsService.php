@@ -23,56 +23,6 @@ class PlayerSkillsService
     private const SUMMARY_FIELDS = 'id, name, race, player_type, xp, lastLoginTime';
 
     /**
-     * Resolve players for the admin picker.
-     *
-     * A purely numeric term is treated as a matricule (exact id match); any
-     * other term is a name LIKE search. Results are name-ordered and capped.
-     *
-     * @return array<int, array{id:int, name:string, race:string, player_type:string, xp:int, lastLoginTime:int, active:bool}>
-     */
-    public function searchPlayers(string $term, int $limit = 50): array
-    {
-        $term = trim($term);
-        if ($term === '') {
-            return [];
-        }
-
-        $db = new Db();
-
-        if (ctype_digit($term)) {
-            $sql = 'SELECT ' . self::SUMMARY_FIELDS . ' FROM players WHERE id = ?';
-            $res = $db->exe($sql, [(int) $term]);
-        } else {
-            // $limit is an internal int (cast here), never user input, so
-            // inlining it avoids mysqli binding LIMIT as a quoted string.
-            $sql = 'SELECT ' . self::SUMMARY_FIELDS . '
-                    FROM players
-                    WHERE name LIKE ?
-                    ORDER BY name ASC
-                    LIMIT ' . (int) $limit;
-            $res = $db->exe($sql, ['%' . $term . '%']);
-        }
-
-        return $this->hydrateRows($res);
-    }
-
-    /**
-     * Every real player (player_type = 'real'), name-ordered — the default
-     * roster shown on the Compétences landing, filtered client-side.
-     *
-     * @return array<int, array{id:int, name:string, race:string, player_type:string, xp:int, lastLoginTime:int, active:bool}>
-     */
-    public function listRealPlayers(): array
-    {
-        $sql = 'SELECT ' . self::SUMMARY_FIELDS . "
-                FROM players
-                WHERE player_type = 'real'
-                ORDER BY name ASC";
-
-        return $this->hydrateRows((new Db())->exe($sql));
-    }
-
-    /**
      * Real players and PNJs together, name-ordered — the roster shown on the
      * Compétences landing, where a client-side Type filter (Joueurs / PNJ) and
      * a Statut filter (Actifs / Inactifs) narrow the list. Tutorial and other

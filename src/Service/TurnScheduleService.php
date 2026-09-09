@@ -79,16 +79,4 @@ class TurnScheduleService
         return $candidate >= $window['min'] && $candidate <= $window['max'];
     }
 
-    /**
-     * Persist a new next-turn time. Callers must have validated the value
-     * with isWithinRescheduleWindow() first.
-     *
-     * The right to reschedule is spent along with it: one reschedule per turn
-     * cycle, the flag cleared when the turn refreshes (NewTurnView). Where the
-     * turn is stored is TurnService's business — the rules stay here.
-     */
-    public function reschedule(int $playerId, int $newNextTurnTime): void
-    {
-        (new TurnService())->reschedule($playerId, $newNextTurnTime);
-    }
 }

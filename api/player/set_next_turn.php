@@ -14,6 +14,7 @@ header('Content-Type: application/json; charset=utf-8');
 require_once(__DIR__ . '/../../config.php');
 
 use App\Service\TurnScheduleService;
+use App\Service\TurnService;
 use Classes\Player;
 
 if (empty($_SESSION['playerId'])) {
@@ -62,7 +63,7 @@ if (!TurnScheduleService::isWithinRescheduleWindow($candidate, $player->data->ne
     exit;
 }
 
-(new TurnScheduleService())->reschedule($player->id, $candidate);
+(new TurnService())->reschedule($player->id, $candidate);
 
 $player->refresh_data();
 

@@ -15,18 +15,6 @@ class PlayerBonusService
         $this->entityManager = EntityManagerFactory::getEntityManager();
     }
 
-    public function getBonusByPlayerIdByName(int $playerId, $name): int
-    {
-        $repo = $this->entityManager->getRepository(PlayerBonus::class);
-
-        $results = $repo->findBy([
-            'player_id' => $playerId,
-            'name' => $name
-        ]);
-
-        return $results[0]->getN();
-    }
-
     public function setBonusByPlayerIdByName(int $playerId, $name, $n): void
     {
         $repo = $this->entityManager->getRepository(PlayerBonus::class);
@@ -50,20 +38,4 @@ class PlayerBonusService
         }
     }
 
-    // Supprime les bonus Ae, A et Mvt
-    public function recoverNewTurn(int $playerId): void
-    {
-        $repo = $this->entityManager->getRepository(PlayerBonus::class);
-
-        $results = $repo->findBy([
-            'player_id' => $playerId,
-            'name' => ['a', 'ae', 'mvt']
-        ]);
-
-        foreach ($results as $bonus) {
-            $this->entityManager->remove($bonus);
-        }
-
-        $this->entityManager->flush();
-    }
 }
