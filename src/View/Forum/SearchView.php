@@ -81,27 +81,20 @@ class SearchView
                 }
 
 
+                $link = 'forum.php?topic=' . htmlentities($topJson->name) . '#' . htmlentities($postJson->name);
+
                 echo '
             <tr>
 
-                <th><a href="forum.php?topic=' . $topJson->name . '#' . $postJson->name . '">' . $topJson->title . '</a></th>
+                <th><a href="' . $link . '">' . htmlentities($topJson->title) . '</a></th>
 
             </tr>
             ';
 
-                $text = $postJson->text;
-
-                foreach (explode(' ', $_POST['keywords']) as $w) {
-
-
-                    $text = str_replace(' ' . $w . ' ', '<font color="red"> ' . $w . ' </font>', $text);
-                }
-
-
                 echo '
             <tr>
 
-                <td align="left">' . explode("\n", $text)[0] . ' <a href="forum.php?topic=' . $topJson->name . '#' . $postJson->name . '">[...]</a></td>
+                <td align="left">' . self::excerpt($postJson->text, $_POST['keywords']) . ' <a href="' . $link . '">[...]</a></td>
 
             </tr>
             ';
@@ -112,5 +105,25 @@ class SearchView
     </table>
     ';
         }
+    }
+
+    /**
+     * First line of a post with each searched word highlighted. The line is
+     * escaped before the highlight is added, so the highlight is the only
+     * markup that reaches the page.
+     */
+    public static function excerpt(string $text, string $keywords): string
+    {
+        $line = htmlentities(explode("\n", $text)[0]);
+
+        foreach (explode(' ', $keywords) as $word) {
+            if ($word === '') {
+                continue;
+            }
+            $word = htmlentities($word);
+            $line = str_replace(' ' . $word . ' ', '<font color="red"> ' . $word . ' </font>', $line);
+        }
+
+        return $line;
     }
 }
