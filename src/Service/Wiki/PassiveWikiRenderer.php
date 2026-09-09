@@ -4,7 +4,7 @@ namespace App\Service\Wiki;
 
 use App\Interface\WikiSheetRendererInterface;
 use App\Action\Combat\PassiveValueCalculator;
-use App\Service\ImportExport\ExporterRegistry;
+use App\Service\ImportExport\PassiveExporter;
 
 /**
  * Fiche wiki des PASSIFS (compétences passives) : tableaux DokuWiki par
@@ -30,10 +30,7 @@ final class PassiveWikiRenderer implements WikiSheetRendererInterface
 
     public function render(): string
     {
-        $exporter = (new ExporterRegistry())->exporterFor('passive');
-        if ($exporter === null) {
-            return '(exporter des passifs indisponible)';
-        }
+        $exporter = new PassiveExporter();
 
         $byCategory = [];
         foreach ($exporter->exportAll() as $passive) {
@@ -57,14 +54,14 @@ final class PassiveWikiRenderer implements WikiSheetRendererInterface
             $out .= "^ Passif ^ Type ^ S'applique à ^ Bonus ^ Niveau ^ Race ^ Prérequis ^ Description ^\n";
 
             foreach ($passives as $passive) {
-                $out .= '| ' . $this->cell($this->displayName($passive))
+                $out .= '| ' . DokuWiki::cell($this->displayName($passive))
                     . ' | ' . (self::TYPE_LABELS[(string) ($passive['type'] ?? '')] ?? (string) ($passive['type'] ?? '—'))
-                    . ' | ' . $this->cell($this->traitsLabel($passive))
-                    . ' | ' . $this->cell($this->bonusLabel($passive))
+                    . ' | ' . DokuWiki::cell($this->traitsLabel($passive))
+                    . ' | ' . DokuWiki::cell($this->bonusLabel($passive))
                     . ' | ' . (int) ($passive['level'] ?? 0)
-                    . ' | ' . $this->cell((string) ($passive['race'] ?? '') !== '' ? (string) $passive['race'] : '—')
-                    . ' | ' . $this->cell((string) ($passive['prerequisites'] ?? '') !== '' ? (string) $passive['prerequisites'] : '—')
-                    . ' | ' . $this->cell((string) ($passive['text'] ?? ''))
+                    . ' | ' . DokuWiki::cell((string) ($passive['race'] ?? '') !== '' ? (string) $passive['race'] : '—')
+                    . ' | ' . DokuWiki::cell((string) ($passive['prerequisites'] ?? '') !== '' ? (string) $passive['prerequisites'] : '—')
+                    . ' | ' . DokuWiki::cell((string) ($passive['text'] ?? ''))
                     . " |\n";
             }
             $out .= "\n";
@@ -121,8 +118,4 @@ final class PassiveWikiRenderer implements WikiSheetRendererInterface
         return (CARACS_TXT[$carac] ?? strtoupper($carac)) . ' × ' . $value;
     }
 
-    private function cell(string $value): string
-    {
-        return trim(str_replace(['|', "\r", "\n"], ['∣', ' ', ' '], strip_tags($value)));
-    }
 }

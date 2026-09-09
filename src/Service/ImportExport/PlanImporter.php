@@ -2,14 +2,13 @@
 
 namespace App\Service\ImportExport;
 
-use App\Interface\ObjectImporterInterface;
 use App\Service\PlanAdminService;
 use App\Service\PlanConfigService;
 use App\Service\Map\StructureTypeService;
 use App\Service\TiledMapService;
 use Classes\Db;
+use Doctrine\DBAL\Connection;
 use RuntimeException;
-use Throwable;
 
 /**
  * Importe des bundles de plans ({@see PlanExporter}) en create-or-replace :
@@ -19,15 +18,13 @@ use Throwable;
  * existantes sont conservées (les FK qui les visent — joueurs, logs —
  * restent valides), les manquantes sont créées.
  *
- * Implémente ObjectImporterInterface directement plutôt que d'étendre
- * AbstractObjectImporter : le squelette abstrait transactionne l'EntityManager
- * Doctrine alors que les écritures map_* passent par Classes\Db (mysqli) —
- * la transaction doit vivre sur la même connexion que les écritures.
+ * Les écritures map_* passent par Classes\Db, qui enveloppe la même
+ * connexion native que DBAL : la transaction du squelette les couvre.
  *
  * Le fichier JSON du plan est remplacé APRÈS le commit : une base importée
  * sans JSON se répare en réimportant, l'inverse non.
  */
-final class PlanImporter implements ObjectImporterInterface
+final class PlanImporter extends AbstractDbalImporter
 {
     /** Taille des lots d'INSERT multi-lignes (précédent : mapcmd.php). */
     private const INSERT_BATCH = 500;
@@ -38,6 +35,7 @@ final class PlanImporter implements ObjectImporterInterface
 
     public function __construct(?Db $db = null, ?PlanConfigService $planConfig = null, ?PlanAdminService $planAdmin = null)
     {
+        parent::__construct();
         // Lazy : l'instanciation ne doit pas ouvrir de connexion DB
         $this->db = $db;
         $this->planConfig = $planConfig;
@@ -49,54 +47,24 @@ final class PlanImporter implements ObjectImporterInterface
         return 'plan';
     }
 
-    public function preview(array $objects): ImportReport
+    /** JSON après commit (les fichiers ne se rollbackent pas). */
+    protected function afterImport(array $payloads): void
     {
-        $report = new ImportReport();
-        $this->collect($objects, $report);
-
-        return $report;
-    }
-
-    public function import(array $objects): ImportReport
-    {
-        $report = new ImportReport();
-        $payloads = $this->collect($objects, $report);
-
-        // Tout-ou-rien : un seul rejet et le lot entier reste non écrit
-        if ($report->hasRejections()) {
-            return $report;
-        }
-
-        $db = $this->db();
-        $db->beginTransaction();
-        try {
-            foreach ($payloads as $payload) {
-                $this->applyPayload($payload, $report);
-            }
-            $db->commit();
-        } catch (Throwable $exception) {
-            $db->rollBack();
-            throw $exception;
-        }
-
-        // JSON après commit (les fichiers ne se rollbackent pas)
         foreach ($payloads as $payload) {
             if (is_array($payload['config'])) {
                 ($this->planConfig ??= new PlanConfigService())->replace($payload['plan'], $payload['config']);
             }
         }
-
-        return $report;
     }
 
     /**
      * Valide et classe chaque payload (create/update/reject/warn) sans rien
-     * écrire — même squelette que AbstractObjectImporter::collect().
+     * écrire.
      *
      * @param array<int, mixed> $objects
      * @return list<array{plan: string, config: ?array, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>}>
      */
-    private function collect(array $objects, ImportReport $report): array
+    protected function collect(array $objects, ImportReport $report): array
     {
         $payloads = [];
         $seen = [];
@@ -113,11 +81,9 @@ final class PlanImporter implements ObjectImporterInterface
                 continue;
             }
 
-            if (isset($seen[$payload['plan']])) {
-                $report->reject($payload['plan'], 'Doublon : « ' . $payload['plan'] . ' » apparaît plusieurs fois dans le lot.');
+            if ($this->isDuplicate($report, $seen, $payload['plan'])) {
                 continue;
             }
-            $seen[$payload['plan']] = true;
 
             $this->classify($payload, $report);
             $payloads[] = $payload;
@@ -210,11 +176,11 @@ final class PlanImporter implements ObjectImporterInterface
 
     /**
      * Remplace le contenu authoré d'un plan par celui du payload, dans la
-     * transaction ouverte par import().
+     * transaction du lot.
      *
      * @param array{plan: string, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>} $payload
      */
-    private function applyPayload(array $payload, ImportReport $report): void
+    protected function apply(Connection $conn, array $payload, ImportReport $report): void
     {
         $plan = $payload['plan'];
         $db = $this->db();

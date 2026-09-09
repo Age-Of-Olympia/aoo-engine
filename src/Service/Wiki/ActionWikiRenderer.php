@@ -3,7 +3,7 @@
 namespace App\Service\Wiki;
 
 use App\Interface\WikiSheetRendererInterface;
-use App\Service\ImportExport\ExporterRegistry;
+use App\Service\ImportExport\ActionExporter;
 use Classes\Db;
 
 /**
@@ -43,10 +43,7 @@ final class ActionWikiRenderer implements WikiSheetRendererInterface
 
     public function render(): string
     {
-        $exporter = (new ExporterRegistry())->exporterFor('action');
-        if ($exporter === null) {
-            return '(exporter des actions indisponible)';
-        }
+        $exporter = new ActionExporter();
 
         $itemNames = $this->itemNames();
 
@@ -72,11 +69,11 @@ final class ActionWikiRenderer implements WikiSheetRendererInterface
             $out .= "^ Nom ^ Type ^ Visée ^ Coût ^ Description ^\n";
 
             foreach ($actions as $action) {
-                $out .= '| ' . $this->cell((string) (($action['displayName'] ?? '') !== '' ? $action['displayName'] : $action['name']))
-                    . ' | ' . $this->cell((string) ($action['type'] ?? ''))
-                    . ' | ' . $this->cell($this->targetLabel($action['conditions'] ?? []))
-                    . ' | ' . $this->cell($this->costLabel($action['conditions'] ?? [], $itemNames))
-                    . ' | ' . $this->cell((string) ($action['text'] ?? ''))
+                $out .= '| ' . DokuWiki::cell((string) (($action['displayName'] ?? '') !== '' ? $action['displayName'] : $action['name']))
+                    . ' | ' . DokuWiki::cell((string) ($action['type'] ?? ''))
+                    . ' | ' . DokuWiki::cell($this->targetLabel($action['conditions'] ?? []))
+                    . ' | ' . DokuWiki::cell($this->costLabel($action['conditions'] ?? [], $itemNames))
+                    . ' | ' . DokuWiki::cell((string) ($action['text'] ?? ''))
                     . " |\n";
             }
             $out .= "\n";
@@ -159,8 +156,4 @@ final class ActionWikiRenderer implements WikiSheetRendererInterface
     }
 
     /** Une cellule DokuWiki ne survit ni aux pipes ni aux retours ligne. */
-    private function cell(string $value): string
-    {
-        return trim(str_replace(['|', "\r", "\n"], ['∣', ' ', ' '], strip_tags($value)));
-    }
 }

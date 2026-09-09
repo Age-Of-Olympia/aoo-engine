@@ -33,11 +33,9 @@ final class ItemImporter extends AbstractDbalImporter
                 continue;
             }
             $name = strtolower(trim((string) $object['name']));
-            if (isset($seen[$name])) {
-                $report->reject($name, 'doublon dans le bundle');
+            if ($this->isDuplicate($report, $seen, $name)) {
                 continue;
             }
-            $seen[$name] = true;
 
             $exists = $conn->fetchOne('SELECT id FROM items WHERE name = ?', [$name]) !== false;
             if ($exists) {
@@ -55,7 +53,7 @@ final class ItemImporter extends AbstractDbalImporter
     /**
      * @param array<string, mixed> $payload
      */
-    protected function apply(Connection $conn, array $payload): void
+    protected function apply(Connection $conn, array $payload, ImportReport $report): void
     {
         $name = (string) $payload['name'];
 

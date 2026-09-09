@@ -48,20 +48,42 @@ abstract class AbstractDbalImporter implements ObjectImporterInterface
             return $report;
         }
 
-        $this->connection()->transactional(function (Connection $conn) use ($payloads): void {
+        $this->connection()->transactional(function (Connection $conn) use ($payloads, $report): void {
             foreach ($payloads as $payload) {
-                $this->apply($conn, $payload);
+                $this->apply($conn, $payload, $report);
             }
         });
 
-        $this->afterImport();
+        $this->afterImport($payloads);
 
         return $report;
     }
 
-    /** Hook post-transaction (invalidation de caches…) — no-op par défaut. */
-    protected function afterImport(): void
+    /**
+     * Hook post-transaction (invalidation de caches, fichiers…) — no-op par
+     * défaut.
+     *
+     * @param array<int, array<string, mixed>> $payloads ceux qui viennent d'être écrits
+     */
+    protected function afterImport(array $payloads): void
     {
+    }
+
+    /**
+     * Vrai (et rejet enregistré) quand $key a déjà été acceptée dans ce lot :
+     * la clé naturelle est unique dans un bundle.
+     *
+     * @param array<string, true> $seen
+     */
+    final protected function isDuplicate(ImportReport $report, array &$seen, string $key): bool
+    {
+        if (isset($seen[$key])) {
+            $report->reject($key, 'Doublon : « ' . $key . " » apparaît plusieurs fois dans le lot.");
+            return true;
+        }
+        $seen[$key] = true;
+
+        return false;
     }
 
     /**
@@ -75,9 +97,9 @@ abstract class AbstractDbalImporter implements ObjectImporterInterface
 
     /**
      * Écrit UN payload (create-or-update par nom) — appelée dans la
-     * transaction du lot.
+     * transaction du lot. Le rapport reçoit les avertissements d'écriture.
      *
      * @param array<string, mixed> $payload
      */
-    abstract protected function apply(Connection $conn, array $payload): void;
+    abstract protected function apply(Connection $conn, array $payload, ImportReport $report): void;
 }

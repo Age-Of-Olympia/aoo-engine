@@ -37,11 +37,9 @@ final class RecipeImporter extends AbstractDbalImporter
             // casse-insensible (utf8mb4_general_ci), « Potion » et « potion »
             // entreraient en collision à l'écriture sans ceci.
             $name = mb_strtolower(trim((string) $object['name']));
-            if (isset($seen[$name])) {
-                $report->reject($name, 'doublon dans le bundle');
+            if ($this->isDuplicate($report, $seen, $name)) {
                 continue;
             }
-            $seen[$name] = true;
 
             $rejected = false;
             foreach (['ingredients', 'results'] as $listKey) {
@@ -89,7 +87,7 @@ final class RecipeImporter extends AbstractDbalImporter
     /**
      * @param array<string, mixed> $payload
      */
-    protected function apply(Connection $conn, array $payload): void
+    protected function apply(Connection $conn, array $payload, ImportReport $report): void
     {
         $name = (string) $payload['name'];
 

@@ -29,7 +29,7 @@ final class DialogImporter extends AbstractDbalImporter
         return 'dialog';
     }
 
-    protected function apply(Connection $conn, array $payload): void
+    protected function apply(Connection $conn, array $payload, ImportReport $report): void
     {
         ($this->dialogs ??= new DialogService())->saveGameDialog($payload['name'], $payload['nodes'], [
             'npc_name'  => $payload['npcName'],
@@ -39,7 +39,7 @@ final class DialogImporter extends AbstractDbalImporter
         ]);
     }
 
-    protected function afterImport(): void
+    protected function afterImport(array $payloads): void
     {
         DialogService::clearCache();
     }
@@ -68,11 +68,9 @@ final class DialogImporter extends AbstractDbalImporter
                 continue;
             }
 
-            if (isset($seen[$payload['name']])) {
-                $report->reject($payload['name'], 'Doublon : « ' . $payload['name'] . ' » apparaît plusieurs fois dans le lot.');
+            if ($this->isDuplicate($report, $seen, $payload['name'])) {
                 continue;
             }
-            $seen[$payload['name']] = true;
 
             if (($this->dialogs ??= new DialogService())->gameDialogExists($payload['name'])) {
                 $report->addUpdated($payload['name']);

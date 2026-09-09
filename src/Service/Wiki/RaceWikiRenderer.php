@@ -3,7 +3,7 @@
 namespace App\Service\Wiki;
 
 use App\Interface\WikiSheetRendererInterface;
-use App\Service\ImportExport\ExporterRegistry;
+use App\Service\ImportExport\RaceExporter;
 
 /**
  * Fiche wiki des RACES et des TYPES DE BÂTIMENTS — le même partage que
@@ -26,10 +26,7 @@ final class RaceWikiRenderer implements WikiSheetRendererInterface
 
     public function render(): string
     {
-        $exporter = (new ExporterRegistry())->exporterFor('race');
-        if ($exporter === null) {
-            return '(exporter des races indisponible)';
-        }
+        $exporter = new RaceExporter();
 
         $races = [];
         $types = [];
@@ -72,7 +69,7 @@ final class RaceWikiRenderer implements WikiSheetRendererInterface
         $out .= "^ Type ^ Nature ^ PV ^ Bloque le passage ^ Bloque les tirs ^\n";
         foreach ($types as $type) {
             $caracs = (array) ($type['caracs'] ?? []);
-            $out .= '| ' . $this->cell((string) $type['label'])
+            $out .= '| ' . DokuWiki::cell((string) $type['label'])
                 . ' | ' . (($type['structureNature'] ?? 'edifice') === 'obstacle' ? 'Obstacle' : 'Édifice')
                 . ' | ' . (int) ($caracs['pv'] ?? 0)
                 . ' | ' . (!empty($type['blocks_passage']) ? 'oui' : 'non')
@@ -81,11 +78,6 @@ final class RaceWikiRenderer implements WikiSheetRendererInterface
         }
 
         return $out;
-    }
-
-    private function cell(string $value): string
-    {
-        return trim(str_replace(['|', "\r", "\n"], ['∣', ' ', ' '], strip_tags($value)));
     }
 
     private function text(string $value): string

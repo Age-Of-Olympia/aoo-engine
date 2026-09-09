@@ -3,7 +3,7 @@
 namespace App\Service\Wiki;
 
 use App\Interface\WikiSheetRendererInterface;
-use App\Service\ImportExport\ExporterRegistry;
+use App\Service\ImportExport\ItemExporter;
 
 /**
  * Fiche wiki des OBJETS : tableaux DokuWiki par type (équipement,
@@ -33,10 +33,7 @@ final class ItemWikiRenderer implements WikiSheetRendererInterface
 
     public function render(): string
     {
-        $exporter = (new ExporterRegistry())->exporterFor('item');
-        if ($exporter === null) {
-            return '(exporter des objets indisponible)';
-        }
+        $exporter = new ItemExporter();
 
         $byType = [];
         foreach ($exporter->exportAll() as $item) {
@@ -65,12 +62,12 @@ final class ItemWikiRenderer implements WikiSheetRendererInterface
 
             foreach ($items as $item) {
                 $out .= '| {{https://age-of-olympia.net/img/items/' . $item['name'] . '_mini.webp?nolink|}} '
-                    . $this->cell($this->displayName($item))
-                    . ' | ' . $this->cell((string) ($item['emplacement'] ?? '') !== '' ? (string) $item['emplacement'] : '—')
-                    . ' | ' . $this->cell($this->bonusLabel($item))
-                    . ' | ' . $this->cell((string) (int) ($item['price'] ?? 0))
-                    . ' | ' . $this->cell($this->wearLabel($item))
-                    . ' | ' . $this->cell((string) ($item['text'] ?? ''))
+                    . DokuWiki::cell($this->displayName($item))
+                    . ' | ' . DokuWiki::cell((string) ($item['emplacement'] ?? '') !== '' ? (string) $item['emplacement'] : '—')
+                    . ' | ' . DokuWiki::cell($this->bonusLabel($item))
+                    . ' | ' . DokuWiki::cell((string) (int) ($item['price'] ?? 0))
+                    . ' | ' . DokuWiki::cell($this->wearLabel($item))
+                    . ' | ' . DokuWiki::cell((string) ($item['text'] ?? ''))
                     . " |\n";
             }
             $out .= "\n";
@@ -181,8 +178,4 @@ final class ItemWikiRenderer implements WikiSheetRendererInterface
         return ($parts === [] ? 'usure ordinaire' : implode(', ', $parts)) . $durability;
     }
 
-    private function cell(string $value): string
-    {
-        return trim(str_replace(['|', "\r", "\n"], ['∣', ' ', ' '], strip_tags($value)));
-    }
 }
