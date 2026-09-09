@@ -28,89 +28,7 @@ class TutorialStepRepository
      */
     public function getStepById(string $stepId, string $version = '1.0.0'): ?array
     {
-        $sql = 'SELECT
-                    ts.id,
-                    ts.version,
-                    ts.step_id,
-                    ts.next_step,
-                    ts.step_number,
-                    ts.step_type,
-                    ts.title,
-                    ts.text,
-                    ts.xp_reward,
-                    -- UI config
-                    ui.target_selector,
-                    ui.target_description,
-                    ui.highlight_selector,
-                    ui.tooltip_position,
-                    ui.interaction_mode,
-                    ui.blocked_click_message,
-                    ui.show_delay,
-                    ui.auto_advance_delay,
-                    ui.allow_manual_advance,
-                    ui.auto_close_card,
-                    ui.tooltip_offset_x,
-                    ui.tooltip_offset_y,
-                    ui.highlight_padding,
-                    ui.caracs_panel_state,
-                    -- Validation config
-                    v.requires_validation,
-                    v.validation_type,
-                    v.validation_hint,
-                    v.target_x,
-                    v.target_y,
-                    v.movement_count,
-                    v.panel_id,
-                    v.element_selector,
-                    v.element_clicked,
-                    v.action_name,
-                    v.action_charges_required,
-                    v.combat_required,
-                    v.dialog_id,
-                    -- Prerequisites
-                    p.mvt_required,
-                    p.pa_required,
-                    p.auto_restore,
-                    p.consume_movements,
-                    p.unlimited_mvt,
-                    p.unlimited_pa,
-                    p.spawn_enemy,
-                    p.ensure_harvestable_tree_x,
-                    p.ensure_harvestable_tree_y,
-                    -- Features
-                    f.celebration,
-                    f.show_rewards,
-                    f.redirect_delay,
-                    -- 1:N relationships using JSON aggregation (eliminates N+1 queries)
-                    (SELECT JSON_ARRAYAGG(selector)
-                     FROM tutorial_step_interactions
-                     WHERE step_id = ts.id) as interactions_json,
-                    (SELECT JSON_ARRAYAGG(JSON_OBJECT(\'selector\', selector, \'padding\', COALESCE(padding, 0)))
-                     FROM tutorial_step_highlights
-                     WHERE step_id = ts.id) as highlights_json,
-                    (SELECT JSON_OBJECTAGG(context_key, context_value)
-                     FROM tutorial_step_context_changes
-                     WHERE step_id = ts.id) as context_changes_json,
-                    (SELECT JSON_OBJECTAGG(preparation_key, preparation_value)
-                     FROM tutorial_step_next_preparation
-                     WHERE step_id = ts.id) as next_preparation_json
-                FROM tutorial_steps ts
-                LEFT JOIN tutorial_step_ui ui ON ts.id = ui.step_id
-                LEFT JOIN tutorial_step_validation v ON ts.id = v.step_id
-                LEFT JOIN tutorial_step_prerequisites p ON ts.id = p.step_id
-                LEFT JOIN tutorial_step_features f ON ts.id = f.step_id
-                WHERE ts.version = ? AND ts.step_id = ? AND ts.is_active = 1';
-
-        $result = $this->db->exe($sql, [$version, $stepId]);
-
-        if (!$result || $result->num_rows === 0) {
-            return null;
-        }
-
-        $row = $result->fetch_assoc();
-
-        // Convert database row to format expected by AbstractStep constructor
-        return $this->convertRowToStepData($row);
+        return $this->fetchStep('ts.step_id = ?', [$version, $stepId]);
     }
 
     /**
@@ -121,6 +39,17 @@ class TutorialStepRepository
      * @return array|null
      */
     public function getStepByNumber(float $stepNumber, string $version = '1.0.0'): ?array
+    {
+        return $this->fetchStep('ts.step_number = ?', [$version, $stepNumber]);
+    }
+
+    /**
+     * One active step of a version with all its satellites, matched on
+     * $where (a clause on `ts`), in the shape AbstractStep expects.
+     *
+     * @param list<mixed> $params version first, then the clause's own
+     */
+    private function fetchStep(string $where, array $params): ?array
     {
         $sql = 'SELECT
                     ts.id,
@@ -193,16 +122,15 @@ class TutorialStepRepository
                 LEFT JOIN tutorial_step_validation v ON ts.id = v.step_id
                 LEFT JOIN tutorial_step_prerequisites p ON ts.id = p.step_id
                 LEFT JOIN tutorial_step_features f ON ts.id = f.step_id
-                WHERE ts.version = ? AND ts.step_number = ? AND ts.is_active = 1';
+                WHERE ts.version = ? AND ' . $where . ' AND ts.is_active = 1';
 
-        $result = $this->db->exe($sql, [$version, $stepNumber]);
+        $result = $this->db->exe($sql, $params);
 
         if (!$result || $result->num_rows === 0) {
             return null;
         }
 
-        $row = $result->fetch_assoc();
-        return $this->convertRowToStepData($row);
+        return $this->convertRowToStepData($result->fetch_assoc());
     }
 
     /**
@@ -395,8 +323,8 @@ class TutorialStepRepository
         // Parse JSON-aggregated 1:N relationships (eliminates 4 additional queries)
         $interactions = $this->parseJsonArray($row['interactions_json'] ?? null);
         $highlights = $this->parseJsonArray($row['highlights_json'] ?? null);
-        $contextChanges = $this->parseJsonObject($row['context_changes_json'] ?? null);
-        $prepareNextStep = $this->parseJsonObject($row['next_preparation_json'] ?? null);
+        $contextChanges = $this->parseJsonArray($row['context_changes_json'] ?? null);
+        $prepareNextStep = $this->parseJsonArray($row['next_preparation_json'] ?? null);
 
         // Convert context change values to appropriate types
         if (!empty($contextChanges)) {
@@ -574,33 +502,11 @@ class TutorialStepRepository
     // reducing 5 queries per step to just 1 query.
 
     /**
-     * Parse JSON array from database (handles NULL and decode errors)
+     * Decode a JSON_ARRAYAGG / JSON_OBJECTAGG column (NULL and decode errors give an empty array).
      *
-     * @param string|null $json JSON string from JSON_ARRAYAGG
-     * @return array Decoded array or empty array on failure
+     * @return array<mixed>
      */
     private function parseJsonArray(?string $json): array
-    {
-        if ($json === null || $json === '') {
-            return [];
-        }
-
-        $decoded = json_decode($json, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return [];
-        }
-
-        return is_array($decoded) ? $decoded : [];
-    }
-
-    /**
-     * Parse JSON object from database (handles NULL and decode errors)
-     *
-     * @param string|null $json JSON string from JSON_OBJECTAGG
-     * @return array Decoded associative array or empty array on failure
-     */
-    private function parseJsonObject(?string $json): array
     {
         if ($json === null || $json === '') {
             return [];
