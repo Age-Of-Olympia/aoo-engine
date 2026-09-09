@@ -961,32 +961,6 @@ class ItemInstanceService
     }
 
     /**
-     * All of a player's instances with their catalog name, worn first —
-     * inventaire ET banque, avec leur localisation : c'est la vue
-     * « tout ce que ce joueur possède », pas « ce qu'il a sous la main ».
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public function getInstances(int $playerId): array
-    {
-        return $this->entityManager->getConnection()->fetchAllAssociative(
-            'SELECT i.*, ' . self::linkColumnsFromSlot() . ', it.name AS catalog_name
-             FROM players e
-             JOIN item_instances i ON i.entity_id = e.id
-             JOIN items it ON it.id = i.item_id
-             WHERE e.holder_id = ?
-             ORDER BY e.slot DESC, i.id',
-            [$playerId]
-        );
-    }
-
-    /**
-     * Total units a player owns of a catalog item, BOTH representations:
-     * stack quantity + live (non-destroyed) instances. The future
-     * dual-read shim for Item::get_n() — pinned by tests now so the
-     * switch is a drop-in.
-     */
-    /**
      * Une unité ÉQUIPABLE existe-t-elle : pile non vide, ou instance
      * vivante non équipée ? Miroir exact des deux chemins de
      * equipCatalogItem() — la garde à passer AVANT toute mutation

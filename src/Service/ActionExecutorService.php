@@ -330,13 +330,4 @@ class ActionExecutorService
         }
     }
 
-    public function getInitialTargetPv(): int
-    {
-        return $this->initialTargetPv;
-    }
-
-    public function getFinalTargetPv(): int
-    {
-        return $this->finalTargetPv;
-    }
 }

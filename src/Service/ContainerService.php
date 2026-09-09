@@ -79,22 +79,10 @@ final class ContainerService
         }
     }
 
-    /**
-     * Why this container denies its contents, or null when it serves.
-     * The one closure rule (BuildingService::closureReason), fed for an
-     * entity that has no building satellite.
-     */
+    /** Why this container denies its contents, or null when it serves. */
     public function closureReasonOf(int $containerId): ?string
     {
-        $entity = \App\Factory\PlayerFactory::legacy($containerId);
-        $entity->get_caracs();
-
-        $pvMax = (int) ($entity->caracs->pv ?? 0);
-        $pvPct = $pvMax > 0 ? (int) floor($entity->getRemaining('pv') / $pvMax * 100) : 100;
-
-        $details = (new BuildingService())->getDetails($containerId);
-
-        return (new BuildingService())->closureReason($containerId, $details, $pvPct);
+        return (new BuildingService())->closureReasonOf($containerId);
     }
 
     /**

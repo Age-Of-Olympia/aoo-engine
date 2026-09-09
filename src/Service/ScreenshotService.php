@@ -145,8 +145,6 @@ class ScreenshotService
 
         $result = $this->generateScreenshot($coordsArray, self::DEFAULT_RANGE, $filename, $outputDir);
 
-        if ($result['success']) {
-        }
 
         return $result;
     }
@@ -245,13 +243,6 @@ class ScreenshotService
         
         foreach ($patterns as $pattern) {
             $svgData = preg_replace($pattern, '', $svgData);
-        }
-        
-        $newLength = strlen($svgData);
-        
-        if ($originalLength !== $newLength) {
-            $coordsInfo = ($pnjX !== null && $pnjY !== null) ? " at coordinates ({$pnjX},{$pnjY})" : "";
-        } else {
         }
         
         return $svgData;

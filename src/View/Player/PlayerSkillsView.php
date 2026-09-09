@@ -2,6 +2,8 @@
 
 namespace App\View\Player;
 
+use App\Trait\EscapesHtmlTrait;
+
 /**
  * One character's skills: the action and passive catalogs as two tables, each
  * row a checkbox for ownership. Built from the shared admin components (tables,
@@ -16,6 +18,8 @@ namespace App\View\Player;
  */
 final class PlayerSkillsView
 {
+    use EscapesHtmlTrait;
+
     /**
      * @param PlayerSummary $summary
      * @param array<int, array{key:string, label:string, sub:string, category:string, owned:bool, editable:bool, field?:string, value?:string}> $actions
@@ -127,8 +131,4 @@ final class PlayerSkillsView
         return $n;
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

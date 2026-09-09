@@ -20,7 +20,7 @@ $player = PlayerFactory::legacy(TutorialHelper::getActivePlayerId());
 $coords = $player->getCoords();
 
 $planJson = plans()->read($coords->plan);
-$planId = is_object($planJson) ? ($planJson->id ?? $coords->plan) : $coords->plan;
+$planId = $coords->plan;
 $planName = is_object($planJson) ? $planJson->name : $coords->plan;
 
 $viewService = new ViewService(new Db(), $coords->x, $coords->y, $coords->z, $player->id, $planId);

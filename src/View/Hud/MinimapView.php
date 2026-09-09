@@ -41,10 +41,7 @@ final class MinimapView
                 throw new \RuntimeException('plan sans carte');
             }
 
-            /* Certains JSON de plan n'ont pas de champ id : le slug du
-             * plan sert alors d'identifiant, comme pour le nommage des
-             * couches PNG (local_{plan}_{z}_{couche}_*.png). */
-            $planId = $planJson->id ?? $coords->plan;
+            $planId = $coords->plan;
 
             $viewService = new ViewService(new Db(), $coords->x, $coords->y, $coords->z, $player->id, $planId);
 

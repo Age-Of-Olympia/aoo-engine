@@ -2,6 +2,8 @@
 
 namespace App\View\Player;
 
+use App\Trait\EscapesHtmlTrait;
+
 /**
  * Compétences statistics: a summary row, action/passive adoption (how many
  * players own each, with coverage bars), and a per-player distribution (how
@@ -13,6 +15,8 @@ namespace App\View\Player;
  */
 final class SkillStatsView
 {
+    use EscapesHtmlTrait;
+
     /**
      * @param array{players:int, avgActions:float, avgPassives:float} $summary
      * @param array<int, array{key:string, label:string, count:int}> $actionAdoption
@@ -117,8 +121,4 @@ final class SkillStatsView
             . '<tbody>' . $body . '</tbody></table>';
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

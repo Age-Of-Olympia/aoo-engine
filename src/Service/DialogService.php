@@ -452,27 +452,6 @@ class DialogService
     }
 
     /**
-     * Render dialog with legacy Dialog class
-     */
-    public function renderDialog(
-        string $dialogName,
-        ?Player $player = null,
-        ?Player $target = null
-    ): string {
-        $dialogData = $this->loadDialog($dialogName);
-
-        if (!$dialogData) {
-            return '<p>Dialog not found: ' . htmlspecialchars($dialogName) . '</p>';
-        }
-
-        $dialog = new Dialog($dialogName, $player, $target);
-
-        ob_start();
-        echo $dialog->get_data();
-        return ob_get_clean();
-    }
-
-    /**
      * Get dialog data without rendering (for API)
      *
      * @return array
@@ -590,40 +569,4 @@ class DialogService
         return $text;
     }
 
-    /**
-     * Check if in tutorial mode
-     */
-    public function isTutorialMode(): bool
-    {
-        return $this->isTutorialMode;
-    }
-
-    /**
-     * Save or update dialog in database — variante tutoriel historique.
-     *
-     * @param array $dialogData
-     */
-    public function saveDialog(
-        string $dialogId,
-        string $npcName,
-        array $dialogData,
-        string $version = '1.0.0'
-    ): bool {
-        if (!$this->isTutorialMode) {
-            throw new \Exception('Can only save dialogs in tutorial mode');
-        }
-
-        $dialogJson = json_encode($dialogData);
-
-        $sql = 'INSERT INTO tutorial_dialogs (dialog_id, npc_name, version, dialog_data, is_active)
-                VALUES (?, ?, ?, ?, 1)
-                ON DUPLICATE KEY UPDATE
-                    npc_name = VALUES(npc_name),
-                    dialog_data = VALUES(dialog_data),
-                    updated_at = CURRENT_TIMESTAMP';
-
-        $result = $this->db->exe($sql, [$dialogId, $npcName, $version, $dialogJson]);
-
-        return $result !== false;
-    }
 }

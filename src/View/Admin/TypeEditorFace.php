@@ -2,7 +2,6 @@
 
 namespace App\View\Admin;
 
-use App\Interface\HarvestableInterface;
 use App\Entity\Race;
 
 /**
@@ -235,10 +234,4 @@ final class TypeEditorFace
     }
 
     /** The face's own page, with its query, for links and redirects. */
-    public function url(string $query = ''): string
-    {
-        $own = $query === '' ? '' : '?' . $query;
-
-        return $this->page . $own;
-    }
 }

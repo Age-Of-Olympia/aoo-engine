@@ -2,6 +2,8 @@
 
 namespace App\View\Player;
 
+use App\Trait\EscapesHtmlTrait;
+
 /**
  * The Compétences landing: the full roster of characters (real players + PNJs),
  * filtered live by a search field (name or matricule), a Type filter
@@ -10,6 +12,8 @@ namespace App\View\Player;
  */
 final class PlayerSearchView
 {
+    use EscapesHtmlTrait;
+
     /**
      * @param array<int, array{id:int, name:string, race:string, player_type:string, xp:int, lastLoginTime:int, active:bool}> $players
      */
@@ -146,8 +150,4 @@ final class PlayerSearchView
             . '})();</script>';
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

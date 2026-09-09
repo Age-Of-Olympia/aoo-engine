@@ -2,6 +2,8 @@
 
 namespace App\View\Player;
 
+use App\Trait\EscapesHtmlTrait;
+
 /**
  * Roster of players who own a given action or passive ("Qui a ça ?"). Reached
  * from the ownership count on the Actions / Passifs pages; each row links to
@@ -9,6 +11,8 @@ namespace App\View\Player;
  */
 final class SkillOwnersView
 {
+    use EscapesHtmlTrait;
+
     /**
      * @param array<int, array{id:int, name:string, race:string}> $players
      */
@@ -47,8 +51,4 @@ final class SkillOwnersView
             . '<tbody>' . $rows . '</tbody></table>';
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }
