@@ -33,8 +33,8 @@ class ActionPassive
     #[ORM\Column(type: "integer")]
     private int $level;
 
-    #[ORM\Column(type: "string", length: 255)]
-    private string $race;
+    #[ORM\Column(type: "string", length: 255, nullable: true)]
+    private ?string $race = null;
 
     #[ORM\Column(type: "string", length: 50, nullable: true)]
     protected ?string $category = null;
@@ -130,12 +130,12 @@ class ActionPassive
         $this->level = $level;
     }
 
-    public function getRace(): string
+    public function getRace(): ?string
     {
         return $this->race;
     }
 
-    public function setRace(string $race): void
+    public function setRace(?string $race): void
     {
         $this->race = $race;
     }
