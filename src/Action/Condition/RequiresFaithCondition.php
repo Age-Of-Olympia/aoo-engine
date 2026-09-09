@@ -43,11 +43,9 @@ class RequiresFaithCondition extends BaseCondition implements HasParameterSchema
             return new ConditionResult(true, array(), array());
         }
 
-        $condition->setBlocking(true);
-
         return new ConditionResult(false, array(), [
             'Il vous faut ' . $price . ' points de foi (vous en avez ' . $held . ').',
-        ]);
+        ], blocking: true);
     }
 
     /** The price is a debit: without this the executor never queues it. */

@@ -41,9 +41,7 @@ class BuildSiteCondition extends BaseCondition implements HasParameterSchemaInte
         $goCoords = BuildSitePick::resolve($actor->getCoords(), $type !== null ? (string) $type : null);
 
         if ($goCoords === null) {
-            $condition->setBlocking(true);
-
-            return new ConditionResult(false, array(), [BuildSitePick::REFUSAL]);
+            return new ConditionResult(false, array(), [BuildSitePick::REFUSAL], blocking: true);
         }
 
         $conditionObject->setBuildCoords($goCoords);

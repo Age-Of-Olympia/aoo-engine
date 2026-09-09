@@ -22,21 +22,19 @@ class DigSiteCondition extends BaseCondition implements HasParameterSchemaInterf
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        $condition->setBlocking(true);
-
         $digX = $_POST['digX'] ?? null;
         $digY = $_POST['digY'] ?? null;
         if (!is_numeric($digX) || !is_numeric($digY)) {
-            return new ConditionResult(false, array(), ['Aucune case à creuser fournie.']);
+            return new ConditionResult(false, array(), ['Aucune case à creuser fournie.'], blocking: true);
         }
 
         $coords = $actor->getCoords(refresh: false);
 
         if ((int) $coords->z >= 0) {
-            return new ConditionResult(false, array(), ['On ne creuse que sous terre.']);
+            return new ConditionResult(false, array(), ['On ne creuse que sous terre.'], blocking: true);
         }
         if (max(abs((int) $digX - (int) $coords->x), abs((int) $digY - (int) $coords->y)) > 1) {
-            return new ConditionResult(false, array(), ['Cette case est trop loin pour creuser.']);
+            return new ConditionResult(false, array(), ['Cette case est trop loin pour creuser.'], blocking: true);
         }
 
         $res = (new Db())->exe(
@@ -45,7 +43,7 @@ class DigSiteCondition extends BaseCondition implements HasParameterSchemaInterf
             array((int) $digX, (int) $digY, (int) $coords->z, (string) $coords->plan)
         );
         if ((int) ($res->fetch_object()->n ?? 0) > 0) {
-            return new ConditionResult(false, array(), ['Cette case est déjà creusée.']);
+            return new ConditionResult(false, array(), ['Cette case est déjà creusée.'], blocking: true);
         }
 
         return new ConditionResult(true, array(), array());

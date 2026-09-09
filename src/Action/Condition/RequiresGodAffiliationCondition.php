@@ -52,9 +52,7 @@ class RequiresGodAffiliationCondition extends BaseCondition implements HasParame
         $examined = $side === self::SIDE_TARGET ? $target : $actor;
 
         if ($examined === null) {
-            $condition->setBlocking(true);
-
-            return new ConditionResult(false, array(), ['Cette action a besoin d\'une cible.']);
+            return new ConditionResult(false, array(), ['Cette action a besoin d\'une cible.'], blocking: true);
         }
 
         $god = (int) ($examined->data->godId ?? 0);
@@ -71,13 +69,11 @@ class RequiresGodAffiliationCondition extends BaseCondition implements HasParame
             return new ConditionResult(true, array(), array());
         }
 
-        $condition->setBlocking(true);
-
         $message = trim((string) ($params['message'] ?? ''));
 
         return new ConditionResult(false, array(), [
             $message !== '' ? $message : self::refusal($side, $state),
-        ]);
+        ], blocking: true);
     }
 
     private static function refusal(string $side, string $state): string

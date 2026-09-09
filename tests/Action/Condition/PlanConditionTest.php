@@ -63,4 +63,15 @@ class PlanConditionTest extends TestCase
     {
         $this->assertTrue($this->isAllowed('gaia', 'melee', ['plan' => 'enfers', 'allowed' => ['prier']]));
     }
+
+    public function testARefusalIsCarriedByTheResultAndLeavesTheConditionRowAlone(): void
+    {
+        $condition = $this->condition('melee', ['plan' => 'enfers']);
+
+        $result = (new PlanCondition())->check($this->actorOnPlan('enfers'), null, $condition, new ConditionObject());
+
+        $this->assertFalse($result->isSuccess());
+        $this->assertTrue($result->isBlocking());
+        $this->assertFalse($condition->isBlocking(), 'the row is admin config, a check must not rewrite it');
+    }
 }

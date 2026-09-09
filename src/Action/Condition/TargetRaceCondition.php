@@ -44,9 +44,7 @@ class TargetRaceCondition extends BaseCondition implements HasParameterSchemaInt
             return new ConditionResult(true, array(), array());
         }
 
-        $condition->setBlocking(true);
-
-        return new ConditionResult(false, array(), ['Cette action ne vise pas cela.']);
+        return new ConditionResult(false, array(), ['Cette action ne vise pas cela.'], blocking: true);
     }
 
     /**

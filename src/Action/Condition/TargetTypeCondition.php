@@ -133,13 +133,11 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInt
                 return new ConditionResult(true, array(), array());
             }
 
-            $condition->setBlocking(true);
-
             $errorMessage = in_array(self::KIND_NONE, $allowed, true)
                 ? ['Cette action ne vise personne.']
                 : ['Cette action ne s\'applique qu\'à vous-même.'];
 
-            return new ConditionResult(false, array(), $errorMessage);
+            return new ConditionResult(false, array(), $errorMessage, blocking: true);
         }
 
         $playerType = (string) ($target->data->player_type ?? 'real');
@@ -149,22 +147,19 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchemaInt
              * on the ground occupies nothing and is picked up, not targeted —
              * the same cells that decide obstruction decide this. */
             if (\App\Enum\EntityCategory::fromPlayerType($playerType)->isStructure() && !$this->holdsATile($target)) {
-                $condition->setBlocking(true);
-
-                return new ConditionResult(false, array(), ['Cet objet est au sol : on le ramasse, on ne le vise pas.']);
+                return new ConditionResult(false, array(), ['Cet objet est au sol : on le ramasse, on ne le vise pas.'], blocking: true);
             }
 
             return new ConditionResult(true, array(), array());
         }
-
-        $condition->setBlocking(true);
 
         /* Name the TARGET, not the branch: "une structure" reads wrong on a
          * tree when the action repairs buildings. */
         return new ConditionResult(
             false,
             array(),
-            ['Cette action ne peut pas viser ' . self::refusalLabel($playerType) . '.']
+            ['Cette action ne peut pas viser ' . self::refusalLabel($playerType) . '.'],
+            blocking: true
         );
     }
 

@@ -42,8 +42,7 @@ class PlanCondition extends BaseCondition implements HasParameterSchemaInterface
                 $errorMessage[0] = 'Impossible d\'agir sur ce plan : ' . $plan;
             }
             
-            $condition->setBlocking(true);
-            $result = new ConditionResult(false, array(), $errorMessage);
+            $result = new ConditionResult(false, array(), $errorMessage, blocking: true);
         }
 
         return $result;

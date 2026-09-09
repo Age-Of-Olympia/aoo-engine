@@ -70,16 +70,14 @@ class ItemPickCondition extends BaseCondition implements HasParameterSchemaInter
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        $condition->setBlocking(true);
-
         $itemId = self::requestedItemId();
         if ($itemId === null) {
-            return new ConditionResult(false, array(), ['Aucun objet fourni pour cette action.']);
+            return new ConditionResult(false, array(), ['Aucun objet fourni pour cette action.'], blocking: true);
         }
 
         $item = new Item($itemId);
         if (empty($item->row)) {
-            return new ConditionResult(false, array(), ["Objet inconnu au catalogue (#{$itemId})."]);
+            return new ConditionResult(false, array(), ["Objet inconnu au catalogue (#{$itemId})."], blocking: true);
         }
         $item->get_data();
 
@@ -90,7 +88,7 @@ class ItemPickCondition extends BaseCondition implements HasParameterSchemaInter
         // individualisée (arme à durabilité) : instances comprises.
         $owned = $item->get_n($actor, includeInstances: $kind === self::KIND_EQUIPEMENT);
         if ($owned < 1) {
-            return new ConditionResult(false, array(), ['Vous ne possédez pas ' . $item->data->name . '.']);
+            return new ConditionResult(false, array(), ['Vous ne possédez pas ' . $item->data->name . '.'], blocking: true);
         }
 
         $admissible = match ($kind) {
@@ -100,7 +98,7 @@ class ItemPickCondition extends BaseCondition implements HasParameterSchemaInter
             default => false,
         };
         if (!$admissible) {
-            return new ConditionResult(false, array(), [$item->data->name . ' ne convient pas à cette action.']);
+            return new ConditionResult(false, array(), [$item->data->name . ' ne convient pas à cette action.'], blocking: true);
         }
 
         $conditionObject->setPickedItem($item);
