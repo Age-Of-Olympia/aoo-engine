@@ -3,7 +3,7 @@
 namespace Tests\Tutorial;
 
 use App\Service\ActionService;
-use App\Tutorial\TutorialConstants;
+use App\Factory\TutorialPlayerFactory;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
@@ -29,7 +29,7 @@ class BasicActionsExistTest extends LegacyPlayerFixtureTestCase
         $actionService = new ActionService();
         $missing = [];
 
-        foreach (TutorialConstants::BASIC_TUTORIAL_ACTIONS as $name) {
+        foreach (TutorialPlayerFactory::BASIC_ACTIONS as $name) {
             if ($actionService->getActionByName($name) === null) {
                 $missing[] = $name;
             }
@@ -47,7 +47,7 @@ class BasicActionsExistTest extends LegacyPlayerFixtureTestCase
         // Le contact et le tir sont deux actions distinctes depuis la
         // scission : n'en accorder qu'une laisserait le personnage
         // désarmé à l'autre portée.
-        $this->assertContains('melee', TutorialConstants::BASIC_TUTORIAL_ACTIONS);
-        $this->assertContains('distance', TutorialConstants::BASIC_TUTORIAL_ACTIONS);
+        $this->assertContains('melee', TutorialPlayerFactory::BASIC_ACTIONS);
+        $this->assertContains('distance', TutorialPlayerFactory::BASIC_ACTIONS);
     }
 }

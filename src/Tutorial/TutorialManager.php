@@ -147,41 +147,6 @@ class TutorialManager
         ]);
     }
 
-    public function getTutorialPlayer(): ?TutorialPlayer
-    {
-        return $this->tutorialPlayer;
-    }
-
-    /**
-     * Get current step data from database
-     *
-     * @param int $stepNumber
-     * @param string $version
-     * @return array|null
-     */
-    public function getStepData(int $stepNumber, string $version = '1.0.0'): ?array
-    {
-        return $this->stepRepository->getStepByNumber((float)$stepNumber, $version);
-    }
-
-    /**
-     * Get current step as AbstractStep object
-     *
-     * @param int $stepNumber
-     * @param string $version
-     * @return Steps\AbstractStep|null
-     */
-    public function getStep(int $stepNumber, string $version = '1.0.0'): ?Steps\AbstractStep
-    {
-        $stepData = $this->getStepData($stepNumber, $version);
-
-        if (!$stepData) {
-            return null;
-        }
-
-        return TutorialStepFactory::createFromData($stepData, $this->context);
-    }
-
     /**
      * Get step data by step_id (name)
      *
@@ -267,33 +232,6 @@ class TutorialManager
         }
 
         return $stepData;
-    }
-
-    public function getCurrentStepForClient(int $stepNumber, string $version = '1.0.0', bool $applyPrerequisites = false): ?array
-    {
-        $step = $this->getStep($stepNumber, $version);
-
-        if (!$step) {
-            return null;
-        }
-
-        $stepData = $step->getData();
-        $stepData = $this->processPlaceholders($stepData);
-
-        if ($applyPrerequisites && isset($stepData['config']['prerequisites'])) {
-            $this->context->ensurePrerequisites($stepData['config']['prerequisites']);
-        }
-
-        if ($step->requiresValidation() && method_exists($step, 'getValidationHint')) {
-            $dynamicHint = $step->getValidationHint();
-            if ($dynamicHint) {
-                $stepData['validation_hint'] = $dynamicHint;
-            }
-        }
-
-        return array_merge($stepData, [
-            'tutorial_state' => $this->context->getPublicState()
-        ]);
     }
 
     public function advanceStep(array $validationData = []): array
@@ -398,22 +336,6 @@ class TutorialManager
             'is_replay' => $isReplay,
             'message' => $message
         ];
-    }
-
-    public static function hasCompletedTutorial(int $playerId): bool
-    {
-        $sessionManager = new TutorialSessionManager();
-        return $sessionManager->hasCompletedBefore($playerId);
-    }
-
-    public function getContext(): TutorialContext
-    {
-        return $this->context;
-    }
-
-    public function getSessionId(): string
-    {
-        return $this->sessionId;
     }
 
     public function jumpToStep(string $sessionId, int $targetStepNumber): bool

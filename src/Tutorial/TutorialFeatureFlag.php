@@ -109,18 +109,6 @@ class TutorialFeatureFlag
     }
 
     /**
-     * Check if auto-show for new players is enabled
-     */
-    public static function isAutoShowNewPlayersEnabled(): bool
-    {
-        $settings = self::getSettings();
-        if (isset($settings['auto_show_new_players'])) {
-            return filter_var($settings['auto_show_new_players'], FILTER_VALIDATE_BOOLEAN);
-        }
-        return true; // Default: enabled
-    }
-
-    /**
      * Get all settings from database (with TTL-based caching)
      *
      * Cache expires after CACHE_TTL_SECONDS to ensure settings changes
@@ -255,42 +243,4 @@ class TutorialFeatureFlag
         ];
     }
 
-    /**
-     * Check if player should see tutorial option
-     *
-     * @param int $playerId
-     * @param bool $hasCompletedBefore Has player completed tutorial before?
-     * @return bool
-     */
-    public static function shouldShowTutorial(int $playerId, bool $hasCompletedBefore): bool
-    {
-        // If tutorial not enabled for this player, don't show
-        if (!self::isEnabledForPlayer($playerId)) {
-            return false;
-        }
-
-        // Always show for new players
-        if (!$hasCompletedBefore) {
-            return true;
-        }
-
-        // For players who completed before, show "replay" option
-        return true;
-    }
-
-    /**
-     * Get tutorial mode for player
-     *
-     * @param int $playerId
-     * @param bool $hasCompletedBefore
-     * @return string|null 'first_time', 'replay', or null if not available
-     */
-    public static function getTutorialMode(int $playerId, bool $hasCompletedBefore): ?string
-    {
-        if (!self::isEnabledForPlayer($playerId)) {
-            return null;
-        }
-
-        return $hasCompletedBefore ? 'replay' : 'first_time';
-    }
 }

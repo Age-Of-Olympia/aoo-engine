@@ -109,8 +109,6 @@ class TutorialResourceManager
             }
             $plan = $playerData['plan'];
 
-            require_once dirname(__FILE__) . '/../../Classes/Player.php';
-
             foreach ($npcs as $npc) {
                 $enemyX = (int) $npc['x'];
                 $enemyY = (int) $npc['y'];
@@ -509,7 +507,6 @@ class TutorialResourceManager
                     (int) $row['id'],
                     (int) $entity->getId()
                 );
-            } else {
             }
 
             // Step 3: map instance + its coords (must be AFTER player delete).

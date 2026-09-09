@@ -38,6 +38,9 @@ use Doctrine\DBAL\Connection;
  */
 class TutorialPlayerFactory
 {
+    /** What every tutorial character can do; the catalogue must carry each one. */
+    public const BASIC_ACTIONS = ['fouiller', 'repos', 'melee', 'distance', 'courir', 'prier', 'entrainement'];
+
     /**
      * Create a new tutorial character and return it as a Doctrine
      * entity. Throws on invalid race or any DB failure.
@@ -120,7 +123,7 @@ class TutorialPlayerFactory
          * eu de ligne au catalogue et se résolvait par un repli sur la
          * distance, qui n'existe plus. Un personnage de tutoriel à qui
          * on l'accorderait ne pourrait tout simplement plus attaquer. */
-        foreach (['fouiller', 'repos', 'melee', 'distance', 'courir', 'prier', 'entrainement'] as $actionName) {
+        foreach (self::BASIC_ACTIONS as $actionName) {
             $conn->insert('players_actions', [
                 'player_id' => $actualPlayerId,
                 'name'      => $actionName,

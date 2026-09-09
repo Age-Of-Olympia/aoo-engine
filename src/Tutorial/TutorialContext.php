@@ -59,14 +59,6 @@ class TutorialContext
     }
 
     /**
-     * Get complete tutorial state
-     */
-    public function getTutorialState(): array
-    {
-        return $this->tutorialState;
-    }
-
-    /**
      * Set tutorial state value
      */
     public function setState(string $key, $value): void
@@ -114,40 +106,6 @@ class TutorialContext
     }
 
     /**
-     * Invest PI in characteristic (for tutorial practice)
-     *
-     * @param string $characteristic (mvt, pv, cc, f, etc.)
-     * @param int $amount Number of PI to invest
-     * @return bool Success
-     */
-    public function investPI(string $characteristic, int $amount): bool
-    {
-        if ($this->tutorialPI < $amount) {
-            return false;
-        }
-
-        // Deduct PI
-        $this->tutorialPI -= $amount;
-
-        // Apply investment temporarily (for tutorial demonstration)
-        // In real game, this would be done via proper game mechanics
-        switch ($characteristic) {
-            case 'mvt':
-                $this->player->data->mvt = ($this->player->data->mvt ?? 4) + $amount;
-                $this->tutorialState['mvt_investment'] = $amount;
-                break;
-
-            case 'pv':
-                $this->player->data->pv_max = ($this->player->data->pv_max ?? 20) + ($amount * 5);
-                break;
-
-            // Add other characteristics as needed
-        }
-
-        return true;
-    }
-
-    /**
      * Get XP needed for level (simple exponential curve)
      */
     private function getXPForLevel(int $level): int
@@ -178,22 +136,6 @@ class TutorialContext
     public function getTutorialPI(): int
     {
         return $this->tutorialPI;
-    }
-
-    /**
-     * Check if level up is pending
-     */
-    public function hasPendingLevelUp(): bool
-    {
-        return $this->tutorialState['pending_level_up'] ?? false;
-    }
-
-    /**
-     * Clear level up notification
-     */
-    public function clearLevelUpNotification(): void
-    {
-        $this->tutorialState['pending_level_up'] = false;
     }
 
     /**
@@ -358,69 +300,6 @@ class TutorialContext
         if (isset($preparation['remove_item'])) {
             $this->setState('remove_item', $preparation['remove_item']);
         }
-    }
-
-    /**
-     * Get current movement points
-     */
-    public function getCurrentMovement(): int
-    {
-        if (!$this->player->data || $this->player->data === false) {
-            $this->player->get_data();
-            if (!$this->player->data || $this->player->data === false) {
-                return 0;
-            }
-        }
-
-        return $this->player->data->mvt ?? 0;
-    }
-
-    public function getCurrentActions(): int
-    {
-        if (!$this->player->data || $this->player->data === false) {
-            $this->player->get_data();
-            if (!$this->player->data || $this->player->data === false) {
-                return 0;
-            }
-        }
-
-        return $this->player->data->a ?? 0;
-    }
-
-    /**
-     * Set movement points (for tutorial resource management)
-     */
-    public function setMovement(int $amount): void
-    {
-        // Ensure player data is loaded
-        if (!$this->player->data || $this->player->data === false) {
-            $this->player->get_data();
-
-            // Throw exception if data still not loaded
-            if (!$this->player->data || $this->player->data === false) {
-                throw new \RuntimeException("Failed to load player data in setMovement()");
-            }
-        }
-
-        $this->player->data->mvt = $amount;
-    }
-
-    /**
-     * Set action points (for tutorial resource management)
-     */
-    public function setActions(int $amount): void
-    {
-        // Ensure player data is loaded
-        if (!$this->player->data || $this->player->data === false) {
-            $this->player->get_data();
-
-            // Throw exception if data still not loaded
-            if (!$this->player->data || $this->player->data === false) {
-                throw new \RuntimeException("Failed to load player data in setActions()");
-            }
-        }
-
-        $this->player->data->a = $amount;
     }
 
     /**

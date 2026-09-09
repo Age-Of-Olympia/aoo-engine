@@ -289,49 +289,43 @@ parameters:
 		-
 			message: '#^Negated boolean expression is always false\.$#'
 			identifier: booleanNot.alwaysFalse
-			count: 5
+			count: 1
 			path: src/Tutorial/TutorialContext.php
 
 		-
 			message: '#^Result of \|\| is always false\.$#'
 			identifier: booleanOr.alwaysFalse
-			count: 5
-			path: src/Tutorial/TutorialContext.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between \*NEVER\* and false will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 4
+			count: 1
 			path: src/Tutorial/TutorialContext.php
 
 		-
 			message: '#^Strict comparison using \=\=\= between object and false will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
-			count: 5
+			count: 1
 			path: src/Tutorial/TutorialContext.php
 
 		-
 			message: '#^Negated boolean expression is always false\.$#'
 			identifier: booleanNot.alwaysFalse
-			count: 2
+			count: 1
 			path: src/Tutorial/TutorialHelper.php
 
 		-
 			message: '#^Result of \|\| is always false\.$#'
 			identifier: booleanOr.alwaysFalse
-			count: 2
+			count: 1
 			path: src/Tutorial/TutorialHelper.php
 
 		-
 			message: '#^Strict comparison using \=\=\= between object and false will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
-			count: 2
+			count: 1
 			path: src/Tutorial/TutorialHelper.php
 
 		-
 			message: '#^Call to function method_exists\(\) with App\\Tutorial\\Steps\\AbstractStep and ''getValidationHint'' will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
-			count: 2
+			count: 1
 			path: src/Tutorial/TutorialManager.php
 
 		-

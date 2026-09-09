@@ -164,19 +164,6 @@ class TutorialHelper
     }
 
     /**
-     * Get tutorial player ID if in tutorial
-     *
-     * @return int|null Tutorial player ID or null if not in tutorial
-     */
-    public static function getTutorialPlayerId(): ?int
-    {
-        if (self::isInTutorial()) {
-            return (int) $_SESSION['tutorial_player_id'];
-        }
-        return null;
-    }
-
-    /**
      * Start tutorial mode
      *
      * Sets session variables for tutorial mode
@@ -235,39 +222,6 @@ class TutorialHelper
         // Validate data loaded successfully
         if (!$player->data || $player->data === false) {
             $errorMsg = "Failed to load player data for player {$activePlayerId}";
-
-            if ($throwOnFailure) {
-                throw new \RuntimeException($errorMsg);
-            }
-        }
-
-        // Load characteristics if requested
-        if ($loadCaracs) {
-            $player->get_caracs();
-        }
-
-        return $player;
-    }
-
-    /**
-     * Load specific player with full data and validation
-     *
-     * @param int $playerId Player ID to load
-     * @param bool $loadCaracs Whether to load characteristics (turn data)
-     * @param bool $throwOnFailure Whether to throw exception if data load fails
-     * @return \Classes\Player Loaded player instance
-     * @throws \RuntimeException If player data fails to load and throwOnFailure is true
-     */
-    public static function loadPlayer(int $playerId, bool $loadCaracs = false, bool $throwOnFailure = false): \Classes\Player
-    {
-        $player = new \Classes\Player($playerId);
-
-        // Load player data
-        $player->get_data();
-
-        // Validate data loaded successfully
-        if (!$player->data || $player->data === false) {
-            $errorMsg = "Failed to load player data for player {$playerId}";
 
             if ($throwOnFailure) {
                 throw new \RuntimeException($errorMsg);

@@ -5,7 +5,7 @@
  * CRUD over the tutorial_npcs table — the configurable roster + placement
  * for tutorial NPCs (template Gaïa-style + dynamic enemy-style spawns).
  * Replaces the hardcoded Gaïa migration row + hardcoded dummy spawn
- * constants previously in TutorialResourceManager / TutorialConstants.
+ * constants previously in TutorialResourceManager.
  */
 
 require_once __DIR__ . '/layout.php';

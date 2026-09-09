@@ -312,25 +312,6 @@ class TutorialSessionManager
     }
 
     /**
-     * Validate session exists and is active
-     *
-     * @param string $sessionId Tutorial session UUID
-     * @return bool True if session exists and is not completed
-     */
-    public function isSessionActive(string $sessionId): bool
-    {
-        $sql = 'SELECT completed FROM tutorial_progress WHERE tutorial_session_id = ?';
-        $result = $this->db->exe($sql, [$sessionId]);
-
-        if (!$result || $result->num_rows === 0) {
-            return false;
-        }
-
-        $row = $result->fetch_assoc();
-        return !(bool) $row['completed'];
-    }
-
-    /**
      * Validate session ID format (UUID v4)
      *
      * @param string $sessionId Session ID to validate
@@ -359,28 +340,4 @@ class TutorialSessionManager
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 
-    /**
-     * Get session statistics for debugging
-     *
-     * @return array Statistics about active/completed sessions
-     */
-    public function getStatistics(): array
-    {
-        $sql = 'SELECT
-                    COUNT(*) as total,
-                    SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) as completed,
-                    SUM(CASE WHEN completed = 0 THEN 1 ELSE 0 END) as active,
-                    AVG(xp_earned) as avg_xp
-                FROM tutorial_progress';
-
-        $result = $this->db->exe($sql);
-        $stats = $result->fetch_assoc();
-
-        return [
-            'total_sessions' => (int) $stats['total'],
-            'completed_sessions' => (int) $stats['completed'],
-            'active_sessions' => (int) $stats['active'],
-            'average_xp' => round((float) $stats['avg_xp'], 2)
-        ];
-    }
 }

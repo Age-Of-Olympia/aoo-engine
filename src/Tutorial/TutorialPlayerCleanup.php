@@ -267,15 +267,6 @@ class TutorialPlayerCleanup
         }
     }
 
-    /**
-     * Get list of foreign key tables (for testing/debugging)
-     *
-     * @return array List of tables that reference players.id
-     */
-    public static function getForeignKeyTables(): array
-    {
-        return self::FOREIGN_KEY_TABLES;
-    }
 }
 
 /**
