@@ -44,10 +44,15 @@ class ViewService {
     private $localBoundsAvailable = false;
 
     public function __construct($db, $playerX = null, $playerY = null, $playerZ = null, $playerId = null, $plan = null) {
+        // The plan name and the z level go into SQL strings and file names
+        // below: one refusal here covers every query.
+        if ($plan !== null && !preg_match(TiledMapService::PLAN_NAME_PATTERN, (string) $plan)) {
+            throw new \InvalidArgumentException('Nom de plan invalide : ' . $plan);
+        }
         $this->db = $db;
         $this->playerX = $playerX;
         $this->playerY = $playerY;
-        $this->playerZ = $playerZ;
+        $this->playerZ = $playerZ === null ? null : (int) $playerZ;
         $this->playerId = $playerId;
         $this->worldPlan = plans()->worldPlan();
         $this->currentPlan = $plan ?? $this->worldPlan;
