@@ -12,15 +12,7 @@ class FoiView
 
         $path = 'datas/public/classements/foi.html';
 
-        /* Served from cache only while it is newer than the code that wrote
-           it: the file has no expiry, so a new column would never appear. */
-        if (file_exists($path) && CACHED_CLASSEMENTS && filemtime($path) >= filemtime(__FILE__)) {
-            echo file_get_contents($path);
-            return;
-        }
-
-        ob_start();
-
+        RankingCache::serve($path, __FILE__, static function (): void {
         $db = new Db();
 
         $sql = '
@@ -133,12 +125,6 @@ class FoiView
         }
         echo '</div><br />';
 
-        $data = ob_get_clean();
-
-        $myfile = fopen($path, 'w') or die('Unable to open file!');
-        fwrite($myfile, $data);
-        fclose($myfile);
-
-        echo $data;
+        });
     }
 }

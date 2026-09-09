@@ -11,19 +11,9 @@ class FortunesView
 
         echo '<h1>Classement des Fortunes</h1>';
 
-
         $path = 'datas/public/classements/fortunes.html';
 
-        if (file_exists($path) && CACHED_CLASSEMENTS) {
-
-
-            echo file_get_contents($path);
-        } else {
-
-
-            ob_start();
-
-
+        RankingCache::serve($path, __FILE__, static function () use ($playerList): void {
             $db = new Db();
 
             $sql = '
@@ -47,11 +37,9 @@ class FortunesView
 
             $res = $db->exe($sql);
 
-
             $playerGold = array();
 
             while ($row = $res->fetch_object()) {
-
 
                 if (!isset($playerGold[$row->player_id])) {
 
@@ -62,7 +50,6 @@ class FortunesView
 
                 $playerGold[$row->player_id] += $row->n;
             }
-
 
             foreach ($playerList as $k => $player) {
 
@@ -78,18 +65,8 @@ class FortunesView
             // Trier le tableau en utilisant la fonction de comparaison
             usort($playerList, self::compareByGold(...));
 
-
             PlayersTableView::render($playerList);
-
-
-            $data = ob_get_clean();
-
-            $myfile = fopen($path, "w") or die("Unable to open file!");
-            fwrite($myfile, $data);
-            fclose($myfile);
-
-            echo $data;
-        }
+        });
     }
 
     private static function compareByGold($a, $b)

@@ -10,44 +10,36 @@ use Classes\Str;
 
 class BourrinsView
 {
+    private const CARACS_BOURRINS = [
+        'pv' => "Increvables! Si si je vous jure!",
+        'cc' => "Les meilleurs maîtres lames.",
+        'ct' => "Les meilleurs tireurs.",
+        'f' => "Ils ont des bras comme vos jambes!",
+        'e' => "Ils sont plus solides que le roc!",
+        'agi' => "Rapides comme l'éclair!",
+
+        'a' => "Les plus grands moulins à baffes!",
+        'mvt' => "Ils volent plus qu'ils ne marchent...",
+        'p' => "Rien n'échappe à leur regard!",
+
+        'pm' => "Leur magie est inépuisable!",
+        'fm' => "Leur esprit est une forteresse!",
+        'pui' => "Les plus puissants magiciens!",
+        'res' => "Les sorts leurs rebondissent dessus!",
+        'r' => "Les plus résistants!",
+        'rm' => "Des mineurs de mana"
+    ];
+
     public static function renderBourrins($playerList): void
     {
 
-        define('CARACS_BOURRINS', array(
-            'pv' => "Increvables! Si si je vous jure!",
-            'cc' => "Les meilleurs maîtres lames.",
-            'ct' => "Les meilleurs tireurs.",
-            'f' => "Ils ont des bras comme vos jambes!",
-            'e' => "Ils sont plus solides que le roc!",
-            'agi' => "Rapides comme l'éclair!",
-
-            'a' => "Les plus grands moulins à baffes!",
-            'mvt' => "Ils volent plus qu'ils ne marchent...",
-            'p' => "Rien n'échappe à leur regard!",
-
-            'pm' => "Leur magie est inépuisable!",
-            'fm' => "Leur esprit est une forteresse!",
-            'pui' => "Les plus puissants magiciens!",
-            'res' => "Les sorts leurs rebondissent dessus!",
-            'r' => "Les plus résistants!",
-            'rm' => "Des mineurs de mana"
-        ));
-
         echo '<h1>Classement des Bourrins</h1>';
-
 
         $path = 'datas/public/classements/bourrins.html';
 
-        if (file_exists($path) && CACHED_CLASSEMENTS) {
-
-
-            echo file_get_contents($path);
-        } else {
-
-
+        RankingCache::serve($path, __FILE__, static function () use ($playerList): void {
             $bestCarac = array();
             $caracsService = new PlayerCaracsService();
-
 
             foreach ($playerList as $player) {
 
@@ -58,12 +50,10 @@ class BourrinsView
 
                 $caracs = $entity->getNudeCaracs($caracsService);
 
-
                 foreach (CARACS as $k => $e) {
 
                     // first entry
                     if (!isset($bestCarac[$k])) {
-
 
                         $bestCarac[$k] = array(
                             $caracs->$k => array($entity)
@@ -72,42 +62,26 @@ class BourrinsView
                         continue;
                     }
 
-
                     // add entry
                     $bestCarac[$k][$caracs->$k][] = $entity;
                 }
             }
 
-
-            ob_start();
-
-
             foreach (CARACS as $k => $e) {
 
-
-                if (!isset(CARACS_BOURRINS[$k])) {
+                if (!isset(self::CARACS_BOURRINS[$k])) {
 
                     continue;
                 }
 
-                echo '<h2>' . CARACS_BOURRINS[$k] . ' (' . $e . ')</h2>';
+                echo '<h2>' . self::CARACS_BOURRINS[$k] . ' (' . $e . ')</h2>';
 
-                BourrinsView::print_best_carac($k, $bestCarac);
+                self::print_best_carac($k, $bestCarac);
             }
-
-
-            $data = ob_get_clean();
-
-            $myfile = fopen($path, "w") or die("Unable to open file!");
-            fwrite($myfile, $data);
-            fclose($myfile);
-
-            echo $data;
-        }
+        });
     }
     static function print_best_carac($carac, $bestCarac)
     {
-
 
         echo '
     <table border="1" align="center" class="dialog-table">
@@ -134,26 +108,20 @@ class BourrinsView
 
         krsort($tbl);
 
-
         $n = 1;
 
         $i = 1;
-
 
         $raceService = new RaceService();
 
         foreach ($tbl as $k => $e) {
 
-
             $playerTbl = $e;
-
 
             foreach ($playerTbl as $e) {
 
                 /** @var Character $e */
                 $raceJson = $raceService->getRaceData($e->getRace());
-
-
 
                 echo '
             <tr style="background: ' . $raceJson->bgColor . '; color: ' . $raceJson->color . '">
@@ -168,7 +136,6 @@ class BourrinsView
             </tr>
             ';
 
-
                 // max 5
                 if ($i >= 5)
                     break;
@@ -176,11 +143,9 @@ class BourrinsView
                 $i++;
             }
 
-
             // max 5
             if ($i >= 5)
                 break;
-
 
             // stop when 3 best
             if ($n >= 3)
