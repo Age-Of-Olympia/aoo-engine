@@ -40,38 +40,4 @@ class NonPlayerCharacter extends Character
         return true;
     }
 
-    /**
-     * NPCs don't appear in player lists
-     */
-    public function isPubliclyVisible(): bool
-    {
-        return false;
-    }
-
-    /**
-     * Check if this is a tutorial enemy (negative ID in tutorial range)
-     */
-    public function isTutorialEnemy(): bool
-    {
-        return $this->id !== null && $this->id <= -100000;
-    }
-
-    /**
-     * Check if this is a regular game NPC
-     */
-    public function isRegularNPC(): bool
-    {
-        return $this->id !== null && $this->id > -100000 && $this->id < 0;
-    }
-
-    /**
-     * Get NPC type based on ID range
-     */
-    public function getNPCType(): string
-    {
-        if ($this->isTutorialEnemy()) {
-            return 'tutorial_enemy';
-        }
-        return 'regular_npc';
-    }
 }

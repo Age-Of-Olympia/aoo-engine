@@ -130,11 +130,6 @@ class Plan
         return $this->slug;
     }
 
-    public function setSlug(string $slug): void
-    {
-        $this->slug = $slug;
-    }
-
     public function getSeason(): ?int
     {
         return $this->season;

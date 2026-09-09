@@ -33,11 +33,6 @@ class TutorialPlayer extends Character
         return false;
     }
 
-    public function isPubliclyVisible(): bool
-    {
-        return false;
-    }
-
     public function getTutorialSessionId(): ?string
     {
         return $this->tutorialSessionId;
@@ -58,11 +53,6 @@ class TutorialPlayer extends Character
     {
         $this->realPlayerIdRef = $realPlayerIdRef;
         return $this;
-    }
-
-    public function isTemporary(): bool
-    {
-        return true;
     }
 
     /**
@@ -93,36 +83,4 @@ class TutorialPlayer extends Character
             ->gain($this->realPlayerIdRef, $xpEarned, $piEarned);
     }
 
-    public function deleteWithRelatedData(\Doctrine\DBAL\Connection $conn): void
-    {
-        if (!$this->id) {
-            return;
-        }
-
-        $tables = [
-            'players_logs' => ['player_id', 'target_id'],
-            'players_actions' => ['player_id'],
-            'players_items' => ['player_id'],
-            'players_effects' => ['player_id'],
-            'players_options' => ['player_id'],
-            'players_connections' => ['player_id'],
-            'players_bonus' => ['player_id'],
-            'players_assists' => ['player_id', 'target_id'],
-            'players_kills' => ['player_id', 'target_id'],
-        ];
-
-        foreach ($tables as $table => $columns) {
-            foreach ($columns as $column) {
-                $conn->executeStatement(
-                    "DELETE FROM $table WHERE $column = ?",
-                    [$this->id]
-                );
-            }
-        }
-
-        $conn->executeStatement(
-            'DELETE FROM players WHERE id = ? AND player_type = "tutorial"',
-            [$this->id]
-        );
-    }
 }

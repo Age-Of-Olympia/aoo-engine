@@ -513,18 +513,6 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
         $this->{$key} = $value;
     }
 
-    /**
-     * @return array<string, int> All 16 stats, keyed like the CARACS constant.
-     */
-    public function getCaracs(): array
-    {
-        $caracs = [];
-        foreach (self::CARAC_KEYS as $key) {
-            $caracs[$key] = $this->{$key};
-        }
-        return $caracs;
-    }
-
     private function assertCaracKey(string $key): void
     {
         if (!in_array($key, self::CARAC_KEYS, true)) {
@@ -586,14 +574,6 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
         return $this;
     }
 
-    /**
-     * @return Collection<int, Action>
-     */
-    public function getActions(): Collection
-    {
-        return $this->actions;
-    }
-
     public function addAction(Action $action): self
     {
         if (!$this->actions->contains($action)) {
@@ -611,13 +591,6 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
         return $this;
     }
 
-    /**
-     * @return Collection<int, Recipe>
-     */
-    public function getRecipes(): Collection
-    {
-        return $this->recipes;
-    }
     public function addRecipe(Recipe $recipe): self
     {
         if (!$this->recipes->contains($recipe)) {
@@ -643,12 +616,6 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     public function opensTheWay(): bool
     {
         return $this->opensTheWay;
-    }
-
-    public function setOpensTheWay(bool $opensTheWay): self
-    {
-        $this->opensTheWay = $opensTheWay;
-        return $this;
     }
 
     public function setLockable(bool $lockable): self

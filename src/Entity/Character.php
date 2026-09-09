@@ -94,39 +94,9 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
     #[ORM\Column(type: "boolean", name: "email_bonus", nullable: true)]
     protected ?bool $emailBonus = false;
 
-    // Getters and Setters
-
-    public function getPassword(): string
-    {
-        return $this->psw;
-    }
-
-    public function setPassword(string $psw): self
-    {
-        $this->psw = $psw;
-        return $this;
-    }
-
     public function getMail(): string
     {
         return $this->mail;
-    }
-
-    public function setMail(string $mail): self
-    {
-        $this->mail = $mail;
-        return $this;
-    }
-
-    public function getPlainMail(): string
-    {
-        return $this->plainMail;
-    }
-
-    public function setPlainMail(string $plainMail): self
-    {
-        $this->plainMail = $plainMail;
-        return $this;
     }
 
     public function getPr(): int
@@ -134,21 +104,9 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
         return $this->pr;
     }
 
-    public function setPr(int $pr): self
-    {
-        $this->pr = $pr;
-        return $this;
-    }
-
     public function getMalus(): int
     {
         return $this->malus;
-    }
-
-    public function setMalus(int $malus): self
-    {
-        $this->malus = $malus;
-        return $this;
     }
 
     public function getEnergie(): int
@@ -156,32 +114,9 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
         return $this->energie;
     }
 
-    public function setEnergie(int $energie): self
-    {
-        $this->energie = $energie;
-        return $this;
-    }
-
     public function getGodId(): int
     {
         return $this->godId;
-    }
-
-    public function setGodId(int $godId): self
-    {
-        $this->godId = $godId;
-        return $this;
-    }
-
-    public function getPf(): int
-    {
-        return $this->pf;
-    }
-
-    public function setPf(int $pf): self
-    {
-        $this->pf = $pf;
-        return $this;
     }
 
     public function getStory(): string
@@ -189,32 +124,9 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
         return $this->story;
     }
 
-    public function setStory(string $story): self
-    {
-        $this->story = $story;
-        return $this;
-    }
-
-    public function getQuest(): ?string
-    {
-        return $this->quest;
-    }
-
-    public function setQuest(?string $quest): self
-    {
-        $this->quest = $quest;
-        return $this;
-    }
-
     public function getFactionRole(): int
     {
         return $this->factionRole;
-    }
-
-    public function setFactionRole(int $factionRole): self
-    {
-        $this->factionRole = $factionRole;
-        return $this;
     }
 
     public function getSecretFaction(): string
@@ -222,21 +134,9 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
         return $this->secretFaction;
     }
 
-    public function setSecretFaction(string $secretFaction): self
-    {
-        $this->secretFaction = $secretFaction;
-        return $this;
-    }
-
     public function getSecretFactionRole(): int
     {
         return $this->secretFactionRole;
-    }
-
-    public function setSecretFactionRole(int $secretFactionRole): self
-    {
-        $this->secretFactionRole = $secretFactionRole;
-        return $this;
     }
 
     public function getLastLoginTime(): int
@@ -250,25 +150,9 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
         return $this;
     }
 
-    public function getLastTravelTime(): int
-    {
-        return $this->lastTravelTime;
-    }
-
-    public function setLastTravelTime(int $lastTravelTime): self
-    {
-        $this->lastTravelTime = $lastTravelTime;
-        return $this;
-    }
-
     public function getEmailBonus(): ?bool
     {
         return $this->emailBonus;
     }
 
-    public function setEmailBonus(?bool $emailBonus): self
-    {
-        $this->emailBonus = $emailBonus;
-        return $this;
-    }
 }

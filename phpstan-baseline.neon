@@ -226,12 +226,6 @@ parameters:
 			path: src/Entity/RaceNameListEntry.php
 
 		-
-			message: '#^Class App\\Entity\\Recipe referenced with incorrect case\: App\\Entity\\recipe\.$#'
-			identifier: class.nameCase
-			count: 1
-			path: src/Entity/RecipeResult.php
-
-		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.expr
 			count: 1

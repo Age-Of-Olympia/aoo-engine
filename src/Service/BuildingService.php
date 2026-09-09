@@ -1128,7 +1128,7 @@ class BuildingService extends BaseService
             return;
         }
 
-        $maxPv = (int) ($this->raceService->getRaceByName((string) $row['race'])?->getCaracs()['pv'] ?? 0);
+        $maxPv = (int) ($this->raceService->getRaceByName((string) $row['race'])?->ownCaracs()['pv'] ?? 0);
         if ($maxPv <= 0) {
             return;
         }

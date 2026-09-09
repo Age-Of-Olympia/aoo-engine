@@ -75,11 +75,6 @@ class Item implements OwnsCaracsInterface, LockableInterface, ObstructsInterface
         return $this->lockable;
     }
 
-    public function setLockable(bool $lockable): void
-    {
-        $this->lockable = $lockable;
-    }
-
     /**
      * Building (races.name) that must stand FINISHED on the plan before
      * this type can be built — 'banque' for chests; null = no requirement.
@@ -125,38 +120,18 @@ class Item implements OwnsCaracsInterface, LockableInterface, ObstructsInterface
     {
         return $this->private;
     }
-    public function setPrivate(bool $private): void
-    {
-        $this->private = $private;  
-    }
-
     public function isEnchanted(): bool
     {
         return $this->enchanted;
     }
-    public function setEnchanted(bool $enchanted): void
-    {
-        $this->enchanted = $enchanted;
-    }
-
     public function isVorpal(): bool
     {
         return $this->vorpal;
     }
-    public function setVorpal(bool $vorpal): void
-    {
-        $this->vorpal = $vorpal;
-    }
-
     public function isCursed(): bool
     {
         return $this->cursed;
     }
-    public function setCursed(bool $cursed): void
-    {
-        $this->cursed = $cursed;
-    }
-
     public function getSpell(): ?string
     {
         return $this->spell;
@@ -170,11 +145,6 @@ class Item implements OwnsCaracsInterface, LockableInterface, ObstructsInterface
     public function getDurabilityMax(): int
     {
         return $this->durabilityMax;
-    }
-
-    public function setDurabilityMax(int $durabilityMax): void
-    {
-        $this->durabilityMax = $durabilityMax;
     }
 
     /**

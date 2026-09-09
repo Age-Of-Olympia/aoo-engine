@@ -35,25 +35,6 @@ class RealPlayer extends Character
     }
 
     /**
-     * Check if player can appear in public lists (rankings, leaderboards)
-     */
-    public function isPubliclyVisible(): bool
-    {
-        return true;
-    }
-
-    /**
-     * Check if player has admin privileges
-     */
-    public function isAdmin(): bool
-    {
-        // Check if player has isAdmin option
-        // This would require loading from players_options table
-        // For now, return false - implement when needed
-        return false;
-    }
-
-    /**
      * Has this player's last login passed the INACTIVE_TIME threshold?
      *
      * Domain method — replaces legacy `$player->data->isInactive`

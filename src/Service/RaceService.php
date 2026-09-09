@@ -92,7 +92,7 @@ class RaceService
                 'spells' => $race->getSpellNames(),
                 'actionsPack' => $race->getActionsPackNames(),
             ],
-            $race->getCaracs()
+            $race->ownCaracs()
         );
     }
 

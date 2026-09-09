@@ -65,7 +65,7 @@ final class RaceExporter implements ObjectExporterInterface
             'faction'        => $entity->getFaction(),
             'plan'           => $entity->getPlan(),
             'animateurId'    => $entity->getAnimateurId(),
-            'caracs'         => $entity->getCaracs(),
+            'caracs'         => $entity->ownCaracs(),
             'build_work'     => $entity->getBuildWork(),
             /* The DECLARED cut-out travels with its type — guessed shapes
              * stay home, the target install derives its own. */

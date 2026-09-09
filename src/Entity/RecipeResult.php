@@ -41,7 +41,7 @@ class RecipeResult
         $this->item = $item;
     }
     
-    public function getrecipe(): recipe
+    public function getRecipe(): Recipe
     {
         return $this->recipe;
     }

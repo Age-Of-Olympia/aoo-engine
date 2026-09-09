@@ -247,17 +247,6 @@ abstract class GameEntity
         return $this;
     }
 
-    public function getRegisterTime(): int
-    {
-        return $this->registerTime;
-    }
-
-    public function setRegisterTime(int $registerTime): self
-    {
-        $this->registerTime = $registerTime;
-        return $this;
-    }
-
     /**
      * Check if this is a real player (not tutorial, not NPC)
      */
