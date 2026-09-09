@@ -227,7 +227,6 @@ class AdminMenuAccessService
             return;
         }
 
-        $this->ensureTable();
         $db = new Db();
 
         if ($level === self::MENUS[$page][2]) {
@@ -245,9 +244,7 @@ class AdminMenuAccessService
     }
 
     /**
-     * DB overrides (page => level). Cached per instance; degrades to empty (all
-     * registry defaults) if the table is absent, so the dashboard keeps working
-     * before the migration runs.
+     * DB overrides (page => level). Cached per instance.
      *
      * @return array<string,string>
      */
@@ -258,29 +255,11 @@ class AdminMenuAccessService
         }
 
         $this->overrideCache = [];
-        try {
-            $res = (new Db())->exe('SELECT page, required_level FROM admin_menu_access');
-            while ($row = $res->fetch_assoc()) {
-                $this->overrideCache[(string) $row['page']] = (string) $row['required_level'];
-            }
-        } catch (\Throwable $e) {
-            // Table not created yet → registry defaults only.
+        $res = (new Db())->exe('SELECT page, required_level FROM admin_menu_access');
+        while ($row = $res->fetch_assoc()) {
+            $this->overrideCache[(string) $row['page']] = (string) $row['required_level'];
         }
 
         return $this->overrideCache;
-    }
-
-    /**
-     * Create the overrides table if it does not exist. Keeps the feature working
-     * even where the Doctrine migration has not been applied; idempotent.
-     */
-    private function ensureTable(): void
-    {
-        (new Db())->exe(
-            "CREATE TABLE IF NOT EXISTS admin_menu_access (
-                page VARCHAR(64) NOT NULL PRIMARY KEY,
-                required_level VARCHAR(16) NOT NULL
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-        );
     }
 }
