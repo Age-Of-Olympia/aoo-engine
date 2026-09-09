@@ -3,12 +3,7 @@ use App\Factory\PlayerFactory;
 use Classes\Ui;
 use Classes\WarSchool;
 
-use App\View\WarSchool\MeleeView;
-use App\View\WarSchool\DistanceView;
-use App\View\WarSchool\MagicView;
-use App\View\WarSchool\SpellView;
-use App\View\WarSchool\StealthView;
-use App\View\WarSchool\SurvivalView;
+use App\View\WarSchool\SkillTreeView;
 use App\View\WarSchool\ReassignationView;
 
 /*
@@ -111,27 +106,21 @@ if ($onSkillTab) {
         . '.ws-content h2{font-family:sans-serif;font-size:1.1em;font-weight:bold}'
         . '.ws-content h3{font-family:sans-serif;font-size:1.05em;font-weight:normal}'
         . '.ws-content .ws-info{font-family:sans-serif;font-size:1.05em;text-align:center;margin:6px 0}'
+        . '.ws-content .ws-legend{cursor:pointer;margin-bottom:20px;background:rgba(0,0,0,.05);padding:10px;border-radius:5px}'
+        . '.ws-content .ws-legend summary{display:flex;align-items:center;justify-content:center;font-weight:bold;margin:15px 0;outline:none}'
+        . '.ws-content .ws-legend summary h3{margin:0;display:inline;font-size:1.17em}'
+        . '.ws-content .ws-legend h3{margin:5px 0}'
+        . '.ws-content .ws-effect{max-width:400px;padding:10px}'
+        . '.ws-content .ws-wiki{text-decoration:underline;color:#2980b9}'
+        . '.ws-content .ws-off{color:#c0392b}.ws-content .ws-curse{color:#8e44ad}.ws-content .ws-buff{color:#2980b9}.ws-content .ws-support{color:#27ae60}'
+        . '.ws-content .ws-warn{color:red}.ws-content .ws-stealth{color:blue}.ws-content .ws-full{color:red}'
         . '</style>';
     echo '<div class="ws-content">';
 }
 
-if (isset($_GET['melee'])) {
-    MeleeView::render($player);
-}
-elseif (isset($_GET['distance'])) {
-    DistanceView::render($player);
-}
-elseif (isset($_GET['magic'])) {
-    MagicView::render($player);
-}
-elseif (isset($_GET['spells'])) {
-    SpellView::render($player);
-}
-elseif (isset($_GET['stealth'])) {
-    StealthView::render($player);
-}
-elseif (isset($_GET['survival'])) {
-    SurvivalView::render($player);
+$treeTab = array_intersect_key(SkillTreeView::GET_KEYS, $_GET);
+if ($treeTab !== []) {
+    (new SkillTreeView())->render($player, reset($treeTab));
 }
 elseif (isset($_GET['reassignation'])) {
     ReassignationView::render($player);
