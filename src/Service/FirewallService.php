@@ -16,13 +16,11 @@ class FirewallService
 
 
         // firewall
-        $sql = 'DELETE FROM players_ips WHERE expTime <= ' . time() . '';
-        $db->exe($sql);
+        $db->exe('DELETE FROM players_ips WHERE expTime <= ?', [time()]);
 
         if (array_key_exists('REMOTE_ADDR', $_SERVER)) {
             $this->ip = $_SERVER['REMOTE_ADDR'];
-            $sql = 'SELECT * FROM players_ips WHERE ip = "' .  $this->ip . '" AND failed > 0 ';
-            $result = $db->exe($sql);
+            $result = $db->exe('SELECT * FROM players_ips WHERE ip = ? AND failed > 0', [$this->ip]);
             $row_ip = $result->fetch_assoc();
 
             $this->previousFailedCount = (is_array($row_ip)) ? $row_ip['failed'] : 0;
@@ -46,16 +44,10 @@ class FirewallService
             // reccord the fail for firewall
             if ($this->previousFailedCount > 0) {
 
-                $sql = 'UPDATE players_ips SET failed = failed + 1, expTime = ' . $expTime . ' WHERE ip = "' . $ip . '" ';
-                $db->exe($sql);
+                $db->exe('UPDATE players_ips SET failed = failed + 1, expTime = ? WHERE ip = ?', [$expTime, $ip]);
             } else {
 
-                $sql = '
-        INSERT INTO players_ips
-        (`ip`,`expTime`,`failed`)
-        VALUES("' . $ip . '",' . $expTime . ',1);
-        ';
-                $db->exe($sql);
+                $db->exe('INSERT INTO players_ips (`ip`, `expTime`, `failed`) VALUES (?, ?, 1)', [$ip, $expTime]);
             }
         }
     }
