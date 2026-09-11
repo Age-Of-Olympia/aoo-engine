@@ -103,8 +103,6 @@ if($player->have_option('showActionDetails')){
  * PERFORM ACTION
  */
 
-// Initialisation de la fabrique avec le répertoire des actions
-ActionFactory::initialize('src/Action');
 $actionResultsView = null;
 
 $action = ActionFactory::getAction($_POST["action"]);

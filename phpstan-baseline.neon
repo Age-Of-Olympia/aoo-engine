@@ -36,12 +36,6 @@ parameters:
 			count: 1
 			path: api/tutorial/jump-to-step.php
 
-		-
-			message: '#^Static property App\\Factory\\ActionFactory\:\:\$actionClasses is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Factory/ActionFactory.php
-
 
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
