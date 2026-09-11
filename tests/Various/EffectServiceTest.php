@@ -51,7 +51,7 @@ class EffectServiceTest extends TestCase
     public function testTheFiveCombatStancesAreHidden(): void
     {
         $this->assertEqualsCanonicalizing(
-            ['parade', 'leurre', 'dedoublement', 'cle_de_bras', 'pas_de_cote'],
+            ['parade', 'dissipation', 'dedoublement', 'cle_de_bras', 'pas_de_cote'],
             $this->service->getHiddenNames()
         );
         $this->assertTrue($this->service->isHidden('parade'));
@@ -152,13 +152,13 @@ class EffectServiceTest extends TestCase
         $this->assertSame('melee', $parade->getDodgeDefenderWeapon());
         $this->assertSame('', $parade->getDodgeReaction());
 
-        $this->assertSame('spell', $this->service->getEffectByName('leurre')->getDodgeScope());
+        $this->assertSame('spell', $this->service->getEffectByName('dissipation')->getDodgeScope());
         $this->assertSame('delete_double', $this->service->getEffectByName('dedoublement')->getDodgeReaction());
         $cle = $this->service->getEffectByName('cle_de_bras');
         $this->assertSame('poing', $cle->getDodgeDefenderWeapon());
         $this->assertSame('immobilize_attacker', $cle->getDodgeReaction());
         $pas = $this->service->getEffectByName('pas_de_cote');
-        $this->assertSame('physical', $pas->getDodgeScope());
+        $this->assertSame('distance', $pas->getDodgeScope());
         $this->assertSame('step_aside', $pas->getDodgeReaction());
 
         // Vol, multiplicateur de coût (×(valeur+1)), blocage échanges.
