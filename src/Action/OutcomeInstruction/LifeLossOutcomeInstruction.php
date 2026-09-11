@@ -56,12 +56,8 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         $isDrain = $params["drain"] ?? false;
         $isSiphon = $params["siphon"] ?? false;
         $bonusTraitDamages = (is_array($bonusTraitDamagesParameters) ? floor($actor->caracs->{$bonusTraitDamagesParameters[0]}/$bonusTraitDamagesParameters[1]) : $bonusTraitDamagesParameters) ?? 0;
-        $bonusTargetTraitDamages = is_array($bonusTargetTraitDamagesParameters) 
-                                    ? ($bonusTargetTraitDamagesParameters[0] === "malus" 
-                                    ? floor((int) $target->data->malus / $bonusTargetTraitDamagesParameters[1]) 
-                                    : floor(($target->caracs->{$bonusTargetTraitDamagesParameters[0]} - $target->getRemaining($bonusTargetTraitDamagesParameters[0])) / $bonusTargetTraitDamagesParameters[1])) 
-                                    : 0;
-    $bonusTraitDefense = $params['bonusDefenseTrait'] ?? 0;
+        $bonusTargetTraitDamages = $this->targetStateBonus($target, $bonusTargetTraitDamagesParameters);
+        $bonusTraitDefense = $params['bonusDefenseTrait'] ?? 0;
         $distanceInfluence = $params['distance'] ?? false;
         $sautInfluence = $params['saut'] ?? false;
         $targetIgnore = $params['targetIgnore'] ?? false;
@@ -105,7 +101,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         if(!empty($actorTraitDamages) && !empty($targetTraitDamagesTaken)){
             $actorDamages = (is_numeric($actorTraitDamages)) ? $actorTraitDamages : $actor->caracs->{$actorTraitDamages};
             $targetDefense = (is_numeric($targetTraitDamagesTaken)) ? $targetTraitDamagesTaken : $target->caracs->{$targetTraitDamagesTaken};
-            $bonusDamages = (is_numeric($bonusTraitDamages)) ? $bonusTraitDamages + $bonusTargetTraitDamages : $actor->caracs->{$bonusTraitDamages} + $bonusTargetTraitDamages;
+            $bonusDamages = ((is_numeric($bonusTraitDamages)) ? $bonusTraitDamages : $actor->caracs->{$bonusTraitDamages}) + $bonusTargetTraitDamages;
             $bonusDefense = (is_numeric($bonusTraitDefense)) ? $bonusTraitDefense : $target->caracs->{$bonusTraitDefense};
             
             $modifiers = new DamageModifiers(
@@ -267,6 +263,23 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         }
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array(), totalDamages:$totalDamages);
+    }
+
+    /**
+     * Damage from the target's state: [trait, per] gives +1 per $per points the
+     * target is missing on $trait ('malus' reads the malus counter); a bare
+     * number is a flat bonus.
+     */
+    private function targetStateBonus(Player $target, mixed $param): int
+    {
+        if (!is_array($param)) {
+            return (int) $param;
+        }
+        [$trait, $per] = $param;
+        $missing = $trait === 'malus'
+            ? (int) $target->data->malus
+            : $target->caracs->{$trait} - $target->getRemaining($trait);
+        return (int) floor($missing / $per);
     }
 
     /**
