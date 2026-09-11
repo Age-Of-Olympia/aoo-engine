@@ -7,7 +7,12 @@ use App\Action\Condition\ConditionObject;
 use App\Entity\ActionCondition;
 
 
-interface ConditionInterface
+/**
+ * A condition declares its parameters ({@see HasParameterSchemaInterface}):
+ * an empty schema means "takes none", and nothing may be read from the
+ * request or the row without a field for it.
+ */
+interface ConditionInterface extends HasParameterSchemaInterface
 {
     /**
      * Return true ConditionResult if the condition is satisfied, false otherwise.

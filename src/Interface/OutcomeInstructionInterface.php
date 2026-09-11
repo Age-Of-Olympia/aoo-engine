@@ -7,7 +7,8 @@ use App\Action\OutcomeInstruction\OutcomeResult;
 use App\Entity\ActionOutcome;
 use Classes\Player;
 
-interface OutcomeInstructionInterface
+/** An instruction declares its parameters, like a condition does. */
+interface OutcomeInstructionInterface extends HasParameterSchemaInterface
 {
     public function getId(): ?int;
     public function setId(int $id): self;
