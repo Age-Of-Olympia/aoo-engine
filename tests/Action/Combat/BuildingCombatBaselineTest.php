@@ -14,8 +14,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * Roadmap step 6 (docs/design-buildings-entities.md §6): combat against a
- * building, end to end.
+ * Roadmap step 6: combat against a building, end to end.
  *
  *  - the REAL melee action from the catalog resolves against a building
  *    target through the untouched executor — never blocked, 1 A paid,

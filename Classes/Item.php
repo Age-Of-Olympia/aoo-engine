@@ -557,7 +557,7 @@ class Item{
         }
 
 
-        /* Double lecture (docs/design-items-instances.md §5c P2) — double
+        /* Double lecture (items Phase 2) — double
          * lecture : les objets individualisés (item_instances) rejoignent
          * la liste, façonnés comme des lignes de pile (n=1) + méta
          * d'instance. Clés : par id catalogue quand on liste l'ÉQUIPÉ

@@ -66,8 +66,8 @@ radius, and no player would see a difference.
 - `takeInstance` has exactly **one** caller: `TakeItemOutcomeInstruction`.
 - `Player::death()` = spill loot → go to hell (`plan 'enfers'`) → purge malus,
   effects, bonuses. Only the spill is reusable; the rest is character-only.
-- `docs/design-items-instances.md` **rejected** items-as-entities, but its
-  stated reason was *stacks* ("259 planches = 259 entities"). Individual
+- Items-as-entities was **rejected**, but the stated reason was *stacks*
+  ("259 planches = 259 entities"). Individual
   instances are already one row each, so that argument does not settle the
   case — this is open design space, not a closed door.
 

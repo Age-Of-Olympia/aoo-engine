@@ -10,8 +10,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * Phase 0 golden master for one FULL attack resolution
- * (docs/design-buildings-entities.md §7.3): two real fixture players, the
+ * Phase 0 golden master for one FULL attack resolution: two real fixture players, the
  * real 'melee' action from the DB catalog, the real executor — conditions,
  * dice, outcomes, costs, XP and logs all live.
  *

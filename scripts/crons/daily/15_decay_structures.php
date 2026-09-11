@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Decay of player-built constructions — docs/design-decay-structures.md.
+ * Decay of player-built constructions.
  *
  * Runs daily, but the rule is counted in TURNS: the pass applies whatever
  * each construction owes since its horizon, so the cadence of the cron and

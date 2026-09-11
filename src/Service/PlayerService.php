@@ -154,8 +154,7 @@ class PlayerService
     }
 
     /**
-     * Branche destruction du chemin de mort pour les structures
-     * (docs/design-buildings-entities.md §4.7).
+     * Branche destruction du chemin de mort pour les structures.
      *
      * Journalise la destruction des deux côtés puis :
      * - bâtiment : il DISPARAÎT du plateau (BuildingService::vanish) —

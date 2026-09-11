@@ -8,8 +8,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * L'action GÉNÉRIQUE 'equiper' de bout en bout
- * (docs/design-generic-item-actions.md, volet 2) : bascule
+ * L'action GÉNÉRIQUE 'equiper' de bout en bout (volet 2) : bascule
  * équiper/déséquiper via ItemPick — équiper coûte 1 Ae, déséquiper est
  * gratuit, et le type 'equip' (sans ligne action_type_xp) ne rapporte
  * AUCUNE XP : pas de fermier de garde-robe.

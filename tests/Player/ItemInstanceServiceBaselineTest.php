@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * Items Phase 1a golden masters (docs/design-items-instances.md §5c):
- * the instance lifecycle under lazy promotion —
+ * Items Phase 1a golden masters: the instance lifecycle under lazy
+ * promotion —
  *
  *   - promote(): stack −1 + instance + link, atomically; refused on an
  *     empty stack (P3);

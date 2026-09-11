@@ -8,8 +8,8 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Items Phase 1a (docs/design-items-instances.md §3.2 / §5c): the
- * instance tables — SCHEMA ONLY, no data conversion, no behavior
+ * Items Phase 1a: the instance tables — SCHEMA ONLY, no data conversion,
+ * no behavior
  * change. The equipped-rows conversion is a LATER migration, after the
  * read and write paths understand instances (strangler order).
  *

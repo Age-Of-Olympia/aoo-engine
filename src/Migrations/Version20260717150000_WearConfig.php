@@ -8,8 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Items Phase 2 — wear configuration ON THE CATALOG
- * (docs/design-items-instances.md §3.4):
+ * Items Phase 2 — wear configuration ON THE CATALOG:
  *
  * - wear_triggers: CSV subset of attack,defense,move,usage — the events
  *   that ARM this item's wear during a turn;

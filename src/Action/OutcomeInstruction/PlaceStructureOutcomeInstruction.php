@@ -15,7 +15,7 @@ use Classes\View;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * G2 (docs/design-items-instances.md §4) : pose une structure sur une
+ * G2 : pose une structure sur une
  * case libre adjacente à l'acteur, via BuildingService — le débouché
  * data-driven de l'action « construire ». Remplace la pose de
  * map_resources muets de build.php : une palissade construite par un

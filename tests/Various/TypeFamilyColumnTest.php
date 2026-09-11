@@ -12,8 +12,8 @@ use Tests\Support\LegacyBootstrapTrait;
 /**
  * `races.type_kind` dit la même chose que le code, pour chaque ligne.
  *
- * La colonne sera le discriminant du tronc `EntityType`
- * (docs/design-entity-types-inheritance.md). Avant qu'une classe en dépende,
+ * La colonne sera le discriminant du tronc `EntityType`. Avant qu'une classe
+ * en dépende,
  * il faut qu'elle soit d'accord avec `TypeEditorFace::of()` — qui est ce que
  * le moteur calcule aujourd'hui à chaque affichage — et qu'aucune ligne ne
  * reste sans famille.

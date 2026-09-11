@@ -3,8 +3,7 @@
 namespace App\Enum;
 
 /**
- * The two branches of the GameEntity tree, as data
- * (docs/design-buildings-entities.md §4.3/§4.4):
+ * The two branches of the GameEntity tree, as data:
  *
  *   Character — real players, tutorial players, NPCs
  *   Structure — buildings, unique objects, scenery

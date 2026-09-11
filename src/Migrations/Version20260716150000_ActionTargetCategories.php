@@ -9,9 +9,8 @@ use Doctrine\Migrations\AbstractMigration;
 
 /**
  * Wire the TargetType condition onto the existing action catalog and ship
- * the first structure-targeted action (docs/design-buildings-entities.md
- * §4.4 + retours 2026-07-16 : les actions sur personnages et sur
- * structures doivent être distinctes en jeu).
+ * the first structure-targeted action (retours 2026-07-16 : les actions sur
+ * personnages et sur structures doivent être distinctes en jeu).
  *
  * Rule applied to every action that does not already carry a TargetType
  * condition:

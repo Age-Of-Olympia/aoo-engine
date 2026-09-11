@@ -8,8 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * First structure pseudo-race: 'palissade'
- * (docs/design-buildings-entities.md §4.6).
+ * First structure pseudo-race: 'palissade'.
  *
  * Structures reuse the caracs pipeline untouched: their max PV is a
  * races row, exactly like characters. playable = 0 keeps it out of

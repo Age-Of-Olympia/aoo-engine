@@ -8,8 +8,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * Phase 0 golden masters for the player vitals pipeline
- * (docs/design-buildings-entities.md §7.3): pins the persisted contract of
+ * Phase 0 golden masters for the player vitals pipeline: pins the persisted contract of
  * get_caracs(), getRemaining() and putBonus() on a real fixture player.
  *
  * Buildings will be `players` rows whose damage flows through exactly these

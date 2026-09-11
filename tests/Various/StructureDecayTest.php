@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * Decay of player-built constructions — docs/design-decay-structures.md.
+ * Decay of player-built constructions.
  *
  * The rule's criterion is MEMBERSHIP of `entity_decay`: what Tiled or the
  * admin placed has no row and must be untouchable. Most of what follows

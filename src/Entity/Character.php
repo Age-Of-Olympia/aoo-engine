@@ -10,8 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * Character — abstract branch of the GameEntity STI for entities that are
- * played or play themselves: real players, tutorial players, NPCs
- * (docs/design-buildings-entities.md §4.3).
+ * played or play themselves: real players, tutorial players, NPCs.
  *
  * Carries what a map STRUCTURE must not: account data (psw/mail — the
  * §3 ideal eventually splits these into their own table, Phase D),

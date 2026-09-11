@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * L'action GÉNÉRIQUE 'consommer' de bout en bout
- * (docs/design-generic-item-actions.md) : l'objet arrive à l'exécution
+ * L'action GÉNÉRIQUE 'consommer' de bout en bout : l'objet arrive à
+ * l'exécution
  * (POST itemId → ItemPick), le coût 1 A et le retrait de l'exemplaire
  * sont des conditions, la charge (bonus, effets) une instruction —
  * même résultat observable que le geste d'inventaire historique.

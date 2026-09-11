@@ -16,8 +16,7 @@ use Doctrine\ORM\Mapping as ORM;
  * The `players` row carries identity/position/PV surface (via
  * GameEntity); everything building-specific — type (players.race), owner,
  * faction allegiance, build state — lives in the `buildings`
- * satellite row (BuildingDetails), per the component pattern of
- * docs/design-buildings-entities.md §4.5.
+ * satellite row (BuildingDetails), per the component pattern.
  *
  * **It plays.** A building takes turns and earns its own experience — the two
  * capabilities `Character` happened to have first — without ever gaining an

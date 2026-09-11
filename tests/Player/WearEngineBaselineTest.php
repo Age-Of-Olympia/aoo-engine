@@ -8,8 +8,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * The PER-TURN wear engine (docs/design-items-instances.md §3.4):
- * « le tour est l'unité d'usure ».
+ * The PER-TURN wear engine: « le tour est l'unité d'usure ».
  *
  *   - arm() flags ONLY the WORN exemplars whose catalogue declares the
  *     trigger — wrong trigger, unequipped, other player, broken: none

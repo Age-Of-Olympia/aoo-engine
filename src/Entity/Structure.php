@@ -6,8 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * Structure — abstract branch of the GameEntity STI for immobile map
- * entities: buildings and unique objects
- * (docs/design-buildings-entities.md §4.3).
+ * entities: buildings and unique objects.
  *
  * A structure is a `players` row so it inherits the whole damageable
  * machinery for free (§4.9): targetable by attacks, wounds in

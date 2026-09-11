@@ -14,8 +14,7 @@ use ReflectionClass;
 use Tests\Support\LegacyBootstrapTrait;
 
 /**
- * Pins the Structure branch of the GameEntity STI
- * (docs/design-buildings-entities.md §4.3, roadmap step 2):
+ * Pins the Structure branch of the GameEntity STI (roadmap step 2):
  *
  *  - hierarchy shape: Building / UniqueObject are Structures, are
  *    GameEntities, and are NOT Characters — TargetTypeCondition and the

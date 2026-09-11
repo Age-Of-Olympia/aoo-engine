@@ -10,8 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
  *
  * # The turn, for what wears by being used
  *
- * Boots and tools keep the original model
- * (docs/design-items-instances.md §3.4): an event during the turn ARMS
+ * Boots and tools keep the original model: an event during the turn ARMS
  * (arm(): wear_pending = 1 on the worn exemplars whose catalogue
  * declares the trigger), and the decrement lands ONCE at new-turn
  * processing (applyNewTurnWear()). Ten steps in a turn wear the boots

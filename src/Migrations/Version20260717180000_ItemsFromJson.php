@@ -9,8 +9,8 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Items JSON→DB (docs/design-items-instances.md, même mouvement que
- * Version20260710120000_RacesFromJson) : les stats de jeu des objets
+ * Items JSON→DB (même mouvement que Version20260710120000_RacesFromJson) :
+ * les stats de jeu des objets
  * (emplacement, caracs, prix, texte…) quittent datas/*\/items/*.json
  * pour des colonnes de la table items + un fourre-tout `extra` SANS
  * PERTE pour toute clé non colonnisée.

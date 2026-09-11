@@ -8,8 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Actions génériques paramétrées par l'objet
- * (docs/design-generic-item-actions.md) :
+ * Actions génériques paramétrées par l'objet :
  *
  * - crée UNE action `construire` et UNE action `consommer` — l'objet
  *   arrive à l'exécution (condition ItemPick, POST itemId), plus une

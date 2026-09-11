@@ -8,8 +8,8 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Items Phase 1d (docs/design-items-instances.md §5c) — the ONE data
- * conversion of the lazy-promotion policy: currently-equipped stack
+ * Items Phase 1d — the ONE data conversion of the lazy-promotion policy:
+ * currently-equipped stack
  * rows become instances.
  *
  * Handles the « equiped-on-stack » wart (P1): a row (n=3,

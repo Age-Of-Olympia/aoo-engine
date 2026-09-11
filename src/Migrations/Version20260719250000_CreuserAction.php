@@ -8,8 +8,8 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Action `creuser` (docs/design-generic-item-actions.md, volet
- * « creuser sort de go.php ») : le creusement de galeries devient une
+ * Action `creuser` (volet « creuser sort de go.php ») : le creusement de
+ * galeries devient une
  * action du catalogue — coût 1 A en condition, galerie/pierre/malus
  * dans l'instruction digtunnel, XP par la règle du type 'search'
  * (1 = XP_PER_MINE). Déclenchée par le déplacement (go.php), visée

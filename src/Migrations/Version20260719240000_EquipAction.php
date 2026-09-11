@@ -8,8 +8,8 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Action générique `equiper` (docs/design-generic-item-actions.md,
- * volet 2) : équiper/déséquiper entre dans le moteur d'actions — objet
+ * Action générique `equiper` (volet 2) : équiper/déséquiper entre dans le
+ * moteur d'actions — objet
  * fourni au geste (ItemPick kind equipement, instance précise
  * comprise), visée 'self', bascule et coût 1 Ae (sens-dépendant) dans
  * l'instruction equipitem. Type 'equip' : sans ligne action_type_xp,

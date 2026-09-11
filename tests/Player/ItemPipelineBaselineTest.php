@@ -8,8 +8,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * Phase 0 golden masters for the ITEM pipeline
- * (docs/design-items-instances.md §5): pins the persisted contract of
+ * Phase 0 golden masters for the ITEM pipeline: pins the persisted contract of
  * stack arithmetic, equip/unequip and the equipment effect on caracs,
  * BEFORE the instances migration starts touching players_items.
  *

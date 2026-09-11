@@ -8,7 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Roads join the entity model — docs/plan-routes-entities.md.
+ * Roads join the entity model.
  *
  * A road was a line in `map_routes`: a coordinate and a name, nothing more.
  * That is enough to grant the running bonus and to paint the map, and too

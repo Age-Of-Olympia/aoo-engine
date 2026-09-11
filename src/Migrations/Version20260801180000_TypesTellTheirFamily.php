@@ -9,7 +9,7 @@ use Doctrine\Migrations\AbstractMigration;
 
 /**
  * Chaque type dit à quelle famille il appartient — première étape du tronc
- * commun (docs/design-entity-types-inheritance.md).
+ * commun.
  *
  * `races` porte cinq populations que rien ne sépare qu'un couple de colonnes,
  * `kind` et `structure_nature`. Le couple se lit mal : seize races de

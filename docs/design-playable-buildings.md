@@ -5,10 +5,8 @@
 **Purpose**: buildings will be playable and will level up. This note records what was decided
 so that today's code does not close the door — it is *not* a build order.
 
-Companion of [entity-system-overview.md](entity-system-overview.md) (the state as delivered),
-[design-buildings-entities.md](design-buildings-entities.md) and
-[design-vie-et-contenance.md](design-vie-et-contenance.md), whose "capability, not a place in
-the tree" is the pattern applied here.
+Companion of the entity-system state as delivered and of the earlier buildings-as-entities
+design work, whose "capability, not a place in the tree" pattern is applied here.
 
 ---
 

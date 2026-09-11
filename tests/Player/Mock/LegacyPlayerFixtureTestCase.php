@@ -15,8 +15,8 @@ use Tests\Support\PlanFixtureTrait;
  * Base class for baseline tests that exercise the LEGACY player stack
  * (Classes\Player + mysqli Db) against the devcontainer aoo4 database.
  *
- * Phase 0 of the buildings-as-entities plan (docs/design-buildings-entities.md
- * §7.3): these fixtures let tests pin get_caracs()/getRemaining()/putBonus()
+ * Phase 0 of the buildings-as-entities plan: these fixtures let tests pin
+ * get_caracs()/getRemaining()/putBonus()
  * and a full action resolution on REAL rows, so the GameEntity/Structure
  * refactors that follow have a behavioural safety net.
  *

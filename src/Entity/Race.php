@@ -17,7 +17,6 @@ use Doctrine\ORM\Mapping as ORM;
  * parce que la colonne est NOT NULL, pas parce qu'elles sont des bâtiments.
  * Le côté OBJET a son tronc (`GameEntity` et ses déclinaisons) depuis
  * longtemps ; voici celui du côté TYPE.
- * Cadrage complet : docs/design-entity-types-inheritance.md.
  *
  * Le nom reste `Race`, faux mais écrit dans quatre-vingt-une références : le
  * renommer ICI mêlerait un renommage mécanique à un changement de mapping, et

@@ -13,8 +13,7 @@ use App\Service\RaceService;
 
 /**
  * The gesture happens AT a building: an OPEN one of the given types
- * within range of the actor (G4 in design-buildings-entities.md — "une
- * Forge avant un Magasin"). Every cell the building holds counts for
+ * within range of the actor ("une Forge avant un Magasin"). Every cell the building holds counts for
  * the distance, and the one closure rule answers for its state: a
  * ruin, a construction site, a damaged or voluntarily shut workshop
  * serves nobody.

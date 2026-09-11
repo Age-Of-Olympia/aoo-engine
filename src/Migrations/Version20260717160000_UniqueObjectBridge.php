@@ -8,7 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Items Phase 3 (docs/design-items-instances.md §3.3) — the map bridge:
+ * Items Phase 3 — the map bridge:
  *
  * - unique_objects.item_instance_id: a UniqueObject can WRAP an item
  *   instance — a dropped named sword or a placed artifact is a map

@@ -6,7 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * GameEntity — Single Table Inheritance root for everything that lives on
- * the map as a `players` row (docs/design-buildings-entities.md §4.3).
+ * the map as a `players` row.
  *
  * This is the old PlayerEntity split in two:
  *   - GameEntity (this class): what EVERY map entity shares — identity,

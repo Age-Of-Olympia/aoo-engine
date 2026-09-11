@@ -6,8 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * BuildingDetails — 1:1 satellite row of a Building's `players` row
- * (component pattern, docs/design-buildings-entities.md §4.5; same
- * shape as players_pnjs / tutorial_players).
+ * (component pattern; same shape as players_pnjs / tutorial_players).
  *
  * The building's TYPE lives in players.race (a races row of kind
  * 'structure') — not duplicated here.

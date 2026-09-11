@@ -2867,8 +2867,8 @@ body:has(#hud) #admin-coords #admin-coords-close {
 }
 
 /* ---------------------------------------------------------------------
- * Usure (items Phase 2, design-items-instances.md §3.5) : jauge fine
- * sous l'icône d'un emplacement d'équipement. Neutre >= 50 %, encre
+ * Usure (items Phase 2) : jauge fine sous l'icône d'un emplacement
+ * d'équipement. Neutre >= 50 %, encre
  * orangée < 50 %, rouge < 20 % ; brisé = alvéole ternie.
  * ------------------------------------------------------------------ */
 .equip-slot {

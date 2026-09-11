@@ -10,7 +10,7 @@ use App\Action\Schema\ParameterSchema;
 use Classes\Item;
 
 /**
- * G1 (docs/design-items-instances.md §4) : l'action exige N exemplaires
+ * G1 : l'action exige N exemplaires
  * d'un objet du catalogue dans l'inventaire de l'acteur, et les
  * consomme au paiement des coûts — RequiresAmmo généralisé à n'importe
  * quel objet.

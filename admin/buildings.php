@@ -4,8 +4,7 @@
  *
  * One view: the roster of every placed building (position, état, PV,
  * propriétaire, faction) plus the place form. Companion of the console
- * command `building place|remove` — same BuildingService underneath
- * (docs/design-buildings-entities.md §4.7).
+ * command `building place|remove` — same BuildingService underneath.
  *
  * Structure types are races rows of kind 'structure' created in
  * admin/races.php; their pv column is the building's max PV.

@@ -8,7 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Player-built constructions decay — see docs/design-decay-structures.md.
+ * Player-built constructions decay.
  *
  * Three things ship here, and nothing calls them yet:
  *

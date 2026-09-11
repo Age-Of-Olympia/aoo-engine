@@ -11,8 +11,8 @@ use App\Service\InventoryService;
 use Classes\Item;
 
 /**
- * L'objet comme PARAMÈTRE D'EXÉCUTION d'une action générique
- * (docs/design-generic-item-actions.md) : le client POSTe `itemId`, la
+ * L'objet comme PARAMÈTRE D'EXÉCUTION d'une action générique : le client
+ * POSTe `itemId`, la
  * condition valide possession ET admissibilité côté serveur, puis
  * dépose l'objet sur le ConditionObject — RequiresItem (sans paramètre
  * `item` statique) et PlaceStructure/ApplyConsumable consomment CE

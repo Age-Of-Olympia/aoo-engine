@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * La famille devient une colonne ORDINAIRE, sans cesser de se remplir seule.
  *
- * Étape 2 du tronc commun (docs/design-entity-types-inheritance.md) : Doctrine
+ * Étape 2 du tronc commun : Doctrine
  * va se servir de `type_kind` comme DISCRIMINANT, et un discriminant, il
  * l'écrit. Une colonne générée est en lecture seule — elle ne peut donc plus
  * convenir.

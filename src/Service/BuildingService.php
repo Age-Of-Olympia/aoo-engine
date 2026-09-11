@@ -11,8 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Creation and lookup of buildings — `players` rows with
- * player_type='building' plus their 1:1 `buildings` satellite row
- * (docs/design-buildings-entities.md §4.7).
+ * player_type='building' plus their 1:1 `buildings` satellite row.
  *
  * Mirrors Player::put_player(): reserved id range, display id, coords
  * row reuse. The building's max PV comes from its type's

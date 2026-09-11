@@ -156,8 +156,7 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
     }
 
     /**
-     * Category gate (docs/design-buildings-entities.md, retours 2026-07-16) :
-     * un effet ne s'APPLIQUE qu'aux catégories d'entités que l'instruction
+     * Category gate : un effet ne s'APPLIQUE qu'aux catégories d'entités que l'instruction
      * déclare — par défaut les personnages seuls, donc jamais d'adrénaline
      * sur une palissade ; une action de siège peut déclarer ['character',
      * 'structure'] pour mettre le feu à un bâtiment. Le RETRAIT d'un effet

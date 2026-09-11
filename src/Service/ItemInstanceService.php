@@ -7,8 +7,8 @@ use Classes\Item;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Cycle de vie des instances (docs/design-items-instances.md §5c) — the lifecycle
- * of item INSTANCES under the lazy-promotion policy:
+ * Cycle de vie des instances — the lifecycle of item INSTANCES under the
+ * lazy-promotion policy:
  *
  *   - promote(): a pristine unit leaves its stack and becomes an
  *     instance — called by the state events (equip, enchant, wear,

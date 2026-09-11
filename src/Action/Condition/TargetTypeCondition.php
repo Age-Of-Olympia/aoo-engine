@@ -9,9 +9,8 @@ use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 
 /**
- * Restricts an action to target categories of the GameEntity tree
- * (docs/design-buildings-entities.md §4.4) — the data-driven
- * replacement for id-sign conventions:
+ * Restricts an action to target categories of the GameEntity tree — the
+ * data-driven replacement for id-sign conventions:
  *
  *   'character' — real players, tutorial players, NPCs
  *   'structure' — buildings, scenery, resources, plants, placed objects

@@ -8,7 +8,7 @@ use App\Service\TurnScheduleService;
 use Doctrine\DBAL\Connection;
 
 /**
- * Decay of player-built constructions — docs/design-decay-structures.md.
+ * Decay of player-built constructions.
  *
  * # Membership is the rule
  *

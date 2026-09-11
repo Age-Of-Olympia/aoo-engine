@@ -9,8 +9,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * G1 + G2 end to end (docs/design-items-instances.md §4, généralisé par
- * docs/design-generic-item-actions.md) : l'action GÉNÉRIQUE 'construire'
+ * G1 + G2 end to end : l'action GÉNÉRIQUE 'construire'
  * du catalogue, l'objet fourni à l'exécution (POST itemId → ItemPick),
  * through the untouched executor —
  *

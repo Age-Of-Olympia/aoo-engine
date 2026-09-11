@@ -8,8 +8,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * THE proof the buildings plan stands on
- * (docs/design-buildings-entities.md §5, first risk line): a building —
+ * THE proof the buildings plan stands on (first risk line): a building —
  * a players row with player_type='building' and a pseudo-race — flows
  * through the UNTOUCHED legacy vitals pipeline:
  *

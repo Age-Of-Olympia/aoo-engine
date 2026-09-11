@@ -9,7 +9,7 @@ use Doctrine\Migrations\AbstractMigration;
 
 /**
  * First data-driven construction action: 'construire_palissade'
- * (docs/design-items-instances.md §4, gaps G1+G2 now implemented).
+ * (gaps G1+G2 now implemented).
  *
  * Shape: self action (type buff, outcome on self) — the button shows on
  * your own tile; 10 bois (RequiresItem, consumed) + 1 A

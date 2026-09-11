@@ -8,9 +8,8 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Satellite tables for the Structure branch of the GameEntity STI
- * (docs/design-buildings-entities.md §4.5): `buildings` and
- * `unique_objects`, both 1:1 on players.id.
+ * Satellite tables for the Structure branch of the GameEntity STI:
+ * `buildings` and `unique_objects`, both 1:1 on players.id.
  *
  * No change to `players` itself — the new 'building' / 'unique'
  * discriminator values fit the existing player_type column, and their
