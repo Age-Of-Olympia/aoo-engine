@@ -79,7 +79,7 @@ function effect_modifiers(Effect $effect): string
         $parts[] = '−valeur Mvt au tour';
     }
     if ($effect->getDodgeScope() !== '') {
-        $scopes = ['any' => 'tout', 'physical' => 'physique', 'spell' => 'sorts'];
+        $scopes = ['any' => 'tout', 'physical' => 'mêlée', 'distance' => 'tirs', 'spell' => 'sorts'];
         $parts[] = 'posture (' . ($scopes[$effect->getDodgeScope()] ?? $effect->getDodgeScope()) . ')';
     }
     if ($effect->grantsFlight()) {
@@ -264,7 +264,7 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
     $posture = '<div class="row">'
         . formField('Annule les attaques',
             formSelect('dodge_scope', [
-                'any' => 'Toutes', 'physical' => 'Physiques (hors sorts)', 'spell' => 'Sorts',
+                'any' => 'Toutes', 'physical' => 'Mêlée', 'distance' => 'Tirs', 'spell' => 'Sorts',
             ], $isEdit && $effect->getDodgeScope() !== '' ? $effect->getDodgeScope() : null, '— pas une posture —'),
             'form-group col-md-2',
             'La posture est CONSOMMÉE quand elle se déclenche.')

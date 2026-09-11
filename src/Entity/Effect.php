@@ -124,7 +124,7 @@ class Effect
 
     /**
      * Posture de défense : portée d'annulation d'une attaque subie —
-     * '' (pas une posture), 'spell', 'physical' ou 'any'. La posture
+     * '' (pas une posture), 'spell', 'physical', 'distance' ou 'any'. La posture
      * est CONSOMMÉE quand elle se déclenche.
      */
     #[ORM\Column(type: "string", length: 10, options: ["default" => ""], name: "dodge_scope")]
@@ -405,7 +405,7 @@ class Effect
 
     public function setDodgeScope(string $scope): void
     {
-        $this->dodgeScope = in_array($scope, ['spell', 'physical', 'any'], true) ? $scope : '';
+        $this->dodgeScope = in_array($scope, ['spell', 'physical', 'distance', 'any'], true) ? $scope : '';
     }
 
     public function getDodgeAttackerWeapon(): string

@@ -89,7 +89,7 @@ final class EffectWikiRenderer implements WikiSheetRendererInterface
             $rules[] = 'Retire sa valeur en Mouvements au tour suivant.';
         }
         if ($effect->getDodgeScope() !== '') {
-            $scopes = ['any' => 'toute attaque', 'physical' => 'toute attaque physique', 'spell' => 'tout sort offensif'];
+            $scopes = ['any' => 'toute attaque', 'physical' => 'toute attaque de mêlée', 'distance' => 'tout tir', 'spell' => 'tout sort offensif'];
             $rule = 'Posture : annule ' . ($scopes[$effect->getDodgeScope()] ?? $effect->getDodgeScope());
             if ($effect->getDodgeAttackerWeapon() === 'melee') {
                 $rule .= ' d\'un attaquant armé en mêlée';
