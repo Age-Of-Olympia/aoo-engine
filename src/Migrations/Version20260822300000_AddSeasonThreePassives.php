@@ -215,6 +215,7 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
             'carac'         => 'mvt',
             'value'         => 0.143,
             'level'         => 2,
+            'conditions'    => '{"weapon":["arc","fustibale","arc_long","arc_elfique","arc_ensorcele","sarbacane"]}',
             'category'      => 'distance',
             'race'          => 'elfe',
             'prerequisites' => '{"forbidden": ["fulgurance", "pouvoir_titanique"]}',
@@ -322,40 +323,44 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
 
     public function up(Schema $schema): void
     {
-        // 1. Insertion des nouveaux passifs
+        // 1/8 and 1/7 do not fit two decimals (0.143 → 0.14 → floor(7 × 0.14) = 0).
+        $this->addSql('ALTER TABLE action_passives MODIFY `value` DECIMAL(6,4) DEFAULT NULL');
+
         foreach (self::PASSIVES_DATA as $passive) {
             $columns = implode(', ', array_keys($passive));
             $placeholders = implode(', ', array_fill(0, count($passive), '?'));
-            
-            $this->addSql(
-                "INSERT INTO action_passives ($columns) VALUES ($placeholders)",
-                array_values($passive)
-            );
+            $this->addSql("INSERT INTO action_passives ($columns) VALUES ($placeholders)", array_values($passive));
         }
 
-        // 2. Mises à jour des passifs existants
         foreach (self::UPDATES_DATA as $update) {
-            $this->addSql(
-                sprintf('UPDATE action_passives SET %s = ? WHERE name = ?', $update['column']),
-                [$update['new_value'], $update['name']]
-            );
+            $this->addSql(...self::updateSql($update['name'], $update['column'], $update['old_value'], $update['new_value']));
         }
     }
 
     public function down(Schema $schema): void
     {
-        // 2. Annulation des mises à jour (restauration des anciennes valeurs)
         foreach (self::UPDATES_DATA as $update) {
-            $this->addSql(
-                sprintf('UPDATE action_passives SET %s = ? WHERE name = ?', $update['column']),
-                [$update['old_value'], $update['name']]
-            );
+            $this->addSql(...self::updateSql($update['name'], $update['column'], $update['new_value'], $update['old_value']));
         }
 
-        // 1. Suppression des nouveaux passifs insérés
-        $names = array_map(fn($p) => "'" . $p['name'] . "'", self::PASSIVES_DATA);
-        $inClause = implode(', ', $names);
+        $names = array_column(self::PASSIVES_DATA, 'name');
+        $in = implode(', ', array_fill(0, count($names), '?'));
+        $this->addSql("DELETE FROM action_passives WHERE name IN ($in)", $names);
 
-        $this->addSql("DELETE FROM action_passives WHERE name IN ($inClause)");
+        $this->addSql('ALTER TABLE action_passives MODIFY `value` DECIMAL(4,2) DEFAULT NULL');
+    }
+
+    /**
+     * Guarded update: only a row still holding $from moves to $to, so a wrong
+     * name or a row edited by hand is left alone.
+     *
+     * @return array{0: string, 1: array<int, string|null>}
+     */
+    private static function updateSql(string $name, string $column, ?string $from, ?string $to): array
+    {
+        $guard = $from === null ? "$column IS NULL" : "$column = ?";
+        $params = $from === null ? [$to, $name] : [$to, $name, $from];
+
+        return ["UPDATE action_passives SET $column = ? WHERE name = ? AND $guard", $params];
     }
 }

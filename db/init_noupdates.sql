@@ -211,7 +211,7 @@ CREATE TABLE `action_passives` (
   `traits` longtext DEFAULT NULL,
   `type` varchar(255) DEFAULT NULL,
   `carac` varchar(255) DEFAULT NULL,
-  `value` decimal(4,2) DEFAULT NULL,
+  `value` decimal(6,4) DEFAULT NULL,
   `conditions` longtext DEFAULT NULL,
   `level` int(11) NOT NULL,
   `race` varchar(255) DEFAULT NULL,

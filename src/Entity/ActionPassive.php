@@ -24,7 +24,7 @@ class ActionPassive
     #[ORM\Column(type: "string", length: 255)]
     private string $carac;
 
-    #[ORM\Column(type: "decimal", precision: 4, scale: 2)]
+    #[ORM\Column(type: "decimal", precision: 6, scale: 4)]
     private ?string $value = null;
 
     #[ORM\Column(type: "json", nullable: true)]
@@ -106,7 +106,7 @@ class ActionPassive
     public function setValue(float $value): void
     {
         // La valeur est stockée en string avec Doctrine
-        $this->value = number_format($value, 2, '.', '');
+        $this->value = number_format($value, 4, '.', '');
     }
 
     public function getConditions(): ?array
