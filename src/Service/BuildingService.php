@@ -859,13 +859,7 @@ class BuildingService
          * door opened stays barred on screen until something else
          * refreshes the cache. Cheap for chests and édifices too. */
         self::purgeEntityCaches($playerId);
-        $goCoords = $this->entityManager->getConnection()->fetchAssociative(
-            'SELECT c.x, c.y, c.z, c.plan FROM coords c JOIN players p ON p.coords_id = c.id WHERE p.id = ?',
-            [$playerId]
-        );
-        if ($goCoords !== false) {
-            View::refresh_players_svg((object) $goCoords);
-        }
+        $this->refreshBoardAt($this->coordsOf($playerId));
 
         (new AuditService())->addAuditLog('BuildingService::setOpen #' . $playerId . ' ' . ($open ? 'ouvert' : 'fermé'));
     }
@@ -1162,14 +1156,29 @@ class BuildingService
         @unlink(\Classes\Player::cachePath($playerId, '.json'));
         json()->forget('players', (string) $playerId);
 
-        $goCoords = $conn->fetchAssociative(
+        $this->refreshBoardAt($this->coordsOf($playerId));
+        @unlink(\Classes\Player::cachePath($playerId, '.svg'));
+    }
+
+    /**
+     * Board coordinates of a player row, for the refresh-then-repaint
+     * sequence every mutation below needs. Fetched through the injected
+     * EntityManager's connection, not $conn, so callers already holding
+     * their own connection reference stay consistent.
+     */
+    private function coordsOf(int $playerId): array|false
+    {
+        return $this->entityManager->getConnection()->fetchAssociative(
             'SELECT c.x, c.y, c.z, c.plan FROM coords c JOIN players p ON p.coords_id = c.id WHERE p.id = ?',
             [$playerId]
         );
+    }
+
+    private function refreshBoardAt(array|false $goCoords): void
+    {
         if ($goCoords !== false) {
             View::refresh_players_svg((object) $goCoords);
         }
-        @unlink(\Classes\Player::cachePath($playerId, '.svg'));
     }
 
     /**
@@ -1194,10 +1203,7 @@ class BuildingService
             return false;
         }
 
-        $goCoords = $conn->fetchAssociative(
-            'SELECT c.x, c.y, c.z, c.plan FROM coords c JOIN players p ON p.coords_id = c.id WHERE p.id = ?',
-            [$playerId]
-        );
+        $goCoords = $this->coordsOf($playerId);
 
         // Spill before the transaction below, which deletes what is left.
         $spilled = (new \App\Service\LootSpillService())->spill(\App\Factory\PlayerFactory::legacy($playerId));
@@ -1225,9 +1231,7 @@ class BuildingService
             (new \App\Service\Map\EntityLocationService($conn))->shelve((int) $playerId);
         });
 
-        if ($goCoords !== false) {
-            View::refresh_players_svg((object) $goCoords);
-        }
+        $this->refreshBoardAt($goCoords);
 
         // refresh_players_svg ne balaie que la case désormais vide : les
         // caches par-entité du bâtiment disparu se purgent explicitement.
@@ -1269,10 +1273,7 @@ class BuildingService
             return false;
         }
 
-        $goCoords = $conn->fetchAssociative(
-            'SELECT c.x, c.y, c.z, c.plan FROM coords c JOIN players p ON p.coords_id = c.id WHERE p.id = ?',
-            [$playerId]
-        );
+        $goCoords = $this->coordsOf($playerId);
 
         // Même hygiène transactionnelle que takeInstance() : la séquence de
         // DELETE est tout-ou-rien, pas de démontage à moitié fait.
@@ -1281,9 +1282,7 @@ class BuildingService
             self::deleteEntityRows($conn, $playerId);
         });
 
-        if ($goCoords !== false) {
-            View::refresh_players_svg((object) $goCoords);
-        }
+        $this->refreshBoardAt($goCoords);
 
         // refresh_players_svg ne balaie que les lignes ENCORE présentes :
         // purger explicitement les caches du bâtiment supprimé, sinon un id

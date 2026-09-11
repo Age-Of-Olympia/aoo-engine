@@ -184,25 +184,6 @@ final class EntityLocationService
     }
 
     /**
-     * What an entity holds — its inventory, one slot or all of them.
-     *
-     * @return list<array{id: int, slot: string, player_type: string, race: string, name: string}>
-     */
-    public function childrenOf(int $entityId, ?string $slot = null): array
-    {
-        $sql = 'SELECT id, slot, player_type, race, name FROM players WHERE holder_id = ?';
-        $params = [$entityId];
-
-        if ($slot !== null) {
-            $sql .= ' AND slot = ?';
-            $params[] = $slot;
-        }
-
-        /** @var list<array{id: int, slot: string, player_type: string, race: string, name: string}> */
-        return $this->conn->fetchAllAssociative($sql . ' ORDER BY slot, id', $params);
-    }
-
-    /**
      * Does this entity hold anything at all? The question a container is
      * asked before it is picked up — and STACKS count as much as held
      * exemplars: a chest full of wood was pocketed whole because only

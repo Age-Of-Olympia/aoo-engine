@@ -222,24 +222,17 @@ class EntityLocationServiceTest extends LegacyPlayerFixtureTestCase
     }
 
     /** An inventory is a query: what points at me, by slot or in full. */
-    public function testChildrenAreTheInventory(): void
+    public function testHoldsAnythingReflectsWhatWasPutInside(): void
     {
         $chest  = $this->createRealPlayer('ContenanceCoffre');
         $inBag  = $this->createRealPlayer('ContenanceSac');
-        $worn   = $this->createRealPlayer('ContenancePorte');
         $service = new EntityLocationService($this->link);
 
         $this->assertFalse($service->holdsAnything((int) $chest->id), 'vide au départ');
 
         $service->putInside((int) $inBag->id, (int) $chest->id);
-        $service->putInside((int) $worn->id, (int) $chest->id, 'main1');
 
         $this->assertTrue($service->holdsAnything((int) $chest->id));
-        $this->assertCount(2, $service->childrenOf((int) $chest->id));
-
-        $equipped = $service->childrenOf((int) $chest->id, 'main1');
-        $this->assertCount(1, $equipped);
-        $this->assertSame((int) $worn->id, (int) $equipped[0]['id']);
     }
 
     /** A bag cannot go inside itself, nor inside what it already holds. */

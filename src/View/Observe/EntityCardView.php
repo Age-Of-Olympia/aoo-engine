@@ -602,11 +602,10 @@ final class EntityCardView
 
         $offensiveTypes = ['melee', 'distance', 'spell', 'technique'];
 
-        $byCategory = ['basics' => [], 'offensive' => [], 'heal' => [], 'utility' => []];
+        $byCategory = ['offensive' => [], 'heal' => [], 'utility' => []];
 
         foreach ($actions as $actionName) {
             if (in_array($actionName, $basics)) {
-                $byCategory['basics'][$actionName] = array_search($actionName, $basics);
                 continue;
             }
             $actionData = $actionService->getActionByName($actionName);
@@ -624,12 +623,8 @@ final class EntityCardView
             }
         }
 
-        $result = [];
-        foreach ($basics as $basic) {
-            if (isset($byCategory['basics'][$basic])) {
-                $result[] = $basic;
-            }
-        }
+        // Ordre de la liste de départ, restreint à ce que l'entité a vraiment.
+        $result = array_values(array_intersect($basics, $actions));
         sort($byCategory['offensive']);
         sort($byCategory['heal']);
         sort($byCategory['utility']);
