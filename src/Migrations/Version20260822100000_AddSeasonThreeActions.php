@@ -156,346 +156,346 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
     ];
 
     private const ACTION_CONDITIONS = [
-        // --- ENCAISSER (ID 125) ---
+        // --- ENCAISSER ---
         [
             'conditionType'   => 'RequiresDistance',
             'parameters'      => '{"max":0}',
-            'action_id'       => 125,
+            'action'       => 'encaisser',
             'execution_order' => 0,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
             'parameters'      => '{"a": 1, "pm": 6}',
-            'action_id'       => 125,
+            'action'       => 'encaisser',
             'execution_order' => 9,
             'blocking'        => 1,
         ],
-        // --- TIR PUISSANT (ID 126) ---
+        // --- TIR PUISSANT ---
         [
             'conditionType'   => 'RequiresDistance',
             'parameters'      => '{"min":2}',
-            'action_id'       => 126,
+            'action'       => 'tir_puissant',
             'execution_order' => 0,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresWeaponType',
             'parameters'      => '{"type": ["jet"]}',
-            'action_id'       => 126,
+            'action'       => 'tir_puissant',
             'execution_order' => 1,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresAmmo',
             'parameters'      => '{}',
-            'action_id'       => 126,
+            'action'       => 'tir_puissant',
             'execution_order' => 4,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
             'parameters'      => '{"a": 1, "pm": 2, "mvt":1}',
-            'action_id'       => 126,
+            'action'       => 'tir_puissant',
             'execution_order' => 9,
             'blocking'        => 1,
         ],
-        // --- HARPONNAGE (ID 127) ---
+        // --- HARPONNAGE ---
         [
             'conditionType'   => 'RequiresDistance',
             'parameters'      => '{"min":2}',
-            'action_id'       => 127,
+            'action'       => 'harponnage',
             'execution_order' => 0,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresWeaponType',
             'parameters'      => '{"type": ["jet"]}',
-            'action_id'       => 127,
+            'action'       => 'harponnage',
             'execution_order' => 1,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresAmmo',
             'parameters'      => '{}',
-            'action_id'       => 127,
+            'action'       => 'harponnage',
             'execution_order' => 4,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
             'parameters'      => '{"a": 1, "pm": [["voie_eau",5],["none",8]], "mvt":1}',
-            'action_id'       => 127,
+            'action'       => 'harponnage',
             'execution_order' => 9,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'DistanceCompute',
             'parameters'      => '{"actorRollType":"ct", "targetRollType": "cc/agi"}',
-            'action_id'       => 127,
+            'action'       => 'harponnage',
             'execution_order' => 10,
             'blocking'        => 0,
         ],
-        // --- PARADE (ID 128) ---
+        // --- PARADE ---
         [
             'conditionType'   => 'RequiresDistance',
             'parameters'      => '{"max":0}',
-            'action_id'       => 128,
+            'action'       => 'parade',
             'execution_order' => 0,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'ForbidIfHasEffect',
             'parameters'      => '{"actorEffect": "parade"}',
-            'action_id'       => 128,
+            'action'       => 'parade',
             'execution_order' => 4,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
             'parameters'      => '{"a": 1, "pm": 8}',
-            'action_id'       => 128,
+            'action'       => 'parade',
             'execution_order' => 9,
             'blocking'        => 1,
         ],
-        // --- PAS DE COTE (ID 129) ---
+        // --- PAS DE COTE ---
         [
             'conditionType'   => 'RequiresDistance',
             'parameters'      => '{"max":0}',
-            'action_id'       => 129,
+            'action'       => 'pas_de_cote',
             'execution_order' => 0,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'ForbidIfHasEffect',
             'parameters'      => '{"actorEffect": "pas_de_cote"}',
-            'action_id'       => 129,
+            'action'       => 'pas_de_cote',
             'execution_order' => 4,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
             'parameters'      => '{"a": 1, "pm": 8}',
-            'action_id'       => 129,
+            'action'       => 'pas_de_cote',
             'execution_order' => 9,
             'blocking'        => 1,
         ],
-        // --- DISSIPATION (ID 130) ---
+        // --- DISSIPATION ---
         [
             'conditionType'   => 'RequiresDistance',
             'parameters'      => '{"max":0}',
-            'action_id'       => 130,
+            'action'       => 'dissipation',
             'execution_order' => 0,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'ForbidIfHasEffect',
             'parameters'      => '{"actorEffect": "dissipation"}',
-            'action_id'       => 130,
+            'action'       => 'dissipation',
             'execution_order' => 4,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
             'parameters'      => '{"a": 1, "pm": 8}',
-            'action_id'       => 130,
+            'action'       => 'dissipation',
             'execution_order' => 9,
             'blocking'        => 1,
         ],
-        // --- DEDOUBLEMENT (ID 131) ---
+        // --- DEDOUBLEMENT ---
         [
             'conditionType'   => 'RequiresDistance',
             'parameters'      => '{"max":0}',
-            'action_id'       => 131,
+            'action'       => 'dedoublement',
             'execution_order' => 0,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'ForbidIfHasEffect',
             'parameters'      => '{"actorEffect": "dedoublement"}',
-            'action_id'       => 131,
+            'action'       => 'dedoublement',
             'execution_order' => 4,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
             'parameters'      => '{"a": 1, "pm": 10}',
-            'action_id'       => 131,
+            'action'       => 'dedoublement',
             'execution_order' => 9,
             'blocking'        => 1,
         ],
-        // --- POSTURE DEFENSIVE (ID 132) ---
+        // --- POSTURE DEFENSIVE ---
         [
             'conditionType'   => 'RequiresDistance',
             'parameters'      => '{"max":0}',
-            'action_id'       => 132,
+            'action'       => 'posture_defensive',
             'execution_order' => 0,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
             'parameters'      => '{"a": 1, "pm": 4}',
-            'action_id'       => 132,
+            'action'       => 'posture_defensive',
             'execution_order' => 9,
             'blocking'        => 0,
         ],
-        // --- JET BRUTAL (ID 133) ---
+        // --- JET BRUTAL ---
         [
             'conditionType'   => 'RequiresDistance',
             'parameters'      => '{"min":2}',
-            'action_id'       => 133,
+            'action'       => 'jet_brutal',
             'execution_order' => 0,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresWeaponType',
             'parameters'      => '{"type": ["jet"]}',
-            'action_id'       => 133,
+            'action'       => 'jet_brutal',
             'execution_order' => 1,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresAmmo',
             'parameters'      => '{}',
-            'action_id'       => 133,
+            'action'       => 'jet_brutal',
             'execution_order' => 4,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
             'parameters'      => '{"a": 1, "pm": [["voie_eau",5],["none",8]]}',
-            'action_id'       => 133,
+            'action'       => 'jet_brutal',
             'execution_order' => 9,
             'blocking'        => 1,
         ],
-        // --- COUP DE GRACE (ID 134) ---
+        // --- COUP DE GRACE ---
         [
             'conditionType'   => 'RequiresDistance',
             'parameters'      => '{"max":1}',
-            'action_id'       => 134,
+            'action'       => 'coup_grace',
             'execution_order' => 0,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresWeaponType',
             'parameters'      => '{"type": ["melee"]}',
-            'action_id'       => 134,
+            'action'       => 'coup_grace',
             'execution_order' => 1,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
             'parameters'      => '{"a": 1, "pm": [["maitre_lame",4],["none",6]]}',
-            'action_id'       => 134,
+            'action'       => 'coup_grace',
             'execution_order' => 9,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'MeleeCompute',
             'parameters'      => '{"actorRollType":"cc", "targetRollType": "cc/agi"}',
-            'action_id'       => 134,
+            'action'       => 'coup_grace',
             'execution_order' => 10,
             'blocking'        => 0,
         ],
-        // --- OPPORTUNISME (ID 135) ---
+        // --- OPPORTUNISME ---
         [
             'conditionType'   => 'RequiresDistance',
             'parameters'      => '{"min":2}',
-            'action_id'       => 135,
+            'action'       => 'opportunisme',
             'execution_order' => 0,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresWeaponType',
             'parameters'      => '{"type": ["tir","jet"]}',
-            'action_id'       => 135,
+            'action'       => 'opportunisme',
             'execution_order' => 1,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresAmmo',
             'parameters'      => '{}',
-            'action_id'       => 135,
+            'action'       => 'opportunisme',
             'execution_order' => 4,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
             'parameters'      => '{"a": 1, "pm": [["voie_eau",5],["none",8]]}',
-            'action_id'       => 135,
+            'action'       => 'opportunisme',
             'execution_order' => 9,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'DistanceCompute',
             'parameters'      => '{"actorRollType":"ct", "targetRollType": "cc/agi"}',
-            'action_id'       => 135,
+            'action'       => 'opportunisme',
             'execution_order' => 10,
             'blocking'        => 0,
         ],
-        // --- MINE ESPRIT (ID 136) ---
+        // --- MINE ESPRIT ---
         [
             'conditionType'   => 'RequiresDistance',
             'parameters'      => '{"min":2}',
-            'action_id'       => 136,
+            'action'       => 'mine_esprit',
             'execution_order' => 0,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
             'parameters'      => '{"a": 1, "pm": 8}',
-            'action_id'       => 136,
+            'action'       => 'mine_esprit',
             'execution_order' => 9,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'SpellCompute',
             'parameters'      => '{"actorRollType":"fm", "targetRollType": "fm"}',
-            'action_id'       => 136,
+            'action'       => 'mine_esprit',
             'execution_order' => 10,
             'blocking'        => 0,
         ],
-        // --- ARCANE MALADROITE (ID 137) ---
+        // --- ARCANE MALADROITE ---
         [
             'conditionType'   => 'RequiresDistance',
             'parameters'      => '{"max":1}',
-            'action_id'       => 137,
+            'action'       => 'arcane_maladroite',
             'execution_order' => 0,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
             'parameters'      => '{"a": 1, "pm": 6}',
-            'action_id'       => 137,
+            'action'       => 'arcane_maladroite',
             'execution_order' => 9,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'SpellCompute',
             'parameters'      => '{"actorRollType":"fm", "targetRollType": "fm", "actorRollBonus" : -6}',
-            'action_id'       => 137,
+            'action'       => 'arcane_maladroite',
             'execution_order' => 10,
             'blocking'        => 0,
         ],
-        // --- AIGUILLES (ID 138) ---
+        // --- AIGUILLES ---
         [
             'conditionType'   => 'RequiresDistance',
             'parameters'      => '{"min":2}',
-            'action_id'       => 138,
+            'action'       => 'aiguilles',
             'execution_order' => 0,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'RequiresTraitValue',
             'parameters'      => '{"a": 1, "pm": 8}',
-            'action_id'       => 138,
+            'action'       => 'aiguilles',
             'execution_order' => 9,
             'blocking'        => 1,
         ],
         [
             'conditionType'   => 'SpellCompute',
             'parameters'      => '{"actorRollType":"fm", "targetRollType": "fm"}',
-            'action_id'       => 138,
+            'action'       => 'aiguilles',
             'execution_order' => 10,
             'blocking'        => 0,
         ],
@@ -503,61 +503,49 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
 
     private const ACTION_CONDITION_UPDATES = [
         [
-            'action_id'      => 58,
+            'action'      => 'aide',
             'conditionType'  => 'RequiresTraitValue',
             'old_parameters' => '{"a":1, "pm":10}',
             'new_parameters' => '{"a": 1, "pm": [["voie_eau",7],["none",10]]}',
         ],
         [
-            'action_id'      => 47,
+            'action'      => 'coup_ajuste',
             'conditionType'  => 'RequiresTraitValue',
             'old_parameters' => '{"a":1, "pm":2}',
             'new_parameters' => '{"a":1, "pm":[["maitre_lame",1],["none",2]]}',
         ],
         [
-            'action_id'      => 48,
+            'action'      => 'coup_epaule',
             'conditionType'  => 'RequiresTraitValue',
             'old_parameters' => '{"a":1, "pm":2}',
             'new_parameters' => '{"a":1, "pm":[["maitre_lame",1],["none",2]]}',
         ],
         [
-            'action_id'      => 49,
+            'action'      => 'saut_attaque',
             'conditionType'  => 'RequiresTraitValue',
             'old_parameters' => '{"a":1, "pm":6}',
             'new_parameters' => '{"a":1, "pm":[["maitre_lame",4],["none",6]]}',
         ],
         [
-            'action_id'      => 50,
+            'action'      => 'recuperation',
             'conditionType'  => 'RequiresTraitValue',
             'old_parameters' => '{"a":1, "pm":2}',
             'new_parameters' => '{"a":1, "pm":[["maitre_lame",1],["none",2]]}',
         ],
         [
-            'action_id'      => 52,
+            'action'      => 'restauration',
             'conditionType'  => 'RequiresTraitValue',
             'old_parameters' => '{"a":1, "pm":8}',
             'new_parameters' => '{"a":1, "pm":[["maitre_lame",6],["none",8]]}',
         ],
         [
-            'action_id'      => 77,
+            'action'      => 'attaque_drainante',
             'conditionType'  => 'RequiresTraitValue',
             'old_parameters' => '{"a":1, "pm":2}',
             'new_parameters' => '{"a":1, "pm":[["maitre_lame",1],["none",2]]}',
         ],
         [
-            'action_id'      => 107,
-            'conditionType'  => 'RequiresTraitValue',
-            'old_parameters' => '{"a":1, "pm":4}',
-            'new_parameters' => '{"a":1, "pm":[["maitre_lame",2],["none",4]]}',
-        ],
-        [
-            'action_id'      => 109,
-            'conditionType'  => 'RequiresTraitValue',
-            'old_parameters' => '{"a":1, "pm":4}',
-            'new_parameters' => '{"a":1, "pm":[["maitre_lame",2],["none",4]]}',
-        ],
-        [
-            'action_id'      => 79,
+            'action'      => 'frappe_tempe',
             'conditionType'  => 'RequiresTraitValue',
             'old_parameters' => '{"a":1, "pm":15, "mvt":1}',
             'new_parameters' => '{"a":1, "pm":[["maitre_lame",11],["none",15]], "mvt":1}',
@@ -565,235 +553,235 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
     ];
 
     private const ACTION_OUTCOMES = [
-        // --- ENCAISSER (ID 125) ---
+        // --- ENCAISSER ---
         [
             'apply_to'   => 'self',
             'name'       => 'buff_encaisse',
             'on_success' => 1,
-            'action_id'  => 125,
+            'action'  => 'encaisser',
         ],
-        // --- TIR PUISSANT (ID 126) ---
+        // --- TIR PUISSANT ---
         [
             'apply_to'   => 'target',
             'name'       => 'dtechnique_tir_puissant',
             'on_success' => 1,
-            'action_id'  => 126,
+            'action'  => 'tir_puissant',
         ],
-        // --- HARPONNAGE (ID 127) ---
+        // --- HARPONNAGE ---
         [
             'apply_to'   => 'target',
             'name'       => 'dtechnique_harponnage',
             'on_success' => 1,
-            'action_id'  => 127,
+            'action'  => 'harponnage',
         ],
-        // --- PARADE (ID 128) ---
+        // --- PARADE ---
         [
             'apply_to'   => 'self',
             'name'       => 'buff_parade',
             'on_success' => 1,
-            'action_id'  => 128,
+            'action'  => 'parade',
         ],
-        // --- PAS DE COTE (ID 129) ---
+        // --- PAS DE COTE ---
         [
             'apply_to'   => 'self',
             'name'       => 'buff_pas_de_cote',
             'on_success' => 1,
-            'action_id'  => 129,
+            'action'  => 'pas_de_cote',
         ],
-        // --- DISSIPATION (ID 130) ---
+        // --- DISSIPATION ---
         [
             'apply_to'   => 'self',
             'name'       => 'buff_dissipation',
             'on_success' => 1,
-            'action_id'  => 130,
+            'action'  => 'dissipation',
         ],
-        // --- DEDOUBLEMENT (ID 131) ---
+        // --- DEDOUBLEMENT ---
         [
             'apply_to'   => 'self',
             'name'       => 'buff_dedoublement',
             'on_success' => 1,
-            'action_id'  => 131,
+            'action'  => 'dedoublement',
         ],
-        // --- POSTURE DEFENSIVE (ID 132) ---
+        // --- POSTURE DEFENSIVE ---
         [
             'apply_to'   => 'self',
             'name'       => 'buff_posture_defensive',
             'on_success' => 1,
-            'action_id'  => 132,
+            'action'  => 'posture_defensive',
         ],
-        // --- JET BRUTAL (ID 133) ---
+        // --- JET BRUTAL ---
         [
             'apply_to'   => 'target',
             'name'       => 'dtechnique_jet_brutal',
             'on_success' => 1,
-            'action_id'  => 133,
+            'action'  => 'jet_brutal',
         ],
-        // --- COUP DE GRACE (ID 134) ---
+        // --- COUP DE GRACE ---
         [
             'apply_to'   => 'target',
             'name'       => 'mtechnique_coup_grace',
             'on_success' => 1,
-            'action_id'  => 134,
+            'action'  => 'coup_grace',
         ],
-        // --- OPPORTUNISME (ID 135) ---
+        // --- OPPORTUNISME ---
         [
             'apply_to'   => 'target',
             'name'       => 'dtechnique_opportunisme',
             'on_success' => 1,
-            'action_id'  => 135,
+            'action'  => 'opportunisme',
         ],
-        // --- MINE ESPRIT (ID 136) ---
+        // --- MINE ESPRIT ---
         [
             'apply_to'   => 'target',
             'name'       => 'spell_mine_esprit',
             'on_success' => 1,
-            'action_id'  => 136,
+            'action'  => 'mine_esprit',
         ],
-        // --- ARCANE MALADROITE (ID 137) ---
+        // --- ARCANE MALADROITE ---
         [
             'apply_to'   => 'target',
             'name'       => 'spell_arcane_maladroite',
             'on_success' => 1,
-            'action_id'  => 137,
+            'action'  => 'arcane_maladroite',
         ],
-        // --- AIGUILLES (ID 138) ---
+        // --- AIGUILLES ---
         [
             'apply_to'   => 'target',
             'name'       => 'spell_aiguilles',
             'on_success' => 1,
-            'action_id'  => 138,
+            'action'  => 'aiguilles',
         ],
     ];
 
     private const OUTCOME_INSTRUCTIONS = [
-        // --- SAUT D'ATTAQUE (Outcome ID 89) ---
+        // --- SAUT D'ATTAQUE ---
         [
             'type'       => 'lifeloss',
             'parameters' => '{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "saut": true }',
             'orderIndex' => 1,
-            'outcome_id' => 89,
+            'outcome' => 'mtechnique_sautattaque',
         ],
         [
             'type'       => 'teleport',
             'parameters' => '{ "coords": "target" }',
             'orderIndex' => 3,
-            'outcome_id' => 89,
+            'outcome' => 'mtechnique_sautattaque',
         ],
-        // --- ENCAISSER (Outcome ID 139) ---
+        // --- ENCAISSER ---
         [
             'type'       => 'applystatus',
             'parameters' => '{ "encaisse": true, "stackable": false, "value": 1, "player": "actor", "duration": 1}',
             'orderIndex' => 10,
-            'outcome_id' => 139,
+            'outcome' => 'buff_encaisse',
         ],
-        // --- TIR PUISSANT (Outcome ID 140) ---
+        // --- TIR PUISSANT ---
         [
             'type'       => 'teleport',
-            'parameters' => '{ "coords": "def-opposite" }',
+            'parameters' => '{ "coords": "dist-opposite" }',
             'orderIndex' => 2,
-            'outcome_id' => 140,
+            'outcome' => 'dtechnique_tir_puissant',
         ],
         [
             'type'       => 'applystatus',
             'parameters' => '{ "stabilite": true, "stackable": true, "value": 4, "player": "target", "duration": 1}',
             'orderIndex' => 10,
-            'outcome_id' => 140,
+            'outcome' => 'dtechnique_tir_puissant',
         ],
-        // --- HARPONNAGE (Outcome ID 141) ---
+        // --- HARPONNAGE ---
         [
             'type'       => 'teleport',
             'parameters' => '{ "coords": "harpoon" }',
             'orderIndex' => 2,
-            'outcome_id' => 141,
+            'outcome' => 'dtechnique_harponnage',
         ],
         [
             'type'       => 'lifeloss',
             'parameters' => '{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "distance": true }',
             'orderIndex' => 3,
-            'outcome_id' => 141,
+            'outcome' => 'dtechnique_harponnage',
         ],
         [
             'type'       => 'applystatus',
             'parameters' => '{ "stabilite": true, "stackable": true, "value": 4, "player": "target", "duration": 1}',
             'orderIndex' => 10,
-            'outcome_id' => 141,
+            'outcome' => 'dtechnique_harponnage',
         ],
-        // --- PARADE (Outcome ID 142) ---
+        // --- PARADE ---
         [
             'type'       => 'applystatus',
             'parameters' => '{"effect":"parade","apply":true,"player":"actor","duration":0}',
             'orderIndex' => 0,
-            'outcome_id' => 142,
+            'outcome' => 'buff_parade',
         ],
-        // --- PAS DE COTE (Outcome ID 143) ---
+        // --- PAS DE COTE ---
         [
             'type'       => 'applystatus',
             'parameters' => '{"effect":"pas_de_cote","apply":true,"player":"actor","duration":0}',
             'orderIndex' => 0,
-            'outcome_id' => 143,
+            'outcome' => 'buff_pas_de_cote',
         ],
-        // --- DISSIPATION (Outcome ID 144) ---
+        // --- DISSIPATION ---
         [
             'type'       => 'applystatus',
             'parameters' => '{"effect":"dissipation","apply":true,"player":"actor","duration":0}',
             'orderIndex' => 0,
-            'outcome_id' => 144,
+            'outcome' => 'buff_dissipation',
         ],
-        // --- DEDOUBLEMENT (Outcome ID 145) ---
+        // --- DEDOUBLEMENT ---
         [
             'type'       => 'applystatus',
             'parameters' => '{"effect":"dedoublement","apply":true,"player":"actor","duration":0}',
             'orderIndex' => 0,
-            'outcome_id' => 145,
+            'outcome' => 'buff_dedoublement',
         ],
-        // --- POSTURE DEFENSIVE (Outcome ID 146) ---
+        // --- POSTURE DEFENSIVE ---
         [
             'type'       => 'applystatus',
             'parameters' => '{"effect": "protection", "apply": true, "stackable": false, "value": 2, "player": "actor", "duration": 1}',
             'orderIndex' => 0,
-            'outcome_id' => 146,
+            'outcome' => 'buff_posture_defensive',
         ],
-        // --- JET BRUTAL (Outcome ID 147) ---
+        // --- JET BRUTAL ---
         [
             'type'       => 'lifeloss',
             'parameters' => '{ "actorDamagesTrait": "f", "targetDamagesTrait": "e" }',
             'orderIndex' => 3,
-            'outcome_id' => 147,
+            'outcome' => 'dtechnique_jet_brutal',
         ],
-        // --- COUP GRACE (Outcome ID 148) ---
+        // --- COUP GRACE ---
         [
             'type'       => 'lifeloss',
             'parameters' => '{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusTargetTraitDamages": ["pv",25] }',
             'orderIndex' => 3,
-            'outcome_id' => 148,
+            'outcome' => 'mtechnique_coup_grace',
         ],
-        // --- OPPORTUNISME (Outcome ID 149) ---
+        // --- OPPORTUNISME ---
         [
             'type'       => 'lifeloss',
             'parameters' => '{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "distance": true, "bonusTargetTraitDamages": ["malus",5] }',
             'orderIndex' => 3,
-            'outcome_id' => 149,
+            'outcome' => 'dtechnique_opportunisme',
         ],
-        // --- MINE ESPRIT (Outcome ID 150) ---
+        // --- MINE ESPRIT ---
         [
             'type'       => 'lifeloss',
             'parameters' => '{ "actorDamagesTrait": "pui", "targetDamagesTrait": "res", "bonusTargetTraitDamages": ["pm",5] }',
             'orderIndex' => 3,
-            'outcome_id' => 150,
+            'outcome' => 'spell_mine_esprit',
         ],
-        // --- ARCANE MALADROITE (Outcome ID 151) ---
+        // --- ARCANE MALADROITE ---
         [
             'type'       => 'lifeloss',
             'parameters' => '{ "actorDamagesTrait": "pui", "targetDamagesTrait": "res", "bonusDamagesTrait": 3 }',
             'orderIndex' => 3,
-            'outcome_id' => 151,
+            'outcome' => 'spell_arcane_maladroite',
         ],
-        // --- AIGUILLES (Outcome ID 152) ---
+        // --- AIGUILLES ---
         [
             'type'       => 'lifeloss',
             'parameters' => '{ "actorDamagesTrait": "pui", "targetDamagesTrait": "res", "bonusDamagesTrait": 6 }',
             'orderIndex' => 3,
-            'outcome_id' => 152,
+            'outcome' => 'spell_aiguilles',
         ],
     ];
 
@@ -804,90 +792,69 @@ final class Version20260822100000_AddSeasonThreeActions extends AbstractMigratio
 
     public function up(Schema $schema): void
     {
-        // 1. Ajout des actions
         foreach (self::ACTIONS_DATA as $action) {
             $columns = implode(', ', array_keys($action));
             $placeholders = implode(', ', array_fill(0, count($action), '?'));
+            $this->addSql("INSERT INTO actions ($columns) VALUES ($placeholders)", array_values($action));
+        }
+
+        // Children hang off their parent by NAME: ids differ between databases.
+        foreach (self::ACTION_CONDITIONS as $c) {
             $this->addSql(
-                "INSERT INTO actions ($columns) VALUES ($placeholders)",
-                array_values($action)
+                'INSERT INTO action_conditions (conditionType, parameters, execution_order, blocking, action_id)
+                 SELECT ?, ?, ?, ?, id FROM actions WHERE name = ?',
+                [$c['conditionType'], $c['parameters'], $c['execution_order'], $c['blocking'], $c['action']]
             );
         }
 
-        // 2. Ajout des conditions d'action
-        foreach (self::ACTION_CONDITIONS as $condition) {
-            $cols = implode(', ', array_keys($condition));
-            $vals = implode(', ', array_fill(0, count($condition), '?'));
+        foreach (self::ACTION_CONDITION_UPDATES as $u) {
             $this->addSql(
-                "INSERT INTO action_conditions ($cols) VALUES ($vals)",
-                array_values($condition)
+                'UPDATE action_conditions c JOIN actions a ON a.id = c.action_id
+                 SET c.parameters = ? WHERE a.name = ? AND c.conditionType = ?',
+                [$u['new_parameters'], $u['action'], $u['conditionType']]
             );
         }
 
-        // 3. Mise à jour des conditions d'action existantes
-        foreach (self::ACTION_CONDITION_UPDATES as $update) {
+        foreach (self::ACTION_OUTCOMES as $o) {
             $this->addSql(
-                'UPDATE action_conditions SET parameters = ? WHERE action_id = ? AND conditionType = ?',
-                [
-                    $update['new_parameters'],
-                    $update['action_id'],
-                    $update['conditionType'],
-                ]
+                'INSERT INTO action_outcomes (apply_to, name, on_success, action_id)
+                 SELECT ?, ?, ?, id FROM actions WHERE name = ?',
+                [$o['apply_to'], $o['name'], $o['on_success'], $o['action']]
             );
         }
 
-        // 4. Ajout des résultats d'action (outcomes)
-        foreach (self::ACTION_OUTCOMES as $outcome) {
-            $cols = implode(', ', array_keys($outcome));
-            $vals = implode(', ', array_fill(0, count($outcome), '?'));
+        foreach (self::OUTCOME_INSTRUCTIONS as $i) {
             $this->addSql(
-                "INSERT INTO action_outcomes ($cols) VALUES ($vals)",
-                array_values($outcome)
-            );
-        }
-
-        // 5. Ajout des instructions
-        foreach (self::OUTCOME_INSTRUCTIONS as $instruction) {
-            $cols = implode(', ', array_keys($instruction));
-            $vals = implode(', ', array_fill(0, count($instruction), '?'));
-            $this->addSql(
-                "INSERT INTO outcome_instructions ($cols) VALUES ($vals)",
-                array_values($instruction)
+                'INSERT INTO outcome_instructions (type, parameters, orderIndex, outcome_id)
+                 SELECT ?, ?, ?, id FROM action_outcomes WHERE name = ?',
+                [$i['type'], $i['parameters'], $i['orderIndex'], $i['outcome']]
             );
         }
     }
 
     public function down(Schema $schema): void
     {
-        // Rollback dans l'ordre inverse des opérations
-
-        // 5. Suppression des instructions (liées aux nouvelles actions)
-        $this->addSql('DELETE FROM outcome_instructions WHERE outcome_id IN (139, 140, 141, 142, 143, 144, 145, 146, 147)');
-
-        // 4. Suppression des outcomes (liés aux nouvelles actions)
-        $this->addSql('DELETE FROM action_outcomes WHERE action_id IN (125, 126, 127, 128, 129, 130, 131, 132, 133)');
-
-        // 3. Annulation des mises à jour des conditions d'action
-        foreach (self::ACTION_CONDITION_UPDATES as $update) {
+        foreach (self::OUTCOME_INSTRUCTIONS as $i) {
             $this->addSql(
-                'UPDATE action_conditions SET parameters = ? WHERE action_id = ? AND conditionType = ?',
-                [
-                    $update['old_parameters'],
-                    $update['action_id'],
-                    $update['conditionType'],
-                ]
+                'DELETE i FROM outcome_instructions i JOIN action_outcomes o ON o.id = i.outcome_id
+                 WHERE o.name = ? AND i.type = ? AND i.orderIndex = ?',
+                [$i['outcome'], $i['type'], $i['orderIndex']]
             );
         }
 
-        // 2. Suppression des conditions (liées aux nouvelles actions)
-        $this->addSql('DELETE FROM action_conditions WHERE action_id IN (125, 126, 127, 128, 129, 130, 131, 132, 133)');
+        $names = array_column(self::ACTIONS_DATA, 'name');
+        $in = implode(', ', array_fill(0, count($names), '?'));
+        $this->addSql("DELETE o FROM action_outcomes o JOIN actions a ON a.id = o.action_id WHERE a.name IN ($in)", $names);
 
-        // 1. Suppression des actions
-        foreach (self::ACTIONS_DATA as $action) {
+        foreach (self::ACTION_CONDITION_UPDATES as $u) {
             $this->addSql(
-                'DELETE FROM actions WHERE name = ?',
-                [$action['name']]
+                'UPDATE action_conditions c JOIN actions a ON a.id = c.action_id
+                 SET c.parameters = ? WHERE a.name = ? AND c.conditionType = ?',
+                [$u['old_parameters'], $u['action'], $u['conditionType']]
             );
         }
+
+        $this->addSql("DELETE c FROM action_conditions c JOIN actions a ON a.id = c.action_id WHERE a.name IN ($in)", $names);
+        $this->addSql("DELETE FROM actions WHERE name IN ($in)", $names);
     }
 }
