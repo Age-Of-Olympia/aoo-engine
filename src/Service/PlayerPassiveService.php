@@ -74,14 +74,9 @@ class PlayerPassiveService
         $passives = $this->getPassivesByPlayerId($player->getId());
         $esquive = 0;
 
-        foreach($passives as $passive){
-            if (in_array("esquive", $passive->getTraits())){
-                if($passive->getCarac() == "fixed"){
-                    $esquive += $passive->getValue();
-                }
-                else{
-                    $esquive += floor($player->caracs->{$passive->getCarac()} * $passive->getValue());
-                }
+        foreach ($passives as $passive) {
+            if (in_array('esquive', $passive->getTraits(), true)) {
+                $esquive += $this->passiveValueCalculator->compute($passive, $player);
             }
         }
         
