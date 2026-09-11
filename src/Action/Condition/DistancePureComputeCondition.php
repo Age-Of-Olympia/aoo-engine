@@ -1,6 +1,7 @@
 <?php
 namespace App\Action\Condition;
 
+use App\Interface\ActorInterface;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetailView;
 use Classes\View;
@@ -8,7 +9,7 @@ use Classes\View;
 class DistancePureComputeCondition extends ComputePureCondition
 {
 
-    protected function getDistanceTreshold(ConditionObject $conditionObject) : int {
+    protected function getDistanceTreshold(ActorInterface $actor) : int {
         return floor(($this->distance) * 2.5);
     }
 
@@ -50,14 +51,6 @@ class DistancePureComputeCondition extends ComputePureCondition
         return array($targetRoll->roll, $targetTotal, $targetTxt);
     }
 
-    protected function checkDistanceCondition(int $actorTotal, ConditionObject $conditionObject): bool {
-        $checkAboveDistance = true;
-        if($this->distance > 1){
-            $distanceTreshold = $this->getDistanceTreshold($conditionObject);
-            $checkAboveDistance = $actorTotal >= $distanceTreshold;
-        }
-        return $checkAboveDistance;
-    }
     
     protected function getDistanceMalus(): int {
         $distanceMalus = 0;

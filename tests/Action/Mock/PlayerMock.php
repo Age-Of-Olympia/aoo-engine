@@ -4,7 +4,7 @@ namespace Tests\Action\Mock;
 
 use App\Enum\EquipResult;
 use App\Interface\ActorInterface;
-use App\Service\PlayerPassiveService;
+use App\Action\Condition\ConditionObject;
 use Classes\Item;
 
 class PlayerMock implements ActorInterface
@@ -167,11 +167,18 @@ class PlayerMock implements ActorInterface
     return $this->passivesList;
   }
 
-  public function getPlayerPassiveService(): PlayerPassiveService
+  /** Fixed-value passives only: the mock has no player state to compute from. */
+  public function traitBonus(string $trait, ?array $types = null, ?ConditionObject $conditionObject = null): int
   {
-        return new PlayerPassiveService();
+    $total = 0;
+    foreach ($this->passivesList as $passive) {
+      if (in_array($trait, $passive->getTraits(), true) && ($types === null || in_array($passive->getType(), $types, true))) {
+        $total += (int) $passive->getValue();
+      }
+    }
+    return $total;
   }
-    
+
   public function getEquipedItems(): array
   {
     return Item::get_equiped_list($this);

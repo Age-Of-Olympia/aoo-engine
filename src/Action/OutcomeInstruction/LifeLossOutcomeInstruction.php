@@ -291,7 +291,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
     {
         $othersDamages = 0;
         $malusBonus = 0;
-        foreach ($conditionObject->getActorPassives() as $actorPassive) {
+        foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
             if($actorPassive->getName() == "maitre_bretteur" && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
                 $malusBonus += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
             }
@@ -315,7 +315,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
     {
         $othersDefense = 0;
         $encaisse = false;
-        foreach ($conditionObject->getTargetPassives() as $targetPassive) {
+        foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
             if (in_array($targetTraitDamagesTaken, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" ) && $target->playerPassiveService->checkPassiveConditionsByPlayerById($target,$targetPassive,$conditionObject)) {
                 if($targetPassive->getName() === "dur_cuire"){
                     if($target->getRemaining('pv') <= $target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId())){

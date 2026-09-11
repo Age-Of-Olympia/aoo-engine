@@ -1,31 +1,16 @@
 <?php
 namespace App\Action\Condition;
 
+use App\Interface\ActorInterface;
 
 class TechniquePureComputeCondition extends ComputePureCondition
 {
     protected string $throwName = "La technique";
 
-    protected function getDistanceTreshold(ConditionObject $conditionObject) : int {
-        $bonusTreshold = 0;
-        foreach ($conditionObject->getActorPassives() as $actorPassive) {
-            $passiveName = $actorPassive->getName();
-
-            if($passiveName == "retrait"){
-                $bonusTreshold += (int) $actorPassive->getValue();
-            }
-        }
-        
-        return (4 * ($this->distance - 1) - $bonusTreshold);
+    /** 4 per cell beyond the first, lowered by the actor's 'seuil' passives (retrait). */
+    protected function getDistanceTreshold(ActorInterface $actor) : int {
+        return 4 * ($this->distance - 1) - $actor->traitBonus('seuil');
     }
 
-    protected function checkDistanceCondition(int $actorTotal, ConditionObject $conditionObject): bool {
-        $checkAboveDistance = true;
-        if($this->distance > 1){
-            $distanceTreshold = $this->getDistanceTreshold($conditionObject);
-            $checkAboveDistance = $actorTotal >= $distanceTreshold;
-        }
-        return $checkAboveDistance;
-    }
     
 }

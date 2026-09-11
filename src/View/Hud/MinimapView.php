@@ -43,7 +43,7 @@ final class MinimapView
 
             $planId = $coords->plan;
 
-            $viewService = new ViewService(new Db(), $coords->x, $coords->y, $coords->z, $player->id, $planId);
+            $viewService = new ViewService(new Db(), $coords->x, $coords->y, $coords->z, $player->id, $planId, $player->traitBonus('vue'));
 
             if ($viewService->isWorldPlan()) {
                 $mapResult = $viewService->getGlobalMap();

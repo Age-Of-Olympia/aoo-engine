@@ -36,42 +36,12 @@ class RestOutcomeInstruction extends OutcomeInstruction implements HasParameterS
 
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         
-        $actor->get_caracs();
-
-        $bonusPV = 0.0;
-        $bonusPM = 0.0;
-        $bonusMalus = 0.0;
-
-        foreach ($conditionObject->getActorPassives() as $actorPassive) {
-            $passiveName = $actorPassive->getName();
-
-            if (!$actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor, $actorPassive, $conditionObject)) {
-                continue;
-            }
-
-            $traitsArray = $actorPassive->getTraits();
-            $trait = $traitsArray[0] ?? null;
-            $passiveValue = $actorPassive->getValue();
-
-            if (!$trait || empty($passiveValue) || !isset($actor->caracs->{$trait})) {
-                continue;
-            }
-
-            $statValue = $actor->caracs->{$trait};
-            $bonusRatio = $statValue / $passiveValue;
-
-            if(in_array($passiveName, ["meditation_arcanique", "meditation_somatique", "recuperation_runique"], true)){
-                $bonusPM += $bonusRatio;
-            } elseif (in_array($passiveName, ["recuperation_arcanique", "recuperation_somatique"], true)) {
-                $bonusPV += $bonusRatio;
-            } elseif ($passiveName === "retablissement_rapide") {
-                $bonusMalus += $bonusRatio;
-            }
-        }
-
-        $recupPV = floor($actor->getRemaining("a")*$actor->caracs->r/4 + $bonusPV);
-        $recupPM = floor($actor->getRemaining("a")*$actor->caracs->rm/4 + $bonusPM);
-        $recupMalus = floor($actor->getRemaining("mvt")/3 + $bonusMalus);
+        // Rest passives (meditation, recuperation, retablissement) add their
+        // computed value per action spent, on the trait they restore.
+        $actions = $actor->getRemaining("a");
+        $recupPV = floor($actions*$actor->caracs->r/4) + $actions * $actor->traitBonus('pv', null, $conditionObject);
+        $recupPM = floor($actions*$actor->caracs->rm/4) + $actions * $actor->traitBonus('pm', null, $conditionObject);
+        $recupMalus = floor($actor->getRemaining("mvt")/3) + $actions * $actor->traitBonus('malus', null, $conditionObject);
 
         $actor->putBonus(array('pv'=>$recupPV));
         $actor->putBonus(array('pm'=>$recupPM));
@@ -83,7 +53,6 @@ class RestOutcomeInstruction extends OutcomeInstruction implements HasParameterS
         $outcomeMalusMessages[] = 'Votre repos vous rend '. $recupPM .' PM.';
 
         return new OutcomeResult(true, $outcomeMalusMessages, $outcomeMalusMessages);
-
-        }
+    }
 
 }

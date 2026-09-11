@@ -3,7 +3,7 @@
 namespace App\Interface;
 
 use App\Enum\EquipResult;
-use App\Service\PlayerPassiveService;
+use App\Action\Condition\ConditionObject;
 use Classes\Item;
 
 interface ActorInterface
@@ -32,7 +32,8 @@ interface ActorInterface
   public function get_data(bool $forceRefresh=true);
   public function get_upgrades();
   public function getPassives(int $id): array;
-  public function getPlayerPassiveService(): PlayerPassiveService;
+  /** Sum of the actor's passives on $trait (optionally on given sides) whose conditions hold. */
+  public function traitBonus(string $trait, ?array $types = null, ?ConditionObject $conditionObject = null): int;
   public function getEquipedItems(): array;
   public function hasMagicalItemEquipped(): bool;
   public function getEquipedItemsEffects(): array;

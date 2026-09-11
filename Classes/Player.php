@@ -3,6 +3,7 @@ namespace Classes;
 
 use App\Enum\EquipResult;
 use App\Interface\ActorInterface;
+use App\Action\Condition\ConditionObject;
 use App\Service\ActionPassiveService;
 use App\Service\PlayerActionsService;
 use App\Service\PlayerOptionsService;
@@ -2505,11 +2506,6 @@ class Player implements ActorInterface {
         return $this->playerPassiveService->getPassivesByPlayerId($playerId);
     }
 
-    public function getPlayerPassiveService(): PlayerPassiveService
-    {
-        return $this->playerPassiveService;
-    }
-
     public function getEquipedItems(): array {
         return Item::get_equiped_list($this);
     }
@@ -2537,15 +2533,37 @@ class Player implements ActorInterface {
         return $effectsList;
     }
 
-    public function getPush(Player $target, int $bonusActor, int $bonusTarget): bool {
-        $att = $this->caracs->f;
-        $def = max($target->caracs->e + 4,$target->caracs->agi);
+    /**
+     * Sum of this player's passives on $trait whose conditions hold: 'poussee'
+     * for push rolls, 'seuil' for the technique distance threshold, 'vue',
+     * 'vol', 'pv'/'pm'/'malus' for rest. $types narrows to a side ('att',
+     * 'def', 'mixte'); null takes every type. Advantage passives are flags,
+     * not values, and are skipped.
+     */
+    public function traitBonus(string $trait, ?array $types = null, ?ConditionObject $conditionObject = null): int
+    {
+        $total = 0;
+        foreach ($this->getPassives($this->getId()) as $passive) {
+            if (!in_array($trait, $passive->getTraits(), true)
+                || ($types !== null && !in_array($passive->getType(), $types, true))
+                || $passive->getCarac() === 'advantage'
+                || !$this->playerPassiveService->checkPassiveConditionsByPlayerById($this, $passive, $conditionObject)) {
+                continue;
+            }
+            $total += $this->playerPassiveService->getComputedValueByPlayerIdById($this->getId(), $passive->getId());
+        }
+        return $total;
+    }
+
+    public function getPush(Player $target, ?ConditionObject $conditionObject = null): bool {
+        $att = $this->caracs->f + $this->traitBonus('poussee', ['att', 'mixte'], $conditionObject);
+        $def = max($target->caracs->e + 4,$target->caracs->agi) + $target->traitBonus('poussee', ['def', 'mixte'], $conditionObject);
         $pv = floor($target->getRemaining('pv')/10);
         // Modificateurs de poussée portés par les effets (catalogue :
         // push_attack_mod / push_defense_mod — ex-renforcement,
         // stabilite, instabilite codés en dur).
         $attMods = $this->effectService->modifierContributions($this->getEffects(), 'getPushAttackMod');
         $defMods = $this->effectService->modifierContributions($target->getEffects(), 'getPushDefenseMod');
-        return $att + $bonusActor + $attMods['pos'] - $attMods['neg'] >= $def + $pv + $bonusTarget + $defMods['pos'] - $defMods['neg'];
+        return $att + $attMods['pos'] - $attMods['neg'] >= $def + $pv + $defMods['pos'] - $defMods['neg'];
     }
 }

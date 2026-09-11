@@ -43,10 +43,10 @@ class BuffComputeCondition extends ComputeCondition implements DeclaresSimulatio
         $conditionObject->setActorAdvantage($params['actorAdvantage'] ?? false);
         $conditionObject->setActorDisadvantage($params['actorDisadvantage'] ?? false);
 
-        foreach ($conditionObject->getActorPassives() as $actorPassive) {
+        foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
             if (in_array($this->actorRollTrait, $actorPassive->getTraits()) && ($actorPassive->getType() == "buff")) {
-                if($actor->getPlayerPassiveService()->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
-                    $conditionObject->addActorRollBonus($actor->getPlayerPassiveService()->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId()));
+                if($actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+                    $conditionObject->addActorRollBonus($actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId()));
                 }
             }
         }

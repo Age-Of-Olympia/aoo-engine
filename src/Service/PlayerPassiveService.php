@@ -83,7 +83,7 @@ class PlayerPassiveService
         $player->caracs->esquive = $esquive;
     }
 
-    public function checkPassiveConditionsByPlayerById(ActorInterface $player, ActionPassive $passive, ConditionObject $conditionObject): bool
+    public function checkPassiveConditionsByPlayerById(ActorInterface $player, ActionPassive $passive, ?ConditionObject $conditionObject = null): bool
     {
         $conditions = $passive->getConditions();
         if(is_null($conditions)){
@@ -109,7 +109,8 @@ class PlayerPassiveService
         }
         // ex : {"category":["melee-curse","melee-off"]}
         if(isset($conditions["category"])){
-            return in_array($conditionObject->getAction()->getCategory(),$conditions["category"]);
+            // Outside an action (push, sight...) a category condition cannot hold.
+            return $conditionObject !== null && in_array($conditionObject->getAction()->getCategory(), $conditions["category"]);
         }
         return true;
     }

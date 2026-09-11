@@ -5,7 +5,6 @@ namespace App\Service;
 use DateTime;
 use DateTimeZone;
 use Exception;
-use Classes\Player;
 
 class ViewService {
     private $width = 700;
@@ -28,6 +27,7 @@ class ViewService {
     private $playerY;
     private $playerZ;
     private $playerId;
+    private int $sightBonus;
     private $raceService;
     private $worldPlan;
     private $localMinX;
@@ -44,7 +44,7 @@ class ViewService {
     private $localCenterY = 0;
     private $localBoundsAvailable = false;
 
-    public function __construct($db, $playerX = null, $playerY = null, $playerZ = null, $playerId = null, $plan = null) {
+    public function __construct($db, $playerX = null, $playerY = null, $playerZ = null, $playerId = null, $plan = null, int $sightBonus = 0) {
         // The plan name and the z level go into SQL strings and file names
         // below: one refusal here covers every query.
         if ($plan !== null && !preg_match(TiledMapService::PLAN_NAME_PATTERN, (string) $plan)) {
@@ -55,6 +55,7 @@ class ViewService {
         $this->playerY = $playerY;
         $this->playerZ = $playerZ === null ? null : (int) $playerZ;
         $this->playerId = $playerId;
+        $this->sightBonus = $sightBonus;
         $this->worldPlan = plans()->worldPlan();
         $this->currentPlan = $plan ?? $this->worldPlan;
         $this->raceService = new RaceService();
@@ -207,17 +208,6 @@ class ViewService {
     private function visiblePlayers(string $scope): array
     {
         $isGlobal = $scope === 'global';
-        $player = new Player($this->playerId);
-        $passives = $player->getPassives($this->playerId);
-        $maxViewBonus = 0;
-
-        foreach ($passives as $passive) {
-            $passiveName = $passive->getName();
-
-            if($passiveName == "oeil_percant" || $passiveName == "oeil_aigle" || $passiveName == "oeil_ultime"){
-                $maxViewBonus += (int) $passive->getValue();
-            }
-        }
 
         if ($isGlobal) {
             if (empty($this->scaleX) || empty($this->scaleY)) {
@@ -275,7 +265,7 @@ class ViewService {
              * couvre des étendues où l'on ne reconnaît pas un individu à
              * vue. La carte locale tient dans la portée de perception. */
             $known = !$isGlobal
-                || ($this->getPlayersDistance($this->playerX, $this->playerY, $row['x'], $row['y']) <= DIST_MAP_MAX + $maxViewBonus
+                || ($this->getPlayersDistance($this->playerX, $this->playerY, $row['x'], $row['y']) <= DIST_MAP_MAX + $this->sightBonus
                     && $this->playerZ == 0
                     && $this->currentPlan == $this->worldPlan);
 

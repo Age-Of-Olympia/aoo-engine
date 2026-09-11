@@ -23,7 +23,7 @@ $planJson = plans()->read($coords->plan);
 $planId = $coords->plan;
 $planName = is_object($planJson) ? $planJson->name : $coords->plan;
 
-$viewService = new ViewService(new Db(), $coords->x, $coords->y, $coords->z, $player->id, $planId);
+$viewService = new ViewService(new Db(), $coords->x, $coords->y, $coords->z, $player->id, $planId, $player->traitBonus('vue'));
 
 if ($viewService->isWorldPlan()) {
     $layers = ['tiles', 'elements', 'locations', 'routes'];
