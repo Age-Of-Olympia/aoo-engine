@@ -11,6 +11,7 @@ use Classes\Player;
 #[ORM\Table(name: "outcome_instructions")]
 #[ORM\InheritanceType('SINGLE_TABLE')]
 #[ORM\DiscriminatorColumn(name: 'type', type: 'string')]
+// The discriminator map is the src/Action/OutcomeInstruction folder: see ActionTypeDiscovery.
 abstract class OutcomeInstruction implements OutcomeInstructionInterface
 {
     #[ORM\Id]

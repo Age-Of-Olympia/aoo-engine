@@ -10,23 +10,7 @@ use Doctrine\Common\Collections\Collection;
 #[ORM\Table(name: "actions")]
 #[ORM\InheritanceType('SINGLE_TABLE')]
 #[ORM\DiscriminatorColumn(name: 'type', type: 'string')]
-#[ORM\DiscriminatorMap([
-    'melee' => \App\Action\MeleeAction::class,
-    'distance' => \App\Action\DistanceAction::class,
-    'steal' => \App\Action\StealAction::class,
-    'rest' => \App\Action\RestAction::class,
-    'run' => \App\Action\RunAction::class,
-    'pray' => \App\Action\PrayAction::class,
-    'search' => \App\Action\SearchAction::class,
-    'train' => \App\Action\TrainAction::class,
-    'technique' => \App\Action\TechniqueAction::class,
-    'buff' => \App\Action\BuffAction::class,
-    'spell' => \App\Action\SpellAction::class,
-    'heal' => \App\Action\HealAction::class,
-    'craft' => \App\Action\CraftAction::class,
-    'work' => \App\Action\WorkAction::class,
-    'gesture' => \App\Action\GestureAction::class,
-])]
+// The discriminator map is the src/Action folder: see ActionTypeDiscovery.
 abstract class Action implements ActionInterface
 {
     #[ORM\Id]

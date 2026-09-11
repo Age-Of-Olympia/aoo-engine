@@ -78,10 +78,11 @@ final class EntityManagerFactory
             $connection->executeStatement('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
 
             self::$em = new EntityManager($connection, self::$orm_db_config);
+            $eventManager = self::$em->getEventManager();
+            $eventManager->addEventListener(Events::loadClassMetadata, new ActionMetadataListener());
+            $eventManager->addEventListener(Events::loadClassMetadata, new OutcomeInstructionMetadataListener());
         }
-        $eventManager = self::$em->getEventManager();
-        $eventManager->addEventListener(Events::loadClassMetadata, new ActionMetadataListener());
-        $eventManager->addEventListener(Events::loadClassMetadata, new OutcomeInstructionMetadataListener());
+
         return self::$em;
     }
 

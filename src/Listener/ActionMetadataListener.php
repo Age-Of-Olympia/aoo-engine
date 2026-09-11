@@ -3,27 +3,17 @@
 namespace App\Listener;
 
 use App\Entity\Action;
+use App\Service\Action\ActionTypeDiscovery;
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
-use Doctrine\ORM\Mapping\ClassMetadata;
 
-class ActionMetadataListener {
-    public function loadClassMetadata(LoadClassMetadataEventArgs $eventArgs) {
+/** Fills the Action discriminator map from its folder at metadata load. */
+class ActionMetadataListener
+{
+    public function loadClassMetadata(LoadClassMetadataEventArgs $eventArgs): void
+    {
         $metadata = $eventArgs->getClassMetadata();
-
         if ($metadata->getName() === Action::class) {
-            $this->updateDiscriminatorMap($metadata);
-        }
-    }
-
-    private function updateDiscriminatorMap(ClassMetadata $metadata) {
-        $directory = __DIR__ . '/../Action'; // Absolute path to Action directory
-        foreach (glob("$directory/*Action.php") as $file) {
-            $className = basename($file, '.php');
-            $fullClassName = "App\\Action\\$className";
-            if (!class_exists($fullClassName)) {
-                require_once $file;
-            }
-            $metadata->discriminatorMap[strtolower(substr($className, 0, -6))] = $fullClassName;
+            ActionTypeDiscovery::fillMetadata($metadata, Action::class);
         }
     }
 }

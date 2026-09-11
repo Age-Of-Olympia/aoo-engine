@@ -4,15 +4,14 @@ namespace App\Service\ImportExport;
 
 use App\Interface\ObjectExporterInterface;
 use App\Factory\OutcomeInstructionFactory;
+use App\Service\Action\ActionTypeDiscovery;
 use App\Entity\Action;
 use App\Entity\ActionCondition;
 use App\Entity\ActionOutcome;
 use App\Entity\OutcomeInstruction;
 use App\Entity\Race;
 use App\Service\Action\ActionCatalogService;
-use Doctrine\Persistence\Proxy;
 use InvalidArgumentException;
-use ReflectionClass;
 use ReflectionProperty;
 
 /**
@@ -24,7 +23,6 @@ use ReflectionProperty;
  */
 final class ActionExporter implements ObjectExporterInterface
 {
-    private const ACTION_SUFFIX = 'Action';
 
     private ?ActionCatalogService $catalog;
 
@@ -65,7 +63,7 @@ final class ActionExporter implements ObjectExporterInterface
         // payload faithfully records "no value" instead of crashing the export.
         return [
             'name' => $this->scalar($entity, 'name'),
-            'type' => self::discriminatorType($entity),
+            'type' => ActionTypeDiscovery::typeOf($entity),
             'icon' => $this->scalar($entity, 'icon'),
             'iconColor' => $this->scalar($entity, 'iconColor'),
             'displayName' => $this->scalar($entity, 'displayName'),
@@ -163,18 +161,5 @@ final class ActionExporter implements ObjectExporterInterface
         }
 
         return $rows;
-    }
-
-    /**
-     * Derives the STI discriminator key the same way {@see \App\Listener\ActionMetadataListener}
-     * builds the map: the lowercased short class name without its "Action" suffix.
-     * Doctrine proxies are unwrapped to their real entity class first.
-     */
-    private static function discriminatorType(Action $action): string
-    {
-        $class = $action instanceof Proxy ? get_parent_class($action) : $action::class;
-        $shortName = (new ReflectionClass($class))->getShortName();
-
-        return strtolower(substr($shortName, 0, -strlen(self::ACTION_SUFFIX)));
     }
 }

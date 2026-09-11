@@ -7,15 +7,12 @@ use ReflectionClass;
 
 /**
  * Maps action classes to "type keys" used by the type-level instruction system.
- * A key is the lowercased class short-name without the Action suffix
- * (MeleeAction -> "melee", AttackAction -> "attack"). Inheritance is resolved
+ * The keys come from ActionTypeDiscovery (MeleeAction -> "melee",
+ * AttackAction -> "attack"). Inheritance is resolved
  * from the real PHP class hierarchy, so a new subclass groups automatically.
  */
 final class ActionTypeRegistry
 {
-    /** @var array<string, class-string>|null */
-    private ?array $cachedTypeMap = null;
-
     /**
      * Assignable type keys => label: every action class (concrete and abstract
      * grouping parents like "attack") under src/Action, excluding the
@@ -183,30 +180,11 @@ final class ActionTypeRegistry
      */
     private function typeMap(): array
     {
-        if ($this->cachedTypeMap !== null) {
-            return $this->cachedTypeMap;
-        }
-
-        $map = [];
-        foreach (glob(__DIR__ . '/../../Action/*Action.php') ?: [] as $file) {
-            $className = basename($file, '.php');
-            $fqcn = "App\\Action\\$className";
-            if (!class_exists($fqcn)) {
-                require_once $file;
-            }
-            if (is_subclass_of($fqcn, Action::class)) {
-                $map[$this->keyForClass($fqcn)] = $fqcn;
-            }
-        }
-        $this->cachedTypeMap = $map;
-
-        return $map;
+        return ActionTypeDiscovery::typeMap(Action::class);
     }
 
     private function keyForClass(string $fqcn): string
     {
-        $short = (new ReflectionClass($fqcn))->getShortName();
-
-        return strtolower((string) preg_replace('/Action$/', '', $short));
+        return ActionTypeDiscovery::keyFor($fqcn, 'Action');
     }
 }
