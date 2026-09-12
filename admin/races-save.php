@@ -89,9 +89,14 @@ $validate = static function (): ?string {
 
 /**
  * Apply every form field onto the entity (shared by create and update).
- * Returns a notice appended to the success flash ('' when all clean).
+ *
+ * @return array{notice: string, newFamily: string} notice: appended to the
+ *         success flash ('' when all clean). newFamily: the family the
+ *         posted structure_nature resolves to (Race::FAMILY_*) — the update
+ *         branch compares it to $race->familyKey() to know whether the raw
+ *         type_kind fixup below is needed.
  */
-$applyForm = static function (Race $race) use ($face): string {
+$applyForm = static function (Race $race) use ($face, $action): array {
     $notice = '';
 
     $race->setLabel(trim((string) $_POST['label']));
@@ -100,12 +105,39 @@ $applyForm = static function (Race $race) use ($face): string {
     // proposée à l'inscription, quel que soit l'état de la case Jouable.
     $kind = ($_POST['kind'] ?? 'character') === 'structure' ? 'structure' : 'character';
     $race->setKind($kind);
-    // Nature (structures seulement) : édifice (porte) ou obstacle (mur).
-    /* Every non-building face pins its own nature — décor, ressource,
-     * plante. The old scenery-only guard clamped the others to édifice:
-     * a type created from Types récoltables was corrupted one line after
-     * its creation and never reached the resources palette. */
-    $race->setStructureNature($face->resolveNature($_POST['structure_nature'] ?? null));
+    /* Nature (structures seulement) : édifice/obstacle (bâtiment), décor,
+     * ressource ou plante.
+     *
+     * À la CRÉATION, chaque visage impose la sienne (resolveNature) — un
+     * type créé depuis Types récoltables ne doit pas pouvoir naître ailleurs
+     * que ressource. La vieille garde ne couvrait que le décor : un type créé
+     * depuis Types récoltables était corrigé une ligne après sa création et
+     * ne rejoignait jamais la palette des ressources.
+     *
+     * À la MODIFICATION, la vue édition offre un vrai choix de catégorie
+     * (les 5 valeurs) : l'admin peut reclasser un type existant, posté ici
+     * directement plutôt que pincé au visage courant. */
+    $allowedNatures = ['edifice', 'obstacle', 'decor', 'ressource', 'plante'];
+    $postedNature = (string) ($_POST['structure_nature'] ?? '');
+    $newNature = ($action === 'update' && in_array($postedNature, $allowedNatures, true))
+        ? $postedNature
+        : $face->resolveNature($postedNature !== '' ? $postedNature : null);
+    // Race::ofFamily() sait déjà dériver une famille de (kind, nature) — la
+    // même règle que le déclencheur SQL races_type_kind_bu (voir
+    // Version20260801200000_TheFamilyBecomesWritable). On lui demande une
+    // coquille vide plutôt que de la redire ici : Doctrine, pas ce
+    // déclencheur, écrit type_kind sur CE flush (il respecte une valeur déjà
+    // posée par l'ORM, la sienne — pas celle qu'on voudrait), donc il faut
+    // la famille cible pour la forcer nous-mêmes ensuite.
+    $newFamily = Race::ofFamily($kind, $newNature)->familyKey();
+
+    // La classe PHP de $race ne change qu'au PROCHAIN chargement (PRG déjà
+    // en place) : elle reste ce que Doctrine a instancié ce tour-ci, même
+    // après avoir changé structure_nature ici. On s'en sert pour savoir ce
+    // qu'il faut vider avant que la classe d'aujourd'hui ne redevienne muette.
+    $stillHarvestable = in_array($newNature, ['ressource', 'plante'], true);
+
+    $race->setStructureNature($newNature);
     // Saignement : un élément de carte connu, ou rien.
     $bleeds = trim((string) ($_POST['bleeds'] ?? ''));
     $race->setBleeds($bleeds !== '' && (new \App\Service\EffectService())->exists($bleeds) ? $bleeds : '');
@@ -124,35 +156,54 @@ $applyForm = static function (Race $race) use ($face): string {
     }
     /* Rendement du type : on s'adresse à ce qui SAIT SE RÉCOLTER, pas à une
      * famille. Le vider rend le type muet jusqu'à ce qu'un plan le déclare ;
-     * ce qui ne se récolte pas n'a même plus la question à se poser. */
+     * ce qui ne se récolte pas n'a même plus la question à se poser.
+     *
+     * Un reclassement qui QUITTE ressource/plante efface le rendement
+     * plutôt que de le laisser en base, invisible dans tous les
+     * formulaires suivants — prêt à ressurgir si le type redevient
+     * récoltable plus tard sans qu'on y repense. */
     if ($race instanceof \App\Interface\HarvestableInterface) {
-        /* L'objet vient d'une liste ; on le valide quand même contre le
-         * catalogue — un POST fabriqué ne doit pas installer un rendement qui
-         * ne rapporte rien. Vide reste vide : c'est « ne rend rien ». */
-        $harvestItem = trim((string) ($_POST['harvest_item'] ?? ''));
+        if ($stillHarvestable) {
+            /* L'objet vient d'une liste ; on le valide quand même contre le
+             * catalogue — un POST fabriqué ne doit pas installer un rendement
+             * qui ne rapporte rien. Vide reste vide : c'est « ne rend rien ». */
+            $harvestItem = trim((string) ($_POST['harvest_item'] ?? ''));
 
-        if ($harvestItem !== '' && \Classes\Item::get_item_by_name($harvestItem) === false) {
-            $notice .= " ⚠ Objet « {$harvestItem} » inconnu du catalogue — rendement inchangé.";
-            $harvestItem = $race->getHarvestItem();
+            if ($harvestItem !== '' && \Classes\Item::get_item_by_name($harvestItem) === false) {
+                $notice .= " ⚠ Objet « {$harvestItem} » inconnu du catalogue — rendement inchangé.";
+                $harvestItem = $race->getHarvestItem();
+            }
+
+            $race->setHarvestItem($harvestItem);
+            $race->setHarvestExhaust(trim((string) ($_POST['harvest_exhaust'] ?? '')) !== ''
+                ? max(1, min(100, (int) $_POST['harvest_exhaust']))
+                : null);
+            $race->setHarvestRegrow(trim((string) ($_POST['harvest_regrow'] ?? '')) !== ''
+                ? max(1, min(1000, (int) $_POST['harvest_regrow']))
+                : null);
+        } elseif ($race->getHarvestItem() !== '' || $race->getHarvestExhaust() !== null || $race->getHarvestRegrow() !== null) {
+            $race->setHarvestItem('');
+            $race->setHarvestExhaust(null);
+            $race->setHarvestRegrow(null);
+            $notice .= ' ⚠ Catégorie changée : le rendement (récolte) de ce type a été effacé.';
         }
-
-        $race->setHarvestItem($harvestItem);
     }
 
     /* Combien rend une plante : deux bornes, et un maximum qui ne passe pas
-     * sous le minimum — un intervalle vide ne rendrait rien du tout. */
+     * sous le minimum — un intervalle vide ne rendrait rien du tout. Quitter
+     * la catégorie Plante remet les bornes à leur défaut plutôt que de les
+     * laisser trainer, pour la même raison que ci-dessus. */
     if ($race instanceof \App\Entity\PlantType) {
-        $min = max(1, min(99, (int) ($_POST['harvest_min'] ?? \App\Entity\PlantType::DEFAULT_MIN)));
-        $max = max($min, min(99, (int) ($_POST['harvest_max'] ?? \App\Entity\PlantType::DEFAULT_MAX)));
+        if ($newNature === 'plante') {
+            $min = max(1, min(99, (int) ($_POST['harvest_min'] ?? \App\Entity\PlantType::DEFAULT_MIN)));
+            $max = max($min, min(99, (int) ($_POST['harvest_max'] ?? \App\Entity\PlantType::DEFAULT_MAX)));
 
-        $race->setHarvestMin($min);
-        $race->setHarvestMax($max);
-        $race->setHarvestExhaust(trim((string) ($_POST['harvest_exhaust'] ?? '')) !== ''
-            ? max(1, min(100, (int) $_POST['harvest_exhaust']))
-            : null);
-        $race->setHarvestRegrow(trim((string) ($_POST['harvest_regrow'] ?? '')) !== ''
-            ? max(1, min(1000, (int) $_POST['harvest_regrow']))
-            : null);
+            $race->setHarvestMin($min);
+            $race->setHarvestMax($max);
+        } else {
+            $race->setHarvestMin(\App\Entity\PlantType::DEFAULT_MIN);
+            $race->setHarvestMax(\App\Entity\PlantType::DEFAULT_MAX);
+        }
     }
     $race->setBlocksPassage(booleanCheckbox('blocks_passage'));
     $race->setBlocksProjectiles(booleanCheckbox('blocks_projectiles'));
@@ -201,7 +252,7 @@ $applyForm = static function (Race $race) use ($face): string {
     }
     $race->setCapacity((int) ($_POST['capacity'] ?? 0));
 
-    return $notice;
+    return ['notice' => $notice, 'newFamily' => $newFamily];
 };
 
 /** One name per non-empty line. */
@@ -240,14 +291,16 @@ if ($action === 'create') {
     }
 
     /* La famille se choisit à la création : c'est le visage d'où l'on vient
-       qui la dit, et elle ne changera plus — un mur ne devient pas un peuple. */
+       qui la dit. Elle peut être reclassée ensuite (Catégorie, en édition,
+       cf. applyForm) — mais jamais vers/depuis un personnage : un mur ne
+       devient pas un peuple. */
     $race = Race::ofFamily(
         $face->isStructure() ? 'structure' : 'character',
         $face->nature()
     );
     $race->setName($name);
     $race->setCode(strtoupper($name));
-    $factionNotice = $applyForm($race);
+    $factionNotice = $applyForm($race)['notice'];
     $service->save($race);
     $starterActions = $linesToNames('starter_actions');
     $spells = $linesToNames('spells');
@@ -268,8 +321,23 @@ if ($action === 'update') {
         redirectTo($backPage);
     }
 
-    $factionNotice = $applyForm($race);
+    $formResult = $applyForm($race);
+    $factionNotice = $formResult['notice'];
     $service->save($race);
+
+    /* Doctrine écrit type_kind d'après la classe PHP de $race — celle
+     * chargée AVANT ce reclassement, donc l'ancienne famille. Un
+     * reclassement (Catégorie changée en édition) doit forcer la vraie
+     * valeur par une écriture brute, hors ORM : sans elle, la ligne redevient
+     * son ancienne classe au prochain chargement, malgré structure_nature. */
+    if ($formResult['newFamily'] !== $race->familyKey()) {
+        \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()->executeStatement(
+            'UPDATE races SET type_kind = ? WHERE name = ?',
+            [$formResult['newFamily'], $name]
+        );
+        RaceService::clearCache();
+    }
+
     $starterActions = $linesToNames('starter_actions');
     $spells = $linesToNames('spells');
     // Compute the typo notice BEFORE saving: the catalog includes the race
