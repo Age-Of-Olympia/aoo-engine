@@ -70,6 +70,12 @@ $(document).ready(function(){
             return false;
         }
 
+        /* Pour « Refaire la même action » (modale de résultat, js/hud.js) :
+         * on retient QUI a été cliqué, pas les coordonnées — le bouton
+         * vivant est rejoué tel quel, avec les coordonnées relues après
+         * la ré-observation, donc une cible qui a bougé est resuivie. */
+        window.hudLastAction = {action: action, targetId: targetId};
+
 
         /* HUD : le résultat arrive dans une modale par-dessus le damier
          * (window.hudShowActionResult, js/hud.js) — la fiche de la

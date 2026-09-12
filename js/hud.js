@@ -312,6 +312,9 @@
                 + '<div class="hud-action-modal-sheet">'
                 + '<button class="hud-action-modal-close" title="Fermer" aria-label="Fermer">×</button>'
                 + '<div class="hud-action-modal-body"></div>'
+                + '<div class="hud-action-modal-foot">'
+                + '<button type="button" class="hud-action-modal-again" hidden>Refaire la même action</button>'
+                + '</div>'
                 + '</div></div>').appendTo('#hud');
 
             $modal.on('click', function (e) {
@@ -322,6 +325,22 @@
             $modal.find('.hud-action-modal-close').on('click', function () {
                 $modal.hide();
             });
+            /* Rejoue le bouton d'action VIVANT (pas un POST recopié) : il
+             * a été ré-observé après le résultat, donc ses coordonnées
+             * sont fraîches et action.php refait ses vérifications (PA,
+             * charges, cible déplacée) comme pour un clic ordinaire. */
+            $modal.find('.hud-action-modal-again').on('click', function () {
+                var $again = hudLastActionButton();
+                $modal.hide();
+                if ($again.length) {
+                    /* Le déclenchement jQuery ne passe pas par l'écouteur
+                     * natif d'armement du panneau (qui épingle
+                     * window.visible) : on l'épingle ici, sinon le
+                     * révélateur d'observe.js avale le clic. */
+                    window.visible = true;
+                    $again.trigger('click.observe');
+                }
+            });
             $(document).on('keydown.hudActionModal', function (e) {
                 if (e.key === 'Escape' && $modal.is(':visible')) {
                     $modal.hide();
@@ -330,8 +349,27 @@
         }
 
         $modal.find('.hud-action-modal-body').html(html);
+        /* Seulement sur un résultat final, et seulement si l'action est
+         * encore proposée sur la case : rien à rejouer pendant le jet de
+         * dés ni après un déplacement qui a changé la fiche. */
+        $modal.find('.hud-action-modal-again').prop('hidden', !isFinal || !hudLastActionButton().length);
         $modal.show();
     };
+
+    /* Le bouton d'action que le dernier clic a visé (js/observe.js pose
+     * window.hudLastAction), retrouvé dans le panneau tel qu'il est
+     * MAINTENANT — vide s'il n'y est plus. */
+    function hudLastActionButton() {
+        var last = window.hudLastAction;
+        if (!last || !last.action) {
+            return $();
+        }
+        var selector = '#hud-actions .action[data-action="' + last.action + '"]';
+        if (last.targetId !== undefined && last.targetId !== '') {
+            selector += '[data-target-id="' + last.targetId + '"]';
+        }
+        return $(selector).first();
+    }
 
     /*
      * Après une action : re-rend la page côté serveur et ne remet à
