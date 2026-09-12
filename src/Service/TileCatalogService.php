@@ -55,9 +55,8 @@ class TileCatalogService
                 $images[$layer . '/' . $name] = 'img/' . $dir . '/' . $image['file'];
             }
 
-            // Une ressource neuve n'a jamais de fichier dans img/walls/ :
-            // son image vit dans le stock moderne (admin → Types
-            // récoltables → Images), jamais alimenté par cette convention.
+            // Resource sprites uploaded from the admin live in the
+            // RaceImageService stock, not in img/walls/.
             if ($layer === 'resources') {
                 foreach ($this->harvestableSpritesNotIn($names) as $name => $path) {
                     $names[] = $name;
@@ -73,13 +72,12 @@ class TileCatalogService
     }
 
     /**
-     * Types récoltables dont le sprite vit dans le stock moderne
-     * (RaceImageService, via BuildingService::resolveAvatar) plutôt que
-     * dans le scan img/walls/ ci-dessus — sans dupliquer ce que le scan a
-     * déjà trouvé.
+     * Harvestable types whose sprite resolves through the image stock
+     * (BuildingService::resolveAvatar), skipping names the directory scan
+     * already yielded.
      *
-     * @param string[] $exclude Noms déjà trouvés par le scan img/walls/
-     * @return array<string, string> nom => chemin d'image relatif au docroot
+     * @param string[] $exclude names already found by the img/walls/ scan
+     * @return array<string, string> name => image path, docroot-relative
      */
     private function harvestableSpritesNotIn(array $exclude): array
     {
