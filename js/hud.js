@@ -2201,13 +2201,21 @@
                     $('<div id="hud-action-hint"></div>')
                         .append($('<span class="hud-action-hint-name"></span>').text(btn.title || ''))
                         .append($('<span class="hud-action-hint-tip"></span>').text('cliquez à nouveau pour confirmer'))
-                        .appendTo('#hud-actions');
+                        .appendTo(hintHost());
                     return;
                 }
 
                 /* Armé : on laisse filer le clic vers observe.js */
                 disarmActions();
             }, true);
+        }
+
+        /* Where the armed/long-press hint lives: on a narrow screen the
+         * selection pane, as a later sibling of the card, so it paints
+         * over the speech plaque whatever the strip's scroll box does;
+         * on desktop the actions panel, its own positioned box. */
+        function hintHost() {
+            return isMobileViewport() ? '#hud-sel-pane' : '#hud-actions';
         }
 
         function disarmActions() {
@@ -2226,7 +2234,7 @@
             $('#hud-action-hint').remove();
             $('<div id="hud-action-hint"></div>')
                 .append($('<span class="hud-action-hint-name"></span>').text(this.title || ''))
-                .appendTo('#hud-actions');
+                .appendTo(hintHost());
             clearTimeout(hintTimer);
             hintTimer = setTimeout(function () {
                 $('#hud-action-hint').remove();

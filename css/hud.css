@@ -2568,9 +2568,7 @@ body:has(#hud) #debug-flags {
         position: static;
         border-width: 1px 0 0;
         border-radius: 0;
-        /* 12px top and right: the cancel cross of an armed button overflows
-         * by 9px, the scroll box was clipping it. */
-        padding: 12px 12px 6px 8px;
+        padding: 6px 8px;
         overflow-x: auto;
         overflow-y: hidden;
     }
@@ -2610,13 +2608,12 @@ body:has(#hud) #debug-flags {
         font-size: 26px;
     }
 
-    /* Armed-action hint: over the card, not over the button strip (the
-     * absolute anchor is the pane, #hud-actions is static here). */
-    #hud-sel-pane #hud-action-hint {
+    /* Armed-action hint (js/hud.js hintHost): appended to the pane
+     * itself, over the card, above the speech plaque. */
+    #hud-sel-pane > #hud-action-hint {
         top: 8px;
         bottom: auto;
-        /* above the speech plaque (positioned as well) */
-        z-index: 3;
+        z-index: 5;
     }
 
     /* --- Pane bar: named segments, 40px touch targets --- */
