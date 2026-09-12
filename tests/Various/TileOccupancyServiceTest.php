@@ -429,10 +429,6 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /**
-     * Same split for elements: lava stops a player's construire, not an
-     * animator composing the map. The editors used to be refused too.
-     */
     public function testAnElementStopsThePlayerButNotTheEditor(): void
     {
         $id = $this->coordsIdOn(self::PLAN, 63, 0);
