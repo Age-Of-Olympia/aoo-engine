@@ -137,6 +137,18 @@ $applyForm = static function (Race $race) use ($face): string {
         }
 
         $race->setHarvestItem($harvestItem);
+
+        /* Épuisement et repousse décrivent une RESSOURCE (le formulaire ne
+         * les affiche que pour ce visage) — pas une plante, qui disparaît à
+         * la cueillette. Vivaient par erreur dans le bloc PlantType ci-dessous,
+         * où ils n'étaient jamais postés : la ressource les perdait à chaque
+         * sauvegarde. */
+        $race->setHarvestExhaust(trim((string) ($_POST['harvest_exhaust'] ?? '')) !== ''
+            ? max(1, min(100, (int) $_POST['harvest_exhaust']))
+            : null);
+        $race->setHarvestRegrow(trim((string) ($_POST['harvest_regrow'] ?? '')) !== ''
+            ? max(1, min(1000, (int) $_POST['harvest_regrow']))
+            : null);
     }
 
     /* Combien rend une plante : deux bornes, et un maximum qui ne passe pas
@@ -147,12 +159,6 @@ $applyForm = static function (Race $race) use ($face): string {
 
         $race->setHarvestMin($min);
         $race->setHarvestMax($max);
-        $race->setHarvestExhaust(trim((string) ($_POST['harvest_exhaust'] ?? '')) !== ''
-            ? max(1, min(100, (int) $_POST['harvest_exhaust']))
-            : null);
-        $race->setHarvestRegrow(trim((string) ($_POST['harvest_regrow'] ?? '')) !== ''
-            ? max(1, min(1000, (int) $_POST['harvest_regrow']))
-            : null);
     }
     $race->setBlocksPassage(booleanCheckbox('blocks_passage'));
     $race->setBlocksProjectiles(booleanCheckbox('blocks_projectiles'));
