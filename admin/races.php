@@ -406,28 +406,17 @@ HTML;
             . ' title="Élément versé au sol quand l\'entité est blessée — rien : un mur ne saigne pas."'
         )
         . '</label> '
-        // La Nature (édifice/obstacle) n'a de sens que pour une structure :
-        // champ caché sur le visage Races. Les flags de blocage restent
-        // éditables partout — une race massive PEUT faire écran aux tirs,
-        // simplement pas par défaut.
-        //
-        // En ÉDITION, ce champ devient la Catégorie : les 5 valeurs de
-        // structure_nature, postées telles quelles (races-save.php ne les
-        // fait plus passer par le visage courant sur update). Reclasser
-        // un type existant — bâtiment vers ressource, par exemple — n'a
-        // de sens qu'une fois le type déjà créé.
+        // Structures only; the character face posts a hidden default. The
+        // blocking flags stay editable on every face.
+        // On edit the field is the Catégorie: any nature, posted as is, so
+        // an existing type can move to another family. On create the face
+        // pins the family, so the select only offers édifice/obstacle.
         . ($face->isStructure()
             ? ($isEdit
                 ? '<label class="mr-3">Catégorie '
                     . formSelect(
                         'structure_nature',
-                        [
-                            'edifice' => 'Bâtiment — édifice (porte)',
-                            'obstacle' => 'Bâtiment — obstacle (mur)',
-                            'decor' => 'Décor',
-                            'ressource' => 'Ressource récoltable',
-                            'plante' => 'Plante',
-                        ],
+                        \App\View\Admin\TypeEditorFace::natureChoices(),
                         $race->getStructureNature(),
                         null,
                         'class="form-control form-control-sm d-inline-block" style="width:auto"'
@@ -443,14 +432,17 @@ HTML;
                 : '<label class="mr-3">Nature '
                     . formSelect(
                         'structure_nature',
-                        ['edifice' => 'Édifice (porte)', 'obstacle' => 'Obstacle (mur)'],
-                        'edifice',
+                        [
+                            \App\View\Admin\TypeEditorFace::NATURE_EDIFICE => 'Édifice (porte)',
+                            \App\View\Admin\TypeEditorFace::NATURE_OBSTACLE => 'Obstacle (mur)',
+                        ],
+                        \App\View\Admin\TypeEditorFace::NATURE_EDIFICE,
                         null,
                         'class="form-control form-control-sm d-inline-block" style="width:auto"'
                         . ' title="Édifice : vrai bâtiment, a une porte (Ouvert/Fermé, dialogue). Obstacle : mur construit, sans porte (is_open = future passabilité)."'
                     )
                     . '</label> ')
-            : '<input type="hidden" name="structure_nature" value="edifice">')
+            : '<input type="hidden" name="structure_nature" value="' . \App\View\Admin\TypeEditorFace::NATURE_EDIFICE . '">')
         . '<label class="mr-3"><input type="checkbox" name="blocks_passage" '
         . checked(!$isEdit || $race->blocksPassage())
         . ' title="Décoché : on marche sur sa case (mobilier bas, passage)."> Bloque le passage</label> '

@@ -24,9 +24,28 @@ final class TypeEditorFace
     public const PLANT = 'plant';
 
     /** All structures; `structure_nature` is what tells the faces apart. */
+    public const NATURE_EDIFICE = 'edifice';
+    public const NATURE_OBSTACLE = 'obstacle';
     public const NATURE_DECOR = 'decor';
     public const NATURE_RESOURCE = 'ressource';
     public const NATURE_PLANT = 'plante';
+
+    /**
+     * Every structure_nature a structure type may carry, with its admin
+     * label — the one list the category select and its validation share.
+     *
+     * @return array<string, string> nature => label
+     */
+    public static function natureChoices(): array
+    {
+        return [
+            self::NATURE_EDIFICE => 'Bâtiment — édifice (porte)',
+            self::NATURE_OBSTACLE => 'Bâtiment — obstacle (mur)',
+            self::NATURE_DECOR => 'Décor',
+            self::NATURE_RESOURCE => 'Ressource récoltable',
+            self::NATURE_PLANT => 'Plante',
+        ];
+    }
 
     private function __construct(
         public readonly string $key,
@@ -195,7 +214,7 @@ final class TypeEditorFace
             self::SCENERY => self::NATURE_DECOR,
             self::RESOURCE => self::NATURE_RESOURCE,
             self::PLANT => self::NATURE_PLANT,
-            self::BUILDING => 'edifice',
+            self::BUILDING => self::NATURE_EDIFICE,
             default => '',
         };
     }
@@ -216,7 +235,7 @@ final class TypeEditorFace
             self::SCENERY => self::NATURE_DECOR,
             self::RESOURCE => self::NATURE_RESOURCE,
             self::PLANT => self::NATURE_PLANT,
-            default => $posted === 'obstacle' ? 'obstacle' : 'edifice',
+            default => $posted === self::NATURE_OBSTACLE ? self::NATURE_OBSTACLE : self::NATURE_EDIFICE,
         };
     }
 
