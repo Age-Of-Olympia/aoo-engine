@@ -138,11 +138,8 @@ $applyForm = static function (Race $race) use ($face): string {
 
         $race->setHarvestItem($harvestItem);
 
-        /* Épuisement et repousse décrivent une RESSOURCE (le formulaire ne
-         * les affiche que pour ce visage) — pas une plante, qui disparaît à
-         * la cueillette. Vivaient par erreur dans le bloc PlantType ci-dessous,
-         * où ils n'étaient jamais postés : la ressource les perdait à chaque
-         * sauvegarde. */
+        /* Exhaust/regrow only make sense for a resource, which stays on the
+         * board; the plant form does not post them and a plant keeps null. */
         $race->setHarvestExhaust(trim((string) ($_POST['harvest_exhaust'] ?? '')) !== ''
             ? max(1, min(100, (int) $_POST['harvest_exhaust']))
             : null);
