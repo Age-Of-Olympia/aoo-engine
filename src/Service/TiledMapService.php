@@ -642,9 +642,8 @@ class TiledMapService
 
         foreach ($toInsert as $row) {
             try {
-                // overScenery : même passe-droit que l'éditeur en jeu
-                // (erase_or_create_tile.php) — un animateur pose par-dessus
-                // décor et éléments, la règle ne vaut que pour construire.
+                // Editor placement: decor and elements do not block, only
+                // a player's construire is held to that rule.
                 $buildings->place((string) $row['name'], (object) [
                     'x'    => (int) $row['x'],
                     'y'    => (int) $row['y'],
