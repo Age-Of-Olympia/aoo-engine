@@ -38,8 +38,8 @@ $resources = new ResourceObjectService();
 $resources->removeEntities($resources->idsOn((int) $coordsId));
 
 /* Et les plantes, pour la même raison. */
-$resources->removeEntities(array_map('intval', $db->exe(
+$resources->removeEntities(array_map('intval', array_column($db->exe(
     "SELECT id FROM players WHERE player_type = 'plant' AND coords_id = ?",
     array($coordsId)
-)->fetch_all(MYSQLI_COLUMN) ?: []));
+)->fetch_all(MYSQLI_NUM) ?: [], 0)));
 
