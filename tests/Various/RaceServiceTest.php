@@ -164,6 +164,55 @@ class RaceServiceTest extends TestCase
         }
     }
 
+    /**
+     * getRacesByKind('structure') mixes buildings, scenery, resources and
+     * plants — they all carry kind='structure'. The Tiled palettes used it
+     * directly for "Bâtiments" and offered every harvestable type too;
+     * getBuildingTypes() must filter down to the building family only.
+     */
+    public function testGetBuildingTypesExcludesResources(): void
+    {
+        $building = 'test_race_building';
+        $resource = 'test_race_resource';
+        $this->deleteRace($building);
+        $this->deleteRace($resource);
+
+        try {
+            $buildingRace = Race::ofFamily('structure', 'edifice');
+            $buildingRace->setName($building);
+            $buildingRace->setCode(strtoupper($building));
+            $buildingRace->setLabel('Bâtiment de test');
+            $buildingRace->setKind('structure');
+            $buildingRace->setStructureNature('edifice');
+            $buildingRace->setPlayable(false);
+            $buildingRace->setHidden(false);
+            $this->service->save($buildingRace);
+
+            $resourceRace = Race::ofFamily('structure', 'ressource');
+            $resourceRace->setName($resource);
+            $resourceRace->setCode(strtoupper($resource));
+            $resourceRace->setLabel('Ressource de test');
+            $resourceRace->setKind('structure');
+            $resourceRace->setStructureNature('ressource');
+            $resourceRace->setPlayable(false);
+            $resourceRace->setHidden(false);
+            $this->service->save($resourceRace);
+
+            RaceService::clearCache();
+            $names = array_map(
+                static fn (Race $race): string => $race->getName(),
+                (new RaceService())->getBuildingTypes()
+            );
+
+            $this->assertContains($building, $names);
+            $this->assertNotContains($resource, $names, 'une ressource ne doit pas grossir la palette bâtiments');
+        } finally {
+            $this->deleteRace($building);
+            $this->deleteRace($resource);
+            RaceService::clearCache();
+        }
+    }
+
     private function deleteRace(string $name): void
     {
         // race_starter_actions / race_spells rows follow via ON DELETE CASCADE.

@@ -259,6 +259,22 @@ class RaceService
     }
 
     /**
+     * Structure types that are actually buildings — not scenery, resources
+     * or plants, which also carry kind='structure'. getRacesByKind('structure')
+     * alone mixes all four families; the Tiled palettes used it directly and
+     * offered every harvestable/decor type as a "building" too.
+     *
+     * @return Race[]
+     */
+    public function getBuildingTypes(): array
+    {
+        return array_values(array_filter(
+            $this->getRacesByKind('structure'),
+            static fn (Race $race): bool => $race->familyKey() === Race::FAMILY_BUILDING
+        ));
+    }
+
+    /**
      * @return string[] Lowercase names of character-kind races — what PNJ
      *                  creation and other character flows must list instead
      *                  of getAllRaceNames() now that structure types share
