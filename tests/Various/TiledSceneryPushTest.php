@@ -143,6 +143,81 @@ class TiledSceneryPushTest extends TestCase
         );
     }
 
+    /**
+     * Erasing every piece of a figure in Tiled must vanish its entity too —
+     * otherwise the game keeps drawing it from entity_cells while the editor
+     * shows nothing left to erase.
+     */
+    public function testErasingAllPiecesVanishesTheEntity(): void
+    {
+        $service = new TiledMapService();
+        $export = $service->exportPlan(self::PLAN, 0);
+
+        $push = $service->importPlan(self::PLAN, 0, [
+            'foregrounds' => [
+                ['x' => 10, 'y' => 10, 'name' => self::FAMILY . '-00', 'composite' => true],
+            ],
+        ], $export['version']);
+
+        $entityId = (int) $this->conn->fetchOne(
+            "SELECT p.id FROM players p
+               JOIN entity_cells ec ON ec.player_id = p.id
+               JOIN coords c ON c.id = ec.coords_id
+              WHERE c.plan = ? AND p.player_type = 'scenery'",
+            [self::PLAN]
+        );
+        $this->assertGreaterThan(0, $entityId, 'the object became an entity');
+
+        $export = $service->exportPlan(self::PLAN, 0);
+        $push = $service->importPlan(self::PLAN, 0, ['foregrounds' => []], $export['version']);
+
+        $this->assertSame(1, $push['layers']['foregrounds']['vanished'], 'the orphaned entity is vanished');
+        $this->assertSame([], $this->piecesOnPlan(), 'no pieces left');
+
+        $stillScenery = (int) $this->conn->fetchOne(
+            "SELECT COUNT(*) FROM entity_cells ec
+               JOIN players p ON p.id = ec.player_id
+              WHERE p.id = ? AND p.player_type = 'scenery'",
+            [$entityId]
+        );
+        $this->assertSame(0, $stillScenery, 'no cell left holding the vanished entity');
+    }
+
+    /**
+     * A truncated figure — one piece erased, one still standing — is not an
+     * orphan: it stays, waiting to be repaired, not silently deleted.
+     */
+    public function testPartiallyErasingAFigureKeepsTheEntity(): void
+    {
+        $service = new TiledMapService();
+        $export = $service->exportPlan(self::PLAN, 0);
+
+        $service->importPlan(self::PLAN, 0, [
+            'foregrounds' => [
+                ['x' => 12, 'y' => 12, 'name' => self::FAMILY . '-00', 'composite' => true],
+            ],
+        ], $export['version']);
+
+        // Push again with only the anchor piece: the second piece is erased.
+        $export = $service->exportPlan(self::PLAN, 0);
+        $push = $service->importPlan(self::PLAN, 0, [
+            'foregrounds' => [
+                ['x' => 12, 'y' => 12, 'name' => self::FAMILY . '-00'],
+            ],
+        ], $export['version']);
+
+        $this->assertSame(0, $push['layers']['foregrounds']['vanished'], 'a truncated figure is not an orphan');
+
+        $cells = (int) $this->conn->fetchOne(
+            "SELECT COUNT(*) FROM entity_cells ec
+               JOIN players p ON p.id = ec.player_id
+               JOIN coords c ON c.id = ec.coords_id
+              WHERE c.plan = ? AND p.player_type = 'scenery'",
+            [self::PLAN]
+        );
+        $this->assertSame(2, $cells, 'the entity keeps both its cells');
+    }
+
     /** A family with no known cut-out is never guessed at. */
     public function testAnUnknownFamilyIsLaidDownAsIs(): void
     {

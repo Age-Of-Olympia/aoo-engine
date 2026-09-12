@@ -164,6 +164,44 @@ final class SceneryObjectService
     }
 
     /**
+     * Vanish scenery entities whose pieces are all gone from the map.
+     *
+     * The Tiled push diffs `map_foregrounds` cell by cell and has no idea an
+     * entity holds several of them. An animator erasing every piece of a
+     * figure only removes its rows there — this is the entity's other half:
+     * without it, {@see \App\Service\Map\SceneryFiguresInSight} kept drawing
+     * the figure from `entity_cells` alone, on a board where the editor
+     * showed nothing left to erase.
+     *
+     * A figure with SOME pieces still standing is a truncated object, not an
+     * orphan: it stays, {@see complete()} is how it gets fixed.
+     *
+     * @return int entities removed
+     */
+    public function removeOrphanedEntities(): int
+    {
+        $ids = $this->conn->fetchFirstColumn(
+            "SELECT DISTINCT p.id
+               FROM players p
+               JOIN entity_cells ec ON ec.player_id = p.id
+              WHERE p.player_type = 'scenery'
+                AND NOT EXISTS (
+                    SELECT 1 FROM entity_cells ec2
+                      JOIN map_foregrounds f ON f.coords_id = ec2.coords_id
+                     WHERE ec2.player_id = p.id
+                )"
+        );
+
+        $buildings = new \App\Service\BuildingService();
+
+        foreach ($ids as $id) {
+            $buildings->vanish((int) $id);
+        }
+
+        return count($ids);
+    }
+
+    /**
      * The type a scenery family stands for, created on first need.
      *
      * @return bool true when it had to be created
