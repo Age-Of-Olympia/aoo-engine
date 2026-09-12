@@ -971,8 +971,10 @@ class BuildingService
      *                          owner_name:?string, x:int, y:int, z:int, plan:string,
      *                          max_pv:int, current_pv:int, site_done:?int, site_total:?int}>
      */
-    public function listBuildings(): array
+    public function listBuildings(array $filters = [], ?int $limit = null, int $offset = 0): array
     {
+        [$where, $params] = $this->buildingFilterSql($filters);
+
         // races is joined in PHP via the cached RaceService: the table was
         // created under a newer default collation than players and a SQL
         // join on r.name = p.race trips "illegal mix of collations".
@@ -988,7 +990,10 @@ class BuildingService
              LEFT JOIN players o ON o.id = p.owner_id
              LEFT JOIN players_bonus pb ON pb.player_id = p.id AND pb.name = 'pv'
              LEFT JOIN construction_sites cs ON cs.player_id = p.id
+             {$where}
              ORDER BY c.plan, p.id"
+            . ($limit !== null ? ' LIMIT ' . (int) $limit . ' OFFSET ' . max(0, $offset) : ''),
+            $params
         );
 
         $raceService = $this->raceService;
@@ -1022,6 +1027,54 @@ class BuildingService
                 'site_total' => $row['site_total'] !== null ? (int) $row['site_total'] : null,
             ];
         }, $rows);
+    }
+
+    /**
+     * @param array{id?: int, plan?: string, type?: string, state?: string, q?: string} $filters
+     */
+    public function countBuildings(array $filters = []): int
+    {
+        [$where, $params] = $this->buildingFilterSql($filters);
+
+        return (int) $this->entityManager->getConnection()->fetchOne(
+            "SELECT COUNT(*) FROM buildings b
+             JOIN players p ON p.id = b.player_id
+             JOIN coords c ON c.id = p.coords_id
+             LEFT JOIN players o ON o.id = p.owner_id
+             {$where}",
+            $params
+        );
+    }
+
+    /**
+     * WHERE clause shared by listBuildings() and countBuildings(). `q`
+     * matches the building name, its owner's name, or its exact id.
+     *
+     * @param array{id?: int, plan?: string, type?: string, state?: string, q?: string} $filters
+     * @return array{string, list<int|string>}
+     */
+    private function buildingFilterSql(array $filters): array
+    {
+        $clauses = [];
+        $params = [];
+
+        if (isset($filters['id'])) {
+            $clauses[] = 'p.id = ?';
+            $params[] = (int) $filters['id'];
+        }
+        foreach (['plan' => 'c.plan', 'type' => 'p.race', 'state' => 'b.build_state'] as $key => $column) {
+            if (($filters[$key] ?? '') !== '') {
+                $clauses[] = "{$column} = ?";
+                $params[] = (string) $filters[$key];
+            }
+        }
+        if (($filters['q'] ?? '') !== '') {
+            $like = '%' . addcslashes((string) $filters['q'], '%_\\') . '%';
+            $clauses[] = '(p.name LIKE ? OR o.name LIKE ? OR p.id = ?)';
+            array_push($params, $like, $like, (int) $filters['q']);
+        }
+
+        return [$clauses === [] ? '' : 'WHERE ' . implode(' AND ', $clauses), $params];
     }
 
     /**

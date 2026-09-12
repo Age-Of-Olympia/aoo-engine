@@ -56,6 +56,55 @@ function building_dialog_select(string $fieldName, string $selected, array $dial
     );
 }
 
+const BUILDINGS_PER_PAGE = 50;
+
+const BUILDING_STATES = [
+    'built' => 'Construit',
+    'construction' => 'En construction',
+    'ruin' => 'Ruine',
+];
+
+/**
+ * @param array<string, string> $filters plan, type, state, q
+ * @param array<int, string>    $plans
+ * @param array<string, string> $types   name => label
+ */
+function building_render_filters(array $filters, array $plans, array $types, int $total): string
+{
+    $selectAttrs = 'class="form-control form-control-sm" onchange="this.form.submit()"';
+
+    return '<form method="get" action="/admin/buildings.php" class="form-row align-items-end mb-3">'
+        . '<div class="col-md-2"><label class="small mb-0">Plan</label>'
+        . formSelect('plan', array_combine($plans, $plans), $filters['plan'] !== '' ? $filters['plan'] : null, '— tous —', $selectAttrs) . '</div>'
+        . '<div class="col-md-3"><label class="small mb-0">Type</label>'
+        . formSelect('type', $types, $filters['type'] !== '' ? $filters['type'] : null, '— tous —', $selectAttrs) . '</div>'
+        . '<div class="col-md-2"><label class="small mb-0">État</label>'
+        . formSelect('state', BUILDING_STATES, $filters['state'] !== '' ? $filters['state'] : null, '— tous —', $selectAttrs) . '</div>'
+        . '<div class="col-md-3"><label class="small mb-0">Nom, propriétaire ou #</label>'
+        . '<input type="search" name="q" class="form-control form-control-sm" value="' . e($filters['q']) . '"></div>'
+        . '<div class="col-md-2"><button class="btn btn-sm btn-outline-secondary" type="submit">Filtrer</button> '
+        . '<small class="text-muted">' . $total . ' bâtiment(s)</small></div>'
+        . '</form>';
+}
+
+/** @param array<string, string> $filters */
+function building_render_pager(int $page, int $pages, array $filters): string
+{
+    if ($pages <= 1) {
+        return '';
+    }
+
+    $link = static fn (int $p, string $label): string =>
+        '<a class="btn btn-sm btn-outline-secondary" href="/admin/buildings.php?'
+        . e(http_build_query(array_filter($filters) + ['page' => $p])) . '">' . $label . '</a>';
+
+    return '<div class="d-flex align-items-center mt-2" style="gap:8px">'
+        . ($page > 1 ? $link($page - 1, '← Précédent') : '')
+        . '<span class="text-muted">page ' . $page . ' / ' . $pages . '</span>'
+        . ($page < $pages ? $link($page + 1, 'Suivant →') : '')
+        . '</div>';
+}
+
 function building_state_badge(string $state): string
 {
     return match ($state) {
@@ -318,13 +367,7 @@ $dialogNames = array_keys((new DialogService())->listGameDialogs());
 
 if (($_GET['action'] ?? '') === 'edit') {
     $editId = (int) ($_GET['id'] ?? 0);
-    $row = null;
-    foreach ($service->listBuildings() as $b) {
-        if ($b['id'] === $editId) {
-            $row = $b;
-            break;
-        }
-    }
+    $row = $service->listBuildings(['id' => $editId])[0] ?? null;
     if ($row === null) {
         setFlash('warning', "Aucun bâtiment #{$editId}.");
         redirectTo('/admin/buildings.php');
@@ -339,12 +382,27 @@ if (($_GET['action'] ?? '') === 'edit') {
     exit();
 }
 
-$content = building_render_place_form(
-    building_type_options(),
-    (new NpcAdminService())->listPlans(),
-    $factions,
-    $dialogNames,
-    $csrfToken
-) . building_render_list($service->listBuildings(), $dialogNames, $csrfToken);
+$types = building_type_options();
+$plans = (new NpcAdminService())->listPlans();
+
+$filters = [
+    'plan' => (string) ($_GET['plan'] ?? ''),
+    'type' => (string) ($_GET['type'] ?? ''),
+    'state' => (string) ($_GET['state'] ?? ''),
+    'q' => trim((string) ($_GET['q'] ?? '')),
+];
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$total = $service->countBuildings($filters);
+$pages = max(1, (int) ceil($total / BUILDINGS_PER_PAGE));
+$page = min($page, $pages);
+
+$content = building_render_place_form($types, $plans, $factions, $dialogNames, $csrfToken)
+    . building_render_filters($filters, $plans, $types, $total)
+    . building_render_list(
+        $service->listBuildings($filters, BUILDINGS_PER_PAGE, ($page - 1) * BUILDINGS_PER_PAGE),
+        $dialogNames,
+        $csrfToken
+    )
+    . building_render_pager($page, $pages, $filters);
 
 echo admin_layout('Bâtiments posés', renderFlashMessage() . $content);
