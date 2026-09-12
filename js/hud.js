@@ -1295,11 +1295,9 @@
          * sheet from this button. Without a card the pane holds nothing
          * else, they stay in place. */
         if ($card.length && ($infos.length || $d.children('#case-coords').length)) {
-            var coordsText = $d.children('#case-coords').text().trim();
             $('<button type="button" class="hud-sel-tile-btn"></button>')
-                .attr('title', 'Sur la case')
-                .append('<span class="ra ra-compass"></span>')
-                .append($('<span class="hud-sel-tile-btn-coords"></span>').text(coordsText || 'Sur la case'))
+                .attr('title', 'Ce qu\'il y a sur la case')
+                .append('<span class="ra ra-aware"></span> Voir le sol')
                 .on('click', function () {
                     var $selNow = $(this).closest('.hud-sel');
                     hudSheetShowNodes($selNow.children('.hud-sel-tile, #case-coords'), $selNow);

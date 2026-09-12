@@ -2294,18 +2294,20 @@ body:has(#hud) #debug-flags {
         width: 100%;
     }
 
-    /* Toutes les entrées sur la même ligne verticale : icône (peinte
-     * ou glyphe) dans la bande 8-36px, libellé à 44px — avant, les
-     * paddings variaient selon la spécificité des sélecteurs d'icônes
-     * peintes, d'où des libellés tantôt à gauche tantôt « centrés »
-     * (retour testeur). */
+    /* Toutes les entrées sur la même ligne verticale : glyphe dans la
+     * bande 8-36px, libellé à 44px. */
     #hud-rail #menu > a > button,
     #hud-rail #menu > button {
         width: 100%;
-        height: 44px;
+        height: auto;
+        min-height: 44px;
         font-size: 100%;
+        line-height: 1.15;
         text-align: left;
-        padding: 0 10px 0 44px;
+        /* les libellés longs (« Panneau d'administration ») passent
+         * sur deux lignes au lieu de sortir du bouton */
+        white-space: normal;
+        padding: 6px 10px 6px 44px;
         display: flex;
         align-items: center;
         justify-content: flex-start;
@@ -2322,48 +2324,8 @@ body:has(#hud) #debug-flags {
         text-align: center;
     }
 
-    /* Le glyphe invisible des entrées peintes garde sa largeur en
-     * flex : libellés décalés d'un cran par rapport aux autres
-     * (retour testeur « certains titres centrés »). Dans le tiroir il
-     * sort du flux — l'icône peinte (::before, absolue) suffit. */
-    #hud-rail #show-damier button .ra,
-    #hud-rail #show-caracs button .ra,
-    #hud-rail #show-inventory button .ra,
-    #hud-rail #show-spells button .ra,
-    #hud-rail #menu > a[href="map.php"] > button .ra,
-    #hud-rail #missive-btn .ra,
-    #hud-rail #menu > a[href="account.php"] > button .ra {
-        display: none;
-    }
-
     #hud-rail .hud-rail-sep {
         width: 80%;
-    }
-
-    /* Icônes peintes dans le tiroir : vignette fixe à gauche, le
-     * libellé se décale pour ne pas passer dessous. */
-    #hud-rail #show-damier button::before,
-    #hud-rail #show-caracs button::before,
-    #hud-rail #show-inventory button::before,
-    #hud-rail #show-spells button::before,
-    #hud-rail #menu > a[href="map.php"] > button::before,
-    #hud-rail #missive-btn::before,
-    #hud-rail #menu > a[href="account.php"] > button::before {
-        inset: auto;
-        left: 8px;
-        top: 8px;
-        width: 28px;
-        height: 28px;
-    }
-
-    #hud-rail #show-damier button,
-    #hud-rail #show-caracs button,
-    #hud-rail #show-inventory button,
-    #hud-rail #show-spells button,
-    #hud-rail #menu > a[href="map.php"] > button,
-    #hud-rail #missive-btn,
-    #hud-rail #menu > a[href="account.php"] > button {
-        padding-left: 44px;
     }
 
     #hud.hud--drawer-open #hud-backdrop {
@@ -2497,10 +2459,6 @@ body:has(#hud) #debug-flags {
         padding-right: 120px;
     }
 
-    #hud #ajax-data .hud-sel-tile-btn-coords {
-        opacity: 0.7;
-    }
-
     #hud #ajax-data .hud-sel--dialog .view-dialog {
         grid-column: 1 / span 2;
         grid-row: 2;
@@ -2534,11 +2492,44 @@ body:has(#hud) #debug-flags {
         opacity: 0.7;
     }
 
-    /* Dans la feuille : mêmes nœuds, mise en page libre */
+    /* Dans la feuille : mêmes nœuds, mise en page libre. Hors de
+     * #ajax-data, .case-infos retombait sur main.css : 300px centrés
+     * et TOUTES ses images flottantes — l'icône de la case comme celle
+     * de chaque objet au sol — d'où des lignes en escalier. */
     #hud-action-modal .hud-sel-tile {
         border-left: none;
         padding: 0;
         overflow: visible;
+    }
+
+    #hud-action-modal .case-infos {
+        width: auto;
+        margin: 0 0 8px;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    #hud-action-modal .case-infos > img {
+        float: none;
+        margin: 0;
+        max-width: 44px;
+        max-height: 44px;
+        flex: 0 0 auto;
+    }
+
+    #hud-action-modal .case-infos .text {
+        flex: 1 1 auto;
+        min-width: 0;
+        text-align: left;
+        line-height: 1.9;
+    }
+
+    #hud-action-modal .case-infos .text img {
+        float: none;
+        margin: 0 4px 0 0;
+        vertical-align: middle;
+        max-height: 22px;
     }
 
     #hud-action-modal #case-coords {
@@ -2576,7 +2567,9 @@ body:has(#hud) #debug-flags {
         position: static;
         border-width: 1px 0 0;
         border-radius: 0;
-        padding: 6px 8px;
+        /* 12px en haut et à droite : la croix d'annulation d'un bouton
+         * armé déborde de 9px, le défilement la coupait. */
+        padding: 12px 12px 6px 8px;
         overflow-x: auto;
         overflow-y: hidden;
     }
@@ -2622,6 +2615,8 @@ body:has(#hud) #debug-flags {
     #hud-sel-pane #hud-action-hint {
         top: 8px;
         bottom: auto;
+        /* au-dessus de la plaque de parole (positionnée elle aussi) */
+        z-index: 3;
     }
 
     /* --- Bandeau de volets : segments nommés, cibles tactiles 40px --- */
