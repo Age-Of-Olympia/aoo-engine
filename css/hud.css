@@ -2608,25 +2608,12 @@ body:has(#hud) #debug-flags {
         font-size: 26px;
     }
 
-    /* Armed-action hint (js/hud.js hintHost/placeHint): a fixed overlay
-     * pinned at the top of the selection pane, like the pull-to-refresh
-     * pill — no scroll box or stacking context of the pane can cover
-     * or clip it. */
-    #hud > #hud-action-hint {
-        position: fixed;
-        left: 12px;
-        right: 12px;
+    /* Armed-action hint (js/hud.js hintHost): appended to the pane
+     * itself, over the card, above the speech plaque. */
+    #hud-sel-pane > #hud-action-hint {
+        top: 8px;
         bottom: auto;
-        z-index: 90;
-    }
-
-    /* Cancel cross of an armed button: inside the button's corner, the
-     * strip's scroll box cannot clip it. */
-    #hud-sel-pane .hud-action-cancel {
-        top: 2px;
-        right: 2px;
-        width: 18px;
-        height: 18px;
+        z-index: 5;
     }
 
     /* --- Pane bar: named segments, 40px touch targets --- */

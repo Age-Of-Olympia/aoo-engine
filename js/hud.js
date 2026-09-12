@@ -2202,7 +2202,6 @@
                         .append($('<span class="hud-action-hint-name"></span>').text(btn.title || ''))
                         .append($('<span class="hud-action-hint-tip"></span>').text('cliquez à nouveau pour confirmer'))
                         .appendTo(hintHost());
-                    placeHint();
                     return;
                 }
 
@@ -2216,18 +2215,7 @@
          * over the speech plaque whatever the strip's scroll box does;
          * on desktop the actions panel, its own positioned box. */
         function hintHost() {
-            return isMobileViewport() ? '#hud' : '#hud-actions';
-        }
-
-        /* Narrow screen: the hint is a fixed overlay (css), pinned at the
-         * top of the selection pane — outside every scroll box and
-         * stacking context of the pane. */
-        function placeHint() {
-            var pane = document.getElementById('hud-sel-pane');
-            var hint = document.getElementById('hud-action-hint');
-            if (pane && hint && isMobileViewport()) {
-                hint.style.top = Math.round(pane.getBoundingClientRect().top + 8) + 'px';
-            }
+            return isMobileViewport() ? '#hud-sel-pane' : '#hud-actions';
         }
 
         function disarmActions() {
@@ -2247,7 +2235,6 @@
             $('<div id="hud-action-hint"></div>')
                 .append($('<span class="hud-action-hint-name"></span>').text(this.title || ''))
                 .appendTo(hintHost());
-            placeHint();
             clearTimeout(hintTimer);
             hintTimer = setTimeout(function () {
                 $('#hud-action-hint').remove();
