@@ -1383,8 +1383,8 @@ body:has(#hud) #view-landing-wrapper {
     font-size: 92%;
 }
 
-/* Fiche d'objet dans la feuille (js/hud.js initItemSheet) : image à
- * gauche, texte à droite ; empilés quand la feuille est étroite. */
+/* Item card in the sheet (js/hud.js initItemSheet): image left, text
+ * right; stacked when the sheet is narrow. */
 .hud-item-sheet {
     display: flex;
     flex-wrap: wrap;
@@ -2109,22 +2109,23 @@ body:has(#hud) ::-webkit-scrollbar-thumb {
 
 /* ---------- Conteneur carrousel (neutre en desktop) ---------- */
 
-/* js/hud.js déplace #hud-side et le volet sélection (#ajax-data +
- * #hud-actions dans #hud-sel-pane) dedans une fois pour toutes ; en
- * desktop les deux conteneurs sont transparents pour la grille. */
+/* js/hud.js moves #hud-side and the selection pane (#ajax-data +
+ * #hud-actions inside #hud-sel-pane) in here once and for all; on
+ * desktop both containers are transparent to the grid. */
 #hud-carousel,
 #hud-sel-pane {
     display: contents;
 }
 
-/* Compte d'effets du bandeau mobile (TopBarView) : en desktop les
- * pastilles d'effets sont là, le compte est de trop. */
+/* Effects count of the mobile bar (TopBarView): on desktop the
+ * effect chips are there, the count is redundant. */
 .hud-pill--effects-count {
     display: none;
 }
 
-/* Bouton « Sur la case » du volet mobile (js/hud.js composeSelection) :
- * en desktop le contenu de la case est dans sa colonne, sans bouton. */
+/* « Voir le sol » button of the mobile pane (js/hud.js
+ * composeSelection): on desktop the tile contents have their own
+ * column, no button. */
 #hud #ajax-data .hud-sel-tile-btn {
     display: none;
 }
@@ -2217,8 +2218,8 @@ body:has(#hud) #debug-flags {
         font-size: 88%;
     }
 
-    /* Les coordonnées restent (les joueurs se repèrent et se parlent
-     * par elles) ; seul le nom du plan cède la place. */
+    /* The coordinates stay (players locate and talk to each other by
+     * them); only the plan name gives way. */
     #hud-topbar .hud-place .hud-plan {
         display: none;
     }
@@ -2243,8 +2244,8 @@ body:has(#hud) #debug-flags {
         gap: 3px;
     }
 
-    /* Effets : trop pour le bandeau mobile — une seule pastille les
-     * compte, elle ouvre la fiche où ils sont détaillés. */
+    /* Effects: too many for the mobile bar — one chip counts them and
+     * opens the sheet where they are listed. */
     .hud-pill--effect {
         display: none;
     }
@@ -2294,8 +2295,8 @@ body:has(#hud) #debug-flags {
         width: 100%;
     }
 
-    /* Toutes les entrées sur la même ligne verticale : glyphe dans la
-     * bande 8-36px, libellé à 44px. */
+    /* Every entry on the same vertical line: glyph in the 8-36px band,
+     * label at 44px. */
     #hud-rail #menu > a > button,
     #hud-rail #menu > button {
         width: 100%;
@@ -2304,8 +2305,8 @@ body:has(#hud) #debug-flags {
         font-size: 100%;
         line-height: 1.15;
         text-align: left;
-        /* les libellés longs (« Panneau d'administration ») passent
-         * sur deux lignes au lieu de sortir du bouton */
+        /* long labels (« Panneau d'administration ») wrap onto two lines
+         * instead of running out of the button */
         white-space: normal;
         padding: 6px 10px 6px 44px;
         display: flex;
@@ -2371,12 +2372,12 @@ body:has(#hud) #debug-flags {
         content: "Cliquez sur une case pour l'observer.";
     }
 
-    /* --- Fiche de sélection mobile : la parole d'abord ---
-     * Vignette 48px + identité côte à côte, la plaque de parole prend
-     * TOUTE la hauteur restante et est la seule chose qui défile. Le
-     * contenu de la case et les coordonnées sortent du volet : un
-     * bouton les ouvre dans la feuille (js/hud.js, hudSheetShowNodes).
-     * Sans carte (case vide), ils restent seuls dans le volet. */
+    /* --- Mobile selection card: speech first ---
+     * 48px thumbnail + identity side by side, the speech plaque takes ALL
+     * the remaining height and is the only thing that scrolls. The tile
+     * contents and the coordinates leave the pane: a button opens them in
+     * the sheet (js/hud.js, hudSheetShowNodes). Without a card (empty
+     * tile) they stay alone in the pane. */
     #hud #ajax-data {
         padding: 8px 10px;
         overflow: hidden;
@@ -2399,9 +2400,9 @@ body:has(#hud) #debug-flags {
         border-radius: 6px;
     }
 
-    /* Identité à droite de la vignette, plaque pleine largeur dessous :
-     * la marge négative la ramène au bord de la vignette, la marge
-     * haute garantit qu'elle démarre sous les 48px de portrait. */
+    /* Identity right of the thumbnail, full-width plaque below: the
+     * negative margin brings it back under the thumbnail, the top margin
+     * keeps it under the 48px of portrait. */
     #hud #ajax-data .hud-sel-main {
         grid-column: 2;
         grid-row: 1;
@@ -2414,16 +2415,16 @@ body:has(#hud) #debug-flags {
     }
 
     #hud #ajax-data .hud-sel-main .card-text {
-        /* pleine largeur du volet : la marge négative ramène le bord
-         * gauche sous la vignette, la largeur compense (le stretch du
-         * flex ne tient pas compte d'une marge négative) */
+        /* full width of the pane: the negative margin pulls the left edge
+         * under the thumbnail, the width compensates (flex stretch ignores a
+         * negative margin) */
         margin-left: -58px;
         width: calc(100% + 58px);
         max-width: none;
         margin-top: 6px;
         max-height: none;
         flex: 1 1 auto;
-        /* deux lignes de parole au moins, le reste défile dedans */
+        /* two lines of speech at least, the rest scrolls inside */
         min-height: 2.6em;
         overflow: auto;
     }
@@ -2433,8 +2434,8 @@ body:has(#hud) #debug-flags {
         display: none;
     }
 
-    /* Coin haut-droit du volet, sur la ligne de l'identité : il ne
-     * prend aucune hauteur à la plaque. */
+    /* Top-right corner of the pane, on the identity line: it takes no
+     * height from the plaque. */
     #hud #ajax-data .hud-sel {
         position: relative;
     }
@@ -2454,7 +2455,7 @@ body:has(#hud) #debug-flags {
         color: var(--hud-ink);
     }
 
-    /* La ligne du nom laisse la place au bouton */
+    /* The name line leaves room for the button */
     #hud #ajax-data .hud-sel-main .card-name {
         padding-right: 120px;
     }
@@ -2468,7 +2469,7 @@ body:has(#hud) #debug-flags {
         padding-left: 0;
     }
 
-    /* Case sans carte : contenu et coordonnées prennent le volet */
+    /* Tile without a card: contents and coordinates take the pane */
     #hud #ajax-data .hud-sel--nocard .hud-sel-tile,
     #hud #ajax-data .hud-sel--nocard #case-coords {
         grid-column: 1 / span 2;
@@ -2492,10 +2493,10 @@ body:has(#hud) #debug-flags {
         opacity: 0.7;
     }
 
-    /* Dans la feuille : mêmes nœuds, mise en page libre. Hors de
-     * #ajax-data, .case-infos retombait sur main.css : 300px centrés
-     * et TOUTES ses images flottantes — l'icône de la case comme celle
-     * de chaque objet au sol — d'où des lignes en escalier. */
+    /* In the sheet: same nodes, free layout. Outside #ajax-data,
+     * .case-infos fell back on main.css: 300px centred and ALL its images
+     * floated — the tile icon as well as each ground item's — hence the
+     * staircase lines. */
     #hud-action-modal .hud-sel-tile {
         border-left: none;
         padding: 0;
@@ -2540,10 +2541,10 @@ body:has(#hud) #debug-flags {
         text-align: right;
     }
 
-    /* --- Volet sélection + actions ---
-     * La case observée défile en haut, ses actions sont épinglées en
-     * bas du volet (zone du pouce), toujours atteignables sans
-     * changer de page. */
+    /* --- Selection + actions pane ---
+     * The observed tile scrolls on top, its actions are pinned at the
+     * bottom of the pane (thumb zone), always reachable without changing
+     * page. */
     #hud-sel-pane {
         display: flex;
         flex-direction: column;
@@ -2558,17 +2559,17 @@ body:has(#hud) #debug-flags {
         overflow: auto;
     }
 
-    /* Bande d'actions : hauteur fixée par le nombre de RANGÉES, jamais
-     * par le nombre d'actions — une rangée jusqu'à cinq, deux au-delà,
-     * le reste défile de côté. Le contenu de la case garde sa place
-     * quelle que soit la cible. */
+    /* Action strip: height set by the number of ROWS, never by the
+     * number of actions — one row up to five, two beyond, the rest
+     * scrolls sideways. The tile contents keep their place whatever the
+     * target. */
     #hud-sel-pane #hud-actions {
         flex: 0 0 auto;
         position: static;
         border-width: 1px 0 0;
         border-radius: 0;
-        /* 12px en haut et à droite : la croix d'annulation d'un bouton
-         * armé déborde de 9px, le défilement la coupait. */
+        /* 12px top and right: the cancel cross of an armed button overflows
+         * by 9px, the scroll box was clipping it. */
         padding: 12px 12px 6px 8px;
         overflow-x: auto;
         overflow-y: hidden;
@@ -2578,8 +2579,8 @@ body:has(#hud) #debug-flags {
         display: none;
     }
 
-    /* Le segment « Sélection & actions » nomme déjà la bande : pas de
-     * titre gravé, sa ligne revient à la parole. */
+    /* The « Sélection & actions » segment already names the strip: no
+     * engraved title, its line goes back to the speech. */
     #hud-sel-pane #hud-actions:not(:empty)::before {
         content: none;
     }
@@ -2609,17 +2610,16 @@ body:has(#hud) #debug-flags {
         font-size: 26px;
     }
 
-    /* Rappel d'action armée : au-dessus de la case, pas sur la bande
-     * de boutons (l'ancre absolue est le volet, #hud-actions est
-     * statique ici). */
+    /* Armed-action hint: over the card, not over the button strip (the
+     * absolute anchor is the pane, #hud-actions is static here). */
     #hud-sel-pane #hud-action-hint {
         top: 8px;
         bottom: auto;
-        /* au-dessus de la plaque de parole (positionnée elle aussi) */
+        /* above the speech plaque (positioned as well) */
         z-index: 3;
     }
 
-    /* --- Bandeau de volets : segments nommés, cibles tactiles 40px --- */
+    /* --- Pane bar: named segments, 40px touch targets --- */
     #hud-dots {
         display: flex;
         gap: 4px;
@@ -2641,10 +2641,10 @@ body:has(#hud) #debug-flags {
         background: var(--hud-veil);
     }
 
-    /* Les états :hover/:focus/:active de main.css (gris clair, halo
-     * bleu) passent devant une classe seule : le segment qu'on vient
-     * de toucher restait gris sur encre, illisible jusqu'au clic
-     * suivant. Les états sont repris ici, actif ou non. */
+    /* main.css's :hover/:focus/:active states (light grey, blue halo)
+     * beat a lone class: the segment just tapped stayed grey on ink,
+     * unreadable until the next tap. The states are restated here,
+     * active or not. */
     .hud-seg:hover,
     .hud-seg:focus,
     .hud-seg:active {
@@ -2720,11 +2720,11 @@ body:has(#hud) #debug-flags {
         display: none;
     }
 
-    /* --- Fiche de personnage : portrait au-dessus du texte ---
-     * La table héritée (portrait 210px | texte) laissait au portrait
-     * ce que le texte voulait bien lui laisser : 27px sur un téléphone
-     * dès que le message du jour tenait un mot long. Les deux cellules
-     * s'empilent, le portrait centré et borné en hauteur. */
+    /* --- Character sheet: portrait above the text ---
+     * The legacy table (portrait 210px | text) left the portrait whatever
+     * the text cared to leave: 27px on a phone as soon as the message of
+     * the day held a long word. The two cells stack, the portrait centred
+     * and capped in height. */
     .hud-panel-content td.infos-portrait,
     .hud-panel-content td.infos-portrait + td {
         display: block;
@@ -2747,9 +2747,9 @@ body:has(#hud) #debug-flags {
         overflow-wrap: anywhere;
     }
 
-    /* --- Écran d'échange (banque, coffre) : volets empilés ---
-     * Côte à côte, deux tables à boutons débordaient l'une sur l'autre
-     * dans 390px ; le sac passe au-dessus, la réserve dessous. */
+    /* --- Exchange screen (bank, chest): stacked panes ---
+     * Side by side, two tables with buttons overflowed into each other in
+     * 390px; the bag goes on top, the store below. */
     .hud-panel-content .exchange-panes {
         flex-wrap: wrap;
         gap: 16px 0;

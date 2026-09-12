@@ -66,9 +66,8 @@
         var show = unread > 0 && activeTab() !== 'events';
 
         $('#hud-events-badge').text(unread).toggle(show);
-        /* Écho sur le segment « Discussions » du bandeau mobile : le
-         * badge de l'onglet est invisible quand l'autre volet occupe
-         * l'écran. */
+        /* Echoed on the « Discussions » segment of the mobile bar: the tab's
+         * badge is invisible while the other pane fills the screen. */
         $('.hud-seg[data-index="0"] .hud-seg-badge').text(unread).toggle(show);
     }
 
@@ -946,9 +945,8 @@
             if (!e.target.isConnected) {
                 return;
             }
-            /* #hud-dots / #hud-carousel : changer de volet en écran
-             * étroit ne doit pas vider la sélection qu'on vient
-             * d'ouvrir. */
+            /* #hud-dots / #hud-carousel: switching pane on a narrow screen must
+             * not clear the selection just opened. */
             if ($(e.target).closest(
                 '#ajax-data, #hud-actions, #hud-zoom, #hud-layers,'
                 + ' #hud-side, #hud-theater-chat-btn, #hud-topbar,'
@@ -1772,12 +1770,12 @@
     /*
      * ===== Mobile (<1024px) — Phase 3 =====
      *
-     * Le bandeau bas devient un carrousel scroll-snap à 2 positions
-     * (discussions · sélection + actions). Les blocs existants sont
-     * déplacés UNE FOIS dans #hud-carousel ; en desktop ce conteneur
-     * et le volet de sélection sont en display:contents, donc la
-     * grille est strictement inchangée — le déplacement est fait à
-     * tous les viewports pour éviter toute gestion de resize.
+     * The bottom band becomes a 2-position scroll-snap carousel
+     * (discussions · selection + actions). The existing blocks are moved
+     * ONCE into #hud-carousel; on desktop this container and the
+     * selection pane are display:contents, so the grid is strictly
+     * unchanged — the move is done at every viewport to avoid any resize
+     * handling.
      */
     function isMobileViewport() {
         return window.matchMedia('(max-width: 1023px)').matches;
@@ -1805,8 +1803,8 @@
         return isMobileViewport() && isTouchDevice();
     }
 
-    /* Fait défiler le carrousel bas vers une position (0 discussions,
-     * 1 sélection + actions). */
+    /* Scrolls the bottom carousel to a position (0 discussions,
+     * 1 selection + actions). */
     function scrollCarouselTo(index, smooth) {
         var el = document.getElementById('hud-carousel');
         if (el) {
@@ -1843,22 +1841,20 @@
             }
         });
 
-        /* Volets : discussions (panneau latéral entier : onglets
-         * Général/Événements + message du jour), puis sélection ET
-         * actions dans un même volet — la case observée au-dessus,
-         * ses actions épinglées en bas (#hud-sel-pane). Un volet
-         * Actions séparé coûtait un changement de page à chaque
-         * geste. La minimap vit dans le panneau Carte du tiroir.
-         * En desktop #hud-carousel et #hud-sel-pane sont en
-         * display:contents : chaque bloc garde sa cellule de grille. */
+        /* Panes: discussions (the whole side panel: Général/Événements tabs
+         * + message of the day), then selection AND actions in one pane — the
+         * observed tile above, its actions pinned at the bottom
+         * (#hud-sel-pane). A separate Actions pane cost a page change on
+         * every gesture. The minimap lives in the drawer's Carte panel.
+         * On desktop #hud-carousel and #hud-sel-pane are display:contents:
+         * each block keeps its grid cell. */
         var $carousel = $('<div id="hud-carousel"></div>').insertAfter('#hud-main');
         var $selPane = $('<div id="hud-sel-pane"></div>').append($('#ajax-data'), $('#hud-actions'));
         $carousel.append($('#hud-side'), $selPane);
 
-        /* Bandeau de volets : un segment nommé par position (des
-         * points de 10 px étaient injouables au doigt et muets sur ce
-         * qu'ils cachaient), synchronisé au scroll. Le segment
-         * Discussions porte le compte d'évènements non lus. */
+        /* Pane bar: one named segment per position (10px dots were
+         * unplayable by finger and silent about what they hid), synced to the
+         * scroll. The Discussions segment carries the unread events count. */
         var labels = ['Discussions', 'Sélection & actions'];
         var $dots = $('#hud-dots');
         labels.forEach(function (label, i) {

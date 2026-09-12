@@ -67,8 +67,8 @@ final class ExchangePanesView
         echo '</table></div>';
     }
 
-    /** L'enveloppe des volets : côte à côte (css/main.css), empilés
-     *  seulement sur un écran de téléphone (css/hud.css). */
+    /** The panes' wrapper: side by side (css/main.css), stacked only on a
+     * phone screen (css/hud.css). */
     public static function openPanes(): void
     {
         echo '<div class="exchange-panes">';
