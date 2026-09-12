@@ -259,10 +259,8 @@ class RaceService
     }
 
     /**
-     * Structure types that are actually buildings — not scenery, resources
-     * or plants, which also carry kind='structure'. getRacesByKind('structure')
-     * alone mixes all four families; the Tiled palettes used it directly and
-     * offered every harvestable/decor type as a "building" too.
+     * Building family only: scenery, resource and plant types also carry
+     * kind='structure', so getRacesByKind('structure') is wider than this.
      *
      * @return Race[]
      */
