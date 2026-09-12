@@ -469,8 +469,12 @@ class TiledMapService
          * than from what the push said, so it also catches what earlier
          * pushes left behind. */
         if (isset($incomingLayers[self::SCENERY_LAYER])) {
-            $report[self::SCENERY_LAYER]['entities'] =
-                (new \App\Service\Map\SceneryObjectService())->convertOrphans();
+            $scenery = new \App\Service\Map\SceneryObjectService();
+            $report[self::SCENERY_LAYER]['entities'] = $scenery->convertOrphans();
+            /* The other direction: a push that erased every piece of a
+             * figure leaves its entity behind, still drawn in-game from
+             * entity_cells with nothing left in the editor to erase it. */
+            $report[self::SCENERY_LAYER]['vanished'] = $scenery->removeOrphanedEntities();
         }
 
         /* Avant les bâtiments : une ressource retirée dans le même push
