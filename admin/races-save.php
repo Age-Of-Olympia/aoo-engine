@@ -90,11 +90,17 @@ $validate = static function (): ?string {
 /**
  * Apply every form field onto the entity (shared by create and update).
  *
- * @return array{notice: string, newFamily: string} notice: appended to the
- *         success flash ('' when all clean). newFamily: the family the
- *         posted structure_nature resolves to (Race::FAMILY_*) — the update
- *         branch compares it to $race->familyKey() to know whether the raw
- *         type_kind fixup below is needed.
+ * @return array{notice: string, newFamily: string, rawHarvestFix: array<string, int|string|null>}
+ *         notice: appended to the success flash ('' when all clean).
+ *         newFamily: the family the posted structure_nature resolves to
+ *         (Race::FAMILY_*) — the update branch compares it to
+ *         $race->familyKey() to know whether the raw type_kind fixup below
+ *         is needed. rawHarvestFix: harvest_* columns the CURRENT PHP class
+ *         of $race cannot carry (e.g. a BuildingType switched to ressource
+ *         has no setHarvestItem()) — written by the update branch via raw
+ *         SQL, in the same statement as the type_kind fixup, so a category
+ *         switch takes full effect in a single save instead of needing a
+ *         reload first.
  */
 $applyForm = static function (Race $race) use ($face, $action): array {
     $notice = '';
@@ -161,49 +167,74 @@ $applyForm = static function (Race $race) use ($face, $action): array {
      * Un reclassement qui QUITTE ressource/plante efface le rendement
      * plutôt que de le laisser en base, invisible dans tous les
      * formulaires suivants — prêt à ressurgir si le type redevient
-     * récoltable plus tard sans qu'on y repense. */
-    if ($race instanceof \App\Interface\HarvestableInterface) {
-        if ($stillHarvestable) {
-            /* L'objet vient d'une liste ; on le valide quand même contre le
-             * catalogue — un POST fabriqué ne doit pas installer un rendement
-             * qui ne rapporte rien. Vide reste vide : c'est « ne rend rien ». */
-            $harvestItem = trim((string) ($_POST['harvest_item'] ?? ''));
+     * récoltable plus tard sans qu'on y repense.
+     *
+     * Un reclassement qui ENTRE dans ressource/plante pose le problème
+     * inverse : $race est encore l'ANCIENNE classe ce tour-ci (ex.
+     * BuildingType), qui ne porte pas ces champs — impossible de les lui
+     * poser par ses setters. On calcule quand même la valeur validée, et on
+     * la range dans $rawHarvestFix pour que le bloc update l'écrive en SQL
+     * brut juste après le flush : le rendement prend effet dès CE même
+     * enregistrement, sans repasser par le formulaire. */
+    $rawHarvestFix = [];
 
-            if ($harvestItem !== '' && \Classes\Item::get_item_by_name($harvestItem) === false) {
-                $notice .= " ⚠ Objet « {$harvestItem} » inconnu du catalogue — rendement inchangé.";
-                $harvestItem = $race->getHarvestItem();
-            }
+    if ($stillHarvestable) {
+        /* L'objet vient d'une liste ; on le valide quand même contre le
+         * catalogue — un POST fabriqué ne doit pas installer un rendement
+         * qui ne rapporte rien. Vide reste vide : c'est « ne rend rien ». */
+        $harvestItem = trim((string) ($_POST['harvest_item'] ?? ''));
 
-            $race->setHarvestItem($harvestItem);
-            $race->setHarvestExhaust(trim((string) ($_POST['harvest_exhaust'] ?? '')) !== ''
-                ? max(1, min(100, (int) $_POST['harvest_exhaust']))
-                : null);
-            $race->setHarvestRegrow(trim((string) ($_POST['harvest_regrow'] ?? '')) !== ''
-                ? max(1, min(1000, (int) $_POST['harvest_regrow']))
-                : null);
-        } elseif ($race->getHarvestItem() !== '' || $race->getHarvestExhaust() !== null || $race->getHarvestRegrow() !== null) {
-            $race->setHarvestItem('');
-            $race->setHarvestExhaust(null);
-            $race->setHarvestRegrow(null);
-            $notice .= ' ⚠ Catégorie changée : le rendement (récolte) de ce type a été effacé.';
+        if ($harvestItem !== '' && \Classes\Item::get_item_by_name($harvestItem) === false) {
+            $notice .= " ⚠ Objet « {$harvestItem} » inconnu du catalogue — rendement inchangé.";
+            $harvestItem = $race instanceof \App\Interface\HarvestableInterface ? $race->getHarvestItem() : '';
         }
+
+        $harvestExhaust = trim((string) ($_POST['harvest_exhaust'] ?? '')) !== ''
+            ? max(1, min(100, (int) $_POST['harvest_exhaust']))
+            : null;
+        $harvestRegrow = trim((string) ($_POST['harvest_regrow'] ?? '')) !== ''
+            ? max(1, min(1000, (int) $_POST['harvest_regrow']))
+            : null;
+
+        if ($race instanceof \App\Interface\HarvestableInterface) {
+            $race->setHarvestItem($harvestItem);
+            $race->setHarvestExhaust($harvestExhaust);
+            $race->setHarvestRegrow($harvestRegrow);
+        } else {
+            $rawHarvestFix['harvest_item'] = $harvestItem;
+            $rawHarvestFix['harvest_exhaust'] = $harvestExhaust;
+            $rawHarvestFix['harvest_regrow'] = $harvestRegrow;
+        }
+    } elseif ($race instanceof \App\Interface\HarvestableInterface
+        && ($race->getHarvestItem() !== '' || $race->getHarvestExhaust() !== null || $race->getHarvestRegrow() !== null)
+    ) {
+        $race->setHarvestItem('');
+        $race->setHarvestExhaust(null);
+        $race->setHarvestRegrow(null);
+        $notice .= ' ⚠ Catégorie changée : le rendement (récolte) de ce type a été effacé.';
     }
 
     /* Combien rend une plante : deux bornes, et un maximum qui ne passe pas
      * sous le minimum — un intervalle vide ne rendrait rien du tout. Quitter
      * la catégorie Plante remet les bornes à leur défaut plutôt que de les
-     * laisser trainer, pour la même raison que ci-dessus. */
-    if ($race instanceof \App\Entity\PlantType) {
-        if ($newNature === 'plante') {
-            $min = max(1, min(99, (int) ($_POST['harvest_min'] ?? \App\Entity\PlantType::DEFAULT_MIN)));
-            $max = max($min, min(99, (int) ($_POST['harvest_max'] ?? \App\Entity\PlantType::DEFAULT_MAX)));
+     * laisser trainer, pour la même raison que ci-dessus — et y ENTRER
+     * depuis une famille qui n'a pas ces colonnes (ressource comprise :
+     * harvest_min/max n'appartiennent qu'à PlantType) suit la même
+     * bascule vers $rawHarvestFix. */
+    if ($newNature === 'plante') {
+        $min = max(1, min(99, (int) ($_POST['harvest_min'] ?? \App\Entity\PlantType::DEFAULT_MIN)));
+        $max = max($min, min(99, (int) ($_POST['harvest_max'] ?? \App\Entity\PlantType::DEFAULT_MAX)));
 
+        if ($race instanceof \App\Entity\PlantType) {
             $race->setHarvestMin($min);
             $race->setHarvestMax($max);
         } else {
-            $race->setHarvestMin(\App\Entity\PlantType::DEFAULT_MIN);
-            $race->setHarvestMax(\App\Entity\PlantType::DEFAULT_MAX);
+            $rawHarvestFix['harvest_min'] = $min;
+            $rawHarvestFix['harvest_max'] = $max;
         }
+    } elseif ($race instanceof \App\Entity\PlantType) {
+        $race->setHarvestMin(\App\Entity\PlantType::DEFAULT_MIN);
+        $race->setHarvestMax(\App\Entity\PlantType::DEFAULT_MAX);
     }
     $race->setBlocksPassage(booleanCheckbox('blocks_passage'));
     $race->setBlocksProjectiles(booleanCheckbox('blocks_projectiles'));
@@ -252,7 +283,7 @@ $applyForm = static function (Race $race) use ($face, $action): array {
     }
     $race->setCapacity((int) ($_POST['capacity'] ?? 0));
 
-    return ['notice' => $notice, 'newFamily' => $newFamily];
+    return ['notice' => $notice, 'newFamily' => $newFamily, 'rawHarvestFix' => $rawHarvestFix];
 };
 
 /** One name per non-empty line. */
@@ -326,14 +357,22 @@ if ($action === 'update') {
     $service->save($race);
 
     /* Doctrine écrit type_kind d'après la classe PHP de $race — celle
-     * chargée AVANT ce reclassement, donc l'ancienne famille. Un
-     * reclassement (Catégorie changée en édition) doit forcer la vraie
-     * valeur par une écriture brute, hors ORM : sans elle, la ligne redevient
-     * son ancienne classe au prochain chargement, malgré structure_nature. */
+     * chargée AVANT ce reclassement, donc l'ancienne famille — et cette
+     * même classe ne sait pas porter les champs de rendement d'une autre
+     * famille ($rawHarvestFix, voir applyForm). Une seule écriture SQL
+     * brute, juste après le flush, corrige les deux à la fois : sans elle,
+     * soit la ligne redeviendrait son ancienne classe au prochain
+     * chargement malgré structure_nature, soit un rendement posé au moment
+     * même du reclassement serait perdu jusqu'à un second enregistrement. */
+    $rawFix = $formResult['rawHarvestFix'];
     if ($formResult['newFamily'] !== $race->familyKey()) {
+        $rawFix['type_kind'] = $formResult['newFamily'];
+    }
+    if ($rawFix !== []) {
+        $setClauses = array_map(static fn (string $column): string => "{$column} = ?", array_keys($rawFix));
         \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()->executeStatement(
-            'UPDATE races SET type_kind = ? WHERE name = ?',
-            [$formResult['newFamily'], $name]
+            'UPDATE races SET ' . implode(', ', $setClauses) . ' WHERE name = ?',
+            [...array_values($rawFix), $name]
         );
         RaceService::clearCache();
     }
