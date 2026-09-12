@@ -71,17 +71,18 @@ const BUILDING_STATES = [
  */
 function building_render_filters(array $filters, array $plans, array $types, int $total): string
 {
-    // One line: the placeholder option names the field, no labels.
-    $selectAttrs = 'class="form-control form-control-sm mr-2 mb-1" style="width:auto" onchange="this.form.submit()"';
+    // One flex line, no labels: the placeholder option names the field.
+    $selectAttrs = 'class="form-control form-control-sm" style="width:auto" onchange="this.form.submit()"';
 
-    return '<form method="get" action="/admin/buildings.php" class="form-inline mb-2">'
+    return '<form method="get" action="/admin/buildings.php" class="mb-2"'
+        . ' style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">'
         . formSelect('plan', array_combine($plans, $plans), $filters['plan'] !== '' ? $filters['plan'] : null, 'Plan : tous', $selectAttrs)
         . formSelect('type', $types, $filters['type'] !== '' ? $filters['type'] : null, 'Type : tous', $selectAttrs)
         . formSelect('state', BUILDING_STATES, $filters['state'] !== '' ? $filters['state'] : null, 'État : tous', $selectAttrs)
-        . '<input type="search" name="q" class="form-control form-control-sm mr-2 mb-1" style="width:14em"'
+        . '<input type="search" name="q" class="form-control form-control-sm" style="width:14em"'
         . ' placeholder="Nom, propriétaire ou #" value="' . e($filters['q']) . '">'
-        . '<button class="btn btn-sm btn-outline-secondary mr-2 mb-1" type="submit">Filtrer</button>'
-        . '<small class="text-muted mb-1">' . $total . ' bâtiment(s)</small>'
+        . '<button class="btn btn-sm btn-outline-secondary" type="submit">Filtrer</button>'
+        . '<small class="text-muted">' . $total . ' bâtiment(s)</small>'
         . '</form>';
 }
 
