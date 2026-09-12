@@ -176,7 +176,7 @@ class TiledMapService
         // Palette bâtiments : le catalogue des types de structure (mêmes
         // entrées que admin → Bâtiments), sprite résolu comme au rendu
         $catalog[self::BUILDINGS_LAYER] = [];
-        foreach ((new RaceService())->getRacesByKind(\App\Enum\EntityCategory::Structure->value) as $race) {
+        foreach ((new RaceService())->getBuildingTypes() as $race) {
             $catalog[self::BUILDINGS_LAYER][] = $race->getName();
             $sprite = BuildingService::resolveAvatar($race->getName());
             if ($sprite !== BuildingService::NO_IMAGE) {

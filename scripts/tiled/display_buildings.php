@@ -1,5 +1,4 @@
 <?php
-use App\Enum\EntityCategory;
 use App\Service\BuildingService;
 use App\Service\RaceService;
 
@@ -20,7 +19,7 @@ echo '
    pose elle-même. */
 $footprints = (new \App\Service\Map\EntityTypeFootprintService())->catalogue();
 
-foreach((new RaceService())->getRacesByKind(EntityCategory::Structure->value) as $race){
+foreach((new RaceService())->getBuildingTypes() as $race){
 
     $name = $race->getName();
     $sprite = BuildingService::resolveAvatar($name);
