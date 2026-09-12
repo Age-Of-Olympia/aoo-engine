@@ -48,9 +48,8 @@ foreach(File::scan_dir('img/walls/', $without=".png") as $e){
 
 }
 
-/* Une ressource neuve n'a jamais de fichier dans img/walls/ : son image
-   vit dans le stock moderne (admin → Types récoltables → Images), que
-   BuildingService::resolveAvatar sait lire. */
+/* Harvestable types not found in img/walls/: their sprite comes from the
+   image stock, resolved like a building's. */
 foreach(StructureTypeService::names() as $name){
 
     if(isset($shown[$name]) || !StructureTypeService::isHarvestable($name)){
