@@ -1,4 +1,6 @@
 <?php
+use App\Service\BuildingService;
+use App\Service\Map\StructureTypeService;
 use App\Service\ResourcePaletteService;
 use Classes\File;
 
@@ -12,6 +14,7 @@ echo '
 ';
 
 $hidden = 0;
+$shown = [];
 
 foreach(File::scan_dir('img/walls/', $without=".png") as $e){
 
@@ -31,6 +34,8 @@ foreach(File::scan_dir('img/walls/', $without=".png") as $e){
         continue;
     }
 
+    $shown[$e] = true;
+
     echo '<img
         class="map wall select-name"
         data-type="resources"
@@ -41,6 +46,38 @@ foreach(File::scan_dir('img/walls/', $without=".png") as $e){
     />';
 
 
+}
+
+/* Une ressource neuve n'a jamais de fichier dans img/walls/ : son image
+   vit dans le stock moderne (admin → Types récoltables → Images), que
+   BuildingService::resolveAvatar sait lire. */
+foreach(StructureTypeService::names() as $name){
+
+    if(isset($shown[$name]) || !StructureTypeService::isHarvestable($name)){
+
+        continue;
+    }
+
+    if(!ResourcePaletteService::isAuthorable($name, $player->coords->plan)){
+
+        continue;
+    }
+
+    $sprite = BuildingService::resolveAvatar($name);
+
+    if($sprite === BuildingService::NO_IMAGE){
+
+        continue;
+    }
+
+    echo '<img
+        class="map wall select-name"
+        data-type="resources"
+        data-params="damages"
+        data-name="'. $name .'"
+        src="'. $sprite .'"
+        loading="lazy"
+    />';
 }
 /* Le champ ne porte plus des « damages » : une ressource posée est debout,
    et le seul réglage qui reste est de la poser déjà sèche (-2), pour qu'elle
