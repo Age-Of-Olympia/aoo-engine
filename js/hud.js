@@ -325,18 +325,15 @@
             $modal.find('.hud-action-modal-close').on('click', function () {
                 $modal.hide();
             });
-            /* Rejoue le bouton d'action VIVANT (pas un POST recopié) : il
-             * a été ré-observé après le résultat, donc ses coordonnées
-             * sont fraîches et action.php refait ses vérifications (PA,
-             * charges, cible déplacée) comme pour un clic ordinaire. */
+            /* Replays the live action button, re-observed since the
+             * result: fresh coordinates, and action.php re-runs every
+             * check (points, charges, moved target) as for a normal click. */
             $modal.find('.hud-action-modal-again').on('click', function () {
                 var $again = hudLastActionButton();
                 $modal.hide();
                 if ($again.length) {
-                    /* Le déclenchement jQuery ne passe pas par l'écouteur
-                     * natif d'armement du panneau (qui épingle
-                     * window.visible) : on l'épingle ici, sinon le
-                     * révélateur d'observe.js avale le clic. */
+                    /* A jQuery trigger skips the panel's native arming
+                     * listener, which is what pins window.visible. */
                     window.visible = true;
                     $again.trigger('click.observe');
                 }
@@ -349,16 +346,14 @@
         }
 
         $modal.find('.hud-action-modal-body').html(html);
-        /* Seulement sur un résultat final, et seulement si l'action est
-         * encore proposée sur la case : rien à rejouer pendant le jet de
-         * dés ni après un déplacement qui a changé la fiche. */
+        /* Final results only, and only while the action is still offered
+         * on the tile. */
         $modal.find('.hud-action-modal-again').prop('hidden', !isFinal || !hudLastActionButton().length);
         $modal.show();
     };
 
-    /* Le bouton d'action que le dernier clic a visé (js/observe.js pose
-     * window.hudLastAction), retrouvé dans le panneau tel qu'il est
-     * MAINTENANT — vide s'il n'y est plus. */
+    /* The action button of the last click (window.hudLastAction, set by
+     * js/observe.js) as it stands in the panel now; empty if gone. */
     function hudLastActionButton() {
         var last = window.hudLastAction;
         if (!last || !last.action) {
