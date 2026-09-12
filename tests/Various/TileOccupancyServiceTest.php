@@ -40,6 +40,10 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
             'DELETE l FROM map_triggers l JOIN coords c ON c.id = l.coords_id WHERE c.plan = ?',
             [self::PLAN]
         );
+        $link->executeStatement(
+            'DELETE e FROM map_elements e JOIN coords c ON c.id = e.coords_id WHERE c.plan = ?',
+            [self::PLAN]
+        );
 
         /* Cells written by hand here; the `coords` constraint is RESTRICT, so
          * a still-referenced cell would block the cleanup. */
@@ -421,6 +425,29 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
 
         $this->assertNull(
             $this->service->buildRefusal($this->coordsIdOn(self::PLAN, 62, 0), overScenery: true),
+            'the editor is allowed through'
+        );
+    }
+
+    /**
+     * Same split for elements: lava stops a player's construire, not an
+     * animator composing the map. The editors used to be refused too.
+     */
+    public function testAnElementStopsThePlayerButNotTheEditor(): void
+    {
+        $id = $this->coordsIdOn(self::PLAN, 63, 0);
+        $this->link->executeStatement(
+            'INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 0)',
+            [$id, 'element_test_inconnu']
+        );
+
+        $this->assertSame(
+            'Case occupée par un élément (element_test_inconnu).',
+            $this->service->buildRefusal($id),
+            'a player does not build on an element'
+        );
+        $this->assertNull(
+            $this->service->buildRefusal($id, overScenery: true),
             'the editor is allowed through'
         );
     }

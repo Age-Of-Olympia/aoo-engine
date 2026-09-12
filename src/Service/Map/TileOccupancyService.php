@@ -280,6 +280,12 @@ final class TileOccupancyService
             return 'Case occupée par une entité.';
         }
 
+        /* Same rule for elements (water, lava…): they stop a player's
+         * construire, not an animator composing a map from the editors. */
+        if ($overScenery) {
+            return null;
+        }
+
         $effectService = new \App\Service\EffectService();
         foreach ($this->conn->fetchFirstColumn('SELECT name FROM map_elements WHERE coords_id = ?', [$coordsId]) as $element) {
             if (!$effectService->isBuildableOver((string) $element)) {
