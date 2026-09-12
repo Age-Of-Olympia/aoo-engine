@@ -2202,6 +2202,7 @@
                         .append($('<span class="hud-action-hint-name"></span>').text(btn.title || ''))
                         .append($('<span class="hud-action-hint-tip"></span>').text('cliquez à nouveau pour confirmer'))
                         .appendTo(hintHost());
+                    placeHint();
                     return;
                 }
 
@@ -2216,6 +2217,16 @@
          * on desktop the actions panel, its own positioned box. */
         function hintHost() {
             return isMobileViewport() ? '#hud-sel-pane' : '#hud-actions';
+        }
+
+        /* Narrow screen: the hint sits just above the action strip, over
+         * the bottom of the card, next to the button that was pressed. */
+        function placeHint() {
+            var strip = document.getElementById('hud-actions');
+            var hint = document.getElementById('hud-action-hint');
+            if (strip && hint && isMobileViewport()) {
+                hint.style.bottom = (strip.offsetHeight + 8) + 'px';
+            }
         }
 
         function disarmActions() {
@@ -2235,6 +2246,7 @@
             $('<div id="hud-action-hint"></div>')
                 .append($('<span class="hud-action-hint-name"></span>').text(this.title || ''))
                 .appendTo(hintHost());
+            placeHint();
             clearTimeout(hintTimer);
             hintTimer = setTimeout(function () {
                 $('#hud-action-hint').remove();

@@ -2611,8 +2611,8 @@ body:has(#hud) #debug-flags {
     /* Armed-action hint (js/hud.js hintHost): appended to the pane
      * itself, over the card, above the speech plaque. */
     #hud-sel-pane > #hud-action-hint {
-        top: 8px;
-        bottom: auto;
+        top: auto;
+        /* bottom set by js/hud.js placeHint: strip height + 8px */
         z-index: 5;
     }
 
