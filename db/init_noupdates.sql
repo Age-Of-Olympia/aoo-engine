@@ -2167,6 +2167,7 @@ INSERT INTO `doctrine_migration_versions` VALUES ('App\\Migrations\\Version20260
 -- bas dans ce dump (avec les trois plans standalone). La migration reste
 -- idempotente (IF NOT EXISTS) mais l'enregistrer évite de la rejouer.
 INSERT INTO `doctrine_migration_versions` VALUES ('App\\Migrations\\Version20260821100000_PlansLeaveTheirJson','2026-08-21 10:00:00',0);
+INSERT INTO `doctrine_migration_versions` VALUES ('App\\Migrations\\Version20260912120000_DropMalformedRestMalusInstruction','2026-09-12 12:00:00',0);
 /*!40000 ALTER TABLE `doctrine_migration_versions` ENABLE KEYS */;
 COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
@@ -4693,7 +4694,6 @@ INSERT INTO `outcome_instructions` VALUES (13,'teleport','{ \"coords\": \"target
 INSERT INTO `outcome_instructions` VALUES (14,'object','{\"action\":\"steal\", \"object\": 1 }',0,11);
 INSERT INTO `outcome_instructions` VALUES (15,'applystatus','{ \"adrenaline\": true, \"duration\": 172800 }',0,12);
 INSERT INTO `outcome_instructions` VALUES (16,'rest','{}',10,13);
-INSERT INTO `outcome_instructions` VALUES (17,'player','{\"carac\":\"malus\", \"value\": \"r\", \"player\": \"actor\"}',0,13);
 INSERT INTO `outcome_instructions` VALUES (18,'player','{\"carac\": \"mvt\", \"value\" : 1, \"player\": \"actor\"}',0,14);
 INSERT INTO `outcome_instructions` VALUES (19,'applystatus','{ \"cle_de_bras\": true, \"player\": \"actor\", \"duration\": 0 }',0,15);
 INSERT INTO `outcome_instructions` VALUES (20,'player','{\"carac\": \"foi\", \"player\": \"actor\"}',0,16);

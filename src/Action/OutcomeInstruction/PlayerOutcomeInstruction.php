@@ -31,7 +31,9 @@ class PlayerOutcomeInstruction extends OutcomeInstruction implements HasParamete
         
         $player = $params['player'] ?? null;
         $carac = $params['carac'] ?? null;
-        $value = $params['value'] ?? 0;
+        // The schema declares an INT; the admin form still stores what it is
+        // given, so a stray string becomes 0 rather than a broken query.
+        $value = (int) ($params['value'] ?? 0);
         $outcomeSuccessMessages = array();
 
         if ($carac !== null && in_array($player, ['actor', 'target'], true)) {
