@@ -8,7 +8,7 @@ describe('mobile minimap pane', () => {
         cy.wait(1200);
 
         /* Va au volet minimap (point 0) */
-        cy.get('.hud-dot[data-index="0"]').click();
+        cy.get('.hud-seg[data-index="0"]').click();
         cy.wait(800);
         cy.screenshot('minimap-pane', { capture: 'viewport', overwrite: true });
 

@@ -34,7 +34,7 @@ final class ExchangePanesView
      */
     public static function pane(string $title, array $contents, string $direction, string $label): void
     {
-        echo '<div style="min-width:0;">';
+        echo '<div class="exchange-pane">';
         echo '<h2>' . $title . '</h2>';
 
         if ($contents['stacks'] === [] && $contents['exemplars'] === []) {
@@ -67,10 +67,11 @@ final class ExchangePanesView
         echo '</table></div>';
     }
 
-    /** L'enveloppe des volets : côte à côte, jamais empilés. */
+    /** L'enveloppe des volets : côte à côte (css/main.css), empilés
+     *  seulement sur un écran de téléphone (css/hud.css). */
     public static function openPanes(): void
     {
-        echo '<div style="display:flex; flex-wrap:nowrap; gap:0 24px; align-items:flex-start; overflow-x:auto;">';
+        echo '<div class="exchange-panes">';
     }
 
     public static function closePanes(): void

@@ -1245,6 +1245,18 @@ article.pnj {
     background-color: #1ba377;
     color: white;
 }
+/* Écran d'échange à deux volets (ExchangePanesView) : côte à côte,
+ * jamais empilés — sauf sur un écran de téléphone (css/hud.css). */
+.exchange-panes {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0 24px;
+    align-items: flex-start;
+    overflow-x: auto;
+}
+.exchange-pane {
+    min-width: 0;
+}
 .section-title {
     font-weight: bold;
     margin-bottom: 10px;
