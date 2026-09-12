@@ -164,12 +164,6 @@ class RaceServiceTest extends TestCase
         }
     }
 
-    /**
-     * getRacesByKind('structure') mixes buildings, scenery, resources and
-     * plants — they all carry kind='structure'. The Tiled palettes used it
-     * directly for "Bâtiments" and offered every harvestable type too;
-     * getBuildingTypes() must filter down to the building family only.
-     */
     public function testGetBuildingTypesExcludesResources(): void
     {
         $building = 'test_race_building';
@@ -205,7 +199,7 @@ class RaceServiceTest extends TestCase
             );
 
             $this->assertContains($building, $names);
-            $this->assertNotContains($resource, $names, 'une ressource ne doit pas grossir la palette bâtiments');
+            $this->assertNotContains($resource, $names, 'a resource type is not a building');
         } finally {
             $this->deleteRace($building);
             $this->deleteRace($resource);
