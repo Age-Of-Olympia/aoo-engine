@@ -642,12 +642,15 @@ class TiledMapService
 
         foreach ($toInsert as $row) {
             try {
+                // overScenery : même passe-droit que l'éditeur en jeu
+                // (erase_or_create_tile.php) — un animateur pose par-dessus
+                // décor et éléments, la règle ne vaut que pour construire.
                 $buildings->place((string) $row['name'], (object) [
                     'x'    => (int) $row['x'],
                     'y'    => (int) $row['y'],
                     'z'    => $z,
                     'plan' => $plan,
-                ]);
+                ], overScenery: true);
                 $inserted++;
             } catch (\InvalidArgumentException $e) {
                 $skipped[] = $row['x'] . ',' . $row['y'] . ' ' . $row['name'] . ' — ' . $e->getMessage();
