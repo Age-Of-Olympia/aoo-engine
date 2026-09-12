@@ -1357,8 +1357,7 @@ body:has(#hud) #view-landing-wrapper {
     cursor: pointer;
 }
 
-/* Pied de la modale : « Refaire la même action », même bronze que la
- * croix, aligné à droite comme un bouton de dialogue. */
+/* Modal footer: the replay button, same bronze as the close cross. */
 .hud-action-modal-foot {
     margin-top: 14px;
     text-align: right;
