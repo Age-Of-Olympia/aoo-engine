@@ -55,11 +55,49 @@ class TileCatalogService
                 $images[$layer . '/' . $name] = 'img/' . $dir . '/' . $image['file'];
             }
 
+            // Une ressource neuve n'a jamais de fichier dans img/walls/ :
+            // son image vit dans le stock moderne (admin → Types
+            // récoltables → Images), jamais alimenté par cette convention.
+            if ($layer === 'resources') {
+                foreach ($this->harvestableSpritesNotIn($names) as $name => $path) {
+                    $names[] = $name;
+                    $images[$layer . '/' . $name] = $path;
+                }
+            }
+
             sort($names);
             $catalog[$layer] = $names;
         }
 
         return ['catalog' => $catalog, 'images' => $images];
+    }
+
+    /**
+     * Types récoltables dont le sprite vit dans le stock moderne
+     * (RaceImageService, via BuildingService::resolveAvatar) plutôt que
+     * dans le scan img/walls/ ci-dessus — sans dupliquer ce que le scan a
+     * déjà trouvé.
+     *
+     * @param string[] $exclude Noms déjà trouvés par le scan img/walls/
+     * @return array<string, string> nom => chemin d'image relatif au docroot
+     */
+    private function harvestableSpritesNotIn(array $exclude): array
+    {
+        $skip = array_flip($exclude);
+        $found = [];
+
+        foreach (\App\Service\Map\StructureTypeService::names() as $name) {
+            if (isset($skip[$name]) || !\App\Service\Map\StructureTypeService::isHarvestable($name)) {
+                continue;
+            }
+
+            $sprite = \App\Service\BuildingService::resolveAvatar($name);
+            if ($sprite !== \App\Service\BuildingService::NO_IMAGE) {
+                $found[$name] = $sprite;
+            }
+        }
+
+        return $found;
     }
 
     /**
