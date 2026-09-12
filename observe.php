@@ -442,7 +442,7 @@ if(!empty($card)){
     }
 
     ?>
-    <script src="js/observe.js?v=20260821"></script>
+    <script src="js/observe.js?v=20260912"></script>
     <?php
 }
 

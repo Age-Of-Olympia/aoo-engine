@@ -1357,6 +1357,32 @@ body:has(#hud) #view-landing-wrapper {
     cursor: pointer;
 }
 
+/* Pied de la modale : « Refaire la même action », même bronze que la
+ * croix, aligné à droite comme un bouton de dialogue. */
+.hud-action-modal-foot {
+    margin-top: 14px;
+    text-align: right;
+}
+
+.hud-action-modal-foot[hidden],
+.hud-action-modal-again[hidden] {
+    display: none;
+}
+
+.hud-action-modal-again {
+    padding: 6px 14px;
+    border: 1px solid var(--hud-bronze);
+    border-radius: 6px;
+    background: var(--hud-parchment);
+    color: var(--hud-ink);
+    font: inherit;
+    cursor: pointer;
+}
+
+.hud-action-modal-again:hover {
+    border-color: var(--hud-bronze-bright);
+}
+
 /* Les détails de calcul étaient gris-sur-noir dans la carte héritée :
  * sur papier, encre assourdie. */
 .hud-action-modal-body .action-details {
