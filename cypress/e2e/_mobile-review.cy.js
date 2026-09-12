@@ -11,13 +11,13 @@ describe('mobile carousel', () => {
         cy.get('#hud-bubble').should('not.exist');
 
         /* Volet Discussions (point 0) */
-        cy.get('.hud-dot[data-index="0"]').click();
+        cy.get('.hud-seg[data-index="0"]').click();
         cy.wait(600);
         cy.get('#hud-carousel #hud-side').should('be.visible');
         cy.screenshot('pane-discussions', { capture: 'viewport', overwrite: true });
 
         /* Volet Sélection (point 1) — défaut */
-        cy.get('.hud-dot[data-index="1"]').click();
+        cy.get('.hud-seg[data-index="1"]').click();
         cy.wait(600);
         cy.screenshot('pane-selection', { capture: 'viewport', overwrite: true });
     });

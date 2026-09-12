@@ -108,8 +108,11 @@ final class TopBarView
         echo '</div>';
 
         echo '<div class="hud-place">'
+            /* Plan name in its own span: the mobile bar hides it and
+             * keeps the coordinates (css/hud.css). */
             . '<span id="hud-location" title="Position actuelle">'
-            . $planName . ' — (' . $coords->x . ', ' . $coords->y . ', ' . $coords->z . ')'
+            . '<span class="hud-plan">' . $planName . ' — </span>'
+            . '(' . $coords->x . ', ' . $coords->y . ', ' . $coords->z . ')'
             . '</span>'
             . '<sup>' . self::nextTurn($player) . '</sup>'
             . '</div>';
@@ -192,6 +195,7 @@ final class TopBarView
     private static function effectChips(Player $player): string
     {
         $chips = '';
+        $count = 0;
         $effectService = new \App\Service\EffectService();
 
         foreach ((new PlayerEffectService())->getEffectsByPlayerId($player->id) as $effect) {
@@ -208,6 +212,15 @@ final class TopBarView
             $chips .= '<span class="hud-pill hud-pill--effect" title="' . htmlspecialchars($title, ENT_QUOTES) . '">'
                 . '<span class="ra ' . $icon . '"></span>'
                 . '</span>';
+            $count++;
+        }
+
+        /* Mobile only (CSS): one counted chip instead of the row, a
+         * link to the sheet where the effects are listed. */
+        if ($count > 0) {
+            $chips .= '<a class="hud-pill hud-pill--effects-count" href="infos.php?targetId=' . $player->id . '"'
+                . ' title="' . $count . ' effet' . ($count > 1 ? 's' : '') . ' actif' . ($count > 1 ? 's' : '') . '">'
+                . '<span class="ra ra-aura"></span><span class="hud-pill-value">' . $count . '</span></a>';
         }
 
         return '<span id="hud-effects">' . $chips . '</span>';

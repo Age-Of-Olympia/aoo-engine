@@ -66,10 +66,10 @@
         var show = unread > 0 && activeTab() !== 'events';
 
         $('#hud-events-badge').text(unread).toggle(show);
-        /* Écho sur le point « Discussions » du carrousel mobile : le
-         * badge de l'onglet est invisible quand un autre volet occupe
+        /* Écho sur le segment « Discussions » du bandeau mobile : le
+         * badge de l'onglet est invisible quand l'autre volet occupe
          * l'écran. */
-        $('.hud-dot[data-index="0"]').toggleClass('hud-dot--badge', show);
+        $('.hud-seg[data-index="0"] .hud-seg-badge').text(unread).toggle(show);
     }
 
     function markEventsSeen() {
@@ -81,7 +81,7 @@
             aooStore.setLocal(SEEN_KEY, String(latest));
         }
         $('#hud-events-badge').hide();
-        $('.hud-dot[data-index="0"]').removeClass('hud-dot--badge');
+        $('.hud-seg[data-index="0"] .hud-seg-badge').hide();
     }
 
     /*
@@ -305,46 +305,7 @@
             refreshAfterAction();
         }
 
-        var $modal = $('#hud-action-modal');
-
-        if (!$modal.length) {
-            $modal = $('<div id="hud-action-modal" role="dialog" aria-label="Résultat de l\'action">'
-                + '<div class="hud-action-modal-sheet">'
-                + '<button class="hud-action-modal-close" title="Fermer" aria-label="Fermer">×</button>'
-                + '<div class="hud-action-modal-body"></div>'
-                + '<div class="hud-action-modal-foot">'
-                + '<button type="button" class="hud-action-modal-again" hidden>Refaire la même action</button>'
-                + '</div>'
-                + '</div></div>').appendTo('#hud');
-
-            $modal.on('click', function (e) {
-                if (e.target === this) {
-                    $modal.hide();
-                }
-            });
-            $modal.find('.hud-action-modal-close').on('click', function () {
-                $modal.hide();
-            });
-            /* Replays the live action button, re-observed since the
-             * result: fresh coordinates, and action.php re-runs every
-             * check (points, charges, moved target) as for a normal click. */
-            $modal.find('.hud-action-modal-again').on('click', function () {
-                var $again = hudLastActionButton();
-                $modal.hide();
-                if ($again.length) {
-                    /* A jQuery trigger skips the panel's native arming
-                     * listener, which is what pins window.visible. */
-                    window.visible = true;
-                    $again.trigger('click.observe');
-                }
-            });
-            $(document).on('keydown.hudActionModal', function (e) {
-                if (e.key === 'Escape' && $modal.is(':visible')) {
-                    $modal.hide();
-                }
-            });
-        }
-
+        var $modal = hudSheet();
         $modal.find('.hud-action-modal-body').html(html);
         /* Final results only, and only while the action is still offered
          * on the tile. */
@@ -364,6 +325,120 @@
             selector += '[data-target-id="' + last.targetId + '"]';
         }
         return $(selector).first();
+    }
+
+    /*
+     * The paper sheet over the board, shared by the action result and the
+     * tile details (mobile). One element, created on first use; closed by
+     * ×, a click on the backdrop or Escape. Nodes parked in it by
+     * hudSheetShowNodes go back where they came from before the sheet is
+     * reused or hidden.
+     */
+    var sheetParked = null; /* {$nodes, $home} */
+
+    function hudSheetRestore() {
+        if (sheetParked) {
+            sheetParked.$home.append(sheetParked.$nodes);
+            sheetParked = null;
+        }
+    }
+
+    function hudSheetHide() {
+        hudSheetRestore();
+        $('#hud-action-modal').hide();
+    }
+
+    function hudSheet() {
+        var $modal = $('#hud-action-modal');
+
+        if ($modal.length) {
+            hudSheetRestore();
+            return $modal;
+        }
+
+        $modal = $('<div id="hud-action-modal" role="dialog">'
+            + '<div class="hud-action-modal-sheet">'
+            + '<button class="hud-action-modal-close" title="Fermer" aria-label="Fermer">×</button>'
+            + '<div class="hud-action-modal-body"></div>'
+            + '<div class="hud-action-modal-foot">'
+            + '<button type="button" class="hud-action-modal-again" hidden>Refaire la même action</button>'
+            + '</div>'
+            + '</div></div>').appendTo('#hud');
+
+        $modal.on('click', function (e) {
+            if (e.target === this) {
+                hudSheetHide();
+            }
+        });
+        $modal.find('.hud-action-modal-close').on('click', hudSheetHide);
+        /* Replays the live action button, re-observed since the
+         * result: fresh coordinates, and action.php re-runs every
+         * check (points, charges, moved target) as for a normal click.
+         * Shown by hudShowActionResult only. */
+        $modal.find('.hud-action-modal-again').on('click', function () {
+            var $again = hudLastActionButton();
+            hudSheetHide();
+            if ($again.length) {
+                /* A jQuery trigger skips the panel's native arming
+                 * listener, which is what pins window.visible. */
+                window.visible = true;
+                $again.trigger('click.observe');
+            }
+        });
+        $(document).on('keydown.hudActionModal', function (e) {
+            if (e.key === 'Escape' && $modal.is(':visible')) {
+                hudSheetHide();
+            }
+        });
+
+        return $modal;
+    }
+
+    /* Moves (never clones — the copy button of #case-coords keeps its
+     * handler) the given nodes into the sheet, remembering where to put
+     * them back. */
+    function hudSheetShowNodes($nodes, $home) {
+        var $modal = hudSheet();
+        $modal.find('.hud-action-modal-body').empty().append($nodes);
+        $modal.find('.hud-action-modal-again').prop('hidden', true);
+        sheetParked = { $nodes: $nodes, $home: $home };
+        $modal.show();
+    }
+
+    /*
+     * Worn items (.infos-item, EquipmentSlotsView) open in the sheet —
+     * from the character panel AND from the selection strip of the
+     * board. The legacy js/infos.js swapped the portrait block for a
+     * preview block inside the sheet page, and the two have different
+     * heights: every click reflowed the panel. Capture phase, so the
+     * legacy direct handler never runs in the HUD; the data-* the
+     * legacy preview read are reused as they are.
+     */
+    function initItemSheet() {
+        document.addEventListener('click', function (e) {
+            var img = e.target.closest('#hud .infos-item');
+            if (!img) {
+                return;
+            }
+            e.stopPropagation();
+            e.preventDefault();
+
+            var $img = $(img);
+            var $body = $('<div class="hud-item-sheet"></div>')
+                .append($('<img class="hud-item-sheet-img" alt="" />').attr('src', $img.data('img') || img.src))
+                .append($('<div class="hud-item-sheet-main"></div>')
+                    .append($('<h1></h1>').html($img.data('name') || ''))
+                    .append($('<p class="hud-item-sheet-text"></p>').html($img.data('text') || ''))
+                    .append($('<p class="hud-item-sheet-caracs"></p>').html($img.data('caracs') || ''))
+                    /* The slot's title carries what the data-* do not:
+                     * the hand it sits in, the durability. */
+                    .append($('<p class="hud-item-sheet-meta"></p>').text(img.title || '')));
+
+            var $modal = hudSheet();
+            $modal.find('.hud-action-modal-body').empty().append($body);
+            $modal.find('.hud-action-modal-again').prop('hidden', true);
+            $modal.show();
+        }, true);
     }
 
     /*
@@ -871,12 +946,9 @@
             if (!e.target.isConnected) {
                 return;
             }
-            /* #hud-dots / #hud-carousel : la pagination du bandeau bas
-             * est le SEUL chemin vers le volet Actions en écran étroit.
-             * Absents de cette liste, ces clics vidaient la sélection
-             * qu'on venait d'ouvrir — « quand je clique sur un
-             * personnage, il faut cliquer sur le petit point en bas
-             * pour changer de page et ça déselectionne la case ». */
+            /* #hud-dots / #hud-carousel : changer de volet en écran
+             * étroit ne doit pas vider la sélection qu'on vient
+             * d'ouvrir. */
             if ($(e.target).closest(
                 '#ajax-data, #hud-actions, #hud-zoom, #hud-layers,'
                 + ' #hud-side, #hud-theater-chat-btn, #hud-topbar,'
@@ -1092,16 +1164,6 @@
         $panel.empty();
 
         if ($actions.length) {
-            /* Rappel de la cible en tête du volet (mobile : le volet
-             * Actions est seul à l'écran, sans ce rappel on ne sait
-             * plus sur qui on agit — masqué en desktop par le CSS). */
-            var targetName = $('#ajax-data .card-name a').first().text().trim();
-            if (targetName) {
-                $('<div class="hud-actions-target"></div>')
-                    .text(targetName)
-                    .appendTo($panel);
-            }
-
             $panel.append($actions);
             /* Icônes seules dans la grille : le nom passe en title
              * (survol desktop, appui long mobile via contextmenu). */
@@ -1225,6 +1287,24 @@
                     .append('<div class="hud-sel-tile-title">Sur la case</div>')
                     .append($infos)
             );
+        }
+
+        /* Mobile (CSS hides it elsewhere): the tile contents and the
+         * coordinates leave the pane — a card needs its whole height for
+         * the portrait, the identity and the speech — and open in the
+         * sheet from this button. Without a card the pane holds nothing
+         * else, they stay in place. */
+        if ($card.length && ($infos.length || $d.children('#case-coords').length)) {
+            var coordsText = $d.children('#case-coords').text().trim();
+            $('<button type="button" class="hud-sel-tile-btn"></button>')
+                .attr('title', 'Sur la case')
+                .append('<span class="ra ra-compass"></span>')
+                .append($('<span class="hud-sel-tile-btn-coords"></span>').text(coordsText || 'Sur la case'))
+                .on('click', function () {
+                    var $selNow = $(this).closest('.hud-sel');
+                    hudSheetShowNodes($selNow.children('.hud-sel-tile, #case-coords'), $selNow);
+                })
+                .appendTo($main);
         }
 
         /* Équipement porté (observe.php, personnage sélectionné) :
@@ -1694,12 +1774,12 @@
     /*
      * ===== Mobile (<1024px) — Phase 3 =====
      *
-     * Le bandeau bas devient un carrousel scroll-snap à 3 positions
-     * (minimap · sélection · actions, wireframe mobile-main). Les trois
-     * blocs existants sont déplacés UNE FOIS dans #hud-carousel ; en
-     * desktop ce conteneur est en display:contents, donc la grille est
-     * strictement inchangée — le déplacement est fait à tous les
-     * viewports pour éviter toute gestion de resize.
+     * Le bandeau bas devient un carrousel scroll-snap à 2 positions
+     * (discussions · sélection + actions). Les blocs existants sont
+     * déplacés UNE FOIS dans #hud-carousel ; en desktop ce conteneur
+     * et le volet de sélection sont en display:contents, donc la
+     * grille est strictement inchangée — le déplacement est fait à
+     * tous les viewports pour éviter toute gestion de resize.
      */
     function isMobileViewport() {
         return window.matchMedia('(max-width: 1023px)').matches;
@@ -1727,8 +1807,8 @@
         return isMobileViewport() && isTouchDevice();
     }
 
-    /* Fait défiler le carrousel bas vers une position (0 minimap,
-     * 1 sélection, 2 actions). */
+    /* Fait défiler le carrousel bas vers une position (0 discussions,
+     * 1 sélection + actions). */
     function scrollCarouselTo(index, smooth) {
         var el = document.getElementById('hud-carousel');
         if (el) {
@@ -1766,33 +1846,40 @@
         });
 
         /* Volets : discussions (panneau latéral entier : onglets
-         * Général/Événements + message du jour), sélection, actions.
-         * La minimap quitte le carrousel mobile (retour testeur : la
-         * carte reste accessible via l'entrée Carte du tiroir) et la
-         * bulle de chat flottante disparaît — c'est le volet 0.
-         * En desktop #hud-carousel est en display:contents : chaque
-         * bloc garde sa cellule de grille, rien ne change. */
+         * Général/Événements + message du jour), puis sélection ET
+         * actions dans un même volet — la case observée au-dessus,
+         * ses actions épinglées en bas (#hud-sel-pane). Un volet
+         * Actions séparé coûtait un changement de page à chaque
+         * geste. La minimap vit dans le panneau Carte du tiroir.
+         * En desktop #hud-carousel et #hud-sel-pane sont en
+         * display:contents : chaque bloc garde sa cellule de grille. */
         var $carousel = $('<div id="hud-carousel"></div>').insertAfter('#hud-main');
-        $carousel.append($('#hud-side'), $('#ajax-data'), $('#hud-actions'));
+        var $selPane = $('<div id="hud-sel-pane"></div>').append($('#ajax-data'), $('#hud-actions'));
+        $carousel.append($('#hud-side'), $selPane);
 
-        /* Pagination : un point par position, synchronisé au scroll */
-        var labels = ['Discussions', 'Sélection', 'Actions'];
+        /* Bandeau de volets : un segment nommé par position (des
+         * points de 10 px étaient injouables au doigt et muets sur ce
+         * qu'ils cachaient), synchronisé au scroll. Le segment
+         * Discussions porte le compte d'évènements non lus. */
+        var labels = ['Discussions', 'Sélection & actions'];
         var $dots = $('#hud-dots');
         labels.forEach(function (label, i) {
-            $('<button class="hud-dot" aria-label="' + label + '" data-index="' + i + '"></button>')
+            $('<button class="hud-seg" data-index="' + i + '"></button>')
+                .text(label)
+                .append('<span class="hud-seg-badge" style="display:none;"></span>')
                 .appendTo($dots);
         });
 
         function syncDots() {
             var el = $carousel[0];
             var index = Math.round(el.scrollLeft / Math.max(1, el.clientWidth));
-            $('.hud-dot').removeClass('hud-dot--active')
-                .filter('[data-index="' + index + '"]').addClass('hud-dot--active');
+            $('.hud-seg').removeClass('hud-seg--active')
+                .filter('[data-index="' + index + '"]').addClass('hud-seg--active');
         }
 
         $carousel.on('scroll', syncDots);
 
-        $dots.on('click', '.hud-dot', function () {
+        $dots.on('click', '.hud-seg', function () {
             scrollCarouselTo($(this).data('index'), true);
         });
 
@@ -2236,6 +2323,7 @@
         initPinchZoom();
         initPullToRefresh();
         initTheaterMode();
+        initItemSheet();
         initSelectionMemory();
         initMapLayers();
         fitDamier();

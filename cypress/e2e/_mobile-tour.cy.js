@@ -41,7 +41,7 @@ describe('mobile tour', () => {
         cy.screenshot('m-selection', { capture: 'viewport', overwrite: true });
 
         /* volet actions (3e position du carrousel) */
-        cy.get('.hud-dot[data-index="2"]').click();
+        cy.get('.hud-seg[data-index="1"]').click();
         cy.wait(800);
         cy.window().then((w) => overflow(w, 'actions'));
         cy.screenshot('m-actions', { capture: 'viewport', overwrite: true });

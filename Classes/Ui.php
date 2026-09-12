@@ -38,7 +38,7 @@ class Ui{
                 <script src="js/main.js?v=20260806"></script>
                 <script src="js/console.js?v=20260614"></script>
                 ' . self::characterStoreTag() . '
-                <link href="css/main.min.css?v=20260805" rel="stylesheet">
+                <link href="css/main.min.css?v=20260912" rel="stylesheet">
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
         // Environment-specific body background: test/experimental get a distinct

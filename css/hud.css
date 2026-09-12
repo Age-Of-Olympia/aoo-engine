@@ -1307,13 +1307,6 @@ body:has(#hud) #view-landing-wrapper {
     font-style: italic;
 }
 
-/* Rappel de la cible en tête du volet Actions (js/hud.js) : utile en
- * mobile où le volet occupe l'écran seul ; en desktop la sélection
- * est visible juste à côté, le rappel serait du bruit. */
-.hud-actions-target {
-    display: none;
-}
-
 /* ---------- Modale de résultat d'action ----------
  * Par-dessus le damier, la fiche de la cible reste intacte : le
  * résultat est un évènement ponctuel, pas une description. */
@@ -1388,6 +1381,53 @@ body:has(#hud) #view-landing-wrapper {
     color: var(--hud-ink);
     opacity: 0.75;
     font-size: 92%;
+}
+
+/* Fiche d'objet dans la feuille (js/hud.js initItemSheet) : image à
+ * gauche, texte à droite ; empilés quand la feuille est étroite. */
+.hud-item-sheet {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 18px;
+    align-items: flex-start;
+}
+
+.hud-item-sheet-img {
+    flex: 0 0 auto;
+    width: 120px;
+    max-width: 100%;
+    border: 1px solid var(--hud-line-soft);
+    border-radius: 4px;
+    background: var(--hud-parchment);
+}
+
+.hud-item-sheet-main {
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+.hud-item-sheet-main h1 {
+    margin: 0 0 6px;
+    font-size: 130%;
+}
+
+.hud-item-sheet-main p {
+    margin: 0 0 6px;
+}
+
+.hud-item-sheet-caracs {
+    font-weight: bold;
+}
+
+.hud-item-sheet-meta {
+    font-size: 85%;
+    opacity: 0.75;
+}
+
+/* The board's selection strip has no js/infos.js: the slots only
+ * looked clickable in the panel. Same cursor everywhere now. */
+#hud .equip-slot img {
+    cursor: pointer;
 }
 
 /* Titre gravé du panneau, même inscription que « Sur la case » */
@@ -2069,10 +2109,24 @@ body:has(#hud) ::-webkit-scrollbar-thumb {
 
 /* ---------- Conteneur carrousel (neutre en desktop) ---------- */
 
-/* js/hud.js déplace minimap / #ajax-data / #hud-actions dedans une
- * fois pour toutes ; en desktop il est transparent pour la grille. */
-#hud-carousel {
+/* js/hud.js déplace #hud-side et le volet sélection (#ajax-data +
+ * #hud-actions dans #hud-sel-pane) dedans une fois pour toutes ; en
+ * desktop les deux conteneurs sont transparents pour la grille. */
+#hud-carousel,
+#hud-sel-pane {
     display: contents;
+}
+
+/* Compte d'effets du bandeau mobile (TopBarView) : en desktop les
+ * pastilles d'effets sont là, le compte est de trop. */
+.hud-pill--effects-count {
+    display: none;
+}
+
+/* Bouton « Sur la case » du volet mobile (js/hud.js composeSelection) :
+ * en desktop le contenu de la case est dans sa colonne, sans bouton. */
+#hud #ajax-data .hud-sel-tile-btn {
+    display: none;
 }
 
 /* Widgets mobile — invisibles en desktop */
@@ -2102,7 +2156,7 @@ body:has(#hud) #debug-flags {
 }
 
 /* ---------- Mobile < 1024px (Phase 3, wireframe mobile-main) ----------
- * Barre compacte · carte plein écran · carrousel bas 3 positions ·
+ * Barre compacte · carte plein écran · carrousel bas 2 volets ·
  * tiroir de navigation · bulle de chat → sheet · panneaux en
  * bottom-sheet (85 %) avec la barre de stats toujours visible. */
 @media (max-width: 1023px) {
@@ -2163,7 +2217,9 @@ body:has(#hud) #debug-flags {
         font-size: 88%;
     }
 
-    #hud-topbar .hud-place #hud-location {
+    /* Les coordonnées restent (les joueurs se repèrent et se parlent
+     * par elles) ; seul le nom du plan cède la place. */
+    #hud-topbar .hud-place .hud-plan {
         display: none;
     }
 
@@ -2187,10 +2243,14 @@ body:has(#hud) #debug-flags {
         gap: 3px;
     }
 
-    /* Effets : trop pour le bandeau mobile — ils restent sur la
-     * fiche, à un tap de l'avatar. */
+    /* Effets : trop pour le bandeau mobile — une seule pastille les
+     * compte, elle ouvre la fiche où ils sont détaillés. */
     .hud-pill--effect {
         display: none;
+    }
+
+    .hud-pill--effects-count {
+        display: inline-flex;
     }
 
     #hud-burger {
@@ -2232,17 +2292,6 @@ body:has(#hud) #debug-flags {
 
     #hud-rail #menu > a {
         width: 100%;
-    }
-
-    /* Cible rappelée en tête du volet Actions du carrousel */
-    .hud-actions-target {
-        display: block;
-        text-align: center;
-        font-family: var(--hud-display);
-        font-size: 15px;
-        margin: 0 0 8px;
-        padding-bottom: 5px;
-        border-bottom: 1px solid var(--hud-line-soft);
     }
 
     /* Toutes les entrées sur la même ligne verticale : icône (peinte
@@ -2334,7 +2383,7 @@ body:has(#hud) #debug-flags {
     /* --- Carrousel bas : 3 positions scroll-snap --- */
     #hud-carousel {
         display: flex;
-        flex: 0 0 32vh;
+        flex: 0 0 34vh;
         overflow-x: auto;
         scroll-snap-type: x mandatory;
         scrollbar-width: none;
@@ -2361,21 +2410,21 @@ body:has(#hud) #debug-flags {
     }
 
     /* --- Fiche de sélection mobile : la parole d'abord ---
-     * La grille desktop 3 colonnes (portrait 130px | centre | case 34%)
-     * écrasait tout dans la cellule du carrousel : la plaque de parole
-     * devenait une languette illisible. Ici : vignette 64px + identité
-     * côte à côte, plaque pleine largeur dessous, contenu de la case en
-     * pied avec les coordonnées dans le filet du titre. */
+     * Vignette 48px + identité côte à côte, la plaque de parole prend
+     * TOUTE la hauteur restante et est la seule chose qui défile. Le
+     * contenu de la case et les coordonnées sortent du volet : un
+     * bouton les ouvre dans la feuille (js/hud.js, hudSheetShowNodes).
+     * Sans carte (case vide), ils restent seuls dans le volet. */
     #hud #ajax-data {
         padding: 8px 10px;
+        overflow: hidden;
     }
 
     #hud #ajax-data .hud-sel {
         grid-template-columns: 48px minmax(0, 1fr);
-        grid-template-rows: auto auto auto;
-        gap: 6px 10px;
-        height: auto;
-        min-height: 100%;
+        grid-template-rows: minmax(0, 1fr) auto;
+        gap: 0 10px;
+        height: 100%;
         align-content: start;
     }
 
@@ -2388,14 +2437,14 @@ body:has(#hud) #debug-flags {
         border-radius: 6px;
     }
 
-    /* Identité à droite de la vignette (nom ~21px + statut ~17px ≈
-     * 42px), plaque pleine largeur dessous : la marge négative la
-     * ramène au bord de la vignette, la marge haute (10px) garantit
-     * qu'elle démarre sous les 48px de portrait — jamais dessus. */
+    /* Identité à droite de la vignette, plaque pleine largeur dessous :
+     * la marge négative la ramène au bord de la vignette, la marge
+     * haute garantit qu'elle démarre sous les 48px de portrait. */
     #hud #ajax-data .hud-sel-main {
         grid-column: 2;
-        grid-row: 1 / span 2;
+        grid-row: 1;
         min-width: 0;
+        min-height: 0;
     }
 
     #hud #ajax-data .hud-sel-main .card-name {
@@ -2403,45 +2452,65 @@ body:has(#hud) #debug-flags {
     }
 
     #hud #ajax-data .hud-sel-main .card-text {
+        /* pleine largeur du volet : la marge négative ramène le bord
+         * gauche sous la vignette, la largeur compense (le stretch du
+         * flex ne tient pas compte d'une marge négative) */
         margin-left: -58px;
-        margin-top: 10px;
-        max-height: 108px;
-        flex: 0 1 auto;
+        width: calc(100% + 58px);
+        max-width: none;
+        margin-top: 6px;
+        max-height: none;
+        flex: 1 1 auto;
+        /* deux lignes de parole au moins, le reste défile dedans */
+        min-height: 2.6em;
+        overflow: auto;
     }
 
-    #hud #ajax-data .hud-sel-tile {
-        grid-column: 1 / span 2;
-        grid-row: 3;
-        border-left: none;
-        padding-left: 0;
-        /* pas de coordonnées épinglées en mobile : pas de réserve */
-        padding-bottom: 0;
-        overflow: visible;
+    #hud #ajax-data .hud-sel:not(.hud-sel--nocard) .hud-sel-tile,
+    #hud #ajax-data .hud-sel:not(.hud-sel--nocard) #case-coords {
+        display: none;
     }
 
-    #hud #ajax-data #case-coords {
-        grid-column: 2;
-        grid-row: 3;
-        align-self: start;
-        justify-self: end;
-        padding-left: 0;
-        font-size: 80%;
-        opacity: 0.7;
-        /* retour au flux (grille ou brut) : neutralise l'épinglage
-         * absolu bas-droit du desktop */
+    /* Coin haut-droit du volet, sur la ligne de l'identité : il ne
+     * prend aucune hauteur à la plaque. */
+    #hud #ajax-data .hud-sel {
         position: relative;
-        right: auto;
-        bottom: auto;
-        z-index: 1;
+    }
+
+    #hud #ajax-data .hud-sel-tile-btn {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 3px 8px;
+        font-size: 75%;
+        background: var(--hud-veil);
+        border: 1px solid var(--hud-line-soft);
+        border-radius: 4px;
+        color: var(--hud-ink);
+    }
+
+    /* La ligne du nom laisse la place au bouton */
+    #hud #ajax-data .hud-sel-main .card-name {
+        padding-right: 120px;
+    }
+
+    #hud #ajax-data .hud-sel-tile-btn-coords {
+        opacity: 0.7;
     }
 
     #hud #ajax-data .hud-sel--dialog .view-dialog {
         grid-column: 1 / span 2;
-        grid-row: 4;
+        grid-row: 2;
+        max-height: 40%;
+        overflow: auto;
         border-left: none;
         padding-left: 0;
     }
 
+    /* Case sans carte : contenu et coordonnées prennent le volet */
     #hud #ajax-data .hud-sel--nocard .hud-sel-tile,
     #hud #ajax-data .hud-sel--nocard #case-coords {
         grid-column: 1 / span 2;
@@ -2449,18 +2518,93 @@ body:has(#hud) #debug-flags {
 
     #hud #ajax-data .hud-sel--nocard .hud-sel-tile {
         grid-row: 1;
+        border-left: none;
+        padding: 0;
+        overflow: auto;
     }
 
     #hud #ajax-data .hud-sel--nocard #case-coords {
         grid-row: 2;
+        justify-self: end;
+        position: relative;
+        right: auto;
+        bottom: auto;
+        padding-left: 0;
+        font-size: 80%;
+        opacity: 0.7;
     }
 
-    /* --- Panneau d'actions : cibles tactiles 60px, rangées centrées --- */
+    /* Dans la feuille : mêmes nœuds, mise en page libre */
+    #hud-action-modal .hud-sel-tile {
+        border-left: none;
+        padding: 0;
+        overflow: visible;
+    }
+
+    #hud-action-modal #case-coords {
+        position: relative;
+        right: auto;
+        bottom: auto;
+        margin-top: 10px;
+        text-align: right;
+    }
+
+    /* --- Volet sélection + actions ---
+     * La case observée défile en haut, ses actions sont épinglées en
+     * bas du volet (zone du pouce), toujours atteignables sans
+     * changer de page. */
+    #hud-sel-pane {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+        padding: 0;
+    }
+
+    #hud-sel-pane #ajax-data {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+    }
+
+    /* Bande d'actions : hauteur fixée par le nombre de RANGÉES, jamais
+     * par le nombre d'actions — une rangée jusqu'à cinq, deux au-delà,
+     * le reste défile de côté. Le contenu de la case garde sa place
+     * quelle que soit la cible. */
+    #hud-sel-pane #hud-actions {
+        flex: 0 0 auto;
+        position: static;
+        border-width: 1px 0 0;
+        border-radius: 0;
+        padding: 6px 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    #hud-sel-pane #hud-actions:empty {
+        display: none;
+    }
+
+    /* Le segment « Sélection & actions » nomme déjà la bande : pas de
+     * titre gravé, sa ligne revient à la parole. */
+    #hud-sel-pane #hud-actions:not(:empty)::before {
+        content: none;
+    }
+
     #hud-carousel #hud-actions .card-actions {
-        grid-template-columns: repeat(auto-fit, 60px);
-        justify-content: center;
+        grid-auto-flow: column;
+        grid-template-columns: none;
+        grid-template-rows: 60px;
+        grid-auto-columns: 60px;
+        justify-content: safe center;
         gap: 10px;
-        padding-top: 4px;
+        padding: 0;
+        width: max-content;
+        min-width: 100%;
+    }
+
+    #hud-carousel #hud-actions .card-actions:has(.action:nth-child(6)) {
+        grid-template-rows: repeat(2, 60px);
     }
 
     #hud-carousel #hud-actions .action {
@@ -2472,25 +2616,67 @@ body:has(#hud) #debug-flags {
         font-size: 26px;
     }
 
+    /* Rappel d'action armée : au-dessus de la case, pas sur la bande
+     * de boutons (l'ancre absolue est le volet, #hud-actions est
+     * statique ici). */
+    #hud-sel-pane #hud-action-hint {
+        top: 8px;
+        bottom: auto;
+    }
+
+    /* --- Bandeau de volets : segments nommés, cibles tactiles 40px --- */
     #hud-dots {
         display: flex;
+        gap: 4px;
+        flex: 0 0 40px;
+    }
+
+    .hud-seg {
+        flex: 1 1 0;
+        display: flex;
+        align-items: center;
         justify-content: center;
-        gap: 8px;
-        flex: 0 0 auto;
-        padding: 2px 0;
-    }
-
-    .hud-dot {
-        width: 10px;
-        height: 10px;
+        gap: 6px;
         padding: 0;
-        border-radius: 50%;
+        font-family: var(--hud-display);
+        font-size: 14px;
+        color: var(--hud-ink);
         border: 1px solid var(--hud-line);
-        background: rgba(255, 255, 255, 0.5);
+        border-radius: 6px;
+        background: var(--hud-veil);
     }
 
-    .hud-dot--active {
-        background: var(--hud-bronze);
+    /* Les états :hover/:focus/:active de main.css (gris clair, halo
+     * bleu) passent devant une classe seule : le segment qu'on vient
+     * de toucher restait gris sur encre, illisible jusqu'au clic
+     * suivant. Les états sont repris ici, actif ou non. */
+    .hud-seg:hover,
+    .hud-seg:focus,
+    .hud-seg:active {
+        background: var(--hud-veil);
+        box-shadow: none;
+    }
+
+    .hud-seg--active,
+    .hud-seg--active:hover,
+    .hud-seg--active:focus,
+    .hud-seg--active:active {
+        background: var(--hud-ink);
+        color: var(--hud-parchment);
+        border-color: var(--hud-ink);
+        box-shadow: none;
+    }
+
+    .hud-seg-badge {
+        min-width: 18px;
+        padding: 0 5px;
+        border-radius: 999px;
+        font-family: var(--hud-body, inherit);
+        font-size: 11px;
+        line-height: 18px;
+        text-align: center;
+        background: var(--hud-blood);
+        color: #fff;
     }
 
     /* --- Panneau latéral : volet « Discussions » du carrousel ---
@@ -2515,23 +2701,6 @@ body:has(#hud) #debug-flags {
         box-shadow: 8px 0 28px rgba(0, 0, 0, 0.35);
     }
 
-    /* Badge du point « Discussions » : évènements non lus */
-    .hud-dot--badge {
-        position: relative;
-    }
-
-    .hud-dot--badge::after {
-        content: "";
-        position: absolute;
-        top: -3px;
-        right: -3px;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--hud-blood);
-        border: 1px solid #fff;
-    }
-
     /* --- Panneau glissant : bottom-sheet 85 %, stats visibles --- */
     .hud-panel {
         left: 0;
@@ -2554,6 +2723,46 @@ body:has(#hud) #debug-flags {
 
     .hud-panel .hud-panel-fullpage {
         display: none;
+    }
+
+    /* --- Fiche de personnage : portrait au-dessus du texte ---
+     * La table héritée (portrait 210px | texte) laissait au portrait
+     * ce que le texte voulait bien lui laisser : 27px sur un téléphone
+     * dès que le message du jour tenait un mot long. Les deux cellules
+     * s'empilent, le portrait centré et borné en hauteur. */
+    .hud-panel-content td.infos-portrait,
+    .hud-panel-content td.infos-portrait + td {
+        display: block;
+        width: auto;
+        box-sizing: border-box;
+    }
+
+    .hud-panel-content td.infos-portrait {
+        text-align: center;
+    }
+
+    .hud-panel-content td.infos-portrait img {
+        height: auto;
+        max-height: 240px;
+        max-width: 100%;
+    }
+
+    .hud-panel-content #infos-player,
+    .hud-panel-content .infos-text {
+        overflow-wrap: anywhere;
+    }
+
+    /* --- Écran d'échange (banque, coffre) : volets empilés ---
+     * Côte à côte, deux tables à boutons débordaient l'une sur l'autre
+     * dans 390px ; le sac passe au-dessus, la réserve dessous. */
+    .hud-panel-content .exchange-panes {
+        flex-wrap: wrap;
+        gap: 16px 0;
+        overflow-x: visible;
+    }
+
+    .hud-panel-content .exchange-pane {
+        flex: 1 1 100%;
     }
 
     /* --- Flyout caracs (tutoriel) : plein écran utilisable --- */
@@ -2584,7 +2793,7 @@ body:has(#hud) #debug-flags {
         position: fixed;
         right: 14px;
         /* juste au-dessus du carrousel (32vh) et de sa pagination */
-        bottom: calc(32vh + 30px);
+        bottom: calc(34vh + 30px);
         z-index: 50;
         margin: 0;
     }
