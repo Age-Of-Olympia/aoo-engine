@@ -2,7 +2,6 @@
 
 namespace Tests\Various;
 
-use App\Enum\EntityCategory;
 use App\Service\BuildingService;
 use Tests\Support\PlantsResourcesTrait;
 use App\Service\RaceService;
@@ -37,11 +36,11 @@ class TiledBuildingsLayerTest extends TestCase
         $this->bootstrapLegacyOrSkip('coords');
         $this->cleanupFixtures();
 
-        $structures = (new RaceService())->getRacesByKind(EntityCategory::Structure->value);
-        if ($structures === []) {
-            $this->markTestSkipped('Aucune race structure en base.');
+        $buildings = (new RaceService())->getBuildingTypes();
+        if ($buildings === []) {
+            $this->markTestSkipped('Aucun type de bâtiment en base.');
         }
-        $this->type = $structures[0]->getName();
+        $this->type = $buildings[0]->getName();
 
         // Coord d'amorce : le plan doit exister pour être exportable
         $this->coordsIdOn(self::PLAN, 0, 0);
@@ -58,7 +57,7 @@ class TiledBuildingsLayerTest extends TestCase
 
         $export = $service->exportPlan(self::PLAN, 0);
         $this->assertSame([], $export['layers']['buildings'], 'plan neuf : aucune entité');
-        $this->assertContains($this->type, $export['catalog']['buildings'], 'palette = catalogue des types');
+        $this->assertContains($this->type, $export['catalog']['buildings'], 'the palette lists the building types');
 
         // Pose : une tuile buildings devient une entité
         $result = $service->importPlan(self::PLAN, 0, [
