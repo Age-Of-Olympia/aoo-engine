@@ -1165,6 +1165,7 @@ class Player implements ActorInterface {
         }
 
         $values = array();
+        $params = array();
 
 
         $db = new Db();
@@ -1173,8 +1174,11 @@ class Player implements ActorInterface {
         foreach($bonus as $carac=>$val){
 
 
-            $values[] = '('. $this->id .', "'. $carac .'", '. $val .')';
-            
+            // Bound, never spliced: a non-numeric value (an admin typo in an
+            // outcome instruction) used to reach MariaDB as a column name.
+            $values[] = '(?, ?, ?)';
+            array_push($params, (int) $this->id, (string) $carac, (int) $val);
+
             if($carac == 'pv'){
 
                 if($val < 0){
@@ -1223,7 +1227,7 @@ class Player implements ActorInterface {
         n = n + VALUES(n);
         ';
 
-        $db->exe($sql);
+        $db->exe($sql, $params);
 
 
         if(!isset($this->turn)){
