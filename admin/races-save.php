@@ -19,6 +19,7 @@ use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\FactionService;
 use App\Service\RaceService;
+use App\View\Admin\TypeEditorFace;
 
 (new AdminMenuAccessService())->enforce('races.php');
 
@@ -29,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 /* Deux sections, une table : les mutations d'une sorte « structure »
  * renvoient vers Types de bâtiments, pas vers Races — messages compris
  * (chaque formulaire, suppression incluse, poste son kind). */
-$face = \App\View\Admin\TypeEditorFace::fromRequest($_POST);
+$face = TypeEditorFace::fromRequest($_POST);
 $structureMode = $face->isStructure();
 $backPage = $face->page;
 
@@ -92,15 +93,10 @@ $validate = static function (): ?string {
  *
  * @return array{notice: string, newFamily: string, rawHarvestFix: array<string, int|string|null>}
  *         notice: appended to the success flash ('' when all clean).
- *         newFamily: the family the posted structure_nature resolves to
- *         (Race::FAMILY_*) — the update branch compares it to
- *         $race->familyKey() to know whether the raw type_kind fixup below
- *         is needed. rawHarvestFix: harvest_* columns the CURRENT PHP class
- *         of $race cannot carry (e.g. a BuildingType switched to ressource
- *         has no setHarvestItem()) — written by the update branch via raw
- *         SQL, in the same statement as the type_kind fixup, so a category
- *         switch takes full effect in a single save instead of needing a
- *         reload first.
+ *         newFamily: Race::FAMILY_* the posted nature resolves to.
+ *         rawHarvestFix: harvest_* columns the entity's current PHP class
+ *         has no setter for (a BuildingType moving to ressource); the
+ *         update branch writes them with raw SQL after the flush.
  */
 $applyForm = static function (Race $race) use ($face, $action): array {
     $notice = '';
@@ -111,37 +107,14 @@ $applyForm = static function (Race $race) use ($face, $action): array {
     // proposée à l'inscription, quel que soit l'état de la case Jouable.
     $kind = ($_POST['kind'] ?? 'character') === 'structure' ? 'structure' : 'character';
     $race->setKind($kind);
-    /* Nature (structures seulement) : édifice/obstacle (bâtiment), décor,
-     * ressource ou plante.
-     *
-     * À la CRÉATION, chaque visage impose la sienne (resolveNature) — un
-     * type créé depuis Types récoltables ne doit pas pouvoir naître ailleurs
-     * que ressource. La vieille garde ne couvrait que le décor : un type créé
-     * depuis Types récoltables était corrigé une ligne après sa création et
-     * ne rejoignait jamais la palette des ressources.
-     *
-     * À la MODIFICATION, la vue édition offre un vrai choix de catégorie
-     * (les 5 valeurs) : l'admin peut reclasser un type existant, posté ici
-     * directement plutôt que pincé au visage courant. */
-    $allowedNatures = ['edifice', 'obstacle', 'decor', 'ressource', 'plante'];
+    /* On create the face pins the nature; on update any known nature is
+     * accepted, which is how a type moves to another family. */
     $postedNature = (string) ($_POST['structure_nature'] ?? '');
-    $newNature = ($action === 'update' && in_array($postedNature, $allowedNatures, true))
+    $newNature = ($action === 'update' && array_key_exists($postedNature, TypeEditorFace::natureChoices()))
         ? $postedNature
         : $face->resolveNature($postedNature !== '' ? $postedNature : null);
-    // Race::ofFamily() sait déjà dériver une famille de (kind, nature) — la
-    // même règle que le déclencheur SQL races_type_kind_bu (voir
-    // Version20260801200000_TheFamilyBecomesWritable). On lui demande une
-    // coquille vide plutôt que de la redire ici : Doctrine, pas ce
-    // déclencheur, écrit type_kind sur CE flush (il respecte une valeur déjà
-    // posée par l'ORM, la sienne — pas celle qu'on voudrait), donc il faut
-    // la famille cible pour la forcer nous-mêmes ensuite.
+    $targetFace = TypeEditorFace::fromRequest(['kind' => $kind, 'nature' => $newNature]);
     $newFamily = Race::ofFamily($kind, $newNature)->familyKey();
-
-    // La classe PHP de $race ne change qu'au PROCHAIN chargement (PRG déjà
-    // en place) : elle reste ce que Doctrine a instancié ce tour-ci, même
-    // après avoir changé structure_nature ici. On s'en sert pour savoir ce
-    // qu'il faut vider avant que la classe d'aujourd'hui ne redevienne muette.
-    $stillHarvestable = in_array($newNature, ['ressource', 'plante'], true);
 
     $race->setStructureNature($newNature);
     // Saignement : un élément de carte connu, ou rien.
@@ -160,28 +133,16 @@ $applyForm = static function (Race $race) use ($face, $action): array {
         $repairable = (string) ($_POST['repairable'] ?? '');
         $race->setRepairable($repairable === '' ? null : $repairable === '1');
     }
-    /* Rendement du type : on s'adresse à ce qui SAIT SE RÉCOLTER, pas à une
-     * famille. Le vider rend le type muet jusqu'à ce qu'un plan le déclare ;
-     * ce qui ne se récolte pas n'a même plus la question à se poser.
-     *
-     * Un reclassement qui QUITTE ressource/plante efface le rendement
-     * plutôt que de le laisser en base, invisible dans tous les
-     * formulaires suivants — prêt à ressurgir si le type redevient
-     * récoltable plus tard sans qu'on y repense.
-     *
-     * Un reclassement qui ENTRE dans ressource/plante pose le problème
-     * inverse : $race est encore l'ANCIENNE classe ce tour-ci (ex.
-     * BuildingType), qui ne porte pas ces champs — impossible de les lui
-     * poser par ses setters. On calcule quand même la valeur validée, et on
-     * la range dans $rawHarvestFix pour que le bloc update l'écrive en SQL
-     * brut juste après le flush : le rendement prend effet dès CE même
-     * enregistrement, sans repasser par le formulaire. */
+    /* Yield. $race keeps the PHP class Doctrine loaded until the next
+     * request, so the target family decides what to write, and the current
+     * class decides whether it goes through a setter or $rawHarvestFix.
+     * Leaving ressource/plante clears the yield rather than leaving it
+     * invisible in the row. */
     $rawHarvestFix = [];
 
-    if ($stillHarvestable) {
-        /* L'objet vient d'une liste ; on le valide quand même contre le
-         * catalogue — un POST fabriqué ne doit pas installer un rendement
-         * qui ne rapporte rien. Vide reste vide : c'est « ne rend rien ». */
+    if ($targetFace->harvests()) {
+        // Validated against the catalogue: a crafted POST must not install
+        // an unknown item. Empty stays empty ("yields nothing").
         $harvestItem = trim((string) ($_POST['harvest_item'] ?? ''));
 
         if ($harvestItem !== '' && \Classes\Item::get_item_by_name($harvestItem) === false) {
@@ -214,14 +175,9 @@ $applyForm = static function (Race $race) use ($face, $action): array {
         $notice .= ' ⚠ Catégorie changée : le rendement (récolte) de ce type a été effacé.';
     }
 
-    /* Combien rend une plante : deux bornes, et un maximum qui ne passe pas
-     * sous le minimum — un intervalle vide ne rendrait rien du tout. Quitter
-     * la catégorie Plante remet les bornes à leur défaut plutôt que de les
-     * laisser trainer, pour la même raison que ci-dessus — et y ENTRER
-     * depuis une famille qui n'a pas ces colonnes (ressource comprise :
-     * harvest_min/max n'appartiennent qu'à PlantType) suit la même
-     * bascule vers $rawHarvestFix. */
-    if ($newNature === 'plante') {
+    /* Plant quantity: two bounds, max never below min. harvest_min/max are
+     * PlantType columns only, hence the same setter/raw split. */
+    if ($targetFace->key === TypeEditorFace::PLANT) {
         $min = max(1, min(99, (int) ($_POST['harvest_min'] ?? \App\Entity\PlantType::DEFAULT_MIN)));
         $max = max($min, min(99, (int) ($_POST['harvest_max'] ?? \App\Entity\PlantType::DEFAULT_MAX)));
 
@@ -321,10 +277,8 @@ if ($action === 'create') {
         redirectTo($backPage);
     }
 
-    /* La famille se choisit à la création : c'est le visage d'où l'on vient
-       qui la dit. Elle peut être reclassée ensuite (Catégorie, en édition,
-       cf. applyForm) — mais jamais vers/depuis un personnage : un mur ne
-       devient pas un peuple. */
+    /* The family comes from the face at creation; edit can move a type
+       between structure families, never to or from character. */
     $race = Race::ofFamily(
         $face->isStructure() ? 'structure' : 'character',
         $face->nature()
@@ -356,14 +310,10 @@ if ($action === 'update') {
     $factionNotice = $formResult['notice'];
     $service->save($race);
 
-    /* Doctrine écrit type_kind d'après la classe PHP de $race — celle
-     * chargée AVANT ce reclassement, donc l'ancienne famille — et cette
-     * même classe ne sait pas porter les champs de rendement d'une autre
-     * famille ($rawHarvestFix, voir applyForm). Une seule écriture SQL
-     * brute, juste après le flush, corrige les deux à la fois : sans elle,
-     * soit la ligne redeviendrait son ancienne classe au prochain
-     * chargement malgré structure_nature, soit un rendement posé au moment
-     * même du reclassement serait perdu jusqu'à un second enregistrement. */
+    /* Doctrine writes type_kind from the loaded PHP class, i.e. the family
+     * before this save (the races_type_kind_bu trigger only fills an empty
+     * value). A family change, and the harvest columns that class has no
+     * setter for, are written with one raw statement after the flush. */
     $rawFix = $formResult['rawHarvestFix'];
     if ($formResult['newFamily'] !== $race->familyKey()) {
         $rawFix['type_kind'] = $formResult['newFamily'];
