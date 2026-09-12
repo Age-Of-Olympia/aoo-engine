@@ -410,19 +410,47 @@ HTML;
         // champ caché sur le visage Races. Les flags de blocage restent
         // éditables partout — une race massive PEUT faire écran aux tirs,
         // simplement pas par défaut.
+        //
+        // En ÉDITION, ce champ devient la Catégorie : les 5 valeurs de
+        // structure_nature, postées telles quelles (races-save.php ne les
+        // fait plus passer par le visage courant sur update). Reclasser
+        // un type existant — bâtiment vers ressource, par exemple — n'a
+        // de sens qu'une fois le type déjà créé.
         . ($face->isStructure()
-            ? '<label class="mr-3">Nature '
-                . formSelect(
-                    'structure_nature',
-                    ['edifice' => 'Édifice (porte)', 'obstacle' => 'Obstacle (mur)'],
-                    $isEdit && $race->getStructureNature() === 'obstacle' ? 'obstacle' : 'edifice',
-                    null,
-                    'class="form-control form-control-sm d-inline-block" style="width:auto"'
-                    . ' title="Édifice : vrai bâtiment, a une porte (Ouvert/Fermé, dialogue). Obstacle : mur construit, sans porte (is_open = future passabilité)."'
-                )
-                . '</label> '
-            : '<input type="hidden" name="structure_nature" value="'
-                . ($isEdit && $race->getStructureNature() === 'obstacle' ? 'obstacle' : 'edifice') . '">')
+            ? ($isEdit
+                ? '<label class="mr-3">Catégorie '
+                    . formSelect(
+                        'structure_nature',
+                        [
+                            'edifice' => 'Bâtiment — édifice (porte)',
+                            'obstacle' => 'Bâtiment — obstacle (mur)',
+                            'decor' => 'Décor',
+                            'ressource' => 'Ressource récoltable',
+                            'plante' => 'Plante',
+                        ],
+                        $race->getStructureNature(),
+                        null,
+                        'class="form-control form-control-sm d-inline-block" style="width:auto"'
+                        . ' data-original-nature="' . e($race->getStructureNature()) . '"'
+                        . ' onchange="if (this.value !== this.dataset.originalNature'
+                        . ' &amp;&amp; !confirm(\'Changer de catégorie reclasse le type dans les palettes'
+                        . ' de carte et efface son rendement (récolte) éventuel — le reste (PV, images,'
+                        . ' emprise) ne change pas. Continuer ?\')) { this.value = this.dataset.originalNature; }"'
+                        . ' title="Reclasse le type : palette carte, formulaire affiché, et efface le'
+                        . ' rendement (récolte) si le type quitte Ressource/Plante."'
+                    )
+                    . '</label> '
+                : '<label class="mr-3">Nature '
+                    . formSelect(
+                        'structure_nature',
+                        ['edifice' => 'Édifice (porte)', 'obstacle' => 'Obstacle (mur)'],
+                        'edifice',
+                        null,
+                        'class="form-control form-control-sm d-inline-block" style="width:auto"'
+                        . ' title="Édifice : vrai bâtiment, a une porte (Ouvert/Fermé, dialogue). Obstacle : mur construit, sans porte (is_open = future passabilité)."'
+                    )
+                    . '</label> ')
+            : '<input type="hidden" name="structure_nature" value="edifice">')
         . '<label class="mr-3"><input type="checkbox" name="blocks_passage" '
         . checked(!$isEdit || $race->blocksPassage())
         . ' title="Décoché : on marche sur sa case (mobilier bas, passage)."> Bloque le passage</label> '
