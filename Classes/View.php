@@ -575,15 +575,14 @@ class View{
                             : self::structureSprite((string) $entity->race, (string) $entity->name);
                     }
 
-                    if($isStructure){
+                    /* Any entity spans its type's cut-out — a character race
+                     * declared 2×2 is drawn as large as the édifice it rivals. */
+                    $footprint = self::typeFootprints()[(string) $entity->race] ?? null;
 
-                        $footprint = self::typeFootprints()[(string) $entity->race] ?? null;
+                    if($footprint !== null && !$footprint->isSingleCell()){
 
-                        if($footprint !== null && !$footprint->isSingleCell()){
-
-                            $spanW = self::TILE_PX * $footprint->width();
-                            $spanH = self::TILE_PX * $footprint->height();
-                        }
+                        $spanW = self::TILE_PX * $footprint->width();
+                        $spanH = self::TILE_PX * $footprint->height();
                     }
 
                     /* La bordure de race dit d'un coup d'œil À QUI on a

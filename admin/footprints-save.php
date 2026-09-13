@@ -28,6 +28,10 @@ function reapplied(int $count): string
 
 $service = new EntityTypeFootprintService();
 
+/* Back where the form came from: a type's own page, a kind's, or the whole list. */
+$back = (string) ($_POST['back'] ?? '');
+$back = preg_match('/^\?(type=[^&]*|kind=[a-z]+)$/', $back) ? $back : '';
+
 try {
     (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
 
@@ -39,7 +43,7 @@ try {
             ? 'Aucun décor coché.'
             : $removed . ' décor' . ($removed > 1 ? 's retirés' : ' retiré') . ' de la carte.');
 
-        redirectTo('/admin/footprints.php');
+        redirectTo('/admin/footprints.php' . $back);
     }
 
     $type = trim((string) ($_POST['type'] ?? ''));
@@ -56,7 +60,7 @@ try {
         setFlash('success', 'La forme de « ' . $type . ' » sera de nouveau devinée.'
             . reapplied($cells->reapplyForType($type)));
 
-        redirectTo('/admin/footprints.php');
+        redirectTo('/admin/footprints.php' . $back);
     }
 
     $figure = json_decode((string) ($_POST['figure'] ?? ''), true);
@@ -88,11 +92,14 @@ try {
     $scenery = new SceneryObjectService();
     $created = $scenery->ensureType($type);
 
-    $scenery->setTypeSettings(
-        $type,
-        !empty($_POST['blocks_passage']),
-        !empty($_POST['blocks_projectiles'])
-    );
+    /* The dials only travel with a structure's form; a character's has none. */
+    if (isset($_POST['has_dials'])) {
+        $scenery->setTypeSettings(
+            $type,
+            !empty($_POST['blocks_passage']),
+            !empty($_POST['blocks_projectiles'])
+        );
+    }
 
     setFlash('success', 'La forme de « ' . $type . ' » est enregistrée.'
         . ($created ? ' Type créé au catalogue.' : '')
@@ -101,4 +108,4 @@ try {
     setFlash('danger', $e->getMessage());
 }
 
-redirectTo('/admin/footprints.php');
+redirectTo('/admin/footprints.php' . $back);

@@ -40,7 +40,10 @@ function admin_layout($title, $content, array $assets = []) {
         if (!$access->canAccess($page, $viewerIsSuperAdmin)) {
             return '';
         }
-        $isActive = ($currentPage === $page) ||
+        /* A link carrying a query (Formes per kind) is active only when the
+         * request carries the same one, or every section would light up. */
+        $query = (string) parse_url($href, PHP_URL_QUERY);
+        $isActive = ($currentPage === $page && ($query === '' || $query === ($_SERVER['QUERY_STRING'] ?? ''))) ||
                     ($page === 'tutorial.php' && $currentPage === 'tutorial-step-editor.php') ||
                     ($page === 'players.php' && $currentPage === 'player-skills.php');
         $activeClass = $isActive ? ' active' : '';
@@ -60,7 +63,9 @@ function admin_layout($title, $content, array $assets = []) {
         if (!$links) {
             return '';
         }
-        $openClass = in_array($currentPage, $activePages, true) ? ' nav-group-open' : '';
+        $openClass = in_array($currentPage, $activePages, true) || str_contains(implode('', $links), 'nav-link active')
+            ? ' nav-group-open'
+            : '';
         return "<div class=\"nav-group{$openClass}\">\n                "
             . "    <span class=\"nav-group-title\">{$title}</span>\n                "
             . "    <div class=\"nav-group-children\">\n                    "
@@ -107,7 +112,7 @@ function admin_layout($title, $content, array $assets = []) {
     $itemPages = ['items.php', 'item-seed.php', 'recipes.php'];
     $factionPages = ['factions.php', 'faction-members.php', 'faction-seed.php'];
     $dialogPages = ['dialogs.php', 'dialog-seed.php'];
-    $sceneryPages = ['scenery-types.php', 'footprints.php'];
+    $sceneryPages = ['scenery-types.php'];
 
     /* The two pages one lands on stay at the top, outside any section.
      * Then four sections, in the order one thinks about the game: what is
@@ -137,17 +142,19 @@ function admin_layout($title, $content, array $assets = []) {
                 ['buildings.php', 'Posés', '/admin/buildings.php'],
                 ['structure-types.php', 'Types', '/admin/structure-types.php'],
                 ['structure-images.php', 'Images', '/admin/structure-images.php'],
+                ['footprints.php', 'Formes', '/admin/footprints.php?kind=building'],
                 // Reprise ponctuelle des déclencheurs de case hérités : à
                 // retirer du menu une fois la carte reprise partout.
                 ['tile-dialogs-migration.php', 'Dialogues de case', '/admin/tile-dialogs-migration.php'],
             ], ['buildings.php', 'structure-types.php', 'structure-images.php', 'tile-dialogs-migration.php']),
             $navGroup('Décors', [
                 ['scenery-types.php', 'Types', '/admin/scenery-types.php'],
-                ['footprints.php', 'Formes', '/admin/footprints.php'],
+                ['footprints.php', 'Formes', '/admin/footprints.php?kind=scenery'],
             ], $sceneryPages),
             $navGroup('Ressources', [
                 ['harvest-types.php', 'Types récoltables', '/admin/harvest-types.php'],
                 ['harvest-seed.php', 'Rendements', '/admin/harvest-seed.php'],
+                ['footprints.php', 'Formes', '/admin/footprints.php?kind=resource'],
             ], ['harvest-types.php', 'harvest-seed.php']),
             /* Les plantes ont leur propre entrée : elles se récoltent comme les
                ressources, et c'est tout ce qu'elles partagent — une seule liste
@@ -155,6 +162,7 @@ function admin_layout($title, $content, array $assets = []) {
                traverse. */
             $navGroup('Plantes', [
                 ['plant-types.php', 'Types', '/admin/plant-types.php'],
+                ['footprints.php', 'Formes', '/admin/footprints.php?kind=plant'],
             ], ['plant-types.php']),
             /* Un élément posé applique l'effet de son nom quand on marche
              * dessus : le catalogue et ce qui en est posé, même sujet. */
@@ -172,6 +180,7 @@ function admin_layout($title, $content, array $assets = []) {
         $navSection('Les règles', [
             $navGroup('Races', [
                 ['races.php', 'Liste', '/admin/races.php'],
+                ['footprints.php', 'Formes', '/admin/footprints.php?kind=character'],
                 ['race-seed.php', 'Seed JSON legacy', '/admin/race-seed.php'],
             ], $racePages),
             $navGroup('Objets', [

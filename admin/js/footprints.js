@@ -87,6 +87,8 @@
         cell.dataset.y = y;
 
         if (piece === undefined) {
+            cell.title = 'Cliquer pour ajouter une case à la figure.';
+            cell.addEventListener('click', this.onAdd.bind(this, x, y));
             cell.addEventListener('dragover', this.onDragOver.bind(this));
             cell.addEventListener('dragleave', this.onDragLeave.bind(this));
             cell.addEventListener('drop', this.onDrop.bind(this));
@@ -102,7 +104,7 @@
         cell.draggable = true;
         cell.title = 'Morceau ' + piece + ' — '
             + (blocks ? 'barre le chemin' : 'on peut passer')
-            + '. Cliquer pour changer, faire glisser pour déplacer.';
+            + '. Cliquer pour changer, faire glisser pour déplacer, clic droit pour retirer.';
         cell.setAttribute('aria-pressed', blocks ? 'true' : 'false');
 
         var url = this.state.pieces[piece];
@@ -113,9 +115,21 @@
             img.alt = '';
             img.loading = 'lazy';
             cell.appendChild(img);
+        } else if (this.state.sheet) {
+            /* One picture for the whole figure: the board stretches it over
+             * the box, so each cell shows its own slice of it. */
+            var bounds = this.bounds();
+            var col = x - bounds.minX;
+            var row = bounds.maxY - y;
+
+            cell.style.backgroundImage = 'url("' + this.state.sheet + '")';
+            cell.style.backgroundSize = ((bounds.maxX - bounds.minX + 1) * CELL) + 'px '
+                + ((bounds.maxY - bounds.minY + 1) * CELL) + 'px';
+            cell.style.backgroundPosition = (-col * CELL) + 'px ' + (-row * CELL) + 'px';
         }
 
         cell.addEventListener('click', this.onToggle.bind(this, Number(piece)));
+        cell.addEventListener('contextmenu', this.onRemove.bind(this, Number(piece)));
         cell.addEventListener('dragstart', this.onDragStart.bind(this, Number(piece)));
         cell.addEventListener('dragend', this.onDragEnd.bind(this));
 
@@ -131,6 +145,37 @@
         if (at === -1) {
             this.state.blocked.push(piece);
         } else {
+            this.state.blocked.splice(at, 1);
+        }
+
+        this.render();
+    };
+
+    /* An empty cell clicked joins the figure, as the next piece. */
+    Board.prototype.onAdd = function (x, y, event) {
+        event.preventDefault();
+
+        var next = Object.keys(this.state.offsets).map(Number).reduce(function (max, piece) {
+            return Math.max(max, piece);
+        }, -1) + 1;
+
+        this.state.offsets[next] = [x, y];
+        this.render();
+    };
+
+    /* A figure keeps at least one cell: the last one cannot go. */
+    Board.prototype.onRemove = function (piece, event) {
+        event.preventDefault();
+
+        if (Object.keys(this.state.offsets).length < 2) {
+            return;
+        }
+
+        delete this.state.offsets[piece];
+
+        var at = this.state.blocked.indexOf(piece);
+
+        if (at !== -1) {
             this.state.blocked.splice(at, 1);
         }
 
@@ -222,7 +267,7 @@
         if (summary) {
             var blocking = this.state.blocked.length;
 
-            summary.textContent = pieces.length + ' morceau' + (pieces.length > 1 ? 'x' : '')
+            summary.textContent = pieces.length + ' case' + (pieces.length > 1 ? 's' : '')
                 + ' · ' + (blocking === 0
                     ? 'on passe partout'
                     : blocking + ' case' + (blocking > 1 ? 's' : '') + ' qui barre'

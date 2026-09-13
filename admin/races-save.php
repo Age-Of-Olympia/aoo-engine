@@ -205,7 +205,10 @@ $applyForm = static function (Race $race) use ($face, $action): array {
     if (isset($_POST['fp_w'], $_POST['fp_h'])) {
         $fpW = max(1, min(8, (int) $_POST['fp_w']));
         $fpH = max(1, min(8, (int) $_POST['fp_h']));
-        if ($fpW !== (int) ($_POST['fp_prev_w'] ?? 0) || $fpH !== (int) ($_POST['fp_prev_h'] ?? 0)) {
+        /* prev 0×0 = nothing declared yet: a single cell then needs no row. */
+        $undeclared = (int) ($_POST['fp_prev_w'] ?? 0) === 0;
+        $changed = $fpW !== (int) ($_POST['fp_prev_w'] ?? 0) || $fpH !== (int) ($_POST['fp_prev_h'] ?? 0);
+        if ($changed && !($undeclared && $fpW * $fpH === 1)) {
             $offsets = [];
             for ($dy = 0; $dy > -$fpH; $dy--) {
                 for ($dx = 0; $dx < $fpW; $dx++) {
@@ -213,6 +216,8 @@ $applyForm = static function (Race $race) use ($face, $action): array {
                 }
             }
             (new \App\Service\Map\EntityTypeFootprintService())->declare($race->getName(), $fpW, $fpH, $offsets);
+            /* Placed exemplars take the new box at once, as Formes does. */
+            (new \App\Service\Map\EntityCellService())->reapplyForType($race->getName());
         }
     }
     $race->setPlayable($kind === 'character' && booleanCheckbox('playable'));

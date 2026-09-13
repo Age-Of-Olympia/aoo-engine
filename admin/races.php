@@ -468,32 +468,34 @@ HTML;
                 . '<option value="0"' . ($isEdit && $race instanceof StructureType && $race->getRepairableOverride() === false ? ' selected' : '') . '>Non</option>'
                 . '</select></label> '
             : '')
-        . ($face->key === \App\View\Admin\TypeEditorFace::BUILDING
-            ? (static function () use ($isEdit, $race): string {
+        . (static function () use ($isEdit, $race, $face): string {
+                $isBuilding = $face->key === \App\View\Admin\TypeEditorFace::BUILDING;
                 $declared = $isEdit
-                    ? ((new \App\Service\Map\EntityTypeFootprintService())->declared()[$race->getName()] ?? null)
+                    ? ((new \App\Service\Map\EntityTypeFootprintService())->catalogue()[$race->getName()] ?? null)
                     : null;
-                // A new building type starts at the game's floor: 2×2.
-                $w = $declared !== null ? $declared->width() : ($isEdit ? 1 : 2);
-                $h = $declared !== null ? $declared->height() : ($isEdit ? 1 : 2);
+                // A new building type starts at the game's floor: 2×2; anything else at one cell.
+                $w = $declared !== null ? $declared->width() : ($isEdit || !$isBuilding ? 1 : 2);
+                $h = $declared !== null ? $declared->height() : ($isEdit || !$isBuilding ? 1 : 2);
+                $shapeLink = $isEdit
+                    ? '/admin/footprints.php?type=' . e(urlencode($race->getName()))
+                    : '/admin/footprints.php';
 
-                return '<label class="mr-3">Travail de construction '
+                return ($isBuilding ? '<label class="mr-3">Travail de construction '
                     . '<input type="number" class="form-control form-control-sm d-inline-block" style="width:80px" name="build_work"'
                     . ' min="0" max="999" value="' . ($isEdit ? (int) $race->getBuildWork() : 0) . '"'
                     . ' title="Unités de travail PAR CASE pour le dresser — l\'emprise multiplie. 0 : construit en un geste.'
                     . ' Sinon, construire ouvre un chantier fermé, à PV plancher, que l\'action travailler fait avancer.">'
-                    . ' <small class="text-muted">par case, 0 = instantané</small></label> '
+                    . ' <small class="text-muted">par case, 0 = instantané</small></label> ' : '')
                     . '<label class="mr-3">Emprise '
                     . '<input type="number" class="form-control form-control-sm d-inline-block" style="width:64px" name="fp_w"'
                     . ' min="1" max="8" value="' . $w . '" title="Largeur en cases"> × '
                     . '<input type="number" class="form-control form-control-sm d-inline-block" style="width:64px" name="fp_h"'
                     . ' min="1" max="8" value="' . $h . '" title="Hauteur en cases">'
-                    . ' <small class="text-muted">cases — une figure ajourée se règle dans '
-                    . '<a href="/admin/footprints.php">Cartes → Emprises</a></small></label> '
-                    . '<input type="hidden" name="fp_prev_w" value="' . $w . '">'
-                    . '<input type="hidden" name="fp_prev_h" value="' . $h . '">';
+                    . ' <small class="text-muted">cases — figure ajourée, cases qui barrent : '
+                    . '<a href="' . $shapeLink . '">Formes</a></small></label> '
+                    . '<input type="hidden" name="fp_prev_w" value="' . ($declared !== null ? $w : 0) . '">'
+                    . '<input type="hidden" name="fp_prev_h" value="' . ($declared !== null ? $h : 0) . '">';
             })()
-            : '')
         . ($face->isStructure()
             ? '<label class="mr-3"><input type="checkbox" name="readable_from_afar" '
                 . checked($race instanceof StructureType && $race->isReadableFromAfar())

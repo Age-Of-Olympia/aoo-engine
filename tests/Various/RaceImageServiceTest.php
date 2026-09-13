@@ -107,6 +107,27 @@ class RaceImageServiceTest extends TestCase
         $this->assertNotSame($created, $second);
     }
 
+    public function testAvatarCanonSpansTheTypeFootprint(): void
+    {
+        $footprints = new \App\Service\Map\EntityTypeFootprintService();
+        $footprints->declare('nain', 2, 2, [0 => [0, 0], 1 => [1, 0], 2 => [0, -1], 3 => [1, -1]]);
+
+        try {
+            $this->assertSame([100, 100], $this->service->canon(ImageType::AVATAR, 'nain'));
+            $this->assertSame([210, 330], $this->service->canon(ImageType::PORTRAIT, 'nain'), 'le portrait ne suit pas l\'emprise');
+
+            $tmp = $this->root . '/source.png';
+            imagepng(imagecreatetruecolor(300, 200), $tmp);
+            $created = $this->service->upload(ImageType::AVATAR, 'nain', $tmp);
+            unlink($tmp);
+
+            $size = getimagesize($this->root . '/img/avatars/nain/' . $created);
+            $this->assertSame([100, 100], [$size[0], $size[1]], 'redimensionné sur toute l\'emprise');
+        } finally {
+            $footprints->forget('nain');
+        }
+    }
+
     public function testUploadKeepsPngFormatAndTransparency(): void
     {
         $tmp = $this->root . '/source.png';

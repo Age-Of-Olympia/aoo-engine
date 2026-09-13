@@ -14,12 +14,16 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
+use App\Entity\Race;
+use App\Factory\EntityManagerFactory;
+use App\Service\BuildingService;
 use App\Service\CsrfProtectionService;
 use App\Service\Map\EntityTypeFootprintService;
 use App\Service\Map\Footprint;
 use App\Service\Map\SceneryObjectService;
 use App\Service\Map\MapForegroundsRetirement;
 use App\Service\Map\SceneryFootprintDeriver;
+use App\View\Admin\TypeEditorFace;
 
 /** @return array{0: string, 1: string, 2: string} label, css class, tooltip */
 function footprint_origin(string $source): array
@@ -80,8 +84,17 @@ $scenery = new SceneryObjectService();
 $catalogue = $service->catalogue();
 $onDisk = $deriver->piecesOnDisk();
 
-/* Families worth showing: several pieces on disk, plus those the map knows
- * about without the disk carrying them. */
+/* Every type that can stand on the board, whatever its kind: the races
+ * catalogue (characters, buildings, plants…), the scenery families cut in
+ * pieces on disk, and whatever already has a declared cut-out. */
+$kinds = [];
+$labels = [];
+
+foreach (EntityManagerFactory::getEntityManager()->getRepository(Race::class)->findAll() as $race) {
+    $kinds[$race->getName()] = TypeEditorFace::of($race)->key;
+    $labels[$race->getName()] = $race->getLabel();
+}
+
 $families = [];
 
 foreach ($onDisk as $family => $pieces) {
@@ -90,8 +103,29 @@ foreach ($onDisk as $family => $pieces) {
     }
 }
 
-foreach (array_keys($catalogue) as $family) {
+foreach (array_merge(array_keys($catalogue), array_keys($kinds)) as $family) {
     $families[(string) $family] ??= $onDisk[$family] ?? [];
+}
+
+$kindOf = static fn(string $family): string => $kinds[$family] ?? TypeEditorFace::SCENERY;
+
+$kindLabels = [
+    TypeEditorFace::CHARACTER => 'Personnages',
+    TypeEditorFace::BUILDING  => 'Bâtiments',
+    TypeEditorFace::SCENERY   => 'Décors',
+    TypeEditorFace::RESOURCE  => 'Ressources',
+    TypeEditorFace::PLANT     => 'Plantes',
+];
+
+/* One type's own page (`?type=`), or one kind's (`?kind=`). */
+$onlyType = trim((string) ($_GET['type'] ?? ''));
+$onlyKind = isset($kindLabels[(string) ($_GET['kind'] ?? '')]) ? (string) $_GET['kind'] : '';
+$back = $onlyType !== '' ? '?type=' . urlencode($onlyType) : ($onlyKind !== '' ? '?kind=' . $onlyKind : '');
+
+if ($onlyType !== '') {
+    $families = [$onlyType => $families[$onlyType] ?? []];
+} elseif ($onlyKind !== '') {
+    $families = array_filter($families, static fn(string $f): bool => $kindOf($f) === $onlyKind, ARRAY_FILTER_USE_KEY);
 }
 
 /* Unsettled families first: that is the work left to do. */
@@ -101,8 +135,22 @@ uksort($families, static function (string $a, string $b) use ($service): int {
     return [$settled($a), $a] <=> [$settled($b), $b];
 });
 
-$retirement = (new MapForegroundsRetirement())->status();
-$halfErased = $scenery->halfErased();
+/* The foreground leftovers only concern scenery: the whole list and the
+ * Décors page carry them, a scenery type's page only its own figures, any
+ * other kind nothing. */
+$aboutScenery = $onlyType !== ''
+    ? $kindOf($onlyType) === TypeEditorFace::SCENERY
+    : ($onlyKind === '' || $onlyKind === TypeEditorFace::SCENERY);
+
+$retirement = $aboutScenery && $onlyType === '' ? (new MapForegroundsRetirement())->status() : null;
+$halfErased = $aboutScenery ? $scenery->halfErased() : [];
+
+if ($onlyType !== '') {
+    $halfErased = array_values(array_filter(
+        $halfErased,
+        static fn(array $figure): bool => $figure['family'] === $onlyType
+    ));
+}
 
 $counts = ['all' => count($families), 'todo' => 0, 'set' => 0];
 
@@ -114,33 +162,35 @@ ob_start();
 ?>
 
 <div class="container">
-    <h2 class="section-title">Décors en plusieurs morceaux</h2>
+    <h2 class="section-title">Emprises<?= $onlyType !== '' ? ' — ' . e($labels[$onlyType] ?? $onlyType) : ($onlyKind !== '' ? ' — ' . $kindLabels[$onlyKind] : '') ?></h2>
 
     <p class="text-content">
-        Un décor plus grand qu'une case est posé en morceaux. Cette page dit
-        <strong>quelles cases il occupe</strong> et <strong>lesquelles barrent le chemin</strong>.
-        La forme est devinée quand c'est possible — d'après un exemplaire posé sur la carte, ou
-        d'après l'image d'ensemble du décor — mais les deux se trompent parfois, et rien ne devine
-        le passage. Ce qui est réglé ici l'emporte sur ce qui est deviné.
+        Tout ce qui se tient sur le plateau — personnage, bâtiment, décor, plante — peut occuper
+        plusieurs cases. Cette page dit <strong>quelles cases un type occupe</strong> et
+        <strong>lesquelles barrent le chemin</strong>. Son image du plateau couvre toute l'emprise
+        (50 px par case) ; un décor en morceaux montre ses morceaux. La forme est devinée quand
+        c'est possible — d'après un exemplaire posé sur la carte, ou d'après l'image d'ensemble —
+        mais ce qui est réglé ici l'emporte.
     </p>
 
     <p class="fp-note">
-        <strong>Cliquez une case</strong> pour la faire barrer le chemin, ou le laisser libre.
+        <strong>Cliquez une case vide</strong> pour l'ajouter à la figure,
+        <strong>une case pleine</strong> pour la faire barrer le chemin ou le laisser libre,
+        <strong>clic droit</strong> pour la retirer.
         <strong>Faites glisser un morceau</strong> sur une case vide pour corriger la figure.
-        Le passage sera appliqué quand les décors deviendront des entités du moteur ; d'ici là il
-        est enregistré, sans effet en jeu.
+        Enregistrer reprend les exemplaires déjà posés.
     </p>
 
     <?= renderFlashMessage() ?>
 
-    <?php if ($retirement['droppable']): ?>
+    <?php if ($retirement !== null && $retirement['droppable']): ?>
         <div class="alert alert-success">
             <strong>La table <code>map_foregrounds</code> peut être supprimée.</strong>
             Plus rien n'en dépend : le décor est dessiné depuis les entités, et toutes les formes
             sont réglées ici. Elle porte encore <?= $retirement['rows'] ?> ligne<?= $retirement['rows'] > 1 ? 's' : '' ?>,
             qui ne servent plus à rien.
         </div>
-    <?php else: ?>
+    <?php elseif ($retirement !== null): ?>
         <div class="alert alert-warning">
             <strong>La table <code>map_foregrounds</code> sert encore — ne la supprimez pas.</strong>
             <ul class="fp-blockers">
@@ -204,9 +254,9 @@ ob_start();
 
     <div class="fp-toolbar">
         <input type="search" id="fp-search" class="form-select fp-search"
-               placeholder="Chercher un décor…" aria-label="Chercher un décor" />
+               placeholder="Chercher un type…" aria-label="Chercher un type" />
 
-        <div class="fp-filters" role="group" aria-label="Filtrer les décors">
+        <div class="fp-filters" role="group" aria-label="Filtrer par état">
             <button type="button" class="btn btn-sm btn-secondary active" data-filter="all">
                 Tous (<?= $counts['all'] ?>)
             </button>
@@ -218,6 +268,16 @@ ob_start();
             </button>
         </div>
 
+        <?php if ($onlyType === '' && $onlyKind === ''): ?>
+        <div class="fp-filters" role="group" aria-label="Filtrer par sorte">
+            <?php foreach ($kindLabels as $kindKey => $kindLabel): ?>
+                <a class="btn btn-sm btn-outline-secondary" href="?kind=<?= e($kindKey) ?>"><?= e($kindLabel) ?></a>
+            <?php endforeach; ?>
+        </div>
+        <?php elseif ($onlyType === ''): ?>
+        <a class="btn btn-sm btn-outline-secondary" href="footprints.php">Toutes les sortes</a>
+        <?php endif; ?>
+
         <p class="fp-legend">
             <span class="fp-legend--free">on peut passer</span>
             <span class="fp-legend--blocks">barre le chemin</span>
@@ -225,7 +285,7 @@ ob_start();
     </div>
 
     <?php if ($families === []): ?>
-        <p class="text-muted">Aucun décor en plusieurs morceaux sur ce déploiement.</p>
+        <p class="text-muted">Aucun type à afficher.</p>
     <?php endif; ?>
 
     <div class="fp-grid">
@@ -247,19 +307,30 @@ ob_start();
             static fn(string $role): bool => $role === 'block'
         ));
 
+        $kind = $kindOf($name);
+
+        /* A type without pieces shows its board sprite, stretched over the
+         * box and sliced per cell by the editor — the very image the board
+         * spans (View::structureSprite / the race's first avatar). */
+        $sheet = $pieces === [] ? BuildingService::resolveAvatar($name) : '';
+
         $editorJson = (string) json_encode([
             'family'  => $name,
             'w'       => $figure->width(),
             'h'       => $figure->height(),
             'pieces'  => $pieces,
+            'sheet'   => $sheet === '' ? null : '/' . $sheet,
             'offsets' => $figure->offsets(),
             'blocked' => $blocked,
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         ?>
         <section class="fp-card" data-state="<?= $source === 'declared' ? 'set' : 'todo' ?>"
-                 data-family="<?= e($name) ?>">
+                 data-family="<?= e($name) ?>" data-kind="<?= e($kind) ?>">
             <header class="fp-card__head">
-                <code class="fp-card__name"><?= e($name) ?></code>
+                <span>
+                    <code class="fp-card__name"><?= e($name) ?></code>
+                    <small class="text-muted"><?= e($kindLabels[$kind] ?? $kind) ?></small>
+                </span>
                 <span class="fp-badge <?= $originClass ?>" title="<?= e($originHint) ?>"><?= e($originLabel) ?></span>
             </header>
 
@@ -275,6 +346,7 @@ ob_start();
                 <input type="hidden" name="type" value="<?= e($name) ?>" />
                 <?php /* The figure travels once: the editor reads this field,
                          rewrites it on every gesture, and it is what POSTs. */ ?>
+                <input type="hidden" name="back" value="<?= e($back) ?>" />
                 <input type="hidden" name="figure" class="fp-figure" value="<?= e($editorJson) ?>" />
 
                 <div class="fp-board">
@@ -284,17 +356,23 @@ ob_start();
                             <img class="fp-fallback" src="<?= e($pieces[$piece]) ?>" alt="" loading="lazy" />
                         <?php endif; ?>
                     <?php endforeach; ?>
+                    <?php if ($sheet !== ''): ?>
+                        <img class="fp-fallback" src="/<?= e($sheet) ?>" alt="" loading="lazy" />
+                    <?php endif; ?>
                 </div>
 
                 <p class="fp-summary">
-                    <?= count($pieces) ?> morceau<?= count($pieces) > 1 ? 'x' : '' ?><?php
-                    if ($pieces === []): ?> sur le disque — la carte seule en parle<?php endif; ?>
+                    <?= $figure->cells() ?> case<?= $figure->cells() > 1 ? 's' : '' ?><?php
+                    if ($pieces === [] && $sheet === ''): ?> — aucune image<?php endif; ?>
                 </p>
 
                 <?php /* The two dials a `block` cell defers to. Marking a cell
-                         says WHICH cells are solid; these say what solid means. */ ?>
+                         says WHICH cells are solid; these say what solid means.
+                         A character is never solid that way: no dials. */ ?>
+                <?php if ($kind !== TypeEditorFace::CHARACTER): ?>
                 <fieldset class="fp-dials">
                     <legend>Ce qu'une case rouge fait</legend>
+                    <input type="hidden" name="has_dials" value="1" />
 
                     <label>
                         <input type="checkbox" name="blocks_passage" value="1"
@@ -309,6 +387,7 @@ ob_start();
                         <small>— décocher pour une arche : on ne passe pas, la flèche si</small>
                     </label>
                 </fieldset>
+                <?php endif; ?>
 
                 <div class="fp-actions">
                     <button type="submit" name="action" value="save" class="btn btn-sm btn-primary">
@@ -330,7 +409,7 @@ ob_start();
 <?php
 $content = ob_get_clean();
 
-echo admin_layout('Décors en plusieurs morceaux', $content, [
+echo admin_layout('Emprises', $content, [
     'styles'  => ['/admin/css/footprints.css'],
     'scripts' => ['/admin/js/footprints.js'],
 ]);

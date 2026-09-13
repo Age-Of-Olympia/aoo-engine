@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Factory\EntityManagerFactory;
 use App\Entity\Race;
 use App\Enum\ImageType;
+use App\Service\Map\EntityTypeFootprintService;
 use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
 
@@ -99,7 +100,7 @@ class RaceImageService
     {
         $this->assertRace($race);
         $dir = $this->raceDir($type, $race);
-        [$canonWidth, $canonHeight] = $type->dimensions();
+        [$canonWidth, $canonHeight] = $this->canon($type, $race);
 
         $files = [];
         $minis = [];
@@ -159,6 +160,28 @@ class RaceImageService
     }
 
     /**
+     * Canon d'une image pour un type donné : le portrait ne change pas, mais
+     * l'avatar est le sprite du plateau, qui couvre toute l'emprise du type
+     * (50 px par case) — un édifice 2×2 se dessine en 100×100, sinon le
+     * damier étire un 50×50 et le rend flou.
+     *
+     * @return array{0:int,1:int}
+     */
+    public function canon(ImageType $type, string $race): array
+    {
+        if ($type !== ImageType::AVATAR) {
+            return $type->dimensions();
+        }
+
+        $footprint = (new EntityTypeFootprintService())->catalogue()[$race] ?? null;
+        [$width, $height] = $type->dimensions();
+
+        return $footprint === null
+            ? [$width, $height]
+            : [$width * $footprint->width(), $height * $footprint->height()];
+    }
+
+    /**
      * Ajoute une image : redimensionnée aux dimensions canoniques du type
      * (+ miniature pour les portraits), numérotée par le compteur de la
      * race — même contrat que l'API d'upload historique.
@@ -185,7 +208,7 @@ class RaceImageService
         $extension = self::outputExtension(is_array($info) ? (string) $info['mime'] : '');
         $fileName = $type->buildFilename($number, $extension);
 
-        [$width, $height] = $type->dimensions();
+        [$width, $height] = $this->canon($type, $raceName);
         $this->resize($tmpPath, $dir . '/' . $fileName, $width, $height);
 
         if ($miniDims = $type->miniDimensions()) {
