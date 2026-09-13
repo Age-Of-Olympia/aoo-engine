@@ -98,26 +98,73 @@ h6 {
     border-color: var(--pa-line-soft);
 }
 
-/* Boutons, champs et selects : chips parchemin */
+/* Boutons, champs et selects : jetons de parchemin. Base UNIQUE de
+ * tous les boutons du thème papier (rail, raccourcis, actions, sol,
+ * panneaux…) — un composant ne redit pas ces déclarations, il n'ajoute
+ * que sa taille ou sa forme (rond, plein-largeur). Léger dégradé, filet
+ * bronze sourd, reflet en haut, ombre courte ; le bouton se soulève au
+ * survol et s'enfonce au clic. */
 button,
 input[type="button"],
 select {
-    background: var(--pa-parchment);
-    border: 1px solid var(--pa-bronze);
-    border-radius: 4px;
+    background: linear-gradient(180deg, #fbf2df 0%, #f2e2c3 100%);
+    border: 1px solid var(--pa-line);
+    border-radius: 8px;
     color: var(--pa-ink);
-    box-shadow: none;
+    font-family: inherit;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        inset 0 -1px 0 rgba(93, 74, 42, 0.12),
+        0 1px 2px rgba(0, 0, 0, 0.18);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
 }
 
-button:hover:not(:disabled),
+/* Le halo bleu de main.css disparaît ; le clavier garde un anneau bronze */
+button:focus,
+input[type="button"]:focus,
+select:focus {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        inset 0 -1px 0 rgba(93, 74, 42, 0.12),
+        0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+button:focus-visible,
+input[type="button"]:focus-visible,
+select:focus-visible {
+    outline: 2px solid #b98a1c;
+    outline-offset: 2px;
+}
+
+button:hover,
 input[type="button"]:hover,
 select:hover {
-    background: #fdf6e5;
+    background: linear-gradient(180deg, #fff8e9 0%, #f6e8cc 100%);
+    border-color: var(--pa-bronze);
 }
 
-button:disabled {
+button:hover,
+input[type="button"]:hover {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        0 2px 5px rgba(0, 0, 0, 0.22);
+    transform: translateY(-1px);
+}
+
+button:active,
+input[type="button"]:active {
+    background: linear-gradient(180deg, #ecdbb8 0%, #f2e2c3 100%);
+    box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.2);
+    transform: none;
+}
+
+button:disabled,
+input[type="button"]:disabled,
+select:disabled {
     opacity: 0.45;
     border-color: var(--pa-line-soft);
+    box-shadow: none;
+    transform: none;
 }
 
 input[type="text"],

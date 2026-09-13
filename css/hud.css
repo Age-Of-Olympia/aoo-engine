@@ -174,11 +174,16 @@ body:has(#hud)::after {
     font-weight: bold;
 }
 
+/* Les pilules cèdent la place avant les raccourcis : un nom long ou
+ * des effets en série rognent la dernière pilule, jamais Déconnexion
+ * (le bandeau est en overflow hidden). */
 .hud-pills {
     display: flex;
     align-items: center;
     gap: 6px;
     flex-wrap: nowrap;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .hud-pill {
@@ -271,18 +276,60 @@ body:has(#hud)::after {
 
 .hud-quick {
     flex: 0 0 auto;
-}
-
-.hud-quick {
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
-/* Accès discret (Classements) : icône seule, bronze */
-.hud-quick .hud-quick-icon .ra {
-    font-size: 16px;
+/* ---------- Boutons-icônes de navigation ----------
+ * Un seul composant pour le rail et les raccourcis du bandeau : carré
+ * fixe, glyphe centré en absolu (les libellés résiduels à font-size 0
+ * et les métriques disparates de rpg-awesome décalaient chaque icône
+ * ailleurs), une seule encre bronze, foncée au survol. Le libellé vit
+ * dans le title du lien — le tiroir mobile le recopie en texte. */
+#hud-rail #menu > a > button,
+#hud-rail #menu > button,
+.hud-quick > a > button,
+.hud-quick > button {
+    font-size: 0;
+    line-height: 1;
+    padding: 0;
+    position: relative;
+    width: 48px;
+    height: 48px;
+}
+
+.hud-quick > a > button,
+.hud-quick > button {
+    width: 36px;
+    height: 36px;
+}
+
+#hud-rail #menu .ra,
+.hud-quick .ra {
+    font-size: 22px;
+    line-height: 1;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     color: var(--hud-bronze);
+    text-shadow: 0 1px 0 rgba(255, 230, 170, 0.5);
+}
+
+.hud-quick .ra {
+    font-size: 18px;
+}
+
+#hud-rail #menu > a > button:hover .ra,
+.hud-quick > a > button:hover .ra,
+.hud-quick > button:hover .ra {
+    color: var(--hud-ink);
+}
+
+/* Reprendre son personnage : le seul geste « de sortie » du bandeau */
+#hud-stop-impersonation .ra {
+    color: var(--hud-blood);
 }
 
 /* ---------- Rail de navigation gauche ---------- */
@@ -306,73 +353,6 @@ body:has(#hud)::after {
     flex-direction: column;
     align-items: center;
     gap: 6px;
-}
-
-#hud-rail #menu > a > button,
-#hud-rail #menu > button {
-    font-size: 0;
-    width: 48px;
-    height: 48px;
-    padding: 0;
-    position: relative;
-}
-
-/* Centrage absolu du glyphe : les libellés résiduels des boutons
- * (« Caractéristiques »… à font-size 0) et les métriques de ligne
- * disparates de rpg-awesome décalaient chaque icône ailleurs — en
- * absolu, seul le glyphe compte. */
-#hud-rail #menu .ra {
-    font-size: 22px;
-    line-height: 1;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-/* Icônes plates, une teinte de métier par entrée (retours joueurs
- * juillet 2026 : les objets peints faisaient vieux — les PNG restent
- * en réserve dans img/ui/paper/ pour d'autres usages : dé au lancer,
- * carte sur l'écran carte…). Même recette que la forge : couleur
- * sourde + reflet clair. */
-#hud-rail #show-craft .ra {
-    color: #7a4a21;
-    text-shadow: 0 1px 0 rgba(255, 214, 130, 0.55);
-}
-
-#hud-rail #show-bank .ra {
-    color: #a8790f;
-    text-shadow: 0 1px 0 rgba(255, 230, 150, 0.6);
-}
-
-#hud-rail #show-caracs .ra {
-    color: #8d4a3a;
-    text-shadow: 0 1px 0 rgba(255, 200, 180, 0.5);
-}
-
-#hud-rail #show-inventory .ra {
-    color: #6b4a2b;
-    text-shadow: 0 1px 0 rgba(230, 200, 150, 0.55);
-}
-
-#hud-rail #show-spells .ra {
-    color: #5d4a7a;
-    text-shadow: 0 1px 0 rgba(215, 195, 255, 0.5);
-}
-
-#hud-rail #menu > a[href="map.php"] > button .ra {
-    color: var(--hud-bronze);
-    text-shadow: 0 1px 0 rgba(255, 230, 170, 0.5);
-}
-
-#hud-rail #missive-btn .ra {
-    color: #3a4a6b;
-    text-shadow: 0 1px 0 rgba(190, 210, 245, 0.5);
-}
-
-#hud-rail #menu > a[href="account.php"] > button .ra {
-    color: #55524c;
-    text-shadow: 0 1px 0 rgba(230, 225, 215, 0.55);
 }
 
 /* Pastille missives : l'hôte doit être positionné */
@@ -636,6 +616,9 @@ body:has(#hud) #svg-container .blocked-tile-marker {
 
 .hud-layer:hover {
     background: var(--hud-veil);
+    border: none;
+    box-shadow: none;
+    transform: none;
 }
 
 /* Mini-interrupteur : gaine parchemin, bouton bronze quand actif */
@@ -754,6 +737,19 @@ body:has(#hud) #view-landing-wrapper {
     flex: 0 0 auto;
 }
 
+/* Bourse au sol (GroundLootView) : une ligne flex par objet, le bouton
+ * Ramasser calé en bout de ligne quelle que soit la longueur du nom. */
+.ground-line {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    text-align: left;
+}
+
+.ground-line .ground-take {
+    margin-left: auto;
+}
+
 /* ----- Zone de sélection recomposée (wireframe, bandeau bas) -----
  * js/hud.js (composeSelection) réorganise la réponse d'observe.php en
  * une vue unique qui occupe TOUT le bandeau : portrait à gauche (voile
@@ -766,7 +762,7 @@ body:has(#hud) #view-landing-wrapper {
  * cascade et cassaient portrait, voile et colonne de case. */
 #hud #ajax-data .hud-sel {
     display: grid;
-    grid-template-columns: 130px minmax(0, 1fr) minmax(200px, 34%);
+    grid-template-columns: 130px minmax(0, 1fr) minmax(200px, 30%);
     grid-template-rows: minmax(0, 1fr) auto;
     gap: 4px 14px;
     width: 100%;
@@ -858,6 +854,15 @@ body:has(#hud) #view-landing-wrapper {
     gap: 2px;
     min-height: 0;
     text-align: left;
+}
+
+/* Tête de fiche, une ligne : nom, pastille de race, équipement porté
+ * calé à droite (écrans larges, voir la section Équipement) */
+#hud #ajax-data .hud-sel-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 10px;
 }
 
 #hud #ajax-data .hud-sel-main .card-name {
@@ -1255,34 +1260,39 @@ body:has(#hud) #view-landing-wrapper {
     color: var(--hud-parchment);
 }
 
-/* Vue de sélection : colonne dédiée de la grille, seulement quand la
- * place est là (dès les écrans de portable courants) — en dessous, le
- * bandeau garde ses trois zones et la fiche complète reste à un clic
- * (panneau). */
+/* Vue de sélection : en bout de la ligne de tête (nom, race, puis
+ * les alvéoles), sans titre, seulement quand la place est là (dès les
+ * écrans de portable courants) — en dessous, la fiche complète reste à
+ * un clic (panneau). */
 #hud #ajax-data .hud-sel .equip-strip {
     display: none;
 }
 
 @media (min-width: 1200px) {
 
-    #hud #ajax-data .hud-sel:has(.equip-strip) {
-        grid-template-columns: 130px minmax(0, 1fr) auto minmax(200px, 30%);
-    }
-
     #hud #ajax-data .hud-sel .equip-strip {
-        display: flex;
-        flex-direction: column;
-        grid-column: 3;
-        grid-row: 1 / span 2;
-        max-width: 170px;
-        min-height: 0;
-        overflow-y: auto;
-        border-left: 1px solid var(--hud-line-soft);
-        padding-left: 10px;
+        display: block;
+        flex: 0 0 auto;
+        margin-left: auto;
     }
 
-    #hud #ajax-data .hud-sel:has(.equip-strip) .hud-sel-tile {
-        grid-column: 4;
+    #hud #ajax-data .hud-sel .equip-strip-title {
+        display: none;
+    }
+
+    #hud #ajax-data .hud-sel .equip-slots {
+        flex-wrap: nowrap;
+        gap: 4px;
+    }
+
+    #hud #ajax-data .hud-sel .equip-slot {
+        width: 36px;
+        height: 36px;
+    }
+
+    #hud #ajax-data .hud-sel .equip-slot img {
+        max-width: 30px;
+        max-height: 30px;
     }
 }
 
@@ -1363,10 +1373,6 @@ body:has(#hud) #view-landing-wrapper {
 
 .hud-action-modal-again {
     padding: 6px 14px;
-    border: 1px solid var(--hud-bronze);
-    border-radius: 6px;
-    background: var(--hud-parchment);
-    color: var(--hud-ink);
     font: inherit;
     cursor: pointer;
 }
@@ -1990,27 +1996,6 @@ body:has(#hud) #load-caracs th {
     background: var(--hud-veil);
 }
 
-/* Boutons et champs : chips parchemin, encre */
-.hud-panel-content button,
-.hud-panel-content input[type="button"],
-.hud-panel-content select,
-body:has(#hud) #load-caracs button {
-    background: var(--hud-parchment);
-    border: 1px solid var(--hud-bronze);
-    border-radius: 4px;
-    color: var(--hud-ink);
-    box-shadow: none;
-}
-
-.hud-panel-content button:hover:not(:disabled),
-body:has(#hud) #load-caracs button:hover:not(:disabled) {
-    background: #fdf6e5;
-}
-
-.hud-panel-content button:disabled {
-    opacity: 0.45;
-    border-color: var(--hud-line-soft);
-}
 
 .hud-panel-content input[type="text"],
 .hud-panel-content input[type="password"],
@@ -2455,9 +2440,20 @@ body:has(#hud) #debug-flags {
         color: var(--hud-ink);
     }
 
-    /* The name line leaves room for the button */
-    #hud #ajax-data .hud-sel-main .card-name {
+    /* Name and race chip on one line (the strip is hidden here); the
+     * line leaves the button its corner */
+    #hud #ajax-data .hud-sel-head {
+        flex-wrap: nowrap;
+        gap: 8px;
         padding-right: 120px;
+        min-width: 0;
+    }
+
+    #hud #ajax-data .hud-sel-main .card-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     #hud #ajax-data .hud-sel--dialog .view-dialog {
@@ -2667,6 +2663,7 @@ body:has(#hud) #debug-flags {
     .hud-seg:active {
         background: var(--hud-veil);
         box-shadow: none;
+        transform: none;
     }
 
     .hud-seg--active,
@@ -2824,8 +2821,7 @@ body:has(#hud) .aoo-dialog {
     box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
 }
 
-body:has(#hud) .aoo-dialog-input,
-body:has(#hud) .aoo-dialog-buttons button {
+body:has(#hud) .aoo-dialog-input {
     background: var(--hud-parchment);
     border: 1px solid var(--hud-bronze);
     border-radius: 6px;
@@ -2833,8 +2829,8 @@ body:has(#hud) .aoo-dialog-buttons button {
     padding: 6px 12px;
 }
 
-body:has(#hud) .aoo-dialog-buttons button:hover {
-    background: #fdf6e5;
+body:has(#hud) .aoo-dialog-buttons button {
+    padding: 6px 12px;
 }
 
 /* ---------- Badge missives (personnage courant) ----------
@@ -3009,7 +3005,8 @@ body:has(#hud) .aoo-dialog-buttons button:hover {
     /* Le nom du personnage coiffe le portrait dans la coulisse :
      * .hud-sel-main éclate (display: contents), ses enfants
      * deviennent des éléments de la pile et le nom remonte en tête. */
-    #hud.hud--theater #ajax-data .hud-sel-main {
+    #hud.hud--theater #ajax-data .hud-sel-main,
+    #hud.hud--theater #ajax-data .hud-sel-head {
         display: contents;
     }
 
@@ -3091,16 +3088,7 @@ body:has(#hud) #admin-coords {
 }
 
 body:has(#hud) #admin-coords button {
-    background: var(--hud-parchment);
-    border: 1px solid var(--hud-bronze);
-    border-radius: 6px;
-    color: var(--hud-ink);
     padding: 4px 10px;
-    cursor: pointer;
-}
-
-body:has(#hud) #admin-coords button:hover {
-    background: #fdf6e5;
 }
 
 body:has(#hud) #admin-coords #admin-coords-close {

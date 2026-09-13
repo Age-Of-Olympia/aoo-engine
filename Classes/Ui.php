@@ -56,7 +56,7 @@ class Ui{
          * pixel pour les autres. have_option est mémoïsé, le test est
          * gratuit. Filigrane « aootest » hors prod, comme le HUD. */
         if (self::usesPaperTheme()) {
-            echo '<link href="css/paper-app.css?v=20260715a" rel="stylesheet">';
+            echo '<link href="css/paper-app.css?v=20260913a" rel="stylesheet">';
 
             $paperBg = function_exists('aoo_paper_background') ? aoo_paper_background() : '/img/ui/paper/paper.jpg';
             if ($paperBg !== '/img/ui/paper/paper.jpg') {

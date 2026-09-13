@@ -126,9 +126,8 @@ final class TopBarView
          * nothing. Fragment script: delegated, namespaced. */
         $mainId = (int) ($_SESSION['mainPlayerId'] ?? 0);
         if ($mainId > 0 && (int) $player->id !== $mainId) {
-            echo '<button id="hud-stop-impersonation" class="hud-quick-icon"'
-                . ' title="Reprendre son personnage">'
-                . '<span class="ra ra-player"></span>&#10005;</button>'
+            echo '<button id="hud-stop-impersonation" title="Reprendre son personnage">'
+                . '<span class="ra ra-player"></span></button>'
                 . '<script>
                     $(document).off("click.stopImpersonation", "#hud-stop-impersonation")
                         .on("click.stopImpersonation", "#hud-stop-impersonation", function(){
@@ -144,7 +143,7 @@ final class TopBarView
          * reste sur la touche ² et la page Profil. */
         if ($player->have_option('isSuperAdmin')) {
             echo '<a href="admin/" title="Panneau d\'administration">'
-                . '<button class="hud-quick-icon"><span class="ra ra-cog"></span></button></a>';
+                . '<button><span class="ra ra-cog"></span></button></a>';
         }
 
         /* L'éditeur de carte, pour qui y a droit. Il se trouvait par son
@@ -153,14 +152,14 @@ final class TopBarView
          * ne mène jamais à un refus. */
         if ($player->have_option('isAdmin')) {
             echo '<a href="tiled.php" title="Éditer le damier">'
-                . '<button class="hud-quick-icon"><span class="ra ra-hammer"></span></button></a>';
+                . '<button><span class="ra ra-hammer"></span></button></a>';
         }
 
         /* Redessiner sa vue depuis la carte : le damier est mis en cache par
          * joueur, et jusqu'ici on ne pouvait le forcer que depuis la page
          * Profil — c'est-à-dire en quittant l'écran où le problème se voit. */
         echo '<a href="refresh_view.php?retour=1" title="Redessiner la vue">'
-            . '<button class="hud-quick-icon"><span class="ra ra-cycle"></span></button></a>';
+            . '<button><span class="ra ra-cycle"></span></button></a>';
 
         /* Badge orange : sujets de forum non lus (les missives ont déjà
          * leurs pastilles rouge — personnage courant — et bleue —
@@ -171,12 +170,14 @@ final class TopBarView
             ? '<span id="forum-unread-badge" class="cartouche bulle">' . $forumUnread . '</span>'
             : '';
 
-        echo '<a href="classements.php" title="Classements"><button class="hud-quick-icon"><span class="ra ra-trophy"></span></button></a>'
+        /* Icônes seules, comme le rail : le libellé vit dans le title
+         * (infobulle ici, texte dans le tiroir mobile via js/hud.js). */
+        echo '<a href="classements.php" title="Classements"><button><span class="ra ra-trophy"></span></button></a>'
             /* Le bouton mène à l'ACCUEIL du forum (catégories) ; les
              * derniers messages y restent à un clic. */
-            . '<a href="forum.php" title="' . self::lastPostTitle($player) . '"><button>Forum' . $forumBadge . '</button></a>'
-            . '<a href="index.php?menu" title="Menu principal"><button><span class="ra ra-castle-flag"></span></button></a>'
-            . '<a href="index.php?logout" title="Se déconnecter"><button>Déconnexion</button></a>'
+            . '<a href="forum.php" data-label="Forum" title="Forum — ' . self::lastPostTitle($player) . '"><button><span class="ra ra-speech-bubbles"></span>' . $forumBadge . '</button></a>'
+            . '<a href="index.php?menu" title="Menu principal"><button><span class="ra ra-castle-emblem"></span></button></a>'
+            . '<a href="index.php?logout" title="Se déconnecter"><button><span class="ra ra-footprint"></span></button></a>'
             . '</div>';
 
         echo '</header>';

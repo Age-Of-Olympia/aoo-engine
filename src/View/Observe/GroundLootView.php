@@ -33,6 +33,8 @@ final class GroundLootView
 
         echo '<div class="case-infos">';
         echo '<img src="img/tiles/loot.png" title="Bourse" />';
+        /* One .ground-line per row: a flex line pushes the take button to
+         * the end, whatever the name length (css/hud.css). */
         echo '<div class="text"><b>Au sol :</b><br />';
 
         foreach ($loot['stacks'] as $row) {
@@ -40,9 +42,9 @@ final class GroundLootView
             $groundItem = new \Classes\Item($row->item_id);
             $groundItem->get_data();
 
-            echo '<img src="'. self::mini((string) $row->name, (string) ($groundItem->data->mini ?? '')) .'" style="max-height:22px;vertical-align:middle;" alt="" /> '
+            echo '<div class="ground-line"><img src="'. self::mini((string) $row->name, (string) ($groundItem->data->mini ?? '')) .'" style="max-height:22px;vertical-align:middle;" alt="" /> '
                 . $groundItem->data->name .' x'. (int) $row->n
-                . $lineButton('data-item', (int) $row->item_id) .'<br />';
+                . $lineButton('data-item', (int) $row->item_id) .'</div>';
         }
 
         foreach ($loot['instances'] as $row) {
@@ -55,9 +57,9 @@ final class GroundLootView
                 ? ' — <font color="red"><b>brisé</b></font>'
                 : ' — durabilité '. (int) $row->durability .'/'. (int) $row->durability_max;
 
-            echo '<img src="'. self::mini((string) $row->name, 'img/items/'. $row->name .'_mini.webp') .'" style="max-height:22px;vertical-align:middle;" alt="" /> '
+            echo '<div class="ground-line"><img src="'. self::mini((string) $row->name, 'img/items/'. $row->name .'_mini.webp') .'" style="max-height:22px;vertical-align:middle;" alt="" /> '
                 . $label . $state
-                . $lineButton('data-instance', (int) $row->instance_id) .'<br />';
+                . $lineButton('data-instance', (int) $row->instance_id) .'</div>';
         }
 
         /* Les plantes se montrent avec le reste : on ne les cueille plus en
@@ -66,8 +68,8 @@ final class GroundLootView
          * de quantité ici. */
         foreach ($loot['plants'] as $row) {
 
-            echo '<img src="'. self::mini((string) $row->name, 'img/plants/'. $row->name .'.png') .'" style="max-height:22px;vertical-align:middle;" alt="" /> '
-                . ucfirst((string) $row->name) .' <sup>(à cueillir)</sup><br />';
+            echo '<div class="ground-line"><img src="'. self::mini((string) $row->name, 'img/plants/'. $row->name .'.png') .'" style="max-height:22px;vertical-align:middle;" alt="" /> '
+                . ucfirst((string) $row->name) .' <sup>(à cueillir)</sup></div>';
         }
 
         /* Le bouton n'apparaît que sur SA case : ramasser demande d'être

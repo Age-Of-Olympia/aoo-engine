@@ -1257,10 +1257,19 @@
                 $type.append(' · ').append($faction);
             }
 
-            var $main = $('<div class="hud-sel-main"></div>').append(
+            /* Tête, sur une ligne : nom, pastille de race, puis
+             * l'équipement porté (observe.php, personnage sélectionné)
+             * calé à droite sur écrans larges (CSS). La plaque de parole
+             * prend toute la largeur en dessous — plus de colonne dédiée
+             * de la grille. */
+            var $head = $('<div class="hud-sel-head"></div>').append(
                 $w.children('.card-name'),
                 $type,
                 $faction.parent().hasClass('card-type') ? $() : $faction,
+                $d.children('.equip-strip')
+            );
+            var $main = $('<div class="hud-sel-main"></div>').append(
+                $head,
                 /* Bâtiment : pastille d'état (Ouvert/Fermé + PV) sous la
                  * ligne de type — émise par observe.php à côté de la carte. */
                 $d.find('.building-status'),
@@ -1311,10 +1320,6 @@
                 })
                 .appendTo($main);
         }
-
-        /* Équipement porté (observe.php, personnage sélectionné) :
-         * colonne dédiée de la grille, écrans larges seulement (CSS). */
-        $sel.append($d.children('.equip-strip'));
 
         /* Dialogue porté par un bâtiment OUVERT (observe.php n'émet
          * .view-dialog que dans ce cas) : cellule dédiée de la zone de
@@ -1842,11 +1847,13 @@
         /* Libellés du tiroir : certains boutons du menu hérité sont
          * icône seule (le nom vit dans le title du lien) — sans copie,
          * le tiroir mélangeait entrées nommées et pictogrammes muets.
-         * Le texte ajouté reste invisible en rail desktop (font-size:0). */
+         * Le texte ajouté reste invisible en rail desktop (font-size:0).
+         * data-label prime quand le title porte plus que le nom (Forum
+         * et son dernier message). */
         $('#hud-rail #menu > a[title]').each(function () {
             var $btn = $(this).children('button').first();
             if ($btn.length && !$btn.text().trim()) {
-                $btn.append(document.createTextNode(' ' + this.title));
+                $btn.append(document.createTextNode(' ' + (this.dataset.label || this.title)));
             }
         });
 
