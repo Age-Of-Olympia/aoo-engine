@@ -136,6 +136,14 @@ final class TypeEditorFace
         );
     }
 
+    /** @return array<string, self> every face, by key, in menu order */
+    public static function all(): array
+    {
+        $faces = [self::character(), self::building(), self::scenery(), self::resource(), self::plant()];
+
+        return array_combine(array_map(static fn(self $face): string => $face->key, $faces), $faces);
+    }
+
     /**
      * The face a given row belongs to, whichever page one came from.
      *

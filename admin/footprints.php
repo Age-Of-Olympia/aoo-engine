@@ -109,17 +109,11 @@ foreach (array_merge(array_keys($catalogue), array_keys($kinds)) as $family) {
 
 $kindOf = static fn(string $family): string => $kinds[$family] ?? TypeEditorFace::SCENERY;
 
-$kindLabels = [
-    TypeEditorFace::CHARACTER => 'Personnages',
-    TypeEditorFace::BUILDING  => 'Bâtiments',
-    TypeEditorFace::SCENERY   => 'Décors',
-    TypeEditorFace::RESOURCE  => 'Ressources',
-    TypeEditorFace::PLANT     => 'Plantes',
-];
+$faces = TypeEditorFace::all();
 
 /* One type's own page (`?type=`), or one kind's (`?kind=`). */
 $onlyType = trim((string) ($_GET['type'] ?? ''));
-$onlyKind = isset($kindLabels[(string) ($_GET['kind'] ?? '')]) ? (string) $_GET['kind'] : '';
+$onlyKind = isset($faces[(string) ($_GET['kind'] ?? '')]) ? (string) $_GET['kind'] : '';
 $back = $onlyType !== '' ? '?type=' . urlencode($onlyType) : ($onlyKind !== '' ? '?kind=' . $onlyKind : '');
 
 if ($onlyType !== '') {
@@ -162,7 +156,7 @@ ob_start();
 ?>
 
 <div class="container">
-    <h2 class="section-title">Emprises<?= $onlyType !== '' ? ' — ' . e($labels[$onlyType] ?? $onlyType) : ($onlyKind !== '' ? ' — ' . $kindLabels[$onlyKind] : '') ?></h2>
+    <h2 class="section-title">Emprises<?= $onlyType !== '' ? ' — ' . e($labels[$onlyType] ?? $onlyType) : ($onlyKind !== '' ? ' — ' . e($faces[$onlyKind]->title) : '') ?></h2>
 
     <p class="text-content">
         Tout ce qui se tient sur le plateau — personnage, bâtiment, décor, plante — peut occuper
@@ -270,8 +264,8 @@ ob_start();
 
         <?php if ($onlyType === '' && $onlyKind === ''): ?>
         <div class="fp-filters" role="group" aria-label="Filtrer par sorte">
-            <?php foreach ($kindLabels as $kindKey => $kindLabel): ?>
-                <a class="btn btn-sm btn-outline-secondary" href="?kind=<?= e($kindKey) ?>"><?= e($kindLabel) ?></a>
+            <?php foreach ($faces as $face): ?>
+                <a class="btn btn-sm btn-outline-secondary" href="?kind=<?= e($face->key) ?>"><?= e($face->title) ?></a>
             <?php endforeach; ?>
         </div>
         <?php elseif ($onlyType === ''): ?>
@@ -329,7 +323,7 @@ ob_start();
             <header class="fp-card__head">
                 <span>
                     <code class="fp-card__name"><?= e($name) ?></code>
-                    <small class="text-muted"><?= e($kindLabels[$kind] ?? $kind) ?></small>
+                    <small class="text-muted"><?= e($faces[$kind]->singular) ?></small>
                 </span>
                 <span class="fp-badge <?= $originClass ?>" title="<?= e($originHint) ?>"><?= e($originLabel) ?></span>
             </header>
