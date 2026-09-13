@@ -303,6 +303,15 @@ if (!empty($passives)) {
     echo '</table>';
 }
 
+/* Every tree, read-only: where the player stands, level by level, without
+ * walking to a school. The buttons stay at the school. */
+echo '<div style="margin-top: 20px;"></div>';
+echo \App\View\WarSchool\SkillTreeView::styles();
+echo '<div class="ws-content">'
+    . '<h2 style="text-align:center;font-family:sans-serif;font-size:1.1em">Arbres de compétences</h2>'
+    . (new \App\View\WarSchool\SkillTreeView())->overview($player)
+    . '</div>';
+
 ?>
 <script src="js/forget_spells.js?v=20260716"></script>
 <?php

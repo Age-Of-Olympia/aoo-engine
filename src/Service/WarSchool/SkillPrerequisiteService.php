@@ -148,6 +148,24 @@ final class SkillPrerequisiteService
         return $this->spellCountAt($level) < $this->spellSlotsAt($level);
     }
 
+    /** Owned non-spell skills and passives of a tree at one level. */
+    public function treeCountAt(string $tree, int $level): int
+    {
+        return $this->treeCounts[$tree][$level] ?? 0;
+    }
+
+    /** How many skills each level below must hold before the next opens. */
+    public static function requiredPerLevel(string $tree): int
+    {
+        return self::REQUIRED_PER_LEVEL[in_array($tree, self::PRIMARY_TREES, true) ? 'primary' : 'secondary'];
+    }
+
+    /** The tree gate alone: is this level reachable, regardless of need/forbidden lists? */
+    public function isLevelOpen(?string $category, int $level): bool
+    {
+        return $this->passesTreeGate($category, $level);
+    }
+
     public function isUsable(ActionInterface $action): bool
     {
         return $this->isSkillUsable($action->getCategory(), $action->getLevel(), $action->getPrerequisites());
@@ -193,10 +211,10 @@ final class SkillPrerequisiteService
             return $this->hasFreeSpellSlot($level);
         }
 
-        $required = self::REQUIRED_PER_LEVEL[in_array($tree, self::PRIMARY_TREES, true) ? 'primary' : 'secondary'];
+        $required = self::requiredPerLevel($tree);
 
         for ($n = 1; $n < $level; $n++) {
-            if (($this->treeCounts[$tree][$n] ?? 0) < $required) {
+            if ($this->treeCountAt($tree, $n) < $required) {
                 return false;
             }
         }

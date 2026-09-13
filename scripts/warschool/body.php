@@ -93,28 +93,12 @@ $warschool = new WarSchool($trainer);
  * Typography shared by the school's tabs. This body is the single way in,
  * full page as well as HUD panel: dress the tabs here rather than in each
  * view, and a new tab joins the list to get the same look.
- *
- * The rules stay inline rather than in a sheet: the HUD panel arrives by
- * AJAX, without the Ui wrapper that loads the sheets.
  */
 $skillTabs = ['melee', 'distance', 'magic', 'spells', 'stealth', 'survival', 'reassignation'];
 $onSkillTab = (bool) array_intersect($skillTabs, array_keys($_GET));
 
 if ($onSkillTab) {
-    echo '<style>'
-        . '.ws-content h1{font-size:1.6em}'
-        . '.ws-content h2{font-family:sans-serif;font-size:1.1em;font-weight:bold}'
-        . '.ws-content h3{font-family:sans-serif;font-size:1.05em;font-weight:normal}'
-        . '.ws-content .ws-info{font-family:sans-serif;font-size:1.05em;text-align:center;margin:6px 0}'
-        . '.ws-content .ws-legend{cursor:pointer;margin-bottom:20px;background:rgba(0,0,0,.05);padding:10px;border-radius:5px}'
-        . '.ws-content .ws-legend summary{display:flex;align-items:center;justify-content:center;font-weight:bold;margin:15px 0;outline:none}'
-        . '.ws-content .ws-legend summary h3{margin:0;display:inline;font-size:1.17em}'
-        . '.ws-content .ws-legend h3{margin:5px 0}'
-        . '.ws-content .ws-effect{max-width:400px;padding:10px}'
-        . '.ws-content .ws-wiki{text-decoration:underline;color:#2980b9}'
-        . '.ws-content .ws-off{color:#c0392b}.ws-content .ws-curse{color:#8e44ad}.ws-content .ws-buff{color:#2980b9}.ws-content .ws-support{color:#27ae60}'
-        . '.ws-content .ws-warn{color:red}.ws-content .ws-stealth{color:blue}.ws-content .ws-full{color:red}'
-        . '</style>';
+    echo SkillTreeView::styles();
     echo '<div class="ws-content">';
 }
 

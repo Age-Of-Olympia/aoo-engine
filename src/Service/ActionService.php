@@ -189,6 +189,25 @@ class ActionService
         return $names;
     }
 
+    /**
+     * Every action as name => display name.
+     *
+     * @return array<string, string>
+     */
+    public function getAllNames(): array
+    {
+        $rows = $this->entityManager->createQuery(
+            'SELECT a.name, a.displayName FROM App\Entity\Action a'
+        )->getArrayResult();
+
+        $names = [];
+        foreach ($rows as $row) {
+            $names[$row['name']] = (string) ($row['displayName'] ?: $row['name']);
+        }
+
+        return $names;
+    }
+
     public function getCatalogMeta(): array
     {
         $rows = $this->entityManager->createQuery(

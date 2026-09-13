@@ -14,8 +14,11 @@ use Classes\Player;
 use Classes\Str;
 
 /**
- * A war-school tab: the actives of a category and, except for spells, its
- * passives, each row with its buy button. The tabs differ by data only
+ * A war-school tab as a tree: one column per level, the actives and (except
+ * for spells) the passives of the category as cards, each card coloured by
+ * its state — learned, open, locked. The column head carries the gate that
+ * opens it (skills owned at the level below, or free spell slots), so the
+ * player reads the rule where it applies. The tabs differ by data only
  * ({@see SkillTab}); the spell tab differs by its cap rule.
  */
 final class SkillTreeView
@@ -32,6 +35,9 @@ final class SkillTreeView
 
     /** @var array<string, SkillTab>|null */
     private static ?array $tabs = null;
+
+    /** @var array<string, string>|null name => display name, actions and passives */
+    private ?array $displayNames = null;
 
     public function __construct(
         private readonly ActionService $actions = new ActionService(),
@@ -77,6 +83,47 @@ final class SkillTreeView
         ];
     }
 
+    /**
+     * The tabs' styles, inline: the HUD panel receives the body by AJAX,
+     * without the Ui wrapper that loads the sheets. Scoped to .ws-content.
+     */
+    public static function styles(): string
+    {
+        return '<style>'
+            . '.ws-content h1{font-size:1.6em}'
+            . '.ws-content h2{font-family:sans-serif;font-size:1.1em;font-weight:bold}'
+            . '.ws-content h3{font-family:sans-serif;font-size:1.05em;font-weight:normal}'
+            . '.ws-content .ws-info{font-family:sans-serif;font-size:1.05em;text-align:center;margin:6px 0}'
+            . '.ws-content .ws-legend{cursor:pointer;margin-bottom:20px;background:rgba(0,0,0,.05);padding:10px;border-radius:5px}'
+            . '.ws-content .ws-legend summary{display:flex;align-items:center;justify-content:center;font-weight:bold;margin:15px 0;outline:none}'
+            . '.ws-content .ws-legend summary h3{margin:0;display:inline;font-size:1.17em}'
+            . '.ws-content .ws-legend h3{margin:5px 0}'
+            . '.ws-content .ws-wiki{text-decoration:underline;color:#2980b9}'
+            . '.ws-content .ws-off{color:#c0392b}.ws-content .ws-curse{color:#8e44ad}.ws-content .ws-buff{color:#2980b9}.ws-content .ws-support{color:#27ae60}'
+            . '.ws-content .ws-warn{color:red}.ws-content .ws-stealth{color:blue}.ws-content .ws-full{color:red}'
+            /* the tree: one column per level, scrolling sideways when narrow */
+            . '.ws-content .ws-tree{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(200px,1fr);gap:10px;overflow-x:auto;padding:4px;font-family:sans-serif;text-align:left}'
+            . '.ws-content .ws-level{display:flex;flex-direction:column;gap:8px}'
+            . '.ws-content .ws-level-head{display:flex;justify-content:space-between;align-items:baseline;gap:6px;padding:6px 8px;border-radius:5px;background:rgba(0,0,0,.08)}'
+            . '.ws-content .ws-level-head.ws-locked{color:#888}'
+            . '.ws-content .ws-level-head.ws-open{border-left:4px solid #27ae60}'
+            . '.ws-content .ws-gate{font-size:.85em}'
+            . '.ws-content .ws-card{display:flex;gap:8px;padding:6px;border-radius:5px;border:2px solid rgba(0,0,0,.15);background:rgba(255,255,255,.35)}'
+            . '.ws-content .ws-card img{width:48px;height:48px;flex:none;border-radius:4px}'
+            . '.ws-content .ws-card-body{display:flex;flex-direction:column;gap:3px;min-width:0}'
+            . '.ws-content .ws-card.ws-owned{border-color:#27ae60;background:rgba(39,174,96,.12)}'
+            . '.ws-content .ws-card.ws-open{border-color:#2980b9}'
+            . '.ws-content .ws-card.ws-locked{opacity:.55}'
+            . '.ws-content .ws-meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:.85em}'
+            . '.ws-content .ws-kind{text-transform:uppercase;letter-spacing:.05em;font-size:.8em;color:#666}'
+            . '.ws-content .ws-effect{font-size:.9em}'
+            . '.ws-content .ws-needs{font-size:.85em}'
+            . '.ws-content .ws-ok{color:#27ae60}.ws-content .ws-ko{color:#c0392b}'
+            . '.ws-content .ws-card .buy-skill-btn,.ws-content .ws-card button{margin-top:4px;align-self:flex-start}'
+            . '.ws-content .ws-overview summary h3{font-weight:bold}'
+            . '</style>';
+    }
+
     public function render(Player $player, string $category): void
     {
         $tab = self::tabs()[$category];
@@ -87,24 +134,35 @@ final class SkillTreeView
 
         $html = $this->header($tab, $prereqs, $gold)
             . $this->legend($tab)
-            . $this->actives($tab, $player, $prereqs, $gold)
-            . ($tab->spells ? '' : $this->passives($tab, $player, $prereqs, $gold));
+            . $this->tree($tab, $player, $prereqs, $gold);
 
         echo Str::minify($html);
         echo '<script src="js/warschool.js?v=20260714"></script>';
     }
 
+    /** Every tree, read-only: the player's standing without a school around. */
+    public function overview(Player $player): string
+    {
+        $prereqs = SkillPrerequisiteService::forPlayer($player->getId());
+
+        $html = '';
+        foreach (self::tabs() as $tab) {
+            $html .= '<details class="ws-legend ws-overview"><summary><h3>' . $this->esc($tab->title) . '</h3></summary>'
+                . $this->tree($tab, $player, $prereqs, null)
+                . '</details>';
+        }
+
+        return $html;
+    }
+
     private function header(SkillTab $tab, SkillPrerequisiteService $prereqs, int $gold): string
     {
         if ($tab->spells) {
-            $slots = [];
-            for ($level = 1; $level <= 5; $level++) {
-                $full = $prereqs->hasFreeSpellSlot($level) ? '' : ' class="ws-full"';
-                $slots[] = 'lvl ' . $level . ' : <span' . $full . '>' . $prereqs->spellCountAt($level) . '/' . $prereqs->spellSlotsAt($level) . '</span>';
-            }
-            $info = 'Emplacements de sorts : ' . implode('&nbsp;&middot;&nbsp;', $slots);
+            $info = 'Un sort occupe un emplacement de son niveau ; les passifs d\'emplacement en ouvrent';
         } else {
-            $info = 'Compétences apprises : ' . $prereqs->capCount() . '/' . NUMBER_MAX_COMP . ' (sorts + passifs cumulés)';
+            $required = SkillPrerequisiteService::requiredPerLevel($tab->category);
+            $info = 'Compétences apprises : ' . $prereqs->capCount() . '/' . NUMBER_MAX_COMP . ' (sorts + passifs cumulés)'
+                . '&nbsp;&middot;&nbsp;Un niveau s\'ouvre avec ' . $required . ' compétence' . ($required > 1 ? 's' : '') . ' ' . $tab->of . ' apprise' . ($required > 1 ? 's' : '') . ' à chaque niveau inférieur';
         }
 
         return '<h1>' . $this->esc($tab->title) . '</h1>'
@@ -124,72 +182,124 @@ final class SkillTreeView
             . '</details>';
     }
 
-    private function actives(SkillTab $tab, Player $player, SkillPrerequisiteService $prereqs, int $gold): string
+    /**
+     * The grid: one column per level, cards inside. $gold null renders
+     * without buy buttons (the overview).
+     */
+    private function tree(SkillTab $tab, Player $player, SkillPrerequisiteService $prereqs, ?int $gold): string
     {
-        $actions = $this->actions->getActionsByCategory($tab->category);
+        /** @var array<int, list<Action|ActionPassive>> level => skills */
+        $byLevel = [];
+        foreach ($this->actions->getActionsByCategory($tab->category) as $action) {
+            $byLevel[$action->getLevel()][] = $action;
+        }
+        if (!$tab->spells) {
+            foreach ($this->passives->getActionPassivesByCategory($tab->category) as $passive) {
+                $byLevel[$passive->getLevel()][] = $passive;
+            }
+        }
+
+        if ($byLevel === []) {
+            return '<div class="section"><p>' . $this->esc($tab->spells ? 'Aucun sort disponible.' : 'Aucune compétence ' . $tab->of . ' disponible.') . '</p></div>';
+        }
+        ksort($byLevel);
+
+        // need/forbidden lists may point at another tree: resolve over the whole catalogue
+        $displayNames = $this->displayNames ??= $this->actions->getAllNames() + $this->passives->getAllNames();
+
         $costView = new ActionCostView($this->actions);
-
-        $rows = '';
-        foreach ($actions as $action) {
-            $capped = $tab->spells ? !$prereqs->hasFreeSpellSlot($action->getLevel()) : $prereqs->isFull();
-            $price = $this->actions->getPrice($action->getLevel());
-            $rows .= $this->row(
-                $action,
-                $player,
-                '<td align="center"><strong>' . $costView->forAction($action) . '</strong></td>',
-                SkillPurchaseHandler::buyButton($action->getName(), 'active', $price, $gold, $prereqs->owns($action->getName()), $this->learnable($action, $player), $capped, $prereqs->isUsable($action))
-            );
+        $columns = '';
+        foreach ($byLevel as $level => $skills) {
+            $cards = '';
+            foreach ($skills as $skill) {
+                $cards .= $this->card($skill, $tab, $player, $prereqs, $gold, $costView, $displayNames);
+            }
+            $columns .= '<div class="ws-level">' . $this->levelHead($tab, $level, $prereqs) . $cards . '</div>';
         }
 
-        return $this->section(
-            $tab->spells ? null : 'Compétences actives',
-            $rows,
-            ['Icône', 'Nom', 'Effet', 'Coût', 'Race', 'Prix'],
-            $tab->spells ? 'Aucun sort disponible.' : 'Aucune compétence active ' . $tab->of . ' disponible.'
-        );
+        return '<div class="section ws-tree">' . $columns . '</div>';
     }
 
-    private function passives(SkillTab $tab, Player $player, SkillPrerequisiteService $prereqs, int $gold): string
+    /** "Niveau N" plus the gate that opens it, in the player's numbers. */
+    private function levelHead(SkillTab $tab, int $level, SkillPrerequisiteService $prereqs): string
     {
-        $rows = '';
-        foreach ($this->passives->getActionPassivesByCategory($tab->category) as $passive) {
-            $price = $this->passives->getPrice($passive->getLevel());
-            $rows .= $this->row(
-                $passive,
-                $player,
-                '',
-                SkillPurchaseHandler::buyButton($passive->getName(), 'passive', $price, $gold, $prereqs->owns($passive->getName()), $this->learnable($passive, $player), $prereqs->isFull(), $prereqs->isPassiveUsable($passive))
-            );
+        $open = $prereqs->isLevelOpen($tab->category, $level);
+
+        if ($tab->spells) {
+            $gate = 'Emplacements : ' . $prereqs->spellCountAt($level) . '/' . $prereqs->spellSlotsAt($level);
+        } elseif ($level === 1) {
+            $gate = 'Toujours ouvert';
+        } else {
+            $required = SkillPrerequisiteService::requiredPerLevel($tab->category);
+            $gate = 'Niveau ' . ($level - 1) . ' : ' . min($prereqs->treeCountAt($tab->category, $level - 1), $required) . '/' . $required . ' apprise' . ($required > 1 ? 's' : '');
         }
 
-        return $this->section('Compétences passives', $rows, ['Icône', 'Nom', 'Effet', 'Race', 'Prix'], 'Aucune compétence passive ' . $tab->of . ' disponible.');
+        return '<div class="ws-level-head' . ($open ? ' ws-open' : ' ws-locked') . '">'
+            . '<strong>Niveau ' . $level . '</strong>'
+            . '<span class="ws-gate">' . $this->esc($gate) . '</span>'
+            . '</div>';
     }
 
-    /** @param list<string> $columns */
-    private function section(?string $title, string $rows, array $columns, string $empty): string
-    {
-        $body = $rows === ''
-            ? '<p>' . $this->esc($empty) . '</p>'
-            : '<table border="1" align="center" class="marbre"><thead><tr><th>' . implode('</th><th>', $columns) . '</th></tr></thead><tbody>' . $rows . '</tbody></table>';
-
-        return '<div class="section">' . ($title === null ? '' : '<h2>' . $title . '</h2>') . $body . '</div>';
-    }
-
-    /** One row; $costCell is empty for passives, which have no cost column. */
-    private function row(Action|ActionPassive $skill, Player $player, string $costCell, string $buyButton): string
-    {
+    /** @param array<string, string> $displayNames */
+    private function card(
+        Action|ActionPassive $skill,
+        SkillTab $tab,
+        Player $player,
+        SkillPrerequisiteService $prereqs,
+        ?int $gold,
+        ActionCostView $costView,
+        array $displayNames
+    ): string {
         $name = $skill->getName();
+        $isPassive = $skill instanceof ActionPassive;
+        $owned = $prereqs->owns($name);
+        $learnable = $this->learnable($skill, $player);
+        $usable = $isPassive ? $prereqs->isPassiveUsable($skill) : $prereqs->isUsable($skill);
+        $state = $owned ? 'ws-owned' : (($learnable && $usable) ? 'ws-open' : 'ws-locked');
+
         $race = $skill->getRace();
         $image = file_exists('img/spells/' . $name . '.jpeg') ? $name : 'todo';
 
-        return '<tr>'
-            . '<td><img src="img/spells/' . $this->esc($image) . '.jpeg" /></td>'
-            . '<td align="left"><strong class="' . self::colorClass($skill->getCategory()) . '">' . $this->esc($skill->getDisplayName()) . '</strong><br /><sup>Niveau ' . $skill->getLevel() . '</sup></td>'
-            . '<td align="left" class="ws-effect"><i>' . $this->esc($skill->getText()) . '</i></td>'
-            . $costCell
-            . '<td align="center"><strong style="color: ' . RaceService::getRaceColor($race) . ';">' . (empty($race) ? 'Commun' : $this->esc(ucfirst($race))) . '</strong></td>'
-            . '<td>' . $buyButton . '</td>'
-            . '</tr>';
+        $meta = '<span class="ws-kind">' . ($tab->spells ? 'Sort' : ($isPassive ? 'Passif' : 'Actif')) . '</span>'
+            . '<span style="color: ' . RaceService::getRaceColor($race) . ';">' . (empty($race) ? 'Commun' : $this->esc(ucfirst($race))) . '</span>'
+            . ($isPassive ? '' : '<span>' . $costView->forAction($skill) . '</span>');
+
+        $button = '';
+        if ($gold !== null) {
+            $capped = $tab->spells ? !$prereqs->hasFreeSpellSlot($skill->getLevel()) : $prereqs->isFull();
+            $price = $isPassive ? $this->passives->getPrice($skill->getLevel()) : $this->actions->getPrice($skill->getLevel());
+            $button = SkillPurchaseHandler::buyButton($name, $isPassive ? 'passive' : 'active', $price, $gold, $owned, $learnable, $capped, $usable, $tab->spells ? 'Aucun emplacement' : 'Max atteint');
+        }
+
+        return '<div class="ws-card ' . $state . '">'
+            . '<img src="img/spells/' . $this->esc($image) . '.jpeg" alt="" />'
+            . '<div class="ws-card-body">'
+            . '<strong class="' . self::colorClass($skill->getCategory()) . '">' . $this->esc($skill->getDisplayName()) . '</strong>'
+            . '<div class="ws-meta">' . $meta . '</div>'
+            . '<i class="ws-effect">' . $this->esc($skill->getText()) . '</i>'
+            . $this->needs($skill->getPrerequisites(), $prereqs, $displayNames)
+            . $button
+            . '</div>'
+            . '</div>';
+    }
+
+    /** The need/forbidden lists as lines, each name ticked when it holds. */
+    private function needs(?string $json, SkillPrerequisiteService $prereqs, array $displayNames): string
+    {
+        $lists = json_decode($json ?? '', true) ?: [];
+        $lines = '';
+        foreach (['need' => 'Requiert', 'forbidden' => 'Incompatible avec'] as $key => $label) {
+            $items = [];
+            foreach ($lists[$key] ?? [] as $other) {
+                $ok = ($key === 'need') === $prereqs->owns($other);
+                $items[] = '<span class="' . ($ok ? 'ws-ok' : 'ws-ko') . '">' . $this->esc($displayNames[$other] ?? $other) . '</span>';
+            }
+            if ($items !== []) {
+                $lines .= '<div class="ws-needs">' . $label . ' : ' . implode(', ', $items) . '</div>';
+            }
+        }
+
+        return $lines;
     }
 
     private function learnable(Action|ActionPassive $skill, Player $player): bool

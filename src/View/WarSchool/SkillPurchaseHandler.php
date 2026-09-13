@@ -87,7 +87,8 @@ final class SkillPurchaseHandler
         bool $alreadyLearned,
         bool $isRaceLearnable,
         bool $isFull,
-        bool $hasPrerequisites
+        bool $hasPrerequisites,
+        string $fullText = 'Max atteint'
     ): string {
         if ($alreadyLearned) {
             return '<button class="create" disabled>Déjà apprise</button>';
@@ -100,7 +101,7 @@ final class SkillPurchaseHandler
         $disabled = (($playerGold < $price) || $isFull || !$hasPrerequisites) ? 'disabled' : '';
 
         if ($isFull) {
-            $btnText = 'Max atteint';
+            $btnText = $fullText;
         } elseif (!$hasPrerequisites) {
             $btnText = 'Pré-requis manquants';
         } else {
