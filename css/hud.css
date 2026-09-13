@@ -2526,6 +2526,12 @@ body:has(#hud) #debug-flags {
         line-height: 1.9;
     }
 
+    #hud-action-modal .hud-sel-tile-empty {
+        margin: 4px 0 8px;
+        font-style: italic;
+        opacity: 0.7;
+    }
+
     #hud-action-modal .case-infos .text img {
         float: none;
         margin: 0 4px 0 0;

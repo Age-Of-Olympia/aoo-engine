@@ -1298,6 +1298,15 @@
                 .append('<span class="ra ra-aware"></span> Voir le sol')
                 .on('click', function () {
                     var $selNow = $(this).closest('.hud-sel');
+                    /* observe.php emits .case-infos only when the tile
+                     * holds something: an empty floor gets a line, not a
+                     * sheet with the coordinates alone. */
+                    if (!$selNow.children('.hud-sel-tile').length) {
+                        $('<div class="hud-sel-tile"></div>')
+                            .append('<div class="hud-sel-tile-title">Sur la case</div>')
+                            .append('<p class="hud-sel-tile-empty">Il n\'y a rien ici.</p>')
+                            .insertBefore($selNow.children('#case-coords'));
+                    }
                     hudSheetShowNodes($selNow.children('.hud-sel-tile, #case-coords'), $selNow);
                 })
                 .appendTo($main);
