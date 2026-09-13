@@ -112,8 +112,11 @@ final class SkillTreeView
             . '.ws-content .ws-card img{width:48px;height:48px;flex:none;border-radius:4px}'
             . '.ws-content .ws-card-body{display:flex;flex-direction:column;gap:3px;min-width:0}'
             . '.ws-content .ws-card.ws-owned{border-color:#27ae60;background:rgba(39,174,96,.12)}'
-            . '.ws-content .ws-card.ws-open{border-color:#2980b9}'
+            . '.ws-content .ws-card.ws-open{border-color:#2980b9;border-style:dashed}'
             . '.ws-content .ws-card.ws-locked{opacity:.55}'
+            . '.ws-content .ws-state{font-size:.8em;text-transform:uppercase;letter-spacing:.05em;padding:1px 6px;border-radius:9px;color:#fff;background:#888}'
+            . '.ws-content .ws-owned .ws-state{background:#27ae60}'
+            . '.ws-content .ws-open .ws-state{background:#2980b9}'
             . '.ws-content .ws-meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:.85em}'
             . '.ws-content .ws-kind{text-transform:uppercase;letter-spacing:.05em;font-size:.8em;color:#666}'
             . '.ws-content .ws-effect{font-size:.9em}'
@@ -255,7 +258,9 @@ final class SkillTreeView
         $owned = $prereqs->owns($name);
         $learnable = $this->learnable($skill, $player);
         $usable = $isPassive ? $prereqs->isPassiveUsable($skill) : $prereqs->isUsable($skill);
-        $state = $owned ? 'ws-owned' : (($learnable && $usable) ? 'ws-open' : 'ws-locked');
+        [$state, $stateLabel] = $owned
+            ? ['ws-owned', 'Apprise']
+            : (($learnable && $usable) ? ['ws-open', 'Disponible'] : ['ws-locked', 'Verrouillée']);
 
         $race = $skill->getRace();
         $image = file_exists('img/spells/' . $name . '.jpeg') ? $name : 'todo';
@@ -275,7 +280,7 @@ final class SkillTreeView
             . '<img src="img/spells/' . $this->esc($image) . '.jpeg" alt="" />'
             . '<div class="ws-card-body">'
             . '<strong class="' . self::colorClass($skill->getCategory()) . '">' . $this->esc($skill->getDisplayName()) . '</strong>'
-            . '<div class="ws-meta">' . $meta . '</div>'
+            . '<div class="ws-meta"><span class="ws-state">' . $stateLabel . '</span>' . $meta . '</div>'
             . '<i class="ws-effect">' . $this->esc($skill->getText()) . '</i>'
             . $this->needs($skill->getPrerequisites(), $prereqs, $displayNames)
             . $button
