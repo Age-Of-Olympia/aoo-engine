@@ -221,6 +221,48 @@ class SceneryObjectServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /**
+     * A figure erased piece by piece keeps its cells and stays drawn in game:
+     * it is listed, with what the editor still shows of it, and goes whole.
+     */
+    public function testAHalfErasedFigureIsListedAndRemoved(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $this->seedModel('gm_menhir');
+
+        $this->assertSame(2, $this->service->placeObject('gm_menhir-00', 60, 61, 0, self::PLAN));
+        $this->assertSame(0, count($this->listed()), 'entier, rien à signaler');
+
+        $this->link->executeStatement(
+            'DELETE FROM map_foregrounds WHERE name = ? AND coords_id = ?',
+            ['gm_menhir-01', $this->coordsIdOn(self::PLAN, 60, 60)]
+        );
+
+        $listed = $this->listed();
+        $this->assertCount(1, $listed);
+        $this->assertSame([2, 1, 60, 61], [$listed[0]['cells'], $listed[0]['pieces'], $listed[0]['x'], $listed[0]['y']]);
+
+        $this->assertSame(1, $this->service->removeEntities([$listed[0]['id']]));
+        $this->assertSame(0, count($this->listed()));
+        $this->assertSame(
+            0,
+            (int) $this->link->fetchOne(
+                'SELECT COUNT(*) FROM map_foregrounds f JOIN coords c ON c.id = f.coords_id WHERE c.plan = ? AND c.x = 60',
+                [self::PLAN]
+            ),
+            'le dernier morceau part avec l\'entité'
+        );
+    }
+
+    /** @return list<array<string, int|string>> the half-erased figures of this test's plan */
+    private function listed(): array
+    {
+        return array_values(array_filter(
+            $this->service->halfErased(),
+            static fn(array $figure): bool => $figure['plan'] === self::PLAN
+        ));
+    }
+
     /** Completing an already complete figure places nothing. */
     public function testCompletingACompleteFigureDoesNothing(): void
     {

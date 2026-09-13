@@ -102,6 +102,7 @@ uksort($families, static function (string $a, string $b) use ($service): int {
 });
 
 $retirement = (new MapForegroundsRetirement())->status();
+$halfErased = $scenery->halfErased();
 
 $counts = ['all' => count($families), 'todo' => 0, 'set' => 0];
 
@@ -158,6 +159,47 @@ ob_start();
                 Ce message deviendra vert de lui-même quand plus rien n'en dépendra.
             </p>
         </div>
+    <?php endif; ?>
+
+    <?php if ($halfErased !== []): ?>
+        <section class="alert alert-warning fp-half-erased">
+            <strong><?= count($halfErased) ?> décor<?= count($halfErased) > 1 ? 's' : '' ?> à moitié effacé<?= count($halfErased) > 1 ? 's' : '' ?>.</strong>
+            Ces décors tiennent toutes leurs cases en jeu, où ils sont dessinés en entier, mais
+            l'éditeur n'en montre plus qu'une partie — parfois un seul morceau transparent, que
+            personne ne peut viser pour l'effacer. Cochez ceux à retirer. Pour en compléter un à
+            la place, passez par l'info de case dans Tiled.
+            <form method="post" action="footprints-save.php" class="fp-half-erased__form">
+                <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
+                <input type="hidden" name="action" value="remove" />
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped align-middle">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" data-check-all aria-label="Tout cocher" /></th>
+                                <th>Décor</th>
+                                <th>Plan</th>
+                                <th>Case</th>
+                                <th>Cases tenues</th>
+                                <th>Morceaux visibles</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($halfErased as $figure): ?>
+                            <tr>
+                                <td><input type="checkbox" name="ids[]" value="<?= $figure['id'] ?>" /></td>
+                                <td><code><?= e($figure['family']) ?></code> <small class="text-muted">#<?= $figure['id'] ?></small></td>
+                                <td><?= e($figure['plan']) ?></td>
+                                <td><?= $figure['x'] ?>, <?= $figure['y'] ?>, <?= $figure['z'] ?></td>
+                                <td><?= $figure['cells'] ?></td>
+                                <td><?= $figure['pieces'] ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <button type="submit" class="btn btn-sm btn-danger">Retirer les décors cochés</button>
+            </form>
+        </section>
     <?php endif; ?>
 
     <div class="fp-toolbar">

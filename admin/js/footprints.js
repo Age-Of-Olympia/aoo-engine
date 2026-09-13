@@ -274,5 +274,15 @@
         });
 
         wireFilters(cards);
+
+        var checkAll = document.querySelector('[data-check-all]');
+
+        if (checkAll) {
+            checkAll.addEventListener('change', function () {
+                checkAll.form.querySelectorAll('input[name="ids[]"]').forEach(function (box) {
+                    box.checked = checkAll.checked;
+                });
+            });
+        }
     });
 })();

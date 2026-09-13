@@ -174,7 +174,8 @@ final class SceneryObjectService
      * showed nothing left to erase.
      *
      * A figure with SOME pieces still standing is a truncated object, not an
-     * orphan: it stays, {@see complete()} is how it gets fixed.
+     * orphan: it stays, {@see complete()} is how it gets fixed and
+     * {@see halfErased()} is where it gets noticed.
      *
      * @return int entities removed
      */
@@ -199,6 +200,76 @@ final class SceneryObjectService
         }
 
         return count($ids);
+    }
+
+    /**
+     * Scenery entities the editor no longer shows whole: every cell still
+     * held, but fewer piece rows than cells. The leftover of the cell-by-cell
+     * erase the editor once allowed — the game keeps drawing the figure from
+     * its cells, while the editor shows only what remains, sometimes one
+     * transparent corner nobody can aim at to remove.
+     *
+     * @return list<array{id:int, family:string, cells:int, pieces:int, plan:string, x:int, y:int, z:int}>
+     *         with the anchor cell, where the editor would show the first piece
+     */
+    public function halfErased(): array
+    {
+        /* ponytail: a piece belongs to the family by name prefix, so a sibling
+         * family sharing it (hutte / hutte_pilotis) can hide a truncation,
+         * never invent one; splitPiece() per row if that ever matters. */
+        $rows = $this->conn->fetchAllAssociative(
+            "SELECT p.id, p.race AS family,
+                    COUNT(ec.coords_id) AS cells, COUNT(f.id) AS pieces,
+                    c.plan, c.x, c.y, c.z
+               FROM players p
+               JOIN coords c ON c.id = p.coords_id
+               JOIN entity_cells ec ON ec.player_id = p.id
+               LEFT JOIN map_foregrounds f
+                 ON f.coords_id = ec.coords_id AND f.name LIKE CONCAT(p.race, '%')
+              WHERE p.player_type = 'scenery'
+              GROUP BY p.id, p.race, c.plan, c.x, c.y, c.z
+             HAVING pieces < cells
+              ORDER BY p.race, c.plan, c.x, c.y"
+        );
+
+        return array_map(static fn(array $row): array => [
+            'id'     => (int) $row['id'],
+            'family' => (string) $row['family'],
+            'cells'  => (int) $row['cells'],
+            'pieces' => (int) $row['pieces'],
+            'plan'   => (string) $row['plan'],
+            'x'      => (int) $row['x'],
+            'y'      => (int) $row['y'],
+            'z'      => (int) $row['z'],
+        ], $rows);
+    }
+
+    /**
+     * Shelve the given scenery entities, pieces included. Ids naming anything
+     * else are ignored: the admin form is the caller.
+     *
+     * @param list<int> $ids
+     * @return int entities removed
+     */
+    public function removeEntities(array $ids): int
+    {
+        if ($ids === []) {
+            return 0;
+        }
+
+        $in = implode(',', array_map('intval', $ids));
+
+        $scenery = $this->conn->fetchFirstColumn(
+            "SELECT id FROM players WHERE id IN ({$in}) AND player_type = 'scenery'"
+        );
+
+        $buildings = new \App\Service\BuildingService();
+
+        foreach ($scenery as $id) {
+            $buildings->vanish((int) $id);
+        }
+
+        return count($scenery);
     }
 
     /**

@@ -31,6 +31,17 @@ $service = new EntityTypeFootprintService();
 try {
     (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
 
+    if (($_POST['action'] ?? '') === 'remove') {
+        $ids = array_map('intval', (array) ($_POST['ids'] ?? []));
+        $removed = (new SceneryObjectService())->removeEntities($ids);
+
+        setFlash($removed === 0 ? 'warning' : 'success', $removed === 0
+            ? 'Aucun décor coché.'
+            : $removed . ' décor' . ($removed > 1 ? 's retirés' : ' retiré') . ' de la carte.');
+
+        redirectTo('/admin/footprints.php');
+    }
+
     $type = trim((string) ($_POST['type'] ?? ''));
 
     if ($type === '') {
