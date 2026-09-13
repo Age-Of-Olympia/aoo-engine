@@ -766,6 +766,17 @@
         map.addEventListener('touchcancel', function () {
             pinch = null;
         }, { passive: true });
+
+        /* Ctrl + molette sur le plateau : un cran de zoom du damier
+         * (même pas que les boutons + / −) à la place du zoom de PAGE
+         * du navigateur — non passif, sinon preventDefault est ignoré. */
+        map.addEventListener('wheel', function (e) {
+            if (!e.ctrlKey) {
+                return;
+            }
+            e.preventDefault();
+            setDamierZoom(e.deltaY < 0 ? damierZoom * DAMIER_ZOOM_STEP : damierZoom / DAMIER_ZOOM_STEP);
+        }, { passive: false });
     }
 
     /*
