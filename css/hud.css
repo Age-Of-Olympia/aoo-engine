@@ -2616,6 +2616,20 @@ body:has(#hud) #debug-flags {
         z-index: 5;
     }
 
+    /* The strip is a horizontal scroll box: it clips whatever rises
+     * above a button. The cost pop-up of the icon is dropped here (the
+     * hint carries the cost, js/hud.js showHint) and the cancel cross
+     * stays within the strip's padding. */
+    #hud-sel-pane #hud-actions [tooltip]::before,
+    #hud-sel-pane #hud-actions [tooltip]::after {
+        display: none;
+    }
+
+    #hud-sel-pane #hud-actions .hud-action-cancel {
+        top: -6px;
+        right: -6px;
+    }
+
     /* --- Pane bar: named segments, 40px touch targets --- */
     #hud-dots {
         display: flex;

@@ -2197,12 +2197,7 @@
                      * nom en Goudy, consigne en dessous — le bandeau
                      * remplit l'espace vide du panneau au lieu d'une
                      * ligne grise noyée. */
-                    $('#hud-action-hint').remove();
-                    $('<div id="hud-action-hint"></div>')
-                        .append($('<span class="hud-action-hint-name"></span>').text(btn.title || ''))
-                        .append($('<span class="hud-action-hint-tip"></span>').text('cliquez à nouveau pour confirmer'))
-                        .appendTo(hintHost());
-                    placeHint();
+                    showHint(btn, 'cliquez à nouveau pour confirmer');
                     return;
                 }
 
@@ -2211,10 +2206,26 @@
             }, true);
         }
 
-        /* Where the armed/long-press hint lives: on a narrow screen the
-         * selection pane, as a later sibling of the card, so it paints
-         * over the speech plaque whatever the strip's scroll box does;
-         * on desktop the actions panel, its own positioned box. */
+        /* The hint of an action button: its name, its cost (the [tooltip]
+         * of the icon — on a narrow screen that pop-up is hidden, the
+         * strip's scroll box clipped it), then the instruction. */
+        function showHint(btn, tip) {
+            var cost = $(btn).find('[tooltip]').attr('tooltip') || '';
+            var $tip = $('<span class="hud-action-hint-tip"></span>')
+                .text(cost && tip ? cost + ' · ' + tip : (cost || tip));
+
+            $('#hud-action-hint').remove();
+            $('<div id="hud-action-hint"></div>')
+                .append($('<span class="hud-action-hint-name"></span>').text(btn.title || ''))
+                .append($tip)
+                .appendTo(hintHost());
+            placeHint();
+        }
+
+        /* Where the hint lives: on a narrow screen the selection pane,
+         * as a later sibling of the card, so it paints over the speech
+         * plaque whatever the strip's scroll box does; on desktop the
+         * actions panel, its own positioned box. */
         function hintHost() {
             return isMobileViewport() ? '#hud-sel-pane' : '#hud-actions';
         }
@@ -2242,11 +2253,7 @@
         var hintTimer = null;
         $('#hud-actions').on('contextmenu', '.action', function (e) {
             e.preventDefault();
-            $('#hud-action-hint').remove();
-            $('<div id="hud-action-hint"></div>')
-                .append($('<span class="hud-action-hint-name"></span>').text(this.title || ''))
-                .appendTo(hintHost());
-            placeHint();
+            showHint(this, '');
             clearTimeout(hintTimer);
             hintTimer = setTimeout(function () {
                 $('#hud-action-hint').remove();
