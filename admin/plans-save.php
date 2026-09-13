@@ -123,9 +123,8 @@ if ($action === 'update') {
 
         $configService->write($plan, $parsed);
         foreach ($zLevels as $z => $zConfig) {
-            // bounds explicites honorées ; « auto » = recalcul au prochain
-            // push Tiled (null : pas d'étendue calculée ici)
-            $configService->writeZLevel($plan, $z, $zConfig, null);
+            // bounds explicites honorées ; « auto » = étendue réelle des coords
+            $configService->writeZLevel($plan, $z, $zConfig, $configService->boundsFromCoords($plan, $z));
         }
     } catch (\RuntimeException $e) {
         setFlash('warning', $e->getMessage());

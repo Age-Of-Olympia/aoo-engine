@@ -221,7 +221,7 @@ class TiledMapService
             $this->planConfig->write($plan, $parsedConfig);
         }
 
-        $this->planConfig->writeZLevel($plan, $z, $zConfig ?? [], $this->levelBounds($plan, $z));
+        $this->planConfig->writeZLevel($plan, $z, $zConfig ?? [], $this->planConfig->boundsFromCoords($plan, $z));
 
         $health = $this->planConfig->validate($plan, $this->db, $this->knownItemNames());
         if ($health['errors'] !== [] || $health['warnings'] !== []) {
@@ -809,22 +809,6 @@ class TiledMapService
         }
 
         return $zLevels;
-    }
-
-    /** @return array{minX: int, maxX: int, minY: int, maxY: int}|null étendue du niveau */
-    private function levelBounds(string $plan, int $z): ?array
-    {
-        $res = $this->db->exe(
-            'SELECT MIN(x) minX, MAX(x) maxX, MIN(y) minY, MAX(y) maxY FROM coords WHERE plan = ? AND z = ?',
-            array($plan, $z)
-        );
-        $bounds = $res->fetch_assoc();
-
-        if ($bounds === null || $bounds['minX'] === null) {
-            return null;
-        }
-
-        return array_map('intval', $bounds);
     }
 
     /** @return list<string> noms d'items existants, pour le validator (une requête au lieu d'une par biome) */

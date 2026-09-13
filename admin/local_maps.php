@@ -26,7 +26,7 @@ $selectedPlan   = optionalString('selected_plan');
 $selectedZLevel = optionalString('selected_z_level');
 
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
-    && (isset($_POST['cleanup_local']) || isset($_POST['generate_local']));
+    && (isset($_POST['cleanup_local']) || isset($_POST['generate_local']) || isset($_POST['autodetect_bounds']));
 if ($isStateChangingPost) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
@@ -55,6 +55,14 @@ $filteredPlans = array_values(array_filter(
     $allPlans,
     fn(object $p) => plan_matches_season_filter($p, $seasonFilter)
 ));
+
+if (isset($_POST['autodetect_bounds'])) {
+    $filled = (new \App\Service\PlanConfigService())->fillMissingBounds();
+    setFlash('success', $filled === []
+        ? 'Aucune borne manquante.'
+        : 'Bornes détectées : ' . implode(', ', $filled) . '.');
+    redirectTo('local_maps.php');
+}
 
 // Cleanup button at top
 if (isset($_POST['cleanup_local'])) {
@@ -116,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_local'])) {
         $results = $viewService->generateLocalMap($layers);
         
         if (!empty($results)) {
-            $_SESSION['flash'] = ['type' => 'success', 'message' => "Couches générées avec succès".(!empty($selectedZLevel) ? " pour le niveau Z $selectedZLevel" : '')];
+            $_SESSION['flash'] = ['type' => 'success', 'message' => "Couches générées avec succès".($selectedZLevel !== null ? " pour le niveau Z $selectedZLevel" : '')];
             $_SESSION['generated_layers'] = $results;
         }
     } catch (Exception $e) {
@@ -264,6 +272,19 @@ ob_start();
                     <i class="fas fa-broom"></i> Nettoyer
                 </button>
                 <small class="text-muted">Supprime les anciennes versions des fichiers PNG générés, en conservant uniquement la version la plus récente pour chaque couche.</small>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Détecter les bornes manquantes</h5>
+            <form method="post" class="d-flex align-items-center gap-3">
+                <?= $csrf->renderTokenField() ?>
+                <button type="submit" name="autodetect_bounds" class="btn btn-primary btn-sm">
+                    <i class="fas fa-expand"></i> Détecter
+                </button>
+                <small class="text-muted">Pose les bornes visibles sur l'étendue réelle des cases, pour chaque niveau qui a une carte mais aucune borne.</small>
             </form>
         </div>
     </div>

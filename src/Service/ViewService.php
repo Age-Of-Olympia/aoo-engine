@@ -321,6 +321,18 @@ class ViewService {
         );
     }
 
+    // SQL window on the bounds of the map being drawn: world bounds for the
+    // global map, the z-level's bounds for a local one. Never mix them: the
+    // world plan may have no bounds at all while a local plan does.
+    private function boundsClause(string $mapType): string {
+        [$minX, $maxX, $minY, $maxY] = $mapType === "global"
+            ? [$this->minX, $this->maxX, $this->minY, $this->maxY]
+            : [$this->localMinX, $this->localMaxX, $this->localMinY, $this->localMaxY];
+
+        return "AND c.x BETWEEN " . (int) $minX . " AND " . (int) $maxX
+            . " AND c.y BETWEEN " . (int) $minY . " AND " . (int) $maxY;
+    }
+
     private function transformX($x, $mapType = "global") {
         if ($mapType === "global") {
             $scale = $this->scaleX;
@@ -538,8 +550,7 @@ class ViewService {
             INNER JOIN map_foregrounds mf ON mf.coords_id = c.id
             WHERE mf.name = 'ombre'
             AND c.plan = '" . $plan . "'
-            AND c.x BETWEEN " . $this->minX . " AND " . $this->maxX . "
-            AND c.y BETWEEN " . $this->minY . " AND " . $this->maxY . "
+            " . $this->boundsClause($mapType) . "
             $zCondition
             ORDER BY c.x, c.y";
 
@@ -588,8 +599,7 @@ class ViewService {
         JOIN coords c ON c.id = mt.coords_id" . 
         ($mapType === "global" ? " LEFT JOIN map_foregrounds mf ON mf.coords_id = mt.coords_id AND mf.name = 'ombre'" : "") . "
         WHERE c.plan = '" . $plan . "'
-        AND c.x BETWEEN " . $this->minX . " AND " . $this->maxX . "
-        AND c.y BETWEEN " . $this->minY . " AND " . $this->maxY . "
+        " . $this->boundsClause($mapType) . "
         $zCondition
         ORDER BY mt.name";
 
@@ -644,8 +654,7 @@ class ViewService {
             AND me.name NOT LIKE 'trace_pas_%'
             AND me.name != 'flag_red'
             AND me.name != 'sang'
-            AND c.x BETWEEN " . $this->minX . " AND " . $this->maxX . "
-            AND c.y BETWEEN " . $this->minY . " AND " . $this->maxY . "
+            " . $this->boundsClause($mapType) . "
             $zCondition
             ORDER BY me.name";
 
@@ -698,8 +707,7 @@ class ViewService {
                 FROM coords c
                 JOIN map_tiles mt ON c.id = mt.coords_id
                 WHERE c.plan = '" . $plan . "'
-                AND c.x BETWEEN " . $this->minX . " AND " . $this->maxX . "
-                AND c.y BETWEEN " . $this->minY . " AND " . $this->maxY . "";
+                " . $this->boundsClause($mapType) . "";
         $result = $this->db->exe($query);
         $bounds = mysqli_fetch_assoc($result);
 
@@ -811,8 +819,7 @@ class ViewService {
             JOIN coords c ON c.id = ec.coords_id
             WHERE p.player_type = 'route'
             AND c.plan = '" . $plan . "'
-            AND c.x BETWEEN " . (int) $this->minX . " AND " . (int) $this->maxX . "
-            AND c.y BETWEEN " . (int) $this->minY . " AND " . (int) $this->maxY . "
+            " . $this->boundsClause($mapType) . "
             $zCondition
             ORDER BY p.race, p.id";
         $result = $this->db->exe($sql);
@@ -874,8 +881,7 @@ class ViewService {
             JOIN coords c ON c.id = ec.coords_id
             WHERE p.player_type = 'resource'
             AND c.plan = ?
-            AND c.x BETWEEN " . (int) $this->minX . " AND " . (int) $this->maxX . "
-            AND c.y BETWEEN " . (int) $this->minY . " AND " . (int) $this->maxY . "
+            " . $this->boundsClause($mapType) . "
             $zCondition
             ORDER BY p.race, p.id";
 
@@ -926,25 +932,12 @@ class ViewService {
             $this->raceService->getBgColorMap()
         );
 
-        // Bornes du BON référentiel (les couches murs/joueurs lisent les
-        // bornes monde même en local — fragile quand le plan monde n'est
-        // pas configuré) ; sans bornes, couche vide plutôt qu'un SQL cassé.
-        $minX = $mapType === 'global' ? $this->minX : $this->localMinX;
-        $maxX = $mapType === 'global' ? $this->maxX : $this->localMaxX;
-        $minY = $mapType === 'global' ? $this->minY : $this->localMinY;
-        $maxY = $mapType === 'global' ? $this->maxY : $this->localMaxY;
-        if (!is_numeric($minX) || !is_numeric($maxX) || !is_numeric($minY) || !is_numeric($maxY)) {
-            $this->layers['buildings'] = $layer;
-            return;
-        }
-
         $sql = "SELECT c.x, c.y, p.race
             FROM players p
             JOIN coords c ON c.id = p.coords_id
             WHERE c.plan = '" . $plan . "'
             AND p.player_type = 'building'
-            AND c.x BETWEEN " . $minX . " AND " . $maxX . "
-            AND c.y BETWEEN " . $minY . " AND " . $maxY . "
+            " . $this->boundsClause($mapType) . "
             $zCondition";
 
         $result = $this->db->exe($sql);
@@ -1257,7 +1250,8 @@ class ViewService {
             foreach ($planData->z_levels as $zLevel) {
                 $entry = ['name' => $zLevel->{'z-name'} ?? "Niveau " . $zLevel->z];
 
-                if (!empty($zLevel->MapUnavailable)) {
+                // Bounds "auto" (NULL until the next Tiled push) = no local map yet
+                if (!empty($zLevel->MapUnavailable) || !isset($zLevel->visibleBoundsMinX)) {
                     $entry['MapUnavailable'] = true;
                 } else {
                     $entry['visibleBoundsMinX'] = $zLevel->visibleBoundsMinX;

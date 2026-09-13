@@ -47,8 +47,9 @@ function action_type_label(object $action): string
  */
 function optionalString(string $key): ?string
 {
-    $value = $_POST[$key] ?? null;
-    return !empty($value) ? trim((string)$value) : null;
+    // Not empty(): "0" is a legitimate value (z-level 0)
+    $value = trim((string) ($_POST[$key] ?? ''));
+    return $value !== '' ? $value : null;
 }
 
 /**
