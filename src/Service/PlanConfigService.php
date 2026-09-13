@@ -372,6 +372,57 @@ class PlanConfigService
     }
 
     /**
+     * Étendue réelle du contenu d'un niveau (coords), null si vide.
+     *
+     * @return array{minX: int, maxX: int, minY: int, maxY: int}|null
+     */
+    public function boundsFromCoords(string $plan, int $z): ?array
+    {
+        $bounds = $this->em()->getConnection()->fetchAssociative(
+            'SELECT MIN(x) minX, MAX(x) maxX, MIN(y) minY, MAX(y) maxY FROM coords WHERE plan = ? AND z = ?',
+            [$plan, $z]
+        );
+
+        if ($bounds === false || $bounds['minX'] === null) {
+            return null;
+        }
+
+        return array_map('intval', $bounds);
+    }
+
+    /**
+     * Pose les bornes manquantes sur l'étendue réelle, pour tous les niveaux
+     * (d'un plan, ou de tous) qui ont une carte mais aucune borne.
+     *
+     * @return list<string> niveaux réparés, « plan z »
+     */
+    public function fillMissingBounds(?string $plan = null): array
+    {
+        if (SimulationGuard::isActive()) {
+            return [];
+        }
+
+        $plans = $plan !== null ? array_filter([$this->find($plan)]) : $this->em()->getRepository(Plan::class)->findAll();
+        $filled = [];
+        foreach ($plans as $entity) {
+            foreach ($entity->getZLevels() as $level) {
+                if ($level->isMapUnavailable() || $level->hasVisibleBounds()) {
+                    continue;
+                }
+                $bounds = $this->boundsFromCoords($entity->getSlug(), $level->getZ());
+                if ($bounds === null) {
+                    continue;
+                }
+                $level->setVisibleBounds($bounds['minX'], $bounds['maxX'], $bounds['minY'], $bounds['maxY']);
+                $filled[] = $entity->getSlug() . ' z' . $level->getZ();
+            }
+            $this->flush($entity->getSlug());
+        }
+
+        return $filled;
+    }
+
+    /**
      * « minX,maxX,minY,maxY » → bornes, ou null pour « auto »/vide.
      *
      * @return array{minX: int, maxX: int, minY: int, maxY: int}|null
