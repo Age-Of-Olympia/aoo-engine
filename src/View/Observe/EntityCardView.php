@@ -236,21 +236,28 @@ final class EntityCardView
             ? $buildingDetails->getDialog()
             : '';
 
+        $hasCounter = false;
+
         if ($counterDialog !== '') {
             $dialogService = new \App\Service\DialogService();
 
             if ($dialogService->opensScreen($counterDialog, 'merchant.php')) {
+                $hasCounter = true;
                 $html .= '<a href="merchant.php?targetId=' . $target->id . '"><button class="action"><span class="ra ra-ammo-bag"></span> <span class="action-name">Marchander</span></button></a>';
             }
 
             if ($dialogService->opensScreen($counterDialog, 'warschool.php')) {
+                $hasCounter = true;
                 $html .= '<a href="warschool.php?targetId=' . $target->id . '"><button class="action"><span class="ra ra-axe"></span> <span class="action-name">Apprendre</span></button></a>';
             }
         }
 
         $html .= self::containerBlockHtml($player, $target);
 
-        $html .= self::parlerButtonHtml($player, $target, $buildingDetails, $buildingClosure, $x, $y, $coords);
+        /* A counter screen already carries the tenant's dialogue: no
+         * second door to the same conversation. Lire (inscription) and
+         * Parler on a dialogue-only building are untouched. */
+        $html .= self::parlerButtonHtml($player, $target, $buildingDetails, $buildingClosure, $hasCounter);
 
         return $html;
     }
@@ -340,9 +347,7 @@ final class EntityCardView
         Player $target,
         ?BuildingDetails $buildingDetails,
         ?string $buildingClosure,
-        $x,
-        $y,
-        object $coords
+        bool $hasCounter
     ): string {
         if ($buildingClosure !== null) {
             return '';
@@ -350,9 +355,10 @@ final class EntityCardView
 
         /* Ce que l'objet a à dire décide du verbe : une inscription se
          * LIT (players.text, le MDJ d'un bâtiment), une échoppe
-         * s'ADRESSE (dialogue du catalogue). */
+         * s'ADRESSE (dialogue du catalogue) — sauf quand un comptoir
+         * (Marchander, Apprendre) porte déjà cette conversation. */
         $inscription = \App\Service\BuildingService::inscriptionOf($target);
-        $hasDialog = $buildingDetails !== null && $buildingDetails->getDialog() !== '';
+        $hasDialog = !$hasCounter && $buildingDetails !== null && $buildingDetails->getDialog() !== '';
 
         if ($inscription === '' && !$hasDialog) {
             return '';
