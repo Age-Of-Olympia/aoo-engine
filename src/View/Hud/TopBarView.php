@@ -158,7 +158,7 @@ final class TopBarView
         /* Redessiner sa vue depuis la carte : le damier est mis en cache par
          * joueur, et jusqu'ici on ne pouvait le forcer que depuis la page
          * Profil — c'est-à-dire en quittant l'écran où le problème se voit. */
-        echo '<a href="refresh_view.php?retour=1" title="Redessiner la vue">'
+        echo '<a href="refresh_view.php?retour=1" class="hud-meta" title="Redessiner la vue">'
             . '<button><span class="ra ra-cycle"></span></button></a>';
 
         /* Badge orange : sujets de forum non lus (les missives ont déjà
@@ -171,8 +171,10 @@ final class TopBarView
             : '';
 
         /* Icônes seules, comme le rail : le libellé vit dans le title
-         * (infobulle ici, texte dans le tiroir mobile via js/hud.js). */
-        echo '<a href="classements.php" title="Classements"><button><span class="ra ra-trophy"></span></button></a>'
+         * (infobulle ici, texte dans le tiroir mobile via js/hud.js).
+         * .hud-meta: off the desktop bar (css/hud.css), the main menu
+         * is the one door to those pages; the mobile drawer keeps all. */
+        echo '<a href="classements.php" class="hud-meta" title="Classements"><button><span class="ra ra-trophy"></span></button></a>'
             /* Le bouton mène à l'ACCUEIL du forum (catégories) ; les
              * derniers messages y restent à un clic. */
             . '<a href="forum.php" data-label="Forum" title="Forum — ' . self::lastPostTitle($player) . '"><button><span class="ra ra-speech-bubbles"></span>' . $forumBadge . '</button></a>'
