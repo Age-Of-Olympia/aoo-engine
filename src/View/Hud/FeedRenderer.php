@@ -29,9 +29,22 @@ final class FeedRenderer
         $playerService = new PlayerService($player->id);
 
         ob_start();
+        $currentFound = false;
         foreach ($logs as $e) {
-            echo '<div class="hud-feed-item hud-feed-item--mdj">'
-                . '<strong>' . self::authorName($playerService, (int) $e->player_id) . '</strong>'
+            /* Only the player's CURRENT message can be edited: the past
+             * stays as written. Feed is newest first, so the first own
+             * row is it. Raw text travels with it for js/hud.js. */
+            $own = !$currentFound && (int) $e->player_id === (int) $player->id;
+            $currentFound = $currentFound || $own;
+            $editAttrs = $own
+                ? ' data-log-id="' . (int) $e->id . '" data-text="' . htmlspecialchars(self::mdjRaw((string) $e->hiddenText), ENT_QUOTES) . '"'
+                : '';
+            $editBtn = $own
+                ? '<button type="button" class="hud-mdj-edit" title="Modifier"><span class="ra ra-quill-ink"></span></button>'
+                : '';
+
+            echo '<div class="hud-feed-item hud-feed-item--mdj"' . $editAttrs . '>'
+                . '<strong>' . self::authorName($playerService, (int) $e->player_id) . '</strong>' . $editBtn
                 . '<div class="hud-mdj-text">' . self::mdjBody((string) $e->hiddenText) . '</div>'
                 . '<div class="hud-feed-meta">' . self::humanDate((int) $e->time) . '</div>'
                 . '</div>';
@@ -102,13 +115,17 @@ final class FeedRenderer
      */
     private static function mdjBody(string $hiddenText): string
     {
+        return Str::richText(self::mdjRaw($hiddenText));
+    }
+
+    /** The player's text without our envelope; unexpected markup is stripped. */
+    private static function mdjRaw(string $hiddenText): string
+    {
         if (preg_match('#^<div class="action-details">(.*)</div>$#s', $hiddenText, $m) === 1) {
-            return Str::richText($m[1]);
+            return $m[1];
         }
 
-        /* Enveloppe inattendue (journal ancien, autre forme) : on ne
-         * devine pas, on retire tout le balisage avant d'afficher. */
-        return Str::richText(strip_tags($hiddenText));
+        return strip_tags($hiddenText);
     }
 
     /**

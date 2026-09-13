@@ -12,12 +12,26 @@ if(isset($_POST['text'])){
     if ($_POST['author-id']!=$player->id) {
         exit($ErrorMessageChangeSession);
     }
-    $sql = 'UPDATE players SET text = ? WHERE id = ?';
-
     $db = new Db();
 
-    $db->exe($sql, array($_POST['text'], $player->id));
+    /* Edit = a new entry stamped with the original time, the old one
+     * retyped mdj_edited: out of every feed, kept as history. Only the
+     * author's CURRENT message qualifies, the past stays as written. */
+    $edited = null;
+    $editId = (int) ($_POST['edit-id'] ?? 0);
+    if ($editId > 0) {
+        $edited = $db->exe(
+            // Same order as the feed: an edit keeps its original time,
+            // so the current message is the latest by time, not by id
+            'SELECT id, time FROM players_logs WHERE player_id = ? AND type = ? ORDER BY time DESC, id DESC LIMIT 1',
+            array($player->id, 'mdj')
+        )->fetch_object();
+        if ($edited === null || (int) $edited->id !== $editId) {
+            exit('Message introuvable.');
+        }
+    }
 
+    $db->exe('UPDATE players SET text = ? WHERE id = ?', array($_POST['text'], $player->id));
     $player->refresh_data();
 
     $log = trim((string) $_POST['text']) === ''
@@ -26,7 +40,11 @@ if(isset($_POST['text'])){
 
     $details = '<div class="action-details">'.$_POST['text'].'</div>';
 
-    Log::put($player, $player, $log, type:"mdj", hiddenText:$details);
+    Log::put($player, $player, $log, type:"mdj", hiddenText:$details, logTime: $edited?->time ?? '');
+
+    if ($edited !== null) {
+        $db->exe('UPDATE players_logs SET type = ? WHERE id = ?', array('mdj_edited', $edited->id));
+    }
 
     exit();
 }

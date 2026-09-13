@@ -127,7 +127,8 @@ class Log{
                 $typeCondition = ' WHERE final_logs.type = \'mdj\'';
                 break;
             default:
-                $typeCondition = ' WHERE final_logs.type != \'mdj\'';
+                // mdj_edited (superseded messages) belongs to neither feed
+                $typeCondition = ' WHERE final_logs.type NOT LIKE \'mdj%\'';
                 break;
         }
 
@@ -171,7 +172,7 @@ class Log{
         LEFT JOIN coords c ON final_logs.last_player_movement_coords_id = c.id
         '.$typeCondition.'
         AND final_logs.time > ?
-        ORDER BY final_logs.id DESC';
+        ORDER BY final_logs.time DESC, final_logs.id DESC';
         if(is_array($steps)) {
             $steps[] = array("PrepQuerry",microtime(true));
         }
@@ -252,11 +253,11 @@ class Log{
             $qb->andWhere('final_logs.type = :logType')
                 ->setParameter('logType', 'mdj');
         } else {
-            $qb->andWhere('final_logs.type != :logType')
-                ->setParameter('logType', 'mdj');
+            $qb->andWhere('final_logs.type NOT LIKE :logType')
+                ->setParameter('logType', 'mdj%');
         }
 
-        $qb->orderBy('final_logs.id', 'DESC');
+        $qb->orderBy('final_logs.time', 'DESC')->addOrderBy('final_logs.id', 'DESC');
 
         if(is_array($steps)) {
             $steps[] = array("PrepQuerry",microtime(true));

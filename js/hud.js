@@ -2327,16 +2327,19 @@
 
             $.post('account.php?mdj', {
                 'text': text,
-                'author-id': $('#player-avatar').data('id')
+                'author-id': $('#player-avatar').data('id'),
+                'edit-id': $('#hud-mdj-form').data('editId') || 0
             })
                 .done(function (data) {
-                    if (String(data).indexOf('Changement de personnage') !== -1) {
+                    if (String(data).indexOf('Changement de personnage') !== -1
+                        || String(data).indexOf('Message introuvable') !== -1) {
                         alert('Erreur lors de la sauvegarde du message du jour, veuillez réessayer.');
                         return;
                     }
                     /* Message posté : champ vidé ET rendu — le clavier
                      * mobile se referme (blur). */
-                    $('#hud-mdj-input').val('').trigger('blur');
+                    mdjEditMode(null);
+                    $('#hud-mdj-input').trigger('blur');
                     loadFeed('mdj');
                     propagateMdj();
                 })
@@ -2346,6 +2349,33 @@
                 .always(function () {
                     $btn.prop('disabled', false);
                 });
+        });
+
+        /* Edit mode: the input refilled with one of the player's own
+         * messages, the form remembering which entry to supersede.
+         * Escape or an empty submit leaves it. */
+        function mdjEditMode($item) {
+            var $form = $('#hud-mdj-form');
+            var $input = $('#hud-mdj-input');
+            $('.hud-feed-item--editing').removeClass('hud-feed-item--editing');
+            if ($item) {
+                $form.data('editId', $item.data('logId')).addClass('hud-mdj-form--editing');
+                $item.addClass('hud-feed-item--editing');
+                $input.val($item.data('text')).attr('placeholder', 'Modifier le message… (Échap pour annuler)').trigger('focus');
+            } else {
+                $form.removeData('editId').removeClass('hud-mdj-form--editing');
+                $input.val('').attr('placeholder', 'Votre message du jour…');
+            }
+        }
+
+        $('#hud-feed-mdj').on('click', '.hud-mdj-edit', function () {
+            mdjEditMode($(this).closest('.hud-feed-item--mdj'));
+        });
+
+        $('#hud-mdj-input').on('keydown', function (e) {
+            if (e.key === 'Escape' && $('#hud-mdj-form').data('editId')) {
+                mdjEditMode(null);
+            }
         });
 
         $('#hud-feed-refresh').on('click', function () {

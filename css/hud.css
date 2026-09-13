@@ -404,7 +404,17 @@ body:has(#hud)::after {
  * initMobile) : réservés au tiroir — jamais sur le rail desktop. */
 @media (min-width: 1024px) {
 
-    #hud-rail .hud-quick-clone {
+    /* Same specificity as the `#hud-rail #menu > a` flex rule above,
+     * which otherwise wins and shows the clones on desktop. */
+    #hud-rail #menu > .hud-quick-clone {
+        display: none;
+    }
+
+    /* Desktop keeps the role-play entries only: rankings, profile and
+     * the redraw tool stay reachable through the main menu. The mobile
+     * drawer shows everything. */
+    .hud-quick > a.hud-meta,
+    #hud-rail #menu > a[href="account.php"] {
         display: none;
     }
 }
@@ -1721,6 +1731,28 @@ body:has(#hud) #view-landing-wrapper {
 .hud-mdj-text {
     margin-top: 2px;
     white-space: pre-line;
+}
+
+/* Edit gesture on one's own messages: a discreet quill after the
+ * name; the entry being edited and the form both get a bronze mark. */
+.hud-mdj-edit {
+    float: right;
+    padding: 0 4px;
+    line-height: 1;
+    opacity: 0.55;
+}
+
+.hud-mdj-edit:hover,
+.hud-feed-item--editing .hud-mdj-edit {
+    opacity: 1;
+}
+
+.hud-feed-item--editing {
+    box-shadow: inset 2px 0 0 var(--hud-bronze);
+}
+
+#hud-mdj-form.hud-mdj-form--editing input {
+    border-width: 2px;
 }
 
 .hud-feed-empty {

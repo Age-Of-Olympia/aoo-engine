@@ -65,6 +65,20 @@ class LogTest extends TestCase
     }
 
     #[Group('log-get')]
+    public function testSupersededMdjIsInNoFeed(): void
+    {
+        $this->testDb->insertLog(['type' => 'mdj_edited', 'text' => 'Ancien', 'time' => time()]);
+        $this->testDb->insertLog(['type' => 'mdj', 'text' => 'Nouveau', 'time' => time()]);
+        $this->testDb->insertLog(['type' => 'action', 'text' => 'Action', 'time' => time()]);
+
+        $mdj = Log::get($this->player, THREE_DAYS, 'mdj');
+        $events = Log::get($this->player, THREE_DAYS);
+
+        $this->assertSame(['Nouveau'], array_column($mdj, 'text'));
+        $this->assertSame(['Action'], array_column($events, 'text'));
+    }
+
+    #[Group('log-get')]
     public function testGetLogsFiltersByAge(): void
     {
         // Arrange
