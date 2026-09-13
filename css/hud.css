@@ -934,8 +934,13 @@ body:has(#hud) #view-landing-wrapper {
  * Ce que dit le personnage est la monnaie sociale du jeu : la parole
  * passe du noir illisible hérité (main.css, 225×125 fixes) à une
  * plaque parchemin citée — guillemet Goudy surdimensionné, filet
- * bronze. Même traitement desktop et mobile. */
-#hud #ajax-data .hud-sel-main .card-text {
+ * bronze. Même traitement desktop et mobile.
+ *
+ * .hud-plaque est posée par Ui::get_card (carte du damier) ET par
+ * InfosSheetView (message du jour de la fiche) : une seule règle, même
+ * plaque, même défilement interne. Dans le bandeau, la hauteur vient du
+ * flex ; dans la fiche, d'un plafond (plus bas). */
+#hud .hud-plaque {
     flex: 1 1 auto;
     overflow-y: auto;
     min-height: 0;
@@ -957,7 +962,7 @@ body:has(#hud) #view-landing-wrapper {
     text-align: left;
 }
 
-#hud #ajax-data .hud-sel-main .card-text::before {
+#hud .hud-plaque::before {
     content: "\201C";
     position: absolute;
     left: 9px;
@@ -972,9 +977,15 @@ body:has(#hud) #view-landing-wrapper {
 
 /* Contenu hérité de la plaque : liens cyan et textes blancs pensés
  * pour le fond noir — repassés à l'encre sur parchemin. */
-#hud #ajax-data #ui-card .card-text a {
+#hud .hud-plaque a {
     color: var(--hud-bronze);
     font-weight: bold;
+}
+
+/* Dans la fiche (message du jour, histoire), pas de flex pour borner la
+ * plaque : un plafond, et le texte défile dedans comme dans le bandeau. */
+#hud .hud-panel-content .hud-plaque {
+    max-height: 11em;
 }
 
 #hud #ajax-data #ui-card .card-text textarea {
@@ -2734,20 +2745,113 @@ body:has(#hud) #debug-flags {
         display: none;
     }
 
-    /* --- Character sheet: portrait above the text ---
+    /* --- Character sheet: portrait beside the identity, text below ---
      * The legacy table (portrait 210px | text) left the portrait whatever
      * the text cared to leave: 27px on a phone as soon as the message of
-     * the day held a long word. The two cells stack, the portrait centred
-     * and capped in height. */
-    .hud-panel-content td.infos-portrait,
-    .hud-panel-content td.infos-portrait + td {
-        display: block;
-        width: auto;
-        box-sizing: border-box;
+     * the day held a long word. The table body becomes a grid: a fixed
+     * portrait column, the identity lines (name, race, faction, god,
+     * avatar) next to it with the equipment squeezed at the bottom of
+     * that column, then the message of the day and the story across
+     * every column. Rows and the identity cell dissolve (display:
+     * contents) so each block places itself. */
+    .hud-panel-content table.marbre:has(td.infos-portrait) > tbody {
+        display: grid;
+        grid-template-columns: 120px minmax(0, 1fr) auto;
+        gap: 0 10px;
+        align-items: start;
+    }
+
+    .hud-panel-content table.marbre:has(td.infos-portrait) > tbody > tr {
+        display: contents;
+    }
+
+    /* Equipment: bottom of the identity column, compact slots, no title */
+    .hud-panel-content table.marbre:has(td.infos-portrait) td:has(> .equip-strip) {
+        grid-column: 2 / -1;
+        grid-row: 8;
+        align-self: end;
+        padding: 0;
+        border: none;
+        /* centred on the whole space right of the portrait: the block
+         * swallows the column gap */
+        margin-left: -10px;
+    }
+
+    #hud .hud-panel-content table.marbre:has(td.infos-portrait) td:has(> .equip-strip) .equip-slots {
+        justify-content: center;
+    }
+
+    #hud .hud-panel-content table.marbre:has(td.infos-portrait) td:has(> .equip-strip) .equip-strip-title {
+        display: none;
+    }
+
+    #hud .hud-panel-content table.marbre:has(td.infos-portrait) td:has(> .equip-strip) .equip-slot {
+        width: 40px;
+        height: 40px;
+    }
+
+    #hud .hud-panel-content table.marbre:has(td.infos-portrait) td:has(> .equip-strip) .equip-slot img {
+        max-width: 32px;
+        max-height: 32px;
+    }
+
+    /* Story: same width as the message of the day (no cell padding) */
+    .hud-panel-content table.marbre:has(td.infos-portrait) td:has(> h2) {
+        grid-column: 1 / -1;
+        grid-row: 10;
+        padding: 0;
+        border: none;
     }
 
     .hud-panel-content td.infos-portrait {
+        grid-column: 1;
+        /* enough rows for every identity line; unused ones collapse */
+        grid-row: 1 / span 8;
+        width: auto;
+        box-sizing: border-box;
+        padding: 0;
         text-align: center;
+    }
+
+    /* The portrait box is inline-block: on the baseline it left a
+     * descender gap under the image */
+    .hud-panel-content td.infos-portrait > div {
+        vertical-align: top;
+    }
+
+    .hud-panel-content td.infos-portrait + td,
+    .hud-panel-content td.infos-portrait + td > #infos-player {
+        display: contents;
+    }
+
+    /* :where keeps this at low specificity so the name and the avatar
+     * below can take their own cells */
+    .hud-panel-content #infos-player > :where(:not(.infos-text)) {
+        grid-column: 2 / -1;
+    }
+
+    /* Name and avatar share the first line */
+    .hud-panel-content #infos-player > h1 {
+        grid-column: 2;
+        grid-row: 1;
+        margin: 6px 0 4px;
+        align-self: center;
+    }
+
+    /* Full-size avatar centred on the name's line: the row keeps the
+     * name's height, the avatar overflows it evenly */
+    .hud-panel-content #infos-player > img {
+        grid-column: 3;
+        grid-row: 1;
+        align-self: center;
+        max-height: 48px;
+        margin: -12px 0;
+    }
+
+    .hud-panel-content #infos-player > .infos-text {
+        grid-column: 1 / -1;
+        grid-row: 9;
+        margin-top: 8px;
     }
 
     .hud-panel-content td.infos-portrait img {

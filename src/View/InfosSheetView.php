@@ -183,7 +183,8 @@ final class InfosSheetView
         }
 
 
-        echo '<div class="infos-text">' . $text . '</div>';
+        /* hud-plaque : same speech plaque as the board card (css/hud.css) */
+        echo '<div class="infos-text hud-plaque">' . $text . '</div>';
 
         echo '
                 </div>
@@ -288,7 +289,7 @@ final class InfosSheetView
 
                 <h2>Histoire:' . $storyEdit . '</h2>
 
-                ' . Str::richText($targetEntity->getStory()) . '
+                <div class="infos-story hud-plaque">' . Str::richText($targetEntity->getStory()) . '</div>
             </td>
         </tr>
         </table>

@@ -311,7 +311,8 @@ class Ui{
                  * entités n'ont rien à dire. */
                 if(trim((string) ($data->text ?? '')) !== ''){
 
-                    echo '<div class="card-text">'. $data->text .'</div>';
+                    /* hud-plaque : la plaque de parole du HUD, partagée avec la fiche Personnage (css/hud.css) */
+                    echo '<div class="card-text hud-plaque">'. $data->text .'</div>';
                 }
 
 
