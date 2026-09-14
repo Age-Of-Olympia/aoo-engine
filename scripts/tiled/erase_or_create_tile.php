@@ -34,7 +34,7 @@ if($_POST['type'] == 'eraser'){
 } else {
 
 
-    if(!in_array($_POST['type'], array('tiles','foregrounds','resources','triggers','elements','dialogs','plants','routes'))){
+    if(!in_array($_POST['type'], array('tiles','foregrounds','resources','triggers','elements','marks','dialogs','plants','routes'))){
 
         exit('error type');
     }
@@ -160,6 +160,16 @@ if($_POST['type'] == 'eraser'){
         );
 
         echo $laid['ok'] ? 'route' : $laid['message'];
+
+        return;
+    }
+
+    /* An element goes through the one door that knows the cell's rules:
+       one element, and a floor under it. */
+    if ($_POST['type'] === 'elements') {
+        echo \Classes\Element::put($_POST['src'], (int) $coordsId, \Classes\Element::DURATION_INFINITE)
+            ? 'elements'
+            : 'refusé : un autre élément occupe la case, ou elle n\'a pas de sol';
 
         return;
     }

@@ -545,6 +545,8 @@ include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_buildings.php';
 
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_elements.php';
 
+include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_marks.php';
+
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_routes.php';
 
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_triggers.php';

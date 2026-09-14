@@ -6,7 +6,7 @@ use Classes\Db;
 /* « resources » a quitté cette liste : la table ne reçoit plus rien, ses
    objets sont des entités et se retirent plus bas, avec le décor. */
 /* « plants » a quitté la liste avec « resources » : ce sont des entités. */
-$mapTypes = array('tiles','triggers','elements','dialogs','foregrounds','routes');
+$mapTypes = array('tiles','triggers','elements','marks','dialogs','foregrounds','routes');
 
 $db = new Db();
 
