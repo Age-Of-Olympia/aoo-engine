@@ -152,8 +152,11 @@ final class ActionSimulationService
             $data['antiBerserkTime'] = time() + ONE_DAY;
         }
 
+        // Positive (a negative id reads as PNJ) but above every entity id
+        // range: distance is measured through entity_cells, so ids 1 and 2
+        // would resolve to the real players' cells on another plan.
         return new SimulatedPlayer(
-            $isTarget ? 2 : 1,
+            $isTarget ? 900000002 : 900000001,
             $isTarget ? $input->targetCaracs : $input->actorCaracs,
             $isTarget ? $input->targetRemaining : $input->actorRemaining,
             (object) ['x' => $x, 'y' => 0, 'z' => 0, 'plan' => $input->plan],
