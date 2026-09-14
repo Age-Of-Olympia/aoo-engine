@@ -651,9 +651,6 @@ class ViewService {
             FROM map_elements me 
             JOIN coords c ON c.id = me.coords_id
             WHERE c.plan = '" . $plan . "'
-            AND me.name NOT LIKE 'trace_pas_%'
-            AND me.name != 'flag_red'
-            AND me.name != 'sang'
             " . $this->boundsClause($mapType) . "
             $zCondition
             ORDER BY me.name";

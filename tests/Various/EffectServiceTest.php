@@ -20,7 +20,7 @@ use Tests\Support\LegacyBootstrapTrait;
  *    ELE_IS_CONTROLED);
  *  - the corruption maps under the normalized 'corruption_des_plantes'
  *    key (ex-ITEM_CORRUPTIONS, fixed spelling);
- *  - map markers (trace_pas*) excluded from the gameplay name list.
+ *  - mark_turns: what an effect adds to the footsteps of its bearer.
  *
  * Skips cleanly when the DB is unreachable (same convention as
  * FactionServiceTest).
@@ -41,7 +41,6 @@ class EffectServiceTest extends TestCase
     public function testTheCatalogIsTheExistenceValidator(): void
     {
         $this->assertTrue($this->service->exists('feu'));
-        $this->assertTrue($this->service->exists('trace_pas_ne'));
         $this->assertFalse($this->service->exists('effet_inconnu'));
 
         $this->assertSame('ra-small-fire', $this->service->getIcon('feu'));
@@ -170,12 +169,18 @@ class EffectServiceTest extends TestCase
         $this->assertNull($this->service->tradingBlocker([$carry('feu')]));
     }
 
-    public function testMapMarkersAreExcludedFromGameplayLists(): void
+    /** Mud on the walker makes the footstep last a turn longer; fire adds nothing. */
+    public function testWhatTheCarriedEffectsAddToAFootstep(): void
     {
-        $names = $this->service->getGameplayEffectNames();
+        $carry = static function (string $name): \App\Entity\PlayerEffect {
+            $entry = new \App\Entity\PlayerEffect();
+            $entry->setName($name);
+            return $entry;
+        };
 
-        $this->assertContains('feu', $names);
-        $this->assertNotContains('trace_pas', $names);
-        $this->assertNotContains('trace_pas_so', $names);
+        $this->assertSame(1, $this->service->markTurns([$carry('feu'), $carry('boue')]));
+        $this->assertSame(0, $this->service->markTurns([$carry('feu')]));
+        $this->assertSame(0, $this->service->markTurns([]));
+        $this->assertContains('feu', $this->service->getEffectNames());
     }
 }

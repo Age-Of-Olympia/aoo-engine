@@ -28,10 +28,7 @@ final class EffectWikiRenderer implements WikiSheetRendererInterface
 
     public function render(): string
     {
-        $effects = array_filter(
-            (new EffectService())->getAllEffects(),
-            static fn (Effect $effect): bool => !$effect->isMapMarker()
-        );
+        $effects = (new EffectService())->getAllEffects();
         usort($effects, static fn (Effect $a, Effect $b): int => strcoll($a->getLabel(), $b->getLabel()));
 
         $markup = "====== Effets ======\n";

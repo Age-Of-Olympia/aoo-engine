@@ -66,6 +66,8 @@ class PlanImportExportTest extends TestCase
         $this->assertSame(-1, (int) $wall['damages']);
         $this->assertArrayNotHasKey('id', $wall, 'jamais d\'id DB dans un bundle');
         $this->assertArrayNotHasKey('player_id', $wall);
+        $this->assertCount(1, $payload['layers']['elements'], 'un élément daté est de l\'état runtime, hors bundle');
+        $this->assertSame('feu_test', $payload['layers']['elements'][0]['name']);
         $this->assertArrayNotHasKey('endTime', $payload['layers']['elements'][0], 'endTime = état runtime, hors bundle');
     }
 
@@ -228,7 +230,9 @@ class PlanImportExportTest extends TestCase
             [(int) $builderId, $palissadeId]
         );
 
-        $this->link->executeStatement('INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 12345)', [$ids['0,1'], 'feu_test']);
+        $this->link->executeStatement('INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 0)', [$ids['0,1'], 'feu_test']);
+        // Dated = the game's: never exported
+        $this->link->executeStatement('INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 12345)', [$ids['0,0'], 'sang_test']);
 
         (new PlanConfigService())->replace(self::SRC, ['name' => 'Source de test', 'player_visibility' => false]);
     }

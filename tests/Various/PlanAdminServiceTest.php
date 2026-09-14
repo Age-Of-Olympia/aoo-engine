@@ -103,7 +103,7 @@ class PlanAdminServiceTest extends TestCase
         $this->assertSame(3, $report['coords']);
         $this->assertSame(1, $report['layers']['tiles']);
         $this->assertSame(2, $report['layers']['resources'], 'les ressources voyagent, entités comprises');
-        $this->assertSame(1, $report['layers']['elements']);
+        $this->assertSame(1, $report['layers']['elements'], 'le permanent voyage, le daté reste au jeu');
 
         /* Les ressources du clone sont des ENTITÉS, debout au même endroit,
            et celle qui était à sec l'est restée. */
@@ -367,8 +367,13 @@ class PlanAdminServiceTest extends TestCase
             [$ids['0,0'], 'grass']
         );
         $this->link->executeStatement(
-            'INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 12345)',
+            'INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 0)',
             [$ids['0,1'], 'feu_test']
+        );
+        // Dated = the game's: never cloned
+        $this->link->executeStatement(
+            'INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 12345)',
+            [$ids['0,0'], 'sang_test']
         );
 
         (new PlanConfigService())->replace(self::SRC, ['name' => 'Source de test', 'player_visibility' => false]);

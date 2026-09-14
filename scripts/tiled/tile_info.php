@@ -25,6 +25,8 @@ select  coords_id as coords_id, 'map_dialogs' as type, CONVERT(name USING utf8mb
 union
 select  coords_id as coords_id, 'map_elements' as type, CONVERT(name USING utf8mb4) as name, NULL as params from map_elements where coords_id = ?
 union
+select  coords_id as coords_id, 'map_marks' as type, CONVERT(name USING utf8mb4) as name, NULL as params from map_marks where coords_id = ?
+union
 /* Roads are entities, described by their type like resources and plants.
    The channel name the erase button receives is 'route', not a table. */
 select ec.coords_id as coords_id, 'route' as type,
@@ -55,7 +57,7 @@ union
 select id as coords_id, 'ombre' as type, CONVERT(CONCAT('niveau ', shade) USING utf8mb4) as name,
        '« −1 niveau » éclaircit d\'un cran' as params
 from coords where id = ? and shade > 0";
-$res = $db->exe($sql, array($coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId));
+$res = $db->exe($sql, array_fill(0, substr_count($sql, '?'), $coordsId));
 
 
 $results = $res->fetch_all(MYSQLI_ASSOC);

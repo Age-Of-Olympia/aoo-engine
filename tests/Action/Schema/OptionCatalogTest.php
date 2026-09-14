@@ -21,7 +21,7 @@ class OptionCatalogTest extends TestCase
     private function catalog(): OptionCatalog
     {
         $effectService = $this->createStub(\App\Service\EffectService::class);
-        $effectService->method('getGameplayEffectNames')->willReturn(['maladresse', 'protection', 'adrenaline']);
+        $effectService->method('getEffectNames')->willReturn(['maladresse', 'protection', 'adrenaline']);
         $effectService->method('getLabel')->willReturnCallback(
             static fn (string $name): string => ucfirst(str_replace('_', ' ', $name))
         );

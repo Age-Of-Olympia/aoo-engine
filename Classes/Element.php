@@ -12,6 +12,11 @@ class Element{
 
 
     /**
+     * Lays an element on a cell. A cell holds ONE element: another one
+     * already there wins and nothing is laid; the same one again only
+     * refreshes its clock. Nothing is laid where there is no floor either
+     * — a flier bleeding over the void stains nothing.
+     *
      * @param int  $duration durée de vie en TOURS, comme celle des
      *        effets — mais convertie en durée réelle, car un élément de
      *        carte n'appartient à aucun joueur : aucun tour ne le
@@ -23,13 +28,9 @@ class Element{
      *        Element::DURATION_INFINITE pour un élément que rien n'use
      *        (l'eau de pêche) : il est écrit endTime = 0, la convention
      *        que le cron ne purge jamais.
-     * @param bool $refreshWatchers purger le damier en cache de ceux qui
-     *        voient la case. À FAUX quand l'appelant purge déjà lui-même
-     *        la zone (traces de pas : Player::go le fait pour l'origine
-     *        ET la destination du pas) — sinon on paie deux fois la même
-     *        purge à chaque déplacement, l'action la plus fréquente du jeu.
+     * @return bool false when the cell refused it
      */
-    public static function put($name, $coords, $duration=4, bool $refreshWatchers=true){
+    public static function put($name, $coords, $duration=4): bool{
 
 
         if(!(new \App\Service\EffectService())->exists($name)){
@@ -46,30 +47,25 @@ class Element{
 
         if(is_numeric($coords)){
 
-            $coords_id = $coords;
+            $coords_id = (int) $coords;
         }
         else{
 
-            $coords_id = View::get_coords_id($coords);
-        }
-
-        // Log coords_id for debugging foreign key issues
-        if ($coords_id === NULL || $coords_id === '') {
-            error_log("[Element::put] WARNING: coords_id is NULL/empty for element '{$name}'");
-            error_log("[Element::put] Stack trace: " . print_r(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3), true));
-            return; // Don't try to insert with NULL coords_id
+            $coords_id = (int) View::get_coords_id($coords);
         }
 
         $db = new Db();
 
-        // CRITICAL: Validate that coords_id actually exists in database
-        // This prevents foreign key constraint violations
-        $result = $db->exe("SELECT id FROM coords WHERE id = ?", [$coords_id]);
-        $coordsExists = $result && $result->num_rows > 0;
-        if (!$coordsExists) {
-            error_log("[Element::put] ERROR: coords_id {$coords_id} does not exist in database for element '{$name}'");
-            error_log("[Element::put] Stack trace: " . print_r(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 5), true));
-            return; // Don't try to insert with invalid coords_id
+        if(!self::hasFloor($db, $coords_id)){
+
+            return false;
+        }
+
+        $taken = $db->exe('SELECT 1 FROM map_elements WHERE coords_id = ? AND name != ?', array($coords_id, $name));
+
+        if($taken && $taken->num_rows){
+
+            return false;
         }
 
         $sql = '
@@ -83,10 +79,28 @@ class Element{
 
         $db->exe($sql, array($name, $coords_id, $endTime));
 
-        if($refreshWatchers){
+        self::refreshWatchers($db, $coords_id);
 
-            self::refreshWatchers($db, (int) $coords_id);
-        }
+        return true;
+    }
+
+    /**
+     * Is there ground under this cell? The sky is a cell above ground
+     * level with no tile — the same rule go.php uses to demand flight.
+     * Below that, a cell without a tile is still walked on, so it counts
+     * as floor. A coords id that does not exist has none.
+     */
+    public static function hasFloor(Db $db, int $coordsId): bool
+    {
+        $res = $db->exe(
+            'SELECT 1 FROM coords c
+              LEFT JOIN map_tiles t ON t.coords_id = c.id
+             WHERE c.id = ? AND (c.z <= 0 OR t.coords_id IS NOT NULL)
+             LIMIT 1',
+            array($coordsId)
+        );
+
+        return $res && $res->num_rows > 0;
     }
 
     /**

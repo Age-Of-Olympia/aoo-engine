@@ -381,7 +381,7 @@ function items_type_filter_bar(array $typeCounts): string
  */
 function item_effect_multiselect(string $field, array $selected, string $label, string $hint): string
 {
-    $known = (new \App\Service\EffectService())->getGameplayEffectNames();
+    $known = (new \App\Service\EffectService())->getEffectNames();
 
     $options = '';
     foreach (array_diff($selected, $known) as $orphan) {
@@ -429,7 +429,7 @@ function item_spell_select(string $field, string $selected): string
  */
 function item_effect_duration_rows(string $field, array $entries, string $header): string
 {
-    $known = (new \App\Service\EffectService())->getGameplayEffectNames();
+    $known = (new \App\Service\EffectService())->getEffectNames();
 
     $rows = '<div class="d-flex gap-2 text-muted" style="font-size:85%;">'
         . '<span style="flex:2;">' . $header . '</span>'

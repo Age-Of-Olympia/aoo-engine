@@ -177,17 +177,17 @@ class Effect
     private bool $stackRefreshDuration = false;
 
     /**
-     * Map marker (trace_pas…) : transits through players_effects but is
-     * no gameplay effect — excluded from admin dropdowns and sheets.
+     * Turns this effect adds to the footsteps of whoever carries it:
+     * mud makes a trace last longer (go.php, MapMarkService).
      */
-    #[ORM\Column(type: "boolean", options: ["default" => false], name: "is_map_marker")]
-    private bool $mapMarker = false;
+    #[ORM\Column(type: "integer", options: ["default" => 0], name: "mark_turns")]
+    private int $markTurns = 0;
 
     /**
      * Un élément au sol portant cet effet laisse-t-il construire et
      * aménager sa case ? Faux par défaut (feu, lave, ronce… rendent la
      * case inconstructible) ; vrai pour les salissures qui ne gênent
-     * pas le chantier (sang, boue, traces de pas).
+     * pas le chantier (sang, boue).
      */
     #[ORM\Column(type: "boolean", options: ["default" => false], name: "buildable_over")]
     private bool $buildableOver = false;
@@ -489,14 +489,14 @@ class Effect
         $this->stackRefreshDuration = $stackRefreshDuration;
     }
 
-    public function isMapMarker(): bool
+    public function getMarkTurns(): int
     {
-        return $this->mapMarker;
+        return $this->markTurns;
     }
 
-    public function setMapMarker(bool $mapMarker): void
+    public function setMarkTurns(int $markTurns): void
     {
-        $this->mapMarker = $mapMarker;
+        $this->markTurns = max(0, $markTurns);
     }
 
     public function isBuildableOver(): bool

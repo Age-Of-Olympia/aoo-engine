@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use Classes\Db;
+use Classes\Element;
 use RuntimeException;
 
 /**
@@ -12,15 +13,15 @@ use RuntimeException;
  * que le Saignement des races). Socle du panneau admin
  * « Cartes → Éléments » : inventaire par plan, pose (durée ou
  * permanent — endTime = 0, que le cron horaire delete_elements ne purge
- * jamais) et retrait. Complète Element::put, réservé aux durées finies.
+ * jamais) et retrait. La pose passe par Element::put, qui tient les
+ * règles de la case : un seul élément, et un sol dessous.
  */
 class MapElementService
 {
     /**
      * Éléments posables : une image dans img/elements ET un effet du
      * catalogue (exigence d'Element::put et de l'application au pas —
-     * un élément sans effet ne ferait rien). Les traces de pas, sans
-     * effet, en sont naturellement exclues.
+     * un élément sans effet ne ferait rien).
      *
      * @return list<string>
      */
@@ -58,14 +59,13 @@ class MapElementService
      *
      * @return list<array{id: int, name: string, x: int, y: int, z: int, endTime: int}>
      */
-    public function listByPlan(string $plan, bool $withFootprints = false): array
+    public function listByPlan(string $plan): array
     {
-        $sql = "SELECT me.id, me.name, me.endTime, c.x, c.y, c.z
+        $sql = 'SELECT me.id, me.name, me.endTime, c.x, c.y, c.z
                 FROM map_elements me
                 JOIN coords c ON c.id = me.coords_id
-                WHERE c.plan = ?"
-            . ($withFootprints ? '' : " AND me.name NOT LIKE 'trace_pas_%'")
-            . ' ORDER BY me.name, c.x, c.y, c.z';
+                WHERE c.plan = ?
+                ORDER BY me.name, c.x, c.y, c.z';
 
         $rows = [];
         $res = (new Db())->exe($sql, [$plan]);
@@ -108,17 +108,11 @@ class MapElementService
             );
         }
 
-        $db->exe(
-            'INSERT INTO map_elements (`name`, `coords_id`, `endTime`) VALUE (?, ?, ?)
-             ON DUPLICATE KEY UPDATE endTime = VALUES(endTime)',
-            [
-                $name,
-                (int) $coordsId,
-                $durationTurns === null
-                    ? 0
-                    : time() + ($durationTurns * TurnScheduleService::referenceTurnSeconds()),
-            ]
-        );
+        if (!Element::put($name, (int) $coordsId, $durationTurns ?? Element::DURATION_INFINITE)) {
+            throw new RuntimeException(
+                "Case ({$x},{$y},{$z}) : pas de sol, ou un autre élément l'occupe déjà — une case n'en porte qu'un."
+            );
+        }
     }
 
     public function remove(int $id): void
@@ -143,18 +137,24 @@ class MapElementService
     }
 
     /**
-     * Purge des éléments expirés — le travail du cron horaire
-     * delete_elements, déclenchable à la main depuis le panneau (tous
-     * plans confondus, comme le cron). endTime 0 (permanent) survit.
+     * Purge des éléments et des marques expirés — le travail du cron
+     * horaire delete_elements, déclenchable à la main depuis le panneau
+     * (tous plans confondus, comme le cron). endTime 0 (permanent) survit.
      */
     public function purgeExpired(): int
     {
-        return (int) (new Db())->exe(
-            'DELETE FROM map_elements WHERE endTime != 0 AND endTime <= ?',
-            [time()],
-            false,
-            true
-        );
+        $db = new Db();
+        $purged = 0;
+        foreach (['map_elements', 'map_marks'] as $table) {
+            $purged += (int) $db->exe(
+                'DELETE FROM ' . $table . ' WHERE endTime != 0 AND endTime <= ?',
+                [time()],
+                false,
+                true
+            );
+        }
+
+        return $purged;
     }
 
     private function root(): string

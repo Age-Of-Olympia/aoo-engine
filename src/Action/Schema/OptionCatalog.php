@@ -36,7 +36,7 @@ final class OptionCatalog
     {
         try {
             $service = $this->effectService ??= new \App\Service\EffectService();
-            $names = $service->getGameplayEffectNames();
+            $names = $service->getEffectNames();
         } catch (\Throwable) {
             return [];
         }

@@ -23,8 +23,7 @@ $plan = stringWithDefault('plan', (string) ($_GET['plan'] ?? ''));
 if (!in_array($plan, $plans, true)) {
     $plan = in_array('gaia', $plans, true) ? 'gaia' : ($plans[0] ?? '');
 }
-$withFootprints = !empty($_REQUEST['traces']);
-$backTo = 'map-elements.php?plan=' . urlencode($plan) . ($withFootprints ? '&traces=1' : '');
+$backTo = 'map-elements.php?plan=' . urlencode($plan);
 
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['element_place']) || isset($_POST['element_remove'])
@@ -79,7 +78,7 @@ if ($isStateChangingPost) {
     redirectTo($backTo); // PRG
 }
 
-$entries = $plan !== '' ? $service->listByPlan($plan, $withFootprints) : [];
+$entries = $plan !== '' ? $service->listByPlan($plan) : [];
 $placeable = $service->placeableNames();
 
 ob_start();
@@ -94,7 +93,8 @@ ob_start();
         Un élément posé sur une case applique <strong>l'effet du même nom</strong> à qui marche
         dessus (boue, ronce…) — le comportement de l'effet se règle dans
         <a href="/admin/effects.php">Effets</a>. Durée vide = permanent (jamais purgé) ;
-        reposer un élément prolonge sa durée. La case doit exister (entrée coords du plan).
+        reposer un élément prolonge sa durée. Une case n'en porte qu'un, et il lui faut un sol.
+        Les traces de pas et le drapeau sont des <em>marques</em>, une couche à part (Tiled, couche « marks »).
     </div>
 
     <div class="card mt-3">
@@ -109,11 +109,6 @@ ob_start();
                         </option>
                     <?php endforeach; ?>
                 </select>
-                <label class="mb-0 ml-3" style="font-size:13px;">
-                    <input type="checkbox" name="traces" value="1" <?= $withFootprints ? 'checked' : '' ?>
-                           onchange="this.form.submit()">
-                    afficher les traces de pas
-                </label>
             </form>
         </div>
     </div>
@@ -125,7 +120,6 @@ ob_start();
             <form method="post" class="d-flex align-items-end gap-3 flex-wrap">
                 <?= $csrf->renderTokenField() ?>
                 <input type="hidden" name="plan" value="<?= e($plan) ?>">
-                <?php if ($withFootprints): ?><input type="hidden" name="traces" value="1"><?php endif; ?>
                 <div class="form-group mb-0">
                     <label style="font-size:13px;">Élément</label>
                     <select name="name" class="form-control form-control-sm" required>
@@ -165,7 +159,6 @@ ob_start();
             <form method="post" class="mb-0">
                 <?= $csrf->renderTokenField() ?>
                 <input type="hidden" name="plan" value="<?= e($plan) ?>">
-                <?php if ($withFootprints): ?><input type="hidden" name="traces" value="1"><?php endif; ?>
 
                 <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
                     <h5 class="card-title mb-0">Éléments — <?= e($plan) ?></h5>
@@ -178,8 +171,7 @@ ob_start();
                 </div>
 
                 <?php if ($entries === []): ?>
-                    <div class="alert alert-info mb-0">Aucun élément sur ce plan<?=
-                        $withFootprints ? '' : ' (traces de pas masquées)' ?>.</div>
+                    <div class="alert alert-info mb-0">Aucun élément sur ce plan.</div>
                 <?php else: ?>
                     <table class="table table-sm table-striped" style="font-size:13px;" data-admin-list data-page-size="40">
                         <thead><tr>

@@ -34,9 +34,6 @@ function effect_flag_badges(Effect $effect): string
     if ($effect->isHidden()) {
         $badges[] = '<span class="badge badge-secondary" title="Posture éphémère : purgée au nouveau tour ou à l\'usage, jamais listée sur les fiches">Caché</span>';
     }
-    if ($effect->isMapMarker()) {
-        $badges[] = '<span class="badge badge-light" title="Marqueur de carte (traces de pas…) : transite par players_effects mais n\'est pas un effet de gameplay">Marqueur</span>';
-    }
     if ($effect->getCorruptionBreakChance() !== null) {
         $badges[] = '<span class="badge badge-warning" title="Corruption : augmente la chance de casse du matériel fait de ses matériaux">Corruption</span>';
     }
@@ -193,7 +190,7 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
     $service = new EffectService();
     $currentControls = $isEdit ? $effect->getControlNames() : [];
     $controlOptions = '';
-    foreach ($service->getGameplayEffectNames() as $name) {
+    foreach ($service->getEffectNames() as $name) {
         if (!$isEdit || $name !== $effect->getName()) {
             $controlOptions .= '<option value="' . e($name) . '"'
                 . (in_array($name, $currentControls, true) ? ' selected' : '') . '>' . e($name) . '</option>';
@@ -220,10 +217,8 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
             '<div>'
             . formCheckbox('hidden', $isEdit && $effect->isHidden(), 'Caché',
                 'class="mr-3" title="Posture éphémère (parade, leurre…) : purgée au nouveau tour ou à l\'usage, jamais listée sur les fiches"')
-            . formCheckbox('is_map_marker', $isEdit && $effect->isMapMarker(), 'Marqueur de carte',
-                'class="mr-3" title="Marqueur de carte (traces de pas…) : exclu des listes de gameplay (workbench, saignement)"')
             . formCheckbox('buildable_over', $isEdit && $effect->isBuildableOver(), 'Constructible par-dessus',
-                'title="Posé au sol comme élément : n\'empêche ni construction ni aménagement de la case (sang, boue, traces) — décoché, la case est bloquée (feu, lave, ronce…)"')
+                'title="Posé au sol comme élément : n\'empêche ni construction ni aménagement de la case (sang, boue) — décoché, la case est bloquée (feu, lave, ronce…)"')
             . '</div>',
             'form-group col-md-3')
         . formField('Description', formTextarea('description', $isEdit ? $effect->getDescription() : ''),
@@ -237,6 +232,10 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
             'form-group col-md-4',
             'Appliquée tant que l\'effet dure : la carac bouge de la VALEUR portée par l\'effet'
             . ' (poser avec valeur 3 → ±3).')
+        . formField('Traces de pas (+tours)',
+            formInput('mark_turns', (string) ($isEdit ? $effect->getMarkTurns() : 0), 'type="number" min="0" step="1"'),
+            'form-group col-md-4',
+            'Tours ajoutés à la durée des traces de pas de qui porte l\'effet (boue : 1).')
         . formField('Annule les effets',
             '<select name="controls[]" class="form-control" multiple size="6">' . $controlOptions . '</select>',
             'form-group col-md-4',

@@ -2,6 +2,7 @@
 
 namespace Tests\Player;
 
+use App\Service\MapMarkService;
 use App\Service\TurnScheduleService;
 use Classes\Element;
 use PHPUnit\Framework\Attributes\Group;
@@ -19,8 +20,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * Mais la trace de pas est posée à CHAQUE déplacement, et Player::go()
  * purge déjà l'origine et la destination du pas : lui laisser demander
  * la purge revient à payer deux fois, sur l'action la plus fréquente du
- * jeu, pour un résultat identique. D'où l'exclusion — et ces tests, qui
- * pinnent les deux moitiés de la règle.
+ * jeu, pour un résultat identique. D'où une couche à part — les marques,
+ * qui ne purgent jamais.
  */
 #[Group('entities-baseline')]
 class MapElementCachePurgeTest extends LegacyPlayerFixtureTestCase
@@ -110,40 +111,29 @@ class MapElementCachePurgeTest extends LegacyPlayerFixtureTestCase
     }
 
     /**
-     * L'exclusion demandée : la trace de pas ne purge pas, parce que le
-     * déplacement qui la produit purge déjà les deux cases concernées.
+     * Une marque ne purge pas : le déplacement qui laisse la trace de pas
+     * purge déjà les deux cases concernées.
      */
     public function testAFootstepDoesNotInvalidateTheCachedBoard(): void
     {
         $player = $this->createRealPlayer('GmPurge');
         $player->get_data();
+        $coordsId = (int) $player->data->coords_id;
 
         $cache = $this->primeCacheFor((int) $player->id);
 
-        Element::put('trace_pas_n', (int) $player->data->coords_id, 3600, refreshWatchers: false);
+        (new MapMarkService())->put('trace_pas_n', $coordsId, 1);
 
         $this->assertFileExists(
             $cache,
             'la trace de pas ne redemande pas une purge que Player::go() vient de faire'
         );
+        $this->assertSame(1, (int) $this->link->fetchOne(
+            "SELECT COUNT(*) FROM map_marks WHERE name = 'trace_pas_n' AND coords_id = ?",
+            [$coordsId]
+        ));
 
+        $this->link->executeStatement("DELETE FROM map_marks WHERE name = 'trace_pas_n' AND coords_id = ?", [$coordsId]);
         @unlink($cache);
-    }
-
-    /**
-     * Le garde-fou qui donne son sens à l'exclusion : si go.php cessait
-     * de la demander, on repaierait la purge à chaque pas sans que rien
-     * ne casse visiblement.
-     */
-    public function testTheMovementPathStillOptsOutOfThePurge(): void
-    {
-        $source = file_get_contents(__DIR__ . '/../../go.php');
-        $this->assertIsString($source);
-
-        $this->assertMatchesRegularExpression(
-            '/Element::put\(\$footstep,[^;]*refreshWatchers:\s*false\s*\)/s',
-            $source,
-            'go.php doit poser la trace de pas SANS redemander la purge'
-        );
     }
 }

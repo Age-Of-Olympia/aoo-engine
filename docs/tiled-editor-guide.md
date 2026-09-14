@@ -88,7 +88,8 @@ Chaque niveau z est un groupe `z=0`, `z=-1`… contenant, de bas en haut :
 | `tiles` | sol (biomes, routes posées au sol…) | tuiles |
 | `routes`, `plants` | routes, plantes | tuiles |
 | `resources` | ressources récoltables (arbres, pierres…), autels, `unique_*` — bloquants | tuiles |
-| `elements` | décor animé/temporaire | tuiles |
+| `elements` | éléments au sol (eau, feu, boue…) — un seul par case, l'effet du même nom s'applique à qui marche dessus | tuiles |
+| `marks` | marques sans effet, au-dessus des éléments (drapeau ; les traces de pas sont au jeu, jamais pullées) | tuiles |
 | `buildings` | **entités bâtiment** (murs d'enceinte, statues, coffres…) — une tuile = une entité | tuiles |
 | `foregrounds` | décor d'avant-plan | tuiles |
 | `triggers` | déclencheurs invisibles (tp, forbidden…) | objets |

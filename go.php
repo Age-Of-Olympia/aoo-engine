@@ -251,13 +251,7 @@ if($goCoords->z < 0){
 elseif($goCoords->z > 0){
 
 
-    $sql = 'SELECT COUNT(*) AS n FROM map_tiles WHERE coords_id = ?';
-
-    $res = $db->exe($sql, $coordsId);
-
-    $row = $res->fetch_object();
-
-    if(!$row->n && !$player->effectService->grantsFlight($player->getEffects())){
+    if(!Element::hasFloor($db, (int) $coordsId) && !$player->effectService->grantsFlight($player->getEffects())){
 
         echo '<script>aooAlert("Il faut pouvoir voler pour accéder à ce lieu.").then(function(){document.location.reload();});</script>';
 
@@ -326,21 +320,13 @@ if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMod
         $footstep.='o';
     }
 
-    /* Durées en TOURS depuis le passage des effets aux tours : une trace
-     * tient un tour, deux si le marcheur est couvert de boue. */
-    $footstepDuration = 1;
-    if ($player->have_effect("boue")) {
-        $footstepDuration = 2;
-    }
+    /* A footstep lasts a turn, plus what the effects the walker carries
+     * add to it (mud: effects.mark_turns). */
+    $footstepDuration = 1 + $player->effectService->markTurns($player->getEffects());
     /* Sans direction, pas de trace : emprunter le passage de SA case
-     * (escalier, tp) n'est pas un pas — et l'élément « trace_pas_ » nu
-     * n'existe pas au catalogue. */
+     * (escalier, tp) n'est pas un pas. */
     if($footstep !== 'trace_pas_' && !$player->have_effect("leger")){
-        /* Pas de purge de cache ici : Player::go() ci-dessous purge déjà
-         * la case d'origine (celle de la trace) et la destination. La
-         * demander une seconde fois doublerait, à CHAQUE déplacement, la
-         * purge la plus coûteuse du jeu — pour un résultat identique. */
-        Element::put($footstep, $player->data->coords_id, $footstepDuration, refreshWatchers: false);
+        (new \App\Service\MapMarkService())->put($footstep, (int) $player->data->coords_id, $footstepDuration);
     }
     
 }

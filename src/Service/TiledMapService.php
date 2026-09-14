@@ -49,18 +49,28 @@ class TiledMapService
      *    insertion). Pour les autres couches, les colonnes hors clé sont de
      *    l'état runtime préservé sur les lignes conservées ;
      *  - composites : la couche accepte les structures multi-tuiles (le sol
-     *    reste strictement 50x50).
+     *    reste strictement 50x50) ;
+     *  - permanentOnly : l'éditeur ne voit que les lignes sans échéance
+     *    (endTime 0). Les datées — sang, traces de pas — sont au jeu : ni
+     *    pullées, ni comptées dans la version, ni effacées par un push.
      */
     public const AUTHORABLE_LAYERS = [
         'tiles'       => ['columns' => ['foreground', 'player_id'], 'paramsInKey' => false, 'composites' => false],
         'routes'      => ['columns' => ['player_id'],               'paramsInKey' => false, 'composites' => true],
         'plants'      => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
         'resources'   => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
-        'elements'    => ['columns' => ['endTime'],                 'paramsInKey' => false, 'composites' => true],
+        'elements'    => ['columns' => ['endTime'],                 'paramsInKey' => false, 'composites' => true, 'permanentOnly' => true],
+        'marks'       => ['columns' => ['endTime'],                 'paramsInKey' => false, 'composites' => false, 'permanentOnly' => true],
         'foregrounds' => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
         'triggers'    => ['columns' => ['params'],                  'paramsInKey' => true,  'composites' => false],
         'dialogs'     => ['columns' => ['params'],                  'paramsInKey' => true,  'composites' => false],
     ];
+
+    /** The SQL that keeps a layer's runtime rows away from the editor. */
+    public static function authoredRowsClause(array $spec): string
+    {
+        return !empty($spec['permanentOnly']) ? ' AND m.endTime = 0' : '';
+    }
 
     /**
      * Les couches dont les lignes sont des ENTITÉS, avec leur famille.
@@ -698,7 +708,8 @@ class TiledMapService
                 'SELECT ' . $columns . '
                  FROM map_' . $layer . ' m
                  JOIN coords c ON c.id = m.coords_id
-                 WHERE c.plan = ?' . ($hasPlayerId ? ' AND (m.player_id IS NULL OR m.player_id = 0)' : '') . '
+                 WHERE c.plan = ?' . ($hasPlayerId ? ' AND (m.player_id IS NULL OR m.player_id = 0)' : '')
+                    . self::authoredRowsClause($spec) . '
                  ORDER BY c.z, c.y, c.x, m.id',
                 array($plan)
             );
@@ -737,7 +748,7 @@ class TiledMapService
                 'SELECT ' . $columns . '
                  FROM map_' . $layer . ' m
                  JOIN coords c ON c.id = m.coords_id
-                 WHERE c.plan = ? AND c.z = ?
+                 WHERE c.plan = ? AND c.z = ?' . self::authoredRowsClause($spec) . '
                  ORDER BY c.y, c.x, m.id',
                 array($plan, $z)
             );

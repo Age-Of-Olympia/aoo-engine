@@ -53,7 +53,7 @@ final class EffectExporter implements ObjectExporterInterface
             'description'           => $entity->getDescription(),
             'icon'                  => $entity->getIcon(),
             'hidden'                => $entity->isHidden(),
-            'isMapMarker'           => $entity->isMapMarker(),
+            'markTurns'             => $entity->getMarkTurns(),
             'buffCarac'             => $entity->getBuffCarac(),
             'debuffCarac'           => $entity->getDebuffCarac(),
             'rollAttackMod'         => $entity->getRollAttackMod(),

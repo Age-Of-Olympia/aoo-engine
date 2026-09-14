@@ -758,7 +758,8 @@ class PlanAdminService
              SELECT nc.id, ' . $selectSql . '
              FROM map_' . $layer . ' m
              JOIN coords oc ON oc.id = m.coords_id AND oc.plan = ?
-             JOIN coords nc ON nc.plan = ? AND nc.x = oc.x AND nc.y = oc.y AND nc.z = oc.z' . $playerFilter,
+             JOIN coords nc ON nc.plan = ? AND nc.x = oc.x AND nc.y = oc.y AND nc.z = oc.z'
+                . $playerFilter . TiledMapService::authoredRowsClause($spec),
             array($sourcePlan, $targetPlan),
             false,
             true

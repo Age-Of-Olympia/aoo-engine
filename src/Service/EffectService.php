@@ -329,6 +329,21 @@ class EffectService
     }
 
     /**
+     * Turns the carried effects add to a footstep — the highest one.
+     *
+     * @param iterable<\App\Entity\PlayerEffect> $carried
+     */
+    public function markTurns(iterable $carried): int
+    {
+        $turns = 0;
+        foreach ($carried as $playerEffect) {
+            $turns = max($turns, $this->getEffectByName($playerEffect->getName())?->getMarkTurns() ?? 0);
+        }
+
+        return $turns;
+    }
+
+    /**
      * Multiplicateur des coûts déclarés « imposture » : 1 + la somme des
      * valeurs portées des effets cost_multiplier (un seul effet porté à
      * la valeur v → ×(v+1), la formule historique).
@@ -372,17 +387,10 @@ class EffectService
         return array_values($this->catalog());
     }
 
-    /**
-     * @return string[] Names offered wherever gameplay references an
-     *                  effect (workbench dropdowns, races.bleeds…) —
-     *                  the catalog minus the map markers.
-     */
-    public function getGameplayEffectNames(): array
+    /** @return string[] Every name of the catalog. */
+    public function getEffectNames(): array
     {
-        return array_keys(array_filter(
-            $this->catalog(),
-            static fn (Effect $effect): bool => !$effect->isMapMarker()
-        ));
+        return array_keys($this->catalog());
     }
 
     /**

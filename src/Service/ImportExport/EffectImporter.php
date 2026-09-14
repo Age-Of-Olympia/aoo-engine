@@ -74,7 +74,7 @@ final class EffectImporter extends AbstractObjectImporter
         $effect->setDescription((string) ($plan['description'] ?? ''));
         $effect->setIcon((string) $plan['icon']);
         $effect->setHidden((bool) ($plan['hidden'] ?? false));
-        $effect->setMapMarker((bool) ($plan['isMapMarker'] ?? false));
+        $effect->setMarkTurns((int) ($plan['markTurns'] ?? 0));
         $effect->setBuffCarac(trim((string) ($plan['buffCarac'] ?? '')));
         $effect->setDebuffCarac(trim((string) ($plan['debuffCarac'] ?? '')));
         $effect->setRollAttackMod(max(-1, min(1, (int) ($plan['rollAttackMod'] ?? 0))));

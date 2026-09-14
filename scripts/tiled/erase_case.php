@@ -89,7 +89,7 @@ if($type == 'buildings'){
        passent par le canal « ressource » ci-dessus. */
     /* map_routes left the list too: roads are entities and go through the
        'route' channel above. */
-    if(!in_array($type, array('map_tiles','map_triggers','map_dialogs','map_elements','map_foregrounds'))){
+    if(!in_array($type, array('map_tiles','map_triggers','map_dialogs','map_elements','map_marks','map_foregrounds'))){
 
         exit('error type');
     }

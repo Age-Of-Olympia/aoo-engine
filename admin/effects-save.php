@@ -89,7 +89,7 @@ $applyForm = static function (Effect $effect): void {
     $effect->setIcon((string) $_POST['icon']);
     $effect->setHidden(booleanCheckbox('hidden'));
     $effect->setBuildableOver(booleanCheckbox('buildable_over'));
-    $effect->setMapMarker(booleanCheckbox('is_map_marker'));
+    $effect->setMarkTurns((int) ($_POST['mark_turns'] ?? 0));
     $effect->setBuffCarac(trim((string) ($_POST['buff_carac'] ?? '')));
     $effect->setDebuffCarac(trim((string) ($_POST['debuff_carac'] ?? '')));
 

@@ -412,6 +412,20 @@ class View{
             WHERE
             coords_id IN ('. $inSightIdImploded .')
             AND player_type = "route"
+
+            UNION
+
+            /* Marks — footsteps, the flag — sit above every ground layer
+               and under the characters. */
+            SELECT
+            id, name, coords_id,
+            "marks" AS whichTable,
+            97.9 AS tableOrder
+            FROM
+            map_marks
+            WHERE
+            coords_id IN ('. $inSightIdImploded .')
+
             UNION
 
             SELECT
@@ -640,10 +654,7 @@ class View{
                 }
 
 
-                if($row->whichTable == 'elements'){
-
-
-                    // elements
+                if($row->whichTable == 'elements' || $row->whichTable == 'marks'){
 
 
                     $typesTbl = array(
@@ -656,7 +667,7 @@ class View{
                     foreach($typesTbl as $k=>$e){
 
 
-                        $img = 'img/elements/'. $row->name .'.'. $k;
+                        $img = 'img/'. $row->whichTable .'/'. $row->name .'.'. $k;
 
                         if(file_exists($img)){
 
@@ -682,7 +693,7 @@ class View{
                     }
 
 
-                    if($row->name != 'sang' && !str_starts_with($row->name, 'trace_pas') && $row->name != 'routes'){
+                    if($row->whichTable == 'elements'){
                         $classTransparent[$x .','. $y] = 'transparent-gradient';
                     }
                 }
