@@ -160,10 +160,9 @@ class RaceImageService
     }
 
     /**
-     * Canon d'une image pour un type donné : le portrait ne change pas, mais
-     * l'avatar est le sprite du plateau, qui couvre toute l'emprise du type
-     * (50 px par case) — un édifice 2×2 se dessine en 100×100, sinon le
-     * damier étire un 50×50 et le rend flou.
+     * Expected size of an image for a type. A portrait keeps its fixed size;
+     * an avatar is the board sprite, so it covers the type's whole footprint
+     * (50 px per cell): a 2×2 building is 100×100.
      *
      * @return array{0:int,1:int}
      */
