@@ -118,8 +118,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $destinationPath  = $uploadDir . '/' . $fileName;
 
     // Get main dimensions for this image type — an avatar spans the
-    // race's footprint, so the canon is asked per race
-    [$width, $height] = (new \App\Service\RaceImageService())->canon($imageType, $raceName);
+    // race's footprint, so the size is asked per race
+    [$width, $height] = (new \App\Service\RaceImageService())->expectedSize($imageType, $raceName);
 
     try {
         // 1) Resize & save the main image

@@ -194,7 +194,7 @@ ob_start();
                 <button type="submit" name="image_upload" value="1" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus"></i> Ajouter
                 </button>
-                <small class="text-muted">Redimensionnée en <?= implode('×', $service->canon($type, $race)) ?>
+                <small class="text-muted">Redimensionnée en <?= implode('×', $service->expectedSize($type, $race)) ?>
                     (<a href="/admin/footprints.php?type=<?= e(urlencode($race)) ?>">emprise du type</a>),
                     numérotée automatiquement<?= $type === ImageType::PORTRAIT ? ', miniature 50×79 générée' : '' ?>.</small>
             </form>

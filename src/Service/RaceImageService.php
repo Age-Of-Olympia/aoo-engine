@@ -100,7 +100,7 @@ class RaceImageService
     {
         $this->assertRace($race);
         $dir = $this->raceDir($type, $race);
-        [$canonWidth, $canonHeight] = $this->canon($type, $race);
+        [$canonWidth, $canonHeight] = $this->expectedSize($type, $race);
 
         $files = [];
         $minis = [];
@@ -166,7 +166,7 @@ class RaceImageService
      *
      * @return array{0:int,1:int}
      */
-    public function canon(ImageType $type, string $race): array
+    public function expectedSize(ImageType $type, string $race): array
     {
         if ($type !== ImageType::AVATAR) {
             return $type->dimensions();
@@ -207,7 +207,7 @@ class RaceImageService
         $extension = self::outputExtension(is_array($info) ? (string) $info['mime'] : '');
         $fileName = $type->buildFilename($number, $extension);
 
-        [$width, $height] = $this->canon($type, $raceName);
+        [$width, $height] = $this->expectedSize($type, $raceName);
         $this->resize($tmpPath, $dir . '/' . $fileName, $width, $height);
 
         if ($miniDims = $type->miniDimensions()) {
