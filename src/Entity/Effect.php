@@ -178,7 +178,7 @@ class Effect
 
     /**
      * Turns this effect adds to the footsteps of whoever carries it:
-     * mud makes a trace last longer (go.php, MapMarkService).
+     * mud makes a trace last longer (go.php).
      */
     #[ORM\Column(type: "integer", options: ["default" => 0], name: "mark_turns")]
     private int $markTurns = 0;

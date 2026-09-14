@@ -2,7 +2,7 @@
 
 namespace Tests\Player;
 
-use App\Service\MapMarkService;
+use App\Service\MapElementService;
 use App\Service\TurnScheduleService;
 use Classes\Element;
 use PHPUnit\Framework\Attributes\Group;
@@ -122,7 +122,7 @@ class MapElementCachePurgeTest extends LegacyPlayerFixtureTestCase
 
         $cache = $this->primeCacheFor((int) $player->id);
 
-        (new MapMarkService())->put('trace_pas_n', $coordsId, 1);
+        (new MapElementService())->putMark('trace_pas_n', $coordsId, 1);
 
         $this->assertFileExists(
             $cache,

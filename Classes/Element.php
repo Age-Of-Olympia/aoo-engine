@@ -63,7 +63,7 @@ class Element{
 
         $taken = $db->exe('SELECT 1 FROM map_elements WHERE coords_id = ? AND name != ?', array($coords_id, $name));
 
-        if($taken && $taken->num_rows){
+        if($taken->num_rows){
 
             return false;
         }

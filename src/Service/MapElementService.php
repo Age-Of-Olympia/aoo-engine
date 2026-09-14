@@ -115,6 +115,20 @@ class MapElementService
         }
     }
 
+    /**
+     * Lays a mark (map_marks): a footstep, the flag. No effect, so several
+     * share a cell and one sits on water. Never purges the cached boards —
+     * the step that leaves a footstep already purges its two cells.
+     */
+    public function putMark(string $name, int $coordsId, int $turns): void
+    {
+        (new Db())->exe(
+            'INSERT INTO map_marks (`name`, `coords_id`, `endTime`) VALUE (?, ?, ?)
+             ON DUPLICATE KEY UPDATE endTime = VALUES(endTime)',
+            [$name, $coordsId, time() + ($turns * TurnScheduleService::referenceTurnSeconds())]
+        );
+    }
+
     public function remove(int $id): void
     {
         (new Db())->exe('DELETE FROM map_elements WHERE id = ?', [$id]);

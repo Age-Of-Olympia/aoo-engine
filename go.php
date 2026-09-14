@@ -326,7 +326,7 @@ if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMod
     /* Sans direction, pas de trace : emprunter le passage de SA case
      * (escalier, tp) n'est pas un pas. */
     if($footstep !== 'trace_pas_' && !$player->have_effect("leger")){
-        (new \App\Service\MapMarkService())->put($footstep, (int) $player->data->coords_id, $footstepDuration);
+        (new \App\Service\MapElementService())->putMark($footstep, (int) $player->data->coords_id, $footstepDuration);
     }
     
 }

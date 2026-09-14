@@ -545,9 +545,9 @@ include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_buildings.php';
 
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_elements.php';
 
-include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_marks.php';
-
-include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_routes.php';
+foreach (['marks' => 'Marques (sans effet, au-dessus des éléments)', 'routes' => 'Route'] as $layer => $title) {
+    include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_palette.php';
+}
 
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_triggers.php';
 
