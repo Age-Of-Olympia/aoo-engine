@@ -11,7 +11,7 @@ echo '
 foreach(File::scan_dir('img/marks/') as $e){
 
     echo '<img
-        class="map"
+        class="map select-name"
         data-type="marks"
         data-element="'. explode('.', $e)[0] .'"
         data-name="'. explode('.', $e)[0] .'"
