@@ -123,6 +123,7 @@
             var row = bounds.maxY - y;
 
             cell.style.backgroundImage = 'url("' + this.state.sheet + '")';
+            cell.style.backgroundRepeat = 'no-repeat';
             cell.style.backgroundSize = ((bounds.maxX - bounds.minX + 1) * CELL) + 'px '
                 + ((bounds.maxY - bounds.minY + 1) * CELL) + 'px';
             cell.style.backgroundPosition = (-col * CELL) + 'px ' + (-row * CELL) + 'px';
@@ -155,9 +156,7 @@
     Board.prototype.onAdd = function (x, y, event) {
         event.preventDefault();
 
-        var next = Object.keys(this.state.offsets).map(Number).reduce(function (max, piece) {
-            return Math.max(max, piece);
-        }, -1) + 1;
+        var next = Math.max.apply(null, [-1].concat(Object.keys(this.state.offsets).map(Number))) + 1;
 
         this.state.offsets[next] = [x, y];
         this.render();

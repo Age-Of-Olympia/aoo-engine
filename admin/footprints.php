@@ -88,11 +88,9 @@ $onDisk = $deriver->piecesOnDisk();
  * catalogue (characters, buildings, plants…), the scenery families cut in
  * pieces on disk, and whatever already has a declared cut-out. */
 $kinds = [];
-$labels = [];
 
 foreach (EntityManagerFactory::getEntityManager()->getRepository(Race::class)->findAll() as $race) {
     $kinds[$race->getName()] = TypeEditorFace::of($race)->key;
-    $labels[$race->getName()] = $race->getLabel();
 }
 
 $families = [];
@@ -156,7 +154,7 @@ ob_start();
 ?>
 
 <div class="container">
-    <h2 class="section-title">Emprises<?= $onlyType !== '' ? ' — ' . e($labels[$onlyType] ?? $onlyType) : ($onlyKind !== '' ? ' — ' . e($faces[$onlyKind]->title) : '') ?></h2>
+    <h2 class="section-title">Emprises<?= $onlyType !== '' ? ' — ' . e($onlyType) : ($onlyKind !== '' ? ' — ' . e($faces[$onlyKind]->title) : '') ?></h2>
 
     <p class="text-content">
         Tout ce qui se tient sur le plateau — personnage, bâtiment, décor, plante — peut occuper
@@ -319,7 +317,7 @@ ob_start();
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         ?>
         <section class="fp-card" data-state="<?= $source === 'declared' ? 'set' : 'todo' ?>"
-                 data-family="<?= e($name) ?>" data-kind="<?= e($kind) ?>">
+                 data-family="<?= e($name) ?>">
             <header class="fp-card__head">
                 <span>
                     <code class="fp-card__name"><?= e($name) ?></code>
@@ -361,12 +359,9 @@ ob_start();
                 </p>
 
                 <?php /* The two dials a `block` cell defers to. Marking a cell
-                         says WHICH cells are solid; these say what solid means.
-                         A character is never solid that way: no dials. */ ?>
-                <?php if ($kind !== TypeEditorFace::CHARACTER): ?>
+                         says WHICH cells are solid; these say what solid means. */ ?>
                 <fieldset class="fp-dials">
                     <legend>Ce qu'une case rouge fait</legend>
-                    <input type="hidden" name="has_dials" value="1" />
 
                     <label>
                         <input type="checkbox" name="blocks_passage" value="1"
@@ -381,7 +376,6 @@ ob_start();
                         <small>— décocher pour une arche : on ne passe pas, la flèche si</small>
                     </label>
                 </fieldset>
-                <?php endif; ?>
 
                 <div class="fp-actions">
                     <button type="submit" name="action" value="save" class="btn btn-sm btn-primary">

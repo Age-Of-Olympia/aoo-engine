@@ -154,11 +154,6 @@
     opacity: 0.4;
 }
 
-/* A sheet-backed cell shows its slice of the whole picture, at map size. */
-.fp-cell--filled {
-    background-repeat: no-repeat;
-}
-
 /* No-JavaScript fallback: pieces stacked at map size, not editable. */
 .fp-fallback {
     width: 50px;

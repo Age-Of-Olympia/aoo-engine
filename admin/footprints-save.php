@@ -92,14 +92,11 @@ try {
     $scenery = new SceneryObjectService();
     $created = $scenery->ensureType($type);
 
-    /* The dials only travel with a structure's form; a character's has none. */
-    if (isset($_POST['has_dials'])) {
-        $scenery->setTypeSettings(
-            $type,
-            !empty($_POST['blocks_passage']),
-            !empty($_POST['blocks_projectiles'])
-        );
-    }
+    $scenery->setTypeSettings(
+        $type,
+        !empty($_POST['blocks_passage']),
+        !empty($_POST['blocks_projectiles'])
+    );
 
     setFlash('success', 'La forme de « ' . $type . ' » est enregistrée.'
         . ($created ? ' Type créé au catalogue.' : '')
