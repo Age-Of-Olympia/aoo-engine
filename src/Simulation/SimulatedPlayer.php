@@ -63,6 +63,9 @@ class SimulatedPlayer extends Player
         ));
         $this->playerEffectService = new SimulatedEffectService($effects);
         $this->playerPassiveService = new SimulatedPassiveService($passives, $this);
+        // Catalog readers (no per-player state): add_effect() consults them.
+        $this->effectService = new \App\Service\EffectService();
+        $this->actionPassiveService = new \App\Service\ActionPassiveService();
         $this->tileTypes = $tileTypes;
     }
 
