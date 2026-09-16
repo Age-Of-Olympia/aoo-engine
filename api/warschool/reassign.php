@@ -44,7 +44,9 @@ if ($ranks < 1) {
     ExitError('Vous ne pouvez pas descendre plus bas.');
 }
 
-$cost = (new PlayerCaracsService())->returnCost($caracKey, $ranks - 1);
+// Coût à 0 PO pour le début de la saison 3, repasser le coût à la valeur normale après quelques semaines
+//$cost = (new PlayerCaracsService())->returnCost($caracKey, $ranks - 1);
+$cost = 0;
 
 /* The attempt pays, the arrival rewards: the gold leaves first, in one
  * write that says whether it happened, and only then does the rank go. */
