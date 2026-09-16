@@ -211,6 +211,12 @@ final class SkillPrerequisiteService
             return $this->hasFreeSpellSlot($level);
         }
 
+        if ($level === 4 && in_array($tree, self::PRIMARY_TREES, true)) {
+            if ($this->hasOtherPrimaryLevel4($tree)) {
+                return false;
+            }
+        }
+        
         $required = self::requiredPerLevel($tree);
 
         for ($n = 1; $n < $level; $n++) {
@@ -222,6 +228,17 @@ final class SkillPrerequisiteService
         return true;
     }
 
+    private function hasOtherPrimaryLevel4(string $currentTree): bool
+    {
+        foreach (self::PRIMARY_TREES as $primaryTree) {
+            if ($primaryTree !== $currentTree && $this->treeCountAt($primaryTree, 4) > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
     /** 'melee-off' => 'melee'; anything outside the known trees carries no gate. */
     public static function tree(?string $category): ?string
     {
