@@ -4,6 +4,8 @@ RewriteEngine On
 # Si le mode maintenance est activé, rediriger vers la page de maintenance
 RewriteCond %{DOCUMENT_ROOT}/maintenance.flag -f
 RewriteCond %{REQUEST_URI} !/maintenance\.html$ [NC]
+# The deploy endpoint stays reachable so CI can deploy behind the flag (token-protected)
+RewriteCond %{REQUEST_URI} !^/admin/deploy\.php$ [NC]
 RewriteCond %{REQUEST_URI} !\.(jpe?g|png|gif|css|js|otf)$ [NC]
 RewriteRule ^.*$ /maintenance.html [R=503,L]
 
