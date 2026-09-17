@@ -2340,6 +2340,9 @@ class Player implements ActorInterface {
         // Enable action details by default for all new players
         $player->add_option('showActionDetails');
 
+        // The redesigned layout is the default; the account page can switch back.
+        $player->add_option('newHud');
+
         /* Bordure de race réservée aux personnages par défaut : sur un
          * mur ou un coffre, le liseré encombre le décor sans rien
          * apprendre. Ceux qui la veulent partout la réactivent dans le
