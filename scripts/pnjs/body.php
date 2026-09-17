@@ -47,10 +47,15 @@ if(!empty($_POST['switch'])){
         exit('error pnj');
     }
 
-    /* The switch itself is the SAME gesture as taking a building's
-     * commands — one method, whatever the mask, depth one included. */
+    /* The target was checked against the account's own list above, so
+     * the switch always starts from the main character: driveAs refuses
+     * to go from one driven character to another. */
     try {
-        (new \App\Service\ImpersonationService())->driveAs((int) $_POST['switch']);
+        $impersonation = new \App\Service\ImpersonationService();
+        if ((int) $_SESSION['playerId'] !== (int) $_SESSION['mainPlayerId']) {
+            $impersonation->release();
+        }
+        $impersonation->driveAs((int) $_POST['switch']);
     } catch (\RuntimeException $e) {
         exit($e->getMessage());
     }
@@ -154,4 +159,4 @@ echo '
 </div></section>'
 
 ?>
-<script src="js/pnjs.js?v=20260727"></script>
+<script src="js/pnjs.js?v=20260918"></script>
