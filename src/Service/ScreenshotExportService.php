@@ -3,30 +3,22 @@
 namespace App\Service;
 
 /**
- * Rend une capture SVG lisible hors du jeu.
+ * Makes an SVG capture readable outside the game.
  *
- * Une capture sort du moteur avec des chemins d'images RELATIFS et sans CSS :
- * dans la page du jeu tout se résout, mais le fichier pris à part perd ses
- * assets et ses styles. Ce service comble les trois écarts, et il est partagé
- * par les deux consommateurs qui en ont besoin :
- *
- *  - scripts/tools/export_arene.php, pour le montage des GIF ;
- *  - admin/screenshots.php, dont l'aperçu passe par une balise <img>.
- *
- * Le cas <img> est le plus exigeant : le SVG y est parsé en XML STRICT et
- * tourne en mode statique sécurisé, où aucune ressource externe n'est chargée,
- * relative ou absolue. Il lui faut donc à la fois un XML valide et des images
- * en base64. Aucune dépendance à la base : l'export doit tourner sur un simple
- * dossier rsynchronisé.
+ * A capture leaves the engine with relative image paths and no CSS. This
+ * service fixes the XML, embeds the styles and, when asked, inlines the images.
+ * Shared by scripts/tools/export_arene.php (GIF montage) and
+ * admin/screenshots.php (preview through <img>, which parses strict XML and
+ * loads no external resource). No database access: the export runs on a plain
+ * rsynced directory.
  */
 class ScreenshotExportService
 {
     /**
-     * Classes dont la règle CSS agit sur la géométrie ou le masquage : leurs
-     * images ne peuvent pas passer par <use>, qui ne propage pas ces règles de
-     * la même manière. Ne PAS élargir à "toute image portant une classe" : les
-     * centaines d'images de grille portent class="case ", qui n'a aucune règle,
-     * et les exclure ramènerait la déduplication à presque rien.
+     * Classes whose CSS rule affects geometry or masking: their images cannot go
+     * through <use>, which does not propagate those rules the same way. Do not
+     * widen to "any image with a class": the grid images carry class="case ",
+     * which has no rule, and excluding them would defeat the deduplication.
      */
     private const CLASSES_GEOMETRIQUES = ['avatar-shadow', 'transparent-gradient'];
 
@@ -37,9 +29,7 @@ class ScreenshotExportService
     {
     }
 
-    /**
-     * Capture autonome : XML valide, styles embarqués, images incluses.
-     */
+    /** Self-contained capture: valid XML, embedded styles, inlined images. */
     public function autonomiser(string $svg): string
     {
         $svg = $this->preparerPourBundle($svg);
@@ -48,8 +38,8 @@ class ScreenshotExportService
     }
 
     /**
-     * Capture pour un dossier "bundle", où les assets sont posés à côté : on
-     * corrige le XML et on embarque le CSS, mais on garde les chemins relatifs.
+     * Capture for a "bundle" directory with the assets copied alongside: XML
+     * fixed and CSS embedded, paths kept relative.
      */
     public function preparerPourBundle(string $svg): string
     {
@@ -57,8 +47,7 @@ class ScreenshotExportService
     }
 
     /**
-     * Assets référencés mais introuvables sur disque, accumulés depuis la
-     * construction. L'appelant décide quoi en dire.
+     * Referenced assets missing on disk, accumulated since construction.
      *
      * @return array<int, string>
      */
@@ -68,15 +57,9 @@ class ScreenshotExportService
     }
 
     /**
-     * Fusionne les attributs class dupliqués sur un même élément.
-     *
-     * View compose parfois la classe en l'accolant à la fin de l'URL
-     * (Classes/View.php:387, `$img .= '" class="transparent-gradient'`). Quand
-     * l'élément porte déjà sa propre classe, la balise sort avec DEUX attributs
-     * class. Un navigateur l'accepte en HTML, mais en XML strict
-     * "Attribute class redefined" est FATALE : une seule balise fautive sur
-     * treize cents suffit à ne rien afficher du tout. La cause est dans View ;
-     * ceci n'en corrige que l'effet.
+     * Merges duplicated class attributes on one element. Browsers tolerate them
+     * in HTML; in strict XML "Attribute class redefined" is fatal for the whole
+     * document.
      */
     public function fusionnerClassesDupliquees(string $svg): string
     {
@@ -104,13 +87,9 @@ class ScreenshotExportService
     }
 
     /**
-     * Injecte les règles CSS des classes que le SVG porte réellement.
-     *
-     * Elles sont relues dans css/main.css à chaque export plutôt que recopiées
-     * ici, pour qu'une retouche du thème ne laisse pas les captures dériver.
-     * Le cas qui se voit le plus est .avatar-shadow : en jeu l'ombre est
-     * réduite à 35px et posée à 50 % d'opacité, sans la règle elle s'affiche en
-     * carré plein de 50px sur chaque combattant.
+     * Embeds the CSS rules of the classes the SVG actually uses, read from
+     * css/main.css at export time so a theme change does not leave the captures
+     * behind (e.g. .avatar-shadow: 35px at 50% opacity, else a full square).
      */
     public function injecterStyles(string $svg): string
     {
@@ -135,7 +114,7 @@ class ScreenshotExportService
                     if ($selecteur === '' || !str_starts_with($selecteur, '.')) {
                         continue;
                     }
-                    // Sélecteur composé uniquement de classes connues du SVG.
+                    // Selector made only of classes present in the SVG.
                     $morceaux = array_filter(explode('.', $selecteur));
                     if ($morceaux !== [] && array_diff($morceaux, $classes) === []) {
                         $regles[] = $selecteur . ' {' . trim($bloc[2]) . '}';
@@ -162,9 +141,8 @@ class ScreenshotExportService
     }
 
     /**
-     * Images externes référencées : href de fichier et fond de la balise
-     * racine. Les renvois internes (#foregrounds123) et les data: déjà encodés
-     * sont exclus.
+     * External image references: file hrefs and the root tag background.
+     * Internal references (#id) and data: URIs are excluded.
      *
      * @return array<int, string>
      */
@@ -179,8 +157,8 @@ class ScreenshotExportService
             $refs[] = $m[1];
         }
 
-        // Les deux motifs capturent [^"]+ et [^']+ : la référence ne peut pas
-        // être vide, seuls les renvois internes et les data: sont à écarter.
+        // Both patterns capture a non-empty string: only internal references
+        // and data: URIs are filtered out.
         $refs = array_filter(
             $refs,
             static fn(string $r): bool => !str_starts_with($r, '#')
@@ -191,13 +169,10 @@ class ScreenshotExportService
     }
 
     /**
-     * Inline les images en base64 en n'encodant chaque asset qu'UNE fois.
-     *
-     * Les tuiles passent par un <defs> référencé en <use> : une frame d'arène
-     * compte environ treize cents références pour une quarantaine d'assets
-     * distincts, soit 16 Mo en inlining naïf contre 0,5 Mo ici. Les images dont
-     * une classe touche à la géométrie gardent leur forme d'origine avec leur
-     * base64 en propre, elles ne sont qu'une vingtaine.
+     * Inlines images as base64, encoding each asset once. Tiles go through a
+     * <defs> referenced by <use>: an arena frame holds ~1300 references for ~40
+     * assets, 16 MB naive versus 0.5 MB here. Images with a geometric class keep
+     * their own <image> and base64.
      *
      * @param array<int, string> $refs
      */
@@ -237,27 +212,17 @@ class ScreenshotExportService
                 }
             }
 
-            // Un identifiant par couple (asset, taille) : deux définitions ne
-            // peuvent pas partager le même id, le <use> ne saurait laquelle
-            // viser.
+            // One id per (asset, size) pair: two definitions cannot share an id.
             $idDef = $asset['id'] . str_replace(['"', ' ', '='], '', $taille);
 
             $defs[$idDef] = '<image id="' . $idDef . '"' . $taille . ' href="' . $asset['data'] . '"/>';
 
-            // Tout est reporté, SAUF ce qui appartient à la définition : href
-            // porte le base64, et width/height y sont déjà figés (sur un <use>
-            // visant une <image>, ils ne s'appliqueraient d'ailleurs pas).
-            //
-            // Liste d'exclusion et non liste blanche : celle-ci retenait id, x,
-            // y, class et les data-*, donc laissait tomber style="opacity: …",
-            // que View pose sur les trois calques de décor (Classes/View.php,
-            // gif 0.3 / webp 0.5 / png 1). Les calques translucides sortaient
-            // opaques dans les captures autonomes. Une liste blanche perd
-            // silencieusement chaque attribut ajouté plus tard à View.
-            //
-            // Les paires sont réémises une à une plutôt que découpées dans la
-            // chaîne : $attrs contient le "/" final des balises auto-fermantes
-            // et une espace de tête variable, deux pièges à XML invalide.
+            // Everything is carried over except what belongs to the definition
+            // (href holds the base64, width/height are fixed there). Exclusion
+            // list rather than allow list, so an attribute added to View later
+            // (style="opacity: …" on scenery layers) is not silently dropped.
+            // Pairs are re-emitted one by one: $attrs holds the trailing "/" of
+            // self-closing tags and a variable leading space.
             $garde = '';
             if (preg_match_all('/([a-zA-Z_:][-a-zA-Z0-9_:.]*)="([^"]*)"/', $attrs, $paires, PREG_SET_ORDER)) {
                 foreach ($paires as [, $nom, $valeur]) {
@@ -279,10 +244,8 @@ class ScreenshotExportService
             $bloc    = '<defs>' . implode('', $defs) . '</defs>';
             $injecte = preg_replace('/(<svg[^>]*>)/i', '$1' . $bloc, $svg, 1);
 
-            // Sans balise <svg> le remplacement ne trouve rien et rendait le
-            // bloc silencieusement : chaque <use> aurait alors pointé vers une
-            // définition absente, donc une image vide. On préfixe plutôt que de
-            // perdre les données.
+            // Without a <svg> tag the replacement finds nothing and every <use>
+            // would point at a missing definition: prefix the block instead.
             $svg = ($injecte !== null && $injecte !== $svg) ? $injecte : $bloc . $svg;
         }
 

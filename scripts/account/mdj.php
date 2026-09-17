@@ -46,10 +46,8 @@ if(isset($_POST['text'])){
         $db->exe('UPDATE players_logs SET type = ? WHERE id = ?', array('mdj_edited', $edited->id));
     }
 
-    // Un changement de message du jour ne déplace rien et ne modifie aucun
-    // pixel de la carte : il n'a pas d'image à lui. On le rattache donc au
-    // fichier d'events de la dernière capture, dont l'état visuel est encore
-    // celui qui vaut. Au montage il devient une bulle sur cette image.
+    // An mdj change alters no pixel, so it gets no frame: it is attached to
+    // the latest capture's events file and becomes a bubble on that image.
     try {
         (new \App\Service\ScreenshotService())->attachEventToLastCapture([
             'type'      => 'mdj',

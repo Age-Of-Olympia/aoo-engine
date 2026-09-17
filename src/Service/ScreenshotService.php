@@ -15,46 +15,34 @@ class ScreenshotService
 {
     private const DEFAULT_SCREENSHOT_PLAYER_ID = -92;
 
-    /** Seul plan capturé automatiquement à ce jour. */
+    /** Only plan with automatic captures. */
     private const ARENA_PLAN = 'arene_s2';
 
-    /** Pointeur vers le fichier d'events de la dernière capture. */
+    /** File holding the name of the latest capture's events file. */
     private const LATEST_POINTER = '_derniere_capture';
 
     /**
-     * Rayon de vue de la capture. L'ovale de l'arène s'arrête à 11 (bornes
-     * lues sur les triggers "forbidden" du plan) ; 12 lui laisse une case de
-     * marge pour montrer l'extérieur des murs, soit 25x25 tuiles a 50px =
-     * 1250px de cote.
-     *
-     * 12 est le dernier anneau du plan rempli à 100 %. À 13 il en manque six
-     * (les coins), qui sortent NOIRS au rendu : le fond du plan est posé en
-     * CSS sur la balise racine, propriété qu'un navigateur peint mais pas
-     * rsvg-convert. Au-delà c'est pire, le remplissage tombe à 29 % dès 14.
+     * View radius: 25x25 tiles at 50px. The arena oval ends at 11, 12 adds one
+     * ring of wall outside. Beyond 12 the plan is not fully tiled and the missing
+     * corners render black: the plan background is a CSS property on the root
+     * tag, which rsvg-convert does not paint.
      */
     private const DEFAULT_RANGE = 12;
 
-    /** Centre du cadre : l'arène est construite autour de l'origine. */
+    /** Frame centre: the arena is built around the origin. */
     private const DEFAULT_CENTER = ['x' => 0, 'y' => 0, 'z' => 0];
 
     /**
-     * Zone dont les actions déclenchent une capture. Calée sur le cadre : ce
-     * qui est visible dans l'image mérite d'être capturé, y compris les abords
-     * immédiats de l'arène où les combattants arrivent et se replient.
-     *
-     * Valeur de repli quand le JSON du plan ne porte pas de clé "capture" :
-     * voir getCaptureZone().
+     * Area whose actions trigger a capture, aligned with the frame so the edges
+     * where fighters arrive and retreat are captured too. Fallback when the plan
+     * JSON has no "capture" key, see getCaptureZone().
      */
     private const DEFAULT_BOUNDS = ['minX' => -12, 'maxX' => 12, 'minY' => -12, 'maxY' => 12];
 
     /**
-     * playerId passé à View pour rendre "du point de vue de personne".
-     *
-     * Il ne peut pas valoir null : View fait `$playerId ?? $_SESSION['playerId']`,
-     * donc null retomberait sur le joueur connecté, qui serait alors marqué
-     * current-player. La surbrillance sauterait d'un combattant à l'autre au fil
-     * des images. 0 n'est ni null (pas de repli) ni > 0 (visibilité PNJ, tout le
-     * monde est rendu) et ne correspond à aucun joueur.
+     * playerId handed to View to render from nobody's point of view. Null would
+     * fall back to $_SESSION['playerId'] and mark that player current-player;
+     * 0 matches no player and skips the fallback.
      */
     private const VIEW_AS_NOBODY = 0;
 
@@ -66,13 +54,10 @@ class ScreenshotService
      * @param string|null $filename Custom filename (without extension)
      * @param string|null $outputDir Custom output directory
      * @param int|null $playerId Custom player ID for screenshot
-     * @param bool $selfContained Embarque styles et images dans le SVG.
-     *        Nécessaire dès que la capture est consommée hors de la page du
-     *        jeu, en particulier via une balise <img> : le SVG y tourne en mode
-     *        statique sécurisé, où AUCUNE ressource externe n'est chargée,
-     *        relative ou absolue. Coûteux, donc réservé aux captures manuelles
-     *        d'administration ; les captures automatiques restent légères et
-     *        passent par scripts/tools/export_arene.php.
+     * @param bool $selfContained Embed styles and images in the SVG. Required
+     *        when the capture is consumed outside the game page, e.g. through
+     *        <img>, where no external resource is loaded. Costly: admin captures
+     *        only, automatic captures go through scripts/tools/export_arene.php.
      * @return array Result array with success status, filename, filepath, and error message
      */
     public function generateScreenshot(
@@ -102,14 +87,8 @@ class ScreenshotService
                 return $result;
             }
 
-            // Le PNJ de capture N'EST PAS déplacé. View reçoit son cadrage en
-            // argument, la position du PNJ n'entre nulle part dans le rendu :
-            // l'ancien aller-retour vers (0,0) ne servait qu'à le faire entrer
-            // dans le champ, ce que removeScreenshotPlayerFromSvg devait ensuite
-            // défaire. Le supprimer élimine la course entre deux actions
-            // simultanées sur ce PNJ partagé, ses deux lignes de log parasites
-            // par capture (Log::put redirige les incognito vers "birdland") et
-            // le risque de le laisser échoué au milieu de l'arène sur erreur.
+            // The capture PNJ is never moved: View gets its frame as an argument,
+            // the PNJ position plays no part in the rendering.
             $coordsObject = (object)[
                 'x' => $coords['x'],
                 'y' => $coords['y'],
@@ -180,8 +159,7 @@ class ScreenshotService
         $microtime = microtime(true);
         $timestamp = date('Y-m-d_H-i-s', (int)$microtime) . '_' . sprintf('%03d', ($microtime - floor($microtime)) * 1000);
 
-        // L'acteur et l'action entrent dans le nom : trier par nom revient à
-        // trier par temps, et la séquence reste lisible sans son manifeste.
+        // Actor and action go into the name; sorting by name sorts by time.
         $filename = sprintf(
             'auto_screenshot_%s_%s_%s_%s',
             self::ARENA_PLAN,
@@ -195,10 +173,8 @@ class ScreenshotService
         $result = $this->generateScreenshot($zone['center'], $zone['range'], $filename, $outputDir);
 
         if ($result['success']) {
-            // Une image dont le fichier d'events manque est un trou muet dans
-            // la timeline : elle sera montée sans sa réplique, et les messages
-            // du jour suivants se rattacheront à une capture antérieure. On ne
-            // peut donc pas annoncer un succès plein sur la seule foi du SVG.
+            // A frame without its events file is mute in the timeline and the
+            // next mdj would attach to an older capture: success needs both.
             $result['events_written'] = $this->writeEventFile($result['filename'], $outputDir, [
                 'capture'   => $result['filename'],
                 'at'        => date('c', (int)$microtime),
@@ -210,11 +186,7 @@ class ScreenshotService
             ]);
 
             if (!$result['events_written']) {
-                // success repasse à false, conformément à ce qui précède : une
-                // frame sans son fichier d'events est muette au montage, et le
-                // pointeur reste sur la capture d'AVANT, donc les messages du
-                // jour suivants se colleront à une image périmée. Les clés
-                // filename/filepath restent renseignées : le SVG, lui, existe.
+                // filename/filepath stay set: the SVG itself exists.
                 $result['success'] = false;
                 $result['error'] = 'Capture ecrite mais fichier d\'events non ecrit';
                 error_log("Screenshot {$result['filename']} : fichier d'events non ecrit dans {$outputDir}");
@@ -225,13 +197,9 @@ class ScreenshotService
     }
 
     /**
-     * Cadrage et zone de déclenchement du plan.
-     *
-     * Lus dans le JSON du plan sous la clé "capture" quand elle existe, pour
-     * qu'un déplacement de l'arène se règle en donnée plutôt qu'en code. Les
-     * constantes servent de repli. Ne PAS se rabattre sur les
-     * visibleBoundsMinX/MaxX des z_levels : ils décrivent l'étendue du plan
-     * entier (-33..33), pas la zone de combat.
+     * Frame and trigger area of the plan: the plan JSON "capture" key when
+     * present, the constants otherwise. Not the z_levels visible bounds, which
+     * describe the whole plan rather than the fighting area.
      *
      * @return array{center: array{x: int, y: int, z: int, plan: string}, range: int, bounds: array{minX: int, maxX: int, minY: int, maxY: int}}
      */
@@ -241,9 +209,8 @@ class ScreenshotService
         $range  = self::DEFAULT_RANGE;
         $bounds = self::DEFAULT_BOUNDS;
 
-        // Json::decode renvoie false si le fichier manque ou n'est pas du JSON.
-        // Pas de garde is_object() : ?? applique la sémantique d'isset(), donc
-        // false->capture et null->capture valent null sans warning ni erreur.
+        // Json::decode returns false when the file is missing or invalid; ??
+        // applies isset() semantics, so false->capture is null without a warning.
         $planJson = json()->decode('plans', $plan);
         $capture  = $planJson->capture ?? null;
 
@@ -267,10 +234,7 @@ class ScreenshotService
     }
 
     /**
-     * Coordonnées de l'acteur s'il se tient dans la zone de capture, sinon null.
-     *
-     * Lecture en couche entité (Phase 4.3c) : les appelants passent encore un
-     * Player legacy.
+     * Coordinates of the actor when standing inside the capture area, else null.
      */
     private function locateInsideArena(Player $actor): ?object
     {
@@ -297,18 +261,14 @@ class ScreenshotService
     }
 
     /**
-     * Rattache un event à la capture la plus récente.
+     * Appends an event to the latest capture's events file.
      *
-     * Un changement de message du jour ne modifie aucun pixel de la carte :
-     * générer une image pour lui produirait un doublon de la précédente. On
-     * l'ajoute donc au fichier d'events de la dernière capture, ce qui est
-     * exact puisque l'état visuel n'a pas bougé depuis. Au montage il devient
-     * une bulle posée sur cette image.
+     * An mdj change alters no pixel, so it gets no frame of its own: it becomes
+     * a bubble on the last image, whose visual state still holds.
      *
      * @param array<string, mixed> $event
-     * @param Player|null $actor Quand il est fourni, l'event est ignoré si
-     *                           l'acteur n'est pas dans l'arène : un message du
-     *                           jour changé ailleurs n'a rien à y faire.
+     * @param Player|null $actor When given, the event is dropped unless the
+     *                           actor stands inside the arena.
      */
     public function attachEventToLastCapture(array $event, ?Player $actor = null): bool
     {
@@ -328,14 +288,10 @@ class ScreenshotService
             return false;
         }
 
-        // Lecture ET écriture sous le même verrou. Le fichier est partagé :
-        // tous les events orphelins de la même frame s'y ajoutent, et deux
-        // messages du jour changés dans la même seconde visent donc le même.
-        // Sans verrou, le second relit le tableau avant que le premier ne l'ait
-        // réécrit et efface sa bulle en la recouvrant.
-        //
-        // 'r+' et non 'c+' : le fichier doit exister, il ne s'agit pas d'en
-        // créer un vide sur la foi d'un pointeur périmé.
+        // Read and write under one exclusive lock: every orphan event of the
+        // same frame targets this file, two mdj in the same second must not
+        // overwrite each other. 'r+' not 'c+': a stale pointer must not create
+        // an empty file.
         $handle = fopen($eventFile, 'r+');
         if ($handle === false) {
             return false;
@@ -375,20 +331,18 @@ class ScreenshotService
     }
 
     /**
-     * Écrit le fichier d'events de la capture, plus le pointeur vers lui.
-     *
-     * Le pointeur évite de lister le répertoire à chaque event orphelin, et
-     * reste anodin pour un rsync.
+     * Writes the capture's events file and points LATEST_POINTER at it. The
+     * pointer saves a directory listing per orphan event.
      *
      * @param array<string, mixed> $payload
-     * @return bool Faux si le fichier d'events n'a pas pu être écrit.
+     * @return bool False when the events file could not be written.
      */
     private function writeEventFile(string $captureFilename, string $outputDir, array $payload): bool
     {
         $eventFilename = preg_replace('/\.svg$/', '', $captureFilename) . '.json';
 
-        // LOCK_EX : un message du jour peut viser ce fichier dès que le
-        // pointeur bascule, et attachEventToLastCapture pose le même verrou.
+        // LOCK_EX: attachEventToLastCapture takes the same lock as soon as the
+        // pointer moves.
         $written = file_put_contents(
             $outputDir . $eventFilename,
             json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
@@ -405,17 +359,10 @@ class ScreenshotService
     }
 
     /**
-     * Fait pointer LATEST_POINTER sur la capture la plus récente.
-     *
-     * Deux précautions, parce que plusieurs joueurs agissent en même temps
-     * dans l'arène :
-     *
-     * 1. Monotone. Les noms portent l'horodatage, donc l'ordre lexicographique
-     *    est l'ordre chronologique : une requête plus lente qui termine après
-     *    une plus rapide ne doit pas faire RECULER le pointeur vers son image,
-     *    sans quoi le message du jour suivant se collerait à une frame périmée.
-     * 2. Atomique. L'écriture passe par un fichier temporaire puis un rename,
-     *    pour qu'un lecteur ne tombe jamais sur un nom tronqué.
+     * Points LATEST_POINTER at the most recent capture. Monotonic: names carry
+     * the timestamp, so a slower request finishing later must not move the
+     * pointer backwards. Atomic: temp file then rename, a reader never sees a
+     * truncated name.
      */
     private function updateLatestPointer(string $outputDir, string $eventFilename): void
     {
@@ -483,17 +430,11 @@ class ScreenshotService
             $data = substr($data, $svgStart, $svgEnd - $svgStart);
         }
 
-        // Correction d'un chemin d'asset erroné côté View. Elle vivait dans la
-        // branche HTTP_HOST alors qu'elle n'a rien à voir avec l'hôte : elle
-        // sautait donc en CLI.
+        // Asset path fix on View's output, host-independent so it runs in CLI too.
         $data = str_replace('img/tiles/route.png', 'img/routes/route.png', $data);
 
-        // Les chemins restent RELATIFS. Les rendre absolus avec HTTP_HOST
-        // soudait chaque capture à l'hôte qui l'avait produite, obligeant à
-        // réécrire toutes les URL avant montage. L'autonomie du fichier est
-        // obtenue ailleurs, par ScreenshotExportService : au coup par coup pour
-        // les captures d'administration, en masse à l'export pour les captures
-        // d'arène. Dans les deux cas hors de la requête du joueur.
+        // Paths stay relative: ScreenshotExportService makes a file
+        // self-contained when needed (admin preview, arena export).
         $data = $this->removeScreenshotPlayerFromSvg($data, $player);
 
         return $data ?: null;
@@ -511,19 +452,11 @@ class ScreenshotService
     {
         $id = preg_quote((string) $player->id, '/');
 
-        // View rend DEUX éléments par personnage : l'avatar id="playersX" et
-        // son ombre id="playersX-shadow". Les motifs d'origine exigeaient le
-        // guillemet juste après l'id, donc aucun ne visait l'ombre : elle
-        // survivait à chaque capture, et comme le PNJ était alors téléporté au
-        // centre, c'était une ombre orpheline au milieu de l'arène. Le suffixe
-        // optionnel la couvre.
-        //
-        // Un seul motif suffit : les [^>]* de part et d'autre acceptent
-        // n'importe quel ordre d'attributs, ce que les cinq motifs précédents
-        // énuméraient à la main sans rien couvrir de plus.
+        // View renders two elements per character: the avatar id="playersX" and
+        // its shadow id="playersX-shadow". Attribute order is free, hence [^>]*.
         $avatarPattern = '/<image[^>]*\bid="players' . $id . '(?:-shadow)?"[^>]*>/i';
 
-        // Position de l'avatar, pour retirer aussi la case qu'il surligne.
+        // Avatar position, to drop the highlighted cell too.
         $pnjX = null;
         $pnjY = null;
         if (preg_match('/<image[^>]*\bid="players' . $id . '"[^>]*x="(\d+)"[^>]*y="(\d+)"[^>]*>/i', $svgData, $matches)) {

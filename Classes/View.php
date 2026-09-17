@@ -71,10 +71,8 @@ class View{
     }
    
     /**
-     * Assemble un attribut class, ou rien du tout si la liste est vide.
-     *
-     * Un seul point de composition : c'est ce qui garantit qu'un élément ne
-     * peut plus sortir avec deux attributs class.
+     * Builds the class attribute, or nothing when the list is empty. Single
+     * composition point: an element can never carry two class attributes.
      *
      * @param array<int, string> $classes
      */
@@ -532,8 +530,7 @@ class View{
                 $imgDir = $row->whichTable == 'resources' ? 'walls' : $row->whichTable;
                 $img = 'img/'. $imgDir .'/'. $row->name .'.png';
 
-                // Classes portées par l'image de cette case. Réinitialisées à
-                // chaque tour, comme $img dont elles suivent le sort.
+                // Classes carried by this cell's image, reset with $img on every row.
                 $imgClasses = [];
 
 
@@ -669,16 +666,9 @@ class View{
                 // transparent gradient
                 if(!empty($classTransparent[$x .','. $y]) && $row->whichTable != 'tiles'){
 
-                    // Cette classe s'écrivait auparavant DANS $img, en accolant
-                    // '" class="transparent-gradient' à la fin de l'URL : le
-                    // guillemet injecté refermait le href et ouvrait l'attribut.
-                    // Le balisage sortait juste, sauf sur les deux éléments qui
-                    // posent déjà leur propre classe (l'ombre d'avatar, toujours,
-                    // et l'avatar du joueur courant). Ils recevaient alors DEUX
-                    // attributs class. Un navigateur en mode HTML garde le premier
-                    // et continue, mais un .svg lu seul ou via <img> est parsé en
-                    // XML strict, où "Attribute class redefined" est fatale : une
-                    // balise fautive sur treize cents et plus rien ne s'affiche.
+                    // Never written into $img: a quote injected in the URL would
+                    // give elements with their own class two class attributes,
+                    // fatal in strict XML (SVG read alone or through <img>).
                     $imgClasses[] = 'transparent-gradient';
                 }
 
@@ -698,13 +688,8 @@ class View{
 
                         $img = 'img/'. $row->whichTable .'/'. $row->name .'.'. $k;
 
-                        // Cette réassignation écrasait $img, donc AUSSI la classe
-                        // qui y avait été accolée plus haut : malgré la condition
-                        // "!= tiles", les éléments de décor n'ont jamais reçu
-                        // transparent-gradient. On restitue cet effacement à
-                        // l'identique plutôt que de changer le rendu au passage.
-                        // Si un jour on veut le dégradé sur les éléments, c'est
-                        // cette ligne qu'il faut retirer.
+                        // Scenery layers do not get transparent-gradient; drop
+                        // this reset to apply it to them.
                         $imgClasses = [];
 
                         if(file_exists($img)){

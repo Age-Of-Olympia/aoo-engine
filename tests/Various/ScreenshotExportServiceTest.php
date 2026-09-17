@@ -7,11 +7,8 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Épingle les garanties de ScreenshotExportService.
- *
- * Une capture doit rester lisible hors du jeu : parsable en XML STRICT, sans
- * ressource externe, et d'un poids tenable. Chaque test ci-dessous fige un
- * défaut qui a réellement cassé les exports, pas une hypothèse.
+ * Guarantees of ScreenshotExportService: a capture stays readable outside the
+ * game, as strict XML, without external resources and at an acceptable size.
  */
 class ScreenshotExportServiceTest extends TestCase
 {
@@ -24,7 +21,7 @@ class ScreenshotExportServiceTest extends TestCase
         mkdir($this->docroot . '/img/tiles', 0777, true);
         mkdir($this->docroot . '/css', 0777, true);
 
-        // PNG 1x1 valide : le service lit le fichier et l'encode réellement.
+        // Valid 1x1 PNG: the service reads and encodes a real file.
         file_put_contents(
             $this->docroot . '/img/tiles/herbe.png',
             base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==')
@@ -53,11 +50,7 @@ class ScreenshotExportServiceTest extends TestCase
         return new ScreenshotExportService($this->docroot);
     }
 
-    /**
-     * Le défaut d'origine : View composait la classe en l'écrivant dans l'URL,
-     * si bien qu'un élément portant déjà la sienne sortait avec DEUX attributs
-     * class. Fatal en XML strict, donc plus rien ne s'affichait.
-     */
+    /** Two class attributes on one element are fatal in strict XML. */
     #[Group('screenshot-export')]
     public function testFusionneLesAttributsClassDupliques(): void
     {
@@ -79,9 +72,8 @@ class ScreenshotExportServiceTest extends TestCase
     }
 
     /**
-     * Les renvois internes (<use href="#id">) et les data: déjà encodés ne sont
-     * pas des fichiers : tenter de les résoudre les signalerait à tort comme
-     * manquants.
+     * Internal references (<use href="#id">) and data: URIs are not files and
+     * must not be reported missing.
      */
     #[Group('screenshot-export')]
     public function testReferencesExternesEcarteRenvoisInternesEtDataUri(): void
@@ -93,9 +85,8 @@ class ScreenshotExportServiceTest extends TestCase
     }
 
     /**
-     * Le nerf de la guerre : une frame d'arène compte environ treize cents
-     * références pour une quarantaine d'assets. Sans déduplication elle pèse
-     * 16 Mo au lieu de 0,5.
+     * ~1300 references for ~40 assets per frame: without deduplication a frame
+     * weighs 16 MB instead of 0.5.
      */
     #[Group('screenshot-export')]
     public function testNEncodeChaqueAssetQuUneSeuleFois(): void
@@ -110,8 +101,8 @@ class ScreenshotExportServiceTest extends TestCase
     }
 
     /**
-     * .avatar-shadow porte une règle géométrique (width: 35px) que <use> ne
-     * propage pas de la même manière : ces images gardent leur forme d'origine.
+     * .avatar-shadow carries a geometric rule (width: 35px) that <use> does not
+     * propagate the same way: these images keep their own form.
      */
     #[Group('screenshot-export')]
     public function testLesImagesAClasseGeometriqueNePassentPasParUse(): void
@@ -126,8 +117,8 @@ class ScreenshotExportServiceTest extends TestCase
     }
 
     /**
-     * class="case " est portée par des centaines d'images de grille et n'a
-     * aucune règle CSS : l'exclure de la déduplication la réduirait à néant.
+     * class="case " sits on hundreds of grid images and has no CSS rule:
+     * excluding it would defeat the deduplication.
      */
     #[Group('screenshot-export')]
     public function testUneClasseSansPorteeGeometriqueResteDeduplicable(): void
@@ -142,9 +133,8 @@ class ScreenshotExportServiceTest extends TestCase
     }
 
     /**
-     * View pose l'opacité en style inline sur les calques de décor (gif 0.3,
-     * webp 0.5, png 1). Reportée sur le <use>, elle vaut pour l'image
-     * référencée ; oubliée, les calques translucides sortent opaques.
+     * The inline opacity of scenery layers (gif 0.3, webp 0.5, png 1) must
+     * travel onto the <use>, else translucent layers come out opaque.
      */
     #[Group('screenshot-export')]
     public function testReporteLeStyleInlineSurLeUse(): void
@@ -163,8 +153,8 @@ class ScreenshotExportServiceTest extends TestCase
     }
 
     /**
-     * Deux calques du même asset ne diffèrent que par leur opacité : ils
-     * partagent une définition et portent chacun son style.
+     * Two layers of the same asset differ only by opacity: one definition,
+     * each carrying its own style.
      */
     #[Group('screenshot-export')]
     public function testDeuxCalquesPartagentLaDefinitionEtGardentLeurOpacite(): void
@@ -182,9 +172,8 @@ class ScreenshotExportServiceTest extends TestCase
     }
 
     /**
-     * Une balise auto-fermante finit par "/" et peut n'avoir aucune espace de
-     * tête exploitable : recopier la chaîne d'attributs telle quelle produisait
-     * un "//>" ou un "…"x=" collé, fatal en XML strict.
+     * A self-closing tag ends with "/" and may have no usable leading space:
+     * copying the attribute string verbatim yields "//>" or glued attributes.
      */
     #[Group('screenshot-export')]
     public function testLeUseResteDuXmlValideQuelsQueSoientLesAttributs(): void
@@ -206,9 +195,8 @@ class ScreenshotExportServiceTest extends TestCase
     }
 
     /**
-     * Le bloc <defs> s'insère après la balise racine. Quand elle manque, le
-     * remplacement ne trouvait rien et le bloc était perdu en silence : chaque
-     * <use> pointait alors vers une définition absente, donc une image vide.
+     * <defs> goes after the root tag; without one the block must still land,
+     * else every <use> points at a missing definition.
      */
     #[Group('screenshot-export')]
     public function testNePerdJamaisLesDefinitionsFauteDeBaliseRacine(): void
@@ -237,8 +225,8 @@ class ScreenshotExportServiceTest extends TestCase
     }
 
     /**
-     * Sans le CSS embarqué, une capture ouverte seule perd ses styles : les
-     * ombres, invisibles en jeu, s'affichent en carrés pleins.
+     * Without embedded CSS the shadows, invisible in game, render as full
+     * squares.
      */
     #[Group('screenshot-export')]
     public function testInjecteLesReglesDesSeulesClassesPresentes(): void
@@ -261,9 +249,8 @@ class ScreenshotExportServiceTest extends TestCase
     }
 
     /**
-     * La garantie de bout en bout : une capture autonome doit être du XML
-     * valide et ne dépendre d'aucun fichier extérieur. C'est ce que réclame la
-     * balise <img> de l'aperçu d'administration, qui n'affiche rien sinon.
+     * End to end: a self-contained capture is valid XML and depends on no
+     * external file, as the admin <img> preview requires.
      */
     #[Group('screenshot-export')]
     public function testUneCaptureAutonomeEstDuXmlValideSansReferenceExterne(): void

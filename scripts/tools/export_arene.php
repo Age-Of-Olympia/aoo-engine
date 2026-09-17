@@ -1,29 +1,19 @@
 <?php
 /**
- * Export des captures d'arène vers un dossier montable.
+ * Exports the arena captures into a self-contained directory plus a timeline
+ * manifest. The SVG transformation lives in App\Service\ScreenshotExportService;
+ * this script only walks the files. No database access.
  *
- * Les captures sont écrites avec des chemins d'images RELATIFS et sans CSS :
- * telles quelles, ouvertes seules, il leur manque leurs assets et leurs styles.
- * Ce script produit un dossier autonome, plus un manifeste de la timeline.
+ * Modes:
  *
- * Toute la transformation SVG vit dans App\Service\ScreenshotExportService,
- * partagé avec l'aperçu de admin/screenshots.php. Ici on ne fait que parcourir
- * les fichiers.
+ *   bundle (default)  Copies the frames and the distinct assets keeping the
+ *                     tree, embeds the useful CSS in each SVG. Assets are shared
+ *                     by every frame.
  *
- * Deux modes :
+ *   standalone        One SVG per frame, images inlined as deduplicated base64.
+ *                     For frames shared on their own.
  *
- *   bundle (défaut)  Copie les images et les assets distincts en conservant
- *                    l'arborescence, et injecte le CSS utile dans chaque SVG.
- *                    Aucune URL n'est réécrite, donc rien à corriger à la main.
- *                    Mode économique : les assets sont partagés par toutes les
- *                    frames au lieu d'être recopiés dans chacune.
- *
- *   standalone       Un SVG par frame, images incluses en base64 dédupliqué.
- *                    À réserver aux images à partager seules.
- *
- * Aucune dépendance à la base : le script tourne sur un dossier rsynchronisé.
- *
- * Usage :
+ * Usage:
  *   php scripts/tools/export_arene.php [--mode=bundle|standalone]
  *                                      [--source=img/arene] [--out=export/arene]
  *                                      [--docroot=.]
@@ -51,7 +41,7 @@ if (!is_dir($source)) {
 }
 
 $frames = glob($source . '/*.svg') ?: [];
-sort($frames); // les noms portent l'horodatage : trier par nom trie par temps
+sort($frames); // names carry the timestamp: name order is time order
 
 if ($frames === []) {
     fwrite(STDERR, "Aucune capture dans {$source}\n");
@@ -88,7 +78,7 @@ foreach ($frames as $frame) {
     }
 }
 
-// En mode bundle les assets vivent à côté, partagés par toutes les frames.
+// Bundle mode: assets live alongside, shared by every frame.
 $assetsCopies = 0;
 if ($mode === 'bundle') {
     foreach (array_keys($assetsVus) as $ref) {
@@ -112,8 +102,7 @@ file_put_contents(
 
 $nbEvents = array_sum(array_map(static fn(array $f): int => count($f['events'] ?? []), $timeline));
 
-// Un asset introuvable rend une case noire ou vide : le signaler franchement
-// plutôt que de laisser découvrir le trou au montage.
+// A missing asset renders as a black or empty cell: report it.
 $manquants = $mode === 'standalone'
     ? $export->assetsManquants()
     : array_values(array_filter(array_keys($assetsVus), static fn(string $r): bool => !is_readable($docroot . '/' . ltrim($r, '/'))));

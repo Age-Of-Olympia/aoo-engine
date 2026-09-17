@@ -42,8 +42,8 @@ function action_type_label(object $action): string
 /**
  * Get optional string from POST data
  *
- * Seule la chaîne vide (ou l'absence de clé) vaut null : "0" est une valeur
- * légitime (niveau Z 0 de local_maps.php, par exemple) que empty() écraserait.
+ * Only the empty string (or a missing key) yields null: "0" is a valid value
+ * (z-level 0) that empty() would drop.
  *
  * @param string $key POST key
  * @return string|null String value or null if absent/empty
