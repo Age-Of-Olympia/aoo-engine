@@ -26,12 +26,19 @@ echo '
 
 $hiddenTransitions = 0;
 
-foreach(File::scan_dir('img/tiles/', without:".png") as $e){
+foreach(File::scan_dir('img/tiles/') as $file){
 
+    // Any tile format, svg included; the name is the file without its extension
+    if(!in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), \App\Service\TileCatalogService::IMAGE_EXTENSIONS, true)){
 
-    $url = 'img/tiles/'. $e .'.png';
+        continue;
+    }
+    $e = pathinfo($file, PATHINFO_FILENAME);
+    $url = 'img/tiles/'. $file;
 
-    if(!file_exists($url)){
+    // The plan backgrounds and weather textures live here too: only tile-sized images are brushes
+    $size = \App\Service\TileCatalogService::imageSize($url);
+    if(!$size || max($size) > \App\Service\TiledMapService::TILE_SIZE * 1.2){
 
         continue;
     }
