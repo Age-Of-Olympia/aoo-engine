@@ -18,13 +18,29 @@ class View{
      */
     private const ELEMENT_EDGE_FADE = 0.3;
 
-    /** Sides open around a cell, as a bitmask: 1 north, 2 east, 4 south, 8 west. */
+    /**
+     * Where a cell's element fades, as a bitmask. Sides: 1 north, 2 east,
+     * 4 south, 8 west, open when the neighbour there does not carry the
+     * same element. Corners: 16 NE, 32 SE, 64 SW, 128 NW, set on the inside
+     * of a bend — the diagonal cell is empty while both sides around it are
+     * filled — so the soft margins of the two branches meet round the
+     * corner instead of leaving a square notch.
+     */
     public static function elementEdgeBits(array $elementAt, int $x, int $y, string $name): int
     {
+        $has = fn(int $dx, int $dy): bool => ($elementAt[($x + $dx) .','. ($y + $dy)] ?? null) === $name;
+
         $bits = 0;
         foreach([[0, 1, 1], [1, 0, 2], [0, -1, 4], [-1, 0, 8]] as [$dx, $dy, $bit]){
 
-            if(($elementAt[($x + $dx) .','. ($y + $dy)] ?? null) !== $name){
+            if(!$has($dx, $dy)){
+
+                $bits |= $bit;
+            }
+        }
+        foreach([[1, 1, 16], [1, -1, 32], [-1, -1, 64], [-1, 1, 128]] as [$dx, $dy, $bit]){
+
+            if(!$has($dx, $dy) && $has($dx, 0) && $has(0, $dy)){
 
                 $bits |= $bit;
             }
@@ -34,11 +50,14 @@ class View{
     }
 
     /**
-     * The 15 edge masks, in bounding-box units so one definition serves
-     * every cell: white shows, and a black-to-clear gradient on each open
-     * side fades the image out there. Overlaps multiply, so corners fade.
+     * One mask per pattern, in bounding-box units so one definition serves
+     * every cell: white shows, a black-to-clear gradient on each open side
+     * and a radial one on each inside corner fade the image out there.
+     * Overlaps multiply.
+     *
+     * @param list<int> $patterns bitmasks from elementEdgeBits(), non-zero
      */
-    public static function elementEdgeDefs(): string
+    public static function elementEdgeDefs(array $patterns): string
     {
         $f = self::ELEMENT_EDGE_FADE;
         $sides = [
@@ -47,17 +66,23 @@ class View{
             4 => 'x1="0" y1="1" x2="0" y2="0"',
             8 => 'x1="0" y1="0" x2="1" y2="0"',
         ];
+        $corners = [16 => 'cx="1" cy="0"', 32 => 'cx="1" cy="1"', 64 => 'cx="0" cy="1"', 128 => 'cx="0" cy="0"'];
         $defs = '<defs>';
         foreach($sides as $bit => $axis){
 
             $defs .= '<linearGradient id="elem-fade-'. $bit .'" '. $axis .'>'
                 . '<stop offset="0" stop-color="#000"/><stop offset="'. $f .'" stop-color="#000" stop-opacity="0"/></linearGradient>';
         }
-        for($bits = 1; $bits < 16; $bits++){
+        foreach($corners as $bit => $centre){
+
+            $defs .= '<radialGradient id="elem-fade-'. $bit .'" '. $centre .' r="'. $f .'">'
+                . '<stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>';
+        }
+        foreach(array_unique(array_filter($patterns)) as $bits){
 
             $defs .= '<mask id="elem-edge-'. $bits .'" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">'
                 . '<rect width="1" height="1" fill="#fff"/>';
-            foreach(array_keys($sides) as $bit){
+            foreach(array_keys($sides + $corners) as $bit){
 
                 if($bits & $bit){
 
@@ -288,7 +313,6 @@ class View{
 
             class="box-shadow"
             >
-            '. self::elementEdgeDefs() .'
             ';
 
             /* Le sol ENTRE dans le SVG, au lieu d'être une
@@ -336,6 +360,7 @@ class View{
              * the angle a tile or element was placed at, by layer. */
             $elementAt = [];
             $rotationAt = [];
+            $edgePatterns = [];
             $resPlaced = $db->exe(
                 'SELECT "elements" AS layer, name, coords_id, rotation FROM map_elements WHERE coords_id IN ('. $inSightIdImploded .')
                  UNION ALL
@@ -838,6 +863,7 @@ class View{
 
                         $edgeBits = self::elementEdgeBits($elementAt, (int) $coords->x, (int) $coords->y, $row->name);
                         $edgeMask = $edgeBits ? ' mask="url(#elem-edge-'. $edgeBits .')"' : '';
+                        $edgePatterns[$edgeBits] = $edgeBits;
                     }
 
                     foreach($typesTbl as $k=>$e){
@@ -1178,7 +1204,8 @@ class View{
                 />
             ';
 
-            echo '
+            // Mask references resolve wherever the defs sit in the document
+            echo self::elementEdgeDefs(array_values($edgePatterns)) .'
         </svg>
         ';
 

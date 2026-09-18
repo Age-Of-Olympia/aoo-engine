@@ -264,7 +264,7 @@ ob_start();
         sable:  {style: 'streaks_h', anim: 'drift_h', freq: 0.12, octaves: 2, colorA: '#b8955a', colorB: '#eed7a3', alphaLo: 1, alphaHi: 1, speed: 0, shape: 'square', blur: 0, gamma: 1, detail: 0.6, light: 'diffuse', relief: 1.5},
     };
     const COMPOSED = <?= json_encode($composed, JSON_HEX_TAG | JSON_HEX_AMP) ?>;
-    const EDGE_DEFS = <?= json_encode(\Classes\View::elementEdgeDefs(), JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+    const EDGE_DEFS = <?= json_encode(\Classes\View::elementEdgeDefs([9, 1, 3, 8, 2, 12, 4, 6]), JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 
     const sliders = document.getElementById('sliders');
     SLIDERS.forEach(([key, label, min, max, step, value]) => {
