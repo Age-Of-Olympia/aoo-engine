@@ -31,6 +31,25 @@ class ElementEdgeBitsTest extends TestCase
         $this->assertSame('sang', View::elementFamily('sang'));
     }
 
+    public function testAnElbowEntersAndLeavesLikeTheStraightPartsAroundIt(): void
+    {
+        /* Down a run painted 180, elbow, elbow (a staircase step), then a horizontal run painted 270:
+           the halves that touch a run take that run's rotation; the step between the elbows takes the path's. */
+        $at = ['0,5' => 'eau_cascade', '0,4' => 'eau_cascade', '0,3' => 'eau_cascade', '1,3' => 'eau_cascade', '1,2' => 'eau_cascade', '2,2' => 'eau_cascade', '3,2' => 'eau_cascade'];
+        $rot = ['0,5' => 180, '0,4' => 180, '2,2' => 270, '3,2' => 270];
+        $axes = View::elementAxes($at, $rot, 'eau');
+
+        $this->assertSame(['v' => 180, 'h' => 270], $axes['1,3'], 'the path reads both axes from its runs');
+        $this->assertSame(['N' => 180, 'E' => 270], array_column(View::elementElbow($at, $rot, $axes, 0, 3, 'eau_cascade'), 'rotation', 'side'), 'first elbow: enters like the vertical run, leaves like the path horizontal');
+        $this->assertSame(['S' => 180, 'W' => 270], array_column(View::elementElbow($at, $rot, $axes, 1, 3, 'eau_cascade'), 'rotation', 'side'), 'second elbow: joins the step and the horizontal run as painted');
+        $this->assertNull(View::elementElbow(['0,0' => 'eau', '0,1' => 'eau', '0,-1' => 'eau'], [], [], 0, 0, 'eau'), 'a straight run is not an elbow');
+        $this->assertNull(View::elementElbow(['0,0' => 'eau', '1,0' => 'eau', '0,-1' => 'eau', '1,-1' => 'eau'], [], [], 0, 0, 'eau'), 'the corner of a two-wide block is not an elbow');
+        $this->assertNull(View::elementElbow(['0,0' => 'eau', '0,1' => 'eau', '-1,0' => 'sang'], [], [], 0, 0, 'eau'), 'another family does not count');
+        $this->assertSame(['v' => 0, 'h' => 90], View::elementAxes(['0,0' => 'eau'], [], 'eau')['0,0'], 'no straight run: defaults');
+        // West half of a bend joined west and north: fades from its own corner (SW) toward NE
+        $this->assertStringContainsString('<linearGradient id="elem-half-WSE-g" x1="0" y1="1" x2="1" y2="0">', View::elementHalfDefs(['elem-half-WSE']));
+    }
+
     public function testTheInsideOfABendFadesAtItsCorner(): void
     {
         // A stream coming from the west turning south: the SW diagonal is the inside of the bend

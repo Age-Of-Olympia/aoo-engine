@@ -18,6 +18,9 @@ class View{
      */
     private const ELEMENT_EDGE_FADE = 0.3;
 
+    /** Width of the cross-fade between the two halves of an elbow, as a fraction of the tile. */
+    private const ELBOW_BLEND = 0.3;
+
     /**
      * Family of an element: its name up to the first underscore. Elements
      * of one family join edge to edge (eau, eau_cascade, eau_ecume); any
@@ -154,6 +157,160 @@ class View{
         }
 
         return null;
+    }
+
+    /**
+     * Sides of a cell joined to a neighbour of its family, by side. A
+     * straight run joins two opposite sides, an elbow two sides at a right
+     * angle.
+     *
+     * @param array<string, string> $elementAt element name by "x,y"
+     * @return array<string, string> side => "x,y" of the neighbour
+     */
+    private static function joinedSides(array $elementAt, int $x, int $y, string $family): array
+    {
+        $joined = [];
+        foreach(['N' => [0, 1], 'E' => [1, 0], 'S' => [0, -1], 'W' => [-1, 0]] as $side => [$dx, $dy]){
+
+            $key = ($x + $dx) .','. ($y + $dy);
+            if(isset($elementAt[$key]) && self::elementFamily($elementAt[$key]) === $family){
+
+                $joined[$side] = $key;
+            }
+        }
+
+        return $joined;
+    }
+
+    /**
+     * Axis rotations of every cell of a family, by "x,y": the rotation
+     * its path's straight runs use vertically ('v') and horizontally
+     * ('h'). A path is the set of cells joined side to side; a cell
+     * joined north and south gives its path the vertical rotation, one
+     * joined east and west the horizontal one. A missing axis is the
+     * other turned a quarter; a path with no straight run gets 0 and 90.
+     *
+     * @param array<string, string> $elementAt  element name by "x,y"
+     * @param array<string, int>    $rotationAt element rotation by "x,y"
+     * @return array<string, array{v: int, h: int}>
+     */
+    public static function elementAxes(array $elementAt, array $rotationAt, string $family): array
+    {
+        $axesAt = [];
+        foreach(array_keys($elementAt) as $start){
+
+            if(isset($axesAt[$start]) || self::elementFamily($elementAt[$start]) !== $family){
+                continue;
+            }
+            // Walk the path from here, collecting its straight runs
+            $path = [$start => true];
+            $queue = [$start];
+            $axes = [];
+            while($queue !== []){
+
+                $key = array_shift($queue);
+                [$x, $y] = explode(',', $key);
+                $joined = self::joinedSides($elementAt, (int) $x, (int) $y, $family);
+                if(isset($joined['N'], $joined['S'])){
+                    $axes['v'] ??= (int) ($rotationAt[$key] ?? 0);
+                }
+                if(isset($joined['E'], $joined['W'])){
+                    $axes['h'] ??= (int) ($rotationAt[$key] ?? 0);
+                }
+                foreach($joined as $next){
+                    if(!isset($path[$next])){
+                        $path[$next] = true;
+                        $queue[] = $next;
+                    }
+                }
+            }
+            $axes['v'] ??= isset($axes['h']) ? ($axes['h'] + 270) % 360 : 0;
+            $axes['h'] ??= ($axes['v'] + 90) % 360;
+            foreach(array_keys($path) as $key){
+                $axesAt[$key] = $axes;
+            }
+        }
+
+        return $axesAt;
+    }
+
+    /**
+     * The two halves of an elbow: a cell with exactly two neighbours of
+     * its family at right angles and nothing of the family in the corner
+     * between them — the top of a two-wide fall has the corner filled and
+     * is no bend. Each half faces one neighbour: a
+     * straight run gives the half its own rotation, so the flow enters
+     * and leaves the elbow exactly as painted; another elbow gives it the
+     * path's rotation on that axis (elementAxes), so a staircase stays
+     * consistent. The elbow's own rotation does not count.
+     *
+     * @param array<string, string>                $elementAt  element name by "x,y"
+     * @param array<string, int>                   $rotationAt element rotation by "x,y"
+     * @param array<string, array{v: int, h: int}> $axesAt     from elementAxes()
+     * @return list<array{side: string, rotation: int, clip: string}>|null
+     */
+    public static function elementElbow(array $elementAt, array $rotationAt, array $axesAt, int $x, int $y, string $name): ?array
+    {
+        $family = self::elementFamily($name);
+        $joined = self::joinedSides($elementAt, $x, $y, $family);
+        if(count($joined) !== 2 || isset($joined['N'], $joined['S']) || isset($joined['E'], $joined['W'])){
+
+            return null;
+        }
+        $inside = ($x + (isset($joined['E']) ? 1 : -1)) .','. ($y + (isset($joined['N']) ? 1 : -1));
+        if(isset($elementAt[$inside]) && self::elementFamily($elementAt[$inside]) === $family){
+
+            return null;
+        }
+
+        $outer = (isset($joined['N']) ? 'S' : 'N') . (isset($joined['E']) ? 'W' : 'E');
+        $halves = [];
+        foreach($joined as $side => $key){
+
+            [$nx, $ny] = explode(',', $key);
+            $there = self::joinedSides($elementAt, (int) $nx, (int) $ny, $family);
+            $straight = isset($there['N'], $there['S']) || isset($there['E'], $there['W']);
+            $axis = $side === 'N' || $side === 'S' ? 'v' : 'h';
+            $halves[] = [
+                'side'     => $side,
+                'rotation' => $straight ? (int) ($rotationAt[$key] ?? 0) : ($axesAt[$x .','. $y][$axis] ?? ($axis === 'v' ? 0 : 90)),
+                'clip'     => 'elem-half-'. $side . $outer,
+            ];
+        }
+
+        return $halves;
+    }
+
+    /**
+     * Masks for elbow halves, in bounding-box units (screen y down). Each
+     * half is opaque on its side and fades out across a short band centred
+     * on the mitre; the two halves are exact complements, so the textures
+     * cross-fade over the diagonal instead of meeting on a line.
+     *
+     * @param list<string> $ids mask ids from elementElbow()
+     */
+    public static function elementHalfDefs(array $ids): string
+    {
+        $band = self::ELBOW_BLEND / 2;
+        $corner = ['NW' => '0,0', 'NE' => '1,0', 'SE' => '1,1', 'SW' => '0,1'];
+        $opposite = ['NW' => 'SE', 'NE' => 'SW', 'SE' => 'NW', 'SW' => 'NE'];
+        $edge = ['N' => ['NW', 'NE'], 'E' => ['NE', 'SE'], 'S' => ['SW', 'SE'], 'W' => ['NW', 'SW']];
+        $defs = '';
+        foreach(array_unique($ids) as $id){
+
+            [$side, $outer] = [substr($id, 10, 1), substr($id, 11)];
+            // The half's own corner: the edge's corner that is not the inner one
+            $inner = $opposite[$outer];
+            $own = $edge[$side][0] === $inner ? $edge[$side][1] : $edge[$side][0];
+            [$x1, $y1] = explode(',', $corner[$own]);
+            [$x2, $y2] = explode(',', $corner[$opposite[$own]]);
+            $defs .= '<mask id="'. $id .'" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">'
+                . '<linearGradient id="'. $id .'-g" x1="'. $x1 .'" y1="'. $y1 .'" x2="'. $x2 .'" y2="'. $y2 .'">'
+                . '<stop offset="'. (0.5 - $band) .'" stop-color="#fff"/><stop offset="'. (0.5 + $band) .'" stop-color="#000"/></linearGradient>'
+                . '<rect width="1" height="1" fill="url(#'. $id .'-g)"/></mask>';
+        }
+
+        return $defs === '' ? '' : '<defs>'. $defs .'</defs>';
     }
 
     private $coords; // Coordonnées de la vue
@@ -375,6 +532,8 @@ class View{
             $elementAt = [];
             $rotationAt = [];
             $edgePatterns = [];
+            $halfClips = [];
+            $axesByFamily = [];
             $resPlaced = $db->exe(
                 'SELECT "elements" AS layer, name, coords_id, rotation FROM map_elements WHERE coords_id IN ('. $inSightIdImploded .')
                  UNION ALL
@@ -873,11 +1032,29 @@ class View{
                      * a group AROUND the turned image: on the image itself
                      * it would turn with it and fade the wrong sides. */
                     $edgeMask = '';
+                    // One drawing per cell, or two clipped halves at an elbow
+                    $halves = [['turn' => $turn, 'clip' => '']];
                     if($row->whichTable == 'elements'){
 
                         $edgeBits = self::elementEdgeBits($elementAt, (int) $coords->x, (int) $coords->y, $row->name);
                         $edgeMask = $edgeBits ? ' mask="url(#elem-edge-'. $edgeBits .')"' : '';
                         $edgePatterns[$edgeBits] = $edgeBits;
+
+                        $family = self::elementFamily($row->name);
+                        $axesByFamily[$family] ??= self::elementAxes($elementAt, $rotationAt['elements'] ?? [], $family);
+                        $elbow = self::elementElbow($elementAt, $rotationAt['elements'] ?? [], $axesByFamily[$family], (int) $coords->x, (int) $coords->y, $row->name);
+                        if($elbow !== null){
+
+                            $halves = [];
+                            foreach($elbow as $half){
+
+                                $halfClips[$half['clip']] = $half['clip'];
+                                $halves[] = [
+                                    'turn' => $half['rotation'] ? ' transform="rotate('. $half['rotation'] .' '. (floor($x) + self::TILE_PX / 2) .' '. (floor($y) + self::TILE_PX / 2) .')"' : '',
+                                    'clip' => ' mask="url(#'. $half['clip'] .')"',
+                                ];
+                            }
+                        }
                     }
 
                     foreach($typesTbl as $k=>$e){
@@ -891,25 +1068,30 @@ class View{
 
                         if(file_exists($img)){
 
-                            echo ($edgeMask ? '<g'. $edgeMask .'>' : '') .'
-                            <image
+                            echo ($edgeMask ? '<g'. $edgeMask .'>' : '');
+                            foreach($halves as $half){
 
-                                width="'. self::TILE_PX .'"
-                                height="'. self::TILE_PX .'"
+                                echo ($half['clip'] ? '<g'. $half['clip'] .'>' : '') .'
+                                <image
 
-                                data-table="'. $row->whichTable .'"
-                                data-coords="'. $coords->x .','. $coords->y .'"
+                                    width="'. self::TILE_PX .'"
+                                    height="'. self::TILE_PX .'"
 
-                                x="'. floor($x) .'"
-                                y="'. floor($y) .'"
+                                    data-table="'. $row->whichTable .'"
+                                    data-coords="'. $coords->x .','. $coords->y .'"
 
-                                style="opacity: '. $e .';"
-                                pointer-events="none"
+                                    x="'. floor($x) .'"
+                                    y="'. floor($y) .'"
 
-                                href="'. $img .'"
-                                '. self::class_attr($imgClasses) . $turn .'
-                                />
-                            '. ($edgeMask ? '</g>' : '');
+                                    style="opacity: '. $e .';"
+                                    pointer-events="none"
+
+                                    href="'. $img .'"
+                                    '. self::class_attr($imgClasses) . $half['turn'] .'
+                                    />
+                                '. ($half['clip'] ? '</g>' : '');
+                            }
+                            echo ($edgeMask ? '</g>' : '');
                         }
                     }
 
@@ -1219,7 +1401,7 @@ class View{
             ';
 
             // Mask references resolve wherever the defs sit in the document
-            echo self::elementEdgeDefs(array_values($edgePatterns)) .'
+            echo self::elementEdgeDefs(array_values($edgePatterns)) . self::elementHalfDefs(array_values($halfClips)) .'
         </svg>
         ';
 
