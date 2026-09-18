@@ -23,7 +23,7 @@ class View{
 
     /**
      * Family of an element: its name up to the first underscore. Elements
-     * of one family join edge to edge (eau, eau_cascade, eau_ecume); any
+     * of one family join edge to edge (eau, eau_cascade); any
      * other neighbour is an edge to fade toward.
      */
     public static function elementFamily(string $name): string

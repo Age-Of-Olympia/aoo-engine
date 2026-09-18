@@ -88,7 +88,7 @@ ob_start();
         déformée par ce bruit. L'animation est du SVG natif, sans JavaScript en jeu. Le fichier va dans
         <code style="display:inline">img/&lt;couche&gt;/&lt;nom&gt;.svg</code>. Un élément qui porte le
         nom d'un effet du catalogue l'applique au pas ; sans effet, c'est un décor. Les éléments dont le nom
-        commence par le même mot avant <code style="display:inline">_</code> (eau, eau_cascade, eau_ecume) se
+        commence par le même mot avant <code style="display:inline">_</code> (eau, eau_cascade) se
         touchent bord à bord sur le damier ; face à tout autre voisin, le bord s'estompe. Un élément se pose
         tourné depuis la page Éléments : un seul fichier sert les quatre sens.
     </div>
@@ -98,7 +98,7 @@ ob_start();
             <div class="card-body" id="composer">
                 <div class="d-flex gap-2 flex-wrap mb-2 align-items-center">
                     <span class="text-muted">Préréglages :</span>
-                    <?php foreach (['eau', 'lave', 'poison', 'brume', 'sang', 'feu', 'pierre', 'boue', 'glace', 'marais', 'neige', 'sable', 'eau_ecume'] as $preset): ?>
+                    <?php foreach (['eau', 'lave', 'poison', 'brume', 'sang', 'feu', 'pierre', 'boue', 'glace', 'marais', 'neige', 'sable'] as $preset): ?>
                         <button type="button" class="btn btn-sm btn-outline-secondary py-0" data-preset="<?= $preset ?>"><?= ucfirst(str_replace('_', ' ', $preset)) ?></button>
                     <?php endforeach; ?>
                     <?php if ($composed !== []): ?>
@@ -163,8 +163,7 @@ ob_start();
                             <option value="band_h">bande horizontale</option>
                             <option value="band_v">bande verticale</option>
                             <option value="corner">coin (angle)</option>
-                            <option value="fade_down">dégradé vers le bas</option>
-                        </select>
+                                                    </select>
                     </div>
                 </div>
 
@@ -265,7 +264,6 @@ ob_start();
         marais: {style: 'clouds',    anim: 'sway',    freq: 0.05, octaves: 3, colorA: '#1f2e12', colorB: '#6b7d33', alphaLo: 0.9, alphaHi: 1, speed: 6, shape: 'square', blur: 0.3, gamma: 1.1, detail: 0.4, light: 'specular', relief: 1.5},
         neige:  {style: 'clouds',    anim: 'drift_h', freq: 0.06, octaves: 3, colorA: '#dfe8f2', colorB: '#ffffff', alphaLo: 1, alphaHi: 1, speed: 0, shape: 'square', blur: 0.4, gamma: 1, detail: 0.2, light: 'diffuse', relief: 1.5},
         sable:  {style: 'streaks_h', anim: 'drift_h', freq: 0.12, octaves: 2, colorA: '#b8955a', colorB: '#eed7a3', alphaLo: 1, alphaHi: 1, speed: 0, shape: 'square', blur: 0, gamma: 1, detail: 0.6, light: 'diffuse', relief: 1.5},
-        eau_ecume: {style: 'turbulence', anim: 'drift_v', freq: 0.08, octaves: 3, colorA: '#2f8fc6', colorB: '#ffffff', alphaLo: 1, alphaHi: 1, speed: 2, shape: 'square', blur: 0.4, gamma: 0.5, detail: 0.5, light: 'specular', relief: 1.5},
     };
     const COMPOSED = <?= json_encode($composed, JSON_HEX_TAG | JSON_HEX_AMP) ?>;
     const EDGE_DEFS = <?= json_encode(\Classes\View::elementEdgeDefs([9, 1, 3, 8, 2, 12, 4, 6]), JSON_HEX_TAG | JSON_HEX_AMP) ?>;
@@ -342,8 +340,6 @@ ob_start();
             case 'band_v':
                 const axis = p.shape === 'band_h' ? 'x1="0" y1="0" x2="0" y2="1"' : 'x1="0" y1="0" x2="1" y2="0"';
                 return `<mask id="m"><linearGradient id="lg" ${axis}><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="${(soft / 2).toFixed(2)}" stop-color="#fff"/><stop offset="${(1 - soft / 2).toFixed(2)}" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><rect width="50" height="50" fill="url(#lg)"/></mask>`;
-            case 'fade_down':
-                return `<mask id="m"><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="${hard}" stop-color="#fff" stop-opacity="0"/></linearGradient><rect width="50" height="50" fill="url(#lg)"/></mask>`;
             case 'corner':
                 return `<mask id="m"><radialGradient id="rg" cx="0" cy="0" r="1"><stop offset="${hard}" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><rect width="50" height="50" fill="url(#rg)"/></mask>`;
             default:
