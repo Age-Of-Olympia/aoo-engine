@@ -50,6 +50,19 @@ class ElementEdgeBitsTest extends TestCase
         $this->assertStringContainsString('<linearGradient id="elem-half-WSE-g" x1="0" y1="1" x2="1" y2="0">', View::elementHalfDefs(['elem-half-WSE']));
     }
 
+    public function testALayerTileMayBeAnSvg(): void
+    {
+        $this->assertSame('img/tiles/carreaux.png', View::layerImage('tiles', 'carreaux'), 'a png tile keeps its path');
+        $this->assertSame('img/tiles/zz_no_such_tile.png', View::layerImage('tiles', 'zz_no_such_tile'), 'a missing tile keeps the png path, so it shows as broken');
+
+        file_put_contents('img/tiles/zz_svg_tile_test.svg', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50"/>');
+        try {
+            $this->assertSame('img/tiles/zz_svg_tile_test.svg', View::layerImage('tiles', 'zz_svg_tile_test'));
+        } finally {
+            unlink('img/tiles/zz_svg_tile_test.svg');
+        }
+    }
+
     public function testTheInsideOfABendFadesAtItsCorner(): void
     {
         // A stream coming from the west turning south: the SW diagonal is the inside of the bend

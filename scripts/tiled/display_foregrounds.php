@@ -10,12 +10,13 @@ echo '<summary style="cursor: pointer; font-weight: bold; margin: 10px 0;"><h3 s
 $regularForegrounds = [];
 $uniqueForegrounds = [];
 
-foreach(File::scan_dir('img/foregrounds/', without:".png") as $e){
-    $url = 'img/foregrounds/'. $e .'.png';
-
-    if(!file_exists($url)){
+foreach(File::scan_dir('img/foregrounds/') as $file){
+    // Any tile format, svg included; the name is the file without its extension
+    if(!in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), \App\Service\TileCatalogService::IMAGE_EXTENSIONS, true)){
         continue;
     }
+    $e = pathinfo($file, PATHINFO_FILENAME);
+    $url = 'img/foregrounds/'. $file;
 
     if(str_starts_with($e, 'unique_')){
         $uniqueForegrounds[] = ['name' => $e, 'url' => $url];
