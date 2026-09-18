@@ -13,18 +13,19 @@ class View{
 
     /**
      * Width of the fade on an element's open side, as a fraction of the
-     * tile. An element bordered by a cell without the same element fades
-     * out on that side, so a lake ends in a soft shore, not a square.
+     * tile. An element fades out toward a cell that carries no element,
+     * so a lake ends in a soft shore; toward another element it runs
+     * edge to edge, so a waterfall joins the water it falls into.
      */
     private const ELEMENT_EDGE_FADE = 0.3;
 
-    /** Sides open around a cell, as a bitmask: 1 north, 2 east, 4 south, 8 west. */
-    public static function elementEdgeBits(array $elementAt, int $x, int $y, string $name): int
+    /** Sides open around a cell (no element there), as a bitmask: 1 north, 2 east, 4 south, 8 west. */
+    public static function elementEdgeBits(array $elementAt, int $x, int $y): int
     {
         $bits = 0;
         foreach([[0, 1, 1], [1, 0, 2], [0, -1, 4], [-1, 0, 8]] as [$dx, $dy, $bit]){
 
-            if(($elementAt[($x + $dx) .','. ($y + $dy)] ?? null) !== $name){
+            if(!isset($elementAt[($x + $dx) .','. ($y + $dy)])){
 
                 $bits |= $bit;
             }
@@ -281,8 +282,8 @@ class View{
             $tiledSql = '';
             $inSightIdImploded = implode(',', $this->inSightId);
 
-            /* Which element each cell in sight carries, to fade an element
-             * on the sides where its neighbour is not the same one. */
+            /* Which cells in sight carry an element, to fade an element
+             * only on the sides where its neighbour carries none. */
             $elementAt = [];
             $elementRotation = [];
             $resElements = $db->exe('SELECT name, coords_id, rotation FROM map_elements WHERE coords_id IN ('. $inSightIdImploded .')');
@@ -764,7 +765,7 @@ class View{
                     $turn = '';
                     if($row->whichTable == 'elements'){
 
-                        $edgeBits = self::elementEdgeBits($elementAt, (int) $coords->x, (int) $coords->y, $row->name);
+                        $edgeBits = self::elementEdgeBits($elementAt, (int) $coords->x, (int) $coords->y);
                         $edgeMask = $edgeBits ? ' mask="url(#elem-edge-'. $edgeBits .')"' : '';
                         $angle = $elementRotation[$coords->x .','. $coords->y] ?? 0;
                         $turn = $angle ? ' transform="rotate('. $angle .' '. (floor($x) + self::TILE_PX / 2) .' '. (floor($y) + self::TILE_PX / 2) .')"' : '';
