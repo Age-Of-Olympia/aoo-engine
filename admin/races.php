@@ -129,7 +129,7 @@ function race_character_counts(array $counts): string
 function bleed_options(): array
 {
     $out = [];
-    foreach ((new \App\Service\MapElementService())->placeableNames() as $name) {
+    foreach ((new \App\Service\MapElementService())->namesWithEffect() as $name) {
         $out[$name] = $name;
     }
     ksort($out);

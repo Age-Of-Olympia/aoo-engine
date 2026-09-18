@@ -65,6 +65,35 @@ class MapElementCachePurgeTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /** An element with no effect of its name is decor: laid, walked on, nothing applied. */
+    public function testAnElementWithoutAnEffectIsDecor(): void
+    {
+        $player = $this->createRealPlayer('GmDecor');
+        $player->get_data();
+        $coordsId = (int) $player->data->coords_id;
+        $this->link->executeStatement('DELETE FROM map_elements WHERE coords_id = ?', [$coordsId]);
+
+        try {
+            $this->assertTrue(Element::put('cascade_test_decor', $coordsId, Element::DURATION_INFINITE), 'posé sans effet');
+            $this->assertSame(
+                1,
+                (int) $this->link->fetchOne('SELECT COUNT(*) FROM map_elements WHERE name = ? AND coords_id = ?', ['cascade_test_decor', $coordsId])
+            );
+
+            $player->get_caracs();
+            $cell = $this->link->fetchAssociative('SELECT x, y, z, plan FROM coords WHERE id = ?', [$coordsId]);
+            $player->go((object) $cell);
+
+            $this->assertSame(
+                0,
+                (int) $this->link->fetchOne('SELECT COUNT(*) FROM players_effects WHERE player_id = ? AND name = ?', [(int) $player->id, 'cascade_test_decor']),
+                'fouler un décor n\'applique rien'
+            );
+        } finally {
+            $this->link->executeStatement('DELETE FROM map_elements WHERE name = ?', ['cascade_test_decor']);
+        }
+    }
+
     /**
      * Les durées s'écrivent en TOURS des deux côtés — effets comme
      * éléments — mais un élément de carte n'appartient à aucun joueur :

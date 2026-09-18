@@ -34,13 +34,6 @@ class Element{
      */
     public static function put($name, $coords, $duration=4, int $rotation=0): bool{
 
-
-        if(!(new \App\Service\EffectService())->exists($name)){
-
-            exit('error element '. $name);
-        }
-
-
         /* Durée écrite en tours, vécue en temps réel : c'est le cron
          * horaire qui efface, pas le tour d'un joueur. */
         $endTime = $duration < 0

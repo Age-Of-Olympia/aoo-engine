@@ -841,9 +841,13 @@ class Player implements ActorInterface {
             }
 
 
-            /* Un élément de carte foulé applique son effet pour UN tour
-             * (l'élément, lui, reste daté : voir Element::put). */
-            $this->add_effect($row->name, 1);
+            /* Stepping on an element applies the effect of the same name
+             * for ONE turn (the element itself keeps its own clock, see
+             * Element::put). An element with no such effect is decor. */
+            if($this->effectService->exists($row->name)){
+
+                $this->add_effect($row->name, 1);
+            }
         }
 
 
