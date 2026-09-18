@@ -103,7 +103,8 @@ function admin_layout($title, $content, array $assets = []) {
     $tutorialPages = ['tutorial-catalog.php', 'tutorial.php', 'tutorial-step-editor.php',
                       'tutorial-npcs.php', 'tutorial-settings.php'];
     $mapPages = ['world_map.php', 'plans.php', 'plan-seed.php', 'plan-season-rename.php', 'local_maps.php',
-                 'terrain-transitions.php', 'tile-assets.php', 'tile-colors.php', 'tile-shade.php', 'screenshots.php'];
+                 'terrain-transitions.php', 'tile-assets.php', 'element-composer.php', 'tile-colors.php',
+                 'tile-shade.php', 'screenshots.php'];
     $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php', 'passive-workbench.php',
                     'action-import.php', 'action-import-preview.php'];
     $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
@@ -131,6 +132,7 @@ function admin_layout($title, $content, array $assets = []) {
                 ['local_maps.php', 'Cartes locales', '/admin/local_maps.php'],
                 ['terrain-transitions.php', 'Transitions de terrain', '/admin/terrain-transitions.php'],
                 ['tile-assets.php', 'Tuiles &amp; images', '/admin/tile-assets.php'],
+                ['element-composer.php', 'Composeur d\'éléments', '/admin/element-composer.php'],
                 ['tile-colors.php', 'Couleurs de carte', '/admin/tile-colors.php'],
                 ['tile-shade.php', 'Ombres des cases', '/admin/tile-shade.php'],
                 ['screenshots.php', 'Captures', '/admin/screenshots.php'],

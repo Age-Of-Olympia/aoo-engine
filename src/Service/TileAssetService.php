@@ -132,6 +132,65 @@ class TileAssetService
     }
 
     /**
+     * Writes an SVG tile (admin composer or hand-written). Kept as SVG: its
+     * filters and animations are the point. The file must stand alone —
+     * the board loads it through <image>, where scripts never run and
+     * external resources never load — so anything but inline content is
+     * refused. With $replace, the other formats of that name go: the board
+     * draws every format it finds, stacked.
+     */
+    public function putSvg(string $layer, string $name, string $svg, bool $replace = false): void
+    {
+        $this->assertLayer($layer);
+        $this->assertName($name);
+        if (strlen($svg) > TileCatalogService::IMAGE_MAX_BYTES) {
+            throw new RuntimeException('SVG trop volumineux (max 4 Mo).');
+        }
+        $existing = $this->existingFiles($layer, $name);
+        if ($existing !== [] && !$replace) {
+            throw new RuntimeException("L'image « {$name} » existe déjà dans cette couche.");
+        }
+        $this->assertStandaloneSvg($svg);
+
+        $dir = $this->root . '/img/' . TiledMapService::layerImageDir($layer);
+        if (!is_dir($dir) || !is_writable($dir)) {
+            throw new RuntimeException('Dossier non inscriptible : ' . $dir);
+        }
+        foreach ($existing as $file) {
+            unlink($dir . '/' . $file);
+        }
+        if (file_put_contents($dir . '/' . $name . '.svg', $svg) === false) {
+            throw new RuntimeException('Écriture impossible : ' . $dir . '/' . $name . '.svg');
+        }
+    }
+
+    /** Root <svg>, no script, no event handler, no href but #id or data:image. */
+    private function assertStandaloneSvg(string $svg): void
+    {
+        $doc = @simplexml_load_string($svg);
+        if (!$doc || $doc->getName() !== 'svg') {
+            throw new RuntimeException('SVG illisible : la racine doit être <svg>.');
+        }
+        $nodes = $doc->xpath('//*') ?: [];
+        foreach ($nodes as $node) {
+            if (strtolower($node->getName()) === 'script') {
+                throw new RuntimeException('SVG refusé : <script> interdit.');
+            }
+            foreach ([$node->attributes(), $node->attributes('http://www.w3.org/1999/xlink')] as $attributes) {
+                foreach ($attributes ?? [] as $attr => $value) {
+                    $value = trim((string) $value);
+                    if (str_starts_with(strtolower((string) $attr), 'on')) {
+                        throw new RuntimeException("SVG refusé : attribut {$attr} interdit.");
+                    }
+                    if ($attr === 'href' && !str_starts_with($value, '#') && !str_starts_with($value, 'data:image/')) {
+                        throw new RuntimeException('SVG refusé : seuls les href #id ou data:image/ sont admis.');
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Supprime une image inutilisée. Refus si elle est encore posée sur une
      * carte, ou déclarée terrain (la déclasser d'abord sur la page
      * Transitions de terrain).
@@ -299,7 +358,7 @@ class TileAssetService
     {
         $dir = $this->root . '/img/' . TiledMapService::layerImageDir($layer);
         $primary = $dir . '/' . $nameFiles[0];
-        $size = @getimagesize($primary);
+        $size = TileCatalogService::imageSize($primary);
         $problems = [];
 
         if (!preg_match(TileCatalogService::ASSET_NAME_PATTERN, $name)) {

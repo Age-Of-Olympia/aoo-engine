@@ -30,7 +30,8 @@ class MapElementService
         $effectService = new EffectService();
 
         $names = [];
-        foreach (glob($this->root() . '/img/elements/*.{png,webp,gif}', GLOB_BRACE) ?: [] as $file) {
+        $pattern = '/img/elements/*.{' . implode(',', TileCatalogService::IMAGE_EXTENSIONS) . '}';
+        foreach (glob($this->root() . $pattern, GLOB_BRACE) ?: [] as $file) {
             $name = pathinfo($file, PATHINFO_FILENAME);
             if ($effectService->exists($name)) {
                 $names[] = $name;
@@ -44,7 +45,7 @@ class MapElementService
     /** Chemin web de l'image d'un élément, ou '' si absente. */
     public function imagePath(string $name): string
     {
-        foreach (['png', 'webp', 'gif'] as $extension) {
+        foreach (TileCatalogService::IMAGE_EXTENSIONS as $extension) {
             if (is_file($this->root() . '/img/elements/' . $name . '.' . $extension)) {
                 return 'img/elements/' . $name . '.' . $extension;
             }

@@ -131,6 +131,43 @@ class TileAssetServiceTest extends TestCase
     /** @var list<string> tuiles posées ici, retirées au démontage */
     private array $placedTileNames = [];
 
+    public function testPutSvgKeepsTheSvgAndRefusesWhatCannotStandAlone(): void
+    {
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" data-composer="{}">'
+            . '<defs><filter id="f"><feTurbulence baseFrequency="0.04"/></filter></defs>'
+            . '<rect width="50" height="50" filter="url(#f)"/></svg>';
+
+        $this->service->putSvg('tiles', 'compose', $svg);
+        $this->assertFileExists($this->root . '/img/tiles/compose.svg');
+        $entry = $this->service->inventory('tiles')['entries'][0];
+        $this->assertSame([50, 50, 'compose.svg'], [$entry['width'], $entry['height'], $entry['files'][0]]);
+
+        try {
+            $this->service->putSvg('tiles', 'compose', $svg);
+            $this->fail('un nom déjà pris se refuse sans replace');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('existe déjà', $e->getMessage());
+        }
+
+        $this->writePalettePng('compose');
+        $this->service->putSvg('tiles', 'compose', $svg, true);
+        $this->assertFileDoesNotExist($this->root . '/img/tiles/compose.png', 'replace efface les autres formats');
+
+        foreach ([
+            '<svg xmlns="http://www.w3.org/2000/svg"><script>1</script></svg>',
+            '<svg xmlns="http://www.w3.org/2000/svg"><rect onload="1"/></svg>',
+            '<svg xmlns="http://www.w3.org/2000/svg"><image href="http://x/y.png"/></svg>',
+            '<div/>',
+        ] as $bad) {
+            try {
+                $this->service->putSvg('tiles', 'mauvais', $bad);
+                $this->fail('SVG refusé attendu : ' . $bad);
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('SVG', $e->getMessage());
+            }
+        }
+    }
+
     public function testDeleteRefusesTilesStillPlacedOnMaps(): void
     {
         $this->placeTileOnAMap('caverne');

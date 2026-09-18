@@ -7,6 +7,7 @@ use App\Interface\ActorInterface;
 use App\Service\ActionService;
 use App\Service\BuildingService;
 use App\Service\FactionService;
+use App\Service\MapElementService;
 use App\Service\RaceService;
 use App\Service\Action\ActionTargeting;
 use App\Factory\PlayerFactory;
@@ -84,6 +85,8 @@ $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
 if($res->num_rows){
 
 
+    $elements = new MapElementService();
+
     while($row = $res->fetch_object()){
 
         echo '
@@ -91,14 +94,7 @@ if($res->num_rows){
             ';
 
 
-            if(!file_exists('img/elements/'. $row->name .'.png')){
-
-                echo '<img src="img/elements/'. $row->name .'.webp" />';
-            }
-            else{
-
-                echo '<img src="img/elements/'. $row->name .'.png" />';
-            }
+            echo '<img src="'. $elements->imagePath($row->name) .'" />';
 
             echo '
             <div class="text">

@@ -679,7 +679,8 @@ class View{
                     $typesTbl = array(
                         'gif'=>'0.3',
                         'webp'=>'0.5',
-                        'png'=>'1'
+                        'png'=>'1',
+                        'svg'=>'1'
                     );
 
 

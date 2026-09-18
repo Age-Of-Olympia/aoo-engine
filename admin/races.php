@@ -128,14 +128,9 @@ function race_character_counts(array $counts): string
  */
 function bleed_options(): array
 {
-    $effectService = new \App\Service\EffectService();
-
     $out = [];
-    foreach (glob($_SERVER['DOCUMENT_ROOT'] . '/img/elements/*.{png,webp,gif}', GLOB_BRACE) ?: [] as $file) {
-        $name = pathinfo($file, PATHINFO_FILENAME);
-        if ($effectService->exists($name)) {
-            $out[$name] = $name;
-        }
+    foreach ((new \App\Service\MapElementService())->placeableNames() as $name) {
+        $out[$name] = $name;
     }
     ksort($out);
     return $out;
