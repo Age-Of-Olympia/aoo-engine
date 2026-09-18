@@ -242,6 +242,7 @@ $(document).on("click", ".delete-btn", function () {
               $(this).addClass('selected').css('border', '1px solid red');
               var $customCursor = $('.custom-cursor');
               $customCursor.attr('src', selectedToolSrc).show();
+              window.tiledApplyRotation();
 
               // Rebind mousemove handler for cursor tracking
               $('body').off('mousemove.customcursor').on('mousemove.customcursor', function(e) {
@@ -328,6 +329,27 @@ $(document).ready(function(){
   };
 
 
+  /* Turn what is about to be placed: the mouse wheel, once a tile or an
+     element is selected, steps the angle by a quarter turn and turns the
+     cursor with it. The angle goes with the placement and resets when
+     another tool is picked. The listener is registered natively: a
+     document-level wheel listener is passive in Chrome, and jQuery
+     could not cancel the page scroll. */
+  window.tiledRotation = 0;
+  window.tiledApplyRotation = function () {
+      $('.custom-cursor').css('transform', window.tiledRotation ? 'rotate(' + window.tiledRotation + 'deg)' : '');
+  };
+  document.addEventListener('wheel', function (e) {
+      var $selected = $('.selected');
+      var type = $selected.data('type');
+      if (!$selected.length || (type !== 'tiles' && type !== 'elements')) {
+          return;
+      }
+      e.preventDefault();
+      window.tiledRotation = (window.tiledRotation + (e.deltaY > 0 ? 90 : 270)) % 360;
+      window.tiledApplyRotation();
+  }, { passive: false });
+
   selectPreviousTool($customCursor);
 
 
@@ -410,7 +432,8 @@ $(document).ready(function(){
             'coords':$(this).data('coords'),
             'type':$selected.data('type'),
             'src':src,
-            'params':params
+            'params':params,
+            'rotation':window.tiledRotation
           }, // serializes the form's elements.
           success: function(data)
           {
@@ -484,6 +507,8 @@ $(document).ready(function(){
 
         $('.map').removeClass('selected').css('border', '0px');
         $(this).addClass('selected').css('border', '1px solid red');
+        window.tiledRotation = 0;
+        window.tiledApplyRotation();
 
 
         // Position de l'image sur la page
