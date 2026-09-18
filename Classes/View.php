@@ -313,6 +313,33 @@ class View{
         return $defs === '' ? '' : '<defs>'. $defs .'</defs>';
     }
 
+    /**
+     * Image of a layer tile by name, first format found in the catalog's
+     * order (png first, so a png still wins over a stray svg of the same
+     * name); the png path when none exists, so a missing image stays
+     * visible as a broken tile. Memoised: one stat per name per board.
+     */
+    public static function layerImage(string $dir, string $name): string
+    {
+        static $found = [];
+
+        $key = $dir .'/'. $name;
+        if(!isset($found[$key])){
+
+            $found[$key] = 'img/'. $key .'.png';
+            foreach(\App\Service\TileCatalogService::IMAGE_EXTENSIONS as $ext){
+
+                if(file_exists('img/'. $key .'.'. $ext)){
+
+                    $found[$key] = 'img/'. $key .'.'. $ext;
+                    break;
+                }
+            }
+        }
+
+        return $found[$key];
+    }
+
     private $coords; // Coordonnées de la vue
     private $p; // Portée de la vue
     private $tiled; // Indique si la vue est dans l'éditeur de map
@@ -872,7 +899,7 @@ class View{
                 // (dépôt d'assets + avatars copiés en base — voir
                 // TiledMapService::layerImageDir)
                 $imgDir = $row->whichTable == 'resources' ? 'walls' : $row->whichTable;
-                $img = 'img/'. $imgDir .'/'. $row->name .'.png';
+                $img = self::layerImage($imgDir, $row->name);
 
                 // Classes carried by this cell's image, reset with $img on every row.
                 $imgClasses = [];
