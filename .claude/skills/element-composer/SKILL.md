@@ -58,7 +58,8 @@ A saved SVG carries its parameters in `data-composer`, so any file can be reload
   Chrome's stitching leaves a band at the edge (that is why streaks are a smear).
 - The SVG must stand alone: no script, no `on*`, hrefs only `#id` or `data:image/`.
   `TileAssetService::putSvg` refuses anything else.
-- For a placeable element the file name must match an effect of the catalogue.
+- An element whose name matches an effect of the catalogue applies it when stepped on; with no
+  such effect it is decor (a waterfall) and does nothing.
 
 ## Loop to tune a preset
 

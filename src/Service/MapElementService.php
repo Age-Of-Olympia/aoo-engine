@@ -19,27 +19,30 @@ use RuntimeException;
 class MapElementService
 {
     /**
-     * Éléments posables : une image dans img/elements ET un effet du
-     * catalogue (exigence d'Element::put et de l'application au pas —
-     * un élément sans effet ne ferait rien).
+     * Éléments posables : une image dans img/elements. L'effet du même
+     * nom, s'il existe, s'applique au pas ; sans effet, l'élément est un
+     * décor (une cascade) et ne fait rien.
      *
      * @return list<string>
      */
     public function placeableNames(): array
     {
-        $effectService = new EffectService();
-
         $names = [];
         $pattern = '/img/elements/*.{' . implode(',', TileCatalogService::IMAGE_EXTENSIONS) . '}';
         foreach (glob($this->root() . $pattern, GLOB_BRACE) ?: [] as $file) {
-            $name = pathinfo($file, PATHINFO_FILENAME);
-            if ($effectService->exists($name)) {
-                $names[] = $name;
-            }
+            $names[] = pathinfo($file, PATHINFO_FILENAME);
         }
         sort($names);
 
         return array_values(array_unique($names));
+    }
+
+    /** Éléments posables qui appliquent bien un effet au pas. */
+    public function namesWithEffect(): array
+    {
+        $effectService = new EffectService();
+
+        return array_values(array_filter($this->placeableNames(), fn(string $name) => $effectService->exists($name)));
     }
 
     /** Chemin web de l'image d'un élément, ou '' si absente. */
@@ -97,7 +100,7 @@ class MapElementService
         }
         if (!in_array($name, $this->placeableNames(), true)) {
             throw new RuntimeException(
-                "Élément « {$name} » inconnu — il faut une image img/elements et un effet du même nom au catalogue."
+                "Élément « {$name} » inconnu — il faut une image dans img/elements."
             );
         }
 

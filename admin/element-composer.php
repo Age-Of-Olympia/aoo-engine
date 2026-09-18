@@ -86,8 +86,8 @@ ob_start();
     <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
         Une tuile SVG de 50×50 faite de filtres : un bruit coloré (eau, lave, brume…), ou une image de base
         déformée par ce bruit. L'animation est du SVG natif, sans JavaScript en jeu. Le fichier va dans
-        <code style="display:inline">img/&lt;couche&gt;/&lt;nom&gt;.svg</code> — pour un élément
-        posable, il faut aussi un effet du même nom au catalogue (page Éléments). Un élément se pose
+        <code style="display:inline">img/&lt;couche&gt;/&lt;nom&gt;.svg</code>. Un élément qui porte le
+        nom d'un effet du catalogue l'applique au pas ; sans effet, c'est un décor. Un élément se pose
         tourné depuis la page Éléments : un seul fichier sert les quatre sens.
     </div>
 

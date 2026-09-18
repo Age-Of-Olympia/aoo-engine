@@ -66,6 +66,40 @@ class MapElementCachePurgeTest extends LegacyPlayerFixtureTestCase
     }
 
     /**
+     * Un élément sans effet du même nom — une cascade, un décor — se pose
+     * et se foule sans rien appliquer. Element::put refusait tout nom
+     * absent du catalogue des effets, et le pas mourait sur
+     * « error effect name » pour ceux que Tiled avait posés quand même.
+     */
+    public function testAnElementWithoutAnEffectIsDecor(): void
+    {
+        $player = $this->createRealPlayer('GmDecor');
+        $player->get_data();
+        $coordsId = (int) $player->data->coords_id;
+        $this->link->executeStatement('DELETE FROM map_elements WHERE coords_id = ?', [$coordsId]);
+
+        try {
+            $this->assertTrue(Element::put('cascade_test_decor', $coordsId, Element::DURATION_INFINITE), 'posé sans effet');
+            $this->assertSame(
+                1,
+                (int) $this->link->fetchOne('SELECT COUNT(*) FROM map_elements WHERE name = ? AND coords_id = ?', ['cascade_test_decor', $coordsId])
+            );
+
+            $player->get_caracs();
+            $cell = $this->link->fetchAssociative('SELECT x, y, z, plan FROM coords WHERE id = ?', [$coordsId]);
+            $player->go((object) $cell);
+
+            $this->assertSame(
+                0,
+                (int) $this->link->fetchOne('SELECT COUNT(*) FROM players_effects WHERE player_id = ? AND name = ?', [(int) $player->id, 'cascade_test_decor']),
+                'fouler un décor n\'applique rien'
+            );
+        } finally {
+            $this->link->executeStatement('DELETE FROM map_elements WHERE name = ?', ['cascade_test_decor']);
+        }
+    }
+
+    /**
      * Les durées s'écrivent en TOURS des deux côtés — effets comme
      * éléments — mais un élément de carte n'appartient à aucun joueur :
      * aucun tour ne le décrémente, c'est le cron horaire qui l'efface.

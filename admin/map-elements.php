@@ -55,7 +55,9 @@ if ($isStateChangingPost) {
             setFlash('success', "Élément « {$name} » posé en ("
                 . (int) ($_POST['x'] ?? 0) . ',' . (int) ($_POST['y'] ?? 0) . ') — '
                 . ($turns === '' ? 'permanent' : 'pour ' . $turns . ' tour' . ($turns > 1 ? 's' : ''))
-                . '. L\'effet du même nom s\'appliquera à qui marche dessus.');
+                . (in_array($name, $service->namesWithEffect(), true)
+                    ? '. L\'effet du même nom s\'appliquera à qui marche dessus.'
+                    : '. Sans effet du même nom, c\'est un décor.'));
         } elseif (isset($_POST['element_remove'])) {
             // Le bouton de ligne porte l'id dans sa value : la table
             // entière vit dans UN formulaire (cases de sélection).
@@ -81,6 +83,7 @@ if ($isStateChangingPost) {
 
 $entries = $plan !== '' ? $service->listByPlan($plan) : [];
 $placeable = $service->placeableNames();
+$withEffect = $service->namesWithEffect();
 
 ob_start();
 ?>
@@ -91,7 +94,7 @@ ob_start();
     <?= renderFlashMessage() ?>
 
     <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-        Un élément posé sur une case applique <strong>l'effet du même nom</strong> à qui marche
+        Un élément posé sur une case applique <strong>l'effet du même nom</strong>, s'il existe, à qui marche
         dessus (boue, ronce…) — le comportement de l'effet se règle dans
         <a href="/admin/effects.php">Effets</a>. Durée vide = permanent (jamais purgé) ;
         reposer un élément prolonge sa durée. Une case n'en porte qu'un, et il lui faut un sol.
@@ -125,7 +128,7 @@ ob_start();
                     <label style="font-size:13px;">Élément</label>
                     <select name="name" class="form-control form-control-sm" required>
                         <?php foreach ($placeable as $candidate): ?>
-                            <option value="<?= e($candidate) ?>"><?= e($candidate) ?></option>
+                            <option value="<?= e($candidate) ?>"><?= e($candidate) ?><?= in_array($candidate, $withEffect, true) ? '' : ' (décor, sans effet)' ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
