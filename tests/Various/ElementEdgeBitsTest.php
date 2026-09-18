@@ -21,6 +21,16 @@ class ElementEdgeBitsTest extends TestCase
         $this->assertSame(15, View::elementEdgeBits([], 3, 3, 'eau'), 'isolé : les quatre côtés');
     }
 
+    public function testElementsOfOneFamilyJoinEdgeToEdge(): void
+    {
+        $fall = ['0,1' => 'eau_cascade', '0,0' => 'eau_ecume', '0,-1' => 'eau', '1,0' => 'sang'];
+
+        $this->assertSame(2 | 8, View::elementEdgeBits($fall, 0, 0, 'eau_ecume'), 'foam joins the fall above and the water below, fades east (blood) and west (empty)');
+        $this->assertSame(1 | 2 | 8, View::elementEdgeBits($fall, 0, 1, 'eau_cascade'), 'the fall only joins downward');
+        $this->assertSame('eau', View::elementFamily('eau_cascade'));
+        $this->assertSame('sang', View::elementFamily('sang'));
+    }
+
     public function testTheInsideOfABendFadesAtItsCorner(): void
     {
         // A stream coming from the west turning south: the SW diagonal is the inside of the bend

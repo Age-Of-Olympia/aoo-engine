@@ -19,16 +19,30 @@ class View{
     private const ELEMENT_EDGE_FADE = 0.3;
 
     /**
+     * Family of an element: its name up to the first underscore. Elements
+     * of one family join edge to edge (eau, eau_cascade, eau_ecume); any
+     * other neighbour is an edge to fade toward.
+     */
+    public static function elementFamily(string $name): string
+    {
+        return explode('_', $name, 2)[0];
+    }
+
+    /**
      * Where a cell's element fades, as a bitmask. Sides: 1 north, 2 east,
-     * 4 south, 8 west, open when the neighbour there does not carry the
-     * same element. Corners: 16 NE, 32 SE, 64 SW, 128 NW, set on the inside
-     * of a bend — the diagonal cell is empty while both sides around it are
+     * 4 south, 8 west, open when the neighbour there is not of the same
+     * family. Corners: 16 NE, 32 SE, 64 SW, 128 NW, set on the inside of a
+     * bend — the diagonal cell is open while both sides around it are
      * filled — so the soft margins of the two branches meet round the
      * corner instead of leaving a square notch.
      */
     public static function elementEdgeBits(array $elementAt, int $x, int $y, string $name): int
     {
-        $has = fn(int $dx, int $dy): bool => ($elementAt[($x + $dx) .','. ($y + $dy)] ?? null) === $name;
+        $family = self::elementFamily($name);
+        $has = function(int $dx, int $dy) use ($elementAt, $x, $y, $family): bool {
+            $there = $elementAt[($x + $dx) .','. ($y + $dy)] ?? null;
+            return $there !== null && self::elementFamily($there) === $family;
+        };
 
         $bits = 0;
         foreach([[0, 1, 1], [1, 0, 2], [0, -1, 4], [-1, 0, 8]] as [$dx, $dy, $bit]){
