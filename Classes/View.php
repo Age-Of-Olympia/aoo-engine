@@ -11,6 +11,65 @@ class View{
      */
     public const TILE_PX = 50;
 
+    /**
+     * Width of the fade on an element's open side, as a fraction of the
+     * tile. An element bordered by a cell without the same element fades
+     * out on that side, so a lake ends in a soft shore, not a square.
+     */
+    private const ELEMENT_EDGE_FADE = 0.3;
+
+    /** Sides open around a cell, as a bitmask: 1 north, 2 east, 4 south, 8 west. */
+    public static function elementEdgeBits(array $elementAt, int $x, int $y, string $name): int
+    {
+        $bits = 0;
+        foreach([[0, 1, 1], [1, 0, 2], [0, -1, 4], [-1, 0, 8]] as [$dx, $dy, $bit]){
+
+            if(($elementAt[($x + $dx) .','. ($y + $dy)] ?? null) !== $name){
+
+                $bits |= $bit;
+            }
+        }
+
+        return $bits;
+    }
+
+    /**
+     * The 15 edge masks, in bounding-box units so one definition serves
+     * every cell: white shows, and a black-to-clear gradient on each open
+     * side fades the image out there. Overlaps multiply, so corners fade.
+     */
+    public static function elementEdgeDefs(): string
+    {
+        $f = self::ELEMENT_EDGE_FADE;
+        $sides = [
+            1 => 'x1="0" y1="0" x2="0" y2="1"',
+            2 => 'x1="1" y1="0" x2="0" y2="0"',
+            4 => 'x1="0" y1="1" x2="0" y2="0"',
+            8 => 'x1="0" y1="0" x2="1" y2="0"',
+        ];
+        $defs = '<defs>';
+        foreach($sides as $bit => $axis){
+
+            $defs .= '<linearGradient id="elem-fade-'. $bit .'" '. $axis .'>'
+                . '<stop offset="0" stop-color="#000"/><stop offset="'. $f .'" stop-color="#000" stop-opacity="0"/></linearGradient>';
+        }
+        for($bits = 1; $bits < 16; $bits++){
+
+            $defs .= '<mask id="elem-edge-'. $bits .'" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">'
+                . '<rect width="1" height="1" fill="#fff"/>';
+            foreach(array_keys($sides) as $bit){
+
+                if($bits & $bit){
+
+                    $defs .= '<rect width="1" height="1" fill="url(#elem-fade-'. $bit .')"/>';
+                }
+            }
+            $defs .= '</mask>';
+        }
+
+        return $defs .'</defs>';
+    }
+
     private $coords; // Coordonnées de la vue
     private $p; // Portée de la vue
     private $tiled; // Indique si la vue est dans l'éditeur de map
@@ -179,6 +238,7 @@ class View{
 
             class="box-shadow"
             >
+            '. self::elementEdgeDefs() .'
             ';
 
             /* Le sol ENTRE dans le SVG, au lieu d'être une
@@ -220,6 +280,18 @@ class View{
 
             $tiledSql = '';
             $inSightIdImploded = implode(',', $this->inSightId);
+
+            /* Which element each cell in sight carries, to fade an element
+             * on the sides where its neighbour is not the same one. */
+            $elementAt = [];
+            $elementRotation = [];
+            $resElements = $db->exe('SELECT name, coords_id, rotation FROM map_elements WHERE coords_id IN ('. $inSightIdImploded .')');
+            while($rowElement = $resElements->fetch_object()){
+
+                $cell = $this->inSight[$rowElement->coords_id];
+                $elementAt[$cell->x .','. $cell->y] = $rowElement->name;
+                $elementRotation[$cell->x .','. $cell->y] = (int) $rowElement->rotation;
+            }
 
             /* Les cases infranchissables, telles que le serveur les refusera.
              *
@@ -684,6 +756,20 @@ class View{
                     );
 
 
+                    /* An element fades on its open sides and may be drawn
+                     * turned. The mask goes on a group AROUND the turned
+                     * image: on the image itself it would turn with it and
+                     * fade the wrong sides. */
+                    $edgeMask = '';
+                    $turn = '';
+                    if($row->whichTable == 'elements'){
+
+                        $edgeBits = self::elementEdgeBits($elementAt, (int) $coords->x, (int) $coords->y, $row->name);
+                        $edgeMask = $edgeBits ? ' mask="url(#elem-edge-'. $edgeBits .')"' : '';
+                        $angle = $elementRotation[$coords->x .','. $coords->y] ?? 0;
+                        $turn = $angle ? ' transform="rotate('. $angle .' '. (floor($x) + self::TILE_PX / 2) .' '. (floor($y) + self::TILE_PX / 2) .')"' : '';
+                    }
+
                     foreach($typesTbl as $k=>$e){
 
 
@@ -695,7 +781,7 @@ class View{
 
                         if(file_exists($img)){
 
-                            echo '
+                            echo ($edgeMask ? '<g'. $edgeMask .'>' : '') .'
                             <image
 
                                 width="'. self::TILE_PX .'"
@@ -711,9 +797,9 @@ class View{
                                 pointer-events="none"
 
                                 href="'. $img .'"
-                                '. self::class_attr($imgClasses) .'
+                                '. self::class_attr($imgClasses) . $turn .'
                                 />
-                            ';
+                            '. ($edgeMask ? '</g>' : '');
                         }
                     }
 

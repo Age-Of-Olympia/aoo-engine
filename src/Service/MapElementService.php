@@ -58,11 +58,11 @@ class MapElementService
      * Inventaire d'un plan — les traces de pas (bruit du moteur, une par
      * déplacement) sont exclues sauf demande explicite.
      *
-     * @return list<array{id: int, name: string, x: int, y: int, z: int, endTime: int}>
+     * @return list<array{id: int, name: string, x: int, y: int, z: int, endTime: int, rotation: int}>
      */
     public function listByPlan(string $plan): array
     {
-        $sql = 'SELECT me.id, me.name, me.endTime, c.x, c.y, c.z
+        $sql = 'SELECT me.id, me.name, me.endTime, me.rotation, c.x, c.y, c.z
                 FROM map_elements me
                 JOIN coords c ON c.id = me.coords_id
                 WHERE c.plan = ?
@@ -74,7 +74,7 @@ class MapElementService
             $rows[] = [
                 'id' => (int) $row->id, 'name' => (string) $row->name,
                 'x' => (int) $row->x, 'y' => (int) $row->y, 'z' => (int) $row->z,
-                'endTime' => (int) $row->endTime,
+                'endTime' => (int) $row->endTime, 'rotation' => (int) $row->rotation,
             ];
         }
 
@@ -90,8 +90,11 @@ class MapElementService
      * La conversion passe par le tour de référence (18 h). null =
      * permanent (endTime 0, jamais purgé).
      */
-    public function place(string $name, int $x, int $y, int $z, string $plan, ?int $durationTurns): void
+    public function place(string $name, int $x, int $y, int $z, string $plan, ?int $durationTurns, int $rotation = 0): void
     {
+        if (!in_array($rotation, TiledMapService::ROTATIONS, true)) {
+            throw new RuntimeException('Rotation invalide : 0, 90, 180 ou 270.');
+        }
         if (!in_array($name, $this->placeableNames(), true)) {
             throw new RuntimeException(
                 "Élément « {$name} » inconnu — il faut une image img/elements et un effet du même nom au catalogue."
@@ -109,7 +112,7 @@ class MapElementService
             );
         }
 
-        if (!Element::put($name, (int) $coordsId, $durationTurns ?? Element::DURATION_INFINITE)) {
+        if (!Element::put($name, (int) $coordsId, $durationTurns ?? Element::DURATION_INFINITE, $rotation)) {
             throw new RuntimeException(
                 "Case ({$x},{$y},{$z}) : pas de sol, ou un autre élément l'occupe déjà — une case n'en porte qu'un."
             );

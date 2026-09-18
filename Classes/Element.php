@@ -28,9 +28,11 @@ class Element{
      *        Element::DURATION_INFINITE pour un élément que rien n'use
      *        (l'eau de pêche) : il est écrit endTime = 0, la convention
      *        que le cron ne purge jamais.
+     * @param int  $rotation 0, 90, 180 or 270: the image is drawn turned
+     *        that much, so one file serves every direction.
      * @return bool false when the cell refused it
      */
-    public static function put($name, $coords, $duration=4): bool{
+    public static function put($name, $coords, $duration=4, int $rotation=0): bool{
 
 
         if(!(new \App\Service\EffectService())->exists($name)){
@@ -71,13 +73,14 @@ class Element{
         $sql = '
         INSERT INTO
         map_elements
-        (`name`,`coords_id`,`endTime`)
-        VALUE(?, ?, ?)
+        (`name`,`coords_id`,`endTime`,`rotation`)
+        VALUE(?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
-        endTime = VALUES(endTime);
+        endTime = VALUES(endTime),
+        rotation = VALUES(rotation);
         ';
 
-        $db->exe($sql, array($name, $coords_id, $endTime));
+        $db->exe($sql, array($name, $coords_id, $endTime, $rotation));
 
         self::refreshWatchers($db, $coords_id);
 

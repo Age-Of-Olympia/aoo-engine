@@ -49,7 +49,8 @@ if ($isStateChangingPost) {
                 (int) ($_POST['y'] ?? 0),
                 (int) ($_POST['z'] ?? 0),
                 $plan,
-                $turns === '' ? null : (int) $turns
+                $turns === '' ? null : (int) $turns,
+                (int) ($_POST['rotation'] ?? 0)
             );
             setFlash('success', "Élément « {$name} » posé en ("
                 . (int) ($_POST['x'] ?? 0) . ',' . (int) ($_POST['y'] ?? 0) . ') — '
@@ -145,6 +146,14 @@ ob_start();
                     <input type="number" class="form-control form-control-sm" name="turns" min="1" step="1"
                            placeholder="permanent">
                 </div>
+                <div class="form-group mb-0" style="width:6rem;">
+                    <label style="font-size:13px;" title="L'image est dessinée tournée : un seul fichier pour les quatre sens">Rotation</label>
+                    <select name="rotation" class="form-control form-control-sm">
+                        <?php foreach (\App\Service\TiledMapService::ROTATIONS as $angle): ?>
+                            <option value="<?= $angle ?>"><?= $angle ?>°</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <button type="submit" name="element_place" value="1" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus"></i> Poser
                 </button>
@@ -191,7 +200,7 @@ ob_start();
                                              style="object-fit:contain;" alt="">
                                     <?php endif; ?>
                                 </td>
-                                <td><code><?= e($entry['name']) ?></code></td>
+                                <td><code><?= e($entry['name']) ?></code><?= $entry['rotation'] ? ' <small class="text-muted">' . $entry['rotation'] . '°</small>' : '' ?></td>
                                 <td><?= $entry['x'] ?>,<?= $entry['y'] ?>,<?= $entry['z'] ?></td>
                                 <td>
                                     <?php if ($entry['endTime'] === 0): ?>

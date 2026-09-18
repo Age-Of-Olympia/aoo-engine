@@ -59,12 +59,21 @@ class TiledMapService
         'routes'      => ['columns' => ['player_id'],               'paramsInKey' => false, 'composites' => true],
         'plants'      => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
         'resources'   => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
-        'elements'    => ['columns' => ['endTime'],                 'paramsInKey' => false, 'composites' => true, 'permanentOnly' => true],
+        'elements'    => ['columns' => ['endTime', 'rotation'],     'paramsInKey' => false, 'composites' => true, 'permanentOnly' => true],
         'marks'       => ['columns' => ['endTime'],                 'paramsInKey' => false, 'composites' => false, 'permanentOnly' => true],
         'foregrounds' => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
         'triggers'    => ['columns' => ['params'],                  'paramsInKey' => true,  'composites' => false],
         'dialogs'     => ['columns' => ['params'],                  'paramsInKey' => true,  'composites' => false],
     ];
+
+    /** Turn angles a rotated element may carry (map_elements.rotation). */
+    public const ROTATIONS = [0, 90, 180, 270];
+
+    /** A layer whose rows carry a rotation: the angle is part of what is placed. */
+    public static function hasRotation(string $layer): bool
+    {
+        return in_array('rotation', self::AUTHORABLE_LAYERS[$layer]['columns'] ?? [], true);
+    }
 
     /** The SQL that keeps a layer's runtime rows away from the editor. */
     public static function authoredRowsClause(array $spec): string
@@ -878,6 +887,10 @@ class TiledMapService
         if (self::AUTHORABLE_LAYERS[$layer]['paramsInKey'] ?? false) {
             $key .= '|' . (string) ($row['params'] ?? '');
         }
+        // The same element turned the other way is another placement
+        if (self::hasRotation($layer)) {
+            $key .= '|' . (int) ($row['rotation'] ?? 0);
+        }
 
         return $key;
     }
@@ -976,18 +989,21 @@ class TiledMapService
             }
         }
 
-        $this->insertRows($layer, $toInsert, $coordsIds);
-
         $toDelete = array_merge([], ...array_values($available));
 
-        /* Par lots : au-delà de 65 535 paramètres, MySQL refuse de préparer
-         * la requête — un grand plan effacé d'un coup y arrivait. */
+        /* Deletions first: the same element re-placed turned the other
+         * way lands on the same (name, coords_id) key as the row it
+         * replaces. Par lots : au-delà de 65 535 paramètres, MySQL refuse
+         * de préparer la requête — un grand plan effacé d'un coup y
+         * arrivait. */
         foreach (array_chunk($toDelete, self::INSERT_BATCH) as $chunk) {
             $this->db->exe(
                 'DELETE FROM map_' . $layer . ' WHERE id IN (' . implode(',', array_fill(0, count($chunk), '?')) . ')',
                 $chunk
             );
         }
+
+        $this->insertRows($layer, $toInsert, $coordsIds);
 
         return [
             'inserted'  => count($toInsert),
@@ -1034,6 +1050,10 @@ class TiledMapService
 
         if (isset($row['params']) && (!is_scalar($row['params']) || strlen((string) $row['params']) > 255)) {
             throw new RuntimeException('Params invalide dans la couche ' . $layer . ' en ' . $row['x'] . ',' . $row['y'], 400);
+        }
+
+        if (isset($row['rotation']) && !in_array((int) $row['rotation'], self::ROTATIONS, true)) {
+            throw new RuntimeException('Rotation invalide (0, 90, 180 ou 270) dans la couche ' . $layer . ' en ' . $row['x'] . ',' . $row['y'], 400);
         }
     }
 
@@ -1110,8 +1130,9 @@ class TiledMapService
         }
 
         $withParams = self::AUTHORABLE_LAYERS[$layer]['paramsInKey'];
-        $columns = $withParams ? '(`name`, coords_id, `params`)' : '(`name`, coords_id)';
-        $placeholder = $withParams ? '(?, ?, ?)' : '(?, ?)';
+        $withRotation = self::hasRotation($layer);
+        $columns = '(`name`, coords_id' . ($withParams ? ', `params`' : '') . ($withRotation ? ', `rotation`' : '') . ')';
+        $placeholder = '(' . implode(', ', array_fill(0, 2 + (int) $withParams + (int) $withRotation, '?')) . ')';
 
         foreach (array_chunk($rows, self::INSERT_BATCH) as $chunk) {
             $params = [];
@@ -1131,6 +1152,9 @@ class TiledMapService
 
                 if ($withParams) {
                     $params[] = (string) ($row['params'] ?? '');
+                }
+                if ($withRotation) {
+                    $params[] = (int) ($row['rotation'] ?? 0);
                 }
             }
 

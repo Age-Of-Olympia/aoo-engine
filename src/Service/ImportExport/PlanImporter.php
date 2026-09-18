@@ -302,8 +302,8 @@ final class PlanImporter extends AbstractDbalImporter
                 ? (int) $row['damages']
                 : (StructureTypeService::isHarvestable((string) $row['name']) ? -1 : 0);
         }
-        if ($column === 'foreground') {
-            return isset($row['foreground']) && is_numeric($row['foreground']) ? (int) $row['foreground'] : 0;
+        if ($column === 'foreground' || $column === 'rotation') {
+            return isset($row[$column]) && is_numeric($row[$column]) ? (int) $row[$column] : 0;
         }
 
         // params (plants, triggers, dialogs)
