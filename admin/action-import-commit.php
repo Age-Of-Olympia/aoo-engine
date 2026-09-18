@@ -47,12 +47,16 @@ try {
         $first = $report->rejected()[0];
         setFlash('danger', 'Import annulé (' . count($report->rejected()) . ' rejet(s)) : ' . $first['name'] . ' — ' . $first['reason']);
     } else {
+        $warnings = array_map(
+            static fn(array $warning): string => $warning['name'] . ' — ' . $warning['message'],
+            $report->warnings()
+        );
         setFlash('success', sprintf(
             'Import appliqué : %d créée(s), %d mise(s) à jour, %d avertissement(s).',
             count($report->created()),
             count($report->updated()),
-            count($report->warnings())
-        ));
+            count($warnings)
+        ) . ($warnings !== [] ? ' ' . implode(' ', $warnings) : ''));
     }
 } catch (\Throwable $exception) {
     setFlash('danger', 'Échec de l\'import : ' . $exception->getMessage());

@@ -134,12 +134,12 @@ class PlanImportExportTest extends TestCase
         $this->seedSourcePlan();
         $importer = new PlanImporter();
 
-        // Remplacement : une seule tuile, plus aucun mur authoré
+        // Remplacement : une seule tuile, plus aucune ressource ni mur authoré
         $payload = [
             'plan'   => self::SRC,
             'config' => ['name' => 'Source remplacée'],
             'coords' => [[0, 0, 0]],
-            'layers' => ['tiles' => [['x' => 0, 'y' => 0, 'z' => 0, 'name' => 'sable']]],
+            'layers' => ['tiles' => [['x' => 0, 'y' => 0, 'z' => 0, 'name' => 'sable']], 'buildings' => []],
         ];
 
         $preview = $importer->preview([$payload]);
@@ -229,6 +229,16 @@ class PlanImportExportTest extends TestCase
             'UPDATE players SET owner_id = ? WHERE id = ?',
             [(int) $builderId, $palissadeId]
         );
+
+        // Decor: no owner, no faction, built — the wall a bundle must carry.
+        $wallId = (new EntityPlacementService($this->link))->create(
+            'building',
+            'mur_pierre',
+            $ids['0,0'],
+            'Mur',
+            'img/walls/mur_pierre.png'
+        );
+        $this->link->executeStatement('INSERT INTO buildings (player_id, build_state) VALUES (?, ?)', [$wallId, 'built']);
 
         $this->link->executeStatement('INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 0)', [$ids['0,1'], 'feu_test']);
         // Dated = the game's: never exported

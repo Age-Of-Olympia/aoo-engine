@@ -134,6 +134,17 @@ final class ResourceReconciler
      *
      * @return list<array{name: string, x: int, y: int, z: int, damages: int}>
      */
+    /** Type names of these rows that the catalogue does not know: they would not be placed. */
+    public function unknownTypes(array $rows): array
+    {
+        $labels = $this->labels($rows);
+
+        return array_values(array_filter(
+            array_unique(array_column($rows, 'name')),
+            static fn(string $name): bool => !isset($labels[$name])
+        ));
+    }
+
     public function asPayloadRows(string $plan, ?int $z = null): array
     {
         $rows = $this->conn->fetchAllAssociative(

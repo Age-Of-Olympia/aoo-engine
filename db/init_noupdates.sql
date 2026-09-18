@@ -5232,7 +5232,7 @@ CREATE TABLE `players_options` (
   `player_id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL DEFAULT '',
   KEY `player_id` (`player_id`),
-  CONSTRAINT `players_options_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`)
+  CONSTRAINT `players_options_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

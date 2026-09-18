@@ -62,7 +62,7 @@ final class PlanImporter extends AbstractDbalImporter
      * écrire.
      *
      * @param array<int, mixed> $objects
-     * @return list<array{plan: string, config: ?array, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>}>
+     * @return list<array{plan: string, config: ?array, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>, buildings: ?list<array<string, mixed>>}>
      */
     protected function collect(array $objects, ImportReport $report): array
     {
@@ -93,7 +93,7 @@ final class PlanImporter extends AbstractDbalImporter
     }
 
     /**
-     * @return array{plan: string, config: ?array, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>}
+     * @return array{plan: string, config: ?array, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>, buildings: ?list<array<string, mixed>>}
      * @throws RuntimeException message utilisateur (français)
      */
     private function validate(mixed $object): array
@@ -128,6 +128,22 @@ final class PlanImporter extends AbstractDbalImporter
         }
         // Bundles exportés avant le renommage map_walls → map_resources
         $layers = TiledMapService::normalizeLegacyLayerKeys($layers);
+
+        // Absent from a bundle exported before buildings travelled: left alone.
+        $buildings = $layers[TiledMapService::BUILDINGS_LAYER] ?? null;
+        unset($layers[TiledMapService::BUILDINGS_LAYER]);
+        if ($buildings !== null) {
+            if (!is_array($buildings)) {
+                throw new RuntimeException('Les lignes de la couche buildings doivent être une liste.');
+            }
+            foreach ($buildings as $row) {
+                TiledMapService::validateIncomingRow(TiledMapService::BUILDINGS_LAYER, $row);
+                if (!isset($row['z']) || !is_numeric($row['z'])) {
+                    throw new RuntimeException('Ligne sans z dans la couche buildings en ' . $row['x'] . ',' . $row['y']);
+                }
+            }
+        }
+
         foreach ($layers as $layer => $rows) {
             if (!isset(TiledMapService::AUTHORABLE_LAYERS[$layer])) {
                 throw new RuntimeException('Couche inconnue : ' . $layer);
@@ -147,14 +163,21 @@ final class PlanImporter extends AbstractDbalImporter
             $layers[$layer] ??= [];
         }
 
-        return ['plan' => $plan, 'config' => $config, 'coords' => $coords, 'layers' => $layers];
+        return ['plan' => $plan, 'config' => $config, 'coords' => $coords, 'layers' => $layers, 'buildings' => $buildings];
     }
 
-    /** @param array{plan: string, layers: array<string, array>} $payload */
+    /** @param array{plan: string, layers: array<string, array>, buildings: ?list<array<string, mixed>>} $payload */
     private function classify(array $payload, ImportReport $report): void
     {
         $plan = $payload['plan'];
         $planAdmin = $this->planAdmin ??= new PlanAdminService();
+
+        foreach (array_keys(TiledMapService::ENTITY_LAYERS) as $layer) {
+            $unknown = TiledMapService::reconcilerFor($layer)->unknownTypes($payload['layers'][$layer]);
+            if ($unknown !== []) {
+                $report->warn($plan, 'Types absents du catalogue, non posés (' . $layer . ') : ' . implode(', ', $unknown) . '.');
+            }
+        }
 
         if (!$planAdmin->planExists($plan)) {
             $report->addCreated($plan);
@@ -178,7 +201,7 @@ final class PlanImporter extends AbstractDbalImporter
      * Remplace le contenu authoré d'un plan par celui du payload, dans la
      * transaction du lot.
      *
-     * @param array{plan: string, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>} $payload
+     * @param array{plan: string, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>, buildings: ?list<array<string, mixed>>} $payload
      */
     protected function apply(Connection $conn, array $payload, ImportReport $report): void
     {
@@ -205,7 +228,7 @@ final class PlanImporter extends AbstractDbalImporter
         foreach ($payload['coords'] as [$x, $y, $z]) {
             $needed[$x . '|' . $y . '|' . $z] = [$x, $y, $z];
         }
-        foreach ($payload['layers'] as $rows) {
+        foreach ($payload['layers'] + ['buildings' => $payload['buildings'] ?? []] as $rows) {
             foreach ($rows as $row) {
                 $key = (int) $row['x'] . '|' . (int) $row['y'] . '|' . (int) $row['z'];
                 $needed[$key] ??= [(int) $row['x'], (int) $row['y'], (int) $row['z']];
@@ -242,15 +265,13 @@ final class PlanImporter extends AbstractDbalImporter
          * Classes\Db enveloppe : même transaction, même rollback. */
         foreach (array_keys(TiledMapService::ENTITY_LAYERS) as $layer) {
             /* Sans niveau : un bundle redessine le plan entier. */
-            $result = TiledMapService::reconcilerFor($layer)
-                ->reconcile($plan, $payload['layers'][$layer] ?? []);
+            // Unknown types were reported by classify(): same rows, same answer.
+            TiledMapService::reconcilerFor($layer)->reconcile($plan, $payload['layers'][$layer] ?? []);
+        }
 
-            if ($result['unknown'] !== []) {
-                $report->warn(
-                    $plan,
-                    'Types absents du catalogue, non posés (' . $layer . ') : '
-                        . implode(', ', $result['unknown']) . '.'
-                );
+        if ($payload['buildings'] !== null) {
+            foreach ((new TiledMapService())->importDecorBuildings($plan, $payload['buildings']) as $refused) {
+                $report->warn($plan, 'Bâtiment non posé : ' . $refused);
             }
         }
     }

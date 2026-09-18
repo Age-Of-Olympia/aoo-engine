@@ -734,7 +734,63 @@ class TiledMapService
             $layers[$layer] = $rows;
         }
 
+        $layers[self::BUILDINGS_LAYER] = $this->decorBuildingRows($plan);
+
         return $layers;
+    }
+
+    /**
+     * The DECOR buildings of a whole plan, as bundle rows: what a clone
+     * copies and a bundle carries. Walls are buildings since the entity
+     * conversion — a bundle without them was a plan with no walls.
+     *
+     * @return list<array{name: string, x: int, y: int, z: int}>
+     */
+    public function decorBuildingRows(string $plan): array
+    {
+        $res = $this->db->exe(
+            "SELECT p.race AS name, c.x, c.y, c.z
+             FROM buildings b
+             JOIN players p ON p.id = b.player_id
+             JOIN coords c ON c.id = p.coords_id
+             WHERE c.plan = ? AND p.owner_id IS NULL AND p.faction = '' AND b.build_state = 'built'
+             ORDER BY c.z, c.y, c.x, p.id",
+            array($plan)
+        );
+
+        $rows = [];
+        while ($row = $res->fetch_assoc()) {
+            $rows[] = ['name' => (string) $row['name'], 'x' => (int) $row['x'], 'y' => (int) $row['y'], 'z' => (int) $row['z']];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Applies a bundle's buildings layer, z level by z level, with the push's
+     * diff: decor missing from the rows is removed, rows missing from the
+     * plan are placed, everything a player or a faction holds is untouched.
+     *
+     * @param list<array{name: string, x: int, y: int, z: int}> $rows
+     * @return string[] placements refused, one line each
+     */
+    public function importDecorBuildings(string $plan, array $rows): array
+    {
+        $byZ = [];
+        foreach ($rows as $row) {
+            $byZ[(int) $row['z']][] = $row;
+        }
+        foreach ($this->planZLevels($plan) as $z) {
+            $byZ[$z] ??= [];
+        }
+
+        $skipped = [];
+        foreach ($byZ as $z => $zRows) {
+            $result = $this->importBuildingsLayer($plan, $z, $zRows, $this->fetchBuildingRows($plan, $z));
+            $skipped = array_merge($skipped, $result['skipped']);
+        }
+
+        return $skipped;
     }
 
     /** @return array<string, array> toutes les couches authorables du (plan, z) */
