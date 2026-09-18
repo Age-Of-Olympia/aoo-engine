@@ -66,7 +66,7 @@ class TiledPushBatchingTest extends TestCase
         );
     }
 
-    /** Le même élément tourné autrement est une autre pose : la rotation voyage et compte dans la clé. */
+    /** A rotation travels with the row, pull and push, and is part of the row key: re-placed turned means replaced. */
     public function testARotatedElementIsPushedAndPulledWithItsAngle(): void
     {
         $service = new TiledMapService();
@@ -85,6 +85,12 @@ class TiledPushBatchingTest extends TestCase
         ], $pulled['version']);
         $this->assertSame(1, $result['layers']['elements']['inserted'], 'tourner, c\'est reposer');
         $this->assertSame(1, $result['layers']['elements']['deleted']);
+
+        $service->importPlan(self::PLAN, 0, [
+            'tiles' => [['x' => 1, 'y' => 1, 'name' => 'herbe', 'rotation' => 270]],
+        ], $service->exportPlan(self::PLAN, 0)['version']);
+        $tile = array_values(array_filter($service->exportPlan(self::PLAN, 0)['layers']['tiles'], fn(array $r) => $r['x'] === 1 && $r['y'] === 1))[0] ?? null;
+        $this->assertSame(270, (int) ($tile['rotation'] ?? -1), 'une tuile de sol se pose tournée aussi');
 
         try {
             $service->importPlan(self::PLAN, 0, [

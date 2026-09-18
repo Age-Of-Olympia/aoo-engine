@@ -55,7 +55,7 @@ class TiledMapService
      *    pullées, ni comptées dans la version, ni effacées par un push.
      */
     public const AUTHORABLE_LAYERS = [
-        'tiles'       => ['columns' => ['foreground', 'player_id'], 'paramsInKey' => false, 'composites' => false],
+        'tiles'       => ['columns' => ['foreground', 'player_id', 'rotation'], 'paramsInKey' => false, 'composites' => false],
         'routes'      => ['columns' => ['player_id'],               'paramsInKey' => false, 'composites' => true],
         'plants'      => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
         'resources'   => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
@@ -66,7 +66,7 @@ class TiledMapService
         'dialogs'     => ['columns' => ['params'],                  'paramsInKey' => true,  'composites' => false],
     ];
 
-    /** Turn angles a rotated element may carry (map_elements.rotation). */
+    /** Turn angles a placed tile or element may carry (map_*.rotation). */
     public const ROTATIONS = [0, 90, 180, 270];
 
     /** A layer whose rows carry a rotation: the angle is part of what is placed. */

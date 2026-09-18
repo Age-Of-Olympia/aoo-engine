@@ -62,7 +62,8 @@ $db = new Db();
 $sql = '
 SELECT
 p.id AS id,
-name
+name,
+rotation
 FROM
 map_elements AS p
 INNER JOIN
@@ -94,7 +95,8 @@ if($res->num_rows){
             ';
 
 
-            echo '<img src="'. $elements->imagePath($row->name) .'" />';
+            echo '<img src="'. $elements->imagePath($row->name) .'"'
+                . ($row->rotation ? ' style="transform: rotate('. (int) $row->rotation .'deg)"' : '') .' />';
 
             echo '
             <div class="text">

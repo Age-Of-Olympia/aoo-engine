@@ -282,15 +282,22 @@ class View{
             $inSightIdImploded = implode(',', $this->inSightId);
 
             /* Which element each cell in sight carries, to fade an element
-             * on the sides where its neighbour is not the same one. */
+             * on the sides where its neighbour is not the same one — and
+             * the angle a tile or element was placed at, by layer. */
             $elementAt = [];
-            $elementRotation = [];
-            $resElements = $db->exe('SELECT name, coords_id, rotation FROM map_elements WHERE coords_id IN ('. $inSightIdImploded .')');
-            while($rowElement = $resElements->fetch_object()){
+            $rotationAt = [];
+            $resPlaced = $db->exe(
+                'SELECT "elements" AS layer, name, coords_id, rotation FROM map_elements WHERE coords_id IN ('. $inSightIdImploded .')
+                 UNION ALL
+                 SELECT "tiles", name, coords_id, rotation FROM map_tiles WHERE rotation <> 0 AND coords_id IN ('. $inSightIdImploded .')'
+            );
+            while($placed = $resPlaced->fetch_object()){
 
-                $cell = $this->inSight[$rowElement->coords_id];
-                $elementAt[$cell->x .','. $cell->y] = $rowElement->name;
-                $elementRotation[$cell->x .','. $cell->y] = (int) $rowElement->rotation;
+                $cell = $this->inSight[$placed->coords_id];
+                if($placed->layer === 'elements'){
+                    $elementAt[$cell->x .','. $cell->y] = $placed->name;
+                }
+                $rotationAt[$placed->layer][$cell->x .','. $cell->y] = (int) $placed->rotation;
             }
 
             /* Les cases infranchissables, telles que le serveur les refusera.
@@ -595,6 +602,10 @@ class View{
                 $spanW = self::TILE_PX;
                 $spanH = self::TILE_PX;
 
+                // A tile or element placed turned is drawn turned about its cell centre
+                $angle = $rotationAt[$row->whichTable][$coords->x .','. $coords->y] ?? 0;
+                $turn = $angle ? ' transform="rotate('. $angle .' '. (floor($x) + self::TILE_PX / 2) .' '. (floor($y) + self::TILE_PX / 2) .')"' : '';
+
 
                 // La couche resources garde ses images dans img/walls
                 // (dépôt d'assets + avatars copiés en base — voir
@@ -756,18 +767,14 @@ class View{
                     );
 
 
-                    /* An element fades on its open sides and may be drawn
-                     * turned. The mask goes on a group AROUND the turned
-                     * image: on the image itself it would turn with it and
-                     * fade the wrong sides. */
+                    /* An element fades on its open sides. The mask goes on
+                     * a group AROUND the turned image: on the image itself
+                     * it would turn with it and fade the wrong sides. */
                     $edgeMask = '';
-                    $turn = '';
                     if($row->whichTable == 'elements'){
 
                         $edgeBits = self::elementEdgeBits($elementAt, (int) $coords->x, (int) $coords->y, $row->name);
                         $edgeMask = $edgeBits ? ' mask="url(#elem-edge-'. $edgeBits .')"' : '';
-                        $angle = $elementRotation[$coords->x .','. $coords->y] ?? 0;
-                        $turn = $angle ? ' transform="rotate('. $angle .' '. (floor($x) + self::TILE_PX / 2) .' '. (floor($y) + self::TILE_PX / 2) .')"' : '';
                     }
 
                     foreach($typesTbl as $k=>$e){
@@ -875,7 +882,7 @@ class View{
                         x="'. floor($x) .'"
                         y="'. floor($y) .'"
 
-                        href="'. $img .'"'. $avatarClassAttr . $spanAttr .'
+                        href="'. $img .'"'. $avatarClassAttr . $spanAttr . $turn .'
                         />
                     ';
                 }
