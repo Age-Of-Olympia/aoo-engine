@@ -11,6 +11,29 @@ class View{
      */
     public const TILE_PX = 50;
 
+    /**
+     * A mark named meteo_<x> is weather: painted in Tiled like any mark
+     * (its 50x50 icon in img/marks feeds the palette) but drawn as the
+     * board-wide mask img/tiles/<x> while the viewer stands on it.
+     */
+    public const WEATHER_MARK_PREFIX = 'meteo_';
+
+    /** Mask texture of a weather mark, or null when none is on disk. */
+    public static function weatherMask(string $markName): ?string
+    {
+        $name = substr($markName, strlen(self::WEATHER_MARK_PREFIX));
+
+        foreach(\App\Service\TileCatalogService::IMAGE_EXTENSIONS as $ext){
+
+            if(file_exists('img/tiles/'. $name .'.'. $ext)){
+
+                return 'img/tiles/'. $name .'.'. $ext;
+            }
+        }
+
+        return null;
+    }
+
     private $coords; // Coordonnées de la vue
     private $p; // Portée de la vue
     private $tiled; // Indique si la vue est dans l'éditeur de map
@@ -134,6 +157,9 @@ class View{
 
 
         $planJson = plans()->read($this->coords->plan);
+
+        // Texture of the weather on the viewer's cell, set by the render loop
+        $weatherMask = null;
 
         // Load invisible players to filter them from view
         $invisiblePlayers = array();
@@ -508,6 +534,19 @@ class View{
 
 
                 $coords = $this->inSight[$row->coords_id];
+
+                /* A weather mark is never drawn on its cell (the editor
+                 * excepted, where the mapper must see it): the one under
+                 * the viewer picks the mask laid over the whole board. */
+                if(!$this->tiled && $row->whichTable == 'marks' && str_starts_with($row->name, self::WEATHER_MARK_PREFIX)){
+
+                    if($coords->x == $this->coords->x && $coords->y == $this->coords->y){
+
+                        $weatherMask = self::weatherMask($row->name);
+                    }
+
+                    continue;
+                }
 
 
                 $x = $coords->x;
@@ -1025,13 +1064,16 @@ class View{
         </svg>
         ';
 
-        if(!empty($planJson->mask) && $this->coords->z >= 0 && !in_array('noMask', $this->options)){
+        // The cell's weather wins over the plan's mask; both scroll as the plan says
+        $mask = $weatherMask ?? (!empty($planJson->mask) ? $planJson->mask : null);
+
+        if($mask !== null && $this->coords->z >= 0 && !in_array('noMask', $this->options)){
 
 
             if(!empty($planJson->scrollingMask)){
 
 
-                list($maskW, $maskH) = getimagesize($planJson->mask);
+                list($maskW, $maskH) = getimagesize($mask);
 
                 echo '
                 <style>
@@ -1066,7 +1108,7 @@ class View{
             echo '
             <div
                 class="view-mask scrolling-mask"
-                style="background: url(\''. $planJson->mask .'\'); max-width:'. $sizeW .'px; max-height:'. $sizeH .'px; "
+                style="background: url(\''. $mask .'\'); max-width:'. $sizeW .'px; max-height:'. $sizeH .'px; "
                 >
             </div>
             ';
