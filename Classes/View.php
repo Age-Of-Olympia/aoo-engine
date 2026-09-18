@@ -77,8 +77,30 @@ class View{
      */
     public const WEATHER_MARK_PREFIX = 'meteo_';
 
-    /** Mask texture of a weather mark, or null when none is on disk. */
-    public static function weatherMask(string $markName): ?string
+    /**
+     * How each weather texture scrolls: seconds per loop and axis. Same
+     * values as the plans that use these textures as their own mask;
+     * a texture absent here is drawn still.
+     */
+    private const WEATHER_SCROLL = [
+        'rain'           => ['seconds' => 0.2, 'vertical' => true],
+        'fog'            => ['seconds' => 10,  'vertical' => false],
+        'fog_ice'        => ['seconds' => 8,   'vertical' => false],
+        'sand_storm'     => ['seconds' => 20,  'vertical' => false],
+        'sand_storm_red' => ['seconds' => 20,  'vertical' => false],
+        'dust_storm'     => ['seconds' => 10,  'vertical' => false],
+        'ethereal_storm' => ['seconds' => 60,  'vertical' => false],
+        'cloud_shadow'   => ['seconds' => 60,  'vertical' => false],
+        'ombres'         => ['seconds' => 60,  'vertical' => false],
+    ];
+
+    /**
+     * Mask of a weather mark: texture path and scroll settings, or null
+     * when no texture of that name is on disk.
+     *
+     * @return array{mask: string, seconds: float, vertical: bool}|null
+     */
+    public static function weatherMask(string $markName): ?array
     {
         $name = substr($markName, strlen(self::WEATHER_MARK_PREFIX));
 
@@ -86,7 +108,9 @@ class View{
 
             if(file_exists('img/tiles/'. $name .'.'. $ext)){
 
-                return 'img/tiles/'. $name .'.'. $ext;
+                $scroll = self::WEATHER_SCROLL[$name] ?? ['seconds' => 0, 'vertical' => false];
+
+                return ['mask' => 'img/tiles/'. $name .'.'. $ext] + $scroll;
             }
         }
 
@@ -1158,13 +1182,16 @@ class View{
         </svg>
         ';
 
-        // The cell's weather wins over the plan's mask; both scroll as the plan says
-        $mask = $weatherMask ?? (!empty($planJson->mask) ? $planJson->mask : null);
+        /* The weather on the viewer's cell wins over the plan's own mask,
+         * and brings its own scroll settings; the plan's apply to its mask. */
+        $mask = $weatherMask['mask'] ?? (!empty($planJson->mask) ? $planJson->mask : null);
+        $scrollSeconds = $weatherMask['seconds'] ?? (float) ($planJson->scrollingMask ?? 0);
+        $scrollVertical = $weatherMask['vertical'] ?? !empty($planJson->verticalScrolling);
 
         if($mask !== null && $this->coords->z >= 0 && !in_array('noMask', $this->options)){
 
 
-            if(!empty($planJson->scrollingMask)){
+            if($scrollSeconds > 0){
 
 
                 list($maskW, $maskH) = getimagesize($mask);
@@ -1173,7 +1200,7 @@ class View{
                 <style>
                 .scrolling-mask {
 
-                    animation: scrollMask '. $planJson->scrollingMask .'s linear infinite;
+                    animation: scrollMask '. $scrollSeconds .'s linear infinite;
                 }
 
                 @keyframes scrollMask {
@@ -1184,7 +1211,7 @@ class View{
                     100% {
                     ';
 
-                    if(empty($planJson->verticalScrolling)){
+                    if(!$scrollVertical){
 
                         echo 'background-position: -'. $maskW .'px 0;';
                     }
