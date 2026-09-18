@@ -47,7 +47,37 @@ class ElementEdgeBitsTest extends TestCase
         $this->assertNull(View::elementElbow(['0,0' => 'eau', '0,1' => 'eau', '-1,0' => 'sang'], [], [], 0, 0, 'eau'), 'another family does not count');
         $this->assertSame(['v' => 0, 'h' => 90], View::elementAxes(['0,0' => 'eau'], [], 'eau')['0,0'], 'no straight run: defaults');
         // West half of a bend joined west and north: fades from its own corner (SW) toward NE
-        $this->assertStringContainsString('<linearGradient id="elem-half-WSE-g" x1="0" y1="1" x2="1" y2="0">', View::elementHalfDefs(['elem-half-WSE']));
+        $this->assertStringContainsString('<linearGradient id="elem-half-WSE-g" gradientUnits="userSpaceOnUse" x1="0" y1="50" x2="50" y2="0">', View::elementHalfDefs(['elem-half-WSE']));
+    }
+
+    public function testATwoWideFlowBendsOnItsTwoCornerCells(): void
+    {
+        /* Vertical band x=0,1 for y>=1 turning east into a horizontal band y=0,1 for x>=0. */
+        $at = [];
+        foreach ([0, 1] as $x) { foreach ([1, 2, 3] as $y) { $at["$x,$y"] = 'eau'; } }
+        foreach ([0, 1, 2, 3] as $x) { foreach ([0, 1] as $y) { $at["$x,$y"] = 'eau'; } }
+        $rot = ['2,0' => 90, '2,1' => 90, '3,0' => 90, '3,1' => 90, '1,0' => 90];
+        $axes = View::elementAxes($at, $rot, 'eau');
+
+        $this->assertSame(['N' => 0, 'E' => 90], array_column(View::elementElbow($at, $rot, $axes, 0, 0, 'eau'), 'rotation', 'side'), 'outer corner: its corner is filled but both runs continue');
+        $this->assertSame(['', 'elem-half-ESW'], array_column(View::elementElbow($at, $rot, $axes, 0, 0, 'eau'), 'clip'), 'outer corner: vertical half whole, horizontal half through the SW-NE ramp');
+        $this->assertSame(['N' => 0, 'E' => 90], array_column(View::elementElbow($at, $rot, $axes, 1, 1, 'eau'), 'rotation', 'side'), 'inner corner: four neighbours, one empty diagonal');
+        $this->assertSame(['', 'elem-half-ESW'], array_column(View::elementElbow($at, $rot, $axes, 1, 1, 'eau'), 'clip'), 'same diagonal as the outer corner');
+        $this->assertNull(View::elementElbow($at, $rot, $axes, 0, 1, 'eau'), 'the other two cells of the block stay straight');
+        $this->assertNull(View::elementElbow($at, $rot, $axes, 1, 0, 'eau'));
+
+        $fallTop = ['0,0' => 'eau', '1,0' => 'eau', '0,-1' => 'eau', '1,-1' => 'eau', '0,-2' => 'eau', '1,-2' => 'eau'];
+        $this->assertNull(View::elementElbow($fallTop, [], [], 0, 0, 'eau'), 'the top of a wide fall: one run stops, no bend');
+    }
+
+    public function testCellsAlongAFlowShareTheirPhase(): void
+    {
+        // Vertical flow: the choice hangs on the column, so a column is uniform and columns differ somewhere
+        $this->assertCount(1, array_unique(array_map(fn(int $y) => View::cellPhase('y', 0, 4, $y), range(0, 5))), 'one column, one phase');
+        $this->assertSame([0.0, 0.5], array_values(array_unique(array_map(fn(int $x) => View::cellPhase('y', 0, $x, 0), range(0, 8)))), 'columns use both phases');
+        // Turned a quarter, the same texture flows horizontally: the choice hangs on the row
+        $this->assertCount(1, array_unique(array_map(fn(int $x) => View::cellPhase('y', 90, $x, 3), range(0, 5))));
+        $this->assertSame(0.0, View::cellPhase(null, 0, 1, 1), 'a diagonal drift is never shifted');
     }
 
     public function testALayerTileMayBeAnSvg(): void

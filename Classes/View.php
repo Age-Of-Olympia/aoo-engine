@@ -67,43 +67,45 @@ class View{
     }
 
     /**
-     * One mask per pattern, in bounding-box units so one definition serves
-     * every cell: white shows, a black-to-clear gradient on each open side
-     * and a radial one on each inside corner fade the image out there.
-     * Overlaps multiply.
+     * One mask per pattern, in the cell's own units (0..TILE_PX), applied
+     * inside the cell's nested svg so its content, shifted or not, does
+     * not change it: white shows, a black-to-clear gradient on each open
+     * side and a radial one on each inside corner fade the image out
+     * there. Overlaps multiply.
      *
      * @param list<int> $patterns bitmasks from elementEdgeBits(), non-zero
      */
     public static function elementEdgeDefs(array $patterns): string
     {
-        $f = self::ELEMENT_EDGE_FADE;
+        $t = self::TILE_PX;
+        $f = self::ELEMENT_EDGE_FADE * $t;
         $sides = [
-            1 => 'x1="0" y1="0" x2="0" y2="1"',
-            2 => 'x1="1" y1="0" x2="0" y2="0"',
-            4 => 'x1="0" y1="1" x2="0" y2="0"',
-            8 => 'x1="0" y1="0" x2="1" y2="0"',
+            1 => 'x1="0" y1="0" x2="0" y2="'. $t .'"',
+            2 => 'x1="'. $t .'" y1="0" x2="0" y2="0"',
+            4 => 'x1="0" y1="'. $t .'" x2="0" y2="0"',
+            8 => 'x1="0" y1="0" x2="'. $t .'" y2="0"',
         ];
-        $corners = [16 => 'cx="1" cy="0"', 32 => 'cx="1" cy="1"', 64 => 'cx="0" cy="1"', 128 => 'cx="0" cy="0"'];
+        $corners = [16 => 'cx="'. $t .'" cy="0"', 32 => 'cx="'. $t .'" cy="'. $t .'"', 64 => 'cx="0" cy="'. $t .'"', 128 => 'cx="0" cy="0"'];
         $defs = '<defs>';
         foreach($sides as $bit => $axis){
 
-            $defs .= '<linearGradient id="elem-fade-'. $bit .'" '. $axis .'>'
-                . '<stop offset="0" stop-color="#000"/><stop offset="'. $f .'" stop-color="#000" stop-opacity="0"/></linearGradient>';
+            $defs .= '<linearGradient id="elem-fade-'. $bit .'" gradientUnits="userSpaceOnUse" '. $axis .'>'
+                . '<stop offset="0" stop-color="#000"/><stop offset="'. self::ELEMENT_EDGE_FADE .'" stop-color="#000" stop-opacity="0"/></linearGradient>';
         }
         foreach($corners as $bit => $centre){
 
-            $defs .= '<radialGradient id="elem-fade-'. $bit .'" '. $centre .' r="'. $f .'">'
+            $defs .= '<radialGradient id="elem-fade-'. $bit .'" gradientUnits="userSpaceOnUse" '. $centre .' r="'. $f .'">'
                 . '<stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>';
         }
         foreach(array_unique(array_filter($patterns)) as $bits){
 
-            $defs .= '<mask id="elem-edge-'. $bits .'" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">'
-                . '<rect width="1" height="1" fill="#fff"/>';
+            $defs .= '<mask id="elem-edge-'. $bits .'" maskUnits="userSpaceOnUse" x="0" y="0" width="'. $t .'" height="'. $t .'">'
+                . '<rect width="'. $t .'" height="'. $t .'" fill="#fff"/>';
             foreach(array_keys($sides + $corners) as $bit){
 
                 if($bits & $bit){
 
-                    $defs .= '<rect width="1" height="1" fill="url(#elem-fade-'. $bit .')"/>';
+                    $defs .= '<rect width="'. $t .'" height="'. $t .'" fill="url(#elem-fade-'. $bit .')"/>';
                 }
             }
             $defs .= '</mask>';
@@ -111,7 +113,6 @@ class View{
 
         return $defs .'</defs>';
     }
-
     /**
      * A mark named meteo_<x> is weather: painted in Tiled like any mark
      * (its 50x50 icon in img/marks feeds the palette) but drawn as the
@@ -235,14 +236,19 @@ class View{
     }
 
     /**
-     * The two halves of an elbow: a cell with exactly two neighbours of
-     * its family at right angles and nothing of the family in the corner
-     * between them — the top of a two-wide fall has the corner filled and
-     * is no bend. Each half faces one neighbour: a
-     * straight run gives the half its own rotation, so the flow enters
-     * and leaves the elbow exactly as painted; another elbow gives it the
-     * path's rotation on that axis (elementAxes), so a staircase stays
-     * consistent. The elbow's own rotation does not count.
+     * The two halves of a bend, or null when the cell is not one.
+     *
+     * A thin bend is a cell with exactly two neighbours of its family at a
+     * right angle and nothing in the corner between them. A two-wide flow
+     * bends on two cells: the outer corner, whose corner is filled but
+     * whose both runs continue one cell further (the top of a wide fall
+     * has one run that stops, and stays straight), and the inner corner,
+     * a cell joined on all four sides with exactly one empty diagonal.
+     *
+     * Each half faces one side: a straight run there gives the half its
+     * own rotation, so the flow enters and leaves the bend exactly as
+     * painted; anything else gives it the path's rotation on that axis
+     * (elementAxes). The bend cell's own rotation does not count.
      *
      * @param array<string, string>                $elementAt  element name by "x,y"
      * @param array<string, int>                   $rotationAt element rotation by "x,y"
@@ -252,29 +258,62 @@ class View{
     public static function elementElbow(array $elementAt, array $rotationAt, array $axesAt, int $x, int $y, string $name): ?array
     {
         $family = self::elementFamily($name);
+        $delta = ['N' => [0, 1], 'E' => [1, 0], 'S' => [0, -1], 'W' => [-1, 0]];
+        $has = fn(int $dx, int $dy): bool => isset($elementAt[($x + $dx) .','. ($y + $dy)])
+            && self::elementFamily($elementAt[($x + $dx) .','. ($y + $dy)]) === $family;
+        $continues = fn(string $side): bool => $has(2 * $delta[$side][0], 2 * $delta[$side][1]);
         $joined = self::joinedSides($elementAt, $x, $y, $family);
-        if(count($joined) !== 2 || isset($joined['N'], $joined['S']) || isset($joined['E'], $joined['W'])){
+
+        if(count($joined) === 2 && !isset($joined['N'], $joined['S']) && !isset($joined['E'], $joined['W'])){
+
+            // Thin bend, or the outer corner of a wide one: the corner between the two sides
+            [$cornerV, $cornerH] = [isset($joined['N']) ? 'N' : 'S', isset($joined['E']) ? 'E' : 'W'];
+            $sides = [$cornerV, $cornerH];
+            if($has($delta[$cornerH][0], $delta[$cornerV][1]) && !($continues($cornerV) && $continues($cornerH))){
+
+                return null;
+            }
+        }
+        elseif(count($joined) === 4){
+
+            // Inner corner of a wide bend: one empty diagonal, one run leaving per axis
+            $empty = [];
+            foreach(['N', 'S'] as $v){
+                foreach(['E', 'W'] as $h){
+                    if(!$has($delta[$h][0], $delta[$v][1])){
+                        $empty[] = [$v, $h];
+                    }
+                }
+            }
+            if(count($empty) !== 1 || $continues('N') === $continues('S') || $continues('E') === $continues('W')){
+
+                return null;
+            }
+            [$cornerV, $cornerH] = $empty[0];
+            $sides = [$continues('N') ? 'N' : 'S', $continues('E') ? 'E' : 'W'];
+        }
+        else{
 
             return null;
         }
-        $inside = ($x + (isset($joined['E']) ? 1 : -1)) .','. ($y + (isset($joined['N']) ? 1 : -1));
-        if(isset($elementAt[$inside]) && self::elementFamily($elementAt[$inside]) === $family){
 
-            return null;
-        }
-
-        $outer = (isset($joined['N']) ? 'S' : 'N') . (isset($joined['E']) ? 'W' : 'E');
+        // The mitre runs through that corner; the outer corner is the opposite one
+        $outer = ($cornerV === 'N' ? 'S' : 'N') . ($cornerH === 'E' ? 'W' : 'E');
+        /* The vertical half is drawn whole, the horizontal one over it through a
+         * soft ramp: nothing is ever half-transparent, so the joint shows
+         * neither a light band nor a line. */
+        usort($sides, fn(string $a, string $b): int => (int) ($a === 'E' || $a === 'W') <=> (int) ($b === 'E' || $b === 'W'));
         $halves = [];
-        foreach($joined as $side => $key){
+        foreach($sides as $side){
 
-            [$nx, $ny] = explode(',', $key);
-            $there = self::joinedSides($elementAt, (int) $nx, (int) $ny, $family);
+            $key = ($x + $delta[$side][0]) .','. ($y + $delta[$side][1]);
+            $there = self::joinedSides($elementAt, $x + $delta[$side][0], $y + $delta[$side][1], $family);
             $straight = isset($there['N'], $there['S']) || isset($there['E'], $there['W']);
             $axis = $side === 'N' || $side === 'S' ? 'v' : 'h';
             $halves[] = [
                 'side'     => $side,
                 'rotation' => $straight ? (int) ($rotationAt[$key] ?? 0) : ($axesAt[$x .','. $y][$axis] ?? ($axis === 'v' ? 0 : 90)),
-                'clip'     => 'elem-half-'. $side . $outer,
+                'clip'     => $axis === 'h' ? 'elem-half-'. $side . $outer : '',
             ];
         }
 
@@ -282,35 +321,79 @@ class View{
     }
 
     /**
-     * Masks for elbow halves, in bounding-box units (screen y down). Each
-     * half is opaque on its side and fades out across a short band centred
-     * on the mitre; the two halves are exact complements, so the textures
-     * cross-fade over the diagonal instead of meeting on a line.
+     * Masks for the horizontal half of a bend, in the cell's own units:
+     * opaque on its side, fading out across a band centred on the mitre.
+     * It is drawn over the whole vertical half, so the joint is a soft
+     * cross-fade with full opacity everywhere.
      *
      * @param list<string> $ids mask ids from elementElbow()
      */
     public static function elementHalfDefs(array $ids): string
     {
+        $t = self::TILE_PX;
         $band = self::ELBOW_BLEND / 2;
-        $corner = ['NW' => '0,0', 'NE' => '1,0', 'SE' => '1,1', 'SW' => '0,1'];
+        $corner = ['NW' => [0, 0], 'NE' => [$t, 0], 'SE' => [$t, $t], 'SW' => [0, $t]];
         $opposite = ['NW' => 'SE', 'NE' => 'SW', 'SE' => 'NW', 'SW' => 'NE'];
         $edge = ['N' => ['NW', 'NE'], 'E' => ['NE', 'SE'], 'S' => ['SW', 'SE'], 'W' => ['NW', 'SW']];
         $defs = '';
-        foreach(array_unique($ids) as $id){
+        foreach(array_unique(array_filter($ids)) as $id){
 
             [$side, $outer] = [substr($id, 10, 1), substr($id, 11)];
             // The half's own corner: the edge's corner that is not the inner one
             $inner = $opposite[$outer];
             $own = $edge[$side][0] === $inner ? $edge[$side][1] : $edge[$side][0];
-            [$x1, $y1] = explode(',', $corner[$own]);
-            [$x2, $y2] = explode(',', $corner[$opposite[$own]]);
-            $defs .= '<mask id="'. $id .'" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">'
-                . '<linearGradient id="'. $id .'-g" x1="'. $x1 .'" y1="'. $y1 .'" x2="'. $x2 .'" y2="'. $y2 .'">'
+            [$x1, $y1] = $corner[$own];
+            [$x2, $y2] = $corner[$opposite[$own]];
+            $defs .= '<mask id="'. $id .'" maskUnits="userSpaceOnUse" x="0" y="0" width="'. $t .'" height="'. $t .'">'
+                . '<linearGradient id="'. $id .'-g" gradientUnits="userSpaceOnUse" x1="'. $x1 .'" y1="'. $y1 .'" x2="'. $x2 .'" y2="'. $y2 .'">'
                 . '<stop offset="'. (0.5 - $band) .'" stop-color="#fff"/><stop offset="'. (0.5 + $band) .'" stop-color="#000"/></linearGradient>'
-                . '<rect width="1" height="1" fill="url(#'. $id .'-g)"/></mask>';
+                . '<rect width="'. $t .'" height="'. $t .'" fill="url(#'. $id .'-g)"/></mask>';
         }
 
         return $defs === '' ? '' : '<defs>'. $defs .'</defs>';
+    }
+
+    /**
+     * The native axis a texture flows along: 'y' for a vertical drift or
+     * no drift at all, 'x' for a horizontal one, null for a diagonal one.
+     * Read once per file from the composer settings an SVG carries; a
+     * raster does not flow and counts as 'y'.
+     */
+    public static function textureFlowAxis(string $img): ?string
+    {
+        static $axis = [];
+
+        if(!isset($axis[$img])){
+
+            $axis[$img] = 'y';
+            if(str_ends_with($img, '.svg') && preg_match('/data-composer="([^"]*)"/', (string) @file_get_contents($img, false, null, 0, 4096), $m)){
+
+                $anim = json_decode(html_entity_decode($m[1]), true)['anim'] ?? '';
+                $axis[$img] = ['drift_h' => 'x', 'drift_d' => null][$anim] ?? 'y';
+            }
+        }
+
+        return $axis[$img];
+    }
+
+    /**
+     * Phase of one cell along its texture's flow, in tile units: 0, or
+     * half a period. Half the cells of a band are shifted so the same
+     * texture does not repeat stamp-like. The choice hangs on the
+     * coordinate perpendicular to the flow, so cells that follow each
+     * other along it share the shift and the seams stay continuous; a
+     * shifted cell is drawn twice, the period wrapping inside it.
+     */
+    public static function cellPhase(?string $flowAxis, int $rotation, int $x, int $y): float
+    {
+        if($flowAxis === null){
+
+            return 0;
+        }
+        // The native flow lands on screen y when the cell is not turned a quarter
+        $key = (($flowAxis === 'y') xor ($rotation % 180 !== 0)) ? $x : $y;
+
+        return ((abs($key * 2654435761) >> 12) & 1) ? 0.5 : 0;
     }
 
     /**
@@ -561,6 +644,7 @@ class View{
             $edgePatterns = [];
             $halfClips = [];
             $axesByFamily = [];
+            $elementImages = new \App\Service\MapElementService();
             $resPlaced = $db->exe(
                 'SELECT "elements" AS layer, name, coords_id, rotation FROM map_elements WHERE coords_id IN ('. $inSightIdImploded .')
                  UNION ALL
@@ -892,7 +976,9 @@ class View{
 
                 // A tile or element placed turned is drawn turned about its cell centre
                 $angle = $rotationAt[$row->whichTable][$coords->x .','. $coords->y] ?? 0;
-                $turn = $angle ? ' transform="rotate('. $angle .' '. (floor($x) + self::TILE_PX / 2) .' '. (floor($y) + self::TILE_PX / 2) .')"' : '';
+                $cx = floor($x) + self::TILE_PX / 2;
+                $cy = floor($y) + self::TILE_PX / 2;
+                $turn = $angle ? ' transform="rotate('. $angle .' '. $cx .' '. $cy .')"' : '';
 
 
                 // La couche resources garde ses images dans img/walls
@@ -1063,6 +1149,9 @@ class View{
                     $halves = [['turn' => $turn, 'clip' => '']];
                     if($row->whichTable == 'elements'){
 
+                        $flowAxis = self::textureFlowAxis($elementImages->imagePath($row->name));
+                        $halves = [['turn' => $angle, 'clip' => '']];
+
                         $edgeBits = self::elementEdgeBits($elementAt, (int) $coords->x, (int) $coords->y, $row->name);
                         $edgeMask = $edgeBits ? ' mask="url(#elem-edge-'. $edgeBits .')"' : '';
                         $edgePatterns[$edgeBits] = $edgeBits;
@@ -1075,11 +1164,10 @@ class View{
                             $halves = [];
                             foreach($elbow as $half){
 
-                                $halfClips[$half['clip']] = $half['clip'];
-                                $halves[] = [
-                                    'turn' => $half['rotation'] ? ' transform="rotate('. $half['rotation'] .' '. (floor($x) + self::TILE_PX / 2) .' '. (floor($y) + self::TILE_PX / 2) .')"' : '',
-                                    'clip' => ' mask="url(#'. $half['clip'] .')"',
-                                ];
+                                if($half['clip']){
+                                    $halfClips[$half['clip']] = $half['clip'];
+                                }
+                                $halves[] = ['turn' => $half['rotation'], 'clip' => $half['clip'] ? ' mask="url(#'. $half['clip'] .')"' : ''];
                             }
                         }
                     }
@@ -1093,32 +1181,50 @@ class View{
                         // this reset to apply it to them.
                         $imgClasses = [];
 
-                        if(file_exists($img)){
+                        if(file_exists($img) && $row->whichTable == 'elements'){
 
-                            echo ($edgeMask ? '<g'. $edgeMask .'>' : '');
+                            /* An element cell is a nested svg: it clips its content, so a
+                             * shifted texture wraps inside the cell with no clip-path defs. */
+                            echo '<svg x="'. floor($x) .'" y="'. floor($y) .'" width="'. self::TILE_PX .'" height="'. self::TILE_PX .'" style="opacity: '. $e .';" pointer-events="none">'
+                                . ($edgeMask ? '<g'. $edgeMask .'>' : '');
                             foreach($halves as $half){
 
-                                echo ($half['clip'] ? '<g'. $half['clip'] .'>' : '') .'
-                                <image
+                                $rotate = $half['turn'] ? 'rotate('. $half['turn'] .' '. (self::TILE_PX / 2) .' '. (self::TILE_PX / 2) .')' : '';
+                                $phase = self::cellPhase($flowAxis, (int) $half['turn'], (int) $coords->x, (int) $coords->y);
+                                $shifts = $phase ? [$phase * self::TILE_PX, ($phase - 1) * self::TILE_PX] : [0];
+                                echo ($half['clip'] ? '<g'. $half['clip'] .'>' : '');
+                                foreach($shifts as $shift){
 
-                                    width="'. self::TILE_PX .'"
-                                    height="'. self::TILE_PX .'"
-
-                                    data-table="'. $row->whichTable .'"
-                                    data-coords="'. $coords->x .','. $coords->y .'"
-
-                                    x="'. floor($x) .'"
-                                    y="'. floor($y) .'"
-
-                                    style="opacity: '. $e .';"
-                                    pointer-events="none"
-
-                                    href="'. $img .'"
-                                    '. self::class_attr($imgClasses) . $half['turn'] .'
-                                    />
-                                '. ($half['clip'] ? '</g>' : '');
+                                    $slide = $shift ? ($flowAxis === 'x' ? 'translate('. $shift .',0)' : 'translate(0,'. $shift .')') : '';
+                                    $transform = trim($rotate .' '. $slide);
+                                    echo '<image width="'. self::TILE_PX .'" height="'. self::TILE_PX .'" data-table="elements" data-coords="'. $coords->x .','. $coords->y .'" href="'. $img .'"'
+                                        . self::class_attr($imgClasses) . ($transform ? ' transform="'. $transform .'"' : '') .'/>';
+                                }
+                                echo ($half['clip'] ? '</g>' : '');
                             }
-                            echo ($edgeMask ? '</g>' : '');
+                            echo ($edgeMask ? '</g>' : '') .'</svg>';
+                        }
+                        elseif(file_exists($img)){
+
+                            echo '
+                            <image
+
+                                width="'. self::TILE_PX .'"
+                                height="'. self::TILE_PX .'"
+
+                                data-table="'. $row->whichTable .'"
+                                data-coords="'. $coords->x .','. $coords->y .'"
+
+                                x="'. floor($x) .'"
+                                y="'. floor($y) .'"
+
+                                style="opacity: '. $e .';"
+                                pointer-events="none"
+
+                                href="'. $img .'"
+                                '. self::class_attr($imgClasses) . $turn .'
+                                />
+                            ';
                         }
                     }
 

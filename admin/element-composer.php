@@ -447,7 +447,7 @@ ob_start();
          * sides with no neighbour, through the board's own edge masks. */
         const EDGE_BITS = [9, 1, 3, 8, 0, 2, 12, 4, 6];
         document.getElementById('preview-edges').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150" width="150" height="150">${EDGE_DEFS}`
-            + EDGE_BITS.map((bits, i) => `<g${bits ? ` mask="url(#elem-edge-${bits})"` : ''}><image href="${uri}" x="${(i % 3) * 50}" y="${Math.floor(i / 3) * 50}" width="50" height="50"/></g>`).join('')
+            + EDGE_BITS.map((bits, i) => `<svg x="${(i % 3) * 50}" y="${Math.floor(i / 3) * 50}" width="50" height="50"><g${bits ? ` mask="url(#elem-edge-${bits})"` : ''}><image href="${uri}" width="50" height="50"/></g></svg>`).join('')
             + '</svg>';
         document.getElementById('svg-out').value = svg;
         document.getElementById('svg-src').textContent = svg;
