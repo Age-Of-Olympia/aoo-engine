@@ -31,8 +31,10 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 CacheDisable public /
 </IfModule>
 
-# Limites d'upload : les aperçus de la page d'accueil (admin/landing.php)
-# sont des captures du plateau de plusieurs Mo — le défaut PHP (2M) les
-# refusait. post_max_size garde une marge au-dessus du fichier seul.
-php_value upload_max_filesize 16M
-php_value post_max_size 20M
+# Limites d'upload : captures du plateau (admin/landing.php) et push Tiled
+# d'un niveau entier en JSON (api/admin/map/import.php). Au-delà de
+# post_max_size, PHP ne lit pas le corps. Le JSON se décode en mémoire :
+# memory_limit suit.
+php_value upload_max_filesize 200M
+php_value post_max_size 200M
+php_value memory_limit 1024M

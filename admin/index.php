@@ -105,6 +105,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tiled_min_extension']
     redirectTo('/admin/index.php');
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import_bundle_max_mb'])) {
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        $mb = (int) $_POST['import_bundle_max_mb'];
+        if ($mb < 1) {
+            throw new \RuntimeException('Taille invalide (1 Mo ou plus).');
+        }
+        (new AdminSettingsService())->set('import_bundle_max_mb', (string) $mb);
+        setFlash('success', 'Import de bundle : taille maximale portée à ' . $mb . ' Mo.');
+    } catch (\Throwable $e) {
+        setFlash('danger', 'Échec : ' . $e->getMessage());
+    }
+    redirectTo('/admin/index.php');
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['date_format'])) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
@@ -305,6 +320,25 @@ ob_start();
                     jamais avant : la barre ferme la porte à tout le monde tant que le zip n'est pas en
                     ligne. Avant la v<?= e(TiledExtensionService::FIRST_VERSIONED) ?>, une extension
                     n'annonçait pas sa version : elle est refusée quoi qu'il arrive.
+                </small>
+            </form>
+
+            <hr />
+
+            <form method="post" action="index.php">
+                <?= $csrf->renderTokenField() ?>
+                <label class="form-label mb-0">Taille maximale d'un bundle importé (Mo)</label>
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="number" name="import_bundle_max_mb" min="1" step="1"
+                           class="form-select" style="max-width: 120px;"
+                           value="<?= (int) (new AdminSettingsService())->get('import_bundle_max_mb', '200') ?>" />
+                    <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
+                </div>
+                <small class="form-text text-muted">
+                    Plafond du fichier .json accepté par Actions → Import. Le serveur borne aussi la
+                    requête : ici <?= e(ini_get('upload_max_filesize')) ?> (upload_max_filesize),
+                    <?= e(ini_get('post_max_size')) ?> (post_max_size) — un réglage plus haut ne
+                    passe pas cette barre.
                 </small>
             </form>
         </div>
