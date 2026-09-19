@@ -135,6 +135,10 @@ $applyForm = static function (Race $race) use ($face, $action): array {
     if ($race instanceof \App\Entity\StructureType) {
         $race->setReadableFromAfar(booleanCheckbox('readable_from_afar'));
         $race->setDefaultText(trim((string) ($_POST['default_text'] ?? '')));
+        $defaultDialog = trim((string) ($_POST['default_dialog'] ?? ''));
+        $race->setDefaultDialog(
+            $defaultDialog !== '' && (new \App\Service\DialogService())->gameDialogExists($defaultDialog) ? $defaultDialog : ''
+        );
 
         /* Three states: empty means "follow my family" and must stay null.
          * Reading it as "no" would cut the type off its family on the first

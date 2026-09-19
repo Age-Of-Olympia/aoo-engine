@@ -451,9 +451,10 @@ class BuildingService
              * cut-out adds around it. A type without one holds a single cell. */
             (new \App\Service\Map\EntityCellService($conn))->syncCells((int) $id);
 
+            // The type's default dialogue, copied like its inscription.
             $conn->executeStatement(
-                'INSERT INTO buildings (player_id, build_state) VALUES (?, ?)',
-                [$id, BuildingDetails::STATE_BUILT]
+                'INSERT INTO buildings (player_id, build_state, dialog) VALUES (?, ?, ?)',
+                [$id, BuildingDetails::STATE_BUILT, $race->getDefaultDialog()]
             );
 
             if ($faction !== '') {

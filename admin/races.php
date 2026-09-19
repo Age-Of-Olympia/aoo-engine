@@ -283,6 +283,7 @@ function race_render_form(?Race $race, string $csrfToken, TypeEditorFace $face):
     $isEdit = $race !== null;
     $action = $isEdit ? 'update' : 'create';
     $noun = $face->singular;
+    $dialogNames = $face->isStructure() ? array_keys((new \App\Service\DialogService())->listGameDialogs()) : [];
     $title = $isEdit
         ? $noun . ' : ' . e($race->getLabel()) . ' <span class="text-muted">(' . e($race->getName()) . ')</span>'
         : 'Nouveau ' . strtolower($noun);
@@ -562,6 +563,16 @@ HTML;
                 . e($race instanceof StructureType ? $race->getDefaultText() : '') . '</textarea>'
                 . '<small class="form-text text-muted">Copiée à la pose, puis libre :'
                 . ' changer ce défaut ne réécrit pas ce qui est déjà posé.</small></div>'
+                . '<div class="form-group col-md-4"><label>Dialogue par défaut</label><div>'
+                . formSelect(
+                    'default_dialog',
+                    array_combine($dialogNames, $dialogNames),
+                    $race instanceof StructureType && $race->getDefaultDialog() !== '' ? $race->getDefaultDialog() : null,
+                    '— aucun —',
+                    'class="form-control form-control-sm"'
+                )
+                . '</div><small class="form-text text-muted">Attaché à chaque exemplaire neuf, comme l\'inscription ;'
+                . ' modifiable ensuite bâtiment par bâtiment.</small></div>'
             : '')
         . '<div class="form-group col-12"><label>Description</label>'
         . '<textarea class="form-control" name="description" rows="5">'
