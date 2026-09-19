@@ -333,6 +333,13 @@ if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMod
 $db->commit();
 $player->go($goCoords);
 
+// The cell's element may have taken the last PV (effects.pv_on_apply).
+if ($player->getRemaining('pv') < 1) {
+    \App\Service\PlayerService::processDeathByElement($player);
+    echo '<script>aooAlert("Vous succombez aux éléments.").then(function(){document.location.reload();});</script>';
+    exit();
+}
+
 /* Walking a road keeps it: the step pushes its horizon AND mends the wear,
    which is the only upkeep a road has. Silent for anything not enrolled, so
    the map editor's roads are untouched. */
