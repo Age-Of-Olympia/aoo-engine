@@ -121,6 +121,13 @@ class DeathView
         if (!$player->have_option(self::PENDING_OPTION)) {
             $player->add_option(self::PENDING_OPTION);
         }
+
+        /* An opened session marks its dismissal in the PHP session, not on
+         * the player: a new death of the character it drives (elements, own
+         * effects — armed from this very session) must show the page again. */
+        if ((int) ($_SESSION['playerId'] ?? 0) === (int) $player->id) {
+            unset($_SESSION[self::SEEN_KEY]);
+        }
     }
 
     /** The page only shows to the freshly killed, still in the underworld, and not twice. */
