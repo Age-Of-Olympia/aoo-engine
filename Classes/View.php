@@ -795,10 +795,13 @@ class View{
 
             UNION
 
+            /* Items and dropped bags sit ABOVE elements, plants and roads
+               (97.6) — a bag lying on a road must stay visible — and under
+               the marks and the characters. */
             SELECT
             MIN(id) AS id, MIN(name) AS name, coords_id,
             "items" AS whichTable,
-            96 AS tableOrder
+            97.7 AS tableOrder
             FROM
             map_items
             WHERE
@@ -810,7 +813,7 @@ class View{
             SELECT
             MIN(id) AS id, "bourse" AS name, coords_id,
             "items" AS whichTable,
-            96 AS tableOrder
+            97.7 AS tableOrder
             FROM
             players
             WHERE
