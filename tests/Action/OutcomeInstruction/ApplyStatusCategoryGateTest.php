@@ -60,7 +60,7 @@ class ApplyStatusCategoryGateTest extends TestCase
         $actor = $this->player(1, 'real');
         $building = $this->player(20000001, 'building');
 
-        $result = $this->instruction(['effect' => 'adrenaline', 'player' => 'target'])
+        $result = $this->instruction(['effect' => 'adrenaline'])
             ->execute($actor, $building, new ConditionObject());
 
         $this->assertSame([], $this->applied, 'no effect may land on a structure by default');
@@ -72,21 +72,22 @@ class ApplyStatusCategoryGateTest extends TestCase
         $actor = $this->player(1, 'real');
         $building = $this->player(20000001, 'building');
 
-        $this->instruction(['effect' => 'feu', 'player' => 'target', 'targets' => ['character', 'structure']])
+        $this->instruction(['effect' => 'feu', 'targets' => ['character', 'structure']])
             ->execute($actor, $building, new ConditionObject());
 
         $this->assertSame([['20000001:feu']], $this->applied, 'a declared structure effect must apply');
     }
 
-    public function testBothModeAppliesToTheCharacterAndSkipsTheStructure(): void
+    public function testASelfOutcomeAppliesToTheActorWhateverTheTarget(): void
     {
         $actor = $this->player(1, 'real');
         $building = $this->player(20000001, 'building');
 
-        $this->instruction(['effect' => 'adrenaline', 'player' => 'both'])
-            ->execute($actor, $building, new ConditionObject());
+        $instruction = $this->instruction(['effect' => 'adrenaline']);
+        self::onSelf($instruction);
+        $instruction->execute($actor, $building, new ConditionObject());
 
-        $this->assertSame([['1:adrenaline']], $this->applied, 'the character side applies, the structure side is skipped');
+        $this->assertSame([['1:adrenaline']], $this->applied, 'the outcome says « sur soi » : the actor gets it');
     }
 
     public function testEffectRemovalIsAlwaysAllowedOnAStructure(): void
@@ -94,9 +95,15 @@ class ApplyStatusCategoryGateTest extends TestCase
         $actor = $this->player(1, 'real');
         $building = $this->player(20000001, 'building');
 
-        $this->instruction(['effect' => 'feu', 'apply' => false, 'player' => 'target'])
+        $this->instruction(['effect' => 'feu', 'apply' => false])
             ->execute($actor, $building, new ConditionObject());
 
         $this->assertSame(['20000001:feu'], $this->ended, 'removing an effect is cleanup, never gated');
+    }
+
+    /** The outcome's toggle is what routes the instruction now. */
+    private static function onSelf(\App\Entity\OutcomeInstruction $instruction): void
+    {
+        $instruction->setOutcome((new \App\Entity\ActionOutcome())->setApplyTo(\App\Enum\OutcomeTarget::Self));
     }
 }

@@ -23,7 +23,8 @@ class PlayerOutcomeInstructionCharacterizationTest extends TestCase
     public function testActorNonMovementCaracUsesACaracAwareMessage(): void
     {
         $instruction = new PlayerOutcomeInstruction();
-        $instruction->setParameters(['carac' => 'energie', 'value' => 4, 'player' => 'actor']);
+        $instruction->setParameters(['carac' => 'energie', 'value' => 4]);
+        self::onSelf($instruction);
 
         $actor = $this->player('Actor');
         $calls = [];
@@ -43,7 +44,8 @@ class PlayerOutcomeInstructionCharacterizationTest extends TestCase
     public function testActorMovementKeepsTheRunningFlavour(): void
     {
         $instruction = new PlayerOutcomeInstruction();
-        $instruction->setParameters(['carac' => 'mvt', 'value' => 1, 'player' => 'actor']);
+        $instruction->setParameters(['carac' => 'mvt', 'value' => 1]);
+        self::onSelf($instruction);
 
         $actor = $this->player('Actor');
         $actor->method('putBonus')->willReturn(true);
@@ -58,7 +60,7 @@ class PlayerOutcomeInstructionCharacterizationTest extends TestCase
     {
         // player:target did nothing before — the branch was empty.
         $instruction = new PlayerOutcomeInstruction();
-        $instruction->setParameters(['carac' => 'mvt', 'value' => 2, 'player' => 'target']);
+        $instruction->setParameters(['carac' => 'mvt', 'value' => 2]);
 
         $target = $this->player('Target');
         $calls = [];
@@ -78,7 +80,8 @@ class PlayerOutcomeInstructionCharacterizationTest extends TestCase
     {
         // SimulatedPlayer has no playerService; the visible branch used to NPE.
         $instruction = new PlayerOutcomeInstruction();
-        $instruction->setParameters(['carac' => 'visible', 'value' => 1, 'player' => 'actor']);
+        $instruction->setParameters(['carac' => 'visible', 'value' => 1]);
+        self::onSelf($instruction);
 
         $actor = $this->player('Actor');
         $actor->method('isSimulated')->willReturn(true);
@@ -87,5 +90,11 @@ class PlayerOutcomeInstructionCharacterizationTest extends TestCase
             ->getOutcomeSuccessMessages();
 
         $this->assertStringContainsString('furtivité', $messages[0]);
+    }
+
+    /** The outcome's toggle is what routes the instruction now. */
+    private static function onSelf(\App\Entity\OutcomeInstruction $instruction): void
+    {
+        $instruction->setOutcome((new \App\Entity\ActionOutcome())->setApplyTo(\App\Enum\OutcomeTarget::Self));
     }
 }

@@ -21,11 +21,6 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
             new ParameterField('effect', FieldType::EFFECT, 'Effet', required: true),
             new ParameterField('apply', FieldType::BOOL, 'Appliquer (sinon retirer)', default: true),
             new ParameterField('duration', FieldType::INT, 'Durée (tours)', default: 1, help: '0 = jusqu\'au prochain tour, -1 = sans fin'),
-            new ParameterField('player', FieldType::ENUM, 'Appliquer à', default: 'both', options: [
-                'actor' => 'Acteur',
-                'target' => 'Cible',
-                'both' => 'Les deux',
-            ]),
             new ParameterField('value', FieldType::TRAIT_OR_INT, 'Intensité', default: 1, help: 'Multiplie les caracs modifiées par l\'effet (feu à E −1, intensité 3 → E −3) ; 1 = l\'effet tel que défini. Les PV à l\'application ne sont pas multipliés.'),
             new ParameterField('stackable', FieldType::BOOL, 'Cumulable', default: false, help: 'Réappliqué sur un porteur qui l\'a déjà : les intensités s\'additionnent (sinon la plus forte reste).'),
             new ParameterField(
@@ -71,7 +66,6 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
          * aux tours : zéro tient jusqu'au prochain, négatif ne s'éteint
          * jamais (PlayerEffectService::DURATION_INFINITE). */
         $duration = (int) ($params['duration'] ?? 1);
-        $player = $params['player'] ?? 'both';
         $valueParam = $params['value'] ?? 1;
         if(is_array($valueParam)){
             switch ($valueParam[0]) {
@@ -96,35 +90,16 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
         $valueLabel = ($stackable ? '+' : 'x') . htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 
         $outcomeSuccessMessages = array();
-        switch ($player) {
-            case 'actor':
-                if ($status == "finished") {
-                    $res = $actor->purge_effects();
-                    if ($res > 0) {
-                        $outcomeSuccessMessages[0] = $res .' effet(s) terminé(s).';
-                    }
-                } elseif ($this->mayReceiveEffect($actor, $params, $apply)) {
-                    $this->applyEffect($apply, $status, $duration, $value, $stackable, $actor);
-                    $outcomeSuccessMessages[0] = $effectService->landingMessage($status, $actor->data->name, $actor->data->name, $duration, $valueLabel);
-                }
-                break;
-            case 'target':
-                if ($this->mayReceiveEffect($target, $params, $apply)) {
-                    $this->applyEffect($apply, $status, $duration, $value, $stackable, $target);
-                    $outcomeSuccessMessages[0] = $effectService->landingMessage($status, $target->data->name, $actor->data->name, $duration, $valueLabel);
-                }
-                break;
-            default:
-                if ($this->mayReceiveEffect($actor, $params, $apply)) {
-                    $this->applyEffect($apply, $status, $duration, $value, $stackable, $actor);
-                    $outcomeSuccessMessages[0] = $effectService->landingMessage($status, $actor->data->name, $actor->data->name, $duration, $valueLabel);
-                }
+        $receiver = $this->receiver($actor, $target);
 
-            if ($target->data->name !== $actor->data->name && $this->mayReceiveEffect($target, $params, $apply)) {
-                $this->applyEffect($apply, $status, $duration, $value, $stackable, $target);
-                $outcomeSuccessMessages[1] = $effectService->landingMessage($status, $target->data->name, $actor->data->name, $duration, $valueLabel);
+        if ($status == "finished") {
+            $res = $receiver->purge_effects();
+            if ($res > 0) {
+                $outcomeSuccessMessages[0] = $res .' effet(s) terminé(s).';
             }
-            break;
+        } elseif ($this->mayReceiveEffect($receiver, $params, $apply)) {
+            $this->applyEffect($apply, $status, $duration, $value, $stackable, $receiver);
+            $outcomeSuccessMessages[0] = $effectService->landingMessage($status, $receiver->data->name, $actor->data->name, $duration, $valueLabel);
         }
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array());

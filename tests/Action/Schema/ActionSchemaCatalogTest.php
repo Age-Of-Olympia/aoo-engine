@@ -108,6 +108,6 @@ class ActionSchemaCatalogTest extends TestCase
         $this->assertSame(FieldType::TRAIT_OR_INT, $healing->field('actorHealingTrait')->type);
 
         $player = $this->catalog->schemaForOutcomeInstruction('player');
-        $this->assertSame(FieldType::ENUM, $player->field('player')->type);
+        $this->assertSame(FieldType::INT, $player->field('value')->type);
     }
 }

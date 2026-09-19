@@ -16,11 +16,11 @@ class ApplyStatusOutcomeInstructionCharacterizationTest extends TestCase
         $instruction = new ApplyStatusOutcomeInstruction();
         $instruction->setParameters([
             'adrenaline' => true,
-            'player' => 'actor',
             'duration' => 0,
             'value' => 2,
             'stackable' => false,
         ]);
+        self::onSelf($instruction);
 
         $actor = $this->createMock(Player::class);
         $actor->data = (object) ['name' => 'Actor'];
@@ -42,9 +42,10 @@ class ApplyStatusOutcomeInstructionCharacterizationTest extends TestCase
         // New shape: effect/apply are normal fields (was the first param key).
         $instruction = new ApplyStatusOutcomeInstruction();
         $instruction->setParameters([
-            'effect' => 'adrenaline', 'apply' => true, 'player' => 'actor',
+            'effect' => 'adrenaline', 'apply' => true,
             'duration' => 0, 'value' => 2, 'stackable' => false,
         ]);
+        self::onSelf($instruction);
 
         $actor = $this->createMock(Player::class);
         $actor->data = (object) ['name' => 'Actor'];
@@ -58,7 +59,8 @@ class ApplyStatusOutcomeInstructionCharacterizationTest extends TestCase
     public function testApplyFalseEndsTheEffectInsteadOfAddingIt(): void
     {
         $instruction = new ApplyStatusOutcomeInstruction();
-        $instruction->setParameters(['effect' => 'protection', 'apply' => false, 'player' => 'actor', 'duration' => 1]);
+        $instruction->setParameters(['effect' => 'protection', 'apply' => false, 'duration' => 1]);
+        self::onSelf($instruction);
 
         $actor = $this->createMock(Player::class);
         $actor->data = (object) ['name' => 'Actor'];
@@ -76,10 +78,10 @@ class ApplyStatusOutcomeInstructionCharacterizationTest extends TestCase
         $instruction = new ApplyStatusOutcomeInstruction();
         $instruction->setParameters([
             $payload => true,
-            'player' => 'actor',
             'duration' => 0,
             'value' => 2,
         ]);
+        self::onSelf($instruction);
 
         $actor = $this->createMock(Player::class);
         $actor->data = (object) ['name' => 'Actor'];
@@ -95,5 +97,11 @@ class ApplyStatusOutcomeInstructionCharacterizationTest extends TestCase
 
         $this->assertStringNotContainsString('<img', $message);
         $this->assertStringContainsString('&lt;img', $message);
+    }
+
+    /** The outcome's toggle is what routes the instruction now. */
+    private static function onSelf(\App\Entity\OutcomeInstruction $instruction): void
+    {
+        $instruction->setOutcome((new \App\Entity\ActionOutcome())->setApplyTo(\App\Enum\OutcomeTarget::Self));
     }
 }
