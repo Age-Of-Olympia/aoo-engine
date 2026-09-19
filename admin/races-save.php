@@ -255,7 +255,6 @@ $applyForm = static function (Race $race) use ($face, $action): array {
     foreach (array_keys(CARACS) as $key) {
         $race->setCarac($key, (int) $_POST['carac'][$key]);
     }
-    $race->setCapacity((int) ($_POST['capacity'] ?? 0));
 
     return ['notice' => $notice, 'newFamily' => $newFamily, 'rawHarvestFix' => $rawHarvestFix];
 };

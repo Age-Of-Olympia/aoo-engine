@@ -51,7 +51,8 @@ class UpgradeCostTest extends TestCase
 
         foreach (array_keys(CARACS) as $carac) {
 
-            if ($carac === 'ae') {
+            // ae comes from the equipment, sac from the race: neither is bought.
+            if ($carac === 'ae' || $carac === 'sac') {
 
                 continue;
             }

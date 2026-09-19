@@ -415,6 +415,15 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
 
         // The guard lookup above cached the absence; the identity map may
         // hold stale catalogue reads.
+        $this->refreshRaceCatalog();
+    }
+
+    /**
+     * After a raw UPDATE on `races`: drop both the service cache and the
+     * identity map, or the entity keeps the value it was loaded with.
+     */
+    protected function refreshRaceCatalog(): void
+    {
         RaceService::clearCache();
         \App\Factory\EntityManagerFactory::getEntityManager()->clear();
     }

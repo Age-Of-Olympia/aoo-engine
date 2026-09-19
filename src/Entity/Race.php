@@ -248,10 +248,12 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     /**
      * The BAG of this race's characters, in content lines — a stack of
      * one item is a line, an exemplar is a line; gold and equipment
-     * count for nothing. 0 = unlimited (every structure type).
+     * count for nothing. 0 = unlimited (every structure type). A carac
+     * like the others (items and effects add to it); the column keeps
+     * its historical name.
      */
-    #[ORM\Column(type: "integer", options: ["default" => 0])]
-    private int $capacity = 0;
+    #[ORM\Column(type: "integer", name: "capacity", options: ["default" => 0])]
+    private int $sac = 0;
 
     #[ORM\Column(type: "integer", options: ["default" => 0])]
     private int $ae = 0;
@@ -490,16 +492,6 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
         $this->animateurId = $animateurId;
     }
 
-    public function getCapacity(): int
-    {
-        return $this->capacity;
-    }
-
-    public function setCapacity(int $capacity): void
-    {
-        $this->capacity = max(0, $capacity);
-    }
-
     public function getCarac(string $key): int
     {
         $this->assertCaracKey($key);
@@ -623,7 +615,7 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
         return $this;
     }
 
-    /** A race owns all sixteen of its caracs; an item owns only its life. */
+    /** A race owns all of its caracs; an item owns only its life. */
     public function ownCaracs(): array
     {
         $own = [];

@@ -372,7 +372,17 @@ final class ContainerService
             return $row['item_capacity'] === null ? null : (int) $row['item_capacity'];
         }
 
-        return (int) ($row['race_capacity'] ?? 0) > 0 ? (int) $row['race_capacity'] : null;
+        // A race without a bag stays unlimited whatever the bearer wears;
+        // otherwise the `sac` carac (equipment and effects included) is
+        // the ceiling, never below zero lines.
+        if ((int) ($row['race_capacity'] ?? 0) <= 0) {
+            return null;
+        }
+
+        $bearer = \App\Factory\PlayerFactory::legacy($containerId);
+        $bearer->get_caracs();
+
+        return max(0, (int) ($bearer->caracs->sac ?? $row['race_capacity']));
     }
 
     /**
