@@ -56,11 +56,9 @@ final class EffectWikiRenderer implements WikiSheetRendererInterface
         $rules = [];
         $carac = static fn (?string $key): string => CARACS_TXT[$key] ?? strtoupper((string) $key);
 
-        if ($effect->getBuffCarac() !== null) {
-            $rules[] = 'Augmente ' . $carac($effect->getBuffCarac()) . ' de la valeur portée.';
-        }
-        if ($effect->getDebuffCarac() !== null) {
-            $rules[] = 'Diminue ' . $carac($effect->getDebuffCarac()) . ' de la valeur portée.';
+        foreach ($effect->getCaracMods() as $key => $sign) {
+            $times = abs($sign) === 1 ? '' : ' × ' . abs($sign);
+            $rules[] = ($sign > 0 ? 'Augmente ' : 'Diminue ') . $carac($key) . ' de la valeur portée' . $times . '.';
         }
         foreach ([
             'getRollAttackMod' => 'au jet d\'attaque', 'getRollDefenseMod' => 'au jet de défense',

@@ -50,13 +50,13 @@ class Effect
     #[ORM\Column(type: "boolean", options: ["default" => false])]
     private bool $hidden = false;
 
-    /** Carac raised by 1 while the effect lasts (null = none). */
-    #[ORM\Column(type: "string", length: 10, nullable: true, name: "buff_carac")]
-    private ?string $buffCarac = null;
-
-    /** Carac lowered by 1 while the effect lasts (null = none). */
-    #[ORM\Column(type: "string", length: 10, nullable: true, name: "debuff_carac")]
-    private ?string $debuffCarac = null;
+    /**
+     * Caracs moved while the effect lasts: {"e": -1, "f": 2}, each entry
+     * multiplied by the effect's value. The legacy buff_carac / debuff_carac
+     * columns were folded into it by migration and are no longer read.
+     */
+    #[ORM\Column(type: "json", nullable: true, name: "carac_mods")]
+    private ?array $caracMods = null;
 
     /**
      * Cancellation list: applying THIS effect removes each controlled
@@ -259,24 +259,16 @@ class Effect
         $this->hidden = $hidden;
     }
 
-    public function getBuffCarac(): ?string
+    /** @return array<string, int> carac => signed multiplier of the value, zeros dropped */
+    public function getCaracMods(): array
     {
-        return $this->buffCarac;
+        return array_filter(array_map('intval', $this->caracMods ?? []));
     }
 
-    public function setBuffCarac(?string $carac): void
+    /** @param array<string, int> $mods */
+    public function setCaracMods(array $mods): void
     {
-        $this->buffCarac = $carac !== '' ? $carac : null;
-    }
-
-    public function getDebuffCarac(): ?string
-    {
-        return $this->debuffCarac;
-    }
-
-    public function setDebuffCarac(?string $carac): void
-    {
-        $this->debuffCarac = $carac !== '' ? $carac : null;
+        $this->caracMods = array_filter(array_map('intval', $mods));
     }
 
     /** @return string[] Names of the effects this one cancels. */

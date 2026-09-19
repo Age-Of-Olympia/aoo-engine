@@ -75,8 +75,15 @@ final class EffectImporter extends AbstractObjectImporter
         $effect->setIcon((string) $plan['icon']);
         $effect->setHidden((bool) ($plan['hidden'] ?? false));
         $effect->setMarkTurns((int) ($plan['markTurns'] ?? 0));
-        $effect->setBuffCarac(trim((string) ($plan['buffCarac'] ?? '')));
-        $effect->setDebuffCarac(trim((string) ($plan['debuffCarac'] ?? '')));
+        // Older bundles carry the two single caracs; fold them into the map.
+        $mods = is_array($plan['caracMods'] ?? null) ? $plan['caracMods'] : [];
+        foreach (['buffCarac' => 1, 'debuffCarac' => -1] as $legacyKey => $sign) {
+            $carac = trim((string) ($plan[$legacyKey] ?? ''));
+            if ($carac !== '' && !isset($mods[$carac])) {
+                $mods[$carac] = $sign;
+            }
+        }
+        $effect->setCaracMods($mods);
         $effect->setRollAttackMod(max(-1, min(1, (int) ($plan['rollAttackMod'] ?? 0))));
         $effect->setRollDefenseMod(max(-1, min(1, (int) ($plan['rollDefenseMod'] ?? 0))));
         $effect->setDamageDealtMod(max(-1, min(1, (int) ($plan['damageDealtMod'] ?? 0))));

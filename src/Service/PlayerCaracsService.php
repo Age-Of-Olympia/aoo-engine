@@ -22,7 +22,7 @@ use Classes\Db;
  * What's NOT in the nude path (stays on legacy
  * `Classes\Player::get_caracs()` until a future mini-phase):
  *   - equipped item bonuses (Item::get_equiped_list loop)
- *   - buff/debuff effects (EffectService::getBuffCaracs/getDebuffCaracs)
+ *   - effect carac mods (EffectService::getCaracMods)
  *   - turn bonuses from `players_bonus`
  *
  * Matches the legacy `Player::get_caracs(nude: true)` path, which

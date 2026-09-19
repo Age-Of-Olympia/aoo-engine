@@ -313,26 +313,23 @@ class Player implements ActorInterface {
         $this->debuffs = (object) array();
         $this->buffs = (object) array();
 
-        $debuffCaracs = $this->effectService->getDebuffCaracs();
-        $buffCaracs = $this->effectService->getBuffCaracs();
+        $caracMods = $this->effectService->getCaracMods();
 
+        // Each entry of the effect moves its carac by sign × value.
         foreach($effectsList as $e){
 
+            $value = is_null($e->getValue()) ? 1 : $e->getValue();
 
-            if(!empty($debuffCaracs[$e->getName()])){
+            foreach($caracMods[$e->getName()] ?? [] as $carac => $sign){
 
+                $this->caracs->$carac = ($this->caracs->$carac ?? 0) + $sign * $value;
 
-                $this->caracs->{$debuffCaracs[$e->getName()]} -= is_null($e->getValue()) ? 1 : $e->getValue();
-
-                $this->debuffs->{$debuffCaracs[$e->getName()]} = $e->getName();
-            }
-
-            if(!empty($buffCaracs[$e->getName()])){
-
-
-                $this->caracs->{$buffCaracs[$e->getName()]} += is_null($e->getValue()) ? 1 : $e->getValue();
-
-                $this->buffs->{$buffCaracs[$e->getName()]} = $e->getName();
+                if($sign < 0){
+                    $this->debuffs->$carac = $e->getName();
+                }
+                else{
+                    $this->buffs->$carac = $e->getName();
+                }
             }
         }
 

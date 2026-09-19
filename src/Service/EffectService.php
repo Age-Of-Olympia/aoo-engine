@@ -119,26 +119,14 @@ class EffectService
         ));
     }
 
-    /** @return array<string, string> effect name => carac lowered by 1 (ex-ELE_DEBUFFS). */
-    public function getDebuffCaracs(): array
-    {
-        return $this->caracMap('getDebuffCarac');
-    }
-
-    /** @return array<string, string> effect name => carac raised by 1 (ex-ELE_BUFFS). */
-    public function getBuffCaracs(): array
-    {
-        return $this->caracMap('getBuffCarac');
-    }
-
-    /** @return array<string, string> */
-    private function caracMap(string $getter): array
+    /** @return array<string, array<string, int>> effect name => carac => signed multiplier of the value */
+    public function getCaracMods(): array
     {
         $map = [];
         foreach ($this->catalog() as $name => $effect) {
-            $carac = $effect->{$getter}();
-            if ($carac !== null) {
-                $map[$name] = $carac;
+            $mods = $effect->getCaracMods();
+            if ($mods !== []) {
+                $map[$name] = $mods;
             }
         }
 

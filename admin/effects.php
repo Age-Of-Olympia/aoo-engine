@@ -45,11 +45,10 @@ function effect_flag_badges(Effect $effect): string
 function effect_modifiers(Effect $effect): string
 {
     $parts = [];
-    if ($effect->getBuffCarac() !== null) {
-        $parts[] = '<span class="text-success">+valeur ' . e(strtoupper($effect->getBuffCarac())) . '</span>';
-    }
-    if ($effect->getDebuffCarac() !== null) {
-        $parts[] = '<span class="text-danger">−valeur ' . e(strtoupper($effect->getDebuffCarac())) . '</span>';
+    foreach ($effect->getCaracMods() as $carac => $sign) {
+        $times = abs($sign) === 1 ? 'valeur' : abs($sign) . '×valeur';
+        $parts[] = '<span class="' . ($sign > 0 ? 'text-success' : 'text-danger') . '">'
+            . ($sign > 0 ? '+' : '−') . $times . ' ' . e(strtoupper((string) $carac)) . '</span>';
     }
 
     foreach ([
@@ -155,15 +154,23 @@ function effect_mod_select(string $fieldName, string $label, int $current, strin
         . '</div>';
 }
 
-/** <select> d'une carac (buff/debuff), « — aucune — » compris. */
-function effect_carac_select(string $fieldName, ?string $current): string
+/**
+ * Grille des caracs : un multiplicateur signé par carac (0 = pas touchée),
+ * appliqué × la valeur portée par l'effet.
+ *
+ * @param array<string, int> $mods
+ */
+function effect_carac_mods_grid(array $mods): string
 {
-    $options = [];
+    $cells = '';
     foreach (CARACS as $key => $short) {
-        $options[$key] = $short . ' — ' . (CARACS_TXT[$key] ?? $short);
+        $cells .= '<div class="col-md-1 col-3 form-group">'
+            . '<label title="' . e(CARACS_TXT[$key] ?? $short) . '">' . e($short) . '</label>'
+            . formInput('carac_mods[' . $key . ']', (string) ($mods[$key] ?? 0), 'type="number" step="1" min="-9" max="9"')
+            . '</div>';
     }
 
-    return formSelect($fieldName, $options, $current, '— aucune —');
+    return '<div class="row">' . $cells . '</div>';
 }
 
 function effect_render_form(?Effect $effect, string $csrfToken): string
@@ -226,12 +233,10 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
         . '</div>';
 
     $comportement = '<div class="row">'
-        . formField('Carac augmentée (+valeur)', effect_carac_select('buff_carac', $isEdit ? $effect->getBuffCarac() : null),
-            'form-group col-md-4')
-        . formField('Carac diminuée (−valeur)', effect_carac_select('debuff_carac', $isEdit ? $effect->getDebuffCarac() : null),
-            'form-group col-md-4',
-            'Appliquée tant que l\'effet dure : la carac bouge de la VALEUR portée par l\'effet'
-            . ' (poser avec valeur 3 → ±3).')
+        . formField('Caracs modifiées', effect_carac_mods_grid($isEdit ? $effect->getCaracMods() : []),
+            'form-group col-12',
+            'Tant que l\'effet dure, chaque carac bouge de ce multiplicateur × la VALEUR portée par l\'effet'
+            . ' (E à −1 et F à 2, posé avec valeur 3 → E −3, F +6). 0 = pas touchée.')
         . formField('Traces de pas (+tours)',
             formInput('mark_turns', (string) ($isEdit ? $effect->getMarkTurns() : 0), 'type="number" min="0" step="1"'),
             'form-group col-md-4',

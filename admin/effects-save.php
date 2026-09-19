@@ -67,9 +67,8 @@ $validate = static function () use ($service): ?string {
     if ($breakChance !== '' && (!is_numeric($breakChance) || (int) $breakChance < 0 || (int) $breakChance > 100)) {
         return 'Chance de casse invalide (0-100, ou vide).';
     }
-    foreach (['buff_carac', 'debuff_carac'] as $field) {
-        $carac = trim((string) ($_POST[$field] ?? ''));
-        if ($carac !== '' && !isset(CARACS[$carac])) {
+    foreach (array_keys((array) ($_POST['carac_mods'] ?? [])) as $carac) {
+        if (!isset(CARACS[$carac])) {
             return "Caractéristique inconnue : {$carac}.";
         }
     }
@@ -90,8 +89,7 @@ $applyForm = static function (Effect $effect): void {
     $effect->setHidden(booleanCheckbox('hidden'));
     $effect->setBuildableOver(booleanCheckbox('buildable_over'));
     $effect->setMarkTurns((int) ($_POST['mark_turns'] ?? 0));
-    $effect->setBuffCarac(trim((string) ($_POST['buff_carac'] ?? '')));
-    $effect->setDebuffCarac(trim((string) ($_POST['debuff_carac'] ?? '')));
+    $effect->setCaracMods(array_map('intval', (array) ($_POST['carac_mods'] ?? [])));
 
     foreach (['setRollAttackMod' => 'roll_attack_mod', 'setRollDefenseMod' => 'roll_defense_mod',
               'setDamageDealtMod' => 'damage_dealt_mod', 'setDamageTakenMod' => 'damage_taken_mod',

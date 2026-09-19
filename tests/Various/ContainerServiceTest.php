@@ -309,8 +309,8 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
 
         // A curse on the bag: -4 lines, below the floor.
         $this->link->executeStatement(
-            "INSERT INTO effects (name, label, debuff_carac) VALUES ('sac_troue', 'Sac troué', 'sac')
-             ON DUPLICATE KEY UPDATE debuff_carac = 'sac'"
+            "INSERT INTO effects (name, label, carac_mods) VALUES ('sac_troue', 'Sac troué', '{\"sac\":-1}')
+             ON DUPLICATE KEY UPDATE carac_mods = '{\"sac\":-1}'"
         );
         \App\Service\EffectService::clearCache();
 
