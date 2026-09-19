@@ -49,10 +49,10 @@ function effect_modifiers(Effect $effect): string
     if ($pv !== 0) {
         $parts[] = '<span class="' . ($pv > 0 ? 'text-success' : 'text-danger') . '">PV ' . ($pv > 0 ? '+' : '−') . abs($pv) . '</span>';
     }
+    // Values at intensity 1, the usual case; the action's « Intensité » multiplies them.
     foreach ($effect->getCaracMods() as $carac => $sign) {
-        $times = abs($sign) === 1 ? 'valeur' : abs($sign) . '×valeur';
         $parts[] = '<span class="' . ($sign > 0 ? 'text-success' : 'text-danger') . '">'
-            . ($sign > 0 ? '+' : '−') . $times . ' ' . e(strtoupper((string) $carac)) . '</span>';
+            . ($sign > 0 ? '+' : '−') . abs($sign) . ' ' . e($carac === 'pv' ? 'PV max' : strtoupper((string) $carac)) . '</span>';
     }
 
     foreach ([
@@ -168,8 +168,10 @@ function effect_carac_mods_grid(array $mods): string
 {
     $cells = '';
     foreach (CARACS as $key => $short) {
+        // The PV cell is the ceiling, not a wound: damage is « PV à l'application ».
+        $label = $key === 'pv' ? 'PV max' : $short;
         $cells .= '<div class="col-md-1 col-3 form-group">'
-            . '<label title="' . e(CARACS_TXT[$key] ?? $short) . '">' . e($short) . '</label>'
+            . '<label title="' . e($key === 'pv' ? 'Points de Vie maximum (une blessure : « PV à l\'application »)' : (CARACS_TXT[$key] ?? $short)) . '">' . e($label) . '</label>'
             . formInput('carac_mods[' . $key . ']', (string) ($mods[$key] ?? 0), 'type="number" step="1"')
             . '</div>';
     }
@@ -248,8 +250,8 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
     $comportement = '<div class="row">'
         . formField('Caracs modifiées', effect_carac_mods_grid($isEdit ? $effect->getCaracMods() : []),
             'form-group col-12',
-            'Tant que l\'effet dure, chaque carac bouge de ce multiplicateur × la VALEUR portée par l\'effet'
-            . ' (E à −1 et F à 2, posé avec valeur 3 → E −3, F +6). 0 = pas touchée.')
+            'Tant que l\'effet dure, chaque carac bouge de ce nombre (E à −1, F à +2). 0 = pas touchée.'
+            . ' Une action peut poser l\'effet avec une intensité supérieure à 1 : les nombres sont alors multipliés.')
         . formField('Traces de pas (+tours)',
             formInput('mark_turns', (string) ($isEdit ? $effect->getMarkTurns() : 0), 'type="number" min="0" step="1"'),
             'form-group col-md-4',
