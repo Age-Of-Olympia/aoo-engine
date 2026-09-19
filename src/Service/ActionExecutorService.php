@@ -151,11 +151,12 @@ class ActionExecutorService
             foreach ($this->action->getOnSuccessOutcomes() as $outcomeEntity) {
                 $this->applyActionOutcome($outcomeEntity);
             }
-            $this->applyEquippedItemsEffects();
+            $this->applyEquippedItemsEffects('hit');
         } else {
             foreach ($this->action->getOnSuccessOutcomes(false) as $outcomeEntity) {
                 $this->applyActionOutcome($outcomeEntity);
             }
+            $this->applyEquippedItemsEffects('miss');
         }
 
         // Inherited type-level instructions (data-driven defaults for the action
@@ -278,7 +279,12 @@ class ActionExecutorService
         array_push($this->outcomeResultsArray, $result);
     }
 
-    private function applyEquippedItemsEffects(): void
+    /**
+     * The bearer's weapon effects for this outcome ('hit' or 'miss'), each
+     * landed on its receivers: the bearer, the target, or every character
+     * on the target's cell and the eight around it.
+     */
+    private function applyEquippedItemsEffects(string $outcome): void
     {
         if ($this->action instanceof \App\Action\MeleeAction || $this->action instanceof \App\Action\DistanceAction) {
 
@@ -288,18 +294,28 @@ class ActionExecutorService
 
             foreach ($effectList as $effect) {
 
-                $this->target->playerEffectService->addEffectByPlayerId($this->target->id,$effect->name, $effect->duration,1,false);
+                if (($effect->outcome ?? 'hit') !== $outcome) {
+                    continue;
+                }
+
+                $duration = (int) ($effect->duration ?? 1);
+                $timeMessage = $duration === 0
+                    ? 'jusqu\'au prochain tour'
+                    : ($duration < 0 ? 'sans limite de durée' : 'pour ' . $duration . ' tour' . ($duration > 1 ? 's' : ''));
 
                 $statusLabel = htmlspecialchars((string) $effect->name, ENT_QUOTES, 'UTF-8');
-                $timeMessage = 'pour ' . \Classes\Str::displaySeconds($effect->duration);
-
                 $icon = $effectService->getIcon($effect->name);
                 $iconMarkup = !empty($icon) ? ' <span class="ra ' . $icon . '"></span>' : '';
 
-                $own = $effectService->applyMessage((string) $effect->name, $this->target->data->name, $this->actor->data->name);
-                $outcomeSuccessMessages[] = $own !== null
-                    ? $own . ' (' . $timeMessage . ')'
-                    : 'L\'effet ' . $statusLabel . $iconMarkup . ' (x1) est appliqué ' . $timeMessage . ' à ' . $this->target->data->name;
+                foreach ($this->strikeReceivers((string) ($effect->target ?? 'target')) as $receiver) {
+
+                    $receiver->playerEffectService->addEffectByPlayerId($receiver->id, $effect->name, $duration, 1, false);
+
+                    $own = $effectService->applyMessage((string) $effect->name, $receiver->data->name, $this->actor->data->name);
+                    $outcomeSuccessMessages[] = $own !== null
+                        ? $own . ' (' . $timeMessage . ')'
+                        : 'L\'effet ' . $statusLabel . $iconMarkup . ' (x1) est appliqué ' . $timeMessage . ' à ' . $receiver->data->name;
+                }
             }
 
             if (!empty($outcomeSuccessMessages)) {
@@ -314,4 +330,49 @@ class ActionExecutorService
         }
     }
 
+
+    /**
+     * Who a weapon effect lands on. 'area' is the target's cell and the
+     * eight around it, characters only — a wall does not catch a cold.
+     *
+     * @return list<Player>
+     */
+    private function strikeReceivers(string $target): array
+    {
+        if ($target === 'self') {
+            return [$this->actor];
+        }
+        if ($target !== 'area') {
+            return [$this->target];
+        }
+
+        $coords = $this->target->getCoords();
+        if ($coords === null) {
+            return [$this->target];
+        }
+        $aroundCoords = null;
+        $aroundIds = [];
+        \Classes\View::get_coords_id_arround($aroundCoords, $aroundIds, $coords, 1);
+        if ($aroundIds === []) {
+            return [$this->target];
+        }
+
+        $rows = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()->fetchAllAssociative(
+            'SELECT id, player_type FROM players WHERE coords_id IN (' . implode(',', array_fill(0, count($aroundIds), '?')) . ')',
+            array_values($aroundIds)
+        );
+
+        $receivers = [];
+        foreach ($rows as $row) {
+            if (\App\Enum\EntityCategory::fromPlayerType($row['player_type']) !== \App\Enum\EntityCategory::Character) {
+                continue;
+            }
+            $id = (int) $row['id'];
+            $receivers[] = $id === (int) $this->target->id
+                ? $this->target
+                : ($id === (int) $this->actor->id ? $this->actor : \App\Factory\PlayerFactory::legacy($id));
+        }
+
+        return $receivers === [] ? [$this->target] : $receivers;
+    }
 }

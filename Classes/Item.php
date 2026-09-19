@@ -757,12 +757,12 @@ class Item{
             $return[] = '<font color="green">Magique</font>';
         }
         
-        // special effects
-        if(!empty($itemJson->addEffects)){
+        // strike effects
+        if(!empty($itemJson->id)){
 
-            foreach($itemJson->addEffects as $e){
+            foreach((new \App\Service\ItemEffectService())->listForItems([(int) $itemJson->id]) as $e){
 
-                $return[] = '<font color="blue">+'. $e->name .'</font>';
+                $return[] = '<font color="blue">+'. $e->name . ($e->outcome === 'miss' ? ' (raté)' : '') .'</font>';
             }
         }
 
@@ -850,14 +850,8 @@ class Item{
         return !empty($this->row->magique);
     }
 
+    /** @return list<object{name: string, duration: int, outcome: string, target: string}> */
     public function getItemEffects() : array {
-        $itemJson = json()->decode('items', $this->row->name);
-        if (empty($itemJson->addEffects)) {
-            return [];
-        }
-
-        return is_array($itemJson->addEffects)
-            ? $itemJson->addEffects
-            : (array) $itemJson->addEffects;
+        return (new \App\Service\ItemEffectService())->listForItems([(int) $this->row->id]);
     }
 }

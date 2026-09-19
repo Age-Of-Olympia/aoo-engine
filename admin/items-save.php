@@ -267,18 +267,26 @@ $readEffectRows = static function (string $field) use ($effectService, $id): arr
     return $rows;
 };
 
-// Effets d'arme au coup porté : lignes effet + durée, recomposées en JSON.
-$strikeRows = $readEffectRows('strike_effects');
-$strikeEffects = array_map(
-    static fn (array $row): array => $row['extra'] + array_filter(
-        ['name' => $row['name'], 'duration' => $row['duration']],
-        static fn ($v): bool => $v !== null
-    ),
-    $strikeRows
-);
-$jsonColumns['add_effects'] = $strikeEffects === []
-    ? null
-    : json_encode(array_values($strikeEffects), JSON_UNESCAPED_UNICODE);
+// Weapon strike effects: one item_effects row per filled line.
+$strikeRows = [];
+foreach (array_values((array) ($_POST['strike_effects_name'] ?? [])) as $i => $rawName) {
+    $effectName = strtolower(trim((string) $rawName));
+    if ($effectName === '') {
+        continue;
+    }
+    $strikeRows[] = [
+        'name' => $effectName,
+        'duration' => max(-1, (int) ($_POST['strike_effects_duration'][$i] ?? 1)),
+        'outcome' => (string) ($_POST['strike_effects_outcome'][$i] ?? 'hit'),
+        'target' => (string) ($_POST['strike_effects_target'][$i] ?? 'target'),
+    ];
+}
+try {
+    (new \App\Service\ItemEffectService())->replaceForItem($id, $strikeRows);
+} catch (\InvalidArgumentException $e) {
+    setFlash('warning', $e->getMessage() . ' — rien n\'a été enregistré.');
+    redirectTo('/admin/items.php?action=edit&id=' . $id);
+}
 
 // Effets de consommation : les effets appliqués s'éditent en lignes (avec
 // leur durée), les retirés restent un sélecteur — on ne règle pas la durée
@@ -378,7 +386,7 @@ $set = array_merge($set, [
     'spell = ?', 'exotique = ?',
     'wear_triggers = ?', 'wear_profile = ?', 'wear_rate = ?', 'durability_max = ?', 'capacity = ?',
     'text = ?', 'price = ?', 'emplacement = ?', 'type = ?', 'subtype = ?', 'race = ?',
-    'munitions = ?', 'add_effects = ?', 'forbid = ?', 'extra = ?',
+    'munitions = ?', 'forbid = ?', 'extra = ?',
     'stats_in_db = 1',
 ]);
 $params = array_merge($params, [
@@ -397,7 +405,6 @@ $params = array_merge($params, [
     trim((string) ($_POST['subtype'] ?? '')),
     trim((string) ($_POST['race'] ?? '')),
     $munitions === [] ? null : json_encode($munitions, JSON_UNESCAPED_UNICODE),
-    $jsonColumns['add_effects'],
     $jsonColumns['forbid'],
     $jsonColumns['extra'],
 ]);

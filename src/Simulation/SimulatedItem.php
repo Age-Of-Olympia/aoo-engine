@@ -47,6 +47,22 @@ class SimulatedItem extends Item
         return $this->data;
     }
 
+    public function getItemEffects(): array
+    {
+        $rows = [];
+        foreach ((array) $this->data->addEffects as $entry) {
+            $entry = (object) $entry;
+            $rows[] = (object) [
+                'name' => (string) ($entry->name ?? ''),
+                'duration' => (int) ($entry->duration ?? 1),
+                'outcome' => (string) ($entry->outcome ?? 'hit'),
+                'target' => (string) ($entry->target ?? 'target'),
+            ];
+        }
+
+        return $rows;
+    }
+
     public function is_crafted_with($ingredients)
     {
         return false;

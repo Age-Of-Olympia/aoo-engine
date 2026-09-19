@@ -463,6 +463,42 @@ function item_effect_duration_rows(string $field, array $entries, string $header
 }
 
 /**
+ * Lignes des effets d'arme (table item_effects) : effet, durée, déclencheur
+ * (coup réussi / raté) et receveur — plus une ligne vierge pour l'ajout.
+ *
+ * @param list<object{name: string, duration: int, outcome: string, target: string}> $rows
+ */
+function item_strike_effect_rows(array $rows): string
+{
+    $known = (new \App\Service\EffectService())->getEffectNames();
+    $outcomes = ['hit' => 'Coup réussi', 'miss' => 'Coup raté'];
+    $targets = ['target' => 'La cible', 'self' => 'Le porteur', 'area' => 'La cible et autour'];
+
+    $html = '<div class="d-flex gap-2 text-muted" style="font-size:85%;">'
+        . '<span style="flex:2;">Effet</span><span style="flex:1;">Durée (tours)</span>'
+        . '<span style="flex:1;">Quand</span><span style="flex:1;">Sur qui</span></div>';
+
+    $rows[] = (object) ['name' => '', 'duration' => 1, 'outcome' => 'hit', 'target' => 'target'];
+    foreach ($rows as $row) {
+        $options = '<option value="">—</option>';
+        foreach ($known as $effectName) {
+            $options .= '<option value="' . e($effectName) . '"' . ($effectName === $row->name ? ' selected' : '') . '>' . e($effectName) . '</option>';
+        }
+        $html .= '<div class="d-flex gap-2 mb-1">'
+            . '<select class="form-control form-control-sm" name="strike_effects_name[]" style="flex:2;">' . $options . '</select>'
+            . '<input class="form-control form-control-sm" type="number" name="strike_effects_duration[]" style="flex:1;" value="' . (int) $row->duration . '">'
+            . formSelect('strike_effects_outcome[]', $outcomes, $row->outcome, null, 'class="form-control form-control-sm" style="flex:1;"')
+            . formSelect('strike_effects_target[]', $targets, $row->target, null, 'class="form-control form-control-sm" style="flex:1;"')
+            . '</div>';
+    }
+
+    return '<div class="form-group">' . $html
+        . '<small class="text-muted">Durée en <b>tours</b> : <code>1</code> pour un tour,'
+        . ' <code>0</code> jusqu\'au prochain tour, <code>-1</code> sans fin.'
+        . ' Ligne au nom vidé = supprimée ; la ligne vierge sert à en ajouter une.</small></div>';
+}
+
+/**
  * Lignes d'édition des pousses d'une graine (extra.growTo) : nom posé,
  * table de carte cible, taux « 1 chance sur N par jour » — plus une
  * ligne vierge pour l'ajout.
@@ -596,19 +632,8 @@ function items_render_edit(object $row, string $csrfToken): string
         array_filter($consumeEffects, static fn (string $e): bool => str_starts_with($e, '-'))
     ));
 
-    /* Weapon strike effects: [{"name": "poison", "duration": 3}] — edited as
-       rows since the raw JSON taught a seconds-era duration nobody honours. */
-    $strikeEffects = [];
-    foreach ((array) json_decode((string) ($row->add_effects ?? ''), true) as $entry) {
-        if (!is_array($entry) || trim((string) ($entry['name'] ?? '')) === '') {
-            continue;
-        }
-        $strikeEffects[] = [
-            'name' => (string) $entry['name'],
-            'duration' => array_key_exists('duration', $entry) ? (int) $entry['duration'] : null,
-            'extra' => array_diff_key($entry, ['name' => null, 'duration' => null]),
-        ];
-    }
+    // Weapon strike effects: one row each in item_effects.
+    $strikeEffects = (new \App\Service\ItemEffectService())->listForItem((int) $row->id);
     /* Graine : growTo (pousses possibles, table cible, 1 chance sur N par
      * jour — cron daily 20_grow_crops) et growZMin, éclatés en champs
      * dédiés — même contrat que les effets : le textarea Extra n'affiche
@@ -781,9 +806,10 @@ function items_render_edit(object $row, string $csrfToken): string
             'form-group', 'La graine ne germe qu\'à partir de ce niveau Z — vide : partout.');
 
     $jsonAvance = formField('Effets d\'arme au coup porté',
-            item_effect_duration_rows('strike_effects', $strikeEffects, 'Effet posé sur la cible'),
+            item_strike_effect_rows($strikeEffects),
             'form-group',
-            'Arme équipée : effets posés sur la cible quand le coup touche.')
+            'Arme équipée : chaque ligne dit quand l\'effet est posé (coup réussi ou raté) et sur qui'
+            . ' — le porteur, la cible, ou la case de la cible et les huit autour (personnages seulement).')
         . formField('Interdits (JSON)', formTextarea('forbid', (string) ($row->forbid ?? ''), 2),
             'form-group', '<code>{"market":1}</code> : invendable au marché et aux contrats (ex : l\'or).')
         . formField('Extra (JSON, clés héritées — sans perte)', formTextarea('extra', $extraDisplay, 2),
