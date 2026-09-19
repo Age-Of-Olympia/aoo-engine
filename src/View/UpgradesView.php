@@ -79,11 +79,17 @@ final class UpgradesView
                 $carac = '<font color="red">' . $player->caracs->$k . '</font>';
             }
 
+            // The icon of the effect that moves this carac, red for a malus, blue for a bonus.
             $debuff = '';
 
             if (!empty($player->debuffs->$k)) {
 
-                $debuff = '<span class="ra ' . $player->effectService->getIcon($player->debuffs->$k) . '"></span>';
+                $debuff = ' <span class="ra ' . $player->effectService->getIcon($player->debuffs->$k) . '" style="color:red" title="' . htmlspecialchars((string) $player->debuffs->$k, ENT_QUOTES) . '"></span>';
+            }
+
+            if (!empty($player->buffs->$k)) {
+
+                $debuff .= ' <span class="ra ' . $player->effectService->getIcon($player->buffs->$k) . '" style="color:blue" title="' . htmlspecialchars((string) $player->buffs->$k, ENT_QUOTES) . '"></span>';
             }
 
             if ($reassign) {

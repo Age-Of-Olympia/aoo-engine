@@ -85,9 +85,6 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
 
         $stackable = $params['stackable'] ?? false;
 
-        // The value comes from action parameters: escaped before it goes into
-        // the outcome HTML (the effect name is escaped by landingMessage).
-        $valueLabel = ($stackable ? '+' : 'x') . htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 
         $outcomeSuccessMessages = array();
         $receiver = $this->receiver($actor, $target);
@@ -99,7 +96,7 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
             }
         } elseif ($this->mayReceiveEffect($receiver, $params, $apply)) {
             $this->applyEffect($apply, $status, $duration, $value, $stackable, $receiver);
-            $outcomeSuccessMessages[0] = $effectService->landingMessage($status, $receiver->data->name, $actor->data->name, $duration, $valueLabel);
+            $outcomeSuccessMessages[0] = $effectService->landingMessage($status, $receiver->data->name, $actor->data->name, $duration, (int) $value, (bool) $stackable);
         }
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array());

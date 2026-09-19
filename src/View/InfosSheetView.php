@@ -102,7 +102,8 @@ final class InfosSheetView
                     $endTime = '';
                 }
 
-                echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=regles:effets#' . $effect->getName() . '"><span class="ra ' . $effectService->getIcon($effect->getName()) . '"></span><span style="font-size: 88%;">(' . $effect->getValue() . ') ' . $endTime . '</span></a><br />';
+                $what = $effectService->describe($effect->getName(), (int) ($effect->getValue() ?? 1));
+                echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=regles:effets#' . $effect->getName() . '" title="' . htmlspecialchars(ucfirst($effect->getName()) . ($what !== '' ? ' : ' . $what : ''), ENT_QUOTES) . '"><span class="ra ' . $effectService->getIcon($effect->getName()) . '"></span><span style="font-size: 88%;">(' . $effect->getValue() . ') ' . $endTime . ($what !== '' ? ' · ' . $what : '') . '</span></a><br />';
             }
 
             echo '</div>';

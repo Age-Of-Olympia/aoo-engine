@@ -134,7 +134,7 @@ class EffectService
      * $valueLabel is "x1" or "+3" as the caller counts it; $duration in
      * turns (0 = until next turn, negative = no end).
      */
-    public function landingMessage(string $name, string $receiverName, string $actorName, int $duration, string $valueLabel = 'x1'): string
+    public function landingMessage(string $name, string $receiverName, string $actorName, int $duration, int $value = 1, bool $stackable = false): string
     {
         $effect = $this->catalog()[$name] ?? null;
         $icon = $effect === null ? '' : $effect->getIcon();
@@ -144,12 +144,13 @@ class EffectService
             ? 'sans limite de durée'
             : ($duration === 0 ? 'jusqu\'au prochain tour' : 'pour ' . $duration . ' tour' . ($duration > 1 ? 's' : ''));
 
-        $pv = $effect === null ? 0 : $effect->getPvOnApply();
-        $pvLabel = $pv === 0 ? '' : ', PV ' . ($pv > 0 ? '+' : '−') . abs($pv);
+        $valueLabel = ($stackable ? '+' : 'x') . $value;
+        $what = $this->describe($name, $value);
+        $whatLabel = $what === '' ? '' : ', ' . $what;
 
         if ($effect === null || trim($effect->getApplyText()) === '') {
             return 'L\'effet ' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . $iconMarkup
-                . ' (' . $valueLabel . ') est appliqué ' . $time . ' à ' . $receiverName . $pvLabel;
+                . ' (' . $valueLabel . ') est appliqué ' . $time . ' à ' . $receiverName . $whatLabel;
         }
 
         $own = strtr(htmlspecialchars($effect->getApplyText(), ENT_QUOTES, 'UTF-8'), [
@@ -158,7 +159,32 @@ class EffectService
             '{effet}' => htmlspecialchars($effect->getLabel(), ENT_QUOTES, 'UTF-8') . $iconMarkup,
         ]);
 
-        return $own . ' (' . $valueLabel . ', ' . $time . $pvLabel . ')';
+        return $own . ' (' . $valueLabel . ', ' . $time . $whatLabel . ')';
+    }
+
+    /**
+     * What the effect does to its bearer, in the player's words: the caracs
+     * it moves at this intensity and the PV taken on landing.
+     * "E −3, F +6, PV −10" — '' when it moves nothing.
+     */
+    public function describe(string $name, int $value = 1): string
+    {
+        $effect = $this->catalog()[$name] ?? null;
+        if ($effect === null) {
+            return '';
+        }
+
+        $parts = [];
+        foreach ($effect->getCaracMods() as $carac => $sign) {
+            $n = $sign * max(1, $value);
+            $parts[] = ($carac === 'pv' ? 'PV max' : (CARACS[$carac] ?? strtoupper($carac))) . ' ' . ($n > 0 ? '+' : '−') . abs($n);
+        }
+        $pv = $effect->getPvOnApply();
+        if ($pv !== 0) {
+            $parts[] = 'PV ' . ($pv > 0 ? '+' : '−') . abs($pv);
+        }
+
+        return implode(', ', $parts);
     }
 
     /** @return array<string, array<string, int>> effect name => carac => signed multiplier of the value */

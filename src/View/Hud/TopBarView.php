@@ -208,7 +208,8 @@ final class TopBarView
 
             $endTime = PlayerEffectService::describeRemaining($effect->getEndTime());
 
-            $title = ucfirst($effect->getName()) . ' (' . $effect->getValue() . ') · ' . $endTime;
+            $what = $effectService->describe($effect->getName(), (int) ($effect->getValue() ?? 1));
+            $title = ucfirst($effect->getName()) . ' (' . $effect->getValue() . ') · ' . $endTime . ($what !== '' ? ' · ' . $what : '');
             $icon = $effectService->getIcon($effect->getName());
 
             $chips .= '<span class="hud-pill hud-pill--effect" title="' . htmlspecialchars($title, ENT_QUOTES) . '">'

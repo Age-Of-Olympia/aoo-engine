@@ -46,15 +46,15 @@ class EffectCaracModsTest extends LegacyPlayerFixtureTestCase
     public function testAnEffectSaysWhatItDoesWhenItLands(): void
     {
         $this->link->executeStatement(
-            "INSERT INTO effects (name, label, icon, apply_text) VALUES ('flamme_test', 'Flamme', 'ra-fire', '{cible} prend feu par {acteur} <b>')"
+            "INSERT INTO effects (name, label, icon, apply_text, carac_mods, pv_on_apply) VALUES ('flamme_test', 'Flamme', 'ra-fire', '{cible} prend feu par {acteur} <b>', '{\"e\":-1,\"f\":2}', -10)"
         );
         EffectService::clearCache();
 
         $service = new EffectService();
         $this->assertSame(
-            'Dorna prend feu par Cradek &lt;b&gt; (x1, pour 2 tours)',
-            $service->landingMessage('flamme_test', 'Dorna', 'Cradek', 2),
-            'placeholders filled, template escaped'
+            'Dorna prend feu par Cradek &lt;b&gt; (x3, pour 2 tours, E −3, F +6, PV −10)',
+            $service->landingMessage('flamme_test', 'Dorna', 'Cradek', 2, 3),
+            'placeholders filled, template escaped, effects spelled out at this intensity'
         );
         $this->assertStringStartsWith('L\'effet feu', $service->landingMessage('feu', 'Dorna', 'Cradek', 1), 'no text = the generic line');
     }
