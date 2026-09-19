@@ -10,14 +10,14 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * The effects a weapon lands on a strike leave items.add_effects (JSON,
  * hand-written, only name/duration ever read) for a table of their own,
- * with WHEN they land (hit or miss) and ON WHOM (self, target, area).
+ * with WHEN they land (hit or miss) and ON WHOM (self or target).
  * The JSON column stays untouched and is no longer read.
  */
 final class Version20260919170000_ItemEffectsGetATable extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'item_effects: effect, duration, outcome (hit/miss), target (self/target/area) per item';
+        return 'item_effects: effect, duration, outcome (hit/miss), target (self/target) per item';
     }
 
     public function up(Schema $schema): void
@@ -29,7 +29,7 @@ final class Version20260919170000_ItemEffectsGetATable extends AbstractMigration
                 effect VARCHAR(100) NOT NULL,
                 duration INT NOT NULL DEFAULT 1,
                 outcome ENUM('hit', 'miss') NOT NULL DEFAULT 'hit',
-                target ENUM('self', 'target', 'area') NOT NULL DEFAULT 'target',
+                target ENUM('self', 'target') NOT NULL DEFAULT 'target',
                 INDEX idx_item_effects_item (item_id),
                 CONSTRAINT fk_item_effects_item FOREIGN KEY (item_id) REFERENCES items (id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
@@ -59,7 +59,7 @@ final class Version20260919170000_ItemEffectsGetATable extends AbstractMigration
                         $effect,
                         max(-1, (int) ($entry['duration'] ?? 1)),
                         ($entry['when'] ?? 'win') === 'lose' ? 'miss' : 'hit',
-                        in_array($target, ['self', 'target', 'area'], true) ? $target : 'target',
+                        in_array($target, ['self', 'target'], true) ? $target : 'target',
                     ]
                 );
             }

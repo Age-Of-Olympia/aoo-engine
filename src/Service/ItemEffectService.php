@@ -8,12 +8,12 @@ use Doctrine\DBAL\Connection;
 /**
  * The effects an item lands when its bearer strikes: one row per effect,
  * with the outcome that triggers it (hit or miss) and who receives it
- * (the bearer, the target, or the target and the eight cells around it).
+ * (the bearer or the target).
  */
 class ItemEffectService
 {
     public const OUTCOMES = ['hit', 'miss'];
-    public const TARGETS = ['self', 'target', 'area'];
+    public const TARGETS = ['self', 'target'];
 
     private Connection $conn;
 

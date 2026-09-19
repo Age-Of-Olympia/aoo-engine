@@ -472,7 +472,7 @@ function item_strike_effect_rows(array $rows): string
 {
     $known = (new \App\Service\EffectService())->getEffectNames();
     $outcomes = ['hit' => 'Coup réussi', 'miss' => 'Coup raté'];
-    $targets = ['target' => 'La cible', 'self' => 'Le porteur', 'area' => 'La cible et autour'];
+    $targets = ['target' => 'La cible', 'self' => 'Le porteur'];
 
     $html = '<div class="d-flex gap-2 text-muted" style="font-size:85%;">'
         . '<span style="flex:2;">Effet</span><span style="flex:1;">Durée (tours)</span>'
@@ -808,8 +808,7 @@ function items_render_edit(object $row, string $csrfToken): string
     $jsonAvance = formField('Effets d\'arme au coup porté',
             item_strike_effect_rows($strikeEffects),
             'form-group',
-            'Arme équipée : chaque ligne dit quand l\'effet est posé (coup réussi ou raté) et sur qui'
-            . ' — le porteur, la cible, ou la case de la cible et les huit autour (personnages seulement).')
+            'Arme équipée : chaque ligne indique quand l\'effet est posé (coup réussi ou raté) et sur qui (le porteur ou la cible).')
         . formField('Interdits (JSON)', formTextarea('forbid', (string) ($row->forbid ?? ''), 2),
             'form-group', '<code>{"market":1}</code> : invendable au marché et aux contrats (ex : l\'or).')
         . formField('Extra (JSON, clés héritées — sans perte)', formTextarea('extra', $extraDisplay, 2),

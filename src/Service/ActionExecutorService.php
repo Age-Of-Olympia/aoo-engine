@@ -281,8 +281,7 @@ class ActionExecutorService
 
     /**
      * The bearer's weapon effects for this outcome ('hit' or 'miss'), each
-     * landed on its receivers: the bearer, the target, or every character
-     * on the target's cell and the eight around it.
+     * landed on its receiver: the bearer or the target.
      */
     private function applyEquippedItemsEffects(string $outcome): void
     {
@@ -303,13 +302,7 @@ class ActionExecutorService
                 foreach ($this->strikeReceivers((string) ($effect->target ?? 'target')) as $receiver) {
                     // add_effect, not the raw insert: the cancellation cycle and pv_on_apply come with it.
                     $receiver->add_effect((string) $effect->name, $duration);
-                    $message = $effectService->landingMessage((string) $effect->name, $receiver->data->name, $this->actor->data->name, $duration);
-                    $outcomeSuccessMessages[] = $message;
-
-                    // A bystander of an area gets no action log: this line is their only trace.
-                    if ($receiver->id != $this->actor->id && $receiver->id != $this->target->id) {
-                        \Classes\Log::put($receiver, $this->actor, $message, 'action_other_player', '', time());
-                    }
+                    $outcomeSuccessMessages[] = $effectService->landingMessage((string) $effect->name, $receiver->data->name, $this->actor->data->name, $duration);
                 }
             }
 
@@ -327,40 +320,12 @@ class ActionExecutorService
 
 
     /**
-     * Who a weapon effect lands on. 'area' is the target's cell and the
-     * eight around it, characters only — a wall does not catch a cold.
+     * Who a weapon effect lands on: the bearer or the target.
      *
      * @return list<Player>
      */
     private function strikeReceivers(string $target): array
     {
-        if ($target === 'self') {
-            return [$this->actor];
-        }
-        if ($target !== 'area') {
-            return [$this->target];
-        }
-
-        $aroundCoords = null;
-        $aroundIds = [];
-        \Classes\View::get_coords_id_arround($aroundCoords, $aroundIds, $this->target->getCoords(), 1);
-
-        $rows = $aroundIds === [] ? [] : \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()->fetchAllAssociative(
-            'SELECT id, player_type FROM players WHERE coords_id IN (' . implode(',', array_fill(0, count($aroundIds), '?')) . ')',
-            array_values($aroundIds)
-        );
-
-        $receivers = [];
-        foreach ($rows as $row) {
-            if (\App\Enum\EntityCategory::fromPlayerType($row['player_type']) !== \App\Enum\EntityCategory::Character) {
-                continue;
-            }
-            $id = (int) $row['id'];
-            $receivers[] = $id === (int) $this->target->id
-                ? $this->target
-                : ($id === (int) $this->actor->id ? $this->actor : \App\Factory\PlayerFactory::legacy($id));
-        }
-
-        return $receivers === [] ? [$this->target] : $receivers;
+        return [$target === 'self' ? $this->actor : $this->target];
     }
 }
