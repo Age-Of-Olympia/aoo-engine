@@ -26,8 +26,8 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
                 'target' => 'Cible',
                 'both' => 'Les deux',
             ]),
-            new ParameterField('value', FieldType::TRAIT_OR_INT, 'Valeur', default: 1),
-            new ParameterField('stackable', FieldType::BOOL, 'Cumulable', default: false),
+            new ParameterField('value', FieldType::TRAIT_OR_INT, 'Intensité', default: 1, help: 'Multiplie les caracs modifiées par l\'effet (feu à E −1, intensité 3 → E −3) ; 1 = l\'effet tel que défini. Les PV à l\'application ne sont pas multipliés.'),
+            new ParameterField('stackable', FieldType::BOOL, 'Cumulable', default: false, help: 'Réappliqué sur un porteur qui l\'a déjà : les intensités s\'additionnent (sinon la plus forte reste).'),
             new ParameterField(
                 'targets',
                 FieldType::ENUM,
