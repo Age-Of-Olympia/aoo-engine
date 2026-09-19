@@ -101,7 +101,16 @@ $validate = static function (): ?string {
 $applyForm = static function (Race $race) use ($face, $action): array {
     $notice = '';
 
+    // Instances named after the type (placed from the map, never renamed)
+    // follow its label.
+    $oldLabel = $race->getLabel();
     $race->setLabel(trim((string) $_POST['label']));
+    if ($action === 'update' && $oldLabel !== $race->getLabel()) {
+        \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()->executeStatement(
+            'UPDATE players SET name = ? WHERE race = ? AND name = ?',
+            [$race->getLabel(), $race->getName(), $oldLabel]
+        );
+    }
     $race->setDescription(trim((string) ($_POST['description'] ?? '')));
     // Sorte : personnage (défaut) ou structure. Une structure n'est jamais
     // proposée à l'inscription, quel que soit l'état de la case Jouable.
