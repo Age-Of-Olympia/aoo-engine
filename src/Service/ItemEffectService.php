@@ -22,12 +22,6 @@ class ItemEffectService
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
     }
 
-    /** @return list<object{name: string, duration: int, outcome: string, target: string}> */
-    public function listForItem(int $itemId): array
-    {
-        return $this->listForItems([$itemId]);
-    }
-
     /**
      * @param list<int> $itemIds
      * @return list<object{name: string, duration: int, outcome: string, target: string}>
@@ -40,7 +34,7 @@ class ItemEffectService
         }
 
         $rows = $this->conn->fetchAllAssociative(
-            'SELECT effect AS name, duration, outcome, target FROM item_effects
+            'SELECT item_id, effect AS name, duration, outcome, target FROM item_effects
               WHERE item_id IN (' . implode(',', array_fill(0, count($itemIds), '?')) . ')
               ORDER BY id',
             $itemIds
@@ -51,6 +45,22 @@ class ItemEffectService
 
             return (object) $row;
         }, $rows);
+    }
+
+    /**
+     * The same rows grouped by item, for a list rendered in one query.
+     *
+     * @param list<int> $itemIds
+     * @return array<int, list<object{name: string, duration: int, outcome: string, target: string}>>
+     */
+    public function mapForItems(array $itemIds): array
+    {
+        $map = [];
+        foreach ($this->listForItems($itemIds) as $row) {
+            $map[(int) $row->item_id][] = $row;
+        }
+
+        return $map;
     }
 
     /**

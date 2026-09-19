@@ -633,7 +633,7 @@ function items_render_edit(object $row, string $csrfToken): string
     ));
 
     // Weapon strike effects: one row each in item_effects.
-    $strikeEffects = (new \App\Service\ItemEffectService())->listForItem((int) $row->id);
+    $strikeEffects = (new \App\Service\ItemEffectService())->listForItems([(int) $row->id]);
     /* Graine : growTo (pousses possibles, table cible, 1 chance sur N par
      * jour — cron daily 20_grow_crops) et growZMin, éclatés en champs
      * dédiés — même contrat que les effets : le textarea Extra n'affiche

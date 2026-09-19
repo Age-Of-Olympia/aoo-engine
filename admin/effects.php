@@ -45,9 +45,9 @@ function effect_flag_badges(Effect $effect): string
 function effect_modifiers(Effect $effect): string
 {
     $parts = [];
-    if ($effect->getPvOnApply() !== 0) {
-        $parts[] = '<span class="' . ($effect->getPvOnApply() > 0 ? 'text-success' : 'text-danger') . '">PV '
-            . ($effect->getPvOnApply() > 0 ? '+' : '−') . abs($effect->getPvOnApply()) . '</span>';
+    $pv = $effect->getPvOnApply();
+    if ($pv !== 0) {
+        $parts[] = '<span class="' . ($pv > 0 ? 'text-success' : 'text-danger') . '">PV ' . ($pv > 0 ? '+' : '−') . abs($pv) . '</span>';
     }
     foreach ($effect->getCaracMods() as $carac => $sign) {
         $times = abs($sign) === 1 ? 'valeur' : abs($sign) . '×valeur';

@@ -85,7 +85,7 @@ final class ItemExporter implements ObjectExporterInterface
 
         $payload['strikeEffects'] = array_map(
             static fn (object $row): array => (array) $row,
-            (new ItemEffectService($this->connection()))->listForItem((int) $entity->id)
+            (new ItemEffectService($this->connection()))->listForItems([(int) $entity->id])
         );
 
         return $payload;

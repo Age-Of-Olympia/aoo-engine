@@ -323,13 +323,7 @@ class Player implements ActorInterface {
             foreach($caracMods[$e->getName()] ?? [] as $carac => $sign){
 
                 $this->caracs->$carac = ($this->caracs->$carac ?? 0) + $sign * $value;
-
-                if($sign < 0){
-                    $this->debuffs->$carac = $e->getName();
-                }
-                else{
-                    $this->buffs->$carac = $e->getName();
-                }
+                $this->{$sign < 0 ? 'debuffs' : 'buffs'}->$carac = $e->getName();
             }
         }
 

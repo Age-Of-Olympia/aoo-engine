@@ -237,6 +237,8 @@ final class InfosSheetView
             // so pass the entity's id directly instead of the legacy object.
             $itemList = Item::get_equiped_list($targetEntity->getId());
 
+            $strikeByItem = (new \App\Service\ItemEffectService())->mapForItems(array_column($itemList, 'id'));
+
             foreach ($itemList as $row) {
 
 
@@ -245,7 +247,7 @@ final class InfosSheetView
 
 
                 $itemName = Item::get_formatted_name(ucfirst($item->data->name), $row);
-                $caracs = implode(', ', Item::get_item_carac($item->data));
+                $caracs = implode(', ', Item::get_item_carac($item->data, $strikeByItem[(int) $row->id] ?? []));
 
                 $type = (!empty($item->data->type)) ? $item->data->type : '';
 

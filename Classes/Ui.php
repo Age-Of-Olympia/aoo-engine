@@ -448,6 +448,8 @@ class Ui{
                     . $sectionTitle . '</td></tr>';
             }
 
+        $strikeByItem = (new \App\Service\ItemEffectService())->mapForItems(array_column($sectionRows, 'id'));
+
         foreach($sectionRows as $row){
 
 
@@ -455,7 +457,7 @@ class Ui{
 
             $item->get_data();
 
-            $caracs = Item::get_item_carac($item->data);
+            $caracs = Item::get_item_carac($item->data, $strikeByItem[(int) $row->id] ?? []);
 
 
             $itemName = Item::get_formatted_name(ucfirst($item->data->name), $row);

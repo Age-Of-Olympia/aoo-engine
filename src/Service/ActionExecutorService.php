@@ -299,24 +299,11 @@ class ActionExecutorService
                 }
 
                 $duration = (int) ($effect->duration ?? 1);
-                $timeMessage = $duration === 0
-                    ? 'jusqu\'au prochain tour'
-                    : ($duration < 0 ? 'sans limite de durée' : 'pour ' . $duration . ' tour' . ($duration > 1 ? 's' : ''));
-
-                $statusLabel = htmlspecialchars((string) $effect->name, ENT_QUOTES, 'UTF-8');
-                $icon = $effectService->getIcon($effect->name);
-                $iconMarkup = !empty($icon) ? ' <span class="ra ' . $icon . '"></span>' : '';
-                $pv = $effectService->pvOnApply((string) $effect->name);
-                $pvLabel = $pv === 0 ? '' : ', PV ' . ($pv > 0 ? '+' : '−') . abs($pv);
 
                 foreach ($this->strikeReceivers((string) ($effect->target ?? 'target')) as $receiver) {
-
-                    $receiver->playerEffectService->addEffectByPlayerId($receiver->id, $effect->name, $duration, 1, false);
-
-                    $own = $effectService->applyMessage((string) $effect->name, $receiver->data->name, $this->actor->data->name);
-                    $outcomeSuccessMessages[] = $own !== null
-                        ? $own . ' (' . $timeMessage . $pvLabel . ')'
-                        : 'L\'effet ' . $statusLabel . $iconMarkup . ' (x1) est appliqué ' . $timeMessage . ' à ' . $receiver->data->name . $pvLabel;
+                    // add_effect, not the raw insert: the cancellation cycle and pv_on_apply come with it.
+                    $receiver->add_effect((string) $effect->name, $duration);
+                    $outcomeSuccessMessages[] = $effectService->landingMessage((string) $effect->name, $receiver->data->name, $this->actor->data->name, $duration);
                 }
             }
 
@@ -348,18 +335,11 @@ class ActionExecutorService
             return [$this->target];
         }
 
-        $coords = $this->target->getCoords();
-        if ($coords === null) {
-            return [$this->target];
-        }
         $aroundCoords = null;
         $aroundIds = [];
-        \Classes\View::get_coords_id_arround($aroundCoords, $aroundIds, $coords, 1);
-        if ($aroundIds === []) {
-            return [$this->target];
-        }
+        \Classes\View::get_coords_id_arround($aroundCoords, $aroundIds, $this->target->getCoords(), 1);
 
-        $rows = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()->fetchAllAssociative(
+        $rows = $aroundIds === [] ? [] : \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()->fetchAllAssociative(
             'SELECT id, player_type FROM players WHERE coords_id IN (' . implode(',', array_fill(0, count($aroundIds), '?')) . ')',
             array_values($aroundIds)
         );

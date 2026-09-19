@@ -639,7 +639,12 @@ class Item{
 
 
     // print item carac
-    public static function get_item_carac($itemJson){
+    /**
+     * @param ?array $strikeEffects the item's item_effects rows when the caller
+     *                              fetched them for a whole list (mapForItems);
+     *                              null = read them here
+     */
+    public static function get_item_carac($itemJson, ?array $strikeEffects = null){
 
 
         $return = array();
@@ -758,12 +763,13 @@ class Item{
         }
         
         // strike effects
-        if(!empty($itemJson->id)){
+        if($strikeEffects === null && !empty($itemJson->id)){
 
-            foreach((new \App\Service\ItemEffectService())->listForItems([(int) $itemJson->id]) as $e){
+            $strikeEffects = (new \App\Service\ItemEffectService())->listForItems([(int) $itemJson->id]);
+        }
+        foreach($strikeEffects ?? [] as $e){
 
-                $return[] = '<font color="blue">+'. $e->name . ($e->outcome === 'miss' ? ' (raté)' : '') .'</font>';
-            }
+            $return[] = '<font color="blue">+'. $e->name . ($e->outcome === 'miss' ? ' (raté)' : '') .'</font>';
         }
 
         // pr

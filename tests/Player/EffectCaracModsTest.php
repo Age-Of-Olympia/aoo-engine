@@ -52,11 +52,11 @@ class EffectCaracModsTest extends LegacyPlayerFixtureTestCase
 
         $service = new EffectService();
         $this->assertSame(
-            'Dorna prend feu par Cradek &lt;b&gt;',
-            $service->applyMessage('flamme_test', 'Dorna', 'Cradek'),
+            'Dorna prend feu par Cradek &lt;b&gt; (x1, pour 2 tours)',
+            $service->landingMessage('flamme_test', 'Dorna', 'Cradek', 2),
             'placeholders filled, template escaped'
         );
-        $this->assertNull($service->applyMessage('feu', 'Dorna', 'Cradek'), 'no text = the generic line');
+        $this->assertStringStartsWith('L\'effet feu', $service->landingMessage('feu', 'Dorna', 'Cradek', 1), 'no text = the generic line');
     }
 
     public function testAnEffectHurtsEachTimeItLands(): void

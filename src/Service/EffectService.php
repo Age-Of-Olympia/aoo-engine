@@ -128,25 +128,37 @@ class EffectService
     }
 
     /**
-     * The effect's own sentence for its landing, placeholders filled, or null
-     * when the effect has none. The names are inserted as the game shows
-     * them elsewhere; the template is escaped.
+     * The line shown when the effect lands on $receiverName: the effect's
+     * own sentence ({cible}, {acteur}, {effet} filled, template escaped)
+     * or the generic one, followed by value, duration and PV change.
+     * $valueLabel is "x1" or "+3" as the caller counts it; $duration in
+     * turns (0 = until next turn, negative = no end).
      */
-    public function applyMessage(string $name, string $targetName, string $actorName): ?string
+    public function landingMessage(string $name, string $receiverName, string $actorName, int $duration, string $valueLabel = 'x1'): string
     {
         $effect = $this->catalog()[$name] ?? null;
+        $icon = $effect === null ? '' : $effect->getIcon();
+        $iconMarkup = $icon !== '' ? ' <span class="ra ' . $icon . '"></span>' : '';
+
+        $time = PlayerEffectService::isInfinite($duration)
+            ? 'sans limite de durée'
+            : ($duration === 0 ? 'jusqu\'au prochain tour' : 'pour ' . $duration . ' tour' . ($duration > 1 ? 's' : ''));
+
+        $pv = $effect === null ? 0 : $effect->getPvOnApply();
+        $pvLabel = $pv === 0 ? '' : ', PV ' . ($pv > 0 ? '+' : '−') . abs($pv);
+
         if ($effect === null || trim($effect->getApplyText()) === '') {
-            return null;
+            return 'L\'effet ' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . $iconMarkup
+                . ' (' . $valueLabel . ') est appliqué ' . $time . ' à ' . $receiverName . $pvLabel;
         }
 
-        $icon = $effect->getIcon();
-
-        return strtr(htmlspecialchars($effect->getApplyText(), ENT_QUOTES, 'UTF-8'), [
-            '{cible}' => $targetName,
+        $own = strtr(htmlspecialchars($effect->getApplyText(), ENT_QUOTES, 'UTF-8'), [
+            '{cible}' => $receiverName,
             '{acteur}' => $actorName,
-            '{effet}' => htmlspecialchars($effect->getLabel(), ENT_QUOTES, 'UTF-8')
-                . ($icon !== '' ? ' <span class="ra ' . $icon . '"></span>' : ''),
+            '{effet}' => htmlspecialchars($effect->getLabel(), ENT_QUOTES, 'UTF-8') . $iconMarkup,
         ]);
+
+        return $own . ' (' . $valueLabel . ', ' . $time . $pvLabel . ')';
     }
 
     /** @return array<string, array<string, int>> effect name => carac => signed multiplier of the value */

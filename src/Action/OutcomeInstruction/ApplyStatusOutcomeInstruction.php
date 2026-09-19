@@ -71,13 +71,6 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
          * aux tours : zéro tient jusqu'au prochain, négatif ne s'éteint
          * jamais (PlayerEffectService::DURATION_INFINITE). */
         $duration = (int) ($params['duration'] ?? 1);
-        if (\App\Service\PlayerEffectService::isInfinite($duration)) {
-            $timeMessage = 'sans limite de durée';
-        } elseif ($duration === 0) {
-            $timeMessage = 'jusqu\'au prochain tour';
-        } else {
-            $timeMessage = 'pour ' . $duration . ' tour' . ($duration > 1 ? 's' : '');
-        }
         $player = $params['player'] ?? 'both';
         $valueParam = $params['value'] ?? 1;
         if(is_array($valueParam)){
@@ -98,13 +91,9 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
 
         $stackable = $params['stackable'] ?? false;
 
-        // The effect name and value come from action parameters; escape them
-        // before they go into the outcome HTML (the surrounding <span> markup is
-        // ours and stays raw). Defense-in-depth: a config bundle or the raw param
-        // editor could otherwise smuggle markup into every player's combat log.
-        $statusLabel = htmlspecialchars((string) $status, ENT_QUOTES, 'UTF-8');
-        $valueLabel = htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-        $statusIcon = $effectService->getIcon($status);
+        // The value comes from action parameters: escaped before it goes into
+        // the outcome HTML (the effect name is escaped by landingMessage).
+        $valueLabel = ($stackable ? '+' : 'x') . htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 
         $outcomeSuccessMessages = array();
         switch ($player) {
@@ -116,44 +105,29 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
                     }
                 } elseif ($this->mayReceiveEffect($actor, $params, $apply)) {
                     $this->applyEffect($apply, $status, $duration, $value, $stackable, $actor);
-                    $outcomeSuccessMessages[0] = $this->appliedMessage($status, $statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $actor, $actor);
+                    $outcomeSuccessMessages[0] = $effectService->landingMessage($status, $actor->data->name, $actor->data->name, $duration, $valueLabel);
                 }
                 break;
             case 'target':
                 if ($this->mayReceiveEffect($target, $params, $apply)) {
                     $this->applyEffect($apply, $status, $duration, $value, $stackable, $target);
-                    $outcomeSuccessMessages[0] = $this->appliedMessage($status, $statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $target, $actor);
+                    $outcomeSuccessMessages[0] = $effectService->landingMessage($status, $target->data->name, $actor->data->name, $duration, $valueLabel);
                 }
                 break;
             default:
                 if ($this->mayReceiveEffect($actor, $params, $apply)) {
                     $this->applyEffect($apply, $status, $duration, $value, $stackable, $actor);
-                    $outcomeSuccessMessages[0] = $this->appliedMessage($status, $statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $actor, $actor);
+                    $outcomeSuccessMessages[0] = $effectService->landingMessage($status, $actor->data->name, $actor->data->name, $duration, $valueLabel);
                 }
 
             if ($target->data->name !== $actor->data->name && $this->mayReceiveEffect($target, $params, $apply)) {
                 $this->applyEffect($apply, $status, $duration, $value, $stackable, $target);
-                $outcomeSuccessMessages[1] = $this->appliedMessage($status, $statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $target, $actor);
+                $outcomeSuccessMessages[1] = $effectService->landingMessage($status, $target->data->name, $actor->data->name, $duration, $valueLabel);
             }
             break;
         }
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array());
-    }
-
-    /** The effect's own sentence when it has one, the generic line otherwise. */
-    private function appliedMessage(string $status, string $statusLabel, string $statusIcon, bool $stackable, string $valueLabel, string $timeMessage, Player $receiver, Player $actor): string
-    {
-        $effectService = new \App\Service\EffectService();
-        $pv = $effectService->pvOnApply($status);
-        $pvLabel = $pv === 0 ? '' : ', PV ' . ($pv > 0 ? '+' : '−') . abs($pv);
-
-        $own = $effectService->applyMessage($status, $receiver->data->name, $actor->data->name);
-        if ($own !== null) {
-            return $own . ' (' . ($stackable ? '+' : 'x') . $valueLabel . ', ' . $timeMessage . $pvLabel . ')';
-        }
-
-        return 'L\'effet '.$statusLabel.' <span class="ra '. $statusIcon .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage.' à ' . $receiver->data->name . $pvLabel;
     }
 
     private function applyEffect (bool $apply, string $effectName, int $duration, int $value, bool $stackable, Player $player){

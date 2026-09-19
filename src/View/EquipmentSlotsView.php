@@ -38,13 +38,15 @@ final class EquipmentSlotsView
         echo '<div class="equip-strip-title">Équipement</div>';
         echo '<div class="equip-slots">';
 
+        $strikeByItem = (new \App\Service\ItemEffectService())->mapForItems(array_column($itemList, 'id'));
+
         foreach ($itemList as $row) {
 
             $item = new Item($row->id, $row);
             $item->get_data();
 
             $itemName = Item::get_formatted_name(ucfirst($item->data->name), $row);
-            $caracs = implode(', ', Item::get_item_carac($item->data));
+            $caracs = implode(', ', Item::get_item_carac($item->data, $strikeByItem[(int) $row->id] ?? []));
             $type = (!empty($item->data->type)) ? $item->data->type : '';
 
             /* Certains objets n'ont pas de vignette _mini : l'image
