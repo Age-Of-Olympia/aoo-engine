@@ -50,6 +50,8 @@ final class Version20260919170000_ItemEffectsGetATable extends AbstractMigration
                 if ($effect === '') {
                     continue;
                 }
+                // Legacy keys were hand-written: absent or unknown values take the defaults.
+                $target = (string) ($entry['on'] ?? 'target');
                 $this->connection->executeStatement(
                     'INSERT INTO item_effects (item_id, effect, duration, outcome, target) VALUES (?, ?, ?, ?, ?)',
                     [
@@ -57,7 +59,7 @@ final class Version20260919170000_ItemEffectsGetATable extends AbstractMigration
                         $effect,
                         max(-1, (int) ($entry['duration'] ?? 1)),
                         ($entry['when'] ?? 'win') === 'lose' ? 'miss' : 'hit',
-                        in_array($entry['on'] ?? 'target', ['self', 'target', 'area'], true) ? $entry['on'] : 'target',
+                        in_array($target, ['self', 'target', 'area'], true) ? $target : 'target',
                     ]
                 );
             }
