@@ -19,7 +19,7 @@ class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterS
     {
         return new ParameterSchema(
             new ParameterField('type', FieldType::WEAPON_TYPE, "Types d'arme", multiple: true),
-            new ParameterField('location', FieldType::EMPLACEMENT, 'Emplacements', multiple: true),
+            new ParameterField('location', FieldType::EMPLACEMENT, 'Emplacements', multiple: true, help: 'Vide : main1.'),
         );
     }
 
@@ -37,7 +37,8 @@ class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterS
         $result = new ConditionResult(true, array(), array());
         $params = $condition->getParameters(); // e.g. { "type": ["melee"] } { "type": ["tir","jet"] } { "type": ["bouclier"], "location": ["main2"] }
         $weaponTypes = $params['type'] ?? array();
-        $locationArray = $params['location'] ?? ['main1'];
+        // The form saves an untouched multi-select as []: that is the default, not "nowhere".
+        $locationArray = ($params['location'] ?? []) ?: ['main1'];
         $weaponTypeOk = false;
         $weaponTypesKo = array();
         foreach ($locationArray as $location) {
