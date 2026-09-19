@@ -306,9 +306,11 @@
 
         var $modal = hudSheet();
         $modal.find('.hud-action-modal-body').html(html);
-        /* Final results only, and only while the action is still offered
-         * on the tile. */
-        $modal.find('.hud-action-modal-again').prop('hidden', !isFinal || !hudLastActionButton().length);
+        /* Final results only, only while the action is still offered on
+         * the tile, and not after « Action Impossible » : the same click
+         * would be refused the same way. */
+        var blocked = $modal.find('.hud-action-modal-body .action-blocked').length > 0;
+        $modal.find('.hud-action-modal-again').prop('hidden', !isFinal || blocked || !hudLastActionButton().length);
         $modal.show();
     };
 

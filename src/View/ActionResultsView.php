@@ -75,7 +75,7 @@ class ActionResultsView
             return '<div style="color: #66ccff;">Réussite !</div>';
         }
         if ($this->actionResults->isBlocked()) {
-            return '<div style="color: orange;">Action Impossible.</div>';
+            return '<div class="action-blocked" style="color: orange;">Action Impossible.</div>';
         }
 
         return '<div style="color: red;">Echec !</div>';
