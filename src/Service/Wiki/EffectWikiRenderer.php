@@ -60,8 +60,7 @@ final class EffectWikiRenderer implements WikiSheetRendererInterface
             $rules[] = ($effect->getPvOnApply() < 0 ? 'Retire ' : 'Rend ') . abs($effect->getPvOnApply()) . ' PV à chaque application.';
         }
         foreach ($effect->getCaracMods() as $key => $sign) {
-            $times = abs($sign) === 1 ? '' : ' × ' . abs($sign);
-            $rules[] = ($sign > 0 ? 'Augmente ' : 'Diminue ') . $carac($key) . ' de la valeur portée' . $times . '.';
+            $rules[] = ($sign > 0 ? 'Augmente ' : 'Diminue ') . ($key === 'pv' ? 'les Points de Vie maximum' : $carac($key)) . ' de ' . abs($sign) . '.';
         }
         foreach ([
             'getRollAttackMod' => 'au jet d\'attaque', 'getRollDefenseMod' => 'au jet de défense',
