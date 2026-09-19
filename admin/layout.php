@@ -252,7 +252,9 @@ function admin_layout($title, $content, array $assets = []) {
     <link href="/css/main.min.css?v=$mainCssVersion" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="/admin/css/admin.css?v=$version">
-    <link rel="stylesheet" href="/admin/css/admin-design-system.css?v=$version">$styleLinks
+    <link rel="stylesheet" href="/admin/css/admin-design-system.css?v=$version">
+    <link rel="stylesheet" href="/css/modal.css?v=$mainCssVersion">$styleLinks
+    <script src="/js/modal.js?v=$version"></script>
     <script src="/admin/js/admin-list.js?v=$version" defer></script>
 </head>
 <body>
