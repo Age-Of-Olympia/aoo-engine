@@ -42,7 +42,7 @@ class DeathByElementTest extends LegacyPlayerFixtureTestCase
         $this->assertLessThan(1, $player->getRemaining('pv'), 'the element took the last PV');
 
         ob_start();
-        PlayerService::processDeathByElement($player);
+        PlayerService::processSelfDeath($player, 'aux éléments');
         ob_end_clean();
 
         $plan = (string) $this->link->fetchOne(

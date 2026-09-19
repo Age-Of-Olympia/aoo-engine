@@ -81,17 +81,18 @@ class PlayerService
     }
 
     /**
-     * A character killed by the ground they walk on (an element whose effect
-     * takes PV): no killer, so no XP to share and no kill counted — the
-     * log, the XP loss and the trip to the enfers are the same.
+     * A character killed with no killer — the ground they walk on, or an
+     * effect they landed on themselves: no XP to share and no kill counted;
+     * the log, the XP loss and the trip to the enfers are the same.
+     * $cause completes « a succombé … » (« aux éléments », « à ses propres effets »).
      */
-    public static function processDeathByElement(Player $player): void
+    public static function processSelfDeath(Player $player, string $cause): void
     {
         if ($player->getRemaining('pv') > 0) {
             return;
         }
 
-        Log::put($player, $player, $player->data->name . ' a succombé aux éléments.', type: "kill", hiddenText: '', logTime: time());
+        Log::put($player, $player, $player->data->name . ' a succombé ' . $cause . '.', type: "kill", hiddenText: '', logTime: time());
 
         $player->put_xp(-DEATH_XP * $player->data->rank);
         $player->death();

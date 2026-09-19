@@ -196,6 +196,14 @@ try {
 
 $targetPvAfter = $target->getRemaining('pv');
 
+/* The actor's own effects (a weapon row on « le porteur », an area that
+ * covers their cell) can take their last PV: no killer, self death. */
+if ($target->id != $player->id && $player->getRemaining('pv') < 1) {
+    PlayerService::processSelfDeath($player, 'à ses propres effets');
+    echo '<b><font color="red">Vous succombez à vos propres effets.</font></b>';
+    OnHideReloadView::render($player);
+}
+
 if($targetPvBefore != $targetPvAfter){
     if($targetPvAfter < 1){
         PlayerService::ProcessTargetDeath($player, $target);

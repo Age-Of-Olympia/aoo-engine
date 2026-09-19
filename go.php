@@ -335,7 +335,7 @@ $player->go($goCoords);
 
 // The cell's element may have taken the last PV (effects.pv_on_apply).
 if ($player->getRemaining('pv') < 1) {
-    \App\Service\PlayerService::processDeathByElement($player);
+    \App\Service\PlayerService::processSelfDeath($player, 'aux éléments');
     echo '<script>aooAlert("Vous succombez aux éléments.").then(function(){document.location.reload();});</script>';
     exit();
 }
