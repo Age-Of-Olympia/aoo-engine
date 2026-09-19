@@ -74,6 +74,8 @@ final class ItemImporter extends AbstractDbalImporter
         }
         $set[] = '`durability_max` = ?';
         $params[] = max(1, (int) ($payload['durability_max'] ?? 100));
+        $set[] = '`label` = ?';
+        $params[] = mb_substr(trim((string) ($payload['label'] ?? '')), 0, 100);
         // Un objet importé est par définition sourcé en base : sans ce
         // forçage, un payload sans la clé retomberait à 0 et le jeu
         // chercherait un JSON legacy qui n'existe pas ici.

@@ -129,7 +129,8 @@ class Item{
 
         $data = (object) array(
             'id' => (int) $this->row->id,
-            'name' => $this->row->name,
+            // The name players read; '' falls back to the technical name (ucfirst by get_data).
+            'name' => trim((string) ($this->row->label ?? '')) !== '' ? $this->row->label : $this->row->name,
             'private' => (int) $this->row->private,
             'price' => (int) $this->row->price,
             'text' => (string) ($this->row->text ?? ''),

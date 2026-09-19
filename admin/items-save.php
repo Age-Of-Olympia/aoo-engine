@@ -189,7 +189,7 @@ if ($action === 'create') {
         setFlash('warning', "Un objet « {$name} » existe déjà.");
         redirectTo('/admin/items.php?action=new');
     }
-    $db->exe('INSERT INTO items (name) VALUES (?)', $name);
+    $db->exe('INSERT INTO items (name, label) VALUES (?, ?)', [$name, mb_substr(trim((string) ($_POST['label'] ?? '')), 0, 100)]);
     $id = (int) $db->exe('SELECT id FROM items WHERE name = ?', $name)->fetch_object()->id;
 } else {
     $id = (int) ($_POST['id'] ?? 0);
@@ -385,7 +385,7 @@ foreach (\Classes\Item::FLAG_KEYS as $flag) {
 $set = array_merge($set, [
     'spell = ?', 'exotique = ?',
     'wear_triggers = ?', 'wear_profile = ?', 'wear_rate = ?', 'durability_max = ?', 'capacity = ?',
-    'text = ?', 'price = ?', 'emplacement = ?', 'type = ?', 'subtype = ?', 'race = ?',
+    'label = ?', 'text = ?', 'price = ?', 'emplacement = ?', 'type = ?', 'subtype = ?', 'race = ?',
     'munitions = ?', 'forbid = ?', 'extra = ?',
     'stats_in_db = 1',
 ]);
@@ -398,6 +398,7 @@ $params = array_merge($params, [
     max(1, (int) ($_POST['durability_max'] ?? 100)),
     // '' = unlimited (NULL); a number is the content-line ceiling.
     trim((string) ($_POST['capacity'] ?? '')) === '' ? null : max(0, (int) $_POST['capacity']),
+    mb_substr(trim((string) ($_POST['label'] ?? '')), 0, 100),
     trim((string) ($_POST['text'] ?? '')),
     max(0, (int) ($_POST['price'] ?? 1)),
     trim((string) ($_POST['emplacement'] ?? '')),
