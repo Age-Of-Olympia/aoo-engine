@@ -86,12 +86,16 @@ $applyForm = static function (Effect $effect): void {
     $effect->setLabel(trim((string) $_POST['label']));
     $effect->setDescription(trim((string) ($_POST['description'] ?? '')));
     $effect->setApplyText(trim((string) ($_POST['apply_text'] ?? '')));
-    $effect->setPvOnApply((int) ($_POST['pv_on_apply'] ?? 0));
     $effect->setIcon((string) $_POST['icon']);
     $effect->setHidden(booleanCheckbox('hidden'));
     $effect->setBuildableOver(booleanCheckbox('buildable_over'));
     $effect->setMarkTurns((int) ($_POST['mark_turns'] ?? 0));
-    $effect->setCaracMods(array_map('intval', (array) ($_POST['carac_mods'] ?? [])));
+    // One number per carac; a spendable one goes to the losses when its mode says so.
+    $numbers = array_map('intval', (array) ($_POST['carac_mods'] ?? []));
+    $modes = (array) ($_POST['carac_mode'] ?? []);
+    $losses = array_filter($numbers, static fn (int $n, string $carac): bool => ($modes[$carac] ?? 'max') === 'loss', ARRAY_FILTER_USE_BOTH);
+    $effect->setLossMods($losses);
+    $effect->setCaracMods(array_diff_key($numbers, $losses));
 
     foreach (['setRollAttackMod' => 'roll_attack_mod', 'setRollDefenseMod' => 'roll_defense_mod',
               'setDamageDealtMod' => 'damage_dealt_mod', 'setDamageTakenMod' => 'damage_taken_mod',

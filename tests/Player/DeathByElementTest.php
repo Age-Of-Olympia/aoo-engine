@@ -26,7 +26,7 @@ class DeathByElementTest extends LegacyPlayerFixtureTestCase
     public function testAWalkerDrainedByTheGroundDies(): void
     {
         $this->link->executeStatement(
-            "INSERT INTO effects (name, label, pv_on_apply) VALUES ('lave_test', 'Lave', -5)"
+            "INSERT INTO effects (name, label, loss_mods) VALUES ('lave_test', 'Lave', '{\"pv\":-5}')"
         );
         EffectService::clearCache();
 

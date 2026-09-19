@@ -73,7 +73,11 @@ final class EffectImporter extends AbstractObjectImporter
         $effect->setLabel($label !== '' ? $label : ucfirst(strtr($name, '_', ' ')));
         $effect->setDescription((string) ($plan['description'] ?? ''));
         $effect->setApplyText(trim((string) ($plan['applyText'] ?? '')));
-        $effect->setPvOnApply((int) ($plan['pvOnApply'] ?? 0));
+        $losses = is_array($plan['lossMods'] ?? null) ? $plan['lossMods'] : [];
+        if ((int) ($plan['pvOnApply'] ?? 0) !== 0 && !isset($losses['pv'])) {
+            $losses['pv'] = (int) $plan['pvOnApply'];
+        }
+        $effect->setLossMods($losses);
         $effect->setIcon((string) $plan['icon']);
         $effect->setHidden((bool) ($plan['hidden'] ?? false));
         $effect->setMarkTurns((int) ($plan['markTurns'] ?? 0));

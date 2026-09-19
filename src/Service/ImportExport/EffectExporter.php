@@ -52,7 +52,7 @@ final class EffectExporter implements ObjectExporterInterface
             'label'                 => $entity->getLabel(),
             'description'           => $entity->getDescription(),
             'applyText'             => $entity->getApplyText(),
-            'pvOnApply'             => $entity->getPvOnApply(),
+            'lossMods'              => $entity->getLossMods(),
             'icon'                  => $entity->getIcon(),
             'hidden'                => $entity->isHidden(),
             'markTurns'             => $entity->getMarkTurns(),

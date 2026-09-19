@@ -45,14 +45,15 @@ function effect_flag_badges(Effect $effect): string
 function effect_modifiers(Effect $effect): string
 {
     $parts = [];
-    $pv = $effect->getPvOnApply();
-    if ($pv !== 0) {
-        $parts[] = '<span class="' . ($pv > 0 ? 'text-success' : 'text-danger') . '">PV ' . ($pv > 0 ? '+' : '−') . abs($pv) . '</span>';
-    }
     // Values at intensity 1, the usual case; the action's « Intensité » multiplies them.
+    foreach ($effect->getLossMods() as $carac => $n) {
+        $parts[] = '<span class="' . ($n > 0 ? 'text-success' : 'text-danger') . '">'
+            . ($n > 0 ? '+' : '−') . abs($n) . ' ' . e(strtoupper((string) $carac)) . ' perdus</span>';
+    }
     foreach ($effect->getCaracMods() as $carac => $sign) {
+        $max = in_array($carac, Effect::SPENDABLE, true) ? ' max' : '';
         $parts[] = '<span class="' . ($sign > 0 ? 'text-success' : 'text-danger') . '">'
-            . ($sign > 0 ? '+' : '−') . abs($sign) . ' ' . e($carac === 'pv' ? 'PV max' : strtoupper((string) $carac)) . '</span>';
+            . ($sign > 0 ? '+' : '−') . abs($sign) . ' ' . e(strtoupper((string) $carac) . $max) . '</span>';
     }
 
     foreach ([
@@ -159,20 +160,28 @@ function effect_mod_select(string $fieldName, string $label, int $current, strin
 }
 
 /**
- * Grille des caracs : un multiplicateur signé par carac (0 = pas touchée),
- * appliqué × la valeur portée par l'effet.
+ * Grille des caracs : un nombre signé par carac (0 = pas touchée), × l'intensité
+ * posée par l'action. Une carac à réserve (PV, PM, A, Mvt) a en plus un mode :
+ * « max » déplace le plafond le temps de l'effet, « perte » retire le nombre
+ * de la réserve à chaque application.
  *
- * @param array<string, int> $mods
+ * @param array<string, int> $mods   entrées « max »
+ * @param array<string, int> $losses entrées « perte »
  */
-function effect_carac_mods_grid(array $mods): string
+function effect_carac_mods_grid(array $mods, array $losses): string
 {
     $cells = '';
     foreach (CARACS as $key => $short) {
-        // The PV cell is the ceiling, not a wound: damage is « PV à l'application ».
-        $label = $key === 'pv' ? 'PV max' : $short;
+        $spendable = in_array($key, Effect::SPENDABLE, true);
+        $isLoss = $spendable && isset($losses[$key]) && !isset($mods[$key]);
+        $value = $isLoss ? $losses[$key] : ($mods[$key] ?? 0);
         $cells .= '<div class="col-md-1 col-3 form-group">'
-            . '<label title="' . e($key === 'pv' ? 'Points de Vie maximum (une blessure : « PV à l\'application »)' : (CARACS_TXT[$key] ?? $short)) . '">' . e($label) . '</label>'
-            . formInput('carac_mods[' . $key . ']', (string) ($mods[$key] ?? 0), 'type="number" step="1"')
+            . '<label title="' . e(CARACS_TXT[$key] ?? $short) . '">' . e($short) . '</label>'
+            . formInput('carac_mods[' . $key . ']', (string) $value, 'type="number" step="1"')
+            . ($spendable
+                ? formSelect('carac_mode[' . $key . ']', ['max' => 'max', 'loss' => 'perte'], $isLoss ? 'loss' : 'max', null,
+                    'class="form-control form-control-sm mt-1" title="max : le plafond bouge le temps de l\'effet ; perte : retiré de la réserve à chaque application"')
+                : '')
             . '</div>';
     }
 
@@ -234,10 +243,6 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
                 'title="Posé au sol comme élément : n\'empêche ni construction ni aménagement de la case (sang, boue) — décoché, la case est bloquée (feu, lave, ronce…)"')
             . '</div>',
             'form-group col-md-3')
-        . formField('PV à l\'application',
-            formInput('pv_on_apply', (string) ($isEdit ? $effect->getPvOnApply() : 0), 'type="number" step="1"'),
-            'form-group col-md-2',
-            'Perdus (négatif) ou rendus (positif) à chaque application — feu : −10.')
         . formField('Texte à l\'application',
             formInput('apply_text', $isEdit ? $effect->getApplyText() : '', 'maxlength="255" placeholder="{cible} prend feu"'),
             'form-group col-md-6',
@@ -248,9 +253,10 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
         . '</div>';
 
     $comportement = '<div class="row">'
-        . formField('Caracs modifiées', effect_carac_mods_grid($isEdit ? $effect->getCaracMods() : []),
+        . formField('Caracs modifiées', effect_carac_mods_grid($isEdit ? $effect->getCaracMods() : [], $isEdit ? $effect->getLossMods() : []),
             'form-group col-12',
             'Tant que l\'effet dure, chaque carac bouge de ce nombre (E à −1, F à +2). 0 = pas touchée.'
+            . ' PV, PM, A et Mvt ont un mode : « max » déplace le plafond, « perte » retire le nombre de la réserve à chaque application (feu : PV −10 en perte).'
             . ' Une action peut poser l\'effet avec une intensité supérieure à 1 : les nombres sont alors multipliés.')
         . formField('Traces de pas (+tours)',
             formInput('mark_turns', (string) ($isEdit ? $effect->getMarkTurns() : 0), 'type="number" min="0" step="1"'),

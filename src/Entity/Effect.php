@@ -46,9 +46,13 @@ class Effect
     #[ORM\Column(type: "string", length: 255, options: ["default" => ""], name: "apply_text")]
     private string $applyText = '';
 
-    /** PV change applied once each time the effect lands (fire: -10). */
-    #[ORM\Column(type: "integer", options: ["default" => 0], name: "pv_on_apply")]
-    private int $pvOnApply = 0;
+    /**
+     * Spendable caracs (PV, PM, A, Mvt) taken from the pool each time the
+     * effect lands, {"pv": -10}, × the intensity — a wound, not a ceiling.
+     * The legacy pv_on_apply column was folded into it and is no longer read.
+     */
+    #[ORM\Column(type: "json", nullable: true, name: "loss_mods")]
+    private ?array $lossMods = null;
 
     /** RPG-Awesome icon class ('ra-small-fire'…). */
     #[ORM\Column(type: "string", length: 50, options: ["default" => "ra-fairy-wand"])]
@@ -260,14 +264,19 @@ class Effect
         $this->applyText = $text;
     }
 
-    public function getPvOnApply(): int
+    /** The pools an effect can take from: what has a remaining value. */
+    public const SPENDABLE = ['pv', 'pm', 'a', 'mvt'];
+
+    /** @return array<string, int> spendable carac => signed amount × intensity, zeros dropped */
+    public function getLossMods(): array
     {
-        return $this->pvOnApply;
+        return array_filter(array_map('intval', $this->lossMods ?? []));
     }
 
-    public function setPvOnApply(int $pv): void
+    /** @param array<string, int> $mods */
+    public function setLossMods(array $mods): void
     {
-        $this->pvOnApply = $pv;
+        $this->lossMods = array_filter(array_map('intval', array_intersect_key($mods, array_flip(self::SPENDABLE))));
     }
 
     public function getIcon(): string

@@ -664,13 +664,13 @@ class Player implements ActorInterface {
             exit('error effect name');
         }
 
-        // The effect's own PV change lands with it, every time it is applied
-        // (a burning cell hurts at each step). Death stays with the callers
-        // that already check PV after an action.
-        $pvOnApply = $this->effectService->pvOnApply($name);
-        if($pvOnApply !== 0){
+        // What the effect takes from the pools lands with it, every time it
+        // is applied (a burning cell hurts at each step). Death stays with
+        // the callers that already check PV after an action.
+        $losses = $this->effectService->lossesOf($name, $value);
+        if($losses !== array()){
 
-            $this->putBonus(array('pv' => $pvOnApply));
+            $this->putBonus($losses);
         }
 
         // Annulations (ex-cycle élémentaire, désormais des listes) :

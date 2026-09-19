@@ -119,12 +119,15 @@ class EffectService
         ));
     }
 
-    /** PV change the effect applies each time it lands, 0 = none. */
-    public function pvOnApply(string $name): int
+    /** @return array<string, int> what the effect takes from the pools on landing, at this intensity */
+    public function lossesOf(string $name, int $value = 1): array
     {
         $effect = $this->catalog()[$name] ?? null;
+        if ($effect === null) {
+            return [];
+        }
 
-        return $effect === null ? 0 : $effect->getPvOnApply();
+        return array_map(static fn (int $n): int => $n * max(1, $value), $effect->getLossMods());
     }
 
     /**
@@ -177,11 +180,11 @@ class EffectService
         $parts = [];
         foreach ($effect->getCaracMods() as $carac => $sign) {
             $n = $sign * max(1, $value);
-            $parts[] = ($carac === 'pv' ? 'PV max' : (CARACS[$carac] ?? strtoupper($carac))) . ' ' . ($n > 0 ? '+' : '−') . abs($n);
+            $label = (CARACS[$carac] ?? strtoupper($carac)) . (in_array($carac, Effect::SPENDABLE, true) ? ' max' : '');
+            $parts[] = $label . ' ' . ($n > 0 ? '+' : '−') . abs($n);
         }
-        $pv = $effect->getPvOnApply();
-        if ($pv !== 0) {
-            $parts[] = 'PV ' . ($pv > 0 ? '+' : '−') . abs($pv);
+        foreach ($this->lossesOf($name, $value) as $carac => $n) {
+            $parts[] = (CARACS[$carac] ?? strtoupper($carac)) . ' ' . ($n > 0 ? '+' : '−') . abs($n);
         }
 
         return implode(', ', $parts);

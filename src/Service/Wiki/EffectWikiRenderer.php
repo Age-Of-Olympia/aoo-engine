@@ -56,11 +56,12 @@ final class EffectWikiRenderer implements WikiSheetRendererInterface
         $rules = [];
         $carac = static fn (?string $key): string => CARACS_TXT[$key] ?? strtoupper((string) $key);
 
-        if ($effect->getPvOnApply() !== 0) {
-            $rules[] = ($effect->getPvOnApply() < 0 ? 'Retire ' : 'Rend ') . abs($effect->getPvOnApply()) . ' PV à chaque application.';
+        foreach ($effect->getLossMods() as $key => $n) {
+            $rules[] = ($n < 0 ? 'Retire ' : 'Rend ') . abs($n) . ' ' . $carac($key) . ' à chaque application.';
         }
         foreach ($effect->getCaracMods() as $key => $sign) {
-            $rules[] = ($sign > 0 ? 'Augmente ' : 'Diminue ') . ($key === 'pv' ? 'les Points de Vie maximum' : $carac($key)) . ' de ' . abs($sign) . '.';
+            $max = in_array($key, \App\Entity\Effect::SPENDABLE, true) ? ' maximum' : '';
+            $rules[] = ($sign > 0 ? 'Augmente ' : 'Diminue ') . $carac($key) . $max . ' de ' . abs($sign) . '.';
         }
         foreach ([
             'getRollAttackMod' => 'au jet d\'attaque', 'getRollDefenseMod' => 'au jet de défense',
