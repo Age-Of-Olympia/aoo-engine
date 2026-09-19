@@ -848,8 +848,9 @@ class Player implements ActorInterface {
 
                 $this->add_effect($row->name, 1);
 
-                // The walker's log keeps what the ground did (effect, PV).
-                Log::put($this, $this, $this->effectService->landingMessage($row->name, $this->data->name, $this->data->name, 1), 'move');
+                // The walker's log keeps what the ground did (effect, PV). Not a
+                // "move": those stay out of the events feed.
+                Log::put($this, $this, $this->effectService->landingMessage($row->name, $this->data->name, $this->data->name, 1), 'element');
             }
         }
 

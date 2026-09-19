@@ -41,7 +41,7 @@ class DeathByElementTest extends LegacyPlayerFixtureTestCase
         $player->go($cell);
         $this->assertLessThan(1, $player->getRemaining('pv'), 'the element took the last PV');
         $this->assertSame(1, (int) $this->link->fetchOne(
-            "SELECT COUNT(*) FROM players_logs WHERE player_id = ? AND type = 'move' AND text LIKE '%PV −5%'", [$player->id]
+            "SELECT COUNT(*) FROM players_logs WHERE player_id = ? AND type = 'element' AND text LIKE '%PV −5%'", [$player->id]
         ), 'the step is in the walker\'s log');
 
         ob_start();

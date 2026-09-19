@@ -48,7 +48,7 @@ function effect_modifiers(Effect $effect): string
     // Values at intensity 1, the usual case; the action's « Intensité » multiplies them.
     foreach ($effect->getLossMods() as $carac => $n) {
         $parts[] = '<span class="' . ($n > 0 ? 'text-success' : 'text-danger') . '">'
-            . ($n > 0 ? '+' : '−') . abs($n) . ' ' . e(strtoupper((string) $carac)) . ' perdus</span>';
+            . ($n > 0 ? '+' : '−') . abs($n) . ' ' . e(strtoupper((string) $carac)) . ($n > 0 ? ' gagnés' : ' perdus') . '</span>';
     }
     foreach ($effect->getCaracMods() as $carac => $sign) {
         $max = in_array($carac, Effect::SPENDABLE, true) ? ' max' : '';
@@ -179,8 +179,8 @@ function effect_carac_mods_grid(array $mods, array $losses): string
             . '<label title="' . e(CARACS_TXT[$key] ?? $short) . '">' . e($short) . '</label>'
             . formInput('carac_mods[' . $key . ']', (string) $value, 'type="number" step="1"')
             . ($spendable
-                ? formSelect('carac_mode[' . $key . ']', ['max' => 'max', 'loss' => 'perte'], $isLoss ? 'loss' : 'max', null,
-                    'class="form-control form-control-sm mt-1" title="max : le plafond bouge le temps de l\'effet ; perte : retiré de la réserve à chaque application"')
+                ? formSelect('carac_mode[' . $key . ']', ['max' => 'max', 'loss' => 'perte / gain'], $isLoss ? 'loss' : 'max', null,
+                    'class="form-control form-control-sm mt-1" title="max : le plafond bouge le temps de l\'effet ; perte / gain : retiré (négatif) ou rendu (positif) à la réserve à chaque application"')
                 : '')
             . '</div>';
     }
@@ -256,7 +256,7 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
         . formField('Caracs modifiées', effect_carac_mods_grid($isEdit ? $effect->getCaracMods() : [], $isEdit ? $effect->getLossMods() : []),
             'form-group col-12',
             'Tant que l\'effet dure, chaque carac bouge de ce nombre (E à −1, F à +2). 0 = pas touchée.'
-            . ' PV, PM, A et Mvt ont un mode : « max » déplace le plafond, « perte » retire le nombre de la réserve à chaque application (feu : PV −10 en perte).'
+            . ' PV, PM, A et Mvt ont un mode : « max » déplace le plafond, « perte / gain » retire (négatif) ou rend (positif) le nombre à la réserve à chaque application (feu : PV −10 en perte / gain).'
             . ' Une action peut poser l\'effet avec une intensité supérieure à 1 : les nombres sont alors multipliés.')
         . formField('Traces de pas (+tours)',
             formInput('mark_turns', (string) ($isEdit ? $effect->getMarkTurns() : 0), 'type="number" min="0" step="1"'),
