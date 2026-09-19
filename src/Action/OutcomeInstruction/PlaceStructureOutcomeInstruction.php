@@ -146,14 +146,15 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
         // `travailler` will raise it gesture by gesture.
         $work = $isRaceTyped ? $race->getBuildWork() : 0;
         if ($work > 0) {
-            $message = 'Vous ouvrez le chantier de ' . $label
-                . ' <span class="ra ra-hammer"></span> en (' . $goCoords->x . ', ' . $goCoords->y . ') — 0/' . $work . '.';
+            $messages = [
+                'Vous ouvrez le chantier de ' . $label . ' <span class="ra ra-hammer"></span> en (' . $goCoords->x . ', ' . $goCoords->y . ').',
+                'Travaux : 0/' . $work . '.',
+            ];
 
-            return new OutcomeResult(true, outcomeSuccessMessages: [$message], outcomeFailureMessages: array());
+            return new OutcomeResult(true, outcomeSuccessMessages: $messages, outcomeFailureMessages: array());
         }
 
-        $message = 'Vous construisez ' . $label
-            . ' <span class="ra ra-tower"></span> en (' . $goCoords->x . ', ' . $goCoords->y . ') — structure #' . $id . '.';
+        $message = 'Vous construisez ' . $label . ' <span class="ra ra-tower"></span> en (' . $goCoords->x . ', ' . $goCoords->y . ').';
 
         return new OutcomeResult(true, outcomeSuccessMessages: [$message], outcomeFailureMessages: array());
     }
