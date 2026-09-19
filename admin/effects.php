@@ -170,7 +170,7 @@ function effect_carac_mods_grid(array $mods): string
     foreach (CARACS as $key => $short) {
         $cells .= '<div class="col-md-1 col-3 form-group">'
             . '<label title="' . e(CARACS_TXT[$key] ?? $short) . '">' . e($short) . '</label>'
-            . formInput('carac_mods[' . $key . ']', (string) ($mods[$key] ?? 0), 'type="number" step="1" min="-9" max="9"')
+            . formInput('carac_mods[' . $key . ']', (string) ($mods[$key] ?? 0), 'type="number" step="1"')
             . '</div>';
     }
 
