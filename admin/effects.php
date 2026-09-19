@@ -228,6 +228,11 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
                 'title="Posé au sol comme élément : n\'empêche ni construction ni aménagement de la case (sang, boue) — décoché, la case est bloquée (feu, lave, ronce…)"')
             . '</div>',
             'form-group col-md-3')
+        . formField('Texte à l\'application',
+            formInput('apply_text', $isEdit ? $effect->getApplyText() : '', 'maxlength="255" placeholder="{cible} prend feu"'),
+            'form-group col-md-6',
+            'Phrase affichée quand l\'effet est posé ; {cible}, {acteur} et {effet} sont remplacés.'
+            . ' Vide : « L\'effet X est appliqué … à Y ».')
         . formField('Description', formTextarea('description', $isEdit ? $effect->getDescription() : ''),
             'form-group col-12', 'Texte de règles (wiki des effets).')
         . '</div>';

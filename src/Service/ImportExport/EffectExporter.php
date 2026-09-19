@@ -51,6 +51,7 @@ final class EffectExporter implements ObjectExporterInterface
             'name'                  => $entity->getName(),
             'label'                 => $entity->getLabel(),
             'description'           => $entity->getDescription(),
+            'applyText'             => $entity->getApplyText(),
             'icon'                  => $entity->getIcon(),
             'hidden'                => $entity->isHidden(),
             'markTurns'             => $entity->getMarkTurns(),

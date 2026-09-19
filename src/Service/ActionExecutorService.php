@@ -296,7 +296,10 @@ class ActionExecutorService
                 $icon = $effectService->getIcon($effect->name);
                 $iconMarkup = !empty($icon) ? ' <span class="ra ' . $icon . '"></span>' : '';
 
-                $outcomeSuccessMessages[] = 'L\'effet ' . $statusLabel . $iconMarkup . ' (x1) est appliqué ' . $timeMessage . ' à ' . $this->target->data->name;
+                $own = $effectService->applyMessage((string) $effect->name, $this->target->data->name, $this->actor->data->name);
+                $outcomeSuccessMessages[] = $own !== null
+                    ? $own . ' (' . $timeMessage . ')'
+                    : 'L\'effet ' . $statusLabel . $iconMarkup . ' (x1) est appliqué ' . $timeMessage . ' à ' . $this->target->data->name;
             }
 
             if (!empty($outcomeSuccessMessages)) {

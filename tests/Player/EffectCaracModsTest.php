@@ -15,7 +15,7 @@ class EffectCaracModsTest extends LegacyPlayerFixtureTestCase
 {
     protected function tearDown(): void
     {
-        $this->link->executeStatement("DELETE FROM effects WHERE name = 'brasier_test'");
+        $this->link->executeStatement("DELETE FROM effects WHERE name IN ('brasier_test', 'flamme_test')");
         EffectService::clearCache();
         parent::tearDown();
     }
@@ -41,5 +41,21 @@ class EffectCaracModsTest extends LegacyPlayerFixtureTestCase
         $this->assertSame($p, $player->caracs->p, 'a zero entry leaves the carac alone');
         $this->assertSame('brasier_test', $player->debuffs->e);
         $this->assertSame('brasier_test', $player->buffs->f);
+    }
+
+    public function testAnEffectSaysWhatItDoesWhenItLands(): void
+    {
+        $this->link->executeStatement(
+            "INSERT INTO effects (name, label, icon, apply_text) VALUES ('flamme_test', 'Flamme', 'ra-fire', '{cible} prend feu par {acteur} <b>')"
+        );
+        EffectService::clearCache();
+
+        $service = new EffectService();
+        $this->assertSame(
+            'Dorna prend feu par Cradek &lt;b&gt;',
+            $service->applyMessage('flamme_test', 'Dorna', 'Cradek'),
+            'placeholders filled, template escaped'
+        );
+        $this->assertNull($service->applyMessage('feu', 'Dorna', 'Cradek'), 'no text = the generic line');
     }
 }

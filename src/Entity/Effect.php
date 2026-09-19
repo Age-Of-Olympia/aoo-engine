@@ -39,6 +39,13 @@ class Effect
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $description = null;
 
+    /**
+     * Sentence shown when the effect lands, with {cible}, {acteur} and
+     * {effet} placeholders. Empty = the generic "L'effet X est appliqué…".
+     */
+    #[ORM\Column(type: "string", length: 255, options: ["default" => ""], name: "apply_text")]
+    private string $applyText = '';
+
     /** RPG-Awesome icon class ('ra-small-fire'…). */
     #[ORM\Column(type: "string", length: 50, options: ["default" => "ra-fairy-wand"])]
     private string $icon = 'ra-fairy-wand';
@@ -237,6 +244,16 @@ class Effect
     public function setDescription(string $description): void
     {
         $this->description = $description;
+    }
+
+    public function getApplyText(): string
+    {
+        return $this->applyText;
+    }
+
+    public function setApplyText(string $text): void
+    {
+        $this->applyText = $text;
     }
 
     public function getIcon(): string

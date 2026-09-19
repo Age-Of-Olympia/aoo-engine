@@ -119,6 +119,28 @@ class EffectService
         ));
     }
 
+    /**
+     * The effect's own sentence for its landing, placeholders filled, or null
+     * when the effect has none. The names are inserted as the game shows
+     * them elsewhere; the template is escaped.
+     */
+    public function applyMessage(string $name, string $targetName, string $actorName): ?string
+    {
+        $effect = $this->catalog()[$name] ?? null;
+        if ($effect === null || trim($effect->getApplyText()) === '') {
+            return null;
+        }
+
+        $icon = $effect->getIcon();
+
+        return strtr(htmlspecialchars($effect->getApplyText(), ENT_QUOTES, 'UTF-8'), [
+            '{cible}' => $targetName,
+            '{acteur}' => $actorName,
+            '{effet}' => htmlspecialchars($effect->getLabel(), ENT_QUOTES, 'UTF-8')
+                . ($icon !== '' ? ' <span class="ra ' . $icon . '"></span>' : ''),
+        ]);
+    }
+
     /** @return array<string, array<string, int>> effect name => carac => signed multiplier of the value */
     public function getCaracMods(): array
     {

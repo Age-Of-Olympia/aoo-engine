@@ -116,24 +116,24 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
                     }
                 } elseif ($this->mayReceiveEffect($actor, $params, $apply)) {
                     $this->applyEffect($apply, $status, $duration, $value, $stackable, $actor);
-                    $outcomeSuccessMessages[0] = $this->appliedMessage($statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $actor->data->name);
+                    $outcomeSuccessMessages[0] = $this->appliedMessage($status, $statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $actor, $actor);
                 }
                 break;
             case 'target':
                 if ($this->mayReceiveEffect($target, $params, $apply)) {
                     $this->applyEffect($apply, $status, $duration, $value, $stackable, $target);
-                    $outcomeSuccessMessages[0] = $this->appliedMessage($statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $target->data->name);
+                    $outcomeSuccessMessages[0] = $this->appliedMessage($status, $statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $target, $actor);
                 }
                 break;
             default:
                 if ($this->mayReceiveEffect($actor, $params, $apply)) {
                     $this->applyEffect($apply, $status, $duration, $value, $stackable, $actor);
-                    $outcomeSuccessMessages[0] = $this->appliedMessage($statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $actor->data->name);
+                    $outcomeSuccessMessages[0] = $this->appliedMessage($status, $statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $actor, $actor);
                 }
 
             if ($target->data->name !== $actor->data->name && $this->mayReceiveEffect($target, $params, $apply)) {
                 $this->applyEffect($apply, $status, $duration, $value, $stackable, $target);
-                $outcomeSuccessMessages[1] = $this->appliedMessage($statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $target->data->name);
+                $outcomeSuccessMessages[1] = $this->appliedMessage($status, $statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $target, $actor);
             }
             break;
         }
@@ -141,10 +141,15 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array());
     }
 
-    /** Le même message de succès servait les quatre cibles (acteur, cible, les deux). */
-    private function appliedMessage(string $statusLabel, string $statusIcon, bool $stackable, string $valueLabel, string $timeMessage, string $playerName): string
+    /** The effect's own sentence when it has one, the generic line otherwise. */
+    private function appliedMessage(string $status, string $statusLabel, string $statusIcon, bool $stackable, string $valueLabel, string $timeMessage, Player $receiver, Player $actor): string
     {
-        return 'L\'effet '.$statusLabel.' <span class="ra '. $statusIcon .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage.' à ' . $playerName;
+        $own = (new \App\Service\EffectService())->applyMessage($status, $receiver->data->name, $actor->data->name);
+        if ($own !== null) {
+            return $own . ' (' . ($stackable ? '+' : 'x') . $valueLabel . ', ' . $timeMessage . ')';
+        }
+
+        return 'L\'effet '.$statusLabel.' <span class="ra '. $statusIcon .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage.' à ' . $receiver->data->name;
     }
 
     private function applyEffect (bool $apply, string $effectName, int $duration, int $value, bool $stackable, Player $player){
