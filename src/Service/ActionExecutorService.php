@@ -303,7 +303,13 @@ class ActionExecutorService
                 foreach ($this->strikeReceivers((string) ($effect->target ?? 'target')) as $receiver) {
                     // add_effect, not the raw insert: the cancellation cycle and pv_on_apply come with it.
                     $receiver->add_effect((string) $effect->name, $duration);
-                    $outcomeSuccessMessages[] = $effectService->landingMessage((string) $effect->name, $receiver->data->name, $this->actor->data->name, $duration);
+                    $message = $effectService->landingMessage((string) $effect->name, $receiver->data->name, $this->actor->data->name, $duration);
+                    $outcomeSuccessMessages[] = $message;
+
+                    // A bystander of an area gets no action log: this line is their only trace.
+                    if ($receiver->id != $this->actor->id && $receiver->id != $this->target->id) {
+                        \Classes\Log::put($receiver, $this->actor, $message, 'action_other_player', '', time());
+                    }
                 }
             }
 
