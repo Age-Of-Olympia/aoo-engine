@@ -60,6 +60,7 @@ final class ItemExporter implements ObjectExporterInterface
 
         $payload = [
             'name' => (string) $entity->name,
+            'label' => (string) ($entity->label ?? ''),
             'private' => (int) $entity->private,
             'enchanted' => (int) $entity->enchanted,
             'vorpal' => (int) $entity->vorpal,

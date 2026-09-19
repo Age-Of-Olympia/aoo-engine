@@ -292,7 +292,9 @@ function items_render_list(array $items, string $csrfToken): string
 
         $rows[] = '<tr data-type="' . e($type) . '">'
             . '<td><img src="/img/items/' . e($row->name) . '_mini.webp" style="max-height:24px"'
-            . ' onerror="this.style.display=\'none\'" alt=""> <code>' . e($row->name) . '</code>' . $mapThumbs . '</td>'
+            . ' onerror="this.style.display=\'none\'" alt=""> '
+            . (trim((string) ($row->label ?? '')) !== '' ? '<b>' . e($row->label) . '</b> ' : '')
+            . '<code>' . e($row->name) . '</code>' . $mapThumbs . '</td>'
             . '<td>' . item_type_badge($type) . $issuesBadge . '</td>'
             . '<td>' . $statsBadge . '</td>'
             . '<td>' . item_flag_badges($row) . '</td>'
@@ -693,6 +695,9 @@ function items_render_edit(object $row, string $csrfToken): string
     // Création : pas encore de ligne en base — champ nom éditable,
     // POST vers action=create, pas de panneau d'images (elles portent le nom).
     $isNew = (int) $row->id === 0;
+    $labelField = formField('Nom affiché',
+        formInput('label', (string) ($row->label ?? ''), 'maxlength="100" placeholder="ex : Hache de guerre"'),
+        'form-group', 'Ce que les joueurs lisent. Vide : le nom technique, avec une majuscule.');
     $nameField = $isNew
         ? formField('Nom technique',
             formInput('new_name', '', 'required maxlength="255" pattern="[a-z0-9_/-]+" placeholder="ex : hache_de_guerre"'),
@@ -950,6 +955,7 @@ function items_render_edit(object $row, string $csrfToken): string
         . '<form method="post" action="/admin/items-save.php?action=' . ($isNew ? 'create' : 'update') . '">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
         . $nameField
+        . $labelField
         . ($isNew ? '' : $notInDb . $imagesPanel)
         . '<div class="item-sections">' . $sections . '</div>'
         . '<button class="btn btn-primary" type="submit">Enregistrer</button> '
