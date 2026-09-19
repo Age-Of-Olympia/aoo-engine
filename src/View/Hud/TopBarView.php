@@ -155,10 +155,9 @@ final class TopBarView
                 . '<button><span class="ra ra-hammer"></span></button></a>';
         }
 
-        /* Redessiner sa vue depuis la carte : le damier est mis en cache par
-         * joueur, et jusqu'ici on ne pouvait le forcer que depuis la page
-         * Profil — c'est-à-dire en quittant l'écran où le problème se voit. */
-        echo '<a href="refresh_view.php?retour=1" class="hud-meta" title="Redessiner la vue">'
+        /* Redraw the board from the board: it is cached per player, and
+         * this is the screen where a stale cache shows. Desktop bar too. */
+        echo '<a href="refresh_view.php?retour=1" title="Redessiner la vue">'
             . '<button><span class="ra ra-cycle"></span></button></a>';
 
         /* Badge orange : sujets de forum non lus (les missives ont déjà

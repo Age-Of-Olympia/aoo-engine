@@ -410,9 +410,9 @@ body:has(#hud)::after {
         display: none;
     }
 
-    /* Desktop keeps the role-play entries only: rankings, profile and
-     * the redraw tool stay reachable through the main menu. The mobile
-     * drawer shows everything. */
+    /* Desktop keeps the role-play entries only: rankings and profile
+     * stay reachable through the main menu. The mobile drawer shows
+     * everything. */
     .hud-quick > a.hud-meta,
     #hud-rail #menu > a[href="account.php"] {
         display: none;
