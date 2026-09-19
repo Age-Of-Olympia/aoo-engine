@@ -88,7 +88,9 @@ class ItemStatsSeeder
         /** @var array<string, true> $skipped */
         $skipped = [];
 
-        foreach ($conn->fetchAllAssociative('SELECT id, name, private, stats_in_db, label FROM items') as $row) {
+        // Replayed from an older migration, the label column may not exist yet.
+        $labelSelect = isset($columns['label']) ? ', label' : ", '' AS label";
+        foreach ($conn->fetchAllAssociative('SELECT id, name, private, stats_in_db' . $labelSelect . ' FROM items') as $row) {
             $dir = ((int) $row['private']) ? 'private' : 'public';
             $path = $projectRoot . '/datas/' . $dir . '/items/' . $row['name'] . '.json';
 
