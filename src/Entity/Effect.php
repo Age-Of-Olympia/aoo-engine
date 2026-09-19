@@ -46,6 +46,10 @@ class Effect
     #[ORM\Column(type: "string", length: 255, options: ["default" => ""], name: "apply_text")]
     private string $applyText = '';
 
+    /** PV change applied once each time the effect lands (fire: -10). */
+    #[ORM\Column(type: "integer", options: ["default" => 0], name: "pv_on_apply")]
+    private int $pvOnApply = 0;
+
     /** RPG-Awesome icon class ('ra-small-fire'…). */
     #[ORM\Column(type: "string", length: 50, options: ["default" => "ra-fairy-wand"])]
     private string $icon = 'ra-fairy-wand';
@@ -254,6 +258,16 @@ class Effect
     public function setApplyText(string $text): void
     {
         $this->applyText = $text;
+    }
+
+    public function getPvOnApply(): int
+    {
+        return $this->pvOnApply;
+    }
+
+    public function setPvOnApply(int $pv): void
+    {
+        $this->pvOnApply = $pv;
     }
 
     public function getIcon(): string

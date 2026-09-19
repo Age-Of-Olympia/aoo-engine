@@ -119,6 +119,14 @@ class EffectService
         ));
     }
 
+    /** PV change the effect applies each time it lands, 0 = none. */
+    public function pvOnApply(string $name): int
+    {
+        $effect = $this->catalog()[$name] ?? null;
+
+        return $effect === null ? 0 : $effect->getPvOnApply();
+    }
+
     /**
      * The effect's own sentence for its landing, placeholders filled, or null
      * when the effect has none. The names are inserted as the game shows

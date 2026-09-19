@@ -45,6 +45,10 @@ function effect_flag_badges(Effect $effect): string
 function effect_modifiers(Effect $effect): string
 {
     $parts = [];
+    if ($effect->getPvOnApply() !== 0) {
+        $parts[] = '<span class="' . ($effect->getPvOnApply() > 0 ? 'text-success' : 'text-danger') . '">PV '
+            . ($effect->getPvOnApply() > 0 ? '+' : '−') . abs($effect->getPvOnApply()) . '</span>';
+    }
     foreach ($effect->getCaracMods() as $carac => $sign) {
         $times = abs($sign) === 1 ? 'valeur' : abs($sign) . '×valeur';
         $parts[] = '<span class="' . ($sign > 0 ? 'text-success' : 'text-danger') . '">'
@@ -228,6 +232,10 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
                 'title="Posé au sol comme élément : n\'empêche ni construction ni aménagement de la case (sang, boue) — décoché, la case est bloquée (feu, lave, ronce…)"')
             . '</div>',
             'form-group col-md-3')
+        . formField('PV à l\'application',
+            formInput('pv_on_apply', (string) ($isEdit ? $effect->getPvOnApply() : 0), 'type="number" step="1"'),
+            'form-group col-md-2',
+            'Perdus (négatif) ou rendus (positif) à chaque application — feu : −10.')
         . formField('Texte à l\'application',
             formInput('apply_text', $isEdit ? $effect->getApplyText() : '', 'maxlength="255" placeholder="{cible} prend feu"'),
             'form-group col-md-6',

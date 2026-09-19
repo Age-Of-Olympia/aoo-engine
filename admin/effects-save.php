@@ -86,6 +86,7 @@ $applyForm = static function (Effect $effect): void {
     $effect->setLabel(trim((string) $_POST['label']));
     $effect->setDescription(trim((string) ($_POST['description'] ?? '')));
     $effect->setApplyText(trim((string) ($_POST['apply_text'] ?? '')));
+    $effect->setPvOnApply((int) ($_POST['pv_on_apply'] ?? 0));
     $effect->setIcon((string) $_POST['icon']);
     $effect->setHidden(booleanCheckbox('hidden'));
     $effect->setBuildableOver(booleanCheckbox('buildable_over'));

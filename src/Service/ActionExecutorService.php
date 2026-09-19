@@ -306,6 +306,8 @@ class ActionExecutorService
                 $statusLabel = htmlspecialchars((string) $effect->name, ENT_QUOTES, 'UTF-8');
                 $icon = $effectService->getIcon($effect->name);
                 $iconMarkup = !empty($icon) ? ' <span class="ra ' . $icon . '"></span>' : '';
+                $pv = $effectService->pvOnApply((string) $effect->name);
+                $pvLabel = $pv === 0 ? '' : ', PV ' . ($pv > 0 ? '+' : '−') . abs($pv);
 
                 foreach ($this->strikeReceivers((string) ($effect->target ?? 'target')) as $receiver) {
 
@@ -313,8 +315,8 @@ class ActionExecutorService
 
                     $own = $effectService->applyMessage((string) $effect->name, $receiver->data->name, $this->actor->data->name);
                     $outcomeSuccessMessages[] = $own !== null
-                        ? $own . ' (' . $timeMessage . ')'
-                        : 'L\'effet ' . $statusLabel . $iconMarkup . ' (x1) est appliqué ' . $timeMessage . ' à ' . $receiver->data->name;
+                        ? $own . ' (' . $timeMessage . $pvLabel . ')'
+                        : 'L\'effet ' . $statusLabel . $iconMarkup . ' (x1) est appliqué ' . $timeMessage . ' à ' . $receiver->data->name . $pvLabel;
                 }
             }
 

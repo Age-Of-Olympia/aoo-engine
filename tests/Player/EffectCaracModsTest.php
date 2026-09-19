@@ -15,7 +15,7 @@ class EffectCaracModsTest extends LegacyPlayerFixtureTestCase
 {
     protected function tearDown(): void
     {
-        $this->link->executeStatement("DELETE FROM effects WHERE name IN ('brasier_test', 'flamme_test')");
+        $this->link->executeStatement("DELETE FROM effects WHERE name IN ('brasier_test', 'flamme_test', 'braise_test')");
         EffectService::clearCache();
         parent::tearDown();
     }
@@ -57,5 +57,23 @@ class EffectCaracModsTest extends LegacyPlayerFixtureTestCase
             'placeholders filled, template escaped'
         );
         $this->assertNull($service->applyMessage('feu', 'Dorna', 'Cradek'), 'no text = the generic line');
+    }
+
+    public function testAnEffectHurtsEachTimeItLands(): void
+    {
+        $this->link->executeStatement(
+            "INSERT INTO effects (name, label, pv_on_apply) VALUES ('braise_test', 'Braise', -3)"
+        );
+        EffectService::clearCache();
+
+        $player = $this->createRealPlayer('GmBraise');
+        $player->get_caracs();
+        $before = $player->getRemaining('pv');
+
+        $player->add_effect('braise_test', 1);
+        $this->assertSame($before - 3, $player->getRemaining('pv'), 'the effect takes its PV when it lands');
+
+        $player->add_effect('braise_test', 1);
+        $this->assertSame($before - 6, $player->getRemaining('pv'), 'and again at the next application');
     }
 }

@@ -144,12 +144,16 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
     /** The effect's own sentence when it has one, the generic line otherwise. */
     private function appliedMessage(string $status, string $statusLabel, string $statusIcon, bool $stackable, string $valueLabel, string $timeMessage, Player $receiver, Player $actor): string
     {
-        $own = (new \App\Service\EffectService())->applyMessage($status, $receiver->data->name, $actor->data->name);
+        $effectService = new \App\Service\EffectService();
+        $pv = $effectService->pvOnApply($status);
+        $pvLabel = $pv === 0 ? '' : ', PV ' . ($pv > 0 ? '+' : '−') . abs($pv);
+
+        $own = $effectService->applyMessage($status, $receiver->data->name, $actor->data->name);
         if ($own !== null) {
-            return $own . ' (' . ($stackable ? '+' : 'x') . $valueLabel . ', ' . $timeMessage . ')';
+            return $own . ' (' . ($stackable ? '+' : 'x') . $valueLabel . ', ' . $timeMessage . $pvLabel . ')';
         }
 
-        return 'L\'effet '.$statusLabel.' <span class="ra '. $statusIcon .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage.' à ' . $receiver->data->name;
+        return 'L\'effet '.$statusLabel.' <span class="ra '. $statusIcon .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage.' à ' . $receiver->data->name . $pvLabel;
     }
 
     private function applyEffect (bool $apply, string $effectName, int $duration, int $value, bool $stackable, Player $player){
