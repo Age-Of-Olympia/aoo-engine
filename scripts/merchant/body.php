@@ -7,6 +7,7 @@ use App\View\Inventory\BankView;
 use App\View\Merchant\AsksView;
 use App\View\Merchant\BidsView;
 use App\View\Merchant\ExchangesView;
+use App\View\Merchant\AtelierView;
 
 /*
  * Corps de la page marchand, partagé entre la page complète
@@ -49,6 +50,8 @@ $merchantTabs = array(
     'exchanges' => '<button class="exchange-button"><span class="ra ra-x-mark"></span> Echanges</button>',
     'bank'      => '<button><span class="ra ra-gold-bar"></span> Banque</button>',
     'inventory' => '<button><span class="ra ra-key"></span> Inventaire</button>',
+    'repair'    => '<button><span class="ra ra-repair"></span> Réparer</button>',
+    'recycle'   => '<button><span class="ra ra-recycle"></span> Recycler</button>',
 );
 
 $servedTabs = array();
@@ -94,6 +97,12 @@ elseif(isset($_GET['exchanges'])){
 elseif(isset($_GET['bank'])){
 
     BankView::renderBank($market,$target);
+}
+elseif(isset($_GET['repair'])){
+    AtelierView::renderRepair($target);
+}
+elseif(isset($_GET['recycle'])){
+    AtelierView::renderRecycle($target);
 }
 elseif(isset($_GET['inventory'])){
 
