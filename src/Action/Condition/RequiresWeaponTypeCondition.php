@@ -62,7 +62,7 @@ class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterS
 
         if (!$weaponTypeOk) {
             $errorMessage[0] = isset($broken)
-                ? 'Votre ' . $broken . ' est brisé : réparez-le ou changez d\'arme.'
+                ? $broken . ' : arme brisée, à recycler ou à remplacer.'
                 : 'Vous n\'êtes pas équipé d\'une arme de type '. join("/",$weaponTypesKo). '.';
             $result = new ConditionResult(false, array(), $errorMessage);
         }
