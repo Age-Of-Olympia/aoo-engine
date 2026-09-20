@@ -24,15 +24,19 @@ try {
     (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
 
     $sprites = new EntitySpriteService();
-    $dir = $type === '' ? null : $sprites->imageDirOf($type);
+    $dirs = $type === '' ? [] : $sprites->dirsOf($type);
 
-    if ($dir === null) {
+    if ($dirs === []) {
         throw new RuntimeException('Type inconnu au catalogue : « ' . $type . ' ».');
     }
 
-    $folder = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $dir;
+    /* Pieces are written in the kind's folder; a rename works in whichever
+     * folder of the type's the file is listed from. */
+    $dir = $dirs[0];
 
     if (($_POST['action'] ?? '') === 'rename') {
+        $dir = in_array((string) ($_POST['dir'] ?? ''), $dirs, true) ? (string) $_POST['dir'] : $dir;
+        $folder = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $dir;
         $from = basename((string) ($_POST['from'] ?? ''));
         $to = basename((string) ($_POST['to'] ?? ''));
 
@@ -68,7 +72,7 @@ try {
     $upload = $_FILES['sheet'] ?? null;
     $source = is_array($upload) && ($upload['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK
         ? (string) $upload['tmp_name']
-        : $folder . '/' . $type . '.png';
+        : $_SERVER['DOCUMENT_ROOT'] . '/img/' . $dir . '/' . $type . '.png';
 
     if (!is_file($source)) {
         throw new RuntimeException('Aucune image à découper : en envoyer une, ou déposer img/' . $dir . '/' . $type . '.png.');

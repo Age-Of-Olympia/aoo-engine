@@ -431,13 +431,18 @@ ob_start();
                 </div>
             </form>
 
-            <?php if ($onlyType !== '' && ($dir = (new EntitySpriteService())->imageDirOf($name)) !== null): ?>
-                <?php /* The type's pictures, on its own page only: a folder is
-                         globbed per card, which the whole list must not pay. */ ?>
+            <?php if ($onlyType !== '' && ($dirs = (new EntitySpriteService())->dirsOf($name)) !== []): ?>
+                <?php /* The type's pictures, on its own page only: folders are
+                         globbed per card, which the whole list must not pay.
+                         Every folder with a file of that name: the kind's
+                         first, then the others (pieces left in
+                         img/foregrounds by a type that was scenery). */ ?>
                 <div class="fp-images">
+                    <?php foreach ($dirs as $dir): ?>
+                    <?php $images = footprint_type_images($name, $dir, $figure); ?>
+                    <?php if ($images === [] && $dir !== $dirs[0]) { continue; } ?>
                     <h4>Images — <code>img/<?= e($dir) ?>/</code></h4>
 
-                    <?php $images = footprint_type_images($name, $dir, $figure); ?>
                     <?php if ($images === []): ?>
                         <p class="text-muted">Aucune image de ce nom dans le dossier.</p>
                     <?php endif; ?>
@@ -447,6 +452,7 @@ ob_start();
                             <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
                             <input type="hidden" name="type" value="<?= e($name) ?>" />
                             <input type="hidden" name="action" value="rename" />
+                            <input type="hidden" name="dir" value="<?= e($dir) ?>" />
                             <input type="hidden" name="from" value="<?= e($image['file']) ?>" />
                             <img src="<?= e($image['web']) ?>?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . $image['web']) ?>" alt="" loading="lazy" />
                             <span class="fp-image__size <?= $image['expected'] !== '' && $image['expected'] !== $image['size'] ? 'fp-image__size--off' : '' ?>"
@@ -459,6 +465,7 @@ ob_start();
                             <?php endif; ?>
                         </form>
                     <?php endforeach; ?>
+                    <?php endforeach; ?>
 
                     <?php if (!$figure->isSingleCell()): ?>
                         <form method="post" action="footprints-images.php" enctype="multipart/form-data" class="fp-image fp-image--cut">
@@ -469,7 +476,7 @@ ob_start();
                                 <input type="file" name="sheet" accept="image/png,image/webp,image/gif,image/jpeg" />
                             </label>
                             <button type="submit" class="btn btn-sm btn-primary">Découper</button>
-                            <small class="text-muted">Sans fichier, <code><?= e($name) ?>.png</code> du dossier est découpé. Les morceaux existants sont remplacés.</small>
+                            <small class="text-muted">Morceaux écrits dans <code>img/<?= e($dirs[0]) ?>/</code>. Sans fichier envoyé, la découpe utilise <code><?= e($name) ?>.png</code> de ce dossier et remplace les morceaux existants.</small>
                         </form>
                     <?php endif; ?>
                 </div>

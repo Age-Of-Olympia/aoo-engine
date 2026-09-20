@@ -130,7 +130,17 @@ EOT);
                 continue;
             }
 
-            $dir = $sprites->imageDirOf((string) $family) ?? SceneryType::IMAGE_DIR;
+            /* The first folder holding pieces, the kind's own by default. */
+            $dirs = $sprites->dirsOf((string) $family) ?: [SceneryType::IMAGE_DIR];
+            $dir = $dirs[0];
+
+            foreach ($dirs as $candidate) {
+                if (isset($deriver->piecesOnDisk($candidate)[$family])) {
+                    $dir = $candidate;
+                    break;
+                }
+            }
+
             $figures[(string) $family] = [$dir, $footprint, $deriver->piecesOnDisk($dir)[$family] ?? []];
         }
 

@@ -35,9 +35,29 @@ final class EntitySpriteService
      */
     public function spriteOf(string $type): ?string
     {
-        $dir = $this->imageDirOf($type);
+        foreach ($this->dirsOf($type) as $dir) {
+            $image = $this->spanImage($dir, $type);
 
-        return $dir === null ? null : $this->spanImage($dir, $type);
+            if ($image !== null) {
+                return $image;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The kind's folder first, then every other folder pieces live in:
+     * pieces left where a type used to belong — a trade hall was scenery,
+     * its pieces are still in img/foregrounds — draw it all the same.
+     *
+     * @return list<string> empty for a name the catalogue does not know
+     */
+    public function dirsOf(string $type): array
+    {
+        $own = $this->imageDirOf($type);
+
+        return $own === null ? [] : array_values(array_unique(array_merge([$own], $this->pieceDirs())));
     }
 
     /** null for a name the catalogue does not know. */

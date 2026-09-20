@@ -50,7 +50,7 @@ class EntitySpriteServiceTest extends LegacyPlayerFixtureTestCase
         $this->written[] = $file;
     }
 
-    public function testABuildingCutInWallPiecesIsStitchedLikeAFigure(): void
+    private function seedBuildingType(): void
     {
         $this->link->executeStatement(
             "INSERT INTO races
@@ -62,8 +62,14 @@ class EntitySpriteServiceTest extends LegacyPlayerFixtureTestCase
         );
         RaceService::clearCache();
 
+        (new EntityTypeFootprintService($this->link))
+            ->declare(self::TYPE, 2, 2, [[0, 0], [1, 0], [0, -1], [1, -1]]);
+    }
+
+    public function testABuildingCutInWallPiecesIsStitchedLikeAFigure(): void
+    {
+        $this->seedBuildingType();
         $footprints = new EntityTypeFootprintService($this->link);
-        $footprints->declare(self::TYPE, 2, 2, [[0, 0], [1, 0], [0, -1], [1, -1]]);
 
         /* The whole picture, cut along the shape — the admin's gesture. */
         $this->png('img/walls/' . self::TYPE . '.png', 100, 100);
@@ -85,6 +91,23 @@ class EntitySpriteServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame('img/walls/_composed/' . self::TYPE . '.png', $sprite);
         $this->assertSame([100, 100], array_slice((array) getimagesize($_SERVER['DOCUMENT_ROOT'] . '/' . $sprite), 0, 2));
         $this->assertSame($sprite, BuildingService::resolveAvatar(self::TYPE), 'le plateau et la palette lisent la même image');
+    }
+
+    /** A trade hall was scenery: its pieces are still in img/foregrounds on the servers. */
+    public function testPiecesLeftInAnotherFolderStillDrawTheType(): void
+    {
+        $this->seedBuildingType();
+
+        foreach ([0, 1, 2, 3] as $piece) {
+            $this->png('img/foregrounds/' . self::TYPE . '_0' . $piece . '.png', 50, 50);
+        }
+        $this->written[] = $_SERVER['DOCUMENT_ROOT'] . '/img/foregrounds/_composed/' . self::TYPE . '.png';
+        EntitySpriteService::forget();
+
+        $this->assertSame(
+            'img/foregrounds/_composed/' . self::TYPE . '.png',
+            (new EntitySpriteService())->spriteOf(self::TYPE)
+        );
     }
 
     public function testATypeWithoutPiecesHasNoStitchedSprite(): void
