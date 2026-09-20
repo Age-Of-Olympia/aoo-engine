@@ -479,7 +479,7 @@ class Ui{
             if($stateLine !== ''){
 
                 $stateAttr = \App\Service\ItemInstanceService::isBroken((int) $row->durability)
-                    ? 'Brisé : ses bonus ne s\'appliquent plus. À réparer.'
+                    ? 'Brisé : ses bonus ne s\'appliquent plus. À recycler.'
                     : 'Durabilité '. (int) $row->durability .'/'. (int) $row->durability_max;
             }
 
