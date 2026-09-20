@@ -111,10 +111,13 @@ class DeathView
         exit();
     }
 
-    /** Arm the page for a fresh death. NPCs and structures never log in. */
+    /**
+     * Arm the page for a fresh death. A structure is never driven; a PNJ
+     * (negative id) is, through the switch screen, so it gets the page.
+     */
     public static function armFor(Player $player): void
     {
-        if ((int) $player->id <= 0) {
+        if (\App\Enum\EntityCategory::fromPlayerType($player->getPlayerType()) !== \App\Enum\EntityCategory::Character) {
             return;
         }
 
