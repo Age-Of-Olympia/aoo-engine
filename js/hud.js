@@ -300,17 +300,26 @@
         /* Résultat final : l'action a coûté et produit — pilules du
          * bandeau (A, PV…), prochain tour, cible observée (PV,
          * charges d'actions) et flux d'évènements se rafraîchissent. */
-        if (isFinal) {
-            refreshAfterAction();
-        }
+        var refreshed = isFinal ? refreshAfterAction() : null;
 
         var $modal = hudSheet();
         $modal.find('.hud-action-modal-body').html(html);
         /* Final results only, only while the action is still offered on
          * the tile, and not after « Action Impossible » : the same click
-         * would be refused the same way. */
+         * would be refused the same way. The offer is read on the
+         * REFRESHED panel: after « fermer » the tile offers « ouvrir »,
+         * so there is nothing to do again. */
         var blocked = $modal.find('.hud-action-modal-body .action-blocked').length > 0;
-        $modal.find('.hud-action-modal-again').prop('hidden', !isFinal || blocked || !hudLastActionButton().length);
+        var $again = $modal.find('.hud-action-modal-again').prop('hidden', true);
+        if (isFinal && !blocked) {
+            $.when(refreshed).always(function () {
+                /* Next tick: the observer moving .card-actions into
+                 * #hud-actions runs after the response is injected. */
+                setTimeout(function () {
+                    $again.prop('hidden', !hudLastActionButton().length);
+                }, 0);
+            });
+        }
         $modal.show();
     };
 
@@ -486,9 +495,9 @@
                 }
             });
 
-        refreshSelection();
-
         loadFeed('events');
+
+        return refreshSelection();
     }
 
     /* Sprites du damier après une action : la bascule blessé/réparé
@@ -573,13 +582,16 @@
     /* Re-observe la sélection courante : PV, charges, message du
      * jour… — utilisée après une action et par le bouton de
      * rafraîchissement du panneau latéral. */
+    /* Resolves once the observed tile's panel is redrawn; at once when
+     * nothing is selected. */
     function refreshSelection() {
         var selCoords = aooStore.get('hudSelCoords');
-        if (selCoords) {
-            $.post('observe.php', { coords: selCoords }, function (data) {
-                $('#ajax-data').html(data);
-            });
+        if (!selCoords) {
+            return $.Deferred().resolve();
         }
+        return $.post('observe.php', { coords: selCoords }, function (data) {
+            $('#ajax-data').html(data);
+        });
     }
 
     /*
