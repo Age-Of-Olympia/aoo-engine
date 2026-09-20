@@ -50,19 +50,19 @@ class AtelierRepairTest extends LegacyPlayerFixtureTestCase
         $quote = $rows[0]['quote'];
 
         /* Down to 1 PV: a quarter of 8 bois (10 PO) + 4 pierre (10 PO). */
-        $this->assertSame(['bois' => 2, 'pierre' => 1], $quote['resources']);
+        $this->assertSame(['bois_atelier_test' => 2, 'pierre_atelier_test' => 1], $quote['resources']);
         $this->assertSame(3, $quote['labour'], '10% of 30 PO of resources, rounded up');
         $this->assertSame(45 + 3, $quote['gold'], 'resources at 1.5 × plus the labour');
 
         $this->link->executeStatement('UPDATE players_bonus SET n = -100 WHERE player_id = ? AND name = ?', [$entityId, 'pv']);
         $half = $service->listRepairable((int) $client->id)[0]['quote'];
-        $this->assertSame(['bois' => 1, 'pierre' => 1], $half['resources'], 'half the wear, half the bill, whole units');
+        $this->assertSame(['bois_atelier_test' => 1, 'pierre_atelier_test' => 1], $half['resources'], 'half the wear, half the bill, whole units');
         $this->assertSame(23 + 2, $half['gold']);
 
         /* The knobs are admin settings, read on every quote. */
         (new \App\Service\AdminSettingsService())->set('repair_full_share', '50');
         try {
-            $this->assertSame(['bois' => 2, 'pierre' => 1], $service->listRepairable((int) $client->id)[0]['quote']['resources'], 'half the wear at 50 % = a quarter');
+            $this->assertSame(['bois_atelier_test' => 2, 'pierre_atelier_test' => 1], $service->listRepairable((int) $client->id)[0]['quote']['resources'], 'half the wear at 50 % = a quarter');
         } finally {
             $this->link->executeStatement("DELETE FROM admin_settings WHERE name = 'repair_full_share'");
         }
@@ -71,8 +71,8 @@ class AtelierRepairTest extends LegacyPlayerFixtureTestCase
     public function testResourcesPayTheRepairAndRestoreFullLife(): void
     {
         [$client, $instanceId, $entityId] = $this->wornExemplar(wear: 200);
-        (new Item((int) $this->itemOrSkip('bois')->id))->add_item($client, 2);
-        (new Item((int) $this->itemOrSkip('pierre')->id))->add_item($client, 1);
+        Item::get_item_by_name('bois_atelier_test')->add_item($client, 2);
+        Item::get_item_by_name('pierre_atelier_test')->add_item($client, 1);
         $this->itemOrSkip('or')->add_item($client, 3);
 
         (new RepairService())->repairWithResources((int) $client->id, $instanceId);
@@ -100,11 +100,11 @@ class AtelierRepairTest extends LegacyPlayerFixtureTestCase
         $service = new RepairService();
 
         $this->assertSame([], $service->listRepairable((int) $client->id), 'broken: past repair');
-        $this->assertSame(['bois' => 2, 'pierre' => 1], $service->listBroken((int) $client->id)[0]['refund']);
+        $this->assertSame(['bois_atelier_test' => 2, 'pierre_atelier_test' => 1], $service->listBroken((int) $client->id)[0]['refund']);
 
         $service->recycle((int) $client->id, $instanceId);
 
-        $this->assertSame(2, (int) (new Item((int) $this->itemOrSkip('bois')->id))->get_n($client, includeInstances: false));
+        $this->assertSame(2, (int) Item::get_item_by_name('bois_atelier_test')->get_n($client, includeInstances: false));
         $this->assertSame(1, (int) $this->link->fetchOne('SELECT destroyed FROM item_instances WHERE id = ?', [$instanceId]));
         $this->assertSame([], $service->listBroken((int) $client->id), 'the wreck is gone from the bag');
     }
@@ -117,8 +117,9 @@ class AtelierRepairTest extends LegacyPlayerFixtureTestCase
      */
     private function wornExemplar(int $wear): array
     {
-        $bois = $this->itemOrSkip('bois');
-        $pierre = $this->itemOrSkip('pierre');
+        /* Own ingredients: the bill depends on prices, so the catalog's must not leak in. */
+        $bois = $this->sowCatalogItem('bois_atelier_test', ['type' => 'matiere', 'price' => 10]);
+        $pierre = $this->sowCatalogItem('pierre_atelier_test', ['type' => 'matiere', 'price' => 10]);
         $item = $this->sowCatalogItem('marteau_atelier_test', ['type' => 'equipement', 'durability_max' => 201, 'price' => 100]);
 
         $this->link->insert('craft_recipes', ['name' => 'marteau_atelier_test']);

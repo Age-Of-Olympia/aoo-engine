@@ -112,20 +112,21 @@ class WearEngineBaselineTest extends LegacyPlayerFixtureTestCase
 
     public function testTenStepsInATurnWearTheGearOnce(): void
     {
-        [$player, , $instanceId] = $this->wearingGladius(rate: 5);
+        [$player, $item, $instanceId] = $this->wearingGladius(rate: 5);
         $wear = new WearService();
+        $max = (int) $this->link->fetchOne('SELECT durability_max FROM items WHERE id = ?', [$item->id]);
 
         for ($i = 0; $i < 10; $i++) {
             $wear->arm($player->id, 'move');
         }
         $recap = $wear->applyNewTurnWear($player->id);
 
-        $this->assertSame(95, $this->durabilityOf($instanceId), 'one decrement per turn, whatever the event count');
+        $this->assertSame($max - 5, $this->durabilityOf($instanceId), 'one decrement per turn, whatever the event count');
         $this->assertCount(1, $recap);
         $this->assertStringContainsString('s\'use (−5)', $recap[0]);
 
         $this->assertSame([], $wear->applyNewTurnWear($player->id), 'nothing armed → next turn wears nothing');
-        $this->assertSame(95, $this->durabilityOf($instanceId));
+        $this->assertSame($max - 5, $this->durabilityOf($instanceId));
     }
 
     public function testWearFloorsAtZeroBreaksAndBrokenNoLongerArms(): void
