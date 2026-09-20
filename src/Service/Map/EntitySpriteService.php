@@ -2,6 +2,8 @@
 
 namespace App\Service\Map;
 
+use App\Service\RaceService;
+
 /**
  * The one picture the board draws a multi-cell figure with.
  *
@@ -25,6 +27,30 @@ final class EntitySpriteService
 {
     /** @var array<string, string|null> memo, keyed "dir/family" */
     private static array $sprites = [];
+
+    /**
+     * The picture of a multi-cell TYPE, in the folder its kind keeps its
+     * images in ({@see \App\Entity\Race::imageDir()}) — the one path for
+     * a scenery figure, a building or a character with a cut-out.
+     */
+    public function spriteOf(string $type): ?string
+    {
+        $dir = $this->imageDirOf($type);
+
+        return $dir === null ? null : $this->spanImage($dir, $type);
+    }
+
+    /** null for a name the catalogue does not know. */
+    public function imageDirOf(string $type): ?string
+    {
+        return (new RaceService())->getImageDirMap()[$type] ?? null;
+    }
+
+    /** @return list<string> every folder a type may keep pieces in */
+    public function pieceDirs(): array
+    {
+        return array_values(array_unique((new RaceService())->getImageDirMap()));
+    }
 
     /**
      * Web path of the figure's picture, or null when there is none to trust.
@@ -71,7 +97,7 @@ final class EntitySpriteService
             return null;
         }
 
-        $pieces = (new SceneryFootprintDeriver())->piecesOnDisk()[$family] ?? [];
+        $pieces = (new SceneryFootprintDeriver())->piecesOnDisk($imageDir)[$family] ?? [];
 
         return (new CompositeSpriteService())->composedSprite($imageDir, $family, $footprint, $pieces);
     }

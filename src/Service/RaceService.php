@@ -24,6 +24,9 @@ class RaceService
     /** @var array<string, Race|null> Per-request cache, keyed by lowercase race name. */
     private static array $cache = [];
 
+    /** @var array<string, string>|null race name => image folder, per request */
+    private static ?array $imageDirs = null;
+
     private $entityManager;
 
     public function __construct()
@@ -302,6 +305,23 @@ class RaceService
     }
 
     /**
+     * @return array<string, string> race name => folder under img/ where the
+     *                               type's pictures live ({@see Race::imageDir()}).
+     *                               Memoised: the board asks per entity row.
+     */
+    public function getImageDirMap(): array
+    {
+        if (self::$imageDirs === null) {
+            self::$imageDirs = [];
+            foreach ($this->getAllRaces() as $race) {
+                self::$imageDirs[$race->getName()] = $race->imageDir();
+            }
+        }
+
+        return self::$imageDirs;
+    }
+
+    /**
      * Replace a race's starter-action and spell lists (admin edit). Plain SQL
      * delete+insert: entries are name strings without FK identity, and this
      * sidesteps ORM insert-before-delete collisions on the unique key.
@@ -425,5 +445,6 @@ class RaceService
     public static function clearCache(): void
     {
         self::$cache = [];
+        self::$imageDirs = null;
     }
 }

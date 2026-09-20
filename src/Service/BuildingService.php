@@ -267,7 +267,8 @@ class BuildingService
     }
 
     /**
-     * Sprite of a structure type, in fallback order: dedicated avatar
+     * Sprite of a structure type, in fallback order: the sprite stitched
+     * from its pieces (img/walls/{type}_{n}.png) → dedicated avatar
      * (img/avatars/{type}.webp) → the FIRST image of the type's stock
      * (img/avatars/{type}/, admin → Bâtiments → Images — same thumbnail
      * as the admin lists, one visual everywhere) → the map-wall sprite of
@@ -282,6 +283,13 @@ class BuildingService
 
         $candidates = ['img/avatars/' . $type . $suffix . '.webp'];
         if (!$broken) {
+            // A type cut in pieces (img/walls/{type}_{n}.png) shows the
+            // sprite stitched from them, as a scenery figure does.
+            $composed = (new \App\Service\Map\EntitySpriteService())->spriteOf($type);
+            if ($composed !== null) {
+                array_unshift($candidates, $composed);
+            }
+
             // Le stock n'a pas de convention _broken : variante cassée
             // servie par les fichiers plats seulement.
             try {

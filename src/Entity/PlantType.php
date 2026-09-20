@@ -57,6 +57,11 @@ class PlantType extends StructureType implements HarvestableInterface
         return self::FAMILY_PLANT;
     }
 
+    public function imageDir(): string
+    {
+        return 'plants';
+    }
+
     public function getHarvestMin(): int
     {
         return $this->harvestMin ?? self::DEFAULT_MIN;

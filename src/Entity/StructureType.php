@@ -22,6 +22,12 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 abstract class StructureType extends Race
 {
+    /** Les murs, bâtiments et ressources partagent le stock historique. */
+    public function imageDir(): string
+    {
+        return 'walls';
+    }
+
     /**
      * Jusqu'où se lit ce qui est inscrit : de loin (pancarte, enseigne) ou
      * seulement d'une case voisine (plaque gravée, épitaphe).

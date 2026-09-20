@@ -1073,6 +1073,12 @@ class View{
 
                         $spanW = self::TILE_PX * $footprint->width();
                         $spanH = self::TILE_PX * $footprint->height();
+
+                        /* Drawn like a scenery figure when its type is cut in
+                         * pieces: the sprite stitched from them, in the folder
+                         * of its kind. Without pieces, the single picture
+                         * above stretches over the box. */
+                        $img = (new \App\Service\Map\EntitySpriteService())->spriteOf((string) $entity->race) ?? $img;
                     }
 
                     /* La bordure de race dit d'un coup d'œil À QUI on a

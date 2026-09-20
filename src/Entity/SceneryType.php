@@ -14,9 +14,16 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 class SceneryType extends StructureType
 {
+    public const IMAGE_DIR = 'foregrounds';
+
     public function familyKey(): string
     {
         return self::FAMILY_SCENERY;
+    }
+
+    public function imageDir(): string
+    {
+        return self::IMAGE_DIR;
     }
 
     /** Scenery is erected by someone — a statue, a fence — so it is maintained.

@@ -55,6 +55,12 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     abstract public function familyKey(): string;
 
     /**
+     * Le dossier sous img/ où vivent les images de CE type : son sprite,
+     * ses morceaux (`<type>_<n>.png`) et leur assemblage (`_composed/`).
+     */
+    abstract public function imageDir(): string;
+
+    /**
      * Le type vide de la famille que décrit ce couple de colonnes.
      *
      * SEULE dérivation en PHP : un formulaire ou un bundle ne parlent que de
