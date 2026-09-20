@@ -14,7 +14,6 @@ use Classes\Str;
  */
 
 $debug=isset($_GET['perf']);
-$useGet2=isset($_GET['test']);
 $steps=null;
 if ($debug) {
     $steps = array();
@@ -65,12 +64,7 @@ if ($debug) {
 if(isset($_GET['mdj'])){
     $logsToDisplay = Log::get($player,$logAge, 'mdj',steps: $steps);
 } else if (isset($_GET['light'])) {
-    if($useGet2) {
-        $logsToDisplay = Log::get2($player,$logAge, 'light', steps: $steps);
-    }
-    else{
-        $logsToDisplay = Log::get($player,$logAge, 'light',steps: $steps);
-    }
+    $logsToDisplay = Log::get($player,$logAge, 'light',steps: $steps);
 } else if ($displayAllCondition && isset($_GET['admin'])) {
     $logsToDisplay = Log::getAllPlanEvents($player->coords->plan,$logAge);
 } else {

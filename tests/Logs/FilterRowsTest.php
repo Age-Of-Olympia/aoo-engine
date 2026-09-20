@@ -174,7 +174,7 @@ class FilterRowsTest extends TestCase
         ]);
 
         // Le destroy doit être visible (dans le champ de perception)
-        ViewMock::setCoordsAroundResult(['0_0_0_test_plan']);
+        $this->testDb->insertLog(['type' => 'move', 'player_id' => 1, 'coords_id' => 1, 'time' => time() - THREE_DAYS - 100]);
 
         // Act
         $result = Log::get($this->player);
@@ -205,7 +205,7 @@ class FilterRowsTest extends TestCase
         ]);
 
         // Les événements doivent être visibles (dans le champ de perception)
-        ViewMock::setCoordsAroundResult(['0_0_0_test_plan']);
+        $this->testDb->insertLog(['type' => 'move', 'player_id' => 1, 'coords_id' => 1, 'time' => time() - THREE_DAYS - 100]);
 
         // Act
         $result = Log::get($this->player);
@@ -237,7 +237,7 @@ class FilterRowsTest extends TestCase
         ]);
 
         // Les événements doivent être visibles
-        ViewMock::setCoordsAroundResult(['0_0_0_test_plan']);
+        $this->testDb->insertLog(['type' => 'move', 'player_id' => 1, 'coords_id' => 1, 'time' => time() - THREE_DAYS - 100]);
 
         // Act
         $result = Log::get($this->player);
