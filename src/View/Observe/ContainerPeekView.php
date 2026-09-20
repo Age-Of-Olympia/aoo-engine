@@ -20,15 +20,17 @@ final class ContainerPeekView
     {
         $conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
 
-        /* The lockable entities standing on this cell — anchor or any
-         * cell of their footprint. */
+        /* The lockable entities standing on this cell — anchor or any cell
+         * of their footprint. Two indexed lookups, materialised once: a JOIN
+         * on `coords_id = c.id OR EXISTS …` scanned the whole players table. */
+        $cellId = '(SELECT id FROM coords WHERE x = ? AND y = ? AND z = ? AND plan = ?)';
+        $cell = [$x, $y, (int) $coords->z, (string) $coords->plan];
         $entities = $conn->fetchAllAssociative(
-            'SELECT DISTINCT p.id, p.name
-               FROM players p
-               JOIN coords c ON (c.x = ? AND c.y = ? AND c.z = ? AND CONVERT(c.plan USING utf8mb4) = CONVERT(? USING utf8mb4))
-              WHERE p.coords_id = c.id
-                 OR EXISTS (SELECT 1 FROM entity_cells ec WHERE ec.player_id = p.id AND ec.coords_id = c.id)',
-            [$x, $y, (int) $coords->z, (string) $coords->plan]
+            'SELECT p.id, p.name
+               FROM (SELECT id FROM players WHERE coords_id = ' . $cellId . '
+                     UNION SELECT player_id FROM entity_cells WHERE coords_id = ' . $cellId . ') occ
+               JOIN players p ON p.id = occ.id',
+            array_merge($cell, $cell)
         );
 
         $lock = new LockService();

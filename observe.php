@@ -46,16 +46,6 @@ $player->get_data();
 $coords = $player->getCoords();
 
 
-/* An entity answers from EVERY cell it holds, not only the one it stands on:
- * without this, only the top-left corner of a 3×3 library called itself a
- * library.
- *
- * `players.coords_id` stays in the condition, so an entity whose cells have
- * not kept up is still reachable where it stands. */
-$entityOnCell = '(p.coords_id = c.id OR EXISTS (
-        SELECT 1 FROM entity_cells ec WHERE ec.player_id = p.id AND ec.coords_id = c.id
-    ))';
-
 $db = new Db();
 
 
@@ -203,125 +193,33 @@ while($row = $res->fetch_object()){
 }
 
 
-// plan exceptions
+/* An entity answers from EVERY cell it holds, not only the one it stands on:
+ * without this, only the top-left corner of a 3×3 library called itself a
+ * library. `players.coords_id` stays in the lookup, so an entity whose cells
+ * have not kept up is still reachable where it stands.
+ *
+ * Both lookups go through an index and the UNION is materialised once; the
+ * former `JOIN players ON (coords_id = c.id OR EXISTS …)` scanned players. */
+$cellId = '(SELECT id FROM coords WHERE x = ? AND y = ? AND z = ? AND plan = ?)';
+$onCell = '(SELECT id FROM players WHERE coords_id = ' . $cellId
+    . ' UNION SELECT player_id FROM entity_cells WHERE coords_id = ' . $cellId . ')';
+$cellParams = [$x, $y, $coords->z, $coords->plan, $x, $y, $coords->z, $coords->plan];
+
+/* Plans with player_visibility off (tutorial) and unknown plans show only
+ * oneself plus what is not another player: PNJ, buildings, unique objects.
+ * Structures have positive ids since the wall conversion, hence the type test. */
 $planJson = plans()->read($player->coords->plan);
+$othersHidden = !$planJson || (isset($planJson->player_visibility) && $planJson->player_visibility === false);
 
+$sql = '
+SELECT p.id AS id, p.name
+  FROM ' . $onCell . ' AS occ
+  JOIN players AS p ON p.id = occ.id
+  LEFT JOIN players_options AS po ON po.player_id = p.id AND po.name = "invisibleMode"
+ WHERE (p.id = ? OR po.player_id IS NULL)'
+    . ($othersHidden ? ' AND (p.id = ? OR p.player_type NOT IN ("real", "tutorial"))' : '');
 
-if($planJson){
-    // Check if player_visibility is disabled (tutorial mode)
-    $playerVisibilityEnabled = !isset($planJson->player_visibility) || $planJson->player_visibility !== false;
-
-    if ($playerVisibilityEnabled) {
-        // Show all players at this location (except invisible ones)
-        $sql = '
-        SELECT
-        p.id AS id,
-        p.name
-        FROM
-        players AS p
-        INNER JOIN
-        coords AS c
-        ON
-        '. $entityOnCell .'
-        LEFT JOIN
-        players_options AS po
-        ON
-        po.player_id = p.id AND po.name = "invisibleMode"
-        WHERE
-        c.x = ?
-        AND
-        c.y = ?
-        AND
-        c.z = ?
-        AND
-        c.plan = ?
-        AND
-        (p.id = ? OR po.player_id IS NULL)
-        ';
-
-        $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan, $player->id));
-    } else {
-        // Player visibility disabled - only show current player and NPCs (except invisible ones)
-        $sql = '
-        SELECT
-        p.id AS id,
-        p.name
-        FROM
-        players AS p
-        INNER JOIN
-        coords AS c
-        ON
-        '. $entityOnCell .'
-        LEFT JOIN
-        players_options AS po
-        ON
-        po.player_id = p.id AND po.name = "invisibleMode"
-        WHERE
-        c.x = ?
-        AND
-        c.y = ?
-        AND
-        c.z = ?
-        AND
-        c.plan = ?
-        AND
-        (
-            p.id = ?
-            OR
-            /* Soi-même, plus tout ce qui n\'est pas un autre joueur : PNJ,
-             * bâtiments, objets uniques. « p.id < 0 » ne désignait que les
-             * PNJ — depuis la conversion des murs, un bâtiment porte un id
-             * POSITIF et disparaissait donc du panneau d\'observation sur
-             * les plans à visibilité coupée, alors que la carte le dessine
-             * (Classes/View.php : une structure fait partie du décor). */
-            p.player_type NOT IN ("real", "tutorial")
-        )
-        AND
-        (p.id = ? OR po.player_id IS NULL)
-        ';
-
-        $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan, $player->id, $player->id));
-    }
-}
-
-elseif(!$planJson){
-
-    $sql = '
-    SELECT
-    p.id AS id,
-    p.name
-    FROM
-    players AS p
-    INNER JOIN
-    coords AS c
-    ON
-    '. $entityOnCell .'
-    LEFT JOIN
-    players_options AS po
-    ON
-    po.player_id = p.id AND po.name = "invisibleMode"
-    WHERE
-    c.x = ?
-    AND
-    c.y = ?
-    AND
-    c.z = ?
-    AND
-    c.plan = ?
-    AND
-    (
-        p.id = ?
-        OR
-        /* Même correction que la branche ci-dessus : les structures ont un
-         * id positif depuis la conversion des murs. */
-        p.player_type NOT IN ("real", "tutorial")
-    )
-    AND
-    (p.id = ? OR po.player_id IS NULL)
-    ';
-
-    $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan, $player->id, $player->id));
-}
+$res = $db->exe($sql, array_merge($cellParams, $othersHidden ? [$player->id, $player->id] : [$player->id]));
 
 
 if($res->num_rows){
