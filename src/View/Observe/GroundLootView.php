@@ -50,8 +50,8 @@ final class GroundLootView
         foreach ($loot['instances'] as $row) {
 
             $label = $row->custom_name !== ''
-                ? '« '. htmlspecialchars($row->custom_name, ENT_QUOTES, 'UTF-8') .' » ('. ucfirst($row->name) .')'
-                : ucfirst($row->name);
+                ? '« '. htmlspecialchars($row->custom_name, ENT_QUOTES, 'UTF-8') .' » ('. ucfirst($row->label) .')'
+                : ucfirst($row->label);
 
             $state = \App\Service\ItemInstanceService::isBroken((int) $row->durability)
                 ? ' — <font color="red"><b>brisé</b></font>'
