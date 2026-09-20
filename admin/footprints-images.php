@@ -6,7 +6,9 @@
  *   cut    — a whole picture (uploaded, or the one the board draws) sliced
  *            into `<type>_<n>.png` pieces along the declared shape;
  *   rename — a file of that folder given another name (`banque_naine.png`
- *            → `banque.png`), never moved out of it.
+ *            → `banque.png`), never moved out of it;
+ *   move   — every file of the type from another folder into the kind's
+ *            (pieces left in img/foregrounds by a type that was scenery).
  */
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
@@ -58,6 +60,41 @@ try {
 
         EntitySpriteService::forget();
         setFlash('success', $from . ' renommé en ' . $to . '.');
+        redirectTo($back);
+    }
+
+    if (($_POST['action'] ?? '') === 'move') {
+        $from = (string) ($_POST['dir'] ?? '');
+
+        if (!in_array($from, $dirs, true) || $from === $dir) {
+            throw new RuntimeException('Dossier d\'origine inconnu pour ce type.');
+        }
+
+        $root = $_SERVER['DOCUMENT_ROOT'] . '/img/';
+        $moved = 0;
+
+        foreach (glob($root . $from . '/' . $type . '*.png') ?: [] as $file) {
+            $base = basename($file, '.png');
+
+            if (!preg_match('/^' . preg_quote($type, '/') . '(_\d{1,2})?$/', $base)) {
+                continue; /* a namesake (banque_naine) is not a piece of this type */
+            }
+
+            if (is_file($root . $dir . '/' . $base . '.png')) {
+                throw new RuntimeException('Un fichier ' . $base . '.png existe déjà dans img/' . $dir . '/.');
+            }
+
+            if (rename($file, $root . $dir . '/' . $base . '.png')) {
+                $moved++;
+            }
+        }
+
+        /* The stitched picture is a cache: rebuilt where the pieces now are. */
+        @unlink($root . $from . '/_composed/' . $type . '.png');
+        EntitySpriteService::forget();
+
+        setFlash('success', $moved . ' fichier' . ($moved > 1 ? 's' : '') . ' déplacé' . ($moved > 1 ? 's' : '')
+            . ' de img/' . $from . '/ vers img/' . $dir . '/.');
         redirectTo($back);
     }
 

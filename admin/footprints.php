@@ -443,6 +443,17 @@ ob_start();
                     <?php if ($images === [] && $dir !== $dirs[0]) { continue; } ?>
                     <h4>Images — <code>img/<?= e($dir) ?>/</code></h4>
 
+                    <?php if ($dir !== $dirs[0] && $images !== []): ?>
+                        <form method="post" action="footprints-images.php" class="fp-image">
+                            <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
+                            <input type="hidden" name="type" value="<?= e($name) ?>" />
+                            <input type="hidden" name="action" value="move" />
+                            <input type="hidden" name="dir" value="<?= e($dir) ?>" />
+                            <button type="submit" class="btn btn-sm btn-secondary">Déplacer dans <code>img/<?= e($dirs[0]) ?>/</code></button>
+                            <small class="text-muted">Les fichiers <code><?= e($name) ?>.png</code> et <code><?= e($name) ?>_n.png</code> de ce dossier.</small>
+                        </form>
+                    <?php endif; ?>
+
                     <?php if ($images === []): ?>
                         <p class="text-muted">Aucune image de ce nom dans le dossier.</p>
                     <?php endif; ?>
