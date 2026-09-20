@@ -307,13 +307,12 @@ class ActionExecutorService
             }
 
             if (!empty($outcomeSuccessMessages)) {
-                $itemOutcomeResult = new OutcomeResult(
-                    true,
-                    outcomeSuccessMessages: $outcomeSuccessMessages,
-                    outcomeFailureMessages: []
-                );
-
-                $this->outcomeResultsArray[] = $itemOutcomeResult;
+                /* ActionResultsView shows an outcome's failure messages when
+                 * the action failed: a miss-triggered effect files its line
+                 * there, or the player never reads what just hit them. */
+                $this->outcomeResultsArray[] = $outcome === 'hit'
+                    ? new OutcomeResult(true, outcomeSuccessMessages: $outcomeSuccessMessages, outcomeFailureMessages: [])
+                    : new OutcomeResult(true, outcomeSuccessMessages: [], outcomeFailureMessages: $outcomeSuccessMessages);
             }
         }
     }
