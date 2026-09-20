@@ -40,3 +40,4 @@ db/migrations/
 
 # Serena local index and memories
 .serena/
+/var/cache/
