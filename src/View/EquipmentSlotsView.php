@@ -60,7 +60,7 @@ final class EquipmentSlotsView
              * title natif l'afficherait littéralement. */
             $title = strip_tags($itemName);
             if ($caracs !== '') {
-                $title .= ' — ' . strip_tags($caracs);
+                $title .= ' : ' . strip_tags($caracs);
             }
             if (!empty($row->equiped)) {
                 $title .= ' (' . $row->equiped . ')';
@@ -75,8 +75,8 @@ final class EquipmentSlotsView
                 $pct = max(0, min(100, (int) round($durability / (int) $row->durability_max * 100)));
                 $level = $durability <= 0 ? 'broken' : ($pct < 20 ? 'low' : ($pct < 50 ? 'mid' : 'ok'));
                 $title .= $durability <= 0
-                    ? ' — BRISÉ'
-                    : ' — durabilité ' . $durability . '/' . (int) $row->durability_max;
+                    ? '. Brisé'
+                    : '. Durabilité ' . $durability . '/' . (int) $row->durability_max;
                 if ($durability <= 0) {
                     $slotClass .= ' equip-slot--broken';
                 }
