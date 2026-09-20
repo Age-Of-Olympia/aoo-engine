@@ -254,7 +254,7 @@ if ($action === 'new') {
         $content .= '<p class="text-muted">Aucun NPC configuré pour le tutoriel.</p>';
     } else {
         $h = fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
-        $content .= '<table class="table table-striped"><thead><tr>'
+        $content .= '<table class="table table-striped" data-admin-list data-page-size="50"><thead><tr>'
                   . '<th>ID</th><th>Version</th><th>Rôle</th><th>Mode</th>'
                   . '<th>X / Y</th><th>Nom</th><th>Race</th>'
                   . '<th>Spawn step</th><th>Actif</th><th>Actions</th>'

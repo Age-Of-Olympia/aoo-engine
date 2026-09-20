@@ -100,7 +100,7 @@ ob_start();
                 depuis cet environnement.
             </div>
         <?php else: ?>
-            <table class="table table-striped table-sm" style="max-width: 860px;">
+            <table class="table table-striped table-sm">
                 <thead><tr>
                     <th>Plan</th><th>Nom</th><th>Niveaux z</th><th>Action</th><th>Avertissements</th>
                 </tr></thead>

@@ -248,7 +248,7 @@ ob_start();
                 <?php if (empty($terrainAudit['zLevels'])): ?>
                     <div class="alert alert-info mb-0">Aucune tuile de sol en base pour ce plan.</div>
                 <?php else: ?>
-                    <table class="table table-sm mb-2" style="font-size:13px;max-width:520px;">
+                    <table class="table table-sm mb-2" style="font-size:13px;">
                         <thead><tr><th>Niveau Z</th><th>Cases</th><th>Paires</th><th>Trios</th><th>Quatuors</th></tr></thead>
                         <tbody>
                         <?php foreach ($terrainAudit['zLevels'] as $z => $zStats): ?>

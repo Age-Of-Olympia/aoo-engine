@@ -116,7 +116,8 @@ final class SkillStatsView
         }
 
         return '<h2 class="h5 mt-4 mb-2">Répartition par joueur</h2>'
-            . '<table class="table table-striped table-hover">'
+            . '<table class="table table-striped table-hover" data-admin-list data-page-size="50"'
+            . ' data-search-placeholder="Nom ou matricule…">'
             . '<thead><tr><th>Matricule</th><th>Nom</th><th>Actions</th><th>Passifs</th><th></th></tr></thead>'
             . '<tbody>' . $body . '</tbody></table>';
     }

@@ -226,7 +226,6 @@ function items_type_inconsistencies(object $row, string $type): array
 function items_render_list(array $items, string $csrfToken): string
 {
     $inDb = 0;
-    $typeCounts = [];
     $rows = [];
     $ownerCounts = items_owner_counts();
     foreach ($items as $row) {
@@ -237,7 +236,6 @@ function items_render_list(array $items, string $csrfToken): string
             $legacyJson = json()->decode('items', $row->name);
             $type = is_object($legacyJson) ? (string) ($legacyJson->type ?? '') : '';
         }
-        $typeCounts[$type] = ($typeCounts[$type] ?? 0) + 1;
         $statsBadge = !empty($row->stats_in_db)
             ? '<span class="badge badge-success" title="Stats en base — édition complète">BDD</span>'
             : '<span class="badge badge-secondary" title="Stats encore dans le JSON legacy — seed à rejouer, ou enregistrer ici pour basculer">JSON</span>';
@@ -290,7 +288,8 @@ function items_render_list(array $items, string $csrfToken): string
                 . '<i class="fas fa-exclamation-triangle"></i> ' . count($issues) . '</span>'
             : '';
 
-        $rows[] = '<tr data-type="' . e($type) . '">'
+        // « Sans type » : facette distincte de « tous » pour admin-list.js
+        $rows[] = '<tr data-type="' . ($type !== '' ? e(ucfirst($type)) : 'Sans type') . '">'
             . '<td><img src="/img/items/' . e($row->name) . '_mini.webp" style="max-height:24px"'
             . ' onerror="this.style.display=\'none\'" alt=""> '
             . (trim((string) ($row->label ?? '')) !== '' ? '<b>' . e($row->label) . '</b> ' : '')
@@ -320,58 +319,11 @@ function items_render_list(array $items, string $csrfToken): string
         . ' présents dans <code>datas/*/items/</code> ont pu être recopiés ; en prod,'
         . ' <a href="/admin/item-seed.php">rejouer le seed</a> les basculera tous.'
         . ' Enregistrer un objet « JSON » depuis cette page fait aussi de la base sa source.</p>'
-        . items_type_filter_bar($typeCounts)
-        . '<input type="text" class="form-control mb-2" id="items-filter" placeholder="filtrer…"'
-        . ' onkeyup="itemsApplyFilters();">'
         . renderTable(
             ['Objet', 'Type', 'Stats', 'Flags', 'Sort lié', 'Usure', 'Joueurs', ''],
             $rows,
-            'class="table table-sm table-striped align-middle" id="items-table"'
+            'class="table table-sm table-striped align-middle" data-admin-list data-page-size="50" data-facets="type:Type"'
         );
-}
-
-/**
- * Barre de filtre par type : un bouton par type présent au catalogue
- * (avec son compte), combinable avec la recherche texte — une seule
- * fonction JS applique les deux critères.
- *
- * @param array<string, int> $typeCounts type => nombre d'objets
- */
-function items_type_filter_bar(array $typeCounts): string
-{
-    ksort($typeCounts);
-
-    $buttons = '<button type="button" class="btn btn-sm btn-outline-dark active" data-type-filter="*">'
-        . 'Tous (' . array_sum($typeCounts) . ')</button>';
-    foreach ($typeCounts as $type => $count) {
-        // « Sans type » filtre sur la chaîne vide — distinct de « Tous » (*).
-        $buttons .= ' <button type="button" class="btn btn-sm btn-outline-dark" data-type-filter="' . e($type) . '">'
-            . ($type !== '' ? e(ucfirst($type)) : 'Sans type') . ' (' . $count . ')</button>';
-    }
-
-    $script = '<script>
-    /* Filtre combiné type + texte : chaque critère élimine, la ligne
-       survit si elle passe les deux. */
-    window.itemsTypeFilter = "*";
-    function itemsApplyFilters() {
-        var q = document.getElementById("items-filter").value.toLowerCase();
-        document.querySelectorAll("#items-table tbody tr").forEach(function (tr) {
-            var typeOk = window.itemsTypeFilter === "*" || tr.dataset.type === window.itemsTypeFilter;
-            var textOk = q === "" || tr.textContent.toLowerCase().indexOf(q) !== -1;
-            tr.style.display = (typeOk && textOk) ? "" : "none";
-        });
-    }
-    document.querySelectorAll("[data-type-filter]").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-            window.itemsTypeFilter = btn.dataset.typeFilter;
-            document.querySelectorAll("[data-type-filter]").forEach(function (b) { b.classList.remove("active"); });
-            btn.classList.add("active");
-            itemsApplyFilters();
-        });
-    });
-    </script>';
-
-    return '<div class="mb-2">' . $buttons . '</div>' . $script;
 }
 
 /**

@@ -93,7 +93,7 @@ ob_start();
                 depuis cet environnement.
             </div>
         <?php else: ?>
-            <table class="table table-striped table-sm" style="max-width: 760px;">
+            <table class="table table-striped table-sm">
                 <thead><tr>
                     <th>Race</th><th>Fichier</th><th>Action</th><th>Listes du JSON</th>
                 </tr></thead>

@@ -62,17 +62,11 @@ function race_image_path(string $name, TypeEditorFace $face): string
     }
 }
 
-/** Page du stock d'images correspondant à la section courante. */
-function race_images_page(TypeEditorFace $face): string
-{
-    return $face->imagesPage();
-}
-
 /** La vignette, cliquable vers le stock d'images de la race / du type. */
 function race_image_cell(string $name, TypeEditorFace $face): string
 {
     $path = race_image_path($name, $face);
-    $href = race_images_page($face) . '?type=avatar&amp;race=' . e(urlencode($name));
+    $href = $face->imagesPage() . '?type=avatar&amp;race=' . e(urlencode($name));
 
     $inner = $path !== ''
         ? '<img src="/' . e($path) . '" height="36" loading="lazy" alt=""'
@@ -579,7 +573,7 @@ HTML;
         . ($isEdit
             ? '<div class="form-group col-md-2"><label>' . ($face->isStructure() ? 'Image' : 'Avatar') . '</label>'
                 . '<div>' . race_image_cell($race->getName(), $face) . '</div>'
-                . '<a class="btn btn-sm btn-outline-secondary mt-1" href="' . race_images_page($face)
+                . '<a class="btn btn-sm btn-outline-secondary mt-1" href="' . $face->imagesPage()
                 . '?type=avatar&amp;race=' . e(urlencode($race->getName())) . '">Gérer les images</a>'
                 . '<small class="form-text text-muted">Première image du stock'
                 . ($face->isStructure() ? ' — le sprite des entités posées.' : ' — les joueurs choisissent en jeu.')

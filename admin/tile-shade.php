@@ -40,7 +40,7 @@ ob_start();
 
     <?= renderFlashMessage() ?>
 
-    <div class="card mt-3" style="max-width: 640px;">
+    <div class="card mt-3">
         <div class="card-header"><strong>Ombres des cases</strong></div>
         <div class="card-body">
             <form method="post" action="tile-shade.php">
