@@ -36,7 +36,7 @@ $csrfToken = (new CsrfProtectionService())->generateToken();
 /* -------------------------------------------------------------------------
  * DATA: admin-access dashboard
  *
- * One row per privileged real character (id > 0), showing whether the right is
+ * One row per privileged real character, showing whether the right is
  * direct and which admin PNJ(s) it controls. Same predicate as the test-env
  * lock-down UPDATE, so this list == the accounts that would keep access.
  * ---------------------------------------------------------------------- */
@@ -62,7 +62,7 @@ LEFT JOIN players_options o2
 LEFT JOIN players pnj
        ON pnj.id = pp.pnj_id
       AND o2.name IS NOT NULL
-WHERE p.id > 0
+WHERE p.player_type = 'real'
 GROUP BY p.id, p.name
 HAVING direct_admin = 1 OR direct_superadmin = 1 OR via_pnjs IS NOT NULL
 ORDER BY p.id
