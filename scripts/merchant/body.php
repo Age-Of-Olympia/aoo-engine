@@ -99,10 +99,10 @@ elseif(isset($_GET['bank'])){
     BankView::renderBank($market,$target);
 }
 elseif(isset($_GET['repair'])){
-    AtelierView::renderRepair($target);
+    AtelierView::render($target, 'repair');
 }
 elseif(isset($_GET['recycle'])){
-    AtelierView::renderRecycle($target);
+    AtelierView::render($target, 'recycle');
 }
 elseif(isset($_GET['inventory'])){
 

@@ -58,6 +58,14 @@ class AtelierRepairTest extends LegacyPlayerFixtureTestCase
         $half = $service->listRepairable((int) $client->id)[0]['quote'];
         $this->assertSame(['bois' => 1, 'pierre' => 1], $half['resources'], 'half the wear, half the bill, whole units');
         $this->assertSame(23 + 2, $half['gold']);
+
+        /* The knobs are admin settings, read on every quote. */
+        (new \App\Service\AdminSettingsService())->set('repair_full_share', '50');
+        try {
+            $this->assertSame(['bois' => 2, 'pierre' => 1], $service->listRepairable((int) $client->id)[0]['quote']['resources'], 'half the wear at 50 % = a quarter');
+        } finally {
+            $this->link->executeStatement("DELETE FROM admin_settings WHERE name = 'repair_full_share'");
+        }
     }
 
     public function testResourcesPayTheRepairAndRestoreFullLife(): void

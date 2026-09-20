@@ -12,31 +12,44 @@ use Doctrine\DBAL\Connection;
  * The atelier's counter: repair a worn exemplar, recycle a broken one.
  *
  * Both price off the item's RECIPE. A full repair (from the last hit
- * point) costs FULL_REPAIR_SHARE of the recipe; less wear costs
- * proportionally less. The bill is paid either in the recipe's resources
- * plus labour, or entirely in gold — the artisan buys the resources with
- * a margin, so gold always costs more. A broken exemplar is past repair:
- * recycling gives back RECYCLE_SHARE of its ingredients and destroys it.
+ * point) costs a share of the recipe; less wear costs proportionally
+ * less. The bill is paid either in the recipe's resources plus labour, or
+ * entirely in gold — the artisan buys the resources with a margin, so gold
+ * always costs more. A broken exemplar is past repair: recycling gives
+ * back a share of its ingredients and destroys it.
  */
 final class RepairService
 {
-    /** Share of the recipe a repair from 1 PV costs. */
-    public const FULL_REPAIR_SHARE = 0.25;
-
-    /** Share of the recipe a broken exemplar gives back. */
-    public const RECYCLE_SHARE = 0.25;
-
-    /** Labour, in gold: this share of the resources' value, at least 1 PO. */
-    public const LABOUR_SHARE = 0.10;
-
-    /** What the artisan charges on resources bought in your stead. */
-    public const GOLD_MARGIN = 1.5;
+    /**
+     * The four knobs, as percentages in admin_settings (admin/index.php):
+     * share of the recipe a repair from 1 PV costs, labour as a share of
+     * the resources' value (at least 1 PO), the artisan's margin on
+     * resources paid in gold, share of the recipe a broken exemplar gives
+     * back. Read on every quote, so a change applies at once.
+     */
+    public const SETTINGS = [
+        'repair_full_share' => 25,
+        'repair_labour_share' => 10,
+        'repair_gold_margin' => 150,
+        'recycle_share' => 25,
+    ];
 
     private Connection $conn;
+
+    private AdminSettingsService $settings;
 
     public function __construct()
     {
         $this->conn = EntityManagerFactory::getEntityManager()->getConnection();
+        $this->settings = new AdminSettingsService();
+    }
+
+    /** A knob as a ratio: 25 → 0.25. Unset or invalid falls back to the default. */
+    public function ratio(string $name): float
+    {
+        $stored = $this->settings->get($name, (string) self::SETTINGS[$name]);
+
+        return (is_numeric($stored) && $stored >= 0 ? (float) $stored : self::SETTINGS[$name]) / 100;
     }
 
     /**
@@ -49,8 +62,7 @@ final class RepairService
     {
         $rows = [];
         foreach ($this->heldExemplars($playerId) as $row) {
-            $missing = (int) $row['durability_max'] - (int) $row['durability'];
-            if ($missing <= 0 || ItemInstanceService::isBroken((int) $row['durability'])) {
+            if ((int) $row['durability'] >= (int) $row['durability_max'] || ItemInstanceService::isBroken((int) $row['durability'])) {
                 continue;
             }
             $row['quote'] = $this->quote($row);
@@ -68,7 +80,7 @@ final class RepairService
             if (!ItemInstanceService::isBroken((int) $row['durability'])) {
                 continue;
             }
-            $row['refund'] = $this->shareOf($this->recipeOf((string) $row['name']), self::RECYCLE_SHARE, roundUp: false);
+            $row['refund'] = $this->shareOf($this->recipeOf((string) $row['name']), $this->ratio('recycle_share'), roundUp: false);
             $rows[] = $row;
         }
 
@@ -89,19 +101,19 @@ final class RepairService
         }
 
         $max = max(1, (int) $row['durability_max']);
-        $share = self::FULL_REPAIR_SHARE * ((int) $row['durability_max'] - (int) $row['durability']) / $max;
+        $share = $this->ratio('repair_full_share') * ((int) $row['durability_max'] - (int) $row['durability']) / $max;
 
         $resources = $this->shareOf($recipe, $share, roundUp: true);
         $value = 0;
         foreach ($recipe as $ingredient) {
             $value += $ingredient['price'] * $ingredient['count'] * $share;
         }
-        $labour = max(1, (int) ceil($value * self::LABOUR_SHARE));
+        $labour = max(1, (int) ceil($value * $this->ratio('repair_labour_share')));
 
         return [
             'resources' => $resources,
             'labour' => $labour,
-            'gold' => (int) ceil($value * self::GOLD_MARGIN) + $labour,
+            'gold' => (int) ceil($value * $this->ratio('repair_gold_margin')) + $labour,
         ];
     }
 
@@ -151,7 +163,7 @@ final class RepairService
         $this->restore((int) $row['entity_id']);
     }
 
-    /** A broken exemplar becomes RECYCLE_SHARE of its ingredients, and is gone. */
+    /** A broken exemplar becomes a share of its ingredients, and is gone. */
     public function recycle(int $playerId, int $instanceId): void
     {
         $row = $this->held($playerId, $instanceId);
@@ -159,7 +171,7 @@ final class RepairService
             throw new \RuntimeException('Seul un objet brisé se recycle.');
         }
 
-        $refund = $this->shareOf($this->recipeOf((string) $row['name']), self::RECYCLE_SHARE, roundUp: false);
+        $refund = $this->shareOf($this->recipeOf((string) $row['name']), $this->ratio('recycle_share'), roundUp: false);
 
         /* The bag-lines rule: the wreck frees its line, each new stack takes one. */
         $capacity = new ContainerService();

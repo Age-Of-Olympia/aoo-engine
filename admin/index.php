@@ -38,6 +38,7 @@ $csrf = new CsrfProtectionService();
 $dateFormat = new DateFormatService();
 $harvestDefaults = new HarvestDefaultsService();
 $decayDefaults = new \App\Service\Decay\DecayDefaultsService();
+$repairSettings = new \App\Service\AdminSettingsService();
 $seasonService = new SeasonService();
 $tiledExtension = new TiledExtensionService();
 
@@ -65,6 +66,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['world_settings'])) {
         PlanService::forget();
 
         setFlash('success', 'Réglages du monde enregistrés.');
+    } catch (\Throwable $e) {
+        setFlash('danger', 'Échec : ' . $e->getMessage());
+    }
+    redirectTo('/admin/index.php');
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['repair_full_share'])) {
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        foreach (array_keys(\App\Service\RepairService::SETTINGS) as $name) {
+            $repairSettings->set($name, (string) max(0, (int) ($_POST[$name] ?? 0)));
+        }
+        setFlash('success', 'Atelier : réglages enregistrés.');
     } catch (\Throwable $e) {
         setFlash('danger', 'Échec : ' . $e->getMessage());
     }
@@ -302,6 +316,30 @@ ob_start();
                     valeurs. À zéro PV, la construction est détruite.
                     <strong>Lu à chaque usage</strong> : un changement s'applique progressivement,
                     sans migration.
+                </small>
+            </form>
+
+            <hr />
+
+            <form method="post" action="index.php">
+                <?= $csrf->renderTokenField() ?>
+                <label class="form-label mb-0">Atelier : réparation et recyclage</label>
+                <?php $repairField = static function (string $name, string $label) use ($repairSettings): void { ?>
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="number" name="<?= $name ?>" min="0" max="1000"
+                               class="form-select" style="max-width: 100px;"
+                               value="<?= (int) $repairSettings->get($name, (string) \App\Service\RepairService::SETTINGS[$name]) ?>" />
+                        <span class="text-muted"><?= $label ?></span>
+                    </div>
+                <?php }; ?>
+                <?php $repairField('repair_full_share', '% de la recette pour réparer un objet à 1 PV (au prorata des PV manquants)'); ?>
+                <?php $repairField('repair_labour_share', '% de la valeur des ressources en main-d\'œuvre (1 PO minimum)'); ?>
+                <?php $repairField('repair_gold_margin', '% du prix des ressources quand tout est payé en or'); ?>
+                <?php $repairField('recycle_share', '% des ingrédients rendus au recyclage d\'un objet brisé'); ?>
+                <button type="submit" class="btn btn-sm btn-primary mt-2">Enregistrer</button>
+                <small class="form-text text-muted">
+                    Prix des ressources : colonne <code>price</code> de chaque objet. Points de vie d'un
+                    objet : sa colonne <code>durability_max</code>. <strong>Lu à chaque devis.</strong>
                 </small>
             </form>
 
