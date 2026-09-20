@@ -27,6 +27,12 @@ class RaceService
     /** @var array<string, string>|null race name => image folder, per request */
     private static ?array $imageDirs = null;
 
+    /** @var Race[]|null every row, per request: hydrating 200+ races costs more than any query on them */
+    private static ?array $all = null;
+
+    /** The manager $all came from — the tests switch databases mid-process. */
+    private static ?\Doctrine\ORM\EntityManagerInterface $allFrom = null;
+
     private $entityManager;
 
     public function __construct()
@@ -216,8 +222,10 @@ class RaceService
      */
     public function getPlayableRaces(): array
     {
-        return $this->entityManager->getRepository(Race::class)
-            ->findBy(['playable' => true, 'hidden' => false], ['id' => 'ASC']);
+        return array_values(array_filter(
+            $this->getAllRaces(),
+            static fn (Race $race): bool => $race->getPlayable() && !$race->getHidden()
+        ));
     }
 
     /**
@@ -228,8 +236,12 @@ class RaceService
      */
     public function getAllRaces(): array
     {
-        return $this->entityManager->getRepository(Race::class)
-            ->findBy([], ['id' => 'ASC']);
+        if (self::$all === null || self::$allFrom !== $this->entityManager) {
+            self::$all = $this->entityManager->getRepository(Race::class)->findBy([], ['id' => 'ASC']);
+            self::$allFrom = $this->entityManager;
+        }
+
+        return self::$all;
     }
 
     /**
@@ -257,8 +269,10 @@ class RaceService
      */
     public function getRacesByKind(string $kind): array
     {
-        return $this->entityManager->getRepository(Race::class)
-            ->findBy(['kind' => $kind], ['name' => 'ASC']);
+        $races = array_filter($this->getAllRaces(), static fn (Race $race): bool => $race->getKind() === $kind);
+        usort($races, static fn (Race $a, Race $b): int => strcmp($a->getName(), $b->getName()));
+
+        return $races;
     }
 
     /**
@@ -296,12 +310,9 @@ class RaceService
      */
     public function getBgColorMap(): array
     {
-        $map = [];
-        foreach ($this->getAllRaces() as $race) {
-            $map[$race->getName()] = $race->getBgColor();
-        }
-
-        return $map;
+        // Two columns, no entities: the board asks for this on every request
+        return $this->entityManager->getConnection()
+            ->fetchAllKeyValue('SELECT name, bgColor FROM races');
     }
 
     /**
@@ -446,5 +457,7 @@ class RaceService
     {
         self::$cache = [];
         self::$imageDirs = null;
+        self::$all = null;
+        self::$allFrom = null;
     }
 }

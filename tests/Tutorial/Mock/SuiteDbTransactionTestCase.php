@@ -45,6 +45,7 @@ abstract class SuiteDbTransactionTestCase extends TestCase
 
         // Read caches and the identity map survive the rollback.
         PlanService::forget();
+        \App\Service\RaceService::clearCache();
         EntityManagerFactory::getEntityManager()->clear();
     }
 }

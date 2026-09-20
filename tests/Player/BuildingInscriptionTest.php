@@ -127,7 +127,7 @@ class BuildingInscriptionTest extends LegacyPlayerFixtureTestCase
 
         try {
             $this->link->executeStatement("UPDATE races SET readable_from_afar = 1 WHERE name = 'palissade'");
-            \App\Service\RaceService::clearCache();
+            $this->refreshRaceCatalog();
 
             $this->assertNull($service->getDetails($id)?->isReadableFromAfar(), 'aucune exception à la pose');
             $this->assertTrue(
@@ -151,7 +151,7 @@ class BuildingInscriptionTest extends LegacyPlayerFixtureTestCase
                 'UPDATE races SET readable_from_afar = ? WHERE name = ?',
                 [$before, 'palissade']
             );
-            \App\Service\RaceService::clearCache();
+            $this->refreshRaceCatalog();
         }
     }
 

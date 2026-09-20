@@ -134,7 +134,7 @@ class BankLifecycleTest extends LegacyPlayerFixtureTestCase
         // The chantier path: the bank rises stone by stone, the claim
         // fires on the LAST work gesture, not at the site opening.
         $this->link->executeStatement("UPDATE races SET build_work = 4 WHERE name = 'banque'");
-        RaceService::clearCache();
+        $this->refreshRaceCatalog();
         try {
             [$bx, $by] = $this->farTile();
             $bankId = $this->placeStructure('banque', $bx, $by, $plan, asConstructionSite: true);
@@ -147,7 +147,7 @@ class BankLifecycleTest extends LegacyPlayerFixtureTestCase
             $this->assertTrue((bool) ($result['completed'] ?? false));
         } finally {
             $this->link->executeStatement("UPDATE races SET build_work = 0 WHERE name = 'banque'");
-            RaceService::clearCache();
+            $this->refreshRaceCatalog();
         }
 
         $this->assertSame('gardiens_scene', (string) $this->ownershipOf($public)['faction'], 'la banque récupère le coffre sans propriétaire');
