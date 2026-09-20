@@ -18,6 +18,7 @@ use App\Entity\Race;
 use App\Factory\EntityManagerFactory;
 use App\Service\BuildingService;
 use App\Service\CsrfProtectionService;
+use App\Service\Map\EntitySpriteService;
 use App\Service\Map\EntityTypeFootprintService;
 use App\Service\Map\Footprint;
 use App\Service\Map\SceneryObjectService;
@@ -75,6 +76,39 @@ function footprint_in_a_square(array $pieces): Footprint
     return Footprint::fromOffsets($offsets);
 }
 
+/**
+ * A type's pictures in its folder: the whole one, its pieces, their
+ * composition — and namesakes (`banque_naine.png`), which is what renaming
+ * is for. Each with its size and the size the shape expects of it.
+ *
+ * @return list<array{file: string, web: string, size: string, expected: string}>
+ */
+function footprint_type_images(string $type, string $dir, Footprint $figure): array
+{
+    $root = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $dir;
+    $files = array_merge(
+        glob($root . '/*' . $type . '*.png') ?: [],
+        glob($root . '/_composed/' . $type . '.png') ?: []
+    );
+
+    $box = ($figure->width() * 50) . '×' . ($figure->height() * 50);
+    $rows = [];
+
+    foreach ($files as $file) {
+        $base = basename($file, '.png');
+        $info = @getimagesize($file);
+        $rows[] = [
+            'file'     => substr($file, strlen($root) + 1),
+            'web'      => '/img/' . $dir . '/' . substr($file, strlen($root) + 1),
+            'size'     => $info ? $info[0] . '×' . $info[1] : '?',
+            'expected' => preg_match('/^' . preg_quote($type, '/') . '_\d{1,2}$/', $base) ? '50×50'
+                        : ($base === $type ? $box : ''),
+        ];
+    }
+
+    return $rows;
+}
+
 $csrfToken = (new CsrfProtectionService())->generateToken();
 
 $service = new EntityTypeFootprintService();
@@ -82,7 +116,13 @@ $deriver = new SceneryFootprintDeriver();
 $scenery = new SceneryObjectService();
 
 $catalogue = $service->catalogue();
-$onDisk = $deriver->piecesOnDisk();
+
+/* Pieces from every picture folder: a building cut in img/walls/<type>_<n>.png
+ * is a figure like a scenery family in img/foregrounds. */
+$onDisk = [];
+foreach ((new EntitySpriteService())->pieceDirs() as $dir) {
+    $onDisk += $deriver->piecesOnDisk($dir);
+}
 
 /* Every type that can stand on the board, whatever its kind: the races
  * catalogue (characters, buildings, plants…), the scenery families cut in
@@ -320,7 +360,8 @@ ob_start();
                  data-family="<?= e($name) ?>">
             <header class="fp-card__head">
                 <span>
-                    <code class="fp-card__name"><?= e($name) ?></code>
+                    <?php /* Its own page carries the images block. */ ?>
+                    <a href="?type=<?= e(urlencode($name)) ?>" class="fp-card__name" title="Sa page : forme et images"><code><?= e($name) ?></code></a>
                     <small class="text-muted"><?= e($faces[$kind]->singular) ?></small>
                 </span>
                 <span class="fp-badge <?= $originClass ?>" title="<?= e($originHint) ?>"><?= e($originLabel) ?></span>
@@ -389,6 +430,50 @@ ob_start();
                     <?php endif; ?>
                 </div>
             </form>
+
+            <?php if ($onlyType !== '' && ($dir = (new EntitySpriteService())->imageDirOf($name)) !== null): ?>
+                <?php /* The type's pictures, on its own page only: a folder is
+                         globbed per card, which the whole list must not pay. */ ?>
+                <div class="fp-images">
+                    <h4>Images — <code>img/<?= e($dir) ?>/</code></h4>
+
+                    <?php $images = footprint_type_images($name, $dir, $figure); ?>
+                    <?php if ($images === []): ?>
+                        <p class="text-muted">Aucune image de ce nom dans le dossier.</p>
+                    <?php endif; ?>
+
+                    <?php foreach ($images as $image): ?>
+                        <form method="post" action="footprints-images.php" class="fp-image">
+                            <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
+                            <input type="hidden" name="type" value="<?= e($name) ?>" />
+                            <input type="hidden" name="action" value="rename" />
+                            <input type="hidden" name="from" value="<?= e($image['file']) ?>" />
+                            <img src="<?= e($image['web']) ?>?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . $image['web']) ?>" alt="" loading="lazy" />
+                            <span class="fp-image__size <?= $image['expected'] !== '' && $image['expected'] !== $image['size'] ? 'fp-image__size--off' : '' ?>"
+                                  title="<?= $image['expected'] !== '' ? 'attendu ' . e($image['expected']) : '' ?>"><?= e($image['size']) ?></span>
+                            <?php if (str_starts_with($image['file'], '_composed/')): ?>
+                                <code><?= e($image['file']) ?></code>
+                            <?php else: ?>
+                                <input type="text" name="to" value="<?= e($image['file']) ?>" pattern="[a-z0-9_-]+\.png" required />
+                                <button type="submit" class="btn btn-sm btn-secondary">Renommer</button>
+                            <?php endif; ?>
+                        </form>
+                    <?php endforeach; ?>
+
+                    <?php if (!$figure->isSingleCell()): ?>
+                        <form method="post" action="footprints-images.php" enctype="multipart/form-data" class="fp-image fp-image--cut">
+                            <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
+                            <input type="hidden" name="type" value="<?= e($name) ?>" />
+                            <input type="hidden" name="action" value="cut" />
+                            <label>Découper selon la forme
+                                <input type="file" name="sheet" accept="image/png,image/webp,image/gif,image/jpeg" />
+                            </label>
+                            <button type="submit" class="btn btn-sm btn-primary">Découper</button>
+                            <small class="text-muted">Sans fichier, <code><?= e($name) ?>.png</code> du dossier est découpé. Les morceaux existants sont remplacés.</small>
+                        </form>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
         </section>
     <?php endforeach; ?>
     </div>

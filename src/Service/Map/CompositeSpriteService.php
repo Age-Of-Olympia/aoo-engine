@@ -190,6 +190,62 @@ final class CompositeSpriteService
         return $webPath;
     }
 
+    /**
+     * The inverse of composing: a whole picture cut into the figure's pieces,
+     * `img/<dir>/<family>_<piece>.png`, one per occupied cell. The source is
+     * first brought to the box size (50 px a cell), so any drawing of the
+     * right proportions does. The stale composition is dropped, so the next
+     * board stitches the new pieces.
+     *
+     * @return array<int, string> piece => web path written, empty when the source is unreadable
+     */
+    public function cutPieces(string $imageDir, string $family, Footprint $footprint, string $sourceFile): array
+    {
+        $source = $this->read($sourceFile);
+
+        if ($source === null) {
+            return [];
+        }
+
+        $root = empty($_SERVER['DOCUMENT_ROOT'])
+            ? dirname(__DIR__, 3)
+            : $_SERVER['DOCUMENT_ROOT'];
+
+        $boxW = $footprint->width() * self::CELL;
+        $boxH = $footprint->height() * self::CELL;
+
+        if (imagesx($source) !== $boxW || imagesy($source) !== $boxH) {
+            $scaled = imagecreatetruecolor($boxW, $boxH);
+            imagealphablending($scaled, false);
+            imagesavealpha($scaled, true);
+            imagecopyresampled($scaled, $source, 0, 0, 0, 0, $boxW, $boxH, imagesx($source), imagesy($source));
+            imagedestroy($source);
+            $source = $scaled;
+        }
+
+        $written = [];
+
+        foreach ($footprint->grid() as $piece => [$col, $row]) {
+            $cell = imagecreatetruecolor(self::CELL, self::CELL);
+            imagealphablending($cell, false);
+            imagesavealpha($cell, true);
+            imagecopy($cell, $source, 0, 0, $col * self::CELL, $row * self::CELL, self::CELL, self::CELL);
+
+            $webPath = 'img/' . $imageDir . '/' . $family . '_' . $piece . '.png';
+
+            if (imagepng($cell, $root . '/' . $webPath)) {
+                $written[$piece] = $webPath;
+            }
+
+            imagedestroy($cell);
+        }
+
+        imagedestroy($source);
+        @unlink($root . '/img/' . $imageDir . '/' . self::CACHE_DIR . '/' . $family . '.png');
+
+        return $written;
+    }
+
     private function read(string $file): ?\GdImage
     {
         if (!is_file($file)) {
