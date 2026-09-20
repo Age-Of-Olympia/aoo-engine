@@ -58,6 +58,9 @@ class ItemInstanceService
 
     public const LOCATION_EXCHANGE = 'exchange';
 
+    /** Display name of a catalog row aliased `it`: its label, else its technical name. */
+    public const DISPLAY_NAME = "COALESCE(NULLIF(it.label, ''), it.name)";
+
     public static function isBroken(int $durability): bool
     {
         return $durability <= self::BROKEN_AT;
@@ -684,7 +687,7 @@ class ItemInstanceService
     public function describe(int $instanceId): string
     {
         $row = $this->entityManager->getConnection()->fetchAssociative(
-            'SELECT i.custom_name, ' . self::WEAR_SELECT . ', it.name AS catalog_name
+            'SELECT i.custom_name, ' . self::WEAR_SELECT . ', ' . self::DISPLAY_NAME . ' AS catalog_name
              FROM item_instances i JOIN items it ON it.id = i.item_id ' . self::WEAR_JOIN . '
              WHERE i.id = ?',
             [$instanceId]
@@ -887,7 +890,7 @@ class ItemInstanceService
         $conn = $this->entityManager->getConnection();
 
         $rows = $conn->fetchAllAssociative(
-            'SELECT i.id AS instance_id, i.entity_id, i.custom_name, it.name AS catalog_name
+            'SELECT i.id AS instance_id, i.entity_id, i.custom_name, ' . self::DISPLAY_NAME . ' AS catalog_name
                FROM players e
                JOIN item_instances i ON i.entity_id = e.id
                JOIN items it ON it.id = i.item_id

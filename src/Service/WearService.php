@@ -159,7 +159,7 @@ class WearService
 
         return $this->entityManager->getConnection()->fetchAllAssociative(
             "SELECT i.id, i.entity_id, " . ItemInstanceService::WEAR_SELECT . ",
-                    i.custom_name, it.name AS catalog_name, it.wear_rate
+                    i.custom_name, " . ItemInstanceService::DISPLAY_NAME . " AS catalog_name, it.wear_rate
              FROM item_instances i
              JOIN players e ON e.id = i.entity_id
              JOIN items it ON it.id = i.item_id
@@ -319,7 +319,7 @@ class WearService
 
         $armed = $conn->fetchAllAssociative(
             "SELECT i.id, i.entity_id, " . ItemInstanceService::WEAR_SELECT . ",
-                    i.custom_name, it.name AS catalog_name, it.wear_rate
+                    i.custom_name, " . ItemInstanceService::DISPLAY_NAME . " AS catalog_name, it.wear_rate
              FROM item_instances i
              JOIN players e ON e.id = i.entity_id
              JOIN items it ON it.id = i.item_id

@@ -191,7 +191,7 @@ final class LootSpillService
                 "SELECT p.id, ii.item_id, 1 AS n,
                         IF(p.slot IN (?, ?, ?), '', p.slot) AS equiped,
                         it.name, it.lootChance,
-                        IF(ii.custom_name <> '', ii.custom_name, it.name) AS label
+                        IF(ii.custom_name <> '', ii.custom_name, " . ItemInstanceService::DISPLAY_NAME . ") AS label
                    FROM players p
                    JOIN item_instances ii ON ii.entity_id = p.id
                    JOIN items it ON it.id = ii.item_id

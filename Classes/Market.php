@@ -57,7 +57,7 @@ class Market
 
             $choices[] = [
                 'value' => (string) $row['instance_id'],
-                'label' => \App\Service\ItemInstanceService::label($row['custom_name'], (string) $row['name'])
+                'label' => \App\Service\ItemInstanceService::label($row['custom_name'], (string) ($row['label'] ?: $row['name']))
                     . ' — ' . strip_tags(
                         \App\Service\ItemInstanceService::stateLine($row, withBreak: false)
                     ),

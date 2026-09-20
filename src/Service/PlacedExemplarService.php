@@ -45,6 +45,7 @@ class PlacedExemplarService
         // has no holder and cannot gain a second location.
         $row = $conn->fetchAssociative(
             "SELECT i.id, i.custom_name, i.destroyed, it.name AS catalog_name, e.slot AS equiped,
+                    " . ItemInstanceService::DISPLAY_NAME . " AS label,
                     " . ItemInstanceService::WEAR_CURRENT . "
              FROM item_instances i
              JOIN items it ON it.id = i.item_id
@@ -66,7 +67,7 @@ class PlacedExemplarService
             throw new \InvalidArgumentException('Brisé, cela ne se pose plus — réparez-le d\'abord.');
         }
 
-        $name = $row['custom_name'] !== '' ? $row['custom_name'] : ucfirst((string) $row['catalog_name']);
+        $name = $row['custom_name'] !== '' ? $row['custom_name'] : ucfirst((string) $row['label']);
         $coordsId = View::get_coords_id($goCoords);
 
         /* The BOARD sprite rule for a placed object: structure art
