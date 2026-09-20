@@ -68,6 +68,14 @@ class Item{
     }
 
 
+    /* A broken exemplar stays worn but no longer works as an item:
+     * no caracs, no weapon type. Stacks have no durability, never broken. */
+    public function isBroken(): bool
+    {
+        return isset($this->row->durability)
+            && \App\Service\ItemInstanceService::isBroken((int) $this->row->durability);
+    }
+
     public function get_data(){
 
 

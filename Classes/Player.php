@@ -293,7 +293,7 @@ class Player implements ActorInterface {
             /* Un objet BRISÉ (ItemInstanceService::BROKEN_AT) reste
              * porté — visible à l'emplacement — mais ne contribue plus ses
              * caracs : c'est le sens gameplay de « brisé ». */
-            if(isset($row->durability) && \App\Service\ItemInstanceService::isBroken((int) $row->durability)){
+            if($item->isBroken()){
 
                 continue;
             }

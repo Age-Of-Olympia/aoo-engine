@@ -163,8 +163,10 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
              * by the SimulationGuard, so the guard belongs here. */
             if (!$actor->isSimulated() && !$target->isSimulated()) {
                 $wear = new \App\Service\WearService();
-                $wear->wearWeaponOnAttack($actor->id);
-                $wear->wearProtectionOnHit($target->id);
+                $wearRecap = $wear->wearWeaponOnAttack($actor->id);
+                foreach ($wear->wearProtectionOnHit($target->id) as $line) {
+                    $wearRecap[] = $target->data->name . ' : ' . $line;
+                }
             }
 
             // Gestion des logs
@@ -259,6 +261,8 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
 
             // put assist
             $actor->put_assist($target, $totalDamages);
+
+            array_push($outcomeSuccessMessages, ...($wearRecap ?? []));
 
         }
 

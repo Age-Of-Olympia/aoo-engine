@@ -45,6 +45,11 @@ class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterS
             if (!isset($actor->emplacements->{$location}) || $actor->emplacements->{$location} === null) {
                 continue;
             }
+            // A broken weapon is worn, not wielded.
+            if ($actor->emplacements->{$location}->isBroken()) {
+                $broken = $actor->emplacements->{$location}->data->name;
+                continue;
+            }
             foreach ($weaponTypes as $weaponType) {
                 if ($actor->emplacements->{$location}->data->subtype == $weaponType) {
                     $weaponTypeOk = true;
@@ -56,7 +61,9 @@ class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterS
         }
 
         if (!$weaponTypeOk) {
-            $errorMessage[0] = 'Vous n\'êtes pas équipé d\'une arme de type '. join("/",$weaponTypesKo). '.';
+            $errorMessage[0] = isset($broken)
+                ? 'Votre ' . $broken . ' est brisé : réparez-le ou changez d\'arme.'
+                : 'Vous n\'êtes pas équipé d\'une arme de type '. join("/",$weaponTypesKo). '.';
             $result = new ConditionResult(false, array(), $errorMessage);
         }
         
