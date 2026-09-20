@@ -384,10 +384,10 @@ class Ui{
                             height="150"
                         />
                     </div>
-                    <div class="preview-state" style="color:#7a4a12;font-weight:bold;"></div>
                 </div>
                 <div class="preview-text">
                     '. $defaultItem->data->text .'
+                    <div class="preview-state" style="color:#7a4a12;font-weight:bold;"></div>
                 </div>
                 <div class="preview-action">
                 </div>
@@ -674,7 +674,7 @@ class Ui{
         window.n =    <?php echo $defaultItemN ?>;
         window.price =    1;
         </script>
-        <script src="js/inventUi.js?v=20260821"></script>
+        <script src="js/inventUi.js?v=20260920"></script>
         <?php
 
         return Str::minify(ob_get_clean());

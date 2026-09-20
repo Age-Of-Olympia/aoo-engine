@@ -95,8 +95,8 @@ $(document).ready(function(){
         $(".preview-n").text('x'+ n);
         /* État d'une instance (durabilité / brisé) : rempli seulement
            quand la ligne en porte un, vidé sinon. */
-        $(".preview-state").text($item.data("state") || '');
-        $(".preview-text").text(text);
+        $(".preview-text").text(text)
+            .append($('<div class="preview-state" style="color:#7a4a12;font-weight:bold;"></div>').text($item.data("state") || ''));
 
         preload(img, $previewImg);
     });
