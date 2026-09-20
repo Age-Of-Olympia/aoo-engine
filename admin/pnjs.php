@@ -3,9 +3,9 @@
  * PNJ management (admin dashboard → Joueurs → PNJ).
  *
  * Three views, routed on ?action:
- *   - list  (default): roster of every PNJ with owner(s), activity, XP, plus
- *            client-side filters (search / statut / affectation) and a create
- *            button. Each row → edit, or soft-retire (inline confirm form).
+ *   - list  (default): roster of every PNJ with owner(s), activity, XP
+ *            (search / facets / paging by admin-list.js) and a create button.
+ *            Each row → edit, or soft-retire (inline confirm form).
  *   - new   : create-a-PNJ form (name + race) → Player::put_player(..., pnj).
  *   - edit  : rename / change race, manage controlling owners (assign /
  *             unassign), and soft-retire.
@@ -52,7 +52,6 @@ function pnj_render_list(array $pnjs, string $csrfToken, bool $canEditRetirePlan
     $rows = '';
     foreach ($pnjs as $pnj) {
         $assigned = $pnj['owner_count'] > 0;
-        $needle = strtolower($pnj['name'] . ' ' . $pnj['id']);
         $owners = $pnj['owners'] !== null ? e($pnj['owners']) : '<span class="text-muted">— non assigné —</span>';
 
         $retireForm = '<form method="post" action="/admin/pnjs-save.php?action=retire" style="display:inline"'
@@ -61,9 +60,8 @@ function pnj_render_list(array $pnjs, string $csrfToken, bool $canEditRetirePlan
             . '<input type="hidden" name="pnj_id" value="' . (int) $pnj['id'] . '">'
             . '<button type="submit" class="btn btn-sm btn-outline-danger">Retirer</button></form>';
 
-        $rows .= '<tr data-filter="' . e($needle) . '"'
-            . ' data-active="' . ($pnj['active'] ? '1' : '0') . '"'
-            . ' data-assigned="' . ($assigned ? '1' : '0') . '">'
+        $rows .= '<tr data-status="' . ($pnj['active'] ? 'Actif' : 'Inactif') . '"'
+            . ' data-assigned="' . ($assigned ? 'Assigné' : 'Non assigné') . '">'
             . '<td>' . (int) $pnj['id'] . '</td>'
             . '<td>' . e($pnj['name']) . '</td>'
             . '<td>' . e(ucfirst($pnj['race'])) . '</td>'
@@ -81,15 +79,6 @@ function pnj_render_list(array $pnjs, string $csrfToken, bool $canEditRetirePlan
     if ($rows === '') {
         $rows = '<tr><td colspan="7" class="text-muted">Aucun PNJ.</td></tr>';
     }
-
-    $filters = '<div class="d-flex flex-wrap mb-3" style="gap:.5rem">'
-        . '<input type="search" id="pnj-filter" class="form-control" style="max-width:22rem"'
-        . ' placeholder="Filtrer par nom ou matricule…" autocomplete="off">'
-        . formSelect('pnj-status', ['active' => 'Actifs', 'inactive' => 'Inactifs'], null,
-            'Tous les statuts', 'id="pnj-status" class="form-control" style="max-width:12rem"')
-        . formSelect('pnj-assign', ['1' => 'Assignés', '0' => 'Non assignés'], null,
-            'Assignés + non', 'id="pnj-assign" class="form-control" style="max-width:14rem"')
-        . '</div>';
 
     // Settings: the plan retired PNJs are parked on (configurable, not hardcoded).
     $service = new NpcAdminService();
@@ -123,35 +112,11 @@ function pnj_render_list(array $pnjs, string $csrfToken, bool $canEditRetirePlan
         . '<h1 class="mb-0">Gestion des PNJ</h1>'
         . '<a class="btn btn-primary" href="/admin/pnjs.php?action=new">+ Créer un PNJ</a></div>'
         . $settingsCard
-        . $filters
-        . '<p class="text-muted mb-2"><span id="pnj-count">' . count($pnjs) . '</span> PNJ</p>'
-        . '<table class="table table-striped table-hover" id="pnj-table">'
+        . '<table class="table table-striped table-hover" data-admin-list data-page-size="50"'
+        . ' data-search-placeholder="Nom ou matricule…" data-facets="status:Statut,assigned:Affectation">'
         . '<thead><tr><th>Matricule</th><th>Nom</th><th>Race</th><th>Statut</th>'
         . '<th>Contrôlé par</th><th>XP</th><th></th></tr></thead>'
-        . '<tbody>' . $rows . '</tbody></table>'
-        . '<p class="text-muted" id="pnj-empty" style="display:none">Aucun PNJ ne correspond.</p>'
-        . pnj_list_script();
-}
-
-function pnj_list_script(): string
-{
-    // Combines search + statut + affectation filters (all client-side).
-    return '<script>(function(){'
-        . 'var f=document.getElementById("pnj-filter"),st=document.getElementById("pnj-status"),'
-        . 'as=document.getElementById("pnj-assign");'
-        . 'var rows=[].slice.call(document.querySelectorAll("#pnj-table tbody tr[data-filter]"));'
-        . 'var c=document.getElementById("pnj-count"),e=document.getElementById("pnj-empty");'
-        . 'if(!f)return;'
-        . 'function apply(){var q=f.value.trim().toLowerCase(),s=st?st.value:"",a=as?as.value:"",n=0;'
-        . 'rows.forEach(function(r){'
-        . 'var okT=q===""||r.getAttribute("data-filter").indexOf(q)!==-1;'
-        . 'var act=r.getAttribute("data-active")==="1";'
-        . 'var okS=s===""||(s==="active"?act:!act);'
-        . 'var okA=a===""||r.getAttribute("data-assigned")===a;'
-        . 'var m=okT&&okS&&okA;r.style.display=m?"":"none";if(m)n++;});'
-        . 'if(c)c.textContent=n;if(e)e.style.display=n===0?"":"none";}'
-        . 'f.addEventListener("input",apply);if(st)st.addEventListener("change",apply);'
-        . 'if(as)as.addEventListener("change",apply);})();</script>';
+        . '<tbody>' . $rows . '</tbody></table>';
 }
 
 function pnj_render_create_form(string $csrfToken): string

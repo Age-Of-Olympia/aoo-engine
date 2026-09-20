@@ -424,6 +424,7 @@ select.form-control {
     margin-bottom: 0.5rem;
 }
 .admin-list-toolbar input[type="search"] { max-width: 320px; }
+.admin-layout .admin-list-toolbar select { width: auto; }
 .admin-list-pager {
     display: flex;
     align-items: center;

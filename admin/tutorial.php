@@ -275,7 +275,7 @@ ob_start();
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-striped table-hover">
+                <table class="table table-striped table-hover" data-admin-list data-page-size="50">
                     <thead>
                         <tr>
                             <th>#</th>

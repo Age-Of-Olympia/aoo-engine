@@ -149,7 +149,7 @@ ob_start();
     $missingYields = (new \App\Service\Map\HarvestCatalogService())->plansMissingYields();
     ?>
     <?php if ($missingYields !== []): ?>
-        <div class="alert alert-danger mt-3" style="max-width: 640px;">
+        <div class="alert alert-danger mt-3">
             <strong>Fouiller ne rapporte rien sur <?= count($missingYields) ?> plan(s).</strong>
             Ils portent des ressources récoltables sans aucun rendement réglé.
             <a href="/admin/harvest-seed.php" class="alert-link">Régler les rendements</a>.
@@ -162,7 +162,7 @@ ob_start();
     $mapResources = (new \App\Service\Map\MapResourcesRetirement())->status();
     ?>
     <?php if ($mapResources['present'] || $mapResources['view']): ?>
-        <div class="alert <?= $mapResources['droppable'] ? 'alert-info' : 'alert-warning' ?> mt-3" style="max-width: 640px;">
+        <div class="alert <?= $mapResources['droppable'] ? 'alert-info' : 'alert-warning' ?> mt-3">
             <?php if ($mapResources['droppable']): ?>
                 <strong>Reste de chantier : <code>map_resources</code><?= $mapResources['view'] ? ' et la vue <code>map_walls</code>' : '' ?>.</strong>
                 Plus aucun lecteur, plus aucun écrivain, zéro ligne : les ressources sont des entités.
@@ -178,7 +178,7 @@ ob_start();
 
     <?php $ownershipLink = (new \App\Service\OwnershipLinkRetirement())->status(); ?>
     <?php if ($ownershipLink['present']): ?>
-        <div class="alert <?= $ownershipLink['droppable'] ? 'alert-info' : 'alert-warning' ?> mt-3" style="max-width: 640px;">
+        <div class="alert <?= $ownershipLink['droppable'] ? 'alert-info' : 'alert-warning' ?> mt-3">
             <?php if ($ownershipLink['droppable']): ?>
                 <strong>Reste de chantier : <code>players_items_instances</code>.</strong>
                 Plus aucun lecteur, plus aucun écrivain : le porteur d'un exemplaire vit sur l'entité.
@@ -192,7 +192,9 @@ ob_start();
         </div>
     <?php endif; ?>
 
-    <div class="card mt-3" style="max-width: 640px;">
+    <div class="row mt-3">
+    <div class="col-md-6">
+    <div class="card">
         <div class="card-header"><strong>Réglages du monde</strong></div>
         <div class="card-body">
             <form method="post" action="index.php">
@@ -239,7 +241,9 @@ ob_start();
         </div>
     </div>
 
-    <div class="card mt-3" style="max-width: 640px;">
+    </div>
+    <div class="col-md-6">
+    <div class="card">
         <div class="card-header"><strong>Options générales</strong></div>
         <div class="card-body">
             <form method="post" action="index.php">
@@ -342,6 +346,8 @@ ob_start();
                 </small>
             </form>
         </div>
+    </div>
+    </div>
     </div>
 
 </div>

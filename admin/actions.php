@@ -17,9 +17,7 @@ ob_start();
     <h1 class="mb-0">Actions</h1>
     <?= $exportButton->all() ?>
 </div>
-<p class="text-muted mb-3"><?= count($actions) ?> action(s)</p>
-
-<table class="table table-striped table-hover">
+<table class="table table-striped table-hover" data-admin-list data-page-size="50">
     <thead>
         <tr>
             <th>Name</th>

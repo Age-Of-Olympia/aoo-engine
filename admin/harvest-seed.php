@@ -70,7 +70,7 @@ ob_start();
         <strong>Sur <?= count($missing) ?> plan(s), fouiller ne rapporte RIEN.</strong>
         Ces plans portent des ressources récoltables sans rendement réglé pour leur type. Le jeu ne
         lit que cette table — il n'y a pas de repli silencieux sur le JSON.
-        <table class="table table-sm mb-0 mt-2" style="max-width: 760px;">
+        <table class="table table-sm mb-0 mt-2">
             <thead><tr><th>Plan</th><th>Ressources posées</th><th>Types sans rendement</th><th>Rendements dans son JSON</th></tr></thead>
             <tbody>
             <?php foreach (array_slice($missing, 0, 25) as $row): ?>
@@ -158,7 +158,7 @@ ob_start();
             <form method="post">
                 <input type="hidden" name="csrf_token" value="<?= e($csrf->generateToken()) ?>" />
 
-                <table class="table table-striped table-sm" style="max-width: 900px;">
+                <table class="table table-striped table-sm">
                     <thead><tr>
                         <th>Plan</th><th>Type</th>
                         <th title="Vide : l'objet que donne le type. Rempli : cet objet-ci, sur ce plan.">Donne</th>
