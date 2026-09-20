@@ -208,7 +208,7 @@ class ChestSpillsWhenSmashedTest extends LegacyPlayerFixtureTestCase
         );
         (new \App\Service\Map\EntityLocationService($this->link))->putInside($chestId, (int) $owner->id);
 
-        $this->expectExceptionMessage('Brisé, cela ne se pose plus');
+        $this->expectExceptionMessage('Un objet brisé ne peut pas être posé');
         (new \App\Service\PlacedExemplarService())->placeInstance(
             $instanceId,
             $this->tile(7, 11)

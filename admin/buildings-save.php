@@ -157,7 +157,7 @@ if ($action === 'toggle-open') {
 
     setFlash('success', $open
         ? "Bâtiment #{$id} ouvert."
-        : "Bâtiment #{$id} fermé — son dialogue se tait.");
+        : "Bâtiment #{$id} fermé : dialogue désactivé.");
     redirectTo('/admin/buildings.php');
 }
 

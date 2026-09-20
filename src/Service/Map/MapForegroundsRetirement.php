@@ -57,14 +57,14 @@ final class MapForegroundsRetirement
 
         if ($shapesFromMap !== []) {
             $blockers[] = count($shapesFromMap) . ' '
-                . (count($shapesFromMap) > 1 ? 'familles tiennent leur forme' : 'famille tient sa forme')
-                . ' des morceaux posés sur la carte, et rien d\'autre ne la sait';
+                . (count($shapesFromMap) > 1 ? 'formes calculées' : 'forme calculée')
+                . ' uniquement à partir des morceaux de la table : forme à définir ici';
         }
 
         if ($orphanRows > 0) {
             $blockers[] = $orphanRows . ' '
-                . ($orphanRows > 1 ? 'lignes ne sont couvertes' : 'ligne n\'est couverte')
-                . ' par aucune entité : ce décor-là disparaîtrait';
+                . ($orphanRows > 1 ? 'lignes sans entité' : 'ligne sans entité')
+                . ' : décor absent des entités, perdu à la suppression de la table';
         }
 
         return [

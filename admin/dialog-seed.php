@@ -57,7 +57,7 @@ ob_start();
     <code style="display:inline">datas/*/dialogs/*.json</code> de cet environnement.
     <ul class="mb-0 mt-1">
         <li>Une ligne existante est <strong>préservée telle quelle</strong> (création seulement) : relancer n'écrase jamais un dialogue édité en admin, ni <code style="display:inline">register</code> réécrit à chaque inscription.</li>
-        <li>Tant qu'un dialogue n'est pas seedé, le jeu replie sur son fichier JSON — rien ne casse entre-temps.</li>
+        <li>Tant qu'un dialogue n'est pas en base, le jeu lit son fichier JSON.</li>
         <li>Relançable sans risque (tout ou rien, idempotent).</li>
     </ul>
 </div>
@@ -117,7 +117,7 @@ ob_start();
                 <button type="submit" name="seed_dialogs" class="btn btn-primary">
                     <i class="fas fa-seedling"></i> Seeder les dialogues manquants
                 </button>
-                <small class="text-muted">Tout ou rien — re-consultez la liste des dialogues après coup.</small>
+                <small class="text-muted">Tout ou rien. Vérifier ensuite la liste des dialogues.</small>
             </form>
         <?php endif; ?>
     </div>

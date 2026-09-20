@@ -41,7 +41,7 @@ const ITEM_FLAG_LABELS = [
     'vorpal' => 'Vorpal',
     'is_bankable' => 'Stockable en banque',
     'is_deprecated' => 'Déprécié',
-    'vanish_on_break' => 'Disparaît brisé (répand son butin puis s\'efface, pas d\'épave au sol)',
+    'vanish_on_break' => 'Disparaît une fois brisé (le butin est répandu au sol, pas d\'épave)',
     'magique' => 'Magique (équipé, les dégâts d\'attaque passent sur la M)',
 ];
 
@@ -177,12 +177,12 @@ function item_type_badge(string $type): string
         'equipement' => ['Équipement', 'primary', 'Se porte (1 Ae)'],
         'consommable' => ['Consommable', 'success', 'Se consomme (1 A)'],
         Item::TYPE_CONSTRUCTIBLE => ['Constructible', 'warning',
-            'Système actuel : se bâtit depuis l\'inventaire en vraie entité bâtiment (PV, porte, fiche)'],
+            'Système actuel : construit depuis l\'inventaire comme entité bâtiment (PV, porte, fiche)'],
         'structure' => ['Structure (ancien)', 'danger',
             'Ancien système de pose (build.php, supprimé) — plus aucun usage en jeu : à migrer en Constructible'],
         'matiere' => ['Matière', 'secondary', 'Matériau d\'artisanat, sans usage direct'],
         Item::TYPE_QUETE => ['Objet de quête', 'info',
-            'Carte, clef, relique… aucune mécanique câblée : ni équipable, ni consommable'],
+            'Carte, clef, relique… aucune mécanique associée : ni équipable, ni consommable'],
     ];
     [$label, $style, $help] = $styles[$type] ?? [($type !== '' ? ucfirst($type) : '—'), 'light', ''];
 
@@ -284,7 +284,7 @@ function items_render_list(array $items, string $csrfToken): string
         $issues = items_type_inconsistencies($row, $type);
         $issuesBadge = $issues !== []
             ? ' <span class="badge" style="background-color:#f0ad4e;color:#fff;"'
-                . ' title="Renseigné hors type : ' . e(implode(', ', $issues)) . ' — ouvrez la fiche pour corriger.">'
+                . ' title="Champs renseignés sans rapport avec le type : ' . e(implode(', ', $issues)) . ' — ouvrez la fiche pour corriger.">'
                 . '<i class="fas fa-exclamation-triangle"></i> ' . count($issues) . '</span>'
             : '';
 
@@ -315,10 +315,10 @@ function items_render_list(array $items, string $csrfToken): string
         . '<a class="btn btn-outline-secondary" href="/admin/action-import.php">Importer</a></p>';
 
     return $toolbar . '<p class="text-muted"><b>' . $inDb . '</b>/' . count($items) . ' objets ont leurs stats en base'
-        . ' (édition complète ici). Les autres attendent leur JSON — sur cet environnement seuls les fichiers'
-        . ' présents dans <code>datas/*/items/</code> ont pu être recopiés ; en prod,'
-        . ' <a href="/admin/item-seed.php">rejouer le seed</a> les basculera tous.'
-        . ' Enregistrer un objet « JSON » depuis cette page fait aussi de la base sa source.</p>'
+        . ' (édition complète ici). Les autres ont encore leurs stats dans le JSON : sur cet environnement, seuls'
+        . ' les fichiers présents dans <code>datas/*/items/</code> ont pu être recopiés ; en prod,'
+        . ' <a href="/admin/item-seed.php">rejouer le seed</a> les recopiera tous.'
+        . ' Enregistrer un objet « JSON » depuis cette page bascule aussi sa source vers la base.</p>'
         . renderTable(
             ['Objet', 'Type', 'Stats', 'Flags', 'Sort lié', 'Usure', 'Joueurs', ''],
             $rows,
@@ -539,7 +539,7 @@ function items_render_edit(object $row, string $csrfToken): string
     // Stats — pleinement éditables depuis la migration JSON→DB.
     $notInDb = empty($row->stats_in_db)
         ? '<div class="alert alert-warning">Stats pas encore migrées pour cet objet (JSON absent de cet'
-          . ' environnement) — <b>enregistrer les stats ici fera de la base sa source</b>.'
+          . ' environnement) : <b>enregistrer les stats ici bascule leur source vers la base</b>.'
           . ' En prod, rejouer le seed : <a href="/admin/item-seed.php">item-seed</a>.</div>'
         : '';
 
@@ -625,7 +625,7 @@ function items_render_edit(object $row, string $csrfToken): string
                 ? '<img src="/' . e($path) . '?t=' . filemtime($_SERVER['DOCUMENT_ROOT'] . '/' . $path) . '" style="max-width:100px;max-height:80px;" alt="">'
                 : '<div style="width:100px;height:80px;display:inline-flex;align-items:center;justify-content:center;'
                   . 'border:1px dashed #bbb;color:#999;font-size:11px;margin:auto;">manquante</div>')
-            . '<div><small>' . $label . ($exists ? '' : ' <span class="text-muted">(repli : image par défaut)</span>') . '</small></div>'
+            . '<div><small>' . $label . ($exists ? '' : ' <span class="text-muted">(absente : image par défaut)</span>') . '</small></div>'
             . '<input type="file" form="' . $formId . '" name="image_file" required'
             . ' accept=".png,.jpg,.jpeg,.webp,.gif" style="width:120px;font-size:10px;">'
             . '<button type="submit" form="' . $formId . '" class="btn btn-sm btn-outline-primary mt-1">Importer</button>'
@@ -649,7 +649,7 @@ function items_render_edit(object $row, string $csrfToken): string
     $isNew = (int) $row->id === 0;
     $labelField = formField('Nom affiché',
         formInput('label', (string) ($row->label ?? ''), 'maxlength="100" placeholder="ex : Hache de guerre"'),
-        'form-group', 'Ce que les joueurs lisent. Vide : le nom technique, avec une majuscule.');
+        'form-group', 'Nom vu par les joueurs. Vide : le nom technique, avec une majuscule.');
     $nameField = $isNew
         ? formField('Nom technique',
             formInput('new_name', '', 'required maxlength="255" pattern="[a-z0-9_/-]+" placeholder="ex : hache_de_guerre"'),
@@ -685,9 +685,9 @@ function items_render_edit(object $row, string $csrfToken): string
                 '— sans usage direct (matériau…)',
                 'class="form-control" id="item-type-select"'),
             'form-group',
-            'Décide du geste « Utiliser » : <b>equipement</b> se porte (1 Ae),'
+            'Définit l\'action « Utiliser » : <b>equipement</b> s\'équipe (1 Ae),'
             . ' <b>consommable</b> se consomme (1 A),'
-            . ' <b>' . Item::TYPE_CONSTRUCTIBLE . '</b> se bâtit sur la carte,'
+            . ' <b>' . Item::TYPE_CONSTRUCTIBLE . '</b> se construit sur la carte,'
             . ' <b>graine</b> germe une fois posée au sol,'
             . ' <b>' . Item::TYPE_QUETE . '</b> (carte, clef, relique…) n\'a aucune mécanique.'
             . ' Le choix ouvre la section correspondante ci-contre.')
@@ -697,7 +697,7 @@ function items_render_edit(object $row, string $csrfToken): string
                 ((string) ($row->emplacement ?? '')) !== '' ? (string) $row->emplacement : null,
                 '— aucun —'),
             'form-group',
-            'Où l\'objet se porte — tout objet AVEC emplacement devient équipable, quel que soit son type.')
+            'Emplacement d\'équipement ; tout objet avec un emplacement est équipable, quel que soit son type.')
         . formField('Sous-type',
             formInput('subtype', (string) ($row->subtype ?? ''), 'placeholder="melee, tir, jet, walls, routes…"'),
             'form-group',
@@ -708,11 +708,11 @@ function items_render_edit(object $row, string $csrfToken): string
     $flags = $flagBoxes
         . formField('Sort lié', item_spell_select('spell', (string) $row->spell),
             'form-group mt-2',
-            'Objet à sort intégré : porté, il ACCORDE ce sort — en plus du'
-            . ' plafond de compétences, et sans occuper de place. Le sort'
+            'Objet à sort intégré : une fois équipé, il donne ce sort, hors plafond'
+            . ' de compétences et sans occuper de place. Le sort'
             . ' disparaît quand l\'objet est retiré.')
         . formField('Exotique (race)', formInput('exotique', (string) $row->exotique),
-            'form-group', 'Code de race : SEULE cette race peut équiper l\'objet.');
+            'form-group', 'Code de race : seule cette race peut équiper l\'objet.');
 
     $usure = '<p class="text-muted mb-2" style="font-size:88%">Frapper, encaisser et mourir usent'
         . ' l\'équipement <b>par défaut</b> : rien à cocher ici pour que cela marche. Les cases'
@@ -720,24 +720,24 @@ function items_render_edit(object $row, string $csrfToken): string
         . formField('Rôle au combat',
             formSelect('wear_profile', ITEM_WEAR_PROFILE_LABELS, (string) ($row->wear_profile ?? ''), null, 'data-fills'),
             'form-group',
-            'Ce que l\'objet est quand les coups tombent. Laissé sur « d\'après l\'emplacement », main1 et deux-mains sont des armes, munitions et anneaux sont épargnés par les coups, le reste encaisse.')
+            'Rôle de l\'objet en combat. Sur « d\'après l\'emplacement » : main1 et deux-mains sont des armes, munitions et anneaux ne s\'usent pas au combat, le reste est une protection.')
         . '<div class="form-group">' . $triggerBoxes . '</div>'
         . formField('Fragilité',
             formInput('wear_rate', (string) max(1, (int) $row->wear_rate), 'type="number" min="1"'),
-            'form-group', 'Ce que l\'objet perd pour UN point d\'usure reçu : 1 = ordinaire, 3 = trois fois plus fragile. Pour qu\'un objet ne s\'use pas, c\'est le rôle au combat qui le dit, pas ce champ.')
+            'form-group', 'Durabilité perdue par point d\'usure reçu : 1 = ordinaire, 3 = trois fois plus fragile. Pour qu\'un objet ne s\'use pas, utiliser le rôle au combat, pas ce champ.')
         . formField('Durabilité max (vie de l\'objet)',
             formInput('durability_max', (string) (int) ($row->durability_max ?? 100), 'type="number" min="1"'),
-            'form-group', 'Vie de départ des exemplaires individualisés — les instances déjà nées gardent la leur.');
+            'form-group', 'Durabilité de départ des exemplaires individualisés ; les exemplaires existants conservent la leur.');
 
     /* Its own section, not a line lost in the folded wear block: a
      * chest wears nothing, so « Usure » stays shut and hid the field. */
     $contenant = formField('Contenance (lignes)',
         formInput('capacity', $row->capacity === null ? '' : (string) (int) $row->capacity, 'type="number" min="0"'),
-        'form-group', 'Nombre de LIGNES de contenu (une pile d\'un objet = une ligne, un exemplaire = une ligne). Vide = illimité — ce que tout objet non-contenant garde.');
+        'form-group', 'Nombre de lignes de contenu (une pile d\'un objet = une ligne, un exemplaire = une ligne). Vide = illimité (valeur des objets qui ne sont pas des contenants).');
 
     $caracsCol = '<p class="text-muted mb-2" style="font-size:88%">Double lecture selon le type :'
         . ' sur un <b>équipement</b>, modificateurs du porteur tant que l\'objet est porté ;'
-        . ' sur un <b>consommable</b>, quantités RENDUES à la consommation (PV, PM, MVT, A, AE).</p>'
+        . ' sur un <b>consommable</b>, quantités rendues à la consommation (PV, PM, MVT, A, AE).</p>'
         . '<div class="row">' . $caracInputs . '</div>';
 
     $speciaux = '<p class="text-muted mb-2" style="font-size:88%">Modificateurs du porteur — sur un consommable,'
@@ -747,15 +747,15 @@ function items_render_edit(object $row, string $csrfToken): string
             'form-group', 'Arme de tir : les objets-munitions qu\'elle accepte.');
 
     $consommation = formField('Effets appliqués',
-            item_effect_duration_rows('effets_appliques', $effectsApplied, 'Effet posé sur le buveur'),
+            item_effect_duration_rows('effets_appliques', $effectsApplied, 'Effet appliqué au consommateur'),
             'form-group',
-            'Posés sur le buveur à la consommation (potion de poison, de régénération…).')
+            'Appliqués à la consommation (potion de poison, de régénération…).')
         . item_effect_multiselect('effets_retires', $effectsRemoved, 'Effets retirés',
-            'Purgés du buveur à la consommation (antidote…). Catalogue : admin → Effets.');
+            'Retirés à la consommation (antidote…). Catalogue : admin → Effets.');
 
     $graine = '<p class="text-muted mb-2" style="font-size:88%">Objet de type <b>graine</b> posé seul au sol :'
         . ' chaque jour, une pousse est tirée au hasard parmi les lignes ci-dessous, puis germe avec'
-        . ' 1 chance sur N — la graine disparaît alors. Ligne au nom vidé = supprimée ;'
+        . ' 1 chance sur N ; la graine disparaît alors. Ligne au nom vidé = supprimée ;'
         . ' la ligne vierge sert à en ajouter une.</p>'
         . items_grow_rows($growTo)
         . formField('Z minimum de pousse',

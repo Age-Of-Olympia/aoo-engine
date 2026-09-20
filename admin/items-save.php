@@ -418,5 +418,5 @@ foreach (array_merge(\App\Enum\Caracs::KEYS, \Classes\Item::SPECIAL_KEYS) as $ke
 $params[] = $id;
 $db->exe('UPDATE items SET ' . implode(', ', $set) . ' WHERE id = ?', $params);
 
-setFlash('success', 'Objet « ' . $name . ' » enregistré — la base est sa source de vérité.');
+setFlash('success', 'Objet « ' . $name . ' » enregistré ; ses stats sont maintenant lues en base.');
 redirectTo('/admin/items.php?action=edit&id=' . $id);

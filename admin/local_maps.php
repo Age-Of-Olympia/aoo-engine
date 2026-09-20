@@ -148,7 +148,7 @@ ob_start();
             <li><strong>Des coordonnées en base</strong> : chaque case dans la table <code style="display:inline;white-space:nowrap">coords</code> (tiles, éléments, murs…)</li>
         </ul>
         Un niveau Z peut exister côté coords sans être déclaré dans la config (et inversement) : la validation ci-dessous détecte ces incohérences.
-        Si un niveau n'a volontairement pas de carte, cochez « Pas de carte » dans l'édition du plan (drapeau MapUnavailable).
+        Si un niveau n'a volontairement pas de carte, cochez « Pas de carte » dans l'édition du plan (option MapUnavailable).
     </div>
 
     <div class="card mt-3">

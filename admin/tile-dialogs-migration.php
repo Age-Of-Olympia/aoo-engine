@@ -96,8 +96,8 @@ if ($plan === []) {
         . '<h5>Ce qui serait fait</h5><ul class="mb-2">' . $summary . '</ul>'
         . ($dropped > 0
             ? '<p class="mb-2"><strong>' . $dropped . '</strong> ligne(s) écartée(s) : lignes vides et versions'
-                . ' antérieures sur une même case. La dernière édition l\'emporte — les doublons ne sont jamais'
-                . ' fondus ensemble, cela inventerait un texte que personne n\'a écrit.</p>'
+                . ' antérieures sur une même case. La dernière édition est conservée ; les doublons ne sont jamais'
+                . ' fusionnés, le résultat serait un texte que personne n\'a écrit.</p>'
             : '')
         . '<form method="post" action="/admin/tile-dialogs-migration-save.php">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'

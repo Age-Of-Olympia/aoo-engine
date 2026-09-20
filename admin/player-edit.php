@@ -209,14 +209,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
             $player->add_effect($effectName, $duration, $value);
 
             setFlash('success', PlayerEffectService::isInfinite($duration)
-                ? "« {$label} » posé sans limite de durée sur « {$player->data->name} »."
-                : "« {$label} » posé sur « {$player->data->name} » pour "
+                ? "« {$label} » appliqué sans limite de durée à « {$player->data->name} »."
+                : "« {$label} » appliqué à « {$player->data->name} » pour "
                     . PlayerEffectService::describeRemaining($duration) . '.');
         } elseif (isset($_POST['effect_update'])) {
             // Direct overwrite: add_effect ignores a weaker re-application,
             // only updateEffectByPlayerId can shorten or weaken.
             if (!(new PlayerEffectService())->updateEffectByPlayerId($id, $effectName, $duration, $value)) {
-                throw new RuntimeException("« {$label} » n'est plus porté par ce personnage.");
+                throw new RuntimeException("« {$label} » n'est plus appliqué à ce personnage.");
             }
 
             setFlash('success', "« {$label} » ajusté : valeur {$value}, "
@@ -225,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
                     : PlayerEffectService::describeRemaining($duration) . '.'));
         } else {
             $player->end_effect($effectName);
-            setFlash('success', "« {$label} » levé sur « {$player->data->name} ».");
+            setFlash('success', "« {$label} » retiré de « {$player->data->name} ».");
         }
     } catch (Throwable $e) {
         setFlash('danger', $e->getMessage());
@@ -299,7 +299,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
             } else {
                 (new ProgressionService())->addPi($id, $offset);
                 setFlash('success', sprintf(
-                    'PI %+d : le solde retrouve min(XP, plafond) − rangs payés.', $offset
+                    'PI %+d : solde ramené à min(XP, plafond) − rangs payés.', $offset
                 ));
             }
         } else {
@@ -315,7 +315,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
                 if (!(new ProgressionService())->spendPi($id, $cost)) {
                     throw new RuntimeException(
                         "PI insuffisants : le rang de " . CARACS[$carac] . " coûte {$cost}, le personnage en a "
-                        . (int) $player->data->pi . '. Ajoutez de l\'XP d\'abord pour rester en phase.'
+                        . (int) $player->data->pi . '. Ajoutez de l\'XP d\'abord pour garder XP et PI cohérents.'
                     );
                 }
                 $player->put_upgrade($carac, $cost);
@@ -372,8 +372,8 @@ $position = formCard('Position', '<div class="d-flex flex-wrap" style="gap:.5rem
 $vitals = formCard('Vitalités restantes', ''
     . '<table class="table table-sm mb-2"><thead><tr><th></th><th>Max (caracs)</th><th>Restant</th></tr></thead>'
     . '<tbody>' . $vitalsRows . '</tbody></table>'
-    . '<p class="text-muted mb-0">Le restant s\'écrit en <code>players_bonus</code> (blessure = PV restants réduits) ;'
-    . ' un restant égal au max supprime l\'écart.</p>');
+    . '<p class="text-muted mb-0">La valeur restante est enregistrée dans <code>players_bonus</code> (blessure = PV restants réduits) ;'
+    . ' une valeur restante égale au max supprime l\'écart.</p>');
 
 $turn = formCard('Tour', ''
     . '<p class="mb-2">' . e($turnInfo) . '</p>'
@@ -480,7 +480,7 @@ $progression = formCard('Progression (XP / PI)', ''
     . '<p class="text-muted mb-1">L\'XP passe par le moteur : sous le plafond de saison, 1 XP ajoute 1 PI'
     . ' (et l\'inverse en retirant) ; le rang est recalculé.</p>'
     . '<p class="text-muted mb-0">« +1 » achète le rang au prix du barème en dépensant les PI ;'
-    . ' « −1 » retire le rang le plus cher et rembourse son coût — l\'équilibre XP/PI tient dans les deux sens.</p>');
+    . ' « −1 » retire le rang le plus cher et rembourse son coût ; XP et PI restent cohérents dans les deux sens.</p>');
 
 // ----- Inventaire (piles ; formulaires séparés du formulaire principal) -----
 
@@ -525,8 +525,8 @@ $inventory = formCard('Inventaire (piles)', ''
     . '<button type="submit" name="inventory_add" value="1" class="btn btn-outline-primary mb-3">Ajouter</button>'
     . '</form>'
     . renderDatalist('pe-items', $catalogNames)
-    . '<p class="text-muted mb-0">Piles seulement — les instances individualisées (durabilité) naissent du jeu ;'
-    . ' les objets équipés se gèrent en jeu.</p>');
+    . '<p class="text-muted mb-0">Piles seulement : les exemplaires individualisés (durabilité) sont créés par le jeu,'
+    . ' et les objets équipés se gèrent en jeu.</p>');
 
 // ----- Effets (formulaires séparés du formulaire principal) -----
 
@@ -567,7 +567,7 @@ foreach ($player->getEffects() as $carried) {
         . '<td>' . $updateForm
         . '<button type="submit" name="effect_update" value="1" class="btn btn-sm btn-outline-primary">Modifier</button>'
         . '<button type="submit" name="effect_remove" value="1" class="btn btn-sm btn-outline-danger"'
-        . ' onclick="return confirm(\'Lever « ' . e($effectService->getLabel($carried->getName())) . ' » ?\');">Lever</button>'
+        . ' onclick="return confirm(\'Retirer « ' . e($effectService->getLabel($carried->getName())) . ' » ?\');">Retirer</button>'
         . '</form></td>'
         . '</tr>';
 }
@@ -593,15 +593,14 @@ $effects = formCard('Effets', ''
     . formField('Sans fin', '<input type="checkbox" name="duration_infinite" value="1" class="form-check-input">', 'form-group', 'ignore la durée')
     . formField('Valeur', formInput('effect_value', '1', 'type="number" min="1" style="max-width:6rem"'),
         'form-group', 'multiplicateur : carac ±valeur, mods × valeur')
-    . '<button type="submit" name="effect_add" value="1" class="btn btn-outline-primary mb-3">Poser</button>'
+    . '<button type="submit" name="effect_add" value="1" class="btn btn-outline-primary mb-3">Appliquer</button>'
     . '</form>'
-    . '<p class="text-muted mb-1">Poser un effet applique les règles du catalogue, annulations comprises :'
-    . ' un effet qui en neutralise un autre le lève, et tombe lui-même s\'il en subit un qui le contredit.</p>'
-    . '<p class="text-muted mb-1">La durée se compte en <strong>tours</strong> du joueur : elle perd un point à'
-    . ' chaque tour et l\'effet tombe à zéro. « Sans fin » (∞) pose un effet que le temps n\'use pas —'
-    . ' un trait permanent, qu\'il faut lever à la main.</p>'
-    . '<p class="text-muted mb-0">« Modifier » écrase valeur et durée de l\'effet porté, sans repasser par les'
-    . ' règles de pose — c\'est le seul chemin pour écourter ou affaiblir un effet en cours.</p>');
+    . '<p class="text-muted mb-1">Appliquer un effet respecte les règles du catalogue, annulations comprises :'
+    . ' un effet qui en annule un autre le retire, et est lui-même retiré si le personnage a déjà un effet qui l\'annule.</p>'
+    . '<p class="text-muted mb-1">La durée est comptée en <strong>tours</strong> du joueur : elle diminue de 1 à'
+    . ' chaque tour et l\'effet est retiré à zéro. « Sans fin » (∞) applique un effet permanent, à retirer à la main.</p>'
+    . '<p class="text-muted mb-0">« Modifier » remplace la valeur et la durée de l\'effet en cours, sans appliquer les'
+    . ' règles ci-dessus : c\'est le seul moyen d\'écourter ou d\'affaiblir un effet.</p>');
 
 $body = '<form method="post" action="player-edit.php?id=' . (int) $id . '">'
     . $csrfField

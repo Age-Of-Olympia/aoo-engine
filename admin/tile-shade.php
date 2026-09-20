@@ -47,16 +47,16 @@ ob_start();
                 <?= $csrf->renderTokenField() ?>
 
                 <p class="text-muted" style="font-size: 13px;">
-                    Une case porte un <em>niveau</em> d'ombre (0 à
+                    Une case a un <em>niveau</em> d'ombre (0 à
                     <?= (int) $shade->maxLevel() ?>), posé au pinceau dans
-                    l'éditeur — re-cliquer fonce. Ces réglages disent ce qu'un
-                    niveau vaut à l'écran : les changer n'oblige pas à
-                    reprendre les cases.
+                    l'éditeur ; chaque clic supplémentaire assombrit. Ces réglages
+                    définissent le rendu d'un niveau à l'écran : les changer ne
+                    demande pas de reprendre les cases.
                 </p>
                 <p class="text-muted" style="font-size: 13px;">
                     <strong>Ce sont les valeurs par défaut.</strong> Chaque plan
-                    peut les surcharger — une grotte plus sombre, un plan de
-                    glace plus bleu — depuis
+                    peut les remplacer (une grotte plus sombre, un plan de
+                    glace plus bleu) depuis
                     <a href="plans.php">Plans</a> ou depuis Tiled, avec les
                     propriétés <code style="display:inline">shade_step</code>,
                     <code style="display:inline">shade_max</code> et

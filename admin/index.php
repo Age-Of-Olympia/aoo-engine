@@ -151,7 +151,7 @@ ob_start();
     <?php if ($missingYields !== []): ?>
         <div class="alert alert-danger mt-3">
             <strong>Fouiller ne rapporte rien sur <?= count($missingYields) ?> plan(s).</strong>
-            Ils portent des ressources récoltables sans aucun rendement réglé.
+            Ils contiennent des ressources récoltables dont le type n'a aucun rendement défini.
             <a href="/admin/harvest-seed.php" class="alert-link">Régler les rendements</a>.
         </div>
     <?php endif; ?>
@@ -165,12 +165,12 @@ ob_start();
         <div class="alert <?= $mapResources['droppable'] ? 'alert-info' : 'alert-warning' ?> mt-3">
             <?php if ($mapResources['droppable']): ?>
                 <strong>Reste de chantier : <code>map_resources</code><?= $mapResources['view'] ? ' et la vue <code>map_walls</code>' : '' ?>.</strong>
-                Plus aucun lecteur, plus aucun écrivain, zéro ligne : les ressources sont des entités.
-                <strong>Prêtes à être déposées</strong>, une fois le code qui a cessé de les lire déployé
-                partout — migrations après code pour une suppression, l'inverse de l'habitude.
-                Cet avertissement disparaîtra de lui-même.
+                Plus aucun code ne les lit ni ne les écrit, et la table est vide : les ressources sont des entités.
+                <strong>À supprimer</strong> une fois ce code déployé sur tous les serveurs (pour une
+                suppression, la migration passe après le code, à l'inverse de l'habitude).
+                Cet avertissement disparaîtra alors.
             <?php else: ?>
-                <strong><code>map_resources</code> n'est pas encore déposable.</strong>
+                <strong><code>map_resources</code> ne peut pas encore être supprimée.</strong>
                 <?= e(implode(' ; ', $mapResources['blockers'])) ?>.
             <?php endif; ?>
         </div>
@@ -181,12 +181,12 @@ ob_start();
         <div class="alert <?= $ownershipLink['droppable'] ? 'alert-info' : 'alert-warning' ?> mt-3">
             <?php if ($ownershipLink['droppable']): ?>
                 <strong>Reste de chantier : <code>players_items_instances</code>.</strong>
-                Plus aucun lecteur, plus aucun écrivain : le porteur d'un exemplaire vit sur l'entité.
-                <strong>Prête à être déposée</strong>, une fois le code qui a cessé de la lire déployé
-                partout — migrations après code pour une suppression, l'inverse de l'habitude.
-                Cet avertissement disparaîtra de lui-même.
+                Plus aucun code ne la lit ni ne l'écrit : le porteur d'un exemplaire est enregistré sur l'entité.
+                <strong>À supprimer</strong> une fois ce code déployé sur tous les serveurs (pour une
+                suppression, la migration passe après le code, à l'inverse de l'habitude).
+                Cet avertissement disparaîtra alors.
             <?php else: ?>
-                <strong><code>players_items_instances</code> n'est pas encore déposable.</strong>
+                <strong><code>players_items_instances</code> ne peut pas encore être supprimée.</strong>
                 <?= e(implode(' ; ', $ownershipLink['blockers'])) ?>.
             <?php endif; ?>
         </div>
@@ -233,9 +233,9 @@ ob_start();
                     <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                 </div>
                 <small class="form-text text-muted">
-                    La saison courante est celle que prennent par défaut les listes de plans (carte du monde,
-                    pages Cartes). Le plan principal porte la carte du monde ; le plan des morts accueille
-                    les personnages tombés. Un plan référencé ici ne peut pas être supprimé.
+                    La saison courante est la saison par défaut des listes de plans (carte du monde,
+                    pages Cartes). Le plan principal est celui de la carte du monde ; les personnages
+                    morts sont envoyés sur le plan des morts. Un plan référencé ici ne peut pas être supprimé.
                 </small>
             </form>
         </div>
@@ -257,7 +257,7 @@ ob_start();
                 </div>
                 <div class="text-muted mt-2" style="font-size: 13px;">
                     Aujourd'hui s'affiche : « <?= e($dateFormat->format($today)) ?> ».
-                    Suivi par les affichages passés à <code style="display:inline">DateFormatService</code>
+                    Utilisé par les affichages qui passent par <code style="display:inline">DateFormatService</code>
                     (chroniques de l'accueil…) ; la saisie admin reste en JJ/MM/AAAA.
                 </div>
             </form>
@@ -274,8 +274,8 @@ ob_start();
                     <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                 </div>
                 <small class="form-text text-muted">
-                    Combien de coups il faut pour abattre un arbre. Sert de valeur par défaut à la
-                    <strong>création</strong> d'un type récoltable ; un type déjà réglé garde la sienne.
+                    Nombre de coups pour abattre un arbre. Valeur par défaut à la
+                    <strong>création</strong> d'un type récoltable ; un type existant conserve sa valeur.
                 </small>
             </form>
 
@@ -296,12 +296,12 @@ ob_start();
                     <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                 </div>
                 <small class="form-text text-muted">
-                    Ce que les <strong>joueurs</strong> ont bâti se dégrade ; ce que Tiled a posé, non.
-                    S'en servir repousse l'échéance — marcher sur une route la répare même. Un mur,
-                    lui, ne s'entretient qu'en le réparant. Un type peut porter ses propres valeurs.
-                    À zéro, la construction est détruite.
-                    <strong>Lu à chaque usage</strong> : changer ces valeurs déplace le monde,
-                    progressivement, sans migration.
+                    Les constructions des <strong>joueurs</strong> se dégradent ; celles posées avec Tiled, non.
+                    Utiliser une construction repousse le début de l'usure ; marcher sur une route la
+                    répare. Un mur ne s'entretient qu'en le réparant. Un type peut définir ses propres
+                    valeurs. À zéro PV, la construction est détruite.
+                    <strong>Lu à chaque usage</strong> : un changement s'applique progressivement,
+                    sans migration.
                 </small>
             </form>
 
@@ -317,13 +317,13 @@ ob_start();
                     <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                 </div>
                 <small class="form-text text-muted">
-                    Les éditeurs plus anciens que ce numéro sont refusés par les endpoints Tiled, avec un
-                    message qui dit quoi télécharger — une extension d'un autre âge parle un protocole
-                    changé et se trompe en silence. À relever <strong>après</strong> la publication de la
+                    Les extensions plus anciennes que ce numéro sont refusées par les endpoints Tiled, avec un
+                    message qui indique quoi télécharger : une extension trop ancienne utilise un protocole
+                    différent et produit des erreurs silencieuses. À relever <strong>après</strong> la publication de la
                     <a href="<?= e(TiledExtensionService::DOWNLOAD_URL) ?>">release correspondante</a>,
-                    jamais avant : la barre ferme la porte à tout le monde tant que le zip n'est pas en
-                    ligne. Avant la v<?= e(TiledExtensionService::FIRST_VERSIONED) ?>, une extension
-                    n'annonçait pas sa version : elle est refusée quoi qu'il arrive.
+                    jamais avant : tant que le zip n'est pas en ligne, tout le monde est bloqué.
+                    Avant la v<?= e(TiledExtensionService::FIRST_VERSIONED) ?>, une extension
+                    n'annonçait pas sa version : elle est refusée dans tous les cas.
                 </small>
             </form>
 
@@ -339,10 +339,10 @@ ob_start();
                     <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                 </div>
                 <small class="form-text text-muted">
-                    Plafond du fichier .json accepté par Actions → Import. Le serveur borne aussi la
+                    Taille maximale du fichier .json accepté par Actions → Import. Le serveur limite aussi la
                     requête : ici <?= e(ini_get('upload_max_filesize')) ?> (upload_max_filesize),
-                    <?= e(ini_get('post_max_size')) ?> (post_max_size) — un réglage plus haut ne
-                    passe pas cette barre.
+                    <?= e(ini_get('post_max_size')) ?> (post_max_size) ; un réglage plus élevé n'a
+                    pas d'effet.
                 </small>
             </form>
         </div>

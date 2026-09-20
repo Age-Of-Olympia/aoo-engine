@@ -27,9 +27,9 @@ foreach ($titles as $key => $title) {
 
 $body = '<div class="d-flex justify-content-between align-items-center mb-3">'
     . '<h1 class="mb-0">Wiki</h1><div>' . $tabs . '</div></div>'
-    . '<p class="text-muted">Markup DokuWiki généré depuis le catalogue — cliquez dans la zone pour tout'
-    . ' sélectionner, puis collez-le sur la page du wiki externe. Les coûts et visées sont dérivés des'
-    . ' conditions réelles : cette fiche ne peut pas mentir sur les mécaniques.</p>';
+    . '<p class="text-muted">Markup DokuWiki généré depuis le catalogue : cliquez dans la zone pour tout'
+    . ' sélectionner, puis collez-le sur la page du wiki externe. Les coûts et les cibles sont calculés'
+    . ' à partir des conditions réelles des actions.</p>';
 
 if ($renderer === null) {
     $body .= '<div class="alert alert-warning">Famille inconnue.</div>';

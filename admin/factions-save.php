@@ -100,7 +100,7 @@ $roles = $rolesFromForm();
 $defaultCount = count(array_filter($roles, static fn (array $r): bool => $r['flags']['defaultRole']));
 $notice = '';
 if ($roles !== [] && $defaultCount === 0) {
-    $notice = ' ⚠ Aucun rôle « Défaut » coché : les affectations sans rôle précis retomberont sur le rôle 0.';
+    $notice = ' ⚠ Aucun rôle « Défaut » coché : les affectations sans rôle précis recevront le rôle 0.';
 } elseif ($defaultCount > 1) {
     $notice = ' ⚠ Plusieurs rôles « Défaut » cochés : le premier de la liste sera utilisé.';
 }

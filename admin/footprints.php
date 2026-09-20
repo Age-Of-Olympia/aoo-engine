@@ -31,24 +31,24 @@ function footprint_origin(string $source): array
 {
     return match ($source) {
         'declared' => [
-            'réglé ici',
+            'définie ici',
             'fp-badge--set',
-            'Quelqu\'un a réglé cette figure à la main : elle fait autorité.',
+            'Forme définie à la main sur cette page. Elle a priorité sur le calcul automatique.',
         ],
         'map' => [
-            'deviné d\'après la carte',
+            'calculée d\'après la carte',
             'fp-badge--guessed',
-            'Forme relevée sur un exemplaire complet posé sur la carte. Le passage, lui, n\'est pas réglé.',
+            'Forme calculée à partir d\'un exemplaire complet posé sur la carte. Les cases bloquantes ne sont pas définies.',
         ],
         'image' => [
-            'deviné d\'après l\'image',
+            'calculée d\'après l\'image',
             'fp-badge--guessed',
-            'Forme relevée sur l\'image d\'ensemble du décor. Le passage, lui, n\'est pas réglé.',
+            'Forme calculée à partir de l\'image entière du décor. Les cases bloquantes ne sont pas définies.',
         ],
         default => [
             'forme inconnue',
             'fp-badge--unknown',
-            'Ni la carte ni l\'image ne savent dire la figure : les morceaux sont alignés au hasard, à corriger.',
+            'Aucune forme trouvée sur la carte ni dans l\'image : les morceaux sont placés en carré par défaut, à corriger.',
         ],
     };
 }
@@ -197,20 +197,20 @@ ob_start();
     <h2 class="section-title">Emprises<?= $onlyType !== '' ? ' — ' . e($onlyType) : ($onlyKind !== '' ? ' — ' . e($faces[$onlyKind]->title) : '') ?></h2>
 
     <p class="text-content">
-        Tout ce qui se tient sur le plateau — personnage, bâtiment, décor, plante — peut occuper
-        plusieurs cases. Cette page dit <strong>quelles cases un type occupe</strong> et
-        <strong>lesquelles barrent le chemin</strong>. Son image du plateau couvre toute l'emprise
-        (50 px par case) ; un décor en morceaux montre ses morceaux. La forme est devinée quand
-        c'est possible — d'après un exemplaire posé sur la carte, ou d'après l'image d'ensemble —
-        mais ce qui est réglé ici l'emporte.
+        Un type — personnage, bâtiment, décor, plante — peut occuper plusieurs cases.
+        Cette page définit <strong>les cases occupées par un type</strong> et
+        <strong>celles qui bloquent le passage</strong>. Sur le plateau, l'image d'un type
+        couvre toute son emprise (50 px par case) ; un décor en morceaux est affiché morceau
+        par morceau. Quand c'est possible, la forme est calculée automatiquement à partir d'un
+        exemplaire posé sur la carte ou de l'image entière ; une forme définie ici a priorité.
     </p>
 
     <p class="fp-note">
-        <strong>Cliquez une case vide</strong> pour l'ajouter à la figure,
-        <strong>une case pleine</strong> pour la faire barrer le chemin ou le laisser libre,
-        <strong>clic droit</strong> pour la retirer.
-        <strong>Faites glisser un morceau</strong> sur une case vide pour corriger la figure.
-        Enregistrer reprend les exemplaires déjà posés.
+        <strong>Clic sur une case vide</strong> : ajout à la figure.
+        <strong>Clic sur une case pleine</strong> : la case bloque ou non le passage.
+        <strong>Clic droit</strong> : retrait de la case.
+        <strong>Glisser-déposer d'un morceau</strong> sur une case vide : correction de la figure.
+        Enregistrer applique la forme aux exemplaires déjà posés.
     </p>
 
     <?= renderFlashMessage() ?>
@@ -218,13 +218,13 @@ ob_start();
     <?php if ($retirement !== null && $retirement['droppable']): ?>
         <div class="alert alert-success">
             <strong>La table <code>map_foregrounds</code> peut être supprimée.</strong>
-            Plus rien n'en dépend : le décor est dessiné depuis les entités, et toutes les formes
-            sont réglées ici. Elle porte encore <?= $retirement['rows'] ?> ligne<?= $retirement['rows'] > 1 ? 's' : '' ?>,
-            qui ne servent plus à rien.
+            Plus rien ne l'utilise : le jeu dessine les décors à partir des entités, et toutes les
+            formes sont définies ici. Elle contient encore <?= $retirement['rows'] ?> ligne<?= $retirement['rows'] > 1 ? 's' : '' ?>,
+            inutilisée<?= $retirement['rows'] > 1 ? 's' : '' ?>.
         </div>
     <?php elseif ($retirement !== null): ?>
         <div class="alert alert-warning">
-            <strong>La table <code>map_foregrounds</code> sert encore — ne la supprimez pas.</strong>
+            <strong>La table <code>map_foregrounds</code> est encore utilisée — ne pas la supprimer.</strong>
             <ul class="fp-blockers">
                 <?php foreach ($retirement['blockers'] as $blocker): ?>
                     <li><?= htmlspecialchars($blocker, ENT_QUOTES, 'UTF-8') ?></li>
@@ -232,13 +232,13 @@ ob_start();
             </ul>
             <?php if ($retirement['shapesFromMap'] !== []): ?>
                 <p class="fp-blockers__hint">
-                    Régler ces formes ici les met à l'abri : <?=
+                    Formes à définir ici pour ne plus dépendre de la table : <?=
                         htmlspecialchars(implode(', ', array_slice($retirement['shapesFromMap'], 0, 12)), ENT_QUOTES, 'UTF-8')
                     ?><?= count($retirement['shapesFromMap']) > 12 ? '…' : '' ?>.
                 </p>
             <?php endif; ?>
             <p class="fp-blockers__hint">
-                Ce message deviendra vert de lui-même quand plus rien n'en dépendra.
+                Ce message passera au vert quand plus rien n'utilisera la table.
             </p>
         </div>
     <?php endif; ?>
@@ -246,10 +246,10 @@ ob_start();
     <?php if ($halfErased !== []): ?>
         <section class="alert alert-warning fp-half-erased">
             <strong><?= count($halfErased) ?> décor<?= count($halfErased) > 1 ? 's' : '' ?> à moitié effacé<?= count($halfErased) > 1 ? 's' : '' ?>.</strong>
-            Ces décors tiennent toutes leurs cases en jeu, où ils sont dessinés en entier, mais
-            l'éditeur n'en montre plus qu'une partie — parfois un seul morceau transparent, que
-            personne ne peut viser pour l'effacer. Cochez ceux à retirer. Pour en compléter un à
-            la place, passez par l'info de case dans Tiled.
+            En jeu, ces décors occupent toutes leurs cases et sont affichés en entier, mais
+            l'éditeur n'en affiche plus qu'une partie — parfois un seul morceau transparent,
+            impossible à sélectionner pour l'effacer. Cochez ceux à retirer. Pour compléter un
+            décor au lieu de le retirer, utilisez l'info de case dans Tiled.
             <form method="post" action="footprints-save.php" class="fp-half-erased__form">
                 <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
                 <input type="hidden" name="action" value="remove" />
@@ -293,10 +293,10 @@ ob_start();
                 Tous (<?= $counts['all'] ?>)
             </button>
             <button type="button" class="btn btn-sm btn-secondary" data-filter="todo">
-                À régler (<?= $counts['todo'] ?>)
+                À définir (<?= $counts['todo'] ?>)
             </button>
             <button type="button" class="btn btn-sm btn-secondary" data-filter="set">
-                Réglés (<?= $counts['set'] ?>)
+                Définies (<?= $counts['set'] ?>)
             </button>
         </div>
 
@@ -311,8 +311,8 @@ ob_start();
         <?php endif; ?>
 
         <p class="fp-legend">
-            <span class="fp-legend--free">on peut passer</span>
-            <span class="fp-legend--blocks">barre le chemin</span>
+            <span class="fp-legend--free">passage libre</span>
+            <span class="fp-legend--blocks">passage bloqué</span>
         </p>
     </div>
 
@@ -361,7 +361,7 @@ ob_start();
             <header class="fp-card__head">
                 <span>
                     <?php /* Its own page carries the images block. */ ?>
-                    <a href="?type=<?= e(urlencode($name)) ?>" class="fp-card__name" title="Sa page : forme et images"><code><?= e($name) ?></code></a>
+                    <a href="?type=<?= e(urlencode($name)) ?>" class="fp-card__name" title="Page du type : forme et images"><code><?= e($name) ?></code></a>
                     <small class="text-muted"><?= e($faces[$kind]->singular) ?></small>
                 </span>
                 <span class="fp-badge <?= $originClass ?>" title="<?= e($originHint) ?>"><?= e($originLabel) ?></span>
@@ -369,8 +369,8 @@ ob_start();
 
             <?php if ($settings === null): ?>
                 <p class="fp-warn">
-                    Pas encore de type au catalogue : les cases marquées ici resteront sans effet
-                    jusqu'à l'enregistrement, qui le créera.
+                    Type absent du catalogue : les cases marquées ici n'auront aucun effet avant
+                    l'enregistrement, qui créera le type.
                 </p>
             <?php endif; ?>
 
@@ -402,19 +402,19 @@ ob_start();
                 <?php /* The two dials a `block` cell defers to. Marking a cell
                          says WHICH cells are solid; these say what solid means. */ ?>
                 <fieldset class="fp-dials">
-                    <legend>Ce qu'une case rouge fait</legend>
+                    <legend>Effet d'une case rouge</legend>
 
                     <label>
                         <input type="checkbox" name="blocks_passage" value="1"
                                <?= ($settings['blocks_passage'] ?? true) ? 'checked' : '' ?> />
-                        barre le chemin
+                        bloque le passage
                     </label>
 
                     <label>
                         <input type="checkbox" name="blocks_projectiles" value="1"
                                <?= ($settings['blocks_projectiles'] ?? true) ? 'checked' : '' ?> />
-                        arrête les tirs
-                        <small>— décocher pour une arche : on ne passe pas, la flèche si</small>
+                        arrête les projectiles
+                        <small>— à décocher pour une arche : passage bloqué, projectiles libres</small>
                     </label>
                 </fieldset>
 
@@ -424,7 +424,7 @@ ob_start();
                     </button>
                     <?php if ($source === 'declared'): ?>
                         <button type="submit" name="action" value="forget" class="btn btn-sm btn-secondary"
-                                title="La forme sera de nouveau devinée d'après la carte ou l'image">
+                                title="La forme sera de nouveau calculée d'après la carte ou l'image">
                             Revenir au calcul automatique
                         </button>
                     <?php endif; ?>

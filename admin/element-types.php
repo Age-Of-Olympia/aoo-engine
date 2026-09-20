@@ -71,8 +71,8 @@ foreach ($names as $name) {
     $thumb = $image !== null
         ? '<img src="/' . e($image) . '" height="28" loading="lazy" alt=""'
             . ' style="image-rendering:pixelated;background:#e7ded0;border:1px solid #ddd;">'
-        : '<span class="badge badge-warning" title="Posé mais aucune image dans img/elements/ :'
-            . ' la case ne dessine rien">sans image</span>';
+        : '<span class="badge badge-warning" title="Posé sur la carte mais aucune image dans img/elements/ :'
+            . ' rien n\'est affiché sur la case">sans image</span>';
 
     $does = $effect !== null
         ? '<a href="/admin/effects.php?action=edit&amp;name=' . e(urlencode($name)) . '">'
@@ -97,12 +97,12 @@ $inert = count(array_filter(
 
 $content = '<div class="d-flex justify-content-between align-items-center mb-3">'
     . '<h1 class="mb-0">Types d\'éléments</h1></div>'
-    . '<p class="text-muted">Ce que le pinceau de Tiled peut poser sur une case. '
-    . 'L\'<strong>image</strong> de <code>img/elements/</code> décide de ce qu\'on peut peindre ; '
-    . 'l\'<strong>effet du même nom</strong> décide de ce que ça fait — marcher sur la case l\'applique. '
-    . 'Un type sans effet se peint et ne fait rien. '
-    . '<em>Le lien par le nom est provisoire : un type d\'élément aura sa propre ligne, '
-    . 'qui NOMMERA l\'effet appliqué au lieu de l\'être.</em>'
+    . '<p class="text-muted">Éléments que le pinceau de Tiled peut poser sur une case. '
+    . 'La liste vient des <strong>images</strong> de <code>img/elements/</code> ; '
+    . 'l\'<strong>effet du même nom</strong>, s\'il existe, est appliqué quand on marche sur la case. '
+    . 'Un type sans effet est purement décoratif. '
+    . '<em>Ce lien par le nom est provisoire : à terme, un type d\'élément aura sa propre ligne, '
+    . 'avec l\'effet appliqué en paramètre.</em>'
     . ($inert > 0
         ? ' <strong>' . $inert . ' type(s) sans effet</strong> sur cette carte.'
         : '')
@@ -112,7 +112,7 @@ $content = '<div class="d-flex justify-content-between align-items-center mb-3">
             '',
             'Nom',
             ['Effet appliqué', 'title="L\'effet du même nom, appliqué en marchant sur la case"'],
-            ['Posés', 'title="Instances map_elements portant ce nom"'],
+            ['Posés', 'title="Cases map_elements de ce nom"'],
         ],
         $rows,
         'class="table table-striped table-sm" data-admin-list data-page-size="30"'

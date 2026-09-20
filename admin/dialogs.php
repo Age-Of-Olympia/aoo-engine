@@ -86,7 +86,7 @@ function dialogs_render_list(array $dialogs, array $references, array $buildingR
         $names = array_map(fn(array $entry) => $entry['name'], $pending);
         $pendingAlert = '<div class="alert alert-warning" style="font-size:13px;">'
             . '<strong>' . count($pending) . ' dialogue(s) JSON non seedé(s)</strong> (' . e(implode(', ', $names)) . ')'
-            . ' — le jeu les sert depuis leurs fichiers en attendant. '
+            . ' — le jeu lit leurs fichiers JSON en attendant. '
             . '<a href="/admin/dialog-seed.php">Lancer le seed</a>.</div>';
     }
 
@@ -173,7 +173,7 @@ function dialogs_render_form(?array $dialog, string $csrfToken): string
         . '<div class="form-group col-md-2"><label>Statut</label><div>'
         . '<label style="cursor:pointer;"><input type="checkbox" name="is_active" '
         . checked(!$isEdit || $dialog['is_active']) . '> Actif</label>'
-        . '<small class="form-text text-muted">Inactif : le jeu replie sur le fichier JSON s\'il existe.</small>'
+        . '<small class="form-text text-muted">Inactif : le jeu lit le fichier JSON s\'il existe.</small>'
         . '</div></div>'
         . '</div></div></div>'
 
@@ -181,7 +181,7 @@ function dialogs_render_form(?array $dialog, string $csrfToken): string
         . '<textarea class="form-control" name="dialog_data" rows="24" spellcheck="false"'
         . ' style="font-family:monospace;font-size:12px;">' . e($nodesJson) . '</textarea>'
         . '<small class="form-text text-muted">Liste de nœuds <code style="display:inline">{id, text, options}</code>.'
-        . ' Le nœud <code style="display:inline">bonjour</code> est affiché en premier ; chaque option porte un'
+        . ' Le nœud <code style="display:inline">bonjour</code> est affiché en premier ; chaque option a un'
         . ' <code style="display:inline">text</code> et une cible : <code style="display:inline">go</code>'
         . ' (id de nœud, <code style="display:inline">EXIT</code>/<code style="display:inline">RESET</code>),'
         . ' <code style="display:inline">url</code> ou <code style="display:inline">set</code>.'
@@ -207,13 +207,13 @@ function dialogs_render_delete_zone(string $name, string $csrfToken): string
 
     if ($name === DialogService::REGISTER_DIALOG) {
         $body = '<p class="mb-0 text-muted">Suppression impossible : « register » est réécrit par le jeu à chaque'
-            . ' inscription (options de races). Décochez « Actif » pour replier sur le fichier JSON.</p>';
+            . ' inscription (options de races). Décochez « Actif » pour revenir au fichier JSON.</p>';
     } elseif ($references > 0) {
         $body = '<p class="mb-0 text-muted">Suppression impossible : ' . $references . ' déclencheur(s)'
             . ' map_dialogs référencent ce dialogue — retirez-les d\'abord (éditeur Tiled).</p>';
     } elseif ($buildingReferences > 0) {
         $body = '<p class="mb-0 text-muted">Suppression impossible : ' . $buildingReferences . ' bâtiment(s)'
-            . ' portent ce dialogue — détachez-les d\'abord (<a href="/admin/buildings.php">Bâtiments</a>).</p>';
+            . ' utilisent ce dialogue — détachez-les d\'abord (<a href="/admin/buildings.php">Bâtiments</a>).</p>';
     } else {
         $body = '<form method="post" action="/admin/dialogs-save.php?action=delete" class="d-flex align-items-center gap-3"'
             . ' onsubmit="return confirm(\'Supprimer définitivement le dialogue « ' . e($name) . ' » ?\');">'

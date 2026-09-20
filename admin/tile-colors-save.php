@@ -49,7 +49,7 @@ if ($action === 'save') {
 } elseif ($action === 'delete') {
     try {
         ColorService::deleteColor($name);
-        setFlash('success', "Couleur de « {$name} » supprimée (repli sur default).");
+        setFlash('success', "Couleur de « {$name} » supprimée (couleur default appliquée).");
     } catch (\RuntimeException $e) {
         setFlash('warning', $e->getMessage());
     }

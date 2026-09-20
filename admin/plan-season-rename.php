@@ -58,15 +58,15 @@ ob_start();
 <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
     <strong>Pourquoi cette page ?</strong>
     La saison est une colonne (<code style="display:inline">plans.season</code>) : le suffixe
-    <code style="display:inline">_sX</code> du nom n'est plus qu'un reste. Cette cérémonie donne le nom de base
-    aux plans de la <strong>saison courante (<?= (int) $currentSeason ?>)</strong> et suffixe les archives
-    déplacées avec leur propre saison. Rejouable à chaque ouverture de saison.
+    <code style="display:inline">_sX</code> du nom est un reste de l'ancien système. Cette page donne le nom de base
+    aux plans de la <strong>saison courante (<?= (int) $currentSeason ?>)</strong> et ajoute leur numéro de saison
+    au nom des archives. Rejouable à chaque ouverture de saison.
     <ul class="mb-0 mt-1">
-        <li>Chaque renommage suit le nom partout : coords, journaux, rendements, réglages, téléporteurs,
+        <li>Chaque renommage est répercuté partout : coords, journaux, rendements, réglages, téléporteurs,
             conditions d'action, PNG de minimap.</li>
-        <li>Un plan sans fond configuré qui repose sur <code style="display:inline">img/tiles/&lt;nom&gt;</code>
-            se voit épingler ce fond en config avant le renommage — le visuel ne bouge pas.</li>
-        <li>Les conflits (nom de base tenu par la saison courante ou un plan de toutes saisons) sont ignorés
+        <li>Un plan sans fond configuré, qui utilise <code style="display:inline">img/tiles/&lt;nom&gt;</code>,
+            reçoit ce fond dans sa config avant le renommage : l'affichage ne change pas.</li>
+        <li>Les conflits (nom de base déjà utilisé par la saison courante ou par un plan de toutes saisons) sont ignorés
             et signalés : à trancher à la main.</li>
     </ul>
 </div>
@@ -116,7 +116,7 @@ ob_start();
             </table>
 
             <form method="post" class="d-flex align-items-center gap-3"
-                  onsubmit="return confirm('Renommer <?= count($preview['operations']) ?> plan(s) ? Chaque renommage est définitif (l\'historique suit).');">
+                  onsubmit="return confirm('Renommer <?= count($preview['operations']) ?> plan(s) ? Chaque renommage est définitif (l\'historique est renommé aussi).');">
                 <?= $csrf->renderTokenField() ?>
                 <button type="submit" name="apply_renames" class="btn btn-primary">
                     <i class="fas fa-signature"></i> Renommer <?= count($preview['operations']) ?> plan(s)

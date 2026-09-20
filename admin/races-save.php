@@ -289,7 +289,7 @@ if ($action === 'create') {
     }
     if ($service->getRaceByName($name) !== null) {
         setFlash('warning', $structureMode
-            ? "Le type « {$name} » existe déjà (ou une race porte déjà ce code)."
+            ? "Le type « {$name} » existe déjà (ou une race a déjà ce code)."
             : "La race « {$name} » existe déjà.");
         redirectTo($backPage);
     }

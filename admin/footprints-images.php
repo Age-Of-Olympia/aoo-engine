@@ -101,7 +101,7 @@ try {
     $footprint = (new EntityTypeFootprintService())->catalogue()[$type] ?? null;
 
     if ($footprint === null || $footprint->isSingleCell()) {
-        throw new RuntimeException('Déclarer d\'abord une emprise de plus d\'une case.');
+        throw new RuntimeException('Emprise d\'une seule case : rien à découper. Définir d\'abord la forme.');
     }
 
     /* The picture to cut: the one sent, else the type's whole picture in
@@ -112,7 +112,7 @@ try {
         : $_SERVER['DOCUMENT_ROOT'] . '/img/' . $dir . '/' . $type . '.png';
 
     if (!is_file($source)) {
-        throw new RuntimeException('Aucune image à découper : en envoyer une, ou déposer img/' . $dir . '/' . $type . '.png.');
+        throw new RuntimeException('Aucune image à découper : envoyer un fichier, ou déposer img/' . $dir . '/' . $type . '.png.');
     }
 
     $pieces = (new CompositeSpriteService())->cutPieces($dir, $type, $footprint, $source);

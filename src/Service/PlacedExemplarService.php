@@ -64,7 +64,7 @@ class PlacedExemplarService
         }
         // What is smashed does not stand back up by being posed: repair first.
         if (ItemInstanceService::isBroken((int) $row['durability'])) {
-            throw new \InvalidArgumentException('Brisé, cela ne se pose plus — réparez-le d\'abord.');
+            throw new \InvalidArgumentException('Un objet brisé ne peut pas être posé : réparez-le d\'abord.');
         }
 
         $name = $row['custom_name'] !== '' ? $row['custom_name'] : ucfirst((string) $row['label']);

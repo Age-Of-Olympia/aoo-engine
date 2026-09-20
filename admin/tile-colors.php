@@ -92,7 +92,7 @@ foreach ($palette as $name => $rgb) {
         . '</form>';
 
     $deleteCell = $name === 'default'
-        ? '<span class="text-muted" title="Couleur de repli des tuiles inconnues — non supprimable">—</span>'
+        ? '<span class="text-muted" title="Couleur par défaut des tuiles inconnues ; non supprimable">—</span>'
         : '<form method="post" action="/admin/tile-colors-save.php?action=delete"'
             . ' onsubmit="return confirm(\'Supprimer la couleur de « ' . e((string) $name) . ' » ? La tuile prendra la couleur default.\');">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'

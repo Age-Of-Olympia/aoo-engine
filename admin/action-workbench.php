@@ -164,8 +164,8 @@ if ($action === null) {
     echo '<label class="wb-field"><span>Type</span>'
         . formSelect('type', $actionTypes, $currentType !== '' ? $currentType : null, null,
             'class="form-control" data-original="' . e($currentType) . '"'
-            . ' title="Le type décide du comportement (ciblage, instructions héritées) —'
-            . ' changer conserve conditions et outcomes, à revoir ensuite"'
+            . ' title="Le type définit le comportement (ciblage, instructions héritées).'
+            . ' Changer de type conserve les conditions et les outcomes, à vérifier ensuite"'
             . ' onchange="if(this.value !== this.dataset.original'
             . ' &amp;&amp; !confirm(\'Changer le type de cette action ?'
             . ' Les conditions et outcomes existants sont conservés mais peuvent'

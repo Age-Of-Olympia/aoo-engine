@@ -72,7 +72,7 @@ class ColorService {
     public static function deleteColor(string $name): void
     {
         if ($name === 'default') {
-            throw new \RuntimeException('La couleur « default » est le repli des tuiles inconnues — non supprimable.');
+            throw new \RuntimeException('La couleur « default » est celle des tuiles inconnues : non supprimable.');
         }
 
         EntityManagerFactory::getEntityManager()->getConnection()

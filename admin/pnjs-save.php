@@ -139,7 +139,7 @@ if ($action === 'assign') {
         redirectTo('/admin/pnjs.php?action=edit&id=' . $pnjId);
     }
     if (count($matches) > 1) {
-        setFlash('warning', 'Plusieurs joueurs portent ce nom — utilisez le matricule.');
+        setFlash('warning', 'Plusieurs joueurs ont ce nom : utilisez le matricule.');
         redirectTo('/admin/pnjs.php?action=edit&id=' . $pnjId);
     }
     $playerId = $matches[0]['id'];

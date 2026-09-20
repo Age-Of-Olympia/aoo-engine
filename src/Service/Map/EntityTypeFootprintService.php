@@ -114,15 +114,15 @@ final class EntityTypeFootprintService
     public function declare(string $typeName, int $w, int $h, array $offsets, array $roles = []): void
     {
         if ($offsets === []) {
-            throw new RuntimeException('Une découpe sans morceau ne décrit rien.');
+            throw new RuntimeException('Une forme doit contenir au moins une case.');
         }
 
         if ($w < 1 || $h < 1 || $w > 32 || $h > 32) {
-            throw new RuntimeException('Les dimensions doivent tenir entre 1 et 32 cases.');
+            throw new RuntimeException('Les dimensions doivent être comprises entre 1 et 32 cases.');
         }
 
         if (trim($typeName) === '') {
-            throw new RuntimeException('Une découpe sans type ne se range nulle part.');
+            throw new RuntimeException('Le nom du type est requis.');
         }
 
         $this->conn()->executeStatement(

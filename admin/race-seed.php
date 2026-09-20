@@ -56,7 +56,7 @@ ob_start();
     checkout git où <code style="display:inline">datas/</code> n'existe pas : les lignes y sont créées avec des stats
     nulles. Ce bouton relance le même seed depuis la racine web, où les JSON existent.
     <ul class="mb-0 mt-1">
-        <li>Sur une race existante : drapeaux (jouable/cachée), description non vide et compteurs de portraits sont <strong>préservés</strong> ; libellé, couleurs, faction, plan, animateur et les 16 caractéristiques sont rafraîchis.</li>
+        <li>Sur une race existante : options jouable/cachée, description non vide et compteurs de portraits sont <strong>préservés</strong> ; libellé, couleurs, faction, plan, animateur et les 16 caractéristiques sont rafraîchis.</li>
         <li>Les listes (actions de départ, sorts) ne sont remplacées que si le JSON en fournit.</li>
         <li>Relançable sans risque (tout ou rien, idempotent).</li>
     </ul>
@@ -117,7 +117,7 @@ ob_start();
                 <button type="submit" name="seed_races" class="btn btn-primary">
                     <i class="fas fa-seedling"></i> Seeder <?= count($preview['entries']) ?> race(s)
                 </button>
-                <small class="text-muted">Tout ou rien — re-consultez la liste des races après coup pour vérifier.</small>
+                <small class="text-muted">Tout ou rien. Vérifier ensuite la liste des races.</small>
             </form>
         <?php endif; ?>
     </div>
