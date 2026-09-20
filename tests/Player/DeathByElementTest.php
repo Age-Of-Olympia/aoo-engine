@@ -52,5 +52,9 @@ class DeathByElementTest extends LegacyPlayerFixtureTestCase
             'SELECT c.plan FROM players p JOIN coords c ON c.id = p.coords_id WHERE p.id = ?', [$player->id]
         );
         $this->assertSame(plans()->deathPlan(), $plan, 'dead where they stood, sent to the enfers');
+        $this->assertNotEmpty(
+            \App\Factory\PlayerFactory::legacy($player->id)->have_option('deathScreenPending'),
+            'the death page is armed'
+        );
     }
 }

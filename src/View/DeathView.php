@@ -124,8 +124,10 @@ class DeathView
 
         /* An opened session marks its dismissal in the PHP session, not on
          * the player: a new death of the character it drives (elements, own
-         * effects — armed from this very session) must show the page again. */
-        if ((int) ($_SESSION['playerId'] ?? 0) === (int) $player->id) {
+         * effects — armed from this very session) must show the page again.
+         * A session opened without -reactive keeps its mark: it never gets
+         * the page (sessioncmd sets it on purpose). */
+        if ((int) ($_SESSION['playerId'] ?? 0) === (int) $player->id && empty($_SESSION['nonewturn'])) {
             unset($_SESSION[self::SEEN_KEY]);
         }
     }
