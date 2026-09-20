@@ -116,7 +116,7 @@ class RaceImageService
         }
         sort($files, SORT_NATURAL);
 
-        $usage = $this->usageByPath($type);
+        $usage = $this->usageByPath($type, $race);
         $prefix = $this->relativeDir($type, $race) . '/';
 
         $entries = [];
@@ -290,7 +290,7 @@ class RaceImageService
         }
 
         $path = $this->relativeDir($type, $fromRace) . '/' . $fileName;
-        $usage = $this->usageByPath($type)[$path] ?? 0;
+        $usage = $this->usageByPath($type, $fromRace)[$path] ?? 0;
         if ($usage > 0) {
             throw new RuntimeException("« {$fileName} » est l'image de {$usage} joueur(s) — changez-les d'abord.");
         }
@@ -336,7 +336,7 @@ class RaceImageService
         }
 
         $path = $this->relativeDir($type, $race) . '/' . $fileName;
-        $usage = $this->usageByPath($type)[$path] ?? 0;
+        $usage = $this->usageByPath($type, $race)[$path] ?? 0;
         if ($usage > 0) {
             throw new RuntimeException("« {$fileName} » est l'image de {$usage} joueur(s) — impossible de la supprimer.");
         }
@@ -359,11 +359,12 @@ class RaceImageService
      *
      * @return array<string, list<string>> chemin relatif => « Nom (mat.X) »
      */
-    public function usersByPath(ImageType $type): array
+    public function usersByPath(ImageType $type, string $race): array
     {
         $column = $type === ImageType::PORTRAIT ? 'portrait' : 'avatar';
         $rows = $this->em()->getConnection()->fetchAllAssociative(
-            "SELECT {$column} AS path, id, name FROM players WHERE {$column} != '' ORDER BY name"
+            "SELECT {$column} AS path, id, name FROM players WHERE {$column} LIKE ? ORDER BY name",
+            [$this->relativeDir($type, $race) . '/%']
         );
 
         $map = [];
@@ -374,11 +375,13 @@ class RaceImageService
         return $map;
     }
 
-    private function usageByPath(ImageType $type): array
+    /** Paths under one race's folder only: players is the whole world, walls included. */
+    private function usageByPath(ImageType $type, string $race): array
     {
         $column = $type === ImageType::PORTRAIT ? 'portrait' : 'avatar';
         $rows = $this->em()->getConnection()->fetchAllKeyValue(
-            "SELECT {$column}, COUNT(*) FROM players WHERE {$column} != '' GROUP BY {$column}"
+            "SELECT {$column}, COUNT(*) FROM players WHERE {$column} LIKE ? GROUP BY {$column}",
+            [$this->relativeDir($type, $race) . '/%']
         );
         return array_map('intval', $rows);
     }

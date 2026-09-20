@@ -28,6 +28,9 @@ final class EntitySpriteService
     /** @var array<string, string|null> memo, keyed "dir/family" */
     private static array $sprites = [];
 
+    /** @var array<string, Footprint>|null request-wide: one map read, not one per type */
+    private static ?array $catalogue = null;
+
     /**
      * The picture of a multi-cell TYPE, in the folder its kind keeps its
      * images in ({@see \App\Entity\Race::imageDir()}) — the one path for
@@ -91,7 +94,8 @@ final class EntitySpriteService
      */
     private function composeOnce(string $imageDir, string $family): ?string
     {
-        $footprint = (new EntityTypeFootprintService())->catalogue()[$family] ?? null;
+        self::$catalogue ??= (new EntityTypeFootprintService())->catalogue();
+        $footprint = self::$catalogue[$family] ?? null;
 
         if ($footprint === null || $footprint->isSingleCell()) {
             return null;
@@ -106,5 +110,6 @@ final class EntitySpriteService
     public static function forget(): void
     {
         self::$sprites = [];
+        self::$catalogue = null;
     }
 }

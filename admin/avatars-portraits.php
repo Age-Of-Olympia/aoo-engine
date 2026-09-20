@@ -95,7 +95,7 @@ try {
 }
 $withProblems = array_filter($entries, fn(array $entry) => $entry['problems'] !== []);
 $thumbHeight = $type === ImageType::PORTRAIT ? 76 : 50;
-$usersByPath = $entries !== [] ? $service->usersByPath($type) : [];
+$usersByPath = $entries !== [] ? $service->usersByPath($type, $race) : [];
 $imageDir = '/img/' . ($type === ImageType::PORTRAIT ? 'portraits' : 'avatars') . '/' . $race . '/';
 
 ob_start();
