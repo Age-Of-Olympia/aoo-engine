@@ -214,6 +214,9 @@ $(document).ready(function(){
 
                         if(window.hudShowActionResult){
 
+                            /* Not a tile action: no « Refaire » replaying the
+                             * previous tile click from here. */
+                            window.hudLastAction = null;
                             window.hudShowActionResult(data, true);
                             /* le panneau d'inventaire se recharge sous la
                              * modale : le compte d'exemplaires est à jour */
