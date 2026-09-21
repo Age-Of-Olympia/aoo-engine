@@ -216,7 +216,7 @@ CREATE TABLE `action_passives` (
   `level` int(11) NOT NULL,
   `race` varchar(255) DEFAULT NULL,
   `category` varchar(50) DEFAULT NULL,
-  `prerequisites` varchar(50) DEFAULT NULL,
+  `prerequisites` varchar(255) DEFAULT NULL,
   `display_name` varchar(255) DEFAULT NULL,
   `text` text DEFAULT NULL,
   PRIMARY KEY (`id`)
@@ -241,7 +241,7 @@ CREATE TABLE `actions` (
   `race` varchar(255) DEFAULT NULL,
   `category` varchar(50) DEFAULT NULL,
   `cost` varchar(255) DEFAULT NULL,
-  `prerequisites` varchar(50) DEFAULT NULL,
+  `prerequisites` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=92 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -2168,6 +2168,8 @@ INSERT INTO `doctrine_migration_versions` VALUES ('App\\Migrations\\Version20260
 -- idempotente (IF NOT EXISTS) mais l'enregistrer évite de la rejouer.
 INSERT INTO `doctrine_migration_versions` VALUES ('App\\Migrations\\Version20260821100000_PlansLeaveTheirJson','2026-08-21 10:00:00',0);
 INSERT INTO `doctrine_migration_versions` VALUES ('App\\Migrations\\Version20260912120000_DropMalformedRestMalusInstruction','2026-09-12 12:00:00',0);
+-- prerequisites est déjà en VARCHAR(255) plus haut dans ce dump.
+INSERT INTO `doctrine_migration_versions` VALUES ('App\\Migrations\\Version20260822250000_WidenPrerequisites','2026-08-22 10:00:00',0);
 /*!40000 ALTER TABLE `doctrine_migration_versions` ENABLE KEYS */;
 COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
