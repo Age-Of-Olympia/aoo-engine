@@ -57,7 +57,7 @@ class PlanImportExportTest extends TestCase
 
         $this->assertSame(self::SRC, $payload['plan']);
         $this->assertSame('Source de test', $payload['config']['name']);
-        $this->assertCount(3, $payload['coords'], 'toutes les coords, y compris sans contenu');
+        $this->assertCount(4, $payload['coords'], 'toutes les coords, y compris sans contenu');
         $this->assertContains([0, 1, 0], $payload['coords']);
 
         $this->assertCount(1, $payload['layers']['resources'], 'le mur player_id est exclu de l\'export');
@@ -66,6 +66,8 @@ class PlanImportExportTest extends TestCase
         $this->assertSame(-1, (int) $wall['damages']);
         $this->assertArrayNotHasKey('id', $wall, 'jamais d\'id DB dans un bundle');
         $this->assertArrayNotHasKey('player_id', $wall);
+        $this->assertCount(1, $payload['layers']['routes'], 'the road entity travels as a routes row');
+        $this->assertSame('route', $payload['layers']['routes'][0]['name']);
         $this->assertCount(1, $payload['layers']['elements'], 'un élément daté est de l\'état runtime, hors bundle');
         $this->assertSame('feu_test', $payload['layers']['elements'][0]['name']);
         $this->assertArrayNotHasKey('endTime', $payload['layers']['elements'][0], 'endTime = état runtime, hors bundle');
@@ -168,7 +170,7 @@ class PlanImportExportTest extends TestCase
 
         // Les coords existantes survivent (FK joueurs/logs) même hors payload
         $this->assertSame(
-            3,
+            4,
             (int) $this->link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::SRC])
         );
 
@@ -178,17 +180,17 @@ class PlanImportExportTest extends TestCase
     }
 
     /**
-     * 3 coords, une tuile, une ressource authorée, une construction de joueur,
-     * un élément.
+     * A tile, an authored resource, a road, a decor wall, a player-built
+     * palissade, two elements, and one coordinate without content.
      *
-     * Ressource et construction sont posées comme la partie les pose : des
-     * entités, pas des lignes de couche. C'est ce que l'import doit retrouver
-     * — l'une remplaçable, l'autre intouchable.
+     * Resource, road and buildings are placed the way the game places them:
+     * as entities, not layer rows. That is what the import has to find back
+     * — replaceable for the authored ones, untouchable for the player's.
      */
     private function seedSourcePlan(): void
     {
         $ids = [];
-        foreach ([[0, 0], [1, 0], [0, 1]] as [$x, $y]) {
+        foreach ([[0, 0], [1, 0], [0, 1], [1, 1]] as [$x, $y]) {
             $this->link->executeStatement('INSERT INTO coords (x, y, z, plan) VALUES (?, ?, 0, ?)', [$x, $y, self::SRC]);
             $ids[$x . ',' . $y] = (int) $this->link->lastInsertId();
         }
@@ -201,6 +203,14 @@ class PlanImportExportTest extends TestCase
             $ids['1,0'],
             'Arbre',
             'img/walls/arbre1.png'
+        );
+
+        (new EntityPlacementService($this->link))->create(
+            'route',
+            'route',
+            $ids['1,1'],
+            'Route',
+            'img/routes/route.png'
         );
 
         /* Seed the builder: a fresh database holds no player to borrow, and the
@@ -272,7 +282,7 @@ class PlanImportExportTest extends TestCase
         $this->link->executeStatement(
             "DELETE p FROM players p
                JOIN coords c ON c.id = p.coords_id
-              WHERE p.player_type IN ('resource', 'building') AND c.plan LIKE 'plan_test_ie_%'"
+              WHERE p.player_type IN ('resource', 'building', 'route') AND c.plan LIKE 'plan_test_ie_%'"
         );
 
         /* The builder stands on no cell, so the join above never reaches it. */

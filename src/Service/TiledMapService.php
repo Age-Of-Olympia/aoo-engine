@@ -56,7 +56,7 @@ class TiledMapService
      */
     public const AUTHORABLE_LAYERS = [
         'tiles'       => ['columns' => ['foreground', 'player_id', 'rotation'], 'paramsInKey' => false, 'composites' => false],
-        'routes'      => ['columns' => ['player_id'],               'paramsInKey' => false, 'composites' => true],
+        'routes'      => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
         'plants'      => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
         'resources'   => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
         'elements'    => ['columns' => ['endTime', 'rotation'],     'paramsInKey' => false, 'composites' => true, 'permanentOnly' => true],
@@ -86,7 +86,8 @@ class TiledMapService
      *
      * Leur table map_* est vide et sans lecteur depuis la conversion : une
      * ressource est un joueur de type `resource`, avec sa case, son satellite
-     * d'état et sa repousse. Elles sortent donc du diff de lignes — qui
+     * d'état et sa repousse ; une route est un joueur de type `route`
+     * (Version20260831140000). Elles sortent donc du diff de lignes — qui
      * jetterait cette identité — pour passer par {@see ResourceReconciler},
      * comme l'import de bundle ({@see \App\Service\ImportExport\PlanImporter}).
      *
@@ -94,7 +95,7 @@ class TiledMapService
      * le jeu tenait des arbres et des pierres, et ce que le push y posait
      * n'arrivait nulle part.
      */
-    public const ENTITY_LAYERS = ['resources' => 'resource', 'plants' => 'plant'];
+    public const ENTITY_LAYERS = ['resources' => 'resource', 'plants' => 'plant', 'routes' => 'route'];
 
     /** Couche virtuelle des entités bâtiment (pas de table map_*) */
     public const BUILDINGS_LAYER = 'buildings';
