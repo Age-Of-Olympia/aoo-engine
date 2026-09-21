@@ -1,14 +1,25 @@
 /*
- * Recherche + pagination côté client pour les tableaux du panneau admin.
+ * Search, facets and paging for any admin table, client side.
  *
- * Opt-in : <table data-admin-list data-page-size="50"> — le script injecte
- * une barre d'outils (champ de recherche + compteur) au-dessus du tableau et
- * une pagination en dessous. Le filtre porte sur le texte complet de chaque
- * ligne. Aucun rechargement : les lignes sont masquées/affichées.
+ *   <table data-admin-list data-page-size="50" data-facets="type:Type,status:Statut">
+ *     <tr data-type="PNJ" data-status="Actif">…
  *
- * Chargé globalement par admin/layout.php : inactif sans tableau marqué.
+ * The search matches the row text; each facet becomes a <select> whose
+ * options are the distinct values found on the rows (the value IS the label).
  */
 document.addEventListener('DOMContentLoaded', function () {
+    // A popover panel filled on first opening: the page ships a URL, not the rows.
+    document.querySelectorAll('details [data-lazy-src]').forEach(function (panel) {
+        panel.closest('details').addEventListener('toggle', function () {
+            var url = panel.getAttribute('data-lazy-src');
+            if (!this.open || !url) {
+                return;
+            }
+            panel.removeAttribute('data-lazy-src');
+            fetch(url).then(function (r) { return r.text(); }).then(function (html) { panel.innerHTML = html; });
+        });
+    });
+
     document.querySelectorAll('table[data-admin-list]').forEach(function (table) {
         var tbody = table.tBodies[0];
         if (!tbody) {
@@ -19,20 +30,40 @@ document.addEventListener('DOMContentLoaded', function () {
         var page = 0;
         var query = '';
 
-        /* Barre d'outils : recherche + compteur */
         var toolbar = document.createElement('div');
         toolbar.className = 'admin-list-toolbar';
         var search = document.createElement('input');
         search.type = 'search';
         search.className = 'form-control form-control-sm';
-        search.placeholder = 'Rechercher… (nom, problème, badge)';
+        search.placeholder = table.getAttribute('data-search-placeholder') || 'Rechercher…';
+        toolbar.appendChild(search);
+
+        var facets = (table.getAttribute('data-facets') || '').split(',').filter(Boolean).map(function (spec) {
+            var parts = spec.split(':');
+            var attr = 'data-' + parts[0];
+            var values = {};
+            rows.forEach(function (row) {
+                var value = row.getAttribute(attr);
+                if (value) {
+                    values[value] = (values[value] || 0) + 1;
+                }
+            });
+            var select = document.createElement('select');
+            select.className = 'form-control form-control-sm';
+            select.appendChild(new Option(parts[1] || parts[0], ''));
+            Object.keys(values).sort().forEach(function (value) {
+                select.appendChild(new Option(value + ' (' + values[value] + ')', value));
+            });
+            select.addEventListener('change', function () { page = 0; render(); });
+            toolbar.appendChild(select);
+            return { attr: attr, select: select };
+        });
+
         var counter = document.createElement('small');
         counter.className = 'text-muted';
-        toolbar.appendChild(search);
         toolbar.appendChild(counter);
         table.parentNode.insertBefore(toolbar, table);
 
-        /* Pagination */
         var pager = document.createElement('div');
         pager.className = 'admin-list-pager';
         var prev = pagerButton('← Précédent');
@@ -53,7 +84,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function matches(row) {
-            return query === '' || row.textContent.toLowerCase().indexOf(query) !== -1;
+            if (query !== '' && row.textContent.toLowerCase().indexOf(query) === -1) {
+                return false;
+            }
+            return facets.every(function (facet) {
+                return facet.select.value === '' || row.getAttribute(facet.attr) === facet.select.value;
+            });
         }
 
         function render() {
@@ -65,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function () {
             visible.slice(page * pageSize, (page + 1) * pageSize)
                 .forEach(function (row) { row.style.display = ''; });
 
-            counter.textContent = query === ''
+            counter.textContent = visible.length === rows.length
                 ? visible.length + ' ligne(s)'
                 : visible.length + ' / ' + rows.length + ' ligne(s)';
             info.textContent = 'page ' + (page + 1) + ' / ' + pages;

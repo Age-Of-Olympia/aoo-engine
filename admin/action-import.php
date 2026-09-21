@@ -7,8 +7,11 @@ use App\Service\ImportExport\BundleEnvelope;
 use App\Service\ImportExport\ImporterRegistry;
 use App\View\Action\ImportFormView;
 
-/** Hard ceiling on an uploaded bundle; a real export of the whole catalogue is ~50 KB. */
-const MAX_BUNDLE_BYTES = 1048576; // 1 MiB
+/** Ceiling on an uploaded bundle, in MB; set from the admin dashboard. */
+const BUNDLE_MAX_MB_SETTING = 'import_bundle_max_mb';
+const BUNDLE_MAX_MB_DEFAULT = 200;
+$bundleMaxMb = max(1, (int) (new App\Service\AdminSettingsService())->get(BUNDLE_MAX_MB_SETTING, (string) BUNDLE_MAX_MB_DEFAULT));
+define('MAX_BUNDLE_BYTES', $bundleMaxMb * 1024 * 1024);
 
 $csrf = new CsrfProtectionService();
 
@@ -57,7 +60,7 @@ function read_uploaded_bundle($file): string
         throw new RuntimeException('Fichier invalide.');
     }
     if ((int) ($file['size'] ?? 0) > MAX_BUNDLE_BYTES) {
-        throw new InvalidArgumentException('Fichier trop volumineux (max 1 Mo).');
+        throw new InvalidArgumentException('Fichier trop volumineux (max ' . (MAX_BUNDLE_BYTES >> 20) . ' Mo).');
     }
     if (strtolower((string) pathinfo((string) $file['name'], PATHINFO_EXTENSION)) !== 'json') {
         throw new InvalidArgumentException('Seuls les fichiers .json sont acceptés.');

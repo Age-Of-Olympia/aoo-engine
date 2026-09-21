@@ -19,32 +19,36 @@ use RuntimeException;
 class MapElementService
 {
     /**
-     * Éléments posables : une image dans img/elements ET un effet du
-     * catalogue (exigence d'Element::put et de l'application au pas —
-     * un élément sans effet ne ferait rien).
+     * Placeable elements: every image in img/elements. The effect of the
+     * same name, when one exists, is applied on step; otherwise the
+     * element is decor.
      *
      * @return list<string>
      */
     public function placeableNames(): array
     {
-        $effectService = new EffectService();
-
         $names = [];
-        foreach (glob($this->root() . '/img/elements/*.{png,webp,gif}', GLOB_BRACE) ?: [] as $file) {
-            $name = pathinfo($file, PATHINFO_FILENAME);
-            if ($effectService->exists($name)) {
-                $names[] = $name;
-            }
+        $pattern = '/img/elements/*.{' . implode(',', TileCatalogService::IMAGE_EXTENSIONS) . '}';
+        foreach (glob($this->root() . $pattern, GLOB_BRACE) ?: [] as $file) {
+            $names[] = pathinfo($file, PATHINFO_FILENAME);
         }
         sort($names);
 
         return array_values(array_unique($names));
     }
 
+    /** Placeable elements that do apply an effect on step. @return list<string> */
+    public function namesWithEffect(): array
+    {
+        $effectService = new EffectService();
+
+        return array_values(array_filter($this->placeableNames(), fn(string $name) => $effectService->exists($name)));
+    }
+
     /** Chemin web de l'image d'un élément, ou '' si absente. */
     public function imagePath(string $name): string
     {
-        foreach (['png', 'webp', 'gif'] as $extension) {
+        foreach (TileCatalogService::IMAGE_EXTENSIONS as $extension) {
             if (is_file($this->root() . '/img/elements/' . $name . '.' . $extension)) {
                 return 'img/elements/' . $name . '.' . $extension;
             }
@@ -57,11 +61,11 @@ class MapElementService
      * Inventaire d'un plan — les traces de pas (bruit du moteur, une par
      * déplacement) sont exclues sauf demande explicite.
      *
-     * @return list<array{id: int, name: string, x: int, y: int, z: int, endTime: int}>
+     * @return list<array{id: int, name: string, x: int, y: int, z: int, endTime: int, rotation: int}>
      */
     public function listByPlan(string $plan): array
     {
-        $sql = 'SELECT me.id, me.name, me.endTime, c.x, c.y, c.z
+        $sql = 'SELECT me.id, me.name, me.endTime, me.rotation, c.x, c.y, c.z
                 FROM map_elements me
                 JOIN coords c ON c.id = me.coords_id
                 WHERE c.plan = ?
@@ -73,7 +77,7 @@ class MapElementService
             $rows[] = [
                 'id' => (int) $row->id, 'name' => (string) $row->name,
                 'x' => (int) $row->x, 'y' => (int) $row->y, 'z' => (int) $row->z,
-                'endTime' => (int) $row->endTime,
+                'endTime' => (int) $row->endTime, 'rotation' => (int) $row->rotation,
             ];
         }
 
@@ -89,11 +93,14 @@ class MapElementService
      * La conversion passe par le tour de référence (18 h). null =
      * permanent (endTime 0, jamais purgé).
      */
-    public function place(string $name, int $x, int $y, int $z, string $plan, ?int $durationTurns): void
+    public function place(string $name, int $x, int $y, int $z, string $plan, ?int $durationTurns, int $rotation = 0): void
     {
+        if (!in_array($rotation, TiledMapService::ROTATIONS, true)) {
+            throw new RuntimeException('Rotation invalide : 0, 90, 180 ou 270.');
+        }
         if (!in_array($name, $this->placeableNames(), true)) {
             throw new RuntimeException(
-                "Élément « {$name} » inconnu — il faut une image img/elements et un effet du même nom au catalogue."
+                "Élément « {$name} » inconnu — il faut une image dans img/elements."
             );
         }
 
@@ -108,7 +115,7 @@ class MapElementService
             );
         }
 
-        if (!Element::put($name, (int) $coordsId, $durationTurns ?? Element::DURATION_INFINITE)) {
+        if (!Element::put($name, (int) $coordsId, $durationTurns ?? Element::DURATION_INFINITE, $rotation)) {
             throw new RuntimeException(
                 "Case ({$x},{$y},{$z}) : pas de sol, ou un autre élément l'occupe déjà — une case n'en porte qu'un."
             );

@@ -40,11 +40,11 @@ ob_start();
     <?= renderFlashMessage() ?>
 
     <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-        L'accueil compose tout sur le <strong>premier écran</strong> (sans défiler, sur un écran de bureau) :
+        L'accueil affiche tout sur le <strong>premier écran</strong> (sans défiler, sur un écran de bureau) :
         les sections de texte et la galerie dans la marge gauche, les 3 dernières chroniques dans la marge droite.
         <strong>Budgets conseillés</strong> : présentation ≈ 4-6 lignes ; chroniques de 1-2 lignes ;
         4 planches actives dans la galerie. Une ligne <em>inactive</em> disparaît de l'accueil sans être perdue.
-        Base vide (nouveau déploiement) ? <a href="landing-seed.php">Semer le contenu initial</a>.
+        Base vide (nouveau déploiement) ? <a href="landing-seed.php">Créer le contenu initial</a>.
     </div>
 
     <!-- ============ Sections de texte ============ -->

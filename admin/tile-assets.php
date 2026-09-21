@@ -66,6 +66,16 @@ if ($isStateChangingPost) {
     redirectTo('tile-assets.php?layer=' . urlencode($layer)); // PRG : pas de re-soumission au refresh
 }
 
+// Positions of one tile, fetched when its popover opens (admin-list.js data-lazy-src)
+if (isset($_GET['positions'])) {
+    $positions = $service->positionsOfTile($layer, (string) $_GET['positions']);
+    echo implode('', array_map(static fn (string $position): string => '<div>' . e($position) . '</div>', $positions));
+    if (count($positions) >= 200) {
+        echo '<div class="text-muted">… (200 premières)</div>';
+    }
+    exit;
+}
+
 try {
     $inventory = $service->inventory($layer);
 } catch (Throwable $e) {
@@ -85,7 +95,7 @@ ob_start();
 
     <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
         Inventaire des images de <code style="display:inline">img/&lt;couche&gt;/</code> avec leurs problèmes connus
-        (image à palette — la source des fondus noirs —, formats multiples, nom invalide, image posée sur une carte
+        (image à palette, cause des fondus noirs ; formats multiples ; nom invalide ; image posée sur une carte
         mais absente du serveur…). L'ajout convertit systématiquement en PNG vraies couleurs ; la suppression est
         refusée tant que l'image est posée quelque part ; le renommage met à jour les cartes et terrains.json.
         Les fondus générés (<code style="display:inline">trans_*</code>) se gèrent depuis la page Transitions de terrain.
@@ -170,14 +180,8 @@ ob_start();
                                     <details class="row-popover">
                                         <summary class="btn btn-sm btn-outline-secondary" style="cursor:pointer;list-style:none;"
                                                  title="Positions de cette tuile sur les cartes"><strong><?= $entry['usage'] ?></strong></summary>
-                                        <div class="row-popover-panel" style="max-height:12rem;overflow:auto;font-size:12px;">
-                                            <?php foreach ($service->positionsOfTile($layer, $entry['name']) as $position): ?>
-                                                <div><?= e($position) ?></div>
-                                            <?php endforeach; ?>
-                                            <?php if ($entry['usage'] > 200): ?>
-                                                <div class="text-muted">… (200 premières)</div>
-                                            <?php endif; ?>
-                                        </div>
+                                        <div class="row-popover-panel" style="max-height:12rem;overflow:auto;font-size:12px;"
+                                             data-lazy-src="?layer=<?= e(urlencode($layer)) ?>&amp;positions=<?= e(urlencode($entry['name'])) ?>">…</div>
                                     </details>
                                 <?php else: ?>
                                     <span class="text-muted">0</span>

@@ -22,6 +22,12 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 abstract class StructureType extends Race
 {
+    /** Les murs, bâtiments et ressources partagent le stock historique. */
+    public function imageDir(): string
+    {
+        return 'walls';
+    }
+
     /**
      * Jusqu'où se lit ce qui est inscrit : de loin (pancarte, enseigne) ou
      * seulement d'une case voisine (plaque gravée, épitaphe).
@@ -45,6 +51,9 @@ abstract class StructureType extends Race
      */
     #[ORM\Column(type: "boolean", name: "repairable", nullable: true)]
     private ?bool $repairable = null;
+
+    #[ORM\Column(type: "string", length: 100, name: "default_dialog", options: ["default" => ""])]
+    private string $defaultDialog = '';
 
     public function isRepairable(): bool
     {
@@ -100,6 +109,19 @@ abstract class StructureType extends Race
     public function setDefaultText(string $text): self
     {
         $this->defaultText = $text;
+
+        return $this;
+    }
+
+    /** Dialogue (dialogs.name) copied onto every new exemplar, '' = none. */
+    public function getDefaultDialog(): string
+    {
+        return $this->defaultDialog;
+    }
+
+    public function setDefaultDialog(string $dialog): self
+    {
+        $this->defaultDialog = $dialog;
 
         return $this;
     }

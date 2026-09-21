@@ -10,6 +10,7 @@ use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\Proxy\ProxyFactory;
 use Doctrine\ORM\Configuration;
+use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
 
 final class EntityManagerFactory
 {
@@ -97,7 +98,8 @@ final class EntityManagerFactory
          * cette fabrique : elle a déménagé, Doctrine ne doit pas la suivre. */
         self::$orm_db_config = ORMSetup::createAttributeMetadataConfiguration(
             paths: [dirname(__DIR__) . '/Entity'],
-            isDevMode: $isDevMode
+            isDevMode: $isDevMode,
+            cache: new PhpFilesAdapter('doctrine_' . self::mappingFingerprint(), 0, dirname(__DIR__, 2) . '/var/cache')
         );
         $proxyDir = __DIR__ . '/../../var/proxies';
         if (!is_dir($proxyDir)) {
@@ -105,6 +107,24 @@ final class EntityManagerFactory
         }
         self::$orm_db_config->setProxyDir($proxyDir);
         self::$orm_db_config->setProxyNamespace('Proxies');
-        self::$orm_db_config->setAutoGenerateProxyClasses(true);
+        self::$orm_db_config->setAutoGenerateProxyClasses(ProxyFactory::AUTOGENERATE_FILE_NOT_EXISTS_OR_CHANGED);
+    }
+
+    /**
+     * Metadata cache namespace: without it Doctrine reads every entity's
+     * attributes by reflection on each request. The namespace changes with
+     * the mapped files (entities, and the action folders the discriminator
+     * maps are scanned from), so an edit or a deploy starts a fresh cache.
+     */
+    private static function mappingFingerprint(): string
+    {
+        $src = dirname(__DIR__);
+        $files = array_merge(
+            glob($src . '/Entity/*.php') ?: [],
+            glob($src . '/Action/*.php') ?: [],
+            glob($src . '/Action/OutcomeInstruction/*.php') ?: []
+        );
+
+        return md5(count($files) . '|' . max(array_map('filemtime', $files) ?: [0]));
     }
 }

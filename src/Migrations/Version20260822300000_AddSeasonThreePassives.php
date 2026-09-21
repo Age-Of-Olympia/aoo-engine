@@ -326,10 +326,18 @@ final class Version20260822300000_AddSeasonThreePassives extends AbstractMigrati
         // 1/8 and 1/7 do not fit two decimals (0.143 → 0.14 → floor(7 × 0.14) = 0).
         $this->addSql('ALTER TABLE action_passives MODIFY `value` DECIMAL(6,4) DEFAULT NULL');
 
+        /* The ALTER above commits the migration's transaction, so a failure
+         * further down leaves the rows already inserted: only the names still
+         * missing are inserted, and a retry adds nothing twice. */
         foreach (self::PASSIVES_DATA as $passive) {
             $columns = implode(', ', array_keys($passive));
             $placeholders = implode(', ', array_fill(0, count($passive), '?'));
-            $this->addSql("INSERT INTO action_passives ($columns) VALUES ($placeholders)", array_values($passive));
+            $this->addSql(
+                "INSERT INTO action_passives ($columns)
+                 SELECT $placeholders
+                  WHERE NOT EXISTS (SELECT 1 FROM action_passives WHERE name = ?)",
+                [...array_values($passive), $passive['name']]
+            );
         }
 
         foreach (self::UPDATES_DATA as $update) {

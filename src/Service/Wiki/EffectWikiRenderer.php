@@ -56,11 +56,12 @@ final class EffectWikiRenderer implements WikiSheetRendererInterface
         $rules = [];
         $carac = static fn (?string $key): string => CARACS_TXT[$key] ?? strtoupper((string) $key);
 
-        if ($effect->getBuffCarac() !== null) {
-            $rules[] = 'Augmente ' . $carac($effect->getBuffCarac()) . ' de la valeur portée.';
+        foreach ($effect->getLossMods() as $key => $n) {
+            $rules[] = ($n < 0 ? 'Retire ' : 'Rend ') . abs($n) . ' ' . $carac($key) . ' à chaque application.';
         }
-        if ($effect->getDebuffCarac() !== null) {
-            $rules[] = 'Diminue ' . $carac($effect->getDebuffCarac()) . ' de la valeur portée.';
+        foreach ($effect->getCaracMods() as $key => $sign) {
+            $max = in_array($key, \App\Entity\Effect::SPENDABLE, true) ? ' maximum' : '';
+            $rules[] = ($sign > 0 ? 'Augmente ' : 'Diminue ') . $carac($key) . $max . ' de ' . abs($sign) . '.';
         }
         foreach ([
             'getRollAttackMod' => 'au jet d\'attaque', 'getRollDefenseMod' => 'au jet de défense',

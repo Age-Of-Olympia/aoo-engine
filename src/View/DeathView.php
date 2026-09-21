@@ -111,15 +111,27 @@ class DeathView
         exit();
     }
 
-    /** Arm the page for a fresh death. NPCs and structures never log in. */
+    /**
+     * Arm the page for a fresh death. A structure is never driven; a PNJ
+     * (negative id) is, through the switch screen, so it gets the page.
+     */
     public static function armFor(Player $player): void
     {
-        if ((int) $player->id <= 0) {
+        if (\App\Enum\EntityCategory::fromPlayerType($player->getPlayerType()) !== \App\Enum\EntityCategory::Character) {
             return;
         }
 
         if (!$player->have_option(self::PENDING_OPTION)) {
             $player->add_option(self::PENDING_OPTION);
+        }
+
+        /* An opened session marks its dismissal in the PHP session, not on
+         * the player: a new death of the character it drives (elements, own
+         * effects — armed from this very session) must show the page again.
+         * A session opened without -reactive keeps its mark: it never gets
+         * the page (sessioncmd sets it on purpose). */
+        if ((int) ($_SESSION['playerId'] ?? 0) === (int) $player->id && empty($_SESSION['nonewturn'])) {
+            unset($_SESSION[self::SEEN_KEY]);
         }
     }
 

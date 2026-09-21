@@ -530,7 +530,7 @@ class FactionService
 
         $name = trim($name);
         if ($name === '') {
-            throw new RuntimeException('Un rang porte un nom.');
+            throw new RuntimeException('Le nom du rôle est requis.');
         }
 
         $conn = $this->entityManager->getConnection();
@@ -651,7 +651,7 @@ class FactionService
 
         $name = trim($name);
         if ($name === '') {
-            throw new RuntimeException('Un rang porte un nom.');
+            throw new RuntimeException('Le nom du rôle est requis.');
         }
 
         $conn = $this->entityManager->getConnection();

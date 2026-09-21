@@ -176,7 +176,7 @@ final class EntityCardView
 
         $card .= self::lockStatusHtml($target, (int) $pvPct);
 
-        $card .= self::harvestStatusHtml($target);
+        $card .= self::harvestStatusHtml($player, $target, (string) $coords->plan);
 
         // Équipement porté — alvéoles de la vue de sélection du HUD
         // papier (écrans larges) ; l'habillage hérité garde sa carte.
@@ -565,7 +565,7 @@ final class EntityCardView
      * même phrase — « voici l'état de ce qui occupe la case » — et deux styles
      * pour une seule idée finiraient par diverger.
      */
-    private static function harvestStatusHtml(Player $target): string
+    private static function harvestStatusHtml(Player $viewer, Player $target, string $plan): string
     {
         $type = (string) ($target->data->player_type ?? '');
 
@@ -575,6 +575,20 @@ final class EntityCardView
 
         if ($type !== 'resource') {
             return '';
+        }
+
+        // Same catalogue as the search condition: a type without a yield is
+        // not harvestable, whatever the map says.
+        $race = (string) ($target->data->race ?? '');
+        $yields = (new \App\Service\Map\HarvestCatalogService())->yieldsFor($plan);
+
+        if (!isset($yields[$race])) {
+            $hint = $viewer->have_option('isAdmin') || $viewer->have_option('isSuperAdmin')
+                ? ' <small>(type « ' . htmlspecialchars($race) . ' » sans rendement — '
+                    . '<a href="/admin/harvest-types.php?action=edit&name=' . urlencode($race) . '">régler</a>)</small>'
+                : '';
+
+            return self::statusBadgeHtml('Rien à récolter' . $hint, true);
         }
 
         $exhausted = (new \App\Service\Map\ResourceStateService())->isExhausted((int) $target->id);

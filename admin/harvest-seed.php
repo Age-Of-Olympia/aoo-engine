@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['seed_harvest'])) {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
         $report = $service->seed();
         setFlash('success', sprintf(
-            'Seed appliqué : %d rendement(s) versé(s) — %d plan(s), %d type(s).',
+            'Seed appliqué : %d rendement(s) enregistré(s) — %d plan(s), %d type(s).',
             $report['written'],
             $report['plans'],
             $report['types']
@@ -68,9 +68,9 @@ ob_start();
 <?php if ($missing !== []): ?>
     <div class="alert alert-danger">
         <strong>Sur <?= count($missing) ?> plan(s), fouiller ne rapporte RIEN.</strong>
-        Ces plans portent des ressources récoltables sans rendement réglé pour leur type. Le jeu ne
-        lit que cette table — il n'y a pas de repli silencieux sur le JSON.
-        <table class="table table-sm mb-0 mt-2" style="max-width: 760px;">
+        Ces plans contiennent des ressources récoltables dont le type n'a aucun rendement défini.
+        Le jeu ne lit que cette table, jamais le JSON.
+        <table class="table table-sm mb-0 mt-2">
             <thead><tr><th>Plan</th><th>Ressources posées</th><th>Types sans rendement</th><th>Rendements dans son JSON</th></tr></thead>
             <tbody>
             <?php foreach (array_slice($missing, 0, 25) as $row): ?>
@@ -96,12 +96,12 @@ ob_start();
     <strong>Pourquoi cette page ?</strong>
     La migration <code style="display:inline">RaceHarvestTable</code> ne crée que la table
     <code style="display:inline">race_harvest</code> : en production les migrations s'exécutent depuis le checkout git
-    où <code style="display:inline">datas/</code> n'existe pas. Ce bouton verse les rendements depuis les
+    où <code style="display:inline">datas/</code> n'existe pas. Ce bouton enregistre les rendements à partir des
     <code style="display:inline">biomes[]</code> des JSON de plan de cet environnement.
     <ul class="mb-0 mt-1">
-        <li>Le rendement dépend du <strong>plan</strong> et pas seulement du type : le même mur donne des taux différents selon l'endroit.</li>
-        <li>Un plan <strong>illisible est nommé, jamais devin&eacute;</strong> — aucun taux par défaut n'est inventé.</li>
-        <li>Relançable : une ligne déjà versée est mise à jour, donc un JSON corrigé se reverse.</li>
+        <li>Le rendement dépend du <strong>plan</strong> et pas seulement du type : la même ressource donne des taux différents selon le plan.</li>
+        <li>Un plan <strong>illisible est signalé et ignoré</strong> : aucun taux par défaut n'est inventé.</li>
+        <li>Relançable : une ligne déjà enregistrée est mise à jour, un JSON corrigé peut donc être rejoué.</li>
         <li>Page temporaire, à retirer quand les rendements ne viendront plus des JSON.</li>
     </ul>
 </div>
@@ -109,25 +109,25 @@ ob_start();
 <?php if ($preview['unreadable'] !== []): ?>
     <div class="alert alert-danger" style="font-size: 13px;">
         <strong>Plans illisibles, ignorés :</strong> <?= e(implode(', ', $preview['unreadable'])) ?>.
-        Leurs rendements ne seront pas versés — corrigez le fichier, puis relancez.
+        Leurs rendements ne seront pas enregistrés : corrigez le fichier, puis relancez.
     </div>
 <?php endif; ?>
 
 <?php if ($preview['unknown'] !== []): ?>
     <div class="alert alert-warning" style="font-size: 13px;">
         <strong>Types nommés par un plan et absents du catalogue :</strong> <?= e(implode(', ', $preview['unknown'])) ?>.
-        Ces entrées ne rapportent rien en jeu — le plus souvent une coquille dans le JSON.
+        Ces entrées n'ont aucun effet en jeu ; le plus souvent, une faute de frappe dans le JSON.
     </div>
 <?php endif; ?>
 
 <div class="card">
     <div class="card-body">
-        <h5 class="card-title">Ce que les plans déclarent</h5>
+        <h5 class="card-title">Rendements déclarés par les plans</h5>
 
         <?php if ($preview['rows'] === []): ?>
             <div class="alert alert-warning mb-0">
                 Aucun rendement trouvé dans les <code style="display:inline">biomes[]</code> des JSON de plan de cet
-                environnement — rien à verser.
+                environnement : rien à enregistrer.
             </div>
         <?php else: ?>
             <p class="text-muted" style="font-size: 13px;">
@@ -137,7 +137,7 @@ ob_start();
             <form method="post" class="mt-2">
                 <input type="hidden" name="csrf_token" value="<?= e($csrf->generateToken()) ?>" />
                 <button type="submit" name="seed_harvest" value="1" class="btn btn-primary">
-                    Verser dans race_harvest
+                    Enregistrer dans race_harvest
                 </button>
             </form>
         <?php endif; ?>
@@ -146,24 +146,24 @@ ob_start();
 <?php if ($configured !== []): ?>
     <div class="card mt-3">
         <div class="card-body">
-            <h5 class="card-title">Dérogations par plan — ce que ce plan change au catalogue</h5>
+            <h5 class="card-title">Exceptions par plan</h5>
             <p class="text-muted" style="font-size: 13px;">
-                Le rendement d'un récoltable se règle sur son TYPE (Types récoltables) : il vaut partout,
-                et un plan n'a rien à déclarer pour que fouiller rapporte.
-                Une ligne ici ne sert qu'à <strong>dévier</strong> — le même arbre donne moins dans le désert
-                que dans la forêt. Chaque case vide reprend ce que dit le type ; <strong>0</strong> veut dire
-                « jamais, ici ».
+                Le rendement d'un récoltable est défini sur son type (Types récoltables) et vaut sur tous
+                les plans ; un plan n'a rien à déclarer pour que fouiller rapporte.
+                Une ligne ici est une <strong>exception</strong> : le même arbre donne moins dans le désert
+                que dans la forêt. Une case vide reprend la valeur du type ; <strong>0</strong> signifie
+                « jamais sur ce plan ».
             </p>
 
             <form method="post">
                 <input type="hidden" name="csrf_token" value="<?= e($csrf->generateToken()) ?>" />
 
-                <table class="table table-striped table-sm" style="max-width: 900px;">
+                <table class="table table-striped table-sm">
                     <thead><tr>
                         <th>Plan</th><th>Type</th>
-                        <th title="Vide : l'objet que donne le type. Rempli : cet objet-ci, sur ce plan.">Donne</th>
-                        <th title="Chance sur cent de tarir à la récolte. Vide : comme le type. 0 : ne tarit jamais ici.">Épuisement</th>
-                        <th title="Chance sur mille de repousser, par passage du cron. Vide : comme le type. 0 : ne repousse jamais ici.">Repousse</th>
+                        <th title="Vide : l'objet défini sur le type. Rempli : cet objet, sur ce plan.">Donne</th>
+                        <th title="Chance sur cent d'épuisement à la récolte. Vide : valeur du type. 0 : jamais épuisé sur ce plan.">Épuisement</th>
+                        <th title="Chance sur mille de repousse à chaque passage du cron. Vide : valeur du type. 0 : ne repousse jamais sur ce plan.">Repousse</th>
                     </tr></thead>
                     <tbody>
                     <?php foreach ($configured as $row): ?>

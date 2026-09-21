@@ -104,9 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['run_group']) || isse
 
 $content = '<div class="d-flex justify-content-between align-items-center mb-3">'
     . '<h1 class="mb-0">Crons</h1></div>'
-    . '<p class="text-muted">Rejoue à la main ce que la planification exécute : un groupe entier dans'
-    . ' l\'ordre, ou un script seul. Mêmes chemins de code que les exécutions planifiées — un cron'
-    . ' joué ici fait exactement ce qu\'il fait la nuit.</p>';
+    . '<p class="text-muted">Exécution manuelle des crons : un groupe entier dans l\'ordre, ou un script'
+    . ' seul. Le code exécuté est le même que celui de l\'exécution planifiée de la nuit.</p>';
 
 // Report of the run just done (stored by the POST, shown once).
 if (!empty($_SESSION['cron_run_report'])) {

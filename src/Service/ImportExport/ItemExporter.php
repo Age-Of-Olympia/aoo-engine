@@ -4,6 +4,7 @@ namespace App\Service\ImportExport;
 
 use App\Interface\ObjectExporterInterface;
 use App\Factory\EntityManagerFactory;
+use App\Service\ItemEffectService;
 use App\Service\ItemStatsSeeder;
 use Doctrine\DBAL\Connection;
 use InvalidArgumentException;
@@ -59,6 +60,7 @@ final class ItemExporter implements ObjectExporterInterface
 
         $payload = [
             'name' => (string) $entity->name,
+            'label' => (string) ($entity->label ?? ''),
             'private' => (int) $entity->private,
             'enchanted' => (int) $entity->enchanted,
             'vorpal' => (int) $entity->vorpal,
@@ -78,9 +80,14 @@ final class ItemExporter implements ObjectExporterInterface
             $payload[$key] = is_numeric($entity->$key ?? null) ? $entity->$key + 0 : (string) ($entity->$key ?? '');
         }
 
-        foreach (['munitions' => 'munitions', 'add_effects' => 'addEffects', 'forbid' => 'forbid', 'extra' => 'extra'] as $column => $key) {
+        foreach (['munitions' => 'munitions', 'forbid' => 'forbid', 'extra' => 'extra'] as $column => $key) {
             $payload[$key] = !empty($entity->$column) ? json_decode((string) $entity->$column, true) : null;
         }
+
+        $payload['strikeEffects'] = array_map(
+            static fn (object $row): array => (array) $row,
+            (new ItemEffectService($this->connection()))->listForItems([(int) $entity->id])
+        );
 
         return $payload;
     }

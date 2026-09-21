@@ -119,26 +119,85 @@ class EffectService
         ));
     }
 
-    /** @return array<string, string> effect name => carac lowered by 1 (ex-ELE_DEBUFFS). */
-    public function getDebuffCaracs(): array
+    /** @return array<string, int> what the effect takes from the pools on landing, at this intensity */
+    public function lossesOf(string $name, int $value = 1): array
     {
-        return $this->caracMap('getDebuffCarac');
+        $effect = $this->catalog()[$name] ?? null;
+        if ($effect === null) {
+            return [];
+        }
+
+        return array_map(static fn (int $n): int => $n * max(1, $value), $effect->getLossMods());
     }
 
-    /** @return array<string, string> effect name => carac raised by 1 (ex-ELE_BUFFS). */
-    public function getBuffCaracs(): array
+    /**
+     * The line shown when the effect lands on $receiverName: the effect's
+     * own sentence ({cible}, {acteur}, {effet} filled, template escaped)
+     * or the generic one, followed by value, duration and PV change.
+     * $valueLabel is "x1" or "+3" as the caller counts it; $duration in
+     * turns (0 = until next turn, negative = no end).
+     */
+    public function landingMessage(string $name, string $receiverName, string $actorName, int $duration, int $value = 1, bool $stackable = false): string
     {
-        return $this->caracMap('getBuffCarac');
+        $effect = $this->catalog()[$name] ?? null;
+        $icon = $effect === null ? '' : $effect->getIcon();
+        $iconMarkup = $icon !== '' ? ' <span class="ra ' . $icon . '"></span>' : '';
+
+        $time = PlayerEffectService::isInfinite($duration)
+            ? 'sans limite de durée'
+            : ($duration === 0 ? 'jusqu\'au prochain tour' : 'pour ' . $duration . ' tour' . ($duration > 1 ? 's' : ''));
+
+        $valueLabel = ($stackable ? '+' : 'x') . $value;
+        $what = $this->describe($name, $value);
+        $whatLabel = $what === '' ? '' : ', ' . $what;
+
+        if ($effect === null || trim($effect->getApplyText()) === '') {
+            return 'L\'effet ' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . $iconMarkup
+                . ' (' . $valueLabel . ') est appliqué ' . $time . ' à ' . $receiverName . $whatLabel;
+        }
+
+        $own = strtr(htmlspecialchars($effect->getApplyText(), ENT_QUOTES, 'UTF-8'), [
+            '{cible}' => $receiverName,
+            '{acteur}' => $actorName,
+            '{effet}' => htmlspecialchars($effect->getLabel(), ENT_QUOTES, 'UTF-8') . $iconMarkup,
+        ]);
+
+        return $own . ' (' . $valueLabel . ', ' . $time . $whatLabel . ')';
     }
 
-    /** @return array<string, string> */
-    private function caracMap(string $getter): array
+    /**
+     * What the effect does to its bearer, in the player's words: the caracs
+     * it moves at this intensity and the PV taken on landing.
+     * "E −3, F +6, PV −10" — '' when it moves nothing.
+     */
+    public function describe(string $name, int $value = 1): string
+    {
+        $effect = $this->catalog()[$name] ?? null;
+        if ($effect === null) {
+            return '';
+        }
+
+        $parts = [];
+        foreach ($effect->getCaracMods() as $carac => $sign) {
+            $n = $sign * max(1, $value);
+            $label = (CARACS[$carac] ?? strtoupper($carac)) . (in_array($carac, Effect::SPENDABLE, true) ? ' max' : '');
+            $parts[] = $label . ' ' . ($n > 0 ? '+' : '−') . abs($n);
+        }
+        foreach ($this->lossesOf($name, $value) as $carac => $n) {
+            $parts[] = (CARACS[$carac] ?? strtoupper($carac)) . ' ' . ($n > 0 ? '+' : '−') . abs($n);
+        }
+
+        return implode(', ', $parts);
+    }
+
+    /** @return array<string, array<string, int>> effect name => carac => signed multiplier of the value */
+    public function getCaracMods(): array
     {
         $map = [];
         foreach ($this->catalog() as $name => $effect) {
-            $carac = $effect->{$getter}();
-            if ($carac !== null) {
-                $map[$name] = $carac;
+            $mods = $effect->getCaracMods();
+            if ($mods !== []) {
+                $map[$name] = $mods;
             }
         }
 

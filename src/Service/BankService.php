@@ -38,7 +38,7 @@ class BankService
     public function contentsOf(int $playerId): array
     {
         $stacks = $this->conn->fetchAllAssociative(
-            'SELECT pib.item_id, it.name, pib.n
+            'SELECT pib.item_id, it.name, ' . ItemInstanceService::DISPLAY_NAME . ' AS label, pib.n
                FROM players_items_bank pib
                JOIN items it ON it.id = pib.item_id
               WHERE pib.player_id = ? AND pib.n > 0
@@ -47,7 +47,7 @@ class BankService
         );
 
         $exemplars = $this->conn->fetchAllAssociative(
-            "SELECT it.name, i.item_id, i.id AS instance_id, i.custom_name, e.id AS entity_id
+            "SELECT it.name, " . ItemInstanceService::DISPLAY_NAME . " AS label, i.item_id, i.id AS instance_id, i.custom_name, e.id AS entity_id
                FROM players e
                JOIN item_instances i ON i.entity_id = e.id
                JOIN items it ON it.id = i.item_id

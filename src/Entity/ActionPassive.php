@@ -45,7 +45,7 @@ class ActionPassive
     #[ORM\Column(type: "string", length: 150)]
     protected string $text;
 
-    #[ORM\Column(type: "string", length: 50, nullable: true)]
+    #[ORM\Column(type: "string", length: 255, nullable: true)]
     protected ?string $prerequisites = null;
 
     public function getId(): int

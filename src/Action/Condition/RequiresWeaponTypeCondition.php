@@ -19,7 +19,7 @@ class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterS
     {
         return new ParameterSchema(
             new ParameterField('type', FieldType::WEAPON_TYPE, "Types d'arme", multiple: true),
-            new ParameterField('location', FieldType::EMPLACEMENT, 'Emplacements', multiple: true),
+            new ParameterField('location', FieldType::EMPLACEMENT, 'Emplacements', multiple: true, help: 'Vide : main1.'),
         );
     }
 
@@ -37,11 +37,17 @@ class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterS
         $result = new ConditionResult(true, array(), array());
         $params = $condition->getParameters(); // e.g. { "type": ["melee"] } { "type": ["tir","jet"] } { "type": ["bouclier"], "location": ["main2"] }
         $weaponTypes = $params['type'] ?? array();
-        $locationArray = $params['location'] ?? ['main1'];
+        // The form saves an untouched multi-select as []: that is the default, not "nowhere".
+        $locationArray = ($params['location'] ?? []) ?: ['main1'];
         $weaponTypeOk = false;
         $weaponTypesKo = array();
         foreach ($locationArray as $location) {
             if (!isset($actor->emplacements->{$location}) || $actor->emplacements->{$location} === null) {
+                continue;
+            }
+            // A broken weapon is worn, not wielded.
+            if ($actor->emplacements->{$location}->isBroken()) {
+                $broken = $actor->emplacements->{$location}->data->name;
                 continue;
             }
             foreach ($weaponTypes as $weaponType) {
@@ -55,7 +61,9 @@ class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterS
         }
 
         if (!$weaponTypeOk) {
-            $errorMessage[0] = 'Vous n\'êtes pas équipé d\'une arme de type '. join("/",$weaponTypesKo). '.';
+            $errorMessage[0] = isset($broken)
+                ? $broken . ' : arme brisée, à recycler ou à remplacer.'
+                : 'Vous n\'êtes pas équipé d\'une arme de type '. join("/",$weaponTypesKo). '.';
             $result = new ConditionResult(false, array(), $errorMessage);
         }
         

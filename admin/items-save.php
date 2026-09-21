@@ -189,7 +189,7 @@ if ($action === 'create') {
         setFlash('warning', "Un objet « {$name} » existe déjà.");
         redirectTo('/admin/items.php?action=new');
     }
-    $db->exe('INSERT INTO items (name) VALUES (?)', $name);
+    $db->exe('INSERT INTO items (name, label) VALUES (?, ?)', [$name, mb_substr(trim((string) ($_POST['label'] ?? '')), 0, 100)]);
     $id = (int) $db->exe('SELECT id FROM items WHERE name = ?', $name)->fetch_object()->id;
 } else {
     $id = (int) ($_POST['id'] ?? 0);
@@ -267,18 +267,26 @@ $readEffectRows = static function (string $field) use ($effectService, $id): arr
     return $rows;
 };
 
-// Effets d'arme au coup porté : lignes effet + durée, recomposées en JSON.
-$strikeRows = $readEffectRows('strike_effects');
-$strikeEffects = array_map(
-    static fn (array $row): array => $row['extra'] + array_filter(
-        ['name' => $row['name'], 'duration' => $row['duration']],
-        static fn ($v): bool => $v !== null
-    ),
-    $strikeRows
-);
-$jsonColumns['add_effects'] = $strikeEffects === []
-    ? null
-    : json_encode(array_values($strikeEffects), JSON_UNESCAPED_UNICODE);
+// Weapon strike effects: one item_effects row per filled line.
+$strikeRows = [];
+foreach (array_values((array) ($_POST['strike_effects_name'] ?? [])) as $i => $rawName) {
+    $effectName = strtolower(trim((string) $rawName));
+    if ($effectName === '') {
+        continue;
+    }
+    $strikeRows[] = [
+        'name' => $effectName,
+        'duration' => max(-1, (int) ($_POST['strike_effects_duration'][$i] ?? 1)),
+        'outcome' => (string) ($_POST['strike_effects_outcome'][$i] ?? 'hit'),
+        'target' => (string) ($_POST['strike_effects_target'][$i] ?? 'target'),
+    ];
+}
+try {
+    (new \App\Service\ItemEffectService())->replaceForItem($id, $strikeRows);
+} catch (\InvalidArgumentException $e) {
+    setFlash('warning', $e->getMessage() . ' — rien n\'a été enregistré.');
+    redirectTo('/admin/items.php?action=edit&id=' . $id);
+}
 
 // Effets de consommation : les effets appliqués s'éditent en lignes (avec
 // leur durée), les retirés restent un sélecteur — on ne règle pas la durée
@@ -377,8 +385,8 @@ foreach (\Classes\Item::FLAG_KEYS as $flag) {
 $set = array_merge($set, [
     'spell = ?', 'exotique = ?',
     'wear_triggers = ?', 'wear_profile = ?', 'wear_rate = ?', 'durability_max = ?', 'capacity = ?',
-    'text = ?', 'price = ?', 'emplacement = ?', 'type = ?', 'subtype = ?', 'race = ?',
-    'munitions = ?', 'add_effects = ?', 'forbid = ?', 'extra = ?',
+    'label = ?', 'text = ?', 'price = ?', 'emplacement = ?', 'type = ?', 'subtype = ?', 'race = ?',
+    'munitions = ?', 'forbid = ?', 'extra = ?',
     'stats_in_db = 1',
 ]);
 $params = array_merge($params, [
@@ -390,6 +398,7 @@ $params = array_merge($params, [
     max(1, (int) ($_POST['durability_max'] ?? 100)),
     // '' = unlimited (NULL); a number is the content-line ceiling.
     trim((string) ($_POST['capacity'] ?? '')) === '' ? null : max(0, (int) $_POST['capacity']),
+    mb_substr(trim((string) ($_POST['label'] ?? '')), 0, 100),
     trim((string) ($_POST['text'] ?? '')),
     max(0, (int) ($_POST['price'] ?? 1)),
     trim((string) ($_POST['emplacement'] ?? '')),
@@ -397,7 +406,6 @@ $params = array_merge($params, [
     trim((string) ($_POST['subtype'] ?? '')),
     trim((string) ($_POST['race'] ?? '')),
     $munitions === [] ? null : json_encode($munitions, JSON_UNESCAPED_UNICODE),
-    $jsonColumns['add_effects'],
     $jsonColumns['forbid'],
     $jsonColumns['extra'],
 ]);
@@ -410,5 +418,5 @@ foreach (array_merge(\App\Enum\Caracs::KEYS, \Classes\Item::SPECIAL_KEYS) as $ke
 $params[] = $id;
 $db->exe('UPDATE items SET ' . implode(', ', $set) . ' WHERE id = ?', $params);
 
-setFlash('success', 'Objet « ' . $name . ' » enregistré — la base est sa source de vérité.');
+setFlash('success', 'Objet « ' . $name . ' » enregistré ; ses stats sont maintenant lues en base.');
 redirectTo('/admin/items.php?action=edit&id=' . $id);

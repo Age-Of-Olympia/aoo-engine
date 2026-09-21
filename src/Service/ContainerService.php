@@ -94,7 +94,7 @@ final class ContainerService
     public function contentsOf(int $containerId): array
     {
         $stacks = $this->conn->fetchAllAssociative(
-            "SELECT pi.item_id, it.name, pi.n
+            "SELECT pi.item_id, it.name, " . ItemInstanceService::DISPLAY_NAME . " AS label, pi.n
                FROM players_items pi
                JOIN items it ON it.id = pi.item_id
               WHERE pi.player_id = ? AND pi.slot = '' AND pi.equiped = '' AND pi.n > 0
@@ -103,7 +103,7 @@ final class ContainerService
         );
 
         $exemplars = $this->conn->fetchAllAssociative(
-            "SELECT it.name, i.item_id, i.id AS instance_id, i.custom_name, e.id AS entity_id
+            "SELECT it.name, " . ItemInstanceService::DISPLAY_NAME . " AS label, i.item_id, i.id AS instance_id, i.custom_name, e.id AS entity_id
                FROM players e
                JOIN item_instances i ON i.entity_id = e.id
                JOIN items it ON it.id = i.item_id
@@ -372,7 +372,17 @@ final class ContainerService
             return $row['item_capacity'] === null ? null : (int) $row['item_capacity'];
         }
 
-        return (int) ($row['race_capacity'] ?? 0) > 0 ? (int) $row['race_capacity'] : null;
+        // A race without a bag stays unlimited whatever the bearer wears;
+        // otherwise the `sac` carac (equipment and effects included) is
+        // the ceiling, never below zero lines.
+        if ((int) ($row['race_capacity'] ?? 0) <= 0) {
+            return null;
+        }
+
+        $bearer = \App\Factory\PlayerFactory::legacy($containerId);
+        $bearer->get_caracs();
+
+        return max(0, (int) ($bearer->caracs->sac ?? $row['race_capacity']));
     }
 
     /**
@@ -459,7 +469,7 @@ final class ContainerService
     /** One content line's label — a stack: « Bois ×3 ». */
     public static function stackLabel(array $row): string
     {
-        return ucfirst((string) $row['name']) . ' ×' . (int) $row['n'];
+        return ucfirst((string) ($row['label'] ?? $row['name'])) . ' ×' . (int) $row['n'];
     }
 
     /** One content line's label — an exemplar: its own name if christened. */
@@ -467,7 +477,7 @@ final class ContainerService
     {
         return (string) ($row['custom_name'] ?? '') !== ''
             ? '« ' . $row['custom_name'] . ' »'
-            : ucfirst((string) $row['name']);
+            : ucfirst((string) ($row['label'] ?? $row['name']));
     }
 
     /**
@@ -504,7 +514,7 @@ final class ContainerService
     private function exemplarLabel(int $instanceId): string
     {
         $row = $this->conn->fetchAssociative(
-            'SELECT i.custom_name, it.name FROM item_instances i JOIN items it ON it.id = i.item_id WHERE i.id = ?',
+            'SELECT i.custom_name, ' . ItemInstanceService::DISPLAY_NAME . ' AS name FROM item_instances i JOIN items it ON it.id = i.item_id WHERE i.id = ?',
             [$instanceId]
         );
         if ($row === false) {
@@ -513,7 +523,7 @@ final class ContainerService
 
         return (string) $row['custom_name'] !== ''
             ? '« ' . $row['custom_name'] . ' »'
-            : ucfirst((string) $row['name']);
+            : ucfirst((string) ($row['label'] ?? $row['name']));
     }
 
     /**

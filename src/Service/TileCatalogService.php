@@ -9,7 +9,8 @@ namespace App\Service;
  */
 class TileCatalogService
 {
-    public const IMAGE_EXTENSIONS = ['png', 'webp', 'gif'];
+    /** svg: hand-written or from the admin composer; measured by imageSize() */
+    public const IMAGE_EXTENSIONS = ['png', 'webp', 'gif', 'svg'];
 
     /** Règle unique des noms de tuiles/assets (tables map_*, fichiers img/) */
     public const ASSET_NAME_PATTERN = '/^[a-zA-Z0-9_.-]+$/';
@@ -301,7 +302,7 @@ class TileCatalogService
                 continue;
             }
 
-            $size = @getimagesize($dir . '/' . $fileName);
+            $size = self::imageSize($dir . '/' . $fileName);
             if (!$size) {
                 continue;
             }
@@ -310,6 +311,33 @@ class TileCatalogService
         }
 
         return $this->scans[$relativeDir] = $result;
+    }
+
+    /**
+     * [width, height] of a raster or an SVG (viewBox, else width/height
+     * attributes), null when unreadable. getimagesize() knows no SVG.
+     *
+     * @return array{0: int, 1: int}|null
+     */
+    public static function imageSize(string $path): ?array
+    {
+        if (strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== 'svg') {
+            $size = @getimagesize($path);
+            return $size ? [(int) $size[0], (int) $size[1]] : null;
+        }
+
+        $svg = @simplexml_load_string((string) @file_get_contents($path));
+        if (!$svg || $svg->getName() !== 'svg') {
+            return null;
+        }
+        $viewBox = preg_split('/[\s,]+/', trim((string) $svg['viewBox'])) ?: [];
+        if (count($viewBox) === 4) {
+            return [(int) round((float) $viewBox[2]), (int) round((float) $viewBox[3])];
+        }
+        $width = (int) $svg['width'];
+        $height = (int) $svg['height'];
+
+        return $width > 0 && $height > 0 ? [$width, $height] : null;
     }
 
     /** @param array{width: int, height: int} $image */

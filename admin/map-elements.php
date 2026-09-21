@@ -49,12 +49,15 @@ if ($isStateChangingPost) {
                 (int) ($_POST['y'] ?? 0),
                 (int) ($_POST['z'] ?? 0),
                 $plan,
-                $turns === '' ? null : (int) $turns
+                $turns === '' ? null : (int) $turns,
+                (int) ($_POST['rotation'] ?? 0)
             );
             setFlash('success', "Élément « {$name} » posé en ("
                 . (int) ($_POST['x'] ?? 0) . ',' . (int) ($_POST['y'] ?? 0) . ') — '
                 . ($turns === '' ? 'permanent' : 'pour ' . $turns . ' tour' . ($turns > 1 ? 's' : ''))
-                . '. L\'effet du même nom s\'appliquera à qui marche dessus.');
+                . (in_array($name, $service->namesWithEffect(), true)
+                    ? '. L\'effet du même nom s\'appliquera aux personnages qui marchent dessus.'
+                    : '. Sans effet du même nom, c\'est un décor.'));
         } elseif (isset($_POST['element_remove'])) {
             // Le bouton de ligne porte l'id dans sa value : la table
             // entière vit dans UN formulaire (cases de sélection).
@@ -70,7 +73,7 @@ if ($isStateChangingPost) {
         } elseif (isset($_POST['element_purge'])) {
             $purged = $service->purgeExpired();
             setFlash('success', "Purge des expirés : {$purged} élément(s) supprimé(s)"
-                . ' (tous plans confondus — le travail du cron horaire).');
+                . ' (tous plans confondus, comme le cron horaire).');
         }
     } catch (Throwable $e) {
         setFlash('danger', $e->getMessage());
@@ -80,6 +83,7 @@ if ($isStateChangingPost) {
 
 $entries = $plan !== '' ? $service->listByPlan($plan) : [];
 $placeable = $service->placeableNames();
+$withEffect = $service->namesWithEffect();
 
 ob_start();
 ?>
@@ -90,10 +94,10 @@ ob_start();
     <?= renderFlashMessage() ?>
 
     <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-        Un élément posé sur une case applique <strong>l'effet du même nom</strong> à qui marche
-        dessus (boue, ronce…) — le comportement de l'effet se règle dans
+        Un élément posé sur une case applique <strong>l'effet du même nom</strong>, s'il existe, aux
+        personnages qui marchent dessus (boue, ronce…) ; l'effet se configure dans
         <a href="/admin/effects.php">Effets</a>. Durée vide = permanent (jamais purgé) ;
-        reposer un élément prolonge sa durée. Une case n'en porte qu'un, et il lui faut un sol.
+        reposer un élément prolonge sa durée. Une case ne peut avoir qu'un élément, et seulement sur un sol.
         Les traces de pas et le drapeau sont des <em>marques</em>, une couche à part (Tiled, couche « marks »).
     </div>
 
@@ -124,7 +128,7 @@ ob_start();
                     <label style="font-size:13px;">Élément</label>
                     <select name="name" class="form-control form-control-sm" required>
                         <?php foreach ($placeable as $candidate): ?>
-                            <option value="<?= e($candidate) ?>"><?= e($candidate) ?></option>
+                            <option value="<?= e($candidate) ?>"><?= e($candidate) ?><?= in_array($candidate, $withEffect, true) ? '' : ' (décor, sans effet)' ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -145,6 +149,14 @@ ob_start();
                     <input type="number" class="form-control form-control-sm" name="turns" min="1" step="1"
                            placeholder="permanent">
                 </div>
+                <div class="form-group mb-0" style="width:6rem;">
+                    <label style="font-size:13px;" title="L'image est affichée avec cette rotation : un seul fichier pour les quatre orientations">Rotation</label>
+                    <select name="rotation" class="form-control form-control-sm">
+                        <?php foreach (\App\Service\TiledMapService::ROTATIONS as $angle): ?>
+                            <option value="<?= $angle ?>"><?= $angle ?>°</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <button type="submit" name="element_place" value="1" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus"></i> Poser
                 </button>
@@ -164,8 +176,8 @@ ob_start();
                     <h5 class="card-title mb-0">Éléments — <?= e($plan) ?></h5>
                     <span class="badge bg-secondary"><?= count($entries) ?> posés</span>
                     <button type="submit" name="element_purge" value="1" class="btn btn-sm btn-outline-secondary ml-auto"
-                            onclick="return confirm('Purger tous les éléments expirés (tous plans confondus) — le travail du cron horaire ?');"
-                            title="Supprime les éléments à durée écoulée, sur TOUS les plans — les permanents survivent.">
+                            onclick="return confirm('Purger tous les éléments expirés (tous plans confondus), comme le cron horaire ?');"
+                            title="Supprime les éléments dont la durée est écoulée, sur tous les plans ; les permanents sont conservés.">
                         <i class="fas fa-broom"></i> Purger les expirés<?= $expired > 0 ? ' (' . $expired . ' ici)' : '' ?>
                     </button>
                 </div>
@@ -191,7 +203,7 @@ ob_start();
                                              style="object-fit:contain;" alt="">
                                     <?php endif; ?>
                                 </td>
-                                <td><code><?= e($entry['name']) ?></code></td>
+                                <td><code><?= e($entry['name']) ?></code><?= $entry['rotation'] ? ' <small class="text-muted">' . $entry['rotation'] . '°</small>' : '' ?></td>
                                 <td><?= $entry['x'] ?>,<?= $entry['y'] ?>,<?= $entry['z'] ?></td>
                                 <td>
                                     <?php if ($entry['endTime'] === 0): ?>

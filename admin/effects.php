@@ -32,10 +32,10 @@ function effect_flag_badges(Effect $effect): string
 {
     $badges = [];
     if ($effect->isHidden()) {
-        $badges[] = '<span class="badge badge-secondary" title="Posture éphémère : purgée au nouveau tour ou à l\'usage, jamais listée sur les fiches">Caché</span>';
+        $badges[] = '<span class="badge badge-secondary" title="Effet temporaire : retiré au nouveau tour ou à l\'usage, jamais affiché sur les fiches">Caché</span>';
     }
     if ($effect->getCorruptionBreakChance() !== null) {
-        $badges[] = '<span class="badge badge-warning" title="Corruption : augmente la chance de casse du matériel fait de ses matériaux">Corruption</span>';
+        $badges[] = '<span class="badge badge-warning" title="Corruption : augmente le risque de casse des objets faits de ses matériaux">Corruption</span>';
     }
 
     return implode(' ', $badges);
@@ -45,11 +45,15 @@ function effect_flag_badges(Effect $effect): string
 function effect_modifiers(Effect $effect): string
 {
     $parts = [];
-    if ($effect->getBuffCarac() !== null) {
-        $parts[] = '<span class="text-success">+valeur ' . e(strtoupper($effect->getBuffCarac())) . '</span>';
+    // Values at intensity 1, the usual case; the action's « Intensité » multiplies them.
+    foreach ($effect->getLossMods() as $carac => $n) {
+        $parts[] = '<span class="' . ($n > 0 ? 'text-success' : 'text-danger') . '">'
+            . ($n > 0 ? '+' : '−') . abs($n) . ' ' . e(strtoupper((string) $carac)) . ($n > 0 ? ' gagnés' : ' perdus') . '</span>';
     }
-    if ($effect->getDebuffCarac() !== null) {
-        $parts[] = '<span class="text-danger">−valeur ' . e(strtoupper($effect->getDebuffCarac())) . '</span>';
+    foreach ($effect->getCaracMods() as $carac => $sign) {
+        $max = in_array($carac, Effect::SPENDABLE, true) ? ' max' : '';
+        $parts[] = '<span class="' . ($sign > 0 ? 'text-success' : 'text-danger') . '">'
+            . ($sign > 0 ? '+' : '−') . abs($sign) . ' ' . e(strtoupper((string) $carac) . $max) . '</span>';
     }
 
     foreach ([
@@ -155,15 +159,33 @@ function effect_mod_select(string $fieldName, string $label, int $current, strin
         . '</div>';
 }
 
-/** <select> d'une carac (buff/debuff), « — aucune — » compris. */
-function effect_carac_select(string $fieldName, ?string $current): string
+/**
+ * Grille des caracs : un nombre signé par carac (0 = pas touchée), × l'intensité
+ * posée par l'action. Une carac à réserve (PV, PM, A, Mvt) a en plus un mode :
+ * « max » déplace le plafond le temps de l'effet, « perte » retire le nombre
+ * de la réserve à chaque application.
+ *
+ * @param array<string, int> $mods   entrées « max »
+ * @param array<string, int> $losses entrées « perte »
+ */
+function effect_carac_mods_grid(array $mods, array $losses): string
 {
-    $options = [];
+    $cells = '';
     foreach (CARACS as $key => $short) {
-        $options[$key] = $short . ' — ' . (CARACS_TXT[$key] ?? $short);
+        $spendable = in_array($key, Effect::SPENDABLE, true);
+        $isLoss = $spendable && isset($losses[$key]) && !isset($mods[$key]);
+        $value = $isLoss ? $losses[$key] : ($mods[$key] ?? 0);
+        $cells .= '<div class="col-md-1 col-3 form-group">'
+            . '<label title="' . e(CARACS_TXT[$key] ?? $short) . '">' . e($short) . '</label>'
+            . formInput('carac_mods[' . $key . ']', (string) $value, 'type="number" step="1"')
+            . ($spendable
+                ? formSelect('carac_mode[' . $key . ']', ['max' => 'max', 'loss' => 'perte / gain'], $isLoss ? 'loss' : 'max', null,
+                    'class="form-control form-control-sm mt-1" title="max : le maximum change pendant l\'effet ; perte / gain : la réserve perd (négatif) ou gagne (positif) la valeur à chaque application"')
+                : '')
+            . '</div>';
     }
 
-    return formSelect($fieldName, $options, $current, '— aucune —');
+    return '<div class="row">' . $cells . '</div>';
 }
 
 function effect_render_form(?Effect $effect, string $csrfToken): string
@@ -216,31 +238,35 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
         . formField('Flags',
             '<div>'
             . formCheckbox('hidden', $isEdit && $effect->isHidden(), 'Caché',
-                'class="mr-3" title="Posture éphémère (parade, leurre…) : purgée au nouveau tour ou à l\'usage, jamais listée sur les fiches"')
+                'class="mr-3" title="Effet temporaire (parade, leurre…) : retiré au nouveau tour ou à l\'usage, jamais affiché sur les fiches"')
             . formCheckbox('buildable_over', $isEdit && $effect->isBuildableOver(), 'Constructible par-dessus',
                 'title="Posé au sol comme élément : n\'empêche ni construction ni aménagement de la case (sang, boue) — décoché, la case est bloquée (feu, lave, ronce…)"')
             . '</div>',
             'form-group col-md-3')
+        . formField('Texte à l\'application',
+            formInput('apply_text', $isEdit ? $effect->getApplyText() : '', 'maxlength="255" placeholder="{cible} prend feu"'),
+            'form-group col-md-6',
+            'Phrase affichée quand l\'effet est posé ; {cible}, {acteur} et {effet} sont remplacés.'
+            . ' Vide : « L\'effet X est appliqué … à Y ».')
         . formField('Description', formTextarea('description', $isEdit ? $effect->getDescription() : ''),
             'form-group col-12', 'Texte de règles (wiki des effets).')
         . '</div>';
 
     $comportement = '<div class="row">'
-        . formField('Carac augmentée (+valeur)', effect_carac_select('buff_carac', $isEdit ? $effect->getBuffCarac() : null),
-            'form-group col-md-4')
-        . formField('Carac diminuée (−valeur)', effect_carac_select('debuff_carac', $isEdit ? $effect->getDebuffCarac() : null),
-            'form-group col-md-4',
-            'Appliquée tant que l\'effet dure : la carac bouge de la VALEUR portée par l\'effet'
-            . ' (poser avec valeur 3 → ±3).')
+        . formField('Caracs modifiées', effect_carac_mods_grid($isEdit ? $effect->getCaracMods() : [], $isEdit ? $effect->getLossMods() : []),
+            'form-group col-12',
+            'Pendant l\'effet, chaque carac est modifiée de ce nombre (E −1, F +2) ; 0 = inchangée.'
+            . ' Pour PV, PM, A et Mvt, le mode « max » modifie le maximum ; le mode « perte / gain » retire (négatif) ou ajoute (positif) le nombre à la réserve à chaque application (feu : PV −10 en perte / gain).'
+            . ' Une action peut appliquer l\'effet avec une intensité supérieure à 1 : les nombres sont alors multipliés.')
         . formField('Traces de pas (+tours)',
             formInput('mark_turns', (string) ($isEdit ? $effect->getMarkTurns() : 0), 'type="number" min="0" step="1"'),
             'form-group col-md-4',
-            'Tours ajoutés à la durée des traces de pas de qui porte l\'effet (boue : 1).')
+            'Tours ajoutés à la durée des traces de pas du personnage sous l\'effet (boue : 1).')
         . formField('Annule les effets',
             '<select name="controls[]" class="form-control" multiple size="6">' . $controlOptions . '</select>',
             'form-group col-md-4',
-            'Poser cet effet retire chaque effet coché (eau éteint feu…) ; les deux tombent si la cible'
-            . ' porte déjà un effet qui annule celui-ci. Ctrl+clic pour en choisir plusieurs.')
+            'Appliquer cet effet retire chaque effet coché (l\'eau éteint le feu…) ; si la cible a déjà'
+            . ' un effet qui annule celui-ci, les deux sont retirés. Ctrl+clic pour en choisir plusieurs.')
         . '</div>';
 
     $combat = '<div class="row">'
@@ -257,7 +283,7 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
                 $isEdit ? rtrim(rtrim(number_format($effect->getDamageTakenFactor(), 2, '.', ''), '0'), '.') : '1',
                 'type="number" step="0.05" min="0.05" max="5"'),
             'form-group col-md-3',
-            '1 = neutre ; 0.75 = encaisse (les facteurs portés se multiplient, minimum 1 dégât).')
+            '1 = neutre ; 0,75 = dégâts réduits d\'un quart (les facteurs de plusieurs effets se multiplient, minimum 1 dégât).')
         . '</div>';
 
     $posture = '<div class="row">'
@@ -266,7 +292,7 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
                 'any' => 'Toutes', 'physical' => 'Mêlée', 'distance' => 'Tirs', 'spell' => 'Sorts',
             ], $isEdit && $effect->getDodgeScope() !== '' ? $effect->getDodgeScope() : null, '— pas une posture —'),
             'form-group col-md-2',
-            'La posture est CONSOMMÉE quand elle se déclenche.')
+            'La posture est consommée quand elle se déclenche.')
         . formField('Arme de l\'attaquant',
             formSelect('dodge_attacker_weapon', ['melee' => 'Mêlée'],
                 $isEdit && $effect->getDodgeAttackerWeapon() !== '' ? $effect->getDodgeAttackerWeapon() : null,
@@ -293,9 +319,9 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
 
     $auras = '<div class="row">'
         . formField('Vol', '<div>' . formCheckbox('grants_flight', $isEdit && $effect->grantsFlight(),
-            'Traverse les obstacles au déplacement, ne laisse pas de traces') . '</div>', 'form-group col-md-4')
+            'Traverse les obstacles au déplacement, sans laisser de traces') . '</div>', 'form-group col-md-4')
         . formField('Multiplicateur de coût', '<div>' . formCheckbox('cost_multiplier', $isEdit && $effect->isCostMultiplier(),
-            'Les actions à coût « imposture » coûtent × (valeur portée + 1)') . '</div>', 'form-group col-md-4')
+            'Les actions à coût « imposture » coûtent × (valeur de l\'effet + 1)') . '</div>', 'form-group col-md-4')
         . formField('Bloque marchand & écoles', '<div>' . formCheckbox('blocks_trading', $isEdit && $effect->blocksTrading(),
             'Ni marchander ni apprendre, des deux côtés (ex-adrénaline)') . '</div>', 'form-group col-md-4')
         . formField('Empilement', '<div>' . formCheckbox('stack_refresh_duration', $isEdit && $effect->isStackRefreshDuration(),
@@ -307,10 +333,10 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
             formSelect('block_recovery', ['pv' => 'PV (ex-poison)', 'pm' => 'PM (ex-poison magique)'],
                 $isEdit ? $effect->getBlockRecovery() : '', '— non —'),
             'form-group col-md-3',
-            'La récup de la carac tombe à zéro, l\'effet expire. Prime sur la régénération.')
+            'Récupération de la carac nulle jusqu\'à expiration de l\'effet. Prioritaire sur la régénération.')
         . formField('Régénération',
             '<div>' . formCheckbox('turn_regen', $isEdit && $effect->isTurnRegen(),
-                'La récup PV gagne +RM, l\'effet expire') . '</div>',
+                'Récupération de PV augmentée de RM jusqu\'à expiration de l\'effet') . '</div>',
             'form-group col-md-3')
         . formField('Malus de mouvement',
             '<div>' . formCheckbox('turn_mvt_malus', $isEdit && $effect->isTurnMvtMalus(),
@@ -323,7 +349,7 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
             formInput('corruption_break_chance', $breakChance === null ? '' : (string) $breakChance,
                 'type="number" min="0" max="100"'),
             'form-group col-md-4',
-            'Vide = pas une corruption. S\'applique au matériel fabriqué avec les matériaux ci-contre'
+            'Vide = pas de corruption. S\'applique aux objets fabriqués avec les matériaux ci-contre'
             . ' quand le porteur attaque ou défend.')
         . formField('Matériaux corruptibles (un par ligne)',
             formTextarea('corruption_materials', $materials, 4, 'spellcheck="false"'),
@@ -361,7 +387,7 @@ function effect_render_delete_zone(Effect $effect, string $csrfToken): string
     $carriers = (new EffectService())->countPlayersUsingEffect($effect->getName());
 
     $body = $carriers > 0
-        ? '<p class="mb-0 text-muted">Suppression impossible : cet effet est encore porté par '
+        ? '<p class="mb-0 text-muted">Suppression impossible : cet effet est encore appliqué à '
             . $carriers . ' personnage' . ($carriers > 1 ? 's' : '') . '. Attendez son expiration ou retirez-le d\'abord.</p>'
         : '<form method="post" action="/admin/effects-save.php?action=delete" class="d-flex align-items-center gap-3"'
             . ' onsubmit="return confirm(\'Supprimer définitivement l\\\'effet « '
@@ -369,7 +395,7 @@ function effect_render_delete_zone(Effect $effect, string $csrfToken): string
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="name" value="' . e($effect->getName()) . '">'
             . '<button type="submit" class="btn btn-outline-danger">Supprimer l\'effet</button>'
-            . '<small class="text-muted">Aucun personnage ne porte cet effet. Les actions qui le référencent'
+            . '<small class="text-muted">Aucun personnage n\'a cet effet. Les actions qui le référencent'
             . ' afficheront « ⚠ inconnue » au workbench.</small>'
             . '</form>';
 

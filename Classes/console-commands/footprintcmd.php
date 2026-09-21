@@ -1,7 +1,10 @@
 <?php
 use Classes\Command;
 use Classes\Argument;
+use App\Entity\SceneryType;
+use App\Service\Map\EntitySpriteService;
 use App\Service\Map\EntityTypeFootprintService;
+use App\Service\Map\Footprint;
 use App\Service\Map\SceneryArtAudit;
 use App\Service\Map\SceneryFootprintDeriver;
 
@@ -71,19 +74,12 @@ EOT);
      */
     private function verify(): string
     {
-        $service = new EntityTypeFootprintService();
         $audit = new SceneryArtAudit();
-        $pieces = (new SceneryFootprintDeriver())->piecesOnDisk();
 
         $verdicts = [];
 
-        foreach ($service->catalogue() as $family => $footprint) {
-            if ($footprint->isSingleCell()) {
-                continue;
-            }
-
-            $result = $audit->audit('foregrounds', (string) $family, $footprint, $pieces[$family] ?? []);
-            $verdicts[(string) $family] = $result;
+        foreach ($this->figuresWithPieces() as $family => [$dir, $footprint, $pieces]) {
+            $verdicts[$family] = $audit->audit($dir, $family, $footprint, $pieces);
         }
 
         $wrong = array_filter(
@@ -118,6 +114,40 @@ EOT);
     }
 
     /**
+     * Every multi-cell type with the folder its kind keeps pictures in, and
+     * the `<type>_<n>.png` pieces found there.
+     *
+     * @return array<string, array{0: string, 1: Footprint, 2: array<int, string>}>
+     */
+    private function figuresWithPieces(): array
+    {
+        $deriver = new SceneryFootprintDeriver();
+        $sprites = new EntitySpriteService();
+        $figures = [];
+
+        foreach ((new EntityTypeFootprintService())->catalogue() as $family => $footprint) {
+            if ($footprint->isSingleCell()) {
+                continue;
+            }
+
+            /* The first folder holding pieces, the kind's own by default. */
+            $dirs = $sprites->dirsOf((string) $family) ?: [SceneryType::IMAGE_DIR];
+            $dir = $dirs[0];
+
+            foreach ($dirs as $candidate) {
+                if (isset($deriver->piecesOnDisk($candidate)[$family])) {
+                    $dir = $candidate;
+                    break;
+                }
+            }
+
+            $figures[(string) $family] = [$dir, $footprint, $deriver->piecesOnDisk($dir)[$family] ?? []];
+        }
+
+        return $figures;
+    }
+
+    /**
      * Builds the picture the board draws a figure with.
      *
      * Stitched from the family's own pieces, never from the artist's
@@ -127,19 +157,13 @@ EOT);
      */
     private function compose(): string
     {
-        $service = new EntityTypeFootprintService();
         $sprites = new \App\Service\Map\CompositeSpriteService();
-        $pieces = (new SceneryFootprintDeriver())->piecesOnDisk();
 
         $made = [];
         $missed = [];
 
-        foreach ($service->catalogue() as $family => $footprint) {
-            if ($footprint->isSingleCell()) {
-                continue;
-            }
-
-            $image = $sprites->composedSprite('foregrounds', (string) $family, $footprint, $pieces[$family] ?? []);
+        foreach ($this->figuresWithPieces() as $family => [$dir, $footprint, $pieces]) {
+            $image = $sprites->composedSprite($dir, $family, $footprint, $pieces);
 
             if ($image === null) {
                 $missed[] = (string) $family;

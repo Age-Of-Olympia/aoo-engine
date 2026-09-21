@@ -144,7 +144,7 @@ function building_render_list(array $buildings, array $dialogNames, string $csrf
                 . '<input type="hidden" name="id" value="' . (int) $b['id'] . '">'
                 . '<input type="hidden" name="open" value="' . ($b['is_open'] ? 0 : 1) . '">'
                 . '<button class="btn btn-sm btn-outline-' . ($b['is_open'] ? 'secondary' : 'success') . '" type="submit"'
-                . ' title="Fermeture volontaire : le bâtiment tait son dialogue (il ferme aussi d\'office endommagé, en construction ou en ruine)">'
+                . ' title="Fermer désactive le dialogue. Un bâtiment endommagé, en construction ou en ruine est fermé d\'office.">'
                 . ($b['is_open'] ? 'Fermer' : 'Ouvrir') . '</button>'
                 . '</form> ';
         }
@@ -152,7 +152,7 @@ function building_render_list(array $buildings, array $dialogNames, string $csrf
             $actions .= '<form method="post" action="/admin/buildings-save.php?action=restore" class="d-inline">'
                 . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
                 . '<input type="hidden" name="id" value="' . (int) $b['id'] . '">'
-                . '<button class="btn btn-sm btn-outline-primary" type="submit" title="PV au maximum, état construit — remise à neuf admin, distincte de la future action de réparation en jeu">Restaurer</button>'
+                . '<button class="btn btn-sm btn-outline-primary" type="submit" title="PV au maximum, état construit (remise à neuf admin, sans rapport avec l\'action de réparation en jeu)">Restaurer</button>'
                 . '</form> ';
         }
         $actions .= '<form method="post" action="/admin/buildings-save.php?action=remove" class="d-inline"'
@@ -172,7 +172,7 @@ function building_render_list(array $buildings, array $dialogNames, string $csrf
                 ? ' <small class="text-muted" title="Travail accompli / total du chantier (l\'emprise multiplie le travail par case du type)">'
                     . (int) $b['site_done'] . '/' . (int) $b['site_total'] . '</small>'
                 : '')
-            . ($isEdifice && !$b['is_open'] ? ' <span class="badge badge-dark" title="Fermeture volontaire — le dialogue se tait">Fermé</span>' : '') . '</td>'
+            . ($isEdifice && !$b['is_open'] ? ' <span class="badge badge-dark" title="Fermé volontairement : dialogue désactivé">Fermé</span>' : '') . '</td>'
             . '<td>' . $pvCell . '</td>'
             . '<td>(' . (int) $b['x'] . ', ' . (int) $b['y'] . ', ' . (int) $b['z'] . ') · ' . e($b['plan']) . '</td>'
             . '<td>' . ($b['owner_name'] !== null ? e($b['owner_name']) . ' <small class="text-muted">#' . (int) $b['owner_id'] . '</small>' : '<span class="text-muted">—</span>') . '</td>'
@@ -233,9 +233,9 @@ function building_render_place_form(array $types, array $plans, array $factions,
         . '<select name="faction" class="form-control">' . $factionOptions . '</select></div>'
         . '<div class="col-md-2"><label class="form-label">Dialogue (optionnel)</label>'
         . building_dialog_select('dialog', '', $dialogNames)
-        . '<small class="text-muted d-block">Porté par le bâtiment — muet en ruine.'
-        . ' Le dialogue fait aussi le comptoir : s\'il mène au marché ou à l\'école,'
-        . ' le bâtiment sert.</small></div>'
+        . '<small class="text-muted d-block">Dialogue du bâtiment, désactivé en ruine.'
+        . ' Il définit aussi le service rendu : un dialogue qui mène au marché ou à l\'école'
+        . ' fait du bâtiment un comptoir.</small></div>'
         . '<div class="col-12"><button class="btn btn-primary" type="submit">Poser le bâtiment</button></div>'
         . '</form>';
 
@@ -288,7 +288,7 @@ function building_render_fabric(int $buildingId, string $csrfToken): string
         . '</form>';
 
     return '<div class="card mt-4"><div class="card-header">Dans les murs'
-        . ' <small class="text-muted">— invisible aux joueurs, répandu (règles de butin) quand le bâtiment tombe</small></div>'
+        . ' <small class="text-muted">— invisible aux joueurs, répandu au sol (règles de butin) à la destruction du bâtiment</small></div>'
         . '<div class="card-body">' . $body . '</div></div>';
 }
 
@@ -326,20 +326,20 @@ function building_render_edit(array $b, string $description, array $factions, ar
         . '<div class="row">'
         . '<div class="form-group col-md-4"><label>Dialogue</label><div>'
         . building_dialog_select('dialog', (string) $b['dialog'], $dialogNames)
-        . '</div><small class="text-muted">Porté par le bâtiment — muet quand il est fermé.</small></div>'
+        . '</div><small class="text-muted">Dialogue du bâtiment, désactivé quand il est fermé.</small></div>'
         . '<div class="form-group col-md-4"><label>Inscription lisible de loin</label>'
         . '<select name="readable_from_afar" class="form-control">'
         . '<option value="">Comme son type</option>'
         . '<option value="1"' . (($b['readable_from_afar'] ?? null) === true ? ' selected' : '') . '>Oui</option>'
         . '<option value="0"' . (($b['readable_from_afar'] ?? null) === false ? ' selected' : '') . '>Non, il faut s\'approcher</option>'
-        . '</select><small class="text-muted">Le défaut vient du type (console des Races) ;'
-        . ' ce réglage n\'est qu\'une exception pour CET exemplaire.</small></div>'
+        . '</select><small class="text-muted">Valeur par défaut définie sur le type (page Races) ;'
+        . ' ce réglage ne concerne que cet exemplaire.</small></div>'
         . ($isEdifice
             ? '<div class="form-group col-md-4"><label>Porte</label>'
                 . '<input type="hidden" name="has_door" value="1">'
                 . '<div><label><input type="checkbox" name="is_open" ' . checked((bool) $b['is_open']) . '> Ouvert</label></div>'
-                . '<small class="text-muted">Fermé volontairement, le bâtiment tait son dialogue (il ferme aussi'
-                . ' d\'office endommagé, en construction ou en ruine).</small></div>'
+                . '<small class="text-muted">Fermé volontairement : le dialogue n\'est plus proposé. Un bâtiment'
+                . ' endommagé, en construction ou en ruine est fermé d\'office.</small></div>'
             : '')
         . '</div>'
         . '<button class="btn btn-primary" type="submit">Enregistrer</button> '

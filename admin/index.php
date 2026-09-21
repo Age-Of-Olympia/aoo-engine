@@ -38,6 +38,7 @@ $csrf = new CsrfProtectionService();
 $dateFormat = new DateFormatService();
 $harvestDefaults = new HarvestDefaultsService();
 $decayDefaults = new \App\Service\Decay\DecayDefaultsService();
+$repairSettings = new \App\Service\AdminSettingsService();
 $seasonService = new SeasonService();
 $tiledExtension = new TiledExtensionService();
 
@@ -65,6 +66,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['world_settings'])) {
         PlanService::forget();
 
         setFlash('success', 'Réglages du monde enregistrés.');
+    } catch (\Throwable $e) {
+        setFlash('danger', 'Échec : ' . $e->getMessage());
+    }
+    redirectTo('/admin/index.php');
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['repair_full_share'])) {
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        foreach (array_keys(\App\Service\RepairService::SETTINGS) as $name) {
+            $repairSettings->set($name, (string) max(0, (int) ($_POST[$name] ?? 0)));
+        }
+        setFlash('success', 'Atelier : réglages enregistrés.');
     } catch (\Throwable $e) {
         setFlash('danger', 'Échec : ' . $e->getMessage());
     }
@@ -105,6 +119,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tiled_min_extension']
     redirectTo('/admin/index.php');
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import_bundle_max_mb'])) {
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        $mb = (int) $_POST['import_bundle_max_mb'];
+        if ($mb < 1) {
+            throw new \RuntimeException('Taille invalide (1 Mo ou plus).');
+        }
+        (new AdminSettingsService())->set('import_bundle_max_mb', (string) $mb);
+        setFlash('success', 'Import de bundle : taille maximale portée à ' . $mb . ' Mo.');
+    } catch (\Throwable $e) {
+        setFlash('danger', 'Échec : ' . $e->getMessage());
+    }
+    redirectTo('/admin/index.php');
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['date_format'])) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
@@ -134,9 +163,9 @@ ob_start();
     $missingYields = (new \App\Service\Map\HarvestCatalogService())->plansMissingYields();
     ?>
     <?php if ($missingYields !== []): ?>
-        <div class="alert alert-danger mt-3" style="max-width: 640px;">
+        <div class="alert alert-danger mt-3">
             <strong>Fouiller ne rapporte rien sur <?= count($missingYields) ?> plan(s).</strong>
-            Ils portent des ressources récoltables sans aucun rendement réglé.
+            Ils contiennent des ressources récoltables dont le type n'a aucun rendement défini.
             <a href="/admin/harvest-seed.php" class="alert-link">Régler les rendements</a>.
         </div>
     <?php endif; ?>
@@ -147,15 +176,15 @@ ob_start();
     $mapResources = (new \App\Service\Map\MapResourcesRetirement())->status();
     ?>
     <?php if ($mapResources['present'] || $mapResources['view']): ?>
-        <div class="alert <?= $mapResources['droppable'] ? 'alert-info' : 'alert-warning' ?> mt-3" style="max-width: 640px;">
+        <div class="alert <?= $mapResources['droppable'] ? 'alert-info' : 'alert-warning' ?> mt-3">
             <?php if ($mapResources['droppable']): ?>
                 <strong>Reste de chantier : <code>map_resources</code><?= $mapResources['view'] ? ' et la vue <code>map_walls</code>' : '' ?>.</strong>
-                Plus aucun lecteur, plus aucun écrivain, zéro ligne : les ressources sont des entités.
-                <strong>Prêtes à être déposées</strong>, une fois le code qui a cessé de les lire déployé
-                partout — migrations après code pour une suppression, l'inverse de l'habitude.
-                Cet avertissement disparaîtra de lui-même.
+                Plus aucun code ne les lit ni ne les écrit, et la table est vide : les ressources sont des entités.
+                <strong>À supprimer</strong> une fois ce code déployé sur tous les serveurs (pour une
+                suppression, la migration passe après le code, à l'inverse de l'habitude).
+                Cet avertissement disparaîtra alors.
             <?php else: ?>
-                <strong><code>map_resources</code> n'est pas encore déposable.</strong>
+                <strong><code>map_resources</code> ne peut pas encore être supprimée.</strong>
                 <?= e(implode(' ; ', $mapResources['blockers'])) ?>.
             <?php endif; ?>
         </div>
@@ -163,21 +192,23 @@ ob_start();
 
     <?php $ownershipLink = (new \App\Service\OwnershipLinkRetirement())->status(); ?>
     <?php if ($ownershipLink['present']): ?>
-        <div class="alert <?= $ownershipLink['droppable'] ? 'alert-info' : 'alert-warning' ?> mt-3" style="max-width: 640px;">
+        <div class="alert <?= $ownershipLink['droppable'] ? 'alert-info' : 'alert-warning' ?> mt-3">
             <?php if ($ownershipLink['droppable']): ?>
                 <strong>Reste de chantier : <code>players_items_instances</code>.</strong>
-                Plus aucun lecteur, plus aucun écrivain : le porteur d'un exemplaire vit sur l'entité.
-                <strong>Prête à être déposée</strong>, une fois le code qui a cessé de la lire déployé
-                partout — migrations après code pour une suppression, l'inverse de l'habitude.
-                Cet avertissement disparaîtra de lui-même.
+                Plus aucun code ne la lit ni ne l'écrit : le porteur d'un exemplaire est enregistré sur l'entité.
+                <strong>À supprimer</strong> une fois ce code déployé sur tous les serveurs (pour une
+                suppression, la migration passe après le code, à l'inverse de l'habitude).
+                Cet avertissement disparaîtra alors.
             <?php else: ?>
-                <strong><code>players_items_instances</code> n'est pas encore déposable.</strong>
+                <strong><code>players_items_instances</code> ne peut pas encore être supprimée.</strong>
                 <?= e(implode(' ; ', $ownershipLink['blockers'])) ?>.
             <?php endif; ?>
         </div>
     <?php endif; ?>
 
-    <div class="card mt-3" style="max-width: 640px;">
+    <div class="row mt-3">
+    <div class="col-md-6">
+    <div class="card">
         <div class="card-header"><strong>Réglages du monde</strong></div>
         <div class="card-body">
             <form method="post" action="index.php">
@@ -216,15 +247,17 @@ ob_start();
                     <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                 </div>
                 <small class="form-text text-muted">
-                    La saison courante est celle que prennent par défaut les listes de plans (carte du monde,
-                    pages Cartes). Le plan principal porte la carte du monde ; le plan des morts accueille
-                    les personnages tombés. Un plan référencé ici ne peut pas être supprimé.
+                    La saison courante est la saison par défaut des listes de plans (carte du monde,
+                    pages Cartes). Le plan principal est celui de la carte du monde ; les personnages
+                    morts sont envoyés sur le plan des morts. Un plan référencé ici ne peut pas être supprimé.
                 </small>
             </form>
         </div>
     </div>
 
-    <div class="card mt-3" style="max-width: 640px;">
+    </div>
+    <div class="col-md-6">
+    <div class="card">
         <div class="card-header"><strong>Options générales</strong></div>
         <div class="card-body">
             <form method="post" action="index.php">
@@ -238,7 +271,7 @@ ob_start();
                 </div>
                 <div class="text-muted mt-2" style="font-size: 13px;">
                     Aujourd'hui s'affiche : « <?= e($dateFormat->format($today)) ?> ».
-                    Suivi par les affichages passés à <code style="display:inline">DateFormatService</code>
+                    Utilisé par les affichages qui passent par <code style="display:inline">DateFormatService</code>
                     (chroniques de l'accueil…) ; la saisie admin reste en JJ/MM/AAAA.
                 </div>
             </form>
@@ -255,8 +288,8 @@ ob_start();
                     <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                 </div>
                 <small class="form-text text-muted">
-                    Combien de coups il faut pour abattre un arbre. Sert de valeur par défaut à la
-                    <strong>création</strong> d'un type récoltable ; un type déjà réglé garde la sienne.
+                    Nombre de coups pour abattre un arbre. Valeur par défaut à la
+                    <strong>création</strong> d'un type récoltable ; un type existant conserve sa valeur.
                 </small>
             </form>
 
@@ -277,12 +310,36 @@ ob_start();
                     <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                 </div>
                 <small class="form-text text-muted">
-                    Ce que les <strong>joueurs</strong> ont bâti se dégrade ; ce que Tiled a posé, non.
-                    S'en servir repousse l'échéance — marcher sur une route la répare même. Un mur,
-                    lui, ne s'entretient qu'en le réparant. Un type peut porter ses propres valeurs.
-                    À zéro, la construction est détruite.
-                    <strong>Lu à chaque usage</strong> : changer ces valeurs déplace le monde,
-                    progressivement, sans migration.
+                    Les constructions des <strong>joueurs</strong> se dégradent ; celles posées avec Tiled, non.
+                    Utiliser une construction repousse le début de l'usure ; marcher sur une route la
+                    répare. Un mur ne s'entretient qu'en le réparant. Un type peut définir ses propres
+                    valeurs. À zéro PV, la construction est détruite.
+                    <strong>Lu à chaque usage</strong> : un changement s'applique progressivement,
+                    sans migration.
+                </small>
+            </form>
+
+            <hr />
+
+            <form method="post" action="index.php">
+                <?= $csrf->renderTokenField() ?>
+                <label class="form-label mb-0">Atelier : réparation et recyclage</label>
+                <?php $repairField = static function (string $name, string $label) use ($repairSettings): void { ?>
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="number" name="<?= $name ?>" min="0" max="1000"
+                               class="form-select" style="max-width: 100px;"
+                               value="<?= (int) $repairSettings->get($name, (string) \App\Service\RepairService::SETTINGS[$name]) ?>" />
+                        <span class="text-muted"><?= $label ?></span>
+                    </div>
+                <?php }; ?>
+                <?php $repairField('repair_full_share', '% de la recette pour réparer un objet à 1 PV (au prorata des PV manquants)'); ?>
+                <?php $repairField('repair_labour_share', '% de la valeur des ressources en main-d\'œuvre (1 PO minimum)'); ?>
+                <?php $repairField('repair_gold_margin', '% du prix des ressources quand tout est payé en or'); ?>
+                <?php $repairField('recycle_share', '% des ingrédients rendus au recyclage d\'un objet brisé'); ?>
+                <button type="submit" class="btn btn-sm btn-primary mt-2">Enregistrer</button>
+                <small class="form-text text-muted">
+                    Prix des ressources : colonne <code>price</code> de chaque objet. Points de vie d'un
+                    objet : sa colonne <code>durability_max</code>. <strong>Lu à chaque devis.</strong>
                 </small>
             </form>
 
@@ -298,16 +355,37 @@ ob_start();
                     <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                 </div>
                 <small class="form-text text-muted">
-                    Les éditeurs plus anciens que ce numéro sont refusés par les endpoints Tiled, avec un
-                    message qui dit quoi télécharger — une extension d'un autre âge parle un protocole
-                    changé et se trompe en silence. À relever <strong>après</strong> la publication de la
+                    Les extensions plus anciennes que ce numéro sont refusées par les endpoints Tiled, avec un
+                    message qui indique quoi télécharger : une extension trop ancienne utilise un protocole
+                    différent et produit des erreurs silencieuses. À relever <strong>après</strong> la publication de la
                     <a href="<?= e(TiledExtensionService::DOWNLOAD_URL) ?>">release correspondante</a>,
-                    jamais avant : la barre ferme la porte à tout le monde tant que le zip n'est pas en
-                    ligne. Avant la v<?= e(TiledExtensionService::FIRST_VERSIONED) ?>, une extension
-                    n'annonçait pas sa version : elle est refusée quoi qu'il arrive.
+                    jamais avant : tant que le zip n'est pas en ligne, tout le monde est bloqué.
+                    Avant la v<?= e(TiledExtensionService::FIRST_VERSIONED) ?>, une extension
+                    n'annonçait pas sa version : elle est refusée dans tous les cas.
+                </small>
+            </form>
+
+            <hr />
+
+            <form method="post" action="index.php">
+                <?= $csrf->renderTokenField() ?>
+                <label class="form-label mb-0">Taille maximale d'un bundle importé (Mo)</label>
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="number" name="import_bundle_max_mb" min="1" step="1"
+                           class="form-select" style="max-width: 120px;"
+                           value="<?= (int) (new AdminSettingsService())->get('import_bundle_max_mb', '200') ?>" />
+                    <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
+                </div>
+                <small class="form-text text-muted">
+                    Taille maximale du fichier .json accepté par Actions → Import. Le serveur limite aussi la
+                    requête : ici <?= e(ini_get('upload_max_filesize')) ?> (upload_max_filesize),
+                    <?= e(ini_get('post_max_size')) ?> (post_max_size) ; un réglage plus élevé n'a
+                    pas d'effet.
                 </small>
             </form>
         </div>
+    </div>
+    </div>
     </div>
 
 </div>

@@ -106,8 +106,8 @@ class MapForegroundsRetirementTest extends TestCase
         $this->assertFalse($status['droppable']);
         $this->assertNotEmpty(array_filter(
             $status['blockers'],
-            static fn(string $b): bool => str_contains($b, 'tient sa forme')
-                || str_contains($b, 'tiennent leur forme')
+            static fn(string $b): bool => str_contains($b, 'forme calculée')
+                || str_contains($b, 'formes calculées')
         ));
     }
 
@@ -139,7 +139,7 @@ class MapForegroundsRetirementTest extends TestCase
         $this->assertFalse($after['droppable']);
         $this->assertNotEmpty(array_filter(
             $after['blockers'],
-            static fn(string $b): bool => str_contains($b, 'disparaîtrait')
+            static fn(string $b): bool => str_contains($b, 'sans entité')
         ));
     }
 }

@@ -142,7 +142,7 @@ final class SceneryFiguresInSight
                 continue; /* one cell: today's avatar already draws it right */
             }
 
-            $image = $this->sprites->spanImage('foregrounds', $body['family']);
+            $image = $this->sprites->spriteOf($body['family']);
 
             if ($image === null) {
                 continue; /* no faithful picture: its pieces keep the job */

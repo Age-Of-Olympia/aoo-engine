@@ -32,6 +32,7 @@ db/migrations/
 # A rule named local-*.md is personal (machine-specific tooling) and stays out too.
 .claude/*
 !.claude/rules/
+!.claude/skills/
 .claude/rules/local-*.md
 
 .kr1.yaml
@@ -39,3 +40,4 @@ db/migrations/
 
 # Serena local index and memories
 .serena/
+/var/cache/

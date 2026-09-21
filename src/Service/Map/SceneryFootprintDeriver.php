@@ -2,6 +2,7 @@
 
 namespace App\Service\Map;
 
+use App\Entity\SceneryType;
 use App\Factory\EntityManagerFactory;
 use App\Service\TiledMapService;
 use Doctrine\DBAL\Connection;
@@ -35,8 +36,8 @@ final class SceneryFootprintDeriver
     /** @var array<string, Footprint>|null */
     private ?array $imageCache = null;
 
-    /** @var array<string, array<int, string>>|null */
-    private ?array $diskCache = null;
+    /** @var array<string, array<string, array<int, string>>> per image folder */
+    private array $diskCache = [];
 
     public function __construct(?Connection $conn = null)
     {
@@ -145,7 +146,7 @@ final class SceneryFootprintDeriver
             return $this->imageCache;
         }
 
-        $root = self::foregroundsDir();
+        $root = self::imageDirPath(SceneryType::IMAGE_DIR);
 
         if ($root === null) {
             return [];
@@ -195,26 +196,36 @@ final class SceneryFootprintDeriver
     /**
      * Pieces present on disk — what EXISTS, as opposed to what is placed.
      *
+     * Any image folder, not only the scenery's: a building, a plant or a
+     * race cut in `<type>_<n>.png` pieces is stitched the same way. Only the
+     * scenery folder is read with the loose conventions (`-NN`, bare digit):
+     * elsewhere `arbre1`…`arbre7` are VARIANTS, not a figure.
+     *
      * @return array<string, array<int, string>> famille → morceau → chemin web
      */
-    public function piecesOnDisk(): array
+    public function piecesOnDisk(string $imageDir = SceneryType::IMAGE_DIR): array
     {
-        if ($this->diskCache !== null) {
-            return $this->diskCache;
+        if (isset($this->diskCache[$imageDir])) {
+            return $this->diskCache[$imageDir];
         }
 
-        $root = self::foregroundsDir();
-
-        if ($root === null) {
-            return $this->diskCache = [];
-        }
+        $root = self::imageDirPath($imageDir);
+        $loose = $imageDir === SceneryType::IMAGE_DIR;
 
         $pieces = [];
 
-        foreach (glob($root . '*.png') ?: [] as $file) {
+        foreach ($root === null ? [] : (glob($root . '*.png') ?: []) as $file) {
             $base = basename($file, '.png');
-            [$family, $index] = self::splitPiece($base);
-            $pieces[$family][$index] = '/img/foregrounds/' . $base . '.png';
+
+            if ($loose) {
+                [$family, $index] = self::splitPiece($base);
+            } elseif (preg_match('/^(.+)_(\d{1,2})$/', $base, $m)) {
+                [$family, $index] = [$m[1], (int) $m[2]];
+            } else {
+                [$family, $index] = [$base, 0];
+            }
+
+            $pieces[$family][$index] = '/img/' . $imageDir . '/' . $base . '.png';
         }
 
         foreach ($pieces as &$indexes) {
@@ -224,19 +235,19 @@ final class SceneryFootprintDeriver
         unset($indexes);
         ksort($pieces);
 
-        return $this->diskCache = $pieces;
+        return $this->diskCache[$imageDir] = $pieces;
     }
 
     /**
-     * Scenery directory, or null when absent. `DOCUMENT_ROOT` is unset outside
+     * An image folder, or null when absent. `DOCUMENT_ROOT` is unset outside
      * the web (console, migration, test), hence the repository-relative fallback.
      */
-    private static function foregroundsDir(): ?string
+    private static function imageDirPath(string $imageDir): ?string
     {
-        $root = ($_SERVER['DOCUMENT_ROOT'] ?? '') . '/img/foregrounds/';
+        $root = ($_SERVER['DOCUMENT_ROOT'] ?? '') . '/img/' . $imageDir . '/';
 
         if (!is_dir($root)) {
-            $root = dirname(__DIR__, 3) . '/img/foregrounds/';
+            $root = dirname(__DIR__, 3) . '/img/' . $imageDir . '/';
         }
 
         return is_dir($root) ? $root : null;

@@ -82,17 +82,6 @@ class Log{
             return null;
         }
 
-        // Otherwise, display only if it happened within the player's perception radius
-        $last_player_coords = (object) array(
-            'x'=>$row->movement_x,
-            'y'=>$row->movement_y,
-            'z'=>$row->movement_z,
-            'plan'=>$row->movement_plan
-        );
-
-        $viewClass = self::getViewClass();
-        $arrayCoordsId = $viewClass::get_coords_arround($last_player_coords, $perception, CoordType::XYZPLAN, separator:'_');
-
         $planJson = self::planConfig($row->plan);
 
         // For PNJs, check if event is in their current plan
@@ -111,7 +100,17 @@ class Log{
             }
         }
 
-        return in_array($row->coords_computed, $arrayCoordsId) ? $row : null;
+        // Otherwise, display only if it happened within the player's perception
+        // radius around where the player stood then: coords_computed is "x_y_z_plan"
+        // (the plan may hold underscores itself, hence the limit of 4 parts).
+        [$x, $y, $z, $plan] = array_pad(explode('_', (string) $row->coords_computed, 4), 4, '');
+
+        $inRange = (string) $row->movement_plan === $plan
+            && (string) $row->movement_z === $z
+            && abs((int) $x - (int) $row->movement_x) <= $perception
+            && abs((int) $y - (int) $row->movement_y) <= $perception;
+
+        return $inRange ? $row : null;
     }
 
     // STATIC
@@ -196,120 +195,6 @@ class Log{
         return $return;
     }
 
-    public static function get2(ActorInterface $player,$maxLogAge=THREE_DAYS,$type='', ?array& $steps=null){
-        
-        $return = array();
-        $em = \App\Factory\EntityManagerFactory::getEntityManager();
-        $connection = $em->getConnection();
-        
-        $timeLimit = time()-$maxLogAge;
-
-        // Build the subquery for last player movement
-        $subQb = $connection->createQueryBuilder();
-        $subQb->select('MAX(pl2.id)')
-            ->from('players_logs', 'pl2')
-            ->where('pl2.player_id = :playerId')
-            ->andWhere('pl2.time <= pl.time')
-            ->andWhere('pl2.type = :moveType');
-
-        // Build the main query
-        $qb = $connection->createQueryBuilder();
-        $qb->select(
-                'final_logs.id',
-                'final_logs.player_id',
-                'final_logs.target_id',
-                'final_logs.text',
-                'final_logs.hiddenText',
-                'final_logs.type',
-                'final_logs.plan',
-                'final_logs.time',
-                'final_logs.coords_id',
-                'final_logs.coords_computed',
-                'final_logs.last_player_movement_coords_id AS last_player_coords_id',
-                'c.plan AS movement_plan',
-                'c.x AS movement_x',
-                'c.y AS movement_y',
-                'c.z AS movement_z'
-            )
-            ->from('(
-                SELECT 
-                    logs.*,
-                    logs_player.coords_id AS last_player_movement_coords_id
-                FROM (
-                    SELECT pl.*,
-                        (' . $subQb->getSQL() . ') AS last_player_move_id
-                    FROM players_logs pl
-                ) logs
-                LEFT JOIN players_logs logs_player ON logs.last_player_move_id = logs_player.id
-            )', 'final_logs')
-            ->leftJoin('final_logs', 'coords', 'c', 'final_logs.last_player_movement_coords_id = c.id')
-            ->where('final_logs.time > :timeLimit')
-            ->setParameter('playerId', $player->id)
-            ->setParameter('moveType', 'move')
-            ->setParameter('timeLimit', $timeLimit);
-
-        // Add type condition
-        if ($type === 'mdj') {
-            $qb->andWhere('final_logs.type = :logType')
-                ->setParameter('logType', 'mdj');
-        } else {
-            $qb->andWhere('final_logs.type NOT LIKE :logType')
-                ->setParameter('logType', 'mdj%');
-        }
-
-        $qb->orderBy('final_logs.time', 'DESC')->addOrderBy('final_logs.id', 'DESC');
-
-        if(is_array($steps)) {
-            $steps[] = array("PrepQuerry",microtime(true));
-        }
-        $result = $qb->executeQuery();
-
-        if(is_array($steps)) {
-            $steps[] = array("executeQuery",microtime(true));
-        }
-
-        $perception = self::getPerception($player);
-
-        if(is_array($steps)) {
-            $steps[] = array("prep carac",microtime(true));
-        }
-
-        while($row = $result->fetchAssociative()) {
-            $row = (object) $row; // Convert array to object for compatibility
-            if (self::isRowVisibleTo($row, $player, $perception, $type) !== null) {
-                $return[] = $row;
-            }
-        }
-
-        if(is_array($steps)) {
-            $steps[] = array("fetch & prefilter",microtime(true));
-        }
-        
-        $return = Log::filterRows($return, $player->id);
-        
-        if(is_array($steps)) {
-            $steps[] = array("filter",microtime(true));
-        }
-        
-        return $return;
-    }
-
-/**
- * Filters an array of row objects by identifying pairs of rows that meet the specified conditions.
- * 
- * Conditions for identifying a pair:
- * - Two consecutive rows have the same timestamp.
- * - They have the same action type.
- * - The player of the first row is the target of the second row OR the target of the first row is the player of the second row.
- * 
- * For pairs that match these conditions: keep only one row amongst the two.
- * 
- * If a pair is not matched or identified, the row is kept as is.
- * 
- * @param array $rows An array of objects. Each object is expected to have 'time', 'player', 'target', and 'type' properties.
- * @param int $playerId The identifier of the player to prioritize in pairs.
- * @return array The filtered array of rows.
- */
 private static function filterRows(array $rows, int $playerId): array {
     $filtered = [];
 

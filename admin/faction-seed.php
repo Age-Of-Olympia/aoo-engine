@@ -57,7 +57,7 @@ ob_start();
     le checkout git où <code style="display:inline">datas/</code> n'existe pas : les lignes y sont créées sans lore,
     sans icône et sans rôles. Ce bouton relance le même seed depuis la racine web, où les JSON existent.
     <ul class="mb-0 mt-1">
-        <li>Sur une faction existante : drapeaux (cachée/secrète) et lore non vide sont <strong>préservés</strong> ; nom, icône et plan de respawn sont rafraîchis.</li>
+        <li>Sur une faction existante : options cachée/secrète et lore non vide sont <strong>préservés</strong> ; nom, icône et plan de respawn sont rafraîchis.</li>
         <li>Les rôles ne sont remplacés que si le JSON en fournit.</li>
         <li>Relançable sans risque (tout ou rien, idempotent).</li>
     </ul>
@@ -94,7 +94,7 @@ ob_start();
                 seeder depuis cet environnement.
             </div>
         <?php else: ?>
-            <table class="table table-striped table-sm" style="max-width: 760px;">
+            <table class="table table-striped table-sm">
                 <thead><tr>
                     <th>Faction</th><th>Fichier</th><th>Action</th><th>Rôles du JSON</th>
                 </tr></thead>
@@ -118,7 +118,7 @@ ob_start();
                 <button type="submit" name="seed_factions" class="btn btn-primary">
                     <i class="fas fa-seedling"></i> Seeder <?= count($preview['entries']) ?> faction(s)
                 </button>
-                <small class="text-muted">Tout ou rien — re-consultez la liste des factions après coup pour vérifier.</small>
+                <small class="text-muted">Tout ou rien. Vérifier ensuite la liste des factions.</small>
             </form>
         <?php endif; ?>
     </div>

@@ -2,6 +2,8 @@
 
 namespace App\Service\Map;
 
+use App\Service\RaceService;
+
 /**
  * The one picture the board draws a multi-cell figure with.
  *
@@ -25,6 +27,53 @@ final class EntitySpriteService
 {
     /** @var array<string, string|null> memo, keyed "dir/family" */
     private static array $sprites = [];
+
+    /** @var array<string, Footprint>|null request-wide: one map read, not one per type */
+    private static ?array $catalogue = null;
+
+    /**
+     * The picture of a multi-cell TYPE, in the folder its kind keeps its
+     * images in ({@see \App\Entity\Race::imageDir()}) — the one path for
+     * a scenery figure, a building or a character with a cut-out.
+     */
+    public function spriteOf(string $type): ?string
+    {
+        foreach ($this->dirsOf($type) as $dir) {
+            $image = $this->spanImage($dir, $type);
+
+            if ($image !== null) {
+                return $image;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The kind's folder first, then every other folder pieces live in:
+     * pieces left where a type used to belong — a trade hall was scenery,
+     * its pieces are still in img/foregrounds — draw it all the same.
+     *
+     * @return list<string> empty for a name the catalogue does not know
+     */
+    public function dirsOf(string $type): array
+    {
+        $own = $this->imageDirOf($type);
+
+        return $own === null ? [] : array_values(array_unique(array_merge([$own], $this->pieceDirs())));
+    }
+
+    /** null for a name the catalogue does not know. */
+    public function imageDirOf(string $type): ?string
+    {
+        return (new RaceService())->getImageDirMap()[$type] ?? null;
+    }
+
+    /** @return list<string> every folder a type may keep pieces in */
+    public function pieceDirs(): array
+    {
+        return array_values(array_unique((new RaceService())->getImageDirMap()));
+    }
 
     /**
      * Web path of the figure's picture, or null when there is none to trust.
@@ -65,13 +114,14 @@ final class EntitySpriteService
      */
     private function composeOnce(string $imageDir, string $family): ?string
     {
-        $footprint = (new EntityTypeFootprintService())->catalogue()[$family] ?? null;
+        self::$catalogue ??= (new EntityTypeFootprintService())->catalogue();
+        $footprint = self::$catalogue[$family] ?? null;
 
         if ($footprint === null || $footprint->isSingleCell()) {
             return null;
         }
 
-        $pieces = (new SceneryFootprintDeriver())->piecesOnDisk()[$family] ?? [];
+        $pieces = (new SceneryFootprintDeriver())->piecesOnDisk($imageDir)[$family] ?? [];
 
         return (new CompositeSpriteService())->composedSprite($imageDir, $family, $footprint, $pieces);
     }
@@ -80,5 +130,6 @@ final class EntitySpriteService
     public static function forget(): void
     {
         self::$sprites = [];
+        self::$catalogue = null;
     }
 }

@@ -65,7 +65,7 @@ if ($isStateChangingPost) {
             }
             $created = $service->adopt($type, $race, $inherited);
             setFlash('success', "Sprite hérité « {$inherited} » copié dans le stock : « {$created} »"
-                . ' — c\'est désormais lui qui fait foi sur le plateau.');
+                . ' : le plateau utilise désormais cette image.');
         } elseif (isset($_POST['image_move'])) {
             $name = trim((string) ($_POST['file'] ?? ''));
             $target = trim((string) ($_POST['target_race'] ?? ''));
@@ -95,7 +95,7 @@ try {
 }
 $withProblems = array_filter($entries, fn(array $entry) => $entry['problems'] !== []);
 $thumbHeight = $type === ImageType::PORTRAIT ? 76 : 50;
-$usersByPath = $entries !== [] ? $service->usersByPath($type) : [];
+$usersByPath = $entries !== [] ? $service->usersByPath($type, $race) : [];
 $imageDir = '/img/' . ($type === ImageType::PORTRAIT ? 'portraits' : 'avatars') . '/' . $race . '/';
 
 ob_start();
@@ -110,13 +110,13 @@ ob_start();
         <?php if ($structureMode): ?>
             Images des types de bâtiments : la <strong>première image du stock</strong> est le
             sprite des entités posées sur le plateau (à défaut, le sprite de mur du même nom).
-            L'ajout redimensionne au canon et numérote avec le compteur du type ; la suppression
-            est refusée tant qu'une entité posée utilise l'image.
+            L'ajout redimensionne l'image à la taille attendue et la numérote avec le compteur du type ;
+            la suppression est refusée tant qu'une entité posée utilise l'image.
         <?php else: ?>
             Images de personnage par race : avatars (50×50, carte et listes) et portraits
-            (210×320 + miniature 50×79, fiche de personnage). L'ajout redimensionne au canon et
-            numérote avec le compteur de la race ; la suppression est refusée tant qu'un joueur
-            utilise l'image. Les joueurs choisissent leurs images en jeu — ici c'est le stock.
+            (210×320 + miniature 50×79, fiche de personnage). L'ajout redimensionne l'image à la taille
+            attendue et la numérote avec le compteur de la race ; la suppression est refusée tant
+            qu'un joueur utilise l'image. Les joueurs choisissent leur image en jeu ; cette page gère le stock.
         <?php endif; ?>
     </div>
 
@@ -169,7 +169,7 @@ ob_start();
                         <input type="hidden" name="type" value="<?= e($type->value) ?>">
                         <input type="hidden" name="race" value="<?= e($race) ?>">
                         <button type="submit" name="image_adopt" value="1" class="btn btn-sm btn-outline-primary"
-                                title="Copie le fichier tel quel dans le stock du type — il devient l'image gérée ici">
+                                title="Copie le fichier tel quel dans le stock du type ; l'image est ensuite gérée ici">
                             <i class="fas fa-download"></i> Copier dans le stock
                         </button>
                     </form>

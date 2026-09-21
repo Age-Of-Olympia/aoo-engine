@@ -10,7 +10,7 @@ $db = new Db();
 /* Chaque branche du UNION sort ses colonnes textuelles en utf8mb4 : les
    tables mêlent des collations d'époques différentes, et un UNION refuse
    le mélange — jamais de collation plaquée, toujours CONVERT. */
-$sql = "select coords_id as coords_id, 'map_tiles' as type, CONVERT(name USING utf8mb4) as name, NULL as params from map_tiles where coords_id = ?
+$sql = "select coords_id as coords_id, 'map_tiles' as type, CONVERT(name USING utf8mb4) as name, CONVERT(IF(rotation = 0, NULL, CONCAT('rotation ', rotation, '°')) USING utf8mb4) as params from map_tiles where coords_id = ?
 union
 /* Une ressource est une entité : elle se décrit comme un bâtiment, par son
    type et son état, et non plus par le signe d'un nombre. */
@@ -23,7 +23,7 @@ select  coords_id as coords_id, 'map_triggers' as type, CONVERT(name USING utf8m
 union
 select  coords_id as coords_id, 'map_dialogs' as type, CONVERT(name USING utf8mb4) as name, CONVERT(params USING utf8mb4) as params  from map_dialogs where coords_id = ?
 union
-select  coords_id as coords_id, 'map_elements' as type, CONVERT(name USING utf8mb4) as name, NULL as params from map_elements where coords_id = ?
+select  coords_id as coords_id, 'map_elements' as type, CONVERT(name USING utf8mb4) as name, CONVERT(IF(rotation = 0, NULL, CONCAT('rotation ', rotation, '°')) USING utf8mb4) as params from map_elements where coords_id = ?
 union
 select  coords_id as coords_id, 'map_marks' as type, CONVERT(name USING utf8mb4) as name, NULL as params from map_marks where coords_id = ?
 union

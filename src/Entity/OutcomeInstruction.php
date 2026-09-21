@@ -55,6 +55,17 @@ abstract class OutcomeInstruction implements OutcomeInstructionInterface
         return $this;
     }
 
+    /**
+     * Who an instruction acts on, from its outcome's toggle: « sur soi »
+     * is the actor; « sur la cible » and « les deux » are whoever the
+     * action was aimed at (the actor, for a self-aimed action). No
+     * outcome (a bare instruction) means the target.
+     */
+    public function receiver(Player $actor, Player $target): Player
+    {
+        return $this->outcome?->getApplyTo() === \App\Enum\OutcomeTarget::Self ? $actor : $target;
+    }
+
     public function getParameters(): ?array
     {
         return $this->parameters;

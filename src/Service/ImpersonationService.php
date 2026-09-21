@@ -26,7 +26,7 @@ final class ImpersonationService
             && $mainId > 0
             && (int) ($_SESSION['playerId'] ?? 0) !== $mainId
         ) {
-            throw new \RuntimeException('On ne porte pas un masque par-dessus un autre.');
+            throw new \RuntimeException('Il faut d\'abord revenir à votre personnage principal.');
         }
 
         $_SESSION['playerId'] = $entityId;

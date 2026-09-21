@@ -45,7 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_screenshot']
         ];
         $timestamp = date('Y-m-d_H-i-s');
         $filename  = "screenshot_{$selectedPlanId}_{$selectedX}_{$selectedY}_{$selectedZ}_{$timestamp}";
-        $result    = $screenshotService->generateScreenshot($coords, $selectedRange, $filename);
+        // selfContained: the preview below goes through <img src="….svg">,
+        // which parses strict XML and loads no external resource.
+        $result    = $screenshotService->generateScreenshot(
+            $coords,
+            $selectedRange,
+            $filename,
+            selfContained: true
+        );
 
         if ($result['success']) {
             $success     = "Capture d'écran générée avec succès : " . basename($result['filepath']);

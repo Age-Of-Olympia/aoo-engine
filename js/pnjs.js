@@ -33,6 +33,11 @@ function switchToPnj(id, destination){
         data: {'switch': id},
         success: function(data)
         {
+            /* pnjs.php answers an empty body on success, the refusal text otherwise */
+            if (data) {
+                aooAlert(data);
+                return;
+            }
             forgetPnjPanel();
             document.location = destination;
         }

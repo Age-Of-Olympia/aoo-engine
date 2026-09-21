@@ -17,7 +17,6 @@ use App\Service\Action\ActionTypeInstructionResolver;
 use App\Service\Action\ActionTypePreconditionResolver;
 use App\Service\Action\ConditionPreconditionResolver;
 use App\Action\OutcomeInstruction\OutcomeResult;
-use Exception;
 
 class ActionExecutorService
 {
@@ -126,10 +125,8 @@ class ActionExecutorService
         // 5) LOG — from the action's per-type templates (action_type_logs).
         $logsArray = $this->logResolver->resolve($this->action, $this->actor, $this->target);
 
-        // 6) Trigger automatic screenshot if action occurred on arene_s2
-        if (!$this->simulationMode) {
-            $this->triggerAutomaticScreenshot();
-        }
+        // 6) The arena capture is triggered from action.php, after the Log::put
+        //    calls, where the event text is available.
 
         // contains conditionsResults, effectsResults, costsResults, xpResults and logs
         return new ActionResults($this->globalConditionsResult, $this->blocked, $this->conditionResultsArray, $this->outcomeResultsArray, $costsResultsArray, $xpResultsArray, $logsArray);
@@ -154,11 +151,12 @@ class ActionExecutorService
             foreach ($this->action->getOnSuccessOutcomes() as $outcomeEntity) {
                 $this->applyActionOutcome($outcomeEntity);
             }
-            $this->applyEquippedItemsEffects();
+            $this->applyEquippedItemsEffects('hit');
         } else {
             foreach ($this->action->getOnSuccessOutcomes(false) as $outcomeEntity) {
                 $this->applyActionOutcome($outcomeEntity);
             }
+            $this->applyEquippedItemsEffects('miss');
         }
 
         // Inherited type-level instructions (data-driven defaults for the action
@@ -281,23 +279,11 @@ class ActionExecutorService
         array_push($this->outcomeResultsArray, $result);
     }
 
-    private function triggerAutomaticScreenshot(): void
-    {
-        try {
-            $screenshotService = new ScreenshotService();
-            $actionName = $this->action->getName() ?? 'unknown';
-
-            $result = $screenshotService->generateAutomaticScreenshot($this->actor, $actionName);
-
-            if (!$result['success'] && $result['error'] !== 'Action not on arene_s2 map') {
-                error_log("Automatic screenshot failed: " . $result['error']);
-            }
-        } catch (Exception $e) {
-            error_log("Error triggering automatic screenshot: " . $e->getMessage());
-        }
-    }
-
-    private function applyEquippedItemsEffects(): void
+    /**
+     * The bearer's weapon effects for this outcome ('hit' or 'miss'), each
+     * landed on its receiver: the bearer or the target.
+     */
+    private function applyEquippedItemsEffects(string $outcome): void
     {
         if ($this->action instanceof \App\Action\MeleeAction || $this->action instanceof \App\Action\DistanceAction) {
 
@@ -307,27 +293,38 @@ class ActionExecutorService
 
             foreach ($effectList as $effect) {
 
-                $this->target->playerEffectService->addEffectByPlayerId($this->target->id,$effect->name, $effect->duration,1,false);
+                if (($effect->outcome ?? 'hit') !== $outcome) {
+                    continue;
+                }
 
-                $statusLabel = htmlspecialchars((string) $effect->name, ENT_QUOTES, 'UTF-8');
-                $timeMessage = 'pour ' . \Classes\Str::displaySeconds($effect->duration);
+                $duration = (int) ($effect->duration ?? 1);
 
-                $icon = $effectService->getIcon($effect->name);
-                $iconMarkup = !empty($icon) ? ' <span class="ra ' . $icon . '"></span>' : '';
-
-                $outcomeSuccessMessages[] = 'L\'effet ' . $statusLabel . $iconMarkup . ' (x1) est appliqué ' . $timeMessage . ' à ' . $this->target->data->name;
+                foreach ($this->strikeReceivers((string) ($effect->target ?? 'target')) as $receiver) {
+                    // add_effect, not the raw insert: the cancellation cycle and pv_on_apply come with it.
+                    $receiver->add_effect((string) $effect->name, $duration);
+                    $outcomeSuccessMessages[] = $effectService->landingMessage((string) $effect->name, $receiver->data->name, $this->actor->data->name, $duration);
+                }
             }
 
             if (!empty($outcomeSuccessMessages)) {
-                $itemOutcomeResult = new OutcomeResult(
-                    true,
-                    outcomeSuccessMessages: $outcomeSuccessMessages,
-                    outcomeFailureMessages: []
-                );
-
-                $this->outcomeResultsArray[] = $itemOutcomeResult;
+                /* ActionResultsView shows an outcome's failure messages when
+                 * the action failed: a miss-triggered effect files its line
+                 * there, or the player never reads what just hit them. */
+                $this->outcomeResultsArray[] = $outcome === 'hit'
+                    ? new OutcomeResult(true, outcomeSuccessMessages: $outcomeSuccessMessages, outcomeFailureMessages: [])
+                    : new OutcomeResult(true, outcomeSuccessMessages: [], outcomeFailureMessages: $outcomeSuccessMessages);
             }
         }
     }
 
+
+    /**
+     * Who a weapon effect lands on: the bearer or the target.
+     *
+     * @return list<Player>
+     */
+    private function strikeReceivers(string $target): array
+    {
+        return [$target === 'self' ? $this->actor : $this->target];
+    }
 }

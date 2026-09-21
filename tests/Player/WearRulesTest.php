@@ -273,6 +273,25 @@ class WearRulesTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(0, $this->remainingLifeOf($worn['epee']));
         $this->assertStringContainsString('brisé', $recap[0]);
     }
+
+    /** A broken weapon is worn, not wielded: the type check refuses it. */
+    public function testABrokenWeaponNoLongerCountsAsAWeapon(): void
+    {
+        [$player, $worn] = $this->wearing('GmBriseArme', [
+            'epee' => ['emplacement' => 'main1', 'subtype' => 'melee'],
+        ]);
+
+        $condition = new \App\Action\Condition\RequiresWeaponTypeCondition();
+        $entity = (new \App\Entity\ActionCondition())->setParameters(['type' => ['melee']]);
+        $check = fn() => $condition->check($player, null, $entity, new \App\Action\Condition\ConditionObject())->isSuccess();
+
+        $player->get_caracs();
+        $this->assertTrue($check(), 'intact, the sword is a melee weapon');
+
+        $this->setRemainingLife($worn['epee'], 0);
+        $player->get_caracs();
+        $this->assertFalse($check(), 'broken, it is not');
+    }
 }
 
 /** Scripted die: returns the given values in order, then 1. */

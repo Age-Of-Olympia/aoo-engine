@@ -259,6 +259,7 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         $pierre = $this->giveStack($chest, 'pierre', 3);
         $or = $this->giveStack($chest, 'or', 5);
         $this->link->executeStatement('UPDATE races SET capacity = 1 WHERE name = ?', [$race]);
+        $this->refreshRaceCatalog();
 
         try {
             $service = new ContainerService();
@@ -283,6 +284,53 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
             $this->assertSame(1, $service->lineCountOf($actor), 'gold is no line');
         } finally {
             $this->link->executeStatement('UPDATE races SET capacity = ? WHERE name = ?', [$before, $race]);
+            $this->refreshRaceCatalog();
+        }
+    }
+
+    public function testTheBagIsACaracEquipmentAndEffectsChangeIt(): void
+    {
+        $actor = $this->actorNextTo(52, 32, 'GmSacCarac');
+        $race = (string) $this->link->fetchOne('SELECT race FROM players WHERE id = ?', [$actor]);
+        $before = (int) $this->link->fetchOne('SELECT capacity FROM races WHERE name = ?', [$race]);
+        $this->link->executeStatement('UPDATE races SET capacity = 3 WHERE name = ?', [$race]);
+        $this->refreshRaceCatalog();
+
+        // A worn sack: +2 lines. Stats read from the DB columns.
+        $this->link->executeStatement(
+            "INSERT INTO items (name, price, stats_in_db, sac) VALUES ('sac_test', 1, 1, 2)
+             ON DUPLICATE KEY UPDATE stats_in_db = 1, sac = 2"
+        );
+        $sack = (int) $this->link->fetchOne("SELECT id FROM items WHERE name = 'sac_test'");
+        $this->link->executeStatement(
+            "INSERT INTO players_items (player_id, item_id, n, equiped, slot) VALUES (?, ?, 1, 'dos', '')",
+            [$actor, $sack]
+        );
+
+        // A curse on the bag: -4 lines, below the floor.
+        $this->link->executeStatement(
+            "INSERT INTO effects (name, label, carac_mods) VALUES ('sac_troue', 'Sac troué', '{\"sac\":-1}')
+             ON DUPLICATE KEY UPDATE carac_mods = '{\"sac\":-1}'"
+        );
+        \App\Service\EffectService::clearCache();
+
+        try {
+            $service = new ContainerService();
+            $this->assertSame(5, $service->capacityOf($actor), 'race 3 + sack 2');
+
+            (new \App\Service\PlayerEffectService())->addEffectByPlayerId($actor, 'sac_troue', 3, 4, false);
+            $this->assertSame(1, $service->capacityOf($actor), 'the curse takes 4');
+
+            $this->link->executeStatement('UPDATE races SET capacity = 0 WHERE name = ?', [$race]);
+            $this->refreshRaceCatalog();
+            $this->assertNull($service->capacityOf($actor), 'a race without a bag stays unlimited');
+        } finally {
+            $this->link->executeStatement('UPDATE races SET capacity = ? WHERE name = ?', [$before, $race]);
+            $this->refreshRaceCatalog();
+            $this->link->executeStatement("DELETE FROM effects WHERE name = 'sac_troue'");
+            $this->link->executeStatement('DELETE FROM players_items WHERE item_id = ?', [$sack]);
+            $this->link->executeStatement("DELETE FROM items WHERE name = 'sac_test'");
+            \App\Service\EffectService::clearCache();
         }
     }
 
@@ -304,6 +352,7 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         $service->depositExemplar($chest, $actor, $instanceId);
 
         $this->link->executeStatement('UPDATE races SET capacity = 1 WHERE name = ?', [$race]);
+        $this->refreshRaceCatalog();
 
         try {
             // The bois joins its line; everything else would be a new one.
@@ -314,6 +363,7 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
             $this->assertSame(2, $this->stackOf($chest, $pierre), 'what does not fit stays in the chest');
         } finally {
             $this->link->executeStatement('UPDATE races SET capacity = ? WHERE name = ?', [$before, $race]);
+            $this->refreshRaceCatalog();
         }
 
         // Ceiling lifted: the rest follows, exemplar included.

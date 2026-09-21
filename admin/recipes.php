@@ -93,7 +93,8 @@ function recipe_render_list(string $csrfToken): string
     return '<p><a class="btn btn-primary" href="/admin/recipes.php?action=new">Nouvelle recette</a> '
         . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=recipe">Exporter tout (JSON)</a> '
         . '<a class="btn btn-outline-secondary" href="/admin/action-import.php">Importer</a></p>'
-        . renderTable(['Recette', 'Ingrédients', 'Résultats', 'Races', 'Atelier', ''], $rows);
+        . renderTable(['Recette', 'Ingrédients', 'Résultats', 'Races', 'Atelier', ''], $rows,
+            'data-admin-list data-page-size="50"');
 }
 
 function recipe_item_select(string $name, int $selected, array $items): string

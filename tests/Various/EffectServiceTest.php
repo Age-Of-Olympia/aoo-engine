@@ -59,13 +59,12 @@ class EffectServiceTest extends TestCase
 
     public function testCaracModifierMapsMatchTheOldConstants(): void
     {
-        $debuffs = $this->service->getDebuffCaracs();
-        $this->assertSame('e', $debuffs['feu']);
-        $this->assertSame('mvt', $debuffs['eau']);
-        $this->assertSame('mvt', $debuffs['styx']);
-        $this->assertSame('p', $debuffs['aveuglement']);
-
-        $this->assertSame(['acuite_visuelle' => 'p'], $this->service->getBuffCaracs());
+        $mods = $this->service->getCaracMods();
+        $this->assertSame(['e' => -1], $mods['feu']);
+        $this->assertSame(['mvt' => -1], $mods['eau']);
+        $this->assertSame(['mvt' => -1], $mods['styx']);
+        $this->assertSame(['p' => -1], $mods['aveuglement']);
+        $this->assertSame(['p' => 1], $mods['acuite_visuelle']);
     }
 
     public function testTheElementalCycleInverseIsComputed(): void

@@ -55,7 +55,7 @@ class ImpersonationDepthTest extends LegacyPlayerFixtureTestCase
             $service->driveAs($maskB);
             $this->fail('a second mask over the first must refuse');
         } catch (\RuntimeException $e) {
-            $this->assertSame('On ne porte pas un masque par-dessus un autre.', $e->getMessage());
+            $this->assertSame('Il faut d\'abord revenir à votre personnage principal.', $e->getMessage());
             $this->assertSame($maskA, (int) $_SESSION['playerId'], 'the session did not move');
         }
 

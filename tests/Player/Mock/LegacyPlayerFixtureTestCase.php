@@ -69,8 +69,10 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         // Fixture rows are deleted through DBAL, invisible to the shared
         // EntityManager: when a later test reuses a freed id, stale
         // identity-map entries (e.g. a PlayerEffect from a previous attack)
-        // collide with the new rows. Start every test with a clean map.
+        // collide with the new rows. Start every test with a clean map, and
+        // without the race catalogue memoised from the previous one.
         \App\Factory\EntityManagerFactory::getEntityManager()->clear();
+        RaceService::clearCache();
     }
 
     protected function tearDown(): void
@@ -415,6 +417,15 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
 
         // The guard lookup above cached the absence; the identity map may
         // hold stale catalogue reads.
+        $this->refreshRaceCatalog();
+    }
+
+    /**
+     * After a raw UPDATE on `races`: drop both the service cache and the
+     * identity map, or the entity keeps the value it was loaded with.
+     */
+    protected function refreshRaceCatalog(): void
+    {
         RaceService::clearCache();
         \App\Factory\EntityManagerFactory::getEntityManager()->clear();
     }

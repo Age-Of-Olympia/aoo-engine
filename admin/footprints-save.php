@@ -23,7 +23,7 @@ function reapplied(int $count): string
 {
     return $count === 0
         ? ' Aucun exemplaire posé sur la carte.'
-        : ' ' . $count . ' exemplaire' . ($count > 1 ? 's' : '') . ' repris sur la carte.';
+        : ' ' . $count . ' exemplaire' . ($count > 1 ? 's' : '') . ' mis à jour sur la carte.';
 }
 
 $service = new EntityTypeFootprintService();
@@ -49,7 +49,7 @@ try {
     $type = trim((string) ($_POST['type'] ?? ''));
 
     if ($type === '') {
-        throw new RuntimeException('Aucun décor indiqué.');
+        throw new RuntimeException('Aucun type indiqué.');
     }
 
     $cells = new EntityCellService();
@@ -57,7 +57,7 @@ try {
     if (($_POST['action'] ?? '') === 'forget') {
         $service->forget($type);
 
-        setFlash('success', 'La forme de « ' . $type . ' » sera de nouveau devinée.'
+        setFlash('success', 'La forme de « ' . $type . ' » sera de nouveau calculée.'
             . reapplied($cells->reapplyForType($type)));
 
         redirectTo('/admin/footprints.php' . $back);
@@ -66,7 +66,7 @@ try {
     $figure = json_decode((string) ($_POST['figure'] ?? ''), true);
 
     if (!is_array($figure) || !isset($figure['offsets']) || !is_array($figure['offsets'])) {
-        throw new RuntimeException('La figure envoyée est illisible.');
+        throw new RuntimeException('Figure illisible.');
     }
 
     $offsets = [];

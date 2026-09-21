@@ -293,7 +293,7 @@ class Player implements ActorInterface {
             /* Un objet BRISÉ (ItemInstanceService::BROKEN_AT) reste
              * porté — visible à l'emplacement — mais ne contribue plus ses
              * caracs : c'est le sens gameplay de « brisé ». */
-            if(isset($row->durability) && \App\Service\ItemInstanceService::isBroken((int) $row->durability)){
+            if($item->isBroken()){
 
                 continue;
             }
@@ -313,26 +313,17 @@ class Player implements ActorInterface {
         $this->debuffs = (object) array();
         $this->buffs = (object) array();
 
-        $debuffCaracs = $this->effectService->getDebuffCaracs();
-        $buffCaracs = $this->effectService->getBuffCaracs();
+        $caracMods = $this->effectService->getCaracMods();
 
+        // Each entry of the effect moves its carac by sign × value.
         foreach($effectsList as $e){
 
+            $value = is_null($e->getValue()) ? 1 : $e->getValue();
 
-            if(!empty($debuffCaracs[$e->getName()])){
+            foreach($caracMods[$e->getName()] ?? [] as $carac => $sign){
 
-
-                $this->caracs->{$debuffCaracs[$e->getName()]} -= is_null($e->getValue()) ? 1 : $e->getValue();
-
-                $this->debuffs->{$debuffCaracs[$e->getName()]} = $e->getName();
-            }
-
-            if(!empty($buffCaracs[$e->getName()])){
-
-
-                $this->caracs->{$buffCaracs[$e->getName()]} += is_null($e->getValue()) ? 1 : $e->getValue();
-
-                $this->buffs->{$buffCaracs[$e->getName()]} = $e->getName();
+                $this->caracs->$carac = ($this->caracs->$carac ?? 0) + $sign * $value;
+                $this->{$sign < 0 ? 'debuffs' : 'buffs'}->$carac = $e->getName();
             }
         }
 
@@ -673,6 +664,15 @@ class Player implements ActorInterface {
             exit('error effect name');
         }
 
+        // What the effect takes from the pools lands with it, every time it
+        // is applied (a burning cell hurts at each step). Death stays with
+        // the callers that already check PV after an action.
+        $losses = $this->effectService->lossesOf($name, $value);
+        if($losses !== array()){
+
+            $this->putBonus($losses);
+        }
+
         // Annulations (ex-cycle élémentaire, désormais des listes) :
         // poser cet effet retire chaque effet qu'il annule ; s'il porte
         // déjà un effet qui L'annule, les deux tombent.
@@ -841,9 +841,17 @@ class Player implements ActorInterface {
             }
 
 
-            /* Un élément de carte foulé applique son effet pour UN tour
-             * (l'élément, lui, reste daté : voir Element::put). */
-            $this->add_effect($row->name, 1);
+            /* Stepping on an element applies the effect of the same name
+             * for ONE turn (the element itself keeps its own clock, see
+             * Element::put). An element with no such effect is decor. */
+            if($this->effectService->exists($row->name)){
+
+                $this->add_effect($row->name, 1);
+
+                // The walker's log keeps what the ground did (effect, PV). Not a
+                // "move": those stay out of the events feed.
+                Log::put($this, $this, $this->effectService->landingMessage($row->name, $this->data->name, $this->data->name, 1), 'element');
+            }
         }
 
 
@@ -880,7 +888,12 @@ class Player implements ActorInterface {
         if ($goCoords->plan === 'arene_s2' && $this->id >= 0) {
             try {
                 $screenshotService = new \App\Service\ScreenshotService();
-                $screenshotService->generateAutomaticScreenshot($this, 'move');
+                $screenshotService->generateAutomaticScreenshot($this, 'deplacement', [[
+                    'type'      => 'move',
+                    'at'        => time(),
+                    'player_id' => (int) $this->id,
+                    'text'      => $text,
+                ]]);
             } catch (Exception $e) {
                 error_log("Error triggering automatic screenshot for movement: " . $e->getMessage());
             }
@@ -2334,6 +2347,9 @@ class Player implements ActorInterface {
 
         // Enable action details by default for all new players
         $player->add_option('showActionDetails');
+
+        // The redesigned layout is the default; the account page can switch back.
+        $player->add_option('newHud');
 
         /* Bordure de race réservée aux personnages par défaut : sur un
          * mur ou un coffre, le liseré encombre le décor sans rien

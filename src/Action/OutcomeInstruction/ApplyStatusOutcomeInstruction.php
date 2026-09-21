@@ -21,13 +21,8 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
             new ParameterField('effect', FieldType::EFFECT, 'Effet', required: true),
             new ParameterField('apply', FieldType::BOOL, 'Appliquer (sinon retirer)', default: true),
             new ParameterField('duration', FieldType::INT, 'Durée (tours)', default: 1, help: '0 = jusqu\'au prochain tour, -1 = sans fin'),
-            new ParameterField('player', FieldType::ENUM, 'Appliquer à', default: 'both', options: [
-                'actor' => 'Acteur',
-                'target' => 'Cible',
-                'both' => 'Les deux',
-            ]),
-            new ParameterField('value', FieldType::TRAIT_OR_INT, 'Valeur', default: 1),
-            new ParameterField('stackable', FieldType::BOOL, 'Cumulable', default: false),
+            new ParameterField('value', FieldType::TRAIT_OR_INT, 'Intensité', default: 1, help: 'Multiplie les caracs modifiées par l\'effet (feu à E −1, intensité 3 → E −3) ; 1 = l\'effet tel que défini. Les PV à l\'application ne sont pas multipliés.'),
+            new ParameterField('stackable', FieldType::BOOL, 'Cumulable', default: false, help: 'Réappliqué sur un porteur qui l\'a déjà : les intensités s\'additionnent (sinon la plus forte reste).'),
             new ParameterField(
                 'targets',
                 FieldType::ENUM,
@@ -71,14 +66,6 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
          * aux tours : zéro tient jusqu'au prochain, négatif ne s'éteint
          * jamais (PlayerEffectService::DURATION_INFINITE). */
         $duration = (int) ($params['duration'] ?? 1);
-        if (\App\Service\PlayerEffectService::isInfinite($duration)) {
-            $timeMessage = 'sans limite de durée';
-        } elseif ($duration === 0) {
-            $timeMessage = 'jusqu\'au prochain tour';
-        } else {
-            $timeMessage = 'pour ' . $duration . ' tour' . ($duration > 1 ? 's' : '');
-        }
-        $player = $params['player'] ?? 'both';
         $valueParam = $params['value'] ?? 1;
         if(is_array($valueParam)){
             switch ($valueParam[0]) {
@@ -98,53 +85,21 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
 
         $stackable = $params['stackable'] ?? false;
 
-        // The effect name and value come from action parameters; escape them
-        // before they go into the outcome HTML (the surrounding <span> markup is
-        // ours and stays raw). Defense-in-depth: a config bundle or the raw param
-        // editor could otherwise smuggle markup into every player's combat log.
-        $statusLabel = htmlspecialchars((string) $status, ENT_QUOTES, 'UTF-8');
-        $valueLabel = htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-        $statusIcon = $effectService->getIcon($status);
 
         $outcomeSuccessMessages = array();
-        switch ($player) {
-            case 'actor':
-                if ($status == "finished") {
-                    $res = $actor->purge_effects();
-                    if ($res > 0) {
-                        $outcomeSuccessMessages[0] = $res .' effet(s) terminé(s).';
-                    }
-                } elseif ($this->mayReceiveEffect($actor, $params, $apply)) {
-                    $this->applyEffect($apply, $status, $duration, $value, $stackable, $actor);
-                    $outcomeSuccessMessages[0] = $this->appliedMessage($statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $actor->data->name);
-                }
-                break;
-            case 'target':
-                if ($this->mayReceiveEffect($target, $params, $apply)) {
-                    $this->applyEffect($apply, $status, $duration, $value, $stackable, $target);
-                    $outcomeSuccessMessages[0] = $this->appliedMessage($statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $target->data->name);
-                }
-                break;
-            default:
-                if ($this->mayReceiveEffect($actor, $params, $apply)) {
-                    $this->applyEffect($apply, $status, $duration, $value, $stackable, $actor);
-                    $outcomeSuccessMessages[0] = $this->appliedMessage($statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $actor->data->name);
-                }
+        $receiver = $this->receiver($actor, $target);
 
-            if ($target->data->name !== $actor->data->name && $this->mayReceiveEffect($target, $params, $apply)) {
-                $this->applyEffect($apply, $status, $duration, $value, $stackable, $target);
-                $outcomeSuccessMessages[1] = $this->appliedMessage($statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $target->data->name);
+        if ($status == "finished") {
+            $res = $receiver->purge_effects();
+            if ($res > 0) {
+                $outcomeSuccessMessages[0] = $res .' effet(s) terminé(s).';
             }
-            break;
+        } elseif ($this->mayReceiveEffect($receiver, $params, $apply)) {
+            $this->applyEffect($apply, $status, $duration, $value, $stackable, $receiver);
+            $outcomeSuccessMessages[0] = $effectService->landingMessage($status, $receiver->data->name, $actor->data->name, $duration, (int) $value, (bool) $stackable);
         }
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array());
-    }
-
-    /** Le même message de succès servait les quatre cibles (acteur, cible, les deux). */
-    private function appliedMessage(string $statusLabel, string $statusIcon, bool $stackable, string $valueLabel, string $timeMessage, string $playerName): string
-    {
-        return 'L\'effet '.$statusLabel.' <span class="ra '. $statusIcon .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage.' à ' . $playerName;
     }
 
     private function applyEffect (bool $apply, string $effectName, int $duration, int $value, bool $stackable, Player $player){

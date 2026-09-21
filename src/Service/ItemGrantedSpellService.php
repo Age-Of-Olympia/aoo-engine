@@ -35,20 +35,22 @@ final class ItemGrantedSpellService
      */
     public function forPlayer(Player $player): array
     {
-        $catalogue = $this->actionService->getCastableSpellNames();
-        $granted = [];
-
         /* The equipped list is a JOIN of players_items and items, so the
            catalogue columns are on the row already — no get_data() needed. */
+        $spells = [];
         foreach ($player->getEquipedItems() as $row) {
             $spell = (string) ($row->spell ?? '');
-            if ($spell === '' || !array_key_exists($spell, $catalogue)) {
-                continue;
+            if ($spell !== '') {
+                $spells[$spell] ??= (string) ($row->name ?? $spell);
             }
-            $granted[$spell] ??= (string) ($row->name ?? $spell);
         }
 
-        return $granted;
+        // Most players carry no spell item: skip the catalogue query then
+        if ($spells === []) {
+            return [];
+        }
+
+        return array_intersect_key($spells, $this->actionService->getCastableSpellNames());
     }
 
     /**

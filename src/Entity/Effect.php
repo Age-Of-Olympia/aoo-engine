@@ -39,6 +39,21 @@ class Effect
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $description = null;
 
+    /**
+     * Sentence shown when the effect lands, with {cible}, {acteur} and
+     * {effet} placeholders. Empty = the generic "L'effet X est appliqué…".
+     */
+    #[ORM\Column(type: "string", length: 255, options: ["default" => ""], name: "apply_text")]
+    private string $applyText = '';
+
+    /**
+     * Spendable caracs (PV, PM, A, Mvt) taken from the pool each time the
+     * effect lands, {"pv": -10}, × the intensity — a wound, not a ceiling.
+     * The legacy pv_on_apply column was folded into it and is no longer read.
+     */
+    #[ORM\Column(type: "json", nullable: true, name: "loss_mods")]
+    private ?array $lossMods = null;
+
     /** RPG-Awesome icon class ('ra-small-fire'…). */
     #[ORM\Column(type: "string", length: 50, options: ["default" => "ra-fairy-wand"])]
     private string $icon = 'ra-fairy-wand';
@@ -50,13 +65,13 @@ class Effect
     #[ORM\Column(type: "boolean", options: ["default" => false])]
     private bool $hidden = false;
 
-    /** Carac raised by 1 while the effect lasts (null = none). */
-    #[ORM\Column(type: "string", length: 10, nullable: true, name: "buff_carac")]
-    private ?string $buffCarac = null;
-
-    /** Carac lowered by 1 while the effect lasts (null = none). */
-    #[ORM\Column(type: "string", length: 10, nullable: true, name: "debuff_carac")]
-    private ?string $debuffCarac = null;
+    /**
+     * Caracs moved while the effect lasts: {"e": -1, "f": 2}, each entry
+     * multiplied by the effect's value. The legacy buff_carac / debuff_carac
+     * columns were folded into it by migration and are no longer read.
+     */
+    #[ORM\Column(type: "json", nullable: true, name: "carac_mods")]
+    private ?array $caracMods = null;
 
     /**
      * Cancellation list: applying THIS effect removes each controlled
@@ -239,6 +254,31 @@ class Effect
         $this->description = $description;
     }
 
+    public function getApplyText(): string
+    {
+        return $this->applyText;
+    }
+
+    public function setApplyText(string $text): void
+    {
+        $this->applyText = $text;
+    }
+
+    /** The pools an effect can take from: what has a remaining value. */
+    public const SPENDABLE = ['pv', 'pm', 'a', 'mvt'];
+
+    /** @return array<string, int> spendable carac => signed amount × intensity, zeros dropped */
+    public function getLossMods(): array
+    {
+        return array_filter(array_map('intval', $this->lossMods ?? []));
+    }
+
+    /** @param array<string, int> $mods */
+    public function setLossMods(array $mods): void
+    {
+        $this->lossMods = array_filter(array_map('intval', array_intersect_key($mods, array_flip(self::SPENDABLE))));
+    }
+
     public function getIcon(): string
     {
         return $this->icon;
@@ -259,24 +299,16 @@ class Effect
         $this->hidden = $hidden;
     }
 
-    public function getBuffCarac(): ?string
+    /** @return array<string, int> carac => signed multiplier of the value, zeros dropped */
+    public function getCaracMods(): array
     {
-        return $this->buffCarac;
+        return array_filter(array_map('intval', $this->caracMods ?? []));
     }
 
-    public function setBuffCarac(?string $carac): void
+    /** @param array<string, int> $mods */
+    public function setCaracMods(array $mods): void
     {
-        $this->buffCarac = $carac !== '' ? $carac : null;
-    }
-
-    public function getDebuffCarac(): ?string
-    {
-        return $this->debuffCarac;
-    }
-
-    public function setDebuffCarac(?string $carac): void
-    {
-        $this->debuffCarac = $carac !== '' ? $carac : null;
+        $this->caracMods = array_filter(array_map('intval', $mods));
     }
 
     /** @return string[] Names of the effects this one cancels. */

@@ -67,9 +67,8 @@ $validate = static function () use ($service): ?string {
     if ($breakChance !== '' && (!is_numeric($breakChance) || (int) $breakChance < 0 || (int) $breakChance > 100)) {
         return 'Chance de casse invalide (0-100, ou vide).';
     }
-    foreach (['buff_carac', 'debuff_carac'] as $field) {
-        $carac = trim((string) ($_POST[$field] ?? ''));
-        if ($carac !== '' && !isset(CARACS[$carac])) {
+    foreach (array_keys((array) ($_POST['carac_mods'] ?? [])) as $carac) {
+        if (!isset(CARACS[$carac])) {
             return "Caractéristique inconnue : {$carac}.";
         }
     }
@@ -86,12 +85,17 @@ $validate = static function () use ($service): ?string {
 $applyForm = static function (Effect $effect): void {
     $effect->setLabel(trim((string) $_POST['label']));
     $effect->setDescription(trim((string) ($_POST['description'] ?? '')));
+    $effect->setApplyText(trim((string) ($_POST['apply_text'] ?? '')));
     $effect->setIcon((string) $_POST['icon']);
     $effect->setHidden(booleanCheckbox('hidden'));
     $effect->setBuildableOver(booleanCheckbox('buildable_over'));
     $effect->setMarkTurns((int) ($_POST['mark_turns'] ?? 0));
-    $effect->setBuffCarac(trim((string) ($_POST['buff_carac'] ?? '')));
-    $effect->setDebuffCarac(trim((string) ($_POST['debuff_carac'] ?? '')));
+    // One number per carac; a spendable one goes to the losses when its mode says so.
+    $numbers = array_map('intval', (array) ($_POST['carac_mods'] ?? []));
+    $modes = (array) ($_POST['carac_mode'] ?? []);
+    $losses = array_filter($numbers, static fn (int $n, string $carac): bool => ($modes[$carac] ?? 'max') === 'loss', ARRAY_FILTER_USE_BOTH);
+    $effect->setLossMods($losses);
+    $effect->setCaracMods(array_diff_key($numbers, $losses));
 
     foreach (['setRollAttackMod' => 'roll_attack_mod', 'setRollDefenseMod' => 'roll_defense_mod',
               'setDamageDealtMod' => 'damage_dealt_mod', 'setDamageTakenMod' => 'damage_taken_mod',

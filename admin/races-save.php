@@ -101,7 +101,16 @@ $validate = static function (): ?string {
 $applyForm = static function (Race $race) use ($face, $action): array {
     $notice = '';
 
+    // Instances named after the type (placed from the map, never renamed)
+    // follow its label.
+    $oldLabel = $race->getLabel();
     $race->setLabel(trim((string) $_POST['label']));
+    if ($action === 'update' && $oldLabel !== $race->getLabel()) {
+        \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()->executeStatement(
+            'UPDATE players SET name = ? WHERE race = ? AND name = ?',
+            [$race->getLabel(), $race->getName(), $oldLabel]
+        );
+    }
     $race->setDescription(trim((string) ($_POST['description'] ?? '')));
     // Sorte : personnage (défaut) ou structure. Une structure n'est jamais
     // proposée à l'inscription, quel que soit l'état de la case Jouable.
@@ -126,6 +135,10 @@ $applyForm = static function (Race $race) use ($face, $action): array {
     if ($race instanceof \App\Entity\StructureType) {
         $race->setReadableFromAfar(booleanCheckbox('readable_from_afar'));
         $race->setDefaultText(trim((string) ($_POST['default_text'] ?? '')));
+        $defaultDialog = trim((string) ($_POST['default_dialog'] ?? ''));
+        $race->setDefaultDialog(
+            $defaultDialog !== '' && (new \App\Service\DialogService())->gameDialogExists($defaultDialog) ? $defaultDialog : ''
+        );
 
         /* Three states: empty means "follow my family" and must stay null.
          * Reading it as "no" would cut the type off its family on the first
@@ -242,7 +255,6 @@ $applyForm = static function (Race $race) use ($face, $action): array {
     foreach (array_keys(CARACS) as $key) {
         $race->setCarac($key, (int) $_POST['carac'][$key]);
     }
-    $race->setCapacity((int) ($_POST['capacity'] ?? 0));
 
     return ['notice' => $notice, 'newFamily' => $newFamily, 'rawHarvestFix' => $rawHarvestFix];
 };
@@ -277,7 +289,7 @@ if ($action === 'create') {
     }
     if ($service->getRaceByName($name) !== null) {
         setFlash('warning', $structureMode
-            ? "Le type « {$name} » existe déjà (ou une race porte déjà ce code)."
+            ? "Le type « {$name} » existe déjà (ou une race a déjà ce code)."
             : "La race « {$name} » existe déjà.");
         redirectTo($backPage);
     }

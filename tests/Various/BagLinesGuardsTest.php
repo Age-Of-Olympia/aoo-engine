@@ -52,11 +52,13 @@ class BagLinesGuardsTest extends LegacyPlayerFixtureTestCase
         $race = (string) $this->link->fetchOne('SELECT race FROM players WHERE id = ?', [$playerId]);
         $before = (int) $this->link->fetchOne('SELECT capacity FROM races WHERE name = ?', [$race]);
         $this->link->executeStatement('UPDATE races SET capacity = ? WHERE name = ?', [$ceiling, $race]);
+        $this->refreshRaceCatalog();
 
         try {
             $body();
         } finally {
             $this->link->executeStatement('UPDATE races SET capacity = ? WHERE name = ?', [$before, $race]);
+            $this->refreshRaceCatalog();
         }
     }
 

@@ -384,10 +384,10 @@ class Ui{
                             height="150"
                         />
                     </div>
-                    <div class="preview-state" style="color:#7a4a12;font-weight:bold;"></div>
                 </div>
                 <div class="preview-text">
                     '. $defaultItem->data->text .'
+                    <div class="preview-state" style="color:#7a4a12;font-weight:bold;"></div>
                 </div>
                 <div class="preview-action">
                 </div>
@@ -448,6 +448,8 @@ class Ui{
                     . $sectionTitle . '</td></tr>';
             }
 
+        $strikeByItem = (new \App\Service\ItemEffectService())->mapForItems(array_column($sectionRows, 'id'));
+
         foreach($sectionRows as $row){
 
 
@@ -455,7 +457,7 @@ class Ui{
 
             $item->get_data();
 
-            $caracs = Item::get_item_carac($item->data);
+            $caracs = Item::get_item_carac($item->data, $strikeByItem[(int) $row->id] ?? []);
 
 
             $itemName = Item::get_formatted_name(ucfirst($item->data->name), $row);
@@ -477,7 +479,7 @@ class Ui{
             if($stateLine !== ''){
 
                 $stateAttr = \App\Service\ItemInstanceService::isBroken((int) $row->durability)
-                    ? 'Brisé — ne contribue plus ses caractéristiques.'
+                    ? 'Brisé : ses bonus ne s\'appliquent plus. À recycler.'
                     : 'Durabilité '. (int) $row->durability .'/'. (int) $row->durability_max;
             }
 
@@ -672,7 +674,7 @@ class Ui{
         window.n =    <?php echo $defaultItemN ?>;
         window.price =    1;
         </script>
-        <script src="js/inventUi.js?v=20260821"></script>
+        <script src="js/inventUi.js?v=20260920"></script>
         <?php
 
         return Str::minify(ob_get_clean());

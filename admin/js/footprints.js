@@ -87,7 +87,7 @@
         cell.dataset.y = y;
 
         if (piece === undefined) {
-            cell.title = 'Cliquer pour ajouter une case à la figure.';
+            cell.title = 'Clic : ajout de la case à la figure.';
             cell.addEventListener('click', this.onAdd.bind(this, x, y));
             cell.addEventListener('dragover', this.onDragOver.bind(this));
             cell.addEventListener('dragleave', this.onDragLeave.bind(this));
@@ -103,8 +103,8 @@
         cell.dataset.piece = piece;
         cell.draggable = true;
         cell.title = 'Morceau ' + piece + ' — '
-            + (blocks ? 'barre le chemin' : 'on peut passer')
-            + '. Cliquer pour changer, faire glisser pour déplacer, clic droit pour retirer.';
+            + (blocks ? 'passage bloqué' : 'passage libre')
+            + '. Clic : changer. Glisser : déplacer. Clic droit : retirer.';
         cell.setAttribute('aria-pressed', blocks ? 'true' : 'false');
 
         var url = this.state.pieces[piece];

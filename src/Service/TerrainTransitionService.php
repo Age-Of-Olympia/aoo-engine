@@ -823,6 +823,7 @@ class TerrainTransitionService
                 'png' => imagecreatefrompng($path),
                 'webp' => imagecreatefromwebp($path),
                 'gif' => imagecreatefromgif($path),
+                default => false, // svg: GD cannot rasterize it, no blend
             };
             if (!$image) {
                 break;

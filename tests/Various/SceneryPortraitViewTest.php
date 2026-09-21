@@ -3,6 +3,8 @@
 namespace Tests\Various;
 
 use App\Service\Map\EntitySpriteService;
+use App\Service\Map\SceneryObjectService;
+use App\Service\RaceService;
 use App\View\Observe\SceneryPortraitView;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
@@ -75,6 +77,9 @@ class SceneryPortraitViewTest extends LegacyPlayerFixtureTestCase
         EntitySpriteService::forget();
 
         try {
+            /* A figure is a TYPE: its kind says where its picture lives. */
+            (new SceneryObjectService($this->link))->ensureType($family);
+
             $entity = $this->createRealPlayer('GmPortraitCompose');
             $this->link->executeStatement(
                 'UPDATE players SET race = ? WHERE id = ?',
@@ -92,6 +97,8 @@ class SceneryPortraitViewTest extends LegacyPlayerFixtureTestCase
         } finally {
             @unlink($sprite);
             EntitySpriteService::forget();
+            $this->link->executeStatement('DELETE FROM races WHERE name = ?', [$family]);
+            RaceService::clearCache();
         }
     }
 

@@ -76,25 +76,40 @@ class ItemStatsSeeder
         return array_fill_keys(array_map('strval', $names), true);
     }
 
-    /** @return array{seeded: int, missing: int, kept: int, skipped: list<string>} */
+    /** @return array{seeded: int, missing: int, kept: int, labelled: int, skipped: list<string>} */
     public function seed(Connection $conn, string $projectRoot): array
     {
         $seeded = 0;
         $missing = 0;
         $kept = 0;
+        $labelled = 0;
 
         $columns = $this->existingColumns($conn);
         /** @var array<string, true> $skipped */
         $skipped = [];
 
-        foreach ($conn->fetchAllAssociative('SELECT id, name, private, stats_in_db FROM items') as $row) {
+        // Replayed from an older migration, the label column may not exist yet.
+        $labelSelect = isset($columns['label']) ? ', label' : ", '' AS label";
+        foreach ($conn->fetchAllAssociative('SELECT id, name, private, stats_in_db' . $labelSelect . ' FROM items') as $row) {
+            $dir = ((int) $row['private']) ? 'private' : 'public';
+            $path = $projectRoot . '/datas/' . $dir . '/items/' . $row['name'] . '.json';
+
+            /* The display name was never copied (the "name" key is the
+             * technical one in the column): fill it once, kept rows too. */
+            if (isset($columns['label']) && (string) $row['label'] === '' && is_file($path)) {
+                $json = json_decode((string) file_get_contents($path), true);
+                $label = is_array($json) ? trim((string) ($json['name'] ?? '')) : '';
+                if ($label !== '' && strtolower($label) !== strtolower((string) $row['name'])) {
+                    $conn->executeStatement('UPDATE items SET label = ? WHERE id = ?', [mb_substr($label, 0, 100), (int) $row['id']]);
+                    $labelled++;
+                }
+            }
+
             if ((int) $row['stats_in_db'] === 1) {
                 $kept++;
                 continue;
             }
 
-            $dir = ((int) $row['private']) ? 'private' : 'public';
-            $path = $projectRoot . '/datas/' . $dir . '/items/' . $row['name'] . '.json';
             if (!is_file($path)) {
                 $missing++;
                 continue;
@@ -164,6 +179,7 @@ class ItemStatsSeeder
             'seeded' => $seeded,
             'missing' => $missing,
             'kept' => $kept,
+            'labelled' => $labelled,
             'skipped' => array_keys($skipped),
         ];
     }

@@ -11,22 +11,21 @@ use Doctrine\DBAL\Connection;
 use RuntimeException;
 
 /**
- * Importe des bundles de plans ({@see PlanExporter}) en create-or-replace :
- * un plan absent est créé, un plan existant est remplacé — mais seulement
- * son contenu authoré. Les lignes construites par des joueurs (player_id)
- * et map_items (loot runtime) ne sont jamais touchées, les coords
- * existantes sont conservées (les FK qui les visent — joueurs, logs —
- * restent valides), les manquantes sont créées.
+ * Imports plan bundles ({@see PlanExporter}) as create-or-replace: a missing
+ * plan is created, an existing one is replaced — but only its authored
+ * content. Player-built rows (player_id) and map_items (runtime loot) are
+ * never touched, existing coords are kept (the FKs pointing at them —
+ * players, logs — stay valid), missing ones are created.
  *
- * Les écritures map_* passent par Classes\Db, qui enveloppe la même
- * connexion native que DBAL : la transaction du squelette les couvre.
+ * map_* writes go through Classes\Db, which wraps the same native
+ * connection as DBAL: the skeleton's transaction covers them.
  *
- * Le fichier JSON du plan est remplacé APRÈS le commit : une base importée
- * sans JSON se répare en réimportant, l'inverse non.
+ * The plan's JSON file is replaced AFTER the commit: a database imported
+ * without its JSON is fixed by importing again, the reverse is not.
  */
 final class PlanImporter extends AbstractDbalImporter
 {
-    /** Taille des lots d'INSERT multi-lignes (précédent : mapcmd.php). */
+    /** Multi-row INSERT batch size (same value as TiledMapService). */
     private const INSERT_BATCH = 500;
 
     private ?Db $db;
@@ -36,7 +35,7 @@ final class PlanImporter extends AbstractDbalImporter
     public function __construct(?Db $db = null, ?PlanConfigService $planConfig = null, ?PlanAdminService $planAdmin = null)
     {
         parent::__construct();
-        // Lazy : l'instanciation ne doit pas ouvrir de connexion DB
+        // Lazy: instantiation must not open a DB connection
         $this->db = $db;
         $this->planConfig = $planConfig;
         $this->planAdmin = $planAdmin;
@@ -47,7 +46,7 @@ final class PlanImporter extends AbstractDbalImporter
         return 'plan';
     }
 
-    /** JSON après commit (les fichiers ne se rollbackent pas). */
+    /** JSON after the commit (files do not roll back). */
     protected function afterImport(array $payloads): void
     {
         foreach ($payloads as $payload) {
@@ -58,11 +57,11 @@ final class PlanImporter extends AbstractDbalImporter
     }
 
     /**
-     * Valide et classe chaque payload (create/update/reject/warn) sans rien
-     * écrire.
+     * Validates and classifies each payload (create/update/reject/warn)
+     * without writing anything.
      *
      * @param array<int, mixed> $objects
-     * @return list<array{plan: string, config: ?array, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>}>
+     * @return list<array{plan: string, config: ?array, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>, buildings: ?list<array<string, mixed>>}>
      */
     protected function collect(array $objects, ImportReport $report): array
     {
@@ -93,8 +92,8 @@ final class PlanImporter extends AbstractDbalImporter
     }
 
     /**
-     * @return array{plan: string, config: ?array, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>}
-     * @throws RuntimeException message utilisateur (français)
+     * @return array{plan: string, config: ?array, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>, buildings: ?list<array<string, mixed>>}
+     * @throws RuntimeException user-facing message (French)
      */
     private function validate(mixed $object): array
     {
@@ -126,8 +125,24 @@ final class PlanImporter extends AbstractDbalImporter
         if (!is_array($layers)) {
             throw new RuntimeException('« layers » doit être un objet couche => lignes.');
         }
-        // Bundles exportés avant le renommage map_walls → map_resources
+        // Bundles exported before the map_walls → map_resources rename
         $layers = TiledMapService::normalizeLegacyLayerKeys($layers);
+
+        // Absent from a bundle exported before buildings travelled: left alone.
+        $buildings = $layers[TiledMapService::BUILDINGS_LAYER] ?? null;
+        unset($layers[TiledMapService::BUILDINGS_LAYER]);
+        if ($buildings !== null) {
+            if (!is_array($buildings)) {
+                throw new RuntimeException('Les lignes de la couche buildings doivent être une liste.');
+            }
+            foreach ($buildings as $row) {
+                TiledMapService::validateIncomingRow(TiledMapService::BUILDINGS_LAYER, $row);
+                if (!isset($row['z']) || !is_numeric($row['z'])) {
+                    throw new RuntimeException('Ligne sans z dans la couche buildings en ' . $row['x'] . ',' . $row['y']);
+                }
+            }
+        }
+
         foreach ($layers as $layer => $rows) {
             if (!isset(TiledMapService::AUTHORABLE_LAYERS[$layer])) {
                 throw new RuntimeException('Couche inconnue : ' . $layer);
@@ -142,19 +157,26 @@ final class PlanImporter extends AbstractDbalImporter
                 }
             }
         }
-        // Couche absente du bundle = couche vide : le bundle porte l'état complet
+        // A layer missing from the bundle is an empty layer: the bundle carries the whole state
         foreach (array_keys(TiledMapService::AUTHORABLE_LAYERS) as $layer) {
             $layers[$layer] ??= [];
         }
 
-        return ['plan' => $plan, 'config' => $config, 'coords' => $coords, 'layers' => $layers];
+        return ['plan' => $plan, 'config' => $config, 'coords' => $coords, 'layers' => $layers, 'buildings' => $buildings];
     }
 
-    /** @param array{plan: string, layers: array<string, array>} $payload */
+    /** @param array{plan: string, layers: array<string, array>, buildings: ?list<array<string, mixed>>} $payload */
     private function classify(array $payload, ImportReport $report): void
     {
         $plan = $payload['plan'];
         $planAdmin = $this->planAdmin ??= new PlanAdminService();
+
+        foreach (array_keys(TiledMapService::ENTITY_LAYERS) as $layer) {
+            $unknown = TiledMapService::reconcilerFor($layer)->unknownTypes($payload['layers'][$layer]);
+            if ($unknown !== []) {
+                $report->warn($plan, 'Types absents du catalogue, non posés (' . $layer . ') : ' . implode(', ', $unknown) . '.');
+            }
+        }
 
         if (!$planAdmin->planExists($plan)) {
             $report->addCreated($plan);
@@ -175,17 +197,17 @@ final class PlanImporter extends AbstractDbalImporter
     }
 
     /**
-     * Remplace le contenu authoré d'un plan par celui du payload, dans la
-     * transaction du lot.
+     * Replaces a plan's authored content with the payload's, inside the
+     * batch transaction.
      *
-     * @param array{plan: string, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>} $payload
+     * @param array{plan: string, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>, buildings: ?list<array<string, mixed>>} $payload
      */
     protected function apply(Connection $conn, array $payload, ImportReport $report): void
     {
         $plan = $payload['plan'];
         $db = $this->db();
 
-        // 1. Purge du contenu authoré (les lignes joueur restent)
+        // 1. Purge the authored content (player rows stay)
         foreach (array_keys(TiledMapService::AUTHORABLE_LAYERS) as $layer) {
             if (isset(TiledMapService::ENTITY_LAYERS[$layer])) {
                 continue;
@@ -200,12 +222,12 @@ final class PlanImporter extends AbstractDbalImporter
             );
         }
 
-        // 2. Coords : celles du payload + celles des lignes, création en lots
+        // 2. Coords: the payload's plus the rows', created in batches
         $needed = [];
         foreach ($payload['coords'] as [$x, $y, $z]) {
             $needed[$x . '|' . $y . '|' . $z] = [$x, $y, $z];
         }
-        foreach ($payload['layers'] as $rows) {
+        foreach ($payload['layers'] + ['buildings' => $payload['buildings'] ?? []] as $rows) {
             foreach ($rows as $row) {
                 $key = (int) $row['x'] . '|' . (int) $row['y'] . '|' . (int) $row['z'];
                 $needed[$key] ??= [(int) $row['x'], (int) $row['y'], (int) $row['z']];
@@ -226,7 +248,7 @@ final class PlanImporter extends AbstractDbalImporter
             $coordsIds = $this->loadCoordsIds($plan);
         }
 
-        // 3. Insertion des couches en lots
+        // 3. Insert the layers in batches
         foreach ($payload['layers'] as $layer => $rows) {
             if (isset(TiledMapService::ENTITY_LAYERS[$layer])) {
                 continue;
@@ -235,22 +257,20 @@ final class PlanImporter extends AbstractDbalImporter
             $this->insertLayerRows($layer, $rows, $coordsIds);
         }
 
-        /* 4. Les ressources sont des entités : on COMPARE au lieu de remplacer.
-         * Une ressource que le bundle redessine à l'identique garde son id et
-         * son état — épuisée, elle le reste et repousse à son heure. Le
-         * réconciliateur écrit sur la connexion Doctrine, qui est celle que
-         * Classes\Db enveloppe : même transaction, même rollback. */
+        /* 4. Resources, plants and roads are entities: COMPARE instead of
+         * replacing. One the bundle redraws identically keeps its id and its
+         * state — exhausted, it stays so and regrows in its own time. The
+         * reconciler writes on the Doctrine connection, the one Classes\Db
+         * wraps: same transaction, same rollback. */
         foreach (array_keys(TiledMapService::ENTITY_LAYERS) as $layer) {
-            /* Sans niveau : un bundle redessine le plan entier. */
-            $result = TiledMapService::reconcilerFor($layer)
-                ->reconcile($plan, $payload['layers'][$layer] ?? []);
+            /* No level: a bundle redraws the whole plan. */
+            // Unknown types were reported by classify(): same rows, same answer.
+            TiledMapService::reconcilerFor($layer)->reconcile($plan, $payload['layers'][$layer] ?? []);
+        }
 
-            if ($result['unknown'] !== []) {
-                $report->warn(
-                    $plan,
-                    'Types absents du catalogue, non posés (' . $layer . ') : '
-                        . implode(', ', $result['unknown']) . '.'
-                );
+        if ($payload['buildings'] !== null) {
+            foreach ((new TiledMapService())->importDecorBuildings($plan, $payload['buildings']) as $refused) {
+                $report->warn($plan, 'Bâtiment non posé : ' . $refused);
             }
         }
     }
@@ -265,8 +285,8 @@ final class PlanImporter extends AbstractDbalImporter
             return;
         }
 
-        // Colonnes uniformes par couche (INSERT multi-lignes) : les extras
-        // portables de AUTHORABLE_LAYERS, avec les défauts du schéma
+        // Uniform columns per layer (multi-row INSERT): the portable extras
+        // of AUTHORABLE_LAYERS, with the schema defaults
         $extras = array_values(array_filter(
             TiledMapService::AUTHORABLE_LAYERS[$layer]['columns'],
             fn(string $column) => $column !== 'player_id' && $column !== 'endTime'
@@ -292,25 +312,25 @@ final class PlanImporter extends AbstractDbalImporter
         }
     }
 
-    /** Valeur portable d'une colonne extra, défauts alignés sur le schéma / insertRow(). */
+    /** Portable value of an extra column, defaults aligned on the schema / insertRows(). */
     private function extraValue(string $layer, string $column, array $row): int|string
     {
         if ($column === 'damages') {
-            // Même défaut authoré que TiledMapService::insertRow() : -1
-            // (récoltable) pour les ressources du catalogue, sinon 0
+            // Same authored default as TiledMapService::insertRows(): -1
+            // (harvestable) for catalog resources, 0 otherwise
             return isset($row['damages']) && is_numeric($row['damages'])
                 ? (int) $row['damages']
                 : (StructureTypeService::isHarvestable((string) $row['name']) ? -1 : 0);
         }
-        if ($column === 'foreground') {
-            return isset($row['foreground']) && is_numeric($row['foreground']) ? (int) $row['foreground'] : 0;
+        if ($column === 'foreground' || $column === 'rotation') {
+            return isset($row[$column]) && is_numeric($row[$column]) ? (int) $row[$column] : 0;
         }
 
         // params (plants, triggers, dialogs)
         return (string) ($row[$column] ?? '');
     }
 
-    /** @return array<string, int> "x|y|z" => coords_id du plan entier */
+    /** @return array<string, int> "x|y|z" => coords_id of the whole plan */
     private function loadCoordsIds(string $plan): array
     {
         $res = $this->db()->exe('SELECT id, x, y, z FROM coords WHERE plan = ?', array($plan));
@@ -325,9 +345,9 @@ final class PlanImporter extends AbstractDbalImporter
 
     private function countPlayerBuiltRows(string $plan): int
     {
-        /* Ce qu'un joueur a construit n'est plus une ligne de couche mais une
-         * entité bâtiment : sans ce compte, l'avertissement « préservées, hors
-         * import » se tairait sur les seules constructions qui restent. */
+        /* What a player built is a building entity, not a layer row: without
+         * this count the "préservées, hors import" warning would stay silent
+         * on the only constructions left. */
         $built = $this->db()->exe(
             'SELECT COUNT(*) n FROM buildings b
                JOIN players p ON p.id = b.player_id

@@ -62,17 +62,11 @@ function race_image_path(string $name, TypeEditorFace $face): string
     }
 }
 
-/** Page du stock d'images correspondant à la section courante. */
-function race_images_page(TypeEditorFace $face): string
-{
-    return $face->imagesPage();
-}
-
 /** La vignette, cliquable vers le stock d'images de la race / du type. */
 function race_image_cell(string $name, TypeEditorFace $face): string
 {
     $path = race_image_path($name, $face);
-    $href = race_images_page($face) . '?type=avatar&amp;race=' . e(urlencode($name));
+    $href = $face->imagesPage() . '?type=avatar&amp;race=' . e(urlencode($name));
 
     $inner = $path !== ''
         ? '<img src="/' . e($path) . '" height="36" loading="lazy" alt=""'
@@ -128,14 +122,9 @@ function race_character_counts(array $counts): string
  */
 function bleed_options(): array
 {
-    $effectService = new \App\Service\EffectService();
-
     $out = [];
-    foreach (glob($_SERVER['DOCUMENT_ROOT'] . '/img/elements/*.{png,webp,gif}', GLOB_BRACE) ?: [] as $file) {
-        $name = pathinfo($file, PATHINFO_FILENAME);
-        if ($effectService->exists($name)) {
-            $out[$name] = $name;
-        }
+    foreach ((new \App\Service\MapElementService())->namesWithEffect() as $name) {
+        $out[$name] = $name;
     }
     ksort($out);
     return $out;
@@ -288,6 +277,7 @@ function race_render_form(?Race $race, string $csrfToken, TypeEditorFace $face):
     $isEdit = $race !== null;
     $action = $isEdit ? 'update' : 'create';
     $noun = $face->singular;
+    $dialogNames = $face->isStructure() ? array_keys((new \App\Service\DialogService())->listGameDialogs()) : [];
     $title = $isEdit
         ? $noun . ' : ' . e($race->getLabel()) . ' <span class="text-muted">(' . e($race->getName()) . ')</span>'
         : 'Nouveau ' . strtolower($noun);
@@ -304,12 +294,16 @@ function race_render_form(?Race $race, string $csrfToken, TypeEditorFace $face):
     foreach (CARACS as $key => $short) {
         $label = CARACS_TXT[$key] ?? $short;
         /* A new harvestable starts at the admin's default, so creating a
-           type does not silently make a one-blow tree. */
-        $value = $isEdit
-            ? $race->getCarac($key)
-            : ($key === 'pv' && $face->key === \App\View\Admin\TypeEditorFace::RESOURCE
-                ? (new \App\Service\Map\HarvestDefaultsService())->pv()
-                : 0);
+           type does not silently make a one-blow tree; a new people gets
+           the 10-line bag every race has. */
+        $value = 0;
+        if ($isEdit) {
+            $value = $race->getCarac($key);
+        } elseif ($key === 'pv' && $face->key === \App\View\Admin\TypeEditorFace::RESOURCE) {
+            $value = (new \App\Service\Map\HarvestDefaultsService())->pv();
+        } elseif ($key === 'sac' && !$face->isStructure()) {
+            $value = 10;
+        }
 
         /* A structure had only its PV editable, which was true of walls and
          * false as soon as a building defends itself or a decor takes a hit.
@@ -321,14 +315,6 @@ function race_render_form(?Race $race, string $csrfToken, TypeEditorFace $face):
             . ' value="' . (int) $value . '" required>'
             . '</div>';
     }
-
-    /* The bag joins the caracs grid: its lines are a stat of the
-     * people, like its legs or its eyes. 0 = unlimited. */
-    $caracInputs .= '<div class="form-group col-md-3 col-6">'
-        . '<label title="Contenance du sac, en lignes de contenu (une pile d\'un objet = une ligne, un exemplaire = une ligne ; l\'or et l\'équipé ne comptent pas). 0 = sans limite.">Sac</label>'
-        . '<input type="number" class="form-control" name="capacity" min="0"'
-        . ' value="' . (int) ($isEdit ? $race->getCapacity() : 0) . '">'
-        . '</div>';
 
     $starterActions = $isEdit ? implode("\n", $race->getStarterActionNames()) : '';
     $spells = $isEdit ? implode("\n", $race->getSpellNames()) : '';
@@ -403,7 +389,7 @@ HTML;
             $isEdit && $race->getBleeds() !== '' ? $race->getBleeds() : null,
             '— rien —',
             'class="form-control form-control-sm d-inline-block" style="width:auto"'
-            . ' title="Élément versé au sol quand l\'entité est blessée — rien : un mur ne saigne pas."'
+            . ' title="Élément déposé au sol quand l\'entité est blessée ; rien pour un mur."'
         )
         . '</label> '
         // Structures only; the character face posts a hidden default. The
@@ -423,7 +409,7 @@ HTML;
                         . ' data-original-nature="' . e($race->getStructureNature()) . '"'
                         . ' onchange="if (this.value !== this.dataset.originalNature'
                         . ' &amp;&amp; !confirm(\'Changer de catégorie reclasse le type dans les palettes'
-                        . ' de carte et efface son rendement (récolte) éventuel — le reste (PV, images,'
+                        . ' de carte et efface son rendement (récolte) éventuel ; le reste (PV, images,'
                         . ' emprise) ne change pas. Continuer ?\')) { this.value = this.dataset.originalNature; }"'
                         . ' title="Reclasse le type : palette carte, formulaire affiché, et efface le'
                         . ' rendement (récolte) si le type quitte Ressource/Plante."'
@@ -450,14 +436,14 @@ HTML;
         // Coché par défaut pour un type (un mur arrête la flèche), pas
         // pour une race de personnage (les tirs passent, sauf exception).
         . checked($isEdit ? $race->blocksProjectiles() : $face->isStructure())
-        . ' title="Décoché (défaut des personnages) : les tirs passent. Coché : fait écran sur la ligne de tir."> Bloque les tirs</label> '
+        . ' title="Décoché (défaut des personnages) : les tirs passent. Coché : bloque la ligne de tir."> Bloque les tirs</label> '
         . ($face->isStructure() ? '' : '<label class="mr-3"><input type="checkbox" name="playable" '
             . checked($isEdit && $race->getPlayable()) . '> Jouable (proposée à l\'inscription)</label>')
         /* Three states, not two: "selon la famille" is not "no". A plain
            yes/no would drop the distinction on the first save. */
         . ($face->isStructure()
             ? '<label class="mr-3">Réparable <select name="repairable" class="form-control form-control-sm d-inline-block w-auto"'
-                . ' title="Ce qui a été bâti se répare. Un rocher, un décor ou une fleur, non — sauf à le dire ici.">'
+                . ' title="Une construction est réparable. Un rocher, un décor ou une fleur ne le sont pas, sauf indication ici.">'
                 . '<option value=""' . (!$isEdit || !($race instanceof StructureType) || $race->getRepairableOverride() === null ? ' selected' : '') . '>'
                 . 'Selon la famille'
                 . ($isEdit && $race instanceof StructureType
@@ -483,15 +469,15 @@ HTML;
                 return ($isBuilding ? '<label class="mr-3">Travail de construction '
                     . '<input type="number" class="form-control form-control-sm d-inline-block" style="width:80px" name="build_work"'
                     . ' min="0" max="999" value="' . ($isEdit ? (int) $race->getBuildWork() : 0) . '"'
-                    . ' title="Unités de travail PAR CASE pour le dresser — l\'emprise multiplie. 0 : construit en un geste.'
-                    . ' Sinon, construire ouvre un chantier fermé, à PV plancher, que l\'action travailler fait avancer.">'
+                    . ' title="Unités de travail par case pour le construire (multipliées par le nombre de cases de l\'emprise). 0 : construit en une action.'
+                    . ' Sinon, construire ouvre un chantier fermé, aux PV minimum, que l\'action travailler fait avancer.">'
                     . ' <small class="text-muted">par case, 0 = instantané</small></label> ' : '')
                     . '<label class="mr-3">Emprise '
                     . '<input type="number" class="form-control form-control-sm d-inline-block" style="width:64px" name="fp_w"'
                     . ' min="1" max="8" value="' . $w . '" title="Largeur en cases"> × '
                     . '<input type="number" class="form-control form-control-sm d-inline-block" style="width:64px" name="fp_h"'
                     . ' min="1" max="8" value="' . $h . '" title="Hauteur en cases">'
-                    . ' <small class="text-muted">cases — figure ajourée, cases qui barrent : '
+                    . ' <small class="text-muted">cases ; figure à trous, cases bloquantes : '
                     . '<a href="' . $shapeLink . '">Formes</a></small></label> '
                     . '<input type="hidden" name="fp_prev_w" value="' . ($declared !== null ? $w : 0) . '">'
                     . '<input type="hidden" name="fp_prev_h" value="' . ($declared !== null ? $h : 0) . '">';
@@ -499,14 +485,14 @@ HTML;
         . ($face->isStructure()
             ? '<label class="mr-3"><input type="checkbox" name="readable_from_afar" '
                 . checked($race instanceof StructureType && $race->isReadableFromAfar())
-                . ' title="Coché : ce qui est inscrit sur ce type d\'objet se lit sans s\'approcher (pancarte, enseigne).'
+                . ' title="Coché : l\'inscription de ce type d\'objet est lisible de loin (pancarte, enseigne).'
                 . ' Décoché : il faut être sur une case voisine (plaque gravée, épitaphe)."> Inscription lisible de loin</label> '
             : '')
         . '<label><input type="checkbox" name="hidden" '
         . checked($isEdit && $race->getHidden()) . '> Cachée</label>'
-        . '<small class="form-text text-muted">Cachée : les personnages de cette race ne définissent pas'
-        . ' le « premier joueur » qui sert de référence au bonus d\'XP de rattrapage'
-        . ' (un perso admin très haut niveau ne doit pas gonfler le bonus de tout le serveur).</small>'
+        . '<small class="form-text text-muted">Cachée : les personnages de cette race ne sont pas pris en compte'
+        . ' pour le « premier joueur » qui sert de référence au bonus d\'XP de rattrapage'
+        . ' (un personnage admin de très haut niveau ne doit pas augmenter le bonus de tout le serveur).</small>'
         . '</div></div>'
         /* Le rendement du TYPE : ce qu'un exemplaire posé rend, partout, sans
            qu'on ait à le déclarer plan par plan. Un plan peut encore dévier
@@ -551,22 +537,32 @@ HTML;
                         . ' value="' . ($race instanceof HarvestableInterface && $race->getHarvestRegrow() !== null ? (int) $race->getHarvestRegrow() : '') . '"'
                         . ' min="1" max="1000" placeholder="repousse (1-1000)"></div>'
                     : '')
-                . '</div><small class="form-text text-muted">Laissé vide, ce type ne rend rien :'
-                . ' fouiller reviendra les mains vides, sauf si un plan le déclare.'
+                . '</div><small class="form-text text-muted">Vide : ce type ne rend rien et fouiller ne rapporte rien,'
+                . ' sauf rendement déclaré par un plan.'
                 . ($face->isResource()
-                    ? ' Les dés sont volontairement dissemblables — épuisement sur 100, repousse sur 1000.'
+                    ? ' Les deux échelles sont différentes : épuisement sur 100, repousse sur 1000.'
                     : ' Les deux nombres sont la quantité rendue, du minimum au maximum.'
                         . ' Une plante cueillie disparaît : elle ne s\'épuise pas et ne repousse pas sur place.'
-                        . ' Sa repousse se règle encore sur l\'objet (grow_rate) et par les déclencheurs « grow ».')
+                        . ' Sa repousse se configure encore sur l\'objet (grow_rate) et par les déclencheurs « grow ».')
                 . '</small></div>'
             : '')
         . ($face->isStructure()
             ? '<div class="form-group col-12"><label>Inscription par défaut</label>'
                 . '<textarea class="form-control" name="default_text" rows="2"'
-                . ' placeholder="Ce qu\'un exemplaire NEUF de ce type porte déjà d\'inscrit. Vide : il naît muet.">'
+                . ' placeholder="Inscription d\'un exemplaire neuf de ce type. Vide : aucune inscription.">'
                 . e($race instanceof StructureType ? $race->getDefaultText() : '') . '</textarea>'
-                . '<small class="form-text text-muted">Copiée à la pose, puis libre :'
-                . ' changer ce défaut ne réécrit pas ce qui est déjà posé.</small></div>'
+                . '<small class="form-text text-muted">Copiée à la pose, puis modifiable sur l\'exemplaire :'
+                . ' changer ce défaut ne modifie pas les exemplaires déjà posés.</small></div>'
+                . '<div class="form-group col-md-4"><label>Dialogue par défaut</label><div>'
+                . formSelect(
+                    'default_dialog',
+                    array_combine($dialogNames, $dialogNames),
+                    $race instanceof StructureType && $race->getDefaultDialog() !== '' ? $race->getDefaultDialog() : null,
+                    '— aucun —',
+                    'class="form-control form-control-sm"'
+                )
+                . '</div><small class="form-text text-muted">Copié sur chaque exemplaire neuf, comme l\'inscription ;'
+                . ' modifiable ensuite bâtiment par bâtiment.</small></div>'
             : '')
         . '<div class="form-group col-12"><label>Description</label>'
         . '<textarea class="form-control" name="description" rows="5">'
@@ -577,10 +573,10 @@ HTML;
         . ($isEdit
             ? '<div class="form-group col-md-2"><label>' . ($face->isStructure() ? 'Image' : 'Avatar') . '</label>'
                 . '<div>' . race_image_cell($race->getName(), $face) . '</div>'
-                . '<a class="btn btn-sm btn-outline-secondary mt-1" href="' . race_images_page($face)
+                . '<a class="btn btn-sm btn-outline-secondary mt-1" href="' . $face->imagesPage()
                 . '?type=avatar&amp;race=' . e(urlencode($race->getName())) . '">Gérer les images</a>'
                 . '<small class="form-text text-muted">Première image du stock'
-                . ($face->isStructure() ? ' — le sprite des entités posées.' : ' — les joueurs choisissent en jeu.')
+                . ($face->isStructure() ? ' : sprite des entités posées.' : ' ; les joueurs choisissent leur image en jeu.')
                 . '</small></div>'
             : '')
         . '<div class="form-group col-md-2"><label>Couleur de fond</label>'
@@ -593,7 +589,7 @@ HTML;
         . '<div class="form-group col-md-2"><label>Couleur de blessure</label>'
         . '<input type="color" class="form-control" name="wound_color" value="'
         . e($isEdit ? $race->getWoundColor() : \App\Service\RaceService::DEFAULT_WOUND_COLOR) . '">'
-        . '<small class="form-text text-muted">Voile des PV perdus (portrait, carte) — rouge sang par défaut, bronze pour une structure par exemple.</small></div>'
+        . '<small class="form-text text-muted">Voile des PV perdus (portrait, carte) : rouge sang par défaut, bronze pour une structure par exemple.</small></div>'
         . ($face->isStructure()
             ? '<input type="hidden" name="faction" value="' . e($isEdit ? $race->getFaction() : '') . '">'
                 . '<input type="hidden" name="plan" value="' . e($isEdit ? $race->getPlan() : '') . '">'
@@ -655,7 +651,7 @@ function race_render_delete_zone(Race $race, string $csrfToken): string
         // (ou remisées aux limbes), une race par ses personnages.
         $guard = $face->isStructure()
             ? 'Suppression impossible : <strong>' . $players . '</strong> entité(s) de ce type existent'
-                . ' encore — posées sur le plateau ou remisées aux limbes. Retirez-les d\'abord'
+                . ' encore, posées sur le plateau ou stockées dans les limbes. Retirez-les d\'abord'
                 . ' (Bâtiments → <a href="/admin/buildings.php">Posés</a>).'
             : 'Suppression impossible : cette race est encore utilisée par '
                 . race_character_counts($service->countCharactersByRaceName()[$race->getName()]

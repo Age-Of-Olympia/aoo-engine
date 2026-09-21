@@ -68,6 +68,14 @@ class Item{
     }
 
 
+    /* A broken exemplar stays worn but no longer works as an item:
+     * no caracs, no weapon type. Stacks have no durability, never broken. */
+    public function isBroken(): bool
+    {
+        return isset($this->row->durability)
+            && \App\Service\ItemInstanceService::isBroken((int) $this->row->durability);
+    }
+
     public function get_data(){
 
 
@@ -129,7 +137,8 @@ class Item{
 
         $data = (object) array(
             'id' => (int) $this->row->id,
-            'name' => $this->row->name,
+            // The name players read; '' falls back to the technical name (ucfirst by get_data).
+            'name' => trim((string) ($this->row->label ?? '')) !== '' ? $this->row->label : $this->row->name,
             'private' => (int) $this->row->private,
             'price' => (int) $this->row->price,
             'text' => (string) ($this->row->text ?? ''),
@@ -639,7 +648,12 @@ class Item{
 
 
     // print item carac
-    public static function get_item_carac($itemJson){
+    /**
+     * @param ?array $strikeEffects the item's item_effects rows when the caller
+     *                              fetched them for a whole list (mapForItems);
+     *                              null = read them here
+     */
+    public static function get_item_carac($itemJson, ?array $strikeEffects = null){
 
 
         $return = array();
@@ -757,13 +771,14 @@ class Item{
             $return[] = '<font color="green">Magique</font>';
         }
         
-        // special effects
-        if(!empty($itemJson->addEffects)){
+        // strike effects
+        if($strikeEffects === null && !empty($itemJson->id)){
 
-            foreach($itemJson->addEffects as $e){
+            $strikeEffects = (new \App\Service\ItemEffectService())->listForItems([(int) $itemJson->id]);
+        }
+        foreach($strikeEffects ?? [] as $e){
 
-                $return[] = '<font color="blue">+'. $e->name .'</font>';
-            }
+            $return[] = '<font color="blue">+'. $e->name . ($e->outcome === 'miss' ? ' (raté)' : '') .'</font>';
         }
 
         // pr
@@ -850,14 +865,8 @@ class Item{
         return !empty($this->row->magique);
     }
 
+    /** @return list<object{name: string, duration: int, outcome: string, target: string}> */
     public function getItemEffects() : array {
-        $itemJson = json()->decode('items', $this->row->name);
-        if (empty($itemJson->addEffects)) {
-            return [];
-        }
-
-        return is_array($itemJson->addEffects)
-            ? $itemJson->addEffects
-            : (array) $itemJson->addEffects;
+        return (new \App\Service\ItemEffectService())->listForItems([(int) $this->row->id]);
     }
 }

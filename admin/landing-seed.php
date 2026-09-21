@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['seed_landing'])) {
         );
         if ($report['missingFiles'] !== []) {
             $message .= ' ⚠ ' . count($report['missingFiles'])
-                . ' image(s) non semée(s), fichiers absents : déposez-les dans img/ui/landing/ puis relancez.';
+                . ' image(s) non créée(s), fichiers absents : déposez-les dans img/ui/landing/ puis relancez.';
         }
         setFlash($report['missingFiles'] === [] ? 'success' : 'warning', $message);
     } catch (\Throwable $e) {
@@ -51,7 +51,7 @@ ob_start();
     <?= renderFlashMessage() ?>
 
     <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-        Sème le contenu éditorial initial de l'accueil (présentation, 3 chroniques, 5 aperçus).
+        Crée le contenu éditorial initial de l'accueil (présentation, 3 chroniques, 5 aperçus).
         <ul class="mb-0 mt-1">
             <li>Les <strong>images ne sont pas dans git</strong> : déposez d'abord les fichiers dans
                 <code style="display:inline">img/ui/landing/</code> (archive fournie par l'équipe) —

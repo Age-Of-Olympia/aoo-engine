@@ -10,7 +10,7 @@ use Classes\Player;
 (new AdminMenuAccessService())->enforce(basename($_SERVER['PHP_SELF']));
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260830';
+const ADMIN_ASSET_VERSION = '20260920';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -103,7 +103,8 @@ function admin_layout($title, $content, array $assets = []) {
     $tutorialPages = ['tutorial-catalog.php', 'tutorial.php', 'tutorial-step-editor.php',
                       'tutorial-npcs.php', 'tutorial-settings.php'];
     $mapPages = ['world_map.php', 'plans.php', 'plan-seed.php', 'plan-season-rename.php', 'local_maps.php',
-                 'terrain-transitions.php', 'tile-assets.php', 'tile-colors.php', 'tile-shade.php', 'screenshots.php'];
+                 'terrain-transitions.php', 'tile-assets.php', 'element-composer.php', 'tile-colors.php',
+                 'tile-shade.php', 'screenshots.php'];
     $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php', 'passive-workbench.php',
                     'action-import.php', 'action-import-preview.php'];
     $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
@@ -131,6 +132,7 @@ function admin_layout($title, $content, array $assets = []) {
                 ['local_maps.php', 'Cartes locales', '/admin/local_maps.php'],
                 ['terrain-transitions.php', 'Transitions de terrain', '/admin/terrain-transitions.php'],
                 ['tile-assets.php', 'Tuiles &amp; images', '/admin/tile-assets.php'],
+                ['element-composer.php', 'Composeur d\'éléments', '/admin/element-composer.php'],
                 ['tile-colors.php', 'Couleurs de carte', '/admin/tile-colors.php'],
                 ['tile-shade.php', 'Ombres des cases', '/admin/tile-shade.php'],
                 ['screenshots.php', 'Captures', '/admin/screenshots.php'],
@@ -250,7 +252,9 @@ function admin_layout($title, $content, array $assets = []) {
     <link href="/css/main.min.css?v=$mainCssVersion" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="/admin/css/admin.css?v=$version">
-    <link rel="stylesheet" href="/admin/css/admin-design-system.css?v=$version">$styleLinks
+    <link rel="stylesheet" href="/admin/css/admin-design-system.css?v=$version">
+    <link rel="stylesheet" href="/css/modal.css?v=$mainCssVersion">$styleLinks
+    <script src="/js/modal.js?v=$version"></script>
     <script src="/admin/js/admin-list.js?v=$version" defer></script>
 </head>
 <body>

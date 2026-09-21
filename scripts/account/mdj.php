@@ -46,6 +46,19 @@ if(isset($_POST['text'])){
         $db->exe('UPDATE players_logs SET type = ? WHERE id = ?', array('mdj_edited', $edited->id));
     }
 
+    // An mdj change alters no pixel, so it gets no frame: it is attached to
+    // the latest capture's events file and becomes a bubble on that image.
+    try {
+        (new \App\Service\ScreenshotService())->attachEventToLastCapture([
+            'type'      => 'mdj',
+            'at'        => time(),
+            'player_id' => (int) $player->id,
+            'text'      => $_POST['text'],
+        ], $player);
+    } catch (Throwable $e) {
+        error_log('Rattachement du mdj a la derniere capture impossible : ' . $e->getMessage());
+    }
+
     exit();
 }
 

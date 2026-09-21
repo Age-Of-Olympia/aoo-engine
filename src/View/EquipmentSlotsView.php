@@ -38,13 +38,15 @@ final class EquipmentSlotsView
         echo '<div class="equip-strip-title">Équipement</div>';
         echo '<div class="equip-slots">';
 
+        $strikeByItem = (new \App\Service\ItemEffectService())->mapForItems(array_column($itemList, 'id'));
+
         foreach ($itemList as $row) {
 
             $item = new Item($row->id, $row);
             $item->get_data();
 
             $itemName = Item::get_formatted_name(ucfirst($item->data->name), $row);
-            $caracs = implode(', ', Item::get_item_carac($item->data));
+            $caracs = implode(', ', Item::get_item_carac($item->data, $strikeByItem[(int) $row->id] ?? []));
             $type = (!empty($item->data->type)) ? $item->data->type : '';
 
             /* Certains objets n'ont pas de vignette _mini : l'image
@@ -58,7 +60,7 @@ final class EquipmentSlotsView
              * title natif l'afficherait littéralement. */
             $title = strip_tags($itemName);
             if ($caracs !== '') {
-                $title .= ' — ' . strip_tags($caracs);
+                $title .= ' : ' . strip_tags($caracs);
             }
             if (!empty($row->equiped)) {
                 $title .= ' (' . $row->equiped . ')';
@@ -73,8 +75,8 @@ final class EquipmentSlotsView
                 $pct = max(0, min(100, (int) round($durability / (int) $row->durability_max * 100)));
                 $level = $durability <= 0 ? 'broken' : ($pct < 20 ? 'low' : ($pct < 50 ? 'mid' : 'ok'));
                 $title .= $durability <= 0
-                    ? ' — BRISÉ'
-                    : ' — durabilité ' . $durability . '/' . (int) $row->durability_max;
+                    ? '. Brisé'
+                    : '. Durabilité ' . $durability . '/' . (int) $row->durability_max;
                 if ($durability <= 0) {
                     $slotClass .= ' equip-slot--broken';
                 }

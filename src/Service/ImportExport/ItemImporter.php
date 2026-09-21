@@ -2,6 +2,7 @@
 
 namespace App\Service\ImportExport;
 
+use App\Service\ItemEffectService;
 use App\Service\ItemStatsSeeder;
 use Doctrine\DBAL\Connection;
 
@@ -73,6 +74,8 @@ final class ItemImporter extends AbstractDbalImporter
         }
         $set[] = '`durability_max` = ?';
         $params[] = max(1, (int) ($payload['durability_max'] ?? 100));
+        $set[] = '`label` = ?';
+        $params[] = mb_substr(trim((string) ($payload['label'] ?? '')), 0, 100);
         // Un objet importé est par définition sourcé en base : sans ce
         // forçage, un payload sans la clé retomberait à 0 et le jeu
         // chercherait un JSON legacy qui n'existe pas ici.
@@ -86,7 +89,7 @@ final class ItemImporter extends AbstractDbalImporter
             $value = $payload[$key] ?? (in_array($key, ItemStatsSeeder::STRING_KEYS, true) ? '' : 0);
             $params[] = is_numeric($value) ? $value : (string) $value;
         }
-        foreach (['munitions' => 'munitions', 'addEffects' => 'add_effects', 'forbid' => 'forbid', 'extra' => 'extra'] as $key => $col) {
+        foreach (['munitions' => 'munitions', 'forbid' => 'forbid', 'extra' => 'extra'] as $key => $col) {
             $set[] = "`{$col}` = ?";
             $params[] = isset($payload[$key])
                 ? json_encode($payload[$key], JSON_UNESCAPED_UNICODE)
@@ -95,5 +98,22 @@ final class ItemImporter extends AbstractDbalImporter
 
         $params[] = $name;
         $conn->executeStatement('UPDATE items SET ' . implode(', ', $set) . ' WHERE name = ?', $params);
+
+        // Strike effects: the table rows; an older bundle's addEffects list is read the same way.
+        $strikeRows = [];
+        foreach ((array) ($payload['strikeEffects'] ?? $payload['addEffects'] ?? []) as $entry) {
+            $entry = (array) $entry;
+            if (trim((string) ($entry['name'] ?? '')) === '') {
+                continue;
+            }
+            $strikeRows[] = [
+                'name' => (string) $entry['name'],
+                'duration' => (int) ($entry['duration'] ?? 1),
+                'outcome' => (string) ($entry['outcome'] ?? 'hit'),
+                'target' => (string) ($entry['target'] ?? 'target'),
+            ];
+        }
+        $itemId = (int) $conn->fetchOne('SELECT id FROM items WHERE name = ?', [$name]);
+        (new ItemEffectService($conn))->replaceForItem($itemId, $strikeRows);
     }
 }

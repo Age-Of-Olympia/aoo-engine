@@ -39,6 +39,12 @@ if($_POST['type'] == 'eraser'){
         exit('error type');
     }
 
+    // The angle the brush was turned to (mouse wheel); anything else lands straight
+    $rotation = (int) ($_POST['rotation'] ?? 0);
+    if(!in_array($rotation, \App\Service\TiledMapService::ROTATIONS, true)){
+        $rotation = 0;
+    }
+
     /* L'ombre n'est plus un decor mais une INTENSITE de case.
      *
      * Le geste de l'animateur ne change pas d'un poil : il prend le meme
@@ -167,7 +173,7 @@ if($_POST['type'] == 'eraser'){
     /* An element goes through the one door that knows the cell's rules:
        one element, and a floor under it. */
     if ($_POST['type'] === 'elements') {
-        echo \Classes\Element::put($_POST['src'], (int) $coordsId, \Classes\Element::DURATION_INFINITE)
+        echo \Classes\Element::put($_POST['src'], (int) $coordsId, \Classes\Element::DURATION_INFINITE, $rotation)
             ? 'elements'
             : 'refusé : un autre élément occupe la case, ou elle n\'a pas de sol';
 
@@ -178,6 +184,9 @@ if($_POST['type'] == 'eraser'){
         'name'=>$_POST['src'],
         'coords_id'=>$coordsId
     );
+    if($_POST['type'] === 'tiles'){
+        $values['rotation'] = $rotation;
+    }
 
     echo $_POST['type'];
 

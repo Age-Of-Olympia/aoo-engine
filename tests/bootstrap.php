@@ -95,6 +95,7 @@ if (!defined('CARACS')) {
         'a' => 'A', 'mvt' => 'Mvt', 'p' => 'P', 'pv' => 'PV', 'cc' => 'CC',
         'ct' => 'CT', 'f' => 'F', 'e' => 'E', 'agi' => 'Agi', 'pm' => 'PM',
         'fm' => 'FM', 'pui' => 'Pui', 'res' => 'Res', 'r' => 'R', 'rm' => 'RM', 'spd' => 'Spd', 'ae' => 'Ae',
+        'sac' => 'Sac',
     ]);
 }
 if (!defined('ONE_DAY')) {

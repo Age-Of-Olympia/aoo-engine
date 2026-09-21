@@ -51,7 +51,8 @@ define('CARACS', array(
     'r'=>'R',
     'rm'=>'RM',
     'spd'=>'Spd',
-    'ae'=>'Ae'
+    'ae'=>'Ae',
+    'sac'=>'Sac'
 ));
 
 
@@ -79,6 +80,7 @@ define('CARACS_TXT', array(
     'r'=>'Récupération',
     'rm'=>'Récupération Magique',
     'ae'=> 'Action d\'Equipement',
+    'sac'=>'Contenance du sac (lignes)',
     'foi'=>'Nombre de points de Foi',
     'xp'=>'Points d\'Expérience',
     'pi'=>'Points d\'Investissement',

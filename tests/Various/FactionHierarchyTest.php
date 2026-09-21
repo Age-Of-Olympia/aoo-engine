@@ -202,7 +202,7 @@ class FactionHierarchyTest extends LegacyPlayerFixtureTestCase
     {
         $king = $this->enrolled('GmRoi3', 2);
 
-        $this->expectExceptionMessage('Un rang porte un nom.');
+        $this->expectExceptionMessage('Le nom du rôle est requis.');
         (new FactionService())->updateRoleDefinition($king, 0, '   ', []);
     }
 

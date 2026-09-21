@@ -29,7 +29,7 @@ final class CaracsPanelRenderer
         echo '<tr>';
         $i = 0;
         foreach (CARACS as $k => $e) {
-            if ($k === 'spd') {
+            if ($k === 'spd' || $k === 'sac') {
                 continue;
             }
             $i++;
@@ -40,7 +40,7 @@ final class CaracsPanelRenderer
 
         echo '<tr>';
         foreach (CARACS as $k => $e) {
-            if ($k === 'spd') {
+            if ($k === 'spd' || $k === 'sac') {
                 continue;
             }
 

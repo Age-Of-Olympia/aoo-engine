@@ -14,8 +14,37 @@ use Exception;
 class ScreenshotService
 {
     private const DEFAULT_SCREENSHOT_PLAYER_ID = -92;
-    private const DEFAULT_RANGE = 10;
-    private const DEFAULT_RESTORE_POSITION = ['x' => 0, 'y' => 8, 'z' => 0, 'plan' => 'arene_s2'];
+
+    /** Only plan with automatic captures. */
+    private const ARENA_PLAN = 'arene_s2';
+
+    /** File holding the name of the latest capture's events file. */
+    private const LATEST_POINTER = '_derniere_capture';
+
+    /**
+     * View radius: 25x25 tiles at 50px. The arena oval ends at 11, 12 adds one
+     * ring of wall outside. Beyond 12 the plan is not fully tiled and the missing
+     * corners render black: the plan background is a CSS property on the root
+     * tag, which rsvg-convert does not paint.
+     */
+    private const DEFAULT_RANGE = 12;
+
+    /** Frame centre: the arena is built around the origin. */
+    private const DEFAULT_CENTER = ['x' => 0, 'y' => 0, 'z' => 0];
+
+    /**
+     * Area whose actions trigger a capture, aligned with the frame so the edges
+     * where fighters arrive and retreat are captured too. Fallback when the plan
+     * JSON has no "capture" key, see getCaptureZone().
+     */
+    private const DEFAULT_BOUNDS = ['minX' => -12, 'maxX' => 12, 'minY' => -12, 'maxY' => 12];
+
+    /**
+     * playerId handed to View to render from nobody's point of view. Null would
+     * fall back to $_SESSION['playerId'] and mark that player current-player;
+     * 0 matches no player and skips the fallback.
+     */
+    private const VIEW_AS_NOBODY = 0;
 
     /**
      * Generate a screenshot at specific coordinates
@@ -25,14 +54,19 @@ class ScreenshotService
      * @param string|null $filename Custom filename (without extension)
      * @param string|null $outputDir Custom output directory
      * @param int|null $playerId Custom player ID for screenshot
+     * @param bool $selfContained Embed styles and images in the SVG. Required
+     *        when the capture is consumed outside the game page, e.g. through
+     *        <img>, where no external resource is loaded. Costly: admin captures
+     *        only, automatic captures go through scripts/tools/export_arene.php.
      * @return array Result array with success status, filename, filepath, and error message
      */
     public function generateScreenshot(
-        array $coords, 
-        int $range = self::DEFAULT_RANGE, 
-        ?string $filename = null, 
+        array $coords,
+        int $range = self::DEFAULT_RANGE,
+        ?string $filename = null,
         ?string $outputDir = null,
-        ?int $playerId = null
+        ?int $playerId = null,
+        bool $selfContained = false
     ): array {
         $startTime = microtime(true);
         
@@ -53,8 +87,8 @@ class ScreenshotService
                 return $result;
             }
 
-            $screenshotPlayer->move_player((object)['x' => 0, 'y' => 0, 'z' => 0, 'plan' => $coords['plan']]);
-
+            // The capture PNJ is never moved: View gets its frame as an argument,
+            // the PNJ position plays no part in the rendering.
             $coordsObject = (object)[
                 'x' => $coords['x'],
                 'y' => $coords['y'],
@@ -66,18 +100,19 @@ class ScreenshotService
             
             if (!$svgData) {
                 $result['error'] = 'Failed to generate SVG data';
-                $this->restorePlayerPosition($screenshotPlayer);
                 return $result;
+            }
+
+            if ($selfContained) {
+                $svgData = (new ScreenshotExportService($_SERVER['DOCUMENT_ROOT'] ?? '.'))
+                    ->autonomiser($svgData);
             }
 
             $saveResult = $this->saveScreenshotToFile($svgData, $filename, $outputDir);
             if (!$saveResult['success']) {
                 $result['error'] = $saveResult['error'];
-                $this->restorePlayerPosition($screenshotPlayer);
                 return $result;
             }
-
-            $this->restorePlayerPosition($screenshotPlayer);
 
             $endTime = microtime(true);
             $duration = round(($endTime - $startTime) * 1000, 2);
@@ -93,11 +128,7 @@ class ScreenshotService
             $duration = round(($endTime - $startTime) * 1000, 2);
             
             error_log("Screenshot generation failed after {$duration}ms: " . $e->getMessage());
-            
-            if (isset($screenshotPlayer)) {
-                $this->restorePlayerPosition($screenshotPlayer);
-            }
-            
+
             $result['error'] = 'Screenshot generation failed: ' . $e->getMessage();
             $result['generation_time_ms'] = $duration;
         }
@@ -107,46 +138,257 @@ class ScreenshotService
 
     /**
      * Generate automatic screenshot for actions on arene_s2
-     * 
+     *
      * @param Player $actor The player who performed the action
      * @param string $actionName Name of the action performed
+     * @param array<int, array<string, mixed>> $events Events to record alongside the frame
      * @return array Result array
      */
-    public function generateAutomaticScreenshot(Player $actor, string $actionName, ?array $coordsMin = array('x' => -7,'y' => -7,'z' => 0,'plan' => 'arene_s2'), ?array $coordsMax = array('x' => 7,'y' => 7,'z' => 0,'plan' => 'arene_s2')): array
+    public function generateAutomaticScreenshot(Player $actor, string $actionName, array $events = []): array
     {
         // Internal upgrade to entity for read-only lookups.
         // Callers still pass legacy Player (ActorInterface), but the
-        // read paths inside this method use the entity layer. The
-        // screenshot-PNJ mutation paths below (move_player, get_caracs)
-        // stay on legacy — they need it.
-        $actorEntity = PlayerFactory::entity((int) $actor->id);
-        if ($actorEntity === null) {
-            return ['success' => false, 'error' => 'Actor entity hydration failed'];
-        }
-
-        $conn = EntityManagerFactory::getEntityManager()->getConnection();
-        $coords = $actorEntity->getCoords($conn);
+        // read paths inside this method use the entity layer.
+        $coords = $this->locateInsideArena($actor);
         if ($coords === null) {
-            return ['success' => false, 'error' => 'Actor coords missing'];
-        }
-        if ($coords->plan !== 'arene_s2') {
-            return ['success' => false, 'error' => 'Action not on arene_s2 map'];
-        }
-        if ($coords->x < $coordsMin['x'] || $coords->x > $coordsMax['x'] || $coords->y < $coordsMin['y'] || $coords->y > $coordsMax['y'] ) {
             return ['success' => false, 'error' => 'Action not inside the arena'];
         }
+
+        $zone = $this->getCaptureZone(self::ARENA_PLAN);
+
         $microtime = microtime(true);
         $timestamp = date('Y-m-d_H-i-s', (int)$microtime) . '_' . sprintf('%03d', ($microtime - floor($microtime)) * 1000);
-        $filename = "auto_screenshot_arene_s2_{$timestamp}";
 
-        $coordsArray = ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'arene_s2'];
+        // Actor and action go into the name; sorting by name sorts by time.
+        $filename = sprintf(
+            'auto_screenshot_%s_%s_%s_%s',
+            self::ARENA_PLAN,
+            $timestamp,
+            $this->slugify((string) $actor->id),
+            $this->slugify($actionName)
+        );
 
-        $outputDir = $_SERVER['DOCUMENT_ROOT'] . '/img/arene/';
+        $outputDir = $this->getOutputDir();
 
-        $result = $this->generateScreenshot($coordsArray, self::DEFAULT_RANGE, $filename, $outputDir);
+        $result = $this->generateScreenshot($zone['center'], $zone['range'], $filename, $outputDir);
 
+        if ($result['success']) {
+            // A frame without its events file is mute in the timeline and the
+            // next mdj would attach to an older capture: success needs both.
+            $result['events_written'] = $this->writeEventFile($result['filename'], $outputDir, [
+                'capture'   => $result['filename'],
+                'at'        => date('c', (int)$microtime),
+                'at_ms'     => (int) round($microtime * 1000),
+                'plan'      => self::ARENA_PLAN,
+                'actor'     => ['id' => (int) $actor->id, 'x' => $coords->x, 'y' => $coords->y],
+                'action'    => $actionName,
+                'events'    => $events,
+            ]);
+
+            if (!$result['events_written']) {
+                // filename/filepath stay set: the SVG itself exists.
+                $result['success'] = false;
+                $result['error'] = 'Capture ecrite mais fichier d\'events non ecrit';
+                error_log("Screenshot {$result['filename']} : fichier d'events non ecrit dans {$outputDir}");
+            }
+        }
 
         return $result;
+    }
+
+    /**
+     * Frame and trigger area of the plan: the plan JSON "capture" key when
+     * present, the constants otherwise. Not the z_levels visible bounds, which
+     * describe the whole plan rather than the fighting area.
+     *
+     * @return array{center: array{x: int, y: int, z: int, plan: string}, range: int, bounds: array{minX: int, maxX: int, minY: int, maxY: int}}
+     */
+    private function getCaptureZone(string $plan): array
+    {
+        $center = self::DEFAULT_CENTER + ['plan' => $plan];
+        $range  = self::DEFAULT_RANGE;
+        $bounds = self::DEFAULT_BOUNDS;
+
+        // Json::decode returns false when the file is missing or invalid; ??
+        // applies isset() semantics, so false->capture is null without a warning.
+        $planJson = json()->decode('plans', $plan);
+        $capture  = $planJson->capture ?? null;
+
+        if (is_object($capture)) {
+            foreach (['x', 'y', 'z'] as $axis) {
+                if (isset($capture->center->$axis)) {
+                    $center[$axis] = (int) $capture->center->$axis;
+                }
+            }
+            if (isset($capture->range)) {
+                $range = (int) $capture->range;
+            }
+            foreach (array_keys($bounds) as $bound) {
+                if (isset($capture->bounds->$bound)) {
+                    $bounds[$bound] = (int) $capture->bounds->$bound;
+                }
+            }
+        }
+
+        return ['center' => $center, 'range' => $range, 'bounds' => $bounds];
+    }
+
+    /**
+     * Coordinates of the actor when standing inside the capture area, else null.
+     */
+    private function locateInsideArena(Player $actor): ?object
+    {
+        $actorEntity = PlayerFactory::entity((int) $actor->id);
+        if ($actorEntity === null) {
+            return null;
+        }
+
+        $conn   = EntityManagerFactory::getEntityManager()->getConnection();
+        $coords = $actorEntity->getCoords($conn);
+
+        if ($coords === null || $coords->plan !== self::ARENA_PLAN) {
+            return null;
+        }
+
+        $bounds = $this->getCaptureZone(self::ARENA_PLAN)['bounds'];
+
+        if ($coords->x < $bounds['minX'] || $coords->x > $bounds['maxX']
+            || $coords->y < $bounds['minY'] || $coords->y > $bounds['maxY']) {
+            return null;
+        }
+
+        return $coords;
+    }
+
+    /**
+     * Appends an event to the latest capture's events file.
+     *
+     * An mdj change alters no pixel, so it gets no frame of its own: it becomes
+     * a bubble on the last image, whose visual state still holds.
+     *
+     * @param array<string, mixed> $event
+     * @param Player|null $actor When given, the event is dropped unless the
+     *                           actor stands inside the arena.
+     */
+    public function attachEventToLastCapture(array $event, ?Player $actor = null): bool
+    {
+        if ($actor !== null && $this->locateInsideArena($actor) === null) {
+            return false;
+        }
+
+        $outputDir = $this->getOutputDir();
+        $pointer   = $outputDir . self::LATEST_POINTER;
+
+        if (!is_readable($pointer)) {
+            return false;
+        }
+
+        $eventFile = $outputDir . trim((string) file_get_contents($pointer));
+        if (!is_readable($eventFile)) {
+            return false;
+        }
+
+        // Read and write under one exclusive lock: every orphan event of the
+        // same frame targets this file, two mdj in the same second must not
+        // overwrite each other. 'r+' not 'c+': a stale pointer must not create
+        // an empty file.
+        $handle = fopen($eventFile, 'r+');
+        if ($handle === false) {
+            return false;
+        }
+
+        try {
+            if (!flock($handle, LOCK_EX)) {
+                return false;
+            }
+
+            $payload = json_decode((string) stream_get_contents($handle), true);
+            if (!is_array($payload)) {
+                return false;
+            }
+
+            $payload['events'][] = $event;
+
+            rewind($handle);
+            ftruncate($handle, 0);
+
+            $written = fwrite(
+                $handle,
+                json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            );
+            fflush($handle);
+
+            return $written !== false;
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
+    }
+
+    private function getOutputDir(): string
+    {
+        return ($_SERVER['DOCUMENT_ROOT'] ?? '.') . '/img/arene/';
+    }
+
+    /**
+     * Writes the capture's events file and points LATEST_POINTER at it. The
+     * pointer saves a directory listing per orphan event.
+     *
+     * @param array<string, mixed> $payload
+     * @return bool False when the events file could not be written.
+     */
+    private function writeEventFile(string $captureFilename, string $outputDir, array $payload): bool
+    {
+        $eventFilename = preg_replace('/\.svg$/', '', $captureFilename) . '.json';
+
+        // LOCK_EX: attachEventToLastCapture takes the same lock as soon as the
+        // pointer moves.
+        $written = file_put_contents(
+            $outputDir . $eventFilename,
+            json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            LOCK_EX
+        );
+
+        if ($written === false) {
+            return false;
+        }
+
+        $this->updateLatestPointer($outputDir, $eventFilename);
+
+        return true;
+    }
+
+    /**
+     * Points LATEST_POINTER at the most recent capture. Monotonic: names carry
+     * the timestamp, so a slower request finishing later must not move the
+     * pointer backwards. Atomic: temp file then rename, a reader never sees a
+     * truncated name.
+     */
+    private function updateLatestPointer(string $outputDir, string $eventFilename): void
+    {
+        $pointeur = $outputDir . self::LATEST_POINTER;
+
+        if (is_readable($pointeur)) {
+            $actuel = trim((string) file_get_contents($pointeur));
+            if ($actuel !== '' && strcmp($eventFilename, $actuel) < 0) {
+                return;
+            }
+        }
+
+        $temporaire = $pointeur . '.' . getmypid();
+
+        if (file_put_contents($temporaire, $eventFilename) === false) {
+            return;
+        }
+
+        if (!rename($temporaire, $pointeur)) {
+            @unlink($temporaire);
+        }
+    }
+
+    private function slugify(string $value): string
+    {
+        return preg_replace('/[^A-Za-z0-9_-]/', '-', $value) ?? 'inconnu';
     }
 
     /**
@@ -170,14 +412,6 @@ class ScreenshotService
 
         return ['valid' => true, 'error' => null];
     }
-    /**
-     * Restore player to default position
-     */
-    private function restorePlayerPosition(Player $player): void
-    {
-        $restorePosition = (object) self::DEFAULT_RESTORE_POSITION;
-        $player->move_player($restorePosition);
-    }
 
     /**
      * Generate SVG data using View class
@@ -187,7 +421,7 @@ class ScreenshotService
         $playerOptions = $player->get_options();
         $player->get_caracs();
 
-        $view = new View($coords, $range, false, $playerOptions);
+        $view = new View($coords, $range, false, $playerOptions, self::VIEW_AS_NOBODY);
         $data = $view->get_view();
 
         if (strpos($data, '<svg') !== false) {
@@ -196,18 +430,19 @@ class ScreenshotService
             $data = substr($data, $svgStart, $svgEnd - $svgStart);
         }
 
-        if (isset($_SERVER['HTTP_HOST'])) {
-            $baseUrl = 'http://' . $_SERVER['HTTP_HOST'] . '/';
-            $data = str_replace('img/tiles/route.png', 'img/routes/route.png', $data);
-            $data = str_replace('img/', $baseUrl . 'img/', $data);
-        }
+        // Asset path fix on View's output, host-independent so it runs in CLI too.
+        $data = str_replace('img/tiles/route.png', 'img/routes/route.png', $data);
 
-        //$data = $this->convertImagesToBase64($data);
+        // Paths stay relative: ScreenshotExportService makes a file
+        // self-contained when needed (admin preview, arena export).
         $data = $this->removeScreenshotPlayerFromSvg($data, $player);
 
         return $data ?: null;
     }
 
+    
+
+    
 
     /**
      * Remove the screenshot PNJ from the SVG output
@@ -215,129 +450,34 @@ class ScreenshotService
      */
     private function removeScreenshotPlayerFromSvg(string $svgData, Player $player): string
     {
-        $playerId = $player->id;
-        $coordsPattern = '/<image[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*x="(\d+)"[^>]*y="(\d+)"[^>]*>/i';
+        $id = preg_quote((string) $player->id, '/');
+
+        // View renders two elements per character: the avatar id="playersX" and
+        // its shadow id="playersX-shadow". Attribute order is free, hence [^>]*.
+        $avatarPattern = '/<image[^>]*\bid="players' . $id . '(?:-shadow)?"[^>]*>/i';
+
+        // Avatar position, to drop the highlighted cell too.
         $pnjX = null;
         $pnjY = null;
-        
-        if (preg_match($coordsPattern, $svgData, $matches)) {
+        if (preg_match('/<image[^>]*\bid="players' . $id . '"[^>]*x="(\d+)"[^>]*y="(\d+)"[^>]*>/i', $svgData, $matches)) {
             $pnjX = $matches[1];
             $pnjY = $matches[2];
         }
-        
-        $patterns = [
-            '/<image[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*data-table="players"[^>]*>/i',
-            '/<image[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*class="avatar-shadow"[^>]*>/i',
-            
-            '/<image[^>]*data-table="players"[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*>/i',
-            '/<image[^>]*class="avatar-shadow"[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*>/i',
-            
-            '/<image[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*>/i'
-        ];
-        
+
+        $svgData = preg_replace($avatarPattern, '', $svgData);
+
         if ($pnjX !== null && $pnjY !== null) {
-            $patterns[] = '/<rect[^>]*class="case"[^>]*x="' . preg_quote($pnjX, '/') . '"[^>]*y="' . preg_quote($pnjY, '/') . '"[^>]*>/i';
+            $svgData = preg_replace(
+                '/<rect[^>]*class="case"[^>]*x="' . preg_quote($pnjX, '/') . '"[^>]*y="' . preg_quote($pnjY, '/') . '"[^>]*>/i',
+                '',
+                $svgData
+            );
         }
-        
-        $originalLength = strlen($svgData);
-        
-        foreach ($patterns as $pattern) {
-            $svgData = preg_replace($pattern, '', $svgData);
-        }
-        
+
         return $svgData;
     }
 
-
-
-    /* ------------------------------------------------------------------
-     * Incorporation base64 des captures — FONCTIONNALITÉ EN SOMMEIL,
-     * gardée sur décision d'équipe (2026-07-18) : rend le SVG autonome
-     * (images incluses) le jour où l'appel commenté de generateSvgData()
-     * est réactivé. PHPStan les voit inutilisées : ignores ciblés.
-     * ---------------------------------------------------------------- */
-    /**
-     * Convert all external images in SVG to base64 data URIs
-     * Handles both regular images and background images
-     */
-    // @phpstan-ignore method.unused (en sommeil, voir note ci-dessus)
-    private function convertImagesToBase64(string $svgData, int $zValue = 0): string
-    {
-        if (preg_match('/<svg[^>]*style="[^"]*background:\s*url\(\'([^\']+)\'\)/i', $svgData, $bgMatches)) {
-            $bgUrl = $bgMatches[1];
-            $bgPath = $this->resolveImagePath($bgUrl);
-            $bgBase64 = $this->imageToBase64($bgPath);
-            
-            if ($bgBase64) {
-                $svgData = str_replace(
-                    $bgUrl, 
-                    $bgBase64, 
-                    $svgData
-                );
-            }
-        }
-
-        $pattern = '/<image[^>]*href=[\'"]([^\'"]+)[\'"][^>]*>/i';
-        
-        return preg_replace_callback($pattern, function($matches) {
-            $fullImageTag = $matches[0];
-            $imageUrl = $matches[1];
-            
-            if (empty($imageUrl) || strpos($imageUrl, 'data:') === 0) {
-                return $fullImageTag;
-            }
-            
-            $imagePath = $this->resolveImagePath($imageUrl);
-            $base64Data = $this->imageToBase64($imagePath);
-            
-            if ($base64Data) {
-                return str_replace($imageUrl, $base64Data, $fullImageTag);
-            }
-            
-            return $fullImageTag;
-        }, $svgData);
-    }
-
-    /**
-     * Convert image to base64 data URL
-     */
-    private function imageToBase64(string $imagePath): ?string
-    {
-        if (!file_exists($imagePath)) {
-            return null;
-        }
-
-        $mimeType = mime_content_type($imagePath);
-        if (!$mimeType) {
-            $mimeType = 'image/png';
-        }
-
-        $imageData = file_get_contents($imagePath);
-        if ($imageData === false) {
-            return null;
-        }
-
-        return 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
-    }
-
-    /**
-     * Resolve image URL to local file path
-     */
-    private function resolveImagePath(string $imageUrl): string
-    {
-        if (isset($_SERVER['HTTP_HOST'])) {
-            $baseUrl = 'http://' . $_SERVER['HTTP_HOST'] . '/';
-            if (strpos($imageUrl, $baseUrl) === 0) {
-                $imageUrl = substr($imageUrl, strlen($baseUrl));
-            }
-        }
-        
-        if (strpos($imageUrl, '/') === 0) {
-            return $_SERVER['DOCUMENT_ROOT'] . $imageUrl;
-        } else {
-            return $_SERVER['DOCUMENT_ROOT'] . '/' . $imageUrl;
-        }
-    }
+    
 
     /**
      * Save screenshot data to file

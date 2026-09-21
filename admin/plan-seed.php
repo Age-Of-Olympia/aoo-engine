@@ -50,16 +50,16 @@ ob_start();
 
 <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
     <strong>Pourquoi cette page ?</strong>
-    La configuration des plans vit désormais en base (<code style="display:inline">plans</code>,
+    La configuration des plans est désormais en base (<code style="display:inline">plans</code>,
     <code style="display:inline">plan_z_levels</code>) ; la migration crée le schéma depuis le checkout git,
-    où <code style="display:inline">datas/</code> n'existe pas. Ce bouton sème les lignes depuis
+    où <code style="display:inline">datas/</code> n'existe pas. Ce bouton crée les lignes à partir de
     <code style="display:inline">datas/*/plans/*.json</code> de cet environnement.
     <ul class="mb-0 mt-1">
-        <li><strong>Create-only</strong> : un plan déjà en base n'est jamais modifié — relançable sans risque.</li>
-        <li>Les clés mortes (<code style="display:inline">exits</code>, <code style="display:inline">enters</code>,
+        <li><strong>Création seulement</strong> : un plan déjà en base n'est jamais modifié ; relançable sans risque.</li>
+        <li>Les clés obsolètes (<code style="display:inline">exits</code>, <code style="display:inline">enters</code>,
             <code style="display:inline">id</code>, <code style="display:inline">num_z_levels</code>) sont
             volontairement abandonnées ; toute autre clé inconnue est signalée ci-dessous.</li>
-        <li>Après le seed, l'admin Plans édite la base — les fichiers JSON ne sont plus ni lus ni écrits.</li>
+        <li>Après le seed, la page Plans modifie la base ; les fichiers JSON ne sont plus lus ni écrits.</li>
     </ul>
 </div>
 
@@ -100,7 +100,7 @@ ob_start();
                 depuis cet environnement.
             </div>
         <?php else: ?>
-            <table class="table table-striped table-sm" style="max-width: 860px;">
+            <table class="table table-striped table-sm">
                 <thead><tr>
                     <th>Plan</th><th>Nom</th><th>Niveaux z</th><th>Action</th><th>Avertissements</th>
                 </tr></thead>
@@ -124,7 +124,7 @@ ob_start();
                 <button type="submit" name="seed_plans" class="btn btn-primary">
                     <i class="fas fa-seedling"></i> Seeder les plans manquants
                 </button>
-                <small class="text-muted">Create-only — les plans déjà en base ne bougent pas.</small>
+                <small class="text-muted">Création seulement : les plans déjà en base ne sont pas modifiés.</small>
             </form>
         <?php endif; ?>
     </div>

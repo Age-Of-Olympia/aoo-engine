@@ -4,15 +4,14 @@ use App\Factory\PlayerFactory;
 use App\Service\PlayerPnjService;
 use App\Service\RaceService;
 use App\Service\PlayerEffectService;
-use Classes\Db;
 use Classes\Str;
 use Classes\Ui;
 
 /*
  * Corps de la page des personnages secondaires, partagé entre la
  * page complète (pnjs.php, enveloppe Ui) et le panneau glissant
- * du HUD (load_pnjs.php). Contient aussi le POST de bascule de
- * personnage (js/pnjs.js poste sur pnjs.php).
+ * du HUD (load_pnjs.php). Le POST de bascule de personnage est
+ * traité par scripts/pnjs/switch.php, inclus par pnjs.php.
  */
 
 
@@ -36,26 +35,6 @@ foreach($playerPnjs as $playerPnj ){
     }else{
         $hiddenPnjs[$playerPnj->getPnjId()] = PlayerFactory::legacy($playerPnj->getPnjId());
     }
-}
-
-
-if(!empty($_POST['switch'])){
-
-    $db = new Db();
-    if(!isset($playersTbl[$_POST['switch']]) && !isset($hiddenPnjs[$_POST['switch']])){
-
-        exit('error pnj');
-    }
-
-    /* The switch itself is the SAME gesture as taking a building's
-     * commands — one method, whatever the mask, depth one included. */
-    try {
-        (new \App\Service\ImpersonationService())->driveAs((int) $_POST['switch']);
-    } catch (\RuntimeException $e) {
-        exit($e->getMessage());
-    }
-
-    exit();
 }
 
 
@@ -154,4 +133,4 @@ echo '
 </div></section>'
 
 ?>
-<script src="js/pnjs.js?v=20260727"></script>
+<script src="js/pnjs.js?v=20260918"></script>

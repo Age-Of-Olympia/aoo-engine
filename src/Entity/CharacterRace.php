@@ -19,4 +19,9 @@ class CharacterRace extends Race
     {
         return self::FAMILY_CHARACTER;
     }
+
+    public function imageDir(): string
+    {
+        return 'avatars';
+    }
 }

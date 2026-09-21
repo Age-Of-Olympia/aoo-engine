@@ -80,6 +80,24 @@ class PlayerService
         (new TurnService())->touchLastAction($this->playerId);
     }
 
+    /**
+     * A character killed with no killer — the ground they walk on, or an
+     * effect they landed on themselves: no XP to share and no kill counted;
+     * the log, the XP loss and the trip to the enfers are the same.
+     * $cause completes « a succombé … » (« aux éléments », « à ses propres effets »).
+     */
+    public static function processSelfDeath(Player $player, string $cause): void
+    {
+        if ($player->getRemaining('pv') > 0) {
+            return;
+        }
+
+        Log::put($player, $player, $player->data->name . ' a succombé ' . $cause . '.', type: "kill", hiddenText: '', logTime: time());
+
+        $player->put_xp(-DEATH_XP * $player->data->rank);
+        $player->death();
+    }
+
     public static function ProcessTargetDeath(Player $player, Player $target): void
     {
         if ($target->getRemaining('pv') > 0) {

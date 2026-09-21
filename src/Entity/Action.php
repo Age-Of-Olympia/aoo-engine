@@ -46,7 +46,7 @@ abstract class Action implements ActionInterface
     #[ORM\Column(type: "string", length: 255, nullable: true)]
     protected ?string $cost = null;
 
-    #[ORM\Column(type: "string", length: 50, nullable: true)]
+    #[ORM\Column(type: "string", length: 255, nullable: true)]
     protected ?string $prerequisites = null;
 
     #[ORM\OneToMany(

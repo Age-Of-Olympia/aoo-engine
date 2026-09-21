@@ -161,7 +161,7 @@ class LogTest extends TestCase
         ]);
         
         // Le joueur n'est ni acteur ni cible, mais dans le champ de perception
-        ViewMock::setCoordsAroundResult(['5_5_0_test_plan']);
+        $this->testDb->insertLog(['type' => 'move', 'player_id' => 1, 'coords_id' => 2, 'time' => time() - THREE_DAYS - 100]);
 
         // Act
         $result = Log::get($this->player);
@@ -185,7 +185,7 @@ class LogTest extends TestCase
         ]);
         
         // Le joueur n'est pas dans le champ de perception
-        ViewMock::setCoordsAroundResult(['5_5_0_test_plan']);
+        $this->testDb->insertLog(['type' => 'move', 'player_id' => 1, 'coords_id' => 2, 'time' => time() - THREE_DAYS - 100]);
 
         // Act
         $result = Log::get($this->player);
@@ -259,7 +259,7 @@ class LogTest extends TestCase
         ]);
         
         // Mock perception : seulement '5_5_0_test_plan' est visible
-        ViewMock::setCoordsAroundResult(['5_5_0_test_plan']);
+        $this->testDb->insertLog(['type' => 'move', 'player_id' => 1, 'coords_id' => 2, 'time' => time() - THREE_DAYS - 100]);
 
         // Act
         $result = Log::get($this->player);
@@ -363,7 +363,7 @@ class LogTest extends TestCase
             'target_id' => $this->player->id,
             'coords_computed' => '5_5_0_test_plan'
         ]);
-        ViewMock::setCoordsAroundResult(['5_5_0_test_plan']);
+        $this->testDb->insertLog(['type' => 'move', 'player_id' => 1, 'coords_id' => 2, 'time' => time() - THREE_DAYS - 100]);
 
         $result = Log::get($this->player);
 
@@ -382,7 +382,7 @@ class LogTest extends TestCase
             'target_id' => $this->player->id,
             'coords_computed' => '100_100_0_test_plan'
         ]);
-        ViewMock::setCoordsAroundResult(['5_5_0_test_plan']);
+        $this->testDb->insertLog(['type' => 'move', 'player_id' => 1, 'coords_id' => 2, 'time' => time() - THREE_DAYS - 100]);
 
         $result = Log::get($this->player);
 
@@ -400,7 +400,7 @@ class LogTest extends TestCase
             'target_id' => 3,
             'coords_computed' => '5_5_0_test_plan'
         ]);
-        ViewMock::setCoordsAroundResult(['5_5_0_test_plan']);
+        $this->testDb->insertLog(['type' => 'move', 'player_id' => 1, 'coords_id' => 2, 'time' => time() - THREE_DAYS - 100]);
 
         $result = Log::get($this->player);
 
@@ -419,7 +419,7 @@ class LogTest extends TestCase
             'target_id' => 3,
             'coords_computed' => '100_100_0_test_plan'
         ]);
-        ViewMock::setCoordsAroundResult(['5_5_0_test_plan']);
+        $this->testDb->insertLog(['type' => 'move', 'player_id' => 1, 'coords_id' => 2, 'time' => time() - THREE_DAYS - 100]);
 
         $result = Log::get($this->player);
 
@@ -464,7 +464,7 @@ class LogTest extends TestCase
             'target_id' => 98,
             'coords_computed' => '5_5_0_test_plan',
         ]);
-        ViewMock::setCoordsAroundResult(['5_5_0_test_plan']);
+        $this->testDb->insertLog(['type' => 'move', 'player_id' => 1, 'coords_id' => 2, 'time' => time() - THREE_DAYS - 100]);
 
         $result = Log::get($this->player);
 

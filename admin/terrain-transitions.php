@@ -143,7 +143,7 @@ ob_start();
     <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
         <strong>Trois étapes :</strong>
         <ol class="mb-0 mt-1">
-            <li><strong>Classer</strong> les tuiles du plan : terrain (biome fondable) ou hors terrain (décor, escaliers, runes…). Le classement vit dans <code style="display:inline">tools/tiled/terrains.json</code> — sur un serveur neuf ce fichier est vide, tout se classe ici.</li>
+            <li><strong>Classer</strong> les tuiles du plan : terrain (biome fondable) ou hors terrain (décor, escaliers, runes…). Le classement est enregistré dans <code style="display:inline">tools/tiled/terrains.json</code> ; sur un serveur neuf ce fichier est vide, tout se classe ici.</li>
             <li><strong>Auditer</strong> : chaque endroit où 2 à 4 terrains se touchent exige ses tuiles de fondu, sinon le pinceau Terrain pose la tuile la plus proche (morceaux d'autres biomes).</li>
             <li><strong>Générer</strong> les fondus manquants (<code style="display:inline">img/tiles/</code> + wangId) et les vérifier dans la galerie.</li>
         </ol>
@@ -248,7 +248,7 @@ ob_start();
                 <?php if (empty($terrainAudit['zLevels'])): ?>
                     <div class="alert alert-info mb-0">Aucune tuile de sol en base pour ce plan.</div>
                 <?php else: ?>
-                    <table class="table table-sm mb-2" style="font-size:13px;max-width:520px;">
+                    <table class="table table-sm mb-2" style="font-size:13px;">
                         <thead><tr><th>Niveau Z</th><th>Cases</th><th>Paires</th><th>Trios</th><th>Quatuors</th></tr></thead>
                         <tbody>
                         <?php foreach ($terrainAudit['zLevels'] as $z => $zStats): ?>
@@ -316,9 +316,9 @@ ob_start();
                     <hr>
                     <h6 class="text-muted">Fondus existants du plan — vérifier et régénérer</h6>
                     <p class="text-muted mb-2" style="font-size:12px;">
-                        Aperçu des fondus tels que le jeu les rend sur CE serveur. Un ensemble aux couleurs
-                        fausses (fondu vers le noir, art d'un biome modifié…) se réécrit depuis les images de
-                        base actuelles — les wangId ne changent pas.
+                        Aperçu des fondus tels que le jeu les affiche sur ce serveur. Un ensemble aux couleurs
+                        fausses (fondu vers le noir, image d'un biome modifiée…) peut être réécrit à partir des
+                        images de base actuelles ; les wangId ne changent pas.
                     </p>
                     <form method="post">
                         <?= $csrf->renderTokenField() ?>

@@ -179,7 +179,7 @@ function plans_render_list(array $inventory, Db $db): string
         . '</div></div>'
 
         . '<div class="alert alert-info" style="font-size:13px;line-height:1.5;">'
-        . '<strong>Qu\'est-ce qu\'un plan ?</strong> Deux moitiés qui doivent rester cohérentes : '
+        . '<strong>Qu\'est-ce qu\'un plan ?</strong> Deux parties qui doivent rester cohérentes : '
         . '<strong>une config</strong> (tables <code style="display:inline;white-space:nowrap">plans</code> /'
         . ' <code style="display:inline;white-space:nowrap">plan_z_levels</code>'
         . ' — nom, niveaux Z, bornes visibles, biomes…) et <strong>des coordonnées en base</strong>'
@@ -299,7 +299,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         'mask'              => ['Masque', 'Superposition (brume, tempête…), niveaux z ≥ 0 uniquement.'],
         'scrollingMask'     => ['Défilement du masque', 'Durée d\'animation du masque (0/vide = statique).'],
         'verticalScrolling' => ['Défilement vertical', 'Direction du défilement du masque.'],
-        'biomes'            => ['Biomes (JSON) — repli', 'Les rendements se règlent désormais dans Ressources → Rendements, qui est ce que le jeu lit. Ce JSON ne sert plus que de REPLI, pour un plan dont les rendements n\'ont pas encore été versés. Forme : [{"wall": "arbre1", "ressource": "bois", "exhaust": 75, "regrow": 20}].'],
+        'biomes'            => ['Biomes (JSON) — ancien format', 'Les rendements se définissent désormais dans Ressources → Rendements, la seule table lue par le jeu. Ce JSON ne sert plus qu\'à alimenter cette table pour un plan dont les rendements n\'y sont pas encore. Forme : [{"wall": "arbre1", "ressource": "bois", "exhaust": 75, "regrow": 20}].'],
     ];
 
     $renderField = function (string $key, string $type) use ($values, $fieldHelp): string {
@@ -354,10 +354,10 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
        disparu — elle réclamait un réglage qui n'est plus dû. */
     $biomesField = '<div class="col-12"><p class="mb-1">'
         . ($poured > 0
-            ? '<strong>' . $poured . ' rendement(s)</strong> propre(s) à ce plan, qui prennent le pas sur le catalogue des types.'
-            : 'Aucune dérogation : les ressources de ce plan rendent ce que <strong>leur type</strong> dit.'
+            ? '<strong>' . $poured . ' rendement(s)</strong> propre(s) à ce plan, prioritaires sur le catalogue des types.'
+            : 'Aucune exception : les ressources de ce plan ont le rendement de <strong>leur type</strong>.'
                 . ($fallback > 0
-                    ? ' Son JSON en déclare ' . $fallback . ', versables depuis l\'écran des rendements si ce plan doit dévier.'
+                    ? ' Son JSON en déclare ' . $fallback . ', à enregistrer depuis la page Rendements si ce plan doit faire exception.'
                     : ''))
         . '</p><a class="btn btn-sm btn-outline-primary" href="/admin/harvest-seed.php">Régler les rendements</a></div>';
 
