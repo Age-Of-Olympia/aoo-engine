@@ -9,21 +9,21 @@ use Classes\Db;
 use InvalidArgumentException;
 
 /**
- * Exporte un plan (carte locale) en payload à clés naturelles : l'identité
- * est le nom du plan, chaque case est portée par (x, y, z) — aucun id de
- * base, le bundle est portable entre environnements.
+ * Exports a plan (local map) as a natural-key payload: the identity is the
+ * plan name, every cell is carried by (x, y, z) — no database id, the bundle
+ * is portable between environments.
  *
- * Un payload = le fichier JSON du plan (verbatim), toutes ses coords (pour
- * préserver les niveaux z vides) et ses couches authorables. map_items
- * (loot runtime), les lignes construites par des joueurs et endTime sont
- * exclus — mêmes règles que l'export Tiled.
+ * A payload is the plan's JSON file (verbatim), all its coords (to preserve
+ * empty z levels) and its authorable layers. map_items (runtime loot),
+ * player-built rows and endTime are excluded — same rules as the Tiled
+ * export.
  *
- * Taille : un bundle est un fichier unique (pas de découpage façon mapcmd).
- * Un plan 200x200 pèse quelques Mo de JSON — dimensionné pour l'admin ;
- * si ça devient un problème, gzip côté endpoint avant de multi-partir.
+ * Size: a bundle is a single file. A 200x200 plan weighs a few MB of JSON —
+ * sized for the admin; gzip on the endpoint before splitting if that ever
+ * becomes a problem.
  *
- * Contrairement aux autres familles, « exporter tout » est lourd : l'admin
- * propose surtout l'export unitaire via exportOne().
+ * Unlike the other families, "export everything" is heavy: the admin mostly
+ * offers the single export through exportOne().
  */
 final class PlanExporter implements ObjectExporterInterface
 {
@@ -33,7 +33,7 @@ final class PlanExporter implements ObjectExporterInterface
 
     public function __construct(?Db $db = null, ?TiledMapService $tiledMap = null, ?PlanConfigService $planConfig = null)
     {
-        // Lazy : l'instanciation ne doit pas ouvrir de connexion DB
+        // Lazy: instantiation must not open a DB connection
         $this->db = $db;
         $this->tiledMap = $tiledMap;
         $this->planConfig = $planConfig;
@@ -69,8 +69,8 @@ final class PlanExporter implements ObjectExporterInterface
     }
 
     /**
-     * Les plans n'ont pas d'entité Doctrine : l'export unitaire passe par
-     * exportOne() (clé naturelle chaîne), pas par toArray().
+     * Plans have no Doctrine entity: the single export goes through
+     * exportOne() (string natural key), not toArray().
      */
     public function toArray(object $entity): array
     {
@@ -78,8 +78,8 @@ final class PlanExporter implements ObjectExporterInterface
     }
 
     /**
-     * Triplets compacts [x, y, z] — ~4x plus légers que des objets, et
-     * porteurs des cases sans contenu (niveaux z vides mais existants).
+     * Compact [x, y, z] triplets — ~4x lighter than objects, and carrying the
+     * cells without content (empty but existing z levels).
      *
      * @return list<array{0: int, 1: int, 2: int}>
      */

@@ -7,52 +7,51 @@ use Classes\View;
 use RuntimeException;
 
 /**
- * Export / import des plans du jeu pour l'extension Tiled (dépôt aoo-tiled-extension).
+ * Export / import of game plans for the Tiled extension (aoo-tiled-extension repo).
  *
- * Ce service porte le moteur de diff transactionnel sur les tables map_* et
- * compose deux services voisins : TileCatalogService (images de img/) et
- * PlanConfigService (JSON de plan).
+ * Holds the transactional diff engine over the map_* tables and composes two
+ * neighbours: TileCatalogService (images under img/) and PlanConfigService
+ * (plan JSON).
  *
- * Un « plan » exporté = les couches authorables d'un (plan, z) donné.
- * map_items n'apparaît jamais : c'est de l'état runtime (objets au sol).
+ * An exported "plan" is the authorable layers of one (plan, z). map_items
+ * never appears: it is runtime state (items on the ground).
  *
- * L'import est un diff par couche, clé d'identité (x, y, name[, params]) :
- *  - les lignes identiques sont conservées telles quelles (leurs colonnes
- *    runtime — damages des murs, endTime des éléments — survivent) ;
- *  - les lignes construites par des joueurs (player_id non nul) sont
- *    intouchables : jamais supprimées, ignorées par le diff ;
- *  - le tout est transactionnel, avec contrôle de version optimiste :
- *    la version calculée au pull doit correspondre à l'état courant,
- *    sinon 409 (un autre admin — ou le jeu — a modifié le plan).
+ * The import is a per-layer diff keyed on (x, y, name[, params]):
+ *  - identical rows are kept as they are, runtime columns included
+ *    (endTime of elements…);
+ *  - player-built rows (player_id set) are untouchable: never deleted,
+ *    ignored by the diff;
+ *  - the whole thing is transactional, with optimistic version control:
+ *    the version computed at pull time must match the current state, else
+ *    409 (another admin — or the game — changed the plan).
  *
- * La couche « buildings » est particulière : elle n'a pas de table map_*,
- * ses lignes sont les ENTITÉS bâtiment du niveau (players type building).
- * À l'export, une tuile par entité (name = le type / la race structure) ;
- * à l'import, le même diff (x, y, name), mais chaque pose passe par
- * BuildingService::place() et chaque retrait par remove() — hors de la
- * transaction map_* (autre connexion), après elle, pose par pose : une
- * case occupée est signalée (« skipped ») sans condamner le push. Seul le
- * DÉCOR est diffable (sans propriétaire ni faction, état built) ; le
- * reste — bâtiments de joueurs, avant-postes de faction, chantiers,
- * ruines — est protégé comme les lignes player_id des autres couches.
+ * The "buildings" layer is special: it has no map_* table, its rows are the
+ * building ENTITIES of the level (players of type building). Exported as one
+ * tile per entity (name = the structure type / race); imported through the
+ * same (x, y, name) diff, but every placement is a BuildingService::place()
+ * and every removal a remove() — outside the map_* transaction (other
+ * connection), after it, one by one: an occupied cell is reported as
+ * "skipped" without failing the push. Only DECOR is diffable (no owner, no
+ * faction, state built); the rest — player buildings, faction outposts,
+ * building sites, ruins — is protected like the player_id rows of the other
+ * layers.
  */
 class TiledMapService
 {
-    /** Règle unique des noms de plan (endpoints : tiledValidPlanName()) */
+    /** The one rule for plan names (endpoints: tiledValidPlanName()) */
     public const PLAN_NAME_PATTERN = '/^[a-z0-9_-]{1,64}$/';
 
     /**
-     * Spécification des couches authorables.
-     *  - columns : colonnes exportées en plus de name/x/y ;
-     *  - paramsInKey : params fait partie de la clé d'identité (contenu
-     *    authoré — modifier le params d'un trigger = suppression +
-     *    insertion). Pour les autres couches, les colonnes hors clé sont de
-     *    l'état runtime préservé sur les lignes conservées ;
-     *  - composites : la couche accepte les structures multi-tuiles (le sol
-     *    reste strictement 50x50) ;
-     *  - permanentOnly : l'éditeur ne voit que les lignes sans échéance
-     *    (endTime 0). Les datées — sang, traces de pas — sont au jeu : ni
-     *    pullées, ni comptées dans la version, ni effacées par un push.
+     * Specification of the authorable layers.
+     *  - columns: columns exported on top of name/x/y;
+     *  - paramsInKey: params is part of the identity key (authored content —
+     *    changing a trigger's params = delete + insert). On the other layers
+     *    the non-key columns are runtime state, preserved on kept rows;
+     *  - composites: the layer accepts multi-tile structures (the ground
+     *    stays strictly 50x50);
+     *  - permanentOnly: the editor only sees rows without an expiry
+     *    (endTime 0). Dated ones — blood, footprints — belong to the game:
+     *    neither pulled, nor counted in the version, nor erased by a push.
      */
     public const AUTHORABLE_LAYERS = [
         'tiles'       => ['columns' => ['foreground', 'player_id', 'rotation'], 'paramsInKey' => false, 'composites' => false],
@@ -82,32 +81,32 @@ class TiledMapService
     }
 
     /**
-     * Les couches dont les lignes sont des ENTITÉS, avec leur famille.
+     * The layers whose rows are ENTITIES, with their family.
      *
-     * Leur table map_* est vide et sans lecteur depuis la conversion : une
-     * ressource est un joueur de type `resource`, avec sa case, son satellite
-     * d'état et sa repousse ; une route est un joueur de type `route`
-     * (Version20260831140000). Elles sortent donc du diff de lignes — qui
-     * jetterait cette identité — pour passer par {@see ResourceReconciler},
-     * comme l'import de bundle ({@see \App\Service\ImportExport\PlanImporter}).
+     * Their map_* table is empty and has no reader since the conversion: a
+     * resource is a player of type `resource`, with its cell, its state
+     * satellite and its regrowth; a road is a player of type `route`
+     * (Version20260831140000). They stay out of the row diff — which would
+     * throw that identity away — and go through {@see ResourceReconciler},
+     * as the bundle import does ({@see \App\Service\ImportExport\PlanImporter}).
      *
-     * Le pull les lit au même endroit : la couche montrait un plan vide là où
-     * le jeu tenait des arbres et des pierres, et ce que le push y posait
-     * n'arrivait nulle part.
+     * The pull reads them from the same place: read from map_*, the layer
+     * would show an empty plan, and whatever a push wrote there would reach
+     * nobody.
      */
     public const ENTITY_LAYERS = ['resources' => 'resource', 'plants' => 'plant', 'routes' => 'route'];
 
-    /** Couche virtuelle des entités bâtiment (pas de table map_*) */
+    /** Virtual layer of the building entities (no map_* table) */
     public const BUILDINGS_LAYER = 'buildings';
 
     /** The layer whose rows may name a whole object rather than a piece. */
     public const SCENERY_LAYER = 'foregrounds';
 
     /**
-     * Répertoire d'images d'une couche. La couche « resources » (ex-walls)
-     * garde img/walls : le dépôt d'assets n'est pas versionné ici et les
-     * avatars des entités converties pointent des chemins img/walls/… copiés
-     * en base — renommer le dossier casserait les deux.
+     * Image directory of a layer. The "resources" layer (ex-walls) keeps
+     * img/walls: the asset repo is not versioned here and the converted
+     * entities' avatars point to img/walls/… paths copied into the database —
+     * renaming the folder would break both.
      */
     public static function layerImageDir(string $layer): string
     {
@@ -117,12 +116,10 @@ class TiledMapService
     public const TILE_SIZE = 50;
 
     /**
-     * Taille des lots d'écriture (même valeur que PlanImporter).
+     * Write batch size (same value as PlanImporter).
      *
-     * Une ligne = une requête, c'était tenable tant qu'un push tenait dans
-     * quelques centaines de lignes. Un collage de zone en apporte des dizaines
-     * de milliers : PHP y laissait sa limite de temps ou de mémoire, et
-     * l'extension n'avait qu'une « réponse illisible » à montrer.
+     * One row per query only holds for a few hundred rows; an area paste
+     * brings tens of thousands and blows PHP's time or memory limit.
      */
     private const INSERT_BATCH = 500;
 
@@ -137,13 +134,13 @@ class TiledMapService
         $this->planConfig = new PlanConfigService();
     }
 
-    /** @return array|null null si le (plan, z) n'existe pas */
+    /** @return array|null null when the (plan, z) does not exist */
     public function exportPlan(string $plan, int $z): ?array
     {
         $zLevels = $this->planZLevels($plan);
 
-        // Un niveau vide mais existant (coords sans contenu) reste pullable :
-        // l'extension multi-z doit pouvoir l'afficher et le remplir
+        // An empty but existing level (coords without content) stays pullable:
+        // the multi-z extension must be able to show it and fill it
         if (!in_array($z, $zLevels, true)) {
             return null;
         }
@@ -177,24 +174,23 @@ class TiledMapService
             $catalog[$layer] = array_values(array_diff($catalog[$layer] ?? [], $loose));
         }
 
-        // Depuis la conversion des obstacles en entités bâtiment, la palette
-        // resources ne propose que ce qui s'y pose encore sur ce plan
-        // (ressources, autels, unique_* — tout sur les plans de tutoriel).
-        // Les murs déjà posés restent visibles : buildLevel les tient des
-        // lignes du plan, pas du catalogue.
+        // Obstacles are building entities: the resources palette only offers
+        // what still goes on that layer for this plan (resources, altars,
+        // unique_* — everything on tutorial plans). Walls already placed stay
+        // visible: buildLevel takes them from the plan's rows, not the catalog.
         $catalog['resources'] = ResourcePaletteService::filterNames($catalog['resources'] ?? [], $plan);
 
-        // Même règle pour les déclencheurs : la palette ne propose que ceux
-        // que le jeu sait exécuter (un gestionnaire dans scripts/map/triggers).
-        // Les lignes déjà posées restent pullées : on doit pouvoir les retirer.
+        // Same rule for triggers: the palette only offers those the game can
+        // run (a handler in scripts/map/triggers). Rows already placed are
+        // still pulled: one must be able to remove them.
         $catalog['triggers'] = TriggerPaletteService::filterNames($catalog['triggers'] ?? []);
         $composites['resources'] = array_values(array_filter(
             $composites['resources'] ?? [],
             fn(array $composite) => ResourcePaletteService::isAuthorable($composite['name'], $plan)
         ));
 
-        // Palette bâtiments : le catalogue des types de structure (mêmes
-        // entrées que admin → Bâtiments), sprite résolu comme au rendu
+        // Buildings palette: the structure type catalog (same entries as
+        // admin → Bâtiments), sprite resolved as at render time
         $catalog[self::BUILDINGS_LAYER] = [];
         foreach ((new RaceService())->getBuildingTypes() as $race) {
             $catalog[self::BUILDINGS_LAYER][] = $race->getName();
@@ -224,10 +220,10 @@ class TiledMapService
     }
 
     /**
-     * Cas d'usage complet d'un push : valide la configuration de plan AVANT
-     * la transaction (aucun 400 possible après le commit des couches),
-     * importe les couches, écrit la configuration, recale les bornes du
-     * niveau, et remonte le bilan de santé du JSON de plan.
+     * The whole push use case: validates the plan configuration BEFORE the
+     * transaction (no 400 possible once the layers are committed), imports
+     * the layers, writes the configuration, resets the level bounds, and
+     * returns the plan JSON's health report.
      *
      * @return array{layers: array, newVersion: string, planHealth?: array}
      */
@@ -254,16 +250,15 @@ class TiledMapService
     }
 
     /**
-     * Redessine les damiers de qui voyait la zone poussée.
+     * Redraws the boards of whoever saw the pushed area.
      *
-     * Le damier est mis en cache par joueur, sans expiration : un bâtiment
-     * posé depuis Tiled dans le champ de vision de quelqu'un n'apparaissait
-     * pas tant que ce quelqu'un ne bougeait pas.
+     * The board is cached per player, without expiry: a building placed from
+     * Tiled in someone's field of view would not show until they moved.
      *
-     * Sur l'étendue de la poussée d'un coup, et non case par case : une
-     * poussée en touche des centaines, qui purgeraient les mêmes fichiers.
+     * Over the push's extent at once rather than cell by cell: a push touches
+     * hundreds of cells, which would purge the same files.
      *
-     * @param array<string, mixed> $layers tel que poussé, donc pas encore de forme sûre
+     * @param array<string, mixed> $layers as pushed, so not yet of a safe shape
      */
     private function refreshBoardsAround(string $plan, int $z, array $layers): void
     {
@@ -284,11 +279,11 @@ class TiledMapService
         }
 
         if ($xs === []) {
-            return; /* poussée vide : personne n'a rien vu changer */
+            return; /* empty push: nobody saw anything change */
         }
 
-        /* La portée de vue la plus large, pour attraper qui voit le bord de
-         * la zone depuis l'extérieur. */
+        /* The widest sight range, to catch whoever sees the edge of the area
+         * from outside. */
         $reach = 20;
 
         \Classes\View::refresh_players_svg_in_box(
@@ -302,14 +297,14 @@ class TiledMapService
     }
 
     /**
-     * Données de disposition pour un monde Tiled : par plan, sa position
-     * (x, y) sur la carte du monde, son étendue de contenu par niveau z, et
-     * les plans vers lesquels ses déclencheurs `tp` mènent (graphe de liens,
-     * pour placer les plans hors grille et signaler les liens cassés).
+     * Layout data for a Tiled world: per plan, its (x, y) position on the
+     * world map, its content extent per z level, and the plans its `tp`
+     * triggers lead to (link graph, to place off-grid plans and flag broken
+     * links).
      *
-     * Les plans dont le nom ne respecte pas PLAN_NAME_PATTERN (résidus
-     * historiques de la table coords) sont écartés — export.php les
-     * refuserait — et listés dans `ignored` pour être signalés à l'admin.
+     * Plans whose name fails PLAN_NAME_PATTERN (historical residue of the
+     * coords table) are left out — export.php would refuse them — and listed
+     * in `ignored` for the admin.
      *
      * @return array{tileSize: int, plans: array<string, array<string, mixed>>, ignored: string[]}
      */
@@ -318,7 +313,7 @@ class TiledMapService
         $plans = [];
         $ignored = [];
 
-        // Étendue du contenu par (plan, z)
+        // Content extent per (plan, z)
         $res = $this->db->exe(
             'SELECT plan, z, MIN(x) minX, MAX(x) maxX, MIN(y) minY, MAX(y) maxY
              FROM coords GROUP BY plan, z ORDER BY plan, z'
@@ -337,7 +332,7 @@ class TiledMapService
             ];
         }
 
-        // Liens tp : plan source → plans destination distincts
+        // tp links: source plan → distinct destination plans
         $links = [];
         $res = $this->db->exe(
             'SELECT c.plan AS src, t.params FROM map_triggers t
@@ -351,7 +346,7 @@ class TiledMapService
             }
         }
 
-        // Position (x, y) depuis le JSON de plan + liens
+        // (x, y) position from the plan JSON + links
         foreach ($plans as $plan => &$data) {
             $position = $this->planConfig->readPosition($plan);
             $data['x'] = $position['x'];
@@ -363,8 +358,8 @@ class TiledMapService
     }
 
     /**
-     * Plans existants — mêmes résidus écartés que worldLayout(), un plan
-     * listé ici doit toujours être pullable via export.php.
+     * Existing plans — same residue left out as worldLayout(): a plan listed
+     * here must always be pullable through export.php.
      *
      * @return array<string, array{zLevels: int[], coords: int}>
      */
@@ -384,15 +379,15 @@ class TiledMapService
         return $plans;
     }
 
-    /** @throws RuntimeException code 409 si le plan existe déjà */
+    /** @throws RuntimeException code 409 when the plan already exists */
     public function createPlan(string $plan): void
     {
         if ($this->planZLevels($plan) !== []) {
             throw new RuntimeException('Le plan existe déjà : ' . $plan, 409);
         }
 
-        // Une coordonnée d'amorce suffit : le plan existe, l'import créera
-        // les autres coords au fil des éditions
+        // One seed coordinate is enough: the plan exists, the import creates
+        // the other coords as edits come
         $coordsId = View::get_coords_id((object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => $plan]);
 
         if (!$coordsId) {
@@ -401,9 +396,9 @@ class TiledMapService
     }
 
     /**
-     * @param array<string, array> $incomingLayers couches envoyées par l'extension
+     * @param array<string, array> $incomingLayers layers sent by the extension
      * @return array{layers: array, newVersion: string}
-     * @throws RuntimeException code 400 (payload invalide) ou 409 (conflit de version)
+     * @throws RuntimeException code 400 (invalid payload) or 409 (version conflict)
      */
     public function importPlan(string $plan, int $z, array $incomingLayers, string $expectedVersion): array
     {
@@ -415,17 +410,17 @@ class TiledMapService
             }
         }
 
-        // Les bâtiments sont des entités : posés/retirés via BuildingService
-        // (autre connexion), APRÈS la transaction map_* — un mur supprimé
-        // dans le même push libère sa case avant la pose
+        // Buildings are entities: placed/removed through BuildingService
+        // (other connection), AFTER the map_* transaction — a wall deleted in
+        // the same push frees its cell before the placement
         $incomingBuildings = null;
         if (array_key_exists(self::BUILDINGS_LAYER, $incomingLayers)) {
             $incomingBuildings = $incomingLayers[self::BUILDINGS_LAYER];
             unset($incomingLayers[self::BUILDINGS_LAYER]);
         }
 
-        /* Ressources et plantes non plus ne sont pas des lignes : elles
-         * passent par le réconciliateur, hors du diff map_*. */
+        /* Resources, plants and roads are not rows either: they go through
+         * the reconciler, outside the map_* diff. */
         $incomingEntities = [];
         foreach (array_keys(self::ENTITY_LAYERS) as $layer) {
             if (array_key_exists($layer, $incomingLayers)) {
@@ -452,10 +447,9 @@ class TiledMapService
             );
         }
 
-        /* Les lignes d'entités sont validées AVANT la transaction : elles
-         * s'écrivent après le commit des couches, donc un refus tardif
-         * laisserait le reste appliqué. Même règle que la configuration de
-         * plan dans applyPush(). */
+        /* Entity rows are validated BEFORE the transaction: they are written
+         * after the layers commit, so a late refusal would leave the rest
+         * applied. Same rule as the plan configuration in applyPush(). */
         $wantedEntities = [];
         foreach ($incomingEntities as $layer => $rows) {
             $wantedEntities[$layer] = $this->validateEntityRows($plan, $z, $layer, $rows);
@@ -463,7 +457,7 @@ class TiledMapService
 
         $coordsIds = $this->loadCoordsIds($plan, $z);
 
-        // Les cases naissent d'un coup, avant les couches qui s'y posent
+        // Cells are born in one go, before the layers that land on them
         $this->ensureCoords($plan, $z, $incomingLayers, $coordsIds);
 
         $report = [];
@@ -479,9 +473,9 @@ class TiledMapService
             throw $e;
         }
 
-        // L'état post-import est connu sans relire la base : les couches
-        // importées valent exactement les lignes reçues (les lignes joueurs,
-        // hors diff, sont aussi hors empreinte), les autres n'ont pas bougé
+        // The post-import state is known without re-reading the database:
+        // imported layers are exactly the rows received (player rows are out
+        // of the diff and out of the fingerprint alike), the others did not move
         $postLayers = array_merge($currentLayers, $incomingLayers);
 
         /* Scenery laid down by a push must become an entity, or its cut-out's
@@ -497,8 +491,8 @@ class TiledMapService
             $report[self::SCENERY_LAYER]['vanished'] = $scenery->removeOrphanedEntities();
         }
 
-        /* Avant les bâtiments : une ressource retirée dans le même push
-         * libère sa case avant qu'on y pose autre chose. */
+        /* Before the buildings: a resource removed in the same push frees
+         * its cell before something else is placed on it. */
         foreach ($wantedEntities as $layer => $wanted) {
             $report[$layer] = $this->reconcileEntityLayer($plan, $z, $layer, $wanted);
             $postLayers[$layer] = self::reconcilerFor($layer)->asPayloadRows($plan, $z);
@@ -511,8 +505,8 @@ class TiledMapService
                 $incomingBuildings,
                 $currentLayers[self::BUILDINGS_LAYER]
             );
-            // Contrairement aux map_*, l'état final peut différer des lignes
-            // reçues (poses refusées) : relire les entités réelles
+            // Unlike map_*, the final state may differ from the rows received
+            // (refused placements): re-read the actual entities
             $postLayers[self::BUILDINGS_LAYER] = $this->fetchBuildingRows($plan, $z);
         }
 
@@ -523,11 +517,11 @@ class TiledMapService
     }
 
     /**
-     * Le réconciliateur d'une couche d'entités : sa famille, et le dossier
-     * où vivent ses sprites (celui de la couche, via layerImageDir()).
+     * The reconciler of an entity layer: its family, and the folder its
+     * sprites live in (the layer's, through layerImageDir()).
      *
-     * Publique parce que le pull, le push, le clonage de plan et l'import de
-     * bundle veulent tous le même : une couche d'entités a UN écrivain.
+     * Public because pull, push, plan cloning and bundle import all want the
+     * same one: an entity layer has ONE writer.
      */
     public static function reconcilerFor(string $layer): \App\Service\Map\ResourceReconciler
     {
@@ -539,8 +533,8 @@ class TiledMapService
     }
 
     /**
-     * Lignes d'une couche d'entités reçues du push, validées et mises en forme
-     * pour le réconciliateur.
+     * Rows of an entity layer received from the push, validated and shaped
+     * for the reconciler.
      *
      * @param list<array<string, mixed>> $incomingRows
      * @return list<array{name: string, x: int, y: int, z: int}>
@@ -553,8 +547,8 @@ class TiledMapService
         foreach ($incomingRows as $row) {
             self::validateIncomingRow($layer, $row);
 
-            // Les obstacles/décor sont des bâtiments depuis leur conversion :
-            // la couche resources ne reçoit que ce qui s'y pose encore.
+            // Obstacles and decor are buildings: the resources layer only
+            // receives what still goes on it.
             if ($layer === 'resources' && !ResourcePaletteService::isAuthorable((string) $row['name'], $plan)) {
                 throw new RuntimeException(
                     'Mur « ' . $row['name'] . ' » en ' . $row['x'] . ',' . $row['y']
@@ -576,16 +570,16 @@ class TiledMapService
     }
 
     /**
-     * Diff d'une couche d'entités — ressources, plantes.
+     * Diff of an entity layer — resources, plants, roads.
      *
-     * Même clé d'identité que les couches de tuiles (x, y, name), mais la
-     * comparaison est celle du réconciliateur : ce que les deux côtés
-     * dessinent pareil garde son id ET son état, si bien qu'une ressource
-     * épuisée le reste et repousse à son heure. Ce que le push ne nomme plus
-     * est retiré du plateau, satellite compris.
+     * Same identity key as the tile layers (x, y, name), but the comparison
+     * is the reconciler's: what both sides draw alike keeps its id AND its
+     * state, so an exhausted resource stays exhausted and regrows in its own
+     * time. What the push no longer names leaves the board, satellite
+     * included.
      *
-     * Restreint au niveau poussé : l'éditeur envoie un z à la fois, et ce
-     * qu'il ne regarde pas ne doit pas se lire comme « supprimé ».
+     * Restricted to the pushed level: the editor sends one z at a time, and
+     * what it is not looking at must not read as "removed".
      *
      * @param list<array{name: string, x: int, y: int, z: int}> $wanted
      * @return array{inserted: int, deleted: int, kept: int, protected: int, skipped: list<string>}
@@ -599,8 +593,8 @@ class TiledMapService
             'deleted'   => $result['removed'],
             'kept'      => $result['kept'],
             'protected' => 0,
-            /* Un type que le catalogue ne connaît pas n'est pas posé : le
-               push le dit, comme une pose de bâtiment refusée. */
+            /* A type the catalog does not know is not placed: the push says
+               so, like a refused building placement. */
             'skipped'   => array_map(
                 static fn(string $name): string => $name . ' — type inconnu du catalogue, non posé',
                 $result['unknown']
@@ -609,12 +603,12 @@ class TiledMapService
     }
 
     /**
-     * Diff de la couche bâtiments : même clé d'identité (x, y, type) que les
-     * couches de tuiles, mais chaque pose est un BuildingService::place()
-     * (validations d'occupation comprises) et chaque retrait un remove().
-     * Une pose refusée est signalée dans `skipped` sans faire échouer le
-     * push ; les entités protégées (propriétaire, faction, chantier, ruine)
-     * sont hors diff comme les lignes player_id des autres couches.
+     * Diff of the buildings layer: same identity key (x, y, type) as the tile
+     * layers, but every placement is a BuildingService::place() (occupancy
+     * checks included) and every removal a remove(). A refused placement is
+     * reported in `skipped` without failing the push; protected entities
+     * (owner, faction, building site, ruin) are out of the diff like the
+     * player_id rows of the other layers.
      *
      * @return array{inserted: int, deleted: int, kept: int, protected: int, skipped: string[]}
      */
@@ -651,8 +645,8 @@ class TiledMapService
         $skipped = [];
         $inserted = 0;
 
-        // Retraits d'abord : déplacer un bâtiment d'une case à l'autre dans
-        // le même push libère l'ancienne case avant la pose sur la nouvelle
+        // Removals first: moving a building from one cell to another in the
+        // same push frees the old cell before the placement on the new one
         $deleted = 0;
         foreach (array_merge([], ...array_values($available)) as $entityId) {
             if ($buildings->remove((int) $entityId)) {
@@ -686,21 +680,21 @@ class TiledMapService
     }
 
     /**
-     * Couches authorables d'un plan entier (tous z), sous forme portable :
-     * pas d'id de base, lignes et colonne player_id exclues (mêmes règles
-     * que l'empreinte de version), endTime exclu (état runtime — damages
-     * reste : il encode l'intention d'auteur, -1 = récoltable). Alimente
-     * l'export de bundle ({@see \App\Service\ImportExport\PlanExporter}).
+     * Authorable layers of a whole plan (every z), in portable form: no
+     * database id, player_id rows and column excluded (same rules as the
+     * version fingerprint), endTime excluded (runtime state — damages stays:
+     * it encodes the author's intent, -1 = harvestable). Feeds the bundle
+     * export ({@see \App\Service\ImportExport\PlanExporter}).
      *
-     * @return array<string, list<array<string, mixed>>> couche => lignes {x, y, z, name, …}
+     * @return array<string, list<array<string, mixed>>> layer => rows {x, y, z, name, …}
      */
     public function exportAllLayers(string $plan): array
     {
         $layers = [];
 
         foreach (self::AUTHORABLE_LAYERS as $layer => $spec) {
-            /* Les couches d'entités sont lues chez leur écrivain, qui tient
-             * la correspondance entre damages et le satellite d'état. */
+            /* Entity layers are read from their writer, which owns the
+             * mapping between damages and the state satellite. */
             if (isset(self::ENTITY_LAYERS[$layer])) {
                 $layers[$layer] = self::reconcilerFor($layer)->asPayloadRows($plan);
                 continue;
@@ -794,7 +788,7 @@ class TiledMapService
         return $skipped;
     }
 
-    /** @return array<string, array> toutes les couches authorables du (plan, z) */
+    /** @return array<string, array> every authorable layer of the (plan, z) */
     private function fetchLayers(string $plan, int $z): array
     {
         $layers = [];
@@ -836,12 +830,12 @@ class TiledMapService
     }
 
     /**
-     * Entités bâtiment du (plan, z), sous la forme des lignes de couche :
-     * name = le type (players.race). Le DÉCOR authorable a player_id = 0 ;
-     * tout le reste (propriétaire, faction, chantier, ruine) porte un
-     * player_id non nul — même convention que les lignes construites par
-     * les joueurs : hors diff, hors empreinte de version, couche
-     * verrouillée « (joueurs) » côté extension.
+     * Building entities of the (plan, z), shaped as layer rows: name = the
+     * type (players.race). Authorable DECOR has player_id = 0; everything
+     * else (owner, faction, building site, ruin) carries a non-zero
+     * player_id — same convention as player-built rows: out of the diff, out
+     * of the version fingerprint, locked "(joueurs)" layer on the extension
+     * side.
      *
      * @return list<array{id: int, name: string, x: int, y: int, player_id: int}>
      */
@@ -875,7 +869,7 @@ class TiledMapService
         return $rows;
     }
 
-    /** @return int[] niveaux z existants du plan, croissants */
+    /** @return int[] the plan's existing z levels, ascending */
     private function planZLevels(string $plan): array
     {
         $res = $this->db->exe('SELECT DISTINCT z FROM coords WHERE plan = ? ORDER BY z', array($plan));
@@ -888,7 +882,7 @@ class TiledMapService
         return $zLevels;
     }
 
-    /** @return list<string> noms d'items existants, pour le validator (une requête au lieu d'une par biome) */
+    /** @return list<string> existing item names, for the validator (one query instead of one per biome) */
     private function knownItemNames(): array
     {
         $res = $this->db->exe('SELECT name FROM items');
@@ -901,7 +895,7 @@ class TiledMapService
         return $names;
     }
 
-    /** @return array<string, int> "x|y" => coords_id du (plan, z) */
+    /** @return array<string, int> "x|y" => coords_id of the (plan, z) */
     private function loadCoordsIds(string $plan, int $z): array
     {
         $res = $this->db->exe('SELECT id, x, y FROM coords WHERE plan = ? AND z = ?', array($plan, $z));
@@ -915,9 +909,9 @@ class TiledMapService
     }
 
     /**
-     * Empreinte du contenu authoré. Exclut les lignes protégées (player_id)
-     * et les colonnes runtime (damages, endTime), qui évoluent pendant le jeu
-     * sans que ce soit un conflit d'édition.
+     * Fingerprint of the authored content. Excludes protected rows
+     * (player_id) and runtime columns (damages, endTime), which change during
+     * play without being an editing conflict.
      */
     private function computeVersion(array $layers): string
     {
@@ -1002,12 +996,12 @@ class TiledMapService
     /**
      * @param list<array<string, mixed>>  $incomingRows
      * @param list<array<string, mixed>>  $currentRows
-     * @param array<string, int>          $coordsIds cache "x|y" => id, complet à ce stade
+     * @param array<string, int>          $coordsIds "x|y" => id cache, complete at this point
      * @return array{inserted: int, deleted: int, kept: int, protected: int}
      */
     private function importLayer(string $layer, array $incomingRows, array $currentRows, array $coordsIds): array
     {
-        // Lignes existantes disponibles pour le rapprochement, par clé
+        // Existing rows available for matching, by key
         $available = [];
         $protected = 0;
 
@@ -1028,10 +1022,9 @@ class TiledMapService
 
             $key = $this->rowKey($layer, $row);
 
-            /* Deux fois la même chose sur la même case, c'est une fois. Un
-             * collage qui recouvre sa propre zone en envoie deux, et
-             * map_elements — dont la clé primaire est (name, coords_id) —
-             * refusait la seconde en emportant tout le push. */
+            /* The same thing twice on the same cell is once. A paste over
+             * its own area sends two, and map_elements — whose primary key is
+             * (name, coords_id) — refuses the second one, push and all. */
             if (isset($seen[$key])) {
                 continue;
             }
@@ -1050,9 +1043,8 @@ class TiledMapService
 
         /* Deletions first: the same element re-placed turned the other
          * way lands on the same (name, coords_id) key as the row it
-         * replaces. Par lots : au-delà de 65 535 paramètres, MySQL refuse
-         * de préparer la requête — un grand plan effacé d'un coup y
-         * arrivait. */
+         * replaces. Batched: past 65 535 parameters MySQL refuses to prepare
+         * the statement, and a large plan erased at once gets there. */
         foreach (array_chunk($toDelete, self::INSERT_BATCH) as $chunk) {
             $this->db->exe(
                 'DELETE FROM map_' . $layer . ' WHERE id IN (' . implode(',', array_fill(0, count($chunk), '?')) . ')',
@@ -1071,9 +1063,9 @@ class TiledMapService
     }
 
     /**
-     * Accepte les payloads d'avant le renommage map_walls → map_resources :
-     * les cartes pullées et les bundles exportés à l'époque portent la clé
-     * « walls ». Partagé avec l'import de bundle (PlanImporter).
+     * Accepts payloads from before the map_walls → map_resources rename:
+     * maps pulled and bundles exported back then carry the "walls" key.
+     * Shared with the bundle import (PlanImporter).
      *
      * @param array<string, mixed> $layers
      * @return array<string, mixed>
@@ -1089,8 +1081,8 @@ class TiledMapService
     }
 
     /**
-     * Point de contrôle unique de la validité d'une ligne authorée — partagé
-     * entre le push Tiled et l'import de bundle (PlanImporter).
+     * The single checkpoint for an authored row's validity — shared between
+     * the Tiled push and the bundle import (PlanImporter).
      *
      * @throws RuntimeException code 400
      */
@@ -1115,16 +1107,15 @@ class TiledMapService
     }
 
     /**
-     * Crée d'un coup les cases que la poussée nomme et qui n'existent pas.
+     * Creates in one go the cells the push names that do not exist yet.
      *
-     * Une par une, c'était deux à trois requêtes par case
-     * ({@see View::get_coords_id}) : un collage de quelques milliers de cases
-     * y passait la limite de temps de PHP. L'upsert garde l'idempotence de
-     * l'original — deux poussées qui découvrent la même case ne la créent
-     * qu'une fois, la clé unique (plan, z, x, y) tranche.
+     * One at a time ({@see View::get_coords_id}) is two or three queries per
+     * cell, and a paste of a few thousand cells blows PHP's time limit. The
+     * upsert keeps it idempotent — two pushes discovering the same cell
+     * create it once, the unique key (plan, z, x, y) decides.
      *
-     * @param array<string, mixed> $layers couches telles que poussées
-     * @param array<string, int>   $coordsIds cache "x|y" => id, rechargé si des cases naissent
+     * @param array<string, mixed> $layers layers as pushed
+     * @param array<string, int>   $coordsIds "x|y" => id cache, reloaded when cells are born
      */
     private function ensureCoords(string $plan, int $z, array $layers, array &$coordsIds): void
     {
@@ -1171,14 +1162,14 @@ class TiledMapService
     }
 
     /**
-     * Insère les lignes d'une couche par lots.
+     * Inserts a layer's rows in batches.
      *
-     * Colonnes uniformes : `name` et la case, plus `params` pour les couches
-     * qui en portent (défaut '' en base, comme l'insertion ligne à ligne qui
-     * l'omettait). Le reste — foreground, endTime — prend le défaut du schéma.
+     * Uniform columns: `name` and the cell, plus `params` and `rotation` for
+     * the layers that carry them ('' and 0 by default). The rest —
+     * foreground, endTime — takes the schema default.
      *
      * @param list<array<string, mixed>> $rows
-     * @param array<string, int>         $coordsIds cache "x|y" => id, complet à ce stade
+     * @param array<string, int>         $coordsIds "x|y" => id cache, complete at this point
      */
     private function insertRows(string $layer, array $rows, array $coordsIds): void
     {
