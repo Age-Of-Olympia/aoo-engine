@@ -47,7 +47,6 @@ try {
             throw new InvalidArgumentException('Import refusé : ' . $first['name'] . ' — ' . $first['reason']);
         }
 
-        $_SESSION['action_import_plan_index'] = 0;
         $csrf->regenerateToken();
         header('Location: /admin/action-import-run.php');
         exit;

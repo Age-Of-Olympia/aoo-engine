@@ -35,55 +35,22 @@ try {
         throw new InvalidArgumentException('Cet écran ne charge que des plans.');
     }
 
-    $importer = new PlanImporter();
     $report = new ImportReport();
-    $objects = $parsed->objects;
-    $index = (int) ($_SESSION['action_import_plan_index'] ?? 0);
-    $deadline = microtime(true) + STEP_BUDGET;
-
-    $payload = null;
-    $run = null;
-
-    while ($index < count($objects)) {
-        $payload = $importer->payloadFor($objects[$index]);
-        $run = $importer->runFor($payload, $report);
-        if (!$run->isDone()) {
-            break;
-        }
-        $index++;
-    }
-
-    if ($run === null || $index >= count($objects)) {
-        unset($_SESSION['action_import_bundle'], $_SESSION['action_import_filename'], $_SESSION['action_import_plan_index']);
-        echo json_encode(['done' => true, 'plan' => '', 'step' => 0, 'total' => 0, 'label' => 'terminé', 'warnings' => []]);
-        exit;
-    }
-
-    while (!$run->isDone() && microtime(true) < $deadline) {
-        $run->next();
-    }
-
-    if ($run->isDone()) {
-        $index++;
-    }
-    $_SESSION['action_import_plan_index'] = $index;
+    $run = (new PlanImporter())->advance($parsed->objects, $report, microtime(true) + STEP_BUDGET);
 
     $warnings = array_map(
         static fn(array $warning): string => $warning['name'] . ' — ' . $warning['message'],
         $report->warnings()
     );
-    $_SESSION['action_import_warnings'] = array_merge(
-        (array) ($_SESSION['action_import_warnings'] ?? []),
-        $warnings
-    );
 
-    $done = $index >= count($objects);
-    if ($done) {
-        unset($_SESSION['action_import_bundle'], $_SESSION['action_import_filename'], $_SESSION['action_import_plan_index']);
+    if ($run === null) {
+        unset($_SESSION['action_import_bundle'], $_SESSION['action_import_filename']);
+        echo json_encode(['done' => true, 'plan' => '', 'step' => 0, 'total' => 0, 'label' => 'terminé', 'warnings' => $warnings]);
+        exit;
     }
 
     echo json_encode([
-        'done'     => $done,
+        'done'     => false,
         'plan'     => $run->plan(),
         'step'     => $run->step(),
         'total'    => $run->total(),

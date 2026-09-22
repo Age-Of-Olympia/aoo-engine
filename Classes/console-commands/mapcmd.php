@@ -7,6 +7,7 @@ use App\Service\ImportExport\BundleEnvelope;
 use App\Service\ImportExport\ImportReport;
 use App\Service\ImportExport\PlanExporter;
 use App\Service\ImportExport\PlanImporter;
+use App\Service\ImportExport\PlanImportRun;
 
 /**
  * Saves and restores the plan the admin stands on, in the bundle format the
@@ -107,38 +108,24 @@ EOT);
             return '<font color="orange">erreur : ce bundle contient des « ' . htmlspecialchars($parsed->objectType) . ' », pas des plans</font>';
         }
 
-        $importer = new PlanImporter();
         $report = new ImportReport();
         $out = '';
-        $deadline = microtime(true) + self::BUDGET;
 
-        foreach ($parsed->objects as $object) {
-            try {
-                $payload = $importer->payloadFor($object);
-            } catch (\Throwable $e) {
-                $out .= '<font color="orange">' . htmlspecialchars($e->getMessage()) . '</font><br />';
-                continue;
+        $run = (new PlanImporter())->advance(
+            $parsed->objects,
+            $report,
+            microtime(true) + self::BUDGET,
+            function (PlanImportRun $run, string $label) use (&$out): void {
+                $out .= '- ' . htmlspecialchars($run->plan() . ' : ' . $label)
+                    . ' (' . $run->step() . '/' . $run->total() . ')<br />';
             }
+        );
 
-            $run = $importer->runFor($payload, $report);
-            $out .= ($run->resumed() ? 'Reprise' : 'Chargement') . ' de « ' . htmlspecialchars($run->plan())
-                . ' » : étape ' . $run->step() . '/' . $run->total() . '<br />';
-
-            while (!$run->isDone() && microtime(true) < $deadline) {
-                $label = $run->label();
-                $run->next();
-                $out .= '- ' . htmlspecialchars($label) . ' (' . $run->step() . '/' . $run->total() . ')<br />';
-            }
-
-            $out .= $run->isDone()
-                ? '<b>' . htmlspecialchars($run->plan()) . ' : terminé.</b><br />'
-                : '<font color="orange">Interrompu à l\'étape ' . $run->step() . '/' . $run->total()
-                    . ' — relancez « map load ' . htmlspecialchars((string) $name) . ' » pour continuer.</font><br />';
-
-            if (!$run->isDone()) {
-                break;
-            }
-        }
+        $out .= $run === null
+            ? '<b>Chargement terminé.</b><br />'
+            : '<font color="orange">Interrompu à l\'étape ' . $run->step() . '/' . $run->total()
+                . ' de « ' . htmlspecialchars($run->plan()) . ' » — relancez « map load '
+                . htmlspecialchars((string) $name) . ' » pour continuer.</font><br />';
 
         foreach ($report->warnings() as $warning) {
             $out .= '<font color="orange">' . htmlspecialchars($warning['name'] . ' — ' . $warning['message']) . '</font><br />';
