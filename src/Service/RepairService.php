@@ -7,29 +7,29 @@ use App\Factory\PlayerFactory;
 use App\Service\Map\EntityLocationService;
 use Classes\Item;
 use Doctrine\DBAL\Connection;
+use Random\Engine\Mt19937;
+use Random\Randomizer;
 
 /**
  * The atelier's counter: repair a worn exemplar, recycle a broken one.
  *
- * Both price off the item's RECIPE. A full repair (from the last hit
- * point) costs a share of the recipe; less wear costs proportionally
- * less. The bill is paid either in the recipe's resources plus labour, or
- * entirely in gold — the artisan buys the resources with a margin, so gold
- * always costs more. A broken exemplar is past repair: recycling gives
- * back a share of its ingredients and destroys it.
+ * Both price off the item's worth (RecipeWorthService). A full repair
+ * (from the last hit point) costs a share of that worth, less wear costs
+ * proportionally less. That bill is converted back into whole resources
+ * of the recipe plus one resource of the object's race, or paid entirely
+ * in gold with the artisan's margin on top. A broken exemplar is past
+ * repair: recycling gives back a share of its resources and destroys it.
  */
 final class RepairService
 {
     /**
-     * The four knobs, as percentages in admin_settings (admin/index.php):
-     * share of the recipe a repair from 1 PV costs, labour as a share of
-     * the resources' value (at least 1 PO), the artisan's margin on
-     * resources paid in gold, share of the recipe a broken exemplar gives
-     * back. Read on every quote, so a change applies at once.
+     * The three knobs, as percentages in admin_settings (admin/index.php):
+     * share of the object's worth a repair from 1 PV costs, the artisan's
+     * margin when the bill is paid in gold, share of the recipe a broken
+     * exemplar gives back. Read on every quote, so a change applies at once.
      */
     public const SETTINGS = [
         'repair_full_share' => 25,
-        'repair_labour_share' => 10,
         'repair_gold_margin' => 150,
         'recycle_share' => 25,
     ];
@@ -38,10 +38,13 @@ final class RepairService
 
     private AdminSettingsService $settings;
 
+    private RecipeWorthService $worth;
+
     public function __construct()
     {
         $this->conn = EntityManagerFactory::getEntityManager()->getConnection();
         $this->settings = new AdminSettingsService();
+        $this->worth = new RecipeWorthService($this->conn);
     }
 
     /** A knob as a ratio: 25 → 0.25. Unset or invalid falls back to the default. */
@@ -80,7 +83,7 @@ final class RepairService
             if (!ItemInstanceService::isBroken((int) $row['durability'])) {
                 continue;
             }
-            $row['refund'] = $this->shareOf($this->recipeOf((string) $row['name']), $this->ratio('recycle_share'), roundUp: false);
+            $row['refund'] = $this->worth->shareOf($this->worth->flatten((string) $row['name']), $this->ratio('recycle_share'));
             $rows[] = $row;
         }
 
@@ -90,30 +93,35 @@ final class RepairService
     /**
      * The bill for bringing one exemplar back to full life.
      *
-     * @param array<string, mixed> $row an exemplar row (name, durability, durability_max)
-     * @return array{resources: array<string, int>, labour: int, gold: int}|null null without a recipe
+     * The random draws are seeded by the exemplar, so the quote shown in
+     * the list is the one charged at the click.
+     *
+     * @param array<string, mixed> $row an exemplar row (name, race, instance_id, durability, durability_max)
+     * @return array{resources: array<string, int>, gold: int}|null null without a recipe
      */
     public function quote(array $row): ?array
     {
-        $recipe = $this->recipeOf((string) $row['name']);
+        $recipe = $this->worth->flatten((string) $row['name']);
         if ($recipe === []) {
             return null;
         }
 
         $max = max(1, (int) $row['durability_max']);
-        $share = $this->ratio('repair_full_share') * ((int) $row['durability_max'] - (int) $row['durability']) / $max;
+        $missing = (int) $row['durability_max'] - (int) $row['durability'];
+        $bill = (int) ceil($this->worth->worthOf($recipe) * $this->ratio('repair_full_share') * $missing / $max);
 
-        $resources = $this->shareOf($recipe, $share, roundUp: true);
-        $value = 0;
-        foreach ($recipe as $ingredient) {
-            $value += $ingredient['price'] * $ingredient['count'] * $share;
+        $dice = new Randomizer(new Mt19937((int) $row['instance_id']));
+        $resources = $this->worth->resourcesWorth($bill, $recipe, $dice);
+
+        $racial = $this->worth->racialResource((string) $row['race'], $recipe, $dice);
+        if ($racial !== null) {
+            $resources[$racial['name']] = ($resources[$racial['name']] ?? 0) + 1;
+            $bill += $racial['price'];
         }
-        $labour = max(1, (int) ceil($value * $this->ratio('repair_labour_share')));
 
         return [
             'resources' => $resources,
-            'labour' => $labour,
-            'gold' => (int) ceil($value * $this->ratio('repair_gold_margin')) + $labour,
+            'gold' => (int) ceil($bill * $this->ratio('repair_gold_margin')),
         ];
     }
 
@@ -125,22 +133,12 @@ final class RepairService
             throw new \RuntimeException('Sans recette connue, cet objet ne se répare pas.');
         }
 
-        /* Two connections (gold on DBAL, stacks on the legacy mysqli one), so
-         * no single transaction covers the bill: labour first, atomic on its
-         * own; then the resources in the legacy transaction, refunding the
-         * labour if they fall short. ponytail: one connection would make this
-         * one transaction — when Item::add_item moves to DBAL. */
-        if (!(new GoldService($this->conn))->spend($playerId, $quote['labour'])) {
-            throw new \RuntimeException('Pas assez d\'or pour la main-d\'œuvre.');
-        }
-
         $player = PlayerFactory::legacy($playerId);
         $db = new \Classes\Db();
         $db->beginTransaction();
         foreach ($quote['resources'] as $name => $count) {
             if (!Item::get_item_by_name($name)->add_item($player, -$count)) {
                 $db->rollback();
-                Item::get_item_by_name('or')->add_item($player, $quote['labour']);
                 throw new \RuntimeException("Il vous manque : {$name} ({$count}).");
             }
         }
@@ -171,7 +169,7 @@ final class RepairService
             throw new \RuntimeException('Seul un objet brisé se recycle.');
         }
 
-        $refund = $this->shareOf($this->recipeOf((string) $row['name']), $this->ratio('recycle_share'), roundUp: false);
+        $refund = $this->worth->shareOf($this->worth->flatten((string) $row['name']), $this->ratio('recycle_share'));
 
         /* The bag-lines rule: the wreck frees its line, each new stack takes one. */
         $capacity = new ContainerService();
@@ -213,57 +211,11 @@ final class RepairService
         );
     }
 
-    /**
-     * The recipe's ingredients priced from the catalog: name => [count, price].
-     *
-     * @return array<string, array{count: int, price: int}>
-     */
-    private function recipeOf(string $itemName): array
-    {
-        $ingredients = (new RecipeService())->ingredientsForResult($itemName);
-        if ($ingredients === []) {
-            return [];
-        }
-
-        $prices = $this->conn->fetchAllKeyValue(
-            'SELECT name, price FROM items WHERE name IN (?)',
-            [array_keys($ingredients)],
-            [\Doctrine\DBAL\ArrayParameterType::STRING]
-        );
-
-        $recipe = [];
-        foreach ($ingredients as $name => $count) {
-            $recipe[$name] = ['count' => (int) $count, 'price' => (int) ($prices[$name] ?? 0)];
-        }
-
-        return $recipe;
-    }
-
-    /**
-     * A share of a recipe, whole units only: repair rounds up (the artisan
-     * does not cut a plank), recycling rounds down (nothing is conjured).
-     *
-     * @param array<string, array{count: int, price: int}> $recipe
-     * @return array<string, int>
-     */
-    private function shareOf(array $recipe, float $share, bool $roundUp): array
-    {
-        $out = [];
-        foreach ($recipe as $name => $ingredient) {
-            $n = (int) ($roundUp ? ceil($ingredient['count'] * $share) : floor($ingredient['count'] * $share));
-            if ($n > 0) {
-                $out[$name] = $n;
-            }
-        }
-
-        return $out;
-    }
-
     /** @return array<int, array<string, mixed>> the exemplars in the bag, with their wear */
     private function heldExemplars(int $playerId): array
     {
         return $this->conn->fetchAllAssociative(
-            'SELECT it.name, ' . ItemInstanceService::DISPLAY_NAME . ' AS label, i.item_id, i.id AS instance_id,
+            'SELECT it.name, it.race, ' . ItemInstanceService::DISPLAY_NAME . ' AS label, i.item_id, i.id AS instance_id,
                     i.custom_name, e.id AS entity_id, ' . ItemInstanceService::WEAR_SELECT . '
                FROM players e
                JOIN item_instances i ON i.entity_id = e.id

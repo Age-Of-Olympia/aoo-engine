@@ -62,7 +62,7 @@ final class AtelierView
             return '<small>Sans recette connue, l\'artisan ne sait pas réparer cela.</small>';
         }
 
-        return self::button($row, 'repair-resources', self::stackList($quote['resources']) . ' + ' . $quote['labour'] . ' PO de main-d\'œuvre')
+        return self::button($row, 'repair-resources', self::stackList($quote['resources']))
             . ' ' . self::button($row, 'repair-gold', $quote['gold'] . ' PO');
     }
 

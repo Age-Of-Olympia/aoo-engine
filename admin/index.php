@@ -332,9 +332,8 @@ ob_start();
                         <span class="text-muted"><?= $label ?></span>
                     </div>
                 <?php }; ?>
-                <?php $repairField('repair_full_share', '% de la recette pour réparer un objet à 1 PV (au prorata des PV manquants)'); ?>
-                <?php $repairField('repair_labour_share', '% de la valeur des ressources en main-d\'œuvre (1 PO minimum)'); ?>
-                <?php $repairField('repair_gold_margin', '% du prix des ressources quand tout est payé en or'); ?>
+                <?php $repairField('repair_full_share', '% de la valeur de l\'objet pour le réparer à 1 PV (au prorata des PV manquants)'); ?>
+                <?php $repairField('repair_gold_margin', '% de la facture (ressources + ressource raciale) quand tout est payé en or'); ?>
                 <?php $repairField('recycle_share', '% des ingrédients rendus au recyclage d\'un objet brisé'); ?>
                 <button type="submit" class="btn btn-sm btn-primary mt-2">Enregistrer</button>
                 <small class="form-text text-muted">
