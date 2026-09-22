@@ -47,12 +47,19 @@ final class RepairService
         $this->worth = new RecipeWorthService($this->conn);
     }
 
+    /** Recycling never gives back more than the recipe costs. */
+    private const RECYCLE_SHARE_MAX = 100;
+
     /** A knob as a ratio: 25 → 0.25. Unset or invalid falls back to the default. */
     public function ratio(string $name): float
     {
         $stored = $this->settings->get($name, (string) self::SETTINGS[$name]);
+        $percent = is_numeric($stored) && $stored >= 0 ? (float) $stored : self::SETTINGS[$name];
+        if ($name === 'recycle_share') {
+            $percent = min($percent, self::RECYCLE_SHARE_MAX);
+        }
 
-        return (is_numeric($stored) && $stored >= 0 ? (float) $stored : self::SETTINGS[$name]) / 100;
+        return $percent / 100;
     }
 
     /**
@@ -134,17 +141,14 @@ final class RepairService
         }
 
         $player = PlayerFactory::legacy($playerId);
-        $db = new \Classes\Db();
-        $db->beginTransaction();
-        foreach ($quote['resources'] as $name => $count) {
-            if (!Item::get_item_by_name($name)->add_item($player, -$count)) {
-                $db->rollback();
-                throw new \RuntimeException("Il vous manque : {$name} ({$count}).");
+        $this->conn->transactional(function () use ($row, $quote, $player): void {
+            $this->restore((int) $row['entity_id']);
+            foreach ($quote['resources'] as $name => $count) {
+                if (!Item::get_item_by_name($name)->add_item($player, -$count)) {
+                    throw new \RuntimeException("Il vous manque : {$name} ({$count}).");
+                }
             }
-        }
-        $db->commit();
-
-        $this->restore((int) $row['entity_id']);
+        });
     }
 
     public function repairWithGold(int $playerId, int $instanceId): void
@@ -155,10 +159,12 @@ final class RepairService
             throw new \RuntimeException('Sans recette connue, cet objet ne se répare pas.');
         }
 
-        if (!(new GoldService($this->conn))->spend($playerId, $quote['gold'])) {
-            throw new \RuntimeException('Pas assez d\'or.');
-        }
-        $this->restore((int) $row['entity_id']);
+        $this->conn->transactional(function () use ($row, $quote, $playerId): void {
+            $this->restore((int) $row['entity_id']);
+            if (!(new GoldService($this->conn))->spend($playerId, $quote['gold'])) {
+                throw new \RuntimeException('Pas assez d\'or.');
+            }
+        });
     }
 
     /** A broken exemplar becomes a share of its ingredients, and is gone. */
@@ -184,31 +190,45 @@ final class RepairService
             throw new \RuntimeException('Votre sac est plein.');
         }
 
-        /* The wreck goes first, in one transaction (same steps as a vanished
-         * exemplar, PlacedExemplarService); the refund follows on the legacy
-         * connection. */
+        /* Wreck and refund in one transaction (the legacy Db shares the
+         * connection; same wreck steps as PlacedExemplarService). Only the
+         * request that flips `destroyed` pays out: a double click finds the
+         * wreck already gone. */
         $entityId = (int) $row['entity_id'];
-        $this->conn->transactional(function () use ($row, $entityId): void {
-            $this->conn->executeStatement('UPDATE item_instances SET destroyed = 1 WHERE id = ?', [(int) $row['instance_id']]);
+        $player = PlayerFactory::legacy($playerId);
+        $this->conn->transactional(function () use ($row, $entityId, $refund, $player): void {
+            $destroyed = $this->conn->executeStatement(
+                'UPDATE item_instances SET destroyed = 1 WHERE id = ? AND destroyed = 0',
+                [(int) $row['instance_id']]
+            );
+            if ($destroyed === 0) {
+                throw new \RuntimeException('Cet objet n\'est pas dans votre sac.');
+            }
             foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
                 $this->conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$entityId]);
             }
             (new EntityLocationService($this->conn))->shelve($entityId);
-        });
 
-        $player = PlayerFactory::legacy($playerId);
-        foreach ($refund as $name => $count) {
-            Item::get_item_by_name($name)->add_item($player, $count);
-        }
+            foreach ($refund as $name => $count) {
+                Item::get_item_by_name($name)->add_item($player, $count);
+            }
+        });
     }
 
-    /** Full life: the wear deficit disappears. */
+    /**
+     * Full life: the wear deficit disappears. Called before the charge, in
+     * its transaction: of two simultaneous repairs, the second deletes
+     * nothing and its charge rolls back.
+     */
     private function restore(int $entityId): void
     {
-        $this->conn->executeStatement(
+        $restored = $this->conn->executeStatement(
             "DELETE FROM players_bonus WHERE player_id = ? AND name = 'pv'",
             [$entityId]
         );
+        if ($restored === 0) {
+            throw new \RuntimeException('Cet objet est intact.');
+        }
     }
 
     /** @return array<int, array<string, mixed>> the exemplars in the bag, with their wear */

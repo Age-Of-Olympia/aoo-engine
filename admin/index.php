@@ -76,7 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['repair_full_share']))
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
         foreach (array_keys(\App\Service\RepairService::SETTINGS) as $name) {
-            $repairSettings->set($name, (string) max(0, (int) ($_POST[$name] ?? 0)));
+            $percent = max(0, (int) ($_POST[$name] ?? 0));
+            $repairSettings->set($name, (string) ($name === 'recycle_share' ? min(100, $percent) : $percent));
         }
         setFlash('success', 'Atelier : réglages enregistrés.');
     } catch (\Throwable $e) {
@@ -334,7 +335,7 @@ ob_start();
                 <?php }; ?>
                 <?php $repairField('repair_full_share', '% de la valeur de l\'objet pour le réparer à 1 PV (au prorata des PV manquants)'); ?>
                 <?php $repairField('repair_gold_margin', '% de la facture (ressources + ressource raciale) quand tout est payé en or'); ?>
-                <?php $repairField('recycle_share', '% des ingrédients rendus au recyclage d\'un objet brisé'); ?>
+                <?php $repairField('recycle_share', '% des ingrédients rendus au recyclage d\'un objet brisé (100 au maximum)'); ?>
                 <button type="submit" class="btn btn-sm btn-primary mt-2">Enregistrer</button>
                 <small class="form-text text-muted">
                     Prix des ressources : colonne <code>price</code> de chaque objet. Points de vie d'un

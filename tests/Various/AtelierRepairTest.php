@@ -99,6 +99,40 @@ class AtelierRepairTest extends LegacyPlayerFixtureTestCase
         } catch (\RuntimeException $e) {
             $this->assertSame('Pas assez d\'or.', $e->getMessage());
         }
+        $this->assertCount(1, (new RepairService())->listRepairable((int) $client->id), 'the refused charge leaves the wear');
+    }
+
+    public function testATinyBillStillCostsOneResource(): void
+    {
+        [$client] = $this->wornExemplar(wear: 1);
+
+        /* ceil(235 × 0.25 × 1/201) = 1, under every price: one tourbe, the cheapest. */
+        $quote = (new RepairService())->listRepairable((int) $client->id)[0]['quote'];
+        $this->assertSame(1, $quote['resources']['tourbe_atelier_test'] ?? 0);
+    }
+
+    public function testARecipeMakingTwoCountsHalfPerObject(): void
+    {
+        [$client] = $this->wornExemplar(wear: 201, staffYield: 2);
+
+        /* Half the recipe per staff: 2 tourbe and 25 or, a quarter of which
+         * rounds down to 0 tourbe and 6 or. */
+        $this->assertSame(['or' => 6], (new RepairService())->listBroken((int) $client->id)[0]['refund']);
+    }
+
+    public function testRecyclingNeverGivesBackMoreThanTheRecipe(): void
+    {
+        [$client] = $this->wornExemplar(wear: 201);
+
+        (new \App\Service\AdminSettingsService())->set('recycle_share', '200');
+        try {
+            $this->assertSame(
+                ['tourbe_atelier_test' => 4, 'or' => 50],
+                array_intersect_key((new RepairService())->listBroken((int) $client->id)[0]['refund'], ['tourbe_atelier_test' => 0, 'or' => 0])
+            );
+        } finally {
+            $this->link->executeStatement("DELETE FROM admin_settings WHERE name = 'recycle_share'");
+        }
     }
 
     public function testABrokenExemplarIsRecycledNotRepaired(): void
@@ -124,11 +158,11 @@ class AtelierRepairTest extends LegacyPlayerFixtureTestCase
      * $wear. Recipe: 1 sceptre + 1 salpêtre + 1 mana + 1 cuir + 2 tourbe;
      * the sceptre is 1 cendre + 2 tourbe + 50 or. Flattened: three rares
      * at 50, one cendre (elven, 15), four tourbe (common, 5), 50 or —
-     * worth 235.
+     * worth 235. $staffYield staffs per craft divide all of it.
      *
      * @return array{0: \Classes\Player, 1: int, 2: int} client, instance id, entity id
      */
-    private function wornExemplar(int $wear): array
+    private function wornExemplar(int $wear, int $staffYield = 1): array
     {
         $this->itemOrSkip('or');
         $prices = ['salpetre' => 50, 'mana' => 50, 'cuir' => 50, 'cendre' => 15, 'tourbe' => 5];
@@ -141,7 +175,7 @@ class AtelierRepairTest extends LegacyPlayerFixtureTestCase
         $orId = (int) Item::get_item_by_name('or')->id;
 
         $this->sowRecipe($ids['sceptre'], [$ids['cendre'] => 1, $ids['tourbe'] => 2, $orId => 50]);
-        $this->sowRecipe($staffId, [$ids['sceptre'] => 1, $ids['salpetre'] => 1, $ids['mana'] => 1, $ids['cuir'] => 1, $ids['tourbe'] => 2]);
+        $this->sowRecipe($staffId, [$ids['sceptre'] => 1, $ids['salpetre'] => 1, $ids['mana'] => 1, $ids['cuir'] => 1, $ids['tourbe'] => 2], $staffYield);
 
         $client = $this->createRealPlayer('ForgeronAtelier');
         $instanceId = (new ItemInstanceService())->create((int) $client->id, $staffId, (int) $client->id, '');
@@ -152,7 +186,7 @@ class AtelierRepairTest extends LegacyPlayerFixtureTestCase
     }
 
     /** @param array<int, int> $ingredients item id => count */
-    private function sowRecipe(int $resultId, array $ingredients): void
+    private function sowRecipe(int $resultId, array $ingredients, int $yield = 1): void
     {
         $this->link->insert('craft_recipes', ['name' => (string) $this->link->fetchOne('SELECT name FROM items WHERE id = ?', [$resultId])]);
         $recipeId = (int) $this->link->lastInsertId();
@@ -160,7 +194,7 @@ class AtelierRepairTest extends LegacyPlayerFixtureTestCase
         foreach ($ingredients as $itemId => $count) {
             $this->link->insert('craft_recipes_ingredients', ['recipe_id' => $recipeId, 'item_id' => $itemId, 'count' => $count]);
         }
-        $this->link->insert('craft_recipes_results', ['recipe_id' => $recipeId, 'item_id' => $resultId, 'count' => 1]);
+        $this->link->insert('craft_recipes_results', ['recipe_id' => $recipeId, 'item_id' => $resultId, 'count' => $yield]);
     }
 
     /** @return array<string, mixed> */

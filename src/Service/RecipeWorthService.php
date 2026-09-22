@@ -17,23 +17,54 @@ use Random\Randomizer;
  */
 final class RecipeWorthService
 {
+    /** @var array<string, array<string, array{count: float, price: int, race: string}>> flatten() per item, for this request */
+    private array $flattened = [];
+
     public function __construct(private Connection $conn)
     {
     }
 
     /**
      * The recipe flattened to raw resources, priced from the catalog:
-     * name => [count, price, race]. An ingredient with a recipe of its own
-     * is replaced by what it is made of; gold stays a line (it counts in
-     * the worth) but is never handed out as a resource.
+     * name => [count, price, race], for ONE item: a recipe that makes 6
+     * arrows from 5 wood counts 5/6 wood per arrow. An ingredient with a
+     * recipe of its own is replaced by what it is made of; gold stays a
+     * line (it counts in the worth) but is never handed out as a resource.
      *
      * @param array<string, true> $seen the results already being expanded, against recipe cycles
-     * @return array<string, array{count: int, price: int, race: string}>
+     * @return array<string, array{count: float, price: int, race: string}>
      */
     public function flatten(string $itemName, array $seen = []): array
     {
+        // Cycle guard aside, the result depends on the item only
+        if ($seen === [] && isset($this->flattened[$itemName])) {
+            return $this->flattened[$itemName];
+        }
+
+        $recipe = $this->expand($itemName, $seen);
+        if ($seen === []) {
+            $this->flattened[$itemName] = $recipe;
+        }
+
+        return $recipe;
+    }
+
+    /**
+     * @param array<string, true> $seen
+     * @return array<string, array{count: float, price: int, race: string}>
+     */
+    private function expand(string $itemName, array $seen): array
+    {
         $seen[$itemName] = true;
-        $ingredients = (new RecipeService())->ingredientsForResult($itemName);
+        $recipes = new RecipeService();
+        $source = $recipes->recipeForResult($itemName);
+        if ($source === null) {
+            return [];
+        }
+        $ingredients = [];
+        foreach ($source->getRecipeIngredients() as $ingredient) {
+            $ingredients[$ingredient->getItem()->getName()] = $ingredient->getCount() / $recipes->yieldOf($source, $itemName);
+        }
         if ($ingredients === []) {
             return [];
         }
@@ -45,26 +76,26 @@ final class RecipeWorthService
         );
 
         $recipe = [];
-        $add = static function (string $name, int $count, int $price, string $race) use (&$recipe): void {
+        $add = static function (string $name, float $count, int $price, string $race) use (&$recipe): void {
             $recipe[$name] ??= ['count' => 0, 'price' => $price, 'race' => $race];
             $recipe[$name]['count'] += $count;
         };
         foreach ($ingredients as $name => $count) {
             $parts = isset($seen[$name]) ? [] : $this->flatten($name, $seen);
             if ($parts === []) {
-                $add($name, (int) $count, (int) ($catalog[$name]['price'] ?? 0), (string) ($catalog[$name]['race'] ?? ''));
+                $add($name, $count, (int) ($catalog[$name]['price'] ?? 0), (string) ($catalog[$name]['race'] ?? ''));
                 continue;
             }
             foreach ($parts as $part => $line) {
-                $add($part, $line['count'] * (int) $count, $line['price'], $line['race']);
+                $add($part, $line['count'] * $count, $line['price'], $line['race']);
             }
         }
 
         return $recipe;
     }
 
-    /** @param array<string, array{count: int, price: int, race: string}> $recipe */
-    public function worthOf(array $recipe): int
+    /** @param array<string, array{count: float, price: int, race: string}> $recipe */
+    public function worthOf(array $recipe): float
     {
         $worth = 0;
         foreach ($recipe as $line) {
@@ -78,9 +109,10 @@ final class RecipeWorthService
      * Whole resources of the recipe worth $amount: while one is affordable,
      * draw among the priciest affordable ones and pay it. With one price
      * per tier that reads rare → racial → common, the change under the
-     * cheapest resource is forgiven.
+     * cheapest resource is forgiven — unless nothing was drawn: a bill
+     * smaller than every price costs one of the cheapest, never nothing.
      *
-     * @param array<string, array{count: int, price: int, race: string}> $recipe
+     * @param array<string, array{count: float, price: int, race: string}> $recipe
      * @param Randomizer|null $dice seeded by the caller when the draw must be replayable
      * @return array<string, int> name => count
      */
@@ -95,6 +127,7 @@ final class RecipeWorthService
         }
 
         $out = [];
+        $owed = $amount > 0;
         while ($prices !== []) {
             $affordable = array_filter($prices, static fn (int $price): bool => $price <= $amount);
             if ($affordable === []) {
@@ -106,6 +139,10 @@ final class RecipeWorthService
             $amount -= $top;
         }
 
+        if ($out === [] && $owed && $prices !== []) {
+            $out[array_search(min($prices), $prices, true)] = 1;
+        }
+
         return $out;
     }
 
@@ -114,7 +151,7 @@ final class RecipeWorthService
      * drawn from the recipe when it holds one, else the cheapest the
      * catalog knows.
      *
-     * @param array<string, array{count: int, price: int, race: string}> $recipe
+     * @param array<string, array{count: float, price: int, race: string}> $recipe
      * @return array{name: string, price: int}|null
      */
     public function racialResource(string $race, array $recipe, ?Randomizer $dice = null): ?array
@@ -140,7 +177,7 @@ final class RecipeWorthService
     /**
      * A share of a recipe, whole units only, rounded down: nothing is conjured.
      *
-     * @param array<string, array{count: int, price: int, race: string}> $recipe
+     * @param array<string, array{count: float, price: int, race: string}> $recipe
      * @return array<string, int>
      */
     public function shareOf(array $recipe, float $share): array
