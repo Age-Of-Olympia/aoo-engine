@@ -5,9 +5,9 @@ namespace Tests\Various;
 use App\Service\BuildingService;
 use App\Service\DialogService;
 use App\Service\PlayerOptionsService;
+use App\Service\Counter\CounterAccessService;
+use App\Service\Counter\CounterCatalog;
 use App\Service\RaceService;
-use Classes\Market;
-use Classes\WarSchool;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
@@ -154,9 +154,10 @@ class TradeHallsTest extends LegacyPlayerFixtureTestCase
      */
     private function marketAccess(int $playerId, int $targetId): ?string
     {
-        return Market::CheckMarketAccess(
+        return (new CounterAccessService())->check(
             \App\Factory\PlayerFactory::legacy($playerId),
-            \App\Factory\PlayerFactory::legacy($targetId)
+            \App\Factory\PlayerFactory::legacy($targetId),
+            CounterCatalog::MERCHANT
         );
     }
 
@@ -166,9 +167,10 @@ class TradeHallsTest extends LegacyPlayerFixtureTestCase
      */
     private function schoolAccess(int $playerId, int $targetId): ?string
     {
-        return WarSchool::checkAccess(
+        return (new CounterAccessService())->check(
             \App\Factory\PlayerFactory::legacy($playerId),
-            \App\Factory\PlayerFactory::legacy($targetId)
+            \App\Factory\PlayerFactory::legacy($targetId),
+            CounterCatalog::WAR_SCHOOL
         );
     }
 

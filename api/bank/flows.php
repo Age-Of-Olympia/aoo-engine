@@ -2,7 +2,8 @@
 
 use App\Factory\PlayerFactory;
 use App\Service\BankService;
-use Classes\Market;
+use App\Service\Counter\CounterAccessService;
+use App\Service\Counter\CounterCatalog;
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 
@@ -18,14 +19,11 @@ $player->get_data();
 
 $target = PlayerFactory::legacy((int) ($POST_DATA['targetId'] ?? 0));
 
-// Le guichet d'abord : mêmes gardes que l'écran (accès marché, puis
-// l'onglet — le dialogue fait foi, une échoppe n'a pas de coffre-fort).
-$marketAccessError = Market::CheckMarketAccess($player, $target);
-if ($marketAccessError != null) {
-    ExitError($marketAccessError);
-}
-if (!(new \App\Service\BuildingService())->servesCounter((int) $target->id, 'merchant.php', 'bank')) {
-    ExitError('On ne sert pas cela à ce comptoir.');
+// Le guichet d'abord : mêmes gardes que l'écran — le dialogue fait foi,
+// une échoppe n'a pas de coffre-fort.
+$accessError = (new CounterAccessService())->check($player, $target, CounterCatalog::MERCHANT, 'bank');
+if ($accessError !== null) {
+    ExitError($accessError);
 }
 
 $service = new BankService();

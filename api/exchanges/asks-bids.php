@@ -2,7 +2,8 @@
 
 use App\Factory\PlayerFactory;
 use App\Service\BidsAsksService;
-use Classes\Market;
+use App\Service\Counter\CounterAccessService;
+use App\Service\Counter\CounterCatalog;
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 
@@ -17,11 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $target = PlayerFactory::legacy((int) $_GET['targetId']);
 
-    $marketAccessError = Market::CheckMarketAccess($player, $target);
-    if ($marketAccessError != null) {
-
-        ExitError($marketAccessError);
-    }
 
     $POST_DATA = json_decode(file_get_contents('php://input'), true);
     if (!isset($POST_DATA['action']) || !in_array($POST_DATA['action'], ['accept', 'create', 'cancel'])) {
@@ -32,10 +28,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ExitError(INVALID_REQ);
     }
 
-    // Chaque comptoir ne sert que SES onglets (le dialogue fait foi) :
+    // Mêmes gardes que l'écran, onglet compris (le dialogue fait foi) :
     // pas d'offre ni de demande au guichet de la banque par l'API.
-    if (!(new \App\Service\BuildingService())->servesCounter((int) $target->id, 'merchant.php', $POST_DATA['type'])) {
-        ExitError('On ne sert pas cela à ce comptoir.');
+    $accessError = (new CounterAccessService())->check($player, $target, CounterCatalog::MERCHANT, $POST_DATA['type']);
+    if ($accessError !== null) {
+        ExitError($accessError);
     }
 
     $bidsAsksService = new BidsAsksService();

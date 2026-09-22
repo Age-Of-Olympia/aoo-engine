@@ -1,5 +1,7 @@
 <?php
 use App\Factory\PlayerFactory;
+use App\Service\Counter\CounterAccessService;
+use App\Service\Counter\CounterCatalog;
 use Classes\Ui;
 use Classes\WarSchool;
 
@@ -22,38 +24,25 @@ if (!isset($_GET['targetId'])) {
 
 $trainer = PlayerFactory::legacy($_GET['targetId']);
 
-// check access
-$accessError = WarSchool::checkAccess($player, $trainer);
+/* Chaque école n'enseigne que SES disciplines — celles que son dialogue
+ * mentionne. Le menu suit, et la garde refuse ce que le menu ne propose
+ * pas : l'URL directe ne sert à rien. */
+$counters = new CounterAccessService();
+$servedTabs = $counters->servedTabs((int) $trainer->id, CounterCatalog::WAR_SCHOOL);
+
+$tab = null;
+foreach (array_keys(CounterCatalog::tabs(CounterCatalog::WAR_SCHOOL)) as $candidate) {
+    if (isset($_GET[$candidate])) {
+        $tab = (string) $candidate;
+        break;
+    }
+}
+
+$accessError = $counters->check($player, $trainer, CounterCatalog::WAR_SCHOOL, $tab);
 if ($accessError !== null) {
     exit($accessError);
 }
 
-/* Chaque école n'enseigne que SES disciplines — celles que son dialogue
- * mentionne (BuildingService::servesCounter). Le menu suit, et la
- * branche refuse ce que le menu ne propose pas. */
-$buildingService = new \App\Service\BuildingService();
-
-$disciplineTabs = [
-    'melee'    => '<button><span class="ra ra-crossed-swords"></span> Mêlée</button>',
-    'distance' => '<button><span class="ra ra-archer"></span> Distance</button>',
-    'magic'    => '<button><span class="ra ra-fairy-wand"></span> Magie</button>',
-    'spells'   => '<button><span class="ra ra-book"></span> Sorts</button>',
-    'stealth'  => '<button><span class="ra ra-hood"></span> Furtivité</button>',
-    'survival' => '<button><span class="ra ra-campfire"></span> Survie</button>',
-];
-
-$servedTabs = [];
-foreach (array_keys($disciplineTabs) as $tab) {
-    if ($buildingService->servesCounter((int) $trainer->id, 'warschool.php', $tab)) {
-        $servedTabs[] = $tab;
-    }
-}
-
-foreach (array_keys($disciplineTabs) as $tab) {
-    if (isset($_GET[$tab]) && !in_array($tab, $servedTabs, true)) {
-        exit('On n\'enseigne pas cela dans cette école.');
-    }
-}
 
 // menu
 if (!isset($_GET['hideMenu'])) {
@@ -68,10 +57,10 @@ if (!isset($_GET['hideMenu'])) {
             <button><span class="ra ra-speech-bubbles"></span></button>
         </a>';
 
-    foreach ($servedTabs as $tab) {
+    foreach ($servedTabs as $servedTab) {
         echo '
-        <a href="warschool.php?targetId=' . $trainer->id . '&' . $tab . '">
-            ' . $disciplineTabs[$tab] . '
+        <a href="warschool.php?targetId=' . $trainer->id . '&' . $servedTab . '">
+            ' . CounterCatalog::menuButton(CounterCatalog::WAR_SCHOOL, $servedTab) . '
         </a>';
     }
 

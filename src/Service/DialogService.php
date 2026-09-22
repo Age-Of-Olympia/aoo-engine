@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Service\Counter\CounterCatalog;
 use Classes\Db;
 use Classes\Dialog;
 use Classes\Json;
@@ -242,26 +243,6 @@ class DialogService
     }
 
     /**
-     * Écrans de comptoir et bouton par défaut de la carte de case
-     * (icône rpg-awesome, libellé).
-     */
-    private const COUNTER_SCREENS = [
-        'merchant.php' => ['ra-ammo-bag', 'Marchander'],
-        'warschool.php' => ['ra-axe', 'Apprendre'],
-    ];
-
-    /**
-     * Onglets qui méritent leur propre bouton sur la carte de case :
-     * onglet => [écran, icône, libellé]. Les autres onglets d'un écran
-     * sont regroupés derrière le bouton par défaut ci-dessus.
-     */
-    private const COUNTER_TABS = [
-        'bank' => ['merchant.php', 'ra-gold-bar', 'Banque'],
-        'repair' => ['merchant.php', 'ra-repair', 'Réparer'],
-        'recycle' => ['merchant.php', 'ra-recycle', 'Recycler'],
-    ];
-
-    /**
      * Ce dialogue mène-t-il à cet écran — et, si demandé, à cet ONGLET ?
      * Une option d'un de ses nœuds pointe `<script>` (« merchant.php »,
      * « warschool.php ») ; l'onglet est le drapeau de requête de l'URL
@@ -312,7 +293,7 @@ class DialogService
         foreach ($nodes as $node) {
             foreach (($node['options'] ?? []) as $index => $option) {
                 $url = (string) ($option['url'] ?? '');
-                foreach (array_keys(self::COUNTER_SCREENS) as $script) {
+                foreach (array_keys(CounterCatalog::screens()) as $script) {
                     if (str_starts_with($url, (string) $script)) {
                         $found[] = [
                             'node' => (string) ($node['id'] ?? ''),
@@ -374,43 +355,42 @@ class DialogService
 
     /**
      * Les boutons de comptoir à montrer sur la carte d'une case : un par
-     * onglet distingué (Banque, Réparer, Recycler), plus le bouton par
-     * défaut de l'écran dès qu'un autre onglet est servi. Une option qui
-     * porte `icon` / `button` impose les siens.
+     * onglet qui porte le sien au catalogue (Banque, Réparer, Recycler),
+     * plus le bouton par défaut de l'écran dès qu'un autre onglet est
+     * servi. Une option qui porte `icon` / `button` impose les siens.
      *
      * @return array<int, array{tab: string, script: string, icon: string, label: string}>
      */
     public function counterButtons(string $dialogName): array
     {
         $buttons = [];
-        foreach (self::COUNTER_SCREENS as $script => [$screenIcon, $screenLabel]) {
-            $options = $this->counterOptions($dialogName, $script);
+        foreach (CounterCatalog::screens() as $script => $screen) {
+            $options = $this->counterOptions($dialogName, (string) $script);
             if ($options === null) {
                 continue;
             }
 
+            $tabs = CounterCatalog::tabs((string) $script);
             $default = null;
             foreach ($options as $option) {
-                $tab = $option['tab'];
-                [$icon, $label] = match (true) {
-                    $option['icon'] !== null || $option['label'] !== null
-                        => [$option['icon'] ?? $screenIcon, $option['label'] ?? $screenLabel],
-                    isset(self::COUNTER_TABS[$tab]) && self::COUNTER_TABS[$tab][0] === $script
-                        => [self::COUNTER_TABS[$tab][1], self::COUNTER_TABS[$tab][2]],
-                    default => [null, null],
-                };
+                $own = $tabs[$option['tab']]['card'] ?? null;
+                $icon = $option['icon'] ?? $own['icon'] ?? null;
+                $label = $option['label'] ?? $own['label'] ?? null;
 
-                if ($icon === null) {
+                if ($icon === null && $label === null) {
                     // Onglet ordinaire : un seul bouton d'écran, sur le premier.
-                    $default ??= ['tab' => $tab, 'script' => $script, 'icon' => $screenIcon, 'label' => $screenLabel];
+                    $default ??= ['tab' => $option['tab'], 'script' => (string) $script,
+                        'icon' => $screen['icon'], 'label' => $screen['label']];
                     continue;
                 }
 
-                $buttons[] = ['tab' => $tab, 'script' => $script, 'icon' => $icon, 'label' => $label];
+                $buttons[] = ['tab' => $option['tab'], 'script' => (string) $script,
+                    'icon' => $icon ?? $screen['icon'], 'label' => $label ?? $screen['label']];
             }
 
             if ($default !== null || $options === []) {
-                $buttons[] = $default ?? ['tab' => '', 'script' => $script, 'icon' => $screenIcon, 'label' => $screenLabel];
+                $buttons[] = $default ?? ['tab' => '', 'script' => (string) $script,
+                    'icon' => $screen['icon'], 'label' => $screen['label']];
             }
         }
 
