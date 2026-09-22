@@ -212,6 +212,38 @@ final class PlanImporter extends AbstractDbalImporter
     }
 
     /**
+     * Works on the bundle until $deadline, plan after plan, each resuming
+     * where it stopped. A plan already finished costs one cursor read.
+     *
+     * Returns the run left unfinished — null when the whole bundle is done.
+     * $onStep is called with the run and the label of the step about to run,
+     * for a caller that reports as it goes.
+     *
+     * @param array<int, mixed> $objects the bundle's plan objects
+     * @param callable(PlanImportRun, string): void|null $onStep
+     */
+    public function advance(array $objects, ImportReport $report, float $deadline, ?callable $onStep = null): ?PlanImportRun
+    {
+        foreach ($objects as $object) {
+            $run = $this->runFor($this->payloadFor($object), $report);
+
+            while (!$run->isDone() && microtime(true) < $deadline) {
+                $label = $run->label();
+                $run->next();
+                if ($onStep !== null) {
+                    $onStep($run, $label);
+                }
+            }
+
+            if (!$run->isDone()) {
+                return $run;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Validates one bundle object and returns the payload a run works on.
      *
      * @return array{plan: string, config: ?array, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>, buildings: ?list<array<string, mixed>>}

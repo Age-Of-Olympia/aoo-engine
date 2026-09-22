@@ -20,7 +20,6 @@ if (!is_string($json) || $json === '') {
 
 $csrf = new CsrfProtectionService();
 $filename = (string) ($_SESSION['action_import_filename'] ?? 'bundle.json');
-$_SESSION['action_import_warnings'] = [];
 
 ob_start();
 ?>

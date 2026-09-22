@@ -168,7 +168,6 @@ class PlanImportExportTest extends TestCase
 
         $run = $importer->runFor($importer->payloadFor($payload), $report);
         $this->assertGreaterThan(1, $run->total(), 'un plan se découpe en étapes');
-        $this->assertFalse($run->resumed());
 
         // Two steps, then we walk away: the cursor stays in the database.
         $run->next();
@@ -184,8 +183,7 @@ class PlanImportExportTest extends TestCase
 
         // The same bundle picked up later: it restarts at step 2.
         $resumed = $importer->runFor($importer->payloadFor($payload), $report);
-        $this->assertTrue($resumed->resumed());
-        $this->assertSame(2, $resumed->step());
+        $this->assertSame(2, $resumed->step(), 'le nouveau run repart de l\'étape enregistrée');
 
         $resumed->runToEnd();
 

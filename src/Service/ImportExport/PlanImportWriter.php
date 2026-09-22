@@ -58,7 +58,7 @@ final class PlanImportWriter
      * @param array<string, list<array<string, mixed>>> $layers
      * @return list<array{0:int,1:int,2:int}>
      */
-    public function neededCoords(string $plan, array $payload, array $layers): array
+    public function neededCoords(array $payload, array $layers): array
     {
         $needed = [];
         foreach ($payload['coords'] as [$x, $y, $z]) {

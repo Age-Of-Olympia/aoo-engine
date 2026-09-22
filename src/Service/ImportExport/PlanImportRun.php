@@ -30,7 +30,7 @@ final class PlanImportRun
     private PlanImportProgress $progress;
     private PlanImportWriter $writer;
 
-    /** @var array<int, array{key: string, label: string, run: callable}> */
+    /** @var array<int, array{label: string, run: callable}> */
     private array $steps;
 
     private string $fingerprint;
@@ -76,12 +76,6 @@ final class PlanImportRun
     public function isDone(): bool
     {
         return $this->index >= count($this->steps);
-    }
-
-    /** Was this run already under way when we picked it up? */
-    public function resumed(): bool
-    {
-        return $this->index > 0;
     }
 
     /**
@@ -130,7 +124,7 @@ final class PlanImportRun
         $this->progress->clear($this->fingerprint, $this->plan);
     }
 
-    /** @return array<int, array{key: string, label: string, run: callable}> */
+    /** @return array<int, array{label: string, run: callable}> */
     private function buildSteps(): array
     {
         $steps = [];
@@ -150,14 +144,12 @@ final class PlanImportRun
         }
 
         $steps[] = [
-            'key' => 'purge',
             'label' => 'contenu remplacé',
             'run' => fn() => $this->writer->purgeAuthoredRows($plan),
         ];
 
-        foreach (array_chunk($this->writer->neededCoords($plan, $this->payload, $layers), self::CHUNK) as $i => $chunk) {
+        foreach (array_chunk($this->writer->neededCoords($this->payload, $layers), self::CHUNK) as $i => $chunk) {
             $steps[] = [
-                'key' => 'coords:' . $i,
                 'label' => 'cases (' . ($i + 1) . ')',
                 'run' => fn() => $this->writer->insertCoords($plan, $chunk),
             ];
@@ -169,7 +161,6 @@ final class PlanImportRun
             }
             foreach (array_chunk($rows, self::CHUNK) as $i => $chunk) {
                 $steps[] = [
-                    'key' => 'rows:' . $layer . ':' . $i,
                     'label' => $layer . ' (' . ($i + 1) . ')',
                     'run' => fn() => $this->writer->insertLayerRows($plan, $layer, $chunk),
                 ];
@@ -179,7 +170,6 @@ final class PlanImportRun
         foreach (array_keys(TiledMapService::ENTITY_LAYERS) as $layer) {
             $rows = $layers[$layer] ?? [];
             $steps[] = [
-                'key' => 'entities:' . $layer,
                 'label' => $layer . ' (entités)',
                 'run' => fn() => TiledMapService::reconcilerFor($layer)->reconcile($plan, $rows),
             ];
@@ -188,7 +178,6 @@ final class PlanImportRun
         if ($this->payload['buildings'] !== null) {
             foreach ($this->writer->buildingsByLevel($this->payload['coords'], $buildings) as $z => $zRows) {
                 $steps[] = [
-                    'key' => 'buildings:' . $z,
                     'label' => 'bâtiments (niveau ' . $z . ')',
                     'run' => fn() => $this->writer->placeBuildings($plan, (int) $z, $zRows),
                 ];
