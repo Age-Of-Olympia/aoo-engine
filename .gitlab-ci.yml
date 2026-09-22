@@ -378,6 +378,11 @@ release-job:
 deploy-job-non-prod:
   stage: deployment
   image: alpine
+  # Two merges close together make two pipelines, so two deploys on the same
+  # server: two `git fetch` + `checkout` in the same working copy and two
+  # `doctrine-migrations migrate` at once. The resource group queues them —
+  # one deploy per environment at a time.
+  resource_group: deploy-$CI_COMMIT_REF_NAME
   environment:
     name: $CI_COMMIT_REF_NAME
     url: https://${DEPLOY_HOST}
