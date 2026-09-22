@@ -108,6 +108,51 @@ class PlanImportExportTest extends TestCase
         $this->assertEquals($payload['layers'], $exporter->exportOne(self::IMPORTED)['layers'], 'ré-import idempotent');
     }
 
+    /**
+     * Vieilles cartes : une route et un mur sur la même case. La structure
+     * gagne, la route n'est pas posée — l'inverse refusait le mur.
+     */
+    public function testAStructureTakesTheCellFromARoad(): void
+    {
+        $importer = new PlanImporter();
+
+        $payload = [
+            'plan' => self::IMPORTED,
+            'config' => ['name' => 'Plan encombré'],
+            'coords' => [[0, 0, 0], [1, 0, 0]],
+            'layers' => [
+                'routes' => [
+                    ['name' => 'route', 'x' => 0, 'y' => 0, 'z' => 0],
+                    ['name' => 'route', 'x' => 1, 'y' => 0, 'z' => 0],
+                ],
+                'buildings' => [
+                    ['name' => 'mur_pierre', 'x' => 0, 'y' => 0, 'z' => 0],
+                ],
+            ],
+        ];
+
+        $report = $importer->import([$payload]);
+
+        $this->assertSame([self::IMPORTED], $report->created());
+        $this->assertSame(
+            [],
+            array_filter($report->warnings(), static fn (array $w): bool => str_contains($w['message'], 'Bâtiment non posé')),
+            'le mur est posé, pas refusé'
+        );
+        $this->assertNotSame(
+            [],
+            array_filter($report->warnings(), static fn (array $w): bool => str_contains($w['message'], 'sous une structure')),
+            "l'import dit ce qu'il a laissé de côté"
+        );
+
+        $onCells = $this->link->fetchAllKeyValue(
+            "SELECT c.x, p.player_type FROM players p JOIN coords c ON c.id = p.coords_id
+              WHERE c.plan = ? AND p.player_type IN ('building', 'route') ORDER BY c.x",
+            [self::IMPORTED]
+        );
+        $this->assertSame(['0' => 'building', '1' => 'route'], $onCells);
+    }
+
     public function testImportRejectsInvalidPayloadsWithoutWriting(): void
     {
         $importer = new PlanImporter();

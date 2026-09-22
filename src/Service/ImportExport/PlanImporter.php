@@ -257,6 +257,17 @@ final class PlanImporter extends AbstractDbalImporter
             $this->insertLayerRows($layer, $rows, $coordsIds);
         }
 
+        /* 3b. Structures win the cell: a road drawn under a wall or a
+         * building would be created first and the building refused. */
+        $roads = TiledMapService::roadsClearOfStructures(
+            $payload['layers'][TiledMapService::GROUND_ENTITY_LAYER] ?? [],
+            $payload['buildings'] ?? []
+        );
+        $payload['layers'][TiledMapService::GROUND_ENTITY_LAYER] = $roads['kept'];
+        if ($roads['dropped'] > 0) {
+            $report->warn($plan, $roads['dropped'] . ' route(s) sous une structure, non posée(s).');
+        }
+
         /* 4. Resources, plants and roads are entities: COMPARE instead of
          * replacing. One the bundle redraws identically keeps its id and its
          * state — exhausted, it stays so and regrows in its own time. The
