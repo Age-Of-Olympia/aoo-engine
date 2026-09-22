@@ -290,6 +290,25 @@ class DialogService
      */
     public function servedTabs(string $dialogName, string $script): ?array
     {
+        $options = $this->counterOptions($dialogName, $script);
+        if ($options === null) {
+            return null;
+        }
+
+        return array_values(array_unique(array_column($options, 'tab')));
+    }
+
+    /**
+     * Les options de ce dialogue qui mènent à cet écran, dans l'ordre du
+     * dialogue : onglet de l'URL, plus l'icône et le libellé que
+     * l'option impose au bouton de la carte (clés `icon` et `button`,
+     * saisies dans l'admin des dialogues). Null quand le dialogue ne mène
+     * pas à l'écran.
+     *
+     * @return array<int, array{tab: string, icon: ?string, label: ?string}>|null
+     */
+    private function counterOptions(string $dialogName, string $script): ?array
+    {
         if ($dialogName === '') {
             return null;
         }
@@ -299,53 +318,66 @@ class DialogService
             return null;
         }
 
-        $tabs = null;
+        $options = null;
         foreach ($dialogJson->dialog as $node) {
             foreach (($node->options ?? []) as $option) {
                 if (empty($option->url) || !str_starts_with((string) $option->url, $script)) {
                     continue;
                 }
 
-                $tabs ??= [];
                 parse_str((string) parse_url((string) $option->url, PHP_URL_QUERY), $params);
                 unset($params['targetId']);
-                foreach (array_keys($params) as $name) {
-                    $tabs[] = (string) $name;
-                }
+                $options ??= [];
+                $options[] = [
+                    'tab' => (string) (array_key_first($params) ?? ''),
+                    'icon' => isset($option->icon) ? (string) $option->icon : null,
+                    'label' => isset($option->button) ? (string) $option->button : null,
+                ];
             }
         }
 
-        return $tabs === null ? null : array_values(array_unique($tabs));
+        return $options;
     }
 
     /**
      * Les boutons de comptoir à montrer sur la carte d'une case : un par
      * onglet distingué (Banque, Réparer, Recycler), plus le bouton par
-     * défaut de l'écran dès qu'un autre onglet est servi.
+     * défaut de l'écran dès qu'un autre onglet est servi. Une option qui
+     * porte `icon` / `button` impose les siens.
      *
      * @return array<int, array{tab: string, script: string, icon: string, label: string}>
      */
     public function counterButtons(string $dialogName): array
     {
         $buttons = [];
-        foreach (self::COUNTER_SCREENS as $script => [$icon, $label]) {
-            $tabs = $this->servedTabs($dialogName, $script);
-            if ($tabs === null) {
+        foreach (self::COUNTER_SCREENS as $script => [$screenIcon, $screenLabel]) {
+            $options = $this->counterOptions($dialogName, $script);
+            if ($options === null) {
                 continue;
             }
 
-            $plain = [];
-            foreach ($tabs as $tab) {
-                if (isset(self::COUNTER_TABS[$tab]) && self::COUNTER_TABS[$tab][0] === $script) {
-                    [, $tabIcon, $tabLabel] = self::COUNTER_TABS[$tab];
-                    $buttons[] = ['tab' => $tab, 'script' => $script, 'icon' => $tabIcon, 'label' => $tabLabel];
+            $default = null;
+            foreach ($options as $option) {
+                $tab = $option['tab'];
+                [$icon, $label] = match (true) {
+                    $option['icon'] !== null || $option['label'] !== null
+                        => [$option['icon'] ?? $screenIcon, $option['label'] ?? $screenLabel],
+                    isset(self::COUNTER_TABS[$tab]) && self::COUNTER_TABS[$tab][0] === $script
+                        => [self::COUNTER_TABS[$tab][1], self::COUNTER_TABS[$tab][2]],
+                    default => [null, null],
+                };
+
+                if ($icon === null) {
+                    // Onglet ordinaire : un seul bouton d'écran, sur le premier.
+                    $default ??= ['tab' => $tab, 'script' => $script, 'icon' => $screenIcon, 'label' => $screenLabel];
                     continue;
                 }
-                $plain[] = $tab;
+
+                $buttons[] = ['tab' => $tab, 'script' => $script, 'icon' => $icon, 'label' => $label];
             }
 
-            if ($plain !== [] || $tabs === []) {
-                $buttons[] = ['tab' => $plain[0] ?? '', 'script' => $script, 'icon' => $icon, 'label' => $label];
+            if ($default !== null || $options === []) {
+                $buttons[] = $default ?? ['tab' => '', 'script' => $script, 'icon' => $screenIcon, 'label' => $screenLabel];
             }
         }
 

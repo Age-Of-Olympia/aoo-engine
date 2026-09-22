@@ -106,6 +106,31 @@ class TradeHallsTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    public function testAnOptionChoosesItsOwnButton(): void
+    {
+        $service = new DialogService();
+        $service->saveGameDialog('trade_test_forge', [[
+            'id' => 'bonjour',
+            'text' => 'Alors ?',
+            'options' => [
+                ['url' => 'merchant.php?targetId=TARGET_ID&repair', 'text' => 'Réparer', 'icon' => 'ra-anvil', 'button' => 'Forge'],
+                ['go' => 'EXIT', 'text' => '[partir]'],
+            ],
+        ]], ['npc_name' => 'TARGET_NAME', 'type' => 'building']);
+        DialogService::clearCache();
+
+        try {
+            $this->assertSame(
+                [['tab' => 'repair', 'script' => 'merchant.php', 'icon' => 'ra-anvil', 'label' => 'Forge']],
+                $service->counterButtons('trade_test_forge'),
+                "l'option impose son icône et son libellé"
+            );
+        } finally {
+            $service->deleteGameDialog('trade_test_forge');
+            DialogService::clearCache();
+        }
+    }
+
     public function testCounterOptionsLeftTheGame(): void
     {
         $this->assertNotContains('isMerchant', PlayerOptionsService::MANAGEABLE_OPTIONS);
