@@ -138,12 +138,15 @@ function dialogs_render_counters(array $nodes): string
     $rows = '';
     foreach ($counters as $counter) {
         $key = $counter['node'] . '|' . $counter['index'];
+        // The *_was fields let the save tell a change here from a change made in the JSON
         $rows .= '<tr>'
             . '<td><code>' . e($counter['url']) . '</code><br><small class="text-muted">'
             . e($counter['text']) . '</small></td>'
-            . '<td>' . (new IconFieldView())->render($counter['icon'], 'counter_icon[' . e($key) . ']', null, '', false) . '</td>'
+            . '<td>' . (new IconFieldView())->render($counter['icon'], 'counter_icon[' . $key . ']', null, '', false)
+            . '<input type="hidden" name="counter_icon_was[' . e($key) . ']" value="' . e($counter['icon']) . '"></td>'
             . '<td><input type="text" class="form-control" name="counter_button[' . e($key) . ']"'
-            . ' value="' . e($counter['button']) . '" placeholder="libellé par défaut"></td>'
+            . ' value="' . e($counter['button']) . '" placeholder="libellé par défaut">'
+            . '<input type="hidden" name="counter_button_was[' . e($key) . ']" value="' . e($counter['button']) . '"></td>'
             . '</tr>';
     }
 

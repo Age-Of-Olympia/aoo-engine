@@ -244,8 +244,10 @@ final class EntityCardView
         foreach ($counters as $counter) {
             $url = $counter['script'] . '?targetId=' . $target->id
                 . ($counter['tab'] !== '' ? '&' . $counter['tab'] : '');
-            $html .= '<a href="' . $url . '"><button class="action"><span class="ra ' . $counter['icon']
-                . '"></span> <span class="action-name">' . $counter['label'] . '</span></button></a>';
+            // Icon and label come from the admin's dialog JSON
+            $html .= '<a href="' . htmlspecialchars($url) . '"><button class="action"><span class="ra '
+                . htmlspecialchars($counter['icon']) . '"></span> <span class="action-name">'
+                . htmlspecialchars($counter['label']) . '</span></button></a>';
         }
 
         $html .= self::containerBlockHtml($player, $target);

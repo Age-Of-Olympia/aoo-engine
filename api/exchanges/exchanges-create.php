@@ -17,14 +17,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   $target = PlayerFactory::legacy((int) $_GET['targetId']);
 
-  // Mêmes gardes que l'écran, onglet compris : le dialogue fait foi.
+  // Same guards as the screen, tab included: the dialog decides.
   $accessError = (new CounterAccessService())->check($player, $target, CounterCatalog::MERCHANT, 'exchanges');
   if ($accessError !== null) {
-
       ExitError($accessError);
   }
 
-  
   $recipient = PlayerFactory::legacyByName($_POST['recipient'] ?? '');
   if($recipient === null){
     ExitError('Destinataire inconnu');

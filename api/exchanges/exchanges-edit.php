@@ -19,14 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   $target = PlayerFactory::legacy((int) $_GET['targetId']);
 
-  // Mêmes gardes que l'écran, onglet compris : le dialogue fait foi.
+  // Same guards as the screen, tab included: the dialog decides.
   $accessError = (new CounterAccessService())->check($player, $target, CounterCatalog::MERCHANT, 'exchanges');
   if ($accessError !== null) {
-
       ExitError($accessError);
   }
 
-  
   $POST_DATA = json_decode(file_get_contents('php://input'), true);
   if(!isset($POST_DATA['action']) || !in_array($POST_DATA['action'], ['accept', 'refuse', 'cancel', 'objects'])) {
     ExitError('Invalid request');

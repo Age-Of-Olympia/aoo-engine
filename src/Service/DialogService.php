@@ -243,17 +243,15 @@ class DialogService
     }
 
     /**
-     * Ce dialogue mène-t-il à cet écran — et, si demandé, à cet ONGLET ?
-     * Une option d'un de ses nœuds pointe `<script>` (« merchant.php »,
-     * « warschool.php ») ; l'onglet est le drapeau de requête de l'URL
+     * Whether this dialog leads to this screen — and, when given, to this
+     * tab. One option of one of its nodes points at `<script>`
+     * ("merchant.php", "warschool.php"); the tab is the URL's query flag
      * (`&bank`, `&bids`, `&melee`…).
      *
-     * C'est la règle des COMPTOIRS : un bâtiment n'est marchand ou
-     * entraîneur par aucune option de personne — son dialogue porte le
-     * rôle, onglet par onglet : la banque dépose et retire, l'échoppe
-     * tient les étals, chacune est sourde au comptoir de l'autre. Les
-     * gardes d'accès (Market, WarSchool), les corps de page et les API
-     * d'écriture lisent la même réponse.
+     * A building serves a counter only through its dialog, tab by tab: the
+     * bank's dialog opens the bank tab, the stall's opens the market tabs,
+     * and neither opens the other's. CounterAccessService, the page bodies
+     * and the write APIs all ask this method.
      */
     public function opensScreen(string $dialogName, string $script, ?string $tab = null): bool
     {
@@ -310,6 +308,46 @@ class DialogService
         }
 
         return $found;
+    }
+
+    /**
+     * Applies the admin's "Boutons de comptoir" card to the nodes read from
+     * the JSON textarea. Each field comes with the value it was rendered
+     * with ($was): only a field the admin changed in the card applies, so
+     * an edit made in the JSON stands. Empty removes the key, the button
+     * falls back to its default.
+     *
+     * @param array<int, array<string, mixed>> $nodes
+     * @param array{icon?: array<string, string>, button?: array<string, string>} $posted "node|rank" => value
+     * @param array{icon?: array<string, string>, button?: array<string, string>} $was    "node|rank" => rendered value
+     * @return array<int, array<string, mixed>>
+     */
+    public static function applyCounterFields(array $nodes, array $posted, array $was): array
+    {
+        foreach (self::counterOptionsOfNodes($nodes) as $counter) {
+            $key = $counter['node'] . '|' . $counter['index'];
+            foreach (['icon', 'button'] as $field) {
+                if (!isset($posted[$field][$key])) {
+                    continue;
+                }
+                $value = trim((string) $posted[$field][$key]);
+                if ($value === trim((string) ($was[$field][$key] ?? ''))) {
+                    continue;
+                }
+                foreach ($nodes as $i => $node) {
+                    if (($node['id'] ?? '') !== $counter['node']) {
+                        continue;
+                    }
+                    if ($value === '') {
+                        unset($nodes[$i]['options'][$counter['index']][$field]);
+                    } else {
+                        $nodes[$i]['options'][$counter['index']][$field] = $value;
+                    }
+                }
+            }
+        }
+
+        return $nodes;
     }
 
     /**
