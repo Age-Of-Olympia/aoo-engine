@@ -946,7 +946,8 @@ class Player implements ActorInterface {
 
         if ($this->data->pr < $this->data->pr+$pr){
 
-            for($n=$this->data->pr; $n<=$this->data->pr+$pr; $n++){
+            // From pr + 1: the milestone the player stands on was rewarded when reached
+            for($n=$this->data->pr+1; $n<=$this->data->pr+$pr; $n++){
                 
                 if($n %50 == 0){
 

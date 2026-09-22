@@ -10,6 +10,8 @@ class Console
    public $commandsList;
    private ?CommandFactory $factory;
    private $dbconn;
+   /** Set when "reporttime" is on, for the total printed at the end. */
+   private ?PerfTimer $globalTimer = null;
     public function InitAndExec($inputString)
     {
         $this->factory = CommandFactory::initCommmandFactory();
@@ -41,8 +43,8 @@ class Console
             $this->commandsResults->Error('faillure revert all changes');
             $this->dbconn->rollBack();
         } finally {
-            if (isset($globalTimer)) {
-                $execTime = $globalTimer->stop();
+            if ($this->globalTimer !== null) {
+                $execTime = $this->globalTimer->stop();
                 $this->commandsResults->Log('Total execution time : ' . round($execTime, 3) . ' seconds');
             }
         }
@@ -89,12 +91,12 @@ class Console
         for ($i = 0; $i < count($commandsList); $i++) {
             $subCommands = Command::ReplaceEnvVariable($commandsList[$i]);
 
-            if (!isset($globalTimer) && Command::getEnvVariable("reporttime", '0')=='1') {
-                $globalTimer = new PerfTimer();
+            if ($this->globalTimer === null && Command::getEnvVariable("reporttime", '0')=='1') {
+                $this->globalTimer = new PerfTimer();
             }
 
             foreach ($subCommands as $commandLine) {
-                if(isset($globalTimer)) {
+                if($this->globalTimer !== null) {
                     $localTimer = new PerfTimer();
                 }
                 $commandLineSplit = Command::getCommandLineSplit($commandLine);

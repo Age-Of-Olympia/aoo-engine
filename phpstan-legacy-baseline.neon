@@ -1,34 +1,10 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Undefined variable\: \$globalTimer$#'
-			identifier: variable.undefined
-			count: 1
-			path: Classes/Console.php
-
-		-
-			message: '#^Variable \$globalTimer in isset\(\) is never defined\.$#'
-			identifier: isset.variable
-			count: 1
-			path: Classes/Console.php
-
-		-
 			message: '#^Variable \$valuesRef might not be defined\.$#'
 			identifier: variable.undefined
 			count: 2
 			path: Classes/Db.php
-
-		-
-			message: '#^Function draw_random_reward not found\.$#'
-			identifier: function.notFound
-			count: 1
-			path: Classes/Forum.php
-
-		-
-			message: '#^Inner named functions are not supported by PHPStan\. Consider refactoring to an anonymous function, class method, or a top\-level\-defined function\. See issue \#165 \(https\://github\.com/phpstan/phpstan/issues/165\) for more details\.$#'
-			identifier: function.inner
-			count: 1
-			path: Classes/Forum.php
 
 		-
 			message: '#^Cannot unset property Classes\\Player\:\:\$coords because it might have hooks in a subclass\.$#'
