@@ -109,8 +109,8 @@ class PlanImportExportTest extends TestCase
     }
 
     /**
-     * Vieilles cartes : une route et un mur sur la même case. La structure
-     * gagne, la route n'est pas posée — l'inverse refusait le mur.
+     * Old maps carry a road and a wall on the same cell. The structure wins
+     * and the road is not placed — the other way round refused the wall.
      */
     public function testAStructureTakesTheCellFromARoad(): void
     {
@@ -151,6 +151,54 @@ class PlanImportExportTest extends TestCase
             [self::IMPORTED]
         );
         $this->assertSame(['0' => 'building', '1' => 'route'], $onCells);
+    }
+
+    /**
+     * A plan is loaded step by step: interrupted, it resumes where it stopped
+     * instead of starting over.
+     */
+    public function testAnInterruptedImportResumesWhereItStopped(): void
+    {
+        $this->seedSourcePlan();
+        $importer = new PlanImporter();
+        $report = new \App\Service\ImportExport\ImportReport();
+
+        $payload = (new PlanExporter())->exportOne(self::SRC);
+        $payload['plan'] = self::IMPORTED;
+
+        $run = $importer->runFor($importer->payloadFor($payload), $report);
+        $this->assertGreaterThan(1, $run->total(), 'un plan se découpe en étapes');
+        $this->assertFalse($run->resumed());
+
+        // Two steps, then we walk away: the cursor stays in the database.
+        $run->next();
+        $run->next();
+        $this->assertSame(2, $run->step());
+        $this->assertFalse($run->isDone());
+
+        $fingerprint = \App\Service\ImportExport\PlanImportProgress::fingerprint($importer->payloadFor($payload));
+        $this->assertSame(
+            2,
+            (new \App\Service\ImportExport\PlanImportProgress())->stepOf($fingerprint, self::IMPORTED)
+        );
+
+        // The same bundle picked up later: it restarts at step 2.
+        $resumed = $importer->runFor($importer->payloadFor($payload), $report);
+        $this->assertTrue($resumed->resumed());
+        $this->assertSame(2, $resumed->step());
+
+        $resumed->runToEnd();
+
+        $this->assertEqualsCanonicalizing(
+            $payload['layers'],
+            (new PlanExporter())->exportOne(self::IMPORTED)['layers'],
+            'le plan repris vaut le plan chargé d\'un trait'
+        );
+        $this->assertSame(
+            0,
+            (new \App\Service\ImportExport\PlanImportProgress())->stepOf($fingerprint, self::IMPORTED),
+            'fini : plus rien à reprendre'
+        );
     }
 
     public function testImportRejectsInvalidPayloadsWithoutWriting(): void
@@ -332,6 +380,7 @@ class PlanImportExportTest extends TestCase
 
         /* The builder stands on no cell, so the join above never reaches it. */
         $this->link->executeStatement('DELETE FROM players WHERE id = ?', [self::BUILDER_ID]);
+        $this->link->executeStatement("DELETE FROM plan_import_progress WHERE plan LIKE 'plan_test_ie_%'");
 
         $this->link->executeStatement("DELETE FROM coords WHERE plan LIKE 'plan_test_ie_%'");
 

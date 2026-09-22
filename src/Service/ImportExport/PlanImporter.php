@@ -3,8 +3,6 @@
 namespace App\Service\ImportExport;
 
 use App\Service\PlanAdminService;
-use App\Service\PlanConfigService;
-use App\Service\Map\StructureTypeService;
 use App\Service\TiledMapService;
 use Classes\Db;
 use Doctrine\DBAL\Connection;
@@ -25,35 +23,20 @@ use RuntimeException;
  */
 final class PlanImporter extends AbstractDbalImporter
 {
-    /** Multi-row INSERT batch size (same value as TiledMapService). */
-    private const INSERT_BATCH = 500;
-
     private ?Db $db;
-    private ?PlanConfigService $planConfig;
     private ?PlanAdminService $planAdmin;
 
-    public function __construct(?Db $db = null, ?PlanConfigService $planConfig = null, ?PlanAdminService $planAdmin = null)
+    public function __construct(?Db $db = null, ?PlanAdminService $planAdmin = null)
     {
         parent::__construct();
         // Lazy: instantiation must not open a DB connection
         $this->db = $db;
-        $this->planConfig = $planConfig;
         $this->planAdmin = $planAdmin;
     }
 
     public function objectType(): string
     {
         return 'plan';
-    }
-
-    /** JSON after the commit (files do not roll back). */
-    protected function afterImport(array $payloads): void
-    {
-        foreach ($payloads as $payload) {
-            if (is_array($payload['config'])) {
-                ($this->planConfig ??= new PlanConfigService())->replace($payload['plan'], $payload['config']);
-            }
-        }
     }
 
     /**
@@ -197,161 +180,51 @@ final class PlanImporter extends AbstractDbalImporter
     }
 
     /**
-     * Replaces a plan's authored content with the payload's, inside the
-     * batch transaction.
-     *
-     * @param array{plan: string, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>, buildings: ?list<array<string, mixed>>} $payload
+     * Imports the batch step by step instead of in one transaction: a big
+     * plan no longer needs one request, and an interrupted import resumes
+     * where it stopped ({@see PlanImportRun}).
      */
-    protected function apply(Connection $conn, array $payload, ImportReport $report): void
+    public function import(array $objects): ImportReport
     {
-        $plan = $payload['plan'];
-        $db = $this->db();
+        $report = new ImportReport();
+        $payloads = $this->collect($objects, $report);
 
-        // 1. Purge the authored content (player rows stay)
-        foreach (array_keys(TiledMapService::AUTHORABLE_LAYERS) as $layer) {
-            if (isset(TiledMapService::ENTITY_LAYERS[$layer])) {
-                continue;
-            }
-
-            $playerFilter = in_array('player_id', TiledMapService::AUTHORABLE_LAYERS[$layer]['columns'], true)
-                ? ' AND (m.player_id IS NULL OR m.player_id = 0)'
-                : '';
-            $db->exe(
-                'DELETE m FROM map_' . $layer . ' m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?' . $playerFilter,
-                array($plan)
-            );
+        if ($report->hasRejections()) {
+            return $report;
         }
 
-        // 2. Coords: the payload's plus the rows', created in batches
-        $needed = [];
-        foreach ($payload['coords'] as [$x, $y, $z]) {
-            $needed[$x . '|' . $y . '|' . $z] = [$x, $y, $z];
-        }
-        foreach ($payload['layers'] + ['buildings' => $payload['buildings'] ?? []] as $rows) {
-            foreach ($rows as $row) {
-                $key = (int) $row['x'] . '|' . (int) $row['y'] . '|' . (int) $row['z'];
-                $needed[$key] ??= [(int) $row['x'], (int) $row['y'], (int) $row['z']];
-            }
+        foreach ($payloads as $payload) {
+            $this->runFor($payload, $report)->runToEnd();
         }
 
-        $coordsIds = $this->loadCoordsIds($plan);
-        $missing = array_diff_key($needed, $coordsIds);
-        foreach (array_chunk(array_values($missing), self::INSERT_BATCH) as $chunk) {
-            $placeholders = implode(', ', array_fill(0, count($chunk), '(?, ?, ?, ?)'));
-            $params = [];
-            foreach ($chunk as [$x, $y, $z]) {
-                array_push($params, $x, $y, $z, $plan);
-            }
-            $db->exe('INSERT INTO coords (x, y, z, plan) VALUES ' . $placeholders, $params);
-        }
-        if ($missing !== []) {
-            $coordsIds = $this->loadCoordsIds($plan);
-        }
-
-        // 3. Insert the layers in batches
-        foreach ($payload['layers'] as $layer => $rows) {
-            if (isset(TiledMapService::ENTITY_LAYERS[$layer])) {
-                continue;
-            }
-
-            $this->insertLayerRows($layer, $rows, $coordsIds);
-        }
-
-        /* 3b. Structures win the cell: a road drawn under a wall or a
-         * building would be created first and the building refused. */
-        $roads = TiledMapService::roadsClearOfStructures(
-            $payload['layers'][TiledMapService::GROUND_ENTITY_LAYER] ?? [],
-            $payload['buildings'] ?? []
-        );
-        $payload['layers'][TiledMapService::GROUND_ENTITY_LAYER] = $roads['kept'];
-        if ($roads['dropped'] > 0) {
-            $report->warn($plan, $roads['dropped'] . ' route(s) sous une structure, non posée(s).');
-        }
-
-        /* 4. Resources, plants and roads are entities: COMPARE instead of
-         * replacing. One the bundle redraws identically keeps its id and its
-         * state — exhausted, it stays so and regrows in its own time. The
-         * reconciler writes on the Doctrine connection, the one Classes\Db
-         * wraps: same transaction, same rollback. */
-        foreach (array_keys(TiledMapService::ENTITY_LAYERS) as $layer) {
-            /* No level: a bundle redraws the whole plan. */
-            // Unknown types were reported by classify(): same rows, same answer.
-            TiledMapService::reconcilerFor($layer)->reconcile($plan, $payload['layers'][$layer] ?? []);
-        }
-
-        if ($payload['buildings'] !== null) {
-            foreach ((new TiledMapService())->importDecorBuildings($plan, $payload['buildings']) as $refused) {
-                $report->warn($plan, 'Bâtiment non posé : ' . $refused);
-            }
-        }
+        return $report;
     }
 
     /**
-     * @param list<array<string, mixed>> $rows
-     * @param array<string, int>         $coordsIds "x|y|z" => id
+     * The run for one plan payload — the console command and the admin page
+     * drive it a few steps at a time, on their own budget.
+     *
+     * @param array<string, mixed> $payload
      */
-    private function insertLayerRows(string $layer, array $rows, array $coordsIds): void
+    public function runFor(array $payload, ImportReport $report): PlanImportRun
     {
-        if ($rows === []) {
-            return;
-        }
-
-        // Uniform columns per layer (multi-row INSERT): the portable extras
-        // of AUTHORABLE_LAYERS, with the schema defaults
-        $extras = array_values(array_filter(
-            TiledMapService::AUTHORABLE_LAYERS[$layer]['columns'],
-            fn(string $column) => $column !== 'player_id' && $column !== 'endTime'
-        ));
-
-        $columnSql = '(coords_id, `name`' . ($extras !== [] ? ', `' . implode('`, `', $extras) . '`' : '') . ')';
-        $rowPlaceholder = '(' . implode(', ', array_fill(0, 2 + count($extras), '?')) . ')';
-
-        foreach (array_chunk($rows, self::INSERT_BATCH) as $chunk) {
-            $params = [];
-            foreach ($chunk as $row) {
-                $params[] = $coordsIds[(int) $row['x'] . '|' . (int) $row['y'] . '|' . (int) $row['z']];
-                $params[] = (string) $row['name'];
-                foreach ($extras as $column) {
-                    $params[] = $this->extraValue($layer, $column, $row);
-                }
-            }
-            $this->db()->exe(
-                'INSERT INTO map_' . $layer . ' ' . $columnSql . ' VALUES '
-                    . implode(', ', array_fill(0, count($chunk), $rowPlaceholder)),
-                $params
-            );
-        }
+        return new PlanImportRun($payload, $report, $this->connection());
     }
 
-    /** Portable value of an extra column, defaults aligned on the schema / insertRows(). */
-    private function extraValue(string $layer, string $column, array $row): int|string
+    /**
+     * Validates one bundle object and returns the payload a run works on.
+     *
+     * @return array{plan: string, config: ?array, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>, buildings: ?list<array<string, mixed>>}
+     */
+    public function payloadFor(mixed $object): array
     {
-        if ($column === 'damages') {
-            // Same authored default as TiledMapService::insertRows(): -1
-            // (harvestable) for catalog resources, 0 otherwise
-            return isset($row['damages']) && is_numeric($row['damages'])
-                ? (int) $row['damages']
-                : (StructureTypeService::isHarvestable((string) $row['name']) ? -1 : 0);
-        }
-        if ($column === 'foreground' || $column === 'rotation') {
-            return isset($row[$column]) && is_numeric($row[$column]) ? (int) $row[$column] : 0;
-        }
-
-        // params (plants, triggers, dialogs)
-        return (string) ($row[$column] ?? '');
+        return $this->validate($object);
     }
 
-    /** @return array<string, int> "x|y|z" => coords_id of the whole plan */
-    private function loadCoordsIds(string $plan): array
+    /** Unused: a plan is written by its run, step by step. */
+    protected function apply(Connection $conn, array $payload, ImportReport $report): void
     {
-        $res = $this->db()->exe('SELECT id, x, y, z FROM coords WHERE plan = ?', array($plan));
-
-        $coordsIds = [];
-        while ($row = $res->fetch_assoc()) {
-            $coordsIds[$row['x'] . '|' . $row['y'] . '|' . $row['z']] = (int) $row['id'];
-        }
-
-        return $coordsIds;
+        (new PlanImportRun($payload, $report, $conn))->runToEnd();
     }
 
     private function countPlayerBuiltRows(string $plan): int

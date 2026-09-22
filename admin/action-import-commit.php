@@ -38,6 +38,21 @@ try {
         throw new InvalidArgumentException("Type d'objet non supporté : « {$parsed->objectType} ».");
     }
 
+    /* A plan is loaded step by step: the progress screen chains them, and an
+     * interrupted load resumes where it stopped. */
+    if ($parsed->objectType === 'plan') {
+        $preview = $importer->preview($parsed->objects);
+        if ($preview->hasRejections()) {
+            $first = $preview->rejected()[0];
+            throw new InvalidArgumentException('Import refusé : ' . $first['name'] . ' — ' . $first['reason']);
+        }
+
+        $_SESSION['action_import_plan_index'] = 0;
+        $csrf->regenerateToken();
+        header('Location: /admin/action-import-run.php');
+        exit;
+    }
+
     $report = $importer->import($parsed->objects);
 
     unset($_SESSION['action_import_bundle'], $_SESSION['action_import_filename']);

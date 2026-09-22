@@ -845,11 +845,25 @@ class TiledMapService
 
         $skipped = [];
         foreach ($byZ as $z => $zRows) {
-            $result = $this->importBuildingsLayer($plan, $z, $zRows, $this->fetchBuildingRows($plan, $z));
-            $skipped = array_merge($skipped, $result['skipped']);
+            $skipped = array_merge($skipped, $this->importBuildingsAt($plan, (int) $z, $zRows));
         }
 
         return $skipped;
+    }
+
+    /**
+     * The decor buildings of ONE level, as a bundle draws them: what the rows
+     * no longer name is removed, what they add is placed.
+     *
+     * The level is a step of its own for a resumable import
+     * ({@see \App\Service\ImportExport\PlanImportRun}).
+     *
+     * @param list<array<string, mixed>> $rows
+     * @return list<string> the placements the board refused, with their reason
+     */
+    public function importBuildingsAt(string $plan, int $z, array $rows): array
+    {
+        return $this->importBuildingsLayer($plan, $z, $rows, $this->fetchBuildingRows($plan, $z))['skipped'];
     }
 
     /** @return array<string, array> every authorable layer of the (plan, z) */
