@@ -139,6 +139,32 @@ class TradeHallsTest extends LegacyPlayerFixtureTestCase
         }
     }
 
+    /**
+     * The admin card and the JSON textarea post the same keys: a field left
+     * as rendered in the card does not undo an edit made in the JSON.
+     */
+    public function testTheCounterCardOnlyAppliesWhatTheAdminChanged(): void
+    {
+        $nodes = [['id' => 'bonjour', 'options' => [
+            ['text' => 'Déposer', 'url' => 'merchant.php?targetId=TARGET_ID&bank', 'button' => 'Coffre'],
+        ]]];
+
+        $untouched = DialogService::applyCounterFields(
+            $nodes,
+            ['icon' => ['bonjour|0' => ''], 'button' => ['bonjour|0' => '']],
+            ['icon' => ['bonjour|0' => ''], 'button' => ['bonjour|0' => '']]
+        );
+        $this->assertSame('Coffre', $untouched[0]['options'][0]['button'], 'the JSON edit stands');
+
+        $changed = DialogService::applyCounterFields(
+            $nodes,
+            ['icon' => ['bonjour|0' => 'ra-key'], 'button' => ['bonjour|0' => '']],
+            ['icon' => ['bonjour|0' => ''], 'button' => ['bonjour|0' => 'Coffre']]
+        );
+        $this->assertSame('ra-key', $changed[0]['options'][0]['icon']);
+        $this->assertArrayNotHasKey('button', $changed[0]['options'][0], 'emptied in the card: back to the default');
+    }
+
     public function testCounterOptionsLeftTheGame(): void
     {
         $this->assertNotContains('isMerchant', PlayerOptionsService::MANAGEABLE_OPTIONS);

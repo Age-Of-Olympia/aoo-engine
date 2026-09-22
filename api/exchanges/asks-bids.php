@@ -18,7 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $target = PlayerFactory::legacy((int) $_GET['targetId']);
 
-
     $POST_DATA = json_decode(file_get_contents('php://input'), true);
     if (!isset($POST_DATA['action']) || !in_array($POST_DATA['action'], ['accept', 'create', 'cancel'])) {
         ExitError(INVALID_REQ);
@@ -28,8 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ExitError(INVALID_REQ);
     }
 
-    // Mêmes gardes que l'écran, onglet compris (le dialogue fait foi) :
-    // pas d'offre ni de demande au guichet de la banque par l'API.
+    // Same guards as the screen, tab included (the dialog decides):
+    // no bid or ask through the API at the bank's counter.
     $accessError = (new CounterAccessService())->check($player, $target, CounterCatalog::MERCHANT, $POST_DATA['type']);
     if ($accessError !== null) {
         ExitError($accessError);

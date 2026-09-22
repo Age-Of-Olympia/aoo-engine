@@ -66,28 +66,12 @@ if ($action === 'create' || $action === 'update') {
         redirectTo('/admin/dialogs.php?action=' . ($action === 'create' ? 'new' : 'edit&name=' . urlencode($name)));
     }
 
-    /* Apparence des boutons de comptoir : le formulaire poste une icône et
-     * un libellé par option, repérés « nœud|rang ». Vide = clé retirée,
-     * le bouton reprend son défaut. */
-    foreach (DialogService::counterOptionsOfNodes($nodes) as $counter) {
-        $key = $counter['node'] . '|' . $counter['index'];
-        foreach (['icon' => 'counter_icon', 'button' => 'counter_button'] as $field => $input) {
-            if (!isset($_POST[$input][$key])) {
-                continue;
-            }
-            $value = trim((string) $_POST[$input][$key]);
-            foreach ($nodes as $i => $node) {
-                if (($node['id'] ?? '') !== $counter['node']) {
-                    continue;
-                }
-                if ($value === '') {
-                    unset($nodes[$i]['options'][$counter['index']][$field]);
-                } else {
-                    $nodes[$i]['options'][$counter['index']][$field] = $value;
-                }
-            }
-        }
-    }
+    // The "Boutons de comptoir" card, on top of the JSON
+    $nodes = DialogService::applyCounterFields(
+        $nodes,
+        ['icon' => (array) ($_POST['counter_icon'] ?? []), 'button' => (array) ($_POST['counter_button'] ?? [])],
+        ['icon' => (array) ($_POST['counter_icon_was'] ?? []), 'button' => (array) ($_POST['counter_button_was'] ?? [])]
+    );
 
     try {
         $service->saveGameDialog($name, $nodes, [
