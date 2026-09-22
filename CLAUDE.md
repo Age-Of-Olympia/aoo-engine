@@ -59,7 +59,7 @@ Everything is centralized in the **Makefile**, used both locally and in CI:
 
 ```bash
 make all          # PHPStan + tests + coverage
-make phpstan      # static analysis (level 4 on tests/)
+make phpstan      # static analysis: level 6 on src/tests/admin, level 1 on the legacy (two baselines)
 make test         # full PHPUnit suite
 make testf CalculateXpTest   # one test by name
 make coverage     # report in tmp/coverage/

@@ -1,0 +1,44 @@
+includes:
+    - phpstan-legacy-baseline.neon
+
+# The legacy layer (Classes/, api/, scripts/, root pages), analysed apart and
+# softly: level 1 catches undefined variables, unknown functions and wrong
+# argument counts, and the baseline holds what was already there. Only new
+# errors fail the job. The modern code has its own, stricter run
+# (phpstan.neon); a file moves there once it is cleaned up.
+parameters:
+    level: 1
+    tmpDir: tmp/phpstan/legacy
+    # The whole tree minus the modern code: a new root page is analysed
+    # without anyone having to list it (paths takes no wildcard)
+    paths:
+      - .
+    excludePaths:
+      analyseAndScan:
+        - vendor
+        - node_modules (?)
+        - tmp
+        - var (?)
+        - tools
+        - cypress
+      analyse:
+        # Analysed by phpstan.neon
+        - src
+        - tests
+        - admin
+        - api/tutorial
+        - classements.php
+        - config/constants.php
+        - config/functions.php
+        # Local secrets, absent from the repository
+        - config/db_constants.php (?)
+        - config/onesignal_constants.php (?)
+        - config/tiled_constants.php (?)
+    scanFiles:
+      - config/deploy_targets.php
+    ignoreErrors:
+      # scripts/ are templates included by a page: their variables come from
+      # the including scope, which PHPStan cannot see
+      -
+        identifier: variable.undefined
+        path: scripts/*

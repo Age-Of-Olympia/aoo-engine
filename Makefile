@@ -11,8 +11,11 @@ setup-ci-env:
 	cp config/db_constants.php.exemple config/db_constants.php 2>/dev/null || echo "Config already exists"
 	cp .env.dist .env 2>/dev/null || echo ".env already exists"
 
+# Two runs: the modern code at level 6, the legacy layer at level 1
+# (phpstan-legacy.neon). Each baseline holds the errors already there.
 phpstan:
 	./vendor/bin/phpstan analyse -c phpstan.neon --memory-limit 1G
+	./vendor/bin/phpstan analyse -c phpstan-legacy.neon --memory-limit 1G
 
 # La base jetable de la suite se reconstruit depuis le schéma VIVANT, donc
 # après chaque migration. Le client MariaDB n'existe pas dans le devcontainer :
