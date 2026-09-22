@@ -40,6 +40,7 @@ class ActionExecutorService
     private int $finalTargetPv;
     private bool $blocked = false;
     private ConditionObject $conditionObject;
+    private string $deathOutput = '';
 
     public function __construct(Action $action, Player $actor, Player $target, bool $simulationMode = false, ?ActionTypeInstructionResolver $typeInstructionResolver = null, ?ActionTypePreconditionResolver $preconditionResolver = null, ?ConditionPreconditionResolver $conditionPreconditionResolver = null, ?ActionLogResolver $logResolver = null, ?ActionXpResolver $xpResolver = null){
         $this->conditionRegistry = new ConditionRegistry();
@@ -128,8 +129,64 @@ class ActionExecutorService
         // 6) The arena capture is triggered from action.php, after the Log::put
         //    calls, where the event text is available.
 
+        // 7) Deaths — the engine's business, so every caller gets them.
+        $this->resolveDeaths();
+
         // contains conditionsResults, effectsResults, costsResults, xpResults and logs
         return new ActionResults($this->globalConditionsResult, $this->blocked, $this->conditionResultsArray, $this->outcomeResultsArray, $costsResultsArray, $xpResultsArray, $logsArray);
+    }
+
+    /** The target's life once the outcomes were applied — before any death. */
+    public function getFinalTargetPv(): int
+    {
+        return $this->finalTargetPv ?? $this->initialTargetPv;
+    }
+
+    /** The kill report, for a caller that renders a page. */
+    public function getDeathOutput(): string
+    {
+        return $this->deathOutput;
+    }
+
+    /**
+     * Who dies of this action: the target of the blow, with the kill going
+     * to the actor; the actor of its own effects; a self-targeted action
+     * is a self death.
+     *
+     * Here rather than in action.php so that every caller of the executor
+     * inherits the rule — a move that starts an action, an API, a future
+     * NPC turn.
+     *
+     * ponytail: PlayerService still ECHOES the kill report, so capture it
+     * and let the caller place it. Drop the buffer when that report
+     * becomes a view.
+     */
+    private function resolveDeaths(): void
+    {
+        if ($this->simulationMode) {
+            return;
+        }
+
+        $onSelf = (int) $this->actor->id === (int) $this->target->id;
+
+        ob_start();
+
+        if (!$onSelf && $this->actor->getRemaining('pv') < 1) {
+            PlayerService::processSelfDeath($this->actor, 'à ses propres effets');
+            echo '<b><font color="red">Vous succombez à vos propres effets.</font></b>';
+            \App\View\OnHideReloadView::render($this->actor);
+        }
+
+        $targetPv = $this->target->getRemaining('pv');
+        if ($targetPv < 1 && $targetPv !== $this->initialTargetPv) {
+            if ($onSelf) {
+                PlayerService::processSelfDeath($this->target, 'à ses propres effets');
+            } else {
+                PlayerService::ProcessTargetDeath($this->actor, $this->target);
+            }
+        }
+
+        $this->deathOutput = (string) ob_get_clean();
     }
 
     private function applyCosts(): array

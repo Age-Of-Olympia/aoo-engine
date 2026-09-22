@@ -212,7 +212,10 @@ if($goCoords->z < 0){
             exit('error creuser action missing (run migrations)');
         }
 
-        $digResults = (new \App\Service\ActionExecutorService($digAction, $player, $player))->executeAction();
+        $digExecutor = new \App\Service\ActionExecutorService($digAction, $player, $player);
+        $digResults = $digExecutor->executeAction();
+        // Creuser peut coûter la vie : l'exécuteur tranche, la page affiche.
+        echo $digExecutor->getDeathOutput();
 
         /* Une action laisse TOUJOURS un événement, d'où qu'elle parte —
          * ici du déplacement (récap détaillé : le même rendu
