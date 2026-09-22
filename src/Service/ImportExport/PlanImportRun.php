@@ -19,7 +19,7 @@ use Doctrine\DBAL\Connection;
  * stopped instead of starting over.
  *
  * The caller decides how many steps one request runs: the console command
- * loops on a time budget, the admin page calls back until `isDone()`.
+ * and the admin page both go through {@see PlanImporter::advance()}.
  */
 final class PlanImportRun
 {
@@ -97,25 +97,16 @@ final class PlanImportRun
         });
 
         $this->index++;
-
-        if ($this->isDone()) {
-            $this->finish();
-        }
-    }
-
-    /** Runs every remaining step — the caller that has no budget to keep. */
-    public function runToEnd(): void
-    {
-        while (!$this->isDone()) {
-            $this->next();
-        }
     }
 
     /**
-     * The plan's JSON and the cursor: both belong after the last step,
-     * so a run interrupted before the end keeps its resume point.
+     * The plan's JSON, then the cursor — called once the whole bundle has
+     * landed ({@see PlanImporter::advance()}): a cursor forgotten earlier
+     * would restart this plan while a later one is still loading.
+     * Idempotent, so a bundle that died right after its last step finishes
+     * on the next call.
      */
-    private function finish(): void
+    public function finish(): void
     {
         if (is_array($this->payload['config'])) {
             (new PlanConfigService())->replace($this->plan, $this->payload['config']);
@@ -139,9 +130,7 @@ final class PlanImportRun
             $buildings
         );
         $layers[TiledMapService::GROUND_ENTITY_LAYER] = $roads['kept'];
-        if ($roads['dropped'] > 0) {
-            $this->report->warn($plan, $roads['dropped'] . ' route(s) sous une structure, non posée(s).');
-        }
+        $droppedRoads = $roads['dropped'];
 
         $steps[] = [
             'label' => 'contenu remplacé',
@@ -171,7 +160,13 @@ final class PlanImportRun
             $rows = $layers[$layer] ?? [];
             $steps[] = [
                 'label' => $layer . ' (entités)',
-                'run' => fn() => TiledMapService::reconcilerFor($layer)->reconcile($plan, $rows),
+                'run' => function () use ($plan, $layer, $rows, $droppedRoads): void {
+                    TiledMapService::reconcilerFor($layer)->reconcile($plan, $rows);
+                    // Warned by the step, not the step list: the list is rebuilt on every call
+                    if ($layer === TiledMapService::GROUND_ENTITY_LAYER && $droppedRoads > 0) {
+                        $this->report->warn($plan, $droppedRoads . ' route(s) sous une structure, non posée(s).');
+                    }
+                },
             ];
         }
 

@@ -4,7 +4,6 @@ use Classes\Argument;
 use Classes\File;
 use Classes\Player;
 use App\Service\ImportExport\BundleEnvelope;
-use App\Service\ImportExport\ImportReport;
 use App\Service\ImportExport\PlanExporter;
 use App\Service\ImportExport\PlanImporter;
 use App\Service\ImportExport\PlanImportRun;
@@ -108,10 +107,17 @@ EOT);
             return '<font color="orange">erreur : ce bundle contient des « ' . htmlspecialchars($parsed->objectType) . ' », pas des plans</font>';
         }
 
-        $report = new ImportReport();
+        // Same checks as the admin preview; its warnings join the load's
+        $importer = new PlanImporter();
+        $report = $importer->preview($parsed->objects);
+        if ($report->hasRejections()) {
+            $first = $report->rejected()[0];
+            return '<font color="orange">erreur : ' . htmlspecialchars($first['name'] . ' — ' . $first['reason']) . '</font>';
+        }
+
         $out = '';
 
-        $run = (new PlanImporter())->advance(
+        $run = $importer->advance(
             $parsed->objects,
             $report,
             microtime(true) + self::BUDGET,

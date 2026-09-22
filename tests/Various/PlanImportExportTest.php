@@ -28,6 +28,7 @@ class PlanImportExportTest extends TestCase
 
     private const SRC = 'plan_test_ie_src';
     private const IMPORTED = 'plan_test_ie_imp';
+    private const IMPORTED_TOO = 'plan_test_ie_imp2';
 
     /** Fixture id, out of reach of real ones. */
     private const BUILDER_ID = 990301;
@@ -185,7 +186,7 @@ class PlanImportExportTest extends TestCase
         $resumed = $importer->runFor($importer->payloadFor($payload), $report);
         $this->assertSame(2, $resumed->step(), 'le nouveau run repart de l\'étape enregistrée');
 
-        $resumed->runToEnd();
+        $this->assertNull($importer->advance([$payload], $report, INF), 'le bundle est chargé');
 
         $this->assertEqualsCanonicalizing(
             $payload['layers'],
@@ -195,6 +196,52 @@ class PlanImportExportTest extends TestCase
         $this->assertSame(
             0,
             (new \App\Service\ImportExport\PlanImportProgress())->stepOf($fingerprint, self::IMPORTED),
+            'fini : plus rien à reprendre'
+        );
+    }
+
+    /**
+     * A bundle of several plans, the budget spent in the middle of the
+     * second: the next call finishes the second without replaying the first,
+     * and writes each plan's JSON once the whole bundle has landed.
+     */
+    public function testAFinishedPlanIsNotReplayedWhileTheNextOneLoads(): void
+    {
+        $this->seedSourcePlan();
+        $importer = new PlanImporter();
+        $report = new \App\Service\ImportExport\ImportReport();
+
+        $first = (new PlanExporter())->exportOne(self::SRC);
+        $first['plan'] = self::IMPORTED;
+        $first['config']['name'] = 'Premier';
+        $second = $first;
+        $second['plan'] = self::IMPORTED_TOO;
+        $second['config']['name'] = 'Second';
+
+        // The previous call: the first plan went through, the second stopped after one step.
+        $done = $importer->runFor($importer->payloadFor($first), $report);
+        while (!$done->isDone()) {
+            $done->next();
+        }
+        $importer->runFor($importer->payloadFor($second), $report)->next();
+
+        $replayed = [];
+        $left = $importer->advance(
+            [$first, $second],
+            $report,
+            INF,
+            static function (\App\Service\ImportExport\PlanImportRun $run) use (&$replayed): void {
+                $replayed[$run->plan()] = true;
+            }
+        );
+
+        $this->assertNull($left, 'le bundle est chargé');
+        $this->assertSame([self::IMPORTED_TOO], array_keys($replayed), 'le premier plan n\'est pas rejoué');
+        $this->assertSame('Premier', (new PlanExporter())->exportOne(self::IMPORTED)['config']['name']);
+        $this->assertSame('Second', (new PlanExporter())->exportOne(self::IMPORTED_TOO)['config']['name']);
+        $this->assertSame(
+            0,
+            (int) $this->link->fetchOne("SELECT COUNT(*) FROM plan_import_progress WHERE plan LIKE 'plan_test_ie_%'"),
             'fini : plus rien à reprendre'
         );
     }
