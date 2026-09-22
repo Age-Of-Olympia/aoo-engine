@@ -6,6 +6,7 @@ use App\Service\PlanAdminService;
 use App\Service\TiledMapService;
 use Classes\Db;
 use Doctrine\DBAL\Connection;
+use LogicException;
 use RuntimeException;
 
 /**
@@ -193,16 +194,13 @@ final class PlanImporter extends AbstractDbalImporter
             return $report;
         }
 
-        foreach ($payloads as $payload) {
-            $this->runFor($payload, $report)->runToEnd();
-        }
+        $this->drive(array_map(fn(array $payload): PlanImportRun => $this->runFor($payload, $report), $payloads), INF);
 
         return $report;
     }
 
     /**
-     * The run for one plan payload — the console command and the admin page
-     * drive it a few steps at a time, on their own budget.
+     * The run for one plan payload.
      *
      * @param array<string, mixed> $payload
      */
@@ -213,10 +211,11 @@ final class PlanImporter extends AbstractDbalImporter
 
     /**
      * Works on the bundle until $deadline, plan after plan, each resuming
-     * where it stopped. A plan already finished costs one cursor read.
+     * where it stopped — the console command and the admin page drive it
+     * on their own budget.
      *
      * Returns the run left unfinished — null when the whole bundle is done.
-     * $onStep is called with the run and the label of the step about to run,
+     * $onStep is called with the run and the label of the step that ran,
      * for a caller that reports as it goes.
      *
      * @param array<int, mixed> $objects the bundle's plan objects
@@ -224,9 +223,36 @@ final class PlanImporter extends AbstractDbalImporter
      */
     public function advance(array $objects, ImportReport $report, float $deadline, ?callable $onStep = null): ?PlanImportRun
     {
-        foreach ($objects as $object) {
-            $run = $this->runFor($this->payloadFor($object), $report);
+        return $this->drive(
+            array_map(fn(mixed $object): PlanImportRun => $this->runFor($this->payloadFor($object), $report), $objects),
+            $deadline,
+            $onStep
+        );
+    }
 
+    /**
+     * Validates one bundle object and returns the payload a run works on.
+     *
+     * @return array{plan: string, config: ?array, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>, buildings: ?list<array<string, mixed>>}
+     */
+    public function payloadFor(mixed $object): array
+    {
+        return $this->validate($object);
+    }
+
+    /** Unused: {@see import()} writes each plan through its run. */
+    protected function apply(Connection $conn, array $payload, ImportReport $report): void
+    {
+        throw new LogicException('A plan is written by its PlanImportRun.');
+    }
+
+    /**
+     * @param list<PlanImportRun> $runs
+     * @param callable(PlanImportRun, string): void|null $onStep
+     */
+    private function drive(array $runs, float $deadline, ?callable $onStep = null): ?PlanImportRun
+    {
+        foreach ($runs as $run) {
             while (!$run->isDone() && microtime(true) < $deadline) {
                 $label = $run->label();
                 $run->next();
@@ -240,23 +266,12 @@ final class PlanImporter extends AbstractDbalImporter
             }
         }
 
+        // Only now: a cursor cleared per plan would restart a finished plan on the next call
+        foreach ($runs as $run) {
+            $run->finish();
+        }
+
         return null;
-    }
-
-    /**
-     * Validates one bundle object and returns the payload a run works on.
-     *
-     * @return array{plan: string, config: ?array, coords: list<array{0:int,1:int,2:int}>, layers: array<string, list<array<string, mixed>>>, buildings: ?list<array<string, mixed>>}
-     */
-    public function payloadFor(mixed $object): array
-    {
-        return $this->validate($object);
-    }
-
-    /** Unused: a plan is written by its run, step by step. */
-    protected function apply(Connection $conn, array $payload, ImportReport $report): void
-    {
-        (new PlanImportRun($payload, $report, $conn))->runToEnd();
     }
 
     private function countPlayerBuiltRows(string $plan): int
