@@ -299,6 +299,39 @@ class DialogService
     }
 
     /**
+     * Les options de comptoir d'une liste de nœuds, repérées par le nœud
+     * et leur rang dans ce nœud — de quoi dresser le formulaire de l'admin
+     * et y réinjecter icône et libellé.
+     *
+     * @param array<int, array<string, mixed>> $nodes
+     * @return array<int, array{node: string, index: int, url: string, text: string, icon: string, button: string}>
+     */
+    public static function counterOptionsOfNodes(array $nodes): array
+    {
+        $found = [];
+        foreach ($nodes as $node) {
+            foreach (($node['options'] ?? []) as $index => $option) {
+                $url = (string) ($option['url'] ?? '');
+                foreach (array_keys(self::COUNTER_SCREENS) as $script) {
+                    if (str_starts_with($url, (string) $script)) {
+                        $found[] = [
+                            'node' => (string) ($node['id'] ?? ''),
+                            'index' => (int) $index,
+                            'url' => $url,
+                            'text' => (string) ($option['text'] ?? ''),
+                            'icon' => (string) ($option['icon'] ?? ''),
+                            'button' => (string) ($option['button'] ?? ''),
+                        ];
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $found;
+    }
+
+    /**
      * Les options de ce dialogue qui mènent à cet écran, dans l'ordre du
      * dialogue : onglet de l'URL, plus l'icône et le libellé que
      * l'option impose au bouton de la carte (clés `icon` et `button`,

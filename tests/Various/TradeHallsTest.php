@@ -119,6 +119,14 @@ class TradeHallsTest extends LegacyPlayerFixtureTestCase
         ]], ['npc_name' => 'TARGET_NAME', 'type' => 'building']);
         DialogService::clearCache();
 
+        /* Le formulaire de l'admin dresse ses lignes à partir des mêmes
+         * options, repérées « nœud|rang ». */
+        $this->assertSame(
+            [['node' => 'bonjour', 'index' => 0, 'url' => 'merchant.php?targetId=TARGET_ID&repair',
+              'text' => 'Réparer', 'icon' => 'ra-anvil', 'button' => 'Forge']],
+            DialogService::counterOptionsOfNodes($service->listGameDialogs()['trade_test_forge']['nodes'])
+        );
+
         try {
             $this->assertSame(
                 [['tab' => 'repair', 'script' => 'merchant.php', 'icon' => 'ra-anvil', 'label' => 'Forge']],
