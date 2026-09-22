@@ -229,27 +229,23 @@ final class EntityCardView
 
         /* class="action" comme Missive : sans elle, la grille d'actions
          * du HUD ignore ces boutons (nom toujours affiché, taille libre).
-         * Le rôle n'est plus une option de personne : le DIALOGUE du
-         * bâtiment porte ses comptoirs (DialogService::opensScreen) —
-         * fermé, il les tait, même règle que Parler. */
+         * Un bouton par comptoir servi, avec son icône et son libellé
+         * (DialogService::counterButtons) : « Banque », « Réparer »,
+         * « Recycler », sinon « Marchander » ou « Apprendre ». Bâtiment
+         * fermé : aucun comptoir, même règle que Parler. */
         $counterDialog = ($buildingClosure === null && $buildingDetails !== null)
             ? $buildingDetails->getDialog()
             : '';
 
-        $hasCounter = false;
+        $counters = $counterDialog !== ''
+            ? (new \App\Service\DialogService())->counterButtons($counterDialog)
+            : [];
 
-        if ($counterDialog !== '') {
-            $dialogService = new \App\Service\DialogService();
-
-            if ($dialogService->opensScreen($counterDialog, 'merchant.php')) {
-                $hasCounter = true;
-                $html .= '<a href="merchant.php?targetId=' . $target->id . '"><button class="action"><span class="ra ra-ammo-bag"></span> <span class="action-name">Marchander</span></button></a>';
-            }
-
-            if ($dialogService->opensScreen($counterDialog, 'warschool.php')) {
-                $hasCounter = true;
-                $html .= '<a href="warschool.php?targetId=' . $target->id . '"><button class="action"><span class="ra ra-axe"></span> <span class="action-name">Apprendre</span></button></a>';
-            }
+        foreach ($counters as $counter) {
+            $url = $counter['script'] . '?targetId=' . $target->id
+                . ($counter['tab'] !== '' ? '&' . $counter['tab'] : '');
+            $html .= '<a href="' . $url . '"><button class="action"><span class="ra ' . $counter['icon']
+                . '"></span> <span class="action-name">' . $counter['label'] . '</span></button></a>';
         }
 
         $html .= self::containerBlockHtml($player, $target);
@@ -257,7 +253,7 @@ final class EntityCardView
         /* A counter screen already carries the tenant's dialogue: no
          * second door to the same conversation. Lire (inscription) and
          * Parler on a dialogue-only building are untouched. */
-        $html .= self::parlerButtonHtml($player, $target, $buildingDetails, $buildingClosure, $hasCounter);
+        $html .= self::parlerButtonHtml($player, $target, $buildingDetails, $buildingClosure, $counters !== []);
 
         return $html;
     }

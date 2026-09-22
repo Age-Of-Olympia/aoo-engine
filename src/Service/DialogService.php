@@ -242,6 +242,26 @@ class DialogService
     }
 
     /**
+     * Écrans de comptoir et bouton par défaut de la carte de case
+     * (icône rpg-awesome, libellé).
+     */
+    private const COUNTER_SCREENS = [
+        'merchant.php' => ['ra-ammo-bag', 'Marchander'],
+        'warschool.php' => ['ra-axe', 'Apprendre'],
+    ];
+
+    /**
+     * Onglets qui méritent leur propre bouton sur la carte de case :
+     * onglet => [écran, icône, libellé]. Les autres onglets d'un écran
+     * sont regroupés derrière le bouton par défaut ci-dessus.
+     */
+    private const COUNTER_TABS = [
+        'bank' => ['merchant.php', 'ra-gold-bar', 'Banque'],
+        'repair' => ['merchant.php', 'ra-repair', 'Réparer'],
+        'recycle' => ['merchant.php', 'ra-recycle', 'Recycler'],
+    ];
+
+    /**
      * Ce dialogue mène-t-il à cet écran — et, si demandé, à cet ONGLET ?
      * Une option d'un de ses nœuds pointe `<script>` (« merchant.php »,
      * « warschool.php ») ; l'onglet est le drapeau de requête de l'URL
@@ -256,33 +276,80 @@ class DialogService
      */
     public function opensScreen(string $dialogName, string $script, ?string $tab = null): bool
     {
+        $tabs = $this->servedTabs($dialogName, $script);
+
+        return $tab === null ? $tabs !== null : $tabs !== null && in_array($tab, $tabs, true);
+    }
+
+    /**
+     * Les onglets de cet écran que le dialogue propose, ou null quand il
+     * ne mène pas à l'écran du tout (une option `merchant.php?targetId=X`
+     * sans onglet donne une liste vide).
+     *
+     * @return array<int, string>|null
+     */
+    public function servedTabs(string $dialogName, string $script): ?array
+    {
         if ($dialogName === '') {
-            return false;
+            return null;
         }
 
         $dialogJson = $this->loadDialog($dialogName);
         if ($dialogJson === null || empty($dialogJson->dialog)) {
-            return false;
+            return null;
         }
 
+        $tabs = null;
         foreach ($dialogJson->dialog as $node) {
             foreach (($node->options ?? []) as $option) {
                 if (empty($option->url) || !str_starts_with((string) $option->url, $script)) {
                     continue;
                 }
 
-                if ($tab === null) {
-                    return true;
-                }
-
+                $tabs ??= [];
                 parse_str((string) parse_url((string) $option->url, PHP_URL_QUERY), $params);
-                if (array_key_exists($tab, $params)) {
-                    return true;
+                unset($params['targetId']);
+                foreach (array_keys($params) as $name) {
+                    $tabs[] = (string) $name;
                 }
             }
         }
 
-        return false;
+        return $tabs === null ? null : array_values(array_unique($tabs));
+    }
+
+    /**
+     * Les boutons de comptoir à montrer sur la carte d'une case : un par
+     * onglet distingué (Banque, Réparer, Recycler), plus le bouton par
+     * défaut de l'écran dès qu'un autre onglet est servi.
+     *
+     * @return array<int, array{tab: string, script: string, icon: string, label: string}>
+     */
+    public function counterButtons(string $dialogName): array
+    {
+        $buttons = [];
+        foreach (self::COUNTER_SCREENS as $script => [$icon, $label]) {
+            $tabs = $this->servedTabs($dialogName, $script);
+            if ($tabs === null) {
+                continue;
+            }
+
+            $plain = [];
+            foreach ($tabs as $tab) {
+                if (isset(self::COUNTER_TABS[$tab]) && self::COUNTER_TABS[$tab][0] === $script) {
+                    [, $tabIcon, $tabLabel] = self::COUNTER_TABS[$tab];
+                    $buttons[] = ['tab' => $tab, 'script' => $script, 'icon' => $tabIcon, 'label' => $tabLabel];
+                    continue;
+                }
+                $plain[] = $tab;
+            }
+
+            if ($plain !== [] || $tabs === []) {
+                $buttons[] = ['tab' => $plain[0] ?? '', 'script' => $script, 'icon' => $icon, 'label' => $label];
+            }
+        }
+
+        return $buttons;
     }
 
     /**

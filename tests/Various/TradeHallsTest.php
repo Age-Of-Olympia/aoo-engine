@@ -87,6 +87,25 @@ class TradeHallsTest extends LegacyPlayerFixtureTestCase
         $this->assertFalse($service->opensScreen('ecole_guerre', 'warschool.php', 'forgeron'), 'discipline inconnue');
     }
 
+    public function testTheCardButtonNamesTheCounter(): void
+    {
+        $service = new DialogService();
+        $labels = static fn (string $dialog): array => array_map(
+            static fn (array $button): string => $button['label'] . ' → ' . $button['script'] . '&' . $button['tab'],
+            $service->counterButtons($dialog)
+        );
+
+        $this->assertSame(['Marchander → merchant.php&bids'], $labels('echoppe'));
+        $this->assertSame(['Banque → merchant.php&bank'], $labels('banque'), 'la banque ne dit plus « Marchander »');
+        $this->assertSame(['Apprendre → warschool.php&melee'], $labels('ecole_guerre'));
+        $this->assertSame([], $labels(''), 'sans dialogue, pas de bouton');
+        $this->assertSame(
+            ['Réparer → merchant.php&repair', 'Recycler → merchant.php&recycle'],
+            $labels('atelier'),
+            "les deux comptoirs de l'atelier ont chacun leur bouton"
+        );
+    }
+
     public function testCounterOptionsLeftTheGame(): void
     {
         $this->assertNotContains('isMerchant', PlayerOptionsService::MANAGEABLE_OPTIONS);
