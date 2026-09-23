@@ -37,12 +37,60 @@ class MapElementService
         return array_values(array_unique($names));
     }
 
+    /** @var array<string, ?string>|null element_types, read once per request */
+    private static ?array $types = null;
+
     /** Placeable elements that do apply an effect on step. @return list<string> */
     public function namesWithEffect(): array
     {
-        $effectService = new EffectService();
+        return array_values(array_filter($this->placeableNames(), fn(string $name) => $this->effectOf($name) !== null));
+    }
 
-        return array_values(array_filter($this->placeableNames(), fn(string $name) => $effectService->exists($name)));
+    /**
+     * The effect stepping on this element applies: the one its type names
+     * (element_types), else the effect of the same name. Null = decor.
+     */
+    public function effectOf(string $element): ?string
+    {
+        if (self::$types === null) {
+            self::$types = [];
+            $res = (new Db())->exe('SELECT name, effect_name FROM element_types');
+            while ($row = $res->fetch_object()) {
+                self::$types[(string) $row->name] = $row->effect_name;
+            }
+        }
+
+        $effect = array_key_exists($element, self::$types) ? self::$types[$element] : $element;
+
+        return $effect !== null && (new EffectService())->exists($effect) ? $effect : null;
+    }
+
+    public static function clearCache(): void
+    {
+        self::$types = null;
+    }
+
+    /** Names the effect an element type applies; null makes it decor. */
+    public function setEffect(string $element, ?string $effect): void
+    {
+        if ($effect !== null && !(new EffectService())->exists($effect)) {
+            throw new RuntimeException("Effet « {$effect} » inconnu.");
+        }
+
+        (new Db())->exe(
+            'INSERT INTO element_types (name, effect_name) VALUE (?, ?)
+             ON DUPLICATE KEY UPDATE effect_name = VALUES(effect_name)',
+            [$element, $effect]
+        );
+        self::clearCache();
+    }
+
+    /** Construction over an element follows its effect; decor blocks. */
+    public function isBuildableOver(string $element): bool
+    {
+        $effect = $this->effectOf($element);
+
+        return $effect !== null && (new EffectService())->isBuildableOver($effect);
     }
 
     /** Chemin web de l'image d'un élément, ou '' si absente. */

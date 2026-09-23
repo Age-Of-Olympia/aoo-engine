@@ -286,9 +286,9 @@ final class TileOccupancyService
             return null;
         }
 
-        $effectService = new \App\Service\EffectService();
+        $elements = new \App\Service\MapElementService();
         foreach ($this->conn->fetchFirstColumn('SELECT name FROM map_elements WHERE coords_id = ?', [$coordsId]) as $element) {
-            if (!$effectService->isBuildableOver((string) $element)) {
+            if (!$elements->isBuildableOver((string) $element)) {
                 return 'Case occupée par un élément (' . $element . ').';
             }
         }

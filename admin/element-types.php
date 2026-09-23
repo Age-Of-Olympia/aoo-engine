@@ -1,29 +1,19 @@
 <?php
 /**
  * Element types (admin → Éléments → Types): what the Tiled brush can lay on
- * a cell.
+ * a cell, and the effect stepping on it applies.
  *
- * An element type has no table of its own. It is the meeting of two things,
- * and this page exists to show where they fail to meet:
- *
- * - an IMAGE in `img/elements/`, which is what the Tiled palette offers, so
- *   it decides what can be painted;
- * - an EFFECT OF THE SAME NAME, which decides what it does — stepping on the
- *   cell applies it (`Player::go` → `add_effect`).
- *
- * That name match is the coupling to break: an element type will get a row of
- * its own, naming the effect it applies rather than being it. Two things
- * follow. The pairing is shown as a LINK, not as an identity, so this page
- * keeps its meaning afterwards — only its source changes. And the page is
- * the inventory the future table will be seeded from: what is paintable, and
- * what each one currently does.
+ * The list is the IMAGES in `img/elements/` (what can be painted) plus the
+ * names already placed. The effect comes from `element_types`
+ * (MapElementService::effectOf): a type without a row applies the effect
+ * of its own name, a row without an effect makes it decor.
  */
-
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
-use App\Service\EffectService;
+use App\Service\CsrfProtectionService;
+use App\Service\MapElementService;
 use Classes\Db;
 
 /** The images the Tiled palette offers, by name. */
@@ -45,7 +35,29 @@ function element_images(): array
 }
 
 $db = new Db();
-$effectService = new EffectService();
+$csrf = new CsrfProtectionService();
+$elements = new MapElementService();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['element_type'])) {
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        $name = (string) $_POST['element_type'];
+        $effect = trim((string) ($_POST['effect'] ?? ''));
+        $elements->setEffect($name, $effect === '' ? null : $effect);
+        setFlash('success', $effect === ''
+            ? "« {$name} » est maintenant un décor, sans effet."
+            : "Marcher sur « {$name} » applique maintenant l'effet « {$effect} ».");
+    } catch (Throwable $e) {
+        setFlash('danger', $e->getMessage());
+    }
+    redirectTo('element-types.php'); // PRG
+}
+
+$effects = [];
+$res = $db->exe('SELECT name, label FROM effects ORDER BY name');
+while ($row = $res->fetch_object()) {
+    $effects[(string) $row->name] = $row->label !== '' ? $row->label . ' (' . $row->name . ')' : (string) $row->name;
+}
 
 $placed = [];
 $res = $db->exe('SELECT name, COUNT(*) AS n FROM map_elements GROUP BY name');
@@ -64,7 +76,7 @@ sort($names);
 $rows = [];
 
 foreach ($names as $name) {
-    $effect = $effectService->getEffectByName($name);
+    $effect = $elements->effectOf($name);
     $count = $placed[$name] ?? 0;
     $image = $images[$name] ?? null;
 
@@ -74,11 +86,19 @@ foreach ($names as $name) {
         : '<span class="badge badge-warning" title="Posé sur la carte mais aucune image dans img/elements/ :'
             . ' rien n\'est affiché sur la case">sans image</span>';
 
-    $does = $effect !== null
-        ? '<a href="/admin/effects.php?action=edit&amp;name=' . e(urlencode($name)) . '">'
-            . e($effect->getLabel() !== '' ? $effect->getLabel() : $name) . '</a>'
-        : '<span class="badge badge-warning" title="Se peint, mais marcher dessus n\'applique rien">'
-            . 'aucun effet</span>';
+    $options = '<option value="">— aucun (décor) —</option>';
+    foreach ($effects as $effectName => $label) {
+        $options .= '<option value="' . e($effectName) . '"' . ($effectName === $effect ? ' selected' : '') . '>'
+            . e($label) . '</option>';
+    }
+    $does = '<form method="post" class="d-flex gap-2 mb-0">' . $csrf->renderTokenField()
+        . '<input type="hidden" name="element_type" value="' . e($name) . '">'
+        . '<select name="effect" class="form-control form-control-sm" style="width:auto">' . $options . '</select>'
+        . '<button class="btn btn-sm btn-outline-primary">Enregistrer</button>'
+        . ($effect !== null
+            ? ' <a class="btn btn-sm btn-link" href="/admin/effects.php?action=edit&amp;name=' . e(urlencode($effect)) . '">voir</a>'
+            : '')
+        . '</form>';
 
     $rows[] = '<tr>'
         . '<td>' . $thumb . '</td>'
@@ -90,19 +110,15 @@ foreach ($names as $name) {
         . '</tr>';
 }
 
-$inert = count(array_filter(
-    $names,
-    static fn (string $name): bool => $effectService->getEffectByName($name) === null
-));
+$inert = count(array_filter($names, static fn (string $name): bool => $elements->effectOf($name) === null));
 
 $content = '<div class="d-flex justify-content-between align-items-center mb-3">'
     . '<h1 class="mb-0">Types d\'éléments</h1></div>'
     . '<p class="text-muted">Éléments que le pinceau de Tiled peut poser sur une case. '
     . 'La liste vient des <strong>images</strong> de <code>img/elements/</code> ; '
-    . 'l\'<strong>effet du même nom</strong>, s\'il existe, est appliqué quand on marche sur la case. '
-    . 'Un type sans effet est purement décoratif. '
-    . '<em>Ce lien par le nom est provisoire : à terme, un type d\'élément aura sa propre ligne, '
-    . 'avec l\'effet appliqué en paramètre.</em>'
+    . 'l\'<strong>effet choisi</strong> est appliqué quand on marche sur la case. '
+    . 'Tant qu\'aucun n\'a été choisi, c\'est l\'effet du même nom, s\'il existe. '
+    . 'Un type sans effet est purement décoratif.'
     . ($inert > 0
         ? ' <strong>' . $inert . ' type(s) sans effet</strong> sur cette carte.'
         : '')
@@ -111,7 +127,7 @@ $content = '<div class="d-flex justify-content-between align-items-center mb-3">
         [
             '',
             'Nom',
-            ['Effet appliqué', 'title="L\'effet du même nom, appliqué en marchant sur la case"'],
+            ['Effet appliqué', 'title="Appliqué en marchant sur la case"'],
             ['Posés', 'title="Cases map_elements de ce nom"'],
         ],
         $rows,

@@ -1,8 +1,8 @@
 <?php
 /**
  * Éléments posés (admin dashboard → Cartes → Éléments) : LE lien
- * case ↔ effet — marcher sur une case applique l'effet du même nom que
- * l'élément posé dessus (Player::go → add_effect). Jusqu'ici seul le
+ * case ↔ effet — marcher sur une case applique l'effet du type de
+ * l'élément posé dessus (MapElementService::effectOf, Player::go). Jusqu'ici seul le
  * moteur écrivait map_elements (saignements, traces, import Tiled) ;
  * cette page pose et retire à la case, avec durée ou permanent
  * (endTime = 0, jamais purgé par le cron horaire delete_elements).
@@ -56,8 +56,8 @@ if ($isStateChangingPost) {
                 . (int) ($_POST['x'] ?? 0) . ',' . (int) ($_POST['y'] ?? 0) . ') — '
                 . ($turns === '' ? 'permanent' : 'pour ' . $turns . ' tour' . ($turns > 1 ? 's' : ''))
                 . (in_array($name, $service->namesWithEffect(), true)
-                    ? '. L\'effet du même nom s\'appliquera aux personnages qui marchent dessus.'
-                    : '. Sans effet du même nom, c\'est un décor.'));
+                    ? '. Son effet s\'appliquera aux personnages qui marchent dessus.'
+                    : '. Sans effet, c\'est un décor.'));
         } elseif (isset($_POST['element_remove'])) {
             // Le bouton de ligne porte l'id dans sa value : la table
             // entière vit dans UN formulaire (cases de sélection).
@@ -94,9 +94,8 @@ ob_start();
     <?= renderFlashMessage() ?>
 
     <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-        Un élément posé sur une case applique <strong>l'effet du même nom</strong>, s'il existe, aux
-        personnages qui marchent dessus (boue, ronce…) ; l'effet se configure dans
-        <a href="/admin/effects.php">Effets</a>. Durée vide = permanent (jamais purgé) ;
+        Un élément posé sur une case applique <strong>l'effet de son type</strong> aux personnages qui
+        marchent dessus (boue, ronce…) ; il se choisit dans <a href="/admin/element-types.php">Types</a>. Durée vide = permanent (jamais purgé) ;
         reposer un élément prolonge sa durée. Une case ne peut avoir qu'un élément, et seulement sur un sol.
         Les traces de pas et le drapeau sont des <em>marques</em>, une couche à part (Tiled, couche « marks »).
     </div>
