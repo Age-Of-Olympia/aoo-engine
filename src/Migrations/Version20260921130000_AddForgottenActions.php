@@ -33,6 +33,16 @@ final class Version20260921130000_AddForgottenActions extends AbstractMigration
             'category'     => 'spell-curse',
             'icon_color'   => 'violet',
         ],
+        [
+            'name'         => 'pic_magique',
+            'icon'         => 'ra-fast-ship',
+            'type'         => 'spell',
+            'display_name' => 'Pic magique',
+            'text'         => '+3 Dmg',
+            'level'        => 1,
+            'category'     => 'spell-off',
+            'icon_color'   => 'rouge',
+        ],
     ];
 
     private const ACTION_CONDITIONS = [
@@ -80,6 +90,28 @@ final class Version20260921130000_AddForgottenActions extends AbstractMigration
             'execution_order' => 7,
             'blocking'        => 0,
         ],
+        // --- PIC MAGIQUE ---
+        [
+            'conditionType'   => 'RequiresDistance',
+            'parameters'      => '{"min":2}',
+            'action'       => 'pic_magique',
+            'execution_order' => 0,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'RequiresTraitValue',
+            'parameters'      => '{"a": 1, "pm": 4}',
+            'action'       => 'pic_magique',
+            'execution_order' => 5,
+            'blocking'        => 1,
+        ],
+        [
+            'conditionType'   => 'SpellCompute',
+            'parameters'      => '{"actorRollType":"fm", "targetRollType": "fm"}',
+            'action'       => 'pic_magique',
+            'execution_order' => 7,
+            'blocking'        => 0,
+        ],
     ];
 
     private const ACTION_OUTCOMES = [
@@ -97,6 +129,13 @@ final class Version20260921130000_AddForgottenActions extends AbstractMigration
             'on_success' => 1,
             'action'  => 'duel_mental',
         ],
+        // --- MIGRAINE ---
+        [
+            'apply_to'   => 'target',
+            'name'       => 'spell_pic_magique',
+            'on_success' => 1,
+            'action'  => 'pic_magique',
+        ],
     ];
 
     private const OUTCOME_INSTRUCTIONS = [
@@ -113,6 +152,13 @@ final class Version20260921130000_AddForgottenActions extends AbstractMigration
             'parameters' => '{ "lossType": "difference" }',
             'orderIndex' => 1,
             'outcome' => 'mal_duelmental',
+        ],
+        // --- PIC MAGIQUE ---
+        [
+            'type'       => 'lifeloss',
+            'parameters' => '{"actorDamagesTrait": "pui", "targetDamagesTrait": "res", "bonusDamagesTrait": 3}',
+            'orderIndex' => 1,
+            'outcome' => 'spell_pic_magique',
         ],
     ];
 
