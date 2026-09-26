@@ -121,27 +121,41 @@ final class Version20260921130000_AddForgottenActions extends AbstractMigration
         return 'Ajout d\'actions oubliées dans la migration précédente';
     }
 
+    /**
+     * Idempotent: experimental got these actions by hand. An action is only
+     * created when its name is absent, and its conditions, outcomes and
+     * instructions only land on an action (or outcome) that has none yet,
+     * so an existing, complete action is left alone.
+     */
     public function up(Schema $schema): void
     {
         foreach (self::ACTIONS_DATA as $action) {
             $columns = implode(', ', array_keys($action));
             $placeholders = implode(', ', array_fill(0, count($action), '?'));
-            $this->addSql("INSERT INTO actions ($columns) VALUES ($placeholders)", array_values($action));
+            $this->addSql(
+                "INSERT INTO actions ($columns) SELECT $placeholders FROM DUAL
+                  WHERE NOT EXISTS (SELECT 1 FROM actions WHERE name = ?)",
+                [...array_values($action), $action['name']]
+            );
         }
 
         // Children hang off their parent by NAME: ids differ between databases.
         foreach (self::ACTION_CONDITIONS as $c) {
             $this->addSql(
                 'INSERT INTO action_conditions (conditionType, parameters, execution_order, blocking, action_id)
-                 SELECT ?, ?, ?, ?, id FROM actions WHERE name = ?',
-                [$c['conditionType'], $c['parameters'], $c['execution_order'], $c['blocking'], $c['action']]
+                 SELECT ?, ?, ?, ?, a.id FROM actions a
+                  WHERE a.name = ?
+                    AND NOT EXISTS (SELECT 1 FROM action_conditions c WHERE c.action_id = a.id AND c.conditionType = ?)',
+                [$c['conditionType'], $c['parameters'], $c['execution_order'], $c['blocking'], $c['action'], $c['conditionType']]
             );
         }
 
         foreach (self::ACTION_OUTCOMES as $o) {
             $this->addSql(
                 'INSERT INTO action_outcomes (apply_to, name, on_success, action_id)
-                 SELECT ?, ?, ?, id FROM actions WHERE name = ?',
+                 SELECT ?, ?, ?, a.id FROM actions a
+                  WHERE a.name = ?
+                    AND NOT EXISTS (SELECT 1 FROM action_outcomes o WHERE o.action_id = a.id)',
                 [$o['apply_to'], $o['name'], $o['on_success'], $o['action']]
             );
         }
@@ -149,7 +163,9 @@ final class Version20260921130000_AddForgottenActions extends AbstractMigration
         foreach (self::OUTCOME_INSTRUCTIONS as $i) {
             $this->addSql(
                 'INSERT INTO outcome_instructions (type, parameters, orderIndex, outcome_id)
-                 SELECT ?, ?, ?, id FROM action_outcomes WHERE name = ?',
+                 SELECT ?, ?, ?, o.id FROM action_outcomes o
+                  WHERE o.name = ?
+                    AND NOT EXISTS (SELECT 1 FROM outcome_instructions i WHERE i.outcome_id = o.id)',
                 [$i['type'], $i['parameters'], $i['orderIndex'], $i['outcome']]
             );
         }
@@ -157,18 +173,18 @@ final class Version20260921130000_AddForgottenActions extends AbstractMigration
 
     public function down(Schema $schema): void
     {
-        foreach (self::OUTCOME_INSTRUCTIONS as $i) {
-            $this->addSql(
-                'DELETE i FROM outcome_instructions i JOIN action_outcomes o ON o.id = i.outcome_id
-                 WHERE o.name = ? AND i.type = ? AND i.orderIndex = ?',
-                [$i['outcome'], $i['type'], $i['orderIndex']]
-            );
-        }
-
         $names = array_column(self::ACTIONS_DATA, 'name');
         $in = implode(', ', array_fill(0, count($names), '?'));
-        $this->addSql("DELETE o FROM action_outcomes o JOIN actions a ON a.id = o.action_id WHERE a.name IN ($in)", $names);
 
+        // Children first, all reached through the action's name (foreign keys)
+        $this->addSql(
+            "DELETE i FROM outcome_instructions i
+               JOIN action_outcomes o ON o.id = i.outcome_id
+               JOIN actions a ON a.id = o.action_id
+              WHERE a.name IN ($in)",
+            $names
+        );
+        $this->addSql("DELETE o FROM action_outcomes o JOIN actions a ON a.id = o.action_id WHERE a.name IN ($in)", $names);
         $this->addSql("DELETE c FROM action_conditions c JOIN actions a ON a.id = c.action_id WHERE a.name IN ($in)", $names);
         $this->addSql("DELETE FROM actions WHERE name IN ($in)", $names);
     }
