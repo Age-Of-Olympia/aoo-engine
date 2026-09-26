@@ -90,7 +90,8 @@ class ItemStatsSeeder
 
         // Replayed from an older migration, the label column may not exist yet.
         $labelSelect = isset($columns['label']) ? ', label' : ", '' AS label";
-        foreach ($conn->fetchAllAssociative('SELECT id, name, private, stats_in_db' . $labelSelect . ' FROM items') as $row) {
+        $typeSelect = isset($columns['type']) ? ', type' : ", '' AS type";
+        foreach ($conn->fetchAllAssociative('SELECT id, name, private, stats_in_db' . $labelSelect . $typeSelect . ' FROM items') as $row) {
             $dir = ((int) $row['private']) ? 'private' : 'public';
             $path = $projectRoot . '/datas/' . $dir . '/items/' . $row['name'] . '.json';
 
@@ -130,6 +131,12 @@ class ItemStatsSeeder
                     continue;
                 }
                 if (in_array($key, self::SCALAR_KEYS, true)) {
+                    /* A type already set in base came from a migration (the
+                     * old `structure` items turned `constructible`): the
+                     * stale JSON type must not undo it. */
+                    if ($key === 'type' && (string) $row['type'] !== '') {
+                        continue;
+                    }
                     /* Colonne pas encore là (rejeu d'une migration antérieure
                      * à son ajout) : on passe. La migration propriétaire de la
                      * colonne la peuplera depuis son propre instantané — pour
