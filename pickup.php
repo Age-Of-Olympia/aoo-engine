@@ -31,7 +31,9 @@ $service = new GroundLootService();
 header('Content-Type: text/plain; charset=utf-8');
 
 try {
-    if ($instanceId > 0) {
+    if (!empty($_POST['plants'])) {
+        $lootList = $service->collectPlants($player, (int) $player->data->coords_id, $player->coords);
+    } elseif ($instanceId > 0) {
         $lootList = $service->collectInstance($player, (int) $player->data->coords_id, $instanceId, $player->coords);
     } elseif ($itemId > 0) {
         $lootList = $service->collectStack($player, (int) $player->data->coords_id, $itemId, $player->coords);

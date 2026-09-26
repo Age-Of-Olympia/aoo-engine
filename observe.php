@@ -111,88 +111,6 @@ if($res->num_rows){
 }
 
 
-/* Roads: drawn on the map, and read in the tile panel too — that is where
- * one understands why running is possible here. They are entities since
- * they gained life and an owner, so the panel reads the family rather than
- * the old layer table. */
-$sql = '
-SELECT
-p.name
-FROM
-players AS p
-INNER JOIN
-entity_cells AS ec
-ON
-ec.player_id = p.id
-INNER JOIN
-coords AS c
-ON
-ec.coords_id = c.id
-WHERE
-p.player_type = "route"
-AND
-c.x = ?
-AND
-c.y = ?
-AND
-c.z = ?
-AND
-c.plan = ?
-';
-
-$res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
-
-while($row = $res->fetch_object()){
-
-    echo '
-    <div class="case-infos">
-        <img src="img/routes/'. $row->name .'.png" />
-        <div class="text">
-            '. ucfirst($row->name) .' aménagée<br />
-            Courir y est possible.
-        </div>
-    </div>
-    ';
-}
-
-
-/* Plantes (map_plants) : mêmes égards que les routes — le panneau de
- * case dit ce qui pousse ici et comment le récolter. */
-$sql = '
-SELECT
-p.name
-FROM
-map_plants AS p
-INNER JOIN
-coords AS c
-ON
-p.coords_id = c.id
-WHERE
-c.x = ?
-AND
-c.y = ?
-AND
-c.z = ?
-AND
-c.plan = ?
-';
-
-$res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
-
-while($row = $res->fetch_object()){
-
-    echo '
-    <div class="case-infos">
-        <img src="img/plants/'. $row->name .'.png" />
-        <div class="text">
-            '. ucfirst($row->name) .'<br />
-            Se récolte en marchant sur la case.
-        </div>
-    </div>
-    ';
-}
-
-
 /* An entity answers from EVERY cell it holds, not only the one it stands on:
  * without this, only the top-left corner of a 3×3 library called itself a
  * library. `players.coords_id` stays in the lookup, so an entity whose cells
@@ -334,7 +252,7 @@ if(!empty($card)){
     }
 
     ?>
-    <script src="js/observe.js?v=20260912"></script>
+    <script src="js/observe.js?v=20260926"></script>
     <?php
 }
 
