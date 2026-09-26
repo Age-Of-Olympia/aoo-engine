@@ -429,6 +429,7 @@ class View{
     private $inSight; // Coordonnées des objets dans le champ de vision
     private $inSightId; // id de ces coordonnées
     private $useTbl; // array qui permettra d'augmenter le z-level des images
+    private array $editorTopTbl = []; // editor only: triggers and dialogs, repeated above everything
     /** @var list<array{id:int, name:string, family:string, image:string, x:int, y:int, w:int, h:int}> */
     private $sceneryFigures = []; // scenery drawn whole, across its footprint
     private $options; // player->get_options()
@@ -1128,6 +1129,11 @@ class View{
                     $this->useTbl[] = $id;
                 }
 
+                elseif($row->whichTable == 'triggers' || $row->whichTable == 'dialogs'){
+
+                    $this->editorTopTbl[] = $id;
+                }
+
 
                 // transparent gradient
                 if(!empty($classTransparent[$x .','. $y]) && $row->whichTable != 'tiles'){
@@ -1406,6 +1412,14 @@ class View{
                     pointer-events="none"
                     />
                 ';
+            }
+
+
+            /* Editor only: triggers and dialogs are never drawn in play, so
+             * nothing may hide them — scenery repeated above, shade included. */
+            foreach($this->editorTopTbl as $e){
+
+                echo '<use xlink:href="#'. $e .'" />';
             }
 
 
