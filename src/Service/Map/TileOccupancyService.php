@@ -17,14 +17,6 @@ use Doctrine\DBAL\Connection;
  */
 final class TileOccupancyService
 {
-    /**
-     * Roles that override the entity type's own passability. Roles absent
-     * here — `part` — leaves the type to decide.
-     */
-    private const ROLE_VERDICTS = [
-        'block' => true,
-        'cover' => false,
-    ];
 
     private Connection $conn;
     private RaceService $raceService;
@@ -84,7 +76,7 @@ final class TileOccupancyService
             ->passableTypeNames();
 
         foreach ($this->occupations($in) as $row) {
-            $verdict = self::ROLE_VERDICTS[(string) $row['role']] ?? null;
+            $verdict = EntityCellService::STEP_VERDICTS[(string) $row['role']] ?? null;
 
             if ($verdict === false) {
                 continue; /* a drawing order screens nothing */
@@ -144,7 +136,7 @@ final class TileOccupancyService
                 continue;
             }
 
-            $verdict = self::ROLE_VERDICTS[(string) $row['role']] ?? null;
+            $verdict = EntityCellService::STEP_VERDICTS[(string) $row['role']] ?? null;
 
             if ($verdict === false) {
                 continue; /* walkable whatever the type says */

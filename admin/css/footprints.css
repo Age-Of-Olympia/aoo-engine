@@ -131,18 +131,32 @@
     pointer-events: none;
 }
 
-/* A blocking cell is visible without hovering: red hatching. */
-.fp-cell--blocks::after {
+/* What a cell blocks shows without hovering: red hatching for people,
+   blue hatching the other way for projectiles, both for a wall. */
+.fp-cell--fence::after,
+.fp-cell--wall::after,
+.fp-cell--screen::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: repeating-linear-gradient(
-        45deg,
-        rgba(180, 40, 40, 0.55) 0 4px,
-        transparent 4px 9px
-    );
-    box-shadow: inset 0 0 0 2px rgba(180, 40, 40, 0.75);
     pointer-events: none;
+}
+
+.fp-cell--fence::after {
+    background: repeating-linear-gradient(45deg, rgba(180, 40, 40, 0.55) 0 4px, transparent 4px 9px);
+    box-shadow: inset 0 0 0 2px rgba(180, 40, 40, 0.75);
+}
+
+.fp-cell--screen::after {
+    background: repeating-linear-gradient(-45deg, rgba(40, 80, 180, 0.55) 0 4px, transparent 4px 9px);
+    box-shadow: inset 0 0 0 2px rgba(40, 80, 180, 0.75);
+}
+
+.fp-cell--wall::after {
+    background:
+        repeating-linear-gradient(45deg, rgba(180, 40, 40, 0.55) 0 4px, transparent 4px 9px),
+        repeating-linear-gradient(-45deg, rgba(40, 80, 180, 0.55) 0 4px, transparent 4px 9px);
+    box-shadow: inset 0 0 0 2px rgba(110, 40, 140, 0.8);
 }
 
 .fp-cell--drop {
@@ -179,14 +193,13 @@
     border: 1px solid rgba(0, 0, 0, 0.3);
 }
 
-.fp-legend .fp-legend--free::before { background: rgba(255, 255, 255, 0.8); }
-
-.fp-legend .fp-legend--blocks::before {
-    background: repeating-linear-gradient(
-        45deg,
-        rgba(180, 40, 40, 0.6) 0 3px,
-        transparent 3px 6px
-    );
+.fp-legend .fp-legend--cover::before { background: rgba(255, 255, 255, 0.8); }
+.fp-legend .fp-legend--fence::before { background: repeating-linear-gradient(45deg, rgba(180, 40, 40, 0.6) 0 3px, transparent 3px 6px); }
+.fp-legend .fp-legend--screen::before { background: repeating-linear-gradient(-45deg, rgba(40, 80, 180, 0.6) 0 3px, transparent 3px 6px); }
+.fp-legend .fp-legend--wall::before {
+    background:
+        repeating-linear-gradient(45deg, rgba(180, 40, 40, 0.6) 0 3px, transparent 3px 6px),
+        repeating-linear-gradient(-45deg, rgba(40, 80, 180, 0.6) 0 3px, transparent 3px 6px);
 }
 
 .fp-summary {
@@ -203,31 +216,9 @@
 
 /* What a red cell defers to: the type. Shown here so a decor is finished in
  * one place rather than across two admin pages. */
-.fp-dials {
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    border-radius: 4px;
-    padding: 6px 10px 8px;
-    margin: 0 0 10px;
-    font-size: 12px;
-}
 
-.fp-dials legend {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: #5a5346;
-    padding: 0 4px;
-}
 
-.fp-dials label {
-    display: block;
-    margin: 3px 0;
-    cursor: pointer;
-}
 
-.fp-dials small {
-    color: #7a7263;
-}
 
 .fp-warn {
     font-size: 12px;

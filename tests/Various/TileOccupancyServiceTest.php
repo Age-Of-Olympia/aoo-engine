@@ -325,6 +325,47 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /** What the Formes editor paints red is exactly what refuses the step, cell role by cell role. */
+    public function testTheShapeEditorShowsWhatTheStepDoes(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $wall = $this->placeStructure('mur_pierre', 30, 0, self::PLAN);
+        $blocksPassage = (new RaceService())->getRaceByName('mur_pierre')->blocksPassage();
+
+        $roles = [EntityCellService::ROLE_PART, EntityCellService::ROLE_BLOCK, EntityCellService::ROLE_COVER,
+                  EntityCellService::ROLE_FENCE, EntityCellService::ROLE_WALL, EntityCellService::ROLE_SCREEN];
+        foreach ($roles as $i => $role) {
+            $cell = $this->giveCell($wall, 31 + $i, 0, $role, self::PLAN);
+
+            $this->assertSame(
+                EntityCellService::blocksStep($role, true, $blocksPassage),
+                $this->service->stepRefusal($cell, 1, true) !== null,
+                "rôle {$role}"
+            );
+        }
+
+        $this->assertFalse(
+            EntityCellService::blocksStep(EntityCellService::ROLE_COVER, true, $blocksPassage),
+            'une case verte se traverse, même sur un type qui bloque'
+        );
+    }
+
+    /** A ghost: a character is solid by default, walked through once its cell is painted green. */
+    public function testACharacterCellMarkedWalkableLetsThrough(): void
+    {
+        $ghost = $this->createRealPlayer('Fantome');
+        $cell = $this->coordsIdOn(self::PLAN, 40, 0);
+        $this->link->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$cell, (int) $ghost->id]);
+        $mover = (int) $this->createRealPlayer('GmMarcheurFantome')->id;
+
+        $this->assertNotNull($this->service->stepRefusal($cell, $mover, true), 'par défaut, un personnage bloque');
+        $this->assertTrue(EntityCellService::blocksStep(EntityCellService::defaultRole('real'), false, true));
+
+        $this->giveCell((int) $ghost->id, 40, 0, EntityCellService::ROLE_COVER, self::PLAN);
+
+        $this->assertNull($this->service->stepRefusal($cell, $mover, true), 'case verte : on le traverse');
+    }
+
     public function testABlockingCellStopsAPassableType(): void
     {
         $this->requireBuildingsOrSkip();

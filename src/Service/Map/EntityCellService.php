@@ -29,7 +29,58 @@ final class EntityCellService
      * refuses the step. */
     private const DEFAULT_ROLES = ['scenery' => 'cover', 'resource' => 'block'];
 
+    /** Solid for people; projectiles: as the type says. */
+    public const ROLE_BLOCK = 'block';
+
+    /** The four cells the Formes editor paints — each effect decided on the cell itself. */
+    public const ROLE_COVER = 'cover';   // people pass, projectiles pass
+    public const ROLE_FENCE = 'fence';   // people blocked, projectiles pass
+    public const ROLE_WALL = 'wall';     // people blocked, projectiles blocked
+    public const ROLE_SCREEN = 'screen'; // people pass, projectiles blocked
+
+    /** Roles that decide the step themselves; absent (`part`) defers. */
+    public const STEP_VERDICTS = [
+        self::ROLE_BLOCK => true, self::ROLE_FENCE => true, self::ROLE_WALL => true,
+        self::ROLE_COVER => false, self::ROLE_SCREEN => false,
+    ];
+
+    /** Roles that decide the shot themselves; absent (`part`, `block`) defers to the type. */
+    public const SHOT_VERDICTS = [
+        self::ROLE_WALL => true, self::ROLE_SCREEN => true,
+        self::ROLE_COVER => false, self::ROLE_FENCE => false,
+    ];
+
     private Connection $conn;
+
+    /** Role of a cell the type's shape says nothing about. */
+    public static function defaultRole(string $playerType): string
+    {
+        return self::DEFAULT_ROLES[$playerType] ?? self::ROLE_PART;
+    }
+
+    /**
+     * Whether a cell of this role refuses the step to whoever walks in.
+     * `part` defers: to the type for a structure, while a character always
+     * holds its cells.
+     */
+    public static function blocksStep(string $role, bool $isStructure, bool $typeBlocksPassage): bool
+    {
+        return self::STEP_VERDICTS[$role] ?? (!$isStructure || $typeBlocksPassage);
+    }
+
+    /** Whether a cell of this role stops a projectile; `part` and `block` defer to the type. */
+    public static function blocksShot(string $role, bool $typeBlocksProjectiles): bool
+    {
+        return self::SHOT_VERDICTS[$role] ?? $typeBlocksProjectiles;
+    }
+
+    /** The explicit role for a cell's two effects. */
+    public static function roleFor(bool $blocksStep, bool $blocksShot): string
+    {
+        return $blocksStep
+            ? ($blocksShot ? self::ROLE_WALL : self::ROLE_FENCE)
+            : ($blocksShot ? self::ROLE_SCREEN : self::ROLE_COVER);
+    }
 
     public function __construct(?Connection $conn = null)
     {
@@ -71,7 +122,7 @@ final class EntityCellService
                 (int) $origin['y']
             );
 
-        $default = self::DEFAULT_ROLES[(string) $origin['player_type']] ?? self::ROLE_PART;
+        $default = self::defaultRole((string) $origin['player_type']);
         $keep = [];
 
         foreach ($cells as $piece => [$x, $y]) {

@@ -18,6 +18,7 @@ use App\Entity\Race;
 use App\Factory\EntityManagerFactory;
 use App\Service\BuildingService;
 use App\Service\CsrfProtectionService;
+use App\Service\Map\EntityCellService;
 use App\Service\Map\EntitySpriteService;
 use App\Service\Map\EntityTypeFootprintService;
 use App\Service\Map\Footprint;
@@ -199,7 +200,7 @@ ob_start();
     <p class="text-content">
         Un type — personnage, bâtiment, décor, plante — peut occuper plusieurs cases.
         Cette page définit <strong>les cases occupées par un type</strong> et
-        <strong>celles qui bloquent le passage</strong>. Sur le plateau, l'image d'un type
+        <strong>ce que chaque case bloque</strong> : les personnages, les projectiles, les deux ou rien. Sur le plateau, l'image d'un type
         couvre toute son emprise (50 px par case) ; un décor en morceaux est affiché morceau
         par morceau. Quand c'est possible, la forme est calculée automatiquement à partir d'un
         exemplaire posé sur la carte ou de l'image entière ; une forme définie ici a priorité.
@@ -207,7 +208,8 @@ ob_start();
 
     <p class="fp-note">
         <strong>Clic sur une case vide</strong> : ajout à la figure.
-        <strong>Clic sur une case pleine</strong> : la case bloque ou non le passage.
+        <strong>Clic sur une case pleine</strong> : la case passe à l'état suivant — tout passe,
+        bloque les personnages, bloque tout, bloque les projectiles.
         <strong>Clic droit</strong> : retrait de la case.
         <strong>Glisser-déposer d'un morceau</strong> sur une case vide : correction de la figure.
         Enregistrer applique la forme aux exemplaires déjà posés.
@@ -311,8 +313,10 @@ ob_start();
         <?php endif; ?>
 
         <p class="fp-legend">
-            <span class="fp-legend--free">passage libre</span>
-            <span class="fp-legend--blocks">passage bloqué</span>
+            <span class="fp-legend--cover">tout passe</span>
+            <span class="fp-legend--fence">bloque les personnages</span>
+            <span class="fp-legend--wall">bloque tout</span>
+            <span class="fp-legend--screen">bloque les projectiles</span>
         </p>
     </div>
 
@@ -334,12 +338,19 @@ ob_start();
          * any effect at all — which is the one thing a cut-out cannot say. */
         $settings = $scenery->typeSettings($name);
 
-        $blocked = array_keys(array_filter(
-            $figure->roles(),
-            static fn(string $role): bool => $role === 'block'
-        ));
-
         $kind = $kindOf($name);
+
+        /* Each cell as the game treats it TODAY, family default included —
+         * an unmarked building cell defers to its type, a resource's is solid. */
+        $defaultRole = EntityCellService::defaultRole($kind);
+        $roles = [];
+        foreach (array_keys($figure->offsets()) as $piece) {
+            $role = $figure->roleOf($piece, $defaultRole);
+            $roles[$piece] = EntityCellService::roleFor(
+                EntityCellService::blocksStep($role, $kind !== TypeEditorFace::CHARACTER, $settings['blocks_passage'] ?? true),
+                EntityCellService::blocksShot($role, $settings['blocks_projectiles'] ?? true)
+            );
+        }
 
         /* A type without pieces shows its board sprite, stretched over the
          * box and sliced per cell by the editor — the very image the board
@@ -353,7 +364,7 @@ ob_start();
             'pieces'  => $pieces,
             'sheet'   => $sheet === '' ? null : '/' . $sheet,
             'offsets' => $figure->offsets(),
-            'blocked' => $blocked,
+            'roles'   => (object) $roles,
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         ?>
         <section class="fp-card" data-state="<?= $source === 'declared' ? 'set' : 'todo' ?>"
@@ -398,25 +409,6 @@ ob_start();
                     <?= $figure->cells() ?> case<?= $figure->cells() > 1 ? 's' : '' ?><?php
                     if ($pieces === [] && $sheet === ''): ?> — aucune image<?php endif; ?>
                 </p>
-
-                <?php /* The two dials a `block` cell defers to. Marking a cell
-                         says WHICH cells are solid; these say what solid means. */ ?>
-                <fieldset class="fp-dials">
-                    <legend>Effet d'une case rouge</legend>
-
-                    <label>
-                        <input type="checkbox" name="blocks_passage" value="1"
-                               <?= ($settings['blocks_passage'] ?? true) ? 'checked' : '' ?> />
-                        bloque le passage
-                    </label>
-
-                    <label>
-                        <input type="checkbox" name="blocks_projectiles" value="1"
-                               <?= ($settings['blocks_projectiles'] ?? true) ? 'checked' : '' ?> />
-                        arrête les projectiles
-                        <small>— à décocher pour une arche : passage bloqué, projectiles libres</small>
-                    </label>
-                </fieldset>
 
                 <div class="fp-actions">
                     <button type="submit" name="action" value="save" class="btn btn-sm btn-primary">

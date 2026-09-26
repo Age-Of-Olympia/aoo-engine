@@ -3,8 +3,8 @@
  * Save or drop a scenery family's shape (admin → Cartes). CSRF + PRG.
  *
  * The figure arrives serialised as the editor built it:
- * `{family, w, h, offsets: {piece: [dx, dy]}, blocked: [pieces]}`. Blocking
- * cells become `block` roles; the rest keep the type's default.
+ * `{family, w, h, offsets: {piece: [dx, dy]}, roles: {piece: role}}`, each
+ * role one of the four the editor paints (cover, fence, wall, screen).
  *
  * Both gestures re-spread the instances already on the map, otherwise a
  * correction would only apply to future placements.
@@ -77,26 +77,19 @@ try {
         }
     }
 
+    // Every piece gets the state the editor showed: no cell is left to a family default
+    $painted = [EntityCellService::ROLE_COVER, EntityCellService::ROLE_FENCE, EntityCellService::ROLE_WALL, EntityCellService::ROLE_SCREEN];
     $roles = [];
 
-    foreach ($figure['blocked'] ?? [] as $piece) {
-        if (isset($offsets[(int) $piece])) {
-            $roles[(int) $piece] = 'block';
-        }
+    foreach (array_keys($offsets) as $piece) {
+        $role = (string) ($figure['roles'][$piece] ?? '');
+        $roles[$piece] = in_array($role, $painted, true) ? $role : EntityCellService::ROLE_COVER;
     }
 
     $service->declare($type, (int) ($figure['w'] ?? 1), (int) ($figure['h'] ?? 1), $offsets, $roles);
 
-    /* Marking cells says WHICH are solid; the type says what solid means. A
-     * cut-out saved without one would have no effect whatsoever. */
-    $scenery = new SceneryObjectService();
-    $created = $scenery->ensureType($type);
-
-    $scenery->setTypeSettings(
-        $type,
-        !empty($_POST['blocks_passage']),
-        !empty($_POST['blocks_projectiles'])
-    );
+    // A cut-out saved without a type would have no effect
+    $created = (new SceneryObjectService())->ensureType($type);
 
     setFlash('success', 'La forme de « ' . $type . ' » est enregistrée.'
         . ($created ? ' Type créé au catalogue.' : '')

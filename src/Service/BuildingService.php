@@ -69,15 +69,6 @@ class BuildingService
     }
 
     /**
-     * A cell whose role is only a drawing order never screens anything.
-     *
-     * The rest is left to `races.blocks_projectiles`, which already tells a
-     * wall from a table — an arch stops the step on its base while arrows
-     * pass through its opening.
-     */
-    private const TRANSPARENT_ROLE = 'cover';
-
-    /**
      * Ligne de tir entre deux points du même plan : les cases traversées
      * (Bresenham, extrémités exclues) et le premier obstacle — toute
      * entité dont la race arrête les projectiles
@@ -115,59 +106,62 @@ class BuildingService
 
         $blockingBy = (new \App\Service\ObstructionService($conn, $this->raceService))
             ->projectileBlockingTypeNames();
-        $blocking = array_merge($blockingBy['race'], $blockingBy['item']);
 
         // The same opening governs step and shot. Doors are race types only,
         // so the discriminator guards against homonymous items.
         $doors = $this->raceService->getDoorRaceNames();
 
-        if ($blocking !== []) {
-            // An entity screens every cell it HOLDS, not just the one it
-            // stands on: a 2×2 wall used to stop arrows on a quarter of
-            // itself. `cover` is excluded — it is a drawing order, so the
-            // back of a building must not make whoever stands there
-            // unreachable.
-            /* A construction SITE screens nothing: bare posts and scaffolds
-             * let the arrow through — while still blocking the step. The
-             * satellite row is the state; the last stone removes it and the
-             * finished walls start screening. */
-            $rows = $conn->fetchAllAssociative(
-                'SELECT c.x, c.y, p.name
-                 FROM players p
-                 JOIN entity_cells ec ON ec.player_id = p.id
-                 JOIN coords c ON c.id = ec.coords_id
-                 LEFT JOIN construction_sites cs ON cs.player_id = p.id
-                 WHERE ' . $tileFilter . '
-                   AND cs.player_id IS NULL
-                   AND ec.role <> ?
-                   AND NOT (p.is_open = 1 AND p.player_type <> ? AND p.race IN (' . self::placeholders($doors) . '))
-                   AND (
-                        (p.player_type <> ? AND p.race IN (' . self::placeholders($blockingBy['race']) . '))
-                     OR (p.player_type =  ? AND p.race IN (' . self::placeholders($blockingBy['item']) . '))
-                   )',
-                array_merge(
-                    $tileParams,
-                    [self::TRANSPARENT_ROLE],
-                    [\App\Service\ObstructionService::ITEM_TYPE],
-                    $doors ?: [''],
-                    [\App\Service\ObstructionService::ITEM_TYPE],
-                    $blockingBy['race'] ?: [''],
-                    [\App\Service\ObstructionService::ITEM_TYPE],
-                    $blockingBy['item'] ?: ['']
-                )
-            );
-            /* A target does not screen itself. With a single cell the
-             * question did not arise — that cell is an endpoint, excluded
-             * from the corridor — but a multi-cell object stopped a shot
-             * meant for it as soon as a far cell was aimed at. */
-            $ownCells = $targetEntityId === null ? [] : $this->cellKeysOf($targetEntityId);
+        $cellSays = static fn(bool $verdict): array => array_keys(array_filter(
+            \App\Service\Map\EntityCellService::SHOT_VERDICTS,
+            static fn(bool $v): bool => $v === $verdict
+        ));
 
-            foreach ($rows as $row) {
-                $key = $row['x'] . ',' . $row['y'];
+        // An entity screens every cell it HOLDS, not just the one it
+        // stands on: a 2×2 wall used to stop arrows on a quarter of
+        // itself. A cell whose role decides the shot is taken at its
+        // word; the others (`part`, `block`) defer to their type.
+        /* A construction SITE screens nothing: bare posts and scaffolds
+         * let the arrow through — while still blocking the step. The
+         * satellite row is the state; the last stone removes it and the
+         * finished walls start screening. */
+        $rows = $conn->fetchAllAssociative(
+            'SELECT c.x, c.y, p.name
+             FROM players p
+             JOIN entity_cells ec ON ec.player_id = p.id
+             JOIN coords c ON c.id = ec.coords_id
+             LEFT JOIN construction_sites cs ON cs.player_id = p.id
+             WHERE ' . $tileFilter . '
+               AND cs.player_id IS NULL
+               AND ec.role NOT IN (' . self::placeholders($cellSays(false)) . ')
+               AND NOT (p.is_open = 1 AND p.player_type <> ? AND p.race IN (' . self::placeholders($doors) . '))
+               AND (
+                    ec.role IN (' . self::placeholders($cellSays(true)) . ')
+                 OR (p.player_type <> ? AND p.race IN (' . self::placeholders($blockingBy['race']) . '))
+                 OR (p.player_type =  ? AND p.race IN (' . self::placeholders($blockingBy['item']) . '))
+               )',
+            array_merge(
+                $tileParams,
+                $cellSays(false),
+                [\App\Service\ObstructionService::ITEM_TYPE],
+                $doors ?: [''],
+                $cellSays(true),
+                [\App\Service\ObstructionService::ITEM_TYPE],
+                $blockingBy['race'] ?: [''],
+                [\App\Service\ObstructionService::ITEM_TYPE],
+                $blockingBy['item'] ?: ['']
+            )
+        );
+        /* A target does not screen itself. With a single cell the
+         * question did not arise — that cell is an endpoint, excluded
+         * from the corridor — but a multi-cell object stopped a shot
+         * meant for it as soon as a far cell was aimed at. */
+        $ownCells = $targetEntityId === null ? [] : $this->cellKeysOf($targetEntityId);
 
-                if (!isset($ownCells[$key])) {
-                    $blockersByTile[$key] = (string) $row['name'];
-                }
+        foreach ($rows as $row) {
+            $key = $row['x'] . ',' . $row['y'];
+
+            if (!isset($ownCells[$key])) {
+                $blockersByTile[$key] = (string) $row['name'];
             }
         }
 

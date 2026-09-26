@@ -170,6 +170,31 @@ class ObstacleConditionTest extends LegacyPlayerFixtureTestCase
         $this->assertTrue($result->isSuccess(), 'one is not invulnerable behind a sprite');
     }
 
+    /** Each cell decides the shot for itself, whatever its type says. */
+    public function testACellDecidesTheShotOverItsType(): void
+    {
+        [$shooter, $victim, $x, $y] = $this->shooterAndTarget();
+        $shot = fn(): bool => (new ObstacleCondition())->check(
+            $shooter, $victim, $this->condition(), new ConditionObject()
+        )->isSuccess();
+
+        $wall = $this->placeStructure('mur_pierre', $x + 2, $y + 1);
+        $this->giveCell($wall, $x + 2, $y, \App\Service\Map\EntityCellService::ROLE_FENCE);
+        $this->assertTrue($shot(), 'a fence cell of a wall lets the arrow through');
+
+        $this->giveCell($wall, $x + 2, $y, \App\Service\Map\EntityCellService::ROLE_WALL);
+        $this->assertFalse($shot(), 'a wall cell stops it');
+
+        (new BuildingService())->remove($wall);
+        $table = $this->placeStructure('table_bois', $x + 2, $y + 1);
+        $cell = $this->giveCell($table, $x + 2, $y, \App\Service\Map\EntityCellService::ROLE_SCREEN);
+        $this->assertFalse($shot(), 'a screen cell of a table stops the arrow');
+        $this->assertNull(
+            (new \App\Service\Map\TileOccupancyService())->stepRefusal($cell, (int) $shooter->id, true),
+            'and people walk through it'
+        );
+    }
+
     /**
      * The arch: its base refuses the step, its opening lets arrows pass.
      * Blocking the way and screening a shot are two dials, on purpose.

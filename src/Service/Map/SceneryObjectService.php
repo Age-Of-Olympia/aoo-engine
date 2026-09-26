@@ -326,19 +326,6 @@ final class SceneryObjectService
         ];
     }
 
-    /** Set the two dials a marked cell defers to. */
-    public function setTypeSettings(string $family, bool $blocksPassage, bool $blocksProjectiles): void
-    {
-        $this->ensureType($family);
-
-        $this->conn->executeStatement(
-            'UPDATE races SET blocks_passage = ?, blocks_projectiles = ? WHERE name = ?',
-            [(int) $blocksPassage, (int) $blocksProjectiles, $family]
-        );
-
-        \App\Service\RaceService::clearCache();
-    }
-
     /** The scenery entity a placed figure belongs to, cells included. */
     private function makeEntity(string $family, int $anchorCoordsId, string $anchorPieceName): void
     {

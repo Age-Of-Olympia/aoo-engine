@@ -10,6 +10,15 @@
 
     var CELL = 50;
 
+    /* The four states a click cycles through, and what each one says. */
+    var ROLES = ['cover', 'fence', 'wall', 'screen'];
+    var ROLE_LABELS = {
+        cover: 'tout passe',
+        fence: 'bloque les personnages',
+        wall: 'bloque tout',
+        screen: 'bloque les projectiles'
+    };
+
     /* Redrawn whole on every gesture: a figure is a few dozen cells at most,
      * and a single render path cannot drift from the state. */
     function Board(root, form) {
@@ -96,16 +105,14 @@
             return cell;
         }
 
-        var blocks = this.state.blocked.indexOf(Number(piece)) !== -1;
+        var role = this.roleOf(piece);
 
         cell.type = 'button';
-        cell.className += ' fp-cell--filled' + (blocks ? ' fp-cell--blocks' : '');
+        cell.className += ' fp-cell--filled fp-cell--' + role;
         cell.dataset.piece = piece;
         cell.draggable = true;
-        cell.title = 'Morceau ' + piece + ' — '
-            + (blocks ? 'passage bloqué' : 'passage libre')
-            + '. Clic : changer. Glisser : déplacer. Clic droit : retirer.';
-        cell.setAttribute('aria-pressed', blocks ? 'true' : 'false');
+        cell.title = 'Morceau ' + piece + ' — ' + ROLE_LABELS[role]
+            + '. Clic : état suivant. Glisser : déplacer. Clic droit : retirer.';
 
         var url = this.state.pieces[piece];
 
@@ -137,18 +144,16 @@
         return cell;
     };
 
-    /* Clicking a cell toggles whether it blocks the way. */
+    /* A new piece lets everything through until clicked. */
+    Board.prototype.roleOf = function (piece) {
+        return this.state.roles[piece] || 'cover';
+    };
+
+    /* Clicking a cell moves it to the next state. */
     Board.prototype.onToggle = function (piece, event) {
         event.preventDefault();
 
-        var at = this.state.blocked.indexOf(piece);
-
-        if (at === -1) {
-            this.state.blocked.push(piece);
-        } else {
-            this.state.blocked.splice(at, 1);
-        }
-
+        this.state.roles[piece] = ROLES[(ROLES.indexOf(this.roleOf(piece)) + 1) % ROLES.length];
         this.render();
     };
 
@@ -171,12 +176,7 @@
         }
 
         delete this.state.offsets[piece];
-
-        var at = this.state.blocked.indexOf(piece);
-
-        if (at !== -1) {
-            this.state.blocked.splice(at, 1);
-        }
+        delete this.state.roles[piece];
 
         this.render();
     };
@@ -241,6 +241,7 @@
 
         var anchor = this.state.offsets[pieces[0]];
         var offsets = {};
+        var roles = {};
         var xs = [];
         var ys = [];
 
@@ -249,6 +250,7 @@
             var dy = this.state.offsets[piece][1] - anchor[1];
 
             offsets[piece] = [dx, dy];
+            roles[piece] = this.roleOf(piece);
             xs.push(dx);
             ys.push(dy);
         }, this);
@@ -258,19 +260,21 @@
             w: Math.max.apply(null, xs) - Math.min.apply(null, xs) + 1,
             h: Math.max.apply(null, ys) - Math.min.apply(null, ys) + 1,
             offsets: offsets,
-            blocked: this.state.blocked.slice().sort(function (a, b) { return a - b; })
+            roles: roles
         });
 
         var summary = this.form.querySelector('.fp-summary');
 
         if (summary) {
-            var blocking = this.state.blocked.length;
+            var counts = ROLES.filter(function (role) {
+                return pieces.some(function (piece) { return roles[piece] === role; });
+            }).map(function (role) {
+                var n = pieces.filter(function (piece) { return roles[piece] === role; }).length;
+                return n + ' ' + ROLE_LABELS[role];
+            });
 
             summary.textContent = pieces.length + ' case' + (pieces.length > 1 ? 's' : '')
-                + ' · ' + (blocking === 0
-                    ? 'on passe partout'
-                    : blocking + ' case' + (blocking > 1 ? 's' : '') + ' qui barre'
-                        + (blocking > 1 ? 'nt' : '') + ' le chemin');
+                + ' · ' + counts.join(', ');
         }
     };
 
