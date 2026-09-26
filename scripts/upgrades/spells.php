@@ -37,7 +37,8 @@ if (isset($_GET['forget_p']) && !empty($_POST['passive'])) {
  */
 
 $spellList = $player->get_spells();
-$spellsN = count($spellList);
+$basicSpell = ['pic_magique'];
+$spellsN = count(array_diff($spellList, $basicSpell));
 
 /* Sorts prêtés par un objet porté (items.spell) : ils se listent avec les
  * autres, mais ne sont pas des lignes apprises — ni dans le décompte du
@@ -240,6 +241,15 @@ foreach(array_merge($spellList, array_keys($grantedSpells)) as $e){
         <td class="item-actions">
             <span class="text-muted" title="Sort accordé par un objet porté — hors plafond de compétences">
                 <span class="ra ra-vest"></span> '. htmlspecialchars($grantedBy, ENT_QUOTES) .'
+            </span>
+        </td>
+        ';
+        } elseif (in_array($e, $basicSpell)) {
+            // Le sort de base ne s'oublie pas
+            echo '
+        <td class="item-actions">
+            <span class="text-muted" title="Sort inné — hors plafond de compétences">
+                <span class="ra ra-player"></span> Sort de base
             </span>
         </td>
         ';
