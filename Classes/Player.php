@@ -187,7 +187,7 @@ class Player implements ActorInterface {
         p.id = ?
         ';
 
-        $res = $db->exe($sql, $this->id);
+        $res = $db->exeCached(['players', 'accounts', 'turns', 'progression'], $sql, $this->id);
 
 
         if(!$res->num_rows){
@@ -338,7 +338,7 @@ class Player implements ActorInterface {
 
         $db = new Db();
 
-        $res = $db->exe($sql, $this->id);
+        $res = $db->exeCached(['players_bonus'], $sql, $this->id);
 
         $this->turn = (object) array();
 
@@ -533,7 +533,7 @@ class Player implements ActorInterface {
 
         $db = new Db();
 
-        $res = $db->get_single_player_id('players_'. $table, $this->id);
+        $res = $db->exeCached(['players_'. $table], 'SELECT name FROM players_'. $table .' WHERE player_id = ?', $this->id);
 
         while($row = $res->fetch_object()){
 

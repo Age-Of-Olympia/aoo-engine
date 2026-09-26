@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Database\QueryCache;
 use App\Factory\EntityManagerFactory;
 use Classes\Item;
 use Doctrine\ORM\EntityManagerInterface;
@@ -485,7 +486,10 @@ class ItemInstanceService
     {
         $equipedFilter = $equipedOnly ? "AND e.slot != ''" : '';
 
-        return $this->entityManager->getConnection()->fetchAllAssociative(
+        return QueryCache::remember(
+            ['players', 'item_instances', 'items', 'players_bonus'],
+            'inventory:' . $playerId . ':' . (int) $equipedOnly,
+            fn(): array => $this->entityManager->getConnection()->fetchAllAssociative(
             "SELECT it.*, i.item_id, i.id AS instance_id, " . self::WEAR_CURRENT . ", i.quality,
                     i.custom_name, i.params AS instance_params, i.creator_id, i.wear_pending,
                     e.slot AS equiped, 1 AS n
@@ -496,7 +500,8 @@ class ItemInstanceService
              WHERE e.holder_id = ? AND i.destroyed = 0
                AND e.slot NOT IN (" . self::heldElsewhereSlots() . ") {$equipedFilter}
              ORDER BY e.slot DESC, i.id",
-            [$playerId]
+                [$playerId]
+            )
         );
     }
 

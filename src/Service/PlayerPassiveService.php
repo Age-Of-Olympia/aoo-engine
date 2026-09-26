@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Database\QueryCache;
 use App\Action\Combat\PassiveValueCalculator;
 use App\Action\Condition\ConditionObject;
 use App\Factory\EntityManagerFactory;
@@ -25,7 +26,13 @@ class PlayerPassiveService
     public function getPassivesByPlayerId(int $playerId): array
     {
         $repo = $this->entityManager->getRepository(PlayerPassive::class);
-        $results = $repo->findBy(['playerId' => $playerId]);
+        $load = fn(): array => $repo->findBy(['playerId' => $playerId]);
+        $results = QueryCache::remember(['players_passives'], 'passives:' . $playerId, $load);
+
+        // Detached by an EntityManager::clear() (admin tools): read again
+        if ($results !== [] && !$this->entityManager->contains($results[0])) {
+            $results = $load();
+        }
 
         $passiveArray = [];
         foreach ($results as $playerPassive) {

@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Database\QueryCache;
 use Classes\Db;
 
 use App\Factory\EntityManagerFactory;
@@ -92,8 +93,12 @@ class PlayerEffectService
     public function getEffectsByPlayerId(int $playerId): array
     {
         $repo = $this->entityManager->getRepository(PlayerEffect::class);
+        $load = fn(): array => $repo->findBy(['player_id' => $playerId]);
 
-        return $repo->findBy(['player_id' => $playerId]);
+        $effects = QueryCache::remember(['players_effects'], 'effects:' . $playerId, $load);
+
+        // Detached by an EntityManager::clear() (admin tools): read again
+        return ($effects === [] || $this->entityManager->contains($effects[0])) ? $effects : $load();
     }
 
     public function getEffectValueByPlayerIdByEffectName(int $playerId, string $name): int

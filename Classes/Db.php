@@ -127,6 +127,24 @@ class Db{
         return $res;
     }
 
+    /**
+     * A SELECT read once per web request, until a write touches one of
+     * $tables (App\Database\QueryCache); the rows come back replayable,
+     * read like a mysqli_result.
+     *
+     * @param list<string> $tables what the query reads
+     */
+    public function exeCached(array $tables, string $sql, $array = array()): \App\Database\CachedResult {
+
+        $rows = \App\Database\QueryCache::remember(
+            $tables,
+            'db:' . $sql . '|' . serialize($array),
+            fn() => $this->exe($sql, $array)->fetch_all(MYSQLI_ASSOC)
+        );
+
+        return new \App\Database\CachedResult($rows);
+    }
+
     public function get_single_player_id($table, $id, $fields=array()) : mysqli_result{
 
         $select = (count($fields)) ? '`'. implode('`,`', $fields) .'`' : '*';

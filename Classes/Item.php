@@ -478,7 +478,7 @@ class Item{
 
         $sql = 'SELECT * FROM items WHERE name = ?';
 
-        $res = $db->exe($sql, $name);
+        $res = $db->exeCached(['items'], $sql, $name);
 
         if(!$res->num_rows){
             if($checked)
@@ -557,7 +557,7 @@ class Item{
 
         $db = new Db();
 
-        $res = $db->exe($sql, $playerId);
+        $res = $db->exeCached(['players_items'. $bank, 'items'], $sql, $playerId);
 
         while($row = $res->fetch_object()){
 
