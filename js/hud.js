@@ -743,28 +743,23 @@
      * carries its duration and its keyframe intervals (data-segments),
      * so the step count is rebuilt here from the chosen rate.
      */
-    /* TEMPORARY — Chrome mobile flicker bisect, ?flicker=<variant>:
-     * isolates the animated layers in their own compositor layer (iso on
-     * the SVG group, isofo on the HTML inside each foreignObject), or drops
-     * the layers carrying a GIF (nogif) or a WebP (nowebp). */
+    /* TEMPORARY — Chrome mobile flicker bisect, ?flicker=a,b: drops the
+     * layers carrying a GIF (nogif), a WebP (nowebp) or a sliding composed
+     * tile (noslide); nowill keeps the slides but repainted, not composited. */
     function probeBoardFlicker() {
-        var variant = new URLSearchParams(location.search).get('flicker');
-        if (!variant) {
-            return;
-        }
-        if (variant === 'iso') {
-            document.querySelectorAll('.anim-layers').forEach(function (g) {
-                g.style.willChange = 'transform';
-            });
-        }
+        var variants = (new URLSearchParams(location.search).get('flicker') || '').split(',');
         document.querySelectorAll('.anim-layers foreignObject').forEach(function (fo) {
             var texture = fo.querySelector('.anim-layer-texture');
             var image = texture ? texture.style.backgroundImage : '';
-            if (variant === 'isofo') {
-                fo.querySelector('.anim-layer-frame').style.willChange = 'transform';
-            } else if ((variant === 'nogif' && image.indexOf('.gif') !== -1)
-                || (variant === 'nowebp' && image.indexOf('.webp') !== -1)) {
+            var slides = fo.querySelector('.anim-layer-move') !== null;
+            if ((variants.indexOf('nogif') !== -1 && image.indexOf('.gif') !== -1)
+                || (variants.indexOf('nowebp') !== -1 && image.indexOf('.webp') !== -1)
+                || (variants.indexOf('noslide') !== -1 && slides)) {
                 fo.parentNode.remove();
+            } else if (variants.indexOf('nowill') !== -1) {
+                fo.querySelectorAll('.anim-layer-move').forEach(function (move) {
+                    move.style.willChange = 'auto';
+                });
             }
         });
     }
