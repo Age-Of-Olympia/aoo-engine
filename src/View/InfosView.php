@@ -66,7 +66,7 @@ class InfosView
                 <sup>Prochain tour à <a href="#" id="next-turn-timer" title="dans ' . $timeToNextTurn . '">' . date('H:i', $player->data->nextTurnTime) . "</a>" . $adminInfos . '</sup>
             </td>
             <td>
-                <div id="player-avatar" data-id="' . $player->id . '">
+                <div id="player-avatar" data-id="' . $player->id . '" data-new-mails="' . htmlspecialchars((string) json_encode($player->get_new_mails(all: true))) . '">
                     <a href="pnjs.php"><img src="' . $player->data->avatar . '" /></a>
                 </div>
             </td>

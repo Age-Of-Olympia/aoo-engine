@@ -41,8 +41,6 @@ class Db{
             return true;
         }
 
-        sqln();
-        
         $params = '';
 
         $stmt = $this->db->prepare($sql);
@@ -83,7 +81,7 @@ class Db{
             call_user_func_array(array($stmt, 'bind_param'), $values);
         }
 
-        $stmt->execute();
+        \App\Database\QueryCounter::time(fn() => $stmt->execute(), $sql);
 
         if ($stmt->errno > 0) {
             error_log("[Db::exe] SQL Error #{$stmt->errno}: {$stmt->error}");

@@ -2,17 +2,30 @@
 
 namespace App\Service;
 
+use App\Database\QueryCounter;
 use Classes\Db;
 
 /** Key/value store for admin-configurable settings (admin_settings table). */
 class AdminSettingsService
 {
+    /** @var array<string, string>|null every setting, read in one query */
+    private static ?array $all = null;
+    private static int $readAtWrites = -1;
+
     /** Read a setting, or $default when unset. */
     public function get(string $name, string $default = ''): string
     {
-        $res = (new Db())->exe('SELECT value FROM admin_settings WHERE name = ?', [$name]);
+        // Read once per request; again after any write, which may have changed one
+        if (self::$all === null || self::$readAtWrites !== QueryCounter::writes()) {
+            self::$all = [];
+            $res = (new Db())->exe('SELECT name, value FROM admin_settings');
+            while ($row = $res->fetch_assoc()) {
+                self::$all[$row['name']] = (string) $row['value'];
+            }
+            self::$readAtWrites = QueryCounter::writes();
+        }
 
-        return $res->num_rows ? (string) $res->fetch_assoc()['value'] : $default;
+        return self::$all[$name] ?? $default;
     }
 
     /**

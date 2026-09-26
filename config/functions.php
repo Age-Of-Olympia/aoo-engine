@@ -56,23 +56,6 @@ function printr($text){
     echo '</pre>';
 }
 
-// sqln
-function sqln(){
-
-    global $sqln;
-
-    if(!isset($sqln)){
-
-        $sqln = 1;
-    }
-    else{
-
-        $sqln++;
-    }
-
-    return $sqln;
-}
-
 function removeComments($jsonString) {
     // Supprime les commentaires de type //
     $jsonString = preg_replace('/\/\/[^\n]*\n/', '', $jsonString);

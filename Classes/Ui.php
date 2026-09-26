@@ -35,7 +35,7 @@ class Ui{
                 <title>Age of Olympia - ' . $title . '</title>
                 <link rel="icon" type="image/x-icon" href="/img/ui/favicons/favicon.png">
                 <script src="js/jquery.js"></script>
-                <script src="js/main.js?v=20260806"></script>
+                <script src="js/main.js?v=20260927"></script>
                 <script src="js/console.js?v=20260614"></script>
                 ' . self::characterStoreTag() . '
                 <link href="css/main.min.css?v=20260926" rel="stylesheet">
@@ -71,7 +71,7 @@ class Ui{
         }
 
         // Tutorial System (feature-flagged for specific players)
-        $tutorialVersion = '20260926';
+        $tutorialVersion = '20260927';
         echo '
                 <!-- Modal System -->
                 <link href="css/modal.css?v=20260715" rel="stylesheet">
@@ -124,7 +124,7 @@ class Ui{
          */
 
         return Str::minify('
-                <sup style="position: absolute; top: 0px; right: 0px; opacity: 0.5;">'. sqln()-1 .' req</sup>
+                <sup id="query-counter" data-queries="'. \App\Database\QueryCounter::count() .'" data-ms="'. round(\App\Database\QueryCounter::milliseconds(), 1) .'" style="position: absolute; top: 0px; right: 0px; opacity: 0.5;">'. \App\Database\QueryCounter::count() .' req</sup>
             </body>
         </html>
         ');

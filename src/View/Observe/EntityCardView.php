@@ -300,6 +300,7 @@ final class EntityCardView
     {
         $actionService = new ActionService();
         $actionTargeting = new ActionTargeting();
+        $actionService->preload($player->get_actions());
         $actions = self::sortActionsByCategory($player, $player->get_actions(), $actionService);
 
         $html = '';

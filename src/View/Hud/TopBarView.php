@@ -46,7 +46,7 @@ final class TopBarView
         echo '<button id="hud-burger" title="Menu" aria-label="Menu">&#9776;</button>';
 
         echo '<div class="hud-chip">'
-            . '<div id="player-avatar" data-id="' . $player->id . '">'
+            . '<div id="player-avatar" data-id="' . $player->id . '" data-new-mails="' . htmlspecialchars((string) json_encode($player->get_new_mails(all: true))) . '">'
             . '<a href="pnjs.php"><img src="' . $player->data->avatar . '" alt="" /></a>'
             . '</div>'
             . '<div class="hud-chip-id">'

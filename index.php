@@ -94,13 +94,20 @@ $player->get_data(false);
 
 // Check if player is brand new (should auto-start tutorial instead of showing modal)
 $isBrandNew = false;
+// No unfinished tutorial session: the page skips the tutorial resume check
+$noTutorialSession = false;
 
 // Calculate total tutorial XP/PI dynamically from database
 // Note: XP and PI are the same - when you earn XP, you also earn PI
 // XP is permanent total, PI can be spent on character improvements
 $totalTutorialXP = 0;
 $totalTutorialPI = 0;
-if (TutorialFeatureFlag::isEnabledForPlayer($player->id)) {
+/* Only shown to a player who can see the tutorial: not finished yet, in
+ * it, or starting it (a replay included). */
+$tutorialShown = !(new TutorialSessionManager(new Db()))->hasCompletedBefore($_SESSION['playerId'])
+    || TutorialHelper::isInTutorial()
+    || !empty($_SESSION['auto_start_tutorial']);
+if ($tutorialShown && TutorialFeatureFlag::isEnabledForPlayer($player->id)) {
     $db = new Db();
     /* Sum all XP rewards from active tutorial steps */
     $sql = "SELECT SUM(xp_reward) as total_xp FROM tutorial_steps WHERE version = '1.0.0' AND is_active = 1 AND xp_reward IS NOT NULL";
@@ -116,6 +123,7 @@ if (TutorialFeatureFlag::isEnabledForPlayer($player->id) && !TutorialHelper::isI
     $sessionManager = new TutorialSessionManager($db);
     $hasCompleted = $sessionManager->hasCompletedBefore($player->id);
     $activeSession = $sessionManager->getActiveSession($player->id);
+    $noTutorialSession = $activeSession === null;
 
     if (!$hasCompleted && $activeSession === null) {
         $isBrandNew = true;
@@ -189,6 +197,7 @@ echo '<script>
     window.TUTORIAL_TOTAL_XP = ' . $totalTutorialXP . ';
     window.TUTORIAL_TOTAL_PI = ' . $totalTutorialPI . ';
     window.TUTORIAL_IS_REPLAY = ' . ($hasCompletedTutorialBefore ? 'true' : 'false') . ';
+    window.TUTORIAL_NO_SESSION = ' . ($noTutorialSession ? 'true' : 'false') . ';
 </script>';
 
 if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew && !$autoStarting) {

@@ -1115,22 +1115,34 @@
             aooStore.remove('hudSelEntity');
         });
 
-        /* Non restaurée sur mobile (le volet s'ouvrirait tout seul),
-         * mais restaurée en fenêtre PC étroite, comme en desktop. */
-        var saved = aooStore.get('hudSelCoords');
-        if (saved && !isMobileDevice() && !tutorialActive()) {
-            var payload = { coords: saved };
-            var savedEntity = aooStore.get('hudSelEntity');
-
-            if (savedEntity) {
-                payload.entity = savedEntity;
-            }
-
+        var payload = savedSelection();
+        if (payload) {
             $.post('observe.php', payload, function (data) {
                 $('#ajax-data').html(data);
             });
         }
     }
+
+    /* The selection reopened at page load, or null. Not on mobile (the
+     * drawer would open by itself), but in a narrow desktop window yes. */
+    function savedSelection() {
+        var saved = aooStore.get('hudSelCoords');
+        if (!saved || isMobileDevice() || tutorialActive()) {
+            return null;
+        }
+        var payload = { coords: saved };
+        var savedEntity = aooStore.get('hudSelEntity');
+        if (savedEntity) {
+            payload.entity = savedEntity;
+        }
+        return payload;
+    }
+
+    /* js/view.js skips observing the player's own cell at load when this
+     * selection is about to replace it. */
+    window.hudRestoresSelection = function () {
+        return savedSelection() !== null;
+    };
 
     /*
      * Coordonnées en bordure du damier : des <text> SVG injectés dans

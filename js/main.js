@@ -26,6 +26,46 @@ function load_data(data, element){
     $(element).html(data);
 }
 
+/* Query counter (footer "N req"): the page's own SQL count, plus the
+ * Server-Timing "db" entry of every XHR and fetch made since, plus the
+ * requests that reached the network (a cached file has no transferSize).
+ * Hovering lists the queries per request and the SQL time. */
+document.addEventListener('DOMContentLoaded', function () {
+    var counter = document.getElementById('query-counter');
+    if (!counter || !window.PerformanceObserver) {
+        return;
+    }
+    var queries = Number(counter.dataset.queries) || 0;
+    var ms = Number(counter.dataset.ms) || 0;
+    var http = 1;
+    var lines = ['page : ' + queries + ' req'];
+
+    function render() {
+        counter.textContent = queries + ' req · ' + http + ' http';
+        counter.title = Math.round(ms) + ' ms de SQL\n' + lines.join('\n');
+    }
+
+    new PerformanceObserver(function (list) {
+        list.getEntries().forEach(function (entry) {
+            if (entry.transferSize > 0) {
+                http++;
+            }
+            (entry.serverTiming || []).forEach(function (timing) {
+                if (timing.name !== 'db') {
+                    return;
+                }
+                var n = Number(timing.description) || 0;
+                queries += n;
+                ms += timing.duration;
+                lines.push(entry.name.replace(location.origin + '/', '') + ' : ' + n + ' req');
+            });
+        });
+        render();
+    }).observe({ type: 'resource', buffered: true });
+
+    render();
+});
+
 /* Reopen a HUD panel on the fragment URL — or reload the page when
  * no panel host exists (full-page fallback). One copy of the dance
  * every gesture script used to carry inline. */
@@ -278,58 +318,61 @@ $(document).ready(function(){
     // check mail
     const baseTitle = $(document).prop('title');
 
+    /* Unread missives per character (current one on the rail, the others
+     * on the avatar), favicon and tab title. */
+    var renderMails = function (data) {
+        let avatar = $('#player-avatar');
+        let currentPlayerId = parseInt(avatar.attr('data-id'));
+
+        let otherCharactersNewMails = 0;
+        let currentCharacterNewMails = 0;
+        for (const playerid in data) {
+            if (playerid == currentPlayerId) {
+                currentCharacterNewMails = data[playerid];
+            } else {
+                otherCharactersNewMails += data[playerid];
+            }
+        }
+        let totalNewMails = otherCharactersNewMails + currentCharacterNewMails;
+
+        let popupOtherCharacter = $('#other-characters-mails');
+        if (!popupOtherCharacter.length)
+            popupOtherCharacter = $('<div id="other-characters-mails" class="cartouche bulle blink" style="pointer-events: none; display:none; background:blue;"></div>').appendTo(avatar);
+
+        let popupCurrentCharacter = $('#current-characters-mails');
+        if (!popupCurrentCharacter.length)
+            popupCurrentCharacter = $('<div id="current-characters-mails" class="cartouche bulle blink" style="pointer-events: none; display:none;"></div>').appendTo('#missive-btn');
+
+        popupCurrentCharacter.text(currentCharacterNewMails);
+        popupCurrentCharacter.toggle(currentCharacterNewMails > 0);
+
+        popupOtherCharacter.text(otherCharactersNewMails);
+        popupOtherCharacter.toggle(otherCharactersNewMails > 0);
+
+        /* Mobile (HUD) : le rail vit dans le tiroir fermé — écho
+         * du badge missives sur le bouton burger. */
+        let burgerBadge = $('#hud-burger-mails');
+        if (!burgerBadge.length && $('#hud-burger').length)
+            burgerBadge = $('<span id="hud-burger-mails" class="cartouche bulle blink" style="pointer-events: none; display:none;"></span>').appendTo('#hud-burger');
+
+        burgerBadge.text(currentCharacterNewMails);
+        burgerBadge.toggle(currentCharacterNewMails > 0);
+
+        // change favicon
+        $("link[rel*='icon']").attr("href", totalNewMails > 0 ? "img/ui/favicons/favicon_alert.png" : "img/ui/favicons/favicon.png");
+
+        // change title
+        var newTitle = baseTitle;
+        if (totalNewMails > 0) {
+            newTitle = '(' + totalNewMails + ') ' + newTitle;
+        }
+        $(document).prop('title', newTitle);
+    };
+
     var checkMailFunction = function () {
 
-        let url = 'check_mail.php';
-        aooFetch(url)
-            .then(data => {
-                let avatar = $('#player-avatar');
-                let currentPlayerId = parseInt(avatar.attr('data-id'));
-
-                let otherCharactersNewMails = 0;
-                let currentCharacterNewMails = 0;
-                for (const playerid in data) {
-                    if (playerid == currentPlayerId) {
-                        currentCharacterNewMails = data[playerid];
-                    } else {
-                        otherCharactersNewMails += data[playerid];
-                    }
-                }
-                let totalNewMails = otherCharactersNewMails + currentCharacterNewMails;
-
-                let popupOtherCharacter = $('#other-characters-mails');
-                if (!popupOtherCharacter.length)
-                    popupOtherCharacter = $('<div id="other-characters-mails" class="cartouche bulle blink" style="pointer-events: none; display:none; background:blue;"></div>').appendTo(avatar);
-
-                let popupCurrentCharacter = $('#current-characters-mails');
-                if (!popupCurrentCharacter.length)
-                    popupCurrentCharacter = $('<div id="current-characters-mails" class="cartouche bulle blink" style="pointer-events: none; display:none;"></div>').appendTo('#missive-btn');
-
-                popupCurrentCharacter.text(currentCharacterNewMails);
-                popupCurrentCharacter.toggle(currentCharacterNewMails > 0);
-
-                popupOtherCharacter.text(otherCharactersNewMails);
-                popupOtherCharacter.toggle(otherCharactersNewMails > 0);
-
-                /* Mobile (HUD) : le rail vit dans le tiroir fermé — écho
-                 * du badge missives sur le bouton burger. */
-                let burgerBadge = $('#hud-burger-mails');
-                if (!burgerBadge.length && $('#hud-burger').length)
-                    burgerBadge = $('<span id="hud-burger-mails" class="cartouche bulle blink" style="pointer-events: none; display:none;"></span>').appendTo('#hud-burger');
-
-                burgerBadge.text(currentCharacterNewMails);
-                burgerBadge.toggle(currentCharacterNewMails > 0);
-
-                // change favicon
-                $("link[rel*='icon']").attr("href", totalNewMails > 0 ? "img/ui/favicons/favicon_alert.png" : "img/ui/favicons/favicon.png");
-
-                // change title
-                var newTitle = baseTitle;
-                if (totalNewMails > 0) {
-                    newTitle = '(' + totalNewMails + ') ' + newTitle;
-                }
-                $(document).prop('title', newTitle);
-            })
+        aooFetch('check_mail.php')
+            .then(renderMails)
             .catch((error) => {
                 console.error('Error:', error);
             });
@@ -346,8 +389,13 @@ $(document).ready(function(){
      * doit rafraîchir les badges sans attendre le poll de 60 s. */
     window.refreshMailBadges = checkMailFunction;
 
-    if($('#player-avatar')[0] != null){
-
+    /* The page already carries the counts (data-new-mails): show them
+     * and poll from the next minute on, instead of asking right away. */
+    var initialMails = $('#player-avatar').attr('data-new-mails');
+    if (initialMails) {
+        renderMails(JSON.parse(initialMails));
+        window.checkMailTimer = setTimeout(checkMailFunction, 60000);
+    } else if ($('#player-avatar')[0] != null) {
         setTimeout(checkMailFunction, 1);
     }
 

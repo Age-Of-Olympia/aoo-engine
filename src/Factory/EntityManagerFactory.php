@@ -2,6 +2,7 @@
 
 namespace App\Factory;
 
+use App\Database\QueryCountingMiddleware;
 use App\Listener\ActionMetadataListener;
 use App\Listener\OutcomeInstructionMetadataListener;
 use Doctrine\ORM\EntityManager;
@@ -101,6 +102,7 @@ final class EntityManagerFactory
             isDevMode: $isDevMode,
             cache: new PhpFilesAdapter('doctrine_' . self::mappingFingerprint(), 0, dirname(__DIR__, 2) . '/var/cache')
         );
+        self::$orm_db_config->setMiddlewares([new QueryCountingMiddleware()]);
         $proxyDir = __DIR__ . '/../../var/proxies';
         if (!is_dir($proxyDir)) {
             mkdir($proxyDir, 0755, true);

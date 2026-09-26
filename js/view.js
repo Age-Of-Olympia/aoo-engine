@@ -373,7 +373,7 @@ $(document).ready(function(){
         }
     };
 
-    window.bindMapView = function(){
+    window.bindMapView = function(pageLoad){
 
     /* Damier neuf (chargement, ou remplacement après un déplacement par
        hudRefreshAfterMove) : les marques sont parties avec l'ancien
@@ -566,12 +566,16 @@ $(document).ready(function(){
 
     /* Le tutoriel conduit ses propres panneaux, à son rythme : lui en ouvrir
        un dans le dos ferait valider des étapes que le joueur n'a pas faites. */
-    if (ownCoords && !(window.tutorialUI && window.tutorialUI.isActive)) {
+    /* On page load the HUD may reopen the saved selection instead: that
+       panel would replace this one, so asking for both costs a request. */
+    var hudRestores = pageLoad && window.hudRestoresSelection && window.hudRestoresSelection();
+
+    if (ownCoords && !hudRestores && !(window.tutorialUI && window.tutorialUI.isActive)) {
 
         openObservation(ownCoords, {force: true});
     }
 
     }; // end window.bindMapView
 
-    window.bindMapView();
+    window.bindMapView(true);
 });

@@ -64,6 +64,8 @@ if(file_exists(__DIR__.'/config/onesignal_constants.php')){
 require_once(__DIR__.'/config/bootstrap.php');
 require_once(__DIR__.'/config/functions.php');
 
+\App\Database\QueryCounter::reportOnXhr();
+
 if(!defined('NO_LOGIN') && !isset($_SESSION['playerId'])){
 
     $ui = new Ui('Connexion requise');

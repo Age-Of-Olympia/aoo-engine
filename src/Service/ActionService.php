@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Database\QueryCounter;
 use App\Entity\Action;
 use App\Factory\EntityManagerFactory;
 use App\Service\Action\ActionTypeDiscovery;
@@ -10,6 +11,16 @@ use App\Interface\ActionInterface;
 class ActionService
 {
     private $entityManager;
+
+    /**
+     * Actions already read in this request, by name (null = no such action).
+     * A card lists a dozen actions and asks for each more than once; any
+     * write since the read may have changed one, so the map is dropped then.
+     *
+     * @var array<string, ?ActionInterface>
+     */
+    private static array $byName = [];
+    private static int $readAtWrites = -1;
 
     public function __construct()
     {
@@ -20,12 +31,51 @@ class ActionService
     /** The action named so, hydrated as its concrete subclass, or null. */
     public function getActionByName(string $name): ?ActionInterface
     {
-        $action = $this->entityManager->getRepository(Action::class)->findOneBy(['name' => $name]);
-        if ($action !== null) {
-            $action->setOrmType(ActionTypeDiscovery::typeOf($action));
+        $this->forgetIfWritten();
+        if (!array_key_exists($name, self::$byName)) {
+            $action = $this->entityManager->getRepository(Action::class)->findOneBy(['name' => $name]);
+            if ($action !== null) {
+                $action->setOrmType(ActionTypeDiscovery::typeOf($action));
+            }
+            self::$byName[$name] = $action;
         }
 
-        return $action;
+        return self::$byName[$name];
+    }
+
+    /**
+     * Reads these actions in one query, with their outcomes and conditions,
+     * for the next getActionByName() calls.
+     *
+     * @param list<string> $names
+     */
+    public function preload(array $names): void
+    {
+        $this->forgetIfWritten();
+        $missing = array_values(array_diff($names, array_keys(self::$byName)));
+        if ($missing === []) {
+            return;
+        }
+
+        $actions = $this->entityManager->createQuery(
+            'SELECT a, o, c FROM ' . Action::class . ' a LEFT JOIN a.outcomes o LEFT JOIN a.actionConditions c WHERE a.name IN (:names)'
+        )->setParameter('names', $missing)->getResult();
+
+        foreach ($missing as $name) {
+            self::$byName[$name] = null;
+        }
+        foreach ($actions as $action) {
+            $action->setOrmType(ActionTypeDiscovery::typeOf($action));
+            self::$byName[$action->getName()] = $action;
+        }
+    }
+
+    private function forgetIfWritten(): void
+    {
+        if (self::$readAtWrites !== QueryCounter::writes()) {
+            self::$byName = [];
+            self::$readAtWrites = QueryCounter::writes();
+        }
     }
 
     public function getCostsArray(?string $actionName, ?ActionInterface $action) : array {

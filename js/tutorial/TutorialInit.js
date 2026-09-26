@@ -161,6 +161,12 @@
         } else {
         }
 
+        /* index.php found no unfinished session: the stricter check below
+         * cannot find one either, so skip the request. */
+        if (window.TUTORIAL_NO_SESSION) {
+            return;
+        }
+
         try {
             // Add check_only parameter to prevent setting session vars on initial check
             const response = await fetch('/api/tutorial/resume.php?check_only=1');
