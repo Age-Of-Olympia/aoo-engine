@@ -31,6 +31,33 @@ final class ActionCostView
     {
         $spans = [];
         foreach ($this->actionService->getCostParts(null, $action) as $part) {
+            $rawText = $part['text'] ?? '';
+
+            // 1. Cas où la valeur arrive sous forme de tableau PHP natif
+            if (is_array($rawText)) {$val = 0;
+                foreach ($rawText as$item) {
+                    if (is_array($item) && isset($item[0], $item[1]) &&$item[0] === 'none') {
+                        $val =$item[1];
+                        break;
+                    }
+                }
+                // On reconstruit une chaîne du type "6 PM"
+                $rawText = $val . ' ' . strtoupper((string)($part['trait'] ?? ''));
+            } 
+            // 2. Cas où la valeur est une chaîne contenant du JSON (ex: '[["maitre_lame",4],["none",6]] PM')
+            elseif (is_string($rawText) && preg_match('/(\[\[.*?\]\])/', $rawText,$matches)) {
+                $jsonArr = json_decode($matches[1], true);
+                if (is_array($jsonArr)) {
+                    foreach ($jsonArr as$item) {
+                        if (is_array($item) && isset($item[0], $item[1]) &&$item[0] === 'none') {
+                            // On remplace le bloc JSON moche par la valeur (ex: 6)
+                            $rawText = str_replace($matches[1], (string)$item[1],$rawText);
+                            break;
+                        }
+                    }
+                }
+            }
+
             $text = htmlspecialchars($part['text'], ENT_QUOTES, 'UTF-8');
             $effect = $part['effect'] ?? null;
             if ($effect !== null && (new \App\Service\EffectService())->exists($effect)) {
