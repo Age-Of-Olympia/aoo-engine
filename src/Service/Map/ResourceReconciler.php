@@ -70,6 +70,11 @@ final class ResourceReconciler
      */
     public function reconcile(string $plan, array $wanted, ?int $z = null): array
     {
+        // The routes palette is the road images: each one is a type
+        if ($this->family === \App\Entity\Race::FAMILY_ROUTE) {
+            (new RouteTypeService($this->conn))->ensure(array_column($wanted, 'name'));
+        }
+
         $current = $this->current($plan, $z);
         $labels = $this->labels($wanted);
 

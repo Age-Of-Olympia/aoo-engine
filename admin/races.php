@@ -713,6 +713,11 @@ if ($action === 'new') {
     /* The row decides: editing from anywhere shows its own face. */
     $content = race_render_form($race, $csrfToken, TypeEditorFace::of($race));
 } else {
+    // Every road image is a road type, placed or not yet
+    if ($face->isRoute()) {
+        (new \App\Service\Map\RouteTypeService())->ensure(\App\Service\Map\RouteTypeService::imageNames());
+    }
+
     $kept = array_values(array_filter(
         $service->getAllRaces(),
         static fn (Race $race): bool => $face->keeps($race)

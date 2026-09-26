@@ -156,6 +156,30 @@ class GroundLayerTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(0, (int) $blocks['blocks_projectiles']);
     }
 
+    /** A road image without a type yet: laying it creates the type, and the road can be walked on. */
+    public function testLayingARoadImageCreatesItsType(): void
+    {
+        $name = array_values(array_diff(\App\Service\Map\RouteTypeService::imageNames(), ['route']))[0] ?? null;
+        if ($name === null) {
+            $this->markTestSkipped('only the « route » image in img/routes.');
+        }
+        $this->link->executeStatement('DELETE FROM races WHERE name = ?', [$name]);
+        \App\Service\RaceService::clearCache();
+
+        $player = $this->createRealPlayer('Paveur');
+        $coords = $this->cell(5);
+        $this->laidAt[] = (int) View::get_coords_id($coords);
+
+        (new GroundLayerService())->lay('routes', $name, $coords, (int) $player->id);
+
+        $this->assertSame('route', $this->link->fetchOne('SELECT type_kind FROM races WHERE name = ?', [$name]));
+        $mover = (int) $this->createRealPlayer('PaveurMarcheur')->id;
+        $this->assertNull(
+            (new \App\Service\Map\TileOccupancyService())->stepRefusal((int) View::get_coords_id($coords), $mover, true),
+            'la route se traverse'
+        );
+    }
+
     /** One road per cell. */
     public function testASecondRoadOnTheSameCellIsRefused(): void
     {

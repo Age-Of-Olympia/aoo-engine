@@ -152,6 +152,11 @@ final class GroundLayerService
     {
         $conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
 
+        // A road image is a road type: without its row, the road would block
+        if ($family === \App\Entity\Race::FAMILY_ROUTE) {
+            (new RouteTypeService($conn))->ensure([$type]);
+        }
+
         $label = (string) ($conn->fetchOne(
             'SELECT label FROM races WHERE CONVERT(name USING utf8mb4) = CONVERT(? USING utf8mb4)',
             [$type]
