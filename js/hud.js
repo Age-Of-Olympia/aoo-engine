@@ -16,6 +16,19 @@
         events: { url: 'load_events.php', pane: '#hud-feed-events' }
     };
 
+    /* A feed's content in place, and for the events the unread badge */
+    function showFeed(name, html) {
+        $(FEEDS[name].pane).html(html);
+        if (name === 'events') {
+            /* Onglet ouvert : tout est vu ; sinon, compter. */
+            if (activeTab() === 'events') {
+                markEventsSeen();
+            } else {
+                updateEventsBadge();
+            }
+        }
+    }
+
     function activeTab() {
         return $('.hud-tab--active').data('tab') || 'mdj';
     }
@@ -27,15 +40,7 @@
         }
         $.post(feed.url)
             .done(function (data) {
-                $(feed.pane).html(data);
-                if (name === 'events') {
-                    /* Onglet ouvert : tout est vu ; sinon, compter. */
-                    if (activeTab() === 'events') {
-                        markEventsSeen();
-                    } else {
-                        updateEventsBadge();
-                    }
-                }
+                showFeed(name, data);
             })
             .fail(function () {
                 $(feed.pane).html('<p class="hud-feed-empty">Impossible de charger le flux.</p>');
@@ -614,47 +619,9 @@
     window.hudRefreshAfterMove = function () {
         $.ajax({ url: document.location.href, cache: false })
             .done(function (html) {
-                var doc = new DOMParser().parseFromString(html, 'text/html');
-                var freshMap = doc.getElementById('game-map');
-                var current = document.getElementById('game-map');
-                if (!freshMap || !current) {
-                    document.location.reload();
+                if (!applyMovedPage(new DOMParser().parseFromString(html, 'text/html'), false)) {
                     return;
                 }
-
-                current.innerHTML = freshMap.innerHTML;
-                current.setAttribute('data-map-hash', freshMap.getAttribute('data-map-hash') || '');
-
-                ['hud-location', 'hud-minimap'].forEach(function (id) {
-                    var fresh = doc.getElementById(id);
-                    var el = document.getElementById(id);
-                    if (fresh && el) {
-                        el.innerHTML = fresh.innerHTML;
-                    }
-                });
-
-                /* Pilules du bandeau haut (PA, MVT…) : remplacées une à
-                 * une, le reste du bandeau garde ses gestionnaires. */
-                refreshPills(doc);
-
-                /* Sélection et actions de l'ancienne case : obsolètes. */
-                $('#ajax-data').empty();
-                $('#hud-actions').empty();
-                aooStore.remove('hudSelCoords');
-                window.clickedCases = [];
-
-                /* Les gestionnaires du SVG sont morts avec l'ancien
-                 * balisage : re-liaison (js/view.js). */
-                if (typeof window.bindMapView === 'function') {
-                    window.bindMapView();
-                }
-
-                fitMinimap();
-                fitDamier();
-                buildMapRulers();
-                centerMap();
-                redrawBlockedMarkers();
-                renderIdleSelection();
 
                 /* Un déplacement journalise (move — et les actions qu'il
                  * démarre : creuser…) : le flux d'évènements se recharge
@@ -666,6 +633,76 @@
                 document.location.reload();
             });
     };
+
+    /* go.php's HUD response (App\View\Hud\MoveResponseView): the board,
+     * the feed and the new cell's observation came with the step, no more
+     * requests to make. */
+    window.hudApplyMove = function (data) {
+        var doc = new DOMParser().parseFromString('<!doctype html><body>' + data.board, 'text/html');
+        if (!applyMovedPage(doc, true)) {
+            return;
+        }
+
+        $('#ajax-data').html(data.observe);
+        window.clickedCases[data.coords] = data.observe;
+        aooStore.set('hudSelCoords', data.coords);
+        aooStore.remove('hudSelEntity');
+
+        showFeed('events', data.events);
+    };
+
+    /* Swaps in the moved page's board, position, minimap and top bar pills.
+     * observed: the new cell's panel comes with the response, view.js must
+     * not ask for it. False when the page has to be reloaded instead. */
+    function applyMovedPage(doc, observed) {
+        var freshMap = doc.getElementById('game-map');
+        var current = document.getElementById('game-map');
+        if (!freshMap || !current) {
+            document.location.reload();
+            return false;
+        }
+
+        current.innerHTML = freshMap.innerHTML;
+        current.setAttribute('data-map-hash', freshMap.getAttribute('data-map-hash') || '');
+
+        ['hud-location', 'hud-minimap'].forEach(function (id) {
+            var fresh = doc.getElementById(id);
+            var el = document.getElementById(id);
+            if (fresh && el) {
+                el.innerHTML = fresh.innerHTML;
+            }
+        });
+
+        /* Pilules du bandeau haut (PA, MVT…) : remplacées une à
+         * une, le reste du bandeau garde ses gestionnaires. */
+        refreshPills(doc);
+
+        /* Sélection et actions de l'ancienne case : obsolètes. */
+        $('#ajax-data').empty();
+        $('#hud-actions').empty();
+        aooStore.remove('hudSelCoords');
+        window.clickedCases = [];
+
+        /* Les gestionnaires du SVG sont morts avec l'ancien
+         * balisage : re-liaison (js/view.js). */
+        if (typeof window.bindMapView === 'function') {
+            window.bindMapView(false, observed);
+        }
+
+        fitMinimap();
+        fitDamier();
+        buildMapRulers();
+        centerMap();
+        redrawBlockedMarkers();
+        /* Not when the panel comes with the response: composed in the same
+         * tick, the idle selection would make the #ajax-data observer skip
+         * the panel too, and its action buttons would stay on the card. */
+        if (!observed) {
+            renderIdleSelection();
+        }
+
+        return true;
+    }
 
     /*
      * Calques d'affichage de la carte (popover boussole, façon applis

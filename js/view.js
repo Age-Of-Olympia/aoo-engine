@@ -373,7 +373,7 @@ $(document).ready(function(){
         }
     };
 
-    window.bindMapView = function(pageLoad){
+    window.bindMapView = function(pageLoad, observed){
 
     /* Damier neuf (chargement, ou remplacement après un déplacement par
        hudRefreshAfterMove) : les marques sont parties avec l'ancien
@@ -508,13 +508,23 @@ $(document).ready(function(){
         $('#go-img').attr('href', 'img/ui/view/gear.webp');
         // $('#view').css({'filter':'grayscale(1)', 'transition':'filter 0.5s'});
 
+        /* In the HUD, outside the tutorial (which reloads the page), the
+           step's response carries the board, the feed and the observation. */
+        var hudResponse = typeof window.hudApplyMove === 'function'
+            && !(window.tutorialUI && window.tutorialUI.isActive);
+
         $.ajax({
             type: "POST",
             url: 'go.php',
-            data: {'coords':coords}, // serializes the form's elements.
+            data: {'coords': coords, 'hud': hudResponse ? 1 : 0},
             success: function(data)
             {
-                // alert(data);
+                if (data && typeof data === 'object') {
+
+                    window.hudApplyMove(data);
+
+                    return false;
+                }
 
                 if(data.trim() != ''){
 
@@ -570,7 +580,9 @@ $(document).ready(function(){
        panel would replace this one, so asking for both costs a request. */
     var hudRestores = pageLoad && window.hudRestoresSelection && window.hudRestoresSelection();
 
-    if (ownCoords && !hudRestores && !(window.tutorialUI && window.tutorialUI.isActive)) {
+    /* observed: the step's response already carries this panel (js/hud.js
+       hudApplyMove) */
+    if (ownCoords && !hudRestores && !observed && !(window.tutorialUI && window.tutorialUI.isActive)) {
 
         openObservation(ownCoords, {force: true});
     }

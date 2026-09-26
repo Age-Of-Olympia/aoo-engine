@@ -350,3 +350,13 @@ if ($player->getRemaining('pv') < 1) {
 foreach ((new \App\Service\Map\GroundLayerService())->roadsOn((int) View::get_coords_id($goCoords)) as $roadId) {
     (new \App\Service\Decay\StructureDecayService())->touchAndHeal($roadId);
 }
+/* HUD: the board, the feed and the new cell's observation come back with
+ * the step, instead of three more requests (App\View\Hud\MoveResponseView).
+ * Only when the step printed nothing: an alert (dig without a pickaxe…)
+ * keeps its old path, the page reloads once it is closed. */
+$printed = ob_get_level() > 0 ? ob_get_contents() : null;
+if (($_POST['hud'] ?? '') === '1' && $printed !== null && trim($printed) === '') {
+    ob_clean();
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(\App\View\Hud\MoveResponseView::render());
+}
