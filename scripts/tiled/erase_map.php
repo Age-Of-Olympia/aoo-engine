@@ -1,45 +1,6 @@
 <?php
-use App\Service\BuildingService;
-use App\Service\Map\ResourceObjectService;
-use Classes\Db;
-//delete anything at coords given.
-/* « resources » a quitté cette liste : la table ne reçoit plus rien, ses
-   objets sont des entités et se retirent plus bas, avec le décor. */
-/* « plants » a quitté la liste avec « resources » : ce sont des entités. */
-$mapTypes = array('tiles','triggers','elements','marks','dialogs','foregrounds','routes');
-
-$db = new Db();
-
-foreach ($mapTypes as $type){
-    $sql = 'DELETE FROM map_'.$type.' WHERE coords_id =?';
-
-    $db->exe($sql, $coordsId);
-
+/* The eraser: every layer the info panel deletes one by one. The board is
+ * refreshed once by erase_or_create_tile.php. */
+foreach ((new \App\Service\Map\TileEraserService())->eraseAll((int) $coordsId) as $notice) {
+    echo '<div class="erase-notice">' . $notice . '</div>';
 }
-
-/* La gomme retire aussi le DÉCOR bâtiment (entité sans propriétaire ni
-   faction, état built) — via le service, jamais en DELETE brut. Les
-   bâtiments de joueurs/factions et les chantiers restent. */
-$buildingService = new BuildingService();
-
-foreach($buildingService->holdingCell((int) $coordsId) as $building){
-
-    if($building['owner_id'] !== null || $building['faction'] !== '' || $building['build_state'] !== 'built'){
-
-        continue;
-    }
-
-    $buildingService->remove((int) $building['player_id']);
-}
-
-/* Les ressources aussi : elles n'ont ni propriétaire ni chantier à protéger,
-   la gomme les emporte comme elle emportait leurs lignes. */
-$resources = new ResourceObjectService();
-$resources->removeEntities($resources->idsOn((int) $coordsId));
-
-/* Et les plantes, pour la même raison. */
-$resources->removeEntities(array_map('intval', array_column($db->exe(
-    "SELECT id FROM players WHERE player_type = 'plant' AND coords_id = ?",
-    array($coordsId)
-)->fetch_all(MYSQLI_NUM) ?: [], 0)));
-
