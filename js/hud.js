@@ -743,6 +743,26 @@
      * carries its duration and its keyframe intervals (data-segments),
      * so the step count is rebuilt here from the chosen rate.
      */
+    /* TEMPORARY — Chrome mobile flicker bisect, ?flicker=nofo|nomask|static:
+     * drops the animated layers, their masks, or their animated images. */
+    function probeBoardFlicker() {
+        var variant = new URLSearchParams(location.search).get('flicker');
+        if (!variant) {
+            return;
+        }
+        document.querySelectorAll('.anim-layers foreignObject').forEach(function (fo) {
+            if (variant === 'nofo') {
+                fo.parentNode.remove();
+            } else if (variant === 'nomask') {
+                fo.removeAttribute('mask');
+            } else if (variant === 'static') {
+                fo.querySelectorAll('.anim-layer-texture').forEach(function (t) {
+                    t.style.background = '#777';
+                });
+            }
+        });
+    }
+
     var ANIMATION_QUALITY_KEY = 'aoo-animation-quality';
 
     function applyAnimationQuality(quality) {
@@ -2549,6 +2569,7 @@
         initSelectionMemory();
         initMapLayers();
         applyAnimationQuality();
+        probeBoardFlicker();
         fitDamier();
         buildMapRulers();
         redrawBlockedMarkers();
