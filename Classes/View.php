@@ -361,19 +361,9 @@ class View{
      */
     public static function textureFlowAxis(string $img): ?string
     {
-        static $axis = [];
+        $anim = \App\View\AnimatedLayersView::composerParams($img)['anim'] ?? '';
 
-        if(!isset($axis[$img])){
-
-            $axis[$img] = 'y';
-            if(str_ends_with($img, '.svg') && preg_match('/data-composer="([^"]*)"/', (string) @file_get_contents($img, false, null, 0, 4096), $m)){
-
-                $anim = json_decode(html_entity_decode($m[1]), true)['anim'] ?? '';
-                $axis[$img] = ['drift_h' => 'x', 'drift_d' => null][$anim] ?? 'y';
-            }
-        }
-
-        return $axis[$img];
+        return ['drift_h' => 'x', 'drift_d' => null][$anim] ?? 'y';
     }
 
     /**
@@ -942,8 +932,18 @@ class View{
 
             $res = $db->exe($sql);
 
+            /* Animated images, one layer per image instead of one per cell,
+             * collected per table and drawn where that table's rows end:
+             * rows come sorted by depth, so the stacking holds. */
+            $layers = null;
 
             while($row = $res->fetch_object()){
+
+                if($layers === null || $layers->table !== $row->whichTable){
+
+                    echo $layers?->render() ?? '';
+                    $layers = new \App\View\AnimatedLayersView($row->whichTable);
+                }
 
 
                 $id = $row->whichTable . $row->id;
@@ -1160,12 +1160,14 @@ class View{
                      * a group AROUND the turned image: on the image itself
                      * it would turn with it and fade the wrong sides. */
                     $edgeMask = '';
+                    $edgeBits = 0;
+                    $flowAxis = null;
                     // One drawing per cell, or two clipped halves at an elbow
-                    $halves = [['turn' => $turn, 'clip' => '']];
+                    $halves = [['turn' => $angle, 'clip' => '', 'clipId' => '']];
                     if($row->whichTable == 'elements'){
 
                         $flowAxis = self::textureFlowAxis($elementImages->imagePath($row->name));
-                        $halves = [['turn' => $angle, 'clip' => '']];
+                        $halves = [['turn' => $angle, 'clip' => '', 'clipId' => '']];
 
                         $edgeBits = self::elementEdgeBits($elementAt, (int) $coords->x, (int) $coords->y, $row->name);
                         $edgeMask = $edgeBits ? ' mask="url(#elem-edge-'. $edgeBits .')"' : '';
@@ -1182,9 +1184,19 @@ class View{
                                 if($half['clip']){
                                     $halfClips[$half['clip']] = $half['clip'];
                                 }
-                                $halves[] = ['turn' => $half['rotation'], 'clip' => $half['clip'] ? ' mask="url(#'. $half['clip'] .')"' : ''];
+                                $halves[] = ['turn' => $half['rotation'], 'clip' => $half['clip'] ? ' mask="url(#'. $half['clip'] .')"' : '', 'clipId' => $half['clip']];
                             }
                         }
+                    }
+
+                    /* An element or mark with any animated format goes to the
+                     * layers whole, every format with it, so they keep their
+                     * stacking. */
+                    $layered = false;
+                    foreach(array_keys($typesTbl) as $k){
+
+                        $file = 'img/'. $row->whichTable .'/'. $row->name .'.'. $k;
+                        $layered = $layered || (file_exists($file) && \App\View\AnimatedLayersView::animates($file));
                     }
 
                     foreach($typesTbl as $k=>$e){
@@ -1196,7 +1208,16 @@ class View{
                         // this reset to apply it to them.
                         $imgClasses = [];
 
-                        if(file_exists($img) && $row->whichTable == 'elements'){
+                        if(file_exists($img) && $layered){
+
+                            foreach($halves as $half){
+
+                                $phase = self::cellPhase($flowAxis, (int) $half['turn'], (int) $coords->x, (int) $coords->y);
+                                $shift = $flowAxis === 'x' ? [$phase * self::TILE_PX, 0] : [0, $phase * self::TILE_PX];
+                                $layers->add($img, array_search($k, array_keys($typesTbl)), (float) $e, (int) $half['turn'], $shift, (int) floor($x), (int) floor($y), $edgeBits, $half['clipId']);
+                            }
+                        }
+                        elseif(file_exists($img) && $row->whichTable == 'elements'){
 
                             /* An element cell is a nested svg: it clips its content, so a
                              * shifted texture wraps inside the cell with no clip-path defs. */
@@ -1247,6 +1268,16 @@ class View{
                     if($row->whichTable == 'elements'){
                         $classTransparent[$x .','. $y] = 'transparent-gradient';
                     }
+                }
+
+                /* An animated ground tile, plant or road (a composed ground,
+                 * an animated sprite): into its table's layers, like the
+                 * elements. Wider sprites and characters keep their cells. */
+                elseif(in_array($row->whichTable, ['tiles', 'plants', 'routes'], true)
+                    && $spanW === self::TILE_PX && $spanH === self::TILE_PX
+                    && \App\View\AnimatedLayersView::animates($img)){
+
+                    $layers->add($img, 0, 1.0, (int) $angle, [0, 0], (int) floor($x), (int) floor($y), 0, '');
                 }
 
                 else{
@@ -1321,6 +1352,9 @@ class View{
                 }
 
             }
+
+
+            echo $layers?->render() ?? '';
 
 
             // uses
@@ -1570,47 +1604,28 @@ class View{
         if($mask !== null && $this->coords->z >= 0 && !in_array('noMask', $this->options)){
 
 
+            /* A scrolling mask slides by a transform, not by its
+             * background-position: the texture is painted once on a block
+             * one image longer than the board, the compositor moves it,
+             * nothing is repainted. Stepped like the element layers. */
+            $scroller = '';
             if($scrollSeconds > 0){
 
+                [$maskW, $maskH] = getimagesize($mask);
+                [$block, $to] = $scrollVertical
+                    ? ['top:-'. $maskH .'px;left:0;right:0;bottom:0;', 'translateY('. $maskH .'px)']
+                    : ['top:0;left:0;right:-'. $maskW .'px;bottom:0;', 'translateX(-'. $maskW .'px)'];
 
-                list($maskW, $maskH) = getimagesize($mask);
-
-                echo '
-                <style>
-                .scrolling-mask {
-
-                    animation: scrollMask '. $scrollSeconds .'s linear infinite;
-                }
-
-                @keyframes scrollMask {
-
-                    0% {
-                    background-position: 0 0;
-                    }
-                    100% {
-                    ';
-
-                    if(!$scrollVertical){
-
-                        echo 'background-position: -'. $maskW .'px 0;';
-                    }
-
-                    else{
-
-                        echo 'background-position: 0 '. $maskW .'px;';
-                    }
-
-                echo '
-                </style>
-                ';
+                echo '<style>@keyframes scrollMask{to{transform:'. $to .'}}</style>';
+                $scroller = '<div class="view-mask-scroll" data-segments="1" style="position:absolute;'. $block .'max-width:none;max-height:none;will-change:transform;'
+                    . 'background:url(\''. $mask .'\');animation:scrollMask '. $scrollSeconds .'s '. \App\View\AnimatedLayersView::steps($scrollSeconds) .' infinite"></div>';
             }
-            
+
             echo '
             <div
-                class="view-mask scrolling-mask"
-                style="background: url(\''. $mask .'\'); max-width:'. $sizeW .'px; max-height:'. $sizeH .'px; "
-                >
-            </div>
+                class="view-mask"
+                style="'. ($scroller === '' ? 'background: url(\''. $mask .'\'); ' : 'overflow: hidden; ') .'max-width:'. $sizeW .'px; max-height:'. $sizeH .'px; "
+                >'. $scroller .'</div>
             ';
         }
 

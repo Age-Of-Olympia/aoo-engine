@@ -512,6 +512,16 @@
             return;
         }
 
+        /* Animated images are layers (AnimatedLayersView), not <image>s:
+         * each table's group is swapped whole when it changed. */
+        Array.prototype.forEach.call(freshView.querySelectorAll('.anim-layers'), function (fresh) {
+            var current = document.getElementById(fresh.id);
+            if (current && !fresh.isEqualNode(current)) {
+                current.replaceWith(document.importNode(fresh, true));
+            }
+        });
+        applyAnimationQuality();
+
         $(currentView).find('image[id]').each(function () {
             var fresh = freshView.querySelector('image[id="' + this.id + '"]');
             if (!fresh) {
@@ -677,7 +687,14 @@
             }
         });
 
-        $('#hud-layers-pop').on('click', '.hud-layer', function () {
+        $('#hud-layers-pop').on('click', '.hud-anim-quality', function () {
+            try {
+                localStorage.setItem(ANIMATION_QUALITY_KEY, this.dataset.quality);
+            } catch (e) { /* private mode: applies to this page only */ }
+            applyAnimationQuality(this.dataset.quality);
+        });
+
+        $('#hud-layers-pop').on('click', '.hud-layer[data-option]', function () {
             var $layer = $(this);
             var option = $layer.data('option');
             var willBeOn = !$layer.hasClass('hud-layer--on');
@@ -686,6 +703,44 @@
                 .done(function () {
                     window.hudApplyBoardOption(option, willBeOn);
                 });
+        });
+    }
+
+    /*
+     * Animation quality of the board, per browser: positions per second
+     * of the sliding layers and the weather mask ('smooth' = every frame,
+     * 'off' = still). The server renders the default (12); each motion
+     * carries its duration and its keyframe intervals (data-segments),
+     * so the step count is rebuilt here from the chosen rate.
+     */
+    var ANIMATION_QUALITY_KEY = 'aoo-animation-quality';
+
+    function applyAnimationQuality(quality) {
+        if (quality === undefined) {
+            try {
+                quality = localStorage.getItem(ANIMATION_QUALITY_KEY);
+            } catch (e) {
+                quality = null;
+            }
+        }
+        quality = quality || '12';
+
+        $('.hud-anim-quality').each(function () {
+            $(this).toggleClass('hud-layer--on', this.dataset.quality === quality);
+        });
+
+        Array.prototype.forEach.call(document.querySelectorAll('.anim-layer-move, .view-mask-scroll'), function (el) {
+            el.style.animationPlayState = quality === 'off' ? 'paused' : '';
+            if (quality === 'off') {
+                return;
+            }
+            if (quality === 'smooth') {
+                el.style.animationTimingFunction = 'linear';
+                return;
+            }
+            var seconds = parseFloat(el.style.animationDuration || getComputedStyle(el).animationDuration) || 1;
+            var segments = parseInt(el.dataset.segments, 10) || 1;
+            el.style.animationTimingFunction = 'steps(' + Math.max(1, Math.round(seconds * Number(quality) / segments)) + ')';
         });
     }
 
@@ -2418,6 +2473,7 @@
         initItemSheet();
         initSelectionMemory();
         initMapLayers();
+        applyAnimationQuality();
         fitDamier();
         buildMapRulers();
         redrawBlockedMarkers();

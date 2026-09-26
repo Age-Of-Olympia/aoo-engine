@@ -112,7 +112,6 @@ body::before {
     width: clamp(190px, 13.5vw, 264px);
     padding: 8px 14px;
     margin: 2vh auto 2vh;
-    animation: none;
 }
 
 #index-menu .text {

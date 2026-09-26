@@ -30,11 +30,6 @@ parameters:
 			count: 1
 			path: Classes/Player.php
 
-		-
-			message: '#^Variable \$flowAxis might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: Classes/View.php
 
 		-
 			message: '#^Variable \$hideLogsCondition might not be defined\.$#'

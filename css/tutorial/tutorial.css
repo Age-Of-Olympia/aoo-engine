@@ -510,21 +510,25 @@
     background: rgba(255, 255, 255, 0.1);
 }
 
-.tutorial-highlight.pulsate {
+/* The pulse fades a stronger glow in and out on a layer of its own:
+ * opacity runs on the compositor, an animated box-shadow repaints
+ * every frame. */
+.tutorial-highlight.pulsate::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow:
+        0 0 25px 5px rgba(218, 165, 32, 0.6),
+        inset 0 0 0 2px rgba(218, 165, 32, 0.8);
+    opacity: 0;
+    will-change: opacity;
     animation: tutorial-spotlight-pulse 2s infinite;
 }
 
-/* Pulsating animation for spotlight - pulses the glow */
 @keyframes tutorial-spotlight-pulse {
-    0%, 100% {
-        box-shadow:
-            0 0 15px 3px rgba(212, 175, 55, 0.4),
-            inset 0 0 0 2px rgba(212, 175, 55, 0.6);
-    }
     50% {
-        box-shadow:
-            0 0 25px 5px rgba(218, 165, 32, 0.6),      /* More subtle pulse */
-            inset 0 0 0 2px rgba(218, 165, 32, 0.8);
+        opacity: 1;
     }
 }
 
