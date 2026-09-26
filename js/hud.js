@@ -743,6 +743,32 @@
      * carries its duration and its keyframe intervals (data-segments),
      * so the step count is rebuilt here from the chosen rate.
      */
+    /* TEMPORARY — Chrome mobile flicker bisect, ?flicker=<variant>:
+     * isolates the animated layers in their own compositor layer (iso on
+     * the SVG group, isofo on the HTML inside each foreignObject), or drops
+     * the layers carrying a GIF (nogif) or a WebP (nowebp). */
+    function probeBoardFlicker() {
+        var variant = new URLSearchParams(location.search).get('flicker');
+        if (!variant) {
+            return;
+        }
+        if (variant === 'iso') {
+            document.querySelectorAll('.anim-layers').forEach(function (g) {
+                g.style.willChange = 'transform';
+            });
+        }
+        document.querySelectorAll('.anim-layers foreignObject').forEach(function (fo) {
+            var texture = fo.querySelector('.anim-layer-texture');
+            var image = texture ? texture.style.backgroundImage : '';
+            if (variant === 'isofo') {
+                fo.querySelector('.anim-layer-frame').style.willChange = 'transform';
+            } else if ((variant === 'nogif' && image.indexOf('.gif') !== -1)
+                || (variant === 'nowebp' && image.indexOf('.webp') !== -1)) {
+                fo.parentNode.remove();
+            }
+        });
+    }
+
     var ANIMATION_QUALITY_KEY = 'aoo-animation-quality';
 
     function applyAnimationQuality(quality) {
@@ -2549,6 +2575,7 @@
         initSelectionMemory();
         initMapLayers();
         applyAnimationQuality();
+        probeBoardFlicker();
         fitDamier();
         buildMapRulers();
         redrawBlockedMarkers();

@@ -1189,13 +1189,14 @@ class View{
                         }
                     }
 
-                    /* An element or mark whose every format slides goes to the
-                     * layers whole, so its formats keep their stacking. */
-                    $layered = true;
+                    /* An element or mark with any animated format goes to the
+                     * layers whole, every format with it, so they keep their
+                     * stacking. */
+                    $layered = false;
                     foreach(array_keys($typesTbl) as $k){
 
                         $file = 'img/'. $row->whichTable .'/'. $row->name .'.'. $k;
-                        $layered = $layered && (!file_exists($file) || \App\View\AnimatedLayersView::slides($file));
+                        $layered = $layered || (file_exists($file) && \App\View\AnimatedLayersView::animates($file));
                     }
 
                     foreach($typesTbl as $k=>$e){
@@ -1269,12 +1270,12 @@ class View{
                     }
                 }
 
-                /* A sliding ground tile, plant or road (a composed ground):
-                 * into its table's layers, like the elements. Wider sprites
-                 * and characters keep their cells. */
+                /* An animated ground tile, plant or road (a composed ground,
+                 * an animated sprite): into its table's layers, like the
+                 * elements. Wider sprites and characters keep their cells. */
                 elseif(in_array($row->whichTable, ['tiles', 'plants', 'routes'], true)
                     && $spanW === self::TILE_PX && $spanH === self::TILE_PX
-                    && \App\View\AnimatedLayersView::slides($img)){
+                    && \App\View\AnimatedLayersView::animates($img)){
 
                     $layers->add($img, 0, 1.0, (int) $angle, [0, 0], (int) floor($x), (int) floor($y), 0, '');
                 }
