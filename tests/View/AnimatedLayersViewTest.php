@@ -42,14 +42,13 @@ class AnimatedLayersViewTest extends TestCase
             . '<animateTransform attributeName="transform" type="translate" values="0 0;0 50" dur="2s" repeatCount="indefinite"/></rect></g></svg>');
     }
 
-    public function testDetectsAnimatedFiles(): void
+    public function testOnlySlidingTilesBecomeLayers(): void
     {
         $frame = "\x21\xF9\x04";
-        $this->assertTrue(AnimatedLayersView::animates($this->file('a.gif', 'GIF89a' . $frame . 'x' . $frame . 'y')));
-        $this->assertFalse(AnimatedLayersView::animates($this->file('b.gif', 'GIF89a' . $frame . 'x')));
-        $this->assertTrue(AnimatedLayersView::animates($this->file('c.webp', 'RIFF....WEBPVP8XANIMANMF')));
-        $this->assertFalse(AnimatedLayersView::animates($this->file('d.webp', 'RIFF....WEBPVP8 ')));
-        $this->assertTrue(AnimatedLayersView::animates($this->composed('e.svg', 'drift_v')));
+        $this->assertFalse(AnimatedLayersView::slides($this->file('a.gif', 'GIF89a' . $frame . 'x' . $frame . 'y')));
+        $this->assertFalse(AnimatedLayersView::slides($this->file('c.webp', 'RIFF....WEBPVP8XANIMANMF')));
+        $this->assertFalse(AnimatedLayersView::slides($this->file('s.svg', '<svg><animate attributeName="opacity"/></svg>')));
+        $this->assertTrue(AnimatedLayersView::slides($this->composed('e.svg', 'drift_v')));
     }
 
     public function testSlidingTileIsFrozenAndMovedByCss(): void
@@ -71,7 +70,7 @@ class AnimatedLayersViewTest extends TestCase
     public function testLayersStackLikeTheCells(): void
     {
         $lava = $this->composed('lava.svg', 'drift_v');
-        $fire = $this->file('fire.gif', 'GIF89a');
+        $fire = $this->composed('fire.svg', 'sway');
         $layers = new AnimatedLayersView();
         // Rows: lava first, then fire; an elbow's clipped half added before its whole one
         $layers->add($lava, 3, 1.0, 0, [0, 0], 0, 0, 0, 'elem-half-ENW');
@@ -82,7 +81,7 @@ class AnimatedLayersViewTest extends TestCase
         $whole = strpos($html, 'rotate(90deg)');
         $clipped = strpos($html, 'url(#elem-half-ENW)');
         $this->assertLessThan($clipped, $whole, 'the clipped half goes over the whole one');
-        $this->assertLessThan(strpos($html, 'fire.gif'), $clipped, 'fire, a later row, goes over lava');
+        $this->assertLessThan(strpos($html, 'id="layer-elements-2"'), $clipped, 'fire, a later row, goes over lava');
         $this->assertStringContainsString('opacity:0.3', $html);
     }
 

@@ -77,22 +77,15 @@ final class AnimatedLayersView
         return $params[$img];
     }
 
-    /** Whether an image file animates: SMIL in an SVG, several frames in a GIF, WebP or PNG. Memoised. */
-    public static function animates(string $img): bool
+    /**
+     * Whether an image is a sliding composed tile: only those become layers.
+     * An image animating by itself (GIF, WebP, APNG, SMIL) stays one <image>
+     * per cell — as a layer background, Chrome Android drops whatever the
+     * board paints above it on some frames.
+     */
+    public static function slides(string $img): bool
     {
-        static $animated = [];
-
-        return $animated[$img] ??= (function () use ($img): bool {
-            $data = (string) @file_get_contents($img);
-
-            return match (strtolower(pathinfo($img, PATHINFO_EXTENSION))) {
-                'svg'  => str_contains($data, '<animate'),
-                'gif'  => substr_count($data, "\x21\xF9\x04") > 1,
-                'webp' => str_contains($data, 'ANMF'),
-                'png'  => str_contains($data, 'acTL'),
-                default => false,
-            };
-        })();
+        return self::moves($img) !== [];
     }
 
     /**
@@ -230,16 +223,13 @@ final class AnimatedLayersView
     /**
      * What the layer repeats. A sliding composed tile is frozen: its
      * animations out, its own shape mask out (the layer's mask carries it,
-     * fixed to the cell). Anything else is the file itself. Memoised.
+     * fixed to the cell). Memoised.
      */
     private static function textureUri(string $img): string
     {
         static $uris = [];
 
         return $uris[$img] ??= (function () use ($img): string {
-            if (self::moves($img) === []) {
-                return $img;
-            }
             $svg = preg_replace('#<animate(Transform)?\b[^>]*/>#', '', (string) file_get_contents($img));
 
             return 'data:image/svg+xml,'. rawurlencode(str_replace(' mask="url(#m)"', '', $svg));
@@ -252,7 +242,7 @@ final class AnimatedLayersView
         static $uris = [];
 
         if (!array_key_exists($img, $uris)) {
-            $uris[$img] = self::moves($img) !== [] && preg_match('#<mask id="m">.*?</mask>#s', (string) file_get_contents($img), $m)
+            $uris[$img] = preg_match('#<mask id="m">.*?</mask>#s', (string) file_get_contents($img), $m)
                 ? 'data:image/svg+xml,'. rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="50" height="50"><defs>'
                     . $m[0] .'</defs><rect width="50" height="50" fill="#fff" mask="url(#m)"/></svg>')
                 : null;
