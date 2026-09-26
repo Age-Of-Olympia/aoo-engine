@@ -28,7 +28,7 @@ class GroundLootService
      * piles map_items et instances — le pendant read-only de collect(),
      * même périmètre.
      *
-     * @return array{stacks: array<int, object>, instances: array<int, object>, plants: array<int, object>}
+     * @return array{stacks: array<int, object>, instances: array<int, object>}
      */
     public function listAt(int $x, int $y, int $z, string $plan): array
     {
@@ -63,24 +63,7 @@ class GroundLootService
             $instances[] = $row;
         }
 
-        /* Les plantes sont des entités : on lit `race`, le TYPE, et non plus le
-         * nom d'une ligne de couche. Ce que la plante rend se règle désormais
-         * sur ce type — le nom ne sert plus de configuration. */
-        $plants = [];
-        $res = $db->exe(
-            "SELECT p.id, p.race AS name
-             FROM players AS p
-             INNER JOIN coords AS c ON p.coords_id = c.id
-             WHERE p.player_type = 'plant'
-               AND c.x = ? AND c.y = ? AND c.z = ? AND c.plan = ?
-             ORDER BY p.race",
-            [$x, $y, $z, $plan]
-        );
-        while ($row = $res->fetch_object()) {
-            $plants[] = $row;
-        }
-
-        return ['stacks' => $stacks, 'instances' => $instances, 'plants' => $plants];
+        return ['stacks' => $stacks, 'instances' => $instances];
     }
 
     /**
@@ -161,14 +144,9 @@ class GroundLootService
 
         /* Les plantes se cueillent dans le même geste, mais gardent leur
          * journal : la récolte n'est pas le ramassage. */
-        $harvest = $this->harvestPlants($player, $coordsId, $logCoords);
+        $harvest = $this->collectPlants($player, $coordsId, $logCoords);
 
         if (!$res->num_rows && !$hadInstances) {
-
-            if ($harvest !== []) {
-                $this->forgetBoards($coordsId);
-            }
-
             return $harvest;
         }
 
@@ -210,6 +188,22 @@ class GroundLootService
         $this->forgetBoards($coordsId);
 
         return array_merge($lootList, $harvest);
+    }
+
+    /**
+     * Pick only the plants of the cell — the plant card's button.
+     *
+     * @return string[] what was picked ([] = no plant)
+     */
+    public function collectPlants(Player $player, int $coordsId, object $logCoords): array
+    {
+        $harvest = $this->harvestPlants($player, $coordsId, $logCoords);
+
+        if ($harvest !== []) {
+            $this->forgetBoards($coordsId);
+        }
+
+        return $harvest;
     }
 
     /**

@@ -176,7 +176,7 @@ final class EntityCardView
 
         $card .= self::lockStatusHtml($target, (int) $pvPct);
 
-        $card .= self::harvestStatusHtml($player, $target, (string) $coords->plan);
+        $card .= self::familyStatusHtml($player, $target, (string) $coords->plan, (int) $x, (int) $y);
 
         // Équipement porté — alvéoles de la vue de sélection du HUD
         // papier (écrans larges) ; l'habillage hérité garde sa carte.
@@ -547,6 +547,32 @@ final class EntityCardView
             . '</div>';
     }
 
+    /** The badge under the card that says what this family of entity is good for. */
+    private static function familyStatusHtml(Player $viewer, Player $target, string $plan, int $x, int $y): string
+    {
+        return match ((string) ($target->data->player_type ?? '')) {
+            'resource' => self::resourceStatusHtml($viewer, $target, $plan),
+            'plant' => self::plantStatusHtml($viewer, $x, $y),
+            'route' => self::statusBadgeHtml('Courir y est possible', false),
+            default => '',
+        };
+    }
+
+    /**
+     * A plant has no exhausted state: picked in one go, it is gone. It is
+     * harvestable as long as it is there — from its own cell.
+     */
+    private static function plantStatusHtml(Player $viewer, int $x, int $y): string
+    {
+        $onOwnTile = $x === (int) $viewer->coords->x && $y === (int) $viewer->coords->y;
+
+        return self::statusBadgeHtml('Récoltable', false)
+            . ($onOwnTile
+                ? '<button class="action action--direct ground-take" data-plants="1">'
+                    . '<span class="ra ra-hand"></span> <span class="action-name">Cueillir</span></button>'
+                : '<sup>Allez sur la case pour cueillir.</sup>');
+    }
+
     /**
      * Pastille de RÉCOLTE : ce qu'on peut encore tirer de la case.
      *
@@ -556,25 +582,12 @@ final class EntityCardView
      * vidé sans le savoir, et il n'y avait plus aucun moyen de le voir avant
      * d'y passer son tour.
      *
-     * Une plante n'a pas cet état : elle est prise d'un coup et disparaît.
-     * Elle est donc toujours récoltable tant qu'elle est là.
-     *
      * L'habillage est celui de la pastille des bâtiments, à dessein : c'est la
      * même phrase — « voici l'état de ce qui occupe la case » — et deux styles
      * pour une seule idée finiraient par diverger.
      */
-    private static function harvestStatusHtml(Player $viewer, Player $target, string $plan): string
+    private static function resourceStatusHtml(Player $viewer, Player $target, string $plan): string
     {
-        $type = (string) ($target->data->player_type ?? '');
-
-        if ($type === 'plant') {
-            return self::statusBadgeHtml('Récoltable', false);
-        }
-
-        if ($type !== 'resource') {
-            return '';
-        }
-
         // Same catalogue as the search condition: a type without a yield is
         // not harvestable, whatever the map says.
         $race = (string) ($target->data->race ?? '');

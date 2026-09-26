@@ -64,16 +64,27 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /** La bourse au sol montre les plantes : sans les voir, on n'y pense pas. */
-    public function testPlantsShowInTheGroundList(): void
+    /** The plant card's button picks the plant alone; the ground list leaves it to the card. */
+    public function testThePlantButtonPicksOnlyThePlant(): void
     {
         $name = $this->somePlantName();
-        $this->plantAt($this->coordsIdOn(self::PLAN, 1, 1), $name);
+        $coordsId = $this->coordsIdOn(self::PLAN, 1, 1);
+        $this->plantAt($coordsId, $name);
 
-        $loot = (new GroundLootService())->listAt(1, 1, 0, self::PLAN);
+        $this->assertSame(
+            ['stacks' => [], 'instances' => []],
+            (new GroundLootService())->listAt(1, 1, 0, self::PLAN),
+            'une plante n\'est pas un objet au sol'
+        );
 
-        $this->assertCount(1, $loot['plants']);
-        $this->assertSame($name, $loot['plants'][0]->name);
+        $player = $this->createRealPlayer('cueilleurseul');
+        $player->get_data();
+
+        $this->assertNotEmpty((new GroundLootService())->collectPlants($player, $coordsId, $this->tile(1, 1, self::PLAN)));
+        $this->assertSame(
+            0,
+            (int) $this->link->fetchOne("SELECT COUNT(*) FROM players WHERE player_type = 'plant' AND coords_id = ?", [$coordsId])
+        );
     }
 
     /** Ramasser cueille la plante : elle quitte la case. */
@@ -100,7 +111,6 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
                 [$coordsId]
             )
         );
-        $this->assertSame([], (new GroundLootService())->listAt(2, 1, 0, self::PLAN)['plants']);
     }
 
     /**

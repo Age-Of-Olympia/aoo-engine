@@ -191,6 +191,7 @@ $(document).off('click.pickupLine').on('click.pickupLine', '.ground-take', funct
     var body = new URLSearchParams();
     if(this.hasAttribute('data-item')){ body.set('itemId', this.getAttribute('data-item')); }
     if(this.hasAttribute('data-instance')){ body.set('instanceId', this.getAttribute('data-instance')); }
+    if(this.hasAttribute('data-plants')){ body.set('plants', '1'); }
 
     fetch('pickup.php', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: body.toString()})
         .then(function(r){ return r.text(); })

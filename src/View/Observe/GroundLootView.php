@@ -19,7 +19,8 @@ final class GroundLootView
     {
         $loot = (new GroundLootService())->listAt($x, $y, (int) $coords->z, (string) $coords->plan);
 
-        if ($loot['stacks'] === [] && $loot['instances'] === [] && $loot['plants'] === []) {
+        // A plant is an entity: its own card shows it, and picks it
+        if ($loot['stacks'] === [] && $loot['instances'] === []) {
             return;
         }
 
@@ -60,16 +61,6 @@ final class GroundLootView
             echo '<div class="ground-line"><img src="'. self::mini((string) $row->name, 'img/items/'. $row->name .'_mini.webp') .'" style="max-height:22px;vertical-align:middle;" alt="" /> '
                 . $label . $state
                 . $lineButton('data-instance', (int) $row->instance_id) .'</div>';
-        }
-
-        /* Les plantes se montrent avec le reste : on ne les cueille plus en
-         * marchant, il faut donc les VOIR pour penser à les prendre. Ce
-         * qu'elles rendent est tiré au sort à la cueillette, d'où l'absence
-         * de quantité ici. */
-        foreach ($loot['plants'] as $row) {
-
-            echo '<div class="ground-line"><img src="'. self::mini((string) $row->name, 'img/plants/'. $row->name .'.png') .'" style="max-height:22px;vertical-align:middle;" alt="" /> '
-                . ucfirst((string) $row->name) .' <sup>(à cueillir)</sup></div>';
         }
 
         /* Le bouton n'apparaît que sur SA case : ramasser demande d'être
