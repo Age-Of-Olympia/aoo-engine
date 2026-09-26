@@ -9,14 +9,17 @@ use Classes\Db;
  * with the time spent in them. Shown in the page footer and, for XHR and
  * fetch responses, sent as a Server-Timing entry (js/main.js adds them up).
  *
- * It also counts the writes: a per-request cache keeps what it read while
- * writes() has not moved, whoever wrote and through which connection.
+ * It also counts the writes, per table: a per-request cache keeps what it
+ * read while the writes to its tables have not moved, whoever wrote and
+ * through which connection.
  */
 final class QueryCounter
 {
     private static int $count = 0;
     private static float $ms = 0.0;
     private static int $writes = 0;
+    /** @var array<string, int> writes per table; '*' = a write whose table was not recognised */
+    private static array $tableWrites = [];
 
     /**
      * @template T
@@ -33,6 +36,10 @@ final class QueryCounter
             self::$ms += (hrtime(true) - $start) / 1e6;
             if (Db::isWriteStatement($sql)) {
                 self::$writes++;
+                $table = preg_match('/^\s*(?:(?:INSERT|REPLACE)(?:\s+IGNORE)?\s+INTO|UPDATE|DELETE\s+FROM|TRUNCATE(?:\s+TABLE)?)\s+`?(\w+)/i', $sql, $m)
+                    ? strtolower($m[1])
+                    : '*';
+                self::$tableWrites[$table] = (self::$tableWrites[$table] ?? 0) + 1;
             }
         }
     }
@@ -41,6 +48,17 @@ final class QueryCounter
     public static function writes(): int
     {
         return self::$writes;
+    }
+
+    /** Writes run so far on these tables, unrecognised writes included. */
+    public static function writesTo(string ...$tables): int
+    {
+        $n = self::$tableWrites['*'] ?? 0;
+        foreach ($tables as $table) {
+            $n += self::$tableWrites[strtolower($table)] ?? 0;
+        }
+
+        return $n;
     }
 
     public static function count(): int

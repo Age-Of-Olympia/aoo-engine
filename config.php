@@ -44,7 +44,10 @@ if (PHP_SAPI !== 'cli') {
     ini_set('session.use_strict_mode', '1');
 }
 
-session_start();
+/* A script that only reads the session declares SESSION_READ_ONLY: the
+ * lock is released at once, so the player's parallel requests (observe,
+ * feeds, mail) no longer wait for each other. */
+session_start(defined('SESSION_READ_ONLY') ? ['read_and_close' => true] : []);
 
 // Authenticated, per-user responses: say so to every cache on the path.
 // The prod cross-account incident was a host-level full-page cache storing

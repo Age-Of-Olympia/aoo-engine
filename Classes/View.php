@@ -1730,6 +1730,32 @@ class View{
 
     public static function get_coords_id($goCoords){
 
+        /* A cell's id never changes: one lookup per cell and request, kept
+         * while nothing writes to coords (tests purge whole plans). */
+        static $ids = [];
+        static $readAtWrites = -1;
+        if ($readAtWrites !== \App\Database\QueryCounter::writesTo('coords')) {
+            $ids = [];
+            $readAtWrites = \App\Database\QueryCounter::writesTo('coords');
+        }
+        $key = isset($goCoords->x, $goCoords->y, $goCoords->z, $goCoords->plan)
+            ? $goCoords->x .','. $goCoords->y .','. $goCoords->z .','. $goCoords->plan
+            : null;
+        if ($key !== null && isset($ids[$key])) {
+            return $ids[$key];
+        }
+
+        $id = self::lookupCoordsId($goCoords);
+        if ($key !== null && $id !== null) {
+            $ids[$key] = $id;
+            $readAtWrites = \App\Database\QueryCounter::writesTo('coords');
+        }
+
+        return $id;
+    }
+
+    private static function lookupCoordsId($goCoords){
+
         $db = new Db();
 
         // Validate input

@@ -15,6 +15,8 @@ use Classes\Str;
 use Classes\Ui;
 use Classes\Db;
 
+// Reads the session only: its lock is released at once (config.php)
+define('SESSION_READ_ONLY', true);
 require_once('config.php');
 
 
