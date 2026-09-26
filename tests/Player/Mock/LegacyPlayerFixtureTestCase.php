@@ -441,8 +441,8 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
             return;
         }
 
-        // icon is NOT NULL without default on the CI schema.
-        $this->link->insert('actions', ['name' => $name, 'icon' => '', 'type' => $type]);
+        // icon, display_name and text are NOT NULL without default.
+        $this->link->insert('actions', ['name' => $name, 'display_name' => $name, 'text' => '', 'icon' => '', 'type' => $type]);
         $id = (int) $this->link->lastInsertId();
         $this->sownActionIds[] = $id;
 

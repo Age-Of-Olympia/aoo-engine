@@ -32,7 +32,7 @@ class ConsommerBaselineTest extends LegacyPlayerFixtureTestCase
         $maxA = (int) $drinker->caracs->a;
         $this->snapshotBloodAt((int) $drinker->data->coords_id);
 
-        $potion = $this->sowCatalogItem('potion_soin', ['type' => 'consommable', 'pv' => 10]);
+        $potion = $this->sowCatalogItem('gm_potion_soin', ['type' => 'consommable', 'pv' => 10]);
         $potion->add_item($drinker, 1);
         $drinker->putBonus(['pv' => -20]);
 
@@ -59,7 +59,7 @@ class ConsommerBaselineTest extends LegacyPlayerFixtureTestCase
         $drinker->get_caracs();
         $maxA = (int) $drinker->caracs->a;
 
-        $potion = $this->sowCatalogItem('potion_soin', ['type' => 'consommable', 'pv' => 10]);
+        $potion = $this->sowCatalogItem('gm_potion_soin', ['type' => 'consommable', 'pv' => 10]);
         $_POST['itemId'] = (string) $potion->id;
 
         $results = (new ActionExecutorService($this->actionOrSkip('consommer'), $drinker, $drinker))->executeAction();
@@ -78,7 +78,7 @@ class ConsommerBaselineTest extends LegacyPlayerFixtureTestCase
         $drinker->get_caracs();
         $other->get_caracs();
 
-        $potion = $this->sowCatalogItem('potion_soin', ['type' => 'consommable', 'pv' => 10]);
+        $potion = $this->sowCatalogItem('gm_potion_soin', ['type' => 'consommable', 'pv' => 10]);
         $potion->add_item($drinker, 1);
         $_POST['itemId'] = (string) $potion->id;
 

@@ -59,7 +59,7 @@ class FactionImportExportTest extends TestCase
         $this->assertSame('forge_sacree', $payload['code']);
         $this->assertSame('La Forge Sacrée', $payload['name']);
         $this->assertSame('ra-forging', $payload['raFont']);
-        $this->assertSame('banque_des_lutins', $payload['respawnPlan']);
+        $this->assertSame($faction->getRespawnPlan(), $payload['respawnPlan'], 'world content, edited per server');
         $this->assertFalse($payload['secret']);
         $this->assertSame('Forgeron', $payload['roles'][0]['name']);
         $this->assertTrue($payload['roles'][0]['defaultRole']);

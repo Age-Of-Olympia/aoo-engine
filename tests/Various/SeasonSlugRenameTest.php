@@ -177,6 +177,7 @@ class SeasonSlugRenameTest extends TestCase
         $this->assertSame([], $preview['operations']);
         // Season 1 with an _s2 suffix: not current, keeps its (wrong) name —
         // nothing to do, nothing broken.
-        $this->assertSame([], $preview['skipped']);
+        // real plans in the base may carry their own mismatches
+        $this->assertArrayNotHasKey(self::PREFIX . '_c_s2', $preview['skipped']);
     }
 }

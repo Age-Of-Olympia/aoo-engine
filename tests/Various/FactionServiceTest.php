@@ -49,7 +49,8 @@ class FactionServiceTest extends TestCase
         $this->assertNotNull($data);
         $this->assertSame('La Forge Sacrée', $data->name);
         $this->assertSame('ra-forging', $data->raFont);
-        $this->assertSame('banque_des_lutins', $data->respawnPlan);
+        // the respawn plan is world content, edited per server
+        $this->assertSame($this->respawnPlanInBase(), $data->respawnPlan);
         $this->assertIsString($data->text);
 
         $this->assertIsArray($data->role);
@@ -212,5 +213,10 @@ class FactionServiceTest extends TestCase
     {
         // faction_roles rows follow via ON DELETE CASCADE.
         $this->link->executeStatement('DELETE FROM factions WHERE code = ?', [$code]);
+    }
+
+    private function respawnPlanInBase(): string
+    {
+        return (string) $this->link->fetchOne("SELECT respawnPlan FROM factions WHERE code = 'forge_sacree'");
     }
 }

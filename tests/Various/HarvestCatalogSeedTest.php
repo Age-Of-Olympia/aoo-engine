@@ -154,7 +154,8 @@ class HarvestCatalogSeedTest extends TestCase
 
         $report = (new HarvestCatalogService($this->conn))->seed();
 
-        $this->assertSame([], $report['unknown'], 'une entrée vide n\'est pas un type inconnu');
+        // other plans in datas/ may report their own unknowns
+        $this->assertNotContains('', $report['unknown'], 'une entrée vide n\'est pas un type inconnu');
         $this->assertNotFalse($this->poured(self::PLAN_OK));
     }
 
