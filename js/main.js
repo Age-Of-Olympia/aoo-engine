@@ -29,7 +29,8 @@ function load_data(data, element){
 /* Query counter (footer "N req"): the page's own SQL count, plus the
  * Server-Timing "db" entry of every XHR and fetch made since, plus the
  * requests that reached the network (a cached file has no transferSize).
- * Hovering lists the queries per request and the SQL time. */
+ * Hovering lists the queries per request and the SQL time. A move or an
+ * action starts the count over: it shows what that one gesture cost. */
 document.addEventListener('DOMContentLoaded', function () {
     var counter = document.getElementById('query-counter');
     if (!counter || !window.PerformanceObserver) {
@@ -45,6 +46,18 @@ document.addEventListener('DOMContentLoaded', function () {
         counter.title = Math.round(ms) + ' ms de SQL\n' + lines.join('\n');
     }
 
+    var gestures = { 'go.php': 'Déplacement', 'action.php': 'Action' };
+    $(document).ajaxSend(function (e, xhr, settings) {
+        var gesture = gestures[String(settings.url).split('?')[0]];
+        if (gesture) {
+            queries = 0;
+            ms = 0;
+            http = 0;
+            lines = [gesture];
+            render();
+        }
+    });
+
     new PerformanceObserver(function (list) {
         list.getEntries().forEach(function (entry) {
             if (entry.transferSize > 0) {
@@ -57,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var n = Number(timing.description) || 0;
                 queries += n;
                 ms += timing.duration;
-                lines.push(entry.name.replace(location.origin + '/', '') + ' : ' + n + ' req');
+                lines.push(entry.name.replace(location.origin + '/', '').split('?')[0] + ' : ' + n + ' req');
             });
         });
         render();
