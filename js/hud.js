@@ -687,13 +687,6 @@
             }
         });
 
-        $('#hud-layers-pop').on('click', '.hud-anim-quality', function () {
-            try {
-                localStorage.setItem(ANIMATION_QUALITY_KEY, this.dataset.quality);
-            } catch (e) { /* private mode: applies to this page only */ }
-            applyAnimationQuality(this.dataset.quality);
-        });
-
         $('#hud-layers-pop').on('click', '.hud-layer[data-option]', function () {
             var $layer = $(this);
             var option = $layer.data('option');
@@ -723,13 +716,20 @@
                 quality = null;
             }
         }
-        quality = quality || '12';
+        var $menus = $('.anim-quality');
+        quality = quality || String($menus.data('default') || 12);
 
-        $('.hud-anim-quality').each(function () {
-            $(this).toggleClass('hud-layer--on', this.dataset.quality === quality);
+        /* Quality ladder: lit rate (the only one in the tab order), its hint */
+        $menus.each(function () {
+            var $rates = $(this).find('[data-quality]');
+            var $chosen = $rates.filter('[data-quality="' + quality + '"]');
+            $rates.attr({ 'aria-checked': 'false', tabindex: '-1' });
+            $chosen.attr({ 'aria-checked': 'true', tabindex: '0' });
+            $(this).find('.anim-quality-hint').text($chosen.data('hint') || '');
         });
 
-        Array.prototype.forEach.call(document.querySelectorAll('.anim-layer-move, .view-mask-scroll'), function (el) {
+        /* The ladder's water swatch follows the same rate as the board */
+        Array.prototype.forEach.call(document.querySelectorAll('.anim-layer-move, .view-mask-scroll, .anim-quality-preview-move'), function (el) {
             el.style.animationPlayState = quality === 'off' ? 'paused' : '';
             if (quality === 'off') {
                 return;
@@ -743,6 +743,30 @@
             el.style.animationTimingFunction = 'steps(' + Math.max(1, Math.round(seconds * Number(quality) / segments)) + ')';
         });
     }
+
+    function chooseAnimationQuality(quality) {
+        try {
+            localStorage.setItem(ANIMATION_QUALITY_KEY, quality);
+        } catch (e) { /* private mode: applies to this page only */ }
+        applyAnimationQuality(quality);
+    }
+
+    $(document).on('click', '.anim-quality [data-quality]', function () {
+        chooseAnimationQuality(this.dataset.quality);
+    });
+
+    /* Radio group keys: arrows move the choice along the ladder */
+    $(document).on('keydown', '.anim-quality [data-quality]', function (e) {
+        var step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+        if (!step) {
+            return;
+        }
+        e.preventDefault();
+        var $rates = $(this).closest('.anim-quality').find('[data-quality]');
+        var next = $rates.get(($rates.index(this) + step + $rates.length) % $rates.length);
+        chooseAnimationQuality(next.dataset.quality);
+        next.focus();
+    });
 
     /* Options d'affichage du plateau — liste partagée entre le popover
      * de calques et les options du panneau Profil (js/account.js). */
@@ -1681,6 +1705,7 @@
                     ? url.slice(url.indexOf('?') + 1)
                     : '';
                 $content.html(data);
+                applyAnimationQuality();
 
                 /* Le fragment peut imposer son titre — la fiche d'une
                    STRUCTURE arrive par la même URL infos que celle d'un
@@ -2167,6 +2192,7 @@
             $.post(fragment, $(this).serialize())
                 .done(function (data) {
                     $content.html(data);
+                    applyAnimationQuality();
                 })
                 .fail(function () {
                     $content.html('<p class="hud-feed-empty">Impossible d\'envoyer le formulaire.</p>');

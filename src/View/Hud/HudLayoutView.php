@@ -21,7 +21,7 @@ use Classes\Ui;
 final class HudLayoutView
 {
     /** Cache-busting des assets du HUD — à incrémenter à chaque modif CSS/JS. */
-    public const VERSION = '20260926';
+    public const VERSION = '20260926b';
 
     public static function render(Player $player): void
     {
@@ -99,19 +99,7 @@ final class HudLayoutView
             echo '<button class="hud-layer' . $on . '" data-option="' . $option . '">'
                 . '<span class="hud-layer-dot"></span>' . $label . '</button>';
         }
-        /* Board animation quality: per browser (localStorage), applied
-         * by js/hud.js applyAnimationQuality. */
-        echo '<div class="hud-layers-title">Animations</div>';
-        $qualities = [
-            'off'    => ['Aucune', 'Plateau figé'],
-            '6'      => ['Économe', '6 images par seconde — appareils modestes'],
-            '12'     => ['Normale', '12 images par seconde'],
-            'smooth' => ['Fluide', 'Mouvement continu — plus gourmand'],
-        ];
-        foreach ($qualities as $quality => [$label, $hint]) {
-            echo '<button class="hud-layer hud-anim-quality" data-quality="' . $quality . '" title="' . $hint . '">'
-                . '<span class="hud-layer-dot"></span>' . $label . '</button>';
-        }
+        echo '<div class="hud-layers-title hud-layers-title--next">Animations</div>' . AnimationQualityView::render();
         echo '</div></div>';
 
         PanelView::render();

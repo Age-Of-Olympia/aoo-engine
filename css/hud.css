@@ -674,6 +674,145 @@ body:has(#hud) #svg-container .blocked-tile-marker {
     opacity: 1;
 }
 
+/* Animation quality: a video player's quality ladder in the HUD's
+ * bronze. Five rates in one row, the lit one in bronze; a water swatch
+ * on the left flows at the chosen rate. Popover and profile panel. */
+.hud-layers-title--next {
+    margin-top: 10px;
+}
+
+.anim-quality {
+    max-width: none;
+}
+
+.anim-quality-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.anim-quality-preview {
+    flex: 0 0 38px;
+    height: 30px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--hud-bronze);
+    border-radius: 5px;
+    background: linear-gradient(#3f93c2, #2a6f9a);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* Ripples one period (12px) taller than the swatch, slid down a period */
+.anim-quality-preview-move {
+    position: absolute;
+    top: -12px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    max-width: none;
+    background: radial-gradient(ellipse 4px 1.5px at 6px 6px, rgba(225, 244, 252, 0.95) 55%, transparent 80%) 0 0 / 12px 12px;
+    will-change: transform;
+    animation: anim-quality-flow 1s steps(12) infinite;
+}
+
+@keyframes anim-quality-flow {
+    to {
+        transform: translateY(12px);
+    }
+}
+
+.anim-quality-rates {
+    flex: 1;
+    display: flex;
+    gap: 2px;
+    max-width: none;
+    padding: 2px;
+    border-radius: 7px;
+    background: rgba(93, 74, 42, 0.14);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.anim-quality-rates button,
+.anim-quality-rates button:hover,
+.anim-quality-rates button:focus,
+.anim-quality-rates button:active {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    height: 28px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    background: none;
+    box-shadow: none;
+    color: var(--hud-ink);
+    font-family: var(--hud-display);
+    font-size: 15px;
+    line-height: 1;
+}
+
+.anim-quality-rates button:hover {
+    background: rgba(247, 231, 201, 0.75);
+}
+
+.anim-quality-rates button[aria-checked="true"] {
+    background: var(--hud-bronze);
+    border-color: #6d5029;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    color: var(--hud-parchment);
+}
+
+.anim-quality-rates button:focus-visible {
+    outline: 2px solid var(--hud-bronze-bright);
+    outline-offset: 1px;
+}
+
+.anim-quality-hd {
+    position: absolute;
+    top: -6px;
+    right: -3px;
+    padding: 1px 2px;
+    border-radius: 2px;
+    background: var(--hud-blood);
+    color: var(--hud-parchment);
+    font: bold 7px/1 -apple-system, system-ui, sans-serif;
+    letter-spacing: 0.3px;
+}
+
+/* A player's pause: two short wide bars in a circle, so it cannot
+ * read as the number 11 next to the digits. */
+.anim-quality-pause {
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid currentColor;
+    border-radius: 50%;
+    background:
+        linear-gradient(currentColor, currentColor) 3px 4px / 3px 7px no-repeat,
+        linear-gradient(currentColor, currentColor) 9px 4px / 3px 7px no-repeat;
+}
+
+/* Always one line: switching rates must not resize the panel */
+.anim-quality-hint {
+    margin: 5px 0 0;
+    overflow: hidden;
+    color: var(--hud-ink-soft);
+    font-size: 12px;
+    line-height: 1.3;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .anim-quality-preview-move {
+        animation: none;
+    }
+}
+
 /* Bandes sombres de la bordure graduée */
 #hud #svg-view .hud-svg-coord-band {
     fill: var(--hud-night);

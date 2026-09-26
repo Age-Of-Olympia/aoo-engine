@@ -250,6 +250,13 @@ final class AccountView
                 </td>
             </tr>
             ';
+
+            /* Per browser, not a player option: only the HUD panel loads
+             * the script that applies it. */
+            if ($k == 'noMask' && $hudPanel) {
+                echo '<tr><td colspan="2">Animations du plateau<br /><sup>Eau, lave et météo, pour ce navigateur</sup>'
+                    . \App\View\Hud\AnimationQualityView::render() . '</td></tr>';
+            }
         }
 
 
