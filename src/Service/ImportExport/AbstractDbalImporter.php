@@ -39,7 +39,7 @@ abstract class AbstractDbalImporter implements ObjectImporterInterface
         return $report;
     }
 
-    final public function import(array $objects): ImportReport
+    public function import(array $objects): ImportReport
     {
         $report = new ImportReport();
         $payloads = $this->collect($objects, $report);

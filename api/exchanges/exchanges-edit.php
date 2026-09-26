@@ -1,7 +1,8 @@
 <?php
 use App\Factory\PlayerFactory;
 use Classes\Exchange;
-use Classes\Market;
+use App\Service\Counter\CounterAccessService;
+use App\Service\Counter\CounterCatalog;
 use Classes\Item;
 use Classes\Log;
 require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
@@ -18,15 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   $target = PlayerFactory::legacy((int) $_GET['targetId']);
 
-  $marketAccessError = Market::CheckMarketAccess($player, $target);
-  if($marketAccessError !=null){
-
-      ExitError($marketAccessError);
-  }
-
-  // Chaque comptoir ne sert que SES onglets (le dialogue fait foi).
-  if (!(new \App\Service\BuildingService())->servesCounter((int) $target->id, 'merchant.php', 'exchanges')) {
-      ExitError('On ne sert pas cela à ce comptoir.');
+  // Same guards as the screen, tab included: the dialog decides.
+  $accessError = (new CounterAccessService())->check($player, $target, CounterCatalog::MERCHANT, 'exchanges');
+  if ($accessError !== null) {
+      ExitError($accessError);
   }
 
   $POST_DATA = json_decode(file_get_contents('php://input'), true);

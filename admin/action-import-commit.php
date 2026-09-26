@@ -31,11 +31,27 @@ try {
     }
 
     // Re-parse + re-validate from the stored JSON: import() classifies every
-    // object again and applies the batch transactionally (all-or-nothing).
+    // object again and applies the batch transactionally (all-or-nothing),
+    // except plans, below.
     $parsed = BundleEnvelope::parse($json);
     $importer = (new ImporterRegistry())->importerFor($parsed->objectType);
     if ($importer === null) {
         throw new InvalidArgumentException("Type d'objet non supporté : « {$parsed->objectType} ».");
+    }
+
+    /* A plan is loaded step by step, each step committed: the progress
+     * screen chains them, and an interrupted load resumes where it stopped.
+     * Until it ends, players on the plan see it half loaded. */
+    if ($parsed->objectType === 'plan') {
+        $preview = $importer->preview($parsed->objects);
+        if ($preview->hasRejections()) {
+            $first = $preview->rejected()[0];
+            throw new InvalidArgumentException('Import refusé : ' . $first['name'] . ' — ' . $first['reason']);
+        }
+
+        $csrf->regenerateToken();
+        header('Location: /admin/action-import-run.php');
+        exit;
     }
 
     $report = $importer->import($parsed->objects);

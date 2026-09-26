@@ -99,10 +99,10 @@ final class GroundLayerService
            over (blood, mud, tracks) — the same rule BuildingService::place
            applies to structures. */
         $db = new Db();
-        $effectService = new \App\Service\EffectService();
+        $elements = new \App\Service\MapElementService();
         $element = $db->exe('SELECT name FROM map_elements WHERE coords_id = ?', $coordsId);
         while ($element && ($row = $element->fetch_object())) {
-            if (!$effectService->isBuildableOver((string) $row->name)) {
+            if (!$elements->isBuildableOver((string) $row->name)) {
                 return ['ok' => false, 'message' => 'Un élément occupe cette case.'];
             }
         }

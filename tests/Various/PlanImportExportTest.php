@@ -28,6 +28,7 @@ class PlanImportExportTest extends TestCase
 
     private const SRC = 'plan_test_ie_src';
     private const IMPORTED = 'plan_test_ie_imp';
+    private const IMPORTED_TOO = 'plan_test_ie_imp2';
 
     /** Fixture id, out of reach of real ones. */
     private const BUILDER_ID = 990301;
@@ -106,6 +107,143 @@ class PlanImportExportTest extends TestCase
         $again = $importer->import([$payload]);
         $this->assertSame([self::IMPORTED], $again->updated());
         $this->assertEquals($payload['layers'], $exporter->exportOne(self::IMPORTED)['layers'], 'ré-import idempotent');
+    }
+
+    /**
+     * Old maps carry a road and a wall on the same cell. The structure wins
+     * and the road is not placed — the other way round refused the wall.
+     */
+    public function testAStructureTakesTheCellFromARoad(): void
+    {
+        $importer = new PlanImporter();
+
+        $payload = [
+            'plan' => self::IMPORTED,
+            'config' => ['name' => 'Plan encombré'],
+            'coords' => [[0, 0, 0], [1, 0, 0]],
+            'layers' => [
+                'routes' => [
+                    ['name' => 'route', 'x' => 0, 'y' => 0, 'z' => 0],
+                    ['name' => 'route', 'x' => 1, 'y' => 0, 'z' => 0],
+                ],
+                'buildings' => [
+                    ['name' => 'mur_pierre', 'x' => 0, 'y' => 0, 'z' => 0],
+                ],
+            ],
+        ];
+
+        $report = $importer->import([$payload]);
+
+        $this->assertSame([self::IMPORTED], $report->created());
+        $this->assertSame(
+            [],
+            array_filter($report->warnings(), static fn (array $w): bool => str_contains($w['message'], 'Bâtiment non posé')),
+            'le mur est posé, pas refusé'
+        );
+        $this->assertNotSame(
+            [],
+            array_filter($report->warnings(), static fn (array $w): bool => str_contains($w['message'], 'sous une structure')),
+            "l'import dit ce qu'il a laissé de côté"
+        );
+
+        $onCells = $this->link->fetchAllKeyValue(
+            "SELECT c.x, p.player_type FROM players p JOIN coords c ON c.id = p.coords_id
+              WHERE c.plan = ? AND p.player_type IN ('building', 'route') ORDER BY c.x",
+            [self::IMPORTED]
+        );
+        $this->assertSame(['0' => 'building', '1' => 'route'], $onCells);
+    }
+
+    /**
+     * A plan is loaded step by step: interrupted, it resumes where it stopped
+     * instead of starting over.
+     */
+    public function testAnInterruptedImportResumesWhereItStopped(): void
+    {
+        $this->seedSourcePlan();
+        $importer = new PlanImporter();
+        $report = new \App\Service\ImportExport\ImportReport();
+
+        $payload = (new PlanExporter())->exportOne(self::SRC);
+        $payload['plan'] = self::IMPORTED;
+
+        $run = $importer->runFor($importer->payloadFor($payload), $report);
+        $this->assertGreaterThan(1, $run->total(), 'un plan se découpe en étapes');
+
+        // Two steps, then we walk away: the cursor stays in the database.
+        $run->next();
+        $run->next();
+        $this->assertSame(2, $run->step());
+        $this->assertFalse($run->isDone());
+
+        $fingerprint = \App\Service\ImportExport\PlanImportProgress::fingerprint($importer->payloadFor($payload));
+        $this->assertSame(
+            2,
+            (new \App\Service\ImportExport\PlanImportProgress())->stepOf($fingerprint, self::IMPORTED)
+        );
+
+        // The same bundle picked up later: it restarts at step 2.
+        $resumed = $importer->runFor($importer->payloadFor($payload), $report);
+        $this->assertSame(2, $resumed->step(), 'le nouveau run repart de l\'étape enregistrée');
+
+        $this->assertNull($importer->advance([$payload], $report, INF), 'le bundle est chargé');
+
+        $this->assertEqualsCanonicalizing(
+            $payload['layers'],
+            (new PlanExporter())->exportOne(self::IMPORTED)['layers'],
+            'le plan repris vaut le plan chargé d\'un trait'
+        );
+        $this->assertSame(
+            0,
+            (new \App\Service\ImportExport\PlanImportProgress())->stepOf($fingerprint, self::IMPORTED),
+            'fini : plus rien à reprendre'
+        );
+    }
+
+    /**
+     * A bundle of several plans, the budget spent in the middle of the
+     * second: the next call finishes the second without replaying the first,
+     * and writes each plan's JSON once the whole bundle has landed.
+     */
+    public function testAFinishedPlanIsNotReplayedWhileTheNextOneLoads(): void
+    {
+        $this->seedSourcePlan();
+        $importer = new PlanImporter();
+        $report = new \App\Service\ImportExport\ImportReport();
+
+        $first = (new PlanExporter())->exportOne(self::SRC);
+        $first['plan'] = self::IMPORTED;
+        $first['config']['name'] = 'Premier';
+        $second = $first;
+        $second['plan'] = self::IMPORTED_TOO;
+        $second['config']['name'] = 'Second';
+
+        // The previous call: the first plan went through, the second stopped after one step.
+        $done = $importer->runFor($importer->payloadFor($first), $report);
+        while (!$done->isDone()) {
+            $done->next();
+        }
+        $importer->runFor($importer->payloadFor($second), $report)->next();
+
+        $replayed = [];
+        $left = $importer->advance(
+            [$first, $second],
+            $report,
+            INF,
+            static function (\App\Service\ImportExport\PlanImportRun $run) use (&$replayed): void {
+                $replayed[$run->plan()] = true;
+            }
+        );
+
+        $this->assertNull($left, 'le bundle est chargé');
+        $this->assertSame([self::IMPORTED_TOO], array_keys($replayed), 'le premier plan n\'est pas rejoué');
+        $this->assertSame('Premier', (new PlanExporter())->exportOne(self::IMPORTED)['config']['name']);
+        $this->assertSame('Second', (new PlanExporter())->exportOne(self::IMPORTED_TOO)['config']['name']);
+        $this->assertSame(
+            0,
+            (int) $this->link->fetchOne("SELECT COUNT(*) FROM plan_import_progress WHERE plan LIKE 'plan_test_ie_%'"),
+            'fini : plus rien à reprendre'
+        );
     }
 
     public function testImportRejectsInvalidPayloadsWithoutWriting(): void
@@ -287,6 +425,7 @@ class PlanImportExportTest extends TestCase
 
         /* The builder stands on no cell, so the join above never reaches it. */
         $this->link->executeStatement('DELETE FROM players WHERE id = ?', [self::BUILDER_ID]);
+        $this->link->executeStatement("DELETE FROM plan_import_progress WHERE plan LIKE 'plan_test_ie_%'");
 
         $this->link->executeStatement("DELETE FROM coords WHERE plan LIKE 'plan_test_ie_%'");
 

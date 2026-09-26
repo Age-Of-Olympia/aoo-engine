@@ -102,6 +102,56 @@ class TiledMapService
     /** The layer whose rows may name a whole object rather than a piece. */
     public const SCENERY_LAYER = 'foregrounds';
 
+    /** The entity layer that gives way to a structure on the same cell. */
+    public const GROUND_ENTITY_LAYER = 'routes';
+
+    /**
+     * Structures win the cell: a road drawn where a wall or a building
+     * stands is dropped, rather than the placement being refused.
+     *
+     * Old maps carry both on the same cell — the road was created first
+     * (the reconciler places without asking), then the building was
+     * refused « case occupée » and lost for good.
+     *
+     * @param list<array<string, mixed>> $roads     incoming rows of the routes layer
+     * @param list<array<string, mixed>> $buildings incoming rows of the buildings layer
+     * @return array{kept: list<array<string, mixed>>, dropped: int}
+     */
+    public static function roadsClearOfStructures(array $roads, array $buildings): array
+    {
+        if ($roads === [] || $buildings === []) {
+            return ['kept' => array_values($roads), 'dropped' => 0];
+        }
+
+        $footprints = (new \App\Service\Map\EntityTypeFootprintService())->catalogue();
+        $taken = [];
+        foreach ($buildings as $row) {
+            $x = (int) $row['x'];
+            $y = (int) $row['y'];
+            $z = (int) ($row['z'] ?? 0);
+            $footprint = $footprints[(string) $row['name']] ?? null;
+            $cells = $footprint === null
+                ? [[$x, $y]]
+                : $footprint->cellsAround((int) array_key_first($footprint->offsets()), $x, $y);
+
+            foreach ($cells as [$cellX, $cellY]) {
+                $taken[$cellX . '|' . $cellY . '|' . $z] = true;
+            }
+        }
+
+        $kept = [];
+        $dropped = 0;
+        foreach ($roads as $row) {
+            if (isset($taken[(int) $row['x'] . '|' . (int) $row['y'] . '|' . (int) ($row['z'] ?? 0)])) {
+                $dropped++;
+                continue;
+            }
+            $kept[] = $row;
+        }
+
+        return ['kept' => $kept, 'dropped' => $dropped];
+    }
+
     /**
      * Image directory of a layer. The "resources" layer (ex-walls) keeps
      * img/walls: the asset repo is not versioned here and the converted
@@ -491,11 +541,25 @@ class TiledMapService
             $report[self::SCENERY_LAYER]['vanished'] = $scenery->removeOrphanedEntities();
         }
 
+        /* Structures win the cell, here as in a bundle import: a road
+         * pushed under a wall would take the cell and the wall would be
+         * refused. */
+        $droppedRoads = 0;
+        if ($incomingBuildings !== null && isset($wantedEntities[self::GROUND_ENTITY_LAYER])) {
+            $roads = self::roadsClearOfStructures($wantedEntities[self::GROUND_ENTITY_LAYER], $incomingBuildings);
+            $wantedEntities[self::GROUND_ENTITY_LAYER] = $roads['kept'];
+            $droppedRoads = $roads['dropped'];
+        }
+
         /* Before the buildings: a resource removed in the same push frees
          * its cell before something else is placed on it. */
         foreach ($wantedEntities as $layer => $wanted) {
             $report[$layer] = $this->reconcileEntityLayer($plan, $z, $layer, $wanted);
             $postLayers[$layer] = self::reconcilerFor($layer)->asPayloadRows($plan, $z);
+        }
+
+        if ($droppedRoads > 0) {
+            $report[self::GROUND_ENTITY_LAYER]['under_structure'] = $droppedRoads;
         }
 
         if ($incomingBuildings !== null) {
@@ -781,11 +845,25 @@ class TiledMapService
 
         $skipped = [];
         foreach ($byZ as $z => $zRows) {
-            $result = $this->importBuildingsLayer($plan, $z, $zRows, $this->fetchBuildingRows($plan, $z));
-            $skipped = array_merge($skipped, $result['skipped']);
+            $skipped = array_merge($skipped, $this->importBuildingsAt($plan, (int) $z, $zRows));
         }
 
         return $skipped;
+    }
+
+    /**
+     * The decor buildings of ONE level, as a bundle draws them: what the rows
+     * no longer name is removed, what they add is placed.
+     *
+     * The level is a step of its own for a resumable import
+     * ({@see \App\Service\ImportExport\PlanImportRun}).
+     *
+     * @param list<array<string, mixed>> $rows
+     * @return list<string> the placements the board refused, with their reason
+     */
+    public function importBuildingsAt(string $plan, int $z, array $rows): array
+    {
+        return $this->importBuildingsLayer($plan, $z, $rows, $this->fetchBuildingRows($plan, $z))['skipped'];
     }
 
     /** @return array<string, array> every authorable layer of the (plan, z) */

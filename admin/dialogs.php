@@ -25,6 +25,8 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 use App\Service\CsrfProtectionService;
 use App\Service\DialogSeedService;
 use App\Service\DialogService;
+use App\View\Action\IconFieldView;
+use App\Service\Action\RpgAwesomeIcons;
 
 /** Marqueurs des dialogues branchés en dur dans le code du jeu. */
 function dialog_special_badge(string $name): string
@@ -119,6 +121,45 @@ function dialogs_render_list(array $dialogs, array $references, array $buildingR
 }
 
 /**
+ * Apparence des boutons de comptoir : une ligne par option menant à
+ * merchant.php / warschool.php, avec le sélecteur d'icône des actions et
+ * le libellé. Vide, l'un ou l'autre revient au défaut du jeu (Banque,
+ * Réparer, Recycler, sinon Marchander ou Apprendre).
+ *
+ * @param array<int, array<string, mixed>> $nodes
+ */
+function dialogs_render_counters(array $nodes): string
+{
+    $counters = DialogService::counterOptionsOfNodes($nodes);
+    if ($counters === []) {
+        return '';
+    }
+
+    $rows = '';
+    foreach ($counters as $counter) {
+        $key = $counter['node'] . '|' . $counter['index'];
+        // The *_was fields let the save tell a change here from a change made in the JSON
+        $rows .= '<tr>'
+            . '<td><code>' . e($counter['url']) . '</code><br><small class="text-muted">'
+            . e($counter['text']) . '</small></td>'
+            . '<td>' . (new IconFieldView())->render($counter['icon'], 'counter_icon[' . $key . ']', null, '', false)
+            . '<input type="hidden" name="counter_icon_was[' . e($key) . ']" value="' . e($counter['icon']) . '"></td>'
+            . '<td><input type="text" class="form-control" name="counter_button[' . e($key) . ']"'
+            . ' value="' . e($counter['button']) . '" placeholder="libellé par défaut">'
+            . '<input type="hidden" name="counter_button_was[' . e($key) . ']" value="' . e($counter['button']) . '"></td>'
+            . '</tr>';
+    }
+
+    return '<div class="card mb-3"><div class="card-header">Boutons de comptoir</div><div class="card-body">'
+        . '<p class="text-muted" style="font-size:13px;">La carte d\'une case affiche un bouton par comptoir'
+        . ' servi. Laissez vide pour garder le bouton par défaut : Banque, Réparer, Recycler, sinon'
+        . ' Marchander ou Apprendre.</p>'
+        . '<table class="table table-sm mb-0"><thead><tr><th>Option</th><th>Icône</th><th>Libellé</th></tr></thead>'
+        . '<tbody>' . $rows . '</tbody></table>'
+        . '</div></div>';
+}
+
+/**
  * @param array<string, mixed>|null $dialog ligne de listGameDialogs(), null = création
  */
 function dialogs_render_form(?array $dialog, string $csrfToken): string
@@ -187,8 +228,13 @@ function dialogs_render_form(?array $dialog, string $csrfToken): string
         . ' <code style="display:inline">url</code> ou <code style="display:inline">set</code>.'
         . ' Optionnels sur un nœud : <code style="display:inline">avatar</code>,'
         . ' <code style="display:inline">type</code>, <code style="display:inline">shuffle</code>'
-        . ' (mélange les options). Placeholders PLAYER_NAME / PLAYER_ID / TARGET_ID dans les textes et urls.</small>'
+        . ' (mélange les options). Placeholders PLAYER_NAME / PLAYER_ID / TARGET_ID dans les textes et urls.<br>'
+        . ' Une option <code style="display:inline">url</code> vers merchant.php ou warschool.php ouvre un'
+        . ' comptoir : son bouton sur la carte se règle dans « Boutons de comptoir », plus bas'
+        . ' (clés <code style="display:inline">icon</code> et <code style="display:inline">button</code>).</small>'
         . '</div></div>'
+
+        . ($isEdit ? dialogs_render_counters(json_decode((string) json_encode($dialog['nodes']), true) ?: []) : '')
 
         . '<button type="submit" class="btn btn-primary">' . ($isEdit ? 'Enregistrer' : 'Créer le dialogue') . '</button>'
         . '</form>'
@@ -255,4 +301,12 @@ if ($action === 'new') {
     );
 }
 
-echo admin_layout('Dialogues', renderFlashMessage() . $content);
+/* Catalogue d'icônes du sélecteur (IconFieldView) — même mécanisme que
+ * le workbench des actions et l'admin des effets. */
+$content .= '<script>window.WB_ICONS = '
+    . json_encode((new RpgAwesomeIcons())->all(), JSON_UNESCAPED_SLASHES) . ';</script>';
+
+echo admin_layout('Dialogues', renderFlashMessage() . $content, [
+    'styles' => ['/css/rpg-awesome.min.css', '/admin/css/icon-picker.css'],
+    'scripts' => ['/admin/js/icon-picker.js'],
+]);

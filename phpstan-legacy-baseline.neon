@@ -1,0 +1,61 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Variable \$valuesRef might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: Classes/Db.php
+
+		-
+			message: '#^Cannot unset property Classes\\Player\:\:\$coords because it might have hooks in a subclass\.$#'
+			identifier: unset.possiblyHookedProperty
+			count: 2
+			path: Classes/Player.php
+
+		-
+			message: '#^Cannot unset property Classes\\Player\:\:\$data because it might have hooks in a subclass\.$#'
+			identifier: unset.possiblyHookedProperty
+			count: 1
+			path: Classes/Player.php
+
+		-
+			message: '#^Variable \$carac might not be defined\.$#'
+			identifier: variable.undefined
+			count: 4
+			path: Classes/Player.php
+
+		-
+			message: '#^Variable \$val might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: Classes/Player.php
+
+		-
+			message: '#^Variable \$flowAxis might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: Classes/View.php
+
+		-
+			message: '#^Variable \$hideLogsCondition might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: action.php
+
+		-
+			message: '#^Variable \$logTime might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: action.php
+
+		-
+			message: '#^Anonymous function has an unused use \$em\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: scripts/testing/effects-protocol/setup.php
+
+		-
+			message: '#^Constant DB_CONSTANTS not found\.$#'
+			identifier: constant.notFound
+			count: 4
+			path: scripts/world.php

@@ -5,9 +5,9 @@ namespace Tests\Various;
 use App\Service\BuildingService;
 use App\Service\DialogService;
 use App\Service\PlayerOptionsService;
+use App\Service\Counter\CounterAccessService;
+use App\Service\Counter\CounterCatalog;
 use App\Service\RaceService;
-use Classes\Market;
-use Classes\WarSchool;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
@@ -87,6 +87,84 @@ class TradeHallsTest extends LegacyPlayerFixtureTestCase
         $this->assertFalse($service->opensScreen('ecole_guerre', 'warschool.php', 'forgeron'), 'discipline inconnue');
     }
 
+    public function testTheCardButtonNamesTheCounter(): void
+    {
+        $service = new DialogService();
+        $labels = static fn (string $dialog): array => array_map(
+            static fn (array $button): string => $button['label'] . ' → ' . $button['script'] . '&' . $button['tab'],
+            $service->counterButtons($dialog)
+        );
+
+        $this->assertSame(['Marchander → merchant.php&bids'], $labels('echoppe'));
+        $this->assertSame(['Banque → merchant.php&bank'], $labels('banque'), 'la banque ne dit plus « Marchander »');
+        $this->assertSame(['Apprendre → warschool.php&melee'], $labels('ecole_guerre'));
+        $this->assertSame([], $labels(''), 'sans dialogue, pas de bouton');
+        $this->assertSame(
+            ['Réparer → merchant.php&repair', 'Recycler → merchant.php&recycle'],
+            $labels('atelier'),
+            "les deux comptoirs de l'atelier ont chacun leur bouton"
+        );
+    }
+
+    public function testAnOptionChoosesItsOwnButton(): void
+    {
+        $service = new DialogService();
+        $service->saveGameDialog('trade_test_forge', [[
+            'id' => 'bonjour',
+            'text' => 'Alors ?',
+            'options' => [
+                ['url' => 'merchant.php?targetId=TARGET_ID&repair', 'text' => 'Réparer', 'icon' => 'ra-anvil', 'button' => 'Forge'],
+                ['go' => 'EXIT', 'text' => '[partir]'],
+            ],
+        ]], ['npc_name' => 'TARGET_NAME', 'type' => 'building']);
+        DialogService::clearCache();
+
+        /* Le formulaire de l'admin dresse ses lignes à partir des mêmes
+         * options, repérées « nœud|rang ». */
+        $this->assertSame(
+            [['node' => 'bonjour', 'index' => 0, 'url' => 'merchant.php?targetId=TARGET_ID&repair',
+              'text' => 'Réparer', 'icon' => 'ra-anvil', 'button' => 'Forge']],
+            DialogService::counterOptionsOfNodes($service->listGameDialogs()['trade_test_forge']['nodes'])
+        );
+
+        try {
+            $this->assertSame(
+                [['tab' => 'repair', 'script' => 'merchant.php', 'icon' => 'ra-anvil', 'label' => 'Forge']],
+                $service->counterButtons('trade_test_forge'),
+                "l'option impose son icône et son libellé"
+            );
+        } finally {
+            $service->deleteGameDialog('trade_test_forge');
+            DialogService::clearCache();
+        }
+    }
+
+    /**
+     * The admin card and the JSON textarea post the same keys: a field left
+     * as rendered in the card does not undo an edit made in the JSON.
+     */
+    public function testTheCounterCardOnlyAppliesWhatTheAdminChanged(): void
+    {
+        $nodes = [['id' => 'bonjour', 'options' => [
+            ['text' => 'Déposer', 'url' => 'merchant.php?targetId=TARGET_ID&bank', 'button' => 'Coffre'],
+        ]]];
+
+        $untouched = DialogService::applyCounterFields(
+            $nodes,
+            ['icon' => ['bonjour|0' => ''], 'button' => ['bonjour|0' => '']],
+            ['icon' => ['bonjour|0' => ''], 'button' => ['bonjour|0' => '']]
+        );
+        $this->assertSame('Coffre', $untouched[0]['options'][0]['button'], 'the JSON edit stands');
+
+        $changed = DialogService::applyCounterFields(
+            $nodes,
+            ['icon' => ['bonjour|0' => 'ra-key'], 'button' => ['bonjour|0' => '']],
+            ['icon' => ['bonjour|0' => ''], 'button' => ['bonjour|0' => 'Coffre']]
+        );
+        $this->assertSame('ra-key', $changed[0]['options'][0]['icon']);
+        $this->assertArrayNotHasKey('button', $changed[0]['options'][0], 'emptied in the card: back to the default');
+    }
+
     public function testCounterOptionsLeftTheGame(): void
     {
         $this->assertNotContains('isMerchant', PlayerOptionsService::MANAGEABLE_OPTIONS);
@@ -102,9 +180,10 @@ class TradeHallsTest extends LegacyPlayerFixtureTestCase
      */
     private function marketAccess(int $playerId, int $targetId): ?string
     {
-        return Market::CheckMarketAccess(
+        return (new CounterAccessService())->check(
             \App\Factory\PlayerFactory::legacy($playerId),
-            \App\Factory\PlayerFactory::legacy($targetId)
+            \App\Factory\PlayerFactory::legacy($targetId),
+            CounterCatalog::MERCHANT
         );
     }
 
@@ -114,9 +193,10 @@ class TradeHallsTest extends LegacyPlayerFixtureTestCase
      */
     private function schoolAccess(int $playerId, int $targetId): ?string
     {
-        return WarSchool::checkAccess(
+        return (new CounterAccessService())->check(
             \App\Factory\PlayerFactory::legacy($playerId),
-            \App\Factory\PlayerFactory::legacy($targetId)
+            \App\Factory\PlayerFactory::legacy($targetId),
+            CounterCatalog::WAR_SCHOOL
         );
     }
 

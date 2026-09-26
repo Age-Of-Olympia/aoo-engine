@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Service\Counter\CounterCatalog;
 use Classes\Db;
 use Classes\Dialog;
 use Classes\Json;
@@ -242,47 +243,196 @@ class DialogService
     }
 
     /**
-     * Ce dialogue mène-t-il à cet écran — et, si demandé, à cet ONGLET ?
-     * Une option d'un de ses nœuds pointe `<script>` (« merchant.php »,
-     * « warschool.php ») ; l'onglet est le drapeau de requête de l'URL
+     * Whether this dialog leads to this screen — and, when given, to this
+     * tab. One option of one of its nodes points at `<script>`
+     * ("merchant.php", "warschool.php"); the tab is the URL's query flag
      * (`&bank`, `&bids`, `&melee`…).
      *
-     * C'est la règle des COMPTOIRS : un bâtiment n'est marchand ou
-     * entraîneur par aucune option de personne — son dialogue porte le
-     * rôle, onglet par onglet : la banque dépose et retire, l'échoppe
-     * tient les étals, chacune est sourde au comptoir de l'autre. Les
-     * gardes d'accès (Market, WarSchool), les corps de page et les API
-     * d'écriture lisent la même réponse.
+     * A building serves a counter only through its dialog, tab by tab: the
+     * bank's dialog opens the bank tab, the stall's opens the market tabs,
+     * and neither opens the other's. CounterAccessService, the page bodies
+     * and the write APIs all ask this method.
      */
     public function opensScreen(string $dialogName, string $script, ?string $tab = null): bool
     {
+        $tabs = $this->servedTabs($dialogName, $script);
+
+        return $tab === null ? $tabs !== null : $tabs !== null && in_array($tab, $tabs, true);
+    }
+
+    /**
+     * Les onglets de cet écran que le dialogue propose, ou null quand il
+     * ne mène pas à l'écran du tout (une option `merchant.php?targetId=X`
+     * sans onglet donne une liste vide).
+     *
+     * @return array<int, string>|null
+     */
+    public function servedTabs(string $dialogName, string $script): ?array
+    {
+        $options = $this->counterOptions($dialogName, $script);
+        if ($options === null) {
+            return null;
+        }
+
+        return array_values(array_unique(array_column($options, 'tab')));
+    }
+
+    /**
+     * Les options de comptoir d'une liste de nœuds, repérées par le nœud
+     * et leur rang dans ce nœud — de quoi dresser le formulaire de l'admin
+     * et y réinjecter icône et libellé.
+     *
+     * @param array<int, array<string, mixed>> $nodes
+     * @return array<int, array{node: string, index: int, url: string, text: string, icon: string, button: string}>
+     */
+    public static function counterOptionsOfNodes(array $nodes): array
+    {
+        $found = [];
+        foreach ($nodes as $node) {
+            foreach (($node['options'] ?? []) as $index => $option) {
+                $url = (string) ($option['url'] ?? '');
+                foreach (array_keys(CounterCatalog::screens()) as $script) {
+                    if (str_starts_with($url, (string) $script)) {
+                        $found[] = [
+                            'node' => (string) ($node['id'] ?? ''),
+                            'index' => (int) $index,
+                            'url' => $url,
+                            'text' => (string) ($option['text'] ?? ''),
+                            'icon' => (string) ($option['icon'] ?? ''),
+                            'button' => (string) ($option['button'] ?? ''),
+                        ];
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $found;
+    }
+
+    /**
+     * Applies the admin's "Boutons de comptoir" card to the nodes read from
+     * the JSON textarea. Each field comes with the value it was rendered
+     * with ($was): only a field the admin changed in the card applies, so
+     * an edit made in the JSON stands. Empty removes the key, the button
+     * falls back to its default.
+     *
+     * @param array<int, array<string, mixed>> $nodes
+     * @param array{icon?: array<string, string>, button?: array<string, string>} $posted "node|rank" => value
+     * @param array{icon?: array<string, string>, button?: array<string, string>} $was    "node|rank" => rendered value
+     * @return array<int, array<string, mixed>>
+     */
+    public static function applyCounterFields(array $nodes, array $posted, array $was): array
+    {
+        foreach (self::counterOptionsOfNodes($nodes) as $counter) {
+            $key = $counter['node'] . '|' . $counter['index'];
+            foreach (['icon', 'button'] as $field) {
+                if (!isset($posted[$field][$key])) {
+                    continue;
+                }
+                $value = trim((string) $posted[$field][$key]);
+                if ($value === trim((string) ($was[$field][$key] ?? ''))) {
+                    continue;
+                }
+                foreach ($nodes as $i => $node) {
+                    if (($node['id'] ?? '') !== $counter['node']) {
+                        continue;
+                    }
+                    if ($value === '') {
+                        unset($nodes[$i]['options'][$counter['index']][$field]);
+                    } else {
+                        $nodes[$i]['options'][$counter['index']][$field] = $value;
+                    }
+                }
+            }
+        }
+
+        return $nodes;
+    }
+
+    /**
+     * Les options de ce dialogue qui mènent à cet écran, dans l'ordre du
+     * dialogue : onglet de l'URL, plus l'icône et le libellé que
+     * l'option impose au bouton de la carte (clés `icon` et `button`,
+     * saisies dans l'admin des dialogues). Null quand le dialogue ne mène
+     * pas à l'écran.
+     *
+     * @return array<int, array{tab: string, icon: ?string, label: ?string}>|null
+     */
+    private function counterOptions(string $dialogName, string $script): ?array
+    {
         if ($dialogName === '') {
-            return false;
+            return null;
         }
 
         $dialogJson = $this->loadDialog($dialogName);
         if ($dialogJson === null || empty($dialogJson->dialog)) {
-            return false;
+            return null;
         }
 
+        $options = null;
         foreach ($dialogJson->dialog as $node) {
             foreach (($node->options ?? []) as $option) {
                 if (empty($option->url) || !str_starts_with((string) $option->url, $script)) {
                     continue;
                 }
 
-                if ($tab === null) {
-                    return true;
-                }
-
                 parse_str((string) parse_url((string) $option->url, PHP_URL_QUERY), $params);
-                if (array_key_exists($tab, $params)) {
-                    return true;
-                }
+                unset($params['targetId']);
+                $options ??= [];
+                $options[] = [
+                    'tab' => (string) (array_key_first($params) ?? ''),
+                    'icon' => isset($option->icon) ? (string) $option->icon : null,
+                    'label' => isset($option->button) ? (string) $option->button : null,
+                ];
             }
         }
 
-        return false;
+        return $options;
+    }
+
+    /**
+     * Les boutons de comptoir à montrer sur la carte d'une case : un par
+     * onglet qui porte le sien au catalogue (Banque, Réparer, Recycler),
+     * plus le bouton par défaut de l'écran dès qu'un autre onglet est
+     * servi. Une option qui porte `icon` / `button` impose les siens.
+     *
+     * @return array<int, array{tab: string, script: string, icon: string, label: string}>
+     */
+    public function counterButtons(string $dialogName): array
+    {
+        $buttons = [];
+        foreach (CounterCatalog::screens() as $script => $screen) {
+            $options = $this->counterOptions($dialogName, (string) $script);
+            if ($options === null) {
+                continue;
+            }
+
+            $tabs = CounterCatalog::tabs((string) $script);
+            $default = null;
+            foreach ($options as $option) {
+                $own = $tabs[$option['tab']]['card'] ?? null;
+                $icon = $option['icon'] ?? $own['icon'] ?? null;
+                $label = $option['label'] ?? $own['label'] ?? null;
+
+                if ($icon === null && $label === null) {
+                    // Onglet ordinaire : un seul bouton d'écran, sur le premier.
+                    $default ??= ['tab' => $option['tab'], 'script' => (string) $script,
+                        'icon' => $screen['icon'], 'label' => $screen['label']];
+                    continue;
+                }
+
+                $buttons[] = ['tab' => $option['tab'], 'script' => (string) $script,
+                    'icon' => $icon ?? $screen['icon'], 'label' => $label ?? $screen['label']];
+            }
+
+            if ($default !== null || $options === []) {
+                $buttons[] = $default ?? ['tab' => '', 'script' => (string) $script,
+                    'icon' => $screen['icon'], 'label' => $screen['label']];
+            }
+        }
+
+        return $buttons;
     }
 
     /**

@@ -2,7 +2,8 @@
 
 use App\Factory\PlayerFactory;
 use App\Service\PlayerCaracsService;
-use Classes\WarSchool;
+use App\Service\Counter\CounterAccessService;
+use App\Service\Counter\CounterCatalog;
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 
@@ -34,7 +35,7 @@ $player->get_caracs();
  * counters (school open, within reach, compatible states). */
 $trainer = PlayerFactory::legacy((int) ($POST_DATA['targetId'] ?? 0));
 
-$accessError = WarSchool::checkAccess($player, $trainer);
+$accessError = (new CounterAccessService())->check($player, $trainer, CounterCatalog::WAR_SCHOOL);
 if ($accessError !== null) {
     ExitError($accessError);
 }

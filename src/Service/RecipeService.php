@@ -85,14 +85,32 @@ class RecipeService
     /**
      * Ingredients required to craft one item, as name => count.
      *
+     * @return array<string, int>
+     */
+    public function ingredientsForResult(string $itemName): array
+    {
+        $recipe = $this->recipeForResult($itemName);
+        if ($recipe === null) {
+            return [];
+        }
+
+        $ingredients = [];
+        foreach ($recipe->getRecipeIngredients() as $ingredient) {
+            $ingredients[$ingredient->getItem()->getName()] = $ingredient->getCount();
+        }
+
+        return $ingredients;
+    }
+
+    /**
+     * The recipe an item is considered made of.
+     *
      * The craft_recipes catalog is the single recipe source. When several
      * recipes yield the same item, the one bearing the item's name wins,
      * then the oldest — a later variant never changes what an existing
      * object is considered made of.
-     *
-     * @return array<string, int>
      */
-    public function ingredientsForResult(string $itemName): array
+    public function recipeForResult(string $itemName): ?Recipe
     {
         $qb = $this->entityManager->createQueryBuilder();
         $qb->select('re, ri, ii')
@@ -106,24 +124,25 @@ class RecipeService
             ->setParameter('name', $itemName);
 
         $recipes = $qb->getQuery()->getResult();
-        if ($recipes === []) {
-            return [];
-        }
-
-        $recipe = $recipes[0];
         foreach ($recipes as $candidate) {
             if ($candidate->getName() === $itemName) {
-                $recipe = $candidate;
-                break;
+                return $candidate;
             }
         }
 
-        $ingredients = [];
-        foreach ($recipe->getRecipeIngredients() as $ingredient) {
-            $ingredients[$ingredient->getItem()->getName()] = $ingredient->getCount();
+        return $recipes[0] ?? null;
+    }
+
+    /** How many of $itemName one run of $recipe makes (1 when it does not list it). */
+    public function yieldOf(Recipe $recipe, string $itemName): int
+    {
+        foreach ($recipe->getRecipeResults() as $result) {
+            if ($result->getItem()->getName() === $itemName) {
+                return max(1, $result->getCount());
+            }
         }
 
-        return $ingredients;
+        return 1;
     }
     /**
      * Checks if the player can craft the given recipe. knowledge, not ingredients

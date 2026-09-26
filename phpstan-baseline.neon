@@ -1,10 +1,112 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Function building_render_edit\(\) has parameter \$b with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/buildings.php
+
+		-
+			message: '#^Function building_render_edit\(\) has parameter \$dialogNames with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/buildings.php
+
+		-
+			message: '#^Function building_render_edit\(\) has parameter \$factions with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/buildings.php
+
+		-
+			message: '#^Function deploy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: admin/deploy.php
+
+		-
+			message: '#^Function dialogs_render_list\(\) has parameter \$dialogs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/dialogs.php
+
+		-
+			message: '#^Function element_images\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/element-types.php
+
+		-
+			message: '#^Function member_faction_select\(\) has parameter \$factionNames with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/faction-members.php
+
+		-
+			message: '#^Function member_role_select\(\) has parameter \$rolesByFaction with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/faction-members.php
+
+		-
+			message: '#^Function faction_render_role_row\(\) has parameter \$flags with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/factions.php
+
+		-
+			message: '#^Parameter \#1 \$array \(non\-empty\-list\<int\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: admin/footprints.php
+
+		-
+			message: '#^Function arrayGet\(\) has parameter \$array with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/helpers.php
+
+		-
+			message: '#^Function cleanStringArray\(\) has parameter \$values with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/helpers.php
+
+		-
+			message: '#^Function cleanStringArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/helpers.php
+
+		-
 			message: '#^Strict comparison using \!\=\= between non\-empty\-string and null will always evaluate to true\.$#'
 			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: admin/helpers.php
+
+		-
+			message: '#^Function items_render_list\(\) has parameter \$items with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/items.php
+
+		-
+			message: '#^Function admin_layout\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: admin/layout.php
+
+		-
+			message: '#^Function admin_layout\(\) has parameter \$content with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: admin/layout.php
+
+		-
+			message: '#^Function admin_layout\(\) has parameter \$title with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: admin/layout.php
 
 		-
 			message: '#^Method App\\Service\\ViewService\:\:getAllPlans\(\) invoked with 1 parameter, 0 required\.$#'
@@ -13,10 +115,34 @@ parameters:
 			path: admin/local_maps.php
 
 		-
+			message: '#^Parameter \#1 \$array of function sort contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: admin/plans.php
+
+		-
+			message: '#^Unable to resolve the template type T in call to function array_values$#'
+			identifier: argument.templateType
+			count: 1
+			path: admin/plans.php
+
+		-
+			message: '#^Function recipe_item_select\(\) has parameter \$items with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/recipes.php
+
+		-
 			message: '#^Method App\\Service\\ViewService\:\:getAllPlans\(\) invoked with 1 parameter, 0 required\.$#'
 			identifier: arguments.count
 			count: 1
 			path: admin/screenshots.php
+
+		-
+			message: '#^Function tdm_render_row\(\) has parameter \$e with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/tile-dialogs-migration.php
 
 		-
 			message: '#^Dead catch \- Exception is never thrown in the try block\.$#'
@@ -25,10 +151,46 @@ parameters:
 			path: admin/tutorial-catalog.php
 
 		-
+			message: '#^Function renderNpcForm\(\) has parameter \$npc with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/tutorial-npcs.php
+
+		-
+			message: '#^Function renderNpcForm\(\) has parameter \$races with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/tutorial-npcs.php
+
+		-
+			message: '#^Function renderNpcForm\(\) has parameter \$stepsByVersion with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/tutorial-npcs.php
+
+		-
+			message: '#^Function renderNpcForm\(\) has parameter \$versions with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: admin/tutorial-npcs.php
+
+		-
 			message: '#^Strict comparison using \=\=\= between mixed and null will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1
 			path: admin/tutorial-step-editor.php
+
+		-
+			message: '#^Function PrintRecipe\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: admin/view_recipes.php
+
+		-
+			message: '#^Function PrintRecipe\(\) has parameter \$recipe with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: admin/view_recipes.php
 
 		-
 			message: '#^Function getConnection not found\.$#'
@@ -36,18 +198,275 @@ parameters:
 			count: 1
 			path: api/tutorial/jump-to-step.php
 
+		-
+			message: '#^Function getTutorialRewards\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: config/constants.php
 
 		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
-			identifier: property.notFound
-			count: 9
-			path: src/Service/Action/Xp/AttackXpCalculator.php
+			message: '#^Function ExitError\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: config/functions.php
 
 		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
+			message: '#^Function ExitError\(\) has parameter \$error with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Function ExitSuccess\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Function ExitSuccess\(\) has parameter \$success with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Function SanitizeIntChecked\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Function SanitizeIntChecked\(\) has parameter \$error with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Function SanitizeIntChecked\(\) has parameter \$var with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Function db\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Function json\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Function plans\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Function printr\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Function printr\(\) has parameter \$text with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Function removeComments\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Function removeComments\(\) has parameter \$jsonString with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Function sqln\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Function timestampNormalization\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Function timestampNormalization\(\) has parameter \$timestamp with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: config/functions.php
+
+		-
+			message: '#^Method App\\Action\\ActionResults\:\:__construct\(\) has parameter \$conditionsResultsArray with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/ActionResults.php
+
+		-
+			message: '#^Method App\\Action\\ActionResults\:\:__construct\(\) has parameter \$costsResultsArray with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/ActionResults.php
+
+		-
+			message: '#^Method App\\Action\\ActionResults\:\:__construct\(\) has parameter \$effectsResultsArray with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/ActionResults.php
+
+		-
+			message: '#^Method App\\Action\\ActionResults\:\:__construct\(\) has parameter \$logsArray with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/ActionResults.php
+
+		-
+			message: '#^Method App\\Action\\ActionResults\:\:__construct\(\) has parameter \$xpResultsArray with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/ActionResults.php
+
+		-
+			message: '#^Method App\\Action\\ActionResults\:\:getConditionsResultsArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/ActionResults.php
+
+		-
+			message: '#^Method App\\Action\\ActionResults\:\:getCostsResultsArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/ActionResults.php
+
+		-
+			message: '#^Method App\\Action\\ActionResults\:\:getLogsArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/ActionResults.php
+
+		-
+			message: '#^Method App\\Action\\ActionResults\:\:getOutcomesResultsArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/ActionResults.php
+
+		-
+			message: '#^Method App\\Action\\ActionResults\:\:getXpResultsArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/ActionResults.php
+
+		-
+			message: '#^Method App\\Action\\ActionResults\:\:setConditionsResultsArray\(\) has parameter \$conditionsResultsArray with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/ActionResults.php
+
+		-
+			message: '#^Method App\\Action\\ActionResults\:\:setCostsResultsArray\(\) has parameter \$costsResultsArray with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/ActionResults.php
+
+		-
+			message: '#^Method App\\Action\\ActionResults\:\:setLogsArray\(\) has parameter \$logsArray with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/ActionResults.php
+
+		-
+			message: '#^Method App\\Action\\ActionResults\:\:setOutcomesResultsArray\(\) has parameter \$effectsResultsArray with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/ActionResults.php
+
+		-
+			message: '#^Method App\\Action\\ActionResults\:\:setXpResultsArray\(\) has parameter \$xpResultsArray with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/ActionResults.php
+
+		-
+			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 3
-			path: src/Service/Action/Xp/TrainXpCalculator.php
+			count: 2
+			path: src/Action/Condition/AbstractComputeCondition.php
+
+		-
+			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$playerPassiveService\.$#'
+			identifier: property.notFound
+			count: 6
+			path: src/Action/Condition/AbstractComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\AbstractComputeCondition\:\:computeActor\(\) has parameter \$actor with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/AbstractComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\AbstractComputeCondition\:\:computeActor\(\) has parameter \$conditionObject with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/AbstractComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\AbstractComputeCondition\:\:computeActor\(\) has parameter \$dice with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/AbstractComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\AbstractComputeCondition\:\:computeActor\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/AbstractComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\AbstractComputeCondition\:\:computeTarget\(\) has parameter \$conditionObject with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/AbstractComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\AbstractComputeCondition\:\:computeTarget\(\) has parameter \$dice with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/AbstractComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\AbstractComputeCondition\:\:computeTarget\(\) has parameter \$target with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/AbstractComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\AbstractComputeCondition\:\:computeTarget\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/AbstractComputeCondition.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 1
+			path: src/Action/Condition/AbstractComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\BaseCondition\:\:applyCosts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/BaseCondition.php
 
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$id\.$#'
@@ -62,6 +481,30 @@ parameters:
 			path: src/Action/Condition/BuffComputeCondition.php
 
 		-
+			message: '#^Method App\\Action\\Condition\\BuffComputeCondition\:\:computeTarget\(\) has parameter \$dice with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/BuffComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\BuffComputeCondition\:\:computeTarget\(\) has parameter \$target with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/BuffComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\BuffComputeCondition\:\:computeTarget\(\) has parameter \$targetRollBonus with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/BuffComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\BuffComputeCondition\:\:computeTarget\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/BuffComputeCondition.php
+
+		-
 			message: '#^Negated boolean expression is always false\.$#'
 			identifier: booleanNot.alwaysFalse
 			count: 1
@@ -73,6 +516,203 @@ parameters:
 			count: 1
 			path: src/Action/Condition/BuffComputeCondition.php
 
+		-
+			message: '#^Method App\\Action\\Condition\\ComputeCondition\:\:computeActor\(\) has parameter \$actor with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/ComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ComputeCondition\:\:computeActor\(\) has parameter \$conditionObject with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/ComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ComputeCondition\:\:computeActor\(\) has parameter \$dice with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/ComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ComputeCondition\:\:computeActor\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/ComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ComputeCondition\:\:computeTarget\(\) has parameter \$conditionObject with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/ComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ComputeCondition\:\:computeTarget\(\) has parameter \$dice with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/ComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ComputeCondition\:\:computeTarget\(\) has parameter \$target with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/ComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ComputeCondition\:\:computeTarget\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/ComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ComputePureCondition\:\:computeActor\(\) has parameter \$actor with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/ComputePureCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ComputePureCondition\:\:computeActor\(\) has parameter \$conditionObject with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/ComputePureCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ComputePureCondition\:\:computeActor\(\) has parameter \$dice with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/ComputePureCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ComputePureCondition\:\:computeActor\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/ComputePureCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ComputePureCondition\:\:computeTarget\(\) has parameter \$conditionObject with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/ComputePureCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ComputePureCondition\:\:computeTarget\(\) has parameter \$dice with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/ComputePureCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ComputePureCondition\:\:computeTarget\(\) has parameter \$target with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/ComputePureCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ComputePureCondition\:\:computeTarget\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/ComputePureCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ConditionObject\:\:getAttackEffects\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/ConditionObject.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ConditionObject\:\:setAttackEffects\(\) has parameter \$attackEffects with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/ConditionObject.php
+
+		-
+			message: '#^Property App\\Action\\Condition\\ConditionObject\:\:\$attackEffects type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/ConditionObject.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ConditionResult\:\:__construct\(\) has parameter \$conditionFailureMessages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/ConditionResult.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ConditionResult\:\:__construct\(\) has parameter \$conditionSuccessMessages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/ConditionResult.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ConditionResult\:\:getConditionFailureMessages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/ConditionResult.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\ConditionResult\:\:getConditionSuccessMessages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/ConditionResult.php
+
+		-
+			message: '#^Property App\\Action\\Condition\\ConditionResult\:\:\$conditionFailureMessages has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Action/Condition/ConditionResult.php
+
+		-
+			message: '#^Property App\\Action\\Condition\\ConditionResult\:\:\$conditionSuccessMessages has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Action/Condition/ConditionResult.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\DistanceComputeCondition\:\:computeTarget\(\) has parameter \$conditionObject with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/DistanceComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\DistanceComputeCondition\:\:computeTarget\(\) has parameter \$dice with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/DistanceComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\DistanceComputeCondition\:\:computeTarget\(\) has parameter \$target with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/DistanceComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\DistanceComputeCondition\:\:computeTarget\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/DistanceComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\DistancePureComputeCondition\:\:computeTarget\(\) has parameter \$conditionObject with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/DistancePureComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\DistancePureComputeCondition\:\:computeTarget\(\) has parameter \$dice with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/DistancePureComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\DistancePureComputeCondition\:\:computeTarget\(\) has parameter \$target with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/DistancePureComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\DistancePureComputeCondition\:\:computeTarget\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/DistancePureComputeCondition.php
 
 		-
 			message: '#^Method App\\Action\\Condition\\DistancePureComputeCondition\:\:getDistanceTreshold\(\) should return int but returns float\.$#'
@@ -99,16 +739,63 @@ parameters:
 			path: src/Action/Condition/ForbidIfHasEffectCondition.php
 
 		-
+			message: '#^Method App\\Action\\Condition\\ForbidIfHasEffectCondition\:\:checkEffect\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Action/Condition/ForbidIfHasEffectCondition.php
+
+		-
+			message: '#^Property App\\Action\\Condition\\ForbidIfHasEffectCondition\:\:\$errorMessage type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/ForbidIfHasEffectCondition.php
+
+		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'
 			identifier: property.notFound
 			count: 1
 			path: src/Action/Condition/ForbidOnEquipedObjectStatusCondition.php
 
+		-
+			message: '#^Method App\\Action\\Condition\\MeleeComputeCondition\:\:computeTarget\(\) has parameter \$conditionObject with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/MeleeComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\MeleeComputeCondition\:\:computeTarget\(\) has parameter \$dice with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/MeleeComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\MeleeComputeCondition\:\:computeTarget\(\) has parameter \$target with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/MeleeComputeCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\MeleeComputeCondition\:\:computeTarget\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/MeleeComputeCondition.php
 
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
 			identifier: property.notFound
 			count: 2
+			path: src/Action/Condition/NoBerserkCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\NoBerserkCondition\:\:convertToHoursMins\(\) has parameter \$format with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/Condition/NoBerserkCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\NoBerserkCondition\:\:convertToHoursMins\(\) has parameter \$time with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
 			path: src/Action/Condition/NoBerserkCondition.php
 
 		-
@@ -130,6 +817,42 @@ parameters:
 			path: src/Action/Condition/RequiresAmmoCondition.php
 
 		-
+			message: '#^Method App\\Action\\Condition\\RequiresAmmoCondition\:\:applyCosts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/RequiresAmmoCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\RequiresBuildingCondition\:\:missingMessage\(\) has parameter \$types with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/RequiresBuildingCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\RequiresFaithCondition\:\:applyCosts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/RequiresFaithCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\RequiresItemCondition\:\:applyCosts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/RequiresItemCondition.php
+
+		-
+			message: '#^Parameter \#1 \$player of static method App\\Service\\ResourceService\:\:findResourcesAround\(\) expects Classes\\Player, App\\Interface\\ActorInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Action/Condition/RequiresResourceCondition.php
+
+		-
+			message: '#^Method App\\Action\\Condition\\RequiresTraitValueCondition\:\:applyCosts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/Condition/RequiresTraitValueCondition.php
+
+		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'
 			identifier: property.notFound
 			count: 1
@@ -142,9 +865,51 @@ parameters:
 			path: src/Action/Condition/RequiresWeaponCraftedWithCondition.php
 
 		-
+			message: '#^Method App\\Action\\OutcomeInstruction\\ApplyStatusOutcomeInstruction\:\:applyEffect\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Action/OutcomeInstruction/ApplyStatusOutcomeInstruction.php
+
+		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'
 			identifier: property.notFound
 			count: 4
+			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
+
+		-
+			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:breakObject\(\) has parameter \$type with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
+
+		-
+			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:getBreakChance\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
+
+		-
+			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:getBreakChance\(\) has parameter \$equipmentToDamage with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
+
+		-
+			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:getDamageableDefenseEquipments\(\) has parameter \$player with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
+
+		-
+			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:getDamageableDefenseEquipments\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
+
+		-
+			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:getRecipeElementBack\(\) has parameter \$object with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
 			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
 
 		-
@@ -166,10 +931,202 @@ parameters:
 			path: src/Action/OutcomeInstruction/LifeLossOutcomeInstruction.php
 
 		-
+			message: '#^Method App\\Action\\OutcomeInstruction\\LifeLossOutcomeInstruction\:\:updatePlayerCaracsWithIgnores\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Action/OutcomeInstruction/LifeLossOutcomeInstruction.php
+
+		-
+			message: '#^Method App\\Action\\OutcomeInstruction\\LifeLossOutcomeInstruction\:\:updatePlayerCaracsWithIgnores\(\) has parameter \$ignore with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/OutcomeInstruction/LifeLossOutcomeInstruction.php
+
+		-
+			message: '#^Method App\\Action\\OutcomeInstruction\\OutcomeResult\:\:__construct\(\) has parameter \$outcomeFailureMessages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/OutcomeInstruction/OutcomeResult.php
+
+		-
+			message: '#^Method App\\Action\\OutcomeInstruction\\OutcomeResult\:\:__construct\(\) has parameter \$outcomeSuccessMessages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/OutcomeInstruction/OutcomeResult.php
+
+		-
+			message: '#^Method App\\Action\\OutcomeInstruction\\OutcomeResult\:\:getOutcomeFailureMessages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/OutcomeInstruction/OutcomeResult.php
+
+		-
+			message: '#^Method App\\Action\\OutcomeInstruction\\OutcomeResult\:\:getOutcomeSuccessMessages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/OutcomeInstruction/OutcomeResult.php
+
+		-
+			message: '#^Property App\\Action\\OutcomeInstruction\\OutcomeResult\:\:\$outcomeFailureMessages has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Action/OutcomeInstruction/OutcomeResult.php
+
+		-
+			message: '#^Property App\\Action\\OutcomeInstruction\\OutcomeResult\:\:\$outcomeSuccessMessages has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Action/OutcomeInstruction/OutcomeResult.php
+
+		-
+			message: '#^Method App\\Action\\OutcomeInstruction\\TeleportOutcomeInstruction\:\:push\(\) has parameter \$delta with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Action/OutcomeInstruction/TeleportOutcomeInstruction.php
+
+		-
+			message: '#^Property App\\Entity\\Action\:\:\$actionConditions with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Action.php
+
+		-
 			message: '#^Property App\\Entity\\Action\:\:\$automaticOutcomeInstructions in isset\(\) is not nullable nor uninitialized\.$#'
 			identifier: isset.initializedProperty
 			count: 3
 			path: src/Entity/Action.php
+
+		-
+			message: '#^Property App\\Entity\\Action\:\:\$automaticOutcomeInstructions with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Action.php
+
+		-
+			message: '#^Property App\\Entity\\Action\:\:\$outcomes with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Action.php
+
+		-
+			message: '#^Property App\\Entity\\Action\:\:\$races with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Action.php
+
+		-
+			message: '#^Method App\\Entity\\ActionCondition\:\:getParameters\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/ActionCondition.php
+
+		-
+			message: '#^Method App\\Entity\\ActionCondition\:\:setParameters\(\) has parameter \$parameters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/ActionCondition.php
+
+		-
+			message: '#^Property App\\Entity\\ActionCondition\:\:\$parameters type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/ActionCondition.php
+
+		-
+			message: '#^Property App\\Entity\\ActionConditionPrecondition\:\:\$parameters type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/ActionConditionPrecondition.php
+
+		-
+			message: '#^Property App\\Entity\\ActionOutcome\:\:\$instructions with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/ActionOutcome.php
+
+		-
+			message: '#^Method App\\Entity\\ActionPassive\:\:getConditions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/ActionPassive.php
+
+		-
+			message: '#^Method App\\Entity\\ActionPassive\:\:getTraits\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/ActionPassive.php
+
+		-
+			message: '#^Method App\\Entity\\ActionPassive\:\:setConditions\(\) has parameter \$conditions with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/ActionPassive.php
+
+		-
+			message: '#^Method App\\Entity\\ActionPassive\:\:setId\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Entity/ActionPassive.php
+
+		-
+			message: '#^Method App\\Entity\\ActionPassive\:\:setLevel\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Entity/ActionPassive.php
+
+		-
+			message: '#^Method App\\Entity\\ActionPassive\:\:setTraits\(\) has parameter \$traits with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/ActionPassive.php
+
+		-
+			message: '#^Property App\\Entity\\ActionPassive\:\:\$conditions type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/ActionPassive.php
+
+		-
+			message: '#^Property App\\Entity\\ActionPassive\:\:\$traits type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/ActionPassive.php
+
+		-
+			message: '#^Property App\\Entity\\ActionTypeInstruction\:\:\$parameters type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/ActionTypeInstruction.php
+
+		-
+			message: '#^Property App\\Entity\\ActionTypePrecondition\:\:\$parameters type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/ActionTypePrecondition.php
+
+		-
+			message: '#^Property App\\Entity\\Audit\:\:\$action has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Entity/Audit.php
+
+		-
+			message: '#^Property App\\Entity\\Audit\:\:\$auditKey has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Entity/Audit.php
+
+		-
+			message: '#^Property App\\Entity\\Audit\:\:\$details has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Entity/Audit.php
+
+		-
+			message: '#^Property App\\Entity\\Audit\:\:\$id has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Entity/Audit.php
 
 		-
 			message: '#^Property App\\Entity\\Audit\:\:\$id is never written, only read\.$#'
@@ -178,14 +1135,38 @@ parameters:
 			path: src/Entity/Audit.php
 
 		-
-			message: '#^Constant DB_CONSTANTS not found\.$#'
-			identifier: constant.notFound
+			message: '#^Property App\\Entity\\Audit\:\:\$ipAddress has no type specified\.$#'
+			identifier: missingType.property
 			count: 1
-			path: src/Factory/EntityManagerFactory.php
+			path: src/Entity/Audit.php
+
+		-
+			message: '#^Property App\\Entity\\Audit\:\:\$timestamp has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Entity/Audit.php
+
+		-
+			message: '#^Property App\\Entity\\Audit\:\:\$userId has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Entity/Audit.php
+
+		-
+			message: '#^Property App\\Entity\\Effect\:\:\$caracMods type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/Effect.php
 
 		-
 			message: '#^Property App\\Entity\\Effect\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
 			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Effect.php
+
+		-
+			message: '#^Property App\\Entity\\Effect\:\:\$lossMods type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: src/Entity/Effect.php
 
@@ -202,14 +1183,86 @@ parameters:
 			path: src/Entity/Faction.php
 
 		-
+			message: '#^Property App\\Entity\\Faction\:\:\$roles with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Faction.php
+
+		-
 			message: '#^Property App\\Entity\\FactionRole\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
 			path: src/Entity/FactionRole.php
 
 		-
+			message: '#^Method App\\Entity\\OutcomeInstruction\:\:getParameters\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/OutcomeInstruction.php
+
+		-
+			message: '#^Method App\\Entity\\OutcomeInstruction\:\:setParameters\(\) has parameter \$parameters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/OutcomeInstruction.php
+
+		-
+			message: '#^Property App\\Entity\\OutcomeInstruction\:\:\$parameters type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/OutcomeInstruction.php
+
+		-
+			message: '#^Method App\\Entity\\Plan\:\:setBiomes\(\) has parameter \$biomes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/Plan.php
+
+		-
+			message: '#^Property App\\Entity\\Plan\:\:\$zLevels with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Plan.php
+
+		-
+			message: '#^Method App\\Entity\\PlayerBonus\:\:setPlayerId\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Entity/PlayerBonus.php
+
+		-
+			message: '#^Method App\\Entity\\PlayerEffect\:\:setPlayer_id\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Entity/PlayerEffect.php
+
+		-
+			message: '#^Property App\\Entity\\Race\:\:\$actions with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Race.php
+
+		-
 			message: '#^Property App\\Entity\\Race\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
 			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Race.php
+
+		-
+			message: '#^Property App\\Entity\\Race\:\:\$recipes with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Race.php
+
+		-
+			message: '#^Property App\\Entity\\Race\:\:\$spells with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Race.php
+
+		-
+			message: '#^Property App\\Entity\\Race\:\:\$starterActions with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
 			count: 1
 			path: src/Entity/Race.php
 
@@ -220,10 +1273,766 @@ parameters:
 			path: src/Entity/RaceNameListEntry.php
 
 		-
+			message: '#^Method App\\Entity\\Recipe\:\:getRecipeIngredients\(\) return type with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Recipe.php
+
+		-
+			message: '#^Method App\\Entity\\Recipe\:\:getRecipeResults\(\) return type with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Recipe.php
+
+		-
+			message: '#^Property App\\Entity\\Recipe\:\:\$races with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Recipe.php
+
+		-
+			message: '#^Property App\\Entity\\Recipe\:\:\$recipeIngredients with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Recipe.php
+
+		-
+			message: '#^Property App\\Entity\\Recipe\:\:\$recipeResults with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Recipe.php
+
+		-
+			message: '#^Method App\\Enum\\ImageType\:\:dimensions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Enum/ImageType.php
+
+		-
+			message: '#^Method App\\Enum\\ImageType\:\:miniDimensions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Enum/ImageType.php
+
+		-
+			message: '#^Constant DB_CONSTANTS not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: src/Factory/EntityManagerFactory.php
+
+		-
+			message: '#^Method Doctrine\\ORM\\EntityManager\:\:clear\(\) invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: src/Factory/TutorialPlayerFactory.php
+
+		-
+			message: '#^Method App\\Factory\\TutorialStepFactory\:\:createFromData\(\) has parameter \$stepData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Factory/TutorialStepFactory.php
+
+		-
+			message: '#^Property App\\Factory\\TutorialStepFactory\:\:\$stepTypeMap has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Factory/TutorialStepFactory.php
+
+		-
+			message: '#^Method App\\Interface\\ActionInterface\:\:getConditions\(\) return type with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Interface/ActionInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActionInterface\:\:getOnSuccessOutcomes\(\) return type with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Interface/ActionInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActionInterface\:\:getOutcomes\(\) return type with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Interface/ActionInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActionInterface\:\:getRaces\(\) return type with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Interface/ActionInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActorInterface\:\:add_effect\(\) has parameter \$duration with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Interface/ActorInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActorInterface\:\:add_effect\(\) has parameter \$name with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Interface/ActorInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActorInterface\:\:getEquipedItems\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Interface/ActorInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActorInterface\:\:getEquipedItemsEffects\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Interface/ActorInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActorInterface\:\:getPassives\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Interface/ActorInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActorInterface\:\:get_action_xp\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Interface/ActorInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActorInterface\:\:get_action_xp\(\) has parameter \$target with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Interface/ActorInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActorInterface\:\:get_data\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Interface/ActorInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActorInterface\:\:get_upgrades\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Interface/ActorInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActorInterface\:\:go\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Interface/ActorInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActorInterface\:\:go\(\) has parameter \$goCoords with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Interface/ActorInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActorInterface\:\:putBonus\(\) has parameter \$bonus with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Interface/ActorInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActorInterface\:\:putEnergie\(\) has parameter \$bonus with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Interface/ActorInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActorInterface\:\:put_malus\(\) has parameter \$malus with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Interface/ActorInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ActorInterface\:\:traitBonus\(\) has parameter \$types with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Interface/ActorInterface.php
+
+		-
+			message: '#^Method App\\Interface\\ConditionInterface\:\:applyCosts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Interface/ConditionInterface.php
+
+		-
+			message: '#^Method App\\Interface\\OutcomeInstructionInterface\:\:getParameters\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Interface/OutcomeInstructionInterface.php
+
+		-
+			message: '#^Method App\\Interface\\OutcomeInstructionInterface\:\:setParameters\(\) has parameter \$parameters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Interface/OutcomeInstructionInterface.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{\}\|array\{''adonis'', ''cafe'', ''astral'', ''houblon'', ''lichen_sacre'', ''lotus_noir'', ''menthe'', ''pavot''\}\|array\{''bois'', ''bois_petrifie''\}\|array\{''cuir''\}\|array\{0\: ''bronze'', 1\?\: ''nickel''\}\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/Migrations/Version20260719120000_EffectsFromConstants.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{\}\|array\{''boue''\}\|array\{''diamant''\}\|array\{''eau''\}\|array\{''feu''\}\|array\{''ronce''\}\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/Migrations/Version20260719120000_EffectsFromConstants.php
+
+		-
+			message: '#^Method App\\Migrations\\Version20260801100000_TheLastRowsLeaveMapResources\:\:takeTheCell\(\) has parameter \$row with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Migrations/Version20260801100000_TheLastRowsLeaveMapResources.php
+
+		-
+			message: '#^Method App\\Service\\Action\\ActionParameterValidator\:\:traitOrIntValue\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Action/ActionParameterValidator.php
+
+		-
+			message: '#^Method App\\Service\\Action\\ActionSaveService\:\:saveParameters\(\) has parameter \$conditionBlocking with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Action/ActionSaveService.php
+
+		-
+			message: '#^Method App\\Service\\Action\\ActionSaveService\:\:saveParameters\(\) has parameter \$conditionContext with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Action/ActionSaveService.php
+
+		-
+			message: '#^Method App\\Service\\Action\\ActionTypeDiscovery\:\:fillMetadata\(\) has parameter \$metadata with generic class Doctrine\\ORM\\Mapping\\ClassMetadata but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Service/Action/ActionTypeDiscovery.php
+
+		-
+			message: '#^Method App\\Service\\Action\\SimulationInput\:\:__construct\(\) has parameter \$actorEquipment with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Action/SimulationInput.php
+
+		-
+			message: '#^Method App\\Service\\Action\\SimulationInput\:\:__construct\(\) has parameter \$targetEquipment with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Action/SimulationInput.php
+
+		-
+			message: '#^Method App\\Service\\Action\\SimulationInput\:\:__construct\(\) has parameter \$tileTypes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Action/SimulationInput.php
+
+		-
+			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
+			identifier: property.notFound
+			count: 9
+			path: src/Service/Action/Xp/AttackXpCalculator.php
+
+		-
+			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Action/Xp/TrainXpCalculator.php
+
+		-
+			message: '#^Method App\\Service\\ActionExecutorService\:\:applyCosts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ActionExecutorService.php
+
+		-
+			message: '#^Property App\\Service\\ActionExecutorService\:\:\$conditionResultsArray type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ActionExecutorService.php
+
+		-
+			message: '#^Property App\\Service\\ActionExecutorService\:\:\$conditionsToPay type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ActionExecutorService.php
+
+		-
+			message: '#^Property App\\Service\\ActionExecutorService\:\:\$outcomeResultsArray type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ActionExecutorService.php
+
+		-
+			message: '#^Method App\\Service\\ActionPassiveService\:\:getActionPassivesByCategory\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ActionPassiveService.php
+
+		-
+			message: '#^Method App\\Service\\ActionPassiveService\:\:getIdByName\(\) has parameter \$name with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ActionPassiveService.php
+
+		-
+			message: '#^Method App\\Service\\ActionPassiveService\:\:getPrice\(\) has parameter \$level with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ActionPassiveService.php
+
+		-
+			message: '#^Property App\\Service\\ActionPassiveService\:\:\$entityManager has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ActionPassiveService.php
+
+		-
+			message: '#^Method App\\Service\\ActionService\:\:getActionsByCategory\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ActionService.php
+
+		-
+			message: '#^Method App\\Service\\ActionService\:\:getCatalogMeta\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ActionService.php
+
+		-
+			message: '#^Method App\\Service\\ActionService\:\:getCostsArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ActionService.php
+
+		-
+			message: '#^Method App\\Service\\ActionService\:\:getPrice\(\) has parameter \$level with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ActionService.php
+
+		-
+			message: '#^Property App\\Service\\ActionService\:\:\$entityManager has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ActionService.php
+
+		-
+			message: '#^Property App\\Service\\AuditService\:\:\$entityManager has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/AuditService.php
+
+		-
+			message: '#^Method App\\Service\\BidsAsksService\:\:Accept\(\) has parameter \$player with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/BidsAsksService.php
+
+		-
+			message: '#^Method App\\Service\\BidsAsksService\:\:Cancel\(\) has parameter \$player with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/BidsAsksService.php
+
+		-
+			message: '#^Method App\\Service\\BidsAsksService\:\:Create\(\) has parameter \$player with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/BidsAsksService.php
+
+		-
+			message: '#^Method App\\Service\\BidsAsksService\:\:get_bid_ask_db_dataById\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/BidsAsksService.php
+
+		-
+			message: '#^Method App\\Service\\BidsAsksService\:\:get_bid_ask_db_dataById\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/BidsAsksService.php
+
+		-
+			message: '#^Method App\\Service\\BidsAsksService\:\:get_bid_ask_db_dataById\(\) has parameter \$player with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/BidsAsksService.php
+
+		-
+			message: '#^Method App\\Service\\BidsAsksService\:\:get_bid_ask_db_dataById\(\) has parameter \$type with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/BidsAsksService.php
+
+		-
+			message: '#^Method App\\Service\\BuildingService\:\:coordsOf\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/BuildingService.php
+
+		-
+			message: '#^Method App\\Service\\BuildingService\:\:listBuildings\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/BuildingService.php
+
+		-
+			message: '#^Method App\\Service\\BuildingService\:\:refreshBoardAt\(\) has parameter \$goCoords with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/BuildingService.php
+
+		-
+			message: '#^Method App\\Service\\ColorService\:\:splitBiomes\(\) has parameter \$colors with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ColorService.php
+
+		-
+			message: '#^Method App\\Service\\ColorService\:\:transitionBlend\(\) has parameter \$colors with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ColorService.php
+
+		-
+			message: '#^Method App\\Service\\ContainerService\:\:exemplarEntryLabel\(\) has parameter \$row with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ContainerService.php
+
+		-
+			message: '#^Method App\\Service\\ContainerService\:\:stackLabel\(\) has parameter \$row with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ContainerService.php
+
+		-
+			message: '#^Method App\\Service\\CronService\:\:executeCron\(\) has parameter \$type with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/CronService.php
+
+		-
+			message: '#^Method App\\Service\\DialogSeedService\:\:collectJsonDialogs\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DialogSeedService.php
+
+		-
+			message: '#^Method App\\Service\\DialogService\:\:getDialogData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DialogService.php
+
+		-
+			message: '#^Method App\\Service\\DialogService\:\:listGameDialogs\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DialogService.php
+
+		-
+			message: '#^Method App\\Service\\DialogService\:\:processDialogNodes\(\) has parameter \$nodes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DialogService.php
+
+		-
+			message: '#^Method App\\Service\\DialogService\:\:processDialogNodes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DialogService.php
+
+		-
+			message: '#^Method App\\Service\\DialogService\:\:processOptions\(\) has parameter \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DialogService.php
+
+		-
+			message: '#^Method App\\Service\\DialogService\:\:processOptions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DialogService.php
+
+		-
+			message: '#^Property App\\Service\\FactionService\:\:\$entityManager has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/FactionService.php
+
+		-
+			message: '#^Method App\\Service\\FirewallService\:\:RecordFailedAttempt\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/FirewallService.php
+
+		-
+			message: '#^Method App\\Service\\FirewallService\:\:TryPassFirewall\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/FirewallService.php
+
+		-
+			message: '#^Method App\\Service\\ForumCookieService\:\:getAllCookiesForPost\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ForumCookieService.php
+
+		-
+			message: '#^Method App\\Service\\ForumCookieService\:\:getForumCookie\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ForumCookieService.php
+
+		-
 			message: '#^Negated boolean expression is always false\.$#'
 			identifier: booleanNot.alwaysFalse
 			count: 1
 			path: src/Service/ForumCookieService.php
+
+		-
+			message: '#^Property App\\Service\\ForumCookieService\:\:\$entityManager has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ForumCookieService.php
+
+		-
+			message: '#^Method App\\Service\\ForumService\:\:GetAllUnreadTopics\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ForumService.php
+
+		-
+			message: '#^Property App\\Service\\ForumService\:\:\$entityManager has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ForumService.php
+
+		-
+			message: '#^Method App\\Service\\GroundLootService\:\:collect\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/GroundLootService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/Service/ImportExport/ActionExporter.php
+
+		-
+			message: '#^Method App\\Service\\ImportExport\\DialogExporter\:\:rowToPayload\(\) has parameter \$row with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ImportExport/DialogExporter.php
+
+		-
+			message: '#^Method App\\Service\\ImportExport\\DialogImporter\:\:collect\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ImportExport/DialogImporter.php
+
+		-
+			message: '#^Method App\\Service\\ImportExport\\DialogImporter\:\:validate\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ImportExport/DialogImporter.php
+
+		-
+			message: '#^Method App\\Service\\ImportExport\\ItemExporter\:\:exportOne\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ImportExport/ItemExporter.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<non\-empty\-string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/Service/ImportExport/PassiveImporter.php
+
+		-
+			message: '#^Method App\\Service\\ImportExport\\PlanImportProgress\:\:fingerprint\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ImportExport/PlanImportProgress.php
+
+		-
+			message: '#^Method App\\Service\\ImportExport\\PlanImportWriter\:\:extraValue\(\) has parameter \$row with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ImportExport/PlanImportWriter.php
+
+		-
+			message: '#^Method App\\Service\\ImportExport\\PlanImporter\:\:classify\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ImportExport/PlanImporter.php
+
+		-
+			message: '#^Method App\\Service\\ImportExport\\PlanImporter\:\:collect\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ImportExport/PlanImporter.php
+
+		-
+			message: '#^Method App\\Service\\ImportExport\\PlanImporter\:\:payloadFor\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ImportExport/PlanImporter.php
+
+		-
+			message: '#^Method App\\Service\\ImportExport\\PlanImporter\:\:validate\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ImportExport/PlanImporter.php
+
+		-
+			message: '#^Method App\\Service\\ImportExport\\RecipeExporter\:\:exportOne\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ImportExport/RecipeExporter.php
+
+		-
+			message: '#^Method App\\Service\\InventoryService\:\:dropItem\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/InventoryService.php
+
+		-
+			message: '#^Method App\\Service\\ItemInstanceService\:\:attachEntity\(\) has parameter \$conn with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ItemInstanceService.php
+
+		-
+			message: '#^Method App\\Service\\ItemInstanceService\:\:detachEntity\(\) has parameter \$conn with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ItemInstanceService.php
+
+		-
+			message: '#^Method App\\Service\\ItemInstanceService\:\:ensureEntity\(\) has parameter \$conn with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ItemInstanceService.php
+
+		-
+			message: '#^Method App\\Service\\ItemInstanceService\:\:writeSlot\(\) has parameter \$conn with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ItemInstanceService.php
+
+		-
+			message: '#^Method App\\Service\\Map\\CompositeSpriteService\:\:staleAgainst\(\) has parameter \$pieceImages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Map/CompositeSpriteService.php
+
+		-
+			message: '#^Method App\\Service\\Map\\HarvestCatalogService\:\:planNames\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Map/HarvestCatalogService.php
+
+		-
+			message: '#^Method App\\Service\\Map\\ResourceReconciler\:\:asPayloadRows\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Map/ResourceReconciler.php
+
+		-
+			message: '#^Method App\\Service\\Map\\ResourceReconciler\:\:unknownTypes\(\) has parameter \$rows with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Map/ResourceReconciler.php
+
+		-
+			message: '#^Method App\\Service\\Map\\ResourceReconciler\:\:unknownTypes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Map/ResourceReconciler.php
+
+		-
+			message: '#^Method App\\Service\\Map\\SceneryArtAudit\:\:verdict\(\) has parameter \$art with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Map/SceneryArtAudit.php
+
+		-
+			message: '#^Method App\\Service\\Map\\SceneryObjectService\:\:removeEntitiesOn\(\) has parameter \$coordsIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Map/SceneryObjectService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<int\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/Service/Map/SceneryObjectService.php
+
+		-
+			message: '#^Method App\\Service\\Map\\TileOccupancyService\:\:blockedForStep\(\) has parameter \$coordsIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Map/TileOccupancyService.php
+
+		-
+			message: '#^Method App\\Service\\Map\\TileOccupancyService\:\:blockedForStep\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Map/TileOccupancyService.php
+
+		-
+			message: '#^Parameter \#2 of callable callable\(array\<string, mixed\>, array\<string, mixed\>\)\: bool expects array\<string, mixed\>, list\<array\<string, int\|string\>\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Map/TouchingCells.php
+
+		-
+			message: '#^Method App\\Service\\MapElementService\:\:namesWithEffect\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/MapElementService.php
+
+		-
+			message: '#^Method App\\Service\\MissiveService\:\:sendNewMissive\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/MissiveService.php
+
+		-
+			message: '#^Method App\\Service\\MissiveService\:\:sendNewMissive\(\) has parameter \$destPlayersIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/MissiveService.php
+
+		-
+			message: '#^Property App\\Service\\OutcomeInstructionService\:\:\$entityManager has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/OutcomeInstructionService.php
+
+		-
+			message: '#^Method App\\Service\\PlanConfigService\:\:applyFull\(\) has parameter \$json with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/PlanConfigService.php
+
+		-
+			message: '#^Method App\\Service\\PlanConfigService\:\:write\(\) has parameter \$parsed with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/PlanConfigService.php
+
+		-
+			message: '#^Method App\\Service\\PlanSeedService\:\:planNames\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/PlanSeedService.php
 
 		-
 			message: '#^Left side of \|\| is always false\.$#'
@@ -231,12 +2040,413 @@ parameters:
 			count: 1
 			path: src/Service/PlantsService.php
 
+		-
+			message: '#^Method App\\Service\\PlantsService\:\:growSeed\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/PlantsService.php
+
+		-
+			message: '#^Method App\\Service\\PlantsService\:\:growSeed\(\) has parameter \$coords with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/PlantsService.php
+
+		-
+			message: '#^Method App\\Service\\PlantsService\:\:growSeed\(\) has parameter \$plante with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/PlantsService.php
+
+		-
+			message: '#^Method App\\Service\\PlayerBonusService\:\:setBonusByPlayerIdByName\(\) has parameter \$n with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/PlayerBonusService.php
+
+		-
+			message: '#^Method App\\Service\\PlayerBonusService\:\:setBonusByPlayerIdByName\(\) has parameter \$name with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/PlayerBonusService.php
+
+		-
+			message: '#^Property App\\Service\\PlayerBonusService\:\:\$entityManager has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/PlayerBonusService.php
+
+		-
+			message: '#^Method App\\Service\\PlayerEffectService\:\:getEffectsByPlayerId\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/PlayerEffectService.php
+
+		-
+			message: '#^Property App\\Service\\PlayerEffectService\:\:\$entityManager has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/PlayerEffectService.php
+
+		-
+			message: '#^Method App\\Service\\PlayerPassiveService\:\:getComputedValueByPlayerIdById\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/PlayerPassiveService.php
+
+		-
+			message: '#^Method App\\Service\\PlayerPassiveService\:\:getPassivesByPlayerId\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/PlayerPassiveService.php
+
+		-
+			message: '#^Property App\\Service\\PlayerPassiveService\:\:\$entityManager has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/PlayerPassiveService.php
+
+		-
+			message: '#^Method App\\Service\\PlayerPnjService\:\:getByPlayerId\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/PlayerPnjService.php
+
+		-
+			message: '#^Method App\\Service\\PlayerPnjService\:\:updatePlayerPnj\(\) has parameter \$displayed with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/PlayerPnjService.php
+
+		-
+			message: '#^Property App\\Service\\PlayerPnjService\:\:\$entityManager has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/PlayerPnjService.php
+
+		-
+			message: '#^Method App\\Service\\PlayerService\:\:GetPlayer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/PlayerService.php
+
+		-
+			message: '#^Method App\\Service\\PlayerService\:\:GetPlayer\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/PlayerService.php
+
+		-
+			message: '#^Method App\\Service\\PlayerService\:\:playerUpdateVisible\(\) has parameter \$value with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/PlayerService.php
+
+		-
+			message: '#^Method App\\Service\\PlayerService\:\:searchNonAnonymePlayer\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/PlayerService.php
+
+		-
+			message: '#^Property App\\Service\\PlayerService\:\:\$playerCache has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/PlayerService.php
+
+		-
+			message: '#^Method App\\Service\\RaceImageService\:\:usageByPath\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/RaceImageService.php
+
+		-
+			message: '#^Property App\\Service\\RaceService\:\:\$entityManager has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/RaceService.php
+
+		-
+			message: '#^Method App\\Service\\RecipeService\:\:TryCraftRecipe\(\) has parameter \$message with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/RecipeService.php
+
+		-
+			message: '#^Method App\\Service\\RecipeService\:\:adminGetAllRecipes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/RecipeService.php
+
+		-
+			message: '#^Method App\\Service\\RecipeService\:\:getRecipes\(\) has parameter \$player with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/RecipeService.php
+
+		-
+			message: '#^Method App\\Service\\RecipeService\:\:getRecipes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/RecipeService.php
+
+		-
+			message: '#^Method App\\Service\\RecipeService\:\:workshopReached\(\) has parameter \$message with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/RecipeService.php
+
+		-
+			message: '#^Property App\\Service\\RecipeService\:\:\$entityManager has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/RecipeService.php
+
+		-
+			message: '#^Method App\\Service\\ResourceService\:\:createExhaustArray\(\) has parameter \$resourcesIdArray with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ResourceService.php
+
+		-
+			message: '#^Method App\\Service\\ResourceService\:\:createExhaustArray\(\) has parameter \$row with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ResourceService.php
+
+		-
+			message: '#^Method App\\Service\\ResourceService\:\:createRegrowArray\(\) has parameter \$resourcesIdArray with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ResourceService.php
+
+		-
+			message: '#^Method App\\Service\\ResourceService\:\:createRegrowArray\(\) has parameter \$row with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ResourceService.php
+
+		-
+			message: '#^Method App\\Service\\ResourceService\:\:pickExhausted\(\) has parameter \$yields with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ResourceService.php
+
+		-
+			message: '#^Method App\\Service\\ResourceService\:\:regrowResources\(\) has parameter \$resourcesId with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ResourceService.php
+
+		-
+			message: '#^Method App\\Service\\ScreenshotService\:\:generateAutomaticScreenshot\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ScreenshotService.php
+
+		-
+			message: '#^Method App\\Service\\ScreenshotService\:\:generateScreenshot\(\) has parameter \$coords with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ScreenshotService.php
+
+		-
+			message: '#^Method App\\Service\\ScreenshotService\:\:generateScreenshot\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ScreenshotService.php
+
+		-
+			message: '#^Method App\\Service\\ScreenshotService\:\:saveScreenshotToFile\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ScreenshotService.php
+
+		-
+			message: '#^Method App\\Service\\ScreenshotService\:\:validateScreenshotPlayer\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ScreenshotService.php
 
 		-
 			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
 			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: src/Service/ScreenshotService.php
+
+		-
+			message: '#^Method App\\Service\\TerrainTransitionService\:\:colorIndexOf\(\) has parameter \$cfg with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TerrainTransitionService.php
+
+		-
+			message: '#^Method App\\Service\\TerrainTransitionService\:\:generateForPlan\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TerrainTransitionService.php
+
+		-
+			message: '#^Method App\\Service\\TerrainTransitionService\:\:wangKey\(\) has parameter \$wangId with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TerrainTransitionService.php
+
+		-
+			message: '#^Method App\\Service\\TileAssetService\:\:layers\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TileAssetService.php
+
+		-
+			message: '#^Method App\\Service\\TileDialogMigrationService\:\:applyOne\(\) has parameter \$entry with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TileDialogMigrationService.php
+
+		-
+			message: '#^Method App\\Service\\TiledMapService\:\:applyPush\(\) has parameter \$layers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TiledMapService.php
+
+		-
+			message: '#^Method App\\Service\\TiledMapService\:\:applyPush\(\) has parameter \$planConfig with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TiledMapService.php
+
+		-
+			message: '#^Method App\\Service\\TiledMapService\:\:applyPush\(\) has parameter \$zConfig with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TiledMapService.php
+
+		-
+			message: '#^Method App\\Service\\TiledMapService\:\:applyPush\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: src/Service/TiledMapService.php
+
+		-
+			message: '#^Method App\\Service\\TiledMapService\:\:authoredRowsClause\(\) has parameter \$spec with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TiledMapService.php
+
+		-
+			message: '#^Method App\\Service\\TiledMapService\:\:computeVersion\(\) has parameter \$layers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TiledMapService.php
+
+		-
+			message: '#^Method App\\Service\\TiledMapService\:\:exportPlan\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TiledMapService.php
+
+		-
+			message: '#^Method App\\Service\\TiledMapService\:\:fetchLayers\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TiledMapService.php
+
+		-
+			message: '#^Method App\\Service\\TiledMapService\:\:importBuildingsLayer\(\) has parameter \$currentRows with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TiledMapService.php
+
+		-
+			message: '#^Method App\\Service\\TiledMapService\:\:importBuildingsLayer\(\) has parameter \$incomingRows with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TiledMapService.php
+
+		-
+			message: '#^Method App\\Service\\TiledMapService\:\:importPlan\(\) has parameter \$incomingLayers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TiledMapService.php
+
+		-
+			message: '#^Method App\\Service\\TiledMapService\:\:importPlan\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TiledMapService.php
+
+		-
+			message: '#^Method App\\Service\\TiledMapService\:\:rowKey\(\) has parameter \$row with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TiledMapService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<array\<string, mixed\>\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/Service/TiledMapService.php
+
+		-
+			message: '#^Method App\\Service\\TutorialStepSaveService\:\:saveBasicStepData\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TutorialStepSaveService.php
+
+		-
+			message: '#^Method App\\Service\\TutorialStepSaveService\:\:saveContextChanges\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TutorialStepSaveService.php
+
+		-
+			message: '#^Method App\\Service\\TutorialStepSaveService\:\:saveFeatures\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TutorialStepSaveService.php
+
+		-
+			message: '#^Method App\\Service\\TutorialStepSaveService\:\:saveHighlights\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TutorialStepSaveService.php
+
+		-
+			message: '#^Method App\\Service\\TutorialStepSaveService\:\:saveInteractions\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TutorialStepSaveService.php
+
+		-
+			message: '#^Method App\\Service\\TutorialStepSaveService\:\:saveNextPreparation\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TutorialStepSaveService.php
+
+		-
+			message: '#^Method App\\Service\\TutorialStepSaveService\:\:savePrerequisites\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TutorialStepSaveService.php
+
+		-
+			message: '#^Method App\\Service\\TutorialStepSaveService\:\:saveStep\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TutorialStepSaveService.php
+
+		-
+			message: '#^Method App\\Service\\TutorialStepSaveService\:\:saveUIConfig\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TutorialStepSaveService.php
+
+		-
+			message: '#^Method App\\Service\\TutorialStepSaveService\:\:saveValidationConfig\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TutorialStepSaveService.php
 
 		-
 			message: '#^Strict comparison using \!\=\= between 0\.0\|''''\|array\{\}\|false\|null and ''\-1'' will always evaluate to true\.$#'
@@ -251,8 +2461,872 @@ parameters:
 			path: src/Service/TutorialStepValidationService.php
 
 		-
+			message: '#^Method App\\Service\\ViewService\:\:__construct\(\) has parameter \$db with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:__construct\(\) has parameter \$plan with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:__construct\(\) has parameter \$playerId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:__construct\(\) has parameter \$playerX with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:__construct\(\) has parameter \$playerY with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:__construct\(\) has parameter \$playerZ with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:applyBackground\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:applyBackground\(\) has parameter \$layer with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:applyBackground\(\) has parameter \$planData with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:applyBackground\(\) has parameter \$useImage with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:calculateBounds\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:calculateLocalPlayerLayerBounds\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:calculateWorldPlayerLayerBounds\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:createLayer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:createLayer\(\) has parameter \$height with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:createLayer\(\) has parameter \$width with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateBuildingsLayer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateBuildingsLayer\(\) has parameter \$plan with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateCoordinatesLayer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateCoordinatesLayer\(\) has parameter \$plan with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateElementLayer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateElementLayer\(\) has parameter \$plan with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateForegroundsLayer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateForegroundsLayer\(\) has parameter \$plan with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateGlobalMap\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateGlobalMap\(\) has parameter \$selectedLayers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateLocalMap\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateLocalMap\(\) has parameter \$selectedLayers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateLocalPlayerLayer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateLocalPlayersLayer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateLocationsLayer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateLocationsLayer\(\) has parameter \$plan with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateResourceLayer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateResourceLayer\(\) has parameter \$plan with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateRoutesLayer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateRoutesLayer\(\) has parameter \$plan with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateTileLayer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateTileLayer\(\) has parameter \$plan with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateWorldPlayerLayer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:generateWorldPlayersLayer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getAllLocationsFromPlans\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getAllPlans\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getBoundsFromPlan\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getBoundsFromPlan\(\) has parameter \$planName with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getColorForType\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getColorForType\(\) has parameter \$name with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getGlobalMap\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getLocalMap\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getLocationFromPlan\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getLocationFromPlan\(\) has parameter \$planName with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getPlanData\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getPlanData\(\) has parameter \$planName with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getPlayersDistance\(\) has parameter \$p1X with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getPlayersDistance\(\) has parameter \$p1Y with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getPlayersDistance\(\) has parameter \$p2X with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:getPlayersDistance\(\) has parameter \$p2Y with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:saveLayer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:saveLayer\(\) has parameter \$fileName with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:saveLayer\(\) has parameter \$layer with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:saveLayer\(\) has parameter \$mapType with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:saveLayer\(\) has parameter \$playerId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:transformX\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:transformX\(\) has parameter \$mapType with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:transformX\(\) has parameter \$x with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:transformY\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:transformY\(\) has parameter \$mapType with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Service\\ViewService\:\:transformY\(\) has parameter \$y with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$colors has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$currentPlan has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$db has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$height has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$image has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$layers has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$localBoundsAvailable has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$localCenterX has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$localCenterY has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$localMapHeight has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$localMapWidth has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$localMaxX has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$localMaxY has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$localMinX has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$localMinY has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$localOffsetX has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$localOffsetY has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$localScaleX has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$localScaleY has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$localWidth has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$margin has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$maxX has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$maxY has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$minX has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$minY has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$playerId has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$playerX has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$playerY has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$playerZ has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$raceService has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$scaleX has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$scaleY has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$tileColorCache type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$width has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Property App\\Service\\ViewService\:\:\$worldPlan has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/ViewService.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedItem\:\:add_item\(\) has parameter \$player with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedItem.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedItem\:\:get_data\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Simulation/SimulatedItem.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedItem\:\:get_recipe\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Simulation/SimulatedItem.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedItem\:\:is_crafted_with\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Simulation/SimulatedItem.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedItem\:\:is_crafted_with\(\) has parameter \$ingredients with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedItem.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPassiveService\:\:checkPassiveConditionsByPlayerById\(\) has parameter \$conditionObject with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPassiveService.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPassiveService\:\:checkPassiveConditionsByPlayerById\(\) has parameter \$passive with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPassiveService.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPassiveService\:\:checkPassiveConditionsByPlayerById\(\) has parameter \$player with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPassiveService.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPassiveService\:\:getComputedValueByPlayerIdById\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPassiveService.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPassiveService\:\:setEsquivePlayer\(\) has parameter \$player with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPassiveService.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:add_action\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:add_action\(\) has parameter \$name with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:drop\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:drop\(\) has parameter \$item with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:drop\(\) has parameter \$n with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:end_action\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:end_action\(\) has parameter \$name with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:getEquipedItems\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:getPassives\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:get_action_xp\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:get_action_xp\(\) has parameter \$target with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:get_data\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:get_upgrades\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:go\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:go\(\) has parameter \$goCoords with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:have_option\(\) has parameter \$name with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:putBonus\(\) has parameter \$bonus with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:putEnergie\(\) has parameter \$energie with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:put_assist\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:put_assist\(\) has parameter \$damages with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:put_assist\(\) has parameter \$target with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:put_malus\(\) has parameter \$malus with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:put_pf\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:put_pf\(\) has parameter \$pf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:put_xp\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:put_xp\(\) has parameter \$xp with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Simulation/SimulatedPlayer.php
+
+		-
+			message: '#^Method App\\Tutorial\\Exceptions\\TutorialException\:\:__construct\(\) has parameter \$context with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/Exceptions/TutorialException.php
+
+		-
+			message: '#^Method App\\Tutorial\\Exceptions\\TutorialValidationException\:\:__construct\(\) has parameter \$context with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/Exceptions/TutorialValidationException.php
+
+		-
 			message: '#^Call to function method_exists\(\) with \$this\(App\\Tutorial\\Steps\\AbstractStep\) and ''getValidationHint'' will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Tutorial/Steps/AbstractStep.php
+
+		-
+			message: '#^Method App\\Tutorial\\Steps\\AbstractStep\:\:__construct\(\) has parameter \$config with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/Steps/AbstractStep.php
+
+		-
+			message: '#^Method App\\Tutorial\\Steps\\AbstractStep\:\:applyContextChanges\(\) has parameter \$changes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/Steps/AbstractStep.php
+
+		-
+			message: '#^Method App\\Tutorial\\Steps\\AbstractStep\:\:getConfig\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/Steps/AbstractStep.php
+
+		-
+			message: '#^Method App\\Tutorial\\Steps\\AbstractStep\:\:getData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: src/Tutorial/Steps/AbstractStep.php
 
@@ -263,8 +3337,32 @@ parameters:
 			path: src/Tutorial/Steps/AbstractStep.php
 
 		-
+			message: '#^Method App\\Tutorial\\Steps\\AbstractStep\:\:prepareNextStep\(\) has parameter \$preparation with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/Steps/AbstractStep.php
+
+		-
+			message: '#^Method App\\Tutorial\\Steps\\AbstractStep\:\:toBool\(\) has parameter \$value with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Tutorial/Steps/AbstractStep.php
+
+		-
+			message: '#^Method App\\Tutorial\\Steps\\AbstractStep\:\:validate\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/Steps/AbstractStep.php
+
+		-
 			message: '#^Negated boolean expression is always false\.$#'
 			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: src/Tutorial/Steps/AbstractStep.php
+
+		-
+			message: '#^Property App\\Tutorial\\Steps\\AbstractStep\:\:\$config type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: src/Tutorial/Steps/AbstractStep.php
 
@@ -275,8 +3373,152 @@ parameters:
 			path: src/Tutorial/Steps/AbstractStep.php
 
 		-
+			message: '#^Method App\\Tutorial\\Steps\\Actions\\ActionStep\:\:validate\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/Steps/Actions/ActionStep.php
+
+		-
+			message: '#^Method App\\Tutorial\\Steps\\Actions\\ActionStep\:\:validateActionAvailable\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/Steps/Actions/ActionStep.php
+
+		-
+			message: '#^Method App\\Tutorial\\Steps\\Actions\\ActionStep\:\:validateActionUsed\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/Steps/Actions/ActionStep.php
+
+		-
+			message: '#^Method App\\Tutorial\\Steps\\DialogStep\:\:getData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/Steps/DialogStep.php
+
+		-
+			message: '#^Method App\\Tutorial\\Steps\\Movement\\MovementStep\:\:validate\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/Steps/Movement/MovementStep.php
+
+		-
+			message: '#^Method App\\Tutorial\\Steps\\UIInteractionStep\:\:validate\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/Steps/UIInteractionStep.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialCatalogService\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialCatalogService.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialCatalogService\:\:getActiveTutorials\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialCatalogService.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialCatalogService\:\:getAllTutorials\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialCatalogService.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialCatalogService\:\:getById\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialCatalogService.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialCatalogService\:\:getByVersion\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialCatalogService.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialCatalogService\:\:getVersionsForSelect\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialCatalogService.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialCatalogService\:\:mapFormData\(\) has parameter \$post with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialCatalogService.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialCatalogService\:\:mapFormData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialCatalogService.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialCatalogService\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialCatalogService.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialCatalogService\:\:validateData\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialCatalogService.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialContext\:\:ensurePrerequisites\(\) has parameter \$prerequisites with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialContext.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialContext\:\:getPublicState\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialContext.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialContext\:\:getState\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Tutorial/TutorialContext.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialContext\:\:getState\(\) has parameter \$default with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Tutorial/TutorialContext.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialContext\:\:prepareForNextStep\(\) has parameter \$preparation with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialContext.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialContext\:\:restoreState\(\) has parameter \$serializedState with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialContext.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialContext\:\:setState\(\) has parameter \$value with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Tutorial/TutorialContext.php
+
+		-
 			message: '#^Negated boolean expression is always false\.$#'
 			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: src/Tutorial/TutorialContext.php
+
+		-
+			message: '#^Property App\\Tutorial\\TutorialContext\:\:\$tutorialState type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: src/Tutorial/TutorialContext.php
 
@@ -291,6 +3533,24 @@ parameters:
 			identifier: identical.alwaysFalse
 			count: 1
 			path: src/Tutorial/TutorialContext.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialFeatureFlag\:\:getSettings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialFeatureFlag.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialFeatureFlag\:\:getWhitelistedPlayers\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialFeatureFlag.php
+
+		-
+			message: '#^Property App\\Tutorial\\TutorialFeatureFlag\:\:\$settingsCache type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialFeatureFlag.php
 
 		-
 			message: '#^Negated boolean expression is always false\.$#'
@@ -323,22 +3583,364 @@ parameters:
 			path: src/Tutorial/TutorialManager.php
 
 		-
+			message: '#^Method App\\Tutorial\\TutorialManager\:\:advanceStep\(\) has parameter \$validationData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialManager\:\:advanceStep\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialManager\:\:completeTutorial\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialManager\:\:getCurrentStepForClientById\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialManager\:\:getStepDataById\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialManager\:\:processPlaceholders\(\) has parameter \$stepData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialManager\:\:processPlaceholders\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialManager\:\:resumeTutorial\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialManager\:\:startTutorial\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialMapInstance\:\:copyMapElements\(\) has parameter \$columnsToCopy with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialMapInstance.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialMapInstance\:\:copyMapElements\(\) has parameter \$coordsMapping with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialMapInstance.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialMapInstance\:\:createInstance\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialMapInstance.php
+
+		-
 			message: '#^Property App\\Tutorial\\TutorialMapInstance\:\:\$db is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
 			path: src/Tutorial/TutorialMapInstance.php
 
 		-
-			message: '#^Method Doctrine\\ORM\\EntityManager\:\:clear\(\) invoked with 1 parameter, 0 required\.$#'
-			identifier: arguments.count
+			message: '#^Method App\\Tutorial\\TutorialNpcRepository\:\:normalize\(\) has parameter \$r with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
-			path: src/Factory/TutorialPlayerFactory.php
+			path: src/Tutorial/TutorialNpcRepository.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialNpcRepository\:\:normalize\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialNpcRepository.php
+
+		-
+			message: '#^Property App\\Tutorial\\TutorialPlaceholderService\:\:\$cachedValues type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialPlaceholderService.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialProgressManager\:\:advanceStep\(\) has parameter \$validationData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialProgressManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialProgressManager\:\:advanceStep\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialProgressManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialProgressManager\:\:getCurrentStepForClient\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialProgressManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialProgressManager\:\:prepareStepForClient\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialProgressManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialResourceManager\:\:spawnDynamicNpcs\(\) has parameter \$npcs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialResourceManager.php
+
+		-
+			message: '#^Property App\\Tutorial\\TutorialResourceManager\:\:\$conn has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Tutorial/TutorialResourceManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialSessionManager\:\:createSession\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialSessionManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialSessionManager\:\:getActiveSession\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialSessionManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialSessionManager\:\:loadSession\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialSessionManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialSessionManager\:\:updateProgress\(\) has parameter \$contextData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialSessionManager.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialStepRepository\:\:convertRowToStepData\(\) has parameter \$row with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialStepRepository.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialStepRepository\:\:convertRowToStepData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialStepRepository.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialStepRepository\:\:fetchStep\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialStepRepository.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialStepRepository\:\:getStepById\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialStepRepository.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialStepRepository\:\:getStepByNumber\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialStepRepository.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialStepRepository\:\:getStepStatistics\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialStepRepository.php
+
+		-
+			message: '#^Method App\\Tutorial\\TutorialStepRepository\:\:getStepsForAdmin\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Tutorial/TutorialStepRepository.php
+
+		-
+			message: '#^Method App\\View\\AccountView\:\:buildOptions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/View/AccountView.php
+
+		-
+			message: '#^Method App\\View\\Admin\\TypeEditorFace\:\:fromRequest\(\) has parameter \$query with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/View/Admin/TypeEditorFace.php
+
+		-
+			message: '#^Method App\\View\\Classement\\BourrinsView\:\:print_best_carac\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/View/Classement/BourrinsView.php
+
+		-
+			message: '#^Method App\\View\\Classement\\BourrinsView\:\:print_best_carac\(\) has parameter \$bestCarac with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Classement/BourrinsView.php
+
+		-
+			message: '#^Method App\\View\\Classement\\BourrinsView\:\:print_best_carac\(\) has parameter \$carac with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Classement/BourrinsView.php
+
+		-
+			message: '#^Method App\\View\\Classement\\BourrinsView\:\:renderBourrins\(\) has parameter \$playerList with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Classement/BourrinsView.php
+
+		-
+			message: '#^Method App\\View\\Classement\\FortunesView\:\:compareByGold\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/View/Classement/FortunesView.php
+
+		-
+			message: '#^Method App\\View\\Classement\\FortunesView\:\:compareByGold\(\) has parameter \$a with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Classement/FortunesView.php
+
+		-
+			message: '#^Method App\\View\\Classement\\FortunesView\:\:compareByGold\(\) has parameter \$b with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Classement/FortunesView.php
+
+		-
+			message: '#^Method App\\View\\Classement\\FortunesView\:\:renderFortunes\(\) has parameter \$playerList with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Classement/FortunesView.php
+
+		-
+			message: '#^Method App\\View\\Classement\\ReputationsView\:\:compareByPr\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/View/Classement/ReputationsView.php
+
+		-
+			message: '#^Method App\\View\\Classement\\ReputationsView\:\:compareByPr\(\) has parameter \$a with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Classement/ReputationsView.php
+
+		-
+			message: '#^Method App\\View\\Classement\\ReputationsView\:\:compareByPr\(\) has parameter \$b with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Classement/ReputationsView.php
+
+		-
+			message: '#^Method App\\View\\Classement\\ReputationsView\:\:renderReputations\(\) has parameter \$playerList with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Classement/ReputationsView.php
+
+		-
+			message: '#^Method App\\View\\FactionView\:\:renderFaction\(\) has parameter \$facJson with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/FactionView.php
+
+		-
+			message: '#^Method App\\View\\FactionView\:\:renderFaction\(\) has parameter \$player with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/FactionView.php
+
+		-
+			message: '#^Method App\\View\\FactionView\:\:renderFaction\(\) has parameter \$res with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/FactionView.php
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
 			path: src/View/FactionView.php
+
+		-
+			message: '#^Method App\\View\\Forum\\CookieView\:\:displayCookieView\(\) has parameter \$player with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Forum/CookieView.php
+
+		-
+			message: '#^Method App\\View\\Forum\\CookieView\:\:displayCookieView\(\) has parameter \$postJson with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Forum/CookieView.php
+
+		-
+			message: '#^Method App\\View\\Forum\\ForumView\:\:GetLastReadedPost\(\) has parameter \$TopicView with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Forum/ForumView.php
+
+		-
+			message: '#^Method App\\View\\Forum\\ForumView\:\:GetNextPostData\(\) has parameter \$data with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Forum/ForumView.php
+
+		-
+			message: '#^Method App\\View\\Forum\\ForumView\:\:GetNextPostData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/View/Forum/ForumView.php
+
+		-
+			message: '#^Method App\\View\\Forum\\ForumView\:\:SearchInPosts\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/View/Forum/ForumView.php
+
+		-
+			message: '#^Method App\\View\\Forum\\ForumView\:\:SearchInPosts\(\) has parameter \$posts with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Forum/ForumView.php
+
+		-
+			message: '#^Method App\\View\\Forum\\ForumView\:\:SearchInPosts\(\) has parameter \$search with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Forum/ForumView.php
+
+		-
+			message: '#^Method App\\View\\Forum\\MissiveView\:\:renderMissive\(\) has parameter \$topJson with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Forum/MissiveView.php
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>bgColor" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
@@ -376,6 +3978,107 @@ parameters:
 			count: 1
 			path: src/View/InfosView.php
 
+		-
+			message: '#^Method App\\View\\Observe\\EntityCardView\:\:buttonsHtml\(\) has parameter \$x with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Observe/EntityCardView.php
+
+		-
+			message: '#^Method App\\View\\Observe\\EntityCardView\:\:buttonsHtml\(\) has parameter \$y with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Observe/EntityCardView.php
+
+		-
+			message: '#^Method App\\View\\Observe\\EntityCardView\:\:cardText\(\) has parameter \$x with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Observe/EntityCardView.php
+
+		-
+			message: '#^Method App\\View\\Observe\\EntityCardView\:\:cardText\(\) has parameter \$y with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Observe/EntityCardView.php
+
+		-
+			message: '#^Method App\\View\\Observe\\EntityCardView\:\:echoOthers\(\) has parameter \$x with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Observe/EntityCardView.php
+
+		-
+			message: '#^Method App\\View\\Observe\\EntityCardView\:\:echoOthers\(\) has parameter \$y with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Observe/EntityCardView.php
+
+		-
+			message: '#^Method App\\View\\Observe\\EntityCardView\:\:renderTarget\(\) has parameter \$x with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Observe/EntityCardView.php
+
+		-
+			message: '#^Method App\\View\\Observe\\EntityCardView\:\:renderTarget\(\) has parameter \$y with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/View/Observe/EntityCardView.php
+
+		-
+			message: '#^Method App\\View\\Observe\\EntityCardView\:\:sortActionsByCategory\(\) has parameter \$actions with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/View/Observe/EntityCardView.php
+
+		-
+			message: '#^Method App\\View\\Observe\\EntityCardView\:\:sortActionsByCategory\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/View/Observe/EntityCardView.php
+
+		-
+			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:canTargetEntity\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/View/Observe/EntityCardView.php
+
+		-
+			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:canTargetOther\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/View/Observe/EntityCardView.php
+
+		-
+			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:canTargetSelf\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/View/Observe/EntityCardView.php
+
+		-
+			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:matchesDisplayContext\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/View/Observe/EntityCardView.php
+
+		-
+			message: '#^Parameter \#1 \$action of method App\\View\\Action\\ActionIconView\:\:forAction\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/View/Observe/EntityCardView.php
+
+		-
+			message: '#^Method App\\View\\Player\\PlayerSearchView\:\:render\(\) has parameter \$players with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/View/Player/PlayerSearchView.php
+
+		-
+			message: '#^Method App\\View\\QuestsView\:\:renderQuests\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/View/QuestsView.php
 
 		-
 			message: '#^Negated boolean expression is always false\.$#'
@@ -383,21 +4086,746 @@ parameters:
 			count: 1
 			path: src/View/QuestsView.php
 
-
 		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: src/Action/Condition/AbstractComputeCondition.php
-
-		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$playerPassiveService\.$#'
-			identifier: property.notFound
-			count: 6
-			path: src/Action/Condition/AbstractComputeCondition.php
-
-		-
-			message: '#^Negated boolean expression is always true\.$#'
-			identifier: booleanNot.alwaysTrue
+			message: '#^Method App\\View\\WarSchool\\SkillTreeView\:\:needs\(\) has parameter \$displayNames with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
-			path: src/Action/Condition/AbstractComputeCondition.php
+			path: src/View/WarSchool/SkillTreeView.php
+
+		-
+			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:matchesDisplayContext\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Action/ActionDisplayContextBaselineTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:matchesDisplayContext\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Action/ActionDisplayContextBaselineTest.php
+
+		-
+			message: '#^Method Tests\\Action\\ActionResultsTest\:\:testConstructorAndGetters\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Action/ActionResultsTest.php
+
+		-
+			message: '#^Method Tests\\Action\\ActionResultsTest\:\:testSetters\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Action/ActionResultsTest.php
+
+		-
+			message: '#^Method Tests\\Action\\AdvancedRecipeNeedsWorkshopTest\:\:crafterWithAdvancedRecipe\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/AdvancedRecipeNeedsWorkshopTest.php
+
+		-
+			message: '#^Method Tests\\Action\\ChestUnderTheBankTest\:\:placedChestOn\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/ChestUnderTheBankTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Action/ChestUnderTheBankTest.php
+
+		-
+			message: '#^Method Tests\\Action\\Combat\\ActionSimulationServiceTest\:\:condition\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/Combat/ActionSimulationServiceTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Action/Combat/AttackResolutionBaselineTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 3
+			path: tests/Action/Combat/BuildingCombatBaselineTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Action/Combat/BuildingCombatBaselineTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Action/Combat/ChestBreaksUnderAttackBaselineTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 3
+			path: tests/Action/Combat/ConstruireBaselineTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Action/Combat/ExecutorResolvesDeathTest.php
+
+		-
+			message: '#^Method Tests\\Action\\Combat\\LineOfFireTest\:\:key\(\) has parameter \$tile with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/Combat/LineOfFireTest.php
+
+		-
+			message: '#^Method Tests\\Action\\Combat\\LineOfFireTest\:\:sortedKeys\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/Combat/LineOfFireTest.php
+
+		-
+			message: '#^Method Tests\\Action\\Combat\\ObstacleConditionTest\:\:shooterAndTarget\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/Combat/ObstacleConditionTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 4
+			path: tests/Action/Combat/RepairExemplarBaselineTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 3
+			path: tests/Action/Combat/RepairTargetsBaselineTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:canTargetEntity\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 5
+			path: tests/Action/Combat/RepairTargetsBaselineTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:matchesDisplayContext\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 3
+			path: tests/Action/Combat/RepairTargetsBaselineTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Action/Combat/WeaponEffectsOnHitAndMissTest.php
+
+		-
+			message: '#^Method Tests\\Action\\Compute\\ComputeConditionCharacterizationTest\:\:check\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Action/Compute/ComputeConditionCharacterizationTest.php
+
+		-
+			message: '#^Method Tests\\Action\\Compute\\ComputePureConditionCharacterizationTest\:\:check\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Action/Compute/ComputePureConditionCharacterizationTest.php
+
+		-
+			message: '#^Method Tests\\Action\\Compute\\MeleePureComputeConditionTest\:\:check\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/Compute/MeleePureComputeConditionTest.php
+
+		-
+			message: '#^Method Tests\\Action\\Condition\\RequiresWeaponTypeConditionTest\:\:check\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/Condition/RequiresWeaponTypeConditionTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 4
+			path: tests/Action/ConsommerBaselineTest.php
+
+		-
+			message: '#^Method Tests\\Action\\ConsumableEffectDurationTest\:\:drinkerWith\(\) has parameter \$extra with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/ConsumableEffectDurationTest.php
+
+		-
+			message: '#^Method Tests\\Action\\ConsumableEffectDurationTest\:\:drinkerWith\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/ConsumableEffectDurationTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Action/CreuserBaselineTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 3
+			path: tests/Action/EquiperBaselineTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Action/FabriquerBaselineTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 6
+			path: tests/Action/FouillerBaselineTest.php
+
+		-
+			message: '#^Method Tests\\Action\\ImportExport\\ActionImporterPreviewTest\:\:importer\(\) has parameter \$knownRaces with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/ImportExport/ActionImporterPreviewTest.php
+
+		-
+			message: '#^Method Tests\\Action\\ItemGrantedSpellTest\:\:bearerWith\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/ItemGrantedSpellTest.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:add_effect\(\) has parameter \$duration with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:add_effect\(\) has parameter \$name with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:getEquipedItems\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:getEquipedItemsEffects\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:getPassives\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:get_action_xp\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:get_action_xp\(\) has parameter \$target with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:get_data\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:get_upgrades\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:go\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:go\(\) has parameter \$goCoords with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:putBonus\(\) has parameter \$bonus with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:putEnergie\(\) has parameter \$energie with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:putFat\(\) has parameter \$bonus with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:put_malus\(\) has parameter \$malus with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\PlayerMock\:\:traitBonus\(\) has parameter \$types with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Property Tests\\Action\\Mock\\PlayerMock\:\:\$caracs has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Property Tests\\Action\\Mock\\PlayerMock\:\:\$coords has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Property Tests\\Action\\Mock\\PlayerMock\:\:\$data has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Property Tests\\Action\\Mock\\PlayerMock\:\:\$id has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Property Tests\\Action\\Mock\\PlayerMock\:\:\$mockedEffects type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Property Tests\\Action\\Mock\\PlayerMock\:\:\$playerPassiveService has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: tests/Action/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\ScriptedDice\:\:roll\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Action/Mock/ScriptedDice.php
+
+		-
+			message: '#^Method Tests\\Action\\Mock\\ScriptedDice\:\:roll\(\) has parameter \$d with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Action/Mock/ScriptedDice.php
+
+		-
+			message: '#^Method Tests\\Action\\OutcomeInstruction\\OutcomeInstructionMetadataListenerTest\:\:loadMetadata\(\) return type with generic class Doctrine\\ORM\\Mapping\\ClassMetadata does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Action/OutcomeInstruction/OutcomeInstructionMetadataListenerTest.php
+
+		-
+			message: '#^Method Tests\\Action\\Schema\\ActionXpResolverTest\:\:player\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/Schema/ActionXpResolverTest.php
+
+		-
+			message: '#^Method Tests\\Action\\Schema\\SchemaSimulationInputsTest\:\:bySide\(\) has parameter \$fields with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/Schema/SchemaSimulationInputsTest.php
+
+		-
+			message: '#^Method Tests\\Action\\Schema\\SimulationFormBuilderTest\:\:condition\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/Schema/SimulationFormBuilderTest.php
+
+		-
+			message: '#^Method Tests\\Action\\Schema\\SimulationWeaponCatalogTest\:\:items\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/Schema/SimulationWeaponCatalogTest.php
+
+		-
+			message: '#^Method Tests\\Action\\View\\ActionTypeTreeViewTest\:\:sampleTree\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Action/View/ActionTypeTreeViewTest.php
+
+		-
+			message: '#^Method Tests\\Logs\\LogTest\:\:selfTargetedEventTypeProvider\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Logs/LogTest.php
+
+		-
+			message: '#^Method Tests\\Logs\\Mock\\PlayerMock\:\:setOption\(\) has parameter \$value with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Logs/Mock/PlayerMock.php
+
+		-
+			message: '#^Property Tests\\Logs\\Mock\\PlayerMock\:\:\$options type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Logs/Mock/PlayerMock.php
+
+		-
+			message: '#^Method Tests\\Logs\\Mock\\TestDatabase\:\:exe\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Logs/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Logs\\Mock\\TestDatabase\:\:exe\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Logs/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Logs\\Mock\\TestDatabase\:\:insert\(\) has parameter \$values with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Logs/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Logs\\Mock\\TestDatabase\:\:insertLog\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Logs/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Logs\\Mock\\TestDatabaseResult\:\:__construct\(\) has parameter \$stmt with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Logs/Mock/TestDatabase.php
+
+		-
+			message: '#^Property Tests\\Logs\\Mock\\TestDatabaseResult\:\:\$stmt has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: tests/Logs/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\LegacyPlayerFixtureTestCase\:\:sowCatalogAction\(\) has parameter \$conditions with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/Mock/LegacyPlayerFixtureTestCase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\LegacyPlayerFixtureTestCase\:\:sowCatalogItem\(\) has parameter \$overrides with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/Mock/LegacyPlayerFixtureTestCase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\LegacyPlayerFixtureTestCase\:\:sowStructureType\(\) has parameter \$overrides with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/Mock/LegacyPlayerFixtureTestCase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\MockResult\:\:__construct\(\) has parameter \$stmt with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Player/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\MockResult\:\:fetchAllAssociative\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\MockResult\:\:fetchAllNumeric\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\MockResult\:\:fetchAssociative\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\MockResult\:\:fetchNumeric\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\TestDatabase\:\:executeQuery\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\TestDatabase\:\:executeQuery\(\) has parameter \$types with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Player/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\TestDatabase\:\:executeStatement\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\TestDatabase\:\:executeStatement\(\) has parameter \$types with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\TestDatabase\:\:insert\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\TestDatabase\:\:insert\(\) has parameter \$types with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\TestDatabase\:\:insertPlayer\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Player\\Mock\\TestDatabase\:\:lastInsertId\(\) has parameter \$name with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Player/Mock/TestDatabase.php
+
+		-
+			message: '#^Property Tests\\Player\\Mock\\MockResult\:\:\$stmt has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: tests/Player/Mock/TestDatabase.php
+
+		-
+			message: '#^Method Tests\\Player\\OneElementPerCellTest\:\:element\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/OneElementPerCellTest.php
+
+		-
+			message: '#^Property Tests\\Player\\TurnProcessingBaselineTest\:\:\$sessionBackup type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/TurnProcessingBaselineTest.php
+
+		-
+			message: '#^Method Tests\\Player\\WearEngineBaselineTest\:\:wearingGladius\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/WearEngineBaselineTest.php
+
+		-
+			message: '#^Method Tests\\Player\\LoadedDice\:\:roll\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Player/WearRulesTest.php
+
+		-
+			message: '#^Method Tests\\Player\\LoadedDice\:\:roll\(\) has parameter \$d with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Player/WearRulesTest.php
+
+		-
+			message: '#^Method Tests\\Player\\WearRulesTest\:\:wearing\(\) has parameter \$pieces with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/WearRulesTest.php
+
+		-
+			message: '#^Method Tests\\Player\\WearRulesTest\:\:wearing\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Player/WearRulesTest.php
+
+		-
+			message: '#^Method Tests\\Tutorial\\ActionStepTest\:\:makeStepWithConfig\(\) has parameter \$config with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Tutorial/ActionStepTest.php
+
+		-
+			message: '#^Method Tests\\Tutorial\\LegacyTutorialPlayerStub\:\:refresh_caracs\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Tutorial/LegacyTutorialScriptLoadingTest.php
+
+		-
+			message: '#^Method Tests\\Tutorial\\LegacyTutorialPlayerStub\:\:refresh_data\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Tutorial/LegacyTutorialScriptLoadingTest.php
+
+		-
+			message: '#^Method Tests\\Tutorial\\LegacyTutorialPlayerStub\:\:refresh_view\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Tutorial/LegacyTutorialScriptLoadingTest.php
+
+		-
+			message: '#^Method Tests\\Tutorial\\MovementStepDbBranchesTest\:\:makeStepWithConfig\(\) has parameter \$config with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Tutorial/MovementStepDbBranchesTest.php
+
+		-
+			message: '#^Method Tests\\Tutorial\\MovementStepTest\:\:makeStepWithConfig\(\) has parameter \$config with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Tutorial/MovementStepTest.php
+
+		-
+			message: '#^Property Tests\\Tutorial\\TutorialEnemyIdentificationTest\:\:\$previousLink has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: tests/Tutorial/TutorialEnemyIdentificationTest.php
+
+		-
+			message: '#^Property Tests\\Tutorial\\TutorialEnemyIdentificationTest\:\:\$previousSession type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Tutorial/TutorialEnemyIdentificationTest.php
+
+		-
+			message: '#^Method Tests\\Tutorial\\UIInteractionStepTest\:\:makeStepWithConfig\(\) has parameter \$config with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Tutorial/UIInteractionStepTest.php
+
+		-
+			message: '#^Method Tests\\Various\\BankLifecycleTest\:\:ownershipOf\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Various/BankLifecycleTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Various/ConstructionSiteTest.php
+
+		-
+			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Various/FabricTest.php
+
+		-
+			message: '#^Parameter \#1 \$rows of method App\\Service\\Map\\HarvestCatalogService\:\:save\(\) expects array\<int, array\<string, mixed\>\>, array\<string, array\<string, string\>\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Various/HarvestYieldsSourceTest.php
+
+		-
+			message: '#^Method Tests\\Various\\MapForegroundsRetirementTest\:\:verdict\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Various/MapForegroundsRetirementTest.php
+
+		-
+			message: '#^Method Tests\\Various\\PermanentlyBlockedTest\:\:blocked\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Various/PermanentlyBlockedTest.php
+
+		-
+			message: '#^Method Tests\\Various\\PlanAdminServiceTest\:\:readConfig\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Various/PlanAdminServiceTest.php
+
+		-
+			message: '#^Method Tests\\Various\\PlayerEntityDisplayIdTest\:\:setEntityField\(\) has parameter \$value with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Various/PlayerEntityDisplayIdTest.php
+
+		-
+			message: '#^Parameter \#1 \$expected of method PHPUnit\\Framework\\Assert\:\:assertSame\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: tests/Various/RaceServiceTest.php
+
+		-
+			message: '#^Unable to resolve the template type T in call to function array_values$#'
+			identifier: argument.templateType
+			count: 1
+			path: tests/Various/RaceServiceTest.php
+
+		-
+			message: '#^Method Tests\\Various\\ResourceExhaustCharacterizationTest\:\:rows\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Various/ResourceExhaustCharacterizationTest.php
+
+		-
+			message: '#^Parameter \#3 \$row of static method App\\Service\\ResourceService\:\:createExhaustArray\(\) is passed by reference, so it expects variables only\.$#'
+			identifier: argument.byRef
+			count: 5
+			path: tests/Various/ResourceExhaustCharacterizationTest.php
+
+		-
+			message: '#^Parameter \#3 \$row of static method App\\Service\\ResourceService\:\:createRegrowArray\(\) is passed by reference, so it expects variables only\.$#'
+			identifier: argument.byRef
+			count: 4
+			path: tests/Various/ResourceExhaustCharacterizationTest.php
+
+		-
+			message: '#^Method Tests\\Various\\TerrainTransitionServiceTest\:\:config\(\) has parameter \$fullTiles with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Various/TerrainTransitionServiceTest.php
+
+		-
+			message: '#^Method Tests\\Various\\TiledExtensionVersionTest\:\:service\(\) has parameter \$stored with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Various/TiledExtensionVersionTest.php
+
+		-
+			message: '#^Method Classes\\Player@anonymous/tests/Various/TriggerRequirementsTest\.php\:74\:\:have_spell\(\) has parameter \$name with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Various/TriggerRequirementsTest.php

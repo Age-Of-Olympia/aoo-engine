@@ -66,6 +66,13 @@ if ($action === 'create' || $action === 'update') {
         redirectTo('/admin/dialogs.php?action=' . ($action === 'create' ? 'new' : 'edit&name=' . urlencode($name)));
     }
 
+    // The "Boutons de comptoir" card, on top of the JSON
+    $nodes = DialogService::applyCounterFields(
+        $nodes,
+        ['icon' => (array) ($_POST['counter_icon'] ?? []), 'button' => (array) ($_POST['counter_button'] ?? [])],
+        ['icon' => (array) ($_POST['counter_icon_was'] ?? []), 'button' => (array) ($_POST['counter_button_was'] ?? [])]
+    );
+
     try {
         $service->saveGameDialog($name, $nodes, [
             'npc_name'  => stringWithDefault('npc_name', 'TARGET_NAME'),

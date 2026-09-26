@@ -1,9 +1,9 @@
 <?php
 
 use App\Factory\PlayerFactory;
-use App\Service\BuildingService;
+use App\Service\Counter\CounterAccessService;
+use App\Service\Counter\CounterCatalog;
 use App\Service\RepairService;
-use Classes\Market;
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 
@@ -18,17 +18,14 @@ $player->get_data();
 
 $target = PlayerFactory::legacy((int) ($POST_DATA['targetId'] ?? 0));
 
-/* The counter first: same guards as the screen (access, then the tab the
- * dialog serves — an atelier repairs, a bank does not). */
-$marketAccessError = Market::CheckMarketAccess($player, $target);
-if ($marketAccessError != null) {
-    ExitError($marketAccessError);
-}
-
+/* The counter first: same guards as the screen — an atelier repairs, a
+ * bank does not. */
 $action = (string) ($POST_DATA['action'] ?? '');
 $tab = $action === 'exemplar-recycle' ? 'recycle' : 'repair';
-if (!(new BuildingService())->servesCounter((int) $target->id, 'merchant.php', $tab)) {
-    ExitError('On ne sert pas cela à ce comptoir.');
+
+$accessError = (new CounterAccessService())->check($player, $target, CounterCatalog::MERCHANT, $tab);
+if ($accessError !== null) {
+    ExitError($accessError);
 }
 
 $service = new RepairService();
