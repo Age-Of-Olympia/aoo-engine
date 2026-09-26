@@ -99,6 +99,9 @@ class TiledMapService
     /** Virtual layer of the building entities (no map_* table) */
     public const BUILDINGS_LAYER = 'buildings';
 
+    /** params of a buildings row: the id of its god, '' without one. */
+    private const GOD_PARAMS_SQL = "IF(p.godId = 0, '', p.godId) AS params";
+
     /** The layer whose rows may name a whole object rather than a piece. */
     public const SCENERY_LAYER = 'foregrounds';
 
@@ -251,6 +254,12 @@ class TiledMapService
         }
         sort($catalog[self::BUILDINGS_LAYER]);
 
+        // Choices for the god of an altar: params of a buildings row = god id
+        $gods = [];
+        foreach ((new BuildingService())->gods() as $id => $name) {
+            $gods[] = ['id' => $id, 'name' => $name];
+        }
+
         return [
             'plan'       => $plan,
             'z'          => $z,
@@ -262,6 +271,7 @@ class TiledMapService
             'images'     => $images,
             'composites' => $composites,
             'pieces'     => $pieces,
+            'gods'       => $gods,
             'planConfig' => [
                 'values' => $this->planConfig->read($plan),
             ],
@@ -686,11 +696,15 @@ class TiledMapService
                 $protected++;
                 continue;
             }
-            $available[$this->rowKey(self::BUILDINGS_LAYER, $row)][] = $row['id'];
+            $available[$this->rowKey(self::BUILDINGS_LAYER, $row)][] = $row;
         }
 
         $kept = 0;
         $toInsert = [];
+        $toConsecrate = [];
+        // params of a building row = the id of its god, '' = none
+        $godOf = static fn(array $row): int => (int) ($row['params'] ?? 0);
+        $skip = static fn(array $row, string $why): string => $row['x'] . ',' . $row['y'] . ' ' . $row['name'] . ' — ' . $why;
 
         foreach ($incomingRows as $row) {
             self::validateIncomingRow(self::BUILDINGS_LAYER, $row);
@@ -698,8 +712,11 @@ class TiledMapService
             $key = $this->rowKey(self::BUILDINGS_LAYER, $row);
 
             if (!empty($available[$key])) {
-                array_pop($available[$key]);
+                $current = array_pop($available[$key]);
                 $kept++;
+                if ($godOf($current) !== $godOf($row)) {
+                    $toConsecrate[] = [(int) $current['id'], $row];
+                }
             } else {
                 $toInsert[] = $row;
             }
@@ -712,8 +729,8 @@ class TiledMapService
         // Removals first: moving a building from one cell to another in the
         // same push frees the old cell before the placement on the new one
         $deleted = 0;
-        foreach (array_merge([], ...array_values($available)) as $entityId) {
-            if ($buildings->remove((int) $entityId)) {
+        foreach (array_merge([], ...array_values($available)) as $leftover) {
+            if ($buildings->remove((int) $leftover['id'])) {
                 $deleted++;
             }
         }
@@ -722,15 +739,26 @@ class TiledMapService
             try {
                 // Editor placement: decor and elements do not block, only
                 // a player's construire is held to that rule.
-                $buildings->place((string) $row['name'], (object) [
+                $id = $buildings->place((string) $row['name'], (object) [
                     'x'    => (int) $row['x'],
                     'y'    => (int) $row['y'],
                     'z'    => $z,
                     'plan' => $plan,
                 ], overScenery: true);
                 $inserted++;
+                if ($godOf($row) !== 0) {
+                    $toConsecrate[] = [$id, $row];
+                }
             } catch (\InvalidArgumentException $e) {
-                $skipped[] = $row['x'] . ',' . $row['y'] . ' ' . $row['name'] . ' — ' . $e->getMessage();
+                $skipped[] = $skip($row, $e->getMessage());
+            }
+        }
+
+        foreach ($toConsecrate as [$id, $row]) {
+            try {
+                $buildings->setGod($id, $godOf($row));
+            } catch (\InvalidArgumentException $e) {
+                $skipped[] = $skip($row, $e->getMessage());
             }
         }
 
@@ -803,12 +831,12 @@ class TiledMapService
      * copies and a bundle carries. Walls are buildings since the entity
      * conversion — a bundle without them was a plan with no walls.
      *
-     * @return list<array{name: string, x: int, y: int, z: int}>
+     * @return list<array{name: string, x: int, y: int, z: int, params: string}>
      */
     public function decorBuildingRows(string $plan): array
     {
         $res = $this->db->exe(
-            "SELECT p.race AS name, c.x, c.y, c.z
+            "SELECT p.race AS name, c.x, c.y, c.z, " . self::GOD_PARAMS_SQL . "
              FROM buildings b
              JOIN players p ON p.id = b.player_id
              JOIN coords c ON c.id = p.coords_id
@@ -819,7 +847,8 @@ class TiledMapService
 
         $rows = [];
         while ($row = $res->fetch_assoc()) {
-            $rows[] = ['name' => (string) $row['name'], 'x' => (int) $row['x'], 'y' => (int) $row['y'], 'z' => (int) $row['z']];
+            $rows[] = ['name' => (string) $row['name'], 'x' => (int) $row['x'], 'y' => (int) $row['y'], 'z' => (int) $row['z'],
+                       'params' => (string) $row['params']];
         }
 
         return $rows;
@@ -915,12 +944,12 @@ class TiledMapService
      * of the version fingerprint, locked "(joueurs)" layer on the extension
      * side.
      *
-     * @return list<array{id: int, name: string, x: int, y: int, player_id: int}>
+     * @return list<array{id: int, name: string, x: int, y: int, player_id: int, params: string}>
      */
     private function fetchBuildingRows(string $plan, int $z): array
     {
         $res = $this->db->exe(
-            "SELECT p.id, p.race AS name, c.x, c.y, p.owner_id, p.faction, b.build_state
+            "SELECT p.id, p.race AS name, c.x, c.y, p.owner_id, p.faction, b.build_state, " . self::GOD_PARAMS_SQL . "
              FROM buildings b
              JOIN players p ON p.id = b.player_id
              JOIN coords c ON c.id = p.coords_id
@@ -941,6 +970,7 @@ class TiledMapService
                 'x'         => (int) $row['x'],
                 'y'         => (int) $row['y'],
                 'player_id' => $isDecor ? 0 : (int) ($row['owner_id'] ?? -1),
+                'params'    => (string) $row['params'],
             ];
         }
 
@@ -1000,7 +1030,9 @@ class TiledMapService
                 if (!empty($row['player_id'])) {
                     continue;
                 }
-                $parts[] = $layer . '|' . $this->rowKey($layer, $row);
+                $parts[] = $layer . '|' . $this->rowKey($layer, $row)
+                    // A god given in game since the pull makes the push stale
+                    . ($layer === self::BUILDINGS_LAYER ? '|' . ($row['params'] ?? '') : '');
             }
         }
 

@@ -26,6 +26,12 @@ if($_POST['type'] == 'eraser'){
         );
 
         echo 'bâtiment #'. $buildingId .' ';
+
+        $godId = (int) ($_POST['params'] ?? 0);
+        if ($godId !== 0) {
+            (new BuildingService())->setGod($buildingId, $godId);
+            echo 'dieu #'. $godId .' ';
+        }
     } catch (\InvalidArgumentException $e) {
 
         echo 'refusé : '. $e->getMessage() .' ';

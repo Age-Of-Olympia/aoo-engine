@@ -35,6 +35,7 @@ foreach((new RaceService())->getBuildingTypes() as $race){
         class="map wall select-name"
         data-type="buildings"
         data-name="'. $name .'"'
+        . (in_array($name, BuildingService::GOD_TYPES, true) ? ' data-params=""' : '')
         . ($footprint !== null && $footprint->cells() > 1
             ? ' data-figure=\''. json_encode([
                 'w' => $footprint->width(),
@@ -49,6 +50,13 @@ foreach((new RaceService())->getBuildingTypes() as $race){
 
 
 }
+
+echo '<div>Dieu de l\'autel : <select id="buildings-params"><option value="">— aucun —</option>';
+foreach ((new BuildingService())->gods() as $godId => $godName) {
+    echo '<option value="'. $godId .'">'. htmlspecialchars($godName, ENT_QUOTES) .' (#'. $godId .')</option>';
+}
+echo '</select></div>';
+echo '<p style="font-size: 0.85em; color: #999; margin: 5px 0;">Seuls les dieux avec l\'option <code>prayable</code> sont proposés (admin → Joueurs → Accès &amp; options).</p>';
 
 echo '
 </div>

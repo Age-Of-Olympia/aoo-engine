@@ -28,6 +28,9 @@ class BuildingService
      */
     public const NO_IMAGE = '';
 
+    /** Types the editors offer a god for. */
+    public const GOD_TYPES = ['altar'];
+
     private EntityManagerInterface $entityManager;
     private RaceService $raceService;
     private FactionService $factionService;
@@ -968,6 +971,55 @@ class BuildingService
         $this->entityManager->flush();
 
         (new AuditService())->addAuditLog("BuildingService::setDialog #{$playerId} '{$dialogName}'");
+    }
+
+    /**
+     * @return array<int, string> god id => name: players of the `dieu` race
+     *         carrying the `prayable` option — the race also holds test copies
+     *         and scenery-like NPCs nobody should pray to
+     */
+    public function gods(): array
+    {
+        $gods = [];
+        foreach ($this->entityManager->getConnection()->fetchAllAssociative(
+            "SELECT p.id, p.name FROM players p
+              WHERE p.race = 'dieu'
+                AND EXISTS (SELECT 1 FROM players_options o WHERE o.player_id = p.id AND o.name = 'prayable')
+              ORDER BY p.name, p.id"
+        ) as $row) {
+            $gods[(int) $row['id']] = (string) $row['name'];
+        }
+
+        return $gods;
+    }
+
+    /**
+     * Consecrates a building to a god (0 = none) and names it the way
+     * `consacrer` does: "Autel de Zeus", or the bare type label without a god.
+     */
+    public function setGod(int $playerId, int $godId): void
+    {
+        $conn = $this->entityManager->getConnection();
+        $type = $conn->fetchOne(
+            'SELECT p.race FROM players p JOIN buildings b ON b.player_id = p.id WHERE p.id = ?',
+            [$playerId]
+        );
+        if ($type === false) {
+            throw new \InvalidArgumentException("#{$playerId} n'est pas un bâtiment.");
+        }
+
+        $godName = $godId === 0
+            ? null
+            : ($this->gods()[$godId] ?? throw new \InvalidArgumentException("Dieu inconnu : #{$godId}."));
+        $label = $this->raceService->getRaceByName((string) $type)?->getLabel() ?: (string) $type;
+
+        $conn->executeStatement(
+            'UPDATE players SET godId = ?, name = ? WHERE id = ?',
+            [$godId, $godName === null ? $label : $label . ' de ' . $godName, $playerId]
+        );
+        self::purgeEntityCaches($playerId);
+
+        (new AuditService())->addAuditLog("BuildingService::setGod #{$playerId} god {$godId}");
     }
 
     /**

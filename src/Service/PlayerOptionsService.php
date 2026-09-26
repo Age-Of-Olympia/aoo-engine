@@ -51,6 +51,8 @@ class PlayerOptionsService
         'isSuperAdmin', 'isAdmin', 'showActionDetails',
         'alreadyFished', 'incognitoMode', 'invisibleMode', 'showBlockedTiles',
         'doubleUpload', 'alreadyChanged',
+        // on a god: offered when consecrating an altar from the editors
+        'prayable',
     ];
 
     /** Options that carry admin authority — highlighted / guarded in the UI. */

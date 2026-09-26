@@ -150,6 +150,74 @@ class TiledBuildingsLayerTest extends TestCase
         $this->assertStringContainsString('7,7', $result['layers']['buildings']['skipped'][0]);
     }
 
+    /** params of a buildings row = the id of its god: set, kept, removed, refused, versioned. */
+    public function testTheGodOfABuildingTravelsInItsParams(): void
+    {
+        $godId = -99990;
+        $this->link->executeStatement(
+            "INSERT INTO players (id, name, race, player_type) VALUES (?, 'Dieu du test', 'dieu', 'npc')",
+            [$godId]
+        );
+        $this->link->executeStatement("INSERT INTO players_options (player_id, name) VALUES (?, 'prayable')", [$godId]);
+
+        try {
+            $service = new TiledMapService();
+            $label = (new RaceService())->getRaceByName($this->type)->getLabel();
+            $at = static fn(array $rows): array => array_values(array_filter($rows, static fn(array $r): bool => $r['x'] === 1))[0];
+
+            $this->assertContains(['id' => $godId, 'name' => 'Dieu du test'], $service->exportPlan(self::PLAN, 0)['gods']);
+
+            $service->importPlan(self::PLAN, 0, [
+                'buildings' => [['x' => 1, 'y' => 1, 'name' => $this->type, 'params' => (string) $godId]],
+            ], $service->exportPlan(self::PLAN, 0)['version']);
+
+            $export = $service->exportPlan(self::PLAN, 0);
+            $this->assertSame((string) $godId, $at($export['layers']['buildings'])['params']);
+            $this->assertSame($label . ' de Dieu du test', $this->nameAt(1, 1));
+
+            // In-game consecration after the pull: the pulled version is stale
+            $this->link->executeStatement(
+                'UPDATE players SET godId = 0 WHERE id = ?',
+                [$at($export['layers']['buildings'])['id']]
+            );
+            try {
+                $service->importPlan(self::PLAN, 0, ['buildings' => $export['layers']['buildings']], $export['version']);
+                $this->fail('a god changed since the pull must refuse the push');
+            } catch (\RuntimeException $e) {
+                $this->assertSame(409, $e->getCode());
+            }
+
+            // Unknown or non-prayable god: skipped, the building stays
+            $export = $service->exportPlan(self::PLAN, 0);
+            $result = $service->importPlan(self::PLAN, 0, [
+                'buildings' => [['x' => 1, 'y' => 1, 'name' => $this->type, 'params' => '-1']],
+            ], $export['version']);
+            $this->assertSame(1, $result['layers']['buildings']['kept']);
+            $this->assertStringContainsString('Dieu inconnu', $result['layers']['buildings']['skipped'][0] ?? '');
+
+            // No params: no god, the bare type label
+            $service->importPlan(self::PLAN, 0, [
+                'buildings' => [['x' => 1, 'y' => 1, 'name' => $this->type, 'params' => (string) $godId]],
+            ], $service->exportPlan(self::PLAN, 0)['version']);
+            $service->importPlan(self::PLAN, 0, [
+                'buildings' => [['x' => 1, 'y' => 1, 'name' => $this->type]],
+            ], $service->exportPlan(self::PLAN, 0)['version']);
+            $this->assertSame('', $at($service->exportPlan(self::PLAN, 0)['layers']['buildings'])['params']);
+            $this->assertSame($label, $this->nameAt(1, 1));
+        } finally {
+            $this->link->executeStatement('DELETE FROM players_options WHERE player_id = ?', [$godId]);
+            $this->link->executeStatement('DELETE FROM players WHERE id = ?', [$godId]);
+        }
+    }
+
+    private function nameAt(int $x, int $y): string
+    {
+        return (string) $this->link->fetchOne(
+            'SELECT p.name FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ? AND c.x = ? AND c.y = ?',
+            [self::PLAN, $x, $y]
+        );
+    }
+
     private function cleanupFixtures(): void
     {
         $this->purgePlan($this->link, self::PLAN);
