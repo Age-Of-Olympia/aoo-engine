@@ -419,6 +419,11 @@ body:has(#hud)::after {
     }
 }
 
+/* Desktop: the animation quality lives in the board options popover */
+.hud-rail-anim {
+    display: none;
+}
+
 /* Séparateurs de groupes (posés par js/hud.js) : la vue / le
  * personnage / le monde / le compte */
 #hud-rail .hud-rail-sep {
@@ -2502,6 +2507,24 @@ body:has(#hud) #debug-flags {
 
     #hud-rail .hud-rail-sep {
         width: 80%;
+    }
+
+    /* Animation quality at the foot of the drawer (the popover that
+     * holds it on desktop is hidden here) */
+    #hud-rail .hud-rail-anim {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: 8px;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--hud-line-soft);
+    }
+
+    /* Too narrow for the hint on one line: two lines, always reserved,
+     * so switching rates still keeps the height */
+    #hud-rail .anim-quality-hint {
+        min-height: 2.6em;
+        white-space: normal;
     }
 
     #hud.hud--drawer-open #hud-backdrop {
