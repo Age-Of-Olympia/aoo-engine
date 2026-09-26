@@ -4,6 +4,7 @@ namespace Tests\Various;
 
 use App\Service\Map\EntityCellService;
 use App\Service\Map\TileOccupancyService;
+use App\Service\RaceService;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 use Tests\Support\PlantsResourcesTrait;
@@ -107,6 +108,36 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->plantResource($this->link, 'arbre1', $id, self::PLAN, 1, 0);
 
         $this->assertSame('Quelque chose obstrue ton chemin.', $this->service->stepRefusal($id, 1, true));
+    }
+
+    /** A road is walked on even when its row says it blocks: the family decides. */
+    public function testARoadNeverBlocksTheStep(): void
+    {
+        $id = $this->coordsIdOn(self::PLAN, 5, 1);
+        $type = 'gm_route_' . bin2hex(random_bytes(4));
+        $roadId = 89995000;
+
+        $this->link->executeStatement(
+            "INSERT INTO races (code, name, label, description, playable, hidden, kind, structure_nature,
+                                bleeds, wound_color, blocks_passage, blocks_projectiles, bgColor, color, faction, plan, pv)
+             VALUES ('GM_ROUTE', ?, 'Gm route', '', 0, 1, 'structure', 'route',
+                     '', '#8b4513', 1, 1, '#8b4513', 'black', '', '', 10)",
+            [$type]
+        );
+        $this->link->executeStatement(
+            "INSERT INTO players (id, name, race, coords_id, player_type) VALUES (?, 'Sentier', ?, ?, 'route')",
+            [$roadId, $type, $id]
+        );
+        RaceService::clearCache();
+
+        try {
+            $this->assertNull($this->service->stepRefusal($id, 1, true));
+            $this->assertSame([], $this->service->permanentlyBlocked([$id]));
+        } finally {
+            $this->link->executeStatement('DELETE FROM players WHERE id = ?', [$roadId]);
+            $this->link->executeStatement('DELETE FROM races WHERE name = ?', [$type]);
+            RaceService::clearCache();
+        }
     }
 
     /** An EXHAUSTED resource blocks like any other. Legacy behaviour. */

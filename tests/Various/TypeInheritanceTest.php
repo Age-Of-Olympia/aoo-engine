@@ -7,6 +7,7 @@ use App\Entity\CharacterRace;
 use App\Interface\HarvestableInterface;
 use App\Entity\ResourceType;
 use App\Entity\PlantType;
+use App\Entity\RouteType;
 use App\Entity\Race;
 use App\Entity\SceneryType;
 use App\Service\RaceService;
@@ -61,6 +62,7 @@ class TypeInheritanceTest extends TestCase
             Race::FAMILY_SCENERY => SceneryType::class,
             Race::FAMILY_RESOURCE => ResourceType::class,
             Race::FAMILY_PLANT => PlantType::class,
+            Race::FAMILY_ROUTE => RouteType::class,
         ];
     }
 
@@ -108,6 +110,7 @@ class TypeInheritanceTest extends TestCase
             ['structure', 'decor', SceneryType::class, Race::FAMILY_SCENERY],
             ['structure', 'ressource', ResourceType::class, Race::FAMILY_RESOURCE],
             ['structure', 'plante', PlantType::class, Race::FAMILY_PLANT],
+            ['structure', 'route', RouteType::class, Race::FAMILY_ROUTE],
         ];
 
         foreach ($cases as [$kind, $nature, $class, $family]) {

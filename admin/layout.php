@@ -166,6 +166,9 @@ function admin_layout($title, $content, array $assets = []) {
                 ['plant-types.php', 'Types', '/admin/plant-types.php'],
                 ['footprints.php', 'Formes', '/admin/footprints.php?kind=plant'],
             ], ['plant-types.php']),
+            $navGroup('Routes', [
+                ['route-types.php', 'Types', '/admin/route-types.php'],
+            ], ['route-types.php']),
             /* Un élément posé applique l'effet de son nom quand on marche
              * dessus : le catalogue et ce qui en est posé, même sujet. */
             $navGroup('Éléments', [

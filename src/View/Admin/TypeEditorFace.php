@@ -22,6 +22,7 @@ final class TypeEditorFace
     public const SCENERY = 'scenery';
     public const RESOURCE = 'resource';
     public const PLANT = 'plant';
+    public const ROUTE = 'route';
 
     /** All structures; `structure_nature` is what tells the faces apart. */
     public const NATURE_EDIFICE = 'edifice';
@@ -29,6 +30,7 @@ final class TypeEditorFace
     public const NATURE_DECOR = 'decor';
     public const NATURE_RESOURCE = 'ressource';
     public const NATURE_PLANT = 'plante';
+    public const NATURE_ROUTE = 'route';
 
     /**
      * Every structure_nature a structure type may carry, with its admin
@@ -44,6 +46,7 @@ final class TypeEditorFace
             self::NATURE_DECOR => 'Décor',
             self::NATURE_RESOURCE => 'Ressource récoltable',
             self::NATURE_PLANT => 'Plante',
+            self::NATURE_ROUTE => 'Route',
         ];
     }
 
@@ -70,6 +73,7 @@ final class TypeEditorFace
             self::NATURE_DECOR => self::scenery(),
             self::NATURE_RESOURCE => self::resource(),
             self::NATURE_PLANT => self::plant(),
+            self::NATURE_ROUTE => self::route(),
             default => self::building(),
         };
     }
@@ -136,6 +140,18 @@ final class TypeEditorFace
         );
     }
 
+    /** Roads: ground, walked on — their own list keeps them out of the decor. */
+    public static function route(): self
+    {
+        return new self(
+            self::ROUTE,
+            'Types de routes',
+            'Type de route',
+            '+ Nouvelle route',
+            '/admin/route-types.php'
+        );
+    }
+
     /** @return array<string, self> every face, by key, in menu order */
     public static function all(): array
     {
@@ -145,6 +161,7 @@ final class TypeEditorFace
             self::SCENERY => self::scenery(),
             self::RESOURCE => self::resource(),
             self::PLANT => self::plant(),
+            self::ROUTE => self::route(),
         ];
     }
 
@@ -162,6 +179,7 @@ final class TypeEditorFace
             Race::FAMILY_SCENERY => self::scenery(),
             Race::FAMILY_RESOURCE => self::resource(),
             Race::FAMILY_PLANT => self::plant(),
+            Race::FAMILY_ROUTE => self::route(),
             Race::FAMILY_BUILDING => self::building(),
             default => self::character(),
         };
@@ -170,6 +188,11 @@ final class TypeEditorFace
     public function isScenery(): bool
     {
         return $this->key === self::SCENERY;
+    }
+
+    public function isRoute(): bool
+    {
+        return $this->key === self::ROUTE;
     }
 
     /** Seule cette face récolte : elle seule règle un rendement. */
@@ -226,6 +249,7 @@ final class TypeEditorFace
             self::SCENERY => self::NATURE_DECOR,
             self::RESOURCE => self::NATURE_RESOURCE,
             self::PLANT => self::NATURE_PLANT,
+            self::ROUTE => self::NATURE_ROUTE,
             self::BUILDING => self::NATURE_EDIFICE,
             default => '',
         };
@@ -247,6 +271,7 @@ final class TypeEditorFace
             self::SCENERY => self::NATURE_DECOR,
             self::RESOURCE => self::NATURE_RESOURCE,
             self::PLANT => self::NATURE_PLANT,
+            self::ROUTE => self::NATURE_ROUTE,
             default => $posted === self::NATURE_OBSTACLE ? self::NATURE_OBSTACLE : self::NATURE_EDIFICE,
         };
     }

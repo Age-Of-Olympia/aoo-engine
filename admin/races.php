@@ -51,6 +51,12 @@ function race_image_path(string $name, TypeEditorFace $face): string
         return $avatar ?? '';
     }
 
+    if ($face->isRoute()) {
+        $path = 'img/' . \App\Entity\RouteType::IMAGE_DIR . '/' . $name . '.png';
+
+        return is_file(dirname(__DIR__) . '/' . $path) ? $path : '';
+    }
+
     if ($face->isStructure()) {
         return BuildingService::resolveAvatar($name);
     }
@@ -180,7 +186,8 @@ function race_render_list(array $races, TypeEditorFace $face): string
         // « Posés » : entités de ce type actuellement dans le monde.
         $placedByType = [];
         $res = (new \Classes\Db())->exe(
-            "SELECT race, COUNT(*) AS n FROM players WHERE player_type IN ('building') GROUP BY race"
+            "SELECT race, COUNT(*) AS n FROM players WHERE player_type = ? GROUP BY race",
+            $face->key
         );
         while ($row = $res->fetch_object()) {
             $placedByType[(string) $row->race] = (int) $row->n;
@@ -197,9 +204,9 @@ function race_render_list(array $races, TypeEditorFace $face): string
             . '<td>' . e($race->getLabel()) . '</td>';
 
         if ($face->isStructure()) {
-            $rows .= '<td>' . ($race->getStructureNature() === 'obstacle'
+            $rows .= '<td>' . ($face->key !== TypeEditorFace::BUILDING ? '' : ($race->getStructureNature() === 'obstacle'
                     ? '<span class="badge badge-secondary">Obstacle</span>'
-                    : '<span class="badge badge-info">Édifice</span>') . ' '
+                    : '<span class="badge badge-info">Édifice</span>')) . ' '
                 . ($race->blocksPassage() ? '' : '<span class="badge badge-light" title="On marche sur sa case">passable</span> ')
                 . ($race->blocksProjectiles() ? '' : '<span class="badge badge-light" title="Les tirs passent au-dessus">tirs libres</span>')
                 . '</td>';
@@ -393,7 +400,7 @@ HTML;
         )
         . '</label> '
         // Structures only; the character face posts a hidden default. The
-        // blocking flags stay editable on every face.
+        // blocking flags stay editable on every face but the roads.
         // On edit the field is the Catégorie: any nature, posted as is, so
         // an existing type can move to another family. On create the face
         // pins the family, so the select only offers édifice/obstacle.
@@ -429,14 +436,15 @@ HTML;
                     )
                     . '</label> ')
             : '<input type="hidden" name="structure_nature" value="' . \App\View\Admin\TypeEditorFace::NATURE_EDIFICE . '">')
-        . '<label class="mr-3"><input type="checkbox" name="blocks_passage" '
+        /* A road never blocks: RouteType answers for it, so no box to tick. */
+        . ($face->isRoute() ? '' : '<label class="mr-3"><input type="checkbox" name="blocks_passage" '
         . checked(!$isEdit || $race->blocksPassage())
         . ' title="Décoché : on marche sur sa case (mobilier bas, passage)."> Bloque le passage</label> '
         . '<label class="mr-3"><input type="checkbox" name="blocks_projectiles" '
         // Coché par défaut pour un type (un mur arrête la flèche), pas
         // pour une race de personnage (les tirs passent, sauf exception).
         . checked($isEdit ? $race->blocksProjectiles() : $face->isStructure())
-        . ' title="Décoché (défaut des personnages) : les tirs passent. Coché : bloque la ligne de tir."> Bloque les tirs</label> '
+        . ' title="Décoché (défaut des personnages) : les tirs passent. Coché : bloque la ligne de tir."> Bloque les tirs</label> ')
         . ($face->isStructure() ? '' : '<label class="mr-3"><input type="checkbox" name="playable" '
             . checked($isEdit && $race->getPlayable()) . '> Jouable (proposée à l\'inscription)</label>')
         /* Three states, not two: "selon la famille" is not "no". A plain

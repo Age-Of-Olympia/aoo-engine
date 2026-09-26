@@ -154,6 +154,7 @@ class TypeFamilyColumnTest extends TestCase
                 TypeEditorFace::SCENERY,
                 TypeEditorFace::RESOURCE,
                 Race::FAMILY_PLANT,
+                Race::FAMILY_ROUTE,
             ]),
             'une famille inconnue est apparue dans la colonne'
         );

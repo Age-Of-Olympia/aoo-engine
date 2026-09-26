@@ -36,6 +36,7 @@ use Doctrine\ORM\Mapping as ORM;
     'scenery'   => SceneryType::class,
     'resource'  => ResourceType::class,
     'plant'     => PlantType::class,
+    'route'     => RouteType::class,
 ])]
 abstract class Race implements OwnsCaracsInterface, LockableInterface, ObstructsInterface
 {
@@ -50,6 +51,7 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     public const FAMILY_SCENERY = 'scenery';
     public const FAMILY_RESOURCE = 'resource';
     public const FAMILY_PLANT = 'plant';
+    public const FAMILY_ROUTE = 'route';
 
     /** La famille de CE type — le discriminant, dit par la classe. */
     abstract public function familyKey(): string;
@@ -79,6 +81,7 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
             $structureNature === 'decor' => new SceneryType(),
             $structureNature === 'ressource' => new ResourceType(),
             $structureNature === 'plante' => new PlantType(),
+            $structureNature === 'route' => new RouteType(),
             default => new BuildingType(),
         };
     }

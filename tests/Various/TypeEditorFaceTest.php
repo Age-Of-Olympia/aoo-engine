@@ -121,6 +121,7 @@ class TypeEditorFaceTest extends TestCase
             $this->assertSame(TypeEditorFace::NATURE_RESOURCE, TypeEditorFace::resource()->resolveNature($posted));
             $this->assertSame(TypeEditorFace::NATURE_PLANT, TypeEditorFace::plant()->resolveNature($posted));
             $this->assertSame(TypeEditorFace::NATURE_DECOR, TypeEditorFace::scenery()->resolveNature($posted));
+            $this->assertSame(TypeEditorFace::NATURE_ROUTE, TypeEditorFace::route()->resolveNature($posted));
         }
 
         // Le visage bâtiments est le seul à offrir un choix.
@@ -130,6 +131,18 @@ class TypeEditorFaceTest extends TestCase
 
         // Les personnages gardent le défaut historique de la colonne.
         $this->assertSame('edifice', TypeEditorFace::character()->resolveNature(null));
+    }
+
+    /** Every face's page exists and is declared, or its menu entry leads nowhere. */
+    public function testEveryFacePageIsReachable(): void
+    {
+        $declared = array_column((new \App\Service\AdminMenuAccessService())->getConfigurableMenus(), 'page');
+
+        foreach (TypeEditorFace::all() as $face) {
+            $page = basename($face->page);
+            $this->assertFileExists(dirname(__DIR__, 2) . '/admin/' . $page);
+            $this->assertContains($page, $declared, $face->title);
+        }
     }
 
     /** Scenery is a structure: its images come from the structure stock. */

@@ -48,6 +48,7 @@ class AdminMenuAccessService
         'harvest-types.php'        => ['Ressources · Types récoltables', 'Ressources', self::LEVEL_SUPERADMIN],
         // Types de plantes : même politique que les récoltables — c'est du gameplay
         'plant-types.php'          => ['Plantes · Types', 'Plantes', self::LEVEL_SUPERADMIN],
+        'route-types.php'          => ['Routes · Types', 'Routes', self::LEVEL_SUPERADMIN],
         'footprints.php'           => ['Décors · Formes', 'Décors', self::LEVEL_SUPERADMIN],
         'scenery-types.php'        => ['Décors · Types', 'Décors', self::LEVEL_SUPERADMIN],
         // Couleurs de carte : palette visuelle de la carte monde générée —
