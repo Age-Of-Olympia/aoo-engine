@@ -21,7 +21,7 @@ use Classes\Ui;
 final class HudLayoutView
 {
     /** Cache-busting des assets du HUD — à incrémenter à chaque modif CSS/JS. */
-    public const VERSION = '20260926b';
+    public const VERSION = '20260927m';
 
     public static function render(Player $player): void
     {
@@ -59,7 +59,9 @@ final class HudLayoutView
             echo '<a href="faction.php?faction=' . htmlspecialchars(rawurlencode($faction), ENT_QUOTES)
                 . '" id="show-faction" title="Faction"><button><span class="ra ra-castle-flag"></span></button></a>';
         }
-        echo '</div></nav>';
+        /* Mobile drawer only: the board options popover is hidden there */
+        echo '</div><div class="hud-rail-anim"><div class="hud-layers-title">Animations</div>'
+            . AnimationQualityView::render() . '</div></nav>';
 
         MinimapView::render($player);
 
