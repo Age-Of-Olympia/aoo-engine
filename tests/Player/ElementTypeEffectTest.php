@@ -54,4 +54,16 @@ class ElementTypeEffectTest extends LegacyPlayerFixtureTestCase
         $this->assertFalse($elements->isFluid('glu_test'));
         $this->assertSame('glu_test', $elements->effectOf('glu_test'), 'the new row keeps the effect of its own name');
     }
+
+    public function testTheLabelFallsBackOnTheCode(): void
+    {
+        $elements = new MapElementService();
+        $this->assertSame('glu_test', $elements->labelOf('glu_test'), 'no row: the code');
+
+        $elements->setLabel('glu_test', 'Glu collante');
+        $this->assertSame('Glu collante', $elements->labelOf('glu_test'));
+
+        $elements->setLabel('glu_test', '');
+        $this->assertSame('glu_test', $elements->labelOf('glu_test'), 'emptied: the code again');
+    }
 }

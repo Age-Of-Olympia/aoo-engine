@@ -98,7 +98,7 @@ if($res->num_rows){
 
             echo '
             <div class="text">
-                Élement ('. $row->name .')<br />
+                '. htmlspecialchars($elements->labelOf($row->name)) .'<br />
                 ';
 
                 if((new \App\Service\EffectService())->exists($row->name)){

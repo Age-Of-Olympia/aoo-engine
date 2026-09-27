@@ -37,7 +37,7 @@ class MapElementService
         return array_values(array_unique($names));
     }
 
-    /** @var array<string, array{effect: ?string, fluid: bool}>|null element_types, read once per request */
+    /** @var array<string, array{effect: ?string, fluid: bool, label: string}>|null element_types, read once per request */
     private static ?array $types = null;
 
     /** Placeable elements that do apply an effect on step. @return list<string> */
@@ -64,14 +64,34 @@ class MapElementService
         return self::types()[$element]['fluid'] ?? true;
     }
 
-    /** @return array<string, array{effect: ?string, fluid: bool}> */
+    /** Name shown to players: the type's label, else its code. */
+    public function labelOf(string $element): string
+    {
+        $label = self::types()[$element]['label'] ?? '';
+
+        return $label !== '' ? $label : $element;
+    }
+
+    public function setLabel(string $element, string $label): void
+    {
+        (new Db())->exe(
+            'INSERT INTO element_types (name, effect_name, label)
+             SELECT ?, (SELECT name FROM effects WHERE name = ?), ?
+             ON DUPLICATE KEY UPDATE label = VALUES(label)',
+            [$element, $element, $label]
+        );
+        self::clearCache();
+    }
+
+    /** @return array<string, array{effect: ?string, fluid: bool, label: string}> */
     private static function types(): array
     {
         if (self::$types === null) {
             self::$types = [];
-            $res = (new Db())->exe('SELECT name, effect_name, fluid FROM element_types');
+            $res = (new Db())->exe('SELECT name, effect_name, fluid, label FROM element_types');
             while ($row = $res->fetch_object()) {
-                self::$types[(string) $row->name] = ['effect' => $row->effect_name, 'fluid' => (bool) $row->fluid];
+                self::$types[(string) $row->name] = ['effect' => $row->effect_name, 'fluid' => (bool) $row->fluid,
+                    'label' => (string) $row->label];
             }
         }
 

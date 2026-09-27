@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['element_type'])) {
         $effect = trim((string) ($_POST['effect'] ?? ''));
         $elements->setEffect($name, $effect === '' ? null : $effect);
         $elements->setFluid($name, isset($_POST['fluid']));
+        $elements->setLabel($name, trim((string) ($_POST['label'] ?? '')));
         setFlash('success', $effect === ''
             ? "« {$name} » est maintenant un décor, sans effet."
             : "Marcher sur « {$name} » applique maintenant l'effet « {$effect} ».");
@@ -94,6 +95,9 @@ foreach ($names as $name) {
     }
     $does = '<form method="post" class="d-flex gap-2 mb-0">' . $csrf->renderTokenField()
         . '<input type="hidden" name="element_type" value="' . e($name) . '">'
+        . '<input name="label" class="form-control form-control-sm" style="width:10em" maxlength="100"'
+            . ' placeholder="' . e($name) . '" value="' . e($elements->labelOf($name) === $name ? '' : $elements->labelOf($name)) . '"'
+            . ' title="Nom affiché au joueur ; vide = le code">'
         . '<select name="effect" class="form-control form-control-sm" style="width:auto">' . $options . '</select>'
         . '<label class="mb-0 d-flex align-items-center gap-1" title="Se fond avec ses voisins de la même famille :'
             . ' bords estompés, coudes. Décoché, chaque case est dessinée seule.">'
@@ -133,7 +137,7 @@ $content = '<div class="d-flex justify-content-between align-items-center mb-3">
         [
             '',
             'Nom',
-            ['Effet appliqué', 'title="Appliqué en marchant sur la case"'],
+            ['Nom affiché · effet appliqué', 'title="Nom vu par le joueur ; effet appliqué en marchant sur la case"'],
             ['Posés', 'title="Cases map_elements de ce nom"'],
         ],
         $rows,
