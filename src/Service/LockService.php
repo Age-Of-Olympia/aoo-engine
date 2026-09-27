@@ -54,14 +54,16 @@ final class LockService
     }
 
     /**
-     * $actorId a-t-il le droit de fermer ou d'ouvrir $entityId ?
+     * May $actorId shut or open $entityId?
      *
-     * Sans propriétaire NI faction, personne n'est chez soi : la chose reste
-     * ouverte à tous, ce qui vaut mieux qu'une serrure que nul ne peut tourner.
+     * A public chest (no owner, no faction) belongs to everyone, lid
+     * included. A public door keeps the state the map gave it: an ownerless
+     * town gate is not for any passer-by to bar.
      */
     public function mayLock(int $entityId, int $actorId): bool
     {
-        if (!$this->isLockable($entityId)) {
+        $type = $this->typeOf($entityId);
+        if (!($type?->isLockable() ?? false)) {
             return false;
         }
 
@@ -77,7 +79,7 @@ final class LockService
         $faction = (string) $thing['faction'];
 
         if ($ownerId === null && $faction === '') {
-            return false;
+            return $type instanceof \App\Entity\Item;
         }
 
         return $this->isOneOfTheirs($ownerId, $faction, $actorId);

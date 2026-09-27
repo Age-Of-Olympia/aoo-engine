@@ -852,6 +852,7 @@ class ItemInstanceService
      * payment), so it never passes through an inventory.
      *
      * @return int the exemplar's entity id
+     * @throws \InvalidArgumentException when the tile cannot be built on
      */
     public function installFromCatalogAt(
         int $itemId,
@@ -863,6 +864,13 @@ class ItemInstanceService
         $conn = $this->entityManager->getConnection();
 
         return $conn->transactional(function ($conn) use ($itemId, $coordsId, $creatorId, $ownerId, $faction): int {
+            // Same tile rule and lock as BuildingService::place().
+            $conn->fetchOne('SELECT id FROM players WHERE coords_id = ? FOR UPDATE', [$coordsId]);
+            $refusal = (new \App\Service\Map\TileOccupancyService($conn))->buildRefusal($coordsId);
+            if ($refusal !== null) {
+                throw new \InvalidArgumentException($refusal);
+            }
+
             $conn->executeStatement(
                 'INSERT INTO item_instances (item_id, creator_id, created_at) VALUES (?, ?, ?)',
                 [$itemId, $creatorId, time()]

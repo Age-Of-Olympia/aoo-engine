@@ -97,9 +97,9 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
         [$x, $y] = $this->farTile();
         $id = $this->installExemplar('coffre_bois', $x, $y);
 
-        $this->assertFalse(
-            $this->lock()->mayLock($id, (int) $owner->id),
-            'sans maître ni faction, personne n\'est chez soi'
+        $this->assertTrue(
+            $this->lock()->mayLock($id, (int) $stranger->id),
+            'sans maître ni faction, le coffre est à tous, serrure comprise'
         );
 
         $this->link->executeStatement('UPDATE players SET owner_id = ? WHERE id = ?', [$owner->id, $id]);
@@ -358,5 +358,26 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
         $this->link->executeStatement('UPDATE players SET owner_id = ? WHERE id = ?', [$owner->id, $id]);
 
         $this->assertFalse($this->lock()->mayLock($id, (int) $owner->id));
+    }
+
+    /** Une porte sans maître ni faction reste comme la carte l'a posée. */
+    public function testNobodyBarsAPublicDoor(): void
+    {
+        $passerBy = $this->createRealPlayer('GmBadaud');
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('palissade', $x, $y);
+        $this->link->executeStatement("UPDATE players SET owner_id = NULL, faction = '' WHERE id = ?", [$id]);
+
+        $this->link->executeStatement("UPDATE races SET lockable = 1 WHERE name = 'palissade'");
+        \App\Service\RaceService::clearCache();
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
+
+        try {
+            $this->assertFalse($this->lock()->mayLock($id, (int) $passerBy->id));
+        } finally {
+            $this->link->executeStatement("UPDATE races SET lockable = 0 WHERE name = 'palissade'");
+            \App\Service\RaceService::clearCache();
+            \App\Factory\EntityManagerFactory::getEntityManager()->clear();
+        }
     }
 }

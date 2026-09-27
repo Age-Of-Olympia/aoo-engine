@@ -14,8 +14,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * Bank lifecycle (chests & bank work, part 2):
  *
  * - last bank of the plan destroyed: every placed chest becomes public
- *   — no owner, no faction, lid open (nobody can turn a public chest's
- *   lock any more);
+ *   — no owner, no faction, lid open;
  * - while another bank still stands, nothing moves;
  * - a finished bank takes the ownerless chests for its faction, and
  *   only those — personal chests do not move;
@@ -100,7 +99,7 @@ class BankLifecycleTest extends LegacyPlayerFixtureTestCase
             $ownership = $this->ownershipOf($chestId);
             $this->assertNull($ownership['owner_id'], 'sans banque, le coffre n\'a plus de propriétaire');
             $this->assertSame('', (string) $ownership['faction'], 'sans banque, le coffre n\'a plus de faction');
-            $this->assertSame(1, (int) $ownership['is_open'], 'le couvercle s\'ouvre : personne ne peut plus tourner la serrure');
+            $this->assertSame(1, (int) $ownership['is_open'], 'le couvercle s\'ouvre : la banque ne garantit plus rien');
         }
     }
 

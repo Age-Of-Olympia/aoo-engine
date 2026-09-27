@@ -10,9 +10,8 @@ use App\Service\Map\EntityLocationService;
  * The bank and the plan's chests (chests & bank work, part 2).
  *
  * - Last bank destroyed: every placed chest of the plan becomes public
- *   — no owner, no faction, lid open. Forcing the lid open is not a
- *   detail: nobody can turn a public chest's lock any more
- *   (LockService::mayLock), so a closed one would stay sealed forever.
+ *   — no owner, no faction, lid open: the bank no longer vouches for
+ *   anyone's chest, and anyone may now turn its lock.
  * - Bank finished: it takes the ownerless chests (owner NULL, empty
  *   faction) for its faction — and only those. Personal chests and
  *   other factions' chests do not move, which keeps the rule

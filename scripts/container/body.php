@@ -2,7 +2,6 @@
 
 use App\Factory\PlayerFactory;
 use App\Service\ContainerService;
-use App\Service\LockService;
 use App\View\ExchangePanesView;
 
 /*
@@ -39,7 +38,7 @@ echo '<h1><img src="' . htmlspecialchars($sprite, ENT_QUOTES, 'UTF-8') . '"'
 
 /* The lock, to its people: shown even when the container refuses —
  * shut is exactly when the owner needs the button. */
-$mayLock = (new LockService())->mayLock($containerId, (int) $player->id);
+$mayLock = $service->mayTurnLockNow($containerId, (int) $player->id);
 $isOpen = (bool) $row->is_open;
 
 if ($mayLock) {

@@ -64,4 +64,16 @@ class ChestIsAnObjectBaselineTest extends LegacyPlayerFixtureTestCase
             'un coffre posé barre le pas, race ou pas'
         );
     }
+
+    /** A chest is built under the same tile rule as any construction. */
+    public function testAChestIsNotBuiltOnAnOccupiedTile(): void
+    {
+        [$x, $y] = $this->farTile();
+        $this->installExemplar('coffre_bois', $x, $y);
+        $coordsId = $this->coordsIdOn('gaia', $x, $y);
+        $itemId = (int) $this->link->fetchOne("SELECT id FROM items WHERE name = 'coffre_bois'");
+
+        $this->expectException(\InvalidArgumentException::class);
+        (new \App\Service\ItemInstanceService())->installFromCatalogAt($itemId, $coordsId);
+    }
 }

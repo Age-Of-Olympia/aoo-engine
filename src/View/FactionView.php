@@ -532,17 +532,7 @@ class FactionView
      */
     private static function lockCellHtml(int $entityId, int $actorId): string
     {
-        $lock = new \App\Service\LockService();
-        $container = new \App\Service\ContainerService();
-
-        if (!$lock->isLockable($entityId) || !$container->mayTurnLock($entityId, $actorId)) {
-            return '';
-        }
-
-        /* A closure the latch does not explain jams the lock: no button
-         * on a ruin, a site, a wreck — here as on the tile card. */
-        $closure = $container->closureReasonOf($entityId);
-        if ($closure !== null && $closure !== \App\Service\BuildingService::CLOSED_BY_HAND) {
+        if (!(new \App\Service\ContainerService())->mayTurnLockNow($entityId, $actorId)) {
             return '';
         }
 

@@ -8,8 +8,8 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * players.factionRole / players.secretFactionRole are 0-based indexes into
  * the faction's role list — mapped to $position, which FactionService keeps
- * contiguous (0..n-1) on every save. The permission flags are carried over
- * from the JSON for admin editability; no game code reads them yet.
+ * contiguous (0..n-1) on every save. The permission flags gate the faction
+ * panel and the faction's assets (FactionService::mayManage).
  */
 #[ORM\Entity]
 #[ORM\Table(name: "faction_roles")]

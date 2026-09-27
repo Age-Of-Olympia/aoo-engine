@@ -273,6 +273,22 @@ final class ContainerService
     }
 
     /**
+     * mayTurnLock(), and the lock answers: a closure the latch does not
+     * explain (ruin, site, wreck) jams it. Decides whether a lock button
+     * is shown at all.
+     */
+    public function mayTurnLockNow(int $containerId, int $actorId): bool
+    {
+        if (!$this->mayTurnLock($containerId, $actorId)) {
+            return false;
+        }
+
+        $closure = $this->closureReasonOf($containerId);
+
+        return $closure === null || $closure === BuildingService::CLOSED_BY_HAND;
+    }
+
+    /**
      * The household rule, refined by RANK: the owner is at home; within
      * a faction, the useChest flag says who uses its containers; a
      * thing with neither owner nor faction serves everyone.
