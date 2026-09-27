@@ -335,9 +335,13 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         return [$othersDefense, $encaisse];
     }
 
+
     public function computeDamageTaken(int $damage, float $factor = 0.75): int
     {
-        return max(1, (int) floor($damage * $factor));
+        $reduction = $damage * (1 - $factor);
+        $roundedReduction = floor($reduction);
+        
+        return max(1, (int) ($damage - $roundedReduction));
     }
 
     public function computeRecoverMalus(int $damage): int
