@@ -4,6 +4,7 @@ namespace App\View\Action;
 
 use App\Interface\ActionInterface;
 use App\Service\ActionService;
+use App\Service\EffectService;
 
 /**
  * The single place that turns an action's cost into HTML. The cost comes from
@@ -29,9 +30,11 @@ final class ActionCostView
 
     public function forAction(ActionInterface $action): string
     {
-        $spans = [];
-        foreach ($this->actionService->getCostParts(null, $action) as $part) {
-            $rawText = $part['text'] ?? '';
+        $spans = [];$effectService = new EffectService();
+
+        foreach ($this->actionService->getCostParts(null, $action) as$part) {
+            /** @var mixed $rawText */
+            $rawText =$part['text'];
 
             // 1. Cas où la valeur arrive sous forme de tableau PHP natif
             if (is_array($rawText)) {$val = 0;
@@ -42,10 +45,10 @@ final class ActionCostView
                     }
                 }
                 // On reconstruit une chaîne du type "6 PM"
-                $rawText = $val . ' ' . strtoupper((string)($part['trait'] ?? ''));
+                $rawText = $val . ' ' . strtoupper($part['trait']);
             } 
             // 2. Cas où la valeur est une chaîne contenant du JSON (ex: '[["maitre_lame",4],["none",6]] PM')
-            elseif (is_string($rawText) && preg_match('/(\[\[.*?\]\])/', $rawText,$matches)) {
+            elseif (is_string($rawText) && preg_match('/(\[\[.*?\]\])/', $rawText,$matches) === 1) {
                 $jsonArr = json_decode($matches[1], true);
                 if (is_array($jsonArr)) {
                     foreach ($jsonArr as$item) {
@@ -58,19 +61,19 @@ final class ActionCostView
                 }
             }
 
-            $text = htmlspecialchars($part['text'], ENT_QUOTES, 'UTF-8');
-            $effect = $part['effect'] ?? null;
-            if ($effect !== null && (new \App\Service\EffectService())->exists($effect)) {
+            $text = htmlspecialchars((string)$rawText, ENT_QUOTES, 'UTF-8');
+            $effect =$part['effect'] ?? null;
+            if ($effect !== null && $effectService->exists($effect)) {
                 // "(+1)" is the effect's stack count — show its icon, as the
                 // WarSchool legend does ("coûts basés sur l'Imposture").
                 $text = str_replace(
                     '(+1)',
-                    '(<i class="ra ' . (new \App\Service\EffectService())->getIcon($effect) . '"></i>+1)',
+                    '(<i class="ra ' . $effectService->getIcon($effect) . '"></i>+1)',
                     $text
                 );
             }
             $hex = self::TRAIT_COLORS[$part['trait']] ?? null;
-            $spans[] = $hex !== null
+            $spans[] =$hex !== null
                 ? '<span style="color: ' . $hex . ';">' . $text . '</span>'
                 : $text;
         }
