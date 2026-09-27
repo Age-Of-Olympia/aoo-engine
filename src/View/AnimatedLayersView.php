@@ -182,6 +182,7 @@ final class AnimatedLayersView
             . ($body === '' ? '' : View::elementEdgeDefs(array_values($edges)) .'<defs>'. View::elementHalfDefs(array_values($clips)) .'</defs>'
                 . '<style>.anim-layer-frame,.anim-layer-move,.anim-layer-texture{position:absolute;max-width:none;max-height:none}'
                 . '.anim-layer-move{inset:0;will-change:transform;animation-iteration-count:infinite}'
+                . '.chromium-android .anim-layer-move{will-change:auto}'
                 . '@media (prefers-reduced-motion:reduce){.anim-layer-move{animation:none}}'. $css .'</style>'. $body)
             .'</g>';
     }
