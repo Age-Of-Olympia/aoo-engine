@@ -223,6 +223,8 @@ function race_render_list(array $races, TypeEditorFace $face): string
 
         if ($face->isStructure()) {
             $rows .= '<td>' . (int) $race->getCarac('pv') . ' PV</td>'
+                . '<td>' . (int) $race->getCarac('e') . '</td>'
+                . '<td>' . (int) $race->getCarac('res') . '</td>'
                 . '<td>' . (($placedByType[$race->getName()] ?? 0) > 0
                     ? '<strong>' . $placedByType[$race->getName()] . '</strong>'
                     : '<span class="text-muted">—</span>') . '</td>';
@@ -244,7 +246,7 @@ function race_render_list(array $races, TypeEditorFace $face): string
     }
 
     $headers = $face->isStructure()
-        ? '<th></th><th>Code</th><th>Nom</th><th>Nature</th><th>Couleur</th><th>PV</th>'
+        ? '<th></th><th>Code</th><th>Nom</th><th>Nature</th><th>Couleur</th><th>PV</th><th>E</th><th>Res</th>'
             . '<th title="Entités de ce type posées dans le monde">Posés</th><th></th>'
         : '<th></th><th>Code</th><th>Nom</th><th>Statut</th><th>Couleur</th><th>Faction</th>'
             . '<th>Stats clés</th><th>Listes</th><th title="Personnages (joueurs et PNJ) utilisant cette race">Personnages</th><th></th>';
