@@ -664,6 +664,7 @@
 
         current.innerHTML = freshMap.innerHTML;
         current.setAttribute('data-map-hash', freshMap.getAttribute('data-map-hash') || '');
+        applyAnimationQuality();
 
         ['hud-location', 'hud-minimap'].forEach(function (id) {
             var fresh = doc.getElementById(id);
@@ -743,27 +744,6 @@
      * carries its duration and its keyframe intervals (data-segments),
      * so the step count is rebuilt here from the chosen rate.
      */
-    /* TEMPORARY — Chrome mobile flicker bisect, ?flicker=a,b: drops the
-     * layers carrying a GIF (nogif), a WebP (nowebp) or a sliding composed
-     * tile (noslide); nowill keeps the slides but repainted, not composited. */
-    function probeBoardFlicker() {
-        var variants = (new URLSearchParams(location.search).get('flicker') || '').split(',');
-        document.querySelectorAll('.anim-layers foreignObject').forEach(function (fo) {
-            var texture = fo.querySelector('.anim-layer-texture');
-            var image = texture ? texture.style.backgroundImage : '';
-            var slides = fo.querySelector('.anim-layer-move') !== null;
-            if ((variants.indexOf('nogif') !== -1 && image.indexOf('.gif') !== -1)
-                || (variants.indexOf('nowebp') !== -1 && image.indexOf('.webp') !== -1)
-                || (variants.indexOf('noslide') !== -1 && slides)) {
-                fo.parentNode.remove();
-            } else if (variants.indexOf('nowill') !== -1) {
-                fo.querySelectorAll('.anim-layer-move').forEach(function (move) {
-                    move.style.willChange = 'auto';
-                });
-            }
-        });
-    }
-
     var ANIMATION_QUALITY_KEY = 'aoo-animation-quality';
 
     function applyAnimationQuality(quality) {
@@ -2570,7 +2550,12 @@
         initSelectionMemory();
         initMapLayers();
         applyAnimationQuality();
-        probeBoardFlicker();
+        /* Chromium on Android drops, on some frames, what the board paints
+         * over a composited sliding layer: there the layers are repainted
+         * (AnimatedLayersView). */
+        if (/Android.*Chrome\//.test(navigator.userAgent)) {
+            document.documentElement.classList.add('chromium-android');
+        }
         fitDamier();
         buildMapRulers();
         redrawBlockedMarkers();

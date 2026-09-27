@@ -24,6 +24,7 @@ final class BoardRenderStamp
     private const SOURCES = [
         'Classes/View.php',
         'src/View/MainView.php',
+        'src/View/AnimatedLayersView.php',
         'src/Service/Map/*.php',
     ];
 
