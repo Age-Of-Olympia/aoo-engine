@@ -266,7 +266,7 @@ class BuildingService
     /** What a building under construction looks like, whatever it will become. */
     public static function siteImage(bool $large): string
     {
-        return $large ? 'img/tiles/chantier_grand.png' : 'img/tiles/chantier_petit.png';
+        return $large ? 'img/ui/view/chantier_grand.png' : 'img/ui/view/chantier_petit.png';
     }
 
     /**
