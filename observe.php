@@ -47,6 +47,12 @@ $player->get_data();
 
 $coords = $player->getCoords();
 
+/* Only what the board shows: the viewer's square of Perception. */
+if (!(new \App\Service\EntityVisibility($player))->seesCell((int) $x, (int) $y, (int) $coords->z, (string) $coords->plan)) {
+
+    exit('Cette case est hors de votre vue.');
+}
+
 
 $db = new Db();
 

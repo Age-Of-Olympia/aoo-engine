@@ -276,7 +276,7 @@ class Market
             }
             $adminInfos = '';
             if ($player->have_option('isAdmin')) {
-                $adminInfos = ' [<a href="infos.php?targetId=' . $player->id . '">' . $playerJson->name . '(' . $row->player_id . ')</a>]';
+                $adminInfos = ' [<a href="infos.php?targetId=' . $row->player_id . '">' . $playerJson->name . '(' . $row->player_id . ')</a>]';
             }
 
 

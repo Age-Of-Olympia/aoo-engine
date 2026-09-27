@@ -3986,18 +3986,6 @@ parameters:
 			path: src/View/Observe/EntityCardView.php
 
 		-
-			message: '#^Method App\\View\\Observe\\EntityCardView\:\:cardText\(\) has parameter \$x with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/View/Observe/EntityCardView.php
-
-		-
-			message: '#^Method App\\View\\Observe\\EntityCardView\:\:cardText\(\) has parameter \$y with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/View/Observe/EntityCardView.php
-
-		-
 			message: '#^Method App\\View\\Observe\\EntityCardView\:\:echoOthers\(\) has parameter \$x with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1

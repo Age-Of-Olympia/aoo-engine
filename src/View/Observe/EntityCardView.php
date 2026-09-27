@@ -115,7 +115,12 @@ final class EntityCardView
      */
     private static function renderTarget(Player $player, Player $target, RaceService $raceService, $x, $y, object $coords): array
     {
-        $pvPct = ($target->caracs->pv > 0)
+        $visibility = new \App\Service\EntityVisibility($player);
+        $isStructure = \App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? null)->isStructure();
+        // A character's PV, effects, message and equipment: within Perception.
+        $detailed = $isStructure || $visibility->seesDetailsOf((int) $target->id);
+
+        $pvPct = ($target->caracs->pv > 0 && $detailed)
             ? floor($target->getRemaining('pv') / $target->caracs->pv * 100)
             : 100;
 
@@ -130,6 +135,9 @@ final class EntityCardView
                 $buildingClosure = (new BuildingService())
                     ->closureReason((int) $target->id, $buildingDetails, (int) $pvPct);
             }
+        } elseif (($target->data->player_type ?? '') === 'item') {
+            // A shut chest has nothing to read aloud either.
+            $buildingClosure = (new \App\Service\ContainerService())->closureReasonOf((int) $target->id);
         }
 
         /* An altar shows WHOSE it is: its god's portrait behind the card and
@@ -157,15 +165,15 @@ final class EntityCardView
              * portrait happens to name. */
             'portraitHtml' => (new SceneryPortraitView())->compose((int) $target->id),
             'name' => $god !== null
-                ? self::nameWithEffects($target) . ' <a href="infos.php?targetId=' . $god->id . '">('
+                ? self::nameWithEffects($target, $detailed) . ' <a href="infos.php?targetId=' . $god->id . '">('
                     . htmlspecialchars((string) $god->data->name, ENT_QUOTES, 'UTF-8') . ')</a>'
-                : self::nameWithEffects($target),
+                : self::nameWithEffects($target, $detailed),
             'img' => self::buttonsHtml($player, $target, $buildingDetails, $buildingClosure, $x, $y, $coords),
             'pvPct' => $pvPct,
             'type' => self::typeLabel($raceService, $target),
-            'text' => self::cardText($player, $target, $buildingDetails, $x, $y, $coords),
+            'text' => self::cardText($visibility, $target, $buildingDetails, $detailed),
             'race' => $target->data->race,
-            'faction' => self::factionHtml($player, $target),
+            'faction' => self::factionHtml($visibility, $target),
         ];
 
         $card = Ui::get_card($data);
@@ -180,18 +188,18 @@ final class EntityCardView
 
         // Équipement porté — alvéoles de la vue de sélection du HUD
         // papier (écrans larges) ; l'habillage hérité garde sa carte.
-        $equipStrip = Ui::usesPaperTheme() ? \App\View\EquipmentSlotsView::render($target->id) : '';
+        $equipStrip = Ui::usesPaperTheme() && $detailed ? \App\View\EquipmentSlotsView::render($target->id) : '';
 
         return [$card, $equipStrip];
     }
 
-    /** Nom cliquable + icônes d'effets visibles. */
-    private static function nameWithEffects(Player $target): string
+    /** Nom cliquable + icônes d'effets visibles (à portée de Perception). */
+    private static function nameWithEffects(Player $target, bool $withEffects): string
     {
         $name = '<a href="infos.php?targetId=' . $target->id . '">' . $target->data->name . '</a>';
 
         $name .= '<div class="effects">';
-        foreach ($target->getEffects() as $effect) {
+        foreach ($withEffects ? $target->getEffects() : [] as $effect) {
             if ($target->effectService->isHidden($effect->getName())) {
                 continue;
             }
@@ -404,17 +412,17 @@ final class EntityCardView
      * milliers de murs du monde réclamaient qu'on les frappe.
      */
     private static function cardText(
-        Player $player,
+        \App\Service\EntityVisibility $visibility,
         Player $target,
         ?BuildingDetails $buildingDetails,
-        $x,
-        $y,
-        object $coords
+        bool $detailed
     ): string {
         $isDecor = \App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? null)->isStructure();
 
         if (!$isDecor) {
-            return Str::richText($target->data->text);
+            return $detailed
+                ? Str::richText($target->data->text)
+                : '<em>Ce personnage est trop éloigné pour l\'entendre parler.</em>';
         }
 
         $inscription = \App\Service\BuildingService::inscriptionOf($target);
@@ -422,15 +430,7 @@ final class EntityCardView
             return '';
         }
 
-        if (\App\Service\BuildingService::readsFromAfar($target, $buildingDetails)) {
-            return Str::richText($inscription);
-        }
-
-        /* To the whole entity: one talks to a building from any of its
-         * cells, not only the one clicked. */
-        $distance = View::get_distance_to_entity($player->getCoords(), (int) $target->id, $target->getCoords());
-
-        return $distance <= 1
+        return $visibility->readsInscriptionOf($target, $buildingDetails)
             ? Str::richText($inscription)
             : '<em>' . \App\Service\BuildingService::OUT_OF_REACH_NOTICE . '</em>';
     }
@@ -453,7 +453,7 @@ final class EntityCardView
     }
 
     /** Icônes de faction — la secrète seulement entre membres. */
-    private static function factionHtml(Player $player, Player $target): string
+    private static function factionHtml(\App\Service\EntityVisibility $visibility, Player $target): string
     {
         $factionService = new FactionService();
 
@@ -464,7 +464,7 @@ final class EntityCardView
                 . $factionJson->raFont . '"></span></a>';
         }
 
-        if ($target->data->secretFaction != '' && $target->data->secretFaction == $player->data->secretFaction) {
+        if ($visibility->seesSecretFaction((string) $target->data->secretFaction)) {
             $secretJson = $factionService->getFactionData($target->data->secretFaction);
             if ($secretJson) {
                 $faction .= '<a href="faction.php?faction=' . $target->data->secretFaction . '"><span class="ra '

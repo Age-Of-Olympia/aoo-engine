@@ -10,9 +10,8 @@ use Classes\Player;
  * What the tile's containers hold, in the TILE section of the
  * observation panel — beside the ground loot, not among the actions.
  *
- * One only sees inside what serves them: the household rule
- * (mayActOn) and an open lid. A shut or foreign container keeps its
- * contents to itself, and shows nothing here.
+ * What is shown follows EntityVisibility::seesContentsOf: open, and
+ * from beside it — from anywhere for its own people.
  */
 final class ContainerPeekView
 {
@@ -35,6 +34,7 @@ final class ContainerPeekView
 
         $lock = new LockService();
         $service = new ContainerService();
+        $visibility = new \App\Service\EntityVisibility($player);
 
         foreach ($entities as $entity) {
             $entityId = (int) $entity['id'];
@@ -44,7 +44,7 @@ final class ContainerPeekView
             if (!$lock->isLockable($entityId) || !$service->isContainer($entityId)) {
                 continue;
             }
-            if ($service->closureReasonOf($entityId) !== null) {
+            if (!$visibility->seesContentsOf($entityId)) {
                 continue;
             }
 

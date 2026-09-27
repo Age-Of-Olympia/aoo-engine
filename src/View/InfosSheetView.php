@@ -2,7 +2,6 @@
 
 namespace App\View;
 
-use App\Factory\EntityManagerFactory;
 use App\Entity\Character;
 use App\Entity\RealPlayer;
 use App\Service\FactionService;
@@ -12,7 +11,6 @@ use App\Service\RaceService;
 use Classes\Item;
 use Classes\Player;
 use Classes\Str;
-use Classes\View;
 
 /**
  * Corps de la fiche de personnage, extrait d'infos.php pour être
@@ -44,27 +42,21 @@ final class InfosSheetView
                 ';
 
 
-        $caracsJson = $player->get_caracsJson();
-
         $player->getCoords();
 
-        // Target coords via entity. Shape-compatible with
-        // View::get_distance which only reads ->x / ->y / ->plan.
-        $conn = EntityManagerFactory::getEntityManager()->getConnection();
-        $targetCoords = $targetEntity->getCoords($conn);
+        /* PV veil, effects, message and equipment: one rule
+         * (EntityVisibility) — oneself, or within Perception. */
+        $visibility = new \App\Service\EntityVisibility($player);
+        $detailed = $visibility->seesDetailsOf((int) $targetEntity->getId());
+        $seesTimers = $visibility->seesEffectTimersOf(
+            (int) $targetEntity->getId(),
+            (string) $targetEntity->getFaction(),
+            (string) $targetEntity->getSecretFaction()
+        );
 
-        $distance = View::get_distance($player->coords, $targetCoords);
-
-        /* Voile de sang sur le portrait : même règle de perception que
-         * les effets, le mdj et l'équipement ci-dessous — soi-même ou
-         * une cible à portée (retours joueurs juillet 2026). */
         $pvVeil = '';
 
-        if (
-            $player->id == $targetEntity->getId()
-            ||
-            $distance <= $caracsJson->p
-        ) {
+        if ($detailed) {
 
             $target = \App\Factory\PlayerFactory::legacy($targetEntity->getId());
             $target->get_data();
@@ -88,13 +80,7 @@ final class InfosSheetView
                     continue;
                 }
 
-                if (
-                    $targetEntity->getId() == $player->id
-                    ||
-                    $targetEntity->getFaction() == $player->data->faction
-                    ||
-                    $targetEntity->getSecretFaction() == $player->data->secretFaction
-                ) {
+                if ($seesTimers) {
 
                     $endTime = PlayerEffectService::describeRemaining($effect->getEndTime());
                 } else {
@@ -150,7 +136,7 @@ final class InfosSheetView
         echo '<div><a href="faction.php?faction=' . $targetEntity->getFaction() . '">' . $factionJson->name . '</a> <span style="font-size: 1.3em" class="ra ' . $factionJson->raFont . '"></span> (<i>' . $factionJson->role[$targetEntity->getFactionRole()]->name . '</i>) </div>';
 
         $targetSecretFaction = $targetEntity->getSecretFaction();
-        if (!empty($targetSecretFaction) && ($player->data->secretFaction == $targetSecretFaction || $player->have_option('isAdmin'))) {
+        if ($visibility->seesSecretFaction((string) $targetSecretFaction)) {
             $secretFactionJson = (new FactionService())->getFactionData($targetSecretFaction);
 
             echo '<div class="secret-faction"><a href="faction.php?faction=' . $targetSecretFaction . '">' . $secretFactionJson->name . '</a> <span style="font-size: 1.3em" class="ra ' . $secretFactionJson->raFont . '"></span> (<i>' . $secretFactionJson->role[$targetEntity->getSecretFactionRole()]->name . '</i>) </div>';
@@ -178,7 +164,7 @@ final class InfosSheetView
          * reste neutralisé (Str::richText). Il était rendu brut. */
         $text = Str::richText($targetEntity->getText());
 
-        if ($player->id != $targetEntity->getId() && $distance > $caracsJson->p) {
+        if (!$detailed) {
 
             $text = '<i>Ce personnage est trop éloigné pour l\'entendre parler.</i>';
         }
@@ -210,7 +196,7 @@ final class InfosSheetView
         ';
 
 
-        if ($player->coords->plan == $targetCoords->plan && $distance <= $caracsJson->p) {
+        if ($detailed) {
 
 
             if ($hudPanel) {

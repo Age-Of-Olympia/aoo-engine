@@ -18,6 +18,15 @@ if(!$facJson){
     exit('error faction');
 }
 
+$player = PlayerFactory::legacy($_SESSION['playerId']);
+$player->get_data();
+
+/* A hidden faction shows nothing, not even its name, to anyone but the admins. */
+if(!empty($facJson->hidden) && !$player->have_option('isAdmin')){
+
+    exit('error faction');
+}
+
 
 /* The page lives in the HUD side panel as well as full screen: each
  * section folds (native details) and its table scrolls sideways INSIDE
@@ -54,15 +63,6 @@ if (!empty($facJson->text)) {
         . '</small></p>';
 }
 
-
-$player = PlayerFactory::legacy($_SESSION['playerId']);
-$player->get_data();
-
-
-if(!empty($facJson->hidden) && !$player->have_option('isAdmin')){
-
-    exit();
-}
 
 
 if(isset($facJson->secret)){

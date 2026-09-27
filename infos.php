@@ -16,6 +16,12 @@ if(!isset($_GET['targetId']) || !is_numeric($_GET['targetId'])){
 $player = PlayerFactory::active();
 $player->get_data();
 
+/* Every view of the sheet (base, reputation, rewards) obeys the same
+ * visibility rule (EntityVisibility). */
+if (!(new \App\Service\EntityVisibility($player))->seesEntity((int) $_GET['targetId'])) {
+    exit('error target id');
+}
+
 
 $target = PlayerFactory::legacy($_GET['targetId']);
 $target->get_data();

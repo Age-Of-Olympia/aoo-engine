@@ -20,6 +20,12 @@ if (!isset($_GET['targetId']) || !is_numeric($_GET['targetId'])) {
 $player = PlayerFactory::active();
 $player->get_data();
 
+/* Every view of the sheet (base, reputation, rewards) obeys the same
+ * visibility rule (EntityVisibility). */
+if (!(new \App\Service\EntityVisibility($player))->seesEntity((int) $_GET['targetId'])) {
+    exit('error target id');
+}
+
 if (isset($_GET['reputation']) || isset($_GET['rewards'])) {
 
     /* Les corps réputation et récompenses (scripts/infos/*.php)
