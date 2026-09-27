@@ -46,11 +46,17 @@ if ($mayLock) {
         . '<span class="ra ra-key"></span> ' . ($isOpen ? 'Fermer' : 'Ouvrir') . '</button></p>';
 }
 
+/* The owner may hand a personal chest to their faction. */
+$mayEntrust = (new \App\Service\FactionChestService())->mayEntrust($containerId, (int) $player->id);
+if ($mayEntrust) {
+    echo '<p><button id="container-entrust">Confier à ma faction</button></p>';
+}
+
 try {
     $service->assertUsable($containerId, (int) $player->id);
 } catch (\RuntimeException $e) {
     echo '<p>' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</p>';
-    if ($mayLock) {
+    if ($mayLock || $mayEntrust) {
         echo renderContainerScript($containerId);
     }
     return;
@@ -107,6 +113,16 @@ function renderContainerScript(int $containerId): string
                     aooResultMessage(data).then(function(){
                         aooPanelOrReload('load_container.php?targetId=' + containerId, 'Contenant');
                     });
+                });
+            });
+
+        $(document).off('click.containerFlows', '#container-entrust')
+            .on('click.containerFlows', '#container-entrust', function(){
+                if (!confirm('Confier ce coffre à votre faction ? Il ne sera plus à vous.')) {
+                    return;
+                }
+                aooGestureFetch('api/faction/chests.php', { action: 'entrust', chestId: containerId }, function(){
+                    aooPanelOrReload('load_container.php?targetId=' + containerId, 'Contenant');
                 });
             });
 

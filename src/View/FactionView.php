@@ -212,6 +212,7 @@ class FactionView
             'driveBuilding' => 'Piloter les bâtiments',
             'useChest'      => 'User des coffres',
             'showLogs'      => 'Voir le journal',
+            'manageChests'  => 'Gérer les coffres',
         ];
 
         $service = new \App\Service\FactionService();
@@ -627,6 +628,13 @@ class FactionView
             return;
         }
 
+        $members = [];
+        if ($member && (new \App\Service\FactionService())->mayManage($actorId, \App\Service\FactionChestService::FLAG)) {
+            $code = (string) \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()
+                ->fetchOne('SELECT faction FROM players WHERE id = ?', [$actorId]);
+            $members = (new \App\Service\FactionChestService())->membersOf($code);
+        }
+
         self::sectionOpen('coffres', 'Coffres');
 
         echo '
@@ -636,7 +644,9 @@ class FactionView
         . ($member ? '
         <th>Contenu</th>' : '') . '
         <th>État</th>
-        <th>Territoire</th>
+        <th>Territoire</th>'
+        . ($members !== [] ? '
+        <th>Gestion</th>' : '') . '
     </tr>
     ';
 
@@ -652,7 +662,103 @@ class FactionView
             <td>' . ($chest['isOpen'] ? 'Ouvert' : '<span class="ra ra-key"></span> Fermé')
                 . ($member ? self::lockCellHtml((int) $chest['id'], $actorId) : '') . '</td>
             <td>' . htmlspecialchars((string) ($planJson->name ?? '?'), ENT_QUOTES, 'UTF-8')
-                . ' (' . (int) $chest['x'] . ', ' . (int) $chest['y'] . ')</td>
+                . ' (' . (int) $chest['x'] . ', ' . (int) $chest['y'] . ')</td>'
+            . ($members !== [] ? '
+            <td>' . self::chestStewardCellHtml((int) $chest['id'], $members) . '</td>' : '') . '
+        </tr>
+        ';
+        }
+
+        echo '
+    </table>
+    ';
+
+        self::sectionClose();
+    }
+
+    /**
+     * Give the chest to a member, or abandon it to the public — for the
+     * ranks holding manageChests; the endpoint re-checks.
+     *
+     * @param list<array{id: int, name: string}> $members
+     */
+    private static function chestStewardCellHtml(int $chestId, array $members): string
+    {
+        $options = '';
+        foreach ($members as $m) {
+            $options .= '<option value="' . $m['id'] . '">' . htmlspecialchars($m['name'], ENT_QUOTES, 'UTF-8') . '</option>';
+        }
+
+        return '<select class="faction-chest-member" data-chest="' . $chestId . '">' . $options . '</select>'
+            . ' <button class="faction-chest-offer" data-chest="' . $chestId . '">Offrir</button>'
+            . ' <button class="faction-chest-abandon" data-chest="' . $chestId . '">Abandonner</button>';
+    }
+
+    /**
+     * Public chests on the faction's bank plans — each one taken back,
+     * or left public, by choice.
+     *
+     * @param list<array{id: int, name: string, plan: string, x: int, y: int}> $chests FactionChestService::claimableOf()
+     */
+    public static function renderClaimableChests(array $chests): void
+    {
+        if ($chests === []) {
+            return;
+        }
+
+        self::sectionOpen('coffres-publics', 'Coffres publics');
+
+        echo '
+    <table border="1" class="marbre" align="center">
+    <tr><th>Nom</th><th>Territoire</th><th></th></tr>
+    ';
+
+        foreach ($chests as $chest) {
+            $planJson = plans()->read($chest['plan']);
+            echo '
+        <tr>
+            <td>' . htmlspecialchars($chest['name'], ENT_QUOTES, 'UTF-8') . '</td>
+            <td>' . htmlspecialchars((string) ($planJson->name ?? $chest['plan']), ENT_QUOTES, 'UTF-8')
+                . ' (' . $chest['x'] . ', ' . $chest['y'] . ')</td>
+            <td><button class="faction-chest-claim" data-chest="' . $chest['id'] . '">Reprendre</button></td>
+        </tr>
+        ';
+        }
+
+        echo '
+    </table>
+    ';
+
+        self::sectionClose();
+    }
+
+    /**
+     * The floors of the faction's bank plans, open or closed to its
+     * members' chests.
+     *
+     * @param list<array{plan: string, planName: string, z: int, name: string, open: bool}> $floors FactionChestService::floorsOf()
+     */
+    public static function renderChestFloors(array $floors): void
+    {
+        if ($floors === []) {
+            return;
+        }
+
+        self::sectionOpen('coffres-niveaux', 'Niveaux des coffres');
+
+        echo '
+    <table border="1" class="marbre" align="center">
+    <tr><th>Territoire</th><th>Niveau</th><th>Coffres</th></tr>
+    ';
+
+        foreach ($floors as $floor) {
+            echo '
+        <tr>
+            <td>' . htmlspecialchars($floor['planName'], ENT_QUOTES, 'UTF-8') . '</td>
+            <td>' . htmlspecialchars($floor['name'], ENT_QUOTES, 'UTF-8') . '</td>
+            <td><input type="checkbox" class="faction-chest-floor"'
+                . ' data-plan="' . htmlspecialchars($floor['plan'], ENT_QUOTES, 'UTF-8') . '"'
+                . ' data-z="' . $floor['z'] . '"' . ($floor['open'] ? ' checked' : '') . ' /></td>
         </tr>
         ';
         }
@@ -711,6 +817,40 @@ class FactionView
         <script>
         (function(){
             var factionCode = <?php echo json_encode($factionCode); ?>;
+
+            function reloadFaction(){
+                aooPanelOrReload('load_faction.php?faction=' + encodeURIComponent(factionCode), 'Faction');
+            }
+
+            function chestCall(payload){
+                aooGestureFetch('api/faction/chests.php', payload, function(data){
+                    aooResultMessage(data).then(reloadFaction);
+                });
+            }
+
+            $(document).off('click.factionAssets', '.faction-chest-claim')
+                .on('click.factionAssets', '.faction-chest-claim', function(){
+                    chestCall({ action: 'claim', chestId: $(this).data('chest') });
+                });
+
+            $(document).off('click.factionAssets', '.faction-chest-offer')
+                .on('click.factionAssets', '.faction-chest-offer', function(){
+                    var chestId = $(this).data('chest');
+                    var memberId = $('.faction-chest-member[data-chest="' + chestId + '"]').val();
+                    chestCall({ action: 'offer', chestId: chestId, memberId: memberId });
+                });
+
+            $(document).off('click.factionAssets', '.faction-chest-abandon')
+                .on('click.factionAssets', '.faction-chest-abandon', function(){
+                    if (confirm('Abandonner ce coffre ? Il deviendra public.')) {
+                        chestCall({ action: 'abandon', chestId: $(this).data('chest') });
+                    }
+                });
+
+            $(document).off('change.factionAssets', '.faction-chest-floor')
+                .on('change.factionAssets', '.faction-chest-floor', function(){
+                    chestCall({ action: 'floor', plan: $(this).data('plan'), z: $(this).data('z'), open: this.checked ? 1 : 0 });
+                });
 
             $(document).off('click.factionAssets', '.faction-lock-toggle')
                 .on('click.factionAssets', '.faction-lock-toggle', function(){

@@ -124,6 +124,11 @@ if ($player->data->faction === ($_GET['faction'] ?? '') || $player->have_option(
     if ($player->data->faction === ($_GET['faction'] ?? '')) {
         /* The journal is the house's eyes — for the ranks it trusts
          * with them (showLogs). */
+        if ((new FactionService())->mayManage((int) $player->id, \App\Service\FactionChestService::FLAG)) {
+            $factionChests = new \App\Service\FactionChestService();
+            FactionView::renderClaimableChests($factionChests->claimableOf((string) $_GET['faction']));
+            FactionView::renderChestFloors($factionChests->floorsOf((string) $_GET['faction']));
+        }
         if ((new FactionService())->mayManage((int) $player->id, 'showLogs')) {
             FactionView::renderJournal((new \App\Service\FactionLogService())->listOf((string) $_GET['faction']));
         }

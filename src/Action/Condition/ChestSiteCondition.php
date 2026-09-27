@@ -6,6 +6,7 @@ use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Interface\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
+use App\Service\FactionChestService;
 
 /**
  * The chest-specific build rules — where a lockable container may be
@@ -13,7 +14,8 @@ use App\Action\Schema\ParameterSchema;
  * passes untouched.
  *
  * - The floor must allow chests (plan_z_levels.chests_allowed; a plan
- *   without level rows restricts nothing).
+ *   without level rows restricts nothing), and the builder's faction
+ *   must not have closed it (FactionChestService).
  * - The builder chooses the owner (POST buildFor): 'self' keeps
  *   today's personal chest, 'faction' gives it to their faction — and
  *   requires one. The validated choice is deposited on the
@@ -62,6 +64,10 @@ class ChestSiteCondition extends BaseCondition implements HasParameterSchemaInte
         $coords = $conditionObject->getBuildCoords() ?? $actor->getCoords();
         if ($coords !== null && !plans()->chestsAllowedAt((string) $coords->plan, (int) $coords->z)) {
             return new ConditionResult(false, array(), ['Les coffres ne peuvent pas être posés à ce niveau.']);
+        }
+        $faction = (string) ($actor->data->faction ?? '');
+        if ($coords !== null && !(new FactionChestService())->floorOpenFor($faction, (string) $coords->plan, (int) $coords->z)) {
+            return new ConditionResult(false, array(), ['Votre faction n\'autorise pas les coffres à ce niveau.']);
         }
 
         $conditionObject->setBuildFor($buildFor);

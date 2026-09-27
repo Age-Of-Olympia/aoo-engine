@@ -12,41 +12,15 @@ use App\Service\Map\EntityLocationService;
  * - Last bank destroyed: every placed chest of the plan becomes public
  *   — no owner, no faction, lid open: the bank no longer vouches for
  *   anyone's chest, and anyone may now turn its lock.
- * - Bank finished: it takes the ownerless chests (owner NULL, empty
- *   faction) for its faction — and only those. Personal chests and
- *   other factions' chests do not move, which keeps the rule
- *   replayable and predictable when several banks coexist.
+ * - Bank finished: nothing moves. Its faction chooses, chest by chest,
+ *   which public ones to take back (FactionChestService).
  */
 class BankLifecycle implements BuildingLifecycleInterface
 {
     public function rose(int $buildingId, string $plan, string $faction): void
     {
-        // A factionless bank takes nothing (admin placement): the
-        // ownerless chests stay public.
-        if ($faction === '') {
-            return;
-        }
-
-        $claimed = $this->connection()->executeStatement(
-            "UPDATE players p
-               JOIN item_instances ii ON ii.entity_id = p.id
-               JOIN items i ON i.id = ii.item_id
-               JOIN coords c ON c.id = p.coords_id
-                SET p.faction = ?
-              WHERE i.lockable = 1
-                AND p.slot = ?
-                AND p.owner_id IS NULL AND p.faction = ''
-                AND c.plan = ?",
-            [$faction, EntityLocationService::SLOT_INSTALLED, $plan]
-        );
-
-        if ($claimed > 0) {
-            (new FactionLogService())->add(
-                $faction,
-                null,
-                'La banque récupère ' . $claimed . ' coffre(s) du plan pour la faction.'
-            );
-        }
+        // Nothing moves on its own: the faction takes back the public
+        // chests it wants from its panel (FactionChestService::claim).
     }
 
     public function fell(int $buildingId, string $plan, string $faction): void

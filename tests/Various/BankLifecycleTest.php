@@ -16,9 +16,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * - last bank of the plan destroyed: every placed chest becomes public
  *   — no owner, no faction, lid open;
  * - while another bank still stands, nothing moves;
- * - a finished bank takes the ownerless chests for its faction, and
- *   only those — personal chests do not move;
- * - a factionless bank takes nothing.
+ * - a finished bank takes nothing by itself.
  *
  * Every scene has its own plan: the rule reads the whole plan.
  */
@@ -121,25 +119,20 @@ class BankLifecycleTest extends LegacyPlayerFixtureTestCase
         $this->assertSame('gardiens_scene', (string) $ownership['faction'], 'une banque tient encore : rien ne bouge');
     }
 
-    public function testAFinishedBankClaimsOnlyTheHomelessChests(): void
+    /** The faction chooses what to take back (FactionChestService). */
+    public function testAFinishedBankTakesNothingByItself(): void
     {
         $plan = $this->scenePlan();
         $this->sowFaction('gardiens_scene');
 
-        $owner = $this->createRealPlayer('GmProprio');
         $public = $this->placeChest($plan, null, '');
-        $personal = $this->placeChest($plan, (int) $owner->id, '');
 
-        // The chantier path: the bank rises stone by stone, the claim
-        // fires on the LAST work gesture, not at the site opening.
         $this->link->executeStatement("UPDATE races SET build_work = 4 WHERE name = 'banque'");
         $this->refreshRaceCatalog();
         try {
             [$bx, $by] = $this->farTile();
             $bankId = $this->placeStructure('banque', $bx, $by, $plan, asConstructionSite: true);
             $this->link->executeStatement("UPDATE players SET faction = 'gardiens_scene' WHERE id = ?", [$bankId]);
-
-            $this->assertSame('', (string) $this->ownershipOf($public)['faction'], 'un chantier ne garde rien encore');
 
             $total = (int) $this->link->fetchOne('SELECT work_total FROM construction_sites WHERE player_id = ?', [$bankId]);
             $result = (new ConstructionSiteService())->advance($bankId, $total);
@@ -149,24 +142,8 @@ class BankLifecycleTest extends LegacyPlayerFixtureTestCase
             $this->refreshRaceCatalog();
         }
 
-        $this->assertSame('gardiens_scene', (string) $this->ownershipOf($public)['faction'], 'la banque récupère le coffre sans propriétaire');
-        $this->assertNull($this->ownershipOf($public)['owner_id'], 'récupéré pour la faction, pas pour une personne');
-        $this->assertSame((int) $owner->id, (int) $this->ownershipOf($personal)['owner_id'], 'le coffre personnel ne bouge pas');
-        $this->assertSame('', (string) $this->ownershipOf($personal)['faction']);
-    }
-
-    public function testAFactionlessBankClaimsNothing(): void
-    {
-        $plan = $this->scenePlan();
-
-        $public = $this->placeChest($plan, null, '');
-
-        // placeStructure poses with no faction: rose() must be a no-op.
-        [$bx, $by] = $this->farTile();
-        $this->placeStructure('banque', $bx, $by, $plan);
-
         $ownership = $this->ownershipOf($public);
         $this->assertNull($ownership['owner_id']);
-        $this->assertSame('', (string) $ownership['faction'], 'une banque sans faction ne récupère rien');
+        $this->assertSame('', (string) $ownership['faction'], 'le coffre public le reste tant que la faction ne le reprend pas');
     }
 }
