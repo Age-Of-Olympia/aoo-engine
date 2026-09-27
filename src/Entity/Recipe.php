@@ -132,11 +132,7 @@ class Recipe
     {
         $cost = 0;
         foreach ($this->getRecipeIngredients() as $ingredient) {
-            // Item::get_data() answers from the DB row or the legacy JSON,
-            // whichever holds the item's stats.
-            $item = new \Classes\Item($ingredient->getItem()->getId());
-            $item->get_data();
-            $cost += (int) $item->data->price * $ingredient->getCount();
+            $cost += $ingredient->getItem()->getPrice() * $ingredient->getCount();
         }
 
         $results = $this->getRecipeResults();

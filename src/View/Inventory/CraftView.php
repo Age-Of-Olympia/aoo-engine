@@ -106,40 +106,35 @@ class CraftView
    ';
 
 
-        // recipe
-        if (!isset($item->data->occurence) || $item->data->occurence == 'co' || $item->data->race == $player->data->race) {
+        // The item's own recipe, if the player's race knows one (race_recipes).
+        $recipeList = $recipeService->getRecipes($player, fromItemId: null, forItemId: $item->id);
 
-
-            $recipeList = $recipeService->getRecipes($player, fromItemId: null, forItemId: $item->id);
-
-
-            // recette exists
-            if (count($recipeList)) {
-                echo '
-        <div id="item-recipe">
-            ';
-
-                foreach ($recipeList[0]->getRecipeIngredients() as $ingredientItem) {
-
-                    $ingredient = self::itemReadModel($ingredientItem->GetItem());
-
-                    echo '
-                <img src="' . $ingredient->data->mini . '" /> x' . $ingredientItem->getCount() . '
-                ';
-                }
-
-                echo '<br />';
-
-
-                echo 'Coût des matériaux ~' . $recipeList[0]->get_cost() . 'Po<br />';
-
-                echo 'Revendu ~' . floor($item->data->price * 2 / 3) . 'Po<br />';
-                echo 'Acheté ~' . $item->data->price . 'Po';
-
-                echo '
-        </div>
+        // recette exists
+        if (count($recipeList)) {
+            echo '
+    <div id="item-recipe">
         ';
+
+            foreach ($recipeList[0]->getRecipeIngredients() as $ingredientItem) {
+
+                $ingredient = self::itemReadModel($ingredientItem->GetItem());
+
+                echo '
+            <img src="' . $ingredient->data->mini . '" /> x' . $ingredientItem->getCount() . '
+            ';
             }
+
+            echo '<br />';
+
+
+            echo 'Coût des matériaux ~' . $recipeList[0]->get_cost() . 'Po<br />';
+
+            echo 'Revendu ~' . floor($item->data->price * 2 / 3) . 'Po<br />';
+            echo 'Acheté ~' . $item->data->price . 'Po';
+
+            echo '
+    </div>
+    ';
         }
 
 

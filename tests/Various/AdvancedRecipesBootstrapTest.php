@@ -75,6 +75,22 @@ class AdvancedRecipesBootstrapTest extends LegacyPlayerFixtureTestCase
         $this->assertTrue($buildings->servesCounter($id, CounterCatalog::MERCHANT, 'recycle'));
     }
 
+    public function testTheMaterialCostReadsTheCatalogPrices(): void
+    {
+        $recipe = (new RecipeService())->recipeForResult('atelier');
+        if ($recipe === null) {
+            $this->markTestSkipped("recette 'atelier' not seeded (run migrations).");
+        }
+
+        $expected = (int) $this->link->fetchOne(
+            'SELECT SUM(i.price * ri.count) FROM craft_recipes_ingredients ri
+               JOIN items i ON i.id = ri.item_id
+              WHERE ri.recipe_id = ?',
+            [$recipe->getId()]
+        );
+        $this->assertSame($expected, $recipe->get_cost());
+    }
+
     public function testTheFullLoopFromNothingToAdvancedCrafting(): void
     {
         $this->requireBuildingsOrSkip();

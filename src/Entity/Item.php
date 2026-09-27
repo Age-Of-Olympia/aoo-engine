@@ -94,6 +94,15 @@ class Item implements OwnsCaracsInterface, LockableInterface, ObstructsInterface
         $this->requiresBuilding = $requiresBuilding;
     }
 
+    /** Catalog price, in gold. */
+    #[ORM\Column(type: "integer", options: ["default" => 1])]
+    private int $price = 1;
+
+    public function getPrice(): int
+    {
+        return $this->price;
+    }
+
     /** Base life of an item of this type — the counterpart of `races.pv`. */
     #[ORM\Column(type: "integer", name: "durability_max", options: ["default" => 100])]
     private int $durabilityMax = 100;
