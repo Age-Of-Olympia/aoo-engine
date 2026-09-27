@@ -71,15 +71,12 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         $dealtMods = $effectService->modifierContributions($actor->getEffects(), 'getDamageDealtMod');
         $takenMods = $effectService->modifierContributions($target->getEffects(), 'getDamageTakenMod');
 
-        // Démolition : le bonus anti-structure de l'arme (pioche, bélier…)
-        // s'ajoute aux dégâts quand la CIBLE est une structure — l'héritier
-        // de l'ex-destroy.php maintenant que les murs sont des entités.
+        // Demolition: the weapon's anti-structure bonus (pickaxe, ram…) lands
+        // on top of the final damage when the target is a structure, so no
+        // defense, floor or damage absorption can swallow it.
+        $demolition = 0;
         if (\App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? 'real') === \App\Enum\EntityCategory::Structure) {
-            $demolition = (int) ($actor->emplacements->main1->data->demolition ?? 0);
-            if ($demolition > 0) {
-                $dealtMods['pos'] += $demolition;
-                $dealtMods['posLabels'][] = 'Démolition';
-            }
+            $demolition = max(0, (int) ($actor->emplacements->main1->data->demolition ?? 0));
         }
         $actorEffetAgressivite = $dealtMods['pos'];
         $actorEffetFaiblesse = $dealtMods['neg'];
@@ -155,6 +152,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
                 $encaisse = true;
                 $totalDamages = $this->computeDamageTaken((int) $totalDamages, $takenFactor);
             }
+            $totalDamages += $demolition;
             $target->putBonus(array('pv'=>-$totalDamages));
 
             /* Wear: the blow wears the weapon that lands it and the
@@ -229,7 +227,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
                 $distanceText = ' + '. floor(0.5 * $cellCount) . ' (Distance)';
             }
 
-            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous infligez <span style="text-decoration: underline;" flow="up" tooltip="' . CARACS[$actorTraitDamages] .' vs '. CARACS[$targetTraitDamagesTaken] . ' : ' . $actorDamages . $bonusDamagesText . $agresssiviteDamagesText . $fragiliteDamagesText . $othersDamagesText .' - ' . $targetDefense . $bonusDefenseText . $faiblesseDamagesText . $armureDamagesText . $distanceText . (($encaisse) ? ' = ' . $beforeEncaisseDmg . ' - ' . ($beforeEncaisseDmg - $totalDamages) . ' (Encaisse)': '') . '">' . $totalDamages . '</span>' .' dégâts à '. $target->data->name.'.';
+            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous infligez <span style="text-decoration: underline;" flow="up" tooltip="' . CARACS[$actorTraitDamages] .' vs '. CARACS[$targetTraitDamagesTaken] . ' : ' . $actorDamages . $bonusDamagesText . $agresssiviteDamagesText . $fragiliteDamagesText . $othersDamagesText .' - ' . $targetDefense . $bonusDefenseText . $faiblesseDamagesText . $armureDamagesText . $distanceText . (($encaisse) ? ' = ' . $beforeEncaisseDmg . ' - ' . ($beforeEncaisseDmg - $totalDamages + $demolition) . ' (Encaisse)': '') . (($demolition > 0) ? ' + ' . $demolition . ' (Démolition)' : '') . '">' . $totalDamages . '</span>' .' dégâts à '. $target->data->name.'.';
 
             // Une structure n'a pas de malus (elle n'esquive jamais) :
             // ni écriture, ni ligne « subit/récupère X malus » au récap.
