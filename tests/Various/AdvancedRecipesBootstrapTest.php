@@ -2,6 +2,8 @@
 
 namespace Tests\Various;
 
+use App\Service\BuildingService;
+use App\Service\Counter\CounterCatalog;
 use App\Service\RecipeService;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
@@ -60,6 +62,17 @@ class AdvancedRecipesBootstrapTest extends LegacyPlayerFixtureTestCase
             $workshop['workshop'],
             "the atelier's own recipe must stay BASIC: the first one is crafted without an atelier"
         );
+    }
+
+    public function testANewAtelierRepairsAndRecycles(): void
+    {
+        $this->requireBuildingsOrSkip();
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure('atelier', $x, $y);
+
+        $buildings = new BuildingService();
+        $this->assertTrue($buildings->servesCounter($id, CounterCatalog::MERCHANT, 'repair'));
+        $this->assertTrue($buildings->servesCounter($id, CounterCatalog::MERCHANT, 'recycle'));
     }
 
     public function testTheFullLoopFromNothingToAdvancedCrafting(): void
