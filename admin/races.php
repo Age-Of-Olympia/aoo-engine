@@ -204,9 +204,11 @@ function race_render_list(array $races, TypeEditorFace $face): string
             . '<td>' . e($race->getLabel()) . '</td>';
 
         if ($face->isStructure()) {
-            $rows .= '<td>' . ($face->key !== TypeEditorFace::BUILDING ? '' : ($race->getStructureNature() === 'obstacle'
-                    ? '<span class="badge badge-secondary">Obstacle</span>'
-                    : '<span class="badge badge-info">Édifice</span>')) . ' '
+            $rows .= '<td>' . ($face->key !== TypeEditorFace::BUILDING ? '' : match ($race->getStructureNature()) {
+                    'obstacle' => '<span class="badge badge-secondary">Obstacle</span>',
+                    'porte' => '<span class="badge badge-warning">Porte</span>',
+                    default => '<span class="badge badge-info">Édifice</span>',
+                }) . ' '
                 . ($race->blocksPassage() ? '' : '<span class="badge badge-light" title="On marche sur sa case">passable</span> ')
                 . ($race->blocksProjectiles() ? '' : '<span class="badge badge-light" title="Les tirs passent au-dessus">tirs libres</span>')
                 . '</td>';

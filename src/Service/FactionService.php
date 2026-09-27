@@ -286,6 +286,36 @@ class FactionService
     }
 
     /**
+     * The faction's DOORS: standing structures of the 'porte' nature.
+     *
+     * @return list<array{id: int, name: string, isOpen: bool, x: int, y: int, z: int, plan: string}>
+     */
+    public function doorsOf(string $code): array
+    {
+        $rows = $this->entityManager->getConnection()->fetchAllAssociative(
+            "SELECT p.id, p.name, p.is_open, c.x, c.y, c.z, c.plan
+               FROM players p
+               JOIN coords c ON c.id = p.coords_id
+               JOIN races r ON CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4)
+              WHERE p.player_type = 'building'
+                AND r.structure_nature = 'porte'
+                AND CONVERT(p.faction USING utf8mb4) = CONVERT(? USING utf8mb4)
+              ORDER BY c.plan, p.name",
+            [strtolower(trim($code))]
+        );
+
+        return array_map(static fn (array $row): array => [
+            'id'     => (int) $row['id'],
+            'name'   => (string) $row['name'],
+            'isOpen' => (bool) $row['is_open'],
+            'x'      => (int) $row['x'],
+            'y'      => (int) $row['y'],
+            'z'      => (int) $row['z'],
+            'plan'   => (string) $row['plan'],
+        ], $rows);
+    }
+
+    /**
      * The faction's CONTAINERS — its chests: standing lockable objects
      * carrying the faction. Same door as buildingsOf: what is shelved,
      * held or vanished stands nowhere and is not listed.

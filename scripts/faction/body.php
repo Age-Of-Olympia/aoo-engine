@@ -122,6 +122,8 @@ if ($player->data->faction === ($_GET['faction'] ?? '') || $player->have_option(
     );
 
     if ($player->data->faction === ($_GET['faction'] ?? '')) {
+        FactionView::renderDoors((new FactionService())->doorsOf((string) $_GET['faction']), (int) $player->id);
+
         /* The journal is the house's eyes — for the ranks it trusts
          * with them (showLogs). */
         if ((new FactionService())->mayManage((int) $player->id, \App\Service\FactionChestService::FLAG)) {

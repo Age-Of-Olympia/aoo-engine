@@ -70,7 +70,11 @@ final class RaceWikiRenderer implements WikiSheetRendererInterface
         foreach ($types as $type) {
             $caracs = (array) ($type['caracs'] ?? []);
             $out .= '| ' . DokuWiki::cell((string) $type['label'])
-                . ' | ' . (($type['structureNature'] ?? 'edifice') === 'obstacle' ? 'Obstacle' : 'Édifice')
+                . ' | ' . match ($type['structureNature'] ?? 'edifice') {
+                    'obstacle' => 'Obstacle',
+                    'porte' => 'Porte',
+                    default => 'Édifice',
+                }
                 . ' | ' . (int) ($caracs['pv'] ?? 0)
                 . ' | ' . (!empty($type['blocks_passage']) ? 'oui' : 'non')
                 . ' | ' . (!empty($type['blocks_projectiles']) ? 'oui' : 'non')

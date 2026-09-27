@@ -161,10 +161,8 @@ class RaceService
      *  - une PORTE fermée barre le chemin, et c'est tout ce qu'elle ajoute au
      *    mur qu'elle perce.
      *
-     * Les trois se ferment ; aucune colonne existante ne les sépare, puisque
-     * `structure_nature` répond à une autre question. Le type le dit donc
-     * lui-même, et aucun ne le dit encore : marquer un type de mur
-     * `opens_the_way` en fera une porte, sans rien changer au reste.
+     * A door is its own structure nature ('porte'), next to édifice and
+     * obstacle.
      *
      * @return string[] noms des races dont l'ouverture décide du passage
      */
@@ -172,7 +170,7 @@ class RaceService
     {
         $names = [];
         foreach ($this->getRacesByKind(\App\Enum\EntityCategory::Structure->value) as $race) {
-            if ($race->opensTheWay() && $race->isLockable()) {
+            if ($race->isDoor() && $race->isLockable()) {
                 $names[] = $race->getName();
             }
         }

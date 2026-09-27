@@ -149,7 +149,7 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
         // Une palissade qui devient porte : elle se ferme, et sa fermeture
         // décide du passage.
         $this->link->executeStatement(
-            "UPDATE races SET lockable = 1, opens_the_way = 1 WHERE name = 'palissade'"
+            "UPDATE races SET lockable = 1, structure_nature = 'porte' WHERE name = 'palissade'"
         );
         \App\Service\RaceService::clearCache();
         \App\Factory\EntityManagerFactory::getEntityManager()->clear();
@@ -170,7 +170,7 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
             );
         } finally {
             $this->link->executeStatement(
-                "UPDATE races SET lockable = 0, opens_the_way = 0 WHERE name = 'palissade'"
+                "UPDATE races SET lockable = 0, structure_nature = 'obstacle' WHERE name = 'palissade'"
             );
             \App\Service\RaceService::clearCache();
             \App\Factory\EntityManagerFactory::getEntityManager()->clear();
@@ -204,7 +204,7 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
         );
 
         $this->link->executeStatement(
-            "UPDATE races SET lockable = 1, opens_the_way = 1 WHERE name = 'palissade'"
+            "UPDATE races SET lockable = 1, structure_nature = 'porte' WHERE name = 'palissade'"
         );
         \App\Service\RaceService::clearCache();
         \App\Factory\EntityManagerFactory::getEntityManager()->clear();
@@ -223,7 +223,7 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
             );
         } finally {
             $this->link->executeStatement(
-                "UPDATE races SET lockable = 0, opens_the_way = 0 WHERE name = 'palissade'"
+                "UPDATE races SET lockable = 0, structure_nature = 'obstacle' WHERE name = 'palissade'"
             );
             \App\Service\RaceService::clearCache();
             \App\Factory\EntityManagerFactory::getEntityManager()->clear();

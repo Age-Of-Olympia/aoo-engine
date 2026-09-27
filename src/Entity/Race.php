@@ -187,10 +187,8 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     private bool $lockable = false;
 
     /**
-     * La fermeture de ce type décide-t-elle du PASSAGE ?
-     *
-     * Une porte, et elle seule. Un édifice fermé cesse de servir, un coffre
-     * fermé retient son contenu : ni l'un ni l'autre ne s'est jamais traversé.
+     * Superseded by structure_nature 'porte' (isDoor); no code reads it.
+     * Kept mapped until a migration drops the column after the deploy.
      */
     #[ORM\Column(type: "boolean", name: "opens_the_way", options: ["default" => false])]
     private bool $opensTheWay = false;
@@ -409,6 +407,12 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
         return $this->isStructureKind() && $this->structureNature === 'edifice';
     }
 
+    /** A door: shut, it bars the way like a wall; open, one walks through. */
+    public function isDoor(): bool
+    {
+        return $this->isStructureKind() && $this->structureNature === 'porte';
+    }
+
     public function getBleeds(): string
     {
         return $this->bleeds;
@@ -611,11 +615,6 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     public function isLockable(): bool
     {
         return $this->lockable;
-    }
-
-    public function opensTheWay(): bool
-    {
-        return $this->opensTheWay;
     }
 
     public function setLockable(bool $lockable): self

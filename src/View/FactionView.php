@@ -684,6 +684,45 @@ class FactionView
     }
 
     /**
+     * The faction's doors: open or shut, the lock turnable from here by
+     * the ranks allowed to, and where each stands.
+     *
+     * @param list<array{id: int, name: string, isOpen: bool, x: int, y: int, z: int, plan: string}> $doors FactionService::doorsOf()
+     */
+    public static function renderDoors(array $doors, int $actorId): void
+    {
+        if ($doors === []) {
+            return;
+        }
+
+        self::sectionOpen('portes', 'Portes');
+
+        echo '
+    <table border="1" class="marbre" align="center">
+    <tr><th>Nom</th><th>État</th><th>Territoire</th></tr>
+    ';
+
+        foreach ($doors as $door) {
+            $planJson = plans()->read($door['plan']);
+            echo '
+        <tr>
+            <td><a href="infos.php?targetId=' . $door['id'] . '">' . htmlspecialchars($door['name'], ENT_QUOTES, 'UTF-8') . '</a></td>
+            <td>' . ($door['isOpen'] ? 'Ouverte' : '<span class="ra ra-key"></span> Fermée')
+                . self::lockCellHtml($door['id'], $actorId) . '</td>
+            <td>' . htmlspecialchars((string) ($planJson->name ?? $door['plan']), ENT_QUOTES, 'UTF-8')
+                . ' (' . $door['x'] . ', ' . $door['y'] . ', ' . $door['z'] . ')</td>
+        </tr>
+        ';
+        }
+
+        echo '
+    </table>
+    ';
+
+        self::sectionClose();
+    }
+
+    /**
      * Give the chest to a member, or abandon it to the public — for the
      * ranks holding manageChests; the endpoint re-checks.
      *

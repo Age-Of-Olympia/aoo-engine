@@ -40,6 +40,21 @@ class FactionPanelBuildingsTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    public function testADoorHasItsOwnList(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $code = $this->factionOrSkip();
+        if ((new \App\Service\RaceService())->getRaceByName('porte_bois')?->isDoor() !== true) {
+            $this->markTestSkipped("'porte_bois' not seeded as a door (run migrations).");
+        }
+
+        $id = (new BuildingService())->place('porte_bois', $this->tile(118, 102), null, $code);
+        $this->trackEntityId($id);
+
+        $this->assertContains($id, array_column((new FactionService())->doorsOf($code), 'id'));
+        $this->assertNotContains($id, array_column((new FactionService())->buildingsOf($code), 'id'));
+    }
+
     public function testAStandingBuildingIsListedWithItsState(): void
     {
         $this->requireBuildingsOrSkip();

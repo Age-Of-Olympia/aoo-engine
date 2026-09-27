@@ -27,6 +27,7 @@ final class TypeEditorFace
     /** All structures; `structure_nature` is what tells the faces apart. */
     public const NATURE_EDIFICE = 'edifice';
     public const NATURE_OBSTACLE = 'obstacle';
+    public const NATURE_DOOR = 'porte';
     public const NATURE_DECOR = 'decor';
     public const NATURE_RESOURCE = 'ressource';
     public const NATURE_PLANT = 'plante';
@@ -41,8 +42,9 @@ final class TypeEditorFace
     public static function natureChoices(): array
     {
         return [
-            self::NATURE_EDIFICE => 'Bâtiment — édifice (porte)',
+            self::NATURE_EDIFICE => 'Bâtiment — édifice',
             self::NATURE_OBSTACLE => 'Bâtiment — obstacle (mur)',
+            self::NATURE_DOOR => 'Bâtiment — porte',
             self::NATURE_DECOR => 'Décor',
             self::NATURE_RESOURCE => 'Ressource récoltable',
             self::NATURE_PLANT => 'Plante',
@@ -260,7 +262,7 @@ final class TypeEditorFace
      *
      * Every face but the buildings one pins its own nature — that is what
      * keeps a row on its list. Only the buildings face offers a choice
-     * (édifice/obstacle); the character face keeps the historical 'edifice'
+     * (édifice/obstacle/porte); the character face keeps the historical 'edifice'
      * default. Without this, the shared save clamped every face to
      * édifice/obstacle: a type created from Types récoltables was born
      * 'edifice' and never reached the resources palette of the editors.
@@ -272,7 +274,7 @@ final class TypeEditorFace
             self::RESOURCE => self::NATURE_RESOURCE,
             self::PLANT => self::NATURE_PLANT,
             self::ROUTE => self::NATURE_ROUTE,
-            default => $posted === self::NATURE_OBSTACLE ? self::NATURE_OBSTACLE : self::NATURE_EDIFICE,
+            default => in_array($posted, [self::NATURE_OBSTACLE, self::NATURE_DOOR], true) ? $posted : self::NATURE_EDIFICE,
         };
     }
 

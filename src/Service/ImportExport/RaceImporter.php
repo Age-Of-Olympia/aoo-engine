@@ -86,7 +86,8 @@ final class RaceImporter extends AbstractObjectImporter
         $race->setPlayable((bool) ($plan['playable'] ?? $race->getPlayable()));
         $race->setHidden((bool) ($plan['hidden'] ?? $race->getHidden()));
         $race->setKind(($plan['kind'] ?? $race->getKind()) === 'structure' ? 'structure' : 'character');
-        $race->setStructureNature(($plan['structureNature'] ?? $race->getStructureNature()) === 'obstacle' ? 'obstacle' : 'edifice');
+        $nature = (string) ($plan['structureNature'] ?? $race->getStructureNature());
+        $race->setStructureNature(in_array($nature, ['obstacle', 'porte'], true) ? $nature : 'edifice');
         $race->setBleeds((string) ($plan['bleeds'] ?? $race->getBleeds()));
         $race->setWoundColor((string) ($plan['wound_color'] ?? $race->getWoundColor()));
         $race->setBlocksPassage((bool) ($plan['blocks_passage'] ?? $race->blocksPassage()));
