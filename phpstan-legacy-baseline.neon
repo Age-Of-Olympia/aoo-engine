@@ -32,18 +32,6 @@ parameters:
 
 
 		-
-			message: '#^Variable \$hideLogsCondition might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: action.php
-
-		-
-			message: '#^Variable \$logTime might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: action.php
-
-		-
 			message: '#^Anonymous function has an unused use \$em\.$#'
 			identifier: closure.unusedUse
 			count: 1

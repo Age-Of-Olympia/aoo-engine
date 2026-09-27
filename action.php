@@ -143,39 +143,10 @@ try {
         $actionResultsView->getActionResults()
     );
 
-    // Arena capture. It lives here rather than in ActionExecutorService because
-    // the action logs are written at this point and their text is at hand for
-    // the events file. A blocked action alters no pixel: no frame for it.
+    // Arena capture: a blocked action alters no pixel, no frame for it.
     if (!$actionResults->isBlocked()) {
         try {
-            $arenaEvents = [];
-
-            // Hidden logs (hideOnSuccess, e.g. theft) stay out of the events
-            // file: img/arene/ is served publicly. The frame is still taken, the
-            // arena state did change. Same condition as the Log::put above.
-            if (!$hideLogsCondition && !empty($actorMainLog)) {
-                $arenaEvents[] = [
-                    'type'      => 'action',
-                    'at'        => $logTime,
-                    'player_id' => (int) $player->id,
-                    'text'      => $actorMainLog,
-                ];
-            }
-
-            if (!$hideLogsCondition && $target->id != $player->id && !empty($targetMainLog)) {
-                $arenaEvents[] = [
-                    'type'      => 'action_other_player',
-                    'at'        => $logTime,
-                    'player_id' => (int) $target->id,
-                    'text'      => $targetMainLog,
-                ];
-            }
-
-            (new ScreenshotService())->generateAutomaticScreenshot(
-                $player,
-                $action->getName(),
-                $arenaEvents
-            );
+            (new ScreenshotService())->generateAutomaticScreenshot($player, $action->getName());
         } catch (Throwable $e) {
             error_log('Capture arene impossible : ' . $e->getMessage());
         }
