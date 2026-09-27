@@ -144,11 +144,11 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
 
         // A type declaring work was born a SITE (place, asConstructionSite):
         // `travailler` will raise it gesture by gesture.
-        $work = $isRaceTyped ? $race->getBuildWork() : 0;
-        if ($work > 0) {
+        $site = (new \App\Service\ConstructionSiteService())->progressOf($id);
+        if ($site !== null) {
             $messages = [
                 'Vous ouvrez le chantier de ' . $label . ' <span class="ra ra-hammer"></span> en (' . $goCoords->x . ', ' . $goCoords->y . ').',
-                'Travaux : 0/' . $work . '.',
+                'Travaux : 0/' . $site['total'] . '.',
             ];
 
             return new OutcomeResult(true, outcomeSuccessMessages: $messages, outcomeFailureMessages: array());
