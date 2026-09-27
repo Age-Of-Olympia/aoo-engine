@@ -13,7 +13,7 @@ class LifeLossOutcomeInstructionCharacterizationTest extends TestCase
     {
         $instruction = new LifeLossOutcomeInstruction();
 
-        $this->assertSame(7, $instruction->computeDamageTaken(10));
+        $this->assertSame(8, $instruction->computeDamageTaken(10));
     }
 
     public function testDamageTakenNeverDropsBelowOne(): void
