@@ -471,9 +471,10 @@ class FactionView
         <th>État</th>
         <th>Entretien</th>'
         . ($mayDrive ? '
-        <th>Contenu</th>
+        <th>Contenu</th>' : '') . '
+        <th>Territoire</th>'
+        . ($mayDrive ? '
         <th>Commandes</th>' : '') . '
-        <th>Territoire</th>
     </tr>
     ';
 
@@ -498,7 +499,15 @@ class FactionView
 
             if ($mayDrive) {
                 echo '
-            <td>' . self::contentsCellHtml((int) $b['id'], $drivenId) . '</td>
+            <td>' . self::contentsCellHtml((int) $b['id'], $drivenId) . '</td>';
+            }
+
+            echo '
+            <td>' . htmlspecialchars((string) ($planJson->name ?? '?'), ENT_QUOTES, 'UTF-8')
+                . ' (' . (int) $b['x'] . ', ' . (int) $b['y'] . ', ' . (int) $b['z'] . ')</td>';
+
+            if ($mayDrive) {
+                echo '
             <td>';
                 if ((int) $b['id'] === $drivenId) {
                     echo '<button class="faction-drive-release">Reprendre son personnage</button>';
@@ -509,8 +518,6 @@ class FactionView
             }
 
             echo '
-            <td>' . htmlspecialchars((string) ($planJson->name ?? '?'), ENT_QUOTES, 'UTF-8')
-                . ' (' . (int) $b['x'] . ', ' . (int) $b['y'] . ', ' . (int) $b['z'] . ')</td>
         </tr>
         ';
         }

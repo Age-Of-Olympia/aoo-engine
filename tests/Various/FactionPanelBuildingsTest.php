@@ -25,6 +25,21 @@ class FactionPanelBuildingsTest extends LegacyPlayerFixtureTestCase
         return $code;
     }
 
+    public function testAWallIsNoBuildingOfThePanel(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $code = $this->factionOrSkip();
+
+        $id = (new BuildingService())->place('palissade', $this->tile(110, 102), null, $code);
+        $this->trackEntityId($id);
+
+        $this->assertNotContains(
+            $id,
+            array_column((new FactionService())->buildingsOf($code), 'id'),
+            'a palissade is an obstacle, not a building'
+        );
+    }
+
     public function testAStandingBuildingIsListedWithItsState(): void
     {
         $this->requireBuildingsOrSkip();

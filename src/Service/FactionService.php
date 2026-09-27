@@ -256,6 +256,7 @@ class FactionService
                LEFT JOIN players_bonus pb ON pb.player_id = p.id AND pb.name = 'pv'
                LEFT JOIN entity_decay ed ON ed.player_id = p.id
               WHERE p.player_type = 'building'
+                AND r.structure_nature = 'edifice'
                 AND CONVERT(p.faction USING utf8mb4) = CONVERT(? USING utf8mb4)
               ORDER BY c.plan, p.name",
             [strtolower(trim($code))]
