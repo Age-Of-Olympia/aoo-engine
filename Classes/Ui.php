@@ -88,7 +88,7 @@ class Ui{
 
                 <!-- Choix de case de construction (réutilise le spotlight tutoriel) -->
                 <script src="js/footprint_ghost.js?v=20260806"></script>
-                <script src="js/build_picker.js?v=20260821"></script>
+                <script src="js/build_picker.js?v=20260927"></script>
         ';
 
         echo '    </head>

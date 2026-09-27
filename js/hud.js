@@ -600,11 +600,19 @@
     /* Resolves once the observed tile's panel is redrawn; at once when
      * nothing is selected. */
     function refreshSelection() {
+        /* An action can change any tile's card: drop every cached one. */
+        window.clickedCases = [];
+
         var selCoords = aooStore.get('hudSelCoords');
         if (!selCoords) {
             return $.Deferred().resolve();
         }
-        return $.post('observe.php', { coords: selCoords }, function (data) {
+        var payload = { coords: selCoords };
+        var selEntity = aooStore.get('hudSelEntity');
+        if (selEntity) {
+            payload.entity = selEntity;
+        }
+        return $.post('observe.php', payload, function (data) {
             $('#ajax-data').html(data);
         });
     }

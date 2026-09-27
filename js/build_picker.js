@@ -228,10 +228,18 @@ $(document).ready(function(){
 
         $.post('action.php', { action: pending.action, itemId: pending.itemId, buildX: coords[0], buildY: coords[1], buildFor: buildFor }, function(data){
 
-            var text = $('<div></div>').html(
+            /* One message per line (aooAlert renders \n), without the hidden
+               board re-render (#data) a screen refresh appends. */
+            var $result = $('<div></div>').html(
                 data.replace(/<script[\s\S]*?<\/script>/gi, '')
                     .replace(/<style[\s\S]*?<\/style>/gi, '')
-            ).text().replace(/\s+/g, ' ').trim();
+                    .replace(/<br\s*\/?>|<\/div>/gi, '$&\n')
+            );
+            $result.find('#data').remove();
+            var text = $result.text().split('\n')
+                .map(function(line){ return line.replace(/\s+/g, ' ').trim(); })
+                .filter(Boolean)
+                .join('\n');
 
             aooAlert(text).then(function(){
                 document.location.reload();
