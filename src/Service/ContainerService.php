@@ -135,7 +135,7 @@ final class ContainerService
         }
 
         $this->moveStack($actorId, $containerId, $itemId, $n, 'Vous n\'avez pas cela.');
-        $this->journal($containerId, $actorId, 'a déposé ' . $n . ' × ' . $this->itemLabel($itemId) . ' dans');
+        (new FactionLogService())->addAboutThing($containerId, $actorId, 'a déposé ' . $n . ' × ' . $this->itemLabel($itemId) . ' dans');
         (new AuditService())->addAuditLog("container #{$containerId}: #{$actorId} y dépose {$n} × item #{$itemId}");
     }
 
@@ -147,7 +147,7 @@ final class ContainerService
             $this->assertRoomForALine($actorId, 'Votre sac est plein.');
         }
         $this->moveStack($containerId, $actorId, $itemId, $n, 'Le contenant n\'a pas cela.');
-        $this->journal($containerId, $actorId, 'a pris ' . $n . ' × ' . $this->itemLabel($itemId) . ' dans');
+        (new FactionLogService())->addAboutThing($containerId, $actorId, 'a pris ' . $n . ' × ' . $this->itemLabel($itemId) . ' dans');
         (new AuditService())->addAuditLog("container #{$containerId}: #{$actorId} en retire {$n} × item #{$itemId}");
     }
 
@@ -162,7 +162,7 @@ final class ContainerService
         $this->conn->transactional(function (Connection $conn) use ($entityId, $containerId): void {
             (new EntityLocationService($conn))->putInside($entityId, $containerId);
         });
-        $this->journal($containerId, $actorId, 'a déposé ' . $this->exemplarLabel($instanceId) . ' dans');
+        (new FactionLogService())->addAboutThing($containerId, $actorId, 'a déposé ' . $this->exemplarLabel($instanceId) . ' dans');
         (new AuditService())->addAuditLog("container #{$containerId}: #{$actorId} y dépose l'exemplaire #{$instanceId}");
     }
 
@@ -185,7 +185,7 @@ final class ContainerService
         $this->conn->transactional(function (Connection $conn) use ($entityId, $actorId): void {
             (new EntityLocationService($conn))->putInside((int) $entityId, $actorId);
         });
-        $this->journal($containerId, $actorId, 'a pris ' . $this->exemplarLabel($instanceId) . ' dans');
+        (new FactionLogService())->addAboutThing($containerId, $actorId, 'a pris ' . $this->exemplarLabel($instanceId) . ' dans');
         (new AuditService())->addAuditLog("container #{$containerId}: #{$actorId} en retire l'exemplaire #{$instanceId}");
     }
 
@@ -229,35 +229,6 @@ final class ContainerService
     }
 
     /**
-     * Turns the lock: the container's people (mayLock — its owner, a
-     * member of its faction) shut or open it themselves. What is shut
-     * denies its contents to everyone, holder included.
-     */
-    public function toggleOpen(int $containerId, int $actorId, bool $open): void
-    {
-        if (!(new LockService())->mayLock($containerId, $actorId)) {
-            throw new RuntimeException('Cette serrure ne vous connaît pas.');
-        }
-
-        $refusal = $this->lockRankRefusal($containerId, $actorId);
-        if ($refusal !== null) {
-            throw new RuntimeException($refusal);
-        }
-
-        /* A closure the latch does not explain — ruin, construction,
-         * damage — jams the lock for every path, the remote faction
-         * gesture included. */
-        $closure = $this->closureReasonOf($containerId);
-        if ($closure !== null && $closure !== BuildingService::CLOSED_BY_HAND) {
-            throw new RuntimeException('La serrure ne répond plus : c\'est ' . $closure . '.');
-        }
-
-        (new BuildingService())->setOpen($containerId, $open);
-        $this->journal($containerId, $actorId, $open ? 'a ouvert' : 'a fermé');
-        (new AuditService())->addAuditLog("container #{$containerId}: #{$actorId} " . ($open ? 'ouvre' : 'ferme'));
-    }
-
-    /**
      * May $actorId see inside and use this container, standing aside
      * the where-and-reach questions? The peek on the observation panel
      * asks this — seeing follows the same rule as using.
@@ -265,33 +236,6 @@ final class ContainerService
     public function mayUse(int $containerId, int $actorId): bool
     {
         return $this->householdRefusal($containerId, $actorId) === null;
-    }
-
-    /**
-     * May $actorId turn this lock at all — its owner, or a member whose
-     * rank carries the flag? Where the gesture happens (beside it, or
-     * from the faction panel) is the caller's affair.
-     */
-    public function mayTurnLock(int $containerId, int $actorId): bool
-    {
-        return (new LockService())->mayLock($containerId, $actorId)
-            && $this->lockRankRefusal($containerId, $actorId) === null;
-    }
-
-    /**
-     * mayTurnLock(), and the lock answers: a closure the latch does not
-     * explain (ruin, site, wreck) jams it. Decides whether a lock button
-     * is shown at all.
-     */
-    public function mayTurnLockNow(int $containerId, int $actorId): bool
-    {
-        if (!$this->mayTurnLock($containerId, $actorId)) {
-            return false;
-        }
-
-        $closure = $this->closureReasonOf($containerId);
-
-        return $closure === null || $closure === BuildingService::CLOSED_BY_HAND;
     }
 
     /**
@@ -305,53 +249,7 @@ final class ContainerService
             return 'Vous n\'êtes pas des siens.';
         }
 
-        return $this->factionRankRefusal($containerId, $actorId);
-    }
-
-    /**
-     * The rank a faction lock asks for: a door is opened under useDoor;
-     * anything else (a chest, a building) under useChest, like its contents.
-     */
-    private function lockRankRefusal(int $entityId, int $actorId): ?string
-    {
-        $type = (string) $this->conn->fetchOne('SELECT race FROM players WHERE id = ?', [$entityId]);
-        if ((new RaceService())->getRaceByName($type)?->isDoor()) {
-            return $this->factionRankRefusal(
-                $entityId,
-                $actorId,
-                'useDoor',
-                'Votre rang ne permet pas d\'ouvrir les portes de la faction.'
-            );
-        }
-
-        return $this->factionRankRefusal($entityId, $actorId);
-    }
-
-    /** The rank half of the household rule, alone — mayLock has its own first half. */
-    private function factionRankRefusal(
-        int $containerId,
-        int $actorId,
-        string $flag = 'useChest',
-        string $refusal = 'Votre rang ne permet pas d\'utiliser les coffres de la faction.'
-    ): ?string {
-        $thing = $this->conn->fetchAssociative(
-            'SELECT owner_id, faction FROM players WHERE id = ?',
-            [$containerId]
-        );
-        if ($thing === false) {
-            return 'Ce contenant n\'existe pas.';
-        }
-
-        $ownerId = $thing['owner_id'] === null ? null : (int) $thing['owner_id'];
-        if (
-            (string) $thing['faction'] !== ''
-            && $ownerId !== $actorId
-            && !(new FactionService())->mayManage($actorId, $flag)
-        ) {
-            return $refusal;
-        }
-
-        return null;
+        return (new LockService())->rankRefusal($containerId, $actorId);
     }
 
     /**
@@ -523,30 +421,6 @@ final class ContainerService
         return (string) ($row['custom_name'] ?? '') !== ''
             ? '« ' . $row['custom_name'] . ' »'
             : ucfirst((string) ($row['label'] ?? $row['name']));
-    }
-
-    /**
-     * One line in the faction's journal, when the container is the
-     * faction's: "{Actor} {verb phrase} {Container}." — the house sees
-     * what happened to its things, internal takings included.
-     */
-    private function journal(int $containerId, int $actorId, string $verbPhrase): void
-    {
-        $thing = $this->conn->fetchAssociative(
-            'SELECT name, faction FROM players WHERE id = ?',
-            [$containerId]
-        );
-        if ($thing === false || (string) $thing['faction'] === '') {
-            return;
-        }
-
-        $actorName = (string) $this->conn->fetchOne('SELECT name FROM players WHERE id = ?', [$actorId]);
-
-        (new FactionLogService())->add(
-            (string) $thing['faction'],
-            $actorId,
-            $actorName . ' ' . $verbPhrase . ' ' . $thing['name'] . '.'
-        );
     }
 
     /** The item's display name, for a journal line. */

@@ -6,13 +6,13 @@ use App\Action\Condition\ConditionObject;
 use App\Entity\OutcomeInstruction;
 use App\Interface\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
-use App\Service\ContainerService;
+use App\Service\LockService;
 use Classes\Player;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * Turns the target's lock through the container gateway —
- * {@see ContainerService::toggleOpen()} re-checks control server-side,
+ * {@see LockService::toggleOpen()} re-checks control server-side,
  * so a stale button costs a refusal, never a wrong state.
  *
  * Parameters: {"open": 0|1} — the state the gesture produces.
@@ -34,7 +34,7 @@ class TurnLockOutcomeInstruction extends OutcomeInstruction implements HasParame
         }
 
         try {
-            (new ContainerService())->toggleOpen((int) $target->id, (int) $actor->id, $open);
+            (new LockService())->toggleOpen((int) $target->id, (int) $actor->id, $open);
         } catch (\RuntimeException | \InvalidArgumentException $e) {
             return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: [$e->getMessage()]);
         }

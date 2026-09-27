@@ -21,6 +21,21 @@ final class FactionLogService
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
     }
 
+    /**
+     * "{Actor} {verb phrase} {Thing}." in the journal of the thing's
+     * faction; a thing without faction writes nothing.
+     */
+    public function addAboutThing(int $thingId, int $actorId, string $verbPhrase): void
+    {
+        $thing = $this->conn->fetchAssociative('SELECT name, faction FROM players WHERE id = ?', [$thingId]);
+        if ($thing === false || (string) $thing['faction'] === '') {
+            return;
+        }
+
+        $actorName = (string) $this->conn->fetchOne('SELECT name FROM players WHERE id = ?', [$actorId]);
+        $this->add((string) $thing['faction'], $actorId, $actorName . ' ' . $verbPhrase . ' ' . $thing['name'] . '.');
+    }
+
     /** Writes one line; a blank or unknown faction writes nothing. */
     public function add(string $factionCode, ?int $actorId, string $message): void
     {

@@ -45,11 +45,6 @@ try {
             }
             ExitSuccess(['message' => $message]);
             break;
-        case 'lock':
-            $open = (int) ($POST_DATA['open'] ?? 0) === 1;
-            $service->toggleOpen($containerId, $actorId, $open);
-            ExitSuccess(['message' => $open ? 'Ouvert.' : 'Fermé.']);
-            break;
         default:
             ExitError('action inconnue');
     }

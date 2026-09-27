@@ -50,7 +50,7 @@ describe('Gesture endpoints (container, faction)', () => {
       });
 
     // Each real action on a container nobody has: a spoken JSON refusal.
-    ['stack-withdraw', 'exemplar-withdraw', 'withdraw-all', 'lock'].forEach((action) => {
+    ['stack-withdraw', 'exemplar-withdraw', 'withdraw-all'].forEach((action) => {
       postJson('/api/container/flows.php', { action: action, containerId: 0, itemId: 0, n: 1, instanceId: 0, open: 1 })
         .then((response) => {
           expect(response.status).to.eq(200);
@@ -58,6 +58,14 @@ describe('Gesture endpoints (container, faction)', () => {
           expect(response.body, `« ${action} » doit répondre {error}`).to.have.property('error');
         });
     });
+
+    // The lock endpoint, on nothing: a spoken JSON refusal.
+    postJson('/api/lock/turn.php', { targetId: 0, open: 1 })
+      .then((response) => {
+        expect(response.status).to.eq(200);
+        expectNoFatal(response.body);
+        expect(response.body).to.have.property('error');
+      });
 
     // The panel fragment guards its parameter.
     cy.request({ url: '/load_container.php', failOnStatusCode: false }).then((response) => {

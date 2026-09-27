@@ -409,16 +409,16 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         $this->enrolled($recruit, 0);
 
         $service = new ContainerService();
-        $service->toggleOpen($chest, $guard, false);
+        (new \App\Service\LockService())->toggleOpen($chest, $guard, false);
         $this->assertSame(
             0,
             (int) $this->link->fetchOne('SELECT is_open FROM players WHERE id = ?', [$chest]),
             'the flagged rank turns the faction lock'
         );
-        $service->toggleOpen($chest, $guard, true);
+        (new \App\Service\LockService())->toggleOpen($chest, $guard, true);
 
         $this->expectExceptionMessage('Votre rang ne permet pas d\'utiliser les coffres de la faction.');
-        $service->toggleOpen($chest, $recruit, false);
+        (new \App\Service\LockService())->toggleOpen($chest, $recruit, false);
     }
 
     public function testAFactionDoorFollowsItsOwnRank(): void
@@ -437,7 +437,7 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         $service = new ContainerService();
 
         try {
-            $service->toggleOpen($door, $guard, false);
+            (new \App\Service\LockService())->toggleOpen($door, $guard, false);
             $this->fail('useChest alone does not open the doors');
         } catch (\RuntimeException $e) {
             $this->assertSame('Votre rang ne permet pas d\'ouvrir les portes de la faction.', $e->getMessage());
@@ -446,7 +446,7 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         $this->link->executeStatement('UPDATE faction_roles SET useDoor = 1 WHERE faction_id = ? AND position = 1', [$this->factionId]);
         \App\Service\FactionService::clearCache();
 
-        $service->toggleOpen($door, $guard, false);
+        (new \App\Service\LockService())->toggleOpen($door, $guard, false);
         $this->assertSame(0, (int) $this->link->fetchOne('SELECT is_open FROM players WHERE id = ?', [$door]));
     }
 
@@ -457,18 +457,18 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         $this->link->executeStatement('UPDATE players SET owner_id = ? WHERE id = ?', [$keeper, $chest]);
 
         $service = new ContainerService();
-        $service->toggleOpen($chest, $keeper, false);
+        (new \App\Service\LockService())->toggleOpen($chest, $keeper, false);
         $this->assertSame(
             0,
             (int) $this->link->fetchOne('SELECT is_open FROM players WHERE id = ?', [$chest]),
             'the owner turns their own lock'
         );
-        $service->toggleOpen($chest, $keeper, true);
+        (new \App\Service\LockService())->toggleOpen($chest, $keeper, true);
 
         $stranger = $this->actorNextTo(42, 30, 'GmSansClef');
         $this->link->executeStatement("UPDATE players SET faction = '' WHERE id = ?", [$stranger]);
 
         $this->expectExceptionMessage('Cette serrure ne vous connaît pas.');
-        $service->toggleOpen($chest, $stranger, false);
+        (new \App\Service\LockService())->toggleOpen($chest, $stranger, false);
     }
 }

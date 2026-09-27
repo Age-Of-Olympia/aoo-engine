@@ -116,7 +116,7 @@ class LockGestureTest extends LegacyPlayerFixtureTestCase
         $this->assertFalse($result->isSuccess(), 'display_context: no button on a wreck');
 
         $this->expectExceptionMessage('La serrure ne répond plus');
-        (new \App\Service\ContainerService())->toggleOpen($chestId, (int) $owner->id, false);
+        (new \App\Service\LockService())->toggleOpen($chestId, (int) $owner->id, false);
     }
 
     public function testTheGestureMintsNoExperience(): void

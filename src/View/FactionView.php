@@ -538,7 +538,7 @@ class FactionView
      */
     private static function lockCellHtml(int $entityId, int $actorId): string
     {
-        if (!(new \App\Service\ContainerService())->mayTurnLockNow($entityId, $actorId)) {
+        if (!(new \App\Service\LockService())->mayTurnLockNow($entityId, $actorId)) {
             return '';
         }
 
@@ -814,8 +814,8 @@ class FactionView
     }
 
     /**
-     * The lock gestures of the assets tables post to the container
-     * endpoint and reopen the panel. Fragment script: delegated,
+     * The gestures of the assets tables (locks, chest management) post
+     * to their endpoints and reopen the panel. Fragment script: delegated,
      * namespaced, off() before on() — it re-executes at every load.
      */
     public static function renderAssetsScript(string $factionCode): void
@@ -861,13 +861,10 @@ class FactionView
 
             $(document).off('click.factionAssets', '.faction-lock-toggle')
                 .on('click.factionAssets', '.faction-lock-toggle', function(){
-                    aooGestureFetch('api/container/flows.php', {
-                        action: 'lock',
-                        containerId: $(this).data('target'),
+                    aooGestureFetch('api/lock/turn.php', {
+                        targetId: $(this).data('target'),
                         open: $(this).data('open')
-                    }, function(){
-                        aooPanelOrReload('load_faction.php?faction=' + encodeURIComponent(factionCode), 'Faction');
-                    });
+                    }, reloadFaction);
                 });
         })();
         </script>

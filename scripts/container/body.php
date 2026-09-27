@@ -38,7 +38,7 @@ echo '<h1><img src="' . htmlspecialchars($sprite, ENT_QUOTES, 'UTF-8') . '"'
 
 /* The lock, to its people: shown even when the container refuses —
  * shut is exactly when the owner needs the button. */
-$mayLock = $service->mayTurnLockNow($containerId, (int) $player->id);
+$mayLock = (new \App\Service\LockService())->mayTurnLockNow($containerId, (int) $player->id);
 $isOpen = (bool) $row->is_open;
 
 if ($mayLock) {
@@ -128,7 +128,7 @@ function renderContainerScript(int $containerId): string
 
         $(document).off('click.containerFlows', '#container-lock')
             .on('click.containerFlows', '#container-lock', function(){
-                aooGestureFetch('api/container/flows.php', { action: 'lock', containerId: containerId, open: $(this).data('open') }, function(){
+                aooGestureFetch('api/lock/turn.php', { targetId: containerId, open: $(this).data('open') }, function(){
                     aooPanelOrReload('load_container.php?targetId=' + containerId, 'Contenant');
                 });
             });

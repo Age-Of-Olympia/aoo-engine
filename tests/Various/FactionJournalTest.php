@@ -78,7 +78,7 @@ class FactionJournalTest extends LegacyPlayerFixtureTestCase
         $service = new ContainerService();
         $service->depositStack($chestId, (int) $member->id, (int) $bois->id, 2);
         $service->withdrawStack($chestId, (int) $member->id, (int) $bois->id, 1);
-        $service->toggleOpen($chestId, (int) $member->id, false);
+        (new \App\Service\LockService())->toggleOpen($chestId, (int) $member->id, false);
 
         $messages = array_column((new FactionLogService())->listOf(self::CODE), 'message');
 

@@ -7,13 +7,12 @@ use App\Factory\EntityManagerFactory;
 use App\Interface\ActorInterface;
 use App\Interface\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
-use App\Service\ContainerService;
 use App\Service\LockService;
 
 /**
  * The hand on a lock: the target must be lockable, the actor must
  * CONTROL it (its owner, or a member whose rank carries the useChest
- * flag — {@see ContainerService::mayTurnLock()}), and the lock must
+ * flag — {@see LockService::mayTurnLock()}), and the lock must
  * stand in the state the gesture leaves behind's opposite — `fermer`
  * only shuts what is open, `ouvrir` only opens what is shut.
  *
@@ -41,20 +40,19 @@ class RequiresLockControlCondition extends BaseCondition implements HasParameter
 
         $targetId = (int) $target->getId();
 
-        if (!(new LockService())->isLockable($targetId)) {
+        $lock = new LockService();
+        if (!$lock->isLockable($targetId)) {
             return new ConditionResult(false, array(), array('Cela ne se ferme pas.'));
         }
 
-        $container = new ContainerService();
-
-        if (!$container->mayTurnLock($targetId, (int) $actor->getId())) {
+        if (!$lock->mayTurnLock($targetId, (int) $actor->getId())) {
             return new ConditionResult(false, array(), array('Cette serrure ne vous connaît pas.'));
         }
 
         /* A closure the latch does not explain — ruin, construction,
          * damage — JAMS the lock: no hand turns it, and being
          * display_context, neither button shows on the wreck. */
-        $closure = $container->closureReasonOf($targetId);
+        $closure = (new \App\Service\BuildingService())->closureReasonOf($targetId);
         if ($closure !== null && $closure !== \App\Service\BuildingService::CLOSED_BY_HAND) {
             return new ConditionResult(false, array(), array('La serrure ne répond plus : c\'est ' . $closure . '.'));
         }
