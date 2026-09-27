@@ -263,6 +263,12 @@ class BuildingService
         return $nearest;
     }
 
+    /** What a building under construction looks like, whatever it will become. */
+    public static function siteImage(bool $large): string
+    {
+        return $large ? 'img/tiles/chantier_grand.png' : 'img/tiles/chantier_petit.png';
+    }
+
     /**
      * Sprite of a structure type, in fallback order: the sprite stitched
      * from its pieces (img/walls/{type}_{n}.png) → dedicated avatar

@@ -73,7 +73,7 @@ final class StructureSheetView
         <tr>
             <td width="210" class="infos-portrait" valign="top">
                 <div style="position: relative; display: inline-block;">
-                    <img src="' . self::portraitOrInitials($entity) . '" style="max-width: 200px;" />
+                    <img src="' . self::portraitOrInitials($entity, $details) . '" style="max-width: 200px;" />
                     ' . Ui::get_pv_veil($pvPct, $race?->getWoundColor()) . '
                 </div>
             </td>
@@ -192,7 +192,7 @@ final class StructureSheetView
             } else {
                 echo Ui::get_dialog($player, [
                     'name' => $entity->getName(),
-                    'avatar' => self::portraitOrInitials($entity),
+                    'avatar' => self::portraitOrInitials($entity, $details),
                     'dialog' => $details->getDialog(),
                     'text' => '',
                     'player' => $player,
@@ -205,12 +205,16 @@ final class StructureSheetView
     }
 
     /**
-     * Portrait de la structure, ou le même repli « initiales dans un
-     * cadre » que le damier quand elle n'a pas de visuel (SVG, propre
-     * à toute taille).
+     * The structure's portrait — the construction site while it is being
+     * built — or, when it has no picture, the same framed-initials fallback
+     * as the board (SVG, sharp at any size).
      */
-    private static function portraitOrInitials(Structure $entity): string
+    private static function portraitOrInitials(Structure $entity, ?BuildingDetails $details): string
     {
+        if ($details?->getBuildState() === BuildingDetails::STATE_CONSTRUCTION) {
+            return BuildingService::siteImage(true);
+        }
+
         $portrait = (string) $entity->getPortrait();
 
         if ($portrait !== '' && file_exists($portrait)) {

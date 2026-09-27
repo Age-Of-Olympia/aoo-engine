@@ -89,6 +89,12 @@ class ConstructionSiteService
             $db->exe('DELETE FROM construction_sites WHERE player_id = ?', $entityId);
             $db->exe("UPDATE buildings SET build_state = 'built' WHERE player_id = ?", $entityId);
 
+            // The board drew the site: every viewer around must redraw the building.
+            $coordsId = $db->exe('SELECT coords_id FROM players WHERE id = ?', $entityId)->fetch_object()->coords_id ?? null;
+            if ($coordsId !== null) {
+                \Classes\View::refresh_players_svg_at((int) $coordsId);
+            }
+
             // The building is finished: its type's behavior fires.
             BuildingLifecycleRegistry::dispatchRose($entityId);
 

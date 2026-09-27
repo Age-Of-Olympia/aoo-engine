@@ -707,11 +707,12 @@ class View{
                  * au sol. Le dessiner en plus donnerait deux objets là où il
                  * n'y en a qu'un. */
                 $resEntities = (new Db())->exe('
-                    SELECT id, name, player_type, avatar, race
-                    FROM players
-                    WHERE coords_id IN ('. $inSightIdImploded .')
-                    AND player_type NOT IN ("scenery", "plant", "route")
-                    AND slot <> "dropped"
+                    SELECT p.id, p.name, p.player_type, p.avatar, p.race, b.build_state
+                    FROM players p
+                    LEFT JOIN buildings b ON b.player_id = p.id
+                    WHERE p.coords_id IN ('. $inSightIdImploded .')
+                    AND p.player_type NOT IN ("scenery", "plant", "route")
+                    AND p.slot <> "dropped"
                 ');
                 while ($rowE = $resEntities->fetch_object()) {
                     $entitiesInSight[(int) $rowE->id] = $rowE;
@@ -1080,6 +1081,12 @@ class View{
                          * of its kind. Without pieces, the single picture
                          * above stretches over the box. */
                         $img = (new \App\Service\Map\EntitySpriteService())->spriteOf((string) $entity->race) ?? $img;
+                    }
+
+                    // A building still being raised shows the site, whatever it will become.
+                    if(($entity->build_state ?? null) === \App\Entity\BuildingDetails::STATE_CONSTRUCTION){
+
+                        $img = \App\Service\BuildingService::siteImage($footprint !== null && !$footprint->isSingleCell());
                     }
 
                     /* La bordure de race dit d'un coup d'œil À QUI on a
