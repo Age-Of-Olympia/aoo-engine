@@ -80,13 +80,9 @@ class PlanService
     public function chestsStandingOn(string $slug, int $z): int
     {
         return (int) $this->conn->fetchOne(
-            "SELECT COUNT(*)
-               FROM players p
-               JOIN item_instances ii ON ii.entity_id = p.id AND ii.destroyed = 0
-               JOIN items i ON i.id = ii.item_id AND i.lockable = 1
-               JOIN coords c ON c.id = p.coords_id
-              WHERE p.slot = ? AND c.plan = ? AND c.z = ?",
-            [\App\Service\Map\EntityLocationService::SLOT_INSTALLED, $slug, $z]
+            'SELECT COUNT(*) FROM players p ' . ContainerService::STANDING_CHEST_JOIN . '
+              WHERE c.plan = ? AND c.z = ?',
+            [$slug, $z]
         );
     }
 

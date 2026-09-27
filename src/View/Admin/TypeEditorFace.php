@@ -25,13 +25,13 @@ final class TypeEditorFace
     public const ROUTE = 'route';
 
     /** All structures; `structure_nature` is what tells the faces apart. */
-    public const NATURE_EDIFICE = 'edifice';
-    public const NATURE_OBSTACLE = 'obstacle';
-    public const NATURE_DOOR = 'porte';
-    public const NATURE_DECOR = 'decor';
-    public const NATURE_RESOURCE = 'ressource';
-    public const NATURE_PLANT = 'plante';
-    public const NATURE_ROUTE = 'route';
+    public const NATURE_EDIFICE = Race::NATURE_EDIFICE;
+    public const NATURE_OBSTACLE = Race::NATURE_OBSTACLE;
+    public const NATURE_DOOR = Race::NATURE_DOOR;
+    public const NATURE_DECOR = Race::NATURE_DECOR;
+    public const NATURE_RESOURCE = Race::NATURE_RESOURCE;
+    public const NATURE_PLANT = Race::NATURE_PLANT;
+    public const NATURE_ROUTE = Race::NATURE_ROUTE;
 
     /**
      * Every structure_nature a structure type may carry, with its admin

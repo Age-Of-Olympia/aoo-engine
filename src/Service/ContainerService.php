@@ -30,6 +30,14 @@ final class ContainerService
     /** Within reach: on the container's cell or the one next to it. */
     private const REACH = 1;
 
+    /**
+     * Joins keeping only chests standing on a cell: `p` is the entity,
+     * `c` its cell, `i` its catalogue item.
+     */
+    public const STANDING_CHEST_JOIN = "JOIN item_instances ii ON ii.entity_id = p.id AND ii.destroyed = 0
+               JOIN items i ON i.id = ii.item_id AND i.lockable = 1
+               JOIN coords c ON c.id = p.coords_id AND p.slot = '" . EntityLocationService::SLOT_INSTALLED . "'";
+
     private Connection $conn;
 
     public function __construct(?Connection $conn = null)

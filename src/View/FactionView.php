@@ -487,11 +487,9 @@ class FactionView
                 default => 'Construit',
             };
 
-            $planJson = plans()->read((string) $b['plan']);
-
             echo '
         <tr>
-            <td><a href="infos.php?targetId=' . (int) $b['id'] . '">' . htmlspecialchars((string) $b['name'], ENT_QUOTES, 'UTF-8') . '</a></td>
+            <td>' . self::entityLinkHtml((int) $b['id'], (string) $b['name']) . '</td>
             <td>' . htmlspecialchars((string) $b['label'], ENT_QUOTES, 'UTF-8')
                 . ($b['playable'] ? ' <span class="ra ra-castle-flag" title="Pilotable par la faction"></span>' : '') . '</td>
             <td>' . $state
@@ -504,8 +502,7 @@ class FactionView
             }
 
             echo '
-            <td>' . htmlspecialchars((string) ($planJson->name ?? '?'), ENT_QUOTES, 'UTF-8')
-                . ' (' . (int) $b['x'] . ', ' . (int) $b['y'] . ', ' . (int) $b['z'] . ')</td>';
+            <td>' . self::territoryHtml((string) $b['plan'], (int) $b['x'], (int) $b['y'], (int) $b['z']) . '</td>';
 
             if ($mayDrive) {
                 echo '
@@ -626,62 +623,39 @@ class FactionView
     /**
      * The faction's chests — its standing containers, shown to its
      * members like the buildings: what each holds (for eyes the rank
-     * allows), its lock turnable from HERE, and where it stands.
+     * allows), its lock turnable from HERE, and where it stands. With
+     * $members (manageChests ranks), each row can be given or abandoned.
      *
-     * @param array<int, array<string, mixed>> $containers FactionService::containersOf() rows
+     * @param list<array{id: int, name: string, isOpen: bool, x: int, y: int, z: int, plan: string}> $containers FactionService::containersOf()
+     * @param list<array{id: int, name: string}> $members
      */
-    public static function renderContainers(array $containers, bool $member = false, int $actorId = 0): void
+    public static function renderContainers(array $containers, bool $member = false, int $actorId = 0, array $members = []): void
     {
-        if ($containers === []) {
-            return;
+        $headers = ['Nom'];
+        if ($member) {
+            $headers[] = 'Contenu';
+        }
+        array_push($headers, 'État', 'Territoire');
+        if ($members !== []) {
+            $headers[] = 'Gestion';
         }
 
-        $members = [];
-        if ($member && (new \App\Service\FactionService())->mayManage($actorId, \App\Service\FactionChestService::FLAG)) {
-            $code = (string) \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()
-                ->fetchOne('SELECT faction FROM players WHERE id = ?', [$actorId]);
-            $members = (new \App\Service\FactionChestService())->membersOf($code);
-        }
-
-        self::sectionOpen('coffres', 'Coffres');
-
-        echo '
-    <table border="1" class="marbre" align="center">
-    <tr>
-        <th>Nom</th>'
-        . ($member ? '
-        <th>Contenu</th>' : '') . '
-        <th>État</th>
-        <th>Territoire</th>'
-        . ($members !== [] ? '
-        <th>Gestion</th>' : '') . '
-    </tr>
-    ';
-
+        $rows = [];
         foreach ($containers as $chest) {
-            $planJson = plans()->read((string) $chest['plan']);
-
-            echo '
-        <tr>
-            <td><a href="infos.php?targetId=' . (int) $chest['id'] . '">'
-                . htmlspecialchars((string) $chest['name'], ENT_QUOTES, 'UTF-8') . '</a></td>'
-            . ($member ? '
-            <td>' . self::contentsCellHtml((int) $chest['id'], $actorId) . '</td>' : '') . '
-            <td>' . ($chest['isOpen'] ? 'Ouvert' : '<span class="ra ra-key"></span> Fermé')
-                . ($member ? self::lockCellHtml((int) $chest['id'], $actorId) : '') . '</td>
-            <td>' . htmlspecialchars((string) ($planJson->name ?? '?'), ENT_QUOTES, 'UTF-8')
-                . ' (' . (int) $chest['x'] . ', ' . (int) $chest['y'] . ', ' . (int) $chest['z'] . ')</td>'
-            . ($members !== [] ? '
-            <td>' . self::chestStewardCellHtml((int) $chest['id'], $members) . '</td>' : '') . '
-        </tr>
-        ';
+            $cells = [self::entityLinkHtml($chest['id'], $chest['name'])];
+            if ($member) {
+                $cells[] = self::contentsCellHtml($chest['id'], $actorId);
+            }
+            $cells[] = ($chest['isOpen'] ? 'Ouvert' : '<span class="ra ra-key"></span> Fermé')
+                . ($member ? self::lockCellHtml($chest['id'], $actorId) : '');
+            $cells[] = self::territoryHtml($chest['plan'], $chest['x'], $chest['y'], $chest['z']);
+            if ($members !== []) {
+                $cells[] = self::chestStewardCellHtml($chest['id'], $members);
+            }
+            $rows[] = $cells;
         }
 
-        echo '
-    </table>
-    ';
-
-        self::sectionClose();
+        self::tableSection('coffres', 'Coffres', $headers, $rows);
     }
 
     /**
@@ -692,35 +666,16 @@ class FactionView
      */
     public static function renderDoors(array $doors, int $actorId): void
     {
-        if ($doors === []) {
-            return;
-        }
-
-        self::sectionOpen('portes', 'Portes');
-
-        echo '
-    <table border="1" class="marbre" align="center">
-    <tr><th>Nom</th><th>État</th><th>Territoire</th></tr>
-    ';
-
+        $rows = [];
         foreach ($doors as $door) {
-            $planJson = plans()->read($door['plan']);
-            echo '
-        <tr>
-            <td><a href="infos.php?targetId=' . $door['id'] . '">' . htmlspecialchars($door['name'], ENT_QUOTES, 'UTF-8') . '</a></td>
-            <td>' . ($door['isOpen'] ? 'Ouverte' : '<span class="ra ra-key"></span> Fermée')
-                . self::lockCellHtml($door['id'], $actorId) . '</td>
-            <td>' . htmlspecialchars((string) ($planJson->name ?? $door['plan']), ENT_QUOTES, 'UTF-8')
-                . ' (' . $door['x'] . ', ' . $door['y'] . ', ' . $door['z'] . ')</td>
-        </tr>
-        ';
+            $rows[] = [
+                self::entityLinkHtml($door['id'], $door['name']),
+                ($door['isOpen'] ? 'Ouverte' : '<span class="ra ra-key"></span> Fermée') . self::lockCellHtml($door['id'], $actorId),
+                self::territoryHtml($door['plan'], $door['x'], $door['y'], $door['z']),
+            ];
         }
 
-        echo '
-    </table>
-    ';
-
-        self::sectionClose();
+        self::tableSection('portes', 'Portes', ['Nom', 'État', 'Territoire'], $rows);
     }
 
     /**
@@ -749,34 +704,16 @@ class FactionView
      */
     public static function renderClaimableChests(array $chests): void
     {
-        if ($chests === []) {
-            return;
-        }
-
-        self::sectionOpen('coffres-publics', 'Coffres publics');
-
-        echo '
-    <table border="1" class="marbre" align="center">
-    <tr><th>Nom</th><th>Territoire</th><th></th></tr>
-    ';
-
+        $rows = [];
         foreach ($chests as $chest) {
-            $planJson = plans()->read($chest['plan']);
-            echo '
-        <tr>
-            <td>' . htmlspecialchars($chest['name'], ENT_QUOTES, 'UTF-8') . '</td>
-            <td>' . htmlspecialchars((string) ($planJson->name ?? $chest['plan']), ENT_QUOTES, 'UTF-8')
-                . ' (' . $chest['x'] . ', ' . $chest['y'] . ', ' . $chest['z'] . ')</td>
-            <td><button class="faction-chest-claim" data-chest="' . $chest['id'] . '">Reprendre</button></td>
-        </tr>
-        ';
+            $rows[] = [
+                htmlspecialchars($chest['name'], ENT_QUOTES, 'UTF-8'),
+                self::territoryHtml($chest['plan'], $chest['x'], $chest['y'], $chest['z']),
+                '<button class="faction-chest-claim" data-chest="' . $chest['id'] . '">Reprendre</button>',
+            ];
         }
 
-        echo '
-    </table>
-    ';
-
-        self::sectionClose();
+        self::tableSection('coffres-publics', 'Coffres publics', ['Nom', 'Territoire', ''], $rows);
     }
 
     /**
@@ -787,34 +724,57 @@ class FactionView
      */
     public static function renderChestFloors(array $floors): void
     {
-        if ($floors === []) {
+        $rows = [];
+        foreach ($floors as $floor) {
+            $rows[] = [
+                htmlspecialchars($floor['planName'], ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($floor['name'], ENT_QUOTES, 'UTF-8'),
+                '<input type="checkbox" class="faction-chest-floor"'
+                    . ' data-plan="' . htmlspecialchars($floor['plan'], ENT_QUOTES, 'UTF-8') . '"'
+                    . ' data-z="' . $floor['z'] . '"' . ($floor['open'] ? ' checked' : '') . ' />',
+            ];
+        }
+
+        self::tableSection('coffres-niveaux', 'Niveaux des coffres', ['Territoire', 'Niveau', 'Coffres'], $rows);
+    }
+
+    /**
+     * A folding section holding one table; nothing at all when empty.
+     *
+     * @param list<string>       $headers
+     * @param list<list<string>> $rows    cells as HTML
+     */
+    private static function tableSection(string $key, string $title, array $headers, array $rows): void
+    {
+        if ($rows === []) {
             return;
         }
 
-        self::sectionOpen('coffres-niveaux', 'Niveaux des coffres');
+        self::sectionOpen($key, $title);
 
-        echo '
-    <table border="1" class="marbre" align="center">
-    <tr><th>Territoire</th><th>Niveau</th><th>Coffres</th></tr>
-    ';
-
-        foreach ($floors as $floor) {
-            echo '
-        <tr>
-            <td>' . htmlspecialchars($floor['planName'], ENT_QUOTES, 'UTF-8') . '</td>
-            <td>' . htmlspecialchars($floor['name'], ENT_QUOTES, 'UTF-8') . '</td>
-            <td><input type="checkbox" class="faction-chest-floor"'
-                . ' data-plan="' . htmlspecialchars($floor['plan'], ENT_QUOTES, 'UTF-8') . '"'
-                . ' data-z="' . $floor['z'] . '"' . ($floor['open'] ? ' checked' : '') . ' /></td>
-        </tr>
-        ';
+        echo '<table border="1" class="marbre" align="center"><tr>';
+        foreach ($headers as $header) {
+            echo '<th>' . $header . '</th>';
         }
-
-        echo '
-    </table>
-    ';
+        echo '</tr>';
+        foreach ($rows as $cells) {
+            echo '<tr><td>' . implode('</td><td>', $cells) . '</td></tr>';
+        }
+        echo '</table>';
 
         self::sectionClose();
+    }
+
+    private static function entityLinkHtml(int $id, string $name): string
+    {
+        return '<a href="infos.php?targetId=' . $id . '">' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</a>';
+    }
+
+    /** Plan name and (x, y, z) of an asset. */
+    private static function territoryHtml(string $plan, int $x, int $y, int $z): string
+    {
+        return htmlspecialchars((string) (plans()->read($plan)->name ?? $plan), ENT_QUOTES, 'UTF-8')
+            . " ({$x}, {$y}, {$z})";
     }
 
     /**

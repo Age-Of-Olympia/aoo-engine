@@ -53,6 +53,15 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     public const FAMILY_PLANT = 'plant';
     public const FAMILY_ROUTE = 'route';
 
+    /** races.structure_nature values. */
+    public const NATURE_EDIFICE = 'edifice';
+    public const NATURE_OBSTACLE = 'obstacle';
+    public const NATURE_DOOR = 'porte';
+    public const NATURE_DECOR = 'decor';
+    public const NATURE_RESOURCE = 'ressource';
+    public const NATURE_PLANT = 'plante';
+    public const NATURE_ROUTE = 'route';
+
     /** La famille de CE type — le discriminant, dit par la classe. */
     abstract public function familyKey(): string;
 
@@ -78,10 +87,10 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     {
         return match (true) {
             $kind !== 'structure' => new CharacterRace(),
-            $structureNature === 'decor' => new SceneryType(),
-            $structureNature === 'ressource' => new ResourceType(),
-            $structureNature === 'plante' => new PlantType(),
-            $structureNature === 'route' => new RouteType(),
+            $structureNature === self::NATURE_DECOR => new SceneryType(),
+            $structureNature === self::NATURE_RESOURCE => new ResourceType(),
+            $structureNature === self::NATURE_PLANT => new PlantType(),
+            $structureNature === self::NATURE_ROUTE => new RouteType(),
             default => new BuildingType(),
         };
     }
@@ -130,11 +139,9 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     private string $kind = 'character';
 
     /**
-     * Nature d'un type de STRUCTURE : 'edifice' (vrai bâtiment — a une
-     * porte, toujours ouvrable/fermable) ou 'obstacle' (objet construit
-     * type mur — pas de porte ; is_open y signifiera un jour la
-     * passabilité, mutualisé avec les coffres). Ignoré pour les races
-     * de personnages.
+     * Nature of a STRUCTURE type (NATURE_* constants): édifice (a real
+     * building), obstacle (a wall), porte (a door), or one of the
+     * decor/resource/plant/route families. Ignored for character races.
      */
     #[ORM\Column(type: "string", length: 20, name: "structure_nature", options: ["default" => "edifice"])]
     private string $structureNature = 'edifice';
@@ -404,13 +411,13 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     /** Vrai bâtiment (porte Ouvert/Fermé) — par opposition aux murs construits. */
     public function isEdifice(): bool
     {
-        return $this->isStructureKind() && $this->structureNature === 'edifice';
+        return $this->isStructureKind() && $this->structureNature === self::NATURE_EDIFICE;
     }
 
     /** A door: shut, it bars the way like a wall; open, one walks through. */
     public function isDoor(): bool
     {
-        return $this->isStructureKind() && $this->structureNature === 'porte';
+        return $this->isStructureKind() && $this->structureNature === self::NATURE_DOOR;
     }
 
     public function getBleeds(): string

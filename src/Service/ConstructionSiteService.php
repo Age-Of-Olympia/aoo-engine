@@ -95,9 +95,6 @@ class ConstructionSiteService
                 \Classes\View::refresh_players_svg_at((int) $coordsId);
             }
 
-            // The building is finished: its type's behavior fires.
-            BuildingLifecycleRegistry::dispatchRose($entityId);
-
             return ['done' => $progress['done'], 'total' => $progress['total'], 'completed' => true];
         }
 

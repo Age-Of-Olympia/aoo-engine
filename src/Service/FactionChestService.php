@@ -4,7 +4,6 @@ namespace App\Service;
 
 use App\Entity\BuildingDetails;
 use App\Factory\EntityManagerFactory;
-use App\Service\Map\EntityLocationService;
 use Doctrine\DBAL\Connection;
 use RuntimeException;
 
@@ -155,16 +154,11 @@ class FactionChestService
         }
 
         $rows = $this->conn->fetchAllAssociative(
-            "SELECT p.id, p.name, c.plan, c.x, c.y, c.z
-               FROM players p
-               JOIN item_instances ii ON ii.entity_id = p.id AND ii.destroyed = 0
-               JOIN items i ON i.id = ii.item_id AND i.lockable = 1
-               JOIN coords c ON c.id = p.coords_id
-              WHERE p.slot = ? AND p.owner_id IS NULL AND p.faction = ''
-                AND c.plan IN (?)
+            'SELECT p.id, p.name, c.plan, c.x, c.y, c.z FROM players p ' . ContainerService::STANDING_CHEST_JOIN . "
+              WHERE p.owner_id IS NULL AND p.faction = '' AND c.plan IN (?)
               ORDER BY c.plan, p.name",
-            [EntityLocationService::SLOT_INSTALLED, $plans],
-            [\Doctrine\DBAL\ParameterType::STRING, \Doctrine\DBAL\ArrayParameterType::STRING]
+            [$plans],
+            [\Doctrine\DBAL\ArrayParameterType::STRING]
         );
 
         return array_map(static fn (array $row): array => [
@@ -294,13 +288,8 @@ class FactionChestService
     private function chestOrFail(int $chestId): array
     {
         $row = $this->conn->fetchAssociative(
-            'SELECT p.name, c.plan
-               FROM players p
-               JOIN item_instances ii ON ii.entity_id = p.id AND ii.destroyed = 0
-               JOIN items i ON i.id = ii.item_id AND i.lockable = 1
-               JOIN coords c ON c.id = p.coords_id
-              WHERE p.id = ? AND p.slot = ?',
-            [$chestId, EntityLocationService::SLOT_INSTALLED]
+            'SELECT p.name, c.plan FROM players p ' . ContainerService::STANDING_CHEST_JOIN . ' WHERE p.id = ?',
+            [$chestId]
         );
         if ($row === false) {
             throw new RuntimeException('Ce n\'est pas un coffre posé.');

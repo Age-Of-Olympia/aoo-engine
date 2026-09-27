@@ -106,35 +106,36 @@ if(isset($facJson->secret)){
  * Le geste « prendre les commandes » n'appartient qu'aux membres — et
  * l'entité pilotée en ce moment porte le chemin du retour. */
 if ($player->data->faction === ($_GET['faction'] ?? '') || $player->have_option('isAdmin')) {
+    $code = (string) $_GET['faction'];
+    $member = $player->data->faction === $code;
+    $factionChests = new \App\Service\FactionChestService();
+    $managesChests = $member && (new FactionService())->mayManage((int) $player->id, \App\Service\FactionChestService::FLAG);
 
-    FactionView::renderBuildings(
-        (new FactionService())->buildingsOf((string) $_GET['faction']),
-        $player->data->faction === ($_GET['faction'] ?? ''),
-        (int) $player->id
-    );
+    FactionView::renderBuildings((new FactionService())->buildingsOf($code), $member, (int) $player->id);
 
     /* Its chests, listed like its walls: contents for the eyes the
      * rank allows, and the lock turnable from here. */
     FactionView::renderContainers(
-        (new FactionService())->containersOf((string) $_GET['faction']),
-        $player->data->faction === ($_GET['faction'] ?? ''),
-        (int) $player->id
+        (new FactionService())->containersOf($code),
+        $member,
+        (int) $player->id,
+        $managesChests ? $factionChests->membersOf($code) : []
     );
 
-    if ($player->data->faction === ($_GET['faction'] ?? '')) {
-        FactionView::renderDoors((new FactionService())->doorsOf((string) $_GET['faction']), (int) $player->id);
+    if ($member) {
+        FactionView::renderDoors((new FactionService())->doorsOf($code), (int) $player->id);
+
+        if ($managesChests) {
+            FactionView::renderClaimableChests($factionChests->claimableOf($code));
+            FactionView::renderChestFloors($factionChests->floorsOf($code));
+        }
 
         /* The journal is the house's eyes — for the ranks it trusts
          * with them (showLogs). */
-        if ((new FactionService())->mayManage((int) $player->id, \App\Service\FactionChestService::FLAG)) {
-            $factionChests = new \App\Service\FactionChestService();
-            FactionView::renderClaimableChests($factionChests->claimableOf((string) $_GET['faction']));
-            FactionView::renderChestFloors($factionChests->floorsOf((string) $_GET['faction']));
-        }
         if ((new FactionService())->mayManage((int) $player->id, 'showLogs')) {
-            FactionView::renderJournal((new \App\Service\FactionLogService())->listOf((string) $_GET['faction']));
+            FactionView::renderJournal((new \App\Service\FactionLogService())->listOf($code));
         }
-        FactionView::renderAssetsScript((string) $_GET['faction']);
+        FactionView::renderAssetsScript($code);
     }
 }
 

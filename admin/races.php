@@ -205,8 +205,8 @@ function race_render_list(array $races, TypeEditorFace $face): string
 
         if ($face->isStructure()) {
             $rows .= '<td>' . ($face->key !== TypeEditorFace::BUILDING ? '' : match ($race->getStructureNature()) {
-                    'obstacle' => '<span class="badge badge-secondary">Obstacle</span>',
-                    'porte' => '<span class="badge badge-warning">Porte</span>',
+                    Race::NATURE_OBSTACLE => '<span class="badge badge-secondary">Obstacle</span>',
+                    Race::NATURE_DOOR => '<span class="badge badge-warning">Porte</span>',
                     default => '<span class="badge badge-info">Édifice</span>',
                 }) . ' '
                 . ($race->blocksPassage() ? '' : '<span class="badge badge-light" title="On marche sur sa case">passable</span> ')

@@ -2,6 +2,7 @@
 
 namespace App\Service\Wiki;
 
+use App\Entity\Race;
 use App\Interface\WikiSheetRendererInterface;
 use App\Service\ImportExport\RaceExporter;
 
@@ -70,9 +71,9 @@ final class RaceWikiRenderer implements WikiSheetRendererInterface
         foreach ($types as $type) {
             $caracs = (array) ($type['caracs'] ?? []);
             $out .= '| ' . DokuWiki::cell((string) $type['label'])
-                . ' | ' . match ($type['structureNature'] ?? 'edifice') {
-                    'obstacle' => 'Obstacle',
-                    'porte' => 'Porte',
+                . ' | ' . match ($type['structureNature'] ?? Race::NATURE_EDIFICE) {
+                    Race::NATURE_OBSTACLE => 'Obstacle',
+                    Race::NATURE_DOOR => 'Porte',
                     default => 'Édifice',
                 }
                 . ' | ' . (int) ($caracs['pv'] ?? 0)

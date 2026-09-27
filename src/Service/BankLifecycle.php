@@ -4,7 +4,6 @@ namespace App\Service;
 
 use App\Factory\EntityManagerFactory;
 use App\Interface\BuildingLifecycleInterface;
-use App\Service\Map\EntityLocationService;
 
 /**
  * The bank and the plan's chests (chests & bank work, part 2).
@@ -17,12 +16,6 @@ use App\Service\Map\EntityLocationService;
  */
 class BankLifecycle implements BuildingLifecycleInterface
 {
-    public function rose(int $buildingId, string $plan, string $faction): void
-    {
-        // Nothing moves on its own: the faction takes back the public
-        // chests it wants from its panel (FactionChestService::claim).
-    }
-
     public function fell(int $buildingId, string $plan, string $faction): void
     {
         // Another finished bank still stands on the plan: nothing changes.
@@ -31,15 +24,10 @@ class BankLifecycle implements BuildingLifecycleInterface
         }
 
         $released = $this->connection()->executeStatement(
-            "UPDATE players p
-               JOIN item_instances ii ON ii.entity_id = p.id
-               JOIN items i ON i.id = ii.item_id
-               JOIN coords c ON c.id = p.coords_id
+            'UPDATE players p ' . ContainerService::STANDING_CHEST_JOIN . "
                 SET p.owner_id = NULL, p.faction = '', p.is_open = 1
-              WHERE i.lockable = 1
-                AND p.slot = ?
-                AND c.plan = ?",
-            [EntityLocationService::SLOT_INSTALLED, $plan]
+              WHERE c.plan = ?",
+            [$plan]
         );
 
         if ($released > 0 && $faction !== '') {

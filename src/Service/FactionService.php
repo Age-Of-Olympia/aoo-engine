@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Factory\EntityManagerFactory;
 use App\Entity\Faction;
 use App\Entity\FactionRole;
+use App\Entity\Race;
 use RuntimeException;
 
 /**
@@ -256,7 +257,7 @@ class FactionService
                LEFT JOIN players_bonus pb ON pb.player_id = p.id AND pb.name = 'pv'
                LEFT JOIN entity_decay ed ON ed.player_id = p.id
               WHERE p.player_type = 'building'
-                AND r.structure_nature = 'edifice'
+                AND r.structure_nature = '" . Race::NATURE_EDIFICE . "'
                 AND CONVERT(p.faction USING utf8mb4) = CONVERT(? USING utf8mb4)
               ORDER BY c.plan, p.name",
             [strtolower(trim($code))]
@@ -298,13 +299,24 @@ class FactionService
                JOIN coords c ON c.id = p.coords_id
                JOIN races r ON CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4)
               WHERE p.player_type = 'building'
-                AND r.structure_nature = 'porte'
+                AND r.structure_nature = '" . Race::NATURE_DOOR . "'
                 AND CONVERT(p.faction USING utf8mb4) = CONVERT(? USING utf8mb4)
               ORDER BY c.plan, p.name",
             [strtolower(trim($code))]
         );
 
-        return array_map(static fn (array $row): array => [
+        return array_map(self::lockableAsset(...), $rows);
+    }
+
+    /**
+     * A door or chest row of the faction panel.
+     *
+     * @param array<string, mixed> $row
+     * @return array{id: int, name: string, isOpen: bool, x: int, y: int, z: int, plan: string}
+     */
+    private static function lockableAsset(array $row): array
+    {
+        return [
             'id'     => (int) $row['id'],
             'name'   => (string) $row['name'],
             'isOpen' => (bool) $row['is_open'],
@@ -312,7 +324,7 @@ class FactionService
             'y'      => (int) $row['y'],
             'z'      => (int) $row['z'],
             'plan'   => (string) $row['plan'],
-        ], $rows);
+        ];
     }
 
     /**
@@ -320,31 +332,18 @@ class FactionService
      * carrying the faction. Same door as buildingsOf: what is shelved,
      * held or vanished stands nowhere and is not listed.
      *
-     * @return array<int, array<string, mixed>>
+     * @return list<array{id: int, name: string, isOpen: bool, x: int, y: int, z: int, plan: string}>
      */
     public function containersOf(string $code): array
     {
         $rows = $this->entityManager->getConnection()->fetchAllAssociative(
-            "SELECT p.id, p.name, p.is_open, c.x, c.y, c.z, c.plan
-               FROM players p
-               JOIN item_instances i ON i.entity_id = p.id AND i.destroyed = 0
-               JOIN items it ON it.id = i.item_id AND it.lockable = 1
-               JOIN coords c ON c.id = p.coords_id
-              WHERE p.player_type = 'item'
-                AND CONVERT(p.faction USING utf8mb4) = CONVERT(? USING utf8mb4)
-              ORDER BY c.plan, p.name",
+            'SELECT p.id, p.name, p.is_open, c.x, c.y, c.z, c.plan FROM players p ' . ContainerService::STANDING_CHEST_JOIN . '
+              WHERE CONVERT(p.faction USING utf8mb4) = CONVERT(? USING utf8mb4)
+              ORDER BY c.plan, p.name',
             [strtolower(trim($code))]
         );
 
-        return array_map(static fn (array $row): array => [
-            'id'     => (int) $row['id'],
-            'name'   => (string) $row['name'],
-            'isOpen' => (bool) $row['is_open'],
-            'x'      => (int) $row['x'],
-            'y'      => (int) $row['y'],
-            'z'      => (int) $row['z'],
-            'plan'   => (string) $row['plan'],
-        ], $rows);
+        return array_map(self::lockableAsset(...), $rows);
     }
 
     /**
