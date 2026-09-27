@@ -243,6 +243,31 @@ class FactionService
      */
     public function buildingsOf(string $code): array
     {
+        return $this->buildingsWhere('CONVERT(p.faction USING utf8mb4) = CONVERT(? USING utf8mb4)', [strtolower(trim($code))]);
+    }
+
+    /**
+     * The buildings a player owns in person — same rows as buildingsOf().
+     *
+     * @return array<int, array{id: int, name: string, type: string, label: string,
+     *                          playable: bool, build_state: string, site_done: ?int,
+     *                          site_total: ?int, x: int, y: int, plan: string,
+     *                          life_pct: int, decays: bool}>
+     */
+    public function buildingsOwnedBy(int $playerId): array
+    {
+        return $this->buildingsWhere('p.owner_id = ?', [$playerId]);
+    }
+
+    /**
+     * @param list<mixed> $params
+     * @return array<int, array{id: int, name: string, type: string, label: string,
+     *                          playable: bool, build_state: string, site_done: ?int,
+     *                          site_total: ?int, x: int, y: int, plan: string,
+     *                          life_pct: int, decays: bool}>
+     */
+    private function buildingsWhere(string $whose, array $params): array
+    {
         $rows = $this->entityManager->getConnection()->fetchAllAssociative(
             "SELECT p.id, p.name, p.race, r.label, r.playable,
                     b.build_state, cs.work_done AS site_done, cs.work_total AS site_total,
@@ -258,9 +283,9 @@ class FactionService
                LEFT JOIN entity_decay ed ON ed.player_id = p.id
               WHERE p.player_type = 'building'
                 AND r.structure_nature = '" . Race::NATURE_EDIFICE . "'
-                AND CONVERT(p.faction USING utf8mb4) = CONVERT(? USING utf8mb4)
+                AND {$whose}
               ORDER BY c.plan, p.name",
-            [strtolower(trim($code))]
+            $params
         );
 
         return array_map(static fn (array $row): array => [
@@ -293,6 +318,25 @@ class FactionService
      */
     public function doorsOf(string $code): array
     {
+        return $this->doorsWhere('CONVERT(p.faction USING utf8mb4) = CONVERT(? USING utf8mb4)', [strtolower(trim($code))]);
+    }
+
+    /**
+     * The doors a player owns in person.
+     *
+     * @return list<array{id: int, name: string, isOpen: bool, x: int, y: int, z: int, plan: string}>
+     */
+    public function doorsOwnedBy(int $playerId): array
+    {
+        return $this->doorsWhere('p.owner_id = ?', [$playerId]);
+    }
+
+    /**
+     * @param list<mixed> $params
+     * @return list<array{id: int, name: string, isOpen: bool, x: int, y: int, z: int, plan: string}>
+     */
+    private function doorsWhere(string $whose, array $params): array
+    {
         $rows = $this->entityManager->getConnection()->fetchAllAssociative(
             "SELECT p.id, p.name, p.is_open, c.x, c.y, c.z, c.plan
                FROM players p
@@ -300,31 +344,12 @@ class FactionService
                JOIN races r ON CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4)
               WHERE p.player_type = 'building'
                 AND r.structure_nature = '" . Race::NATURE_DOOR . "'
-                AND CONVERT(p.faction USING utf8mb4) = CONVERT(? USING utf8mb4)
+                AND {$whose}
               ORDER BY c.plan, p.name",
-            [strtolower(trim($code))]
+            $params
         );
 
-        return array_map(self::lockableAsset(...), $rows);
-    }
-
-    /**
-     * A door or chest row of the faction panel.
-     *
-     * @param array<string, mixed> $row
-     * @return array{id: int, name: string, isOpen: bool, x: int, y: int, z: int, plan: string}
-     */
-    private static function lockableAsset(array $row): array
-    {
-        return [
-            'id'     => (int) $row['id'],
-            'name'   => (string) $row['name'],
-            'isOpen' => (bool) $row['is_open'],
-            'x'      => (int) $row['x'],
-            'y'      => (int) $row['y'],
-            'z'      => (int) $row['z'],
-            'plan'   => (string) $row['plan'],
-        ];
+        return array_map(ContainerService::assetRow(...), $rows);
     }
 
     /**
@@ -343,7 +368,7 @@ class FactionService
             [strtolower(trim($code))]
         );
 
-        return array_map(self::lockableAsset(...), $rows);
+        return array_map(ContainerService::assetRow(...), $rows);
     }
 
     /**

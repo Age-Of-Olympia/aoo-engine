@@ -6,6 +6,7 @@ use App\Action\Condition\ItemPickCondition;
 use App\Factory\PlayerFactory;
 use App\Service\InventoryService;
 use App\Tutorial\TutorialHelper;
+use App\View\AssetTableView;
 use Classes\Item;
 use Classes\Ui;
 
@@ -104,10 +105,61 @@ window.aLeft = ' . $player->getRemaining('a') . ';
 
         echo $data;
 
+        if (!$itemsFromBank) {
+            echo self::ownAssetsHtml((int) $player->id);
+        }
+
 
 ?>
         <script src="js/progressive_loader.js?v=20260716"></script>
         <script src="js/inventory.js?v=20260927"></script>
 <?php
+    }
+
+    /**
+     * What the player owns in person, standing on the board: chests,
+     * doors, buildings — one section each, only when there is one.
+     */
+    private static function ownAssetsHtml(int $playerId): string
+    {
+        $chests = (new \App\Service\ContainerService())->chestsOwnedBy($playerId);
+        $doors = (new \App\Service\FactionService())->doorsOwnedBy($playerId);
+        $buildings = (new \App\Service\FactionService())->buildingsOwnedBy($playerId);
+        if ($chests === [] && $doors === [] && $buildings === []) {
+            return '';
+        }
+
+        $html = '<div class="inventory-own-assets" data-reload="load_inventory.php|Inventaire">';
+
+        if ($chests !== []) {
+            $chestService = new \App\Service\FactionChestService();
+            $rows = [];
+            foreach ($chests as $chest) {
+                $rows[] = [
+                    AssetTableView::entityLinkHtml($chest['id'], $chest['name']),
+                    AssetTableView::contentsCellHtml($chest['id'], $playerId),
+                    ($chest['isOpen'] ? 'Ouvert' : '<span class="ra ra-key"></span> Fermé')
+                        . AssetTableView::lockCellHtml($chest['id'], $playerId),
+                    AssetTableView::territoryHtml($chest['plan'], $chest['x'], $chest['y'], $chest['z']),
+                    $chestService->mayEntrust($chest['id'], $playerId) ? AssetTableView::entrustCellHtml($chest['id']) : '',
+                ];
+            }
+            $html .= '<h3>Mes coffres</h3>' . AssetTableView::table(['Nom', 'Contenu', 'État', 'Territoire', ''], $rows);
+        }
+
+        if ($doors !== []) {
+            $html .= '<h3>Mes portes</h3>'
+                . AssetTableView::table(AssetTableView::DOOR_HEADERS, AssetTableView::doorRows($doors, $playerId));
+        }
+
+        if ($buildings !== []) {
+            // No upkeep column: decay is announced to factions only.
+            $html .= '<h3>Mes bâtiments</h3>'
+                . AssetTableView::buildingsTable($buildings, true, $playerId, withUpkeep: false);
+        }
+
+        return $html . '</div>'
+            . AssetTableView::script()
+            . ($buildings !== [] ? AssetTableView::driveScript() : '');
     }
 }

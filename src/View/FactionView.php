@@ -412,47 +412,10 @@ class FactionView
     }
 
     /**
-     * How a construction is holding up.
-     *
-     * The faction page is the ONLY place decay is announced: a construction
-     * attached to no faction warns nobody, deliberately — a faction is a
-     * group of people, and several pairs of eyes notice a wall going soft.
-     * Build alone and you do not know what happens while you are away.
-     *
-     * Flagged below 75 %, which leaves 25 points before
-     * BuildingService::CLOSED_BELOW_PV_PCT shuts the counter: the faction
-     * hears about it while the building still works, and while repairing
-     * still costs less than rebuilding.
-     *
-     * @param array<string, mixed> $building a FactionService::buildingsOf() row
-     */
-    private static function upkeepCellHtml(array $building): string
-    {
-        if (empty($building['decays'])) {
-            return '<span style="opacity: 0.5;">—</span>';
-        }
-
-        $pct = (int) $building['life_pct'];
-
-        if ($pct >= \App\Service\Decay\StructureDecayService::ALERT_BELOW_PCT) {
-            return $pct . '&nbsp;%';
-        }
-
-        $colour = $pct < \App\Service\BuildingService::CLOSED_BELOW_PV_PCT ? 'red' : '#b45f06';
-
-        return '<span style="color: ' . $colour . '; font-weight: bold;" title="'
-            . ($pct < \App\Service\BuildingService::CLOSED_BELOW_PV_PCT
-                ? 'Trop abîmé pour servir : à réparer.'
-                : 'Se dégrade faute d\'entretien — s\'en servir suffit à l\'entretenir.')
-            . '">' . $pct . '&nbsp;% <span class="ra ra-bleeding-eye"></span></span>';
-    }
-
-    /**
      * The faction's buildings — its assets, shown to its members only (the
      * caller applies that rule, the same one that hides the territory).
-     * A member sees the "take command" gesture on the playable, finished
-     * ones; the server re-checks everything on the way in. Whoever is
-     * currently AT a building's commands sees the way back instead.
+     * Members get the lock, contents and command gestures; the upkeep
+     * column is the faction's alone (AssetTableView::upkeepCellHtml).
      *
      * @param array<int, array<string, mixed>> $buildings FactionService::buildingsOf() rows
      */
@@ -463,161 +426,12 @@ class FactionView
         }
 
         self::sectionOpen('batiments', 'Bâtiments');
-
-        echo '
-    <table border="1" class="marbre" align="center">
-    <tr>
-        <th>Nom</th>
-        <th>Type</th>
-        <th>État</th>
-        <th>Entretien</th>'
-        . ($mayDrive ? '
-        <th>Contenu</th>' : '') . '
-        <th>Territoire</th>'
-        . ($mayDrive ? '
-        <th>Commandes</th>' : '') . '
-    </tr>
-    ';
-
-        foreach ($buildings as $b) {
-            $state = match ($b['build_state']) {
-                'construction' => 'En chantier'
-                    . ($b['site_total'] !== null ? ' (' . $b['site_done'] . '/' . $b['site_total'] . ')' : ''),
-                'ruin' => 'Ruine',
-                default => 'Construit',
-            };
-
-            echo '
-        <tr>
-            <td>' . self::entityLinkHtml((int) $b['id'], (string) $b['name']) . '</td>
-            <td>' . htmlspecialchars((string) $b['label'], ENT_QUOTES, 'UTF-8')
-                . ($b['playable'] ? ' <span class="ra ra-castle-flag" title="Pilotable par la faction"></span>' : '') . '</td>
-            <td>' . $state
-                . ($mayDrive ? self::lockCellHtml((int) $b['id'], $drivenId) : '') . '</td>
-            <td>' . self::upkeepCellHtml($b) . '</td>';
-
-            if ($mayDrive) {
-                echo '
-            <td>' . self::contentsCellHtml((int) $b['id'], $drivenId) . '</td>';
-            }
-
-            echo '
-            <td>' . self::territoryHtml((string) $b['plan'], (int) $b['x'], (int) $b['y'], (int) $b['z']) . '</td>';
-
-            if ($mayDrive) {
-                echo '
-            <td>';
-                if ((int) $b['id'] === $drivenId) {
-                    echo '<button class="faction-drive-release">Reprendre son personnage</button>';
-                } elseif ($b['playable'] && $b['build_state'] !== 'ruin' && $b['site_total'] === null) {
-                    echo '<button class="faction-drive-take" data-building="' . (int) $b['id'] . '">Prendre les commandes</button>';
-                }
-                echo '</td>';
-            }
-
-            echo '
-        </tr>
-        ';
-        }
-
-        echo '
-    </table>
-    ';
-
+        echo AssetTableView::buildingsTable($buildings, $mayDrive, $drivenId, withUpkeep: true);
         self::sectionClose();
 
         if ($mayDrive) {
-            self::renderDriveScript();
+            echo AssetTableView::driveScript();
         }
-    }
-
-    /**
-     * The lock, from the panel: Fermer/Ouvrir beside the state, for
-     * whoever the rank lets turn it — a remote gesture on purpose, the
-     * server re-checks. Nothing for what cannot be shut.
-     */
-    private static function lockCellHtml(int $entityId, int $actorId): string
-    {
-        if (!(new \App\Service\LockService())->mayTurnLockNow($entityId, $actorId)) {
-            return '';
-        }
-
-        $isOpen = (bool) \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()
-            ->fetchOne('SELECT is_open FROM players WHERE id = ?', [$entityId]);
-
-        return ' <button class="faction-lock-toggle" data-target="' . $entityId . '"'
-            . ' data-open="' . ($isOpen ? 0 : 1) . '">'
-            . '<span class="ra ra-key"></span> ' . ($isOpen ? 'Fermer' : 'Ouvrir') . '</button>';
-    }
-
-    /**
-     * What the asset HOLDS, for eyes the rank allows: a short list, or
-     * why it stays unseen. Empty for what cannot be shut (no lid, no
-     * inside).
-     */
-    private static function contentsCellHtml(int $entityId, int $actorId): string
-    {
-        $lock = new \App\Service\LockService();
-        if (!$lock->isLockable($entityId)) {
-            return '';
-        }
-
-        $container = new \App\Service\ContainerService();
-        if (!$container->mayUse($entityId, $actorId)) {
-            return '—';
-        }
-        if ($container->closureReasonOf($entityId) !== null) {
-            return '<small>(fermé)</small>';
-        }
-
-        $contents = $container->contentsOf($entityId);
-        $names = array_merge(
-            array_map([\App\Service\ContainerService::class, 'stackLabel'], $contents['stacks']),
-            array_map([\App\Service\ContainerService::class, 'exemplarEntryLabel'], $contents['exemplars'])
-        );
-
-        if ($names === []) {
-            return '<small>Rien</small>';
-        }
-
-        return '<small>' . htmlspecialchars(
-            implode(', ', array_slice($names, 0, 5)) . (count($names) > 5 ? '…' : ''),
-            ENT_QUOTES,
-            'UTF-8'
-        ) . '</small>';
-    }
-
-    /**
-     * Taking or leaving the commands posts to api/faction/drive.php and
-     * lands on the map as whoever the session now drives. Fragment
-     * script: delegated, namespaced, off() before on() — it re-executes
-     * at every panel load.
-     */
-    private static function renderDriveScript(): void
-    {
-        ?>
-        <script>
-        (function(){
-            function factionDriveCall(payload){
-                aooGestureFetch('api/faction/drive.php', payload, function(data){
-                    aooResultMessage(data).then(function(){
-                        document.location = 'index.php';
-                    });
-                });
-            }
-
-            $(document).off('click.factionDrive', '.faction-drive-take')
-                .on('click.factionDrive', '.faction-drive-take', function(){
-                    factionDriveCall({ action: 'take', buildingId: $(this).data('building') });
-                });
-
-            $(document).off('click.factionDrive', '.faction-drive-release')
-                .on('click.factionDrive', '.faction-drive-release', function(){
-                    factionDriveCall({ action: 'release' });
-                });
-        })();
-        </script>
-        <?php
     }
 
     /**
@@ -642,13 +456,13 @@ class FactionView
 
         $rows = [];
         foreach ($containers as $chest) {
-            $cells = [self::entityLinkHtml($chest['id'], $chest['name'])];
+            $cells = [AssetTableView::entityLinkHtml($chest['id'], $chest['name'])];
             if ($member) {
-                $cells[] = self::contentsCellHtml($chest['id'], $actorId);
+                $cells[] = AssetTableView::contentsCellHtml($chest['id'], $actorId);
             }
             $cells[] = ($chest['isOpen'] ? 'Ouvert' : '<span class="ra ra-key"></span> Fermé')
-                . ($member ? self::lockCellHtml($chest['id'], $actorId) : '');
-            $cells[] = self::territoryHtml($chest['plan'], $chest['x'], $chest['y'], $chest['z']);
+                . ($member ? AssetTableView::lockCellHtml($chest['id'], $actorId) : '');
+            $cells[] = AssetTableView::territoryHtml($chest['plan'], $chest['x'], $chest['y'], $chest['z']);
             if ($members !== []) {
                 $cells[] = self::chestStewardCellHtml($chest['id'], $members);
             }
@@ -666,16 +480,7 @@ class FactionView
      */
     public static function renderDoors(array $doors, int $actorId): void
     {
-        $rows = [];
-        foreach ($doors as $door) {
-            $rows[] = [
-                self::entityLinkHtml($door['id'], $door['name']),
-                ($door['isOpen'] ? 'Ouverte' : '<span class="ra ra-key"></span> Fermée') . self::lockCellHtml($door['id'], $actorId),
-                self::territoryHtml($door['plan'], $door['x'], $door['y'], $door['z']),
-            ];
-        }
-
-        self::tableSection('portes', 'Portes', ['Nom', 'État', 'Territoire'], $rows);
+        self::tableSection('portes', 'Portes', AssetTableView::DOOR_HEADERS, AssetTableView::doorRows($doors, $actorId));
     }
 
     /**
@@ -708,7 +513,7 @@ class FactionView
         foreach ($chests as $chest) {
             $rows[] = [
                 htmlspecialchars($chest['name'], ENT_QUOTES, 'UTF-8'),
-                self::territoryHtml($chest['plan'], $chest['x'], $chest['y'], $chest['z']),
+                AssetTableView::territoryHtml($chest['plan'], $chest['x'], $chest['y'], $chest['z']),
                 '<button class="faction-chest-claim" data-chest="' . $chest['id'] . '">Reprendre</button>',
             ];
         }
@@ -751,30 +556,8 @@ class FactionView
         }
 
         self::sectionOpen($key, $title);
-
-        echo '<table border="1" class="marbre" align="center"><tr>';
-        foreach ($headers as $header) {
-            echo '<th>' . $header . '</th>';
-        }
-        echo '</tr>';
-        foreach ($rows as $cells) {
-            echo '<tr><td>' . implode('</td><td>', $cells) . '</td></tr>';
-        }
-        echo '</table>';
-
+        echo AssetTableView::table($headers, $rows);
         self::sectionClose();
-    }
-
-    private static function entityLinkHtml(int $id, string $name): string
-    {
-        return '<a href="infos.php?targetId=' . $id . '">' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</a>';
-    }
-
-    /** Plan name and (x, y, z) of an asset. */
-    private static function territoryHtml(string $plan, int $x, int $y, int $z): string
-    {
-        return htmlspecialchars((string) (plans()->read($plan)->name ?? $plan), ENT_QUOTES, 'UTF-8')
-            . " ({$x}, {$y}, {$z})";
     }
 
     /**
@@ -814,12 +597,13 @@ class FactionView
     }
 
     /**
-     * The gestures of the assets tables (locks, chest management) post
-     * to their endpoints and reopen the panel. Fragment script: delegated,
+     * The chest management gestures post to their endpoint and reopen
+     * the panel; locks are AssetTableView's. Fragment script: delegated,
      * namespaced, off() before on() — it re-executes at every load.
      */
     public static function renderAssetsScript(string $factionCode): void
     {
+        echo AssetTableView::script();
         ?>
         <script>
         (function(){
@@ -857,14 +641,6 @@ class FactionView
             $(document).off('change.factionAssets', '.faction-chest-floor')
                 .on('change.factionAssets', '.faction-chest-floor', function(){
                     chestCall({ action: 'floor', plan: $(this).data('plan'), z: $(this).data('z'), open: this.checked ? 1 : 0 });
-                });
-
-            $(document).off('click.factionAssets', '.faction-lock-toggle')
-                .on('click.factionAssets', '.faction-lock-toggle', function(){
-                    aooGestureFetch('api/lock/turn.php', {
-                        targetId: $(this).data('target'),
-                        open: $(this).data('open')
-                    }, reloadFaction);
                 });
         })();
         </script>

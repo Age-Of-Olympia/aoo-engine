@@ -450,6 +450,20 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(0, (int) $this->link->fetchOne('SELECT is_open FROM players WHERE id = ?', [$door]));
     }
 
+    public function testAPlayerSeesTheChestsTheyOwn(): void
+    {
+        [$x, $y] = $this->farTile();
+        $mine = $this->chestAt($x, $y);
+        $theirs = $this->chestAt($x + 2, $y);
+        $owner = $this->actorNextTo($x, $y, 'GmMesCoffres');
+        $this->link->executeStatement('UPDATE players SET owner_id = ? WHERE id = ?', [$owner, $mine]);
+
+        $listed = (new ContainerService())->chestsOwnedBy($owner);
+
+        $this->assertSame([$mine], array_column($listed, 'id'), 'their own chest only, not the public one beside it');
+        $this->assertNotContains($theirs, array_column($listed, 'id'));
+    }
+
     public function testTheLockKnowsItsPeopleAlone(): void
     {
         $chest = $this->chestAt(42, 30);

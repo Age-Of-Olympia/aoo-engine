@@ -40,6 +40,40 @@ final class ContainerService
 
     private Connection $conn;
 
+    /**
+     * A standing chest or door, as the asset tables show it.
+     *
+     * @param array<string, mixed> $row id, name, is_open, x, y, z, plan
+     * @return array{id: int, name: string, isOpen: bool, x: int, y: int, z: int, plan: string}
+     */
+    public static function assetRow(array $row): array
+    {
+        return [
+            'id'     => (int) $row['id'],
+            'name'   => (string) $row['name'],
+            'isOpen' => (bool) $row['is_open'],
+            'x'      => (int) $row['x'],
+            'y'      => (int) $row['y'],
+            'z'      => (int) $row['z'],
+            'plan'   => (string) $row['plan'],
+        ];
+    }
+
+    /**
+     * The chests a player owns in person.
+     *
+     * @return list<array{id: int, name: string, isOpen: bool, x: int, y: int, z: int, plan: string}>
+     */
+    public function chestsOwnedBy(int $playerId): array
+    {
+        return array_map(self::assetRow(...), $this->conn->fetchAllAssociative(
+            'SELECT p.id, p.name, p.is_open, c.x, c.y, c.z, c.plan FROM players p ' . self::STANDING_CHEST_JOIN . '
+              WHERE p.owner_id = ?
+              ORDER BY c.plan, p.name',
+            [$playerId]
+        ));
+    }
+
     public function __construct(?Connection $conn = null)
     {
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();

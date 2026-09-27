@@ -55,6 +55,25 @@ class FactionPanelBuildingsTest extends LegacyPlayerFixtureTestCase
         $this->assertNotContains($id, array_column((new FactionService())->buildingsOf($code), 'id'));
     }
 
+    public function testAPlayerFindsTheBuildingsAndDoorsTheyOwn(): void
+    {
+        $this->requireBuildingsOrSkip();
+        if ((new \App\Service\RaceService())->getRaceByName('porte_bois')?->isDoor() !== true) {
+            $this->markTestSkipped("'porte_bois' not seeded as a door (run migrations).");
+        }
+        $owner = (int) $this->createRealPlayer('GmBatisseur')->id;
+        [$x, $y] = $this->farTile();
+
+        $workshop = (new BuildingService())->place('atelier', $this->tile($x, $y), $owner, '');
+        $door = (new BuildingService())->place('porte_bois', $this->tile($x + 3, $y), $owner, '');
+        $wall = (new BuildingService())->place('palissade', $this->tile($x + 5, $y), $owner, '');
+        array_map($this->trackEntityId(...), [$workshop, $door, $wall]);
+
+        $service = new FactionService();
+        $this->assertSame([$workshop], array_column($service->buildingsOwnedBy($owner), 'id'));
+        $this->assertSame([$door], array_column($service->doorsOwnedBy($owner), 'id'), 'the wall is neither');
+    }
+
     public function testAStandingBuildingIsListedWithItsState(): void
     {
         $this->requireBuildingsOrSkip();

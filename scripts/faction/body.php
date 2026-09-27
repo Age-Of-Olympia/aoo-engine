@@ -22,7 +22,7 @@ if(!$facJson){
 /* The page lives in the HUD side panel as well as full screen: each
  * section folds (native details) and its table scrolls sideways INSIDE
  * its frame instead of overflowing the panel or a mobile screen. */
-echo '<div class="faction-page">
+echo '<div class="faction-page" data-reload="load_faction.php?faction=' . htmlspecialchars(rawurlencode((string) ($_GET['faction'] ?? '')), ENT_QUOTES, 'UTF-8') . '|Faction">
 <style>
     /* Titles read from the left, like the rest of the game; only the
      * tables keep their centred marble. */
