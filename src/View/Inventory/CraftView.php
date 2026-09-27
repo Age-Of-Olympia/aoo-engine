@@ -10,6 +10,8 @@ use Classes\Str;
 
 class CraftView
 {
+    private const ADVANCED_NOTICE = 'Pour fabriquer une recette avancée, il faut être à côté d\'un atelier ouvert.';
+
     public static function renderCraft(): void
     {
 
@@ -66,7 +68,7 @@ class CraftView
                 $(document).ready(function() {
 
 
-                    $('.inventory-preview').html((window.hudOpenPanel ? '' : '<h1>Artisanat</h1> ') + 'Voici les objets dans votre inventaire susceptibles d\'être utilisés dans l\'Artisanat.<br />Cliquez sur l\'un d\'eux pour voir les recettes associées.').fadeIn();
+                    $('.inventory-preview').html((window.hudOpenPanel ? '' : '<h1>Artisanat</h1> ') + 'Voici les objets dans votre inventaire susceptibles d\'être utilisés dans l\'Artisanat.<br />Cliquez sur l\'un d\'eux pour voir les recettes associées.<br />' + <?php echo json_encode(self::ADVANCED_NOTICE) ?>).fadeIn();
 
                     $('.item-case').click(function(e) {
 
@@ -139,7 +141,7 @@ class CraftView
 
 
         echo '
-<p>Voici la liste des objets que vous pouvez créer avec cet objet.</p>
+<p>Voici la liste des objets que vous pouvez créer avec cet objet.<br />' . self::ADVANCED_NOTICE . '</p>
 ';
 
 
