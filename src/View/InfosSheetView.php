@@ -133,13 +133,13 @@ final class InfosSheetView
 
         $factionJson = (new FactionService())->getFactionData($targetEntity->getFaction());
 
-        echo '<div><a href="faction.php?faction=' . $targetEntity->getFaction() . '">' . $factionJson->name . '</a> <span style="font-size: 1.3em" class="ra ' . $factionJson->raFont . '"></span> (<i>' . $factionJson->role[$targetEntity->getFactionRole()]->name . '</i>) </div>';
+        echo '<div><a href="faction.php?faction=' . $targetEntity->getFaction() . '">' . $factionJson->name . '</a> <span style="font-size: 1.3em" class="ra ' . $factionJson->raFont . '"></span>' . self::rankHtml($factionJson, $targetEntity->getFactionRole()) . ' </div>';
 
         $targetSecretFaction = $targetEntity->getSecretFaction();
         if ($visibility->seesSecretFaction((string) $targetSecretFaction)) {
             $secretFactionJson = (new FactionService())->getFactionData($targetSecretFaction);
 
-            echo '<div class="secret-faction"><a href="faction.php?faction=' . $targetSecretFaction . '">' . $secretFactionJson->name . '</a> <span style="font-size: 1.3em" class="ra ' . $secretFactionJson->raFont . '"></span> (<i>' . $secretFactionJson->role[$targetEntity->getSecretFactionRole()]->name . '</i>) </div>';
+            echo '<div class="secret-faction"><a href="faction.php?faction=' . $targetSecretFaction . '">' . $secretFactionJson->name . '</a> <span style="font-size: 1.3em" class="ra ' . $secretFactionJson->raFont . '"></span>' . self::rankHtml($secretFactionJson, $targetEntity->getSecretFactionRole()) . ' </div>';
         }
 
         /* Dieu vénéré — sur sa propre fiche uniquement (la foi ne
@@ -287,5 +287,13 @@ final class InfosSheetView
         echo Str::minify(ob_get_clean());
 
         echo '<script src="js/infos.js?v=20250529"></script>';
+    }
+
+    /** " (Rank)", or nothing when the faction defines no such rank. */
+    private static function rankHtml(object $factionJson, int $position): string
+    {
+        $name = $factionJson->role[$position]->name ?? '';
+
+        return $name === '' ? '' : ' (<i>' . htmlspecialchars((string) $name, ENT_QUOTES, 'UTF-8') . '</i>)';
     }
 }
