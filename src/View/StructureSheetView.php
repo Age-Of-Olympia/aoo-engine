@@ -49,7 +49,9 @@ final class StructureSheetView
             : 100;
 
         $race = (new RaceService())->getRaceByName($entity->getRace());
-        $typeLabel = $race !== null ? $race->getLabel() : ucfirst($entity->getRace());
+        $typeLabel = $race !== null
+            ? $race->getLabel()
+            : \App\Service\ItemInstanceService::catalogLabel(EntityManagerFactory::getEntityManager()->getConnection(), $entity->getRace());
 
         $buildingService = new BuildingService();
         $details = $entity instanceof Building ? $buildingService->getDetails($entity->getId()) : null;
@@ -57,6 +59,11 @@ final class StructureSheetView
             ? $buildingService->closureReason($entity->getId(), $details, $pvPct)
             : null;
         $isEdifice = (bool) $race?->isEdifice();
+        $containers = new \App\Service\ContainerService();
+        $isChest = $details === null && $containers->isContainer($entity->getId());
+        if ($isChest) {
+            $closure = $containers->closureReasonOf($entity->getId());
+        }
 
         ob_start();
 
@@ -79,7 +86,7 @@ final class StructureSheetView
             </td>
             <td valign="top" style="text-align: left; padding: 10px;">
                 <h2 style="margin-top: 0;">' . htmlspecialchars($entity->getName(), ENT_QUOTES, 'UTF-8') . '</h2>
-                <p>' . htmlspecialchars($typeLabel, ENT_QUOTES, 'UTF-8') . '</p>
+                ' . ($typeLabel !== $entity->getName() ? '<p>' . htmlspecialchars($typeLabel, ENT_QUOTES, 'UTF-8') . '</p>' : '') . '
                 ';
 
         $stateLabels = [
@@ -107,7 +114,18 @@ final class StructureSheetView
                         . ($closure !== 'fermé volontairement' ? ' (' . $closure . ')' : '') . '</span>';
             }
             echo '<span class="building-status-state">' . $stateLabel . ' · PV ' . $pvPct . '%</span></div>';
+        }
 
+        if ($isChest) {
+            echo '<div class="building-status' . ($closure !== null ? ' building-status--closed' : '') . '">'
+                . ($closure === null
+                    ? '<span class="building-status-door building-status-door--open">Ouvert</span>'
+                    : '<span class="building-status-door building-status-door--closed">Fermé'
+                        . ($closure !== BuildingService::CLOSED_BY_HAND ? ' (' . $closure . ')' : '') . '</span>')
+                . '<span class="building-status-state">PV ' . $pvPct . '%</span></div>';
+        }
+
+        if ($details !== null || $isChest) {
             if ($entity->getOwnerId() !== null) {
                 $owner = \App\Factory\PlayerFactory::entity($entity->getOwnerId());
                 if ($owner !== null) {
@@ -202,6 +220,41 @@ final class StructureSheetView
         }
 
         echo \Classes\Str::minify(ob_get_clean());
+
+        // Outside the minifier: the inventory component carries its own scripts.
+        if ($isChest && $closure === null) {
+            echo self::chestContentsHtml($player, $entity);
+        }
+    }
+
+    /**
+     * What an open chest holds, drawn like the bag. Seen from anywhere by
+     * its people (ContainerService::mayOversee), from beside it by anyone
+     * — they could take from it anyway.
+     */
+    private static function chestContentsHtml(Player $player, Structure $entity): string
+    {
+        $chestId = (int) $entity->getId();
+        $container = new \App\Service\ContainerService();
+
+        $player->getCoords();
+        $coords = $entity->getCoords(EntityManagerFactory::getEntityManager()->getConnection());
+        $beside = $coords !== null && View::get_distance_to_entity($player->coords, $chestId, $coords) <= 1;
+
+        if (!$beside && !$container->mayOversee($chestId, (int) $player->id)) {
+            return '<div class="building-status" style="margin: 14px auto; text-align: center;">'
+                . '<span class="building-status-state">Approchez-vous pour voir ce qu\'il contient.</span></div>';
+        }
+
+        $capacity = $container->capacityOf($chestId);
+
+        return Ui::print_inventory(
+            \Classes\Item::get_item_list($chestId),
+            bagLabel: 'Dans le coffre (' . $container->lineCountOf($chestId)
+                . ($capacity !== null ? '/' . $capacity : '') . ' lignes)'
+        )
+            // Swaps in the item images, as on the bag (no inventory.js: no Use/Drop here).
+            . '<script src="js/progressive_loader.js?v=20260716"></script>';
     }
 
     /**
