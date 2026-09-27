@@ -68,13 +68,20 @@ if($numberOfSpellsAvailable < 0){
 }
 
 echo '<table class="box-shadow marbre" border="1" cellspacing="0" align="center">';
-echo '<tr><th colspan="'.$maxColSpan.'" style="background-color: rgba(0,0,139,0.1);"><font color="blue">Sorts et Techniques Possédés</font></th></tr>';
-echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Bonus</th><th>Effet</th><th>Type</th><th>Niveau</th><th>Action</th></tr>';
+echo '<tr><th colspan="'.$maxColSpan.'">Sorts et Techniques Possédés</th></tr>';
+
+$ownedSpells = array_merge($spellList, array_keys($grantedSpells));
+
+if (!$ownedSpells) {
+    echo '<tr><td colspan="'.$maxColSpan.'" align="center">Aucun sort ni technique appris : les arbres ci-dessous montrent ce qui vous est ouvert.</td></tr>';
+} else {
+    echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Bonus</th><th>Effet</th><th>Type</th><th>Niveau</th><th>Action</th></tr>';
+}
 
 $actionService = new ActionService();
 $costView = new ActionCostView($actionService);
 $effectService = new \App\Service\EffectService();
-foreach(array_merge($spellList, array_keys($grantedSpells)) as $e){
+foreach($ownedSpells as $e){
     $grantedBy = $grantedSpells[$e] ?? null;
     $spell = $actionService->getActionByName($e);
 
@@ -308,7 +315,7 @@ if (!empty($passives)) {
 echo '<div style="margin-top: 20px;"></div>';
 echo \App\View\WarSchool\SkillTreeView::styles();
 echo '<div class="ws-content">'
-    . '<h2 style="text-align:center;font-family:sans-serif;font-size:1.1em">Arbres de compétences</h2>'
+    . '<h2 style="text-align:center">Arbres de compétences</h2>'
     . (new \App\View\WarSchool\SkillTreeView())->overview($player)
     . '</div>';
 

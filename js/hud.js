@@ -1594,10 +1594,10 @@
         if (href === 'forum.php' || /^forum\.php\?(forum=|topic=|lastPosts|reply=|edit=|newTopic=)/.test(href)) {
             return href.replace(/^forum\.php/, 'load_forum.php');
         }
-        /* Carte : la vue simple en panneau ; les pages avec options
-         * de couches (map.php?world / ?local) restent plein-page. */
-        if (href === 'map.php') {
-            return 'load_map.php';
+        /* Map: world, territory and layers all open in the panel,
+         * the minimap links included. */
+        if (href === 'map.php' || /^map\.php\?(world|local(=1)?)$/.test(href)) {
+            return href.replace(/^map\.php/, 'load_map.php');
         }
         /* Pages de lecture : classements (onglets compris), factions,
          * évènements (onglets compris), personnages secondaires. */
@@ -1755,6 +1755,35 @@
         });
     }
 
+    /* Legacy fragments carry page chrome the panel head already
+     * provides: a first heading repeating the panel title is dropped,
+     * and a row of link-buttons containing the current page is a tab
+     * row (css/hud.css .hud-tabs-row), its current tab marked. */
+    function tidyPanelContent($content, url, title) {
+        var norm = function (text) {
+            return text.trim().toLowerCase().replace(/s$/, '');
+        };
+        var $heading = $content.find('h1').first();
+
+        if (title && $heading.length && norm($heading.text()) === norm(title)) {
+            $heading.remove();
+        }
+
+        $content.find('div').each(function () {
+            var $links = $(this).children('a[href]').filter(function () {
+                return $(this).children('button').length > 0;
+            });
+            var $current = $links.filter(function () {
+                return panelUrl($(this).attr('href')) === url;
+            });
+
+            if ($links.length >= 2 && $current.length) {
+                $(this).addClass('hud-tabs-row');
+                $current.addClass('hud-tab--current').attr('aria-current', 'page');
+            }
+        });
+    }
+
     function loadPanelContent(slot, url) {
         var $content = $('#hud-panel-' + slot + ' .hud-panel-content');
         $content.html('Chargement…');
@@ -1768,6 +1797,7 @@
                     : '';
                 $content.html(data);
                 applyAnimationQuality();
+                tidyPanelContent($content, url, openPanels[slot] ? openPanels[slot].title : '');
 
                 /* Le fragment peut imposer son titre — la fiche d'une
                    STRUCTURE arrive par la même URL infos que celle d'un
@@ -1806,6 +1836,12 @@
             $(this).find('.hud-panel-back').toggle(panelHistory.length > 0);
         });
         $('#hud').toggleClass('hud--panel-open', openPanels.length > 0);
+        /* Mobile sheet starts right under the status bar, whose height
+         * follows its content (css/hud.css --hud-panel-top). */
+        var topbar = document.getElementById('hud-topbar');
+        if (topbar) {
+            document.documentElement.style.setProperty('--hud-panel-top', topbar.getBoundingClientRect().bottom + 'px');
+        }
         aooStore.set('hudPanels', JSON.stringify(openPanels));
         aooStore.set('hudPanelHistory', JSON.stringify(panelHistory));
     }

@@ -33,8 +33,8 @@ class LastPostsView
 
         echo <<<HTML
         <h1>Derniers Messages du Forum</h1>
-        <div style="display: flex;    width: 500px;    margin: auto;    justify-content: end;">
-            <button class="newTopic" onclick="markAllAsRead();" >Tout Marquer Comme `Lu`</button>
+        <div style="display: flex;    max-width: 500px;    margin: auto;    justify-content: end;">
+            <button class="newTopic" onclick="markAllAsRead();" >Tout marquer comme lu</button>
         </div>
        
         <table border="1" class="marbre" align="center" width="500" id="forum-last-posts">

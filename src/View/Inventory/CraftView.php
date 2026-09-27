@@ -66,7 +66,7 @@ class CraftView
                 $(document).ready(function() {
 
 
-                    $('.inventory-preview').html('<h1>Artisanat</h1> Voici les objets dans votre inventaire susceptibles d\'être utilisés dans l\'Artisanat.<br />Cliquez sur l\'un d\'eux pour voir les recettes associées.').fadeIn();
+                    $('.inventory-preview').html((window.hudOpenPanel ? '' : '<h1>Artisanat</h1> ') + 'Voici les objets dans votre inventaire susceptibles d\'être utilisés dans l\'Artisanat.<br />Cliquez sur l\'un d\'eux pour voir les recettes associées.').fadeIn();
 
                     $('.item-case').click(function(e) {
 

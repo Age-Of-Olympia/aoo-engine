@@ -1998,15 +1998,17 @@ body:has(#hud) #view-landing-wrapper {
 
 /* ---------- Panneau glissant (sous-pages, Phase 2) ---------- */
 
-/* Glisse depuis la gauche (côté rail) par-dessus la carte ; barre de
- * statut, chat et bandeau bas restent visibles. Un seul panneau à la
- * fois : ouvrir une autre entrée remplace le contenu courant. */
+/* Slides in from the rail and covers the whole map area, minimap and
+ * selection included (a board strip left on the right never showed the
+ * player's tile). Status bar, discussions and actions (right column,
+ * 340px + gaps) stay visible. One panel at a time: opening another
+ * entry replaces the current content. */
 .hud-panel {
     position: fixed;
     top: 80px;
     left: 80px;
     bottom: 8px;
-    width: min(640px, calc(100vw - 460px));
+    right: 356px;
     z-index: 55;
     display: flex;
     flex-direction: column;
@@ -2129,11 +2131,94 @@ body:has(#hud) #view-landing-wrapper {
     text-align: center;
 }
 
-/* Fragment carte (load_map.php) : couches PNG empilées, pleine
- * largeur de panneau — même matière que la minimap. */
+/* Map panel (load_map.php): tabs, layer switches, then the map
+ * filling the rest of the panel. The frame is a size container; the
+ * stack is the largest box of the map's ratio (--map-ratio) fitting in
+ * it, and every layer covers the stack exactly — the position marker
+ * is placed in % of that box, so the box keeps the ratio. */
+.hud-map-fragment {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+}
+
+/* Tabs and the layers menu share one bar, the menu at its end */
+.hud-map-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--hud-line);
+}
+
+.hud-panel-content .hud-map-bar .hud-tabs-row,
+.hud-panel-content .hud-map-bar .hud-panel-topic-title {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.hud-map-layers {
+    position: relative;
+    margin-left: auto;
+}
+
+/* The summary looks like the paper buttons (css/paper-app.css) */
+.hud-map-layers > summary {
+    list-style: none;
+    padding: 4px 12px 4px 30px;
+    background: var(--hud-parchment) url('../img/ui/paper/icon-carte.png') 8px center / 16px no-repeat;
+    border: 1px solid var(--hud-line);
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.hud-map-layers > summary::-webkit-details-marker {
+    display: none;
+}
+
+.hud-map-layers[open] > summary {
+    box-shadow: inset 0 -2px 0 var(--hud-bronze);
+}
+
+/* The board's layers popover (#hud-layers-pop), one switch per line */
+.hud-map-layers-pop {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: max-content;
+    max-width: none;
+    padding: 6px;
+    background: #e7ded0 url('../img/ui/paper/paper.jpg') center / 100% 100% no-repeat;
+    border: 1px solid var(--hud-line);
+    border-radius: 6px;
+    box-shadow: 2px 3px 12px rgba(0, 0, 0, 0.35);
+}
+
+.hud-map-layers-pop label {
+    margin: 2px 0;
+    background: none;
+    border: 0;
+}
+
+.hud-map-frame {
+    flex: 1 1 0;
+    min-height: 240px;
+    container-type: size;
+}
+
 .hud-map-stack {
     position: relative;
-    width: 100%;
+    width: min(100cqw, 100cqh * var(--map-ratio, 1));
+    aspect-ratio: var(--map-ratio, 1);
+    margin: 0 auto;
 }
 
 .hud-map-stack img {
@@ -2143,13 +2228,14 @@ body:has(#hud) #view-landing-wrapper {
     height: 100%;
 }
 
-.hud-map-stack img:first-child {
-    position: static;
-    height: auto;
+.hud-map-stack [hidden] {
+    display: none;
 }
 
-.hud-map-fragment-links {
-    margin-top: 10px;
+.hud-map-notice,
+.hud-map-pnj,
+.hud-map-admin {
+    margin: 0;
     text-align: center;
     font-size: 88%;
 }
@@ -2265,6 +2351,170 @@ body:has(#hud) #load-caracs .progress-bar {
  * css/main.css). */
 .hud-panel-content .inventory-container {
     height: 230px;
+}
+
+/* ---------- Panel contents: one vocabulary for every fragment ----------
+ * Rows divided by an ink rule instead of a spreadsheet grid (the
+ * logs table of css/paper-app.css is the model), Gloock column heads,
+ * a leading heading at subtitle size since the head bar already names
+ * the panel, and link-button rows as tabs (js/hud.js tidyPanelContent). */
+.hud-panel-content table {
+    border: 0;
+    border-collapse: collapse;
+}
+
+.hud-panel-content table td,
+.hud-panel-content table th {
+    border: 0;
+    border-bottom: 1px solid var(--hud-line-soft);
+    padding: 6px 8px;
+}
+
+.hud-panel-content table th {
+    font-family: var(--hud-display);
+    font-weight: 400;
+    border-bottom-color: var(--hud-line);
+}
+
+.hud-panel-content table tr:last-child > td {
+    border-bottom: 0;
+}
+
+.hud-panel-content > h1 {
+    margin: 4px 0 12px;
+    font-size: 22px;
+}
+
+.hud-panel-content h2 {
+    margin: 14px 0 8px;
+    font-size: 18px;
+}
+
+/* The in-content « Retour » repeats the head bar's back arrow */
+.hud-panel-content a:has(> button > .ra-sideswipe) {
+    display: none;
+}
+
+/* Tab rows: the discussions pane's tabs (#hud-side .hud-tab), one
+ * scrolling line instead of wrapping into stacked rows on a phone. */
+.hud-panel-content .hud-tabs-row {
+    display: flex;
+    gap: 4px;
+    margin: 0 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--hud-line);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.hud-panel-content .hud-tabs-row > a {
+    flex: 0 0 auto;
+}
+
+.hud-panel-content .hud-tabs-row > a > button {
+    white-space: nowrap;
+    opacity: 0.6;
+}
+
+.hud-panel-content .hud-tabs-row > a.hud-tab--current > button {
+    opacity: 1;
+    font-weight: bold;
+    box-shadow: inset 0 -2px 0 var(--hud-bronze);
+}
+
+/* Reputation: a label and a figure, in the panel's own serif (the
+ * page's goudy blackletter appears nowhere else in the HUD). */
+.hud-panel-content #pr-wrapper {
+    font-family: var(--hud-display);
+    font-weight: 400;
+    font-size: 20px;
+}
+
+.hud-panel-content #pr-wrapper #pr {
+    font-size: 48px;
+}
+
+/* Skill trees: a heading over a rule, not a grey slab per tree */
+.hud-panel-content .ws-content h2,
+.hud-panel-content .ws-content .ws-legend summary h3 {
+    font-family: var(--hud-display);
+    font-weight: 400;
+}
+
+.hud-panel-content .ws-content .ws-legend {
+    margin-bottom: 4px;
+    padding: 0 0 4px;
+    border-bottom: 1px solid var(--hud-line-soft);
+    border-radius: 0;
+    background: none;
+}
+
+.hud-panel-content .ws-content .ws-legend summary {
+    margin: 10px 0;
+}
+
+/* Bank and chest: the two panes share the panel width */
+.hud-panel-content .exchange-pane {
+    flex: 1 1 0;
+}
+
+/* Characters: a grid filling the panel, not a centred strip */
+.hud-panel-content .pnj-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    width: auto;
+    background: none;
+}
+
+.hud-panel-content .pnj-container.hidden-pnjs {
+    display: block;
+    margin-top: 12px;
+}
+
+.hud-panel-content article.pnj {
+    width: auto;
+    margin: 0;
+    border-color: var(--hud-line);
+    background: var(--hud-veil);
+}
+
+/* Events on a phone: each row stacks — the event across the width,
+ * then who, with whom, when and where on one wrapping line — instead
+ * of five columns squeezed to a few words each. */
+@media (max-width: 1023px) {
+    .hud-panel-content .logs-table,
+    .hud-panel-content .logs-table tbody,
+    .hud-panel-content .logs-table tr {
+        display: block;
+    }
+
+    .hud-panel-content .logs-table tr:first-child {
+        display: none;
+    }
+
+    .hud-panel-content .logs-table tr {
+        padding: 6px 0;
+        border-bottom: 1px solid var(--hud-line-soft);
+    }
+
+    .hud-panel-content .logs-table td {
+        display: inline-block;
+        padding: 4px 10px 0 0;
+        border: 0;
+        vertical-align: top;
+        font-size: 90%;
+    }
+
+    .hud-panel-content .logs-table td:first-child {
+        display: block;
+        padding-right: 0;
+        font-size: 100%;
+    }
+
+    .hud-panel-content .logs-table td:empty {
+        display: none;
+    }
 }
 
 body:has(#hud) #load-caracs table {
@@ -2923,12 +3173,14 @@ body:has(#hud) #debug-flags {
         box-shadow: 8px 0 28px rgba(0, 0, 0, 0.35);
     }
 
-    /* --- Panneau glissant : bottom-sheet 85 %, stats visibles --- */
+    /* --- Sliding panel: bottom sheet right under the status bar --- */
     .hud-panel {
         left: 0;
         right: 0;
         bottom: 0;
-        top: 15vh;
+        /* Right under the status bar: no board strip above the sheet
+         * (js/hud.js syncPanels measures the bar) */
+        top: var(--hud-panel-top, 15vh);
         width: auto;
         border-radius: 12px 12px 0 0;
         transform: translateY(105%);
