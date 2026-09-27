@@ -76,4 +76,17 @@ class ChestIsAnObjectBaselineTest extends LegacyPlayerFixtureTestCase
         $this->expectException(\InvalidArgumentException::class);
         (new \App\Service\ItemInstanceService())->installFromCatalogAt($itemId, $coordsId);
     }
+
+    /** A built chest reads its catalogue label, never its code ("Coffre_bois"). */
+    public function testABuiltChestIsNamedByItsLabel(): void
+    {
+        [$x, $y] = $this->farTile();
+        $item = $this->link->fetchAssociative("SELECT id, name, label FROM items WHERE name = 'coffre_bois'");
+        $id = (new \App\Service\ItemInstanceService())
+            ->installFromCatalogAt((int) $item['id'], $this->coordsIdOn('gaia', $x, $y));
+        $this->trackEntityId($id);
+
+        $expected = (string) $item['label'] !== '' ? (string) $item['label'] : 'Coffre bois';
+        $this->assertSame($expected, $this->link->fetchOne('SELECT name FROM players WHERE id = ?', [$id]));
+    }
 }

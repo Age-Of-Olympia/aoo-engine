@@ -93,6 +93,14 @@ class ItemInstanceService
 
     private const ENTITY_RANGE_END = 79999999;
 
+    /** A catalogue item's display name: its label, else its code with spaces. */
+    public static function catalogLabel(\Doctrine\DBAL\Connection $conn, string $itemName): string
+    {
+        $label = (string) $conn->fetchOne('SELECT label FROM items WHERE name = ?', [$itemName]);
+
+        return $label !== '' ? $label : ucfirst(str_replace('_', ' ', $itemName));
+    }
+
     /**
      * Give a fresh exemplar its entity row: identity only, no location.
      *
@@ -108,6 +116,7 @@ class ItemInstanceService
         ?int $holderId = null
     ): void {
         $catalogName = (string) $conn->fetchOne('SELECT name FROM items WHERE id = ?', [$itemId]);
+        $displayName = self::catalogLabel($conn, $catalogName);
 
         $entityId = (int) $conn->fetchOne(
             'SELECT COALESCE(MAX(id), ?) + 1 FROM players WHERE id BETWEEN ? AND ?',
@@ -127,7 +136,7 @@ class ItemInstanceService
                 $entityId,
                 self::ENTITY_TYPE,
                 $displayId,
-                $customName !== '' ? $customName : ucfirst($catalogName),
+                $customName !== '' ? $customName : $displayName,
                 $catalogName,
                 $holderId,
                 time(),
