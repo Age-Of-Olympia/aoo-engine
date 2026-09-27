@@ -47,6 +47,29 @@ $(document).ready(function(){
         }
 
 
+        /* A gesture that carries a text (écrire): the game's dialog asks
+           for it, then the click is replayed with the answer; cancelling
+           sends nothing. */
+        let text;
+        if($(this).is('[data-ask-text]')){
+
+            let button = this;
+            if($(button).data('askedText') === undefined){
+
+                aooPrompt($(button).data('ask-text'), $(button).attr('data-text-default') || '').then(function(answer){
+
+                    if(answer === null){
+
+                        return;
+                    }
+                    $(button).data('askedText', answer).trigger('click');
+                });
+                return false;
+            }
+            text = $(button).data('askedText');
+            $(button).removeData('askedText');
+        }
+
         $('.action').prop('disabled', true);
         $('#action-data').hide().html();
 
@@ -106,7 +129,7 @@ $(document).ready(function(){
         $.ajax({
             type: "POST",
             url: url,
-            data: {'action':action, 'targetId':targetId, 'coordsX': coordsX, 'coordsY': coordsY, 'coordsZ': coordsZ, 'coordsPlan': coordsPlan}, // serializes the form's elements.
+            data: Object.assign({'action':action, 'targetId':targetId, 'coordsX': coordsX, 'coordsY': coordsY, 'coordsZ': coordsZ, 'coordsPlan': coordsPlan}, text === undefined ? {} : {'text': text}),
             success: function(data)
             {
                 if(window.hudShowActionResult){

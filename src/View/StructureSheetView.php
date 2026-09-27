@@ -168,7 +168,8 @@ final class StructureSheetView
                 : PHP_INT_MAX;
 
             $readableHere = \App\Service\BuildingService::readsFromAfar($target, $details)
-                || $inscriptionDistance <= 1;
+                || $inscriptionDistance <= 1
+                || ($isChest && $containers->mayOversee((int) $entity->getId(), (int) $player->id));
 
             echo $readableHere
                 ? '<p><sup>' . Str::richText($inscription) . '</sup></p>'

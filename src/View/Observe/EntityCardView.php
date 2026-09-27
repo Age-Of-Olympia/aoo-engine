@@ -676,6 +676,16 @@ final class EntityCardView
         $name = $nameOverride ?? $action->getName();
         $label = $nameOverride !== null ? ucfirst($nameOverride) : $action->getDisplayName();
 
+        /* A gesture carrying a text (InscriptionText): the button asks for
+         * it, pre-filled with what is written now (js/observe.js). */
+        $askText = '';
+        foreach ($action->getConditions() as $condition) {
+            if ($condition->getConditionType() === 'InscriptionText' && $target instanceof \Classes\Player) {
+                $askText = ' data-ask-text="Inscription :" data-text-default="'
+                    . htmlspecialchars(\App\Service\BuildingService::inscriptionOf($target), ENT_QUOTES, 'UTF-8', false) . '"';
+            }
+        }
+
         return '<button
                 class="action"
                 data-coords-x="' . $target->getCoords()->x . '"
@@ -683,7 +693,7 @@ final class EntityCardView
                 data-coords-z="' . $target->getCoords(refresh:false)->z . '"
                 data-coords-plan="' . $target->getCoords(refresh:false)->plan . '"
                 data-target-id="' . $target->getId() . '"
-                data-action="' . $name . '"
+                data-action="' . $name . '"' . $askText . '
                 >
                 ' . $icon . '
                 <span class="action-name">' . $label . '</span>
