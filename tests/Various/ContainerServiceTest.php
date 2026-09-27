@@ -190,7 +190,8 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         (new ContainerService())->depositStack($chest, $actor, $bois, 1);
     }
 
-    public function testAStrangerIsNotOneOfTheirs(): void
+    /** Open, a personal chest serves anyone beside it; shut by its owner, nobody. */
+    public function testAnOpenChestServesAStrangerAndAShutOneDoesNot(): void
     {
         $chest = $this->chestAt(38, 30);
         $keeper = $this->createRealPlayer('GmGardien');
@@ -200,10 +201,16 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         );
         $stranger = $this->actorNextTo(38, 30, 'GmVoleur');
         $this->link->executeStatement("UPDATE players SET faction = '' WHERE id = ?", [$stranger]);
-        $bois = $this->giveStack($stranger, 'bois', 1);
+        $bois = $this->giveStack($stranger, 'bois', 2);
+        $service = new ContainerService();
 
-        $this->expectExceptionMessage('Vous n\'êtes pas des siens.');
-        (new ContainerService())->depositStack($chest, $stranger, $bois, 1);
+        $service->depositStack($chest, $stranger, $bois, 1);
+        $this->assertSame(1, $this->stackOf($chest, $bois), 'open: the stranger uses it');
+        $this->assertFalse($service->mayOversee($chest, $stranger), 'but sees nothing from afar');
+
+        (new \App\Service\LockService())->toggleOpen($chest, (int) $keeper->id, false);
+        $this->expectExceptionMessage('Ce contenant est fermé volontairement.');
+        $service->depositStack($chest, $stranger, $bois, 1);
     }
 
     public function testFromAfarOneCannotReach(): void
@@ -374,7 +381,7 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(1, $instances->countInstances($actor, (int) $gladius->id));
     }
 
-    public function testAFactionChestFollowsTheRank(): void
+    public function testAnOpenFactionChestServesAllAndIsSeenFromAfarByRank(): void
     {
         $code = $this->factionWithRanks();
         $chest = $this->chestAt(44, 30);
@@ -389,12 +396,11 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
 
         $service = new ContainerService();
         $service->depositStack($chest, $guard, $bois, 1);
-        $this->assertSame(1, $this->stackOf($chest, $bois), 'the flagged rank uses the chest');
-
-        $this->assertFalse($service->mayUse($chest, $recruit), 'seeing inside follows the same rule');
-
-        $this->expectExceptionMessage('Votre rang ne permet pas d\'utiliser les coffres de la faction.');
         $service->depositStack($chest, $recruit, $bois, 1);
+        $this->assertSame(2, $this->stackOf($chest, $bois), 'open, the chest serves every rank');
+
+        $this->assertTrue($service->mayOversee($chest, $guard), 'the flagged rank sees inside from afar');
+        $this->assertFalse($service->mayOversee($chest, $recruit), 'the others only from beside it');
     }
 
     public function testTheFactionLockFollowsTheSameRank(): void
@@ -417,7 +423,7 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         );
         (new \App\Service\LockService())->toggleOpen($chest, $guard, true);
 
-        $this->expectExceptionMessage('Votre rang ne permet pas d\'utiliser les coffres de la faction.');
+        $this->expectExceptionMessage('Votre rang ne permet pas de verrouiller les coffres de la faction.');
         (new \App\Service\LockService())->toggleOpen($chest, $recruit, false);
     }
 

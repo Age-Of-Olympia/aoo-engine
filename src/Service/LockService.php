@@ -145,7 +145,7 @@ final class LockService
         int $entityId,
         int $actorId,
         string $flag = 'useChest',
-        string $refusal = 'Votre rang ne permet pas d\'utiliser les coffres de la faction.'
+        string $refusal = 'Votre rang ne permet pas de verrouiller les coffres de la faction.'
     ): ?string {
         $thing = $this->conn->fetchAssociative('SELECT owner_id, faction FROM players WHERE id = ?', [$entityId]);
         if ($thing === false) {

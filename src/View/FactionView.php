@@ -210,7 +210,7 @@ class FactionView
             'editRole'      => 'Changer les rangs',
             'initRole'      => 'Régler l\'échelle',
             'driveBuilding' => 'Piloter les bâtiments',
-            'useChest'      => 'Utiliser les coffres',
+            'useChest'      => 'Verrouiller les coffres',
             'showLogs'      => 'Voir le journal',
             'manageChests'  => 'Gérer les coffres',
             'useDoor'       => 'Ouvrir les portes',

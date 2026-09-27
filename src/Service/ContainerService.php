@@ -81,7 +81,8 @@ final class ContainerService
 
     /**
      * May $actorId use this container here and now? Throws the refusal
-     * otherwise.
+     * otherwise. An open chest serves whoever stands beside it, whoever
+     * owns it: owning it only lets one shut it (LockService).
      */
     public function assertUsable(int $containerId, int $actorId): void
     {
@@ -102,11 +103,6 @@ final class ContainerService
         $reason = $this->closureReasonOf($containerId);
         if ($reason !== null) {
             throw new RuntimeException('Ce contenant est ' . $reason . '.');
-        }
-
-        $refusal = $this->householdRefusal($containerId, $actorId);
-        if ($refusal !== null) {
-            throw new RuntimeException($refusal);
         }
 
         $actorCoords = $this->conn->fetchAssociative(
@@ -263,27 +259,20 @@ final class ContainerService
     }
 
     /**
-     * May $actorId see inside and use this container, standing aside
-     * the where-and-reach questions? The peek on the observation panel
-     * asks this — seeing follows the same rule as using.
+     * May $actorId look inside from afar (inventory, faction panel)? Only
+     * the chest's people: its owner, or a member of its faction whose rank
+     * carries useChest. A public chest is seen from beside it only.
      */
-    public function mayUse(int $containerId, int $actorId): bool
+    public function mayOversee(int $containerId, int $actorId): bool
     {
-        return $this->householdRefusal($containerId, $actorId) === null;
-    }
-
-    /**
-     * The household rule, refined by RANK: the owner is at home; within
-     * a faction, the useChest flag says who uses its containers; a
-     * thing with neither owner nor faction serves everyone.
-     */
-    private function householdRefusal(int $containerId, int $actorId): ?string
-    {
-        if (!(new LockService())->mayActOn($containerId, $actorId)) {
-            return 'Vous n\'êtes pas des siens.';
+        $thing = $this->conn->fetchAssociative('SELECT owner_id, faction FROM players WHERE id = ?', [$containerId]);
+        if ($thing === false || ($thing['owner_id'] === null && (string) $thing['faction'] === '')) {
+            return false;
         }
 
-        return (new LockService())->rankRefusal($containerId, $actorId);
+        $lock = new LockService();
+
+        return $lock->mayActOn($containerId, $actorId) && $lock->rankRefusal($containerId, $actorId) === null;
     }
 
     /**

@@ -67,7 +67,7 @@ class FactionRole
     #[ORM\Column(type: "boolean", options: ["default" => false])]
     private bool $driveBuilding = false;
 
-    /** May see inside, use and lock the faction's containers. */
+    /** May lock the faction's chests and see inside them from afar. */
     #[ORM\Column(type: "boolean", options: ["default" => false])]
     private bool $useChest = false;
 

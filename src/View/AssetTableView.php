@@ -77,7 +77,7 @@ final class AssetTableView
         }
 
         $container = new ContainerService();
-        if (!$container->mayUse($entityId, $actorId)) {
+        if (!$container->mayOversee($entityId, $actorId)) {
             return '—';
         }
         if ($container->closureReasonOf($entityId) !== null) {
