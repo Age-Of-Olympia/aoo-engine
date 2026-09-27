@@ -24,7 +24,7 @@ $coords->plan = ($coordsTbl[3] != 'plan') ? $coordsTbl[3] : $goCoords->plan;
 
 $goCoords = $coords;
 
-$coordsId = View::get_free_coords_id_arround($goCoords);
+$coordsId = View::get_free_coords_id_arround($goCoords, 1, avoidElements: true);
 
 
 View::refresh_players_svg($player->coords);

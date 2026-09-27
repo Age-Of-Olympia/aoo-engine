@@ -1692,7 +1692,7 @@ class View{
 
         $sql = '
         SELECT
-        x, y
+        x, y, p.race, p.player_type
         FROM
         coords AS c
         INNER JOIN
@@ -1707,7 +1707,7 @@ class View{
         UNION
 
         SELECT
-        x, y
+        x, y, NULL, NULL
         FROM
         coords AS c
         INNER JOIN
@@ -1726,8 +1726,15 @@ class View{
 
         $coordsTaken = array($coords->x .','. $coords->y);
 
+        $occupancy = new \App\Service\Map\TileOccupancyService();
+
         while($row = $res->fetch_object()){
 
+            /* A trigger has no race; an entity one walks through does not take the tile. */
+            if($row->race !== null && !$occupancy->fillsForLanding($row->race, $row->player_type)){
+
+                continue;
+            }
 
             $coordsTaken[] = $row->x .','. $row->y;
         }
@@ -1842,7 +1849,7 @@ class View{
     }
 
 
-    public static function get_free_coords_id_arround(&$goCoords, $p=1){
+    public static function get_free_coords_id_arround(&$goCoords, $p=1, bool $avoidElements = false){
 
 
         /* Sous terre, une case sans sol creusé (map_tiles) est de la roche
@@ -1868,6 +1875,21 @@ class View{
 
 
         $coordsTaken = View::get_coords_taken($goCoords);
+
+        /* A teleport does not drop anyone into water or lava; a push or a
+         * projection may. */
+        if($avoidElements){
+
+            $res = (new Db())->exe(
+                'SELECT c.x, c.y FROM map_elements e INNER JOIN coords c ON c.id = e.coords_id WHERE c.z = ? AND c.plan = ?',
+                array($goCoords->z, $goCoords->plan)
+            );
+
+            while($row = $res->fetch_object()){
+
+                $coordsTaken[] = $row->x .','. $row->y;
+            }
+        }
 
         $coordsArround = View::get_coords_arround($goCoords, $p);
         $coordsArround = array_diff($coordsArround, $coordsTaken);

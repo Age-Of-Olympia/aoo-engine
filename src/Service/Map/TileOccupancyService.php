@@ -242,18 +242,44 @@ final class TileOccupancyService
     /**
      * Landing question: is the tile EMPTY? Stricter than the step — every
      * trigger counts, and neither hidden mode nor plan visibility applies.
+     * Elements do not: one is pushed into water or lava.
      */
     public function isVacant(int $coordsId): bool
     {
-        /* Decor does not fill a tile: one walks on it, so one lands on it. */
-        if ($this->heldByAnEntity($coordsId)) {
-            return false;
+        foreach ($this->occupations((string) $coordsId) as $row) {
+            if ($this->fillsForLanding((string) $row['race'], $row['player_type'])) {
+                return false;
+            }
         }
 
         return !(bool) $this->conn->fetchOne(
             'SELECT 1 FROM map_triggers WHERE coords_id = ? LIMIT 1',
             [$coordsId]
         );
+    }
+
+    /** @var array{race: list<string>, item: list<string>}|null */
+    private ?array $passableBy = null;
+
+    /**
+     * Whether an entity of this type fills a tile one lands on. Decor and
+     * the types one walks through (roads, plants…) do not: one walks on
+     * them, so one lands on them.
+     */
+    public function fillsForLanding(string $race, ?string $playerType): bool
+    {
+        if ($playerType === 'scenery') {
+            return false;
+        }
+
+        $this->passableBy ??= (new \App\Service\ObstructionService($this->conn, $this->raceService))
+            ->passableTypeNames();
+
+        $passable = $playerType === \App\Service\ObstructionService::ITEM_TYPE
+            ? $this->passableBy['item']
+            : $this->passableBy['race'];
+
+        return !in_array($race, $passable, true);
     }
 
     /**

@@ -482,6 +482,44 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
     }
 
     /**
+     * What one walks through (a road, a plant) one lands on; a wall one
+     * does not. An element (water, lava…) takes a push, but a teleport
+     * looking for a free tile avoids it.
+     */
+    public function testOneLandsOnARoadAndIsPushedIntoAnElementButNotTeleported(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $this->sowStructureType('route_test_pas', ['type_kind' => 'route', 'blocks_passage' => 0, 'blocks_projectiles' => 0]);
+        $this->placeStructure('route_test_pas', 70, 0, self::PLAN);
+        $this->placeStructure('mur_pierre', 73, 0, self::PLAN);
+
+        $this->assertFalse($this->service->isVacant($this->coordsIdOn(self::PLAN, 73, 0)), 'wall');
+        $this->assertNotContains('70,0', \Classes\View::get_coords_taken($this->tile(0, 0, self::PLAN)), 'road');
+        $this->assertContains('73,0', \Classes\View::get_coords_taken($this->tile(0, 0, self::PLAN)), 'wall');
+
+        $element = $this->coordsIdOn(self::PLAN, 72, 0);
+        $this->link->executeStatement('INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 0)', [$element, 'eau']);
+
+        $this->assertTrue($this->service->isVacant($this->coordsIdOn(self::PLAN, 70, 0)), 'road');
+        $this->assertTrue($this->service->isVacant($element), 'element: one is pushed into it');
+
+        /* Around (71,0), radius 1: everything but the road holds an element. */
+        foreach ([[70, -1], [71, -1], [72, -1], [70, 1], [71, 1], [72, 1]] as [$x, $y]) {
+            $this->link->executeStatement(
+                'INSERT INTO map_elements (coords_id, name, endTime) VALUES (?, ?, 0)',
+                [$this->coordsIdOn(self::PLAN, $x, $y), 'eau']
+            );
+        }
+        $goCoords = (object) ['x' => 71, 'y' => 0, 'z' => 0, 'plan' => self::PLAN];
+
+        $this->assertSame(
+            $this->coordsIdOn(self::PLAN, 70, 0),
+            (int) \Classes\View::get_free_coords_id_arround($goCoords, 1, avoidElements: true),
+            'the only free neighbour is the road'
+        );
+    }
+
+    /**
      * An animator placing from the editor may build over decor — tucking
      * something behind a statue is a legitimate gesture there.
      */
