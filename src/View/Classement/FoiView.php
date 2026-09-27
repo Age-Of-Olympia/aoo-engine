@@ -6,11 +6,13 @@ use Classes\Db;
 
 class FoiView
 {
+    public const CACHE = 'datas/public/classements/foi.html';
+
     public static function renderFoi(): void
     {
         echo '<h1>Classement de la Foi</h1>';
 
-        $path = 'datas/public/classements/foi.html';
+        $path = self::CACHE;
 
         RankingCache::serve($path, __FILE__, static function (): void {
         $db = new Db();

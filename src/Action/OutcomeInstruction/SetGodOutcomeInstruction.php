@@ -8,6 +8,7 @@ use App\Enum\FieldType;
 use App\Interface\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
+use App\View\Classement\FoiView;
 use Classes\Player;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -94,9 +95,14 @@ class SetGodOutcomeInstruction extends OutcomeInstruction implements HasParamete
             $to->refresh_data();
         }
 
+        // The faith ranking counts altars and followers by god.
+        @unlink(FoiView::CACHE);
+
+        // The altar's name and the plan's god show all over the board:
+        // the HUD reloads the page when this result is closed.
         return new OutcomeResult(
             true,
-            outcomeSuccessMessages: [$to->data->name . ' est désormais sous la protection de ' . $god->data->name . '.'],
+            outcomeSuccessMessages: [$to->data->name . ' est désormais sous la protection de ' . $god->data->name . '.<span class="hud-reload-on-close"></span>'],
             outcomeFailureMessages: array()
         );
     }

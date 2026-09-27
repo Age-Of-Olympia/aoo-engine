@@ -360,7 +360,11 @@
 
     function hudSheetHide() {
         hudSheetRestore();
-        $('#hud-action-modal').hide();
+        var $modal = $('#hud-action-modal').hide();
+        /* A result that changed more than the panels show (consecration). */
+        if ($modal.find('.hud-reload-on-close').length) {
+            document.location.reload();
+        }
     }
 
     function hudSheet() {
