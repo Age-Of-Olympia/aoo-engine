@@ -360,8 +360,8 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertFalse($this->lock()->mayLock($id, (int) $owner->id));
     }
 
-    /** Une porte sans maître ni faction reste comme la carte l'a posée. */
-    public function testNobodyBarsAPublicDoor(): void
+    /** Une porte sans propriétaire ni faction est à tous, comme un coffre public. */
+    public function testAnyoneTurnsAPublicDoor(): void
     {
         $passerBy = $this->createRealPlayer('GmBadaud');
         [$x, $y] = $this->farTile();
@@ -373,7 +373,7 @@ class LockBaselineTest extends LegacyPlayerFixtureTestCase
         \App\Factory\EntityManagerFactory::getEntityManager()->clear();
 
         try {
-            $this->assertFalse($this->lock()->mayLock($id, (int) $passerBy->id));
+            $this->assertTrue($this->lock()->mayLock($id, (int) $passerBy->id));
         } finally {
             $this->link->executeStatement("UPDATE races SET lockable = 0 WHERE name = 'palissade'");
             \App\Service\RaceService::clearCache();

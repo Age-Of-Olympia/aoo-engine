@@ -54,35 +54,12 @@ final class LockService
     }
 
     /**
-     * May $actorId shut or open $entityId?
-     *
-     * A public chest (no owner, no faction) belongs to everyone, lid
-     * included. A public door keeps the state the map gave it: an ownerless
-     * town gate is not for any passer-by to bar.
+     * May $actorId shut or open $entityId? Its people may; a thing with
+     * neither owner nor faction (chest or door) belongs to everyone.
      */
     public function mayLock(int $entityId, int $actorId): bool
     {
-        $type = $this->typeOf($entityId);
-        if (!($type?->isLockable() ?? false)) {
-            return false;
-        }
-
-        $thing = $this->conn->fetchAssociative(
-            'SELECT owner_id, faction FROM players WHERE id = ?',
-            [$entityId]
-        );
-        if ($thing === false) {
-            return false;
-        }
-
-        $ownerId = $thing['owner_id'] === null ? null : (int) $thing['owner_id'];
-        $faction = (string) $thing['faction'];
-
-        if ($ownerId === null && $faction === '') {
-            return $type instanceof \App\Entity\Item;
-        }
-
-        return $this->isOneOfTheirs($ownerId, $faction, $actorId);
+        return $this->isLockable($entityId) && $this->mayActOn($entityId, $actorId);
     }
 
     /**
@@ -90,7 +67,7 @@ final class LockService
      * its faction — and a thing with neither owner nor faction belongs to
      * everyone: yes for all.
      *
-     * This is mayLock()'s rule without the latch: working on a palissade's
+     * mayLock() adds the latch to this rule: working on a palissade's
      * construction site asks this question, not the lock's.
      */
     public function mayActOn(int $entityId, int $actorId): bool
