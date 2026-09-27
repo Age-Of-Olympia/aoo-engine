@@ -393,7 +393,7 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
 
         $this->assertFalse($service->mayUse($chest, $recruit), 'seeing inside follows the same rule');
 
-        $this->expectExceptionMessage('Votre rang n\'use pas des coffres de la faction.');
+        $this->expectExceptionMessage('Votre rang ne permet pas d\'utiliser les coffres de la faction.');
         $service->depositStack($chest, $recruit, $bois, 1);
     }
 
@@ -417,7 +417,7 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         );
         $service->toggleOpen($chest, $guard, true);
 
-        $this->expectExceptionMessage('Votre rang n\'use pas des coffres de la faction.');
+        $this->expectExceptionMessage('Votre rang ne permet pas d\'utiliser les coffres de la faction.');
         $service->toggleOpen($chest, $recruit, false);
     }
 

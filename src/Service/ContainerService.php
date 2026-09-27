@@ -319,7 +319,7 @@ final class ContainerService
             && $ownerId !== $actorId
             && !(new FactionService())->mayManage($actorId, 'useChest')
         ) {
-            return 'Votre rang n\'use pas des coffres de la faction.';
+            return 'Votre rang ne permet pas d\'utiliser les coffres de la faction.';
         }
 
         return null;
