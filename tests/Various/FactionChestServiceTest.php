@@ -178,4 +178,35 @@ class FactionChestServiceTest extends LegacyPlayerFixtureTestCase
         $this->expectExceptionMessage('pas de banque sur ce plan');
         $service->setFloorOpen($chief, $this->scenePlan(), 0, false);
     }
+
+    public function testAFloorHoldingChestsCannotBeClosed(): void
+    {
+        $plan = $this->scenePlan();
+        $this->bankOn($plan);
+        $chief = $this->member('GmChefNiveauPlein', 1);
+        $this->chestOn($plan);
+
+        $this->expectExceptionMessage('Des coffres sont posés à ce niveau');
+        (new FactionChestService())->setFloorOpen($chief, $plan, 0, false);
+    }
+
+    /** Same rule for the admin's floor setting. */
+    public function testTheAdminCannotForbidChestsWhereSomeStand(): void
+    {
+        $plan = $this->scenePlan();
+        $config = new \App\Service\PlanConfigService();
+        $config->replace($plan, ['name' => $plan, 'z_levels' => [['z' => 0, 'z-name' => 'Rez', 'chestsAllowed' => true]]]);
+        plans()->forget($plan);
+
+        try {
+            $this->chestOn($plan);
+
+            $this->expectExceptionMessage('impossible d\'y interdire les coffres');
+            $config->replace($plan, ['name' => $plan, 'z_levels' => [['z' => 0, 'z-name' => 'Rez', 'chestsAllowed' => false]]]);
+        } finally {
+            \App\Factory\EntityManagerFactory::getEntityManager()->clear();
+            $this->link->executeStatement('DELETE FROM plans WHERE slug = ?', [$plan]);
+            plans()->forget($plan);
+        }
+    }
 }

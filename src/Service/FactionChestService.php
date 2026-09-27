@@ -120,6 +120,10 @@ class FactionChestService
             throw new RuntimeException('Votre faction n\'a pas de banque sur ce plan.');
         }
 
+        if (!$open && plans()->chestsStandingOn($plan, $z) > 0) {
+            throw new RuntimeException('Des coffres sont posés à ce niveau : impossible de le fermer.');
+        }
+
         $factionId = (int) $this->factionIdOf($code);
         if ($open) {
             $this->conn->executeStatement(

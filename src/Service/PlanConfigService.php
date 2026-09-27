@@ -272,7 +272,7 @@ class PlanConfigService
             }
             $zLevel->setName((string) ($level['z-name'] ?? 'Niveau ' . $z));
             $zLevel->setMapUnavailable(!empty($level['MapUnavailable']));
-            $zLevel->setAllowsChests(($level['chestsAllowed'] ?? true) !== false);
+            $this->setAllowsChests($zLevel, $plan, ($level['chestsAllowed'] ?? true) !== false);
             if (!$zLevel->isMapUnavailable()
                 && isset($level['visibleBoundsMinX'], $level['visibleBoundsMaxX'], $level['visibleBoundsMinY'], $level['visibleBoundsMaxY'])
             ) {
@@ -288,6 +288,18 @@ class PlanConfigService
         }
 
         $this->flush($plan);
+    }
+
+    /** Closing a floor to chests is refused while chests stand on it. */
+    private function setAllowsChests(PlanZLevel $level, string $plan, bool $allows): void
+    {
+        if (!$allows && $level->allowsChests() && plans()->chestsStandingOn($plan, $level->getZ()) > 0) {
+            throw new RuntimeException(
+                'Des coffres sont posés au niveau z=' . $level->getZ() . ' de ' . $plan . ' : impossible d\'y interdire les coffres.'
+            );
+        }
+
+        $level->setAllowsChests($allows);
     }
 
     /**
@@ -353,7 +365,9 @@ class PlanConfigService
         $level->setMapUnavailable($mapUnavailable);
 
         if (isset($zConfig['chestsAllowed'])) {
-            $level->setAllowsChests(
+            $this->setAllowsChests(
+                $level,
+                $plan,
                 !in_array(strtolower((string) $zConfig['chestsAllowed']), ['false', '0'], true)
             );
         }

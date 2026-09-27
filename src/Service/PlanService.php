@@ -76,6 +76,20 @@ class PlanService
         return true;
     }
 
+    /** Chests standing on this floor, whoever owns them. */
+    public function chestsStandingOn(string $slug, int $z): int
+    {
+        return (int) $this->conn->fetchOne(
+            "SELECT COUNT(*)
+               FROM players p
+               JOIN item_instances ii ON ii.entity_id = p.id AND ii.destroyed = 0
+               JOIN items i ON i.id = ii.item_id AND i.lockable = 1
+               JOIN coords c ON c.id = p.coords_id
+              WHERE p.slot = ? AND c.plan = ? AND c.z = ?",
+            [\App\Service\Map\EntityLocationService::SLOT_INSTALLED, $slug, $z]
+        );
+    }
+
     /**
      * Slug of the world-map plan (admin dashboard → Réglages du monde).
      * Falls back to the historical slug when the setting is unset.
