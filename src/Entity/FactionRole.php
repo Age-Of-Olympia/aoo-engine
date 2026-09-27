@@ -20,7 +20,7 @@ class FactionRole
     public const FLAG_KEYS = [
         'defaultRole', 'showPosition', 'showForum', 'addMember',
         'editRole', 'kickMember', 'initRole',
-        'driveBuilding', 'useChest', 'showLogs', 'manageChests',
+        'driveBuilding', 'useChest', 'showLogs', 'manageChests', 'useDoor',
     ];
 
     #[ORM\Id]
@@ -78,6 +78,10 @@ class FactionRole
     /** May take back, give away or abandon the faction's chests, and choose their floors. */
     #[ORM\Column(type: "boolean", options: ["default" => false])]
     private bool $manageChests = false;
+
+    /** May open and shut the faction's doors. */
+    #[ORM\Column(type: "boolean", options: ["default" => false])]
+    private bool $useDoor = false;
 
     public function __construct(Faction $faction, string $name, int $position)
     {

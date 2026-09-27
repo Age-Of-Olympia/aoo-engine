@@ -540,7 +540,7 @@ class FactionService
      *  (defaultRole) is the ladder's structure, not a capability. */
     public const GRANTABLE_FLAGS = [
         'showPosition', 'showForum', 'addMember', 'editRole', 'kickMember', 'initRole',
-        'driveBuilding', 'useChest', 'showLogs', 'manageChests',
+        'driveBuilding', 'useChest', 'showLogs', 'manageChests', 'useDoor',
     ];
 
     /**

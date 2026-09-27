@@ -231,9 +231,7 @@ final class ContainerService
             throw new RuntimeException('Cette serrure ne vous connaît pas.');
         }
 
-        /* Within a faction, the lock follows the same rank flag as the
-         * contents — one flag governs the chest whole. */
-        $refusal = $this->factionRankRefusal($containerId, $actorId);
+        $refusal = $this->lockRankRefusal($containerId, $actorId);
         if ($refusal !== null) {
             throw new RuntimeException($refusal);
         }
@@ -269,7 +267,7 @@ final class ContainerService
     public function mayTurnLock(int $containerId, int $actorId): bool
     {
         return (new LockService())->mayLock($containerId, $actorId)
-            && $this->factionRankRefusal($containerId, $actorId) === null;
+            && $this->lockRankRefusal($containerId, $actorId) === null;
     }
 
     /**
@@ -302,9 +300,32 @@ final class ContainerService
         return $this->factionRankRefusal($containerId, $actorId);
     }
 
-    /** The rank half of the household rule, alone — mayLock has its own first half. */
-    private function factionRankRefusal(int $containerId, int $actorId): ?string
+    /**
+     * The rank a faction lock asks for: a door is opened under useDoor;
+     * anything else (a chest, a building) under useChest, like its contents.
+     */
+    private function lockRankRefusal(int $entityId, int $actorId): ?string
     {
+        $type = (string) $this->conn->fetchOne('SELECT race FROM players WHERE id = ?', [$entityId]);
+        if ((new RaceService())->getRaceByName($type)?->isDoor()) {
+            return $this->factionRankRefusal(
+                $entityId,
+                $actorId,
+                'useDoor',
+                'Votre rang ne permet pas d\'ouvrir les portes de la faction.'
+            );
+        }
+
+        return $this->factionRankRefusal($entityId, $actorId);
+    }
+
+    /** The rank half of the household rule, alone — mayLock has its own first half. */
+    private function factionRankRefusal(
+        int $containerId,
+        int $actorId,
+        string $flag = 'useChest',
+        string $refusal = 'Votre rang ne permet pas d\'utiliser les coffres de la faction.'
+    ): ?string {
         $thing = $this->conn->fetchAssociative(
             'SELECT owner_id, faction FROM players WHERE id = ?',
             [$containerId]
@@ -317,9 +338,9 @@ final class ContainerService
         if (
             (string) $thing['faction'] !== ''
             && $ownerId !== $actorId
-            && !(new FactionService())->mayManage($actorId, 'useChest')
+            && !(new FactionService())->mayManage($actorId, $flag)
         ) {
-            return 'Votre rang ne permet pas d\'utiliser les coffres de la faction.';
+            return $refusal;
         }
 
         return null;

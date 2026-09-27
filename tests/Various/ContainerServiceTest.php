@@ -421,6 +421,35 @@ class ContainerServiceTest extends LegacyPlayerFixtureTestCase
         $service->toggleOpen($chest, $recruit, false);
     }
 
+    public function testAFactionDoorFollowsItsOwnRank(): void
+    {
+        $this->requireBuildingsOrSkip();
+        if ((new \App\Service\RaceService())->getRaceByName('porte_bois')?->isDoor() !== true) {
+            $this->markTestSkipped("'porte_bois' not seeded as a door (run migrations).");
+        }
+        $code = $this->factionWithRanks();
+        [$x, $y] = $this->farTile();
+        $door = (new \App\Service\BuildingService())->place('porte_bois', $this->tile($x, $y), null, $code);
+        $this->trackEntityId($door);
+
+        $guard = $this->actorNextTo($x, $y, 'GmGardePorte');
+        $this->enrolled($guard, 1);
+        $service = new ContainerService();
+
+        try {
+            $service->toggleOpen($door, $guard, false);
+            $this->fail('useChest alone does not open the doors');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('Votre rang ne permet pas d\'ouvrir les portes de la faction.', $e->getMessage());
+        }
+
+        $this->link->executeStatement('UPDATE faction_roles SET useDoor = 1 WHERE faction_id = ? AND position = 1', [$this->factionId]);
+        \App\Service\FactionService::clearCache();
+
+        $service->toggleOpen($door, $guard, false);
+        $this->assertSame(0, (int) $this->link->fetchOne('SELECT is_open FROM players WHERE id = ?', [$door]));
+    }
+
     public function testTheLockKnowsItsPeopleAlone(): void
     {
         $chest = $this->chestAt(42, 30);

@@ -213,6 +213,7 @@ class FactionView
             'useChest'      => 'Utiliser les coffres',
             'showLogs'      => 'Voir le journal',
             'manageChests'  => 'Gérer les coffres',
+            'useDoor'       => 'Ouvrir les portes',
         ];
 
         $service = new \App\Service\FactionService();
