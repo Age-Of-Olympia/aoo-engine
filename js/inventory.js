@@ -91,6 +91,12 @@ $(document).ready(function(){
                 'lockable': !!window.lockable
             }));
 
+            /* Picking a cell needs the board: the HUD must not reopen the
+               inventory over it, now or after the placement reload. */
+            if(typeof window.hudForgetPanel === 'function'){
+                window.hudForgetPanel('load_inventory.php');
+            }
+
             document.location = 'index.php';
             return false;
         }
