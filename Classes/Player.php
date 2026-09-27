@@ -1765,9 +1765,7 @@ class Player implements ActorInterface {
                 return EquipResult::DoNothing;
             }
 
-            // Libérer les emplacements des deux représentations —
-            // piles héritées (SQL) et instances (service, avec retour en pile
-            // des instances encore vierges).
+            // Déterminer quels emplacements doivent être libérés
             $emplacementsToClear = [$item->data->emplacement];
             if($item->data->emplacement == "deuxmains"){
                 $emplacementsToClear[] = 'main1';
@@ -1777,20 +1775,24 @@ class Player implements ActorInterface {
                 $emplacementsToClear[] = 'deuxmains';
             }
 
-            $sql = '
-            UPDATE
-            players_items
-            SET
-            equiped = ""
-            WHERE
-            player_id = ?
-            AND
-            equiped IN('. Db::print_in($emplacementsToClear) .')
-            ';
+            // Déséquiper proprement objet par objet
+            foreach ($emplacementsToClear as $emp) {
+                // Si le joueur porte un objet sur cet emplacement précis
+                if (!empty($this->emplacements->{$emp})) {
+                    $oldItem = $this->emplacements->{$emp};
 
-            $db->exe($sql, array_merge(array($this->id), $emplacementsToClear));
+                    // 1. On annule les bonus de l'ancienne arme (corrige le bug de statistiques)
+                    $this->applyUnequipItemBonus($oldItem);
 
-            $instanceService->unequipEmplacements($this->id, $emplacementsToClear);
+                    // 2. On déséquipe proprement via le service d'instance OU via SQL (Exactement comme dans le bloc UNEQUIP)
+                    if (!empty($itemList[$oldItem->id]) && !empty($itemList[$oldItem->id]->instance_id)) {
+                        $instanceService->unequipInstance((int) $itemList[$oldItem->id]->instance_id);
+                    } else {
+                        $sql = 'UPDATE players_items SET equiped = "" WHERE player_id = ? AND item_id = ?';
+                        $db->exe($sql, array($this->id, $oldItem->id));
+                    }
+                }
+            }
 
             if($item->data->emplacement == 'munition' || $item->data->emplacement == 'trophee'){
 
