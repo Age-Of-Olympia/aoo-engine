@@ -105,8 +105,8 @@ else{
     <table border="1" align="center" class="marbre">
     <tr>
         <th>Sujet</th>
-        <td>Récompenses</td>
-        <td>Pr
+        <th>Récompenses</th>
+        <th>Pr
         ';
 
 
@@ -130,10 +130,11 @@ else{
 
             $topJson = json()->decode('forum/topics', $row['topName']);
 
-            $forumJson = json()->decode('forum/forums', $topJson->forum_id);
+            /* A deleted topic leaves its rewards behind: listed as « ? » */
+            $forumJson = $topJson ? json()->decode('forum/forums', $topJson->forum_id) : false;
 
 
-            if(!empty($forumJson->factions) && !in_array($player->data->faction, $forumJson->factions)){
+            if(!$topJson || (!empty($forumJson->factions) && !in_array($player->data->faction, $forumJson->factions))){
 
 
                 echo '<th>?</th>

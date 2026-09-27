@@ -139,6 +139,7 @@ echo '
 
             $target = $playerService->GetPlayer($e->target_id);
             $target->get_data(false);
+            /* null for an object (chest, building…): its chip stays uncoloured */
             $targetRaceJson = $raceService->getRaceData($target->data->race);
         }
 
@@ -152,7 +153,7 @@ echo '
                     <span class="log-'. $e->type .'">'. $e->text .'</span><br />
                     '. $hiddenText .'
                 </td>
-            <td class="log-td" style="--race-bg: '. $actorRaceJson->bgColor .'; --race-fg: '. $actorRaceJson->color .';">
+            <td class="log-td" style="--race-bg: '. ($actorRaceJson->bgColor ?? '') .'; --race-fg: '. ($actorRaceJson->color ?? '') .';">
                 <span class="log-actor">'. $actor->data->name .'<br />
                 (<a href="infos.php?targetId='. $actor->id .'">mat.'. $actor->getDisplayId() .'</a>)</span>
             </td>
@@ -161,7 +162,7 @@ echo '
             if(!empty($target)){
 
                 echo '
-                <td class="log-td" style="--race-bg: '. $targetRaceJson->bgColor .'; --race-fg: '. $targetRaceJson->color .';">
+                <td class="log-td" style="--race-bg: '. ($targetRaceJson->bgColor ?? '') .'; --race-fg: '. ($targetRaceJson->color ?? '') .';">
                     <span class="log-actor">'. $target->data->name .'<br />
                     (<a href="infos.php?targetId='. $target->id .'">mat.'. $target->getDisplayId() .'</a>)</span>
                 </td>

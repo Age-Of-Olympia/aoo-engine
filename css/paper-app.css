@@ -442,3 +442,13 @@ a:hover {
     border-radius: 4px;
     color: var(--pa-ink);
 }
+
+/* Classements: the race colour tints the row, the text stays ink.
+ * !important beats the legacy inline colours, which stay in the markup
+ * because the ranking HTML is cached for every theme alike
+ * (src/View/Classement/PlayersTableView.php, RankingCache). */
+.race-row {
+    background: color-mix(in srgb, var(--race-bg) 16%, transparent) !important;
+    box-shadow: inset 3px 0 0 color-mix(in srgb, var(--race-bg) 55%, transparent);
+    color: var(--pa-ink) !important;
+}

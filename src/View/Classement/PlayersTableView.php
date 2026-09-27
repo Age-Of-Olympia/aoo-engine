@@ -54,7 +54,7 @@ final class PlayersTableView
             $reput = Str::get_reput(floor($player->pr/COEFFICIENT_PR));
 
             echo '
-            <tr style="color: '. $raceJson->color .'; background: '. $raceJson->bgColor .'">
+            <tr class="race-row" style="--race-bg: '. $raceJson->bgColor .'; color: '. $raceJson->color .'; background: '. $raceJson->bgColor .'">
                 <td align="center">'. $n .'</td>
                 <td style="white-space: nowrap;">'. $player->name .'</td>
                 <td align="center"><a href="infos.php?targetId='. $player->id .'">mat.'. ($player->display_id ?? $player->id) .'</a></td>
