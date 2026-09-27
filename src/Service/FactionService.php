@@ -245,7 +245,7 @@ class FactionService
         $rows = $this->entityManager->getConnection()->fetchAllAssociative(
             "SELECT p.id, p.name, p.race, r.label, r.playable,
                     b.build_state, cs.work_done AS site_done, cs.work_total AS site_total,
-                    c.x, c.y, c.plan,
+                    c.x, c.y, c.z, c.plan,
                     r.pv AS pv_max, COALESCE(pb.n, 0) AS pv_deficit,
                     ed.player_id IS NOT NULL AS decays
                FROM players p
@@ -272,6 +272,7 @@ class FactionService
             'site_total'  => $row['site_total'] !== null ? (int) $row['site_total'] : null,
             'x'           => (int) $row['x'],
             'y'           => (int) $row['y'],
+            'z'           => (int) $row['z'],
             'plan'        => (string) $row['plan'],
             /* Life as a share of the type's maximum: this is the only place
                a faction is told a construction is going soft, so it carries
@@ -293,7 +294,7 @@ class FactionService
     public function containersOf(string $code): array
     {
         $rows = $this->entityManager->getConnection()->fetchAllAssociative(
-            "SELECT p.id, p.name, p.is_open, c.x, c.y, c.plan
+            "SELECT p.id, p.name, p.is_open, c.x, c.y, c.z, c.plan
                FROM players p
                JOIN item_instances i ON i.entity_id = p.id AND i.destroyed = 0
                JOIN items it ON it.id = i.item_id AND it.lockable = 1
@@ -310,6 +311,7 @@ class FactionService
             'isOpen' => (bool) $row['is_open'],
             'x'      => (int) $row['x'],
             'y'      => (int) $row['y'],
+            'z'      => (int) $row['z'],
             'plan'   => (string) $row['plan'],
         ], $rows);
     }

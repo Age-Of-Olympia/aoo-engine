@@ -141,7 +141,7 @@ class FactionChestService
      * Public chests standing on the faction's bank plans — what it may
      * take back.
      *
-     * @return list<array{id: int, name: string, plan: string, x: int, y: int}>
+     * @return list<array{id: int, name: string, plan: string, x: int, y: int, z: int}>
      */
     public function claimableOf(string $code): array
     {
@@ -151,7 +151,7 @@ class FactionChestService
         }
 
         $rows = $this->conn->fetchAllAssociative(
-            "SELECT p.id, p.name, c.plan, c.x, c.y
+            "SELECT p.id, p.name, c.plan, c.x, c.y, c.z
                FROM players p
                JOIN item_instances ii ON ii.entity_id = p.id AND ii.destroyed = 0
                JOIN items i ON i.id = ii.item_id AND i.lockable = 1
@@ -169,6 +169,7 @@ class FactionChestService
             'plan' => (string) $row['plan'],
             'x'    => (int) $row['x'],
             'y'    => (int) $row['y'],
+            'z'    => (int) $row['z'],
         ], $rows);
     }
 

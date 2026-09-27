@@ -510,7 +510,7 @@ class FactionView
 
             echo '
             <td>' . htmlspecialchars((string) ($planJson->name ?? '?'), ENT_QUOTES, 'UTF-8')
-                . ' (' . (int) $b['x'] . ', ' . (int) $b['y'] . ')</td>
+                . ' (' . (int) $b['x'] . ', ' . (int) $b['y'] . ', ' . (int) $b['z'] . ')</td>
         </tr>
         ';
         }
@@ -662,7 +662,7 @@ class FactionView
             <td>' . ($chest['isOpen'] ? 'Ouvert' : '<span class="ra ra-key"></span> Fermé')
                 . ($member ? self::lockCellHtml((int) $chest['id'], $actorId) : '') . '</td>
             <td>' . htmlspecialchars((string) ($planJson->name ?? '?'), ENT_QUOTES, 'UTF-8')
-                . ' (' . (int) $chest['x'] . ', ' . (int) $chest['y'] . ')</td>'
+                . ' (' . (int) $chest['x'] . ', ' . (int) $chest['y'] . ', ' . (int) $chest['z'] . ')</td>'
             . ($members !== [] ? '
             <td>' . self::chestStewardCellHtml((int) $chest['id'], $members) . '</td>' : '') . '
         </tr>
@@ -698,7 +698,7 @@ class FactionView
      * Public chests on the faction's bank plans — each one taken back,
      * or left public, by choice.
      *
-     * @param list<array{id: int, name: string, plan: string, x: int, y: int}> $chests FactionChestService::claimableOf()
+     * @param list<array{id: int, name: string, plan: string, x: int, y: int, z: int}> $chests FactionChestService::claimableOf()
      */
     public static function renderClaimableChests(array $chests): void
     {
@@ -719,7 +719,7 @@ class FactionView
         <tr>
             <td>' . htmlspecialchars($chest['name'], ENT_QUOTES, 'UTF-8') . '</td>
             <td>' . htmlspecialchars((string) ($planJson->name ?? $chest['plan']), ENT_QUOTES, 'UTF-8')
-                . ' (' . $chest['x'] . ', ' . $chest['y'] . ')</td>
+                . ' (' . $chest['x'] . ', ' . $chest['y'] . ', ' . $chest['z'] . ')</td>
             <td><button class="faction-chest-claim" data-chest="' . $chest['id'] . '">Reprendre</button></td>
         </tr>
         ';
