@@ -101,9 +101,11 @@ if($res->num_rows){
                 '. htmlspecialchars($elements->labelOf($row->name)) .'<br />
                 ';
 
-                if((new \App\Service\EffectService())->exists($row->name)){
+                $effect = $elements->effectOf($row->name);
 
-                    echo 'Effet: <span class="ra '. (new \App\Service\EffectService())->getIcon($row->name) .'"></span>';
+                if($effect !== null){
+
+                    echo 'Effet: <span class="ra '. (new \App\Service\EffectService())->getIcon($effect) .'"></span>';
                 }
                 else{
 
