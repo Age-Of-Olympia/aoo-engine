@@ -1164,10 +1164,10 @@ class View{
                     $flowAxis = null;
                     // One drawing per cell, or two clipped halves at an elbow
                     $halves = [['turn' => $angle, 'clip' => '', 'clipId' => '']];
-                    if($row->whichTable == 'elements'){
+                    // A non-fluid type is drawn cell by cell: no fade, no elbow, no phase shift
+                    if($row->whichTable == 'elements' && $elementImages->isFluid($row->name)){
 
                         $flowAxis = self::textureFlowAxis($elementImages->imagePath($row->name));
-                        $halves = [['turn' => $angle, 'clip' => '', 'clipId' => '']];
 
                         $edgeBits = self::elementEdgeBits($elementAt, (int) $coords->x, (int) $coords->y, $row->name);
                         $edgeMask = $edgeBits ? ' mask="url(#elem-edge-'. $edgeBits .')"' : '';

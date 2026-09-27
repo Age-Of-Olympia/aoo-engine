@@ -44,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['element_type'])) {
         $name = (string) $_POST['element_type'];
         $effect = trim((string) ($_POST['effect'] ?? ''));
         $elements->setEffect($name, $effect === '' ? null : $effect);
+        $elements->setFluid($name, isset($_POST['fluid']));
         setFlash('success', $effect === ''
             ? "« {$name} » est maintenant un décor, sans effet."
             : "Marcher sur « {$name} » applique maintenant l'effet « {$effect} ».");
@@ -94,6 +95,9 @@ foreach ($names as $name) {
     $does = '<form method="post" class="d-flex gap-2 mb-0">' . $csrf->renderTokenField()
         . '<input type="hidden" name="element_type" value="' . e($name) . '">'
         . '<select name="effect" class="form-control form-control-sm" style="width:auto">' . $options . '</select>'
+        . '<label class="mb-0 d-flex align-items-center gap-1" title="Se fond avec ses voisins de la même famille :'
+            . ' bords estompés, coudes. Décoché, chaque case est dessinée seule.">'
+            . '<input type="checkbox" name="fluid"' . ($elements->isFluid($name) ? ' checked' : '') . '> fluide</label>'
         . '<button class="btn btn-sm btn-outline-primary">Enregistrer</button>'
         . ($effect !== null
             ? ' <a class="btn btn-sm btn-link" href="/admin/effects.php?action=edit&amp;name=' . e(urlencode($effect)) . '">voir</a>'
@@ -118,7 +122,9 @@ $content = '<div class="d-flex justify-content-between align-items-center mb-3">
     . 'La liste vient des <strong>images</strong> de <code>img/elements/</code> ; '
     . 'l\'<strong>effet choisi</strong> est appliqué quand on marche sur la case. '
     . 'Tant qu\'aucun n\'a été choisi, c\'est l\'effet du même nom, s\'il existe. '
-    . 'Un type sans effet est purement décoratif.'
+    . 'Un type sans effet est purement décoratif. '
+    . 'Un type <strong>fluide</strong> (eau, lave…) se fond avec ses voisins de la même famille ; '
+    . 'décoché, chaque case est dessinée seule.'
     . ($inert > 0
         ? ' <strong>' . $inert . ' type(s) sans effet</strong> sur cette carte.'
         : '')

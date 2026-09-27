@@ -37,7 +37,7 @@ class MapElementService
         return array_values(array_unique($names));
     }
 
-    /** @var array<string, ?string>|null element_types, read once per request */
+    /** @var array<string, array{effect: ?string, fluid: bool}>|null element_types, read once per request */
     private static ?array $types = null;
 
     /** Placeable elements that do apply an effect on step. @return list<string> */
@@ -52,17 +52,30 @@ class MapElementService
      */
     public function effectOf(string $element): ?string
     {
+        $types = self::types();
+        $effect = isset($types[$element]) ? $types[$element]['effect'] : $element;
+
+        return $effect !== null && (new EffectService())->exists($effect) ? $effect : null;
+    }
+
+    /** Whether the element blends with its neighbours (edge fades, elbows); a type without a row does. */
+    public function isFluid(string $element): bool
+    {
+        return self::types()[$element]['fluid'] ?? true;
+    }
+
+    /** @return array<string, array{effect: ?string, fluid: bool}> */
+    private static function types(): array
+    {
         if (self::$types === null) {
             self::$types = [];
-            $res = (new Db())->exe('SELECT name, effect_name FROM element_types');
+            $res = (new Db())->exe('SELECT name, effect_name, fluid FROM element_types');
             while ($row = $res->fetch_object()) {
-                self::$types[(string) $row->name] = $row->effect_name;
+                self::$types[(string) $row->name] = ['effect' => $row->effect_name, 'fluid' => (bool) $row->fluid];
             }
         }
 
-        $effect = array_key_exists($element, self::$types) ? self::$types[$element] : $element;
-
-        return $effect !== null && (new EffectService())->exists($effect) ? $effect : null;
+        return self::$types;
     }
 
     public static function clearCache(): void
@@ -81,6 +94,19 @@ class MapElementService
             'INSERT INTO element_types (name, effect_name) VALUE (?, ?)
              ON DUPLICATE KEY UPDATE effect_name = VALUES(effect_name)',
             [$element, $effect]
+        );
+        self::clearCache();
+    }
+
+    public function setFluid(string $element, bool $fluid): void
+    {
+        /* A new row keeps the implicit effect (the one of the same name),
+         * as effectOf() gives it to a type without a row. */
+        (new Db())->exe(
+            'INSERT INTO element_types (name, effect_name, fluid)
+             SELECT ?, (SELECT name FROM effects WHERE name = ?), ?
+             ON DUPLICATE KEY UPDATE fluid = VALUES(fluid)',
+            [$element, $element, (int) $fluid]
         );
         self::clearCache();
     }

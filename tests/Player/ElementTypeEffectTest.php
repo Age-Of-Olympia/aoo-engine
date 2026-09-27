@@ -42,4 +42,16 @@ class ElementTypeEffectTest extends LegacyPlayerFixtureTestCase
         $this->assertNull($elements->effectOf('glu_test'), 'decor, though an effect bears its name');
         $this->assertFalse($elements->isBuildableOver('glu_test'), 'decor blocks construction');
     }
+
+    public function testFluidIsSetWithoutTouchingTheEffect(): void
+    {
+        $this->link->executeStatement("INSERT INTO effects (name, label) VALUES ('glu_test', 'Glu')");
+        EffectService::clearCache();
+        $elements = new MapElementService();
+        $this->assertTrue($elements->isFluid('glu_test'), 'no row: fluid');
+
+        $elements->setFluid('glu_test', false);
+        $this->assertFalse($elements->isFluid('glu_test'));
+        $this->assertSame('glu_test', $elements->effectOf('glu_test'), 'the new row keeps the effect of its own name');
+    }
 }
