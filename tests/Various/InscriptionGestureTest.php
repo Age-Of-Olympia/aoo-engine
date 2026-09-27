@@ -2,10 +2,8 @@
 
 namespace Tests\Various;
 
-use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
 use App\Service\InscriptionService;
-use Classes\Player;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
@@ -45,16 +43,6 @@ class InscriptionGestureTest extends LegacyPlayerFixtureTestCase
         return $action;
     }
 
-    private function loaded(int $id): Player
-    {
-        $player = PlayerFactory::legacy($id);
-        $player->get_data();
-        $player->get_caracs();
-        $player->getCoords();
-
-        return $player;
-    }
-
     public function testOnlyItsPeopleWriteOnAThing(): void
     {
         [$chest, $owner] = $this->ownedChestWithOwnerBeside();
@@ -78,15 +66,15 @@ class InscriptionGestureTest extends LegacyPlayerFixtureTestCase
     {
         $action = $this->ecrire();
         [$chest, $owner] = $this->ownedChestWithOwnerBeside();
-        $actor = $this->loaded($owner);
+        $actor = $this->loadedCharacter($owner);
         $before = $actor->getRemaining('a');
 
         $_POST['text'] = 'Réserve';
-        $results = (new ActionExecutorService($action, $actor, $this->loaded($chest)))->executeAction();
+        $results = (new ActionExecutorService($action, $actor, $this->loadedCharacter($chest)))->executeAction();
 
         $this->assertFalse($results->isBlocked());
         $this->assertSame('Réserve', $this->link->fetchOne('SELECT text FROM players WHERE id = ?', [$chest]));
-        $this->assertSame($before - 1, $this->loaded($owner)->getRemaining('a'), 'writing costs 1 A');
+        $this->assertSame($before - 1, $this->loadedCharacter($owner)->getRemaining('a'), 'writing costs 1 A');
     }
 
     public function testWithoutTextTheGestureDoesNothing(): void
@@ -95,7 +83,7 @@ class InscriptionGestureTest extends LegacyPlayerFixtureTestCase
         [$chest, $owner] = $this->ownedChestWithOwnerBeside();
 
         unset($_POST['text']);
-        $results = (new ActionExecutorService($action, $this->loaded($owner), $this->loaded($chest)))->executeAction();
+        $results = (new ActionExecutorService($action, $this->loadedCharacter($owner), $this->loadedCharacter($chest)))->executeAction();
 
         $this->assertTrue($results->isBlocked(), 'no text sent (prompt cancelled): nothing written, nothing paid');
     }

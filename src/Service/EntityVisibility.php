@@ -21,12 +21,12 @@ final class EntityVisibility
     {
     }
 
-    public function isSelf(int $entityId): bool
+    private function isSelf(int $entityId): bool
     {
         return (int) $this->viewer->id === $entityId;
     }
 
-    public function isAdmin(): bool
+    private function isAdmin(): bool
     {
         return (bool) $this->viewer->have_option('isAdmin');
     }
@@ -53,9 +53,10 @@ final class EntityVisibility
             return true;
         }
 
-        $player = \App\Factory\PlayerFactory::legacy($entityId);
-
-        return !$player->have_option('invisibleMode');
+        return !\App\Factory\EntityManagerFactory::getEntityManager()->getConnection()->fetchOne(
+            "SELECT 1 FROM players_options WHERE player_id = ? AND name = 'invisibleMode'",
+            [$entityId]
+        );
     }
 
     /** A character's PV, effects, message and worn equipment: itself, or within Perception. */

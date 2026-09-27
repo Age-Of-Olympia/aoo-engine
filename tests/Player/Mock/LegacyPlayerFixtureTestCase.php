@@ -311,6 +311,33 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
     }
 
     /** A catalogue action, or skip when the world lacks it. */
+    /**
+     * A fresh character standing on a gaia tile, factionless, data, caracs
+     * and coords loaded — its cells synced, so reach reads the new tile.
+     */
+    protected function characterAt(string $name, int $x, int $y): Player
+    {
+        $id = (int) $this->createRealPlayer($name)->id;
+        $this->link->executeStatement(
+            "UPDATE players SET coords_id = ?, faction = '', secretFaction = '' WHERE id = ?",
+            [$this->coordsIdOn('gaia', $x, $y), $id]
+        );
+        (new \App\Service\Map\EntityCellService($this->link))->syncCells($id);
+
+        return $this->loadedCharacter($id);
+    }
+
+    /** A legacy character with data, caracs and coords loaded — after any raw SQL. */
+    protected function loadedCharacter(int $id): Player
+    {
+        $player = \App\Factory\PlayerFactory::legacy($id);
+        $player->get_data();
+        $player->get_caracs();
+        $player->getCoords();
+
+        return $player;
+    }
+
     protected function actionOrSkip(string $name): \App\Interface\ActionInterface
     {
         $action = \App\Factory\ActionFactory::getAction($name);

@@ -27,10 +27,8 @@ if ($row === null) {
 
 $containerName = (string) $row->name !== '' ? (string) $row->name : 'Contenant';
 
-/* The container's face: the same sprite rule as the board and the card. */
-$sprite = ((string) $row->player_type === 'item')
-    ? \Classes\View::exemplarSprite((string) $row->race, $containerName)
-    : \Classes\View::structureSprite((string) $row->race, $containerName);
+/* The container's face: its entity profile's portrait, as on the card and the sheet. */
+$sprite = \App\View\Entity\EntityProfile::of($player, $containerId)->portraitUrl();
 
 echo '<h1><img src="' . htmlspecialchars($sprite, ENT_QUOTES, 'UTF-8') . '"'
     . ' style="max-height:48px;vertical-align:middle;margin-right:8px;" alt="" />'

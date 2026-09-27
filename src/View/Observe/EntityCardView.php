@@ -12,6 +12,8 @@ use App\Service\ActionService;
 use App\Service\BuildingService;
 use App\Service\FactionService;
 use App\Service\RaceService;
+use App\View\Entity\EntityParts;
+use App\View\Entity\EntityProfile;
 use Classes\Player;
 use Classes\Str;
 use Classes\Ui;
@@ -57,7 +59,7 @@ final class EntityCardView
         $target->get_data();
         $target->get_caracs();
 
-        [$card, $equipStrip] = self::renderTarget($player, $target, new RaceService(), $x, $y, $coords);
+        [$card, $equipStrip] = self::renderTarget($player, $target, $x, $y, $coords);
 
         self::echoOthers($ids, $focus, $x, $y);
 
@@ -92,122 +94,48 @@ final class EntityCardView
     }
 
     /**
-     * The god an entity belongs to, or null — only a consecrated altar has one.
-     */
-    private static function godOf(Player $target): ?Player
-    {
-        $godId = (int) ($target->data->godId ?? 0);
-
-        if ($godId === 0 || ($target->data->race ?? '') !== 'altar') {
-            return null;
-        }
-
-        $god = PlayerFactory::legacy($godId);
-        $god->get_data();
-
-        return empty($god->data->name) ? null : $god;
-    }
-
-    /**
-     * La carte complète de la PREMIÈRE entité de la case.
+     * La carte complète de la PREMIÈRE entité de la case : la forme
+     * courte de la fiche, lue dans le même EntityProfile, avec les
+     * gestes de la case en plus.
      *
      * @return array{0: string, 1: string} [$card, $equipStrip]
      */
-    private static function renderTarget(Player $player, Player $target, RaceService $raceService, $x, $y, object $coords): array
+    private static function renderTarget(Player $player, Player $target, $x, $y, object $coords): array
     {
-        $visibility = new \App\Service\EntityVisibility($player);
-        $isStructure = \App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? null)->isStructure();
-        // A character's PV, effects, message and equipment: within Perception.
-        $detailed = $isStructure || $visibility->seesDetailsOf((int) $target->id);
-
-        $pvPct = ($target->caracs->pv > 0 && $detailed)
-            ? floor($target->getRemaining('pv') / $target->caracs->pv * 100)
-            : 100;
-
-        // Bâtiment : satellite + raison de fermeture calculés AVANT la
-        // carte — le bouton « Parler » entre dans les actions, la
-        // pastille d'état après la carte réutilise les mêmes valeurs.
-        $buildingDetails = null;
-        $buildingClosure = null;
-        if (($target->data->player_type ?? '') === 'building') {
-            $buildingDetails = (new BuildingService())->getDetails($target->id);
-            if ($buildingDetails !== null) {
-                $buildingClosure = (new BuildingService())
-                    ->closureReason((int) $target->id, $buildingDetails, (int) $pvPct);
-            }
-        } elseif (($target->data->player_type ?? '') === 'item') {
-            // A shut chest has nothing to read aloud either.
-            $buildingClosure = (new \App\Service\ContainerService())->closureReasonOf((int) $target->id);
-        }
+        $profile = new EntityProfile($player, $target);
 
         /* An altar shows WHOSE it is: its god's portrait behind the card and
-         * a link to their sheet, as the resource card did before the altar
-         * became an entity. */
-        $god = self::godOf($target);
-
-        /* Same resolution as the board: a structure whose stored
-         * portrait is empty or points nowhere shows its sprite chain,
-         * down to the initials frame — a chest without art included. */
-        $bg = $god !== null ? (string) $god->data->portrait : (string) ($target->data->portrait ?? '');
-        if (
-            $god === null
-            && \App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? null)->isStructure()
-            && ($bg === '' || !file_exists($bg))
-        ) {
-            $bg = (($target->data->player_type ?? '') === 'item')
-                ? \Classes\View::exemplarSprite((string) $target->data->race, (string) $target->data->name)
-                : \Classes\View::structureSprite((string) $target->data->race, (string) $target->data->name);
-        }
+         * a link to their sheet. */
+        $name = '<a href="infos.php?targetId=' . $target->id . '">' . $target->data->name . '</a>'
+            . EntityParts::effectIconsHtml($profile)
+            . ($profile->god !== null
+                ? ' <a href="infos.php?targetId=' . $profile->god->id . '">('
+                    . htmlspecialchars((string) $profile->god->data->name, ENT_QUOTES, 'UTF-8') . ')</a>'
+                : '');
 
         $data = (object) [
-            'bg' => $bg,
+            'bg' => $profile->portraitUrl(),
             /* A multi-cell decor shows whole, not by the corner its
              * portrait happens to name. */
             'portraitHtml' => (new SceneryPortraitView())->compose((int) $target->id),
-            'name' => $god !== null
-                ? self::nameWithEffects($target, $detailed) . ' <a href="infos.php?targetId=' . $god->id . '">('
-                    . htmlspecialchars((string) $god->data->name, ENT_QUOTES, 'UTF-8') . ')</a>'
-                : self::nameWithEffects($target, $detailed),
-            'img' => self::buttonsHtml($player, $target, $buildingDetails, $buildingClosure, $x, $y, $coords),
-            'pvPct' => $pvPct,
-            'type' => self::typeLabel($raceService, $target),
-            'text' => self::cardText($visibility, $target, $buildingDetails, $detailed),
+            'name' => $name,
+            'img' => self::buttonsHtml($player, $target, $profile->details, $profile->closure, $x, $y, $coords),
+            'pvPct' => $profile->pvPct,
+            'type' => $profile->typeLabel(),
+            'text' => $profile->textHtml(),
             'race' => $target->data->race,
-            'faction' => self::factionHtml($visibility, $target),
+            'faction' => EntityParts::factionIconsHtml($profile),
         ];
 
-        $card = Ui::get_card($data);
-
-        if ($buildingDetails !== null) {
-            $card .= self::buildingStatusHtml($raceService, $target, $buildingDetails, $buildingClosure, (int) $pvPct);
-        }
-
-        $card .= self::lockStatusHtml($target, (int) $pvPct);
-
-        $card .= self::familyStatusHtml($player, $target, (string) $coords->plan, (int) $x, (int) $y);
+        $card = Ui::get_card($data)
+            . EntityParts::statusHtml($profile)
+            . self::familyStatusHtml($player, $target, (string) $coords->plan, (int) $x, (int) $y);
 
         // Équipement porté — alvéoles de la vue de sélection du HUD
         // papier (écrans larges) ; l'habillage hérité garde sa carte.
-        $equipStrip = Ui::usesPaperTheme() && $detailed ? \App\View\EquipmentSlotsView::render($target->id) : '';
+        $equipStrip = Ui::usesPaperTheme() && $profile->detailed ? \App\View\EquipmentSlotsView::render($target->id) : '';
 
         return [$card, $equipStrip];
-    }
-
-    /** Nom cliquable + icônes d'effets visibles (à portée de Perception). */
-    private static function nameWithEffects(Player $target, bool $withEffects): string
-    {
-        $name = '<a href="infos.php?targetId=' . $target->id . '">' . $target->data->name . '</a>';
-
-        $name .= '<div class="effects">';
-        foreach ($withEffects ? $target->getEffects() : [] as $effect) {
-            if ($target->effectService->isHidden($effect->getName())) {
-                continue;
-            }
-            $name .= ' <a href="infos.php?targetId=' . $target->id . '"><span class="ra '
-                . $target->effectService->getIcon($effect->getName()) . '"></span></a>';
-        }
-
-        return $name . '</div>';
     }
 
     /**
@@ -392,160 +320,6 @@ final class EntityCardView
         }
 
         return '<a href="infos.php?targetId=' . $target->id . '"><button class="action"><span class="ra ' . $icon . '"></span> <span class="action-name">' . $label . '</span></button></a>';
-    }
-
-    /**
-     * Le texte porté par l'entité, tel que la carte de la case peut le
-     * montrer.
-     *
-     * Pour un PERSONNAGE, c'est son message du jour, et il se lit comme
-     * avant. Saisi par le joueur, donc assaini ici — Ui::get_card sert
-     * aussi des textes composés par le jeu (état d'une ressource, avec
-     * ses propres balises), on ne peut donc pas assainir dans le
-     * composant.
-     *
-     * Pour un DÉCOR, c'est son inscription, et elle obéit aux mêmes
-     * deux règles que dans la fiche : le texte de création ne compte
-     * pas, et hors de portée on annonce qu'il y a quelque chose plutôt
-     * que de le donner à lire. Sans ça, la carte affichait l'épitaphe
-     * en entier à côté d'un bouton « Trop loin pour lire », et les
-     * milliers de murs du monde réclamaient qu'on les frappe.
-     */
-    private static function cardText(
-        \App\Service\EntityVisibility $visibility,
-        Player $target,
-        ?BuildingDetails $buildingDetails,
-        bool $detailed
-    ): string {
-        $isDecor = \App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? null)->isStructure();
-
-        if (!$isDecor) {
-            return $detailed
-                ? Str::richText($target->data->text)
-                : '<em>Ce personnage est trop éloigné pour l\'entendre parler.</em>';
-        }
-
-        $inscription = \App\Service\BuildingService::inscriptionOf($target);
-        if ($inscription === '') {
-            return '';
-        }
-
-        return $visibility->readsInscriptionOf($target, $buildingDetails)
-            ? Str::richText($inscription)
-            : '<em>' . \App\Service\BuildingService::OUT_OF_REACH_NOTICE . '</em>';
-    }
-
-    /** Ligne de type : libellé de race, suffixes PNJ et inactif. */
-    private static function typeLabel(RaceService $raceService, Player $target): string
-    {
-        $raceJson = $raceService->getRaceData($target->data->race);
-        $pnjText = $target->id < 0 ? ' - PNJ' : '';
-
-        $label = $raceJson
-            ? $raceJson->name . $pnjText
-            : ucfirst($target->data->race ?? 'inconnu') . $pnjText;
-
-        if ($target->id > 0 && !empty($target->data->isInactive)) {
-            $label .= ' (inactif)';
-        }
-
-        return $label;
-    }
-
-    /** Icônes de faction — la secrète seulement entre membres. */
-    private static function factionHtml(\App\Service\EntityVisibility $visibility, Player $target): string
-    {
-        $factionService = new FactionService();
-
-        $faction = '';
-        $factionJson = $factionService->getFactionData($target->data->faction);
-        if ($factionJson && isset($factionJson->raFont)) {
-            $faction = '<a href="faction.php?faction=' . $target->data->faction . '"><span class="ra '
-                . $factionJson->raFont . '"></span></a>';
-        }
-
-        if ($visibility->seesSecretFaction((string) $target->data->secretFaction)) {
-            $secretJson = $factionService->getFactionData($target->data->secretFaction);
-            if ($secretJson) {
-                $faction .= '<a href="faction.php?faction=' . $target->data->secretFaction . '"><span class="ra '
-                    . $secretJson->raFont . '"></span></a>';
-            }
-        }
-
-        return $faction;
-    }
-
-    /**
-     * Pastille d'état sous la carte : porte Ouvert/Fermé pour tout
-     * ÉDIFICE (un mur construit n'a pas de porte), état + PV pour tous.
-     */
-    private static function buildingStatusHtml(
-        RaceService $raceService,
-        Player $target,
-        BuildingDetails $details,
-        ?string $closure,
-        int $pvPct
-    ): string {
-        $stateLabels = [
-            BuildingDetails::STATE_BUILT => 'Construit',
-            BuildingDetails::STATE_CONSTRUCTION => 'En construction',
-            BuildingDetails::STATE_RUIN => 'Ruine',
-        ];
-        $stateLabel = $stateLabels[$details->getBuildState()] ?? ucfirst($details->getBuildState());
-
-        // The tile card tells where the site stands, like the sheet.
-        $progress = (new \App\Service\ConstructionSiteService())->progressOf((int) $target->id);
-        if ($progress !== null) {
-            $stateLabel .= ' (' . $progress['done'] . '/' . $progress['total'] . ')';
-        }
-
-        /* One predicate for the Ouvert/Fermé span, everywhere: the TYPE
-         * says what can be shut (isLockable) — an édifice, a door in a
-         * wall, and the chest pastille below reads the same rule. */
-        $lockable = (new \App\Service\LockService())->isLockable((int) $target->id);
-
-        $door = $lockable ? self::doorSpanHtml($closure) : '';
-
-        return '<div class="building-status'
-            . ($lockable && $closure !== null ? ' building-status--closed' : '') . '">'
-            . $door
-            . '<span class="building-status-state">' . $stateLabel . ' · PV ' . $pvPct . '%</span>'
-            . '</div>';
-    }
-
-    /**
-     * The Ouvert/Fermé span, one builder for every pastille that says
-     * it — the reason joins when the latch does not explain it alone.
-     */
-    private static function doorSpanHtml(?string $closure): string
-    {
-        return $closure === null
-            ? '<span class="building-status-door building-status-door--open">Ouvert</span>'
-            : '<span class="building-status-door building-status-door--closed">Fermé'
-                . ($closure !== \App\Service\BuildingService::CLOSED_BY_HAND ? ' (' . $closure . ')' : '') . '</span>';
-    }
-
-    /**
-     * The building pastille's phrase, for every OTHER lockable thing —
-     * a chest: open or shut, read on the tile card the same way a door
-     * is. One style for one idea, as the harvest pastille already says.
-     */
-    private static function lockStatusHtml(Player $target, int $pvPct): string
-    {
-        if (($target->data->player_type ?? '') === 'building') {
-            return ''; // the building pastille already speaks
-        }
-        if (!(new \App\Service\LockService())->isLockable((int) $target->id)) {
-            return '';
-        }
-
-        $closure = (new \App\Service\ContainerService())->closureReasonOf((int) $target->id);
-        $door = self::doorSpanHtml($closure);
-
-        return '<div class="building-status' . ($closure !== null ? ' building-status--closed' : '') . '">'
-            . $door
-            . '<span class="building-status-state">PV ' . $pvPct . '%</span>'
-            . '</div>';
     }
 
     /** The badge under the card that says what this family of entity is good for. */

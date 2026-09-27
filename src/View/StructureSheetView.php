@@ -2,17 +2,13 @@
 
 namespace App\View;
 
-use App\Entity\Building;
-use App\Entity\BuildingDetails;
-use App\Factory\EntityManagerFactory;
 use App\Entity\Structure;
 use App\Service\BuildingService;
-use App\Service\FactionService;
 use App\Service\RaceService;
+use App\View\Entity\EntityParts;
+use App\View\Entity\EntityProfile;
 use Classes\Player;
-use Classes\Str;
 use Classes\Ui;
-use Classes\View;
 
 /**
  * Fiche d'une STRUCTURE (bâtiment, objet unique) pour infos.php /
@@ -40,30 +36,12 @@ final class StructureSheetView
      */
     public static function render(Player $player, Structure $entity, bool $hudPanel = false): void
     {
-        $target = \App\Factory\PlayerFactory::legacy($entity->getId());
-        $target->get_data();
-        $target->get_caracs();
-
-        $pvPct = ($target->caracs->pv > 0)
-            ? (int) floor($target->getRemaining('pv') / $target->caracs->pv * 100)
-            : 100;
-
+        $profile = EntityProfile::of($player, (int) $entity->getId());
+        $target = $profile->target;
+        $details = $profile->details;
+        $closure = $profile->closure;
+        $typeLabel = $profile->typeLabel();
         $race = (new RaceService())->getRaceByName($entity->getRace());
-        $typeLabel = $race !== null
-            ? $race->getLabel()
-            : \App\Service\ItemInstanceService::catalogLabel(EntityManagerFactory::getEntityManager()->getConnection(), $entity->getRace());
-
-        $buildingService = new BuildingService();
-        $details = $entity instanceof Building ? $buildingService->getDetails($entity->getId()) : null;
-        $closure = $details !== null
-            ? $buildingService->closureReason($entity->getId(), $details, $pvPct)
-            : null;
-        $isEdifice = (bool) $race?->isEdifice();
-        $containers = new \App\Service\ContainerService();
-        $isChest = $details === null && $containers->isContainer($entity->getId());
-        if ($isChest) {
-            $closure = $containers->closureReasonOf($entity->getId());
-        }
 
         ob_start();
 
@@ -80,8 +58,8 @@ final class StructureSheetView
         <tr>
             <td width="210" class="infos-portrait" valign="top">
                 <div style="position: relative; display: inline-block;">
-                    <img src="' . self::portraitOrInitials($entity, $details) . '" style="max-width: 200px;" />
-                    ' . Ui::get_pv_veil($pvPct, $race?->getWoundColor()) . '
+                    <img src="' . $profile->portraitUrl() . '" style="max-width: 200px;" />
+                    ' . Ui::get_pv_veil((int) $profile->pvPct, $race?->getWoundColor()) . '
                 </div>
             </td>
             <td valign="top" style="text-align: left; padding: 10px;">
@@ -89,82 +67,15 @@ final class StructureSheetView
                 ' . ($typeLabel !== $entity->getName() ? '<p>' . htmlspecialchars($typeLabel, ENT_QUOTES, 'UTF-8') . '</p>' : '') . '
                 ';
 
-        $stateLabels = [
-            BuildingDetails::STATE_BUILT => 'Construit',
-            BuildingDetails::STATE_CONSTRUCTION => 'En construction',
-            BuildingDetails::STATE_RUIN => 'Ruine',
-        ];
+        echo EntityParts::statusHtml($profile) . EntityParts::ownerHtml($profile);
 
-        if ($details !== null) {
-            $stateLabel = $stateLabels[$details->getBuildState()] ?? ucfirst($details->getBuildState());
-
-            /* The one swinging the hammer sees where the site stands — the
-             * admin dashboard already did. */
-            $progress = (new \App\Service\ConstructionSiteService())->progressOf($entity->getId());
-            if ($progress !== null) {
-                $stateLabel .= ' (' . $progress['done'] . '/' . $progress['total'] . ')';
-            }
-
-            echo '<div class="building-status'
-                . ($isEdifice && $closure !== null ? ' building-status--closed' : '') . '">';
-            if ($isEdifice) {
-                echo $closure === null
-                    ? '<span class="building-status-door building-status-door--open">Ouvert</span>'
-                    : '<span class="building-status-door building-status-door--closed">Fermé'
-                        . ($closure !== 'fermé volontairement' ? ' (' . $closure . ')' : '') . '</span>';
-            }
-            echo '<span class="building-status-state">' . $stateLabel . ' · PV ' . $pvPct . '%</span></div>';
-        }
-
-        if ($isChest) {
-            echo '<div class="building-status' . ($closure !== null ? ' building-status--closed' : '') . '">'
-                . ($closure === null
-                    ? '<span class="building-status-door building-status-door--open">Ouvert</span>'
-                    : '<span class="building-status-door building-status-door--closed">Fermé'
-                        . ($closure !== BuildingService::CLOSED_BY_HAND ? ' (' . $closure . ')' : '') . '</span>')
-                . '<span class="building-status-state">PV ' . $pvPct . '%</span></div>';
-        }
-
-        if ($details !== null || $isChest) {
-            if ($entity->getOwnerId() !== null) {
-                $owner = \App\Factory\PlayerFactory::entity($entity->getOwnerId());
-                if ($owner !== null) {
-                    echo '<p><small>Propriétaire : <a href="infos.php?targetId=' . $entity->getOwnerId() . '">'
-                        . htmlspecialchars($owner->getName(), ENT_QUOTES, 'UTF-8') . '</a></small></p>';
-                }
-            }
-
-            $factionJson = $entity->getFaction() !== ''
-                ? (new FactionService())->getFactionData($entity->getFaction())
-                : null;
-            if ($factionJson !== null && isset($factionJson->raFont)) {
-                echo '<p><small>Faction : <a href="faction.php?faction=' . $entity->getFaction() . '">'
-                    . '<span class="ra ' . $factionJson->raFont . '"></span></a></small></p>';
-            }
-        }
-
-        /* Message du jour du bâtiment — son INSCRIPTION : ce qui est
-         * gravé, peint ou cloué dessus. Même colonne que le message du
-         * jour d'un personnage (players.text), même emplacement dans la
-         * fiche ; même traitement aussi, mise en forme simple tolérée et
-         * le reste neutralisé.
-         *
-         * Deux règles s'y ajoutent. Le texte de création ne compte pas
-         * pour une inscription, sans quoi les milliers de murs du monde
-         * annonceraient tous « Je suis nouveau, frappez-moi! ». Et la
-         * PORTÉE : hors d'atteinte on ne se tait pas — ne rien afficher
-         * ne se distingue pas d'un objet muet, et le joueur ne saurait
-         * jamais qu'il devait s'approcher. */
-        $inscription = \App\Service\BuildingService::inscriptionOf($target);
-
-        $visibility = new \App\Service\EntityVisibility($player);
-
-        if ($inscription !== '') {
-
-            echo $visibility->readsInscriptionOf($target, $details)
-                ? '<p><sup>' . Str::richText($inscription) . '</sup></p>'
-                : '<p><sup class="building-status-state">'
-                    . \App\Service\BuildingService::OUT_OF_REACH_NOTICE . '</sup></p>';
+        /* Its INSCRIPTION (players.text, the column of a character's
+         * message): the creation text does not count, and out of reach
+         * the sheet says there is something to read rather than falling
+         * silent (EntityProfile::textHtml). */
+        $text = $profile->textHtml();
+        if ($text !== '') {
+            echo '<p><sup>' . $text . '</sup></p>';
         }
 
         echo '
@@ -174,26 +85,16 @@ final class StructureSheetView
         ';
 
         // Conversation — façon marchand : plein panneau, grand avatar.
-        // Garde de PORTÉE côté serveur (même mécanisme que le MDJ limité
-        // à la Perception) : il faut être sur une case adjacente.
+        // Garde de PORTÉE côté serveur : il faut être sur une case adjacente.
         if ($details !== null && $details->getDialog() !== '') {
-
-            $player->getCoords();
-            $targetCoords = $entity->getCoords(EntityManagerFactory::getEntityManager()->getConnection());
-            /* À l'ENTITÉ entière — même règle que le bouton Parler de la
-             * carte et que les gardes d'accès : le tenancier sert par
-             * chaque case de l'emprise. */
-            $distance = $targetCoords !== null
-                ? View::get_distance_to_entity($player->coords, (int) $entity->getId(), $targetCoords)
-                : PHP_INT_MAX;
 
             if ($closure !== null) {
                 echo '<div class="building-status building-status--closed" style="margin: 14px auto; text-align: center;">'
                     . '<span class="building-status-door building-status-door--closed">Fermé'
-                    . ($closure !== 'fermé volontairement' ? ' (' . $closure . ')' : '') . '</span>'
+                    . ($closure !== BuildingService::CLOSED_BY_HAND ? ' (' . $closure . ')' : '') . '</span>'
                     . '<span class="building-status-state">Personne ne répond.</span>'
                     . '</div>';
-            } elseif ($distance > 1) {
+            } elseif (!$profile->visibility->isBeside((int) $entity->getId())) {
                 echo '<div class="building-status" style="margin: 14px auto; text-align: center;">'
                     . '<span class="building-status-state">Il faut être directement à côté du bâtiment'
                     . ' pour pouvoir parler au tenancier.</span>'
@@ -201,7 +102,7 @@ final class StructureSheetView
             } else {
                 echo Ui::get_dialog($player, [
                     'name' => $entity->getName(),
-                    'avatar' => self::portraitOrInitials($entity, $details),
+                    'avatar' => $profile->portraitUrl(),
                     'dialog' => $details->getDialog(),
                     'text' => '',
                     'player' => $player,
@@ -213,53 +114,6 @@ final class StructureSheetView
         echo \Classes\Str::minify(ob_get_clean());
 
         // Outside the minifier: the inventory component carries its own scripts.
-        if ($containers->isContainer((int) $entity->getId()) && $containers->closureReasonOf((int) $entity->getId()) === null) {
-            echo $visibility->seesContentsOf((int) $entity->getId())
-                ? self::contentsHtml((int) $entity->getId())
-                : '<div class="building-status" style="margin: 14px auto; text-align: center;">'
-                    . '<span class="building-status-state">Approchez-vous pour voir ce qu\'il contient.</span></div>';
-        }
-    }
-
-    /** What a container holds (chest or building), drawn like the bag, read-only. */
-    private static function contentsHtml(int $chestId): string
-    {
-        $container = new \App\Service\ContainerService();
-        $capacity = $container->capacityOf($chestId);
-
-        return Ui::print_inventory(
-            \Classes\Item::get_item_list($chestId),
-            bagLabel: 'Contenu (' . $container->lineCountOf($chestId)
-                . ($capacity !== null ? '/' . $capacity : '') . ' lignes)'
-        )
-            // Swaps in the item images, as on the bag (no inventory.js: no Use/Drop here).
-            . '<script src="js/progressive_loader.js?v=20260716"></script>';
-    }
-
-    /**
-     * The structure's portrait — the construction site while it is being
-     * built — or, when it has no picture, the same framed-initials fallback
-     * as the board (SVG, sharp at any size).
-     */
-    private static function portraitOrInitials(Structure $entity, ?BuildingDetails $details): string
-    {
-        if ($details?->getBuildState() === BuildingDetails::STATE_CONSTRUCTION) {
-            return BuildingService::siteImage(true);
-        }
-
-        $portrait = (string) $entity->getPortrait();
-
-        if ($portrait !== '' && file_exists($portrait)) {
-            return $portrait;
-        }
-
-        // Portrait figé vide à la conversion (migration sans img/) :
-        // re-résolution par la race au rendu — même repli que le damier.
-        $resolved = \App\Service\BuildingService::resolveAvatar((string) $entity->getRace());
-        if ($resolved !== '') {
-            return $resolved;
-        }
-
-        return \Classes\View::structureInitialsAvatar($entity->getName());
+        echo EntityParts::contentsHtml($profile);
     }
 }

@@ -4,10 +4,10 @@ namespace App\View;
 
 use App\Entity\Character;
 use App\Entity\RealPlayer;
-use App\Service\FactionService;
-use App\Service\PlayerEffectService;
 use App\Service\PlayerService;
 use App\Service\RaceService;
+use App\View\Entity\EntityParts;
+use App\View\Entity\EntityProfile;
 use Classes\Item;
 use Classes\Player;
 use Classes\Str;
@@ -28,7 +28,6 @@ final class InfosSheetView
      */
     public static function render(Player $player, Character $targetEntity, bool $hudPanel = false): void
     {
-        $playerEffectService = new PlayerEffectService();
 
         ob_start();
 
@@ -44,55 +43,17 @@ final class InfosSheetView
 
         $player->getCoords();
 
-        /* PV veil, effects, message and equipment: one rule
-         * (EntityVisibility) — oneself, or within Perception. */
-        $visibility = new \App\Service\EntityVisibility($player);
-        $detailed = $visibility->seesDetailsOf((int) $targetEntity->getId());
-        $seesTimers = $visibility->seesEffectTimersOf(
-            (int) $targetEntity->getId(),
-            (string) $targetEntity->getFaction(),
-            (string) $targetEntity->getSecretFaction()
-        );
+        /* PV veil, effects, factions and message come from the entity's
+         * profile, the one the tile card reads too (EntityProfile). */
+        $profile = EntityProfile::of($player, (int) $targetEntity->getId());
 
         $pvVeil = '';
 
-        if ($detailed) {
+        if ($profile->detailed) {
 
-            $target = \App\Factory\PlayerFactory::legacy($targetEntity->getId());
-            $target->get_data();
-            $target->get_caracs();
+            $pvVeil = \Classes\Ui::get_pv_veil((int) $profile->pvPct, (new \App\Service\RaceService())->getRaceWoundColor($profile->target->data->race ?? null));
 
-            $pvPct = ($target->caracs->pv > 0)
-                ? (int) floor($target->getRemaining('pv') / $target->caracs->pv * 100)
-                : 100;
-
-            $pvVeil = \Classes\Ui::get_pv_veil($pvPct, (new \App\Service\RaceService())->getRaceWoundColor($target->data->race ?? null));
-
-            echo '<div class="infos-effects">';
-
-            $playerEffects = $playerEffectService->getEffectsByPlayerId($targetEntity->getId());
-            $effectService = new \App\Service\EffectService();
-
-            foreach ($playerEffects as $effect) {
-
-                if ($effectService->isHidden($effect->getName())) {
-
-                    continue;
-                }
-
-                if ($seesTimers) {
-
-                    $endTime = PlayerEffectService::describeRemaining($effect->getEndTime());
-                } else {
-
-                    $endTime = '';
-                }
-
-                $what = $effectService->describe($effect->getName(), (int) ($effect->getValue() ?? 1));
-                echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=regles:effets#' . $effect->getName() . '" title="' . htmlspecialchars(ucfirst($effect->getName()) . ($what !== '' ? ' : ' . $what : ''), ENT_QUOTES) . '"><span class="ra ' . $effectService->getIcon($effect->getName()) . '"></span><span style="font-size: 88%;">(' . $effect->getValue() . ') ' . $endTime . ($what !== '' ? ' · ' . $what : '') . '</span></a><br />';
-            }
-
-            echo '</div>';
+            echo '<div class="infos-effects">' . EntityParts::effectsListHtml($profile) . '</div>';
         }
 
 
@@ -131,16 +92,7 @@ final class InfosSheetView
         echo '<div>' . $raceJson->name . $pnjText . $inactifText . ' - <a href="infos.php?targetId=' . $targetEntity->getId() . '&reputation">' . Str::get_reput(floor($targetEntity->getPr() / COEFFICIENT_PR)) . '</a> Rang ' . $targetEntity->getRank() . ' <span style="opacity: 0.6; font-size: 88%; white-space: nowrap;">· mat. ' . $targetEntity->getDisplayId() . '</span></div>';
 
 
-        $factionJson = (new FactionService())->getFactionData($targetEntity->getFaction());
-
-        echo '<div><a href="faction.php?faction=' . $targetEntity->getFaction() . '">' . $factionJson->name . '</a> <span style="font-size: 1.3em" class="ra ' . $factionJson->raFont . '"></span>' . self::rankHtml($factionJson, $targetEntity->getFactionRole()) . ' </div>';
-
-        $targetSecretFaction = $targetEntity->getSecretFaction();
-        if ($visibility->seesSecretFaction((string) $targetSecretFaction)) {
-            $secretFactionJson = (new FactionService())->getFactionData($targetSecretFaction);
-
-            echo '<div class="secret-faction"><a href="faction.php?faction=' . $targetSecretFaction . '">' . $secretFactionJson->name . '</a> <span style="font-size: 1.3em" class="ra ' . $secretFactionJson->raFont . '"></span>' . self::rankHtml($secretFactionJson, $targetEntity->getSecretFactionRole()) . ' </div>';
-        }
+        echo EntityParts::factionLinesHtml($profile);
 
         /* Dieu vénéré — sur sa propre fiche uniquement (la foi ne
          * regarde personne d'autre). Le dieu est un personnage : lien
@@ -160,14 +112,7 @@ final class InfosSheetView
         echo '<img src="' . $targetEntity->getAvatar() . '" />';
 
 
-        /* Texte libre du joueur : mise en forme simple tolérée, tout le
-         * reste neutralisé (Str::richText). Il était rendu brut. */
-        $text = Str::richText($targetEntity->getText());
-
-        if (!$detailed) {
-
-            $text = '<i>Ce personnage est trop éloigné pour l\'entendre parler.</i>';
-        }
+        $text = $profile->textHtml();
 
 
         /* hud-plaque : same speech plaque as the board card (css/hud.css) */
@@ -196,7 +141,7 @@ final class InfosSheetView
         ';
 
 
-        if ($detailed) {
+        if ($profile->detailed) {
 
 
             if ($hudPanel) {
@@ -287,13 +232,5 @@ final class InfosSheetView
         echo Str::minify(ob_get_clean());
 
         echo '<script src="js/infos.js?v=20250529"></script>';
-    }
-
-    /** " (Rank)", or nothing when the faction defines no such rank. */
-    private static function rankHtml(object $factionJson, int $position): string
-    {
-        $name = $factionJson->role[$position]->name ?? '';
-
-        return $name === '' ? '' : ' (<i>' . htmlspecialchars((string) $name, ENT_QUOTES, 'UTF-8') . '</i>)';
     }
 }
