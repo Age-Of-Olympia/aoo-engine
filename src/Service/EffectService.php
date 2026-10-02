@@ -165,10 +165,20 @@ class EffectService
         return $own . ' (' . $valueLabel . ', ' . $time . $whatLabel . ')';
     }
 
+    /** Combat modifier getters (each × the carried value), as the player reads them. */
+    private const COMBAT_MODS = [
+        'getRollAttackMod' => 'jet d\'attaque',
+        'getRollDefenseMod' => 'jet de défense',
+        'getDamageDealtMod' => 'dégâts infligés',
+        'getDamageTakenMod' => 'dégâts subis',
+        'getPushAttackMod' => 'poussée',
+        'getPushDefenseMod' => 'résistance aux poussées',
+    ];
+
     /**
      * What the effect does to its bearer, in the player's words: the caracs
-     * it moves at this intensity and the PV taken on landing.
-     * "E −3, F +6, PV −10" — '' when it moves nothing.
+     * it moves at this intensity, the PV taken on landing and the combat
+     * modifiers. "E −3, F +6, PV −10, jet d'attaque −2" — '' when it moves nothing.
      */
     public function describe(string $name, int $value = 1): string
     {
@@ -185,6 +195,15 @@ class EffectService
         }
         foreach ($this->lossesOf($name, $value) as $carac => $n) {
             $parts[] = (CARACS[$carac] ?? strtoupper($carac)) . ' ' . ($n > 0 ? '+' : '−') . abs($n);
+        }
+        foreach (self::COMBAT_MODS as $getter => $label) {
+            $n = $effect->{$getter}() * max(1, $value);
+            if ($n !== 0) {
+                $parts[] = $label . ' ' . ($n > 0 ? '+' : '−') . abs($n);
+            }
+        }
+        if ($effect->getDamageTakenFactor() != 1.0) {
+            $parts[] = 'dégâts subis ×' . $effect->getDamageTakenFactor();
         }
 
         return implode(', ', $parts);

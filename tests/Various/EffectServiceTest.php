@@ -131,6 +131,14 @@ class EffectServiceTest extends TestCase
         $this->assertCount(1, $this->service->turnEffects([$carry('ralentissement')], 'turn_mvt_malus'));
     }
 
+    /** The player's text shows the combat modifiers at the carried intensity. */
+    public function testTheDescriptionSpellsTheCombatModifiers(): void
+    {
+        $this->assertStringContainsString('jet d\'attaque −2', $this->service->describe('maladresse', 2));
+        $this->assertStringContainsString('jet de défense +3', $this->service->describe('protection', 3));
+        $this->assertStringContainsString('dégâts subis ×0.75', $this->service->describe('encaisse'));
+    }
+
     public function testStancesFlightCostAndTradingBehaviors(): void
     {
         $carry = static function (string $name, int $value = 1): \App\Entity\PlayerEffect {
