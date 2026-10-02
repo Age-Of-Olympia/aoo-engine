@@ -210,6 +210,43 @@ class TiledBuildingsLayerTest extends TestCase
         }
     }
 
+    /** Drawn in the editor, a building belongs to a faction and to no player. */
+    public function testTheFactionOfABuildingIsPlacedAndChanged(): void
+    {
+        $faction = (string) $this->link->fetchOne('SELECT code FROM factions ORDER BY code LIMIT 1');
+        if ($faction === '') {
+            $this->markTestSkipped('Aucune faction en base.');
+        }
+        $service = new TiledMapService();
+        $at = fn(): array|false => $this->link->fetchAssociative(
+            'SELECT p.faction, p.owner_id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ? AND c.x = 4 AND c.y = 4',
+            [self::PLAN]
+        );
+
+        $this->assertContains($faction, array_column($service->exportPlan(self::PLAN, 0)['factions'], 'code'));
+
+        $service->importPlan(self::PLAN, 0, [
+            'buildings' => [['x' => 4, 'y' => 4, 'name' => $this->type, 'faction' => $faction]],
+        ], $service->exportPlan(self::PLAN, 0)['version']);
+        $this->assertSame(['faction' => $faction, 'owner_id' => null], $at());
+
+        $export = $service->exportPlan(self::PLAN, 0);
+        $this->assertSame(0, $export['layers']['buildings'][0]['player_id'], 'a faction building stays editable');
+        $this->assertSame($faction, $export['layers']['buildings'][0]['faction']);
+
+        // An older extension sends no faction: the building keeps its own.
+        $service->importPlan(self::PLAN, 0, [
+            'buildings' => [['x' => 4, 'y' => 4, 'name' => $this->type]],
+        ], $export['version']);
+        $this->assertSame($faction, $at()['faction']);
+
+        $result = $service->importPlan(self::PLAN, 0, [
+            'buildings' => [['x' => 4, 'y' => 4, 'name' => $this->type, 'faction' => '']],
+        ], $service->exportPlan(self::PLAN, 0)['version']);
+        $this->assertSame(1, $result['layers']['buildings']['kept'], 'same building, not re-created');
+        $this->assertSame('', $at()['faction']);
+    }
+
     private function nameAt(int $x, int $y): string
     {
         return (string) $this->link->fetchOne(

@@ -260,6 +260,12 @@ class TiledMapService
             $gods[] = ['id' => $id, 'name' => $name];
         }
 
+        // Choices for the faction of a building drawn in the editor
+        $factions = [];
+        foreach ((new FactionService())->getFactionNames() as $code => $name) {
+            $factions[] = ['code' => $code, 'name' => $name];
+        }
+
         return [
             'plan'       => $plan,
             'z'          => $z,
@@ -272,6 +278,7 @@ class TiledMapService
             'composites' => $composites,
             'pieces'     => $pieces,
             'gods'       => $gods,
+            'factions'   => $factions,
             'planConfig' => [
                 'values' => $this->planConfig->read($plan),
             ],
@@ -681,8 +688,10 @@ class TiledMapService
      * layers, but every placement is a BuildingService::place() (occupancy
      * checks included) and every removal a remove(). A refused placement is
      * reported in `skipped` without failing the push; protected entities
-     * (owner, faction, building site, ruin) are out of the diff like the
-     * player_id rows of the other layers.
+     * (owner, building site, ruin) are out of the diff like the player_id
+     * rows of the other layers. A row's faction is placed with it, and a kept
+     * building takes the row's faction; a row without the key (an older
+     * extension) leaves the faction as it is.
      *
      * @return array{inserted: int, deleted: int, kept: int, protected: int, skipped: string[]}
      */
@@ -702,6 +711,7 @@ class TiledMapService
         $kept = 0;
         $toInsert = [];
         $toConsecrate = [];
+        $toEnlist = [];
         // params of a building row = the id of its god, '' = none
         $godOf = static fn(array $row): int => (int) ($row['params'] ?? 0);
         $skip = static fn(array $row, string $why): string => $row['x'] . ',' . $row['y'] . ' ' . $row['name'] . ' — ' . $why;
@@ -716,6 +726,9 @@ class TiledMapService
                 $kept++;
                 if ($godOf($current) !== $godOf($row)) {
                     $toConsecrate[] = [(int) $current['id'], $row];
+                }
+                if (isset($row['faction']) && (string) $row['faction'] !== (string) ($current['faction'] ?? '')) {
+                    $toEnlist[] = [(int) $current['id'], $row];
                 }
             } else {
                 $toInsert[] = $row;
@@ -738,13 +751,14 @@ class TiledMapService
         foreach ($toInsert as $row) {
             try {
                 // Editor placement: decor and elements do not block, only
-                // a player's construire is held to that rule.
+                // a player's construire is held to that rule. No owner: a
+                // building drawn in the editor belongs to a faction or to nobody.
                 $id = $buildings->place((string) $row['name'], (object) [
                     'x'    => (int) $row['x'],
                     'y'    => (int) $row['y'],
                     'z'    => $z,
                     'plan' => $plan,
-                ], overScenery: true);
+                ], faction: (string) ($row['faction'] ?? ''), overScenery: true);
                 $inserted++;
                 if ($godOf($row) !== 0) {
                     $toConsecrate[] = [$id, $row];
@@ -757,6 +771,16 @@ class TiledMapService
         foreach ($toConsecrate as [$id, $row]) {
             try {
                 $buildings->setGod($id, $godOf($row));
+            } catch (\InvalidArgumentException $e) {
+                $skipped[] = $skip($row, $e->getMessage());
+            }
+        }
+
+        // Same path as the admin building form; an editable building has no owner.
+        foreach ($toEnlist as [$id, $row]) {
+            try {
+                $current = $this->db->exe('SELECT name, text FROM players WHERE id = ?', array($id))->fetch_assoc();
+                $buildings->updateInfo($id, (string) $current['name'], (string) $current['text'], null, (string) $row['faction']);
             } catch (\InvalidArgumentException $e) {
                 $skipped[] = $skip($row, $e->getMessage());
             }
@@ -827,20 +851,20 @@ class TiledMapService
     }
 
     /**
-     * The DECOR buildings of a whole plan, as bundle rows: what a clone
-     * copies and a bundle carries. Walls are buildings since the entity
-     * conversion — a bundle without them was a plan with no walls.
+     * The authorable buildings of a whole plan (no owner, built), as bundle
+     * rows: what a clone copies and a bundle carries. Walls are buildings
+     * since the entity conversion — a bundle without them was a plan with no walls.
      *
-     * @return list<array{name: string, x: int, y: int, z: int, params: string}>
+     * @return list<array{name: string, x: int, y: int, z: int, params: string, faction: string}>
      */
     public function decorBuildingRows(string $plan): array
     {
         $res = $this->db->exe(
-            "SELECT p.race AS name, c.x, c.y, c.z, " . self::GOD_PARAMS_SQL . "
+            "SELECT p.race AS name, c.x, c.y, c.z, p.faction, " . self::GOD_PARAMS_SQL . "
              FROM buildings b
              JOIN players p ON p.id = b.player_id
              JOIN coords c ON c.id = p.coords_id
-             WHERE c.plan = ? AND p.owner_id IS NULL AND p.faction = '' AND b.build_state = 'built'
+             WHERE c.plan = ? AND p.owner_id IS NULL AND b.build_state = 'built'
              ORDER BY c.z, c.y, c.x, p.id",
             array($plan)
         );
@@ -848,7 +872,7 @@ class TiledMapService
         $rows = [];
         while ($row = $res->fetch_assoc()) {
             $rows[] = ['name' => (string) $row['name'], 'x' => (int) $row['x'], 'y' => (int) $row['y'], 'z' => (int) $row['z'],
-                       'params' => (string) $row['params']];
+                       'params' => (string) $row['params'], 'faction' => (string) $row['faction']];
         }
 
         return $rows;
@@ -938,13 +962,13 @@ class TiledMapService
 
     /**
      * Building entities of the (plan, z), shaped as layer rows: name = the
-     * type (players.race). Authorable DECOR has player_id = 0; everything
-     * else (owner, faction, building site, ruin) carries a non-zero
-     * player_id — same convention as player-built rows: out of the diff, out
-     * of the version fingerprint, locked "(joueurs)" layer on the extension
-     * side.
+     * type (players.race). An authorable building — no owner, built, with or
+     * without a faction — has player_id = 0; everything else (owner, building
+     * site, ruin) carries a non-zero player_id — same convention as
+     * player-built rows: out of the diff, out of the version fingerprint,
+     * locked "(joueurs)" layer on the extension side.
      *
-     * @return list<array{id: int, name: string, x: int, y: int, player_id: int, params: string}>
+     * @return list<array{id: int, name: string, x: int, y: int, player_id: int, params: string, faction: string}>
      */
     private function fetchBuildingRows(string $plan, int $z): array
     {
@@ -960,8 +984,7 @@ class TiledMapService
 
         $rows = [];
         while ($row = $res->fetch_assoc()) {
-            $isDecor = $row['owner_id'] === null
-                && (string) $row['faction'] === ''
+            $isAuthorable = $row['owner_id'] === null
                 && (string) $row['build_state'] === 'built';
 
             $rows[] = [
@@ -969,8 +992,9 @@ class TiledMapService
                 'name'      => (string) $row['name'],
                 'x'         => (int) $row['x'],
                 'y'         => (int) $row['y'],
-                'player_id' => $isDecor ? 0 : (int) ($row['owner_id'] ?? -1),
+                'player_id' => $isAuthorable ? 0 : (int) ($row['owner_id'] ?? -1),
                 'params'    => (string) $row['params'],
+                'faction'   => (string) $row['faction'],
             ];
         }
 
@@ -1031,8 +1055,8 @@ class TiledMapService
                     continue;
                 }
                 $parts[] = $layer . '|' . $this->rowKey($layer, $row)
-                    // A god given in game since the pull makes the push stale
-                    . ($layer === self::BUILDINGS_LAYER ? '|' . ($row['params'] ?? '') : '');
+                    // A god or a faction given in game since the pull makes the push stale
+                    . ($layer === self::BUILDINGS_LAYER ? '|' . ($row['params'] ?? '') . '|' . ($row['faction'] ?? '') : '');
             }
         }
 
