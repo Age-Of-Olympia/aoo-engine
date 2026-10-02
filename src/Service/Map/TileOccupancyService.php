@@ -164,7 +164,7 @@ final class TileOccupancyService
                 }
             }
 
-            $blocked[(int) $row['coords_id']] ??= 'Quelque chose obstrue ton chemin.';
+            $blocked[(int) $row['coords_id']] ??= $row['name'] . ' obstrue ton chemin.';
         }
 
         return $blocked;
@@ -174,12 +174,12 @@ final class TileOccupancyService
      * Which entity holds which of the given tiles, cell by cell.
      *
      * @param string $in coords_id list, already cast to integers
-     * @return list<array{id: int|string, coords_id: int|string, role: string, race: string, player_type: ?string, is_open: int|string, invisible: ?int}>
+     * @return list<array{id: int|string, coords_id: int|string, role: string, name: string, race: string, player_type: ?string, is_open: int|string, invisible: ?int}>
      */
     private function occupations(string $in): array
     {
         $rows = $this->conn->fetchAllAssociative(
-            "SELECT p.id, occupied.coords_id, occupied.role, p.race, p.player_type, p.is_open,
+            "SELECT p.id, occupied.coords_id, occupied.role, p.name, p.race, p.player_type, p.is_open,
                     (SELECT 1 FROM players_options o
                       WHERE o.player_id = p.id AND o.name = 'invisibleMode') AS invisible
                FROM (" . self::heldSql($in) . ") AS occupied
@@ -225,18 +225,24 @@ final class TileOccupancyService
                    AND slot <> '" . EntityLocationService::SLOT_DROPPED . "'";
     }
 
-    /** Any entity, at any title, on this tile. */
-    private function heldByAnEntity(int $coordsId, bool $countScenery = false): bool
+    /** Name of an entity holding this tile, at any title; null when none does.
+     * A hidden character stays anonymous: the refusal must not unmask it. */
+    private function holderOf(int $coordsId, bool $countScenery = false): ?string
     {
         $exceptScenery = $countScenery ? '' : " AND p.player_type <> 'scenery'";
 
-        return (bool) $this->conn->fetchOne(
-            'SELECT 1
-               FROM (' . self::heldSql((string) $coordsId) . ') AS held
+        $name = $this->conn->fetchOne(
+            "SELECT CASE WHEN EXISTS (SELECT 1 FROM players_options o
+                                        WHERE o.player_id = p.id AND o.name = 'invisibleMode')
+                         THEN 'une entité'
+                         ELSE p.name END
+               FROM (" . self::heldSql((string) $coordsId) . ") AS held
                JOIN players p ON p.id = held.player_id
-              WHERE 1' . $exceptScenery . '
+              WHERE 1" . $exceptScenery . '
               LIMIT 1'
         );
+
+        return $name === false ? null : (string) $name;
     }
 
     /**
@@ -294,8 +300,10 @@ final class TileOccupancyService
         /* Decor counts as occupied for a PLAYER: one does not raise a wall
          * through a statue. An animator placing from the editor may, to tuck
          * something behind it — hence the flag rather than a blanket rule. */
-        if ($this->heldByAnEntity($coordsId, !$overScenery)) {
-            return 'Case occupée par une entité.';
+        $holder = $this->holderOf($coordsId, !$overScenery);
+        if ($holder !== null) {
+            /* Escaped: build refusals land in HTML action logs. */
+            return 'Case occupée par ' . htmlspecialchars($holder) . '.';
         }
 
         /* Same rule for elements (water, lava…): they stop a player's

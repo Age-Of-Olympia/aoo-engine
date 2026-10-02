@@ -107,7 +107,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $id = $this->coordsIdOn(self::PLAN, 1, 0);
         $this->plantResource($this->link, 'arbre1', $id, self::PLAN, 1, 0);
 
-        $this->assertSame('Quelque chose obstrue ton chemin.', $this->service->stepRefusal($id, 1, true));
+        $this->assertSame('Arbre1 obstrue ton chemin.', $this->service->stepRefusal($id, 1, true));
     }
 
     /** A road is walked on even when its row says it blocks: the family decides. */
@@ -414,7 +414,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertNotNull($this->service->stepRefusal($body, 1, true), 'on n\'y entre pas');
         $this->assertFalse($this->service->isVacant($body), 'on n\'y atterrit pas');
         $this->assertSame(
-            'Case occupée par une entité.',
+            'Case occupée par ' . $this->nameOf($wall) . '.',
             $this->service->buildRefusal($body),
             'et on n\'y bâtit pas'
         );
@@ -475,7 +475,7 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
 
         $this->assertTrue($this->service->isVacant($id), 'decor does not fill a tile for landing');
         $this->assertSame(
-            'Case occupée par une entité.',
+            'Case occupée par ' . $this->nameOf($decor) . '.',
             $this->service->buildRefusal($id),
             'but a player does not build through it'
         );
@@ -569,5 +569,10 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertFalse(
             TileOccupancyService::charactersVisibleOn((object) ['player_visibility' => false])
         );
+    }
+
+    private function nameOf(int $entityId): string
+    {
+        return (string) $this->link->fetchOne('SELECT name FROM players WHERE id = ?', [$entityId]);
     }
 }
