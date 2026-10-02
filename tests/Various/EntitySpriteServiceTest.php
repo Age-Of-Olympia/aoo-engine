@@ -110,6 +110,42 @@ class EntitySpriteServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /**
+     * The admin's upload sits in /tmp without an extension, and a building
+     * already standing takes the new cut: its avatar was a copy made at placement.
+     */
+    public function testAnUploadIsCutAndTheStandingInstancesFollow(): void
+    {
+        $this->seedBuildingType();
+        $this->png('img/walls/' . self::TYPE . '.png', 100, 100);
+        [$x, $y] = $this->farTile();
+        $id = $this->placeStructure(self::TYPE, $x, $y);
+        // Placed before the type's image changed: its row holds the old path.
+        $this->link->executeStatement("UPDATE players SET avatar = 'img/walls/ancienne.png' WHERE id = ?", [$id]);
+
+        $upload = (string) tempnam(sys_get_temp_dir(), 'php');
+        copy($_SERVER['DOCUMENT_ROOT'] . '/img/walls/' . self::TYPE . '.png', $upload);
+        $pieces = (new CompositeSpriteService())->cutPieces(
+            'walls',
+            self::TYPE,
+            (new EntityTypeFootprintService($this->link))->catalogue()[self::TYPE],
+            $upload
+        );
+        @unlink($upload);
+        foreach ($pieces as $piece) {
+            $this->written[] = $_SERVER['DOCUMENT_ROOT'] . '/' . $piece;
+        }
+        $this->written[] = $_SERVER['DOCUMENT_ROOT'] . '/img/walls/_composed/' . self::TYPE . '.png';
+        $this->assertCount(4, $pieces, 'decoded from its content, not its name');
+        EntitySpriteService::forget();
+
+        $this->assertSame(1, (new BuildingService())->refreshTypeSprites(self::TYPE));
+        $this->assertSame(
+            'img/walls/_composed/' . self::TYPE . '.png',
+            $this->link->fetchOne('SELECT avatar FROM players WHERE id = ?', [$id])
+        );
+    }
+
     public function testATypeWithoutPiecesHasNoStitchedSprite(): void
     {
         $this->assertNull((new EntitySpriteService())->spriteOf('gm_sprite_unknown'));

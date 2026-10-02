@@ -290,7 +290,7 @@ class RaceImageService
         }
 
         $path = $this->relativeDir($type, $fromRace) . '/' . $fileName;
-        $usage = $this->usageByPath($type, $fromRace)[$path] ?? 0;
+        $usage = $this->followsItsType($fromRace) ? 0 : ($this->usageByPath($type, $fromRace)[$path] ?? 0);
         if ($usage > 0) {
             throw new RuntimeException("« {$fileName} » est l'image de {$usage} joueur(s) — changez-les d'abord.");
         }
@@ -321,7 +321,8 @@ class RaceImageService
     /**
      * Supprime une image (et sa miniature). Refus tant que des joueurs
      * l'ont comme avatar/portrait : ils se retrouveraient avec une image
-     * cassée en jeu.
+     * cassée en jeu. Une structure n'en garde pas : ses exemplaires suivent
+     * l'image de leur type.
      */
     public function delete(ImageType $type, string $race, string $fileName): void
     {
@@ -336,7 +337,7 @@ class RaceImageService
         }
 
         $path = $this->relativeDir($type, $race) . '/' . $fileName;
-        $usage = $this->usageByPath($type, $race)[$path] ?? 0;
+        $usage = $this->followsItsType($race) ? 0 : ($this->usageByPath($type, $race)[$path] ?? 0);
         if ($usage > 0) {
             throw new RuntimeException("« {$fileName} » est l'image de {$usage} joueur(s) — impossible de la supprimer.");
         }
@@ -446,6 +447,17 @@ class RaceImageService
     private function relativeDir(ImageType $type, string $race): string
     {
         return ($type === ImageType::PORTRAIT ? 'img/portraits/' : 'img/avatars/') . $race;
+    }
+
+    /**
+     * A structure's instances take their type's image (BuildingService::
+     * refreshTypeSprites, run by the caller), so an image they use may go:
+     * only a character's chosen avatar pins its file.
+     */
+    private function followsItsType(string $race): bool
+    {
+        return $this->em()->getRepository(Race::class)->findOneBy(['name' => $race])
+            instanceof \App\Entity\StructureType;
     }
 
     private function assertRace(string $race): void

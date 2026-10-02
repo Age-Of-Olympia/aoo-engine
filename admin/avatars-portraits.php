@@ -81,6 +81,15 @@ if ($isStateChangingPost) {
             setFlash('success', ucfirst($type->value) . " « {$name} » supprimé"
                 . ($type === ImageType::PORTRAIT ? ' (miniature comprise)' : '') . '.');
         }
+        /* Instances carry a copy of their type's image: realign them on
+         * whatever the stock now says, the target type of a move included. */
+        if ($structureMode) {
+            $buildings = new \App\Service\BuildingService();
+            $buildings->refreshTypeSprites($race);
+            if (isset($_POST['image_move'])) {
+                $buildings->refreshTypeSprites(trim((string) ($_POST['target_race'] ?? '')));
+            }
+        }
     } catch (Throwable $e) {
         setFlash('danger', $e->getMessage());
     }
@@ -110,8 +119,9 @@ ob_start();
         <?php if ($structureMode): ?>
             Images des types de bâtiments : la <strong>première image du stock</strong> est le
             sprite des entités posées sur le plateau (à défaut, le sprite de mur du même nom).
-            L'ajout redimensionne l'image à la taille attendue et la numérote avec le compteur du type ;
-            la suppression est refusée tant qu'une entité posée utilise l'image.
+            L'ajout redimensionne l'image à la taille attendue et la numérote avec le compteur du type.
+            Pour changer l'image d'un type, ajouter la nouvelle puis supprimer l'ancienne :
+            les entités déjà posées suivent l'image de leur type.
         <?php else: ?>
             Images de personnage par race : avatars (50×50, carte et listes) et portraits
             (210×320 + miniature 50×79, fiche de personnage). L'ajout redimensionne l'image à la taille
@@ -272,7 +282,7 @@ ob_start();
                                     <details class="row-popover" style="display:inline-block;">
                                         <summary class="btn btn-sm btn-outline-secondary" style="cursor:pointer;list-style:none;"
                                                  title="Déplacer l'image vers <?= $structureMode ? 'un autre type' : 'une autre race' ?>"
-                                                 <?= $entry['usage'] > 0 ? 'aria-disabled="true"' : '' ?>>Déplacer</summary>
+                                                 <?= $entry['usage'] > 0 && !$structureMode ? 'aria-disabled="true"' : '' ?>>Déplacer</summary>
                                         <form method="post" class="row-popover-panel d-flex gap-2"
                                               onsubmit="return confirm('Déplacer « <?= e($entry['file']) ?> » vers <?= $structureMode ? 'le type sélectionné' : 'la race sélectionnée' ?> ?');">
                                             <?= $csrf->renderTokenField() ?>
@@ -290,7 +300,7 @@ ob_start();
                                                 'class="form-control form-control-sm" style="width:140px;"');
                                             ?>
                                             <button type="submit" name="image_move" value="1" class="btn btn-sm btn-primary"
-                                                    <?= $entry['usage'] > 0 ? 'disabled title="Encore utilisée par des joueurs"' : '' ?>>OK</button>
+                                                    <?= $entry['usage'] > 0 && !$structureMode ? 'disabled title="Encore utilisée par des joueurs"' : '' ?>>OK</button>
                                         </form>
                                     </details>
                                     <?php endif; ?>
@@ -301,7 +311,7 @@ ob_start();
                                         <input type="hidden" name="race" value="<?= e($race) ?>">
                                         <input type="hidden" name="file" value="<?= e($entry['file']) ?>">
                                         <button type="submit" name="image_delete" value="1" class="btn btn-sm btn-outline-danger"
-                                                <?= $entry['usage'] > 0 ? 'disabled title="Encore utilisée par des joueurs"' : '' ?>>
+                                                <?= $entry['usage'] > 0 && !$structureMode ? 'disabled title="Encore utilisée par des joueurs"' : '' ?>>
                                             Supprimer
                                         </button>
                                     </form>

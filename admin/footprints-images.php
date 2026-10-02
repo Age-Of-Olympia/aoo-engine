@@ -59,6 +59,7 @@ try {
         }
 
         EntitySpriteService::forget();
+        (new \App\Service\BuildingService())->refreshTypeSprites($type);
         setFlash('success', $from . ' renommé en ' . $to . '.');
         redirectTo($back);
     }
@@ -92,6 +93,7 @@ try {
         /* The stitched picture is a cache: rebuilt where the pieces now are. */
         @unlink($root . $from . '/_composed/' . $type . '.png');
         EntitySpriteService::forget();
+        (new \App\Service\BuildingService())->refreshTypeSprites($type);
 
         setFlash('success', $moved . ' fichier' . ($moved > 1 ? 's' : '') . ' déplacé' . ($moved > 1 ? 's' : '')
             . ' de img/' . $from . '/ vers img/' . $dir . '/.');
@@ -122,7 +124,9 @@ try {
     }
 
     EntitySpriteService::forget();
-    setFlash('success', count($pieces) . ' morceaux écrits dans img/' . $dir . '/.');
+    $followed = (new \App\Service\BuildingService())->refreshTypeSprites($type);
+    setFlash('success', count($pieces) . ' morceaux écrits dans img/' . $dir . '/'
+        . ($followed > 0 ? ' ; ' . $followed . ' exemplaire(s) posé(s) suivent la nouvelle image.' : '.'));
 } catch (\Throwable $e) {
     setFlash('danger', $e->getMessage());
 }

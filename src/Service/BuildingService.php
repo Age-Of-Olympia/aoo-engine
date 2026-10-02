@@ -1224,8 +1224,10 @@ class BuildingService
      * visuelle des murs de carte (destroy.php), portée aux entités.
      * Appelée à chaque putBonus pv d'un bâtiment : no-op tant que le
      * sprite affiché est déjà le bon.
+     *
+     * @return bool whether the sprite changed
      */
-    public function refreshWoundSprite(int $playerId): void
+    public function refreshWoundSprite(int $playerId): bool
     {
         $conn = $this->entityManager->getConnection();
 
@@ -1233,29 +1235,48 @@ class BuildingService
         // collation (utf8mb4_general_ci × uca1400) — le catalogue se lit
         // par RaceService, comme partout.
         $row = $conn->fetchAssociative(
-            "SELECT p.race, p.avatar, COALESCE(b.n, 0) AS wound
+            "SELECT p.race, p.avatar, COALESCE(b.n, 0) AS wound, d.build_state
              FROM players p
              LEFT JOIN players_bonus b ON b.player_id = p.id AND b.name = 'pv'
+             LEFT JOIN buildings d ON d.player_id = p.id
              WHERE p.id = ? AND p.player_type IN ('building', 'scenery')",
             [$playerId]
         );
         if ($row === false) {
-            return;
+            return false;
         }
 
+        /* A ruin keeps the broken sprite markDestroyed gave it; a type
+         * without PV is never wounded, it only follows its type's image. */
         $maxPv = (int) ($this->raceService->getRaceByName((string) $row['race'])?->ownCaracs()['pv'] ?? 0);
-        if ($maxPv <= 0) {
-            return;
-        }
-
-        $remaining = $maxPv + (int) $row['wound'];
-        $broken = $remaining <= $maxPv / 2;
+        $broken = $row['build_state'] === BuildingDetails::STATE_RUIN
+            || ($maxPv > 0 && $maxPv + (int) $row['wound'] <= $maxPv / 2);
 
         if (self::resolveAvatar((string) $row['race'], $broken) === (string) $row['avatar']) {
-            return;
+            return false;
         }
 
         $this->swapAvatar($playerId, $broken);
+
+        return true;
+    }
+
+    /**
+     * Every standing instance of a type takes the type's current image: the
+     * avatar is copied onto the row at placement, so a new cut or a new stock
+     * image would otherwise only reach the instances placed after it.
+     *
+     * @return int instances whose image changed
+     */
+    public function refreshTypeSprites(string $type): int
+    {
+        $ids = $this->entityManager->getConnection()->fetchFirstColumn(
+            "SELECT id FROM players WHERE race = ? AND player_type IN ('building', 'scenery')",
+            [$type]
+        );
+
+        // ponytail: one swap (and board refresh) per instance; batch it if a type ever counts thousands.
+        return count(array_filter($ids, fn ($id): bool => $this->refreshWoundSprite((int) $id)));
     }
 
     /**
