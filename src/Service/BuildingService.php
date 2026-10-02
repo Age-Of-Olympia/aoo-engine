@@ -347,6 +347,41 @@ class BuildingService
      * @throws \InvalidArgumentException on unknown/non-structure type,
      *                                   unknown faction code or unknown owner
      */
+    /**
+     * Why this type cannot stand at this origin, naming the first refused
+     * cell; null when every cell is buildable. Run under place()'s lock, and
+     * before payment by BuildSiteCondition.
+     */
+    public static function siteRefusal(
+        \Doctrine\DBAL\Connection $conn,
+        string $type,
+        object $origin,
+        bool $overScenery = false
+    ): ?string {
+        $occupancy = new \App\Service\Map\TileOccupancyService($conn);
+
+        /* Every cell of the type's cut-out, from the same source syncCells
+         * lays them from: a 2×2 édifice claims four cells, not just the origin. */
+        $footprint = (new \App\Service\Map\EntityTypeFootprintService())->catalogue()[$type] ?? null;
+        $cells = $footprint === null
+            ? [[(int) $origin->x, (int) $origin->y]]
+            : $footprint->cellsAround((int) array_key_first($footprint->offsets()), (int) $origin->x, (int) $origin->y);
+
+        foreach ($cells as [$cellX, $cellY]) {
+            $cellCoordsId = (int) View::get_coords_id((object) [
+                'x' => $cellX, 'y' => $cellY, 'z' => (int) $origin->z, 'plan' => (string) $origin->plan,
+            ]);
+            $conn->fetchOne('SELECT id FROM players WHERE coords_id = ? FOR UPDATE', [$cellCoordsId]);
+
+            $refusal = $occupancy->buildRefusal($cellCoordsId, $overScenery);
+            if ($refusal !== null) {
+                return "Case ({$cellX}, {$cellY}, {$origin->plan}) : " . lcfirst($refusal);
+            }
+        }
+
+        return null;
+    }
+
     public function place(
         string $type,
         object $goCoords,
@@ -388,18 +423,6 @@ class BuildingService
         $displayId = getNextDisplayId('building');
         $coordsId = View::get_coords_id($goCoords);
 
-        /* Every cell of the type's cut-out, from the same source syncCells
-         * will lay them from — a 2×2 édifice claims four cells, and each
-         * must be free, not just the origin. */
-        $footprint = (new \App\Service\Map\EntityTypeFootprintService())->catalogue()[$type] ?? null;
-        $siteCells = $footprint === null
-            ? [[(int) $goCoords->x, (int) $goCoords->y]]
-            : $footprint->cellsAround(
-                (int) array_key_first($footprint->offsets()),
-                (int) $goCoords->x,
-                (int) $goCoords->y
-            );
-
         // Un id recyclé (fixture de test, entité retirée hors remove())
         // peut laisser de vieux caches par-entité : sans purge, le
         // nouveau bâtiment ressert l'IDENTITÉ du précédent (get_data lit
@@ -413,24 +436,14 @@ class BuildingService
         // occupe la case sans apparaître dans listBuildings(). La case doit
         // être LIBRE (ni entité, ni mur) — vérifié ici, source unique de la
         // règle, sous verrou pour resserrer la fenêtre concurrente.
-        $conn->transactional(function ($conn) use ($id, $displayId, $name, $race, $type, $avatar, $coordsId, $ownerId, $faction, $goCoords, $overScenery, $siteCells): void {
+        $conn->transactional(function ($conn) use ($id, $displayId, $name, $race, $type, $avatar, $coordsId, $ownerId, $faction, $goCoords, $overScenery): void {
             /* Le verrou reste ICI : c'est lui qui resserre la fenêtre entre
              * deux poses concurrentes, et il doit vivre dans la transaction.
              * La RÈGLE, elle, est partie dans TileOccupancyService avec les
              * deux autres questions d'occupation. */
-            $occupancy = new \App\Service\Map\TileOccupancyService($conn);
-            foreach ($siteCells as [$cellX, $cellY]) {
-                $cellCoordsId = (int) View::get_coords_id((object) [
-                    'x' => $cellX, 'y' => $cellY, 'z' => (int) $goCoords->z, 'plan' => (string) $goCoords->plan,
-                ]);
-                $conn->fetchOne('SELECT id FROM players WHERE coords_id = ? FOR UPDATE', [$cellCoordsId]);
-
-                $refusal = $occupancy->buildRefusal($cellCoordsId, $overScenery);
-                if ($refusal !== null) {
-                    throw new \InvalidArgumentException(
-                        "Case ({$cellX}, {$cellY}, {$goCoords->plan}) : " . lcfirst($refusal)
-                    );
-                }
+            $refusal = self::siteRefusal($conn, $type, $goCoords, $overScenery);
+            if ($refusal !== null) {
+                throw new \InvalidArgumentException($refusal);
             }
 
             $conn->executeStatement(

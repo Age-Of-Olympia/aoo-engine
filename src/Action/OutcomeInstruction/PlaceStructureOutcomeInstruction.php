@@ -90,7 +90,7 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
            the running bonus, the drawn map and `observe` all read. Installed
            as an object instead, it put a THING on the cell: the board drew
            an object, and no reader of roads saw a road. */
-        $layerName = $this->groundLayerOf($type);
+        $layerName = self::groundLayerOf($type);
 
         if ($layerName !== null) {
             $laid = (new \App\Service\Map\GroundLayerService())->lay(
@@ -194,7 +194,7 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
      * object like any other. Read from `items.subtype`, the vocabulary the
      * workbench field already documents ("walls, routes…").
      */
-    private function groundLayerOf(string $type): ?string
+    public static function groundLayerOf(string $type): ?string
     {
         $item = \Classes\Item::get_item_by_name($type);
 

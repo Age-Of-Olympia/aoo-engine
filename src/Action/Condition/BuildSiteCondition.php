@@ -44,6 +44,18 @@ class BuildSiteCondition extends BaseCondition implements HasParameterSchemaInte
             return new ConditionResult(false, array(), [BuildSitePick::REFUSAL], blocking: true);
         }
 
+        /* Every cell of the footprint, before payment: a refusal found by
+         * place() after the costs would eat the materials, the PA and still
+         * grant the XP. Ground layers (roads) keep their own rule. */
+        if ($type !== null
+            && \App\Action\OutcomeInstruction\PlaceStructureOutcomeInstruction::groundLayerOf((string) $type) === null) {
+            $conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
+            $refusal = \App\Service\BuildingService::siteRefusal($conn, (string) $type, $goCoords);
+            if ($refusal !== null) {
+                return new ConditionResult(false, array(), [$refusal], blocking: true);
+            }
+        }
+
         $conditionObject->setBuildCoords($goCoords);
 
         return new ConditionResult(true, array(), array());

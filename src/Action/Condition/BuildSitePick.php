@@ -26,8 +26,9 @@ final class BuildSitePick
      *
      * La règle est portée par l'EMPRISE : une case de la forme bâtie doit
      * toucher le bâtisseur (distance ≤ 1) — pour un édifice 2×2, l'origine
-     * peut donc se poser à deux cases. La liberté de CHAQUE case reste le
-     * travail de place(), qui verrouille et refuse en nommant la case.
+     * peut donc se poser à deux cases. La liberté de CHAQUE case est
+     * BuildingService::siteRefusal(), que BuildSiteCondition consulte avant
+     * paiement et que place() rejoue sous verrou.
      *
      * @param string|null $type type de structure en cours de construction —
      *        null : emprise d'une case (règle historique)
