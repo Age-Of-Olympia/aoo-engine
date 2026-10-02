@@ -379,7 +379,7 @@ function item_spell_select(string $field, string $selected): string
  * consumable ones. A duration is a TURN COUNT since the effects engine
  * moved to turns: 0 lasts until the next turn, -1 never ends.
  *
- * @param list<array{name: string, duration: ?int, extra: array<string, mixed>}> $entries
+ * @param list<array{name: string, duration: ?int, value: ?int, extra: array<string, mixed>}> $entries
  */
 function item_effect_duration_rows(string $field, array $entries, string $header): string
 {
@@ -387,9 +387,10 @@ function item_effect_duration_rows(string $field, array $entries, string $header
 
     $rows = '<div class="d-flex gap-2 text-muted" style="font-size:85%;">'
         . '<span style="flex:2;">' . $header . '</span>'
-        . '<span style="flex:1;">Durée (tours)</span></div>';
+        . '<span style="flex:1;">Durée (tours)</span>'
+        . '<span style="flex:1;">Intensité</span></div>';
 
-    foreach (array_merge($entries, [['name' => '', 'duration' => null, 'extra' => []]]) as $entry) {
+    foreach (array_merge($entries, [['name' => '', 'duration' => null, 'value' => null, 'extra' => []]]) as $entry) {
         $options = '<option value="">—</option>';
         if ($entry['name'] !== '' && !in_array($entry['name'], $known, true)) {
             $options .= '<option value="' . e($entry['name']) . '" selected>⚠ inconnue : ' . e($entry['name']) . '</option>';
@@ -405,6 +406,8 @@ function item_effect_duration_rows(string $field, array $entries, string $header
             . '<select class="form-control form-control-sm" data-fills name="' . $field . '_name[]" style="flex:2;">' . $options . '</select>'
             . '<input class="form-control form-control-sm" type="number" name="' . $field . '_duration[]" style="flex:1;"'
             . ' value="' . ($entry['duration'] === null ? '' : (int) $entry['duration']) . '" placeholder="1">'
+            . '<input class="form-control form-control-sm" type="number" min="1" name="' . $field . '_value[]" style="flex:1;"'
+            . ' value="' . ($entry['value'] === null ? '' : (int) $entry['value']) . '" placeholder="1">'
             . '<input type="hidden" name="' . $field . '_extra[]" value="'
             . e($entry['extra'] === [] ? '' : (string) json_encode($entry['extra'], JSON_UNESCAPED_UNICODE)) . '">'
             . '</div>';
@@ -413,6 +416,7 @@ function item_effect_duration_rows(string $field, array $entries, string $header
     return '<div class="form-group">' . $rows
         . '<small class="text-muted">Durée en <b>tours</b> : vide ou <code>1</code> pour un tour,'
         . ' <code>0</code> jusqu\'au prochain tour, <code>-1</code> sans fin.'
+        . ' Intensité : multiplie les modificateurs de l\'effet, vide = <code>1</code>.'
         . ' Ligne au nom vidé = supprimée ; la ligne vierge sert à en ajouter une.</small></div>';
 }
 
@@ -420,7 +424,7 @@ function item_effect_duration_rows(string $field, array $entries, string $header
  * Lignes des effets d'arme (table item_effects) : effet, durée, déclencheur
  * (coup réussi / raté) et receveur — plus une ligne vierge pour l'ajout.
  *
- * @param list<object{name: string, duration: int, outcome: string, target: string}> $rows
+ * @param list<object{name: string, duration: int, value: int, outcome: string, target: string}> $rows
  */
 function item_strike_effect_rows(array $rows): string
 {
@@ -429,10 +433,10 @@ function item_strike_effect_rows(array $rows): string
     $targets = ['target' => 'La cible', 'self' => 'Le porteur'];
 
     $html = '<div class="d-flex gap-2 text-muted" style="font-size:85%;">'
-        . '<span style="flex:2;">Effet</span><span style="flex:1;">Durée (tours)</span>'
+        . '<span style="flex:2;">Effet</span><span style="flex:1;">Durée (tours)</span><span style="flex:1;">Intensité</span>'
         . '<span style="flex:1;">Quand</span><span style="flex:1;">Sur qui</span></div>';
 
-    $rows[] = (object) ['name' => '', 'duration' => 1, 'outcome' => 'hit', 'target' => 'target'];
+    $rows[] = (object) ['name' => '', 'duration' => 1, 'value' => 1, 'outcome' => 'hit', 'target' => 'target'];
     foreach ($rows as $row) {
         $options = '<option value="">—</option>';
         foreach ($known as $effectName) {
@@ -441,6 +445,7 @@ function item_strike_effect_rows(array $rows): string
         $html .= '<div class="d-flex gap-2 mb-1">'
             . '<select class="form-control form-control-sm" name="strike_effects_name[]" style="flex:2;">' . $options . '</select>'
             . '<input class="form-control form-control-sm" type="number" name="strike_effects_duration[]" style="flex:1;" value="' . (int) $row->duration . '">'
+            . '<input class="form-control form-control-sm" type="number" min="1" name="strike_effects_value[]" style="flex:1;" value="' . (int) $row->value . '">'
             . formSelect('strike_effects_outcome[]', $outcomes, $row->outcome, null, 'class="form-control form-control-sm" style="flex:1;"')
             . formSelect('strike_effects_target[]', $targets, $row->target, null, 'class="form-control form-control-sm" style="flex:1;"')
             . '</div>';
@@ -449,6 +454,7 @@ function item_strike_effect_rows(array $rows): string
     return '<div class="form-group">' . $html
         . '<small class="text-muted">Durée en <b>tours</b> : <code>1</code> pour un tour,'
         . ' <code>0</code> jusqu\'au prochain tour, <code>-1</code> sans fin.'
+        . ' Intensité : multiplie les modificateurs de l\'effet.'
         . ' Ligne au nom vidé = supprimée ; la ligne vierge sert à en ajouter une.</small></div>';
 }
 
@@ -573,10 +579,13 @@ function items_render_edit(object $row, string $csrfToken): string
        its historical shape, so a reader that ignores durations still works. */
     $consumeDurations = (is_object($extraJson) && !empty($extraJson->effetDuree))
         ? (array) $extraJson->effetDuree : [];
+    $consumeValues = (is_object($extraJson) && !empty($extraJson->effetIntensite))
+        ? (array) $extraJson->effetIntensite : [];
     $effectsApplied = array_values(array_map(
         static fn (string $e): array => [
             'name' => $e,
             'duration' => array_key_exists($e, $consumeDurations) ? (int) $consumeDurations[$e] : null,
+            'value' => array_key_exists($e, $consumeValues) ? (int) $consumeValues[$e] : null,
             'extra' => [],
         ],
         array_filter($consumeEffects, static fn (string $e): bool => !str_starts_with($e, '-'))

@@ -43,6 +43,28 @@ class ElementTypeEffectTest extends LegacyPlayerFixtureTestCase
         $this->assertFalse($elements->isBuildableOver('glu_test'), 'decor blocks construction');
     }
 
+    /** The type sets how long and how hard its effect lands, as a skill does. */
+    public function testTheTypeSetsDurationAndIntensity(): void
+    {
+        $this->link->executeStatement("INSERT INTO effects (name, label) VALUES ('glu_test', 'Glu')");
+        EffectService::clearCache();
+        $elements = new MapElementService();
+        $elements->setEffectStrength('glu_test', 3, 2);
+
+        $player = $this->createRealPlayer('GmGluForte');
+        $cell = $this->tile(2, 0);
+        Element::put('glu_test', (int) \Classes\View::get_coords_id($cell), 4);
+        $player->go($cell);
+
+        $row = $this->link->fetchAssociative(
+            "SELECT endTime, value FROM players_effects WHERE player_id = ? AND name = 'glu_test'",
+            [(int) $player->id]
+        );
+        $this->assertSame(3, (int) $row['endTime']);
+        $this->assertSame(2, (int) $row['value']);
+        $this->assertSame('glu_test', $elements->effectOf('glu_test'), 'the new row keeps the effect of its own name');
+    }
+
     public function testFluidIsSetWithoutTouchingTheEffect(): void
     {
         $this->link->executeStatement("INSERT INTO effects (name, label) VALUES ('glu_test', 'Glu')");

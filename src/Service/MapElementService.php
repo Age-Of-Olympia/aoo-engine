@@ -37,7 +37,7 @@ class MapElementService
         return array_values(array_unique($names));
     }
 
-    /** @var array<string, array{effect: ?string, fluid: bool, label: string}>|null element_types, read once per request */
+    /** @var array<string, array{effect: ?string, fluid: bool, label: string, duration: int, value: int}>|null element_types, read once per request */
     private static ?array $types = null;
 
     /** Placeable elements that do apply an effect on step. @return list<string> */
@@ -56,6 +56,30 @@ class MapElementService
         $effect = isset($types[$element]) ? $types[$element]['effect'] : $element;
 
         return $effect !== null && (new EffectService())->exists($effect) ? $effect : null;
+    }
+
+    /** Turns the effect lasts once stepped on; a type without a row: one. */
+    public function effectDurationOf(string $element): int
+    {
+        return self::types()[$element]['duration'] ?? 1;
+    }
+
+    /** Intensity the effect lands with; a type without a row: one. */
+    public function effectValueOf(string $element): int
+    {
+        return self::types()[$element]['value'] ?? 1;
+    }
+
+    /** Duration in turns (0 = until next turn, -1 = endless) and intensity (≥ 1). */
+    public function setEffectStrength(string $element, int $duration, int $value): void
+    {
+        (new Db())->exe(
+            'INSERT INTO element_types (name, effect_name, effect_duration, effect_value)
+             SELECT ?, (SELECT name FROM effects WHERE name = ?), ?, ?
+             ON DUPLICATE KEY UPDATE effect_duration = VALUES(effect_duration), effect_value = VALUES(effect_value)',
+            [$element, $element, max(-1, $duration), max(1, $value)]
+        );
+        self::clearCache();
     }
 
     /** Whether the element blends with its neighbours (edge fades, elbows); a type without a row does. */
@@ -83,15 +107,16 @@ class MapElementService
         self::clearCache();
     }
 
-    /** @return array<string, array{effect: ?string, fluid: bool, label: string}> */
+    /** @return array<string, array{effect: ?string, fluid: bool, label: string, duration: int, value: int}> */
     private static function types(): array
     {
         if (self::$types === null) {
             self::$types = [];
-            $res = (new Db())->exe('SELECT name, effect_name, fluid, label FROM element_types');
+            $res = (new Db())->exe('SELECT name, effect_name, fluid, label, effect_duration, effect_value FROM element_types');
             while ($row = $res->fetch_object()) {
                 self::$types[(string) $row->name] = ['effect' => $row->effect_name, 'fluid' => (bool) $row->fluid,
-                    'label' => (string) $row->label];
+                    'label' => (string) $row->label, 'duration' => (int) $row->effect_duration,
+                    'value' => (int) $row->effect_value];
             }
         }
 

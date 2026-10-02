@@ -100,4 +100,20 @@ class ConsumableEffectDurationTest extends LegacyPlayerFixtureTestCase
 
         $this->assertSame(3, $this->effectTurnsOf((int) $drinker->id, 'poison'));
     }
+
+    /** The intensity sits beside the duration, in its own name-keyed map. */
+    public function testAConfiguredIntensityIsCarried(): void
+    {
+        [$drinker, $item] = $this->drinkerWith('potion_forte', [
+            'effet' => ['regeneration'],
+            'effetIntensite' => ['regeneration' => 3],
+        ]);
+
+        InventoryService::applyConsumablePayload($drinker, $item);
+
+        $this->assertSame(3, (int) $this->link->fetchOne(
+            'SELECT value FROM players_effects WHERE player_id = ? AND name = ?',
+            [(int) $drinker->id, 'regeneration']
+        ));
+    }
 }

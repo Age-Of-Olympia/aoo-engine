@@ -841,17 +841,20 @@ class Player implements ActorInterface {
             }
 
 
-            /* Stepping on an element applies its type's effect for ONE
-             * turn (the element itself keeps its own clock, see
-             * Element::put). An element with no effect is decor. */
-            $effect = (new \App\Service\MapElementService())->effectOf($row->name);
+            /* Stepping on an element applies its type's effect, with the
+             * duration and intensity its type sets (the element itself keeps
+             * its own clock, see Element::put). An element with no effect is decor. */
+            $elements = new \App\Service\MapElementService();
+            $effect = $elements->effectOf($row->name);
             if($effect !== null){
 
-                $this->add_effect($effect, 1);
+                $duration = $elements->effectDurationOf($row->name);
+                $value = $elements->effectValueOf($row->name);
+                $this->add_effect($effect, $duration, $value);
 
                 // The walker's log keeps what the ground did (effect, PV). Not a
                 // "move": those stay out of the events feed.
-                Log::put($this, $this, $this->effectService->landingMessage($effect, $this->data->name, $this->data->name, 1), 'element');
+                Log::put($this, $this, $this->effectService->landingMessage($effect, $this->data->name, $this->data->name, $duration, $value), 'element');
             }
         }
 

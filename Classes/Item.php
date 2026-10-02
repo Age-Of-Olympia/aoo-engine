@@ -865,7 +865,7 @@ class Item{
         return !empty($this->row->magique);
     }
 
-    /** @return list<object{name: string, duration: int, outcome: string, target: string}> */
+    /** @return list<object{name: string, duration: int, value: int, outcome: string, target: string}> */
     public function getItemEffects() : array {
         return (new \App\Service\ItemEffectService())->listForItems([(int) $this->row->id]);
     }

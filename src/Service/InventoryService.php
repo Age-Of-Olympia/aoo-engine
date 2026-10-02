@@ -231,6 +231,7 @@ class InventoryService
                        names in `effetDuree` — a name-keyed map, so an entry
                        without one keeps the historical default below. */
                     $durations = (array) ($item->data->effetDuree ?? []);
+                    $intensities = (array) ($item->data->effetIntensite ?? []);
                     //dans le json de l'objet, les effet sont dans un tableau du type ["-sang","poison"]
                     foreach ($qte as $effet) {
                         //supression d'un effet
@@ -253,7 +254,7 @@ class InventoryService
                                 ? (int) $durations[$effet]
                                 : ($hidden ? PlayerEffectService::DURATION_INFINITE : 1);
 
-                            $player->add_effect($effet, $duration);
+                            $player->add_effect($effet, $duration, max(1, (int) ($intensities[$effet] ?? 1)));
                             if (!$hidden) {
                                 /* les effets cachés (poison…) restent
                                  * muets dans le message de retour */

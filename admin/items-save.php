@@ -242,7 +242,7 @@ $effectService = new \App\Service\EffectService();
  * row; a blank duration means "unset", which each reader defaults its own
  * way. Keys the form does not edit travel back through the hidden field.
  *
- * @return list<array{name: string, duration: ?int, extra: array<string, mixed>}>
+ * @return list<array{name: string, duration: ?int, value: ?int, extra: array<string, mixed>}>
  */
 $readEffectRows = static function (string $field) use ($effectService, $id): array {
     $rows = [];
@@ -256,10 +256,12 @@ $readEffectRows = static function (string $field) use ($effectService, $id): arr
             redirectTo('/admin/items.php?action=edit&id=' . $id);
         }
         $rawDuration = trim((string) ($_POST[$field . '_duration'][$i] ?? ''));
+        $rawValue = trim((string) ($_POST[$field . '_value'][$i] ?? ''));
         $extra = json_decode((string) ($_POST[$field . '_extra'][$i] ?? ''), true);
         $rows[] = [
             'name' => $effectName,
             'duration' => $rawDuration === '' ? null : (int) $rawDuration,
+            'value' => $rawValue === '' ? null : max(1, (int) $rawValue),
             'extra' => is_array($extra) ? $extra : [],
         ];
     }
@@ -277,6 +279,7 @@ foreach (array_values((array) ($_POST['strike_effects_name'] ?? [])) as $i => $r
     $strikeRows[] = [
         'name' => $effectName,
         'duration' => max(-1, (int) ($_POST['strike_effects_duration'][$i] ?? 1)),
+        'value' => (int) ($_POST['strike_effects_value'][$i] ?? 1),
         'outcome' => (string) ($_POST['strike_effects_outcome'][$i] ?? 'hit'),
         'target' => (string) ($_POST['strike_effects_target'][$i] ?? 'target'),
     ];
@@ -296,9 +299,13 @@ try {
 $appliedRows = $readEffectRows('effets_appliques');
 $consumeEffects = array_map(static fn (array $row): string => $row['name'], $appliedRows);
 $consumeDurations = [];
+$consumeValues = [];
 foreach ($appliedRows as $row) {
     if ($row['duration'] !== null) {
         $consumeDurations[$row['name']] = $row['duration'];
+    }
+    if ($row['value'] !== null && $row['value'] !== 1) {
+        $consumeValues[$row['name']] = $row['value'];
     }
 }
 foreach ((array) ($_POST['effets_retires'] ?? []) as $effectName) {
@@ -319,12 +326,15 @@ if ($extraObject !== null && !is_object($extraObject)) {
     redirectTo('/admin/items.php?action=edit&id=' . $id);
 }
 $extraObject ??= new stdClass();
-unset($extraObject->effet, $extraObject->effetDuree);
+unset($extraObject->effet, $extraObject->effetDuree, $extraObject->effetIntensite);
 if ($consumeEffects !== []) {
     $extraObject->effet = $consumeEffects;
 }
 if ($consumeDurations !== []) {
     $extraObject->effetDuree = (object) $consumeDurations;
+}
+if ($consumeValues !== []) {
+    $extraObject->effetIntensite = (object) $consumeValues;
 }
 
 // Graine : growTo / growZMin recomposés depuis les champs dédiés du

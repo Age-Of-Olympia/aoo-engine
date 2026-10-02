@@ -355,11 +355,12 @@ class ActionExecutorService
                 }
 
                 $duration = (int) ($effect->duration ?? 1);
+                $value = (int) $effect->value;
 
                 foreach ($this->strikeReceivers((string) ($effect->target ?? 'target')) as $receiver) {
                     // add_effect, not the raw insert: the cancellation cycle and pv_on_apply come with it.
-                    $receiver->add_effect((string) $effect->name, $duration);
-                    $outcomeSuccessMessages[] = $effectService->landingMessage((string) $effect->name, $receiver->data->name, $this->actor->data->name, $duration);
+                    $receiver->add_effect((string) $effect->name, $duration, $value);
+                    $outcomeSuccessMessages[] = $effectService->landingMessage((string) $effect->name, $receiver->data->name, $this->actor->data->name, $duration, $value);
                 }
             }
 

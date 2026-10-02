@@ -46,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['element_type'])) {
         $elements->setEffect($name, $effect === '' ? null : $effect);
         $elements->setFluid($name, isset($_POST['fluid']));
         $elements->setLabel($name, trim((string) ($_POST['label'] ?? '')));
+        $elements->setEffectStrength($name, (int) ($_POST['effect_duration'] ?? 1), (int) ($_POST['effect_value'] ?? 1));
         setFlash('success', $effect === ''
             ? "« {$name} » est maintenant un décor, sans effet."
             : "Marcher sur « {$name} » applique maintenant l'effet « {$effect} ».");
@@ -99,6 +100,12 @@ foreach ($names as $name) {
             . ' placeholder="' . e($name) . '" value="' . e($elements->labelOf($name) === $name ? '' : $elements->labelOf($name)) . '"'
             . ' title="Nom affiché au joueur ; vide = le code">'
         . '<select name="effect" class="form-control form-control-sm" style="width:auto">' . $options . '</select>'
+        . '<input type="number" name="effect_duration" min="-1" class="form-control form-control-sm" style="width:5em"'
+            . ' value="' . $elements->effectDurationOf($name) . '"'
+            . ' title="Durée de l\'effet, en tours : 0 jusqu\'au prochain tour, -1 sans fin">'
+        . '<input type="number" name="effect_value" min="1" class="form-control form-control-sm" style="width:4em"'
+            . ' value="' . $elements->effectValueOf($name) . '"'
+            . ' title="Intensité : multiplie les modificateurs de l\'effet">'
         . '<label class="mb-0 d-flex align-items-center gap-1" title="Se fond avec ses voisins de la même famille :'
             . ' bords estompés, coudes. Décoché, chaque case est dessinée seule.">'
             . '<input type="checkbox" name="fluid"' . ($elements->isFluid($name) ? ' checked' : '') . '> fluide</label>'
@@ -126,6 +133,7 @@ $content = '<div class="d-flex justify-content-between align-items-center mb-3">
     . 'La liste vient des <strong>images</strong> de <code>img/elements/</code> ; '
     . 'l\'<strong>effet choisi</strong> est appliqué quand on marche sur la case. '
     . 'Tant qu\'aucun n\'a été choisi, c\'est l\'effet du même nom, s\'il existe. '
+    . 'Les deux nombres règlent sa <strong>durée</strong> en tours (0 jusqu\'au prochain tour, -1 sans fin) et son <strong>intensité</strong>. '
     . 'Un type sans effet est purement décoratif. '
     . 'Un type <strong>fluide</strong> (eau, lave…) se fond avec ses voisins de la même famille ; '
     . 'décoché, chaque case est dessinée seule.'

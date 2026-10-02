@@ -55,6 +55,7 @@ class SimulatedItem extends Item
             $rows[] = (object) [
                 'name' => (string) ($entry->name ?? ''),
                 'duration' => (int) ($entry->duration ?? 1),
+                'value' => (int) ($entry->value ?? 1),
                 'outcome' => (string) ($entry->outcome ?? 'hit'),
                 'target' => (string) ($entry->target ?? 'target'),
             ];

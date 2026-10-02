@@ -24,7 +24,7 @@ class ItemEffectService
 
     /**
      * @param list<int> $itemIds
-     * @return list<object{name: string, duration: int, outcome: string, target: string}>
+     * @return list<object{name: string, duration: int, value: int, outcome: string, target: string}>
      */
     public function listForItems(array $itemIds): array
     {
@@ -34,7 +34,7 @@ class ItemEffectService
         }
 
         $rows = $this->conn->fetchAllAssociative(
-            'SELECT item_id, effect AS name, duration, outcome, target FROM item_effects
+            'SELECT item_id, effect AS name, duration, value, outcome, target FROM item_effects
               WHERE item_id IN (' . implode(',', array_fill(0, count($itemIds), '?')) . ')
               ORDER BY id',
             $itemIds
@@ -42,6 +42,7 @@ class ItemEffectService
 
         return array_map(static function (array $row): object {
             $row['duration'] = (int) $row['duration'];
+            $row['value'] = (int) $row['value'];
 
             return (object) $row;
         }, $rows);
@@ -51,7 +52,7 @@ class ItemEffectService
      * The same rows grouped by item, for a list rendered in one query.
      *
      * @param list<int> $itemIds
-     * @return array<int, list<object{name: string, duration: int, outcome: string, target: string}>>
+     * @return array<int, list<object{name: string, duration: int, value: int, outcome: string, target: string}>>
      */
     public function mapForItems(array $itemIds): array
     {
@@ -66,7 +67,7 @@ class ItemEffectService
     /**
      * Replace the item's rows with the given ones.
      *
-     * @param list<array{name: string, duration: int, outcome: string, target: string}> $rows
+     * @param list<array{name: string, duration: int, value?: int, outcome: string, target: string}> $rows
      * @throws \InvalidArgumentException unknown effect, outcome or target
      */
     public function replaceForItem(int $itemId, array $rows): void
@@ -85,8 +86,8 @@ class ItemEffectService
             $conn->executeStatement('DELETE FROM item_effects WHERE item_id = ?', [$itemId]);
             foreach ($rows as $row) {
                 $conn->executeStatement(
-                    'INSERT INTO item_effects (item_id, effect, duration, outcome, target) VALUES (?, ?, ?, ?, ?)',
-                    [$itemId, $row['name'], (int) $row['duration'], $row['outcome'], $row['target']]
+                    'INSERT INTO item_effects (item_id, effect, duration, value, outcome, target) VALUES (?, ?, ?, ?, ?, ?)',
+                    [$itemId, $row['name'], (int) $row['duration'], max(1, (int) ($row['value'] ?? 1)), $row['outcome'], $row['target']]
                 );
             }
         });
