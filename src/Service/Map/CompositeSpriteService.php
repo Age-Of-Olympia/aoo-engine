@@ -246,19 +246,11 @@ final class CompositeSpriteService
         return $written;
     }
 
+    /** Decoded from the content, not the name: an upload sits in /tmp without an extension. */
     private function read(string $file): ?\GdImage
     {
-        if (!is_file($file)) {
-            return null;
-        }
-
-        $image = match (strtolower(pathinfo($file, PATHINFO_EXTENSION))) {
-            'png'  => @imagecreatefrompng($file),
-            'webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($file) : false,
-            'gif'  => @imagecreatefromgif($file),
-            'jpg', 'jpeg' => @imagecreatefromjpeg($file),
-            default => false,
-        };
+        $bytes = is_file($file) ? @file_get_contents($file) : false;
+        $image = $bytes === false || $bytes === '' ? false : @imagecreatefromstring($bytes);
 
         return $image === false ? null : $image;
     }
