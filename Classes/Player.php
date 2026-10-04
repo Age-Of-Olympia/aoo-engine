@@ -2026,14 +2026,9 @@ class Player implements ActorInterface {
         $sql = 'UPDATE players SET malus = 0 WHERE id = ?';
         $db->exe($sql, $this->id);
 
-        // purge effects & bonus
-        $sql = '
-        DELETE players_effects, players_bonus
-        FROM players_effects
-        JOIN players_bonus ON players_effects.player_id = players_bonus.player_id
-        WHERE players_effects.player_id = ?
-        ';
-        $db->exe($sql, $this->id);
+        // Death heals every wound and ends every effect, flight included.
+        $db->exe('DELETE FROM players_effects WHERE player_id = ?', $this->id);
+        $db->exe('DELETE FROM players_bonus WHERE player_id = ?', $this->id);
 
         // purge assists
         $values = array('target_id'=>$this->id);
