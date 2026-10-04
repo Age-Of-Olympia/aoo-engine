@@ -120,6 +120,13 @@ class ActionService
                     $parts[] = ['trait' => 'mvt', 'text' => $this->formatMultiplier($value[1]) . 'x(+1) Mvt', 'effect' => 'imposture'];
                 } elseif (is_numeric($value) && isset(CARACS[$key])) {
                     $parts[] = ['trait' => $key, 'text' => $value . ' ' . CARACS[$key]];
+                } elseif (is_array($value) && isset(CARACS[$key])) {
+                    // Passive-reduced cost [[passive, cost], ..., ["none", cost]]: show the base cost.
+                    foreach ($value as $option) {
+                        if (($option[0] ?? null) === 'none') {
+                            $parts[] = ['trait' => $key, 'text' => $option[1] . ' ' . CARACS[$key]];
+                        }
+                    }
                 }
             }
             return $parts;
