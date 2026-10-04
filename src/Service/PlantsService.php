@@ -107,6 +107,7 @@ class PlantsService
                 $label !== '' ? $label : $plante,
                 'img/plants/' . $plante . '.png'
             );
+            \App\Service\Map\BoardChanges::cellId((int) $coords);
         }
     }
 

@@ -4,6 +4,8 @@ namespace Tests\Player;
 
 use App\Service\EffectService;
 use App\Service\Map\BoardChanges;
+use App\Service\MapElementService;
+use App\Service\PlanConfigService;
 use Classes\View;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
@@ -16,6 +18,7 @@ class BoardChangesPathsTest extends LegacyPlayerFixtureTestCase
     protected function tearDown(): void
     {
         $this->link->executeStatement("DELETE FROM effects WHERE name IN ('oeil_test', 'rien_test')");
+        $this->link->executeStatement("DELETE FROM map_marks WHERE name = 'trace_test'");
         EffectService::clearCache();
         parent::tearDown();
     }
@@ -50,6 +53,44 @@ class BoardChangesPathsTest extends LegacyPlayerFixtureTestCase
         $board = CachedBoard::drawnFor((int) $watcher->id, 3);
 
         $jumper->go($this->tile(40, 0));
+
+        $this->assertFileDoesNotExist($board);
+    }
+
+    /** The hourly cron deletes expired footsteps: whoever saw them gets a fresh board. */
+    public function testExpiredMarksRedrawTheBoardsThatShowedThem(): void
+    {
+        $watcher = $this->createRealPlayer('GmTrace');
+        $board = CachedBoard::drawnFor((int) $watcher->id);
+        $this->link->executeStatement(
+            "INSERT INTO map_marks (name, coords_id, endTime) VALUES ('trace_test', ?, 1)",
+            [(int) View::get_coords_id($this->tile(2, 0))]
+        );
+
+        (new MapElementService())->purgeExpired();
+
+        $this->assertFileDoesNotExist($board);
+    }
+
+    /** Background, visibility, shade: a plan setting reaches every board drawn on it. */
+    public function testAPlanSettingRedrawsEveryBoardOnThePlan(): void
+    {
+        $watcher = $this->createRealPlayer('GmPlan');
+        $board = CachedBoard::drawnFor((int) $watcher->id);
+
+        (new PlanConfigService())->write('gaia', []);
+
+        $this->assertFileDoesNotExist($board);
+    }
+
+    /** A character turned invisible leaves the boards of those who saw it. */
+    public function testHidingACharacterRedrawsTheBoardsAroundIt(): void
+    {
+        $hider = $this->createRealPlayer('GmCache');
+        $watcher = $this->createRealPlayer('GmVoit');
+        $board = CachedBoard::drawnFor((int) $watcher->id);
+
+        $hider->add_option('invisibleMode');
 
         $this->assertFileDoesNotExist($board);
     }

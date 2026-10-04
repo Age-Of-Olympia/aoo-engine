@@ -85,6 +85,7 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
        c'est ce qui manquait pour reprendre les 38 exemplaires incomplets. */
     if ($_POST['type'] === 'object_complete') {
         $placed = (new SceneryObjectService())->complete($coordsId, (string) $_POST['src']);
+        \App\Service\Map\BoardChanges::cellId((int) $coordsId);
 
         exit($placed > 0 ? $placed . ' morceau(x) reposé(s)' : 'figure déjà complète');
     }

@@ -437,6 +437,8 @@ foreach (array_merge(\App\Enum\Caracs::KEYS, \Classes\Item::SPECIAL_KEYS) as $ke
 
 $params[] = $id;
 $db->exe('UPDATE items SET ' . implode(', ', $set) . ' WHERE id = ?', $params);
+// Sprite, passage, the Perception of whoever wears it: any board may show it.
+\App\Service\Map\BoardChanges::world();
 
 setFlash('success', 'Objet « ' . $name . ' » enregistré ; ses stats sont maintenant lues en base.');
 redirectTo('/admin/items.php?action=edit&id=' . $id);

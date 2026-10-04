@@ -25,6 +25,8 @@ $db = new Db();
 
 $res = $db->exe($sql);
 
+$grown = array();
+
 while($row = $res->fetch_object()){
 
 
@@ -65,9 +67,13 @@ while($row = $res->fetch_object()){
             $values = array('id'=>$row->id);
 
             $db->delete('map_items', $values);
+
+            $grown[] = (int) $row->coords_id;
         }
     }
 }
+
+\App\Service\Map\BoardChanges::cellId(...$grown);
 
 
 echo 'done';

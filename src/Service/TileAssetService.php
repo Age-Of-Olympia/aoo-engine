@@ -129,6 +129,7 @@ class TileAssetService
         if (!imagepng($image, $dir . '/' . $name . '.png')) {
             throw new RuntimeException('Écriture impossible : ' . $dir . '/' . $name . '.png');
         }
+        \App\Service\Map\BoardChanges::world();
     }
 
     /**
@@ -162,6 +163,7 @@ class TileAssetService
         if (file_put_contents($dir . '/' . $name . '.svg', $svg) === false) {
             throw new RuntimeException('Écriture impossible : ' . $dir . '/' . $name . '.svg');
         }
+        \App\Service\Map\BoardChanges::world();
     }
 
     /** Root <svg>, no script, no event handler, no href but #id or data:image. */
@@ -216,6 +218,7 @@ class TileAssetService
                 throw new RuntimeException('Suppression impossible : ' . $file);
             }
         }
+        \App\Service\Map\BoardChanges::world();
     }
 
     /**
@@ -262,6 +265,7 @@ class TileAssetService
                 throw new RuntimeException('Déplacement impossible : ' . $file);
             }
         }
+        \App\Service\Map\BoardChanges::world();
     }
 
     /**
@@ -341,6 +345,8 @@ class TileAssetService
             $connection->rollBack();
             throw $exception;
         }
+
+        \App\Service\Map\BoardChanges::world();
 
         return ['rowsUpdated' => $rowsUpdated, 'warnings' => $this->renameWarnings($layer, $old)];
     }

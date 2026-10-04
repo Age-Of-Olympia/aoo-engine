@@ -89,7 +89,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['player_save'])) {
             if ($coordsId === null) {
                 throw new RuntimeException('Coordonnées invalides.');
             }
+            \App\Service\Map\BoardChanges::entity($id);
             $db->exe('UPDATE players SET coords_id = ? WHERE id = ?', array($coordsId, $id));
+            (new \App\Service\Map\EntityCellService())->syncCells($id);
             \App\Service\Map\BoardChanges::cell($goCoords);
         }
 

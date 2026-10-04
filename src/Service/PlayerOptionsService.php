@@ -104,6 +104,7 @@ class PlayerOptionsService
         ]);
 
         self::resetCache($playerId);
+        self::boardChanged($playerId, $name);
     }
 
     /**
@@ -120,6 +121,16 @@ class PlayerOptionsService
         ]);
 
         self::resetCache($playerId);
+        self::boardChanged($playerId, $name);
+    }
+
+    /** Options are drawn into the board (grid, borders, mask…); invisibility, into the others' boards too. */
+    private static function boardChanged(int $playerId, string $name): void
+    {
+        if ($name === 'invisibleMode') {
+            \App\Service\Map\BoardChanges::entity($playerId);
+        }
+        \App\Service\Map\BoardChanges::viewer($playerId);
     }
 
     /**

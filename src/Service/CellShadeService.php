@@ -223,6 +223,7 @@ class CellShadeService
         self::$stepCache = $step;
         self::$maxCache = $maxLevel;
         self::$colorCache = $color;
+        \App\Service\Map\BoardChanges::world();
     }
 
     /** Vide le cache de requête — les tests changent les réglages en cours de route. */

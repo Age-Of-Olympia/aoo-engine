@@ -224,12 +224,14 @@ function edit_player($argumentValues, $player){
 
     $db = new Db();
 
+    // Any column may be drawn (race, avatar) or move the entity (coords_id): before and after.
+    \App\Service\Map\BoardChanges::entity((int) $player->id);
     $sql = $db->exe($sql, array($value, $player->id));
+    \App\Service\Map\BoardChanges::entity((int) $player->id);
 
 
     $player->refresh_data();
     $player->refresh_caracs();
-    \App\Service\Map\BoardChanges::viewer((int) $player->id);
 
 
     return 'player '. $player->data->name .': field "'. $field .'" changed to value "'. $value .'"';

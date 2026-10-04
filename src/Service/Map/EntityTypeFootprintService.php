@@ -140,6 +140,7 @@ final class EntityTypeFootprintService
         );
 
         $this->declaredCache = null;
+        \App\Service\Map\BoardChanges::world();
     }
 
     /** Drop a declaration: the type falls back to map or image. */
@@ -151,6 +152,7 @@ final class EntityTypeFootprintService
         );
 
         $this->declaredCache = null;
+        \App\Service\Map\BoardChanges::world();
     }
 
     /**

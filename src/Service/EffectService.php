@@ -527,6 +527,7 @@ class EffectService
         $this->entityManager()->persist($effect);
         $this->entityManager()->flush();
         self::clearCache();
+        \App\Service\Map\BoardChanges::world();
     }
 
     /**
@@ -629,6 +630,7 @@ class EffectService
         $this->entityManager()->remove($effect);
         $this->entityManager()->flush();
         self::clearCache();
+        \App\Service\Map\BoardChanges::world();
     }
 
     /**

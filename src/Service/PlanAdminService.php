@@ -590,6 +590,8 @@ class PlanAdminService
 
         // Full flush: the memoized world/death slugs may have been renamed.
         PlanService::forget();
+        // Boards drawn on the plan still carry its former name.
+        \App\Service\Map\BoardChanges::plan($from);
 
         // Fichiers en dernier et best-effort — même politique que deletePlan
         $pngPrefix = $_SERVER['DOCUMENT_ROOT'] . '/img/maps/local/local_';

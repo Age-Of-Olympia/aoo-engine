@@ -368,6 +368,7 @@ class RaceService
         $this->entityManager->persist($race);
         $this->entityManager->flush();
         self::clearCache();
+        \App\Service\Map\BoardChanges::world();
     }
 
     /**
@@ -446,6 +447,7 @@ class RaceService
         $this->entityManager->remove($race);
         $this->entityManager->flush();
         self::clearCache();
+        \App\Service\Map\BoardChanges::world();
     }
 
     /**

@@ -311,45 +311,7 @@ class TiledMapService
             $result['planHealth'] = $health;
         }
 
-        $this->refreshBoardsAround($plan, $z, $layers);
-
         return $result;
-    }
-
-    /**
-     * Redraws the boards of whoever saw the pushed area.
-     *
-     * The board is cached per player, without expiry: a building placed from
-     * Tiled in someone's field of view would not show until they moved.
-     *
-     * Over the push's extent at once rather than cell by cell: a push touches
-     * hundreds of cells, which would purge the same files.
-     *
-     * @param array<string, mixed> $layers as pushed, so not yet of a safe shape
-     */
-    private function refreshBoardsAround(string $plan, int $z, array $layers): void
-    {
-        $xs = [];
-        $ys = [];
-
-        foreach ($layers as $rows) {
-            if (!is_array($rows)) {
-                continue;
-            }
-
-            foreach ($rows as $row) {
-                if (is_array($row) && isset($row['x'], $row['y'])) {
-                    $xs[] = (int) $row['x'];
-                    $ys[] = (int) $row['y'];
-                }
-            }
-        }
-
-        if ($xs === []) {
-            return; /* empty push: nobody saw anything change */
-        }
-
-        \App\Service\Map\BoardChanges::cells($plan, $z, min($xs), max($xs), min($ys), max($ys));
     }
 
     /**

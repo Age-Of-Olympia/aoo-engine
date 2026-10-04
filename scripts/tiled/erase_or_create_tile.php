@@ -67,6 +67,7 @@ if($_POST['type'] == 'eraser'){
             'UPDATE coords SET shade = LEAST(shade + 1, ?) WHERE id = ?',
             [$shadeMax, $coordsId]
         );
+        \App\Service\Map\BoardChanges::cellId((int) $coordsId);
 
         echo 'ombre';
 
@@ -110,6 +111,7 @@ if($_POST['type'] == 'eraser'){
         );
 
         if ($placed > 0) {
+            \App\Service\Map\BoardChanges::cellId((int) $coordsId);
             echo 'foregrounds (' . $placed . ' morceaux)';
 
             return;

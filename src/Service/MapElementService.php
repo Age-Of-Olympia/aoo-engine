@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Service\Map\BoardChanges;
 use Classes\Db;
 use Classes\Element;
 use RuntimeException;
@@ -154,6 +155,7 @@ class MapElementService
             [$element, $element, (int) $fluid]
         );
         self::clearCache();
+        \App\Service\Map\BoardChanges::world();
     }
 
     /** Construction over an element follows its effect; decor blocks. */
@@ -257,7 +259,7 @@ class MapElementService
 
     public function remove(int $id): void
     {
-        (new Db())->exe('DELETE FROM map_elements WHERE id = ?', [$id]);
+        $this->removeMany([$id]);
     }
 
     /** @param list<int> $ids */
@@ -268,12 +270,13 @@ class MapElementService
             return 0;
         }
 
-        return (int) (new Db())->exe(
-            'DELETE FROM map_elements WHERE id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')',
-            $ids,
-            false,
-            true
-        );
+        $db = new Db();
+        $in = 'WHERE id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')';
+        $cells = array_column($db->exe('SELECT DISTINCT coords_id FROM map_elements ' . $in, $ids)->fetch_all(MYSQLI_ASSOC), 'coords_id');
+        $removed = (int) $db->exe('DELETE FROM map_elements ' . $in, $ids, false, true);
+        BoardChanges::cellId(...array_map('intval', $cells));
+
+        return $removed;
     }
 
     /**
@@ -285,14 +288,14 @@ class MapElementService
     {
         $db = new Db();
         $purged = 0;
+        $cells = [];
+        $now = time();
         foreach (['map_elements', 'map_marks'] as $table) {
-            $purged += (int) $db->exe(
-                'DELETE FROM ' . $table . ' WHERE endTime != 0 AND endTime <= ?',
-                [time()],
-                false,
-                true
-            );
+            $expired = 'FROM ' . $table . ' WHERE endTime != 0 AND endTime <= ?';
+            $cells = array_merge($cells, array_column($db->exe('SELECT DISTINCT coords_id ' . $expired, [$now])->fetch_all(MYSQLI_ASSOC), 'coords_id'));
+            $purged += (int) $db->exe('DELETE ' . $expired, [$now], false, true);
         }
+        BoardChanges::cellId(...array_map('intval', array_unique($cells)));
 
         return $purged;
     }

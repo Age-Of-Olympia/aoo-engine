@@ -96,6 +96,8 @@ class PlanConfigService
     {
         $this->em()->flush();
         PlanService::forget($plan);
+        // Background, visibility, shade… every board drawn on the plan.
+        \App\Service\Map\BoardChanges::plan($plan);
     }
 
     /**

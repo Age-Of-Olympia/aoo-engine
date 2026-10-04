@@ -170,6 +170,7 @@ class NpcAdminService
              WHERE id = ? AND player_type = 'npc'",
             [$name, $race, 'img/avatars/ame/' . $race . '.webp', $faction, $pnjId]
         );
+        \App\Service\Map\BoardChanges::entity($pnjId);
     }
 
     /** Default plan where retired PNJs are parked (overridable via settings). */
@@ -277,6 +278,8 @@ class NpcAdminService
         ]);
 
         if ($coordsId !== null) {
+            // The cell it leaves; nobody watches the retirement plan.
+            \App\Service\Map\BoardChanges::entity($pnjId);
             (new Db())->exe(
                 "UPDATE players SET coords_id = ? WHERE id = ? AND player_type = 'npc'",
                 [$coordsId, $pnjId]

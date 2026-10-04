@@ -29,13 +29,31 @@ final class BoardChanges
         self::cells((string) $coords->plan, (int) $coords->z, (int) $coords->x, (int) $coords->x, (int) $coords->y, (int) $coords->y);
     }
 
-    /** A change on one cell known by its coords id; an unknown id changes nothing. */
-    public static function cellId(int $coordsId): void
+    /** Changes on cells known by their coords ids, in one query; unknown ids change nothing. */
+    public static function cellId(int ...$coordsIds): void
     {
-        $row = (new Db())->exe('SELECT x, y, z, plan FROM coords WHERE id = ?', array($coordsId))->fetch_object();
-        if ($row) {
-            self::cell($row);
+        if ($coordsIds === array()) {
+            return;
         }
+
+        $reach = self::reach();
+        $marks = implode(',', array_fill(0, count($coordsIds), '?'));
+        $res = (new Db())->exe(
+            'SELECT DISTINCT b.player_id FROM coords c
+               JOIN board_views b ON b.plan = c.plan AND b.z = c.z
+                AND b.x_min <= c.x + ? AND b.x_max >= c.x - ? AND b.y_min <= c.y + ? AND b.y_max >= c.y - ?
+              WHERE c.id IN (' . $marks . ')',
+            array_merge(array($reach, $reach, $reach, $reach), $coordsIds)
+        );
+
+        self::notify(self::ids($res));
+    }
+
+    /** A change on what stands on a cell: the boards around that entity's cell. */
+    public static function entity(int $playerId): void
+    {
+        $row = (new Db())->exe('SELECT coords_id FROM players WHERE id = ?', array($playerId))->fetch_object();
+        self::cellId((int) ($row->coords_id ?? 0));
     }
 
     /**
@@ -51,12 +69,13 @@ final class BoardChanges
             array($plan, $z, $maxX + $reach, $minX - $reach, $maxY + $reach, $minY - $reach)
         );
 
-        $ids = array();
-        while ($row = $res->fetch_object()) {
-            $ids[] = (int) $row->player_id;
-        }
+        self::notify(self::ids($res));
+    }
 
-        self::notify($ids);
+    /** Every board drawn on this plan: its configuration changed (background, visibility, shade…). */
+    public static function plan(string $plan): void
+    {
+        self::notify(self::ids((new Db())->exe('SELECT player_id FROM board_views WHERE plan = ?', array($plan))));
     }
 
     /** What this player's own board draws changed: Perception, options, effects, their entity. */
@@ -96,6 +115,12 @@ final class BoardChanges
         $row = (new Db())->exe('SELECT stale FROM board_views WHERE player_id = ?', array($playerId))->fetch_object();
 
         return (bool) ($row->stale ?? false);
+    }
+
+    /** @return list<int> */
+    private static function ids(\mysqli_result $res): array
+    {
+        return array_map('intval', array_column($res->fetch_all(MYSQLI_ASSOC), 'player_id'));
     }
 
     /** @param list<int> $playerIds */
