@@ -490,6 +490,24 @@
         }
     }
 
+    /* Live board: the server flags the board stale when something changes
+     * in the player's field of view (View::refresh_players_svg_in_box);
+     * every 30 s the HUD asks, and redraws as after an action. */
+    var BOARD_POLL_MS = 30000;
+
+    function initBoardPolling() {
+        setInterval(function () {
+            if (document.hidden || tutorialActive() || $('#hud-action-modal').is(':visible')) {
+                return;
+            }
+            $.getJSON('api/map/board_stale.php').done(function (data) {
+                if (data && data.stale) {
+                    refreshAfterAction();
+                }
+            });
+        }, BOARD_POLL_MS);
+    }
+
     function refreshAfterAction() {
         $.ajax({ url: document.location.href, cache: false })
             .done(function (html) {
@@ -597,6 +615,21 @@
         /* Restants : disparus du re-rendu (élément consommé, nettoyé). */
         Object.keys(byKey).forEach(function (key) {
             byKey[key].forEach(function (img) { img.remove(); });
+        });
+
+        /* Sprites with an id new to the board (a character walking into
+         * view), placed where the fresh render paints them. */
+        Array.prototype.forEach.call(freshView.querySelectorAll('image[id]'), function (img) {
+            if (currentView.querySelector('image[id="' + img.id + '"]')) {
+                return;
+            }
+            var clone = img.cloneNode(true);
+            var anchor = anchorFor(img);
+            if (anchor) {
+                anchor.parentNode.insertBefore(clone, anchor);
+            } else {
+                currentView.appendChild(clone);
+            }
         });
 
         /* Passage lives on the grid cells' data-blocked, not in a sprite:
@@ -2633,6 +2666,7 @@
         /* Réglages mémorisés du damier : zoom retrouvé après tout
          * rechargement, panoramique retrouvé hors déplacement. */
         initDamierMemory();
+        initBoardPolling();
         var savedZoom = parseFloat(aooStore.get(DAMIER_ZOOM_KEY));
         if (savedZoom > 1) {
             setDamierZoom(savedZoom);
