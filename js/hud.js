@@ -598,6 +598,21 @@
         Object.keys(byKey).forEach(function (key) {
             byKey[key].forEach(function (img) { img.remove(); });
         });
+
+        /* Passage lives on the grid cells' data-blocked, not in a sprite:
+         * a door opened or shut changes nothing else on the board. */
+        var freshBlocked = {};
+        Array.prototype.forEach.call(freshView.querySelectorAll('.case[data-blocked]'), function (cell) {
+            freshBlocked[cell.getAttribute('data-coords')] = true;
+        });
+        Array.prototype.forEach.call(currentView.querySelectorAll('.case[data-coords]'), function (cell) {
+            if (freshBlocked[cell.getAttribute('data-coords')]) {
+                cell.setAttribute('data-blocked', '1');
+            } else {
+                cell.removeAttribute('data-blocked');
+            }
+        });
+        redrawBlockedMarkers();
     }
 
     /* Re-observe la sélection courante : PV, charges, message du
