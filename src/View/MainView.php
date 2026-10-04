@@ -9,6 +9,15 @@ use Classes\View;
 
 class MainView
 {
+    /**
+     * Does this render hold map cells? The grid writes `class="case "` or
+     * `class="case go"` (View::get_view), never a bare `class="case"`.
+     */
+    public static function isRenderable(?string $svg): bool
+    {
+        return $svg !== null && preg_match('/class="case[ "]/', $svg) === 1;
+    }
+
     public static function render(Player $player): void
     {
 
@@ -57,20 +66,11 @@ class MainView
                     \App\Service\Map\BoardChanges::drawn((int) $player->id, $view->area());
                 }
 
-                /* Defensive cache guard: only persist the SVG when it
-                 * actually contains map cells. View::get_view() returns
-                 * null when its inSightId guard fires (e.g. transient
-                 * coords/state issue on a brand-new player's first
-                 * arrival), and writing that null payload caches a
-                 * permanently-gray map for the player until the
-                 * "Rafraichir la Vue" account option is used.
-                 *
-                 * Heuristic: the rendered SVG always contains
-                 * `class="case"` attributes when at least one tile is
-                 * in sight. Missing the substring → empty / degenerate
-                 * render → skip the cache write. The page still echoes
-                 * what we got; the next request retries the render. */
-                $svgIsRenderable = is_string($data) && strpos($data, 'class="case"') !== false;
+                /* Only a render with map cells is cached: View::get_view()
+                 * returns null or a degenerate board on a transient state
+                 * (a brand-new player's first arrival), which would stay
+                 * cached as a grey map. */
+                $svgIsRenderable = self::isRenderable($data);
 
                 if ($svgIsRenderable) {
                     $myfile = fopen($svgUrl, "w") or die("Unable to open file!");
