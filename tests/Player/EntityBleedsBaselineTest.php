@@ -96,9 +96,7 @@ class EntityBleedsBaselineTest extends LegacyPlayerFixtureTestCase
         /* Même chemin RELATIF que le code de production
          * (View::refresh_players_svg) : il s'appuie sur le répertoire
          * courant, pas sur DOCUMENT_ROOT, qui est vide hors requête. */
-        $cache = 'datas/private/players/' . $player->id . '.svg';
-        @mkdir(dirname($cache), 0777, true);
-        file_put_contents($cache, self::CACHE_MARKER);
+        $cache = \Tests\Support\CachedBoard::drawnFor((int) $player->id, content: self::CACHE_MARKER);
         $this->assertFileExists($cache, 'le cache de départ est bien en place');
 
         $player->putBonus(['pv' => -1]);

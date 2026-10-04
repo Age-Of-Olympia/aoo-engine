@@ -2235,7 +2235,14 @@ class View{
     }
 
 
-    public static function refresh_players_svg(object $coords,$p=20):void{
+    /**
+     * Purges the boards that show a change at $coords. $p widens the changed
+     * zone; by default it spans the largest footprint, since a change
+     * reported at an anchor cell can reach that far.
+     */
+    public static function refresh_players_svg(object $coords, ?int $p = null):void{
+
+        $p ??= self::footprintReach();
 
         self::refresh_players_svg_in_box(
             $coords->x - $p,
@@ -2247,21 +2254,8 @@ class View{
         );
     }
 
-    /**
-     * Même purge, sur une ZONE plutôt qu'autour d'un point.
-     *
-     * Une poussée depuis Tiled touche une région entière : appeler la version
-     * ponctuelle case par case relançait la même requête des centaines de
-     * fois, pour effacer les mêmes fichiers.
-     */
-    /**
-     * Purge autour d'une case désignée par son id.
-     *
-     * Ce que veulent les éditeurs de carte : ils tiennent un `coords_id` et
-     * rien d'autre, et sans ça un joueur immobile ne voyait pas apparaître ce
-     * qu'un animateur venait de poser sous ses yeux.
-     */
-    public static function refresh_players_svg_at(int $coordsId, int $p = 20): void
+    /** Purge around a cell known by its coords id (map editors only hold that). */
+    public static function refresh_players_svg_at(int $coordsId, ?int $p = null): void
     {
         $res = (new Db())->exe('SELECT x, y, z, plan FROM coords WHERE id = ?', array($coordsId));
         $row = $res ? $res->fetch_assoc() : null;
@@ -2273,6 +2267,14 @@ class View{
         self::refresh_players_svg((object) $row, $p);
     }
 
+    /**
+     * Flags stale, and purges the cache of, every board whose area
+     * (board_views, written by MainView when it draws the board) overlaps
+     * the changed box. The area is the one the viewer's Perception and
+     * footprint gave the board, so a far-sighted player is reached from as
+     * far as they see, a short-sighted one only when the change is in sight.
+     * The HUD polls the flag (api/map/board_stale.php) to redraw on its own.
+     */
     public static function refresh_players_svg_in_box(
         int $minX,
         int $maxX,
@@ -2281,50 +2283,64 @@ class View{
         int $z,
         string $plan
     ): void {
-        // based on View::get_coords_id_arround that is the fastest implementation
         $db = new Db();
-        $coords = (object) ['z' => $z, 'plan' => $plan];
+        $overlap = 'WHERE plan = ? AND z = ? AND x_min <= ? AND x_max >= ? AND y_min <= ? AND y_max >= ?';
+        $params = array($plan, $z, $maxX, $minX, $maxY, $minY);
 
-        /* Purge du cache SVG, restreinte à ce qui peut en avoir un.
-         *
-         * On exclut UNIQUEMENT le mobilier inerte — ressources et décors —
-         * qui n'agit jamais et ne rendra donc jamais de vue. Les bâtiments
-         * RESTENT dans le balayage : ils sont appelés à agir (bâtiments de
-         * défense), donc à tenir une session et un cache comme un joueur.
-         *
-         * Liste noire et non liste blanche, précisément pour ça : une liste
-         * blanche fondée sur « une structure n'agit pas » deviendrait fausse
-         * le jour où un bâtiment agit, et son cache cesserait silencieusement
-         * d'être purgé. Ici, tout type nouveau est balayé par défaut ; seul
-         * ce qui est démontré inerte en sort.
-         *
-         * Effet : le balayage cesse de croître avec le nombre de ressources
-         * et de décors posés, sans rien changer pour l'existant. */
-        $sql = '
-            SELECT p.id AS id
-            FROM
-            players AS p
-            INNER JOIN
-            coords AS c
-            ON
-            p.coords_id = c.id
-            WHERE x BETWEEN ? AND ?
-            AND y BETWEEN ? AND ?
-            AND c.z = ?
-            AND c.plan = ?
-            AND (p.player_type IS NULL OR p.player_type NOT IN (\'resource\', \'scenery\'))';
-
-        $res = $db->exe($sql, array($minX, $maxX, $minY, $maxY, $coords->z, $coords->plan));
-
+        $db->exe('UPDATE board_views SET stale = 1 ' . $overlap, $params);
+        $res = $db->exe('SELECT player_id FROM board_views ' . $overlap, $params);
 
         while ($row = $res->fetch_object()) {
             /* Absolute: an api/ endpoint's working directory is its own
              * folder, and a relative path silently purged nothing. */
-            $file = dirname(__DIR__) . '/datas/private/players/' . $row->id . '.svg';
+            $file = dirname(__DIR__) . '/datas/private/players/' . $row->player_id . '.svg';
             if (is_file($file)) {
-                unlink($file); // Delete the file
+                unlink($file);
             }
         }
+    }
+
+    /** How far a change reported at one cell can reach: the largest footprint, minus that cell. */
+    private static function footprintReach(): int
+    {
+        $reach = 0;
+        foreach (self::typeFootprints() as $footprint) {
+            $reach = max($reach, $footprint->width() - 1, $footprint->height() - 1);
+        }
+
+        return $reach;
+    }
+
+    /**
+     * The cells this board shows, as MainView records them in board_views:
+     * the viewer's footprint grown by its Perception.
+     *
+     * @return array{plan: string, z: int, x_min: int, x_max: int, y_min: int, y_max: int}
+     */
+    public function area(): array
+    {
+        return array(
+            'plan' => (string) $this->coords->plan,
+            'z' => (int) $this->coords->z,
+            'x_min' => (int) $this->coords->x - (int) $this->p,
+            'x_max' => (int) $this->coords->x + (int) $this->p + $this->footW - 1,
+            'y_min' => (int) $this->coords->y - (int) $this->p - ($this->footH - 1),
+            'y_max' => (int) $this->coords->y + (int) $this->p,
+        );
+    }
+
+    /** Writes this board's area for its viewer, fresh, so refresh_players_svg* finds it. */
+    public function recordArea(): void
+    {
+        $area = $this->area();
+
+        (new Db())->exe(
+            'INSERT INTO board_views (player_id, plan, z, x_min, x_max, y_min, y_max, stale)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+             ON DUPLICATE KEY UPDATE plan = VALUES(plan), z = VALUES(z),
+                x_min = VALUES(x_min), x_max = VALUES(x_max), y_min = VALUES(y_min), y_max = VALUES(y_max), stale = 0',
+            array((int) $this->playerId, $area['plan'], $area['z'], $area['x_min'], $area['x_max'], $area['y_min'], $area['y_max'])
+        );
     }
 
 

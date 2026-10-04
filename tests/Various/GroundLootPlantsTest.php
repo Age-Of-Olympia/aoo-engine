@@ -138,8 +138,7 @@ class GroundLootPlantsTest extends LegacyPlayerFixtureTestCase
             [$coordsId, $player->id]
         );
 
-        $cached = \Classes\Player::cachePath((int) $player->id, '.svg');
-        file_put_contents($cached, '<svg/>');
+        $cached = \Tests\Support\CachedBoard::drawnFor((int) $player->id);
         $this->assertFileExists($cached, 'le décor du cas : un plateau en cache');
 
         (new GroundLootService())->collect(

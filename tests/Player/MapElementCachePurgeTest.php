@@ -29,9 +29,7 @@ class MapElementCachePurgeTest extends LegacyPlayerFixtureTestCase
     /** Cache SVG du joueur, au chemin RELATIF utilisé en production. */
     private function primeCacheFor(int $playerId): string
     {
-        $cache = 'datas/private/players/' . $playerId . '.svg';
-        @mkdir(dirname($cache), 0777, true);
-        file_put_contents($cache, '<svg/>');
+        $cache = \Tests\Support\CachedBoard::drawnFor($playerId);
         $this->assertFileExists($cache, 'le cache de départ est bien en place');
 
         return $cache;

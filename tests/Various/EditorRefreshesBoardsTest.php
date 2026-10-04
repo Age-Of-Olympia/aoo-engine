@@ -6,6 +6,7 @@ use App\Service\TiledMapService;
 use Classes\View;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\CachedBoard;
 use Tests\Support\LegacyBootstrapTrait;
 use Tests\Support\PlanFixtureTrait;
 
@@ -78,10 +79,9 @@ class EditorRefreshesBoardsTest extends TestCase
         return $_SERVER['DOCUMENT_ROOT'] . '/datas/private/players/' . $playerId . '.svg';
     }
 
-    private function boardIsCached(int $playerId): void
+    private function boardIsCached(int $playerId, int $perception = 10): void
     {
-        file_put_contents($this->boardOf($playerId), '<svg class="case"/>');
-        clearstatcache(true, $this->boardOf($playerId));
+        CachedBoard::drawnFor($playerId, $perception, '<svg class="case"/>');
     }
 
     /** What the in-game editor holds is a cell id, and nothing else. */
@@ -100,6 +100,30 @@ class EditorRefreshesBoardsTest extends TestCase
         $this->boardIsCached($this->watcherId);
 
         View::refresh_players_svg_at($this->coordsIdOn(self::PLAN, 500, 500));
+
+        $this->assertFileExists($this->boardOf($this->watcherId));
+    }
+
+    /** Whoever sees farther than the old fixed 20 tiles is refreshed from as far as they see. */
+    public function testAFarSightedBoardIsRedrawnFromAsFarAsItSees(): void
+    {
+        $this->boardIsCached($this->watcherId, 30);
+
+        View::refresh_players_svg_at($this->coordsIdOn(self::PLAN, 28, 0));
+
+        $this->assertFileDoesNotExist($this->boardOf($this->watcherId));
+        $this->assertSame(1, (int) $this->conn->fetchOne(
+            'SELECT stale FROM board_views WHERE player_id = ?',
+            [$this->watcherId]
+        ), 'the HUD poll reads this flag');
+    }
+
+    /** A short-sighted board is left alone by what it cannot show. */
+    public function testAShortSightedBoardIgnoresWhatItCannotSee(): void
+    {
+        $this->boardIsCached($this->watcherId, 3);
+
+        View::refresh_players_svg_at($this->coordsIdOn(self::PLAN, 15, 0));
 
         $this->assertFileExists($this->boardOf($this->watcherId));
     }

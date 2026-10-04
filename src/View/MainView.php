@@ -51,6 +51,12 @@ class MainView
 
                 $data = $view->get_view();
 
+                /* Recorded even when the cache write below is skipped: the
+                 * area is what change notices are matched against. */
+                if (is_string($data)) {
+                    $view->recordArea();
+                }
+
                 /* Defensive cache guard: only persist the SVG when it
                  * actually contains map cells. View::get_view() returns
                  * null when its inSightId guard fires (e.g. transient
