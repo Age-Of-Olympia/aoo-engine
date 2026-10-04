@@ -84,6 +84,24 @@ class ElementTypeEffectTest extends LegacyPlayerFixtureTestCase
         $this->assertSame('', (new EffectService())->describe('glu_test', 2, false), 'nothing lasting to show');
     }
 
+    /** The step tells which carried effect the element's effect put out. */
+    public function testTheStepTellsWhatItCancelled(): void
+    {
+        $this->link->executeStatement("INSERT INTO effects (name, label) VALUES ('glu_test', 'Glu'), ('colle_test', 'Colle')");
+        EffectService::clearCache();
+        $effects = new EffectService();
+        $effects->replaceControls($effects->getEffectByName('glu_test'), ['colle_test']);
+        (new MapElementService())->setLabel('glu_test', 'Eau');
+
+        $player = $this->createRealPlayer('GmGluEteint');
+        $player->add_effect('colle_test', 5);
+        $cell = $this->tile(4, 0);
+        Element::put('glu_test', (int) \Classes\View::get_coords_id($cell), 4);
+
+        $this->assertSame(['Eau : l\'effet Colle prend fin.'], $player->go($cell));
+        $this->assertEmpty($player->have_effect('colle_test'));
+    }
+
     public function testFluidIsSetWithoutTouchingTheEffect(): void
     {
         $this->link->executeStatement("INSERT INTO effects (name, label) VALUES ('glu_test', 'Glu')");

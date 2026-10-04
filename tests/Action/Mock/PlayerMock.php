@@ -79,9 +79,10 @@ class PlayerMock implements ActorInterface
     return 0;
   }
 
-  public function add_effect($name, $duration = 0): void
+  /** @return list<string> */
+  public function add_effect($name, $duration = 0): array
   {
-    // Implémentation vide pour le mock
+    return [];
   }
 
   public function end_effect(string $name): void

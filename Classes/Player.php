@@ -647,8 +647,9 @@ class Player implements ActorInterface {
      *        chaque tour du joueur et l'effet tombe à zéro.
      *        PlayerEffectService::DURATION_INFINITE pour un effet qui ne
      *        s'éteint jamais (vol des oiseaux, trait de race).
+     * @return list<string> effects this one cancelled, itself included when a carried one cancels it
      */
-    public function add_effect($name, $duration=1, int $value=1, bool $stackable=false): void{
+    public function add_effect($name, $duration=1, int $value=1, bool $stackable=false): array{
 
         /* endTime porte désormais un NOMBRE DE TOURS, plus un instant.
          * Zéro n'est donc plus « illimité » mais « expiré » — l'infini
@@ -676,11 +677,13 @@ class Player implements ActorInterface {
         // Annulations (ex-cycle élémentaire, désormais des listes) :
         // poser cet effet retire chaque effet qu'il annule ; s'il porte
         // déjà un effet qui L'annule, les deux tombent.
+        $ended = array();
         foreach($this->effectService->getControlledEffects($name) as $controlled){
 
             if($this->have_effect($controlled)){
 
                 $this->end_effect($controlled);
+                $ended[] = $controlled;
             }
         }
 
@@ -690,9 +693,13 @@ class Player implements ActorInterface {
 
                 $this->end_effect($controller);
                 $this->end_effect($name);
+                $ended[] = $controller;
+                $ended[] = $name;
                 break;
             }
         }
+
+        return $ended;
     }
 
     public function getEffects(): array{
@@ -853,13 +860,19 @@ class Player implements ActorInterface {
 
                 $duration = $elements->effectDurationOf($row->name);
                 $value = $elements->effectValueOf($row->name);
-                $this->add_effect($effect, $duration, $value);
+                $ended = $this->add_effect($effect, $duration, $value);
 
                 // The walker's log keeps what the ground did (effect, PV). Not a
                 // "move": those stay out of the events feed.
                 Log::put($this, $this, $this->effectService->landingMessage($effect, $this->data->name, $this->data->name, $duration, $value), 'element');
 
                 $notice = $this->effectService->stepNotice($effect, $value, $elements->labelOf($row->name));
+                if($notice !== ''){
+
+                    $notices[] = $notice;
+                }
+
+                $notice = $this->effectService->cancelNotice($ended, $elements->labelOf($row->name));
                 if($notice !== ''){
 
                     $notices[] = $notice;

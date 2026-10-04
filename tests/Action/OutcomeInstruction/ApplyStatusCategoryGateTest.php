@@ -36,6 +36,7 @@ class ApplyStatusCategoryGateTest extends TestCase
         $player->data = (object) ['name' => 'P' . $id, 'player_type' => $playerType];
         $player->method('add_effect')->willReturnCallback(function ($name) use ($id) {
             $this->applied[] = [$id . ':' . $name];
+            return [];
         });
         $player->method('end_effect')->willReturnCallback(function ($name) use ($id) {
             $this->ended[] = $id . ':' . $name;

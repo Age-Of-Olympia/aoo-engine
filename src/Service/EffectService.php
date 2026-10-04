@@ -186,6 +186,32 @@ class EffectService
         return $clauses === [] ? '' : $where . ' : vous avez ' . implode(' et ', $clauses) . '.';
     }
 
+    /**
+     * "Eau : l'effet Brûlure prend fin." — the effects landing on $where
+     * cancelled (Player::add_effect), hidden ones left out; '' when none.
+     *
+     * @param list<string> $ended
+     */
+    public function cancelNotice(array $ended, string $where): string
+    {
+        $labels = [];
+        foreach (array_unique($ended) as $name) {
+            if (!$this->isHidden($name)) {
+                $labels[] = $this->getLabel($name);
+            }
+        }
+
+        if ($labels === []) {
+            return '';
+        }
+        if (count($labels) === 1) {
+            return $where . ' : l\'effet ' . $labels[0] . ' prend fin.';
+        }
+        $last = array_pop($labels);
+
+        return $where . ' : les effets ' . implode(', ', $labels) . ' et ' . $last . ' prennent fin.';
+    }
+
     /** Combat modifier getters (each × the carried value), as the player reads them. */
     private const COMBAT_MODS = [
         'getRollAttackMod' => 'jet d\'attaque',

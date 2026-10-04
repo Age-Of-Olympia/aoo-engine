@@ -11,7 +11,8 @@ interface ActorInterface
   public function getId(): int;
   public function isSimulated(): bool;
   public function have_effect(string $name): int;
-  public function add_effect($name, $duration=0): void;
+  /** @return list<string> effects the new one cancelled */
+  public function add_effect($name, $duration=0): array;
   public function end_effect(string $name): void;
   public function have_option(string $name): int;
   public function have_effects_to_purge(): bool;
