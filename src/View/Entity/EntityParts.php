@@ -36,7 +36,7 @@ final class EntityParts
         $html = '';
         foreach ($profile->effects() as $effect) {
             $endTime = $withTimers ? PlayerEffectService::describeRemaining($effect->getEndTime()) : '';
-            $what = $effectService->describe($effect->getName(), (int) ($effect->getValue() ?? 1));
+            $what = $effectService->describe($effect->getName(), (int) ($effect->getValue() ?? 1), false);
 
             $html .= '<a href="https://age-of-olympia.net/wiki/doku.php?id=regles:effets#' . $effect->getName() . '" title="'
                 . htmlspecialchars(ucfirst($effect->getName()) . ($what !== '' ? ' : ' . $what : ''), ENT_QUOTES) . '">'

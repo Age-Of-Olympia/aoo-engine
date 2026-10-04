@@ -179,8 +179,9 @@ class EffectService
      * What the effect does to its bearer, in the player's words: the caracs
      * it moves at this intensity, the PV taken on landing and the combat
      * modifiers. "E −3, F +6, PV −10, jet d'attaque −2" — '' when it moves nothing.
+     * Without $withLosses, only what lasts as long as the effect (a card).
      */
-    public function describe(string $name, int $value = 1): string
+    public function describe(string $name, int $value = 1, bool $withLosses = true): string
     {
         $effect = $this->catalog()[$name] ?? null;
         if ($effect === null) {
@@ -193,7 +194,7 @@ class EffectService
             $label = (CARACS[$carac] ?? strtoupper($carac)) . (in_array($carac, Effect::SPENDABLE, true) ? ' max' : '');
             $parts[] = $label . ' ' . ($n > 0 ? '+' : '−') . abs($n);
         }
-        foreach ($this->lossesOf($name, $value) as $carac => $n) {
+        foreach ($withLosses ? $this->lossesOf($name, $value) : [] as $carac => $n) {
             $parts[] = (CARACS[$carac] ?? strtoupper($carac)) . ' ' . ($n > 0 ? '+' : '−') . abs($n);
         }
         foreach (self::COMBAT_MODS as $getter => $label) {

@@ -208,7 +208,7 @@ final class TopBarView
 
             $endTime = PlayerEffectService::describeRemaining($effect->getEndTime());
 
-            $what = $effectService->describe($effect->getName(), (int) ($effect->getValue() ?? 1));
+            $what = $effectService->describe($effect->getName(), (int) ($effect->getValue() ?? 1), false);
             $title = ucfirst($effect->getName()) . ' (' . $effect->getValue() . ') · ' . $endTime . ($what !== '' ? ' · ' . $what : '');
             $icon = $effectService->getIcon($effect->getName());
 
