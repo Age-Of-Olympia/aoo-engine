@@ -22,7 +22,8 @@ final class TypeLogEditorView
             . '<div class="wb-section-title">Messages de journal « ' . $this->esc($typeKey) . ' »</div>'
             . $this->inheritanceBanner($typeKey, $inheritedFrom, $overriddenParent)
             . '<p class="wb-muted">Placeholders : <code>{actor}</code>, <code>{target}</code>, <code>{action}</code> '
-            . '(nom affiché), <code>{weapon}</code> (« avec &lt;arme&gt; », vide pour les animaux). '
+            . '(nom affiché), <code>{weapon}</code> (« avec &lt;arme&gt; », vide pour les animaux), '
+            . '<code>{item}</code> (objets fabriqués et quantités, artisanat). '
             . 'Laisser vide pour aucune ligne. Hérité par les types enfants sans message propre.</p>'
             . '<label class="wb-field wb-field--wide"><span>Ligne acteur</span>'
             . '<textarea class="form-control" name="actor_template" rows="2">' . $this->esc((string) $actorTemplate) . '</textarea></label>'

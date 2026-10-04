@@ -4,6 +4,8 @@ namespace App\Service\Action;
 
 use App\Entity\Action;
 use App\Entity\ActionTypeLog;
+use App\Service\RecipeService;
+use Classes\Item;
 use Classes\Player;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -66,7 +68,25 @@ final class ActionLogResolver
             '{target}' => (string) ($target->data->name ?? ''),
             '{action}' => $this->displayName($action),
             '{weapon}' => $this->weaponClause($actor),
+            '{item}' => str_contains($template, '{item}') ? $this->craftedItems() : '',
         ]);
+    }
+
+    /** "Épée (x1), Copeaux (x2)": what the posted recipe makes, as the craft outcome reads it. */
+    private function craftedItems(): string
+    {
+        $recipeId = $_POST['recipeId'] ?? null;
+        $recipe = is_numeric($recipeId) ? (new RecipeService())->getRecipeById((int) $recipeId) : null;
+        if ($recipe === null) {
+            return '';
+        }
+
+        $parts = [];
+        foreach ($recipe->getRecipeResults() as $result) {
+            $parts[] = (new Item((int) $result->getItem()->getId()))->get_data()->name . ' (x' . $result->getCount() . ')';
+        }
+
+        return implode(', ', $parts);
     }
 
     /**
