@@ -557,12 +557,20 @@
                 this.remove();
                 return;
             }
+            /* What the server sets, position included: a character moving
+             * within sight keeps its id. Classes stay, the client adds some. */
             var freshHref = fresh.getAttribute('href') || fresh.getAttribute('xlink:href');
             var currentHref = this.getAttribute('href') || this.getAttribute('xlink:href');
             if (freshHref !== null && freshHref !== currentHref) {
                 this.setAttribute('href', freshHref);
                 this.setAttribute('xlink:href', freshHref);
             }
+            ['x', 'y', 'width', 'height', 'transform', 'data-coords'].forEach(function (name) {
+                var value = fresh.getAttribute(name);
+                if (value !== null && value !== this.getAttribute(name)) {
+                    this.setAttribute(name, value);
+                }
+            }, this);
         });
 
         /* Les images SANS id — éléments posés (sang, traces, ressources…)
