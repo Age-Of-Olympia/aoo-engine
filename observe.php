@@ -145,7 +145,13 @@ SELECT p.id AS id, p.name
   JOIN players AS p ON p.id = occ.id
   LEFT JOIN players_options AS po ON po.player_id = p.id AND po.name = "invisibleMode"
  WHERE (p.id = ? OR po.player_id IS NULL)'
-    . ($othersHidden ? ' AND (p.id = ? OR p.player_type NOT IN ("real", "tutorial"))' : '');
+    . ($othersHidden ? ' AND (p.id = ? OR p.player_type NOT IN ("real", "tutorial"))' : '')
+    /* Topmost first, in the board's paint order (View::get_view): scenery
+     * over characters, characters over what they stand on, roads and plants
+     * underneath. The first one gets the card. */
+    . ' ORDER BY CASE p.player_type
+            WHEN "scenery" THEN 0 WHEN "building" THEN 2 WHEN "item" THEN 3
+            WHEN "resource" THEN 3 WHEN "route" THEN 4 WHEN "plant" THEN 5 ELSE 1 END, p.id';
 
 $res = $db->exe($sql, array_merge($cellParams, $othersHidden ? [$player->id, $player->id] : [$player->id]));
 
