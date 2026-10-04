@@ -65,6 +65,25 @@ class ElementTypeEffectTest extends LegacyPlayerFixtureTestCase
         $this->assertSame('glu_test', $elements->effectOf('glu_test'), 'the new row keeps the effect of its own name');
     }
 
+    /** The step tells what it took, at the type's intensity; the card keeps only what lasts. */
+    public function testTheStepTellsWhatItTook(): void
+    {
+        $this->link->executeStatement(
+            "INSERT INTO effects (name, label, loss_mods) VALUES ('glu_test', 'Glu', '{\"pv\":-15,\"mvt\":-1}')"
+        );
+        EffectService::clearCache();
+        $elements = new MapElementService();
+        $elements->setEffectStrength('glu_test', 3, 2);
+        $elements->setLabel('glu_test', 'Lave');
+
+        $player = $this->createRealPlayer('GmGluBrule');
+        $cell = $this->tile(3, 0);
+        Element::put('glu_test', (int) \Classes\View::get_coords_id($cell), 4);
+
+        $this->assertSame(['Lave : vous avez perdu 30 PV et 2 Mvt.'], $player->go($cell));
+        $this->assertSame('', (new EffectService())->describe('glu_test', 2, false), 'nothing lasting to show');
+    }
+
     public function testFluidIsSetWithoutTouchingTheEffect(): void
     {
         $this->link->executeStatement("INSERT INTO effects (name, label) VALUES ('glu_test', 'Glu')");

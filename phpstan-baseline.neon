@@ -3206,12 +3206,6 @@ parameters:
 			path: src/Simulation/SimulatedPlayer.php
 
 		-
-			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:go\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Simulation/SimulatedPlayer.php
-
-		-
 			message: '#^Method App\\Simulation\\SimulatedPlayer\:\:go\(\) has parameter \$goCoords with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1

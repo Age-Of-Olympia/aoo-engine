@@ -166,8 +166,10 @@ class SimulatedPlayer extends Player
     {
     }
 
-    public function go($goCoords)
+    /** @return list<string> */
+    public function go($goCoords): array
     {
+        return [];
     }
 
     public function equip(Item $item, bool $doNotRefresh = false, ?int $instanceId = null, ?bool $clickedEquippedLine = null): EquipResult

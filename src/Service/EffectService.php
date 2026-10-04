@@ -165,6 +165,27 @@ class EffectService
         return $own . ' (' . $valueLabel . ', ' . $time . $whatLabel . ')';
     }
 
+    /** "Lave : vous avez perdu 30 PV et 2 Mvt." — what landing on $where took, '' when nothing. */
+    public function stepNotice(string $name, int $value, string $where): string
+    {
+        $moved = ['perdu' => [], 'gagné' => []];
+        foreach ($this->lossesOf($name, $value) as $carac => $n) {
+            if ($n !== 0) {
+                $moved[$n < 0 ? 'perdu' : 'gagné'][] = abs($n) . ' ' . (CARACS[$carac] ?? strtoupper($carac));
+            }
+        }
+
+        $clauses = [];
+        foreach ($moved as $verb => $parts) {
+            if ($parts !== []) {
+                $last = array_pop($parts);
+                $clauses[] = $verb . ' ' . ($parts === [] ? $last : implode(', ', $parts) . ' et ' . $last);
+            }
+        }
+
+        return $clauses === [] ? '' : $where . ' : vous avez ' . implode(' et ', $clauses) . '.';
+    }
+
     /** Combat modifier getters (each × the carried value), as the player reads them. */
     private const COMBAT_MODS = [
         'getRollAttackMod' => 'jet d\'attaque',

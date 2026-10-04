@@ -661,6 +661,11 @@
         aooStore.remove('hudSelEntity');
 
         showFeed('events', data.events);
+
+        /* What the cell's element took on arrival (lava, mud…). */
+        if (data.notice) {
+            aooAlert(data.notice);
+        }
     };
 
     /* Swaps in the moved page's board, position, minimap and top bar pills.

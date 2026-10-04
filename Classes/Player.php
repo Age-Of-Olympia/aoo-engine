@@ -752,7 +752,10 @@ class Player implements ActorInterface {
     }
 
 
+    /** @return list<string> what the cell's elements took or gave on arrival (EffectService::stepNotice) */
     public function go($goCoords){
+
+        $notices = array();
 
 
         // store older coords
@@ -855,6 +858,12 @@ class Player implements ActorInterface {
                 // The walker's log keeps what the ground did (effect, PV). Not a
                 // "move": those stay out of the events feed.
                 Log::put($this, $this, $this->effectService->landingMessage($effect, $this->data->name, $this->data->name, $duration, $value), 'element');
+
+                $notice = $this->effectService->stepNotice($effect, $value, $elements->labelOf($row->name));
+                if($notice !== ''){
+
+                    $notices[] = $notice;
+                }
             }
         }
 
@@ -904,6 +913,8 @@ class Player implements ActorInterface {
         }
 
        // delete empty coords will be cron managed for easier debugging
+
+        return $notices;
     }
 
     public static function CapPI($playerXp,$xpGained,$xpCap): int{

@@ -334,7 +334,7 @@ if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMod
     
 }
 $db->commit();
-$player->go($goCoords);
+$stepNotices = $player->go($goCoords);
 
 // The cell's element may have taken the last PV (effects.pv_on_apply).
 if ($player->getRemaining('pv') < 1) {
@@ -358,5 +358,9 @@ $printed = ob_get_level() > 0 ? ob_get_contents() : null;
 if (($_POST['hud'] ?? '') === '1' && $printed !== null && trim($printed) === '') {
     ob_clean();
     header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(\App\View\Hud\MoveResponseView::render());
+    echo json_encode(\App\View\Hud\MoveResponseView::render() + ['notice' => implode("\n", $stepNotices)]);
+}
+elseif ($stepNotices !== []) {
+    // Legacy layout: printing anything skips view.js's reload, so reload here.
+    echo '<script>aooAlert(' . json_encode(implode("\n", $stepNotices)) . ').then(function(){document.location.reload();});</script>';
 }
