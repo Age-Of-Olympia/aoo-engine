@@ -54,6 +54,9 @@ class PlanConfigService
         'shade_step'        => 'float',
         'shade_max'         => 'int',
         'shade_color'       => 'string',
+
+        /* Admin-only note, never shown in game. */
+        'comment'           => 'text',
     ];
 
     /** Sentinelle interne de parse() : remettre la clé à son défaut */
@@ -519,6 +522,7 @@ class PlanConfigService
             'shade_step'        => $entity->getShadeStep(),
             'shade_max'         => $entity->getShadeMax(),
             'shade_color'       => $entity->getShadeColor(),
+            'comment'           => $entity->getComment(),
             default             => throw new RuntimeException('Propriété de plan inconnue : ' . $key, 400),
         };
     }
@@ -576,6 +580,9 @@ class PlanConfigService
             case 'shade_color':
                 $entity->setShadeColor($value === null ? null : (string) $value);
                 break;
+            case 'comment':
+                $entity->setComment($value === null ? null : (string) $value);
+                break;
             default:
                 throw new RuntimeException('Propriété de plan inconnue : ' . $key, 400);
         }
@@ -618,6 +625,9 @@ class PlanConfigService
                     throw new RuntimeException($key . ' : JSON invalide', 400);
                 }
                 return $decoded;
+
+            case 'text':
+                return $raw;
 
             default:
                 return mb_substr($raw, 0, 255);

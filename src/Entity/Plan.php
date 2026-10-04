@@ -109,6 +109,10 @@ class Plan
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $biomes = null;
 
+    /** Admin-only note, never shown in game. */
+    #[ORM\Column(type: "text", nullable: true)]
+    private ?string $comment = null;
+
     #[ORM\OneToMany(targetEntity: PlanZLevel::class, mappedBy: "plan", cascade: ["persist", "remove"], orphanRemoval: true)]
     #[ORM\OrderBy(["z" => "ASC"])]
     private Collection $zLevels;
@@ -288,6 +292,16 @@ class Plan
     public function setShadeColor(?string $shadeColor): void
     {
         $this->shadeColor = $shadeColor;
+    }
+
+    public function getComment(): ?string
+    {
+        return $this->comment;
+    }
+
+    public function setComment(?string $comment): void
+    {
+        $this->comment = $comment;
     }
 
     public function getVisibleBoundsMinX(): ?int

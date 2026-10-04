@@ -299,6 +299,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         'mask'              => ['Masque', 'Superposition (brume, tempête…), niveaux z ≥ 0 uniquement.'],
         'scrollingMask'     => ['Défilement du masque', 'Durée d\'animation du masque (0/vide = statique).'],
         'verticalScrolling' => ['Défilement vertical', 'Direction du défilement du masque.'],
+        'comment'           => ['Commentaire', 'Note pour les admins, jamais affichée en jeu.'],
         'biomes'            => ['Biomes (JSON) — ancien format', 'Les rendements se définissent désormais dans Ressources → Rendements, la seule table lue par le jeu. Ce JSON ne sert plus qu\'à alimenter cette table pour un plan dont les rendements n\'y sont pas encore. Forme : [{"wall": "arbre1", "ressource": "bois", "exhaust": 75, "regrow": 20}].'],
     ];
 
@@ -313,12 +314,13 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
                 $value !== '' ? $value : null, '(défaut — clé absente)'),
             'image' => '<input type="text" class="form-control" name="config[' . e($key) . ']" value="' . e($value) . '"'
                 . ' list="plans-bg-catalog" placeholder="img/tiles/…">',
+            'text' => '<textarea class="form-control" name="config[' . e($key) . ']" rows="3">' . e($value) . '</textarea>',
             'json' => '<textarea class="form-control" name="config[' . e($key) . ']" rows="10" spellcheck="false"'
                 . ' style="font-family:monospace;font-size:12px;">' . e($value) . '</textarea>',
             default => '<input type="text" class="form-control" name="config[' . e($key) . ']" value="' . e($value) . '">',
         };
 
-        $width = $type === 'json' ? 'col-12' : 'col-md-3 col-6';
+        $width = in_array($type, ['json', 'text'], true) ? 'col-12' : 'col-md-3 col-6';
 
         return '<div class="form-group ' . $width . '"><label>' . e($label)
             . ' <code style="display:inline;font-size:11px;">' . e($key) . '</code></label>'
@@ -326,7 +328,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
     };
 
     // Cartes de champs par thème (l'ordre suit l'usage, pas PLAN_CONFIG_KEYS)
-    $identityKeys = ['name', 'shortName', 'season', 'x', 'y', 'size', 'pnj'];
+    $identityKeys = ['name', 'shortName', 'season', 'x', 'y', 'size', 'pnj', 'comment'];
     $displayKeys = ['player_visibility', 'bg', 'mask', 'scrollingMask', 'verticalScrolling'];
 
     $identityFields = '';

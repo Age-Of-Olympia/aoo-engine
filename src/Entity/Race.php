@@ -117,6 +117,10 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $description = null;
 
+    /** Admin-only note, never shown in game. */
+    #[ORM\Column(type: "text", nullable: true)]
+    private ?string $comment = null;
+
     #[ORM\Column(type: "boolean")]
     private bool $playable;
 
@@ -361,6 +365,16 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     public function setDescription(string $description): void
     {
         $this->description = $description;
+    }
+
+    public function getComment(): string
+    {
+        return $this->comment ?? '';
+    }
+
+    public function setComment(string $comment): void
+    {
+        $this->comment = $comment === '' ? null : $comment;
     }
 
     public function getPlayable(): bool

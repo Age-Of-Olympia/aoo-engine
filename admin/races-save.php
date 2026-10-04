@@ -112,6 +112,7 @@ $applyForm = static function (Race $race) use ($face, $action): array {
         );
     }
     $race->setDescription(trim((string) ($_POST['description'] ?? '')));
+    $race->setComment(trim((string) ($_POST['comment'] ?? '')));
     // Sorte : personnage (défaut) ou structure. Une structure n'est jamais
     // proposée à l'inscription, quel que soit l'état de la case Jouable.
     $kind = ($_POST['kind'] ?? 'character') === 'structure' ? 'structure' : 'character';

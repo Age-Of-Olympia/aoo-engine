@@ -579,6 +579,10 @@ HTML;
         . '<div class="form-group col-12"><label>Description</label>'
         . '<textarea class="form-control" name="description" rows="5">'
         . e($isEdit ? $race->getDescription() : '') . '</textarea></div>'
+        . '<div class="form-group col-12"><label>Commentaire</label>'
+        . '<textarea class="form-control" name="comment" rows="3">'
+        . e($isEdit ? $race->getComment() : '') . '</textarea>'
+        . '<small class="form-text text-muted">Note pour les admins, jamais affichée en jeu.</small></div>'
         . '</div></div></div>'
 
         . '<div class="card mb-3"><div class="card-header">Apparence &amp; monde</div><div class="card-body"><div class="row">'
