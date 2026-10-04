@@ -105,6 +105,19 @@ final class OptionCatalog
     }
 
     /**
+     * Item subtypes some rule reads: the weapon types, then the ground layers.
+     * Any other value is inert — a bow saved as « Tir » cannot shoot.
+     *
+     * @return array<string, string>
+     */
+    public function itemSubtypes(): array
+    {
+        $layers = \App\Service\Map\GroundLayerService::LAYERS;
+
+        return $this->weaponTypes() + array_combine($layers, array_map('ucfirst', $layers));
+    }
+
+    /**
      * Equipment slots a weapon-type condition can read.
      *
      * @return array<string, string>

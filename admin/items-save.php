@@ -383,6 +383,16 @@ foreach ($munitions as $munition) {
     }
 }
 
+// Sous-type : une valeur de la liste, ou celle déjà en base (le formulaire
+// la garde sélectionnée sous ⚠ tant que personne ne la corrige).
+$subtype = trim((string) ($_POST['subtype'] ?? ''));
+$storedSubtype = (string) ($db->exe('SELECT subtype FROM items WHERE id = ?', $id)->fetch_object()->subtype ?? '');
+if ($subtype !== '' && $subtype !== $storedSubtype
+    && !isset((new \App\Action\Schema\OptionCatalog())->itemSubtypes()[$subtype])) {
+    setFlash('warning', "Sous-type inconnu : « {$subtype} » — rien n'a été enregistré.");
+    redirectTo('/admin/items.php?action=edit&id=' . $id);
+}
+
 $set = [];
 $params = [];
 
@@ -413,7 +423,7 @@ $params = array_merge($params, [
     max(0, (int) ($_POST['price'] ?? 1)),
     trim((string) ($_POST['emplacement'] ?? '')),
     trim((string) ($_POST['type'] ?? '')),
-    trim((string) ($_POST['subtype'] ?? '')),
+    $subtype,
     trim((string) ($_POST['race'] ?? '')),
     $munitions === [] ? null : json_encode($munitions, JSON_UNESCAPED_UNICODE),
     $jsonColumns['forbid'],

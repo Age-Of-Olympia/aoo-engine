@@ -685,6 +685,9 @@ function items_render_edit(object $row, string $csrfToken): string
         $typeOptions[$typeRow->type] ??= $typeRow->type;
     }
 
+    $subtypeValue = (string) ($row->subtype ?? '');
+    $subtypeOptions = (new \App\Action\Schema\OptionCatalog())->itemSubtypes();
+
     $identite = formField('Description', formTextarea('text', (string) ($row->text ?? ''), 5),
             'form-group', 'Texte montré au joueur (aperçu d\'inventaire, marchand).')
         . formField('Prix', formInput('price', (string) (int) ($row->price ?? 1), 'type="number" min="0"'),
@@ -708,9 +711,14 @@ function items_render_edit(object $row, string $csrfToken): string
             'form-group',
             'Emplacement d\'équipement ; tout objet avec un emplacement est équipable, quel que soit son type.')
         . formField('Sous-type',
-            formInput('subtype', (string) ($row->subtype ?? ''), 'placeholder="melee, tir, jet, walls, routes…"'),
+            formSelect('subtype', $subtypeOptions, $subtypeValue !== '' ? $subtypeValue : null, '— aucun —'),
             'form-group',
-            'Catégorie d\'arme pour le combat (melee, tir, jet, bouclier) ou de pose carte (walls, routes…).')
+            ($subtypeValue !== '' && !isset($subtypeOptions[$subtypeValue])
+                ? '<span class="text-danger">⚠ « ' . e($subtypeValue) . ' » n\'est lu par aucune règle :'
+                    . ' une arme ainsi rangée ne remplit aucune condition de type d\'arme.'
+                    . ' Choisir une valeur de la liste, ou « aucun ».</span><br>'
+                : '')
+            . 'Type d\'arme pour le combat, ou couche posée au sol (routes).')
         . formField('Race (objet racial)', formInput('race', (string) ($row->race ?? '')),
             'form-group', 'Code de race (nain, elfe…) : colore le nom de l\'objet — vide : commun.');
 
