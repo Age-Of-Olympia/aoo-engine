@@ -30,13 +30,14 @@ class TeleportOutcomeInstruction extends OutcomeInstruction implements HasParame
         $outcomeSuccessMessages = array();
         switch ($coords) {
             case 'target':
-                $goCoords = $target->coords;
+                // Copies: the helper moves the coords it is given to the free cell.
+                $goCoords = clone $target->coords;
                 $coordsId = View::get_free_coords_id_arround($goCoords);
                 $outcomeSuccessMessages[0] = $actor->data->name . ' saute sur ' .$target->data->name. ' !';
                 $actor->go($coordsId);
                 break;
             case 'projected':
-                $goCoords = $actor->coords;
+                $goCoords = clone $actor->coords;
                 $coordsId = View::get_free_coords_id_arround($goCoords);
                 $target->go($coordsId);
                 $outcomeSuccessMessages[0] = $target->data->name . ' est projeté !';

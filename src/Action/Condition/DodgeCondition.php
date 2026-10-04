@@ -98,8 +98,10 @@ class DodgeCondition extends BaseCondition implements HasParameterSchemaInterfac
                 break;
 
             case 'step_aside':
-                $goCoords = $target->coords;
-                $goCoords->id = View::get_free_coords_id_arround($target->coords);
+                // A copy: the helper moves the coords it is given to the
+                // free cell, and go() still needs the target's own.
+                $goCoords = clone $target->coords;
+                View::get_free_coords_id_arround($goCoords);
                 $target->go($goCoords);
                 $condition->getAction()->setRefreshScreen(true);
                 break;

@@ -718,7 +718,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$coords\.$#'
 			identifier: property.notFound
-			count: 2
+			count: 1
 			path: src/Action/Condition/DodgeCondition.php
 
 		-
