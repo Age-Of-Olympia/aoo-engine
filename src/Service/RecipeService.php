@@ -230,14 +230,14 @@ class RecipeService
                     // rollback obligatoire : sans lui la transaction restait
                     // OUVERTE sur ce chemin de refus (bug latent)
                     $db->rollback();
-                    $message = "Vous n'avez pas assez de {$ingredient->getItem()->getName()} pour la recette {$recipe->getName()}";
+                    $message = "Vous n'avez pas assez de {$itemRecipe->get_data()->name} pour la recette {$recipe->getName()}";
                     return false;
                 }
             }
             foreach ($recipeResults as $result) {
                 $itemCrafted = \Classes\Item::get_item_by_name($result->getItem()->GetName());
                 $itemCrafted->add_item($player, $result->GetCount());
-                $message .= "Vous avez créé {$result->getItem()->GetName()} ({$result->GetCount()}) \n";
+                $message .= "Vous avez créé {$itemCrafted->get_data()->name} ({$result->GetCount()}) \n";
             }
 
             $db->commit();
