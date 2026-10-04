@@ -64,6 +64,8 @@ class DropWeaponOutcomeInstruction extends OutcomeInstruction implements HasPara
             } else {
                 $target->drop($item, 1);
             }
+            // The bag on the target's cell, for everyone who sees it.
+            \App\Service\Map\BoardChanges::cell($target->getCoords());
             $resultText = "L'arme de votre adversaire tombe au sol.";
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $resultText;
             $result = true;

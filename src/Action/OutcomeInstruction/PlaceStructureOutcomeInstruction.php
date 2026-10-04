@@ -180,13 +180,16 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
         $coordsId = (int) View::get_coords_id($coords);
         $forFaction = $buildFor === \App\Action\Condition\ChestSiteCondition::FOR_FACTION;
 
-        return (new \App\Service\ItemInstanceService())->installFromCatalogAt(
+        $id = (new \App\Service\ItemInstanceService())->installFromCatalogAt(
             (int) $item->id,
             $coordsId,
             (int) $actor->id,
             $forFaction ? null : (int) $actor->id,
             $forFaction ? (string) ($actor->data->faction ?? '') : ''
         );
+        \App\Service\Map\BoardChanges::cellId($coordsId);
+
+        return $id;
     }
 
     /**

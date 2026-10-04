@@ -19,9 +19,13 @@ final class BoardChanges
 {
     private static ?int $reach = null;
 
-    /** A change on one cell (coords: x, y, z, plan). */
-    public static function cell(object $coords): void
+    /** A change on one cell (coords: x, y, z, plan); null, an entity off the board, changes nothing. */
+    public static function cell(?object $coords): void
     {
+        if ($coords === null) {
+            return;
+        }
+
         self::cells((string) $coords->plan, (int) $coords->z, (int) $coords->x, (int) $coords->x, (int) $coords->y, (int) $coords->y);
     }
 

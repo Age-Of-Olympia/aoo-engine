@@ -167,6 +167,7 @@ class PlayerEffectService
         }
 
         $this->entityManager->flush();
+        $this->redrawIfPerception($playerId, $name);
     }
 
     /**
@@ -191,6 +192,7 @@ class PlayerEffectService
         $existingEffect->setEndTime($endTime);
         $existingEffect->setValue($value);
         $this->entityManager->flush();
+        $this->redrawIfPerception($playerId, $name);
 
         return true;
     }
@@ -208,7 +210,23 @@ class PlayerEffectService
         if ($existingEffect) {
             $this->entityManager->remove($existingEffect);
             $this->entityManager->flush();
+            $this->redrawIfPerception($playerId, $name);
         }
-    }    
+    }
+
+    /**
+     * An effect on Perception resizes its bearer's board, whoever applied it
+     * (a spell cast by someone else included).
+     */
+    public function redrawIfPerception(int $playerId, string ...$names): void
+    {
+        $effects = new EffectService();
+        foreach ($names as $name) {
+            if (array_key_exists('p', $effects->getEffectByName($name)?->getCaracMods() ?? [])) {
+                \App\Service\Map\BoardChanges::viewer($playerId);
+                return;
+            }
+        }
+    }
 
 }

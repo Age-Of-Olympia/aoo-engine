@@ -720,19 +720,19 @@ class Player implements ActorInterface {
     public function purge_effects(): int{
 
 
-        $sql = '
-        DELETE
-        FROM
-        players_effects
-        WHERE
-        player_id = ?
-        AND
-        endTime = 0
-        ';
-
         $db = new Db();
 
-        $affectedRows = $db->exe($sql, $this->id, false, true);
+        $ended = array();
+        $res = $db->exe('SELECT name FROM players_effects WHERE player_id = ? AND endTime = 0', $this->id);
+        while($row = $res->fetch_object()){
+
+            $ended[] = (string) $row->name;
+        }
+
+        $affectedRows = $db->exe('DELETE FROM players_effects WHERE player_id = ? AND endTime = 0', $this->id, false, true);
+
+        $this->playerEffectService->redrawIfPerception((int) $this->id, ...$ended);
+
         return $affectedRows;
     }
 
@@ -881,21 +881,14 @@ class Player implements ActorInterface {
         }
 
 
-        // void plan
-        $planJson = plans()->read($this->coords->plan);
+        // The cell left, and the cell reached unless the margin around the
+        // cell left already covers it (a one-cell step on the same level).
+        \App\Service\Map\BoardChanges::cell($this->coords);
 
-        if(!$planJson){
-            \App\Service\Map\BoardChanges::viewer((int) $this->id);
-        }
-        else{
-            \App\Service\Map\BoardChanges::cell($this->coords);
-        }
-
-        if ($goCoords->plan != $this->coords->plan || $zChange) {
-            $goPlanJson = plans()->read($goCoords->plan);
-            if ($goPlanJson) {
-                \App\Service\Map\BoardChanges::cell($goCoords);
-            }
+        $step = !$zChange && $goCoords->plan == $this->coords->plan
+            && abs($goCoords->x - $this->coords->x) <= 1 && abs($goCoords->y - $this->coords->y) <= 1;
+        if(!$step){
+            \App\Service\Map\BoardChanges::cell($goCoords);
         }
 
         $this->refresh_caracs();
@@ -1461,7 +1454,9 @@ class Player implements ActorInterface {
 
 
         $this->refresh_data();
-        \App\Service\Map\BoardChanges::viewer((int) $this->id);
+
+        // Everyone who sees the character, its owner included.
+        \App\Service\Map\BoardChanges::cell($this->getCoords());
     }
 
 

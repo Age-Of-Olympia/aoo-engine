@@ -59,7 +59,8 @@ if(!empty($_POST['zone']) && !empty($_POST['type']) && !empty($_POST['src'])){
 if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
 
 
-    $coords = $player->coords;
+    // A copy: go() needs the player's coords to still be the cell left.
+    $coords = clone $player->coords;
 
     $coords->x = explode(',', $_POST['coords'])[0];
     $coords->y = explode(',', $_POST['coords'])[1];

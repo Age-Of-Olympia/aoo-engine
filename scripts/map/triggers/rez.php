@@ -25,8 +25,12 @@ $goCoords = (object) array(
 
 $coordsId = View::get_free_coords_id_arround($goCoords);
 
+// The event is logged on the arrival plan; go() still needs the cell left.
+$leftPlan = $player->coords->plan;
 $player->coords->plan = $spawnPlan;
 
 $text = $player->data->name .' est arrivé sur Olympia.';
 
 Log::put($player, $player, $text, type:"rez");
+
+$player->coords->plan = $leftPlan;

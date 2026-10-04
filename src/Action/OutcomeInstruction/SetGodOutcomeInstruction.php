@@ -93,6 +93,8 @@ class SetGodOutcomeInstruction extends OutcomeInstruction implements HasParamete
 
             (new \Classes\Db())->exe('UPDATE players SET name = ? WHERE id = ?', array($name, $to->id));
             $to->refresh_data();
+            // An altar without an image shows the initials of its name.
+            \App\Service\Map\BoardChanges::cell($to->getCoords());
         }
 
         // The faith ranking counts altars and followers by god.
