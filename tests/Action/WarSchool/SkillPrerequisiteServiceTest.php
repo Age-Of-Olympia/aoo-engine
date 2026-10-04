@@ -92,6 +92,28 @@ class SkillPrerequisiteServiceTest extends TestCase
         $this->assertTrue($service->isSkillUsable('magic-off', 2, null));
     }
 
+    public function testLevelFourInOnlyOnePrimaryTree(): void
+    {
+        $catalog = [];
+        $owned = [];
+        foreach (['melee', 'distance'] as $tree) {
+            for ($level = 1; $level <= 3; $level++) {
+                foreach (['a', 'b'] as $n) {
+                    $catalog["$tree$level$n"] = ['category' => "$tree-off", 'level' => $level];
+                    $owned["$tree$level$n"] = 'sort';
+                }
+            }
+        }
+
+        $none = $this->service($owned, $catalog);
+        $this->assertTrue($none->isSkillUsable('distance-off', 4, null));
+
+        $catalog['melee4'] = ['category' => 'melee-off', 'level' => 4];
+        $meleeFour = $this->service($owned + ['melee4' => 'sort'], $catalog);
+        $this->assertFalse($meleeFour->isSkillUsable('distance-off', 4, null), 'level 4 already taken in melee');
+        $this->assertTrue($meleeFour->isSkillUsable('melee-off', 4, null), 'same tree stays open');
+    }
+
     public function testUnknownOrEmptyCategoryCarriesNoGate(): void
     {
         $this->assertTrue($this->service()->isSkillUsable(null, 4, null));
