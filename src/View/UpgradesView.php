@@ -96,10 +96,8 @@ final class UpgradesView
 
                 $ranks = (int) ($player->upgrades->$k ?? 0);
 
-                /* Buying a rank back costs what that rank cost: the Pi it
-                 * took come back, its price is paid in gold. No rank
-                 * bought, nothing to give back. */
-                $cost = $ranks > 0 ? $caracsService->returnCost($k, $ranks - 1) : 0;
+                // The Pi come back, the rank's price is paid in gold.
+                $cost = $caracsService->reassignCost($k, $ranks);
                 $color = ($cost > $gold) ? 'red' : 'green';
                 $disabled = ($ranks < 1 || $cost > $gold) ? 'disabled' : '';
                 $label = $ranks > 0

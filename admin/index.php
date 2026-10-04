@@ -31,6 +31,7 @@ use App\Service\CsrfProtectionService;
 use App\Service\DateFormatService;
 use App\Service\Map\HarvestDefaultsService;
 use App\Service\PlanService;
+use App\Service\PlayerCaracsService;
 use App\Service\SeasonService;
 use App\Service\TiledExtensionService;
 
@@ -80,6 +81,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['repair_full_share']))
             $repairSettings->set($name, (string) ($name === 'recycle_share' ? min(100, $percent) : $percent));
         }
         setFlash('success', 'Atelier : réglages enregistrés.');
+    } catch (\Throwable $e) {
+        setFlash('danger', 'Échec : ' . $e->getMessage());
+    }
+    redirectTo('/admin/index.php');
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reassign_settings'])) {
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        $free = isset($_POST[PlayerCaracsService::SETTING_FREE_REASSIGN]);
+        (new AdminSettingsService())->set(PlayerCaracsService::SETTING_FREE_REASSIGN, $free ? '1' : '0');
+        setFlash('success', $free ? 'Réassignation gratuite activée.' : 'Réassignation au prix normal.');
     } catch (\Throwable $e) {
         setFlash('danger', 'Échec : ' . $e->getMessage());
     }
@@ -340,6 +353,27 @@ ob_start();
                 <small class="form-text text-muted">
                     Prix des ressources : colonne <code>price</code> de chaque objet. Points de vie d'un
                     objet : sa colonne <code>durability_max</code>. <strong>Lu à chaque devis.</strong>
+                </small>
+            </form>
+
+            <hr />
+
+            <form method="post" action="index.php">
+                <?= $csrf->renderTokenField() ?>
+                <input type="hidden" name="reassign_settings" value="1" />
+                <label class="form-label mb-0">École de guerre : réassignation</label>
+                <div class="d-flex gap-2 align-items-center">
+                    <div class="form-check mb-0">
+                        <input type="checkbox" class="form-check-input" id="reassign-free"
+                               name="<?= PlayerCaracsService::SETTING_FREE_REASSIGN ?>"
+                               <?= (new AdminSettingsService())->get(PlayerCaracsService::SETTING_FREE_REASSIGN) === '1' ? 'checked' : '' ?> />
+                        <label class="form-check-label" for="reassign-free">Réassignation gratuite</label>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
+                </div>
+                <small class="form-text text-muted">
+                    Cochée : réassigner un rang ne coûte aucune pièce d'or, par exemple en début de saison.
+                    Décochée : le joueur paie le prix du rang.
                 </small>
             </form>
 

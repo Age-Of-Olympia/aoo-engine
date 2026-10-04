@@ -31,6 +31,16 @@ use Classes\Db;
  */
 class PlayerCaracsService
 {
+    /** admin_settings flag: '1' makes reassignment free (season start). */
+    public const SETTING_FREE_REASSIGN = 'reassign_free';
+
+    private AdminSettingsService $settings;
+
+    public function __construct(?AdminSettingsService $settings = null)
+    {
+        $this->settings = $settings ?? new AdminSettingsService();
+    }
+
     /**
      * Cost grid per carac: [first rank, ranks 2-3, ranks 4 and up].
      * It lives with the upgrades it prices, so that the table showing
@@ -144,5 +154,18 @@ class PlayerCaracsService
         }
 
         return $total;
+    }
+
+    /**
+     * Gold to buy back one rank: what that rank cost, unless the admin
+     * made reassignment free. No rank bought, nothing to give back.
+     */
+    public function reassignCost(string $carac, int $ranks): int
+    {
+        if ($ranks < 1 || $this->settings->get(self::SETTING_FREE_REASSIGN) === '1') {
+            return 0;
+        }
+
+        return $this->returnCost($carac, $ranks - 1);
     }
 }
