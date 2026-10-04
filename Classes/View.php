@@ -1114,8 +1114,10 @@ class View{
                         }
 
 
+                        // The id lets the HUD move the border with its character.
                         echo '
                         <rect
+                            id="'. $id .'-race"
                             class="case"
 
                             x="' . $x . '"

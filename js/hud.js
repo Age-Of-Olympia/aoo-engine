@@ -551,8 +551,10 @@
         });
         applyAnimationQuality();
 
-        $(currentView).find('image[id]').each(function () {
-            var fresh = freshView.querySelector('image[id="' + this.id + '"]');
+        /* Sprites drawn by the server (data-table), and the race borders
+         * that follow them. Not #go-img / #destroy-img: the client places them. */
+        $(currentView).find('image[id][data-table], rect[id$="-race"]').each(function () {
+            var fresh = freshView.querySelector('[id="' + this.id + '"]');
             if (!fresh) {
                 this.remove();
                 return;
@@ -565,7 +567,7 @@
                 this.setAttribute('href', freshHref);
                 this.setAttribute('xlink:href', freshHref);
             }
-            ['x', 'y', 'width', 'height', 'transform', 'data-coords'].forEach(function (name) {
+            ['x', 'y', 'width', 'height', 'transform', 'style', 'data-coords'].forEach(function (name) {
                 var value = fresh.getAttribute(name);
                 if (value !== null && value !== this.getAttribute(name)) {
                     this.setAttribute(name, value);
@@ -627,8 +629,8 @@
 
         /* Sprites with an id new to the board (a character walking into
          * view), placed where the fresh render paints them. */
-        Array.prototype.forEach.call(freshView.querySelectorAll('image[id]'), function (img) {
-            if (currentView.querySelector('image[id="' + img.id + '"]')) {
+        Array.prototype.forEach.call(freshView.querySelectorAll('image[id][data-table], rect[id$="-race"]'), function (img) {
+            if (currentView.querySelector('[id="' + img.id + '"]')) {
                 return;
             }
             var clone = img.cloneNode(true);
