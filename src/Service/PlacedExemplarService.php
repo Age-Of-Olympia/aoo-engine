@@ -94,7 +94,7 @@ class PlacedExemplarService
             (new \App\Service\Map\EntityLocationService($conn))->installOnCell($id, (int) $coordsId);
         });
 
-        View::refresh_players_svg($goCoords);
+        \App\Service\Map\BoardChanges::cell($goCoords);
 
         (new AuditService())->addAuditLog("PlacedExemplarService::placeInstance #{$instanceId} as item #{$id}");
 
@@ -146,9 +146,9 @@ class PlacedExemplarService
             (new \App\Service\Map\EntityLocationService($conn))->putInside($exemplarId, $takerId);
         });
 
-        BuildingService::purgeEntityCaches($exemplarId);
+        \App\Service\Map\BoardChanges::viewer($exemplarId);
         if ($goCoords !== false) {
-            View::refresh_players_svg((object) $goCoords);
+            \App\Service\Map\BoardChanges::cell((object) $goCoords);
         }
 
         (new AuditService())->addAuditLog("PlacedExemplarService::takeInstance exemplar #{$exemplarId} -> player #{$takerId}");
@@ -219,9 +219,9 @@ class PlacedExemplarService
             (new \App\Service\Map\EntityLocationService($conn))->dropOnCell($exemplarId, (int) $coordsId);
         });
 
-        BuildingService::purgeEntityCaches($exemplarId);
+        \App\Service\Map\BoardChanges::viewer($exemplarId);
         if ($goCoords !== false) {
-            View::refresh_players_svg((object) $goCoords);
+            \App\Service\Map\BoardChanges::cell((object) $goCoords);
         }
 
         (new AuditService())->addAuditLog("PlacedExemplarService::destroyToGround exemplar #{$exemplarId} instance #{$instanceId}");

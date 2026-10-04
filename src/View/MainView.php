@@ -54,7 +54,7 @@ class MainView
                 /* Recorded even when the cache write below is skipped: the
                  * area is what change notices are matched against. */
                 if (is_string($data)) {
-                    $view->recordArea();
+                    \App\Service\Map\BoardChanges::drawn((int) $player->id, $view->area());
                 }
 
                 /* Defensive cache guard: only persist the SVG when it

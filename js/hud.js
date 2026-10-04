@@ -491,7 +491,7 @@
     }
 
     /* Live board: the server flags the board stale when something changes
-     * in the player's field of view (View::refresh_players_svg_in_box);
+     * in the player's field of view (App\Service\Map\BoardChanges);
      * every 30 s the HUD asks, and redraws as after an action. */
     var BOARD_POLL_MS = 30000;
 

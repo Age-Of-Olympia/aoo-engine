@@ -274,7 +274,7 @@ class TileDialogMigrationService
                     'UPDATE players SET text = ? WHERE id = ?',
                     [$entry['text'], (int) $targetId]
                 );
-                BuildingService::purgeEntityCaches((int) $targetId);
+                \App\Service\Map\BoardChanges::viewer((int) $targetId);
             }
 
             $this->db->exe('DELETE FROM map_dialogs WHERE coords_id = ?', [$coordsId]);

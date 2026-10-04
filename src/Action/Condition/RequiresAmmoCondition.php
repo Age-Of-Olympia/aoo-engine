@@ -106,7 +106,7 @@ class RequiresAmmoCondition extends BaseCondition implements HasParameterSchemaI
 
                         $actor->emplacements->main1->add_item($actor, -1);
 
-                        View::refresh_players_svg($dropCoords);
+                        \App\Service\Map\BoardChanges::cell($dropCoords);
                         $conditionToPay->getAction()->setRefreshScreen(true);
                     }
 

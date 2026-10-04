@@ -45,7 +45,7 @@ trait PlanFixtureTrait
                 $conn->executeStatement("DELETE FROM {$satellite} WHERE player_id = ?", [(int) $id]);
             }
             BuildingService::deleteEntityRows($conn, (int) $id);
-            BuildingService::purgeEntityCaches((int) $id);
+            \App\Service\Map\BoardChanges::viewer((int) $id);
         }
 
         foreach (['tiles', 'routes', 'plants', 'resources', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {

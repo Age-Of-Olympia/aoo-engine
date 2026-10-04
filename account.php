@@ -98,7 +98,7 @@ if(!empty($_POST['option'])){
         exit('error option');
     }
 
-    $player->refresh_view();
+    \App\Service\Map\BoardChanges::viewer((int) $player->id);
 
     /* Capture toggle direction BEFORE mutating the option set. */
     $wasEnabled = (bool) $player->have_option($_POST['option']);

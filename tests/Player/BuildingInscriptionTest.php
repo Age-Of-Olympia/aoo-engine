@@ -47,7 +47,7 @@ class BuildingInscriptionTest extends LegacyPlayerFixtureTestCase
             'UPDATE players SET text = ? WHERE id = ?',
             ['Route de Thèbes, trois lieues.', (int) $entity->id]
         );
-        BuildingService::purgeEntityCaches((int) $entity->id);
+        \App\Service\Map\BoardChanges::viewer((int) $entity->id);
 
         $reloaded = \App\Factory\PlayerFactory::legacy((int) $entity->id);
         $reloaded->get_data();
@@ -195,7 +195,7 @@ class BuildingInscriptionTest extends LegacyPlayerFixtureTestCase
         $entity->get_data();
 
         $this->link->executeStatement('UPDATE players SET text = ? WHERE id = ?', ['   ', (int) $entity->id]);
-        BuildingService::purgeEntityCaches((int) $entity->id);
+        \App\Service\Map\BoardChanges::viewer((int) $entity->id);
 
         $reloaded = \App\Factory\PlayerFactory::legacy((int) $entity->id);
         $reloaded->get_data();

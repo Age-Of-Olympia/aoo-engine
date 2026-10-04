@@ -3,7 +3,6 @@
 namespace App\Service\Map;
 
 use App\Factory\EntityManagerFactory;
-use App\Service\BuildingService;
 use Classes\View;
 use Doctrine\DBAL\Connection;
 
@@ -264,7 +263,7 @@ final class ResourceReconciler
         /* An id can be recycled from a resource removed earlier in this very
          * import; its cached identity would outlive it. */
         foreach ($ids as $id) {
-            BuildingService::purgeEntityCaches($id);
+            \App\Service\Map\BoardChanges::viewer($id);
         }
 
         $exhausted = [];

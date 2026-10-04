@@ -120,7 +120,7 @@ final class GroundLayerService
             ]);
         }
 
-        View::refresh_players_svg($goCoords);
+        \App\Service\Map\BoardChanges::cell($goCoords);
 
         return [
             'ok' => true,

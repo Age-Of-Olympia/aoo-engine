@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['player_save'])) {
                 throw new RuntimeException('Coordonnées invalides.');
             }
             $db->exe('UPDATE players SET coords_id = ? WHERE id = ?', array($coordsId, $id));
-            View::refresh_players_svg($goCoords);
+            \App\Service\Map\BoardChanges::cell($goCoords);
         }
 
         // Vitalités : le restant voulu devient un écart en players_bonus

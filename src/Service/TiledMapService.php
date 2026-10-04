@@ -349,18 +349,7 @@ class TiledMapService
             return; /* empty push: nobody saw anything change */
         }
 
-        /* The widest sight range, to catch whoever sees the edge of the area
-         * from outside. */
-        $reach = 20;
-
-        \Classes\View::refresh_players_svg_in_box(
-            min($xs) - $reach,
-            max($xs) + $reach,
-            min($ys) - $reach,
-            max($ys) + $reach,
-            $z,
-            $plan
-        );
+        \App\Service\Map\BoardChanges::cells($plan, $z, min($xs), max($xs), min($ys), max($ys));
     }
 
     /**

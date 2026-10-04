@@ -5,7 +5,6 @@ use App\Service\CellShadeService;
 use App\Service\Map\ResourceObjectService;
 use App\Service\Map\SceneryObjectService;
 use Classes\Db;
-use Classes\View;
 
 if($_POST['type'] == 'eraser'){
     include 'erase_map.php';
@@ -132,7 +131,7 @@ if($_POST['type'] == 'eraser'){
 
         echo 'ressource #' . $resourceId;
 
-        \Classes\View::refresh_players_svg_at((int) $coordsId);
+        \App\Service\Map\BoardChanges::cellId((int) $coordsId);
 
         return;
     }
@@ -154,7 +153,7 @@ if($_POST['type'] == 'eraser'){
 
         echo 'plante #' . $plantId;
 
-        \Classes\View::refresh_players_svg_at((int) $coordsId);
+        \App\Service\Map\BoardChanges::cellId((int) $coordsId);
 
         return;
     }
@@ -217,4 +216,4 @@ if($_POST['type'] == 'eraser'){
 /* Idem à la pose : `BuildingService::place` rafraîchit déjà pour les
  * bâtiments, mais rien ne le faisait pour un sol, un décor ou une
  * ressource. */
-\Classes\View::refresh_players_svg_at((int) $coordsId);
+\App\Service\Map\BoardChanges::cellId((int) $coordsId);

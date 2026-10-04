@@ -92,7 +92,7 @@ class ConstructionSiteService
             // The board drew the site: every viewer around must redraw the building.
             $coordsId = $db->exe('SELECT coords_id FROM players WHERE id = ?', $entityId)->fetch_object()->coords_id ?? null;
             if ($coordsId !== null) {
-                \Classes\View::refresh_players_svg_at((int) $coordsId);
+                \App\Service\Map\BoardChanges::cellId((int) $coordsId);
             }
 
             return ['done' => $progress['done'], 'total' => $progress['total'], 'completed' => true];

@@ -273,7 +273,7 @@ class TutorialHelper
         }
 
         $player->refresh_data();
-        $player->refresh_view();
+        \App\Service\Map\BoardChanges::viewer((int) $player->id);
         $player->getCoords();
 
         return $earned;
@@ -378,7 +378,7 @@ class TutorialHelper
                 [$avatar, $player->id]
             );
             $player->refresh_data();
-            $player->refresh_view();
+            \App\Service\Map\BoardChanges::viewer((int) $player->id);
         }
     }
 }

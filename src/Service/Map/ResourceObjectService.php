@@ -3,7 +3,6 @@
 namespace App\Service\Map;
 
 use App\Factory\EntityManagerFactory;
-use App\Service\BuildingService;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -43,7 +42,7 @@ final class ResourceObjectService
 
         /* An id can be recycled from a resource erased a moment ago, and its
          * cached identity would outlive it. */
-        BuildingService::purgeEntityCaches($id);
+        \App\Service\Map\BoardChanges::viewer($id);
 
         if ($exhausted) {
             (new ResourceStateService($this->conn))->exhaust([$id]);
@@ -89,7 +88,7 @@ final class ResourceObjectService
         $this->conn->executeStatement("DELETE FROM players WHERE id IN ({$placeholders})", $ids);
 
         foreach ($ids as $id) {
-            BuildingService::purgeEntityCaches($id);
+            \App\Service\Map\BoardChanges::viewer($id);
         }
     }
 

@@ -885,16 +885,16 @@ class Player implements ActorInterface {
         $planJson = plans()->read($this->coords->plan);
 
         if(!$planJson){
-            $this->refresh_view();
+            \App\Service\Map\BoardChanges::viewer((int) $this->id);
         }
         else{
-            View::refresh_players_svg($this->coords);
+            \App\Service\Map\BoardChanges::cell($this->coords);
         }
 
         if ($goCoords->plan != $this->coords->plan || $zChange) {
             $goPlanJson = plans()->read($goCoords->plan);
             if ($goPlanJson) {
-                View::refresh_players_svg($goCoords);
+                \App\Service\Map\BoardChanges::cell($goCoords);
             }
         }
 
@@ -1051,13 +1051,6 @@ class Player implements ActorInterface {
     }
 
 
-    public function refresh_view(){
-        $file = self::cachePath((int) $this->id, '.svg');
-        if (is_file($file)) {
-            unlink($file); // Delete the file
-        }
-    }
-
     /**
      * Chemin d'un cache par-entité ({id}{suffix}) — résolu depuis la
      * racine du projet, PAS depuis DOCUMENT_ROOT : vide en CLI, il
@@ -1132,7 +1125,7 @@ class Player implements ActorInterface {
         
         if($upgradeName == 'p'){
         
-            $this->refresh_view();
+            \App\Service\Map\BoardChanges::viewer((int) $this->id);
         }
         
         
@@ -1175,7 +1168,7 @@ class Player implements ActorInterface {
 
         if($upgradeName == 'p'){
 
-            $this->refresh_view();
+            \App\Service\Map\BoardChanges::viewer((int) $this->id);
         }
 
 
@@ -1468,7 +1461,7 @@ class Player implements ActorInterface {
 
 
         $this->refresh_data();
-        $this->refresh_view();
+        \App\Service\Map\BoardChanges::viewer((int) $this->id);
     }
 
 
@@ -1715,7 +1708,7 @@ class Player implements ActorInterface {
             // refresh view when P change
             if(isset($item->data->p)){
 
-                $this->refresh_view();
+                \App\Service\Map\BoardChanges::viewer((int) $this->id);
             }
 
             $return = EquipResult::Unequip;
@@ -1882,7 +1875,7 @@ class Player implements ActorInterface {
 
             // in both case, refresh
             $this->refresh_caracs();
-            $this->refresh_view();
+            \App\Service\Map\BoardChanges::viewer((int) $this->id);
         }
 
         return $return;
@@ -2056,7 +2049,7 @@ class Player implements ActorInterface {
 
 
         // refresh
-        $this->refresh_view();
+        \App\Service\Map\BoardChanges::viewer((int) $this->id);
         $this->refresh_caracs();
         $this->refresh_data();
     }

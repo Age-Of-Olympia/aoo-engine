@@ -55,7 +55,7 @@ EOT);
             $goCoords->coordsId = $coordsId;
             $player->go($goCoords);
 
-            $player->refresh_view();
+            \App\Service\Map\BoardChanges::viewer((int) $player->id);
 
             return 'tp '. $player->data->name .' near '. $target->data->name .'';
         }
@@ -143,7 +143,7 @@ EOT);
 
             $player->go($coords);
 
-            $player->refresh_view();
+            \App\Service\Map\BoardChanges::viewer((int) $player->id);
 
             echo 'tp '. $player->data->name .' to '. $goX .','. $goY .','. $goZ .','. $plan .'<br />';
         }

@@ -14,7 +14,7 @@ class TutorialView
         }
 
         // Refresh player's view to show tutorial state
-        $player->refresh_view();
+        \App\Service\Map\BoardChanges::viewer((int) $player->id);
         $player->refresh_data();
         $player->refresh_caracs();
 

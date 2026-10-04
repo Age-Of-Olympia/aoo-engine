@@ -2116,26 +2116,6 @@ class View{
     }
 
 
-
-
-    public static function put($table, $name, $coords){
-
-
-        $db = new Db();
-
-        $values = array(
-            'name'=>$name,
-            'coords_id'=>View::get_coords_id($coords),
-            'player_id'=>$_SESSION['playerId']
-        );
-
-        $db->insert('map_'. $table, $values);
-
-
-        self::refresh_players_svg($coords);
-    }
-
-
     /**
      * Avatar de repli d'une structure sans visuel : ses deux premières
      * lettres dans un cadre, en SVG inline (data-URI). Rester une URL
@@ -2236,84 +2216,8 @@ class View{
 
 
     /**
-     * Purges the boards that show a change at $coords. $p widens the changed
-     * zone; by default it spans the largest footprint, since a change
-     * reported at an anchor cell can reach that far.
-     */
-    public static function refresh_players_svg(object $coords, ?int $p = null):void{
-
-        $p ??= self::footprintReach();
-
-        self::refresh_players_svg_in_box(
-            $coords->x - $p,
-            $coords->x + $p,
-            $coords->y - $p,
-            $coords->y + $p,
-            (int) $coords->z,
-            (string) $coords->plan
-        );
-    }
-
-    /** Purge around a cell known by its coords id (map editors only hold that). */
-    public static function refresh_players_svg_at(int $coordsId, ?int $p = null): void
-    {
-        $res = (new Db())->exe('SELECT x, y, z, plan FROM coords WHERE id = ?', array($coordsId));
-        $row = $res ? $res->fetch_assoc() : null;
-
-        if (!$row) {
-            return;
-        }
-
-        self::refresh_players_svg((object) $row, $p);
-    }
-
-    /**
-     * Flags stale, and purges the cache of, every board whose area
-     * (board_views, written by MainView when it draws the board) overlaps
-     * the changed box. The area is the one the viewer's Perception and
-     * footprint gave the board, so a far-sighted player is reached from as
-     * far as they see, a short-sighted one only when the change is in sight.
-     * The HUD polls the flag (api/map/board_stale.php) to redraw on its own.
-     */
-    public static function refresh_players_svg_in_box(
-        int $minX,
-        int $maxX,
-        int $minY,
-        int $maxY,
-        int $z,
-        string $plan
-    ): void {
-        $db = new Db();
-        $overlap = 'WHERE plan = ? AND z = ? AND x_min <= ? AND x_max >= ? AND y_min <= ? AND y_max >= ?';
-        $params = array($plan, $z, $maxX, $minX, $maxY, $minY);
-
-        $db->exe('UPDATE board_views SET stale = 1 ' . $overlap, $params);
-        $res = $db->exe('SELECT player_id FROM board_views ' . $overlap, $params);
-
-        while ($row = $res->fetch_object()) {
-            /* Absolute: an api/ endpoint's working directory is its own
-             * folder, and a relative path silently purged nothing. */
-            $file = dirname(__DIR__) . '/datas/private/players/' . $row->player_id . '.svg';
-            if (is_file($file)) {
-                unlink($file);
-            }
-        }
-    }
-
-    /** How far a change reported at one cell can reach: the largest footprint, minus that cell. */
-    private static function footprintReach(): int
-    {
-        $reach = 0;
-        foreach (self::typeFootprints() as $footprint) {
-            $reach = max($reach, $footprint->width() - 1, $footprint->height() - 1);
-        }
-
-        return $reach;
-    }
-
-    /**
-     * The cells this board shows, as MainView records them in board_views:
-     * the viewer's footprint grown by its Perception.
+     * The cells this board shows, as MainView records them
+     * (BoardChanges::drawn): the viewer's footprint grown by its Perception.
      *
      * @return array{plan: string, z: int, x_min: int, x_max: int, y_min: int, y_max: int}
      */
@@ -2326,20 +2230,6 @@ class View{
             'x_max' => (int) $this->coords->x + (int) $this->p + $this->footW - 1,
             'y_min' => (int) $this->coords->y - (int) $this->p - ($this->footH - 1),
             'y_max' => (int) $this->coords->y + (int) $this->p,
-        );
-    }
-
-    /** Writes this board's area for its viewer, fresh, so refresh_players_svg* finds it. */
-    public function recordArea(): void
-    {
-        $area = $this->area();
-
-        (new Db())->exe(
-            'INSERT INTO board_views (player_id, plan, z, x_min, x_max, y_min, y_max, stale)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 0)
-             ON DUPLICATE KEY UPDATE plan = VALUES(plan), z = VALUES(z),
-                x_min = VALUES(x_min), x_max = VALUES(x_max), y_min = VALUES(y_min), y_max = VALUES(y_max), stale = 0',
-            array((int) $this->playerId, $area['plan'], $area['z'], $area['x_min'], $area['x_max'], $area['y_min'], $area['y_max'])
         );
     }
 
@@ -2368,7 +2258,7 @@ class View{
             $player->getCoords();
         }
 
-        self::refresh_players_svg($player->coords);
+        \App\Service\Map\BoardChanges::cell($player->coords);
     }
 
     /**

@@ -53,7 +53,7 @@ EOT);
             return 'Erreur : ' . $e->getMessage();
         }
 
-        \Classes\View::refresh_players_svg($goCoords);
+        \App\Service\Map\BoardChanges::cell($goCoords);
 
         return 'Objet ' . $argumentValues[1] . ' (instance #' . $instanceId . ') posé en bourse en ('
             . $goCoords->x . ',' . $goCoords->y . ') sur ' . $goCoords->plan . '.';

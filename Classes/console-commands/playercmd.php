@@ -229,7 +229,7 @@ function edit_player($argumentValues, $player){
 
     $player->refresh_data();
     $player->refresh_caracs();
-    $player->refresh_view();
+    \App\Service\Map\BoardChanges::viewer((int) $player->id);
 
 
     return 'player '. $player->data->name .': field "'. $field .'" changed to value "'. $value .'"';
@@ -273,7 +273,7 @@ function unequip_player($argumentValues, $player){
         $db->exe($sql, array($player->id, $data));
 
         $player->refresh_caracs();
-        $player->refresh_view();
+        \App\Service\Map\BoardChanges::viewer((int) $player->id);
 
         echo $player->data->name .' unequiped '. $data;
     }
@@ -302,14 +302,13 @@ function purge_player($argumentValues, $player){
     {
         if($cacheName == 'view'){
 
-            $files = glob('datas/private/players/'. $player->id .'.svg');
+            \App\Service\Map\BoardChanges::viewer((int) $player->id);
+            $files = array();
         }
         elseif($cacheName == 'allcaches'){
 
-            $files = array_merge(
-                glob('datas/private/players/'. $player->id .'.svg'),
-                glob('datas/private/players/'. $player->id .'.kills.html')
-            );
+            \App\Service\Map\BoardChanges::viewer((int) $player->id);
+            $files = glob('datas/private/players/'. $player->id .'.kills.html');
         }
         elseif($cacheName == 'playerdata'){
 
@@ -320,14 +319,13 @@ function purge_player($argumentValues, $player){
 
         if($cacheName == 'view'){
 
-            $files = glob('datas/private/players/*.svg');
+            \App\Service\Map\BoardChanges::world();
+            $files = array();
         }
         elseif($cacheName == 'allcaches'){
 
-            $files = array_merge(
-                glob('datas/private/players/*.svg'),
-                glob('datas/private/players/*.kills.html')
-            );
+            \App\Service\Map\BoardChanges::world();
+            $files = glob('datas/private/players/*.kills.html');
         }
         elseif($cacheName == 'playerdata'){
 

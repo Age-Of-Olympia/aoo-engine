@@ -3,7 +3,6 @@
 namespace Tests\Various;
 
 use App\Service\TiledMapService;
-use Classes\View;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use Tests\Support\CachedBoard;
@@ -89,7 +88,7 @@ class EditorRefreshesBoardsTest extends TestCase
     {
         $this->boardIsCached($this->watcherId);
 
-        View::refresh_players_svg_at($this->coordsIdOn(self::PLAN, 2, 2));
+        \App\Service\Map\BoardChanges::cellId($this->coordsIdOn(self::PLAN, 2, 2));
 
         $this->assertFileDoesNotExist($this->boardOf($this->watcherId));
     }
@@ -99,7 +98,7 @@ class EditorRefreshesBoardsTest extends TestCase
     {
         $this->boardIsCached($this->watcherId);
 
-        View::refresh_players_svg_at($this->coordsIdOn(self::PLAN, 500, 500));
+        \App\Service\Map\BoardChanges::cellId($this->coordsIdOn(self::PLAN, 500, 500));
 
         $this->assertFileExists($this->boardOf($this->watcherId));
     }
@@ -109,7 +108,7 @@ class EditorRefreshesBoardsTest extends TestCase
     {
         $this->boardIsCached($this->watcherId, 30);
 
-        View::refresh_players_svg_at($this->coordsIdOn(self::PLAN, 28, 0));
+        \App\Service\Map\BoardChanges::cellId($this->coordsIdOn(self::PLAN, 28, 0));
 
         $this->assertFileDoesNotExist($this->boardOf($this->watcherId));
         $this->assertSame(1, (int) $this->conn->fetchOne(
@@ -123,7 +122,7 @@ class EditorRefreshesBoardsTest extends TestCase
     {
         $this->boardIsCached($this->watcherId, 3);
 
-        View::refresh_players_svg_at($this->coordsIdOn(self::PLAN, 15, 0));
+        \App\Service\Map\BoardChanges::cellId($this->coordsIdOn(self::PLAN, 15, 0));
 
         $this->assertFileExists($this->boardOf($this->watcherId));
     }
@@ -133,7 +132,7 @@ class EditorRefreshesBoardsTest extends TestCase
     {
         $this->boardIsCached($this->watcherId);
 
-        View::refresh_players_svg_at(0);
+        \App\Service\Map\BoardChanges::cellId(0);
 
         $this->assertFileExists($this->boardOf($this->watcherId));
     }

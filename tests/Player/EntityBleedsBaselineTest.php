@@ -93,9 +93,6 @@ class EntityBleedsBaselineTest extends LegacyPlayerFixtureTestCase
             [$bleeds, (int) $player->data->coords_id]
         );
 
-        /* Même chemin RELATIF que le code de production
-         * (View::refresh_players_svg) : il s'appuie sur le répertoire
-         * courant, pas sur DOCUMENT_ROOT, qui est vide hors requête. */
         $cache = \Tests\Support\CachedBoard::drawnFor((int) $player->id, content: self::CACHE_MARKER);
         $this->assertFileExists($cache, 'le cache de départ est bien en place');
 

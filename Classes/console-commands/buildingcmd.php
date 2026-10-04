@@ -105,7 +105,7 @@ EOT);
                 continue; // vraiment sans visuel : initiales au rendu, normal
             }
             $db->exe('UPDATE players SET avatar = ?, portrait = ? WHERE id = ?', array($resolved, $resolved, (int) $row->id));
-            BuildingService::purgeEntityCaches((int) $row->id);
+            \App\Service\Map\BoardChanges::viewer((int) $row->id);
             $healed++;
         }
 

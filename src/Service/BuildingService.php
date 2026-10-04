@@ -316,16 +316,6 @@ class BuildingService
     }
 
     /**
-     * Purge an id's cached board (.svg, the only file cache left) —
-     * called at PLACEMENT (recycled id) as at removal, otherwise the new
-     * entity serves the previous one's render.
-     */
-    public static function purgeEntityCaches(int $playerId): void
-    {
-        @unlink(\Classes\Player::cachePath($playerId, '.svg'));
-    }
-
-    /**
      * Place a building of the given type on the map.
      *
      * The type is a races row of kind 'structure' (the races table is the
@@ -427,7 +417,7 @@ class BuildingService
         // peut laisser de vieux caches par-entité : sans purge, le
         // nouveau bâtiment ressert l'IDENTITÉ du précédent (get_data lit
         // le .json avant la base).
-        self::purgeEntityCaches($id);
+        \App\Service\Map\BoardChanges::viewer($id);
 
         $avatar = self::resolveAvatar($type);
 
@@ -509,7 +499,7 @@ class BuildingService
         // Le damier de chaque joueur est un SVG caché : invalider le
         // voisinage pour que le bâtiment apparaisse sans attendre un
         // déplacement.
-        View::refresh_players_svg($goCoords);
+        \App\Service\Map\BoardChanges::cell($goCoords);
 
         (new AuditService())->addAuditLog("BuildingService::place {$type} #{$id} at ({$goCoords->x},{$goCoords->y},{$goCoords->plan})");
 
@@ -879,7 +869,7 @@ class BuildingService
          * it carry data-blocked, so they must be redrawn — otherwise a
          * door opened stays barred on screen until something else
          * refreshes the cache. Cheap for chests and édifices too. */
-        self::purgeEntityCaches($playerId);
+        \App\Service\Map\BoardChanges::viewer($playerId);
         $this->refreshBoardAt($this->coordsOf($playerId));
 
         (new AuditService())->addAuditLog('BuildingService::setOpen #' . $playerId . ' ' . ($open ? 'ouvert' : 'fermé'));
@@ -1026,7 +1016,7 @@ class BuildingService
             'UPDATE players SET godId = ?, name = ? WHERE id = ?',
             [$godId, $godName === null ? $label : $label . ' de ' . $godName, $playerId]
         );
-        self::purgeEntityCaches($playerId);
+        \App\Service\Map\BoardChanges::viewer($playerId);
 
         (new AuditService())->addAuditLog("BuildingService::setGod #{$playerId} god {$godId}");
     }
@@ -1301,7 +1291,7 @@ class BuildingService
         json()->forget('players', (string) $playerId);
 
         $this->refreshBoardAt($this->coordsOf($playerId));
-        @unlink(\Classes\Player::cachePath($playerId, '.svg'));
+        \App\Service\Map\BoardChanges::viewer($playerId);
     }
 
     /**
@@ -1321,7 +1311,7 @@ class BuildingService
     private function refreshBoardAt(array|false $goCoords): void
     {
         if ($goCoords !== false) {
-            View::refresh_players_svg((object) $goCoords);
+            \App\Service\Map\BoardChanges::cell((object) $goCoords);
         }
     }
 
@@ -1377,9 +1367,8 @@ class BuildingService
 
         $this->refreshBoardAt($goCoords);
 
-        // refresh_players_svg ne balaie que la case désormais vide : les
-        // caches par-entité du bâtiment disparu se purgent explicitement.
-        self::purgeEntityCaches($playerId);
+        // The entity's own board (a building may draw one) goes too.
+        \App\Service\Map\BoardChanges::viewer($playerId);
 
         (new AuditService())->addAuditLog(
             "BuildingService::vanish #{$playerId}"
@@ -1428,10 +1417,8 @@ class BuildingService
 
         $this->refreshBoardAt($goCoords);
 
-        // refresh_players_svg ne balaie que les lignes ENCORE présentes :
-        // purger explicitement les caches du bâtiment supprimé, sinon un id
-        // recyclé ressert le vieux SVG.
-        self::purgeEntityCaches($playerId);
+        // The removed entity's own board too, or a recycled id serves it.
+        \App\Service\Map\BoardChanges::viewer($playerId);
 
         (new AuditService())->addAuditLog("BuildingService::remove #{$playerId}");
 

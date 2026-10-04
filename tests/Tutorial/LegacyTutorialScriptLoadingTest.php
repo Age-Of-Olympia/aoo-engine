@@ -79,7 +79,6 @@ class LegacyTutorialPlayerStub extends Player
         // intentionally skip parent — no DB, no services
     }
 
-    public function refresh_view() {}
     public function refresh_data() {}
     public function refresh_caracs() {}
 

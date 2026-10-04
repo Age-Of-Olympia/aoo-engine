@@ -27,4 +27,4 @@ $goCoords = $coords;
 $coordsId = View::get_free_coords_id_arround($goCoords, 1, avoidElements: true);
 
 
-View::refresh_players_svg($player->coords);
+\App\Service\Map\BoardChanges::cell($player->coords);

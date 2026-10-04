@@ -10,4 +10,4 @@ foreach ($notices as $notice) {
     echo '<div class="erase-notice">' . $notice . '</div>';
 }
 
-\Classes\View::refresh_players_svg_at((int) $coordsId);
+\App\Service\Map\BoardChanges::cellId((int) $coordsId);
