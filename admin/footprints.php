@@ -261,8 +261,7 @@ ob_start();
                             <tr>
                                 <th><input type="checkbox" data-check-all aria-label="Tout cocher" /></th>
                                 <th>Décor</th>
-                                <th>Plan</th>
-                                <th>Case</th>
+                                <th>Case <small class="text-muted">(clic = copie pour <code>tp</code>)</small></th>
                                 <th>Cases tenues</th>
                                 <th>Morceaux visibles</th>
                             </tr>
@@ -272,8 +271,10 @@ ob_start();
                             <tr>
                                 <td><input type="checkbox" name="ids[]" value="<?= $figure['id'] ?>" /></td>
                                 <td><code><?= e($figure['family']) ?></code> <small class="text-muted">#<?= $figure['id'] ?></small></td>
-                                <td><?= e($figure['plan']) ?></td>
-                                <td><?= $figure['x'] ?>, <?= $figure['y'] ?>, <?= $figure['z'] ?></td>
+                                <?php $tp = $figure['x'] . ',' . $figure['y'] . ',' . $figure['z'] . ',' . $figure['plan']; ?>
+                                <td><button type="button" class="btn btn-sm btn-outline-secondary tp-copy" data-tp="<?= e($tp) ?>"
+                                            title="Copier pour la console : tp &lt;nom&gt; <?= e($tp) ?>">
+                                    <i class="fas fa-copy"></i> <code><?= e($tp) ?></code></button></td>
                                 <td><?= $figure['cells'] ?></td>
                                 <td><?= $figure['pieces'] ?></td>
                             </tr>
@@ -494,5 +495,5 @@ $content = ob_get_clean();
 
 echo admin_layout('Emprises', $content, [
     'styles'  => ['/admin/css/footprints.css'],
-    'scripts' => ['/admin/js/footprints.js'],
+    'scripts' => ['/admin/js/footprints.js', '/admin/js/tp-copy.js'],
 ]);
