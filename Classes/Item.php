@@ -647,6 +647,26 @@ class Item{
     }
 
 
+    /**
+     * Attributes of an item picture outside the inventory (craft, market):
+     * a click opens its sheet in the HUD (js/hud.js initItemSheet), a hover
+     * shows its caracs and description.
+     */
+    public static function sheetAttributes(object $data): string
+    {
+        $caracs = implode(', ', self::get_item_carac($data));
+        $text = (string) ($data->text ?? '');
+        $hover = trim($data->name . "\n" . strip_tags($caracs) . "\n" . strip_tags($text));
+
+        return ' class="item-sheet-link"'
+            . ' data-name="' . htmlspecialchars((string) $data->name, ENT_QUOTES) . '"'
+            . ' data-text="' . htmlspecialchars($text, ENT_QUOTES) . '"'
+            . ' data-img="' . htmlspecialchars((string) $data->img, ENT_QUOTES) . '"'
+            . ' data-caracs="' . htmlspecialchars($caracs, ENT_QUOTES) . '"'
+            . ' title="' . htmlspecialchars($hover, ENT_QUOTES) . '"';
+    }
+
+
     // print item carac
     /**
      * @param ?array $strikeEffects the item's item_effects rows when the caller

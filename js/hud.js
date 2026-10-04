@@ -431,11 +431,12 @@
      * preview block inside the sheet page, and the two have different
      * heights: every click reflowed the panel. Capture phase, so the
      * legacy direct handler never runs in the HUD; the data-* the
-     * legacy preview read are reused as they are.
+     * legacy preview read are reused as they are. Craft and market
+     * pictures carry the same data-* (Item::sheetAttributes).
      */
     function initItemSheet() {
         document.addEventListener('click', function (e) {
-            var img = e.target.closest('#hud .infos-item');
+            var img = e.target.closest('#hud .infos-item, #hud .item-sheet-link');
             if (!img) {
                 return;
             }
@@ -451,7 +452,8 @@
                     .append($('<p class="hud-item-sheet-caracs"></p>').html($img.data('caracs') || ''))
                     /* The slot's title carries what the data-* do not:
                      * the hand it sits in, the durability. */
-                    .append($('<p class="hud-item-sheet-meta"></p>').text(img.title || '')));
+                    .append($('<p class="hud-item-sheet-meta"></p>')
+                        .text(img.classList.contains('infos-item') ? img.title : '')));
 
             var $modal = hudSheet();
             $modal.find('.hud-action-modal-body').empty().append($body);

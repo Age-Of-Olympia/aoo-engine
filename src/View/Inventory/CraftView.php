@@ -103,7 +103,7 @@ class CraftView
 <br/>
 
  <a href="item.php?itemId=' . $item->id . '" class="source-link">
-        <img src="' . $item->data->img . '" />
+        <img src="' . $item->data->img . '"' . Item::sheetAttributes($item->data) . ' />
     </a>
    ';
 
@@ -122,7 +122,7 @@ class CraftView
                 $ingredient = self::itemReadModel($ingredientItem->GetItem());
 
                 echo '
-            <img src="' . $ingredient->data->mini . '" /> x' . $ingredientItem->getCount() . '
+            <img src="' . $ingredient->data->mini . '"' . Item::sheetAttributes($ingredient->data) . ' /> x' . $ingredientItem->getCount() . '
             ';
             }
 
@@ -191,7 +191,7 @@ class CraftView
         <tr>
             <td width="50">
 
-              <a href="item.php?itemId=' . $artItem->id . '"><img src="' . $artItem->data->mini . '" /></a>
+              <a href="item.php?itemId=' . $artItem->id . '"><img src="' . $artItem->data->mini . '"' . Item::sheetAttributes($artItem->data) . ' /></a>
 
             </td>
             <td>
@@ -225,7 +225,7 @@ class CraftView
                 }
 
                 echo '
-                    <a href="item.php?itemId=' . $ingredientItem->id . '"><img src="' . $ingredientItem->data->mini . '" /></a>
+                    <a href="item.php?itemId=' . $ingredientItem->id . '"><img src="' . $ingredientItem->data->mini . '"' . Item::sheetAttributes($ingredientItem->data) . ' /></a>
                     <font color="' . $color . '">x' . $ingredient->getCount() . '</font>
                     ';
             }

@@ -23,7 +23,7 @@ class AsksView
 
 
             echo '<h1>' . ucfirst($item->data->name) . '</h1>';
-            echo '<div><img src="' . $item->data->mini . '" /></div>';
+            echo '<div><img src="' . $item->data->mini . '"' . Item::sheetAttributes($item->data) . ' /></div>';
 
 
             $inventaire = $item->get_n($player, bank: false);

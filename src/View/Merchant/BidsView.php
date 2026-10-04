@@ -24,7 +24,7 @@ class BidsView
 
             echo '<h1>' . ucfirst($item->data->name) . '</h1>';
 
-            echo '<div><img src="' . $item->data->mini . '" /></div>';
+            echo '<div><img src="' . $item->data->mini . '"' . Item::sheetAttributes($item->data) . ' /></div>';
 
 
             $or_inventaire = $player->get_gold();

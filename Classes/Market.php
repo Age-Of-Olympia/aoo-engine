@@ -183,7 +183,7 @@ class Market
 
             echo '
                 <td>
-                    <img src="' . $item->data->mini . '" />
+                    <img src="' . $item->data->mini . '"' . Item::sheetAttributes($item->data) . ' />
                 </td>
                 ';
 
