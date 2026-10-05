@@ -36,19 +36,23 @@ class TiledAuthService
         $db = new Db();
 
         if (is_numeric($name)) {
-            $res = $db->exe('SELECT id, psw FROM players WHERE id = ?', array($name));
+            $res = $db->exe('SELECT id FROM players WHERE id = ?', array($name));
         } else {
             $name = implode(' ', array_map('ucfirst', explode(' ', $name)));
-            $res = $db->exe('SELECT id, psw FROM players WHERE name = ?', array($name));
+            $res = $db->exe('SELECT id FROM players WHERE name = ?', array($name));
         }
 
         $row = $res->fetch_assoc();
-
-        if (!$row || !password_verify($password, $row['psw'])) {
+        if (!$row) {
             return null;
         }
 
         $playerId = (int) $row['id'];
+        $hash = (new AccountService())->passwordHashOf($playerId);
+
+        if ($hash === null || !password_verify($password, $hash)) {
+            return null;
+        }
 
         return self::isAdmin($playerId) ? $playerId : null;
     }
