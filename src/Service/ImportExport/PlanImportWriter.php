@@ -24,16 +24,30 @@ final class PlanImportWriter
 
     private ?Db $db = null;
 
-    /** @var array<string, int>|null "x|y|z" => coords_id, read once per request */
-    private ?array $coordsIds = null;
-
     public function __construct(private Connection $conn, private ImportReport $report)
     {
     }
 
-    /** Authored rows go; player rows and entities stay. */
-    public function purgeAuthoredRows(string $plan): void
+    /**
+     * Authored rows go; player rows stay. Entities stay too, except on the
+     * levels the bundle no longer has: the entity bands only cover its levels.
+     *
+     * @param list<int> $levels the levels of the bundle
+     */
+    public function purgeAuthoredRows(string $plan, array $levels): void
     {
+        foreach (array_keys(TiledMapService::ENTITY_LAYERS) as $layer) {
+            $reconciler = TiledMapService::reconcilerFor($layer);
+            $stale = $this->conn->fetchFirstColumn(
+                'SELECT DISTINCT c.z FROM players p JOIN coords c ON c.id = p.coords_id
+                  WHERE p.player_type = ? AND c.plan = ?',
+                [TiledMapService::ENTITY_LAYERS[$layer], $plan]
+            );
+            foreach (array_diff(array_map('intval', $stale), $levels) as $z) {
+                $reconciler->reconcile($plan, [], $z);
+            }
+        }
+
         foreach (array_keys(TiledMapService::AUTHORABLE_LAYERS) as $layer) {
             if (isset(TiledMapService::ENTITY_LAYERS[$layer])) {
                 continue;
@@ -58,7 +72,7 @@ final class PlanImportWriter
      * @param array<string, list<array<string, mixed>>> $layers
      * @return list<array{0:int,1:int,2:int}>
      */
-    public function neededCoords(array $payload, array $layers): array
+    public static function neededCoords(array $payload, array $layers): array
     {
         $needed = [];
         foreach ($payload['coords'] as [$x, $y, $z]) {
@@ -91,7 +105,6 @@ final class PlanImportWriter
 
         // The (plan, z, x, y) key makes the replay a no-op.
         $this->db()->exe('INSERT IGNORE INTO coords (x, y, z, plan) VALUES ' . $placeholders, $params);
-        $this->coordsIds = null;
     }
 
     /** @param list<array<string, mixed>> $rows */
@@ -101,7 +114,7 @@ final class PlanImportWriter
             return;
         }
 
-        $coordsIds = $this->coordsIds($plan);
+        $coordsIds = $this->coordsIds($plan, $rows);
 
         // Uniform columns per layer (multi-row INSERT): the portable extras
         // of AUTHORABLE_LAYERS, with the schema defaults
@@ -131,38 +144,11 @@ final class PlanImportWriter
     }
 
     /**
-     * The buildings of the bundle by level, levels without a building
-     * included: a level the bundle draws no building on is a level whose
-     * decor buildings are removed.
-     *
-     * The levels come from the bundle, never from the database: a step list
-     * that grew as the cells were created would move the cursor of a resumed
-     * run onto another step.
-     *
-     * @param list<array{0:int,1:int,2:int}>  $coords the cells the bundle names
-     * @param list<array<string, mixed>>      $rows   the bundle's building rows
-     * @return array<int, list<array<string, mixed>>>
+     * @param list<array<string, mixed>> $rows
      */
-    public function buildingsByLevel(array $coords, array $rows): array
+    public function placeBuildings(string $plan, int $z, array $rows, ?int $yFrom = null, ?int $yTo = null): void
     {
-        $byZ = [];
-        foreach ($rows as $row) {
-            $byZ[(int) $row['z']][] = $row;
-        }
-
-        foreach ($coords as [, , $z]) {
-            $byZ[(int) $z] ??= [];
-        }
-
-        ksort($byZ);
-
-        return $byZ;
-    }
-
-    /** @param list<array<string, mixed>> $rows */
-    public function placeBuildings(string $plan, int $z, array $rows): void
-    {
-        foreach ((new TiledMapService())->importBuildingsAt($plan, $z, $rows) as $refused) {
+        foreach ((new TiledMapService())->importBuildingsAt($plan, $z, $rows, $yFrom, $yTo) as $refused) {
             $this->report->warn($plan, 'Bâtiment non posé : ' . $refused);
         }
     }
@@ -185,19 +171,30 @@ final class PlanImportWriter
         return (string) ($row[$column] ?? '');
     }
 
-    /** @return array<string, int> "x|y|z" => coords_id of the whole plan */
-    private function coordsIds(string $plan): array
+    /**
+     * "x|y|z" => coords_id of exactly the cells these rows name, never the
+     * whole plan: a sparse layer (marks, foregrounds) spans every row of the map.
+     *
+     * @param list<array<string, mixed>> $rows
+     * @return array<string, int>
+     */
+    private function coordsIds(string $plan, array $rows): array
     {
-        if ($this->coordsIds !== null) {
-            return $this->coordsIds;
+        $params = [$plan];
+        foreach ($rows as $row) {
+            array_push($params, (int) $row['z'], (int) $row['x'], (int) $row['y']);
         }
 
-        $this->coordsIds = [];
-        foreach ($this->conn->fetchAllAssociative('SELECT id, x, y, z FROM coords WHERE plan = ?', [$plan]) as $row) {
-            $this->coordsIds[$row['x'] . '|' . $row['y'] . '|' . $row['z']] = (int) $row['id'];
+        $ids = [];
+        foreach ($this->conn->fetchAllAssociative(
+            'SELECT id, x, y, z FROM coords WHERE plan = ? AND (z, x, y) IN ('
+                . implode(', ', array_fill(0, count($rows), '(?, ?, ?)')) . ')',
+            $params
+        ) as $cell) {
+            $ids[$cell['x'] . '|' . $cell['y'] . '|' . $cell['z']] = (int) $cell['id'];
         }
 
-        return $this->coordsIds;
+        return $ids;
     }
 
     private function db(): Db

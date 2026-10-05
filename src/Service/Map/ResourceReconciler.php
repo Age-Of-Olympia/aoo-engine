@@ -62,19 +62,22 @@ final class ResourceReconciler
      *        whole plan. A bundle redraws a plan entire; the map editor pushes
      *        one level at a time, and what it says nothing about — the levels
      *        it is not looking at — must not be read as « removed ».
+     * @param int|null $yFrom with $yTo, restrict it further to the rows y in
+     *        [$yFrom, $yTo] of that level (null = unbounded): an import
+     *        reconciles a large level band by band
      *
      * @return array{created: int, removed: int, kept: int, unknown: list<string>}
      *         unknown holds the type names absent from the `races` catalog,
      *         which cannot be posed and are reported rather than guessed at
      */
-    public function reconcile(string $plan, array $wanted, ?int $z = null): array
+    public function reconcile(string $plan, array $wanted, ?int $z = null, ?int $yFrom = null, ?int $yTo = null): array
     {
         // The routes palette is the road images: each one is a type
         if ($this->family === \App\Entity\Race::FAMILY_ROUTE) {
             (new RouteTypeService($this->conn))->ensure(array_column($wanted, 'name'));
         }
 
-        $current = $this->current($plan, $z);
+        $current = $this->current($plan, $z, $yFrom, $yTo);
         $labels = $this->labels($wanted);
 
         $seen = [];
@@ -183,15 +186,15 @@ final class ResourceReconciler
      *
      * @return array<string, list<int>> identity => entity ids, oldest first
      */
-    private function current(string $plan, ?int $z = null): array
+    private function current(string $plan, ?int $z = null, ?int $yFrom = null, ?int $yTo = null): array
     {
         $rows = $this->conn->fetchAllAssociative(
             "SELECT p.id, p.race, c.z, c.x, c.y
                FROM players p
                JOIN coords c ON c.id = p.coords_id
-              WHERE p.player_type = ? AND c.plan = ?" . ($z === null ? '' : ' AND c.z = ?') . "
+              WHERE p.player_type = ? AND c.plan = ? AND c.y BETWEEN ? AND ?" . ($z === null ? '' : ' AND c.z = ?') . "
               ORDER BY p.id",
-            $z === null ? [$this->family, $plan] : [$this->family, $plan, $z]
+            array_merge([$this->family, $plan, $yFrom ?? PHP_INT_MIN, $yTo ?? PHP_INT_MAX], $z === null ? [] : [$z])
         );
 
         $current = [];

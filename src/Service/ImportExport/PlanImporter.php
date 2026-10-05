@@ -206,7 +206,37 @@ final class PlanImporter extends AbstractDbalImporter
      */
     public function runFor(array $payload, ImportReport $report): PlanImportRun
     {
-        return new PlanImportRun($payload, $report, $this->connection());
+        return PlanImportRun::stage($payload, $report, $this->connection());
+    }
+
+    /**
+     * Stores the steps of every plan of the bundle, so the requests that
+     * follow load one step at a time instead of the bundle.
+     *
+     * @param array<int, mixed> $objects the bundle's plan objects
+     * @return list<array{0: string, 1: string}> [fingerprint, plan] for {@see advanceStaged()}
+     */
+    public function stage(array $objects, ImportReport $report): array
+    {
+        return array_map(
+            fn(mixed $object): array => [($run = $this->runFor($this->payloadFor($object), $report))->fingerprint(), $run->plan()],
+            $objects
+        );
+    }
+
+    /**
+     * {@see advance()} on a bundle stage() already stored.
+     *
+     * @param list<array{0: string, 1: string}> $jobs
+     * @param callable(PlanImportRun, string): void|null $onStep
+     */
+    public function advanceStaged(array $jobs, ImportReport $report, float $deadline, ?callable $onStep = null): ?PlanImportRun
+    {
+        return $this->drive(
+            array_map(fn(array $job): PlanImportRun => new PlanImportRun($job[0], $job[1], $report, $this->connection()), $jobs),
+            $deadline,
+            $onStep
+        );
     }
 
     /**
@@ -223,11 +253,7 @@ final class PlanImporter extends AbstractDbalImporter
      */
     public function advance(array $objects, ImportReport $report, float $deadline, ?callable $onStep = null): ?PlanImportRun
     {
-        return $this->drive(
-            array_map(fn(mixed $object): PlanImportRun => $this->runFor($this->payloadFor($object), $report), $objects),
-            $deadline,
-            $onStep
-        );
+        return $this->advanceStaged($this->stage($objects, $report), $report, $deadline, $onStep);
     }
 
     /**

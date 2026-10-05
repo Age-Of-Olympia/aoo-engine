@@ -102,6 +102,8 @@ final class EntityPlacementService
         /* Cells last, and one entity at a time: syncCells reads the row back
          * to find the origin and the cut-out it has to lay around it. */
         $cells = new EntityCellService($this->conn);
+        // One catalogue for the batch: building it reads images and the map (~45 ms)
+        $footprints ??= new EntityTypeFootprintService($this->conn);
         foreach ($ids as $entityId) {
             $cells->syncCells($entityId, $footprints);
         }

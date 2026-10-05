@@ -53,6 +53,9 @@ class AuditService
             $this->entityManager->flush();
         }
 
+        // Written once, never read back: left managed, every later flush of the request re-scans it
+        $this->entityManager->detach($audit);
+
         return $audit->getId();
         
     }

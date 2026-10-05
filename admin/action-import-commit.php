@@ -6,6 +6,7 @@ use App\Service\AdminAuthorizationService;
 use App\Service\CsrfProtectionService;
 use App\Service\ImportExport\BundleEnvelope;
 use App\Service\ImportExport\ImporterRegistry;
+use App\Service\ImportExport\PlanImporter;
 
 AdminAuthorizationService::DoAdminCheck();
 
@@ -41,13 +42,18 @@ try {
 
     /* A plan is loaded step by step, each step committed: the progress
      * screen chains them, and an interrupted load resumes where it stopped.
-     * Until it ends, players on the plan see it half loaded. */
-    if ($parsed->objectType === 'plan') {
+     * Until it ends, players on the plan see it half loaded. The steps are
+     * stored here, the only decode of the bundle: each progress request
+     * loads one step. */
+    if ($importer instanceof PlanImporter) {
         $preview = $importer->preview($parsed->objects);
         if ($preview->hasRejections()) {
             $first = $preview->rejected()[0];
             throw new InvalidArgumentException('Import refusé : ' . $first['name'] . ' — ' . $first['reason']);
         }
+
+        $_SESSION['plan_import_jobs'] = $importer->stage($parsed->objects, $preview);
+        unset($_SESSION['action_import_bundle']);
 
         $csrf->regenerateToken();
         header('Location: /admin/action-import-run.php');

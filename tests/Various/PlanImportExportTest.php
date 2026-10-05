@@ -246,6 +246,38 @@ class PlanImportExportTest extends TestCase
         );
     }
 
+    /** The admin page's path: steps stored once, then loaded without the bundle. */
+    public function testAStagedImportRunsFromItsStoredSteps(): void
+    {
+        $this->seedSourcePlan();
+        $payload = (new PlanExporter())->exportOne(self::SRC);
+        $payload['plan'] = self::IMPORTED;
+
+        $jobs = (new PlanImporter())->stage([$payload], new \App\Service\ImportExport\ImportReport());
+        $this->assertNull((new PlanImporter())->advanceStaged($jobs, new \App\Service\ImportExport\ImportReport(), INF));
+
+        $this->assertEqualsCanonicalizing($payload['layers'], (new PlanExporter())->exportOne(self::IMPORTED)['layers']);
+        $this->assertSame(0, (int) $this->link->fetchOne("SELECT COUNT(*) FROM plan_import_steps WHERE plan = ?", [self::IMPORTED]));
+    }
+
+    /** Bands of about 100 rows per level, cut between two map rows, covering every y. */
+    public function testEntityBandsCoverEveryRowOfEachLevel(): void
+    {
+        $rows = [];
+        for ($y = 0; $y < 12; $y++) {
+            for ($x = 0; $x < 30; $x++) {
+                $rows[] = ['name' => 'arbre1', 'x' => $x, 'y' => $y, 'z' => 0];
+            }
+        }
+
+        $bands = (new \ReflectionMethod(\App\Service\ImportExport\PlanImportRun::class, 'bands'))->invoke(null, $rows, [0, 1]);
+
+        $this->assertSame(
+            [[0, null, 3, 120], [0, 4, 7, 120], [0, 8, null, 120], [1, null, null, 0]],
+            array_map(static fn(array $b): array => [$b['z'], $b['from'], $b['to'], count($b['rows'])], $bands)
+        );
+    }
+
     public function testImportRejectsInvalidPayloadsWithoutWriting(): void
     {
         $importer = new PlanImporter();
@@ -426,6 +458,7 @@ class PlanImportExportTest extends TestCase
         /* The builder stands on no cell, so the join above never reaches it. */
         $this->link->executeStatement('DELETE FROM players WHERE id = ?', [self::BUILDER_ID]);
         $this->link->executeStatement("DELETE FROM plan_import_progress WHERE plan LIKE 'plan_test_ie_%'");
+        $this->link->executeStatement("DELETE FROM plan_import_steps WHERE plan LIKE 'plan_test_ie_%'");
 
         $this->link->executeStatement("DELETE FROM coords WHERE plan LIKE 'plan_test_ie_%'");
 

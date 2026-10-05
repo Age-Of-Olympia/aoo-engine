@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Stash the raw JSON (not the parsed report): preview and commit re-parse
         // and re-validate it, never trusting a precomputed result.
         $_SESSION['action_import_bundle'] = $json;
+        unset($_SESSION['plan_import_jobs']);
         $_SESSION['action_import_filename'] = (string) ($_FILES['bundle']['name'] ?? 'bundle.json');
         $csrf->regenerateToken();
 

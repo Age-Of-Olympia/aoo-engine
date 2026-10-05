@@ -12,7 +12,6 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\AdminAuthorizationService;
 use App\Service\CsrfProtectionService;
-use App\Service\ImportExport\BundleEnvelope;
 use App\Service\ImportExport\ImportReport;
 use App\Service\ImportExport\PlanImporter;
 
@@ -25,18 +24,15 @@ const STEP_BUDGET = 5;
 try {
     (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
 
-    $json = $_SESSION['action_import_bundle'] ?? null;
-    if (!is_string($json) || $json === '') {
-        throw new InvalidArgumentException('Aucun bundle en cours.');
-    }
-
-    $parsed = BundleEnvelope::parse($json);
-    if ($parsed->objectType !== 'plan') {
-        throw new InvalidArgumentException('Cet écran ne charge que des plans.');
-    }
-
+    $importer = new PlanImporter();
     $report = new ImportReport();
-    $run = (new PlanImporter())->advance($parsed->objects, $report, microtime(true) + STEP_BUDGET);
+
+    $jobs = $_SESSION['plan_import_jobs'] ?? null;
+    if (!is_array($jobs)) {
+        throw new InvalidArgumentException('Aucun import en cours.');
+    }
+
+    $run = $importer->advanceStaged($jobs, $report, microtime(true) + STEP_BUDGET);
 
     $warnings = array_map(
         static fn(array $warning): string => $warning['name'] . ' — ' . $warning['message'],
@@ -44,7 +40,7 @@ try {
     );
 
     if ($run === null) {
-        unset($_SESSION['action_import_bundle'], $_SESSION['action_import_filename']);
+        unset($_SESSION['plan_import_jobs'], $_SESSION['action_import_filename']);
         echo json_encode(['done' => true, 'plan' => '', 'step' => 0, 'total' => 0, 'label' => 'terminé', 'warnings' => $warnings]);
         exit;
     }

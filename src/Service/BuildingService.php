@@ -36,6 +36,9 @@ class BuildingService
     private FactionService $factionService;
     private DialogService $dialogService;
 
+    /** Shared by every place() of this instance: an editor import places thousands. */
+    private ?\App\Service\Map\EntityTypeFootprintService $footprints = null;
+
     public function __construct(
         ?RaceService $raceService = null,
         ?FactionService $factionService = null,
@@ -376,13 +379,14 @@ class BuildingService
         \Doctrine\DBAL\Connection $conn,
         string $type,
         object $origin,
-        bool $overScenery = false
+        bool $overScenery = false,
+        ?\App\Service\Map\EntityTypeFootprintService $footprints = null
     ): ?string {
         $occupancy = new \App\Service\Map\TileOccupancyService($conn);
 
         /* Every cell of the type's cut-out, from the same source syncCells
          * lays them from: a 2×2 édifice claims four cells, not just the origin. */
-        $footprint = (new \App\Service\Map\EntityTypeFootprintService())->catalogue()[$type] ?? null;
+        $footprint = ($footprints ?? new \App\Service\Map\EntityTypeFootprintService())->catalogue()[$type] ?? null;
         $cells = $footprint === null
             ? [[(int) $origin->x, (int) $origin->y]]
             : $footprint->cellsAround((int) array_key_first($footprint->offsets()), (int) $origin->x, (int) $origin->y);
@@ -457,12 +461,14 @@ class BuildingService
         // occupe la case sans apparaître dans listBuildings(). La case doit
         // être LIBRE (ni entité, ni mur) — vérifié ici, source unique de la
         // règle, sous verrou pour resserrer la fenêtre concurrente.
-        $conn->transactional(function ($conn) use ($id, $displayId, $name, $race, $type, $avatar, $coordsId, $ownerId, $faction, $goCoords, $overScenery): void {
+        $footprints = $this->footprints ??= new \App\Service\Map\EntityTypeFootprintService($conn);
+
+        $conn->transactional(function ($conn) use ($id, $displayId, $name, $race, $type, $avatar, $coordsId, $ownerId, $faction, $goCoords, $overScenery, $footprints): void {
             /* Le verrou reste ICI : c'est lui qui resserre la fenêtre entre
              * deux poses concurrentes, et il doit vivre dans la transaction.
              * La RÈGLE, elle, est partie dans TileOccupancyService avec les
              * deux autres questions d'occupation. */
-            $refusal = self::siteRefusal($conn, $type, $goCoords, $overScenery);
+            $refusal = self::siteRefusal($conn, $type, $goCoords, $overScenery, $footprints);
             if ($refusal !== null) {
                 throw new \InvalidArgumentException($refusal);
             }
@@ -494,7 +500,7 @@ class BuildingService
 
             /* The structure's cells: its origin, plus whatever its type's
              * cut-out adds around it. A type without one holds a single cell. */
-            (new \App\Service\Map\EntityCellService($conn))->syncCells((int) $id);
+            (new \App\Service\Map\EntityCellService($conn))->syncCells((int) $id, $footprints);
 
             // The type's default dialogue, copied like its inscription.
             $conn->executeStatement(

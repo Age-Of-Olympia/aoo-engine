@@ -859,15 +859,15 @@ class TiledMapService
      * The decor buildings of ONE level, as a bundle draws them: what the rows
      * no longer name is removed, what they add is placed.
      *
-     * The level is a step of its own for a resumable import
+     * An import cuts a level into bands of y, [$yFrom, $yTo]
      * ({@see \App\Service\ImportExport\PlanImportRun}).
      *
      * @param list<array<string, mixed>> $rows
      * @return list<string> the placements the board refused, with their reason
      */
-    public function importBuildingsAt(string $plan, int $z, array $rows): array
+    public function importBuildingsAt(string $plan, int $z, array $rows, ?int $yFrom = null, ?int $yTo = null): array
     {
-        return $this->importBuildingsLayer($plan, $z, $rows, $this->fetchBuildingRows($plan, $z))['skipped'];
+        return $this->importBuildingsLayer($plan, $z, $rows, $this->fetchBuildingRows($plan, $z, $yFrom, $yTo))['skipped'];
     }
 
     /** @return array<string, array> every authorable layer of the (plan, z) */
@@ -921,16 +921,16 @@ class TiledMapService
      *
      * @return list<array{id: int, name: string, x: int, y: int, player_id: int, params: string, faction: string}>
      */
-    private function fetchBuildingRows(string $plan, int $z): array
+    private function fetchBuildingRows(string $plan, int $z, ?int $yFrom = null, ?int $yTo = null): array
     {
         $res = $this->db->exe(
             "SELECT p.id, p.race AS name, c.x, c.y, p.owner_id, p.faction, b.build_state, " . self::GOD_PARAMS_SQL . "
              FROM buildings b
              JOIN players p ON p.id = b.player_id
              JOIN coords c ON c.id = p.coords_id
-             WHERE c.plan = ? AND c.z = ?
+             WHERE c.plan = ? AND c.z = ? AND c.y BETWEEN ? AND ?
              ORDER BY c.y, c.x, p.id",
-            array($plan, $z)
+            array($plan, $z, $yFrom ?? PHP_INT_MIN, $yTo ?? PHP_INT_MAX)
         );
 
         $rows = [];

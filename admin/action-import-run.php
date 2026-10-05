@@ -12,8 +12,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\CsrfProtectionService;
 
-$json = $_SESSION['action_import_bundle'] ?? null;
-if (!is_string($json) || $json === '') {
+if (!isset($_SESSION['plan_import_jobs'])) {
     setFlash('warning', 'Aucun bundle à charger.');
     redirectTo('/admin/action-import.php');
 }

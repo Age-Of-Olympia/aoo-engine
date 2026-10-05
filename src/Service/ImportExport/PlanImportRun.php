@@ -8,38 +8,32 @@ use App\Service\TiledMapService;
 use Doctrine\DBAL\Connection;
 
 /**
- * One plan bundle being imported, step by step.
+ * One plan of a bundle, loaded step by step.
  *
- * A whole plan used to be written in a single transaction and a single
- * request: a big map ran out of time or memory, and what had been written
- * was rolled back. A run cuts the same work into steps — purge, cells, each
- * layer by chunks, the entity families, the buildings of each level — and
- * commits each one with the cursor that names the next
- * ({@see PlanImportProgress}). An interrupted import resumes where it
- * stopped instead of starting over.
- *
- * The caller decides how many steps one request runs: the console command
- * and the admin page both go through {@see PlanImporter::advance()}.
+ * stage() cuts the payload into steps once and stores them in
+ * plan_import_steps; a run then loads one step per next(), so a request
+ * never holds more than one step, whatever the size of the map. A step
+ * handles CHUNK rows, or about BAND for entities and buildings, which cost
+ * a query or more each (a band never splits a row of the map).
  */
 final class PlanImportRun
 {
-    /** Rows written per step. */
     private const CHUNK = 2000;
+    private const BAND = 100;
+
+    /** Steps of an import abandoned for this long are dropped. */
+    private const STALE_DAYS = 7;
 
     private Connection $conn;
     private PlanImportProgress $progress;
     private PlanImportWriter $writer;
 
-    /** @var array<int, array{label: string, run: callable}> */
-    private array $steps;
-
-    private string $fingerprint;
-    private string $plan;
+    private int $total;
     private int $index;
 
-    /** @param array<string, mixed> $payload one validated plan payload */
     public function __construct(
-        private array $payload,
+        private string $fingerprint,
+        private string $plan,
         private ImportReport $report,
         ?Connection $conn = null,
         ?PlanImportProgress $progress = null
@@ -47,15 +41,58 @@ final class PlanImportRun
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
         $this->progress = $progress ?? new PlanImportProgress($this->conn);
         $this->writer = new PlanImportWriter($this->conn, $this->report);
-        $this->plan = (string) $payload['plan'];
-        $this->fingerprint = PlanImportProgress::fingerprint($payload);
-        $this->steps = $this->buildSteps();
-        $this->index = min($this->progress->stepOf($this->fingerprint, $this->plan), count($this->steps));
+        $this->total = (int) $this->conn->fetchOne(
+            'SELECT COUNT(*) FROM plan_import_steps WHERE fingerprint = ? AND plan = ?',
+            [$fingerprint, $plan]
+        );
+        $this->index = min($this->progress->stepOf($fingerprint, $plan), $this->total);
+    }
+
+    /**
+     * Stores the steps of a validated payload, unless an earlier call already did.
+     *
+     * @param array<string, mixed> $payload {@see PlanImporter::payloadFor()}
+     */
+    public static function stage(array $payload, ImportReport $report, ?Connection $conn = null): self
+    {
+        $conn ??= EntityManagerFactory::getEntityManager()->getConnection();
+        $plan = (string) $payload['plan'];
+        $fingerprint = PlanImportProgress::fingerprint($payload);
+
+        $conn->executeStatement(
+            'DELETE FROM plan_import_steps WHERE created_at < NOW() - INTERVAL ' . self::STALE_DAYS . ' DAY'
+        );
+
+        $staged = $conn->fetchOne(
+            'SELECT 1 FROM plan_import_steps WHERE fingerprint = ? AND plan = ? LIMIT 1',
+            [$fingerprint, $plan]
+        );
+
+        if ($staged === false) {
+            $steps = self::buildSteps($payload);
+
+            $conn->transactional(static function () use ($conn, $fingerprint, $plan, $steps): void {
+                foreach ($steps as $index => $step) {
+                    $conn->executeStatement(
+                        'INSERT INTO plan_import_steps (fingerprint, plan, step, label, payload, created_at)
+                         VALUES (?, ?, ?, ?, ?, NOW())',
+                        [$fingerprint, $plan, $index, $step['label'], json_encode($step, JSON_UNESCAPED_UNICODE)]
+                    );
+                }
+            });
+        }
+
+        return new self($fingerprint, $plan, $report, $conn);
     }
 
     public function plan(): string
     {
         return $this->plan;
+    }
+
+    public function fingerprint(): string
+    {
+        return $this->fingerprint;
     }
 
     public function step(): int
@@ -65,83 +102,113 @@ final class PlanImportRun
 
     public function total(): int
     {
-        return count($this->steps);
+        return $this->total;
     }
 
     public function label(): string
     {
-        return $this->steps[$this->index]['label'] ?? 'terminé';
+        if ($this->isDone()) {
+            return 'terminé';
+        }
+
+        return (string) $this->conn->fetchOne(
+            'SELECT label FROM plan_import_steps WHERE fingerprint = ? AND plan = ? AND step = ?',
+            [$this->fingerprint, $this->plan, $this->index]
+        );
     }
 
     public function isDone(): bool
     {
-        return $this->index >= count($this->steps);
+        return $this->index >= $this->total;
     }
 
-    /**
-     * Runs the next step and moves the cursor, both in one transaction: a
-     * crash between the two would replay a step that already landed.
-     */
     public function next(): void
     {
         if ($this->isDone()) {
             return;
         }
 
-        $step = $this->steps[$this->index];
+        $step = $this->load($this->index);
         $index = $this->index;
 
         $this->conn->transactional(function () use ($step, $index): void {
-            ($step['run'])();
-            $this->progress->record($this->fingerprint, $this->plan, $index + 1, count($this->steps));
+            $this->run($step);
+            $this->progress->record($this->fingerprint, $this->plan, $index + 1, $this->total);
         });
 
         $this->index++;
     }
 
-    /**
-     * The plan's JSON, then the cursor — called once the whole bundle has
-     * landed ({@see PlanImporter::advance()}): a cursor forgotten earlier
-     * would restart this plan while a later one is still loading.
-     * Idempotent, so a bundle that died right after its last step finishes
-     * on the next call.
-     */
     public function finish(): void
     {
-        if (is_array($this->payload['config'])) {
-            (new PlanConfigService())->replace($this->plan, $this->payload['config']);
+        // The config rides on the first step, written once every step has run
+        $config = $this->load(0)['config'] ?? null;
+        if (is_array($config)) {
+            (new PlanConfigService())->replace($this->plan, $config);
         }
 
         $this->progress->clear($this->fingerprint, $this->plan);
+        $this->conn->executeStatement(
+            'DELETE FROM plan_import_steps WHERE fingerprint = ? AND plan = ?',
+            [$this->fingerprint, $this->plan]
+        );
     }
 
-    /** @return array<int, array{label: string, run: callable}> */
-    private function buildSteps(): array
+    /** @return array<string, mixed> */
+    private function load(int $index): array
     {
-        $steps = [];
-        $plan = $this->plan;
-        $layers = $this->payload['layers'];
-        $buildings = $this->payload['buildings'] ?? [];
+        $json = $this->conn->fetchOne(
+            'SELECT payload FROM plan_import_steps WHERE fingerprint = ? AND plan = ? AND step = ?',
+            [$this->fingerprint, $this->plan, $index]
+        );
 
-        /* Structures win the cell: a road drawn under a wall would be created
-         * first and the wall refused. Decided once, before the steps split. */
+        return $json === false ? [] : (array) json_decode((string) $json, true);
+    }
+
+    /** @param array<string, mixed> $step */
+    private function run(array $step): void
+    {
+        $plan = $this->plan;
+
+        if (isset($step['warn'])) {
+            $this->report->warn($plan, $step['warn']);
+        }
+
+        match ($step['do']) {
+            'purge' => $this->writer->purgeAuthoredRows($plan, $step['levels']),
+            'coords' => $this->writer->insertCoords($plan, $step['cells']),
+            'rows' => $this->writer->insertLayerRows($plan, $step['layer'], $step['rows']),
+            'entities' => TiledMapService::reconcilerFor($step['layer'])
+                ->reconcile($plan, $step['rows'], $step['z'], $step['from'], $step['to']),
+            'buildings' => $this->writer->placeBuildings($plan, $step['z'], $step['rows'], $step['from'], $step['to']),
+            default => throw new \LogicException('Unknown plan import step: ' . $step['do']),
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array<int, array<string, mixed>>
+     */
+    private static function buildSteps(array $payload): array
+    {
+        $plan = (string) $payload['plan'];
+        $layers = $payload['layers'];
+        $buildings = $payload['buildings'] ?? [];
+
         $roads = TiledMapService::roadsClearOfStructures(
             $layers[TiledMapService::GROUND_ENTITY_LAYER] ?? [],
             $buildings
         );
         $layers[TiledMapService::GROUND_ENTITY_LAYER] = $roads['kept'];
-        $droppedRoads = $roads['dropped'];
 
-        $steps[] = [
-            'label' => 'contenu remplacé',
-            'run' => fn() => $this->writer->purgeAuthoredRows($plan),
-        ];
+        $cells = PlanImportWriter::neededCoords($payload, $layers);
+        $levels = array_values(array_unique(array_column($cells, 2)));
+        sort($levels);
 
-        foreach (array_chunk($this->writer->neededCoords($this->payload, $layers), self::CHUNK) as $i => $chunk) {
-            $steps[] = [
-                'label' => 'cases (' . ($i + 1) . ')',
-                'run' => fn() => $this->writer->insertCoords($plan, $chunk),
-            ];
+        $steps = [['label' => 'contenu remplacé', 'do' => 'purge', 'levels' => $levels, 'config' => $payload['config']]];
+
+        foreach (array_chunk($cells, self::CHUNK) as $i => $chunk) {
+            $steps[] = ['label' => 'cases (' . ($i + 1) . ')', 'do' => 'coords', 'cells' => $chunk];
         }
 
         foreach ($layers as $layer => $rows) {
@@ -149,36 +216,66 @@ final class PlanImportRun
                 continue;
             }
             foreach (array_chunk($rows, self::CHUNK) as $i => $chunk) {
-                $steps[] = [
-                    'label' => $layer . ' (' . ($i + 1) . ')',
-                    'run' => fn() => $this->writer->insertLayerRows($plan, $layer, $chunk),
-                ];
+                $steps[] = ['label' => $layer . ' (' . ($i + 1) . ')', 'do' => 'rows', 'layer' => $layer, 'rows' => $chunk];
             }
         }
 
         foreach (array_keys(TiledMapService::ENTITY_LAYERS) as $layer) {
-            $rows = $layers[$layer] ?? [];
-            $steps[] = [
-                'label' => $layer . ' (entités)',
-                'run' => function () use ($plan, $layer, $rows, $droppedRoads): void {
-                    TiledMapService::reconcilerFor($layer)->reconcile($plan, $rows);
-                    // Warned by the step, not the step list: the list is rebuilt on every call
-                    if ($layer === TiledMapService::GROUND_ENTITY_LAYER && $droppedRoads > 0) {
-                        $this->report->warn($plan, $droppedRoads . ' route(s) sous une structure, non posée(s).');
-                    }
-                },
-            ];
+            foreach (self::bands($layers[$layer] ?? [], $levels) as $i => $band) {
+                $step = ['label' => $layer . ' (entités ' . ($i + 1) . ')', 'do' => 'entities', 'layer' => $layer] + $band;
+                if ($i === 0 && $layer === TiledMapService::GROUND_ENTITY_LAYER && $roads['dropped'] > 0) {
+                    $step['warn'] = $roads['dropped'] . ' route(s) sous une structure, non posée(s).';
+                }
+                $steps[] = $step;
+            }
         }
 
-        if ($this->payload['buildings'] !== null) {
-            foreach ($this->writer->buildingsByLevel($this->payload['coords'], $buildings) as $z => $zRows) {
-                $steps[] = [
-                    'label' => 'bâtiments (niveau ' . $z . ')',
-                    'run' => fn() => $this->writer->placeBuildings($plan, (int) $z, $zRows),
-                ];
+        if ($payload['buildings'] !== null) {
+            foreach (self::bands($buildings, $levels) as $i => $band) {
+                $steps[] = ['label' => 'bâtiments (niveau ' . $band['z'] . ', ' . ($i + 1) . ')', 'do' => 'buildings'] + $band;
             }
         }
 
         return $steps;
+    }
+
+    /**
+     * Rows cut into bands of about BAND rows per level, never splitting a
+     * row of the map. The bands of a level cover every y (the first and last
+     * are open), so a band also removes what stands in it and is no longer drawn.
+     *
+     * @param list<array<string, mixed>> $rows
+     * @param list<int> $levels every level of the bundle, even one without rows
+     * @return list<array{z: int, from: ?int, to: ?int, rows: list<array<string, mixed>>}>
+     */
+    private static function bands(array $rows, array $levels): array
+    {
+        $byLevel = array_fill_keys($levels, []);
+        foreach ($rows as $row) {
+            $byLevel[(int) $row['z']][(int) $row['y']][] = $row;
+        }
+        ksort($byLevel);
+
+        $bands = [];
+        foreach ($byLevel as $z => $byY) {
+            ksort($byY);
+            $from = null;
+            $band = [];
+            foreach ($byY as $y => $yRows) {
+                $band = array_merge($band, $yRows);
+                if (count($band) >= self::BAND) {
+                    $bands[] = ['z' => $z, 'from' => $from, 'to' => $y, 'rows' => $band];
+                    [$from, $band] = [$y + 1, []];
+                }
+            }
+            if ($band !== [] || $from === null) {
+                $bands[] = ['z' => $z, 'from' => $from, 'to' => null, 'rows' => $band];
+            } else {
+                // Nothing after the last full band: open it upwards instead of adding an empty one
+                $bands[array_key_last($bands)]['to'] = null;
+            }
+        }
+
+        return $bands;
     }
 }
