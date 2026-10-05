@@ -3,6 +3,7 @@
 namespace App\View;
 
 use App\Factory\PlayerFactory;
+use App\Service\AccountService;
 use Classes\Db;
 use Classes\Str;
 use App\Service\FirewallService;
@@ -163,17 +164,7 @@ class ResetPasswordView
 
 
         // change psw
-        $sql = '
-    UPDATE
-    players
-    SET
-    psw = ?
-    WHERE
-    id = ?
-    ';
-
-        // update db
-        $db->exe($sql, $values = array($hashedPsw, $row['player_id']));
+        (new AccountService())->setPassword((int) $row['player_id'], $hashedPsw);
 
 
         // delete reset psw
