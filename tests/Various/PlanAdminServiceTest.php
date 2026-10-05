@@ -161,6 +161,20 @@ class PlanAdminServiceTest extends TestCase
         $service->clonePlan('plan_test_adm_absent', self::CLONE);
     }
 
+    /** A paused import of the deleted plan would resume past its coords. */
+    public function testDeletePlanForgetsAPausedImport(): void
+    {
+        $this->seedSourcePlan();
+        $this->link->executeStatement(
+            'INSERT INTO plan_import_progress (fingerprint, plan, step, total, updated_at) VALUES (?, ?, 3, 9, NOW())',
+            [str_repeat('a', 64), self::SRC]
+        );
+
+        (new PlanAdminService())->deletePlan(self::SRC);
+
+        $this->assertSame(0, (int) $this->link->fetchOne('SELECT COUNT(*) FROM plan_import_progress WHERE plan = ?', [self::SRC]));
+    }
+
     public function testDeletePlanIsBlockedByARealPlayerEvenForced(): void
     {
         $this->seedSourcePlan();
@@ -454,6 +468,7 @@ class PlanAdminServiceTest extends TestCase
         $this->link->executeStatement("DELETE FROM coords WHERE plan LIKE 'plan_test_adm_%'");
 
         $this->link->executeStatement("DELETE FROM plans WHERE slug LIKE 'plan_test_adm_%'");
+        $this->link->executeStatement("DELETE FROM plan_import_progress WHERE plan LIKE 'plan_test_adm_%'");
         PlanService::forget();
         // L'identity map gagnerait sur la base : une entité Plan d'un test
         // précédent masquerait la ligne recréée.

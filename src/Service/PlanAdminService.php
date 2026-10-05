@@ -703,6 +703,9 @@ class PlanAdminService
                 true
             );
 
+            // A paused import would resume past the coords it can no longer find
+            $this->db->exe('DELETE FROM plan_import_progress WHERE plan = ?', array($plan));
+
             $this->db->commit();
         } catch (\Throwable $e) {
             $this->db->rollBack();
