@@ -7,6 +7,7 @@
  *            into `<type>_<n>.png` pieces along the declared shape;
  *   rename — a file of that folder given another name (`banque_naine.png`
  *            → `banque.png`), never moved out of it;
+ *   delete — a file of that folder removed (a stale piece, a namesake);
  *   move   — every file of the type from another folder into the kind's
  *            (pieces left in img/foregrounds by a type that was scenery).
  */
@@ -61,6 +62,28 @@ try {
         EntitySpriteService::forget();
         (new \App\Service\BuildingService())->refreshTypeSprites($type);
         setFlash('success', $from . ' renommé en ' . $to . '.');
+        redirectTo($back);
+    }
+
+    if (($_POST['action'] ?? '') === 'delete') {
+        $dir = in_array((string) ($_POST['dir'] ?? ''), $dirs, true) ? (string) $_POST['dir'] : $dir;
+        $folder = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $dir;
+        $file = basename((string) ($_POST['from'] ?? ''));
+
+        /* Only what the page lists: a png bearing the type's name. */
+        if (!str_contains($file, $type) || !str_ends_with($file, '.png') || !is_file($folder . '/' . $file)) {
+            throw new RuntimeException('Fichier introuvable : ' . $file);
+        }
+
+        if (!unlink($folder . '/' . $file)) {
+            throw new RuntimeException('Suppression impossible.');
+        }
+
+        /* The stitched picture may hold the removed piece: rebuilt on next look. */
+        @unlink($folder . '/_composed/' . $type . '.png');
+        EntitySpriteService::forget();
+        (new \App\Service\BuildingService())->refreshTypeSprites($type);
+        setFlash('success', $file . ' supprimé.');
         redirectTo($back);
     }
 

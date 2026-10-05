@@ -455,7 +455,6 @@ ob_start();
                         <form method="post" action="footprints-images.php" class="fp-image">
                             <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
                             <input type="hidden" name="type" value="<?= e($name) ?>" />
-                            <input type="hidden" name="action" value="rename" />
                             <input type="hidden" name="dir" value="<?= e($dir) ?>" />
                             <input type="hidden" name="from" value="<?= e($image['file']) ?>" />
                             <img src="<?= e($image['web']) ?>?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . $image['web']) ?>" alt="" loading="lazy" />
@@ -465,7 +464,9 @@ ob_start();
                                 <code><?= e($image['file']) ?></code>
                             <?php else: ?>
                                 <input type="text" name="to" value="<?= e($image['file']) ?>" pattern="[a-z0-9_-]+\.png" required />
-                                <button type="submit" class="btn btn-sm btn-secondary">Renommer</button>
+                                <button type="submit" name="action" value="rename" class="btn btn-sm btn-secondary">Renommer</button>
+                                <button type="submit" name="action" value="delete" class="btn btn-sm btn-outline-danger" formnovalidate
+                                        onclick="return confirm(<?= e(json_encode('Supprimer définitivement « ' . $image['file'] . ' » ?', JSON_UNESCAPED_UNICODE)) ?>);">Supprimer</button>
                             <?php endif; ?>
                         </form>
                     <?php endforeach; ?>

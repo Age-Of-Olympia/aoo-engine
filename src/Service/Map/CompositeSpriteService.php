@@ -192,7 +192,10 @@ final class CompositeSpriteService
 
     /**
      * The inverse of composing: a whole picture cut into the figure's pieces,
-     * `img/<dir>/<family>_<piece>.png`, one per occupied cell. The source is
+     * `img/<dir>/<family>_<piece>.png`, one per occupied cell, numbered on two
+     * digits so the folder sorts in order — except scenery, whose piece
+     * names are stored in map_foregrounds. The other spelling of a piece is
+     * removed: both would claim the same cell. The source is
      * first brought to the box size (50 px a cell), so any drawing of the
      * right proportions does. The stale composition is dropped, so the next
      * board stitches the new pieces.
@@ -231,10 +234,18 @@ final class CompositeSpriteService
             imagesavealpha($cell, true);
             imagecopy($cell, $source, 0, 0, $col * self::CELL, $row * self::CELL, self::CELL, self::CELL);
 
-            $webPath = 'img/' . $imageDir . '/' . $family . '_' . $piece . '.png';
+            $padded = sprintf('%02d', $piece);
+            [$name, $other] = $imageDir === \App\Entity\SceneryType::IMAGE_DIR
+                ? [(string) $piece, $padded]
+                : [$padded, (string) $piece];
+            $webPath = 'img/' . $imageDir . '/' . $family . '_' . $name . '.png';
 
             if (imagepng($cell, $root . '/' . $webPath)) {
                 $written[$piece] = $webPath;
+
+                if ($other !== $name) {
+                    @unlink($root . '/img/' . $imageDir . '/' . $family . '_' . $other . '.png');
+                }
             }
 
             imagedestroy($cell);

@@ -73,6 +73,7 @@ class EntitySpriteServiceTest extends LegacyPlayerFixtureTestCase
 
         /* The whole picture, cut along the shape — the admin's gesture. */
         $this->png('img/walls/' . self::TYPE . '.png', 100, 100);
+        $this->png('img/walls/' . self::TYPE . '_1.png', 50, 50); // an earlier cut, one digit
         $pieces = (new CompositeSpriteService())->cutPieces(
             'walls',
             self::TYPE,
@@ -80,6 +81,8 @@ class EntitySpriteServiceTest extends LegacyPlayerFixtureTestCase
             $_SERVER['DOCUMENT_ROOT'] . '/img/walls/' . self::TYPE . '.png'
         );
         $this->assertSame([0, 1, 2, 3], array_keys($pieces));
+        $this->assertSame('img/walls/' . self::TYPE . '_01.png', $pieces[1], 'numbered on two digits');
+        $this->assertFileDoesNotExist($_SERVER['DOCUMENT_ROOT'] . '/img/walls/' . self::TYPE . '_1.png');
         foreach ($pieces as $piece) {
             $this->written[] = $_SERVER['DOCUMENT_ROOT'] . '/' . $piece;
         }
