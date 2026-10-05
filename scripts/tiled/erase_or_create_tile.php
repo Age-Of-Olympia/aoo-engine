@@ -20,8 +20,11 @@ if($_POST['type'] == 'eraser'){
         /* Depuis l'éditeur, on pose PAR-DESSUS le décor : c'est un geste
          * d'animateur — cacher quelque chose derrière une statue — quand un
          * joueur, lui, ne bâtit pas au travers. */
+        // "type@file": a brush carrying one of the type's stock images.
+        [$buildingType, $imageFile] = array_pad(explode('@', (string) $_POST['src'], 2), 2, null);
         $buildingId = (new BuildingService())->place(
-            $_POST['src'], $goCoords, null, '', null, overScenery: true
+            $buildingType, $goCoords, null, '', null, overScenery: true,
+            image: $imageFile === null ? null : 'img/avatars/' . $buildingType . '/' . basename($imageFile)
         );
 
         echo 'bâtiment #'. $buildingId .' ';

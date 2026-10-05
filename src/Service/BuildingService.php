@@ -269,6 +269,28 @@ class BuildingService
         return $large ? 'img/ui/view/chantier_grand.png' : 'img/ui/view/chantier_petit.png';
     }
 
+    /** Whether $path is an image of the type's stock (img/avatars/<type>/), present on disk. */
+    public static function isStockImage(string $type, string $path): bool
+    {
+        return $path === 'img/avatars/' . $type . '/' . basename($path)
+            && is_file(dirname(__DIR__, 2) . '/' . $path);
+    }
+
+    /**
+     * What an instance shows, and the image it keeps: its own stock image
+     * (players.portrait) while that image exists, else the type's; the
+     * type's broken sprite while damaged, when the type has one.
+     *
+     * @return array{0: string, 1: string} [avatar, base image]
+     */
+    private static function spriteOf(string $type, string $portrait, bool $broken): array
+    {
+        $base = self::isStockImage($type, $portrait) ? $portrait : self::resolveAvatar($type);
+        $brokenSprite = $broken ? self::resolveAvatar($type, true) : '';
+
+        return [$brokenSprite !== '' && $brokenSprite !== self::resolveAvatar($type) ? $brokenSprite : $base, $base];
+    }
+
     /**
      * Sprite of a structure type, in fallback order: the sprite stitched
      * from its pieces (img/walls/{type}_{n}.png) → dedicated avatar
@@ -333,6 +355,8 @@ class BuildingService
      * @param int|null    $ownerId  players.id of the owning character, if any
      * @param string      $faction  faction CODE from the catalog, '' = neutral
      * @param string|null $name     display name; defaults to the race label
+     * @param string|null $image one of the type's stock images (editor brush,
+     *                         admin) ; null or unknown = the type's first image
      * @param bool $asConstructionSite the player's construire gesture: a type
      *                         declaring work (build_work > 0) is then born a
      *                         SITE — admin and editor placements keep raising
@@ -385,7 +409,8 @@ class BuildingService
         string $faction = '',
         ?string $name = null,
         bool $overScenery = false,
-        bool $asConstructionSite = false
+        bool $asConstructionSite = false,
+        ?string $image = null
     ): int {
         $race = $this->raceService->getRaceByName($type);
         if ($race === null) {
@@ -425,7 +450,7 @@ class BuildingService
         // le .json avant la base).
         \App\Service\Map\BoardChanges::viewer($id);
 
-        $avatar = self::resolveAvatar($type);
+        $avatar = $image !== null && self::isStockImage($type, $image) ? $image : self::resolveAvatar($type);
 
         // Une seule transaction pour la paire players + buildings : un échec
         // du satellite ne doit pas laisser une ligne players orpheline qui
@@ -1231,7 +1256,7 @@ class BuildingService
         // collation (utf8mb4_general_ci × uca1400) — le catalogue se lit
         // par RaceService, comme partout.
         $row = $conn->fetchAssociative(
-            "SELECT p.race, p.avatar, COALESCE(b.n, 0) AS wound, d.build_state
+            "SELECT p.race, p.avatar, p.portrait, COALESCE(b.n, 0) AS wound, d.build_state
              FROM players p
              LEFT JOIN players_bonus b ON b.player_id = p.id AND b.name = 'pv'
              LEFT JOIN buildings d ON d.player_id = p.id
@@ -1248,7 +1273,8 @@ class BuildingService
         $broken = $row['build_state'] === BuildingDetails::STATE_RUIN
             || ($maxPv > 0 && $maxPv + (int) $row['wound'] <= $maxPv / 2);
 
-        if (self::resolveAvatar((string) $row['race'], $broken) === (string) $row['avatar']) {
+        [$avatar, $base] = self::spriteOf((string) $row['race'], (string) $row['portrait'], $broken);
+        if ($avatar === (string) $row['avatar'] && $base === (string) $row['portrait']) {
             return false;
         }
 
@@ -1258,14 +1284,41 @@ class BuildingService
     }
 
     /**
-     * Every standing instance of a type takes the type's current image: the
-     * avatar is copied onto the row at placement, so a new cut or a new stock
-     * image would otherwise only reach the instances placed after it.
+     * Give one instance another image of its type's stock (admin).
      *
+     * @throws \InvalidArgumentException when the image is not in the type's stock
+     */
+    public function setImage(int $playerId, string $image): void
+    {
+        $conn = $this->entityManager->getConnection();
+        $type = (string) $conn->fetchOne('SELECT race FROM players WHERE id = ?', [$playerId]);
+
+        if (!self::isStockImage($type, $image)) {
+            throw new \InvalidArgumentException("Image inconnue pour le type {$type} : {$image}.");
+        }
+
+        $conn->executeStatement('UPDATE players SET portrait = ? WHERE id = ?', [$image, $playerId]);
+        $this->refreshWoundSprite($playerId);
+    }
+
+    /**
+     * Realign the standing instances of a type after its images changed.
+     * Each instance keeps its own stock image (players.portrait); one whose
+     * image left the stock takes the type's first image, unless $moved says
+     * where its image went (a replaced file).
+     *
+     * @param array<string, string> $moved old stock path => new stock path
      * @return int instances whose image changed
      */
-    public function refreshTypeSprites(string $type): int
+    public function refreshTypeSprites(string $type, array $moved = []): int
     {
+        foreach ($moved as $from => $to) {
+            $this->entityManager->getConnection()->executeStatement(
+                "UPDATE players SET portrait = ? WHERE race = ? AND portrait = ? AND player_type IN ('building', 'scenery')",
+                [$to, $type, $from]
+            );
+        }
+
         $ids = $this->entityManager->getConnection()->fetchFirstColumn(
             "SELECT id FROM players WHERE race = ? AND player_type IN ('building', 'scenery')",
             [$type]
@@ -1283,15 +1336,15 @@ class BuildingService
     {
         $conn = $this->entityManager->getConnection();
 
-        $race = $conn->fetchOne('SELECT race FROM players WHERE id = ?', [$playerId]);
-        if ($race === false) {
+        $row = $conn->fetchAssociative('SELECT race, portrait FROM players WHERE id = ?', [$playerId]);
+        if ($row === false) {
             return;
         }
 
-        $avatar = self::resolveAvatar((string) $race, $broken);
+        [$avatar, $base] = self::spriteOf((string) $row['race'], (string) $row['portrait'], $broken);
         $conn->executeStatement(
             'UPDATE players SET avatar = ?, portrait = ? WHERE id = ?',
-            [$avatar, $avatar, $playerId]
+            [$avatar, $base, $playerId]
         );
         @unlink(\Classes\Player::cachePath($playerId, '.json'));
         json()->forget('players', (string) $playerId);

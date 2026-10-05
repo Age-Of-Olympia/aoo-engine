@@ -135,6 +135,9 @@ if ($action === 'edit') {
         if (isset($_POST['has_door'])) {
             $service->setOpen($id, !empty($_POST['is_open']));
         }
+        if (isset($_POST['image'])) {
+            $service->setImage($id, (string) $_POST['image']);
+        }
     } catch (\InvalidArgumentException $e) {
         setFlash('warning', $e->getMessage());
         redirectTo('/admin/buildings.php?action=edit&id=' . $id);

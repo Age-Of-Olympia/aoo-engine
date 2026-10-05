@@ -303,7 +303,10 @@ function building_item_options(): array
     return $out;
 }
 
-function building_render_edit(array $b, string $description, array $factions, array $dialogNames, bool $isEdifice, string $csrfToken): string
+/**
+ * @param list<string> $images the type's stock images
+ */
+function building_render_edit(array $b, string $description, array $factions, array $dialogNames, bool $isEdifice, string $csrfToken, array $images = [], string $image = ''): string
 {
     $factionOptions = renderSelectOptions($factions, $b['faction'] !== '' ? (string) $b['faction'] : null, '— neutre —');
 
@@ -342,6 +345,15 @@ function building_render_edit(array $b, string $description, array $factions, ar
                 . ' endommagé, en construction ou en ruine est fermé d\'office.</small></div>'
             : '')
         . '</div>'
+        . (count($images) > 1
+            ? '<div class="form-group"><label>Image</label><div class="d-flex flex-wrap gap-2">'
+                . implode('', array_map(static fn(string $path): string =>
+                    '<label style="cursor:pointer;text-align:center;font-size:12px;">'
+                    . '<input type="radio" name="image" value="' . e($path) . '"' . ($path === $image ? ' checked' : '') . '><br>'
+                    . '<img src="/' . e($path) . '" height="50" alt="" style="border:1px solid #ddd;"><br>'
+                    . e(basename($path)) . '</label>', $images))
+                . '</div><small class="text-muted">Images du stock du type (admin → Bâtiments → Images).</small></div>'
+            : '')
         . '<button class="btn btn-primary" type="submit">Enregistrer</button> '
         . '<a class="btn btn-secondary" href="/admin/buildings.php">Retour</a>'
         . '</form>';
@@ -371,12 +383,17 @@ if (($_GET['action'] ?? '') === 'edit') {
         setFlash('warning', "Aucun bâtiment #{$editId}.");
         redirectTo('/admin/buildings.php');
     }
-    $description = (string) (new \Classes\Db())
-        ->exe('SELECT text FROM players WHERE id = ?', $editId)->fetch_object()->text;
+    $player = (new \Classes\Db())->exe('SELECT text, portrait FROM players WHERE id = ?', $editId)->fetch_object();
+    $description = (string) $player->text;
+    try {
+        $images = (new \App\Service\RaceImageService())->imagePaths(\App\Enum\ImageType::AVATAR, (string) $row['type']);
+    } catch (\RuntimeException) {
+        $images = []; // name outside the stock convention: no stock folder
+    }
     $isEdifice = (bool) (new RaceService())->getRaceByName((string) $row['type'])?->isEdifice();
 
     echo admin_layout('Bâtiments posés', renderFlashMessage()
-        . building_render_edit($row, $description, $factions, $dialogNames, $isEdifice, $csrfToken)
+        . building_render_edit($row, $description, $factions, $dialogNames, $isEdifice, $csrfToken, $images, (string) $player->portrait)
         . building_render_fabric((int) $row['id'], $csrfToken));
     exit();
 }

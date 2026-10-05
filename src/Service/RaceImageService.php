@@ -71,6 +71,17 @@ class RaceImageService
      */
     public function firstImagePath(ImageType $type, string $race): ?string
     {
+        return $this->imagePaths($type, $race)[0] ?? null;
+    }
+
+    /**
+     * Every image of the stock, in natural order (1.png before 10.png),
+     * as paths relative to the docroot. Miniatures are left out.
+     *
+     * @return list<string>
+     */
+    public function imagePaths(ImageType $type, string $race): array
+    {
         $this->assertRace($race);
         $dir = $this->raceDir($type, $race);
 
@@ -80,12 +91,9 @@ class RaceImageService
                 $files[] = $fileName;
             }
         }
-        if ($files === []) {
-            return null;
-        }
         sort($files, SORT_NATURAL);
 
-        return $this->relativeDir($type, $race) . '/' . $files[0];
+        return array_map(fn(string $file): string => $this->relativeDir($type, $race) . '/' . $file, $files);
     }
 
     /**

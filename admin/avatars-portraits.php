@@ -38,7 +38,7 @@ $backTo = $selfPage . '?type=' . urlencode($type->value) . '&race=' . urlencode(
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['image_upload']) || isset($_POST['image_delete'])
         || isset($_POST['image_adopt']) || isset($_POST['image_move'])
-        || ($structureMode && isset($_POST['image_replace'])));
+        || ($structureMode && (isset($_POST['image_replace']) || isset($_POST['image_replace_all']))));
 if ($isStateChangingPost) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
@@ -47,6 +47,7 @@ if ($isStateChangingPost) {
         redirectTo($backTo);
     }
 
+    $moved = []; // old stock path => new one: copies showing a replaced image follow it
     try {
         if (isset($_POST['image_upload'])) {
             $file = $_FILES['image_file'] ?? null;
@@ -87,7 +88,23 @@ if ($isStateChangingPost) {
             }
             $created = $service->upload($type, $race, (string) $file['tmp_name']);
             $service->delete($type, $race, $old);
+            $dir = 'img/avatars/' . $race . '/';
+            $moved[$dir . $old] = $dir . $created;
             setFlash('success', "« {$old} » remplacé par « {$created} ».");
+        } elseif (isset($_POST['image_replace_all'])) {
+            $file = $_FILES['image_file'] ?? null;
+            if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
+                || !is_uploaded_file((string) $file['tmp_name'])) {
+                throw new RuntimeException('Aucun fichier reçu (ou upload incomplet).');
+            }
+            $olds = $service->imagePaths($type, $race);
+            $created = $service->upload($type, $race, (string) $file['tmp_name']);
+            $dir = 'img/avatars/' . $race . '/';
+            foreach ($olds as $oldPath) {
+                $service->delete($type, $race, basename($oldPath));
+                $moved[$oldPath] = $dir . $created;
+            }
+            setFlash('success', count($olds) . " image(s) remplacée(s) par « {$created} » : tous les exemplaires l'affichent.");
         } elseif (isset($_POST['image_delete'])) {
             $name = trim((string) ($_POST['file'] ?? ''));
             $service->delete($type, $race, $name);
@@ -98,7 +115,7 @@ if ($isStateChangingPost) {
          * whatever the stock now says, the target type of a move included. */
         if ($structureMode) {
             $buildings = new \App\Service\BuildingService();
-            $buildings->refreshTypeSprites($race);
+            $buildings->refreshTypeSprites($race, $moved);
             if (isset($_POST['image_move'])) {
                 $buildings->refreshTypeSprites(trim((string) ($_POST['target_race'] ?? '')));
             }
@@ -130,12 +147,13 @@ ob_start();
 
     <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
         <?php if ($structureMode): ?>
-            Images des types de bâtiments : la <strong>première image du stock</strong> est le
-            sprite des entités posées sur le plateau (à défaut, le sprite de mur du même nom).
-            L'ajout redimensionne l'image à la taille attendue et la numérote avec le compteur du type.
-            Pour changer l'image d'un type : bouton <strong>Remplacer</strong> sur la ligne de l'image ;
-            les entités déjà posées suivent l'image de leur type. Un type à plusieurs cases
-            utilise l'image découpée selon sa forme (Formes → Découper), pas le stock.
+            Images des types de bâtiments : chaque exemplaire posé affiche une image du stock,
+            choisie dans l'éditeur de carte (une vignette par image) ou dans admin → Bâtiments → Éditer ;
+            à défaut, la première image du stock (sinon le sprite de mur du même nom).
+            <strong>Remplacer</strong> change une image pour les exemplaires qui l'affichent ;
+            <strong>Supprimer</strong> fait passer ses exemplaires sur la première image ;
+            <strong>Remplacer toutes les images</strong> met une seule image sur tous les exemplaires.
+            Un type à plusieurs cases utilise l'image découpée selon sa forme (Formes → Découper), pas le stock.
         <?php else: ?>
             Images de personnage par race : avatars (50×50, carte et listes) et portraits
             (210×320 + miniature 50×79, fiche de personnage). L'ajout redimensionne l'image à la taille
@@ -227,6 +245,21 @@ ob_start();
                     (<a href="/admin/footprints.php?type=<?= e(urlencode($race)) ?>">emprise du type</a>),
                     numérotée automatiquement<?= $type === ImageType::PORTRAIT ? ', miniature 50×79 générée' : '' ?>.</small>
             </form>
+            <?php if ($structureMode && $entries !== []): ?>
+                <form method="post" enctype="multipart/form-data" class="d-flex align-items-end gap-3 flex-wrap mt-3"
+                      onsubmit="return confirm('Remplacer les <?= count($entries) ?> image(s) du type par celle-ci ? Tous les exemplaires posés l\'afficheront.');">
+                    <?= $csrf->renderTokenField() ?>
+                    <input type="hidden" name="type" value="<?= e($type->value) ?>">
+                    <input type="hidden" name="race" value="<?= e($race) ?>">
+                    <div class="form-group mb-0">
+                        <label style="font-size:13px;">Remplacer toutes les images par</label>
+                        <input type="file" class="form-control-file" name="image_file" accept=".png,.jpg,.jpeg,.webp,.gif" required>
+                    </div>
+                    <button type="submit" name="image_replace_all" value="1" class="btn btn-outline-danger btn-sm">
+                        Remplacer toutes les images
+                    </button>
+                </form>
+            <?php endif; ?>
         </div>
     </div>
 

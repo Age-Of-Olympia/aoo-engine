@@ -18,6 +18,7 @@ echo '
    de l'éditeur montre la figure entière avant la pose — même source que la
    pose elle-même. */
 $footprints = (new \App\Service\Map\EntityTypeFootprintService())->catalogue();
+$images = new \App\Service\RaceImageService();
 
 foreach((new RaceService())->getBuildingTypes() as $race){
 
@@ -30,24 +31,41 @@ foreach((new RaceService())->getBuildingTypes() as $race){
     }
 
     $footprint = $footprints[$name] ?? null;
+    $multiCell = $footprint !== null && $footprint->cells() > 1;
 
-    echo '<img
-        class="map wall select-name"
-        data-type="buildings"
-        data-name="'. $name .'"'
-        . (in_array($name, BuildingService::GOD_TYPES, true) ? ' data-params=""' : '')
-        . ($footprint !== null && $footprint->cells() > 1
-            ? ' data-figure=\''. json_encode([
-                'w' => $footprint->width(),
-                'h' => $footprint->height(),
-                'img' => $sprite,
-            ], JSON_UNESCAPED_SLASHES) .'\''
-            : '') . '
-        title="'. htmlspecialchars($race->getLabel(), ENT_QUOTES) .'"
-        src="'. $sprite .'"
-        loading="lazy"
-    />';
+    /* One brush per stock image ("type@file"): the copies drawn with it keep
+     * that image. A multi-cell type is drawn from its cut pieces: one brush. */
+    $brushes = [$name => $sprite];
+    try {
+        $stock = $multiCell ? [] : $images->imagePaths(\App\Enum\ImageType::AVATAR, $name);
+    } catch (\RuntimeException) {
+        $stock = []; // name outside the stock convention: no stock folder
+    }
+    if (count($stock) > 1) {
+        $brushes = [];
+        foreach ($stock as $path) {
+            $brushes[$name . '@' . basename($path)] = $path;
+        }
+    }
 
+    foreach ($brushes as $brush => $brushSprite) {
+        echo '<img
+            class="map wall select-name"
+            data-type="buildings"
+            data-name="'. htmlspecialchars($brush, ENT_QUOTES) .'"'
+            . (in_array($name, BuildingService::GOD_TYPES, true) ? ' data-params=""' : '')
+            . ($multiCell
+                ? ' data-figure=\''. json_encode([
+                    'w' => $footprint->width(),
+                    'h' => $footprint->height(),
+                    'img' => $brushSprite,
+                ], JSON_UNESCAPED_SLASHES) .'\''
+                : '') . '
+            title="'. htmlspecialchars($race->getLabel() . ($brush !== $name ? ' — ' . basename($brushSprite) : ''), ENT_QUOTES) .'"
+            src="'. $brushSprite .'"
+            loading="lazy"
+        />';
+    }
 
 }
 
