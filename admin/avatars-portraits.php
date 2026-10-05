@@ -37,7 +37,8 @@ $backTo = $selfPage . '?type=' . urlencode($type->value) . '&race=' . urlencode(
 
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['image_upload']) || isset($_POST['image_delete'])
-        || isset($_POST['image_adopt']) || isset($_POST['image_move']));
+        || isset($_POST['image_adopt']) || isset($_POST['image_move'])
+        || ($structureMode && isset($_POST['image_replace'])));
 if ($isStateChangingPost) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
@@ -75,6 +76,18 @@ if ($isStateChangingPost) {
             $created = $service->move($type, $race, $name, $target);
             setFlash('success', ucfirst($type->value) . " « {$name} » déplacé vers"
                 . " {$target} sous le nom « {$created} ».");
+        } elseif (isset($_POST['image_replace'])) {
+            // A new file name, not an overwrite: image URLs carry no version,
+            // so browsers would keep showing the old picture.
+            $old = trim((string) ($_POST['file'] ?? ''));
+            $file = $_FILES['image_file'] ?? null;
+            if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
+                || !is_uploaded_file((string) $file['tmp_name'])) {
+                throw new RuntimeException('Aucun fichier reçu (ou upload incomplet).');
+            }
+            $created = $service->upload($type, $race, (string) $file['tmp_name']);
+            $service->delete($type, $race, $old);
+            setFlash('success', "« {$old} » remplacé par « {$created} ».");
         } elseif (isset($_POST['image_delete'])) {
             $name = trim((string) ($_POST['file'] ?? ''));
             $service->delete($type, $race, $name);
@@ -120,8 +133,9 @@ ob_start();
             Images des types de bâtiments : la <strong>première image du stock</strong> est le
             sprite des entités posées sur le plateau (à défaut, le sprite de mur du même nom).
             L'ajout redimensionne l'image à la taille attendue et la numérote avec le compteur du type.
-            Pour changer l'image d'un type, ajouter la nouvelle puis supprimer l'ancienne :
-            les entités déjà posées suivent l'image de leur type.
+            Pour changer l'image d'un type : bouton <strong>Remplacer</strong> sur la ligne de l'image ;
+            les entités déjà posées suivent l'image de leur type. Un type à plusieurs cases
+            utilise l'image découpée selon sa forme (Formes → Découper), pas le stock.
         <?php else: ?>
             Images de personnage par race : avatars (50×50, carte et listes) et portraits
             (210×320 + miniature 50×79, fiche de personnage). L'ajout redimensionne l'image à la taille
@@ -162,6 +176,7 @@ ob_start();
         $effectiveSource = match (true) {
             $effective === '' => '',
             str_starts_with($effective, 'img/avatars/' . $race . '/') => 'première image du stock ci-dessous',
+            str_contains($effective, '/_composed/') => 'assemblé à partir des morceaux de la forme — le stock n\'est pas utilisé',
             str_starts_with($effective, 'img/walls/') => 'hérité du sprite de mur du même nom — ajoutez une image au stock pour le remplacer',
             default => 'fichier dédié ' . $effective . ' — ajoutez une image au stock pour le remplacer',
         };
@@ -173,7 +188,11 @@ ob_start();
                 <img src="/<?= e($effective) ?>" height="40" style="object-fit:contain;border:1px solid #ddd;background:#fff;" alt="">
                 <code style="font-size:12px;"><?= e($effective) ?></code>
                 <small class="text-muted"><?= e($effectiveSource) ?></small>
-                <?php if (!str_starts_with($effective, 'img/avatars/' . $race . '/')): ?>
+                <?php if (str_contains($effective, '/_composed/')): ?>
+                    <a class="btn btn-sm btn-outline-primary" href="/admin/footprints.php?type=<?= e(urlencode($race)) ?>">
+                        Changer l'image : Formes → Découper
+                    </a>
+                <?php elseif (!str_starts_with($effective, 'img/avatars/' . $race . '/')): ?>
                     <form method="post" class="d-inline mb-0">
                         <?= $csrf->renderTokenField() ?>
                         <input type="hidden" name="type" value="<?= e($type->value) ?>">
@@ -233,7 +252,12 @@ ob_start();
                     <thead><tr>
                         <th></th><th>Fichier</th><th>Taille</th>
                         <?php if ($type === ImageType::PORTRAIT): ?><th>Miniature</th><?php endif; ?>
-                        <th title="Joueurs utilisant cette image">Joueurs</th><th>Problèmes</th><th></th>
+                        <?php if ($structureMode): ?>
+                            <th title="Exemplaires posés qui affichent cette image">Exemplaires</th>
+                        <?php else: ?>
+                            <th title="Joueurs utilisant cette image">Joueurs</th>
+                        <?php endif; ?>
+                        <th>Problèmes</th><th></th>
                     </tr></thead>
                     <tbody>
                     <?php foreach ($entries as $entry): ?>
@@ -260,7 +284,7 @@ ob_start();
                                 <?php if ($imageUsers !== []): ?>
                                     <details class="row-popover">
                                         <summary class="btn btn-sm btn-outline-secondary" style="cursor:pointer;list-style:none;"
-                                                 title="Joueurs utilisant cette image"><strong><?= count($imageUsers) ?></strong></summary>
+                                                 title="<?= $structureMode ? 'Exemplaires posés' : 'Joueurs utilisant cette image' ?>"><strong><?= count($imageUsers) ?></strong></summary>
                                         <div class="row-popover-panel" style="max-height:12rem;overflow:auto;">
                                             <?php foreach ($imageUsers as $userLabel): ?>
                                                 <div><?= e($userLabel) ?></div>
@@ -301,6 +325,20 @@ ob_start();
                                             ?>
                                             <button type="submit" name="image_move" value="1" class="btn btn-sm btn-primary"
                                                     <?= $entry['usage'] > 0 && !$structureMode ? 'disabled title="Encore utilisée par des joueurs"' : '' ?>>OK</button>
+                                        </form>
+                                    </details>
+                                    <?php endif; ?>
+                                    <?php if ($structureMode): ?>
+                                    <details class="row-popover" style="display:inline-block;">
+                                        <summary class="btn btn-sm btn-outline-primary" style="cursor:pointer;list-style:none;"
+                                                 title="Remplacer cette image : les exemplaires posés suivent">Remplacer</summary>
+                                        <form method="post" enctype="multipart/form-data" class="row-popover-panel d-flex gap-2">
+                                            <?= $csrf->renderTokenField() ?>
+                                            <input type="hidden" name="type" value="<?= e($type->value) ?>">
+                                            <input type="hidden" name="race" value="<?= e($race) ?>">
+                                            <input type="hidden" name="file" value="<?= e($entry['file']) ?>">
+                                            <input type="file" class="form-control-file" name="image_file" accept=".png,.jpg,.jpeg,.webp,.gif" required>
+                                            <button type="submit" name="image_replace" value="1" class="btn btn-sm btn-primary">OK</button>
                                         </form>
                                     </details>
                                     <?php endif; ?>

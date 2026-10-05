@@ -274,9 +274,10 @@ class BuildingService
      * from its pieces (img/walls/{type}_{n}.png) → dedicated avatar
      * (img/avatars/{type}.webp) → the FIRST image of the type's stock
      * (img/avatars/{type}/, admin → Bâtiments → Images — same thumbnail
-     * as the admin lists, one visual everywhere) → the map-wall sprite of
-     * the same name (img/walls/{type}.png — a built mur_bois looks like a
-     * mur_bois) → the generic placeholder. View.php renders
+     * as the admin lists, one visual everywhere) → the picture in the
+     * kind's folder (img/foregrounds/{type}.png for a decor) → the map-wall
+     * sprite of the same name (img/walls/{type}.png — a built mur_bois
+     * looks like a mur_bois) → the generic placeholder. View.php renders
      * players.avatar directly.
      */
     public static function resolveAvatar(string $type, bool $broken = false): string
@@ -303,6 +304,11 @@ class BuildingService
             if ($stock !== null) {
                 $candidates[] = $stock;
             }
+        }
+        // A decor's own picture lives in its kind's folder (img/foregrounds).
+        $kindDir = (new \App\Service\Map\EntitySpriteService())->imageDirOf($type);
+        if ($kindDir !== null && $kindDir !== 'walls') {
+            $candidates[] = 'img/' . $kindDir . '/' . $type . $suffix . '.png';
         }
         $candidates[] = 'img/walls/' . $type . $suffix . '.png';
 
