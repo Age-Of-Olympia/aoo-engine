@@ -209,8 +209,8 @@ function race_render_list(array $races, TypeEditorFace $face): string
                     Race::NATURE_DOOR => '<span class="badge badge-warning">Porte</span>',
                     default => '<span class="badge badge-info">Édifice</span>',
                 }) . ' '
-                . ($race->blocksPassage() ? '' : '<span class="badge badge-light" title="On marche sur sa case">passable</span> ')
-                . ($race->blocksProjectiles() ? '' : '<span class="badge badge-light" title="Les tirs passent au-dessus">tirs libres</span>')
+                . ($face->isScenery() || $race->blocksPassage() ? '' : '<span class="badge badge-light" title="On marche sur sa case">passable</span> ')
+                . ($face->isScenery() || $race->blocksProjectiles() ? '' : '<span class="badge badge-light" title="Les tirs passent au-dessus">tirs libres</span>')
                 . '</td>';
         } else {
             $rows .= '<td>' . race_flag_badge($race->getPlayable(), 'Jouable', 'Non') . ' '
@@ -440,8 +440,9 @@ HTML;
                     )
                     . '</label> ')
             : '<input type="hidden" name="structure_nature" value="' . \App\View\Admin\TypeEditorFace::NATURE_EDIFICE . '">')
-        /* A road never blocks: RouteType answers for it, so no box to tick. */
-        . ($face->isRoute() ? '' : '<label class="mr-3"><input type="checkbox" name="blocks_passage" '
+        /* A road never blocks: RouteType answers for it. A decor blocks
+           cell by cell, painted on its Formes page. No box to tick for either. */
+        . ($face->isRoute() || $face->isScenery() ? '' : '<label class="mr-3"><input type="checkbox" name="blocks_passage" '
         . checked(!$isEdit || $race->blocksPassage())
         . ' title="Décoché : on marche sur sa case (mobilier bas, passage)."> Bloque le passage</label> '
         . '<label class="mr-3"><input type="checkbox" name="blocks_projectiles" '

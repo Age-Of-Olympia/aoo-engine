@@ -206,8 +206,12 @@ $applyForm = static function (Race $race) use ($face, $action): array {
         $race->setHarvestMin(\App\Entity\PlantType::DEFAULT_MIN);
         $race->setHarvestMax(\App\Entity\PlantType::DEFAULT_MAX);
     }
-    $race->setBlocksPassage(booleanCheckbox('blocks_passage'));
-    $race->setBlocksProjectiles(booleanCheckbox('blocks_projectiles'));
+    // Only the faces that show the two boxes: an absent checkbox reads as
+    // unticked, and would clear what the decor and road forms never offered.
+    if (!$face->isScenery() && !$face->isRoute()) {
+        $race->setBlocksPassage(booleanCheckbox('blocks_passage'));
+        $race->setBlocksProjectiles(booleanCheckbox('blocks_projectiles'));
+    }
     // Only the building form shows the field; an absent input must not
     // zero what another face never offered to edit.
     if (isset($_POST['build_work'])) {
