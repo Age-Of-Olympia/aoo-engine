@@ -47,10 +47,7 @@ class NpcAdminService
     {
         $id = Player::put_player($name, $race, true);
 
-        (new Db())->exe(
-            "UPDATE players SET lastLoginTime = ? WHERE id = ? AND player_type = 'npc'",
-            [time(), $id]
-        );
+        (new AccountService())->touchLastLogin($id);
 
         return $id;
     }
