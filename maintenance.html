@@ -4,33 +4,209 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Maintenance - Age of Olympia</title>
-  <link rel="icon" type="image/x-icon" href="/img/ui/favicons/favicon.png">
-  <!-- Using the fonts provided on the site -->
-  <link href="https://fonts.googleapis.com/css2?family=Goudy:wght@700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/rpg-awesome.min.css">
-  <link href="css/main.min.css?v=20260614" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/img/ui/favicons/favicon.png">
+  <!-- Self-contained: same paper & ink look as the landing page (css/landing.css),
+       using only assets the maintenance rewrite rule in .htaccess lets through. -->
   <style>
-    /* Set the background image as provided by the site */
-    /* Central container for the maintenance message */
-    .maintenance-container {
-      position: relative;
-      z-index: 2;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 60px 20px;
+    @font-face {
+      font-family: 'Gloock';
+      src: url('/css/fonts/gloock.woff2') format('woff2');
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'DM Serif Display';
+      src: url('/css/fonts/dm-serif-display.woff2') format('woff2');
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'DM Serif Display';
+      src: url('/css/fonts/dm-serif-display-italic.woff2') format('woff2');
+      font-style: italic;
+      font-display: swap;
+    }
+
+    :root {
+      --ink: #1d1c1b;
+      --bronze: #8d6839;
+      --line-soft: rgba(93, 74, 42, 0.3);
+      --veil: rgba(252, 248, 238, 0.6);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      background: #e7ded0 url('/img/ui/paper/landing-bg.jpg') center / cover fixed;
+      color: var(--ink);
+      font-family: 'DM Serif Display', Georgia, serif;
       text-align: center;
+    }
+
+    /* Ironwork ornaments in the top corners */
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      top: 14px;
+      width: min(180px, 17vw);
+      height: 158px;
+      background: url('/img/ui/paper/ornament.png') top right / contain no-repeat;
+      mix-blend-mode: multiply;
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    body::before {
+      left: 16px;
+      transform: scaleX(-1);
+    }
+
+    body::after {
+      right: 16px;
+    }
+
+    .hero {
+      display: grid;
+      place-items: center;
+    }
+
+    .hero img {
+      grid-area: 1 / 1;
+      width: min(48vw, 24vh, 230px);
+      filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.35));
+    }
+
+    /* Positioned so it paints above the image, whose filter creates a stacking context */
+    .hero h1 {
+      grid-area: 1 / 1;
+      position: relative;
+      margin: 0;
+      font-family: 'Gloock', Georgia, serif;
+      font-weight: 400;
+      font-size: clamp(1.6rem, min(5.6vw, 4.4vh), 3.2rem);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 0 2px 22px rgba(0, 0, 0, 0.7), 0 1px 3px rgba(0, 0, 0, 0.55);
+      white-space: nowrap;
+    }
+
+    .card {
+      width: min(440px, 100%);
+      margin-top: 3vh;
+      padding: 22px 26px;
+      background: var(--veil);
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+    }
+
+    .card h2 {
+      margin: 0;
+      font-family: 'Gloock', Georgia, serif;
+      font-weight: 400;
+      font-size: 1.7rem;
+      letter-spacing: 0.04em;
+    }
+
+    .sep {
+      width: 110px;
+      height: 13px;
+      margin: 10px auto 14px;
+      background: url('/img/ui/paper/flourish-sep.png') center / contain no-repeat;
+      opacity: 0.5;
+    }
+
+    .card p {
+      margin: 0 0 10px;
+      line-height: 1.45;
+    }
+
+    .card .soon {
+      font-style: italic;
+      opacity: 0.8;
+    }
+
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .buttons a {
+      display: block;
+      padding: 9px 12px;
+      background: #f7e7c9;
+      color: var(--ink);
+      font-family: 'Gloock', Georgia, serif;
+      font-size: 1.1em;
+      letter-spacing: 0.03em;
+      text-decoration: none;
+      border: 1px solid var(--bronze);
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+    }
+
+    .buttons a:hover,
+    .buttons a:focus-visible {
+      background: #fdf6e5;
+      color: var(--bronze);
+    }
+
+    .buttons a.primary {
+      background: var(--bronze);
+      color: #fdf6e5;
+      border-color: var(--ink);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
+    }
+
+    .buttons a.primary:hover,
+    .buttons a.primary:focus-visible {
+      background: var(--ink);
+      color: #fdf6e5;
+    }
+
+    .card .mail {
+      margin: 16px 0 0;
+      font-size: 0.85em;
+      opacity: 0.8;
+    }
+
+    .mail a {
+      color: var(--bronze);
     }
   </style>
 </head>
 <body>
-  <div class="overlay"></div>
-  <div class="maintenance-container">
-    <h1>Maintenance</h1>
-    <p>Le site Age of Olympia est actuellement en maintenance.</p>
-    <p>Nous travaillons activement pour vous offrir de nouvelles fonctionnalités.</p>
-    <p>Merci de revenir très bientôt !</p>
-    <p>Pour toute question, contactez-nous à <a href="mailto:admin@age-of-olympia.net">admin@age-of-olympia.net</a>.</p>
-    <p>Vous pouvez également nous rejoindre sur le <a href="https://discord.gg/djPRYwEt8E" target="_blank">discord</a> du jeu !</p>
+  <div class="hero">
+    <img src="/img/ui/paper/planet.png" alt="">
+    <h1>Age of Olympia</h1>
   </div>
+
+  <main class="card">
+    <h2>Maintenance</h2>
+    <div class="sep"></div>
+    <p>Le jeu est en maintenance pendant que nous installons une mise à jour.</p>
+    <p class="soon">Merci de revenir dans quelques instants&nbsp;!</p>
+
+    <div class="buttons">
+      <a class="primary" href="https://discord.gg/djPRYwEt8E" target="_blank" rel="noopener">Suivre sur Discord</a>
+      <a href="/">Réessayer</a>
+    </div>
+
+    <p class="mail">Une question&nbsp;? <a href="mailto:admin@age-of-olympia.net">admin@age-of-olympia.net</a></p>
+  </main>
 </body>
 </html>
