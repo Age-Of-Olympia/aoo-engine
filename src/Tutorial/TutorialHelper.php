@@ -346,10 +346,10 @@ class TutorialHelper
      * Grant the one-time starter pack a brand-new character used to receive
      * from the old gaia2 rez trigger (scripts/map/triggers/rez.php) before
      * the tutorial replaced that flow: a flat 20 gold, a walking stick, and
-     * the default first-spawn avatar.
+     * the race's first avatar and portrait.
      *
      * The 20 gold is ON TOP of the race bonus already granted at
-     * registration (register.php); the walking stick and avatar were not
+     * registration (register.php); the walking stick and images were not
      * carried over anywhere else. Only called from the first-time branch of
      * finalizeExitToGame(), so it fires exactly once per character.
      *
@@ -364,22 +364,27 @@ class TutorialHelper
             $stick->add_item($player, 1);
         }
 
-        // Avatar is written directly rather than via Player::change_avatar():
-        // that method's file_exists() check is relative to the CWD and
-        // hard-exits on a miss, which would corrupt this JSON response when
-        // the CWD is not the document root or the race has no 1.png (e.g.
-        // 'ame'). Guard with an absolute path, store the same relative value
-        // the rest of the app uses, and refresh the caches change_avatar
-        // would have refreshed.
-        $race = $player->data->race ?? '';
-        $avatar = 'img/avatars/' . $race . '/1.png';
-        if ($race !== '' && is_file($_SERVER['DOCUMENT_ROOT'] . '/' . $avatar)) {
-            (new \Classes\Db())->exe(
-                'UPDATE players SET avatar = ? WHERE id = ?',
-                [$avatar, $player->id]
-            );
-            $player->refresh_data();
-            \App\Service\Map\BoardChanges::cell($player->getCoords());
+        // The race's first avatar and portrait (the same first image the
+        // admin lists show), so the character stops looking like a soul. The
+        // completion message tells the player to pick another portrait.
+        // Written directly rather than via Player::change_avatar(): that
+        // method hard-exits on a missing file, which would corrupt this JSON
+        // response.
+        $race = (string) ($player->data->race ?? '');
+        if ($race === '') {
+            return;
         }
+        $images = new \App\Service\RaceImageService();
+        $avatar = $images->firstImagePath(\App\Enum\ImageType::AVATAR, $race);
+        $portrait = $images->firstImagePath(\App\Enum\ImageType::PORTRAIT, $race);
+        if ($avatar === null && $portrait === null) {
+            return;
+        }
+        (new \Classes\Db())->exe(
+            'UPDATE players SET avatar = COALESCE(?, avatar), portrait = COALESCE(?, portrait) WHERE id = ?',
+            [$avatar, $portrait, $player->id]
+        );
+        $player->refresh_data();
+        \App\Service\Map\BoardChanges::cell($player->getCoords());
     }
 }

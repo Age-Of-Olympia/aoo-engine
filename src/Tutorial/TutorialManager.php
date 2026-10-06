@@ -333,7 +333,8 @@ class TutorialManager
         if ($isReplay) {
             $message = "Félicitations ! Vous avez terminé le tutoriel. Vous l'aviez déjà terminé une première fois : pas de nouvelle récompense.";
         } else {
-            $message = "Félicitations ! Vous avez terminé le tutoriel et gagné {$actualXpAwarded} XP et {$actualPiAwarded} PI !";
+            $message = "Félicitations ! Vous avez terminé le tutoriel et gagné {$actualXpAwarded} XP et {$actualPiAwarded} PI !"
+                . " Votre personnage a reçu le premier portrait de sa race : choisissez le vôtre dans Profil, « Changer de Portrait ».";
         }
 
         return [
