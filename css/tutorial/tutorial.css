@@ -69,23 +69,22 @@
     position: fixed;
     top: 20px;
     right: 20px;
-    background: linear-gradient(145deg, rgba(60, 42, 28, 0.98), rgba(80, 58, 40, 0.98));
+    /* Same parchment as the step tooltips */
+    background: linear-gradient(135deg, #F4E8D0 0%, #E8D7B8 50%, #D9C7A8 100%);
+    color: #3A2817;
     padding: 0;
-    border-radius: 12px;
+    border-radius: 4px;
     z-index: 10001;
-    min-width: 280px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6),
-                0 0 0 3px rgba(139, 69, 19, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    border: 2px solid #8B4513;
+    min-width: 220px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    border: 2px solid #8B6F47;
     overflow: hidden;
 }
 
 /* Tutorial Progress Section */
 #tutorial-progress {
-    background: linear-gradient(135deg, rgba(139, 69, 19, 0.3), rgba(101, 67, 33, 0.3));
-    padding: 12px 16px;
-    border-bottom: 2px solid rgba(139, 69, 19, 0.5);
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid rgba(139, 111, 71, 0.4);
 }
 
 .progress-header {
@@ -102,13 +101,11 @@
 }
 
 .progress-title {
-    color: #FFD700;
-    font-size: 16px;
+    color: #5D4E37;
+    font-size: 14px;
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 1px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5),
-                 0 0 10px rgba(255, 215, 0, 0.3);
 }
 
 .progress-steps {
@@ -117,34 +114,31 @@
 
 .step-counter {
     display: block;
-    color: rgba(255, 255, 255, 0.9);
+    color: #3A2817;
     font-size: 14px;
     text-align: center;
     font-weight: 600;
 }
 
 .step-current {
-    color: #FFD700;
+    color: #8d6839;
     font-size: 20px;
     font-weight: bold;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
 
 /* Progress Bar */
 .progress-bar-wrapper {
     width: 100%;
-    height: 8px;
-    background: rgba(0, 0, 0, 0.4);
-    border-radius: 4px;
+    height: 6px;
+    background: rgba(93, 74, 42, 0.2);
+    border-radius: 3px;
     overflow: hidden;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .progress-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #B8860B, #FFD700, #FFA500);
+    background: #8d6839;
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
     position: relative;
 }
 
@@ -160,9 +154,8 @@
 
 /* XP Section */
 #tutorial-xp-bar {
-    padding: 10px 16px;
-    background: linear-gradient(135deg, rgba(50, 35, 20, 0.5), rgba(70, 48, 30, 0.5));
-    border-bottom: 2px solid rgba(139, 69, 19, 0.5);
+    padding: 6px 14px;
+    border-bottom: 1px solid rgba(139, 111, 71, 0.4);
 }
 
 .xp-info {
@@ -174,8 +167,7 @@
 
 .xp-icon {
     font-size: 16px;
-    filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.5));
-    animation: pulse 2s ease-in-out infinite;
+    color: #8d6839;
 }
 
 @keyframes pulse {
@@ -184,23 +176,22 @@
 }
 
 .xp-text {
-    color: rgba(255, 255, 255, 0.9);
+    color: #3A2817;
     font-size: 13px;
     font-weight: 600;
 }
 
 .xp-value {
-    color: #FFD700;
+    color: #8d6839;
     font-size: 15px;
     font-weight: bold;
-    text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
 }
 
 /* Tutorial Button Container */
 .tutorial-controls-buttons {
     display: flex;
     gap: 8px;
-    padding: 12px 16px;
+    padding: 8px 14px 10px;
 }
 
 .btn-icon {
@@ -244,14 +235,14 @@
 }
 
 .btn-tutorial-secondary {
-    background: linear-gradient(135deg, #614E3F, #4A3829);
-    color: #E8E4D9;
-    border: 1px solid #8B7355;
+    background: #f7e7c9;
+    color: #3A2817;
+    border: 1px solid #8d6839;
 }
 
 .btn-tutorial-secondary:hover {
-    background: linear-gradient(135deg, #4A3829, #3A2819);
-    color: white;
+    background: #fdf6e5;
+    color: #8d6839;
 }
 
 .btn-tutorial-danger {
@@ -648,8 +639,8 @@
         min-width: auto;
         padding: 5px 8px;
         border-radius: 0;
-        background: linear-gradient(135deg, rgba(74, 56, 41, 0.95), rgba(97, 78, 63, 0.95));
-        border-top: 1px solid #D4AF37;
+        background: linear-gradient(135deg, #F4E8D0 0%, #E8D7B8 100%);
+        border-top: 1px solid #8B6F47;
         border-left: none;
         border-right: none;
         border-bottom: none;
@@ -775,6 +766,12 @@
         max-height: calc(100vh - 85px);
         overflow-y: auto;
         cursor: default !important; /* Not draggable on mobile */
+    }
+
+    /* Target in the lower half (action strip): tooltip at the top edge */
+    .tutorial-tooltip.mobile-top {
+        top: 8px !important;
+        bottom: auto !important;
     }
 
     /* Disable draggable on mobile */
@@ -1692,7 +1689,8 @@
 }
 
 /* Tutorial Skip Modal - Parchment Design */
-#tutorial-skip-modal.tutorial-modal-overlay {
+#tutorial-skip-modal.tutorial-modal-overlay,
+#invisible-player-modal.tutorial-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -1706,7 +1704,8 @@
     animation: fadeIn 0.3s ease;
 }
 
-#tutorial-skip-modal .tutorial-modal-content {
+#tutorial-skip-modal .tutorial-modal-content,
+#invisible-player-modal .tutorial-modal-content {
     /* Aged parchment with rich texture */
     background:
         linear-gradient(to bottom, rgba(0,0,0,0.03) 0%, transparent 100%),
@@ -1727,7 +1726,8 @@
     animation: modal-appear 0.4s ease;
 }
 
-#tutorial-skip-modal h2 {
+#tutorial-skip-modal h2,
+#invisible-player-modal h2 {
     font-size: 28px;
     margin: 0 0 20px 0;
     color: #5D4E37;
@@ -1736,20 +1736,23 @@
     padding-bottom: 12px;
 }
 
-#tutorial-skip-modal p {
+#tutorial-skip-modal p,
+#invisible-player-modal p {
     font-size: 16px;
     margin: 15px 0 25px 0;
     line-height: 1.6;
     color: #3A2817;
 }
 
-#tutorial-skip-modal .tutorial-modal-buttons {
+#tutorial-skip-modal .tutorial-modal-buttons,
+#invisible-player-modal .tutorial-modal-buttons {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-#tutorial-skip-modal .tutorial-modal-buttons button {
+#tutorial-skip-modal .tutorial-modal-buttons button,
+#invisible-player-modal .tutorial-modal-buttons button {
     padding: 14px 28px;
     font-size: 16px;
     font-weight: bold;

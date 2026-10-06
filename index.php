@@ -201,113 +201,71 @@ echo '<script>
 </script>';
 
 if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew && !$autoStarting) {
-    // Player is invisible (registered but didn't complete tutorial) - show modal
-    echo '<div id="invisible-player-modal" style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.8);
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    ">
-        <div style="
-            background: #2a2a2a;
-            padding: 30px;
-            border-radius: 10px;
-            max-width: 500px;
-            text-align: center;
-            color: #fff;
-            position: relative;
-        ">
+    // Player is invisible (registered but didn't complete tutorial) - show modal.
+    // Same parchment markup as the tutorial's skip modal (css/tutorial/tutorial.css).
+    echo '<div id="invisible-player-modal" class="tutorial-modal-overlay" style="display: flex;">
+        <div class="tutorial-modal-content" style="position: relative;">
             <!-- Emergency close button - skips tutorial and grants skip XP -->
-            <a href="api/tutorial/skip.php?redirect=1" style="
+            <a href="api/tutorial/skip.php?redirect=1" title="Fermer (passer le tutoriel)" style="
                 position: absolute;
                 top: 10px;
-                right: 10px;
-                color: #999;
+                right: 14px;
+                color: #8B6F47;
                 font-size: 24px;
                 text-decoration: none;
-                width: 30px;
-                height: 30px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-            " title="Fermer (passer le tutoriel)">&times;</a>
-            <h2>Bienvenue !</h2>
-            <p>Tu as commencé le tutoriel mais ne l\'as pas terminé.</p>
-            <div style="margin-top: 20px; margin-bottom: 20px;">
-                <p style="margin-bottom: 10px;"><strong>Que souhaites-tu faire ?</strong></p>
-                <div style="text-align: left; margin: 0 auto; display: inline-block; max-width: 400px;">
-                    <div style="margin-bottom: 15px; padding: 10px; background: rgba(76, 175, 80, 0.2); border-radius: 5px;">
-                        <strong style="color: #4CAF50;">✓ Reprendre le tutoriel (recommandé)</strong>
-                        <p style="margin: 5px 0 0 0; font-size: 14px;">Termine le tutoriel et gagne jusqu\'à <strong>' . $totalTutorialXP . ' XP/PI</strong></p>
-                    </div>
-                    <div style="margin-bottom: 15px; padding: 10px; background: rgba(244, 67, 54, 0.2); border-radius: 5px;">
-                        <strong style="color: #f44336;">⊗ Passer le tutoriel</strong>
-                        <p style="margin: 5px 0 0 0; font-size: 14px;">Commence le jeu immédiatement mais ne reçois que <strong>' . $skipRewardXP . ' XP/PI</strong> au lieu de ' . $totalTutorialXP . ' XP/PI</p>
-                    </div>
+            ">&times;</a>
+            <h2 style="margin-bottom: 10px;">Bienvenue !</h2>
+            <p style="margin-bottom: 20px;">Vous avez commencé le tutoriel sans le terminer.</p>
+
+            <div style="text-align: left; margin: 20px 0;">
+                <div style="background: rgba(76, 175, 80, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #4CAF50;">
+                    <strong style="color: #4CAF50;">✓ Reprendre le tutoriel (recommandé)</strong>
+                    <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">
+                        Terminez le tutoriel et gagnez jusqu\'à <strong style="color: #4CAF50;">' . $totalTutorialXP . ' XP/PI</strong>
+                    </p>
+                </div>
+
+                <div style="background: rgba(244, 67, 54, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #f44336;">
+                    <strong style="color: #f44336;">⊗ Passer le tutoriel</strong>
+                    <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">
+                        Commencez à jouer tout de suite, avec seulement <strong style="color: #f44336;">' . $skipRewardXP . ' XP/PI</strong> au lieu de ' . $totalTutorialXP . ' XP/PI
+                    </p>
                 </div>
             </div>
-            <div style="margin-top: 20px;">
-                <button id="resume-tutorial-btn" style="
-                    padding: 12px 24px;
-                    margin: 10px;
-                    font-size: 16px;
-                    cursor: pointer;
-                    background: #4CAF50;
-                    color: white;
-                    border: none;
-                    border-radius: 5px;
-                    font-weight: bold;
-                ">Reprendre le tutoriel</button>
-                <button id="skip-tutorial-btn" style="
-                    padding: 12px 24px;
-                    margin: 10px;
-                    font-size: 16px;
-                    cursor: pointer;
-                    background: #f44336;
-                    color: white;
-                    border: none;
-                    border-radius: 5px;
-                ">Passer le tutoriel</button>
+
+            <div class="tutorial-modal-buttons">
+                <button id="resume-tutorial-btn" class="btn-tutorial-primary">
+                    <span class="btn-icon">▶</span>
+                    <span class="btn-text">Reprendre le tutoriel</span>
+                </button>
+                <button id="skip-tutorial-btn" class="btn-tutorial-secondary">
+                    <span class="btn-icon">⊗</span>
+                    <span class="btn-text">Passer (' . $skipRewardXP . ' XP)</span>
+                </button>
             </div>
         </div>
     </div>
     <script>
     $(document).ready(function() {
-        // Resume tutorial button
+        /* Resume tutorial button */
         $("#resume-tutorial-btn").click(function() {
             window.location.href = "index.php?replay_tutorial=1";
         });
 
-        /* Skip tutorial button */
+        /* Skip tutorial button: the modal states what skipping costs */
         $("#skip-tutorial-btn").click(function() {
-            var skipXP = <?php echo $skipRewardXP; ?>;
-            var totalXP = <?php echo $totalTutorialXP; ?>;
-            var message = "Es-tu sûr de vouloir passer le tutoriel ?\n\n" +
-                         "Tu recevras seulement " + skipXP + " XP/PI\n" +
-                         "au lieu de " + totalXP + " XP/PI du tutoriel complet.";
-
-            aooConfirm(message).then(function(ok) {
-                if (!ok) { return; }
-                $.post("api/tutorial/skip.php", {}, function(response) {
-                    if (response.success) {
-                        window.location.reload();
-                    } else {
-                        aooAlert("Erreur: " + (response.error || "Impossible de passer le tutoriel"));
-                    }
-                }, "json").fail(function() {
-                    aooAlert("Erreur de connexion au serveur");
-                });
+            $.post("api/tutorial/skip.php", {}, function(response) {
+                if (response.success) {
+                    window.location.reload();
+                } else {
+                    aooAlert("Erreur: " + (response.error || "Impossible de passer le tutoriel"));
+                }
+            }, "json").fail(function() {
+                aooAlert("Erreur de connexion au serveur");
             });
         });
 
-        // Block all clicks outside modal
+        /* Block all clicks outside modal */
         $("body").on("click", function(e) {
             if (!$(e.target).closest("#invisible-player-modal").length) {
                 e.stopPropagation();

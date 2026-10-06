@@ -355,6 +355,16 @@ class TutorialTooltip {
             return;
         }
 
+        /* Narrow screens: the stylesheet pins the tooltip to the bottom
+         * edge, over the action strip. A target in the lower half (an
+         * action button) moves it to the top edge instead. */
+        if (window.innerWidth <= 768) {
+            const target = this.currentTargetSelector ? $(this.currentTargetSelector)[0] : null;
+            const rect = target ? target.getBoundingClientRect() : null;
+            this.$tooltip.toggleClass('mobile-top', !!rect && rect.top + rect.height / 2 > window.innerHeight / 2);
+            return;
+        }
+
         if (this.currentTargetSelector) {
             const $target = $(this.currentTargetSelector);
             if ($target.length > 0) {

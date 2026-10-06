@@ -65,57 +65,23 @@ class MenuView
                         }
                     });
 
-                    /* Auto-refresh/open character panel after tutorial completion */
-                    /* ONLY trigger if tutorial is not currently active (to avoid opening during replay) */
+                    /* After a first completion (flag set by js/tutorial/TutorialUI.js):
+                     * fresh caracs, then the characteristics screen — the
+                     * rewards are PI to spend. */
                     if (sessionStorage.getItem("tutorial_just_completed") === "true" &&
                         sessionStorage.getItem("tutorial_active") !== "true") {
-                        console.log("[Menu] Tutorial just completed - refreshing character cache and panel");
                         sessionStorage.removeItem("tutorial_just_completed");
 
-                        /* Delay slightly to ensure page is fully loaded */
-                        setTimeout(function() {
-                            /* Step 1: Refresh the server-side cache first */
-                            $.ajax({
-                                type: "POST",
-                                url: "/api/player/refresh_caracs.php",
-                                dataType: "json",
-                                success: function(response) {
-                                    console.log("[Menu] Cache refreshed:", response);
-
-                                    /* Step 2: Now load the panel with fresh data */
-                                    $.ajax({
-                                        type: "POST",
-                                        url: "load_caracs.php",
-                                        success: function(data) {
-                                            /* Always update content (whether panel was visible or not) */
-                                            $("#load-caracs").html(data);
-
-                                            /* Ensure panel is visible */
-                                            if ($("#load-caracs").is(":hidden")) {
-                                                $("#load-caracs").fadeIn();
-                                                console.log("[Menu] Character panel opened with updated stats");
-                                            } else {
-                                                console.log("[Menu] Character panel refreshed with updated stats");
-                                            }
-                                        }
-                                    });
-                                },
-                                error: function(xhr, status, error) {
-                                    console.error("[Menu] Failed to refresh cache:", error);
-                                    /* Still try to load panel even if cache refresh failed */
-                                    $.ajax({
-                                        type: "POST",
-                                        url: "load_caracs.php",
-                                        success: function(data) {
-                                            $("#load-caracs").html(data);
-                                            if ($("#load-caracs").is(":hidden")) {
-                                                $("#load-caracs").fadeIn();
-                                            }
-                                        }
-                                    });
-                                }
+                        $.post("/api/player/refresh_caracs.php").always(function() {
+                            if ($("#hud").length) {
+                                /* HUD: the Caractéristiques panel (js/hud.js) */
+                                $("#show-caracs").trigger("click");
+                                return;
+                            }
+                            $.post("load_caracs.php", function(data) {
+                                $("#load-caracs").html(data).fadeIn();
                             });
-                        }, 500);
+                        });
                     }
 
                     $(".menu-link").click(function(e) {
@@ -159,8 +125,11 @@ class MenuView
                                 window.initTutorial();
                             }
 
+                            /* check_only: probing must not switch the session to the
+                             * tutorial character, or the resume below skips the reload
+                             * that draws the tutorial board. */
                             $.ajax({
-                                url: "/api/tutorial/resume.php",
+                                url: "/api/tutorial/resume.php?check_only=1",
                                 method: "GET",
                                 dataType: "json",
                                 success: function(response) {
