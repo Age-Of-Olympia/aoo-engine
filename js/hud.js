@@ -297,7 +297,13 @@
             $('.card-text').html('').addClass('action-text')
                 .append($('<div></div>').html(html));
             if (isFinal) {
-                refreshAfterAction();
+                /* The refresh re-observes the target and replaces its card:
+                 * write the result again into the fresh card, scripts
+                 * stripped (they already ran once). */
+                $.when(refreshAfterAction()).always(function () {
+                    $('.card-text').html('').addClass('action-text')
+                        .append($('<div></div>').append($.parseHTML(html)));
+                });
             }
             return;
         }

@@ -19,26 +19,23 @@
         // INTERCEPT ACTION BUTTON CLICKS
         // ====================================================================
 
-        // Use event delegation to catch all action button clicks
-        // This works for dynamically loaded action buttons in #ajax-data
-        $(document).on('click', 'button.action, .action[data-action]', function(e) {
-            const $button = $(this);
-            const actionName = $button.data('action') || $button.attr('data-action');
-
-
-            if (actionName) {
-
-                // Notify tutorial system
-                if (window.tutorialUI && typeof window.tutorialUI.notifyAction === 'function') {
-                    window.tutorialUI.notifyAction('action_used', {
-                        action_name: actionName,
-                        button: $button.text().trim()
-                    });
-                } else {
-                    console.warn('[TutorialGameIntegration] tutorialUI.notifyAction not available!');
-                }
-            } else {
-                console.warn('[TutorialGameIntegration] No actionName found for button');
+        /* An action counts once action.php has run it, not on the click: the
+         * HUD's first click only arms the button, and a refused action
+         * ("Action Impossible", no PA left, target gone) must not advance
+         * the step. A run action answers with its results block
+         * (src/View/ActionResultsView.php: .action-details), a refused one
+         * adds .action-blocked; the other refusals are plain text. */
+        $(document).ajaxSuccess(function(e, xhr, settings) {
+            if (!/(^|\/)action\.php$/.test(settings.url) || typeof settings.data !== 'string') {
+                return;
+            }
+            const response = xhr.responseText || '';
+            if (!response.includes('action-details') || response.includes('action-blocked')) {
+                return;
+            }
+            const actionName = new URLSearchParams(settings.data).get('action');
+            if (actionName && window.tutorialUI && typeof window.tutorialUI.notifyAction === 'function') {
+                window.tutorialUI.notifyAction('action_used', { action_name: actionName });
             }
         });
 

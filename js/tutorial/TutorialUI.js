@@ -72,13 +72,13 @@ class TutorialUI {
                 return true;
             } else {
                 console.error('[TutorialUI] Failed to start tutorial', response);
-                alert('Impossible de démarrer le tutoriel: ' + (response.error || 'Erreur inconnue'));
+                aooAlert('Impossible de démarrer le tutoriel: ' + (response.error || 'Erreur inconnue'));
                 return false;
             }
         } catch (error) {
             console.error('[TutorialUI] Start error', error);
             const errorMsg = error.message || 'Erreur inconnue';
-            alert(`Impossible de démarrer le tutoriel: ${errorMsg}\n\nVeuillez recharger la page et réessayer.`);
+            aooAlert(`Impossible de démarrer le tutoriel: ${errorMsg}\n\nVeuillez recharger la page et réessayer.`);
             return false;
         }
     }
@@ -133,7 +133,7 @@ class TutorialUI {
 
             /* Don't show alert for authentication errors (401) - user is not logged in */
             if (!error.message || !error.message.includes('401')) {
-                alert(`Erreur lors de la reprise du tutoriel: ${error.message || 'Erreur inconnue'}\n\nVeuillez recharger la page.`);
+                aooAlert(`Erreur lors de la reprise du tutoriel: ${error.message || 'Erreur inconnue'}\n\nVeuillez recharger la page.`);
             } else {
             }
 
@@ -243,7 +243,7 @@ class TutorialUI {
 
             if (!this.currentSession) {
                 console.error('[TutorialUI] ERROR: No current session! Cannot advance.');
-                alert('Erreur: Session tutoriel introuvable. Veuillez redémarrer le tutoriel.');
+                aooAlert('Erreur: Session tutoriel introuvable. Veuillez redémarrer le tutoriel.');
                 return false;
             }
 
@@ -340,7 +340,7 @@ class TutorialUI {
             }
         } catch (error) {
             console.error('[TutorialUI] Advance error', error);
-            alert(`Erreur lors de l'avancement du tutoriel: ${error.message || 'Erreur inconnue'}\n\nSi le problème persiste, essayez de quitter et reprendre le tutoriel.`);
+            aooAlert(`Erreur lors de l'avancement du tutoriel: ${error.message || 'Erreur inconnue'}\n\nSi le problème persiste, essayez de quitter et reprendre le tutoriel.`);
             return false;
         } finally {
             this.isAdvancing = false;
@@ -566,7 +566,7 @@ class TutorialUI {
         if (this.tooltip) {
             this.tooltip.showError(error, hint);
         } else {
-            alert(`Erreur: ${error}\n${hint || ''}`);
+            aooAlert(`Erreur: ${error}\n${hint || ''}`);
         }
     }
 
@@ -852,21 +852,6 @@ class TutorialUI {
                             e.stopPropagation();
                         }
                         this.trackElementClick(selector, target, stepData);
-                    }
-
-                    // Check if this is an action button click (for action_used validation)
-                    if (validationType === 'action_used') {
-                        const $target = $(target).closest('button.action, .action[data-action]');
-                        if ($target.length > 0) {
-                            const actionName = $target.data('action') || $target.attr('data-action');
-                            if (actionName) {
-
-                                // Don't notify immediately - wait for action to actually execute
-                                // Actions require 2 clicks: 1st expands button, 2nd executes
-                                // We'll watch for the action result to appear in .card-text
-                                this.watchForActionResult(actionName);
-                            }
-                        }
                     }
 
                     return; // Allow the click to proceed
@@ -1614,52 +1599,6 @@ class TutorialUI {
     /**
      * Hide tutorial overlay
      */
-    /**
-     * Watch for action result to appear in DOM (after action executes)
-     */
-    watchForActionResult(actionName) {
-
-        // Check if already watching
-        if (this.actionResultObserver) {
-            return;
-        }
-
-        // Watch for changes in .card-text (where action results appear)
-        const cardText = document.querySelector('.card-text');
-        if (!cardText) {
-            console.warn('[TutorialUI] .card-text not found, cannot watch for action result');
-            return;
-        }
-
-        this.actionResultObserver = new MutationObserver((mutations) => {
-            // Check if action result text appeared (not just "Lancé de dés...")
-            const content = cardText.textContent;
-
-            if (content && !content.includes('Lancé de dés') && content.trim().length > 10) {
-
-                // Disconnect observer
-                if (this.actionResultObserver) {
-                    this.actionResultObserver.disconnect();
-                    this.actionResultObserver = null;
-                }
-
-                // Notify tutorial system
-                this.notifyAction('action_used', {
-                    action_name: actionName,
-                    result_detected: true
-                });
-            }
-        });
-
-        // Observe changes to card-text
-        this.actionResultObserver.observe(cardText, {
-            childList: true,
-            subtree: true,
-            characterData: true
-        });
-
-    }
-
     hideTutorialOverlay() {
         $('#tutorial-overlay').fadeOut(() => $('#tutorial-overlay').remove());
         $('#tutorial-controls').fadeOut(() => $('#tutorial-controls').remove());
@@ -1668,12 +1607,6 @@ class TutorialUI {
         if (this.eventBlocker) {
             document.removeEventListener('click', this.eventBlocker, true);
             this.eventBlocker = null;
-        }
-
-        // Clean up action result observer
-        if (this.actionResultObserver) {
-            this.actionResultObserver.disconnect();
-            this.actionResultObserver = null;
         }
 
         // Clean up observers
@@ -1817,7 +1750,7 @@ class TutorialUI {
                     /* Redirect to main game screen instead of reloading current page */
                     window.location.href = 'index.php';
                 } else {
-                    alert('Erreur lors du passage du tutoriel: ' + (response.error || 'Erreur inconnue'));
+                    aooAlert('Erreur lors du passage du tutoriel: ' + (response.error || 'Erreur inconnue'));
                 }
             } catch (error) {
                 console.error('[TutorialUI] Cancel error', error);
@@ -1840,7 +1773,7 @@ class TutorialUI {
                     console.error('[TutorialUI] Could not fetch debug response');
                 }
 
-                alert(`Erreur: ${error.message || 'Erreur inconnue'}`);
+                aooAlert(`Erreur: ${error.message || 'Erreur inconnue'}`);
             }
         });
 

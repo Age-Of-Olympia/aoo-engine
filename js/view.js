@@ -202,6 +202,13 @@ $(document).ready(function(){
         if(entity){ payload.entity = entity; }
 
         if(!options.force && window.clickedCases[cacheKey]){
+            /* The HUD remembers the observed tile from the observe.php
+               request (js/hud.js): a card served from this cache must be
+               remembered too, or the refresh after an action re-observes
+               the tile seen before. */
+            aooStore.set('hudSelCoords', coords);
+            if(entity){ aooStore.set('hudSelEntity', entity); }
+            else{ aooStore.remove('hudSelEntity'); }
             $('#ajax-data').html(window.clickedCases[cacheKey]);
             if(options.done){ options.done(); }
             return;
