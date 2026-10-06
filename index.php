@@ -204,16 +204,7 @@ if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew && !$autoStarting)
     // Player is invisible (registered but didn't complete tutorial) - show modal.
     // Same parchment markup as the tutorial's skip modal (css/tutorial/tutorial.css).
     echo '<div id="invisible-player-modal" class="tutorial-modal-overlay" style="display: flex;">
-        <div class="tutorial-modal-content" style="position: relative;">
-            <!-- Emergency close button - skips tutorial and grants skip XP -->
-            <a href="api/tutorial/skip.php?redirect=1" title="Fermer (passer le tutoriel)" style="
-                position: absolute;
-                top: 10px;
-                right: 14px;
-                color: #8B6F47;
-                font-size: 24px;
-                text-decoration: none;
-            ">&times;</a>
+        <div class="tutorial-modal-content">
             <h2 style="margin-bottom: 10px;">Bienvenue !</h2>
             <p style="margin-bottom: 20px;">Vous avez commencé le tutoriel sans le terminer.</p>
 

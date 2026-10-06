@@ -153,7 +153,7 @@ class MenuView
                                     if (typeof window.startTutorial === "function") {
                                         window.startTutorial("first_time");
                                     } else {
-                                        alert("Erreur: Le système de tutoriel n\'est pas chargé. Rechargez la page.");
+                                        aooAlert("Erreur: Le système de tutoriel n\'est pas chargé. Rechargez la page.");
                                     }
                                 }
                             });
@@ -188,7 +188,7 @@ class MenuView
                             clearInterval(tutorialLoadCheckInterval);
                             if (typeof window.initTutorial !== "function") {
                                 console.error("[Menu] Tutorial scripts failed to load after 10s");
-                                alert("Erreur: Le système de tutoriel n\'a pas pu se charger. Rechargez la page.");
+                                aooAlert("Erreur: Le système de tutoriel n\'a pas pu se charger. Rechargez la page.");
                                 /* Remove loading overlay if it exists */
                                 $("#tutorial-loading-overlay").remove();
                             }

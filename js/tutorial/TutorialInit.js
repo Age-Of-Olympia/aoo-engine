@@ -238,7 +238,7 @@
             });
 
             document.getElementById('tutorial-resume-cancel').addEventListener('click', async () => {
-                if (confirm('Êtes-vous sûr de vouloir annuler le tutoriel? Votre progression sera perdue.')) {
+                if (await aooConfirm('Voulez-vous vraiment annuler le tutoriel ? Votre progression sera perdue.')) {
                     try {
                         const response = await fetch('/api/tutorial/cancel.php', {
                             method: 'POST',
@@ -253,11 +253,11 @@
                             sessionStorage.setItem('tutorial_just_cancelled', 'true');
                             window.location.reload();
                         } else {
-                            alert('Erreur lors de l\'annulation du tutoriel');
+                            aooAlert('Erreur lors de l\'annulation du tutoriel');
                         }
                     } catch (error) {
                         console.error('Cancel error:', error);
-                        alert('Erreur lors de l\'annulation du tutoriel');
+                        aooAlert('Erreur lors de l\'annulation du tutoriel');
                     }
                 }
             });

@@ -60,6 +60,12 @@ if (!in_array($mode, ['first_time', 'replay', 'practice'])) {
     exit;
 }
 
+// Every client asks for "first_time": a player who already finished the
+// tutorial is replaying it, whatever the button.
+if ($mode === 'first_time' && (new \App\Tutorial\TutorialSessionManager(new \Classes\Db()))->hasCompletedBefore((int) $playerId)) {
+    $mode = 'replay';
+}
+
 // Validate race override up front so we fail with 400 rather than leaking
 // TutorialPlayerFactory's InvalidArgumentException as a 500.
 $allRaceNames = (new \App\Service\RaceService())->getAllRaceNames();

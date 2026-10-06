@@ -38,7 +38,7 @@ class Ui{
                 <script src="js/main.js?v=20260927b"></script>
                 <script src="js/console.js?v=20260614"></script>
                 ' . self::characterStoreTag() . '
-                <link href="css/main.min.css?v=20260926" rel="stylesheet">
+                <link href="css/main.min.css?v=20261006" rel="stylesheet">
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
         // Environment-specific body background: test/experimental get a distinct
@@ -71,7 +71,7 @@ class Ui{
         }
 
         // Tutorial System (feature-flagged for specific players)
-        $tutorialVersion = '20261006h';
+        $tutorialVersion = '20261006j';
         echo '
                 <!-- Modal System -->
                 <link href="css/modal.css?v=20260715" rel="stylesheet">

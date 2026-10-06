@@ -1892,45 +1892,6 @@ blockquote{
         left: 135px;
     }
 
-/*
- * tutorial
- */
-
-#tooltip{
-
-    position:absolute;
-    background-color:black;
-    color: white;
-    border-radius: 15px;
-    padding:10px;
-    font-size: 88%;
-    max-width: 200px;
-    text-align: left;
-    display: none;
-    z-index: 100;
-}
-
-    #tooltip::before {
-
-        content: "▲";
-        position: absolute;
-        top: -1em;
-        left: 15px;
-        font-size: 15px;
-        color: black;
-    }
-
-
-    #tooltip a{
-
-        color: cyan;
-    }
-
-    #tooltip .tooltip-next{
-
-        text-align: right;
-    }
-
     ul.compact-list {
         list-style-type: none;
         margin: 0;
