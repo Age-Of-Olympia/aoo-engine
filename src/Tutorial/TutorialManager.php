@@ -314,17 +314,26 @@ class TutorialManager
         $actualXpAwarded = $earned['xp'];
         $actualPiAwarded = $earned['pi'];
 
-        if ($this->tutorialPlayer) {
-            $this->resourceManager->deleteTutorialPlayerAsEntity($this->tutorialPlayer, $this->sessionId);
-        }
-
+        // Completed as soon as the rewards are paid: a retry must find the
+        // run "completed before" and pay nothing again.
         $this->sessionManager->completeSession($this->sessionId, $xpEarned);
+
+        // A failed cleanup must not undo the completion; complete.php, called
+        // by the client next, runs the same cleanup again.
+        if ($this->tutorialPlayer) {
+            try {
+                $this->resourceManager->deleteTutorialPlayerAsEntity($this->tutorialPlayer, $this->sessionId);
+            } catch (Exceptions\TutorialException $e) {
+                error_log('[TutorialManager] Cleanup after completion failed: ' . $e->getMessage()
+                    . ' — ' . ($e->getPrevious()?->getMessage() ?? ''));
+            }
+        }
 
         // Build completion message based on whether rewards were given
         if ($isReplay) {
-            $message = "Félicitations ! Tu as terminé le tutoriel ! Tu l'avais déjà complété auparavant, donc tu ne reçois pas de récompenses cette fois.";
+            $message = "Félicitations ! Vous avez terminé le tutoriel. Vous l'aviez déjà terminé une première fois : pas de nouvelle récompense.";
         } else {
-            $message = "Félicitations ! Tu as terminé le tutoriel ! Tu as gagné {$actualXpAwarded} XP et {$actualPiAwarded} PI !";
+            $message = "Félicitations ! Vous avez terminé le tutoriel et gagné {$actualXpAwarded} XP et {$actualPiAwarded} PI !";
         }
 
         return [

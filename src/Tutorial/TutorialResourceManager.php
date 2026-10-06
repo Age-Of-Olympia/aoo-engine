@@ -156,6 +156,10 @@ class TutorialResourceManager
                     'text'        => $npc['text'] ?? '',
                 ]);
 
+                /* Distances and visibility measure to entity_cells: without
+                 * them the enemy's PV stay hidden from the next tile. */
+                (new \App\Service\Map\EntityCellService($this->conn))->syncCells($enemyId);
+
                 $enemyPlayer = new \Classes\Player($enemyId);
                 $enemyPlayer->get_caracs();
 
