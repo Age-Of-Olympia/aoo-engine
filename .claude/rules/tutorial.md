@@ -17,7 +17,6 @@ Full write-up: [docs/tutorial-system-overview.md](../../docs/tutorial-system-ove
 - **TutorialContext**: Holds player state, session data
 - **TutorialHelper**: Utility functions (session management, player switching)
 - **TutorialPlayer**: Temporary player characters for tutorial sessions
-- **TutorialView**: Renders tutorial UI on index page
 
 **Tutorial Flow**:
 1. Player starts tutorial via "Commencer le tutoriel" button

@@ -25,11 +25,6 @@ class MainView
         if (!empty($_SESSION['playerId'])) {
 
 
-            if (isset($_GET['tutorial'])) {
-                TutorialView::renderTutorial($player);
-            }
-
-
             $msgUrl = 'datas/private/players/' . $player->id . '.msg.html';
 
             if (file_exists($msgUrl)) {
