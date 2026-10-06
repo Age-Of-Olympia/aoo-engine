@@ -60,6 +60,27 @@ class TutorialInstanceSweepTest extends SuiteDbTransactionTestCase
         $this->assertInstanceGone($playerId);
     }
 
+    /** Every played session leaves footprints, the attack's blood, and logs
+     * that the daily archive moves to players_logs_archives. */
+    public function testASessionWithMarksAndArchivedLogsIsSwept(): void
+    {
+        $playerId = $this->seedInstance();
+        $this->seedSession($playerId, completed: true, ageHours: 1);
+        $this->conn->insert('map_marks', ['name' => 'trace_pas_o', 'coords_id' => $this->coordsId(0, 0)]);
+        $this->conn->insert('map_marks', ['name' => 'sang', 'coords_id' => $this->coordsId(0, 1)]);
+        $this->conn->insert('players_logs_archives', [
+            'player_id' => $playerId,
+            'target_id' => $playerId,
+            'plan'      => $this->plan,
+            'coords_id' => $this->coordsId(0, 1),
+        ]);
+
+        $report = (new TutorialResourceManager())->cleanupStale();
+
+        $this->assertContains($this->plan, $report['swept']);
+        $this->assertInstanceGone($playerId);
+    }
+
     public function testAnOldAbandonedSessionIsSwept(): void
     {
         $playerId = $this->seedInstance();

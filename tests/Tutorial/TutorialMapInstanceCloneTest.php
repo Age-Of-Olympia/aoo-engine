@@ -127,6 +127,39 @@ class TutorialMapInstanceCloneTest extends SuiteDbTransactionTestCase
         $this->assertSame('eryn_dolen', $instanceConfig['bg'] ?? null, 'l\'instance hérite du fond de carte');
     }
 
+    /** Distances measure to entity_cells: an NPC without its cell reads as
+     * "too far" from the next tile (no message, no PV). */
+    public function testTemplateNpcsStandOnTheirBoardCell(): void
+    {
+        $this->seedTemplateTile(0, 0);
+        $this->conn->insert('tutorial_npcs', [
+            'version'    => '1.0.0',
+            'role'       => 'guide',
+            'spawn_mode' => 'template',
+            'x'          => 2,
+            'y'          => -2,
+            'name'       => 'Guide du test de clone',
+            'race'       => 'dieu',
+            'avatar'     => '',
+            'portrait'   => '',
+            'energie'    => 100,
+            'is_active'  => 1,
+        ]);
+
+        $plan = (new TutorialMapInstance($this->conn))
+            ->createInstance($this->sessionId, $this->templatePlan)['plan_name'];
+
+        $this->assertSame(
+            '2,-2',
+            (string) $this->conn->fetchOne("
+                SELECT CONCAT(ec.x, ',', ec.y) FROM players p
+                JOIN entity_cells ec ON ec.player_id = p.id
+                WHERE p.name = 'Guide du test de clone' AND ec.plan = ?
+            ", [$plan]),
+            'le PNJ du modèle occupe sa case dans entity_cells'
+        );
+    }
+
     public function testATypeAbsentFromTheCatalogAbortsCreationLoudly(): void
     {
         $this->seedEntity('resource', 'type_fantome_' . bin2hex(random_bytes(3)), $this->seedTemplateTile(0, 1));

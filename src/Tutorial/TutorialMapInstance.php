@@ -285,6 +285,10 @@ class TutorialMapInstance
                 'portrait' => $npc['portrait'],
                 'text' => $npc['text'] ?? '',
             ]);
+
+            /* Distances and visibility measure to entity_cells: without
+             * them the NPC stays "too far" to read from the next tile. */
+            (new \App\Service\Map\EntityCellService($this->conn))->syncCells($newNpcId);
         }
     }
 
@@ -343,62 +347,7 @@ class TutorialMapInstance
      */
     public function deleteInstance(string $sessionId): void
     {
-        $instancePlanName = 'tut_' . substr($sessionId, 0, 10);
-
-
-        // Get all coords IDs for this instance
-        $coordsIds = $this->conn->fetchFirstColumn("
-            SELECT id FROM coords WHERE plan = ?
-        ", [$instancePlanName]);
-
-        if (empty($coordsIds)) {
-            // No board left, but the config row, the yield overrides and the
-            // minimap PNGs can still be there (half-failed teardown).
-            $this->removeInstanceLeftovers($instancePlanName);
-
-            return;
-        }
-
-        $coordsIdList = implode(',', $coordsIds);
-
-        /* Toutes les entités posées sur l'instance, pas seulement les PNJ.
-         *
-         * Le prédicat « id < 0 » datait d'un monde où seuls les PNJ étaient
-         * des lignes players. Depuis la conversion des murs, un bâtiment
-         * porte un id POSITIF (plage 20 000 000+) : il survivait au ménage,
-         * puis faisait échouer le DELETE des coords sur la clé étrangère —
-         * chaque session abandonnée laissait donc un plan entier derrière
-         * elle.
-         *
-         * Liste noire : tout ce qui est posé sur un plan d'instance s'en va,
-         * sauf ce qui doit lui survivre. Un type d'entité ajouté plus tard —
-         * ressource, décor — sera nettoyé sans qu'on ait à y repenser. */
-        $npcIds = $this->conn->fetchFirstColumn("
-            SELECT id FROM players
-            WHERE coords_id IN ({$coordsIdList})
-            AND player_type NOT IN ('real', 'tutorial')
-        ");
-
-        $this->purgeEntities($npcIds);
-
-        // Delete all map elements
-        $mapElementTypes = ['resources', 'tiles', 'foregrounds', 'triggers', 'elements', 'dialogs', 'plants', 'routes'];
-
-        foreach ($mapElementTypes as $type) {
-            $deleted = $this->conn->executeStatement("
-                DELETE FROM map_{$type} WHERE coords_id IN ({$coordsIdList})
-            ");
-
-            if ($deleted > 0) {
-            }
-        }
-
-        // Delete coords
-        $deleted = $this->conn->executeStatement("
-            DELETE FROM coords WHERE plan = ?
-        ", [$instancePlanName]);
-
-        $this->removeInstanceLeftovers($instancePlanName);
+        $this->deleteInstanceByPlan('tut_' . substr($sessionId, 0, 10));
     }
 
     /**
@@ -424,28 +373,24 @@ class TutorialMapInstance
 
         $coordsIdList = implode(',', $coordsIds);
 
-        /* Même correction qu'en deleteInstance : « id < 0 » laissait derrière
-         * lui les bâtiments, dont l'id est positif depuis la conversion des
-         * murs, et le DELETE des coords échouait ensuite sur la clé
-         * étrangère. Ce chemin ne démontait par ailleurs AUCUNE référence
-         * avant de supprimer la ligne players — il passe par le même
-         * démontage que sa jumelle. */
+        /* Every entity on the instance, not only the NPCs (id < 0): buildings
+         * have positive ids since the wall conversion, and one left behind
+         * makes the coords DELETE fail on its foreign key. */
         $this->purgeEntities($this->conn->fetchFirstColumn("
             SELECT id FROM players
             WHERE coords_id IN ({$coordsIdList})
             AND player_type NOT IN ('real', 'tutorial')
         "));
 
-        // Delete all map elements
-        $mapElementTypes = ['resources', 'tiles', 'foregrounds', 'triggers', 'elements', 'dialogs', 'plants', 'routes'];
+        // Every table with a coords foreign key: the marks (footprints, blood
+        // after the attack) and the logs, archived or not, are what a played
+        // session always leaves.
+        $tables = ['map_resources', 'map_tiles', 'map_foregrounds', 'map_triggers', 'map_elements',
+            'map_dialogs', 'map_plants', 'map_routes', 'map_marks', 'map_items',
+            'players_logs', 'players_logs_archives'];
 
-        foreach ($mapElementTypes as $type) {
-            $deleted = $this->conn->executeStatement("
-                DELETE FROM map_{$type} WHERE coords_id IN ({$coordsIdList})
-            ");
-
-            if ($deleted > 0) {
-            }
+        foreach ($tables as $table) {
+            $this->conn->executeStatement("DELETE FROM {$table} WHERE coords_id IN ({$coordsIdList})");
         }
 
         // Delete coords
