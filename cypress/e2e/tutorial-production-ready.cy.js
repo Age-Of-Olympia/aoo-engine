@@ -1,192 +1,235 @@
 /**
- * Tutorial — production-readiness end-to-end test.
+ * Tutorial — production-readiness end-to-end test, on the HUD.
  *
- * Structure: each tutorial step is driven by a helper whose name encodes the
- * expected user interaction (info Next, tile click, UI-element click, move,
- * action double-click). Every helper:
+ * A fresh account registers, logs in, and plays every step with the clicks
+ * a player makes. Clicks are HUMAN clicks: at the centre of a visible
+ * element, on whatever is drawn on top there — never `force: true`, never a
+ * jQuery trigger on a hidden node. A step whose target is hidden or covered
+ * by the tutorial's own tooltip fails here, as it would block a player.
  *
- *   1. Asserts we are on `fromStep` (hard fail if the previous step didn't
- *      land where expected — catches auto-skips and out-of-order advances).
- *   2. Performs EXACTLY the clicks the step is designed to need.
- *   3. Asserts we advanced to `toStep` within a short window (hard fail on
- *      miss-clicks — no more silent 10-second Cypress retries).
+ * Every step helper asserts the step it starts on and the step it must land
+ * on, so an auto-skip or a click that does nothing fails at once.
  *
- * Race-specific movement sequences (depleteMovesByRace, etc.) encode the
- * expected click count for every path, so the test is deterministic for
- * every race. If a tile isn't clickable the failure message points at the
- * exact coordinate that was expected.
+ * Movement is position-driven (positions read in the database), so the same
+ * choreography works for every race whatever its movement points.
  *
- * CRITICAL: single `it()` block — Cypress resets session between blocks.
+ * Run from the host (the devcontainer has no display):
+ *   TEST_DB_HOST=<mariadb container ip> TEST_DB_NAME=aoo4 \
+ *   ./node_modules/.bin/cypress run --spec cypress/e2e/tutorial-production-ready.cy.js \
+ *     --browser electron --config baseUrl=http://localhost:9000 [--env race=elfe]
+ * TEST_DB_NAME must be the database the web app uses.
+ *
+ * CRITICAL: single `it()` block — Cypress resets the session between blocks.
  */
 
 describe('Tutorial System - Production Readiness Test', () => {
-  const uniqueNames = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta'];
-  const randomName = uniqueNames[Math.floor(Math.random() * uniqueNames.length)];
-  const randomSuffix = Array.from({length: 6}, () =>
+  const randomLetters = (n) => Array.from({ length: n }, () =>
     String.fromCharCode(97 + Math.floor(Math.random() * 26))
   ).join('');
-  const timestamp = Date.now();
 
   let raceData = { mvt: 4, pa: 2 }; /* populated in before() */
   const TEST_ACCOUNT = {
-    name: `CypressTest${randomName}${randomSuffix}`,
+    name: `Cypresstest${randomLetters(8)}`,
     password: 'testpass123',
-    email: `cypresstest${timestamp}@test.com`,
+    email: `cypresstest${Date.now()}@test.com`,
     race: Cypress.env('race') || 'nain',
     playerId: null
   };
 
-  const getMaxMvt = () => raceData.mvt;
-  const getMaxPa = () => raceData.pa;
+  const SHORT = 6000;   /* a step must advance within this after its gesture */
+  const MEDIUM = 15000; /* entering a step: server round-trip + render */
+
+  /* Board obstacles around the arena centre: Gaïa, the tree, the enemy. */
+  const TREE = { x: 0, y: 1 };
+  const ENEMY = { x: 2, y: 1 };
+  const BLOCKED = new Set(['1,0', '0,1', '2,1']);
+
+  let tutorialPlayerId;
 
   /* ============================================================
-   * Per-race click choreography.
-   * All paths start after first_move (player at (-1,0)) and end at (0,0)
-   * (adjacent to the tree at (0,1)). See comments on each entry for why.
+   * Human gestures
    * ============================================================ */
 
-  /* deplete_movements: consumes exactly raceMax MVT. Alternating W/E bounce
-   * keeps the player local so walk_to_tree afterwards is predictable. */
-  const depleteMovesByRace = {
-    nain: ['-2,0', '-1,0', '-2,0', '-1,0'],                     /* 4 moves → end (-1,0) */
-    elfe: ['-2,0', '-1,0', '-2,0', '-1,0', '0,0'],              /* 5 moves → end (0,0) */
-    hs:   ['-2,0', '-1,0', '-2,0', '-1,0', '-2,0', '-1,0'],     /* 6 moves → end (-1,0) */
+  const TUTORIAL_CHROME = '.tutorial-tooltip, #tutorial-overlay, #tutorial-controls, .tutorial-modal-overlay';
+
+  /** Click the centre of the first visible match, on what is drawn there.
+   * Board tiles are usually covered by their sprite (tree, character, the
+   * move arrow): the click then lands on the sprite, as a player's does —
+   * only the tutorial's own chrome on top is a failure. */
+  const humanClick = (selector) => {
+    cy.get(selector, { timeout: MEDIUM }).filter(':visible').first().should('be.visible').then(($el) => {
+      const r = $el[0].getBoundingClientRect();
+      const x = r.left + r.width / 2;
+      const y = r.top + r.height / 2;
+      cy.document().then((doc) => {
+        const top = doc.elementFromPoint(x, y);
+        expect(top, `${selector}: something must be drawn at its centre`).to.exist;
+        if (!$el[0].contains(top)) {
+          expect(Cypress.$(top).closest(TUTORIAL_CHROME).length, `${selector} must not be under the tutorial tooltip`).to.eq(0);
+        }
+        const body = doc.body.getBoundingClientRect();
+        cy.get('body').click(x - body.left, y - body.top);
+      });
+    });
   };
 
-  /* walk_to_tree: move to a tile adjacent to the tree at (0,1). (0,0) works
-   * for Nain/HS who ended deplete at (-1,0). Elfe is already at (0,0). */
-  const walkToTreeByRace = {
-    nain: ['0,0'],
-    elfe: [],
-    hs:   ['0,0'],
-  };
+  const tile = (x, y) => `.case[data-coords="${x},${y}"]`;
 
-  /* walk_to_enemy: after fouiller the player is at (0,0). Target enemy at
-   * (2,1); the direct path via (1,0) is blocked by Gaïa (NPC), so we detour
-   * through y=-1 to reach (2,0) which is adjacent to (2,1). */
-  const walkToEnemy = ['0,-1', '1,-1', '2,-1', '2,0'];
+  /* Lazy (inside cy.then): tutorialPlayerId is only known once the
+   * session started, after these commands were queued. */
+  const playerPos = () => cy.then(() => cy.task('queryDatabase', {
+    query: 'SELECT c.x, c.y FROM players p JOIN coords c ON c.id = p.coords_id WHERE p.id = ?',
+    params: [tutorialPlayerId]
+  })).then((rows) => ({ x: Number(rows[0].x), y: Number(rows[0].y) }));
+
+  const resources = () => cy.then(() => cy.getPlayerResources(tutorialPlayerId));
+
+  const currentStep = () => cy.window().then((win) => win.tutorialUI?.currentStep);
+
+  /** One move: click the destination, then the move arrow. */
+  const moveTo = (x, y) => {
+    humanClick(tile(x, y));
+    cy.get('#go-rect, #go-img', { timeout: 5000 }).filter(':visible').should('have.length.greaterThan', 0);
+    humanClick('#go-rect, #go-img');
+    cy.wait(2500); /* server move + board refresh */
+  };
 
   /* ============================================================
-   * Step-helpers (the "click contract" for each step type).
+   * Step contracts
    * ============================================================ */
 
-  const SHORT = 3000;   /* step transitions should happen within 3s of the action */
-  const MEDIUM = 15000; /* accommodate entering a step (server + render) */
-
-  /** Assert the tutorial is currently on the given step.
-   * The 500ms settle window lets the step's JS-side setup (validation observers,
-   * highlight render, tooltip placement) complete before the test acts on it.
-   * Without it, clicks can happen before a MutationObserver is installed and
-   * the resulting hide/open isn't detected — leading to false timeout. */
+  /** The 500 ms settle lets the step install its observers and place its
+   * tooltip before the test acts — a player reads it first anyway. */
   const assertOnStep = (stepId) => {
     cy.window({ timeout: MEDIUM }).should((win) => {
       expect(win.tutorialUI?.currentStep, `expected currentStep=${stepId}`).to.eq(stepId);
     });
-    cy.wait(500);
+    cy.wait(800);
   };
 
-  /** Assert the tutorial tooltip contains given text (tests placeholder substitutions). */
+  const assertAdvanced = (fromStep, toStep, what) => {
+    cy.window({ timeout: SHORT }).should((win) => {
+      expect(win.tutorialUI?.currentStep, `${what} must advance ${fromStep} → ${toStep}`).to.eq(toStep);
+    });
+  };
+
   const assertTooltipContains = (text) => {
     cy.get('.tutorial-tooltip', { timeout: 5000 }).should('be.visible').should('contain', text);
   };
 
-  /** Info step: click #tutorial-next, advance to toStep. 1 click. */
-  const advanceInfoStep = (fromStep, toStep) => {
+  /** Info step: "Suivant". */
+  const infoStep = (fromStep, toStep) => {
     assertOnStep(fromStep);
-    cy.get('#tutorial-next', { timeout: MEDIUM }).should('be.visible').click();
-    cy.window({ timeout: SHORT }).should((win) => {
-      expect(win.tutorialUI?.currentStep, `${fromStep} Next must advance to ${toStep}`).to.eq(toStep);
-    });
+    humanClick('#tutorial-next');
+    assertAdvanced(fromStep, toStep, 'Suivant');
   };
 
-  /** Click a map tile by `data-coords`. 1 click. force:true — board tiles
-   * are SVG under the tutorial overlay; the page's own delegates handle the
-   * dispatched event (same rationale as moveTo). */
-  const advanceTileClickStep = (fromStep, toStep, coords) => {
+  /** Click a board tile (a character, the tree, an empty tile). */
+  const tileStep = (fromStep, toStep, x, y) => {
     assertOnStep(fromStep);
-    cy.get(`.case[data-coords="${coords}"]`, { timeout: MEDIUM }).should('be.visible').click({ force: true });
-    cy.window({ timeout: SHORT }).should((win) => {
-      expect(win.tutorialUI?.currentStep, `click on ${coords} must advance ${fromStep} → ${toStep}`).to.eq(toStep);
-    });
+    humanClick(tile(x, y));
+    assertAdvanced(fromStep, toStep, `click on (${x},${y})`);
   };
 
-  /** Click an arbitrary UI element. 1 click. force:true because the next
-   * step's tooltip can already hover over the target (same rationale as
-   * moveTo): the event must dispatch past any overlay. */
-  const advanceUiClickStep = (fromStep, toStep, selector) => {
+  /** Click your own character, wherever it stands. */
+  const selfStep = (fromStep, toStep) => {
     assertOnStep(fromStep);
-    /* filter(':visible') : le HUD porte un bouton de fermeture par panneau,
-     * seul celui du panneau ouvert est cliquable. */
-    cy.get(selector, { timeout: MEDIUM }).filter(':visible').first().should('be.visible').click({ force: true });
-    cy.window({ timeout: SHORT }).should((win) => {
-      expect(win.tutorialUI?.currentStep, `click on ${selector} must advance ${fromStep} → ${toStep}`).to.eq(toStep);
-    });
+    playerPos().then(({ x, y }) => humanClick(tile(x, y)));
+    assertAdvanced(fromStep, toStep, 'click on own character');
   };
 
-  /** Move one tile: click destination, click go indicator. 2 clicks per move.
-   * .case/.go/#go-rect may be SVG elements (no native .click()), so we use
-   * Cypress's force:true click to dispatch the event past any overlay. */
-  const moveTo = (coords) => {
-    cy.get(`.case[data-coords="${coords}"]`, { timeout: MEDIUM })
-      .should('exist')
-      .click({ force: true });
-    cy.wait(500);
-    cy.get('#go-rect, #go-img', { timeout: 5000 }).filter(':visible').first().click({ force: true });
-    cy.wait(3500); /* server-side move + page rerender */
+  const uiStep = (fromStep, toStep, selector) => {
+    assertOnStep(fromStep);
+    humanClick(selector);
+    assertAdvanced(fromStep, toStep, `click on ${selector}`);
   };
 
-  /** Movement step with a known destination: one move, then step advances. */
-  const advanceOneMoveStep = (fromStep, toStep, destCoords) => {
+  /** HUD action buttons arm on the first click and run on the second. */
+  const actionStep = (fromStep, toStep, actionName) => {
+    const button = `#hud-actions .action[data-action="${actionName}"]`;
     assertOnStep(fromStep);
-    moveTo(destCoords);
-    cy.window({ timeout: SHORT }).should((win) => {
-      expect(win.tutorialUI?.currentStep, `move to ${destCoords} must advance ${fromStep} → ${toStep}`).to.eq(toStep);
-    });
-  };
-
-  /** Movement step with a known sequence of destinations. */
-  const advanceMoveSequence = (fromStep, toStep, destSeq) => {
-    assertOnStep(fromStep);
-    destSeq.forEach((coord) => moveTo(coord));
-    cy.window({ timeout: SHORT }).should((win) => {
-      expect(win.tutorialUI?.currentStep, `${destSeq.length}-move sequence must advance ${fromStep} → ${toStep}`).to.eq(toStep);
-    });
-  };
-
-  /** Action step: expand button (click) + execute button (click). 2 clicks. */
-  const advanceActionStep = (fromStep, toStep, actionName) => {
-    assertOnStep(fromStep);
-    cy.get(`.action[data-action="${actionName}"]`, { timeout: MEDIUM }).should('be.visible').then(($btn) => {
-      $btn[0].click(); /* expand — or direct execute when already expanded */
-    });
-    cy.wait(3000); /* action processing */
-    /* Second click only when the first was a mere expand: an already
-     * expanded card executes on the first click, and clicking again would
-     * run the action twice (and burn a second PA). */
-    cy.window().then((win) => {
-      if (win.tutorialUI?.currentStep === fromStep) {
-        cy.get(`.action[data-action="${actionName}"]`).then(($btn) => {
-          $btn[0].click(); /* execute */
-        });
-        cy.wait(3000); /* action processing */
+    humanClick(button);
+    cy.wait(600);
+    currentStep().then((step) => {
+      if (step === fromStep) {
+        humanClick(button);
       }
     });
-    cy.window({ timeout: SHORT }).should((win) => {
-      expect(win.tutorialUI?.currentStep, `action ${actionName} must advance ${fromStep} → ${toStep}`).to.eq(toStep);
+    cy.wait(2000); /* action round-trip */
+    assertAdvanced(fromStep, toStep, `action ${actionName}`);
+  };
+
+  /** Walk until the step changes, along a shortest path to a tile beside
+   * (Chebyshev 1, as the server checks) the target. An entry already beside
+   * it advances on its own. */
+  const walkBeside = (fromStep, toStep, target, budget = 6) => {
+    currentStep().then((step) => {
+      if (step !== fromStep || budget === 0) {
+        return;
+      }
+      playerPos().then((p) => {
+        const beside = (x, y) => Math.max(Math.abs(x - target.x), Math.abs(y - target.y)) === 1;
+        if (beside(p.x, p.y)) {
+          return;
+        }
+        /* BFS over the 8 neighbours inside the arena walls (-3..3). */
+        const key = (x, y) => `${x},${y}`;
+        const prev = new Map([[key(p.x, p.y), null]]);
+        const queue = [[p.x, p.y]];
+        let goal = null;
+        while (queue.length && !goal) {
+          const [x, y] = queue.shift();
+          for (let dx = -1; dx <= 1 && !goal; dx++) {
+            for (let dy = -1; dy <= 1 && !goal; dy++) {
+              const nx = x + dx;
+              const ny = y + dy;
+              const k = key(nx, ny);
+              if ((!dx && !dy) || prev.has(k) || BLOCKED.has(k) || Math.abs(nx) > 3 || Math.abs(ny) > 3) {
+                continue;
+              }
+              prev.set(k, key(x, y));
+              if (beside(nx, ny)) {
+                goal = k;
+              }
+              queue.push([nx, ny]);
+            }
+          }
+        }
+        expect(goal, `a path beside (${target.x},${target.y})`).to.not.eq(null);
+        let first = goal;
+        while (prev.get(first) !== key(p.x, p.y)) {
+          first = prev.get(first);
+        }
+        const [fx, fy] = first.split(',').map(Number);
+        moveTo(fx, fy);
+        walkBeside(fromStep, toStep, target, budget - 1);
+      });
     });
   };
 
+  const walkStep = (fromStep, toStep, target) => {
+    cy.window({ timeout: MEDIUM }).should((win) => {
+      expect([fromStep, toStep], `expected ${fromStep}`).to.include(win.tutorialUI?.currentStep);
+    });
+    cy.wait(800);
+    walkBeside(fromStep, toStep, target);
+    assertAdvanced(fromStep, toStep, `walking beside (${target.x},${target.y})`);
+    playerPos().then(({ x, y }) => {
+      const d = Math.max(Math.abs(x - target.x), Math.abs(y - target.y));
+      expect(d, `player at (${x},${y}) must stand beside (${target.x},${target.y})`).to.eq(1);
+    });
+  };
 
-  /* =============================================================
-   * before hooks
-   * ============================================================= */
+  /* ============================================================
+   * Hooks
+   * ============================================================ */
 
   before(() => {
     cy.request(`/api/races/get.php?name=${TEST_ACCOUNT.race}`).then((response) => {
       expect(response.status).to.eq(200);
       expect(response.body.success).to.be.true;
       raceData = response.body.race;
-      cy.log(`🎭 Race: ${raceData.name}, Max MVT: ${raceData.mvt}, Max PA: ${raceData.pa}`);
+      cy.log(`Race: ${raceData.name}, Max MVT: ${raceData.mvt}, Max PA: ${raceData.pa}`);
     });
   });
 
@@ -194,48 +237,39 @@ describe('Tutorial System - Production Readiness Test', () => {
     cy.clearCookies();
     cy.clearLocalStorage();
     cy.window().then((win) => win.sessionStorage.clear());
+    /* Failed logins of earlier runs lock the account form for 5 minutes. */
+    cy.task('queryDatabase', { query: 'DELETE FROM players_ips' });
   });
 
   it('Complete production validation: Fresh player through entire tutorial', () => {
-    let tutorialSessionId;
-    let tutorialPlayerId;
+    cy.viewport(1400, 900);
 
-    /* =============================================================
+    /* ============================================================
      * PHASE 0: REGISTRATION
-     * ============================================================= */
+     * ============================================================ */
     cy.log(`═══ PHASE 0: REGISTER ${TEST_ACCOUNT.name} (race=${TEST_ACCOUNT.race}) ═══`);
     cy.register(TEST_ACCOUNT.name, TEST_ACCOUNT.race, TEST_ACCOUNT.password, TEST_ACCOUNT.email);
     cy.task('queryDatabase', {
       query: 'SELECT id FROM players WHERE name = ? ORDER BY id DESC LIMIT 1',
       params: [TEST_ACCOUNT.name]
     }).then((rows) => {
+      expect(rows, 'the account must exist after registration').to.have.length(1);
       TEST_ACCOUNT.playerId = rows[0].id;
-      cy.log(`✓ Registered with player_id=${TEST_ACCOUNT.playerId}`);
-      /* The tutorial content targets the HUD (option newHud, lue sur le
-       * joueur réel) : give the fresh account the interface the steps
-       * speak — .hud-panel-close, #hud-pill-*… do not exist in the
-       * legacy chrome. */
-      cy.task('queryDatabase', {
-        query: "INSERT IGNORE INTO players_options (player_id, name) VALUES (?, 'newHud')",
-        params: [TEST_ACCOUNT.playerId]
-      });
     });
 
-    /* =============================================================
-     * PHASE 1: LOGIN, OVERLAY, TUTORIAL SESSION
-     * ============================================================= */
+    /* ============================================================
+     * PHASE 1: LOGIN THROUGH THE LANDING FORM, TUTORIAL AUTO-START
+     * ============================================================ */
     cy.log('═══ PHASE 1: LOGIN + TUTORIAL AUTO-START ═══');
-    cy.login(TEST_ACCOUNT.name, TEST_ACCOUNT.password);
-    cy.wait(2000); /* auto-start window */
+    cy.visit('/index.php');
+    cy.get('#index-button-play').click();
+    cy.get('#name-input').type(TEST_ACCOUNT.name);
+    cy.get('#psw-input').type(TEST_ACCOUNT.password);
+    cy.get('#index-button-login').click();
 
-    cy.get('#tutorial-overlay', { timeout: 10000 }).should('exist');
-
-    /* Map tiles rendered (detection for "all-gray, no walls" bug).
-     * The tree must be drawn at (0,1) before the test tries to click it.
-     * Resources are entities since the map_resources conversion: the board
-     * draws them from the players layer, like the structures they are. */
-    cy.get('image[data-table="players"][data-coords="0,1"]', { timeout: 5000 })
-      .should('exist');
+    cy.window({ timeout: 30000 }).its('tutorialUI.currentStep').should('eq', 'welcome');
+    cy.get('#hud', { timeout: MEDIUM }).should('exist');
+    cy.get(`image[data-table="players"][data-coords="${TREE.x},${TREE.y}"]`, { timeout: MEDIUM }).should('exist');
 
     cy.then(() => {
       cy.validateTutorialState(TEST_ACCOUNT.playerId, {
@@ -243,358 +277,191 @@ describe('Tutorial System - Production Readiness Test', () => {
         mode: 'first_time',
         completed: 0
       }).then((state) => {
-        tutorialSessionId = state.tutorial_session_id;
         tutorialPlayerId = state.tutorial_player_id;
-        cy.log(`✓ session=${tutorialSessionId}, tutorial_player_id=${tutorialPlayerId}`);
         cy.validatePlayerCoords(tutorialPlayerId, { plan: 'tut_*', x: 0, y: 0 });
 
-        /* "Map always ready" contract: the session's tut_* plan must have
-         * been fully copied from the tutorial template — 121 coords (11×11,
-         * from −5 to +5 on each axis), one structure entity per cell the
-         * template occupies (walls and resources are entities; the
-         * reconciler reposes one per cell), the gatherable tree at (0,1),
-         * and Gaïa. If any count is off, something in TutorialMapInstance
-         * copying broke.
-         *
-         * NOTE: map_tiles is NOT asserted because the current test-DB seed
-         * (db/init_test_from_dump.sh) does not insert grass tiles for the
-         * tutorial template. If the template ever gets a grass carpet
-         * (7×7 = 49 tiles on the interior), add an assertion here. */
+        /* The session plan is a full copy of the template: same cells,
+         * one entity per occupied template cell, the tree, Gaïa — and
+         * Gaïa sits on the board's cell index, or every distance to her
+         * reads as "too far". */
         cy.task('queryDatabase', {
           query: `SELECT
-                    (SELECT COUNT(*) FROM coords c WHERE c.plan LIKE 'tut_%' AND c.id IN (SELECT coords_id FROM players WHERE id = ?)) AS player_on_tut,
-                    (SELECT COUNT(*) FROM coords c WHERE c.plan=(SELECT c2.plan FROM coords c2 JOIN players p ON p.coords_id=c2.id WHERE p.id=?)) AS plan_coords,
-                    (SELECT COUNT(DISTINCT c.x, c.y, c.z) FROM players p JOIN coords c ON c.id=p.coords_id WHERE p.player_type IN ('building','resource') AND c.plan='tutorial') AS template_cells,
-                    (SELECT COUNT(*) FROM players p JOIN coords c ON c.id=p.coords_id WHERE p.player_type IN ('building','resource') AND c.plan=(SELECT c2.plan FROM coords c2 JOIN players p2 ON p2.coords_id=c2.id WHERE p2.id=?)) AS instance_cells,
-                    (SELECT COUNT(*) FROM players p JOIN coords c ON c.id=p.coords_id WHERE p.player_type='resource' AND c.x=0 AND c.y=1 AND c.plan=(SELECT c2.plan FROM coords c2 JOIN players p2 ON p2.coords_id=c2.id WHERE p2.id=?)) AS instance_tree,
-                    (SELECT COUNT(*) FROM players p JOIN coords c ON c.id=p.coords_id WHERE p.id < 0 AND p.name='Gaïa' AND c.plan=(SELECT c2.plan FROM coords c2 JOIN players p2 ON p2.coords_id=c2.id WHERE p2.id=?)) AS plan_gaia`,
-          params: [tutorialPlayerId, tutorialPlayerId, tutorialPlayerId, tutorialPlayerId, tutorialPlayerId]
+                    (SELECT COUNT(*) FROM coords WHERE plan = s.plan) AS plan_coords,
+                    (SELECT COUNT(*) FROM coords WHERE plan = 'tutorial') AS template_coords,
+                    (SELECT COUNT(DISTINCT c.x, c.y, c.z) FROM players p JOIN coords c ON c.id = p.coords_id
+                      WHERE p.player_type IN ('building', 'resource') AND c.plan = 'tutorial') AS template_cells,
+                    (SELECT COUNT(*) FROM players p JOIN coords c ON c.id = p.coords_id
+                      WHERE p.player_type IN ('building', 'resource') AND c.plan = s.plan) AS instance_cells,
+                    (SELECT COUNT(*) FROM players p JOIN coords c ON c.id = p.coords_id
+                      WHERE p.player_type = 'resource' AND c.x = 0 AND c.y = 1 AND c.plan = s.plan) AS instance_tree,
+                    (SELECT COUNT(*) FROM players p JOIN coords c ON c.id = p.coords_id
+                      JOIN entity_cells ec ON ec.player_id = p.id
+                      WHERE p.id < 0 AND p.name = 'Gaïa' AND c.plan = s.plan) AS gaia_cells
+                  FROM (SELECT c.plan FROM players p JOIN coords c ON c.id = p.coords_id WHERE p.id = ?) AS s`,
+          params: [tutorialPlayerId]
         }).then((rows) => {
           const r = rows[0];
-          cy.log(`Map state: coords=${r.plan_coords}, template_cells=${r.template_cells}, instance_cells=${r.instance_cells}, tree=${r.instance_tree}, gaia=${r.plan_gaia}`);
-          expect(Number(r.plan_coords), 'new session plan must have 121 coords (11x11)').to.eq(121);
+          expect(Number(r.plan_coords), 'the session plan copies every template cell').to.eq(Number(r.template_coords));
           expect(Number(r.template_cells), 'the template must carry structures to copy').to.be.greaterThan(0);
           expect(Number(r.instance_cells), 'one structure per occupied template cell').to.eq(Number(r.template_cells));
           expect(Number(r.instance_tree), 'the gatherable tree stands at (0,1)').to.eq(1);
-          expect(Number(r.plan_gaia), 'Gaïa NPC must be present on the session plan').to.eq(1);
+          expect(Number(r.gaia_cells), 'Gaïa is on the session plan, with her board cell').to.eq(1);
         });
       });
     });
 
     cy.window().then((win) => {
-      expect(win.tutorialUI).to.exist;
       expect(win.sessionStorage.getItem('tutorial_active')).to.equal('true');
     });
 
-    /* =============================================================
-     * PHASE 2: TUTORIAL STEP CHOREOGRAPHY
-     * Each call is (fromStep, toStep[, arg]) with a known click count.
-     * Comments show: <step#> <step_id> <click-count> <intent>
-     * ============================================================= */
+    /* ============================================================
+     * PHASE 2: STEP CHOREOGRAPHY
+     * ============================================================ */
     cy.log('═══ PHASE 2: STEP CHOREOGRAPHY ═══');
 
-    /*  1 welcome            → info Next (1 click) */
-    advanceInfoStep('welcome', 'your_character');
-    /*  2 your_character     → info Next (1 click) */
-    advanceInfoStep('your_character', 'meet_gaia');
-    /*  3 meet_gaia          → click Gaïa at (1,0) (1 click) */
-    advanceTileClickStep('meet_gaia', 'close_card', '1,0');
-    /*  4 close_card — the step watches #ui-card (ui_element_hidden). The
-     * HUD hides the X button in the grid, but its direct observe.js handler
-     * still closes the card: trigger it via the page's own jQuery, the same
-     * convention as board tiles. */
-    assertOnStep('close_card');
-    cy.window().then((win) => {
-      win.$('button.close-card').first().trigger('click');
-    });
-    cy.window({ timeout: SHORT }).should((win) => {
-      expect(win.tutorialUI?.currentStep, 'closing the card must advance to movement_intro').to.eq('movement_intro');
-    });
-    /*  5 movement_intro     → info Next (1 click) */
-    advanceInfoStep('movement_intro', 'first_move');
+    infoStep('welcome', 'your_character');
+    infoStep('your_character', 'meet_gaia');
 
-    /*  6 first_move  any_movement, unlimited_mvt=1. Move to (-1,0). 2 clicks. */
+    tileStep('meet_gaia', 'close_card', 1, 0);
+    /* Next to Gaïa, her card shows her message, not "too far". */
+    cy.get('#ajax-data').should('not.contain', 'trop éloigné');
+
+    /* The card follows the selection: an empty tile replaces it. */
+    tileStep('close_card', 'movement_intro', -1, -1);
+
+    infoStep('movement_intro', 'first_move');
+
     assertOnStep('first_move');
-    moveTo('-1,0');
-    assertOnStep('movement_limit_warning');
+    moveTo(-1, 0);
+    assertAdvanced('first_move', 'movement_limit_warning', 'first move');
 
-    /*  7 movement_limit_warning  info. Assert {max_mvt} substitution + Next (1 click) */
-    assertOnStep('movement_limit_warning');
-    assertTooltipContains(`${getMaxMvt()} mouvements`);
+    assertTooltipContains(`${raceData.mvt} mouvements`);
     cy.get('.tutorial-tooltip').should('not.contain', '{max_mvt}');
-    /* MVT must NOT have decremented (first_move is free) — verify via DB.
-     * cy.then defers the tutorialPlayerId read to execution time. */
-    cy.then(() => {
-      cy.getPlayerResources(tutorialPlayerId).then((r) => {
-        expect(r.mvt, 'first_move unlimited_mvt=1 → MVT must equal race max').to.eq(getMaxMvt());
-      });
+    resources().then((r) => {
+      expect(r.mvt, 'first_move does not consume: MVT still at race max').to.eq(raceData.mvt);
     });
-    advanceInfoStep('movement_limit_warning', 'show_characteristics');
+    infoStep('movement_limit_warning', 'show_characteristics');
+    infoStep('show_characteristics', 'deplete_movements');
 
-    /*  8 show_characteristics  info Next (1 click) — the HUD shows the caracs
-     * chips permanently, the step only points at them. */
-    advanceInfoStep('show_characteristics', 'deplete_movements');
-
-    /*  9 deplete_movements  race-specific move sequence (2 × raceMax clicks). */
-    cy.wait(500);
-    assertTooltipContains(`${getMaxMvt()} mouvements`);
-    const depleteSeq = depleteMovesByRace[TEST_ACCOUNT.race];
-    expect(depleteSeq, `deplete sequence must be defined for race=${TEST_ACCOUNT.race}`).to.have.length(getMaxMvt());
-    advanceMoveSequence('deplete_movements', 'movements_depleted_info', depleteSeq);
-    /* MVT was consumed: now 0, then restored for the next step. Checked in
-     * DB: the legacy chrome only shows the counter inside the caracs panel,
-     * which this flow no longer opens. */
-    cy.then(() => {
-      cy.getPlayerResources(tutorialPlayerId).then((r) => {
-        expect(r.mvt, 'deplete_movements must leave 0 MVT').to.eq(0);
-      });
-    });
-
-    /* 10 movements_depleted_info  info Next (1 click) */
-    advanceInfoStep('movements_depleted_info', 'actions_intro');
-
-    /* 11 actions_intro  info Next (1 click) — resources auto-restored before render */
-    assertOnStep('actions_intro');
-    cy.then(() => {
-      cy.getPlayerResources(tutorialPlayerId).then((r) => {
-        expect(r.pa, `after auto_restore PA must equal race max (${getMaxPa()}) — not inflated`).to.eq(getMaxPa());
-        expect(r.mvt, `after auto_restore MVT must equal race max (${getMaxMvt()})`).to.eq(getMaxMvt());
-      });
-    });
-    advanceInfoStep('actions_intro', 'click_yourself');
-
-    /* 12 click_yourself  click own avatar tile (1 click). Player position is
-     * deterministic per race after deplete_movements, but easier to query DB than
-     * encode per-race positions here. Avatar element x/y attrs are SVG pixels,
-     * not game coords, so we can't derive tile coords from the DOM directly. */
-    assertOnStep('click_yourself');
-    cy.then(() => {
-      cy.task('queryDatabase', {
-        query: 'SELECT c.x, c.y FROM players p JOIN coords c ON c.id = p.coords_id WHERE p.id = ?',
-        params: [tutorialPlayerId]
-      }).then((rows) => {
-        const coords = `${rows[0].x},${rows[0].y}`;
-        cy.log(`👤 Clicking own tile at (${coords})`);
-        cy.get(`.case[data-coords="${coords}"]`).should('be.visible').click({ force: true });
-      });
-    });
-    cy.window({ timeout: SHORT }).should((win) => {
-      expect(win.tutorialUI?.currentStep, 'click own tile must advance to actions_panel_info').to.eq('actions_panel_info');
-    });
-
-    /* 13 actions_panel_info  info Next (1 click) */
-    advanceInfoStep('actions_panel_info', 'close_card_for_tree');
-
-    /* 14 close_card_for_tree — auto_close_card=1 can close the card by
-     * itself; when it does not (HUD panel), close it like step 4, via the
-     * hidden button's direct handler. */
-    assertOnStep('close_card_for_tree');
-    cy.window().then((win) => {
-      if (win.tutorialUI?.currentStep === 'close_card_for_tree') {
-        win.$('button.close-card').first().trigger('click');
-      }
-    });
-    cy.window({ timeout: MEDIUM }).should((win) => {
-      expect(win.tutorialUI?.currentStep, 'closing the card must advance to walk_to_tree').to.eq('walk_to_tree');
-    });
-
-    /* 15 walk_to_tree  adjacent_to_position(0,1). Race-specific sequence. */
-    const walkTreeSeq = walkToTreeByRace[TEST_ACCOUNT.race];
-    if (walkTreeSeq.length === 0) {
-      /* Elfe is already at (0,0) after the deplete sequence — step validates on entry */
-      assertOnStep('walk_to_tree');
-      cy.window({ timeout: SHORT }).should((win) => {
-        expect(win.tutorialUI?.currentStep, 'already-adjacent entry must auto-advance walk_to_tree').to.not.eq('walk_to_tree');
-      });
-    } else {
-      /* The last move's click also opens an observation panel, which can
-       * validate observe_tree (ui_panel_opened) on entry: the sequence
-       * lands on observe_tree, or already on tree_info. */
-      assertOnStep('walk_to_tree');
-      walkTreeSeq.forEach((coord) => moveTo(coord));
-      cy.window({ timeout: SHORT }).should((win) => {
-        expect(['observe_tree', 'tree_info'], 'walk sequence must reach observe_tree (or auto-advance past it)').to.include(win.tutorialUI?.currentStep);
-      });
+    /* Bounce between (-1,0) and (-2,0) until the counter is empty. */
+    assertOnStep('deplete_movements');
+    assertTooltipContains(`${raceData.mvt} mouvements`);
+    for (let i = 0; i < raceData.mvt; i++) {
+      playerPos().then(({ x }) => moveTo(x === -1 ? -2 : -1, 0));
     }
-
-    /* Verify we actually landed adjacent to the tree (issue 2 guard) */
-    cy.then(() => {
-      cy.task('queryDatabase', {
-        query: 'SELECT c.x, c.y FROM players p JOIN coords c ON c.id = p.coords_id WHERE p.id = ?',
-        params: [tutorialPlayerId]
-      }).then((rows) => {
-        const { x, y } = rows[0];
-        const dist = Math.abs(x - 0) + Math.abs(y - 1);
-        expect(dist, `after walk_to_tree player must be adjacent to tree (at (${x},${y}), dist=${dist})`).to.eq(1);
-      });
+    assertAdvanced('deplete_movements', 'movements_depleted_info', `${raceData.mvt} moves`);
+    resources().then((r) => {
+      expect(r.mvt, 'deplete_movements leaves 0 MVT').to.eq(0);
     });
 
-    /* 16 observe_tree  click tree tile (1 click) — skipped when the walk's
-     * own panel already validated it. */
-    cy.window().then((win) => {
-      if (win.tutorialUI?.currentStep === 'observe_tree') {
-        cy.get('.case[data-coords="0,1"]', { timeout: MEDIUM }).should('be.visible').click({ force: true });
-      }
+    infoStep('movements_depleted_info', 'actions_intro');
+    resources().then((r) => {
+      expect(r.pa, `auto_restore gives back the race PA (${raceData.pa}), not more`).to.eq(raceData.pa);
+      expect(r.mvt, `auto_restore gives back the race MVT (${raceData.mvt})`).to.eq(raceData.mvt);
     });
+    infoStep('actions_intro', 'click_yourself');
 
-    /* 17 tree_info  info Next (1 click); auto_close_card=1 closes the panel
-     * with the step. Tooltip may render off-screen, so force the click. */
-    assertOnStep('tree_info');
-    cy.wait(1000); /* let show_delay settle */
-    cy.get('#tutorial-next').click({ force: true });
-    cy.window({ timeout: SHORT }).should((win) => {
-      expect(win.tutorialUI?.currentStep, 'tree_info Next must advance to click_yourself_for_gather').to.eq('click_yourself_for_gather');
-    });
+    selfStep('click_yourself', 'actions_panel_info');
+    cy.get('#hud-actions .action[data-action="fouiller"]').should('exist');
+    infoStep('actions_panel_info', 'close_card_for_tree');
+    infoStep('close_card_for_tree', 'walk_to_tree');
 
-    /* 17.5 click_yourself_for_gather  click own tile (1 click) — reopens
-     * the actions card the previous step closed. The avatar image lets real
-     * clicks through to its .case, so target the tile like step 12 does. */
+    walkStep('walk_to_tree', 'observe_tree', TREE);
+
+    tileStep('observe_tree', 'tree_info', TREE.x, TREE.y);
+    cy.get('#ajax-data .building-status').should('contain', 'Récoltable');
+    infoStep('tree_info', 'click_yourself_for_gather');
+
+    /* The tree's card is still open: only a fresh click on oneself counts. */
     assertOnStep('click_yourself_for_gather');
-    cy.then(() => {
-      cy.task('queryDatabase', {
-        query: 'SELECT c.x, c.y FROM players p JOIN coords c ON c.id = p.coords_id WHERE p.id = ?',
-        params: [tutorialPlayerId]
-      }).then((rows) => {
-        const coords = `${rows[0].x},${rows[0].y}`;
-        cy.log(`👤 Clicking own tile at (${coords})`);
-        cy.get(`.case[data-coords="${coords}"]`).first().should('be.visible').click({ force: true });
-      });
-    });
-    cy.window({ timeout: SHORT }).should((win) => {
-      expect(win.tutorialUI?.currentStep, 'clicking own tile must advance to use_fouiller').to.eq('use_fouiller');
-    });
+    cy.wait(1000);
+    currentStep().should('eq', 'click_yourself_for_gather');
+    selfStep('click_yourself_for_gather', 'use_fouiller');
 
-    /* 18 use_fouiller  2 clicks on .action[data-action="fouiller"] (expand + execute).
-     * PA must decrement by exactly 1. The own-actions card is open from
-     * click_yourself_for_gather — fouiller button lives inside #ui-card. */
-    assertOnStep('use_fouiller');
-    cy.then(() => {
-      cy.getPlayerResources(tutorialPlayerId).then((before) => {
-        advanceActionStep('use_fouiller', 'action_consumed', 'fouiller');
-        cy.getPlayerResources(tutorialPlayerId).then((after) => {
-          expect(after.pa, 'fouiller must consume exactly 1 PA').to.eq(before.pa - 1);
-        });
+    resources().then((before) => {
+      actionStep('use_fouiller', 'action_consumed', 'fouiller');
+      resources().then((after) => {
+        expect(after.pa, 'fouiller costs exactly 1 PA').to.eq(before.pa - 1);
       });
     });
 
-    /* 20 action_consumed  info Next (1 click) */
-    advanceInfoStep('action_consumed', 'open_inventory');
+    infoStep('action_consumed', 'open_inventory');
 
-    /* 21 open_inventory  click #show-inventory (1 click) */
-    advanceUiClickStep('open_inventory', 'inventory_wood', '#show-inventory');
+    uiStep('open_inventory', 'inventory_wood', '#show-inventory');
+    cy.location('pathname').should('not.contain', 'inventory.php');
+    /* Lit through the spotlight: Cypress counts the blocking overlay as a cover. */
+    cy.get('.hud-panel .item-case[data-name="Bois"]', { timeout: MEDIUM }).should(($row) => {
+      expect($row[0].getBoundingClientRect().height, 'the wood row is laid out in the panel').to.be.greaterThan(0);
+    });
+    infoStep('inventory_wood', 'close_inventory');
 
-    /* 22 inventory_wood  info Next (1 click). Assert wood is visually present. */
-    assertOnStep('inventory_wood');
-    /* exist, pas visible : l'overlay du tutoriel couvre le panneau au sens
-     * de Cypress alors que la ligne est bien affichée sous le spotlight. */
-    cy.get('.item-case[data-name="Bois"]').should('exist');
-    advanceInfoStep('inventory_wood', 'close_inventory');
+    uiStep('close_inventory', 'combat_intro', '.hud-panel-close');
 
-    /* 23 close_inventory  click the HUD panel close (1 click) */
-    advanceUiClickStep('close_inventory', 'combat_intro', '.hud-panel-close');
+    infoStep('combat_intro', 'enemy_spawned');
+    /* The enemy spawn reloads the page; the step resumes on its own. */
+    infoStep('enemy_spawned', 'walk_to_enemy');
 
-    /* 24 combat_intro  info Next (1 click) */
-    advanceInfoStep('combat_intro', 'enemy_spawned');
+    walkStep('walk_to_enemy', 'click_enemy', ENEMY);
 
-    /* 25 enemy_spawned  info Next (1 click) — user confirmed deterministic.
-     * Title is "Votre adversaire", but the advance control is the standard tutorial Next. */
-    advanceInfoStep('enemy_spawned', 'walk_to_enemy');
+    tileStep('click_enemy', 'attack_enemy', ENEMY.x, ENEMY.y);
 
-    /* 26 walk_to_enemy  adjacent_to_position(2,1). Detour via y=-1 because
-     * Gaïa blocks (1,0). Ends at (2,0), adjacent to the enemy at (2,1). */
-    advanceMoveSequence('walk_to_enemy', 'click_enemy', walkToEnemy);
-
-    /* Verify adjacency to enemy */
-    cy.then(() => {
-      cy.task('queryDatabase', {
-        query: 'SELECT c.x, c.y FROM players p JOIN coords c ON c.id = p.coords_id WHERE p.id = ?',
-        params: [tutorialPlayerId]
-      }).then((rows) => {
-        const { x, y } = rows[0];
-        const dist = Math.abs(x - 2) + Math.abs(y - 1);
-        expect(dist, `after walk_to_enemy player must be adjacent to enemy (at (${x},${y}), dist=${dist})`).to.eq(1);
+    resources().then((before) => {
+      actionStep('attack_enemy', 'attack_result', 'melee');
+      resources().then((after) => {
+        expect(after.pa, 'the attack costs exactly 1 PA').to.eq(before.pa - 1);
       });
     });
 
-    /* 27 click_enemy  click enemy tile at (2,1) (1 click) */
-    advanceTileClickStep('click_enemy', 'attack_enemy', '2,1');
+    /* The wound shows on the enemy's portrait (the step points at it). */
+    cy.get('#ajax-data #red-filter', { timeout: MEDIUM }).should('exist');
+    infoStep('attack_result', 'tutorial_complete');
 
-    /* 28 attack_enemy  clicks on .action[data-action="melee"] (ex attaquer).
-     * PA must decrement by exactly 1. */
-    assertOnStep('attack_enemy');
-    cy.then(() => {
-      cy.getPlayerResources(tutorialPlayerId).then((before) => {
-        advanceActionStep('attack_enemy', 'attack_result', 'melee');
-        cy.getPlayerResources(tutorialPlayerId).then((after) => {
-          expect(after.pa, 'attack must consume exactly 1 PA').to.eq(before.pa - 1);
-        });
-      });
-    });
-
-    /* 29 attack_result  info Next (1 click) */
-    advanceInfoStep('attack_result', 'tutorial_complete');
-
-    /* 30 tutorial_complete  Next (1 click) triggers completion modal; modal
-     * "Commencer l'aventure!" (1 click) fires complete.php and redirects. */
     assertOnStep('tutorial_complete');
-    cy.get('#tutorial-next').should('be.visible').click();
-    cy.get('#tutorial-complete-modal', { timeout: 5000 }).should('be.visible');
-    cy.get('#tutorial-complete-continue').click();
-    cy.wait(3000); /* let the API call + redirect complete */
+    humanClick('#tutorial-next');
+    cy.get('#tutorial-complete-modal', { timeout: MEDIUM }).should('be.visible');
+    humanClick('#tutorial-complete-continue');
 
-    /* =============================================================
-     * PHASE 3: COMPLETION GUARANTEES
-     * ============================================================= */
+    /* ============================================================
+     * PHASE 3: COMPLETION
+     * ============================================================ */
     cy.log('═══ PHASE 3: COMPLETION VERIFICATION ═══');
 
-    /* completed=1 + xp_earned == SUM(xp_reward) of active steps */
     cy.then(() => {
       cy.validateTutorialState(TEST_ACCOUNT.playerId, { shouldExist: true }).then((state) => {
-        cy.log(`state: completed=${state.completed}, xp=${state.xp_earned}, step=${state.current_step}`);
-        expect(state.completed, 'tutorial_progress.completed must be 1').to.eq(1);
+        expect(state.completed, 'tutorial_progress.completed').to.eq(1);
         cy.task('queryDatabase', {
-          query: `SELECT COALESCE(SUM(xp_reward), 0) AS total FROM tutorial_steps WHERE version = ? AND is_active = 1`,
+          query: 'SELECT COALESCE(SUM(xp_reward), 0) AS total FROM tutorial_steps WHERE version = ? AND is_active = 1',
           params: [state.tutorial_version || '1.0.0']
         }).then((rows) => {
-          const advertised = Number(rows[0].total);
-          expect(Number(state.xp_earned), `xp_earned must equal advertised total (${advertised})`).to.eq(advertised);
+          expect(Number(state.xp_earned), 'xp_earned equals the advertised total').to.eq(Number(rows[0].total));
         });
       });
     });
 
-    /* Real player must leave waiting_room (→ faction's respawnPlan) */
-    cy.then(() => {
-      cy.task('queryDatabase', {
-        query: 'SELECT c.plan FROM players p JOIN coords c ON p.coords_id = c.id WHERE p.id = ?',
-        params: [TEST_ACCOUNT.playerId]
-      }).then((rows) => {
-        expect(rows[0]?.plan, 'player must leave waiting_room after completion').to.not.eq('waiting_room');
-      });
+    cy.then(() => cy.task('queryDatabase', {
+      query: 'SELECT c.plan FROM players p JOIN coords c ON p.coords_id = c.id WHERE p.id = ?',
+      params: [TEST_ACCOUNT.playerId]
+    })).then((rows) => {
+      expect(rows, 'the account still exists').to.have.length(1);
+      expect(rows[0]?.plan, 'the player leaves waiting_room').to.not.eq('waiting_room');
     });
 
     /* First completion grants the starter pack (the walking stick is the
      * item no other path gives). */
-    cy.then(() => {
-      cy.task('queryDatabase', {
-        query: `SELECT pi.n FROM players_items pi JOIN items i ON i.id = pi.item_id
-                WHERE pi.player_id = ? AND i.name = 'baton_marche'`,
-        params: [TEST_ACCOUNT.playerId]
-      }).then((rows) => {
-        expect(Number(rows[0]?.n ?? 0), 'first completion must grant the walking stick').to.be.greaterThan(0);
-      });
+    cy.then(() => cy.task('queryDatabase', {
+      query: `SELECT COALESCE(SUM(pi.n), 0) AS n FROM players_items pi JOIN items i ON i.id = pi.item_id
+              WHERE pi.player_id = ? AND i.name = 'baton_marche'`,
+      params: [TEST_ACCOUNT.playerId]
+    })).then((rows) => {
+      expect(Number(rows[0].n), 'first completion grants ONE walking stick, once').to.eq(1);
     });
 
-    /* Tutorial player must be deactivated (isolation guardrail) */
-    cy.then(() => {
-      cy.task('queryDatabase', {
-        query: 'SELECT is_active FROM tutorial_players WHERE player_id = ?',
-        params: [tutorialPlayerId]
-      }).then((rows) => {
-        expect(rows.length, `tutorial_players row must exist for player_id=${tutorialPlayerId}`).to.be.greaterThan(0);
-        expect(Number(rows[0].is_active), 'tutorial player must be deactivated after completion').to.eq(0);
-      });
+    cy.then(() => cy.task('queryDatabase', {
+      query: 'SELECT is_active FROM tutorial_players WHERE player_id = ? ORDER BY id DESC',
+      params: [tutorialPlayerId]
+    })).then((rows) => {
+      expect(rows.length, 'tutorial_players row').to.be.greaterThan(0);
+      expect(Number(rows[0].is_active), 'the tutorial character is deactivated').to.eq(0);
     });
-
-    cy.log('🏁 Tutorial test passed — all step contracts honored');
   });
 });
