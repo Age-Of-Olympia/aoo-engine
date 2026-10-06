@@ -574,8 +574,9 @@ class TutorialUI {
      * Show tutorial overlay
      */
     showTutorialOverlay() {
-        // Remove existing overlay if any
-        $('#tutorial-overlay').remove();
+        // Remove existing overlay if any, and index.php's "loading" screen:
+        // a resume has no reload to clear it.
+        $('#tutorial-overlay, #tutorial-loading-overlay').remove();
 
         // Create overlay
         const $overlay = $('<div id="tutorial-overlay"></div>');
@@ -1125,23 +1126,15 @@ class TutorialUI {
         }
 
 
-        /* Note: we deliberately do NOT use "any children in #ajax-data" as a
-         * trigger. When a step like close_card_for_tree completes, #ui-card is
-         * hidden via display:none but its DOM stays in #ajax-data. A subsequent
-         * step with ui_panel_opened on "actions" would see those stale children
-         * and auto-validate without any user action (observed bug: observe_tree
-         * getting skipped after close_card_for_tree). The tutorial step must
-         * actually open a fresh card to validate. */
+        /* Only a card opened DURING the step counts: the card already on
+         * screen when the step starts (the tree's, after tree_info) would
+         * otherwise validate "click your character" with no click at all.
+         * observe.php replaces #ajax-data's content, so a fresh card is a
+         * new #ui-card node. */
+        const staleCard = document.querySelector('#ui-card');
         const isActionsPanelOpen = () => {
-            /* NOT .case-infos: the HUD's recomposed selection band keeps
-             * the tile content visible after "Fermer" (by design), so it
-             * would count as an open panel forever and auto-validate the
-             * next panel step. A fresh card is signalled by a VISIBLE
-             * #ui-card (both layouts) or actions still inside #ajax-data
-             * (legacy layout, before the HUD relocates them). */
-            const hasActions = $('#ajax-data .action, #ajax-data button.action').length > 0;
-            const hasUiCardVisible = this.isElementDisplayed('#ui-card');
-            return hasActions || hasUiCardVisible;
+            const card = document.querySelector('#ui-card');
+            return !!card && card !== staleCard && this.isElementDisplayed('#ui-card');
         };
 
         /* The observer must SURVIVE a failed attempt: a stray notify (a
@@ -1177,19 +1170,6 @@ class TutorialUI {
             attributes: true,
             attributeFilter: ['style', 'class']
         });
-
-        /* Also check immediately in case the panel is ALREADY open when this
-         * step started (e.g. click_yourself following actions_panel_info,
-         * where the actions panel is legitimately pre-open). We require one
-         * of the strict signals (actions/case-infos/visible ui-card), not
-         * merely "#ajax-data has children". */
-        if (isActionsPanelOpen() && this.isActive) {
-            window.notifyTutorial('ui_interaction', {
-                panel: 'actions',
-                panel_visible: true,
-                timestamp: Date.now()
-            });
-        }
     }
 
     /**
@@ -1237,20 +1217,15 @@ class TutorialUI {
             }
         });
 
-        // Observe style and attribute changes on the element and its parent
-        this.panelObserver.observe(targetElement, {
+        /* Watch the whole body: the HUD replaces #ajax-data's content, so
+         * the element leaves together with its parent and a mutation on
+         * any closer ancestor is never reported. */
+        this.panelObserver.observe(document.body, {
+            childList: true,
+            subtree: true,
             attributes: true,
             attributeFilter: ['style', 'class']
         });
-
-        /* Also observe if element is removed from DOM */
-        if (targetElement.parentNode) {
-            this.panelObserver.observe(targetElement.parentNode, {
-                childList: true,
-                subtree: true
-            });
-        }
-
     }
 
     /**
@@ -1368,59 +1343,30 @@ class TutorialUI {
             return Promise.resolve(); // Return resolved promise if nothing to do
         }
 
+        /* Narrow screens: the rail is a drawer behind the ☰ button, off
+         * screen until opened. A rail link clicked closes it again. */
+        const target = document.querySelector(targetSelector);
+        if (target && target.closest('#hud-rail') && target.getBoundingClientRect().right <= 0) {
+            $('#hud').addClass('hud--drawer-open');
+        }
+
         // If step targets an action button, ensure correct actions panel is open
         if (targetSelector.includes('.action[data-action=')) {
-            // Check if this is a combat step targeting enemy actions
-            const isCombatStep = stepData.step_type === 'combat' ||
-                                 stepData.action_name === 'attaquer' ||
-                                 stepData.action_name === 'attaque_double';
-
-            /* isElementDisplayed, pas :visible — la carte recomposée du HUD
-             * est en display:contents et passait pour fermée à tort. */
-            if (!this.isElementDisplayed('#ui-card')) {
-
-                // Return a promise that resolves when panel is ready
+            /* The button is missing when no card is open, or when the open
+             * card is another tile's (the tree has no Fouiller): open the
+             * card that carries it — the enemy's for combat, else the
+             * player's own. */
+            if (!document.querySelector(targetSelector)) {
                 return new Promise((resolve) => {
-                    // Store resolve callback for later
                     this.panelReadyCallback = resolve;
-
-                    if (isCombatStep) {
-                        // Combat step - open enemy panel
+                    if (stepData.step_type === 'combat') {
                         this.openEnemyCard();
                     } else {
-                        // Non-combat action - open player panel
-
-                        // Get player coords from window (set in TutorialView.php)
-                        let playerCoords = window.dataCoords;
-
-                        // Fallback: if dataCoords not available yet, wait briefly for it
-                        if (!playerCoords) {
-
-                            let coordsRetries = 0;
-                            const maxCoordsRetries = 3; // Max 300ms - if not ready quickly, use avatar method
-
-                            const waitForCoords = () => {
-                                if (window.dataCoords) {
-                                    playerCoords = window.dataCoords;
-                                    this.openPlayerCardDirect(playerCoords);
-                                } else if (coordsRetries < maxCoordsRetries) {
-                                    coordsRetries++;
-                                    setTimeout(waitForCoords, 100);
-                                } else {
-                                    this.openPlayerCardViaAvatar();
-                                }
-                            };
-
-                            waitForCoords();
-                        } else {
-                            // Coords available, open card directly
-                            this.openPlayerCardDirect(playerCoords);
-                        }
+                        this.openPlayerCardViaAvatar();
                     }
                 });
-            } else {
-                return Promise.resolve(); // Panel already visible
             }
+            return Promise.resolve();
         }
 
         // If step targets characteristics panel or movement/action counters, ensure panel is open
@@ -1616,7 +1562,7 @@ class TutorialUI {
         let retries = 0;
         const maxRetries = 50; // Max 5 seconds
         const checkPanelVisible = () => {
-            if ($('#ui-card').is(':visible')) {
+            if (this.isElementDisplayed('#ui-card')) {
 
                 // Resolve the promise if callback exists
                 if (this.panelReadyCallback) {
@@ -1784,20 +1730,20 @@ class TutorialUI {
             <div id="tutorial-skip-modal" class="tutorial-modal-overlay">
                 <div class="tutorial-modal-content">
                     <h2 style="margin-bottom: 10px;">Quitter le tutoriel ?</h2>
-                    <p style="margin-bottom: 20px;">Tu rejoues le tutoriel.</p>
+                    <p style="margin-bottom: 20px;">Vous rejouez le tutoriel.</p>
 
                     <div style="text-align: left; margin: 20px 0;">
                         <div style="background: rgba(76, 175, 80, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #4CAF50;">
                             <strong style="color: #4CAF50;">✓ Continuer le tutoriel</strong>
                             <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">
-                                Continue l'entraînement
+                                Continuez l'entraînement
                             </p>
                         </div>
 
                         <div style="background: rgba(244, 67, 54, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #f44336;">
                             <strong style="color: #f44336;">⊗ Retour au jeu</strong>
                             <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">
-                                Quitte le tutoriel et retourne au jeu
+                                Quittez le tutoriel et retournez au jeu
                             </p>
                         </div>
                     </div>
@@ -1818,20 +1764,20 @@ class TutorialUI {
             <div id="tutorial-skip-modal" class="tutorial-modal-overlay">
                 <div class="tutorial-modal-content">
                     <h2 style="margin-bottom: 10px;">Quitter le tutoriel ?</h2>
-                    <p style="margin-bottom: 20px;">Tu n'as pas encore terminé le tutoriel.</p>
+                    <p style="margin-bottom: 20px;">Vous n'avez pas encore terminé le tutoriel.</p>
 
                     <div style="text-align: left; margin: 20px 0;">
                         <div style="background: rgba(76, 175, 80, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #4CAF50;">
                             <strong style="color: #4CAF50;">✓ Continuer le tutoriel (recommandé)</strong>
                             <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">
-                                Tu peux gagner jusqu'à <strong style="color: #4CAF50;">${totalXP} XP/PI</strong> en complétant toutes les étapes
+                                Vous pouvez gagner jusqu'à <strong style="color: #4CAF50;">${totalXP} XP/PI</strong> en terminant toutes les étapes
                             </p>
                         </div>
 
                         <div style="background: rgba(244, 67, 54, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #f44336;">
                             <strong style="color: #f44336;">⊗ Passer le tutoriel</strong>
                             <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">
-                                Tu recevras seulement <strong style="color: #f44336;">${skipXP} XP/PI</strong> au lieu de ${totalXP} XP/PI
+                                Vous ne recevrez que <strong style="color: #f44336;">${skipXP} XP/PI</strong> au lieu de ${totalXP} XP/PI
                             </p>
                         </div>
                     </div>
@@ -1853,20 +1799,9 @@ class TutorialUI {
         $('body').append($modal);
         $modal.fadeIn(300);
 
-        /* Cancel button - skip without completion, grant skip rewards */
+        /* Cancel button - skip without completion, grant skip rewards. The
+         * modal itself is the confirmation: it states what skipping costs. */
         $('#tutorial-skip-cancel').on('click', async () => {
-
-            /* Confirmation dialog - different message for replay vs first time */
-            const confirmMessage = isReplay
-                ? `Es-tu sûr de vouloir quitter le tutoriel ?\n\nTu retourneras au jeu normal.`
-                : `Es-tu sûr de vouloir passer le tutoriel ?\n\n` +
-                  `Tu recevras seulement ${skipXP} XP/PI\n` +
-                  `au lieu de ${totalXP} XP/PI du tutoriel complet.`;
-
-            if (!confirm(confirmMessage)) {
-                return;
-            }
-
             try {
                 const response = await this.apiCall('/api/tutorial/cancel.php', {
                     session_id: this.currentSession
@@ -2014,7 +1949,10 @@ class TutorialUI {
             this.hideTutorialOverlay();
             sessionStorage.removeItem('tutorial_active');
             sessionStorage.removeItem('tutorial_session_id');
-            sessionStorage.setItem('tutorial_just_completed', 'true');
+            /* A first run earned PI: the next page opens the characteristics. */
+            if (!window.TUTORIAL_IS_REPLAY) {
+                sessionStorage.setItem('tutorial_just_completed', 'true');
+            }
             window.location.href = 'index.php';
         });
     }

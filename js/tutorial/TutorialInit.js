@@ -167,6 +167,13 @@
             return;
         }
 
+        /* index.php already shows its resume / skip gate to a player who
+         * left the tutorial unfinished, or is auto-starting it (loading
+         * overlay, src/View/MenuView.php resumes): nothing to ask. */
+        if (document.getElementById('invisible-player-modal') || document.getElementById('tutorial-loading-overlay')) {
+            return;
+        }
+
         try {
             // Add check_only parameter to prevent setting session vars on initial check
             const response = await fetch('/api/tutorial/resume.php?check_only=1');

@@ -1170,7 +1170,9 @@
                 '#ajax-data, #hud-actions, #hud-zoom, #hud-layers,'
                 + ' #hud-side, #hud-theater-chat-btn, #hud-topbar,'
                 + ' .aoo-dialog-bg, #hud-action-modal, .hud-panel, #hud-rail,'
-                + ' #hud-dots, #hud-carousel, #hud-backdrop'
+                + ' #hud-dots, #hud-carousel, #hud-backdrop,'
+                + ' .tutorial-tooltip, #tutorial-overlay, #tutorial-controls,'
+                + ' #tutorial-spotlight-overlay, .tutorial-modal-overlay'
             ).length) {
                 return;
             }
