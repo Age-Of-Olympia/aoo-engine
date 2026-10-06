@@ -42,7 +42,7 @@
 ### Code Verification
 
 - [ ] **Cache versions updated** (current: `20251115a`)
-  - Check `src/View/TutorialView.php` lines 29-35
+  - Check `$tutorialVersion` in `Classes/Ui.php`
 
 - [ ] **Database charset config** set to `utf8mb4`:
   - Check `config/db_constants.php` line with charset
