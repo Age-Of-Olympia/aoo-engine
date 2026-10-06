@@ -5,9 +5,9 @@
  *
  * Pour un plan sélectionné, trois étapes sur la couche sol :
  *  1. Classer les tuiles posées : terrain (biome fondable) ou hors terrain
- *     (décor, escaliers, runes…). C'est ce classement — persisté dans
- *     tools/tiled/terrains.json — qui pilote l'analyse ; sur un serveur
- *     fraîchement déployé le fichier peut être vide : tout classer ici.
+ *     (décor, escaliers, runes…). C'est ce classement — en base
+ *     (terrain_colors / terrain_tiles) — qui pilote l'analyse ; sur un
+ *     serveur neuf il est vide : tout classer ici.
  *  2. Auditer : chaque point de coin où 2 à 4 terrains se rencontrent exige
  *     ses tuiles de fondu, sinon le pinceau Terrain de Tiled pose la tuile
  *     la plus proche (morceaux d'autres biomes).
@@ -50,7 +50,7 @@ $selectedPlan = optionalString('selected_plan')
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['classify_tiles']) || isset($_POST['generate_transitions'])
         || isset($_POST['regenerate_transitions']) || isset($_POST['delete_transitions'])
-        || isset($_POST['cleanup_orphans']));
+        || isset($_POST['cleanup_orphans']) || isset($_POST['import_terrains_file']));
 if ($isStateChangingPost) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
@@ -66,7 +66,7 @@ if ($isStateChangingPost && isset($_POST['classify_tiles']) && $selectedPlan) {
     try {
         $listed = array_filter((array) ($_POST['listed_tiles'] ?? []), 'is_string');
         $checked = array_filter((array) ($_POST['terrain_tiles'] ?? []), 'is_string');
-        $result = (new TerrainTransitionService($database))->classifyTiles(
+        $result = (new TerrainTransitionService())->classifyTiles(
             TerrainTransitionService::GROUND_LAYER,
             array_values($checked),
             array_values(array_diff($listed, $checked))
@@ -92,7 +92,7 @@ if ($isStateChangingPost && isset($_POST['classify_tiles']) && $selectedPlan) {
 if ($isStateChangingPost && isset($_POST['regenerate_transitions']) && $selectedPlan) {
     try {
         set_time_limit(600);
-        $service = new TerrainTransitionService($database);
+        $service = new TerrainTransitionService();
         $bySet = $service->planTransitionsBySet($selectedPlan);
 
         $chosenSets = array_filter((array) ($_POST['regenerate_sets'] ?? []), 'is_string');
@@ -122,7 +122,7 @@ if ($isStateChangingPost && isset($_POST['regenerate_transitions']) && $selected
 
 if ($isStateChangingPost && isset($_POST['delete_transitions']) && $selectedPlan) {
     try {
-        $result = (new TerrainTransitionService($database))->deletePlanTransitions($selectedPlan);
+        $result = (new TerrainTransitionService())->deletePlanTransitions($selectedPlan);
         setFlash('success', $result['deleted'] . ' fondu(s) supprimé(s) ; ' . $result['cellsReplaced']
             . ' case(s) remise(s) sur leur biome, ' . $result['cellsEmptied'] . ' case(s) vidée(s).');
     } catch (Throwable $e) {
@@ -130,9 +130,18 @@ if ($isStateChangingPost && isset($_POST['delete_transitions']) && $selectedPlan
     }
 }
 
+if ($isStateChangingPost && isset($_POST['import_terrains_file'])) {
+    try {
+        $count = (new TerrainTransitionService())->importTerrainsFile();
+        setFlash('success', $count . ' tuile(s) de terrain importée(s) depuis terrains.json — le fichier n\'est plus lu.');
+    } catch (Throwable $e) {
+        setFlash('danger', 'Échec de l\'import : ' . $e->getMessage());
+    }
+}
+
 if ($isStateChangingPost && isset($_POST['cleanup_orphans'])) {
     try {
-        $result = (new TerrainTransitionService($database))->cleanupOrphanTransitions();
+        $result = (new TerrainTransitionService())->cleanupOrphanTransitions();
         $lines = [];
         if ($result['declarations'] !== []) {
             $lines[] = count($result['declarations']) . ' déclaration(s) sans image retirée(s) : '
@@ -156,7 +165,7 @@ $transitionReport = null;
 if ($isStateChangingPost && isset($_POST['generate_transitions']) && $selectedPlan) {
     try {
         set_time_limit(600); // gros plans : des centaines de fondus PNG à écrire
-        $transitionReport = (new TerrainTransitionService($database))->generateForPlan($selectedPlan);
+        $transitionReport = (new TerrainTransitionService())->generateForPlan($selectedPlan);
         setFlash('success', $transitionReport['generatedCount'] . ' tuile(s) de transition générée(s) pour '
             . $selectedPlan . ' — re-puller le plan dans Tiled pour recharger les tilesets.');
     } catch (Throwable $e) {
@@ -175,7 +184,7 @@ ob_start();
     <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
         <strong>Trois étapes :</strong>
         <ol class="mb-0 mt-1">
-            <li><strong>Classer</strong> les tuiles du plan : terrain (biome fondable) ou hors terrain (décor, escaliers, runes…). Le classement est enregistré dans <code style="display:inline">tools/tiled/terrains.json</code> ; sur un serveur neuf ce fichier est vide, tout se classe ici.</li>
+            <li><strong>Classer</strong> les tuiles du plan : terrain (biome fondable) ou hors terrain (décor, escaliers, runes…). Le classement est enregistré en base ; sur un serveur neuf il est vide, tout se classe ici.</li>
             <li><strong>Auditer</strong> : chaque endroit où 2 à 4 terrains se touchent exige ses tuiles de fondu, sinon le pinceau Terrain pose la tuile la plus proche (morceaux d'autres biomes).</li>
             <li><strong>Générer</strong> les fondus manquants (<code style="display:inline">img/tiles/</code> + wangId) et les vérifier dans la galerie.</li>
         </ol>
@@ -186,6 +195,23 @@ ob_start();
             <?= render_season_filter($seasonFilter) ?>
         </div>
     </div>
+
+    <?php
+    $importService = new TerrainTransitionService();
+    $terrainsFile = $importService->loadTerrains() === [] ? $importService->terrainsFilePath() : null;
+    ?>
+    <?php if ($terrainsFile !== null): ?>
+        <div class="alert alert-warning d-flex align-items-center gap-3" style="font-size:13px;">
+            <span>Les terrains sont désormais en base, encore vide sur ce serveur : importer l'ancien
+                <code style="display:inline"><?= e(basename(dirname($terrainsFile)) . '/terrains.json') ?></code> (une seule fois).</span>
+            <form method="post" class="mb-0">
+                <?= $csrf->renderTokenField() ?>
+                <button type="submit" name="import_terrains_file" class="btn btn-warning btn-sm">
+                    <i class="fas fa-file-import"></i> Importer
+                </button>
+            </form>
+        </div>
+    <?php endif; ?>
 
     <div class="card mt-3">
         <div class="card-body py-2">
@@ -226,7 +252,7 @@ ob_start();
     <?php if ($selectedPlan): ?>
         <?php
         try {
-            $terrainService = new TerrainTransitionService($database);
+            $terrainService = new TerrainTransitionService();
             $classification = $terrainService->planTileClassification($selectedPlan);
             // Toujours ré-auditer au rendu : après classement ou génération,
             // l'état affiché est celui d'après écriture
@@ -249,8 +275,8 @@ ob_start();
                     <?php if ($terrainCount === 0): ?>
                         <div class="alert alert-warning py-1" style="font-size:13px;">
                             <i class="fas fa-exclamation-triangle"></i>
-                            Aucune tuile de ce plan n'est classée terrain — probablement un
-                            <code style="display:inline">terrains.json</code> vierge sur ce serveur. Commencez par cocher les biomes ci-dessous.
+                            Aucune tuile de ce plan n'est classée terrain — probablement des
+                            terrains encore vides sur ce serveur. Commencez par cocher les biomes ci-dessous.
                         </div>
                     <?php endif; ?>
 
@@ -272,7 +298,7 @@ ob_start();
                         <button type="submit" name="classify_tiles" class="btn btn-primary btn-sm">
                             <i class="fas fa-tags"></i> Enregistrer la classification
                         </button>
-                        <small class="text-muted ml-2">Écrit tools/tiled/terrains.json sur ce serveur.</small>
+                        
                     </form>
 
                     <?php $transitionTiles = array_filter($classification, fn(array $t) => $t['isTransition']); ?>

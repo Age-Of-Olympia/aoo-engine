@@ -2,6 +2,7 @@
 
 namespace Tests\Various;
 
+use App\Service\TerrainTransitionService;
 use App\Service\TileAssetService;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -31,6 +32,9 @@ class TileAssetServiceTest extends TestCase
 
     protected function tearDown(): void
     {
+        if ($this->link->isTransactionActive()) {
+            $this->link->rollBack();
+        }
         foreach ($this->placedTileNames as $name) {
             $this->link->executeStatement('DELETE FROM map_tiles WHERE name = ?', [$name]);
         }
@@ -44,11 +48,6 @@ class TileAssetServiceTest extends TestCase
             rmdir($dir);
         }
         rmdir($this->root . '/img');
-        if (is_dir($this->root . '/tools')) {
-            @unlink($this->root . '/tools/tiled/terrains.json');
-            rmdir($this->root . '/tools/tiled');
-            rmdir($this->root . '/tools');
-        }
         rmdir($this->root);
     }
 
@@ -206,8 +205,11 @@ class TileAssetServiceTest extends TestCase
         $this->assertFileDoesNotExist($this->root . '/img/tiles/tuile_test_avant.png');
         $this->assertFileExists($this->root . '/img/tiles/tuile_test_apres.png');
 
-        mkdir($this->root . '/tools/tiled', 0777, true);
-        file_put_contents($this->root . '/tools/tiled/terrains.json', json_encode([
+        // Terrain sets written here are rolled back in tearDown
+        $this->link->beginTransaction();
+        $this->link->executeStatement('DELETE FROM terrain_colors');
+        $this->link->executeStatement('DELETE FROM terrain_tiles');
+        (new TerrainTransitionService($this->root))->saveTerrains([
             'tiles' => [
                 'name' => 'Terrains', 'type' => 'corner',
                 'colors' => ['tuile_test_apres', 'autre'],
@@ -218,7 +220,7 @@ class TileAssetServiceTest extends TestCase
                     'trans_tuile_test_apres_inconnu_abab' => [0, 2, 0, 1, 0, 2, 0, 1],
                 ],
             ],
-        ]));
+        ]);
         $this->writeTruecolorPng('trans_tuile_test_apres_autre_abba');
 
         $result = $this->service->rename('tiles', 'tuile_test_apres', 'tuile_test_final');
@@ -229,7 +231,7 @@ class TileAssetServiceTest extends TestCase
         );
         $this->assertSame(['trans_tuile_test_apres_inconnu_abab'], $result['transitions']['unparsed']);
         $this->assertFileExists($this->root . '/img/tiles/trans_tuile_test_final_autre_abba.png');
-        $tiles = json_decode((string) file_get_contents($this->root . '/tools/tiled/terrains.json'), true)['tiles']['tiles'];
+        $tiles = (new TerrainTransitionService($this->root))->loadTerrains()['tiles']['tiles'];
         $this->assertSame([0, 2, 0, 2, 0, 1, 0, 1], $tiles['trans_tuile_test_final_autre_abba']);
         $this->assertArrayNotHasKey('trans_tuile_test_apres_autre_abba', $tiles);
     }

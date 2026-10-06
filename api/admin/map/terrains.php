@@ -5,8 +5,8 @@
  * GET /api/admin/map/terrains.php
  * Auth : header X-AoO-Tiled-Token (jeton délivré par auth.php)
  *
- * Réponse : { success, terrains } — le contenu de terrains.json de cette
- * instance (état runtime, absent tant que rien n'a été classé : {}).
+ * Réponse : { success, terrains } — les sets de terrain de cette instance
+ * (tables terrain_colors / terrain_tiles ; {} tant que rien n'a été classé).
  * L'extension Tiled le récupère au pull pour construire ses Terrain Sets.
  */
 

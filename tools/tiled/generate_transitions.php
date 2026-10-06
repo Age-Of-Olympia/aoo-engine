@@ -1,7 +1,7 @@
 <?php
 /**
  * Génère les tuiles de transition entre biomes pour l'autotiling Tiled
- * (pinceau Terrain), et déclare leurs wangId dans tools/tiled/terrains.json.
+ * (pinceau Terrain), et déclare leurs wangId en base (terrain_tiles).
  * Le moteur (analyse de coins, fondus, wangId) vit dans
  * App\Service\TerrainTransitionService — partagé avec le panneau admin des
  * cartes locales (admin/local_maps.php), qui fait la même chose sur un plan
@@ -23,8 +23,8 @@
  * reporter les PNG générés dans la source d'assets déployée.
  *
  * --all génère chaque paire (non ordonnée) de tuiles pleines déclarées dans
- * terrains.json pour la couche. Relançable : écrase les PNG et resynchronise
- * les entrées de terrains.json. Attention au volume : N biomes déclarés =
+ * en base pour la couche. Relançable : écrase les PNG et resynchronise
+ * leurs entrées en base. Attention au volume : N biomes déclarés =
  * N(N-1)/2 paires × 14 PNG — préférer --map ou les paires ciblées au-delà
  * de ~10.
  *
@@ -176,7 +176,7 @@ function tmjGrids(string $path, string $layer): array
 
 /* ------------------------------------------------------------------ */
 
-$service = new TerrainTransitionService(null, $root);
+$service = new TerrainTransitionService($root);
 
 try {
     $terrains = $service->loadTerrains();
@@ -269,7 +269,7 @@ try {
     }
 
     $service->saveTerrains($terrains);
-    echo "terrains.json mis à jour — re-puller un plan pour recharger les tilesets.\n";
+    echo "terrains mis à jour en base — re-puller un plan pour recharger les tilesets.\n";
 } catch (RuntimeException $e) {
     fwrite(STDERR, $e->getMessage() . "\n");
     exit(1);

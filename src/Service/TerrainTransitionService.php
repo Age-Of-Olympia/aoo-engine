@@ -2,14 +2,15 @@
 
 namespace App\Service;
 
-use Classes\Db;
+use App\Factory\EntityManagerFactory;
+use Doctrine\DBAL\Connection;
 use GdImage;
 use RuntimeException;
 
 /**
  * Tuiles de transition entre biomes pour l'autotiling Tiled (pinceau
  * Terrain) : analyse d'un plan, génération des fondus PNG et déclaration des
- * wangId dans tools/tiled/terrains.json.
+ * wangId dans les tables terrain_colors / terrain_tiles.
  *
  * Principe : sur une grille de tuiles pleines, chaque point de coin
  * (intersection de 4 cases) où 2 à 4 biomes se rencontrent exige que toutes
@@ -37,7 +38,10 @@ class TerrainTransitionService
     private const WANG_POSITIONS = [7, 1, 3, 5];
 
     private string $root;
-    private ?Db $db;
+
+    /** @var array<string, array{name: string, type: string, colors: list<string>, tiles: array<string, mixed>}>|null
+     *  terrain sets read once per instance (thousands of rows), dropped on save */
+    private ?array $terrains = null;
 
     /** @var array<string, GdImage> cache des images de biome chargées */
     private array $tileImages = [];
@@ -45,55 +49,130 @@ class TerrainTransitionService
     /** @var list<list<list<float>>>|null poids bilinéaires des 4 coins */
     private ?array $cornerWeights = null;
 
-    public function __construct(?Db $db = null, ?string $root = null)
+    public function __construct(?string $root = null)
     {
-        $this->db = $db;
         $this->root = $root ?? (($_SERVER['DOCUMENT_ROOT'] ?? '') ?: dirname(__DIR__, 2));
     }
 
     /* ------------------------------------------------------------------ */
-    /* terrains.json                                                       */
+    /* Stockage (terrain_colors, terrain_tiles)                            */
     /* ------------------------------------------------------------------ */
 
-    public function terrainsPath(): string
+    /** Old per-server file, read once by importTerrainsFile(). */
+    public function terrainsFilePath(): ?string
     {
-        return $this->root . '/tools/tiled/terrains.json';
+        foreach (['/tools/tiled/terrains.json', '/tools/tiled/aoo/terrains.json'] as $relative) {
+            if (is_file($this->root . $relative)) {
+                return $this->root . $relative;
+            }
+        }
+        return null;
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Terrain sets per layer, in the shape Tiled's extension reads:
+     * colours by 1-based position, tiles mapped to a colour (full tile) or
+     * to a wangId (transition).
+     *
+     * @return array<string, array{name: string, type: string, colors: list<string>, tiles: array<string, mixed>}>
+     */
     public function loadTerrains(): array
     {
-        $raw = @file_get_contents($this->terrainsPath());
-        if ($raw === false) {
-            // Deployed servers built their runtime state under the old
-            // extension folder; keep reading it until the next save.
-            $raw = @file_get_contents($this->root . '/tools/tiled/aoo/terrains.json');
+        if ($this->terrains !== null) {
+            return $this->terrains;
         }
-        $terrains = $raw === false ? [] : json_decode($raw, true);
-        if (!is_array($terrains)) {
-            throw new RuntimeException('terrains.json illisible : ' . $this->terrainsPath());
+        $connection = $this->connection();
+        $terrains = [];
+        foreach ($connection->fetchAllAssociative('SELECT layer, name FROM terrain_colors ORDER BY layer, position') as $row) {
+            $cfg = &$this->layerConfig($terrains, $row['layer']);
+            $cfg['colors'][] = $row['name'];
+            unset($cfg);
         }
-        return $terrains;
+        foreach ($connection->fetchAllAssociative('SELECT layer, name, color, wang_id FROM terrain_tiles ORDER BY layer, name') as $row) {
+            $cfg = &$this->layerConfig($terrains, $row['layer']);
+            $cfg['tiles'][$row['name']] = $row['wang_id'] !== null
+                ? array_map('intval', explode(',', $row['wang_id']))
+                : $row['color'];
+            unset($cfg);
+        }
+        return $this->terrains = $terrains;
     }
 
-    /** @param array<string, mixed> $terrains */
+    /**
+     * Rewrites the layers present in $terrains, in one transaction.
+     *
+     * @param array<string, mixed> $terrains
+     */
     public function saveTerrains(array $terrains): void
     {
-        // Sur un serveur déployé, tools/ n'est pas copié (deploy_code.sh) :
-        // terrains.json y est un état runtime, créé à la première écriture
-        // (classification ou génération depuis le panneau admin).
-        $dir = dirname($this->terrainsPath());
-        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
-            throw new RuntimeException('Impossible de créer ' . $dir);
-        }
+        $this->terrains = null;
+        $connection = $this->connection();
+        $connection->transactional(function (Connection $connection) use ($terrains): void {
+            foreach ($terrains as $layer => $cfg) {
+                if (!is_array($cfg) || !isset($cfg['colors'], $cfg['tiles'])) {
+                    continue; // the old file carried a "_doc" entry
+                }
+                $connection->executeStatement('DELETE FROM terrain_colors WHERE layer = ?', [$layer]);
+                $connection->executeStatement('DELETE FROM terrain_tiles WHERE layer = ?', [$layer]);
 
-        $written = file_put_contents(
-            $this->terrainsPath(),
-            json_encode($terrains, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n"
-        );
-        if ($written === false) {
-            throw new RuntimeException('Impossible d\'écrire ' . $this->terrainsPath());
+                $colors = [];
+                foreach (array_values($cfg['colors']) as $index => $name) {
+                    $colors[] = [$layer, $index + 1, $name];
+                }
+                $tiles = [];
+                foreach ($cfg['tiles'] as $name => $spec) {
+                    $tiles[] = is_array($spec)
+                        ? [$layer, (string) $name, null, implode(',', $spec)]
+                        : [$layer, (string) $name, $spec, null];
+                }
+                $this->insertRows($connection, 'terrain_colors (layer, position, name)', $colors);
+                $this->insertRows($connection, 'terrain_tiles (layer, name, color, wang_id)', $tiles);
+            }
+        });
+    }
+
+    /**
+     * One-off import of the old terrains.json, refused once the database
+     * holds terrain sets (the file would overwrite newer work).
+     *
+     * @return int tiles imported
+     */
+    public function importTerrainsFile(): int
+    {
+        if ($this->loadTerrains() !== []) {
+            throw new RuntimeException('Les terrains sont déjà en base : import refusé.');
         }
+        $path = $this->terrainsFilePath();
+        if ($path === null) {
+            throw new RuntimeException('Aucun terrains.json sur ce serveur.');
+        }
+        $terrains = json_decode((string) file_get_contents($path), true);
+        if (!is_array($terrains)) {
+            throw new RuntimeException('terrains.json illisible : ' . $path);
+        }
+        $this->saveTerrains($terrains);
+
+        return array_sum(array_map(
+            fn($cfg) => is_array($cfg) && is_array($cfg['tiles'] ?? null) ? count($cfg['tiles']) : 0,
+            $terrains
+        ));
+    }
+
+    /** @param list<list<mixed>> $rows */
+    private function insertRows(Connection $connection, string $table, array $rows): void
+    {
+        foreach (array_chunk($rows, 500) as $chunk) {
+            $placeholders = '(' . implode(', ', array_fill(0, count($chunk[0]), '?')) . ')';
+            $connection->executeStatement(
+                'INSERT INTO ' . $table . ' VALUES ' . implode(', ', array_fill(0, count($chunk), $placeholders)),
+                array_merge(...$chunk)
+            );
+        }
+    }
+
+    private function connection(): Connection
+    {
+        return EntityManagerFactory::getEntityManager()->getConnection();
     }
 
     /**
@@ -130,8 +209,7 @@ class TerrainTransitionService
             throw new RuntimeException('Couche inconnue : ' . $layer);
         }
 
-        $this->db ??= new Db();
-        $res = $this->db->exe(
+        $rows = $this->connection()->fetchAllAssociative(
             'SELECT c.x, c.y, c.z, m.name
              FROM map_' . $layer . ' m
              JOIN coords c ON c.id = m.coords_id
@@ -140,7 +218,7 @@ class TerrainTransitionService
         );
 
         $grids = [];
-        while ($row = $res->fetch_assoc()) {
+        foreach ($rows as $row) {
             $grids[(int) $row['z']][$row['x'] . ',' . $row['y']] = $row['name'];
         }
         ksort($grids);
@@ -281,7 +359,7 @@ class TerrainTransitionService
 
     /**
      * Génère toutes les transitions manquantes d'un plan et sauvegarde
-     * terrains.json. Idempotent (comparaison par wangId, quel que soit
+     * les terrains. Idempotent (comparaison par wangId, quel que soit
      * l'ordre historique des noms des fichiers existants).
      *
      * @return array{
@@ -336,7 +414,7 @@ class TerrainTransitionService
     /**
      * Classification des tuiles du sol d'un plan : chaque nom distinct posé
      * (tous niveaux z), avec son statut terrain (tuile pleine déclarée dans
-     * terrains.json) et son nombre d'occurrences. Les fondus générés
+     * en base) et son nombre d'occurrences. Les fondus générés
      * (déclarés par wangId) sont signalés à part : ils ne se classent pas.
      *
      * @return list<array{name: string, isTerrain: bool, isTransition: bool, count: int}>
@@ -369,7 +447,7 @@ class TerrainTransitionService
 
     /**
      * Classe des tuiles comme terrain / hors terrain et sauvegarde
-     * terrains.json. Déclarer = tuile pleine de sa propre couleur (ajoutée
+     * les terrains. Déclarer = tuile pleine de sa propre couleur (ajoutée
      * en FIN de liste : les wangId des fondus existants référencent les
      * couleurs par index, l'ordre ne doit jamais bouger). Déclasser =
      * retirer le mapping de tuile pleine SANS toucher à la liste des
@@ -580,7 +658,7 @@ class TerrainTransitionService
         $cfg = &$this->layerConfig($terrains, $layer);
         $fullNames = array_keys(array_filter($cfg['tiles'], 'is_string'));
         $imgDir = $this->root . '/img/' . $layer;
-        $this->db ??= new Db();
+        $connection = $this->connection();
 
         $replaced = 0;
         $emptied = 0;
@@ -589,10 +667,10 @@ class TerrainTransitionService
             $parsed = is_array($spec) ? $this->parseTransitionName($name, $fullNames, $spec, $cfg) : null;
             if ($parsed !== null) {
                 [$tileNames, $code] = $parsed;
-                $replaced += (int) $this->db->exe('UPDATE map_' . $layer . ' SET name = ? WHERE name = ?',
-                    [$tileNames[ord($code[0]) - ord('a')], $name], false, true);
+                $replaced += (int) $connection->executeStatement('UPDATE map_' . $layer . ' SET name = ? WHERE name = ?',
+                    [$tileNames[ord($code[0]) - ord('a')], $name]);
             } else {
-                $emptied += (int) $this->db->exe('DELETE FROM map_' . $layer . ' WHERE name = ?', [$name], false, true);
+                $emptied += (int) $connection->executeStatement('DELETE FROM map_' . $layer . ' WHERE name = ?', [$name]);
             }
 
             unset($cfg['tiles'][$name]);
@@ -662,12 +740,9 @@ class TerrainTransitionService
         $cfg = &$this->layerConfig($terrains, $layer);
         $imgDir = $this->root . '/img/' . $layer;
 
-        $this->db ??= new Db();
-        $laid = [];
-        $res = $this->db->exe("SELECT DISTINCT name FROM map_{$layer} WHERE name LIKE 'trans\\_%'");
-        while ($row = $res->fetch_assoc()) {
-            $laid[$row['name']] = true;
-        }
+        $laid = array_fill_keys($this->connection()->fetchFirstColumn(
+            "SELECT DISTINCT name FROM map_{$layer} WHERE name LIKE 'trans\\_%'"
+        ), true);
 
         $images = [];
         foreach (glob($imgDir . '/trans_*') ?: [] as $path) {
@@ -785,7 +860,7 @@ class TerrainTransitionService
     /**
      * Génère les tuiles de transition d'un ensemble de 2 à 4 biomes et
      * déclare leurs wangId dans $cfg (non sauvegardé : au appelant de
-     * persister terrains.json). $skipKeys (clés wangKey) restreint aux
+     * persister via saveTerrains). $skipKeys (clés wangKey) restreint aux
      * affectations encore absentes ; vide = tout (ré)générer.
      *
      * @param array{colors: list<string>, tiles: array<string, mixed>} $cfg modifié en place

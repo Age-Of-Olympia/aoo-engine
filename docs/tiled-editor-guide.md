@@ -369,7 +369,7 @@ Emplacements :
   commit ni déploiement, seulement de la relever depuis le tableau de
   bord (Options générales).
 - Secret : `config/tiled_constants.php` (gitignoré). Sets de terrain :
-  `tools/tiled/terrains.json` par instance (état runtime, servi à
+  tables `terrain_colors` / `terrain_tiles` par instance (servies à
   l'extension par `terrains.php` au pull — une instance sans l'endpoint se
   pull sans pinceau Terrain).
 

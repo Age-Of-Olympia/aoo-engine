@@ -5,6 +5,7 @@ namespace Tests\Various;
 use App\Service\TerrainTransitionService;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Tests\Support\LegacyBootstrapTrait;
 
 /**
  * Moteur des transitions de terrain (autotiling Tiled) : énumération des
@@ -13,6 +14,8 @@ use RuntimeException;
  */
 class TerrainTransitionServiceTest extends TestCase
 {
+    use LegacyBootstrapTrait;
+
     private TerrainTransitionService $service;
     private string $root;
 
@@ -20,22 +23,29 @@ class TerrainTransitionServiceTest extends TestCase
     {
         $this->root = sys_get_temp_dir() . '/terrain_transitions_' . uniqid();
         mkdir($this->root . '/img/tiles', 0777, true);
-        $this->service = new TerrainTransitionService(null, $this->root);
+        $this->service = new TerrainTransitionService($this->root);
     }
 
     protected function tearDown(): void
     {
+        if (isset($this->link) && $this->link->isTransactionActive()) {
+            $this->link->rollBack();
+        }
         foreach (glob($this->root . '/img/tiles/*') ?: [] as $file) {
             unlink($file);
         }
         rmdir($this->root . '/img/tiles');
         rmdir($this->root . '/img');
-        if (is_dir($this->root . '/tools')) {
-            @unlink($this->root . '/tools/tiled/terrains.json');
-            rmdir($this->root . '/tools/tiled');
-            rmdir($this->root . '/tools');
-        }
         rmdir($this->root);
+    }
+
+    /** Terrain sets start empty; everything written is rolled back in tearDown. */
+    private function isolateTerrainTables(): void
+    {
+        $this->bootstrapLegacyOrSkip('terrain_tiles');
+        $this->link->beginTransaction();
+        $this->link->executeStatement('DELETE FROM terrain_colors');
+        $this->link->executeStatement('DELETE FROM terrain_tiles');
     }
 
     /** Écrit une tuile 50x50 de couleur unie dans l'img temporaire. */
@@ -125,8 +135,7 @@ class TerrainTransitionServiceTest extends TestCase
 
     public function testClassifyTilesKeepsColorIndicesStableAndProtectsTransitions(): void
     {
-        // Pas de mkdir : sur un serveur déployé tools/ n'existe pas,
-        // saveTerrains doit créer l'arborescence à la première écriture
+        $this->isolateTerrainTables();
         $this->writeSolidTile('rouge', 255, 0, 0);
         $this->writeSolidTile('bleu', 0, 0, 255);
 
@@ -180,7 +189,7 @@ class TerrainTransitionServiceTest extends TestCase
 
     public function testRegenerateTransitionImagesRepairsCorruptedPngs(): void
     {
-        mkdir($this->root . '/tools/tiled', 0777, true);
+        $this->isolateTerrainTables();
         $this->writeSolidTile('rouge', 255, 0, 0);
         $this->writeSolidTile('bleu', 0, 0, 255);
 
@@ -213,5 +222,37 @@ class TerrainTransitionServiceTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->service->generateSet($cfg, 'tiles', ['lac', 'lac_gele']);
+    }
+
+    public function testImportTerrainsFileOnceIntoTheDatabase(): void
+    {
+        $this->isolateTerrainTables();
+        mkdir($this->root . '/tools/tiled/aoo', 0777, true);
+        $file = $this->root . '/tools/tiled/aoo/terrains.json';
+        file_put_contents($file, json_encode([
+            '_doc'  => ['ancienne note'],
+            'tiles' => [
+                'name' => 'Biomes', 'type' => 'corner',
+                'colors' => ['rouge', 'eau'],
+                'tiles' => ['rouge' => 'rouge', 'lac' => 'eau', 'trans_rouge_lac_abab' => [0, 2, 0, 1, 0, 2, 0, 1]],
+            ],
+        ]));
+
+        try {
+            $this->assertSame(3, $this->service->importTerrainsFile());
+
+            $cfg = $this->service->loadTerrains()['tiles'];
+            $this->assertSame(['rouge', 'eau'], $cfg['colors']);
+            $this->assertSame('eau', $cfg['tiles']['lac']);
+            $this->assertSame([0, 2, 0, 1, 0, 2, 0, 1], $cfg['tiles']['trans_rouge_lac_abab']);
+
+            $this->expectException(RuntimeException::class);
+            $this->service->importTerrainsFile();
+        } finally {
+            unlink($file);
+            rmdir($this->root . '/tools/tiled/aoo');
+            rmdir($this->root . '/tools/tiled');
+            rmdir($this->root . '/tools');
+        }
     }
 }

@@ -14,7 +14,7 @@ use App\Service\Map\StructureTypeService;
  * nom invalide, formats multiples, image référencée en base mais absente,
  * image inutilisée), ajouter (normalisée en PNG vraies couleurs), supprimer
  * et renommer avec garde-fous (une image encore posée sur une carte ne se
- * supprime pas ; un renommage met à jour les cartes et terrains.json).
+ * supprime pas ; un renommage met à jour les cartes et les terrains).
  *
  * Les fondus générés (trans_*) ne sont pas inventoriés un à un : ils se
  * gèrent depuis la page Transitions de terrain.
@@ -271,7 +271,7 @@ class TileAssetService
     /**
      * Renomme une image ET toutes ses références : cases posées sur les
      * cartes (tous plans), et pour la couche sol l'entrée de terrain de
-     * terrains.json (mapping + libellé de couleur, au même index — les
+     * terrains (mapping + libellé de couleur, au même index — les
      * wangId référencent les couleurs par index, jamais déplacées) ainsi que
      * les fondus qui embarquent le nom (déclaration, fichier, cases).
      *
@@ -294,7 +294,7 @@ class TileAssetService
         $cfg = null;
         $transitions = ['renamed' => [], 'unparsed' => []];
         if ($layer === TerrainTransitionService::GROUND_LAYER) {
-            $service = new TerrainTransitionService(null, $this->root);
+            $service = new TerrainTransitionService($this->root);
             $terrains = $service->loadTerrains();
             $cfg = &$service->layerConfig($terrains, $layer);
             $transitions = $service->transitionRenames($cfg, $old, $new);
@@ -346,7 +346,7 @@ class TileAssetService
                 $cfg['tiles'][$new] = $color;
             }
             if ($terrains !== null) {
-                (new TerrainTransitionService(null, $this->root))->saveTerrains($terrains);
+                (new TerrainTransitionService($this->root))->saveTerrains($terrains);
             }
 
             $connection->commit();
@@ -438,11 +438,11 @@ class TileAssetService
         return array_map('intval', $rows);
     }
 
-    /** @return array<string, true> tuiles pleines déclarées dans terrains.json */
+    /** @return array<string, true> tuiles pleines déclarées terrain */
     private function declaredTerrainTiles(string $layer): array
     {
         try {
-            $service = new TerrainTransitionService(null, $this->root);
+            $service = new TerrainTransitionService($this->root);
             $terrains = $service->loadTerrains();
             $cfg = &$service->layerConfig($terrains, $layer);
             return array_fill_keys(array_keys(array_filter($cfg['tiles'], 'is_string')), true);

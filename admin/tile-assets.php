@@ -105,7 +105,7 @@ ob_start();
         Inventaire des images de <code style="display:inline">img/&lt;couche&gt;/</code> avec leurs problèmes connus
         (image à palette, cause des fondus noirs ; formats multiples ; nom invalide ; image posée sur une carte
         mais absente du serveur…). L'ajout convertit systématiquement en PNG vraies couleurs ; la suppression est
-        refusée tant que l'image est posée quelque part ; le renommage met à jour les cartes et terrains.json.
+        refusée tant que l'image est posée quelque part ; le renommage met à jour les cartes et les terrains.
         Les fondus générés (<code style="display:inline">trans_*</code>) se gèrent depuis la page Transitions de terrain.
     </div>
 

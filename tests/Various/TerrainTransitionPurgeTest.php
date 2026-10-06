@@ -3,7 +3,6 @@
 namespace Tests\Various;
 
 use App\Service\TerrainTransitionService;
-use Classes\Db;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use Tests\Support\LegacyBootstrapTrait;
@@ -13,7 +12,7 @@ use Tests\Support\PlanFixtureTrait;
  * Deleting every transition of a plan, laid ones included: files and wangIds
  * go, the cells carrying them fall back to their top-left biome.
  *
- * DB-backed; skips cleanly when the database is unreachable.
+ * DB-backed, inside a rolled-back transaction; skips cleanly when the database is unreachable.
  */
 class TerrainTransitionPurgeTest extends TestCase
 {
@@ -39,11 +38,18 @@ class TerrainTransitionPurgeTest extends TestCase
         $this->purgePlan($this->conn, self::PLAN);
         $this->root = sys_get_temp_dir() . '/transition_purge_' . uniqid();
         mkdir($this->root . '/img/tiles', 0777, true);
-        mkdir($this->root . '/tools/tiled', 0777, true);
+
+        // Terrain sets and map rows written by the test are rolled back
+        $this->conn->beginTransaction();
+        $this->conn->executeStatement('DELETE FROM terrain_colors');
+        $this->conn->executeStatement('DELETE FROM terrain_tiles');
     }
 
     protected function tearDown(): void
     {
+        if ($this->conn?->isTransactionActive()) {
+            $this->conn->rollBack();
+        }
         $this->purgePlan($this->conn, self::PLAN);
         if (isset($this->root)) {
             exec('rm -rf ' . escapeshellarg($this->root));
@@ -58,7 +64,7 @@ class TerrainTransitionPurgeTest extends TestCase
             imagepng($image, $this->root . '/img/tiles/' . $name . '.png');
         }
 
-        $service = new TerrainTransitionService(new Db(), $this->root);
+        $service = new TerrainTransitionService($this->root);
         $terrains = $service->loadTerrains();
         $cfg = &$service->layerConfig($terrains, 'tiles');
         $cfg['colors'] = ['gm_purge_rouge', 'gm_purge_bleu'];
@@ -93,7 +99,7 @@ class TerrainTransitionPurgeTest extends TestCase
 
     public function testCleanupDropsOrphansButNeverLaidTransitions(): void
     {
-        $service = new TerrainTransitionService(new Db(), $this->root);
+        $service = new TerrainTransitionService($this->root);
         $terrains = $service->loadTerrains();
         $cfg = &$service->layerConfig($terrains, 'tiles');
         $cfg['tiles'] = [
