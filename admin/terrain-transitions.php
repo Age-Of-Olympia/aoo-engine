@@ -49,7 +49,7 @@ $selectedPlan = optionalString('selected_plan')
 
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['classify_tiles']) || isset($_POST['generate_transitions'])
-        || isset($_POST['regenerate_transitions']));
+        || isset($_POST['regenerate_transitions']) || isset($_POST['delete_transitions']));
 if ($isStateChangingPost) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
@@ -120,6 +120,16 @@ if ($isStateChangingPost && isset($_POST['regenerate_transitions']) && $selected
 }
 
 // Génération des fondus manquants du plan (rapport rendu plus bas)
+if ($isStateChangingPost && isset($_POST['delete_transitions']) && $selectedPlan) {
+    try {
+        $result = (new TerrainTransitionService($database))->deletePlanTransitions($selectedPlan);
+        setFlash('success', $result['deleted'] . ' fondu(s) supprimé(s) ; ' . $result['cellsReplaced']
+            . ' case(s) remise(s) sur leur biome, ' . $result['cellsEmptied'] . ' case(s) vidée(s).');
+    } catch (Throwable $e) {
+        setFlash('danger', 'Échec de la suppression : ' . $e->getMessage());
+    }
+}
+
 $transitionReport = null;
 if ($isStateChangingPost && isset($_POST['generate_transitions']) && $selectedPlan) {
     try {
@@ -351,6 +361,18 @@ ob_start();
                             <input type="hidden" name="regenerate_all_plan" value="">
                             <small class="text-muted">Seuls les fondus des biomes de ce plan sont concernés.</small>
                         </div>
+                    </form>
+                <?php endif; ?>
+
+                <?php if ($transitionsBySet !== [] || array_filter($classification, fn(array $t) => str_starts_with($t['name'], 'trans_'))): ?>
+                    <form method="post" class="d-flex align-items-center gap-3 mt-3"
+                          onsubmit="return confirm('Supprimer tous les fondus de ce plan ? Les fichiers et wangId disparaissent, et les cases qui les portent (sur tous les plans) reprennent un biome plein.');">
+                        <?= $csrf->renderTokenField() ?>
+                        <input type="hidden" name="selected_plan" value="<?= e($selectedPlan) ?>">
+                        <button type="submit" name="delete_transitions" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-trash"></i> Supprimer tous les fondus du plan
+                        </button>
+                        <small class="text-muted">Même posés sur la carte : pour repartir de zéro, puis regénérer.</small>
                     </form>
                 <?php endif; ?>
 

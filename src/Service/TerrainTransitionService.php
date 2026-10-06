@@ -560,6 +560,59 @@ class TerrainTransitionService
     }
 
     /**
+     * Deletes a plan's transitions, even those laid on the map: the ones
+     * declared for its biome sets plus any trans_* on its ground. Files and
+     * wangId entries go; every cell carrying one, on any plan, falls back
+     * to the biome of its top-left corner (or is emptied when the name
+     * cannot be decomposed), ready for a fresh generation.
+     *
+     * @return array{deleted: int, cellsReplaced: int, cellsEmptied: int}
+     */
+    public function deletePlanTransitions(string $plan, string $layer = self::GROUND_LAYER): array
+    {
+        $names = array_merge([], ...array_values($this->planTransitionsBySet($plan, $layer)));
+        foreach ($this->gridsForPlan($plan, $layer) as $grid) {
+            $names = array_merge($names, array_filter($grid, fn(string $name) => str_starts_with($name, 'trans_')));
+        }
+        $names = array_unique($names);
+
+        $terrains = $this->loadTerrains();
+        $cfg = &$this->layerConfig($terrains, $layer);
+        $fullNames = array_keys(array_filter($cfg['tiles'], 'is_string'));
+        $imgDir = $this->root . '/img/' . $layer;
+        $this->db ??= new Db();
+
+        $replaced = 0;
+        $emptied = 0;
+        foreach ($names as $name) {
+            $spec = $cfg['tiles'][$name] ?? null;
+            $parsed = is_array($spec) ? $this->parseTransitionName($name, $fullNames, $spec, $cfg) : null;
+            if ($parsed !== null) {
+                [$tileNames, $code] = $parsed;
+                $replaced += (int) $this->db->exe('UPDATE map_' . $layer . ' SET name = ? WHERE name = ?',
+                    [$tileNames[ord($code[0]) - ord('a')], $name], false, true);
+            } else {
+                $emptied += (int) $this->db->exe('DELETE FROM map_' . $layer . ' WHERE name = ?', [$name], false, true);
+            }
+
+            unset($cfg['tiles'][$name]);
+            foreach (TileCatalogService::IMAGE_EXTENSIONS as $ext) {
+                $path = $imgDir . '/' . $name . '.' . $ext;
+                if (is_file($path) && !unlink($path)) {
+                    throw new RuntimeException('Suppression impossible : ' . $path);
+                }
+            }
+        }
+
+        if ($names !== []) {
+            $this->saveTerrains($terrains);
+            \App\Service\Map\BoardChanges::world();
+        }
+
+        return ['deleted' => count($names), 'cellsReplaced' => $replaced, 'cellsEmptied' => $emptied];
+    }
+
+    /**
      * Décompose un nom de fondu (trans_<A>_<B>[_<C>[_<D>]]_<code>) en tuiles
      * composantes, dans l'ordre des lettres du code. Toutes les coupures
      * possibles en noms de tuiles pleines connus sont essayées ; celle dont
