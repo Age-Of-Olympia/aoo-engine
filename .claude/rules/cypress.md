@@ -8,21 +8,17 @@ paths:
 
 Full guide: [docs/cypress-testing-guide.md](../../docs/cypress-testing-guide.md).
 
-**Quick Start** (from the HOST — the devcontainer image ships neither the MariaDB client
-nor Xvfb, so both commands below fail inside it):
+**Quick Start** (from the HOST — the devcontainer has no display; the host runs Electron on
+its own `DISPLAY`, no Xvfb needed). The DB tasks reach MariaDB by its container IP, and
+`TEST_DB_NAME` must be the database the web app uses:
 ```bash
-# Reset database and run tutorial test
-scripts/testing/reset_test_database.sh && \
-CYPRESS_CONTAINER=true xvfb-run --auto-servernum npx cypress run \
-  --spec "cypress/e2e/tutorial-production-ready.cy.js" \
-  --browser electron
-
-# Test with different race (nain=4 MVT, elfe=5 MVT, hs=6 MVT)
-CYPRESS_CONTAINER=true xvfb-run --auto-servernum npx cypress run \
-  --spec "cypress/e2e/tutorial-production-ready.cy.js" \
-  --env race=elfe \
-  --browser electron
+TEST_DB_HOST=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' aoo-engine-mariadb-aoo4-1) \
+TEST_DB_NAME=aoo4 \
+./node_modules/.bin/cypress run --spec cypress/e2e/tutorial-production-ready.cy.js \
+  --browser electron --config baseUrl=http://localhost:9000 [--env race=elfe]
 ```
+`npx cypress` fails here ("Missing script"): call the binary directly. Playable races:
+nain, elfe, hs, olympien, geant — the spec reads movement points from the races API.
 
 **Key points**:
 - Always use a SINGLE `it()` block for authenticated flows (Cypress resets the session between blocks)
