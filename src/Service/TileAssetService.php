@@ -272,12 +272,11 @@ class TileAssetService
      * Renomme une image ET toutes ses références : cases posées sur les
      * cartes (tous plans), et pour la couche sol l'entrée de terrain de
      * terrains.json (mapping + libellé de couleur, au même index — les
-     * wangId référencent les couleurs par index, jamais déplacées).
+     * wangId référencent les couleurs par index, jamais déplacées) ainsi que
+     * les fondus qui embarquent le nom (déclaration, fichier, cases).
      *
-     * Refusé quand des fondus générés embarquent le nom (trans_<nom>_…) :
-     * supprimer/régénérer les transitions d'abord.
-     *
-     * @return array{rowsUpdated: int, warnings: list<string>}
+     * @return array{rowsUpdated: int, warnings: list<string>,
+     *               transitions: array{renamed: array<string, string>, unparsed: list<string>}}
      */
     public function rename(string $layer, string $old, string $new): array
     {
@@ -293,21 +292,17 @@ class TileAssetService
 
         $terrains = null;
         $cfg = null;
+        $transitions = ['renamed' => [], 'unparsed' => []];
         if ($layer === TerrainTransitionService::GROUND_LAYER) {
             $service = new TerrainTransitionService(null, $this->root);
             $terrains = $service->loadTerrains();
             $cfg = &$service->layerConfig($terrains, $layer);
+            $transitions = $service->transitionRenames($cfg, $old, $new);
 
-            $embedded = 0;
-            foreach (array_keys($cfg['tiles']) as $tileName) {
-                if (is_array($cfg['tiles'][$tileName])
-                    && preg_match('/(^trans_|_)' . preg_quote($old, '/') . '_/', (string) $tileName)) {
-                    $embedded++;
+            foreach ($transitions['renamed'] as $to) {
+                if (isset($cfg['tiles'][$to]) || $this->existingFiles($layer, $to) !== []) {
+                    throw new RuntimeException("Le fondu « {$to} » existe déjà — renommage impossible.");
                 }
-            }
-            if ($embedded > 0) {
-                throw new RuntimeException("« {$old} » apparaît dans le nom de {$embedded} fondu(s) générés — "
-                    . 'supprimez ou régénérez ses transitions avant de renommer.');
             }
         }
 
@@ -327,6 +322,18 @@ class TileAssetService
                 }
             }
 
+            foreach ($transitions['renamed'] as $from => $to) {
+                $connection->executeStatement('UPDATE map_' . $layer . ' SET name = ? WHERE name = ?', [$to, $from]);
+                foreach ($this->existingFiles($layer, $from) as $file) {
+                    $dir = $this->root . '/img/' . TiledMapService::layerImageDir($layer) . '/';
+                    if (!rename($dir . $file, $dir . $to . '.' . pathinfo($file, PATHINFO_EXTENSION))) {
+                        throw new RuntimeException('Renommage du fichier impossible : ' . $file);
+                    }
+                }
+                $cfg['tiles'][$to] = $cfg['tiles'][$from];
+                unset($cfg['tiles'][$from]);
+            }
+
             if ($cfg !== null && is_string($cfg['tiles'][$old] ?? null)) {
                 $color = $cfg['tiles'][$old];
                 unset($cfg['tiles'][$old]);
@@ -337,6 +344,8 @@ class TileAssetService
                     $color = $new;
                 }
                 $cfg['tiles'][$new] = $color;
+            }
+            if ($terrains !== null) {
                 (new TerrainTransitionService(null, $this->root))->saveTerrains($terrains);
             }
 
@@ -348,7 +357,11 @@ class TileAssetService
 
         \App\Service\Map\BoardChanges::world();
 
-        return ['rowsUpdated' => $rowsUpdated, 'warnings' => $this->renameWarnings($layer, $old)];
+        return [
+            'rowsUpdated' => $rowsUpdated,
+            'warnings'    => $this->renameWarnings($layer, $old),
+            'transitions' => $transitions,
+        ];
     }
 
     /* ------------------------------------------------------------------ */

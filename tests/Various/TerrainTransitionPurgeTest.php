@@ -90,4 +90,30 @@ class TerrainTransitionPurgeTest extends TestCase
             [self::PLAN]
         ));
     }
+
+    public function testCleanupDropsOrphansButNeverLaidTransitions(): void
+    {
+        $service = new TerrainTransitionService(new Db(), $this->root);
+        $terrains = $service->loadTerrains();
+        $cfg = &$service->layerConfig($terrains, 'tiles');
+        $cfg['tiles'] = [
+            'trans_gm_sans_image_abab' => [0, 1, 0, 2, 0, 1, 0, 2],
+            'trans_gm_pose_sans_image_abab' => [0, 1, 0, 2, 0, 1, 0, 2],
+        ];
+        $service->saveTerrains($terrains);
+        touch($this->root . '/img/tiles/trans_gm_non_declare_abab.png');
+        touch($this->root . '/img/tiles/trans_gm_pose_non_declare_abab.png');
+        foreach (['trans_gm_pose_sans_image_abab', 'trans_gm_pose_non_declare_abab'] as $x => $name) {
+            $this->conn->executeStatement('INSERT INTO map_tiles (name, coords_id) VALUES (?, ?)',
+                [$name, $this->coordsIdOn(self::PLAN, $x, 0)]);
+        }
+
+        $result = $service->cleanupOrphanTransitions();
+
+        $this->assertSame(['trans_gm_sans_image_abab'], $result['declarations']);
+        $this->assertSame(['trans_gm_non_declare_abab.png'], $result['files']);
+        $this->assertContains('trans_gm_pose_sans_image_abab', $result['laidWithoutImage']);
+        $this->assertFileExists($this->root . '/img/tiles/trans_gm_pose_non_declare_abab.png');
+        $this->assertArrayHasKey('trans_gm_pose_sans_image_abab', $service->loadTerrains()['tiles']['tiles']);
+    }
 }

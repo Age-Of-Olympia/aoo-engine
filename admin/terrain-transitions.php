@@ -49,7 +49,8 @@ $selectedPlan = optionalString('selected_plan')
 
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['classify_tiles']) || isset($_POST['generate_transitions'])
-        || isset($_POST['regenerate_transitions']) || isset($_POST['delete_transitions']));
+        || isset($_POST['regenerate_transitions']) || isset($_POST['delete_transitions'])
+        || isset($_POST['cleanup_orphans']));
 if ($isStateChangingPost) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
@@ -119,7 +120,6 @@ if ($isStateChangingPost && isset($_POST['regenerate_transitions']) && $selected
     }
 }
 
-// Génération des fondus manquants du plan (rapport rendu plus bas)
 if ($isStateChangingPost && isset($_POST['delete_transitions']) && $selectedPlan) {
     try {
         $result = (new TerrainTransitionService($database))->deletePlanTransitions($selectedPlan);
@@ -130,6 +130,28 @@ if ($isStateChangingPost && isset($_POST['delete_transitions']) && $selectedPlan
     }
 }
 
+if ($isStateChangingPost && isset($_POST['cleanup_orphans'])) {
+    try {
+        $result = (new TerrainTransitionService($database))->cleanupOrphanTransitions();
+        $lines = [];
+        if ($result['declarations'] !== []) {
+            $lines[] = count($result['declarations']) . ' déclaration(s) sans image retirée(s) : '
+                . implode(', ', $result['declarations']);
+        }
+        if ($result['files'] !== []) {
+            $lines[] = count($result['files']) . ' image(s) non déclarée(s) supprimée(s) : '
+                . implode(', ', $result['files']);
+        }
+        if ($result['laidWithoutImage'] !== []) {
+            $lines[] = '⚠ posés sur la carte sans image (laissés) : ' . implode(', ', $result['laidWithoutImage']);
+        }
+        setFlash('success', $lines === [] ? 'Aucun fondu orphelin.' : implode(' ; ', $lines) . '.');
+    } catch (Throwable $e) {
+        setFlash('danger', 'Échec du ménage : ' . $e->getMessage());
+    }
+}
+
+// Génération des fondus manquants du plan (rapport rendu plus bas)
 $transitionReport = null;
 if ($isStateChangingPost && isset($_POST['generate_transitions']) && $selectedPlan) {
     try {
@@ -162,6 +184,19 @@ ob_start();
     <div class="card mt-3">
         <div class="card-body py-2">
             <?= render_season_filter($seasonFilter) ?>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-body py-2">
+            <form method="post" class="d-flex align-items-center gap-3"
+                  onsubmit="return confirm('Retirer les déclarations de fondus sans image et supprimer les images trans_* non déclarées ? Les fondus posés sur une carte ne sont jamais touchés.');">
+                <?= $csrf->renderTokenField() ?>
+                <button type="submit" name="cleanup_orphans" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-broom"></i> Ménage des fondus orphelins
+                </button>
+                <small class="text-muted">Tous plans : déclarations sans image, images sans déclaration, hors fondus posés.</small>
+            </form>
         </div>
     </div>
 

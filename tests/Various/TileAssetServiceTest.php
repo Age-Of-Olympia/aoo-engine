@@ -196,7 +196,7 @@ class TileAssetServiceTest extends TestCase
         $this->service->move('tiles', 'caverne', 'foregrounds');
     }
 
-    public function testRenameMovesFileAndRefusesWhenTransitionsEmbedTheName(): void
+    public function testRenameCarriesTheTransitionsThatEmbedTheName(): void
     {
         $this->writeTruecolorPng('tuile_test_avant');
 
@@ -206,7 +206,6 @@ class TileAssetServiceTest extends TestCase
         $this->assertFileDoesNotExist($this->root . '/img/tiles/tuile_test_avant.png');
         $this->assertFileExists($this->root . '/img/tiles/tuile_test_apres.png');
 
-        // Avec un fondu généré qui embarque le nom : refus explicite
         mkdir($this->root . '/tools/tiled', 0777, true);
         file_put_contents($this->root . '/tools/tiled/terrains.json', json_encode([
             'tiles' => [
@@ -214,13 +213,24 @@ class TileAssetServiceTest extends TestCase
                 'colors' => ['tuile_test_apres', 'autre'],
                 'tiles' => [
                     'tuile_test_apres' => 'tuile_test_apres',
-                    'trans_tuile_test_apres_autre_abba' => [0, 1, 0, 2, 0, 2, 0, 1],
+                    'autre' => 'autre',
+                    'trans_tuile_test_apres_autre_abba' => [0, 2, 0, 2, 0, 1, 0, 1],
+                    'trans_tuile_test_apres_inconnu_abab' => [0, 2, 0, 1, 0, 2, 0, 1],
                 ],
             ],
         ]));
+        $this->writeTruecolorPng('trans_tuile_test_apres_autre_abba');
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageMatches('/fondu/');
-        $this->service->rename('tiles', 'tuile_test_apres', 'tuile_test_final');
+        $result = $this->service->rename('tiles', 'tuile_test_apres', 'tuile_test_final');
+
+        $this->assertSame(
+            ['trans_tuile_test_apres_autre_abba' => 'trans_tuile_test_final_autre_abba'],
+            $result['transitions']['renamed']
+        );
+        $this->assertSame(['trans_tuile_test_apres_inconnu_abab'], $result['transitions']['unparsed']);
+        $this->assertFileExists($this->root . '/img/tiles/trans_tuile_test_final_autre_abba.png');
+        $tiles = json_decode((string) file_get_contents($this->root . '/tools/tiled/terrains.json'), true)['tiles']['tiles'];
+        $this->assertSame([0, 2, 0, 2, 0, 1, 0, 1], $tiles['trans_tuile_test_final_autre_abba']);
+        $this->assertArrayNotHasKey('trans_tuile_test_apres_autre_abba', $tiles);
     }
 }

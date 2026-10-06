@@ -613,6 +613,105 @@ class TerrainTransitionService
     }
 
     /**
+     * New names of the transitions built on tile $old once it becomes $new:
+     * the name is decomposed against its wangId, so only the matching part
+     * is replaced. Names that cannot be decomposed are left as they are —
+     * their wangId points to a colour index, they keep working.
+     *
+     * @param array{colors: list<string>, tiles: array<string, mixed>} $cfg
+     * @return array{renamed: array<string, string>, unparsed: list<string>}
+     */
+    public function transitionRenames(array $cfg, string $old, string $new): array
+    {
+        $fullNames = array_keys(array_filter($cfg['tiles'], 'is_string'));
+        $renamed = [];
+        $unparsed = [];
+
+        foreach ($cfg['tiles'] as $name => $spec) {
+            $name = (string) $name;
+            if (!is_array($spec) || !str_contains($name, '_' . $old . '_')) {
+                continue;
+            }
+            $parsed = $this->parseTransitionName($name, $fullNames, $spec, $cfg);
+            if ($parsed === null) {
+                $unparsed[] = $name;
+                continue;
+            }
+            [$tileNames, $code] = $parsed;
+            if (in_array($old, $tileNames, true)) {
+                $tileNames = array_map(fn(string $tile) => $tile === $old ? $new : $tile, $tileNames);
+                $renamed[$name] = ColorService::transitionTileName($tileNames, $code);
+            }
+        }
+
+        return ['renamed' => $renamed, 'unparsed' => $unparsed];
+    }
+
+    /**
+     * Orphan cleanup over the whole layer, laid transitions never touched:
+     * declarations whose image is gone, and trans_* images nobody declares.
+     *
+     * @return array{declarations: list<string>, files: list<string>, laidWithoutImage: list<string>}
+     */
+    public function cleanupOrphanTransitions(string $layer = self::GROUND_LAYER): array
+    {
+        if (!isset(TiledMapService::AUTHORABLE_LAYERS[$layer])) {
+            throw new RuntimeException('Couche inconnue : ' . $layer);
+        }
+        $terrains = $this->loadTerrains();
+        $cfg = &$this->layerConfig($terrains, $layer);
+        $imgDir = $this->root . '/img/' . $layer;
+
+        $this->db ??= new Db();
+        $laid = [];
+        $res = $this->db->exe("SELECT DISTINCT name FROM map_{$layer} WHERE name LIKE 'trans\\_%'");
+        while ($row = $res->fetch_assoc()) {
+            $laid[$row['name']] = true;
+        }
+
+        $images = [];
+        foreach (glob($imgDir . '/trans_*') ?: [] as $path) {
+            $images[pathinfo($path, PATHINFO_FILENAME)][] = $path;
+        }
+
+        $declarations = [];
+        foreach ($cfg['tiles'] as $name => $spec) {
+            $name = (string) $name;
+            if (is_array($spec) && !isset($images[$name]) && !isset($laid[$name])) {
+                unset($cfg['tiles'][$name]);
+                $declarations[] = $name;
+            }
+        }
+
+        $files = [];
+        foreach ($images as $name => $paths) {
+            if (is_array($cfg['tiles'][$name] ?? null) || isset($laid[$name])) {
+                continue;
+            }
+            foreach ($paths as $path) {
+                if (!unlink($path)) {
+                    throw new RuntimeException('Suppression impossible : ' . $path);
+                }
+                $files[] = basename($path);
+            }
+        }
+
+        $laidWithoutImage = array_values(array_filter(
+            array_map('strval', array_keys($laid)),
+            fn(string $name) => !isset($images[$name])
+        ));
+
+        if ($declarations !== []) {
+            $this->saveTerrains($terrains);
+        }
+        if ($files !== []) {
+            \App\Service\Map\BoardChanges::world();
+        }
+
+        return ['declarations' => $declarations, 'files' => $files, 'laidWithoutImage' => $laidWithoutImage];
+    }
+
+    /**
      * Décompose un nom de fondu (trans_<A>_<B>[_<C>[_<D>]]_<code>) en tuiles
      * composantes, dans l'ordre des lettres du code. Toutes les coupures
      * possibles en noms de tuiles pleines connus sont essayées ; celle dont

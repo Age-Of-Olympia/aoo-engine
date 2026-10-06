@@ -52,6 +52,14 @@ if ($isStateChangingPost) {
             $new = trim((string) ($_POST['new_name'] ?? ''));
             $result = $service->rename($layer, $old, $new);
             $notice = $result['warnings'] === [] ? '' : ' ⚠ ' . implode(' ; ', $result['warnings']) . '.';
+            $renamed = $result['transitions']['renamed'];
+            if ($renamed !== []) {
+                $notice .= ' ' . count($renamed) . ' fondu(s) renommé(s) : ' . implode(', ', array_keys($renamed)) . '.';
+            }
+            if ($result['transitions']['unparsed'] !== []) {
+                $notice .= ' ⚠ Fondus indéchiffrables laissés tels quels (ils fonctionnent toujours) : '
+                    . implode(', ', $result['transitions']['unparsed']) . '.';
+            }
             setFlash('success', "« {$old} » renommée en « {$new} » — "
                 . $result['rowsUpdated'] . ' case(s) de carte mises à jour.' . $notice);
         } elseif (isset($_POST['asset_move'])) {
