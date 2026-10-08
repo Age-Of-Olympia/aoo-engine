@@ -22,7 +22,7 @@ final class RpgAwesomeIcons
      */
     public function all(): array
     {
-        $path = $this->cssPath ?? (($_SERVER['DOCUMENT_ROOT'] ?? '') . '/css/rpg-awesome.min.css');
+        $path = $this->cssPath ?? dirname(__DIR__, 3) . '/css/rpg-awesome.min.css';
         $css = is_file($path) ? (string) file_get_contents($path) : '';
 
         preg_match_all('/\.ra-([a-z0-9-]+):before/', $css, $matches);
@@ -30,5 +30,13 @@ final class RpgAwesomeIcons
         sort($icons);
 
         return $icons;
+    }
+
+    /** Throws unless the shipped font draws this class; empty means "no icon" and passes. */
+    public function assertKnown(string $icon): void
+    {
+        if ($icon !== '' && !in_array($icon, $this->all(), true)) {
+            throw new \InvalidArgumentException("Icône inconnue : {$icon}.");
+        }
     }
 }

@@ -48,13 +48,16 @@ final class ActionCreateService
             throw new InvalidArgumentException("Le nom de l'action est requis.");
         }
 
+        $icon = trim($icon);
+        (new RpgAwesomeIcons())->assertKnown($icon);
+
         $class = $map[$type];
         /** @var Action $action */
         $action = new $class();
         $action->setName($name);
         $action->setDisplayName(trim($displayName) !== '' ? trim($displayName) : $name);
         $action->setLevel($level);
-        $action->setIcon(trim($icon));
+        $action->setIcon($icon);
         $action->setIconColor(\App\View\Action\ActionIconPalette::hex($iconColor) !== null ? $iconColor : null);
         $action->setText('');
         if ($category !== null && trim($category) !== '') {

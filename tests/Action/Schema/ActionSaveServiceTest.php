@@ -251,4 +251,23 @@ class ActionSaveServiceTest extends TestCase
         $this->assertNull($action->getIconColor());
     }
 
+    public function testSaveIconAcceptsAShippedGlyphOrEmptyAndRefusesAnUnknownOne(): void
+    {
+        $action = new \App\Action\SearchAction();
+        $action->setIcon('ra-prayer');
+        $service = new ActionSaveService($this->entityManager($action), null, null, $this->createMock(OutcomeInstructionService::class));
+
+        // Unchanged, even if unknown: other fields of the form still save.
+        $service->saveIcon(1, 'ra-prayer');
+
+        $service->saveIcon(1, ' ra-candle ');
+        $this->assertSame('ra-candle', $action->getIcon());
+
+        $service->saveIcon(1, '');
+        $this->assertSame('', $action->getIcon());
+
+        $this->expectException(\InvalidArgumentException::class);
+        $service->saveIcon(1, 'ra-prayer');
+    }
+
 }

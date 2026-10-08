@@ -228,9 +228,9 @@ final class ActionSaveService
     }
 
     /**
-     * Set an action's display icon (an RPG-Awesome class such as
-     * ra-crossed-swords, stored without the leading "ra-" requirement — the
-     * value is taken verbatim). A no-op when the icon is unchanged.
+     * Set an action's display icon: empty, or an RPG-Awesome glyph class
+     * (ra-crossed-swords) the shipped font draws. A no-op when unchanged, so
+     * a stale stored value never blocks saving the rest of the form.
      */
     public function saveIcon(int $actionId, string $icon): void
     {
@@ -240,6 +240,7 @@ final class ActionSaveService
         if ($icon === $action->getIcon()) {
             return;
         }
+        (new RpgAwesomeIcons())->assertKnown($icon);
 
         $action->setIcon($icon);
         $this->entityManager->flush();

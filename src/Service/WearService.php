@@ -203,7 +203,7 @@ class WearService
         $label = ItemInstanceService::label($row['custom_name'], (string) $row['catalog_name']);
 
         if ($after === 0) {
-            return $label . ' <span class="ra ra-shattered-sword"></span> s\'est <b>brisé</b> !';
+            return $label . ' <span class="ra ra-broken-shield"></span> s\'est <b>brisé</b> !';
         }
 
         return $label . ' s\'use (−' . ($before - $after) . ').';
@@ -348,7 +348,7 @@ class WearService
             $label = ItemInstanceService::label($row['custom_name'], (string) $row['catalog_name']);
 
             if ($after === 0 && $before > 0) {
-                $recap[] = $label . ' <span class="ra ra-shattered-sword"></span> s\'est <b>brisé</b> !';
+                $recap[] = $label . ' <span class="ra ra-broken-shield"></span> s\'est <b>brisé</b> !';
             } else {
                 $recap[] = $label . ' s\'use (−' . ($before - $after) . ').';
             }
