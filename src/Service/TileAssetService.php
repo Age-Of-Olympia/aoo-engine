@@ -376,6 +376,8 @@ class TileAssetService
     private function buildEntry(string $layer, string $name, array $nameFiles, array $usage, array $terrainTiles): array
     {
         $dir = $this->root . '/img/' . TiledMapService::layerImageDir($layer);
+        // Precedence order; the scan's own list covers upper-case extensions
+        $nameFiles = $this->existingFiles($layer, $name) ?: $nameFiles;
         $primary = $dir . '/' . $nameFiles[0];
         $size = TileCatalogService::imageSize($primary);
         $problems = [];
@@ -384,7 +386,8 @@ class TileAssetService
             $problems[] = 'nom invalide — ignorée par les éditeurs et la palette';
         }
         if (count($nameFiles) > 1) {
-            $problems[] = 'plusieurs formats (' . implode(', ', $nameFiles) . ') — le png prime, les autres sont morts';
+            $problems[] = 'plusieurs formats (' . implode(', ', $nameFiles) . ') — seul ' . $nameFiles[0]
+                . ' est dessiné (' . implode(' > ', TileCatalogService::IMAGE_EXTENSIONS) . '), les autres sont morts';
         }
         if (!$size) {
             $problems[] = 'image illisible';

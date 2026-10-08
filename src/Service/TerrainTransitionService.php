@@ -1043,14 +1043,14 @@ class TerrainTransitionService
         $size = TiledMapService::TILE_SIZE;
         foreach (TileCatalogService::IMAGE_EXTENSIONS as $ext) {
             $path = $dir . '/' . $name . '.' . $ext;
-            if (!file_exists($path)) {
+            // GD cannot rasterize svg: an animated tile blends from its static sibling
+            if ($ext === 'svg' || !file_exists($path)) {
                 continue;
             }
             $image = match ($ext) {
                 'png' => imagecreatefrompng($path),
                 'webp' => imagecreatefromwebp($path),
                 'gif' => imagecreatefromgif($path),
-                default => false, // svg: GD cannot rasterize it, no blend
             };
             if (!$image) {
                 break;

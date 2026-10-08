@@ -388,9 +388,9 @@ class View{
 
     /**
      * Image of a layer tile by name, first format found in the catalog's
-     * order (png first, so a png still wins over a stray svg of the same
-     * name); the png path when none exists, so a missing image stays
-     * visible as a broken tile. Memoised: one stat per name per board.
+     * precedence order (TileCatalogService::IMAGE_EXTENSIONS); the png path
+     * when none exists, so a missing image stays visible as a broken tile.
+     * Memoised: one stat per name per board.
      */
     public static function layerImage(string $dir, string $name): string
     {
@@ -1157,13 +1157,8 @@ class View{
                 if($row->whichTable == 'elements' || $row->whichTable == 'marks'){
 
 
-                    $typesTbl = array(
-                        'gif'=>'0.3',
-                        'webp'=>'0.5',
-                        'png'=>'1',
-                        'svg'=>'1'
-                    );
-
+                    // webp textures (water, footprints) are opaque frames meant to show the ground through
+                    $e = str_ends_with($img, '.webp') ? '0.5' : '1';
 
                     /* An element fades on its open sides. The mask goes on
                      * a group AROUND the turned image: on the image itself
@@ -1176,7 +1171,7 @@ class View{
                     // A non-fluid type is drawn cell by cell: no fade, no elbow, no phase shift
                     if($row->whichTable == 'elements' && $elementImages->isFluid($row->name)){
 
-                        $flowAxis = self::textureFlowAxis($elementImages->imagePath($row->name));
+                        $flowAxis = self::textureFlowAxis($img);
 
                         $edgeBits = self::elementEdgeBits($elementAt, (int) $coords->x, (int) $coords->y, $row->name);
                         $edgeMask = $edgeBits ? ' mask="url(#elem-edge-'. $edgeBits .')"' : '';
@@ -1198,79 +1193,66 @@ class View{
                         }
                     }
 
-                    /* An element or mark with any animated format goes to the
-                     * layers whole, every format with it, so they keep their
-                     * stacking. */
-                    $layered = false;
-                    foreach(array_keys($typesTbl) as $k){
+                    // One image per element or mark ($img, by format precedence); an animated one goes to the layers
+                    $layered = file_exists($img) && \App\View\AnimatedLayersView::animates($img);
 
-                        $file = 'img/'. $row->whichTable .'/'. $row->name .'.'. $k;
-                        $layered = $layered || (file_exists($file) && \App\View\AnimatedLayersView::animates($file));
+                    // Scenery layers do not get transparent-gradient; drop
+                    // this reset to apply it to them.
+                    $imgClasses = [];
+
+                    if($layered){
+
+                        foreach($halves as $half){
+
+                            $phase = self::cellPhase($flowAxis, (int) $half['turn'], (int) $coords->x, (int) $coords->y);
+                            $shift = $flowAxis === 'x' ? [$phase * self::TILE_PX, 0] : [0, $phase * self::TILE_PX];
+                            $layers->add($img, (float) $e, (int) $half['turn'], $shift, (int) floor($x), (int) floor($y), $edgeBits, $half['clipId']);
+                        }
                     }
+                    elseif(file_exists($img) && $row->whichTable == 'elements'){
 
-                    foreach($typesTbl as $k=>$e){
+                        /* An element cell is a nested svg: it clips its content, so a
+                         * shifted texture wraps inside the cell with no clip-path defs. */
+                        echo '<svg x="'. floor($x) .'" y="'. floor($y) .'" width="'. self::TILE_PX .'" height="'. self::TILE_PX .'" style="opacity: '. $e .';" pointer-events="none">'
+                            . ($edgeMask ? '<g'. $edgeMask .'>' : '');
+                        foreach($halves as $half){
 
+                            $rotate = $half['turn'] ? 'rotate('. $half['turn'] .' '. (self::TILE_PX / 2) .' '. (self::TILE_PX / 2) .')' : '';
+                            $phase = self::cellPhase($flowAxis, (int) $half['turn'], (int) $coords->x, (int) $coords->y);
+                            $shifts = $phase ? [$phase * self::TILE_PX, ($phase - 1) * self::TILE_PX] : [0];
+                            echo ($half['clip'] ? '<g'. $half['clip'] .'>' : '');
+                            foreach($shifts as $shift){
 
-                        $img = 'img/'. $row->whichTable .'/'. $row->name .'.'. $k;
-
-                        // Scenery layers do not get transparent-gradient; drop
-                        // this reset to apply it to them.
-                        $imgClasses = [];
-
-                        if(file_exists($img) && $layered){
-
-                            foreach($halves as $half){
-
-                                $phase = self::cellPhase($flowAxis, (int) $half['turn'], (int) $coords->x, (int) $coords->y);
-                                $shift = $flowAxis === 'x' ? [$phase * self::TILE_PX, 0] : [0, $phase * self::TILE_PX];
-                                $layers->add($img, array_search($k, array_keys($typesTbl)), (float) $e, (int) $half['turn'], $shift, (int) floor($x), (int) floor($y), $edgeBits, $half['clipId']);
+                                $slide = $shift ? ($flowAxis === 'x' ? 'translate('. $shift .',0)' : 'translate(0,'. $shift .')') : '';
+                                $transform = trim($rotate .' '. $slide);
+                                echo '<image width="'. self::TILE_PX .'" height="'. self::TILE_PX .'" data-table="elements" data-coords="'. $coords->x .','. $coords->y .'" href="'. $img .'"'
+                                    . self::class_attr($imgClasses) . ($transform ? ' transform="'. $transform .'"' : '') .'/>';
                             }
+                            echo ($half['clip'] ? '</g>' : '');
                         }
-                        elseif(file_exists($img) && $row->whichTable == 'elements'){
+                        echo ($edgeMask ? '</g>' : '') .'</svg>';
+                    }
+                    elseif(file_exists($img)){
 
-                            /* An element cell is a nested svg: it clips its content, so a
-                             * shifted texture wraps inside the cell with no clip-path defs. */
-                            echo '<svg x="'. floor($x) .'" y="'. floor($y) .'" width="'. self::TILE_PX .'" height="'. self::TILE_PX .'" style="opacity: '. $e .';" pointer-events="none">'
-                                . ($edgeMask ? '<g'. $edgeMask .'>' : '');
-                            foreach($halves as $half){
+                        echo '
+                        <image
 
-                                $rotate = $half['turn'] ? 'rotate('. $half['turn'] .' '. (self::TILE_PX / 2) .' '. (self::TILE_PX / 2) .')' : '';
-                                $phase = self::cellPhase($flowAxis, (int) $half['turn'], (int) $coords->x, (int) $coords->y);
-                                $shifts = $phase ? [$phase * self::TILE_PX, ($phase - 1) * self::TILE_PX] : [0];
-                                echo ($half['clip'] ? '<g'. $half['clip'] .'>' : '');
-                                foreach($shifts as $shift){
+                            width="'. self::TILE_PX .'"
+                            height="'. self::TILE_PX .'"
 
-                                    $slide = $shift ? ($flowAxis === 'x' ? 'translate('. $shift .',0)' : 'translate(0,'. $shift .')') : '';
-                                    $transform = trim($rotate .' '. $slide);
-                                    echo '<image width="'. self::TILE_PX .'" height="'. self::TILE_PX .'" data-table="elements" data-coords="'. $coords->x .','. $coords->y .'" href="'. $img .'"'
-                                        . self::class_attr($imgClasses) . ($transform ? ' transform="'. $transform .'"' : '') .'/>';
-                                }
-                                echo ($half['clip'] ? '</g>' : '');
-                            }
-                            echo ($edgeMask ? '</g>' : '') .'</svg>';
-                        }
-                        elseif(file_exists($img)){
+                            data-table="'. $row->whichTable .'"
+                            data-coords="'. $coords->x .','. $coords->y .'"
 
-                            echo '
-                            <image
+                            x="'. floor($x) .'"
+                            y="'. floor($y) .'"
 
-                                width="'. self::TILE_PX .'"
-                                height="'. self::TILE_PX .'"
+                            style="opacity: '. $e .';"
+                            pointer-events="none"
 
-                                data-table="'. $row->whichTable .'"
-                                data-coords="'. $coords->x .','. $coords->y .'"
-
-                                x="'. floor($x) .'"
-                                y="'. floor($y) .'"
-
-                                style="opacity: '. $e .';"
-                                pointer-events="none"
-
-                                href="'. $img .'"
-                                '. self::class_attr($imgClasses) . $turn .'
-                                />
-                            ';
-                        }
+                            href="'. $img .'"
+                            '. self::class_attr($imgClasses) . $turn .'
+                            />
+                        ';
                     }
 
 
@@ -1286,7 +1268,7 @@ class View{
                     && $spanW === self::TILE_PX && $spanH === self::TILE_PX
                     && \App\View\AnimatedLayersView::animates($img)){
 
-                    $layers->add($img, 0, 1.0, (int) $angle, [0, 0], (int) floor($x), (int) floor($y), 0, '');
+                    $layers->add($img, 1.0, (int) $angle, [0, 0], (int) floor($x), (int) floor($y), 0, '');
                 }
 
                 else{

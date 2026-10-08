@@ -149,6 +149,10 @@ class TileAssetServiceTest extends TestCase
         }
 
         $this->writePalettePng('compose');
+        $entry = $this->service->inventory('tiles')['entries'][0];
+        $this->assertSame(['compose.svg', 'compose.png'], $entry['files'], 'le svg passe avant le png, comme sur la carte');
+        $this->assertStringContainsString('seul compose.svg est dessiné', implode(' ', $entry['problems']));
+
         $this->service->putSvg('tiles', 'compose', $svg, true);
         $this->assertFileDoesNotExist($this->root . '/img/tiles/compose.png', 'replace efface les autres formats');
 

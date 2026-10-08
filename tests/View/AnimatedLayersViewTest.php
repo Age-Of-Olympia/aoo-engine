@@ -55,7 +55,7 @@ class AnimatedLayersViewTest extends TestCase
     public function testSlidingTileIsFrozenAndMovedByCss(): void
     {
         $layers = new AnimatedLayersView();
-        $layers->add($this->composed('lava.svg', 'drift_v'), 3, 1.0, 90, [0, 25], 100, 50, 0, '');
+        $layers->add($this->composed('lava.svg', 'drift_v'), 1.0, 90, [0, 25], 100, 50, 0, '');
         $html = $layers->render();
 
         $texture = rawurldecode($html);
@@ -74,9 +74,9 @@ class AnimatedLayersViewTest extends TestCase
         $fire = $this->file('fire.gif', 'GIF89a');
         $layers = new AnimatedLayersView();
         // Rows: lava first, then fire; an elbow's clipped half added before its whole one
-        $layers->add($lava, 3, 1.0, 0, [0, 0], 0, 0, 0, 'elem-half-ENW');
-        $layers->add($lava, 3, 1.0, 90, [0, 0], 0, 0, 0, '');
-        $layers->add($fire, 0, 0.3, 0, [0, 0], 0, 0, 0, '');
+        $layers->add($lava, 1.0, 0, [0, 0], 0, 0, 0, 'elem-half-ENW');
+        $layers->add($lava, 1.0, 90, [0, 0], 0, 0, 0, '');
+        $layers->add($fire, 0.3, 0, [0, 0], 0, 0, 0, '');
         $html = $layers->render();
 
         $whole = strpos($html, 'rotate(90deg)');

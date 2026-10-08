@@ -9,8 +9,12 @@ namespace App\Service;
  */
 class TileCatalogService
 {
-    /** svg: hand-written or from the admin composer; measured by imageSize() */
-    public const IMAGE_EXTENSIONS = ['png', 'webp', 'gif', 'svg'];
+    /**
+     * Formats in precedence order: one image is drawn per name, the first
+     * format found, animated ones first. svg: hand-written or from the
+     * admin composer; measured by imageSize().
+     */
+    public const IMAGE_EXTENSIONS = ['svg', 'gif', 'webp', 'png'];
 
     /** Règle unique des noms de tuiles/assets (tables map_*, fichiers img/) */
     public const ASSET_NAME_PATTERN = '/^[a-zA-Z0-9_.-]+$/';

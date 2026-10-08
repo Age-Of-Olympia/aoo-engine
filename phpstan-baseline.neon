@@ -31,12 +31,6 @@ parameters:
 			path: admin/dialogs.php
 
 		-
-			message: '#^Function element_images\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: admin/element-types.php
-
-		-
 			message: '#^Function member_faction_select\(\) has parameter \$factionNames with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

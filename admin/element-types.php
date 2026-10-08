@@ -16,24 +16,6 @@ use App\Service\CsrfProtectionService;
 use App\Service\MapElementService;
 use Classes\Db;
 
-/** The images the Tiled palette offers, by name. */
-function element_images(): array
-{
-    $images = [];
-    $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/elements/';
-
-    foreach (glob($dir . '*') ?: [] as $file) {
-        $name = pathinfo($file, PATHINFO_FILENAME);
-
-        /* Tiled leaves .gif out of its palette; show the same set. */
-        if (strtolower(pathinfo($file, PATHINFO_EXTENSION)) !== 'gif') {
-            $images[$name] = 'img/elements/' . basename($file);
-        }
-    }
-
-    return $images;
-}
-
 $db = new Db();
 $csrf = new CsrfProtectionService();
 $elements = new MapElementService();
@@ -69,7 +51,11 @@ while ($row = $res->fetch_assoc()) {
     $placed[(string) $row['name']] = (int) $row['n'];
 }
 
-$images = element_images();
+// One image per name, the one the board draws
+$images = [];
+foreach ($elements->placeableNames() as $name) {
+    $images[$name] = $elements->imagePath($name);
+}
 
 /* The catalogue is the union: what can be painted, plus what is already
  * placed — a placed name whose image is gone must show, not vanish. */

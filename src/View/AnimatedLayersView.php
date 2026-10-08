@@ -96,20 +96,19 @@ final class AnimatedLayersView
     }
 
     /**
-     * One cell (or one elbow half) of an element's image. $format is the
-     * rank of the image's format in the element's stack; $shift is the
+     * One cell (or one elbow half) of an element's image. $shift is the
      * phase offset along the texture's own axes, as the per-cell drawing
      * applied it.
      *
      * @param array{float, float} $shift
      */
-    public function add(string $img, int $format, float $opacity, int $turn, array $shift, int $x, int $y, int $edge, string $clip): void
+    public function add(string $img, float $opacity, int $turn, array $shift, int $x, int $y, int $edge, string $clip): void
     {
         /* Layers stack as the cells did: images in the order of their
-         * rows, then an element's formats, then an elbow's clipped half
+         * rows, then an elbow's clipped half
          * over its whole one. */
         $rank = $this->ranks[pathinfo($img, PATHINFO_FILENAME)] ??= count($this->ranks);
-        $key = sprintf('%04d|%d|%d|%s|%d|%s', $rank, $format, $clip !== '', $img, $turn, implode(',', $shift));
+        $key = sprintf('%04d|%d|%s|%d|%s', $rank, $clip !== '', $img, $turn, implode(',', $shift));
         $this->groups[$key] ??= ['img' => $img, 'opacity' => $opacity, 'turn' => $turn, 'shift' => $shift, 'cells' => []];
         $this->groups[$key]['cells'][] = ['x' => $x, 'y' => $y, 'edge' => $edge, 'clip' => $clip];
     }
