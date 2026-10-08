@@ -67,6 +67,16 @@ final class SimulatedPassiveService
     {
     }
 
+    /** A simulation writes no journal: nothing to note. */
+    public function markTriggered(ActionPassive $passive): void
+    {
+    }
+
+    public function triggerByName(int $playerId, string $name): bool
+    {
+        return $this->hasPassiveByPlayerIdByName($playerId, $name);
+    }
+
     /**
      * Callers reference a passive by id (actor side) or by name (target side).
      */

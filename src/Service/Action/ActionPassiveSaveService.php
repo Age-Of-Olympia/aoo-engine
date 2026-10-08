@@ -44,6 +44,8 @@ final class ActionPassiveSaveService
         $passive->setCategory(trim((string) ($fields['category'] ?? '')));
         $passive->setText(trim((string) ($fields['text'] ?? '')));
         $passive->setPrerequisites(trim((string) ($fields['prerequisites'] ?? '')));
+        $passive->setTriggerTemplate(trim((string) ($fields['triggerTemplate'] ?? '')) ?: null);
+        $passive->setLearnTemplate(trim((string) ($fields['learnTemplate'] ?? '')) ?: null);
         $passive->setTraits($this->parseTraits($fields['traits'] ?? []));
         $passive->setConditions($this->buildConditions($fields));
 

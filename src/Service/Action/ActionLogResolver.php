@@ -3,6 +3,7 @@
 namespace App\Service\Action;
 
 use App\Entity\Action;
+use App\Entity\ActionPassive;
 use App\Entity\ActionTypeLog;
 use App\Service\RecipeService;
 use Classes\Item;
@@ -58,7 +59,16 @@ final class ActionLogResolver
         return $this->locator->closest($action, ActionTypeLog::class, 'log');
     }
 
-    public function render(?string $template, Action $action, Player $actor, Player $target, ?Item $pickedItem = null): string
+    /**
+     * A passive's journal line: {actor} is the passive's holder, {target} the
+     * other party, {passive} its display name; {action} is empty outside an action.
+     */
+    public function renderPassive(?string $template, ActionPassive $passive, Player $holder, Player $other, ?Action $action = null): string
+    {
+        return str_replace('{passive}', $passive->getDisplayName(), $this->render($template, $action, $holder, $other));
+    }
+
+    public function render(?string $template, ?Action $action, Player $actor, Player $target, ?Item $pickedItem = null): string
     {
         if ($template === null || $template === '') {
             return '';
@@ -67,7 +77,7 @@ final class ActionLogResolver
         return strtr($template, [
             '{actor}' => (string) ($actor->data->name ?? ''),
             '{target}' => (string) ($target->data->name ?? ''),
-            '{action}' => $this->displayName($action),
+            '{action}' => $action !== null ? $this->displayName($action) : '',
             '{weapon}' => $this->weaponClause($actor),
             // The item picked at execution (ItemPick), else what the posted recipe makes.
             '{item}' => match (true) {

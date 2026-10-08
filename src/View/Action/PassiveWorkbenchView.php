@@ -102,6 +102,7 @@ final class PassiveWorkbenchView
             . $this->traitsSelect($passive->getTraits())
             . '</div>'
             . $this->textarea('text', 'Texte', (string) $passive->getText())
+            . $this->journalFields($passive)
             . (new PassiveConditionEditorView())->render($passive->getConditions())
             . '</form>'
             // Sibling delete form; its button lives in the shared footer (form= attr).
@@ -221,10 +222,21 @@ final class PassiveWorkbenchView
         return false;
     }
 
-    private function textarea(string $name, string $label, string $value): string
+    /** The two journal lines, same placeholders as the action log plus {passive}. */
+    private function journalFields(ActionPassive $passive): string
+    {
+        return '<div class="wb-section-title">Messages de journal</div>'
+            . '<p class="wb-muted">Placeholders : <code>{actor}</code> (le porteur du passif), <code>{target}</code> (l\'autre partie), '
+            . '<code>{passive}</code> (nom affiché), <code>{action}</code> (l\'action en cours, vide à l\'apprentissage). '
+            . 'Vide = aucune ligne ; le déclenchement est vide par défaut, à renseigner passif par passif.</p>'
+            . $this->textarea('triggerTemplate', 'Déclenchement (public, quand le passif agit pendant une action)', (string) $passive->getTriggerTemplate(), 2)
+            . $this->textarea('learnTemplate', 'Apprentissage (journal personnel)', (string) $passive->getLearnTemplate(), 2);
+    }
+
+    private function textarea(string $name, string $label, string $value, int $rows = 3): string
     {
         return '<label class="wb-field wb-field--wide"><span>' . $this->esc($label) . '</span>'
-            . '<textarea class="form-control" name="passive[' . $this->esc($name) . ']" rows="3">' . $this->esc($value) . '</textarea></label>';
+            . '<textarea class="form-control" name="passive[' . $this->esc($name) . ']" rows="' . $rows . '">' . $this->esc($value) . '</textarea></label>';
     }
 
 }

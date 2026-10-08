@@ -66,11 +66,16 @@ class ActionExecutorService
 
     public function executeAction(): ActionResults
     {
+        // Passives noted before this action (map rendering…) are not its own.
+        $this->takeTriggered($this->actor);
+        $this->takeTriggered($this->target);
+
         // 1) Check conditions
         $this->globalConditionsResult = $this->checkConditions();
 
         $costsResultsArray = array();
         $xpResultsArray = array();
+        $passiveLogs = array();
         if (!$this->blocked) {
             $this->action->initAutomaticOutcomeInstructions();
 
@@ -107,6 +112,8 @@ class ActionExecutorService
                 }
             }
 
+            $passiveLogs = $this->passiveLogs();
+
             // 4) calculate XP — from the action's per-type rule (action_type_xp).
             $xpResultsArray = $this->xpResolver->calculate($this->action, $this->globalConditionsResult, $this->actor, $this->target);
             if(!empty($xpResultsArray["actor"])){            
@@ -133,7 +140,43 @@ class ActionExecutorService
         $this->resolveDeaths();
 
         // contains conditionsResults, effectsResults, costsResults, xpResults and logs
-        return new ActionResults($this->globalConditionsResult, $this->blocked, $this->conditionResultsArray, $this->outcomeResultsArray, $costsResultsArray, $xpResultsArray, $logsArray);
+        return new ActionResults($this->globalConditionsResult, $this->blocked, $this->conditionResultsArray, $this->outcomeResultsArray, $costsResultsArray, $xpResultsArray, $logsArray, $passiveLogs);
+    }
+
+    /**
+     * The passives of both parties noted while the action ran, as journal lines.
+     *
+     * @return list<array{holder: Player, other: Player, text: string}>
+     */
+    private function passiveLogs(): array
+    {
+        $lines = [];
+        // Self-targeted: the first drain empties the shared service, the second finds nothing.
+        foreach ([[$this->actor, $this->target], [$this->target, $this->actor]] as [$holder, $other]) {
+            foreach ($this->takeTriggered($holder) as $passive) {
+                $text = $this->logResolver->renderPassive($passive->getTriggerTemplate(), $passive, $holder, $other, $this->action);
+                if ($text !== '') {
+                    $lines[] = ['holder' => $holder, 'other' => $other, 'text' => $text];
+                }
+            }
+        }
+
+        return $lines;
+    }
+
+    /**
+     * Drain what $player's passive service noted. Only the live service notes
+     * anything: simulation and test stand-ins are skipped.
+     *
+     * @return array<int, \App\Entity\ActionPassive>
+     */
+    private function takeTriggered(Player $player): array
+    {
+        if ($this->simulationMode || !$player->playerPassiveService instanceof PlayerPassiveService) {
+            return [];
+        }
+
+        return $player->playerPassiveService->takeTriggered();
     }
 
     /** The target's life once the outcomes were applied — before any death. */

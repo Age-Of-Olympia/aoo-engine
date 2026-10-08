@@ -107,6 +107,13 @@ final class PassiveImporter extends AbstractObjectImporter
         $passive->setPrerequisites((string) ($object['prerequisites'] ?? ''));
         $passive->setTraits($this->traits($object));
         $passive->setConditions(is_array($object['conditions'] ?? null) ? $object['conditions'] : null);
+        // Bundles exported before the journal lines carry no key: keep what is stored.
+        if (array_key_exists('triggerTemplate', $object)) {
+            $passive->setTriggerTemplate(is_string($object['triggerTemplate']) && $object['triggerTemplate'] !== '' ? $object['triggerTemplate'] : null);
+        }
+        if (array_key_exists('learnTemplate', $object)) {
+            $passive->setLearnTemplate(is_string($object['learnTemplate']) && $object['learnTemplate'] !== '' ? $object['learnTemplate'] : null);
+        }
     }
 
     /**

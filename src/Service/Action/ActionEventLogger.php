@@ -37,5 +37,12 @@ final class ActionEventLogger
                 Log::put($target, $actor, $targetMainLog, $hideLogs ? 'hidden_action_other_player' : 'action_other_player', $logDetails, $logTime);
             }
         }
+
+        // Passives that took effect: public lines, so a hidden action writes none.
+        if (!$hideLogs) {
+            foreach ($results->getPassiveLogs() as $line) {
+                Log::put($line['holder'], $line['other'], $line['text'], 'passive', '', $logTime);
+            }
+        }
     }
 }

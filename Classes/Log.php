@@ -6,8 +6,8 @@ use App\Interface\ActorInterface;
 
 class Log{
 
-    /** Types d'événements visibles par leur seul propriétaire. */
-    public const PRIVATE_TYPES = ['turn'];
+    /** Types d'événements visibles par leur seul propriétaire (récap de tour, passif appris). */
+    public const PRIVATE_TYPES = ['turn', 'learn'];
 
     // Propriétés pour l'injection de dépendances (tests)
     private static $dbInstance = null;

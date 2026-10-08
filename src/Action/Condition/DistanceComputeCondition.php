@@ -41,14 +41,12 @@ class DistanceComputeCondition extends ComputeCondition implements DeclaresSimul
         $trait2 = $target->caracs->agi;
         $targetRollTraitValue = self::targetDefenseValue((int) $trait1, (int) $trait2);
         
-        if($target->playerPassiveService->hasPassiveByPlayerIdByName($target->getId(),"reflexes_fulgurants")){
-            $targetRollTraitValue = floor(6/7 * $trait2 + 1/7 * $trait1);
-        }
+        $targetRollTraitValue = $this->passiveDefense($target, 'reflexes_fulgurants', $targetRollTraitValue, floor(6/7 * $trait2 + 1/7 * $trait1));
         if($target->playerPassiveService->hasPassiveByPlayerIdByName($target->getId(),"couverture")){
             $equipedItems = $target->getEquipedItems();
             foreach($equipedItems as $item){
                 if(in_array($item->name, ["bouclier_parma","bouclier_clipeus","bouclier_ancile","targe","bouclier_lianes","targe_renforcee"] )){
-                    $targetRollTraitValue = floor(6/7 * $trait1 + 1/7 * $trait2);
+                    $targetRollTraitValue = $this->passiveDefense($target, 'couverture', $targetRollTraitValue, floor(6/7 * $trait1 + 1/7 * $trait2));
                 }
             }
         }

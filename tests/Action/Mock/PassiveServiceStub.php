@@ -39,4 +39,13 @@ class PassiveServiceStub
     {
         return is_int($id) ? $this->computedValue : 0;
     }
+
+    public function markTriggered(object $passive): void
+    {
+    }
+
+    public function triggerByName(int $playerId, string $name): bool
+    {
+        return $this->hasPassive;
+    }
 }

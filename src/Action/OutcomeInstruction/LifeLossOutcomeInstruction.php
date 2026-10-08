@@ -234,7 +234,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
             if (\App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? 'real') !== \App\Enum\EntityCategory::Structure) {
                 $recoverMalus = $this->computeRecoverMalus((int) $totalDamages);
 
-                if($target->playerPassiveService->hasPassiveByPlayerIdByName($target->getId(),"inepuisable")){
+                if($target->playerPassiveService->triggerByName($target->getId(),"inepuisable")){
                     $malusBonus--;
                 }
 
@@ -320,8 +320,10 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
             if (in_array($targetTraitDamagesTaken, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" ) && $target->playerPassiveService->checkPassiveConditionsByPlayerById($target,$targetPassive,$conditionObject)) {
                 if($targetPassive->getName() === "dur_cuire"){
-                    if($target->getRemaining('pv') <= $target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId())){
+                    // The threshold is read, not applied: the passive only takes effect under it.
+                    if($target->getRemaining('pv') <= $target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId(),false)){
                         $encaisse = true;
+                        $target->playerPassiveService->markTriggered($targetPassive);
                     }
                 }
                 else{

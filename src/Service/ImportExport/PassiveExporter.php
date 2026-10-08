@@ -62,6 +62,8 @@ final class PassiveExporter implements ObjectExporterInterface
             'category' => $this->str($entity, 'category'),
             'prerequisites' => $this->str($entity, 'prerequisites'),
             'race' => $this->str($entity, 'race'),
+            'triggerTemplate' => $this->str($entity, 'triggerTemplate'),
+            'learnTemplate' => $this->str($entity, 'learnTemplate'),
             'level' => (int) ($this->raw($entity, 'level') ?? 0),
             'value' => $value !== null ? (float) $value : 0.0,
             'traits' => is_array($traits) ? $traits : [],

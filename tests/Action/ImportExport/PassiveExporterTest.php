@@ -30,6 +30,8 @@ class PassiveExporterTest extends TestCase
             'category' => 'distance',
             'prerequisites' => 'arc',
             'race' => 'Elfe',
+            'triggerTemplate' => '{actor} a profité de {passive}.',
+            'learnTemplate' => null,
             'level' => 3,
             'value' => 2.0,
             'traits' => ['ct', 'agi'],
@@ -73,6 +75,7 @@ class PassiveExporterTest extends TestCase
         $passive->setValue(2.0);
         $passive->setTraits(['ct', 'agi']);
         $passive->setConditions(['weapon' => 'bow']);
+        $passive->setTriggerTemplate('{actor} a profité de {passive}.');
 
         return $passive;
     }

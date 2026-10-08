@@ -48,6 +48,14 @@ class ActionPassive
     #[ORM\Column(type: "string", length: 255, nullable: true)]
     protected ?string $prerequisites = null;
 
+    /** Public journal line when the passive takes effect during an action; empty = none. */
+    #[ORM\Column(type: "text", name: "trigger_template", nullable: true)]
+    protected ?string $triggerTemplate = null;
+
+    /** Personal journal line of the player who learns the passive; empty = none. */
+    #[ORM\Column(type: "text", name: "learn_template", nullable: true)]
+    protected ?string $learnTemplate = null;
+
     public function getId(): int
     {
         return $this->id;
@@ -178,6 +186,26 @@ class ActionPassive
     public function setPrerequisites(string $prerequisites): void
     {
         $this->prerequisites = $prerequisites;
+    }
+
+    public function getTriggerTemplate(): ?string
+    {
+        return $this->triggerTemplate;
+    }
+
+    public function setTriggerTemplate(?string $triggerTemplate): void
+    {
+        $this->triggerTemplate = $triggerTemplate;
+    }
+
+    public function getLearnTemplate(): ?string
+    {
+        return $this->learnTemplate;
+    }
+
+    public function setLearnTemplate(?string $learnTemplate): void
+    {
+        $this->learnTemplate = $learnTemplate;
     }
 
     public function getCategoryRender(): string

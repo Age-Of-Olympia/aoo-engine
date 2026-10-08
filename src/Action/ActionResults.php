@@ -13,7 +13,9 @@ class ActionResults
         private array $effectsResultsArray,
         private array $costsResultsArray,
         private array $xpResultsArray,
-        private array $logsArray
+        private array $logsArray,
+        /** @var list<array{holder: \App\Interface\ActorInterface, other: \App\Interface\ActorInterface, text: string}> */
+        private array $passiveLogs = []
     ) {
     }
 
@@ -94,5 +96,13 @@ class ActionResults
         return $this;
     }
 
-    
+    /**
+     * One journal line per passive that took effect during the action.
+     *
+     * @return list<array{holder: \App\Interface\ActorInterface, other: \App\Interface\ActorInterface, text: string}>
+     */
+    public function getPassiveLogs(): array
+    {
+        return $this->passiveLogs;
+    }
 }

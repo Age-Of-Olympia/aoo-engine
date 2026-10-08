@@ -43,7 +43,7 @@ class MalusOutcomeInstruction extends OutcomeInstruction implements HasParameter
         $malusTot = $this->computeMalusTotal($baseRoll, $difference, false);
         $subject = $this->resolveSubject($to, $actor, $target);
         if ($subject !== null) {
-            $inepuisable = $subject->playerPassiveService->hasPassiveByPlayerIdByName($subject->getId(), "inepuisable");
+            $inepuisable = $subject->playerPassiveService->triggerByName($subject->getId(), "inepuisable");
             $malusTot = $this->computeMalusTotal($baseRoll, $difference, $inepuisable);
             $subject->put_malus($malusTot);
         }

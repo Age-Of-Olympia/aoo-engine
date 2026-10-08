@@ -73,6 +73,7 @@ abstract class AbstractComputeCondition extends BaseCondition
                 if ($actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor, $actorPassive, $conditionObject)) {
                     if ($actorPassive->getCarac() == "advantage") {
                         $conditionObject->setActorAdvantage(true);
+                        $actor->playerPassiveService->markTriggered($actorPassive);
                     } else {
                         $conditionObject->addActorRollBonus($actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id, $actorPassive->getId()));
                     }
@@ -88,6 +89,7 @@ abstract class AbstractComputeCondition extends BaseCondition
                 if ($target->playerPassiveService->checkPassiveConditionsByPlayerById($target, $targetPassive, $conditionObject)) {
                     if ($targetPassive->getCarac() == "advantage") {
                         $conditionObject->setTargetAdvantage(true);
+                        $target->playerPassiveService->markTriggered($targetPassive);
                     } else {
                         $conditionObject->addTargetRollBonus($target->playerPassiveService->getComputedValueByPlayerIdById($target->id, $targetPassive->getId()));
                     }
@@ -131,6 +133,15 @@ abstract class AbstractComputeCondition extends BaseCondition
 
     /** @return array [rolls, total, tooltip html] */
     abstract protected function computeTarget($target, $dice, $conditionObject);
+
+    /**
+     * A defence passive that swaps the target's roll value: applied, and noted
+     * for the journal, only when the target holds it and the swap changes the value.
+     */
+    protected function passiveDefense(ActorInterface $target, string $passiveName, float|int $current, float|int $withPassive): float|int
+    {
+        return $withPassive != $current && $target->playerPassiveService->triggerByName($target->getId(), $passiveName) ? $withPassive : $current;
+    }
 
     /** Minimum actor roll to reach a target $this->distance away; 0 = no threshold (melee). */
     protected function getDistanceTreshold(ActorInterface $actor): int

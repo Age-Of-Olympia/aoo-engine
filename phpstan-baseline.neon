@@ -394,7 +394,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$playerPassiveService\.$#'
 			identifier: property.notFound
-			count: 6
+			count: 9
 			path: src/Action/Condition/AbstractComputeCondition.php
 
 		-
