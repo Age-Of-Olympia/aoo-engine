@@ -282,16 +282,31 @@ class BuildingService
     /**
      * What an instance shows, and the image it keeps: its own stock image
      * (players.portrait) while that image exists, else the type's; the
-     * type's broken sprite while damaged, when the type has one.
+     * type's _broken sprite while damaged, else its _open sprite while an
+     * open door — the first of them the type has art for. Damage wins: a
+     * wrecked door shows its wreck, open or not.
      *
      * @return array{0: string, 1: string} [avatar, base image]
      */
-    private static function spriteOf(string $type, string $portrait, bool $broken): array
+    private static function spriteOf(string $type, string $portrait, bool $broken, bool $open = false): array
     {
-        $base = self::isStockImage($type, $portrait) ? $portrait : self::resolveAvatar($type);
-        $brokenSprite = $broken ? self::resolveAvatar($type, true) : '';
+        $plain = self::resolveAvatar($type);
+        $base = self::isStockImage($type, $portrait) ? $portrait : $plain;
 
-        return [$brokenSprite !== '' && $brokenSprite !== self::resolveAvatar($type) ? $brokenSprite : $base, $base];
+        if ($broken && ($sprite = self::resolveAvatar($type, '_broken')) !== $plain) {
+            return [$sprite, $base];
+        }
+        if ($open && ($sprite = self::resolveAvatar($type, '_open')) !== $plain) {
+            return [$sprite, $base];
+        }
+
+        return [$base, $base];
+    }
+
+    /** Whether the entity shows its type's _open sprite: an open door. */
+    private function showsOpen(string $type, int $isOpen): bool
+    {
+        return $isOpen === 1 && ($this->raceService->getRaceByName($type)?->isDoor() ?? false);
     }
 
     /**
@@ -303,15 +318,15 @@ class BuildingService
      * kind's folder (img/foregrounds/{type}.png for a decor) → the map-wall
      * sprite of the same name (img/walls/{type}.png — a built mur_bois
      * looks like a mur_bois) → the generic placeholder. View.php renders
-     * players.avatar directly.
+     * players.avatar directly. A state variant ('_broken', '_open') is
+     * looked up in the flat files only, and falls back to the base sprite.
      */
-    public static function resolveAvatar(string $type, bool $broken = false): string
+    public static function resolveAvatar(string $type, string $variant = ''): string
     {
         $root = dirname(__DIR__, 2);
-        $suffix = $broken ? '_broken' : '';
 
-        $candidates = ['img/avatars/' . $type . $suffix . '.webp'];
-        if (!$broken) {
+        $candidates = ['img/avatars/' . $type . $variant . '.webp'];
+        if ($variant === '') {
             // A type cut in pieces (img/walls/{type}_{n}.png) shows the
             // sprite stitched from them, as a scenery figure does.
             $composed = (new \App\Service\Map\EntitySpriteService())->spriteOf($type);
@@ -319,8 +334,8 @@ class BuildingService
                 array_unshift($candidates, $composed);
             }
 
-            // Le stock n'a pas de convention _broken : variante cassée
-            // servie par les fichiers plats seulement.
+            // Le stock n'a pas de variantes d'état : _broken et _open
+            // sont servies par les fichiers plats seulement.
             try {
                 $stock = (new RaceImageService())->firstImagePath(\App\Enum\ImageType::AVATAR, $type);
             } catch (\RuntimeException) {
@@ -333,9 +348,9 @@ class BuildingService
         // A decor's own picture lives in its kind's folder (img/foregrounds).
         $kindDir = (new \App\Service\Map\EntitySpriteService())->imageDirOf($type);
         if ($kindDir !== null && $kindDir !== 'walls') {
-            $candidates[] = 'img/' . $kindDir . '/' . $type . $suffix . '.png';
+            $candidates[] = 'img/' . $kindDir . '/' . $type . $variant . '.png';
         }
-        $candidates[] = 'img/walls/' . $type . $suffix . '.png';
+        $candidates[] = 'img/walls/' . $type . $variant . '.png';
 
         foreach ($candidates as $candidate) {
             if (is_file($root . '/' . $candidate)) {
@@ -343,7 +358,7 @@ class BuildingService
             }
         }
 
-        return $broken ? self::resolveAvatar($type) : self::NO_IMAGE;
+        return $variant !== '' ? self::resolveAvatar($type) : self::NO_IMAGE;
     }
 
     /**
@@ -527,6 +542,11 @@ class BuildingService
          * leaves it alone until the last stone. */
         if ($asConstructionSite) {
             (new \App\Service\Decay\StructureDecayService())->enrol($id);
+        }
+
+        // Doors start open (is_open defaults to 1).
+        if ($race->isDoor()) {
+            $this->refreshWoundSprite($id);
         }
 
         if ($asConstructionSite && $race->getBuildWork() > 0) {
@@ -901,6 +921,7 @@ class BuildingService
             'UPDATE players SET is_open = ? WHERE id = ?',
             [$open ? 1 : 0, $playerId]
         );
+        $this->refreshWoundSprite($playerId);
 
         /* A DOOR's opening decides passage: the boards rendered around
          * it carry data-blocked, so they must be redrawn — otherwise a
@@ -1246,11 +1267,11 @@ class BuildingService
     }
 
     /**
-     * Aligne le sprite d'un bâtiment sur son état de blessure : _broken
-     * sous la moitié des PV, sprite de base au-dessus — la bascule
-     * visuelle des murs de carte (destroy.php), portée aux entités.
-     * Appelée à chaque putBonus pv d'un bâtiment : no-op tant que le
-     * sprite affiché est déjà le bon.
+     * Aligne le sprite d'un bâtiment sur son état : _broken sous la
+     * moitié des PV, _open pour une porte ouverte, sprite de base sinon
+     * — la bascule visuelle des murs de carte (destroy.php), portée aux
+     * entités. Appelée à chaque putBonus pv d'un bâtiment et à chaque
+     * ouverture : no-op tant que le sprite affiché est déjà le bon.
      *
      * @return bool whether the sprite changed
      */
@@ -1262,7 +1283,7 @@ class BuildingService
         // collation (utf8mb4_general_ci × uca1400) — le catalogue se lit
         // par RaceService, comme partout.
         $row = $conn->fetchAssociative(
-            "SELECT p.race, p.avatar, p.portrait, COALESCE(b.n, 0) AS wound, d.build_state
+            "SELECT p.race, p.avatar, p.portrait, p.is_open, COALESCE(b.n, 0) AS wound, d.build_state
              FROM players p
              LEFT JOIN players_bonus b ON b.player_id = p.id AND b.name = 'pv'
              LEFT JOIN buildings d ON d.player_id = p.id
@@ -1279,12 +1300,13 @@ class BuildingService
         $broken = $row['build_state'] === BuildingDetails::STATE_RUIN
             || ($maxPv > 0 && $maxPv + (int) $row['wound'] <= $maxPv / 2);
 
-        [$avatar, $base] = self::spriteOf((string) $row['race'], (string) $row['portrait'], $broken);
+        $open = $this->showsOpen((string) $row['race'], (int) $row['is_open']);
+        [$avatar, $base] = self::spriteOf((string) $row['race'], (string) $row['portrait'], $broken, $open);
         if ($avatar === (string) $row['avatar'] && $base === (string) $row['portrait']) {
             return false;
         }
 
-        $this->swapAvatar($playerId, $broken);
+        $this->swapAvatar($playerId, $broken, [$avatar, $base]);
 
         return true;
     }
@@ -1335,22 +1357,27 @@ class BuildingService
     }
 
     /**
-     * Point the entity's avatar at its type sprite (broken variant or
-     * base) and refresh the neighbourhood render.
+     * Point the entity's avatar at its type sprite (broken variant, open
+     * door variant or base) and refresh the neighbourhood render.
+     *
+     * @param array{0: string, 1: string}|null $sprite [avatar, base] when the caller already computed it
      */
-    private function swapAvatar(int $playerId, bool $broken): void
+    private function swapAvatar(int $playerId, bool $broken, ?array $sprite = null): void
     {
         $conn = $this->entityManager->getConnection();
 
-        $row = $conn->fetchAssociative('SELECT race, portrait FROM players WHERE id = ?', [$playerId]);
-        if ($row === false) {
-            return;
+        if ($sprite === null) {
+            $row = $conn->fetchAssociative('SELECT race, portrait, is_open FROM players WHERE id = ?', [$playerId]);
+            if ($row === false) {
+                return;
+            }
+            $open = $this->showsOpen((string) $row['race'], (int) $row['is_open']);
+            $sprite = self::spriteOf((string) $row['race'], (string) $row['portrait'], $broken, $open);
         }
 
-        [$avatar, $base] = self::spriteOf((string) $row['race'], (string) $row['portrait'], $broken);
         $conn->executeStatement(
             'UPDATE players SET avatar = ?, portrait = ? WHERE id = ?',
-            [$avatar, $base, $playerId]
+            [...$sprite, $playerId]
         );
         @unlink(\Classes\Player::cachePath($playerId, '.json'));
         json()->forget('players', (string) $playerId);

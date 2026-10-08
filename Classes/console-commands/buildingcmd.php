@@ -93,20 +93,19 @@ EOT);
         $db = new \Classes\Db();
         $res = $db->exe("SELECT id, race, avatar FROM players WHERE player_type = 'building'");
 
+        $buildings = new BuildingService();
         $healed = 0;
         $bare = 0;
         while ($row = $res->fetch_object()) {
             if ($row->avatar !== '' && file_exists($row->avatar)) {
                 continue;
             }
-            $resolved = BuildingService::resolveAvatar((string) $row->race);
-            if ($resolved === '') {
-                $bare++;
-                continue; // vraiment sans visuel : initiales au rendu, normal
+            // Same resolution as any state change: base, _broken or _open.
+            if ($buildings->refreshWoundSprite((int) $row->id)) {
+                $healed++;
+            } else {
+                $bare++; // vraiment sans visuel : initiales au rendu, normal
             }
-            $db->exe('UPDATE players SET avatar = ?, portrait = ? WHERE id = ?', array($resolved, $resolved, (int) $row->id));
-            \App\Service\Map\BoardChanges::viewer((int) $row->id);
-            $healed++;
         }
 
         return "Avatars réparés : {$healed} structure(s) ; sans visuel (initiales) : {$bare}.";

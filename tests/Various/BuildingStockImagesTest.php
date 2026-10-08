@@ -112,6 +112,41 @@ class BuildingStockImagesTest extends LegacyPlayerFixtureTestCase
         }
     }
 
+    public function testAnOpenDoorShowsItsOpenImageAndARuinItsBrokenOne(): void
+    {
+        $this->link->executeStatement(
+            "UPDATE races SET structure_nature = 'porte', lockable = 1 WHERE name = ?",
+            [self::TYPE]
+        );
+        RaceService::clearCache();
+
+        $walls = $_SERVER['DOCUMENT_ROOT'] . '/img/walls/' . self::TYPE;
+        foreach (['_open', '_broken'] as $suffix) {
+            $image = imagecreatetruecolor(50, 50);
+            imagepng($image, $walls . $suffix . '.png');
+            imagedestroy($image);
+        }
+
+        try {
+            $id = $this->place(null);
+            $buildings = new BuildingService();
+            $this->assertSame('img/walls/' . self::TYPE . '_open.png', $this->imageOf($id), 'a door is placed open');
+
+            $buildings->setOpen($id, false);
+            $this->assertSame(self::DIR . '1.png', $this->imageOf($id), 'closed: the base image');
+
+            $buildings->setOpen($id, true);
+            $buildings->markDestroyed($id);
+            $this->assertSame('img/walls/' . self::TYPE . '_broken.png', $this->imageOf($id), 'damage wins over open');
+
+            $buildings->restore($id);
+            $this->assertSame('img/walls/' . self::TYPE . '_open.png', $this->imageOf($id));
+        } finally {
+            @unlink($walls . '_open.png');
+            @unlink($walls . '_broken.png');
+        }
+    }
+
     public function testAnImageOutsideTheStockIsRefused(): void
     {
         $id = $this->place('img/avatars/nain/1.png');
