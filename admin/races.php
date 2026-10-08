@@ -34,6 +34,7 @@ use App\Service\CsrfProtectionService;
 use App\Service\FactionService;
 use App\Service\RaceImageService;
 use App\Service\RaceService;
+use App\Service\TypeRenameService;
 
 /**
  * Vignette d'une race ou d'un type : la PREMIÈRE image du stock (admin →
@@ -694,8 +695,42 @@ function race_render_delete_zone(Race $race, string $csrfToken): string
             . '</form>';
     }
 
+    $rename = race_render_rename_form($race, $face, $csrfToken);
+    if ($rename !== '') {
+        $body = $rename . '<hr><h6>Supprimer</h6>' . $body;
+    }
+
     return '<div class="card mt-4 border-danger"><div class="card-header text-danger">Zone dangereuse</div>'
         . '<div class="card-body">' . $body . '</div></div>';
+}
+
+/**
+ * Renommage du code technique (TypeRenameService) : types de bâtiment et
+ * de décor seulement, code retapé pour confirmer.
+ */
+function race_render_rename_form(Race $race, TypeEditorFace $face, string $csrfToken): string
+{
+    if (!TypeRenameService::handles($race)) {
+        return '';
+    }
+    if (!TypeRenameService::isRenamable($race)) {
+        return '<h6>Renommer</h6><p class="text-muted">Code écrit en dur dans le jeu : non renommable.</p>';
+    }
+    $name = e($race->getName());
+
+    return '<h6>Renommer</h6>'
+        . '<form method="post" action="/admin/races-save.php?action=rename">'
+        . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+        . '<input type="hidden" name="name" value="' . $name . '">'
+        . $face->formFields()
+        . '<div class="form-group"><label>Nouveau code technique</label>'
+        . '<input type="text" class="form-control" name="new_name" required'
+        . ' pattern="[a-z][a-z0-9_]*" placeholder="nouveau_code" style="max-width:20rem;"></div>'
+        . '<div class="form-group"><label>Confirmation : retapez le code actuel (<code>' . $name . '</code>)</label>'
+        . '<input type="text" class="form-control" name="confirm_code" required autocomplete="off"'
+        . ' placeholder="' . $name . '" style="max-width:20rem;"></div>'
+        . '<button type="submit" class="btn btn-outline-danger">Renommer le type</button>'
+        . '</form>';
 }
 
 /* -------------------------------------------------------------------------

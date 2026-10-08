@@ -16,22 +16,19 @@ namespace App\Service;
  * (coords, logs, harvest, settings, condition params, minimap PNGs).
  *
  * A plan whose board background relies on the slug-named fallback
- * (img/tiles/<slug>.webp) would silently change art when renamed: its
- * current fallback is pinned as explicit config first.
+ * (img/tiles/<slug>.webp) keeps its art: renamePlan pins it as explicit
+ * config, the preview lists it.
  */
 class PlanSeasonRenameService
 {
     private PlanAdminService $admin;
-    private PlanConfigService $config;
     private SeasonService $seasons;
 
     public function __construct(
         ?PlanAdminService $admin = null,
-        ?PlanConfigService $config = null,
         ?SeasonService $seasons = null
     ) {
         $this->admin = $admin ?? new PlanAdminService();
-        $this->config = $config ?? new PlanConfigService();
         $this->seasons = $seasons ?? new SeasonService();
     }
 
@@ -98,7 +95,7 @@ class PlanSeasonRenameService
 
             $operations[] = [
                 'from' => $base, 'to' => $archiveSlug, 'kind' => 'archive',
-                'pinBg' => $this->bgToPin($base),
+                'pinBg' => $this->admin->fallbackBg($base),
             ];
             unset($planned[$base]);
             $planned[$archiveSlug] = $baseSeason;
@@ -108,7 +105,7 @@ class PlanSeasonRenameService
         foreach ($wanted as $slug => $base) {
             $operations[] = [
                 'from' => $slug, 'to' => $base, 'kind' => 'strip',
-                'pinBg' => $this->bgToPin($slug),
+                'pinBg' => $this->admin->fallbackBg($slug),
             ];
             unset($planned[$slug]);
             $planned[$base] = $current;
@@ -135,11 +132,6 @@ class PlanSeasonRenameService
 
         foreach ($plan['operations'] as $op) {
             try {
-                if ($op['pinBg'] !== null) {
-                    // Raw write on purpose: parse() would re-check the file,
-                    // which bgToPin() just did.
-                    $this->config->write($op['from'], ['bg' => $op['pinBg']]);
-                }
                 $this->admin->renamePlan($op['from'], $op['to']);
                 $report['renamed'][] = [
                     'from' => $op['from'], 'to' => $op['to'], 'kind' => $op['kind'],
@@ -154,27 +146,5 @@ class PlanSeasonRenameService
         PlanService::forget();
 
         return $report;
-    }
-
-    /**
-     * The slug-named background file a plan currently falls back to, when
-     * it has no explicit bg — null when it has one, or no file exists.
-     */
-    private function bgToPin(string $slug): ?string
-    {
-        $model = plans()->read($slug);
-        if ($model === false || !empty($model->bg)) {
-            return null;
-        }
-
-        $root = dirname(__DIR__, 2) . '/';
-        foreach (['webp', 'png'] as $ext) {
-            $path = 'img/tiles/' . $slug . '.' . $ext;
-            if (is_file($root . $path)) {
-                return $path;
-            }
-        }
-
-        return null;
     }
 }

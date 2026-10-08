@@ -2,7 +2,7 @@
 /**
  * Race management — mutations (POST only). Companion to admin/races.php.
  *
- * Routed on ?action: create | update | delete. Delete is guarded: refused as
+ * Routed on ?action: create | update | delete | rename. Delete is guarded: refused as
  * long as any character (player or PNJ) still has players.race = name —
  * retiring a race in use = uncheck "jouable" + check "cachée" instead.
  *
@@ -19,6 +19,7 @@ use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\FactionService;
 use App\Service\RaceService;
+use App\Service\TypeRenameService;
 use App\View\Admin\TypeEditorFace;
 
 (new AdminMenuAccessService())->enforce('races.php');
@@ -64,6 +65,32 @@ if ($action === 'delete') {
         redirectTo($backPage . '?action=edit&name=' . urlencode($name));
     }
     redirectTo($backPage);
+}
+
+if ($action === 'rename') {
+    $back = $backPage . '?action=edit&name=' . urlencode($name);
+    if (strtolower(trim((string) ($_POST['confirm_code'] ?? ''))) !== $name) {
+        setFlash('warning', "Confirmation refusée : retapez le code du type (« {$name} »).");
+        redirectTo($back);
+    }
+    try {
+        $report = (new TypeRenameService())->rename($name, (string) ($_POST['new_name'] ?? ''));
+    } catch (\RuntimeException $e) {
+        setFlash('warning', $e->getMessage());
+        redirectTo($back);
+    }
+    $refs = [];
+    foreach ($report['references'] as $column => $n) {
+        $refs[] = "{$column} ×{$n}";
+    }
+    if ($report['files'] !== []) {
+        $refs[] = count($report['files']) . ' fichier(s)';
+    }
+    $to = $report['name'];
+    setFlash('success', "Type « {$name} » renommé en « {$to} »"
+        . ($refs !== [] ? ' : ' . implode(', ', $refs) : '') . '.'
+        . ($report['warnings'] !== [] ? ' ⚠ ' . implode(' ', $report['warnings']) : ''));
+    redirectTo($backPage . '?action=edit&name=' . urlencode($to));
 }
 
 /**

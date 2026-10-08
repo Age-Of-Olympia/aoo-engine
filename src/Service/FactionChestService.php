@@ -23,7 +23,7 @@ use RuntimeException;
 class FactionChestService
 {
     public const FLAG = 'manageChests';
-    private const BANK = 'banque';
+    public const BANK = 'banque';
 
     private Connection $conn;
 

@@ -18,8 +18,9 @@ use Tests\Support\LegacyBootstrapTrait;
  *
  * The current season's plans take the clean base slug; a displaced archive
  * keeps its own season as suffix. Conflicts are reported, never forced.
- * renamePlan itself must follow the name into race_harvest and into the
- * perception keys of the history (coords_computed = "x_y_z_plan").
+ * renamePlan itself must follow the name into race_harvest, entity_cells
+ * and the perception keys of the history (coords_computed = "x_y_z_plan"),
+ * mark the plan's boards stale, and keep a slug-named background.
  */
 class SeasonSlugRenameTest extends TestCase
 {
@@ -63,10 +64,13 @@ class SeasonSlugRenameTest extends TestCase
     {
         $this->conn->executeStatement("DELETE FROM race_harvest WHERE plan LIKE ?", [self::PREFIX . '%']);
         $this->conn->executeStatement('DELETE FROM players_logs WHERE player_id = ?', [self::LOG_PLAYER]);
+        $this->conn->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [self::LOG_PLAYER]);
+        $this->conn->executeStatement('DELETE FROM board_views WHERE player_id = ?', [self::LOG_PLAYER]);
         $this->conn->executeStatement('DELETE FROM players WHERE id = ?', [self::LOG_PLAYER]);
         $this->conn->executeStatement("DELETE FROM coords WHERE plan LIKE ?", [self::PREFIX . '%']);
         $this->conn->executeStatement("DELETE FROM plans WHERE slug LIKE ?", [self::PREFIX . '%']);
         @unlink($_SERVER['DOCUMENT_ROOT'] . '/img/tiles/' . self::PREFIX . '_a_s2.webp');
+        @unlink($_SERVER['DOCUMENT_ROOT'] . '/img/tiles/' . self::PREFIX . '_ref.webp');
         PlanService::forget();
         \App\Factory\EntityManagerFactory::getEntityManager()->clear();
     }
@@ -99,8 +103,22 @@ class SeasonSlugRenameTest extends TestCase
             'type' => 'move', 'plan' => $from, 'time' => 1, 'coords_id' => $coordsId, 'coords_computed' => '0_-1_0_' . $from,
         ]);
 
+        $this->conn->insert('entity_cells', ['player_id' => self::LOG_PLAYER, 'coords_id' => $coordsId, 'plan' => $from, 'x' => 0, 'y' => -1]);
+        $this->conn->insert('board_views', [
+            'player_id' => self::LOG_PLAYER, 'plan' => $from, 'z' => 0, 'x_min' => 0, 'x_max' => 0, 'y_min' => 0, 'y_max' => 0,
+        ]);
+        // No bg and a slug-named tile on disk: the art must not change with the name.
+        file_put_contents($_SERVER['DOCUMENT_ROOT'] . '/img/tiles/' . $from . '.webp', 'x');
+
         (new PlanAdminService())->renamePlan($from, $to);
 
+        $this->assertSame($to, $this->conn->fetchOne('SELECT plan FROM entity_cells WHERE player_id = ?', [self::LOG_PLAYER]));
+        $this->assertSame(1, (int) $this->conn->fetchOne('SELECT stale FROM board_views WHERE player_id = ?', [self::LOG_PLAYER]), 'boards redraw');
+        $this->assertSame(
+            'img/tiles/' . $from . '.webp',
+            $this->conn->fetchOne('SELECT bg FROM plans WHERE slug = ?', [$to]),
+            'the slug-named background is pinned'
+        );
         $this->assertSame(
             $to,
             $this->conn->fetchOne('SELECT plan FROM race_harvest WHERE race_id = ? AND plan LIKE ?', [$raceId, self::PREFIX . '%']),

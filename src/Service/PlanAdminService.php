@@ -459,7 +459,8 @@ class PlanAdminService
     /**
      * Renomme un plan : code technique + toutes les coordonnées + les
      * références par NOM (respawn des factions, plan de départ des races,
-     * catalogue tutoriel, téléporteurs entrants) + fichiers JSON/PNG.
+     * catalogue tutoriel, téléporteurs entrants) + fichiers PNG. Un fond
+     * pris par repli sur img/tiles/<slug> est épinglé en config explicite.
      * Les joueurs et les couches suivent via coords_id, rien d'autre à
      * toucher.
      *
@@ -482,6 +483,7 @@ class PlanAdminService
         }
 
         $report = ['coords' => 0, 'references' => [], 'teleports' => 0, 'files' => []];
+        $pinBg = $this->fallbackBg($from);
 
         $this->db->beginTransaction();
         try {
@@ -506,6 +508,8 @@ class PlanAdminService
                 'players_logs'           => 'plan',
                 'players_logs_archives'  => 'plan',
                 'players_kills'          => 'plan',
+                'entity_cells'           => 'plan',
+                'faction_closed_chest_floors' => 'plan',
             ];
             foreach ($byName as $table => $column) {
                 $n = (int) $this->db->exe(
@@ -517,6 +521,12 @@ class PlanAdminService
                 if ($n > 0) {
                     $report['references'][$table] = $n;
                 }
+            }
+
+            // The slug-named background stays the plan's art: pinned as explicit config.
+            if ($pinBg !== null) {
+                $this->db->exe('UPDATE plans SET bg = ? WHERE slug = ?', array($pinBg, $to));
+                $report['references']['plans.bg'] = 1;
             }
 
             // Téléporteurs entrants : params CSV « x,y,z,plan » (même
@@ -603,6 +613,28 @@ class PlanAdminService
         }
 
         return $report;
+    }
+
+    /**
+     * The slug-named background file a plan currently falls back to, when
+     * it has no explicit bg — null when it has one, or no file exists.
+     */
+    public function fallbackBg(string $slug): ?string
+    {
+        $model = plans()->read($slug);
+        if ($model === false || !empty($model->bg)) {
+            return null;
+        }
+
+        $root = dirname(__DIR__, 2) . '/';
+        foreach (['webp', 'png'] as $ext) {
+            $path = 'img/tiles/' . $slug . '.' . $ext;
+            if (is_file($root . $path)) {
+                return $path;
+            }
+        }
+
+        return null;
     }
 
     /**
