@@ -33,6 +33,8 @@ if ($aooTestDb !== '') {
 
     try {
         $conn = App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
+        // Legacy Classes\Db reads the global $link, as config/bootstrap.php sets it.
+        $GLOBALS['link'] = $conn;
         $source = defined('DB_CONSTANTS')
             ? (string) (DB_CONSTANTS['dbname'] ?? DB_CONSTANTS['db'] ?? '')
             : '';
