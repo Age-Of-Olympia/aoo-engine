@@ -96,11 +96,13 @@ try {
 
         $root = $_SERVER['DOCUMENT_ROOT'] . '/img/';
         $moved = 0;
+        // The type's own files: name, optional piece (_NN or scenery's -NN), optional variant.
+        $own = '/^' . preg_quote($type, '/') . '(?:[-_]\d{1,2})?(?:_(?:broken|open|mini))?$/';
 
         foreach (glob($root . $from . '/' . $type . '*.png') ?: [] as $file) {
             $base = basename($file, '.png');
 
-            if (!preg_match('/^' . preg_quote($type, '/') . '(_\d{1,2})?$/', $base)) {
+            if (!preg_match($own, $base)) {
                 continue; /* a namesake (banque_naine) is not a piece of this type */
             }
 
