@@ -20,6 +20,9 @@ class EffectService
     /** Icon shown for a name the catalog does not know. */
     public const FALLBACK_ICON = 'ra-fairy-wand';
 
+    /** admin_settings key: effect a real player receives on death, empty for none. */
+    public const SETTING_DEATH_EFFECT = 'death_effect';
+
     /** @var array<string, Effect>|null Per-request catalog, keyed by name. */
     private static ?array $catalog = null;
 

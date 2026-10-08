@@ -94,8 +94,9 @@ class PlayerService
 
         Log::put($player, $player, $player->data->name . ' a succombé ' . $cause . '.', type: "kill", hiddenText: '', logTime: time());
 
-        $player->put_xp(-DEATH_XP * $player->data->rank);
-        $player->death();
+        $rank = (int) $player->data->rank;
+        $player->put_xp(-DEATH_XP * $rank);
+        $player->death($rank);
     }
 
     public static function ProcessTargetDeath(Player $player, Player $target): void
@@ -163,9 +164,10 @@ class PlayerService
 ';
 
         //Retrait de 10xRang XP/PI au personnage tué (param dans constants.php)
-        $target->put_xp(-DEATH_XP * $target->data->rank);
+        $rank = (int) $target->data->rank;
+        $target->put_xp(-DEATH_XP * $rank);
 
-        $target->death();
+        $target->death($rank);
 
 
         OnHideReloadView::render($player);

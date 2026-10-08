@@ -29,6 +29,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 use App\Service\AdminSettingsService;
 use App\Service\CsrfProtectionService;
 use App\Service\DateFormatService;
+use App\Service\EffectService;
 use App\Service\Map\HarvestDefaultsService;
 use App\Service\PlanService;
 use App\Service\PlayerCaracsService;
@@ -62,6 +63,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['world_settings'])) {
             }
             $settings->set($key, $slug);
         }
+
+        // Empty = no effect on death; otherwise a catalog effect
+        $deathEffect = trim((string) ($_POST[EffectService::SETTING_DEATH_EFFECT] ?? ''));
+        if ($deathEffect !== '' && !(new EffectService())->exists($deathEffect)) {
+            throw new \RuntimeException("Effet inconnu pour la mort : {$deathEffect}");
+        }
+        $settings->set(EffectService::SETTING_DEATH_EFFECT, $deathEffect);
 
         $seasonService->setCurrent($season);
         PlanService::forget();
@@ -258,12 +266,20 @@ ob_start();
                             <?= renderSelectOptions($planChoices, plans()->deathPlan()) ?>
                         </select>
                     </div>
+                    <div>
+                        <label class="form-label mb-0">Effet reçu à la mort</label>
+                        <select name="<?= e(EffectService::SETTING_DEATH_EFFECT) ?>" class="form-select" style="max-width: 340px;">
+                            <?= renderSelectOptions((new \App\Action\Schema\OptionCatalog())->effects(), $repairSettings->get(EffectService::SETTING_DEATH_EFFECT), 'Aucun') ?>
+                        </select>
+                    </div>
                     <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                 </div>
                 <small class="form-text text-muted">
                     La saison courante est la saison par défaut des listes de plans (carte du monde,
                     pages Cartes). Le plan principal est celui de la carte du monde ; les personnages
                     morts sont envoyés sur le plan des morts. Un plan référencé ici ne peut pas être supprimé.
+                    L'effet reçu à la mort ne touche que les personnages des joueurs : intensité et durée
+                    (en tours) valent le rang du personnage avant sa mort.
                 </small>
             </form>
         </div>

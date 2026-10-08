@@ -1985,7 +1985,8 @@ class Player implements ActorInterface {
 
 
 
-    public function death(){
+    /** $rank: held before the death's XP penalty, which callers take first. */
+    public function death(int $rank){
 
         /* Le butin part d'abord : ce que l'entité possédait tombe au sol,
          * chaque objet selon sa chance. Le geste vit dans son propre service
@@ -2029,6 +2030,13 @@ class Player implements ActorInterface {
         // Death heals every wound and ends every effect, flight included.
         $db->exe('DELETE FROM players_effects WHERE player_id = ?', $this->id);
         $db->exe('DELETE FROM players_bonus WHERE player_id = ?', $this->id);
+
+        // The admin-chosen death effect, intensity and duration (turns) = rank before
+        // death. Real players only; an effect since deleted is skipped (add_effect exits).
+        $deathEffect = (new \App\Service\AdminSettingsService())->get(\App\Service\EffectService::SETTING_DEATH_EFFECT);
+        if($deathEffect !== '' && $this->isRealPlayer() && $this->effectService->exists($deathEffect)){
+            $this->add_effect($deathEffect, $rank, $rank);
+        }
 
         // purge assists
         $values = array('target_id'=>$this->id);
