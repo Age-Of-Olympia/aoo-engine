@@ -18,7 +18,7 @@ final class ItemWikiRenderer implements WikiSheetRendererInterface
 
     private const PAYLOAD_LABELS = [
         'pv' => 'PV', 'pm' => 'PM', 'mvt' => 'Mvt', 'a' => 'A', 'ae' => 'Ae',
-        'pr' => 'PR', 'pf' => 'PF', 'malus' => 'malus',
+        'pr' => 'PR', 'pf' => 'PF', 'malus' => 'malus', 'xp' => 'XP',
     ];
 
     public function objectType(): string
@@ -118,7 +118,7 @@ final class ItemWikiRenderer implements WikiSheetRendererInterface
                 $parts[] = sprintf('%+d %s', $value, $label);
             }
         }
-        foreach (['pr', 'pf', 'malus'] as $key) {
+        foreach (['pr', 'pf', 'malus', 'xp'] as $key) {
             $value = (int) ($item[$key] ?? 0);
             if ($value !== 0) {
                 $parts[] = sprintf('%+d %s', $value, self::PAYLOAD_LABELS[$key]);

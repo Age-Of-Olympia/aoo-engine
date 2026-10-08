@@ -26,7 +26,7 @@ class Item{
      */
     public const SPECIAL_KEYS = [
         'esquive', 'pr', 'pf', 'malus', 'spellMalus', 'fixedF', 'mDamage',
-        'demolition', 'craftedByN', 'lootChance', 'grow_rate',
+        'demolition', 'craftedByN', 'lootChance', 'grow_rate', 'xp',
     ];
     public const FLAG_KEYS = ['cursed', 'enchanted', 'vorpal', 'is_bankable', 'is_deprecated', 'vanish_on_break', 'magique'];
     /**

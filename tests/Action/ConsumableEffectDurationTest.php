@@ -116,4 +116,23 @@ class ConsumableEffectDurationTest extends LegacyPlayerFixtureTestCase
             [(int) $drinker->id, 'regeneration']
         ));
     }
+
+    public function testAnXpPotionGrantsXpAndTheMatchingPi(): void
+    {
+        $drinker = $this->createRealPlayer('GmSavoir');
+        $item = $this->sowCatalogItem('potion_savoir', [
+            'type' => 'consommable',
+            'stats_in_db' => 1,
+            'xp' => 7,
+        ]);
+        $item->get_data();
+        $before = $this->link->fetchAssociative('SELECT xp, pi FROM players WHERE id = ?', [(int) $drinker->id]);
+
+        $details = InventoryService::applyConsumablePayload($drinker, $item);
+
+        $after = $this->link->fetchAssociative('SELECT xp, pi FROM players WHERE id = ?', [(int) $drinker->id]);
+        $this->assertSame(7, (int) $after['xp'] - (int) $before['xp']);
+        $this->assertSame(7, (int) $after['pi'] - (int) $before['pi'], 'a fresh character is far below the PI cap');
+        $this->assertContains('+7 XP', $details);
+    }
 }

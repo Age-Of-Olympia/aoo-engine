@@ -174,7 +174,7 @@ class InventoryService
 
     /**
      * Applique la CHARGE d'un consommable (bonus pv/pm/mvt/a/ae, malus,
-     * PR, PF, effets ±) sans toucher au coût ni à la pile — source unique
+     * PR, PF, XP, effets ±) sans toucher au coût ni à la pile — source unique
      * partagée entre le geste d'inventaire (useItem) et l'action
      * générique « consommer » (ApplyConsumableOutcomeInstruction).
      *
@@ -224,6 +224,15 @@ class InventoryService
                     }
                     $player->put_pf($qte);
                     $details[] = sprintf('%+d PF', $qte);
+                    break;
+
+                // put_xp grants the matching PI, capped for the season
+                case "xp":
+                    if ((int) $qte === 0) {
+                        break;
+                    }
+                    $player->put_xp((int) $qte);
+                    $details[] = sprintf('%+d XP', $qte);
                     break;
 
                 case "effet":
