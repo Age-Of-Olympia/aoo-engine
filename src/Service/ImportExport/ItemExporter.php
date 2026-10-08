@@ -89,6 +89,9 @@ final class ItemExporter implements ObjectExporterInterface
             (new ItemEffectService($this->connection()))->listForItems([(int) $entity->id])
         );
 
+        // Placed storage mends by its item's name: both recipes travel with it.
+        $payload['repair'] = (new \App\Service\TypeRepairService($this->connection()))->recipesOf((string) $entity->name);
+
         return $payload;
     }
 

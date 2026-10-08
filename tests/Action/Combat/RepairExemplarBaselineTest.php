@@ -37,6 +37,7 @@ class RepairExemplarBaselineTest extends LegacyPlayerFixtureTestCase
         $chest = PlayerFactory::legacy($chestId);
         $chest->get_caracs();
         $chest->putBonus(['pv' => -20]);
+        $this->givenRepairable('coffre_bois', $actor);
 
         $this->assertSame(
             20,
@@ -52,12 +53,12 @@ class RepairExemplarBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertFalse($results->isBlocked(), 'a placed exemplar is a legal repair target');
         $this->assertTrue($results->isSuccess());
 
-        // coffre_bois: durability_max 40, healed by the actor's F, clamped.
-        $expected = min(40, 20 + (int) $actor->caracs->f);
+        // coffre_bois: durability_max 40; a 100 % dose of its item's recipe.
+        $expected = 40;
         $this->assertSame(
             $expected,
             PlayerFactory::legacy($chestId)->getRemaining('pv'),
-            'repair heals the object through the one life'
+            'repair mends the object through the one life'
         );
     }
 
@@ -81,6 +82,7 @@ class RepairExemplarBaselineTest extends LegacyPlayerFixtureTestCase
 
         // Wounded, it is repairable...
         $chest->putBonus(['pv' => -10]);
+        $this->givenRepairable('coffre_bois', $actor);
         $this->assertFalse(
             (new ActionExecutorService($action, $actor, $chest))->executeAction()->isBlocked(),
             'un coffre entamé se répare'

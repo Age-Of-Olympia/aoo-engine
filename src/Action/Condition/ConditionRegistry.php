@@ -25,6 +25,7 @@ class ConditionRegistry
             'RequiresResource' => new RequiresResourceCondition(),
             'RequiresDamagedTarget' => new RequiresDamagedTargetCondition(),
             'RequiresRepairableTarget' => new RequiresRepairableTargetCondition(),
+            'RepairBill' => new RepairBillCondition(),
             'RequiresLockControl' => new RequiresLockControlCondition(),
             'RequiresInscriptionRight' => new RequiresInscriptionRightCondition(),
             'InscriptionText' => new InscriptionTextCondition(),

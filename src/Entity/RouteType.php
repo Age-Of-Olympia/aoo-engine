@@ -34,10 +34,4 @@ class RouteType extends StructureType
     {
         return false;
     }
-
-    /** Roads are laid by someone, so they are maintained. */
-    protected function repairableByDefault(): bool
-    {
-        return true;
-    }
 }

@@ -176,18 +176,20 @@ class BuildingCombatBaselineTest extends LegacyPlayerFixtureTestCase
         }
 
         $building->putBonus(['pv' => -30]);
+        // The repair is paid: a full dose of the type's recipe, in the bag.
+        $this->givenRepairable('palissade', $actor);
 
         $results = (new ActionExecutorService($action, $actor, $building))->executeAction();
 
         $this->assertFalse($results->isBlocked(), 'reparer must accept an adjacent structure target');
         $this->assertTrue($results->isSuccess(), 'reparer has no dice: passing conditions means success');
 
-        // healing {actorHealingTrait: f} — repaired PV = 70 + F, clamped at max.
-        $expected = min(100, 70 + (int) $actor->caracs->f);
+        // One dose of the sown recipe restores 100 %, capped at the damage.
+        $expected = 100;
         $this->assertSame(
             $expected,
             PlayerFactory::legacy($buildingId)->getRemaining('pv'),
-            'reparer must heal the structure through the standard healing instruction'
+            'reparer must restore one dose, capped at the damage'
         );
 
         // The same action on a character must be refused by its TargetType.

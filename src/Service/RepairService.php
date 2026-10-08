@@ -143,11 +143,7 @@ final class RepairService
         $player = PlayerFactory::legacy($playerId);
         $this->conn->transactional(function () use ($row, $quote, $player): void {
             $this->restore((int) $row['entity_id']);
-            foreach ($quote['resources'] as $name => $count) {
-                if (!Item::get_item_by_name($name)->add_item($player, -$count)) {
-                    throw new \RuntimeException("Il vous manque : {$name} ({$count}).");
-                }
-            }
+            (new TypeRepairService($this->conn))->pay($player, $quote['resources']);
         });
     }
 
@@ -159,11 +155,10 @@ final class RepairService
             throw new \RuntimeException('Sans recette connue, cet objet ne se répare pas.');
         }
 
-        $this->conn->transactional(function () use ($row, $quote, $playerId): void {
+        $player = PlayerFactory::legacy($playerId);
+        $this->conn->transactional(function () use ($row, $quote, $player): void {
             $this->restore((int) $row['entity_id']);
-            if (!(new GoldService($this->conn))->spend($playerId, $quote['gold'])) {
-                throw new \RuntimeException('Pas assez d\'or.');
-            }
+            (new TypeRepairService($this->conn))->pay($player, ['or' => $quote['gold']]);
         });
     }
 

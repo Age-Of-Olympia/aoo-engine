@@ -440,5 +440,13 @@ $db->exe('UPDATE items SET ' . implode(', ', $set) . ' WHERE id = ?', $params);
 // Sprite, passage, the Perception of whoever wears it: any board may show it.
 \App\Service\Map\BoardChanges::world();
 
-setFlash('success', 'Objet « ' . $name . ' » enregistré ; ses stats sont maintenant lues en base.');
+// Placed storage: its repair recipes, keyed by the item's name (shared form).
+$repairRecipes = \App\View\Admin\RepairRecipeFields::fromPost($_POST);
+$repairNotice = '';
+if ($repairRecipes !== null) {
+    $unknown = (new \App\Service\TypeRepairService())->declareAll($name, $repairRecipes);
+    $repairNotice = $unknown === [] ? '' : ' ⚠ Réparation : objets inconnus ignorés (' . implode(', ', $unknown) . ').';
+}
+
+setFlash('success', 'Objet « ' . $name . ' » enregistré ; ses stats sont maintenant lues en base.' . $repairNotice);
 redirectTo('/admin/items.php?action=edit&id=' . $id);

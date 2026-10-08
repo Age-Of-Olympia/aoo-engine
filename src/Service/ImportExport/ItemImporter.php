@@ -115,5 +115,10 @@ final class ItemImporter extends AbstractDbalImporter
         }
         $itemId = (int) $conn->fetchOne('SELECT id FROM items WHERE name = ?', [$name]);
         (new ItemEffectService($conn))->replaceForItem($itemId, $strikeRows);
+
+        // Repair recipes: a bundle carrying the key decides, empty included.
+        if (is_array($payload['repair'] ?? null)) {
+            (new \App\Service\TypeRepairService($conn))->declareAll($name, $payload['repair']);
+        }
     }
 }

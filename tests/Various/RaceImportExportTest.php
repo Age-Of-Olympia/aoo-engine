@@ -43,6 +43,9 @@ class RaceImportExportTest extends TestCase
             $this->link->executeStatement(
                 "DELETE FROM entity_type_footprints WHERE type_name = 'race_test_import'"
             );
+            $this->link->executeStatement(
+                "DELETE FROM entity_type_repairs WHERE type_name = 'race_test_import'"
+            );
         }
         RaceService::clearCache();
     }
@@ -136,6 +139,10 @@ class RaceImportExportTest extends TestCase
         $payload['label'] = 'Type de test';
         $payload['build_work'] = 7;
         $payload['footprint'] = ['w' => 3, 'h' => 1, 'offsets' => [[0, 0], [1, 0], [2, 0]], 'roles' => []];
+        $payload['repair'] = [
+            'materials' => ['percent' => 15, 'costs' => ['pierre' => 1]],
+            'gold' => ['percent' => 20, 'costs' => ['or' => 50]],
+        ];
         $payload['starterActions'] = [];
         $payload['spells'] = [];
 
@@ -147,6 +154,11 @@ class RaceImportExportTest extends TestCase
             "SELECT w, h FROM entity_type_footprints WHERE type_name = 'race_test_import'"
         );
         $this->assertSame(['w' => 3, 'h' => 1], array_map('intval', $row ?: []), 'the cut-out lands with its type');
+        $this->assertEquals(
+            $payload['repair'],
+            (new \App\Service\TypeRepairService($this->link))->recipesOf('race_test_import'),
+            'both repair recipes too'
+        );
     }
 
     public function testDeleteRemovesAnUnreferencedRaceAndItsLists(): void

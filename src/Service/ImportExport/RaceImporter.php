@@ -125,6 +125,12 @@ final class RaceImporter extends AbstractObjectImporter
             );
         }
 
+        /* The repair recipes, keyed by name too — a bundle that carries the
+         * key decides, empty included (the type no longer mends). */
+        if (is_array($plan['repair'] ?? null)) {
+            (new \App\Service\TypeRepairService())->declareAll($name, $plan['repair']);
+        }
+
         // Flush intermédiaire (dans la transaction du lot) : les listes
         // s'écrivent en SQL direct et exigent l'id de la race.
         $this->races->save($race);

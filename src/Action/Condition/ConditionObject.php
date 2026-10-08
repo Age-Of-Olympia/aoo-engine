@@ -30,6 +30,8 @@ class ConditionObject
      *  équiper/déséquiper ; null = contexte de ligne inconnu (bascule
      *  héritée par objet catalogue dans Player::equip). */
     protected ?bool $pickedEquippedLine = null;
+    /** @var array{amount: int, costs: array<string, int>}|null One repair dose, checked by RepairBillCondition. */
+    protected ?array $repairBill = null;
     protected ?bool $isMagical = null;
     protected ?array $attackEffects = null;
 
@@ -56,6 +58,19 @@ class ConditionObject
     public function setBuildFor(string $buildFor): self
     {
         $this->buildFor = $buildFor;
+        return $this;
+    }
+
+    /** @return array{amount: int, costs: array<string, int>}|null */
+    public function getRepairBill(): ?array
+    {
+        return $this->repairBill;
+    }
+
+    /** @param array{amount: int, costs: array<string, int>} $repairBill */
+    public function setRepairBill(array $repairBill): self
+    {
+        $this->repairBill = $repairBill;
         return $this;
     }
 

@@ -17,10 +17,4 @@ class BuildingType extends StructureType
     {
         return self::FAMILY_BUILDING;
     }
-
-    /** What was built is maintained. */
-    protected function repairableByDefault(): bool
-    {
-        return true;
-    }
 }

@@ -25,11 +25,4 @@ class SceneryType extends StructureType
     {
         return self::IMAGE_DIR;
     }
-
-    /** Scenery is erected by someone — a statue, a fence — so it is maintained.
-     *  What grows or lies there instead follows exhaustion and regrowth. */
-    protected function repairableByDefault(): bool
-    {
-        return true;
-    }
 }

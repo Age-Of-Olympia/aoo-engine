@@ -820,6 +820,8 @@ function items_render_edit(object $row, string $csrfToken): string
         $effectsRemoved !== [] ? count($effectsRemoved) . ' retiré' . (count($effectsRemoved) > 1 ? 's' : '') : '',
     ]);
 
+    $repairRecipes = !empty($row->lockable) ? (new \App\Service\TypeRepairService())->recipesOf((string) $row->name) : [];
+
     $sections = items_edit_section('Identité',
             e(trim($typeValue . ($emplacementValue !== '' ? ' · ' . $emplacementValue : ''))) ?: 'type non renseigné',
             true, $identite)
@@ -833,6 +835,14 @@ function items_render_edit(object $row, string $csrfToken): string
         . items_edit_section('Contenant <small class="text-muted">(coffres)</small>',
             $row->capacity !== null ? (int) $row->capacity . ' lignes' : 'sans limite',
             $row->capacity !== null, $contenant)
+        /* Placed storage mends like a building type, by the item's name. */
+        . (!empty($row->lockable)
+            ? items_edit_section('Réparation <small class="text-muted">(posé)</small>',
+                $repairRecipes !== []
+                    ? implode(' · ', array_map(static fn (string $mode): string => \App\Service\TypeRepairService::MODES[$mode], array_keys($repairRecipes)))
+                    : 'ne se répare pas',
+                false, \App\View\Admin\RepairRecipeFields::render($repairRecipes))
+            : '')
         . items_edit_section('Caractéristiques',
             $caracsCount > 0 ? $caracsCount . ' modificateur' . ($caracsCount > 1 ? 's' : '') : '—',
             $caracsCount > 0, $caracsCol)

@@ -97,7 +97,7 @@ class AtelierRepairTest extends LegacyPlayerFixtureTestCase
             (new RepairService())->repairWithGold((int) $client->id, $instanceId);
             $this->fail('no gold, no repair');
         } catch (\RuntimeException $e) {
-            $this->assertSame('Pas assez d\'or.', $e->getMessage());
+            $this->assertStringStartsWith('Il vous manque : ', $e->getMessage());
         }
         $this->assertCount(1, (new RepairService())->listRepairable((int) $client->id), 'the refused charge leaves the wear');
     }

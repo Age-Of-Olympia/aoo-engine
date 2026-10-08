@@ -70,6 +70,7 @@ final class RaceExporter implements ObjectExporterInterface
             /* The DECLARED cut-out travels with its type — guessed shapes
              * stay home, the target install derives its own. */
             'footprint'      => $this->footprintOf($entity->getName()),
+            'repair'         => (new \App\Service\TypeRepairService())->recipesOf($entity->getName()),
             'starterActions' => $entity->getStarterActionNames(),
             'spells'         => $entity->getSpellNames(),
         ];

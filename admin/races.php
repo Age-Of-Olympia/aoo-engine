@@ -453,21 +453,6 @@ HTML;
         . ' title="Décoché (défaut des personnages) : les tirs passent. Coché : bloque la ligne de tir."> Bloque les tirs</label> ')
         . ($face->isStructure() ? '' : '<label class="mr-3"><input type="checkbox" name="playable" '
             . checked($isEdit && $race->getPlayable()) . '> Jouable (proposée à l\'inscription)</label>')
-        /* Three states, not two: "selon la famille" is not "no". A plain
-           yes/no would drop the distinction on the first save. */
-        . ($face->isStructure()
-            ? '<label class="mr-3">Réparable <select name="repairable" class="form-control form-control-sm d-inline-block w-auto"'
-                . ' title="Une construction est réparable. Un rocher, un décor ou une fleur ne le sont pas, sauf indication ici.">'
-                . '<option value=""' . (!$isEdit || !($race instanceof StructureType) || $race->getRepairableOverride() === null ? ' selected' : '') . '>'
-                . 'Selon la famille'
-                . ($isEdit && $race instanceof StructureType
-                    ? ' (' . ($race->repairableFamilyDefault() ? 'oui' : 'non') . ')'
-                    : '')
-                . '</option>'
-                . '<option value="1"' . ($isEdit && $race instanceof StructureType && $race->getRepairableOverride() === true ? ' selected' : '') . '>Oui</option>'
-                . '<option value="0"' . ($isEdit && $race instanceof StructureType && $race->getRepairableOverride() === false ? ' selected' : '') . '>Non</option>'
-                . '</select></label> '
-            : '')
         . (static function () use ($isEdit, $race, $face): string {
                 $isBuilding = $face->key === \App\View\Admin\TypeEditorFace::BUILDING;
                 $declared = $isEdit
@@ -508,6 +493,10 @@ HTML;
         . ' pour le « premier joueur » qui sert de référence au bonus d\'XP de rattrapage'
         . ' (un personnage admin de très haut niveau ne doit pas augmenter le bonus de tout le serveur).</small>'
         . '</div></div>'
+        /* The two repair recipes, shared with the item page. */
+        . ($face->isStructure()
+            ? '<div class="col-12">' . \App\View\Admin\RepairRecipeFields::render($isEdit ? (new \App\Service\TypeRepairService())->recipesOf($race->getName()) : []) . '</div>'
+            : '')
         /* Le rendement du TYPE : ce qu'un exemplaire posé rend, partout, sans
            qu'on ait à le déclarer plan par plan. Un plan peut encore dévier
            depuis Cartes → Rendements, et cette ligne-là prend alors le pas. */

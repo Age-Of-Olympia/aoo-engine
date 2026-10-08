@@ -17,19 +17,21 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('entities-baseline')]
 class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
 {
-    public function testASceneryIsRepaired(): void
+    public function testASceneryWithARepairRecipeIsRepaired(): void
     {
         [$actor, $sceneryId] = $this->anActorFacing('scenery', 20);
+        $this->givenARepairRecipeAndAPurse($actor, $sceneryId);
 
         $results = (new ActionExecutorService($this->repairer(), $actor, PlayerFactory::legacy($sceneryId)))
             ->executeAction();
 
         $this->assertFalse(
             $results->isBlocked(),
-            'un décor entamé se répare : ce qui a été taillé se retaille'
+            'un décor entamé dont le type a sa recette de réparation se répare'
         );
     }
 
+    /** No repair recipe on the type: nothing mends, whatever the family. */
     public function testAResourceIsNotRepaired(): void
     {
         [$actor, $resourceId] = $this->anActorFacing('resource', 22);
@@ -101,6 +103,7 @@ class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
         );
 
         [$actor2, $sceneryId] = $this->anActorFacing('scenery', 28);
+        $this->givenARepairRecipeAndAPurse($actor2, $sceneryId);
         $scenery = PlayerFactory::legacy($sceneryId);
         $scenery->get_data();
 
@@ -162,6 +165,12 @@ class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
         return [$actor, $entityId];
     }
 
+    /** The entity's type gets a materials recipe, the actor what a dose costs. */
+    private function givenARepairRecipeAndAPurse(\Classes\Player $actor, int $entityId): void
+    {
+        $this->givenRepairable((string) $this->link->fetchOne('SELECT race FROM players WHERE id = ?', [$entityId]), $actor);
+    }
+
     /** Place an entity of that family, from a seeded type with enough PV. */
     private function placeEntityOfFamily(string $family, int $x, int $y, int $minPv = 2): int
     {
@@ -188,19 +197,5 @@ class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
         $this->trackEntityId($id);
 
         return $id;
-    }
-
-    /** Every refusal of one execution, flattened. */
-    private function refusalOf(\App\Action\ActionResults $results): string
-    {
-        $messages = [];
-
-        foreach ($results->getConditionsResultsArray() as $conditionResult) {
-            foreach ($conditionResult->getConditionFailureMessages() ?? [] as $message) {
-                $messages[] = (string) $message;
-            }
-        }
-
-        return implode(' ', $messages);
     }
 }

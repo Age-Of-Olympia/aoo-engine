@@ -53,9 +53,9 @@ final class RouteTypeService
             $created += (int) $this->conn->executeStatement(
                 "INSERT INTO races (code, name, label, description, playable, hidden, kind, type_kind,
                                     structure_nature, bleeds, wound_color, blocks_passage, blocks_projectiles,
-                                    pv, spd, bgColor, color, repairable, faction, plan)
+                                    pv, spd, bgColor, color, faction, plan)
                  SELECT ?, ?, ?, '', 0, 1, 'structure', 'route', 'route', '', '#8b4513', 0, 0,
-                        60, 16, '#8b4513', 'black', 1, '', ''
+                        60, 16, '#8b4513', 'black', '', ''
                   WHERE NOT EXISTS (SELECT 1 FROM races WHERE CONVERT(name USING utf8mb4) = CONVERT(? USING utf8mb4))",
                 [strtoupper($name), $name, ucfirst(str_replace('_', ' ', $name)), $name]
             );

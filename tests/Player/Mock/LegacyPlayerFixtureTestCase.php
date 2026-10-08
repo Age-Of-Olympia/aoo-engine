@@ -59,6 +59,9 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
     /** @var int[] action ids sown via sowCatalogAction(), removed in tearDown */
     private array $sownActionIds = [];
 
+    /** @var array<string, array<string, array{percent: int, costs: array<string, int>}>> recipes replaced by sowRepairRecipe(), restored in tearDown */
+    private array $sownRepairTypes = [];
+
     /** @var string[] faction codes sown via sowFaction(), removed in tearDown */
     private array $sownFactionCodes = [];
 
@@ -119,6 +122,9 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         if ($this->sownTypeNames !== []) {
             RaceService::clearCache();
         }
+        foreach ($this->sownRepairTypes as $typeName => $recipes) {
+            (new \App\Service\TypeRepairService($this->link))->declareAll($typeName, $recipes);
+        }
         foreach ($this->sownItemNames as $name) {
             $this->link->executeStatement('DELETE FROM items WHERE name = ?', [$name]);
         }
@@ -135,6 +141,7 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         $this->sownTypeNames = [];
         $this->sownItemNames = [];
         $this->sownActionIds = [];
+        $this->sownRepairTypes = [];
         $this->sownFactionCodes = [];
         $this->link = null;
         $GLOBALS['link'] = $this->previousLink;
@@ -503,6 +510,47 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         \App\Factory\EntityManagerFactory::getEntityManager()->clear();
 
         return $this->itemOrSkip($name);
+    }
+
+    /**
+     * Give a type (or an exemplar's item) a repair recipe in one mode: a dose
+     * costs $costs (gold is `or`) and restores $percent of the max PV. The
+     * type's own recipes come back in tearDown.
+     *
+     * @param array<string, int> $costs item name => quantity
+     */
+    protected function sowRepairRecipe(string $typeName, string $mode, int $percent, array $costs): void
+    {
+        $repairs = new \App\Service\TypeRepairService($this->link);
+        if (!array_key_exists($typeName, $this->sownRepairTypes)) {
+            $this->sownRepairTypes[$typeName] = $repairs->recipesOf($typeName);
+        }
+        $repairs->declare($typeName, $mode, $percent, $costs);
+    }
+
+    /** Every refusal of one execution, flattened. */
+    protected function refusalOf(\App\Action\ActionResults $results): string
+    {
+        $messages = [];
+
+        foreach ($results->getConditionsResultsArray() as $conditionResult) {
+            foreach ($conditionResult->getConditionFailureMessages() ?? [] as $message) {
+                $messages[] = (string) $message;
+            }
+        }
+
+        return implode(' ', $messages);
+    }
+
+    /**
+     * The `reparer` (materials) scene: the type mends fully in one dose of
+     * one planche_harnais, and the actor carries ten.
+     */
+    protected function givenRepairable(string $typeName, \Classes\Player $actor): void
+    {
+        $planche = $this->sowCatalogItem('planche_harnais', ['type' => 'matiere', 'price' => 10]);
+        $this->sowRepairRecipe($typeName, \App\Service\TypeRepairService::MATERIALS, 100, ['planche_harnais' => 1]);
+        $planche->add_item($actor, 10);
     }
 
     /**

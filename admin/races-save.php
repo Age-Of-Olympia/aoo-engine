@@ -168,11 +168,14 @@ $applyForm = static function (Race $race) use ($face, $action): array {
             $defaultDialog !== '' && (new \App\Service\DialogService())->gameDialogExists($defaultDialog) ? $defaultDialog : ''
         );
 
-        /* Three states: empty means "follow my family" and must stay null.
-         * Reading it as "no" would cut the type off its family on the first
-         * save, silently. */
-        $repairable = (string) ($_POST['repairable'] ?? '');
-        $race->setRepairable($repairable === '' ? null : $repairable === '1');
+        /* The two repair recipes, keyed by type name (shared form). */
+        $repairRecipes = \App\View\Admin\RepairRecipeFields::fromPost($_POST);
+        if ($repairRecipes !== null) {
+            $unknown = (new \App\Service\TypeRepairService())->declareAll($race->getName(), $repairRecipes);
+            if ($unknown !== []) {
+                $notice .= ' ⚠ Réparation : objets inconnus ignorés (' . implode(', ', $unknown) . ').';
+            }
+        }
     }
     /* Yield. $race keeps the PHP class Doctrine loaded until the next
      * request, so the target family decides what to write, and the current

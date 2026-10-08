@@ -51,6 +51,7 @@ class ItemRecipeBundleRoundTripTest extends TestCase
             }
             $this->conn->executeStatement('DELETE FROM craft_recipes WHERE id = ?', [(int) $recipeId]);
         }
+        $this->conn->executeStatement('DELETE FROM entity_type_repairs WHERE type_name = ?', [self::ITEM]);
         $this->conn->executeStatement(
             'DELETE FROM items WHERE name IN (?, ?)',
             [self::ITEM, self::INGREDIENT]
@@ -69,6 +70,8 @@ class ItemRecipeBundleRoundTripTest extends TestCase
             'wear_rate' => 2,
             'munitions' => ['fleche'],
             'extra' => ['legacyKey' => 'gardée'],
+            // Placed storage mends by its item's name: its recipes travel with it.
+            'repair' => ['gold' => ['percent' => 15, 'costs' => ['or' => 10]]],
         ];
 
         $report = (new ItemImporter($this->conn))->import([$payload]);
@@ -90,6 +93,7 @@ class ItemRecipeBundleRoundTripTest extends TestCase
         // Un objet importé est toujours sourcé en base, même si le
         // payload ne portait pas la clé.
         $this->assertEquals(1, $exported['stats_in_db']);
+        $this->assertSame(['gold' => ['percent' => 15, 'costs' => ['or' => 10]]], $exported['repair']);
 
         // Réimporter son propre export est un update sans rejet.
         $again = (new ItemImporter($this->conn))->import([$exported]);

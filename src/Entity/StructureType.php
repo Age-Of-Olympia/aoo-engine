@@ -42,52 +42,8 @@ abstract class StructureType extends Race
     #[ORM\Column(type: "text", name: "default_text", nullable: true)]
     private ?string $defaultText = null;
 
-    /**
-     * Does this type mend? `null` = whatever its family says.
-     *
-     * Nullable on purpose: an undecided type follows its family, so changing a
-     * family default carries every type that never overrode it. Ticking the box
-     * on one type still wins.
-     */
-    #[ORM\Column(type: "boolean", name: "repairable", nullable: true)]
-    private ?bool $repairable = null;
-
     #[ORM\Column(type: "string", length: 100, name: "default_dialog", options: ["default" => ""])]
     private string $defaultDialog = '';
-
-    public function isRepairable(): bool
-    {
-        return $this->repairable ?? $this->repairableByDefault();
-    }
-
-    /** The family's answer, when the type has not decided. */
-    protected function repairableByDefault(): bool
-    {
-        return false;
-    }
-
-    /**
-     * What is written on the type, `null` when undecided — the settings screen
-     * needs the third state, or saving once would cut the type off its family.
-     */
-    public function getRepairableOverride(): ?bool
-    {
-        return $this->repairable;
-    }
-
-    /** The family's answer, to show beside the "default" option. */
-    public function repairableFamilyDefault(): bool
-    {
-        return $this->repairableByDefault();
-    }
-
-    /** `null` hands the decision back to the family. */
-    public function setRepairable(?bool $repairable): self
-    {
-        $this->repairable = $repairable;
-
-        return $this;
-    }
 
     public function isReadableFromAfar(): bool
     {

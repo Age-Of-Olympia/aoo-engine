@@ -59,7 +59,7 @@ echo "📦 Catalogues…"
 MISSING=""
 for table in \
     races race_starter_actions race_spells race_harvest race_recipes \
-    entity_type_footprints \
+    entity_type_footprints entity_type_repairs entity_type_repair_costs \
     plans plan_z_levels \
     items craft_recipes craft_recipes_ingredients craft_recipes_results \
     actions action_conditions action_outcomes outcome_instructions \
