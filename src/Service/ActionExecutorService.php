@@ -124,7 +124,7 @@ class ActionExecutorService
         }
         
         // 5) LOG — from the action's per-type templates (action_type_logs).
-        $logsArray = $this->logResolver->resolve($this->action, $this->actor, $this->target);
+        $logsArray = $this->logResolver->resolve($this->action, $this->actor, $this->target, $this->conditionObject->getPickedItem());
 
         // 6) The arena capture is triggered from action.php, after the Log::put
         //    calls, where the event text is available.

@@ -16,8 +16,9 @@ use Doctrine\ORM\EntityManagerInterface;
  *
  * The template is taken from the closest type in the action's class ancestry
  * that has a row (e.g. a spell has no "spell" row → it inherits "technique").
- * Placeholders: {actor}, {target}, {action} (display name) and {weapon} (the
- * " avec <arme>" clause, empty for animals / bare hands). A type with no
+ * Placeholders: {actor}, {target}, {action} (display name), {weapon} (the
+ * " avec <arme>" clause, empty for animals / bare hands) and {item} (the item
+ * picked at execution, else what the posted recipe makes). A type with no
  * configured template produces no log line — the data-driven replacement for the
  * removed per-subclass getLogMessages().
  */
@@ -36,7 +37,7 @@ final class ActionLogResolver
     /**
      * @return array{actor: string, target: string}
      */
-    public function resolve(Action $action, Player $actor, Player $target): array
+    public function resolve(Action $action, Player $actor, Player $target, ?Item $pickedItem = null): array
     {
         $config = $this->configFor($action);
         if ($config === null) {
@@ -44,8 +45,8 @@ final class ActionLogResolver
         }
 
         return [
-            'actor' => $this->render($config->getActorTemplate(), $action, $actor, $target),
-            'target' => $this->render($config->getTargetTemplate(), $action, $actor, $target),
+            'actor' => $this->render($config->getActorTemplate(), $action, $actor, $target, $pickedItem),
+            'target' => $this->render($config->getTargetTemplate(), $action, $actor, $target, $pickedItem),
         ];
     }
 
@@ -57,7 +58,7 @@ final class ActionLogResolver
         return $this->locator->closest($action, ActionTypeLog::class, 'log');
     }
 
-    public function render(?string $template, Action $action, Player $actor, Player $target): string
+    public function render(?string $template, Action $action, Player $actor, Player $target, ?Item $pickedItem = null): string
     {
         if ($template === null || $template === '') {
             return '';
@@ -68,7 +69,12 @@ final class ActionLogResolver
             '{target}' => (string) ($target->data->name ?? ''),
             '{action}' => $this->displayName($action),
             '{weapon}' => $this->weaponClause($actor),
-            '{item}' => str_contains($template, '{item}') ? $this->craftedItems() : '',
+            // The item picked at execution (ItemPick), else what the posted recipe makes.
+            '{item}' => match (true) {
+                !str_contains($template, '{item}') => '',
+                $pickedItem !== null => (string) ($pickedItem->data->name ?? ''),
+                default => $this->craftedItems(),
+            },
         ]);
     }
 

@@ -2,10 +2,12 @@
 
 namespace Tests\Action\Schema;
 
+use App\Action\ConsumeAction;
 use App\Action\MeleeAction;
 use App\Action\SpellAction;
 use App\Entity\ActionTypeLog;
 use App\Service\Action\ActionLogResolver;
+use Classes\Item;
 use Classes\Player;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
@@ -106,5 +108,16 @@ class ActionLogResolverTest extends TestCase
         $result = $this->resolver([])->resolve($action, $this->player('Dorna'), $this->player('Thyrias'));
 
         $this->assertSame(['actor' => '', 'target' => ''], $result);
+    }
+
+    public function testItemPlaceholderNamesThePickedItem(): void
+    {
+        $rows = [$this->log('consume', '{actor} a consommé {item}.', null)];
+        $potion = $this->createMock(Item::class);
+        $potion->data = (object) ['name' => 'Potion de soin'];
+
+        $result = $this->resolver($rows)->resolve(new ConsumeAction(), $this->player('Dorna'), $this->player('Dorna'), $potion);
+
+        $this->assertSame('Dorna a consommé Potion de soin.', $result['actor']);
     }
 }
