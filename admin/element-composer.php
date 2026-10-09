@@ -25,8 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['svg_save'])) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
         $name = trim((string) ($_POST['name'] ?? ''));
-        $service->putSvg($layer, $name, (string) ($_POST['svg'] ?? ''), !empty($_POST['replace']));
-        setFlash('success', "« {$name}.svg » enregistrée dans img/{$layer}/.");
+        // The page sends the snapshot as a data: URL
+        $png = base64_decode(preg_replace('#^data:image/png;base64,#', '', (string) ($_POST['png'] ?? '')), true);
+        $service->putSvg($layer, $name, (string) ($_POST['svg'] ?? ''), !empty($_POST['replace']), (string) $png);
+        setFlash('success', "« {$name}.svg » enregistrée dans img/{$layer}/" . ($png ? ", avec son aperçu {$name}.png pour Tiled." : '.'));
         redirectTo('tile-assets.php?layer=' . urlencode($layer));
     } catch (Throwable $e) {
         setFlash('danger', $e->getMessage());
@@ -40,7 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['svg_save'])) {
 $catalog = (new TileCatalogService())->buildCatalog(['elements', 'tiles']);
 $baseImages = array_filter(
     $catalog['images'],
-    fn(string $path, string $key) => !str_ends_with($path, '.svg') && !str_starts_with($key, 'tiles/trans_'),
+    // No svg, nor the png snapshot the composer saves beside one
+    fn(string $path, string $key) => !is_file($_SERVER['DOCUMENT_ROOT'] . '/' . preg_replace('/\.\w+$/', '.svg', $path))
+        && !str_starts_with($key, 'tiles/trans_'),
     ARRAY_FILTER_USE_BOTH
 );
 ksort($baseImages);
@@ -91,7 +95,9 @@ ob_start();
         Deux éléments dont le nom commence par le même mot avant <code style="display:inline">_</code>
         (eau, eau_cascade) sont raccordés bord à bord ; contre tout autre voisin, le bord est estompé.
         La page Éléments permet de poser un élément avec une rotation : un seul fichier suffit pour les
-        quatre orientations.
+        quatre orientations. Tiled ne sait pas dessiner les filtres : un aperçu fixe
+        <code style="display:inline">&lt;nom&gt;.png</code> est enregistré à côté, et c'est lui que Tiled
+        affiche. Un SVG composé sans aperçu : le recharger ci-dessous, puis l'enregistrer de nouveau.
     </div>
 
     <div class="composer">
@@ -203,9 +209,10 @@ ob_start();
                         <small>en image</small></div>
                 </div>
 
-                <form method="post" class="mt-3">
+                <form method="post" class="mt-3" id="save-form">
                     <?= $csrf->renderTokenField() ?>
                     <input type="hidden" name="svg" id="svg-out">
+                    <input type="hidden" name="png" id="png-out">
                     <div class="d-flex gap-2">
                         <div class="form-group" style="flex:1;">
                             <label>Nom (sans extension)</label>
@@ -480,6 +487,31 @@ ob_start();
         document.getElementById('name').value = btn.dataset.preset;
         render(); remember();
     }));
+    /* Tiled (Qt) draws no SVG filter: the first frame, rasterised by the
+     * browser, goes along as a png. A failed snapshot still saves the svg. */
+    const form = document.getElementById('save-form');
+    form.addEventListener('submit', async event => {
+        const png = document.getElementById('png-out');
+        if (form.dataset.snapshot) return;
+        event.preventDefault();
+        try {
+            const img = new Image();
+            img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(document.getElementById('svg-out').value);
+            await img.decode();
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 50;
+            canvas.getContext('2d').drawImage(img, 0, 0, 50, 50);
+            png.value = canvas.toDataURL('image/png');
+        } catch (e) {
+            png.value = '';
+        }
+        form.dataset.snapshot = '1';
+        try {
+            form.requestSubmit(event.submitter);
+        } finally {
+            delete form.dataset.snapshot;
+        }
+    });
     const reload = document.getElementById('reload');
     if (reload) reload.addEventListener('change', () => {
         if (!reload.value) return;

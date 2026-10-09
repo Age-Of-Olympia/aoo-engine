@@ -137,10 +137,11 @@ class TileAssetService
      * filters and animations are the point. The file must stand alone —
      * the board loads it through <image>, where scripts never run and
      * external resources never load — so anything but inline content is
-     * refused. With $replace, the other formats of that name go: the board
-     * draws every format it finds, stacked.
+     * refused. $png, a static snapshot of it, is stored beside it as
+     * <name>.png for Tiled, which draws no SVG filter. With $replace, the
+     * other formats of that name go.
      */
-    public function putSvg(string $layer, string $name, string $svg, bool $replace = false): void
+    public function putSvg(string $layer, string $name, string $svg, bool $replace = false, string $png = ''): void
     {
         $this->assertLayer($layer);
         $this->assertName($name);
@@ -152,6 +153,8 @@ class TileAssetService
             throw new RuntimeException("L'image « {$name} » existe déjà dans cette couche.");
         }
         $this->assertStandaloneSvg($svg);
+        // Re-encoded through GD, so only pixels reach the disk
+        $snapshot = $png === '' ? null : $this->decodePng($png);
 
         $dir = $this->root . '/img/' . TiledMapService::layerImageDir($layer);
         if (!is_dir($dir) || !is_writable($dir)) {
@@ -163,7 +166,23 @@ class TileAssetService
         if (file_put_contents($dir . '/' . $name . '.svg', $svg) === false) {
             throw new RuntimeException('Écriture impossible : ' . $dir . '/' . $name . '.svg');
         }
+        if ($snapshot !== null && !imagepng($snapshot, $dir . '/' . $name . '.png')) {
+            throw new RuntimeException('Écriture impossible : ' . $dir . '/' . $name . '.png');
+        }
         \App\Service\Map\BoardChanges::world();
+    }
+
+    private function decodePng(string $png): \GdImage
+    {
+        $info = strlen($png) <= TileCatalogService::IMAGE_MAX_BYTES ? @getimagesizefromstring($png) : false;
+        $image = ($info['mime'] ?? '') === 'image/png' ? @imagecreatefromstring($png) : false;
+        if (!$image) {
+            throw new RuntimeException('Aperçu PNG illisible.');
+        }
+        imagealphablending($image, false);
+        imagesavealpha($image, true);
+
+        return $image;
     }
 
     /** Root <svg>, no script, no event handler, no href but #id or data:image. */
@@ -385,9 +404,11 @@ class TileAssetService
         if (!preg_match(TileCatalogService::ASSET_NAME_PATTERN, $name)) {
             $problems[] = 'nom invalide — ignorée par les éditeurs et la palette';
         }
-        if (count($nameFiles) > 1) {
+        // A png beside an svg is its snapshot for Tiled (see putSvg), not a dead format
+        $dead = array_diff(array_slice($nameFiles, 1), str_ends_with($nameFiles[0], '.svg') ? [$name . '.png'] : []);
+        if ($dead !== []) {
             $problems[] = 'plusieurs formats (' . implode(', ', $nameFiles) . ') — seul ' . $nameFiles[0]
-                . ' est dessiné (' . implode(' > ', TileCatalogService::IMAGE_EXTENSIONS) . '), les autres sont morts';
+                . ' est dessiné (' . implode(' > ', TileCatalogService::IMAGE_EXTENSIONS) . '), morts : ' . implode(', ', $dead);
         }
         if (!$size) {
             $problems[] = 'image illisible';

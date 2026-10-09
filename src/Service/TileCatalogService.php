@@ -281,8 +281,9 @@ class TileCatalogService
     }
 
     /**
-     * Scan mémoïsé d'un répertoire d'images : nom → fichier + dimensions.
-     * Une seule passe getimagesize par répertoire et par requête.
+     * Scan mémoïsé d'un répertoire d'images : nom → fichier + dimensions,
+     * un fichier par nom. Une seule passe getimagesize par répertoire et
+     * par requête.
      *
      * @return array<string, array{file: string, width: int, height: int}>
      */
@@ -294,14 +295,20 @@ class TileCatalogService
 
         $dir = $_SERVER['DOCUMENT_ROOT'] . '/' . $relativeDir;
         $result = [];
+        $ranks = [];
+        // Tiled's precedence: a png first, then the board's order. Qt draws no
+        // SVG filter, so an svg from the admin composer reaches Tiled through
+        // the static png snapshot saved beside it; the board keeps the svg.
+        $tiledOrder = ['png', ...self::IMAGE_EXTENSIONS];
 
         foreach (is_dir($dir) ? scandir($dir) : [] as $fileName) {
             $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
             $name = pathinfo($fileName, PATHINFO_FILENAME);
+            $rank = array_search($ext, $tiledOrder, true);
 
-            if (!in_array($ext, self::IMAGE_EXTENSIONS, true)
+            if ($rank === false
                 || !preg_match(self::ASSET_NAME_PATTERN, $name)
-                || isset($result[$name])
+                || ($ranks[$name] ?? PHP_INT_MAX) <= $rank
             ) {
                 continue;
             }
@@ -312,6 +319,7 @@ class TileCatalogService
             }
 
             $result[$name] = ['file' => $fileName, 'width' => $size[0], 'height' => $size[1]];
+            $ranks[$name] = $rank;
         }
 
         return $this->scans[$relativeDir] = $result;

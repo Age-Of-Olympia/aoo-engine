@@ -4,6 +4,7 @@ namespace Tests\Various;
 
 use App\Service\TerrainTransitionService;
 use App\Service\TileAssetService;
+use App\Service\TileCatalogService;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Tests\Support\LegacyBootstrapTrait;
@@ -148,13 +149,13 @@ class TileAssetServiceTest extends TestCase
             $this->assertStringContainsString('existe déjà', $e->getMessage());
         }
 
-        $this->writePalettePng('compose');
+        file_put_contents($this->root . '/img/tiles/compose.gif', 'GIF89a');
         $entry = $this->service->inventory('tiles')['entries'][0];
-        $this->assertSame(['compose.svg', 'compose.png'], $entry['files'], 'le svg passe avant le png, comme sur la carte');
+        $this->assertSame(['compose.svg', 'compose.gif'], $entry['files'], 'le svg passe avant le gif, comme sur la carte');
         $this->assertStringContainsString('seul compose.svg est dessiné', implode(' ', $entry['problems']));
 
         $this->service->putSvg('tiles', 'compose', $svg, true);
-        $this->assertFileDoesNotExist($this->root . '/img/tiles/compose.png', 'replace efface les autres formats');
+        $this->assertFileDoesNotExist($this->root . '/img/tiles/compose.gif', 'replace efface les autres formats');
 
         foreach ([
             '<svg xmlns="http://www.w3.org/2000/svg"><script>1</script></svg>',
@@ -169,6 +170,32 @@ class TileAssetServiceTest extends TestCase
                 $this->assertStringContainsString('SVG', $e->getMessage());
             }
         }
+    }
+
+    public function testPutSvgKeepsItsPngSnapshotForTiled(): void
+    {
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50"><rect width="50" height="50"/></svg>';
+        ob_start();
+        imagepng(imagecreatetruecolor(50, 50));
+        $png = (string) ob_get_clean();
+
+        $this->service->putSvg('tiles', 'compose', $svg, false, $png);
+        $this->service->putSvg('tiles', 'compose', $svg, true, $png);
+        $entry = $this->service->inventory('tiles')['entries'][0];
+        $this->assertSame(['compose.svg', 'compose.png'], $entry['files'], 'replace garde le couple svg + aperçu');
+        $this->assertSame([], array_filter($entry['problems'], fn(string $p) => str_contains($p, 'formats')), 'l\'aperçu n\'est pas un format mort');
+
+        // Tiled gets the png, the board the svg
+        $documentRoot = $_SERVER['DOCUMENT_ROOT'];
+        $_SERVER['DOCUMENT_ROOT'] = $this->root;
+        try {
+            $this->assertSame('img/tiles/compose.png', (new TileCatalogService())->buildCatalog(['tiles'])['images']['tiles/compose']);
+        } finally {
+            $_SERVER['DOCUMENT_ROOT'] = $documentRoot;
+        }
+
+        $this->expectExceptionMessage('Aperçu PNG illisible');
+        $this->service->putSvg('tiles', 'autre', $svg, false, 'GIF89a');
     }
 
     public function testDeleteRefusesTilesStillPlacedOnMaps(): void
