@@ -23,6 +23,15 @@ use RuntimeException;
  */
 class RaceImageService
 {
+    /**
+     * State sprites of a structure type, shown by BuildingService::spriteOf:
+     * suffix => [admin label, doors only].
+     */
+    public const STATE_VARIANTS = [
+        '_broken' => ['Endommagé ou en ruine', false],
+        '_open'   => ['Porte ouverte', true],
+    ];
+
     private ?EntityManagerInterface $entityManager;
     private string $root;
 
@@ -201,9 +210,7 @@ class RaceImageService
         if ($race === null) {
             throw new RuntimeException("Race inconnue : {$raceName}.");
         }
-        if (!is_file($tmpPath) || filesize($tmpPath) > TileCatalogService::IMAGE_MAX_BYTES) {
-            throw new RuntimeException('Fichier absent ou trop volumineux (max 4 Mo).');
-        }
+        $this->assertUploadable($tmpPath);
 
         $dir = $this->raceDir($type, $raceName);
         if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
@@ -239,6 +246,52 @@ class RaceImageService
      * @param string $sourceRelPath chemin relatif au docroot (img/…)
      * @return string nom de fichier créé
      */
+    /** @return array<string, string> the state variants $type can show, suffix => label */
+    public function stateVariants(string $type): array
+    {
+        $this->assertRace($type);
+        $race = $this->em()->getRepository(Race::class)->findOneBy(['name' => $type]);
+        if ($race === null || !$race->isStructureKind()) {
+            throw new RuntimeException("Type inconnu : {$type}.");
+        }
+
+        $shown = array_filter(self::STATE_VARIANTS, static fn (array $v): bool => !$v[1] || $race->isDoor());
+
+        return array_map(static fn (array $v): string => $v[0], $shown);
+    }
+
+    /**
+     * Where the admin stores a state sprite: the first place resolveAvatar
+     * looks. Png, because this GD has no webp encoder.
+     */
+    public function statePath(string $type, string $variant): string
+    {
+        if (!isset($this->stateVariants($type)[$variant])) {
+            throw new RuntimeException("Variante inconnue pour {$type} : {$variant}.");
+        }
+
+        return 'img/avatars/' . $type . $variant . '.png';
+    }
+
+    /** Store (or replace) a state sprite, resized to the type's footprint. */
+    public function uploadState(string $type, string $variant, string $tmpPath): string
+    {
+        $path = $this->statePath($type, $variant);
+        $this->assertUploadable($tmpPath);
+        [$width, $height] = $this->expectedSize(ImageType::AVATAR, $type);
+        $this->resize($tmpPath, $this->root . '/' . $path, $width, $height);
+
+        return $path;
+    }
+
+    public function deleteState(string $type, string $variant): void
+    {
+        $file = $this->root . '/' . $this->statePath($type, $variant);
+        if (is_file($file) && !unlink($file)) {
+            throw new RuntimeException('Suppression impossible : ' . $file);
+        }
+    }
+
     public function adopt(ImageType $type, string $raceName, string $sourceRelPath): string
     {
         $race = $this->em()->getRepository(Race::class)->findOneBy(['name' => $raceName]);
@@ -402,6 +455,13 @@ class RaceImageService
      * jpeg aplatirait la transparence sur fond noir. Le gif perd de toute
      * façon son animation au redimensionnement.
      */
+    private function assertUploadable(string $tmpPath): void
+    {
+        if (!is_file($tmpPath) || filesize($tmpPath) > TileCatalogService::IMAGE_MAX_BYTES) {
+            throw new RuntimeException('Fichier absent ou trop volumineux (max 4 Mo).');
+        }
+    }
+
     private static function outputExtension(string $mime): string
     {
         return match ($mime) {

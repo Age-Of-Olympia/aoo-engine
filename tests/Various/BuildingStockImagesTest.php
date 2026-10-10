@@ -147,6 +147,42 @@ class BuildingStockImagesTest extends LegacyPlayerFixtureTestCase
         }
     }
 
+    public function testTheAdminStateImagesReachThePlacedCopies(): void
+    {
+        $images = new \App\Service\RaceImageService(null, $_SERVER['DOCUMENT_ROOT']);
+        $this->assertSame(['_broken'], array_keys($images->stateVariants(self::TYPE)), 'no open image for a non-door');
+
+        $this->link->executeStatement("UPDATE races SET structure_nature = 'porte' WHERE name = ?", [self::TYPE]);
+        RaceService::clearCache();
+        \App\Factory\EntityManagerFactory::getEntityManager()->clear();
+        $this->assertSame(['_broken', '_open'], array_keys($images->stateVariants(self::TYPE)));
+
+        $id = $this->place(null);
+        $this->assertSame(self::DIR . '1.png', $this->imageOf($id), 'no open image yet: the base one');
+
+        $tmp = $_SERVER['DOCUMENT_ROOT'] . '/' . self::DIR . 'upload.gif';
+        imagegif(imagecreatetruecolor(80, 80), $tmp);
+        $buildings = new BuildingService();
+        try {
+            $path = $images->uploadState(self::TYPE, '_open', $tmp);
+            $this->assertSame('img/avatars/' . self::TYPE . '_open.png', $path);
+            $this->assertSame($path, BuildingService::resolveAvatar(self::TYPE, '_open'));
+            $buildings->refreshTypeSprites(self::TYPE);
+            $this->assertSame($path, $this->imageOf($id), 'the open door shows the uploaded image');
+
+            $images->deleteState(self::TYPE, '_open');
+            $this->assertSame(self::DIR . '1.png', BuildingService::resolveAvatar(self::TYPE, '_open'));
+            $buildings->refreshTypeSprites(self::TYPE);
+            $this->assertSame(self::DIR . '1.png', $this->imageOf($id));
+        } finally {
+            @unlink($tmp);
+            @unlink($_SERVER['DOCUMENT_ROOT'] . '/img/avatars/' . self::TYPE . '_open.png');
+        }
+
+        $this->expectException(\RuntimeException::class);
+        $images->statePath(self::TYPE, '/../../config');
+    }
+
     public function testAnImageOutsideTheStockIsRefused(): void
     {
         $id = $this->place('img/avatars/nain/1.png');

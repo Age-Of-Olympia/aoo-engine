@@ -319,13 +319,15 @@ class BuildingService
      * sprite of the same name (img/walls/{type}.png — a built mur_bois
      * looks like a mur_bois) → the generic placeholder. View.php renders
      * players.avatar directly. A state variant ('_broken', '_open') is
-     * looked up in the flat files only, and falls back to the base sprite.
+     * looked up in the flat files only, first the one the admin uploads
+     * (RaceImageService::statePath), and falls back to the base sprite.
      */
     public static function resolveAvatar(string $type, string $variant = ''): string
     {
         $root = dirname(__DIR__, 2);
 
-        $candidates = ['img/avatars/' . $type . $variant . '.webp'];
+        $candidates = $variant === '' ? [] : ['img/avatars/' . $type . $variant . '.png'];
+        $candidates[] = 'img/avatars/' . $type . $variant . '.webp';
         if ($variant === '') {
             // A type cut in pieces (img/walls/{type}_{n}.png) shows the
             // sprite stitched from them, as a scenery figure does.

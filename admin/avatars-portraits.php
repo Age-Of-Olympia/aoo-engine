@@ -38,7 +38,8 @@ $backTo = $selfPage . '?type=' . urlencode($type->value) . '&race=' . urlencode(
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['image_upload']) || isset($_POST['image_delete'])
         || isset($_POST['image_adopt']) || isset($_POST['image_move'])
-        || ($structureMode && (isset($_POST['image_replace']) || isset($_POST['image_replace_all']))));
+        || ($structureMode && (isset($_POST['image_replace']) || isset($_POST['image_replace_all'])
+            || isset($_POST['state_upload']) || isset($_POST['state_delete']))));
 if ($isStateChangingPost) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
@@ -47,15 +48,18 @@ if ($isStateChangingPost) {
         redirectTo($backTo);
     }
 
+    $uploadedFile = static function (): string {
+        $file = $_FILES['image_file'] ?? null;
+        if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
+            || !is_uploaded_file((string) $file['tmp_name'])) {
+            throw new RuntimeException('Aucun fichier reçu (ou upload incomplet).');
+        }
+        return (string) $file['tmp_name'];
+    };
     $moved = []; // old stock path => new one: copies showing a replaced image follow it
     try {
         if (isset($_POST['image_upload'])) {
-            $file = $_FILES['image_file'] ?? null;
-            if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
-                || !is_uploaded_file((string) $file['tmp_name'])) {
-                throw new RuntimeException('Aucun fichier reçu (ou upload incomplet).');
-            }
-            $created = $service->upload($type, $race, (string) $file['tmp_name']);
+            $created = $service->upload($type, $race, $uploadedFile());
             setFlash('success', ucfirst($type->value) . " « {$created} » ajouté pour la race {$race}"
                 . ($type === ImageType::PORTRAIT ? ' (miniature générée)' : '') . '.');
         } elseif (isset($_POST['image_adopt'])) {
@@ -81,30 +85,26 @@ if ($isStateChangingPost) {
             // A new file name, not an overwrite: image URLs carry no version,
             // so browsers would keep showing the old picture.
             $old = trim((string) ($_POST['file'] ?? ''));
-            $file = $_FILES['image_file'] ?? null;
-            if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
-                || !is_uploaded_file((string) $file['tmp_name'])) {
-                throw new RuntimeException('Aucun fichier reçu (ou upload incomplet).');
-            }
-            $created = $service->upload($type, $race, (string) $file['tmp_name']);
+            $created = $service->upload($type, $race, $uploadedFile());
             $service->delete($type, $race, $old);
             $dir = 'img/avatars/' . $race . '/';
             $moved[$dir . $old] = $dir . $created;
             setFlash('success', "« {$old} » remplacé par « {$created} ».");
         } elseif (isset($_POST['image_replace_all'])) {
-            $file = $_FILES['image_file'] ?? null;
-            if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
-                || !is_uploaded_file((string) $file['tmp_name'])) {
-                throw new RuntimeException('Aucun fichier reçu (ou upload incomplet).');
-            }
             $olds = $service->imagePaths($type, $race);
-            $created = $service->upload($type, $race, (string) $file['tmp_name']);
+            $created = $service->upload($type, $race, $uploadedFile());
             $dir = 'img/avatars/' . $race . '/';
             foreach ($olds as $oldPath) {
                 $service->delete($type, $race, basename($oldPath));
                 $moved[$oldPath] = $dir . $created;
             }
             setFlash('success', count($olds) . " image(s) remplacée(s) par « {$created} » : tous les exemplaires l'affichent.");
+        } elseif (isset($_POST['state_upload'])) {
+            $created = $service->uploadState($race, (string) ($_POST['variant'] ?? ''), $uploadedFile());
+            setFlash('success', "Image « {$created} » enregistrée : les exemplaires concernés l'affichent.");
+        } elseif (isset($_POST['state_delete'])) {
+            $service->deleteState($race, (string) ($_POST['variant'] ?? ''));
+            setFlash('success', 'Image supprimée : les exemplaires reprennent l\'image de base.');
         } elseif (isset($_POST['image_delete'])) {
             $name = trim((string) ($_POST['file'] ?? ''));
             $service->delete($type, $race, $name);
@@ -226,6 +226,63 @@ ob_start();
             <?php endif; ?>
         </div>
     </div>
+    <?php
+    try {
+        $stateVariants = $service->stateVariants($race);
+    } catch (RuntimeException) {
+        $stateVariants = []; // name outside the stock's pattern
+    }
+    if ($stateVariants !== []): ?>
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Images d'état</h5>
+            <table class="table table-sm mb-0" style="font-size:13px;">
+                <tbody>
+                <?php foreach ($stateVariants as $variant => $label):
+                    $own = $service->statePath($race, $variant);
+                    $current = \App\Service\BuildingService::resolveAvatar($race, $variant);
+                ?>
+                    <tr>
+                        <td style="width:12rem;"><?= e($label) ?> <code><?= e($variant) ?></code></td>
+                        <td>
+                            <?php if ($current !== $effective): ?>
+                                <img src="/<?= e($current) ?>?v=<?= (int) @filemtime(dirname(__DIR__) . '/' . $current) ?>" height="40" style="object-fit:contain;border:1px solid #ddd;background:#fff;" alt="">
+                                <code style="font-size:12px;"><?= e($current) ?></code>
+                            <?php else: ?>
+                                <small class="text-muted">aucune — l'image de base est utilisée.</small>
+                            <?php endif; ?>
+                        </td>
+                        <td style="white-space:nowrap;">
+                            <form method="post" enctype="multipart/form-data" class="d-inline-flex gap-2 mb-0">
+                                <?= $csrf->renderTokenField() ?>
+                                <input type="hidden" name="type" value="<?= e($type->value) ?>">
+                                <input type="hidden" name="race" value="<?= e($race) ?>">
+                                <input type="hidden" name="variant" value="<?= e($variant) ?>">
+                                <input type="file" class="form-control-file" name="image_file" accept=".png,.jpg,.jpeg,.webp,.gif" required>
+                                <button type="submit" name="state_upload" value="1" class="btn btn-sm btn-primary">
+                                    <?= $current === $own ? 'Remplacer' : 'Ajouter' ?>
+                                </button>
+                            </form>
+                            <?php if ($current === $own): ?>
+                                <form method="post" class="d-inline mb-0"
+                                      onsubmit="return confirm('Supprimer <?= e($own) ?> ?');">
+                                    <?= $csrf->renderTokenField() ?>
+                                    <input type="hidden" name="type" value="<?= e($type->value) ?>">
+                                    <input type="hidden" name="race" value="<?= e($race) ?>">
+                                    <input type="hidden" name="variant" value="<?= e($variant) ?>">
+                                    <button type="submit" name="state_delete" value="1" class="btn btn-sm btn-outline-danger">Supprimer</button>
+                                </form>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+            <small class="text-muted">Redimensionnée en <?= implode('×', $service->expectedSize($type, $race)) ?>,
+                enregistrée en png dans img/avatars/.</small>
+        </div>
+    </div>
+    <?php endif; ?>
     <?php endif; ?>
     <div class="card mt-3">
         <div class="card-body">
