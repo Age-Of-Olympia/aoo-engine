@@ -410,8 +410,7 @@ body:has(#hud)::after {
         display: none;
     }
 
-    /* Rankings stay reachable through the main menu; the mobile
-     * drawer shows them too. */
+    /* Rankings: mobile drawer only. */
     .hud-quick > a.hud-meta {
         display: none;
     }
