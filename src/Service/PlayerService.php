@@ -50,7 +50,7 @@ class PlayerService
                 left JOIN players_options on players_options.player_id=players.id and players_options.name = "anonymeMode"
                 where players.name like ?
                 and players_options.player_id is null
-                and players.player_type = "real"
+                and players.player_type IN ("real", "npc")
                 ';
 
         $res = $this->db->exe($sql, '%'.$searchKey.'%');

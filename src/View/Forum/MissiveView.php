@@ -54,7 +54,7 @@ class MissiveView
                 }
                 $desti->get_data(false);
 
-                /* Le chemin par NOM est déjà filtré (player_type real) ;
+                /* Le chemin par NOM est déjà filtré (real ou npc) ;
                  * le chemin par ID numérique acceptait n'importe quelle
                  * ligne players — bâtiments compris. Même garde que le
                  * bouton Missive de la carte d'observation. */
