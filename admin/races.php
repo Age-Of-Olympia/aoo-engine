@@ -197,12 +197,11 @@ function race_render_list(array $races, TypeEditorFace $face): string
         $charactersByRace = (new RaceService())->countCharactersByRaceName();
     }
 
-    // Plan overrides of the yield, grouped by type then by (item, rate).
+    // Plan overrides of the yield, grouped by type.
     $overridesByType = [];
     if ($face->isResource()) {
         foreach ((new \App\Service\Map\HarvestCatalogService())->configured() as $row) {
-            $label = race_yield_label($row['item'], $row['exhaust']);
-            $overridesByType[$row['type']][$label] = ($overridesByType[$row['type']][$label] ?? 0) + 1;
+            $overridesByType[$row['type']][] = $row;
         }
     }
 
@@ -262,7 +261,10 @@ function race_render_list(array $races, TypeEditorFace $face): string
 
     $headers = $face->isStructure()
         ? '<th></th><th>Code</th><th>Nom</th><th>Nature</th><th>Couleur</th>'
-            . ($face->isResource() ? '<th title="Objet obtenu en fouillant, et taux d\'épuisement sur 100">Fouille</th>' : '')
+            . ($face->isResource() ? '<th title="Objet obtenu en fouillant.'
+                . ' Épuis. : chances sur 100 qu\'une ressource voisine s\'épuise à chaque fouille.'
+                . ' Repousse : chances sur 1000 qu\'une ressource épuisée repousse à chaque passage du cron horaire.'
+                . ' En gris : valeurs fixées par plan (Rendements).">Fouille</th>' : '')
             . '<th>PV</th><th>E</th><th>Res</th>'
             . '<th title="Entités de ce type posées dans le monde">Posés</th><th></th>'
         : '<th></th><th>Code</th><th>Nom</th><th>Statut</th><th>Couleur</th><th>Faction</th>'
@@ -285,23 +287,38 @@ function race_render_list(array $races, TypeEditorFace $face): string
         . '</tr></thead><tbody>' . $rows . '</tbody></table>';
 }
 
-function race_yield_label(string $item, ?int $exhaust): string
+/** Exhaust is rolled on 1d100 per harvest, regrow on 1d1000 per hourly cron run. */
+function race_yield_label(string $item, ?int $exhaust, ?int $regrow): string
 {
-    return $item . ' ' . (int) $exhaust . ' %';
+    return $item . ' · épuis. ' . (int) $exhaust . ' % · repousse ' . (int) $regrow . ' ‰/h';
 }
 
 /**
- * Type default first, then each plan override with its plan count.
+ * Type default first, then each plan override with its plan count. An
+ * override's empty field falls back to the type, as in yieldsFor().
  *
- * @param array<string, int> $overrides label => number of plans
+ * @param list<array{item: string, exhaust: ?int, regrow: ?int}> $overrides
  */
 function race_yield_cell(Race $race, array $overrides): string
 {
-    $cell = $race instanceof HarvestableInterface && $race->getHarvestItem() !== ''
-        ? e(race_yield_label($race->getHarvestItem(), $race->getHarvestExhaust()))
-        : '';
+    $harvestable = $race instanceof HarvestableInterface;
+    $item = $harvestable ? $race->getHarvestItem() : '';
+    $exhaust = $harvestable ? $race->getHarvestExhaust() : null;
+    $regrow = $harvestable ? $race->getHarvestRegrow() : null;
 
-    foreach ($overrides as $label => $plans) {
+    $cell = $item !== '' ? e(race_yield_label($item, $exhaust, $regrow)) : '';
+
+    $plansByLabel = [];
+    foreach ($overrides as $row) {
+        $label = race_yield_label(
+            trim($row['item']) !== '' ? trim($row['item']) : $item,
+            $row['exhaust'] ?? $exhaust,
+            $row['regrow'] ?? $regrow
+        );
+        $plansByLabel[$label] = ($plansByLabel[$label] ?? 0) + 1;
+    }
+
+    foreach ($plansByLabel as $label => $plans) {
         $cell .= ($cell === '' ? '' : '<br>') . '<small class="text-muted" title="Valeur fixée par plan (Rendements)">'
             . e($label) . ' · ' . $plans . ' plan' . ($plans > 1 ? 's' : '') . '</small>';
     }
