@@ -113,6 +113,20 @@ class TileAssetServiceTest extends TestCase
         $this->assertEqualsWithDelta(174, $pixel['red'], 2);
     }
 
+    public function testAddKeepsWebpAsUploaded(): void
+    {
+        // 1×1 lossless WebP: the game refers to some tiles by their .webp path
+        $bytes = (string) base64_decode('UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==');
+        $tmp = $this->root . '/upload_source.bin';
+        file_put_contents($tmp, $bytes);
+
+        $this->service->add('tiles', 'tuile_test_webp', $tmp);
+        unlink($tmp);
+
+        $this->assertSame($bytes, file_get_contents($this->root . '/img/tiles/tuile_test_webp.webp'));
+        $this->assertFileDoesNotExist($this->root . '/img/tiles/tuile_test_webp.png');
+    }
+
     /** Une tuile POSÉE, mise là par le cas : le garde-fou porte sur elle. */
     private function placeTileOnAMap(string $name): void
     {

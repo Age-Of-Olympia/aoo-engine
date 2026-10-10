@@ -12,7 +12,8 @@ use App\Service\Map\StructureTypeService;
  * admin « Tuiles & images » : lister chaque image avec ses diagnostics
  * (PNG à palette — cause des fondus noirs —, taille hors palette d'éditeur,
  * nom invalide, formats multiples, image référencée en base mais absente,
- * image inutilisée), ajouter (normalisée en PNG vraies couleurs), supprimer
+ * image inutilisée), ajouter (PNG/GIF normalisés en PNG vraies couleurs, WebP
+ * conservé), supprimer
  * et renommer avec garde-fous (une image encore posée sur une carte ne se
  * supprime pas ; un renommage met à jour les cartes et les terrains).
  *
@@ -92,8 +93,9 @@ class TileAssetService
     }
 
     /**
-     * Ajoute une image : validée, convertie en PNG vraies couleurs (les PNG
-     * à palette ont produit des fondus noirs — on normalise à l'entrée).
+     * Ajoute une image : validée, PNG et GIF convertis en PNG vraies couleurs
+     * (les PNG à palette ont produit des fondus noirs — on normalise à
+     * l'entrée), WebP conservé tel quel.
      */
     public function add(string $layer, string $name, string $tmpPath): void
     {
@@ -106,10 +108,24 @@ class TileAssetService
             throw new RuntimeException('Fichier absent ou trop volumineux (max 4 Mo).');
         }
 
+        $dir = $this->root . '/img/' . TiledMapService::layerImageDir($layer);
+        if (!is_dir($dir) || !is_writable($dir)) {
+            throw new RuntimeException('Dossier non inscriptible : ' . $dir);
+        }
+
         $info = @getimagesize($tmpPath);
+        // WebP has no palette mode and may be animated, and the game refers to
+        // some tiles by their .webp path: store it as is, header checked above.
+        if (($info['mime'] ?? '') === 'image/webp') {
+            if (!copy($tmpPath, $dir . '/' . $name . '.webp')) {
+                throw new RuntimeException('Écriture impossible : ' . $dir . '/' . $name . '.webp');
+            }
+            \App\Service\Map\BoardChanges::world();
+            return;
+        }
+
         $image = match ($info['mime'] ?? '') {
             'image/png'  => imagecreatefrompng($tmpPath),
-            'image/webp' => imagecreatefromwebp($tmpPath),
             'image/gif'  => imagecreatefromgif($tmpPath),
             default      => false,
         };
@@ -122,10 +138,6 @@ class TileAssetService
         imagealphablending($image, false);
         imagesavealpha($image, true);
 
-        $dir = $this->root . '/img/' . TiledMapService::layerImageDir($layer);
-        if (!is_dir($dir) || !is_writable($dir)) {
-            throw new RuntimeException('Dossier non inscriptible : ' . $dir);
-        }
         if (!imagepng($image, $dir . '/' . $name . '.png')) {
             throw new RuntimeException('Écriture impossible : ' . $dir . '/' . $name . '.png');
         }
