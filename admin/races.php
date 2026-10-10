@@ -232,7 +232,9 @@ function race_render_list(array $races, TypeEditorFace $face): string
             . e($race->getBgColor()) . '</td>';
 
         if ($face->isResource()) {
-            $rows .= '<td>' . race_yield_cell($race, $overridesByType[$race->getName()] ?? []) . '</td>';
+            $rows .= '<td>' . ($race instanceof HarvestableInterface
+                ? race_yield_cell($race, $overridesByType[$race->getName()] ?? [])
+                : '') . '</td>';
         }
 
         if ($face->isStructure()) {
@@ -299,19 +301,18 @@ function race_yield_label(string $item, ?int $exhaust, ?int $regrow): string
  *
  * @param list<array{item: string, exhaust: ?int, regrow: ?int}> $overrides
  */
-function race_yield_cell(Race $race, array $overrides): string
+function race_yield_cell(HarvestableInterface $race, array $overrides): string
 {
-    $harvestable = $race instanceof HarvestableInterface;
-    $item = $harvestable ? $race->getHarvestItem() : '';
-    $exhaust = $harvestable ? $race->getHarvestExhaust() : null;
-    $regrow = $harvestable ? $race->getHarvestRegrow() : null;
+    $item = $race->getHarvestItem();
+    $exhaust = $race->getHarvestExhaust();
+    $regrow = $race->getHarvestRegrow();
 
     $cell = $item !== '' ? e(race_yield_label($item, $exhaust, $regrow)) : '';
 
     $plansByLabel = [];
     foreach ($overrides as $row) {
         $label = race_yield_label(
-            trim($row['item']) !== '' ? trim($row['item']) : $item,
+            trim($row['item']) ?: $item,
             $row['exhaust'] ?? $exhaust,
             $row['regrow'] ?? $regrow
         );
@@ -319,7 +320,7 @@ function race_yield_cell(Race $race, array $overrides): string
     }
 
     foreach ($plansByLabel as $label => $plans) {
-        $cell .= ($cell === '' ? '' : '<br>') . '<small class="text-muted" title="Valeur fixée par plan (Rendements)">'
+        $cell .= ($cell === '' ? '' : '<br>') . '<small class="text-muted">'
             . e($label) . ' · ' . $plans . ' plan' . ($plans > 1 ? 's' : '') . '</small>';
     }
 
