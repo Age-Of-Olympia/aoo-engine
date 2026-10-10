@@ -197,6 +197,15 @@ function race_render_list(array $races, TypeEditorFace $face): string
         $charactersByRace = (new RaceService())->countCharactersByRaceName();
     }
 
+    // Plan overrides of the yield, grouped by type then by (item, rate).
+    $overridesByType = [];
+    if ($face->isResource()) {
+        foreach ((new \App\Service\Map\HarvestCatalogService())->configured() as $row) {
+            $label = race_yield_label($row['item'], $row['exhaust']);
+            $overridesByType[$row['type']][$label] = ($overridesByType[$row['type']][$label] ?? 0) + 1;
+        }
+    }
+
     $rows = '';
     foreach ($races as $race) {
         $rows .= '<tr>'
@@ -210,6 +219,7 @@ function race_render_list(array $races, TypeEditorFace $face): string
                     Race::NATURE_DOOR => '<span class="badge badge-warning">Porte</span>',
                     default => '<span class="badge badge-info">Édifice</span>',
                 }) . ' '
+                . ($face->key === TypeEditorFace::BUILDING || $face->isScenery() || !$race->blocksPassage() ? '' : '<span class="badge badge-secondary" title="On ne peut pas marcher sur sa case">bloquant</span> ')
                 . ($face->isScenery() || $race->blocksPassage() ? '' : '<span class="badge badge-light" title="On marche sur sa case">passable</span> ')
                 . ($face->isScenery() || $race->blocksProjectiles() ? '' : '<span class="badge badge-light" title="Les tirs passent au-dessus">tirs libres</span>')
                 . '</td>';
@@ -221,6 +231,10 @@ function race_render_list(array $races, TypeEditorFace $face): string
         $rows .= '<td><span style="display:inline-block;width:1.2em;height:1.2em;vertical-align:middle;'
             . 'border:1px solid #999;background:' . e($race->getBgColor()) . '"></span> '
             . e($race->getBgColor()) . '</td>';
+
+        if ($face->isResource()) {
+            $rows .= '<td>' . race_yield_cell($race, $overridesByType[$race->getName()] ?? []) . '</td>';
+        }
 
         if ($face->isStructure()) {
             $rows .= '<td>' . (int) $race->getCarac('pv') . ' PV</td>'
@@ -247,7 +261,9 @@ function race_render_list(array $races, TypeEditorFace $face): string
     }
 
     $headers = $face->isStructure()
-        ? '<th></th><th>Code</th><th>Nom</th><th>Nature</th><th>Couleur</th><th>PV</th><th>E</th><th>Res</th>'
+        ? '<th></th><th>Code</th><th>Nom</th><th>Nature</th><th>Couleur</th>'
+            . ($face->isResource() ? '<th title="Objet obtenu en fouillant, et taux d\'épuisement sur 100">Fouille</th>' : '')
+            . '<th>PV</th><th>E</th><th>Res</th>'
             . '<th title="Entités de ce type posées dans le monde">Posés</th><th></th>'
         : '<th></th><th>Code</th><th>Nom</th><th>Statut</th><th>Couleur</th><th>Faction</th>'
             . '<th>Stats clés</th><th>Listes</th><th title="Personnages (joueurs et PNJ) utilisant cette race">Personnages</th><th></th>';
@@ -267,6 +283,30 @@ function race_render_list(array $races, TypeEditorFace $face): string
         . '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
         . $headers
         . '</tr></thead><tbody>' . $rows . '</tbody></table>';
+}
+
+function race_yield_label(string $item, ?int $exhaust): string
+{
+    return $item . ' ' . (int) $exhaust . ' %';
+}
+
+/**
+ * Type default first, then each plan override with its plan count.
+ *
+ * @param array<string, int> $overrides label => number of plans
+ */
+function race_yield_cell(Race $race, array $overrides): string
+{
+    $cell = $race instanceof HarvestableInterface && $race->getHarvestItem() !== ''
+        ? e(race_yield_label($race->getHarvestItem(), $race->getHarvestExhaust()))
+        : '';
+
+    foreach ($overrides as $label => $plans) {
+        $cell .= ($cell === '' ? '' : '<br>') . '<small class="text-muted" title="Valeur fixée par plan (Rendements)">'
+            . e($label) . ' · ' . $plans . ' plan' . ($plans > 1 ? 's' : '') . '</small>';
+    }
+
+    return $cell !== '' ? $cell : '<span class="text-muted">—</span>';
 }
 
 /**
