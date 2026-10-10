@@ -42,7 +42,7 @@ if ($isStateChangingPost) {
                 throw new RuntimeException('Aucun fichier reçu (ou upload incomplet).');
             }
             $service->add($layer, $name, (string) $file['tmp_name']);
-            setFlash('success', "Image « {$name} » ajoutée à img/{$layer}/ (PNG vraies couleurs).");
+            setFlash('success', "Image « {$name} » ajoutée à img/{$layer}/.");
         } elseif (isset($_POST['asset_delete'])) {
             $name = trim((string) ($_POST['name'] ?? ''));
             $service->delete($layer, $name);
@@ -104,7 +104,7 @@ ob_start();
     <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
         Inventaire des images de <code style="display:inline">img/&lt;couche&gt;/</code> avec leurs problèmes connus
         (image à palette, cause des fondus noirs ; formats multiples ; nom invalide ; image posée sur une carte
-        mais absente du serveur…). L'ajout convertit systématiquement en PNG vraies couleurs ; la suppression est
+        mais absente du serveur…). L'ajout convertit les PNG et GIF en PNG vraies couleurs et conserve les WebP tels quels ; la suppression est
         refusée tant que l'image est posée quelque part ; le renommage met à jour les cartes et les terrains.
         Les fondus générés (<code style="display:inline">trans_*</code>) se gèrent depuis la page Transitions de terrain.
     </div>
@@ -139,7 +139,7 @@ ob_start();
                 <button type="submit" name="asset_upload" value="1" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus"></i> Ajouter
                 </button>
-                <small class="text-muted">Convertie en PNG vraies couleurs à l'entrée. Les tuiles du sol doivent faire 50×50
+                <small class="text-muted">PNG et GIF convertis en PNG vraies couleurs, WebP conservé tel quel. Les tuiles du sol doivent faire 50×50
                     pour apparaître dans les palettes d'éditeur.</small>
             </form>
         </div>
