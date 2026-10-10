@@ -198,7 +198,7 @@ ob_start();
                                 <td><input type="checkbox" name="ids[]" value="<?= $entry['id'] ?>"></td>
                                 <td style="width:48px;">
                                     <?php if ($image !== ''): ?>
-                                        <img src="/<?= e($image) ?>" height="32" loading="lazy"
+                                        <img class="tile-thumb" src="/<?= e($image) ?>" height="32" loading="lazy"
                                              style="object-fit:contain;" alt="">
                                     <?php endif; ?>
                                 </td>
