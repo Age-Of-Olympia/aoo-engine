@@ -17,6 +17,10 @@ $aooTestDb = getenv('AOO_TEST_DB');
 if ($aooTestDb === false) {
     $aooTestDb = 'aoo4_phpunit';
 }
+/* Le fichier est gitignoré — absent, la base de test ne se compare à rien. */
+if (!defined('DB_CONSTANTS') && file_exists(__DIR__ . '/../config/db_constants.php')) {
+    require_once __DIR__ . '/../config/db_constants.php';
+}
 if ($aooTestDb !== '') {
     App\Factory\EntityManagerFactory::useDatabase($aooTestDb);
 
@@ -25,16 +29,8 @@ if ($aooTestDb !== '') {
      * Trois fois de suite sur un seul lot. Elle se compare donc à la base
      * configurée — même serveur, une requête — et dit quoi taper.
      */
-    /* La config n'est pas encore chargée ici : chaque cas requiert la sienne.
-     * Le fichier est gitignoré — absent, on ne compare rien. */
-    if (!defined('DB_CONSTANTS') && file_exists(__DIR__ . '/../config/db_constants.php')) {
-        require_once __DIR__ . '/../config/db_constants.php';
-    }
-
     try {
         $conn = App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
-        // Legacy Classes\Db reads the global $link, as config/bootstrap.php sets it.
-        $GLOBALS['link'] = $conn;
         $source = defined('DB_CONSTANTS')
             ? (string) (DB_CONSTANTS['dbname'] ?? DB_CONSTANTS['db'] ?? '')
             : '';
@@ -86,40 +82,9 @@ ini_set('error_log', sys_get_temp_dir() . '/phpunit-error.log');
 // not trip the suite's strict no-output / fail-on-risky checks.
 App\Service\Action\TypeConfigWarning::$silenced = true;
 
-// Canonical game constants for the whole suite. Defining CARACS here, once and
-// complete, removes the global-constant pollution where the first test to define
-// a partial CARACS won the define-race and corrupted later tests — a CARACS
-// without 'mvt' made the tutorial DB tests' getRemaining('mvt') return null.
-// Mirrors config/constants.php; the per-test `if (!defined('CARACS'))` guards
-// become no-ops.
-if (!defined('CARACS')) {
-    define('CARACS', [
-        'a' => 'A', 'mvt' => 'Mvt', 'p' => 'P', 'pv' => 'PV', 'cc' => 'CC',
-        'ct' => 'CT', 'f' => 'F', 'e' => 'E', 'agi' => 'Agi', 'pm' => 'PM',
-        'fm' => 'FM', 'pui' => 'Pui', 'res' => 'Res', 'r' => 'R', 'rm' => 'RM', 'spd' => 'Spd', 'ae' => 'Ae',
-        'sac' => 'Sac',
-    ]);
-}
-if (!defined('ONE_DAY')) {
-    define('ONE_DAY', 86400);
-}
-// XP tuning constants, mirrored from config/constants.php — the legacy
-// calculate*Xp() fallbacks (e.g. AttackAction) read these.
-if (!defined('ACTION_XP')) {
-    define('ACTION_XP', 5);
-}
-if (!defined('MAX_XP_FOR_STEALING')) {
-    define('MAX_XP_FOR_STEALING', 3);
-}
-// The equipment model, mirrored from config/constants.php so the simulator's
-// slot/limit rules are exercised against the real shape (14 slots; 3 normal
-// items + ring/munition/trophee on top).
-if (!defined('ITEM_EMPLACEMENT_FORMAT')) {
-    define('ITEM_EMPLACEMENT_FORMAT', [
-        'main1', 'main2', 'deuxmains', 'doigt', 'tete', 'bouche', 'cou',
-        'epaule', 'cape', 'tronc', 'taille', 'pieds', 'munition', 'trophee',
-    ]);
-}
-if (!defined('ITEM_LIMIT')) {
-    define('ITEM_LIMIT', 3);
-}
+// The game constants, from the config itself: a test that defines its own copy
+// races the others, and PHPStan, which cannot see a define() inside a method,
+// may index that copy instead of the config's.
+// Legacy Classes\Db reads the global $link, as config/bootstrap.php sets it.
+$GLOBALS['link'] = App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
+require_once __DIR__ . '/../config/constants.php';

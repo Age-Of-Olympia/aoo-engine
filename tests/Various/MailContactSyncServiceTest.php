@@ -22,16 +22,6 @@ use PHPUnit\Framework\TestCase;
  */
 class MailContactSyncServiceTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        // Le service lit INACTIVE_TIME (défini par config/constants.php en prod).
-        // On le pose ici de façon idempotente pour rester indépendant de l'ordre
-        // des tests et ne pas dépendre du bootstrap applicatif.
-        if (!defined('INACTIVE_TIME')) {
-            define('INACTIVE_TIME', 604800); // ONE_WEEK
-        }
-    }
-
     public function testOnRegisterUpsertsSubscribedContactWithThreeTags(): void
     {
         $spy = $this->spyProvider();

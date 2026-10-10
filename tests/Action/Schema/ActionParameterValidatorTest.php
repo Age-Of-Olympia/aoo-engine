@@ -16,9 +16,6 @@ class ActionParameterValidatorTest extends TestCase
 
     protected function setUp(): void
     {
-        if (!defined('CARACS')) {
-            define('CARACS', ['cc' => 'CC', 'f' => 'F', 'agi' => 'Agi', 'pm' => 'PM']);
-        }
         $this->validator = new ActionParameterValidator();
         $this->catalog = new ActionSchemaCatalog();
     }

@@ -14,13 +14,6 @@ use Tests\Action\Mock\PlayerMock;
 #[Group('action-condition')]
 class RequiresTraitValueConditionCharacterizationTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        if (!defined('CARACS')) {
-            define('CARACS', ['cc' => 'CC', 'f' => 'F', 'agi' => 'Agi', 'pm' => 'PM', 'mvt' => 'Mvt', 'pa' => 'PA']);
-        }
-    }
-
     /**
      * @param array<string, mixed> $params
      */

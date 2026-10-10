@@ -19,13 +19,6 @@ use Tests\Action\Mock\ScriptedDice;
 #[Group('action-combat')]
 class TechniqueThresholdPassiveTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        if (!defined('AUTO_FAIL')) {
-            define('AUTO_FAIL', false);
-        }
-    }
-
     private function check(PlayerMock $actor): bool
     {
         $target = new PlayerMock(999999, 'Target');

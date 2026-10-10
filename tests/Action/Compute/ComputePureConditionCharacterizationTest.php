@@ -16,13 +16,6 @@ use Tests\Action\Mock\ScriptedDice;
 #[Group('action-combat')]
 class ComputePureConditionCharacterizationTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        if (!defined('AUTO_FAIL')) {
-            define('AUTO_FAIL', false);
-        }
-    }
-
     private function actor(): PlayerMock
     {
         $actor = new PlayerMock(1, 'Actor');

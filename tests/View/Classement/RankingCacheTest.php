@@ -11,9 +11,6 @@ class RankingCacheTest extends TestCase
 
     protected function setUp(): void
     {
-        if (!defined('CACHED_CLASSEMENTS')) {
-            define('CACHED_CLASSEMENTS', true);
-        }
         $this->dir = sys_get_temp_dir() . '/ranking-cache-' . bin2hex(random_bytes(4));
         mkdir($this->dir);
     }

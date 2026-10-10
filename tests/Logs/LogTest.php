@@ -28,10 +28,6 @@ class LogTest extends TestCase
         // Reset des mocks
         ViewMock::reset();
 
-        // Mock des constantes si nécessaire
-        if (!defined('THREE_DAYS')) {
-            define('THREE_DAYS', 259200); // 3 jours en secondes
-        }
     }
 
     protected function tearDown(): void

@@ -24,16 +24,6 @@ class PlayerIdSystemTest extends TestCase
 
     protected function setUp(): void
     {
-        // Pre-define the tutorial reward constants so the bottom of
-        // constants.php skips its DB-backed getTutorialRewards()
-        // path — this unit test runs against an in-memory SQLite
-        // mock and has no Doctrine connection / tutorial_settings
-        // table to hit.
-        if (!defined('TUTORIAL_SKIP_REWARD')) {
-            define('TUTORIAL_SKIP_REWARD', ['xp' => 50, 'pi' => 50]);
-            define('TUTORIAL_COMPLETION_REWARD', ['xp' => 390, 'pi' => 390]);
-        }
-
         require_once __DIR__ . '/../../config/functions.php';
         require_once __DIR__ . '/../../config/constants.php';
 

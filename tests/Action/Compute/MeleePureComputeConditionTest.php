@@ -14,13 +14,6 @@ use Tests\Action\Mock\ScriptedDice;
 #[Group('action-combat')]
 class MeleePureComputeConditionTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        if (!defined('AUTO_FAIL')) {
-            define('AUTO_FAIL', false);
-        }
-    }
-
     private function player(int $id, string $name): PlayerMock
     {
         $player = new PlayerMock($id, $name);

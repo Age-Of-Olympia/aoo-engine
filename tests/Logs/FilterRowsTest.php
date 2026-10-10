@@ -32,9 +32,6 @@ class FilterRowsTest extends TestCase
         ViewMock::reset();
         $this->testDb->clearLogs();
 
-        if (!defined('THREE_DAYS')) {
-            define('THREE_DAYS', 259200);
-        }
     }
 
     protected function tearDown(): void

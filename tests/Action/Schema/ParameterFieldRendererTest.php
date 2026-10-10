@@ -17,9 +17,6 @@ class ParameterFieldRendererTest extends TestCase
 
     protected function setUp(): void
     {
-        if (!defined('CARACS')) {
-            define('CARACS', ['cc' => 'CC', 'f' => 'F', 'agi' => 'Agi', 'pm' => 'PM']);
-        }
         $this->renderer = new ParameterFieldRenderer();
         $this->catalog = new ActionSchemaCatalog();
     }
