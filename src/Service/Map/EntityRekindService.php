@@ -100,7 +100,7 @@ final class EntityRekindService
                    FROM players p
                    JOIN races r ON CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4)
                   WHERE p.id IN ({$marks}) AND p.player_type IN ({$in}) AND r.type_kind IN ({$in})
-                    AND p.player_type <> r.type_kind
+                    AND CONVERT(p.player_type USING utf8mb4) <> CONVERT(r.type_kind USING utf8mb4)
                   FOR UPDATE",
                 array_map('intval', $entityIds)
             );
