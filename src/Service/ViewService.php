@@ -1210,28 +1210,21 @@ class ViewService {
     }
 
 
+    // World map window = the ground floor's bounds, the ones the plan editor
+    // shows. The plan row's own bounds are a legacy leftover nobody can edit.
     private function getBoundsFromPlan($planName) {
-        $planData = plans()->read($planName);
+        $ground = $this->getPlanData($planName)->z_levels[0] ?? null;
 
-        if (!$planData) {
+        if ($ground === null || !empty($ground->MapUnavailable)) {
             return null;
         }
 
-        // Check if the plan has visible bounds defined
-        if (isset($planData->visibleBoundsMinX) && 
-            isset($planData->visibleBoundsMaxX) && 
-            isset($planData->visibleBoundsMinY) && 
-            isset($planData->visibleBoundsMaxY)) {
-
-            return [
-                'minX' => (int)$planData->visibleBoundsMinX,
-                'maxX' => (int)$planData->visibleBoundsMaxX,
-                'minY' => (int)$planData->visibleBoundsMinY,
-                'maxY' => (int)$planData->visibleBoundsMaxY
-            ];
-        }
-
-        return null;
+        return [
+            'minX' => (int)$ground->visibleBoundsMinX,
+            'maxX' => (int)$ground->visibleBoundsMaxX,
+            'minY' => (int)$ground->visibleBoundsMinY,
+            'maxY' => (int)$ground->visibleBoundsMaxY
+        ];
     }
 
     private function getPlanData($planName) {
