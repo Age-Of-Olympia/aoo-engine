@@ -2407,10 +2407,11 @@ class Player implements ActorInterface {
 
         $db = new Db();
 
-        // Filter by player_type='real' to prevent looking up tutorial players or NPCs
-        // Used in exchanges, missives, and console commands
+        // Characters only (no tutorial copies, no structures); a real player
+        // wins over a NPC with the same name.
         $sql = '
-        SELECT id FROM players WHERE name = ? AND player_type = "real"
+        SELECT id FROM players WHERE name = ? AND player_type IN ("real", "npc")
+        ORDER BY player_type = "real" DESC LIMIT 1
         ';
 
         $res = $db->exe($sql, $name);

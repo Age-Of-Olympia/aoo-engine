@@ -105,6 +105,17 @@ class PlayerFactoryTest extends TestCase
         $this->assertSame(self::REAL_ID, $player->id);
     }
 
+    public function testLegacyByNameFindsNpcButNotTutorialCopy(): void
+    {
+        $link = $this->bootstrapLegacyOrSkip();
+
+        $npc = $this->seedCharacter($link, self::NPC_ID, 'npc', 'GmFabriquePnj');
+        $tutorial = $this->seedCharacter($link, self::TUTORIAL_ID, 'tutorial', 'GmFabriqueTuto');
+
+        $this->assertSame(self::NPC_ID, PlayerFactory::legacyByName($npc)?->id);
+        $this->assertNull(PlayerFactory::legacyByName($tutorial));
+    }
+
     public function testEntityByNameReturnsNullWhenNameNotFound(): void
     {
         $this->bootstrapLegacyOrSkip();

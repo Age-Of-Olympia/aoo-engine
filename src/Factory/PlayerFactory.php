@@ -56,7 +56,7 @@ final class PlayerFactory
     }
 
     /**
-     * Legacy `Classes\Player` looked up by name (player_type='real' only),
+     * Legacy `Classes\Player` looked up by name (player or NPC),
      * or null if no such row exists.
      *
      * Thin wrapper over `Player::get_player_by_name()` that normalises the
