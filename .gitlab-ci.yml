@@ -110,7 +110,12 @@ stan_job:
       paths:
         - tmp/phpstan/
   script:
-    - make phpstan-ci
+    - nproc; uname -a; df -T . | tail -1; php -v | head -1
+    - composer install --no-progress --no-interaction -q
+    - ./vendor/bin/phpstan analyse -c phpstan-legacy.neon --memory-limit 1G --no-progress 2>&1 | grep -E "not found|errors" || true
+    - echo "=== debug (no parallel)"; ./vendor/bin/phpstan analyse -c phpstan-legacy.neon --memory-limit 1G --no-progress --debug 2>&1 | grep -E "not found|errors" || true
+    - echo "=== without tests/Logs/FilterRowsTest.php"; ./vendor/bin/phpstan analyse -c ps-shadow.neon --memory-limit 1G --no-progress 2>&1 | grep -E "not found|errors" || true
+    - echo "=== order"; ls -f tests/Logs | head; find . -name '*.php' -path './tests/*' -newer config/constants.php | head -3; git log -1 --format=%H
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never

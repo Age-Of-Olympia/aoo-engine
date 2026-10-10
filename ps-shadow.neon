@@ -1,0 +1,7 @@
+includes:
+    - phpstan-legacy.neon
+parameters:
+    tmpDir: tmp/ps-shadow
+    excludePaths:
+      analyseAndScan:
+        - tests/Logs/FilterRowsTest.php
