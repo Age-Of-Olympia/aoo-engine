@@ -52,7 +52,7 @@ final class PassiveWorkbenchView
                 . '<span class="wb-item-text">'
                 . '<span class="wb-item-name">' . $this->esc($passive->getDisplayName()) . '</span>'
                 . '<span class="wb-item-meta">' . $this->esc($passive->getType()) . ' · niv.' . (int) $passive->getLevel()
-                . ' · ' . $this->esc($passive->getRace()) . '</span>'
+                . ($passive->getRace() !== null ? ' · ' . $this->esc($passive->getRace()) : '') . '</span>'
                 . '</span>'
                 . '</a>';
         }
