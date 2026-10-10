@@ -48,7 +48,7 @@ final class EntityRekindService
                JOIN races r ON CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4)
                LEFT JOIN coords c ON c.id = p.coords_id
               WHERE p.player_type IN ({$in}) AND r.type_kind IN ({$in})
-                AND p.player_type <> r.type_kind"
+                AND CONVERT(p.player_type USING utf8mb4) <> CONVERT(r.type_kind USING utf8mb4)"
                 . ($typeName !== null ? ' AND p.race = ?' : '')
                 . ' ORDER BY r.label, c.plan, c.z, c.x, c.y, p.id',
             $typeName !== null ? [$typeName] : []
