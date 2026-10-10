@@ -145,10 +145,11 @@ function admin_layout($title, $content, array $assets = []) {
                 ['structure-types.php', 'Types', '/admin/structure-types.php'],
                 ['structure-images.php', 'Images', '/admin/structure-images.php'],
                 ['footprints.php', 'Formes', '/admin/footprints.php?kind=building'],
+                ['entity-kinds.php', 'Catégories à corriger', '/admin/entity-kinds.php'],
                 // Reprise ponctuelle des déclencheurs de case hérités : à
                 // retirer du menu une fois la carte reprise partout.
                 ['tile-dialogs-migration.php', 'Dialogues de case', '/admin/tile-dialogs-migration.php'],
-            ], ['buildings.php', 'structure-types.php', 'structure-images.php', 'tile-dialogs-migration.php']),
+            ], ['buildings.php', 'structure-types.php', 'structure-images.php', 'entity-kinds.php', 'tile-dialogs-migration.php']),
             $navGroup('Décors', [
                 ['scenery-types.php', 'Types', '/admin/scenery-types.php'],
                 ['footprints.php', 'Formes', '/admin/footprints.php?kind=scenery'],

@@ -360,23 +360,33 @@ if ($action === 'update') {
 
     $formResult = $applyForm($race);
     $factionNotice = $formResult['notice'];
-    $service->save($race);
+    $conn = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection();
 
-    /* Doctrine writes type_kind from the loaded PHP class, i.e. the family
-     * before this save (the races_type_kind_bu trigger only fills an empty
-     * value). A family change, and the harvest columns that class has no
-     * setter for, are written with one raw statement after the flush. */
-    $rawFix = $formResult['rawHarvestFix'];
-    if ($formResult['newFamily'] !== $race->familyKey()) {
-        $rawFix['type_kind'] = $formResult['newFamily'];
-    }
-    if ($rawFix !== []) {
-        $setClauses = array_map(static fn (string $column): string => "{$column} = ?", array_keys($rawFix));
-        \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()->executeStatement(
-            'UPDATE races SET ' . implode(', ', $setClauses) . ' WHERE name = ?',
-            [...array_values($rawFix), $name]
-        );
-        RaceService::clearCache();
+    $rekinded = $conn->transactional(static function ($conn) use ($service, $race, $formResult, $name): int {
+        $service->save($race);
+
+        /* Doctrine writes type_kind from the loaded PHP class, i.e. the family
+         * before this save (the races_type_kind_bu trigger only fills an empty
+         * value). A family change, and the harvest columns that class has no
+         * setter for, are written with one raw statement after the flush. */
+        $rawFix = $formResult['rawHarvestFix'];
+        if ($formResult['newFamily'] !== $race->familyKey()) {
+            $rawFix['type_kind'] = $formResult['newFamily'];
+        }
+        if ($rawFix !== []) {
+            $setClauses = array_map(static fn (string $column): string => "{$column} = ?", array_keys($rawFix));
+            $conn->executeStatement(
+                'UPDATE races SET ' . implode(', ', $setClauses) . ' WHERE name = ?',
+                [...array_values($rawFix), $name]
+            );
+            RaceService::clearCache();
+        }
+
+        // Exemplars already placed follow the type's family.
+        return (new \App\Service\Map\EntityRekindService($conn))->rekindType($name);
+    });
+    if ($rekinded > 0) {
+        $factionNotice .= " Catégorie appliquée à {$rekinded} exemplaire(s) déjà posé(s).";
     }
 
     $starterActions = $linesToNames('starter_actions');
