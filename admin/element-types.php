@@ -70,8 +70,8 @@ foreach ($names as $name) {
     $image = $images[$name] ?? null;
 
     $thumb = $image !== null
-        ? '<img src="/' . e($image) . '" height="28" loading="lazy" alt=""'
-            . ' style="image-rendering:pixelated;background:#e7ded0;border:1px solid #ddd;">'
+        ? '<img class="tile-thumb" src="/' . e($image) . '" height="28" loading="lazy" alt=""'
+            . ' style="image-rendering:pixelated;border:1px solid #ddd;">'
         : '<span class="badge badge-warning" title="Posé sur la carte mais aucune image dans img/elements/ :'
             . ' rien n\'est affiché sur la case">sans image</span>';
 

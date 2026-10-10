@@ -287,7 +287,7 @@ ob_start();
                             <?php foreach ($classification as $tile): ?>
                                 <?php if ($tile['isTransition']): continue; endif; ?>
                                 <label style="border:1px solid <?= $tile['isTerrain'] ? '#198754' : '#ddd' ?>;border-radius:.375rem;padding:6px;text-align:center;cursor:pointer;width:86px;font-size:11px;background:<?= $tile['isTerrain'] ? '#f2fbf6' : '#fff' ?>;">
-                                    <img src="/img/tiles/<?= e($tile['name']) ?>.png" width="50" height="50" loading="lazy"
+                                    <img class="tile-thumb" src="/img/tiles/<?= e($tile['name']) ?>.png" width="50" height="50" loading="lazy"
                                          style="image-rendering:pixelated;display:block;margin:0 auto 4px;" alt="">
                                     <input type="hidden" name="listed_tiles[]" value="<?= e($tile['name']) ?>">
                                     <input type="checkbox" name="terrain_tiles[]" value="<?= e($tile['name']) ?>" <?= checked($tile['isTerrain']) ?>>
@@ -403,7 +403,7 @@ ob_start();
                                 </summary>
                                 <div style="padding:.5rem .75rem;display:flex;flex-wrap:wrap;gap:4px;">
                                     <?php foreach ($names as $name): ?>
-                                        <img src="/img/tiles/<?= e($name) ?>.png" width="50" height="50"
+                                        <img class="tile-thumb" src="/img/tiles/<?= e($name) ?>.png" width="50" height="50"
                                              title="<?= e($name) ?>" loading="lazy"
                                              style="image-rendering:pixelated;border:1px solid #ddd;">
                                     <?php endforeach; ?>
@@ -447,7 +447,7 @@ ob_start();
                                 </summary>
                                 <div style="padding:.5rem .75rem;display:flex;flex-wrap:wrap;gap:4px;">
                                     <?php foreach ($names as $name): ?>
-                                        <img src="/img/tiles/<?= e($name) ?>.png" width="50" height="50"
+                                        <img class="tile-thumb" src="/img/tiles/<?= e($name) ?>.png" width="50" height="50"
                                              title="<?= e($name) ?>" loading="lazy"
                                              style="image-rendering:pixelated;border:1px solid #ddd;">
                                     <?php endforeach; ?>

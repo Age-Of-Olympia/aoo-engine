@@ -65,7 +65,7 @@ function tile_color_thumbnail(string $name): string
 
             foreach ($paths as $rel) {
                 if (is_file($_SERVER['DOCUMENT_ROOT'] . '/' . $rel)) {
-                    return '<img src="/' . e($rel) . '" width="28" height="28" loading="lazy"'
+                    return '<img class="tile-thumb" src="/' . e($rel) . '" width="28" height="28" loading="lazy"'
                         . ' style="border:1px solid #ccc;vertical-align:middle" alt="" title="' . e($rel) . '">';
                 }
             }

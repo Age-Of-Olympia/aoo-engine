@@ -173,7 +173,7 @@ ob_start();
                         <tr>
                             <td style="width:56px;">
                                 <?php if (!$entry['missing']): ?>
-                                    <img src="/img/<?= e($layer) ?>/<?= e($entry['files'][0]) ?>" width="50" height="50"
+                                    <img class="tile-thumb" src="/img/<?= e($layer) ?>/<?= e($entry['files'][0]) ?>" width="50" height="50"
                                          loading="lazy" style="image-rendering:pixelated;object-fit:contain;border:1px solid #ddd;" alt="">
                                 <?php else: ?>
                                     <span class="badge badge-danger">absente</span>
@@ -181,7 +181,7 @@ ob_start();
                             </td>
                             <td><code><?= e($entry['name']) ?></code>
                                 <?= $entry['isTerrain'] ? ' <span class="badge badge-success" title="Déclarée terrain (fondable)">terrain</span>' : '' ?></td>
-                            <td style="font-size:12px;"><?= e(implode(', ', $entry['files'])) ?></td>
+                            <td style="font-size:12px;word-break:break-all;"><?= e(implode(', ', $entry['files'])) ?></td>
                             <td><?= $entry['missing'] ? '—' : $entry['width'] . '×' . $entry['height'] ?></td>
                             <td>
                                 <?php if ($entry['usage'] > 0): ?>
