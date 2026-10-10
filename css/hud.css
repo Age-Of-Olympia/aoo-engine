@@ -409,11 +409,6 @@ body:has(#hud)::after {
     #hud-rail #menu > .hud-quick-clone {
         display: none;
     }
-
-    /* Rankings: mobile drawer only. */
-    .hud-quick > a.hud-meta {
-        display: none;
-    }
 }
 
 /* Desktop: the animation quality lives in the board options popover */
