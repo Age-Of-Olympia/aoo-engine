@@ -12,8 +12,7 @@ use App\Service\Map\StructureTypeService;
  * admin « Tuiles & images » : lister chaque image avec ses diagnostics
  * (PNG à palette — cause des fondus noirs —, taille hors palette d'éditeur,
  * nom invalide, formats multiples, image référencée en base mais absente,
- * image inutilisée), ajouter (PNG/GIF normalisés en PNG vraies couleurs, WebP
- * conservé), supprimer
+ * image inutilisée), ajouter (en PNG vraies couleurs, WebP gardé), supprimer
  * et renommer avec garde-fous (une image encore posée sur une carte ne se
  * supprime pas ; un renommage met à jour les cartes et les terrains).
  *
@@ -114,8 +113,7 @@ class TileAssetService
         }
 
         $info = @getimagesize($tmpPath);
-        // WebP has no palette mode and may be animated, and the game refers to
-        // some tiles by their .webp path: store it as is, header checked above.
+        // WebP: no palette mode, maybe animated, referenced by .webp path; store as is
         if (($info['mime'] ?? '') === 'image/webp') {
             if (!copy($tmpPath, $dir . '/' . $name . '.webp')) {
                 throw new RuntimeException('Écriture impossible : ' . $dir . '/' . $name . '.webp');

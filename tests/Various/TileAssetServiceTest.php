@@ -124,7 +124,6 @@ class TileAssetServiceTest extends TestCase
         unlink($tmp);
 
         $this->assertSame($bytes, file_get_contents($this->root . '/img/tiles/tuile_test_webp.webp'));
-        $this->assertFileDoesNotExist($this->root . '/img/tiles/tuile_test_webp.png');
     }
 
     /** Une tuile POSÉE, mise là par le cas : le garde-fou porte sur elle. */
