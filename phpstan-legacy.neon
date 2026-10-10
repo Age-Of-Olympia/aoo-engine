@@ -21,6 +21,9 @@ parameters:
         - var (?)
         - tools
         - cypress
+        # Tests re-define config constants behind if (!defined()): scanned,
+        # they shadow config/constants.php depending on file order
+        - tests
         # Local config, absent in CI: never read, so local and CI runs agree
         - config/db_constants.php (?)
         - config/onesignal_constants.php (?)
@@ -28,7 +31,6 @@ parameters:
       analyse:
         # Analysed by phpstan.neon
         - src
-        - tests
         - admin
         - api/tutorial
         - classements.php
