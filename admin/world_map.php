@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_POST['generate_global'])) {
         try {
-            $layers = ['tiles', 'elements', 'coordinates', 'locations', 'routes'];
+            $layers = ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'buildings'];
             $results = $viewService->generateGlobalMap($layers);
             
             if (!empty($results)) {
@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($latestFiles)) {
             // Order layers consistently
             $orderedLayers = [];
-            $layerOrder = ['tiles', 'elements', 'coordinates', 'locations', 'routes'];
+            $layerOrder = ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'buildings'];
             foreach ($layerOrder as $layer) {
                 if (isset($latestFiles[$layer])) {
                     $orderedLayers[$layer] = $latestFiles[$layer];
