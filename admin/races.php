@@ -477,10 +477,19 @@ HTML;
                         null,
                         'class="form-control form-control-sm d-inline-block" style="width:auto"'
                         . ' data-original-nature="' . e($race->getStructureNature()) . '"'
-                        . ' onchange="if (this.value !== this.dataset.originalNature'
-                        . ' &amp;&amp; !confirm(\'Changer de catégorie reclasse le type dans les palettes'
-                        . ' de carte et efface son rendement (récolte) éventuel ; le reste (PV, images,'
-                        . ' emprise) ne change pas. Continuer ?\')) { this.value = this.dataset.originalNature; }"'
+                        /* Leaving building drops the placed exemplars' dialogue
+                         * and construction site (EntityRekindService). */
+                        . ' data-was-building="' . ($race->familyKey() === \App\Entity\Race::FAMILY_BUILDING ? '1' : '') . '"'
+                        . ' data-building-natures="' . e((string) json_encode(array_values(array_filter(
+                            array_keys(\App\View\Admin\TypeEditorFace::natureChoices()),
+                            static fn (string $nature): bool => \App\Entity\Race::ofFamily('structure', $nature)->familyKey() === \App\Entity\Race::FAMILY_BUILDING
+                        )))) . '"'
+                        . ' onchange="var m = \'Changer de catégorie reclasse le type et ses exemplaires déjà posés,'
+                        . ' et efface son rendement (récolte) éventuel ; le reste (PV, images, emprise) ne change pas.\';'
+                        . ' if (this.dataset.wasBuilding &amp;&amp; JSON.parse(this.dataset.buildingNatures).indexOf(this.value) &lt; 0)'
+                        . ' { m += \'\\n\\nAttention : les bâtiments déjà posés de ce type perdront leur dialogue et leur chantier en cours.\'; }'
+                        . ' if (this.value !== this.dataset.originalNature'
+                        . ' &amp;&amp; !confirm(m + \' Continuer ?\')) { this.value = this.dataset.originalNature; }"'
                         . ' title="Reclasse le type : palette carte, formulaire affiché, et efface le'
                         . ' rendement (récolte) si le type quitte Ressource/Plante."'
                     )

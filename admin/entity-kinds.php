@@ -37,6 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $rows = $service->mismatches();
 $families = EntityCategory::structureFamilies();
+$buildings = count(array_filter($rows, static fn (array $row): bool => $row['player_type'] === 'building'));
+$buildingWarning = 'perdront leur dialogue et leur chantier en cours.';
 
 ob_start();
 ?>
@@ -54,14 +56,16 @@ ob_start();
         Enregistrer un type corrige aussi tous ses exemplaires.
     </div>
 
-    <form method="post" class="mb-0">
+    <!-- Enter in the list search must not submit the form (first button = Tout corriger). -->
+    <form method="post" class="mb-0"
+          onkeydown="if (event.key === 'Enter' &amp;&amp; event.target.type === 'search') event.preventDefault();">
         <?= $csrf->renderTokenField() ?>
 
         <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
             <span class="badge bg-secondary"><?= count($rows) ?> entité(s)</span>
             <?php if ($rows !== []): ?>
                 <button type="submit" name="rekind_all" value="1" class="btn btn-sm btn-primary ml-auto"
-                        onclick="return confirm('Corriger les <?= count($rows) ?> entités de la liste ?');">
+                        onclick="return confirm('Corriger les <?= count($rows) ?> entités de la liste ?<?= $buildings > 0 ? "\\n\\nLes {$buildings} bâtiments de la liste {$buildingWarning}" : '' ?>');">
                     Tout corriger
                 </button>
             <?php endif; ?>
@@ -83,7 +87,7 @@ ob_start();
                     <tr data-type="<?= e($row['race']) ?>" data-plan="<?= e($row['plan'] ?? '—') ?>"
                         data-placed="<?= e($families[$row['player_type']] ?? $row['player_type']) ?>"
                         data-target="<?= e($families[$row['type_kind']] ?? $row['type_kind']) ?>">
-                        <td><input type="checkbox" name="ids[]" value="<?= $row['id'] ?>"></td>
+                        <td><input type="checkbox" name="ids[]" value="<?= $row['id'] ?>"<?= $row['player_type'] === 'building' ? ' data-building="1"' : '' ?>></td>
                         <td><?= $row['id'] ?> <small class="text-muted">#<?= $row['display_id'] ?></small></td>
                         <td><?= e($row['label']) ?> <code><?= e($row['race']) ?></code></td>
                         <td><?= e($row['plan'] ?? '—') ?></td>
@@ -91,12 +95,18 @@ ob_start();
                         <td><?= e($families[$row['player_type']] ?? $row['player_type']) ?></td>
                         <td><?= e($families[$row['type_kind']] ?? $row['type_kind']) ?></td>
                         <td><button type="submit" name="rekind_one" value="<?= $row['id'] ?>"
-                                    class="btn btn-sm btn-outline-primary">Corriger</button></td>
+                                    class="btn btn-sm btn-outline-primary"<?= $row['player_type'] === 'building'
+                                        ? " onclick=\"return confirm('Ce bâtiment perdra son dialogue et son chantier en cours. Continuer ?');\""
+                                        : '' ?>>Corriger</button></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
             </table>
-            <button type="submit" class="btn btn-sm btn-primary">Corriger la sélection</button>
+            <button type="submit" class="btn btn-sm btn-primary"
+                    onclick="var n = this.form.querySelectorAll('input[data-building]:checked').length;
+                             return n === 0 || confirm(n + ' bâtiment(s) de la sélection <?= $buildingWarning ?> Continuer ?');">
+                Corriger la sélection
+            </button>
         <?php endif; ?>
     </form>
 </div>
