@@ -23,14 +23,8 @@ use Doctrine\DBAL\Connection;
  */
 final class EntityRekindService
 {
-    /** Families an exemplar can be placed as; a character type cannot be re-kinded onto the board. */
-    public const FAMILIES = [
-        Race::FAMILY_BUILDING,
-        Race::FAMILY_SCENERY,
-        Race::FAMILY_RESOURCE,
-        Race::FAMILY_PLANT,
-        Race::FAMILY_ROUTE,
-    ];
+    /** Families an exemplar can be placed as, as an SQL list; a character type cannot be re-kinded onto the board. */
+    private const FAMILIES = "'building', 'scenery', 'resource', 'plant', 'route'";
 
     private Connection $conn;
 
@@ -47,7 +41,7 @@ final class EntityRekindService
      */
     public function mismatches(?string $typeName = null): array
     {
-        $in = $this->familyList();
+        $in = self::FAMILIES;
         $rows = $this->conn->fetchAllAssociative(
             "SELECT p.id, p.display_id, p.race, r.label, p.player_type, r.type_kind, c.plan, c.z, c.x, c.y
                FROM players p
@@ -95,7 +89,7 @@ final class EntityRekindService
             return 0;
         }
 
-        $in = $this->familyList();
+        $in = self::FAMILIES;
         $marks = implode(',', array_fill(0, count($entityIds), '?'));
         $changed = [];
 
@@ -152,10 +146,5 @@ final class EntityRekindService
         }
 
         return count($changed);
-    }
-
-    private function familyList(): string
-    {
-        return "'" . implode("','", self::FAMILIES) . "'";
     }
 }
