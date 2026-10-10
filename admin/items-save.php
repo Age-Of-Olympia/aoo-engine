@@ -94,8 +94,12 @@ if ($action === 'upload-image') {
         'item'        => ['img/items/' . $item->name . '.webp', 'webp'],
         'mini'        => ['img/items/' . $item->name . '_mini.webp', 'webp'],
         'wall'        => ['img/walls/' . $item->name . '.png', 'png'],
-        'wall_broken' => ['img/walls/' . $item->name . '_broken.png', 'png'],
     ];
+    $itemType = \App\Factory\EntityManagerFactory::getEntityManager()
+        ->getRepository(\App\Entity\Item::class)->findOneBy(['name' => $item->name]);
+    foreach ($itemType === null ? [] : array_keys(\App\Service\RaceImageService::stateVariantsOf($itemType)) as $suffix) {
+        $slots['wall' . $suffix] = ['img/walls/' . $item->name . $suffix . '.png', 'png'];
+    }
     $slot = (string) ($_POST['slot'] ?? '');
     if (!isset($slots[$slot])) {
         setFlash('warning', 'Emplacement d\'image inconnu.');
@@ -159,6 +163,9 @@ if ($action === 'upload-image') {
         redirectTo($backTo);
     }
 
+    if (str_starts_with($slot, 'wall')) {
+        (new \App\Service\BuildingService())->refreshTypeSprites($item->name); // placed chests switch now
+    }
     setFlash('success', 'Image « ' . $path . ' » importée (' . (int) ($info[0] ?? 0) . '×' . (int) ($info[1] ?? 0) . ').');
     redirectTo($backTo);
 }

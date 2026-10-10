@@ -28,7 +28,7 @@ final class LockService
      * Même aiguillage que {@see EntityTypeCaracsService} : le discriminant dit
      * quelle table lire, le type répond le reste.
      */
-    private function typeOf(int $entityId): ?LockableInterface
+    public function typeOf(int $entityId): ?LockableInterface
     {
         $row = $this->conn->fetchAssociative(
             'SELECT player_type, race FROM players WHERE id = ?',
@@ -46,6 +46,18 @@ final class LockService
         $type = $em->getRepository($class)->findOneBy(['name' => (string) $row['race']]);
 
         return $type instanceof LockableInterface ? $type : null;
+    }
+
+    /**
+     * Types whose open state shows on the board (_open sprite): doors, and
+     * storages that can be shut — a chest, or a type holding lines.
+     */
+    public static function hasOpenSprite(LockableInterface $type): bool
+    {
+        $race = $type instanceof \App\Entity\Race ? $type : null;
+
+        return $race?->isDoor()
+            || ($type->isLockable() && ($race === null || $race->ownCaracs()['sac'] > 0));
     }
 
     /** Cette entité peut-elle se fermer du tout ? */

@@ -618,12 +618,17 @@ function items_render_edit(object $row, string $csrfToken): string
     // HORS du formulaire d'édition (attribut form — pas d'imbrication).
     $imagesPanel = '';
     $imageUploadForms = '';
-    foreach ([
+    $imageSlots = [
         'item' => ['img/items/' . $row->name . '.webp', 'Objet'],
         'mini' => ['img/items/' . $row->name . '_mini.webp', 'Vignette'],
         'wall' => ['img/walls/' . $row->name . '.png', 'Sur la carte'],
-        'wall_broken' => ['img/walls/' . $row->name . '_broken.png', 'Sur la carte — brisé'],
-    ] as $slot => [$path, $label]) {
+    ];
+    $itemType = \App\Factory\EntityManagerFactory::getEntityManager()
+        ->getRepository(\App\Entity\Item::class)->findOneBy(['name' => $row->name]);
+    foreach ($itemType === null ? [] : \App\Service\RaceImageService::stateVariantsOf($itemType) as $suffix => $stateLabel) {
+        $imageSlots['wall' . $suffix] = ['img/walls/' . $row->name . $suffix . '.png', 'Sur la carte — ' . mb_strtolower($stateLabel)];
+    }
+    foreach ($imageSlots as $slot => [$path, $label]) {
         $exists = is_file($_SERVER['DOCUMENT_ROOT'] . '/' . $path);
         $formId = 'item-img-' . $slot;
         // Pas de .d-inline-block dans admin.css : les emplacements sont

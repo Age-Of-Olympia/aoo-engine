@@ -183,6 +183,34 @@ class BuildingStockImagesTest extends LegacyPlayerFixtureTestCase
         $images->statePath(self::TYPE, '/../../config');
     }
 
+    public function testAPlacedChestShowsItsOpenImageWhileOpen(): void
+    {
+        $this->sowCatalogItem('gm_state_chest', ['lockable' => 1, 'durability_max' => 10]);
+        $type = \App\Factory\EntityManagerFactory::getEntityManager()
+            ->getRepository(\App\Entity\Item::class)->findOneBy(['name' => 'gm_state_chest']);
+        $this->assertArrayHasKey('_open', \App\Service\RaceImageService::stateVariantsOf($type), 'the admin offers it');
+
+        $walls = $_SERVER['DOCUMENT_ROOT'] . '/img/walls/gm_state_chest';
+        foreach (['', '_open'] as $suffix) {
+            imagepng(imagecreatetruecolor(50, 50), $walls . $suffix . '.png');
+        }
+
+        try {
+            [$x, $y] = $this->farTile();
+            $id = $this->installExemplar('gm_state_chest', $x, $y);
+            $buildings = new BuildingService();
+
+            $buildings->setOpen($id, true);
+            $this->assertSame('img/walls/gm_state_chest_open.png', $this->imageOf($id));
+
+            $buildings->setOpen($id, false);
+            $this->assertSame('img/walls/gm_state_chest.png', $this->imageOf($id), 'shut: the base image');
+        } finally {
+            @unlink($walls . '.png');
+            @unlink($walls . '_open.png');
+        }
+    }
+
     public function testAnImageOutsideTheStockIsRefused(): void
     {
         $id = $this->place('img/avatars/nain/1.png');

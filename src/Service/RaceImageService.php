@@ -24,12 +24,12 @@ use RuntimeException;
 class RaceImageService
 {
     /**
-     * State sprites of a structure type, shown by BuildingService::spriteOf:
-     * suffix => [admin label, doors only].
+     * State sprites of a type, shown by BuildingService::spriteOf:
+     * suffix => [admin label, which types have it (null = all)].
      */
     public const STATE_VARIANTS = [
-        '_broken' => ['Endommagé ou en ruine', false],
-        '_open'   => ['Porte ouverte', true],
+        '_broken' => ['Endommagé ou en ruine', null],
+        '_open'   => ['Ouvert (porte, coffre)', LockService::class . '::hasOpenSprite'],
     ];
 
     private ?EntityManagerInterface $entityManager;
@@ -255,7 +255,13 @@ class RaceImageService
             throw new RuntimeException("Type inconnu : {$type}.");
         }
 
-        $shown = array_filter(self::STATE_VARIANTS, static fn (array $v): bool => !$v[1] || $race->isDoor());
+        return self::stateVariantsOf($race);
+    }
+
+    /** @return array<string, string> the state variants a structure type or an item has, suffix => label */
+    public static function stateVariantsOf(\App\Interface\LockableInterface $type): array
+    {
+        $shown = array_filter(self::STATE_VARIANTS, static fn (array $v): bool => $v[1] === null || $v[1]($type));
 
         return array_map(static fn (array $v): string => $v[0], $shown);
     }

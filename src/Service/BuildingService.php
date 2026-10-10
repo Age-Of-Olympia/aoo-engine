@@ -303,10 +303,10 @@ class BuildingService
         return [$base, $base];
     }
 
-    /** Whether the entity shows its type's _open sprite: an open door. */
-    private function showsOpen(string $type, int $isOpen): bool
+    /** Whether the entity shows its type's _open sprite: an open door or storage. */
+    private function showsOpen(?\App\Interface\LockableInterface $type, int $isOpen): bool
     {
-        return $isOpen === 1 && ($this->raceService->getRaceByName($type)?->isDoor() ?? false);
+        return $isOpen === 1 && $type !== null && LockService::hasOpenSprite($type);
     }
 
     /**
@@ -1285,24 +1285,30 @@ class BuildingService
         // collation (utf8mb4_general_ci × uca1400) — le catalogue se lit
         // par RaceService, comme partout.
         $row = $conn->fetchAssociative(
-            "SELECT p.race, p.avatar, p.portrait, p.is_open, COALESCE(b.n, 0) AS wound, d.build_state
+            "SELECT p.race, p.player_type, p.avatar, p.portrait, p.is_open, COALESCE(b.n, 0) AS wound, d.build_state
              FROM players p
              LEFT JOIN players_bonus b ON b.player_id = p.id AND b.name = 'pv'
              LEFT JOIN buildings d ON d.player_id = p.id
-             WHERE p.id = ? AND p.player_type IN ('building', 'scenery')",
+             WHERE p.id = ? AND p.player_type IN ('building', 'scenery', 'item')",
             [$playerId]
         );
         if ($row === false) {
             return false;
         }
 
+        // A placed object follows its state only when it is a storage (a chest).
+        $type = (new LockService($conn))->typeOf($playerId);
+        if ($row['player_type'] === 'item' && ($type === null || !LockService::hasOpenSprite($type))) {
+            return false;
+        }
+
         /* A ruin keeps the broken sprite markDestroyed gave it; a type
          * without PV is never wounded, it only follows its type's image. */
-        $maxPv = (int) ($this->raceService->getRaceByName((string) $row['race'])?->ownCaracs()['pv'] ?? 0);
+        $maxPv = $type instanceof \App\Interface\OwnsCaracsInterface ? (int) $type->ownCaracs()['pv'] : 0;
         $broken = $row['build_state'] === BuildingDetails::STATE_RUIN
             || ($maxPv > 0 && $maxPv + (int) $row['wound'] <= $maxPv / 2);
 
-        $open = $this->showsOpen((string) $row['race'], (int) $row['is_open']);
+        $open = $this->showsOpen($type, (int) $row['is_open']);
         [$avatar, $base] = self::spriteOf((string) $row['race'], (string) $row['portrait'], $broken, $open);
         if ($avatar === (string) $row['avatar'] && $base === (string) $row['portrait']) {
             return false;
@@ -1350,7 +1356,7 @@ class BuildingService
         }
 
         $ids = $this->entityManager->getConnection()->fetchFirstColumn(
-            "SELECT id FROM players WHERE race = ? AND player_type IN ('building', 'scenery')",
+            "SELECT id FROM players WHERE race = ? AND player_type IN ('building', 'scenery', 'item')",
             [$type]
         );
 
@@ -1373,7 +1379,7 @@ class BuildingService
             if ($row === false) {
                 return;
             }
-            $open = $this->showsOpen((string) $row['race'], (int) $row['is_open']);
+            $open = $this->showsOpen((new LockService($conn))->typeOf($playerId), (int) $row['is_open']);
             $sprite = self::spriteOf((string) $row['race'], (string) $row['portrait'], $broken, $open);
         }
 
