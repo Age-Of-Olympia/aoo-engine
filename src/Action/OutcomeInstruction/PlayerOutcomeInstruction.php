@@ -19,6 +19,7 @@ class PlayerOutcomeInstruction extends OutcomeInstruction implements HasParamete
         return new ParameterSchema(
             new ParameterField('carac', FieldType::STRING, 'Caractéristique / effet', help: 'ex: foi, mvt, fatigue, visible, energie'),
             new ParameterField('value', FieldType::INT, 'Valeur', default: 0),
+            new ParameterField('appearance', FieldType::STRING, 'Apparence (carac visible)', help: 'invisible, ou la race montrée sur la carte : nain, elfe, geant…'),
         );
     }
 
@@ -41,10 +42,12 @@ class PlayerOutcomeInstruction extends OutcomeInstruction implements HasParamete
                 $outcomeSuccessMessages[0] = 'Vous priez '. $god->data->name .' et gagnez '. $pf .' Points de Foi (total '. $actor->data->pf .'Pf).';
                 $outcomeSuccessMessages[1] = '1d3 = '. $pf;
             } elseif ($onActor && $carac === 'visible') {
+                // A word, not a number: 'invisible' or the race shown on the map.
+                $appearance = trim((string) ($params['appearance'] ?? ''));
                 // SimulatedPlayer has no playerService (skips the DB ctor); the
                 // preview just reports the effect without the real visibility write.
-                if (!$actor->isSimulated()) {
-                    $actor->playerService->playerUpdateVisible($value);
+                if ($appearance !== '' && !$actor->isSimulated()) {
+                    $actor->playerService->playerUpdateVisible($appearance);
                 }
                 $outcomeSuccessMessages[0] = 'Vous agissez avec furtivité...';
             } else {

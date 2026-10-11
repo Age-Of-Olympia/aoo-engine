@@ -92,6 +92,47 @@ class PlayerOutcomeInstructionCharacterizationTest extends TestCase
         $this->assertStringContainsString('furtivité', $messages[0]);
     }
 
+    public function testDiscretionWritesInvisible(): void
+    {
+        $this->assertSame(['invisible'], $this->visibleWrites(['carac' => 'visible', 'appearance' => 'invisible']));
+    }
+
+    public function testACamouflageWritesTheBorrowedRace(): void
+    {
+        // Not cast to an int: 'nain' used to become 0, a race the map ignores.
+        $this->assertSame(['nain'], $this->visibleWrites(['carac' => 'visible', 'appearance' => 'nain', 'value' => 0]));
+    }
+
+    public function testNoAppearanceWritesNothing(): void
+    {
+        $this->assertSame([], $this->visibleWrites(['carac' => 'visible', 'value' => 0]));
+    }
+
+    /**
+     * @param array<string, mixed> $parameters
+     * @return list<mixed> values passed to playerUpdateVisible
+     */
+    private function visibleWrites(array $parameters): array
+    {
+        $instruction = new PlayerOutcomeInstruction();
+        $instruction->setParameters($parameters);
+        self::onSelf($instruction);
+
+        $writes = [];
+        $service = $this->createMock(\App\Service\PlayerService::class);
+        $service->method('playerUpdateVisible')->willReturnCallback(function ($value) use (&$writes) {
+            $writes[] = $value;
+        });
+
+        $actor = $this->player('Actor');
+        $actor->method('isSimulated')->willReturn(false);
+        $actor->playerService = $service;
+
+        $instruction->execute($actor, $this->player('Target'), new ConditionObject());
+
+        return $writes;
+    }
+
     /** The outcome's toggle is what routes the instruction now. */
     private static function onSelf(\App\Entity\OutcomeInstruction $instruction): void
     {
