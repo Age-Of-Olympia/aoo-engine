@@ -39,29 +39,8 @@
             }
         });
 
-        // ====================================================================
-        // INTERCEPT MOVEMENTS
-        // ====================================================================
-
-        // Intercept tile clicks for movement
-        $(document).on('click', '.case.go', function(e) {
-            const coords = $(this).data('coords');
-            if (coords) {
-
-                // Extract x,y from coords string
-                const [x, y] = coords.split(',').map(n => parseInt(n));
-
-                // Notify tutorial (after a short delay to let movement process)
-                setTimeout(() => {
-                    if (window.tutorialUI && typeof window.tutorialUI.notifyAction === 'function') {
-                        window.tutorialUI.notifyAction('movement', {
-                            to: [x, y],
-                            coords: coords
-                        });
-                    }
-                }, 100);
-            }
-        });
+        /* Movements notify from js/view.js once go.php moved the player:
+         * a tile click alone moves nothing. */
 
         // ====================================================================
         // INTERCEPT UI INTERACTIONS

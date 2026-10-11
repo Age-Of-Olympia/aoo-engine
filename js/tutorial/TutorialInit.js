@@ -80,11 +80,13 @@
      * @param {string} actionType - Type of action performed
      * @param {object} actionData - Action data for validation
      * @param {boolean} skipUIUpdate - If true, save progress but don't show next step (use before page reload)
+     * @returns {Promise} settles once the server answered — wait on it before a reload
      */
     window.notifyTutorial = function(actionType, actionData = {}, skipUIUpdate = false) {
         if (window.tutorialUI && window.tutorialUI.currentSession) {
-            window.tutorialUI.notifyAction(actionType, actionData, skipUIUpdate);
+            return window.tutorialUI.notifyAction(actionType, actionData, skipUIUpdate);
         }
+        return Promise.resolve(false);
     };
 
     /**

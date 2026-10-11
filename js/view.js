@@ -545,17 +545,16 @@ $(document).ready(function(){
                 if (window.tutorialUI && window.tutorialUI.isActive) {
                     console.log('[View] Notifying tutorial about movement to:', coords);
 
-                    // Send validation but skip UI update (page will reload)
+                    /* Reload once the server validated the move: an earlier
+                       reload aborts the request, the move goes uncounted and
+                       the aborted call flashes an error. */
                     window.notifyTutorial('movement', {
                         action: 'move',  // Required for validation
                         coords: coords,
                         timestamp: Date.now()
-                    }, true); // skipUIUpdate = true to avoid showing next step before reload
-
-                    // Give tutorial 100ms to save, then reload
-                    setTimeout(function() {
+                    }, true).finally(function() {
                         document.location.reload();
-                    }, 100);
+                    });
                 } else if (typeof window.hudRefreshAfterMove === 'function') {
                     // HUD: the view refreshes over AJAX (js/hud.js) —
                     // zoom and scroll of the damier are untouched.

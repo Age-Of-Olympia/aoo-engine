@@ -202,7 +202,7 @@ class TutorialUI {
     notifyAction(actionType, actionData = {}, skipUIUpdate = false) {
 
         if (!this.stepData) {
-            return;
+            return Promise.resolve(false);
         }
 
         const requiresValidation = this.stepData.config?.requires_validation;
@@ -211,12 +211,12 @@ class TutorialUI {
         // If step has manual advance enabled and doesn't require validation,
         // it should ONLY advance via the manual Next button, not via notifyAction
         if (allowManualAdvance && !requiresValidation) {
-            return;
+            return Promise.resolve(false);
         }
 
         // Auto-advance with validation data
         // The server-side validation will determine if this action is valid for the current step
-        this.next(actionData, skipUIUpdate);
+        return this.next(actionData, skipUIUpdate);
     }
 
     /**
@@ -1122,8 +1122,8 @@ class TutorialUI {
             return !!card && card !== staleCard && this.isElementDisplayed('#ui-card');
         };
 
-        /* The observer must SURVIVE a failed attempt: a stray notify (a
-         * tile click is also a .case.go click) can hold the re-entrancy
+        /* The observer must SURVIVE a failed attempt: a stray notify can
+         * hold the re-entrancy
          * guard at the exact moment the panel opens — disconnecting on
          * first fire then left the step stuck with no observer alive.
          * Disconnect only once the step actually advanced; while another
