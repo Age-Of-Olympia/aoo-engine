@@ -42,22 +42,30 @@ class PlayerService
         return self::isInactiveSince($lastLoginTime);
     }
 
+    /** @return list<array{label: string, value: int, name: string}> */
     public function searchNonAnonymePlayer(string $searchKey): array
     {
         
-        $sql = 'select players.name
+        $sql = 'select players.id, players.name, coalesce(races.label, players.race) as race
                 from players
                 left JOIN players_options on players_options.player_id=players.id and players_options.name = "anonymeMode"
+                left JOIN races on CONVERT(races.name USING utf8mb4) = CONVERT(players.race USING utf8mb4)
                 where players.name like ?
                 and players_options.player_id is null
                 and players.player_type IN (' . EntityCategory::addressableSql() . ')
+                order by players.name, players.id
                 ';
 
         $res = $this->db->exe($sql, '%'.$searchKey.'%');
         $list= array();
 
+        // jQuery UI autocomplete items: label is shown, value (the id) tells homonyms apart.
         while($row = $res->fetch_object()){
-            $list[]=$row->name;
+            $list[] = [
+                'label' => $row->name . ' (' . $row->race . ', mat. ' . $row->id . ')',
+                'value' => (int) $row->id,
+                'name'  => $row->name,
+            ];
         }
         return $list;
     }

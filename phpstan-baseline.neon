@@ -2131,11 +2131,6 @@ parameters:
 			count: 1
 			path: src/Service/PlayerService.php
 
-		-
-			message: '#^Method App\\Service\\PlayerService\:\:searchNonAnonymePlayer\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/PlayerService.php
 
 		-
 			message: '#^Property App\\Service\\PlayerService\:\:\$playerCache has no type specified\.$#'

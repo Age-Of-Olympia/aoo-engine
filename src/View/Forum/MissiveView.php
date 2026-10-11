@@ -231,8 +231,10 @@ class MissiveView
         </script>
         <script src="js/forum_missives.js?v=20260715"></script>
         <script src="js/autocomplete.js"></script>
+        <link rel="stylesheet" href="css/jquery-ui.min.css" />
         <script>
-            $(function() {
+            /* The HUD loads this view as a fragment into a page without jQuery UI. */
+            $.when($.fn.autocomplete || $.ajax({url: 'js/jquery-ui.min.js', dataType: 'script', cache: true})).then(function() {
                 bindAutocomplete(
                     function(event, ui) {
 
@@ -240,7 +242,7 @@ class MissiveView
                             type: "POST",
                             url: 'forum.php?topic=' + window.topName,
                             data: {
-                                'addDest': ui.item.label
+                                'addDest': ui.item.value
                             },
                             success: function(data) {
                                 document.location.reload();

@@ -49,7 +49,7 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
     
     bindAutocomplete(
       function(event, ui) {
-        $('#exchange-recipient').text(ui.item.label);
+        $('#exchange-recipient').text(ui.item.name);
         $('#validate-button').prop('disabled', false);
         $('#autocomplete').hide();
         $('#cancel-button').prop('disabled', false);
