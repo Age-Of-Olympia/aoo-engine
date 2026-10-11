@@ -230,7 +230,7 @@ define('XP_PER_TURNS', 5);      // base 5 xp - rank / turns
 define('XP_PER_MINE', 1);       // chaque case creusé rapporte 1xp
 define('DEATH_XP', 10);       // chaque case creusé rapporte 1xp
 define('ACTION_XP', 5);         // base action Xp
-define('SEASON_XP', 10000);      // passage du limite de saison à 10000
+define('SEASON_XP', 15000);      // passage du limite de saison à 15000
 define('BANK_PCT', 1);          // % gain par jour en banque sans adré
 
 define('MIN_GOLD_STOLEN', 5);
