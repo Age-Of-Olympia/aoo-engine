@@ -18,7 +18,15 @@ final class PassiveWorkbenchView
 {
     use RendersOptionsTrait;
 
-    private const TYPES = ['att' => 'Attaque', 'def' => 'Défense', 'mixte' => 'Mixte'];
+    /** The types some rule reads; '' = none (rest, sight, theft… read the trait alone). */
+    private const TYPES = [
+        '' => '—',
+        'att' => 'Attaque',
+        'def' => 'Défense',
+        'mixte' => 'Mixte',
+        'buff' => 'Buff',
+        'spell-slot' => 'Emplacement de sort',
+    ];
     /** Passives have no stored icon; fall back to a glyph per type for the list / folded rail. */
     private const TYPE_ICONS = ['att' => 'ra-sword', 'def' => 'ra-shield', 'mixte' => 'ra-crossed-swords'];
     private const CATEGORIES = [
@@ -92,7 +100,7 @@ final class PassiveWorkbenchView
             . '<div class="wb-grid">'
             . $this->input('name', 'Nom (clé)', $passive->getName())
             . $this->input('displayName', 'Nom affiché', $passive->getDisplayName())
-            . $this->select('type', 'Type', self::TYPES, $passive->getType())
+            . $this->select('type', 'Type', $this->withCurrent(self::TYPES, $passive->getType()), $passive->getType())
             . $this->caracSelect($passive->getCarac())
             . $this->input('value', 'Valeur', (string) $passive->getValue(), 'number', '0.01')
             . $this->input('level', 'Niveau', (string) $passive->getLevel(), 'number')
@@ -163,7 +171,8 @@ final class PassiveWorkbenchView
             $groups = ['Actuel' => [$current => $current]] + $groups;
         }
 
-        $opts = '';
+        // Empty = no carac: the compute then reads nothing (spell slots, flags).
+        $opts = $this->option('', '—', $current === '');
         foreach ($groups as $groupLabel => $options) {
             $opts .= $this->optgroup((string) $groupLabel, $options, $current);
         }
