@@ -157,8 +157,11 @@ class TopicView
                 continue;
             }
 
+            // Deleted or hidden: greyed out, spotted without reading the text
+            $greyed = empty($postJson->deleted) ? '' : ' style="opacity: .45; filter: grayscale(1);"';
+
             echo '
-        <tr class="tr-topic2 box-shadow">
+        <tr class="tr-topic2 box-shadow"' . $greyed . '>
             ';
 
             echo '
@@ -243,7 +246,7 @@ class TopicView
         ';
 
             echo '
-        <tr class="tr-topic1">
+        <tr class="tr-topic1"' . $greyed . '>
             ';
 
             echo '
@@ -339,7 +342,7 @@ class TopicView
 
                 $actions = empty($postJson->deleted) ? ['delete' => 'Supprimer', 'hide' => 'Masquer'] : ['restore' => 'Restaurer'];
                 foreach ($actions as $action => $label) {
-                    echo '<span class="give-reward-span"><a href="#" class="forum-moderate" data-action="' . $action . '" data-post="' . $post->name . '">' . $label . '</a></span> ';
+                    echo ' <span class="give-reward-span"><a href="#" class="forum-moderate" data-action="' . $action . '" data-post="' . $post->name . '">' . $label . '</a></span>';
                 }
             }
 
@@ -425,7 +428,7 @@ class TopicView
             window.topicName = <?php echo $topJson->name ?>;
             window.pageN = <?php echo $page ?>;
         </script>
-        <script src="js/forum_topic.js?v=20261011"></script>
+        <script src="js/forum_topic.js?v=20261011b"></script>
 <?php
     }
 }

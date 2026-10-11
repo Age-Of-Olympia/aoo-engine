@@ -72,46 +72,26 @@ $(document).ready(function(e){
 
         e.preventDefault();
 
-        var action = $(this).data('action');
-
+        var payload = {action: $(this).data('action'), name: String($(this).data('post'))};
         var confirms = {
             'delete': 'Supprimer ce message ? Les joueurs verront « Message supprimé par la modération ». Restaurable.',
             'hide': 'Masquer ce message ? Il disparaît pour les joueurs, sans trace. Restaurable.'
         };
+        var asked = confirms[payload.action] ? aooConfirm(confirms[payload.action]) : Promise.resolve(true);
 
-        if(confirms[action] && !confirm(confirms[action])){
-            return;
-        }
-
-        forumModerate({action: action, name: String($(this).data('post'))});
+        asked.then(function(ok){
+            if(ok) aooGestureFetch('api/forum/moderate.php', payload, aooReload);
+        });
     });
 
     $('.forum-rename').click(function(e){
 
         e.preventDefault();
 
-        var title = prompt('Nouveau titre du sujet :', $(this).data('title'));
+        var topic = String($(this).data('topic'));
 
-        if(!title || !title.trim()) return;
-
-        forumModerate({action: 'rename', name: String($(this).data('topic')), title: title.trim()});
+        aooPrompt('Nouveau titre du sujet :', $(this).data('title')).then(function(title){
+            if(title && title.trim()) aooGestureFetch('api/forum/moderate.php', {action: 'rename', name: topic, title: title.trim()}, aooReload);
+        });
     });
 });
-
-function forumModerate(payload){
-
-    aooFetch('api/forum/moderate.php', payload).then(function(data){
-
-        if(data.error){
-            alert(data.error);
-            return;
-        }
-
-        if(window.hudOpenPanel){
-            window.hudOpenPanel('load_forum.php?topic='+ window.topicName +'&page='+ window.pageN, 'Missives');
-            return;
-        }
-
-        document.location.reload();
-    });
-}
