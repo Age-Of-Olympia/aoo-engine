@@ -115,9 +115,82 @@ function plans_validation_html(string $planId, Db $db, bool $includeOk): string
 }
 
 /**
- * @param array<string, object> $inventory
+ * The plan's map as the game composes it: its layers stacked, as a small
+ * thumbnail and, on hover, a large preview. World plan: the world map.
+ * Any other plan: the thumbnail shows level 0 (else the first generated
+ * level), the preview every generated level side by side.
+ *
+ * @param array<int, array<string, string>> $localByZ z => layer => web path
+ * @param array<string, string>|null $world layer => web path when this is the world plan
  */
-function plans_render_list(array $inventory, Db $db): string
+function plans_map_thumb(array $localByZ, ?array $world): string
+{
+    /** @param array<string, string> $layers */
+    $stack = function (array $layers, array $order): array {
+        $tiles = $_SERVER['DOCUMENT_ROOT'] . ($layers['tiles'] ?? '');
+        [$w, $h] = is_file($tiles) ? (getimagesize($tiles) ?: [1, 1]) : [1, 1];
+        $imgs = '';
+        foreach ($order as $layer) {
+            if (isset($layers[$layer])) {
+                $imgs .= '<img src="' . e($layers[$layer]) . '" alt="" loading="lazy">';
+            }
+        }
+
+        return [$imgs, round($w / max(1, $h), 4)];
+    };
+
+    if ($world !== null) {
+        $levels = ['Carte du monde' => $world];
+        $order = ['tiles', 'elements', 'routes', 'buildings', 'locations'];
+    } else {
+        ksort($localByZ);
+        $levels = [];
+        foreach ($localByZ as $z => $files) {
+            if (isset($files['tiles'])) {
+                $levels['z = ' . $z] = $files;
+            }
+        }
+        if ($levels === []) {
+            return '<span class="text-muted">–</span>';
+        }
+        $order = ['tiles', 'elements', 'foregrounds', 'resources', 'routes', 'buildings'];
+    }
+
+    $thumbKey = isset($levels['z = 0']) ? 'z = 0' : array_key_first($levels);
+    [$thumb, $thumbRatio] = $stack($levels[$thumbKey], $order);
+
+    $preview = '';
+    foreach ($levels as $label => $layers) {
+        [$imgs, $ratio] = $stack($layers, $order);
+        $preview .= '<span class="plan-map-level"><span class="plan-map-preview-stack" style="--ratio:' . $ratio . '">' . $imgs
+            . '</span><small>' . e($label) . '</small></span>';
+    }
+
+    return '<span class="plan-map-thumb" style="--ratio:' . $thumbRatio . '" tabindex="0">' . $thumb
+        . '<span class="plan-map-preview" role="tooltip">' . $preview . '</span></span>';
+}
+
+/**
+ * Validator messages for the hover detail of a list badge. The messages
+ * come escaped from PlanJsonValidator, as on the edit page.
+ *
+ * @param list<string> $messages
+ */
+function plans_validation_list(array $messages, string $color, string $title): string
+{
+    if ($messages === []) {
+        return '';
+    }
+    $items = '';
+    foreach ($messages as $message) {
+        $items .= '<li>' . $message . '</li>';
+    }
+
+    return '<strong style="color:' . $color . '">' . e($title) . '</strong><ul>' . $items . '</ul>';
+}
+
+/** @param array<string, object> $inventory */
+function plans_render_list(array $inventory, Db $db, string $csrfToken): string
 {
     $seasonFilter = current_season_filter();
     $filtered = array_filter($inventory, fn(object $p) => plan_matches_season_filter($p, $seasonFilter));
@@ -129,6 +202,11 @@ function plans_render_list(array $inventory, Db $db): string
     while ($row = $res->fetch_object()) {
         $knownItemNames[] = $row->name;
     }
+
+    $localMaps = ViewService::localMapIndex();
+    $worldPlan = plans()->worldPlan();
+    $worldMap = (new ViewService($db))->getGlobalMap();
+    $worldLayers = array_map(fn(array $layer): string => $layer['imagePath'], $worldMap);
 
     $rows = '';
     foreach ($filtered as $plan) {
@@ -146,7 +224,12 @@ function plans_render_list(array $inventory, Db $db): string
                 if (count($v['warnings']) > 0) {
                     $badges .= '<span class="badge" style="background-color:#f0ad4e;color:#fff;">' . count($v['warnings']) . ' avert.</span>';
                 }
-                $validationCell = $badges !== '' ? trim($badges)
+                $validationCell = $badges !== ''
+                    ? '<span class="plan-validation" tabindex="0">' . trim($badges)
+                        . '<span class="plan-validation-detail" role="tooltip">'
+                        . plans_validation_list($v['errors'], '#dc3545', 'Erreurs')
+                        . plans_validation_list($v['warnings'], '#f0ad4e', 'Avertissements')
+                        . '</span></span>'
                     : '<span class="badge" style="background-color:#198754;color:#fff;">OK</span>';
             }
         }
@@ -155,17 +238,27 @@ function plans_render_list(array $inventory, Db $db): string
             ? number_format($plan->coordsCount, 0, ',', ' ') . ' cases · z : ' . implode(', ', $plan->zLevels)
             : '<span class="text-muted">–</span>';
 
-        $rows .= '<tr>'
+        $rows .= '<tr id="plan-row-' . e($plan->id) . '">'
             . '<td><code>' . e($plan->id) . '</code></td>'
             . '<td>' . e($plan->name) . '</td>'
             . '<td>' . season_badge($plan->season) . '</td>'
             . '<td>' . plans_status_badge($plan) . '</td>'
             . '<td>' . $coordsCell . '</td>'
             . '<td>' . $validationCell . '</td>'
-            . '<td><a class="btn btn-sm btn-outline-primary" href="/admin/plans.php?action=edit&amp;plan='
-            . e(urlencode($plan->id)) . '">Éditer</a> '
+            . '<td>' . plans_map_thumb($localMaps[$plan->id] ?? [], $plan->id === $worldPlan ? $worldLayers : null) . '</td>'
+            . '<td><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">'
+            . '<a class="btn btn-sm btn-outline-primary" href="/admin/plans.php?action=edit&amp;plan='
+            . e(urlencode($plan->id)) . '">Éditer</a>'
             . '<a class="btn btn-sm btn-outline-secondary" title="Exporter ce plan (bundle JSON : config + coords + couches)"'
-            . ' href="/admin/action-export.php?type=plan&amp;plan=' . e(urlencode($plan->id)) . '">JSON</a></td>'
+            . ' href="/admin/action-export.php?type=plan&amp;plan=' . e(urlencode($plan->id)) . '">JSON</a>'
+            . ($plan->hasConfig && $plan->hasCoords
+                ? '<form method="post" action="/admin/plans-save.php?action=generate-map" style="margin:0">'
+                    . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+                    . '<input type="hidden" name="plan" value="' . e($plan->id) . '">'
+                    . '<button type="submit" class="btn btn-sm btn-outline-secondary" title="Générer les images de la carte de ce plan">'
+                    . '<i class="fas fa-sync-alt"></i> Générer carte</button></form>'
+                : '')
+            . '</div></td>'
             . '</tr>';
     }
 
@@ -199,8 +292,56 @@ function plans_render_list(array $inventory, Db $db): string
 
         . '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
         . '<th>Code</th><th>Nom</th><th>Saison</th><th>Statut</th><th>Coords</th>'
-        . '<th title="Bilan PlanJsonValidator (niveaux Z, biomes)">Validation</th><th></th>'
-        . '</tr></thead><tbody>' . $rows . '</tbody></table>';
+        . '<th title="Bilan PlanJsonValidator (niveaux Z, biomes)">Validation</th>'
+        . '<th title="Carte telle que le jeu la compose ; survol pour l\'agrandir">Carte</th><th></th>'
+        . '</tr></thead><tbody>' . $rows . '</tbody></table>'
+        . '<style>'
+        . '.plan-map-thumb{position:relative;display:inline-block;vertical-align:middle;height:32px;aspect-ratio:var(--ratio);'
+        . 'background:#e7ded0;border:1px solid #ccc;cursor:zoom-in}'
+        . '.plan-map-thumb>img,.plan-map-preview-stack>img{position:absolute;inset:0;width:100%;height:100%}'
+        . '.plan-map-preview{display:none;position:absolute;z-index:1050;right:calc(100% + 8px);top:50%;transform:translateY(-50%);'
+        . 'gap:8px;align-items:flex-start;flex-wrap:wrap;width:max-content;max-width:min(900px,calc(100vw - 360px));'
+        . 'background:#fff;border:1px solid #999;box-shadow:0 6px 24px rgba(0,0,0,.3);padding:6px}'
+        . '.plan-map-level{display:block}'
+        . '.plan-map-preview-stack{position:relative;display:block;width:420px;max-width:60vw;aspect-ratio:var(--ratio);background:#e7ded0}'
+        . '.plan-map-level:not(:only-child) .plan-map-preview-stack{width:200px}'
+        . '.plan-map-preview small{display:block;margin-top:4px;color:#666;text-align:center}'
+        . '.plan-map-thumb:hover .plan-map-preview,.plan-map-thumb:focus .plan-map-preview{display:flex}'
+        . '.plan-validation{position:relative;display:inline-block;cursor:help}'
+        . '.plan-validation-detail{display:none;position:absolute;z-index:1050;left:0;top:calc(100% + 6px);width:max-content;'
+        . 'max-width:min(520px,70vw);background:#fff;border:1px solid #999;box-shadow:0 6px 24px rgba(0,0,0,.3);'
+        . 'padding:8px 10px;font-size:12px;line-height:1.5;white-space:normal;text-align:left}'
+        . '.plan-validation-detail ul{margin:2px 0 6px;padding-left:18px}'
+        . '.plan-validation:hover .plan-validation-detail,.plan-validation:focus .plan-validation-detail{display:block}'
+        . '.plan-generate-status{display:block;font-size:12px;margin-top:4px;white-space:normal}'
+        . '</style>'
+        . '<script>'
+        /* Generating a map refreshes its row in place: no reload, the page
+           stays where it is. Without JS the form posts and comes back to the
+           row (anchor). */
+        . 'document.addEventListener("submit", function (event) {'
+        . '  var form = event.target.closest("form[action*=\\"generate-map\\"]");'
+        . '  if (!form || !window.fetch) { return; }'
+        . '  event.preventDefault();'
+        . '  var row = form.closest("tr");'
+        . '  var button = form.querySelector("button");'
+        . '  button.disabled = true;'
+        . '  button.lastChild.textContent = " Génération…";'
+        . '  fetch(form.action, { method: "POST", body: new FormData(form), credentials: "same-origin" })'
+        . '    .then(function (response) { return response.text(); })'
+        . '    .then(function (html) {'
+        . '      var doc = new DOMParser().parseFromString(html, "text/html");'
+        . '      var fresh = doc.getElementById(row.id);'
+        . '      var flash = doc.querySelector(".alert-success, .alert-warning, .alert-danger");'
+        . '      if (fresh) { row.innerHTML = fresh.innerHTML; }'
+        . '      var status = document.createElement("span");'
+        . '      status.className = "plan-generate-status " + (flash && flash.classList.contains("alert-success") ? "text-success" : "text-danger");'
+        . '      status.textContent = flash ? flash.textContent.replace("×", "").trim() : "Génération terminée.";'
+        . '      row.lastElementChild.appendChild(status);'
+        . '    })'
+        . '    .catch(function () { button.disabled = false; button.lastChild.textContent = " Réessayer"; });'
+        . '});'
+        . '</script>';
 }
 
 /**
@@ -600,7 +741,7 @@ if ($action === 'new') {
     }
     $content = plans_render_edit_form($inventory[$planId], $csrfToken, $db);
 } else {
-    $content = plans_render_list($inventory, $db);
+    $content = plans_render_list($inventory, $db, $csrfToken);
 }
 
 echo admin_layout('Plans', renderFlashMessage() . $content);

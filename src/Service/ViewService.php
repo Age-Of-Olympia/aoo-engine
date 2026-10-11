@@ -1462,6 +1462,31 @@ class ViewService {
         return $results;
     }
 
+    /**
+     * Newest image of every local map layer on disk, in one directory scan
+     * (admin list: one thumbnail per plan without a glob per plan and layer).
+     *
+     * @return array<string, array<int, array<string, string>>> plan => z => layer => web path
+     */
+    public static function localMapIndex(): array
+    {
+        $index = [];
+        $newest = [];
+        foreach (glob($_SERVER['DOCUMENT_ROOT'] . '/img/maps/local/local_*.png') ?: [] as $file) {
+            $name = basename($file);
+            if (!preg_match('/^local_(.+)_(-?\d+)_([a-z]+)_(\d{8}-\d{6})\.png$/', $name, $m)) {
+                continue;
+            }
+            [, $plan, $z, $layer, $stamp] = $m;
+            if (($newest[$plan][$z][$layer] ?? '') < $stamp) {
+                $newest[$plan][$z][$layer] = $stamp;
+                $index[$plan][(int) $z][$layer] = '/img/maps/local/' . $name;
+            }
+        }
+
+        return $index;
+    }
+
     public function getLocalMap(): array
     {
         $layers = ['tiles', 'elements', 'foregrounds', 'resources', 'routes', 'buildings', 'coordinates', 'players', 'player'];

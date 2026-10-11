@@ -23,6 +23,7 @@ use App\Service\CsrfProtectionService;
 use App\Service\PlanAdminService;
 use App\Service\PlanConfigService;
 use App\Service\TiledMapService;
+use App\Service\ViewService;
 use Classes\Db;
 
 (new AdminMenuAccessService())->enforce('plans.php');
@@ -140,6 +141,64 @@ if ($action === 'update') {
 
     setFlash('success', "Configuration du plan « {$plan} » enregistrée." . $notice);
     redirectTo('/admin/plans.php?action=edit&plan=' . urlencode($plan));
+}
+
+/* Images of the plan's map, as the game draws them: the world map for the
+ * world plan, else one local map per level that has bounds. Older images
+ * of the same layers are removed: each click would otherwise pile up. */
+if ($action === 'generate-map') {
+    $db = new Db();
+    $keepNewest = function (string $pattern): void {
+        $files = glob($pattern) ?: [];
+        rsort($files);
+        foreach (array_slice($files, 1) as $old) {
+            @unlink($old);
+        }
+    };
+    $root = $_SERVER['DOCUMENT_ROOT'];
+
+    try {
+        if ($plan === plans()->worldPlan()) {
+            $layers = ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'buildings'];
+            (new ViewService($db))->generateGlobalMap($layers);
+            foreach ($layers as $layer) {
+                $keepNewest($root . '/img/maps/world/world_' . $layer . '_*.png');
+            }
+            setFlash('success', "Carte du monde « {$plan} » régénérée.");
+        } else {
+            $layers = ['tiles', 'elements', 'foregrounds', 'resources', 'routes', 'buildings', 'coordinates'];
+            $done = [];
+            $skipped = [];
+            $failed = [];
+            foreach (plans()->read($plan)->z_levels ?? [] as $level) {
+                $z = (int) $level->z;
+                $viewService = new ViewService($db, 0, 0, $z, 0, $plan);
+                if (!$viewService->isLocalMapAvailable()) {
+                    $skipped[] = $z;
+                    continue;
+                }
+                // One broken level must not stop the others
+                try {
+                    $viewService->generateLocalMap($layers);
+                } catch (\Throwable $e) {
+                    $failed[] = 'z = ' . $z . ' (' . $e->getMessage() . ')';
+                    continue;
+                }
+                foreach ($layers as $layer) {
+                    $keepNewest($root . '/img/maps/local/local_' . $plan . '_' . $z . '_' . $layer . '_*.png');
+                }
+                $done[] = $z;
+            }
+            setFlash($done === [] || $failed !== [] ? 'warning' : 'success', ($done === []
+                ? "Aucune carte générée pour « {$plan} »."
+                : "Carte de « {$plan} » générée pour z = " . implode(', ', $done) . '.')
+                . ($skipped === [] ? '' : ' Sans carte : z = ' . implode(', ', $skipped) . '.')
+                . ($failed === [] ? '' : ' En échec : ' . implode(', ', $failed) . '.'));
+        }
+    } catch (\Throwable $e) {
+        setFlash('warning', 'Génération de la carte impossible : ' . $e->getMessage());
+    }
+    redirectTo('/admin/plans.php#plan-row-' . $plan);
 }
 
 /* Double validation des opérations destructives : le code du plan doit
