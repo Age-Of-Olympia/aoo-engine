@@ -207,7 +207,7 @@ class NewTopicView
 
 
 ?>
-        <script src="js/autosave.js?v=20260715"></script>
+        <script src="js/autosave.js?v=20261011"></script>
         <script src="js/forum_newTopic.js?v=20260716"></script>
 <?php
     }

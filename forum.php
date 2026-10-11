@@ -76,9 +76,10 @@ elseif(isset($_GET['lastPosts'])){
     exit();
 }
 
-elseif(isset($_GET['autosave']) && isset($_POST['text'])){
+elseif(isset($_GET['autosave'])){
 
-    if(trim($_POST['text']) != ''){
+    // Never fall through to the forum home: the caller alerts any answer
+    if(isset($_POST['text']) && trim($_POST['text']) != ''){
         if($_POST['currentSessionId'] == $_SESSION['playerId'])
         {
             Forum::put_autosave($_SESSION['playerId'], $_POST['text']);

@@ -1,10 +1,12 @@
 $(document).ready(function(){
 
 
-    var text = $('textarea').val();
+    /* The form's own textarea: in the HUD, other panels may hold one too. */
+    var $area = $('#forum-textarea textarea').first();
+    var text = $area.val();
 
 
-    $('textarea').on('keyup', function(){
+    $area.on('keyup', function(){
 
 
         $('.submit').html('Envoyer*');
@@ -13,8 +15,12 @@ $(document).ready(function(){
 
     var autosave = function(){
 
+        /* The form left the page (HUD back or close): stop for good. */
+        if(!$area.length || !$.contains(document.documentElement, $area[0])){
+            return;
+        }
 
-        var actualText = $('textarea').val();
+        var actualText = $area.val();
         var currentSessionId = $('#currentSessionId').text();
         if(actualText != text){
 
@@ -36,7 +42,7 @@ $(document).ready(function(){
                     // alert(data);
                     $('.submit').html('Envoyer');
 
-                    text = $('textarea').val();
+                    text = actualText;
                 }
             });
         }
