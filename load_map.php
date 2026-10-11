@@ -74,8 +74,11 @@ if ($notice !== null) {
     exit();
 }
 
-/* Static layers in drawing order: label, and whether it shows by default */
+/* Static layers in drawing order: label, and whether it shows by default.
+ * Buildings, grid and border follow the player's board options. */
 $hideBuildings = (bool) $player->have_option('hideBuildingsLayer');
+$hideGrid = (bool) $player->have_option('hideGrid');
+$hideBoardCoords = (bool) $player->have_option('hideBoardCoords');
 $layers = $showWorld
     ? [
         'tiles' => ['Terrain', true],
@@ -84,7 +87,7 @@ $layers = $showWorld
         'buildings' => ['Bâtiments', !$hideBuildings],
         /* Labels last, so routes and buildings never hide them */
         'locations' => ['Lieux', true],
-        'coordinates' => ['Coordonnées', true],
+        'coordinates' => ['Grille', !$hideGrid],
     ]
     : [
         'tiles' => ['Terrain', true],
@@ -93,6 +96,7 @@ $layers = $showWorld
         'resources' => ['Ressources', true],
         'routes' => ['Routes', true],
         'buildings' => ['Bâtiments', !$hideBuildings],
+        'coordinates' => ['Grille', !$hideGrid],
     ];
 
 $mapResult = $showWorld ? $viewService->getGlobalMap() : $viewService->getLocalMap();
@@ -100,6 +104,16 @@ $mapResult = $showWorld ? $viewService->getGlobalMap() : $viewService->getLocalM
 /* Layers never generated yet (fresh environment, new layer kind):
  * generated once, later hits read them from disk */
 $missing = array_values(array_diff(array_keys($layers), array_keys($mapResult)));
+$rulers = $viewService->getMapRulers($showWorld);
+/* World layers drawn before the canvas followed the plan's proportions
+ * (700x466): redrawn once, or they no longer line up with the players */
+$tilesPath = $mapResult['tiles']['imagePath'] ?? null;
+if ($showWorld && $rulers !== null && $tilesPath && file_exists($_SERVER['DOCUMENT_ROOT'] . $tilesPath)) {
+    [$tilesW, $tilesH] = getimagesize($_SERVER['DOCUMENT_ROOT'] . $tilesPath);
+    if ($tilesW !== $rulers['width'] || $tilesH !== $rulers['height']) {
+        $missing = array_keys($layers);
+    }
+}
 if ($missing) {
     $showWorld ? $viewService->generateGlobalMap($missing) : $viewService->generateLocalMap($missing);
     $mapResult = $showWorld ? $viewService->getGlobalMap() : $viewService->getLocalMap();
@@ -108,7 +122,6 @@ if ($missing) {
 $imgs = '';
 $toggles = '';
 $aspect = '';
-$rulers = $showWorld ? $viewService->getWorldRulers() : null;
 foreach ($layers as $layer => [$label, $shown]) {
     $imagePath = $mapResult[$layer]['imagePath'] ?? null;
     if (!$imagePath || !file_exists($_SERVER['DOCUMENT_ROOT'] . $imagePath)) {
@@ -119,12 +132,6 @@ foreach ($layers as $layer => [$label, $shown]) {
         $aspect = (string) round($w / max(1, $h), 4);
     }
     $imgs .= '<img src="' . $imagePath . '" alt="" data-layer="' . $layer . '"' . ($shown ? '' : ' hidden') . ' />';
-    /* The numbered border: drawn by the board's own code (js/hud.js) */
-    if ($layer === 'coordinates' && $rulers !== null) {
-        $imgs .= '<svg class="hud-map-rulers" data-layer="coordinates"'
-            . ' data-rulers="' . htmlspecialchars((string) json_encode($rulers), ENT_QUOTES) . '"'
-            . ($shown ? '' : ' hidden') . '></svg>';
-    }
     /* The terrain is the map itself: never switched off */
     if ($layer !== 'tiles') {
         $toggles .= '<label><input type="checkbox" data-layer="' . $layer . '"' . ($shown ? ' checked' : '') . '> ' . $label . '</label>';
@@ -135,6 +142,14 @@ if ($imgs === '') {
     echo $head . '<p class="hud-feed-empty">La carte n\'est pas encore générée.</p></div>';
     echo Str::minify(ob_get_clean());
     exit();
+}
+
+/* The numbered border, drawn by the board's own code (js/hud.js) */
+if ($rulers !== null) {
+    $imgs .= '<svg class="hud-map-rulers" data-layer="rulers"'
+        . ' data-rulers="' . htmlspecialchars((string) json_encode($rulers, JSON_FORCE_OBJECT), ENT_QUOTES) . '"'
+        . ($hideBoardCoords ? ' hidden' : '') . '></svg>';
+    $toggles .= '<label><input type="checkbox" data-layer="rulers"' . ($hideBoardCoords ? '' : ' checked') . '> Coordonnées du bord</label>';
 }
 
 /* Other players: a layer drawn per viewer (visibility rules) */
@@ -177,13 +192,14 @@ echo '</div>';
 ?>
 <script>
 (function () {
-    /* World map border: the board's own rulers (js/hud.js drawRulers),
+    /* Map border: the board's own rulers (js/hud.js drawRulers),
      * same band, font and offsets. The map is expressed in board units
      * (k = stack px per image px / board px per unit), so the border has
      * the board's on-screen size. Like the board's, it sits around the
      * map content, over the image margin, in room the stack leaves
-     * through --map-ruler. The bands widen to fit the longest number. */
-    function drawWorldRulers() {
+     * through --map-ruler. The bands widen to fit the longest number.
+     * The room stays when the border is hidden: the map keeps its size. */
+    function drawMapRulers() {
         var boardScale = window.hudBoardScale ? window.hudBoardScale() : 0;
         if (!window.hudDrawRulers || !boardScale) {
             return;
@@ -194,6 +210,9 @@ echo '</div>';
             var stack = svg.parentNode;
             var r = JSON.parse(svg.getAttribute('data-rulers'));
             $(svg).empty();
+            /* Text is measured only when rendered */
+            var hidden = svg.hasAttribute('hidden');
+            svg.removeAttribute('hidden');
 
             var band = G;
             var probe = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -210,6 +229,9 @@ echo '</div>';
             var s = stack.getBoundingClientRect().width / r.width;
             var k = s / boardScale;
             if (!k) {
+                if (hidden) {
+                    svg.setAttribute('hidden', '');
+                }
                 return;
             }
             var inner = r.margin * s;
@@ -222,17 +244,17 @@ echo '</div>';
             var p = [r.margin * k, r.margin * k, (r.width - 2 * r.margin) * k, (r.height - 2 * r.margin) * k];
             svg.setAttribute('viewBox', (p[0] - band) + ' ' + (p[1] - band) + ' ' + (p[2] + 2 * band) + ' ' + (p[3] + 2 * band));
             svg.appendChild(window.hudDrawRulers(p, band, cols, rows));
+            if (hidden) {
+                svg.setAttribute('hidden', '');
+            }
         });
     }
-    drawWorldRulers();
-    $(window).off('resize.hudMapRulers').on('resize.hudMapRulers', drawWorldRulers);
+    drawMapRulers();
+    $(window).off('resize.hudMapRulers').on('resize.hudMapRulers', drawMapRulers);
 
     /* A layer is one element of the stack: toggling it needs no reload */
     $('.hud-map-layers input').on('change', function () {
         $('.hud-map-stack [data-layer="' + $(this).data('layer') + '"]').prop('hidden', !this.checked);
-        if (this.checked && $(this).data('layer') === 'coordinates') {
-            drawWorldRulers();
-        }
     });
 })();
 </script>

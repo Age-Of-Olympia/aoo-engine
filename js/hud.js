@@ -1319,9 +1319,10 @@
     /* Largeur des bandes de la bordure, en unités du damier */
     var RULER_BAND = 16;
 
-    /* Échelle d'affichage du damier (pixels écran par unité du viewBox
-     * d'origine) : la carte du monde s'y cale pour que sa bordure ait la
-     * même taille à l'écran. */
+    /* Échelle d'affichage du damier : pixels écran par unité de son
+     * viewBox courant (déjà élargi de la bordure, c'est bien l'échelle
+     * à l'écran). Les cartes (load_map.php) s'y calent pour que leur
+     * bordure ait la même taille. 0 hors du HUD : pas de bordure. */
     window.hudBoardScale = function () {
         var svg = document.getElementById('svg-view');
         if (!svg) {

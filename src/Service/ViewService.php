@@ -451,6 +451,9 @@ class ViewService {
                 case 'buildings':
                     $this->generateBuildingsLayer($this->currentPlan);
                     break;
+                case 'coordinates':
+                    $this->generateCoordinatesLayer($this->currentPlan);
+                    break;
                 case 'players':
                     $this->generateLocalPlayersLayer();
                     break;
@@ -700,11 +703,39 @@ class ViewService {
     }
     
     /**
-     * Grid of a map: a line every 10 cells over the tiled extent, as
-     * coordinate => screen position, and the label step that keeps labels
-     * at least 32 px apart whatever the map's scale.
+     * Grid and label steps (in cells) for a cell of $scale px: a line at
+     * least every 12 px, a number at least every 32 px, on a multiple of
+     * the line step. World map (~2 px a cell): 10 and 20. Local map
+     * (~13 px a cell): 1 and 5.
      *
-     * @return array{cols: array<int, int>, rows: array<int, int>, labelStep: int}
+     * @return array{grid: int, label: int}
+     */
+    public static function gridSteps(float $scale): array
+    {
+        $steps = [1, 2, 5, 10, 20, 50, 100, 200, 500];
+        $grid = end($steps);
+        foreach ($steps as $step) {
+            if ($step * $scale >= 12) {
+                $grid = $step;
+                break;
+            }
+        }
+        $label = end($steps);
+        foreach ($steps as $step) {
+            if ($step % $grid === 0 && $step * $scale >= 32) {
+                $label = $step;
+                break;
+            }
+        }
+
+        return ['grid' => $grid, 'label' => $label];
+    }
+
+    /**
+     * Grid of a map over its tiled extent: cell centre (screen px) of every
+     * grid coordinate, the steps, and half a cell (lines run between cells).
+     *
+     * @return array{cols: array<int, int>, rows: array<int, int>, labelStep: int, half: float}
      */
     private function coordinateGrid(string $plan): array
     {
@@ -715,67 +746,65 @@ class ViewService {
                 FROM coords c
                 JOIN map_tiles mt ON c.id = mt.coords_id
                 WHERE c.plan = '" . $plan . "'
-                " . $this->boundsClause($mapType) . "";
+                " . $this->boundsClause($mapType) . "
+                " . ($mapType === 'global' ? "AND c.z = 0" : "AND c.z = " . (int) $this->playerZ);
         $bounds = mysqli_fetch_assoc($this->db->exe($query));
 
-        $gridStep = 10;
         $scale = (float) ($mapType === 'global' ? $this->scaleX : $this->localScaleX);
-        $labelStep = $gridStep;
-        foreach ([10, 20, 50, 100, 200, 500] as $step) {
-            $labelStep = $step;
-            if ($step * $scale >= 32) {
-                break;
-            }
-        }
+        $steps = self::gridSteps($scale);
 
         $cols = [];
         $rows = [];
         if ($bounds && $bounds['minX'] !== null) {
-            for ($x = (int) ceil($bounds['minX'] / $gridStep) * $gridStep; $x <= $bounds['maxX']; $x += $gridStep) {
+            for ($x = (int) ceil($bounds['minX'] / $steps['grid']) * $steps['grid']; $x <= $bounds['maxX']; $x += $steps['grid']) {
                 $cols[$x] = $this->transformX($x, $mapType);
             }
-            for ($y = (int) ceil($bounds['minY'] / $gridStep) * $gridStep; $y <= $bounds['maxY']; $y += $gridStep) {
+            for ($y = (int) ceil($bounds['minY'] / $steps['grid']) * $steps['grid']; $y <= $bounds['maxY']; $y += $steps['grid']) {
                 $rows[$y] = $this->transformY($y, $mapType);
             }
         }
 
-        return ['cols' => $cols, 'rows' => $rows, 'labelStep' => $labelStep];
+        return ['cols' => $cols, 'rows' => $rows, 'labelStep' => $steps['label'], 'half' => $scale / 2];
     }
 
     private function generateCoordinatesLayer($plan) {
-        $layer = $this->createLayer();
+        $world = $plan === $this->worldPlan;
+        $layer = $world ? $this->createLayer() : $this->createLayer($this->localMapWidth, $this->localMapHeight);
         $grid = $this->coordinateGrid($plan);
 
-        // Grid lines only: the numbered border is drawn around the map by the
-        // page, with the board's own code (js/hud.js drawRulers, getWorldRulers)
+        // Grid lines only, between cells: the numbered border is drawn around
+        // the map by the page, with the board's own code (js/hud.js drawRulers)
         $gridColor = imagecolorallocatealpha($layer, 255, 255, 255, 100);
-        $band = $plan === $this->worldPlan ? $this->margin : 0;
+        $edge = $world ? $this->margin : 0;
         $layerW = imagesx($layer);
         $layerH = imagesy($layer);
 
-        foreach ($grid['cols'] as $screenX) {
-            imageline($layer, $screenX, $band, $screenX, $layerH - $band - 1, $gridColor);
+        foreach ($grid['cols'] as $centre) {
+            $screenX = (int) round($centre - $grid['half']);
+            imageline($layer, $screenX, $edge, $screenX, $layerH - $edge - 1, $gridColor);
         }
-        foreach ($grid['rows'] as $screenY) {
-            imageline($layer, $band, $screenY, $layerW - $band - 1, $screenY, $gridColor);
+        foreach ($grid['rows'] as $centre) {
+            $screenY = (int) round($centre + $grid['half']);
+            imageline($layer, $edge, $screenY, $layerW - $edge - 1, $screenY, $gridColor);
         }
 
         $this->layers['coordinates'] = $layer;
     }
 
     /**
-     * Numbered border of the world map, for js/hud.js drawRulers: canvas
-     * size, margin around the content and label => position on the canvas.
+     * Numbered border of the world map or of the current local map, for
+     * js/hud.js drawRulers: canvas size, margin around the content and
+     * label => cell centre on the canvas. Null when the map has no bounds.
      *
      * @return array{width: int, height: int, margin: int, cols: array<int, int>, rows: array<int, int>}|null
      */
-    public function getWorldRulers(): ?array
+    public function getMapRulers(bool $world): ?array
     {
-        if ($this->scaleX === null) {
+        if ($world ? $this->scaleX === null : empty($this->localBoundsAvailable)) {
             return null;
         }
 
-        $grid = $this->coordinateGrid($this->worldPlan);
+        $grid = $this->coordinateGrid($world ? $this->worldPlan : (string) $this->currentPlan);
         $labelled = fn (array $lines): array => array_filter(
             $lines,
             fn (int $coord): bool => $coord % $grid['labelStep'] === 0,
@@ -783,9 +812,9 @@ class ViewService {
         );
 
         return [
-            'width' => (int) $this->width,
-            'height' => (int) $this->height,
-            'margin' => (int) $this->margin,
+            'width' => (int) ($world ? $this->width : $this->localMapWidth),
+            'height' => (int) ($world ? $this->height : $this->localMapHeight),
+            'margin' => $world ? (int) $this->margin : 0,
             'cols' => $labelled($grid['cols']),
             'rows' => $labelled($grid['rows']),
         ];
@@ -1405,7 +1434,7 @@ class ViewService {
 
     public function getLocalMap(): array
     {
-        $layers = ['tiles', 'elements', 'foregrounds', 'resources', 'routes', 'buildings', 'players', 'player'];
+        $layers = ['tiles', 'elements', 'foregrounds', 'resources', 'routes', 'buildings', 'coordinates', 'players', 'player'];
         $mapDir = $_SERVER['DOCUMENT_ROOT'] . '/img/maps/local/';
         $results = [];
 

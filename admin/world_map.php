@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($latestFiles)) {
             // Order layers consistently
             $orderedLayers = [];
-            $layerOrder = ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'buildings'];
+            $layerOrder = ['tiles', 'elements', 'routes', 'buildings', 'locations', 'coordinates'];
             foreach ($layerOrder as $layer) {
                 if (isset($latestFiles[$layer])) {
                     $orderedLayers[$layer] = $latestFiles[$layer];
