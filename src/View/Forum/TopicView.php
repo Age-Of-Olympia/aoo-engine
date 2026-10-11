@@ -7,6 +7,7 @@ use Classes\Db;
 use Classes\Ui;
 use Classes\bbcode;
 use Classes\Str;
+use App\Service\AdminMenuAccessService;
 use App\Service\FactionService;
 use App\Service\PlayerService;
 use App\Service\RaceService;
@@ -48,6 +49,9 @@ class TopicView
 
         $player = $playerService->GetPlayer($_SESSION['playerId']);
         $player->get_data(false);
+
+        $canModerate = (new AdminMenuAccessService())->allows('forum-moderation', $player);
+        $renameLink = $canModerate ? ' <a href="#" class="forum-rename" data-topic="' . $topJson->name . '" data-title="' . htmlentities($topJson->title) . '" style="font-size: 50%;">Renommer</a>' : '';
 
         if (!self::$fragment) {
 
@@ -92,14 +96,14 @@ class TopicView
 
         if (!isset($_GET['hideMenu']) && !self::$fragment) {
 
-            echo '<h1>' . htmlentities($topJson->title) . '</h1>';
+            echo '<h1>' . htmlentities($topJson->title) . $renameLink . '</h1>';
         }
 
         /* Fragment : titre compact — le panneau affiche « Missives »,
          * le fil doit rester identifiable. */
         if (self::$fragment) {
 
-            echo '<h2 class="hud-panel-topic-title">' . htmlentities($topJson->title) . '</h2>';
+            echo '<h2 class="hud-panel-topic-title">' . htmlentities($topJson->title) . $renameLink . '</h2>';
         }
 
         if ($topJson->forum_id == 'Missives') {
@@ -142,6 +146,16 @@ class TopicView
             $postJson = json()->decode('forum', 'posts/' . $post->name);
 
             $lastRenderedPost = $postJson->name;
+
+            if (!$canModerate && !empty($postJson->deleted->hidden)) {
+
+                if ($postN == $postMax) {
+
+                    break;
+                }
+
+                continue;
+            }
 
             echo '
         <tr class="tr-topic2 box-shadow">
@@ -261,6 +275,13 @@ class TopicView
             }
 
 
+            if (!empty($postJson->deleted)) {
+
+                $text = $canModerate
+                    ? "[i]" . (empty($postJson->deleted->hidden) ? 'Supprimé' : 'Masqué') . " par la modération le " . date('d/m/Y H:i', $postJson->deleted->time) . " :[/i]\n\n" . $text
+                    : '[i]Message supprimé par la modération.[/i]';
+            }
+
             $bbcode = new bbcode();
 
             echo '<div style="padding: 10px;">' . $bbcode->render(htmlentities($text)) . '</div>';
@@ -312,6 +333,14 @@ class TopicView
 
                         <a href="forum.php?edit=' . $post->name . '">Edit</a>
                     </span>';
+            }
+
+            if ($canModerate) {
+
+                $actions = empty($postJson->deleted) ? ['delete' => 'Supprimer', 'hide' => 'Masquer'] : ['restore' => 'Restaurer'];
+                foreach ($actions as $action => $label) {
+                    echo '<span class="give-reward-span"><a href="#" class="forum-moderate" data-action="' . $action . '" data-post="' . $post->name . '">' . $label . '</a></span> ';
+                }
             }
 
             echo '
@@ -396,7 +425,7 @@ class TopicView
             window.topicName = <?php echo $topJson->name ?>;
             window.pageN = <?php echo $page ?>;
         </script>
-        <script src="js/forum_topic.js?v=20260716"></script>
+        <script src="js/forum_topic.js?v=20261011"></script>
 <?php
     }
 }

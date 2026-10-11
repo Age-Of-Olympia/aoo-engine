@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use Classes\Db;
+use Classes\Player;
 
 /**
  * Per-menu access control for the admin dashboard.
@@ -99,6 +100,8 @@ class AdminMenuAccessService
         // Crons : rejoue les scripts planifiés (suppressions comprises) —
         // superadmin par défaut, ajustable via access-control.php
         'crons.php'                => ['Outils · Crons', 'Divers', self::LEVEL_SUPERADMIN],
+        // Not a page: the forum moderation right (soft delete, topic rename)
+        'forum-moderation'         => ['Forum · Modération (supprimer, renommer)', 'Forum', self::LEVEL_ADMIN],
     ];
 
     /**
@@ -177,6 +180,17 @@ class AdminMenuAccessService
             return true;
         }
         return $this->getRequiredLevel($page) === self::LEVEL_ADMIN;
+    }
+
+    /**
+     * In-game check of a registry entry, for a viewer who may not be an admin.
+     */
+    public function allows(string $page, Player $player): bool
+    {
+        if (!$player->have_option('isAdmin')) {
+            return false;
+        }
+        return $this->canAccess($page, (bool) $player->have_option('isSuperAdmin'));
     }
 
     /**

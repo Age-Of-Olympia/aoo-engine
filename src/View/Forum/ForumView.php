@@ -260,7 +260,7 @@ class ForumView
         $search = strtolower($search);
         foreach ($posts as $post) {
             $postJson = json()->decode('forum', 'posts/' . $post->name);
-            if (strpos(strtolower($postJson->text), $search) !== false) {
+            if (empty($postJson->deleted) && strpos(strtolower($postJson->text), $search) !== false) {
                 return true;
             }
         }

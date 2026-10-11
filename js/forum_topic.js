@@ -67,4 +67,51 @@ $(document).ready(function(e){
             .catch(autoError());      
         }
     });
+
+    $('.forum-moderate').click(function(e){
+
+        e.preventDefault();
+
+        var action = $(this).data('action');
+
+        var confirms = {
+            'delete': 'Supprimer ce message ? Les joueurs verront « Message supprimé par la modération ». Restaurable.',
+            'hide': 'Masquer ce message ? Il disparaît pour les joueurs, sans trace. Restaurable.'
+        };
+
+        if(confirms[action] && !confirm(confirms[action])){
+            return;
+        }
+
+        forumModerate({action: action, name: String($(this).data('post'))});
+    });
+
+    $('.forum-rename').click(function(e){
+
+        e.preventDefault();
+
+        var title = prompt('Nouveau titre du sujet :', $(this).data('title'));
+
+        if(!title || !title.trim()) return;
+
+        forumModerate({action: 'rename', name: String($(this).data('topic')), title: title.trim()});
+    });
 });
+
+function forumModerate(payload){
+
+    aooFetch('api/forum/moderate.php', payload).then(function(data){
+
+        if(data.error){
+            alert(data.error);
+            return;
+        }
+
+        if(window.hudOpenPanel){
+            window.hudOpenPanel('load_forum.php?topic='+ window.topicName +'&page='+ window.pageN, 'Missives');
+            return;
+        }
+
+        document.location.reload();
+    });
+}
