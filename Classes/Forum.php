@@ -110,6 +110,30 @@ class Forum{
     }
 
 
+    /**
+     * Soft delete or restore ($hidden = null): the file stays.
+     * Readers get a placeholder, or nothing at all when $hidden.
+     */
+    public static function set_post_deleted(object $postJson, ?bool $hidden): void{
+
+        if($hidden === null){
+            unset($postJson->deleted);
+        }
+        else{
+            $postJson->deleted = (object) array('time'=>time(), 'hidden'=>$hidden);
+        }
+
+        Json::write_json('datas/private/forum/posts/'. $postJson->name .'.json', Json::encode($postJson));
+
+        if($hidden !== null){
+            (new Db())->delete('forums_keywords', array('postName'=>$postJson->name));
+        }
+        elseif(json()->decode('forum', 'topics/'. $postJson->top_id)->forum_id != 'Missives'){
+            self::put_keywords($postJson->name, $postJson->text, deleteBefore: true);
+        }
+    }
+
+
     public static function get_pages($postTotal):int{
        return ceil($postTotal / Forum::$PostsPerPage);
     }
