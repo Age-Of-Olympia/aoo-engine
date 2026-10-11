@@ -441,7 +441,7 @@ function render_season_filter(string $current): string
 
     $choices = [];
     foreach (known_seasons() as $season) {
-        $choices[(string) $season] = 'Saison ' . $season . ($season === $gameSeason ? ' (courante)' : '');
+        $choices[$season] = 'Saison ' . $season . ($season === $gameSeason ? ' (courante)' : '');
     }
     $choices['all'] = 'Toutes';
 
@@ -450,7 +450,8 @@ function render_season_filter(string $current): string
     foreach ($choices as $value => $label) {
         $html .= '<label class="mb-0" style="cursor:pointer;">'
             . '<input type="radio" name="season_filter" value="' . e($value) . '"'
-            . checked($current === $value)
+            // Numeric array keys come back as int.
+            . ' ' . checked($current === (string) $value)
             . ' onchange="this.form.submit()"> '
             . e($label)
             . '</label>';
