@@ -31,6 +31,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['element_type'])) {
         $elements->setOpacity($name, $opacity === '' ? null : (int) $opacity);
         $elements->setLabel($name, trim((string) ($_POST['label'] ?? '')));
         $elements->setEffectStrength($name, (int) ($_POST['effect_duration'] ?? 1), (int) ($_POST['effect_value'] ?? 1));
+        // Last: it needs element_types.depth, added by a migration
+        $elements->setDepth($name, (int) ($_POST['depth'] ?? MapElementService::DEPTH_VOLUME));
         setFlash('success', $effect === ''
             ? "« {$name} » est maintenant un décor, sans effet."
             : "Marcher sur « {$name} » applique maintenant l'effet « {$effect} ».");
@@ -101,6 +103,15 @@ foreach ($names as $name) {
             . ' placeholder="' . ($image !== null && str_ends_with($image, '.webp') ? 50 : 100) . '"'
             . ' value="' . ($elements->opacityOf($name) ?? '') . '"'
             . ' title="Opacité sur la carte, en % ; vide = 50 pour une texture webp, 100 sinon">'
+        . '<select name="depth" class="form-control form-control-sm" style="width:auto"'
+            . ' title="Place sur le damier : les nappes dessous, les traces au-dessus, les volumes et effets tout en haut">'
+            . implode('', array_map(
+                fn (int $level, string $label): string => '<option value="' . $level . '"'
+                    . ($elements->depthOf($name) === $level ? ' selected' : '') . '>' . e($label) . '</option>',
+                array_keys(MapElementService::DEPTH_LABELS),
+                MapElementService::DEPTH_LABELS
+            ))
+            . '</select>'
         . '<button class="btn btn-sm btn-outline-primary">Enregistrer</button>'
         . ($effect !== null
             ? ' <a class="btn btn-sm btn-link" href="/admin/effects.php?action=edit&amp;name=' . e(urlencode($effect)) . '">voir</a>'
@@ -129,7 +140,10 @@ $content = '<div class="d-flex justify-content-between align-items-center mb-3">
     . 'Un type sans effet est purement décoratif. '
     . 'Un type <strong>fluide</strong> (eau, lave…) se fond avec ses voisins de la même famille ; '
     . 'décoché, chaque case est dessinée seule. '
-    . 'L\'<strong>opacité</strong> (en %) laisse voir le sol dessous ; vide, 50 pour une texture webp, 100 sinon.'
+    . 'L\'<strong>opacité</strong> (en %) laisse voir le sol dessous ; vide, 50 pour une texture webp, 100 sinon. '
+    . 'Le <strong>niveau</strong> règle l\'empilement sur le damier : les nappes (eau, lave, boue) dessous, '
+    . 'les traces au sol (sang, pas) au-dessus, les volumes et effets (feu, ronces) tout en haut ; '
+    . 'à niveau égal, l\'ordre alphabétique.'
     . ($inert > 0
         ? ' <strong>' . $inert . ' type(s) sans effet</strong> sur cette carte.'
         : '')

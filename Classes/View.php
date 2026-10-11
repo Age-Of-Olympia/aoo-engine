@@ -734,6 +734,10 @@ class View{
             $sceneryCovered = [];
             $this->sceneryFigures = [];
 
+            /* Elements stack by the level of their type (sheet, trace,
+             * volume): 97.01 to 97.03, still under plants (97.5). */
+            $elementDepth = (new \App\Service\MapElementService())->depthSql('name');
+
             if (!$this->tiled && !empty($this->inSightId)) {
                 $inSight = (new \App\Service\Map\SceneryFiguresInSight())->forWindow(
                     array_map('intval', $this->inSightId)
@@ -824,7 +828,7 @@ class View{
             SELECT
             id, name, coords_id,
             "elements" AS whichTable,
-            97 AS tableOrder
+            97 + ('. $elementDepth .') / 100 AS tableOrder
             FROM
             map_elements
             WHERE
@@ -930,7 +934,8 @@ class View{
             '. $tiledSql .'
 
             ORDER BY
-            tableOrder
+            tableOrder,
+            CASE WHEN whichTable = "elements" THEN name ELSE "" END
             ';
 
 
@@ -940,15 +945,34 @@ class View{
 
             /* Animated images, one layer per image instead of one per cell,
              * collected per table and drawn where that table's rows end:
-             * rows come sorted by depth, so the stacking holds. */
+             * rows come sorted by depth, so the stacking holds. Elements get
+             * one group per level, so a still element of a higher level
+             * stands over an animated one below; the three groups are always
+             * there, in place, for the HUD to swap after an action. */
             $layers = null;
+            $elementLevelsDone = 0;
+            $closeElementLevels = function (int $upTo) use (&$elementLevelsDone): void {
+                for ($level = $elementLevelsDone + 1; $level <= $upTo; $level++) {
+                    echo (new \App\View\AnimatedLayersView('elements-'. $level))->render();
+                }
+                $elementLevelsDone = max($elementLevelsDone, $upTo);
+            };
 
             while($row = $res->fetch_object()){
 
-                if($layers === null || $layers->table !== $row->whichTable){
+                $level = $row->whichTable === 'elements' ? (int) round(((float) $row->tableOrder - 97) * 100) : 0;
+                $layerKey = $level > 0 ? 'elements-'. $level : $row->whichTable;
+
+                if($layers === null || $layers->table !== $layerKey){
 
                     echo $layers?->render() ?? '';
-                    $layers = new \App\View\AnimatedLayersView($row->whichTable);
+                    if ($level > 0) {
+                        $closeElementLevels($level - 1);
+                        $elementLevelsDone = $level;
+                    } elseif ($elementLevelsDone > 0) {
+                        $closeElementLevels(\App\Service\MapElementService::DEPTH_VOLUME);
+                    }
+                    $layers = new \App\View\AnimatedLayersView($layerKey);
                 }
 
 
@@ -1355,6 +1379,9 @@ class View{
 
 
             echo $layers?->render() ?? '';
+            if ($elementLevelsDone > 0) {
+                $closeElementLevels(\App\Service\MapElementService::DEPTH_VOLUME);
+            }
 
 
             // uses

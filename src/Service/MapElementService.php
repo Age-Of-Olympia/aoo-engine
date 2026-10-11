@@ -38,7 +38,22 @@ class MapElementService
         return array_values(array_unique($names));
     }
 
-    /** @var array<string, array{effect: ?string, fluid: bool, opacity: ?int, label: string, duration: int, value: int}>|null element_types, read once per request */
+    /**
+     * Stacking levels of elements on the board, bottom to top: sheets cover
+     * the ground (water, lava, mud), traces mark it (blood, footprints),
+     * volumes and effects stand on it (fire, brambles). A type left unset
+     * is a volume: better seen by mistake than hidden under a sheet.
+     */
+    public const DEPTH_SHEET = 1;
+    public const DEPTH_TRACE = 2;
+    public const DEPTH_VOLUME = 3;
+    public const DEPTH_LABELS = [
+        self::DEPTH_SHEET  => 'Nappe',
+        self::DEPTH_TRACE  => 'Trace au sol',
+        self::DEPTH_VOLUME => 'Volume ou effet',
+    ];
+
+    /** @var array<string, array{effect: ?string, fluid: bool, opacity: ?int, depth: int, label: string, duration: int, value: int}>|null element_types, read once per request */
     private static ?array $types = null;
 
     /** Placeable elements that do apply an effect on step. @return list<string> */
@@ -107,6 +122,44 @@ class MapElementService
         BoardChanges::world();
     }
 
+    /** Stacking level of the element on the board (DEPTH_*); a type without a row is a volume. */
+    public function depthOf(string $element): int
+    {
+        return self::types()[$element]['depth'] ?? self::DEPTH_VOLUME;
+    }
+
+    public function setDepth(string $element, int $depth): void
+    {
+        if (!isset(self::DEPTH_LABELS[$depth])) {
+            throw new RuntimeException("Niveau d'élément inconnu : {$depth}.");
+        }
+        (new Db())->exe(
+            'INSERT INTO element_types (name, effect_name, depth)
+             SELECT ?, (SELECT name FROM effects WHERE name = ?), ?
+             ON DUPLICATE KEY UPDATE depth = VALUES(depth)',
+            [$element, $element, $depth]
+        );
+        self::clearCache();
+        BoardChanges::world();
+    }
+
+    /**
+     * SQL expression giving the stacking level of an element from its name
+     * column, for the board query to sort elements by level. Built from the
+     * catalogue, not joined: the two name columns do not share a collation.
+     */
+    public function depthSql(string $nameColumn): string
+    {
+        $cases = '';
+        foreach (self::types() as $name => $type) {
+            if ($type['depth'] !== self::DEPTH_VOLUME && preg_match('/^[\w-]+$/', $name)) {
+                $cases .= " WHEN '" . $name . "' THEN " . $type['depth'];
+            }
+        }
+
+        return $cases === '' ? (string) self::DEPTH_VOLUME : 'CASE ' . $nameColumn . $cases . ' ELSE ' . self::DEPTH_VOLUME . ' END';
+    }
+
     /** Name shown to players: the type's label, else its code. */
     public function labelOf(string $element): string
     {
@@ -126,15 +179,24 @@ class MapElementService
         self::clearCache();
     }
 
-    /** @return array<string, array{effect: ?string, fluid: bool, opacity: ?int, label: string, duration: int, value: int}> */
+    /** @return array<string, array{effect: ?string, fluid: bool, opacity: ?int, depth: int, label: string, duration: int, value: int}> */
     private static function types(): array
     {
         if (self::$types === null) {
             self::$types = [];
-            $res = (new Db())->exe('SELECT name, effect_name, fluid, opacity, label, effect_duration, effect_value FROM element_types');
+            $columns = 'name, effect_name, fluid, opacity, label, effect_duration, effect_value';
+            /* Until element_types.depth exists, a fluid type is a sheet and
+             * the others volumes: fire already stands over lava. */
+            try {
+                $res = (new Db())->exe('SELECT ' . $columns . ', depth FROM element_types');
+            } catch (\Throwable) {
+                $res = (new Db())->exe('SELECT ' . $columns . ' FROM element_types');
+            }
             while ($row = $res->fetch_object()) {
-                self::$types[(string) $row->name] = ['effect' => $row->effect_name, 'fluid' => (bool) $row->fluid,
+                $fluid = (bool) $row->fluid;
+                self::$types[(string) $row->name] = ['effect' => $row->effect_name, 'fluid' => $fluid,
                     'opacity' => $row->opacity === null ? null : (int) $row->opacity,
+                    'depth' => isset($row->depth) ? (int) $row->depth : ($fluid ? self::DEPTH_SHEET : self::DEPTH_VOLUME),
                     'label' => (string) $row->label, 'duration' => (int) $row->effect_duration,
                     'value' => (int) $row->effect_value];
             }
@@ -174,7 +236,7 @@ class MapElementService
             [$element, $element, (int) $fluid]
         );
         self::clearCache();
-        \App\Service\Map\BoardChanges::world();
+        BoardChanges::world();
     }
 
     /** Construction over an element follows its effect; decor blocks. */
