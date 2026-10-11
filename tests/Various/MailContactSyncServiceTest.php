@@ -195,6 +195,36 @@ class MailContactSyncServiceTest extends TestCase
         $this->assertSame([], $spy->calls);
     }
 
+    /** Marqueur admin (reroll/suppression) : ne doit jamais atteindre le fournisseur. */
+    public function testSyncPlayerIgnoresPlaceholderEmail(): void
+    {
+        $spy = $this->spyProvider();
+        $row = (object) [
+            'id' => 332,
+            'plain_mail' => ' Vide@Vide.fr ',
+            'name' => 'Rerolled',
+            'race' => 'hs',
+            'lastLoginTime' => time(),
+            'deletion_asked' => null,
+        ];
+
+        (new MailContactSyncService($spy))->syncPlayer($row);
+
+        $this->assertSame([], $spy->calls);
+    }
+
+    public function testEventHooksIgnorePlaceholderEmail(): void
+    {
+        $spy = $this->spyProvider();
+        $sync = new MailContactSyncService($spy);
+
+        $sync->onRegister(400, 'aa@aa.aa', 'Bidon', 'nain');
+        $sync->onDeletionRequested(400, 'vide@vide.fr');
+        $sync->onDeletionCancelled(400, 'toto@toto.toto');
+
+        $this->assertSame([], $spy->calls);
+    }
+
     /**
      * Provider espion : enregistre chaque appel sans rien envoyer.
      *

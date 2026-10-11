@@ -15,6 +15,13 @@ use App\Interface\MailContactProviderInterface;
  */
 class MailContactSyncService
 {
+    /**
+     * Adresses factices (vide@vide.fr = marqueur admin reroll/suppression,
+     * saisies bidon) : jamais synchronisées, un envoi rebondirait et
+     * dégraderait la réputation du domaine.
+     */
+    private const PLACEHOLDER_EMAILS = ['vide@vide.fr', 'aa@aa.aa', 'toto@toto.toto'];
+
     private MailContactProviderInterface $provider;
 
     public function __construct(?MailContactProviderInterface $provider = null)
@@ -25,7 +32,7 @@ class MailContactSyncService
     /** Nouveau joueur => contact abonné (is_inactive=0 par définition). */
     public function onRegister(int $playerId, string $email, string $name, string $race): void
     {
-        if ($email === '') {
+        if (!$this->isSendable($email)) {
             return;
         }
 
@@ -39,7 +46,7 @@ class MailContactSyncService
     /** Désabonne (upsert clé email, tags inchangés ; couvre les contacts legacy). */
     public function onDeletionRequested(int $playerId, string $email): void
     {
-        if ($email === '') {
+        if (!$this->isSendable($email)) {
             return;
         }
 
@@ -49,7 +56,7 @@ class MailContactSyncService
     /** Réabonne le joueur qui annule sa demande de suppression. */
     public function onDeletionCancelled(int $playerId, string $email): void
     {
-        if ($email === '') {
+        if (!$this->isSendable($email)) {
             return;
         }
 
@@ -64,7 +71,7 @@ class MailContactSyncService
     public function syncPlayer(object $row): void
     {
         $email = (string) ($row->plain_mail ?? '');
-        if ($email === '') {
+        if (!$this->isSendable($email)) {
             return;
         }
 
@@ -79,6 +86,12 @@ class MailContactSyncService
             'is_inactive' => $this->isInactive((int) $row->lastLoginTime) ? '1' : '0',
             'race' => (string) $row->race,
         ], $subscribed);
+    }
+
+    private function isSendable(string $email): bool
+    {
+        return $email !== ''
+            && !in_array(strtolower(trim($email)), self::PLACEHOLDER_EMAILS, true);
     }
 
     private function fullName(string $name, int $playerId): string
