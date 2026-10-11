@@ -101,6 +101,22 @@ class WorldDeathPlanSettingsTest extends TestCase
         $this->assertSame(self::PLAN, plans()->worldPlan());
     }
 
+    public function testTheWorldMapListsTheWorldPlansSeasonLocations(): void
+    {
+        $this->conn->insert('plans', ['slug' => self::PLAN, 'name' => self::PLAN, 'season' => 99]);
+        $this->conn->insert('plans', ['slug' => 'plan_test_world_same', 'name' => 'same', 'short_name' => 'same', 'season' => 99, 'visible_by_default' => 1, 'x' => 1, 'y' => 1]);
+        $this->conn->insert('plans', ['slug' => 'plan_test_world_other', 'name' => 'other', 'short_name' => 'other', 'season' => 98, 'visible_by_default' => 1, 'x' => 2, 'y' => 2]);
+        (new AdminSettingsService())->set(PlanService::SETTING_WORLD, self::PLAN);
+        PlanService::forget();
+
+        $locations = (new \ReflectionMethod(\App\Service\ViewService::class, 'getAllLocationsFromPlans'))
+            ->invoke(new \App\Service\ViewService(new \Classes\Db()));
+        $plans = array_column($locations, 'plan');
+
+        $this->assertContains('plan_test_world_same', $plans);
+        $this->assertNotContains('plan_test_world_other', $plans, 'another season\'s territory stays off the world map');
+    }
+
     public function testAStructuralPlanCannotBeDeleted(): void
     {
         $this->seedPlan(self::PLAN);
