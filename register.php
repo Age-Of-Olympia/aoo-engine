@@ -9,6 +9,7 @@ use Classes\File;
 use Classes\Ui;
 use Classes\View;
 use App\Service\MissiveService;
+use App\Service\WelcomeMissiveService;
 use App\Service\RaceService;
 use App\Service\FactionService;
 use App\Service\Mail\MailContactSyncService;
@@ -171,13 +172,7 @@ if(!empty($_POST['race'])){
         Player::refresh_classements();
         @unlink('datas/public/classements/general.html');
 
-        // welcome missive (copy from player 1 if exists)
-        $sql = 'SELECT name FROM players_forum_missives WHERE player_id = 1 ORDER BY name LIMIT 1';
-        $res = $db->exe($sql);
-        if ($res && $row = $res->fetch_object()) {
-            $values = array('player_id'=>$player->id, 'name'=>$row->name);
-            $db->insert('players_forum_missives', $values);
-        }
+        (new WelcomeMissiveService())->enroll((int) $player->id);
 
         $animateur = (new FactionService())->getFactionData($player->data->faction)?->animateur;
         $newPlayerName = $player->data->name;

@@ -108,7 +108,7 @@ function admin_layout($title, $content, array $assets = []) {
     $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php', 'passive-workbench.php',
                     'action-import.php', 'action-import-preview.php'];
     $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
-                    'pnjs.php', 'avatars-portraits.php'];
+                    'pnjs.php', 'avatars-portraits.php', 'welcome-missive.php'];
     $racePages = ['races.php', 'race-seed.php'];
     $itemPages = ['items.php', 'item-seed.php', 'recipes.php'];
     $factionPages = ['factions.php', 'faction-members.php', 'faction-seed.php'];
@@ -212,6 +212,7 @@ function admin_layout($title, $content, array $assets = []) {
             $navGroup('Personnages', [
                 ['players.php', 'Compétences', '/admin/players.php'],
                 ['pnjs.php', 'PNJ', '/admin/pnjs.php'],
+                ['welcome-missive.php', 'Missive d\'accueil', '/admin/welcome-missive.php'],
                 ['avatars-portraits.php', 'Avatars &amp; portraits', '/admin/avatars-portraits.php'],
                 ['skill-stats.php', 'Statistiques', '/admin/skill-stats.php'],
                 ['admin-access.php', 'Accès &amp; options', '/admin/admin-access.php'],

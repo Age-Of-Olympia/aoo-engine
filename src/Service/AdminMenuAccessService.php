@@ -72,6 +72,7 @@ class AdminMenuAccessService
 
         'players.php'              => ['Joueurs · Compétences', 'Joueurs', self::LEVEL_ADMIN],
         'pnjs.php'                 => ['Joueurs · PNJ', 'Joueurs', self::LEVEL_ADMIN],
+        'welcome-missive.php'      => ['Joueurs · Missive d\'accueil', 'Joueurs', self::LEVEL_ADMIN],
         'skill-stats.php'          => ['Joueurs · Statistiques', 'Joueurs', self::LEVEL_ADMIN],
         'admin-access.php'         => ['Joueurs · Accès & options', 'Joueurs', self::LEVEL_SUPERADMIN],
 
@@ -133,6 +134,7 @@ class AdminMenuAccessService
         'action-import-preview.php'  => 'action-import.php',
         'landing-save.php'           => 'landing.php',
         'landing-seed.php'           => 'landing.php',
+        'welcome-missive-save.php'   => 'welcome-missive.php',
         'buildings-save.php'         => 'buildings.php',
         'entity-kinds.php'           => 'structure-types.php', // re-kinds exemplars, same level as the type save
         'items-save.php'             => 'items.php',

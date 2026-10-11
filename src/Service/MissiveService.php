@@ -8,7 +8,11 @@ use Classes\Player;
 
 class MissiveService
 {
-    public function sendNewMissive(int $authorId, array $destPlayersIds, string $title, string $message) {
+    /**
+     * @param int[] $destPlayersIds
+     * @return string the new missive's topic name
+     */
+    public function sendNewMissive(int $authorId, array $destPlayersIds, string $title, string $message): string {
 
         $player = new Player($authorId);
 
@@ -23,6 +27,8 @@ class MissiveService
             $values = array('player_id'=>$destId, 'name'=>$topJson->name);    
             $db->insert('players_forum_missives', $values);
         }
+
+        return (string) $topJson->name;
 
       
     }

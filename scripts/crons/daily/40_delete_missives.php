@@ -1,20 +1,23 @@
 <?php
+use App\Service\WelcomeMissiveService;
 use Classes\Db;
 /*
  * ce script delete les missives sans destinataires
+ * (sauf la missive d'accueil, qui attend ses destinataires)
  */
 
 
 $sql = '
 SELECT name
 FROM players_forum_missives
+WHERE name != ?
 GROUP BY name
 HAVING COUNT(*) = 1
 ';
 
 $db = new Db();
 
-$res = $db->exe($sql);
+$res = $db->exe($sql, [(new WelcomeMissiveService())->topicName()]);
 
 $deleteTbl = array();
 
