@@ -1164,6 +1164,10 @@ class View{
 
                     // webp textures (water, footprints) are opaque frames meant to show the ground through
                     $e = str_ends_with($img, '.webp') ? '0.5' : '1';
+                    $opacity = $row->whichTable == 'elements' ? $elementImages->opacityOf($row->name) : null;
+                    if($opacity !== null){
+                        $e = (string) ($opacity / 100);
+                    }
 
                     /* An element fades on its open sides. The mask goes on
                      * a group AROUND the turned image: on the image itself

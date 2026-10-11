@@ -38,7 +38,7 @@ class MapElementService
         return array_values(array_unique($names));
     }
 
-    /** @var array<string, array{effect: ?string, fluid: bool, label: string, duration: int, value: int}>|null element_types, read once per request */
+    /** @var array<string, array{effect: ?string, fluid: bool, opacity: ?int, label: string, duration: int, value: int}>|null element_types, read once per request */
     private static ?array $types = null;
 
     /** Placeable elements that do apply an effect on step. @return list<string> */
@@ -89,6 +89,24 @@ class MapElementService
         return self::types()[$element]['fluid'] ?? true;
     }
 
+    /** Opacity on the board, in percent; null = the image's default (half for a webp texture). */
+    public function opacityOf(string $element): ?int
+    {
+        return self::types()[$element]['opacity'] ?? null;
+    }
+
+    public function setOpacity(string $element, ?int $opacity): void
+    {
+        (new Db())->exe(
+            'INSERT INTO element_types (name, effect_name, opacity)
+             SELECT ?, (SELECT name FROM effects WHERE name = ?), ?
+             ON DUPLICATE KEY UPDATE opacity = VALUES(opacity)',
+            [$element, $element, $opacity === null ? null : max(0, min(100, $opacity))]
+        );
+        self::clearCache();
+        BoardChanges::world();
+    }
+
     /** Name shown to players: the type's label, else its code. */
     public function labelOf(string $element): string
     {
@@ -108,14 +126,15 @@ class MapElementService
         self::clearCache();
     }
 
-    /** @return array<string, array{effect: ?string, fluid: bool, label: string, duration: int, value: int}> */
+    /** @return array<string, array{effect: ?string, fluid: bool, opacity: ?int, label: string, duration: int, value: int}> */
     private static function types(): array
     {
         if (self::$types === null) {
             self::$types = [];
-            $res = (new Db())->exe('SELECT name, effect_name, fluid, label, effect_duration, effect_value FROM element_types');
+            $res = (new Db())->exe('SELECT name, effect_name, fluid, opacity, label, effect_duration, effect_value FROM element_types');
             while ($row = $res->fetch_object()) {
                 self::$types[(string) $row->name] = ['effect' => $row->effect_name, 'fluid' => (bool) $row->fluid,
+                    'opacity' => $row->opacity === null ? null : (int) $row->opacity,
                     'label' => (string) $row->label, 'duration' => (int) $row->effect_duration,
                     'value' => (int) $row->effect_value];
             }

@@ -114,6 +114,18 @@ class ElementTypeEffectTest extends LegacyPlayerFixtureTestCase
         $this->assertSame('glu_test', $elements->effectOf('glu_test'), 'the new row keeps the effect of its own name');
     }
 
+    public function testOpacityIsClampedAndEmptyRestoresTheDefault(): void
+    {
+        $elements = new MapElementService();
+        $this->assertNull($elements->opacityOf('glu_test'), 'no row: the image default');
+
+        $elements->setOpacity('glu_test', 140);
+        $this->assertSame(100, $elements->opacityOf('glu_test'));
+
+        $elements->setOpacity('glu_test', null);
+        $this->assertNull($elements->opacityOf('glu_test'));
+    }
+
     public function testTheLabelFallsBackOnTheCode(): void
     {
         $elements = new MapElementService();
