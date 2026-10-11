@@ -135,7 +135,7 @@ if ($action === 'update') {
     $notice = '';
     if ($health['errors'] !== [] || $health['warnings'] !== []) {
         $notice = ' ⚠ Validation : ' . count($health['errors']) . ' erreur(s), '
-            . count($health['warnings']) . ' avertissement(s) — détail en bas de page.';
+            . count($health['warnings']) . ' avertissement(s), détail en bas de page.';
     }
 
     setFlash('success', "Configuration du plan « {$plan} » enregistrée." . $notice);
@@ -166,7 +166,7 @@ if ($action === 'rename') {
             $refs[] = count($report['files']) . ' fichier(s)';
         }
         setFlash('success', "Plan « {$plan} » renommé en « {$to} » : {$report['coords']} case(s)"
-            . ($refs !== [] ? ' — ' . implode(', ', $refs) : '') . '.');
+            . ($refs !== [] ? ', ' . implode(', ', $refs) : '') . '.');
         redirectTo('/admin/plans.php?action=edit&plan=' . urlencode($to));
     } catch (\RuntimeException $e) {
         setFlash('warning', str_replace("\n", ' ', $e->getMessage()));
@@ -179,7 +179,7 @@ if ($action === 'clear') {
         $report = $service->clearPlanCoords($plan, isset($_POST['force']));
         $layerTotal = array_sum($report['layers']) + $report['map_items'];
         setFlash('success', "Plan « {$plan} » vidé : {$report['coords']} case(s), {$layerTotal} ligne(s) de couches"
-            . ($report['npcs'] > 0 ? ' — ' . $report['npcs'] . ' PNJ supprimé(s)' : '')
+            . ($report['npcs'] > 0 ? ', ' . $report['npcs'] . ' PNJ supprimé(s)' : '')
             . '. La configuration JSON est conservée.');
     } catch (\RuntimeException $e) {
         setFlash('warning', str_replace("\n", ' ', $e->getMessage()));
@@ -214,7 +214,7 @@ if ($action === 'delete') {
             $extras[] = count($report['files']) . ' fichier(s) supprimé(s)';
         }
         setFlash('success', "Plan « {$plan} » supprimé : {$report['coords']} case(s), {$layerTotal} ligne(s) de couches"
-            . ($extras !== [] ? ' — ' . implode(', ', $extras) : '') . '.');
+            . ($extras !== [] ? ', ' . implode(', ', $extras) : '') . '.');
     } catch (\RuntimeException $e) {
         setFlash('warning', str_replace("\n", ' ', $e->getMessage()));
         redirectTo('/admin/plans.php?action=edit&plan=' . urlencode($plan));

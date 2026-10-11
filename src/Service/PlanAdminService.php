@@ -271,7 +271,7 @@ class PlanAdminService
         if ($characters['players'] > 0) {
             $blockers[] = [
                 'check' => 'players', 'count' => $characters['players'], 'forceable' => false,
-                'detail' => $characters['players'] . ' joueur(s) se trouvent sur ce plan — déplacez-les d\'abord.',
+                'detail' => $characters['players'] . ' joueur(s) se trouvent sur ce plan : déplacez-les d\'abord.',
             ];
         }
         if ($characters['npcs'] > 0) {
@@ -284,8 +284,8 @@ class PlanAdminService
             // Forceable like NPCs: a forced deletion already takes them.
             $blockers[] = [
                 'check' => 'structures', 'count' => $characters['structures'], 'forceable' => true,
-                'detail' => $characters['structures'] . ' structure(s) sur ce plan — bâtiment, objet unique, décor'
-                    . ' ou ressource (supprimées avec leurs données si suppression forcée).',
+                'detail' => $characters['structures'] . ' structure(s) sur ce plan (bâtiment, objet unique, décor'
+                    . ' ou ressource), supprimées avec leurs données si suppression forcée.',
             ];
         }
 
@@ -294,7 +294,7 @@ class PlanAdminService
         if ($logsCount > 0) {
             $blockers[] = [
                 'check' => 'players_logs', 'count' => $logsCount, 'forceable' => true,
-                'detail' => $logsCount . ' ligne(s) de logs pointent des coordonnées du plan (détachées si suppression forcée — l\'historique est conservé).',
+                'detail' => $logsCount . ' ligne(s) de logs pointent des coordonnées du plan (détachées si suppression forcée, l\'historique est conservé).',
             ];
         }
 
@@ -302,7 +302,7 @@ class PlanAdminService
         if ($enemies > 0) {
             $blockers[] = [
                 'check' => 'tutorial_enemies', 'count' => $enemies, 'forceable' => false,
-                'detail' => $enemies . ' ennemi(s) de tutoriel référencent ce plan — terminez/annulez les sessions concernées.',
+                'detail' => $enemies . ' ennemi(s) de tutoriel référencent ce plan : terminez/annulez les sessions concernées.',
             ];
         }
 
@@ -319,7 +319,7 @@ class PlanAdminService
             $blockers[] = [
                 'check' => 'structural_plan', 'count' => count($structural), 'forceable' => false,
                 'detail' => ucfirst(implode(' et ', array_keys($structural)))
-                    . ' du jeu — changez le réglage (admin → Réglages du monde) d\'abord.',
+                    . ' du jeu : changez le réglage (admin → Réglages du monde) d\'abord.',
             ];
         }
 
@@ -334,7 +334,7 @@ class PlanAdminService
             $blockers[] = [
                 'check' => 'factions', 'count' => count($factionNames), 'forceable' => false,
                 'detail' => 'Plan de résurrection des factions : ' . implode(', ', $factionNames)
-                    . ' — changez leur respawnPlan (admin Factions) d\'abord.',
+                    . '. Changez leur respawnPlan (admin Factions) d\'abord.',
             ];
         }
 
@@ -360,7 +360,7 @@ class PlanAdminService
             if ($n > 0) {
                 $warnings[] = [
                     'check' => $table, 'count' => $n,
-                    'detail' => $n . ' référence(s) dans ' . $table . ' (non supprimées — à nettoyer côté tutoriel).',
+                    'detail' => $n . ' référence(s) dans ' . $table . ' (non supprimées, à nettoyer côté tutoriel).',
                 ];
             }
         }
@@ -662,7 +662,7 @@ class PlanAdminService
         $entities = (int) ($res->fetch_assoc()['n'] ?? 0);
         if ($entities > 0) {
             throw new RuntimeException(
-                $entities . ' entité(s) (joueur, PNJ ou bâtiment) occupent le niveau z' . $z . ' — déplacez-les d\'abord.',
+                $entities . ' entité(s) (joueur, PNJ ou bâtiment) occupent le niveau z' . $z . ' : déplacez-les d\'abord.',
                 409
             );
         }

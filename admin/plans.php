@@ -132,7 +132,7 @@ function plans_render_list(array $inventory, Db $db): string
 
     $rows = '';
     foreach ($filtered as $plan) {
-        $validationCell = '<span class="text-muted">—</span>';
+        $validationCell = '<span class="text-muted">–</span>';
         if ($plan->hasConfig) {
             $raw = plans()->read($plan->id);
             if ($raw === null || $raw === false) {
@@ -153,7 +153,7 @@ function plans_render_list(array $inventory, Db $db): string
 
         $coordsCell = $plan->hasCoords
             ? number_format($plan->coordsCount, 0, ',', ' ') . ' cases · z : ' . implode(', ', $plan->zLevels)
-            : '<span class="text-muted">—</span>';
+            : '<span class="text-muted">–</span>';
 
         $rows .= '<tr>'
             . '<td><code>' . e($plan->id) . '</code></td>'
@@ -182,7 +182,7 @@ function plans_render_list(array $inventory, Db $db): string
         . '<strong>Qu\'est-ce qu\'un plan ?</strong> Deux parties qui doivent rester cohérentes : '
         . '<strong>une config</strong> (tables <code style="display:inline;white-space:nowrap">plans</code> /'
         . ' <code style="display:inline;white-space:nowrap">plan_z_levels</code>'
-        . ' — nom, niveaux Z, bornes visibles, biomes…) et <strong>des coordonnées en base</strong>'
+        . ' : nom, niveaux Z, bornes visibles, biomes…) et <strong>des coordonnées en base</strong>'
         . ' (table <code style="display:inline;white-space:nowrap">coords</code> + couches'
         . ' <code style="display:inline;white-space:nowrap">map_*</code>).'
         . ' Le contenu des cartes s\'édite via l\'extension Tiled ; la génération des PNG se fait sur'
@@ -194,7 +194,7 @@ function plans_render_list(array $inventory, Db $db): string
            on the dashboard: admin → Réglages du monde. */
         . '<a class="btn btn-sm btn-outline-secondary" href="/admin/index.php" style="font-size:13px;">'
         . '<i class="fas fa-globe"></i> Saison courante : ' . e((string) (new \App\Service\SeasonService())->current())
-        . ' — régler</a>'
+        . ' (régler)</a>'
         . '</div></div>'
 
         . '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
@@ -244,7 +244,7 @@ HTML;
         . '<div class="form-group col-md-4"><label>Code du plan</label>'
         . '<input type="text" class="form-control" name="plan" required pattern="[a-z0-9_-]{1,64}"'
         . ' placeholder="ex: foret_noire_s2">'
-        . '<small class="form-text text-muted">Minuscules / chiffres / _ / - (64 max) — nom du fichier JSON et de'
+        . '<small class="form-text text-muted">Minuscules / chiffres / _ / - (64 max), nom du fichier JSON et de'
         . ' <code style="display:inline">coords.plan</code>. Non modifiable ensuite. Suffixe'
         . ' <code style="display:inline">_s2</code> = plan de saison 2.</small></div>'
         . '<div class="form-group col-md-4"><label>Nom affiché</label>'
@@ -257,15 +257,15 @@ HTML;
         . '<div class="card mb-3"><div class="card-header">Mode de création</div><div class="card-body">'
         . '<div class="form-group">'
         . '<label class="d-block" style="cursor:pointer;"><input type="radio" name="mode" value="blank" checked> '
-        . '<strong>Plan vierge</strong> — crée le fichier JSON minimal et une case d\'amorce (0,0,0).'
+        . '<strong>Plan vierge</strong> : crée le fichier JSON minimal et une case d\'amorce (0,0,0).'
         . ' Le contenu (tuiles, murs…) s\'authore ensuite via l\'extension Tiled.</label>'
         . '<label class="d-block mt-2" style="cursor:pointer;"><input type="radio" name="mode" value="clone"> '
-        . '<strong>Cloner un plan modèle</strong> — copie le JSON, toutes les coordonnées et les couches'
+        . '<strong>Cloner un plan modèle</strong> : copie le JSON, toutes les coordonnées et les couches'
         . ' (tuiles, murs, éléments…). Les constructions de joueurs, les personnages et les objets au sol'
         . ' ne sont jamais copiés.</label>'
         . '</div>'
         . '<div class="form-group col-md-6 px-0"><label>Plan modèle</label>'
-        . formSelect('template', $templateChoices, null, '— choisir un plan modèle —', 'class="form-control" disabled')
+        . formSelect('template', $templateChoices, null, 'Choisir un plan modèle', 'class="form-control" disabled')
         . '<small class="form-text text-muted">Seuls les plans cohérents (JSON + coords) sont proposés.</small></div>'
         . '</div></div>'
 
@@ -300,7 +300,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         'scrollingMask'     => ['Défilement du masque', 'Durée d\'animation du masque (0/vide = statique).'],
         'verticalScrolling' => ['Défilement vertical', 'Direction du défilement du masque.'],
         'comment'           => ['Commentaire', 'Note pour les admins, jamais affichée en jeu.'],
-        'biomes'            => ['Biomes (JSON) — ancien format', 'Les rendements se définissent désormais dans Ressources → Rendements, la seule table lue par le jeu. Ce JSON ne sert plus qu\'à alimenter cette table pour un plan dont les rendements n\'y sont pas encore. Forme : [{"wall": "arbre1", "ressource": "bois", "exhaust": 75, "regrow": 20}].'],
+        'biomes'            => ['Biomes (JSON), ancien format', 'Les rendements se définissent désormais dans Ressources → Rendements, la seule table lue par le jeu. Ce JSON ne sert plus qu\'à alimenter cette table pour un plan dont les rendements n\'y sont pas encore. Forme : [{"wall": "arbre1", "ressource": "bois", "exhaust": 75, "regrow": 20}].'],
     ];
 
     $renderField = function (string $key, string $type) use ($values, $fieldHelp): string {
@@ -311,7 +311,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         $input = match ($type) {
             'int' => '<input type="number" step="1" class="form-control" name="config[' . e($key) . ']" value="' . e($value) . '">',
             'bool' => formSelect('config[' . $key . ']', ['true' => 'true', 'false' => 'false'],
-                $value !== '' ? $value : null, '(défaut — clé absente)'),
+                $value !== '' ? $value : null, '(défaut : clé absente)'),
             'image' => '<input type="text" class="form-control" name="config[' . e($key) . ']" value="' . e($value) . '"'
                 . ' list="plans-bg-catalog" placeholder="img/tiles/…">',
             'text' => '<textarea class="form-control" name="config[' . e($key) . ']" rows="3">' . e($value) . '</textarea>',
@@ -381,7 +381,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         $origin = '';
         if (!in_array($z, $jsonZ, true)) {
             $origin = ' <span class="badge" style="background-color:#f0ad4e;color:#fff;"'
-                . ' title="Des coords existent pour ce niveau mais le JSON ne le déclare pas — enregistrer corrige.">en base seulement</span>';
+                . ' title="Des coords existent pour ce niveau mais le JSON ne le déclare pas : enregistrer corrige.">en base seulement</span>';
         } elseif (!in_array($z, $plan->zLevels, true)) {
             $origin = ' <span class="badge" style="background-color:#f0ad4e;color:#fff;"'
                 . ' title="Déclaré dans le JSON mais aucune coordonnée en base pour ce niveau.">JSON seulement</span>';
@@ -426,7 +426,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
             . '<th style="width:26%" title="Bornes visibles « minX,maxX,minY,maxY », ou « auto » (recalculées au prochain push Tiled)">Bornes visibles</th>'
             . '<th style="width:10%"></th>'
             . '</tr></thead><tbody>' . $zRows . '</tbody></table>'
-            . '<small class="text-muted">Bornes : « minX,maxX,minY,maxY » explicites, ou « auto » — recalculées'
+            . '<small class="text-muted">Bornes : « minX,maxX,minY,maxY » explicites, ou « auto », recalculées'
             . ' sur l\'étendue réelle au prochain push Tiled du niveau.</small>';
 
     $bgChoices = (new TileCatalogService())->backgroundChoices();
@@ -527,7 +527,7 @@ function plans_render_delete_zone(string $planId, string $csrfToken): string
             . plans_typed_confirm_field($planId)
             . '<div class="d-flex align-items-center gap-3">'
             . '<button type="submit" class="btn btn-outline-danger">Supprimer le plan</button>'
-            . '<small class="text-muted">Pensez à exporter un bundle JSON avant — il permet de restaurer le plan à l\'identique.</small>'
+            . '<small class="text-muted">Pensez à exporter un bundle JSON avant : il permet de restaurer le plan à l\'identique.</small>'
             . '</div></form>';
     }
 
