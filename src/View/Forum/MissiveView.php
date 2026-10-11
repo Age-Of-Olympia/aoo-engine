@@ -63,18 +63,7 @@ class MissiveView
                     exit('<div id="error">Ce destinataire ne peut pas recevoir de missives.</div>');
                 }
                 Forum::add_dest($player, $desti, $topJson, $destTbl);
-                //Ajouter l'animateur si la faction est différente
-                if (
-                    $player->data->faction != $desti->data->faction
-                    &&
-                    (($player->data->secretFaction == "") ||
-                        ($player->data->secretFaction != "" && $player->data->secretFaction != $desti->data->secretFaction))
-                ) {
-                    $raceJson = $raceService->getRaceData($desti->data->race);
-                    if ($raceJson !== null && !empty($raceJson->animateur)) {
-                        Forum::add_dest($player, $raceJson->animateur, $topJson, $destTbl);
-                    }
-                }
+                Forum::add_faction_animateur($player, $desti, $topJson, $destTbl);
             }
 
             exit();
@@ -196,15 +185,12 @@ class MissiveView
 
         echo '<option disabled>Animateurs:</option>';
 
-        foreach ($raceService->getPlayableRaceNames() as $e) {
-
-
-            $raceJson = $raceService->getRaceData($e);
-
-            if ($raceJson === null || empty($raceJson->animateur)) {
+        // Secret and hidden factions do not advertise their animateur.
+        foreach ((new FactionService())->getAllFactions() as $faction) {
+            if ($faction->getAnimateurId() === null || $faction->isHidden() || $faction->isSecret()) {
                 continue;
             }
-            echo '<option value="' . $raceJson->animateur . '">- Animateur: ' . ($raceJson?->name ?? $e) . '</option>';
+            echo '<option value="' . $faction->getAnimateurId() . '">- Animateur: ' . htmlspecialchars($faction->getName()) . '</option>';
         }
 
 
@@ -220,7 +206,7 @@ class MissiveView
 
             /* Style porté par .missive-hint (main.css hérité : bleu/rouge ;
              * css/paper-app.css : encre et sang de la maquette). */
-            echo '<div class="missive-hint">Vous pouvez maintenant sélectionner un ou plusieurs destinataires de votre faction/peuple.<br />Pour envoyer un message à un personnage d\'un autre peuple, sélectionnez l\'animateur de son peuple, tout en bas de la liste.<br />Ce dernier invitera ce personnage dans la discussion.<br />
+            echo '<div class="missive-hint">Vous pouvez maintenant sélectionner un ou plusieurs destinataires de votre faction/peuple.<br />Pour envoyer un message à un personnage d\'une autre faction, cherchez-le par son nom, ou sélectionnez l\'animateur de sa faction tout en bas de la liste.<br />Ce dernier invitera ce personnage dans la discussion.<br />
     <span class="missive-hint-warning">Les Missives sans destinataires sont automatiquement supprimées.</span></div>';
         }
 

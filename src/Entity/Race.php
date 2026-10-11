@@ -211,10 +211,6 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     #[ORM\Column(type: "string", length: 50, options: ["default" => ""])]
     private string $plan = '';
 
-    /** Player id (possibly a negative PNJ id) of the race's animator. */
-    #[ORM\Column(type: "integer", nullable: true)]
-    private ?int $animateurId = null;
-
     #[ORM\Column(type: "integer", options: ["default" => 0])]
     private int $a = 0;
 
@@ -514,16 +510,6 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     public function setPlan(string $plan): void
     {
         $this->plan = $plan;
-    }
-
-    public function getAnimateurId(): ?int
-    {
-        return $this->animateurId;
-    }
-
-    public function setAnimateurId(?int $animateurId): void
-    {
-        $this->animateurId = $animateurId;
     }
 
     public function getCarac(string $key): int

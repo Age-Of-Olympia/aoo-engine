@@ -2,6 +2,7 @@
 namespace Classes;
 
 use App\Factory\PlayerFactory;
+use App\Service\FactionService;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -455,6 +456,21 @@ class Forum{
         return $destTbl;
     }
 
+
+    /** A recipient outside the sender's factions brings their faction's animateur along. */
+    public static function add_faction_animateur(Player $player, Player $dest, object $topJson, array $destTbl): void
+    {
+        $sameFaction = $player->data->faction == $dest->data->faction
+            || ($player->data->secretFaction != '' && $player->data->secretFaction == $dest->data->secretFaction);
+        if ($sameFaction) {
+            return;
+        }
+
+        $animateur = (new FactionService())->getFactionData($dest->data->faction)?->animateur;
+        if (!empty($animateur)) {
+            self::add_dest($player, $animateur, $topJson, $destTbl);
+        }
+    }
 
     public static function add_dest($player,$dest, $topJson, $destTbl=false){
 

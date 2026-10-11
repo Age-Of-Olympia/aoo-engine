@@ -89,6 +89,7 @@ $applyForm = static function (Faction $faction): void {
     $faction->setRespawnPlan(stringWithDefault('respawnPlan', plans()->worldPlan()));
     $faction->setHidden(booleanCheckbox('hidden'));
     $faction->setSecret(booleanCheckbox('secret'));
+    $faction->setAnimateurId(optionalInt('animateurId'));
 };
 
 if (trim((string) ($_POST['name'] ?? '')) === '') {

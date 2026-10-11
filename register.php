@@ -10,6 +10,7 @@ use Classes\Ui;
 use Classes\View;
 use App\Service\MissiveService;
 use App\Service\RaceService;
+use App\Service\FactionService;
 use App\Service\Mail\MailContactSyncService;
 use App\Tutorial\TutorialFeatureFlag;
 
@@ -178,15 +179,15 @@ if(!empty($_POST['race'])){
             $db->insert('players_forum_missives', $values);
         }
 
-        $raceJson = (new RaceService())->getRaceData($player->data->race);
+        $animateur = (new FactionService())->getFactionData($player->data->faction)?->animateur;
         $newPlayerName = $player->data->name;
 
         // Send welcome missive to faction animateur (NPC) if configured and exists
-        if ($raceJson && !empty($raceJson->animateur) && $raceJson->animateur != 0) {
+        if (!empty($animateur)) {
             // Check if animateur player exists
             $db = new Db();
             $checkSql = 'SELECT id FROM players WHERE id = ?';
-            $result = $db->exe($checkSql, [$raceJson->animateur]);
+            $result = $db->exe($checkSql, [$animateur]);
 
             if ($result && $result->num_rows > 0) {
                 $missiveService = new MissiveService();
@@ -195,7 +196,7 @@ Bonjour,
 Un nouveau joueur vient d'arriver dans la faction : $newPlayerName (mat $player->id)
 On compte sur toi pour l'accueillir comme il se doit.
 EOT;
-                $missiveService->sendNewMissive($raceJson->animateur,[$raceJson->animateur],'Nouveau joueur dans la faction', $text);
+                $missiveService->sendNewMissive($animateur,[$animateur],'Nouveau joueur dans la faction', $text);
             }
         }
 

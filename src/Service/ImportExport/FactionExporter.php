@@ -57,6 +57,7 @@ final class FactionExporter implements ObjectExporterInterface
             'respawnPlan' => $entity->getRespawnPlan(),
             'hidden'      => $entity->isHidden(),
             'secret'      => $entity->isSecret(),
+            'animateurId' => $entity->getAnimateurId(),
             'roles'       => array_map(
                 static fn (FactionRole $role): array => array_merge(
                     ['name' => $role->getName()],

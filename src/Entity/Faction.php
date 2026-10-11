@@ -49,6 +49,10 @@ class Faction
     #[ORM\Column(type: "boolean", options: ["default" => false])]
     private bool $secret = false;
 
+    /** Player id who answers for the faction in missives (negative = PNJ), null = none. */
+    #[ORM\Column(type: "integer", nullable: true)]
+    private ?int $animateurId = null;
+
     /** Ordered roles; players.factionRole indexes into this by position. */
     #[ORM\OneToMany(targetEntity: FactionRole::class, mappedBy: "faction", cascade: ["persist", "remove"], orphanRemoval: true)]
     #[ORM\OrderBy(["position" => "ASC"])]
@@ -132,6 +136,16 @@ class Faction
     public function setSecret(bool $secret): void
     {
         $this->secret = $secret;
+    }
+
+    public function getAnimateurId(): ?int
+    {
+        return $this->animateurId;
+    }
+
+    public function setAnimateurId(?int $animateurId): void
+    {
+        $this->animateurId = $animateurId;
     }
 
     /**

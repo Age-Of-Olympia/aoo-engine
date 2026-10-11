@@ -79,6 +79,7 @@ class FactionImportExportTest extends TestCase
             'respawnPlan' => 'olympia',
             'hidden'      => false,
             'secret'      => true,
+            'animateurId' => -5,
             'roles'       => [
                 ['name' => 'Chef', 'editRole' => true, 'kickMember' => true],
                 ['name' => 'Recrue', 'defaultRole' => true],
@@ -103,6 +104,7 @@ class FactionImportExportTest extends TestCase
         // Aller-retour : l'export de l'entité importée == le payload normalisé
         $exported = (new FactionExporter())->toArray($faction);
         $this->assertSame('faction_test_import', $exported['code']);
+        $this->assertSame(-5, $exported['animateurId']);
         $this->assertTrue($exported['roles'][0]['editRole']);
         $this->assertFalse($exported['roles'][0]['defaultRole']);
         $this->assertTrue($exported['roles'][1]['defaultRole']);

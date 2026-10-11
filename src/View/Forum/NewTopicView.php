@@ -4,7 +4,6 @@ namespace App\View\Forum;
 
 use App\Factory\PlayerFactory;
 use App\Service\PlayerService;
-use App\Service\RaceService;
 use Classes\Forum;
 use Classes\Str;
 use Classes\Ui;
@@ -67,16 +66,7 @@ class NewTopicView
                     if ($player->check_missive_permission($desti)) {
 
                         Forum::add_dest($player, $desti, $topJson, $destTbl);
-                        //Ajouter l'animateur si la faction est différente
-                        if (
-                            $player->data->faction != $desti->data->faction
-                            &&
-                            (($player->data->secretFaction == "") ||
-                                ($player->data->secretFaction != "" && $player->data->secretFaction != $desti->data->secretFaction))
-                        ) {
-                            $raceJson = (new RaceService())->getRaceData($desti->data->race);
-                            Forum::add_dest($player, $raceJson->animateur, $topJson, $destTbl);
-                        }
+                        Forum::add_faction_animateur($player, $desti, $topJson, $destTbl);
                     }
                 }
             } else {

@@ -22,7 +22,7 @@ use Throwable;
  *  - sur une ligne existante : identité (code, name), drapeaux
  *    (playable/hidden), lore et compteurs de portraits sont PRÉSERVÉS
  *    (possiblement retouchés par un admin) ; libellé, couleurs, faction,
- *    plan, animateur et les 16 CARACS sont rafraîchis depuis le JSON ; la
+ *    plan et les 16 CARACS sont rafraîchis depuis le JSON ; la
  *    description ne se remplit que si elle est vide ;
  *  - création : drapeaux comme la migration (jouable si dans le snapshot
  *    RACES et JSON présent ; cachée si JSON privé) ;
@@ -183,7 +183,6 @@ class RaceSeedService
         $race->setColor((string) ($json->color ?? 'black'));
         $race->setFaction((string) ($json->faction ?? ''));
         $race->setPlan((string) ($json->plan ?? ''));
-        $race->setAnimateurId(isset($json->animateur) ? (int) $json->animateur : null);
 
         foreach (Race::CARAC_KEYS as $key) {
             $race->setCarac($key, (int) ($json->{$key} ?? 0));

@@ -68,6 +68,7 @@ class FactionService
             'text' => $faction->getText(),
             'raFont' => $faction->getRaFont(),
             'respawnPlan' => $faction->getRespawnPlan(),
+            'animateur' => $faction->getAnimateurId(),
             'role' => array_map(
                 static fn (FactionRole $role): object => $role->toJsonObject(),
                 $faction->getRoles()->getValues()

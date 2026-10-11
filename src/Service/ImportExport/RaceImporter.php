@@ -98,7 +98,6 @@ final class RaceImporter extends AbstractObjectImporter
         $race->setColor(trim((string) ($plan['color'] ?? '')) !== '' ? (string) $plan['color'] : 'black');
         $race->setFaction((string) ($plan['faction'] ?? ''));
         $race->setPlan((string) ($plan['plan'] ?? ''));
-        $race->setAnimateurId(is_numeric($plan['animateurId'] ?? null) ? (int) $plan['animateurId'] : null);
 
         $caracs = is_array($plan['caracs'] ?? null) ? $plan['caracs'] : [];
         foreach (Race::CARAC_KEYS as $key) {

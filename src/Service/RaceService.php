@@ -96,7 +96,6 @@ class RaceService
                 'color' => $race->getColor(),
                 'faction' => $race->getFaction(),
                 'plan' => $race->getPlan(),
-                'animateur' => $race->getAnimateurId(),
                 'actions' => $race->getStarterActionNames(),
                 'spells' => $race->getSpellNames(),
                 'actionsPack' => $race->getActionsPackNames(),

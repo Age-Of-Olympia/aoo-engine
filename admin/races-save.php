@@ -285,7 +285,6 @@ $applyForm = static function (Race $race) use ($face, $action): array {
         $notice = " ⚠ Faction « {$faction} » inconnue du catalogue — champ inchangé.";
     }
     $race->setPlan(trim((string) ($_POST['plan'] ?? '')));
-    $race->setAnimateurId(optionalInt('animateurId'));
 
     foreach (array_keys(CARACS) as $key) {
         $race->setCarac($key, (int) $_POST['carac'][$key]);

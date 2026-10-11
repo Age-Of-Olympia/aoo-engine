@@ -89,7 +89,6 @@ class RaceImportExportTest extends TestCase
             'color'          => 'black',
             'faction'        => 'test',
             'plan'           => '',
-            'animateurId'    => null,
             'caracs'         => array_fill_keys(Race::CARAC_KEYS, 3),
             'starterActions' => ['attaquer', 'repos'],
             'spells'         => ['soins/barbier'],

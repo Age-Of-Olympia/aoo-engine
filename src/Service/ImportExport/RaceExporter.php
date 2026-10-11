@@ -12,7 +12,7 @@ use InvalidArgumentException;
  * Exports {@see Race} entities to natural-key payloads. Identity is the race
  * `name` (the lowercase code stored in players.race). The payload carries
  * everything the race editor manages : identité, drapeaux, couleurs,
- * faction / plan / animateur, les 16 CARACS et les deux listes de noms.
+ * faction / plan, les 16 CARACS et les deux listes de noms.
  * Les compteurs de portraits/avatars sont volontairement absents : état
  * d'environnement, pas de la définition de la race.
  */
@@ -64,7 +64,6 @@ final class RaceExporter implements ObjectExporterInterface
             'color'          => $entity->getColor(),
             'faction'        => $entity->getFaction(),
             'plan'           => $entity->getPlan(),
-            'animateurId'    => $entity->getAnimateurId(),
             'caracs'         => $entity->ownCaracs(),
             'build_work'     => $entity->getBuildWork(),
             /* The DECLARED cut-out travels with its type — guessed shapes

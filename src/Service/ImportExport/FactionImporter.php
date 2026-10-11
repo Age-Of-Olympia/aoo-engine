@@ -71,6 +71,10 @@ final class FactionImporter extends AbstractObjectImporter
         $faction->setRespawnPlan($respawnPlan !== '' ? $respawnPlan : plans()->worldPlan());
         $faction->setHidden((bool) ($plan['hidden'] ?? false));
         $faction->setSecret((bool) ($plan['secret'] ?? false));
+        // Bundles exported before the field existed keep the target's animateur.
+        if (array_key_exists('animateurId', $plan)) {
+            $faction->setAnimateurId(is_numeric($plan['animateurId']) ? (int) $plan['animateurId'] : null);
+        }
 
         // Flush intermédiaire (dans la transaction du lot) : les rôles
         // s'écrivent en SQL direct et exigent l'id de la faction.

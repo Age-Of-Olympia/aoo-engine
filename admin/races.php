@@ -6,7 +6,7 @@
  *   - list (default): every race with flags, colors and list sizes.
  *   - edit / new    : one form for everything a race defines — identity
  *                     (label, description), flags (playable / hidden), colors,
- *                     faction / plan / animateur, the 16 CARACS stats, and the
+ *                     faction / plan, the 16 CARACS stats, and the
  *                     two name lists (starter actions, spells).
  *
  * Races were migrated from datas/*\/races/*.json to the DB
@@ -667,18 +667,13 @@ HTML;
         . ($face->isStructure()
             ? '<input type="hidden" name="faction" value="' . e($isEdit ? $race->getFaction() : '') . '">'
                 . '<input type="hidden" name="plan" value="' . e($isEdit ? $race->getPlan() : '') . '">'
-                . '<input type="hidden" name="animateurId" value="' . e($isEdit ? (string) $race->getAnimateurId() : '') . '">'
             : '<div class="form-group col-md-3"><label>Faction de départ</label>'
                 . race_faction_select($isEdit ? $race->getFaction() : '')
                 . '<small class="form-text text-muted">Copiée dans players.faction à la création du personnage.'
                 . ' Plusieurs races peuvent partager une faction.</small></div>'
                 . '<div class="form-group col-md-3"><label>Plan d\'origine</label>'
                 . '<input type="text" class="form-control" name="plan" value="'
-                . e($isEdit ? $race->getPlan() : '') . '"></div>'
-                . '<div class="form-group col-md-2"><label>Animateur (id joueur)</label>'
-                . '<input type="number" class="form-control" name="animateurId" value="'
-                . e($isEdit ? (string) $race->getAnimateurId() : '') . '">'
-                . '<small class="form-text text-muted">Vide = aucun. Id négatif = PNJ.</small></div>')
+                . e($isEdit ? $race->getPlan() : '') . '"></div>')
         . '</div></div></div>'
 
         . '<div class="card mb-3"><div class="card-header">Caractéristiques</div><div class="card-body"><div class="row">'
