@@ -18,7 +18,7 @@ use App\Service\PlayerPassiveService;
  *    passives of that tree at every level below N;
  *  - secondary trees (survival, stealth): same, with 1 per level;
  *  - spells: level N needs a free spell slot at N, opened by 'spell-slot'
- *    passives whose carac holds the level;
+ *    passives of level N;
  *  - an unknown or empty category carries no tree gate;
  *  - on top of the tree gate, a skill may declare {"need": [...],
  *    "forbidden": [...]} against the owned names.
@@ -97,8 +97,8 @@ final class SkillPrerequisiteService
         $spellSlots = [];
         foreach ((new PlayerPassiveService())->getPassivesByPlayerId($playerId) as $passive) {
             if ($passive->getType() === 'spell-slot') {
-                // carac holds the spell level the slot opens
-                $level = (int) $passive->getCarac();
+                // a slot passive opens slots at its own level
+                $level = $passive->getLevel();
                 $spellSlots[$level] = ($spellSlots[$level] ?? 0) + (int) $passive->getValue();
             }
             $passives[] = [
