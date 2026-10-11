@@ -25,7 +25,7 @@ final class MinimapView
 {
     /** Couches statiques empilées, dans l'ordre de dessin de map.php. */
     private const LOCAL_LAYERS = ['tiles', 'elements', 'resources', 'routes', 'buildings'];
-    private const WORLD_LAYERS = ['tiles', 'elements', 'locations', 'routes', 'buildings'];
+    private const WORLD_LAYERS = ['tiles', 'elements', 'routes', 'buildings', 'locations'];
 
     public static function render(Player $player): void
     {

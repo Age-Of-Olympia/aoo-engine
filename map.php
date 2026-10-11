@@ -112,6 +112,7 @@ if (!isset($_GET['local'])) {
     }
 
     $hasValidLayers = false;
+    $firstLayerPath = null;
     if (is_array($mapResult)) {
         foreach ($selectedLayers as $layer) {
             $layerData = $mapResult[$layer] ?? null;
@@ -120,12 +121,18 @@ if (!isset($_GET['local'])) {
             $fullPath = $_SERVER['DOCUMENT_ROOT'].$imagePath;
             if ($imagePath && file_exists($fullPath)) {
                 $hasValidLayers = true;
+                $firstLayerPath = $fullPath;
                 break;
             }
         }
     }
 
     if ($hasValidLayers) {
+        // The world layers take the plan's proportions: size the frame from them
+        [$layerW, $layerH] = @getimagesize((string) $firstLayerPath) ?: [700, 466];
+        $frameW = $layerW + 100;
+        $frameH = $layerH + 66;
+
         echo '
         <div id="ui-map">
         <?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -134,20 +141,20 @@ if (!isset($_GET['local'])) {
             xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
             baseProfile="full"
             id="svg-map"
-            width="800"
-            height="532"
+            width="'. $frameW .'"
+            height="'. $frameH .'"
             style="overflow: visible"
             >
             <!-- Parchment background -->
-            <image xlink:href="img/ui/map/parchemin.webp" width="800" height="532" />';
+            <image xlink:href="img/ui/map/parchemin.webp" width="'. $frameW .'" height="'. $frameH .'" preserveAspectRatio="none" />';
 
-        $layerOrder = ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'player'];
+        $layerOrder = ['tiles', 'elements', 'routes', 'locations', 'coordinates', 'player'];
 
         foreach ($layerOrder as $layer) {
             if (in_array($layer, $selectedLayers) && isset($mapResult[$layer]['imagePath'])) {
                 $fullPath = $mapResult[$layer]['imagePath'];
                 echo '<image xlink:href="' . $fullPath . '"
-                         width="700" height="466" x="60" y="33" />';
+                         width="'. $layerW .'" height="'. $layerH .'" x="60" y="33" />';
             }
         }
 

@@ -73,8 +73,11 @@ class ViewService {
                 $this->maxX = $worldPlanBounds['maxX'];
                 $this->minY = $worldPlanBounds['minY'];
                 $this->maxY = $worldPlanBounds['maxY'];
+                // One scale for both axes, like the local map: the canvas
+                // height follows the plan's proportions instead of a fixed 3:2.
                 $this->scaleX = ($this->width - 2 * $this->margin) / ($this->maxX - $this->minX);
-                $this->scaleY = ($this->height - 2 * $this->margin) / ($this->maxY - $this->minY);
+                $this->scaleY = $this->scaleX;
+                $this->height = (int) round(($this->maxY - $this->minY) * $this->scaleY + 2 * $this->margin);
             }
 
             if ($this->currentPlan !== $this->worldPlan) {
@@ -522,6 +525,11 @@ class ViewService {
                     break;
             }
 
+            // The player layers are skipped without a player (admin, console)
+            if (!isset($this->layers[$layerName])) {
+                continue;
+            }
+
             $filename = "world_{$layerName}_{$timestamp}.png";
             $filepath = $outputDir . $filename;
 
@@ -713,30 +721,52 @@ class ViewService {
         $textColor = imagecolorallocate($layer, 255, 255, 255);  // Blanc pour le texte
         $textBg = imagecolorallocate($layer, 0, 0, 0);  // Noir pour le fond du texte
         
-        // Dessine les lignes verticales et les coordonnées X
-        for ($x = $bounds['minX']; $x <= $bounds['maxX']; $x += 10) {  // Toutes les 10 unités
-            $screenX = $this->transformX($x, $mapType);
-            
-            // Dessine la ligne verticale
-            imageline($layer, $screenX, 0, $screenX, $this->height, $gridColor);
-            
-            // Dessine le numéro de coordonnée en haut
-            $text = (string)$x;
-            imagefilledrectangle($layer, $screenX - 10, 2, $screenX + 10, 12, $textBg);
-            imagestring($layer, 2, $screenX - strlen($text) * 2, 2, $text, $textColor);
+        $font = 2;
+        $charW = imagefontwidth($font);
+        $charH = imagefontheight($font);
+        $layerW = imagesx($layer);
+        $layerH = imagesy($layer);
+
+        // A line every 10 cells, a label only every $labelStep so that labels
+        // stay at least 32 px apart whatever the map's scale.
+        $gridStep = 10;
+        $scale = $mapType === 'global' ? $this->scaleX : $this->localScaleX;
+        $labelStep = $gridStep;
+        foreach ([10, 20, 50, 100, 200, 500] as $step) {
+            $labelStep = $step;
+            if ($step * $scale >= 32) {
+                break;
+            }
         }
-        
-        // Dessine les lignes horizontales et les coordonnées Y
-        for ($y = $bounds['minY']; $y <= $bounds['maxY']; $y += 10) {  // Toutes les 10 unités
+
+        // Vertical lines, X labels along the top edge
+        for ($x = (int) ceil($bounds['minX'] / $gridStep) * $gridStep; $x <= $bounds['maxX']; $x += $gridStep) {
+            $screenX = $this->transformX($x, $mapType);
+            imageline($layer, $screenX, 0, $screenX, $layerH, $gridColor);
+
+            if ($x % $labelStep !== 0) {
+                continue;
+            }
+            $text = (string) $x;
+            $textW = strlen($text) * $charW;
+            $left = max(0, min($layerW - $textW - 4, $screenX - intdiv($textW, 2) - 2));
+            imagefilledrectangle($layer, $left, 1, $left + $textW + 3, $charH + 2, $textBg);
+            imagestring($layer, $font, $left + 2, 2, $text, $textColor);
+        }
+
+        // Horizontal lines, Y labels along the left edge
+        for ($y = (int) ceil($bounds['minY'] / $gridStep) * $gridStep; $y <= $bounds['maxY']; $y += $gridStep) {
             $screenY = $this->transformY($y, $mapType);
-            
-            // Dessine la ligne horizontale
-            imageline($layer, 0, $screenY, $this->width, $screenY, $gridColor);
-            
-            // Dessine le numéro de coordonnée sur le côté gauche
-            $text = (string)$y;
-            imagefilledrectangle($layer, 2, $screenY - 5, 20, $screenY + 5, $textBg);
-            imagestring($layer, 2, 2, $screenY - 4, $text, $textColor);
+            imageline($layer, 0, $screenY, $layerW, $screenY, $gridColor);
+
+            if ($y % $labelStep !== 0) {
+                continue;
+            }
+            $text = (string) $y;
+            $textW = strlen($text) * $charW;
+            $top = max(0, min($layerH - $charH - 2, $screenY - intdiv($charH, 2) - 1));
+            imagefilledrectangle($layer, 1, $top, $textW + 4, $top + $charH + 1, $textBg);
+            imagestring($layer, $font, 3, $top + 1, $text, $textColor);
         }
         
         $this->layers['coordinates'] = $layer;
@@ -781,9 +811,11 @@ class ViewService {
             $textWidth = imagefontwidth($fontSize) * strlen($name);
             $textHeight = imagefontheight($fontSize);
 
-            // Positionne le texte en dessous du marqueur
+            // Positionne le texte en dessous du marqueur, sans sortir de la carte
             $textX = (int)($x - ($textWidth / 2));
+            $textX = max(1, min(imagesx($layer) - $textWidth - 1, $textX));
             $textY = $y + $size + 2;  // Petit espace après le marqueur
+            $textY = min(imagesy($layer) - $textHeight - 1, $textY);
 
             // Dessine le texte avec un contour (pour une meilleure lisibilité)
             for ($dx = -1; $dx <= 1; $dx++) {

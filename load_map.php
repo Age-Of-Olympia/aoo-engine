@@ -80,15 +80,16 @@ $layers = $showWorld
     ? [
         'tiles' => ['Terrain', true],
         'elements' => ['Éléments', true],
-        'coordinates' => ['Coordonnées', false],
-        'locations' => ['Lieux', true],
         'routes' => ['Routes', true],
         'buildings' => ['Bâtiments', !$hideBuildings],
+        /* Labels last, so routes and buildings never hide them */
+        'locations' => ['Lieux', true],
+        'coordinates' => ['Coordonnées', true],
     ]
     : [
         'tiles' => ['Terrain', true],
         'elements' => ['Éléments', true],
-        'foregrounds' => ['Décor', false],
+        'foregrounds' => ['Décor', true],
         'resources' => ['Ressources', true],
         'routes' => ['Routes', true],
         'buildings' => ['Bâtiments', !$hideBuildings],
@@ -133,8 +134,8 @@ if ($imgs === '') {
 $showWorld ? $viewService->generateWorldPlayersLayer() : $viewService->generateLocalPlayersLayer();
 $playersPath = ViewService::playerLayerPath($showWorld ? 'global' : 'local', (int) $player->id, 'players_layer.png');
 if (file_exists($_SERVER['DOCUMENT_ROOT'] . $playersPath)) {
-    $imgs .= '<img src="' . $playersPath . '?t=' . time() . '" alt="" data-layer="players" hidden />';
-    $toggles .= '<label><input type="checkbox" data-layer="players"> Tous les joueurs</label>';
+    $imgs .= '<img src="' . $playersPath . '?t=' . time() . '" alt="" data-layer="players" />';
+    $toggles .= '<label><input type="checkbox" data-layer="players" checked> Tous les joueurs</label>';
 }
 
 /* The marker only on the map of the plan the player stands in */
