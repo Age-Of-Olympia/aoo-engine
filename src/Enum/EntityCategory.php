@@ -19,6 +19,15 @@ enum EntityCategory: string
     case Character = 'character';
     case Structure = 'structure';
 
+    /** player_type values a player can address: name lookups, missive recipients. */
+    public const ADDRESSABLE_TYPES = ['real', 'npc'];
+
+    /** SQL list for ADDRESSABLE_TYPES, e.g. `player_type IN (...)`. */
+    public static function addressableSql(): string
+    {
+        return "'" . implode("', '", self::ADDRESSABLE_TYPES) . "'";
+    }
+
     public static function fromPlayerType(?string $playerType): self
     {
         // null = legacy rows created before the discriminator existed.

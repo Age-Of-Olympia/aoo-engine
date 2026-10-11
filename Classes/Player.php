@@ -2212,7 +2212,7 @@ class Player implements ActorInterface {
             }
         }
 
-        return true;
+        return in_array($target->data->player_type ?? 'real', \App\Enum\EntityCategory::ADDRESSABLE_TYPES, true);
     }
 
 
@@ -2410,7 +2410,7 @@ class Player implements ActorInterface {
         // Characters only (no tutorial copies, no structures); a real player
         // wins over a NPC with the same name.
         $sql = '
-        SELECT id FROM players WHERE name = ? AND player_type IN ("real", "npc")
+        SELECT id FROM players WHERE name = ? AND player_type IN (' . \App\Enum\EntityCategory::addressableSql() . ')
         ORDER BY player_type = "real" DESC LIMIT 1
         ';
 

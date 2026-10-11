@@ -3,6 +3,7 @@
 namespace App\View\Forum;
 
 use App\Factory\PlayerFactory;
+use App\Enum\EntityCategory;
 use App\Service\FactionService;
 use App\Service\PlayerService;
 use App\Service\RaceService;
@@ -127,7 +128,18 @@ class MissiveView
     </div>';
 
 
-        $playersJson = Player::get_player_list()->list;
+        // Members of the player's factions who can receive a missive.
+        $playersJson = [];
+        $res = (new Db())->exe(
+            'SELECT id, name, race, faction, secretFaction FROM players
+             WHERE player_type IN (' . EntityCategory::addressableSql() . ')
+             AND (faction = ? OR (secretFaction != "" AND secretFaction = ?))
+             ORDER BY name',
+            [$player->data->faction, $player->data->secretFaction]
+        );
+        while ($row = $res->fetch_object()) {
+            $playersJson[] = $row;
+        }
 
         echo '<select id="dest-list">
         <option disabled selected>Sélectionnez un personnage:</option>';
@@ -184,7 +196,7 @@ class MissiveView
 
         echo '<option disabled>Animateurs:</option>';
 
-        foreach ($raceService->getAllRaceNames() as $e) {
+        foreach ($raceService->getPlayableRaceNames() as $e) {
 
 
             $raceJson = $raceService->getRaceData($e);
