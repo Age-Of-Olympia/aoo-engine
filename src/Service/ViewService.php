@@ -931,7 +931,7 @@ class ViewService {
         $result = $this->db->exe($sql);
         
         // Crée les couleurs pour les routes
-        $routeColor = ($mapType === 'global') ? imagecolorallocate($layer, 139, 69, 19) : $this->getColorForType('route');
+        $routeColor = $this->getColorForType('route');
         
         while ($route = mysqli_fetch_assoc($result)) {
             $x = (int)$this->transformX($route['x'], $mapType);
@@ -1014,6 +1014,12 @@ class ViewService {
         $this->layers['resources'] = $layer;
     }
 
+    /** Walls share one map colour: mur_*, muret, barricade (not cliffs nor ice spikes). */
+    public static function isWall(string $type): bool
+    {
+        return str_starts_with($type, 'mur') || $type === 'barricade';
+    }
+
     /**
      * Couche BÂTIMENTS des cartes : les entités structure (bâtiments,
      * objets uniques) en carrés aux couleurs de leur pseudo-race —
@@ -1047,9 +1053,14 @@ class ViewService {
             $x = $this->transformX($building['x'], $mapType);
             $y = $this->transformY($building['y'], $mapType);
 
-            $raceColor = $raceColors[$building['race']] ?? $raceColors['default'];
-            list($r, $g, $b) = sscanf($raceColor, "#%02x%02x%02x");
-            $color = imagecolorallocate($layer, $r, $g, $b);
+            // Every wall reads the same on a map (palette « mur »), whatever its type
+            if (self::isWall((string) $building['race'])) {
+                $color = $this->getColorForType('mur');
+            } else {
+                $raceColor = $raceColors[$building['race']] ?? $raceColors['default'];
+                list($r, $g, $b) = sscanf($raceColor, "#%02x%02x%02x");
+                $color = imagecolorallocate($layer, $r, $g, $b);
+            }
 
             // A building stays a visible dot on the world map (3 px at least)
             [$x1, $y1, $x2, $y2] = $this->cellRect((int) $building['x'], (int) $building['y'], $mapType, 3.0);
