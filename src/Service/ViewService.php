@@ -107,6 +107,10 @@ class ViewService {
                 // Scale calculations
                 $rangeX = (float)($this->localMaxX - $this->localMinX);
                 $rangeY = (float)($this->localMaxY - $this->localMinY);
+                if ($rangeX <= 0 || $rangeY <= 0) {
+                    error_log("Map bounds: z-level {$this->playerZ} of plan {$this->currentPlan} has flat bounds, no local map");
+                    return; // Flat bounds (min = max): nothing to scale, the level has no map
+                }
 
                 // Fixed width for local map
                 $this->localMapWidth = $this->localWidth;
