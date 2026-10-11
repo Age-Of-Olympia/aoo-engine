@@ -145,7 +145,7 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
      *
      * @param array<int, array{0: string, 1: int|string}> $options
      */
-    private function costForActorPassive(ActorInterface $actor, array $options): int
+    public function costForActorPassive(ActorInterface $actor, array $options): int
     {
         $passives = $actor->getPassives($actor->getId());
         $default = 0;

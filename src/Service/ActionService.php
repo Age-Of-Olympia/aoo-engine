@@ -98,6 +98,8 @@ class ActionService
      *   imposture stacks + 1, shown as a multiplier; such parts carry
      *   'effect' => 'imposture' so HTML renderers can show the effect icon;
      *   given the actor, the amount it pays now instead
+     * - passive-reduced ({"pm":[["maitre_lame",11],["none",15]]}): the base
+     *   cost, or given the actor, the cost its passives select
      *
      * @return array<int, array{trait: string, text: string, effect?: string}>
      */
@@ -126,6 +128,10 @@ class ActionService
                     $parts[] = ['trait' => 'mvt', 'text' => $this->formatMultiplier($value[1]) . 'x(+1) Mvt', 'effect' => 'imposture'];
                 } elseif (is_numeric($value) && isset(CARACS[$key])) {
                     $parts[] = ['trait' => $key, 'text' => $value . ' ' . CARACS[$key]];
+                } elseif (is_array($value) && isset(CARACS[$key]) && $actor !== null) {
+                    // Passive-reduced cost: what this actor pays, as the condition charges it.
+                    $cost = (new \App\Action\Condition\RequiresTraitValueCondition())->costForActorPassive($actor, $value);
+                    $parts[] = ['trait' => $key, 'text' => $cost . ' ' . CARACS[$key]];
                 } elseif (is_array($value) && isset(CARACS[$key])) {
                     // Passive-reduced cost [[passive, cost], ..., ["none", cost]]: show the base cost.
                     foreach ($value as $option) {
