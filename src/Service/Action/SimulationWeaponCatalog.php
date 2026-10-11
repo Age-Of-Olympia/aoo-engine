@@ -2,7 +2,8 @@
 
 namespace App\Service\Action;
 
-use Classes\Json;
+use Classes\Db;
+use Classes\Item;
 
 /**
  * The real equippable items (from datas/.../items) available to the simulator,
@@ -22,7 +23,7 @@ final class SimulationWeaponCatalog
      */
     public function __construct(?array $items = null)
     {
-        $items ??= (new Json())->get_all('items');
+        $items ??= self::equipmentFromDatabase();
         foreach ($items as $name => $data) {
             if (($data->type ?? null) === 'equipement') {
                 $this->items[(string) $name] = $data;
@@ -36,6 +37,23 @@ final class SimulationWeaponCatalog
      *
      * @return array<string, array<string, string>>
      */
+    /**
+     * The items table is the catalog; get_data() serves each row in the shape the old JSON had.
+     *
+     * @return array<string, object>
+     */
+    private static function equipmentFromDatabase(): array
+    {
+        $items = [];
+        $result = (new Db())->exe("SELECT * FROM items WHERE type = 'equipement'");
+        while ($row = $result->fetch_object()) {
+            $items[(string) $row->name] = (new Item((int) $row->id, $row))->get_data();
+        }
+
+        return $items;
+    }
+
+    /** @return array<string, array<string, string>> subtype => item name => label */
     public function groupedBySubtype(): array
     {
         $groups = [];
