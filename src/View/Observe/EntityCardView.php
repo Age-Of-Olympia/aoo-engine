@@ -247,7 +247,7 @@ final class EntityCardView
             }
 
             if (self::isDisplayable($player, $target, $actionData, $actionTargeting)) {
-                $html .= self::buildActionToDisplay($target, $actionData, $actionService);
+                $html .= self::buildActionToDisplay($target, $actionData, $actionService, actor: $player);
             }
         }
 
@@ -439,10 +439,10 @@ final class EntityCardView
     }
 
     /** Un bouton d'action du panneau (coût en info-bulle, coords de la cible). */
-    private static function buildActionToDisplay(ActorInterface $target, ActionInterface $action, ActionService $actionService, ?string $nameOverride = null): string
+    private static function buildActionToDisplay(ActorInterface $target, ActionInterface $action, ActionService $actionService, ?string $nameOverride = null, ?ActorInterface $actor = null): string
     {
         $icon = (new \App\View\Action\ActionIconView())->forAction($action, 'span');
-        $costs = $actionService->getCostsArray(null, $action);
+        $costs = $actionService->getCostsArray(null, $action, $actor);
         if ($costs !== []) {
             $icon = '<span flow="up" tooltip="Coût : ' . implode(', ', $costs) . '">' . $icon . '</span>';
         }

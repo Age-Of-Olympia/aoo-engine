@@ -78,10 +78,10 @@ class ActionService
         }
     }
 
-    public function getCostsArray(?string $actionName, ?ActionInterface $action) : array {
+    public function getCostsArray(?string $actionName, ?ActionInterface $action, ?\App\Interface\ActorInterface $actor = null) : array {
         return array_map(
             fn(array $part) => $part['text'],
-            $this->getCostParts($actionName, $action)
+            $this->getCostParts($actionName, $action, $actor)
         );
     }
 
@@ -96,11 +96,12 @@ class ActionService
      * - "remaining" ({"remaining":"a"}): spends everything left
      * - "imposture" ({"imposture":[pm,mvt]}): base scaled by the actor's
      *   imposture stacks + 1, shown as a multiplier; such parts carry
-     *   'effect' => 'imposture' so HTML renderers can show the effect icon
+     *   'effect' => 'imposture' so HTML renderers can show the effect icon;
+     *   given the actor, the amount it pays now instead
      *
      * @return array<int, array{trait: string, text: string, effect?: string}>
      */
-    public function getCostParts(?string $actionName, ?ActionInterface $action) : array {
+    public function getCostParts(?string $actionName, ?ActionInterface $action, ?\App\Interface\ActorInterface $actor = null) : array {
         if (!isset($action)) {
             $action = $this->getActionByName($actionName);
         }
@@ -115,6 +116,11 @@ class ActionService
                 }
                 if ($key == "remaining" && isset(CARACS[$value])) {
                     $parts[] = ['trait' => $value, 'text' => 'Toutes les ' . CARACS[$value] . ' restantes'];
+                } elseif ($key == "imposture" && is_array($value) && $actor !== null) {
+                    // Same rounding as RequiresTraitValueCondition charges.
+                    $multiplier = (new EffectService())->costMultiplier($actor->getEffects());
+                    $parts[] = ['trait' => 'pm', 'text' => (int) floor($value[0] * $multiplier) . ' PM'];
+                    $parts[] = ['trait' => 'mvt', 'text' => (int) floor($value[1] * $multiplier) . ' Mvt'];
                 } elseif ($key == "imposture" && is_array($value)) {
                     $parts[] = ['trait' => 'pm', 'text' => $this->formatMultiplier($value[0]) . 'x(+1) PM', 'effect' => 'imposture'];
                     $parts[] = ['trait' => 'mvt', 'text' => $this->formatMultiplier($value[1]) . 'x(+1) Mvt', 'effect' => 'imposture'];

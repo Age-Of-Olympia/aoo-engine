@@ -1628,6 +1628,18 @@ body:has(#hud) #view-landing-wrapper {
     gap: 6px;
 }
 
+/* Le panneau défile, il coupait l'info-bulle de coût des icônes : nom
+ * et coût passent par le bandeau au survol (js/hud.js showHint). */
+#hud-actions [tooltip] {
+    cursor: inherit;
+    text-decoration: none;
+}
+
+#hud-actions [tooltip]::before,
+#hud-actions [tooltip]::after {
+    display: none;
+}
+
 #hud-actions .card-actions br,
 #hud-actions .action.close-card {
     display: none;

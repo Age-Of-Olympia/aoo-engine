@@ -1517,12 +1517,13 @@
 
         if ($actions.length) {
             $panel.append($actions);
-            /* Icônes seules dans la grille : le nom passe en title
-             * (survol desktop, appui long mobile via contextmenu). */
+            /* Icônes seules dans la grille : le nom passe en aria-label,
+             * montré par le bandeau (survol desktop, appui long mobile).
+             * Pas de title : son info-bulle native doublait le bandeau. */
             $actions.find('.action').each(function () {
                 var name = $(this).find('.action-name').text().trim();
                 if (name) {
-                    this.title = name;
+                    this.setAttribute('aria-label', name);
                 }
             });
             /* Clic direct : on saute l'étape « révéler les noms »
@@ -2624,7 +2625,7 @@
 
             $('#hud-action-hint').remove();
             $('<div id="hud-action-hint"></div>')
-                .append($('<span class="hud-action-hint-name"></span>').text(btn.title || ''))
+                .append($('<span class="hud-action-hint-name"></span>').text(btn.getAttribute('aria-label') || btn.title || ''))
                 .append($tip)
                 .appendTo(hintHost());
             placeHint();
@@ -2655,6 +2656,19 @@
             $('#hud-actions .hud-action-cancel').remove();
             $('#hud-action-hint').remove();
         }
+
+        /* Survol desktop : nom et coût dans le bandeau, l'info-bulle
+         * CSS étant coupée par le défilement du panneau. Une action
+         * armée garde le sien. */
+        $('#hud-actions').on('mouseenter', '.action', function () {
+            if (!isMobileViewport() && !$('#hud-actions .hud-action--armed').length) {
+                showHint(this, '');
+            }
+        }).on('mouseleave', '.action', function () {
+            if (!isMobileViewport() && !$('#hud-actions .hud-action--armed').length) {
+                $('#hud-action-hint').remove();
+            }
+        });
 
         /* Appui long mobile (contextmenu) : afficher le nom de
          * l'action en bandeau au lieu du menu contextuel. */
