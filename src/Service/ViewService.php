@@ -1286,9 +1286,11 @@ class ViewService {
     }
 
     private function getAllLocationsFromPlans() {
-        // World-map locations: the current season only (season-less plans
-        // like olympia and enfers always qualify).
-        $plans = plans()->forSeason();
+        // World-map locations: the world plan's season, so a next-season world
+        // can be prepared while the game still runs the current one. A
+        // season-less world plan falls back to the current season.
+        $worldSeason = plans()->read($this->worldPlan)->season ?? null;
+        $plans = plans()->forSeason($worldSeason === null ? null : (int) $worldSeason);
         $allLocations = [];
 
         foreach ($plans as $planName => $planData) {
