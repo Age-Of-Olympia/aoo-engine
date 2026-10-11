@@ -5,8 +5,6 @@ namespace App\View\Classement;
 use App\Entity\Character;
 use App\Factory\PlayerFactory;
 use App\Service\PlayerCaracsService;
-use App\Service\RaceService;
-use Classes\Str;
 
 class BourrinsView
 {
@@ -80,82 +78,34 @@ class BourrinsView
             }
         });
     }
-    static function print_best_carac($carac, $bestCarac)
+    /**
+     * Top 5 players over the 3 best values; tied players share a place.
+     *
+     * @param array<string, array<int, list<Character>>> $bestCarac
+     */
+    static function print_best_carac(string $carac, array $bestCarac): void
     {
-
-        echo '
-    <table border="1" align="center" class="dialog-table">
-        <tr>
-            <th>#</th>
-            <th>Nom</th>
-            <th>Mat.</th>
-            <th>Réputation</th>
-            <th>Xp</th>
-            <th>Rang</th>
-        </tr>
-        ';
-
-        // No entries for this carac (no hydratable players in the
-        // ranking, or every player rolled the same min value and the
-        // aggregator skipped the slot). Render the empty table shell
-        // and bail — the page header is already echoed above us.
-        if (empty($bestCarac[$carac])) {
-            echo '</table>';
-            return;
-        }
-
-        $tbl = $bestCarac[$carac];
-
+        $tbl = $bestCarac[$carac] ?? [];
         krsort($tbl);
 
-        $n = 1;
-
-        $i = 1;
-
-        $raceService = new RaceService();
-
-        foreach ($tbl as $k => $e) {
-
-            $playerTbl = $e;
-
-            foreach ($playerTbl as $e) {
-
-                /** @var Character $e */
-                $raceJson = $raceService->getRaceData($e->getRace());
-
-                echo '
-            <tr style="background: ' . $raceJson->bgColor . '; color: ' . $raceJson->color . '">
-                <td>' . $n . '</td>
-                <td>
-                    ' . $e->getName() . '
-                </td>
-                <td align="center" valign="top"><a href="infos.php?targetId=' . $e->getId() . '">mat.' . $e->getDisplayId() . '</a></td>
-                <td align="center" valign="top">' . Str::get_reput(floor($e->getPr()/COEFFICIENT_PR)) . '</td>
-                <td align="center" valign="top">' . $e->getXp() . '</td>
-                <td align="center" valign="top">' . $e->getRank() . '</td>
-            </tr>
-            ';
-
-                // max 5
-                if ($i >= 5)
-                    break;
-
-                $i++;
+        $rows = [];
+        $place = 1;
+        foreach (array_slice($tbl, 0, 3, true) as $entities) {
+            foreach ($entities as $e) {
+                $rows[] = (object) [
+                    'place' => $place,
+                    'id' => $e->getId(),
+                    'display_id' => $e->getDisplayId(),
+                    'name' => $e->getName(),
+                    'race' => $e->getRace(),
+                    'pr' => $e->getPr(),
+                    'xp' => $e->getXp(),
+                    'rank' => $e->getRank(),
+                ];
             }
-
-            // max 5
-            if ($i >= 5)
-                break;
-
-            // stop when 3 best
-            if ($n >= 3)
-                break;
-
-            $n++;
+            $place++;
         }
 
-        echo '
-    </table>
-    ';
+        PlayersTableView::render(array_slice($rows, 0, 5));
     }
 }
