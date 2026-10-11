@@ -1389,8 +1389,9 @@ class ViewService {
         $allLocations = [];
 
         foreach ($plans as $planName => $planData) {
-            // Include if visibleByDefault is explicitly set to true
-            if (isset($planData->visibleByDefault) && $planData->visibleByDefault === true) {
+            // Include if visibleByDefault is explicitly set to true, and only
+            // with a position: no x/y is a dungeon off the grid, not (0, 0)
+            if (isset($planData->visibleByDefault, $planData->x, $planData->y) && $planData->visibleByDefault === true) {
                 $allLocations = array_merge($allLocations, $this->getLocationFromPlan($planName));
             }
         }
