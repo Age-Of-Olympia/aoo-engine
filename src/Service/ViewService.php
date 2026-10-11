@@ -21,7 +21,7 @@ class ViewService {
     private $minY;
     private $maxX;
     private $maxY;
-    private $margin = 20;
+    private $margin = 4;
     private $colors = [];
     private $playerX;
     private $playerY;
@@ -699,38 +699,27 @@ class ViewService {
         $this->layers['elements'] = $layer;
     }
     
-    private function generateCoordinatesLayer($plan) {
-        $layer = $this->createLayer();
-        $zCondition = $plan === $this->worldPlan 
-            ? "AND c.z = 0" 
-            : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
+    /**
+     * Grid of a map: a line every 10 cells over the tiled extent, as
+     * coordinate => screen position, and the label step that keeps labels
+     * at least 32 px apart whatever the map's scale.
+     *
+     * @return array{cols: array<int, int>, rows: array<int, int>, labelStep: int}
+     */
+    private function coordinateGrid(string $plan): array
+    {
         $mapType = $plan === $this->worldPlan ? "global" : "local";
 
-        // Récupère les coordonnées minimales et maximales
-        $query = "SELECT MIN(c.x) as minX, MAX(c.x) as maxX, 
+        $query = "SELECT MIN(c.x) as minX, MAX(c.x) as maxX,
                         MIN(c.y) as minY, MAX(c.y) as maxY
                 FROM coords c
                 JOIN map_tiles mt ON c.id = mt.coords_id
                 WHERE c.plan = '" . $plan . "'
                 " . $this->boundsClause($mapType) . "";
-        $result = $this->db->exe($query);
-        $bounds = mysqli_fetch_assoc($result);
+        $bounds = mysqli_fetch_assoc($this->db->exe($query));
 
-        // Crée les couleurs
-        $gridColor = imagecolorallocatealpha($layer, 255, 255, 255, 100);  // Blanc semi-transparent
-        $textColor = imagecolorallocate($layer, 255, 255, 255);  // Blanc pour le texte
-        $textBg = imagecolorallocate($layer, 0, 0, 0);  // Noir pour le fond du texte
-        
-        $font = 2;
-        $charW = imagefontwidth($font);
-        $charH = imagefontheight($font);
-        $layerW = imagesx($layer);
-        $layerH = imagesy($layer);
-
-        // A line every 10 cells, a label only every $labelStep so that labels
-        // stay at least 32 px apart whatever the map's scale.
         $gridStep = 10;
-        $scale = $mapType === 'global' ? $this->scaleX : $this->localScaleX;
+        $scale = (float) ($mapType === 'global' ? $this->scaleX : $this->localScaleX);
         $labelStep = $gridStep;
         foreach ([10, 20, 50, 100, 200, 500] as $step) {
             $labelStep = $step;
@@ -739,39 +728,69 @@ class ViewService {
             }
         }
 
-        // Vertical lines, X labels along the top edge
-        for ($x = (int) ceil($bounds['minX'] / $gridStep) * $gridStep; $x <= $bounds['maxX']; $x += $gridStep) {
-            $screenX = $this->transformX($x, $mapType);
-            imageline($layer, $screenX, 0, $screenX, $layerH, $gridColor);
-
-            if ($x % $labelStep !== 0) {
-                continue;
+        $cols = [];
+        $rows = [];
+        if ($bounds && $bounds['minX'] !== null) {
+            for ($x = (int) ceil($bounds['minX'] / $gridStep) * $gridStep; $x <= $bounds['maxX']; $x += $gridStep) {
+                $cols[$x] = $this->transformX($x, $mapType);
             }
-            $text = (string) $x;
-            $textW = strlen($text) * $charW;
-            $left = max(0, min($layerW - $textW - 4, $screenX - intdiv($textW, 2) - 2));
-            imagefilledrectangle($layer, $left, 1, $left + $textW + 3, $charH + 2, $textBg);
-            imagestring($layer, $font, $left + 2, 2, $text, $textColor);
+            for ($y = (int) ceil($bounds['minY'] / $gridStep) * $gridStep; $y <= $bounds['maxY']; $y += $gridStep) {
+                $rows[$y] = $this->transformY($y, $mapType);
+            }
         }
 
-        // Horizontal lines, Y labels along the left edge
-        for ($y = (int) ceil($bounds['minY'] / $gridStep) * $gridStep; $y <= $bounds['maxY']; $y += $gridStep) {
-            $screenY = $this->transformY($y, $mapType);
-            imageline($layer, 0, $screenY, $layerW, $screenY, $gridColor);
+        return ['cols' => $cols, 'rows' => $rows, 'labelStep' => $labelStep];
+    }
 
-            if ($y % $labelStep !== 0) {
-                continue;
-            }
-            $text = (string) $y;
-            $textW = strlen($text) * $charW;
-            $top = max(0, min($layerH - $charH - 2, $screenY - intdiv($charH, 2) - 1));
-            imagefilledrectangle($layer, 1, $top, $textW + 4, $top + $charH + 1, $textBg);
-            imagestring($layer, $font, 3, $top + 1, $text, $textColor);
+    private function generateCoordinatesLayer($plan) {
+        $layer = $this->createLayer();
+        $grid = $this->coordinateGrid($plan);
+
+        // Grid lines only: the numbered border is drawn around the map by the
+        // page, with the board's own code (js/hud.js drawRulers, getWorldRulers)
+        $gridColor = imagecolorallocatealpha($layer, 255, 255, 255, 100);
+        $band = $plan === $this->worldPlan ? $this->margin : 0;
+        $layerW = imagesx($layer);
+        $layerH = imagesy($layer);
+
+        foreach ($grid['cols'] as $screenX) {
+            imageline($layer, $screenX, $band, $screenX, $layerH - $band - 1, $gridColor);
         }
-        
+        foreach ($grid['rows'] as $screenY) {
+            imageline($layer, $band, $screenY, $layerW - $band - 1, $screenY, $gridColor);
+        }
+
         $this->layers['coordinates'] = $layer;
     }
-    
+
+    /**
+     * Numbered border of the world map, for js/hud.js drawRulers: canvas
+     * size, margin around the content and label => position on the canvas.
+     *
+     * @return array{width: int, height: int, margin: int, cols: array<int, int>, rows: array<int, int>}|null
+     */
+    public function getWorldRulers(): ?array
+    {
+        if ($this->scaleX === null) {
+            return null;
+        }
+
+        $grid = $this->coordinateGrid($this->worldPlan);
+        $labelled = fn (array $lines): array => array_filter(
+            $lines,
+            fn (int $coord): bool => $coord % $grid['labelStep'] === 0,
+            ARRAY_FILTER_USE_KEY
+        );
+
+        return [
+            'width' => (int) $this->width,
+            'height' => (int) $this->height,
+            'margin' => (int) $this->margin,
+            'cols' => $labelled($grid['cols']),
+            'rows' => $labelled($grid['rows']),
+        ];
+    }
+
     private function generateLocationsLayer($plan) {
         $layer = $this->createLayer();
         $zCondition = $plan === $this->worldPlan 
@@ -813,9 +832,10 @@ class ViewService {
 
             // Positionne le texte en dessous du marqueur, sans sortir de la carte
             $textX = (int)($x - ($textWidth / 2));
-            $textX = max(1, min(imagesx($layer) - $textWidth - 1, $textX));
+            $edge = $mapType === 'global' ? $this->margin + 1 : 1;
+            $textX = max($edge, min(imagesx($layer) - $textWidth - $edge, $textX));
             $textY = $y + $size + 2;  // Petit espace après le marqueur
-            $textY = min(imagesy($layer) - $textHeight - 1, $textY);
+            $textY = min(imagesy($layer) - $textHeight - $edge, $textY);
 
             // Dessine le texte avec un contour (pour une meilleure lisibilité)
             for ($dx = -1; $dx <= 1; $dx++) {

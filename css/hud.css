@@ -810,14 +810,16 @@ body:has(#hud) #svg-container .blocked-tile-marker {
     }
 }
 
-/* Bandes sombres de la bordure graduée */
-#hud #svg-view .hud-svg-coord-band {
+/* Bandes sombres de la bordure graduée (damier et carte du monde) */
+#hud #svg-view .hud-svg-coord-band,
+#hud .hud-map-rulers .hud-svg-coord-band {
     fill: var(--hud-night);
     opacity: 0.82;
     pointer-events: none;
 }
 
-#hud #svg-view .hud-svg-coord {
+#hud #svg-view .hud-svg-coord,
+#hud .hud-map-rulers .hud-svg-coord {
     /* Unités du viewBox : la planche est affichée réduite (~0.6),
      * 13 unités rendent ~8px lisibles. */
     font-size: 13px;
@@ -2208,9 +2210,10 @@ body:has(#hud) #view-landing-wrapper {
 
 .hud-map-stack {
     position: relative;
-    width: min(100cqw, 100cqh * var(--map-ratio, 1));
+    /* --map-ruler: room for the world map's numbered border (load_map.php) */
+    width: min(100cqw - 2 * var(--map-ruler, 0px), (100cqh - 2 * var(--map-ruler, 0px)) * var(--map-ratio, 1));
     aspect-ratio: var(--map-ratio, 1);
-    margin: 0 auto;
+    margin: var(--map-ruler, 0px) auto;
 }
 
 .hud-map-stack img {
@@ -2218,6 +2221,13 @@ body:has(#hud) #view-landing-wrapper {
     inset: 0;
     width: 100%;
     height: 100%;
+}
+
+/* The border sits around the map, like the board's */
+.hud-map-stack .hud-map-rulers {
+    position: absolute;
+    inset: calc(-1 * var(--map-ruler, 0px));
+    overflow: visible;
 }
 
 .hud-map-stack [hidden] {

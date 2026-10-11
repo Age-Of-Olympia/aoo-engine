@@ -1268,6 +1268,72 @@
     };
 
     /*
+     * Bordure graduée sur les QUATRE côtés d'une boîte p = [x, y, w, h]
+     * (unités SVG) : bandes sombres de largeur G autour, numéros
+     * parchemin par-dessus. colMids / rowMids : libellé -> centre de la
+     * colonne / ligne. Partagée par le damier et la carte du monde
+     * (load_map.php), qui l'appelle via window.hudDrawRulers.
+     */
+    function drawRulers(p, G, colMids, rowMids) {
+        var NS = 'http://www.w3.org/2000/svg';
+        var g = document.createElementNS(NS, 'g');
+
+        function band(bx, by, bw, bh) {
+            var r = document.createElementNS(NS, 'rect');
+            r.setAttribute('x', bx);
+            r.setAttribute('y', by);
+            r.setAttribute('width', bw);
+            r.setAttribute('height', bh);
+            r.setAttribute('class', 'hud-svg-coord-band');
+            g.appendChild(r);
+        }
+
+        band(p[0] - G, p[1] - G, p[2] + 2 * G, G);          /* haut  */
+        band(p[0] - G, p[1] + p[3], p[2] + 2 * G, G);       /* bas   */
+        band(p[0] - G, p[1], G, p[3]);                      /* gauche */
+        band(p[0] + p[2], p[1], G, p[3]);                   /* droite */
+
+        function coordLabel(tx, ty, str) {
+            var t = document.createElementNS(NS, 'text');
+            t.setAttribute('x', tx);
+            t.setAttribute('y', ty);
+            t.setAttribute('text-anchor', 'middle');
+            t.setAttribute('class', 'hud-svg-coord');
+            t.textContent = str;
+            g.appendChild(t);
+        }
+
+        Object.keys(colMids).forEach(function (cx) {
+            coordLabel(colMids[cx], p[1] - G / 2 + 4.5, cx);                 /* haut */
+            coordLabel(colMids[cx], p[1] + p[3] + G / 2 + 4.5, cx);          /* bas  */
+        });
+        Object.keys(rowMids).forEach(function (cy) {
+            coordLabel(p[0] - G / 2, rowMids[cy] + 4.5, cy);                 /* gauche */
+            coordLabel(p[0] + p[2] + G / 2, rowMids[cy] + 4.5, cy);          /* droite */
+        });
+
+        return g;
+    }
+    window.hudDrawRulers = drawRulers;
+
+    /* Largeur des bandes de la bordure, en unités du damier */
+    var RULER_BAND = 16;
+
+    /* Échelle d'affichage du damier (pixels écran par unité du viewBox
+     * d'origine) : la carte du monde s'y cale pour que sa bordure ait la
+     * même taille à l'écran. */
+    window.hudBoardScale = function () {
+        var svg = document.getElementById('svg-view');
+        if (!svg) {
+            return 0;
+        }
+        var vb = (svg.getAttribute('viewBox') || '').split(/[ ,]+/).map(Number);
+        var w = svg.getBoundingClientRect().width;
+        return vb.length === 4 && vb[2] > 0 ? w / vb[2] : 0;
+    };
+    window.hudRulerBand = RULER_BAND;
+
+    /*
      * Coordonnées en bordure du damier : des <text> SVG injectés dans
      * la planche elle-même, dans une marge ajoutée au viewBox — x en
      * haut, y à gauche. Partie intégrante du damier : elles se
@@ -1326,53 +1392,24 @@
 
         /* Bordure graduée sur les QUATRE côtés : bandes sombres dans
          * la marge du viewBox, numéros parchemin par-dessus. */
-        var G = 16;
+        var G = RULER_BAND;
         var vb = svg.dataset.origViewbox || svg.getAttribute('viewBox') || '0 0 650 650';
         svg.dataset.origViewbox = vb;
         var p = vb.split(/[ ,]+/).map(Number);
         svg.setAttribute('viewBox',
             (p[0] - G) + ' ' + (p[1] - G) + ' ' + (p[2] + 2 * G) + ' ' + (p[3] + 2 * G));
 
-        var NS = 'http://www.w3.org/2000/svg';
-        var g = document.createElementNS(NS, 'g');
-        g.setAttribute('id', 'hud-svg-coords');
-
-        function band(bx, by, bw, bh) {
-            var r = document.createElementNS(NS, 'rect');
-            r.setAttribute('x', bx);
-            r.setAttribute('y', by);
-            r.setAttribute('width', bw);
-            r.setAttribute('height', bh);
-            r.setAttribute('class', 'hud-svg-coord-band');
-            g.appendChild(r);
-        }
-
-        band(p[0] - G, p[1] - G, p[2] + 2 * G, G);          /* haut  */
-        band(p[0] - G, p[1] + p[3], p[2] + 2 * G, G);       /* bas   */
-        band(p[0] - G, p[1], G, p[3]);                      /* gauche */
-        band(p[0] + p[2], p[1], G, p[3]);                   /* droite */
-
-        function coordLabel(tx, ty, str) {
-            var t = document.createElementNS(NS, 'text');
-            t.setAttribute('x', tx);
-            t.setAttribute('y', ty);
-            t.setAttribute('text-anchor', 'middle');
-            t.setAttribute('class', 'hud-svg-coord');
-            t.textContent = str;
-            g.appendChild(t);
-        }
-
+        var colMids = {};
+        var rowMids = {};
         Object.keys(cols).forEach(function (cx) {
-            var mid = cols[cx] + tile / 2;
-            coordLabel(mid, p[1] - G / 2 + 4.5, cx);                 /* haut */
-            coordLabel(mid, p[1] + p[3] + G / 2 + 4.5, cx);          /* bas  */
+            colMids[cx] = cols[cx] + tile / 2;
         });
         Object.keys(rows).forEach(function (cy) {
-            var mid = rows[cy] + tile / 2 + 4.5;
-            coordLabel(p[0] - G / 2, mid, cy);                       /* gauche */
-            coordLabel(p[0] + p[2] + G / 2, mid, cy);                /* droite */
+            rowMids[cy] = rows[cy] + tile / 2;
         });
 
+        var g = drawRulers(p, G, colMids, rowMids);
+        g.setAttribute('id', 'hud-svg-coords');
         svg.appendChild(g);
 
         /* Le viewBox vient de changer : recaler les masques météo. */

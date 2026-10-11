@@ -108,6 +108,7 @@ if ($missing) {
 $imgs = '';
 $toggles = '';
 $aspect = '';
+$rulers = $showWorld ? $viewService->getWorldRulers() : null;
 foreach ($layers as $layer => [$label, $shown]) {
     $imagePath = $mapResult[$layer]['imagePath'] ?? null;
     if (!$imagePath || !file_exists($_SERVER['DOCUMENT_ROOT'] . $imagePath)) {
@@ -118,6 +119,12 @@ foreach ($layers as $layer => [$label, $shown]) {
         $aspect = (string) round($w / max(1, $h), 4);
     }
     $imgs .= '<img src="' . $imagePath . '" alt="" data-layer="' . $layer . '"' . ($shown ? '' : ' hidden') . ' />';
+    /* The numbered border: drawn by the board's own code (js/hud.js) */
+    if ($layer === 'coordinates' && $rulers !== null) {
+        $imgs .= '<svg class="hud-map-rulers" data-layer="coordinates"'
+            . ' data-rulers="' . htmlspecialchars((string) json_encode($rulers), ENT_QUOTES) . '"'
+            . ($shown ? '' : ' hidden') . '></svg>';
+    }
     /* The terrain is the map itself: never switched off */
     if ($layer !== 'tiles') {
         $toggles .= '<label><input type="checkbox" data-layer="' . $layer . '"' . ($shown ? ' checked' : '') . '> ' . $label . '</label>';
@@ -169,10 +176,65 @@ if ($player->have_option('isAdmin')) {
 echo '</div>';
 ?>
 <script>
+(function () {
+    /* World map border: the board's own rulers (js/hud.js drawRulers),
+     * same band, font and offsets. The map is expressed in board units
+     * (k = stack px per image px / board px per unit), so the border has
+     * the board's on-screen size. Like the board's, it sits around the
+     * map content, over the image margin, in room the stack leaves
+     * through --map-ruler. The bands widen to fit the longest number. */
+    function drawWorldRulers() {
+        var boardScale = window.hudBoardScale ? window.hudBoardScale() : 0;
+        if (!window.hudDrawRulers || !boardScale) {
+            return;
+        }
+        var G = window.hudRulerBand;
+        $('.hud-map-rulers').each(function () {
+            var svg = this;
+            var stack = svg.parentNode;
+            var r = JSON.parse(svg.getAttribute('data-rulers'));
+            $(svg).empty();
+
+            var band = G;
+            var probe = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            probe.setAttribute('class', 'hud-svg-coord');
+            svg.appendChild(probe);
+            Object.keys(r.rows).forEach(function (y) {
+                probe.textContent = y;
+                band = Math.max(band, probe.getComputedTextLength() + 6);
+            });
+            svg.removeChild(probe);
+
+            var room = band * boardScale;
+            stack.style.setProperty('--map-ruler', room + 'px');
+            var s = stack.getBoundingClientRect().width / r.width;
+            var k = s / boardScale;
+            if (!k) {
+                return;
+            }
+            var inner = r.margin * s;
+            svg.style.inset = (inner - room) + 'px';
+
+            var cols = {};
+            var rows = {};
+            Object.keys(r.cols).forEach(function (x) { cols[x] = r.cols[x] * k; });
+            Object.keys(r.rows).forEach(function (y) { rows[y] = r.rows[y] * k; });
+            var p = [r.margin * k, r.margin * k, (r.width - 2 * r.margin) * k, (r.height - 2 * r.margin) * k];
+            svg.setAttribute('viewBox', (p[0] - band) + ' ' + (p[1] - band) + ' ' + (p[2] + 2 * band) + ' ' + (p[3] + 2 * band));
+            svg.appendChild(window.hudDrawRulers(p, band, cols, rows));
+        });
+    }
+    drawWorldRulers();
+    $(window).off('resize.hudMapRulers').on('resize.hudMapRulers', drawWorldRulers);
+
     /* A layer is one element of the stack: toggling it needs no reload */
     $('.hud-map-layers input').on('change', function () {
         $('.hud-map-stack [data-layer="' + $(this).data('layer') + '"]').prop('hidden', !this.checked);
+        if (this.checked && $(this).data('layer') === 'coordinates') {
+            drawWorldRulers();
+        }
     });
+})();
 </script>
 <?php
 
