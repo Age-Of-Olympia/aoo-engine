@@ -5,6 +5,7 @@ namespace Tests\Action;
 use App\Action\BuffAction;
 use App\Action\HealAction;
 use App\Action\MeleeAction;
+use App\Entity\ActionCondition;
 use App\Entity\ActionOutcome;
 use App\Enum\OutcomeTarget;
 use App\Service\Action\ActionTargeting;
@@ -102,6 +103,32 @@ final class ActionTargetingTest extends TestCase
         // Missing data, not an override: a buff row with no success outcomes yet
         // still acts on its caster.
         $this->assertSame(ActionTargeting::SELF, $this->targeting->scopeOf(new BuffAction()));
+    }
+
+    public function testASelfOnlyTargetTypeIsShownOnTheCastersCard(): void
+    {
+        // Discrétion, exploration: TargetType self names no entity kind.
+        $buff = new BuffAction();
+        $buff->addOutcome($this->successOutcome(OutcomeTarget::Self));
+        $buff->addCondition($this->targetType(['self']));
+
+        $this->assertTrue($this->targeting->canTargetSelf($buff));
+        $this->assertTrue($this->targeting->canTargetEntity($buff, 'real'));
+    }
+
+    public function testACharacterTargetTypeStillKeepsStructuresOut(): void
+    {
+        $buff = new BuffAction();
+        $buff->addCondition($this->targetType(['character']));
+
+        $this->assertTrue($this->targeting->canTargetEntity($buff, 'real'));
+        $this->assertFalse($this->targeting->canTargetEntity($buff, 'building'));
+    }
+
+    /** @param list<string> $allowed */
+    private function targetType(array $allowed): ActionCondition
+    {
+        return (new ActionCondition())->setConditionType('TargetType')->setParameters(['allowed' => $allowed]);
     }
 
     private function successOutcome(OutcomeTarget $applyTo): ActionOutcome

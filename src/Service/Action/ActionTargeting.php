@@ -98,6 +98,15 @@ final class ActionTargeting
             $params = $condition->getParameters();
             $allowed = is_array($params['allowed'] ?? null) ? $params['allowed'] : [];
 
+            // self / none are no entity kind: the scope filter already
+            // settled who the action reaches.
+            if (array_intersect($allowed, [
+                \App\Action\Condition\TargetTypeCondition::KIND_SELF,
+                \App\Action\Condition\TargetTypeCondition::KIND_NONE,
+            ]) !== []) {
+                return true;
+            }
+
             return \App\Action\Condition\TargetTypeCondition::reaches($playerType, $allowed);
         }
 
