@@ -360,6 +360,34 @@ class ViewService {
         }
     }
     
+    /**
+     * Pixel box of one cell: exactly its share of the map, so neighbouring
+     * cells tile without gap or overlap. On the world map a cell is ~2 px;
+     * the former fixed 6 px squares bled into their neighbours.
+     *
+     * @return array{int, int, int, int} x1, y1, x2, y2 (inclusive)
+     */
+    private function cellRect(int $x, int $y, string $mapType, float $minSize = 1.0): array
+    {
+        if ($mapType === "global") {
+            $scale = (float) $this->scaleX;
+            $cx = $this->margin + ($x - $this->minX) * $scale;
+            $cy = $this->height - ($this->margin + ($y - $this->minY) * $scale);
+        } else {
+            $scale = (float) $this->localScaleX;
+            $cx = $this->localOffsetX + ($x - $this->localMinX) * $scale;
+            $cy = $this->localMapHeight - ($this->localOffsetY + ($y - $this->localMinY) * $scale);
+        }
+        $half = max($scale, $minSize) / 2;
+
+        return [
+            (int) floor($cx - $half),
+            (int) floor($cy - $half),
+            max((int) floor($cx - $half), (int) floor($cx + $half) - 1),
+            max((int) floor($cy - $half), (int) floor($cy + $half) - 1),
+        ];
+    }
+
     private array $tileColorCache = [];
 
     private function getColorForType($name) {
@@ -571,12 +599,7 @@ class ViewService {
             $x = $this->transformX($tile['x'], $mapType);
             $y = $this->transformY($tile['y'], $mapType);
             
-            $tileSize = ($mapType === "global") ? 6 : $this->localScaleX;
-
-            $x1 = (int)($x - ($tileSize/2));
-            $y1 = (int)($y - ($tileSize/2));
-            $x2 = (int)($x + ($tileSize/2));
-            $y2 = (int)($y + ($tileSize/2));
+            [$x1, $y1, $x2, $y2] = $this->cellRect((int) $tile['x'], (int) $tile['y'], $mapType);
 
             $margin = 0.5;
             $shadowColor = imagecolorallocatealpha($layer, 0, 0, 0, 110); // Ombre semi-transparente
@@ -621,12 +644,7 @@ class ViewService {
             $y = $this->transformY($tile['y'], $mapType);
             $color = $this->getColorForType($tile['name']?? 'default');
             
-            $tileSize = ($mapType === "global") ? 6 : $this->localScaleX;
-
-            $x1 = (int)($x - ($tileSize/2));
-            $y1 = (int)($y - ($tileSize/2));
-            $x2 = (int)($x + ($tileSize/2));
-            $y2 = (int)($y + ($tileSize/2));
+            [$x1, $y1, $x2, $y2] = $this->cellRect((int) $tile['x'], (int) $tile['y'], $mapType);
             
             // Dessine la tuile
             imagefilledrectangle(
@@ -684,12 +702,7 @@ class ViewService {
                 );
             }
 
-            $elementSize = ($mapType === "global") ? 6 : $this->localScaleX;
-
-            $x1 = (int)($x - ($elementSize/2));
-            $y1 = (int)($y - ($elementSize/2));
-            $x2 = (int)($x + ($elementSize/2));
-            $y2 = (int)($y + ($elementSize/2));
+            [$x1, $y1, $x2, $y2] = $this->cellRect((int) $element['x'], (int) $element['y'], $mapType);
             
             // Dessine l'élément
             imagefilledrectangle(
@@ -973,12 +986,7 @@ class ViewService {
             $y = $this->transformY($wall['y'], $mapType);
             $color = $this->getColorForType($wall['name']?? 'default');
             
-            $tileSize = ($mapType === "global") ? 6 : $this->localScaleX;
-
-            $x1 = (int)($x - ($tileSize/2));
-            $y1 = (int)($y - ($tileSize/2));
-            $x2 = (int)($x + ($tileSize/2));
-            $y2 = (int)($y + ($tileSize/2));
+            [$x1, $y1, $x2, $y2] = $this->cellRect((int) $wall['x'], (int) $wall['y'], $mapType);
             
             // Dessine la tuile
             imagefilledrectangle(
@@ -1028,14 +1036,9 @@ class ViewService {
             list($r, $g, $b) = sscanf($raceColor, "#%02x%02x%02x");
             $color = imagecolorallocate($layer, $r, $g, $b);
 
-            $tileSize = ($mapType === "global") ? 6 : $this->localScaleX;
-
-            imagefilledrectangle(
-                $layer,
-                (int)($x - ($tileSize/2)), (int)($y - ($tileSize/2)),
-                (int)($x + ($tileSize/2)), (int)($y + ($tileSize/2)),
-                $color
-            );
+            // A building stays a visible dot on the world map (3 px at least)
+            [$x1, $y1, $x2, $y2] = $this->cellRect((int) $building['x'], (int) $building['y'], $mapType, 3.0);
+            imagefilledrectangle($layer, $x1, $y1, $x2, $y2, $color);
         }
 
         $this->layers['buildings'] = $layer;
