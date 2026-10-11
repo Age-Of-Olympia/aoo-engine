@@ -831,53 +831,70 @@
      * (turned like the layer), so a frame repaints one element per layer,
      * not one per cell. A sliding texture stands still; GIF and WebP play.
      */
+    var IS_WEBKIT = /iP(hone|ad|od)/.test(navigator.userAgent)
+        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+        || /^((?!chrome|chromium|crios|android|edg|fxios).)*safari/i.test(navigator.userAgent);
+
     function fixWebkitAnimLayers() {
         if (!IS_WEBKIT) {
             return;
         }
         var NS = 'http://www.w3.org/2000/svg';
-        Array.prototype.forEach.call(document.querySelectorAll('.anim-layers foreignObject[mask]'), function (fo) {
-            var maskRef = fo.getAttribute('mask');
-            var id = (maskRef.match(/#([^)]+)\)/) || [])[1];
-            var mask = id ? document.getElementById(id) : null;
-            var texture = fo.querySelector('.anim-layer-texture');
-            var url = texture ? (texture.style.backgroundImage.match(/url\(["']?(.*?)["']?\)$/) || [])[1] : null;
-            if (!mask || !url) {
-                return;
-            }
-            var frame = fo.querySelector('.anim-layer-frame');
-            var turn = frame ? (frame.style.transform.match(/rotate\((-?[\d.]+)deg\)/) || [])[1] : null;
-            var box = fo.firstElementChild;
-            var t = parseFloat(mask.firstElementChild ? mask.firstElementChild.getAttribute('width') : 50) || 50;
-
-            /* Cells sit on the board grid, so a t x t pattern from the
-             * layer's corner lands on them */
-            var pattern = document.createElementNS(NS, 'pattern');
-            pattern.setAttribute('id', 'webkit-' + id);
-            pattern.setAttribute('patternUnits', 'userSpaceOnUse');
-            pattern.setAttribute('width', t);
-            pattern.setAttribute('height', t);
-            var img = document.createElementNS(NS, 'image');
-            img.setAttribute('href', url);
-            img.setAttribute('width', t);
-            img.setAttribute('height', t);
-            if (turn) {
-                img.setAttribute('transform', 'rotate(' + turn + ' ' + (t / 2) + ' ' + (t / 2) + ')');
-            }
-            pattern.appendChild(img);
-            var defs = document.createElementNS(NS, 'defs');
-            defs.appendChild(pattern);
-
-            var rect = document.createElementNS(NS, 'rect');
-            rect.setAttribute('width', fo.getAttribute('width'));
-            rect.setAttribute('height', fo.getAttribute('height'));
-            rect.setAttribute('fill', 'url(#webkit-' + id + ')');
-            rect.setAttribute('mask', maskRef);
-            rect.setAttribute('pointer-events', 'none');
-            rect.setAttribute('opacity', box && box.style.opacity !== '' ? box.style.opacity : '1');
-
-            fo.replaceWith(defs, rect);
+        /* By tag name, not by selector: WebKit's selectors miss camelCase
+         * SVG names such as foreignObject. Copied: the loop replaces them. */
+        var layers = Array.prototype.slice.call(document.getElementsByTagName('foreignObject')).filter(function (fo) {
+            return fo.hasAttribute('mask') && fo.closest('.anim-layers');
         });
+        layers.forEach(function (fo) {
+            try {
+                convertWebkitAnimLayer(fo, NS);
+            } catch (e) {
+                /* One layer that will not convert keeps the others converting */
+            }
+        });
+    }
+
+    function convertWebkitAnimLayer(fo, NS) {
+        var maskRef = fo.getAttribute('mask');
+        var id = (maskRef.match(/#([^)]+)\)/) || [])[1];
+        var mask = id ? document.getElementById(id) : null;
+        var texture = fo.querySelector('.anim-layer-texture');
+        var url = texture ? (texture.style.backgroundImage.match(/url\(["']?(.*?)["']?\)$/) || [])[1] : null;
+        if (!mask || !url) {
+            return;
+        }
+        var frame = fo.querySelector('.anim-layer-frame');
+        var turn = frame ? (frame.style.transform.match(/rotate\((-?[\d.]+)deg\)/) || [])[1] : null;
+        var box = fo.firstElementChild;
+        var t = parseFloat(mask.firstElementChild ? mask.firstElementChild.getAttribute('width') : 50) || 50;
+
+        /* Cells sit on the board grid, so a t x t pattern from the
+         * layer's corner lands on them */
+        var pattern = document.createElementNS(NS, 'pattern');
+        pattern.setAttribute('id', 'webkit-' + id);
+        pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+        pattern.setAttribute('width', t);
+        pattern.setAttribute('height', t);
+        var img = document.createElementNS(NS, 'image');
+        img.setAttribute('href', url);
+        img.setAttribute('width', t);
+        img.setAttribute('height', t);
+        if (turn) {
+            img.setAttribute('transform', 'rotate(' + turn + ' ' + (t / 2) + ' ' + (t / 2) + ')');
+        }
+        pattern.appendChild(img);
+        var defs = document.createElementNS(NS, 'defs');
+        defs.appendChild(pattern);
+
+        var rect = document.createElementNS(NS, 'rect');
+        rect.setAttribute('width', fo.getAttribute('width'));
+        rect.setAttribute('height', fo.getAttribute('height'));
+        rect.setAttribute('fill', 'url(#webkit-' + id + ')');
+        rect.setAttribute('mask', maskRef);
+        rect.setAttribute('pointer-events', 'none');
+        rect.setAttribute('opacity', box && box.style.opacity !== '' ? box.style.opacity : '1');
+
+        fo.replaceWith(defs, rect);
     }
 
     /*
