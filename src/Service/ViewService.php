@@ -625,6 +625,17 @@ class ViewService {
                 $planData = $this->getPlanData($plan);
                 $this->applyBackground($layer, $planData, false);
             }
+        } else {
+            // Cells without a tile show the plan's ground, as on the board,
+            // instead of a hole in the map
+            $ground = $this->getPlanData($plan)->bg ?? null;
+            $rgb = ColorService::colorFor($ground ? pathinfo($ground, PATHINFO_FILENAME) : 'default', $this->colors);
+            imagefilledrectangle(
+                $layer,
+                $this->margin, $this->margin,
+                imagesx($layer) - $this->margin - 1, imagesy($layer) - $this->margin - 1,
+                imagecolorallocate($layer, $rgb[0], $rgb[1], $rgb[2])
+            );
         }
 
         $query = "SELECT mt.*, c.x, c.y" . 
