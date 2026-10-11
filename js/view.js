@@ -582,14 +582,17 @@ $(document).ready(function(){
     var ownCoords = $('#current-player-avatar').attr('data-coords');
 
     /* Le tutoriel conduit ses propres panneaux, à son rythme : lui en ouvrir
-       un dans le dos ferait valider des étapes que le joueur n'a pas faites. */
+       un dans le dos ferait valider des étapes que le joueur n'a pas faites.
+       At page load tutorialUI only turns active after resume.php answers:
+       the server's flag is the one that holds at this point. */
     /* On page load the HUD may reopen the saved selection instead: that
        panel would replace this one, so asking for both costs a request. */
     var hudRestores = pageLoad && window.hudRestoresSelection && window.hudRestoresSelection();
 
     /* observed: the step's response already carries this panel (js/hud.js
        hudApplyMove) */
-    if (ownCoords && !hudRestores && !observed && !(window.tutorialUI && window.tutorialUI.isActive)) {
+    if (ownCoords && !hudRestores && !observed && !window.TUTORIAL_IN_PROGRESS
+        && !(window.tutorialUI && window.tutorialUI.isActive)) {
 
         openObservation(ownCoords, {force: true});
     }

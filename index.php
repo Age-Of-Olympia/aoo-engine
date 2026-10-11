@@ -198,6 +198,7 @@ echo '<script>
     window.TUTORIAL_TOTAL_PI = ' . $totalTutorialPI . ';
     window.TUTORIAL_IS_REPLAY = ' . ($hasCompletedTutorialBefore ? 'true' : 'false') . ';
     window.TUTORIAL_NO_SESSION = ' . ($noTutorialSession ? 'true' : 'false') . ';
+    window.TUTORIAL_IN_PROGRESS = ' . ($inTutorial ? 'true' : 'false') . ';
 </script>';
 
 if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew && !$autoStarting) {
