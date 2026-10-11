@@ -603,25 +603,30 @@ class View{
              * les tuiles de sol n'ont pas toutes le même format — gaia
              * fait 500 (dix cases), underground et sky en font 50. La
              * figer aurait changé l\'échelle du décor selon le plan. */
-            $tileSize = @getimagesize($tile);
-            $tileW = ($tileSize[0] ?? 0) ?: self::TILE_PX;
-            $tileH = ($tileSize[1] ?? 0) ?: self::TILE_PX;
+            // A missing ground image leaves the board transparent, as the CSS
+            // background did: an SVG <image> that fails is drawn broken by Chrome.
+            if(file_exists($tile)){
 
-            /* Débordement large : buildMapRulers (js/hud.js) agrandit le
-             * viewBox pour loger les coordonnées en marge, et cette marge
-             * était peinte par le fond CSS. Le rectangle la couvre donc
-             * aussi ; ce qui dépasse est écrêté par le viewBox, sans coût. */
-            echo '
-            <defs>
-                <pattern id="ground-pattern" patternUnits="userSpaceOnUse"
-                         width="'. $tileW .'" height="'. $tileH .'">
-                    <image href="'. $tile .'" xlink:href="'. $tile .'"
-                           width="'. $tileW .'" height="'. $tileH .'" />
-                </pattern>
-            </defs>
-            <rect x="-200" y="-200" width="'. ($sizeW + 400) .'" height="'. ($sizeH + 400) .'"
-                  fill="url(#ground-pattern)" />
-            ';
+                $tileSize = @getimagesize($tile);
+                $tileW = ($tileSize[0] ?? 0) ?: self::TILE_PX;
+                $tileH = ($tileSize[1] ?? 0) ?: self::TILE_PX;
+
+                /* Débordement large : buildMapRulers (js/hud.js) agrandit le
+                 * viewBox pour loger les coordonnées en marge, et cette marge
+                 * était peinte par le fond CSS. Le rectangle la couvre donc
+                 * aussi ; ce qui dépasse est écrêté par le viewBox, sans coût. */
+                echo '
+                <defs>
+                    <pattern id="ground-pattern" patternUnits="userSpaceOnUse"
+                             width="'. $tileW .'" height="'. $tileH .'">
+                        <image href="'. $tile .'" xlink:href="'. $tile .'"
+                               width="'. $tileW .'" height="'. $tileH .'" />
+                    </pattern>
+                </defs>
+                <rect x="-200" y="-200" width="'. ($sizeW + 400) .'" height="'. ($sizeH + 400) .'"
+                      fill="url(#ground-pattern)" />
+                ';
+            }
 
 
             $tiledSql = '';
