@@ -110,9 +110,9 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
 
         // A type still described by a race mints a building; anything else
         // places the object itself. Families leaving `races` switch sides here
-        // on their own.
+        // on their own. A chest is always the object, whatever `races` holds.
         $race = $this->raceService()->getRaceByName($type);
-        $isRaceTyped = $race?->isStructureKind() ?? false;
+        $isRaceTyped = ($race?->isStructureKind() ?? false) && BuildingService::chestItemId($type) === null;
 
         try {
             $id = $isRaceTyped

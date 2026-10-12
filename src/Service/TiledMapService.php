@@ -245,11 +245,18 @@ class TiledMapService
         // Buildings palette: the structure type catalog (same entries as
         // admin → Bâtiments), sprite resolved as at render time
         $catalog[self::BUILDINGS_LAYER] = [];
-        foreach ((new RaceService())->getBuildingTypes() as $race) {
-            $catalog[self::BUILDINGS_LAYER][] = $race->getName();
-            $sprite = BuildingService::resolveAvatar($race->getName());
+        // Chests (lockable objects) are drawn on the same layer:
+        // BuildingService::place() lays them as the object itself.
+        $types = array_map(static fn($race): string => $race->getName(), (new RaceService())->getBuildingTypes());
+        $res = $this->db->exe('SELECT name FROM items WHERE lockable = 1');
+        while ($row = $res->fetch_assoc()) {
+            $types[] = (string) $row['name'];
+        }
+        foreach (array_unique($types) as $type) {
+            $catalog[self::BUILDINGS_LAYER][] = $type;
+            $sprite = BuildingService::resolveAvatar($type);
             if ($sprite !== BuildingService::NO_IMAGE) {
-                $images[self::BUILDINGS_LAYER . '/' . $race->getName()] = $sprite;
+                $images[self::BUILDINGS_LAYER . '/' . $type] = $sprite;
             }
         }
         sort($catalog[self::BUILDINGS_LAYER]);
@@ -924,19 +931,31 @@ class TiledMapService
     private function fetchBuildingRows(string $plan, int $z, ?int $yFrom = null, ?int $yTo = null): array
     {
         $res = $this->db->exe(
-            "SELECT p.id, p.race AS name, c.x, c.y, p.owner_id, p.faction, b.build_state, " . self::GOD_PARAMS_SQL . "
-             FROM buildings b
-             JOIN players p ON p.id = b.player_id
-             JOIN coords c ON c.id = p.coords_id
-             WHERE c.plan = ? AND c.z = ? AND c.y BETWEEN ? AND ?
-             ORDER BY c.y, c.x, p.id",
-            array($plan, $z, $yFrom ?? PHP_INT_MIN, $yTo ?? PHP_INT_MAX)
+            "SELECT * FROM (
+                SELECT p.id, p.race AS name, c.x, c.y, p.owner_id, p.faction, b.build_state, 0 AS holds, " . self::GOD_PARAMS_SQL . "
+                  FROM buildings b
+                  JOIN players p ON p.id = b.player_id
+                  JOIN coords c ON c.id = p.coords_id
+                 WHERE c.plan = ? AND c.z = ? AND c.y BETWEEN ? AND ?
+                UNION ALL
+                -- placed chests: the object itself, protected while it holds something
+                SELECT p.id, p.race, c.x, c.y, p.owner_id, p.faction, 'built',
+                       EXISTS(SELECT 1 FROM players_items pi WHERE pi.player_id = p.id)
+                    OR EXISTS(SELECT 1 FROM players h WHERE h.holder_id = p.id), " . self::GOD_PARAMS_SQL . "
+                  FROM players p
+                  JOIN item_instances ii ON ii.entity_id = p.id AND ii.destroyed = 0
+                  JOIN items it ON it.id = ii.item_id AND it.lockable = 1
+                  JOIN coords c ON c.id = p.coords_id
+                 WHERE c.plan = ? AND c.z = ? AND c.y BETWEEN ? AND ?
+             ) t ORDER BY y, x, id",
+            array($plan, $z, $yFrom ?? PHP_INT_MIN, $yTo ?? PHP_INT_MAX, $plan, $z, $yFrom ?? PHP_INT_MIN, $yTo ?? PHP_INT_MAX)
         );
 
         $rows = [];
         while ($row = $res->fetch_assoc()) {
             $isAuthorable = $row['owner_id'] === null
-                && (string) $row['build_state'] === 'built';
+                && (string) $row['build_state'] === 'built'
+                && !(int) $row['holds'];
 
             $rows[] = [
                 'id'        => (int) $row['id'],

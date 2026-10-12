@@ -363,6 +363,15 @@ class BuildingService
         return $variant !== '' ? self::resolveAvatar($type) : self::NO_IMAGE;
     }
 
+    /** The catalogue chest (items.lockable) this type names, or null. */
+    public static function chestItemId(string $type): ?int
+    {
+        $id = EntityManagerFactory::getEntityManager()->getConnection()
+            ->fetchOne('SELECT id FROM items WHERE name = ? AND lockable = 1', [$type]);
+
+        return $id === false ? null : (int) $id;
+    }
+
     /**
      * Place a building of the given type on the map.
      *
@@ -433,6 +442,23 @@ class BuildingService
         bool $asConstructionSite = false,
         ?string $image = null
     ): int {
+        // A chest is the object itself, never a building, even when a race
+        // carries its name: a building has no instance to hold its contents.
+        $chestItemId = self::chestItemId($type);
+        if ($chestItemId !== null) {
+            $id = (new ItemInstanceService())->installFromCatalogAt(
+                $chestItemId,
+                (int) View::get_coords_id($goCoords),
+                null,
+                $ownerId,
+                $faction
+            );
+            \App\Service\Map\BoardChanges::cell($goCoords);
+            (new AuditService())->addAuditLog("BuildingService::place {$type} #{$id} (object) at ({$goCoords->x},{$goCoords->y},{$goCoords->plan})");
+
+            return $id;
+        }
+
         $race = $this->raceService->getRaceByName($type);
         if ($race === null) {
             throw new \InvalidArgumentException(
@@ -1508,12 +1534,30 @@ class BuildingService
 
         $goCoords = $this->coordsOf($playerId);
 
-        // Même hygiène transactionnelle que takeInstance() : la séquence de
-        // DELETE est tout-ou-rien, pas de démontage à moitié fait.
-        $conn->transactional(function ($conn) use ($playerId): void {
-            $conn->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$playerId]);
-            self::deleteEntityRows($conn, $playerId);
-        });
+        // A placed chest keeps its instance (catalogued object, FK RESTRICT):
+        // it is retired like a vanished wreck, and only while empty — what it
+        // holds is never lost to an editor removal.
+        $instanceId = PlacedExemplarService::instanceIdOf($conn, $playerId);
+        if ($instanceId !== null) {
+            $holds = $conn->fetchOne(
+                'SELECT 1 FROM players_items WHERE player_id = ? UNION SELECT 1 FROM players WHERE holder_id = ?',
+                [$playerId, $playerId]
+            );
+            if ($holds !== false) {
+                return false;
+            }
+            $conn->transactional(function ($conn) use ($playerId, $instanceId): void {
+                $conn->executeStatement('UPDATE item_instances SET destroyed = 1 WHERE id = ?', [$instanceId]);
+                (new \App\Service\Map\EntityLocationService($conn))->shelve($playerId);
+            });
+        } else {
+            // Même hygiène transactionnelle que takeInstance() : la séquence de
+            // DELETE est tout-ou-rien, pas de démontage à moitié fait.
+            $conn->transactional(function ($conn) use ($playerId): void {
+                $conn->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$playerId]);
+                self::deleteEntityRows($conn, $playerId);
+            });
+        }
 
         $this->refreshBoardAt($goCoords);
 

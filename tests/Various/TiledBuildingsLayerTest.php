@@ -247,6 +247,85 @@ class TiledBuildingsLayerTest extends TestCase
         $this->assertSame('', $at()['faction']);
     }
 
+    /**
+     * A chest drawn on the buildings layer is the object itself — even with a
+     * stray race of its name, which once made it a building that neither
+     * shuts nor holds. Kept on re-push, protected while it holds something,
+     * retired (not deleted) once erased empty.
+     */
+    public function testAChestIsDrawnAsTheObjectItself(): void
+    {
+        $chest = (string) $this->link->fetchOne('SELECT name FROM items WHERE lockable = 1 ORDER BY id LIMIT 1');
+        if ($chest === '') {
+            $this->markTestSkipped('Aucun coffre au catalogue.');
+        }
+        $this->link->executeStatement(
+            "INSERT INTO races (code, name, label, description, playable, hidden, kind, structure_nature,
+                                bleeds, wound_color, blocks_passage, blocks_projectiles, bgColor, color, faction, plan, pv)
+             VALUES (UPPER(?), ?, 'Coffre égaré', '', 0, 1, 'structure', 'obstacle', '', '#cd7f32', 1, 1, '#fff', 'black', '', '', 10)",
+            [$chest, $chest]
+        );
+        RaceService::clearCache();
+        $chestId = null;
+
+        try {
+            $service = new TiledMapService();
+            $export = $service->exportPlan(self::PLAN, 0);
+            $this->assertContains($chest, $export['catalog']['buildings'], 'the palette lists the chests');
+
+            $result = $service->importPlan(self::PLAN, 0, [
+                'buildings' => [['x' => 4, 'y' => 4, 'name' => $chest]],
+            ], $export['version']);
+            $this->assertSame(1, $result['layers']['buildings']['inserted']);
+
+            $placed = $this->link->fetchAssociative(
+                'SELECT p.id, p.player_type, ii.id AS instance_id FROM players p
+                   JOIN coords c ON c.id = p.coords_id
+                   LEFT JOIN item_instances ii ON ii.entity_id = p.id
+                  WHERE c.plan = ? AND c.x = 4 AND c.y = 4',
+                [self::PLAN]
+            );
+            $chestId = (int) $placed['id'];
+            $this->assertSame('item', $placed['player_type'], 'the object, not a building');
+            $this->assertNotNull($placed['instance_id']);
+
+            $export = $service->exportPlan(self::PLAN, 0);
+            $this->assertSame(0, $export['layers']['buildings'][0]['player_id'], 'empty: diffable');
+            $result = $service->importPlan(self::PLAN, 0, ['buildings' => $export['layers']['buildings']], $export['version']);
+            $this->assertSame(1, $result['layers']['buildings']['kept']);
+
+            // Holding something: out of the diff, an erasing push leaves it
+            $itemId = (int) $this->link->fetchOne('SELECT id FROM items WHERE lockable = 0 ORDER BY id LIMIT 1');
+            $this->link->executeStatement(
+                "INSERT INTO players_items (player_id, item_id, n, equiped, slot) VALUES (?, ?, 1, '', '')",
+                [$chestId, $itemId]
+            );
+            $export = $service->exportPlan(self::PLAN, 0);
+            $result = $service->importPlan(self::PLAN, 0, ['buildings' => []], $export['version']);
+            $this->assertSame(1, $result['layers']['buildings']['protected']);
+
+            // Emptied, then erased: retired, its instance kept as destroyed
+            $this->link->executeStatement('DELETE FROM players_items WHERE player_id = ?', [$chestId]);
+            $export = $service->exportPlan(self::PLAN, 0);
+            $result = $service->importPlan(self::PLAN, 0, ['buildings' => []], $export['version']);
+            $this->assertSame(1, $result['layers']['buildings']['deleted']);
+            $this->assertNull($this->link->fetchOne('SELECT coords_id FROM players WHERE id = ?', [$chestId]));
+            $this->assertSame(1, (int) $this->link->fetchOne(
+                'SELECT destroyed FROM item_instances WHERE id = ?',
+                [(int) $placed['instance_id']]
+            ));
+        } finally {
+            if ($chestId !== null) {
+                $this->link->executeStatement('DELETE FROM players_items WHERE player_id = ?', [$chestId]);
+                $this->link->executeStatement('DELETE FROM item_instances WHERE entity_id = ?', [$chestId]);
+                $this->link->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [$chestId]);
+                $this->link->executeStatement('DELETE FROM players WHERE id = ?', [$chestId]);
+            }
+            $this->link->executeStatement("DELETE FROM races WHERE name = ? AND label = 'Coffre égaré'", [$chest]);
+            RaceService::clearCache();
+        }
+    }
+
     private function nameAt(int $x, int $y): string
     {
         return (string) $this->link->fetchOne(

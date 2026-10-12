@@ -36,6 +36,12 @@ function building_type_options(): array
     foreach ((new RaceService())->getRacesByKind(\App\Enum\EntityCategory::Structure->value) as $race) {
         $out[$race->getName()] = $race->getLabel();
     }
+    // Chests are objects, placed by the same form (BuildingService::place).
+    $chests = \App\Factory\EntityManagerFactory::getEntityManager()->getConnection()
+        ->fetchAllKeyValue("SELECT name, COALESCE(NULLIF(label, ''), name) FROM items WHERE lockable = 1");
+    foreach ($chests as $name => $label) {
+        $out[$name] = $label . ' — objet';
+    }
     ksort($out);
     return $out;
 }
