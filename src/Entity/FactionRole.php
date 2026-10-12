@@ -16,12 +16,40 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\UniqueConstraint(name: "UNIQ_faction_roles_position", columns: ["faction_id", "position"])]
 class FactionRole
 {
-    /** Permission flags, in the order the legacy JSON files used them. */
-    public const FLAG_KEYS = [
-        'defaultRole', 'showPosition', 'showForum', 'addMember',
-        'editRole', 'kickMember', 'initRole',
-        'driveBuilding', 'useChest', 'showLogs', 'manageChests', 'useDoor',
+    /**
+     * The permission flags (one boolean column each) and their player-facing
+     * label — the single list read by the admin, the in-game ladder, import,
+     * export and the seed.
+     */
+    public const FLAG_LABELS = [
+        'defaultRole'   => 'Accueil',
+        'showPosition'  => 'Voir les positions',
+        'showForum'     => 'Voir le forum',
+        'addMember'     => 'Recruter',
+        'editRole'      => 'Changer les rangs',
+        'kickMember'    => 'Renvoyer',
+        'initRole'      => 'Régler l\'échelle',
+        'driveBuilding' => 'Piloter les bâtiments',
+        'useChest'      => 'Verrouiller les coffres',
+        'showLogs'      => 'Voir le journal',
+        'manageChests'  => 'Gérer les coffres',
+        'useDoor'       => 'Ouvrir les portes',
     ];
+
+    /** @return list<string> */
+    public static function flagKeys(): array
+    {
+        return array_keys(self::FLAG_LABELS);
+    }
+
+    /**
+     * @return list<string> the flags a ladder-holder may grant — the landing rank
+     * (defaultRole) is structure, not a capability
+     */
+    public static function grantableFlags(): array
+    {
+        return array_values(array_diff(self::flagKeys(), ['defaultRole']));
+    }
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -120,6 +148,11 @@ class FactionRole
         $this->name = $name;
     }
 
+    public function getNameAlt(): string
+    {
+        return $this->nameAlt;
+    }
+
     public function getFlag(string $key): bool
     {
         $this->assertFlagKey($key);
@@ -133,12 +166,12 @@ class FactionRole
     }
 
     /**
-     * @return array<string, bool> All 7 flags, keyed like the JSON files.
+     * @return array<string, bool> All flags, keyed like the JSON files.
      */
     public function getFlags(): array
     {
         $flags = [];
-        foreach (self::FLAG_KEYS as $key) {
+        foreach (self::flagKeys() as $key) {
             $flags[$key] = $this->{$key};
         }
         return $flags;
@@ -156,7 +189,7 @@ class FactionRole
             // Additive key: legacy readers keep testing name alone.
             $role['nameAlt'] = $this->nameAlt;
         }
-        foreach (self::FLAG_KEYS as $key) {
+        foreach (self::flagKeys() as $key) {
             if ($this->{$key}) {
                 $role[$key] = 1;
             }
@@ -166,7 +199,7 @@ class FactionRole
 
     private function assertFlagKey(string $key): void
     {
-        if (!in_array($key, self::FLAG_KEYS, true)) {
+        if (!in_array($key, self::flagKeys(), true)) {
             throw new \InvalidArgumentException("Unknown role flag '{$key}'");
         }
     }

@@ -60,7 +60,7 @@ final class FactionExporter implements ObjectExporterInterface
             'animateurId' => $entity->getAnimateurId(),
             'roles'       => array_map(
                 static fn (FactionRole $role): array => array_merge(
-                    ['name' => $role->getName()],
+                    ['name' => $role->getName(), 'nameAlt' => $role->getNameAlt()],
                     $role->getFlags()
                 ),
                 $entity->getRoles()->getValues()

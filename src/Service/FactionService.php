@@ -147,7 +147,7 @@ class FactionService
      * insert-before-delete collisions on the (faction_id, position) unique
      * key. Careful: reordering shifts what players.factionRole points at.
      *
-     * @param array<int, array{name?: string, flags?: array<string, bool>}> $roles
+     * @param array<int, array{name?: string, nameAlt?: string, flags?: array<string, bool>}> $roles
      */
     public function replaceRoles(Faction $faction, array $roles): void
     {
@@ -162,14 +162,14 @@ class FactionService
                 continue;
             }
 
-            $params = [$faction->getId(), $position++, $name];
-            foreach (FactionRole::FLAG_KEYS as $key) {
+            $params = [$faction->getId(), $position++, $name, trim((string) ($role['nameAlt'] ?? ''))];
+            foreach (FactionRole::flagKeys() as $key) {
                 $params[] = (int) !empty($role['flags'][$key]);
             }
 
             $connection->executeStatement(
-                'INSERT INTO faction_roles (faction_id, position, name, '
-                    . implode(', ', FactionRole::FLAG_KEYS) . ')
+                'INSERT INTO faction_roles (faction_id, position, name, name_alt, '
+                    . implode(', ', FactionRole::flagKeys()) . ')
                  VALUES (' . implode(', ', array_fill(0, count($params), '?')) . ')',
                 $params
             );
@@ -398,7 +398,7 @@ class FactionService
      */
     public function mayManage(int $actorId, string $flag): bool
     {
-        if (!in_array($flag, FactionRole::FLAG_KEYS, true)) {
+        if (!in_array($flag, FactionRole::flagKeys(), true)) {
             return false;
         }
 
@@ -561,19 +561,12 @@ class FactionService
             ->fetchOne('SELECT name FROM players WHERE id = ?', [$playerId]);
     }
 
-    /** The capability flags a ladder-holder may grant — the landing rank
-     *  (defaultRole) is the ladder's structure, not a capability. */
-    public const GRANTABLE_FLAGS = [
-        'showPosition', 'showForum', 'addMember', 'editRole', 'kickMember', 'initRole',
-        'driveBuilding', 'useChest', 'showLogs', 'manageChests', 'useDoor',
-    ];
-
     /**
      * Renames a rank and sets what it authorizes — the ladder-holder's
      * gesture (initRole), on ranks strictly below their own: nobody
      * rewrites their own charter, nor a superior's.
      *
-     * @param array<string, mixed> $flags flag => truthy, GRANTABLE_FLAGS only
+     * @param array<string, mixed> $flags flag => truthy, FactionRole::grantableFlags() only
      * @param string $nameAlt the rank's second name (Roi / Reine), '' = single
      */
     public function updateRoleDefinition(int $actorId, int $position, string $name, array $flags, string $nameAlt = ''): void
@@ -600,7 +593,7 @@ class FactionService
         /* One's OWN rank renames — names are cosmetic — but its flags stay
          * untouchable: nobody grants themself power. */
         if ($position < (int) $actorRole['position']) {
-            foreach (self::GRANTABLE_FLAGS as $flag) {
+            foreach (FactionRole::grantableFlags() as $flag) {
                 $sets[] = "fr.{$flag} = ?";
                 $params[] = empty($flags[$flag]) ? 0 : 1;
             }

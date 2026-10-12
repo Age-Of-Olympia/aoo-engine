@@ -192,7 +192,7 @@ class FactionSeedService
                 continue;
             }
             $flags = [];
-            foreach (\App\Entity\FactionRole::FLAG_KEYS as $key) {
+            foreach (\App\Entity\FactionRole::flagKeys() as $key) {
                 $flags[$key] = !empty($role->{$key});
             }
             $roles[] = ['name' => trim((string) $role->name), 'flags' => $flags];

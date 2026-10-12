@@ -118,7 +118,7 @@ final class FactionImporter extends AbstractObjectImporter
 
     /**
      * @param array<string, mixed> $plan
-     * @return list<array{name: string, flags: array<string, bool>}>
+     * @return list<array{name: string, nameAlt: string, flags: array<string, bool>}>
      */
     private function roleList(array $plan): array
     {
@@ -128,10 +128,14 @@ final class FactionImporter extends AbstractObjectImporter
                 continue;
             }
             $flags = [];
-            foreach (FactionRole::FLAG_KEYS as $key) {
+            foreach (FactionRole::flagKeys() as $key) {
                 $flags[$key] = (bool) ($role[$key] ?? false);
             }
-            $roles[] = ['name' => trim((string) $role['name']), 'flags' => $flags];
+            $roles[] = [
+                'name'    => trim((string) $role['name']),
+                'nameAlt' => trim((string) ($role['nameAlt'] ?? '')),
+                'flags'   => $flags,
+            ];
         }
 
         return $roles;

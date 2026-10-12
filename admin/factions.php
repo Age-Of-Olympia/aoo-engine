@@ -31,17 +31,6 @@ use App\Entity\FactionRole;
 use App\Service\CsrfProtectionService;
 use App\Service\FactionService;
 
-/** Libellés courts des drapeaux de rôle (colonnes de l'éditeur). */
-const FACTION_ROLE_FLAG_LABELS = [
-    'defaultRole'  => 'Défaut',
-    'showPosition' => 'Position',
-    'showForum'    => 'Forum',
-    'addMember'    => 'Recruter',
-    'editRole'     => 'Gérer rôles',
-    'kickMember'   => 'Exclure',
-    'initRole'     => 'Initier',
-];
-
 function faction_flag_badge(bool $on, string $label, string $class): string
 {
     return $on ? '<span class="badge badge-' . $class . '">' . e($label) . '</span> ' : '';
@@ -118,14 +107,16 @@ function faction_render_list(array $factions): string
         . '</tr></thead><tbody>' . $rows . '</tbody></table>';
 }
 
-/** Une ligne de l'éditeur de rôles (nom + 7 cases + réordonner/supprimer). */
-function faction_render_role_row(int $index, string $name, array $flags): string
+/** Une ligne de l'éditeur de rôles (noms + une case par drapeau + réordonner/supprimer). */
+function faction_render_role_row(int $index, string $name, string $nameAlt, array $flags): string
 {
     $cells = '<td class="text-muted role-position align-middle"></td>'
         . '<td><input type="text" class="form-control form-control-sm" name="roles[' . $index . '][name]"'
-        . ' value="' . e($name) . '" placeholder="Nom du rôle"></td>';
+        . ' value="' . e($name) . '" placeholder="Nom du rôle">'
+        . '<input type="text" class="form-control form-control-sm mt-1" name="roles[' . $index . '][nameAlt]"'
+        . ' value="' . e($nameAlt) . '" placeholder="Second nom (ex : Reine)"></td>';
 
-    foreach (array_keys(FACTION_ROLE_FLAG_LABELS) as $flag) {
+    foreach (FactionRole::flagKeys() as $flag) {
         $cells .= '<td class="text-center align-middle"><input type="checkbox"'
             . ' name="roles[' . $index . '][' . $flag . ']" ' . ($flags[$flag] ?? false ? 'checked' : '') . '></td>';
     }
@@ -156,7 +147,7 @@ function faction_render_form(?Faction $faction, string $csrfToken): string
             . '<small class="form-text text-muted">Minuscules / chiffres / _ — stocké dans players.faction.</small>';
 
     $flagHeaders = '';
-    foreach (FACTION_ROLE_FLAG_LABELS as $flag => $label) {
+    foreach (FactionRole::FLAG_LABELS as $flag => $label) {
         $flagHeaders .= '<th class="text-center" style="font-size:11px" title="' . e($flag) . '">' . e($label) . '</th>';
     }
 
@@ -165,13 +156,13 @@ function faction_render_form(?Faction $faction, string $csrfToken): string
     if ($isEdit) {
         foreach ($faction->getRoles() as $role) {
             /** @var FactionRole $role */
-            $roleRows .= faction_render_role_row($index++, $role->getName(), $role->getFlags());
+            $roleRows .= faction_render_role_row($index++, $role->getName(), $role->getNameAlt(), $role->getFlags());
         }
     }
 
     // Template row cloned by the "add" button; index rewritten in JS. PHP
     // rebuilds positions from DOM order (array_values), so row order = rôle 0..n.
-    $templateRow = faction_render_role_row(9999, '', []);
+    $templateRow = faction_render_role_row(9999, '', '', []);
 
     $rolesScript = <<<HTML
 <script>
@@ -267,11 +258,8 @@ HTML;
         . '<template id="faction-role-template"><table>' . $templateRow . '</table></template>'
         . '<button type="button" class="btn btn-sm btn-outline-primary" id="faction-role-add">+ Ajouter un rôle</button>'
         . '<div class="alert alert-info mt-3 mb-0" style="font-size: 13px;">'
-        . 'ℹ️ <strong>Seul le nom du rôle est utilisé en jeu</strong> (affiché sur la page faction, les forums et'
-        . ' la fiche du personnage). Les cases à cocher (Recruter, Exclure, Gérer rôles…) ne sont'
-        . ' <strong>pas encore implémentées</strong> : le jeu ne les utilise pas, les cocher n\'a aucun'
-        . ' effet pour les joueurs aujourd\'hui. Elles préparent une future gestion des factions en jeu.'
-        . ' Exception : « Défaut » est déjà utilisé par la page Membres (rôle attribué quand l\'index est invalide).'
+        . 'ℹ️ Mêmes drapeaux que l\'échelle du panneau de faction en jeu. « Accueil » : rang donné aux'
+        . ' recrues (le premier coché l\'emporte). Le second nom s\'affiche au choix du membre (Roi / Reine).'
         . '</div>'
         . '</div></div>'
 

@@ -63,7 +63,7 @@ if ($action === 'delete') {
  * Rôles POSTés → liste ordonnée pour FactionService::replaceRoles().
  * L'ordre DOM des lignes fait foi ; les lignes sans nom sont ignorées.
  *
- * @return list<array{name: string, flags: array<string, bool>}>
+ * @return list<array{name: string, nameAlt: string, flags: array<string, bool>}>
  */
 $rolesFromForm = static function (): array {
     $roles = [];
@@ -72,10 +72,14 @@ $rolesFromForm = static function (): array {
             continue;
         }
         $flags = [];
-        foreach (FactionRole::FLAG_KEYS as $key) {
+        foreach (FactionRole::flagKeys() as $key) {
             $flags[$key] = !empty($row[$key]);
         }
-        $roles[] = ['name' => trim((string) $row['name']), 'flags' => $flags];
+        $roles[] = [
+            'name'    => trim((string) $row['name']),
+            'nameAlt' => trim((string) ($row['nameAlt'] ?? '')),
+            'flags'   => $flags,
+        ];
     }
 
     return $roles;
@@ -101,9 +105,9 @@ $roles = $rolesFromForm();
 $defaultCount = count(array_filter($roles, static fn (array $r): bool => $r['flags']['defaultRole']));
 $notice = '';
 if ($roles !== [] && $defaultCount === 0) {
-    $notice = ' ⚠ Aucun rôle « Défaut » coché : les affectations sans rôle précis recevront le rôle 0.';
+    $notice = ' ⚠ Aucun rang « Accueil » coché : les affectations sans rôle précis recevront le rôle 0.';
 } elseif ($defaultCount > 1) {
-    $notice = ' ⚠ Plusieurs rôles « Défaut » cochés : le premier de la liste sera utilisé.';
+    $notice = ' ⚠ Plusieurs rangs « Accueil » cochés : le premier de la liste sera utilisé.';
 }
 
 if ($action === 'create') {

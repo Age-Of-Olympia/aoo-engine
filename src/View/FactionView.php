@@ -202,19 +202,10 @@ class FactionView
      */
     private static function renderLadder(string $factionCode, int $actorPosition): void
     {
-        $flagLabels = [
-            'showPosition'  => 'Voir les positions',
-            'showForum'     => 'Voir le forum',
-            'addMember'     => 'Recruter',
-            'kickMember'    => 'Renvoyer',
-            'editRole'      => 'Changer les rangs',
-            'initRole'      => 'Régler l\'échelle',
-            'driveBuilding' => 'Piloter les bâtiments',
-            'useChest'      => 'Verrouiller les coffres',
-            'showLogs'      => 'Voir le journal',
-            'manageChests'  => 'Gérer les coffres',
-            'useDoor'       => 'Ouvrir les portes',
-        ];
+        $flagLabels = array_intersect_key(
+            \App\Entity\FactionRole::FLAG_LABELS,
+            array_flip(\App\Entity\FactionRole::grantableFlags())
+        );
 
         $service = new \App\Service\FactionService();
         $isTop = $actorPosition === $service->topPositionOf($factionCode);
@@ -275,7 +266,7 @@ class FactionView
                     <button class="faction-ladder-move" data-direction="-1" title="Descendre d\'un cran">&#8595;</button>
                 </span>
                 <label style="white-space: nowrap;"><input type="radio" name="faction-ladder-landing" class="faction-ladder-landing"'
-                    . (!empty($role['defaultRole']) ? ' checked' : '') . '> Accueil</label>
+                    . (!empty($role['defaultRole']) ? ' checked' : '') . '> ' . \App\Entity\FactionRole::FLAG_LABELS['defaultRole'] . '</label>
                 <button class="faction-ladder-remove" data-name="' . htmlspecialchars((string) $role['name'], ENT_QUOTES, 'UTF-8') . '">Retirer</button>';
             }
 
