@@ -28,6 +28,17 @@ aoo_assert_env() {
 # the checkout is already on. Run this BEFORE aoo_assert_branch.
 aoo_update_checkout() {
     cd "$SRC/aoo-engine" || aoo_die "cannot enter '$SRC/aoo-engine'"
+
+    # Prod CI deploy of a release tag: fetch that tag alone and detach on it.
+    # The refspec has no '+', so a tag moved on GitLab after a first fetch is
+    # refused instead of silently deploying other code under the same name.
+    local tag="${CHECKOUT_TAG:-}"
+    if [ -n "$tag" ]; then
+        git fetch --no-tags origin "refs/tags/$tag:refs/tags/$tag" || aoo_die "fetch of tag '$tag' failed"
+        git checkout --detach "refs/tags/$tag" || aoo_die "checkout of tag '$tag' failed"
+        git log --oneline -1
+        return 0
+    fi
     local branch="${CHECKOUT_BRANCH:-}"
     [ -n "$branch" ] || branch="$(git rev-parse --abbrev-ref HEAD)"
 

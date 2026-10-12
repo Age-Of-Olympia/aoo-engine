@@ -12,7 +12,7 @@
 #   - datas/private/welcome.msg.html    (admin-edited)
 #   - img/arene/*                       (generated screenshots)
 #   - db/updates_done/                  (migration tracking)
-# (datas/ and img/ are handled separately by deploy_assets.sh.)
+#   - img/, datas/                       (images and game data, managed from the admin)
 
 source "$(dirname "$0")/deploy_lib.sh"
 aoo_assert_env

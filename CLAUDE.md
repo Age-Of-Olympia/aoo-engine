@@ -176,5 +176,6 @@ To run the game locally, copy `datas_standalone/*` into `datas/` and `img_standa
 
 GitLab CI (`.gitlab-ci.yml`), stages: build (cached Docker test image) → stan → test (PHPUnit
 with coverage) → security (sqlmap, off by default) → prepare and release (on semver tags) →
-deployment (staging / saison-3). Optimizations: Docker image caching, Composer cache from
-`composer.lock`, templates to avoid duplication, automatic failure on test errors.
+deployment (staging and experimental on push, production on a release tag). Optimizations:
+Docker image caching, Composer cache from `composer.lock`, templates to avoid duplication,
+automatic failure on test errors.

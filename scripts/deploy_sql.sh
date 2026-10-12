@@ -29,6 +29,25 @@ cp "$DOCROOT/config/db_constants.php" "$SRC/aoo-engine/config/db_constants.php" 
 mkdir -p "$DOCROOT/db/updates_done"
 cp -ra "$SRC/aoo-engine/db/updates" "$DOCROOT/db/" || exit 1
 
-# 5. Run migrations from the checkout. --no-all-or-nothing is mandatory:
+# 5. Prod only (BACKUP_DIR set): dump the database before migrating, the only
+#    rollback when a migration has no trustworthy down(). Keeps the last 10.
+if [ -n "${BACKUP_DIR:-}" ]; then
+    mkdir -p "$BACKUP_DIR" || exit 1
+    # host[:port], user, password, database from the env's db_constants.php.
+    read -r DB_HOST DB_PORT DB_USER DB_NAME < <(php -r '
+        require "config/db_constants.php";
+        [$h, $p] = array_pad(explode(":", DB_CONSTANTS["host"], 2), 2, "3306");
+        echo "$h $p ", DB_CONSTANTS["user"], " ", DB_CONSTANTS["dbname"], "\n";')
+    DUMP="$BACKUP_DIR/${DB_NAME}_$(date +%Y%m%d_%H%M%S)_$(git rev-parse --short HEAD).sql.gz"
+    MYSQL_PWD="$(php -r 'require "config/db_constants.php"; echo DB_CONSTANTS["password"];')" \
+        mysqldump -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" --single-transaction --routines \
+            --default-character-set=utf8mb4 "$DB_NAME" | gzip > "$DUMP.part"
+    [ "${PIPESTATUS[0]}" -eq 0 ] || { rm -f "$DUMP.part"; aoo_die "database backup failed"; }
+    mv "$DUMP.part" "$DUMP" || exit 1
+    echo "backup: $DUMP<br>"
+    ls -1t "$BACKUP_DIR"/*.sql.gz | tail -n +11 | xargs -r rm -f
+fi
+
+# 6. Run migrations from the checkout. --no-all-or-nothing is mandatory:
 #    MariaDB auto-commits DDL, so the global transaction wrapper would fail.
 ./vendor/bin/doctrine-migrations migrate --no-interaction --no-all-or-nothing

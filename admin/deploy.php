@@ -20,13 +20,14 @@ $firstLogId = $auditService->addAuditLog("Deploying attempt");
 $envInfo = aoo_deploy_env($_SERVER['HTTP_HOST'] ?? null);
 $isCI    = isset($_GET["ci"]);
 
-// Guardrail: production never auto-deploys via CI. A misfired pipeline pointed
-// at the prod host is refused outright; prod stays manual (super-admin) only.
-if ($envInfo['is_prod'] && $isCI) {
+// Production accepts a CI deploy only for a version tag: the tag is checked out
+// on the server, so a pipeline can never push a branch head to prod.
+$envTag = (string) ($_GET['env_tag'] ?? '');
+if ($envInfo['is_prod'] && $isCI && !isValidTagName($envTag)) {
     http_response_code(403);
-    $auditService->addAuditLog("Refused: CI auto-deploy attempt on production");
+    $auditService->addAuditLog("Refused: CI deploy on production without a version tag");
     $auditService->setCurrentAuditKey(null);
-    exit("Production does not accept CI auto-deploy.");
+    exit("Production only accepts a CI deploy of a version tag.");
 }
 
 // Token now travels in a header instead of the URL query string, so it no
@@ -34,7 +35,7 @@ if ($envInfo['is_prod'] && $isCI) {
 $providedToken = $_SERVER['HTTP_X_DEPLOY_TOKEN'] ?? '';
 
 if (isset($_GET["type"]) && $providedToken !== '') {
-    $passPhrase = getPassphrase($isCI, $auditService);
+    $passPhrase = getPassphrase($isCI, $envInfo['is_prod'], $auditService);
 
     // Start output buffering
     ob_start();
@@ -44,7 +45,7 @@ if (isset($_GET["type"]) && $providedToken !== '') {
         // Optional: branch to deploy. Honoured for non-prod envs only (lets the
         // experimental env track a configurable branch); prod ignores it.
         $envBranch = $_GET["env_branch"] ?? '';
-        deploy($_GET["type"], $envInfo, $envBranch, $auditService);
+        deploy($_GET["type"], $envInfo, $envBranch, $isCI ? $envTag : '', $auditService);
     } else {
         http_response_code(403);
         $auditService->addAuditLog("Refused: invalid deploy token");
@@ -59,16 +60,21 @@ $auditService->setCurrentAuditKey(null);
 /**
  * Retrieve the passphrase based on the CI flag.
  *
+ * The environments share one account, so prod CI has its own passphrase file:
+ * the staging token must not open production.
+ *
  * @param bool $isCI Whether the deployment is via CI.
+ * @param bool $isProd Whether this docroot is production.
  * @return string The passphrase.
  */
-function getPassphrase(bool $isCI, AuditService $auditService): string {
+function getPassphrase(bool $isCI, bool $isProd, AuditService $auditService): string {
     $auditMessage = $isCI ? "Deploy with CI" : "Deploy manually";
     $auditService->addAuditLog($auditMessage);
 
     if ($isCI) {
-        $passPhrase = rtrim(file_get_contents('/home/' . get_current_user() . '/etc/ci_passphrase'), "\r\n");
-        return $passPhrase;
+        $file = $isProd ? 'ci_prod_passphrase' : 'ci_passphrase';
+        $path = '/home/' . get_current_user() . '/etc/' . $file;
+        return is_readable($path) ? rtrim((string) file_get_contents($path), "\r\n") : '';
     } else {
         AdminAuthorizationService::DoSuperAdminCheck();
         $passPhrase = rtrim(file_get_contents('/home/' . get_current_user() . '/etc/passphrase'), "\r\n");
@@ -94,6 +100,13 @@ function validatePassphrase(string $storedPassphrase, string $providedToken): bo
  */
 function isValidBranchName(string $branch): bool {
     return $branch !== '' && (bool) preg_match('#^[A-Za-z0-9._/-]+$#', $branch);
+}
+
+/**
+ * Whether a string is a release tag (1.2.3 or v1.2.3), the only ref prod CI deploys.
+ */
+function isValidTagName(string $tag): bool {
+    return (bool) preg_match('/^v?\d+\.\d+\.\d+$/', $tag);
 }
 
 /**
@@ -126,18 +139,22 @@ function deployHome(): string {
  * server. CHECKOUT_BRANCH, when set, tells the scripts to switch the checkout to
  * that branch first — this is how the experimental env can track a configurable
  * branch chosen by the caller (the EXPERIMENTAL_BRANCH CI variable).
+ * CHECKOUT_TAG (prod CI only) makes the scripts fetch and check out that tag;
+ * BACKUP_DIR (prod only) makes deploy_sql.sh dump the database before migrating.
  *
  * @param array{env:string,branch:?string,is_prod:bool,session_name:string} $envInfo
  * @param string $requestedBranch Branch requested by the caller (non-prod only).
+ * @param string $requestedTag Version tag requested by CI (prod only).
  * @return array<string,string>
  */
-function deployEnvVars(array $envInfo, string $requestedBranch = ''): array {
+function deployEnvVars(array $envInfo, string $requestedBranch = '', string $requestedTag = ''): array {
     $home = deployHome();
     $src  = $home . '/deploy/' . $envInfo['env'];
 
     // Prod deploys from a tag (detached HEAD) and ignores any requested branch:
     // empty EXPECT_BRANCH skips the assertion, empty CHECKOUT_BRANCH skips the
-    // switch. Non-prod envs deploy the requested branch when one is supplied,
+    // switch. Without CHECKOUT_TAG (manual deploy) it deploys what is checked
+    // out. Non-prod envs deploy the requested branch when one is supplied,
     // otherwise the env's default branch from config/deploy_targets.php.
     $checkoutBranch = '';
     $expectBranch   = '';
@@ -155,6 +172,8 @@ function deployEnvVars(array $envInfo, string $requestedBranch = ''): array {
         'SRC'             => $src,
         'EXPECT_BRANCH'   => $expectBranch,
         'CHECKOUT_BRANCH' => $checkoutBranch,
+        'CHECKOUT_TAG'    => $envInfo['is_prod'] && isValidTagName($requestedTag) ? $requestedTag : '',
+        'BACKUP_DIR'      => $envInfo['is_prod'] ? $home . '/backups/deploy' : '',
     ];
 }
 
@@ -178,18 +197,25 @@ function runDeployScript(string $script, array $envVars): string {
  * @param string $type The type of deployment.
  * @param array{env:string,branch:?string,is_prod:bool,session_name:string} $envInfo
  * @param string $envBranch Branch requested by the caller (non-prod only).
+ * @param string $envTag Version tag requested by CI (prod only).
  * @param AuditService $auditService The audit service instance.
  */
-function deploy(string $type, array $envInfo, string $envBranch, AuditService $auditService) {
-    $envVars = deployEnvVars($envInfo, $envBranch);
-
-    if ($type === "code") {
-        if (!handleCodeDeployment($envVars, $auditService)) {
-            return;
-        }
+function deploy(string $type, array $envInfo, string $envBranch, string $envTag, AuditService $auditService) {
+    // Code is the only deploy type: game data and images live in the database
+    // and in the docroot, edited from the admin, and no deploy overwrites them.
+    if ($type !== "code") {
+        http_response_code(400);
+        echo "<br />Unknown deploy type.";
+        return;
     }
 
-    $output = runDeployScript($_SERVER['DOCUMENT_ROOT'] . "/scripts/deploy_{$type}.sh", $envVars);
+    $envVars = deployEnvVars($envInfo, $envBranch, $envTag);
+
+    if (!handleCodeDeployment($envVars, $auditService)) {
+        return;
+    }
+
+    $output = runDeployScript($_SERVER['DOCUMENT_ROOT'] . "/scripts/deploy_code.sh", $envVars);
     echo "<br />" . htmlspecialchars($output);
 
     $outputReturnCode = mb_substr($output, -2);

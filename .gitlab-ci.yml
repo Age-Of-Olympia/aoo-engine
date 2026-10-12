@@ -371,10 +371,9 @@ release-job:
 # Auto-deploy the non-prod environments now co-hosted on the single account:
 #   staging               -> test subdomain
 #   $EXPERIMENTAL_BRANCH   -> experimental subdomain (branch is configurable)
-# prod (main) has no deploy job — it stays manual, and admin/deploy.php refuses
-# the `ci` flag on the prod host anyway. The token travels in a header so it is
-# not written to Apache access logs. env_branch tells deploy.php which branch to
-# check out + deploy (honoured for non-prod only).
+# Production deploys from a release tag, see deploy-job-prod. The token travels
+# in a header so it is not written to Apache access logs. env_branch tells
+# deploy.php which branch to check out + deploy (honoured for non-prod only).
 deploy-job-non-prod:
   stage: deployment
   image: alpine
@@ -409,3 +408,29 @@ deploy-job-non-prod:
     - if: $CI_COMMIT_REF_NAME == $EXPERIMENTAL_BRANCH && $CI_MERGE_REQUEST_ID == null
       variables:
         DEPLOY_HOST: "experimental.age-of-olympia.net"
+
+# Production deploys when a release tag is pushed (same pattern as prepare_job).
+# deploy.php checks the tag out on the server, dumps the database, runs the
+# migrations, then copies the code. The token comes from a PROTECTED variable:
+# only protected tags receive it, so the tag pattern must be protected too.
+deploy-job-prod:
+  stage: deployment
+  image: alpine
+  resource_group: deploy-prod
+  environment:
+    name: production
+    url: https://age-of-olympia.net
+  variables:
+    # Full history, so the ancestry check below can see main.
+    GIT_DEPTH: 0
+  before_script:
+    - apk add curl git
+  script:
+    # A tag pipeline does not know which branch the tag came from: refuse one
+    # that is not on main.
+    - git fetch --no-tags origin main
+    - git merge-base --is-ancestor "$CI_COMMIT_SHA" FETCH_HEAD || { echo "Tag $CI_COMMIT_TAG is not on main"; exit 1; }
+    # --fail-with-body: see deploy-job-non-prod.
+    - 'curl --fail-with-body --show-error --silent ${CURL_OPTS} -X POST -H "X-Deploy-Token: ${DEPLOY_KEY_PASS_PROD}" "https://age-of-olympia.net/admin/deploy.php?type=code&ci&env_tag=${CI_COMMIT_TAG}"'
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v?\d+\.\d+\.\d+$/'
