@@ -34,10 +34,13 @@ cp -ra "$SRC/aoo-engine/db/updates" "$DOCROOT/db/" || exit 1
 if [ -n "${BACKUP_DIR:-}" ]; then
     mkdir -p "$BACKUP_DIR" || exit 1
     # host[:port], user, password, database from the env's db_constants.php.
-    read -r DB_HOST DB_PORT DB_USER DB_NAME < <(php -r '
+    # A here-string, not < <(...): process substitution needs /dev/fd, absent
+    # when PHP runs this script on the host.
+    read -r DB_HOST DB_PORT DB_USER DB_NAME <<< "$(php -r '
         require "config/db_constants.php";
         [$h, $p] = array_pad(explode(":", DB_CONSTANTS["host"], 2), 2, "3306");
-        echo "$h $p ", DB_CONSTANTS["user"], " ", DB_CONSTANTS["dbname"], "\n";')
+        echo "$h $p ", DB_CONSTANTS["user"], " ", DB_CONSTANTS["dbname"], "\n";')"
+    [ -n "$DB_NAME" ] || aoo_die "cannot read the database settings"
     DUMP="$BACKUP_DIR/${DB_NAME}_$(date +%Y%m%d_%H%M%S)_$(git rev-parse --short HEAD).sql.gz"
     MYSQL_PWD="$(php -r 'require "config/db_constants.php"; echo DB_CONSTANTS["password"];')" \
         mysqldump -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" --single-transaction --routines \
