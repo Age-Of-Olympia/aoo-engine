@@ -43,7 +43,21 @@ const ITEM_FLAG_LABELS = [
     'is_deprecated' => 'Déprécié',
     'vanish_on_break' => 'Disparaît une fois brisé (le butin est répandu au sol, pas d\'épave)',
     'magique' => 'Magique (équipé, les dégâts d\'attaque passent sur la M)',
+    'lockable' => 'Se ferme (posé : coffre avec serrure)',
+    'blocks_passage' => 'Posé, bloque le passage',
+    'blocks_projectiles' => 'Posé, bloque les tirs',
 ];
+
+/** @return array<string, string> structure types an object may require, name => label */
+function building_type_names(): array
+{
+    $out = [];
+    foreach ((new \App\Service\RaceService())->getBuildingTypes() as $race) {
+        $out[$race->getName()] = $race->getLabel();
+    }
+    asort($out);
+    return $out;
+}
 
 /** @return array<int, object> catalog rows ordered by name */
 function items_catalog(): array
@@ -755,11 +769,15 @@ function items_render_edit(object $row, string $csrfToken): string
      * chest wears nothing, so « Usure » stays shut and hid the field. */
     $contenant = formField('Contenance (lignes)',
         formInput('capacity', $row->capacity === null ? '' : (string) (int) $row->capacity, 'type="number" min="0"'),
-        'form-group', 'Nombre de lignes de contenu (une pile d\'un objet = une ligne, un exemplaire = une ligne). Vide = illimité (valeur des objets qui ne sont pas des contenants).');
+        'form-group', 'Nombre de lignes de contenu (une pile d\'un objet = une ligne, un exemplaire = une ligne). Vide = illimité (valeur des objets qui ne sont pas des contenants).')
+        . formField('Bâtiment requis pour le construire',
+            formSelect('requires_building', building_type_names(), (string) ($row->requires_building ?? ''), '— aucun —'),
+            'form-group', 'Ce bâtiment doit être achevé sur le plan pour que l\'objet s\'y construise (la banque pour les coffres).');
 
     $caracsCol = '<p class="text-muted mb-2" style="font-size:88%">Double lecture selon le type :'
         . ' sur un <b>équipement</b>, modificateurs du porteur tant que l\'objet est porté ;'
-        . ' sur un <b>consommable</b>, quantités rendues à la consommation (PV, PM, MVT, A, AE).</p>'
+        . ' sur un <b>consommable</b>, quantités rendues à la consommation (PV, PM, MVT, A, AE).'
+        . ' Sans effet sur un objet <b>posé</b> (coffre) : sa vie est la durabilité max, le reste est à zéro.</p>'
         . '<div class="row">' . $caracInputs . '</div>';
 
     $speciaux = '<p class="text-muted mb-2" style="font-size:88%">Modificateurs du porteur — sur un consommable,'
