@@ -74,15 +74,6 @@ INSERT INTO coords SELECT * FROM $SOURCE_DB.coords WHERE plan IN ('gaia', 'tutor
 EOF
 echo "  ✅ Coordinates copied (spawn points + tutorial)"
 
-# Copy map walls for tutorial plan
-mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" --default-character-set=utf8mb4 <<EOF
-INSERT INTO map_walls
-SELECT mw.* FROM $SOURCE_DB.map_walls mw
-JOIN $SOURCE_DB.coords c ON mw.coords_id = c.id
-WHERE c.plan = 'tutorial';
-EOF
-echo "  ✅ Tutorial map walls copied"
-
 # Copy actions (needed for tutorial)
 mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" --default-character-set=utf8mb4 <<EOF
 INSERT INTO actions SELECT * FROM $SOURCE_DB.actions;
