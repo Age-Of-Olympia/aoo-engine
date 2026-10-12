@@ -348,8 +348,12 @@ prepare_job:
   image: alpine:latest
   rules:
   - if: '$CI_COMMIT_TAG =~ /^v?\d+\.\d+\.\d+$/'
+  # The notes span the previous tag: full history and every tag are needed.
+  variables:
+    GIT_DEPTH: 0
   script:
     - apk add bash git
+    - git fetch --tags --quiet origin
     - ./scripts/generate-release-notes.sh > release_notes.md
   artifacts:
     paths:

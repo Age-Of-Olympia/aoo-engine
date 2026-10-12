@@ -1,12 +1,7 @@
-#!/bin/bash
+LAST_TAG=${CI_COMMIT_TAG:-$(git tag | sort -V | tail -1)}
+PREV_TAG=$(git tag | sort -V | grep -x -B1 "$LAST_TAG" | head -1)
 
-# Récupérer le dernier tag et le tag précédent
-LAST_TAG=$(git tag --sort=-committerdate | sort -V | tail -1)
-PREV_TAG=$(git tag --sort=-committerdate | sort -V | tail -2 | head -1)
+RELEASE_NOTES=$(git --no-pager log --no-merges $PREV_TAG..$LAST_TAG --pretty=format:"- %s")
 
-# Générer les release notes
-RELEASE_NOTES=$(git --no-pager log $PREV_TAG...$LAST_TAG --pretty=format:"- %s")
-
-# Afficher les release notes
 echo "Release Notes for $LAST_TAG:"
 echo "$RELEASE_NOTES"
