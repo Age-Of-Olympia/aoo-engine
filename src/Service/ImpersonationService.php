@@ -21,7 +21,7 @@ final class ImpersonationService
          * open doors its wearer never owned. */
         if (
             $entityId !== $mainId
-            && $mainId > 0
+            && $mainId !== 0
             && (int) ($_SESSION['playerId'] ?? 0) !== $mainId
         ) {
             throw new \RuntimeException('Il faut d\'abord revenir à votre personnage principal.');
@@ -33,11 +33,12 @@ final class ImpersonationService
         (new AccountService())->touchLastLogin($entityId);
     }
 
-    /** Back to the account's main character; answers its id. */
+    /** Back to the account's main character; answers its id. A non-playing
+     * admin's main character is a PNJ, so the id may be negative. */
     public function release(): int
     {
         $mainId = (int) ($_SESSION['mainPlayerId'] ?? 0);
-        if ($mainId <= 0) {
+        if ($mainId === 0) {
             throw new \RuntimeException('Aucun personnage à reprendre.');
         }
 

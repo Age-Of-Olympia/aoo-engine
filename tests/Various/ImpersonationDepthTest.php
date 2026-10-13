@@ -68,4 +68,23 @@ class ImpersonationDepthTest extends LegacyPlayerFixtureTestCase
         $this->assertSame($main, $service->release(), 'release answers the face');
         $this->assertSame($main, (int) $_SESSION['playerId']);
     }
+
+    /** A non-playing admin logs in as a PNJ: the face has a negative id. */
+    public function testPnjFaceHoldsTheSameRules(): void
+    {
+        $_SESSION['mainPlayerId'] = -92;
+        $_SESSION['playerId'] = -93;
+
+        $service = new ImpersonationService();
+
+        try {
+            $service->driveAs(-94);
+            $this->fail('a second mask over the first must refuse');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('Il faut d\'abord revenir à votre personnage principal.', $e->getMessage());
+        }
+
+        $this->assertSame(-92, $service->release());
+        $this->assertSame(-92, (int) $_SESSION['playerId']);
+    }
 }
