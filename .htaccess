@@ -15,6 +15,9 @@ ErrorDocument 503 /maintenance.html
 # Bloquer l'accès à tous les fichiers dans le dossier /sessions
 RewriteRule ^sessions/ - [F,L]
 
+# Logs des crons (daily.log, hourly_*.log) : jamais servis
+RewriteRule \.log$ - [F,L,NC]
+
 # Redirection HTTP vers HTTPS sauf pour les requêtes locales
 RewriteCond %{HTTP_HOST} !^localhost [NC]
 RewriteCond %{REMOTE_ADDR} !^127\.0\.0\.1$ [NC]
