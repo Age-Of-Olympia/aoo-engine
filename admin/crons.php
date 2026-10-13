@@ -11,9 +11,9 @@
  * stored in session and shown once after the PRG redirect; every run also
  * leaves an audit line, and the page shows the latest cron audit entries.
  *
- * Standalone CLI scripts (cron.php entry point, onesignal_sync.php) are
- * deliberately not runnable here: they define their own bootstrap and argv
- * handling, and belong to the server's crontab.
+ * The standalone CLI entry point (cron.php) is
+ * deliberately not runnable here: it defines its own bootstrap and argv
+ * handling, and belongs to the server's crontab.
  */
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
@@ -24,6 +24,16 @@ use App\Service\CsrfProtectionService;
 use Classes\Db;
 
 const CRONS_DIR = __DIR__ . '/../scripts/crons';
+
+/** Business rules shown under a script, keyed "group/script". */
+const CRON_NOTES = [
+    'daily/80_onesignal_sync.php' =>
+        'Envoie les joueurs à OneSignal pour les campagnes mail. Qui : les vrais joueurs avec un email'
+        . ' (pas les PNJ, le tutoriel, le matricule 1 ni les adresses bidon comme vide@vide.fr).'
+        . ' Abonnés, sauf s\'ils ont demandé la suppression de leur compte.'
+        . ' Segments possibles via 3 tags : race, is_inactive (1 = pas connecté depuis 7 jours, pour les relances)'
+        . ' et full_name (nom + matricule, pour qu\'un joueur qui revient retrouve son perso).',
+];
 
 /**
  * Cron groups (subdirectories of scripts/crons) and their scripts, sorted —
@@ -126,7 +136,11 @@ foreach ($catalog as $group => $scripts) {
     $rows = [];
     foreach ($scripts as $script) {
         $rows[] = '<tr>'
-            . '<td><code>' . e($script) . '</code></td>'
+            . '<td><code>' . e($script) . '</code>'
+            . (isset(CRON_NOTES[$group . '/' . $script])
+                ? '<div class="small text-muted">' . e(CRON_NOTES[$group . '/' . $script]) . '</div>'
+                : '')
+            . '</td>'
             . '<td class="text-right"><form method="post" action="/admin/crons.php" class="d-inline"'
             . ' onsubmit="return confirm(\'Jouer « ' . e($group . '/' . $script) . ' » maintenant ?\');">'
             . $csrf->renderTokenField()
