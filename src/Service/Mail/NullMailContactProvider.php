@@ -9,4 +9,8 @@ class NullMailContactProvider implements MailContactProviderInterface
     public function upsertContact(int $playerId, string $email, array $tags, bool $subscribed = true): void
     {
     }
+
+    public function sendTemplate(string $email, string $templateId): void
+    {
+    }
 }

@@ -19,4 +19,7 @@ interface MailContactProviderInterface
      */
     public function upsertContact(int $playerId, string $email, array $tags, bool $subscribed = true): void;
 
+    /** Envoie un modèle de mail du fournisseur à une adresse. */
+    public function sendTemplate(string $email, string $templateId): void;
+
 }

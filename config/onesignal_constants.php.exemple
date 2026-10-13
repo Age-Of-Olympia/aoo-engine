@@ -8,4 +8,7 @@
 define('ONESIGNAL_APP_ID', '');
 define('ONESIGNAL_REST_API_KEY', '');
 
+/* Modèle email de bienvenue envoyé à l'inscription. Vide -> pas d'envoi. */
+define('ONESIGNAL_WELCOME_TEMPLATE_ID', '');
+
 /* Fournisseur de contacts (cf. MailContactProviderFactory). */

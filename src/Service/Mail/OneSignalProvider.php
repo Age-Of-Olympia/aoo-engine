@@ -6,6 +6,7 @@ use App\Interface\MailContactProviderInterface;
 use GuzzleHttp\Client;
 use onesignal\client\api\DefaultApi;
 use onesignal\client\Configuration;
+use onesignal\client\model\Notification;
 use onesignal\client\model\PropertiesObject;
 use onesignal\client\model\Subscription;
 use onesignal\client\model\UpdateUserRequest;
@@ -70,6 +71,22 @@ class OneSignalProvider implements MailContactProviderInterface
         }
     }
 
+    public function sendTemplate(string $email, string $templateId): void
+    {
+        try {
+            // email_to vise l'adresse directement : pas d'attente que le
+            // contact créé juste avant soit indexé côté OneSignal.
+            $notification = (new Notification())
+                ->setAppId($this->appId)
+                ->setTargetChannel('email')
+                ->setEmailTo([$email])
+                ->setTemplateId($templateId);
+
+            $this->api->createNotification($notification);
+        } catch (\Throwable $e) {
+            error_log("[OneSignal] sendTemplate échoué pour {$email} : " . $e->getMessage());
+        }
+    }
 
     /**
      * Les tags OneSignal sont des chaînes.

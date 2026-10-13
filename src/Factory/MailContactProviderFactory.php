@@ -20,6 +20,12 @@ class MailContactProviderFactory
         return new NullMailContactProvider();
     }
 
+    /** Modèle OneSignal du mail de bienvenue, '' quand non configuré. */
+    public static function welcomeTemplateId(): string
+    {
+        return defined('ONESIGNAL_WELCOME_TEMPLATE_ID') ? (string) constant('ONESIGNAL_WELCOME_TEMPLATE_ID') : '';
+    }
+
     private static function oneSignalConfigured(): bool
     {
         return defined('ONESIGNAL_APP_ID') && ONESIGNAL_APP_ID !== ''

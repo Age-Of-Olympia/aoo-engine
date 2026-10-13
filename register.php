@@ -147,13 +147,15 @@ if(!empty($_POST['race'])){
         $accounts->setPassword((int) $player->id, $hashedPsw);
         $accounts->setMail((int) $player->id, $hashedMail, $plainMail);
 
-        // Enregistre le contact de campagnes mail (non bloquant).
-        (new MailContactSyncService())->onRegister(
+        // Enregistre le contact de campagnes mail et envoie la bienvenue (non bloquant).
+        $mailContacts = new MailContactSyncService();
+        $mailContacts->onRegister(
             (int) $player->id,
             $plainMail,
             $player->data->name,
             $player->data->race
         );
+        $mailContacts->sendWelcome($plainMail);
 
 
         // add bonus gold

@@ -225,6 +225,30 @@ class MailContactSyncServiceTest extends TestCase
         $this->assertSame([], $spy->calls);
     }
 
+    public function testSendWelcomeSendsTheTemplate(): void
+    {
+        $spy = $this->spyProvider();
+        (new MailContactSyncService($spy, 'tpl-1'))->sendWelcome('a@b.c');
+
+        $this->assertSame([['method' => 'template', 'email' => 'a@b.c', 'template' => 'tpl-1']], $spy->calls);
+    }
+
+    public function testSendWelcomeWithoutTemplateSendsNothing(): void
+    {
+        $spy = $this->spyProvider();
+        (new MailContactSyncService($spy, ''))->sendWelcome('a@b.c');
+
+        $this->assertSame([], $spy->calls);
+    }
+
+    public function testSendWelcomeIgnoresPlaceholderEmail(): void
+    {
+        $spy = $this->spyProvider();
+        (new MailContactSyncService($spy, 'tpl-1'))->sendWelcome('vide@vide.fr');
+
+        $this->assertSame([], $spy->calls);
+    }
+
     /**
      * Provider espion : enregistre chaque appel sans rien envoyer.
      *
@@ -245,6 +269,11 @@ class MailContactSyncServiceTest extends TestCase
                     'tags' => $tags,
                     'subscribed' => $subscribed,
                 ];
+            }
+
+            public function sendTemplate(string $email, string $templateId): void
+            {
+                $this->calls[] = ['method' => 'template', 'email' => $email, 'template' => $templateId];
             }
 
         };

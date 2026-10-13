@@ -11,7 +11,7 @@ use App\Interface\MailContactProviderInterface;
  *
  * Tags (3 max, plan Free) : full_name (perso, matricule inclus pour que le
  * dormant se reconnecte), race (scénarios), is_inactive (win-back).
- * L'onboarding est une automation événementielle hors tag.
+ * Le mail de bienvenue est un modèle du fournisseur, envoyé à l'inscription.
  */
 class MailContactSyncService
 {
@@ -23,10 +23,12 @@ class MailContactSyncService
     private const PLACEHOLDER_EMAILS = ['vide@vide.fr', 'aa@aa.aa', 'toto@toto.toto'];
 
     private MailContactProviderInterface $provider;
+    private string $welcomeTemplateId;
 
-    public function __construct(?MailContactProviderInterface $provider = null)
+    public function __construct(?MailContactProviderInterface $provider = null, ?string $welcomeTemplateId = null)
     {
         $this->provider = $provider ?? MailContactProviderFactory::create();
+        $this->welcomeTemplateId = $welcomeTemplateId ?? MailContactProviderFactory::welcomeTemplateId();
     }
 
     /** Nouveau joueur => contact abonné (is_inactive=0 par définition). */
@@ -41,6 +43,16 @@ class MailContactSyncService
             'is_inactive' => '0',
             'race' => $race,
         ], true);
+    }
+
+    /** Mail de bienvenue (modèle du fournisseur). Rien sans modèle configuré. */
+    public function sendWelcome(string $email): void
+    {
+        if ($this->welcomeTemplateId === '' || !$this->isSendable($email)) {
+            return;
+        }
+
+        $this->provider->sendTemplate($email, $this->welcomeTemplateId);
     }
 
     /** Désabonne (upsert clé email, tags inchangés ; couvre les contacts legacy). */
