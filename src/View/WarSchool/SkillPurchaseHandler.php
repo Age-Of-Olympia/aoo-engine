@@ -5,6 +5,7 @@ namespace App\View\WarSchool;
 use App\Service\ActionPassiveService;
 use App\Service\ActionService;
 use App\Service\WarSchool\SkillPrerequisiteService;
+use App\Service\WarSchool\SpellPriceService;
 use Classes\Player;
 
 /**
@@ -61,7 +62,23 @@ final class SkillPurchaseHandler
             ? (new ActionService())->getPrice($skill->getLevel())
             : (new ActionPassiveService())->getPrice($skill->getLevel());
 
-        if (!$player->spendGold($price)) {
+        /* Un sort se paie en ressources, le reste en or. Le choix vient du
+         * POST : on revalide la facture ici, car le menu déroulant n'est
+         * qu'une suggestion de l'interface. */
+        if ($isSpell) {
+            $choices = $_POST['resources'] ?? [];
+            $choices = is_array($choices) ? array_values(array_map('strval', $choices)) : [];
+
+            $tally = SpellPriceService::tally($skill->getLevel(), $choices);
+            if ($tally === null) {
+                self::answer('Ressources invalides pour ce sort.');
+            }
+
+            $failure = '';
+            if (!SpellPriceService::pay($player, $tally, $failure)) {
+                self::answer($failure);
+            }
+        } elseif (!$player->spendGold($price)) {
             self::answer('Or insuffisant !');
         }
 
@@ -76,13 +93,15 @@ final class SkillPurchaseHandler
 
     /**
      * The buy cell of a tree row — one rendering for the six pages.
+     * @param int|null $price en or ; null = payé en ressources (les sorts),
+     *                        auquel cas l'or du joueur ne décide de rien
      * @param bool $isFull the cap that applies to THIS skill (competence
      *                     count, or the spell slot of its level)
      */
     public static function buyButton(
         string $name,
         string $type,
-        int $price,
+        ?int $price,
         int $playerGold,
         bool $alreadyLearned,
         bool $isRaceLearnable,
@@ -98,14 +117,14 @@ final class SkillPurchaseHandler
             return '<button class="create" disabled>Impossible à apprendre</button>';
         }
 
-        $disabled = (($playerGold < $price) || $isFull || !$hasPrerequisites) ? 'disabled' : '';
+        $disabled = ((($price !== null && $playerGold < $price)) || $isFull || !$hasPrerequisites) ? 'disabled' : '';
 
         if ($isFull) {
             $btnText = $fullText;
         } elseif (!$hasPrerequisites) {
             $btnText = 'Pré-requis manquants';
         } else {
-            $btnText = 'Acheter : ' . $price . ' Po';
+            $btnText = $price === null ? 'Apprendre' : 'Acheter : ' . $price . ' Po';
         }
 
         return '<button class="create buy-skill-btn" data-id="' . $name . '" data-type="' . $type . '" ' . $disabled . '>' . $btnText . '</button>';

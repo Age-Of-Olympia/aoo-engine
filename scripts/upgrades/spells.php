@@ -4,6 +4,7 @@ use App\Service\ActionService;
 use App\Service\ActionPassiveService;
 use App\View\Action\ActionCostView;
 use App\Service\OutcomeInstructionService;
+use App\Service\WarSchool\SkillPrerequisiteService;
 use Classes\Str;
 
 if (isset($_GET['forget']) && !empty($_POST['spell'])) {
@@ -37,7 +38,7 @@ if (isset($_GET['forget_p']) && !empty($_POST['passive'])) {
  */
 
 $spellList = $player->get_spells();
-$basicSpell = ['pic_magique'];
+$basicSpell = SkillPrerequisiteService::INNATE_SPELLS;
 $spellsN = count(array_diff($spellList, $basicSpell));
 
 /* Sorts prêtés par un objet porté (items.spell) : ils se listent avec les

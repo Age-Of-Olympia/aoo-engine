@@ -24,10 +24,12 @@ use App\Service\PlayerPassiveService;
  *    "forbidden": [...]} against the owned names.
  *
  * The NUMBER_MAX_COMP cap covers bought non-spell actives (type 'sort') and
- * passives; spells are capped by their slots instead.
+ * passives; spells are capped by their slots instead. Innate spells escape both.
  */
 final class SkillPrerequisiteService
 {
+    public const INNATE_SPELLS = ['pic_magique'];
+    public const MAX_TREE_LEVEL = 4;
     private const PRIMARY_TREES = ['melee', 'distance', 'magic'];
     private const SECONDARY_TREES = ['survival', 'stealth'];
     private const REQUIRED_PER_LEVEL = ['primary' => 2, 'secondary' => 1];
@@ -62,6 +64,10 @@ final class SkillPrerequisiteService
 
         foreach ($ownedActions as $name => $type) {
             $this->ownedNames[$name] = true;
+
+            if (self::isInnate($name)) {
+                continue;
+            }
 
             $meta = $catalog[$name] ?? null;
             if ($meta === null) {
@@ -120,6 +126,12 @@ final class SkillPrerequisiteService
     public function owns(string $name): bool
     {
         return isset($this->ownedNames[$name]);
+    }
+
+    // Un sort inné ne compte pas dans les limites de sorts ou compétences
+    public static function isInnate(string $name): bool
+    {
+        return in_array($name, self::INNATE_SPELLS,true);
     }
 
     /** Bought non-spell actives + passives — what NUMBER_MAX_COMP caps. */
@@ -211,8 +223,8 @@ final class SkillPrerequisiteService
             return $this->hasFreeSpellSlot($level);
         }
 
-        if ($level === 4 && in_array($tree, self::PRIMARY_TREES, true)) {
-            if ($this->hasOtherPrimaryLevel4($tree)) {
+        if ($level === self::MAX_TREE_LEVEL && in_array($tree, self::PRIMARY_TREES, true)) {
+            if ($this->hasOtherPrimaryLevelMax($tree)) {
                 return false;
             }
         }
@@ -228,10 +240,10 @@ final class SkillPrerequisiteService
         return true;
     }
 
-    private function hasOtherPrimaryLevel4(string $currentTree): bool
+    private function hasOtherPrimaryLevelMax(string $currentTree): bool
     {
         foreach (self::PRIMARY_TREES as $primaryTree) {
-            if ($primaryTree !== $currentTree && $this->treeCountAt($primaryTree, 4) > 0) {
+            if ($primaryTree !== $currentTree && $this->treeCountAt($primaryTree, self::MAX_TREE_LEVEL) > 0) {
                 return true;
             }
         }
@@ -253,5 +265,16 @@ final class SkillPrerequisiteService
         }
 
         return null;
+    }
+
+    public static function treeLevel(?string $category, int $level): int
+    {
+        $tree = self::tree($category);
+
+        if ($tree === null || $tree === 'spell') {
+            return $level;
+        }
+
+        return min($level, self::MAX_TREE_LEVEL);
     }
 }

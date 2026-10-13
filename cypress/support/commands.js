@@ -234,6 +234,47 @@ Cypress.Commands.add('validateInventory', (playerId, expectedItems) => {
 });
 
 /**
+ * Garantit que le joueur PORTE au moins `count` de chaque objet nommé.
+ *
+ * Idempotent par construction : GREATEST, pas une addition — rejouer le
+ * test ne gonfle pas le sac, il le remet à son plancher. La ligne visée est
+ * celle du sac (slot vide) que lit Item::get_n ; players_items ayant pour
+ * clé (player_id, item_id), un seul ON DUPLICATE KEY suffit.
+ *
+ * @param {number} playerId
+ * @param {Object<string, number>} items nom d'objet (items.name) => plancher
+ */
+Cypress.Commands.add('giveItems', (playerId, items) => {
+  const names = Object.keys(items);
+
+  /* Un nom absent du catalogue ferait un INSERT ... SELECT sans ligne,
+     donc un sac vide SANS erreur : on préfère échouer ici, avec le nom
+     fautif, plutôt que de laisser le test mourir plus loin sur un
+     symptôme qui ne désigne pas sa cause. */
+  cy.task('queryDatabase', {
+    query: `SELECT name FROM items WHERE name IN (${names.map(() => '?').join(',')})`,
+    params: names
+  }).then((rows) => {
+    const known = rows.map((row) => row.name);
+    const missing = names.filter((name) => !known.includes(name));
+    if (missing.length) {
+      throw new Error(`giveItems : objets absents du catalogue — ${missing.join(', ')}`);
+    }
+  });
+
+  Object.entries(items).forEach(([name, count]) => {
+    cy.task('queryDatabase', {
+      query: `
+        INSERT INTO players_items (player_id, item_id, n)
+        SELECT ?, id, ? FROM items WHERE name = ?
+        ON DUPLICATE KEY UPDATE n = GREATEST(n, VALUES(n))
+      `,
+      params: [playerId, count, name]
+    });
+  });
+});
+
+/**
  * Validate player coordinates
  */
 Cypress.Commands.add('validatePlayerCoords', (playerId, expectedCoords) => {

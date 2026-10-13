@@ -179,6 +179,37 @@ class SkillPrerequisiteServiceTest extends TestCase
         $this->assertFalse($service->owns('eclair'));
     }
 
+    public function testInnateSpellCostsNothing(): void
+    {
+        $innate = SkillPrerequisiteService::INNATE_SPELLS[0];
+
+        foreach ([null, 'spell-off'] as $category) {
+            $service = $this->service(
+                [$innate => 'sort'],
+                [$innate => ['category' => $category, 'level' => 1]],
+                [],
+                [1 => 1]
+            );
+
+            $this->assertTrue($service->owns($innate), 'il reste possédé');
+            $this->assertSame(0, $service->capCount(), 'aucune place sous le plafond');
+            $this->assertSame(0, $service->spellCountAt(1), "aucun emplacement de sort pris");
+            $this->assertTrue($service->hasFreeSpellSlot(1), 'le slot de niveau 1 reste libre');
+        }
+    }
+
+    /** Un sort inné n'ouvre pas non plus de niveau dans un arbre. */
+    public function testInnateSpellDoesNotFeedTheTreeGate(): void
+    {
+        $innate = SkillPrerequisiteService::INNATE_SPELLS[0];
+        $service = $this->service(
+            [$innate => 'sort'],
+            [$innate => ['category' => 'magic-off', 'level' => 1]]
+        );
+
+        $this->assertSame(0, $service->treeCountAt('magic', 1));
+    } 
+    
     public function testTreeExtraction(): void
     {
         $this->assertSame('melee', SkillPrerequisiteService::tree('melee-off'));

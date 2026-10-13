@@ -32,6 +32,13 @@ $(function () {
                 ? { buyPassiveId: skillId }
                 : { buySkillId: skillId };
 
+            /* Un sort se paie en ressources choisies dans la carte : un
+             menu par ressource due, dans l'ordre du barème. */
+            var resources = btn.closest('.ws-card').find('select.ws-resource').map(function () { return this.value; }).get();
+            if (resources.length) {
+                postData.resources = resources;
+            }
+
             $.ajax({
                 type: 'POST',
                 url: buyUrl,

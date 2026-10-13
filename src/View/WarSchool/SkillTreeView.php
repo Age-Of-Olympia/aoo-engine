@@ -8,6 +8,7 @@ use App\Service\ActionPassiveService;
 use App\Service\ActionService;
 use App\Service\RaceService;
 use App\Service\WarSchool\SkillPrerequisiteService;
+use App\Service\WarSchool\SpellPriceService;
 use App\Trait\EscapesHtmlTrait;
 use App\View\Action\ActionCostView;
 use Classes\Player;
@@ -38,6 +39,9 @@ final class SkillTreeView
 
     /** @var array<string, string>|null name => display name, actions and passives */
     private ?array $displayNames = null;
+
+    /** @var array<string, int>|null ressources du barème portées par le joueur */
+    private ?array $ownedResources = null;
 
     public function __construct(
         private readonly ActionService $actions = new ActionService(),
@@ -121,6 +125,10 @@ final class SkillTreeView
             . '.ws-content .ws-kind{text-transform:uppercase;letter-spacing:.05em;font-size:.8em;color:#666}'
             . '.ws-content .ws-effect{font-size:.9em}'
             . '.ws-content .ws-needs{font-size:.85em}'
+            . '.ws-content .ws-cost{display:flex;flex-direction:column;gap:3px;margin-top:4px;font-size:.85em}'
+            . '.ws-content .ws-cost-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap}'
+            . '.ws-content .ws-cost-tier{color:#666;white-space:nowrap}'
+            . '.ws-content .ws-resource{max-width:100%;font-size:1em}'
             . '.ws-content .ws-ok{color:#27ae60}.ws-content .ws-ko{color:#c0392b}'
             . '.ws-content .ws-card .buy-skill-btn,.ws-content .ws-card button{margin-top:4px;align-self:flex-start}'
             . '.ws-content .ws-overview summary h3{font-weight:bold}'
@@ -194,11 +202,12 @@ final class SkillTreeView
         /** @var array<int, list<Action|ActionPassive>> level => skills */
         $byLevel = [];
         foreach ($this->actions->getActionsByCategory($tab->category) as $action) {
-            $byLevel[$action->getLevel()][] = $action;
+            $byLevel[SkillPrerequisiteService::treeLevel($tab->category, $action->getLevel())][] = $action;
         }
         if (!$tab->spells) {
             foreach ($this->passives->getActionPassivesByCategory($tab->category) as $passive) {
-                $byLevel[$passive->getLevel()][] = $passive;
+                // un Archimage ouvre des emplacements de niveau 5, mais sa colonne est la 4e
+                $byLevel[SkillPrerequisiteService::treeLevel($tab->category, $passive->getLevel())][] = $passive;
             }
         }
 
@@ -270,10 +279,16 @@ final class SkillTreeView
             . ($isPassive ? '' : '<span>' . $costView->forAction($skill) . '</span>');
 
         $button = '';
+        $costCell = '';
         if ($gold !== null) {
             $capped = $tab->spells ? !$prereqs->hasFreeSpellSlot($skill->getLevel()) : $prereqs->isFull();
             $price = $isPassive ? $this->passives->getPrice($skill->getLevel()) : $this->actions->getPrice($skill->getLevel());
-            $button = SkillPurchaseHandler::buyButton($name, $isPassive ? 'passive' : 'active', $price, $gold, $owned, $learnable, $capped, $usable, $tab->spells ? 'Aucun emplacement' : 'Max atteint');
+            /* Un sort se paie en ressources : pas de prix en or, et la
+               facture est un choix, donc elle précède le bouton. */
+            if ($tab->spells && !$owned) {
+                $costCell = (new SpellPriceView())->render($name, $skill->getLevel(), $this->ownedResources($player));
+            }
+            $button = SkillPurchaseHandler::buyButton($name, $isPassive ? 'passive' : 'active', $tab->spells ? null : $price, $gold, $owned, $learnable, $capped, $usable, $tab->spells ? 'Aucun emplacement' : 'Max atteint');
         }
 
         return '<div class="ws-card ' . $state . '">'
@@ -283,9 +298,22 @@ final class SkillTreeView
             . '<div class="ws-meta"><span class="ws-state">' . $stateLabel . '</span>' . $meta . '</div>'
             . '<i class="ws-effect">' . $this->esc($skill->getText()) . '</i>'
             . $this->needs($skill->getPrerequisites(), $prereqs, $displayNames)
+            . $costCell
             . $button
             . '</div>'
             . '</div>';
+    }
+
+    /**
+     * Ce que le joueur porte des ressources du barème, lu une fois pour
+     * toute la page : chaque carte de sort en a besoin, et la lecture ne
+     * change pas d'une carte à l'autre.
+     *
+     * @return array<string, int>
+     */
+    private function ownedResources(Player $player): array
+    {
+        return $this->ownedResources ??= SpellPriceService::owned($player);
     }
 
     /** The need/forbidden lists as lines, each name ticked when it holds. */
