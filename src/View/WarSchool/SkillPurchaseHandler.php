@@ -69,6 +69,9 @@ final class SkillPurchaseHandler
             $choices = $_POST['resources'] ?? [];
             $choices = is_array($choices) ? array_values(array_map('strval', $choices)) : [];
 
+            if ($choices === []) {
+                self::answer('Aucune ressource sélectionnée');
+            }
             $tally = SpellPriceService::tally($skill->getLevel(), $choices);
             if ($tally === null) {
                 self::answer('Ressources invalides pour ce sort.');

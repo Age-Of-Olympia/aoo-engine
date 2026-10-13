@@ -148,7 +148,7 @@ final class SkillTreeView
             . $this->tree($tab, $player, $prereqs, $gold);
 
         echo Str::minify($html);
-        echo '<script src="js/warschool.js?v=20260714"></script>';
+        echo '<script src="js/warschool.js?v=20261013"></script>';
     }
 
     /** Every tree, read-only: the player's standing without a school around. */
