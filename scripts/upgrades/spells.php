@@ -1,7 +1,6 @@
 <?php
 
 use App\Service\ActionService;
-use App\Service\ActionPassiveService;
 use App\View\Action\ActionCostView;
 use App\Service\OutcomeInstructionService;
 use App\Service\WarSchool\SkillPrerequisiteService;
@@ -39,7 +38,6 @@ if (isset($_GET['forget_p']) && !empty($_POST['passive'])) {
 
 $spellList = $player->get_spells();
 $basicSpell = SkillPrerequisiteService::INNATE_SPELLS;
-$spellsN = count(array_diff($spellList, $basicSpell));
 
 /* Sorts prêtés par un objet porté (items.spell) : ils se listent avec les
  * autres, mais ne sont pas des lignes apprises — ni dans le décompte du
@@ -53,8 +51,7 @@ $buttonClass = '';
  * « Oublier » vit sur chaque ligne. */
 $maxColSpan = 9;
 
-$passivesN = (new ActionPassiveService())->getActionPassiveCount($player->getId());
-$nbComp = $spellsN + $passivesN;
+$nbComp = SkillPrerequisiteService::forPlayer($player->getId())->capCount();
 $numberOfSpellsAvailable = NUMBER_MAX_COMP - $nbComp;
 $maxSpells = NUMBER_MAX_COMP;
 
