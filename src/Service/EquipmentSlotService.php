@@ -15,7 +15,7 @@ final class EquipmentSlotService
         return $emplacement === 'deuxmains' ? 'main1' : $emplacement;
     }
 
-    /** The slots that must be free before equipping an item of this type. */
+    /** @return list<string> The slots that must be free before equipping this item. */
     public static function slotsToClear(string $emplacement): array
     {
         if ($emplacement === 'deuxmains') {
