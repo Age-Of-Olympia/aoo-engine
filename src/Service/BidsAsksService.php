@@ -57,7 +57,7 @@ class BidsAsksService
                     }
 
                     $item = new Item($row->item_id, row: false, checked: true);
-                    if (!$item->add_item($player, $row->stock, bank: true)) {
+                    if (!$item->add_item($player, $row->stock, bank: false)) {
                         ExitError("Erreur lors du retour des objets dans la banque");
                     }
                 }
@@ -69,7 +69,7 @@ class BidsAsksService
 
                     //give back gold
                     $gold = Item::get_item_by_name('or', checked: true);
-                    $gold->add_item($player, $row->stock * $row->price);
+                    $gold->add_item($player, $row->stock * $row->price, bank: false);
                 }
             }
 
