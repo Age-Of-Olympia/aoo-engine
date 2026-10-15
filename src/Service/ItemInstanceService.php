@@ -615,7 +615,7 @@ class ItemInstanceService
      */
     public function escrowForMarket(int $instanceId, int $playerId): void
     {
-        $this->moveTo($instanceId, $playerId, self::LOCATION_BANK, self::LOCATION_MARKET);
+        $this->moveTo($instanceId, $playerId, self::LOCATION_INVENTORY, self::LOCATION_MARKET);
     }
 
     /** Annulation d'une offre : l'exemplaire retourne au coffre. */

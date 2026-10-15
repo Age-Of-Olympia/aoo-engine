@@ -160,7 +160,7 @@ class BidsAsksService
                     $label = $instanceService->describe($instanceId);
                     Log::put($player, $player, "Vous avez mis en vente un objet",
                         "hidden_action", "{$label} à {$price} Or.", time());
-                } elseif ($item->add_item($player, -$quantity, bank: true)) {
+                } elseif ($item->add_item($player, -$quantity, bank: false)) {
                     $this->db->insert('items_bids', $values);
                     $logTime = time();
                     $targetLog = "Vous avez mis en vente des objets";
@@ -186,7 +186,7 @@ class BidsAsksService
 
                 //remove money to "block" it
                 $gold = Item::get_item_by_name('or', checked: true);
-                if ($gold->add_item($player, -$total)) {
+                if ($gold->add_item($player, -$total, bank: false)) {
                     $this->db->insert('items_asks', $values);
                     $logTime = time();
                     $targetLog = "Vous avez créé une demande d'Achat";
