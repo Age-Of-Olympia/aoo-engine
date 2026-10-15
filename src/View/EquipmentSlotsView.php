@@ -63,7 +63,9 @@ final class EquipmentSlotsView
                 $title .= ' : ' . strip_tags($caracs);
             }
             if (!empty($row->equiped)) {
-                $title .= ' (' . $row->equiped . ')';
+                $title .= \App\Service\EquipmentSlotService::isTwoHanded($item)
+                    ? ' (main1 et main2)'
+                    : ' (' . $row->equiped . ')';
             }
 
             /* Usure : jauge fine sous l'icône dès que la ligne est une instance —

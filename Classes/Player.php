@@ -281,6 +281,9 @@ class Player implements ActorInterface {
 
         $itemList = Item::get_equiped_list($this);
 
+        /* Rebuild the equipment map each time this Player is refreshed. */
+        $this->emplacements = (object) [];
+
         foreach($itemList as $row){
 
 
@@ -289,7 +292,16 @@ class Player implements ActorInterface {
             $item->get_data();
 
 
-            $this->emplacements->{$row->equiped} = $item;
+            $storedSlot = (string) $row->equiped;
+            if ($storedSlot === 'deuxmains' || \App\Service\EquipmentSlotService::isTwoHanded($item)) {
+                /* Legacy rows used `deuxmains` as a location. New rows use
+                 * main1; in both cases one item occupies both hand slots. */
+                $this->emplacements->main1 = $item;
+                $this->emplacements->main2 = $item;
+            } else {
+                $slot = \App\Service\EquipmentSlotService::storageSlot($storedSlot);
+                $this->emplacements->{$slot} = $item;
+            }
 
             /* Un objet BRISÉ (ItemInstanceService::BROKEN_AT) reste
              * porté — visible à l'emplacement — mais ne contribue plus ses
@@ -1656,6 +1668,10 @@ class Player implements ActorInterface {
             $item->get_data();
         }
 
+        $catalogSlot = (string) $item->data->emplacement;
+        $storageSlot = \App\Service\EquipmentSlotService::storageSlot($catalogSlot);
+        $emplacementsToClear = \App\Service\EquipmentSlotService::slotsToClear($catalogSlot);
+
 
         if($item->row->name == 'poing'){
 
@@ -1664,6 +1680,20 @@ class Player implements ActorInterface {
 
 
         $itemList = Item::get_equiped_list($this);
+
+        /* A stored two-handed item now lives in main1. Equipping main2 must
+         * still release that canonical record, while preserving a normal
+         * one-handed main1 item. */
+        if ($catalogSlot === 'main2') {
+            foreach ($itemList as $equippedRow) {
+                if ((string) $equippedRow->equiped === 'main1'
+                    && (string) ($equippedRow->emplacement ?? '') === 'deuxmains') {
+                    $emplacementsToClear[] = 'main1';
+                    break;
+                }
+            }
+        }
+        $emplacementsToClear = array_values(array_unique($emplacementsToClear));
 
 
         if(!empty($itemList[$item->id]) && $clickedEquippedLine !== false){
@@ -1743,7 +1773,7 @@ class Player implements ActorInterface {
             // équiper l'arc neuf alors que l'abîmé occupe l'emplacement
             // est un REMPLACEMENT voulu, pas un no-op.
             if($clickedEquippedLine !== false
-                && !empty($this->emplacements->{$item->data->emplacement}) && $this->emplacements->{$item->data->emplacement}->id == $item->id){
+                && !empty($this->emplacements->{$storageSlot}) && $this->emplacements->{$storageSlot}->id == $item->id){
                 return EquipResult::DoNothing;
             }
 
@@ -1760,16 +1790,22 @@ class Player implements ActorInterface {
             SELECT
             (SELECT COUNT(*) FROM items AS i
              INNER JOIN players_items AS p ON i.id = p.item_id
-             WHERE p.player_id = ? AND p.equiped = ? AND i.cursed = 1)
+             WHERE p.player_id = ? AND p.equiped IN (' . Db::print_in($emplacementsToClear) . ') AND i.cursed = 1)
             +
             (SELECT COUNT(*) FROM items AS i
              INNER JOIN item_instances AS ii ON ii.item_id = i.id
              INNER JOIN players AS e ON e.id = ii.entity_id
-             WHERE e.holder_id = ? AND e.slot = ? AND i.cursed = 1)
+             WHERE e.holder_id = ? AND e.slot IN (' . Db::print_in($emplacementsToClear) . ') AND i.cursed = 1)
             AS n
             ';
 
-            $res = $db->exe($sql, array($this->id, $item->data->emplacement, $this->id, $item->data->emplacement));
+            $curseParams = array_merge(
+                [$this->id],
+                $emplacementsToClear,
+                [$this->id],
+                $emplacementsToClear
+            );
+            $res = $db->exe($sql, $curseParams);
 
             $row = $res->fetch_object();
 
@@ -1794,28 +1830,6 @@ class Player implements ActorInterface {
                 && !$available){
 
                 return EquipResult::DoNothing;
-            }
-
-            // Déterminer quels emplacements doivent être libérés
-            $emplacementsToClear = [$item->data->emplacement];
-            if($item->data->emplacement == "deuxmains"){
-                $emplacementsToClear[] = 'main1';
-                $emplacementsToClear[] = 'main2';
-            }
-            elseif($item->data->emplacement == "main1" || $item->data->emplacement == "main2"){
-                $emplacementsToClear[] = 'deuxmains';
-            }
-
-            // A swap: what the cleared slots send back to the bag, minus the line the new item leaves
-            if ($bagGuard) {
-                $bag = new \App\Service\ContainerService();
-                $capacity = $bag->capacityOf((int) $this->id);
-                $wholeStack = in_array($item->data->emplacement, ['munition', 'trophee'], true);
-                $added = $bag->linesToUnequip((int) $this->id, $emplacementsToClear)
-                    - (int) ($wholeStack || $instanceService->equipFreesALine((int) $this->id, (int) $item->id, $instanceId));
-                if ($capacity !== null && $added > 0 && $bag->lineCountOf((int) $this->id) + $added > $capacity) {
-                    return EquipResult::BagFull;
-                }
             }
 
             // Refund the turn bonuses of the items about to be replaced.
@@ -1871,7 +1885,7 @@ class Player implements ActorInterface {
                 // Équiper crée (ou réutilise) une INSTANCE — l'objet
                 // commence à exister individuellement au moment où il est porté.
                 try {
-                    $instanceService->equipCatalogItem($this->id, (int) $item->id, $item->data->emplacement, $instanceId);
+                    $instanceService->equipCatalogItem($this->id, (int) $item->id, $storageSlot, $instanceId);
                 } catch (\RuntimeException) {
                     return EquipResult::DoNothing;
                 }

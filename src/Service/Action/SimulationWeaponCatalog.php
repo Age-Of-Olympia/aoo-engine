@@ -92,7 +92,7 @@ final class SimulationWeaponCatalog
         $order = defined('ITEM_EMPLACEMENT_FORMAT') ? ITEM_EMPLACEMENT_FORMAT : array_keys($byEmplacement);
         $slots = [];
         foreach ($order as $slot) {
-            if ($slot === 'main1') {
+            if ($slot === 'main1' || $slot === 'deuxmains') {
                 continue; // the main-hand weapon has its own picker
             }
             $items = $byEmplacement[$slot] ?? [];
@@ -122,7 +122,11 @@ final class SimulationWeaponCatalog
         // option), so it isn't offered again as an explicit pick.
         return array_filter(
             $this->items,
-            static fn (object $data, string $name): bool => ($data->emplacement ?? null) === 'main1' && $name !== 'poing',
+            static fn (object $data, string $name): bool => in_array(
+                ($data->emplacement ?? null),
+                ['main1', 'deuxmains'],
+                true
+            ) && $name !== 'poing',
             ARRAY_FILTER_USE_BOTH
         );
     }

@@ -44,10 +44,25 @@ class SimulatedPlayer extends Player
         $this->turn = (object) $remaining;
         $this->coords = $coords;
         $this->emplacements = $emplacements ?? (object) [];
+        $twoHanded = $this->emplacements->deuxmains ?? null;
+        if ($twoHanded !== null) {
+            $this->emplacements->main1 = $twoHanded;
+            $this->emplacements->main2 = $twoHanded;
+            unset($this->emplacements->deuxmains);
+        } elseif (isset($this->emplacements->main1)
+            && \App\Service\EquipmentSlotService::isTwoHanded($this->emplacements->main1)) {
+            $this->emplacements->main2 = $this->emplacements->main1;
+        }
         // Fold equipped-item stat bonuses (e.g. a weapon's cc) into caracs the
         // same way Player::get_caracs() does on a real player — same method, so
         // the simulator doesn't drift from the game's equipment rule.
+        $seenItems = [];
         foreach ((array) $this->emplacements as $item) {
+            $identity = spl_object_id($item);
+            if (isset($seenItems[$identity])) {
+                continue;
+            }
+            $seenItems[$identity] = true;
             self::applyItemCaracs($this->caracs, $item);
         }
         // Degressive-XP reduction read by AttackXpCalculator.

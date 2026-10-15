@@ -387,6 +387,7 @@ class ItemInstanceService
     public function equipCatalogItem(int $playerId, int $itemId, string $emplacement, ?int $instanceId = null): int
     {
         $conn = $this->entityManager->getConnection();
+        $emplacement = EquipmentSlotService::storageSlot($emplacement);
 
         if ($instanceId !== null) {
             if (!$this->isInstanceEquippable($playerId, $itemId, $instanceId)) {
