@@ -46,8 +46,12 @@ class SimulationWeaponCatalogTest extends TestCase
     {
         $slots = (new SimulationWeaponCatalog($this->items()))->equipmentSlots();
 
-        // Every slot of the real model is present, in order, except main1.
-        $expected = array_values(array_filter(ITEM_EMPLACEMENT_FORMAT, static fn (string $s): bool => $s !== 'main1'));
+        // The weapon picker handles both main1 and two-handed weapons; the
+        // latter occupy main1 + main2 in the simulated equipment model.
+        $expected = array_values(array_filter(
+            ITEM_EMPLACEMENT_FORMAT,
+            static fn (string $s): bool => !in_array($s, ['main1', 'deuxmains'], true)
+        ));
         $this->assertSame($expected, array_keys($slots));
         // Slots with items are populated; the rest are empty but still testable.
         $this->assertSame(['casque' => 'Casque'], $slots['tete']);
