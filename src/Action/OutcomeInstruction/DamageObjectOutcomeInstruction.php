@@ -130,6 +130,13 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction implements HasPa
         );
         
         foreach($emplacements as $k=>$e){
+            if ($k === 'main2'
+                && isset($player->emplacements->main1)
+                && isset($player->emplacements->main2)
+                && $player->emplacements->main2 === $player->emplacements->main1) {
+                unset($emplacements[$k]);
+                continue;
+            }
             if(!empty($player->emplacements->{$k}) && !$player->emplacements->{$k}->row->enchanted){
                 continue;
             }

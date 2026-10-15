@@ -20,11 +20,19 @@ class AntiSpellCondition extends BaseCondition implements HasParameterSchemaInte
         $result = new ConditionResult(true, array(), array());
         $errorMessages = array();
         $blocked = false;
+        $seen = [];
         foreach(ITEM_EMPLACEMENT_FORMAT as $emp){
             if(!empty($actor->emplacements->{$emp})){
-                if(!empty($actor->emplacements->{$emp}->data->spellMalus)){
+                $item = $actor->emplacements->{$emp};
+                $identity = spl_object_id($item);
+                if (isset($seen[$identity])) {
+                    continue;
+                }
+                $seen[$identity] = true;
+
+                if(!empty($item->data->spellMalus)){
                     $blocked = true;
-                    $errorMessages[sizeof($errorMessages)] = $actor->emplacements->{$emp}->data->name .' empêche la magie.';
+                    $errorMessages[sizeof($errorMessages)] = $item->data->name .' empêche la magie.';
                 }
             }
         }

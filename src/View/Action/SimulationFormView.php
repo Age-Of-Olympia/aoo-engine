@@ -23,7 +23,6 @@ final class SimulationFormView
     /** Friendly French labels for the equipment slots (emplacement keys). */
     private const SLOT_LABELS = [
         'main2' => 'Main 2',
-        'deuxmains' => 'Deux mains',
         'doigt' => 'Bague',
         'tete' => 'Tête',
         'bouche' => 'Bouche',

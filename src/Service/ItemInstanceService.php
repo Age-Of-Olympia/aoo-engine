@@ -364,6 +364,12 @@ class ItemInstanceService
                  ON DUPLICATE KEY UPDATE n = n + 1',
                 [(int) $row['player_id'], (int) $row['item_id']]
             );
+            /* Kept as a compatibility bridge after holder_id/slot became
+             * authoritative. Remove its FK row before deleting the instance. */
+            $conn->executeStatement(
+                'DELETE FROM players_items_instances WHERE instance_id = ?',
+                [$instanceId]
+            );
             $conn->executeStatement('DELETE FROM item_instances WHERE id = ?', [$instanceId]);
             self::detachEntity($conn, isset($row['entity_id']) ? (int) $row['entity_id'] : null);
 
@@ -392,6 +398,7 @@ class ItemInstanceService
     public function equipCatalogItem(int $playerId, int $itemId, string $emplacement, ?int $instanceId = null): int
     {
         $conn = $this->entityManager->getConnection();
+        $emplacement = EquipmentSlotService::storageSlot($emplacement);
 
         if ($instanceId !== null) {
             if (!$this->isInstanceEquippable($playerId, $itemId, $instanceId)) {

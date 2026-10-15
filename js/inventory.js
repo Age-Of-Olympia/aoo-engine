@@ -192,7 +192,10 @@ $(document).ready(function(){
 
                 var msg = verb + ' ' + window.name;
                 if(verb == 'Équiper' && window.emplacement){
-                    msg += ' en ' + window.emplacement;
+                    var emplacementLabel = window.emplacement == 'deuxmains'
+                        ? 'main1 et main2'
+                        : window.emplacement;
+                    msg += ' en ' + emplacementLabel;
                 }
                 if(cost){
                     msg += ' ' + cost;

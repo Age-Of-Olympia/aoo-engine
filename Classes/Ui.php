@@ -506,8 +506,15 @@ class Ui{
             $emplacement = '';
 
             if(!empty($row->equiped) && $row->equiped != ''){
-
-                $emplacement = '<div class="emplacement" data-id="'. $row->id .'"><img src="img/ui/inventory/'. $row->equiped .'.jpeg" /></div>';
+                $equippedSlots = ((string) $row->equiped === 'deuxmains'
+                    || \App\Service\EquipmentSlotService::isTwoHanded($item))
+                    ? ['main1', 'main2']
+                    : [(string) $row->equiped];
+                $slotIcons = '';
+                foreach ($equippedSlots as $equippedSlot) {
+                    $slotIcons .= '<img src="img/ui/inventory/'. $equippedSlot .'.jpeg" />';
+                }
+                $emplacement = '<div class="emplacement" data-id="'. $row->id .'">'. $slotIcons .'</div>';
             }
 
 

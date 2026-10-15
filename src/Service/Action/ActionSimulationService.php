@@ -199,6 +199,17 @@ final class ActionSimulationService
      */
     private function emplacements(?string $weaponName, array $equipment = []): object
     {
+        /* Older form posts exposed a separate deuxmains field. Promote it
+         * to the main-hand weapon picker when no weapon was chosen there. */
+        $legacyTwoHandName = $equipment['deuxmains'] ?? null;
+        unset($equipment['deuxmains']);
+        if (($weaponName === null || $weaponName === '')
+            && is_string($legacyTwoHandName)
+            && $this->weaponCatalog()->has($legacyTwoHandName)) {
+            $weaponName = $legacyTwoHandName;
+        }
+
+        $weaponData = null;
         if ($weaponName === null || $weaponName === '') {
             // A real player is never bare-handed: unarmed means the "Poing" (fist),
             // a real melee item — load its real data so it carries subtype 'melee'
@@ -211,13 +222,20 @@ final class ActionSimulationService
         } elseif ($this->weaponCatalog()->has($weaponName)) {
             // A real weapon: carry its data (spellMalus/subtype/…) so the
             // weapon-dependent conditions (AntiSpell, Dodge) read real values.
-            $weapon = SimulatedItem::fromData($this->weaponCatalog()->dataFor($weaponName));
+            $weaponData = $this->weaponCatalog()->dataFor($weaponName);
+            $weapon = SimulatedItem::fromData($weaponData);
         } else {
             // Legacy: a bare subtype string (melee/tir/…).
             $weapon = new SimulatedItem($weaponName, ucfirst($weaponName));
         }
 
         $emplacements = (object) ['main1' => $weapon];
+        $twoHanded = ($weaponData->emplacement ?? null) === 'deuxmains';
+        if ($twoHanded) {
+            /* Both physical slots point at the same simulated item. */
+            $emplacements->main2 = $weapon;
+            unset($equipment['main2']);
+        }
 
         // Other equipped slots (helmet, ring, armour, shield, …): their stats
         // fold into caracs and their properties (e.g. a helmet's spellMalus) feed
@@ -246,10 +264,17 @@ final class ActionSimulationService
 
         $kept = (object) [];
         $normalCount = 0;
+        $seenItems = [];
         foreach ($order as $slot) {
             if (!isset($emplacements->{$slot})) {
                 continue;
             }
+            $identity = spl_object_id($emplacements->{$slot});
+            if (isset($seenItems[$identity])) {
+                $kept->{$slot} = $emplacements->{$slot};
+                continue;
+            }
+            $seenItems[$identity] = true;
             // Exempt slots (ring/munition/trophee) and the non-real main-hand
             // (Poing/legacy type) are always kept and don't count toward the cap.
             if (!Item::countsTowardEquipLimit($slot) || ($slot === 'main1' && !$weaponIsReal)) {

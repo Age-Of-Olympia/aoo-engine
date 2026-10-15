@@ -78,11 +78,8 @@ class DodgeCondition extends BaseCondition implements HasParameterSchemaInterfac
     private function defenderWeaponMatches(Effect $stance, ActorInterface $target): bool
     {
         return match ($stance->getDodgeDefenderWeapon()) {
-            // Arme de mêlée en main (une éventuelle arme à deux mains
-            // doit elle-même être de mêlée).
-            'melee' => (!isset($target->emplacements->deuxmains)
-                    || $target->emplacements->deuxmains->data->subtype == 'melee')
-                && isset($target->emplacements->main1)
+            // An offensive item occupies main1, including a two-handed one.
+            'melee' => isset($target->emplacements->main1)
                 && $target->emplacements->main1->data->subtype == 'melee',
             'poing' => isset($target->emplacements->main1)
                 && $target->emplacements->main1->data->name == 'Poing',

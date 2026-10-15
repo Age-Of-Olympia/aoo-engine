@@ -357,12 +357,25 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
     private function updatePlayerCaracsWithIgnores(array $ignore, ActorInterface $player)
     {
         $itemToEquip = array();
+        $ignoredItems = [];
         foreach($ignore as $emp){
             if(!empty($player->emplacements->{$emp})){
+                $item = $player->emplacements->{$emp};
+                $identity = spl_object_id($item);
+                if (isset($ignoredItems[$identity])) {
+                    unset($player->emplacements->{$emp});
+                    continue;
+                }
+                $ignoredItems[$identity] = true;
+
                 // unequip
-                $player->equip($player->emplacements->{$emp}, true);
-                $itemToEquip[$emp] = $player->emplacements->{$emp};
-                unset($player->emplacements->{$emp});
+                $player->equip($item, true);
+                $itemToEquip[] = $item;
+                foreach ((array) $player->emplacements as $slot => $equipped) {
+                    if ($equipped === $item) {
+                        unset($player->emplacements->{$slot});
+                    }
+                }
             }
         }
         // update caracs & refresh equipment
