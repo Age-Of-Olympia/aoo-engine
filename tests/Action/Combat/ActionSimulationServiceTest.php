@@ -231,10 +231,10 @@ class ActionSimulationServiceTest extends TestCase
 
     public function testEquipLimitDropsNormalItemsBeyondTheCap(): void
     {
-        // gladius(main1) + bouclier(main2) + lame(deuxmains) = 3 normal items =
-        // the cap, so the casque (tete, 4th normal) is NOT equipped — its
-        // spellMalus must therefore NOT fire AntiSpell. BuffAction has no auto
-        // outcomes, so a successful roll touches nothing.
+        // gladius(main1) + bouclier(main2) + bottes(pieds) reach the cap, so
+        // the casque (tete, 4th normal) is NOT equipped — its spellMalus
+        // must therefore NOT fire AntiSpell. BuffAction has no auto outcomes,
+        // so a successful roll touches nothing.
         $action = new BuffAction();
         $action->setName('sort');
         $action->setDisplayName('Sort');
@@ -244,14 +244,14 @@ class ActionSimulationServiceTest extends TestCase
             actorCaracs: ['cc' => 30],
             targetCaracs: ['cc' => 1],
             actorWeapon: 'gladius',
-            actorEquipment: ['main2' => 'bouclier', 'deuxmains' => 'lame', 'tete' => 'casque'],
+            actorEquipment: ['main2' => 'bouclier', 'bottes' => 'pieds', 'tete' => 'casque'],
         );
         $antiSpell = (new ActionConditionPrecondition())->setParentConditionType('SpellCompute')
             ->setPreconditionType('AntiSpell')->setOrderIndex(0)->setBlocking(true);
         $weapons = [
             'gladius' => (object) ['type' => 'equipement', 'emplacement' => 'main1', 'subtype' => 'melee', 'name' => 'Gladius'],
             'bouclier' => (object) ['type' => 'equipement', 'emplacement' => 'main2', 'subtype' => 'bouclier', 'name' => 'Bouclier'],
-            'lame' => (object) ['type' => 'equipement', 'emplacement' => 'deuxmains', 'subtype' => 'melee', 'name' => 'Lame'],
+            'bottes' => (object) ['type' => 'equipement', 'emplacement' => 'pieds', 'subtype' => 'bottes', 'name' => 'Bottes'],
             'casque' => (object) ['type' => 'equipement', 'emplacement' => 'tete', 'subtype' => 'casque', 'name' => 'Casque', 'spellMalus' => 1],
         ];
 
