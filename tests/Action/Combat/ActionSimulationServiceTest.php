@@ -231,10 +231,9 @@ class ActionSimulationServiceTest extends TestCase
 
     public function testEquipLimitDropsNormalItemsBeyondTheCap(): void
     {
-        // gladius(main1) + bouclier(main2) + bottes(pieds) reach the cap, so
-        // the casque (tete, 4th normal) is NOT equipped — its spellMalus
-        // must therefore NOT fire AntiSpell. BuffAction has no auto outcomes,
-        // so a successful roll touches nothing.
+        // Slot order is gladius(main1), bouclier(main2), casque(tete), then
+        // bottes(pieds). The boots are the 4th normal item and are dropped,
+        // so their spellMalus must NOT fire AntiSpell.
         $action = new BuffAction();
         $action->setName('sort');
         $action->setDisplayName('Sort');
@@ -244,15 +243,15 @@ class ActionSimulationServiceTest extends TestCase
             actorCaracs: ['cc' => 30],
             targetCaracs: ['cc' => 1],
             actorWeapon: 'gladius',
-            actorEquipment: ['main2' => 'bouclier', 'bottes' => 'pieds', 'tete' => 'casque'],
+            actorEquipment: ['main2' => 'bouclier', 'tete' => 'casque', 'pieds' => 'bottes'],
         );
         $antiSpell = (new ActionConditionPrecondition())->setParentConditionType('SpellCompute')
             ->setPreconditionType('AntiSpell')->setOrderIndex(0)->setBlocking(true);
         $weapons = [
             'gladius' => (object) ['type' => 'equipement', 'emplacement' => 'main1', 'subtype' => 'melee', 'name' => 'Gladius'],
             'bouclier' => (object) ['type' => 'equipement', 'emplacement' => 'main2', 'subtype' => 'bouclier', 'name' => 'Bouclier'],
-            'bottes' => (object) ['type' => 'equipement', 'emplacement' => 'pieds', 'subtype' => 'bottes', 'name' => 'Bottes'],
-            'casque' => (object) ['type' => 'equipement', 'emplacement' => 'tete', 'subtype' => 'casque', 'name' => 'Casque', 'spellMalus' => 1],
+            'casque' => (object) ['type' => 'equipement', 'emplacement' => 'tete', 'subtype' => 'casque', 'name' => 'Casque'],
+            'bottes' => (object) ['type' => 'equipement', 'emplacement' => 'pieds', 'subtype' => 'bottes', 'name' => 'Bottes', 'spellMalus' => 1],
         ];
 
         $results = $this->simulationServiceWith(conditionPreconditions: [$antiSpell], weapons: $weapons)->simulate($action, $input);
