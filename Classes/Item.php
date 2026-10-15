@@ -278,7 +278,7 @@ class Item{
     }
 
 
-    public function give_item(Player $player, Player $target, int $n, bool $bank=false) {
+    public function give_item(Player $player, Player $target, int $n, bool $fromBank=false,bool $toBank=false) {
         if ($n < 1) {
             return false;
         }
@@ -289,12 +289,12 @@ class Item{
         $db = new Db();
         $db->start_transaction('give_item');
 
-        if (!$this->add_item($player, -$n, $bank)) {
+        if (!$this->add_item($player, -$n, $fromBank)) {
             $db->rollback_transaction('give_item');
             return false;
         }
 
-        if (!$this->add_item($target, $n, $bank)) {
+        if (!$this->add_item($target, $n, $toBank)) {
             $db->rollback_transaction('give_item');
             return false;
         }

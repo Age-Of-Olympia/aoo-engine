@@ -167,7 +167,7 @@ class BidsAsksService
                     $objects = "{$quantity} {$item->row->name} à {$price} Or l'unité.";
                     Log::put($player, $player, $targetLog, "hidden_action", $objects, $logTime);
                 } else {
-                    ExitError("Vous ne possédez pas assez d'objets dans votre banque");
+                    ExitError("Vous ne possédez pas assez d'objets dans votre inventaire");
                 }
             }
 
@@ -291,6 +291,7 @@ class BidsAsksService
                             $instanceId,
                             (int) $player->id,
                             (int) $target->id,
+                            ItemInstanceService::LOCATION_INVENTORY,
                             ItemInstanceService::LOCATION_BANK
                         );
                     } catch (\InvalidArgumentException $e) {
@@ -298,7 +299,7 @@ class BidsAsksService
                     }
 
                     $gold = Item::get_item_by_name('or', checked: true);
-                    $gold->add_item($player, $total, bank: true);
+                    $gold->add_item($player, $total, bank: false);
 
                     $logTime = time();
                     Log::put($player, $player, "Vous avez vendu un objet.",
@@ -307,14 +308,14 @@ class BidsAsksService
                         "hidden_action", "{$label} à {$row->price} Or.", $logTime);
                 } else {
 
-                    // transfer item to target bank
-                    if (!$item->give_item($player, $target, $quantity, bank: true)) {
-                        ExitError("Vous n'avez pas assez de cet objet en banque.");
+                    // transfer item to target bank 
+                    if (!$item->give_item($player, $target, $quantity, fromBank:false, toBank: true)) {
+                        ExitError("Vous n'avez pas assez de cet objet dans l'inventaire.");
                     }
 
-                    // transfer gold to player bank from market
+                    // transfer gold to player inv from market
                     $gold = Item::get_item_by_name('or', checked: true);
-                    $gold->add_item($player, $total, bank: true);
+                    $gold->add_item($player, $total, bank: false);
 
                     $logTime = time();
                     $targetLog = "Vous avez vendus des objets.";
@@ -333,7 +334,7 @@ class BidsAsksService
                 $target = new Player($row->player_id);
                 $gold = Item::get_item_by_name('or', checked: true);
 
-                if (!$gold->give_item($player, $target, $total, bank: true)) {
+                if (!$gold->give_item($player, $target, $total, fromBank:false, toBank: true)) {
                     ExitError("Pas assez d'Or.");
                 }
 
@@ -355,7 +356,8 @@ class BidsAsksService
                             (int) $row->instance_id,
                             (int) $target->id,
                             (int) $player->id,
-                            ItemInstanceService::LOCATION_MARKET
+                            ItemInstanceService::LOCATION_MARKET,
+                            ItemInstanceService::LOCATION_INVENTORY
                         );
                     } catch (\InvalidArgumentException $e) {
                         ExitError($e->getMessage());
@@ -368,8 +370,8 @@ class BidsAsksService
                         "hidden_action", "{$label} à {$row->price} Or.", $logTime);
                 } else {
 
-                    if (!$item->add_item($player, $quantity, bank: true)) {
-                        ExitError("Erreur lors du transfert de l'objet depuis la banque.");
+                    if (!$item->add_item($player, $quantity, bank: false)) {
+                        ExitError("Erreur lors du transfert de l'objet vers l'inventaire. Vérifiez que vous avez assez de place.");
                     }
                     $logTime = time();
                     $targetLog = "Vous avez acheté des objets.";

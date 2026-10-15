@@ -96,7 +96,7 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
         $before = $this->link->fetchAssociative('SELECT * FROM item_instances WHERE id = ?', [$instanceId]);
 
         $service->escrowForMarket($instanceId, $seller->id);
-        $service->deliverEscrow($instanceId, $seller->id, $buyer->id, ItemInstanceService::LOCATION_MARKET);
+        $service->deliverEscrow($instanceId, $seller->id, $buyer->id, ItemInstanceService::LOCATION_MARKET,ItemInstanceService::LOCATION_BANK);
 
         $link = $this->link->fetchAssociative(
             "SELECT e.holder_id AS player_id,
@@ -123,12 +123,12 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
         $instanceId = $this->bankedInstance($seller->id, $bois);
         $service->escrowForMarket($instanceId, $seller->id);
 
-        $service->deliverEscrow($instanceId, $seller->id, $first->id, ItemInstanceService::LOCATION_MARKET);
+        $service->deliverEscrow($instanceId, $seller->id, $first->id, ItemInstanceService::LOCATION_MARKET,ItemInstanceService::LOCATION_BANK);
 
         // Le second arrive après : l'exemplaire n'est plus ni séquestré,
         // ni au vendeur. Il doit être refusé, pas livré une seconde fois.
         $this->expectException(\InvalidArgumentException::class);
-        $service->deliverEscrow($instanceId, $seller->id, $second->id, ItemInstanceService::LOCATION_MARKET);
+        $service->deliverEscrow($instanceId, $seller->id, $second->id, ItemInstanceService::LOCATION_MARKET,ItemInstanceService::LOCATION_BANK);
     }
 
     public function testCancellingAnOfferBringsTheInstanceBackToTheVault(): void

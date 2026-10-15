@@ -252,7 +252,8 @@ class Exchange{
                     (int) $exchange_item->instance_id,
                     (int) $from_player->id,
                     (int) $to_player->id,
-                    \App\Service\ItemInstanceService::LOCATION_EXCHANGE
+                    \App\Service\ItemInstanceService::LOCATION_EXCHANGE,
+                    \App\Service\ItemInstanceService::LOCATION_BANK
                 );
 
                 if(!empty($result))

@@ -650,11 +650,11 @@ class ItemInstanceService
      * @throws \InvalidArgumentException si l'exemplaire n'est plus là où
      *         on l'attendait, ou n'appartient plus au cédant
      */
-    public function deliverEscrow(int $instanceId, int $fromPlayerId, int $toPlayerId, string $from): void
+    public function deliverEscrow(int $instanceId, int $fromPlayerId, int $toPlayerId, string $fromLocation, string $toLocation): void
     {
         $conn = $this->entityManager->getConnection();
 
-        $conn->transactional(function ($conn) use ($instanceId, $fromPlayerId, $toPlayerId, $from): void {
+        $conn->transactional(function ($conn) use ($instanceId, $fromPlayerId, $toPlayerId, $fromLocation, $toLocation): void {
             $row = $conn->fetchAssociative(
                 'SELECT ' . self::linkColumnsFromSlot() . ', i.destroyed
                  FROM players e
@@ -666,7 +666,7 @@ class ItemInstanceService
             if ($row === false || (int) $row['destroyed'] === 1) {
                 throw new \InvalidArgumentException("Exemplaire #{$instanceId} introuvable ou détruit.");
             }
-            if ((string) $row['location'] !== $from) {
+            if ((string) $row['location'] !== $fromLocation) {
                 throw new \InvalidArgumentException("Exemplaire #{$instanceId} n'est plus séquestré.");
             }
 
@@ -674,7 +674,7 @@ class ItemInstanceService
                 'UPDATE players e JOIN item_instances i ON i.entity_id = e.id
                     SET e.holder_id = ?, e.slot = ?
                   WHERE i.id = ? AND e.holder_id = ? AND e.slot = ?',
-                [$toPlayerId, self::LOCATION_BANK, $instanceId, $fromPlayerId, self::slotFor($from)]
+                [$toPlayerId, self::slotFor($toLocation), $instanceId, $fromPlayerId, self::slotFor($fromLocation)]
             );
 
             if ($affected === 0) {
