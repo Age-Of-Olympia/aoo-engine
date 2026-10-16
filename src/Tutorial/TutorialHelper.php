@@ -291,7 +291,7 @@ class TutorialHelper
 
     /**
      * Teleport the player off the waiting_room plan to their faction's
-     * respawn plan (default "olympia") at/around 0,0,0. No-op if they have
+     * respawn plan (default "olympia") at/around its respawn coordinates. No-op if they have
      * already left waiting_room. Falls back to creating the destination
      * coords row when none is free — previously only cancel.php did this,
      * so the same teleport behaved differently per endpoint.
@@ -306,7 +306,8 @@ class TutorialHelper
         $factionJson = (new \App\Service\FactionService())->getFactionData($player->data->faction);
         $respawnPlan = isset($factionJson->respawnPlan) ? $factionJson->respawnPlan : 'olympia';
 
-        $goCoords = (object) array('x' => 0, 'y' => 0, 'z' => 0, 'plan' => $respawnPlan);
+        $spawn = $factionJson->respawnCoords ?? (object) ['x' => 0, 'y' => 0, 'z' => 0];
+        $goCoords = (object) array('x' => $spawn->x, 'y' => $spawn->y, 'z' => $spawn->z, 'plan' => $respawnPlan);
 
         $db = new \Classes\Db();
         $coordsId = \Classes\View::get_free_coords_id_arround($goCoords);
@@ -315,7 +316,7 @@ class TutorialHelper
             $db->exe(
                 'INSERT INTO coords (x, y, z, plan) VALUES (?, ?, ?, ?)
                  ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)',
-                array(0, 0, 0, $respawnPlan)
+                array($spawn->x, $spawn->y, $spawn->z, $respawnPlan)
             );
             /* LAST_INSERT_ID() works for both the INSERT and the UPDATE path */
             $row = $db->exe('SELECT LAST_INSERT_ID() as id')->fetch_assoc();

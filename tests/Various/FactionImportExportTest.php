@@ -77,6 +77,7 @@ class FactionImportExportTest extends TestCase
             'text'        => 'Créée par FactionImportExportTest.',
             'raFont'      => 'ra-anvil',
             'respawnPlan' => 'olympia',
+            'respawnCoords' => ['x' => 4, 'y' => -2, 'z' => 1],
             'hidden'      => false,
             'secret'      => true,
             'animateurId' => -5,
@@ -105,6 +106,7 @@ class FactionImportExportTest extends TestCase
         $exported = (new FactionExporter())->toArray($faction);
         $this->assertSame('faction_test_import', $exported['code']);
         $this->assertSame(-5, $exported['animateurId']);
+        $this->assertSame(['x' => 4, 'y' => -2, 'z' => 1], $exported['respawnCoords']);
         $this->assertTrue($exported['roles'][0]['editRole']);
         $this->assertFalse($exported['roles'][0]['defaultRole']);
         $this->assertTrue($exported['roles'][1]['defaultRole']);

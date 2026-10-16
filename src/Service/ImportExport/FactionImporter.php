@@ -69,6 +69,8 @@ final class FactionImporter extends AbstractObjectImporter
         $faction->setRaFont((string) ($plan['raFont'] ?? ''));
         $respawnPlan = trim((string) ($plan['respawnPlan'] ?? ''));
         $faction->setRespawnPlan($respawnPlan !== '' ? $respawnPlan : plans()->worldPlan());
+        $coords = (array) ($plan['respawnCoords'] ?? []);
+        $faction->setRespawnCoords((int) ($coords['x'] ?? 0), (int) ($coords['y'] ?? 0), (int) ($coords['z'] ?? 0));
         $faction->setHidden((bool) ($plan['hidden'] ?? false));
         $faction->setSecret((bool) ($plan['secret'] ?? false));
         // Bundles exported before the field existed keep the target's animateur.

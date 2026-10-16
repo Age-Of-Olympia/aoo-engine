@@ -15,10 +15,12 @@ $factionJson = (new FactionService())->getFactionData($player->data->faction);
 $spawnPlan = $factionJson->respawnPlan ?? plans()->worldPlan();
 
 
+$spawnCoords = $factionJson->respawnCoords ?? (object) ['x' => 0, 'y' => 0, 'z' => 0];
+
 $goCoords = (object) array(
-    'x'=>0,
-    'y'=>0,
-    'z'=>0,
+    'x'=>$spawnCoords->x,
+    'y'=>$spawnCoords->y,
+    'z'=>$spawnCoords->z,
     'plan'=>$spawnPlan
 );
 

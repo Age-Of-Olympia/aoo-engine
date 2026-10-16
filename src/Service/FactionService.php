@@ -51,7 +51,7 @@ class FactionService
 
     /**
      * Full faction data in the shape the faction JSON files used to have
-     * (->name, ->text, ->raFont, ->respawnPlan, ->role[] with per-role
+     * (->name, ->text, ->raFont, ->respawnPlan, ->respawnCoords, ->role[] with per-role
      * permission flags; ->hidden/->secret only when true). Returns null for
      * unknown or empty codes — the same falsy result json()->decode gave on
      * a missing file, preserving every `if(!$facJson)` guard.
@@ -68,6 +68,7 @@ class FactionService
             'text' => $faction->getText(),
             'raFont' => $faction->getRaFont(),
             'respawnPlan' => $faction->getRespawnPlan(),
+            'respawnCoords' => (object) $faction->getRespawnCoords(),
             'animateur' => $faction->getAnimateurId(),
             'role' => array_map(
                 static fn (FactionRole $role): object => $role->toJsonObject(),

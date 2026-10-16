@@ -55,6 +55,7 @@ final class FactionExporter implements ObjectExporterInterface
             'text'        => $entity->getText(),
             'raFont'      => $entity->getRaFont(),
             'respawnPlan' => $entity->getRespawnPlan(),
+            'respawnCoords' => $entity->getRespawnCoords(),
             'hidden'      => $entity->isHidden(),
             'secret'      => $entity->isSecret(),
             'animateurId' => $entity->getAnimateurId(),

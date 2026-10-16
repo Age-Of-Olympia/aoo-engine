@@ -38,6 +38,16 @@ class Faction
     #[ORM\Column(type: "string", length: 50, options: ["default" => "olympia"])]
     private string $respawnPlan = 'olympia';
 
+    /** Landing cell on the respawn plan (nearest free cell around it). */
+    #[ORM\Column(type: "integer", options: ["default" => 0])]
+    private int $respawnX = 0;
+
+    #[ORM\Column(type: "integer", options: ["default" => 0])]
+    private int $respawnY = 0;
+
+    #[ORM\Column(type: "integer", options: ["default" => 0])]
+    private int $respawnZ = 0;
+
     /** Faction page only visible to admins. */
     #[ORM\Column(type: "boolean", options: ["default" => false])]
     private bool $hidden = false;
@@ -116,6 +126,19 @@ class Faction
     public function setRespawnPlan(string $respawnPlan): void
     {
         $this->respawnPlan = $respawnPlan;
+    }
+
+    /** @return array{x: int, y: int, z: int} */
+    public function getRespawnCoords(): array
+    {
+        return ['x' => $this->respawnX, 'y' => $this->respawnY, 'z' => $this->respawnZ];
+    }
+
+    public function setRespawnCoords(int $x, int $y, int $z): void
+    {
+        $this->respawnX = $x;
+        $this->respawnY = $y;
+        $this->respawnZ = $z;
     }
 
     public function isHidden(): bool

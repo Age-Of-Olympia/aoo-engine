@@ -134,6 +134,10 @@ function faction_render_form(?Faction $faction, string $csrfToken): string
 {
     $isEdit = $faction !== null;
     $action = $isEdit ? 'update' : 'create';
+    $respawn = $isEdit ? $faction->getRespawnCoords() : ['x' => 0, 'y' => 0, 'z' => 0];
+    $respawnInput = static fn (string $name, string $axis): string =>
+        '<input type="number" class="form-control form-control-sm" name="' . $name . '" value="'
+        . $respawn[$axis] . '" placeholder="' . $axis . '" aria-label="' . $axis . '">';
     $title = $isEdit
         ? 'Faction : ' . e($faction->getName()) . ' <span class="text-muted">(' . e($faction->getCode()) . ')</span>'
         : 'Nouvelle faction';
@@ -230,7 +234,10 @@ HTML;
         . '<div class="form-group col-md-3"><label>Plan de respawn</label>'
         . '<input type="text" class="form-control" name="respawnPlan" value="'
         . e($isEdit ? $faction->getRespawnPlan() : plans()->worldPlan()) . '">'
-        . '<small class="form-text text-muted">Destination à la sortie des enfers.</small></div>'
+        . '<small class="form-text text-muted">Destination à la sortie des enfers.</small>'
+        . '<div class="d-flex mt-1" title="Case d\'arrivée (x, y, z) — la plus proche libre si occupée">'
+        . $respawnInput('respawnX', 'x') . $respawnInput('respawnY', 'y') . $respawnInput('respawnZ', 'z')
+        . '</div></div>'
         . '<div class="form-group col-md-3"><label>Animateur (matricule)</label>'
         . '<input type="number" class="form-control" name="animateurId" value="'
         . e($isEdit ? (string) $faction->getAnimateurId() : '') . '">'

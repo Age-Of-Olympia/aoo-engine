@@ -91,6 +91,7 @@ $applyForm = static function (Faction $faction): void {
     $faction->setText(trim((string) ($_POST['text'] ?? '')));
     $faction->setRaFont(trim((string) ($_POST['raFont'] ?? '')));
     $faction->setRespawnPlan(stringWithDefault('respawnPlan', plans()->worldPlan()));
+    $faction->setRespawnCoords((int) ($_POST['respawnX'] ?? 0), (int) ($_POST['respawnY'] ?? 0), (int) ($_POST['respawnZ'] ?? 0));
     $faction->setHidden(booleanCheckbox('hidden'));
     $faction->setSecret(booleanCheckbox('secret'));
     $faction->setAnimateurId(optionalInt('animateurId'));
