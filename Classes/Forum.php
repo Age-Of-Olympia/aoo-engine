@@ -244,6 +244,26 @@ class Forum{
         }
     }
 
+    /** Forum access, plus recipients only when the topic is a missive. */
+    public static function check_topic_access($player, $forumJson, $topJson): void{
+
+        self::check_access($player, $forumJson);
+
+        if($topJson->forum_id == 'Missives'){
+
+            self::check_missive_access($player, $topJson);
+        }
+    }
+
+    /** Recipients only, and never through a character played in their place. */
+    public static function check_missive_access($player, $topJson): void{
+
+        if(!in_array($player->id, self::get_top_dest($topJson)) || (($player->id > 0) && ($player->id != $_SESSION['originalPlayerId']))){
+
+            exit('Accès refusé');
+        }
+    }
+
     public static function put_topic($player, $forumJson, $title, $text){
 
         $topicId = round(microtime(true) * 1000);

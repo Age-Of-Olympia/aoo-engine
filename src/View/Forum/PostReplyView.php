@@ -35,7 +35,7 @@ class PostReplyView
 
         $player->get_data();
 
-        Forum::check_access($player, $forumJson);
+        Forum::check_topic_access($player, $forumJson, $topJson);
 
         if (!empty($_POST['text'])) {
 
