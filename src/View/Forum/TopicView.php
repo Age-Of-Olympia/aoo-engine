@@ -67,7 +67,6 @@ class TopicView
 
 
         $postMin = 0;
-        $postMax = Forum::$PostsPerPage-1;
         $page = 1;
 
         $postTotal = count($topJson->posts);
@@ -87,7 +86,6 @@ class TopicView
             $page = $_GET['page'];
 
             $postMin += ($_GET['page'] - 1) * Forum::$PostsPerPage;
-            $postMax += ($_GET['page'] - 1) * Forum::$PostsPerPage;
         }
 
         $forumJson = json()->decode('forum', 'forums/' . $topJson->forum_id);
@@ -131,28 +129,166 @@ class TopicView
     ';
 
 
+        $lastRenderedPost = self::renderPostRows(
+            array_slice($topJson->posts, $postMin, Forum::$PostsPerPage, true),
+            $topJson, $forumJson, $player, $playerService, $canModerate
+        );
+
+
+        echo '
+</table>
+';
+
+
+        echo '<div id="last"></div>';
+
+        $topicClosed = isset($topJson->closed) && $topJson->closed;
+        if (!$topicClosed || $player->have_option('isAdmin')) {
+
+
+            if (!isset($_GET['hideMenu'])) {
+
+                $replyTitle = 'Répondre';
+                if ($topicClosed) {
+                    $replyTitle .= ' (admin only)';
+                }
+                echo '<div>
+        <button class="reply" data-topic="' . htmlentities($_GET['topic']) . '">' . $replyTitle . '
+        </button>
+        </div>';
+            }
+        } else {
+
+            echo '<input type="hidden" class="reply" data-topic="' . htmlentities($_GET['topic']) . '" />';
+        }
+
+        if ($topicClosed) {
+            echo '<div>Sujet fermé.</div>';
+        }
+
+
+        $hideMenu = (!isset($_GET['hideMenu'])) ? '' : '&hideMenu=1';
+
+
+        echo $postTotal . ' posts: <a href="forum.php?topic=' . htmlentities($_GET['topic']) . $hideMenu . '&page=' . $pagesN . '#last">dernier</a><br />';
+
+
+        for ($i = 1; $i <= $pagesN; $i++) {
+            $preText = "";
+            $postText = "";
+            if ($i == $page) {
+                $preText = '<u><b>';
+                $postText = '</b></u>';
+            }
+
+            echo '<a href="forum.php?topic=' . htmlentities($_GET['topic']) . $hideMenu . '&page=' . $i . '">' . $preText . 'page ' . $i . $postText . '</a> ';
+        }
+
+        Forum::put_view($topJson,$lastRenderedPost);
+
+        echo Str::minify(ob_get_clean());
+
+?>
+        <script>
+            window.topicName = <?php echo $topJson->name ?>;
+            window.pageN = <?php echo $page ?>;
+        </script>
+        <script src="js/forum_topic.js?v=20261011b"></script>
+<?php
+    }
+
+    /** Posts shown under a reply or edit form. */
+    private const HISTORY_SIZE = 5;
+
+    /**
+     * The posts before index $before, newest first and read-only: what the
+     * player answers to, right under the form.
+     */
+    public static function renderHistory(object $topJson, object $forumJson, \Classes\Player $player, int $before): void
+    {
+        if ($before <= 0) {
+            return;
+        }
+
+        echo '<section class="forum-history"><h3>Messages précédents</h3>';
+        self::renderHistoryChunk($topJson, $forumJson, $player, $before);
+        echo '</section>'
+            . '<script src="js/forum_history.js?v=20261016"></script>';
+    }
+
+    /**
+     * load_forum.php?history=<topic>&before=<index>: the next older chunk,
+     * swapped in for the button that asked for it.
+     */
+    public static function renderOlderPosts(): void
+    {
+        $topicName = (string) ($_GET['history'] ?? '');
+        $topJson = ctype_digit($topicName) ? json()->decode('forum', 'topics/' . $topicName) : null;
+        if (!$topJson) {
+            exit('error top');
+        }
+
+        $forumJson = json()->decode('forum', 'forums/' . $topJson->forum_id);
+        $player = \App\Factory\PlayerFactory::active();
+        $player->get_data();
+        Forum::check_topic_access($player, $forumJson, $topJson);
+
+        $before = min((int) ($_GET['before'] ?? 0), count($topJson->posts));
+        self::renderHistoryChunk($topJson, $forumJson, $player, $before);
+    }
+
+    private static function renderHistoryChunk(object $topJson, object $forumJson, \Classes\Player $player, int $before): void
+    {
+        $from = max(0, $before - self::HISTORY_SIZE);
+        $posts = array_reverse(array_slice($topJson->posts, $from, $before - $from, true), true);
+
+        echo '<table border="0" align="center" class="marbre box-shadow" cellspacing="0" style="width: 100%">';
+        self::renderPostRows(
+            $posts,
+            $topJson,
+            $forumJson,
+            $player,
+            new PlayerService($player->id),
+            (new AdminMenuAccessService())->allows('forum-moderation', $player),
+            true
+        );
+        echo '</table>';
+
+        if ($from > 0) {
+            echo '<button type="button" class="forum-history-more"'
+                . ' data-url="load_forum.php?history=' . $topJson->name . '&amp;before=' . $from . '">'
+                . 'Messages plus anciens (' . $from . ')</button>';
+        }
+    }
+
+    /**
+     * Echoes posts as rows of the topic table and returns the name of the
+     * last one rendered. Read-only drops the gift, edit, moderation and
+     * cookie controls, whose scripts only the topic page loads.
+     *
+     * @param array<int, object> $posts post refs keyed by their index in the topic
+     */
+    public static function renderPostRows(
+        array $posts,
+        object $topJson,
+        object $forumJson,
+        \Classes\Player $player,
+        PlayerService $playerService,
+        bool $canModerate,
+        bool $readOnly = false
+    ): int|string {
         $raceService = new RaceService();
         $factionService = new FactionService();
 
-        foreach ($topJson->posts as $postN => $post) {
+        $lastRenderedPost = 0;
 
-
-            if ($postN < $postMin) {
-
-                continue;
-            }
-
+        foreach ($posts as $postN => $post) {
 
             $postJson = json()->decode('forum', 'posts/' . $post->name);
 
             $lastRenderedPost = $postJson->name;
 
             if (!$canModerate && !empty($postJson->deleted->hidden)) {
-
-                if ($postN == $postMax) {
-
-                    break;
-                }
 
                 continue;
             }
@@ -198,18 +334,18 @@ class TopicView
             $raceJson = $raceService->getRaceData($author->data->race);
             $pnjText = $author->id < 0 ? ' - PNJ' : '';
 
-            echo '<div style="font-size: 88%;"><i>' . $raceJson->name . $pnjText . ' - <a href="infos.php?targetId=' . $author->id . '&reputation">' . Str::get_reput(floor($author->data->pr/COEFFICIENT_PR)) . '</a> Rang ' . $author->data->rank . '</i></div>';
+            echo '<div class="post-author-meta" style="font-size: 88%;"><i>' . $raceJson->name . $pnjText . ' - <a href="infos.php?targetId=' . $author->id . '&reputation">' . Str::get_reput(floor($author->data->pr/COEFFICIENT_PR)) . '</a> Rang ' . $author->data->rank . '</i></div>';
 
 
 
             if (isset($forumJson->factions) && in_array($author->data->secretFaction, $forumJson->factions)) {
                 $factionJson = $factionService->getFactionData($author->data->secretFaction);
-                echo '<div style="font-size: 88%;"><a href="faction.php?faction=' . $author->data->secretFaction . '">' . $factionJson->name . '</a> <span style="font-size: 1.3em" class="ra ' . $factionJson->raFont . '"></span> (<i>' . $factionJson->role[$author->data->secretFactionRole]->name . '</i>)</div>';
+                echo '<div class="post-author-meta" style="font-size: 88%;"><a href="faction.php?faction=' . $author->data->secretFaction . '">' . $factionJson->name . '</a> <span style="font-size: 1.3em" class="ra ' . $factionJson->raFont . '"></span> (<i>' . $factionJson->role[$author->data->secretFactionRole]->name . '</i>)</div>';
             } else {
 
                 $factionJson = $factionService->getFactionData($author->data->faction);
 
-                echo '<div style="font-size: 88%;"><a href="faction.php?faction=' . $author->data->faction . '">' . $factionJson->name . '</a> <span style="font-size: 1.3em" class="ra ' . $factionJson->raFont . '"></span> (<i>' . $factionJson->role[$author->data->factionRole]->name . '</i>)</div>';
+                echo '<div class="post-author-meta" style="font-size: 88%;"><a href="faction.php?faction=' . $author->data->faction . '">' . $factionJson->name . '</a> <span style="font-size: 1.3em" class="ra ' . $factionJson->raFont . '"></span> (<i>' . $factionJson->role[$author->data->factionRole]->name . '</i>)</div>';
             }
 
 
@@ -227,12 +363,13 @@ class TopicView
             echo '
                 <div
                     id="' . $postJson->name . '"
+                    class="post-date"
 
                     style="position: absolute; right: 0; top: 0; text-align: right"
                     >
-                        <a href="forum.php?topic=' . htmlentities($_GET['topic']) . '&page=' . $page . '#' . $postJson->name . '">#' . $postN + 1 . '</a>
+                        <a href="forum.php?topic=' . htmlentities((string) $topJson->name) . '&page=' . (intdiv($postN, Forum::$PostsPerPage) + 1) . '#' . $postJson->name . '">#' . $postN + 1 . '</a>
                         <br />
-                        <span style="color: grey; font-size: 75%;">' . $date . '<br />' . date('H:i', timestampNormalization($postJson->name)) . '</span>
+                        <span style="color: grey; font-size: 75%;"><span>' . $date . '</span><br /><span>' . date('H:i', timestampNormalization($postJson->name)) . '</span></span>
                     </div>';
 
 
@@ -313,7 +450,9 @@ class TopicView
 
            
 
-            if ($postJson->author != $_SESSION['playerId']) {
+            if ($readOnly) {
+                // History under a reply: rewards shown, no action wired
+            } elseif ($postJson->author != $_SESSION['playerId']) {
 
                 echo '
                         <img
@@ -338,7 +477,7 @@ class TopicView
                     </span>';
             }
 
-            if ($canModerate) {
+            if ($canModerate && !$readOnly) {
 
                 $actions = empty($postJson->deleted) ? ['delete' => 'Supprimer', 'hide' => 'Masquer'] : ['restore' => 'Restaurer'];
                 foreach ($actions as $action => $label) {
@@ -348,7 +487,7 @@ class TopicView
 
             echo '
                 </div>';
-                 if ($topJson->forum_id != 'Missives' || ENABLE_NO_PR_COOKIES_IN_MISSIVES) {
+                 if (!$readOnly && ($topJson->forum_id != 'Missives' || ENABLE_NO_PR_COOKIES_IN_MISSIVES)) {
                      CookieView::displayCookieView($postJson,$player);
                 }
                 
@@ -363,72 +502,9 @@ class TopicView
         </tr>
         ';
 
-            if ($postN == $postMax) {
-
-                break;
-            }
         }
 
-
-        echo '
-</table>
-';
-
-
-        echo '<div id="last"></div>';
-
-        $topicClosed = isset($topJson->closed) && $topJson->closed;
-        if (!$topicClosed || $player->have_option('isAdmin')) {
-
-
-            if (!isset($_GET['hideMenu'])) {
-
-                $replyTitle = 'Répondre';
-                if ($topicClosed) {
-                    $replyTitle .= ' (admin only)';
-                }
-                echo '<div>
-        <button class="reply" data-topic="' . htmlentities($_GET['topic']) . '">' . $replyTitle . '
-        </button>
-        </div>';
-            }
-        } else {
-
-            echo '<input type="hidden" class="reply" data-topic="' . htmlentities($_GET['topic']) . '" />';
-        }
-
-        if ($topicClosed) {
-            echo '<div>Sujet fermé.</div>';
-        }
-
-
-        $hideMenu = (!isset($_GET['hideMenu'])) ? '' : '&hideMenu=1';
-
-
-        echo $postTotal . ' posts: <a href="forum.php?topic=' . htmlentities($_GET['topic']) . $hideMenu . '&page=' . $pagesN . '#last">dernier</a><br />';
-
-
-        for ($i = 1; $i <= $pagesN; $i++) {
-            $preText = "";
-            $postText = "";
-            if ($i == $page) {
-                $preText = '<u><b>';
-                $postText = '</b></u>';
-            }
-
-            echo '<a href="forum.php?topic=' . htmlentities($_GET['topic']) . $hideMenu . '&page=' . $i . '">' . $preText . 'page ' . $i . $postText . '</a> ';
-        }
-
-        Forum::put_view($topJson,$lastRenderedPost);
-
-        echo Str::minify(ob_get_clean());
-
-?>
-        <script>
-            window.topicName = <?php echo $topJson->name ?>;
-            window.pageN = <?php echo $page ?>;
-        </script>
-        <script src="js/forum_topic.js?v=20261011b"></script>
-<?php
+        return $lastRenderedPost;
     }
+
 }

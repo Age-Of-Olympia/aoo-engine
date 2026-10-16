@@ -162,20 +162,7 @@ class PostReplyView
 
         $postTotal = count($topJson->posts);
 
-        $pagesN = Forum::get_pages($postTotal);
-
-
-        /* En panneau, le fil est à un « retour » de pile : l'iframe
-         * des anciens messages n'apporte que du poids. */
-        if (!self::$fragment) {
-
-            echo '
-<iframe
-    id="older-iframe"
-    src="forum.php?topic=' . $topJson->name . '&page=' . $pagesN . '&hideMenu=1#last"
-></iframe>
-';
-        }
+        TopicView::renderHistory($topJson, $forumJson, $player, $postTotal);
 
 
         $nextPagesN = Forum::get_pages($postTotal + 1);
