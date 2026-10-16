@@ -13,7 +13,8 @@ require_once('config.php');
 /*
  * Fragments forum pour les panneaux glissants du HUD (js/hud.js) :
  * liste des sujets (?forum=), fil de discussion (?topic=&page=),
- * répondre (?reply=) et éditer (?edit=), sans enveloppe Ui ni
+ * répondre (?reply=) et éditer (?edit=), messages plus anciens sous
+ * le formulaire (?history=&before=), sans enveloppe Ui ni
  * Infos/Menu — reprend les branches de forum.php en mode fragment.
  * Créer un sujet et la recherche restent des pages complètes.
  */
@@ -55,6 +56,12 @@ if (!empty($_GET['topic'])) {
 
     TopicView::$fragment = true;
     TopicView::renderTopic();
+    exit();
+}
+
+if (!empty($_GET['history'])) {
+
+    TopicView::renderOlderPosts();
     exit();
 }
 

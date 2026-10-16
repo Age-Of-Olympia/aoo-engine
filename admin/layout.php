@@ -13,7 +13,7 @@ use Classes\Player;
 const ADMIN_ASSET_VERSION = '20261010';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
-const MAIN_CSS_VERSION = '20260614';
+const MAIN_CSS_VERSION = '20261016';
 
 /**
  * Render the admin chrome (sidebar + main column) around a page's $content.

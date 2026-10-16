@@ -2291,6 +2291,87 @@ body:has(#hud) #load-caracs th {
     background: var(--hud-veil);
 }
 
+/* Previous posts under a reply or edit form: the letters being answered.
+ * Who and when on one line, the text under a bronze rule — rank, faction
+ * and post number stay on the full thread. */
+.hud-panel-content .forum-history {
+    margin-top: 18px;
+}
+
+.hud-panel-content .forum-history > h3 {
+    margin: 0 0 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--hud-line);
+    font-size: 16px;
+}
+
+.hud-panel-content .forum-history table.marbre,
+.hud-panel-content .forum-history .tr-topic1,
+.hud-panel-content .forum-history .tr-topic2 {
+    background: none;
+    box-shadow: none;
+}
+
+.hud-panel-content .forum-history .tr-topic2 > td {
+    padding: 10px 0 2px;
+    border: 0;
+    vertical-align: middle;
+}
+
+.hud-panel-content .forum-history .tr-topic2 > td:last-child {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.hud-panel-content .forum-history .tr-topic2 > td:first-child {
+    width: 36px;
+}
+
+.hud-panel-content .forum-history .tr-topic2 img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top;
+    box-shadow: none;
+}
+
+.hud-panel-content .forum-history .post-author-meta,
+.hud-panel-content .forum-history .post-date > a,
+.hud-panel-content .forum-history .post-date br,
+.hud-panel-content .forum-history .post-rewards-container:not(:has(img)) {
+    display: none;
+}
+
+.hud-panel-content .forum-history .post-date {
+    position: static !important;
+}
+
+/* Day and hour side by side, the gap standing in for the hidden <br> */
+.hud-panel-content .forum-history .post-date > span {
+    display: flex;
+    gap: 0.4em;
+    color: var(--hud-ink-soft);
+    font-size: 12px;
+}
+
+.hud-panel-content .forum-history .tr-topic1 > td {
+    padding: 0 0 8px;
+    border-bottom: 1px solid var(--hud-line-soft);
+}
+
+.hud-panel-content .forum-history .tr-topic1 > td > div:first-child {
+    margin-left: 13px;
+    padding: 2px 0 2px 22px;
+    border-left: 2px solid var(--hud-line);
+}
+
+.hud-panel-content .forum-history-more {
+    display: block;
+    margin: 10px auto 0;
+}
+
 
 .hud-panel-content input[type="text"],
 .hud-panel-content input[type="password"],

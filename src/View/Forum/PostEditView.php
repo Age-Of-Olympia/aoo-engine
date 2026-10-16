@@ -128,34 +128,10 @@ class PostEditView
         include('scripts/forum/upload_module.php');
 
 
-        // search post position
-        $postN = count($topJson->posts);
+        $postIndex = (int) array_search($postJson->name, array_column($topJson->posts, 'name'));
+        $pagesN = Forum::get_pages($postIndex + 1);
 
-        foreach ($topJson->posts as $e) {
-
-            if ($e->name != $postJson->name) {
-
-                continue;
-            }
-
-            $postN--;
-        }
-
-
-        $pagesN = Forum::get_pages($postN);
-
-
-        /* En panneau, le fil est à un « retour » de pile : l'iframe
-         * des anciens messages n'apporte que du poids. */
-        if (!self::$fragment) {
-
-            echo '
-<iframe
-    id="older-iframe"
-    src="forum.php?topic=' . $topJson->name . '&page=' . $pagesN . '&hideMenu=1#' . $postJson->name . '"
-></iframe>
-';
-        }
+        TopicView::renderHistory($topJson, $forumJson, $player, $postIndex);
 
         echo Str::minify(ob_get_clean());
 
