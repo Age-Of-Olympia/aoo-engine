@@ -20,9 +20,7 @@ class MissiveView
 
         $raceService = new RaceService();
 
-        if (!in_array($player->id, $destTbl) || (($player->id > 0) && ($player->id != $_SESSION['originalPlayerId']))) {
-            exit('Accès refusé');
-        }
+        Forum::check_missive_access($player, $topJson);
 
         if (!empty($_POST['addDest'])) {
             if (strpos($_POST['addDest'], 'all_faction_') === 0) {
