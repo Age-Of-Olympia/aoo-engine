@@ -12,6 +12,9 @@ use App\Action\Schema\SimulationField;
 
 class RequiresTraitValueCondition extends BaseCondition implements HasParameterSchemaInterface, DeclaresSimulationInputsInterface
 {
+    /** @var array<int, int> Multiplier observed before the action's outcomes are applied. */
+    private array $impostureMultipliers = [];
+
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema();
@@ -49,6 +52,7 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
                 /* Clé de coût historique « imposture » = coût multiplié
                    par les effets portés cost_multiplier (catalogue). */
                 $impostureValue = (new \App\Service\EffectService())->costMultiplier($actor->getEffects());
+                $this->impostureMultipliers[spl_object_id($condition)] = $impostureValue;
                 if($actor->getRemaining("pm") < (floor($value[0]*$impostureValue))){
                     array_push($details, "Pas assez de PM");
                     $costIsAffordable = false;
@@ -101,7 +105,13 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
                 continue;
             }
             if ($key == "imposture") {
-                $impostureValue = (new \App\Service\EffectService())->costMultiplier($actor->getEffects());
+                // Outcomes are applied before payment. Use the multiplier
+                // checked before them, so a newly applied Imposture starts
+                // increasing costs on the next action.
+                $conditionId = spl_object_id($conditionToPay);
+                $impostureValue = $this->impostureMultipliers[$conditionId]
+                    ?? (new \App\Service\EffectService())->costMultiplier($actor->getEffects());
+                unset($this->impostureMultipliers[$conditionId]);
                 $pmSpent = $this->pay($actor, "pm", (int) floor($value[0]*$impostureValue));
                 array_push($result, "Vous avez dépensé " . $pmSpent . " PM.");
                 $mvtSpent = $this->pay($actor, "mvt", (int) floor($value[1]*$impostureValue));
