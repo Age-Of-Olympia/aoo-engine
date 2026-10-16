@@ -17,6 +17,12 @@ class FoiView
         RankingCache::serve($path, __FILE__, static function (): void {
         $db = new Db();
 
+        // Only this season's plans (and the every-season ones) count: a
+        // believer stands on one, a controlled plan is one.
+        $seasonPlans = array_keys(plans()->forSeason()) ?: [''];
+        $inSeason = '(' . implode(',', array_fill(0, count($seasonPlans), '?')) . ')';
+        $onSeasonPlan = 'coords_id IN (SELECT id FROM coords WHERE plan IN ' . $inSeason . ')';
+
         $sql = '
         SELECT
             g.id,
@@ -28,9 +34,11 @@ class FoiView
             COALESCE(excl.total_plans, 0) AS plans_controles
         FROM players AS g
         LEFT JOIN players AS f ON f.godId = g.id AND f.id > 0 AND f.lastLoginTime >= (UNIX_TIMESTAMP() - '. INACTIVE_TIME .')
+            AND f.' . $onSeasonPlan . '
         LEFT JOIN players AS top ON top.id = (
             SELECT id FROM players
             WHERE godId = g.id AND id > 0 AND lastLoginTime >= (UNIX_TIMESTAMP() - '. INACTIVE_TIME .')
+            AND ' . $onSeasonPlan . '
             ORDER BY pf DESC
             LIMIT 1
         )
@@ -43,6 +51,7 @@ class FoiView
             FROM players AS a
             JOIN entity_cells AS ec ON ec.player_id = a.id
             WHERE a.race = "altar" AND a.godId != 0
+            AND ec.plan IN ' . $inSeason . '
             AND ec.plan IN (
                 SELECT ec2.plan
                 FROM players AS a2
@@ -66,7 +75,7 @@ class FoiView
         ORDER BY total_foi DESC
         ';
 
-        $res = $db->exe($sql);
+        $res = $db->exe($sql, array_merge($seasonPlans, $seasonPlans, $seasonPlans));
 
         echo '
         <h2>Dieux les plus vénérés</h2>
