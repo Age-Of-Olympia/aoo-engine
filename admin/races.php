@@ -173,6 +173,26 @@ function kind_select(bool $isStructure): string
 }
 
 /**
+ * Total posé, puis le détail par plan.
+ *
+ * @param array<string, int> $byPlan
+ */
+function race_placed_cell(array $byPlan): string
+{
+    if ($byPlan === []) {
+        return '<span class="text-muted">—</span>';
+    }
+
+    $detail = [];
+    foreach ($byPlan as $plan => $n) {
+        $detail[] = e($plan) . '&nbsp;' . $n;
+    }
+
+    return '<strong>' . array_sum($byPlan) . '</strong>'
+        . '<br><small class="text-muted">' . implode(' · ', $detail) . '</small>';
+}
+
+/**
  * Même table races, deux VISAGES d'admin (décision du 2026-07-19) : les
  * RACES (personnages) et les TYPES DE BÂTIMENTS (sorte structure) — deux
  * sections séparées pour ne plus mélanger peuples et murs.
@@ -184,14 +204,15 @@ function race_render_list(array $races, TypeEditorFace $face): string
     $selfPage = $face->page;
 
     if ($face->isStructure()) {
-        // « Posés » : entités de ce type actuellement dans le monde.
+        // « Posés » : entités de ce type actuellement dans le monde, par plan.
         $placedByType = [];
         $res = (new \Classes\Db())->exe(
-            "SELECT race, COUNT(*) AS n FROM players WHERE player_type = ? GROUP BY race",
+            "SELECT p.race, c.plan, COUNT(*) AS n FROM players p JOIN coords c ON c.id = p.coords_id
+             WHERE p.player_type = ? GROUP BY p.race, c.plan ORDER BY p.race, n DESC",
             $face->key
         );
         while ($row = $res->fetch_object()) {
-            $placedByType[(string) $row->race] = (int) $row->n;
+            $placedByType[(string) $row->race][(string) $row->plan] = (int) $row->n;
         }
     } else {
         $charactersByRace = (new RaceService())->countCharactersByRaceName();
@@ -241,9 +262,7 @@ function race_render_list(array $races, TypeEditorFace $face): string
             $rows .= '<td>' . (int) $race->getCarac('pv') . ' PV</td>'
                 . '<td>' . (int) $race->getCarac('e') . '</td>'
                 . '<td>' . (int) $race->getCarac('res') . '</td>'
-                . '<td>' . (($placedByType[$race->getName()] ?? 0) > 0
-                    ? '<strong>' . $placedByType[$race->getName()] . '</strong>'
-                    : '<span class="text-muted">—</span>') . '</td>';
+                . '<td>' . race_placed_cell($placedByType[$race->getName()] ?? []) . '</td>';
         } else {
             $characters = $charactersByRace[$race->getName()] ?? ['players' => 0, 'inactive' => 0, 'npcs' => 0];
             $rows .= '<td>' . e($race->getFaction()) . '</td>'
