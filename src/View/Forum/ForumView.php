@@ -287,12 +287,11 @@ class ForumView
      {
         $posts = $data->posts;
         $index = array_search($postId, array_column($posts, 'name'));
-        if(isset($posts[$index+1]))
-        {
-           $index++;
-        }
         if ($index === false) {
             $index= 0; // Post not found, return first page as default
+        } elseif(isset($posts[$index+1]))
+        {
+           $index++;
         }
         $nextPostId= $posts[$index]->name;
         return array('post'=>$nextPostId, 'page'=> (int)floor(($index) / Forum::$PostsPerPage) + 1);
