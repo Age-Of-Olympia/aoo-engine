@@ -10,7 +10,8 @@ $(document).ready(function () {
 
         $.ajax({
             type: "POST",
-            url: 'merchant.php?targetId=' + window.targetId + '&bids&hideMenu&itemId=' + itemId,
+            /* Fragment, not merchant.php: the full page would reload jQuery and the legacy CSS into the panel */
+            url: 'load_merchant.php?targetId=' + window.targetId + '&bids&hideMenu&itemId=' + itemId,
             data: {}, // serializes the form's elements.
             success: function (data) {
                 /* voir new_contract.php : id propre au contrat */
