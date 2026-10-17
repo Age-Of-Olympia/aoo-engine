@@ -59,7 +59,7 @@ final class CounterCatalog
             self::MERCHANT => [
                 'bids' => ['icon' => 'ra-gavel', 'label' => 'Offres de Vente'],
                 'asks' => ['icon' => 'ra-scroll-unfurled', 'label' => 'Demandes d\'Achat'],
-                'exchanges' => ['icon' => 'ra-x-mark', 'label' => 'Echanges'],
+                'exchanges' => ['icon' => 'ra-x-mark', 'label' => 'Échanges'],
                 'bank' => ['icon' => 'ra-gold-bar', 'label' => 'Banque',
                     'card' => ['icon' => 'ra-gold-bar', 'label' => 'Banque']],
                 'inventory' => ['icon' => 'ra-key', 'label' => 'Inventaire'],
