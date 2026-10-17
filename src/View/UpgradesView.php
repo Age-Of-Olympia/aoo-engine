@@ -239,7 +239,7 @@ final class UpgradesView
             return;
         }
 
-        echo '<script src="js/upgrades.js?v=20260715"></script>';
+        echo '<script src="js/upgrades.js?v=20261017"></script>';
     }
 
     private static function getTooltip(string $key): string

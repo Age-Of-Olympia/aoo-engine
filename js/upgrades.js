@@ -21,7 +21,12 @@ $(document).ready(function(){
                 data: {'carac':carac}, // serializes the form's elements.
                 success: function(data)
                 {
-                    document.location.reload();
+                    /* HUD panel or page: reloads the view in place (main.js) */
+                    aooReload();
+                },
+                error: function() {
+                    aooAlert("Erreur lors de l'amélioration.");
+                    $('.upgrade').prop('disabled', false);
                 }
             });
         });
