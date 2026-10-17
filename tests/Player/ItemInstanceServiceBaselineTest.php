@@ -90,6 +90,28 @@ class ItemInstanceServiceBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertGreaterThan(0, (int) $instance['created_at']);
     }
 
+    public function testDemoteIgnoresALeftoverOwnershipRow(): void
+    {
+        $player = $this->createRealPlayer('GmSmith');
+        $bois = $this->itemOrSkip('bois');
+        $bois->add_item($player, 2);
+
+        $service = new ItemInstanceService();
+        $instanceId = $service->promote($player->id, $bois->id);
+        // Row left by the pre-entity ownership table, still holding a foreign key
+        $this->link->executeStatement(
+            "INSERT INTO players_items_instances (player_id, instance_id, equiped, location) VALUES (?, ?, '', 'inventory')",
+            [$player->id, $instanceId]
+        );
+
+        $this->assertTrue($service->demote($instanceId));
+        $this->assertSame(2, (int) $this->link->fetchOne(
+            'SELECT n FROM players_items WHERE player_id = ? AND item_id = ?',
+            [$player->id, $bois->id]
+        ));
+        $this->assertFalse($this->link->fetchOne('SELECT 1 FROM players_items_instances WHERE instance_id = ?', [$instanceId]));
+    }
+
     public function testDemoteReturnsAPristineInstanceToTheStackAndRefusesDivergedState(): void
     {
         $player = $this->createRealPlayer('GmSmith');

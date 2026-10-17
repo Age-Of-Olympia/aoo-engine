@@ -364,6 +364,8 @@ class ItemInstanceService
                  ON DUPLICATE KEY UPDATE n = n + 1',
                 [(int) $row['player_id'], (int) $row['item_id']]
             );
+            // Leftover ownership row (no longer written, still a foreign key on the instance)
+            $conn->executeStatement('DELETE FROM players_items_instances WHERE instance_id = ?', [$instanceId]);
             $conn->executeStatement('DELETE FROM item_instances WHERE id = ?', [$instanceId]);
             self::detachEntity($conn, isset($row['entity_id']) ? (int) $row['entity_id'] : null);
 
