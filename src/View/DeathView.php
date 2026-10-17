@@ -155,11 +155,15 @@ class DeathView
         return $reactive ? 'Ressusciter' : null;
     }
 
-    /** A session opened on another character through the admin console. */
+    /**
+     * A session opened on another character through the admin console.
+     * `session open` replaces mainPlayerId; driving one's own PNJ keeps it,
+     * so playerId alone cannot tell the two apart.
+     */
     private static function isOpenedSession(): bool
     {
         return isset($_SESSION['originalPlayerId'])
-            && (int) $_SESSION['originalPlayerId'] !== (int) ($_SESSION['playerId'] ?? 0);
+            && (int) $_SESSION['originalPlayerId'] !== (int) ($_SESSION['mainPlayerId'] ?? 0);
     }
 
     /**

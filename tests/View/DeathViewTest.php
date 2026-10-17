@@ -51,6 +51,28 @@ class DeathViewTest extends TestCase
         $this->assertNull(DeathView::dismissLabel(true, false));
     }
 
+    /** @param array<string, int> $session */
+    private function isOpenedSession(array $session): bool
+    {
+        $saved = $_SESSION ?? [];
+        $_SESSION = $session;
+        try {
+            return (new \ReflectionMethod(DeathView::class, 'isOpenedSession'))->invoke(null);
+        } finally {
+            $_SESSION = $saved;
+        }
+    }
+
+    public function testDrivingOwnPnjIsNotAnOpenedSession(): void
+    {
+        $this->assertFalse($this->isOpenedSession(['originalPlayerId' => 2, 'mainPlayerId' => 2, 'playerId' => -5]));
+    }
+
+    public function testAdminConsoleSessionIsAnOpenedSession(): void
+    {
+        $this->assertTrue($this->isOpenedSession(['originalPlayerId' => 1, 'mainPlayerId' => 2, 'playerId' => 2]));
+    }
+
     public function testKeepsOnlyEventsWherePlayerIsActorOrTarget(): void
     {
         $logs = [
