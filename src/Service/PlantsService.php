@@ -93,22 +93,29 @@ class PlantsService
         if(AUTO_GROW || self::roll($growTo) == 1)
         {
 
-            /* Une pousse est une ENTITÉ, posée comme les autres : le service
-               commun lui donne sa ligne, son identifiant dans la plage des
-               plantes, et sa case — `part`, où le type tranche, et le type dit
-               qu'on marche dessus. */
-            $label = (string) ($db->exe('SELECT label FROM races WHERE name = ?', $plante)
-                ->fetch_object()->label ?? '');
-
-            (new \App\Service\Map\EntityPlacementService())->create(
-                'plant',
-                $plante,
-                (int) $coords,
-                $label !== '' ? $label : $plante,
-                'img/plants/' . $plante . '.png'
-            );
+            self::plantAt($plante, (int) $coords);
             \App\Service\Map\BoardChanges::cellId((int) $coords);
         }
+    }
+
+    /**
+     * Pose a plant entity: its row, an id in the plants range, and its
+     * cell — `part`, the type says it is walked on.
+     *
+     * @return int the new plant's players.id
+     */
+    public static function plantAt(string $race, int $coordsId): int
+    {
+        $label = (string) ((new Db())->exe('SELECT label FROM races WHERE name = ?', $race)
+            ->fetch_object()->label ?? '');
+
+        return (new \App\Service\Map\EntityPlacementService())->create(
+            'plant',
+            $race,
+            $coordsId,
+            $label !== '' ? $label : $race,
+            'img/plants/' . $race . '.png'
+        );
     }
 
 }

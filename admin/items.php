@@ -499,8 +499,8 @@ function items_grow_rows(array $growTo): string
 
     return '<div class="form-group">' . $rows
         . renderDatalist('grow-tables', ['plants' => '', 'resources' => '', 'foregrounds' => ''])
-        . '<small class="text-muted">La pousse est insérée dans <code>map_&lt;table&gt;</code> sous ce nom'
-        . ' — le nom doit exister dans la couche visée (image et PV).</small></div>';
+        . '<small class="text-muted"><code>plants</code> et <code>resources</code> posent une entité de ce type ;'
+        . ' une autre table reçoit une ligne <code>map_&lt;table&gt;</code> sous ce nom.</small></div>';
 }
 
 /**

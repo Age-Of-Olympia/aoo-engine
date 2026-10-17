@@ -145,16 +145,7 @@ if($_POST['type'] == 'eraser'){
        dessus : sa case prend `part`, et c'est son type qui dit qu'elle ne
        bloque pas. Le pinceau, lui, ne change pas de geste. */
     if ($_POST['type'] === 'plants') {
-        $label = (string) ($db->exe('SELECT label FROM races WHERE name = ?', $_POST['src'])
-            ->fetch_object()->label ?? '');
-
-        $plantId = (new \App\Service\Map\EntityPlacementService())->create(
-            'plant',
-            $_POST['src'],
-            (int) $coordsId,
-            $label !== '' ? $label : (string) $_POST['src'],
-            'img/plants/' . $_POST['src'] . '.png'
-        );
+        $plantId = \App\Service\PlantsService::plantAt((string) $_POST['src'], (int) $coordsId);
 
         echo 'plante #' . $plantId;
 

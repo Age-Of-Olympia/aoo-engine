@@ -1,4 +1,6 @@
 <?php
+use App\Service\Map\ResourceObjectService;
+use App\Service\PlantsService;
 use Classes\Db;
 use Classes\Item;
 
@@ -56,12 +58,15 @@ while($row = $res->fetch_object()){
         if(AUTO_GROW || rand(1,$growTo->chance) == 1){
 
 
-            $values = array(
-                'name'=>$growTo->name,
-                'coords_id'=>$row->coords_id
-            );
-
-            $db->insert('map_'. $growTo->table, $values);
+            /* Plants and resources are entities: map_plants / map_resources are no longer read. */
+            match ($growTo->table) {
+                'plants' => PlantsService::plantAt($growTo->name, (int) $row->coords_id),
+                'resources' => (new ResourceObjectService())->placeAt($growTo->name, (int) $row->coords_id, false),
+                default => $db->insert('map_'. $growTo->table, array(
+                    'name'=>$growTo->name,
+                    'coords_id'=>$row->coords_id
+                )),
+            };
 
 
             $values = array('id'=>$row->id);
