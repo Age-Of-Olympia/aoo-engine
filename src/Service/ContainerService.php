@@ -424,6 +424,44 @@ final class ContainerService
         ) === false;
     }
 
+    /** Would unequipping this worn item take a bag line? Not an intact exemplar that rejoins its pile. */
+    public function unequipNeedsLine(int $holderId, int $itemId, ?int $instanceId): bool
+    {
+        return $this->stackNeedsRoom($holderId, $itemId)
+            || ($instanceId !== null && !(new ItemInstanceService())->isIntact($instanceId));
+    }
+
+    /**
+     * Bag lines the items worn in these slots would take if unequipped.
+     * Read from the slots, not from the worn list: two copies of one item share a list entry.
+     *
+     * @param list<string> $slots
+     */
+    public function linesToUnequip(int $holderId, array $slots): int
+    {
+        if ($slots === []) {
+            return 0;
+        }
+        $in = implode(',', array_fill(0, count($slots), '?'));
+        $lines = 0;
+
+        foreach ($this->conn->fetchFirstColumn(
+            "SELECT item_id FROM players_items WHERE player_id = ? AND equiped IN ($in)",
+            array_merge([$holderId], $slots)
+        ) as $itemId) {
+            $lines += (int) $this->unequipNeedsLine($holderId, (int) $itemId, null);
+        }
+        foreach ($this->conn->fetchAllAssociative(
+            "SELECT i.id, i.item_id FROM players e JOIN item_instances i ON i.entity_id = e.id
+              WHERE e.holder_id = ? AND e.slot IN ($in)",
+            array_merge([$holderId], $slots)
+        ) as $row) {
+            $lines += (int) $this->unequipNeedsLine($holderId, (int) $row['item_id'], (int) $row['id']);
+        }
+
+        return $lines;
+    }
+
     /** One more line must fit — a stack line or an exemplar, one each. */
     private function assertRoomForALine(int $holderId, string $refusal = 'Le contenant est plein.'): void
     {

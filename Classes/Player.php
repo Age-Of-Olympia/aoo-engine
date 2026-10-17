@@ -1679,14 +1679,12 @@ class Player implements ActorInterface {
 
             // item is equiped : UNEQUIP
 
-            // A new bag line, unless an intact exemplar goes back into its stack
             if ($bagGuard) {
-                $wornInstanceId = (int) ($itemList[$item->id]->instance_id ?? 0);
                 $bag = new \App\Service\ContainerService();
-                $needsLine = $wornInstanceId === 0
-                    || !(new \App\Service\ItemInstanceService())->isIntact($wornInstanceId)
-                    || $bag->stackNeedsRoom((int) $this->id, (int) $item->id);
-                if ($needsLine && !$bag->hasRoomForALine((int) $this->id)) {
+                $wornInstanceId = (int) ($itemList[$item->id]->instance_id ?? 0);
+                if ($bag->unequipNeedsLine((int) $this->id, (int) $item->id, $wornInstanceId ?: null)
+                    && !$bag->hasRoomForALine((int) $this->id)
+                ) {
                     return EquipResult::BagFull;
                 }
             }
@@ -1807,6 +1805,18 @@ class Player implements ActorInterface {
             }
             elseif($item->data->emplacement == "main1" || $item->data->emplacement == "main2"){
                 $emplacementsToClear[] = 'deuxmains';
+            }
+
+            // A swap: what the cleared slots send back to the bag, minus the line the new item leaves
+            if ($bagGuard) {
+                $bag = new \App\Service\ContainerService();
+                $capacity = $bag->capacityOf((int) $this->id);
+                $wholeStack = in_array($item->data->emplacement, ['munition', 'trophee'], true);
+                $added = $bag->linesToUnequip((int) $this->id, $emplacementsToClear)
+                    - (int) ($wholeStack || $instanceService->equipFreesALine((int) $this->id, (int) $item->id, $instanceId));
+                if ($capacity !== null && $added > 0 && $bag->lineCountOf((int) $this->id) + $added > $capacity) {
+                    return EquipResult::BagFull;
+                }
             }
 
             // Refund the turn bonuses of the items about to be replaced.

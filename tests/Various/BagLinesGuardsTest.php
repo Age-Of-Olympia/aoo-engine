@@ -158,4 +158,43 @@ class BagLinesGuardsTest extends LegacyPlayerFixtureTestCase
             $this->assertSame(EquipResult::Unequip, $player->equip($sword, bagGuard: true));
         });
     }
+
+    /**
+     * A worn sword, another sword type in the bag, the bag filled to its ceiling.
+     *
+     * @return array{\Classes\Player, \Classes\Item, \Classes\Item, int}
+     */
+    private function swapSetup(string $name, int $spares): array
+    {
+        $spec = ['type' => 'equipement', 'stats_in_db' => 1, 'durability_max' => 100, 'emplacement' => 'main1'];
+        $worn = $this->sowCatalogItem('zz_porte_' . bin2hex(random_bytes(3)), $spec);
+        $spare = $this->sowCatalogItem('zz_rechange_' . bin2hex(random_bytes(3)), $spec);
+        $player = $this->createRealPlayer($name);
+        $worn->add_item($player, 1);
+        $spare->add_item($player, $spares);
+        $player->get_caracs();
+        $this->assertSame(EquipResult::Equip, $player->equip($worn));
+        $lines = (new \App\Service\ContainerService())->lineCountOf((int) $player->id);
+
+        return [$player, $worn, $spare, $lines];
+    }
+
+    public function testSwapRefusedWhenTheNewItemComesFromAPileThatStays(): void
+    {
+        [$player, $worn, $spare, $lines] = $this->swapSetup('GmSacEchangeRefus', 2);
+
+        $this->withBagCeiling((int) $player->id, $lines, function () use ($player, $spare) {
+            $this->assertSame(EquipResult::BagFull, $player->equip($spare, bagGuard: true));
+        });
+        $this->assertSame('main1', $this->slotOfInstance($this->instanceHeldBy((int) $player->id, (int) $worn->id)), 'the worn sword stays worn');
+    }
+
+    public function testSwapAllowedWhenTheNewItemFreesItsLine(): void
+    {
+        [$player, $worn, $spare, $lines] = $this->swapSetup('GmSacEchangeOk', 1);
+
+        $this->withBagCeiling((int) $player->id, $lines, function () use ($player, $spare) {
+            $this->assertSame(EquipResult::Equip, $player->equip($spare, bagGuard: true));
+        });
+    }
 }

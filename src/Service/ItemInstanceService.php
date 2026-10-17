@@ -421,6 +421,16 @@ class ItemInstanceService
         return $instanceId;
     }
 
+    /** Equipping one unit empties a bag line: a loose exemplar, or the last unit of a pile (see equipCatalogItem). */
+    public function equipFreesALine(int $playerId, int $itemId, ?int $instanceId): bool
+    {
+        return $instanceId !== null || (int) $this->entityManager->getConnection()->fetchOne(
+            "SELECT COALESCE(SUM(n), 0) FROM players_items
+             WHERE player_id = ? AND item_id = ? AND equiped = '' AND slot = ''",
+            [$playerId, $itemId]
+        ) <= 1;
+    }
+
     /**
      * La cible d'un équipement CHOISI est-elle valide : appartient au
      * joueur, est bien une unité de ce catalogue, non portée, non
