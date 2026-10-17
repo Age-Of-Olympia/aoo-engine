@@ -113,12 +113,14 @@ $otherPlayer->get_data();
           aooFetch(url,payload,null)
           .then(data => {
           if(data.error) {
-            alert(data.error);
+            aooAlert(data.error);
             $('#validate-button').prop('disabled', false);
           }
           else if(data.result) {
-            alert(data.result);
-            window.location.href= 'merchant.php?exchanges&targetId=<?php echo $_GET['targetId'] ?>&exchange';
+            /* aooGoto: stays in the HUD panel */
+            aooAlert(data.result).then(function() {
+              aooGoto('merchant.php?exchanges&targetId=<?php echo (int) $target->id ?>');
+            });
           }
         
         })

@@ -121,13 +121,8 @@ class ExchangesView
 
                 aooFetch(url, payload, null)
                     .then(data => {
-                        if (data.error) {
-                            alert(data.error);
-                        } else if (data.message) {
-                            alert(data.message);
-                        }
-                        //console.log('Success:', data);
-                        aooReload();
+                        const message = data.error || data.message;
+                        (message ? aooAlert(message) : Promise.resolve()).then(aooReload);
                     })
                     .catch((error) => {
                         console.error('Error:', error);

@@ -85,13 +85,16 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
               data: $('#object-list-form').serialize(), // Serialize form data
               success: function(response) {
                 if(response.error){
-                  alert(response.error);
+                  aooAlert(response.error);
+                  $('#validate-button').prop('disabled', false);
+                  $('#cancel-button').prop('disabled', false);
                   return;
                 }
-                window.location.href= 'merchant.php?exchanges&targetId=<?php echo $_GET['targetId'] ?>&editExchange='+response.result;
+                /* aooGoto: stays in the HUD panel */
+                aooGoto('merchant.php?exchanges&targetId=<?php echo (int) $target->id ?>&editExchange=' + response.result);
               },
               error: function(xhr, status, error) {
-                alert('Erreur technique.');
+                aooAlert('Erreur technique.');
                 $('#validate-button').prop('disabled', false);
                 $('#cancel-button').prop('disabled', false);
               }
