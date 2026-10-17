@@ -23,6 +23,41 @@ use Classes\Player;
  */
 class GroundLootService
 {
+    /** Suffix of a gain message when giveOrDrop() left it on the ground. */
+    public const FELL = ' (sac plein : laissé au sol)';
+
+    /** One pile per (cell, item): the unique key merges a drop into the cell's line. */
+    public static function putOnGround(int $itemId, int $coordsId, int $n): void
+    {
+        (new Db())->exe(
+            'INSERT INTO map_items (item_id, coords_id, n) VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE n = n + VALUES(n)',
+            [$itemId, $coordsId, $n]
+        );
+    }
+
+    /**
+     * Into the bag, or at the player's feet when the bag has no line left for it.
+     *
+     * @return bool true when it fell to the ground
+     */
+    public static function giveOrDrop(Player $player, Item $item, int $n): bool
+    {
+        $bag = new ContainerService();
+        if (!$bag->stackNeedsRoom((int) $player->id, (int) $item->id) || $bag->hasRoomForALine((int) $player->id)) {
+            $item->add_item($player, $n);
+            return false;
+        }
+
+        if (!isset($player->data)) {
+            $player->get_data();
+        }
+        self::putOnGround((int) $item->id, (int) $player->data->coords_id, $n);
+        \App\Service\Map\BoardChanges::cellId((int) $player->data->coords_id);
+
+        return true;
+    }
+
     /**
      * Contenu au sol d'une case, côté LECTURE (panneau d'observation) :
      * piles map_items et instances — le pendant read-only de collect(),
@@ -267,13 +302,13 @@ class GroundLootService
             $max = max($min, (int) ($row->harvest_max ?? PlantType::DEFAULT_MAX));
 
             $quantity = rand($min, $max);
-            $item->add_item($player, $quantity);
+            $fell = self::giveOrDrop($player, $item, $quantity);
             $item->get_data();
 
             /* L'entité s'en va ; ses cases suivent (ON DELETE CASCADE). */
             $db->delete('players', ['id' => $row->id]);
 
-            $label = ucfirst((string) $item->data->name) . ' x' . $quantity;
+            $label = ucfirst((string) $item->data->name) . ' x' . $quantity . ($fell ? self::FELL : '');
             $picked[] = $label;
             $texts[] = $player->data->name . ' a récolté ' . $label . '.';
         }

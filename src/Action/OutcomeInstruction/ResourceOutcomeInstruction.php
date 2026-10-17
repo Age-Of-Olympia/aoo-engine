@@ -78,9 +78,10 @@ class ResourceOutcomeInstruction extends OutcomeInstruction implements HasParame
             $rand = $this->roll($max);
             $harvested += $rand;
 
-            $item->add_item($actor, $rand);
+            $fell = $rand > 0 && \App\Service\GroundLootService::giveOrDrop($actor, $item, $rand);
 
-            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous trouvez '. ucfirst($item->data->name) .' x'. $rand .' ! (1d'. $max .' = '. $rand .')';
+            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous trouvez '. ucfirst($item->data->name) .' x'. $rand .' ! (1d'. $max .' = '. $rand .')'
+                . ($fell ? \App\Service\GroundLootService::FELL : '');
         }
 
         //Une fois la récolte terminée, on regarde si les ressources s'épuisent

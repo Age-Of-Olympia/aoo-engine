@@ -82,11 +82,11 @@ class DigTunnelOutcomeInstruction extends OutcomeInstruction implements HasParam
         }
 
         $pierre = Item::get_item_by_name('pierre');
-        $pierre->add_item($actor, 1);
+        $fell = \App\Service\GroundLootService::giveOrDrop($actor, $pierre, 1);
 
         $db->insert('map_tiles', ['name' => 'caverne', 'coords_id' => $coordsId]);
 
-        array_unshift($messages, 'Vous creusez la galerie et trouvez 1 pierre.');
+        array_unshift($messages, 'Vous creusez la galerie et trouvez 1 pierre' . ($fell ? \App\Service\GroundLootService::FELL : '') . '.');
 
         return new OutcomeResult(true, outcomeSuccessMessages: $messages, outcomeFailureMessages: array());
     }

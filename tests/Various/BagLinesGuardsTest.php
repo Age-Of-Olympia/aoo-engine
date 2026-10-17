@@ -197,4 +197,30 @@ class BagLinesGuardsTest extends LegacyPlayerFixtureTestCase
             $this->assertSame(EquipResult::Equip, $player->equip($spare, bagGuard: true));
         });
     }
+
+    public function testWhatDoesNotFitFallsAtThePlayersFeet(): void
+    {
+        $bois = $this->itemOrSkip('bois');
+        $pierre = $this->itemOrSkip('pierre');
+        $player = $this->createRealPlayer('GmSacAuSol');
+        $player->get_data();
+        $bois->add_item($player, 3);
+        $cell = (int) $player->data->coords_id;
+        $onGround = fn (int $itemId): int => (int) $this->link->fetchOne(
+            'SELECT COALESCE(SUM(n), 0) FROM map_items WHERE coords_id = ? AND item_id = ?',
+            [$cell, $itemId]
+        );
+        $groundBefore = $onGround((int) $pierre->id);
+
+        $this->withBagCeiling((int) $player->id, 1, function () use ($player, $bois, $pierre, $onGround, $groundBefore) {
+            $this->assertTrue(\App\Service\GroundLootService::giveOrDrop($player, $pierre, 2), 'a new line does not fit');
+            $this->assertSame(0, $pierre->get_n($player));
+            $this->assertSame($groundBefore + 2, $onGround((int) $pierre->id));
+
+            $this->assertFalse(\App\Service\GroundLootService::giveOrDrop($player, $bois, 2), 'joining its pile needs no line');
+            $this->assertSame(5, $bois->get_n($player));
+        });
+
+        $this->link->executeStatement('DELETE FROM map_items WHERE coords_id = ? AND item_id = ?', [$cell, $pierre->id]);
+    }
 }

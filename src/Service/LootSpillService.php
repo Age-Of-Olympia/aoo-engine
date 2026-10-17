@@ -124,13 +124,7 @@ final class LootSpillService
             $nbLoot = $this->rollFor((int) $row->n, $this->chanceFor($entity, $loot, $row));
 
             if ($nbLoot > 0 && $coordsId > 0) {
-                /* Upsert: the unique key merges the spill into the
-                 * tile's existing stack line, if any. */
-                $db->exe(
-                    'INSERT INTO map_items (item_id, coords_id, n) VALUES (?, ?, ?)
-                     ON DUPLICATE KEY UPDATE n = n + VALUES(n)',
-                    [$loot->id, $coordsId, $nbLoot]
-                );
+                GroundLootService::putOnGround((int) $loot->id, $coordsId, $nbLoot);
                 $fallen[] = $row->name . ' x' . $nbLoot;
             }
         }

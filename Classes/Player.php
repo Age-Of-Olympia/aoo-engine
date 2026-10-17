@@ -1425,15 +1425,7 @@ class Player implements ActorInterface {
             exit('error drop n');
         }
 
-        /* One stack per (tile, item): the unique key merges repeated
-         * drops into the tile's existing line. */
-        $db = new Db();
-
-        $db->exe(
-            'INSERT INTO map_items (item_id, coords_id, n) VALUES (?, ?, ?)
-             ON DUPLICATE KEY UPDATE n = n + VALUES(n)',
-            [$item->id, $this->data->coords_id, $n]
-        );
+        \App\Service\GroundLootService::putOnGround((int) $item->id, (int) $this->data->coords_id, (int) $n);
     }
 
 

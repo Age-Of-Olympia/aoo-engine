@@ -139,7 +139,7 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction implements HasPa
         return $emplacements;
     }
 
-    private function getRecipeElementBack(ActorInterface $actor, $object): string {
+    private function getRecipeElementBack(Player $actor, $object): string {
         $corrupted = array();
         $corruptions = (new \App\Service\EffectService())->getCorruptionMaterials();
     
@@ -167,9 +167,9 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction implements HasPa
             $craftedWithItem = Item::get_item_by_name($k);
             $rand = rand(0,$e);
             if($rand){
-                $craftedWithItem->add_item($actor, $rand);
+                $fell = \App\Service\GroundLootService::giveOrDrop($actor, $craftedWithItem, $rand);
                 $craftedWithItem->get_data();
-                $recup[] = $craftedWithItem->data->name .' x'. $rand;
+                $recup[] = $craftedWithItem->data->name .' x'. $rand . ($fell ? \App\Service\GroundLootService::FELL : '');
             }
         }
         $recupTxt = (count($recup)) ? implode(', ', $recup) : 'rien';
