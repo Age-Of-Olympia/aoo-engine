@@ -230,6 +230,7 @@ function admin_layout($title, $content, array $assets = []) {
             ], $tutorialPages),
             $navLink('wiki.php', 'Wiki', '/admin/wiki.php'),
             $navLink('crons.php', 'Crons', '/admin/crons.php'),
+            $navLink('monitoring.php', 'Monitoring', '/admin/monitoring.php'),
         ]),
     ]);
 

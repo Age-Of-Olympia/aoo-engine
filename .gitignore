@@ -5,6 +5,7 @@ img/
 config/db_constants.php
 config/onesignal_constants.php
 config/tiled_constants.php
+config/deployed_version.txt
 sessions/
 db/updates_done/
 /data/

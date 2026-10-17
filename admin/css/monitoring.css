@@ -1,0 +1,290 @@
+/* Monitoring dashboard (admin/monitoring.php). Colour only ever means a
+   status; everything else stays on the admin's paper and ink tokens. */
+
+.mon {
+    --ok: #2f7a4f;
+    --ok-soft: #a9cdb7;
+    --running: #2f6db0;
+    --warning: #b07d1f;
+    --error: #b23a2c;
+    max-width: 96rem;
+}
+
+.mon .is-ok      { --status: var(--ok-soft); --status-ink: var(--ok); }
+.mon .is-running { --status: var(--running); --status-ink: var(--running); }
+.mon .is-warning { --status: var(--warning); --status-ink: var(--warning); }
+.mon .is-error   { --status: var(--error);   --status-ink: var(--error); }
+
+.mon-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* ---- Verdict ---------------------------------------------------------- */
+
+.mon-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* The page speaks plain sans throughout, the admin's Goudy headings included. */
+.admin-layout .admin-main .mon h1,
+.admin-layout .admin-main .mon h2 {
+    font-family: var(--font-body);
+    letter-spacing: -0.01em;
+}
+
+.admin-layout .admin-main .mon-verdict {
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 0;
+    color: var(--status-ink);
+}
+
+.mon-head.is-ok .mon-verdict { color: var(--ink); }
+
+.mon-sub {
+    margin: 0.4rem 0 0;
+    color: var(--mute);
+    font-size: 0.95rem;
+}
+
+.mon-refresh { flex-shrink: 0; }
+
+/* ---- Strip: every check at a glance ------------------------------------ */
+
+.mon-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.75rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.75rem;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+}
+
+.mon-strip-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.mon-tiles {
+    display: flex;
+    gap: 3px;
+}
+
+.mon-tile {
+    display: block;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 2px;
+    background: var(--status);
+}
+
+.mon-tile:hover { outline: 2px solid var(--ink); outline-offset: 1px; }
+.mon-tile:focus-visible { outline: 2px solid var(--bronze); outline-offset: 2px; }
+
+.mon-tile.is-error { animation: mon-alert 1.2s ease-out 2; }
+
+@keyframes mon-alert {
+    0%   { box-shadow: 0 0 0 0 rgba(178, 58, 44, 0.55); }
+    100% { box-shadow: 0 0 0 0.6rem rgba(178, 58, 44, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mon-tile.is-error { animation: none; }
+}
+
+.mon-strip-name {
+    font-size: 0.8rem;
+    color: var(--mute);
+}
+
+/* ---- Panels ------------------------------------------------------------ */
+
+/* Columns, not a grid: panels of very different heights stack without holes. */
+.mon-grid {
+    columns: 22rem;
+    column-gap: 1.25rem;
+}
+
+.mon-panel {
+    break-inside: avoid;
+    margin-bottom: 1.25rem;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+}
+
+.mon-panel-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem 0.6rem;
+    border-bottom: 1px solid var(--rule);
+}
+
+.admin-layout .admin-main .mon-panel-head h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.mon-tally {
+    display: flex;
+    gap: 0.6rem;
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--mute);
+}
+
+.mon-tally .is-error,
+.mon-tally .is-warning,
+.mon-tally .is-running { color: var(--status-ink); font-weight: 600; }
+
+.mon-checks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.mon-check {
+    border-left: 3px solid var(--status);
+}
+
+.mon-check + .mon-check { border-top: 1px solid var(--rule); }
+
+.mon-check-head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    gap: 0.15rem 0.75rem;
+    padding: 0.65rem 1rem 0.7rem 0.85rem;
+}
+
+summary.mon-check-head {
+    cursor: pointer;
+    list-style: none;
+}
+
+summary.mon-check-head::-webkit-details-marker { display: none; }
+
+summary.mon-check-head:hover { background: var(--parchment); }
+summary.mon-check-head:focus-visible { outline: 2px solid var(--bronze); outline-offset: -2px; }
+
+.mon-check-title {
+    font-weight: 600;
+    color: var(--ink);
+}
+
+summary .mon-check-title::before {
+    content: "";
+    display: inline-block;
+    width: 0.4rem;
+    height: 0.4rem;
+    margin: 0 0.5rem 0.15rem 0;
+    border-right: 1.5px solid var(--mute);
+    border-bottom: 1.5px solid var(--mute);
+    transform: rotate(-45deg);
+    transition: transform var(--t);
+}
+
+details[open] > summary .mon-check-title::before { transform: rotate(45deg); }
+
+.mon-badge {
+    grid-column: 2;
+    grid-row: 1;
+    padding: 0.05rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+    background: var(--status-ink);
+}
+
+.mon-figure {
+    grid-column: 1 / -1;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.mon-check-summary {
+    grid-column: 1 / -1;
+    font-size: 0.88rem;
+    color: var(--mute);
+    line-height: 1.4;
+}
+
+.mon-check.is-error .mon-check-summary,
+.mon-check.is-warning .mon-check-summary { color: var(--ink); }
+
+.mon-spark {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: 16rem;
+    height: 2rem;
+    margin-top: 0.35rem;
+}
+
+.mon-spark polyline {
+    fill: none;
+    stroke: var(--status-ink);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.mon-spark circle { fill: var(--status-ink); }
+
+/* ---- Detail lines ------------------------------------------------------ */
+
+.mon-lines {
+    max-height: 22rem;
+    overflow: auto;
+    padding: 0 1rem 0.75rem 0.85rem;
+}
+
+.mon-lines table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+.mon-lines th,
+.mon-lines td {
+    padding: 0.3rem 0.5rem 0.3rem 0;
+    border-top: 1px solid var(--rule);
+    vertical-align: top;
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+
+.mon-lines th {
+    font-weight: normal;
+    color: var(--mute);
+    white-space: nowrap;
+    width: 1%;
+    padding-right: 1rem;
+}
+
+.mon-lines tr.is-error td,
+.mon-lines tr.is-warning td { color: var(--status-ink); font-weight: 600; }
+
+@media (max-width: 600px) {
+    .mon-head { flex-direction: column; align-items: flex-start; }
+    .mon-lines th { white-space: normal; }
+}

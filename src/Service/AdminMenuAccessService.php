@@ -32,6 +32,9 @@ class AdminMenuAccessService
      */
     private const MENUS = [
         'index.php'                => ['Tableau de bord', 'Général', self::LEVEL_ADMIN],
+        // Monitoring : lecture seule, mais montre droits d'admin, comptes
+        // et déploiements — superadmin par défaut, ajustable via access-control.php
+        'monitoring.php'           => ['Monitoring', 'Général', self::LEVEL_SUPERADMIN],
 
         'tutorial-catalog.php'     => ['Tutoriel · Catalogue', 'Tutoriel', self::LEVEL_ADMIN],
         'tutorial.php'             => ['Tutoriel · Étapes', 'Tutoriel', self::LEVEL_ADMIN],

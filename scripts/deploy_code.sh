@@ -24,6 +24,7 @@ echo "$(date)<br>"
 aoo_update_checkout
 aoo_assert_branch
 
+# Last step: config/deployed_version.txt says what the docroot runs (admin monitoring).
 # Dependencies first: copy the composer manifests and the vendor/ built in the
 # checkout, then regenerate the optimized autoloader in the docroot.
 # tools/: only the building composer is served (its gui enforces admin auth on
@@ -36,4 +37,5 @@ echo -e "copie des dependances :\n " \
 && mkdir -p "$DOCROOT/tools" \
 && cp -ra "$SRC/aoo-engine/tools/building-composer" "$DOCROOT/tools/" \
 && cd "$DOCROOT" \
-&& "$COMPOSER" dump-autoload -o
+&& "$COMPOSER" dump-autoload -o \
+&& echo "$(git -C "$SRC/aoo-engine" describe --tags --always) du $(date '+%d/%m/%Y %H:%M')" > "$DOCROOT/config/deployed_version.txt"
