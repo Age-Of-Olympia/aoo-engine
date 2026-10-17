@@ -156,6 +156,11 @@ final class FeedRenderer
             $hiddenText
         );
 
+        /* The detail is the action's result as it was shown, scripts
+         * included (ObstacleCondition draws the line of fire): injected
+         * into the feed, they would run again on every load. */
+        $body = preg_replace('#<script\b.*?</script>#is', '', $body) ?? $body;
+
         return '<details class="hud-feed-detail">'
             . '<summary>Détails</summary>'
             . $body
