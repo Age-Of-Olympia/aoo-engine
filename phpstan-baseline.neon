@@ -1700,12 +1700,6 @@ parameters:
 			path: src/Service/ContainerService.php
 
 		-
-			message: '#^Method App\\Service\\CronService\:\:executeCron\(\) has parameter \$type with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Service/CronService.php
-
-		-
 			message: '#^Method App\\Service\\DialogSeedService\:\:collectJsonDialogs\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
