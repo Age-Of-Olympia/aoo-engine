@@ -3,7 +3,7 @@
 namespace App\View\Merchant;
 
 use App\Factory\PlayerFactory;
-use App\Service\BankService;
+use App\Service\ContainerService;
 use App\View\ExchangePanesView;
 use Classes\Exchange;
 use Classes\Player;
@@ -11,6 +11,7 @@ use Classes\Player;
 /**
  * Exchanges at a merchant: the open deals, a new deal, and the edit screen.
  * The edit screen is the bank's two-pane screen: each move applies at once.
+ * Items are given from the bag (the player is at the counter); what is received goes to the bank.
  */
 class ExchangesView
 {
@@ -37,7 +38,7 @@ class ExchangesView
         $exchanges = Exchange::get_open_exchanges($player->id);
         if ($exchanges === []) {
             echo '<p class="exchange-hint">Aucun échange en cours. Pour en proposer un, choisissez un personnage,'
-                . ' puis les objets de votre banque à lui donner.</p>';
+                . ' puis les objets de votre sac à lui donner.</p>';
         }
 
         foreach ($exchanges as $exchange) {
@@ -59,7 +60,7 @@ class ExchangesView
                 . '<button>Modifier mes objets</button></a>'
                 . self::acceptButton($player, $exchange, self::isEmpty($give, $receive))
                 . '<button class="exchange-cancel" ' . self::actionData('cancel', $player, $exchange)
-                . ' data-confirm="' . self::e('Annuler l\'échange avec ' . $other->data->name . ' ? Les objets retournent à la banque de chacun.') . '">'
+                . ' data-confirm="' . self::e('Annuler l\'échange avec ' . $other->data->name . ' ? Vos objets reviennent dans votre sac, ceux de ' . $other->data->name . ' dans sa banque.') . '">'
                 . 'Annuler l\'échange</button>'
                 . '</div>';
             echo '</section>';
@@ -79,7 +80,7 @@ class ExchangesView
                 <span id="exchange-recipient" style="display:none"></span>
                 <button type="button" id="exchange-change" style="display:none">Changer</button>
             </div>
-            <p class="exchange-hint">Vous choisirez ensuite les objets à donner, parmi ceux de votre banque.</p>
+            <p class="exchange-hint">Vous choisirez ensuite les objets à donner, parmi ceux de votre sac.</p>
             <button type="button" id="exchange-create" disabled><span class="ra ra-scroll-unfurled"></span> Créer l'échange</button>
         </section>
         <script src="js/autocomplete.js?v=20261017"></script>
@@ -152,10 +153,14 @@ class ExchangesView
 
         echo '<section class="exchange-deal">';
         self::renderHead($player, $other, $exchange, self::proposedBy($player, $other, $exchange));
-        echo '<p class="exchange-hint">Cliquez sur « Donner » ou « Reprendre » : l\'objet passe aussitôt de votre banque à l\'échange, ou revient.</p>';
+        echo '<p class="exchange-hint">Cliquez sur « Donner » ou « Reprendre » : l\'objet passe aussitôt de votre sac à l\'échange, ou revient.'
+            . ' Ce que vous recevez arrive dans votre banque.</p>';
 
         ExchangePanesView::openPanes();
-        ExchangePanesView::pane('Votre banque', (new BankService())->contentsOf((int) $player->id), 'give', 'Donner →');
+        $bag = new ContainerService();
+        $capacity = $bag->capacityOf((int) $player->id);
+        $gauge = ' (' . $bag->lineCountOf((int) $player->id) . ($capacity !== null ? '/' . $capacity : '') . ')';
+        ExchangePanesView::pane('Votre sac' . $gauge, $bag->contentsOf((int) $player->id), 'give', 'Donner →');
         ExchangePanesView::pane('Vous donnez à ' . $name, $give, 'take', '← Reprendre');
         ExchangePanesView::closePanes();
         ExchangePanesView::pane($name . ' vous donne', $receive, '', '');

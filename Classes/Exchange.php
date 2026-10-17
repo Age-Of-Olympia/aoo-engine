@@ -223,7 +223,8 @@ class Exchange{
         $this->db->exe($sql, array(time(),$this->id));
     }
 
-    public function give_items( $from_player, $to_player ){
+    /** @param bool $toBag the receiver is at the counter (a cancel): items go to the bag, not the bank */
+    public function give_items( $from_player, $to_player, bool $toBag = false ){
         $result ="";
         foreach($this->items as $exchange_item){
            if($exchange_item->player_id != $from_player->id)continue;
@@ -238,8 +239,8 @@ class Exchange{
             $item = new Item($exchange_item->item_id);
             $item->get_data();
 
-            /* Exemplaire : il change de PROPRIÉTAIRE et retombe en
-             * banque chez le destinataire. Transfert conditionnel — si
+            /* Exemplaire : il change de PROPRIÉTAIRE et arrive en
+             * banque chez le destinataire (au sac s'il est au comptoir). Transfert conditionnel — si
              * l'exemplaire n'est plus séquestré chez le cédant (échange
              * réglé deux fois, objet détruit entre-temps), il lève au
              * lieu d'être livré une seconde fois. */
@@ -253,7 +254,7 @@ class Exchange{
                     (int) $from_player->id,
                     (int) $to_player->id,
                     \App\Service\ItemInstanceService::LOCATION_EXCHANGE,
-                    \App\Service\ItemInstanceService::LOCATION_BANK
+                    $toBag ? \App\Service\ItemInstanceService::LOCATION_INVENTORY : \App\Service\ItemInstanceService::LOCATION_BANK
                 );
 
                 if(!empty($result))
@@ -263,7 +264,7 @@ class Exchange{
                 continue;
             }
 
-            $item->add_item($to_player, $exchange_item->n, true);
+            $item->add_item($to_player, $exchange_item->n, !$toBag);
             if(!empty($result))
                 $result.=", ";
             $result.=$exchange_item->n." ".$item->data->name;
@@ -300,7 +301,7 @@ class Exchange{
         return $contents;
     }
 
-    /** Bank -> exchange. A pile joins the line the owner already has for that item. */
+    /** Bag -> exchange. A pile joins the line the owner already has for that item. */
     public function give(Player $owner, int $n, ?int $itemId = null, ?int $instanceId = null): void
     {
         if ($instanceId !== null) {
@@ -310,8 +311,8 @@ class Exchange{
             return;
         }
 
-        if ($n < 1 || !(new Item($itemId))->add_item($owner, -$n, true)) {
-            throw new \InvalidArgumentException('Vous n\'avez pas cette quantité en banque.');
+        if ($n < 1 || !(new Item($itemId))->add_item($owner, -$n)) {
+            throw new \InvalidArgumentException('Vous n\'avez pas cette quantité dans votre sac.');
         }
         $line = $this->ownLine((int) $owner->id, $itemId, null);
         if ($line !== null) {
@@ -321,7 +322,7 @@ class Exchange{
         $this->add_item_to_exchange($itemId, $n, $owner->id);
     }
 
-    /** Exchange -> bank. Taking part of a pile leaves the rest in the exchange. */
+    /** Exchange -> bag, refused when the bag is full. Taking part of a pile leaves the rest in the exchange. */
     public function takeBack(Player $owner, int $n, ?int $itemId = null, ?int $instanceId = null): void
     {
         $line = $this->ownLine((int) $owner->id, $itemId, $instanceId);
@@ -329,17 +330,43 @@ class Exchange{
             throw new \InvalidArgumentException('Cet objet n\'est pas dans l\'échange.');
         }
 
-        $this->remove_item_line((int) $line->id);
-
         if ($instanceId !== null) {
             (new \App\Service\ItemInstanceService())->releaseFromExchange($instanceId, (int) $owner->id);
+            $this->remove_item_line((int) $line->id);
             return;
         }
 
+        $bag = new \App\Service\ContainerService();
+        if ($bag->stackNeedsRoom((int) $owner->id, $itemId) && !$bag->hasRoomForALine((int) $owner->id)) {
+            throw new \InvalidArgumentException('Votre sac est plein.');
+        }
+
+        $this->remove_item_line((int) $line->id);
         if ((int) $line->n > $n) {
             $this->add_item_to_exchange($itemId, (int) $line->n - $n, $owner->id);
         }
-        (new Item($itemId))->add_item($owner, $n, true);
+        (new Item($itemId))->add_item($owner, $n);
+    }
+
+    /**
+     * Cancel by a player at the counter: their own items come back to their bag
+     * (refused when it cannot hold them all), the other party's go to their bank.
+     */
+    public function cancelReturns(Player $canceller, Player $other): void
+    {
+        $bag = new \App\Service\ContainerService();
+        $own = $this->contentsOf((int) $canceller->id);
+        $lines = count($own['exemplars']);
+        foreach ($own['stacks'] as $row) {
+            $lines += (int) $bag->stackNeedsRoom((int) $canceller->id, (int) $row['item_id']);
+        }
+        $capacity = $bag->capacityOf((int) $canceller->id);
+        if ($capacity !== null && $lines > 0 && $bag->lineCountOf((int) $canceller->id) + $lines > $capacity) {
+            throw new \InvalidArgumentException('Votre sac est plein.');
+        }
+
+        $this->give_items($canceller, $canceller, toBag: true);
+        $this->give_items($other, $other);
     }
 
     /** The owner's line for a pile ($instanceId null) or for one exemplar. */

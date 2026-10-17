@@ -110,14 +110,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
   else if ($POST_DATA['action'] =='cancel') {
    
+    $other = PlayerFactory::legacy((int) ($player->id == $exchange->playerId ? $exchange->targetId : $exchange->playerId));
+    $other->get_data();
     $exchange->db->start_transaction('cancel_exchange');
     try {
       $exchange->get_items_data();
-      $offeringPlayer = PlayerFactory::legacy((int) $exchange->playerId);
-      $targetPlayer = PlayerFactory::legacy((int) $exchange->targetId);
-      //refund items
-      $exchange->give_items(from_player: $offeringPlayer, to_player: $offeringPlayer);
-      $exchange->give_items(from_player: $targetPlayer, to_player: $targetPlayer);
+      $exchange->cancelReturns($player, $other);
 
       /* Les lignes disparaissent avec l'échange : elles y survivaient,
        * et un exemplaire rendu serait resté rattaché à un échange clos —
@@ -126,13 +124,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $exchange->cancel_exchange();
     } catch (Throwable $th) {
       $exchange->db->rollback_transaction('cancel_exchange');
-      ExitError('Erreur lors de l\'annulation de l\'échange');
+      ExitError($th instanceof InvalidArgumentException ? $th->getMessage() : 'Erreur lors de l\'annulation de l\'échange');
     }
     $exchange->db->commit_transaction('cancel_exchange');
-    exit(json_encode(['message' => 'Échange annulé : les objets sont revenus à la banque de chacun.']));
+    exit(json_encode(['message' => 'Échange annulé : vos objets sont revenus dans votre sac, ceux de ' . $other->data->name . ' dans sa banque.']));
   }
   else {
-    // Pane moves (ExchangePanesView): one pile or one exemplar between the bank and the exchange
+    // Pane moves (ExchangePanesView): one pile or one exemplar between the bag and the exchange
     [$kind, $direction] = explode('-', $POST_DATA['action']);
     $instanceId = $kind === 'exemplar' ? (int) ($POST_DATA['instanceId'] ?? 0) : null;
     $itemId = $kind === 'stack' ? (int) ($POST_DATA['itemId'] ?? 0) : null;

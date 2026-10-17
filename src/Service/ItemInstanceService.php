@@ -632,16 +632,24 @@ class ItemInstanceService
         $this->moveTo($instanceId, $playerId, self::LOCATION_MARKET, self::LOCATION_INVENTORY);
     }
 
-    /** Mise en jeu dans un échange. */
+    /** Mise en jeu dans un échange, depuis le sac. */
     public function escrowForExchange(int $instanceId, int $playerId): void
     {
-        $this->moveTo($instanceId, $playerId, self::LOCATION_BANK, self::LOCATION_EXCHANGE);
+        $this->moveTo($instanceId, $playerId, self::LOCATION_INVENTORY, self::LOCATION_EXCHANGE);
     }
 
-    /** Retrait d'un échange, ou annulation : retour au coffre. */
+    /**
+     * Retrait d'un échange : retour au sac (le joueur est au comptoir).
+     *
+     * @throws \InvalidArgumentException when the bag has no line left, or the exemplar is no longer in the exchange
+     */
     public function releaseFromExchange(int $instanceId, int $playerId): void
     {
-        $this->moveTo($instanceId, $playerId, self::LOCATION_EXCHANGE, self::LOCATION_BANK);
+        if (!(new ContainerService())->hasRoomForALine($playerId)) {
+            throw new \InvalidArgumentException('Votre sac est plein.');
+        }
+
+        $this->moveTo($instanceId, $playerId, self::LOCATION_EXCHANGE, self::LOCATION_INVENTORY);
     }
 
     /**
