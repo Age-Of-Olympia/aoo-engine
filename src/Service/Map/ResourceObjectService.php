@@ -52,6 +52,36 @@ final class ResourceObjectService
     }
 
     /**
+     * Entities filed as buildings although their type is a resource (the
+     * cocotiers): re-placed as resources, so they block and can be harvested.
+     *
+     * @return int how many were re-placed
+     */
+    public function refileBuildings(): int
+    {
+        $rows = $this->conn->fetchAllAssociative(
+            "SELECT p.id, p.race, p.coords_id FROM players p
+               JOIN races r ON CONVERT(r.name USING utf8mb4) = CONVERT(p.race USING utf8mb4)
+              WHERE p.player_type = 'building' AND r.type_kind = 'resource'"
+        );
+
+        $this->conn->transactional(function () use ($rows): void {
+            foreach ($rows as $row) {
+                $this->conn->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$row['id']]);
+                \App\Service\BuildingService::deleteEntityRows($this->conn, (int) $row['id']);
+                $this->placeAt((string) $row['race'], (int) $row['coords_id']);
+            }
+        });
+
+        foreach ($rows as $row) {
+            BoardChanges::viewer((int) $row['id']);
+        }
+        BoardChanges::cellId(...array_map(fn (array $row): int => (int) $row['coords_id'], $rows));
+
+        return count($rows);
+    }
+
+    /**
      * The resources standing on a cell.
      *
      * @return list<int>

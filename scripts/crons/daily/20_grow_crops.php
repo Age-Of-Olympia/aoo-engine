@@ -1,10 +1,10 @@
 <?php
-use App\Service\Map\ResourceObjectService;
 use App\Service\PlantsService;
 use Classes\Db;
 use Classes\Item;
 
-// get cases where there is only one item on the ground
+// cells holding a single item, one unit, on free soil: anything else on the
+// ground, a stack included, keeps the seed from growing
 $sql = '
 SELECT
 SUM(map_items.n) as total,
@@ -18,7 +18,7 @@ INNER JOIN
 coords
 ON
 coords_id = coords.id
-WHERE n=1
+WHERE ' . PlantsService::freeSoilSql('map_items.coords_id') . '
 GROUP BY map_items.coords_id
 HAVING total =1
 ';
@@ -58,15 +58,7 @@ while($row = $res->fetch_object()){
         if(AUTO_GROW || rand(1,$growTo->chance) == 1){
 
 
-            /* Plants and resources are entities: map_plants / map_resources are no longer read. */
-            match ($growTo->table) {
-                'plants' => PlantsService::plantAt($growTo->name, (int) $row->coords_id),
-                'resources' => (new ResourceObjectService())->placeAt($growTo->name, (int) $row->coords_id, false),
-                default => $db->insert('map_'. $growTo->table, array(
-                    'name'=>$growTo->name,
-                    'coords_id'=>$row->coords_id
-                )),
-            };
+            PlantsService::sprout($growTo->name, $growTo->table, (int) $row->coords_id);
 
 
             $values = array('id'=>$row->id);

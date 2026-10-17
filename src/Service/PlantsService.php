@@ -46,19 +46,9 @@ class PlantsService
         coords c
         ON
         t.coords_id = c.id
-        LEFT JOIN players p
-        ON p.coords_id = c.id AND p.player_type = 'plant'
-        LEFT JOIN map_elements e
-        ON e.coords_id = c.id
-        LEFT JOIN entity_cells rc
-        ON rc.coords_id = c.id
-        LEFT JOIN players r
-        ON r.id = rc.player_id AND r.player_type = 'route'
         WHERE
         t.name = 'grow'
-        and p.id is null
-        and e.id is null
-        and r.id is null;
+        AND " . self::freeSoilSql('t.coords_id') . ";
         ";
 
         $db = new Db();
@@ -68,6 +58,20 @@ class PlantsService
         return $res;
     }
 
+
+    /**
+     * SQL condition: nothing grows on the cell yet — no plant, no element,
+     * no road. Shared by the grow triggers and the seeds left on the ground.
+     */
+    public static function freeSoilSql(string $coordsColumn): string
+    {
+        return "NOT EXISTS (SELECT 1 FROM players p
+                             WHERE p.coords_id = {$coordsColumn} AND p.player_type = 'plant')
+            AND NOT EXISTS (SELECT 1 FROM map_elements e WHERE e.coords_id = {$coordsColumn})
+            AND NOT EXISTS (SELECT 1 FROM entity_cells rc
+                              JOIN players r ON r.id = rc.player_id AND r.player_type = 'route'
+                             WHERE rc.coords_id = {$coordsColumn})";
+    }
 
     public static function growSeed($plante, $coords)
     {
@@ -99,6 +103,23 @@ class PlantsService
     }
 
     /**
+     * Grow what a seed names. The type decides — a cocotier is a tree whatever
+     * the seed's `table` says; `table` only serves types the catalogue lacks.
+     */
+    public static function sprout(string $type, string $table, int $coordsId): void
+    {
+        $kind = (new Db())->exe('SELECT type_kind FROM races WHERE name = ?', $type)->fetch_object()->type_kind
+            ?? ['plants' => 'plant', 'resources' => 'resource'][$table]
+            ?? null;
+
+        match ($kind) {
+            'plant' => self::plantAt($type, $coordsId),
+            'resource' => (new \App\Service\Map\ResourceObjectService())->placeAt($type, $coordsId, false),
+            default => (new Db())->insert('map_' . $table, ['name' => $type, 'coords_id' => $coordsId]),
+        };
+    }
+
+    /**
      * Pose a plant entity: its row, an id in the plants range, and its
      * cell — `part`, the type says it is walked on.
      *
@@ -118,4 +139,70 @@ class PlantsService
         );
     }
 
+    /**
+     * Plants that grew on a road go back to the ground as the seed they came
+     * from, for players to pick up. A plant no seed grows into is just removed.
+     *
+     * @return array{plants: int, seeded: int, removed: int}
+     */
+    public static function seedBackFromRoads(bool $apply): array
+    {
+        $conn = EntityManagerFactory::getEntityManager()->getConnection();
+
+        $plants = $conn->fetchAllAssociative(
+            "SELECT p.id, p.race, p.coords_id FROM players p
+              WHERE p.player_type = 'plant'
+                AND EXISTS (SELECT 1 FROM entity_cells rc
+                              JOIN players r ON r.id = rc.player_id AND r.player_type = 'route'
+                             WHERE rc.coords_id = p.coords_id)"
+        );
+
+        $seedOf = self::seedsByPlant();
+        $seeded = count(array_filter($plants, fn (array $p): bool => isset($seedOf[$p['race']])));
+
+        if ($apply) {
+            foreach ($plants as $plant) {
+                if (isset($seedOf[$plant['race']])) {
+                    $conn->executeStatement(
+                        'INSERT INTO map_items (item_id, coords_id, n) VALUES (?, ?, 1)
+                         ON DUPLICATE KEY UPDATE n = n + 1',
+                        [$seedOf[$plant['race']], $plant['coords_id']]
+                    );
+                }
+            }
+
+            (new \App\Service\Map\ResourceObjectService($conn))
+                ->removeEntities(array_map(fn (array $p): int => (int) $p['id'], $plants));
+            \App\Service\Map\BoardChanges::cellId(...array_map(fn (array $p): int => (int) $p['coords_id'], $plants));
+        }
+
+        return ['plants' => count($plants), 'seeded' => $seeded, 'removed' => count($plants) - $seeded];
+    }
+
+    /**
+     * Plant type => id of a seed that grows into it. Item data may still live
+     * in datas/ JSON, hence get_data() rather than a SQL read of `extra`.
+     *
+     * @return array<string, int>
+     */
+    private static function seedsByPlant(): array
+    {
+        $seeds = [];
+
+        foreach ((new Db())->exe('SELECT id FROM items ORDER BY id')->fetch_all() as [$id]) {
+            $item = new \Classes\Item((int) $id);
+            $item->get_data();
+
+            if (($item->data->type ?? '') !== 'graine') {
+                continue;
+            }
+
+            // Keyed by name, whatever `table` says: the type decides (see sprout())
+            foreach ($item->data->growTo ?? [] as $growTo) {
+                $seeds[$growTo->name] ??= (int) $id;
+            }
+        }
+
+        return $seeds;
+    }
 }

@@ -25,6 +25,7 @@ Exemple:
 > entity-cells            (état : emprises manquantes ou divergentes)
 > entity-cells repair     (remet les cases d'aplomb)
 > entity-cells convert    (donne une entité au décor posé sans elle)
+> entity-cells refile     (reclasse en ressource les bâtiments dont le type est une ressource)
 EOT);
     }
 
@@ -39,6 +40,14 @@ EOT);
             return $converted === 0
                 ? 'Aucun décor sans entité.'
                 : $converted . ' décor(s) devenu(s) entité(s) — leurs cases portent enfin leur rôle.';
+        }
+
+        if ($action === 'refile') {
+            $refiled = (new \App\Service\Map\ResourceObjectService())->refileBuildings();
+
+            return $refiled === 0
+                ? 'Aucun bâtiment à reclasser.'
+                : $refiled . ' bâtiment(s) reclassé(s) en ressource.';
         }
 
         $drift = $service->drift();
