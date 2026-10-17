@@ -65,8 +65,10 @@ class Exchange{
         $sql = '
             SELECT e.id, e.exchange_id, e.item_id, e.n, e.player_id, e.target_id, e.instance_id,
                    ' . \App\Service\ItemInstanceService::WEAR_SELECT . ',
-                   i.quality, i.custom_name, i.destroyed
+                   i.quality, i.custom_name, i.destroyed,
+                   cat.name, COALESCE(NULLIF(cat.label, \'\'), cat.name) AS label
             FROM players_items_exchanges e
+            JOIN items cat ON cat.id = e.item_id
             LEFT JOIN item_instances i ON i.id = e.instance_id
             LEFT JOIN items it ON it.id = i.item_id
             LEFT JOIN players_bonus wear ON wear.player_id = i.entity_id AND wear.name = "pv"
@@ -272,41 +274,86 @@ class Exchange{
         return $result;
     }
 
-    public function render_items_for_player($playerId){
-        $return = '';
-        $noItem= true;
-        foreach($this->items as $exchange_item){
-            if($exchange_item->player_id != $playerId){
+    /**
+     * What one party puts in, shaped like a pane of ExchangePanesView.
+     *
+     * @return array{stacks: list<array<string, mixed>>, exemplars: list<array<string, mixed>>}
+     */
+    public function contentsOf(int $playerId): array
+    {
+        $contents = ['stacks' => [], 'exemplars' => []];
+        foreach ($this->items as $row) {
+            if ((int) $row->player_id !== $playerId) {
                 continue;
             }
-            $item = new Item($exchange_item->item_id);
-            $item->get_data();
-
-            /* Les deux parties doivent voir CE qu'elles échangent : un
-             * exemplaire porte son nom et son usure, pas une quantité. */
-            if(!empty($exchange_item->instance_id)){
-
-                $return .= '<li>'
-                    . \App\Service\ItemInstanceService::label(
-                        $exchange_item->custom_name,
-                        (string) $item->data->name
-                    )
-                    . ' <small>'
-                    . \App\Service\ItemInstanceService::stateLine($exchange_item, withBreak: false)
-                    . '</small></li>';
-                $noItem = false;
-
+            $entry = (array) $row;
+            if (!empty($row->instance_id)) {
+                // Both parties see the wear of what they trade
+                $entry['state'] = \App\Service\ItemInstanceService::stateLine($row, withBreak: false);
+                $contents['exemplars'][] = $entry;
                 continue;
             }
-
-            $return .= '<li>'. $exchange_item->n . ' ' . $item->data->name. '</li>';;
-            $noItem = false;
+            $contents['stacks'][] = $entry;
         }
 
-        if($noItem){
-            $return = '<li>Aucun objet</li>';
+        return $contents;
+    }
+
+    /** Bank -> exchange. A pile joins the line the owner already has for that item. */
+    public function give(Player $owner, int $n, ?int $itemId = null, ?int $instanceId = null): void
+    {
+        if ($instanceId !== null) {
+            $itemId = (int) $this->db->exe('SELECT item_id FROM item_instances WHERE id = ?', $instanceId)->fetch_object()?->item_id;
+            (new \App\Service\ItemInstanceService())->escrowForExchange($instanceId, (int) $owner->id);
+            $this->add_item_to_exchange($itemId, 1, $owner->id, $instanceId);
+            return;
         }
-        return $return;
+
+        if ($n < 1 || !(new Item($itemId))->add_item($owner, -$n, true)) {
+            throw new \InvalidArgumentException('Vous n\'avez pas cette quantité en banque.');
+        }
+        $line = $this->ownLine((int) $owner->id, $itemId, null);
+        if ($line !== null) {
+            $this->remove_item_line((int) $line->id);
+            $n += (int) $line->n;
+        }
+        $this->add_item_to_exchange($itemId, $n, $owner->id);
+    }
+
+    /** Exchange -> bank. Taking part of a pile leaves the rest in the exchange. */
+    public function takeBack(Player $owner, int $n, ?int $itemId = null, ?int $instanceId = null): void
+    {
+        $line = $this->ownLine((int) $owner->id, $itemId, $instanceId);
+        if ($line === null || ($instanceId === null && ($n < 1 || $n > (int) $line->n))) {
+            throw new \InvalidArgumentException('Cet objet n\'est pas dans l\'échange.');
+        }
+
+        $this->remove_item_line((int) $line->id);
+
+        if ($instanceId !== null) {
+            (new \App\Service\ItemInstanceService())->releaseFromExchange($instanceId, (int) $owner->id);
+            return;
+        }
+
+        if ((int) $line->n > $n) {
+            $this->add_item_to_exchange($itemId, (int) $line->n - $n, $owner->id);
+        }
+        (new Item($itemId))->add_item($owner, $n, true);
+    }
+
+    /** The owner's line for a pile ($instanceId null) or for one exemplar. */
+    private function ownLine(int $ownerId, ?int $itemId, ?int $instanceId): ?object
+    {
+        foreach ($this->items as $row) {
+            if ((int) $row->player_id !== $ownerId) {
+                continue;
+            }
+            if ($instanceId !== null ? (int) $row->instance_id === $instanceId : (empty($row->instance_id) && (int) $row->item_id === $itemId)) {
+                return $row;
+            }
+        }
+
+        return null;
     }
 
     public static function get_open_exchanges($playerId){

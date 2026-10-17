@@ -2553,6 +2553,103 @@ body:has(#hud) #load-caracs .progress-bar {
     flex: 1 1 0;
 }
 
+/* Exchanges at a merchant: one block per deal, one wax seal per party */
+.hud-panel-content .exchange-deal {
+    border: 1px solid var(--hud-line-soft);
+    border-radius: 6px;
+    background: var(--hud-veil);
+    padding: 12px 16px 14px;
+    margin: 0 0 16px;
+}
+
+.hud-panel-content .exchange-deal h2 {
+    margin: 0;
+}
+
+.hud-panel-content .exchange-deal .exchange-pane h2 {
+    font-size: 1.05em;
+    margin: 12px 0 6px;
+}
+
+.hud-panel-content .exchange-deal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.hud-panel-content .exchange-hint {
+    color: var(--hud-ink-soft);
+    margin: 4px 0 8px;
+}
+
+.hud-panel-content .exchange-seals {
+    display: flex;
+    gap: 6px;
+    flex: none;
+}
+
+.hud-panel-content .exchange-seal {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: var(--hud-display);
+    font-size: 1.1em;
+    color: var(--hud-ink-soft);
+    border: 1.5px dashed var(--hud-line);
+}
+
+.hud-panel-content .exchange-seal.is-sealed {
+    color: var(--hud-parchment);
+    border: none;
+    background: radial-gradient(circle at 35% 30%, #a3171c, var(--hud-blood) 72%);
+    box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.hud-panel-content .exchange-status {
+    margin: 12px 0 10px;
+}
+
+.hud-panel-content .exchange-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.hud-panel-content .exchange-actions .exchange-cancel {
+    margin-left: auto;
+    background: none;
+    border: none;
+    box-shadow: none;
+    color: var(--hud-blood);
+    text-decoration: underline;
+    padding: 4px 0;
+}
+
+.hud-panel-content .exchange-new label {
+    display: block;
+    font-weight: 600;
+    margin: 12px 0 4px;
+}
+
+.hud-panel-content .exchange-recipient-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hud-panel-content .exchange-recipient-row #autocomplete {
+    width: min(100%, 360px);
+    padding: 6px 8px;
+}
+
+.hud-panel-content #exchange-recipient {
+    font-weight: 600;
+}
+
 /* Characters: a grid filling the panel, not a centred strip */
 .hud-panel-content .pnj-container {
     display: grid;

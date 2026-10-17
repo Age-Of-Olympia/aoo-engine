@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 
   $POST_DATA = json_decode(file_get_contents('php://input'), true);
-  if(!isset($POST_DATA['action']) || !in_array($POST_DATA['action'], ['accept', 'refuse', 'cancel', 'objects'])) {
+  if(!isset($POST_DATA['action']) || !in_array($POST_DATA['action'], ['accept', 'refuse', 'cancel', 'stack-give', 'stack-take', 'exemplar-give', 'exemplar-take'])) {
     ExitError('Invalid request');
   }
   if(!isset($POST_DATA['id'])) {
@@ -129,70 +129,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       ExitError('Erreur lors de l\'annulation de l\'échange');
     }
     $exchange->db->commit_transaction('cancel_exchange');
-    exit();
+    exit(json_encode(['message' => 'Échange annulé : les objets sont revenus à la banque de chacun.']));
   }
-  else if ($POST_DATA['action'] =='objects') {
-    $objects = $POST_DATA['objects'] ?? [];
-    $exchange->db->start_transaction('edit_objects_exchange');
+  else {
+    // Pane moves (ExchangePanesView): one pile or one exemplar between the bank and the exchange
+    [$kind, $direction] = explode('-', $POST_DATA['action']);
+    $instanceId = $kind === 'exemplar' ? (int) ($POST_DATA['instanceId'] ?? 0) : null;
+    $itemId = $kind === 'stack' ? (int) ($POST_DATA['itemId'] ?? 0) : null;
+    $n = $kind === 'stack' ? (int) ($POST_DATA['n'] ?? 0) : 1;
+
+    $exchange->db->start_transaction('move_exchange_item');
     $exchange->get_items_data();
     try {
-    /* Tout est repris puis reposé : le client envoie l'état voulu, pas
-     * un delta. Chaque ligne est visée par sa CLÉ PRIMAIRE — avant, on
-     * la visait par ses valeurs, ce qui emportait les lignes jumelles. */
-    $instanceService = new App\Service\ItemInstanceService();
-
-    foreach ($exchange->items as $exchange_item) {
-     if($exchange_item->player_id != $player->id)continue;
-
-     $exchange->remove_item_line((int) $exchange_item->id);
-
-     /* Exemplaire : il revient au coffre par sa localisation, pas en
-      * recréditant une pile — sans quoi on fabriquerait une unité
-      * vierge et on laisserait l'exemplaire séquestré à jamais. */
-     if(!empty($exchange_item->instance_id)){
-       $instanceService->releaseFromExchange((int) $exchange_item->instance_id, (int) $player->id);
-       continue;
-     }
-
-     $item = new Item($exchange_item->item_id);
-     $item->add_item($player, $exchange_item->n, true);
-    }
-
-      // add new items
-      foreach ($objects as $decodedObject) {
-        /* itemId quand la ligne désigne un exemplaire : sa clé de liste
-         * côté client est l'id d'INSTANCE (deux épées usées sont deux
-         * entrées, pas une entrée « x2 »), l'objet catalogue voyage donc
-         * à part. Jamais d'id d'instance dans itemId : deux paramètres
-         * distincts, le serveur refuse l'ambigu. */
-        $item = new Item($decodedObject['itemId'] ?? $decodedObject['id']);
-        $count = abs($decodedObject['n']);
-
-        /* Exemplaire choisi par le joueur : il quitte la banque pour
-         * l'échange. Aucune pile n'est débitée — c'était le piège du
-         * marché, un vendeur possédant aussi une pile voyait celle-ci
-         * partir à la place de son objet usé. */
-        $instanceId = isset($decodedObject['instanceId']) && $decodedObject['instanceId'] !== ''
-          ? (int) $decodedObject['instanceId']
-          : null;
-
-        if ($instanceId !== null) {
-          $instanceService->escrowForExchange($instanceId, (int) $player->id);
-          $exchange->add_item_to_exchange($item->id, 1, $player->id, $instanceId);
-          continue;
-        }
-
-        if (!$item->add_item($player, -$count, true)) {
-          throw new Exception('Erreur lors de l\'ajout de l\'objet à l\'échange');
-        }
-        $exchange->add_item_to_exchange($item->id, $count, $player->id);
+      if ($direction === 'give') {
+        $exchange->give($player, $n, $itemId, $instanceId);
+      } else {
+        $exchange->takeBack($player, $n, $itemId, $instanceId);
       }
     } catch (Throwable $th) {
-      $exchange->db->rollback_transaction('edit_objects_exchange');
-      ExitError('Erreur lors de l\'edition de l\'échange');
+      $exchange->db->rollback_transaction('move_exchange_item');
+      ExitError($th instanceof InvalidArgumentException ? $th->getMessage() : 'Erreur lors de la modification de l\'échange');
     }
-    $exchange->db->commit_transaction('edit_objects_exchange');
-    ExitSuccess('echange modifié');
+    $exchange->db->commit_transaction('move_exchange_item');
+    ExitSuccess(['message' => '']);
   }
 
   ExitError('Invalid request');

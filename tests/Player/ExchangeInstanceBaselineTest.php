@@ -200,4 +200,54 @@ class ExchangeInstanceBaselineTest extends LegacyPlayerFixtureTestCase
         $this->expectException(\Throwable::class);
         $second->add_item_to_exchange($bois->id, 1, $offering->id, $instanceId);
     }
+
+    public function testGiveAndTakeBackMoveBetweenTheBankAndTheExchange(): void
+    {
+        $offering = $this->createRealPlayer('GmGive');
+        $target = $this->createRealPlayer('GmTake');
+        $bois = $this->itemOrSkip('bois');
+        $bois->add_item($offering, 1);
+        $instanceId = $this->bankedInstance($offering->id, $bois);
+        $bois->add_item($offering, 10, bank: true);
+        $bankStack = fn (): int => (int) $this->link->fetchOne(
+            'SELECT COALESCE(SUM(n), 0) FROM players_items_bank WHERE player_id = ? AND item_id = ?',
+            [$offering->id, $bois->id]
+        );
+        $exchange = $this->openExchange($offering->id, $target->id);
+        $reload = function () use ($exchange): Exchange {
+            $exchange->items = [];
+            $exchange->get_items_data();
+
+            return $exchange;
+        };
+
+        // Two gifts of a pile end up on one line
+        $reload()->give($offering, 4, $bois->id);
+        $reload()->give($offering, 3, $bois->id);
+        $this->assertSame([7], array_map(fn ($r) => (int) $r['n'], $reload()->contentsOf($offering->id)['stacks']));
+        $this->assertSame(3, $bankStack());
+
+        // Taking part back leaves the rest in the exchange
+        $reload()->takeBack($offering, 5, $bois->id);
+        $this->assertSame([2], array_map(fn ($r) => (int) $r['n'], $reload()->contentsOf($offering->id)['stacks']));
+        $this->assertSame(8, $bankStack());
+
+        // An exemplar goes in and comes back by itself
+        $reload()->give($offering, 1, null, $instanceId);
+        $this->assertCount(1, $reload()->contentsOf($offering->id)['exemplars']);
+        $reload()->takeBack($offering, 1, null, $instanceId);
+        $this->assertSame([], $reload()->contentsOf($offering->id)['exemplars']);
+        $this->assertSame('bank', (string) $this->link->fetchOne(
+            'SELECT e.slot FROM players e JOIN item_instances i ON i.entity_id = e.id WHERE i.id = ?',
+            [$instanceId]
+        ));
+
+        // More than the bank holds: refused, nothing moves
+        try {
+            $reload()->give($offering, 99, $bois->id);
+            $this->fail('giving more than the bank holds must be refused');
+        } catch (\InvalidArgumentException) {
+        }
+        $this->assertSame(8, $bankStack());
+    }
 }

@@ -56,7 +56,8 @@ final class ExchangePanesView
 
         foreach ($contents['exemplars'] as $row) {
             echo '<tr><td>' . self::rowSprite((string) $row['name'])
-                . htmlspecialchars(ContainerService::exemplarEntryLabel($row), ENT_QUOTES, 'UTF-8') . '</td>';
+                . htmlspecialchars(ContainerService::exemplarEntryLabel($row), ENT_QUOTES, 'UTF-8')
+                . (isset($row['state']) ? ' <small>' . $row['state'] . '</small>' : '') . '</td>';
             if ($direction !== '') {
                 echo '<td><button class="pane-move" data-kind="exemplar" data-direction="' . $direction . '"'
                     . ' data-instance="' . (int) $row['instance_id'] . '">' . $label . '</button></td>';
