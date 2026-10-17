@@ -23,6 +23,10 @@ class PlantsOnRoadsTest extends LegacyPlayerFixtureTestCase
             [self::PLAN]
         );
         $link->executeStatement(
+            'DELETE l FROM players_logs l JOIN coords c ON c.id = l.coords_id WHERE c.plan = ?',
+            [self::PLAN]
+        );
+        $link->executeStatement(
             'DELETE p FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ?',
             [self::PLAN]
         );
@@ -50,7 +54,12 @@ class PlantsOnRoadsTest extends LegacyPlayerFixtureTestCase
         $onRoad = $this->coordsIdOn(self::PLAN, 1, 1);
         $offRoad = $this->coordsIdOn(self::PLAN, 2, 1);
         $place->create('route', 'route_test', $onRoad, 'Route', 'img/routes/route_test.png');
-        $place->create('plant', $plant, $onRoad, $plant, 'img/plants/' . $plant . '.png');
+        $roadPlant = $place->create('plant', $plant, $onRoad, $plant, 'img/plants/' . $plant . '.png');
+        // A log on the plant blocks a bare DELETE (players_logs FK, seen on prod)
+        $this->link->executeStatement(
+            "INSERT INTO players_logs (player_id, target_id, type, coords_id) VALUES (?, ?, 'harvest', ?)",
+            [$roadPlant, $roadPlant, $onRoad]
+        );
         $place->create('plant', $plant, $offRoad, $plant, 'img/plants/' . $plant . '.png');
 
         $report = PlantsService::seedBackFromRoads(false);

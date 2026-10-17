@@ -115,9 +115,10 @@ final class ResourceObjectService
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
 
         $this->conn->executeStatement("DELETE FROM resources WHERE player_id IN ({$placeholders})", $ids);
-        $this->conn->executeStatement("DELETE FROM players WHERE id IN ({$placeholders})", $ids);
 
+        // Logs, effects, items… reference the entity; deleteEntityRows clears them first
         foreach ($ids as $id) {
+            \App\Service\BuildingService::deleteEntityRows($this->conn, $id);
             \App\Service\Map\BoardChanges::viewer($id);
         }
     }
