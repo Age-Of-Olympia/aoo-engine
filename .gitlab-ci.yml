@@ -187,7 +187,7 @@ test_job:
 # `- when: manual` as a fallback would make the job appear on every feature
 # branch's pipeline as a manual-only job, which produces a "skipped"
 # pipeline status that the project's merge policy then refuses to accept.
-# L'endpoint action.php, exercé par HTTP sur CHAQUE merge request.
+# L'endpoint action.php, exercé par HTTP (manuel, et chaque nuit par le pipeline planifié).
 #
 # Même infrastructure que cypress_tutorial_job — mariadb jetable, base semée,
 # php -S — mais sans rien du tutoriel : ni fixture de plan, ni drapeau
@@ -250,6 +250,14 @@ cypress_endpoint_job:
       - data_tests/cypress/screenshots/
       - data_tests/cypress/videos/
     expire_in: 1 week
+  # Too long for every push: manual, and run automatically by the nightly
+  # scheduled pipeline. allow_failure keeps the manual job optional.
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - when: manual
+      allow_failure: true
 
 cypress_tutorial_job:
   <<: *php-job-template
@@ -323,6 +331,8 @@ cypress_tutorial_job:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
+    # Nightly scheduled pipeline: every Cypress job runs automatically
+    - if: $CI_PIPELINE_SOURCE == "schedule"
     # staging: manual + allow_failure while the 11x11-plan regression
     # is investigated. Flip back to auto-trigger once Cypress is green.
     - if: $CI_COMMIT_REF_NAME == "staging"
@@ -406,6 +416,8 @@ deploy-job-non-prod:
     # qui porte la sortie du script de déploiement et donc la vraie cause.
     - 'curl --fail-with-body --show-error --silent ${CURL_OPTS} -X POST -H "X-Deploy-Token: ${DEPLOY_KEY_PASS}" "https://${DEPLOY_HOST}/admin/deploy.php?type=code&ci&env_branch=${CI_COMMIT_REF_NAME}"'
   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
     - if: $CI_COMMIT_REF_NAME == "staging" && $CI_MERGE_REQUEST_ID == null
       variables:
         DEPLOY_HOST: "test.age-of-olympia.net"
