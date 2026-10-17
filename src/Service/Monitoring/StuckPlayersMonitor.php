@@ -60,7 +60,8 @@ final class StuckPlayersMonitor
     /**
      * The page is disarmed by one click: a player who logged in a day after
      * dying and still has it armed cannot get rid of it. The death time is the
-     * last kill on record; a death with no killer is not judged.
+     * latest of the last kill on record and the last death with no killer
+     * (PlayerService::processSelfDeath writes no kill, only its log).
      */
     private function deathScreens(): MonitoringResult
     {
@@ -68,10 +69,17 @@ final class StuckPlayersMonitor
             static fn (array $row): string => IntegrityMonitor::who($row) . ' : mort le ' . date('d/m/Y H:i', (int) $row['died'])
                 . ', connecté le ' . date('d/m/Y H:i', (int) $row['lastLoginTime']),
             $this->conn->fetchAllAssociative(
-                "SELECT p.id, p.name, p.lastLoginTime, k.died FROM players_options o
-                   JOIN players p ON p.id = o.player_id
-                   JOIN (SELECT target_id, MAX(time) AS died FROM players_kills GROUP BY target_id) k ON k.target_id = p.id
-                  WHERE o.name = 'deathScreenPending' AND p.lastLoginTime > k.died + 86400 ORDER BY p.id"
+                "SELECT * FROM (
+                    SELECT p.id, p.name, p.lastLoginTime, GREATEST(
+                        COALESCE((SELECT MAX(k.time) FROM players_kills k WHERE k.target_id = p.id), 0),
+                        COALESCE((SELECT MAX(l.time) FROM players_logs l
+                                   WHERE l.player_id = p.id AND l.target_id = p.id AND l.type = 'kill'
+                                     AND l.text LIKE '%a succombé%'), 0)
+                    ) AS died
+                    FROM players_options o JOIN players p ON p.id = o.player_id
+                   WHERE o.name = 'deathScreenPending'
+                 ) d
+                 WHERE d.died > 0 AND d.lastLoginTime > d.died + 86400 ORDER BY d.id"
             )
         );
 
