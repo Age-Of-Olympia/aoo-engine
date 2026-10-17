@@ -85,9 +85,11 @@ final class PlatformMonitor
         $executed = array_flip($this->conn->fetchFirstColumn('SELECT version FROM doctrine_migration_versions'));
         $pending = [];
         foreach (glob(self::MIGRATIONS_DIR . '/Version*.php') ?: [] as $file) {
-            $class = 'App\\Migrations\\' . basename($file, '.php');
-            if (!isset($executed[$class])) {
-                $pending[] = basename($file, '.php');
+            // Doctrine records the class name, which may differ from the file name.
+            preg_match('/^(?:final\s+)?class\s+(\w+)/m', (string) file_get_contents($file), $match);
+            $class = $match[1] ?? basename($file, '.php');
+            if (!isset($executed['App\\Migrations\\' . $class])) {
+                $pending[] = $class;
             }
         }
 
