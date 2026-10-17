@@ -2,12 +2,13 @@
 
 namespace App\Enum;
 
+/** Cases in severity order, worst first: the dashboard sorts by it. */
 enum MonitoringStatus: string
 {
-    case Ok = 'ok';
-    case Running = 'running';
-    case Warning = 'warning';
     case Error = 'error';
+    case Warning = 'warning';
+    case Running = 'running';
+    case Ok = 'ok';
 
     public function label(): string
     {
@@ -16,17 +17,6 @@ enum MonitoringStatus: string
             self::Running => 'En cours',
             self::Warning => 'Attention',
             self::Error   => 'Erreur',
-        };
-    }
-
-    /** Bootstrap badge/border variant. */
-    public function variant(): string
-    {
-        return match ($this) {
-            self::Ok      => 'success',
-            self::Running => 'info',
-            self::Warning => 'warning',
-            self::Error   => 'danger',
         };
     }
 }

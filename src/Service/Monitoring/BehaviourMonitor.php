@@ -68,7 +68,7 @@ final class BehaviourMonitor
     }
 
     /**
-     * @param array{players: array<int, array{xp: int, gold: int}>} $live
+     * @param array{players: array<int, array{name: string, xp: int, gold: int}>} $live
      * @param array{taken_at: string, metrics: array{players: array<int, array{xp: int, gold: int}>}}|null $last
      */
     private function gains(array $live, ?array $last, string $key, string $title): MonitoringResult
@@ -87,11 +87,10 @@ final class BehaviourMonitor
         $gains = array_filter($gains, static fn (int $g): bool => $g > 0);
         arsort($gains);
 
-        $names = $this->names(array_keys(array_slice($gains, 0, 5, true)));
         $lines = [];
         foreach (array_slice($gains, 0, 5, true) as $id => $gain) {
             $lines[] = MonitoringResult::line(
-                $names[$id] ?? '#' . $id,
+                IntegrityMonitor::who(['id' => $id, 'name' => $live['players'][$id]['name']]),
                 '+' . $gain,
                 in_array($id, $flagged, true) ? MonitoringStatus::Warning : null
             );
@@ -169,25 +168,6 @@ final class BehaviourMonitor
 
         return new MonitoringResult(self::SECTION, 'Droits d\'administration', MonitoringStatus::Ok,
             count($lines) . ' compte(s) avec des droits d\'administration, inchangé.', $lines);
-    }
-
-    /**
-     * @param list<int> $ids
-     * @return array<int, string> id => "name (#id)"
-     */
-    private function names(array $ids): array
-    {
-        if ($ids === []) {
-            return [];
-        }
-        $names = [];
-        foreach ($this->conn->fetchAllAssociative(
-            'SELECT id, name FROM players WHERE id IN (' . implode(',', array_map('intval', $ids)) . ')'
-        ) as $row) {
-            $names[(int) $row['id']] = IntegrityMonitor::who($row);
-        }
-
-        return $names;
     }
 
     public static function noSnapshot(): string

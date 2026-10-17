@@ -11,8 +11,6 @@ use App\Enum\MonitoringStatus;
 use App\Service\Monitoring\MonitoringResult;
 use App\Service\Monitoring\MonitoringService;
 
-const STATUS_ORDER = [MonitoringStatus::Error, MonitoringStatus::Warning, MonitoringStatus::Running, MonitoringStatus::Ok];
-
 /** "1 erreur" / "3 erreurs" */
 function mon_count(int $n, string $singular, string $plural): string
 {
@@ -43,10 +41,10 @@ function mon_sparkline(array $series): string
         . '<circle cx="' . $lastX . '" cy="' . $lastY . '" r="2.5" /></svg>';
 }
 
-$rank = static fn (MonitoringResult $r): int => (int) array_search($r->status, STATUS_ORDER, true);
+$rank = static fn (MonitoringResult $r): int => (int) array_search($r->status, MonitoringStatus::cases(), true);
 
 $sections = [];
-$tally = array_fill_keys(array_map(static fn ($s) => $s->value, STATUS_ORDER), 0);
+$tally = array_fill_keys(array_map(static fn ($s) => $s->value, MonitoringStatus::cases()), 0);
 foreach ((new MonitoringService())->results() as $result) {
     $sections[$result->section][] = $result;
     $tally[$result->status->value]++;
@@ -111,7 +109,7 @@ foreach ($sections as $section => $results) {
     }
 
     $tallyHtml = '';
-    foreach (STATUS_ORDER as $s) {
+    foreach (MonitoringStatus::cases() as $s) {
         if (!empty($counts[$s->value])) {
             $tallyHtml .= '<span class="is-' . $s->value . '">' . $counts[$s->value] . ' ' . e(mb_strtolower($s->label())) . '</span>';
         }

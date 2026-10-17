@@ -14,7 +14,7 @@ use Doctrine\DBAL\Connection;
  *     gold: array{characters: int, structures: int, banks: int, ground: int},
  *     items: int,
  *     xp: int,
- *     players: array<int, array{xp: int, gold: int}>,
+ *     players: array<int, array{name: string, xp: int, gold: int}>,
  *     admins: list<int>,
  *     tables: array<string, int>
  * }
@@ -57,6 +57,24 @@ final class MonitoringSnapshotService
         ], $rows);
     }
 
+    /**
+     * The biggest tables, largest first.
+     *
+     * @return array<string, array{bytes: int, rows: int}>
+     */
+    public function tableSizes(int $limit): array
+    {
+        $tables = [];
+        foreach ($this->conn->fetchAllAssociative(
+            'SELECT table_name AS name, table_rows AS row_count, data_length + index_length AS bytes FROM information_schema.tables
+              WHERE table_schema = DATABASE() AND table_type = \'BASE TABLE\' ORDER BY bytes DESC LIMIT ' . max(1, $limit)
+        ) as $row) {
+            $tables[(string) $row['name']] = ['bytes' => (int) $row['bytes'], 'rows' => (int) $row['row_count']];
+        }
+
+        return $tables;
+    }
+
     /** @return Metrics */
     public function measure(): array
     {
@@ -73,21 +91,13 @@ final class MonitoringSnapshotService
 
         $players = [];
         foreach ($this->conn->fetchAllAssociative(
-            "SELECT p.id, p.xp,
+            "SELECT p.id, p.name, p.xp,
                     COALESCE((SELECT SUM(n) FROM players_items WHERE player_id = p.id AND item_id = ?), 0)
                   + COALESCE((SELECT SUM(n) FROM players_items_bank WHERE player_id = p.id AND item_id = ?), 0) AS gold
                FROM players p WHERE p.player_type = 'real'",
             [$gold, $gold]
         ) as $row) {
-            $players[(int) $row['id']] = ['xp' => (int) $row['xp'], 'gold' => (int) $row['gold']];
-        }
-
-        $tables = [];
-        foreach ($this->conn->fetchAllAssociative(
-            'SELECT table_name AS name, data_length + index_length AS bytes FROM information_schema.tables
-              WHERE table_schema = DATABASE() AND table_type = \'BASE TABLE\' ORDER BY bytes DESC LIMIT 15'
-        ) as $row) {
-            $tables[(string) $row['name']] = (int) $row['bytes'];
+            $players[(int) $row['id']] = ['name' => (string) $row['name'], 'xp' => (int) $row['xp'], 'gold' => (int) $row['gold']];
         }
 
         return [
@@ -107,7 +117,7 @@ final class MonitoringSnapshotService
                 'SELECT DISTINCT player_id FROM players_options WHERE name IN (?, ?) ORDER BY player_id',
                 self::ADMIN_OPTIONS
             )),
-            'tables' => $tables,
+            'tables' => array_map(static fn (array $t): int => $t['bytes'], $this->tableSizes(15)),
         ];
     }
 }

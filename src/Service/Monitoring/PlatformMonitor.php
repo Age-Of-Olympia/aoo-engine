@@ -115,17 +115,14 @@ final class PlatformMonitor
     /** Informative: the biggest tables, and their growth over the stored week. */
     private function tableSizes(): MonitoringResult
     {
-        $history = (new MonitoringSnapshotService($this->conn))->history(8);
+        $snapshots = new MonitoringSnapshotService($this->conn);
+        $history = $snapshots->history(8);
         $weekAgo = $history === [] ? [] : end($history)['metrics']['tables'];
         $lines = [];
-        foreach ($this->conn->fetchAllAssociative(
-            'SELECT table_name AS name, table_rows AS row_count, data_length + index_length AS bytes FROM information_schema.tables
-              WHERE table_schema = DATABASE() AND table_type = \'BASE TABLE\' ORDER BY bytes DESC LIMIT 10'
-        ) as $row) {
-            $bytes = (int) $row['bytes'];
-            $before = $weekAgo[(string) $row['name']] ?? null;
-            $lines[] = MonitoringResult::line((string) $row['name'], number_format($bytes / 1048576, 1, ',', ' ') . ' Mo, ~'
-                . number_format((int) $row['row_count'], 0, ',', ' ') . ' lignes'
+        foreach ($snapshots->tableSizes(10) as $name => ['bytes' => $bytes, 'rows' => $rows]) {
+            $before = $weekAgo[$name] ?? null;
+            $lines[] = MonitoringResult::line($name, number_format($bytes / 1048576, 1, ',', ' ') . ' Mo, ~'
+                . number_format($rows, 0, ',', ' ') . ' lignes'
                 . ($before === null ? '' : ', ' . sprintf('%+.1f', EconomyMonitor::percent($before, $bytes)) . ' % depuis le ' . end($history)['day']));
         }
 
