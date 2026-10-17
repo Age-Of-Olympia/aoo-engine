@@ -47,13 +47,15 @@ final class IntegrityMonitor
         ];
     }
 
+    /** A player with a broken counter is an error; an NPC, run by the team, a warning. */
     private function impossibleCounters(): MonitoringResult
     {
         $where = implode(' OR ', array_map(static fn (string $c): string => "{$c} IS NULL OR {$c} < 0", self::COUNTERS));
-        $offenders = [];
+        $lines = [];
+        $count = ['real' => 0, 'npc' => 0];
         foreach ($this->conn->fetchAllAssociative(
-            'SELECT id, name, ' . implode(', ', self::COUNTERS) . ' FROM players
-              WHERE player_type IN (' . EntityCategory::addressableSql() . ") AND ({$where}) ORDER BY id"
+            'SELECT id, name, player_type, ' . implode(', ', self::COUNTERS) . ' FROM players
+              WHERE player_type IN (' . EntityCategory::addressableSql() . ") AND ({$where}) ORDER BY player_type DESC, id"
         ) as $row) {
             $bad = [];
             foreach (self::COUNTERS as $counter) {
@@ -61,12 +63,20 @@ final class IntegrityMonitor
                     $bad[] = $counter . ' = ' . ($row[$counter] ?? 'NULL');
                 }
             }
-            $offenders[] = self::who($row) . ' : ' . implode(', ', $bad);
+            $npc = $row['player_type'] === 'npc';
+            $count[$npc ? 'npc' : 'real']++;
+            $lines[] = MonitoringResult::line($npc ? 'PNJ' : 'joueur', self::who($row) . ' : ' . implode(', ', $bad),
+                $npc ? MonitoringStatus::Warning : MonitoringStatus::Error);
         }
 
-        return MonitoringResult::fromOffenders(self::SECTION, 'Compteurs impossibles', $offenders, MonitoringStatus::Error,
-            'Aucun compteur (PI, PR, XP, PF, malus, énergie) négatif ou vide.',
-            '%d personnage(s) avec un compteur négatif ou vide.');
+        if ($lines === []) {
+            return new MonitoringResult(self::SECTION, 'Compteurs impossibles', MonitoringStatus::Ok,
+                'Aucun compteur (PI, PR, XP, PF, malus, énergie) négatif ou vide.');
+        }
+
+        return new MonitoringResult(self::SECTION, 'Compteurs impossibles',
+            $count['real'] > 0 ? MonitoringStatus::Error : MonitoringStatus::Warning,
+            $count['real'] . ' joueur(s) et ' . $count['npc'] . ' PNJ avec un compteur négatif ou vide.', $lines);
     }
 
     private function emptyStacks(): MonitoringResult

@@ -112,15 +112,32 @@
 
 /* ---- Panels ------------------------------------------------------------ */
 
-/* Columns, not a grid: panels of very different heights stack without holes. */
+/* The page deals panels into three fixed columns: opening a check pushes
+   down its own column only. Narrower, the columns dissolve into a grid. */
 .mon-grid {
-    columns: 22rem;
-    column-gap: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.mon-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+}
+
+@media (max-width: 1200px) {
+    .mon-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .mon-col { display: contents; }
+}
+
+@media (max-width: 760px) {
+    .mon-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 .mon-panel {
-    break-inside: avoid;
-    margin-bottom: 1.25rem;
     background: var(--paper);
     border: 1px solid var(--rule);
     border-radius: 6px;
