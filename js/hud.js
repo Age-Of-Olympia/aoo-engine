@@ -1255,7 +1255,7 @@
                 + ' .aoo-dialog-bg, #hud-action-modal, .hud-panel, #hud-rail,'
                 + ' #hud-dots, #hud-carousel, #hud-backdrop,'
                 + ' .tutorial-tooltip, #tutorial-overlay, #tutorial-controls,'
-                + ' #tutorial-spotlight-overlay, .tutorial-modal-overlay'
+                + ' #tutorial-spotlight-overlay, .tutorial-modal-overlay, .ui-autocomplete'
             ).length) {
                 return;
             }
@@ -2503,8 +2503,9 @@
             if (!e.target.isConnected) {
                 return;
             }
+            /* .ui-autocomplete: jQuery UI appends its suggestion list to <body> */
             if ($(e.target).closest(
-                '.hud-panel, #hud-rail, #hud-burger, #hud-action-modal'
+                '.hud-panel, #hud-rail, #hud-burger, #hud-action-modal, .ui-autocomplete'
             ).length) {
                 return;
             }
