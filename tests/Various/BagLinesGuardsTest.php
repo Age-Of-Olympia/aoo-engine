@@ -2,6 +2,7 @@
 
 namespace Tests\Various;
 
+use App\Enum\EquipResult;
 use App\Service\ItemInstanceService;
 use App\Service\RecipeService;
 use PHPUnit\Framework\Attributes\Group;
@@ -124,5 +125,37 @@ class BagLinesGuardsTest extends LegacyPlayerFixtureTestCase
         // Ceiling restored: the exemplar comes home.
         $service->withdrawFromBank($instanceId, (int) $player->id);
         $this->assertSame(1, $service->countInstances((int) $player->id, (int) $gladius->id));
+    }
+
+    public function testUnequipAsksTheBag(): void
+    {
+        $spec = ['type' => 'equipement', 'stats_in_db' => 1, 'durability_max' => 100, 'emplacement' => 'main1'];
+        $sword = $this->sowCatalogItem('zz_epee_sac_' . bin2hex(random_bytes(3)), $spec);
+        $bois = $this->itemOrSkip('bois');
+        $player = $this->createRealPlayer('GmSacDeseq');
+        $sword->add_item($player, 1);
+        $bois->add_item($player, 3);
+        $player->get_caracs();
+        $this->assertSame(EquipResult::Equip, $player->equip($sword));
+
+        $this->withBagCeiling((int) $player->id, 1, function () use ($player, $sword) {
+            $this->assertSame(EquipResult::BagFull, $player->equip($sword, bagGuard: true));
+            $this->assertSame(EquipResult::Unequip, $player->equip($sword), 'a system unequip always passes');
+        });
+    }
+
+    public function testUnequipMeltingIntoItsStackNeedsNoRoom(): void
+    {
+        $spec = ['type' => 'equipement', 'stats_in_db' => 1, 'durability_max' => 100, 'emplacement' => 'main1'];
+        $sword = $this->sowCatalogItem('zz_epee_pile_' . bin2hex(random_bytes(3)), $spec);
+        $player = $this->createRealPlayer('GmSacPile');
+        $sword->add_item($player, 2);
+        $player->get_caracs();
+        $this->assertSame(EquipResult::Equip, $player->equip($sword));
+
+        // The stack of the other sword is the only line: the intact one goes back into it.
+        $this->withBagCeiling((int) $player->id, 1, function () use ($player, $sword) {
+            $this->assertSame(EquipResult::Unequip, $player->equip($sword, bagGuard: true));
+        });
     }
 }

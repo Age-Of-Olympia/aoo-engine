@@ -41,7 +41,11 @@ class EquipItemOutcomeInstruction extends OutcomeInstruction implements HasParam
         }
 
         $return = $actor->equip($item, instanceId: $conditionObject->getPickedInstanceId(),
-            clickedEquippedLine: $conditionObject->getPickedEquippedLine());
+            clickedEquippedLine: $conditionObject->getPickedEquippedLine(), bagGuard: true);
+
+        if ($return == EquipResult::BagFull) {
+            return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: ['Votre sac est plein.']);
+        }
 
         if ($return == EquipResult::Equip) {
             if ($actor->getRemaining('ae') < 1) {

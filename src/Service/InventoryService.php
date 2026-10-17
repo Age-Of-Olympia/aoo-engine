@@ -113,7 +113,12 @@ class InventoryService
         if (!empty($item->data->emplacement)) {
 
 
-            $return = $player->equip($item, instanceId: $instanceId, clickedEquippedLine: $clickedEquippedLine);
+            $return = $player->equip($item, instanceId: $instanceId, clickedEquippedLine: $clickedEquippedLine, bagGuard: true);
+
+            if ($return == EquipResult::BagFull) {
+
+                exit('<div id="data">Votre sac est plein.</div>');
+            }
 
             if ($return == EquipResult::Equip) {
 

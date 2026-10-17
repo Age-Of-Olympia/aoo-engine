@@ -172,7 +172,7 @@ class SimulatedPlayer extends Player
         return [];
     }
 
-    public function equip(Item $item, bool $doNotRefresh = false, ?int $instanceId = null, ?bool $clickedEquippedLine = null): EquipResult
+    public function equip(Item $item, bool $doNotRefresh = false, ?int $instanceId = null, ?bool $clickedEquippedLine = null, bool $bagGuard = false): EquipResult
     {
         return EquipResult::DoNothing;
     }

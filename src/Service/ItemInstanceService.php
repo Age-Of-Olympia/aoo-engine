@@ -348,14 +348,7 @@ class ItemInstanceService
                 return false;
             }
 
-            $pristine = (int) $row['durability'] === (int) $row['durability_max']
-                && (int) $row['quality'] === 0
-                && (string) $row['custom_name'] === ''
-                && ($row['params'] === null || $row['params'] === '')
-                && (int) $row['destroyed'] === 0
-                && (int) $row['wear_pending'] === 0
-                && (string) $row['equiped'] === '';
-            if (!$pristine) {
+            if (!self::rowIsIntact($row) || (string) $row['equiped'] !== '') {
                 return false;
             }
 
@@ -443,6 +436,35 @@ class ItemInstanceService
                AND e.slot = '' AND i.destroyed = 0",
             [$instanceId, $playerId, $itemId]
         );
+    }
+
+    /**
+     * No wear, no name, no alteration: back in the bag, it goes back into its stack (demote).
+     *
+     * @param array<string, mixed> $row
+     */
+    private static function rowIsIntact(array $row): bool
+    {
+        return (int) $row['durability'] === (int) $row['durability_max']
+            && (int) $row['quality'] === 0
+            && (string) $row['custom_name'] === ''
+            && ($row['params'] === null || $row['params'] === '')
+            && (int) $row['destroyed'] === 0
+            && (int) $row['wear_pending'] === 0;
+    }
+
+    public function isIntact(int $instanceId): bool
+    {
+        $row = $this->entityManager->getConnection()->fetchAssociative(
+            'SELECT ' . self::WEAR_SELECT . ', i.quality, i.custom_name, i.params, i.destroyed, i.wear_pending
+             FROM item_instances i
+             JOIN items it ON it.id = i.item_id
+             ' . self::WEAR_JOIN . '
+             WHERE i.id = ?',
+            [$instanceId]
+        );
+
+        return $row !== false && self::rowIsIntact($row);
     }
 
     /**

@@ -1644,8 +1644,10 @@ class Player implements ActorInterface {
      *        l'abîmé au lieu de le déséquiper). Null = pas de contexte
      *        de ligne (mort, désarmement, revert Ae, munitions auto) :
      *        bascule héritée par objet catalogue.
+     * @param bool $bagGuard geste du joueur : refuser le déséquipement que
+     *        le sac ne peut pas recevoir (mort, casse… passent toujours)
      */
-    public function equip(Item $item, bool $doNotRefresh = false, ?int $instanceId = null, ?bool $clickedEquippedLine = null): EquipResult{
+    public function equip(Item $item, bool $doNotRefresh = false, ?int $instanceId = null, ?bool $clickedEquippedLine = null, bool $bagGuard = false): EquipResult{
 
         $db = new Db();
 
@@ -1676,6 +1678,18 @@ class Player implements ActorInterface {
             }
 
             // item is equiped : UNEQUIP
+
+            // A new bag line, unless an intact exemplar goes back into its stack
+            if ($bagGuard) {
+                $wornInstanceId = (int) ($itemList[$item->id]->instance_id ?? 0);
+                $bag = new \App\Service\ContainerService();
+                $needsLine = $wornInstanceId === 0
+                    || !(new \App\Service\ItemInstanceService())->isIntact($wornInstanceId)
+                    || $bag->stackNeedsRoom((int) $this->id, (int) $item->id);
+                if ($needsLine && !$bag->hasRoomForALine((int) $this->id)) {
+                    return EquipResult::BagFull;
+                }
+            }
 
             if (!empty($itemList[$item->id]->instance_id)) {
 

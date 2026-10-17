@@ -8,4 +8,5 @@ enum EquipResult: string {
     case Cursed = "cursed";
     case DoNothing = "doNothing";
     case NoRoom = "noRoom";
+    case BagFull = "bagFull";
 }
