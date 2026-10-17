@@ -75,7 +75,7 @@ class Ui{
         echo '
                 <!-- Modal System -->
                 <link href="css/modal.css?v=20260715" rel="stylesheet">
-                <script src="js/modal.js?v=20260725"></script>
+                <script src="js/modal.js?v=20261017"></script>
 
                 <!-- Tutorial System -->
                 <link href="css/tutorial/tutorial.css?v=' . $tutorialVersion . '" rel="stylesheet">

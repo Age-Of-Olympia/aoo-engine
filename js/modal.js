@@ -146,7 +146,8 @@
       document.addEventListener('keydown', onKey, true);
 
       (input || okBtn).focus();
-      if (input) { input.select(); }
+      // A choice list is a <select>: only a text field has select()
+      if (input && input.select) { input.select(); }
     });
   }
 
