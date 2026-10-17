@@ -33,7 +33,7 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
 </div>
 
 <script src="js/progressive_loader.js?v=20260716"></script>
-<script src="js/autocomplete.js"></script>
+<script src="js/autocomplete.js?v=20261017"></script>
 
 <script>
 

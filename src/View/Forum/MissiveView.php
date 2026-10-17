@@ -214,11 +214,9 @@ class MissiveView
             window.topName = "<?php echo $topJson->name ?>";
         </script>
         <script src="js/forum_missives.js?v=20260715"></script>
-        <script src="js/autocomplete.js"></script>
-        <link rel="stylesheet" href="css/jquery-ui.min.css" />
+        <script src="js/autocomplete.js?v=20261017"></script>
         <script>
-            /* The HUD loads this view as a fragment into a page without jQuery UI. */
-            $.when($.fn.autocomplete || $.ajax({url: 'js/jquery-ui.min.js', dataType: 'script', cache: true})).then(function() {
+            $(function() {
                 bindAutocomplete(
                     function(event, ui) {
 
