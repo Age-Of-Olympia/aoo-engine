@@ -51,15 +51,15 @@ final class CounterCatalog
      * menu, et `card` quand l'onglet mérite son propre bouton sur la
      * carte de case — sinon il passe derrière le bouton de l'écran.
      *
-     * @return array<string, array{icon: string, label: string, class?: string, card?: array{icon: string, label: string}}>
+     * @return array<string, array{icon: string, label: string, card?: array{icon: string, label: string}}>
      */
     public static function tabs(string $script): array
     {
         return match ($script) {
             self::MERCHANT => [
-                'bids' => ['icon' => 'ra-gavel', 'label' => 'Offres de Vente', 'class' => 'sell-button'],
-                'asks' => ['icon' => 'ra-scroll-unfurled', 'label' => 'Demandes d\'Achat', 'class' => 'buy-button'],
-                'exchanges' => ['icon' => 'ra-x-mark', 'label' => 'Echanges', 'class' => 'exchange-button'],
+                'bids' => ['icon' => 'ra-gavel', 'label' => 'Offres de Vente'],
+                'asks' => ['icon' => 'ra-scroll-unfurled', 'label' => 'Demandes d\'Achat'],
+                'exchanges' => ['icon' => 'ra-x-mark', 'label' => 'Echanges'],
                 'bank' => ['icon' => 'ra-gold-bar', 'label' => 'Banque',
                     'card' => ['icon' => 'ra-gold-bar', 'label' => 'Banque']],
                 'inventory' => ['icon' => 'ra-key', 'label' => 'Inventaire'],
@@ -88,7 +88,7 @@ final class CounterCatalog
             return '';
         }
 
-        return '<button' . (isset($entry['class']) ? ' class="' . $entry['class'] . '"' : '') . '>'
+        return '<button>'
             . '<span class="ra ' . $entry['icon'] . '"></span> ' . $entry['label'] . '</button>';
     }
 }

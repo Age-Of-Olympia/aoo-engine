@@ -22,7 +22,7 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
   <form id="object-list-form">
       <div class="new-exchange-container hidden">
         <button id="cancel-button" disabled>Annuler</button>
-        <button  id="validate-button" class="exchange-button" disabled><span class="ra ra-scroll-unfurled"></span> Creer l'échange</button>
+        <button  id="validate-button" disabled><span class="ra ra-scroll-unfurled"></span> Creer l'échange</button>
       </div>
   </form>
   <div class="button-container">

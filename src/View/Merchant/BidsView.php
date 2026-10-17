@@ -70,7 +70,7 @@ class BidsView
 ?>
         <div class="button-container">
             <a href="merchant.php?targetId=<?php echo $target->id ?>&bids&newContract">
-                <button class="sell-button"><span class="ra ra-gavel"></span> Nouvelle offre de Vente</button>
+                <button><span class="ra ra-gavel"></span> Nouvelle offre de Vente</button>
             </a>
         </div>
         </div>
@@ -81,7 +81,7 @@ class BidsView
 
             <div class="button-container">
                 <a href="merchant.php?targetId=<?php echo $target->id ?>&asks&newContract">
-                    <button class="buy-button"><span class="ra ra-scroll-unfurled"></span> Nouvelle demande d'Achat</button>
+                    <button><span class="ra ra-scroll-unfurled"></span> Nouvelle demande d'Achat</button>
                 </a>
             </div>
         </div>

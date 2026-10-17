@@ -76,7 +76,7 @@ $otherPlayer->get_data();
             ?>
         </div>
         <button id="cancel-button" >Annuler</button>
-        <button  id="validate-button" class="exchange-button" disabled><span class="ra ra-scroll-unfurled"></span> Modifier l'échange</button>
+        <button  id="validate-button" disabled><span class="ra ra-scroll-unfurled"></span> Modifier l'échange</button>
       </div>
   </form>
   <div class="button-container">

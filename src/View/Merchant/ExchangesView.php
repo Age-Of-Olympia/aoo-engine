@@ -97,7 +97,7 @@ class ExchangesView
         </div>
         <div class="button-container">
             <a href="merchant.php?targetId=<?php echo $target->id ?>&exchanges&newExchange">
-                <button class="exchange-button"><span class="ra ra-scroll-unfurled"></span> Nouvel échange</button>
+                <button><span class="ra ra-scroll-unfurled"></span> Nouvel échange</button>
             </a>
         </div>
 
