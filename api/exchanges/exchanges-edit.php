@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
       } else if ($POST_DATA['action'] =='refuse') {
         $exchange->refuse_exchange(Istarget: $isTarget, IsPlayer: !$isTarget);
-        $result["message"] .= "Vous avez refusé l'échange avec " . $offeringPlayer->data->name;
+        $result["message"] .= "Vous avez retiré votre accord à l'échange avec " . $offeringPlayer->data->name . '.';
       }
     } catch (Throwable $th) {
       $exchange->db->rollback_transaction('create_exchange');
