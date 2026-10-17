@@ -23,9 +23,10 @@ class Market
     }
 
     /**
-     * Ce qu'un joueur peut livrer pour une demande d'achat : sa pile de
-     * banque (intacte par construction, donc toujours éligible) et
-     * chacun de ses exemplaires qui satisfait le seuil d'état exigé.
+     * Ce qu'un joueur peut livrer pour une demande d'achat, depuis son
+     * sac : sa pile (intacte par construction, donc toujours éligible)
+     * et chacun de ses exemplaires non portés qui satisfait le seuil
+     * d'état exigé.
      *
      * Calculé serveur pour que le vendeur ne se voie proposer que de
      * l'éligible ; le service revérifie à l'acceptation — cette liste
@@ -37,14 +38,14 @@ class Market
     {
         $choices = [];
 
-        $stack = $item->get_n($player, bank: true, includeInstances: false);
+        $stack = $item->get_n($player, bank: false, includeInstances: false);
         if ($stack > 0) {
             $choices[] = ['value' => '', 'label' => 'Depuis la pile (x' . $stack . ', neuve)'];
         }
 
         $service = new \App\Service\ItemInstanceService();
-        foreach ($service->listForBank((int) $player->id) as $row) {
-            if ((int) $row['item_id'] !== (int) $item->id) {
+        foreach ($service->listForInventory((int) $player->id, false) as $row) {
+            if ((int) $row['item_id'] !== (int) $item->id || (string) $row['equiped'] !== '') {
                 continue;
             }
             if (!\App\Service\ItemInstanceService::meetsCondition(
@@ -322,7 +323,7 @@ class Market
             }
 
             /* Ce que CE joueur peut livrer pour cette demande : sa pile
-             * de banque, et chacun de ses exemplaires qui satisfait le
+             * du sac, et chacun de ses exemplaires qui satisfait le
              * seuil. La liste est calculée serveur — le client ne
              * propose que l'éligible, et le serveur revérifie. */
             $deliverable = [];

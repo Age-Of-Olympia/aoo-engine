@@ -62,7 +62,7 @@ class AsksView
 
 
 
-        echo '<div>Voici les objets que les autres personnages veulent acheter.<br /><font><b>Vendez vos objets ici à partir de votre <i>stock en banque</i>.</b></font></div>';
+        echo '<div>Voici les objets que les autres personnages veulent acheter.<br /><b>Vous vendez les objets de votre sac, et l\'or reçu arrive dans votre sac.</b></div>';
 
         echo $market->print_market('asks', $player->id);
 

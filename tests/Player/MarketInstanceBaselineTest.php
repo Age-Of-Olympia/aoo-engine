@@ -27,13 +27,12 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
         $this->requireTableOrSkip('items_bids', 'instance_id');
     }
 
-    /** Un exemplaire usé, rangé en banque — l'état de départ d'une vente. */
-    private function bankedInstance(int $playerId, Item $item): int
+    /** Un exemplaire usé, dans le sac — l'état de départ d'une vente. */
+    private function wornInstance(int $playerId, Item $item): int
     {
         $service = new ItemInstanceService();
         $instanceId = $service->promote($playerId, $item->id);
         $this->setRemainingLife($instanceId, 35);
-        $service->storeInBank($instanceId, $playerId);
 
         return $instanceId;
     }
@@ -44,18 +43,16 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
         $bois = $this->itemOrSkip('bois');
 
         // Le cas qui produisait la perte silencieuse : une pile ET un
-        // exemplaire du même objet catalogue, tous deux en banque.
+        // exemplaire du même objet catalogue, tous deux dans le sac.
         $bois->add_item($seller, 1);
-        $instanceId = $this->bankedInstance($seller->id, $bois);
-        $bois->add_item($seller, 5, bank: true);
+        $instanceId = $this->wornInstance($seller->id, $bois);
+        $bois->add_item($seller, 5);
 
         $service = new ItemInstanceService();
         $service->escrowForMarket($instanceId, $seller->id);
 
-        $this->assertSame(5, (int) $this->link->fetchOne(
-            'SELECT n FROM players_items_bank WHERE player_id = ? AND item_id = ?',
-            [$seller->id, $bois->id]
-        ), 'la pile de banque est INTACTE — c\'est tout l\'objet du correctif');
+        $this->assertSame(5, $bois->get_n($seller, includeInstances: false),
+            'la pile du sac est INTACTE — c\'est tout l\'objet du correctif');
 
         $this->assertSame(
             ItemInstanceService::LOCATION_MARKET,
@@ -74,7 +71,7 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
         $bois->add_item($seller, 1);
 
         $service = new ItemInstanceService();
-        $instanceId = $this->bankedInstance($seller->id, $bois);
+        $instanceId = $this->wornInstance($seller->id, $bois);
         $service->escrowForMarket($instanceId, $seller->id);
 
         $this->assertSame([], $service->listForInventory($seller->id, false), 'hors inventaire');
@@ -92,11 +89,11 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
         $bois->add_item($seller, 1);
 
         $service = new ItemInstanceService();
-        $instanceId = $this->bankedInstance($seller->id, $bois);
+        $instanceId = $this->wornInstance($seller->id, $bois);
         $before = $this->link->fetchAssociative('SELECT * FROM item_instances WHERE id = ?', [$instanceId]);
 
         $service->escrowForMarket($instanceId, $seller->id);
-        $service->deliverEscrow($instanceId, $seller->id, $buyer->id, ItemInstanceService::LOCATION_MARKET,ItemInstanceService::LOCATION_BANK);
+        $service->deliverEscrow($instanceId, $seller->id, $buyer->id, ItemInstanceService::LOCATION_MARKET, ItemInstanceService::LOCATION_INVENTORY);
 
         $link = $this->link->fetchAssociative(
             "SELECT e.holder_id AS player_id,
@@ -105,7 +102,7 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
             [$instanceId]
         );
         $this->assertSame($buyer->id, (int) $link['player_id'], 'l\'acheteur en est propriétaire');
-        $this->assertSame(ItemInstanceService::LOCATION_BANK, $link['location'], 'et le reçoit en banque');
+        $this->assertSame(ItemInstanceService::LOCATION_INVENTORY, $link['location'], 'et le reçoit dans son sac');
 
         $after = $this->link->fetchAssociative('SELECT * FROM item_instances WHERE id = ?', [$instanceId]);
         $this->assertSame($before, $after, 'usure et identité inchangées : la ligne n\'a pas bougé');
@@ -120,32 +117,61 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
         $bois->add_item($seller, 1);
 
         $service = new ItemInstanceService();
-        $instanceId = $this->bankedInstance($seller->id, $bois);
+        $instanceId = $this->wornInstance($seller->id, $bois);
         $service->escrowForMarket($instanceId, $seller->id);
 
-        $service->deliverEscrow($instanceId, $seller->id, $first->id, ItemInstanceService::LOCATION_MARKET,ItemInstanceService::LOCATION_BANK);
+        $service->deliverEscrow($instanceId, $seller->id, $first->id, ItemInstanceService::LOCATION_MARKET, ItemInstanceService::LOCATION_INVENTORY);
 
         // Le second arrive après : l'exemplaire n'est plus ni séquestré,
         // ni au vendeur. Il doit être refusé, pas livré une seconde fois.
         $this->expectException(\InvalidArgumentException::class);
-        $service->deliverEscrow($instanceId, $seller->id, $second->id, ItemInstanceService::LOCATION_MARKET,ItemInstanceService::LOCATION_BANK);
+        $service->deliverEscrow($instanceId, $seller->id, $second->id, ItemInstanceService::LOCATION_MARKET, ItemInstanceService::LOCATION_INVENTORY);
     }
 
-    public function testCancellingAnOfferBringsTheInstanceBackToTheVault(): void
+    public function testCancellingAnOfferBringsTheInstanceBackToTheBag(): void
     {
         $seller = $this->createRealPlayer('GmSeller');
         $bois = $this->itemOrSkip('bois');
         $bois->add_item($seller, 1);
 
         $service = new ItemInstanceService();
-        $instanceId = $this->bankedInstance($seller->id, $bois);
+        $instanceId = $this->wornInstance($seller->id, $bois);
         $service->escrowForMarket($instanceId, $seller->id);
         $service->releaseFromMarket($instanceId, $seller->id);
 
-        $bank = $service->listForBank($seller->id);
-        $this->assertCount(1, $bank);
-        $this->assertSame($instanceId, (int) $bank[0]['instance_id']);
-        $this->assertSame(35, (int) $bank[0]['durability'], 'et il revient avec son usure');
+        $bag = $service->listForInventory($seller->id, false);
+        $this->assertCount(1, $bag);
+        $this->assertSame($instanceId, (int) $bag[0]['instance_id']);
+        $this->assertSame(35, (int) $bag[0]['durability'], 'et il revient avec son usure');
+    }
+
+    public function testCancellingAnOfferIsRefusedWhenTheBagIsFull(): void
+    {
+        $seller = $this->createRealPlayer('GmSeller');
+        $bois = $this->itemOrSkip('bois');
+        $pierre = $this->itemOrSkip('pierre');
+        $bois->add_item($seller, 1);
+
+        $service = new ItemInstanceService();
+        $instanceId = $this->wornInstance($seller->id, $bois);
+        $service->escrowForMarket($instanceId, $seller->id);
+        $pierre->add_item($seller, 1);
+
+        // The bag's ceiling is the race capacity: one line, taken by the stone
+        $race = (string) $this->link->fetchOne('SELECT race FROM players WHERE id = ?', [$seller->id]);
+        $before = (int) $this->link->fetchOne('SELECT capacity FROM races WHERE name = ?', [$race]);
+        $this->link->executeStatement('UPDATE races SET capacity = 1 WHERE name = ?', [$race]);
+        $this->refreshRaceCatalog();
+        try {
+            $service->releaseFromMarket($instanceId, $seller->id);
+            $this->fail('a full bag must refuse the exemplar');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertSame('Votre sac est plein.', $e->getMessage());
+        } finally {
+            $this->link->executeStatement('UPDATE races SET capacity = ? WHERE name = ?', [$before, $race]);
+            $this->refreshRaceCatalog();
+        }
+        $this->assertSame([], $service->listForInventory($seller->id, false), 'still on sale');
     }
 
     public function testTheDatabaseItselfRefusesTwoOffersOnOneInstance(): void
@@ -153,7 +179,7 @@ class MarketInstanceBaselineTest extends LegacyPlayerFixtureTestCase
         $seller = $this->createRealPlayer('GmSeller');
         $bois = $this->itemOrSkip('bois');
         $bois->add_item($seller, 1);
-        $instanceId = $this->bankedInstance($seller->id, $bois);
+        $instanceId = $this->wornInstance($seller->id, $bois);
 
         $insert = 'INSERT INTO items_bids (item_id, player_id, n, price, stock, instance_id) VALUES (?, ?, 1, 10, 1, ?)';
         $this->link->executeStatement($insert, [$bois->id, $seller->id, $instanceId]);

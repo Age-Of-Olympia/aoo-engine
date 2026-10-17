@@ -20,7 +20,7 @@ if(isset($_GET['bids'])){
      * liste faute de savoir les vendre — un pis-aller que la vente par
      * référence rend inutile. Chaque ligne affiche son usure, et le
      * serveur met en vente l'exemplaire cliqué, pas une unité de pile. */
-    InventoryView::renderInventory(itemsFromBank: true);
+    InventoryView::renderInventory(itemsFromBank: false);
 }
 
 elseif(isset($_GET['asks'])){

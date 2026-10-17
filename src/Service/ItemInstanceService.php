@@ -606,22 +606,30 @@ class ItemInstanceService
     }
 
     /**
-     * Mettre en vente : l'exemplaire quitte la banque pour l'offre. Il
+     * Mettre en vente : l'exemplaire quitte le sac pour l'offre. Il
      * reste la propriété du vendeur — c'est son emplacement qui change,
      * pas son propriétaire (players_items_instances.player_id porte une
      * clé étrangère vers players, il n'existe pas de « joueur marché »).
      *
-     * @throws \InvalidArgumentException si l'exemplaire n'est pas en banque
+     * @throws \InvalidArgumentException si l'exemplaire n'est pas dans le sac
      */
     public function escrowForMarket(int $instanceId, int $playerId): void
     {
         $this->moveTo($instanceId, $playerId, self::LOCATION_INVENTORY, self::LOCATION_MARKET);
     }
 
-    /** Annulation d'une offre : l'exemplaire retourne au coffre. */
+    /**
+     * Cancelling an offer: the exemplar goes back to the seller's bag (the seller is at the counter).
+     *
+     * @throws \InvalidArgumentException when the bag has no line left, or the exemplar is no longer on sale
+     */
     public function releaseFromMarket(int $instanceId, int $playerId): void
     {
-        $this->moveTo($instanceId, $playerId, self::LOCATION_MARKET, self::LOCATION_BANK);
+        if (!(new ContainerService())->hasRoomForALine($playerId)) {
+            throw new \InvalidArgumentException('Votre sac est plein.');
+        }
+
+        $this->moveTo($instanceId, $playerId, self::LOCATION_MARKET, self::LOCATION_INVENTORY);
     }
 
     /** Mise en jeu dans un échange. */

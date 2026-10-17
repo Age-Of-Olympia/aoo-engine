@@ -40,7 +40,7 @@ class BidsAsksService
             if ($type == 'bids') {
                 while ($row = $dbData->fetch_object()) {
 
-                    /* Exemplaire séquestré : il revient au coffre par sa
+                    /* Exemplaire séquestré : il revient au sac par sa
                      * localisation, pas en recréditant une pile — sans
                      * quoi on fabriquerait une unité vierge et on
                      * laisserait l'exemplaire en vente pour toujours. */
@@ -57,8 +57,12 @@ class BidsAsksService
                     }
 
                     $item = new Item($row->item_id, row: false, checked: true);
+                    $bag = new ContainerService();
+                    if ($bag->stackNeedsRoom((int) $player->id, (int) $item->id) && !$bag->hasRoomForALine((int) $player->id)) {
+                        ExitError('Votre sac est plein.');
+                    }
                     if (!$item->add_item($player, $row->stock, bank: false)) {
-                        ExitError("Erreur lors du retour des objets dans la banque");
+                        ExitError("Erreur lors du retour des objets dans le sac");
                     }
                 }
             }
@@ -207,8 +211,8 @@ class BidsAsksService
     /**
      * @param int|null $instanceId exemplaire que le VENDEUR livre pour
      *        satisfaire une demande d'achat. Une demande n'entiercit que
-     *        de l'or : l'exemplaire va donc directement de la banque du
-     *        vendeur à celle de l'acheteur, sans étape intermédiaire.
+     *        de l'or : l'exemplaire va donc directement du sac du
+     *        vendeur à la banque de l'acheteur, sans étape intermédiaire.
      */
     public function Accept(string $type, int $id, int $quantity, $player, ?int $instanceId = null): void
     {
@@ -251,8 +255,8 @@ class BidsAsksService
 
                 /* Livraison d'un EXEMPLAIRE : une demande n'entiercit
                  * que de l'or, il n'y a donc pas de séquestre à
-                 * dénouer — l'objet passe de la banque du vendeur à
-                 * celle de l'acheteur, et c'est son propriétaire qui
+                 * dénouer — l'objet passe du sac du vendeur à la
+                 * banque de l'acheteur, et c'est son propriétaire qui
                  * change. Le seuil d'état est vérifié ICI : le client
                  * ne propose que des exemplaires éligibles, mais un
                  * POST se forge. */
@@ -308,7 +312,7 @@ class BidsAsksService
                         "hidden_action", "{$label} à {$row->price} Or.", $logTime);
                 } else {
 
-                    // transfer item to target bank 
+                    // transfer item to target bank
                     if (!$item->give_item($player, $target, $quantity, fromBank:false, toBank: true)) {
                         ExitError("Vous n'avez pas assez de cet objet dans l'inventaire.");
                     }
@@ -330,6 +334,13 @@ class BidsAsksService
             } elseif ($type == 'bids') {
                 // player buys item from target and send gold
 
+                // The purchase goes to the bag: check the room before any gold moves
+                $bag = new ContainerService();
+                $needsLine = !empty($row->instance_id) || $bag->stackNeedsRoom((int) $player->id, (int) $row->item_id);
+                if ($needsLine && !$bag->hasRoomForALine((int) $player->id)) {
+                    ExitError('Votre sac est plein.');
+                }
+
                 // transfer gold to target bank
                 $target = new Player($row->player_id);
                 $gold = Item::get_item_by_name('or', checked: true);
@@ -338,7 +349,7 @@ class BidsAsksService
                     ExitError("Pas assez d'Or.");
                 }
 
-                // transfer item from maket to player bank
+                // transfer item from market to player bag
                 $item = new Item($row->item_id, row: false, checked: true);
 
                 /* Exemplaire : c'est le SEUL geste du cycle où
@@ -371,7 +382,7 @@ class BidsAsksService
                 } else {
 
                     if (!$item->add_item($player, $quantity, bank: false)) {
-                        ExitError("Erreur lors du transfert de l'objet vers l'inventaire. Vérifiez que vous avez assez de place.");
+                        ExitError("Erreur lors du transfert de l'objet vers le sac.");
                     }
                     $logTime = time();
                     $targetLog = "Vous avez acheté des objets.";

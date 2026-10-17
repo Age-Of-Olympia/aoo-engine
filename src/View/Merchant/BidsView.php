@@ -61,7 +61,7 @@ class BidsView
         }
 
 
-        echo '<div><p>Voici les objets que les autres personnages veulent vendre.<br /><b>Achetez des objets avec votre <i>or en banque</i>.</b></p></div>';
+        echo '<div><p>Voici les objets que les autres personnages veulent vendre.<br /><b>Vous payez avec l\'or de votre sac, et les objets achetés arrivent dans votre sac.</b></p></div>';
 
 
         echo $market->print_market('bids', $player->id);
