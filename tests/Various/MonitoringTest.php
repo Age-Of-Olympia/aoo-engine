@@ -30,6 +30,21 @@ class MonitoringTest extends TestCase
         $this->assertSame(100.0, EconomyMonitor::percent(0, 7));
     }
 
+    public function testSplitsActiveFromInactivePlayers(): void
+    {
+        $players = [
+            1 => ['name' => 'a', 'xp' => 1000, 'gold' => 5, 'active' => true],
+            2 => ['name' => 'b', 'xp' => 300, 'gold' => 7, 'active' => false],
+        ];
+        $xp = static fn (array $p): int => $p['xp'];
+
+        $this->assertSame('actifs 1 000 · inactifs 300 · total 1 300', EconomyMonitor::byActivity($players, $xp));
+        $this->assertSame('total 1 300', EconomyMonitor::byActivity([
+            1 => ['name' => 'a', 'xp' => 1000, 'gold' => 5],
+            2 => ['name' => 'b', 'xp' => 300, 'gold' => 7],
+        ], $xp), 'snapshot taken before the flag existed');
+    }
+
     public function testOffendersMakeTheVerdict(): void
     {
         $ok = MonitoringResult::fromOffenders('S', 'T', [], MonitoringStatus::Error, 'fine', '%d bad');

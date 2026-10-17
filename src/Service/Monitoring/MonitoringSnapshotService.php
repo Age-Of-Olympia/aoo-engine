@@ -14,7 +14,7 @@ use Doctrine\DBAL\Connection;
  *     gold: array{characters: int, structures: int, banks: int, ground: int},
  *     items: int,
  *     xp: int,
- *     players: array<int, array{name: string, xp: int, gold: int}>,
+ *     players: array<int, array{name: string, xp: int, gold: int, active?: bool}>,
  *     admins: list<int>,
  *     tables: array<string, int>
  * }
@@ -93,11 +93,17 @@ final class MonitoringSnapshotService
         foreach ($this->conn->fetchAllAssociative(
             "SELECT p.id, p.name, p.xp,
                     COALESCE((SELECT SUM(n) FROM players_items WHERE player_id = p.id AND item_id = ?), 0)
-                  + COALESCE((SELECT SUM(n) FROM players_items_bank WHERE player_id = p.id AND item_id = ?), 0) AS gold
-               FROM players p WHERE p.player_type = 'real'",
-            [$gold, $gold]
+                  + COALESCE((SELECT SUM(n) FROM players_items_bank WHERE player_id = p.id AND item_id = ?), 0) AS gold,
+                    COALESCE(NULLIF(a.last_login_time, 0), p.lastLoginTime) >= ? AS active
+               FROM players p LEFT JOIN accounts a ON a.player_id = p.id WHERE p.player_type = 'real'",
+            [$gold, $gold, time() - INACTIVE_TIME]
         ) as $row) {
-            $players[(int) $row['id']] = ['name' => (string) $row['name'], 'xp' => (int) $row['xp'], 'gold' => (int) $row['gold']];
+            $players[(int) $row['id']] = [
+                'name'   => (string) $row['name'],
+                'xp'     => (int) $row['xp'],
+                'gold'   => (int) $row['gold'],
+                'active' => (bool) $row['active'],
+            ];
         }
 
         return [

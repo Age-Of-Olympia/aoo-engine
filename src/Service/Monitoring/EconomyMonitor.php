@@ -35,11 +35,15 @@ final class EconomyMonitor
         array_unshift($points, ['label' => 'maintenant', 'metrics' => $snapshots->measure()]);
 
         return [
+            fn (): MonitoringResult => $this->trend($points, 'Joueurs', static fn (array $m): int => count($m['players']),
+                static fn (array $m): string => self::byActivity($m['players'], static fn (array $p): int => 1)),
             fn (): MonitoringResult => $this->trend($points, 'Or en jeu', static fn (array $m): int => array_sum($m['gold']),
                 static fn (array $m): string => 'sacs ' . $m['gold']['characters'] . ' · coffres ' . $m['gold']['structures']
-                    . ' · banques ' . $m['gold']['banks'] . ' · sol ' . $m['gold']['ground']),
+                    . ' · banques ' . $m['gold']['banks'] . ' · sol ' . $m['gold']['ground']
+                    . ' — joueurs ' . self::byActivity($m['players'], static fn (array $p): int => $p['gold'])),
             fn (): MonitoringResult => $this->trend($points, 'Objets en jeu', static fn (array $m): int => $m['items'], null),
-            fn (): MonitoringResult => $this->trend($points, 'XP des joueurs', static fn (array $m): int => $m['xp'], null),
+            fn (): MonitoringResult => $this->trend($points, 'XP des joueurs', static fn (array $m): int => $m['xp'],
+                static fn (array $m): string => self::byActivity($m['players'], static fn (array $p): int => $p['xp'])),
         ];
     }
 
@@ -81,6 +85,33 @@ final class EconomyMonitor
         return new MonitoringResult(self::SECTION, $title, $status,
             self::change($yesterday, $today) . ' entre les relevés du ' . $points[2]['label'] . ' et du ' . $points[1]['label'] . '.',
             $lines, $series, $figure);
+    }
+
+    /**
+     * "actifs X · inactifs Y · total Z" over the real players. Snapshots taken
+     * before the active flag existed only give the total.
+     *
+     * @param array<int, array{name: string, xp: int, gold: int, active?: bool}> $players
+     * @param callable(array{name: string, xp: int, gold: int, active?: bool}): int $value
+     */
+    public static function byActivity(array $players, callable $value): string
+    {
+        $sums = ['active' => 0, 'inactive' => 0];
+        $known = true;
+        foreach ($players as $player) {
+            $known = $known && isset($player['active']);
+            $sums[!empty($player['active']) ? 'active' : 'inactive'] += $value($player);
+        }
+        $total = self::number($sums['active'] + $sums['inactive']);
+
+        return $known
+            ? 'actifs ' . self::number($sums['active']) . ' · inactifs ' . self::number($sums['inactive']) . ' · total ' . $total
+            : 'total ' . $total;
+    }
+
+    private static function number(int $n): string
+    {
+        return number_format($n, 0, ',', ' ');
     }
 
     public static function percent(int $from, int $to): float
