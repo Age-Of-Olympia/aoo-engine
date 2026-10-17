@@ -6,6 +6,7 @@ $(document).ready(function () {
 
         window.itemId = itemId;
         window.action = 'newAsk';
+        $('#submit').prop('disabled', false);
 
 
         $.ajax({

@@ -77,7 +77,7 @@ elseif(isset($_GET['asks'])){
     ';
 
 
-    echo '<button id="submit">Créer une Demande d\'Achat</button>';
+    echo '<button id="submit" disabled>Créer une Demande d\'Achat</button>';
 
 
     /* id propre : #ajax-data existe déjà dans le HUD (bandeau de
@@ -88,7 +88,7 @@ elseif(isset($_GET['asks'])){
     <script>
     window.targetId = <?php echo $target->id ?>;
     </script>
-    <script src="js/new_contract.js?v=20261017"></script>
+    <script src="js/new_contract.js?v=20261017b"></script>
     <?php
 
 
