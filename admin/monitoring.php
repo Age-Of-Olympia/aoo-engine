@@ -41,6 +41,9 @@ function mon_sparkline(array $series): string
         . '<circle cx="' . $lastX . '" cy="' . $lastY . '" r="2.5" /></svg>';
 }
 
+/** Panels are dealt into this many columns, each to the shortest one so far. */
+const MON_COLUMNS = 3;
+
 $rank = static fn (MonitoringResult $r): int => (int) array_search($r->status, MonitoringStatus::cases(), true);
 
 $sections = [];
@@ -72,16 +75,19 @@ $sub = ($errors > 0 && $warnings > 0 ? 'Et ' . mon_count($warnings, 'point à su
 
 // ----- Strip + panels -----
 $strip = '';
-$panels = '';
+// Fixed columns: opening a check only pushes down the panels under it, never into another column.
+$columns = array_fill(0, MON_COLUMNS, ['html' => '', 'weight' => 0.0]);
 $n = 0;
 foreach ($sections as $section => $results) {
     $tiles = '';
     $rows = '';
     $counts = [];
+    $weight = 1.5; // panel header
     foreach ($results as $result) {
         $id = 'chk-' . ++$n;
         $status = $result->status->value;
         $counts[$status] = ($counts[$status] ?? 0) + 1;
+        $weight += 1 + ($status === 'error' ? min(count($result->lines), 12) * 0.5 : 0);
 
         $tiles .= '<a class="mon-tile is-' . $status . '" href="#' . $id . '" title="' . e($result->title . ' : ' . $result->summary) . '">'
             . '<span class="mon-sr">' . e($result->title . ', ' . $result->status->label()) . '</span></a>';
@@ -117,7 +123,9 @@ foreach ($sections as $section => $results) {
 
     $strip .= '<div class="mon-strip-group"><div class="mon-tiles">' . $tiles . '</div>'
         . '<span class="mon-strip-name">' . e($section) . '</span></div>';
-    $panels .= '<section class="mon-panel"><header class="mon-panel-head"><h2>' . e($section) . '</h2>'
+    $shortest = array_keys(array_column($columns, 'weight'), min(array_column($columns, 'weight')))[0];
+    $columns[$shortest]['weight'] += $weight;
+    $columns[$shortest]['html'] .= '<section class="mon-panel"><header class="mon-panel-head"><h2>' . e($section) . '</h2>'
         . '<p class="mon-tally">' . $tallyHtml . '</p></header><ul class="mon-checks">' . $rows . '</ul></section>';
 }
 
@@ -127,6 +135,7 @@ $content = '<div class="mon">'
     . '<p class="mon-sub">' . e($sub) . '</p></div>'
     . '<a class="btn btn-sm btn-outline-primary mon-refresh" href="/admin/monitoring.php">Actualiser</a></header>'
     . '<nav class="mon-strip" aria-label="Tous les contrôles">' . $strip . '</nav>'
-    . '<div class="mon-grid">' . $panels . '</div></div>';
+    . '<div class="mon-grid">' . implode('', array_map(
+        static fn (array $c): string => '<div class="mon-col">' . $c['html'] . '</div>', $columns)) . '</div></div>';
 
 echo admin_layout('Monitoring', $content, ['styles' => ['/admin/css/monitoring.css']]);
