@@ -561,18 +561,22 @@ class Player implements ActorInterface {
     // The spell/technique → type='sort' branch lives inside the
     // service; see addAction().
     public function add_action($name){ (new PlayerActionsService())->addAction($this->id, $name); }
-    public function have_action($name){ return (new PlayerActionsService())->hasAction($this->id, $name); }
+    public function have_action($name){
+        return (new PlayerActionsService())->hasAction($this->id, $name)
+            ?: (int) in_array($name, (new \App\Service\ActionService())->innateNames(), true);
+    }
     public function end_action($name){ (new PlayerActionsService())->endAction($this->id, $name); }
     /**
-     * Usable actions: the learned ones, plus the spells an equipped item
-     * lends (items.spell). The borrowed ones are not rows in
-     * players_actions, so they never count toward the competence cap and
-     * they leave with the item.
+     * Usable actions: the learned ones, the ones every character knows
+     * (actions.innate) and the spells an equipped item lends (items.spell).
+     * The last two are not rows in players_actions, so they never count
+     * toward the competence cap.
      */
     public function get_actions(){
         $learned = (new PlayerActionsService())->getActions($this->id);
+        $innate = (new \App\Service\ActionService())->innateNames();
         $granted = (new \App\Service\ItemGrantedSpellService())->namesForPlayer($this);
-        $all = array_values(array_unique(array_merge($learned, $granted)));
+        $all = array_values(array_unique(array_merge($learned, $innate, $granted)));
         sort($all);
 
         return $all;

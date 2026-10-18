@@ -48,6 +48,9 @@ try {
     if (array_key_exists('category', $_POST)) {
         $saveService->saveCategory($actionId, (string) $_POST['category']);
     }
+    if (array_key_exists('innate', $_POST)) {
+        $saveService->saveInnate($actionId, $_POST['innate'] === '1');
+    }
     $saveService->saveParameters($actionId, $conditionParams, $instructionParams, $conditionRaw, $instructionRaw, $conditionContext, $conditionBlocking);
     $saveService->saveOutcomeTargets($actionId, $outcomeTargets);
     // Type STI en DERNIER : saveType() clear() l'EntityManager — les

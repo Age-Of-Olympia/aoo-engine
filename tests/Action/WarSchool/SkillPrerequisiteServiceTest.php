@@ -16,7 +16,7 @@ class SkillPrerequisiteServiceTest extends TestCase
 
     /**
      * @param array<string, string> $ownedActions
-     * @param array<string, array{category: ?string, level: int}> $catalog
+     * @param array<string, array{category: ?string, level: int, innate?: bool}> $catalog
      * @param array<int, array{name: string, category: ?string, level: int}> $passives
      * @param array<int, int> $spellSlots
      */
@@ -28,6 +28,19 @@ class SkillPrerequisiteServiceTest extends TestCase
         int $maxComp = self::MAX_COMP
     ): SkillPrerequisiteService {
         return new SkillPrerequisiteService($ownedActions, $catalog, $passives, $spellSlots, $maxComp);
+    }
+
+    public function testAnActionAcquiredByDefaultNeverCounts(): void
+    {
+        $catalog = [
+            'coup_bas' => ['category' => 'melee-off', 'level' => 1],
+            'fermer' => ['category' => 'melee-off', 'level' => 1, 'innate' => true],
+        ];
+
+        $service = $this->service(['coup_bas' => 'sort', 'fermer' => 'sort'], $catalog);
+
+        $this->assertSame(1, $service->capCount());
+        $this->assertSame(1, $service->treeCountAt('melee', 1));
     }
 
     public function testLevelOneNeedsNothing(): void

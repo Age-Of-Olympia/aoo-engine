@@ -217,6 +217,19 @@ final class ActionSaveService
         $this->entityManager->flush();
     }
 
+    /** Known by every character without being learned — « acquis d'office ». */
+    public function saveInnate(int $actionId, bool $innate): void
+    {
+        $action = EntityFinder::orFail($this->entityManager, Action::class, $actionId, 'Action');
+        if ($action->isInnate() === $innate) {
+            return;
+        }
+
+        $action->setInnate($innate);
+        $this->entityManager->flush();
+        \App\Service\ActionService::clearInnateCache();
+    }
+
     /**
      * Read a typed property, or null when a legacy NULL left it uninitialized.
      */

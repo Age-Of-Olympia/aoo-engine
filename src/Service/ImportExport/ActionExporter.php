@@ -73,6 +73,7 @@ final class ActionExporter implements ObjectExporterInterface
             'category' => $this->scalar($entity, 'category'),
             'cost' => $this->scalar($entity, 'cost'),
             'prerequisites' => $this->scalar($entity, 'prerequisites'),
+            'innate' => $entity->isInnate(),
             'races' => $this->raceNames($entity),
             'conditions' => $this->conditions($entity),
             'outcomes' => $this->outcomes($entity),

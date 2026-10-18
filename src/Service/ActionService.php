@@ -227,8 +227,8 @@ class ActionService
     }
 
     /**
-     * Tree data of the whole catalog in one query: name => category + level.
-     * @return array<string, array{category: ?string, level: int}>
+     * Tree data of the whole catalog in one query: name => category + level + innate.
+     * @return array<string, array{category: ?string, level: int, innate?: bool}>
      */
     /**
      * The learned combat skills an item may carry, name => display name.
@@ -280,14 +280,36 @@ class ActionService
     public function getCatalogMeta(): array
     {
         $rows = $this->entityManager->createQuery(
-            'SELECT a.name, a.category, a.level FROM App\Entity\Action a'
+            'SELECT a.name, a.category, a.level, a.innate FROM App\Entity\Action a'
         )->getArrayResult();
 
         $meta = [];
         foreach ($rows as $row) {
-            $meta[$row['name']] = ['category' => $row['category'], 'level' => (int) $row['level']];
+            $meta[$row['name']] = ['category' => $row['category'], 'level' => (int) $row['level'], 'innate' => (bool) $row['innate']];
         }
 
         return $meta;
+    }
+
+    /** @var list<string>|null read once per request */
+    private static ?array $innateNames = null;
+
+    /**
+     * Actions every character knows without a players_actions row.
+     *
+     * @return list<string>
+     */
+    public function innateNames(): array
+    {
+        self::$innateNames ??= array_column($this->entityManager->createQuery(
+            'SELECT a.name FROM App\Entity\Action a WHERE a.innate = true'
+        )->getArrayResult(), 'name');
+
+        return self::$innateNames;
+    }
+
+    public static function clearInnateCache(): void
+    {
+        self::$innateNames = null;
     }
 }

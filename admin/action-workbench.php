@@ -188,6 +188,10 @@ if ($action === null) {
             'list="wb-categories" title="Regroupement dans les listes ; vide = sans catégorie"')
         . '</label>'
         . renderDatalist('wb-categories', $knownCategories)
+        . '<label class="wb-field"><span>Acquis d\'office</span>'
+        . '<span><input type="hidden" name="innate" value="0">'
+        . '<input type="checkbox" name="innate" value="1"' . ($action->isInnate() ? ' checked' : '')
+        . ' title="Tous les personnages la connaissent sans l\'apprendre ; ne compte pas dans la limite de compétences."></span></label>'
         . '</div>';
     echo '<label class="wb-field wb-field--wide"><span>Description</span>'
         . '<textarea class="form-control" name="text" rows="3">' . e((string) $readProp('text')) . '</textarea></label>';

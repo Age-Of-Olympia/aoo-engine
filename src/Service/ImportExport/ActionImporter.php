@@ -237,6 +237,10 @@ final class ActionImporter extends AbstractObjectImporter
         $this->setNullableScalar($action, 'category', $object['category'] ?? null);
         $this->setNullableScalar($action, 'cost', $object['cost'] ?? null);
         $this->setNullableScalar($action, 'prerequisites', $object['prerequisites'] ?? null);
+        // An older bundle says nothing: the flag stays as it is
+        if (array_key_exists('innate', $object)) {
+            $action->setInnate((bool) $object['innate']);
+        }
     }
 
     private function setNullableScalar(Action $action, string $property, mixed $value): void

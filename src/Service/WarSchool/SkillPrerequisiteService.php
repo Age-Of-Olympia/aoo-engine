@@ -24,7 +24,8 @@ use App\Service\PlayerPassiveService;
  *    "forbidden": [...]} against the owned names.
  *
  * The NUMBER_MAX_COMP cap covers bought non-spell actives (type 'sort') and
- * passives; spells are capped by their slots instead. Innate spells escape both.
+ * passives; spells are capped by their slots instead. Innate spells and the
+ * actions acquired by default (actions.innate) escape both.
  */
 final class SkillPrerequisiteService
 {
@@ -53,7 +54,7 @@ final class SkillPrerequisiteService
 
     /**
      * @param array<string, ?string> $ownedActions name => players_actions.type ('sort' marks a bought skill)
-     * @param array<string, array{category: ?string, level: int}> $catalog every action's tree data, by name
+     * @param array<string, array{category: ?string, level: int, innate?: bool}> $catalog every action's tree data, by name
      * @param array<int, array{name: string, category: ?string, level: int}> $passives owned passives' tree data
      * @param array<int, int> $spellSlots level => slot count
      */
@@ -70,7 +71,8 @@ final class SkillPrerequisiteService
             }
 
             $meta = $catalog[$name] ?? null;
-            if ($meta === null) {
+            // An action acquired by default is nobody's purchase
+            if ($meta === null || !empty($meta['innate'])) {
                 continue;
             }
 

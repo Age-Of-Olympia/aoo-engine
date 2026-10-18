@@ -49,6 +49,10 @@ abstract class Action implements ActionInterface
     #[ORM\Column(type: "string", length: 255, nullable: true)]
     protected ?string $prerequisites = null;
 
+    /** Known by every character without being learned (« acquis d'office »); never counts toward the cap. */
+    #[ORM\Column(type: "boolean", options: ["default" => false])]
+    protected bool $innate = false;
+
     #[ORM\OneToMany(
         mappedBy: "action",
         targetEntity: ActionCondition::class,
@@ -160,6 +164,16 @@ abstract class Action implements ActionInterface
     public function setText(string $text): void
     {
         $this->text = $text;
+    }
+
+    public function isInnate(): bool
+    {
+        return $this->innate;
+    }
+
+    public function setInnate(bool $innate): void
+    {
+        $this->innate = $innate;
     }
 
     public function getLevel(): int
