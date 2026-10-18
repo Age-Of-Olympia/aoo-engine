@@ -1832,6 +1832,23 @@ class Player implements ActorInterface {
                 return EquipResult::DoNothing;
             }
 
+            /* Replacing worn gear can return its exemplar to the bag. Check
+             * that net change before clearing any slots: the selected stack
+             * only frees a line when this equips its last unit. */
+            if ($bagGuard && $emplacementsToClear !== []) {
+                $bag = new \App\Service\ContainerService();
+                $capacity = $bag->capacityOf((int) $this->id);
+                $freedStackLine = $item->get_n($this, includeInstances: false) === 1 ? 1 : 0;
+                if (
+                    $capacity !== null
+                    && $bag->lineCountOf((int) $this->id)
+                        + $bag->linesToUnequip((int) $this->id, $emplacementsToClear)
+                        - $freedStackLine > $capacity
+                ) {
+                    return EquipResult::BagFull;
+                }
+            }
+
             // Refund the turn bonuses of the items about to be replaced.
             foreach ($itemList as $row) {
                 if (in_array($row->equiped, $emplacementsToClear, true)) {
