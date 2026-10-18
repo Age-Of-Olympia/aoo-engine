@@ -97,30 +97,4 @@ class Json{
     public static function encode($data){
         return json_encode($data, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE);
     }
-
-    public function get_all($type, $s2 = false) {
-        $paths = [
-            dirname(__FILE__) . '/../datas/public/' . $type . '/',
-            dirname(__FILE__) . '/../datas/private/' . $type . '/'
-        ];
-        
-        $allData = [];
-        
-        foreach ($paths as $path) {
-            if (!is_dir($path)) continue;
-            
-            $pattern = $s2 ? '*_s2.json' : '*.json';
-            $files = glob($path . $pattern);
-            
-            foreach ($files as $file) {
-                $name = basename($file, '.json');
-                $data = $this->decode($type, $name);
-                if ($data) {
-                    $allData[$name] = $data;
-                }
-            }
-        }
-        
-        return $allData;
-    }
 }

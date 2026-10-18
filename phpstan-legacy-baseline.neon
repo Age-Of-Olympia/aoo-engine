@@ -37,8 +37,3 @@ parameters:
 			count: 1
 			path: scripts/testing/effects-protocol/setup.php
 
-		-
-			message: '#^Constant DB_CONSTANTS not found\.$#'
-			identifier: constant.notFound
-			count: 4
-			path: scripts/world.php

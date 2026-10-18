@@ -1705,12 +1705,7 @@
         }
 
         var styleAttr = $filter.attr('style') || '';
-        var lostPct = parseFloat($filter.attr('data-lost'));
-
-        if (isNaN(lostPct)) {
-            var match = styleAttr.match(/height:\s*([\d.]+)px/);
-            lostPct = match ? Math.min(100, Math.max(0, parseFloat(match[1]) / 225 * 100)) : 0;
-        }
+        var lostPct = parseFloat($filter.attr('data-lost')) || 0;
         /* La teinte vient du serveur (races.wound_color — bronze pour une
            structure) : la conserver, --hud-blood n'est que le repli CSS. */
         var colorMatch = styleAttr.match(/background:\s*([^;]+)/);
