@@ -264,17 +264,15 @@ final class ActionSimulationService
 
         $kept = (object) [];
         $normalCount = 0;
-        $seenItems = [];
         foreach ($order as $slot) {
             if (!isset($emplacements->{$slot})) {
                 continue;
             }
-            $identity = spl_object_id($emplacements->{$slot});
-            if (isset($seenItems[$identity])) {
+            // A two-handed item already kept fills its second slot without counting again.
+            if (in_array($emplacements->{$slot}, (array) $kept, true)) {
                 $kept->{$slot} = $emplacements->{$slot};
                 continue;
             }
-            $seenItems[$identity] = true;
             // Exempt slots (ring/munition/trophee) and the non-real main-hand
             // (Poing/legacy type) are always kept and don't count toward the cap.
             if (!Item::countsTowardEquipLimit($slot) || ($slot === 'main1' && !$weaponIsReal)) {

@@ -36,6 +36,8 @@ interface ActorInterface
   /** Sum of the actor's passives on $trait (optionally on given sides) whose conditions hold. */
   public function traitBonus(string $trait, ?array $types = null, ?ConditionObject $conditionObject = null): int;
   public function getEquipedItems(): array;
+  /** Worn items by slot; a two-handed item fills main1 and main2. */
+  public function getEmplacements(): object;
   public function hasMagicalItemEquipped(): bool;
   public function getEquipedItemsEffects(): array;
 }

@@ -30,6 +30,26 @@ final class EquipmentSlotService
         return [$emplacement];
     }
 
+    /**
+     * Each worn item once, keyed by its first slot in $slots order: a
+     * two-handed item fills main1 and main2 with the same object.
+     *
+     * @param list<string> $slots
+     * @return array<string, object>
+     */
+    public static function wornItems(object $emplacements, array $slots = ITEM_EMPLACEMENT_FORMAT): array
+    {
+        $items = [];
+        foreach ($slots as $slot) {
+            $item = $emplacements->{$slot} ?? null;
+            if ($item !== null && !in_array($item, $items, true)) {
+                $items[$slot] = $item;
+            }
+        }
+
+        return $items;
+    }
+
     public static function isTwoHanded(object $item): bool
     {
         return (string) ($item->data->emplacement ?? '') === 'deuxmains';

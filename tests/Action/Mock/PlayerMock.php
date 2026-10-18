@@ -13,6 +13,7 @@ class PlayerMock implements ActorInterface
   public $data;
   public $caracs;
   public $coords;
+  public ?object $emplacements = null;
   public $playerPassiveService;
 
   /** @var array<string, int> */
@@ -178,6 +179,11 @@ class PlayerMock implements ActorInterface
       }
     }
     return $total;
+  }
+
+  public function getEmplacements(): object
+  {
+    return $this->emplacements ?? (object) [];
   }
 
   public function getEquipedItems(): array

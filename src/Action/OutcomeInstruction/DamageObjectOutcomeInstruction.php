@@ -129,15 +129,10 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction implements HasPa
             'tete'=>"Le casque"
         );
         
+        // A two-handed item comes back as main1 only: it is not a shield.
+        $worn = \App\Service\EquipmentSlotService::wornItems($player->emplacements);
         foreach($emplacements as $k=>$e){
-            if ($k === 'main2'
-                && isset($player->emplacements->main1)
-                && isset($player->emplacements->main2)
-                && $player->emplacements->main2 === $player->emplacements->main1) {
-                unset($emplacements[$k]);
-                continue;
-            }
-            if(!empty($player->emplacements->{$k}) && !$player->emplacements->{$k}->row->enchanted){
+            if(isset($worn[$k]) && !$worn[$k]->row->enchanted){
                 continue;
             }
             // unset emplacements with no equipement

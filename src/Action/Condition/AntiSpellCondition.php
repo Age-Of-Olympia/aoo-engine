@@ -6,6 +6,7 @@ use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
 use App\Interface\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
+use App\Service\EquipmentSlotService;
 
 class AntiSpellCondition extends BaseCondition implements HasParameterSchemaInterface
 {
@@ -20,20 +21,10 @@ class AntiSpellCondition extends BaseCondition implements HasParameterSchemaInte
         $result = new ConditionResult(true, array(), array());
         $errorMessages = array();
         $blocked = false;
-        $seen = [];
-        foreach(ITEM_EMPLACEMENT_FORMAT as $emp){
-            if(!empty($actor->emplacements->{$emp})){
-                $item = $actor->emplacements->{$emp};
-                $identity = spl_object_id($item);
-                if (isset($seen[$identity])) {
-                    continue;
-                }
-                $seen[$identity] = true;
-
-                if(!empty($item->data->spellMalus)){
-                    $blocked = true;
-                    $errorMessages[sizeof($errorMessages)] = $item->data->name .' empêche la magie.';
-                }
+        foreach(EquipmentSlotService::wornItems($actor->getEmplacements()) as $item){
+            if(!empty($item->data->spellMalus)){
+                $blocked = true;
+                $errorMessages[sizeof($errorMessages)] = $item->data->name .' empêche la magie.';
             }
         }
 
