@@ -2000,12 +2000,6 @@ parameters:
 			path: src/Service/PlanConfigService.php
 
 		-
-			message: '#^Method App\\Service\\PlanSeedService\:\:planNames\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/PlanSeedService.php
-
-		-
 			message: '#^Left side of \|\| is always false\.$#'
 			identifier: booleanOr.leftAlwaysFalse
 			count: 1

@@ -7,8 +7,7 @@ use Doctrine\DBAL\Connection;
 
 /**
  * Seeds the per-plan yields into `race_harvest`, from the biome lists the
- * plans carry (`plans.biomes`, formerly the plan JSON files — PlanSeedService
- * moved them to the DB verbatim). Offered from admin → Cartes → Rendements.
+ * plans carry (`plans.biomes`, formerly the plan JSON files). Offered from admin → Cartes → Rendements.
  */
 final class HarvestCatalogService
 {

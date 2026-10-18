@@ -102,16 +102,16 @@ function admin_layout($title, $content, array $assets = []) {
 
     $tutorialPages = ['tutorial-catalog.php', 'tutorial.php', 'tutorial-step-editor.php',
                       'tutorial-npcs.php', 'tutorial-settings.php'];
-    $mapPages = ['world_map.php', 'plans.php', 'plan-seed.php', 'plan-season-rename.php', 'local_maps.php',
+    $mapPages = ['world_map.php', 'plans.php', 'plan-season-rename.php', 'local_maps.php',
                  'terrain-transitions.php', 'tile-assets.php', 'element-composer.php', 'tile-colors.php',
                  'tile-shade.php', 'screenshots.php'];
     $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php', 'passive-workbench.php',
                     'action-import.php', 'action-import-preview.php'];
     $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
                     'pnjs.php', 'avatars-portraits.php', 'welcome-missive.php'];
-    $racePages = ['races.php', 'race-seed.php'];
+    $racePages = ['races.php'];
     $itemPages = ['items.php', 'item-seed.php', 'recipes.php'];
-    $factionPages = ['factions.php', 'faction-members.php', 'faction-seed.php'];
+    $factionPages = ['factions.php', 'faction-members.php'];
     $dialogPages = ['dialogs.php', 'dialog-seed.php'];
     $sceneryPages = ['scenery-types.php'];
 
@@ -127,7 +127,6 @@ function admin_layout($title, $content, array $assets = []) {
             $navGroup('Cartes', [
                 ['world_map.php', 'Carte monde', '/admin/world_map.php'],
                 ['plans.php', 'Plans', '/admin/plans.php'],
-                ['plan-seed.php', 'Seed JSON legacy', '/admin/plan-seed.php'],
                 ['plan-season-rename.php', 'Renommage de saison', '/admin/plan-season-rename.php'],
                 ['local_maps.php', 'Cartes locales', '/admin/local_maps.php'],
                 ['terrain-transitions.php', 'Transitions de terrain', '/admin/terrain-transitions.php'],
@@ -187,7 +186,6 @@ function admin_layout($title, $content, array $assets = []) {
             $navGroup('Races', [
                 ['races.php', 'Liste', '/admin/races.php'],
                 ['footprints.php', 'Formes', '/admin/footprints.php?kind=character'],
-                ['race-seed.php', 'Seed JSON legacy', '/admin/race-seed.php'],
             ], $racePages),
             $navGroup('Objets', [
                 ['items.php', 'Liste', '/admin/items.php'],
@@ -204,7 +202,6 @@ function admin_layout($title, $content, array $assets = []) {
             $navGroup('Factions', [
                 ['factions.php', 'Liste', '/admin/factions.php'],
                 ['faction-members.php', 'Membres', '/admin/faction-members.php'],
-                ['faction-seed.php', 'Seed JSON legacy', '/admin/faction-seed.php'],
             ], $factionPages),
         ]),
 

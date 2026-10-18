@@ -77,8 +77,8 @@ class TypeFamilyColumnTest extends TestCase
      * C'est le cas que la CI a levé et que la machine de dev ne pouvait pas
      * voir : une suite complète insère des races en cours de route, sans rien
      * savoir de cette colonne. Avec un simple `UPDATE` au moment de la
-     * migration, ces lignes-là naissaient sans famille — et `RaceImporter`,
-     * `RaceSeedService` et l'écran d'admin sont dans le même cas en
+     * migration, ces lignes-là naissaient sans famille — et `RaceImporter`
+     * et l'écran d'admin sont dans le même cas en
      * production. La colonne est donc GÉNÉRÉE : l'écrivain n'a rien à savoir.
      */
     public function testARaceInsertedAfterwardsStillHasItsFamily(): void

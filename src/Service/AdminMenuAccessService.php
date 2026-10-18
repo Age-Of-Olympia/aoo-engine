@@ -116,7 +116,6 @@ class AdminMenuAccessService
         'upload_image.php'           => 'avatars-portraits.php', // redirection legacy
         'structure-images.php'       => 'avatars-portraits.php', // même stock, visage Bâtiments
         'plans-save.php'             => 'plans.php',
-        'plan-seed.php'              => 'plans.php',
         'plan-season-rename.php'     => 'plans.php',
         'footprints-save.php'        => 'footprints.php',
         'tile-colors-save.php'       => 'tile-colors.php',
@@ -124,10 +123,8 @@ class AdminMenuAccessService
         'dialog-seed.php'            => 'dialogs.php',
         'harvest-seed.php'           => 'harvest-types.php',
         'races-save.php'             => 'races.php',
-        'race-seed.php'              => 'races.php',
         'effects-save.php'           => 'effects.php',
         'factions-save.php'          => 'factions.php',
-        'faction-seed.php'           => 'factions.php',
         'faction-members.php'        => 'factions.php',
         'faction-members-save.php'   => 'factions.php',
         'player-skills.php'          => 'players.php',

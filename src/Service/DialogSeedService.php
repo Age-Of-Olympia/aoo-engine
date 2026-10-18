@@ -10,7 +10,7 @@ use Throwable;
  * Seed des dialogues de jeu depuis les JSON legacy
  * (datas/[public|private]/dialogs/*.json) vers la table `dialogs`.
  *
- * Même raison d'être que RaceSeedService : le déploiement exécute les
+ * Le déploiement exécute les
  * migrations depuis le checkout git, où datas/ (gitignoré) n'existe pas —
  * la migration DialogsFromJson ne crée donc que la table. Ce service tourne
  * depuis la racine web (admin/dialog-seed.php), où datas/ existe.
