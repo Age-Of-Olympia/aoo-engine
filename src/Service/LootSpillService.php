@@ -48,6 +48,7 @@ final class LootSpillService
         );
 
         $lootList = array();
+        $lost = array();
 
         while ($row = $res->fetch_object()) {
 
@@ -60,17 +61,48 @@ final class LootSpillService
                 $entity->drop($loot, $nbLoot);
                 $lootList[] = $loot->data->name . ' x' . $nbLoot;
             }
+            // What stays behind dies with a holder that does not survive
+            if (!$holderSurvives && (int) $row->n > $nbLoot) {
+                $lost[] = $loot->data->name . ' x' . ((int) $row->n - $nbLoot);
+            }
         }
 
         $lootList = array_merge($lootList, $this->spillFabric($entity, $db));
-        $lootList = array_merge($lootList, $this->spillChildren($entity, $holderSurvives));
+        $lootList = array_merge($lootList, $this->spillChildren($entity, $holderSurvives, $lost));
 
         if (count($lootList)) {
             $text = $entity->data->name . ' a perdu des objets: ' . implode(', ', $lootList) . '.';
             Log::put($entity, $entity, $text, type: "loot");
         }
 
+        if ($lost !== []) {
+            $this->reportLost($entity, $lootList, $lost);
+        }
+
         return $lootList;
+    }
+
+    /**
+     * A destroyed holder's people learn what fell and what is gone: its
+     * owner in their events, its faction in the journal, the admins in the
+     * audit (with the entity ids, to give a shelved exemplar back).
+     *
+     * @param string[] $fallen
+     * @param string[] $lost
+     */
+    private function reportLost(Player $entity, array $fallen, array $lost): void
+    {
+        $text = $entity->data->name . ' a été détruit.'
+            . ($fallen !== [] ? ' Tombé au sol : ' . implode(', ', $fallen) . '.' : '')
+            . ' Perdu : ' . implode(', ', $lost) . '.';
+
+        $ownerId = (int) ($entity->data->owner_id ?? 0);
+        if ($ownerId !== 0) {
+            $owner = \App\Factory\PlayerFactory::legacy($ownerId);
+            Log::put($owner, $owner, $text, type: "loot");
+        }
+        (new \App\Service\FactionLogService())->add((string) ($entity->data->faction ?? ''), null, $text);
+        (new \App\Service\AuditService())->addAuditLog('spill #' . (int) $entity->id . ' : ' . strip_tags($text));
     }
 
     /**
@@ -145,9 +177,10 @@ final class LootSpillService
      * fails it stays with a holder that survives (a character), and is lost
      * with one that does not (a chest, a structure).
      *
+     * @param string[] $lost what the roll left behind and the holder takes with it
      * @return string[] labels of what fell
      */
-    private function spillChildren(Player $entity, bool $holderSurvives): array
+    private function spillChildren(Player $entity, bool $holderSurvives, array &$lost): array
     {
         $coordsId = (int) ($entity->data->coords_id ?? 0);
 
@@ -165,6 +198,7 @@ final class LootSpillService
             if ($this->rollFor(1, $this->chanceFor($entity, $loot, (object) $child)) === 0) {
                 if (!$holderSurvives) {
                     $location->shelve((int) $child['id']);
+                    $lost[] = $child['label'] . ' (#' . (int) $child['id'] . ')';
                 }
                 continue;
             }

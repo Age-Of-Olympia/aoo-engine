@@ -89,6 +89,34 @@ class ChestSpillsWhenSmashedTest extends LegacyPlayerFixtureTestCase
         }
     }
 
+    /** What a destroyed chest takes with it is named to its owner, with the ids to give it back. */
+    public function testWhatIsLostIsToldToTheOwner(): void
+    {
+        [$chestId, $swordId] = $this->chestHoldingASword(6, 9);
+        $this->trackEntityId($swordId);
+        $ownerId = (int) $this->createRealPlayer('GmProprio')->id;
+        $this->link->executeStatement('UPDATE players SET owner_id = ? WHERE id = ?', [$ownerId, $chestId]);
+
+        $itemId = (int) $this->link->fetchOne('SELECT item_id FROM item_instances WHERE entity_id = ?', [$swordId]);
+        $before = $this->link->fetchOne('SELECT lootChance FROM items WHERE id = ?', [$itemId]);
+        // Negative: no unit ever falls, everything is lost
+        $this->link->executeStatement('UPDATE items SET lootChance = -1 WHERE id = ?', [$itemId]);
+
+        try {
+            $this->assertTrue((new BuildingService())->vanish($chestId));
+        } finally {
+            $this->link->executeStatement('UPDATE items SET lootChance = ? WHERE id = ?', [$before, $itemId]);
+        }
+
+        $this->assertStringContainsString(
+            '(#' . $swordId . ')',
+            (string) $this->link->fetchOne(
+                "SELECT text FROM players_logs WHERE player_id = ? AND text LIKE '%Perdu :%' ORDER BY id DESC LIMIT 1",
+                [$ownerId]
+            )
+        );
+    }
+
     public function testASmashedChestEmptiesItsStacksWhole(): void
     {
         [$chestId, $swordId, $coordsId] = $this->chestHoldingASword(6, 7);
