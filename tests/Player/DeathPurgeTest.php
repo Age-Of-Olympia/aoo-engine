@@ -25,6 +25,31 @@ class DeathPurgeTest extends LegacyPlayerFixtureTestCase
         ));
     }
 
+    /** What the roll leaves behind stays with the dead character: never shelved, as a broken chest's is. */
+    public function testDeathNeverLosesAUniqueObject(): void
+    {
+        $item = $this->itemOrSkip('gladius');
+        $player = $this->createRealPlayer('GmDepouille');
+        $instances = new \App\Service\ItemInstanceService();
+        $ids = [];
+        for ($i = 0; $i < 12; $i++) {
+            $ids[] = $instances->create((int) $player->id, (int) $item->id);
+        }
+        $instances->equipCatalogItem((int) $player->id, (int) $item->id, 'main1', $ids[0]);
+
+        $player->get_caracs();
+        $player->death(1);
+
+        $in = implode(',', $ids);
+        foreach ($this->link->fetchFirstColumn("SELECT entity_id FROM item_instances WHERE id IN ({$in})") as $entityId) {
+            $this->trackEntityId((int) $entityId);
+        }
+        $this->assertSame(0, (int) $this->link->fetchOne(
+            "SELECT COUNT(*) FROM players e JOIN item_instances i ON i.entity_id = e.id
+              WHERE i.id IN ({$in}) AND e.holder_id IS NULL AND e.coords_id IS NULL"
+        ), 'every exemplar is still carried or lies on the ground');
+    }
+
     public function testAnEffectWithoutAWoundEndsWithDeath(): void
     {
         $player = $this->createRealPlayer('GmEnvoute');

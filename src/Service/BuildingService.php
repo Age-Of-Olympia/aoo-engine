@@ -1466,7 +1466,7 @@ class BuildingService
         $goCoords = $this->coordsOf($playerId);
 
         // Spill before the transaction below, which deletes what is left.
-        $spilled = (new \App\Service\LootSpillService())->spill(\App\Factory\PlayerFactory::legacy($playerId));
+        $spilled = (new \App\Service\LootSpillService())->spill(\App\Factory\PlayerFactory::legacy($playerId), holderSurvives: false);
 
         $conn->transactional(function ($conn) use ($playerId): void {
             $conn->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$playerId]);

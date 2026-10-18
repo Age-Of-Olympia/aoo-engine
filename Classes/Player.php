@@ -2020,7 +2020,7 @@ class Player implements ActorInterface {
          * chaque objet selon sa chance. Le geste vit dans son propre service
          * — un coffre qu'on casse répand son contenu de la même façon, sans
          * rien connaître des enfers ni des effets à purger. */
-        (new \App\Service\LootSpillService())->spill($this);
+        (new \App\Service\LootSpillService())->spill($this, holderSurvives: true);
 
         /* Then death wears what is STILL worn: the loot has already
          * fallen, and what lies on the ground is no longer the dead

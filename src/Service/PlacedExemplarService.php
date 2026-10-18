@@ -181,7 +181,7 @@ class PlacedExemplarService
          * CHARACTER loot rules (same service, same rolls), hidden slots
          * (the walls' fabric) included — what it held must not stay shut
          * inside a wreck. */
-        (new LootSpillService())->spill(\App\Factory\PlayerFactory::legacy($exemplarId));
+        (new LootSpillService())->spill(\App\Factory\PlayerFactory::legacy($exemplarId), holderSurvives: false);
 
         /* Then the item type decides the wreck's fate: vanish_on_break
          * erases the husk — the loot on the ground is all that remains —

@@ -26,9 +26,11 @@ final class LootSpillService
      * Répand au sol ce que l'entité possède, chaque objet selon sa chance de
      * butin, et journalise la perte.
      *
+     * @param bool $holderSurvives a dying character keeps the exemplars the
+     *        roll left behind; a broken chest or structure loses them
      * @return string[] libellés de ce qui est tombé ([] = rien)
      */
-    public function spill(Player $entity): array
+    public function spill(Player $entity, bool $holderSurvives): array
     {
         // death() loads data first; vanish() does not.
         if (!isset($entity->data)) {
@@ -61,7 +63,7 @@ final class LootSpillService
         }
 
         $lootList = array_merge($lootList, $this->spillFabric($entity, $db));
-        $lootList = array_merge($lootList, $this->spillChildren($entity));
+        $lootList = array_merge($lootList, $this->spillChildren($entity, $holderSurvives));
 
         if (count($lootList)) {
             $text = $entity->data->name . ' a perdu des objets: ' . implode(', ', $lootList) . '.';
@@ -139,12 +141,13 @@ final class LootSpillService
 
     /**
      * Held entities take the same roll as a stack unit, and the same chance
-     * rules — the exemplar keeps its identity when it lands, and is lost
-     * outright when the roll fails, exactly as an undropped unit is.
+     * rules — the exemplar keeps its identity when it lands. When the roll
+     * fails it stays with a holder that survives (a character), and is lost
+     * with one that does not (a chest, a structure).
      *
      * @return string[] labels of what fell
      */
-    private function spillChildren(Player $entity): array
+    private function spillChildren(Player $entity, bool $holderSurvives): array
     {
         $coordsId = (int) ($entity->data->coords_id ?? 0);
 
@@ -160,8 +163,9 @@ final class LootSpillService
             $loot->get_data();
 
             if ($this->rollFor(1, $this->chanceFor($entity, $loot, (object) $child)) === 0) {
-                // Lost with its holder, like a unit the roll left behind.
-                $location->shelve((int) $child['id']);
+                if (!$holderSurvives) {
+                    $location->shelve((int) $child['id']);
+                }
                 continue;
             }
 
