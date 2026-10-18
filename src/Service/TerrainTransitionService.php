@@ -205,7 +205,7 @@ class TerrainTransitionService
         if (!preg_match(TiledMapService::PLAN_NAME_PATTERN, $plan)) {
             throw new RuntimeException('Nom de plan invalide : ' . $plan);
         }
-        if (!isset(TiledMapService::AUTHORABLE_LAYERS[$layer])) {
+        if (!isset(TiledMapService::rowLayers()[$layer])) {
             throw new RuntimeException('Couche inconnue : ' . $layer);
         }
 
@@ -733,7 +733,7 @@ class TerrainTransitionService
      */
     public function cleanupOrphanTransitions(string $layer = self::GROUND_LAYER): array
     {
-        if (!isset(TiledMapService::AUTHORABLE_LAYERS[$layer])) {
+        if (!isset(TiledMapService::rowLayers()[$layer])) {
             throw new RuntimeException('Couche inconnue : ' . $layer);
         }
         $terrains = $this->loadTerrains();

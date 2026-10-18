@@ -385,8 +385,8 @@ class TutorialMapInstance
         // Every table with a coords foreign key: the marks (footprints, blood
         // after the attack) and the logs, archived or not, are what a played
         // session always leaves.
-        $tables = ['map_resources', 'map_tiles', 'map_foregrounds', 'map_triggers', 'map_elements',
-            'map_dialogs', 'map_plants', 'map_routes', 'map_marks', 'map_items',
+        $tables = ['map_tiles', 'map_foregrounds', 'map_triggers', 'map_elements',
+            'map_dialogs', 'map_marks', 'map_items',
             'players_logs', 'players_logs_archives'];
 
         foreach ($tables as $table) {
@@ -426,9 +426,8 @@ class TutorialMapInstance
      *
      * Les deux chemins de suppression faisaient chacun leur version de ce
      * ménage — l'un incomplet, l'autre inexistant. Ils partagent désormais
-     * celle-ci, qui couvre aussi `players_bonus`, `buildings` et
-     * `unique_objects` : trois clés étrangères vers players.id qu'aucune des
-     * deux ne défaisait, et qui font échouer la suppression des coords dès
+     * celle-ci, qui couvre aussi `players_bonus` et `buildings` : des clés
+     * étrangères vers players.id qu'aucune des deux ne défaisait, et qui font échouer la suppression des coords dès
      * qu'une structure a été posée ou blessée sur l'instance.
      *
      * @param list<int|string> $entityIds
@@ -444,7 +443,7 @@ class TutorialMapInstance
         /* `resources` manquait : l'id d'une entité supprimée se recycle
          * (MAX+1 dans sa plage), et le satellite orphelin — « épuisé le… »
          * — collait son état au prochain arbre né sous le même id. */
-        foreach (['buildings', 'unique_objects', 'resources'] as $satellite) {
+        foreach (['buildings', 'resources'] as $satellite) {
             $this->conn->executeStatement("DELETE FROM {$satellite} WHERE player_id IN ({$idList})");
         }
 

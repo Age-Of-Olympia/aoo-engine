@@ -338,10 +338,11 @@ class TileAssetService
         $connection = $this->connection();
         $connection->beginTransaction();
         try {
-            $rowsUpdated = (int) $connection->executeStatement(
+            // An entity layer has no rows to follow: its types are renamed by TypeRenameService
+            $rowsUpdated = isset(TiledMapService::rowLayers()[$layer]) ? (int) $connection->executeStatement(
                 'UPDATE map_' . $layer . ' SET name = ? WHERE name = ?',
                 [$new, $old]
-            );
+            ) : 0;
 
             foreach ($files as $file) {
                 $ext = pathinfo($file, PATHINFO_EXTENSION);
@@ -538,6 +539,9 @@ class TileAssetService
     public function positionsOfTile(string $layer, string $name, int $limit = 200): array
     {
         $this->assertLayer($layer);
+        if (!isset(TiledMapService::rowLayers()[$layer])) {
+            return [];
+        }
 
         $rows = $this->connection()->fetchAllAssociative(
             'SELECT c.x, c.y, c.z, c.plan FROM map_' . $layer . ' m

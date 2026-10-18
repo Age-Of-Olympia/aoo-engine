@@ -46,7 +46,7 @@ class TypeRenameServiceTest extends TestCase
     private function cleanup(): void
     {
         foreach ([self::FROM, self::TO] as $name) {
-            $this->conn->executeStatement('DELETE FROM map_resources WHERE name LIKE ?', [$name . '%']);
+            $this->conn->executeStatement('DELETE FROM map_foregrounds WHERE name LIKE ?', [$name . '%']);
             $this->conn->executeStatement('DELETE FROM items WHERE name = ?', [$name]);
             $this->conn->executeStatement('DELETE FROM entity_type_footprints WHERE type_name = ?', [$name]);
             $this->conn->executeStatement('DELETE FROM races WHERE name = ?', [$name]);
@@ -89,7 +89,7 @@ class TypeRenameServiceTest extends TestCase
             'avatar' => 'img/walls/' . self::FROM . '_broken.png', 'portrait' => 'img/avatars/' . self::FROM . '/1.png',
         ]);
         $this->conn->insert('items', ['name' => self::FROM, 'requires_building' => self::FROM]);
-        $this->conn->insert('map_resources', ['name' => self::FROM . '-01', 'coords_id' => $coordsId]);
+        $this->conn->insert('map_foregrounds', ['name' => self::FROM . '-01', 'coords_id' => $coordsId]);
         $this->conn->insert('entity_type_footprints', ['type_name' => self::FROM, 'w' => 2, 'h' => 1, 'offsets' => '{}']);
 
         foreach (['.png', '_broken.png', '_1.png', '_longer.png'] as $suffix) {
@@ -108,7 +108,7 @@ class TypeRenameServiceTest extends TestCase
             'the placed instance and its sprites follow'
         );
         $this->assertSame(self::TO, $this->conn->fetchOne('SELECT requires_building FROM items WHERE name = ?', [self::TO]), 'the construction item follows');
-        $this->assertSame(1, (int) $this->conn->fetchOne('SELECT COUNT(*) FROM map_resources WHERE name = ?', [self::TO . '-01']), 'layer pieces follow');
+        $this->assertSame(1, (int) $this->conn->fetchOne('SELECT COUNT(*) FROM map_foregrounds WHERE name = ?', [self::TO . '-01']), 'layer pieces follow');
         $this->assertSame(1, (int) $this->conn->fetchOne('SELECT COUNT(*) FROM entity_type_footprints WHERE type_name = ?', [self::TO]));
 
         foreach (['walls/' . self::TO . '.png', 'walls/' . self::TO . '_broken.png', 'walls/' . self::TO . '_1.png',

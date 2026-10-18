@@ -26,8 +26,7 @@ foreach(File::scan_dir('img/walls/', $without=".png") as $e){
         continue;
     }
 
-    /* Depuis la conversion des obstacles en entités bâtiment, seuls les
-       murs encore posables en map_resources sur ce plan restent proposés */
+    // Only the types still laid as resources on this plan are offered
     if(!ResourcePaletteService::isAuthorable($e, $player->coords->plan)){
 
         $hidden++;

@@ -41,7 +41,7 @@ class EquiperBaselineTest extends LegacyPlayerFixtureTestCase
 
         $fresh = PlayerFactory::legacy($bearer->id);
         // Un gladius à durabilité s'équipe comme INSTANCE (promotion
-        // paresseuse) : l'état porté vit alors dans players_items_instances.
+        // paresseuse) : l'état porté vit alors sur l'entité de l'exemplaire.
         $worn = fn (): bool => (bool) ($this->link->fetchOne(
             "SELECT 1 FROM players_items WHERE player_id = ? AND item_id = ? AND equiped != ''",
             [$bearer->id, $gladius->id]

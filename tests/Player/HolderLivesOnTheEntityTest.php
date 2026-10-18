@@ -97,21 +97,4 @@ class HolderLivesOnTheEntityTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /** Nothing writes the link any more: the entity is the only record. */
-    public function testTheLinkTableIsNoLongerWritten(): void
-    {
-        [, $entityId, $owner] = $this->ownedGladius('GmPorteurD');
-
-        $this->assertSame(
-            0,
-            (int) $this->link->fetchOne(
-                'SELECT COUNT(*) FROM players_items_instances l
-                   JOIN item_instances i ON i.id = l.instance_id
-                  WHERE i.entity_id = ?',
-                [$entityId]
-            ),
-            'creating an exemplar leaves no row in the old table'
-        );
-        $this->assertSame($owner, $this->locationOf($entityId)['holder_id']);
-    }
 }

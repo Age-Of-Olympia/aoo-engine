@@ -102,8 +102,8 @@ class WearEngineBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(
             0,
             (int) $this->link->fetchOne(
-                'SELECT COUNT(*) FROM item_instances i JOIN players_items_instances l ON l.instance_id = i.id
-                 WHERE l.player_id = ? AND i.wear_pending = 1',
+                'SELECT COUNT(*) FROM item_instances i JOIN players e ON e.id = i.entity_id
+                 WHERE e.holder_id = ? AND i.wear_pending = 1',
                 [$other->id]
             ),
             'arming a player without wearing gear is a no-op'

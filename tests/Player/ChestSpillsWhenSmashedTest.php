@@ -32,10 +32,6 @@ class ChestSpillsWhenSmashedTest extends LegacyPlayerFixtureTestCase
             [$instanceId]
         );
 
-        $this->link->executeStatement(
-            'DELETE FROM players_items_instances WHERE instance_id = ?',
-            [$instanceId]
-        );
         (new EntityLocationService($this->link))->putInside($swordId, $chestId);
 
         $coordsId = (int) $this->link->fetchOne(

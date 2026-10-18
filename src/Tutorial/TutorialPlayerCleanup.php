@@ -63,10 +63,8 @@ class TutorialPlayerCleanup
         ['table' => 'players_pnjs', 'columns' => ['player_id', 'pnj_id']],
 
         // Map interactions (tutorial players shouldn't have these, but comprehensive cleanup)
-        // map_resources est sortie de la liste : ses objets sont des entités,
-        // et une entité posée par un joueur est un bâtiment, nettoyé ailleurs.
+        // Objects a player lays are entities (buildings, roads), cleaned elsewhere
         ['table' => 'map_tiles', 'columns' => ['player_id']],
-        ['table' => 'map_routes', 'columns' => ['player_id']],
 
         // Trading/economy (tutorial players shouldn't have these)
         ['table' => 'items_asks', 'columns' => ['player_id']],

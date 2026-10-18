@@ -96,6 +96,17 @@ class TiledMapService
      */
     public const ENTITY_LAYERS = ['resources' => 'resource', 'plants' => 'plant', 'routes' => 'route'];
 
+    /**
+     * The layers stored as rows of their own map_<layer> table: every
+     * authorable layer but the entity ones, whose tables are gone.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function rowLayers(): array
+    {
+        return array_diff_key(self::AUTHORABLE_LAYERS, self::ENTITY_LAYERS);
+    }
+
     /** Virtual layer of the building entities (no map_* table) */
     public const BUILDINGS_LAYER = 'buildings';
 

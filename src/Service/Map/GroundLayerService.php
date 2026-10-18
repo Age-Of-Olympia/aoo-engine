@@ -8,10 +8,9 @@ use Classes\View;
 /**
  * Laying a ground layer on a cell — a road, and whatever joins it.
  *
- * A road is walked ON, not stood in: it belongs to `map_routes`, the layer
- * the map editor writes and that everything already reads — the running
- * bonus through `Player::isOnTileType`, the drawn map, `observe`,
- * and the rule keeping plants off roads.
+ * A road is walked ON, not stood in: a `route` entity whose type blocks
+ * nothing, read by the running bonus through `Player::isOnTileType`, the
+ * drawn map, `observe`, and the rule keeping plants off roads.
  *
  * Placing one as an installed object instead puts a THING on the cell: the
  * board draws an object rather than a road, and every one of those readers

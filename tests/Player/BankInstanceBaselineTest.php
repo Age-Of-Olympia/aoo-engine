@@ -24,12 +24,6 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 class BankInstanceBaselineTest extends LegacyPlayerFixtureTestCase
 {
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->requireTableOrSkip('players_items_instances', 'location');
-    }
-
     /** Un exemplaire usé, donc non démotable : le cas qui motive la fonctionnalité. */
     private function wornInstance(int $playerId, Item $item): int
     {

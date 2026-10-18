@@ -38,7 +38,7 @@ final class TypeRenameService
     private const IMAGE_DIRS = ['walls', 'foregrounds', 'plants', 'routes', 'avatars', 'portraits', 'items'];
 
     /** Legacy map layers whose rows name a type or one of its pieces. */
-    private const LAYERS = ['resources', 'plants', 'routes', 'foregrounds'];
+    private const LAYERS = ['foregrounds'];
 
     /** Columns holding the type name as their whole value. */
     private const EXACT_COLUMNS = [

@@ -182,14 +182,6 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
      */
     private function removeEntity(int $id): void
     {
-        // One key deeper: a bag row on an exemplar of this entity holds its
-        // instance, which holds the entity.
-        $this->link->executeStatement(
-            'DELETE FROM players_items_instances
-              WHERE instance_id IN (SELECT id FROM item_instances WHERE entity_id = ?)',
-            [$id]
-        );
-
         foreach ($this->restrictingReferences() as [$table, $column]) {
             // Map provenance ("laid by") is detached, not destroyed: the
             // content outlives its author.

@@ -122,15 +122,6 @@ class PlanAdminServiceTest extends TestCase
         $this->assertSame('arbre2', $resources[1]['race']);
         $this->assertNotNull($resources[1]['exhausted_at'], 'la ressource à sec aussi');
 
-        $this->assertSame(
-            0,
-            (int) $this->link->fetchOne(
-                'SELECT COUNT(*) FROM map_resources m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
-                [self::CLONE]
-            ),
-            'rien n\'atterrit dans la table retirée'
-        );
-
         // endTime est de l'état runtime : jamais copié (défaut schéma)
         $endTime = $this->link->fetchOne(
             'SELECT m.endTime FROM map_elements m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
@@ -456,7 +447,7 @@ class PlanAdminServiceTest extends TestCase
             $this->link->executeStatement('DELETE FROM entity_cells WHERE player_id = ?', [(int) $entityId]);
             /* Le satellite d'abord : `fk_buildings_player` n'a pas de cascade,
                c'est le service qui le défait à la main partout ailleurs. */
-            foreach (['buildings', 'unique_objects', 'resources'] as $satellite) {
+            foreach (['buildings', 'resources'] as $satellite) {
                 $this->link->executeStatement("DELETE FROM {$satellite} WHERE player_id = ?", [(int) $entityId]);
             }
             \App\Service\BuildingService::deleteEntityRows($this->link, (int) $entityId);

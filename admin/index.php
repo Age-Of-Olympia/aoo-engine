@@ -192,42 +192,6 @@ ob_start();
         </div>
     <?php endif; ?>
 
-    <?php
-    /* Un reste de chantier ne se retient pas de mémoire : il se montre, et il
-       s'efface tout seul le jour du dépôt. */
-    $mapResources = (new \App\Service\Map\MapResourcesRetirement())->status();
-    ?>
-    <?php if ($mapResources['present'] || $mapResources['view']): ?>
-        <div class="alert <?= $mapResources['droppable'] ? 'alert-info' : 'alert-warning' ?> mt-3">
-            <?php if ($mapResources['droppable']): ?>
-                <strong>Reste de chantier : <code>map_resources</code><?= $mapResources['view'] ? ' et la vue <code>map_walls</code>' : '' ?>.</strong>
-                Plus aucun code ne les lit ni ne les écrit, et la table est vide : les ressources sont des entités.
-                <strong>À supprimer</strong> une fois ce code déployé sur tous les serveurs (pour une
-                suppression, la migration passe après le code, à l'inverse de l'habitude).
-                Cet avertissement disparaîtra alors.
-            <?php else: ?>
-                <strong><code>map_resources</code> ne peut pas encore être supprimée.</strong>
-                <?= e(implode(' ; ', $mapResources['blockers'])) ?>.
-            <?php endif; ?>
-        </div>
-    <?php endif; ?>
-
-    <?php $ownershipLink = (new \App\Service\OwnershipLinkRetirement())->status(); ?>
-    <?php if ($ownershipLink['present']): ?>
-        <div class="alert <?= $ownershipLink['droppable'] ? 'alert-info' : 'alert-warning' ?> mt-3">
-            <?php if ($ownershipLink['droppable']): ?>
-                <strong>Reste de chantier : <code>players_items_instances</code>.</strong>
-                Plus aucun code ne la lit ni ne l'écrit : le porteur d'un exemplaire est enregistré sur l'entité.
-                <strong>À supprimer</strong> une fois ce code déployé sur tous les serveurs (pour une
-                suppression, la migration passe après le code, à l'inverse de l'habitude).
-                Cet avertissement disparaîtra alors.
-            <?php else: ?>
-                <strong><code>players_items_instances</code> ne peut pas encore être supprimée.</strong>
-                <?= e(implode(' ; ', $ownershipLink['blockers'])) ?>.
-            <?php endif; ?>
-        </div>
-    <?php endif; ?>
-
     <div class="row mt-3">
     <div class="col-md-6">
     <div class="card">

@@ -80,9 +80,7 @@ if($_POST['type'] == 'eraser'){
         return;
     }
 
-    /* Les obstacles/décor sont des entités bâtiment depuis leur conversion :
-       map_resources ne reçoit plus que les ressources et les survivants
-       (autels, unique_*, plans de tutoriel) */
+    // Only the types still laid as resources on this plan are accepted
     if($_POST['type'] == 'resources' && !ResourcePaletteService::isAuthorable($_POST['src'], $player->coords->plan)){
 
         exit('error: mur « '. $_POST['src'] .' » — les obstacles se posent en tant que bâtiments (admin → Bâtiments)');

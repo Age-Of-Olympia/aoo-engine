@@ -100,14 +100,6 @@ class TiledResourcesLayerTest extends TestCase
             [self::PLAN]
         );
         $this->assertGreaterThan(0, $entityId, 'le push pose une entité, pas une ligne');
-        $this->assertSame(
-            0,
-            (int) $this->link->fetchOne(
-                'SELECT COUNT(*) FROM map_resources m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
-                [self::PLAN]
-            ),
-            'la table sans lecteur ne reçoit plus rien'
-        );
 
         // Re-push identique : conservée, même entité
         $export = $service->exportPlan(self::PLAN, 0);

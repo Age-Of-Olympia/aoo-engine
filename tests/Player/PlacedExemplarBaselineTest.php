@@ -189,10 +189,6 @@ class PlacedExemplarBaselineTest extends LegacyPlayerFixtureTestCase
             (int) $this->link->fetchOne('SELECT entity_id FROM item_instances WHERE id = ?', [$instanceId]),
             'l\'entité posée EST l\'exemplaire'
         );
-        $this->assertFalse(
-            $this->link->fetchOne('SELECT 1 FROM unique_objects WHERE player_id = ?', [$entityId]),
-            'plus de pont : il n\'enveloppe rien, il est'
-        );
 
         $taken = (new PlacedExemplarService())->takeInstance($entityId, $player->id);
         $this->assertSame($instanceId, $taken);

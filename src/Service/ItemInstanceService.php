@@ -22,9 +22,9 @@ use Doctrine\ORM\EntityManagerInterface;
  *     conversion reversible while nothing has diverged.
  *
  * Invariant owned here: an instance has exactly ONE location. Le sol
- * s'exprime par l'entité posée au sol ; côté joueur, la colonne
- * players_items_instances.location distingue ce qu'il PORTE de ce qu'il
- * a rangé en BANQUE. Tout ce qui répond « le joueur a-t-il cet objet
+ * s'exprime par l'entité posée au sol ; côté joueur, le slot de l'entité
+ * qu'il détient (players.slot) distingue ce qu'il PORTE de ce qu'il a
+ * rangé en BANQUE. Tout ce qui répond « le joueur a-t-il cet objet
  * sous la main » doit donc filtrer sur LOCATION_INVENTORY : sans ce
  * filtre, une arme déposée en banque resterait équipable, jetable et
  * vendable depuis n'importe où sur la carte.
@@ -357,8 +357,6 @@ class ItemInstanceService
                  ON DUPLICATE KEY UPDATE n = n + 1',
                 [(int) $row['player_id'], (int) $row['item_id']]
             );
-            // Leftover ownership row (no longer written, still a foreign key on the instance)
-            $conn->executeStatement('DELETE FROM players_items_instances WHERE instance_id = ?', [$instanceId]);
             $conn->executeStatement('DELETE FROM item_instances WHERE id = ?', [$instanceId]);
             self::detachEntity($conn, isset($row['entity_id']) ? (int) $row['entity_id'] : null);
 
@@ -609,8 +607,8 @@ class ItemInstanceService
     /**
      * Mettre en vente : l'exemplaire quitte le sac pour l'offre. Il
      * reste la propriété du vendeur — c'est son emplacement qui change,
-     * pas son propriétaire (players_items_instances.player_id porte une
-     * clé étrangère vers players, il n'existe pas de « joueur marché »).
+     * pas son propriétaire (holder_id reste le vendeur : il n'existe pas
+     * de « joueur marché »).
      *
      * @throws \InvalidArgumentException si l'exemplaire n'est pas dans le sac
      */

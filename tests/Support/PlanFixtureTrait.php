@@ -41,7 +41,7 @@ trait PlanFixtureTrait
             [$plan]
         ) as $id) {
             // Satellites first: their keys are RESTRICT and the service undoes them by hand elsewhere.
-            foreach (['entity_cells', 'buildings', 'resources', 'unique_objects'] as $satellite) {
+            foreach (['entity_cells', 'buildings', 'resources'] as $satellite) {
                 $conn->executeStatement("DELETE FROM {$satellite} WHERE player_id = ?", [(int) $id]);
             }
             BuildingService::deleteEntityRows($conn, (int) $id);

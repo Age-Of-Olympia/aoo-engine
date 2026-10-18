@@ -53,6 +53,15 @@ class SeedSproutTest extends LegacyPlayerFixtureTestCase
         $this->assertSame('resource', $this->kindOn($coordsId));
     }
 
+    public function testAnUnknownTypeGrowsNothing(): void
+    {
+        $coordsId = $this->coordsIdOn(self::PLAN, 3, 1);
+
+        PlantsService::sprout('zz_type_inconnu', 'walls', $coordsId);
+
+        $this->assertFalse($this->kindOn($coordsId));
+    }
+
     public function testATreeFiledAsABuildingBecomesAResource(): void
     {
         $type = $this->resourceType();

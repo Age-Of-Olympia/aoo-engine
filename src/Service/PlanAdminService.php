@@ -23,7 +23,7 @@ class PlanAdminService
 {
     /** Tables sujettes à la cascade PNJ, dans l'ordre de suppression (FK). */
     /** Satellites 1:1 d'une entité : à défaire avant sa ligne players. */
-    private const NPC_CASCADE_SATELLITES = ['buildings', 'unique_objects'];
+    private const NPC_CASCADE_SATELLITES = ['buildings'];
     private const NPC_CASCADE_BY_PLAYER = ['players_actions', 'players_items', 'players_effects', 'players_bonus', 'players_options'];
     private const NPC_CASCADE_BY_PLAYER_OR_TARGET = ['players_logs', 'players_kills', 'players_assists'];
 
@@ -88,8 +88,7 @@ class PlanAdminService
      * Clone un plan complet : coords, couches authorables et fichier JSON.
      * SQL ensembliste (jointure ancien→nouveau par (x,y,z)) — pas de remap
      * PHP ligne à ligne. endTime (map_elements) n'est pas copié : c'est de
-     * l'état runtime ; damages (map_resources) l'est : il encode l'intention
-     * d'auteur (-1 = récoltable).
+     * l'état runtime.
      *
      * @param array<string, mixed> $jsonOverrides clés du JSON cible surchargées (name…)
      * @return array{coords: int, layers: array<string, int>} lignes copiées
@@ -354,7 +353,7 @@ class PlanAdminService
             ];
         }
 
-        foreach (['tutorial_catalog' => 'plan', 'tutorial_map_instances' => 'plan_name'] as $table => $column) {
+        foreach (['tutorial_catalog' => 'plan'] as $table => $column) {
             $res = $this->db->exe('SELECT COUNT(*) n FROM ' . $table . ' WHERE `' . $column . '` = ?', array($plan));
             $n = (int) ($res->fetch_assoc()['n'] ?? 0);
             if ($n > 0) {
@@ -504,7 +503,6 @@ class PlanAdminService
                 'races'                  => 'plan',
                 'race_harvest'           => 'plan',
                 'tutorial_catalog'       => 'plan',
-                'tutorial_map_instances' => 'plan_name',
                 'players_logs'           => 'plan',
                 'players_logs_archives'  => 'plan',
                 'players_kills'          => 'plan',
@@ -672,7 +670,7 @@ class PlanAdminService
         $this->db->beginTransaction();
         try {
             $report['map_items'] = $this->deleteLayerRowsAtZ('map_items', $plan, $z);
-            foreach (array_keys(TiledMapService::AUTHORABLE_LAYERS) as $layer) {
+            foreach (array_keys(TiledMapService::rowLayers()) as $layer) {
                 $report['layers'][$layer] = $this->deleteLayerRowsAtZ('map_' . $layer, $plan, $z);
             }
 
@@ -724,7 +722,7 @@ class PlanAdminService
             }
 
             $report['map_items'] = $this->deleteLayerRows('map_items', $plan);
-            foreach (array_keys(TiledMapService::AUTHORABLE_LAYERS) as $layer) {
+            foreach (array_keys(TiledMapService::rowLayers()) as $layer) {
                 $report['layers'][$layer] = $this->deleteLayerRows('map_' . $layer, $plan);
             }
 

@@ -80,7 +80,7 @@ try {
     //   - the tutorial enemy NPC (players row with negative id)
     //   - that enemy's coords row
     //   - the tutorial `players` row itself (positive-id tutorial avatar)
-    //   - the tutorial_map_instances entry and its coords
+    //   - the instance's coords
     // One completion per player per replay accumulated three to five
     // orphan rows with no cleanup job to reclaim them.
     //

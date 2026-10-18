@@ -10,7 +10,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 /**
  * A road is ground, not an object standing on it.
  *
- * Everything that knows about roads reads `map_routes`: the running bonus
+ * Everything that knows about roads reads the road entities: the running bonus
  * (`courir` → TileTypeOutcomeInstruction → GroundLayerService), the drawn map,
  * `observe`, and the rule keeping plants off roads. A road installed as an
  * object is invisible to every one of them — which is what happened when the

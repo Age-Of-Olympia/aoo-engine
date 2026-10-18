@@ -8,61 +8,17 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * Invariants de la conversion murs→entités (Version20260719280000,
- * docs/design-walls-to-entities.md) : après migrations, il ne reste en
- * map_resources que les RESSOURCES, les autels et les plans de tutoriel —
- * et un obstacle converti vit et meurt comme tout bâtiment.
+ * Invariant de la conversion murs→entités (Version20260719280000,
+ * docs/design-walls-to-entities.md) : un obstacle converti vit et meurt
+ * comme tout bâtiment.
  */
 #[Group('entities-structure')]
 class WallsConversionBaselineTest extends LegacyPlayerFixtureTestCase
 {
-    /** Types RESSOURCE gelés par la migration (RESOURCES_PV < 0). */
-    private const RESOURCE_PREFIXES = [
-        'arbre', 'cendre', 'cuir', 'cuivre', 'etain', 'fer', 'nickel',
-        'salpetre', 'tourbe', 'mana', 'bronze', 'herbe', 'jungle',
-        'pierre', 'rocher_desert',
-    ];
-
     protected function setUp(): void
     {
         parent::setUp();
         $this->requireBuildingsOrSkip();
-    }
-
-    public function testOnlyResourcesAltarsAndTutorialWallsRemain(): void
-    {
-        $leftovers = $this->link->fetchAllAssociative(
-            "SELECT w.name, c.plan FROM map_resources w JOIN coords c ON c.id = w.coords_id"
-        );
-
-        $violations = [];
-        foreach ($leftovers as $row) {
-            $name = (string) $row['name'];
-            $plan = (string) $row['plan'];
-
-            if ($plan === 'tutorial' || str_starts_with($plan, 'tut_')) {
-                continue;
-            }
-            if (str_starts_with($name, 'altar') || str_starts_with($name, 'autel') || str_starts_with($name, 'unique_')) {
-                continue;
-            }
-            $isResource = false;
-            foreach (self::RESOURCE_PREFIXES as $prefix) {
-                if (str_starts_with($name, $prefix)) {
-                    $isResource = true;
-                    break;
-                }
-            }
-            if (!$isResource) {
-                $violations[] = $name . '@' . $plan;
-            }
-        }
-
-        $this->assertSame(
-            [],
-            $violations,
-            'map_resources ne doit plus porter d\'obstacles convertibles : ' . implode(', ', $violations)
-        );
     }
 
     public function testAConvertedObstacleHasSpriteRaceAndDiesLikeABuilding(): void

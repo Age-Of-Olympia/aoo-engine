@@ -112,10 +112,11 @@ class PlantsService
             ?? ['plants' => 'plant', 'resources' => 'resource'][$table]
             ?? null;
 
+        // A type the catalogue does not know grows nothing
         match ($kind) {
             'plant' => self::plantAt($type, $coordsId),
             'resource' => (new \App\Service\Map\ResourceObjectService())->placeAt($type, $coordsId, false),
-            default => (new Db())->insert('map_' . $table, ['name' => $type, 'coords_id' => $coordsId]),
+            default => null,
         };
     }
 
