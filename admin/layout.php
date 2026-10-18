@@ -110,7 +110,7 @@ function admin_layout($title, $content, array $assets = []) {
     $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
                     'pnjs.php', 'avatars-portraits.php', 'welcome-missive.php'];
     $racePages = ['races.php'];
-    $itemPages = ['items.php', 'item-seed.php', 'recipes.php'];
+    $itemPages = ['items.php', 'recipes.php'];
     $factionPages = ['factions.php', 'faction-members.php'];
     $dialogPages = ['dialogs.php', 'dialog-seed.php'];
     $sceneryPages = ['scenery-types.php'];
@@ -190,7 +190,6 @@ function admin_layout($title, $content, array $assets = []) {
             $navGroup('Objets', [
                 ['items.php', 'Liste', '/admin/items.php'],
                 ['recipes.php', 'Recettes', '/admin/recipes.php'],
-                ['item-seed.php', 'Seed JSON legacy', '/admin/item-seed.php'],
             ], $itemPages),
             $navGroup('Actions', [
                 ['actions.php', 'Liste', '/admin/actions.php'],

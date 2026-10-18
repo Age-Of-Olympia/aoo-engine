@@ -239,21 +239,10 @@ function items_type_inconsistencies(object $row, string $type): array
 
 function items_render_list(array $items, string $csrfToken): string
 {
-    $inDb = 0;
     $rows = [];
     $ownerCounts = items_owner_counts();
     foreach ($items as $row) {
         $type = (string) ($row->type ?? '');
-        if ($type === '' && empty($row->stats_in_db)) {
-            // Stats encore en JSON legacy : le type y dort — lecture
-            // directe (pas Item::get_data, dont le repli ÉCRIT un json).
-            $legacyJson = json()->decode('items', $row->name);
-            $type = is_object($legacyJson) ? (string) ($legacyJson->type ?? '') : '';
-        }
-        $statsBadge = !empty($row->stats_in_db)
-            ? '<span class="badge badge-success" title="Stats en base — édition complète">BDD</span>'
-            : '<span class="badge badge-secondary" title="Stats encore dans le JSON legacy — seed à rejouer, ou enregistrer ici pour basculer">JSON</span>';
-        $inDb += !empty($row->stats_in_db) ? 1 : 0;
 
         // Vignettes carte (mur / mur brisé) quand elles existent — repérage
         // rapide des structures constructibles et de leur état visuel.
@@ -263,20 +252,6 @@ function items_render_list(array $items, string $csrfToken): string
             if (is_file($_SERVER['DOCUMENT_ROOT'] . '/' . $wallPath)) {
                 $mapThumbs .= ' <img src="/' . e($wallPath) . '" style="max-height:20px" title="carte ' . $title . '" alt="">';
             }
-        }
-
-        // Retardataire de l'ancien système de pose : conversion en un clic
-        // (race structure + type constructible — l'action générique construire fait le reste).
-        $migrateButton = '';
-        if ($type === 'structure') {
-            $migrateButton = ' <form method="post" style="display:inline"'
-                . ' action="/admin/items-save.php?action=migrate-structure"'
-                . ' onsubmit="return confirm(\'Migrer « ' . e($row->name) . ' » en constructible ?\');">'
-                . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
-                . '<input type="hidden" name="name" value="' . e($row->name) . '">'
-                . '<button class="btn btn-sm btn-danger" title="Crée la race structure (défauts à affiner),'
-                . ' passe l\'objet en constructible (l\'action générique construire fait le reste)">Migrer</button>'
-                . '</form>';
         }
 
         // Supprimable seulement sans détenteur — les autres références
@@ -309,7 +284,6 @@ function items_render_list(array $items, string $csrfToken): string
             . (trim((string) ($row->label ?? '')) !== '' ? '<b>' . e($row->label) . '</b> ' : '')
             . '<code>' . e($row->name) . '</code>' . $mapThumbs . '</td>'
             . '<td>' . item_type_badge($type) . $issuesBadge . '</td>'
-            . '<td>' . $statsBadge . '</td>'
             . '<td>' . item_flag_badges($row) . '</td>'
             . '<td>' . ($row->spell !== '' && $row->spell !== null ? e($row->spell) : '<span class="text-muted">—</span>') . '</td>'
             . '<td>' . item_wear_cell($row) . '</td>'
@@ -320,7 +294,7 @@ function items_render_list(array $items, string $csrfToken): string
             . '<td class="text-nowrap"><a class="btn btn-sm btn-outline-primary" href="/admin/items.php?action=edit&id=' . (int) $row->id . '">Éditer</a> '
             . '<a class="btn btn-sm btn-outline-secondary" title="Exporter le bundle JSON"'
             . ' href="/admin/action-export.php?type=item&name=' . e(urlencode($row->name)) . '">JSON</a>'
-            . $migrateButton . $deleteButton . '</td>'
+            . $deleteButton . '</td>'
             . '</tr>';
     }
 
@@ -328,13 +302,9 @@ function items_render_list(array $items, string $csrfToken): string
         . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=item">Exporter tout (JSON)</a> '
         . '<a class="btn btn-outline-secondary" href="/admin/action-import.php">Importer</a></p>';
 
-    return $toolbar . '<p class="text-muted"><b>' . $inDb . '</b>/' . count($items) . ' objets ont leurs stats en base'
-        . ' (édition complète ici). Les autres ont encore leurs stats dans le JSON : sur cet environnement, seuls'
-        . ' les fichiers présents dans <code>datas/*/items/</code> ont pu être recopiés ; en prod,'
-        . ' <a href="/admin/item-seed.php">rejouer le seed</a> les recopiera tous.'
-        . ' Enregistrer un objet « JSON » depuis cette page bascule aussi sa source vers la base.</p>'
+    return $toolbar
         . renderTable(
-            ['Objet', 'Type', 'Stats', 'Flags', 'Sort lié', 'Usure', 'Joueurs', ''],
+            ['Objet', 'Type', 'Flags', 'Sort lié', 'Usure', 'Joueurs', ''],
             $rows,
             'class="table table-sm table-striped align-middle" data-admin-list data-page-size="50" data-facets="type:Type"'
         );
@@ -555,13 +525,6 @@ function items_render_edit(object $row, string $csrfToken): string
         $flagBoxes .= '<label class="d-block"><input type="checkbox" name="' . $col . '" '
             . checked(!empty($row->$col)) . '> ' . ITEM_FLAG_LABELS[$col] . '</label>';
     }
-
-    // Stats — pleinement éditables depuis la migration JSON→DB.
-    $notInDb = empty($row->stats_in_db)
-        ? '<div class="alert alert-warning">Stats pas encore migrées pour cet objet (JSON absent de cet'
-          . ' environnement) : <b>enregistrer les stats ici bascule leur source vers la base</b>.'
-          . ' En prod, rejouer le seed : <a href="/admin/item-seed.php">item-seed</a>.</div>'
-        : '';
 
     $caracInputs = '';
     foreach (\App\Enum\Caracs::KEYS as $k) {
@@ -958,7 +921,7 @@ function items_render_edit(object $row, string $csrfToken): string
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
         . $nameField
         . $labelField
-        . ($isNew ? '' : $notInDb . $imagesPanel)
+        . ($isNew ? '' : $imagesPanel)
         . '<div class="item-sections">' . $sections . '</div>'
         . '<button class="btn btn-primary" type="submit">Enregistrer</button> '
         . '<a class="btn btn-secondary" href="/admin/items.php">Retour</a>'

@@ -11,9 +11,8 @@ use Doctrine\DBAL\Connection;
  * fourre-tout `extra` (JSON) et est reservie verbatim par la
  * passerelle de Item::get_data().
  *
- * Partagé par la migration Version20260717180000_ItemsFromJson et la
- * page admin/item-seed.php (en prod le déploiement tourne sans datas/,
- * le seed se rejoue depuis la racine web — pattern races).
+ * Appelé par la migration Version20260717180000_ItemsFromJson ; ses
+ * listes de colonnes servent aussi à l'admin et aux bundles.
  *
  * Ne touche JAMAIS : les flags déjà en base (cursed, enchanted, spell…
  * les copies JSON sont des instantanés périmés), ni les lignes déjà
@@ -59,10 +58,8 @@ class ItemStatsSeeder
      * qui a rendu une base fraîche inconstructible quand `grow_rate` a rejoint
      * SPECIAL_KEYS six jours après la migration des items.
      *
-     * Figer la liste dans la migration ne marcherait pas : elle est partagée
-     * avec admin/item-seed.php, qui a besoin de la version à jour. On filtre
-     * donc à l'exécution, ce qui rend le seed correct dans les deux contextes
-     * et immunisé contre la prochaine colonne ajoutée en avance de phase.
+     * On filtre donc à l'exécution, ce qui immunise le seed contre la
+     * prochaine colonne ajoutée en avance de phase.
      *
      * @return array<string, true>
      */

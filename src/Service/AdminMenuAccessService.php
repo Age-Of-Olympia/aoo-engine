@@ -138,7 +138,6 @@ class AdminMenuAccessService
         'buildings-save.php'         => 'buildings.php',
         'entity-kinds.php'           => 'structure-types.php', // re-kinds exemplars, same level as the type save
         'items-save.php'             => 'items.php',
-        'item-seed.php'              => 'items.php',
         'item-owners.php'            => 'items.php',
         'recipes-save.php'           => 'recipes.php',
         'view_recipes.php'           => 'recipes.php',

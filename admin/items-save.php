@@ -30,7 +30,7 @@ try {
 }
 
 $action = $_GET['action'] ?? '';
-if (!in_array($action, ['update', 'create', 'migrate-structure', 'delete', 'upload-image'], true)) {
+if (!in_array($action, ['update', 'create', 'delete', 'upload-image'], true)) {
     setFlash('warning', 'Action inconnue.');
     redirectTo('/admin/items.php');
 }
@@ -168,19 +168,6 @@ if ($action === 'upload-image') {
     }
     setFlash('success', 'Image « ' . $path . ' » importée (' . (int) ($info[0] ?? 0) . '×' . (int) ($info[1] ?? 0) . ').');
     redirectTo($backTo);
-}
-
-// Migration d'un retardataire de l'ancien système de pose (type
-// « structure ») vers le système actuel — bouton « Migrer » de la liste.
-if ($action === 'migrate-structure') {
-    $name = strtolower(trim((string) ($_POST['name'] ?? '')));
-    try {
-        $recap = (new \App\Service\StructureConversionService())->convertItem($name);
-        setFlash('success', $recap);
-    } catch (\Throwable $e) {
-        setFlash('warning', 'Migration impossible : ' . $e->getMessage());
-    }
-    redirectTo('/admin/items.php');
 }
 
 $db = new Db();

@@ -112,8 +112,6 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
    (stats migrées des JSON, sans perte via `extra`).
    ☐ Modifier le CC du gladius (+1 → +2), sauver, observer sa case :
    les caracs en jeu suivent immédiatement ; remettre +1.
-   ☐ En prod : admin → item-seed rejoue le seed pour les objets sans
-   stats (92 en dev faute de JSON locaux).
 8c. **Admin → Objets — création & bundles JSON** (cycle de vie complet,
    comme races/factions/dialogues/plans).
    ☐ « Nouvel objet » : nom technique (minuscules/chiffres/_-, unique)
