@@ -36,6 +36,15 @@ class ChestUnderTheBankTest extends LegacyPlayerFixtureTestCase
     protected function tearDown(): void
     {
         unset($_POST['itemId'], $_POST['buildFor']);
+
+        /* The chests `construire` placed are no fixture's: hand them to the
+         * fixture cleanup, or they outlive the test with their fabric rows. */
+        foreach ($this->link->fetchFirstColumn(
+            "SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id
+              WHERE c.plan LIKE 'p_coffres_%' AND p.player_type = 'item'"
+        ) as $id) {
+            $this->trackEntityId((int) $id);
+        }
         parent::tearDown();
     }
 

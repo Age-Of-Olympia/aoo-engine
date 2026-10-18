@@ -58,7 +58,9 @@ class PlacedExemplarBaselineTest extends LegacyPlayerFixtureTestCase
                 $in = implode(',', array_map(static fn ($r) => (int) $r['id'], $rows));
                 $entityIn = implode(',', array_map(static fn ($r) => (int) $r['entity_id'], $rows));
                 $this->link->executeStatement("DELETE FROM item_instances WHERE id IN ({$in})");
-                $this->link->executeStatement("DELETE FROM players_bonus WHERE player_id IN ({$entityIn})");
+                foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
+                    $this->link->executeStatement("DELETE FROM {$table} WHERE player_id IN ({$entityIn})");
+                }
                 $this->link->executeStatement("DELETE FROM players WHERE id IN ({$entityIn})");
             }
         }
