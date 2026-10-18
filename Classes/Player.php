@@ -2025,13 +2025,18 @@ class Player implements ActorInterface {
         /* Then death wears what is STILL worn: the loot has already
          * fallen, and what lies on the ground is no longer the dead
          * player's. */
-        (new \App\Service\WearService())->wearEverythingOnDeath((int) $this->id);
+        $worn = (new \App\Service\WearService())->wearEverythingOnDeath((int) $this->id);
+        if ($worn !== []) {
+            Log::put($this, $this, $this->data->name . ' : ' . strip_tags(implode(' ', $worn)), type: "loot");
+        }
 
         $db = new Db();
 
         // spawn to hell
         $coords = (object) array('x'=>0,'y'=>0,'z'=>0,'plan'=>plans()->deathPlan());
 
+        // Mvt as death leaves it: what fell or broke no longer carries its bonus
+        $this->get_caracs();
         $oneDayOfWalk = $this->caracs->mvt;
         $distance = $oneDayOfWalk * $this->data->rank;
 
