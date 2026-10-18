@@ -88,7 +88,7 @@ class Ui{
 
                 <!-- Choix de case de construction (réutilise le spotlight tutoriel) -->
                 <script src="js/footprint_ghost.js?v=20260806"></script>
-                <script src="js/build_picker.js?v=20260927"></script>
+                <script src="js/build_picker.js?v=20261018"></script>
         ';
 
         echo '    </head>
@@ -693,7 +693,7 @@ class Ui{
         window.n =    <?php echo $defaultItemN ?>;
         window.price =    1;
         </script>
-        <script src="js/inventUi.js?v=20260920"></script>
+        <script src="js/inventUi.js?v=20261018"></script>
         <?php
 
         return Str::minify(ob_get_clean());

@@ -100,6 +100,7 @@ class InventoryView
 window.freeEmp = ' . Item::get_free_emplacement($player) . ';
 window.aeLeft = ' . $player->getRemaining('ae') . ';
 window.aLeft = ' . $player->getRemaining('a') . ';
+window.hasFaction = ' . ((string) ($player->get_data(false)->faction ?? '') !== '' ? 'true' : 'false') . ';
 </script>
 ';
 
@@ -112,7 +113,7 @@ window.aLeft = ' . $player->getRemaining('a') . ';
 
 ?>
         <script src="js/progressive_loader.js?v=20260716"></script>
-        <script src="js/inventory.js?v=20260927"></script>
+        <script src="js/inventory.js?v=20261018"></script>
 <?php
     }
 

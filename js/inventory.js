@@ -82,22 +82,40 @@ $(document).ready(function(){
            l'objet via itemId (condition ItemPick). */
         if(action == 'use' && window.type == 'constructible'){
 
-            aooStore.set('pendingBuild', JSON.stringify({
+            var pending = {
                 'action': window.buildAction,
                 'itemId': window.id,
                 'name': window.name,
                 'footprint': window.buildFootprint || null,
                 'ghostImg': window.buildGhostImg || null,
-                'lockable': !!window.lockable
-            }));
+                'buildFor': 'self'
+            };
 
-            /* Picking a cell needs the board: the HUD must not reopen the
-               inventory over it, now or after the placement reload. */
-            if(typeof window.hudForgetPanel === 'function'){
-                window.hudForgetPanel('load_inventory.php');
-            }
+            /* A chest's owner is its own step, before the cell: personal
+               or the faction's — asked only of a faction member. The
+               server revalidates (ChestSite). */
+            var owner = (window.lockable && window.hasFaction)
+                ? aooChoose('À qui sera ce coffre ?', [
+                    { value: 'self', label: 'À moi' },
+                    { value: 'faction', label: 'À ma faction' }
+                ], 'self')
+                : Promise.resolve('self');
 
-            document.location = 'index.php';
+            owner.then(function(buildFor){
+                if(buildFor === null){
+                    return;
+                }
+                pending.buildFor = buildFor;
+                aooStore.set('pendingBuild', JSON.stringify(pending));
+
+                /* Picking a cell needs the board: the HUD must not reopen the
+                   inventory over it, now or after the placement reload. */
+                if(typeof window.hudForgetPanel === 'function'){
+                    window.hudForgetPanel('load_inventory.php');
+                }
+
+                document.location = 'index.php';
+            });
             return false;
         }
 

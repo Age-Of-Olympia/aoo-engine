@@ -31,8 +31,8 @@ $(document).ready(function(){
         let text =  $item.data("text");
         window.price = $item.data("price");
         window.buildAction = $item.data("build-action");
-        /* A lockable type (chest): the build picker will offer the
-           personal/faction owner choice. */
+        /* A lockable type (chest): its owner is asked before the build
+           picker (inventory.js). */
         window.lockable = String($item.data("lockable")) === "1";
         /* Cut-out of the built form (offsets JSON) and its sprite — the
            avatar, or the initials-frame data URI — for the picker's ghost. */
