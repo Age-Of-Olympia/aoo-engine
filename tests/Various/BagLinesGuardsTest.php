@@ -171,7 +171,9 @@ class BagLinesGuardsTest extends LegacyPlayerFixtureTestCase
         $spare = $this->sowCatalogItem('zz_rechange_' . bin2hex(random_bytes(3)), $spec);
         $player = $this->createRealPlayer($name);
         $worn->add_item($player, 1);
-        $spare->add_item($player, $spares);
+        if ($spares > 0) {
+            $spare->add_item($player, $spares);
+        }
         $player->get_caracs();
         $this->assertSame(EquipResult::Equip, $player->equip($worn));
         $lines = (new \App\Service\ContainerService())->lineCountOf((int) $player->id);
@@ -192,6 +194,35 @@ class BagLinesGuardsTest extends LegacyPlayerFixtureTestCase
     public function testSwapAllowedWhenTheNewItemFreesItsLine(): void
     {
         [$player, $worn, $spare, $lines] = $this->swapSetup('GmSacEchangeOk', 1);
+
+        $this->withBagCeiling((int) $player->id, $lines, function () use ($player, $spare) {
+            $this->assertSame(EquipResult::Equip, $player->equip($spare, bagGuard: true));
+        });
+    }
+
+    public function testSwapAllowedForALooseExemplar(): void
+    {
+        [$player, , $spare, ] = $this->swapSetup('GmSacEchangeExemplaire', 0);
+        $instanceId = (new ItemInstanceService())->create((int) $player->id, (int) $spare->id, (int) $player->id, '');
+        $lines = (new \App\Service\ContainerService())->lineCountOf((int) $player->id);
+
+        // The worn sword takes a line, the exemplar leaves its own: the count holds.
+        $this->withBagCeiling((int) $player->id, $lines, function () use ($player, $spare, $instanceId) {
+            $this->assertSame(EquipResult::Equip, $player->equip($spare, instanceId: $instanceId, clickedEquippedLine: false, bagGuard: true));
+        });
+    }
+
+    public function testQuiverSwapMovesTheWholeStack(): void
+    {
+        $spec = ['type' => 'equipement', 'stats_in_db' => 1, 'emplacement' => 'munition'];
+        $worn = $this->sowCatalogItem('zz_carquois_' . bin2hex(random_bytes(3)), $spec);
+        $spare = $this->sowCatalogItem('zz_carquois_' . bin2hex(random_bytes(3)), $spec);
+        $player = $this->createRealPlayer('GmSacCarquois');
+        $worn->add_item($player, 5);
+        $spare->add_item($player, 5);
+        $player->get_caracs();
+        $this->assertSame(EquipResult::Equip, $player->equip($worn));
+        $lines = (new \App\Service\ContainerService())->lineCountOf((int) $player->id);
 
         $this->withBagCeiling((int) $player->id, $lines, function () use ($player, $spare) {
             $this->assertSame(EquipResult::Equip, $player->equip($spare, bagGuard: true));

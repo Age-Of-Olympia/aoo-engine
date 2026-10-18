@@ -1832,19 +1832,14 @@ class Player implements ActorInterface {
                 return EquipResult::DoNothing;
             }
 
-            /* Replacing worn gear can return its exemplar to the bag. Check
-             * that net change before clearing any slots: the selected stack
-             * only frees a line when this equips its last unit. */
-            if ($bagGuard && $emplacementsToClear !== []) {
+            // A swap: what the cleared slots send back to the bag, minus the line the new item leaves
+            if ($bagGuard) {
                 $bag = new \App\Service\ContainerService();
                 $capacity = $bag->capacityOf((int) $this->id);
-                $freedStackLine = $item->get_n($this, includeInstances: false) === 1 ? 1 : 0;
-                if (
-                    $capacity !== null
-                    && $bag->lineCountOf((int) $this->id)
-                        + $bag->linesToUnequip((int) $this->id, $emplacementsToClear)
-                        - $freedStackLine > $capacity
-                ) {
+                $wholeStack = in_array($catalogSlot, ['munition', 'trophee'], true);
+                $added = $bag->linesToUnequip((int) $this->id, $emplacementsToClear)
+                    - (int) ($wholeStack || $instanceService->equipFreesALine((int) $this->id, (int) $item->id, $instanceId));
+                if ($capacity !== null && $added > 0 && $bag->lineCountOf((int) $this->id) + $added > $capacity) {
                     return EquipResult::BagFull;
                 }
             }
@@ -2630,6 +2625,10 @@ class Player implements ActorInterface {
         }
 
         return false;
+    }
+
+    public function getEmplacements(): object {
+        return $this->emplacements;
     }
 
     public function getEquipedItemsEffects(): array {
