@@ -52,11 +52,7 @@ class HarvestYieldsSourceTest extends TestCase
 
         $this->raceId = (int) $this->conn->fetchOne('SELECT id FROM races WHERE name = ?', [self::TYPE]);
 
-        $this->conn->insert('plans', [
-            'slug'   => self::PLAN,
-            'name'   => self::PLAN,
-            'biomes' => json_encode([['wall' => self::TYPE, 'ressource' => 'bois', 'exhaust' => 75, 'regrow' => 20]]),
-        ]);
+        $this->conn->insert('plans', ['slug' => self::PLAN, 'name' => self::PLAN]);
         \App\Service\PlanService::forget(self::PLAN);
     }
 
@@ -236,7 +232,8 @@ class HarvestYieldsSourceTest extends TestCase
     public function testWhatTheScreenSavesIsWhatTheGameReads(): void
     {
         $service = new HarvestCatalogService($this->conn);
-        $service->seed();
+        $this->assertTrue($service->add(self::PLAN, $this->raceId), 'the screen opens an exception');
+        $this->assertFalse($service->add(self::PLAN, $this->raceId), 'only once per plan and type');
 
         $service->save([
             self::PLAN . '|' . $this->raceId => ['item' => 'mana', 'exhaust' => '5', 'regrow' => ''],

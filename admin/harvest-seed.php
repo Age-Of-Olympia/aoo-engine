@@ -1,15 +1,8 @@
 <?php
 /**
- * Seed des rendements par plan depuis les JSON legacy
- * (admin dashboard → Cartes → Rendements).
- *
- * Raison d'être : la migration RaceHarvestTable ne crée que la table — au
- * déploiement, les migrations s'exécutent depuis le checkout git où datas/
- * (gitignoré) n'existe pas. Cette page verse depuis la racine web, où datas/
- * existe. Même patron que dialog-seed.php.
- *
- * Relançable : une ligne déjà versée est mise à jour, donc un JSON corrigé se
- * reverse. Page à retirer quand les rendements ne viendront plus des JSON.
+ * Rendements par plan (admin dashboard → Cartes → Rendements) : les plans où
+ * fouiller ne rapporte rien, et les exceptions de `race_harvest` au rendement
+ * des types — ajout et édition.
  *
  * Accès : hérite du niveau du menu des cartes (AdminMenuAccessService).
  */
@@ -22,7 +15,6 @@ use App\Service\Map\HarvestCatalogService;
 
 $csrf = new CsrfProtectionService();
 $service = new HarvestCatalogService();
-$report = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_harvest'])) {
     try {
@@ -34,33 +26,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_harvest'])) {
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['seed_harvest'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_harvest'])) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-        $report = $service->seed();
-        setFlash('success', sprintf(
-            'Seed appliqué : %d rendement(s) enregistré(s) — %d plan(s), %d type(s).',
-            $report['written'],
-            $report['plans'],
-            $report['types']
-        ));
+        $added = $service->add((string) ($_POST['plan'] ?? ''), (int) ($_POST['race_id'] ?? 0));
+        setFlash($added ? 'success' : 'warning', $added
+            ? 'Exception ajoutée : à régler ci-dessous.'
+            : 'Rien ajouté : ce type a déjà une exception sur ce plan, ou le plan ou le type est inconnu.');
     } catch (\Throwable $e) {
-        setFlash('danger', 'Échec du seed : ' . $e->getMessage());
+        setFlash('danger', 'Échec de l\'ajout : ' . $e->getMessage());
     }
-}
-
-try {
-    $preview = $service->preview();
-} catch (\Throwable $e) {
-    $preview = ['rows' => [], 'unreadable' => [], 'unknown' => []];
-    setFlash('danger', 'Analyse impossible : ' . $e->getMessage());
 }
 
 $configured = $service->configured();
 
 ob_start();
 ?>
-<h1>Rendements — seed depuis les JSON de plan</h1>
+<h1>Rendements par plan</h1>
 
 <?= renderFlashMessage() ?>
 
@@ -69,9 +51,8 @@ ob_start();
     <div class="alert alert-danger">
         <strong>Sur <?= count($missing) ?> plan(s), fouiller ne rapporte RIEN.</strong>
         Ces plans contiennent des ressources récoltables dont le type n'a aucun rendement défini.
-        Le jeu ne lit que cette table, jamais le JSON.
         <table class="table table-sm mb-0 mt-2">
-            <thead><tr><th>Plan</th><th>Ressources posées</th><th>Types sans rendement</th><th>Rendements dans son JSON</th></tr></thead>
+            <thead><tr><th>Plan</th><th>Ressources posées</th><th>Types sans rendement</th></tr></thead>
             <tbody>
             <?php foreach (array_slice($missing, 0, 25) as $row): ?>
                 <tr>
@@ -79,9 +60,6 @@ ob_start();
                     <td><?= (int) $row['resources'] ?></td>
                     <td><?= e(implode(', ', array_slice($row['types'], 0, 6)))
                             . (count($row['types']) > 6 ? ', …' : '') ?></td>
-                    <td><?= $row['inJson'] > 0
-                            ? (int) $row['inJson'] . ' — versables ci-dessous'
-                            : '<em>aucun : à saisir à la main</em>' ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
@@ -92,59 +70,7 @@ ob_start();
     </div>
 <?php endif; ?>
 
-<div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-    <strong>Pourquoi cette page ?</strong>
-    La migration <code style="display:inline">RaceHarvestTable</code> ne crée que la table
-    <code style="display:inline">race_harvest</code> : en production les migrations s'exécutent depuis le checkout git
-    où <code style="display:inline">datas/</code> n'existe pas. Ce bouton enregistre les rendements à partir des
-    <code style="display:inline">biomes[]</code> des JSON de plan de cet environnement.
-    <ul class="mb-0 mt-1">
-        <li>Le rendement dépend du <strong>plan</strong> et pas seulement du type : la même ressource donne des taux différents selon le plan.</li>
-        <li>Un plan <strong>illisible est signalé et ignoré</strong> : aucun taux par défaut n'est inventé.</li>
-        <li>Relançable : une ligne déjà enregistrée est mise à jour, un JSON corrigé peut donc être rejoué.</li>
-        <li>Page temporaire, à retirer quand les rendements ne viendront plus des JSON.</li>
-    </ul>
-</div>
-
-<?php if ($preview['unreadable'] !== []): ?>
-    <div class="alert alert-danger" style="font-size: 13px;">
-        <strong>Plans illisibles, ignorés :</strong> <?= e(implode(', ', $preview['unreadable'])) ?>.
-        Leurs rendements ne seront pas enregistrés : corrigez le fichier, puis relancez.
-    </div>
-<?php endif; ?>
-
-<?php if ($preview['unknown'] !== []): ?>
-    <div class="alert alert-warning" style="font-size: 13px;">
-        <strong>Types nommés par un plan et absents du catalogue :</strong> <?= e(implode(', ', $preview['unknown'])) ?>.
-        Ces entrées n'ont aucun effet en jeu ; le plus souvent, une faute de frappe dans le JSON.
-    </div>
-<?php endif; ?>
-
-<div class="card">
-    <div class="card-body">
-        <h5 class="card-title">Rendements déclarés par les plans</h5>
-
-        <?php if ($preview['rows'] === []): ?>
-            <div class="alert alert-warning mb-0">
-                Aucun rendement trouvé dans les <code style="display:inline">biomes[]</code> des JSON de plan de cet
-                environnement : rien à enregistrer.
-            </div>
-        <?php else: ?>
-            <p class="text-muted" style="font-size: 13px;">
-                <?= count($preview['rows']) ?> rendement(s) dans les JSON de plan.
-            </p>
-
-            <form method="post" class="mt-2">
-                <input type="hidden" name="csrf_token" value="<?= e($csrf->generateToken()) ?>" />
-                <button type="submit" name="seed_harvest" value="1" class="btn btn-primary">
-                    Enregistrer dans race_harvest
-                </button>
-            </form>
-        <?php endif; ?>
-    </div>
-</div>
-<?php if ($configured !== []): ?>
-    <div class="card mt-3">
+<div class="card mt-3">
         <div class="card-body">
             <h5 class="card-title">Exceptions par plan</h5>
             <p class="text-muted" style="font-size: 13px;">
@@ -155,6 +81,22 @@ ob_start();
                 « jamais sur ce plan ».
             </p>
 
+            <form method="post" class="form-inline mb-3">
+                <input type="hidden" name="csrf_token" value="<?= e($csrf->generateToken()) ?>" />
+                <select name="plan" class="form-select mr-2" style="width: auto;" required>
+                    <?php foreach (plans()->all() as $slug => $plan): ?>
+                        <option value="<?= e($slug) ?>"><?= e($slug) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <select name="race_id" class="form-select mr-2" style="width: auto;" required>
+                    <?php foreach ($service->resourceTypes() as $raceId => $type): ?>
+                        <option value="<?= (int) $raceId ?>"><?= e($type) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="submit" name="add_harvest" value="1" class="btn btn-outline-primary">Ajouter une exception</button>
+            </form>
+
+            <?php if ($configured !== []): ?>
             <form method="post">
                 <input type="hidden" name="csrf_token" value="<?= e($csrf->generateToken()) ?>" />
 
@@ -184,9 +126,9 @@ ob_start();
 
                 <button type="submit" name="save_harvest" value="1" class="btn btn-primary">Enregistrer</button>
             </form>
+            <?php endif; ?>
         </div>
     </div>
-<?php endif; ?>
 <?php
 
 echo admin_layout('Rendements', ob_get_clean());

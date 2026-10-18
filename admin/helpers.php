@@ -320,24 +320,19 @@ function render_validation_group(array $items, string $variant, string $icon, st
 }
 
 /**
- * Rend les groupes de validation en distinguant les domaines « niveaux Z » et
- * « biomes » : erreurs (Z puis biomes), avertissements (Z puis biomes), puis
- * (optionnel) les validations OK. Chaque groupe vide est ignoré.
+ * Rend les groupes de validation des niveaux Z : erreurs, avertissements,
+ * puis (optionnel) les validations OK. Chaque groupe vide est ignoré.
  *
- * @param array{z: array{errors: string[], warnings: string[], ok: string[]}, biome: array{errors: string[], warnings: string[], ok: string[]}} $validation
+ * @param array{z: array{errors: string[], warnings: string[], ok: string[]}} $validation
  */
 function render_validation_report(array $validation, bool $includeOk = true): void
 {
     $z = $validation['z'];
-    $b = $validation['biome'];
 
     render_validation_group($z['errors'],   'danger',  'fa-times-circle',        '#dc3545', 'Erreurs (niveaux Z)', true);
-    render_validation_group($b['errors'],   'danger',  'fa-times-circle',        '#dc3545', 'Erreurs (biomes)',    true);
     render_validation_group($z['warnings'], 'warning', 'fa-exclamation-triangle', '#f0ad4e', 'Avertissements (niveaux Z)', true);
-    render_validation_group($b['warnings'], 'warning', 'fa-exclamation-triangle', '#f0ad4e', 'Avertissements (biomes)',    true);
     if ($includeOk) {
         render_validation_group($z['ok'], 'success', 'fa-check-circle', '#198754', 'Validations OK (niveaux Z)', false);
-        render_validation_group($b['ok'], 'success', 'fa-check-circle', '#198754', 'Validations OK (biomes)',    false);
     }
 }
 

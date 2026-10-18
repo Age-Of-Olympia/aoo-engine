@@ -68,7 +68,7 @@ class TutorialMapInstance
             throw new \RuntimeException("Template tutorial map (plan='{$templatePlan}') not found.");
         }
 
-        // Step 1.5: Clone the plan configuration (z levels, biomes, visibility)
+        // Step 1.5: Clone the plan configuration (z levels, visibility)
         if (!plans()->exists($templatePlan)) {
             throw new \RuntimeException("Template plan config not found: {$templatePlan}");
         }

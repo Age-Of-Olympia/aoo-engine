@@ -97,7 +97,7 @@ plan configuration (table `plans`, read through `plans()->read($slug)` — the J
 gone):
 
 1. **Plan Configuration** (`plans` row for slug `tutorial`): `player_visibility = 0` hides
-   other players; `biomes` (seed of `race_harvest`) carries the resource definitions.
+   other players; yields come from the resource types, `race_harvest` holds per-plan exceptions.
 
 2. **Three-Layer Isolation**:
    - **Map Rendering** (`Classes/View.php`): Other players not drawn on map
@@ -204,10 +204,7 @@ $player = new Player($activePlayerId);
 **Resource Gathering Setup**:
 1. Configure the plan (admin → Cartes → Plans, table `plans`)
 2. Set `player_visibility` to false to hide other players
-3. Define biomes with wall types and resources (column `plans.biomes`, seed of `race_harvest`):
-   ```json
-   {"wall": "arbre1", "ressource": "bois", "exhaust": 75, "regrow": 20}
-   ```
+3. Check the yields: the resource type carries them; a plan-specific one is an exception added in admin → Cartes → Rendements
 4. Ensure the resource entities exist on the plan (type of nature « ressource », placed through `entity_cells`)
 5. Validate with `adjacent_to_position` instead of exact position
 6. Use multi-step flow: move → inspect → gather → check inventory

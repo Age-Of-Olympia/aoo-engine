@@ -225,13 +225,6 @@ class PlanService
             $model['visibleBoundsMaxY'] = (int) $row['visible_bounds_max_y'];
         }
 
-        if ($row['biomes'] !== null) {
-            $decoded = json_decode((string) $row['biomes']);
-            if (is_array($decoded)) {
-                $model['biomes'] = $decoded;
-            }
-        }
-
         $zLevels = [];
         foreach ($levelsByPlan[(int) $row['id']] ?? [] as $level) {
             $entry = [

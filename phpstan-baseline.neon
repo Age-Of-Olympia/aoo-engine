@@ -1202,12 +1202,6 @@ parameters:
 			path: src/Entity/OutcomeInstruction.php
 
 		-
-			message: '#^Method App\\Entity\\Plan\:\:setBiomes\(\) has parameter \$biomes with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/Plan.php
-
-		-
 			message: '#^Property App\\Entity\\Plan\:\:\$zLevels with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
 			identifier: missingType.generics
 			count: 1
@@ -1908,12 +1902,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Service/Map/CompositeSpriteService.php
-
-		-
-			message: '#^Method App\\Service\\Map\\HarvestCatalogService\:\:planNames\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/Map/HarvestCatalogService.php
 
 		-
 			message: '#^Method App\\Service\\Map\\ResourceReconciler\:\:asPayloadRows\(\) return type has no value type specified in iterable type array\.$#'

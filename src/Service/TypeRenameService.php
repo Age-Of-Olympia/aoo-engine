@@ -17,7 +17,7 @@ use RuntimeException;
 /**
  * Renames the technical name of a building or decor type (races.name) and
  * every place that spells it out: placed instances, the item that builds it,
- * legacy map layers, plan biomes, footprints, and the image files named
+ * legacy map layers, footprints, and the image files named
  * after it.
  *
  * The rows change in one transaction, then the files move; a file that
@@ -181,7 +181,6 @@ final class TypeRenameService
         foreach (self::LAYERS as $layer) {
             $counts['map_' . $layer] = $this->renameLayerRows($conn, $layer, $from, $to);
         }
-        $counts['plans.biomes'] = $this->renameInBiomes($conn, $from, $to);
         $counts['outcome_instructions'] = $this->renameInPlaceStructure($conn, $from, $to);
 
         return $counts;
@@ -200,27 +199,6 @@ final class TypeRenameService
         foreach ($names as $name) {
             if (preg_match($pattern, (string) $name, $m)) {
                 $n += (int) $conn->executeStatement("UPDATE map_{$layer} SET name = ? WHERE name = ?", [$to . $m[1], $name]);
-            }
-        }
-
-        return $n;
-    }
-
-    /** Plan biomes list type names at any depth of their JSON. */
-    private function renameInBiomes(Connection $conn, string $from, string $to): int
-    {
-        $n = 0;
-        foreach ($conn->fetchAllAssociative('SELECT slug, biomes FROM plans WHERE LOCATE(?, biomes) > 0', ['"' . $from . '"']) as $row) {
-            $biomes = json_decode((string) $row['biomes'], true);
-            if (!is_array($biomes)) {
-                continue;
-            }
-            $edited = $biomes;
-            array_walk_recursive($edited, static function (mixed &$value) use ($from, $to): void {
-                $value = $value === $from ? $to : $value;
-            });
-            if ($edited !== $biomes) {
-                $n += (int) $conn->executeStatement('UPDATE plans SET biomes = ? WHERE slug = ?', [json_encode($edited, self::JSON_FLAGS), $row['slug']]);
             }
         }
 

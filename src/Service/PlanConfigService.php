@@ -25,7 +25,6 @@ class PlanConfigService
      * Clés éditables depuis Tiled. Toutes voyagent en chaîne côté éditeur
      * ('' = clé absente/retirée) ; le type pilote la validation/cast à
      * l'écriture (parse) et la mise en chaîne à la lecture (read).
-     * `json` = structure éditée en texte JSON (biomes).
      */
     public const PLAN_CONFIG_KEYS = [
         'name'              => 'string',
@@ -42,10 +41,6 @@ class PlanConfigService
         /* Fractionnaire dans les données réelles (0.2 s) : float, pas int. */
         'scrollingMask'     => 'float',
         'verticalScrolling' => 'bool',
-        /* Plus éditable depuis l'admin : les rendements vivent dans
-         * `race_harvest`. La clé reste la graine que le seed des rendements
-         * relit (plans.biomes). */
-        'biomes'            => 'json',
 
         /* Ombres du plan — une grotte se veut plus sombre qu'une plaine, et
          * un plan de glace plus bleu. Absentes, les valeurs du tableau de
@@ -145,6 +140,10 @@ class PlanConfigService
         $parsed = [];
 
         foreach ($config as $key => $raw) {
+            // Still sent by maps pulled and bundles exported before its removal
+            if ($key === 'biomes') {
+                continue;
+            }
             $type = self::PLAN_CONFIG_KEYS[$key] ?? null;
             if ($type === null || !is_scalar($raw)) {
                 throw new RuntimeException('Propriété de plan inconnue : ' . $key, 400);
@@ -489,17 +488,16 @@ class PlanConfigService
      * Bilan de santé de la config du plan (PlanJsonValidator), remonté dans
      * le rapport de push. Vide si tout va bien.
      *
-     * @param list<string>|null $knownItemNames précharge les items (évite une requête par biome)
      * @return array{errors: string[], warnings: string[]}
      */
-    public function validate(string $plan, ?object $db = null, ?array $knownItemNames = null): array
+    public function validate(string $plan, ?object $db = null): array
     {
         $data = plans()->read($plan);
         if (!is_object($data)) {
             return ['errors' => [], 'warnings' => []];
         }
 
-        $result = PlanJsonValidator::validate($data, $plan, $db, $knownItemNames);
+        $result = PlanJsonValidator::validate($data, $plan, $db);
 
         return ['errors' => $result['errors'], 'warnings' => $result['warnings']];
     }
@@ -520,7 +518,6 @@ class PlanConfigService
             'mask'              => $entity->getMask(),
             'scrollingMask'     => $entity->getScrollingMask(),
             'verticalScrolling' => $entity->isVerticalScrolling(),
-            'biomes'            => $entity->getBiomes(),
             'shade_step'        => $entity->getShadeStep(),
             'shade_max'         => $entity->getShadeMax(),
             'shade_color'       => $entity->getShadeColor(),
@@ -570,9 +567,6 @@ class PlanConfigService
             case 'verticalScrolling':
                 $entity->setVerticalScrolling((bool) $value);
                 break;
-            case 'biomes':
-                $entity->setBiomes($value === null ? null : (array) $value);
-                break;
             case 'shade_step':
                 $entity->setShadeStep($value === null ? null : (float) $value);
                 break;
@@ -621,13 +615,6 @@ class PlanConfigService
                 }
                 return $raw;
 
-            case 'json':
-                $decoded = json_decode($raw, true);
-                if (!is_array($decoded)) {
-                    throw new RuntimeException($key . ' : JSON invalide', 400);
-                }
-                return $decoded;
-
             case 'text':
                 return $raw;
 
@@ -642,7 +629,6 @@ class PlanConfigService
         return match (true) {
             $value === null  => '',
             $type === 'bool' => $value ? 'true' : 'false',
-            $type === 'json' => json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
             default          => (string) $value,
         };
     }

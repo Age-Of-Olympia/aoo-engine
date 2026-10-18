@@ -487,8 +487,8 @@ class TileAssetService
 
     /**
      * Références de configuration qu'un renommage NE met PAS à jour : à
-     * vérifier à la main. Les biomes des plans (plans.biomes) nomment des
-     * murs/ressources ; le catalogue des types aussi.
+     * vérifier à la main : le catalogue des types nomme aussi les murs et
+     * ressources.
      *
      * @return list<string>
      */
@@ -498,12 +498,6 @@ class TileAssetService
 
         if (StructureTypeService::isKnown($old)) {
             $warnings[] = "« {$old} » figure au catalogue des types — à renommer à la main";
-        }
-
-        foreach (glob($this->root . '/datas/*/plans/*.json') ?: [] as $file) {
-            if (str_contains((string) file_get_contents($file), '"' . $old . '"')) {
-                $warnings[] = 'référencée dans ' . basename($file) . ' (biomes du plan) — à renommer à la main';
-            }
         }
 
         return $warnings;

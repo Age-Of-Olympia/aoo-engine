@@ -313,7 +313,7 @@ class TiledMapService
 
         $this->planConfig->writeZLevel($plan, $z, $zConfig ?? [], $this->planConfig->boundsFromCoords($plan, $z));
 
-        $health = $this->planConfig->validate($plan, $this->db, $this->knownItemNames());
+        $health = $this->planConfig->validate($plan, $this->db);
         if ($health['errors'] !== [] || $health['warnings'] !== []) {
             $result['planHealth'] = $health;
         }
@@ -982,19 +982,6 @@ class TiledMapService
         }
 
         return $zLevels;
-    }
-
-    /** @return list<string> existing item names, for the validator (one query instead of one per biome) */
-    private function knownItemNames(): array
-    {
-        $res = $this->db->exe('SELECT name FROM items');
-
-        $names = [];
-        while ($row = $res->fetch_assoc()) {
-            $names[] = $row['name'];
-        }
-
-        return $names;
     }
 
     /** @return array<string, int> "x|y" => coords_id of the (plan, z) */

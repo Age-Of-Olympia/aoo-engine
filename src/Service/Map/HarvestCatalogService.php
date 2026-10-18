@@ -6,8 +6,8 @@ use App\Factory\EntityManagerFactory;
 use Doctrine\DBAL\Connection;
 
 /**
- * Seeds the per-plan yields into `race_harvest`, from the biome lists the
- * plans carry (`plans.biomes`, formerly the plan JSON files). Offered from admin → Cartes → Rendements.
+ * Per-plan yield exceptions (`race_harvest`) on top of what each resource type
+ * yields, edited from admin → Cartes → Rendements.
  */
 final class HarvestCatalogService
 {
@@ -23,115 +23,35 @@ final class HarvestCatalogService
         return $this->conn ??= EntityManagerFactory::getEntityManager()->getConnection();
     }
 
-    /** Configured plan slugs (ex plan JSON files on disk). */
-    public function planNames(): array
+    /**
+     * Opens an exception for a type on a plan: an empty row, which inherits
+     * everything from the type until the screen fills it. Unknown plans,
+     * non-resource types and existing rows are ignored.
+     */
+    public function add(string $plan, int $raceId): bool
     {
-        return array_map(
-            static fn($slug): string => (string) $slug,
-            $this->conn()->fetchFirstColumn('SELECT slug FROM plans ORDER BY slug')
-        );
+        return $this->conn()->executeStatement(
+            "INSERT IGNORE INTO race_harvest (plan, race_id, item, exhaust, regrow)
+             SELECT p.slug, r.id, '', NULL, NULL
+               FROM plans p
+               JOIN races r ON r.id = ? AND r.structure_nature = ?
+              WHERE p.slug = ?",
+            [$raceId, StructureTypeService::NATURE_RESOURCE, $plan]
+        ) > 0;
     }
 
-    /**
-     * What the plan files say, resolved against the type catalogue. Reads
-     * only — nothing is written.
-     *
-     * @return array{
-     *     rows: list<array{plan: string, race_id: int, item: string, exhaust: ?int, regrow: ?int}>,
-     *     unreadable: list<string>,
-     *     unknown: list<string>
-     * }
-     */
-    public function preview(): array
+    /** @return array<int, string> resource types, id => name, for the screen */
+    public function resourceTypes(): array
     {
-        $types = $this->typesByName();
-        $rows = [];
-        $unreadable = [];
-        $unknown = [];
-
-        foreach ($this->planNames() as $plan) {
-            $json = plans()->read($plan);
-
-            if ($json === false) {
-                $unreadable[] = $plan;
-
-                continue;
-            }
-
-            foreach ($json->biomes ?? [] as $biome) {
-                $wall = (string) ($biome->wall ?? '');
-                $item = (string) ($biome->ressource ?? '');
-
-                if ($wall === '' || $item === '') {
-                    continue;
-                }
-
-                if (!isset($types[$wall])) {
-                    $unknown[$wall] = true;
-
-                    continue;
-                }
-
-                /* One row per (plan, type): a plan naming the same wall twice
-                 * keeps the first, as the game does — its biome map is keyed
-                 * by wall name too. */
-                $key = $plan . '/' . $wall;
-
-                $rows[$key] ??= [
-                    'plan' => $plan,
-                    'race_id' => $types[$wall],
-                    'item' => $item,
-                    'exhaust' => isset($biome->exhaust) ? (int) $biome->exhaust : null,
-                    'regrow' => isset($biome->regrow) ? (int) $biome->regrow : null,
-                ];
-            }
+        $types = [];
+        foreach ($this->conn()->fetchAllAssociative(
+            'SELECT id, name FROM races WHERE structure_nature = ? ORDER BY name',
+            [StructureTypeService::NATURE_RESOURCE]
+        ) as $row) {
+            $types[(int) $row['id']] = (string) $row['name'];
         }
 
-        $unknown = array_keys($unknown);
-        sort($unknown);
-
-        return ['rows' => array_values($rows), 'unreadable' => $unreadable, 'unknown' => $unknown];
-    }
-
-    /**
-     * Pours what preview() found. Re-runnable: a row already there is updated
-     * to what the plan says, so a corrected JSON can be poured again.
-     *
-     * @return array{written: int, plans: int, types: int, unreadable: list<string>, unknown: list<string>}
-     */
-    public function seed(): array
-    {
-        $read = $this->preview();
-        $written = $this->write($read['rows']);
-
-        return [
-            'written' => $written,
-            'plans' => count(array_unique(array_column($read['rows'], 'plan'))),
-            'types' => count(array_unique(array_column($read['rows'], 'race_id'))),
-            'unreadable' => $read['unreadable'],
-            'unknown' => $read['unknown'],
-        ];
-    }
-
-    /**
-     * @param list<array{plan: string, race_id: int, item: string, exhaust: ?int, regrow: ?int}> $rows
-     * @return int rows written
-     */
-    private function write(array $rows): int
-    {
-        $written = 0;
-
-        foreach ($rows as $row) {
-            $this->conn()->executeStatement(
-                'INSERT INTO race_harvest (plan, race_id, item, exhaust, regrow)
-                 VALUES (?, ?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE item = VALUES(item), exhaust = VALUES(exhaust), regrow = VALUES(regrow)',
-                [$row['plan'], $row['race_id'], $row['item'], $row['exhaust'], $row['regrow']]
-            );
-            $written++;
-        }
-
-        return $written;
+        return $types;
     }
 
     /**
@@ -267,7 +187,7 @@ final class HarvestCatalogService
      * palms yield nothing is a plan where a player harvests in vain, and a
      * check for "any row on this plan" would call it settled.
      *
-     * @return list<array{plan: string, resources: int, types: list<string>, inJson: int}>
+     * @return list<array{plan: string, resources: int, types: list<string>}>
      */
     public function plansMissingYields(): array
     {
@@ -303,60 +223,8 @@ final class HarvestCatalogService
                 'plan' => (string) $row['plan'],
                 'resources' => (int) $row['resources'],
                 'types' => array_values(array_filter(explode(',', (string) ($row['types'] ?? '')))),
-                'inJson' => count(self::yieldsFromPlanJson((string) $row['plan'])),
             ],
             $rows
         );
-    }
-
-    /**
-     * The seed source (plans.biomes) — read by the SEED only, never at play
-     * time.
-     *
-     * @return array<string, array{item: string, exhaust: ?int, regrow: ?int}>
-     */
-    public static function yieldsFromPlanJson(string $plan): array
-    {
-        $json = plans()->read($plan);
-        $yields = [];
-
-        if ($json === false) {
-            return $yields;
-        }
-
-        foreach ($json->biomes ?? [] as $biome) {
-            $wall = (string) ($biome->wall ?? '');
-
-            if ($wall === '' || $wall === '0') {
-                continue;
-            }
-
-            $yields[$wall] ??= [
-                'item' => (string) ($biome->ressource ?? ''),
-                'exhaust' => isset($biome->exhaust) ? (int) $biome->exhaust : null,
-                'regrow' => isset($biome->regrow) ? (int) $biome->regrow : null,
-            ];
-        }
-
-        return $yields;
-    }
-
-    /**
-     * Type name => races.id, compared on an explicit collation: the name
-     * columns disagree across databases and a bare join errors 1267.
-     *
-     * @return array<string, int>
-     */
-    private function typesByName(): array
-    {
-        $types = [];
-
-        foreach ($this->conn()->fetchAllAssociative(
-            "SELECT id, name FROM races WHERE kind = 'structure'"
-        ) as $row) {
-            $types[(string) $row['name']] = (int) $row['id'];
-        }
-
-        return $types;
     }
 }

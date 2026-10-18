@@ -134,7 +134,7 @@ ob_start();
         <strong>Qu'est-ce qu'une carte locale ?</strong>
         Elle est constituée de deux éléments qui doivent être cohérents :
         <ul class="mb-1 mt-1">
-            <li><strong>Une config de plan</strong> (tables <code style="display:inline;white-space:nowrap">plans</code> / <code style="display:inline;white-space:nowrap">plan_z_levels</code>) : nom, niveaux Z, bornes visibles, biomes…</li>
+            <li><strong>Une config de plan</strong> (tables <code style="display:inline;white-space:nowrap">plans</code> / <code style="display:inline;white-space:nowrap">plan_z_levels</code>) : nom, niveaux Z, bornes visibles…</li>
             <li><strong>Des coordonnées en base</strong> : chaque case dans la table <code style="display:inline;white-space:nowrap">coords</code> (tiles, éléments, murs…)</li>
         </ul>
         Un niveau Z peut exister côté coords sans être déclaré dans la config (et inversement) : la validation ci-dessous détecte ces incohérences.
@@ -149,16 +149,7 @@ ob_start();
 
     <?php if (!$selectedPlan):
         // Vue d'ensemble : santé des plans de la saison filtrée, tant qu'aucun
-        // n'est sélectionné. Les noms d'items sont préchargés une seule fois
-        // pour éviter une requête par biome (sinon des centaines de requêtes
-        // sur l'ensemble des plans).
-        $knownItemNames = [];
-        $itemRows = $database->exe("SELECT name FROM items");
-        if ($itemRows) {
-            while ($ir = $itemRows->fetch_object()) {
-                $knownItemNames[] = $ir->name;
-            }
-        }
+        // n'est sélectionné.
 
         // Vue d'ensemble restreinte aux plans du filtre de saison courant.
         $overviewPlans = $filteredPlans;
@@ -168,14 +159,14 @@ ob_start();
         foreach ($overviewPlans as $p) {
             $raw = plans()->read($p->id);
             if ($raw === null || $raw === false) {
-                // Config absente : problème de plan (ni Z ni biome), rendu à part.
+                // Config absente : problème de plan, rendu à part.
                 $plansWithIssues[] = [
                     'plan' => $p, 'errCount' => 1, 'warnCount' => 0, 'v' => null,
                     'emptyMsg' => 'Config du plan absente, aucune récolte possible sur ce plan.',
                 ];
                 continue;
             }
-            $v = PlanJsonValidator::validate($raw, $p->id, $database, $knownItemNames);
+            $v = PlanJsonValidator::validate($raw, $p->id, $database);
             $errCount  = count($v['errors']);
             $warnCount = count($v['warnings']);
             if ($errCount > 0 || $warnCount > 0) {
@@ -327,9 +318,7 @@ ob_start();
                     // Validation de la config du plan
                     $rawPlanData = plans()->read($plan->id);
                     if ($rawPlanData === null || $rawPlanData === false) {
-                        // Pas de ligne plans : aucun biome chargé, donc aucune récolte
-                        // possible. On le signale explicitement plutôt que d'ignorer
-                        // silencieusement le bloc de validation.
+                        // No plans row: said explicitly rather than skipping the validation block
                         echo '<div class="alert alert-danger mt-3 py-1 my-1"><i class="fas fa-times-circle"></i> Config du plan absente, aucune récolte possible sur ce plan.</div>';
                     } else {
                         $validation = PlanJsonValidator::validate($rawPlanData, $plan->id, $database);

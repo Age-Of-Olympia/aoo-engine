@@ -49,12 +49,12 @@ Age of Olympia is a **turn-based survival RPG** where players:
 - **Entities** (`entities` + satellites): everything standing on a cell — structures, resources, scenery, buildings, unique objects. One row per object, typed by discriminator, placed through `entity_cells`
 - **Items** (`map_items`): Ground items players can pick up
 - **Foregrounds** (`map_foregrounds`): Visual decorations (non-interactive)
-- `map_resources` (ex-`map_walls`) is empty since `Version20260801100000`; the compat view is kept only until the deployment that follows its removal
+- `map_resources` (ex-`map_walls`) is empty since `Version20260801100000`; its `map_walls` compat view is gone (`Version20261018160000`)
 
 **Resource Gathering**:
 - Resources are **entities** (`App\Entity\Resource extends Structure`, discriminator `resource`), NOT items and no longer walls
 - Trees, stones and the like block the step and can be hit, like the structures they came from
-- What a resource *yields* belongs to the (plan, type) pair in `race_harvest`, read through `HarvestCatalogService::yieldsFor()`; the plan's biome list (`plans.biomes`) is only the seed, replayable from admin → Cartes → Rendements
+- What a resource *yields* belongs to the (plan, type) pair in `race_harvest`, read through `HarvestCatalogService::yieldsFor()`: the type carries the default (`races.harvest_*`), a `race_harvest` row is a per-plan exception, added and edited from admin → Cartes → Rendements
 - What a resource *is* right now — standing or exhausted — lives in its own `resources` satellite: an exhausted resource stays on the board and regrows in place
 - Players must move **adjacent** to the resource, then use the `fouiller` action
 - Gathered materials (wood, stone) go to player inventory as items

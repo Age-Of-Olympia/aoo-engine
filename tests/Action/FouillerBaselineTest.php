@@ -22,7 +22,7 @@ use Tests\Support\PlantsResourcesTrait;
  * fonction de la géométrie — ce que ce test épingle case par case, y compris
  * les positions à N élevé que toute règle « un occupant par case » écraserait.
  *
- * Le monde de fixture est un plan dédié, avec son propre JSON de biomes :
+ * Le monde de fixture est un plan dédié, avec ses propres rendements :
  * gaia ne doit pas être touché, et les taux réels ne doivent pas décider du
  * résultat des assertions.
  */
@@ -77,28 +77,26 @@ class FouillerBaselineTest extends LegacyPlayerFixtureTestCase
     }
 
     /**
-     * Écrit la config de plan (table plans) et vide la mémoïsation : le
-     * gateway garde ses lectures, une ligne posée après un premier accès
-     * resterait invisible.
+     * Écrit la config de plan (table plans) et ses rendements (race_harvest),
+     * puis vide la mémoïsation : le gateway garde ses lectures, une ligne
+     * posée après un premier accès resterait invisible.
      *
-     * @param list<array<string, mixed>> $biomes
+     * @param list<array<string, mixed>> $yields wall, ressource, exhaust, regrow
      */
-    private function writePlan(array $biomes): void
+    private function writePlan(array $yields): void
     {
         $this->link->executeStatement('DELETE FROM plans WHERE slug = ?', [self::PLAN]);
-        $this->link->insert('plans', [
-            'slug'   => self::PLAN,
-            'name'   => 'Plan de test fouille',
-            'biomes' => json_encode($biomes, JSON_UNESCAPED_UNICODE),
-        ]);
+        $this->link->insert('plans', ['slug' => self::PLAN, 'name' => 'Plan de test fouille']);
         \App\Service\PlanService::forget(self::PLAN);
 
-        /* Le monde se règle en base : le jeu ne lit pas les biomes pour les
-           rendements, il lit `race_harvest`. La colonne biomes reste la
-           source du VERSEMENT, donc la fixture verse ce qu'elle vient
-           d'écrire. */
         $this->link->executeStatement('DELETE FROM race_harvest WHERE plan = ?', [self::PLAN]);
-        (new \App\Service\Map\HarvestCatalogService($this->link))->seed();
+        foreach ($yields as $yield) {
+            $this->link->executeStatement(
+                'INSERT IGNORE INTO race_harvest (plan, race_id, item, exhaust, regrow)
+                 SELECT ?, id, ?, ?, ? FROM races WHERE name = ?',
+                [self::PLAN, $yield['ressource'], $yield['exhaust'] ?? null, $yield['regrow'] ?? null, $yield['wall']]
+            );
+        }
     }
 
     /** Une ressource récoltable sur une case du plan. */

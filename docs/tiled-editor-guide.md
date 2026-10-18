@@ -45,7 +45,7 @@ Les actions AoO vivent en bas du menu **Fichier** :
 | AoO : Générer le monde… | pull tous les plans et écrit un `.world` (vue d'ensemble) |
 
 Le reste du cycle de vie se gère dans **l'admin du jeu** : création,
-clonage et configuration des plans (fond, ambiance, biomes…) sur la page
+clonage et configuration des plans (fond, ambiance…) sur la page
 **Plans**, inventaire et gestion des images de tuiles sur la page
 **Tuiles & images** (l'`img/` du dépôt n'est pas versionné : récupérer
 l'art via le dépôt d'assets). L'extension se concentre sur l'édition du
@@ -197,16 +197,15 @@ haut-gauche) à la racine de `img/<couche>/`, puis re-puller. Les tuiles de
 sol (`tiles`) restent strictement 50x50 : pas de structures sur cette
 couche, le décor multi-tuiles vit en `foregrounds`/`elements`.
 
-### Les propriétés du plan (nom, fond, visibilité, biomes…)
+### Les propriétés du plan (nom, fond, visibilité…)
 
 La configuration du plan est éditable directement : chaque clé apparaît
 en **propriété de la carte** préfixée `aooPlan_` — `name`, `shortName`,
 `season` (numéro de saison ; vide = toutes les saisons), `x`/`y`
 (position sur la carte du monde), `player_visibility` (`true`/`false`),
-`pnj`, `size`, `bg`, `mask`, `scrollingMask`, `verticalScrolling`,
-`biomes` (JSON des ressources). Une valeur vide = clé retirée. Tout est
-validé et appliqué au push ; le rapport remonte le bilan de santé du
-plan (`PlanJsonValidator` : biomes en doublon, ressources inconnues…).
+`pnj`, `size`, `bg`, `mask`, `scrollingMask`, `verticalScrolling`.
+Une valeur vide = clé retirée. Tout est validé et appliqué au push ; le
+rapport remonte le bilan de santé du plan (`PlanJsonValidator` : niveaux z).
 
 > **Revenir aux propriétés de la carte** : le panneau Propriétés suit ce
 > qui est sélectionné (objet, calque…). Pour retrouver les `aooPlan_*`
@@ -232,13 +231,13 @@ de ce niveau, préfixée `aooZ_` :
 
 Tout est écrit dans `z_levels` du JSON de plan au push.
 
-#### Le fond, l'ambiance et les biomes (admin → Plans)
+#### Le fond et l'ambiance (admin → Plans)
 
-Le fond (`bg`, l'image affichée sous les tuiles), le masque animé (`mask`,
-l'effet d'ambiance météo qui défile par-dessus) et les biomes (`biomes`,
-quels murs sont récoltables et ce qu'ils donnent) sont des clés du JSON de
-plan : leur **édition assistée vit dans l'admin du jeu, page Plans**
-(catalogue des fonds, validation des biomes).
+Le fond (`bg`, l'image affichée sous les tuiles) et le masque animé
+(`mask`, l'effet d'ambiance météo qui défile par-dessus) sont des clés de
+la config du plan : leur **édition assistée vit dans l'admin du jeu, page
+Plans** (catalogue des fonds). Les rendements des ressources se règlent sur
+leur type, et par plan dans admin → Cartes → Rendements.
 
 Côté Tiled, ces clés restent visibles et modifiables à la main dans les
 propriétés `aooPlan_*` (cas avancés — elles sont réécrites au push, avec le

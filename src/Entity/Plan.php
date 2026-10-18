@@ -102,13 +102,6 @@ class Plan
     #[ORM\Column(name: "visible_bounds_max_y", type: "integer", nullable: true)]
     private ?int $visibleBoundsMaxY = null;
 
-    /**
-     * Raw biome list (wall/ressource/exhaust/regrow), JSON-encoded. Seed
-     * source for race_harvest only — never read at play time.
-     */
-    #[ORM\Column(type: "text", nullable: true)]
-    private ?string $biomes = null;
-
     /** Admin-only note, never shown in game. */
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $comment = null;
@@ -330,25 +323,6 @@ class Plan
         $this->visibleBoundsMaxX = $maxX;
         $this->visibleBoundsMinY = $minY;
         $this->visibleBoundsMaxY = $maxY;
-    }
-
-    /** @return list<array{wall: string, ressource: string, exhaust: ?int, regrow: ?int}>|null */
-    public function getBiomes(): ?array
-    {
-        if ($this->biomes === null) {
-            return null;
-        }
-
-        $decoded = json_decode($this->biomes, true);
-
-        return is_array($decoded) ? $decoded : null;
-    }
-
-    public function setBiomes(?array $biomes): void
-    {
-        $this->biomes = $biomes === null
-            ? null
-            : json_encode($biomes, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
     /** @return Collection<int, PlanZLevel> */

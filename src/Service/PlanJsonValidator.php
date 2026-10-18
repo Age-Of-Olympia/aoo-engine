@@ -2,8 +2,6 @@
 
 namespace App\Service;
 
-use App\Service\Map\StructureTypeService;
-
 /**
  * Validates the JSON structure of a plan file.
  * Each z_level must explicitly declare either:
@@ -19,29 +17,14 @@ class PlanJsonValidator
      * @param object        $planData        Raw decoded JSON of the plan
      * @param string        $planId          Plan identifier (used for DB query)
      * @param object|null   $db              Optional DB instance (Classes\Db) for cross-checking with coords table
-     * @param list<string>|null $knownItemNames Optional preloaded list of existing item names.
-     *                                       When provided, biome resources are checked against
-     *                                       this in-memory set instead of one DB query per biome ;
-     *                                       essential when validating every plan at once (overview).
      * @return array{
      *     errors: string[], warnings: string[], ok: string[],
-     *     z: array{errors: string[], warnings: string[], ok: string[]},
-     *     biome: array{errors: string[], warnings: string[], ok: string[]}
-     * } Messages agrégés (errors/warnings/ok) et détaillés par domaine (z / biome)
+     *     z: array{errors: string[], warnings: string[], ok: string[]}
+     * } Messages agrégés (errors/warnings/ok) et détaillés par domaine (z)
      */
-    public static function validate(object $planData, string $planId, ?object $db = null, ?array $knownItemNames = null): array
+    public static function validate(object $planData, string $planId, ?object $db = null): array
     {
-        // Accumulateurs séparés par domaine pour distinguer, à l'affichage,
-        // les problèmes de niveaux Z de ceux des biomes.
-        $bErrors = []; $bWarnings = []; $bOk = [];
         $zErrors = []; $zWarnings = []; $zOk = [];
-
-        // Set O(1) des items connus (si fourni), pour éviter une requête par biome.
-        $itemSet = $knownItemNames !== null ? array_flip($knownItemNames) : null;
-
-        // La validation des biomes est indépendante des z_levels : un plan peut
-        // déclarer des biomes sans z_levels (et inversement).
-        self::validateBiomes($planData, $db, $itemSet, $bErrors, $bWarnings, $bOk);
 
         if (isset($planData->z_levels) && is_array($planData->z_levels)) {
             // Index des z déclarés dans le JSON
@@ -119,109 +102,14 @@ class PlanJsonValidator
 
         return [
             'z'        => ['errors' => $zErrors, 'warnings' => $zWarnings, 'ok' => $zOk],
-            'biome'    => ['errors' => $bErrors, 'warnings' => $bWarnings, 'ok' => $bOk],
-            'errors'   => array_merge($zErrors, $bErrors),
-            'warnings' => array_merge($zWarnings, $bWarnings),
-            'ok'       => array_merge($zOk, $bOk),
+            'errors'   => $zErrors,
+            'warnings' => $zWarnings,
+            'ok'       => $zOk,
         ];
     }
 
     /**
-     * Valide les biomes déclarés dans le JSON du plan.
-     *
-     * Pour qu'une fouille fonctionne (voir ResourceService::findResourcesAround),
-     * deux conditions doivent être vraies pour chaque biome :
-     *   - le nom du wall existe au catalogue resource_types avec la valeur -1 (récoltable) ;
-     *   - le nom de la ressource correspond à un item existant en base
-     *     (Item::get_item_by_name reçoit ce nom).
-     * Toute typo sur l'un ou l'autre provoque une fouille muette, sans erreur.
-     *
-     * @param array<string,int>|null $itemSet Set O(1) des items connus (name => index) ou null pour requêter la base
-     * @param string[] $errors   Modifié par référence
-     * @param string[] $warnings Modifié par référence
-     * @param string[] $ok       Modifié par référence
-     */
-    private static function validateBiomes(object $planData, ?object $db, ?array $itemSet, array &$errors, array &$warnings, array &$ok): void
-    {
-        if (!isset($planData->biomes) || !is_array($planData->biomes)) {
-            return;
-        }
-
-        $types = StructureTypeService::all();
-
-        // Suivi des walls déjà rencontrés pour signaler les doublons : au runtime,
-        // ResourceService indexe les biomes par wall ($biomes[$wall] = $ressource),
-        // donc une seconde entrée pour le même wall écrase silencieusement la première.
-        $seenWalls = [];
-
-        foreach ($planData->biomes as $i => $biome) {
-            // Valeurs brutes pour la logique (lookups resource_types / requête items),
-            // valeurs échappées pour l'affichage (les messages sont rendus en HTML).
-            $wallName      = $biome->wall      ?? null;
-            $ressourceName = $biome->ressource ?? null;
-            $wallEsc       = self::esc($wallName);
-            $ressEsc       = self::esc($ressourceName);
-            $label = "Biome #" . ($i + 1) . ($wallName ? " (wall: {$wallEsc})" : '');
-
-            // Biome entièrement vide (placeholder {"wall":"","ressource":""}) :
-            // inoffensif mais sans effet : un seul warning plutôt que deux erreurs
-            // trompeuses de "clé manquante" (les clés existent mais sont vides).
-            // Une valeur uniquement composée d'espaces compte comme vide.
-            if (trim((string) $wallName) === '' && trim((string) $ressourceName) === '') {
-                $warnings[] = "{$label} : biome vide (placeholder), sans effet, à supprimer";
-                continue;
-            }
-
-            // Wall dupliqué : le runtime ne garde que la dernière ressource associée.
-            if ($wallName && isset($seenWalls[$wallName])) {
-                $warnings[] = "{$label} : wall '{$wallEsc}' déjà déclaré au biome #" . ($seenWalls[$wallName] + 1) . " → seule la dernière ressource est prise en compte à la récolte";
-            } elseif ($wallName) {
-                $seenWalls[$wallName] = $i;
-            }
-
-            // Vérifier le wall au catalogue des types (doit exister ET être de nature « ressource »)
-            if (!$wallName) {
-                $errors[] = "{$label} : clé 'wall' manquante";
-            } elseif (!array_key_exists($wallName, $types)) {
-                $errors[] = "{$label} : wall '{$wallEsc}' inconnu du catalogue des types, probablement une typo";
-            } elseif ($types[$wallName]['nature'] !== StructureTypeService::NATURE_RESOURCE) {
-                $warnings[] = "{$label} : wall '{$wallEsc}' est de nature « " . self::esc($types[$wallName]['nature'])
-                    . " » au catalogue → non récoltable en l'état";
-            } else {
-                $ok[] = "{$label} : wall valide (nature « ressource » au catalogue)";
-            }
-
-            // Vérifier la ressource : elle doit correspondre à un item existant en base.
-            // Set préchargé prioritaire (validation en masse) ; sinon requête unitaire.
-            if (!$ressourceName) {
-                $errors[] = "{$label} : clé 'ressource' manquante";
-            } else {
-                $exists = null;
-                if ($itemSet !== null) {
-                    $exists = isset($itemSet[$ressourceName]);
-                } elseif ($db !== null) {
-                    $rows   = $db->exe("SELECT COUNT(*) AS nb FROM items WHERE name = ?", [$ressourceName]);
-                    $exists = $rows ? ((int) $rows->fetch_object()->nb) > 0 : false;
-                }
-                if ($exists === false) {
-                    $errors[] = "{$label} : ressource '{$ressEsc}' introuvable en base (aucun item de ce nom), nom d'item correct ?";
-                } elseif ($exists === true) {
-                    $ok[] = "{$label} : ressource '{$ressEsc}' valide (item trouvé en base)";
-                }
-            }
-
-            // exhaust / regrow : absents → comportement de récolte non défini
-            if (!isset($biome->exhaust)) {
-                $warnings[] = "{$label} : clé 'exhaust' manquante (taux d'épuisement non défini)";
-            }
-            if (!isset($biome->regrow)) {
-                $warnings[] = "{$label} : clé 'regrow' manquante (taux de repousse non défini)";
-            }
-        }
-    }
-
-    /**
-     * Échappe une valeur dynamique (nom de z, wall, ressource issus du JSON)
+     * Échappe une valeur dynamique (nom de z issu du JSON)
      * pour une insertion sûre dans un message rendu en HTML. Le balisage
      * littéral des messages (ex. <code>) reste volontairement intact.
      */

@@ -97,7 +97,7 @@ function plans_validation_html(string $planId, Db $db, bool $includeOk): string
 
     $validation = PlanJsonValidator::validate($raw, $planId, $db);
     if (count($validation['errors']) + count($validation['warnings']) + count($validation['ok']) === 0) {
-        return '<p class="text-muted mb-0">Aucune validation applicable (pas de niveaux Z ni de biomes déclarés).</p>';
+        return '<p class="text-muted mb-0">Aucune validation applicable (pas de niveaux Z déclarés).</p>';
     }
 
     ob_start();
@@ -187,14 +187,6 @@ function plans_render_list(array $inventory, Db $db, string $csrfToken): string
     $seasonFilter = current_season_filter();
     $filtered = array_filter($inventory, fn(object $p) => plan_matches_season_filter($p, $seasonFilter));
 
-    // Noms d'items préchargés une fois pour le validator (sinon une requête
-    // par biome sur tout le catalogue) — même pattern que local_maps.php
-    $knownItemNames = [];
-    $res = $db->exe('SELECT name FROM items');
-    while ($row = $res->fetch_object()) {
-        $knownItemNames[] = $row->name;
-    }
-
     $localMaps = ViewService::localMapIndex();
     $worldPlan = plans()->worldPlan();
     $worldMap = (new ViewService($db))->getGlobalMap();
@@ -208,7 +200,7 @@ function plans_render_list(array $inventory, Db $db, string $csrfToken): string
             if ($raw === null || $raw === false) {
                 $validationCell = '<span class="badge" style="background-color:#dc3545;color:#fff;">config absente</span>';
             } else {
-                $v = PlanJsonValidator::validate($raw, $plan->id, $db, $knownItemNames);
+                $v = PlanJsonValidator::validate($raw, $plan->id, $db);
                 $badges = '';
                 if (count($v['errors']) > 0) {
                     $badges .= '<span class="badge" style="background-color:#dc3545;color:#fff;">' . count($v['errors']) . ' err.</span> ';
@@ -267,7 +259,7 @@ function plans_render_list(array $inventory, Db $db, string $csrfToken): string
         . '<strong>Qu\'est-ce qu\'un plan ?</strong> Deux parties qui doivent rester cohérentes : '
         . '<strong>une config</strong> (tables <code style="display:inline;white-space:nowrap">plans</code> /'
         . ' <code style="display:inline;white-space:nowrap">plan_z_levels</code>'
-        . ' : nom, niveaux Z, bornes visibles, biomes…) et <strong>des coordonnées en base</strong>'
+        . ' : nom, niveaux Z, bornes visibles…) et <strong>des coordonnées en base</strong>'
         . ' (table <code style="display:inline;white-space:nowrap">coords</code> + couches'
         . ' <code style="display:inline;white-space:nowrap">map_*</code>).'
         . ' Le contenu des cartes s\'édite via l\'extension Tiled ; la génération des PNG se fait sur'
@@ -284,7 +276,7 @@ function plans_render_list(array $inventory, Db $db, string $csrfToken): string
 
         . '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
         . '<th>Code</th><th>Nom</th><th>Saison</th><th>Statut</th><th>Coords</th>'
-        . '<th title="Bilan PlanJsonValidator (niveaux Z, biomes)">Validation</th>'
+        . '<th title="Bilan PlanJsonValidator (niveaux Z)">Validation</th>'
         . '<th title="Carte telle que le jeu la compose ; survol pour l\'agrandir">Carte</th><th></th>'
         . '</tr></thead><tbody>' . $rows . '</tbody></table>'
         . '<style>'
@@ -432,7 +424,6 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         'scrollingMask'     => ['Défilement du masque', 'Durée d\'animation du masque (0/vide = statique).'],
         'verticalScrolling' => ['Défilement vertical', 'Direction du défilement du masque.'],
         'comment'           => ['Commentaire', 'Note pour les admins, jamais affichée en jeu.'],
-        'biomes'            => ['Biomes (JSON), ancien format', 'Les rendements se définissent désormais dans Ressources → Rendements, la seule table lue par le jeu. Ce JSON ne sert plus qu\'à alimenter cette table pour un plan dont les rendements n\'y sont pas encore. Forme : [{"wall": "arbre1", "ressource": "bois", "exhaust": 75, "regrow": 20}].'],
     ];
 
     $renderField = function (string $key, string $type) use ($values, $fieldHelp): string {
@@ -447,12 +438,10 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
             'image' => '<input type="text" class="form-control" name="config[' . e($key) . ']" value="' . e($value) . '"'
                 . ' list="plans-bg-catalog" placeholder="img/tiles/…">',
             'text' => '<textarea class="form-control" name="config[' . e($key) . ']" rows="3">' . e($value) . '</textarea>',
-            'json' => '<textarea class="form-control" name="config[' . e($key) . ']" rows="10" spellcheck="false"'
-                . ' style="font-family:monospace;font-size:12px;">' . e($value) . '</textarea>',
             default => '<input type="text" class="form-control" name="config[' . e($key) . ']" value="' . e($value) . '">',
         };
 
-        $width = in_array($type, ['json', 'text'], true) ? 'col-12' : 'col-md-3 col-6';
+        $width = $type === 'text' ? 'col-12' : 'col-md-3 col-6';
 
         return '<div class="form-group ' . $width . '"><label>' . e($label)
             . ' <code style="display:inline;font-size:11px;">' . e($key) . '</code></label>'
@@ -471,28 +460,17 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
     foreach ($displayKeys as $key) {
         $displayFields .= $renderField($key, PlanConfigService::PLAN_CONFIG_KEYS[$key]);
     }
-    /* Plus de JSON éditable ici : les rendements se règlent dans
-       Ressources → Rendements, qui est ce que le jeu lit. Le JSON du plan
-       n'est plus lu en jeu : il ne sert qu'au versement. Il n'est pas effacé
-       (write() ne touche que les clés postées), simplement plus modifiable
-       ici — et un plan sans rendement réglé est signalé en rouge. */
+    // Yields live in race_harvest; a row there is a per-plan exception
     $harvest = new \App\Service\Map\HarvestCatalogService();
     $poured = count(array_filter(
         $harvest->configured(),
         static fn(array $row): bool => $row['plan'] === $planId
     ));
-    $fallback = count(\App\Service\Map\HarvestCatalogService::yieldsFromPlanJson($planId));
 
-    /* Un plan sans ligne n'est plus un plan incomplet : le type porte son
-       rendement, et une ligne ici ne sert qu'à DÉVIER. L'alerte rouge a donc
-       disparu — elle réclamait un réglage qui n'est plus dû. */
-    $biomesField = '<div class="col-12"><p class="mb-1">'
+    $harvestField = '<div class="col-12"><p class="mb-1">'
         . ($poured > 0
             ? '<strong>' . $poured . ' rendement(s)</strong> propre(s) à ce plan, prioritaires sur le catalogue des types.'
-            : 'Aucune exception : les ressources de ce plan ont le rendement de <strong>leur type</strong>.'
-                . ($fallback > 0
-                    ? ' Son JSON en déclare ' . $fallback . ', à enregistrer depuis la page Rendements si ce plan doit faire exception.'
-                    : ''))
+            : 'Aucune exception : les ressources de ce plan ont le rendement de <strong>leur type</strong>.')
         . '</p><a class="btn btn-sm btn-outline-primary" href="/admin/harvest-seed.php">Régler les rendements</a></div>';
 
     // Niveaux Z : union coords ∪ config, pour rendre la dérive visible ici aussi
@@ -594,7 +572,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         . '<div class="card-body"><div class="row">' . $displayFields . '</div></div></div>'
 
         . '<div class="card mb-3"><div class="card-header">Rendements (ressources récoltables)</div>'
-        . '<div class="card-body"><div class="row">' . $biomesField . '</div></div></div>'
+        . '<div class="card-body"><div class="row">' . $harvestField . '</div></div></div>'
 
         . '<div class="card mb-3"><div class="card-header">Niveaux Z</div>'
         . '<div class="card-body">' . $zCard . '</div></div>'
