@@ -10,6 +10,7 @@ use App\Service\PlayerOptionsService;
 use App\Service\PlayerService;
 use App\Service\PlayerPassiveService;
 use App\Service\EffectService;
+use App\Service\MapElementService;
 use App\Service\PlayerEffectService;
 use App\Service\RaceService;
 use Exception;
@@ -1216,10 +1217,12 @@ class Player implements ActorInterface {
                      * configurable par race (races.bleeds) — '' = rien,
                      * un mur ne saigne pas. */
                     $bleeds = (new RaceService())->getRaceByName((string) ($this->data->race ?? ''))?->getBleeds() ?? '';
+                    $elements = new MapElementService();
 
-                    if($bleeds !== ''){
+                    // Chance and lifetime on the floor belong to the element type (admin → Types d'éléments)
+                    if($bleeds !== '' && $elements->rollsSpill($bleeds)){
 
-                        Element::put($bleeds, $this->data->coords_id);
+                        Element::put($bleeds, $this->data->coords_id, $elements->lifetimeTurnsOf($bleeds));
                     }
                 }
 

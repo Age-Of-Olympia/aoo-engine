@@ -4,6 +4,7 @@ namespace Tests\Player;
 
 use App\Service\EffectService;
 use App\Service\MapElementService;
+use App\Service\RaceService;
 use Classes\Element;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
@@ -17,6 +18,8 @@ class ElementTypeEffectTest extends LegacyPlayerFixtureTestCase
         $this->link->executeStatement("DELETE FROM map_elements WHERE name = 'glu_test'");
         $this->link->executeStatement("DELETE FROM element_types WHERE name = 'glu_test'");
         $this->link->executeStatement("DELETE FROM effects WHERE name IN ('glu_test', 'colle_test')");
+        $this->link->executeStatement("UPDATE races SET bleeds = 'sang' WHERE bleeds = 'glu_test'");
+        RaceService::clearCache();
         EffectService::clearCache();
         MapElementService::clearCache();
         parent::tearDown();
@@ -136,5 +139,27 @@ class ElementTypeEffectTest extends LegacyPlayerFixtureTestCase
 
         $elements->setLabel('glu_test', '');
         $this->assertSame('glu_test', $elements->labelOf('glu_test'), 'emptied: the code again');
+    }
+
+    /** A wound spills the race's element as often and as long as its type says. */
+    public function testTheTypeSetsSpillChanceAndLifetime(): void
+    {
+        $this->link->executeStatement("UPDATE races SET bleeds = 'glu_test' WHERE name = 'nain'");
+        RaceService::clearCache();
+        $elements = new MapElementService();
+        $player = $this->createRealPlayer('GmGluSaigne');
+        $cell = $this->tile(5, 0);
+        $player->go($cell);
+        $coordsId = (int) \Classes\View::get_coords_id($cell);
+        $endTime = fn () => $this->link->fetchOne("SELECT endTime FROM map_elements WHERE name = 'glu_test' AND coords_id = ?", [$coordsId]);
+
+        $elements->setSpill('glu_test', 2, 0);
+        $player->putBonus(['pv' => -1]);
+        $this->assertFalse($endTime(), 'no chance: nothing spilled');
+
+        $elements->setSpill('glu_test', 2, 150);
+        $this->assertSame(100, $elements->spillChanceOf('glu_test'));
+        $player->putBonus(['pv' => -1]);
+        $this->assertEqualsWithDelta(time() + 2 * \App\Service\TurnScheduleService::referenceTurnSeconds(), (int) $endTime(), 5);
     }
 }

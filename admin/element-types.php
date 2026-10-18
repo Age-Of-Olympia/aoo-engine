@@ -31,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['element_type'])) {
         $elements->setOpacity($name, $opacity === '' ? null : (int) $opacity);
         $elements->setLabel($name, trim((string) ($_POST['label'] ?? '')));
         $elements->setEffectStrength($name, (int) ($_POST['effect_duration'] ?? 1), (int) ($_POST['effect_value'] ?? 1));
+        $elements->setSpill($name, (int) ($_POST['lifetime_turns'] ?? 2), (int) ($_POST['spill_chance'] ?? 100));
         // Last: it needs element_types.depth, added by a migration
         $elements->setDepth($name, (int) ($_POST['depth'] ?? MapElementService::DEPTH_VOLUME));
         setFlash('success', $effect === ''
@@ -96,6 +97,12 @@ foreach ($names as $name) {
         . '<input type="number" name="effect_value" min="1" class="form-control form-control-sm" style="width:4em"'
             . ' value="' . $elements->effectValueOf($name) . '"'
             . ' title="Intensité : multiplie les modificateurs de l\'effet">'
+        . '<input type="number" name="lifetime_turns" min="-1" class="form-control form-control-sm" style="width:5em"'
+            . ' value="' . $elements->lifetimeTurnsOf($name) . '"'
+            . ' title="Versé par une blessure (sang…) : tours passés au sol, -1 sans fin">'
+        . '<input type="number" name="spill_chance" min="0" max="100" class="form-control form-control-sm" style="width:5em"'
+            . ' value="' . $elements->spillChanceOf($name) . '"'
+            . ' title="Versé par une blessure : chance en % que le coup le verse vraiment">'
         . '<label class="mb-0 d-flex align-items-center gap-1" title="Se fond avec ses voisins de la même famille :'
             . ' bords estompés, coudes. Décoché, chaque case est dessinée seule.">'
             . '<input type="checkbox" name="fluid"' . ($elements->isFluid($name) ? ' checked' : '') . '> fluide</label>'
@@ -138,6 +145,8 @@ $content = '<div class="d-flex justify-content-between align-items-center mb-3">
     . 'Tant qu\'aucun n\'a été choisi, c\'est l\'effet du même nom, s\'il existe. '
     . 'Les deux nombres règlent sa <strong>durée</strong> en tours (0 jusqu\'au prochain tour, -1 sans fin) et son <strong>intensité</strong>. '
     . 'Un type sans effet est purement décoratif. '
+    . 'Pour ce qu\'une blessure verse au sol (le <code>sang</code>, réglé par race) : les deux nombres suivants donnent '
+    . 'sa <strong>durée au sol</strong> en tours (-1 sans fin) et la <strong>chance</strong>, en %, qu\'un coup le verse vraiment. '
     . 'Un type <strong>fluide</strong> (eau, lave…) se fond avec ses voisins de la même famille ; '
     . 'décoché, chaque case est dessinée seule. '
     . 'L\'<strong>opacité</strong> (en %) laisse voir le sol dessous ; vide, 50 pour une texture webp, 100 sinon. '

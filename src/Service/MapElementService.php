@@ -53,7 +53,7 @@ class MapElementService
         self::DEPTH_VOLUME => 'Volume ou effet',
     ];
 
-    /** @var array<string, array{effect: ?string, fluid: bool, opacity: ?int, depth: int, label: string, duration: int, value: int}>|null element_types, read once per request */
+    /** @var array<string, array{effect: ?string, fluid: bool, opacity: ?int, depth: int, label: string, duration: int, value: int, lifetime: int, chance: int}>|null element_types, read once per request */
     private static ?array $types = null;
 
     /** Placeable elements that do apply an effect on step. @return list<string> */
@@ -94,6 +94,35 @@ class MapElementService
              SELECT ?, (SELECT name FROM effects WHERE name = ?), ?, ?
              ON DUPLICATE KEY UPDATE effect_duration = VALUES(effect_duration), effect_value = VALUES(effect_value)',
             [$element, $element, max(-1, $duration), max(1, $value)]
+        );
+        self::clearCache();
+    }
+
+    /** Turns the element stays on the floor once a wound spills it (-1 = never fades); a type without a row: two. */
+    public function lifetimeTurnsOf(string $element): int
+    {
+        return self::types()[$element]['lifetime'] ?? 2;
+    }
+
+    /** Percent chance that a wound really spills the element; a type without a row: always. */
+    public function spillChanceOf(string $element): int
+    {
+        return self::types()[$element]['chance'] ?? 100;
+    }
+
+    /** Whether this wound spills the element, rolled against its chance. */
+    public function rollsSpill(string $element): bool
+    {
+        return mt_rand(1, 100) <= $this->spillChanceOf($element);
+    }
+
+    public function setSpill(string $element, int $lifetimeTurns, int $chance): void
+    {
+        (new Db())->exe(
+            'INSERT INTO element_types (name, effect_name, lifetime_turns, spill_chance)
+             SELECT ?, (SELECT name FROM effects WHERE name = ?), ?, ?
+             ON DUPLICATE KEY UPDATE lifetime_turns = VALUES(lifetime_turns), spill_chance = VALUES(spill_chance)',
+            [$element, $element, max(-1, $lifetimeTurns), max(0, min(100, $chance))]
         );
         self::clearCache();
     }
@@ -179,16 +208,17 @@ class MapElementService
         self::clearCache();
     }
 
-    /** @return array<string, array{effect: ?string, fluid: bool, opacity: ?int, depth: int, label: string, duration: int, value: int}> */
+    /** @return array<string, array{effect: ?string, fluid: bool, opacity: ?int, depth: int, label: string, duration: int, value: int, lifetime: int, chance: int}> */
     private static function types(): array
     {
         if (self::$types === null) {
             self::$types = [];
             $columns = 'name, effect_name, fluid, opacity, label, effect_duration, effect_value';
-            /* Until element_types.depth exists, a fluid type is a sheet and
-             * the others volumes: fire already stands over lava. */
+            /* Until element_types.depth (and the spill columns) exist, a fluid
+             * type is a sheet and the others volumes: fire already stands
+             * over lava. */
             try {
-                $res = (new Db())->exe('SELECT ' . $columns . ', depth FROM element_types');
+                $res = (new Db())->exe('SELECT ' . $columns . ', depth, lifetime_turns, spill_chance FROM element_types');
             } catch (\Throwable) {
                 $res = (new Db())->exe('SELECT ' . $columns . ' FROM element_types');
             }
@@ -198,7 +228,9 @@ class MapElementService
                     'opacity' => $row->opacity === null ? null : (int) $row->opacity,
                     'depth' => isset($row->depth) ? (int) $row->depth : ($fluid ? self::DEPTH_SHEET : self::DEPTH_VOLUME),
                     'label' => (string) $row->label, 'duration' => (int) $row->effect_duration,
-                    'value' => (int) $row->effect_value];
+                    'value' => (int) $row->effect_value,
+                    'lifetime' => isset($row->lifetime_turns) ? (int) $row->lifetime_turns : 2,
+                    'chance' => isset($row->spill_chance) ? (int) $row->spill_chance : 100];
             }
         }
 
