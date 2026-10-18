@@ -91,8 +91,8 @@ function items_owner_counts(): array
             UNION
             SELECT item_id, player_id FROM players_items_bank WHERE n > 0
             UNION
-            SELECT i.item_id, l.player_id FROM players_items_instances l
-                JOIN item_instances i ON i.id = l.instance_id WHERE i.destroyed = 0
+            SELECT i.item_id, e.holder_id FROM players e
+                JOIN item_instances i ON i.entity_id = e.id WHERE i.destroyed = 0 AND e.holder_id IS NOT NULL
             UNION
             SELECT item_id, player_id FROM items_bids WHERE stock > 0
             UNION
