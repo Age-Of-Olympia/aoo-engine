@@ -197,13 +197,6 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     #[ORM\Column(type: "boolean", options: ["default" => false])]
     private bool $lockable = false;
 
-    /**
-     * Superseded by structure_nature 'porte' (isDoor); no code reads it.
-     * Kept mapped until a migration drops the column after the deploy.
-     */
-    #[ORM\Column(type: "boolean", name: "opens_the_way", options: ["default" => false])]
-    private bool $opensTheWay = false;
-
     #[ORM\Column(type: "string", length: 50, options: ["default" => ""])]
     private string $faction = '';
 

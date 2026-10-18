@@ -439,7 +439,6 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
             'blocks_passage' => 1,
             'blocks_projectiles' => 1,
             'lockable' => 1,
-            'opens_the_way' => 0,
             'readable_from_afar' => 1,
             'bgColor' => '#8b6d43',
             'color' => 'black',
