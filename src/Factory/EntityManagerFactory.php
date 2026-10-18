@@ -94,16 +94,18 @@ final class EntityManagerFactory
             return; // already initialized
         }
         $isDevMode = defined('DEV_MODE') && DEV_MODE;
+        $fingerprint = self::mappingFingerprint();
 
         /* Le dossier des ENTITÉS, nommé et non déduit de l'emplacement de
          * cette fabrique : elle a déménagé, Doctrine ne doit pas la suivre. */
         self::$orm_db_config = ORMSetup::createAttributeMetadataConfiguration(
             paths: [dirname(__DIR__) . '/Entity'],
             isDevMode: $isDevMode,
-            cache: new PhpFilesAdapter('doctrine_' . self::mappingFingerprint(), 0, dirname(__DIR__, 2) . '/var/cache')
+            cache: new PhpFilesAdapter('doctrine_' . $fingerprint, 0, dirname(__DIR__, 2) . '/var/cache')
         );
         self::$orm_db_config->setMiddlewares([new QueryCountingMiddleware()]);
-        $proxyDir = __DIR__ . '/../../var/proxies';
+        // Same key as the metadata: a proxy regenerated on file dates alone can outlive a deploy too
+        $proxyDir = __DIR__ . '/../../var/proxies/' . $fingerprint;
         if (!is_dir($proxyDir)) {
             mkdir($proxyDir, 0755, true);
         }
@@ -116,7 +118,9 @@ final class EntityManagerFactory
      * Metadata cache namespace: without it Doctrine reads every entity's
      * attributes by reflection on each request. The namespace changes with
      * the mapped files (entities, and the action folders the discriminator
-     * maps are scanned from), so an edit or a deploy starts a fresh cache.
+     * maps are scanned from), so a local edit starts a fresh cache — and
+     * with the deployed version, rewritten by every deploy: file dates alone
+     * survived a deploy that changed an entity, and served the old mapping.
      */
     private static function mappingFingerprint(): string
     {
@@ -126,7 +130,8 @@ final class EntityManagerFactory
             glob($src . '/Action/*.php') ?: [],
             glob($src . '/Action/OutcomeInstruction/*.php') ?: []
         );
+        $deployed = @file_get_contents(dirname(__DIR__, 2) . '/config/deployed_version.txt') ?: '';
 
-        return md5(count($files) . '|' . max(array_map('filemtime', $files) ?: [0]));
+        return md5(count($files) . '|' . max(array_map('filemtime', $files) ?: [0]) . '|' . $deployed);
     }
 }
