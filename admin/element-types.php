@@ -69,6 +69,10 @@ sort($names);
 
 $rows = [];
 
+// Each control under its caption: the row is too long to read on tooltips alone
+$field = static fn (string $caption, string $control): string =>
+    '<label class="mb-0 small text-muted" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px">' . e($caption) . $control . '</label>';
+
 foreach ($names as $name) {
     $effect = $elements->effectOf($name);
     $count = $placed[$name] ?? 0;
@@ -85,32 +89,31 @@ foreach ($names as $name) {
         $options .= '<option value="' . e($effectName) . '"' . ($effectName === $effect ? ' selected' : '') . '>'
             . e($label) . '</option>';
     }
-    $does = '<form method="post" class="d-flex gap-2 mb-0">' . $csrf->renderTokenField()
+    $does = '<form method="post" class="d-flex flex-wrap align-items-end gap-2 mb-0">' . $csrf->renderTokenField()
         . '<input type="hidden" name="element_type" value="' . e($name) . '">'
-        . '<input name="label" class="form-control form-control-sm" style="width:10em" maxlength="100"'
+        . $field('Nom affiché', '<input name="label" class="form-control form-control-sm" style="width:10em" maxlength="100"'
             . ' placeholder="' . e($name) . '" value="' . e($elements->labelOf($name) === $name ? '' : $elements->labelOf($name)) . '"'
-            . ' title="Nom affiché au joueur ; vide = le code">'
-        . '<select name="effect" class="form-control form-control-sm" style="width:auto">' . $options . '</select>'
-        . '<input type="number" name="effect_duration" min="-1" class="form-control form-control-sm" style="width:5em"'
+            . ' title="Nom affiché au joueur ; vide = le code">')
+        . $field('Effet', '<select name="effect" class="form-control form-control-sm" style="width:auto">' . $options . '</select>')
+        . $field('Durée effet', '<input type="number" name="effect_duration" min="-1" class="form-control form-control-sm" style="width:5em"'
             . ' value="' . $elements->effectDurationOf($name) . '"'
-            . ' title="Durée de l\'effet, en tours : 0 jusqu\'au prochain tour, -1 sans fin">'
-        . '<input type="number" name="effect_value" min="1" class="form-control form-control-sm" style="width:4em"'
+            . ' title="Durée de l\'effet, en tours : 0 jusqu\'au prochain tour, -1 sans fin">')
+        . $field('Intensité', '<input type="number" name="effect_value" min="1" class="form-control form-control-sm" style="width:4em"'
             . ' value="' . $elements->effectValueOf($name) . '"'
-            . ' title="Intensité : multiplie les modificateurs de l\'effet">'
-        . '<input type="number" name="lifetime_turns" min="-1" class="form-control form-control-sm" style="width:5em"'
+            . ' title="Intensité : multiplie les modificateurs de l\'effet">')
+        . $field('Durée au sol', '<input type="number" name="lifetime_turns" min="-1" class="form-control form-control-sm" style="width:5em"'
             . ' value="' . $elements->lifetimeTurnsOf($name) . '"'
-            . ' title="Versé par une blessure (sang…) : tours passés au sol, -1 sans fin">'
-        . '<input type="number" name="spill_chance" min="0" max="100" class="form-control form-control-sm" style="width:5em"'
+            . ' title="Versé par une blessure (sang…) : tours passés au sol, -1 sans fin">')
+        . $field('Chance %', '<input type="number" name="spill_chance" min="0" max="100" class="form-control form-control-sm" style="width:5em"'
             . ' value="' . $elements->spillChanceOf($name) . '"'
-            . ' title="Versé par une blessure : chance en % que le coup le verse vraiment">'
-        . '<label class="mb-0 d-flex align-items-center gap-1" title="Se fond avec ses voisins de la même famille :'
-            . ' bords estompés, coudes. Décoché, chaque case est dessinée seule.">'
-            . '<input type="checkbox" name="fluid"' . ($elements->isFluid($name) ? ' checked' : '') . '> fluide</label>'
-        . '<input type="number" name="opacity" min="0" max="100" class="form-control form-control-sm" style="width:5em"'
+            . ' title="Versé par une blessure : chance en % que le coup le verse vraiment">')
+        . $field('Fluide', '<span class="form-control-sm"><input type="checkbox" name="fluid"' . ($elements->isFluid($name) ? ' checked' : '')
+            . ' title="Se fond avec ses voisins de la même famille : bords estompés, coudes. Décoché, chaque case est dessinée seule."></span>')
+        . $field('Opacité %', '<input type="number" name="opacity" min="0" max="100" class="form-control form-control-sm" style="width:5em"'
             . ' placeholder="' . ($image !== null && str_ends_with($image, '.webp') ? 50 : 100) . '"'
             . ' value="' . ($elements->opacityOf($name) ?? '') . '"'
-            . ' title="Opacité sur la carte, en % ; vide = 50 pour une texture webp, 100 sinon">'
-        . '<select name="depth" class="form-control form-control-sm" style="width:auto"'
+            . ' title="Opacité sur la carte, en % ; vide = 50 pour une texture webp, 100 sinon">')
+        . $field('Niveau', '<select name="depth" class="form-control form-control-sm" style="width:auto"'
             . ' title="Place sur le damier : les nappes dessous, les traces au-dessus, les volumes et effets tout en haut">'
             . implode('', array_map(
                 fn (int $level, string $label): string => '<option value="' . $level . '"'
@@ -118,7 +121,7 @@ foreach ($names as $name) {
                 array_keys(MapElementService::DEPTH_LABELS),
                 MapElementService::DEPTH_LABELS
             ))
-            . '</select>'
+            . '</select>')
         . '<button class="btn btn-sm btn-outline-primary">Enregistrer</button>'
         . ($effect !== null
             ? ' <a class="btn btn-sm btn-link" href="/admin/effects.php?action=edit&amp;name=' . e(urlencode($effect)) . '">voir</a>'
