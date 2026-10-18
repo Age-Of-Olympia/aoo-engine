@@ -384,18 +384,29 @@ function current_season_filter(): string
     }
 
     $current = $_SESSION['admin_season_filter'] ?? null;
-    // Pre-column values still sitting in sessions: converted once.
-    $current = match ($current) {
-        's1' => '1',
-        's2' => '2',
-        default => $current,
-    };
 
     if (!is_string($current) || ($current !== 'all' && !ctype_digit($current))) {
         $current = (string) (new \App\Service\SeasonService())->current();
     }
 
     return $current;
+}
+
+/**
+ * Plan list order: by name without its season suffix (`_s2`, `_s3`…), the
+ * latest season first among plans that share it.
+ *
+ * @param object $a Plan issu de ViewService::getAllPlans()
+ * @param object $b Plan issu de ViewService::getAllPlans()
+ */
+function plan_order(object $a, object $b): int
+{
+    $nameA = preg_replace('/_s\d+$/', '', $a->id);
+    $nameB = preg_replace('/_s\d+$/', '', $b->id);
+
+    return $nameA === $nameB
+        ? ($b->season ?? 0) <=> ($a->season ?? 0)
+        : strcasecmp($nameA, $nameB);
 }
 
 /**

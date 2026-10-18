@@ -30,11 +30,7 @@ $csrf = new CsrfProtectionService();
 $viewService = new ViewService($database);
 
 $allPlans = $viewService->getAllPlans();
-usort($allPlans, function ($a, $b) {
-    $nameA = str_replace('_s2', '', $a->id);
-    $nameB = str_replace('_s2', '', $b->id);
-    return $nameA === $nameB ? ($b->isS2 <=> $a->isS2) : strcasecmp($nameA, $nameB);
-});
+usort($allPlans, 'plan_order');
 
 $seasonFilter = current_season_filter();
 $filteredPlans = array_values(array_filter(

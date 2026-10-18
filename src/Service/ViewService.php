@@ -1429,7 +1429,6 @@ class ViewService {
                 'hasZLevels' => !empty($planData->z_levels),
                 'visibleByDefault' => $planData->visibleByDefault ?? false,
                 'season' => $season,
-                'isS2' => $season === 2,
                 'fullData' => $fullPlanData
             ];
         }

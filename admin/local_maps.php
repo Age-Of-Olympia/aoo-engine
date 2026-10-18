@@ -8,8 +8,7 @@ use App\Service\ViewService;
 use App\Service\PlanJsonValidator;
 
 // render_validation_group / render_validation_report : admin/helpers.php
-// (partagés avec admin/plans.php), comme SEASON2_EXTRA_PLANS / is_season2_plan
-// et le filtre de saison
+// (partagés avec admin/plans.php), comme le tri des plans et le filtre de saison
 
 // Clear any world map layers when loading local maps
 if (isset($_SESSION['generated_layers']) && strpos(json_encode($_SESSION['generated_layers']), 'world_') !== false) {
@@ -36,16 +35,7 @@ if ($isStateChangingPost) {
     }
 }
 
-usort($allPlans, function($a, $b) {
-    $nameA = str_replace('_s2', '', $a->id);
-    $nameB = str_replace('_s2', '', $b->id);
-
-    if ($nameA === $nameB) {
-        return $b->isS2 <=> $a->isS2;
-    }
-
-    return strcasecmp($nameA, $nameB);
-});
+usort($allPlans, 'plan_order');
 
 // Filtre de saison (défaut : saison courante s2) — vue d'ensemble et liste
 // déroulante ; $allPlans reste complet pour les traitements internes

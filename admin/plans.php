@@ -39,7 +39,7 @@ use Classes\Db;
  * côté coords, ou les deux — les incohérences (moitié manquante) sont le
  * premier diagnostic de la page.
  *
- * @return array<string, object{id: string, name: string, season: ?int, isS2: bool, hasConfig: bool,
+ * @return array<string, object{id: string, name: string, season: ?int, hasConfig: bool,
  *                              hasCoords: bool, zLevels: int[], coordsCount: int}> par id, trié
  */
 function plans_build_inventory(Db $db): array
@@ -48,7 +48,7 @@ function plans_build_inventory(Db $db): array
 
     foreach ((new ViewService($db))->getAllPlans() as $p) {
         $byId[$p->id] = (object) [
-            'id' => $p->id, 'name' => $p->name, 'season' => $p->season, 'isS2' => $p->isS2,
+            'id' => $p->id, 'name' => $p->name, 'season' => $p->season,
             'hasConfig' => true, 'hasCoords' => false, 'zLevels' => [], 'coordsCount' => 0,
         ];
     }
@@ -57,7 +57,7 @@ function plans_build_inventory(Db $db): array
         $row = $byId[$planId] ?? (object) [
             // Coords without config: season unknown (null = shown under
             // every filter — an anomaly to see, not to hide)
-            'id' => $planId, 'name' => $planId, 'season' => null, 'isS2' => str_contains($planId, '_s2'),
+            'id' => $planId, 'name' => $planId, 'season' => null,
             'hasConfig' => false, 'hasCoords' => false, 'zLevels' => [], 'coordsCount' => 0,
         ];
         $row->hasCoords = true;
@@ -66,15 +66,7 @@ function plans_build_inventory(Db $db): array
         $byId[$planId] = $row;
     }
 
-    // Même tri que local_maps.php : nom de base, la variante _s2 d'abord
-    uasort($byId, function (object $a, object $b): int {
-        $nameA = str_replace('_s2', '', $a->id);
-        $nameB = str_replace('_s2', '', $b->id);
-        if ($nameA === $nameB) {
-            return $b->isS2 <=> $a->isS2;
-        }
-        return strcasecmp($nameA, $nameB);
-    });
+    uasort($byId, 'plan_order');
 
     return $byId;
 }
@@ -384,10 +376,9 @@ HTML;
         . '<div class="card mb-3"><div class="card-header">Identité</div><div class="card-body"><div class="row">'
         . '<div class="form-group col-md-4"><label>Code du plan</label>'
         . '<input type="text" class="form-control" name="plan" required pattern="[a-z0-9_-]{1,64}"'
-        . ' placeholder="ex: foret_noire_s2">'
-        . '<small class="form-text text-muted">Minuscules / chiffres / _ / - (64 max), nom du fichier JSON et de'
-        . ' <code style="display:inline">coords.plan</code>. Non modifiable ensuite. Suffixe'
-        . ' <code style="display:inline">_s2</code> = plan de saison 2.</small></div>'
+        . ' placeholder="ex: foret_noire">'
+        . '<small class="form-text text-muted">Minuscules / chiffres / _ / - (64 max), valeur de'
+        . ' <code style="display:inline">coords.plan</code>. Non modifiable ensuite.</small></div>'
         . '<div class="form-group col-md-4"><label>Nom affiché</label>'
         . '<input type="text" class="form-control" name="name" required placeholder="ex: Forêt Noire"></div>'
         . '<div class="form-group col-md-4"><label>Nom court</label>'
