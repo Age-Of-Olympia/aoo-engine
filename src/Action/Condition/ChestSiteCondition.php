@@ -16,9 +16,11 @@ use App\Service\FactionChestService;
  * - The floor must allow chests (plan_z_levels.chests_allowed; a plan
  *   without level rows restricts nothing), and the builder's faction
  *   must not have closed it (FactionChestService).
+ * - Only a faction member places a chest, personal or not. A faction
+ *   chest also needs a finished bank of THAT faction on the plan; a
+ *   personal one is happy with any bank (RequiresPlanBuilding).
  * - The builder chooses the owner (POST buildFor): 'self' keeps
- *   today's personal chest, 'faction' gives it to their faction — and
- *   requires one. The validated choice is deposited on the
+ *   today's personal chest, 'faction' gives it to their faction. The validated choice is deposited on the
  *   ConditionObject; PlaceStructure consumes THAT result, never a
  *   re-read of the POST (BuildSitePick pattern).
  */
@@ -55,8 +57,8 @@ class ChestSiteCondition extends BaseCondition implements HasParameterSchemaInte
         if ($buildFor === null) {
             return new ConditionResult(false, array(), ['Choix du propriétaire du coffre invalide.']);
         }
-        if ($buildFor === self::FOR_FACTION && (string) ($actor->data->faction ?? '') === '') {
-            return new ConditionResult(false, array(), ['Il faut appartenir à une faction pour poser un coffre de faction.']);
+        if ((string) ($actor->data->faction ?? '') === '') {
+            return new ConditionResult(false, array(), ['Il faut appartenir à une faction pour poser un coffre.']);
         }
 
         // The target cell decides the floor; automatic mode stays on the
@@ -66,8 +68,12 @@ class ChestSiteCondition extends BaseCondition implements HasParameterSchemaInte
             return new ConditionResult(false, array(), ['Les coffres ne peuvent pas être posés à ce niveau.']);
         }
         $faction = (string) ($actor->data->faction ?? '');
-        if ($coords !== null && !(new FactionChestService())->floorOpenFor($faction, (string) $coords->plan, (int) $coords->z)) {
+        $chests = new FactionChestService();
+        if ($coords !== null && !$chests->floorOpenFor($faction, (string) $coords->plan, (int) $coords->z)) {
             return new ConditionResult(false, array(), ['Votre faction n\'autorise pas les coffres à ce niveau.']);
+        }
+        if ($buildFor === self::FOR_FACTION && $coords !== null && !in_array((string) $coords->plan, $chests->bankPlansOf($faction), true)) {
+            return new ConditionResult(false, array(), ['Un coffre de faction demande une banque de votre faction sur ce plan.']);
         }
 
         $conditionObject->setBuildFor($buildFor);

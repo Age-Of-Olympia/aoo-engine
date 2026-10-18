@@ -152,10 +152,11 @@ class ChestUnderTheBankTest extends LegacyPlayerFixtureTestCase
         $plan = $this->scenePlan();
         $builder = $this->builderOn($plan);
         [$bx, $by] = $this->farTile();
-        $this->placeStructure('banque', $bx, $by, $plan);
+        $bankId = $this->placeStructure('banque', $bx, $by, $plan);
 
         $this->sowFaction('coffres_scene');
         $this->setFaction($builder->id, 'coffres_scene');
+        $this->setFaction($bankId, 'coffres_scene');
         $chestItem = $this->itemOrSkip('coffre_bois');
         $chestItem->add_item($builder, 1);
 
@@ -169,7 +170,32 @@ class ChestUnderTheBankTest extends LegacyPlayerFixtureTestCase
         $this->assertSame('coffres_scene', (string) $placed['faction'], 'the owner is the faction');
     }
 
-    public function testAFactionlessBuilderGetsNoFactionChest(): void
+    /** A faction chest needs the builder's own bank; a personal one takes any bank. */
+    public function testAFactionChestNeedsItsOwnBank(): void
+    {
+        $plan = $this->scenePlan();
+        $builder = $this->builderOn($plan);
+        [$bx, $by] = $this->farTile();
+        $bankId = $this->placeStructure('banque', $bx, $by, $plan);
+        $this->sowFaction('coffres_rivale');
+        $this->setFaction($bankId, 'coffres_rivale');
+
+        $this->sowFaction('coffres_scene');
+        $this->setFaction($builder->id, 'coffres_scene');
+        $chestItem = $this->itemOrSkip('coffre_bois');
+        $chestItem->add_item($builder, 2);
+
+        $this->assertTrue($this->build($this->reload($builder->id), $chestItem, 'faction')->isBlocked(), 'a rival bank vouches for no faction chest');
+        $this->assertNull($this->placedChestOn($plan));
+
+        $this->assertTrue($this->build($this->reload($builder->id), $chestItem)->isSuccess(), 'any bank takes a personal chest');
+
+        $this->setFaction($bankId, 'coffres_scene');
+        $results = $this->build($this->reload($builder->id), $chestItem, 'faction');
+        $this->assertTrue($results->isSuccess(), 'its own bank: the faction chest rises');
+    }
+
+    public function testAFactionlessBuilderGetsNoChest(): void
     {
         $plan = $this->scenePlan();
         $builder = $this->builderOn($plan);
@@ -180,9 +206,8 @@ class ChestUnderTheBankTest extends LegacyPlayerFixtureTestCase
         $chestItem = $this->itemOrSkip('coffre_bois');
         $chestItem->add_item($builder, 1);
 
-        $results = $this->build($this->reload($builder->id), $chestItem, 'faction');
-
-        $this->assertTrue($results->isBlocked(), 'no faction, no faction chest');
+        $this->assertTrue($this->build($this->reload($builder->id), $chestItem, 'faction')->isBlocked(), 'no faction, no faction chest');
+        $this->assertTrue($this->build($this->reload($builder->id), $chestItem)->isBlocked(), 'no faction, no personal chest either');
         $this->assertNull($this->placedChestOn($plan));
     }
 
