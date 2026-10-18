@@ -79,26 +79,12 @@ class Item{
     public function get_data(){
 
 
-        /* Passerelle JSON→DB (Version20260717180000) : quand les stats
-         * sont en base (stats_in_db), l'objet data est reconstruit depuis
-         * les colonnes — même forme éparse que les JSON historiques (les
-         * clés à zéro/vides n'existent pas, applyItemCaracs et les
-         * consommateurs testent en !empty/isset) ; le fourre-tout `extra`
-         * est reservi verbatim. Sinon : chemin JSON hérité inchangé. */
-        if(!empty($this->row->stats_in_db)){
+        /* Stats in the columns (stats_in_db): the data object is rebuilt
+         * from them, in the sparse shape of the old JSON files (zero/empty
+         * keys absent, consumers test with !empty/isset); `extra` is merged
+         * verbatim. A row without that flag is served as-is. */
+        $itemJson = !empty($this->row->stats_in_db) ? $this->buildDataFromRow() : null;
 
-            $itemJson = $this->buildDataFromRow();
-        }
-        else{
-
-            $itemJson = json()->decode('items', $this->row->name);
-        }
-
-
-        /* No JSON and no DB stats: serve the row as-is, in memory. The old
-         * path WROTE a placeholder file here — whatever partial row built
-         * this object became a definition on disk, poisoning every later
-         * read. No file cache until a real cache system exists. */
         if(!$itemJson){
 
             $itemJson = clone $this->row;
@@ -437,8 +423,11 @@ class Item{
         }
         else{
 
+            // The variant copies its source's catalogue row, stats included
+            $source = $db->get_single('items', $this->id)->fetch_assoc();
+            unset($source['id']);
 
-            $db->insert('items', $newOptions);
+            $db->insert('items', array_merge($source, $newOptions));
 
             $newId = $db->get_last_id('items');
         }

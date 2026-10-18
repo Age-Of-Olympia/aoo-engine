@@ -2,7 +2,6 @@
 use Classes\Command;
 use Classes\Argument;
 use Classes\Item;
-use Classes\Json;
 use Classes\Db;
 
 class ItemCmd extends Command
@@ -20,7 +19,7 @@ create-vorpal: objet vorpal
 Exemple:
 > item create nouvel_item 1
 > item create-vorpal existing_item_name 
-> item create-cursed existing_item_name_2 1
+> item create-cursed existing_item_name_2
 Modification d'une propriété d'un objet : 
 item edit [id] [propriété] [valeur] 
 Exemple:
@@ -54,22 +53,11 @@ function create_item($argumentValues){
     $private = (!empty($argumentValues[2])) ? 1 : 0;
 
 
-    $lastId = Item::put_item($argumentValues[1], $private);
-
-
-    $dir = ($private) ? 'private' : 'public';
-
-
-    $data = (object) array(
-        'id'=>$lastId,
-        'name'=>$argumentValues[1],
-        "private"=>$private,
+    $lastId = Item::put_item($argumentValues[1], $private, array(
         'price'=>1,
-        'text'=>"Description de l'objet."
-    );
-
-
-    Json::write_json('datas/'. $dir .'/items/'. $argumentValues[1] . '.json', Json::encode($data));
+        'text'=>"Description de l'objet.",
+        'stats_in_db'=>1
+    ));
 
 
     return 'Item '. $argumentValues[1] .' créé (id.'. $lastId .')';
@@ -77,18 +65,17 @@ function create_item($argumentValues){
 
 function create_special ($argumentValues, $action){
 
-    if(!json()->decode('items', $argumentValues[1])){
+    $item = Item::get_item_by_name($argumentValues[1]);
+
+    if(!$item){
 
         return '<font color="orange">error item '. $argumentValues[1] .' does not exist</font>';
     }
 
 
-    $private = (!empty($argumentValues[2])) ? 1 : 0;
-
     $itemType = explode('-', $action)[1];
-    $options = array($itemType=>1);
 
-    $lastId = Item::put_item($argumentValues[1], $private, $options);
+    $lastId = $item->get_version(array($itemType=>1));
 
 
     return 'Item '. $argumentValues[1] .' ('. $itemType .') créé (id.'. $lastId .')';
