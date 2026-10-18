@@ -1700,12 +1700,6 @@ parameters:
 			path: src/Service/ContainerService.php
 
 		-
-			message: '#^Method App\\Service\\DialogSeedService\:\:collectJsonDialogs\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/DialogSeedService.php
-
-		-
 			message: '#^Method App\\Service\\DialogService\:\:getDialogData\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

@@ -5,7 +5,6 @@ namespace App\Service;
 use App\Service\Counter\CounterCatalog;
 use Classes\Db;
 use Classes\Dialog;
-use Classes\Json;
 use Classes\Player;
 use RuntimeException;
 
@@ -14,11 +13,8 @@ use RuntimeException;
  *
  *  - Mode tutoriel : table `tutorial_dialogs` (versionnée par tutoriel) —
  *    inchangé.
- *  - Mode jeu : table `dialogs` d'abord (source de vérité depuis
- *    Version20260713150000_DialogsFromJson), REPLI sur les fichiers JSON
- *    legacy (datas/[public|private]/dialogs/*.json) tant que la ligne
- *    n'existe pas — le seed se lance depuis admin/dialog-seed.php. Le repli
- *    disparaîtra une fois toutes les lignes seedées.
+ *  - Mode jeu : table `dialogs` (Version20260713150000_DialogsFromJson) ;
+ *    une ligne absente ou inactive = pas de dialogue.
  *
  * Le read model reste celui des fichiers : stdClass {id, name, type,
  * custom, dialog: [nœuds]} — les consommateurs (Classes\Dialog, Classes\Ui)
@@ -69,8 +65,7 @@ class DialogService
         }
 
         if (!array_key_exists($dialogName, self::$gameCache)) {
-            self::$gameCache[$dialogName] = $this->loadGameDialogFromDatabase($dialogName)
-                ?? $this->loadDialogFromFile($dialogName);
+            self::$gameCache[$dialogName] = $this->loadGameDialogFromDatabase($dialogName);
         }
 
         return self::$gameCache[$dialogName];
@@ -439,9 +434,6 @@ class DialogService
      * Régénère les options du dialogue d'inscription (races jouables avec
      * compteurs d'âmes et bonus de rattrapage) — reprend la logique
      * historique de Dialog::refresh_register_dialog(), qui délègue ici.
-     *
-     * Écrit la ligne `dialogs` quand elle existe (post-seed) ; sinon repli
-     * historique : réécriture du fichier register.json.
      */
     public function refreshRegisterDialog(): void
     {
@@ -454,34 +446,20 @@ class DialogService
             }
         }
 
-        if ($this->gameDialogExists(self::REGISTER_DIALOG)) {
-            $current = $this->loadGameDialogFromDatabase(self::REGISTER_DIALOG, false);
-            if ($current === null || empty($current->dialog)) {
-                return; // ligne vide/inactive et illisible : ne rien casser
-            }
-
-            $nodes = json_decode(json_encode($current->dialog), true);
-            $nodes[0]['options'] = $options;
-
-            $this->saveGameDialog(self::REGISTER_DIALOG, $nodes, [
-                'npc_name'  => $current->name,
-                'type'      => $current->type,
-                'custom'    => (string) ($current->custom ?? ''),
-                'is_active' => true,
-            ]);
-
-            return;
+        $current = $this->loadGameDialogFromDatabase(self::REGISTER_DIALOG, false);
+        if ($current === null || empty($current->dialog)) {
+            return; // no row, or an empty/unreadable one: nothing to rewrite
         }
 
-        // Repli pré-seed : comportement historique sur le fichier
-        $regJson = json()->decode('dialogs', self::REGISTER_DIALOG);
-        if (!is_object($regJson) || empty($regJson->dialog)) {
-            return;
-        }
-        $regJson->dialog[0]->options = json_decode(json_encode($options));
-        Json::write_json('datas/public/dialogs/register.json', Json::encode($regJson));
-        json()->forget('dialogs', self::REGISTER_DIALOG);
-        unset(self::$gameCache[self::REGISTER_DIALOG]);
+        $nodes = json_decode(json_encode($current->dialog), true);
+        $nodes[0]['options'] = $options;
+
+        $this->saveGameDialog(self::REGISTER_DIALOG, $nodes, [
+            'npc_name'  => $current->name,
+            'type'      => $current->type,
+            'custom'    => (string) ($current->custom ?? ''),
+            'is_active' => true,
+        ]);
     }
 
     /**
@@ -568,17 +546,6 @@ class DialogService
             'custom' => $row['custom'],
             'dialog' => $nodes,
         ];
-    }
-
-    /**
-     * Repli fichier legacy, via json() (chemins indépendants du cwd, parse
-     * tolérant, cache) — même lecture que l'historique Classes\Dialog.
-     */
-    private function loadDialogFromFile(string $dialogName): ?object
-    {
-        $decoded = json()->decode('dialogs', $dialogName);
-
-        return is_object($decoded) ? $decoded : null;
     }
 
     /** Load dialog from database (tutorial mode) — inchangé. */

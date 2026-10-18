@@ -4,15 +4,11 @@
  *
  * Deux vues, routées sur ?action :
  *   - list (défaut) : les dialogues de la table `dialogs` (nœuds, actif,
- *     déclencheurs map_dialogs qui les référencent), plus une alerte quand
- *     des JSON legacy ne sont pas encore seedés.
+ *     déclencheurs map_dialogs qui les référencent).
  *   - edit / new    : un formulaire — code (immuable en édition), nom du PNJ,
  *     type, custom, actif, et les nœuds en JSON (validés serveur).
  *
- * Les dialogues migrent de datas/*\/dialogs/*.json vers la table `dialogs`
- * (Version20260713150000_DialogsFromJson) ; le seed se lance depuis
- * admin/dialog-seed.php et le jeu replie sur les fichiers tant qu'une ligne
- * manque. Suppression gardée : `register` (réécrit à chaque inscription) et
+ * Suppression gardée : `register` (réécrit à chaque inscription) et
  * les dialogues encore référencés par des déclencheurs map_dialogs.
  *
  * Toutes les mutations POSTent vers dialogs-save.php (CSRF, PRG). Cette page
@@ -23,7 +19,6 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\CsrfProtectionService;
-use App\Service\DialogSeedService;
 use App\Service\DialogService;
 use App\View\Action\IconFieldView;
 use App\Service\Action\RpgAwesomeIcons;
@@ -77,21 +72,6 @@ function dialogs_render_list(array $dialogs, array $references, array $buildingR
             . '</tr>';
     }
 
-    // JSON legacy pas encore seedés : le jeu les sert en repli, mais ils
-    // n'apparaissent pas ici tant que le seed n'a pas tourné
-    $pending = array_filter(
-        (new DialogSeedService())->preview()['entries'],
-        fn(array $entry) => $entry['action'] === 'create'
-    );
-    $pendingAlert = '';
-    if ($pending !== []) {
-        $names = array_map(fn(array $entry) => $entry['name'], $pending);
-        $pendingAlert = '<div class="alert alert-warning" style="font-size:13px;">'
-            . '<strong>' . count($pending) . ' dialogue(s) JSON non seedé(s)</strong> (' . e(implode(', ', $names)) . ')'
-            . ' — le jeu lit leurs fichiers JSON en attendant. '
-            . '<a href="/admin/dialog-seed.php">Lancer le seed</a>.</div>';
-    }
-
     return '<div class="d-flex justify-content-between align-items-center mb-3">'
         . '<h1 class="mb-0">Dialogues</h1>'
         . '<div class="d-flex gap-2">'
@@ -112,7 +92,6 @@ function dialogs_render_list(array $dialogs, array $references, array $buildingR
         . ' nœud (<code style="display:inline">go</code>), une page (<code style="display:inline">url</code>)'
         . ' ou pose une variable (<code style="display:inline">set</code>).</div>'
 
-        . $pendingAlert
 
         . '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
         . '<th>Code</th><th>Nom du PNJ</th><th>Type</th><th>Nœuds</th><th>Statut</th>'

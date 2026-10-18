@@ -112,7 +112,7 @@ function admin_layout($title, $content, array $assets = []) {
     $racePages = ['races.php'];
     $itemPages = ['items.php', 'recipes.php'];
     $factionPages = ['factions.php', 'faction-members.php'];
-    $dialogPages = ['dialogs.php', 'dialog-seed.php'];
+    $dialogPages = ['dialogs.php'];
     $sceneryPages = ['scenery-types.php'];
 
     /* The two pages one lands on stay at the top, outside any section.
@@ -178,7 +178,6 @@ function admin_layout($title, $content, array $assets = []) {
             ], ['element-types.php', 'effects.php', 'map-elements.php']),
             $navGroup('Dialogues', [
                 ['dialogs.php', 'Liste', '/admin/dialogs.php'],
-                ['dialog-seed.php', 'Seed JSON legacy', '/admin/dialog-seed.php'],
             ], $dialogPages),
         ]),
 

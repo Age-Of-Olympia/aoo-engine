@@ -5,7 +5,7 @@ class Dialog{
 
 
     private $dialog;        // dialog id/name
-    private $dialogJson;    // dialog json file (in datas/private/dialogs/ or datas/public/dialogs/)
+    private $dialogJson;    // dialog read model (DialogService)
     private $player;        // to customize dialog text
     private $target;        // to customize dialog text
 

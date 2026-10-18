@@ -2,18 +2,16 @@
 
 namespace Tests\Various;
 
-use App\Service\DialogSeedService;
 use App\Service\DialogService;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Tests\Support\LegacyBootstrapTrait;
 
 /**
- * Passerelle des dialogues de jeu (DialogService) : la table `dialogs` prime
- * sur les fichiers JSON legacy, qui restent le repli tant qu'une ligne
- * manque ; le read model DB est identique au décodage fichier ; le dialogue
- * `register` est réécrit en base par refreshRegisterDialog() ; le seed est
- * create-only (jamais d'écrasement d'une ligne éditée en admin).
+ * Passerelle des dialogues de jeu (DialogService) : seule la table `dialogs`
+ * compte, un fichier JSON sans ligne n'est jamais lu ; le read model garde la
+ * forme des anciens fichiers ; le dialogue `register` est réécrit en base par
+ * refreshRegisterDialog().
  *
  * DB-backed ; skip propre quand la base est inaccessible — même convention
  * que FactionImportExportTest. Fixtures préfixées dialog_test_.
@@ -35,9 +33,7 @@ class DialogServiceTest extends TestCase
     protected function setUp(): void
     {
         $this->bootstrapLegacyOrSkip('dialogs');
-        if (!is_dir($_SERVER['DOCUMENT_ROOT'] . '/datas/public/dialogs')) {
-            $this->markTestSkipped('datas/public/dialogs absent (datas non provisionné).');
-        }
+        @mkdir(dirname($this->jsonPath('dialog_test_svc')), 0777, true);
         $this->cleanupFixtures();
         DialogService::clearCache();
     }
@@ -48,45 +44,33 @@ class DialogServiceTest extends TestCase
         DialogService::clearCache();
     }
 
-    public function testDbRowTakesPrecedenceOverLegacyFile(): void
+    public function testOnlyTheTableServesDialogs(): void
     {
+        // A leftover JSON file is never read, with or without a row
         file_put_contents(
             $this->jsonPath('dialog_test_svc'),
             json_encode(['id' => 'dialog_test_svc', 'name' => 'Fichier', 'type' => 'pnj', 'dialog' => self::NODES])
         );
 
         $service = new DialogService();
-
-        // Repli fichier tant que la ligne n'existe pas
-        $fromFile = $service->loadDialog('dialog_test_svc');
-        $this->assertNotNull($fromFile);
-        $this->assertSame('Fichier', $fromFile->name);
+        $this->assertNull($service->loadDialog('dialog_test_svc'), 'no row: no dialog');
 
         $service->saveGameDialog('dialog_test_svc', self::NODES, ['npc_name' => 'Base']);
         DialogService::clearCache();
 
         $fromDb = $service->loadDialog('dialog_test_svc');
-        $this->assertSame('Base', $fromDb->name, 'la table prime sur le fichier');
+        $this->assertSame('Base', $fromDb->name);
 
-        // Read model identique au décodage fichier : mêmes clés, nœuds objets
+        // Read model in the shape of the old files: same keys, object nodes
         foreach (['id', 'name', 'type', 'dialog'] as $key) {
             $this->assertObjectHasProperty($key, $fromDb);
         }
         $this->assertSame('bonjour', $fromDb->dialog[0]->id);
         $this->assertSame('Continuer', $fromDb->dialog[0]->options[0]->text);
-    }
 
-    public function testInactiveRowFallsBackToFile(): void
-    {
-        file_put_contents(
-            $this->jsonPath('dialog_test_svc'),
-            json_encode(['id' => 'dialog_test_svc', 'name' => 'Fichier', 'type' => 'pnj', 'dialog' => self::NODES])
-        );
-        (new DialogService())->saveGameDialog('dialog_test_svc', self::NODES, ['npc_name' => 'Base', 'is_active' => false]);
+        $service->saveGameDialog('dialog_test_svc', self::NODES, ['npc_name' => 'Base', 'is_active' => false]);
         DialogService::clearCache();
-
-        $loaded = (new DialogService())->loadDialog('dialog_test_svc');
-        $this->assertSame('Fichier', $loaded->name, 'ligne inactive : repli fichier');
+        $this->assertNull($service->loadDialog('dialog_test_svc'), 'inactive row: no dialog');
     }
 
     public function testRefreshRegisterDialogRewritesTheDbRow(): void
@@ -190,36 +174,6 @@ class DialogServiceTest extends TestCase
         $this->link->executeStatement('DELETE FROM map_dialogs WHERE coords_id = ?', [$coordsId]);
         $service->deleteGameDialog('dialog_test_ref');
         $this->assertFalse($service->gameDialogExists('dialog_test_ref'));
-    }
-
-    public function testSeedCreatesMissingRowsAndPreservesExistingOnes(): void
-    {
-        // Répertoire datas isolé : le seed ne voit que la fixture
-        $root = sys_get_temp_dir() . '/dialog_test_seed_root';
-        @mkdir($root . '/datas/public/dialogs', 0777, true);
-        file_put_contents(
-            $root . '/datas/public/dialogs/dialog_test_seed.json',
-            json_encode(['id' => 'dialog_test_seed', 'name' => 'Seedé', 'type' => 'pnj', 'dialog' => self::NODES])
-        );
-        file_put_contents($root . '/datas/public/dialogs/dialog_test_broken.json', '{pas du json');
-
-        $seeder = new DialogSeedService(null, null, $root);
-
-        $report = $seeder->seed();
-        $this->assertContains('dialog_test_seed', $report['created']);
-        $this->assertNotEmpty($report['unreadable'], 'le JSON cassé est signalé, pas seedé');
-
-        // Édition admin puis re-seed : la ligne est préservée
-        (new DialogService())->saveGameDialog('dialog_test_seed', self::NODES, ['npc_name' => 'Édité en admin']);
-        $again = $seeder->seed();
-        $this->assertContains('dialog_test_seed', $again['kept']);
-        $this->assertSame(
-            'Édité en admin',
-            $this->link->fetchOne("SELECT npc_name FROM dialogs WHERE name = 'dialog_test_seed'")
-        );
-
-        unlink($root . '/datas/public/dialogs/dialog_test_seed.json');
-        unlink($root . '/datas/public/dialogs/dialog_test_broken.json');
     }
 
     private function cleanupFixtures(): void

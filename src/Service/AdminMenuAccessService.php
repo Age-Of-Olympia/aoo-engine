@@ -120,7 +120,6 @@ class AdminMenuAccessService
         'footprints-save.php'        => 'footprints.php',
         'tile-colors-save.php'       => 'tile-colors.php',
         'dialogs-save.php'           => 'dialogs.php',
-        'dialog-seed.php'            => 'dialogs.php',
         'harvest-seed.php'           => 'harvest-types.php',
         'races-save.php'             => 'races.php',
         'effects-save.php'           => 'effects.php',
