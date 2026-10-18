@@ -431,7 +431,7 @@ class FactionView
      * allows), its lock turnable from HERE, and where it stands. With
      * $members (manageChests ranks), each row can be given or abandoned.
      *
-     * @param list<array{id: int, name: string, isOpen: bool, x: int, y: int, z: int, plan: string}> $containers FactionService::containersOf()
+     * @param list<array{id: int, name: string, isOpen: bool, x: int, y: int, z: int, plan: string, text: string}> $containers FactionService::containersOf()
      * @param list<array{id: int, name: string}> $members
      */
     public static function renderContainers(array $containers, bool $member = false, int $actorId = 0, array $members = []): void
@@ -455,7 +455,7 @@ class FactionView
                 . ($member ? AssetTableView::lockCellHtml($chest['id'], $actorId) : '');
             $cells[] = AssetTableView::territoryHtml($chest['plan'], $chest['x'], $chest['y'], $chest['z']);
             if ($members !== []) {
-                $cells[] = self::chestStewardCellHtml($chest['id'], $members);
+                $cells[] = self::chestStewardCellHtml($chest['id'], $chest['text'], $members);
             }
             $rows[] = $cells;
         }
@@ -475,12 +475,12 @@ class FactionView
     }
 
     /**
-     * Give the chest to a member, or abandon it to the public — for the
-     * ranks holding manageChests; the endpoint re-checks.
+     * Give the chest to a member, abandon it to the public, or rewrite its
+     * inscription — for the ranks holding manageChests; the endpoint re-checks.
      *
      * @param list<array{id: int, name: string}> $members
      */
-    private static function chestStewardCellHtml(int $chestId, array $members): string
+    private static function chestStewardCellHtml(int $chestId, string $text, array $members): string
     {
         $options = '';
         foreach ($members as $m) {
@@ -489,7 +489,9 @@ class FactionView
 
         return '<select class="faction-chest-member" data-chest="' . $chestId . '">' . $options . '</select>'
             . ' <button class="faction-chest-offer" data-chest="' . $chestId . '">Offrir</button>'
-            . ' <button class="faction-chest-abandon" data-chest="' . $chestId . '">Abandonner</button>';
+            . ' <button class="faction-chest-abandon" data-chest="' . $chestId . '">Abandonner</button>'
+            . ' <button class="faction-chest-inscribe" data-chest="' . $chestId . '"'
+            . ' data-text="' . htmlspecialchars($text, ENT_QUOTES, 'UTF-8') . '">Inscription</button>';
     }
 
     /**
@@ -627,6 +629,16 @@ class FactionView
                     if (confirm('Abandonner ce coffre ? Il deviendra public.')) {
                         chestCall({ action: 'abandon', chestId: $(this).data('chest') });
                     }
+                });
+
+            $(document).off('click.factionAssets', '.faction-chest-inscribe')
+                .on('click.factionAssets', '.faction-chest-inscribe', function(){
+                    var chestId = $(this).data('chest');
+                    aooPrompt('Inscription du coffre (vide pour effacer) :', $(this).attr('data-text')).then(function(text){
+                        if (text !== null) {
+                            chestCall({ action: 'inscribe', chestId: chestId, text: text });
+                        }
+                    });
                 });
 
             $(document).off('change.factionAssets', '.faction-chest-floor')

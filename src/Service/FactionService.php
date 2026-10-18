@@ -359,18 +359,21 @@ class FactionService
      * carrying the faction. Same door as buildingsOf: what is shelved,
      * held or vanished stands nowhere and is not listed.
      *
-     * @return list<array{id: int, name: string, isOpen: bool, x: int, y: int, z: int, plan: string}>
+     * @return list<array{id: int, name: string, isOpen: bool, x: int, y: int, z: int, plan: string, text: string}>
      */
     public function containersOf(string $code): array
     {
         $rows = $this->entityManager->getConnection()->fetchAllAssociative(
-            'SELECT p.id, p.name, p.is_open, c.x, c.y, c.z, c.plan FROM players p ' . ContainerService::STANDING_CHEST_JOIN . '
+            'SELECT p.id, p.name, p.is_open, p.text, c.x, c.y, c.z, c.plan FROM players p ' . ContainerService::STANDING_CHEST_JOIN . '
               WHERE CONVERT(p.faction USING utf8mb4) = CONVERT(? USING utf8mb4)
               ORDER BY c.plan, p.name',
             [strtolower(trim($code))]
         );
 
-        return array_map(ContainerService::assetRow(...), $rows);
+        return array_map(
+            static fn (array $row): array => ContainerService::assetRow($row) + ['text' => (string) $row['text']],
+            $rows
+        );
     }
 
     /**

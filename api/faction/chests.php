@@ -34,6 +34,10 @@ try {
             $service->entrust($chestId, $actorId);
             ExitSuccess(['message' => 'Coffre confié à votre faction.']);
             break;
+        case 'inscribe':
+            (new \App\Service\InscriptionService())->inscribe($chestId, $actorId, (string) ($POST_DATA['text'] ?? ''));
+            ExitSuccess(['message' => 'Inscription enregistrée.']);
+            break;
         case 'floor':
             $open = (int) ($POST_DATA['open'] ?? 0) === 1;
             $service->setFloorOpen($actorId, (string) ($POST_DATA['plan'] ?? ''), (int) ($POST_DATA['z'] ?? 0), $open);
