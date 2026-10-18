@@ -38,6 +38,9 @@
          <testsuite name="View">
             <directory suffix="Test.php">./tests/View</directory>
         </testsuite>
+         <testsuite name="Service">
+            <directory suffix="Test.php">./tests/Service</directory>
+        </testsuite>
     </testsuites>
 
     <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">
