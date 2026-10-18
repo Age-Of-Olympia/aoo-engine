@@ -124,6 +124,25 @@ class FactionChestServiceTest extends LegacyPlayerFixtureTestCase
         (new FactionChestService())->claim($this->chestOn($plan), $guard);
     }
 
+    /** Managing the chests includes using them: lock, contents from afar, inscription. */
+    public function testTheRankThatManagesAlsoUsesTheChests(): void
+    {
+        $this->link->executeStatement(
+            'INSERT INTO faction_roles (faction_id, position, name, defaultRole, useChest, manageChests)
+             VALUES (?, 2, "Intendant", 0, 0, 1)',
+            [$this->factionId]
+        );
+        \App\Service\FactionService::clearCache();
+        $steward = $this->member('GmIntendant', 2);
+        $chest = $this->chestOn($this->scenePlan(), null, self::CODE);
+
+        $this->assertTrue((new \App\Service\LockService())->mayTurnLock($chest, $steward));
+        $this->assertTrue((new \App\Service\ContainerService())->mayOversee($chest, $steward));
+
+        (new \App\Service\InscriptionService())->inscribe($chest, $steward, 'Réserve de la garde');
+        $this->assertSame('Réserve de la garde', $this->link->fetchOne('SELECT text FROM players WHERE id = ?', [$chest]));
+    }
+
     /** Faction → member → faction → public: every state reachable, every step journaled. */
     public function testAChestTravelsBetweenTheHouseAndItsMembers(): void
     {

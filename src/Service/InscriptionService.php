@@ -25,7 +25,7 @@ final class InscriptionService
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
     }
 
-    /** A chest, written on by its people (owner, or faction rank useChest). */
+    /** A chest, written on by its people (owner, or faction rank useChest — manageChests includes it). */
     public function mayInscribe(int $thingId, int $actorId): bool
     {
         $container = new ContainerService($this->conn);

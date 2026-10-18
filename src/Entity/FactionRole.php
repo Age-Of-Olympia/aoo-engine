@@ -36,6 +36,9 @@ class FactionRole
         'useDoor'       => 'Ouvrir les portes',
     ];
 
+    /** A stronger flag that grants a weaker one with it: managing the chests includes using them. */
+    public const IMPLIED_BY = ['useChest' => 'manageChests'];
+
     /** @return list<string> */
     public static function flagKeys(): array
     {

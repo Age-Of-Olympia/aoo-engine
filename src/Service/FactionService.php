@@ -405,7 +405,8 @@ class FactionService
 
         $role = $this->roleOf($actorId);
 
-        return $role !== null && !empty($role[$flag]);
+        return $role !== null
+            && (!empty($role[$flag]) || !empty($role[FactionRole::IMPLIED_BY[$flag] ?? '']));
     }
 
     /**
