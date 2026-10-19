@@ -735,6 +735,49 @@
         }
     };
 
+    /* Puts the fresh board in place of the current one, reusing the <image>
+     * nodes both share — same id, or same table, world cell and picture:
+     * a reused node keeps its decoded picture, so a step does not repaint
+     * the whole board. The fresh attributes are copied onto it, and the
+     * result must equal the fresh render node for node, else the plain
+     * swap. */
+    function swapBoard(current, freshMap) {
+        var key = function (img) {
+            return (img.id || '') + '|' + (img.getAttribute('data-table') || '') + '|'
+                + (img.getAttribute('data-coords') || '') + '|'
+                + (img.getAttribute('href') || img.getAttribute('xlink:href') || '');
+        };
+
+        var pool = {};
+        Array.prototype.forEach.call(current.getElementsByTagName('image'), function (img) {
+            var k = key(img);
+            (pool[k] = pool[k] || []).push(img);
+        });
+
+        var fresh = document.importNode(freshMap, true);
+        Array.prototype.slice.call(fresh.getElementsByTagName('image')).forEach(function (img) {
+            var old = img.hasChildNodes() ? null : (pool[key(img)] || []).shift();
+            if (!old || old.hasChildNodes()) {
+                return;
+            }
+            Array.prototype.slice.call(old.attributes).forEach(function (a) {
+                if (!img.hasAttributeNS(a.namespaceURI, a.localName)) {
+                    old.removeAttributeNS(a.namespaceURI, a.localName);
+                }
+            });
+            Array.prototype.forEach.call(img.attributes, function (a) {
+                old.setAttributeNS(a.namespaceURI, a.name, a.value);
+            });
+            img.replaceWith(old);
+        });
+
+        if (fresh.isEqualNode(freshMap)) {
+            current.replaceChildren.apply(current, Array.prototype.slice.call(fresh.childNodes));
+        } else {
+            current.innerHTML = freshMap.innerHTML;
+        }
+    }
+
     /* Swaps in the moved page's board, position, minimap and top bar pills.
      * observed: the new cell's panel comes with the response, view.js must
      * not ask for it. False when the page has to be reloaded instead. */
@@ -746,7 +789,7 @@
             return false;
         }
 
-        current.innerHTML = freshMap.innerHTML;
+        swapBoard(current, freshMap);
         current.setAttribute('data-map-hash', freshMap.getAttribute('data-map-hash') || '');
         applyAnimationQuality();
         fixWebkitAnimLayers();
