@@ -77,60 +77,11 @@ if( $storedPassword === null || !password_verify($_POST['psw'], $storedPassword)
 }
 
 
-$accounts->touchLastLogin((int) $row['id']);
+$footprint = md5($_POST['footprint'] ?? '');
+$login = new \App\Service\LoginService();
+$login->open((int) $row['id'], $footprint);
 
+if(!empty($_POST['remember'])){
 
-// Regenerate the session id on privilege change (anonymous -> authenticated)
-// to prevent session fixation.
-session_regenerate_id(true);
-
-
-// set sessions var
-$_SESSION['mainPlayerId'] = $row['id'];
-
-$_SESSION['playerId'] = $row['id'];
-$_SESSION['originalPlayerId'] = $row['id'];
-unset($_SESSION['nonewturn']);
-unset($_SESSION['deathScreenSeen']);
-
-$values = array(
-    'player_id'=> $row['id'],
-    'ip'=>md5($firewall->ip),
-    'footprint'=>md5($_POST['footprint'] ?? ''),
-    'time'=>time()
-);
-
-$db = new Db();
-
-$db->insert('players_connections', $values);
-
-
-$sql = '
-SELECT * FROM players_banned
-WHERE player_id = ?
-';
-
-$res = $db->exe($sql, $_SESSION['playerId']);
-
-if($res->num_rows){
-
-    $row = $res->fetch_object();
-
-    $_SESSION['banned'] = $row->text;
-
-    $bannedIps = explode(',', $row->ips);
-
-    if(!in_array($firewall->ip, $bannedIps)){
-
-
-        array_push($bannedIps, $firewall->ip);
-
-        $bannedIps = array_filter($bannedIps, function($value) {
-            return $value !== ""; // Filtre les valeurs qui ne sont pas des chaînes vides
-        });
-
-        $sql = 'UPDATE players_banned SET ips = ? WHERE player_id = ?';
-
-        $db->exe($sql, array(implode(',', $bannedIps), $_SESSION['playerId']));
-    }
+    $login->remember((int) $row['id'], $footprint);
 }

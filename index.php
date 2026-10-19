@@ -60,6 +60,7 @@ if(!isset($_SESSION['playerId']) || isset($_GET['menu'])){
 
 elseif(isset($_GET['logout'])){
 
+    (new \App\Service\LoginService())->forget();
     unset($_SESSION['mainPlayerId']);
     unset($_SESSION['playerId']);
     unset($_SESSION['nonewturn']);

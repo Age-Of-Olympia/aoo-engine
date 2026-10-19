@@ -69,6 +69,20 @@ require_once(__DIR__.'/config/functions.php');
 
 \App\Database\QueryCounter::reportOnXhr();
 
+// Expired PHP session but a remembered browser: log back in, as login.php does
+if(PHP_SAPI !== 'cli' && !isset($_SESSION['playerId']) && !empty($_COOKIE[\App\Service\LoginService::COOKIE])){
+
+    if(defined('SESSION_READ_ONLY')){
+        session_start();
+    }
+
+    (new \App\Service\LoginService())->resume();
+
+    if(defined('SESSION_READ_ONLY')){
+        session_write_close();
+    }
+}
+
 if(!defined('NO_LOGIN') && !isset($_SESSION['playerId'])){
 
     $ui = new Ui('Connexion requise');

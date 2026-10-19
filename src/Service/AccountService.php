@@ -26,9 +26,11 @@ final class AccountService
         return ($hash === null || $hash === '') ? null : $hash;
     }
 
+    /** A new password also logs out every remembered browser. */
     public function setPassword(int $playerId, string $hash): void
     {
         $this->write($playerId, ['psw' => $hash]);
+        (new LoginService($this->conn))->forgetAll($playerId);
     }
 
     /** The hashed copy of the address, checked by the password reset. */

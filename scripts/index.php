@@ -92,6 +92,7 @@ echo '
             </tr>
             <tr>
             <td>
+            <label style="font-size: 70%"><input type="checkbox" name="remember" value="1" /> Se souvenir de moi</label><br />
             <font style="font-size: 70%"><a href="index.php?resetPsw">Mot de passe perdu?</a></font><br />
             </td>
             </tr>
