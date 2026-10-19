@@ -1488,7 +1488,18 @@ class View{
             $coordsArround = View::get_coords_arround($this->coords, 1);
 
 
-            // grid or empty clickable cases — the box carries the viewer's footprint
+            /* The grid is one pattern over the box, not one image per cell:
+             * Firefox redraws every image of the board SVG on each frame
+             * something in it animates (the arrow's blink, the gear). */
+            if(!in_array('hideGrid', $this->options)){
+
+                echo '<defs><pattern id="view-grid" width="'. self::TILE_PX .'" height="'. self::TILE_PX .'" patternUnits="userSpaceOnUse">'
+                    . '<image href="img/ui/view/grid.webp" width="'. self::TILE_PX .'" height="'. self::TILE_PX .'" /></pattern></defs>'
+                    . '<rect width="'. (($this->p*2 + $this->footW) * self::TILE_PX) .'" height="'. (($this->p*2 + $this->footH) * self::TILE_PX) .'"'
+                    . ' fill="url(#view-grid)" pointer-events="none" />';
+            }
+
+            // clickable cases — the box carries the viewer's footprint
             for ($i = 0; $i < $this->p*2 + $this->footW; $i++) {
 
                 for ($j = 0; $j < $this->p*2 + $this->footH; $j++) {
@@ -1512,47 +1523,24 @@ class View{
                         ? ' data-blocked="1"'
                         : '';
 
-                    if(!in_array('hideGrid', $this->options)){
+                    echo '
+                    <rect
+                        class="case '. $goCase .'"
+                        data-coords="'. $coordX .','. $coordY .'"'. $blockedAttr;
 
-                        echo '
-                        <image
-                            class="case '. $goCase .'"
-                            data-coords="'. $coordX .','. $coordY .'"'. $blockedAttr;
+                        if($this->fullCoordsOnCases){
+                            echo ' data-coords-full="'. $coordX .','. $coordY .','.$this->coords->z.','.$this->coords->plan.'"';
+                        }
 
-                            if($this->fullCoordsOnCases){
-                                echo ' data-coords-full="'. $coordX .','. $coordY .','.$this->coords->z.','.$this->coords->plan.'"';
-                            }
+                        echo ' x="' . $x . '"
+                        y="' . $y . '"
 
-                           echo '
-                            x="' . $x . '"
-                            y="' . $y . '"
+                        width="'. self::TILE_PX .'"
+                        height="'. self::TILE_PX .'"
 
-                            href="img/ui/view/grid.webp"
-                            />
-                        ';
-                    }
-
-                    else {
-
-                        echo '
-                        <rect
-                            class="case '. $goCase .'"
-                            data-coords="'. $coordX .','. $coordY .'"'. $blockedAttr;
-
-                            if($this->fullCoordsOnCases){
-                                echo ' data-coords-full="'. $coordX .','. $coordY .','.$this->coords->z.','.$this->coords->plan.'"';
-                            }
-
-                            echo ' x="' . $x . '"
-                            y="' . $y . '"
-
-                            width="'. self::TILE_PX .'"
-                            height="'. self::TILE_PX .'"
-
-                            fill="transparent"
-                            />
-                        ';
-                    }
+                        fill="transparent"
+                        />
+                    ';
                 }
             }
 
@@ -1582,7 +1570,6 @@ class View{
                 y="30"
 
                 style="opacity: 0.8; display: none; pointer-events: none;"
-                class="blink"
                 href="img/ui/view/arrow.webp"
                 />
             ';
@@ -1612,7 +1599,6 @@ class View{
                 y="30"
 
                 style="opacity: 0.8; display: none; pointer-events: none; filter: hue-rotate(-100deg); z-index: 100;"
-                class="blink"
                 href="img/ui/view/arrow.webp"
                 />
             ';
