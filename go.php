@@ -358,6 +358,8 @@ $printed = ob_get_level() > 0 ? ob_get_contents() : null;
 if (($_POST['hud'] ?? '') === '1' && $printed !== null && trim($printed) === '') {
     ob_clean();
     header('Content-Type: application/json; charset=utf-8');
+    // The host compresses HTML but not JSON: the board weighs ~500 KB raw, ~35 KB gzipped
+    ob_start('ob_gzhandler');
     echo json_encode(\App\View\Hud\MoveResponseView::render() + ['notice' => implode("\n", $stepNotices)]);
 }
 elseif ($stepNotices !== []) {
