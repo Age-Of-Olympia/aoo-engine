@@ -55,12 +55,15 @@ class AnimatedLayersViewTest extends TestCase
     public function testSlidingTileIsFrozenAndMovedByCss(): void
     {
         $layers = new AnimatedLayersView();
-        $layers->add($this->composed('lava.svg', 'drift_v'), 1.0, 90, [0, 25], 100, 50, 0, '');
+        $lava = $this->composed('lava.svg', 'drift_v');
+        $layers->add($lava, 1.0, 90, [0, 25], 100, 50, 0, '');
         $html = $layers->render();
 
-        $texture = rawurldecode($html);
+        $this->assertStringContainsString("url('texture.php?img=" . rawurlencode($lava) . '&amp;v=', $html, 'served frozen, by URL');
+        $texture = (string) AnimatedLayersView::frozenTexture($lava);
         $this->assertStringNotContainsString('<animateTransform', $texture, 'the texture is frozen');
         $this->assertStringNotContainsString('<g mask="url(#m)"', $texture, 'its shape moves to the layer mask');
+        $this->assertNull(AnimatedLayersView::frozenTexture($this->file('still.svg', '<svg xmlns="http://www.w3.org/2000/svg"/>')));
         $this->assertStringContainsString('transform:rotate(90deg)', $html);
         $this->assertStringContainsString('0px 25px/50px 50px', $html, 'phase shift as background position');
         $this->assertStringContainsString('@keyframes layer-elements-0-0{0%{transform:translate(0px,0px)}100%{transform:translate(0px,50px)}}', $html);

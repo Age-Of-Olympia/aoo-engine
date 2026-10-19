@@ -228,22 +228,30 @@ final class AnimatedLayersView
     }
 
     /**
-     * What the layer repeats. A sliding composed tile is frozen: its
-     * animations out, its own shape mask out (the layer's mask carries it,
-     * fixed to the cell). Anything else is the file itself. Memoised.
+     * What the layer repeats. A sliding composed tile is frozen (texture.php,
+     * cached by the browser: it embeds a PNG, ~40 KB per layer and per step
+     * when inlined). Anything else is the file itself.
      */
     private static function textureUri(string $img): string
     {
-        static $uris = [];
+        return self::moves($img) === []
+            ? $img
+            : 'texture.php?img='. rawurlencode($img) .'&amp;v='. filemtime($img);
+    }
 
-        return $uris[$img] ??= (function () use ($img): string {
-            if (self::moves($img) === []) {
-                return $img;
-            }
-            $svg = preg_replace('#<animate(Transform)?\b[^>]*/>#', '', (string) file_get_contents($img));
+    /**
+     * A sliding composed tile, frozen: its animations out, its own shape
+     * mask out (the layer's mask carries it, fixed to the cell). Null for
+     * anything that does not slide.
+     */
+    public static function frozenTexture(string $img): ?string
+    {
+        if (self::moves($img) === []) {
+            return null;
+        }
+        $svg = preg_replace('#<animate(Transform)?\b[^>]*/>#', '', (string) file_get_contents($img));
 
-            return 'data:image/svg+xml,'. rawurlencode(str_replace(' mask="url(#m)"', '', $svg));
-        })();
+        return str_replace(' mask="url(#m)"', '', (string) $svg);
     }
 
     /** A sliding composed tile's own shape (puddle, splash…) as a white image, or null. */
