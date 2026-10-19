@@ -358,9 +358,17 @@ $printed = ob_get_level() > 0 ? ob_get_contents() : null;
 if (($_POST['hud'] ?? '') === '1' && $printed !== null && trim($printed) === '') {
     ob_clean();
     header('Content-Type: application/json; charset=utf-8');
-    // The host compresses HTML but not JSON: the board weighs ~500 KB raw, ~35 KB gzipped
-    ob_start('ob_gzhandler');
-    echo json_encode(\App\View\Hud\MoveResponseView::render() + ['notice' => implode("\n", $stepNotices)]);
+    $json = (string) json_encode(\App\View\Hud\MoveResponseView::render() + ['notice' => implode("\n", $stepNotices)]);
+    /* The host's proxy compresses HTML but not JSON, and strips
+     * Accept-Encoding before PHP sees it: a missing header means "hidden",
+     * so only a client that lists encodings without gzip gets it raw.
+     * ~500 KB raw, ~35 KB gzipped. */
+    if (str_contains($_SERVER['HTTP_ACCEPT_ENCODING'] ?? 'gzip', 'gzip')) {
+        header('Content-Encoding: gzip');
+        header('Vary: Accept-Encoding');
+        $json = (string) gzencode($json);
+    }
+    echo $json;
 }
 elseif ($stepNotices !== []) {
     // Legacy layout: printing anything skips view.js's reload, so reload here.
