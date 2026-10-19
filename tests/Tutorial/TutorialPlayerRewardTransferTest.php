@@ -102,8 +102,6 @@ class TutorialPlayerRewardTransferTest extends TutorialIntegrationTestCase
             'race'        => 'nain',
             'player_type' => 'real',
             'coords_id'   => $coordsId,
-            'xp'          => 0,
-            'pi'          => 0,
         ]);
         $realPlayerId = (int) $this->conn->lastInsertId();
 
@@ -112,8 +110,6 @@ class TutorialPlayerRewardTransferTest extends TutorialIntegrationTestCase
             'race'        => 'nain',
             'player_type' => 'tutorial',
             'coords_id'   => $coordsId,
-            'xp'          => 0,
-            'pi'          => 0,
         ]);
         $tutPlayerId = (int) $this->conn->lastInsertId();
 
