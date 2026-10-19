@@ -1,1 +1,0 @@
-ALTER TABLE action_passives MODIFY value DECIMAL(4,2);

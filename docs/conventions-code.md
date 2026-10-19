@@ -76,7 +76,7 @@ référence outillage/process).
 | **Baseline** | Photographie du comportement existant, figée par un test AVANT de refactorer : le refactoring doit laisser le comportement identique au bit près. Classes suffixées `…BaselineTest`, groupes PHPUnit `entities-baseline` / `items-baseline`. On dit « baseline », jamais « golden master » : le jargon anglais ne porte rien pour l'équipe. |
 | **Strangler** | Remplacement progressif d'un god class (Classes/Player) : le neuf pousse autour du vieux, méthode par méthode, jusqu'à l'étouffer — jamais de réécriture big-bang. |
 | **STI** | Single Table Inheritance : une table (`players`), un discriminateur (`player_type`), plusieurs classes (Character/Structure…). |
-| **Satellite** | Table 1:1 qui complète une ligne `players` pour un type d'entité (`buildings`, `unique_objects`) — le « component pattern ». |
+| **Satellite** | Table 1:1 qui complète une ligne `players` pour un type d'entité (`buildings`, `resources`) — le « component pattern ». |
 | **Pseudo-race** | Ligne `races` non jouable portant les stats de base d'un type de structure (PV max d'une palissade). |
 | **Bundle** | Export/import JSON d'une entité de configuration (race, faction, dialogue, objet, recette…) par clé naturelle `name` — le véhicule des données entre environnements. |
 | **Seed** | Migration ou page admin qui recopie les JSON legacy vers la base (une fois) — la base devient la source de vérité. |

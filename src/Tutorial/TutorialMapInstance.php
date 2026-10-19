@@ -136,7 +136,7 @@ class TutorialMapInstance
         $this->spawnTemplateNpcs($instancePlanName);
 
         // Step 6: Copy other map elements if they exist on template map
-        $mapElementTypes = ['tiles', 'foregrounds', 'triggers', 'elements', 'dialogs', 'routes'];
+        $mapElementTypes = ['tiles', 'foregrounds', 'triggers', 'elements', 'dialogs'];
 
         foreach ($mapElementTypes as $type) {
             $count = $this->conn->fetchOne("

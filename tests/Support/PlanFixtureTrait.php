@@ -48,7 +48,7 @@ trait PlanFixtureTrait
             \App\Service\Map\BoardChanges::viewer((int) $id);
         }
 
-        foreach (['tiles', 'routes', 'plants', 'resources', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {
+        foreach (['tiles', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {
             $conn->executeStatement(
                 "DELETE m FROM map_{$layer} m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?",
                 [$plan]

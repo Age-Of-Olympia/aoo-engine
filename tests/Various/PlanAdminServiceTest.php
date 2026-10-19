@@ -268,7 +268,7 @@ class PlanAdminServiceTest extends TestCase
         $this->assertSame(3, $report['coords']);
         $this->assertNull($this->link->fetchOne('SELECT 1 FROM players WHERE id = ?', [self::NPC_ID]) ?: null);
         $this->assertSame(0, (int) $this->link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::SRC]));
-        foreach (['tiles', 'resources', 'elements'] as $layer) {
+        foreach (['tiles', 'elements'] as $layer) {
             $this->assertSame(
                 0,
                 (int) $this->link->fetchOne(
@@ -422,7 +422,7 @@ class PlanAdminServiceTest extends TestCase
 
         /* Map layers first: a player-built wall holds its builder by foreign
            key, so the character cannot leave before what it built. */
-        foreach (['tiles', 'routes', 'plants', 'resources', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {
+        foreach (['tiles', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {
             $this->link->executeStatement(
                 "DELETE m FROM map_{$layer} m JOIN coords c ON c.id = m.coords_id WHERE c.plan LIKE 'plan_test_adm_%'"
             );

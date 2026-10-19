@@ -49,7 +49,7 @@ Age of Olympia is a **turn-based survival RPG** where players:
 - **Entities** (`entities` + satellites): everything standing on a cell — structures, resources, scenery, buildings, unique objects. One row per object, typed by discriminator, placed through `entity_cells`
 - **Items** (`map_items`): Ground items players can pick up
 - **Foregrounds** (`map_foregrounds`): Visual decorations (non-interactive)
-- `map_resources` (ex-`map_walls`) is empty since `Version20260801100000`; its `map_walls` compat view is gone (`Version20261018160000`)
+- The old row tables of the entity layers (`map_resources`, `map_plants`, `map_routes`) are dropped (`Version20261019100000`)
 
 **Resource Gathering**:
 - Resources are **entities** (`App\Entity\Resource extends Structure`, discriminator `resource`), NOT items and no longer walls

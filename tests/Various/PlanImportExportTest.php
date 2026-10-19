@@ -433,7 +433,7 @@ class PlanImportExportTest extends TestCase
             return;
         }
 
-        foreach (['tiles', 'routes', 'plants', 'resources', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {
+        foreach (['tiles', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {
             $this->link->executeStatement(
                 "DELETE m FROM map_{$layer} m JOIN coords c ON c.id = m.coords_id WHERE c.plan LIKE 'plan_test_ie_%'"
             );

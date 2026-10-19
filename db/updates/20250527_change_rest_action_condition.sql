@@ -1,1 +1,0 @@
-UPDATE `action_conditions` SET `parameters` = '{ \"fatigue\": \"fatigue_or_effects\" }' WHERE `action_conditions`.`id` = 32;
