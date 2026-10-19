@@ -27,6 +27,17 @@ class TutorialUI {
 
         // UI observers for validation
         this.panelObserver = null;
+
+        // A reload aborts the requests still in flight; their error is not one to show
+        this.leaving = false;
+        window.addEventListener('pagehide', () => { this.leaving = true; });
+    }
+
+    /** Alert on a failed request, unless the page is unloading. */
+    requestFailed(message) {
+        if (!this.leaving) {
+            aooAlert(message);
+        }
     }
 
     /**
@@ -78,7 +89,7 @@ class TutorialUI {
         } catch (error) {
             console.error('[TutorialUI] Start error', error);
             const errorMsg = error.message || 'Erreur inconnue';
-            aooAlert(`Impossible de démarrer le tutoriel: ${errorMsg}\n\nVeuillez recharger la page et réessayer.`);
+            this.requestFailed(`Impossible de démarrer le tutoriel: ${errorMsg}\n\nVeuillez recharger la page et réessayer.`);
             return false;
         }
     }
@@ -133,7 +144,7 @@ class TutorialUI {
 
             /* Don't show alert for authentication errors (401) - user is not logged in */
             if (!error.message || !error.message.includes('401')) {
-                aooAlert(`Erreur lors de la reprise du tutoriel: ${error.message || 'Erreur inconnue'}\n\nVeuillez recharger la page.`);
+                this.requestFailed(`Erreur lors de la reprise du tutoriel: ${error.message || 'Erreur inconnue'}\n\nVeuillez recharger la page.`);
             } else {
             }
 
@@ -340,7 +351,7 @@ class TutorialUI {
             }
         } catch (error) {
             console.error('[TutorialUI] Advance error', error);
-            aooAlert(`Erreur lors de l'avancement du tutoriel: ${error.message || 'Erreur inconnue'}\n\nSi le problème persiste, essayez de quitter et reprendre le tutoriel.`);
+            this.requestFailed(`Erreur lors de l'avancement du tutoriel: ${error.message || 'Erreur inconnue'}\n\nSi le problème persiste, essayez de quitter et reprendre le tutoriel.`);
             return false;
         } finally {
             this.isAdvancing = false;
@@ -1773,7 +1784,7 @@ class TutorialUI {
                     console.error('[TutorialUI] Could not fetch debug response');
                 }
 
-                aooAlert(`Erreur: ${error.message || 'Erreur inconnue'}`);
+                this.requestFailed(`Erreur: ${error.message || 'Erreur inconnue'}`);
             }
         });
 
