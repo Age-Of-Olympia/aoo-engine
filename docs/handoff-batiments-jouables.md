@@ -136,4 +136,4 @@ view, `players_items_instances` (6 rows to fold into the containment relation fi
 statements, the `COALESCE(NULLIF(…))` wrappers in `Player::get_row()` and the Doctrine
 mapping are gone (`Version20261019120000_SatellitesOwnTheirColumns` makes a last copy); 4.3.24
 renames the columns to `obsolete_*` (`Version20261020100000`, its down() restores and refills
-them), the release after drops them.
+them), 4.3.25 drops them (`Version20261021100000`).

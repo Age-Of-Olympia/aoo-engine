@@ -99,7 +99,7 @@ class PlayerEntityHydrationTest extends TestCase
         ));
 
         $row = $conn->fetchAssociative(
-            "SELECT id FROM players WHERE id > 0 AND (player_type IS NULL OR player_type = 'real') ORDER BY id ASC LIMIT 1"
+            "SELECT id FROM players WHERE id > 0 AND player_type = 'real' ORDER BY id ASC LIMIT 1"
         );
         if (empty($row['id'])) {
             $this->markTestSkipped('No real player row available — run scripts/testing/reset_test_database.sh.');

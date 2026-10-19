@@ -117,15 +117,6 @@ final class AccountService
         }
     }
 
-    /** A character born without credentials still gets its row. */
-    public function ensureRow(int $playerId): void
-    {
-        $this->conn->executeStatement(
-            'INSERT IGNORE INTO accounts (player_id) VALUES (?)',
-            [$playerId]
-        );
-    }
-
     private function readOne(int $playerId, string $column): ?string
     {
         $value = $this->conn->fetchOne(
