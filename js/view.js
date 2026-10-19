@@ -511,6 +511,14 @@ $(document).ready(function(){
             return false;
         }
 
+        /* The HUD's MVT pill reads "left/max": at 0 the server would only
+           refuse, so refuse here without the round trip. */
+        var mvtLeft = parseInt($('#hud-pill-mvt .hud-pill-value').text(), 10);
+        if (mvtLeft === 0) {
+            aooAlert('Pas assez de Mouvements.');
+            return false;
+        }
+
         $('#go-rect').off('click');
         $('#go-img').attr('href', 'img/ui/view/gear.webp');
         // $('#view').css({'filter':'grayscale(1)', 'transition':'filter 0.5s'});

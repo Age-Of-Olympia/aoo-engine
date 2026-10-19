@@ -8,6 +8,20 @@ use Classes\Element;
 require_once('config.php');
 
 
+/* A refused step: the alert, then the arrow js/view.js swapped for its
+ * gear is given back — no reload. paid: the attempt spent something (a
+ * failed dig), the pills and panels refresh in place (aooReload). */
+function refuseStep(string $message, bool $paid = false): never
+{
+    echo '<script>aooAlert(' . json_encode($message, JSON_UNESCAPED_UNICODE) . ');'
+        . '$("#go-img").attr("href", "img/ui/view/arrow.webp");'
+        . 'if (typeof window.bindMapView === "function") { window.bindMapView(false, true); }'
+        . ($paid ? 'aooReload();' : '')
+        . '</script>';
+    exit();
+}
+
+
 if(!isset($_POST['coords'])){
 
     exit('error coords');
@@ -25,9 +39,7 @@ $player = PlayerFactory::active();
 
 if($player->getRemaining('mvt') < 1){
 
-
-    echo '<script>aooAlert("Pas assez de Mouvements.").then(function(){document.location.reload();});</script>';
-    exit();
+    refuseStep('Pas assez de Mouvements.');
 }
 
 $player->getCoords();
@@ -85,9 +97,7 @@ $refusal = (new \App\Service\Map\TileOccupancyService())->stepRefusal(
 
 if($refusal !== null){
 
-    echo '<script>aooAlert('. json_encode($refusal, JSON_UNESCAPED_UNICODE) .').then(function(){document.location.reload();});</script>';
-
-    exit();
+    refuseStep($refusal);
 }
 
 
@@ -238,8 +248,7 @@ if($goCoords->z < 0){
                 }
             }
 
-            echo '<script>aooAlert('. json_encode($reason) .').then(function(){document.location.reload();});</script>';
-            exit();
+            refuseStep($reason, paid: true);
         }
 
         if($player->emplacements->main1->data->name != 'Pioche'){
@@ -256,9 +265,7 @@ elseif($goCoords->z > 0){
 
     if(!Element::hasFloor($db, (int) $coordsId) && !$player->effectService->grantsFlight($player->getEffects())){
 
-        echo '<script>aooAlert("Il faut pouvoir voler pour accéder à ce lieu.").then(function(){document.location.reload();});</script>';
-
-        exit();
+        refuseStep('Il faut pouvoir voler pour accéder à ce lieu.');
     }
 }
 
