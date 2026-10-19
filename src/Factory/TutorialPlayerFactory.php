@@ -100,22 +100,19 @@ class TutorialPlayerFactory
             'player_type'         => 'tutorial',
             'display_id'          => $displayId,
             'name'                => $name,
-            'psw'                 => '',
-            'mail'                => '',
-            'plain_mail'          => '',
             'coords_id'           => $startingCoordsId,
             'slot'                => \App\Service\Map\EntityLocationService::SLOT_INSTALLED,
             'race'                => $race,
-            'xp'                  => 0,
-            'pi'                  => 0,
             'energie'             => 100,
             'avatar'              => $defaultAvatar,
             'portrait'            => $defaultPortrait,
             'text'                => 'Personnage de tutoriel',
-            'nextTurnTime'        => time() + 86400, // 24h future to skip NewTurn page
             'tutorial_session_id' => $tutorialSessionId,
             'real_player_id_ref'  => $realPlayerId,
         ]);
+
+        // 24h ahead, so the tutorial never opens on the new turn page
+        (new \App\Service\TurnService($conn))->setNextTurnTime($actualPlayerId, time() + 86400);
 
         /* Step 7: Grant basic actions.
          *

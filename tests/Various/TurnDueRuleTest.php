@@ -38,7 +38,7 @@ class TurnDueRuleTest extends LegacyPlayerFixtureTestCase
             $id = (int) $player->id;
 
             $this->link->executeStatement(
-                'UPDATE players SET nextTurnTime = ? WHERE id = ?',
+                'UPDATE turns SET next_turn_time = ? WHERE player_id = ?',
                 [$now + 3600, $id]
             );
             $this->assertFalse(
@@ -47,7 +47,7 @@ class TurnDueRuleTest extends LegacyPlayerFixtureTestCase
             );
 
             $this->link->executeStatement(
-                'UPDATE players SET nextTurnTime = ? WHERE id = ?',
+                'UPDATE turns SET next_turn_time = ? WHERE player_id = ?',
                 [$now - 1, $id]
             );
             $this->assertTrue(
@@ -66,7 +66,11 @@ class TurnDueRuleTest extends LegacyPlayerFixtureTestCase
         $now = 1_800_000_000;
 
         $this->link->executeStatement(
-            'UPDATE players SET nextTurnTime = ?, coords_id = NULL WHERE id = ?',
+            'UPDATE players SET coords_id = NULL WHERE id = ?',
+            [(int) $player->id]
+        );
+        $this->link->executeStatement(
+            'UPDATE turns SET next_turn_time = ? WHERE player_id = ?',
             [$now - 1, (int) $player->id]
         );
 
@@ -82,14 +86,14 @@ class TurnDueRuleTest extends LegacyPlayerFixtureTestCase
         $now = 1_800_000_000;
 
         $this->link->executeStatement(
-            'UPDATE players SET nextTurnTime = ? WHERE id = ?',
+            'UPDATE turns SET next_turn_time = ? WHERE player_id = ?',
             [$now + 60, (int) $player->id]
         );
 
         $this->assertNull((new TurnProcessingService())->processDue($this->freshPlayer((int) $player->id), $now));
         $this->assertSame(
             $now + 60,
-            (int) $this->link->fetchOne('SELECT nextTurnTime FROM players WHERE id = ?', [(int) $player->id]),
+            (int) $this->link->fetchOne('SELECT next_turn_time FROM turns WHERE player_id = ?', [(int) $player->id]),
             'et l\'échéance n\'a pas bougé'
         );
     }

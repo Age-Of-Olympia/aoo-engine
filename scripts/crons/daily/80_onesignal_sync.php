@@ -13,13 +13,14 @@ $mailContactSync = new MailContactSyncService();
 // bloque l'external_id "1" (admin) ; email requis. delete_account = option legacy
 // de suppression, pour désabonner aussi ces joueurs au backfill.
 $sql = '
-    SELECT p.id, p.plain_mail, p.name, p.race, p.lastLoginTime,
+    SELECT p.id, a.plain_mail, p.name, p.race, a.last_login_time AS lastLoginTime,
            p.deletion_asked, o.player_id AS delete_account
     FROM players p
+    JOIN accounts a ON a.player_id = p.id
     LEFT JOIN players_options o ON o.player_id = p.id AND o.name = "deleteAccount"
     WHERE p.player_type = "real"
       AND p.id > 1
-      AND p.plain_mail <> ""
+      AND a.plain_mail <> ""
 ';
 
 $res = $db->exe($sql);

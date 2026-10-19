@@ -20,7 +20,12 @@ use Classes\Db;
 class PlayerSkillsService
 {
     /** Columns surfaced in search results and the skills header. */
-    private const SUMMARY_FIELDS = 'id, name, race, player_type, xp, lastLoginTime';
+    private const SUMMARY_FIELDS = 'p.id, p.name, p.race, p.player_type,
+        COALESCE(g.xp, 0) AS xp, COALESCE(a.last_login_time, 0) AS lastLoginTime';
+
+    private const SUMMARY_FROM = 'players p
+        LEFT JOIN progression g ON g.player_id = p.id
+        LEFT JOIN accounts a ON a.player_id = p.id';
 
     /**
      * Real players and PNJs together, name-ordered — the roster shown on the
@@ -32,10 +37,9 @@ class PlayerSkillsService
      */
     public function listCharacters(): array
     {
-        $sql = 'SELECT ' . self::SUMMARY_FIELDS . "
-                FROM players
-                WHERE player_type IN ('real', 'npc')
-                ORDER BY name ASC";
+        $sql = 'SELECT ' . self::SUMMARY_FIELDS . ' FROM ' . self::SUMMARY_FROM . "
+                WHERE p.player_type IN ('real', 'npc')
+                ORDER BY p.name ASC";
 
         return $this->hydrateRows((new Db())->exe($sql));
     }
@@ -49,7 +53,7 @@ class PlayerSkillsService
     {
         $db = new Db();
         $res = $db->exe(
-            'SELECT ' . self::SUMMARY_FIELDS . ' FROM players WHERE id = ?',
+            'SELECT ' . self::SUMMARY_FIELDS . ' FROM ' . self::SUMMARY_FROM . ' WHERE p.id = ?',
             [$playerId]
         );
 

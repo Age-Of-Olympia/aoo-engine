@@ -8,6 +8,13 @@ class FoiView
 {
     public const CACHE = 'datas/public/classements/foi.html';
 
+    /** Logged in within INACTIVE_TIME; $alias is the players row to test. */
+    private static function activeSql(string $alias): string
+    {
+        return '(SELECT acc.last_login_time FROM accounts AS acc WHERE acc.player_id = ' . $alias . '.id)'
+            . ' >= (UNIX_TIMESTAMP() - ' . INACTIVE_TIME . ')';
+    }
+
     public static function renderFoi(): void
     {
         echo '<h1>Classement de la Foi</h1>';
@@ -33,13 +40,13 @@ class FoiView
             top.id AS top_prieur_id,
             COALESCE(excl.total_plans, 0) AS plans_controles
         FROM players AS g
-        LEFT JOIN players AS f ON f.godId = g.id AND f.id > 0 AND f.lastLoginTime >= (UNIX_TIMESTAMP() - '. INACTIVE_TIME .')
+        LEFT JOIN players AS f ON f.godId = g.id AND f.id > 0 AND ' . self::activeSql('f') . '
             AND f.' . $onSeasonPlan . '
         LEFT JOIN players AS top ON top.id = (
-            SELECT id FROM players
-            WHERE godId = g.id AND id > 0 AND lastLoginTime >= (UNIX_TIMESTAMP() - '. INACTIVE_TIME .')
-            AND ' . $onSeasonPlan . '
-            ORDER BY pf DESC
+            SELECT b.id FROM players AS b
+            WHERE b.godId = g.id AND b.id > 0 AND ' . self::activeSql('b') . '
+            AND b.' . $onSeasonPlan . '
+            ORDER BY b.pf DESC
             LIMIT 1
         )
         /* A plan is controlled when exactly ONE god has a consecrated altar

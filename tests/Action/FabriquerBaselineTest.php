@@ -31,7 +31,7 @@ class FabriquerBaselineTest extends LegacyPlayerFixtureTestCase
         $crafter = $this->createRealPlayer('GmSmith');
         $crafter->getCoords();
         $crafter->get_caracs();
-        $xpBefore = (int) $this->link->fetchOne('SELECT xp FROM players WHERE id = ?', [$crafter->id]);
+        $xpBefore = (int) $this->link->fetchOne('SELECT COALESCE((SELECT xp FROM progression WHERE player_id = ?), 0)', [$crafter->id]);
 
         $bois = $this->itemOrSkip('bois');
         $palissadeItem = $this->itemOrSkip('palissade');
@@ -53,7 +53,7 @@ class FabriquerBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(1, $palissadeItem->get_n($fresh), 'the palissade object is crafted');
         $this->assertSame(
             $xpBefore,
-            (int) $this->link->fetchOne('SELECT xp FROM players WHERE id = ?', [$crafter->id]),
+            (int) $this->link->fetchOne('SELECT COALESCE((SELECT xp FROM progression WHERE player_id = ?), 0)', [$crafter->id]),
             "type 'craft' has no XP rule: crafting grants no XP (parité historique)"
         );
     }

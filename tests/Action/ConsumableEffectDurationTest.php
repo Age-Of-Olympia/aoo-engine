@@ -126,11 +126,11 @@ class ConsumableEffectDurationTest extends LegacyPlayerFixtureTestCase
             'xp' => 7,
         ]);
         $item->get_data();
-        $before = $this->link->fetchAssociative('SELECT xp, pi FROM players WHERE id = ?', [(int) $drinker->id]);
+        $before = $this->link->fetchAssociative('SELECT COALESCE(g.xp, 0) AS xp, COALESCE(g.pi, 0) AS pi FROM players p LEFT JOIN progression g ON g.player_id = p.id WHERE p.id = ?', [(int) $drinker->id]);
 
         $details = InventoryService::applyConsumablePayload($drinker, $item);
 
-        $after = $this->link->fetchAssociative('SELECT xp, pi FROM players WHERE id = ?', [(int) $drinker->id]);
+        $after = $this->link->fetchAssociative('SELECT COALESCE(g.xp, 0) AS xp, COALESCE(g.pi, 0) AS pi FROM players p LEFT JOIN progression g ON g.player_id = p.id WHERE p.id = ?', [(int) $drinker->id]);
         $this->assertSame(7, (int) $after['xp'] - (int) $before['xp']);
         $this->assertSame(7, (int) $after['pi'] - (int) $before['pi'], 'a fresh character is far below the PI cap');
         $this->assertContains('+7 XP', $details);

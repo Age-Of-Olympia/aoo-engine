@@ -4,33 +4,21 @@ namespace App\Entity;
 
 use App\Interface\ProgressesInterface;
 use App\Interface\TakesTurnsInterface;
-use App\Trait\ProgressesFieldsTrait;
-use App\Trait\TakesTurnsFieldsTrait;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * Character — abstract branch of the GameEntity STI for entities that are
  * played or play themselves: real players, tutorial players, NPCs.
  *
- * Carries what a map STRUCTURE must not: account data (psw/mail — the
- * §3 ideal eventually splits these into their own table, Phase D),
- * progression (xp, pi, rank…), faction RANK and turn timing — belonging to a
- * faction is on GameEntity, since a forge belongs to one too.
+ * Carries what a map STRUCTURE must not: a story, a god, a faction RANK —
+ * belonging to a faction is on GameEntity, since a forge belongs to one too.
+ * The account lives in `accounts` (AccountService).
  *
- * Two of those are NOT character-ness, and say so out loud: taking turns and
- * progressing are capabilities, held here today and by playable buildings
- * tomorrow (docs/design-playable-buildings.md). A reader asks "does this take
- * turns?" instead of "is this a character?", so the gates written from now on
- * do not have to be swept later.
- *
- * The columns behind those two capabilities are mapped here but no longer own
- * their value: `turns` and `progression` do, through TurnService and
- * ProgressionService, and the columns are mirrors kept alive until the
- * post-deployment drop. The same holds for psw/mail and `accounts`.
- *
- * So the capability accessors READ only. Their setters are gone: assigning a
- * mapped property and flushing would reach the mirror alone and leave the
- * satellite behind, and the satellite is what answers.
+ * Taking turns and progressing are NOT character-ness, and say so out loud:
+ * they are capabilities, held here and by playable buildings
+ * (docs/design-playable-buildings.md), stored in the `turns` and `progression`
+ * satellites (TurnService, ProgressionService). A reader asks "does this take
+ * turns?" instead of "is this a character?".
  *
  * No discriminator entry of its own — Doctrine allows abstract
  * intermediate classes in an STI hierarchy; querying Character returns
@@ -39,18 +27,6 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 abstract class Character extends GameEntity implements TakesTurnsInterface, ProgressesInterface
 {
-    use TakesTurnsFieldsTrait;
-    use ProgressesFieldsTrait;
-
-    #[ORM\Column(type: "string", length: 255)]
-    protected string $psw = '';
-
-    #[ORM\Column(type: "string", length: 255)]
-    protected string $mail = '';
-
-    #[ORM\Column(type: "string", length: 255, name: "plain_mail")]
-    protected string $plainMail = '';
-
     #[ORM\Column(type: "integer")]
     protected int $pr = 0;
 
@@ -85,18 +61,7 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
     protected int $secretFactionRole = 0;
 
     #[ORM\Column(type: "integer")]
-    protected int $lastLoginTime = 0;
-
-    #[ORM\Column(type: "integer")]
     protected int $lastTravelTime = 0;
-
-    #[ORM\Column(type: "boolean", name: "email_bonus", nullable: true)]
-    protected ?bool $emailBonus = false;
-
-    public function getMail(): string
-    {
-        return $this->mail;
-    }
 
     public function getPr(): int
     {
@@ -136,22 +101,6 @@ abstract class Character extends GameEntity implements TakesTurnsInterface, Prog
     public function getSecretFactionRole(): int
     {
         return $this->secretFactionRole;
-    }
-
-    public function getLastLoginTime(): int
-    {
-        return $this->lastLoginTime;
-    }
-
-    public function setLastLoginTime(int $lastLoginTime): self
-    {
-        $this->lastLoginTime = $lastLoginTime;
-        return $this;
-    }
-
-    public function getEmailBonus(): ?bool
-    {
-        return $this->emailBonus;
     }
 
 }

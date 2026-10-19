@@ -38,8 +38,8 @@ class NpcAdminService
 
     /**
      * Create a PNJ (npc, negative id) via the canonical put_player path, then
-     * stamp lastLoginTime so a freshly-created PNJ reads as active rather than
-     * immediately "Inactif" (put_player leaves the column at its 0 default).
+     * stamp its last login so a freshly-created PNJ reads as active rather than
+     * immediately "Inactif".
      *
      * @return int the new PNJ id
      */
@@ -59,17 +59,19 @@ class NpcAdminService
      */
     public function listPnjs(): array
     {
-        $sql = "SELECT p.id, p.name, p.race, p.xp, p.lastLoginTime,
+        $sql = "SELECT p.id, p.name, p.race, COALESCE(g.xp, 0) AS xp, COALESCE(a.last_login_time, 0) AS lastLoginTime,
                        GROUP_CONCAT(
                            DISTINCT CONCAT(owner.name, ' (#', owner.id, ')')
                            ORDER BY owner.id SEPARATOR ', '
                        ) AS owners,
                        COUNT(DISTINCT pp.player_id) AS owner_count
                 FROM players p
+                LEFT JOIN progression g ON g.player_id = p.id
+                LEFT JOIN accounts a ON a.player_id = p.id
                 LEFT JOIN players_pnjs pp ON pp.pnj_id = p.id
                 LEFT JOIN players owner ON owner.id = pp.player_id
                 WHERE p.player_type = 'npc'
-                GROUP BY p.id, p.name, p.race, p.xp, p.lastLoginTime
+                GROUP BY p.id, p.name, p.race, g.xp, a.last_login_time
                 ORDER BY p.name ASC";
 
         $db = new Db();
@@ -105,7 +107,11 @@ class NpcAdminService
     public function getPnj(int $pnjId): ?array
     {
         $res = (new Db())->exe(
-            "SELECT id, name, race, xp, lastLoginTime FROM players WHERE id = ? AND player_type = 'npc'",
+            "SELECT p.id, p.name, p.race, COALESCE(g.xp, 0) AS xp, COALESCE(a.last_login_time, 0) AS lastLoginTime
+               FROM players p
+               LEFT JOIN progression g ON g.player_id = p.id
+               LEFT JOIN accounts a ON a.player_id = p.id
+              WHERE p.id = ? AND p.player_type = 'npc'",
             [$pnjId]
         );
 

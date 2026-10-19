@@ -33,21 +33,4 @@ class RealPlayer extends Character
     {
         return false;
     }
-
-    /**
-     * Has this player's last login passed the INACTIVE_TIME threshold?
-     *
-     * Domain method — replaces legacy `$player->data->isInactive`
-     * for entity callers (e.g. infos.php). Delegates to
-     * PlayerService::isInactive so the rule lives in ONE place.
-     *
-     * Only meaningful for real players: tutorial characters are
-     * ephemeral and NPCs never "log in" in the user sense. Keeping
-     * this on RealPlayer (not the shared base) prevents accidental
-     * misuse on the other subclasses.
-     */
-    public function isInactive(\App\Service\PlayerService $playerService): bool
-    {
-        return $playerService->isInactive($this->getLastLoginTime());
-    }
 }

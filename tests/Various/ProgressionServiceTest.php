@@ -7,15 +7,14 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * What an entity earns lives in `progression` and is mirrored into `players`
- * until those columns are dropped. These cases pin both halves of that
- * contract, the fallback for a character created before the table, and the
- * conditional debit that makes spending PI safe under concurrency.
+ * What an entity earns lives in `progression`. These cases pin the writes, the
+ * reads, and the conditional debit that makes spending PI safe under
+ * concurrency.
  */
 #[Group('entities-baseline')]
 class ProgressionServiceTest extends LegacyPlayerFixtureTestCase
 {
-    public function testAGainLandsInBothPlacesWhileTheColumnsRemain(): void
+    public function testAGainLandsInTheSatellite(): void
     {
         $player = $this->createRealPlayer('GmGain');
         $id = (int) $player->id;
@@ -23,15 +22,10 @@ class ProgressionServiceTest extends LegacyPlayerFixtureTestCase
         (new ProgressionService($this->link))->gain($id, 120, 120, 3);
 
         $satellite = $this->link->fetchAssociative('SELECT * FROM progression WHERE player_id = ?', [$id]);
-        $legacy = $this->link->fetchAssociative('SELECT xp, pi, `rank` FROM players WHERE id = ?', [$id]);
 
-        $this->assertSame(120, (int) $satellite['xp'], 'the satellite holds it');
+        $this->assertSame(120, (int) $satellite['xp']);
         $this->assertSame(120, (int) $satellite['pi']);
         $this->assertSame(3, (int) $satellite['rank']);
-
-        $this->assertSame(120, (int) $legacy['xp'], 'and the columns still mirror it');
-        $this->assertSame(120, (int) $legacy['pi']);
-        $this->assertSame(3, (int) $legacy['rank']);
     }
 
     public function testTheLegacyRowStillCarriesTheProgressionFields(): void
@@ -47,44 +41,51 @@ class ProgressionServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(4, (int) $player->row->rank);
     }
 
-    public function testAReadFallsBackToTheColumnWhenNoSatelliteRowExists(): void
+    public function testACharacterWithoutRowReadsTheDefaults(): void
     {
         $player = $this->createRealPlayer('GmSansProgression');
         $id = (int) $player->id;
 
         $this->link->executeStatement('DELETE FROM progression WHERE player_id = ?', [$id]);
-        $this->link->executeStatement('UPDATE players SET xp = ? WHERE id = ?', [900, $id]);
 
         $player->get_row();
 
-        $this->assertSame(900, (int) $player->row->xp, 'a character predating the table still answers');
+        $this->assertSame(0, (int) $player->row->xp);
+        $this->assertSame(1, (int) $player->row->rank);
+        $this->assertSame(['xp' => 0, 'rank' => 1], (new ProgressionService($this->link))->of([$id])[$id]);
     }
 
-    /**
-     * A satellite row born after the character must not start from zero: an
-     * increment on a blank row would lose everything already earned.
-     */
-    public function testASatelliteRowIsSeededFromTheColumnsItMirrors(): void
+    /** The first gain creates the missing row instead of being lost. */
+    public function testAGainCreatesTheMissingRow(): void
     {
         $player = $this->createRealPlayer('GmReprise');
         $id = (int) $player->id;
 
         $this->link->executeStatement('DELETE FROM progression WHERE player_id = ?', [$id]);
-        $this->link->executeStatement('UPDATE players SET xp = ?, pi = ? WHERE id = ?', [900, 40, $id]);
 
         (new ProgressionService($this->link))->gain($id, 100, 100);
 
         $this->assertSame(
-            1000,
+            100,
             (int) $this->link->fetchOne('SELECT xp FROM progression WHERE player_id = ?', [$id])
-        );
-        $this->assertSame(
-            1000,
-            (int) $this->link->fetchOne('SELECT xp FROM players WHERE id = ?', [$id])
         );
     }
 
-    public function testSpendingPiDebitsBothPlaces(): void
+    public function testSeveralLevelsAreReadAtOnce(): void
+    {
+        $first = (int) $this->createRealPlayer('GmNiveauA')->id;
+        $second = (int) $this->createRealPlayer('GmNiveauB')->id;
+        $progression = new ProgressionService($this->link);
+
+        $progression->gain($first, 300, 0, 4);
+
+        $this->assertSame(
+            [$first => ['xp' => 300, 'rank' => 4], $second => ['xp' => 0, 'rank' => 1]],
+            $progression->of([$first, $second])
+        );
+    }
+
+    public function testSpendingPiDebitsTheBalance(): void
     {
         $player = $this->createRealPlayer('GmDepense');
         $id = (int) $player->id;
@@ -97,10 +98,6 @@ class ProgressionServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(
             18,
             (int) $this->link->fetchOne('SELECT pi FROM progression WHERE player_id = ?', [$id])
-        );
-        $this->assertSame(
-            18,
-            (int) $this->link->fetchOne('SELECT pi FROM players WHERE id = ?', [$id])
         );
     }
 
@@ -123,10 +120,6 @@ class ProgressionServiceTest extends LegacyPlayerFixtureTestCase
             10,
             (int) $this->link->fetchOne('SELECT pi FROM progression WHERE player_id = ?', [$id])
         );
-        $this->assertSame(
-            10,
-            (int) $this->link->fetchOne('SELECT pi FROM players WHERE id = ?', [$id])
-        );
     }
 
     /** Spending the whole balance works once, and only once. */
@@ -147,7 +140,7 @@ class ProgressionServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    /** A structure earns nothing yet: it keeps answering from its row. */
+    /** A structure that does not play gets no row, and reads the defaults. */
     public function testAStructureGetsNoSatelliteRow(): void
     {
         $id = $this->placeStructure('mur_pierre', 43, 43);

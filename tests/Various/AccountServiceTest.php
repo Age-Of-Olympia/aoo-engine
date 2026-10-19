@@ -7,14 +7,12 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * Credentials live in `accounts` and are mirrored into `players` until those
- * columns are dropped. These cases pin both halves of that contract, and the
- * fallback that makes a character created before the table still readable.
+ * Credentials live in `accounts`, read and written through AccountService.
  */
 #[Group('entities-baseline')]
 class AccountServiceTest extends LegacyPlayerFixtureTestCase
 {
-    public function testAWriteLandsInBothPlacesWhileTheColumnsRemain(): void
+    public function testAWriteLandsInTheAccount(): void
     {
         $player = $this->createRealPlayer('GmCompte');
         $id = (int) $player->id;
@@ -23,29 +21,18 @@ class AccountServiceTest extends LegacyPlayerFixtureTestCase
 
         $this->assertSame(
             'un-condensat',
-            $this->link->fetchOne('SELECT psw FROM accounts WHERE player_id = ?', [$id]),
-            'the account holds it'
-        );
-        $this->assertSame(
-            'un-condensat',
-            $this->link->fetchOne('SELECT psw FROM players WHERE id = ?', [$id]),
-            'and the column still mirrors it'
+            $this->link->fetchOne('SELECT psw FROM accounts WHERE player_id = ?', [$id])
         );
     }
 
-    public function testAReadFallsBackToTheColumnWhenNoAccountRowExists(): void
+    public function testACharacterWithoutAccountRowHasNoPassword(): void
     {
         $player = $this->createRealPlayer('GmSansCompte');
         $id = (int) $player->id;
 
         $this->link->executeStatement('DELETE FROM accounts WHERE player_id = ?', [$id]);
-        $this->link->executeStatement('UPDATE players SET psw = ? WHERE id = ?', ['ancien-condensat', $id]);
 
-        $this->assertSame(
-            'ancien-condensat',
-            (new AccountService($this->link))->passwordHashOf($id),
-            'a character predating the table still answers'
-        );
+        $this->assertNull((new AccountService($this->link))->passwordHashOf($id));
     }
 
     public function testAnEmptyPasswordReadsAsNoneRatherThanEmptyString(): void
@@ -53,7 +40,6 @@ class AccountServiceTest extends LegacyPlayerFixtureTestCase
         $player = $this->createRealPlayer('GmMuet');
         $id = (int) $player->id;
 
-        $this->link->executeStatement('UPDATE players SET psw = ? WHERE id = ?', ['', $id]);
         $this->link->executeStatement(
             "INSERT INTO accounts (player_id, psw) VALUES (?, '')
              ON DUPLICATE KEY UPDATE psw = ''",

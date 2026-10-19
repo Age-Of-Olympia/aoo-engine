@@ -21,22 +21,9 @@ namespace App\Interface;
  * upgrades. It is not a purse — gold is an item — but the currency progression
  * itself produces.
  *
- * **Reading only.** The state lives in the `progression` satellite, and
- * {@see \App\Service\ProgressionService} is its only writer — it keeps the
- * satellite and the `players` columns it still mirrors in step, and spends PI
- * with a conditional statement rather than a read-then-write. A setter here
- * would offer a write that reaches the columns alone.
+ * A marker: the state lives in the `progression` satellite, written and read
+ * through {@see \App\Service\ProgressionService}, not mapped on the entity.
  */
 interface ProgressesInterface
 {
-    public function getXp(): int;
-
-    /** The level, as the game names it. */
-    public function getRank(): int;
-
-    /** Unspent points a level grants. */
-    public function getBonusPoints(): int;
-
-    /** What experience mints and characteristic upgrades spend. */
-    public function getPi(): int;
 }

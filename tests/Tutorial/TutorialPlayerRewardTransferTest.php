@@ -34,15 +34,15 @@ class TutorialPlayerRewardTransferTest extends TutorialIntegrationTestCase
         [$realPlayerId, $tutPlayerId] = $this->seedRealAndTutorialPlayers();
 
         $realXpBefore = (int) $this->conn->fetchOne(
-            'SELECT xp FROM players WHERE id = ?',
+            'SELECT COALESCE((SELECT xp FROM progression WHERE player_id = ?), 0)',
             [$realPlayerId]
         );
         $realPiBefore = (int) $this->conn->fetchOne(
-            'SELECT pi FROM players WHERE id = ?',
+            'SELECT COALESCE((SELECT pi FROM progression WHERE player_id = ?), 0)',
             [$realPlayerId]
         );
         $tutXpBefore = (int) $this->conn->fetchOne(
-            'SELECT xp FROM players WHERE id = ?',
+            'SELECT COALESCE((SELECT xp FROM progression WHERE player_id = ?), 0)',
             [$tutPlayerId]
         );
 
@@ -57,17 +57,17 @@ class TutorialPlayerRewardTransferTest extends TutorialIntegrationTestCase
 
         $this->assertSame(
             $realXpBefore + 100,
-            (int) $this->conn->fetchOne('SELECT xp FROM players WHERE id = ?', [$realPlayerId]),
+            (int) $this->conn->fetchOne('SELECT COALESCE((SELECT xp FROM progression WHERE player_id = ?), 0)', [$realPlayerId]),
             'real player xp should have increased by exactly $xpEarned'
         );
         $this->assertSame(
             $realPiBefore + 100,
-            (int) $this->conn->fetchOne('SELECT pi FROM players WHERE id = ?', [$realPlayerId]),
+            (int) $this->conn->fetchOne('SELECT COALESCE((SELECT pi FROM progression WHERE player_id = ?), 0)', [$realPlayerId]),
             'real player pi should have increased by exactly $piEarned'
         );
         $this->assertSame(
             $tutXpBefore,
-            (int) $this->conn->fetchOne('SELECT xp FROM players WHERE id = ?', [$tutPlayerId]),
+            (int) $this->conn->fetchOne('SELECT COALESCE((SELECT xp FROM progression WHERE player_id = ?), 0)', [$tutPlayerId]),
             'tutorial player row must be untouched — rewards are transferred, not moved'
         );
     }

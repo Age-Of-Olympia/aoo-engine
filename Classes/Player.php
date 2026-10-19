@@ -157,28 +157,25 @@ class Player implements ActorInterface {
 
         /* Credentials live in `accounts`, the turn clock in `turns`, what is
          * earned in `progression`; the joins keep `->row` (and the JSON cache
-         * built from it) carrying the same fields as before.
-         *
-         * NULLIF, not plain COALESCE: the backfill gives every character a row,
-         * so an untouched satellite holds ''/0 — which would win over a
-         * `players` column a path not yet routed through the services has just
-         * written. Empty means "nothing here", and the column answers. */
+         * built from it) carrying the same fields as before. An entity that
+         * neither plays nor progresses has no satellite rows and reads the
+         * defaults. */
         $sql = '
         SELECT
         p.*,
-        COALESCE(NULLIF(a.psw, \'\'), p.psw) AS psw,
-        COALESCE(NULLIF(a.mail, \'\'), p.mail) AS mail,
-        COALESCE(NULLIF(a.plain_mail, \'\'), p.plain_mail) AS plain_mail,
-        COALESCE(a.email_bonus, p.email_bonus) AS email_bonus,
-        COALESCE(NULLIF(a.last_login_time, 0), p.lastLoginTime) AS lastLoginTime,
-        COALESCE(NULLIF(t.next_turn_time, 0), p.nextTurnTime) AS nextTurnTime,
-        COALESCE(NULLIF(t.last_action_time, 0), p.lastActionTime) AS lastActionTime,
-        COALESCE(NULLIF(t.next_turn_rescheduled, 0), p.nextTurnRescheduled) AS nextTurnRescheduled,
-        COALESCE(NULLIF(t.anti_berserk_time, 0), p.antiBerserkTime) AS antiBerserkTime,
-        COALESCE(NULLIF(g.xp, 0), p.xp) AS xp,
-        COALESCE(NULLIF(g.`rank`, 0), p.`rank`) AS `rank`,
-        COALESCE(NULLIF(g.bonus_points, 0), p.bonus_points) AS bonus_points,
-        COALESCE(NULLIF(g.pi, 0), p.pi) AS pi
+        COALESCE(a.psw, \'\') AS psw,
+        COALESCE(a.mail, \'\') AS mail,
+        COALESCE(a.plain_mail, \'\') AS plain_mail,
+        COALESCE(a.email_bonus, 0) AS email_bonus,
+        COALESCE(a.last_login_time, 0) AS lastLoginTime,
+        COALESCE(t.next_turn_time, 0) AS nextTurnTime,
+        COALESCE(t.last_action_time, 0) AS lastActionTime,
+        COALESCE(t.next_turn_rescheduled, 0) AS nextTurnRescheduled,
+        COALESCE(t.anti_berserk_time, 0) AS antiBerserkTime,
+        COALESCE(g.xp, 0) AS xp,
+        COALESCE(g.`rank`, 1) AS `rank`,
+        COALESCE(g.bonus_points, 0) AS bonus_points,
+        COALESCE(g.pi, 0) AS pi
         FROM
         players p
         LEFT JOIN accounts a ON a.player_id = p.id
@@ -2382,7 +2379,6 @@ class Player implements ActorInterface {
             // as "lying on the floor" once items became entities.
             'slot'=>\App\Service\Map\EntityLocationService::SLOT_INSTALLED,
             'faction'=>$raceData->faction ?? '',
-            'nextTurnTime'=>$time,
             'registerTime'=>$time
         );
 
@@ -2391,6 +2387,8 @@ class Player implements ActorInterface {
         if (!$res) {
             exit('error inserting player');
         }
+
+        (new \App\Service\TurnService())->setNextTurnTime($id, $time);
 
         /* Le personnage naît avec son emprise — une case, son ancre. */
         (new \App\Service\Map\EntityCellService())->syncCells((int) $id);
@@ -2547,7 +2545,12 @@ class Player implements ActorInterface {
 
         // CRITICAL: Filter by player_type to exclude tutorial players and NPCs from public lists
         // Only real players (player_type='real') should appear in rankings and leaderboards
-        $sql = 'SELECT id,display_id,name,race,xp,rank,pr,faction,secretFaction,lastLoginTime FROM players WHERE player_type = "real" ORDER BY name';
+        $sql = 'SELECT p.id, p.display_id, p.name, p.race, COALESCE(g.xp, 0) AS xp, COALESCE(g.`rank`, 1) AS `rank`,
+                p.pr, p.faction, p.secretFaction, COALESCE(a.last_login_time, 0) AS lastLoginTime
+                FROM players p
+                LEFT JOIN progression g ON g.player_id = p.id
+                LEFT JOIN accounts a ON a.player_id = p.id
+                WHERE p.player_type = "real" ORDER BY p.name';
 
         $db = new Db();
 

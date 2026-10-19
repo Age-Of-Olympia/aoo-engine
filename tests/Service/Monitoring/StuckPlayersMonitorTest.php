@@ -26,9 +26,10 @@ class StuckPlayersMonitorTest extends TestCase
 
         $id = $this->playerId;
         $this->link->executeStatement(
-            "INSERT INTO players (id, name, race, player_type, lastLoginTime) VALUES (?, 'GmMort', 'nain', 'real', UNIX_TIMESTAMP())",
+            "INSERT INTO players (id, name, race, player_type) VALUES (?, 'GmMort', 'nain', 'real')",
             [$id]
         );
+        $this->link->insert('accounts', ['player_id' => $id, 'last_login_time' => time()]);
         $this->link->insert('players_options', ['player_id' => $id, 'name' => 'deathScreenPending']);
         $this->link->insert('players_kills', ['player_id' => $id, 'target_id' => $id, 'time' => time() - 10 * 86400, 'plan' => 'gaia']);
     }

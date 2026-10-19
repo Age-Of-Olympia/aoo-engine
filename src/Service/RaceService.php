@@ -397,11 +397,11 @@ class RaceService
         $cutoff = time() - INACTIVE_TIME;
 
         $rows = $this->entityManager->getConnection()->fetchAllAssociative(
-            "SELECT race,
-                    COALESCE(SUM(player_type = 'real'), 0) AS players,
-                    COALESCE(SUM(player_type = 'real' AND lastLoginTime < {$cutoff}), 0) AS inactive,
-                    COALESCE(SUM(player_type = 'npc'), 0) AS npcs
-             FROM players GROUP BY race"
+            "SELECT p.race,
+                    COALESCE(SUM(p.player_type = 'real'), 0) AS players,
+                    COALESCE(SUM(p.player_type = 'real' AND COALESCE(a.last_login_time, 0) < {$cutoff}), 0) AS inactive,
+                    COALESCE(SUM(p.player_type = 'npc'), 0) AS npcs
+             FROM players p LEFT JOIN accounts a ON a.player_id = p.id GROUP BY p.race"
         );
 
         $counts = [];

@@ -132,6 +132,7 @@ view, `players_items_instances` (6 rows to fold into the containment relation fi
 `players` credential columns now mirrored by `accounts`, and the eight now mirrored by
 `turns` and `progression` — each drop taking its mirror or its cascade delete with it.
 
-For the L2 columns the pass is mechanical: delete the mirror statement in each service method
-(one per method, marked `/* The mirror: … */`), drop the `COALESCE(NULLIF(…))` wrappers in
-`Player::get_row()` so the satellite answers alone, then `ALTER TABLE players DROP COLUMN`.
+**Done (2026-10).** The tables went in 4.3.22. For the thirteen mirror columns, the mirror
+statements, the `COALESCE(NULLIF(…))` wrappers in `Player::get_row()` and the Doctrine
+mapping are gone (`Version20261019120000_SatellitesOwnTheirColumns` makes a last copy); the
+columns drop in the release after.

@@ -185,10 +185,9 @@ without anyone deciding it should be.
 The point of this note. Today's work only has to avoid foreclosing:
 
 1. **Do not write a capability's state outside its service.** The satellites exist (L2
-   below) and `TurnService` / `ProgressionService` are their only writers, each keeping the
-   `players` column it still mirrors in step. The contracts therefore **read only**: a setter
-   on `TakesTurnsInterface` would reach the mirror alone and leave the satellite behind, which
-   is why `Character`'s capability setters were removed rather than left as a convenience.
+   below) and `TurnService` / `ProgressionService` are their only writers. The `players`
+   mirror columns are gone; the contracts are markers, the state is not mapped on the
+   entity.
 2. **New gates ask the capability, not the branch.** Writing `if (character) { take a turn }`
    or `if (structure) { no XP }` costs nothing today and costs a sweep later. When a branch
    test is genuinely about the branch — bleeding, missives, the enfers — it stays.

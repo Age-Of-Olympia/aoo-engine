@@ -524,8 +524,8 @@ class BuildingService
                  * nouveau, frappez-moi! » — qui a du sens pour un
                  * personnage naissant et aucun pour un mur. */
                 'INSERT INTO players
-                    (id, player_type, display_id, name, race, avatar, portrait, coords_id, slot, nextTurnTime, registerTime, text)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)',
+                    (id, player_type, display_id, name, race, avatar, portrait, coords_id, slot, registerTime, text)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [
                     $id,
                     'building',

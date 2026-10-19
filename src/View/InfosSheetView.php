@@ -4,7 +4,9 @@ namespace App\View;
 
 use App\Entity\Character;
 use App\Entity\RealPlayer;
+use App\Service\AccountService;
 use App\Service\PlayerService;
+use App\Service\ProgressionService;
 use App\Service\RaceService;
 use App\View\Entity\EntityParts;
 use App\View\Entity\EntityProfile;
@@ -83,13 +85,12 @@ final class InfosSheetView
         $raceJson = (new RaceService())->getRaceData($targetEntity->getRace());
 
         $pnjText = $targetEntity->getId() < 0 ? ' - PNJ' : '';
-        // isInactive is runtime-computed (RealPlayer domain method from !384).
-        // Only meaningful for real players.
+        // Only meaningful for real players
         $isInactive = ($targetEntity instanceof RealPlayer)
-            && $targetEntity->isInactive(new PlayerService($targetEntity->getId()));
+            && PlayerService::isInactiveSince((new AccountService())->lastLoginOf($targetEntity->getId()));
         $inactifText = ($targetEntity->getId() > 0 && $isInactive) ? ' (inactif)' : '';
 
-        echo '<div>' . $raceJson->name . $pnjText . $inactifText . ' - <a href="infos.php?targetId=' . $targetEntity->getId() . '&reputation">' . Str::get_reput(floor($targetEntity->getPr() / COEFFICIENT_PR)) . '</a> Rang ' . $targetEntity->getRank() . ' <span style="opacity: 0.6; font-size: 88%; white-space: nowrap;">· mat. ' . $targetEntity->getDisplayId() . '</span></div>';
+        echo '<div>' . $raceJson->name . $pnjText . $inactifText . ' - <a href="infos.php?targetId=' . $targetEntity->getId() . '&reputation">' . Str::get_reput(floor($targetEntity->getPr() / COEFFICIENT_PR)) . '</a> Rang ' . (new ProgressionService())->of([$targetEntity->getId()])[$targetEntity->getId()]['rank'] . ' <span style="opacity: 0.6; font-size: 88%; white-space: nowrap;">· mat. ' . $targetEntity->getDisplayId() . '</span></div>';
 
 
         echo EntityParts::factionLinesHtml($profile);

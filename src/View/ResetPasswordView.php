@@ -54,7 +54,7 @@ class ResetPasswordView
             exit('Erreur: aucun personnage associé à cet identifiant.');
         }
 
-        $storedMail = $player->getMail();
+        $storedMail = (new AccountService())->mailHashOf($player->getId());
 
         // error mail
         if (!password_verify(strtolower($_POST['mail']), $storedMail)) {

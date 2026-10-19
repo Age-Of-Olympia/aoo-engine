@@ -77,8 +77,8 @@ final class EntityPlacementService
             $this->conn->executeStatement(
                 'INSERT INTO players
                     (id, player_type, display_id, name, race, avatar, portrait,
-                     coords_id, slot, nextTurnTime, registerTime, text)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)',
+                     coords_id, slot, registerTime, text)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [
                     $id,
                     $playerType,

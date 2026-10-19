@@ -91,11 +91,14 @@ final class MonitoringSnapshotService
 
         $players = [];
         foreach ($this->conn->fetchAllAssociative(
-            "SELECT p.id, p.name, p.xp,
+            "SELECT p.id, p.name, COALESCE(g.xp, 0) AS xp,
                     COALESCE((SELECT SUM(n) FROM players_items WHERE player_id = p.id AND item_id = ?), 0)
                   + COALESCE((SELECT SUM(n) FROM players_items_bank WHERE player_id = p.id AND item_id = ?), 0) AS gold,
-                    COALESCE(NULLIF(a.last_login_time, 0), p.lastLoginTime) >= ? AS active
-               FROM players p LEFT JOIN accounts a ON a.player_id = p.id WHERE p.player_type = 'real'",
+                    COALESCE(a.last_login_time, 0) >= ? AS active
+               FROM players p
+               LEFT JOIN accounts a ON a.player_id = p.id
+               LEFT JOIN progression g ON g.player_id = p.id
+              WHERE p.player_type = 'real'",
             [$gold, $gold, time() - INACTIVE_TIME]
         ) as $row) {
             $players[(int) $row['id']] = [
@@ -117,7 +120,7 @@ final class MonitoringSnapshotService
                 'SELECT (SELECT COALESCE(SUM(n), 0) FROM players_items) + (SELECT COALESCE(SUM(n), 0) FROM players_items_bank)
                       + (SELECT COALESCE(SUM(n), 0) FROM map_items)'
             ),
-            'xp' => (int) $this->conn->fetchOne("SELECT COALESCE(SUM(xp), 0) FROM players WHERE player_type = 'real'"),
+            'xp' => (int) $this->conn->fetchOne("SELECT COALESCE(SUM(g.xp), 0) FROM progression g JOIN players p ON p.id = g.player_id WHERE p.player_type = 'real'"),
             'players' => $players,
             'admins' => array_map('intval', $this->conn->fetchFirstColumn(
                 'SELECT DISTINCT player_id FROM players_options WHERE name IN (?, ?) ORDER BY player_id',

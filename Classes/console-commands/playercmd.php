@@ -202,6 +202,12 @@ function edit_player($argumentValues, $player){
         return '<font color="orange">field "'. $field .'" is protected</font>';
     }
 
+    // Read into data from accounts, turns and progression, not from players
+    if(in_array($field, array('email_bonus','lastLoginTime','nextTurnTime','lastActionTime','nextTurnRescheduled','antiBerserkTime','xp','rank','bonus_points','pi'))){
+
+        return '<font color="orange">field "'. $field .'" is not a players column, use the admin character sheet</font>';
+    }
+
 
     if(!isset($player->data->$field)){
 

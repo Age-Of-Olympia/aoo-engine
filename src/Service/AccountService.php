@@ -8,23 +8,9 @@ use Doctrine\DBAL\Connection;
 /**
  * The one gateway to a character's credentials: password, mail, mail bonus and
  * last login. They live in `accounts`, keyed by player_id.
- *
- * Every write also updates the matching `players` column, because code still
- * reads those during the transition. When the columns go, the dual write goes
- * with them and only the first statement of each method remains — that is the
- * whole point of routing writes through here first.
  */
 final class AccountService
 {
-    /** players columns still mirrored, keyed by their accounts counterpart. */
-    private const MIRRORED = [
-        'psw' => 'psw',
-        'mail' => 'mail',
-        'plain_mail' => 'plain_mail',
-        'email_bonus' => 'email_bonus',
-        'last_login_time' => 'lastLoginTime',
-    ];
-
     private Connection $conn;
 
     public function __construct(?Connection $conn = null)
@@ -43,6 +29,12 @@ final class AccountService
     public function setPassword(int $playerId, string $hash): void
     {
         $this->write($playerId, ['psw' => $hash]);
+    }
+
+    /** The hashed copy of the address, checked by the password reset. */
+    public function mailHashOf(int $playerId): string
+    {
+        return (string) $this->readOne($playerId, 'mail');
     }
 
     /** The address as typed, for contacting the player; '' when unknown. */
@@ -106,50 +98,23 @@ final class AccountService
             [$playerId]
         );
 
-        /* Empty counts as absent, matching the join in Player::get_row(): the
-         * backfill gave every character a row, so '' means untouched, not
-         * "deliberately blank". */
-        if ($value !== false && $value !== null && $value !== '') {
-            return (string) $value;
-        }
-
-        /* No account row yet: the character predates the table, or was created
-         * by a path that has not been routed here. Fall back to the column the
-         * migration copied FROM, so a read never comes back empty by accident. */
-        $legacy = $this->conn->fetchOne(
-            'SELECT ' . self::MIRRORED[$column] . ' FROM players WHERE id = ?',
-            [$playerId]
-        );
-
-        return ($legacy === false || $legacy === null) ? null : (string) $legacy;
+        return ($value === false || $value === null) ? null : (string) $value;
     }
 
     /** @param array<string, string|int> $values accounts columns */
     private function write(int $playerId, array $values): void
     {
-        $this->conn->transactional(function (Connection $conn) use ($playerId, $values): void {
-            $columns = array_keys($values);
+        $columns = array_keys($values);
 
-            $conn->executeStatement(
-                'INSERT INTO accounts (player_id, ' . implode(', ', $columns) . ')
-                 VALUES (?' . str_repeat(', ?', count($columns)) . ')
-                 ON DUPLICATE KEY UPDATE '
-                    . implode(', ', array_map(
-                        static fn (string $c): string => "{$c} = VALUES({$c})",
-                        $columns
-                    )),
-                array_merge([$playerId], array_values($values))
-            );
-
-            $mirrored = array_map(
-                static fn (string $c): string => self::MIRRORED[$c] . ' = ?',
-                $columns
-            );
-
-            $conn->executeStatement(
-                'UPDATE players SET ' . implode(', ', $mirrored) . ' WHERE id = ?',
-                array_merge(array_values($values), [$playerId])
-            );
-        });
+        $this->conn->executeStatement(
+            'INSERT INTO accounts (player_id, ' . implode(', ', $columns) . ')
+             VALUES (?' . str_repeat(', ?', count($columns)) . ')
+             ON DUPLICATE KEY UPDATE '
+                . implode(', ', array_map(
+                    static fn (string $c): string => "{$c} = VALUES({$c})",
+                    $columns
+                )),
+            array_merge([$playerId], array_values($values))
+        );
     }
 }

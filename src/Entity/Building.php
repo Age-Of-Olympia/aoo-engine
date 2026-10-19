@@ -4,8 +4,6 @@ namespace App\Entity;
 
 use App\Interface\ProgressesInterface;
 use App\Interface\TakesTurnsInterface;
-use App\Trait\ProgressesFieldsTrait;
-use App\Trait\TakesTurnsFieldsTrait;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -33,6 +31,4 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 class Building extends Structure implements TakesTurnsInterface, ProgressesInterface
 {
-    use TakesTurnsFieldsTrait;
-    use ProgressesFieldsTrait;
 }

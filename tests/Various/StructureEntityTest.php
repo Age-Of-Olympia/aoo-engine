@@ -82,8 +82,8 @@ class StructureEntityTest extends TestCase
             }
 
             $conn->executeStatement(
-                "INSERT INTO players (id, player_type, display_id, name, race, coords_id, nextTurnTime, registerTime)
-                 VALUES (?, 'building', 1, 'Palissade GM', 'palissade', ?, 0, ?)",
+                "INSERT INTO players (id, player_type, display_id, name, race, coords_id, registerTime)
+                 VALUES (?, 'building', 1, 'Palissade GM', 'palissade', ?, ?)",
                 [$id, $coordsId, time()]
             );
             $conn->executeStatement(

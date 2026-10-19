@@ -7,14 +7,13 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * When an entity plays lives in `turns` and is mirrored into `players` until
- * those columns are dropped. These cases pin both halves of that contract, and
- * the fallback that makes a character created before the table still readable.
+ * When an entity plays lives in `turns`, written through TurnService and read
+ * into the legacy row by Player::get_row().
  */
 #[Group('entities-baseline')]
 class TurnServiceTest extends LegacyPlayerFixtureTestCase
 {
-    public function testAWriteLandsInBothPlacesWhileTheColumnsRemain(): void
+    public function testAWriteLandsInTheSatellite(): void
     {
         $player = $this->createRealPlayer('GmTour');
         $id = (int) $player->id;
@@ -23,13 +22,7 @@ class TurnServiceTest extends LegacyPlayerFixtureTestCase
 
         $this->assertSame(
             1_800_000_000,
-            (int) $this->link->fetchOne('SELECT next_turn_time FROM turns WHERE player_id = ?', [$id]),
-            'the satellite holds it'
-        );
-        $this->assertSame(
-            1_800_000_000,
-            (int) $this->link->fetchOne('SELECT nextTurnTime FROM players WHERE id = ?', [$id]),
-            'and the column still mirrors it'
+            (int) $this->link->fetchOne('SELECT next_turn_time FROM turns WHERE player_id = ?', [$id])
         );
     }
 
@@ -66,45 +59,19 @@ class TurnServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(1, (int) $player->row->nextTurnRescheduled);
     }
 
-    public function testAReadFallsBackToTheColumnWhenNoSatelliteRowExists(): void
+    /** A character is born with its turn row, its first turn due at once. */
+    public function testACharacterIsBornWithItsTurnRow(): void
     {
-        $player = $this->createRealPlayer('GmSansTour');
-        $id = (int) $player->id;
+        $before = time();
+        $id = (int) $this->createRealPlayer('GmNaissance')->id;
 
-        $this->link->executeStatement('DELETE FROM turns WHERE player_id = ?', [$id]);
-        $this->link->executeStatement(
-            'UPDATE players SET nextTurnTime = ? WHERE id = ?',
-            [1_700_000_000, $id]
-        );
-
-        $player->get_row();
-
-        $this->assertSame(
-            1_700_000_000,
-            (int) $player->row->nextTurnTime,
-            'a character predating the table still answers'
+        $this->assertGreaterThanOrEqual(
+            $before,
+            (int) $this->link->fetchOne('SELECT next_turn_time FROM turns WHERE player_id = ?', [$id])
         );
     }
 
-    /**
-     * An untouched satellite value is 0, which must not beat a column an
-     * unrouted path has just written — that is what NULLIF buys over COALESCE.
-     */
-    public function testAnEmptySatelliteValueLetsTheColumnAnswer(): void
-    {
-        $player = $this->createRealPlayer('GmVide');
-        $id = (int) $player->id;
-
-        (new TurnService($this->link))->ensureRow($id);
-        $this->link->executeStatement('UPDATE turns SET anti_berserk_time = 0 WHERE player_id = ?', [$id]);
-        $this->link->executeStatement('UPDATE players SET antiBerserkTime = ? WHERE id = ?', [4_242, $id]);
-
-        $player->get_row();
-
-        $this->assertSame(4_242, (int) $player->row->antiBerserkTime);
-    }
-
-    /** A structure takes no turn of its own yet: it keeps answering from its row. */
+    /** A structure that does not play gets no row, and reads the defaults. */
     public function testAStructureGetsNoSatelliteRow(): void
     {
         [$x, $y] = $this->farTile();

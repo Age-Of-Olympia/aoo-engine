@@ -5,7 +5,6 @@ namespace Tests\Various;
 use App\Entity\GameEntity;
 use App\Entity\RealPlayer;
 use App\Service\PlayerOptionsService;
-use App\Service\PlayerService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMSetup;
@@ -15,13 +14,12 @@ use Tests\Support\LegacyBootstrapTrait;
 use Tests\Support\TestDb;
 
 /**
- * Phase 3.2 — tests the three domain methods added to the
+ * Phase 3.2 — tests the domain methods added to the
  * GameEntity / RealPlayer hierarchy so Phase 3.3's read-path SAR
  * can be mechanical:
  *
  *   GameEntity::hasOption(PlayerOptionsService, string)
  *   GameEntity::getCoordsPlan(Connection)
- *   RealPlayer::isInactive(PlayerService)
  *
  * Same DB-gated pattern as PlayerEntityHydrationTest: builds a
  * standalone EntityManager against aoo4_test and exercises the methods
@@ -197,44 +195,6 @@ class PlayerEntityDomainMethodsTest extends TestCase
                 'name'      => $b,
             ]);
         }
-    }
-
-    public function testIsInactiveDelegatesToPlayerService(): void
-    {
-        // RealPlayer::isInactive is a one-liner over
-        // PlayerService::isInactive(lastLoginTime). To keep the test
-        // independent of wall-clock threshold drift, we drive it with
-        // two synthetic entities: one "logged in just now" (false),
-        // one "logged in in 1970" (true).
-        // PlayerService's constructor takes a playerId it doesn't use
-        // for isInactive. Pass the test player's id to satisfy the
-        // signature.
-        $svc = new PlayerService($this->playerId);
-
-        $recent = new RealPlayer();
-        $recent->setLastLoginTime(time());
-        $this->assertFalse($recent->isInactive($svc));
-
-        $ancient = new RealPlayer();
-        $ancient->setLastLoginTime(0);
-        $this->assertTrue($ancient->isInactive($svc));
-    }
-
-    public function testIsInactiveRespectsHydratedLastLoginTime(): void
-    {
-        // Integration path: entity loaded from DB, last_login_time
-        // comes from the real row. Matches how infos.php will use the
-        // method post-SAR.
-        $entity = $this->em->find(RealPlayer::class, $this->playerId);
-        $this->assertInstanceOf(RealPlayer::class, $entity);
-
-        // PlayerService's constructor takes a playerId it doesn't use
-        // for isInactive. Pass the test player's id to satisfy the
-        // signature.
-        $svc = new PlayerService($this->playerId);
-        $expected = $svc->isInactive($entity->getLastLoginTime());
-
-        $this->assertSame($expected, $entity->isInactive($svc));
     }
 
     /**

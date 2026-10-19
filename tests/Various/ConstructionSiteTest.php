@@ -237,7 +237,6 @@ class ConstructionSiteTest extends LegacyPlayerFixtureTestCase
         $this->requireBuildingsOrSkip();
         [$x, $y] = $this->farTile();
         $id = $this->placeStructure('atelier', $x, $y, asConstructionSite: true);
-        $this->link->executeStatement('UPDATE players SET nextTurnTime = 1 WHERE id = ?', [$id]);
         $this->link->executeStatement('UPDATE turns SET next_turn_time = 1 WHERE player_id = ?', [$id]);
 
         $site = PlayerFactory::legacy($id);

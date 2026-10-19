@@ -130,8 +130,8 @@ class ItemInstanceService
         $conn->executeStatement(
             "INSERT INTO players
                 (id, player_type, display_id, name, race, avatar, portrait,
-                 coords_id, holder_id, slot, nextTurnTime, registerTime, text)
-             VALUES (?, ?, ?, ?, ?, '', '', NULL, ?, '', 0, ?, '')",
+                 coords_id, holder_id, slot, registerTime, text)
+             VALUES (?, ?, ?, ?, ?, '', '', NULL, ?, '', ?, '')",
             [
                 $entityId,
                 self::ENTITY_TYPE,

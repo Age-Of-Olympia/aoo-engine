@@ -16,10 +16,10 @@ use Doctrine\ORM\Mapping as ORM;
  *   - Character: what only a person has — an account, a story, a god,
  *     a faction rank.
  *
- * Taking turns and progressing live on NEITHER: they are capabilities, carried
- * by TakesTurnsFieldsTrait / ProgressesFieldsTrait into the classes that hold
- * them — Character and Building, which do not form a subtree
- * (docs/design-playable-buildings.md).
+ * Taking turns and progressing live on NEITHER: they are capabilities, marked
+ * by TakesTurnsInterface / ProgressesInterface on the classes that hold them —
+ * Character and Building, which do not form a subtree — and stored in the
+ * `turns` and `progression` satellites (docs/design-playable-buildings.md).
  *
  * Hard rule from the plan: the hierarchy never grows a third level.
  * When a new type doesn't fit Character/Structure, add a component

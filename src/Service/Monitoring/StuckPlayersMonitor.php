@@ -70,13 +70,14 @@ final class StuckPlayersMonitor
                 . ', connecté le ' . date('d/m/Y H:i', (int) $row['lastLoginTime']),
             $this->conn->fetchAllAssociative(
                 "SELECT * FROM (
-                    SELECT p.id, p.name, p.lastLoginTime, GREATEST(
+                    SELECT p.id, p.name, COALESCE(a.last_login_time, 0) AS lastLoginTime, GREATEST(
                         COALESCE((SELECT MAX(k.time) FROM players_kills k WHERE k.target_id = p.id), 0),
                         COALESCE((SELECT MAX(l.time) FROM players_logs l
                                    WHERE l.player_id = p.id AND l.target_id = p.id AND l.type = 'kill'
                                      AND l.text LIKE '%a succombé%'), 0)
                     ) AS died
                     FROM players_options o JOIN players p ON p.id = o.player_id
+                    LEFT JOIN accounts a ON a.player_id = p.id
                    WHERE o.name = 'deathScreenPending'
                  ) d
                  WHERE d.died > 0 AND d.lastLoginTime > d.died + 86400 ORDER BY d.id"

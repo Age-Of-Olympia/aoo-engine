@@ -44,7 +44,7 @@ class CreuserBaselineTest extends LegacyPlayerFixtureTestCase
         $this->snapshotBloodAt((int) $digger->data->coords_id);
 
         $pierre = $this->itemOrSkip('pierre');
-        $xpBefore = (int) $this->link->fetchOne('SELECT xp FROM players WHERE id = ?', [$digger->id]);
+        $xpBefore = (int) $this->link->fetchOne('SELECT COALESCE((SELECT xp FROM progression WHERE player_id = ?), 0)', [$digger->id]);
         $_POST['digX'] = '1';
         $_POST['digY'] = '3';
 
@@ -68,7 +68,7 @@ class CreuserBaselineTest extends LegacyPlayerFixtureTestCase
         );
         $this->assertSame(
             $xpBefore + XP_PER_MINE,
-            (int) $this->link->fetchOne('SELECT xp FROM players WHERE id = ?', [$digger->id]),
+            (int) $this->link->fetchOne('SELECT COALESCE((SELECT xp FROM progression WHERE player_id = ?), 0)', [$digger->id]),
             "the 'search' type rule grants exactly XP_PER_MINE"
         );
     }

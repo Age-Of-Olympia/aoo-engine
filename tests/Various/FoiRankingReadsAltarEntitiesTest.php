@@ -77,10 +77,11 @@ class FoiRankingReadsAltarEntitiesTest extends TestCase
          * who have both. */
         foreach ([self::GOD_WITH, self::GOD_WITHOUT] as $i => $god) {
             $this->conn->executeStatement(
-                "INSERT INTO players (id, name, race, coords_id, player_type, godId, pf, lastLoginTime)
-                 VALUES (?, ?, 'nain', ?, 'real', ?, 100, UNIX_TIMESTAMP())",
+                "INSERT INTO players (id, name, race, coords_id, player_type, godId, pf)
+                 VALUES (?, ?, 'nain', ?, 'real', ?, 100)",
                 [self::FAITHFUL + $i, 'GmFidele' . $i, $home, $god]
             );
+            $this->conn->insert('accounts', ['player_id' => self::FAITHFUL + $i, 'last_login_time' => time()]);
         }
 
         // Only the first god gets an altar bearing their name.
@@ -98,7 +99,7 @@ class FoiRankingReadsAltarEntitiesTest extends TestCase
             'SELECT g.id
                FROM players AS g
                LEFT JOIN players AS f ON f.godId = g.id AND f.id > 0
-                     AND f.lastLoginTime >= (UNIX_TIMESTAMP() - ' . INACTIVE_TIME . ')
+                     AND (SELECT last_login_time FROM accounts WHERE player_id = f.id) >= (UNIX_TIMESTAMP() - ' . INACTIVE_TIME . ')
               WHERE g.race = "dieu"
                 AND g.id IN (?, ?)
                 AND EXISTS (

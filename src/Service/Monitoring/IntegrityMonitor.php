@@ -17,8 +17,8 @@ final class IntegrityMonitor
 {
     private const SECTION = 'Données';
 
-    /** Character counters that are never negative nor NULL. */
-    private const COUNTERS = ['pi', 'pr', 'xp', 'pf', 'malus', 'energie'];
+    /** Character counters that are never negative nor NULL, and where they live. */
+    private const COUNTERS = ['pi' => 'COALESCE(g.pi, 0)', 'pr' => 'p.pr', 'xp' => 'COALESCE(g.xp, 0)', 'pf' => 'p.pf', 'malus' => 'p.malus', 'energie' => 'p.energie'];
 
     /** Tables keyed by a player id that must exist. */
     private const PLAYER_TABLES = [
@@ -51,14 +51,20 @@ final class IntegrityMonitor
     private function impossibleCounters(): MonitoringResult
     {
         $where = implode(' OR ', array_map(static fn (string $c): string => "{$c} IS NULL OR {$c} < 0", self::COUNTERS));
+        $columns = implode(', ', array_map(
+            static fn (string $name, string $c): string => "{$c} AS {$name}",
+            array_keys(self::COUNTERS),
+            self::COUNTERS
+        ));
         $lines = [];
         $count = ['real' => 0, 'npc' => 0];
         foreach ($this->conn->fetchAllAssociative(
-            'SELECT id, name, player_type, ' . implode(', ', self::COUNTERS) . ' FROM players
-              WHERE player_type IN (' . EntityCategory::addressableSql() . ") AND ({$where}) ORDER BY player_type DESC, id"
+            "SELECT p.id, p.name, p.player_type, {$columns}
+               FROM players p LEFT JOIN progression g ON g.player_id = p.id
+              WHERE p.player_type IN (" . EntityCategory::addressableSql() . ") AND ({$where}) ORDER BY p.player_type DESC, p.id"
         ) as $row) {
             $bad = [];
-            foreach (self::COUNTERS as $counter) {
+            foreach (array_keys(self::COUNTERS) as $counter) {
                 if ($row[$counter] === null || (int) $row[$counter] < 0) {
                     $bad[] = $counter . ' = ' . ($row[$counter] ?? 'NULL');
                 }

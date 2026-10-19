@@ -68,20 +68,14 @@ class AccountDeletionService
         );
     }
 
-    /** Garde le mail fourni s'il est renseigné, sinon lit plain_mail en base. */
+    /** Garde le mail fourni s'il est renseigné, sinon lit celui du compte. */
     private function resolvePlayerMail(int $playerId, ?string $providedMail): string
     {
         if ($providedMail !== null && $providedMail !== '') {
             return $providedMail;
         }
 
-        $res = (new Db())->exe('SELECT plain_mail FROM players WHERE id = ?', [$playerId]);
-
-        if ($res && $row = $res->fetch_object()) {
-            return $row->plain_mail ?? '';
-        }
-
-        return '';
+        return (new AccountService())->plainMailOf($playerId);
     }
 
     private function notifyAdmin(int $playerId, string $playerName, ?string $playerMail): void

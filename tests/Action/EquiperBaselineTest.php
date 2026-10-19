@@ -29,7 +29,7 @@ class EquiperBaselineTest extends LegacyPlayerFixtureTestCase
         $bearer->getCoords();
         $bearer->get_caracs();
         $maxAe = (int) $bearer->caracs->ae;
-        $xpBefore = (int) $this->link->fetchOne('SELECT xp FROM players WHERE id = ?', [$bearer->id]);
+        $xpBefore = (int) $this->link->fetchOne('SELECT COALESCE((SELECT xp FROM progression WHERE player_id = ?), 0)', [$bearer->id]);
 
         $gladius = $this->itemOrSkip('gladius');
         $gladius->add_item($bearer, 1);
@@ -67,7 +67,7 @@ class EquiperBaselineTest extends LegacyPlayerFixtureTestCase
 
         $this->assertSame(
             $xpBefore,
-            (int) $this->link->fetchOne('SELECT xp FROM players WHERE id = ?', [$bearer->id]),
+            (int) $this->link->fetchOne('SELECT COALESCE((SELECT xp FROM progression WHERE player_id = ?), 0)', [$bearer->id]),
             "type 'equip' has no XP rule: the wardrobe grants no XP"
         );
     }

@@ -11,25 +11,11 @@ use Doctrine\DBAL\Connection;
  * moment of its last action, whether it has already moved that turn, and the
  * anti-berserk delay. They live in `turns`, keyed by player_id.
  *
- * Every write also updates the matching `players` column, because code still
- * reads those during the transition. When the columns go, the dual write goes
- * with them and only the satellite statement of each method remains — that is
- * the whole point of routing writes through here first.
- *
- * Reads are not routed here: {@see \Classes\Player::get_row()} joins the
- * satellite, so everything reading `$player->data->nextTurnTime` and friends
- * keeps working unchanged.
+ * Legacy reads go through {@see \Classes\Player::get_row()}, which joins the
+ * satellite into `$player->data->nextTurnTime` and friends.
  */
 final class TurnService
 {
-    /** players columns still mirrored, keyed by their `turns` counterpart. */
-    private const MIRRORED = [
-        'next_turn_time' => 'nextTurnTime',
-        'last_action_time' => 'lastActionTime',
-        'next_turn_rescheduled' => 'nextTurnRescheduled',
-        'anti_berserk_time' => 'antiBerserkTime',
-    ];
-
     private Connection $conn;
 
     public function __construct(?Connection $conn = null)
@@ -85,18 +71,16 @@ final class TurnService
     }
 
     /**
-     * Give the entity its satellite row, seeded from the columns it mirrors,
-     * so an increment or a conditional write never starts from a blank slate.
+     * Give the entity its satellite row, so a write always finds one.
      *
      * Who gets one: {@see PlaysTurns::SQL_PREDICATE}. Anything else has no row
-     * here and keeps answering from `players` through the join.
+     * here and reads the defaults.
      */
     public function ensureRow(int $playerId): void
     {
         $this->conn->executeStatement(
-            "INSERT IGNORE INTO turns
-                 (player_id, next_turn_time, last_action_time, next_turn_rescheduled, anti_berserk_time)
-             SELECT p.id, p.nextTurnTime, p.lastActionTime, p.nextTurnRescheduled, p.antiBerserkTime
+            "INSERT IGNORE INTO turns (player_id)
+             SELECT p.id
                FROM players p
                LEFT JOIN races r ON r.name = p.race
               WHERE p.id = ? AND " . PlaysTurns::SQL_PREDICATE,
@@ -120,17 +104,6 @@ final class TurnService
                 'UPDATE turns SET '
                     . implode(', ', array_map(static fn (string $c): string => "{$c} = ?", $columns))
                     . ' WHERE player_id = ?',
-                array_merge(array_values($values), [$playerId])
-            );
-
-            /* The mirror: this statement goes when the columns do. */
-            $conn->executeStatement(
-                'UPDATE players SET '
-                    . implode(', ', array_map(
-                        static fn (string $c): string => self::MIRRORED[$c] . ' = ?',
-                        $columns
-                    ))
-                    . ' WHERE id = ?',
                 array_merge(array_values($values), [$playerId])
             );
         });

@@ -36,12 +36,12 @@ class TurnProcessingBaselineTest extends LegacyPlayerFixtureTestCase
         $_SESSION = ['playerId' => (int) $player->id];
 
         $this->link->executeStatement(
-            'UPDATE players SET nextTurnTime = ? WHERE id = ?',
+            'UPDATE turns SET next_turn_time = ? WHERE player_id = ?',
             [time() - 60, (int) $player->id]
         );
         $player->refresh_data();
 
-        $xpBefore = (int) $this->link->fetchOne('SELECT xp FROM players WHERE id = ?', [(int) $player->id]);
+        $xpBefore = (int) $this->link->fetchOne('SELECT COALESCE((SELECT xp FROM progression WHERE player_id = ?), 0)', [(int) $player->id]);
 
         $recap = (new TurnProcessingService())->processIfDue($player);
 
@@ -51,11 +51,11 @@ class TurnProcessingBaselineTest extends LegacyPlayerFixtureTestCase
 
         $this->assertSame(
             $recap->nextTurnTime,
-            (int) $this->link->fetchOne('SELECT nextTurnTime FROM players WHERE id = ?', [(int) $player->id])
+            (int) $this->link->fetchOne('SELECT next_turn_time FROM turns WHERE player_id = ?', [(int) $player->id])
         );
         $this->assertGreaterThan(
             $xpBefore,
-            (int) $this->link->fetchOne('SELECT xp FROM players WHERE id = ?', [(int) $player->id]),
+            (int) $this->link->fetchOne('SELECT COALESCE((SELECT xp FROM progression WHERE player_id = ?), 0)', [(int) $player->id]),
             "l'XP du tour est créditée"
         );
 
@@ -75,7 +75,7 @@ class TurnProcessingBaselineTest extends LegacyPlayerFixtureTestCase
 
         $future = time() + 3600;
         $this->link->executeStatement(
-            'UPDATE players SET nextTurnTime = ? WHERE id = ?',
+            'UPDATE turns SET next_turn_time = ? WHERE player_id = ?',
             [$future, (int) $player->id]
         );
         $player->refresh_data();
@@ -84,7 +84,7 @@ class TurnProcessingBaselineTest extends LegacyPlayerFixtureTestCase
 
         $this->assertSame(
             $future,
-            (int) $this->link->fetchOne('SELECT nextTurnTime FROM players WHERE id = ?', [(int) $player->id]),
+            (int) $this->link->fetchOne('SELECT next_turn_time FROM turns WHERE player_id = ?', [(int) $player->id]),
             'rien ne bouge quand le tour n\'est pas dû'
         );
         $this->assertFalse(

@@ -26,11 +26,11 @@ Age of Olympia is a **turn-based survival RPG** where players:
 ## Turn System
 
 **Key Concepts**:
-- **Turn**: A player's turn data is stored in `players.turn` (JSON field)
+- **Turn**: A player's action pool is stored in `players.turn` (JSON field); its clock (next turn, last action, anti-berserk) in `turns`, written through `TurnService`
 - **PA (Points d'Action)**: Action points for most activities
 - **MVT (Mouvement)**: Movement points specifically for moving on the map
 - **DLA (Délai Avant Action)**: Cooldown time until next turn (in seconds)
-- **nextTurnTime**: Unix timestamp when next turn is available
+- **nextTurnTime**: Unix timestamp when next turn is available (`turns.next_turn_time`, read as `$player->data->nextTurnTime`)
 
 **Turn Refresh**:
 - Players get new PA/MVT when `nextTurnTime` <= current time
@@ -105,7 +105,8 @@ Age of Olympia is a **turn-based survival RPG** where players:
 ## Important Database Tables
 
 **Players**:
-- `players`: Main player data (id, name, race, coords_id, xp, pi, nextTurnTime, turn JSON)
+- `players`: Main player data (id, name, race, coords_id, turn JSON) — no credentials, clock or progression any more
+- `accounts` (psw, mail, plain_mail, email_bonus, last_login_time) via `AccountService`; `turns` (next_turn_time, last_action_time, next_turn_rescheduled, anti_berserk_time) via `TurnService`; `progression` (xp, rank, bonus_points, pi) via `ProgressionService`. `Player::get_row()` joins the three into `$player->data` under the old names; a raw SQL reader joins the satellite, never `players`
 - `players_actions`: Player available actions (player_id, name, type, charges)
 - `players_options`: Player preferences (player_id, name)
 - `players_items`: Player inventory (player_id, item_id, quantity)

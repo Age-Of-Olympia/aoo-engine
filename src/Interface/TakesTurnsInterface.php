@@ -11,28 +11,12 @@ namespace App\Interface;
  * takes turns, spends action points and moves if it is a siege engine, without
  * ever having an account (docs/design-playable-buildings.md §2).
  *
- * So the contract is named before it is shared. A reader that asks "when may
- * this act?" types on this interface, and stops asking what branch of the tree
- * answered.
+ * So the capability is named before it is shared: a gate asks "does this take
+ * turns?" on this interface, and stops asking what branch of the tree answered.
  *
- * **Reading only.** The state lives in the `turns` satellite, and
- * {@see \App\Service\TurnService} is its only writer — it keeps the satellite
- * and the `players` column it still mirrors in step. A setter here would offer
- * a write that reaches the column alone and silently desynchronises the two.
- *
- * Deliberately NOT here: the action pool itself (A, MVT), which lives in the
- * `players.turn` JSON and is still read through the legacy player. Naming a
- * contract over state that has not been extracted yet would describe a design
- * rather than the code.
+ * A marker: the state lives in the `turns` satellite, written and read through
+ * {@see \App\Service\TurnService}, not mapped on the entity.
  */
 interface TakesTurnsInterface
 {
-    /** Unix time at which the next turn falls due; 0 = due now. */
-    public function getNextTurnTime(): int;
-
-    /** True when this turn's schedule was already pushed once. */
-    public function isNextTurnRescheduled(): bool;
-
-    /** Unix time of the last action taken, 0 if it never acted. */
-    public function getLastActionTime(): int;
 }

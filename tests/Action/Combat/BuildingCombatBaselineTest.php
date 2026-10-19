@@ -209,7 +209,7 @@ class BuildingCombatBaselineTest extends LegacyPlayerFixtureTestCase
         $attacker->get_data();
         // Read from the DB, not $attacker->data: the legacy memo caches by id
         // and fixture ids get reused between tests of this very class.
-        $xpBefore = (int) $this->link->fetchOne('SELECT xp FROM players WHERE id = ?', [$attacker->id]);
+        $xpBefore = (int) $this->link->fetchOne('SELECT COALESCE((SELECT xp FROM progression WHERE player_id = ?), 0)', [$attacker->id]);
 
         $buildingId = $this->placePalissadeAt(0, 1);
         $building = PlayerFactory::legacy($buildingId);
@@ -257,7 +257,7 @@ class BuildingCombatBaselineTest extends LegacyPlayerFixtureTestCase
         );
         $this->assertSame(
             $xpBefore,
-            (int) $this->link->fetchOne('SELECT xp FROM players WHERE id = ?', [$attacker->id]),
+            (int) $this->link->fetchOne('SELECT COALESCE((SELECT xp FROM progression WHERE player_id = ?), 0)', [$attacker->id]),
             'no character-death XP share may run for a building'
         );
     }

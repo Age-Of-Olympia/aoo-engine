@@ -41,7 +41,9 @@ class SkillStatsService
             // is an int computed here (never user input), so it is safe to inline.
             $cutoff = time() - INACTIVE_TIME;
             $op = $status === self::STATUS_ACTIVE ? '>=' : '<';
-            $where .= ' AND ' . $prefix . 'lastLoginTime ' . $op . ' ' . $cutoff;
+            $owner = ($prefix === '' ? 'players.' : $prefix) . 'id';
+            $where .= ' AND COALESCE((SELECT a.last_login_time FROM accounts a WHERE a.player_id = ' . $owner . '), 0) '
+                . $op . ' ' . $cutoff;
         }
 
         return $where;

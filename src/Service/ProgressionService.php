@@ -12,14 +12,8 @@ use Doctrine\DBAL\Connection;
  * characteristic upgrades spend. They live in `progression`, keyed by
  * player_id.
  *
- * Every write also updates the matching `players` column, because code still
- * reads those during the transition. When the columns go, the dual write goes
- * with them and only the satellite statement of each method remains — that is
- * the whole point of routing writes through here first.
- *
- * Reads are not routed here: {@see \Classes\Player::get_row()} joins the
- * satellite, so everything reading `$player->data->xp` and friends keeps
- * working unchanged.
+ * Legacy reads go through {@see \Classes\Player::get_row()}, which joins the
+ * satellite into `$player->data->xp` and friends.
  */
 final class ProgressionService
 {
@@ -50,13 +44,32 @@ final class ProgressionService
                 'UPDATE progression SET xp = xp + ?, pi = pi + ?' . $setRank . ' WHERE player_id = ?',
                 array_merge([$xp, $pi], $rankParam, [$playerId])
             );
-
-            /* The mirror: this statement goes when the columns do. */
-            $conn->executeStatement(
-                'UPDATE players SET xp = xp + ?, pi = pi + ?' . $setRank . ' WHERE id = ?',
-                array_merge([$xp, $pi], $rankParam, [$playerId])
-            );
         });
+    }
+
+    /**
+     * Experience and level of several entities in one read; an entity without
+     * a row reads the defaults.
+     *
+     * @param list<int> $playerIds
+     * @return array<int, array{xp: int, rank: int}>
+     */
+    public function of(array $playerIds): array
+    {
+        $levels = array_fill_keys($playerIds, ['xp' => 0, 'rank' => 1]);
+        if ($playerIds === []) {
+            return $levels;
+        }
+
+        foreach ($this->conn->fetchAllAssociative(
+            'SELECT player_id, xp, `rank` FROM progression WHERE player_id IN (?)',
+            [$playerIds],
+            [\Doctrine\DBAL\ArrayParameterType::INTEGER]
+        ) as $row) {
+            $levels[(int) $row['player_id']] = ['xp' => (int) $row['xp'], 'rank' => (int) $row['rank']];
+        }
+
+        return $levels;
     }
 
     /** Credit PI alone — an upgrade refunded, an audited balance corrected. */
@@ -89,17 +102,7 @@ final class ProgressionService
                 [$cost, $playerId, $cost]
             );
 
-            if ($paid !== 1) {
-                return false;
-            }
-
-            /* The mirror: this statement goes when the columns do. */
-            $conn->executeStatement(
-                'UPDATE players SET pi = pi - ? WHERE id = ?',
-                [$cost, $playerId]
-            );
-
-            return true;
+            return $paid === 1;
         });
     }
 
@@ -115,34 +118,24 @@ final class ProgressionService
             return 0;
         }
 
-        return $this->conn->transactional(function (Connection $conn) use ($ceiling): int {
-            $banked = $conn->executeStatement(
-                'UPDATE progression SET xp = ?, bonus_points = bonus_points + (xp - ?) WHERE xp > ?',
-                [$ceiling, $ceiling, $ceiling]
-            );
-
-            /* The mirror: this statement goes when the columns do. */
-            $conn->executeStatement(
-                'UPDATE players SET xp = ?, bonus_points = bonus_points + (xp - ?) WHERE xp > ?',
-                [$ceiling, $ceiling, $ceiling]
-            );
-
-            return $banked;
-        });
+        return $this->conn->executeStatement(
+            'UPDATE progression SET xp = ?, bonus_points = bonus_points + (xp - ?) WHERE xp > ?',
+            [$ceiling, $ceiling, $ceiling]
+        );
     }
 
     /**
-     * Give the entity its satellite row, seeded from the columns it mirrors,
-     * so an increment or a conditional write never starts from a blank slate.
+     * Give the entity its satellite row, so an increment or a conditional
+     * write always finds one.
      *
      * Who gets one: {@see PlaysTurns::SQL_PREDICATE}. Anything else has no row
-     * here and keeps answering from `players` through the join.
+     * here and reads the defaults.
      */
     public function ensureRow(int $playerId): void
     {
         $this->conn->executeStatement(
-            "INSERT IGNORE INTO progression (player_id, xp, `rank`, bonus_points, pi)
-             SELECT p.id, p.xp, p.`rank`, p.bonus_points, p.pi
+            "INSERT IGNORE INTO progression (player_id)
+             SELECT p.id
                FROM players p
                LEFT JOIN races r ON r.name = p.race
               WHERE p.id = ? AND " . PlaysTurns::SQL_PREDICATE,

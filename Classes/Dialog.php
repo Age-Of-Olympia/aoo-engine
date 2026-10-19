@@ -212,20 +212,19 @@ class Dialog{
         // time limit
         $limit = time() - INACTIVE_TIME;
 
-        // AND
-        // nextTurnTime > ?
-
         $sql = '
-        SELECT COUNT(*) AS n, race
+        SELECT COUNT(*) AS n, p.race
         FROM
-        players
+        players p
+        JOIN accounts a ON a.player_id = p.id
+        JOIN progression g ON g.player_id = p.id
         WHERE
-        id > 0
+        p.id > 0
         AND
-        lastLoginTime > ?
-        AND xp > 500
+        a.last_login_time > ?
+        AND g.xp > 500
         GROUP BY
-        race
+        p.race
         ';
 
         $result = $db->exe($sql, $limit);

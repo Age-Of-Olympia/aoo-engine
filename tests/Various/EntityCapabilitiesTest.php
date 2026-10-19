@@ -7,8 +7,6 @@ use App\Entity\RealPlayer;
 use App\Entity\TutorialPlayer;
 use App\Interface\ProgressesInterface;
 use App\Interface\TakesTurnsInterface;
-use App\Service\ProgressionService;
-use App\Service\TurnService;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
@@ -20,9 +18,8 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * reader can ask through the CONTRACT, which is what lets the gates switch one
  * at a time later.
  *
- * The contracts read; the services write. These cases go through both halves —
- * a service writes, the contract answers — because that agreement is what would
- * rot silently if a write ever went round the service.
+ * The contracts are markers; the state lives in the `turns` and `progression`
+ * satellites, behind TurnService and ProgressionService.
  */
 #[Group('entities-baseline')]
 class EntityCapabilitiesTest extends LegacyPlayerFixtureTestCase
@@ -47,63 +44,6 @@ class EntityCapabilitiesTest extends LegacyPlayerFixtureTestCase
 
         $this->assertContains(TakesTurnsInterface::class, $implemented);
         $this->assertContains(ProgressesInterface::class, $implemented);
-    }
-
-    /** The service writes the turn; the contract answers, without naming Character. */
-    public function testATurnIsWrittenByTheServiceAndReadThroughTheContract(): void
-    {
-        $id = (int) $this->createRealPlayer('GmContratTour')->id;
-
-        (new TurnService($this->link))->openTurn($id, 1_800_000_000, 1_800_005_400);
-
-        $entity = $this->reloadCharacter($id);
-
-        $this->assertSame(1_800_000_000, $entity->getNextTurnTime());
-        $this->assertSame(0, $entity->getLastActionTime(), 'a fresh turn has taken no action');
-        $this->assertFalse($entity->isNextTurnRescheduled());
-    }
-
-    /** Progression too: experience, a level, points left to spend. */
-    public function testProgressionIsWrittenByTheServiceAndReadThroughTheContract(): void
-    {
-        $id = (int) $this->createRealPlayer('GmContratXp')->id;
-
-        $this->assertSame(0, $this->reloadCharacter($id)->getXp());
-
-        (new ProgressionService($this->link))->gain($id, 150, 150, 3);
-
-        $entity = $this->reloadCharacter($id);
-
-        $this->assertSame(150, $entity->getXp());
-        $this->assertSame(3, $entity->getRank());
-        $this->assertSame(150, $entity->getPi());
-    }
-
-    /**
-     * The contract offers no setter, so nothing can write the mirror column and
-     * leave the satellite behind. The services are the writers.
-     */
-    #[DataProvider('writeMethodsThatMustNotExist')]
-    public function testTheContractsOfferNoWrite(string $interface, string $method): void
-    {
-        $this->assertFalse(
-            method_exists($interface, $method),
-            "{$interface}::{$method}() would reach the mirror column alone"
-        );
-    }
-
-    /** @return array<string, array{0: class-string, 1: string}> */
-    public static function writeMethodsThatMustNotExist(): array
-    {
-        $cases = [];
-        foreach (['setNextTurnTime', 'setLastActionTime', 'setNextTurnRescheduled'] as $method) {
-            $cases[$method] = [TakesTurnsInterface::class, $method];
-        }
-        foreach (['setXp', 'addXp', 'setRank', 'setBonusPoints', 'setPi', 'addPi'] as $method) {
-            $cases[$method] = [ProgressesInterface::class, $method];
-        }
-
-        return $cases;
     }
 
     /**
@@ -150,55 +90,29 @@ class EntityCapabilitiesTest extends LegacyPlayerFixtureTestCase
     }
 
     /**
-     * And they map none of the columns either: the traits carry them into the
-     * two classes that hold the capability rather than onto the shared root, so
-     * a decor has no experience to hold — not even an unread one.
+     * No class maps the satellite columns: `turns`, `progression` and
+     * `accounts` hold them, and the `players` columns are dropped.
      *
      * @param class-string $class
      */
-    #[DataProvider('structuresThatDoNotPlay')]
-    public function testTheOtherStructuresMapNoneOfTheColumns(string $class): void
+    #[DataProvider('everyEntityClass')]
+    public function testNoEntityMapsTheSatelliteColumns(string $class): void
     {
         $mapped = \App\Factory\EntityManagerFactory::getEntityManager()
             ->getClassMetadata($class)
-            ->getFieldNames();
+            ->getColumnNames();
 
-        $this->assertSame(
-            [],
-            array_values(array_intersect(
-                ['xp', 'rank', 'pi', 'bonusPoints', 'nextTurnTime', 'lastActionTime'],
-                $mapped
-            ))
-        );
-    }
-
-    /** The two that do hold it map them, into the one shared table. */
-    #[DataProvider('classesThatPlay')]
-    public function testWhatPlaysMapsTheColumnsIntoTheSharedTable(string $class): void
-    {
-        $metadata = \App\Factory\EntityManagerFactory::getEntityManager()->getClassMetadata($class);
-
-        $this->assertSame('players', $metadata->getTableName());
-
-        foreach (['xp', 'rank', 'pi', 'bonusPoints', 'nextTurnTime', 'lastActionTime'] as $field) {
-            $this->assertContains($field, $metadata->getFieldNames());
-        }
+        $this->assertSame([], array_values(array_intersect([
+            'psw', 'mail', 'plain_mail', 'email_bonus', 'lastLoginTime',
+            'nextTurnTime', 'lastActionTime', 'nextTurnRescheduled', 'antiBerserkTime',
+            'xp', 'rank', 'bonus_points', 'pi',
+        ], $mapped)));
     }
 
     /** @return array<string, array{0: class-string}> */
-    public static function classesThatPlay(): array
+    public static function everyEntityClass(): array
     {
-        return [
-            'joueur'    => [RealPlayer::class],
-            'bâtiment'  => [\App\Entity\Building::class],
-        ];
-    }
-
-    private function reloadCharacter(int $id): RealPlayer
-    {
-        $em = \App\Factory\EntityManagerFactory::getEntityManager();
-        $em->clear();
-
-        return $em->find(RealPlayer::class, $id);
+        return self::characterClasses() + self::structuresThatDoNotPlay()
+            + ['bâtiment' => [\App\Entity\Building::class]];
     }
 }

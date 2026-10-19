@@ -5,6 +5,7 @@ namespace App\View\Classement;
 use App\Entity\Character;
 use App\Factory\PlayerFactory;
 use App\Service\PlayerCaracsService;
+use App\Service\ProgressionService;
 
 class BourrinsView
 {
@@ -88,9 +89,15 @@ class BourrinsView
         $tbl = $bestCarac[$carac] ?? [];
         krsort($tbl);
 
+        $podium = array_slice($tbl, 0, 3, true);
+        $levels = (new ProgressionService())->of(array_values(array_unique(array_map(
+            static fn (Character $e): int => $e->getId(),
+            array_merge(...array_values($podium))
+        ))));
+
         $rows = [];
         $place = 1;
-        foreach (array_slice($tbl, 0, 3, true) as $entities) {
+        foreach ($podium as $entities) {
             foreach ($entities as $e) {
                 $rows[] = (object) [
                     'place' => $place,
@@ -99,8 +106,8 @@ class BourrinsView
                     'name' => $e->getName(),
                     'race' => $e->getRace(),
                     'pr' => $e->getPr(),
-                    'xp' => $e->getXp(),
-                    'rank' => $e->getRank(),
+                    'xp' => $levels[$e->getId()]['xp'],
+                    'rank' => $levels[$e->getId()]['rank'],
                 ];
             }
             $place++;
