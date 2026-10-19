@@ -2,7 +2,6 @@
 
 define('NO_LOGIN', true);
 
-use App\Service\DataBaseUpdateService;
 use App\Service\AuditService;
 use App\Service\AdminAuthorizationService;
 
@@ -245,15 +244,6 @@ function handleCodeDeployment(array $envVars, AuditService $auditService): bool 
         http_response_code(500);
         $auditService->addAuditLog("Result: " . $outputDb);
         echo "<br />SQL file copy error.";
-        return false;
-    }
-
-    $dbuService = new DataBaseUpdateService();
-    $dbuService->setCurrentAuditKey($auditService->getCurrentAuditKey());
-    $res = $dbuService->updateDb();
-    if (!$res) {
-        http_response_code(500);
-        echo "<br />SQL Error.";
         return false;
     }
 

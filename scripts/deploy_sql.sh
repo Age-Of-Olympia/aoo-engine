@@ -23,13 +23,7 @@ aoo_assert_branch
 [ -r "$DOCROOT/config/db_constants.php" ] || { echo "db_constants.php missing in $DOCROOT/config"; exit 1; }
 cp "$DOCROOT/config/db_constants.php" "$SRC/aoo-engine/config/db_constants.php" || exit 1
 
-# 4. Ship the legacy SQL updates and ensure the tracking dir exists
-#    (DataBaseUpdateService writes there and dies if it is absent). mkdir -p
-#    also creates $DOCROOT/db on a freshly provisioned docroot.
-mkdir -p "$DOCROOT/db/updates_done"
-cp -ra "$SRC/aoo-engine/db/updates" "$DOCROOT/db/" || exit 1
-
-# 5. Prod only (BACKUP_DIR set): dump the database before migrating, the only
+# 4. Prod only (BACKUP_DIR set): dump the database before migrating, the only
 #    rollback when a migration has no trustworthy down(). Keeps the last 10.
 if [ -n "${BACKUP_DIR:-}" ]; then
     mkdir -p "$BACKUP_DIR" || exit 1
@@ -51,6 +45,6 @@ if [ -n "${BACKUP_DIR:-}" ]; then
     ls -1t "$BACKUP_DIR"/*.sql.gz | tail -n +11 | xargs -r rm -f
 fi
 
-# 6. Run migrations from the checkout. --no-all-or-nothing is mandatory:
+# 5. Run migrations from the checkout. --no-all-or-nothing is mandatory:
 #    MariaDB auto-commits DDL, so the global transaction wrapper would fail.
 ./vendor/bin/doctrine-migrations migrate --no-interaction --no-all-or-nothing
