@@ -51,7 +51,7 @@ trait LegacyBootstrapTrait
     protected function firstRealPlayerIdOrSkip(): int
     {
         $id = $this->link->fetchOne(
-            "SELECT id FROM players WHERE id > 0 AND (player_type IS NULL OR player_type = 'real') ORDER BY id ASC LIMIT 1"
+            "SELECT id FROM players WHERE id > 0 AND player_type = 'real' ORDER BY id ASC LIMIT 1"
         );
         if (empty($id)) {
             $this->markTestSkipped('No real player row available — run scripts/testing/reset_test_database.sh.');

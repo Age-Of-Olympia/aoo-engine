@@ -24,6 +24,5 @@ final class PlaysTurns
 {
     public const SQL_PREDICATE =
         "(p.player_type IN ('real', 'tutorial', 'npc')
-          OR p.player_type IS NULL
           OR r.playable = 1)";
 }
