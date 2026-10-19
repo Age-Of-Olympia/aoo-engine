@@ -121,8 +121,9 @@ class PlayerPassiveService
     }
 
     /**
-     * Appelé en fin de Player::get_caracs() : les caracs sont déjà
-     * calculées (surtout ne pas rappeler get_caracs ici — récursion).
+     * Appelé en fin de Player::get_caracs() : ajoute l'esquive des passifs
+     * à celle des objets portés. Les caracs sont déjà calculées (surtout ne
+     * pas rappeler get_caracs ici — récursion).
      */
     public function setEsquivePlayer(Player $player): void
     {
@@ -134,8 +135,8 @@ class PlayerPassiveService
                 $esquive += $this->passiveValueCalculator->compute($passive, $player);
             }
         }
-        
-        $player->caracs->esquive = $esquive;
+
+        $player->caracs->esquive = ($player->caracs->esquive ?? 0) + $esquive;
     }
 
     public function checkPassiveConditionsByPlayerById(ActorInterface $player, ActionPassive $passive, ?ConditionObject $conditionObject = null): bool

@@ -83,6 +83,21 @@ class SimulatedPlayerTest extends TestCase
         $this->assertSame(4, $caracs->ct); // untouched
     }
 
+    /** A two-handed weapon fills main1 and main2 but adds its esquive once. */
+    public function testTwoHandedWeaponEsquiveCountsOnce(): void
+    {
+        $player = new SimulatedPlayer(
+            1,
+            [],
+            [],
+            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'gaia'],
+            [],
+            (object) ['deuxmains' => SimulatedItem::fromData(['esquive' => -2])],
+        );
+
+        $this->assertSame(-2, $player->caracs->esquive);
+    }
+
     /**
      * The simulator runs the real outcome instructions against players 1/2, so
      * every world-mutating Player method must be inert — otherwise a preview

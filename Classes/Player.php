@@ -220,6 +220,7 @@ class Player implements ActorInterface {
         if (!empty($item->data->fixedF)) {
             $caracs->f = $item->data->fixedF;
         }
+        $caracs->esquive = ($caracs->esquive ?? 0) + (int) ($item->data->esquive ?? 0);
     }
 
 
@@ -267,6 +268,8 @@ class Player implements ActorInterface {
             $this->caracs->$k = $raceValue + $upgradeValue;
         }
 
+        // Esquive: worn items, then passives (setEsquivePlayer) add to it
+        $this->caracs->esquive = 0;
 
         if($nude){
 
@@ -309,12 +312,6 @@ class Player implements ActorInterface {
             }
 
             self::applyItemCaracs($this->caracs, $item);
-        }
-
-        // Esquive
-        if(!empty($item->data->esquive)){
-
-            $this->caracs->esquive = (isset($this->caracs->esquive)) ? $this->caracs->esquive + $item->data->esquive : $item->data->esquive;
         }
 
         // elements de debuffs
@@ -377,9 +374,7 @@ class Player implements ActorInterface {
         }
 
 
-        /* Esquive (passifs à trait « esquive ») : fait partie des
-         * caracs — calculée ici, elle est présente dès que les caracs
-         * le sont. */
+        // Passives with the "esquive" trait add to the items' esquive
         $this->playerPassiveService->setEsquivePlayer($this);
 
         return true;
