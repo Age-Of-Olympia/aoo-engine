@@ -138,14 +138,7 @@ class RaceService
      */
     public function getPassableStructureNames(): array
     {
-        $names = [];
-        foreach ($this->getRacesByKind(\App\Enum\EntityCategory::Structure->value) as $race) {
-            if (!$race->blocksPassage()) {
-                $names[] = $race->getName();
-            }
-        }
-
-        return $names;
+        return $this->namesWhere('kind = ? AND blocks_passage = 0', [\App\Enum\EntityCategory::Structure->value]);
     }
 
     /**
@@ -167,14 +160,10 @@ class RaceService
      */
     public function getDoorRaceNames(): array
     {
-        $names = [];
-        foreach ($this->getRacesByKind(\App\Enum\EntityCategory::Structure->value) as $race) {
-            if ($race->isDoor() && $race->isLockable()) {
-                $names[] = $race->getName();
-            }
-        }
-
-        return $names;
+        return $this->namesWhere(
+            'kind = ? AND structure_nature = ? AND lockable = 1',
+            [\App\Enum\EntityCategory::Structure->value, Race::NATURE_DOOR]
+        );
     }
 
     /**
@@ -186,14 +175,21 @@ class RaceService
      */
     public function getProjectileBlockingRaceNames(): array
     {
-        $names = [];
-        foreach ($this->getAllRaces() as $race) {
-            if ($race->blocksProjectiles()) {
-                $names[] = $race->getName();
-            }
-        }
+        return $this->namesWhere('blocks_projectiles = 1', []);
+    }
 
-        return $names;
+    /**
+     * Race names by their own columns: these lists are read on every step,
+     * shot and board, hydrating the whole catalogue for them cost more than
+     * the rest of the check.
+     *
+     * @param list<string> $params
+     * @return list<string>
+     */
+    private function namesWhere(string $where, array $params): array
+    {
+        return $this->entityManager->getConnection()
+            ->fetchFirstColumn('SELECT name FROM races WHERE ' . $where . ' ORDER BY name', $params);
     }
 
     /**
@@ -320,9 +316,15 @@ class RaceService
     public function getImageDirMap(): array
     {
         if (self::$imageDirs === null) {
+            /* The folder belongs to the class, which the discriminator names:
+             * an empty instance per class answers for every row of it. */
+            $classes = $this->entityManager->getClassMetadata(Race::class)->discriminatorMap;
+            $dirs = [];
             self::$imageDirs = [];
-            foreach ($this->getAllRaces() as $race) {
-                self::$imageDirs[$race->getName()] = $race->imageDir();
+            $rows = $this->entityManager->getConnection()->fetchAllKeyValue('SELECT name, type_kind FROM races');
+            foreach ($rows as $name => $typeKind) {
+                $dirs[$typeKind] ??= (new $classes[$typeKind]())->imageDir();
+                self::$imageDirs[$name] = $dirs[$typeKind];
             }
         }
 
