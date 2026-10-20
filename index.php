@@ -60,6 +60,9 @@ if(!isset($_SESSION['playerId']) || isset($_GET['menu'])){
 
 elseif(isset($_GET['logout'])){
 
+    /* An expired session was just reopened by the remember cookie
+     * (config.php): its cookies give way to the deletions below. */
+    header_remove('Set-Cookie');
     (new \App\Service\LoginService())->forget();
     unset($_SESSION['mainPlayerId']);
     unset($_SESSION['playerId']);

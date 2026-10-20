@@ -27,8 +27,11 @@ final class LoginService
     {
         (new AccountService($this->conn))->touchLastLogin($playerId);
 
-        // New session id on privilege change (anonymous -> authenticated): no fixation
+        // New session id on privilege change (anonymous -> authenticated): no fixation.
+        // One session cookie per response: the id session_start() just issued is
+        // deleted here, and a proxy keeping the first of two cookies would hold it.
         if (session_status() === PHP_SESSION_ACTIVE) {
+            header_remove('Set-Cookie');
             session_regenerate_id(true);
         }
 
@@ -103,11 +106,11 @@ final class LoginService
             return false;
         }
 
+        $this->open((int) $row['player_id'], (string) $row['footprint']);
+
         $expires = time() + self::LIFETIME;
         $this->conn->executeStatement('UPDATE remember_tokens SET expires = ? WHERE selector = ?', [$expires, $selector]);
         $this->sendCookie($value, $expires);
-
-        $this->open((int) $row['player_id'], (string) $row['footprint']);
 
         return true;
     }
