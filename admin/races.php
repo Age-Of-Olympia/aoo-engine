@@ -537,8 +537,13 @@ HTML;
         // pour une race de personnage (les tirs passent, sauf exception).
         . checked($isEdit ? $race->blocksProjectiles() : $face->isStructure())
         . ' title="Décoché (défaut des personnages) : les tirs passent. Coché : bloque la ligne de tir."> Bloque les tirs</label> ')
-        . ($face->isStructure() ? '' : '<label class="mr-3"><input type="checkbox" name="playable" '
-            . checked($isEdit && $race->getPlayable()) . '> Jouable (proposée à l\'inscription)</label>')
+        /* Playable: a character race is offered at registration, a building
+           type can be driven from its faction page. Nothing else plays. */
+        . (!$face->isStructure() || $face->key === \App\View\Admin\TypeEditorFace::BUILDING
+            ? '<label class="mr-3"><input type="checkbox" name="playable" '
+                . checked($isEdit && $race->getPlayable()) . '> '
+                . ($face->isStructure() ? 'Pilotable (depuis la page de faction)' : 'Jouable (proposée à l\'inscription)') . '</label>'
+            : '')
         . (static function () use ($isEdit, $race, $face): string {
                 $isBuilding = $face->key === \App\View\Admin\TypeEditorFace::BUILDING;
                 $declared = $isEdit

@@ -164,6 +164,31 @@ class RaceServiceTest extends TestCase
         }
     }
 
+    /** A playable building type is driven from its faction page, never offered at registration. */
+    public function testAPlayableBuildingTypeIsNotRegisterable(): void
+    {
+        $name = 'test_race_drivable';
+        $this->deleteRace($name);
+
+        try {
+            $race = Race::ofFamily('structure', 'edifice');
+            $race->setName($name);
+            $race->setCode(strtoupper($name));
+            $race->setLabel('Bâtiment pilotable de test');
+            $race->setKind('structure');
+            $race->setStructureNature('edifice');
+            $race->setPlayable(true);
+            $race->setHidden(false);
+            $this->service->save($race);
+
+            RaceService::clearCache();
+            $this->assertNotContains($name, (new RaceService())->getPlayableRaceNames());
+        } finally {
+            $this->deleteRace($name);
+            RaceService::clearCache();
+        }
+    }
+
     public function testGetBuildingTypesExcludesResources(): void
     {
         $building = 'test_race_building';

@@ -141,7 +141,8 @@ $applyForm = static function (Race $race) use ($face, $action): array {
     $race->setDescription(trim((string) ($_POST['description'] ?? '')));
     $race->setComment(trim((string) ($_POST['comment'] ?? '')));
     // Sorte : personnage (défaut) ou structure. Une structure n'est jamais
-    // proposée à l'inscription, quel que soit l'état de la case Jouable.
+    // proposée à l'inscription (RaceService::getPlayableRaces) ; un type de
+    // bâtiment jouable se pilote depuis la page de faction.
     $kind = ($_POST['kind'] ?? 'character') === 'structure' ? 'structure' : 'character';
     $race->setKind($kind);
     /* On create the face pins the nature; on update any known nature is
@@ -268,7 +269,7 @@ $applyForm = static function (Race $race) use ($face, $action): array {
             (new \App\Service\Map\EntityCellService())->reapplyForType($race->getName());
         }
     }
-    $race->setPlayable($kind === 'character' && booleanCheckbox('playable'));
+    $race->setPlayable(($kind === 'character' || $newFamily === Race::FAMILY_BUILDING) && booleanCheckbox('playable'));
     $race->setHidden(booleanCheckbox('hidden'));
     $race->setBgColor((string) $_POST['bgColor']);
     $race->setColor(stringWithDefault('color', 'black'));

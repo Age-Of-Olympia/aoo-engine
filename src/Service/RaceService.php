@@ -221,7 +221,8 @@ class RaceService
     {
         return array_values(array_filter(
             $this->getAllRaces(),
-            static fn (Race $race): bool => $race->getPlayable() && !$race->getHidden()
+            /* A playable building type is driven from its faction, never registered as */
+            static fn (Race $race): bool => $race->getPlayable() && !$race->getHidden() && !$race->isStructureKind()
         ));
     }
 
