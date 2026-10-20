@@ -779,8 +779,9 @@
     }
 
     /* After a one-cell step, the new board starts where the old one stood
-     * and slides into place, all of it at once. The incoming strip is
-     * already drawn: the response carries it. */
+     * and slides into place in one movement; the player's own sprites take
+     * the opposite translation and stay at the centre. The incoming strip
+     * is already drawn: the response carries it. */
     function slideIn(from) {
         var svg = document.getElementById('svg-view');
         var avatar = document.getElementById('current-player-avatar');
@@ -807,10 +808,19 @@
             }
         });
         svg.insertBefore(g, svg.firstChild);
-        g.animate(
-            [{ transform: 'translate(' + dx + 'px, ' + dy + 'px)' }, { transform: 'translate(0px, 0px)' }],
-            { duration: 200, easing: 'ease-out' }
-        ).onfinish = function () {
+        var slide = function (el, x, y) {
+            return el.animate(
+                [{ transform: 'translate(' + x + 'px, ' + y + 'px)' }, { transform: 'translate(0px, 0px)' }],
+                { duration: 200, easing: 'ease-out' }
+            );
+        };
+        $(g).children('[data-table="players"], [id$="-race"]').filter(function () {
+            return this.getAttribute('x') === avatar.getAttribute('x')
+                && this.getAttribute('y') === avatar.getAttribute('y');
+        }).each(function () {
+            slide(this, -dx, -dy);
+        });
+        slide(g, dx, dy).onfinish = function () {
             g.replaceWith.apply(g, Array.prototype.slice.call(g.childNodes));
         };
     }
