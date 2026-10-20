@@ -579,10 +579,10 @@ HTML;
                 . ' Décoché : il faut être sur une case voisine (plaque gravée, épitaphe)."> Inscription lisible de loin</label> '
             : '')
         . '<label><input type="checkbox" name="hidden" '
-        . checked($isEdit && $race->getHidden()) . '> Cachée</label>'
-        . '<small class="form-text text-muted">Cachée : les personnages de cette race ne sont pas pris en compte'
-        . ' pour le « premier joueur » qui sert de référence au bonus d\'XP de rattrapage'
-        . ' (un personnage admin de très haut niveau ne doit pas augmenter le bonus de tout le serveur).</small>'
+        . checked(!$isEdit || $race->getHidden()) . '> Cachée</label>'
+        . '<small class="form-text text-muted">Cachée : la race n\'est pas proposée à l\'inscription, même jouable.'
+        . ' Seules les races proposées à l\'inscription comptent pour le « premier joueur », référence du bonus d\'XP'
+        . ' de rattrapage et du classement.</small>'
         . '</div></div>'
         /* The two repair recipes, shared with the item page. */
         . ($face->isStructure()

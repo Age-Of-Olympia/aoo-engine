@@ -2554,23 +2554,14 @@ class Player implements ActorInterface {
         $data = array();
 
         $list= array();
-        $hiddenRaces = array();
-        $raceService = new RaceService();
+        // The first player, reference of the catch-up XP bonus, is taken among the races offered at registration
+        $registerable = array_flip((new RaceService())->getPlayableRaceNames());
         $firstData = null;
         while($row = $res->fetch_object()){
 
             $list[] = $row;
-            if($row->id > 0 )
+            if($row->id > 0 && isset($registerable[$row->race]))
             {
-                if(!isset($hiddenRaces[$row->race]))
-                {
-                    // Hidden races (ex-private race JSON) stay out of the public first-player spot.
-                    $race = $raceService->getRaceByName($row->race);
-                    $hiddenRaces[$row->race] = $race !== null && $race->getHidden();
-                }
-
-                if($hiddenRaces[$row->race])continue;
-
                 if(!$firstData || $row->xp > $firstData->xp){
                     $firstData = $row;
                 }

@@ -89,14 +89,12 @@ else{
 
 
     if (!empty($playerList)) {
-        // Même règle que Player::refresh_list : les personnages d'une race
-        // cachée ne fournissent pas le « premier joueur » affiché.
-        $raceService = new RaceService();
+        // Same rule as Player::get_player_list(): the first player comes from a race offered at registration
+        $registerable = array_flip((new RaceService())->getPlayableRaceNames());
         $first = null;
         foreach($playerList as $e){
 
-            $race = $raceService->getRaceByName($e->race);
-            if($race !== null && $race->getHidden()){
+            if(!isset($registerable[$e->race])){
                 continue;
             }
 
