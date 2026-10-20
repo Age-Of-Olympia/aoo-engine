@@ -765,8 +765,12 @@
                     old.removeAttributeNS(a.namespaceURI, a.localName);
                 }
             });
+            /* Only what changed: rewriting an unchanged href still makes
+             * the browser reprocess the image. */
             Array.prototype.forEach.call(img.attributes, function (a) {
-                old.setAttributeNS(a.namespaceURI, a.name, a.value);
+                if (old.getAttributeNS(a.namespaceURI, a.localName) !== a.value) {
+                    old.setAttributeNS(a.namespaceURI, a.name, a.value);
+                }
             });
             img.replaceWith(old);
         });
@@ -781,8 +785,14 @@
     /* After a one-cell step, the new board starts where the old one stood
      * and slides into place in one movement; the player's own sprites take
      * the opposite translation and stay at the centre. The incoming strip
-     * is already drawn: the response carries it. */
-    function slideIn(from) {
+     * is already drawn: the response carries it. The outgoing strip is the
+     * old board's images whose cells left the view (before: the old
+     * board's images), plus its element layers (layers: one masked block
+     * per layer, not per cell) clipped to that strip, kept on the trailing
+     * edge until the slide ends.
+     * The slide starts once the swapped board has been painted: that
+     * frame is the slow one, the movement would be over before it shows. */
+    function slideIn(from, before, layers) {
         var svg = document.getElementById('svg-view');
         var avatar = document.getElementById('current-player-avatar');
         var off = false;
@@ -801,28 +811,88 @@
             return;
         }
 
-        var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        var ns = 'http://www.w3.org/2000/svg';
+        var g = document.createElementNS(ns, 'g');
         Array.prototype.slice.call(svg.childNodes).forEach(function (n) {
             if (n.id !== 'hud-svg-coords') {
                 g.appendChild(n);
             }
         });
         svg.insertBefore(g, svg.firstChild);
-        var slide = function (el, x, y) {
-            return el.animate(
-                [{ transform: 'translate(' + x + 'px, ' + y + 'px)' }, { transform: 'translate(0px, 0px)' }],
-                { duration: 200, easing: 'ease-out' }
-            );
+
+        /* The outgoing strip stays where it stood, outside the sliding
+         * group, and leaves with its own animation: moved into the new
+         * board it would sit at negative coordinates, which Firefox and
+         * Chrome on the GPU leave unpainted on the left and top edges. */
+        var inView = {};
+        Array.prototype.forEach.call(g.getElementsByTagName('image'), function (img) {
+            inView[img.getAttribute('data-coords')] = true;
+        });
+        var outgoing = document.createElementNS(ns, 'g');
+        before.forEach(function (img) {
+            var coords = img.getAttribute('data-coords');
+            if (coords && !img.isConnected && !inView[coords]) {
+                outgoing.appendChild(img);
+            }
+        });
+        /* The old layers' masks share their ids with the new ones */
+        layers.forEach(function (layer) {
+            $(layer).find('[id]').addBack().each(function () {
+                this.id += '-out';
+            });
+            $(layer).find('[mask]').each(function () {
+                this.setAttribute('mask', this.getAttribute('mask').replace(/\)$/, '-out)'));
+            });
+            outgoing.appendChild(layer);
+        });
+        var vb = (svg.dataset.origViewbox || svg.getAttribute('viewBox')).split(/[ ,]+/).map(Number);
+        var w = vb[2];
+        var h = vb[3];
+        var clip = document.createElementNS(ns, 'clipPath');
+        clip.id = 'slide-outgoing';
+        [
+            dx ? [dx > 0 ? vb[0] - w : vb[0] + w + dx, vb[1] - h, w + Math.abs(dx), 3 * h] : null,
+            dy ? [vb[0] - w, dy > 0 ? vb[1] - h : vb[1] + h + dy, 3 * w, h + Math.abs(dy)] : null
+        ].forEach(function (r) {
+            if (r) {
+                var rect = document.createElementNS(ns, 'rect');
+                ['x', 'y', 'width', 'height'].forEach(function (a, i) {
+                    rect.setAttribute(a, r[i]);
+                });
+                clip.appendChild(rect);
+            }
+        });
+        outgoing.appendChild(clip);
+        outgoing.setAttribute('clip-path', 'url(#slide-outgoing)');
+        svg.insertBefore(outgoing, g.nextSibling);
+
+        var translate = function (x, y) {
+            return 'translate(' + x + 'px, ' + y + 'px)';
         };
+        var moving = [[g, translate(dx, dy), translate(0, 0)], [outgoing, translate(0, 0), translate(-dx, -dy)]];
         $(g).children('[data-table="players"], [id$="-race"]').filter(function () {
             return this.getAttribute('x') === avatar.getAttribute('x')
                 && this.getAttribute('y') === avatar.getAttribute('y');
         }).each(function () {
-            slide(this, -dx, -dy);
+            moving.push([this, translate(-dx, -dy), translate(0, 0)]);
         });
-        slide(g, dx, dy).onfinish = function () {
-            g.replaceWith.apply(g, Array.prototype.slice.call(g.childNodes));
-        };
+        moving.forEach(function (m) {
+            m[0].style.transform = m[1];
+        });
+
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                var anim;
+                moving.forEach(function (m) {
+                    m[0].style.transform = '';
+                    anim = m[0].animate([{ transform: m[1] }, { transform: m[2] }], { duration: 200, easing: 'ease-out' });
+                });
+                anim.onfinish = function () {
+                    outgoing.remove();
+                    g.replaceWith.apply(g, Array.prototype.slice.call(g.childNodes));
+                };
+            });
+        });
     }
 
     /* Swaps in the moved page's board, position, minimap and top bar pills.
@@ -837,6 +907,8 @@
         }
 
         var from = $('#current-player-avatar').attr('data-coords');
+        var layers = $(current).find('.anim-layers').detach().get();
+        var before = Array.prototype.slice.call(current.getElementsByTagName('image'));
         swapBoard(current, freshMap);
         current.setAttribute('data-map-hash', freshMap.getAttribute('data-map-hash') || '');
         applyAnimationQuality();
@@ -870,7 +942,7 @@
         fitDamier();
         buildMapRulers();
         centerMap();
-        slideIn(from && from.split(','));
+        slideIn(from && from.split(','), before, layers);
         redrawBlockedMarkers();
         /* Not when the panel comes with the response: composed in the same
          * tick, the idle selection would make the #ajax-data observer skip
