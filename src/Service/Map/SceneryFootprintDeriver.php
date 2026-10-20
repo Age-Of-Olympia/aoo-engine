@@ -2,6 +2,7 @@
 
 namespace App\Service\Map;
 
+use App\Database\QueryCache;
 use App\Entity\SceneryType;
 use App\Factory\EntityManagerFactory;
 use App\Service\TiledMapService;
@@ -291,10 +292,11 @@ final class SceneryFootprintDeriver
     {
         $families = [];
 
-        foreach ($this->conn()->fetchAllAssociative(
+        $rows = QueryCache::remember(['map_foregrounds', 'coords'], 'map_foregrounds', fn (): array => $this->conn()->fetchAllAssociative(
             'SELECT f.name, f.coords_id, c.x, c.y, c.z, c.plan
                FROM map_foregrounds f JOIN coords c ON c.id = f.coords_id'
-        ) as $row) {
+        ));
+        foreach ($rows as $row) {
             [$family, $piece] = self::splitPiece((string) $row['name']);
 
             $families[$family][] = [

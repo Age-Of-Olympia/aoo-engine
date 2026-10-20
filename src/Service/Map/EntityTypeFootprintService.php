@@ -2,6 +2,7 @@
 
 namespace App\Service\Map;
 
+use App\Database\QueryCache;
 use App\Factory\EntityManagerFactory;
 use Doctrine\DBAL\Connection;
 use RuntimeException;
@@ -44,9 +45,10 @@ final class EntityTypeFootprintService
 
         $declared = [];
 
-        foreach ($this->conn()->fetchAllAssociative(
+        $rows = QueryCache::remember(['entity_type_footprints'], 'entity_type_footprints', fn (): array => $this->conn()->fetchAllAssociative(
             'SELECT type_name, w, h, offsets, roles FROM entity_type_footprints'
-        ) as $row) {
+        ));
+        foreach ($rows as $row) {
             try {
                 $declared[(string) $row['type_name']] = Footprint::boxed(
                     (int) $row['w'],

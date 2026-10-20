@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Database\QueryCache;
 use App\Factory\EntityManagerFactory;
 use App\Service\ItemInstanceService;
 use Doctrine\DBAL\Connection;
@@ -35,7 +36,8 @@ final class ObstructionService
     {
         return [
             'race' => $this->raceService->getPassableStructureNames(),
-            'item' => $this->conn->fetchFirstColumn('SELECT name FROM items WHERE blocks_passage = 0'),
+            'item' => QueryCache::remember(['items'], 'items:passable',
+                fn (): array => $this->conn->fetchFirstColumn('SELECT name FROM items WHERE blocks_passage = 0')),
         ];
     }
 
