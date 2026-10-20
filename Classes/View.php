@@ -906,7 +906,9 @@ class View{
             SELECT
             id, name, coords_id,
             "players" AS whichTable,
-            98 AS tableOrder
+            /* Characters first, then the structures of the layer: a building
+             * hides whoever stands on its passable cells, as scenery does. */
+            IF(player_type IN ("real", "tutorial", "npc") OR player_type IS NULL, 98, 98.5) AS tableOrder
             FROM
             players
             WHERE
@@ -922,7 +924,7 @@ class View{
             SELECT
             id, name, coords_id,
             "players" AS whichTable,
-            98 AS tableOrder
+            98.5 AS tableOrder
             FROM
             players
             WHERE
