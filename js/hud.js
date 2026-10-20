@@ -713,9 +713,9 @@
             });
     };
 
-    /* go.php's HUD response (App\View\Hud\MoveResponseView): the board,
-     * the feed and the new cell's observation came with the step, no more
-     * requests to make. */
+    /* go.php's HUD response (App\View\Hud\MoveResponseView): the board and
+     * the new cell's observation came with the step. The feed is asked for
+     * apart, only when something new may show in it. */
     window.hudApplyMove = function (data) {
         var doc = new DOMParser().parseFromString('<!doctype html><body>' + data.board, 'text/html');
         if (!applyMovedPage(doc, true)) {
@@ -727,9 +727,8 @@
         aooStore.set('hudSelCoords', data.coords);
         aooStore.remove('hudSelEntity');
 
-        /* Null: nothing new since the feed the page shows */
-        if (data.events !== null) {
-            showFeed('events', data.events);
+        if (data.feedChanged) {
+            loadFeed('events');
         }
 
         /* What the cell's element took on arrival (lava, mud…). */

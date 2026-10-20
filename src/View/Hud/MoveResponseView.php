@@ -9,19 +9,21 @@ use Classes\Log;
 
 /**
  * Everything the HUD shows after a step, in go.php's own response: the
- * top bar, the minimap and the board (as index.php renders them), the
- * events feed and the observation of the new cell. It replaces the three
- * requests the page made after the step (index.php, then observe.php and
- * load_events.php), each of which started PHP, the session, Doctrine and
- * reloaded the character again. js/hud.js hudApplyMove() places the parts.
+ * top bar, the minimap and the board (as index.php renders them) and the
+ * observation of the new cell. It replaces the requests the page made
+ * after the step (index.php, then observe.php), each of which started PHP,
+ * the session, Doctrine and reloaded the character again. The events feed
+ * stays out: the page asks load_events.php for it on its own, in parallel,
+ * and only when something new may show in it. js/hud.js hudApplyMove()
+ * places the parts.
  */
 final class MoveResponseView
 {
     /**
      * $feedLogId: the log the page's events feed is current up to (0: unknown).
-     * The feed is left out (null) when nothing newer could show in it.
+     * feedChanged: something newer may show in it.
      *
-     * @return array{board: string, events: ?string, observe: string, coords: string}
+     * @return array{board: string, feedChanged: bool, observe: string, coords: string}
      */
     public static function render(int $feedLogId = 0): array
     {
@@ -43,7 +45,7 @@ final class MoveResponseView
 
         return [
             'board' => $board,
-            'events' => $feedLogId > 0 && !Log::hasFeedEventsAfter($feedLogId) ? null : FeedRenderer::renderEvents($player),
+            'feedChanged' => $feedLogId === 0 || Log::hasFeedEventsAfter($feedLogId),
             'observe' => self::observe($cell),
             'coords' => $cell,
         ];
