@@ -1483,7 +1483,7 @@ class View{
             $shadeConfig = $shadeService->forPlan($this->coords->plan);
             $shadeColor = $shadeConfig['color'];
 
-            foreach($this->inSight as $row){
+            foreach($this->inSight + $this->ring as $row){
 
                 $level = (int) ($row->shade ?? 0);
 
@@ -1531,7 +1531,10 @@ class View{
 
                 echo '<defs><pattern id="view-grid" width="'. self::TILE_PX .'" height="'. self::TILE_PX .'" patternUnits="userSpaceOnUse">'
                     . '<image href="img/ui/view/grid.webp" width="'. self::TILE_PX .'" height="'. self::TILE_PX .'" /></pattern></defs>'
-                    . '<rect width="'. (($this->p*2 + $this->footW) * self::TILE_PX) .'" height="'. (($this->p*2 + $this->footH) * self::TILE_PX) .'"'
+                    /* One cell wider on every side when the ring is drawn */
+                    . '<rect' . ($this->ring === [] ? '' : ' x="-'. self::TILE_PX .'" y="-'. self::TILE_PX .'"')
+                    . ' width="'. (($this->p*2 + $this->footW + ($this->ring === [] ? 0 : 2)) * self::TILE_PX) .'"'
+                    . ' height="'. (($this->p*2 + $this->footH + ($this->ring === [] ? 0 : 2)) * self::TILE_PX) .'"'
                     . ' fill="url(#view-grid)" pointer-events="none" />';
             }
 
