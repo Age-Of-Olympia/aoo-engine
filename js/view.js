@@ -528,11 +528,6 @@ $(document).ready(function(){
         var hudResponse = typeof window.hudApplyMove === 'function'
             && !(window.tutorialUI && window.tutorialUI.isActive);
 
-        /* The board slides at once; the response's board replaces it */
-        if (hudResponse) {
-            window.hudSlideBoard(coords);
-        }
-
         $.ajax({
             type: "POST",
             url: 'go.php',
@@ -544,12 +539,6 @@ $(document).ready(function(){
                     window.hudApplyMove(data);
 
                     return false;
-                }
-
-                /* Not the step's board (a refusal, a confirmation, a
-                   death): the board goes back where it was. */
-                if (hudResponse) {
-                    window.hudSlideBack();
                 }
 
                 if(data.trim() != ''){
@@ -585,9 +574,6 @@ $(document).ready(function(){
             },
             error: function()
             {
-                if (hudResponse) {
-                    window.hudSlideBack();
-                }
                 $('#go-img').attr('href', 'img/ui/view/arrow.webp');
                 window.bindMapView(false, true);
             }
