@@ -717,6 +717,13 @@
      * with the step. The new cell's panel and the feed are asked for apart,
      * in parallel, the feed only when something new may show in it. */
     window.hudApplyMove = function (data) {
+        /* After the slide started on the click, never in the middle of it */
+        if (boardSlide && boardSlide.running) {
+            boardSlide.finished.then(function () {
+                window.hudApplyMove(data);
+            });
+            return;
+        }
         var doc = new DOMParser().parseFromString('<!doctype html><body>' + data.board, 'text/html');
         if (!applyMovedPage(doc)) {
             return;
@@ -730,6 +737,86 @@
         if (data.notice) {
             aooAlert(data.notice);
         }
+    };
+
+    /* The board slides one cell as soon as « Aller » is clicked, without
+     * waiting for go.php: everything but the rulers goes into a translated
+     * group, the player's own sprites take the opposite translation and stay
+     * at the centre. The incoming strip shows the ground until the
+     * response's board replaces the whole group (applyMovedPage); a refusal
+     * slides it back (hudSlideBack). */
+    var boardSlide = null;
+
+    window.hudSlideBoard = function (target) {
+        var svg = document.getElementById('svg-view');
+        var avatar = document.getElementById('current-player-avatar');
+        if (!svg || !avatar || boardSlide) {
+            return;
+        }
+        var to = target.split(',');
+        var from = avatar.getAttribute('data-coords').split(',');
+        var dx = (from[0] - to[0]) * 50;
+        var dy = (to[1] - from[1]) * 50;
+        var off = false;
+        try {
+            off = localStorage.getItem(ANIMATION_QUALITY_KEY) === 'off';
+        } catch (e) {
+            off = false;
+        }
+
+        var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        Array.prototype.slice.call(svg.childNodes).forEach(function (n) {
+            if (n.id !== 'hud-svg-coords') {
+                g.appendChild(n);
+            }
+        });
+        svg.insertBefore(g, svg.firstChild);
+
+        var moving = [[g, dx, dy]];
+        $(g).children('[data-table="players"], [id$="-race"]').filter(function () {
+            return this.getAttribute('x') === avatar.getAttribute('x')
+                && this.getAttribute('y') === avatar.getAttribute('y');
+        }).each(function () {
+            moving.push([this, -dx, -dy]);
+        });
+        var anims = moving.map(function (m) {
+            return m[0].animate(
+                [{ transform: 'translate(0px, 0px)' }, { transform: 'translate(' + m[1] + 'px, ' + m[2] + 'px)' }],
+                { duration: off ? 0 : 200, easing: 'ease-out', fill: 'forwards' }
+            );
+        });
+        boardSlide = { group: g, anims: anims, running: true, finished: anims[0].finished };
+        /* Rejected when a refusal cancels the slide: nothing to do then */
+        boardSlide.finished.then(function () {
+            if (boardSlide && boardSlide.group === g) {
+                boardSlide.running = false;
+            }
+        }, function () {});
+    };
+
+    window.hudSlideBack = function () {
+        if (!boardSlide) {
+            return;
+        }
+        var slide = boardSlide;
+        boardSlide = null;
+        var undo = function () {
+            slide.anims.forEach(function (a) {
+                a.cancel();
+            });
+            if (slide.group.isConnected) {
+                slide.group.replaceWith.apply(slide.group, Array.prototype.slice.call(slide.group.childNodes));
+            }
+        };
+        /* Not started yet: reverse() would play it from its end */
+        if (!slide.anims[0].currentTime) {
+            undo();
+            return;
+        }
+        slide.anims.forEach(function (a) {
+            a.reverse();
+        });
+        slide.anims[0].finished.then(undo);
     };
 
     /* Puts the fresh board in place of the current one, reusing the <image>
@@ -903,7 +990,9 @@
             return false;
         }
 
-        var from = $('#current-player-avatar').attr('data-coords');
+        /* Already slid on the click: the response's board lands in place */
+        var from = boardSlide ? null : $('#current-player-avatar').attr('data-coords');
+        boardSlide = null;
         var layers = $(current).find('.anim-layers').detach().get();
         var before = Array.prototype.slice.call(current.getElementsByTagName('image'));
         swapBoard(current, freshMap);

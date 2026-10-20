@@ -520,13 +520,19 @@ $(document).ready(function(){
         }
 
         $('#go-rect').off('click');
-        $('#go-img').attr('href', 'img/ui/view/gear.webp');
-        // $('#view').css({'filter':'grayscale(1)', 'transition':'filter 0.5s'});
 
         /* In the HUD, outside the tutorial (which reloads the page), the
            step's response carries the board, the feed and the observation. */
         var hudResponse = typeof window.hudApplyMove === 'function'
             && !(window.tutorialUI && window.tutorialUI.isActive);
+
+        /* HUD: the board slides at once, no gear. Elsewhere, the gear. */
+        if (hudResponse) {
+            $('#go-rect, #go-img').hide();
+            window.hudSlideBoard(coords);
+        } else {
+            $('#go-img').attr('href', 'img/ui/view/gear.webp');
+        }
 
         $.ajax({
             type: "POST",
@@ -543,6 +549,13 @@ $(document).ready(function(){
                     window.hudApplyMove(data);
 
                     return false;
+                }
+
+                /* Not the step's board (a refusal, a confirmation, a death):
+                   the board slides back where it was. */
+                if (hudResponse) {
+                    window.hudSlideBack();
+                    $('#go-rect, #go-img').show();
                 }
 
                 if(data.trim() != ''){
@@ -578,6 +591,10 @@ $(document).ready(function(){
             },
             error: function()
             {
+                if (hudResponse) {
+                    window.hudSlideBack();
+                    $('#go-rect, #go-img').show();
+                }
                 $('#go-img').attr('href', 'img/ui/view/arrow.webp');
                 window.bindMapView(false, true);
             }
