@@ -778,6 +778,75 @@
         }
     }
 
+    /* Slides the board one step towards the clicked cell while go.php
+     * answers: everything but the player's own sprites moves into a
+     * translated group, and the strip coming in shows the ground rect
+     * (it overflows the board). The response's board replaces it all
+     * (swapBoard); hudSlideBack() undoes it when the step is refused.
+     * Nothing beyond sight is sent: the strip has no content of its own. */
+    window.hudSlideBoard = function (dx, dy) {
+        var svg = document.getElementById('svg-view');
+        var avatar = document.getElementById('current-player-avatar');
+        if (!svg || !avatar || document.getElementById('hud-board-slide')) {
+            return;
+        }
+        var ax = avatar.getAttribute('x');
+        var ay = avatar.getAttribute('y');
+        var NS = 'http://www.w3.org/2000/svg';
+        var g = document.createElementNS(NS, 'g');
+        g.id = 'hud-board-slide';
+        var own = [];
+
+        Array.prototype.slice.call(svg.childNodes).forEach(function (n) {
+            if (n.id === 'hud-svg-coords') {
+                return;
+            }
+            var isOwn = n.nodeType === 1 && n.getAttribute('x') === ax && n.getAttribute('y') === ay
+                && (n.getAttribute('data-table') === 'players' || /-race$/.test(n.id));
+            if (isOwn) {
+                /* A placeholder keeps its paint order for hudSlideBack */
+                var mark = document.createComment('own');
+                own.push([mark, n]);
+                g.appendChild(mark);
+            } else {
+                g.appendChild(n);
+            }
+        });
+        svg.insertBefore(g, svg.firstChild);
+        var after = g.nextSibling;
+        own.forEach(function (pair) {
+            svg.insertBefore(pair[1], after);
+        });
+        g.hudOwn = own;
+
+        var quality = null;
+        try {
+            quality = localStorage.getItem(ANIMATION_QUALITY_KEY);
+        } catch (e) {
+            quality = null;
+        }
+        g.animate(
+            [{ transform: 'translate(0px, 0px)' },
+             { transform: 'translate(' + (-dx * 50) + 'px, ' + (dy * 50) + 'px)' }],
+            { duration: quality === 'off' ? 0 : 200, easing: 'ease-out', fill: 'forwards' }
+        );
+    };
+
+    window.hudSlideBack = function () {
+        var g = document.getElementById('hud-board-slide');
+        if (!g) {
+            return;
+        }
+        g.getAnimations().forEach(function (a) { a.cancel(); });
+        (g.hudOwn || []).forEach(function (pair) {
+            pair[0].replaceWith(pair[1]);
+        });
+        while (g.firstChild) {
+            g.parentNode.insertBefore(g.firstChild, g);
+        }
+        g.remove();
+    };
+
     /* Swaps in the moved page's board, position, minimap and top bar pills.
      * observed: the new cell's panel comes with the response, view.js must
      * not ask for it. False when the page has to be reloaded instead. */

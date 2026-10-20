@@ -528,6 +528,13 @@ $(document).ready(function(){
         var hudResponse = typeof window.hudApplyMove === 'function'
             && !(window.tutorialUI && window.tutorialUI.isActive);
 
+        /* The board slides at once; the response's board replaces it */
+        var from = ($('#current-player-avatar').attr('data-coords') || '').split(',');
+        var to = coords.split(',');
+        if (hudResponse && window.hudSlideBoard && from.length === 2) {
+            window.hudSlideBoard(to[0] - from[0], to[1] - from[1]);
+        }
+
         $.ajax({
             type: "POST",
             url: 'go.php',
@@ -539,6 +546,12 @@ $(document).ready(function(){
                     window.hudApplyMove(data);
 
                     return false;
+                }
+
+                /* Not the step's board (a refusal, a confirmation, a
+                   death): the board goes back where it was. */
+                if (window.hudSlideBack) {
+                    window.hudSlideBack();
                 }
 
                 if(data.trim() != ''){
@@ -571,6 +584,14 @@ $(document).ready(function(){
                     // Legacy layout: reload the page
                     document.location.reload();
                 }
+            },
+            error: function()
+            {
+                if (window.hudSlideBack) {
+                    window.hudSlideBack();
+                }
+                $('#go-img').attr('href', 'img/ui/view/arrow.webp');
+                window.bindMapView(false, true);
             }
         });
     });
