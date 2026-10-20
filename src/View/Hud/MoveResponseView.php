@@ -2,10 +2,10 @@
 
 namespace App\View\Hud;
 
-use App\Factory\PlayerFactory;
 use App\Service\TurnProcessingService;
 use App\View\MainView;
 use Classes\Log;
+use Classes\Player;
 
 /**
  * Everything the HUD shows after a step, in go.php's own response: the
@@ -18,17 +18,14 @@ use Classes\Log;
 final class MoveResponseView
 {
     /**
+     * $player: go.php's own, already refreshed by the step (Player::go).
      * $feedLogId: the log the page's events feed is current up to (0: unknown).
      * feedChanged: something newer may show in it.
      *
      * @return array{board: string, feedChanged: bool}
      */
-    public static function render(int $feedLogId = 0): array
+    public static function render(Player $player, int $feedLogId = 0): array
     {
-        // A fresh read of the character: the step has just moved it
-        $player = PlayerFactory::active();
-        $player->get_data();
-
         // As index.php does before drawing: a turn that fell due is processed
         (new TurnProcessingService())->processIfDue($player);
 

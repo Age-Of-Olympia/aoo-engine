@@ -44,9 +44,7 @@ class MainView
 
                 $coords = $player->getCoords();
 
-                $player->get_caracs();
-
-                $p = $player->caracs->p;
+                $p = $player->get_caracsJson()->p;
 
 
                 $playerOptions = $player->get_options();
