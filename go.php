@@ -365,7 +365,7 @@ $printed = ob_get_level() > 0 ? ob_get_contents() : null;
 if (($_POST['hud'] ?? '') === '1' && $printed !== null && trim($printed) === '') {
     ob_clean();
     header('Content-Type: application/json; charset=utf-8');
-    $json = (string) json_encode(\App\View\Hud\MoveResponseView::render() + ['notice' => implode("\n", $stepNotices)]);
+    $json = (string) json_encode(\App\View\Hud\MoveResponseView::render((int) ($_POST['feedLogId'] ?? 0)) + ['notice' => implode("\n", $stepNotices)]);
     /* The host's proxy compresses HTML but not JSON, and strips
      * Accept-Encoding before PHP sees it: a missing header means "hidden",
      * so only a client that lists encodings without gzip gets it raw.

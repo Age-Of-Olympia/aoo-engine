@@ -531,7 +531,11 @@ $(document).ready(function(){
         $.ajax({
             type: "POST",
             url: 'go.php',
-            data: {'coords': coords, 'hud': hudResponse ? 1 : 0},
+            data: {
+                'coords': coords,
+                'hud': hudResponse ? 1 : 0,
+                'feedLogId': $('#hud-feed-events [data-log-id]').attr('data-log-id') || 0
+            },
             success: function(data)
             {
                 if (data && typeof data === 'object') {

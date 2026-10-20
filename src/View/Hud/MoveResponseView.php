@@ -5,6 +5,7 @@ namespace App\View\Hud;
 use App\Factory\PlayerFactory;
 use App\Service\TurnProcessingService;
 use App\View\MainView;
+use Classes\Log;
 
 /**
  * Everything the HUD shows after a step, in go.php's own response: the
@@ -16,8 +17,13 @@ use App\View\MainView;
  */
 final class MoveResponseView
 {
-    /** @return array{board: string, events: string, observe: string, coords: string} */
-    public static function render(): array
+    /**
+     * $feedLogId: the log the page's events feed is current up to (0: unknown).
+     * The feed is left out (null) when nothing newer could show in it.
+     *
+     * @return array{board: string, events: ?string, observe: string, coords: string}
+     */
+    public static function render(int $feedLogId = 0): array
     {
         // A fresh read of the character: the step has just moved it
         $player = PlayerFactory::active();
@@ -37,7 +43,7 @@ final class MoveResponseView
 
         return [
             'board' => $board,
-            'events' => FeedRenderer::renderEvents($player),
+            'events' => $feedLogId > 0 && !Log::hasFeedEventsAfter($feedLogId) ? null : FeedRenderer::renderEvents($player),
             'observe' => self::observe($cell),
             'coords' => $cell,
         ];

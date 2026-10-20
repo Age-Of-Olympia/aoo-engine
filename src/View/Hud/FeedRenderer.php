@@ -53,13 +53,18 @@ final class FeedRenderer
         return Str::minify(ob_get_clean());
     }
 
+    /**
+     * data-log-id: the feed is current up to that log, a step that finds
+     * nothing newer to show leaves it as is (MoveResponseView).
+     */
     public static function renderEvents(Player $player): string
     {
         $player->getCoords();
+        $mark = ' data-log-id="' . Log::lastId() . '"';
         $logs = Log::get($player, THREE_DAYS, 'light');
 
         if (empty($logs)) {
-            return '<p class="hud-feed-empty">Aucun évènement récent.</p>';
+            return '<p class="hud-feed-empty"' . $mark . '>Aucun évènement récent.</p>';
         }
 
         $playerService = new PlayerService($player->id);
@@ -73,7 +78,7 @@ final class FeedRenderer
          * sans libellé, coincée dans la barre d'onglets : son intitulé
          * ne vivait que dans un title, invisible au tactile. Un pied de
          * flux le dit en toutes lettres. */
-        echo '<a class="hud-feed-all" href="logs.php?light">Tout voir</a>';
+        echo '<a class="hud-feed-all" href="logs.php?light"' . $mark . '>Tout voir</a>';
 
         return Str::minify(ob_get_clean());
     }

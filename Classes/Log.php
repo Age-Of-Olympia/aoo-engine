@@ -123,11 +123,11 @@ class Log{
 
         switch ($type) {
             case 'mdj':
-                $typeCondition = ' WHERE final_logs.type = \'mdj\'';
+                $typeCondition = ' WHERE pl.type = \'mdj\'';
                 break;
             default:
                 // mdj_edited (superseded messages) belongs to neither feed
-                $typeCondition = ' WHERE final_logs.type NOT LIKE \'mdj%\'';
+                $typeCondition = ' WHERE pl.type NOT LIKE \'mdj%\'';
                 break;
         }
 
@@ -164,13 +164,13 @@ class Log{
                         ORDER BY pl2.time DESC
                         LIMIT 1
                     ) AS last_player_move_id
-                FROM players_logs pl) logs
+                FROM players_logs pl
+                '.$typeCondition.'
+                AND pl.time > ?) logs
             LEFT JOIN players_logs logs_player ON logs.last_player_move_id = logs_player.id
             
         ) AS final_logs
         LEFT JOIN coords c ON final_logs.last_player_movement_coords_id = c.id
-        '.$typeCondition.'
-        AND final_logs.time > ?
         ORDER BY final_logs.time DESC, final_logs.id DESC';
         if(is_array($steps)) {
             $steps[] = array("PrepQuerry",microtime(true));
@@ -244,6 +244,25 @@ private static function filterRows(array $rows, int $playerId): array {
 
     return $filtered;
 }
+
+    /** Highest log id: the events feed rendered now is current up to it. */
+    public static function lastId(): int
+    {
+        $row = self::getDb()->exe('SELECT MAX(id) AS id FROM players_logs')->fetch_object();
+
+        return (int) ($row->id ?? 0);
+    }
+
+    /** Was anything the events feed may show logged after $id? Moves never show in it. */
+    public static function hasFeedEventsAfter(int $id): bool
+    {
+        $res = self::getDb()->exe(
+            'SELECT 1 FROM players_logs WHERE id > ? AND type <> \'move\' AND type NOT LIKE \'mdj%\' LIMIT 1',
+            $id
+        );
+
+        return $res->num_rows > 0;
+    }
 
     public static function getAllPlanEvents($plan, $maxLogAge=THREE_DAYS){
 

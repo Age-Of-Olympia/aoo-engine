@@ -727,7 +727,10 @@
         aooStore.set('hudSelCoords', data.coords);
         aooStore.remove('hudSelEntity');
 
-        showFeed('events', data.events);
+        /* Null: nothing new since the feed the page shows */
+        if (data.events !== null) {
+            showFeed('events', data.events);
+        }
 
         /* What the cell's element took on arrival (lava, mud…). */
         if (data.notice) {
