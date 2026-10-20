@@ -132,6 +132,8 @@ class Log{
         }
 
         $timeLimit = time()-$maxLogAge;
+        $perception = self::getPerception($player);
+        [$sightSql, $sightParams] = self::sightFilter($player, (int) $perception);
 
         $sql = 'SELECT 
             final_logs.id,
@@ -166,7 +168,8 @@ class Log{
                     ) AS last_player_move_id
                 FROM players_logs pl
                 '.$typeCondition.'
-                AND pl.time > ?) logs
+                AND pl.time > ?
+                AND '.$sightSql.') logs
             LEFT JOIN players_logs logs_player ON logs.last_player_move_id = logs_player.id
             
         ) AS final_logs
@@ -175,11 +178,10 @@ class Log{
         if(is_array($steps)) {
             $steps[] = array("PrepQuerry",microtime(true));
         }
-        $res = $db->exe($sql, array($player->id, $timeLimit));
+        $res = $db->exe($sql, array_merge(array($player->id, $timeLimit), $sightParams));
         if(is_array($steps)) {
             $steps[] = array("executeQuery",microtime(true));
         }
-        $perception = self::getPerception($player);
         while($row = $res->fetch_object()){
             if (self::isRowVisibleTo($row, $player, $perception, $type) !== null) {
                 $return[] = $row;
@@ -193,6 +195,53 @@ class Log{
             $steps[] = array("filter",microtime(true));
         }
         return $return;
+    }
+
+    /**
+     * What isRowVisibleTo() may keep, in SQL, so the game's other events of
+     * the period are not all fetched to be thrown away. A superset: the
+     * player's own rows, the rows without a cell (PHP decides), and the rows
+     * whose cell lies within perception of a box around the player's moves
+     * of each plan and level, since a visible event happened within
+     * perception of one of them. A PNJ sees its whole plan: no box.
+     *
+     * The cell is read from coords_computed, as isRowVisibleTo() does:
+     * "x_y_z_plan", the plan possibly holding underscores.
+     *
+     * @return array{0: string, 1: list<int|string>}
+     */
+    private static function sightFilter(ActorInterface $player, int $perception): array
+    {
+        if ($player->id <= 0) {
+            return ['1 = 1', []];
+        }
+
+        $x = "CAST(SUBSTRING_INDEX(pl.coords_computed, '_', 1) AS SIGNED)";
+        $y = "CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(pl.coords_computed, '_', 2), '_', -1) AS SIGNED)";
+        $z = "CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(pl.coords_computed, '_', 3), '_', -1) AS SIGNED)";
+        $plan = "SUBSTR(pl.coords_computed, CHAR_LENGTH(SUBSTRING_INDEX(pl.coords_computed, '_', 3)) + 2)";
+
+        $params = [$player->id, $player->id];
+        $boxes = [];
+        $res = self::getDb()->exe(
+            'SELECT c.plan, c.z, MIN(c.x) AS x0, MAX(c.x) AS x1, MIN(c.y) AS y0, MAX(c.y) AS y1
+               FROM players_logs m JOIN coords c ON c.id = m.coords_id
+              WHERE m.player_id = ? AND m.type = \'move\'
+              GROUP BY c.plan, c.z',
+            [$player->id]
+        );
+        while ($box = $res->fetch_object()) {
+            $boxes[] = "({$plan} = ? AND {$z} = ? AND {$x} BETWEEN ? AND ? AND {$y} BETWEEN ? AND ?)";
+            array_push($params, $box->plan, (int) $box->z,
+                (int) $box->x0 - $perception, (int) $box->x1 + $perception,
+                (int) $box->y0 - $perception, (int) $box->y1 + $perception);
+        }
+
+        $sql = '(pl.player_id = ? OR pl.target_id = ? OR pl.coords_computed IS NULL'
+            . ($boxes === [] ? '' : ' OR ' . implode(' OR ', $boxes))
+            . ')';
+
+        return [$sql, $params];
     }
 
 private static function filterRows(array $rows, int $playerId): array {

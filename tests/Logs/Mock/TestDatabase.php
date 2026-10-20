@@ -12,6 +12,15 @@ class TestDatabase
         // SQLite en mémoire
         $this->pdo = new PDO('sqlite::memory:');
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        // MariaDB string functions Log::get() filters with
+        $this->pdo->sqliteCreateFunction('SUBSTRING_INDEX', static function (?string $str, string $delim, int $count): ?string {
+            if ($str === null) {
+                return null;
+            }
+            $parts = explode($delim, $str);
+            return implode($delim, $count >= 0 ? array_slice($parts, 0, $count) : array_slice($parts, $count));
+        }, 3);
+        $this->pdo->sqliteCreateFunction('CHAR_LENGTH', static fn (?string $str): ?int => $str === null ? null : mb_strlen($str), 1);
         $this->createTables();
     }
 
