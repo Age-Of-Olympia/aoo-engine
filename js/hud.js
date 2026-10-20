@@ -778,6 +778,62 @@
         }
     }
 
+    /* Slides the board one step towards the clicked cell while go.php
+     * answers. The board goes into a translated group, the player's own
+     * sprites take the opposite translation and stay put; the strip coming
+     * in shows the ground rect, which overflows the board, so nothing
+     * beyond sight is sent. The response's board replaces it all
+     * (swapBoard); hudSlideBack() undoes it otherwise. */
+    window.hudSlideBoard = function (target) {
+        var svg = document.getElementById('svg-view');
+        var avatar = document.getElementById('current-player-avatar');
+        if (!svg || !avatar || document.getElementById('hud-board-slide')) {
+            return;
+        }
+        var to = target.split(',');
+        var from = avatar.getAttribute('data-coords').split(',');
+        var dx = (from[0] - to[0]) * 50;
+        var dy = (to[1] - from[1]) * 50;
+
+        var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.id = 'hud-board-slide';
+        Array.prototype.slice.call(svg.childNodes).forEach(function (n) {
+            if (n.id !== 'hud-svg-coords') {
+                g.appendChild(n);
+            }
+        });
+        svg.insertBefore(g, svg.firstChild);
+
+        var off = false;
+        try {
+            off = localStorage.getItem(ANIMATION_QUALITY_KEY) === 'off';
+        } catch (e) {
+            off = false;
+        }
+        var slide = function (el, x, y) {
+            el.animate(
+                [{ transform: 'translate(0px, 0px)' }, { transform: 'translate(' + x + 'px, ' + y + 'px)' }],
+                { duration: off ? 0 : 200, easing: 'ease-out', fill: 'forwards' }
+            );
+        };
+        slide(g, dx, dy);
+        $(g).children('[data-table="players"], [id$="-race"]').filter(function () {
+            return this.getAttribute('x') === avatar.getAttribute('x')
+                && this.getAttribute('y') === avatar.getAttribute('y');
+        }).each(function () {
+            slide(this, -dx, -dy);
+        });
+    };
+
+    window.hudSlideBack = function () {
+        var g = document.getElementById('hud-board-slide');
+        if (!g) {
+            return;
+        }
+        g.getAnimations({ subtree: true }).forEach(function (a) { a.cancel(); });
+        g.replaceWith.apply(g, Array.prototype.slice.call(g.childNodes));
+    };
+
     /* Swaps in the moved page's board, position, minimap and top bar pills.
      * observed: the new cell's panel comes with the response, view.js must
      * not ask for it. False when the page has to be reloaded instead. */
