@@ -30,7 +30,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'console:rgpd';
+        return 'console.rgpd';
     }
 
     public function execute(  array $argumentValues ) : string

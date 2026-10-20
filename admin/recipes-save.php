@@ -13,7 +13,7 @@ use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use Classes\Db;
 
-(new AdminMenuAccessService())->enforce('recipes.php');
+(new AdminMenuAccessService())->enforce('items.recipes');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirectTo('/admin/recipes.php');

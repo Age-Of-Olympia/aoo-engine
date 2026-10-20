@@ -7,7 +7,7 @@ use App\Service\AdminAuthorizationService;
  * escalate to super-admin for menus configured (or defaulting) to that level.
  * Runs at include time — before any page logic — so an access failure exits
  * before output. */
-(new AdminMenuAccessService())->enforce(basename($_SERVER['PHP_SELF']));
+(new AdminMenuAccessService())->enforcePage(basename($_SERVER['PHP_SELF']));
 
 /** Bump to bust the cache when admin CSS/JS changes. */
 const ADMIN_ASSET_VERSION = '20261010';
@@ -36,7 +36,7 @@ function admin_layout($title, $content, array $assets = []) {
 
     // A nav link, or '' when the viewer cannot access that page.
     $navLink = function($page, $label, $href) use ($currentPage, $access, $viewerIsSuperAdmin) {
-        if (!$access->canAccess($page, $viewerIsSuperAdmin)) {
+        if (!$access->canAccessPage($page, $viewerIsSuperAdmin)) {
             return '';
         }
         /* A link carrying a query (Formes per kind) is active only when the

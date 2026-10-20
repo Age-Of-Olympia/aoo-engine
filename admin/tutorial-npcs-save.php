@@ -11,7 +11,7 @@ use App\Service\AdminAuthorizationService;
 use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 
-(new AdminMenuAccessService())->enforce('tutorial-npcs.php');
+(new AdminMenuAccessService())->enforce('tutorial.npcs');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

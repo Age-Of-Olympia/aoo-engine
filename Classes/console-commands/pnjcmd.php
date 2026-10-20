@@ -18,7 +18,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'pnjs.php';
+        return 'players.npcs';
     }
 
     public function execute(  array $argumentValues ) : string

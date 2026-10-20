@@ -19,7 +19,7 @@ use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\EffectService;
 
-(new AdminMenuAccessService())->enforce('effects.php');
+(new AdminMenuAccessService())->enforce('effects.edit');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirectTo('/admin/effects.php');

@@ -19,7 +19,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'console:forum';
+        return 'console.forum';
     }
 
     public function execute(  array $argumentValues ) : string

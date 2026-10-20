@@ -16,7 +16,7 @@ use App\Service\CsrfProtectionService;
 use App\Service\ImportExport\ImportReport;
 use App\Service\ImportExport\PlanImporter;
 
-(new AdminMenuAccessService())->enforce('action-import.php');
+(new AdminMenuAccessService())->enforce('actions.import');
 header('Content-Type: application/json');
 
 /** Seconds of work per call: under PHP's and the proxy's time limits. */

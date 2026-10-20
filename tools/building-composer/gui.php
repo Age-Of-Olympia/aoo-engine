@@ -15,7 +15,7 @@ $private = $remote === '127.0.0.1' || $remote === '::1'
     || preg_match('/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/', $remote) === 1;
 if (!$private) {
     require_once dirname(__DIR__, 2) . '/config.php';
-    (new \App\Service\AdminMenuAccessService())->enforce(basename(__FILE__));
+    (new \App\Service\AdminMenuAccessService())->enforcePage(basename(__FILE__));
 }
 
 require __DIR__ . '/compose.php';

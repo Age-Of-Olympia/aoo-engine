@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $player = (new PlayerService($_SESSION['playerId']))->GetPlayer($_SESSION['playerId']);
 
-if (!(new AdminMenuAccessService())->allows('forum-moderation', $player)) {
+if (!(new AdminMenuAccessService())->allows('forum.moderate', $player)) {
     ExitError('Droit de modération requis');
 }
 

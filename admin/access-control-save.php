@@ -34,8 +34,8 @@ if (!is_array($levels)) {
 }
 
 $service = new AdminMenuAccessService();
-foreach ($levels as $page => $level) {
-    $service->setLevel((string) $page, (string) $level);
+foreach ($levels as $right => $level) {
+    $service->setLevel((string) $right, (string) $level);
 }
 
 setFlash('success', 'Niveaux d’accès enregistrés.');

@@ -21,7 +21,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'console:session';
+        return 'console.session';
     }
 
     public function execute(  array $argumentValues ) : string

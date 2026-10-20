@@ -37,7 +37,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'footprints.php';
+        return 'scenery.footprints';
     }
 
     public function execute(array $argumentValues): string

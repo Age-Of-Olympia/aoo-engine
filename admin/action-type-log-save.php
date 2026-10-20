@@ -7,7 +7,7 @@ use App\Service\AdminAuthorizationService;
 use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 
-(new AdminMenuAccessService())->enforce('action-type-defaults.php');
+(new AdminMenuAccessService())->enforce('actions.type-defaults');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: /admin/action-type-defaults.php');

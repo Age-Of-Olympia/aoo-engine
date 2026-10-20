@@ -20,7 +20,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'console:edit';
+        return 'console.edit';
     }
 
     public function execute(  array $argumentValues ) : string

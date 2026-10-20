@@ -16,7 +16,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'landing.php';
+        return 'landing.edit';
     }
 
     public function execute(  array $argumentValues ) : string

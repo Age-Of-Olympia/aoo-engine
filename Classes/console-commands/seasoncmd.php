@@ -21,7 +21,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'console:season';
+        return 'console.season';
     }
 
     public function execute(array $argumentValues): string

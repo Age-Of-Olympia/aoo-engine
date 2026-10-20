@@ -21,7 +21,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'console:plants-on-roads';
+        return 'console.plants-on-roads';
     }
 
     public function execute(array $argumentValues): string

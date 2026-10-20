@@ -7,7 +7,7 @@ use App\Service\AdminAuthorizationService;
 use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 
-(new AdminMenuAccessService())->enforce('action-workbench.php');
+(new AdminMenuAccessService())->enforce('actions.edit');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: /admin/action-workbench.php');

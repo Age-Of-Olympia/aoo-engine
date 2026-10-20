@@ -34,13 +34,21 @@ class ConsoleAccessKeyTest extends TestCase
         }
     }
 
+    public function testEveryPageRightIsDeclared(): void
+    {
+        $registry = new AdminMenuAccessService();
+        foreach (AdminMenuAccessService::PAGES as $page => $right) {
+            $this->assertTrue($registry->isDeclared($right), "{$page} → {$right} is not declared");
+        }
+    }
+
     public function testPlayerSubCommandsFollowTheirPanelCounterpart(): void
     {
         $player = CommandFactory::initCommmandFactory()->getCommands()['player'];
 
-        $this->assertSame('pnjs.php', $player->accessKey(['create', 'Ocyrhoée', 'elfe,pnj']));
-        $this->assertSame('console:player', $player->accessKey(['create', 'Orcrist', 'olympien']));
-        $this->assertSame('player-rank-removal', $player->accessKey(['removeupgrade', 'Orcrist', 'A']));
-        $this->assertSame('players.php', $player->accessKey(['addupgrade', 'Orcrist', 'A']));
+        $this->assertSame('players.npcs', $player->accessKey(['create', 'Ocyrhoée', 'elfe,pnj']));
+        $this->assertSame('console.player', $player->accessKey(['create', 'Orcrist', 'olympien']));
+        $this->assertSame('players.rank-removal', $player->accessKey(['removeupgrade', 'Orcrist', 'A']));
+        $this->assertSame('players.sheet', $player->accessKey(['addupgrade', 'Orcrist', 'A']));
     }
 }

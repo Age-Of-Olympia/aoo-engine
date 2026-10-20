@@ -38,15 +38,15 @@ EOT);
         $action = strtolower($argumentValues[0]);
         if ($action === 'create') {
             // "race,anything" creates a PNJ, see create_player()
-            return count(explode(',', $argumentValues[2] ?? '')) === 2 ? 'pnjs.php' : 'console:player';
+            return count(explode(',', $argumentValues[2] ?? '')) === 2 ? 'players.npcs' : 'console.player';
         }
         if ($action === 'removeupgrade') {
-            return 'player-rank-removal';
+            return 'players.rank-removal';
         }
         if (in_array($action, ['edit', 'additem', 'addxp', 'addupgrade', 'unequip', 'checkpi'], true)) {
-            return 'players.php';
+            return 'players.sheet';
         }
-        return 'console:player';
+        return 'console.player';
     }
 
     public function execute(  array $argumentValues ) : string

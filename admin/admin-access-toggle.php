@@ -25,7 +25,7 @@ use Classes\Db;
 
 // Enforce the same level as the admin-access menu, so a direct POST can't
 // bypass a superadmin-only setting on that menu.
-(new AdminMenuAccessService())->enforce('admin-access.php');
+(new AdminMenuAccessService())->enforce('players.options');
 
 $backTerm = trim((string) ($_POST['q'] ?? ''));
 $back = '/admin/admin-access.php' . ($backTerm !== '' ? '?q=' . urlencode($backTerm) . '#manager' : '');

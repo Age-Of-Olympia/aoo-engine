@@ -19,7 +19,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'crons.php';
+        return 'tools.crons';
     }
 
     public function execute(  array $argumentValues ) : string

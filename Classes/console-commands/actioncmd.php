@@ -20,7 +20,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'players.php';
+        return 'players.sheet';
     }
 
     public function execute(  array $argumentValues ) : string

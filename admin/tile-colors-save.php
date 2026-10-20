@@ -15,7 +15,7 @@ use App\Service\ColorService;
 use App\Service\CsrfProtectionService;
 use App\Service\TileCatalogService;
 
-(new AdminMenuAccessService())->enforce('tile-colors.php');
+(new AdminMenuAccessService())->enforce('maps.colors');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirectTo('/admin/tile-colors.php');

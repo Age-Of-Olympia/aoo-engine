@@ -50,7 +50,7 @@ class TopicView
         $player = $playerService->GetPlayer($_SESSION['playerId']);
         $player->get_data(false);
 
-        $canModerate = (new AdminMenuAccessService())->allows('forum-moderation', $player);
+        $canModerate = (new AdminMenuAccessService())->allows('forum.moderate', $player);
         $renameLink = $canModerate ? ' <a href="#" class="forum-rename" data-topic="' . $topJson->name . '" data-title="' . htmlentities($topJson->title) . '" style="font-size: 50%;">Renommer</a>' : '';
 
         if (!self::$fragment) {
@@ -249,7 +249,7 @@ class TopicView
             $forumJson,
             $player,
             new PlayerService($player->id),
-            (new AdminMenuAccessService())->allows('forum-moderation', $player),
+            (new AdminMenuAccessService())->allows('forum.moderate', $player),
             true
         );
         echo '</table>';

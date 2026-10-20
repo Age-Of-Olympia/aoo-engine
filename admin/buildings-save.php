@@ -20,7 +20,7 @@ use App\Service\AdminMenuAccessService;
 use App\Service\BuildingService;
 use App\Service\CsrfProtectionService;
 
-(new AdminMenuAccessService())->enforce('buildings.php');
+(new AdminMenuAccessService())->enforce('buildings.place');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirectTo('/admin/buildings.php');

@@ -31,7 +31,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'console:entity-cells';
+        return 'console.entity-cells';
     }
 
     public function execute(array $argumentValues): string

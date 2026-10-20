@@ -16,7 +16,7 @@ use App\Tutorial\TutorialHelper;
 
 // Launching arbitrary tutorial versions is an admin-only test tool;
 // players use the regular start flow via api/tutorial/start.php.
-(new AdminMenuAccessService())->enforce('tutorial-catalog.php');
+(new AdminMenuAccessService())->enforce('tutorial.catalog');
 
 header('Content-Type: application/json; charset=utf-8');
 

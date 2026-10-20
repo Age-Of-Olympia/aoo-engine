@@ -124,11 +124,8 @@ class PlantTypeAdminTest extends TestCase
         /* Surtout PAS `getRequiredLevel()` : une page inconnue y retombe sur
          * SUPERADMIN, donc l'appel réussit aussi bien pour une page qui
          * n'existe pas. C'est le registre lui-même qu'il faut interroger. */
-        $declared = array_column((new AdminMenuAccessService())->getConfigurableMenus(), 'page');
-
-        $this->assertContains(
-            $page,
-            $declared,
+        $this->assertNotNull(
+            (new AdminMenuAccessService())->rightOfPage($page),
             'la page des types de plantes doit être déclarée : sinon elle est introuvable au menu'
         );
     }

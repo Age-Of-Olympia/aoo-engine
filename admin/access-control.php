@@ -1,12 +1,13 @@
 <?php
 /**
- * Access control — set the required level (admin / superadmin) per admin menu.
+ * Access control — set the required level (admin / superadmin) per admin right,
+ * for the panel pages and the console commands alike.
  *
- * Superadmin-only: this page is not in the AdminMenuAccessService registry, so
- * it defaults to superadmin and can never be lowered to admin — a superadmin can
- * always reach it to undo a lockout. Enforcement happens in layout.php.
+ * Superadmin-only: this page is not in AdminMenuAccessService::PAGES, so it
+ * needs superadmin and can never be lowered to admin — a superadmin can always
+ * reach it to undo a lockout. Enforcement happens in layout.php.
  *
- * Renders one bulk form (a level select per menu) posting to
+ * Renders one bulk form (a level select per right) posting to
  * access-control-save.php (CSRF-validated).
  */
 
@@ -17,7 +18,7 @@ use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 
 $csrfToken = (new CsrfProtectionService())->generateToken();
-$menus = (new AdminMenuAccessService())->getConfigurableMenus();
+$menus = (new AdminMenuAccessService())->getConfigurableRights();
 
 $levelOptions = [
     AdminMenuAccessService::LEVEL_ADMIN      => 'Admin',
@@ -39,7 +40,7 @@ foreach ($rowsByGroup as $group => $rows) {
             ? '<span class="text-muted">(défaut : ' . e($levelOptions[$menu['default']]) . ')</span>'
             : '<span class="text-muted">défaut</span>';
 
-        $select = formSelect('level[' . $menu['page'] . ']', $levelOptions, $menu['level'], null,
+        $select = formSelect('level[' . $menu['right'] . ']', $levelOptions, $menu['level'], null,
             'class="form-control form-control-sm" style="max-width:12rem"');
 
         $trs .= '<tr>'

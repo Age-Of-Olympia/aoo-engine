@@ -15,7 +15,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'world_map.php';
+        return 'maps.world';
     }
 
     public function execute(array $argumentValues): string {

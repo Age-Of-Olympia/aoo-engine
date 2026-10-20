@@ -18,7 +18,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'admin-access.php';
+        return 'players.options';
     }
 
     public function execute(  array $argumentValues ) : string

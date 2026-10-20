@@ -30,7 +30,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'items.php';
+        return 'items.edit';
     }
 
     public function execute(  array $argumentValues ) : string

@@ -9,7 +9,7 @@ use App\Service\ImportExport\BundleEnvelope;
 use App\Service\ImportExport\ImporterRegistry;
 use App\Service\ImportExport\PlanImporter;
 
-(new AdminMenuAccessService())->enforce('action-import.php');
+(new AdminMenuAccessService())->enforce('actions.import');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: /admin/action-import.php');

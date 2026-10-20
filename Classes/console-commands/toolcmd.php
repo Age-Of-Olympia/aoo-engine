@@ -17,7 +17,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'console:tool';
+        return 'console.tool';
     }
 
     public function execute(  array $argumentValues ) : string

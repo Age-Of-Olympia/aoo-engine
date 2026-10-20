@@ -136,12 +136,12 @@ class TypeEditorFaceTest extends TestCase
     /** Every face's page exists and is declared, or its menu entry leads nowhere. */
     public function testEveryFacePageIsReachable(): void
     {
-        $declared = array_column((new \App\Service\AdminMenuAccessService())->getConfigurableMenus(), 'page');
+        $registry = new \App\Service\AdminMenuAccessService();
 
         foreach (TypeEditorFace::all() as $face) {
             $page = basename($face->page);
             $this->assertFileExists(dirname(__DIR__, 2) . '/admin/' . $page);
-            $this->assertContains($page, $declared, $face->title);
+            $this->assertNotNull($registry->rightOfPage($page), $face->title);
         }
     }
 

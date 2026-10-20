@@ -6,20 +6,16 @@ use Classes\Db;
 use Classes\Player;
 
 /**
- * Per-menu access control for the admin dashboard.
+ * Admin rights: one entry per thing an admin may do, named after that thing
+ * (`items.edit`, `buildings.place`), each requiring 'admin' or 'superadmin'.
  *
- * Two tiers, reusing the existing isAdmin / isSuperAdmin options: each admin
- * menu requires either 'admin' or 'superadmin'. The required level per menu is a
- * registry default (below), optionally overridden per-menu in the
- * admin_menu_access table via the superadmin-only config page
- * (admin/access-control.php).
+ * The level is a registry default (below), optionally overridden in the
+ * admin_rights table from the superadmin-only page admin/access-control.php.
+ * Panel pages reach their right through PAGES; console commands name theirs
+ * (Command::accessKey()), so one setting governs both sides.
  *
- * A page not in the registry and not overridden defaults to SUPERADMIN — the
- * dashboard is superadmin-only unless a menu is explicitly opened to admins.
- *
- * Sub-pages that hang off a menu (e.g. player-skills.php under players.php) are
- * aliased to their governing menu so they inherit its level, and so the config
- * page stays a short list of real menus.
+ * An unknown right or page resolves to SUPERADMIN: nothing opens to plain
+ * admins unless declared here.
  */
 class AdminMenuAccessService
 {
@@ -27,239 +23,282 @@ class AdminMenuAccessService
     public const LEVEL_SUPERADMIN = 'superadmin';
 
     /**
-     * Canonical admin menu registry: page => [label, group, default level].
-     * Order here is the display order on the config page.
+     * right => [label, group, default level]. Order here is the display order
+     * on the config page.
      */
-    private const MENUS = [
-        'index.php'                => ['Tableau de bord', 'Général', self::LEVEL_ADMIN],
-        // Monitoring : lecture seule, mais montre droits d'admin, comptes
-        // et déploiements — superadmin par défaut, ajustable via access-control.php
-        'monitoring.php'           => ['Monitoring', 'Général', self::LEVEL_SUPERADMIN],
+    private const RIGHTS = [
+        'dashboard.view'           => ['Tableau de bord', 'Général', self::LEVEL_ADMIN],
+        // Read-only, but shows admin rights, accounts and deployments
+        'monitoring.view'          => ['Monitoring', 'Général', self::LEVEL_SUPERADMIN],
 
-        'tutorial-catalog.php'     => ['Tutoriel · Catalogue', 'Tutoriel', self::LEVEL_ADMIN],
-        'tutorial.php'             => ['Tutoriel · Étapes', 'Tutoriel', self::LEVEL_ADMIN],
-        'tutorial-npcs.php'        => ['Tutoriel · PNJ', 'Tutoriel', self::LEVEL_ADMIN],
-        'tutorial-settings.php'    => ['Tutoriel · Options', 'Tutoriel', self::LEVEL_ADMIN],
+        'tutorial.catalog'         => ['Tutoriel · Catalogue', 'Tutoriel', self::LEVEL_ADMIN],
+        'tutorial.steps'           => ['Tutoriel · Étapes', 'Tutoriel', self::LEVEL_ADMIN],
+        'tutorial.npcs'            => ['Tutoriel · PNJ', 'Tutoriel', self::LEVEL_ADMIN],
+        'tutorial.settings'        => ['Tutoriel · Options', 'Tutoriel', self::LEVEL_ADMIN],
 
-        'world_map.php'            => ['Cartes · Carte monde', 'Cartes', self::LEVEL_ADMIN],
-        // Plans : superadmin par défaut — création/suppression destructives,
-        // même politique que races/factions (ajustable via access-control.php)
-        'plans.php'                => ['Cartes · Plans', 'Cartes', self::LEVEL_SUPERADMIN],
-        'local_maps.php'           => ['Cartes · Cartes locales', 'Cartes', self::LEVEL_ADMIN],
-        'terrain-transitions.php'  => ['Cartes · Transitions de terrain', 'Cartes', self::LEVEL_ADMIN],
-        'tile-assets.php'          => ['Cartes · Tuiles & images', 'Cartes', self::LEVEL_ADMIN],
-        // Types récoltables : catalogue de gameplay — même politique que races/effets
-        'harvest-types.php'        => ['Ressources · Types récoltables', 'Ressources', self::LEVEL_SUPERADMIN],
-        // Types de plantes : même politique que les récoltables — c'est du gameplay
-        'plant-types.php'          => ['Plantes · Types', 'Plantes', self::LEVEL_SUPERADMIN],
-        'route-types.php'          => ['Routes · Types', 'Routes', self::LEVEL_SUPERADMIN],
-        'footprints.php'           => ['Décors · Formes', 'Décors', self::LEVEL_SUPERADMIN],
-        'scenery-types.php'        => ['Décors · Types', 'Décors', self::LEVEL_SUPERADMIN],
-        // Couleurs de carte : palette visuelle de la carte monde générée —
-        // travail d'animation, même niveau que les tuiles
-        'tile-colors.php'          => ['Cartes · Couleurs de carte', 'Cartes', self::LEVEL_ADMIN],
-        'tile-shade.php'           => ['Cartes · Ombres des cases', 'Cartes', self::LEVEL_SUPERADMIN],
-        // Éléments posés : pose case par case (boue, feu…) — travail
-        // d'animation, même niveau que la pose de bâtiments
-        'map-elements.php'         => ['Éléments · Posés', 'Éléments', self::LEVEL_ADMIN],
-        'element-types.php'        => ['Éléments · Types', 'Éléments', self::LEVEL_SUPERADMIN],
-        'screenshots.php'          => ['Cartes · Captures', 'Cartes', self::LEVEL_ADMIN],
+        'maps.world'               => ['Cartes · Carte monde', 'Cartes', self::LEVEL_ADMIN],
+        // Creating and deleting plans is destructive
+        'maps.plans'               => ['Cartes · Plans', 'Cartes', self::LEVEL_SUPERADMIN],
+        'maps.local'               => ['Cartes · Cartes locales', 'Cartes', self::LEVEL_ADMIN],
+        'maps.terrain-transitions' => ['Cartes · Transitions de terrain', 'Cartes', self::LEVEL_ADMIN],
+        'maps.tiles'               => ['Cartes · Tuiles & images', 'Cartes', self::LEVEL_ADMIN],
+        'maps.colors'              => ['Cartes · Couleurs de carte', 'Cartes', self::LEVEL_ADMIN],
+        'maps.shade'               => ['Cartes · Ombres des cases', 'Cartes', self::LEVEL_SUPERADMIN],
+        'maps.screenshots'         => ['Cartes · Captures', 'Cartes', self::LEVEL_ADMIN],
+        // Type catalogs are gameplay content: same policy as races
+        'resources.types'          => ['Ressources · Types récoltables', 'Ressources', self::LEVEL_SUPERADMIN],
+        'plants.types'             => ['Plantes · Types', 'Plantes', self::LEVEL_SUPERADMIN],
+        'routes.types'             => ['Routes · Types', 'Routes', self::LEVEL_SUPERADMIN],
+        'scenery.footprints'       => ['Décors · Formes', 'Décors', self::LEVEL_SUPERADMIN],
+        'scenery.types'            => ['Décors · Types', 'Décors', self::LEVEL_SUPERADMIN],
+        'elements.place'           => ['Éléments · Posés', 'Éléments', self::LEVEL_ADMIN],
+        'elements.types'           => ['Éléments · Types', 'Éléments', self::LEVEL_SUPERADMIN],
+        'effects.edit'             => ['Éléments · Effets', 'Éléments', self::LEVEL_SUPERADMIN],
 
-        'avatars-portraits.php'    => ['Joueurs · Avatars & portraits', 'Joueurs', self::LEVEL_ADMIN],
+        'actions.list'             => ['Actions · Liste', 'Actions', self::LEVEL_SUPERADMIN],
+        'actions.edit'             => ['Actions · Configuration', 'Actions', self::LEVEL_SUPERADMIN],
+        'actions.passives'         => ['Actions · Passifs', 'Actions', self::LEVEL_SUPERADMIN],
+        'actions.type-defaults'    => ['Actions · Défauts par type', 'Actions', self::LEVEL_SUPERADMIN],
+        'actions.import'           => ['Actions · Importer', 'Actions', self::LEVEL_SUPERADMIN],
 
-        'actions.php'              => ['Actions · Liste', 'Actions', self::LEVEL_SUPERADMIN],
-        'action-workbench.php'     => ['Actions · Configuration', 'Actions', self::LEVEL_SUPERADMIN],
-        'passive-workbench.php'    => ['Actions · Passifs', 'Actions', self::LEVEL_SUPERADMIN],
-        'action-type-defaults.php' => ['Actions · Défauts par type', 'Actions', self::LEVEL_SUPERADMIN],
-        'action-import.php'        => ['Actions · Importer', 'Actions', self::LEVEL_SUPERADMIN],
+        'players.sheet'            => ['Joueurs · Compétences et fiche', 'Joueurs', self::LEVEL_ADMIN],
+        'players.rank-removal'     => ['Joueurs · Retrait de rang', 'Joueurs', self::LEVEL_SUPERADMIN],
+        'players.npcs'             => ['Joueurs · PNJ', 'Joueurs', self::LEVEL_ADMIN],
+        'players.images'           => ['Joueurs · Avatars & portraits', 'Joueurs', self::LEVEL_ADMIN],
+        'players.welcome-missive'  => ['Joueurs · Missive d\'accueil', 'Joueurs', self::LEVEL_ADMIN],
+        'players.stats'            => ['Joueurs · Statistiques', 'Joueurs', self::LEVEL_ADMIN],
+        'players.options'          => ['Joueurs · Accès & options', 'Joueurs', self::LEVEL_SUPERADMIN],
 
-        'players.php'              => ['Joueurs · Compétences', 'Joueurs', self::LEVEL_ADMIN],
-        // Not a page: the "−1 rank" button of the character sheet and `player removeupgrade`
-        'player-rank-removal'      => ['Joueurs · Retrait de rang', 'Joueurs', self::LEVEL_SUPERADMIN],
-        'pnjs.php'                 => ['Joueurs · PNJ', 'Joueurs', self::LEVEL_ADMIN],
-        'welcome-missive.php'      => ['Joueurs · Missive d\'accueil', 'Joueurs', self::LEVEL_ADMIN],
-        'skill-stats.php'          => ['Joueurs · Statistiques', 'Joueurs', self::LEVEL_ADMIN],
-        'admin-access.php'         => ['Joueurs · Accès & options', 'Joueurs', self::LEVEL_SUPERADMIN],
+        'items.edit'               => ['Objets', 'Divers', self::LEVEL_SUPERADMIN],
+        'items.recipes'            => ['Objets · Recettes', 'Divers', self::LEVEL_SUPERADMIN],
+        'landing.edit'             => ['Page d\'accueil', 'Divers', self::LEVEL_SUPERADMIN],
+        'dialogs.edit'             => ['Dialogues', 'Divers', self::LEVEL_SUPERADMIN],
+        'races.edit'               => ['Races', 'Divers', self::LEVEL_SUPERADMIN],
+        'factions.edit'            => ['Factions', 'Divers', self::LEVEL_SUPERADMIN],
+        'buildings.place'          => ['Bâtiments · Posés', 'Divers', self::LEVEL_SUPERADMIN],
+        'buildings.types'          => ['Bâtiments · Types', 'Divers', self::LEVEL_SUPERADMIN],
+        'wiki.generate'            => ['Wiki', 'Divers', self::LEVEL_ADMIN],
+        // Replays scheduled scripts, deletions included
+        'tools.crons'              => ['Outils · Crons', 'Divers', self::LEVEL_SUPERADMIN],
+        'tools.special-events'     => ['Outils · Évènements spéciaux', 'Divers', self::LEVEL_SUPERADMIN],
 
-        'recipes.php'              => ['Objets · Recettes', 'Divers', self::LEVEL_SUPERADMIN],
-        // Accueil : contenu éditorial de la page d'accueil (présentation,
-        // chroniques, galerie) — pas de logique de jeu, niveau admin
-        'landing.php'              => ['Page d\'accueil', 'Divers', self::LEVEL_SUPERADMIN],
-        // Dialogues : superadmin par défaut — même politique que races
-        // (contenu de jeu éditable, suppression possible)
-        'dialogs.php'              => ['Dialogues', 'Divers', self::LEVEL_SUPERADMIN],
-        'races.php'                => ['Races', 'Divers', self::LEVEL_SUPERADMIN],
-        // Effets : catalogue de gameplay (icônes, buffs, corruptions) —
-        // même politique que races
-        'effects.php'              => ['Éléments · Effets', 'Éléments', self::LEVEL_SUPERADMIN],
-        'factions.php'             => ['Factions', 'Divers', self::LEVEL_SUPERADMIN],
-        // Bâtiments : pose/retrait sur la carte — travail d'animation, même
-        // niveau que les PNJ
-        'buildings.php'            => ['Bâtiments · Posés', 'Divers', self::LEVEL_SUPERADMIN],
-        // Types de bâtiments : second visage de la table races — même
-        // politique que races (contenu de gameplay, suppression possible)
-        'structure-types.php'      => ['Bâtiments · Types', 'Divers', self::LEVEL_SUPERADMIN],
-        // Objets : flags et réglages d'usure — même politique que races
-        'items.php'                => ['Objets', 'Divers', self::LEVEL_SUPERADMIN],
-        // Wiki : génération de fiches en lecture seule — niveau admin
-        'wiki.php'                 => ['Wiki', 'Divers', self::LEVEL_ADMIN],
-        // Crons : rejoue les scripts planifiés (suppressions comprises) —
-        // superadmin par défaut, ajustable via access-control.php
-        'crons.php'                => ['Outils · Crons', 'Divers', self::LEVEL_SUPERADMIN],
-        'special-events.php'       => ['Outils · Évènements spéciaux', 'Divers', self::LEVEL_SUPERADMIN],
-        // Not a page: the forum moderation right (soft delete, topic rename)
-        'forum-moderation'         => ['Forum · Modération (supprimer, renommer)', 'Forum', self::LEVEL_ADMIN],
+        'forum.moderate'           => ['Forum · Modération (supprimer, renommer)', 'Forum', self::LEVEL_ADMIN],
 
-        // Console commands with no page of their own. A command that mirrors
-        // a page checks that page's entry instead (Command::accessKey()).
-        'console:player'           => ['Console · player (PJ, banque, journal, msg, purge)', 'Console', self::LEVEL_ADMIN],
-        'console:session'          => ['Console · session', 'Console', self::LEVEL_ADMIN],
-        'console:quest'            => ['Console · quest', 'Console', self::LEVEL_ADMIN],
-        'console:missive'          => ['Console · missive', 'Console', self::LEVEL_ADMIN],
-        'console:entity-cells'     => ['Console · entity-cells', 'Console', self::LEVEL_ADMIN],
-        'console:fence'            => ['Console · fence', 'Console', self::LEVEL_ADMIN],
-        'console:plants-on-roads'  => ['Console · plants-on-roads', 'Console', self::LEVEL_ADMIN],
-        'console:objet'            => ['Console · objet', 'Console', self::LEVEL_SUPERADMIN],
-        'console:edit'             => ['Console · edit', 'Console', self::LEVEL_SUPERADMIN],
-        'console:forum'            => ['Console · forum (index)', 'Console', self::LEVEL_SUPERADMIN],
-        'console:rgpd'             => ['Console · rgpd', 'Console', self::LEVEL_SUPERADMIN],
-        'console:season'           => ['Console · season', 'Console', self::LEVEL_SUPERADMIN],
-        'console:tool'             => ['Console · tool', 'Console', self::LEVEL_SUPERADMIN],
+        // Console commands with no panel page
+        'console.player'           => ['Console · player (PJ, banque, journal, msg, purge)', 'Console', self::LEVEL_ADMIN],
+        'console.session'          => ['Console · session', 'Console', self::LEVEL_ADMIN],
+        'console.quest'            => ['Console · quest', 'Console', self::LEVEL_ADMIN],
+        'console.missive'          => ['Console · missive', 'Console', self::LEVEL_ADMIN],
+        'console.entity-cells'     => ['Console · entity-cells', 'Console', self::LEVEL_ADMIN],
+        'console.fence'            => ['Console · fence', 'Console', self::LEVEL_ADMIN],
+        'console.plants-on-roads'  => ['Console · plants-on-roads', 'Console', self::LEVEL_ADMIN],
+        'console.objet'            => ['Console · objet', 'Console', self::LEVEL_SUPERADMIN],
+        'console.edit'             => ['Console · edit', 'Console', self::LEVEL_SUPERADMIN],
+        'console.forum'            => ['Console · forum (index)', 'Console', self::LEVEL_SUPERADMIN],
+        'console.rgpd'             => ['Console · rgpd', 'Console', self::LEVEL_SUPERADMIN],
+        'console.season'           => ['Console · season', 'Console', self::LEVEL_SUPERADMIN],
+        'console.tool'             => ['Console · tool', 'Console', self::LEVEL_SUPERADMIN],
     ];
 
-    /**
-     * Sub-pages that inherit a menu's level (page => governing menu). Rendered
-     * via layout.php but not themselves nav entries.
-     */
-    private const ALIASES = [
-        'upload_image.php'           => 'avatars-portraits.php', // redirection legacy
-        'structure-images.php'       => 'avatars-portraits.php', // même stock, visage Bâtiments
-        'plans-save.php'             => 'plans.php',
-        'plan-season-rename.php'     => 'plans.php',
-        'footprints-save.php'        => 'footprints.php',
-        'tile-colors-save.php'       => 'tile-colors.php',
-        'dialogs-save.php'           => 'dialogs.php',
-        'harvest-seed.php'           => 'harvest-types.php',
-        'races-save.php'             => 'races.php',
-        'effects-save.php'           => 'effects.php',
-        'factions-save.php'          => 'factions.php',
-        'faction-members.php'        => 'factions.php',
-        'faction-members-save.php'   => 'factions.php',
-        'player-skills.php'          => 'players.php',
-        'player-edit.php'            => 'players.php',
-        'skill-owners.php'           => 'players.php',
-        'tutorial-step-editor.php'   => 'tutorial.php',
-        'action-import-preview.php'  => 'action-import.php',
-        'landing-save.php'           => 'landing.php',
-        'landing-seed.php'           => 'landing.php',
-        'welcome-missive-save.php'   => 'welcome-missive.php',
-        'buildings-save.php'         => 'buildings.php',
-        'entity-kinds.php'           => 'structure-types.php', // re-kinds exemplars, same level as the type save
-        'items-save.php'             => 'items.php',
-        'item-owners.php'            => 'items.php',
-        'recipes-save.php'           => 'recipes.php',
-        'view_recipes.php'           => 'recipes.php',
+    /** Panel page => the right it needs. */
+    public const PAGES = [
+        'index.php'                => 'dashboard.view',
+        'monitoring.php'           => 'monitoring.view',
+        'tutorial-catalog.php'     => 'tutorial.catalog',
+        'tutorial-launcher.php'    => 'tutorial.catalog',
+        'tutorial.php'             => 'tutorial.steps',
+        'tutorial-step-editor.php' => 'tutorial.steps',
+        'tutorial-step-save.php'   => 'tutorial.steps',
+        'tutorial-sessions-api.php' => 'tutorial.steps',
+        'tutorial-npcs.php'        => 'tutorial.npcs',
+        'tutorial-npcs-save.php'   => 'tutorial.npcs',
+        'tutorial-settings.php'    => 'tutorial.settings',
+        'world_map.php'            => 'maps.world',
+        'plans.php'                => 'maps.plans',
+        'plans-save.php'           => 'maps.plans',
+        'plan-season-rename.php'   => 'maps.plans',
+        'local_maps.php'           => 'maps.local',
+        'terrain-transitions.php'  => 'maps.terrain-transitions',
+        'tile-assets.php'          => 'maps.tiles',
+        'tile-colors.php'          => 'maps.colors',
+        'tile-colors-save.php'     => 'maps.colors',
+        'tile-shade.php'           => 'maps.shade',
+        'screenshots.php'          => 'maps.screenshots',
+        'harvest-types.php'        => 'resources.types',
+        'harvest-seed.php'         => 'resources.types',
+        'plant-types.php'          => 'plants.types',
+        'route-types.php'          => 'routes.types',
+        'footprints.php'           => 'scenery.footprints',
+        'footprints-save.php'      => 'scenery.footprints',
+        'scenery-types.php'        => 'scenery.types',
+        'map-elements.php'         => 'elements.place',
+        'element-types.php'        => 'elements.types',
+        'effects.php'              => 'effects.edit',
+        'effects-save.php'         => 'effects.edit',
+        'actions.php'              => 'actions.list',
+        'action-workbench.php'     => 'actions.edit',
+        'action-create.php'        => 'actions.edit',
+        'action-save.php'          => 'actions.edit',
+        'action-delete.php'        => 'actions.edit',
+        'action-condition-add.php' => 'actions.edit',
+        'action-condition-remove.php' => 'actions.edit',
+        'action-instruction-add.php' => 'actions.edit',
+        'action-instruction-remove.php' => 'actions.edit',
+        'action-outcome-add.php'   => 'actions.edit',
+        'action-outcome-remove.php' => 'actions.edit',
+        'passive-workbench.php'    => 'actions.passives',
+        'passive-create.php'       => 'actions.passives',
+        'passive-save.php'         => 'actions.passives',
+        'passive-delete.php'       => 'actions.passives',
+        'action-type-defaults.php' => 'actions.type-defaults',
+        'action-type-save.php'     => 'actions.type-defaults',
+        'action-type-log-save.php' => 'actions.type-defaults',
+        'action-type-xp-save.php'  => 'actions.type-defaults',
+        'action-type-instruction-add.php' => 'actions.type-defaults',
+        'action-type-instruction-remove.php' => 'actions.type-defaults',
+        'action-type-precondition-add.php' => 'actions.type-defaults',
+        'action-type-precondition-remove.php' => 'actions.type-defaults',
+        'action-type-precondition-save.php' => 'actions.type-defaults',
+        'action-import.php'        => 'actions.import',
+        'action-import-preview.php' => 'actions.import',
+        'action-import-step.php'   => 'actions.import',
+        'action-import-commit.php' => 'actions.import',
+        'players.php'              => 'players.sheet',
+        'player-skills.php'        => 'players.sheet',
+        'player-skills-save.php'   => 'players.sheet',
+        'player-edit.php'          => 'players.sheet',
+        'skill-owners.php'         => 'players.sheet',
+        'pnjs.php'                 => 'players.npcs',
+        'pnjs-save.php'            => 'players.npcs',
+        'avatars-portraits.php'    => 'players.images',
+        'upload_image.php'         => 'players.images',
+        'structure-images.php'     => 'players.images',
+        'welcome-missive.php'      => 'players.welcome-missive',
+        'welcome-missive-save.php' => 'players.welcome-missive',
+        'skill-stats.php'          => 'players.stats',
+        'admin-access.php'         => 'players.options',
+        'admin-access-toggle.php'  => 'players.options',
+        'items.php'                => 'items.edit',
+        'items-save.php'           => 'items.edit',
+        'item-owners.php'          => 'items.edit',
+        'recipes.php'              => 'items.recipes',
+        'recipes-save.php'         => 'items.recipes',
+        'view_recipes.php'         => 'items.recipes',
+        'landing.php'              => 'landing.edit',
+        'landing-save.php'         => 'landing.edit',
+        'landing-seed.php'         => 'landing.edit',
+        'dialogs.php'              => 'dialogs.edit',
+        'dialogs-save.php'         => 'dialogs.edit',
+        'races.php'                => 'races.edit',
+        'races-save.php'           => 'races.edit',
+        'factions.php'             => 'factions.edit',
+        'factions-save.php'        => 'factions.edit',
+        'faction-members.php'      => 'factions.edit',
+        'faction-members-save.php' => 'factions.edit',
+        'buildings.php'            => 'buildings.place',
+        'buildings-save.php'       => 'buildings.place',
+        'structure-types.php'      => 'buildings.types',
+        'entity-kinds.php'         => 'buildings.types',
+        'wiki.php'                 => 'wiki.generate',
+        'crons.php'                => 'tools.crons',
+        'special-events.php'       => 'tools.special-events',
     ];
 
-    /** @var array<string,string>|null cached DB overrides (page => level) */
+    /** @var array<string,string>|null cached DB overrides (right => level) */
     private ?array $overrideCache = null;
 
-    /**
-     * Resolve a page to the menu that governs its access (itself, or its alias).
-     */
-    private function resolveMenu(string $page): string
+    /** The right a panel page needs, null when the page is not declared. */
+    public function rightOfPage(string $page): ?string
     {
-        return self::ALIASES[$page] ?? $page;
+        return self::PAGES[$page] ?? null;
     }
 
     /**
-     * Required level for a page: DB override, else registry default, else
-     * SUPERADMIN (unknown pages are locked down by default).
+     * Required level for a right: DB override, else registry default, else
+     * SUPERADMIN.
      */
-    public function getRequiredLevel(string $page): string
+    public function getRequiredLevel(string $right): string
     {
-        $menu = $this->resolveMenu($page);
+        return $this->overrides()[$right] ?? self::RIGHTS[$right][2] ?? self::LEVEL_SUPERADMIN;
+    }
 
-        $overrides = $this->overrides();
-        if (isset($overrides[$menu])) {
-            return $overrides[$menu];
-        }
+    public function canAccess(string $right, bool $viewerIsSuperAdmin): bool
+    {
+        return $viewerIsSuperAdmin || $this->getRequiredLevel($right) === self::LEVEL_ADMIN;
+    }
 
-        return self::MENUS[$menu][2] ?? self::LEVEL_SUPERADMIN;
+    public function canAccessPage(string $page, bool $viewerIsSuperAdmin): bool
+    {
+        return $viewerIsSuperAdmin
+            || (($right = $this->rightOfPage($page)) !== null && $this->canAccess($right, false));
     }
 
     /**
-     * Can a viewer (already an admin, since they reached the dashboard) open
-     * this page? Superadmins can open anything; plain admins only admin-level
-     * pages.
+     * In-game check of a right, for a viewer who may not be an admin.
      */
-    public function canAccess(string $page, bool $viewerIsSuperAdmin): bool
-    {
-        if ($viewerIsSuperAdmin) {
-            return true;
-        }
-        return $this->getRequiredLevel($page) === self::LEVEL_ADMIN;
-    }
-
-    /**
-     * In-game check of a registry entry, for a viewer who may not be an admin.
-     */
-    public function allows(string $page, Player $player): bool
+    public function allows(string $right, Player $player): bool
     {
         if (!$player->have_option('isAdmin')) {
             return false;
         }
-        return $this->canAccess($page, (bool) $player->have_option('isSuperAdmin'));
+        return $this->canAccess($right, (bool) $player->have_option('isSuperAdmin'));
     }
 
     /**
      * allows() for the character currently played.
      */
-    public function viewerAllows(string $page): bool
+    public function viewerAllows(string $right): bool
     {
         return AdminAuthorizationService::isAdmin()
-            && $this->canAccess($page, AdminAuthorizationService::isSuperAdmin());
+            && $this->canAccess($right, AdminAuthorizationService::isSuperAdmin());
     }
 
-    /**
-     * Whether the registry declares this entry (unknown entries resolve to
-     * super-admin, so a typo would silently lock a command down).
-     */
-    public function isDeclared(string $page): bool
+    /** Whether the registry declares this right (unknown ones resolve to super-admin). */
+    public function isDeclared(string $right): bool
     {
-        return isset(self::MENUS[$this->resolveMenu($page)]);
+        return isset(self::RIGHTS[$right]);
     }
 
     /**
-     * Enforce the current page's required level: always require admin, and
-     * escalate to super-admin when the page (or its governing menu) demands it.
+     * Require admin, and super-admin when the right demands it.
      * DoAdminCheck / DoSuperAdminCheck exit() on failure.
      */
-    public function enforce(string $page): void
+    public function enforce(string $right): void
     {
         AdminAuthorizationService::DoAdminCheck();
-        if ($this->getRequiredLevel($page) === self::LEVEL_SUPERADMIN) {
+        if ($this->getRequiredLevel($right) === self::LEVEL_SUPERADMIN) {
             AdminAuthorizationService::DoSuperAdminCheck();
         }
     }
 
+    /** enforce() on a page's right; an undeclared page needs super-admin. */
+    public function enforcePage(string $page): void
+    {
+        $right = $this->rightOfPage($page);
+        if ($right === null) {
+            AdminAuthorizationService::DoSuperAdminCheck();
+            return;
+        }
+        $this->enforce($right);
+    }
+
     /**
-     * The configurable menus with their current effective level, for the config
-     * page. Grouped in registry order.
+     * Every right with its current effective level, for the config page, in
+     * registry order.
      *
-     * @return array<int, array{page:string, label:string, group:string, level:string, default:string}>
+     * @return array<int, array{right:string, label:string, group:string, level:string, default:string}>
      */
-    public function getConfigurableMenus(): array
+    public function getConfigurableRights(): array
     {
         $overrides = $this->overrides();
 
         $out = [];
-        foreach (self::MENUS as $page => [$label, $group, $default]) {
+        foreach (self::RIGHTS as $right => [$label, $group, $default]) {
             $out[] = [
-                'page'    => $page,
+                'right'   => $right,
                 'label'   => $label,
                 'group'   => $group,
-                'level'   => $overrides[$page] ?? $default,
+                'level'   => $overrides[$right] ?? $default,
                 'default' => $default,
             ];
         }
@@ -267,13 +306,12 @@ class AdminMenuAccessService
     }
 
     /**
-     * Set (or reset) a menu's required level. Only registry menus are settable;
-     * an invalid page or level is rejected. Passing the registry default clears
-     * the override row so the menu tracks the default again.
+     * Set (or reset) a right's required level. Unknown rights and levels are
+     * ignored; the registry default clears the override row.
      */
-    public function setLevel(string $page, string $level): void
+    public function setLevel(string $right, string $level): void
     {
-        if (!isset(self::MENUS[$page])) {
+        if (!isset(self::RIGHTS[$right])) {
             return;
         }
         if (!in_array($level, [self::LEVEL_ADMIN, self::LEVEL_SUPERADMIN], true)) {
@@ -282,14 +320,13 @@ class AdminMenuAccessService
 
         $db = new Db();
 
-        if ($level === self::MENUS[$page][2]) {
-            // Back to default → drop any override row.
-            $db->exe('DELETE FROM admin_menu_access WHERE page = ?', [$page]);
+        if ($level === self::RIGHTS[$right][2]) {
+            $db->exe('DELETE FROM admin_rights WHERE right_key = ?', [$right]);
         } else {
             $db->exe(
-                'INSERT INTO admin_menu_access (page, required_level) VALUES (?, ?)
+                'INSERT INTO admin_rights (right_key, required_level) VALUES (?, ?)
                  ON DUPLICATE KEY UPDATE required_level = VALUES(required_level)',
-                [$page, $level]
+                [$right, $level]
             );
         }
 
@@ -297,7 +334,7 @@ class AdminMenuAccessService
     }
 
     /**
-     * DB overrides (page => level). Cached per instance.
+     * DB overrides (right => level). Cached per instance.
      *
      * @return array<string,string>
      */
@@ -308,9 +345,9 @@ class AdminMenuAccessService
         }
 
         $this->overrideCache = [];
-        $res = (new Db())->exe('SELECT page, required_level FROM admin_menu_access');
+        $res = (new Db())->exe('SELECT right_key, required_level FROM admin_rights');
         while ($row = $res->fetch_assoc()) {
-            $this->overrideCache[(string) $row['page']] = (string) $row['required_level'];
+            $this->overrideCache[(string) $row['right_key']] = (string) $row['required_level'];
         }
 
         return $this->overrideCache;

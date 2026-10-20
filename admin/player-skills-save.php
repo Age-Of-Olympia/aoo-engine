@@ -7,7 +7,7 @@ use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\PlayerSkillsService;
 
-(new AdminMenuAccessService())->enforce('players.php');
+(new AdminMenuAccessService())->enforce('players.sheet');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: /admin/players.php');

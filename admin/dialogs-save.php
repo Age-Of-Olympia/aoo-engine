@@ -17,7 +17,7 @@ use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\DialogService;
 
-(new AdminMenuAccessService())->enforce('dialogs.php');
+(new AdminMenuAccessService())->enforce('dialogs.edit');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirectTo('/admin/dialogs.php');

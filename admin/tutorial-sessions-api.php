@@ -15,7 +15,7 @@ use App\Service\CsrfProtectionService;
 use App\Service\TutorialStepSaveService;
 use App\Service\TutorialStepValidationService;
 
-(new AdminMenuAccessService())->enforce('tutorial.php');
+(new AdminMenuAccessService())->enforce('tutorial.steps');
 
 header('Content-Type: application/json; charset=utf-8');
 

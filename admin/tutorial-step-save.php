@@ -19,7 +19,7 @@ use App\Service\TutorialStepSaveService;
 use Classes\Db;
 
 // Check admin authorization
-(new AdminMenuAccessService())->enforce('tutorial.php');
+(new AdminMenuAccessService())->enforce('tutorial.steps');
 
 // Only accept POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

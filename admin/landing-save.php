@@ -20,7 +20,7 @@ use App\Service\CsrfProtectionService;
 use App\Service\DateFormatService;
 use App\Service\LandingContentService;
 
-(new AdminMenuAccessService())->enforce('landing.php');
+(new AdminMenuAccessService())->enforce('landing.edit');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirectTo('/admin/landing.php');

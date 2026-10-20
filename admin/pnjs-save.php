@@ -21,7 +21,7 @@ use App\Service\NpcAdminService;
 
 // Enforce the same level as the PNJ menu, so a direct POST can't bypass a
 // superadmin-only setting on that menu.
-(new AdminMenuAccessService())->enforce('pnjs.php');
+(new AdminMenuAccessService())->enforce('players.npcs');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirectTo('/admin/pnjs.php');

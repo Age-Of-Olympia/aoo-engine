@@ -26,7 +26,7 @@ use App\Service\CsrfProtectionService;
 use App\Service\FactionService;
 use Classes\Player;
 
-(new AdminMenuAccessService())->enforce('factions.php');
+(new AdminMenuAccessService())->enforce('factions.edit');
 
 /** Retour vers la liste filtrée d'origine (querystring rejouée telle quelle). */
 $backUrl = '/admin/faction-members.php';

@@ -26,7 +26,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'console:quest';
+        return 'console.quest';
     }
 
     public function execute(  array $argumentValues ) : string

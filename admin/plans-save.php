@@ -26,7 +26,7 @@ use App\Service\TiledMapService;
 use App\Service\ViewService;
 use Classes\Db;
 
-(new AdminMenuAccessService())->enforce('plans.php');
+(new AdminMenuAccessService())->enforce('maps.plans');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirectTo('/admin/plans.php');

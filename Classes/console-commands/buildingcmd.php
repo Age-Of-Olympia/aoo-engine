@@ -25,7 +25,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'buildings.php';
+        return 'buildings.place';
     }
 
     public function execute(array $argumentValues): string

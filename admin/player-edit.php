@@ -252,7 +252,7 @@ $piOffset = static function () use ($db, $player, $id): int {
     return min((int) $player->data->xp, SEASON_XP) - (int) $player->data->pi - $paid;
 };
 
-$canRemoveRank = (new AdminMenuAccessService())->viewerAllows('player-rank-removal');
+$canRemoveRank = (new AdminMenuAccessService())->viewerAllows('players.rank-removal');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['xp_add']) || isset($_POST['pi_fix']) || isset($_POST['pi_add'])

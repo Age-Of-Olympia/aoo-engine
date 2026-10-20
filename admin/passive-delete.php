@@ -7,7 +7,7 @@ use App\Service\AdminAuthorizationService;
 use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 
-(new AdminMenuAccessService())->enforce('passive-workbench.php');
+(new AdminMenuAccessService())->enforce('actions.passives');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: /admin/passive-workbench.php');

@@ -22,7 +22,7 @@ use App\Service\RaceService;
 use App\Service\TypeRenameService;
 use App\View\Admin\TypeEditorFace;
 
-(new AdminMenuAccessService())->enforce('races.php');
+(new AdminMenuAccessService())->enforce('races.edit');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirectTo('/admin/races.php');

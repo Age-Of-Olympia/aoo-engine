@@ -16,7 +16,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'console:missive';
+        return 'console.missive';
     }
 
     public function execute(  array $argumentValues ) : string

@@ -35,7 +35,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'console:fence';
+        return 'console.fence';
     }
 
     public function execute(array $argumentValues): string

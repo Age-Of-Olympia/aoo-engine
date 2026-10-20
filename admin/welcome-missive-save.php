@@ -7,7 +7,7 @@ use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\WelcomeMissiveService;
 
-(new AdminMenuAccessService())->enforce('welcome-missive.php');
+(new AdminMenuAccessService())->enforce('players.welcome-missive');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirectTo('/admin/welcome-missive.php');

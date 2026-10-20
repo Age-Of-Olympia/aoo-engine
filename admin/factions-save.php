@@ -23,7 +23,7 @@ use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\FactionService;
 
-(new AdminMenuAccessService())->enforce('factions.php');
+(new AdminMenuAccessService())->enforce('factions.edit');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirectTo('/admin/factions.php');
