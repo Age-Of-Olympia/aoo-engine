@@ -747,6 +747,23 @@
      * slides it back (hudSlideBack). */
     var boardSlide = null;
 
+    /* The player's own sprites, which stay at the centre while the board
+     * slides: the avatar, its shadow written just before it, and the race
+     * border named after the shadow. Not by position: a building anchored
+     * on the player's cell shares it. */
+    function ownSprites(avatar) {
+        var sprites = [avatar];
+        var shadow = avatar.previousElementSibling;
+        if (shadow && /-shadow$/.test(shadow.id)) {
+            sprites.push(shadow);
+            var race = document.getElementById(shadow.id.replace(/-shadow$/, '-race'));
+            if (race) {
+                sprites.push(race);
+            }
+        }
+        return sprites;
+    }
+
     window.hudSlideBoard = function (target) {
         var svg = document.getElementById('svg-view');
         var avatar = document.getElementById('current-player-avatar');
@@ -773,11 +790,8 @@
         svg.insertBefore(g, svg.firstChild);
 
         var moving = [[g, dx, dy]];
-        $(g).children('[data-table="players"], [id$="-race"]').filter(function () {
-            return this.getAttribute('x') === avatar.getAttribute('x')
-                && this.getAttribute('y') === avatar.getAttribute('y');
-        }).each(function () {
-            moving.push([this, -dx, -dy]);
+        ownSprites(avatar).forEach(function (sprite) {
+            moving.push([sprite, -dx, -dy]);
         });
         var anims = moving.map(function (m) {
             return m[0].animate(
@@ -954,11 +968,8 @@
             return 'translate(' + x + 'px, ' + y + 'px)';
         };
         var moving = [[g, translate(dx, dy), translate(0, 0)], [outgoing, translate(0, 0), translate(-dx, -dy)]];
-        $(g).children('[data-table="players"], [id$="-race"]').filter(function () {
-            return this.getAttribute('x') === avatar.getAttribute('x')
-                && this.getAttribute('y') === avatar.getAttribute('y');
-        }).each(function () {
-            moving.push([this, translate(-dx, -dy), translate(0, 0)]);
+        ownSprites(avatar).forEach(function (sprite) {
+            moving.push([sprite, translate(-dx, -dy), translate(0, 0)]);
         });
         moving.forEach(function (m) {
             m[0].style.transform = m[1];
