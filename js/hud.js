@@ -717,6 +717,9 @@
      * with the step. The new cell's panel and the feed are asked for apart,
      * in parallel, the feed only when something new may show in it. */
     window.hudApplyMove = function (data) {
+        if (boardSlide) {
+            clearStepPending(boardSlide);
+        }
         /* After the slide started on the click, never in the middle of it */
         if (boardSlide && boardSlide.running) {
             boardSlide.finished.then(function () {
@@ -799,7 +802,12 @@
                 { duration: off ? 0 : 200, easing: 'ease-out', fill: 'forwards' }
             );
         });
-        boardSlide = { group: g, anims: anims, running: true, finished: anims[0].finished };
+        boardSlide = {
+            group: g, anims: anims, running: true, finished: anims[0].finished,
+            pending: setTimeout(function () {
+                showStepPending(svg, avatar, off);
+            }, 600)
+        };
         /* Rejected when a refusal cancels the slide: nothing to do then */
         boardSlide.finished.then(function () {
             if (boardSlide && boardSlide.group === g) {
@@ -808,12 +816,40 @@
         }, function () {});
     };
 
+    /* The server is slow to answer the step: a small gear on the player's
+     * cell, outside the sliding group, until the response or a refusal. */
+    function showStepPending(svg, avatar, still) {
+        var gear = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+        gear.id = 'hud-step-pending';
+        gear.setAttribute('href', 'img/ui/view/gear.webp');
+        gear.setAttribute('width', 20);
+        gear.setAttribute('height', 20);
+        gear.setAttribute('x', parseFloat(avatar.getAttribute('x')) + 30);
+        gear.setAttribute('y', avatar.getAttribute('y'));
+        gear.setAttribute('pointer-events', 'none');
+        gear.style.transformBox = 'fill-box';
+        gear.style.transformOrigin = 'center';
+        svg.appendChild(gear);
+        if (!still) {
+            gear.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], { duration: 1000, iterations: Infinity });
+        }
+    }
+
+    function clearStepPending(slide) {
+        clearTimeout(slide.pending);
+        var gear = document.getElementById('hud-step-pending');
+        if (gear) {
+            gear.remove();
+        }
+    }
+
     window.hudSlideBack = function () {
         if (!boardSlide) {
             return;
         }
         var slide = boardSlide;
         boardSlide = null;
+        clearStepPending(slide);
         var undo = function () {
             slide.anims.forEach(function (a) {
                 a.cancel();
