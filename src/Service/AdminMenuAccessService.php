@@ -104,6 +104,7 @@ class AdminMenuAccessService
         // Crons : rejoue les scripts planifiés (suppressions comprises) —
         // superadmin par défaut, ajustable via access-control.php
         'crons.php'                => ['Outils · Crons', 'Divers', self::LEVEL_SUPERADMIN],
+        'special-events.php'       => ['Outils · Évènements spéciaux', 'Divers', self::LEVEL_SUPERADMIN],
         // Not a page: the forum moderation right (soft delete, topic rename)
         'forum-moderation'         => ['Forum · Modération (supprimer, renommer)', 'Forum', self::LEVEL_ADMIN],
     ];
