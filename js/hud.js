@@ -698,7 +698,7 @@
     window.hudRefreshAfterMove = function () {
         $.ajax({ url: document.location.href, cache: false })
             .done(function (html) {
-                if (!applyMovedPage(new DOMParser().parseFromString(html, 'text/html'), false)) {
+                if (!applyMovedPage(new DOMParser().parseFromString(html, 'text/html'))) {
                     return;
                 }
 
@@ -713,19 +713,14 @@
             });
     };
 
-    /* go.php's HUD response (App\View\Hud\MoveResponseView): the board and
-     * the new cell's observation came with the step. The feed is asked for
-     * apart, only when something new may show in it. */
+    /* go.php's HUD response (App\View\Hud\MoveResponseView): the board came
+     * with the step. The new cell's panel and the feed are asked for apart,
+     * in parallel, the feed only when something new may show in it. */
     window.hudApplyMove = function (data) {
         var doc = new DOMParser().parseFromString('<!doctype html><body>' + data.board, 'text/html');
-        if (!applyMovedPage(doc, true)) {
+        if (!applyMovedPage(doc)) {
             return;
         }
-
-        $('#ajax-data').html(data.observe);
-        window.clickedCases[data.coords] = data.observe;
-        aooStore.set('hudSelCoords', data.coords);
-        aooStore.remove('hudSelEntity');
 
         if (data.feedChanged) {
             loadFeed('events');
@@ -897,10 +892,10 @@
         });
     }
 
-    /* Swaps in the moved page's board, position, minimap and top bar pills.
-     * observed: the new cell's panel comes with the response, view.js must
-     * not ask for it. False when the page has to be reloaded instead. */
-    function applyMovedPage(doc, observed) {
+    /* Swaps in the moved page's board, position, minimap and top bar pills;
+     * view.js then asks for the new cell's panel. False when the page has
+     * to be reloaded instead. */
+    function applyMovedPage(doc) {
         var freshMap = doc.getElementById('game-map');
         var current = document.getElementById('game-map');
         if (!freshMap || !current) {
@@ -937,7 +932,7 @@
         /* Les gestionnaires du SVG sont morts avec l'ancien
          * balisage : re-liaison (js/view.js). */
         if (typeof window.bindMapView === 'function') {
-            window.bindMapView(false, observed);
+            window.bindMapView(false);
         }
 
         fitMinimap();
@@ -946,12 +941,7 @@
         centerMap();
         slideIn(from && from.split(','), before, layers);
         redrawBlockedMarkers();
-        /* Not when the panel comes with the response: composed in the same
-         * tick, the idle selection would make the #ajax-data observer skip
-         * the panel too, and its action buttons would stay on the card. */
-        if (!observed) {
-            renderIdleSelection();
-        }
+        renderIdleSelection();
 
         return true;
     }

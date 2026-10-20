@@ -605,8 +605,8 @@ $(document).ready(function(){
        panel would replace this one, so asking for both costs a request. */
     var hudRestores = pageLoad && window.hudRestoresSelection && window.hudRestoresSelection();
 
-    /* observed: the step's response already carries this panel (js/hud.js
-       hudApplyMove) */
+    /* observed: the step was refused, the player has not moved and the
+       panel on screen still holds (go.php, the go-rect error handler) */
     if (ownCoords && !hudRestores && !observed && !window.TUTORIAL_IN_PROGRESS
         && !(window.tutorialUI && window.tutorialUI.isActive)) {
 
