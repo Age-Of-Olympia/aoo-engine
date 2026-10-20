@@ -4,6 +4,10 @@ namespace App\Service;
 
 use Classes\Player;
 
+/**
+ * Admin rights belong to the character, not the session: every check reads the
+ * options of the character currently played, so switching character drops them.
+ */
 class AdminAuthorizationService
 {
     public static function DoAdminCheck(): void
@@ -11,16 +15,8 @@ class AdminAuthorizationService
         if (!isset($_SESSION['playerId'])) {
             exit();
         }
-
-        // check admin (only once per session)
-        if (!isset($_SESSION['isAdmin'])) {
-            // check admin
-            $playerToCheck = new Player($_SESSION['playerId']);
-            if (!$playerToCheck->have_option('isAdmin')) {
-                exit('Action réservée aux admin');
-            } else {
-                $_SESSION['isAdmin'] = true;
-            }
+        if (!self::isAdmin()) {
+            exit('Action réservée aux admin');
         }
     }
 
@@ -29,16 +25,24 @@ class AdminAuthorizationService
         if (!isset($_SESSION['playerId'])) {
             exit();
         }
-
-        // check super admin
-        if (!isset($_SESSION['isSuperAdmin'])) {
-            // check super admin
-            $playerToCheck = new Player($_SESSION['playerId']);
-            if (!$playerToCheck->have_option('isSuperAdmin')) {
-                exit('Action réservée aux super administrateurs');
-            } else {
-                $_SESSION['isSuperAdmin'] = true;
-            }
+        if (!self::isSuperAdmin()) {
+            exit('Action réservée aux super administrateurs');
         }
+    }
+
+    public static function isAdmin(): bool
+    {
+        return self::currentPlayerHas('isAdmin');
+    }
+
+    public static function isSuperAdmin(): bool
+    {
+        return self::currentPlayerHas('isSuperAdmin');
+    }
+
+    private static function currentPlayerHas(string $option): bool
+    {
+        return isset($_SESSION['playerId'])
+            && (bool) (new Player((int) $_SESSION['playerId']))->have_option($option);
     }
 }

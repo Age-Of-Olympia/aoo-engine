@@ -56,7 +56,7 @@ class RecipeService
 
     public function adminGetAllRecipes(): array
     {
-        if(!isset($_SESSION['isAdmin']) || $_SESSION['isAdmin'] !== true)
+        if(!AdminAuthorizationService::isAdmin())
         {
             return array();
         }

@@ -1,7 +1,7 @@
 <?php
 require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
 use App\Service\AdminMenuAccessService;
-use Classes\Player;
+use App\Service\AdminAuthorizationService;
 
 /* Per-menu access control: require admin to reach the dashboard at all, and
  * escalate to super-admin for menus configured (or defaulting) to that level.
@@ -32,8 +32,7 @@ function admin_layout($title, $content, array $assets = []) {
     // Per-menu access: hide links the viewer cannot open. The viewer is already
     // an admin (enforced at include time); the only question is super-admin.
     $access = new AdminMenuAccessService();
-    $viewerIsSuperAdmin = !empty($_SESSION['isSuperAdmin'])
-        || (bool) (new Player($_SESSION['playerId']))->have_option('isSuperAdmin');
+    $viewerIsSuperAdmin = AdminAuthorizationService::isSuperAdmin();
 
     // A nav link, or '' when the viewer cannot access that page.
     $navLink = function($page, $label, $href) use ($currentPage, $access, $viewerIsSuperAdmin) {

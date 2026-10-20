@@ -17,9 +17,9 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
+use App\Service\AdminAuthorizationService;
 use App\Service\CsrfProtectionService;
 use App\Service\NpcAdminService;
-use Classes\Player;
 
 /**
  * Race options for the create/edit dropdowns — only races that can actually be
@@ -225,8 +225,7 @@ if ($action === 'new') {
 } else {
     // Only super-admins may edit the retirement plan (server-side guard is in
     // pnjs-save.php); plain admins see it read-only.
-    $viewerIsSuperAdmin = !empty($_SESSION['isSuperAdmin'])
-        || (bool) (new Player($_SESSION['playerId']))->have_option('isSuperAdmin');
+    $viewerIsSuperAdmin = AdminAuthorizationService::isSuperAdmin();
     $content = pnj_render_list($service->listPnjs(), $csrfToken, $viewerIsSuperAdmin);
 }
 
