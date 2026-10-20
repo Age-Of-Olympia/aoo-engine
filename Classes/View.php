@@ -418,6 +418,10 @@ class View{
     private $tiled; // Indique si la vue est dans l'éditeur de map
     private $inSight; // Coordonnées des objets dans le champ de vision
     private $inSightId; // id de ces coordonnées
+    /** @var array<int, object> the cells one step beyond sight, coords id => row */
+    private array $ring = [];
+    /** Structure types drawn on the ring, with the public layers (tiles, elements, roads, scenery) */
+    private const RING_ENTITY_TYPES = '"building", "resource"';
     private $useTbl; // array qui permettra d'augmenter le z-level des images
     private array $editorTopTbl = []; // editor only: triggers and dialogs, repeated above everything
     /** @var list<array{id:int, name:string, family:string, image:string, x:int, y:int, w:int, h:int}> */
@@ -463,6 +467,18 @@ class View{
         $this->inSight = array();
         $this->inSightId = array();
         View::get_coords_id_arround($this->inSight, $this->inSightId, $coords, $p, $this->footW - 1, $this->footH - 1);
+
+        /* The ring one step beyond sight, drawn outside the board so a step
+         * slides real ground in before the server answers. Public layers
+         * only: what stands or lies there (characters, items, plants,
+         * footprints) stays unsent until it comes into sight. */
+        if(!$tiled){
+
+            $around = array();
+            $aroundId = array();
+            View::get_coords_id_arround($around, $aroundId, $coords, $p + 1, $this->footW - 1, $this->footH - 1);
+            $this->ring = array_diff_key($around, $this->inSight);
+        }
 
         $this->useTbl = array();
         $this->options = $options;
@@ -631,6 +647,9 @@ class View{
 
             $tiledSql = '';
             $inSightIdImploded = implode(',', $this->inSightId);
+            $ringIds = array_keys($this->ring);
+            $ringIdImploded = $ringIds === [] ? '0' : implode(',', $ringIds);
+            $publicIdImploded = implode(',', array_merge($this->inSightId, $ringIds));
 
             /* Which element each cell in sight carries, to fade an element
              * on the sides where its neighbour is not the same one — and
@@ -642,13 +661,13 @@ class View{
             $axesByFamily = [];
             $elementImages = new \App\Service\MapElementService();
             $resPlaced = $db->exe(
-                'SELECT "elements" AS layer, name, coords_id, rotation FROM map_elements WHERE coords_id IN ('. $inSightIdImploded .')
+                'SELECT "elements" AS layer, name, coords_id, rotation FROM map_elements WHERE coords_id IN ('. $publicIdImploded .')
                  UNION ALL
-                 SELECT "tiles", name, coords_id, rotation FROM map_tiles WHERE rotation <> 0 AND coords_id IN ('. $inSightIdImploded .')'
+                 SELECT "tiles", name, coords_id, rotation FROM map_tiles WHERE rotation <> 0 AND coords_id IN ('. $publicIdImploded .')'
             );
             while($placed = $resPlaced->fetch_object()){
 
-                $cell = $this->inSight[$placed->coords_id];
+                $cell = $this->inSight[$placed->coords_id] ?? $this->ring[$placed->coords_id];
                 if($placed->layer === 'elements'){
                     $elementAt[$cell->x .','. $cell->y] = $placed->name;
                 }
@@ -715,7 +734,8 @@ class View{
                     SELECT p.id, p.name, p.player_type, p.avatar, p.race, b.build_state
                     FROM players p
                     LEFT JOIN buildings b ON b.player_id = p.id
-                    WHERE p.coords_id IN ('. $inSightIdImploded .')
+                    WHERE (p.coords_id IN ('. $inSightIdImploded .')
+                        OR (p.coords_id IN ('. $ringIdImploded .') AND p.player_type IN ('. self::RING_ENTITY_TYPES .')))
                     AND p.player_type NOT IN ("scenery", "plant", "route")
                     AND p.slot <> "dropped"
                 ');
@@ -740,7 +760,7 @@ class View{
 
             if (!$this->tiled && !empty($this->inSightId)) {
                 $inSight = (new \App\Service\Map\SceneryFiguresInSight())->forWindow(
-                    array_map('intval', $this->inSightId)
+                    array_map('intval', array_merge($this->inSightId, $ringIds))
                 );
 
                 $this->sceneryFigures = $inSight['figures'];
@@ -792,7 +812,7 @@ class View{
             FROM
             map_tiles
             WHERE
-            coords_id IN ('. $inSightIdImploded .')
+            coords_id IN ('. $publicIdImploded .')
 
             UNION
 
@@ -832,7 +852,7 @@ class View{
             FROM
             map_elements
             WHERE
-            coords_id IN ('. $inSightIdImploded .')
+            coords_id IN ('. $publicIdImploded .')
             
             UNION
 
@@ -865,7 +885,7 @@ class View{
             FROM
             players
             WHERE
-            coords_id IN ('. $inSightIdImploded .')
+            coords_id IN ('. $publicIdImploded .')
             AND player_type = "route"
 
             UNION
@@ -901,12 +921,24 @@ class View{
 
             SELECT
             id, name, coords_id,
+            "players" AS whichTable,
+            98 AS tableOrder
+            FROM
+            players
+            WHERE
+            coords_id IN ('. $ringIdImploded .')
+            AND player_type IN ('. self::RING_ENTITY_TYPES .')
+
+            UNION
+
+            SELECT
+            id, name, coords_id,
             "foregrounds" AS whichTable,
             100 AS tableOrder
             FROM
             map_foregrounds
             WHERE
-            coords_id IN ('. $inSightIdImploded .')
+            coords_id IN ('. $publicIdImploded .')
             /* Minus the cells of a figure already drawn whole. Excluded per
              * FIGURE, not per "an entity holds this cell": scenery that does
              * NOT draw whole — a single cell, or no composed picture yet —
@@ -979,7 +1011,7 @@ class View{
                 $id = $row->whichTable . $row->id;
 
 
-                $coords = $this->inSight[$row->coords_id];
+                $coords = $this->inSight[$row->coords_id] ?? $this->ring[$row->coords_id];
 
                 /* A weather mark is never drawn on its cell (the editor
                  * excepted, where the mapper must see it): the one under
@@ -1123,7 +1155,9 @@ class View{
                      * un mur ou un coffre, où elle encombre le décor. Elle
                      * reste donc toujours posée sur les personnages, PNJ
                      * compris, et devient facultative sur le reste. */
+                    /* Not on the ring: the border is a clickable .case */
                     $raceHintApplies = in_array('raceHint', $this->options)
+                        && !isset($this->ring[$row->coords_id])
                         && !($isStructure && in_array('hideStructureBorders', $this->options));
 
                     if($raceHintApplies){
