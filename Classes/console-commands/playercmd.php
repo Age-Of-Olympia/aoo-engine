@@ -7,7 +7,6 @@ use Classes\Player;
 use Classes\Log;
 use Classes\File;
 use App\Factory\PlayerFactory;
-use App\Service\AdminAuthorizationService;
 class PlayerCmd extends Command
 {
     public function __construct() {
@@ -31,6 +30,23 @@ Exemple:
 > player checkpi Orcrist
 > player checkpi Orcrist fixpi
 EOT);
+    }
+
+    /** Sub-commands the character sheet or the PNJ page also offer share their level. */
+    public function accessKey(array $argumentValues): ?string
+    {
+        $action = strtolower($argumentValues[0]);
+        if ($action === 'create') {
+            // "race,anything" creates a PNJ, see create_player()
+            return count(explode(',', $argumentValues[2] ?? '')) === 2 ? 'pnjs.php' : 'console:player';
+        }
+        if ($action === 'removeupgrade') {
+            return 'player-rank-removal';
+        }
+        if (in_array($action, ['edit', 'additem', 'addxp', 'addupgrade', 'unequip', 'checkpi'], true)) {
+            return 'players.php';
+        }
+        return 'console:player';
     }
 
     public function execute(  array $argumentValues ) : string
@@ -450,8 +466,6 @@ function remove_upgrade($argumentValues, $player)
     if(!isset($argumentValues[2])){
         return '<font color="red">error missing option1. usage: player removeupgrade [mat or name] [carac] [n (optionnal default is 1)]</font>';
     }
-
-    AdminAuthorizationService::DoSuperAdminCheck();
 
     if(!isset($argumentValues[2])){
         return '<font color="red">error missing option1. usage: player removeupgrade [mat or name] [carac] [n (optionnal default is 1)]</font>';

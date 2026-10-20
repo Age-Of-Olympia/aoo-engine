@@ -35,6 +35,11 @@ Exemple:
 EOT);
     }
 
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'footprints.php';
+    }
+
     public function execute(array $argumentValues): string
     {
         $deriver = new SceneryFootprintDeriver();

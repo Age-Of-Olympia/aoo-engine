@@ -1,12 +1,11 @@
 <?php
-use Classes\AdminCommand;
+use Classes\Command;
 use Classes\Argument;
 use Classes\Player;
 use Classes\Item;
 use Classes\Exchange;
-use Classes\Command;
 
-class SeasonCmd extends AdminCommand
+class SeasonCmd extends Command
 {
     public function __construct()
     {
@@ -18,6 +17,11 @@ ordre recommandé :
 - season refundDeprecatedItems
 - season convertItems
 EOT);
+    }
+
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'console:season';
     }
 
     public function execute(array $argumentValues): string

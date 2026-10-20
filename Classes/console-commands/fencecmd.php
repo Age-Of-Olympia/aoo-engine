@@ -33,6 +33,11 @@ Exemple:
 EOT);
     }
 
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'console:fence';
+    }
+
     public function execute(array $argumentValues): string
     {
         $what = trim((string) ($argumentValues[0] ?? ''));

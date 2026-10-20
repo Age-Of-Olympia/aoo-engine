@@ -1,10 +1,10 @@
 <?php
 use App\Service\CronService;
-use Classes\AdminCommand;
+use Classes\Command;
 use Classes\Argument;
 use Classes\Db;
 
-class CronCmd extends AdminCommand
+class CronCmd extends Command
 {
     public function __construct() {
         parent::__construct("cron",[new Argument('path',false)]);
@@ -15,6 +15,11 @@ Exemple:
 > cron daily 10_grow_gold
 > cron daily
 EOT);
+    }
+
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'crons.php';
     }
 
     public function execute(  array $argumentValues ) : string

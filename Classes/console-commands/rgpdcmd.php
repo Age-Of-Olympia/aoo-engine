@@ -1,12 +1,12 @@
 <?php
-use Classes\AdminCommand;
+use Classes\Command;
 use Classes\Argument;
 use Classes\Db;
 use Classes\File;
 use Classes\Json;
 use Classes\Player;
 
-class RgpdCmd extends AdminCommand
+class RgpdCmd extends Command
 {
     public function __construct() {
         parent::__construct("rgpd",[new Argument('action',false), new Argument('mat',false)]);
@@ -27,6 +27,12 @@ EOT);
     //psw => suprimé (hash donc inavalid / check connexion)
     // => "[Supprimé]"
     //forum/missive => [Supprimé en respect du RGPD suite à une demande de l'utilisateur]
+
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'console:rgpd';
+    }
+
     public function execute(  array $argumentValues ) : string
     {
         $action = strtolower($argumentValues[0]);

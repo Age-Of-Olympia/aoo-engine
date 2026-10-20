@@ -1,9 +1,9 @@
 <?php
 use App\Service\BuildingService;
-use Classes\AdminCommand;
+use Classes\Command;
 use Classes\Argument;
 
-class BuildingCmd extends AdminCommand
+class BuildingCmd extends Command
 {
     public function __construct() {
         parent::__construct("building", [
@@ -21,6 +21,11 @@ Exemple:
 > building remove [id]
 > building repair-avatars  (re-résout les avatars vides/cassés des structures — une conversion déployée tourne sans img/)
 EOT);
+    }
+
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'buildings.php';
     }
 
     public function execute(array $argumentValues): string

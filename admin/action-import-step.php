@@ -11,11 +11,12 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\AdminAuthorizationService;
+use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\ImportExport\ImportReport;
 use App\Service\ImportExport\PlanImporter;
 
-AdminAuthorizationService::DoAdminCheck();
+(new AdminMenuAccessService())->enforce('action-import.php');
 header('Content-Type: application/json');
 
 /** Seconds of work per call: under PHP's and the proxy's time limits. */

@@ -10,11 +10,12 @@ require_once __DIR__ . '/helpers.php';
 
 use Classes\Db;
 use App\Service\AdminAuthorizationService;
+use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\TutorialStepSaveService;
 use App\Service\TutorialStepValidationService;
 
-AdminAuthorizationService::DoAdminCheck();
+(new AdminMenuAccessService())->enforce('tutorial.php');
 
 header('Content-Type: application/json; charset=utf-8');
 

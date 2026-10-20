@@ -9,13 +9,14 @@
 require_once __DIR__ . '/../config.php';
 
 use App\Service\AdminAuthorizationService;
+use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Tutorial\TutorialManager;
 use App\Tutorial\TutorialHelper;
 
 // Launching arbitrary tutorial versions is an admin-only test tool;
 // players use the regular start flow via api/tutorial/start.php.
-AdminAuthorizationService::DoAdminCheck();
+(new AdminMenuAccessService())->enforce('tutorial-catalog.php');
 
 header('Content-Type: application/json; charset=utf-8');
 

@@ -28,6 +28,11 @@ Exemple:
 EOT);
     }
 
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'items.php';
+    }
+
     public function execute(  array $argumentValues ) : string
     {
         $action = $argumentValues[0];

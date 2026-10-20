@@ -18,6 +18,11 @@ Exemple:
 EOT);
     }
 
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'players.php';
+    }
+
     public function execute(  array $argumentValues ) : string
     {
 

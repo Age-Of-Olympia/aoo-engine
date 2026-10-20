@@ -19,6 +19,11 @@ Exemple:
 EOT);
     }
 
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'console:plants-on-roads';
+    }
+
     public function execute(array $argumentValues): string
     {
         $apply = strtolower(trim((string) ($argumentValues[0] ?? ''))) === 'fix';

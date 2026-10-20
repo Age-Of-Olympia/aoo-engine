@@ -1,9 +1,9 @@
 <?php
-use Classes\AdminCommand;
+use Classes\Command;
 use Classes\Argument;
 use Classes\File;
 
-class ToolCmd extends AdminCommand
+class ToolCmd extends Command
 {
     public function __construct() {
         parent::__construct("tool",[new Argument('path',true)]);
@@ -13,6 +13,11 @@ Exemple:
 > tool (affiche la liste des outils disponibles)
 > tool add_100_item (lance directement le script add_100_items)
 EOT);
+    }
+
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'console:tool';
     }
 
     public function execute(  array $argumentValues ) : string

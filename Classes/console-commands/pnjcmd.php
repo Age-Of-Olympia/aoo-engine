@@ -16,6 +16,11 @@ Exemple:
 EOT);
     }
 
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'pnjs.php';
+    }
+
     public function execute(  array $argumentValues ) : string
     {
 

@@ -1,10 +1,10 @@
 <?php
-use Classes\AdminCommand;
+use Classes\Command;
 use Classes\Argument;
 use Classes\Forum;
 use Classes\Json;
 
-class ForumCmd extends AdminCommand
+class ForumCmd extends Command
 {
     public function __construct() {
         parent::__construct("forum",[new Argument('action',false),new Argument('startDate',true),new Argument('maxTopic',true)]);
@@ -15,6 +15,11 @@ Exemple:
 > forum buildIndex
 > forum buildIndex 12721584121 10 //start from topic date 12721584121 ( excluded ), limit 10 posts
 EOT);
+    }
+
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'console:forum';
     }
 
     public function execute(  array $argumentValues ) : string

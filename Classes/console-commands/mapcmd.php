@@ -1,5 +1,5 @@
 <?php
-use Classes\AdminCommand;
+use Classes\Command;
 use Classes\Argument;
 use Classes\File;
 use Classes\Player;
@@ -17,7 +17,7 @@ use App\Service\ImportExport\PlanImportRun;
  * the same command again resumes where it stopped
  * ({@see \App\Service\ImportExport\PlanImportRun}).
  */
-class MapCmd extends AdminCommand
+class MapCmd extends Command
 {
     private const PATH = 'datas/private/maps/';
 
@@ -33,6 +33,11 @@ Exemple:
 > map save [nom] (sauvegarde le plan courant)
 > map load [nom] (restaure le plan courant ; relancer la commande reprend un chargement interrompu)
 EOT);
+    }
+
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'plans.php';
     }
 
     public function execute(array $argumentValues): string

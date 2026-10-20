@@ -1,10 +1,10 @@
 <?php
-use Classes\AdminCommand;
+use Classes\Command;
 use Classes\Argument;
 use Classes\File;
 use Classes\Player;
 
-class EditCmd extends AdminCommand
+class EditCmd extends Command
 {
     public function __construct() {
         parent::__construct("edit",[new Argument('json',false), new Argument('private',true)]);
@@ -16,6 +16,11 @@ Exemple:
 > edit items/adonis (édite le .json "datas/public/items/adonis.json")
 > edit plan (ouvre la config du plan actuel dans l'admin — les plans vivent en base)
 EOT);
+    }
+
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'console:edit';
     }
 
     public function execute(  array $argumentValues ) : string

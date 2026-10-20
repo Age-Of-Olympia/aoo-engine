@@ -12,13 +12,14 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
 require_once(__DIR__ . '/helpers.php');
 
 use App\Service\AdminAuthorizationService;
+use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\TutorialStepValidationService;
 use App\Service\TutorialStepSaveService;
 use Classes\Db;
 
 // Check admin authorization
-AdminAuthorizationService::DoAdminCheck();
+(new AdminMenuAccessService())->enforce('tutorial.php');
 
 // Only accept POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

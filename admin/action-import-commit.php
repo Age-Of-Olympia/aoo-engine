@@ -3,12 +3,13 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\AdminAuthorizationService;
+use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\ImportExport\BundleEnvelope;
 use App\Service\ImportExport\ImporterRegistry;
 use App\Service\ImportExport\PlanImporter;
 
-AdminAuthorizationService::DoAdminCheck();
+(new AdminMenuAccessService())->enforce('action-import.php');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: /admin/action-import.php');

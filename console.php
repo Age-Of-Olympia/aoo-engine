@@ -2,7 +2,6 @@
 use Classes\Console;
 use Classes\CommandFactory;
 use App\Service\AdminAuthorizationService;
-use Classes\AdminCommand;
 
 define('NO_LOGIN', true);//session check est fait après car c'est un appel api et on ne veut pas d'ui
 

@@ -8,9 +8,10 @@ require_once __DIR__ . '/../config.php';
 
 use Classes\Db;
 use App\Service\AdminAuthorizationService;
+use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 
-AdminAuthorizationService::DoAdminCheck();
+(new AdminMenuAccessService())->enforce('tutorial-npcs.php');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

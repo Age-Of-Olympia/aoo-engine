@@ -1,9 +1,9 @@
 <?php
-use Classes\AdminCommand;
+use Classes\Command;
 use Classes\Argument;
 use Classes\Json;
 
-class AnnonceCmd extends AdminCommand
+class AnnonceCmd extends Command
 {
     public function __construct() {
         parent::__construct("annonce",[new Argument('text',false)]);
@@ -12,6 +12,11 @@ Modifie l'annonce en page d'accueil
 Exemple:
 > annonce "Nouvelle mise à jour de Leyrion <3"
 EOT);
+    }
+
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'landing.php';
     }
 
     public function execute(  array $argumentValues ) : string

@@ -13,6 +13,7 @@ require_once __DIR__ . '/layout.php';
 require_once __DIR__ . '/helpers.php';
 
 use App\Factory\PlayerFactory;
+use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\EffectService;
 use App\Service\PlayerCaracsService;
@@ -251,6 +252,8 @@ $piOffset = static function () use ($db, $player, $id): int {
     return min((int) $player->data->xp, SEASON_XP) - (int) $player->data->pi - $paid;
 };
 
+$canRemoveRank = (new AdminMenuAccessService())->viewerAllows('player-rank-removal');
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['xp_add']) || isset($_POST['pi_fix']) || isset($_POST['pi_add'])
         || isset($_POST['upgrade_add']) || isset($_POST['upgrade_remove']))) {
@@ -323,6 +326,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
                 $player->put_upgrade($carac, $cost);
                 setFlash('success', '+1 rang de ' . CARACS[$carac] . " pour {$cost} PI.");
             } else {
+                if (!$canRemoveRank) {
+                    throw new RuntimeException('Votre niveau d\'accès ne permet pas de retirer un rang.');
+                }
                 if ($owned < 1) {
                     throw new RuntimeException('Aucun rang de ' . CARACS[$carac] . ' à retirer.');
                 }
@@ -415,7 +421,7 @@ foreach (CARACS as $k => $short) {
         . '<input type="hidden" name="carac" value="' . e($k) . '">'
         . '<button type="submit" name="upgrade_add" value="1" class="btn btn-sm btn-outline-primary"'
         . ' title="Acheter le rang suivant (' . $next . ' PI)">+1</button>'
-        . ($owned > 0
+        . ($owned > 0 && $canRemoveRank
             ? '<button type="submit" name="upgrade_remove" value="1" class="btn btn-sm btn-outline-danger"'
                 . ' title="Retirer le rang le plus cher, coût remboursé en PI"'
                 . ' onclick="return confirm(\'Retirer un rang de ' . e($short) . ' ?\');">−1</button>'

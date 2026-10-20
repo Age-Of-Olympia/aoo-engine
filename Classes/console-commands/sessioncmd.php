@@ -19,6 +19,11 @@ Exemple:
 EOT);
     }
 
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'console:session';
+    }
+
     public function execute(  array $argumentValues ) : string
     {
         // OPEN

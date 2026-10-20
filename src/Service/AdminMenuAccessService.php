@@ -74,6 +74,8 @@ class AdminMenuAccessService
         'action-import.php'        => ['Actions · Importer', 'Actions', self::LEVEL_SUPERADMIN],
 
         'players.php'              => ['Joueurs · Compétences', 'Joueurs', self::LEVEL_ADMIN],
+        // Not a page: the "−1 rank" button of the character sheet and `player removeupgrade`
+        'player-rank-removal'      => ['Joueurs · Retrait de rang', 'Joueurs', self::LEVEL_SUPERADMIN],
         'pnjs.php'                 => ['Joueurs · PNJ', 'Joueurs', self::LEVEL_ADMIN],
         'welcome-missive.php'      => ['Joueurs · Missive d\'accueil', 'Joueurs', self::LEVEL_ADMIN],
         'skill-stats.php'          => ['Joueurs · Statistiques', 'Joueurs', self::LEVEL_ADMIN],
@@ -82,7 +84,7 @@ class AdminMenuAccessService
         'recipes.php'              => ['Objets · Recettes', 'Divers', self::LEVEL_SUPERADMIN],
         // Accueil : contenu éditorial de la page d'accueil (présentation,
         // chroniques, galerie) — pas de logique de jeu, niveau admin
-        'landing.php'              => ['Page d\'accueil', 'Divers', self::LEVEL_ADMIN],
+        'landing.php'              => ['Page d\'accueil', 'Divers', self::LEVEL_SUPERADMIN],
         // Dialogues : superadmin par défaut — même politique que races
         // (contenu de jeu éditable, suppression possible)
         'dialogs.php'              => ['Dialogues', 'Divers', self::LEVEL_SUPERADMIN],
@@ -93,7 +95,7 @@ class AdminMenuAccessService
         'factions.php'             => ['Factions', 'Divers', self::LEVEL_SUPERADMIN],
         // Bâtiments : pose/retrait sur la carte — travail d'animation, même
         // niveau que les PNJ
-        'buildings.php'            => ['Bâtiments · Posés', 'Divers', self::LEVEL_ADMIN],
+        'buildings.php'            => ['Bâtiments · Posés', 'Divers', self::LEVEL_SUPERADMIN],
         // Types de bâtiments : second visage de la table races — même
         // politique que races (contenu de gameplay, suppression possible)
         'structure-types.php'      => ['Bâtiments · Types', 'Divers', self::LEVEL_SUPERADMIN],
@@ -107,6 +109,22 @@ class AdminMenuAccessService
         'special-events.php'       => ['Outils · Évènements spéciaux', 'Divers', self::LEVEL_SUPERADMIN],
         // Not a page: the forum moderation right (soft delete, topic rename)
         'forum-moderation'         => ['Forum · Modération (supprimer, renommer)', 'Forum', self::LEVEL_ADMIN],
+
+        // Console commands with no page of their own. A command that mirrors
+        // a page checks that page's entry instead (Command::accessKey()).
+        'console:player'           => ['Console · player (PJ, banque, journal, msg, purge)', 'Console', self::LEVEL_ADMIN],
+        'console:session'          => ['Console · session', 'Console', self::LEVEL_ADMIN],
+        'console:quest'            => ['Console · quest', 'Console', self::LEVEL_ADMIN],
+        'console:missive'          => ['Console · missive', 'Console', self::LEVEL_ADMIN],
+        'console:entity-cells'     => ['Console · entity-cells', 'Console', self::LEVEL_ADMIN],
+        'console:fence'            => ['Console · fence', 'Console', self::LEVEL_ADMIN],
+        'console:plants-on-roads'  => ['Console · plants-on-roads', 'Console', self::LEVEL_ADMIN],
+        'console:objet'            => ['Console · objet', 'Console', self::LEVEL_SUPERADMIN],
+        'console:edit'             => ['Console · edit', 'Console', self::LEVEL_SUPERADMIN],
+        'console:forum'            => ['Console · forum (index)', 'Console', self::LEVEL_SUPERADMIN],
+        'console:rgpd'             => ['Console · rgpd', 'Console', self::LEVEL_SUPERADMIN],
+        'console:season'           => ['Console · season', 'Console', self::LEVEL_SUPERADMIN],
+        'console:tool'             => ['Console · tool', 'Console', self::LEVEL_SUPERADMIN],
     ];
 
     /**
@@ -192,6 +210,24 @@ class AdminMenuAccessService
             return false;
         }
         return $this->canAccess($page, (bool) $player->have_option('isSuperAdmin'));
+    }
+
+    /**
+     * allows() for the character currently played.
+     */
+    public function viewerAllows(string $page): bool
+    {
+        return AdminAuthorizationService::isAdmin()
+            && $this->canAccess($page, AdminAuthorizationService::isSuperAdmin());
+    }
+
+    /**
+     * Whether the registry declares this entry (unknown entries resolve to
+     * super-admin, so a typo would silently lock a command down).
+     */
+    public function isDeclared(string $page): bool
+    {
+        return isset(self::MENUS[$this->resolveMenu($page)]);
     }
 
     /**

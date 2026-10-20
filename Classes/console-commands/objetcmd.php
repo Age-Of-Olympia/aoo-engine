@@ -1,10 +1,10 @@
 <?php
 use App\Service\ItemInstanceService;
-use Classes\AdminCommand;
+use Classes\Command;
 use Classes\Argument;
 use Classes\Item;
 
-class ObjetCmd extends AdminCommand
+class ObjetCmd extends Command
 {
     public function __construct() {
         parent::__construct("objet", [
@@ -20,6 +20,11 @@ Exemple:
 > objet place [nom objet] [x] [y] [z] [plan]  (z par défaut : 0, plan : gaia)
 > objet place gladius 2 -1
 EOT);
+    }
+
+    public function accessKey(array $argumentValues): ?string
+    {
+        return 'console:objet';
     }
 
     public function execute(array $argumentValues): string

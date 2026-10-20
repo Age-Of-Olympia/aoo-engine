@@ -2,6 +2,7 @@
 namespace Classes;
 
 use App\Factory\PlayerFactory;
+use App\Service\AdminMenuAccessService;
 use Exception;
 
 abstract class Command
@@ -168,7 +169,21 @@ abstract class Command
 
     abstract public function execute(  array $argumentValues ): string;
 
+    /**
+     * Admin registry entry (AdminMenuAccessService) governing this call, so
+     * the console and the admin panel share one level per right. Null: any
+     * admin, which console.php already requires.
+     */
+    public function accessKey(array $argumentValues): ?string
+    {
+        return null;
+    }
+
     public function executeIfAuthorized( array $argumentValues ): string {
+        $key = $this->accessKey($argumentValues);
+        if ($key !== null) {
+            (new AdminMenuAccessService())->enforce($key);
+        }
         return $this->execute($argumentValues);
     }
 

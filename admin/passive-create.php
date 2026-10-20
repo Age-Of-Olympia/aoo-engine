@@ -4,9 +4,10 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\Action\ActionPassiveCreateService;
 use App\Service\AdminAuthorizationService;
+use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 
-AdminAuthorizationService::DoAdminCheck();
+(new AdminMenuAccessService())->enforce('passive-workbench.php');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: /admin/passive-workbench.php');

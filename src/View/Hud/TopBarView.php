@@ -138,10 +138,10 @@ final class TopBarView
                 </script>';
         }
 
-        /* Panneau d'administration (/admin : actions, tutoriel,
-         * joueurs…) pour les super-administrateurs. La console texte
-         * reste sur la touche ² et la page Profil. */
-        if ($player->have_option('isSuperAdmin')) {
+        /* Panneau d'administration (/admin) pour tout admin : le menu
+         * n'y montre que ce que son niveau ouvre. La console texte reste
+         * sur la touche ² et la page Profil. */
+        if ($player->have_option('isAdmin')) {
             echo '<a href="admin/" title="Panneau d\'administration">'
                 . '<button><span class="ra ra-cog"></span></button></a>';
         }
