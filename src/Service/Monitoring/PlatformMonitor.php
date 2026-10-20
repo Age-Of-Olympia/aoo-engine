@@ -34,6 +34,7 @@ final class PlatformMonitor
             $this->pendingMigrations(...),
             $this->auditFailures(...),
             $this->tableSizes(...),
+            $this->opcache(...),
         ];
     }
 
@@ -112,6 +113,64 @@ final class PlatformMonitor
         return MonitoringResult::fromOffenders(self::SECTION, 'Échecs des dernières 24 h', $offenders, MonitoringStatus::Warning,
             'Aucun échec ni interruption dans l\'audit depuis 24 h.',
             '%d échec(s) ou interruption(s) dans l\'audit depuis 24 h.');
+    }
+
+    /**
+     * The web server's opcode cache, as this request sees it: without it PHP
+     * compiles every included file on every request. The cached scripts are
+     * grouped by their first folders, since every environment of the host
+     * may share one cache.
+     */
+    private function opcache(): MonitoringResult
+    {
+        $status = function_exists('opcache_get_status') ? opcache_get_status(true) : false;
+        if ($status === false || empty($status['opcache_enabled'])) {
+            return new MonitoringResult(self::SECTION, 'Cache d\'opcodes (OPcache)', MonitoringStatus::Error,
+                'OPcache inactif pour le site : PHP compile chaque fichier à chaque requête.');
+        }
+
+        $stats = $status['opcache_statistics'];
+        $memory = $status['memory_usage'];
+        $config = (opcache_get_configuration() ?: [])['directives'] ?? [];
+        $hitRate = (float) $stats['opcache_hit_rate'];
+        $restarts = (int) $stats['oom_restarts'] + (int) $stats['hash_restarts'];
+        $keysFull = $stats['num_cached_keys'] >= 0.9 * $stats['max_cached_keys'];
+        $mo = static fn (int|float $bytes): string => number_format($bytes / 1048576, 0, ',', ' ') . ' Mo';
+        $date = static fn (int $time): string => $time > 0 ? date('d/m/Y H:i', $time) : 'jamais';
+
+        $lines = [
+            MonitoringResult::line('Taux de succès', number_format($hitRate, 2, ',', ' ') . ' % ('
+                . number_format((int) $stats['hits'], 0, ',', ' ') . ' succès, '
+                . number_format((int) $stats['misses'], 0, ',', ' ') . ' compilations)',
+                $hitRate < 95 ? MonitoringStatus::Warning : null),
+            MonitoringResult::line('Scripts en cache', $stats['num_cached_scripts'] . ' (clés : ' . $stats['num_cached_keys']
+                . ' sur ' . $stats['max_cached_keys'] . ')', $keysFull ? MonitoringStatus::Warning : null),
+            MonitoringResult::line('Mémoire', $mo($memory['used_memory']) . ' utilisés, ' . $mo($memory['free_memory'])
+                . ' libres, ' . $mo($memory['wasted_memory']) . ' perdus'),
+            MonitoringResult::line('Redémarrages', 'mémoire pleine : ' . $stats['oom_restarts'] . ', table des clés pleine : '
+                . $stats['hash_restarts'] . ', manuels : ' . $stats['manual_restarts'], $restarts > 0 ? MonitoringStatus::Warning : null),
+            MonitoringResult::line('Démarrage', $date((int) $stats['start_time']) . ', dernier redémarrage : '
+                . $date((int) $stats['last_restart_time'])),
+            MonitoringResult::line('Vérification des fichiers', !empty($config['opcache.validate_timestamps'])
+                ? 'toutes les ' . ($config['opcache.revalidate_freq'] ?? '?') . ' s' : 'désactivée'),
+        ];
+
+        $folders = [];
+        foreach (array_keys($status['scripts'] ?? []) as $path) {
+            $folder = implode('/', array_slice(explode('/', $path), 0, 4));
+            $folders[$folder] = ($folders[$folder] ?? 0) + 1;
+        }
+        arsort($folders);
+        foreach (array_slice($folders, 0, 10, true) as $folder => $count) {
+            $lines[] = MonitoringResult::line($folder, $count . ' scripts');
+        }
+
+        $warn = $hitRate < 95 || $restarts > 0 || $keysFull;
+
+        return new MonitoringResult(self::SECTION, 'Cache d\'opcodes (OPcache)',
+            $warn ? MonitoringStatus::Warning : MonitoringStatus::Ok,
+            'Taux de succès ' . number_format($hitRate, 1, ',', ' ') . ' %, ' . $stats['num_cached_scripts']
+                . ' scripts en cache, démarré le ' . $date((int) $stats['start_time']) . '.', $lines);
     }
 
     /** Informative: the biggest tables, and their growth over the stored week. */
