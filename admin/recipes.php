@@ -38,9 +38,10 @@ function recipe_workshop_options(): array
 function recipe_item_options(): array
 {
     $out = [];
-    $res = (new Db())->exe('SELECT id, name FROM items ORDER BY name');
+    $res = (new Db())->exe('SELECT id, name, label FROM items ORDER BY COALESCE(NULLIF(label, \'\'), name)');
     while ($row = $res->fetch_object()) {
-        $out[(int) $row->id] = $row->name;
+        $label = trim((string) $row->label);
+        $out[(int) $row->id] = $label !== '' ? $label . ' (' . $row->name . ')' : $row->name;
     }
     return $out;
 }
@@ -61,11 +62,11 @@ function recipe_render_list(string $csrfToken): string
     $db = new Db();
     $res = $db->exe(
         'SELECT r.id, r.name, r.workshop,
-            (SELECT GROUP_CONCAT(CONCAT(i.name, " x", ri.count) SEPARATOR ", ")
+            (SELECT GROUP_CONCAT(CONCAT(COALESCE(NULLIF(i.label, ""), i.name), " x", ri.count) SEPARATOR ", ")
              FROM craft_recipes_ingredients ri JOIN items i ON i.id = ri.item_id WHERE ri.recipe_id = r.id) AS ingredients,
-            (SELECT GROUP_CONCAT(CONCAT(i.name, " x", rr.count) SEPARATOR ", ")
+            (SELECT GROUP_CONCAT(CONCAT(COALESCE(NULLIF(i.label, ""), i.name), " x", rr.count) SEPARATOR ", ")
              FROM craft_recipes_results rr JOIN items i ON i.id = rr.item_id WHERE rr.recipe_id = r.id) AS results,
-            (SELECT GROUP_CONCAT(ra.name SEPARATOR ", ")
+            (SELECT GROUP_CONCAT(ra.label SEPARATOR ", ")
              FROM race_recipes rr2 JOIN races ra ON ra.id = rr2.race_id WHERE rr2.recipe_id = r.id) AS races
          FROM craft_recipes r ORDER BY r.name'
     );

@@ -112,16 +112,14 @@ ob_start();
 $content = ob_get_clean();
 ob_start();
 ?>
-<strong>Pourquoi cette page ?</strong>
-    La saison est une colonne (<code>plans.season</code>) : le suffixe
-    <code>_sX</code> du nom est un reste de l'ancien système. Cette page donne le nom de base
-    aux plans de la <strong>saison courante (<?= (int) $currentSeason ?>)</strong> et ajoute leur numéro de saison
-    au nom des archives. Rejouable à chaque ouverture de saison.
+À l'ouverture d'une saison : les plans de la <strong>saison <?= (int) $currentSeason ?></strong> prennent
+    leur nom de base (<code>gaia</code>), les archives gardent leur saison en suffixe (<code>gaia_s1</code>).
+   <code class="tech-name">plans.season</code>
     <ul class="mb-0 mt-1">
-        <li>Chaque renommage est répercuté partout : coords, journaux, rendements, réglages, téléporteurs,
-            conditions d'action, PNG de minimap.</li>
-        <li>Un plan sans fond configuré, qui utilise <code>img/tiles/&lt;nom&gt;</code>,
-            reçoit ce fond dans sa config avant le renommage : l'affichage ne change pas.</li>
+        <li>Le nouveau nom est reporté partout : cases, journaux, rendements, réglages, téléporteurs,
+            conditions d'action, images de la carte.</li>
+        <li>Un plan sans fond configuré garde son fond actuel
+           <code class="tech-name">img/tiles/&lt;nom&gt;</code> : l'affichage ne change pas.</li>
         <li>Les conflits (nom de base déjà utilisé par la saison courante ou par un plan de toutes saisons) sont ignorés
             et signalés : à trancher à la main.</li>
     </ul>

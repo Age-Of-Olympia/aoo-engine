@@ -29,13 +29,13 @@ class TutorialStepValidationService
     public function validateStepNumber($value): float
     {
         if (!is_numeric($value)) {
-            throw new InvalidArgumentException('Step number must be numeric');
+            throw new InvalidArgumentException('Le numéro d\'étape doit être un nombre.');
         }
 
         $stepNumber = (float)$value;
 
         if ($stepNumber < 0 || $stepNumber > 999) {
-            throw new InvalidArgumentException('Step number must be between 0 and 999');
+            throw new InvalidArgumentException('Le numéro d\'étape doit être compris entre 0 et 999.');
         }
 
         return $stepNumber;
@@ -57,11 +57,11 @@ class TutorialStepValidationService
         $stepId = (string)$value;
 
         if (strlen($stepId) > 50) {
-            throw new InvalidArgumentException('Step ID must not exceed 50 characters');
+            throw new InvalidArgumentException('L\'identifiant d\'étape ne doit pas dépasser 50 caractères.');
         }
 
         if (!preg_match('/^[a-zA-Z0-9_-]+$/', $stepId)) {
-            throw new InvalidArgumentException('Step ID must contain only letters, numbers, hyphens, and underscores');
+            throw new InvalidArgumentException('L\'identifiant d\'étape ne peut contenir que des lettres, des chiffres, des tirets et des tirets bas.');
         }
 
         return $stepId;
@@ -81,7 +81,7 @@ class TutorialStepValidationService
 
         if (!in_array($stepType, $valid, true)) {
             throw new InvalidArgumentException(
-                'Invalid step type. Must be one of: ' . implode(', ', $valid)
+                'Type d\'étape inconnu. Valeurs possibles : ' . implode(', ', $valid)
             );
         }
 
@@ -104,7 +104,7 @@ class TutorialStepValidationService
         }
 
         if (!preg_match('/^\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?$/', $version)) {
-            throw new InvalidArgumentException('Version must be in format X.Y.Z or X.Y.Z-suffix (e.g., 1.0.0 or 2.0.0-craft)');
+            throw new InvalidArgumentException('La version doit avoir la forme X.Y.Z ou X.Y.Z-suffixe (ex. 1.0.0 ou 2.0.0-craft).');
         }
 
         return $version;
@@ -125,11 +125,11 @@ class TutorialStepValidationService
         $xp = (int)$value;
 
         if ($xp < 0) {
-            throw new InvalidArgumentException('XP reward cannot be negative');
+            throw new InvalidArgumentException('La récompense en XP ne peut pas être négative.');
         }
 
         if ($xp > 10000) {
-            throw new InvalidArgumentException('XP reward cannot exceed 10,000');
+            throw new InvalidArgumentException('La récompense en XP ne peut pas dépasser 10 000.');
         }
 
         return $xp;
@@ -151,7 +151,7 @@ class TutorialStepValidationService
         $coord = (int)$value;
 
         if ($coord < -100 || $coord > 100) {
-            throw new InvalidArgumentException('Coordinates must be between -100 and 100');
+            throw new InvalidArgumentException('Les coordonnées doivent être comprises entre -100 et 100.');
         }
 
         return $coord;
@@ -175,7 +175,7 @@ class TutorialStepValidationService
 
         if (!in_array($validationType, $valid, true)) {
             throw new InvalidArgumentException(
-                'Invalid validation type. Must be one of: ' . implode(', ', $valid)
+                'Type de validation inconnu. Valeurs possibles : ' . implode(', ', $valid)
             );
         }
 
@@ -196,7 +196,7 @@ class TutorialStepValidationService
 
         if (!in_array($mode, $valid, true)) {
             throw new InvalidArgumentException(
-                'Invalid interaction mode. Must be one of: ' . implode(', ', $valid)
+                'Mode d\'interaction inconnu. Valeurs possibles : ' . implode(', ', $valid)
             );
         }
 
@@ -217,7 +217,7 @@ class TutorialStepValidationService
 
         if (!in_array($position, $valid, true)) {
             throw new InvalidArgumentException(
-                'Invalid tooltip position. Must be one of: ' . implode(', ', $valid)
+                'Position de bulle inconnue. Valeurs possibles : ' . implode(', ', $valid)
             );
         }
 
@@ -246,11 +246,11 @@ class TutorialStepValidationService
         }
 
         if ($int < 0) {
-            throw new InvalidArgumentException('Value must be -1 (race max) or a positive number');
+            throw new InvalidArgumentException('La valeur doit être -1 (maximum de la race) ou un nombre positif.');
         }
 
         if ($int > $max) {
-            throw new InvalidArgumentException("Value cannot exceed {$max}");
+            throw new InvalidArgumentException("La valeur ne peut pas dépasser {$max}.");
         }
 
         return $int;
@@ -273,11 +273,11 @@ class TutorialStepValidationService
         $int = (int)$value;
 
         if ($int < 0) {
-            throw new InvalidArgumentException('Value cannot be negative');
+            throw new InvalidArgumentException('La valeur ne peut pas être négative.');
         }
 
         if ($int > $max) {
-            throw new InvalidArgumentException("Value cannot exceed {$max}");
+            throw new InvalidArgumentException("La valeur ne peut pas dépasser {$max}.");
         }
 
         return $int;
@@ -298,7 +298,7 @@ class TutorialStepValidationService
         $selector = trim((string)$value);
 
         if (strlen($selector) > 500) {
-            throw new InvalidArgumentException('CSS selector cannot exceed 500 characters');
+            throw new InvalidArgumentException('Le sélecteur CSS ne peut pas dépasser 500 caractères.');
         }
 
         return $selector;
@@ -321,7 +321,7 @@ class TutorialStepValidationService
         $string = trim((string)$value);
 
         if (strlen($string) > $maxLength) {
-            throw new InvalidArgumentException("Value cannot exceed {$maxLength} characters");
+            throw new InvalidArgumentException("La valeur ne peut pas dépasser {$maxLength} caractères.");
         }
 
         return $string;
@@ -344,7 +344,7 @@ class TutorialStepValidationService
         $text = trim((string)$value);
 
         if (strlen($text) > $maxLength) {
-            throw new InvalidArgumentException("Text cannot exceed {$maxLength} characters");
+            throw new InvalidArgumentException("Le texte ne peut pas dépasser {$maxLength} caractères.");
         }
 
         return $text;
@@ -386,7 +386,7 @@ class TutorialStepValidationService
         $valid = TutorialContextKeys::contextChangeKeys();
         if (!in_array($key, $valid, true)) {
             throw new InvalidArgumentException(
-                'Invalid context key. Must be one of: ' . implode(', ', $valid)
+                'Clé de contexte inconnue. Valeurs possibles : ' . implode(', ', $valid)
             );
         }
 
@@ -418,7 +418,7 @@ class TutorialStepValidationService
         $valid = TutorialContextKeys::nextPreparationKeys();
         if (!in_array($key, $valid, true)) {
             throw new InvalidArgumentException(
-                'Invalid preparation key. Must be one of: ' . implode(', ', $valid)
+                'Clé de préparation inconnue. Valeurs possibles : ' . implode(', ', $valid)
             );
         }
 

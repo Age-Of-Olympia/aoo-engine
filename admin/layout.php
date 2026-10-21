@@ -11,7 +11,7 @@ use App\Service\AdminAuthorizationService;
 (new AdminMenuAccessService())->enforcePage(basename($_SERVER['PHP_SELF']));
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20261021';
+const ADMIN_ASSET_VERSION = '20261022';
 
 
 /**
@@ -272,6 +272,7 @@ function admin_layout(string $title, string $content, array $options = []): stri
     <script src="/admin/js/admin-list.js?v=$version" defer></script>
 </head>
 <body>
+    <script>try { if (localStorage.getItem('adminTechNames') === '1') document.body.classList.add('show-tech'); } catch (e) {}</script>
     <div class="admin-layout">
         <header class="admin-topbar">
             <button type="button" class="admin-nav-toggle" aria-controls="admin-sidebar" aria-expanded="false"
@@ -284,6 +285,7 @@ function admin_layout(string $title, string $content, array $options = []): stri
                 $navigation
             </nav>
             <div class="sidebar-footer">
+                <label class="tech-switch"><input type="checkbox" data-tech-names> Noms techniques</label>
                 <a href="/index.php">&larr; Retour au jeu</a>
             </div>
         </aside>

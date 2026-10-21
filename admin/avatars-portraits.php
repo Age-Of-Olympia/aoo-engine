@@ -29,6 +29,11 @@ $pageTitle = $structureMode ? 'Images des bâtiments' : 'Avatars & portraits';
 
 $type = ImageType::tryFrom(stringWithDefault('type', (string) ($_GET['type'] ?? 'avatar'))) ?? ImageType::AVATAR;
 $races = $service->raceNames($type, $structureMode ? 'structure' : 'character');
+// Race and type codes by their display name.
+$raceLabels = [];
+foreach ((new \App\Service\RaceService())->getAllRaces() as $known) {
+    $raceLabels[$known->getName()] = $known->getLabel();
+}
 $race = stringWithDefault('race', (string) ($_GET['race'] ?? ''));
 if (!in_array($race, $races, true)) {
     $race = $races[0] ?? '';
@@ -165,7 +170,7 @@ ob_start();
             <?php foreach ($races as $candidate): ?>
                 <a href="<?= e($selfPage) ?>?type=<?= e($type->value) ?>&amp;race=<?= e(urlencode($candidate)) ?>"
                    class="btn btn-sm <?= $candidate === $race ? 'btn-primary' : 'btn-outline-secondary' ?>">
-                    <?= e($candidate) ?>
+                    <?= techLabel($raceLabels[$candidate] ?? $candidate, $candidate) ?>
                 </a>
             <?php endforeach; ?>
         </div>
@@ -394,7 +399,7 @@ ob_start();
                                             $raceChoices = [];
                                             foreach ($races as $target) {
                                                 if ($target !== $race) {
-                                                    $raceChoices[$target] = $target;
+                                                    $raceChoices[$target] = $raceLabels[$target] ?? $target;
                                                 }
                                             }
                                             echo formSelect('target_race', $raceChoices, null, null,

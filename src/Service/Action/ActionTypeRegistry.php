@@ -2,6 +2,7 @@
 
 namespace App\Service\Action;
 
+use App\Action\Schema\TechnicalLabels;
 use App\Entity\Action;
 use ReflectionClass;
 
@@ -24,7 +25,7 @@ final class ActionTypeRegistry
     {
         $types = [];
         foreach (array_keys($this->typeMap()) as $key) {
-            $types[$key] = ucfirst($key);
+            $types[$key] = TechnicalLabels::actionType($key);
         }
         ksort($types);
 
@@ -189,7 +190,7 @@ final class ActionTypeRegistry
         foreach ($keys as $key) {
             $nodes[] = new ActionTypeNode(
                 $key,
-                ucfirst($key),
+                TechnicalLabels::actionType($key),
                 (new ReflectionClass($map[$key]))->isAbstract(),
                 $this->buildNodes($map, $childrenByParent, $key),
             );

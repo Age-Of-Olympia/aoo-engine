@@ -88,10 +88,11 @@ ob_start();
         <div class="card-body py-2 d-flex align-items-center gap-3 flex-wrap">
             <form method="get" class="d-flex align-items-center gap-2 flex-wrap mb-0">
                 <span class="text-muted"><i class="fas fa-map"></i> Plan :</span>
+                <?php $planLabels = plan_choices(); ?>
                 <select name="plan" class="form-control form-control-sm w-auto" data-autosubmit>
                     <?php foreach ($plans as $candidate): ?>
                         <option value="<?= e($candidate) ?>" <?= $candidate === $plan ? 'selected' : '' ?>>
-                            <?= e($candidate) ?>
+                            <?= e($planLabels[$candidate] ?? $candidate) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -221,4 +222,4 @@ $content = ob_get_clean();
 echo admin_layout('Éléments posés', $content, ['intro' => 'Un élément posé sur une case applique <strong>l\'effet de son type</strong> aux personnages qui
         marchent dessus (boue, ronce…) ; il se choisit dans <a href="/admin/element-types.php">Types</a>. Durée vide = permanent (jamais purgé) ;
         reposer un élément prolonge sa durée. Une case ne peut avoir qu\'un élément, et seulement sur un sol.
-        Les traces de pas et le drapeau sont des <em>marques</em>, une couche à part (Tiled, couche « marks »).']);
+        Les traces de pas et le drapeau se posent dans Tiled<code class="tech-name">marks</code>.']);

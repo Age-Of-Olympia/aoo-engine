@@ -54,6 +54,39 @@ trait RendersOptionsTrait
     }
 
     /**
+     * <option> list of codes shown by their label (code in the title), sorted
+     * by label.
+     *
+     * @param iterable<int, string>    $codes
+     * @param callable(string): string $label
+     */
+    private function labeledOptions(iterable $codes, callable $label): string
+    {
+        $labels = [];
+        foreach ($codes as $code) {
+            $labels[(string) $code] = $label((string) $code);
+        }
+        asort($labels);
+        $html = '';
+        foreach ($labels as $code => $text) {
+            $html .= '<option value="' . $this->esc($code) . '" title="' . $this->esc($code) . '">' . $this->esc($text) . '</option>';
+        }
+
+        return $html;
+    }
+
+    /**
+     * A label with its code beside it, the code shown only under « Noms
+     * techniques » (same markup as techLabel() in admin/helpers.php).
+     */
+    private function labelWithCode(string $label, string $code): string
+    {
+        return $label === $code
+            ? '<code>' . $this->esc($code) . '</code>'
+            : $this->esc($label) . '<code class="tech-name">' . $this->esc($code) . '</code>';
+    }
+
+    /**
      * <option> list for a multi-select: every value present in $selected (string
      * compare) is marked.
      *

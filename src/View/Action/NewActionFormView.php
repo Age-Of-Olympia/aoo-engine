@@ -2,6 +2,7 @@
 
 namespace App\View\Action;
 
+use App\Action\Schema\TechnicalLabels;
 use App\Trait\RendersOptionsTrait;
 /**
  * The "new action" form shown in the workbench actions column. Lives here so the
@@ -26,7 +27,7 @@ final class NewActionFormView
         return '<details class="wb-create"><summary class="btn btn-sm btn-success">+ Nouvelle action</summary>'
             . '<form method="post" action="/admin/action-create.php" class="wb-create-form">'
             . $csrfTokenField
-            . '<select class="form-control" name="type">' . $this->options($types) . '</select>'
+            . '<select class="form-control" name="type">' . $this->labeledOptions(array_keys($types), TechnicalLabels::actionType(...)) . '</select>'
             . '<input class="form-control" type="text" name="name" placeholder="nom (clé)" required autocomplete="off">'
             . '<input class="form-control" type="text" name="display_name" placeholder="nom affiché" autocomplete="off">'
             . '<div class="wb-create-row">'

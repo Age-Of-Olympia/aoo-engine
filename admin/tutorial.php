@@ -1,8 +1,6 @@
 <?php
 /**
- * Tutorial Admin Panel - Main Dashboard
- *
- * Manage tutorial steps, view player progress, and test configurations
+ * Tutorial admin: steps, player sessions and statistics.
  */
 
 require_once __DIR__ . '/layout.php';
@@ -11,6 +9,7 @@ require_once __DIR__ . '/helpers.php';
 use Classes\Db;
 use App\Service\CsrfProtectionService;
 use App\Tutorial\TutorialCatalogService;
+use App\Tutorial\TutorialOptions;
 use App\Tutorial\TutorialStepRepository;
 
 $database = new Db();
@@ -35,10 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         try {
             $stepRepository->setStepActive($stepId, $isActive);
-            setFlash('success', 'Step ' . ($isActive ? 'enabled' : 'disabled') . ' successfully');
+            setFlash('success', 'Étape ' . ($isActive ? 'activée.' : 'désactivée.'));
         } catch (Exception $e) {
             error_log("[TutorialAdmin] Toggle error: " . $e->getMessage());
-            setFlash('danger', 'Failed to update step');
+            setFlash('danger', 'La mise à jour de l\'étape a échoué.');
         }
     }
 
@@ -47,10 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         try {
             $stepRepository->deleteStep($stepId);
-            setFlash('success', 'Step deleted successfully');
+            setFlash('success', 'Étape supprimée.');
         } catch (Exception $e) {
             error_log("[TutorialAdmin] Delete error: " . $e->getMessage());
-            setFlash('danger', 'Failed to delete step');
+            setFlash('danger', 'La suppression de l\'étape a échoué.');
         }
     }
 
@@ -83,7 +82,7 @@ ob_start();
     <ul class="nav-tabs" id="adminTabs" role="tablist">
         <li class="nav-item">
             <a class="nav-link active" id="steps-tab" data-toggle="tab" href="#steps-panel" role="tab">
-                <i class="fas fa-list-ol"></i> Steps <span class="badge badge-primary ml-1"><?=$stats['total']?></span>
+                <i class="fas fa-list-ol"></i> Étapes <span class="badge badge-primary ml-1"><?=$stats['total']?></span>
             </a>
         </li>
         <li class="nav-item">
@@ -93,7 +92,7 @@ ob_start();
         </li>
         <li class="nav-item">
             <a class="nav-link" id="stats-tab" data-toggle="tab" href="#stats-panel" role="tab">
-                <i class="fas fa-chart-bar"></i> Statistics <span class="badge badge-success ml-1"><?=$stats['active']?></span>
+                <i class="fas fa-chart-bar"></i> Statistiques <span class="badge badge-success ml-1"><?=$stats['active']?></span>
             </a>
         </li>
     </ul>
@@ -103,10 +102,10 @@ ob_start();
         <div class="tab-pane fade" id="sessions-panel" role="tabpanel">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3><i class="fas fa-users"></i> Tutorial Sessions</h3>
+                    <h3><i class="fas fa-users"></i> Sessions de tutoriel</h3>
                     <div>
                         <button class="btn btn-outline-secondary btn-sm" id="refreshSessions">
-                            <i class="fas fa-sync"></i> Refresh
+                            <i class="fas fa-sync"></i> Actualiser
                         </button>
                     </div>
                 </div>
@@ -118,9 +117,9 @@ ob_start();
                         : 0;
                     ?>
                     <div class="session-stats-inline mb-3">
-                        <span class="stat-badge bg-success"><i class="fas fa-check"></i> <?=$stats['sessions']['completed']?> Completed</span>
-                        <span class="stat-badge bg-primary"><i class="fas fa-spinner"></i> <?=$stats['sessions']['in_progress']?> In Progress</span>
-                        <span class="stat-badge bg-info"><i class="fas fa-percentage"></i> <?=$rate?>% Completion</span>
+                        <span class="stat-badge bg-success"><i class="fas fa-check"></i> <?=$stats['sessions']['completed']?> terminées</span>
+                        <span class="stat-badge bg-primary"><i class="fas fa-spinner"></i> <?=$stats['sessions']['in_progress']?> en cours</span>
+                        <span class="stat-badge bg-info"><i class="fas fa-percentage"></i> <?=$rate?> % terminées</span>
                     </div>
 
                     <!-- Sessions Table -->
@@ -128,19 +127,19 @@ ob_start();
                         <table class="table table-hover" id="sessionsTable">
                             <thead class="thead-light">
                                 <tr>
-                                    <th>Player</th>
-                                    <th>Progress</th>
-                                    <th>Current Step</th>
-                                    <th>XP Earned</th>
-                                    <th>Status</th>
-                                    <th>Last Update</th>
+                                    <th>Joueur</th>
+                                    <th>Progression</th>
+                                    <th>Étape en cours</th>
+                                    <th>XP gagnée</th>
+                                    <th>Statut</th>
+                                    <th>Mise à jour</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="sessionsTableBody">
                                 <tr>
                                     <td colspan="7" class="text-center py-4">
-                                        <i class="fas fa-spinner fa-spin"></i> Loading sessions...
+                                        <i class="fas fa-spinner fa-spin"></i> Chargement des sessions…
                                     </td>
                                 </tr>
                             </tbody>
@@ -150,7 +149,7 @@ ob_start();
                     <!-- Pagination -->
                     <div class="d-flex justify-content-between align-items-center mt-3">
                         <div class="text-muted" id="sessionsPaginationInfo">
-                            Showing 0 sessions
+                            Aucune session
                         </div>
                         <nav>
                             <ul class="pagination pagination-sm mb-0" id="sessionsPagination">
@@ -167,7 +166,7 @@ ob_start();
                 <div class="col-md-3">
                     <div class="card">
                         <div class="card-body text-center">
-                            <h5 class="card-title text-muted">Total Steps</h5>
+                            <h5 class="card-title text-muted">Étapes</h5>
                             <p class="card-text display-4"><?=$stats['total']?></p>
                         </div>
                     </div>
@@ -175,7 +174,7 @@ ob_start();
                 <div class="col-md-3">
                     <div class="card">
                         <div class="card-body text-center">
-                            <h5 class="card-title text-muted">Active Steps</h5>
+                            <h5 class="card-title text-muted">Étapes actives</h5>
                             <p class="card-text display-4 text-success"><?=$stats['active']?></p>
                         </div>
                     </div>
@@ -183,7 +182,7 @@ ob_start();
                 <div class="col-md-3">
                     <div class="card">
                         <div class="card-body text-center">
-                            <h5 class="card-title text-muted">Inactive Steps</h5>
+                            <h5 class="card-title text-muted">Étapes inactives</h5>
                             <p class="card-text display-4 text-secondary"><?=$stats['total'] - $stats['active']?></p>
                         </div>
                     </div>
@@ -191,7 +190,7 @@ ob_start();
                 <div class="col-md-3">
                     <div class="card">
                         <div class="card-body text-center">
-                            <h5 class="card-title text-muted">Tutorials</h5>
+                            <h5 class="card-title text-muted">Tutoriels</h5>
                             <p class="card-text display-4"><?= count($availableVersions) ?></p>
                         </div>
                     </div>
@@ -201,7 +200,7 @@ ob_start();
             <!-- Steps by Type -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h3><i class="fas fa-tags"></i> Steps by Type</h3>
+                    <h3><i class="fas fa-tags"></i> Étapes par type</h3>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -209,7 +208,7 @@ ob_start();
                             <div class="col-md-3 mb-2">
                                 <div class="d-flex align-items-center">
                                     <span class="badge badge-primary mr-2"><?=$count?></span>
-                                    <span><?=$type?></span>
+                                    <span><?= techLabel(TutorialOptions::STEP_TYPES[$type] ?? (string) $type, (string) $type) ?></span>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -236,7 +235,7 @@ ob_start();
                     'id="version" class="form-control" data-autosubmit');
                 ?>
                 <?php if ($selectedVersion): ?>
-                <a href="?" class="btn btn-outline-secondary btn-sm">Effacer filtre</a>
+                <a href="?" class="btn btn-outline-secondary btn-sm">Effacer le filtre</a>
                 <?php endif; ?>
             </form>
         </div>
@@ -245,17 +244,17 @@ ob_start();
     <!-- Steps Table -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span>Tutorial Steps <?= $selectedVersion ? '(' . htmlspecialchars($selectedVersion) . ')' : '' ?></span>
+            <span>Étapes <?= $selectedVersion ? '(' . htmlspecialchars($selectedVersion) . ')' : '' ?></span>
             <div class="btn-group">
-                <button type="button" class="btn btn-outline-secondary" id="btn-export-all" title="Export all steps as JSON">
-                    <i class="fas fa-upload"></i> Export All
+                <button type="button" class="btn btn-outline-secondary" id="btn-export-all" title="Télécharger toutes les étapes en JSON">
+                    <i class="fas fa-upload"></i> Tout exporter
                 </button>
-                <button type="button" class="btn btn-outline-secondary" id="btn-import-all" title="Import steps from JSON">
-                    <i class="fas fa-download"></i> Import All
+                <button type="button" class="btn btn-outline-secondary" id="btn-import-all" title="Importer des étapes depuis un fichier JSON">
+                    <i class="fas fa-download"></i> Tout importer
                 </button>
                 <input type="file" id="import-all-file-input" accept=".json" hidden>
                 <a href="tutorial-step-editor.php<?= $selectedVersion ? '?version=' . urlencode($selectedVersion) : '' ?>" class="btn btn-success">
-                    <i class="fas fa-plus"></i> Add New Step
+                    <i class="fas fa-plus"></i> Nouvelle étape
                 </a>
             </div>
         </div>
@@ -266,15 +265,15 @@ ob_start();
                         <tr>
                             <th>#</th>
                             <?php if (!$selectedVersion): ?><th>Version</th><?php endif; ?>
-                            <th>Step ID</th>
-                            <th>Next Step</th>
-                            <th>Title</th>
+                            <th>Identifiant</th>
+                            <th>Étape suivante</th>
+                            <th>Titre</th>
                             <th>Type</th>
                             <th>Mode</th>
                             <th>Validation</th>
                             <th>Interactions</th>
                             <th>XP</th>
-                            <th>Status</th>
+                            <th>Active</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -292,19 +291,19 @@ ob_start();
                                     <?php if ($step['next_step']): ?>
                                         <code><?=htmlspecialchars($step['next_step'])?></code>
                                     <?php else: ?>
-                                        <em class="text-muted">end</em>
+                                        <em class="text-muted">fin</em>
                                     <?php endif; ?>
                                 </td>
                                 <td><?=htmlspecialchars($step['title'])?></td>
                                 <td>
-                                    <span class="badge badge-info"><?= e($step['step_type']) ?></span>
+                                    <span class="badge badge-info"><?= techLabel(TutorialOptions::STEP_TYPES[$step['step_type']] ?? (string) $step['step_type'], (string) $step['step_type']) ?></span>
                                 </td>
-                                <td><?= e($step['interaction_mode'] ?? '-') ?></td>
+                                <td><?= $step['interaction_mode'] ? techLabel(strtok(TutorialOptions::INTERACTION_MODES[$step['interaction_mode']] ?? $step['interaction_mode'], ' '), $step['interaction_mode']) : '-' ?></td>
                                 <td>
                                     <?php if ($step['requires_validation']): ?>
-                                        <span class="badge badge-warning"><?= e($step['validation_type']) ?></span>
+                                        <span class="badge badge-warning"><?= techLabel(TutorialOptions::VALIDATION_TYPES[$step['validation_type']] ?? (string) $step['validation_type'], (string) $step['validation_type']) ?></span>
                                     <?php else: ?>
-                                        <span class="text-muted">None</span>
+                                        <span class="text-muted">Aucune</span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-center"><?=$step['interactions_count']?></td>
@@ -318,7 +317,7 @@ ob_start();
                                             type="submit"
                                             name="toggle_step"
                                             class="btn btn-sm btn-<?=$step['is_active'] ? 'success' : 'secondary'?>"
-                                            title="<?=$step['is_active'] ? 'Disable' : 'Enable'?>"
+                                            title="<?=$step['is_active'] ? 'Désactiver' : 'Activer'?>"
                                         >
                                             <i class="fas fa-<?=$step['is_active'] ? 'check' : 'times'?>"></i>
                                         </button>
@@ -329,7 +328,7 @@ ob_start();
                                         <a
                                             href="tutorial-step-editor.php?id=<?=$step['id']?>"
                                             class="btn btn-sm btn-primary"
-                                            title="Edit"
+                                            title="Modifier"
                                         >
                                             <i class="fas fa-edit"></i>
                                         </a>
@@ -337,7 +336,7 @@ ob_start();
                                               data-confirm="<?= e('Supprimer l\'étape « ' . $step['title'] . ' » ? Sa configuration, ses validations, prérequis et interactions partent avec, sans retour possible.') ?>">
                                             <?= $csrf->renderTokenField() ?>
                                             <input type="hidden" name="step_id" value="<?= (int) $step['id'] ?>">
-                                            <button type="submit" name="delete_step" value="1" class="btn btn-sm btn-danger" title="Delete">
+                                            <button type="submit" name="delete_step" value="1" class="btn btn-sm btn-danger" title="Supprimer">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -360,7 +359,7 @@ ob_start();
 <div class="admin-modal-overlay" id="sessionDetailModal" hidden>
     <div class="admin-modal">
         <div class="admin-modal-header">
-            <h5><i class="fas fa-user-graduate"></i> Session Details</h5>
+            <h5><i class="fas fa-user-graduate"></i> Détail de la session</h5>
             <button type="button" class="admin-modal-close" onclick="closeSessionModal()">&times;</button>
         </div>
         <div class="admin-modal-body" id="sessionDetailContent">
@@ -369,7 +368,7 @@ ob_start();
             </div>
         </div>
         <div class="admin-modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closeSessionModal()">Close</button>
+            <button type="button" class="btn btn-secondary" onclick="closeSessionModal()">Fermer</button>
         </div>
     </div>
 </div>
@@ -443,7 +442,7 @@ async function loadSessions(page = 0) {
 
     const tbody = document.getElementById('sessionsTableBody');
     tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4">
-        <i class="fas fa-spinner fa-spin"></i> Loading sessions...
+        <i class="fas fa-spinner fa-spin"></i> Chargement des sessions…
     </td></tr>`;
 
     try {
@@ -451,7 +450,7 @@ async function loadSessions(page = 0) {
         const data = await response.json();
 
         if (!data.success) {
-            throw new Error(data.error || 'Failed to load sessions');
+            throw new Error(data.error || 'Impossible de charger les sessions');
         }
 
         renderSessions(data.sessions, data.total);
@@ -467,9 +466,9 @@ function renderSessions(sessions, total) {
 
     if (sessions.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">
-            <i class="fas fa-inbox"></i> No tutorial sessions yet
+            <i class="fas fa-inbox"></i> Aucune session de tutoriel pour l'instant
         </td></tr>`;
-        document.getElementById('sessionsPaginationInfo').textContent = 'No sessions';
+        document.getElementById('sessionsPaginationInfo').textContent = 'Aucune session';
         return;
     }
 
@@ -479,15 +478,15 @@ function renderSessions(sessions, total) {
             : 0;
 
         const statusBadge = session.completed
-            ? '<span class="badge badge-success"><i class="fas fa-check"></i> Completed</span>'
-            : '<span class="badge badge-primary"><i class="fas fa-spinner"></i> In Progress</span>';
+            ? '<span class="badge badge-success"><i class="fas fa-check"></i> Terminée</span>'
+            : '<span class="badge badge-primary"><i class="fas fa-spinner"></i> En cours</span>';
 
         const lastUpdate = new Date(session.updated_at).toLocaleString('fr-FR');
 
         return `
             <tr>
                 <td>
-                    <strong>${escapeHtml(session.player_name || 'Unknown')}</strong>
+                    <strong>${escapeHtml(session.player_name || 'Inconnu')}</strong>
                     <br><small class="text-muted">${escapeHtml(session.player_race || '')}</small>
                 </td>
                 <td>
@@ -501,7 +500,7 @@ function renderSessions(sessions, total) {
                             ${progress}%
                         </div>
                     </div>
-                    <small class="text-muted">Step ${session.step_number || '?'} / ${session.total_steps || '?'}</small>
+                    <small class="text-muted">Étape ${session.step_number || '?'} / ${session.total_steps || '?'}</small>
                 </td>
                 <td>
                     <code>${escapeHtml(session.current_step || 'N/A')}</code>
@@ -514,13 +513,13 @@ function renderSessions(sessions, total) {
                 <td><small>${lastUpdate}</small></td>
                 <td>
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="viewSessionDetail('${session.tutorial_session_id}')" title="View Details">
+                        <button class="btn btn-outline-primary" onclick="viewSessionDetail('${session.tutorial_session_id}')" title="Voir le détail">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button class="btn btn-outline-warning" onclick="resetSession('${session.tutorial_session_id}')" title="Reset Session">
+                        <button class="btn btn-outline-warning" onclick="resetSession('${session.tutorial_session_id}')" title="Recommencer la session">
                             <i class="fas fa-undo"></i>
                         </button>
-                        <button class="btn btn-outline-danger" onclick="deleteSession('${session.tutorial_session_id}')" title="Delete Session">
+                        <button class="btn btn-outline-danger" onclick="deleteSession('${session.tutorial_session_id}')" title="Supprimer la session">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -533,7 +532,7 @@ function renderSessions(sessions, total) {
     const start = sessionsCurrentPage * sessionsPerPage + 1;
     const end = Math.min(start + sessions.length - 1, total);
     document.getElementById('sessionsPaginationInfo').textContent =
-        `Showing ${start}-${end} of ${total} sessions`;
+        `Sessions ${start} à ${end} sur ${total}`;
 
     // Render pagination
     renderSessionsPagination(total);
@@ -594,7 +593,7 @@ async function viewSessionDetail(sessionId) {
         const data = await response.json();
 
         if (!data.success) {
-            throw new Error(data.error || 'Failed to load session details');
+            throw new Error(data.error || 'Impossible de charger le détail de la session');
         }
 
         content.innerHTML = renderSessionDetail(data);
@@ -614,23 +613,23 @@ function renderSessionDetail(data) {
     let html = `
         <div class="row mb-4">
             <div class="col-md-6">
-                <h5><i class="fas fa-user"></i> Player Info</h5>
+                <h5><i class="fas fa-user"></i> Joueur</h5>
                 <table class="table table-sm">
-                    <tr><td>Name:</td><td><strong>${escapeHtml(session.player_name)}</strong></td></tr>
-                    <tr><td>Race:</td><td>${escapeHtml(session.player_race)}</td></tr>
-                    <tr><td>XP Earned:</td><td><span class="badge badge-warning">${session.xp_earned} XP</span></td></tr>
-                    <tr><td>Status:</td><td>${session.completed
-                        ? '<span class="badge badge-success">Completed</span>'
-                        : '<span class="badge badge-primary">In Progress</span>'}</td></tr>
+                    <tr><td>Nom :</td><td><strong>${escapeHtml(session.player_name)}</strong></td></tr>
+                    <tr><td>Race :</td><td>${escapeHtml(session.player_race)}</td></tr>
+                    <tr><td>XP gagnée :</td><td><span class="badge badge-warning">${session.xp_earned} XP</span></td></tr>
+                    <tr><td>Statut :</td><td>${session.completed
+                        ? '<span class="badge badge-success">Terminée</span>'
+                        : '<span class="badge badge-primary">En cours</span>'}</td></tr>
                 </table>
             </div>
             <div class="col-md-6">
-                <h5><i class="fas fa-info-circle"></i> Session Info</h5>
+                <h5><i class="fas fa-info-circle"></i> Session</h5>
                 <table class="table table-sm">
-                    <tr><td>Session ID:</td><td><code>${session.tutorial_session_id}</code></td></tr>
-                    <tr><td>Version:</td><td>${session.tutorial_version}</td></tr>
-                    <tr><td>Started:</td><td>${new Date(session.created_at).toLocaleString('fr-FR')}</td></tr>
-                    <tr><td>Last Update:</td><td>${new Date(session.updated_at).toLocaleString('fr-FR')}</td></tr>
+                    <tr><td>Identifiant :</td><td><code>${session.tutorial_session_id}</code></td></tr>
+                    <tr><td>Version :</td><td>${session.tutorial_version}</td></tr>
+                    <tr><td>Commencée le :</td><td>${new Date(session.created_at).toLocaleString('fr-FR')}</td></tr>
+                    <tr><td>Mise à jour :</td><td>${new Date(session.updated_at).toLocaleString('fr-FR')}</td></tr>
                 </table>
             </div>
         </div>
@@ -640,18 +639,18 @@ function renderSessionDetail(data) {
     if (tutorialPlayer) {
         html += `
             <div class="alert alert-info mb-4">
-                <h6><i class="fas fa-user-graduate"></i> Tutorial Player</h6>
+                <h6><i class="fas fa-user-graduate"></i> Personnage du tutoriel</h6>
                 <small>
-                    Name: <strong>${escapeHtml(tutorialPlayer.tutorial_player_name)}</strong> |
-                    Position: (${tutorialPlayer.x}, ${tutorialPlayer.y}) on ${tutorialPlayer.plan} |
-                    Active: ${tutorialPlayer.is_active ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-danger"></i>'}
+                    Nom : <strong>${escapeHtml(tutorialPlayer.tutorial_player_name)}</strong> |
+                    Position : (${tutorialPlayer.x}, ${tutorialPlayer.y}) sur ${tutorialPlayer.plan} |
+                    Actif : ${tutorialPlayer.is_active ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-danger"></i>'}
                 </small>
             </div>
         `;
     }
 
     // Step progress timeline
-    html += `<h5><i class="fas fa-tasks"></i> Progress Timeline</h5>`;
+    html += `<h5><i class="fas fa-tasks"></i> Avancement</h5>`;
     html += `<div class="timeline">`;
 
     steps.forEach((step, index) => {
@@ -686,7 +685,7 @@ function renderSessionDetail(data) {
 }
 
 async function resetSession(sessionId) {
-    if (!confirm('Reset this session to the beginning?\n\nThe player will start from step 1 with 0 XP.')) {
+    if (!confirm('Recommencer cette session depuis le début ?\n\nLe joueur repart de l\'étape 1 avec 0 XP.')) {
         return;
     }
 
@@ -702,10 +701,10 @@ async function resetSession(sessionId) {
 
         const data = await response.json();
         if (!data.success) {
-            throw new Error(data.error || 'Failed to reset session');
+            throw new Error(data.error || 'La remise à zéro de la session a échoué');
         }
 
-        showToast('success', 'Session reset successfully');
+        showToast('success', 'Session remise à zéro.');
         loadSessions(sessionsCurrentPage);
     } catch (error) {
         showToast('danger', error.message);
@@ -713,7 +712,7 @@ async function resetSession(sessionId) {
 }
 
 async function deleteSession(sessionId) {
-    if (!confirm('Delete this session?\n\nThis will remove all progress data. This action cannot be undone.')) {
+    if (!confirm('Supprimer cette session ?\n\nToute la progression est effacée, sans retour possible.')) {
         return;
     }
 
@@ -729,10 +728,10 @@ async function deleteSession(sessionId) {
 
         const data = await response.json();
         if (!data.success) {
-            throw new Error(data.error || 'Failed to delete session');
+            throw new Error(data.error || 'La suppression de la session a échoué');
         }
 
-        showToast('success', 'Session deleted successfully');
+        showToast('success', 'Session supprimée.');
         loadSessions(sessionsCurrentPage);
     } catch (error) {
         showToast('danger', error.message);
@@ -770,13 +769,13 @@ document.getElementById('refreshSessions').addEventListener('click', () => {
 document.getElementById('btn-export-all').addEventListener('click', async function() {
     try {
         this.disabled = true;
-        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Export…';
 
         const response = await fetch('tutorial-sessions-api.php?action=export_all_steps');
         const data = await response.json();
 
         if (!data.success) {
-            throw new Error(data.error || 'Failed to export steps');
+            throw new Error(data.error || 'L\'export des étapes a échoué');
         }
 
         // Download as JSON file
@@ -788,12 +787,12 @@ document.getElementById('btn-export-all').addEventListener('click', async functi
         a.click();
         URL.revokeObjectURL(url);
 
-        showToast('success', `Exported ${data.steps.length} steps successfully!`);
+        showToast('success', `${data.steps.length} étapes exportées.`);
     } catch (error) {
         showToast('danger', error.message);
     } finally {
         this.disabled = false;
-        this.innerHTML = '<i class="fas fa-upload"></i> Export All';
+        this.innerHTML = '<i class="fas fa-upload"></i> Tout exporter';
     }
 });
 
@@ -812,13 +811,12 @@ document.getElementById('import-all-file-input').addEventListener('change', asyn
             const steps = JSON.parse(event.target.result);
 
             if (!Array.isArray(steps)) {
-                throw new Error('Invalid format: expected an array of steps');
+                throw new Error('Format invalide : le fichier doit contenir une liste d\'étapes');
             }
 
-            const confirmMsg = `Import ${steps.length} steps?\n\n` +
-                `This will add/update steps based on step_id.\n` +
-                `Existing steps with matching step_id will be updated.\n` +
-                `New step_ids will be created as new steps.`;
+            const confirmMsg = `Importer ${steps.length} étapes ?\n\n` +
+                `Une étape dont l'identifiant existe déjà est mise à jour,\n` +
+                `les autres sont créées.`;
 
             if (!confirm(confirmMsg)) {
                 return;
@@ -836,15 +834,15 @@ document.getElementById('import-all-file-input').addEventListener('change', asyn
             const data = await response.json();
 
             if (!data.success) {
-                throw new Error(data.error || 'Failed to import steps');
+                throw new Error(data.error || 'L\'import des étapes a échoué');
             }
 
-            showToast('success', `Import complete! Created: ${data.created}, Updated: ${data.updated}`);
+            showToast('success', `Import terminé : ${data.created} créées, ${data.updated} mises à jour.`);
 
             // Reload page to show new steps
             setTimeout(() => window.location.reload(), 1500);
         } catch (err) {
-            showToast('danger', 'Import failed: ' + err.message);
+            showToast('danger', 'Échec de l\'import : ' + err.message);
         }
     };
     reader.readAsText(file);

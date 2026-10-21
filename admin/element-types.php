@@ -78,7 +78,7 @@ foreach ($names as $name) {
     $thumb = $image !== null
         ? '<img class="tile-thumb" src="/' . e($image) . '" height="28" loading="lazy" alt=""'
             . ' style="image-rendering:pixelated;">'
-        : '<span class="badge badge-warning" title="Posé sur la carte mais aucune image dans img/elements/ :'
+        : '<span class="badge badge-warning" title="Posé sur la carte mais sans image :'
             . ' rien n\'est affiché sur la case">sans image</span>';
 
     $options = '<option value="">— aucun (décor) —</option>';
@@ -137,30 +137,28 @@ foreach ($names as $name) {
 
 $inert = count(array_filter($names, static fn (string $name): bool => $elements->effectOf($name) === null));
 
-$intro = 'Éléments que le pinceau de Tiled peut poser sur une case. '
-    . 'La liste vient des <strong>images</strong> de <code>img/elements/</code> ; '
-    . 'l\'<strong>effet choisi</strong> est appliqué quand on marche sur la case. '
-    . 'Tant qu\'aucun n\'a été choisi, c\'est l\'effet du même nom, s\'il existe. '
-    . 'Les deux nombres règlent sa <strong>durée</strong> en tours (0 jusqu\'au prochain tour, -1 sans fin) et son <strong>intensité</strong>. '
-    . 'Un type sans effet est purement décoratif. '
-    . 'Pour ce qu\'une blessure verse au sol (le <code>sang</code>, réglé par race) : les deux nombres suivants donnent '
-    . 'sa <strong>durée au sol</strong> en tours (-1 sans fin) et la <strong>chance</strong>, en %, qu\'un coup le verse vraiment. '
-    . 'Un type <strong>fluide</strong> (eau, lave…) se fond avec ses voisins de la même famille ; '
-    . 'décoché, chaque case est dessinée seule. '
-    . 'L\'<strong>opacité</strong> (en %) laisse voir le sol dessous ; vide, 50 pour une texture webp, 100 sinon. '
-    . 'Le <strong>niveau</strong> règle l\'empilement sur le damier : les nappes (eau, lave, boue) dessous, '
-    . 'les traces au sol (sang, pas) au-dessus, les volumes et effets (feu, ronces) tout en haut ; '
-    . 'à niveau égal, l\'ordre alphabétique.'
+$intro = 'Éléments que Tiled peut poser sur une case (une image<code class="tech-name">img/elements/</code>'
+    . ' par type), et l\'effet qu\'ils appliquent à qui marche dessus. Un type sans effet est un simple décor.'
     . ($inert > 0
         ? ' <strong>' . $inert . ' type(s) sans effet</strong> sur cette carte.'
-        : '');
+        : '')
+    . '<details class="mt-2"><summary>Comment remplir une ligne</summary><ul class="mb-0">'
+    . '<li><strong>Effet</strong> : sans choix, l\'effet du même nom s\'il existe. Durée en tours'
+    . ' (0 jusqu\'au prochain tour, -1 sans fin) et intensité.</li>'
+    . '<li><strong>Durée au sol</strong> et <strong>chance</strong> : pour ce qu\'une blessure verse au sol'
+    . ' (le <code>sang</code>, réglé par race) ; durée en tours (-1 sans fin), chance en % qu\'un coup le verse.</li>'
+    . '<li><strong>Fluide</strong> (eau, lave…) : se fond avec ses voisins de la même famille ; décoché, chaque case est dessinée seule.</li>'
+    . '<li><strong>Opacité</strong> en % : laisse voir le sol dessous ; vide, 50 pour une texture webp, 100 sinon.</li>'
+    . '<li><strong>Niveau</strong> : ordre d\'empilement ; les nappes (eau, lave, boue) dessous, les traces (sang, pas)'
+    . ' au-dessus, les volumes et effets (feu, ronces) tout en haut ; à niveau égal, l\'ordre alphabétique.</li>'
+    . '</ul></details>';
 
 $content = renderTable(
         [
             '',
             'Nom',
             ['Nom affiché · effet appliqué', 'title="Nom vu par le joueur ; effet appliqué en marchant sur la case"'],
-            ['Posés', 'title="Cases map_elements de ce nom"'],
+            ['Posés', 'title="Cases où cet élément est posé"'],
         ],
         $rows,
         'class="table table-striped table-sm" data-admin-list data-page-size="30"'

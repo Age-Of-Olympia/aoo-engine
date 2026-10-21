@@ -58,7 +58,7 @@ function pnj_render_list(array $pnjs, string $csrfToken, bool $canEditRetirePlan
             . ' data-assigned="' . ($assigned ? 'Assigné' : 'Non assigné') . '">'
             . '<td>' . (int) $pnj['id'] . '</td>'
             . '<td>' . e($pnj['name']) . '</td>'
-            . '<td>' . e(ucfirst($pnj['race'])) . '</td>'
+            . '<td>' . e(character_race_choices()[$pnj['race']] ?? ucfirst($pnj['race'])) . '</td>'
             . '<td>' . PlayerSearchView::statusBadge($pnj['active']) . '</td>'
             . '<td>' . $owners . '</td>'
             . '<td>' . (int) $pnj['xp'] . '</td>'

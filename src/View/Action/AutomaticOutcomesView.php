@@ -2,7 +2,8 @@
 
 namespace App\View\Action;
 
-use App\Trait\EscapesHtmlTrait;
+use App\Action\Schema\TechnicalLabels;
+use App\Trait\RendersOptionsTrait;
 use App\Factory\OutcomeInstructionFactory;
 use App\Entity\OutcomeInstruction;
 
@@ -15,7 +16,7 @@ use App\Entity\OutcomeInstruction;
  */
 final class AutomaticOutcomesView
 {
-    use EscapesHtmlTrait;
+    use RendersOptionsTrait;
 
     /**
      * @param iterable<OutcomeInstruction> $instructions
@@ -32,7 +33,7 @@ final class AutomaticOutcomesView
                     . $this->esc($this->format($value)) . '</div>';
             }
             $blocks .= '<div class="wb-block wb-block--auto">'
-                . '<div class="wb-block-head">' . $this->esc($type)
+                . '<div class="wb-block-head">' . $this->labelWithCode(TechnicalLabels::instruction($type), $type)
                 . ' <span class="badge wb-auto-badge">hérité du type</span></div>'
                 . '<div class="wb-block-body">' . ($rows !== '' ? $rows : '<span class="wb-muted">—</span>') . '</div>'
                 . '</div>';

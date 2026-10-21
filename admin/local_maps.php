@@ -334,7 +334,7 @@ ob_start();
                             ?>
                                 <div class="mt-3 d-flex justify-content-end align-items-center gap-2">
                                     <?php if ($mapUnavailable): ?>
-                                        <small class="text-muted fst-italic">Pas de map pour ce niveau (MapUnavailable)</small>
+                                        <small class="text-muted fst-italic">Niveau réglé « Sans carte »<code class="tech-name">MapUnavailable</code></small>
                                     <?php endif; ?>
                                     <button type="submit" name="generate_local" class="btn btn-primary btn-sm" <?= $mapUnavailable ? 'disabled' : '' ?>>
                                         <i class="fas fa-sync"></i> Regénérer
@@ -507,11 +507,6 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Cartes locales', $content, ['intro' => '<strong>Qu\'est-ce qu\'une carte locale ?</strong>
-        Elle est constituée de deux éléments qui doivent être cohérents :
-        <ul class="mb-1 mt-1">
-            <li><strong>Une config de plan</strong> (tables <code>plans</code> / <code>plan_z_levels</code>) : nom, niveaux Z, bornes visibles…</li>
-            <li><strong>Des coordonnées en base</strong> : chaque case dans la table <code>coords</code> (tiles, éléments, murs…)</li>
-        </ul>
-        Un niveau Z peut exister côté coords sans être déclaré dans la config (et inversement) : la validation ci-dessous détecte ces incohérences.
-        Si un niveau n\'a volontairement pas de carte, cochez « Pas de carte » dans l\'édition du plan (option MapUnavailable).']);
+echo admin_layout('Cartes locales', $content, ['intro' => 'Génère l\'image d\'un niveau de plan à partir de ses cases,'
+        . ' et signale les niveaux déclarés dans la configuration sans cases (ou l\'inverse).'
+        . ' Un niveau sans carte voulue se règle par « Sans carte » dans l\'édition du plan.']);

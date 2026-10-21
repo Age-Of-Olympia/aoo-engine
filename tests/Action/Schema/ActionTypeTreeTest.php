@@ -27,7 +27,7 @@ class ActionTypeTreeTest extends TestCase
 
         $this->assertNotNull($attack);
         $this->assertTrue($attack->abstract, 'attack is a grouping (abstract) type');
-        $this->assertSame('Attack', $attack->label);
+        $this->assertSame('Attaque', $attack->label);
         $this->assertSame(['distance', 'melee', 'technique'], $this->keys($attack->children));
     }
 

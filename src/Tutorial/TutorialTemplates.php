@@ -28,9 +28,9 @@ final class TutorialTemplates
      */
     public const ALL = [
         'info_manual_advance' => [
-            'name'        => 'Info Step (Manual Advance)',
+            'name'        => 'Information (bouton Suivant)',
             'icon'        => '📝',
-            'description' => 'Informational step with "Suivant" button',
+            'description' => 'Étape d\'information validée par le bouton « Suivant »',
             'config'      => [
                 'step_type'           => 'ui_interaction',
                 'requires_validation' => true,
@@ -43,9 +43,9 @@ final class TutorialTemplates
             ],
         ],
         'movement_basic' => [
-            'name'        => 'Movement Step',
+            'name'        => 'Déplacement',
             'icon'        => '🚶',
-            'description' => 'Make player move to any adjacent tile',
+            'description' => 'Le joueur se déplace sur une case voisine',
             'config'      => [
                 'step_type'           => 'movement',
                 'requires_validation' => true,
@@ -58,9 +58,9 @@ final class TutorialTemplates
             ],
         ],
         'movement_position' => [
-            'name'        => 'Move to Specific Position',
+            'name'        => 'Déplacement vers une case précise',
             'icon'        => '🎯',
-            'description' => 'Make player move to exact coordinates (fill target_x / target_y)',
+            'description' => 'Le joueur va sur une case donnée (renseigner Cible X / Cible Y)',
             'config'      => [
                 'step_type'           => 'movement',
                 'requires_validation' => true,
@@ -73,9 +73,9 @@ final class TutorialTemplates
             ],
         ],
         'action_use' => [
-            'name'        => 'Use Action',
+            'name'        => 'Utiliser une action',
             'icon'        => '⚡',
-            'description' => 'Make player use a specific action (fill action_name)',
+            'description' => 'Le joueur utilise une action donnée (renseigner Nom de l\'action)',
             'config'      => [
                 'step_type'           => 'action',
                 'requires_validation' => true,
@@ -88,9 +88,9 @@ final class TutorialTemplates
             ],
         ],
         'ui_open_panel' => [
-            'name'        => 'Open UI Panel',
+            'name'        => 'Ouvrir un panneau',
             'icon'        => '🖼️',
-            'description' => 'Make player open a specific panel (fill panel_id, target_selector)',
+            'description' => 'Le joueur ouvre un panneau donné (renseigner Panneau et Sélecteur de la cible)',
             'config'      => [
                 'step_type'           => 'ui_interaction',
                 'requires_validation' => true,
@@ -101,9 +101,9 @@ final class TutorialTemplates
             ],
         ],
         'combat_basic' => [
-            'name'        => 'Combat Step',
+            'name'        => 'Combat',
             'icon'        => '⚔️',
-            'description' => 'Make player attack an enemy',
+            'description' => 'Le joueur attaque un ennemi',
             'config'      => [
                 'step_type'           => 'combat',
                 'requires_validation' => true,

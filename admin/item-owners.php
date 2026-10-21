@@ -21,7 +21,7 @@ use Classes\Db;
 $id = (int) ($_GET['id'] ?? 0);
 $item = null;
 if ($id > 0) {
-    $res = (new Db())->exe('SELECT id, name FROM items WHERE id = ?', [$id]);
+    $res = (new Db())->exe('SELECT id, name, label FROM items WHERE id = ?', [$id]);
     $item = $res->fetch_object();
 }
 if (!$item) {
@@ -31,9 +31,11 @@ if (!$item) {
 
 $owners = (new ItemOwnershipService())->itemOwners($id);
 
-$title = 'Joueurs détenant « ' . $item->name . ' »';
+$itemLabel = trim((string) ($item->label ?? '')) !== '' ? (string) $item->label : (string) $item->name;
+$title = 'Joueurs détenant « ' . e($itemLabel) . ' »';
 
 $rows = [];
+$raceLabels = character_race_choices();
 foreach ($owners as $owner) {
     $inv = $owner['inv'] > 0
         ? (string) $owner['inv']
@@ -44,7 +46,7 @@ foreach ($owners as $owner) {
     $rows[] = '<tr>'
         . '<td>' . $owner['id'] . '</td>'
         . '<td>' . e($owner['name']) . '</td>'
-        . '<td>' . e($owner['race']) . '</td>'
+        . '<td>' . e($raceLabels[$owner['race']] ?? $owner['race']) . '</td>'
         . '<td>' . $inv . '</td>'
         . '<td>' . $cell($owner['bank']) . '</td>'
         . '<td>' . $cell($owner['market']) . '</td>'
@@ -65,4 +67,4 @@ $content = ($owners === []
                 'class="table table-striped table-hover table-sm" data-admin-list data-page-size="30"'
             ));
 
-echo admin_layout(e($title), $content, ['back' => ['/admin/items.php', 'Objets']]);
+echo admin_layout($title, $content, ['back' => ['/admin/items.php', 'Objets']]);

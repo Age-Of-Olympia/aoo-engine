@@ -62,6 +62,19 @@ function building_dialog_select(string $fieldName, string $selected, array $dial
     );
 }
 
+/**
+ * The plans buildings stand on, by their configured name.
+ *
+ * @param array<int, string> $plans
+ * @return array<string, string>
+ */
+function building_plan_labels(array $plans): array
+{
+    $labels = plan_choices();
+
+    return array_combine($plans, array_map(static fn (string $p): string => $labels[$p] ?? $p, $plans));
+}
+
 const BUILDINGS_PER_PAGE = 50;
 
 const BUILDING_STATES = [
@@ -81,7 +94,7 @@ function building_render_filters(array $filters, array $plans, array $types, int
     $selectAttrs = 'class="form-control form-control-sm w-auto" data-autosubmit';
 
     return '<form method="get" action="/admin/buildings.php" class="d-flex flex-wrap gap-2 align-items-center mb-2">'
-        . formSelect('plan', array_combine($plans, $plans), $filters['plan'] !== '' ? $filters['plan'] : null, 'Plan : tous', $selectAttrs)
+        . formSelect('plan', building_plan_labels($plans), $filters['plan'] !== '' ? $filters['plan'] : null, 'Plan : tous', $selectAttrs)
         . formSelect('type', $types, $filters['type'] !== '' ? $filters['type'] : null, 'Type : tous', $selectAttrs)
         . formSelect('state', BUILDING_STATES, $filters['state'] !== '' ? $filters['state'] : null, 'État : tous', $selectAttrs)
         . '<input type="search" name="q" class="form-control form-control-sm" style="width:14em"'
@@ -130,6 +143,7 @@ function building_render_list(array $buildings, array $dialogNames, string $csrf
     }
 
     $raceService = new RaceService();
+    $typeLabels = building_type_options();
 
     $rows = '';
     foreach ($buildings as $b) {
@@ -170,7 +184,7 @@ function building_render_list(array $buildings, array $dialogNames, string $csrf
         $rows .= '<tr>'
             . '<td>' . (int) $b['id'] . '</td>'
             . '<td>' . e($b['name']) . '</td>'
-            . '<td>' . e($b['type']) . '</td>'
+            . '<td>' . techLabel($typeLabels[$b['type']] ?? $b['type'], (string) $b['type']) . '</td>'
             . '<td>' . building_state_badge($b['build_state'])
             // A site tells where it stands: work done over the footprint total.
             . ($b['site_total'] !== null
@@ -179,7 +193,8 @@ function building_render_list(array $buildings, array $dialogNames, string $csrf
                 : '')
             . ($isEdifice && !$b['is_open'] ? ' <span class="badge badge-dark" title="Fermé volontairement : dialogue désactivé">Fermé</span>' : '') . '</td>'
             . '<td>' . $pvCell . '</td>'
-            . '<td>(' . (int) $b['x'] . ', ' . (int) $b['y'] . ', ' . (int) $b['z'] . ') · ' . e($b['plan']) . '</td>'
+            . '<td>(' . (int) $b['x'] . ', ' . (int) $b['y'] . ', ' . (int) $b['z'] . ') · '
+                . e(($config = plans()->read((string) $b['plan'])) ? ($config->name ?? $b['plan']) : $b['plan']) . '</td>'
             . '<td>' . ($b['owner_name'] !== null ? e($b['owner_name']) . ' <small class="text-muted">#' . (int) $b['owner_id'] . '</small>' : '<span class="text-muted">—</span>') . '</td>'
             . '<td>' . ($b['faction'] !== '' ? e($b['faction']) : '<span class="text-muted">—</span>') . '</td>'
             . '<td>' . ($b['dialog'] !== '' ? '<code>' . e($b['dialog']) . '</code>' : '<span class="text-muted">—</span>') . '</td>'
@@ -204,8 +219,8 @@ function building_render_list(array $buildings, array $dialogNames, string $csrf
 function building_render_place_form(array $types, array $plans, array $factions, array $dialogNames, string $csrfToken): string
 {
     if ($types === []) {
-        return '<div class="alert alert-warning">Aucun type de structure disponible : créez-en un'
-            . ' dans <a href="/admin/races.php">Races</a> (sorte « Structure », renseignez ses PV).</div>';
+        return '<div class="alert alert-warning">Aucun type de bâtiment : créez-en un dans'
+            . ' <a href="/admin/structure-types.php">Catalogues → Bâtiments</a> en renseignant ses PV.</div>';
     }
 
     $typeLabels = [];
@@ -213,16 +228,17 @@ function building_render_place_form(array $types, array $plans, array $factions,
         $typeLabels[$name] = $label . ' (' . $name . ')';
     }
     $typeOptions = renderSelectOptions($typeLabels);
-    $planOptions = renderSelectOptions(array_combine($plans, $plans), plans()->worldPlan());
+    $defaultPlan = in_array(plans()->worldPlan(), $plans, true) ? plans()->worldPlan() : ($plans[0] ?? null);
+    $planOptions = renderSelectOptions(building_plan_labels($plans), $defaultPlan);
     $factionOptions = renderSelectOptions($factions, null, '— neutre —');
 
     $body = '<form method="post" action="/admin/buildings-save.php?action=place" class="row g-2">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
         . '<div class="col-md-3"><label class="form-label">Type</label>'
         . '<select name="type" class="form-control" required>' . $typeOptions . '</select>'
-        . '<small class="text-muted">Entrée du catalogue races (sorte « Structure ») — ses PV = PV max du bâtiment.</small></div>'
+        . '<small class="text-muted">Type de bâtiment (Catalogues → Bâtiments) : ses PV sont les PV max du bâtiment.</small></div>'
         . '<div class="col-md-3"><label class="form-label">Nom (optionnel)</label>'
-        . '<input type="text" name="name" class="form-control" maxlength="255" placeholder="Libellé de la race par défaut"></div>'
+        . '<input type="text" name="name" class="form-control" maxlength="255" placeholder="Nom du type par défaut"></div>'
         . '<div class="col-md-1"><label class="form-label">X</label>'
         . '<input type="number" name="x" class="form-control" required></div>'
         . '<div class="col-md-1"><label class="form-label">Y</label>'

@@ -1,8 +1,6 @@
 <?php
 /**
- * Tutorial Admin Panel - Feature Flags Settings
- *
- * Manage global tutorial settings and player whitelist
+ * Tutorial settings: who gets the tutorial, rewards, whitelist.
  */
 
 require_once __DIR__ . '/layout.php';
@@ -27,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         TutorialFeatureFlag::updateSetting('global_enabled', $globalEnabled);
         TutorialFeatureFlag::updateSetting('auto_show_new_players', $autoShowNew);
 
-        setFlash('success', 'Global settings updated successfully');
+        setFlash('success', 'Réglages généraux enregistrés.');
     }
 
     // Update whitelisted players
@@ -41,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cleanedIds = implode(',', $ids);
 
         TutorialFeatureFlag::updateSetting('whitelisted_players', $cleanedIds);
-        setFlash('success', 'Whitelisted players updated successfully');
+        setFlash('success', 'Liste des joueurs autorisés enregistrée.');
     }
 
     // Add a player to whitelist
@@ -54,9 +52,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($player) {
                 TutorialFeatureFlag::addWhitelistedPlayer($playerId);
-                setFlash('success', "Player \"{$player['name']}\" (ID: {$playerId}) added to whitelist");
+                setFlash('success', "{$player['name']} (matricule {$playerId}) ajouté aux joueurs autorisés.");
             } else {
-                setFlash('danger', "Player ID {$playerId} not found");
+                setFlash('danger', "Matricule {$playerId} introuvable.");
             }
         }
     }
@@ -66,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $playerId = (int)($_POST['player_id'] ?? 0);
         if ($playerId > 0) {
             TutorialFeatureFlag::removeWhitelistedPlayer($playerId);
-            setFlash('success', "Player removed from whitelist");
+            setFlash('success', "Joueur retiré des joueurs autorisés.");
         }
     }
 
@@ -82,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         TutorialFeatureFlag::updateSetting('completion_reward_xp', (string)$completionXP);
         TutorialFeatureFlag::updateSetting('completion_reward_pi', (string)$completionPI);
 
-        setFlash('success', 'Reward settings updated successfully');
+        setFlash('success', 'Récompenses enregistrées.');
     }
 
     TutorialFeatureFlag::clearCache();
@@ -136,16 +134,16 @@ ob_start();
     <!-- Override Warnings -->
     <?php if ($hasEnvOverride || $hasConstantOverride || $hasPlayerListOverride): ?>
         <div class="alert alert-warning">
-            <strong><i class="fas fa-exclamation-triangle"></i> Configuration Override Active</strong>
+            <strong><i class="fas fa-exclamation-triangle"></i> Réglage imposé par la configuration du serveur</strong>
             <p class="mt-2 mb-0">
                 <?php if ($hasEnvOverride): ?>
-                    <code>TUTORIAL_V2_ENABLED</code> environment variable is set - overrides database setting.<br>
+                    La variable d'environnement <code>TUTORIAL_V2_ENABLED</code> remplace le réglage ci-dessous.<br>
                 <?php endif; ?>
                 <?php if ($hasConstantOverride): ?>
-                    <code>TUTORIAL_V2_ENABLED</code> constant is defined in config.php - overrides database setting.<br>
+                    La constante <code>TUTORIAL_V2_ENABLED</code> de config.php remplace le réglage ci-dessous.<br>
                 <?php endif; ?>
                 <?php if ($hasPlayerListOverride): ?>
-                    <code>TUTORIAL_V2_TEST_PLAYERS</code> constant is defined - overrides whitelist setting.<br>
+                    La constante <code>TUTORIAL_V2_TEST_PLAYERS</code> remplace la liste des joueurs autorisés.<br>
                 <?php endif; ?>
             </p>
         </div>
@@ -154,7 +152,7 @@ ob_start();
     <!-- Reward Settings Card (Full Width) -->
     <div class="card">
         <div class="card-header">
-            <h3><i class="fas fa-trophy"></i> Tutorial Rewards</h3>
+            <h3><i class="fas fa-trophy"></i> Récompenses du tutoriel</h3>
         </div>
         <div class="card-body">
             <form method="post">
@@ -164,15 +162,15 @@ ob_start();
                     <!-- Skip Rewards -->
                     <div class="col-md-6">
                         <h5 class="text-danger">
-                            <i class="fas fa-forward"></i> Skip Rewards (Without Completion)
+                            <i class="fas fa-forward"></i> Tutoriel passé
                         </h5>
                         <p class="form-text mb-3">
-                            Rewards given when player skips the tutorial without completing it.
+                            Ce que reçoit un joueur qui passe le tutoriel sans le terminer.
                         </p>
 
                         <div class="form-group">
                             <label for="skip_reward_xp">
-                                <strong>XP Reward</strong>
+                                <strong>XP</strong>
                             </label>
                             <input
                                 type="number"
@@ -183,12 +181,12 @@ ob_start();
                                 min="0"
                                 required
                             >
-                            <small class="form-text">Experience points for skipping</small>
+                            <small class="form-text">Points d'expérience pour un tutoriel passé</small>
                         </div>
 
                         <div class="form-group">
                             <label for="skip_reward_pi">
-                                <strong>PI Reward</strong>
+                                <strong>PI</strong>
                             </label>
                             <input
                                 type="number"
@@ -199,22 +197,22 @@ ob_start();
                                 min="0"
                                 required
                             >
-                            <small class="form-text">Investment points for skipping</small>
+                            <small class="form-text">Points d'investissement pour un tutoriel passé</small>
                         </div>
                     </div>
 
                     <!-- Completion Rewards -->
                     <div class="col-md-6">
                         <h5 class="text-success">
-                            <i class="fas fa-check-circle"></i> Completion Rewards
+                            <i class="fas fa-check-circle"></i> Tutoriel terminé
                         </h5>
                         <p class="form-text mb-3">
-                            Rewards given when player completes all tutorial steps.
+                            Ce que reçoit un joueur qui termine toutes les étapes.
                         </p>
 
                         <div class="form-group">
                             <label for="completion_reward_xp">
-                                <strong>XP Reward</strong>
+                                <strong>XP</strong>
                             </label>
                             <input
                                 type="number"
@@ -225,12 +223,12 @@ ob_start();
                                 min="0"
                                 required
                             >
-                            <small class="form-text">Experience points for completion</small>
+                            <small class="form-text">Points d'expérience pour un tutoriel terminé</small>
                         </div>
 
                         <div class="form-group">
                             <label for="completion_reward_pi">
-                                <strong>PI Reward</strong>
+                                <strong>PI</strong>
                             </label>
                             <input
                                 type="number"
@@ -241,7 +239,7 @@ ob_start();
                                 min="0"
                                 required
                             >
-                            <small class="form-text">Investment points for completion</small>
+                            <small class="form-text">Points d'investissement pour un tutoriel terminé</small>
                         </div>
                     </div>
                 </div>
@@ -249,14 +247,13 @@ ob_start();
                 <hr>
                 <div>
                     <button type="submit" name="update_rewards" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Save Reward Settings
+                        <i class="fas fa-save"></i> Enregistrer les récompenses
                     </button>
 
                     <div class="alert alert-secondary mt-3 mb-0">
                         <small>
-                            <strong>Current Difference:</strong>
-                            Completion gives <strong><?= $completionRewardXP - $skipRewardXP ?> more XP</strong>
-                            and <strong><?= $completionRewardPI - $skipRewardPI ?> more PI</strong> than skipping.
+                            Terminer le tutoriel rapporte <strong><?= $completionRewardXP - $skipRewardXP ?> XP</strong>
+                            et <strong><?= $completionRewardPI - $skipRewardPI ?> PI</strong> de plus que le passer.
                         </small>
                     </div>
                 </div>
@@ -269,7 +266,7 @@ ob_start();
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h3><i class="fas fa-globe"></i> Global Settings</h3>
+                    <h3><i class="fas fa-globe"></i> Réglages généraux</h3>
                 </div>
                 <div class="card-body">
                     <form method="post">
@@ -286,12 +283,12 @@ ob_start();
                                     <?= ($hasEnvOverride || $hasConstantOverride) ? 'disabled' : '' ?>
                                 >
                                 <label class="form-check-label" for="global_enabled">
-                                    <strong>Enable Tutorial Globally</strong>
+                                    <strong>Tutoriel ouvert à tous</strong>
                                 </label>
                             </div>
                             <small class="form-text">
-                                When enabled, all players can access the tutorial.
-                                When disabled, only whitelisted players can access it.
+                                Coché : tous les joueurs ont accès au tutoriel.
+                                Décoché : seuls les joueurs autorisés y ont accès.
                             </small>
                         </div>
 
@@ -305,36 +302,36 @@ ob_start();
                                     <?= $autoShowNewPlayers ? 'checked' : '' ?>
                                 >
                                 <label class="form-check-label" for="auto_show_new_players">
-                                    <strong>Auto-show for New Players</strong>
+                                    <strong>Proposé aux nouveaux joueurs</strong>
                                 </label>
                             </div>
                             <small class="form-text">
-                                Automatically prompt new players to start the tutorial.
+                                Un nouveau joueur se voit proposer le tutoriel à sa première connexion.
                             </small>
                         </div>
 
                         <button type="submit" name="update_global" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Save Global Settings
+                            <i class="fas fa-save"></i> Enregistrer
                         </button>
                     </form>
 
                     <!-- Current Status -->
                     <hr>
                 <div>
-                        <h5>Current Status</h5>
+                        <h5>État actuel</h5>
                         <table class="table table-sm">
                             <tr>
-                                <td>Tutorial Access:</td>
+                                <td>Accès au tutoriel :</td>
                                 <td>
                                     <?php if (TutorialFeatureFlag::isEnabled()): ?>
-                                        <span class="badge badge-success"><i class="fas fa-check"></i> Everyone</span>
+                                        <span class="badge badge-success"><i class="fas fa-check"></i> Tout le monde</span>
                                     <?php else: ?>
-                                        <span class="badge badge-warning"><i class="fas fa-lock"></i> Whitelist Only</span>
+                                        <span class="badge badge-warning"><i class="fas fa-lock"></i> Joueurs autorisés seulement</span>
                                     <?php endif; ?>
                                 </td>
                             </tr>
                             <tr>
-                                <td>Whitelisted Players:</td>
+                                <td>Joueurs autorisés :</td>
                                 <td><span class="badge badge-info"><?= count($whitelistedPlayers) ?></span></td>
                             </tr>
                         </table>
@@ -347,13 +344,13 @@ ob_start();
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3><i class="fas fa-users"></i> Whitelisted Players</h3>
-                    <span class="badge badge-primary"><?= count($whitelistedPlayers) ?> players</span>
+                    <h3><i class="fas fa-users"></i> Joueurs autorisés</h3>
+                    <span class="badge badge-primary"><?= count($whitelistedPlayers) ?> joueurs</span>
                 </div>
                 <div class="card-body">
                     <?php if ($hasPlayerListOverride): ?>
                         <div class="alert alert-warning">
-                            <i class="fas fa-info-circle"></i> Whitelist is defined in config.php and cannot be edited here.
+                            <i class="fas fa-info-circle"></i> La liste est fixée dans config.php et ne peut pas être modifiée ici.
                         </div>
                     <?php endif; ?>
 
@@ -366,10 +363,10 @@ ob_start();
                             foreach ($allPlayers as $player) {
                                 if (!in_array($player['id'], $whitelistedPlayers)) {
                                     $playerChoices[(string) $player['id']] =
-                                        $player['name'] . ' (ID: ' . $player['id'] . ', ' . $player['race'] . ')';
+                                        $player['name'] . ' (matricule ' . $player['id'] . ', ' . $player['race'] . ')';
                                 }
                             }
-                            echo formSelect('player_id', $playerChoices, null, '-- Select Player --',
+                            echo formSelect('player_id', $playerChoices, null, '-- Choisir un joueur --',
                                 'class="form-control"' . ($hasPlayerListOverride ? ' disabled' : ''));
                             ?>
                             <button
@@ -378,7 +375,7 @@ ob_start();
                                 class="btn btn-success"
                                 <?= $hasPlayerListOverride ? 'disabled' : '' ?>
                             >
-                                <i class="fas fa-plus"></i> Add
+                                <i class="fas fa-plus"></i> Ajouter
                             </button>
                         </div>
                     </form>
@@ -388,8 +385,8 @@ ob_start();
                         <table class="table table-sm table-hover">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
+                                    <th>Matricule</th>
+                                    <th>Nom</th>
                                     <th>Race</th>
                                     <th>Actions</th>
                                 </tr>
@@ -398,7 +395,7 @@ ob_start();
                                 <?php if (empty($whitelistedPlayers)): ?>
                                     <tr>
                                         <td colspan="4" class="text-center text-muted">
-                                            No players whitelisted
+                                            Aucun joueur autorisé
                                         </td>
                                     </tr>
                                 <?php else: ?>
@@ -406,7 +403,7 @@ ob_start();
                                         <?php $player = $whitelistedPlayerDetails[$playerId] ?? null; ?>
                                         <tr>
                                             <td><?= $playerId ?></td>
-                                            <td><?= $player ? e($player['name']) : '<em class="text-muted">Unknown</em>' ?></td>
+                                            <td><?= $player ? e($player['name']) : '<em class="text-muted">Inconnu</em>' ?></td>
                                             <td><?= $player ? e($player['race']) : '-' ?></td>
                                             <td>
                                                 <form method="post" class="d-inline">
@@ -416,7 +413,7 @@ ob_start();
                                                         type="submit"
                                                         name="remove_player"
                                                         class="btn btn-sm btn-outline-danger"
-                                                        title="Remove from whitelist"
+                                                        title="Retirer des joueurs autorisés"
                                                         <?= $hasPlayerListOverride ? 'disabled' : '' ?>
                                                     >
                                                         <i class="fas fa-times"></i>
@@ -436,7 +433,7 @@ ob_start();
                 <div>
                             <details>
                                 <summary class="text-muted">
-                                    <i class="fas fa-edit"></i> Edit Raw Player IDs
+                                    <i class="fas fa-edit"></i> Modifier la liste des matricules
                                 </summary>
                                 <form method="post" class="mt-2">
                                     <?= $csrf->renderTokenField() ?>
@@ -447,10 +444,10 @@ ob_start();
                                             rows="2"
                                             placeholder="1, 2, 3"
                                         ><?= e(implode(', ', $whitelistedPlayers)) ?></textarea>
-                                        <small class="form-text">Comma-separated player IDs</small>
+                                        <small class="form-text">Matricules séparés par des virgules</small>
                                     </div>
                                     <button type="submit" name="update_whitelist" class="btn btn-sm btn-secondary">
-                                        <i class="fas fa-save"></i> Update Raw List
+                                        <i class="fas fa-save"></i> Enregistrer la liste
                                     </button>
                                 </form>
                             </details>
@@ -464,14 +461,14 @@ ob_start();
     <!-- Quick Test Section -->
     <div class="card">
         <div class="card-header">
-            <h3><i class="fas fa-flask"></i> Quick Test</h3>
+            <h3><i class="fas fa-flask"></i> Vérifier un joueur</h3>
         </div>
         <div class="card-body">
-            <p>Test if a specific player can access the tutorial:</p>
+            <p>Ce joueur a-t-il accès au tutoriel ?</p>
             <div class="d-flex gap-2 align-items-center">
-                <input type="number" id="test_player_id" class="form-control" placeholder="Player ID" style="max-width: 150px;">
+                <input type="number" id="test_player_id" class="form-control" placeholder="Matricule" style="max-width: 150px;">
                 <button type="button" class="btn btn-info" onclick="testPlayer()">
-                    <i class="fas fa-search"></i> Test Access
+                    <i class="fas fa-search"></i> Vérifier
                 </button>
                 <span id="test_result"></span>
             </div>
@@ -485,7 +482,7 @@ function testPlayer() {
     const resultEl = document.getElementById('test_result');
 
     if (!playerId || playerId < 1) {
-        resultEl.innerHTML = '<span class="text-danger">Enter a valid player ID</span>';
+        resultEl.innerHTML = '<span class="text-danger">Saisissez un matricule valide</span>';
         return;
     }
 
@@ -496,9 +493,9 @@ function testPlayer() {
     const hasAccess = globalEnabled || whitelistedPlayers.includes(parseInt(playerId));
 
     if (hasAccess) {
-        resultEl.innerHTML = '<span class="badge badge-success"><i class="fas fa-check"></i> Player ID ' + playerId + ' CAN access tutorial</span>';
+        resultEl.innerHTML = '<span class="badge badge-success"><i class="fas fa-check"></i> Le matricule ' + playerId + ' a accès au tutoriel</span>';
     } else {
-        resultEl.innerHTML = '<span class="badge badge-danger"><i class="fas fa-times"></i> Player ID ' + playerId + ' CANNOT access tutorial</span>';
+        resultEl.innerHTML = '<span class="badge badge-danger"><i class="fas fa-times"></i> Le matricule ' + playerId + ' n\'a pas accès au tutoriel</span>';
     }
 }
 </script>

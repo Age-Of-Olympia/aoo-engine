@@ -131,7 +131,7 @@ try {
         case 'detail':
             $sessionId = $_GET['session_id'] ?? null;
             if (!$sessionId) {
-                throw new Exception('Session ID required');
+                throw new Exception('Identifiant de session manquant');
             }
 
             // Get session info
@@ -147,7 +147,7 @@ try {
 
             $session = $result->fetch_assoc();
             if (!$session) {
-                throw new Exception('Session not found');
+                throw new Exception('Session introuvable');
             }
 
             // Get step history (completed steps)
@@ -198,14 +198,16 @@ try {
         case 'reset':
             // Reset a session to beginning
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-                throw new Exception('POST required');
+                throw new Exception('Requête invalide (POST attendu)');
             }
 
-            $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+            if (!$csrf->validateToken($_POST['csrf_token'] ?? null)) {
+                throw new Exception('Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
+            }
 
             $sessionId = $_POST['session_id'] ?? null;
             if (!$sessionId) {
-                throw new Exception('Session ID required');
+                throw new Exception('Identifiant de session manquant');
             }
 
             // Get first step
@@ -223,19 +225,21 @@ try {
                 WHERE tutorial_session_id = ?
             ", [$firstStep['step_id'], $sessionId]);
 
-            echo json_encode(['success' => true, 'message' => 'Session reset']);
+            echo json_encode(['success' => true, 'message' => 'Session remise à zéro']);
             break;
 
         case 'delete':
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-                throw new Exception('POST required');
+                throw new Exception('Requête invalide (POST attendu)');
             }
 
-            $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+            if (!$csrf->validateToken($_POST['csrf_token'] ?? null)) {
+                throw new Exception('Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
+            }
 
             $sessionId = $_POST['session_id'] ?? null;
             if (!$sessionId) {
-                throw new Exception('Session ID required');
+                throw new Exception('Identifiant de session manquant');
             }
 
             // Delete tutorial player first
@@ -245,7 +249,7 @@ try {
             // Delete progress
             $database->exe("DELETE FROM tutorial_progress WHERE tutorial_session_id = ?", [$sessionId]);
 
-            echo json_encode(['success' => true, 'message' => 'Session deleted']);
+            echo json_encode(['success' => true, 'message' => 'Session supprimée']);
             break;
 
         case 'export_all_steps':
@@ -322,19 +326,21 @@ try {
 
         case 'import_all_steps':
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-                throw new Exception('POST required');
+                throw new Exception('Requête invalide (POST attendu)');
             }
 
-            $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+            if (!$csrf->validateToken($_POST['csrf_token'] ?? null)) {
+                throw new Exception('Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
+            }
 
             $stepsJson = $_POST['steps'] ?? null;
             if (!$stepsJson) {
-                throw new Exception('No steps data provided');
+                throw new Exception('Aucune étape reçue');
             }
 
             $steps = json_decode($stepsJson, true);
             if (!is_array($steps)) {
-                throw new Exception('Invalid steps format');
+                throw new Exception('Format des étapes invalide');
             }
 
             $created = 0;
@@ -369,7 +375,7 @@ try {
             break;
 
         default:
-            throw new Exception('Unknown action: ' . $action);
+            throw new Exception('Action inconnue : ' . $action);
     }
 } catch (Exception $e) {
     http_response_code(400);

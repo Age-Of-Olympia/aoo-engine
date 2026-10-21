@@ -2,6 +2,7 @@
 
 namespace App\View\Action;
 
+use App\Action\Schema\TechnicalLabels;
 use App\Trait\RendersInheritanceBannerTrait;
 use App\Trait\RendersOptionsTrait;
 use App\Service\Action\Xp\XpCalculatorRegistry;
@@ -68,7 +69,7 @@ final class TypeXpEditorView
         return '<form method="post" action="/admin/action-type-xp-save.php" class="wb-form wb-xp">'
             . $csrfTokenField
             . '<input type="hidden" name="type_key" value="' . $this->esc($typeKey) . '">'
-            . '<div class="wb-section-title">Expérience « ' . $this->esc($typeKey) . ' »</div>'
+            . '<div class="wb-section-title">Expérience « ' . $this->esc(TechnicalLabels::actionType($typeKey)) . ' »</div>'
             . $this->inheritanceBanner($typeKey, $inheritedFrom, $overriddenParent)
             . '<label class="wb-field"><span>Mode</span><select class="form-control" name="mode">' . $modeOptions . '</select></label>'
             . '<p class="wb-muted">Changer le mode puis enregistrer affiche ses paramètres. Les algorithmes (combat/vol/entraînement) restent dans le code ; seules leurs constantes sont éditables ici.</p>'

@@ -2,6 +2,7 @@
 
 namespace App\View\Action;
 
+use App\Action\Schema\TechnicalLabels;
 use App\Trait\EscapesHtmlTrait;
 use App\Action\Schema\ActionSchemaCatalog;
 use App\Entity\ActionTypeInstruction;
@@ -64,7 +65,7 @@ final class TypeDefaultsView
             addAction: '/admin/action-type-instruction-add.php',
             removeAction: '/admin/action-type-instruction-remove.php',
             csrfTokenField: $csrfTokenField,
-            sectionTitle: 'Instructions du type « ' . $selectedType . ' »',
+            sectionTitle: 'Instructions du type « ' . TechnicalLabels::actionType($selectedType) . ' »',
             childSelectName: 'instruction_type',
             childOptions: $instructionTypes,
             addLabel: '+ Instruction',
@@ -73,6 +74,7 @@ final class TypeDefaultsView
             rows: $rows,
             emptyLabel: 'Aucune instruction pour ce type.',
             hidden: ['type_key' => $selectedType],
+            labelOf: TechnicalLabels::instruction(...),
         );
 
         // Instructions + the injected XP/Journal/Préconditions sections become tabs

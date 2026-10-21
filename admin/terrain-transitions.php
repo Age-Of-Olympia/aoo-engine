@@ -3,7 +3,7 @@
  * Transitions de terrain (autotiling Tiled) — admin dashboard → Cartes.
  *
  * Pour un plan sélectionné, trois étapes sur la couche sol :
- *  1. Classer les tuiles posées : terrain (biome fondable) ou hors terrain
+ *  1. Classer les tuiles posées : terrain (qui se fond avec ses voisins) ou hors terrain
  *     (décor, escaliers, runes…). C'est ce classement — en base
  *     (terrain_colors / terrain_tiles) — qui pilote l'analyse ; sur un
  *     serveur neuf il est vide : tout classer ici.
@@ -348,7 +348,7 @@ ob_start();
                             <button type="submit" name="generate_transitions" class="btn btn-primary btn-sm">
                                 <i class="fas fa-fill-drip"></i> Générer les <?= $terrainAudit['missingTiles'] ?> tuiles manquantes
                             </button>
-                            <small class="text-muted">Écrit les PNG dans img/tiles/ et déclare leurs wangId — peut prendre une minute sur un gros plan.</small>
+                            <small class="text-muted">Crée les images de transition et les déclare à Tiled<code class="tech-name">img/tiles/, wangId</code> — peut prendre une minute sur un gros plan.</small>
                         </form>
                     <?php else: ?>
                         <div class="alert alert-success py-1 mb-0">
@@ -366,7 +366,7 @@ ob_start();
                     <p class="text-muted small mb-2">
                         Aperçu des fondus tels que le jeu les affiche sur ce serveur. Un ensemble aux couleurs
                         fausses (fondu vers le noir, image d'un biome modifiée…) peut être réécrit à partir des
-                        images de base actuelles ; les wangId ne changent pas.
+                        images de base actuelles ; leur déclaration dans Tiled ne change pas.
                     </p>
                     <form method="post">
                         <?= $csrf->renderTokenField() ?>
@@ -401,7 +401,7 @@ ob_start();
 
                 <?php if ($transitionsBySet !== [] || array_filter($classification, fn(array $t) => str_starts_with($t['name'], 'trans_'))): ?>
                     <form method="post" class="d-flex align-items-center gap-3 mt-3"
-                          data-confirm="Supprimer tous les fondus de ce plan ? Les fichiers et wangId disparaissent, et les cases qui les portent (sur tous les plans) reprennent un biome plein.">
+                          data-confirm="Supprimer tous les fondus de ce plan ? Les images et leur déclaration dans Tiled disparaissent, et les cases qui les portent (sur tous les plans) reprennent un biome plein.">
                         <?= $csrf->renderTokenField() ?>
                         <input type="hidden" name="selected_plan" value="<?= e($selectedPlan) ?>">
                         <button type="submit" name="delete_transitions" class="btn btn-outline-danger btn-sm">
@@ -445,7 +445,7 @@ ob_start();
 $content = ob_get_clean();
 echo admin_layout('Transitions de terrain', $content, ['intro' => '<strong>Trois étapes :</strong>
         <ol class="mb-0 mt-1">
-            <li><strong>Classer</strong> les tuiles du plan : terrain (biome fondable) ou hors terrain (décor, escaliers, runes…). Le classement est enregistré en base ; sur un serveur neuf il est vide, tout se classe ici.</li>
+            <li><strong>Classer</strong> les tuiles du plan : terrain (qui se fond avec ses voisins) ou hors terrain (décor, escaliers, runes…). Le classement est enregistré en base ; sur un serveur neuf il est vide, tout se classe ici.</li>
             <li><strong>Auditer</strong> : chaque endroit où 2 à 4 terrains se touchent exige ses tuiles de fondu, sinon le pinceau Terrain pose la tuile la plus proche (morceaux d\'autres biomes).</li>
-            <li><strong>Générer</strong> les fondus manquants (<code>img/tiles/</code> + wangId) et les vérifier dans la galerie.</li>
+            <li><strong>Générer</strong> les fondus manquants<code class="tech-name">img/tiles/ + wangId</code> et les vérifier dans la galerie.</li>
         </ol>']);
