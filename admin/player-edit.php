@@ -14,6 +14,7 @@ require_once __DIR__ . '/helpers.php';
 
 use App\Factory\PlayerFactory;
 use App\Service\AdminMenuAccessService;
+use App\Service\PlayerLookupService;
 use App\Service\CsrfProtectionService;
 use App\Service\EffectService;
 use App\Service\PlayerCaracsService;
@@ -345,6 +346,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
 
 // ----- Affichage -----
 
+/* Animation shortcuts (the « Animation » card): what the console did,
+ * from the sheet. Each form posts its own marker field. */
+$animationForms = [
+    'tp_near' => function () use ($player, $id): string {
+        $matches = (new PlayerLookupService())->resolve((string) ($_POST['near'] ?? ''), ['real', 'npc']);
+        if (count($matches) !== 1) {
+            throw new \InvalidArgumentException(count($matches) === 0
+                ? 'Aucun personnage ne porte ce nom ou ce matricule.'
+                : 'Plusieurs personnages portent ce nom : utilisez le matricule.');
+        }
+        $other = PlayerFactory::legacy($matches[0]['id']);
+        $other->get_data(false);
+        $goCoords = $other->getCoords();
+        if ($goCoords === null) {
+            throw new \InvalidArgumentException($other->data->name . ' n\'est pas sur le plateau.');
+        }
+        // Same as the console « tp <nom> <autre> »: the nearest free cell around the other one.
+        $goCoords->coordsId = View::get_free_coords_id_arround($goCoords);
+        $player->go($goCoords);
+        \App\Service\Map\BoardChanges::viewer($id);
+
+        return $player->data->name . ' est à côté de ' . $other->data->name . '.';
+    },
+    'missive_send' => function () use ($player, $id): string {
+        $title = trim((string) ($_POST['missive_title'] ?? ''));
+        $text = trim((string) ($_POST['missive_text'] ?? ''));
+        if ($title === '' || $text === '') {
+            throw new \InvalidArgumentException('Le titre et le message sont obligatoires.');
+        }
+        // Sent by the character the admin plays right now, who also receives the thread.
+        $authorId = (int) $_SESSION['playerId'];
+        (new \App\Service\MissiveService())->sendNewMissive($authorId, array_unique([$id, $authorId]), $title, $text);
+
+        return 'Missive envoyée à ' . $player->data->name . '.';
+    },
+    'log_add' => function () use ($player): string {
+        $text = trim((string) ($_POST['log_text'] ?? ''));
+        if ($text === '') {
+            throw new \InvalidArgumentException('La ligne de journal est vide.');
+        }
+        \Classes\Log::put($player, $player, $text, 'console');
+
+        return 'Ligne ajoutée au journal de ' . $player->data->name . '.';
+    },
+    'log_delete_last' => function () use ($player, $id, $db): string {
+        $db->exe('DELETE FROM players_logs WHERE player_id = ? ORDER BY time DESC LIMIT 1', $id);
+
+        return 'Dernière ligne du journal de ' . $player->data->name . ' retirée.';
+    },
+];
+foreach ($animationForms as $marker => $run) {
+    if (isset($_POST[$marker])) {
+        handleAdminPost($backTo, $run);
+    }
+}
+
 $vitalsRows = '';
 foreach (PLAYER_EDIT_VITALS as $trait => $label) {
     $max = (int) ($player->caracs->$trait ?? 0);
@@ -494,17 +551,17 @@ $progression = formCard('Progression (XP / PI)', ''
 
 $inventoryRows = '';
 $stock = $db->exe(
-    'SELECT pi.item_id, pi.n, pi.equiped, i.name FROM players_items pi
+    'SELECT pi.item_id, pi.n, pi.equiped, i.name, i.label FROM players_items pi
      JOIN items i ON i.id = pi.item_id WHERE pi.player_id = ? ORDER BY i.name',
     $id
 );
 while ($stockRow = $stock->fetch_object()) {
     $inventoryRows .= '<tr>'
-        . '<td><code>' . e($stockRow->name) . '</code>'
+        . '<td>' . techLabel((string) ($stockRow->label ?: $stockRow->name), (string) $stockRow->name)
         . ($stockRow->equiped !== '' ? ' <span class="badge badge-info">' . e($stockRow->equiped) . '</span>' : '') . '</td>'
         . '<td>×' . (int) $stockRow->n . '</td>'
         . '<td><form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex gap-1"'
-        . ' data-confirm="' . e('Retirer « ' . $stockRow->name . ' » de l\'inventaire ?') . '">'
+        . ' data-confirm="' . e('Retirer « ' . ($stockRow->label ?: $stockRow->name) . ' » de l\'inventaire ?') . '">'
         . $csrf->renderTokenField()
         . '<input type="hidden" name="id" value="' . (int) $id . '">'
         . '<input type="hidden" name="item_id" value="' . (int) $stockRow->item_id . '">'
@@ -515,9 +572,10 @@ while ($stockRow = $stock->fetch_object()) {
 }
 
 $catalogNames = [];
-$catalog = $db->exe('SELECT name FROM items ORDER BY name');
+// The browser suggests by display name and posts the code.
+$catalog = $db->exe('SELECT name, label FROM items ORDER BY COALESCE(label, name)');
 while ($catalogRow = $catalog->fetch_object()) {
-    $catalogNames[$catalogRow->name] = '';
+    $catalogNames[$catalogRow->name] = (string) ($catalogRow->label ?: $catalogRow->name);
 }
 
 $inventory = formCard('Inventaire (piles)', ''
@@ -528,7 +586,7 @@ $inventory = formCard('Inventaire (piles)', ''
     . '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex flex-wrap align-items-end gap-2">'
     . $csrf->renderTokenField()
     . '<input type="hidden" name="id" value="' . (int) $id . '">'
-    . formField('Objet (nom technique)', formInput('item_name', '', 'list="pe-items" placeholder="pioche" required'))
+    . formField('Objet', formInput('item_name', '', 'list="pe-items" placeholder="Tapez le nom de l\'objet" required'))
     . formField('Quantité', formInput('n', '1', 'type="number" min="1" style="max-width:6rem"'))
     . '<button type="submit" name="inventory_add" value="1" class="btn btn-outline-primary mb-3">Ajouter</button>'
     . '</form>'
@@ -610,17 +668,44 @@ $effects = formCard('Effets', ''
     . '<p class="text-muted mb-0">« Modifier » remplace la valeur et la durée de l\'effet en cours, sans appliquer les'
     . ' règles ci-dessus : c\'est le seul moyen d\'écourter ou d\'affaiblir un effet.</p>');
 
+$authorName = (string) ((new Db())->exe('SELECT name FROM players WHERE id = ?', (int) $_SESSION['playerId'])->fetch_object()->name ?? '');
+$animationForm = static fn (string $inner): string => '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="mb-3">'
+    . $csrfField . '<input type="hidden" name="id" value="' . (int) $id . '">' . $inner . '</form>';
+
+$animation = formCard('Animation', ''
+    . $animationForm(formField('Téléporter à côté de', '<div class="input-group">'
+        . formInput('near', '', 'placeholder="Nom ou matricule" required')
+        . '<div class="input-group-append"><button type="submit" name="tp_near" value="1" class="btn btn-outline-primary">Téléporter</button></div></div>',
+        'form-group mb-0', 'Sur la case libre la plus proche de ce personnage.'))
+    . '<hr>'
+    . $animationForm(formField('Écrire une missive', formInput('missive_title', '', 'placeholder="Titre" required'))
+        . formTextarea('missive_text', '', 4, 'placeholder="Message" required')
+        . '<div class="d-flex align-items-center gap-2 mt-2"><button type="submit" name="missive_send" value="1" class="btn btn-outline-primary">Envoyer</button>'
+        . '<small class="text-muted">Envoyée par votre personnage actuel, ' . e($authorName) . ', qui reçoit aussi les réponses.</small></div>')
+    . '<hr>'
+    . $animationForm(formField('Ajouter au journal', '<div class="input-group">'
+        . formInput('log_text', '', 'placeholder="Ce qui s\'est passé" required')
+        . '<div class="input-group-append"><button type="submit" name="log_add" value="1" class="btn btn-outline-primary">Ajouter</button></div></div>',
+        'form-group mb-2', 'Une ligne dans le journal du personnage, visible comme les autres évènements.'))
+    . '<form method="post" action="player-edit.php?id=' . (int) $id . '" data-confirm="Retirer la dernière ligne du journal de ' . e($player->data->name) . ' ?">'
+    . $csrfField . '<input type="hidden" name="id" value="' . (int) $id . '">'
+    . '<button type="submit" name="log_delete_last" value="1" class="btn btn-sm btn-outline-danger">Retirer la dernière ligne du journal</button></form>');
+
 $body = '<form method="post" action="player-edit.php?id=' . (int) $id . '">'
     . $csrfField
     . '<input type="hidden" name="id" value="' . (int) $id . '">'
     . $identity . $position . $vitals . $turn
     . '<button type="submit" name="player_save" value="1" class="btn btn-primary">Enregistrer</button>'
     . '</form>'
-    . $progression
+    . $animation
     . $inventory
-    . $effects;
+    . $effects
+    . $progression;
 
+$isNpc = ($player->data->player_type ?? '') === 'npc';
 echo admin_layout(e($player->data->name) . ' <span class="text-muted">(#' . (int) $id . ')</span>', $body, [
-    'back' => ['/admin/players.php', 'Personnages'],
+    'back' => $isNpc ? ['/admin/pnjs.php', 'PNJ'] : ['/admin/players.php', 'Personnages'],
+    'actions' => ($isNpc ? embodyButton($id, $csrf->generateToken(), 'btn btn-primary') : '')
+        . '<a class="btn btn-outline-secondary" href="/admin/player-skills.php?id=' . (int) $id . '">Compétences</a>',
     'scripts' => ['/admin/js/scroll-keeper.js'],
 ]);
