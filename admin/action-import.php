@@ -16,9 +16,8 @@ define('MAX_BUNDLE_BYTES', $bundleMaxMb * 1024 * 1024);
 $csrf = new CsrfProtectionService();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireAdminPost('/admin/action-import.php');
     try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-
         $json = read_uploaded_bundle($_FILES['bundle'] ?? null);
         $parsed = BundleEnvelope::parse($json); // validates envelope + json_decode depth
 
@@ -31,18 +30,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['action_import_bundle'] = $json;
         unset($_SESSION['plan_import_jobs']);
         $_SESSION['action_import_filename'] = (string) ($_FILES['bundle']['name'] ?? 'bundle.json');
-        $csrf->regenerateToken();
-
-        header('Location: /admin/action-import-preview.php');
-        exit;
+        redirectTo('/admin/action-import-preview.php');
     } catch (InvalidArgumentException | RuntimeException $exception) {
         setFlash('warning', $exception->getMessage());
-        header('Location: /admin/action-import.php');
-        exit;
+        redirectTo('/admin/action-import.php');
     } catch (\Throwable $exception) {
         setFlash('danger', "Erreur lors de la lecture du fichier.");
-        header('Location: /admin/action-import.php');
-        exit;
+        redirectTo('/admin/action-import.php');
     }
 }
 
@@ -76,4 +70,7 @@ function read_uploaded_bundle($file): string
 }
 
 $body = (new ImportFormView())->render($csrf->renderTokenField());
-echo admin_layout('Importer', renderFlashMessage() . $body);
+echo admin_layout('Importer', $body, [
+    'intro' => 'Importez un bundle <code>aoo.config-bundle</code> (.json) exporté d\'une page d\'admin.'
+        . ' L\'import est transactionnel : en cas de rejet, rien n\'est appliqué.',
+]);

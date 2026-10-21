@@ -45,7 +45,7 @@ final class OutcomeEditorView
     {
         return '<button type="submit" class="wb-remove-btn" name="outcome_id" value="' . $outcomeId . '"'
             . ' formaction="/admin/action-outcome-remove.php" formnovalidate'
-            . ' onclick="var b=this; aooConfirm(\'Retirer cet outcome et ses instructions ?\').then(function(ok){ if(ok){ b.form.requestSubmit(b); } }); return false;" title="Retirer">&times;</button>';
+            . ' data-confirm="Retirer cet outcome et ses instructions ?" title="Retirer">&times;</button>';
     }
 
     /**
@@ -64,7 +64,7 @@ final class OutcomeEditorView
     {
         return '<button type="submit" class="wb-remove-btn" name="instruction_id" value="' . $instructionId . '"'
             . ' formaction="/admin/action-instruction-remove.php" formnovalidate'
-            . ' onclick="var b=this; aooConfirm(\'Retirer cette instruction ?\').then(function(ok){ if(ok){ b.form.requestSubmit(b); } }); return false;" title="Retirer">&times;</button>';
+            . ' data-confirm="Retirer cette instruction ?" title="Retirer">&times;</button>';
     }
 
 }

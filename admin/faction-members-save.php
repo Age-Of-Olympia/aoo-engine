@@ -22,11 +22,10 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Factory\EntityManagerFactory;
 use App\Service\AdminMenuAccessService;
-use App\Service\CsrfProtectionService;
 use App\Service\FactionService;
 use Classes\Player;
 
-(new AdminMenuAccessService())->enforce('factions.edit');
+(new AdminMenuAccessService())->enforce('factions.members');
 
 /** Retour vers la liste filtrée d'origine (querystring rejouée telle quelle). */
 $backUrl = '/admin/faction-members.php';
@@ -35,16 +34,7 @@ if ($back !== '' && preg_match('/^faction=[^&]*&q=[^&]*$/', $back)) {
     $backUrl .= '?' . $back;
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirectTo($backUrl);
-}
-
-try {
-    (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
-} catch (\Throwable $e) {
-    setFlash('warning', 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
-    redirectTo($backUrl);
-}
+requireAdminPost($backUrl);
 
 $playerId = (int) ($_POST['playerId'] ?? 0);
 

@@ -16,17 +16,12 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 use App\Entity\Race;
 use App\Service\ActionService;
 use App\Service\AdminMenuAccessService;
-use App\Service\CsrfProtectionService;
 use App\Service\FactionService;
 use App\Service\RaceService;
 use App\Service\TypeRenameService;
 use App\View\Admin\TypeEditorFace;
 
 (new AdminMenuAccessService())->enforce('races.edit');
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirectTo('/admin/races.php');
-}
 
 /* Deux sections, une table : les mutations d'une sorte « structure »
  * renvoient vers Types de bâtiments, pas vers Races — messages compris
@@ -35,12 +30,7 @@ $face = TypeEditorFace::fromRequest($_POST);
 $structureMode = $face->isStructure();
 $backPage = $face->page;
 
-try {
-    (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
-} catch (\Throwable $e) {
-    setFlash('warning', 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
-    redirectTo($backPage);
-}
+requireAdminPost($backPage);
 
 $service = new RaceService();
 $action = $_GET['action'] ?? '';

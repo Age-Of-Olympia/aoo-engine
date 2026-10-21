@@ -87,6 +87,7 @@ $body = (new PlayerSkillsView())->render(
     (new CsrfProtectionService())->renderTokenField()
 );
 
-echo admin_layout($summary['name'] . ' — compétences', renderFlashMessage() . $body, [
+echo admin_layout(e($summary['name']) . ' — compétences', $body, [
+    'back' => ['/admin/players.php', 'Personnages'],
     'styles' => ['/admin/css/player-skills.css'],
 ]);

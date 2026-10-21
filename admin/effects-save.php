@@ -16,21 +16,11 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Entity\Effect;
 use App\Service\AdminMenuAccessService;
-use App\Service\CsrfProtectionService;
 use App\Service\EffectService;
 
 (new AdminMenuAccessService())->enforce('effects.edit');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirectTo('/admin/effects.php');
-}
-
-try {
-    (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
-} catch (\Throwable $e) {
-    setFlash('warning', 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
-    redirectTo('/admin/effects.php');
-}
+requireAdminPost('/admin/effects.php');
 
 $service = new EffectService();
 $action = $_GET['action'] ?? '';

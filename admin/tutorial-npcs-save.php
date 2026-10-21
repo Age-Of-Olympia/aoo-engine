@@ -5,26 +5,14 @@
  */
 
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/helpers.php';
 
 use Classes\Db;
-use App\Service\AdminAuthorizationService;
 use App\Service\AdminMenuAccessService;
-use App\Service\CsrfProtectionService;
 
 (new AdminMenuAccessService())->enforce('tutorial.npcs');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    exit('Method not allowed');
-}
-
-$csrf = new CsrfProtectionService();
-try {
-    $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-} catch (RuntimeException $e) {
-    http_response_code(403);
-    exit($e->getMessage());
-}
+requireAdminPost('/admin/tutorial-npcs.php');
 
 $db = new Db();
 $action = $_GET['action'] ?? 'save';
@@ -34,10 +22,9 @@ if ($action === 'delete') {
     $id = isset($_POST['id']) ? (int) $_POST['id'] : 0;
     if ($id > 0) {
         $db->exe("DELETE FROM tutorial_npcs WHERE id = ?", [$id]);
-        $_SESSION['flash'] = ['type' => 'success', 'message' => "NPC #{$id} supprimé."];
+        setFlash('success', "NPC #{$id} supprimé.");
     }
-    header('Location: tutorial-npcs.php');
-    exit;
+    redirectTo('/admin/tutorial-npcs.php');
 }
 
 /* Save (create or update) */
@@ -74,10 +61,8 @@ if ($spawnMode === 'template') {
 }
 
 if (!empty($errors)) {
-    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Erreurs : ' . implode(' / ', $errors)];
-    $back = $id ? "tutorial-npcs.php?action=edit&id={$id}" : 'tutorial-npcs.php?action=new';
-    header("Location: {$back}");
-    exit;
+    setFlash('danger', 'Erreurs : ' . implode(' / ', $errors));
+    redirectTo($id ? "/admin/tutorial-npcs.php?action=edit&id={$id}" : '/admin/tutorial-npcs.php?action=new');
 }
 
 if ($id) {
@@ -94,7 +79,7 @@ if ($id) {
             $id,
         ]
     );
-    $_SESSION['flash'] = ['type' => 'success', 'message' => "NPC #{$id} mis à jour."];
+    setFlash('success', "NPC #{$id} mis à jour.");
 } else {
     $db->exe(
         "INSERT INTO tutorial_npcs
@@ -106,8 +91,7 @@ if ($id) {
             $text, $energie, $spawnAtStepId, $isActive,
         ]
     );
-    $_SESSION['flash'] = ['type' => 'success', 'message' => "NPC créé."];
+    setFlash('success', "NPC créé.");
 }
 
-header('Location: tutorial-npcs.php');
-exit;
+redirectTo('/admin/tutorial-npcs.php');

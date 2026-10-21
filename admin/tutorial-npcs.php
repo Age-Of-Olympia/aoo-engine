@@ -88,7 +88,7 @@ function renderNpcForm(?array $npc, array $versions, array $stepsByVersion, arra
 
     return <<<HTML
 <div class="card mb-4">
-  <div class="card-header"><h2>{$h($title)}</h2></div>
+  <div class="card-header">{$h($title)}</div>
   <div class="card-body">
     <form method="post" action="{$h($action)}">
       <input type="hidden" name="csrf_token" value="{$h($csrfToken)}">
@@ -211,17 +211,13 @@ HTML;
 /* ---------------------- Routing ---------------------- */
 
 $content = '';
-$flash = $_SESSION['flash'] ?? null;
-unset($_SESSION['flash']);
-
-if ($flash) {
-    $alertType = $flash['type'] === 'success' ? 'success' : 'danger';
-    $msg = htmlspecialchars($flash['message'], ENT_QUOTES, 'UTF-8');
-    $content .= "<div class=\"alert alert-{$alertType}\">{$msg}</div>";
-}
+$options = [];
 
 $csrfToken = $csrf->generateToken();
 
+if ($action === 'new' || $action === 'edit') {
+    $options['back'] = ['/admin/tutorial-npcs.php', 'PNJ du tutoriel'];
+}
 if ($action === 'new') {
     $content .= renderNpcForm(null, $versions, $stepsByVersion, $races, $csrfToken);
 } elseif ($action === 'edit' && $npcId) {
@@ -234,10 +230,7 @@ if ($action === 'new') {
     }
 } else {
     /* List view */
-    $content .= '<div class="d-flex justify-content-between mb-3">'
-              . '<h2>NPCs du Tutoriel</h2>'
-              . '<a href="tutorial-npcs.php?action=new" class="btn btn-primary">+ Nouveau NPC</a>'
-              . '</div>';
+    $options['actions'] = '<a href="tutorial-npcs.php?action=new" class="btn btn-primary">+ Nouveau PNJ</a>';
 
     $rows = [];
     $res = $database->exe("
@@ -270,7 +263,7 @@ if ($action === 'new') {
                 ? '<span class="badge bg-success">oui</span>'
                 : '<span class="badge bg-secondary">non</span>';
             $deleteForm = sprintf(
-                '<form method="post" action="tutorial-npcs-save.php?action=delete" style="display:inline" onsubmit="return confirm(\'Supprimer ce NPC ?\');">'
+                '<form method="post" action="tutorial-npcs-save.php?action=delete" class="d-inline" data-confirm="Supprimer ce PNJ ?">'
                 . '<input type="hidden" name="csrf_token" value="%s">'
                 . '<input type="hidden" name="id" value="%d">'
                 . '<button type="submit" class="btn btn-sm btn-danger">Supprimer</button>'
@@ -294,4 +287,4 @@ if ($action === 'new') {
     }
 }
 
-echo admin_layout('Tutorial NPCs', $content);
+echo admin_layout('PNJ du tutoriel', $content, $options);

@@ -12,21 +12,11 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\AdminMenuAccessService;
 use App\Service\ColorService;
-use App\Service\CsrfProtectionService;
 use App\Service\TileCatalogService;
 
 (new AdminMenuAccessService())->enforce('maps.colors');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirectTo('/admin/tile-colors.php');
-}
-
-try {
-    (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
-} catch (\Throwable $e) {
-    setFlash('warning', 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
-    redirectTo('/admin/tile-colors.php');
-}
+requireAdminPost('/admin/tile-colors.php');
 
 $action = $_GET['action'] ?? '';
 $name = trim((string) ($_POST['name'] ?? ''));

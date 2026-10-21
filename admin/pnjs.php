@@ -20,6 +20,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 use App\Service\AdminAuthorizationService;
 use App\Service\CsrfProtectionService;
 use App\Service\NpcAdminService;
+use App\View\Player\PlayerSearchView;
 
 /**
  * Race options for the create/edit dropdowns — only races that can actually be
@@ -37,13 +38,6 @@ function pnj_race_options(): array
     return $out;
 }
 
-function pnj_status_badge(bool $active): string
-{
-    return $active
-        ? '<span class="badge badge-success">Actif</span>'
-        : '<span class="badge badge-warning">Inactif</span>';
-}
-
 /**
  * @param array<int, array{id:int, name:string, race:string, xp:int, lastLoginTime:int, active:bool, owners:?string, owner_count:int}> $pnjs
  */
@@ -54,8 +48,8 @@ function pnj_render_list(array $pnjs, string $csrfToken, bool $canEditRetirePlan
         $assigned = $pnj['owner_count'] > 0;
         $owners = $pnj['owners'] !== null ? e($pnj['owners']) : '<span class="text-muted">— non assigné —</span>';
 
-        $retireForm = '<form method="post" action="/admin/pnjs-save.php?action=retire" style="display:inline"'
-            . ' onsubmit="return confirm(\'Retirer ce PNJ ? Il sera désassigné de tous les joueurs, passé en incognito + anonyme et déplacé sur le plan des PNJ retirés. Réversible.\')">'
+        $retireForm = '<form method="post" action="/admin/pnjs-save.php?action=retire" class="d-inline"'
+            . ' data-confirm="Retirer ce PNJ ? Il sera désassigné de tous les joueurs, passé en incognito + anonyme et déplacé sur le plan des PNJ retirés. Réversible.">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="pnj_id" value="' . (int) $pnj['id'] . '">'
             . '<button type="submit" class="btn btn-sm btn-outline-danger">Retirer</button></form>';
@@ -65,11 +59,13 @@ function pnj_render_list(array $pnjs, string $csrfToken, bool $canEditRetirePlan
             . '<td>' . (int) $pnj['id'] . '</td>'
             . '<td>' . e($pnj['name']) . '</td>'
             . '<td>' . e(ucfirst($pnj['race'])) . '</td>'
-            . '<td>' . pnj_status_badge($pnj['active']) . '</td>'
+            . '<td>' . PlayerSearchView::statusBadge($pnj['active']) . '</td>'
             . '<td>' . $owners . '</td>'
             . '<td>' . (int) $pnj['xp'] . '</td>'
             . '<td><a class="btn btn-sm btn-outline-primary" href="/admin/pnjs.php?action=edit&amp;id='
             . (int) $pnj['id'] . '">Gérer</a> '
+            . '<a class="btn btn-sm btn-outline-secondary" href="/admin/player-edit.php?id='
+            . (int) $pnj['id'] . '">Fiche</a> '
             . '<a class="btn btn-sm btn-outline-secondary" href="/admin/player-skills.php?id='
             . (int) $pnj['id'] . '">Compétences</a> '
             . $retireForm
@@ -91,10 +87,10 @@ function pnj_render_list(array $pnjs, string $csrfToken, bool $canEditRetirePlan
     // Editing the retirement plan is super-admin only; plain admins see it
     // read-only (enforcement also lives server-side in pnjs-save.php).
     if ($canEditRetirePlan) {
-        $settingsCard = '<details class="pnj-retire-setting text-muted" style="margin-bottom:1rem;font-size:.9em">'
-            . '<summary style="cursor:pointer">⚙ Plan des PNJ retirés : <strong>' . e($currentPlan) . '</strong></summary>'
+        $settingsCard = '<details class="pnj-retire-setting text-muted small mb-3">'
+            . '<summary>⚙ Plan des PNJ retirés : <strong>' . e($currentPlan) . '</strong></summary>'
             . '<form method="post" action="/admin/pnjs-save.php?action=set_retire_plan"'
-            . ' class="d-flex flex-wrap align-items-center" style="gap:.5rem;margin-top:.5rem">'
+            . ' class="d-flex flex-wrap align-items-center gap-2 mt-2">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="text" name="retire_plan" list="pnj-plan-list" value="' . e($currentPlan) . '"'
             . ' class="form-control form-control-sm" style="max-width:14rem" required>'
@@ -103,15 +99,12 @@ function pnj_render_list(array $pnjs, string $csrfToken, bool $canEditRetirePlan
             . '<span>Les PNJ retirés y sont déplacés (case libre).</span>'
             . '</form></details>';
     } else {
-        $settingsCard = '<p class="text-muted" style="margin-bottom:1rem;font-size:.9em">'
+        $settingsCard = '<p class="text-muted small mb-3">'
             . '⚙ Plan des PNJ retirés : <strong>' . e($currentPlan) . '</strong>'
-            . ' <span style="font-size:.9em">(modifiable par un super-admin)</span></p>';
+            . ' (modifiable par un super-admin)</p>';
     }
 
-    return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">Gestion des PNJ</h1>'
-        . '<a class="btn btn-primary" href="/admin/pnjs.php?action=new">+ Créer un PNJ</a></div>'
-        . $settingsCard
+    return $settingsCard
         . '<table class="table table-striped table-hover" data-admin-list data-page-size="50"'
         . ' data-search-placeholder="Nom ou matricule…" data-facets="status:Statut,assigned:Affectation">'
         . '<thead><tr><th>Matricule</th><th>Nom</th><th>Race</th><th>Statut</th>'
@@ -121,10 +114,8 @@ function pnj_render_list(array $pnjs, string $csrfToken, bool $canEditRetirePlan
 
 function pnj_render_create_form(string $csrfToken): string
 {
-    return '<h1 class="mb-3">Créer un PNJ</h1>'
-        . '<a class="btn btn-sm btn-outline-secondary mb-3" href="/admin/pnjs.php">← Retour à la liste</a>'
-        . '<form method="post" action="/admin/pnjs-save.php?action=create" class="card" style="max-width:32rem">'
-        . '<div class="card-body" style="padding:16px">'
+    return '<form method="post" action="/admin/pnjs-save.php?action=create" class="card pnj-card">'
+        . '<div class="card-body">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
         . '<div class="mb-3"><label>Nom</label>'
         . '<input type="text" name="name" class="form-control" required maxlength="255" autofocus></div>'
@@ -141,9 +132,9 @@ function pnj_render_create_form(string $csrfToken): string
 function pnj_render_edit_form(array $pnj, array $owners, string $csrfToken): string
 {
     // --- Identity form (rename / change race) ---
-    $identity = '<form method="post" action="/admin/pnjs-save.php?action=update" class="card mb-3" style="max-width:32rem">'
-        . '<div class="card-header"><h3 class="card-title">Identité</h3></div>'
-        . '<div class="card-body" style="padding:16px">'
+    $identity = '<form method="post" action="/admin/pnjs-save.php?action=update" class="card pnj-card">'
+        . '<div class="card-header">Identité</div>'
+        . '<div class="card-body">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
         . '<input type="hidden" name="pnj_id" value="' . (int) $pnj['id'] . '">'
         . '<div class="mb-3"><label>Nom</label>'
@@ -157,7 +148,7 @@ function pnj_render_edit_form(array $pnj, array $owners, string $csrfToken): str
     $ownerRows = '';
     foreach ($owners as $o) {
         $ownerRows .= '<tr><td>' . e($o['name']) . ' <span class="text-muted">(#' . (int) $o['player_id'] . ')</span></td>'
-            . '<td><form method="post" action="/admin/pnjs-save.php?action=unassign" style="display:inline">'
+            . '<td><form method="post" action="/admin/pnjs-save.php?action=unassign" class="d-inline">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="pnj_id" value="' . (int) $pnj['id'] . '">'
             . '<input type="hidden" name="player_id" value="' . (int) $o['player_id'] . '">'
@@ -167,11 +158,11 @@ function pnj_render_edit_form(array $pnj, array $owners, string $csrfToken): str
         $ownerRows = '<tr><td colspan="2" class="text-muted">Aucun joueur ne contrôle ce PNJ.</td></tr>';
     }
 
-    $assign = '<div class="card mb-3" style="max-width:32rem">'
-        . '<div class="card-header"><h3 class="card-title">Contrôlé par</h3></div>'
-        . '<div class="card-body" style="padding:16px">'
+    $assign = '<div class="card pnj-card">'
+        . '<div class="card-header">Contrôlé par</div>'
+        . '<div class="card-body">'
         . '<table class="table table-sm"><tbody>' . $ownerRows . '</tbody></table>'
-        . '<form method="post" action="/admin/pnjs-save.php?action=assign" class="d-flex" style="gap:.5rem;margin-top:8px">'
+        . '<form method="post" action="/admin/pnjs-save.php?action=assign" class="d-flex gap-2 mt-2">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
         . '<input type="hidden" name="pnj_id" value="' . (int) $pnj['id'] . '">'
         . '<input type="text" name="player" class="form-control" placeholder="Matricule ou nom exact du joueur…" required>'
@@ -179,28 +170,22 @@ function pnj_render_edit_form(array $pnj, array $owners, string $csrfToken): str
         . '</form></div></div>';
 
     // --- Danger zone: soft retire ---
-    $retire = '<div class="card" style="max-width:32rem;border-color:var(--danger,#d93025)">'
-        . '<div class="card-header"><h3 class="card-title">Retrait</h3></div>'
-        . '<div class="card-body" style="padding:16px">'
-        . '<p class="text-muted">Le retrait, sans rien supprimer :</p>'
-        . '<ul class="text-muted" style="margin:0 0 10px 1.1rem">'
+    $retire = '<div class="pnj-card">' . dangerZone(
+        '<p class="text-muted">Le retrait, sans rien supprimer :</p>'
+        . '<ul class="text-muted">'
         . '<li>le <strong>désassigne</strong> de tous les joueurs qui le contrôlent ;</li>'
         . '<li>le passe en <strong>incognito</strong> (invisible sur la carte et dans les évènements) ;</li>'
         . '<li>le passe en <strong>anonyme</strong> (introuvable dans les recherches de destinataires) ;</li>'
         . '<li>le <strong>déplace sur le plan « ' . e((new NpcAdminService())->getRetirePlan()) . ' »</strong> (case libre), hors du monde vivant.</li>'
         . '</ul>'
         . '<p class="text-muted">Réversible : réassignez-le à un joueur pour le réactiver.</p>'
-        . '<form method="post" action="/admin/pnjs-save.php?action=retire"'
-        . ' onsubmit="return confirm(\'Retirer ce PNJ ?\')">'
+        . '<form method="post" action="/admin/pnjs-save.php?action=retire" data-confirm="Retirer ce PNJ ?">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
         . '<input type="hidden" name="pnj_id" value="' . (int) $pnj['id'] . '">'
         . '<button type="submit" class="btn btn-outline-danger">Retirer ce PNJ</button>'
-        . '</form></div></div>';
+        . '</form>') . '</div>';
 
-    return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">' . e($pnj['name']) . ' <span class="text-muted">(#' . (int) $pnj['id'] . ')</span></h1>'
-        . '<a class="btn btn-sm btn-outline-secondary" href="/admin/pnjs.php">← Retour à la liste</a></div>'
-        . $identity . $assign . $retire;
+    return $identity . $assign . $retire;
 }
 
 /* -------------------------------------------------------------------------
@@ -212,7 +197,9 @@ $service = new NpcAdminService();
 
 $action = $_GET['action'] ?? 'list';
 
+$options = ['styles' => ['/admin/css/pnjs.css'], 'back' => ['/admin/pnjs.php', 'PNJ']];
 if ($action === 'new') {
+    $title = 'Créer un PNJ';
     $content = pnj_render_create_form($csrfToken);
 } elseif ($action === 'edit') {
     $id = (int) ($_GET['id'] ?? 0);
@@ -221,14 +208,16 @@ if ($action === 'new') {
         setFlash('warning', 'PNJ introuvable.');
         redirectTo('/admin/pnjs.php');
     }
+    $title = e($pnj['name']) . ' <span class="text-muted">(#' . (int) $pnj['id'] . ')</span>';
     $content = pnj_render_edit_form($pnj, $service->getOwners($id), $csrfToken);
 } else {
     // Only super-admins may edit the retirement plan (server-side guard is in
     // pnjs-save.php); plain admins see it read-only.
     $viewerIsSuperAdmin = AdminAuthorizationService::isSuperAdmin();
+    $title = 'Gestion des PNJ';
+    $options = ['styles' => ['/admin/css/pnjs.css'],
+        'actions' => '<a class="btn btn-primary" href="/admin/pnjs.php?action=new">+ Créer un PNJ</a>'];
     $content = pnj_render_list($service->listPnjs(), $csrfToken, $viewerIsSuperAdmin);
 }
 
-echo admin_layout('PNJ', renderFlashMessage() . $content, [
-    'styles' => ['/admin/css/pnjs.css'],
-]);
+echo admin_layout($title, $content, $options);

@@ -10,10 +10,8 @@ use App\Service\Action\SimulationInputMapper;
 use Throwable;
 
 /**
- * The simulator panel: the hypothetical-state form, and — on submit — the result
- * report. Extracted so action-simulate.php and the workbench's "Simuler" tab
- * share one implementation instead of each wiring the builder / mapper / service
- * / report views by hand.
+ * The simulator panel of the workbench's "Simuler" tab: the hypothetical-state
+ * form, and — on submit — the result report.
  */
 final class SimulationPanelView
 {

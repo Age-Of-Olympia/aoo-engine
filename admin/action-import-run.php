@@ -22,15 +22,12 @@ $filename = (string) ($_SESSION['action_import_filename'] ?? 'bundle.json');
 
 ob_start();
 ?>
-<h1>Import en cours</h1>
-<p class="text-muted"><?= e($filename) ?></p>
-
 <div class="card mb-3"><div class="card-body">
-    <div class="progress" style="height: 22px;">
+    <div class="progress">
         <div id="import-bar" class="progress-bar" role="progressbar" style="width: 0%;">0 %</div>
     </div>
     <p id="import-label" class="mt-2 mb-0">Démarrage…</p>
-    <ul id="import-warnings" class="mt-3 text-muted" style="font-size: 13px;"></ul>
+    <ul id="import-warnings" class="mt-3 mb-0 text-muted small"></ul>
 </div></div>
 
 <p><a class="btn btn-secondary" href="/admin/action-import.php">Revenir à l'import</a></p>
@@ -86,4 +83,7 @@ ob_start();
 })();
 </script>
 <?php
-echo admin_layout('Import en cours', renderFlashMessage() . ob_get_clean());
+echo admin_layout('Import en cours', ob_get_clean(), [
+    'intro' => 'Fichier : <code>' . e($filename) . '</code>',
+    'back' => ['/admin/action-import.php', 'Importer'],
+]);

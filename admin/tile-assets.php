@@ -1,5 +1,4 @@
 <?php
-// admin/tile-assets.php
 /**
  * Tuiles & images (admin dashboard → Cartes) : inventaire des images de
  * chaque couche de carte (sol, murs, éléments, décors…) avec diagnostics —
@@ -26,12 +25,7 @@ $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['asset_upload']) || isset($_POST['asset_delete'])
         || isset($_POST['asset_rename']) || isset($_POST['asset_move']));
 if ($isStateChangingPost) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-    } catch (RuntimeException $e) {
-        setFlash('danger', $e->getMessage());
-        redirectTo('tile-assets.php?layer=' . urlencode($layer));
-    }
+    requireAdminPost('tile-assets.php?layer=' . urlencode($layer));
 
     try {
         if (isset($_POST['asset_upload'])) {
@@ -97,21 +91,9 @@ ob_start();
 ?>
 
 <div class="container">
-    <h3>Tuiles &amp; images des cartes</h3>
-
-    <?= renderFlashMessage() ?>
-
-    <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-        Inventaire des images de <code style="display:inline">img/&lt;couche&gt;/</code> avec leurs problèmes connus
-        (image à palette, cause des fondus noirs ; formats multiples ; nom invalide ; image posée sur une carte
-        mais absente du serveur…). L'ajout convertit les PNG et GIF en PNG vraies couleurs et conserve les WebP tels quels ; la suppression est
-        refusée tant que l'image est posée quelque part ; le renommage met à jour les cartes et les terrains.
-        Les fondus générés (<code style="display:inline">trans_*</code>) se gèrent depuis la page Transitions de terrain.
-    </div>
-
-    <div class="card mt-3">
-        <div class="card-body py-2 d-flex align-items-center gap-3 flex-wrap">
-            <span class="text-muted" style="font-size:13px;"><i class="fas fa-layer-group"></i> Couche :</span>
+    <div class="card">
+        <div class="card-body py-2 d-flex align-items-center gap-2 flex-wrap">
+            <span class="text-muted"><i class="fas fa-layer-group"></i> Couche :</span>
             <?php foreach ($service->layers() as $candidate): ?>
                 <a href="/admin/tile-assets.php?layer=<?= e(urlencode($candidate)) ?>"
                    class="btn btn-sm <?= $candidate === $layer ? 'btn-primary' : 'btn-outline-secondary' ?>">
@@ -128,12 +110,12 @@ ob_start();
                 <?= $csrf->renderTokenField() ?>
                 <input type="hidden" name="layer" value="<?= e($layer) ?>">
                 <div class="form-group mb-0">
-                    <label style="font-size:13px;">Nom (sans extension)</label>
+                    <label>Nom (sans extension)</label>
                     <input type="text" class="form-control form-control-sm" name="new_name" required
                            pattern="[a-zA-Z0-9_.-]+" placeholder="ex: sable_noir">
                 </div>
                 <div class="form-group mb-0">
-                    <label style="font-size:13px;">Image (png / webp / gif, max 4 Mo)</label>
+                    <label>Image (png / webp / gif, max 4 Mo)</label>
                     <input type="file" class="form-control-file" name="asset_file" accept=".png,.webp,.gif" required>
                 </div>
                 <button type="submit" name="asset_upload" value="1" class="btn btn-primary btn-sm">
@@ -151,9 +133,9 @@ ob_start();
                 <h5 class="card-title mb-0">Inventaire — <?= e($layer) ?></h5>
                 <span class="badge bg-secondary"><?= count($inventory['entries']) ?> images</span>
                 <?php if (count($withProblems) > 0): ?>
-                    <span class="badge" style="background-color:#f0ad4e;color:#fff;"><?= count($withProblems) ?> avec problème(s)</span>
+                    <span class="badge badge-solid badge-warning"><?= count($withProblems) ?> avec problème(s)</span>
                 <?php else: ?>
-                    <span class="badge" style="background-color:#198754;color:#fff;">aucun problème</span>
+                    <span class="badge badge-solid badge-success">aucun problème</span>
                 <?php endif; ?>
                 <?php if ($inventory['transitions'] > 0): ?>
                     <small class="text-muted"><?= $inventory['transitions'] ?> fondus trans_* non listés (page Transitions de terrain)</small>
@@ -163,7 +145,7 @@ ob_start();
             <?php if ($inventory['entries'] === []): ?>
                 <div class="alert alert-info mb-0">Aucune image dans img/<?= e($layer) ?>/.</div>
             <?php else: ?>
-                <table class="table table-sm table-striped" style="font-size:13px;" data-admin-list data-page-size="50">
+                <table class="table table-sm table-striped" data-admin-list data-page-size="50">
                     <thead><tr>
                         <th></th><th>Nom</th><th>Fichier(s)</th><th>Taille</th>
                         <th title="Cases posées sur l'ensemble des cartes">Usage</th><th>Problèmes</th><th></th>
@@ -174,21 +156,21 @@ ob_start();
                             <td style="width:56px;">
                                 <?php if (!$entry['missing']): ?>
                                     <img class="tile-thumb" src="/img/<?= e($layer) ?>/<?= e($entry['files'][0]) ?>" width="50" height="50"
-                                         loading="lazy" style="image-rendering:pixelated;object-fit:contain;border:1px solid #ddd;" alt="">
+                                         loading="lazy" style="image-rendering:pixelated;object-fit:contain;" alt="">
                                 <?php else: ?>
                                     <span class="badge badge-danger">absente</span>
                                 <?php endif; ?>
                             </td>
                             <td><code><?= e($entry['name']) ?></code>
                                 <?= $entry['isTerrain'] ? ' <span class="badge badge-success" title="Déclarée terrain (fondable)">terrain</span>' : '' ?></td>
-                            <td style="font-size:12px;word-break:break-all;"><?= e(implode(', ', $entry['files'])) ?></td>
+                            <td class="small" style="word-break:break-all;"><?= e(implode(', ', $entry['files'])) ?></td>
                             <td><?= $entry['missing'] ? '—' : $entry['width'] . '×' . $entry['height'] ?></td>
                             <td>
                                 <?php if ($entry['usage'] > 0): ?>
                                     <details class="row-popover">
-                                        <summary class="btn btn-sm btn-outline-secondary" style="cursor:pointer;list-style:none;"
+                                        <summary class="btn btn-sm btn-outline-secondary"
                                                  title="Positions de cette tuile sur les cartes"><strong><?= $entry['usage'] ?></strong></summary>
-                                        <div class="row-popover-panel" style="max-height:12rem;overflow:auto;font-size:12px;"
+                                        <div class="row-popover-panel small" style="max-height:12rem;overflow:auto;"
                                              data-lazy-src="?layer=<?= e(urlencode($layer)) ?>&amp;positions=<?= e(urlencode($entry['name'])) ?>">…</div>
                                     </details>
                                 <?php else: ?>
@@ -197,28 +179,28 @@ ob_start();
                             </td>
                             <td>
                                 <?php foreach ($entry['problems'] as $problem): ?>
-                                    <div class="text-warning" style="font-size:12px;"><i class="fas fa-exclamation-triangle"></i> <?= e($problem) ?></div>
+                                    <div class="text-warning small"><i class="fas fa-exclamation-triangle"></i> <?= e($problem) ?></div>
                                 <?php endforeach; ?>
                             </td>
-                            <td style="white-space:nowrap;">
+                            <td class="text-nowrap">
                                 <?php if (!$entry['missing']): ?>
                                     <details class="row-popover">
-                                        <summary class="btn btn-sm btn-outline-secondary" style="cursor:pointer;list-style:none;">Renommer</summary>
+                                        <summary class="btn btn-sm btn-outline-secondary">Renommer</summary>
                                         <form method="post" class="row-popover-panel d-flex gap-2"
-                                              onsubmit="return confirm('Renommer « <?= e($entry['name']) ?> » partout (cartes comprises) ?');">
+                                              data-confirm="Renommer « <?= e($entry['name']) ?> » partout (cartes comprises) ?">
                                             <?= $csrf->renderTokenField() ?>
                                             <input type="hidden" name="layer" value="<?= e($layer) ?>">
                                             <input type="hidden" name="name" value="<?= e($entry['name']) ?>">
                                             <input type="text" class="form-control form-control-sm" name="new_name"
-                                                   pattern="[a-zA-Z0-9_.-]+" required placeholder="nouveau nom" style="width:140px;">
+                                                   pattern="[a-zA-Z0-9_.-]+" required placeholder="nouveau nom" style="width:9rem;">
                                             <button type="submit" name="asset_rename" value="1" class="btn btn-sm btn-primary">OK</button>
                                         </form>
                                     </details>
                                     <details class="row-popover">
-                                        <summary class="btn btn-sm btn-outline-secondary" style="cursor:pointer;list-style:none;"
+                                        <summary class="btn btn-sm btn-outline-secondary"
                                                  title="Changer de type : déplacer l'image vers une autre couche">Déplacer</summary>
                                         <form method="post" class="row-popover-panel d-flex gap-2"
-                                              onsubmit="return confirm('Déplacer « <?= e($entry['name']) ?> » vers la couche sélectionnée ?');">
+                                              data-confirm="Déplacer « <?= e($entry['name']) ?> » vers la couche sélectionnée ?">
                                             <?= $csrf->renderTokenField() ?>
                                             <input type="hidden" name="layer" value="<?= e($layer) ?>">
                                             <input type="hidden" name="name" value="<?= e($entry['name']) ?>">
@@ -230,13 +212,13 @@ ob_start();
                                                 }
                                             }
                                             echo formSelect('target_layer', $layerChoices, null, null,
-                                                'class="form-control form-control-sm" style="width:140px;"');
+                                                'class="form-control form-control-sm" style="width:9rem;"');
                                             ?>
                                             <button type="submit" name="asset_move" value="1" class="btn btn-sm btn-primary">OK</button>
                                         </form>
                                     </details>
-                                    <form method="post" style="display:inline-block;"
-                                          onsubmit="return confirm('Supprimer définitivement « <?= e($entry['name']) ?> » ?');">
+                                    <form method="post" class="d-inline-block"
+                                          data-confirm="Supprimer définitivement « <?= e($entry['name']) ?> » ?">
                                         <?= $csrf->renderTokenField() ?>
                                         <input type="hidden" name="layer" value="<?= e($layer) ?>">
                                         <input type="hidden" name="name" value="<?= e($entry['name']) ?>">
@@ -258,4 +240,8 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Tuiles & images', $content);
+echo admin_layout('Tuiles & images', $content, ['intro' => 'Inventaire des images de <code>img/&lt;couche&gt;/</code> avec leurs problèmes connus
+        (image à palette, cause des fondus noirs ; formats multiples ; nom invalide ; image posée sur une carte
+        mais absente du serveur…). L\'ajout convertit les PNG et GIF en PNG vraies couleurs et conserve les WebP tels quels ; la suppression est
+        refusée tant que l\'image est posée quelque part ; le renommage met à jour les cartes et les terrains.
+        Les fondus générés (<code>trans_*</code>) se gèrent depuis la page Transitions de terrain.']);

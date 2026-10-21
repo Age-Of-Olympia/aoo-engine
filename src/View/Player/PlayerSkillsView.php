@@ -55,18 +55,14 @@ final class PlayerSkillsView
             (int) $summary['xp'] . ' XP',
         ]));
 
-        return '<div class="d-flex justify-content-between align-items-center mb-1">'
-            . '<h1 class="mb-0">' . $this->esc($summary['name'])
-            . ' <small class="text-muted">#' . (int) $summary['id'] . '</small></h1>'
-            . '<div>'
-            . '<a class="btn btn-sm btn-outline-secondary" href="/admin/players.php">← Recherche</a> '
-            . '<button type="submit" class="btn btn-primary">Enregistrer</button>'
-            . '</div>'
-            . '</div>'
-            . '<p class="text-muted mb-3">' . $meta
+        // The page title is drawn by the layout; this line sums up and saves.
+        return '<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">'
+            . '<p class="text-muted mb-0">' . $meta
             . ' · <span class="badge badge-info">' . $this->countOwned($actions) . '/' . count($actions) . ' actions</span>'
             . ' <span class="badge badge-info">' . $this->countOwned($passives) . '/' . count($passives) . ' passifs</span>'
-            . '</p>';
+            . '</p>'
+            . '<button type="submit" class="btn btn-primary">Enregistrer</button>'
+            . '</div>';
     }
 
     /**

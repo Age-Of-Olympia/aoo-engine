@@ -119,9 +119,6 @@ function race_character_counts(array $counts): string
 }
 
 /**
- * @param Race[] $races
- */
-/**
  * Éléments de carte utilisables comme saignement : image dans
  * img/elements + entrée au catalogue des effets (exigence d'Element::put).
  *
@@ -291,21 +288,29 @@ function race_render_list(array $races, TypeEditorFace $face): string
         : '<th></th><th>Code</th><th>Nom</th><th>Statut</th><th>Couleur</th><th>Faction</th>'
             . '<th>Stats clés</th><th>Listes</th><th title="Personnages (joueurs et PNJ) utilisant cette race">Personnages</th><th></th>';
 
-    return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">' . ($face->title) . '</h1>'
-        . '<div class="d-flex gap-2">'
-        . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=race"'
+    return '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
+        . $headers
+        . '</tr></thead><tbody>' . $rows . '</tbody></table>';
+}
+
+/** Buttons on the right of the list's title. */
+function race_list_actions(TypeEditorFace $face): string
+{
+    return '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=race"'
         . ' title="Télécharger toutes les races et types en bundle JSON (famille commune race)">'
         . '<i class="fas fa-download"></i> Exporter (JSON)</a>'
         . '<a class="btn btn-outline-secondary" href="/admin/action-import.php"'
         . ' title="Importer un bundle JSON (avec prévisualisation avant application)">'
         . '<i class="fas fa-upload"></i> Importer</a>'
-        . '<a class="btn btn-primary" href="' . $selfPage . '?action=new">'
-        . ($face->newLabel) . '</a>'
-        . '</div></div>'
-        . '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
-        . $headers
-        . '</tr></thead><tbody>' . $rows . '</tbody></table>';
+        . '<a class="btn btn-primary" href="' . $face->page . '?action=new">' . $face->newLabel . '</a>';
+}
+
+/** Title of the edit/new form. */
+function race_form_title(?Race $race, TypeEditorFace $face): string
+{
+    return $race !== null
+        ? $face->singular . ' : ' . e($race->getLabel()) . ' <span class="text-muted">(' . e($race->getName()) . ')</span>'
+        : 'Nouveau ' . strtolower($face->singular);
 }
 
 /** Exhaust is rolled on 1d100 per harvest, regrow on 1d1000 per hourly cron run. */
@@ -365,11 +370,7 @@ function race_render_form(?Race $race, string $csrfToken, TypeEditorFace $face):
 {
     $isEdit = $race !== null;
     $action = $isEdit ? 'update' : 'create';
-    $noun = $face->singular;
     $dialogNames = $face->isStructure() ? array_keys((new \App\Service\DialogService())->listGameDialogs()) : [];
-    $title = $isEdit
-        ? $noun . ' : ' . e($race->getLabel()) . ' <span class="text-muted">(' . e($race->getName()) . ')</span>'
-        : 'Nouveau ' . strtolower($noun);
 
     $nameField = $isEdit
         ? '<input type="hidden" name="name" value="' . e($race->getName()) . '">'
@@ -453,13 +454,7 @@ function race_render_form(?Race $race, string $csrfToken, TypeEditorFace $face):
 </script>
 HTML;
 
-    return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">' . $title . '</h1>'
-        . '<a class="btn btn-sm btn-outline-secondary" href="'
-        . ($face->page)
-        . '">← Retour à la liste</a></div>'
-
-        . '<form method="post" action="/admin/races-save.php?action=' . $action . '">'
+    return '<form method="post" action="/admin/races-save.php?action=' . $action . '">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
 
         . '<div class="card mb-3"><div class="card-header">Identité</div><div class="card-body"><div class="row">'
@@ -696,8 +691,7 @@ HTML;
                 . '<small class="form-text text-muted">Copiée dans players.faction à la création du personnage.'
                 . ' Plusieurs races peuvent partager une faction.</small></div>'
                 . '<div class="form-group col-md-3"><label>Plan d\'origine</label>'
-                . '<input type="text" class="form-control" name="plan" value="'
-                . e($isEdit ? $race->getPlan() : '') . '"></div>')
+                . formSelect('plan', plan_choices(), $isEdit ? (string) $race->getPlan() : null, '— aucun —') . '</div>')
         . '</div></div></div>'
 
         . '<div class="card mb-3"><div class="card-header">Caractéristiques</div><div class="card-body"><div class="row">'
@@ -754,8 +748,8 @@ function race_render_delete_zone(Race $race, string $csrfToken): string
     } else {
         $noun = $face->isStructure() ? 'le type de bâtiment' : 'la race';
         $body = '<form method="post" action="/admin/races-save.php?action=delete" class="d-flex align-items-center gap-3"'
-            . ' onsubmit="return confirm(\'Supprimer définitivement ' . $noun . ' « '
-            . e($race->getName()) . ' »' . ($face->isStructure() ? '' : ' et ses listes d\\\'actions/sorts') . ' ?\');">'
+            . ' data-confirm="' . e('Supprimer définitivement ' . $noun . ' « ' . $race->getName() . ' »'
+                . ($face->isStructure() ? '' : ' et ses listes d\'actions/sorts') . ' ?') . '">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="name" value="' . e($race->getName()) . '">'
             . ($face->isStructure() ? $face->formFields() : '')
@@ -775,8 +769,7 @@ function race_render_delete_zone(Race $race, string $csrfToken): string
         $body = $rename . '<hr><h6>Supprimer</h6>' . $body;
     }
 
-    return '<div class="card mt-4 border-danger"><div class="card-header text-danger">Zone dangereuse</div>'
-        . '<div class="card-body">' . $body . '</div></div>';
+    return dangerZone($body);
 }
 
 /**
@@ -821,7 +814,10 @@ $action = $_GET['action'] ?? 'list';
  * wrappers that set the query before including this page. */
 $face = TypeEditorFace::fromRequest($_GET);
 
+$options = [];
 if ($action === 'new') {
+    $title = race_form_title(null, $face);
+    $options['back'] = [$face->page, $face->title];
     $content = race_render_form(null, $csrfToken, $face);
 } elseif ($action === 'edit') {
     $race = $service->getRaceByName((string) ($_GET['name'] ?? ''));
@@ -830,7 +826,10 @@ if ($action === 'new') {
         redirectTo($face->page);
     }
     /* The row decides: editing from anywhere shows its own face. */
-    $content = race_render_form($race, $csrfToken, TypeEditorFace::of($race));
+    $face = TypeEditorFace::of($race);
+    $title = race_form_title($race, $face);
+    $options['back'] = [$face->page, $face->title];
+    $content = race_render_form($race, $csrfToken, $face);
 } else {
     // Every road image is a road type, placed or not yet
     if ($face->isRoute()) {
@@ -841,7 +840,9 @@ if ($action === 'new') {
         $service->getAllRaces(),
         static fn (Race $race): bool => $face->keeps($race)
     ));
+    $title = $face->title;
+    $options['actions'] = race_list_actions($face);
     $content = race_render_list($kept, $face);
 }
 
-echo admin_layout($face->title, renderFlashMessage() . $content);
+echo admin_layout($title, $content, $options);

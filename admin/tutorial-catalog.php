@@ -72,6 +72,12 @@ if ($csrfValid) {
     }
 }
 
+// PRG on success; a failure re-renders with the submitted values kept.
+if ($messageType === 'success') {
+    setFlash('success', $message);
+    redirectTo('/admin/tutorial-catalog.php');
+}
+
 // Fetch all tutorials with step counts
 $tutorials = $catalogService->getAllTutorials();
 
@@ -91,26 +97,6 @@ if ($messageType === 'danger' && in_array($_POST['action'] ?? '', ['create', 'up
 ob_start();
 ?>
 
-<link rel="stylesheet" href="/css/rpg-awesome.min.css">
-<style>
-    .tutorial-icon { font-size: 1.5rem; vertical-align: middle; }
-    .badge-beginner { background: #27ae60; color: white; }
-    .badge-intermediate { background: #f39c12; color: white; }
-    .badge-advanced { background: #e74c3c; color: white; }
-</style>
-
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Catalogue des Tutoriels</h1>
-    <div>
-        <a href="/admin/tutorial.php" class="btn btn-outline-info">
-            Voir tous les Steps
-        </a>
-        <a href="/index.php" class="btn btn-outline-secondary">
-            Retour au jeu
-        </a>
-    </div>
-</div>
-
 <?php if ($message): ?>
 <div class="alert alert-<?= $messageType ?>">
     <?= htmlspecialchars($message) ?>
@@ -122,7 +108,7 @@ ob_start();
     <div class="col-md-6">
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="card-title">Tutoriels disponibles</h5>
+                Tutoriels disponibles
             </div>
             <div class="card-body">
                 <?php if (empty($tutorials)): ?>
@@ -183,7 +169,7 @@ ob_start();
                                             Steps
                                         </a>
                                         <?php if ($tut['version'] !== '1.0.0'): ?>
-                                        <form method="POST" style="display:inline" onsubmit="return confirm('Supprimer ce tutoriel ?');">
+                                        <form method="POST" class="d-inline" data-confirm="Supprimer ce tutoriel ?">
                                             <?= $csrf->renderTokenField() ?>
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="id" value="<?= $tut['id'] ?>">
@@ -208,9 +194,7 @@ ob_start();
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title">
-                    <?= $editTutorial ? 'Modifier' : 'Nouveau' ?> Tutoriel
-                </h5>
+                <?= $editTutorial ? 'Modifier le tutoriel' : 'Nouveau tutoriel' ?>
             </div>
             <div class="card-body">
                 <form method="POST">
@@ -377,4 +361,7 @@ document.querySelectorAll('.btn-launch-tutorial').forEach(function(btn) {
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Catalogue des Tutoriels', $content);
+echo admin_layout('Catalogue des tutoriels', $content, [
+    'actions' => '<a href="/admin/tutorial.php" class="btn btn-outline-secondary">Voir toutes les étapes</a>',
+    'styles' => ['/css/rpg-awesome.min.css', '/admin/css/tutorial-admin.css'],
+]);

@@ -18,21 +18,10 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 use App\Factory\PlayerFactory;
 use App\Service\AdminMenuAccessService;
 use App\Service\BuildingService;
-use App\Service\CsrfProtectionService;
 
 (new AdminMenuAccessService())->enforce('buildings.place');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirectTo('/admin/buildings.php');
-}
-
-$csrf = new CsrfProtectionService();
-try {
-    $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-} catch (\Throwable $e) {
-    setFlash('warning', 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
-    redirectTo('/admin/buildings.php');
-}
+requireAdminPost('/admin/buildings.php');
 
 $action = $_GET['action'] ?? '';
 $service = new BuildingService();
@@ -48,7 +37,7 @@ if ($action === 'place') {
         'x' => (int) $_POST['x'],
         'y' => (int) $_POST['y'],
         'z' => is_numeric($_POST['z'] ?? null) ? (int) $_POST['z'] : 0,
-        'plan' => trim((string) ($_POST['plan'] ?? 'gaia')),
+        'plan' => trim((string) ($_POST['plan'] ?? plans()->worldPlan())),
     ];
 
     // Propriétaire : matricule numérique ou nom exact d'un joueur réel.

@@ -10,8 +10,7 @@ use App\View\Action\ImportPreviewView;
 $json = $_SESSION['action_import_bundle'] ?? null;
 if (!is_string($json) || $json === '') {
     setFlash('warning', 'Aucun bundle à prévisualiser. Importez d\'abord un fichier.');
-    header('Location: /admin/action-import.php');
-    exit;
+    redirectTo('/admin/action-import.php');
 }
 
 try {
@@ -24,8 +23,7 @@ try {
 } catch (\Throwable $exception) {
     unset($_SESSION['action_import_bundle'], $_SESSION['action_import_filename']);
     setFlash('danger', 'Bundle invalide : ' . $exception->getMessage());
-    header('Location: /admin/action-import.php');
-    exit;
+    redirectTo('/admin/action-import.php');
 }
 
 $csrf = new CsrfProtectionService();
@@ -33,4 +31,4 @@ $filename = (string) ($_SESSION['action_import_filename'] ?? 'bundle.json');
 $bundleHash = hash('sha256', $json);
 $body = (new ImportPreviewView())->render($report, $filename, $csrf->renderTokenField(), $bundleHash);
 
-echo admin_layout('Prévisualisation de l\'import', renderFlashMessage() . $body);
+echo admin_layout('Prévisualisation de l\'import', $body, ['back' => ['/admin/action-import.php', 'Importer']]);

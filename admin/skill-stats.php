@@ -124,12 +124,8 @@ foreach ($statusLabels as $value => $label) {
 $notes = 'Population : ' . $populationLabel
     . ($status === SkillStatsService::STATUS_ALL ? ' (tous statuts)' : '');
 
-$toggleBar = '<div class="mb-3 d-flex flex-wrap align-items-center" style="gap:.5rem">'
-    . '<span class="btn-group">' . $statusButtons . '</span>'
-    . $npcToggle
-    . '<span class="text-muted">' . e($notes) . '</span>'
-    . '</div>';
-
-echo admin_layout('Compétences — statistiques', $toggleBar . $body, [
+echo admin_layout('Compétences — statistiques', $body, [
+    'actions' => '<span class="btn-group">' . $statusButtons . '</span>' . $npcToggle,
+    'intro' => e($notes),
     'styles' => ['/admin/css/skill-stats.css'],
 ]);

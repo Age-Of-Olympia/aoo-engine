@@ -60,7 +60,7 @@ $valid = $form['text'] !== ''
 
 $recipients = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+    requireAdminPost('/admin/special-events.php');
 
     if (!$valid) {
         setFlash('danger', 'Texte manquant, choix inconnu, zone incomplète (plan, x, y et rayon) ou liste de matricules illisible.');
@@ -135,13 +135,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         . ($names === [] ? '.' : ' : ' . e(implode(', ', $names)) . (count($recipients) > 20 ? '…' : ''))
         . '</div>'
         . ($recipients === [] ? '' : '<button type="submit" name="publish" value="1" class="btn btn-danger"'
-            . ' onclick="return confirm(\'Publier à ' . count($recipients) . ' personnage(s) ?\');">Publier</button> ');
+            . ' data-confirm="Publier à ' . count($recipients) . ' personnage(s) ?">Publier</button> ');
 }
 
 $content = '<form method="post" action="/admin/special-events.php">'
-    . formCard('Évènement spécial', $fields
+    . formCard('Nouvel évènement', $fields
         . $preview
         . '<button type="submit" name="preview" value="1" class="btn btn-secondary">Voir les destinataires</button>')
     . '</form>';
 
-echo admin_layout('Évènements spéciaux', renderFlashMessage() . $content);
+echo admin_layout('Évènements spéciaux', $content);

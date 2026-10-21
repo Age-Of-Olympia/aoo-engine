@@ -15,7 +15,6 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
-use App\Service\CsrfProtectionService;
 use App\Service\Map\CompositeSpriteService;
 use App\Service\Map\EntitySpriteService;
 use App\Service\Map\EntityTypeFootprintService;
@@ -23,9 +22,9 @@ use App\Service\Map\EntityTypeFootprintService;
 $type = trim((string) ($_POST['type'] ?? ''));
 $back = '/admin/footprints.php?type=' . urlencode($type);
 
-try {
-    (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
+requireAdminPost($back);
 
+try {
     $sprites = new EntitySpriteService();
     $dirs = $type === '' ? [] : $sprites->dirsOf($type);
 

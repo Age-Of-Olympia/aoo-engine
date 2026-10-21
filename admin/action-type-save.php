@@ -3,34 +3,18 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\Action\ActionTypeInstructionEditService;
-use App\Service\AdminAuthorizationService;
 use App\Service\AdminMenuAccessService;
-use App\Service\CsrfProtectionService;
 
 (new AdminMenuAccessService())->enforce('actions.type-defaults');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /admin/action-type-defaults.php');
-    exit;
-}
-
-$csrf = new CsrfProtectionService();
 $typeKey = (string) ($_POST['type_key'] ?? '');
 
-try {
-    $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+handleAdminPost('/admin/action-type-defaults.php?type=' . urlencode($typeKey), function () use ($typeKey): string {
     (new ActionTypeInstructionEditService())->saveParameters(
         $typeKey,
         is_array($_POST['type_inst'] ?? null) ? $_POST['type_inst'] : [],
         is_array($_POST['type_inst_raw'] ?? null) ? $_POST['type_inst_raw'] : [],
     );
-    setFlash('success', 'Défauts du type enregistrés.');
-    $csrf->regenerateToken();
-} catch (\InvalidArgumentException $exception) {
-    setFlash('warning', $exception->getMessage());
-} catch (\Throwable $exception) {
-    setFlash('danger', "Erreur lors de l'enregistrement.");
-}
 
-header('Location: /admin/action-type-defaults.php?type=' . urlencode($typeKey));
-exit;
+    return 'Défauts du type enregistrés.';
+});

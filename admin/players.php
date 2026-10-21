@@ -9,6 +9,6 @@ $players = (new PlayerSkillsService())->listCharacters();
 
 $body = (new PlayerSearchView())->render($players);
 
-echo admin_layout('Compétences des joueurs', renderFlashMessage() . $body, [
+echo admin_layout('Personnages', $body, [
     'styles' => ['/admin/css/player-skills.css'],
 ]);

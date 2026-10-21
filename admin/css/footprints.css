@@ -25,6 +25,7 @@
 
 .fp-filters {
     display: flex;
+    flex-wrap: wrap;
     gap: 6px;
 }
 
@@ -36,7 +37,7 @@
 /* Wide enough for a 4-cell figure plus its empty ring: six 50 px cells. */
 .fp-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
     gap: 16px;
     align-items: start;
 }
@@ -256,6 +257,7 @@
     align-items: center;
     gap: 8px;
     margin: 4px 0;
+    flex-wrap: wrap;
 }
 
 .fp-image img {

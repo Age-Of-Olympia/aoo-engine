@@ -25,14 +25,9 @@ $selectedVersion = isset($_GET['version']) ? trim($_GET['version']) : '';
 $availableVersions = $catalogService->getVersionsForSelect();
 
 // Handle form submissions
+$selfUrl = '/admin/tutorial.php' . ($selectedVersion !== '' ? '?version=' . urlencode($selectedVersion) : '');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // CSRF Protection
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-    } catch (\RuntimeException $e) {
-        setFlash('danger', 'Security validation failed. Please refresh and try again.');
-        redirectTo('tutorial.php');
-    }
+    requireAdminPost($selfUrl);
 
     if (isset($_POST['toggle_step'])) {
         $stepId = (int)$_POST['step_id'];
@@ -59,8 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Regenerate token after POST
-    $csrf->regenerateToken();
+    redirectTo($selfUrl);
 }
 
 // Fetch statistics (filtered by version if selected)
@@ -84,17 +78,9 @@ ob_start();
 ?>
 
 <div class="container">
-    <h1>Tutorial Admin Panel</h1>
-
-    <?php if (isset($_SESSION['flash'])): ?>
-        <div class="alert alert-<?=$_SESSION['flash']['type']?>" role="alert">
-            <?= htmlspecialchars($_SESSION['flash']['message']) ?>
-        </div>
-        <?php unset($_SESSION['flash']); ?>
-    <?php endif; ?>
 
     <!-- Navigation Tabs -->
-    <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+    <ul class="nav-tabs" id="adminTabs" role="tablist">
         <li class="nav-item">
             <a class="nav-link active" id="steps-tab" data-toggle="tab" href="#steps-panel" role="tab">
                 <i class="fas fa-list-ol"></i> Steps <span class="badge badge-primary ml-1"><?=$stats['total']?></span>
@@ -222,7 +208,7 @@ ob_start();
                         <?php foreach ($stats['by_type'] as $type => $count): ?>
                             <div class="col-md-3 mb-2">
                                 <div class="d-flex align-items-center">
-                                    <span class="badge badge-primary mr-2" style="min-width: 30px;"><?=$count?></span>
+                                    <span class="badge badge-primary mr-2"><?=$count?></span>
                                     <span><?=$type?></span>
                                 </div>
                             </div>
@@ -238,8 +224,8 @@ ob_start();
     <!-- Version Filter -->
     <div class="card mb-3">
         <div class="card-body">
-            <form method="GET" class="d-flex align-items-center" style="gap: 10px;">
-                <label for="version" style="margin: 0; white-space: nowrap;"><strong>Filtrer par tutoriel:</strong></label>
+            <form method="GET" class="form-inline">
+                <label for="version">Filtrer par tutoriel :</label>
                 <?php
                 $versionChoices = [];
                 foreach ($availableVersions as $v) {
@@ -247,7 +233,7 @@ ob_start();
                 }
                 echo formSelect('version', $versionChoices, $selectedVersion !== '' ? $selectedVersion : null,
                     '-- Tous les tutoriels --',
-                    'id="version" class="form-control" style="max-width: 300px;" onchange="this.form.submit()"');
+                    'id="version" class="form-control" data-autosubmit');
                 ?>
                 <?php if ($selectedVersion): ?>
                 <a href="?" class="btn btn-outline-secondary btn-sm">Effacer filtre</a>
@@ -259,7 +245,7 @@ ob_start();
     <!-- Steps Table -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h2>Tutorial Steps <?= $selectedVersion ? '(' . htmlspecialchars($selectedVersion) . ')' : '' ?></h2>
+            <span>Tutorial Steps <?= $selectedVersion ? '(' . htmlspecialchars($selectedVersion) . ')' : '' ?></span>
             <div class="btn-group">
                 <button type="button" class="btn btn-outline-secondary" id="btn-export-all" title="Export all steps as JSON">
                     <i class="fas fa-upload"></i> Export All
@@ -267,7 +253,7 @@ ob_start();
                 <button type="button" class="btn btn-outline-secondary" id="btn-import-all" title="Import steps from JSON">
                     <i class="fas fa-download"></i> Import All
                 </button>
-                <input type="file" id="import-all-file-input" accept=".json" style="display: none;">
+                <input type="file" id="import-all-file-input" accept=".json" hidden>
                 <a href="tutorial-step-editor.php<?= $selectedVersion ? '?version=' . urlencode($selectedVersion) : '' ?>" class="btn btn-success">
                     <i class="fas fa-plus"></i> Add New Step
                 </a>
@@ -300,7 +286,7 @@ ob_start();
                                 <td><code><?= htmlspecialchars($step['version']) ?></code></td>
                                 <?php endif; ?>
                                 <td>
-                                    <code><?=$step['step_id'] ?? '-'?></code>
+                                    <code><?= e($step['step_id'] ?? '-') ?></code>
                                 </td>
                                 <td>
                                     <?php if ($step['next_step']): ?>
@@ -311,12 +297,12 @@ ob_start();
                                 </td>
                                 <td><?=htmlspecialchars($step['title'])?></td>
                                 <td>
-                                    <span class="badge badge-info"><?=$step['step_type']?></span>
+                                    <span class="badge badge-info"><?= e($step['step_type']) ?></span>
                                 </td>
-                                <td><?=$step['interaction_mode'] ?? '-'?></td>
+                                <td><?= e($step['interaction_mode'] ?? '-') ?></td>
                                 <td>
                                     <?php if ($step['requires_validation']): ?>
-                                        <span class="badge badge-warning"><?=$step['validation_type']?></span>
+                                        <span class="badge badge-warning"><?= e($step['validation_type']) ?></span>
                                     <?php else: ?>
                                         <span class="text-muted">None</span>
                                     <?php endif; ?>
@@ -324,7 +310,7 @@ ob_start();
                                 <td class="text-center"><?=$step['interactions_count']?></td>
                                 <td class="text-center"><?=$step['xp_reward']?></td>
                                 <td>
-                                    <form method="post" style="display: inline;">
+                                    <form method="post" class="d-inline">
                                         <?= $csrf->renderTokenField() ?>
                                         <input type="hidden" name="step_id" value="<?=$step['id']?>">
                                         <input type="hidden" name="is_active" value="<?=$step['is_active'] ? 0 : 1?>">
@@ -347,14 +333,14 @@ ob_start();
                                         >
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <button
-                                            type="button"
-                                            class="btn btn-sm btn-danger"
-                                            onclick="confirmDelete(<?=$step['id']?>, '<?=htmlspecialchars($step['title'], ENT_QUOTES)?>')"
-                                            title="Delete"
-                                        >
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        <form method="post" class="d-inline"
+                                              data-confirm="<?= e('Supprimer l\'étape « ' . $step['title'] . ' » ? Sa configuration, ses validations, prérequis et interactions partent avec, sans retour possible.') ?>">
+                                            <?= $csrf->renderTokenField() ?>
+                                            <input type="hidden" name="step_id" value="<?= (int) $step['id'] ?>">
+                                            <button type="submit" name="delete_step" value="1" class="btn btn-sm btn-danger" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -371,7 +357,7 @@ ob_start();
 </div>
 
 <!-- Session Detail Modal (hidden by default, shown via JS) -->
-<div class="admin-modal-overlay" id="sessionDetailModal" style="display: none;">
+<div class="admin-modal-overlay" id="sessionDetailModal" hidden>
     <div class="admin-modal">
         <div class="admin-modal-header">
             <h5><i class="fas fa-user-graduate"></i> Session Details</h5>
@@ -388,23 +374,11 @@ ob_start();
     </div>
 </div>
 
-<!-- Delete Confirmation Form -->
-<form id="deleteForm" method="post" style="display: none;">
-    <?= $csrf->renderTokenField() ?>
-    <input type="hidden" name="step_id" id="deleteStepId">
-    <input type="hidden" name="delete_step" value="1">
-</form>
 
 <script>
 // CSRF Token for AJAX requests
 const csrfToken = '<?= $csrf->getToken() ?>';
 
-function confirmDelete(stepId, title) {
-    if (confirm('Are you sure you want to delete step "' + title + '"?\n\nThis will also delete:\n- UI configuration\n- Validation rules\n- Prerequisites\n- Allowed interactions\n\nThis action cannot be undone.')) {
-        document.getElementById('deleteStepId').value = stepId;
-        document.getElementById('deleteForm').submit();
-    }
-}
 
 // =========================================
 // Tab Switching with URL Hash Persistence
@@ -416,7 +390,7 @@ function switchToTab(targetId) {
     });
 
     // Remove active from all tabs
-    document.querySelectorAll('.nav-link').forEach(link => {
+    document.querySelectorAll('#adminTabs .nav-link').forEach(link => {
         link.classList.remove('active');
     });
 
@@ -605,7 +579,7 @@ function renderSessionsPagination(total) {
 }
 
 function closeSessionModal() {
-    document.getElementById('sessionDetailModal').style.display = 'none';
+    document.getElementById('sessionDetailModal').hidden = true;
 }
 
 async function viewSessionDetail(sessionId) {
@@ -613,7 +587,7 @@ async function viewSessionDetail(sessionId) {
     const content = document.getElementById('sessionDetailContent');
 
     content.innerHTML = `<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>`;
-    modal.style.display = 'flex';
+    modal.hidden = false;
 
     try {
         const response = await fetch(`tutorial-sessions-api.php?action=detail&session_id=${sessionId}`);
@@ -880,276 +854,10 @@ document.getElementById('import-all-file-input').addEventListener('change', asyn
 });
 </script>
 
-<style>
-.card {
-    margin-bottom: 1rem;
-}
-
-.display-4 {
-    font-size: 2.5rem;
-    font-weight: 300;
-}
-
-.badge {
-    padding: 0.35em 0.65em;
-    font-size: 0.9em;
-}
-
-.table-secondary {
-    opacity: 0.6;
-}
-
-.btn-group {
-    display: flex;
-    gap: 0.25rem;
-}
-
-/* Tab Navigation */
-.nav-tabs {
-    border-bottom: 2px solid #dee2e6;
-    display: flex;
-    gap: 4px;
-}
-
-.nav-tabs .nav-item {
-    list-style: none;
-}
-
-.nav-tabs .nav-link {
-    border-radius: 0.25rem 0.25rem 0 0;
-    padding: 0.75rem 1.25rem;
-    font-weight: 500;
-    color: #6c757d;
-    border: 1px solid transparent;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
-    background: transparent;
-    text-decoration: none;
-    display: inline-block;
-}
-
-.nav-tabs .nav-link:hover {
-    color: #495057;
-    background: #f8f9fa;
-    border-color: #e9ecef #e9ecef transparent;
-}
-
-.nav-tabs .nav-link.active {
-    color: #007bff;
-    background: white;
-    border-color: #dee2e6 #dee2e6 white;
-    border-bottom: 2px solid #007bff;
-    margin-bottom: -2px;
-}
-
-/* Session Stats Inline */
-.session-stats-inline {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.stat-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 500;
-    color: white;
-}
-
-.stat-badge.bg-success { background: #27ae60; }
-.stat-badge.bg-primary { background: #3498db; }
-.stat-badge.bg-info { background: #17a2b8; }
-
-/* Timeline Styles */
-.timeline {
-    position: relative;
-    padding-left: 2rem;
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.timeline::before {
-    content: '';
-    position: absolute;
-    left: 8px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: #dee2e6;
-}
-
-.timeline-item {
-    position: relative;
-    padding-bottom: 1rem;
-}
-
-.timeline-marker {
-    position: absolute;
-    left: -2rem;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: #6c757d;
-    border: 2px solid white;
-    box-shadow: 0 0 0 2px #dee2e6;
-    margin-top: 2px;
-}
-
-.timeline-item.in-progress .timeline-marker {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.2); }
-}
-
-.timeline-content {
-    background: #f8f9fa;
-    padding: 0.5rem 0.75rem;
-    border-radius: 4px;
-    font-size: 0.9rem;
-}
-
-/* Toast Notifications */
-.toast-notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    min-width: 300px;
-    animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-    from { transform: translateX(400px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-
-/* Progress bar improvements */
-.progress {
-    background-color: #e9ecef;
-    border-radius: 4px;
-}
-
-.progress-bar {
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-/* Admin Modal Styles */
-.admin-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-}
-
-.admin-modal {
-    background: white;
-    border-radius: 8px;
-    max-width: 800px;
-    width: 90%;
-    max-height: 90vh;
-    overflow: auto;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-}
-
-.admin-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.admin-modal-header h5 {
-    margin: 0;
-    font-size: 1.25rem;
-}
-
-.admin-modal-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: #6c757d;
-    padding: 0;
-    line-height: 1;
-}
-
-.admin-modal-close:hover {
-    color: #333;
-}
-
-.admin-modal-body {
-    padding: 1.5rem;
-    max-height: 60vh;
-    overflow-y: auto;
-}
-
-.admin-modal-footer {
-    padding: 1rem 1.5rem;
-    border-top: 1px solid #dee2e6;
-    text-align: right;
-}
-
-/* Pagination Styles */
-.pagination {
-    display: flex;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    gap: 4px;
-}
-
-.page-item {
-    list-style: none;
-}
-
-.page-link {
-    display: block;
-    padding: 6px 12px;
-    text-decoration: none;
-    color: #007bff;
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    font-size: 13px;
-    transition: all 0.2s;
-}
-
-.page-link:hover {
-    background: #e9ecef;
-    border-color: #dee2e6;
-    color: #0056b3;
-}
-
-.page-item.active .page-link {
-    background: #007bff;
-    border-color: #007bff;
-    color: white;
-}
-
-.page-item.disabled .page-link {
-    color: #6c757d;
-    background: #f8f9fa;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-</style>
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Tutorial Admin', $content);
+echo admin_layout('Étapes du tutoriel', $content, [
+    'styles' => ['/admin/css/tutorial-admin.css'],
+]);
 ?>

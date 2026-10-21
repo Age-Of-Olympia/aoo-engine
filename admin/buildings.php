@@ -78,10 +78,9 @@ const BUILDING_STATES = [
 function building_render_filters(array $filters, array $plans, array $types, int $total): string
 {
     // One flex line, no labels: the placeholder option names the field.
-    $selectAttrs = 'class="form-control form-control-sm" style="width:auto" onchange="this.form.submit()"';
+    $selectAttrs = 'class="form-control form-control-sm w-auto" data-autosubmit';
 
-    return '<form method="get" action="/admin/buildings.php" class="mb-2"'
-        . ' style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">'
+    return '<form method="get" action="/admin/buildings.php" class="d-flex flex-wrap gap-2 align-items-center mb-2">'
         . formSelect('plan', array_combine($plans, $plans), $filters['plan'] !== '' ? $filters['plan'] : null, 'Plan : tous', $selectAttrs)
         . formSelect('type', $types, $filters['type'] !== '' ? $filters['type'] : null, 'Type : tous', $selectAttrs)
         . formSelect('state', BUILDING_STATES, $filters['state'] !== '' ? $filters['state'] : null, 'État : tous', $selectAttrs)
@@ -103,7 +102,7 @@ function building_render_pager(int $page, int $pages, array $filters): string
         '<a class="btn btn-sm btn-outline-secondary" href="/admin/buildings.php?'
         . e(http_build_query(array_filter($filters) + ['page' => $p])) . '">' . $label . '</a>';
 
-    return '<div class="d-flex align-items-center mt-2" style="gap:8px">'
+    return '<div class="d-flex align-items-center gap-2 mt-2">'
         . ($page > 1 ? $link($page - 1, '← Précédent') : '')
         . '<span class="text-muted">page ' . $page . ' / ' . $pages . '</span>'
         . ($page < $pages ? $link($page + 1, 'Suivant →') : '')
@@ -162,7 +161,7 @@ function building_render_list(array $buildings, array $dialogNames, string $csrf
                 . '</form> ';
         }
         $actions .= '<form method="post" action="/admin/buildings-save.php?action=remove" class="d-inline"'
-            . ' onsubmit="return confirm(' . e(json_encode('Retirer définitivement ' . $b['name'] . ' #' . (int) $b['id'] . ' ?', JSON_UNESCAPED_UNICODE)) . ');">'
+            . ' data-confirm="' . e('Retirer définitivement ' . $b['name'] . ' #' . (int) $b['id'] . ' ?') . '">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="id" value="' . (int) $b['id'] . '">'
             . '<button class="btn btn-sm btn-outline-danger" type="submit">Retirer</button>'
@@ -214,7 +213,7 @@ function building_render_place_form(array $types, array $plans, array $factions,
         $typeLabels[$name] = $label . ' (' . $name . ')';
     }
     $typeOptions = renderSelectOptions($typeLabels);
-    $planOptions = renderSelectOptions(array_combine($plans, $plans), 'gaia');
+    $planOptions = renderSelectOptions(array_combine($plans, $plans), plans()->worldPlan());
     $factionOptions = renderSelectOptions($factions, null, '— neutre —');
 
     $body = '<form method="post" action="/admin/buildings-save.php?action=place" class="row g-2">'
@@ -249,16 +248,6 @@ function building_render_place_form(array $types, array $plans, array $factions,
         . '<div class="card-body">' . $body . '</div></div>';
 }
 
-/**
- * Formulaire d'édition d'un bâtiment posé : nom, description (le
- * « message du jour » du bâtiment), dialogue, porte, propriétaire,
- * faction. L'état (PV, build_state) reste géré par les boutons de la
- * liste (Restaurer) — ici on édite l'IDENTITÉ.
- *
- * @param array<string, mixed>  $b           ligne de listBuildings()
- * @param array<string, string> $factions    code => nom
- * @param array<int, string>    $dialogNames
- */
 /**
  * « Dans les murs » : la fabrique de l'entité — matériaux de construction
  * et trésors glissés par l'animation. Invisible aux joueurs, répandue avec
@@ -310,7 +299,15 @@ function building_item_options(): array
 }
 
 /**
- * @param list<string> $images the type's stock images
+ * Formulaire d'édition d'un bâtiment posé : nom, description (le
+ * « message du jour » du bâtiment), dialogue, porte, propriétaire,
+ * faction. L'état (PV, build_state) reste géré par les boutons de la
+ * liste (Restaurer) — ici on édite l'IDENTITÉ.
+ *
+ * @param array<string, mixed>  $b           ligne de listBuildings()
+ * @param array<string, string> $factions    code => nom
+ * @param array<int, string>    $dialogNames
+ * @param list<string>          $images      the type's stock images
  */
 function building_render_edit(array $b, string $description, array $factions, array $dialogNames, bool $isEdifice, string $csrfToken, array $images = [], string $image = ''): string
 {
@@ -354,18 +351,17 @@ function building_render_edit(array $b, string $description, array $factions, ar
         . (count($images) > 1
             ? '<div class="form-group"><label>Image</label><div class="d-flex flex-wrap gap-2">'
                 . implode('', array_map(static fn(string $path): string =>
-                    '<label style="cursor:pointer;text-align:center;font-size:12px;">'
-                    . '<input type="radio" name="image" value="' . e($path) . '"' . ($path === $image ? ' checked' : '') . '><br>'
-                    . '<img src="/' . e($path) . '" height="50" alt="" style="border:1px solid #ddd;"><br>'
+                    '<label class="d-flex flex-column align-items-center small">'
+                    . '<input type="radio" name="image" value="' . e($path) . '"' . ($path === $image ? ' checked' : '') . '>'
+                    . '<img src="/' . e($path) . '" height="50" alt="" class="border">'
                     . e(basename($path)) . '</label>', $images))
                 . '</div><small class="text-muted">Images du stock du type (admin → Bâtiments → Images).</small></div>'
             : '')
-        . '<button class="btn btn-primary" type="submit">Enregistrer</button> '
-        . '<a class="btn btn-secondary" href="/admin/buildings.php">Retour</a>'
+        . '<button class="btn btn-primary" type="submit">Enregistrer</button>'
         . '</form>';
 
-    return '<div class="card"><div class="card-header">' . e($b['name']) . ' <code>#' . (int) $b['id'] . '</code>'
-        . ' — ' . e($b['type']) . ' en (' . (int) $b['x'] . ', ' . (int) $b['y'] . ', ' . (int) $b['z'] . ') · ' . e($b['plan'])
+    return '<div class="card"><div class="card-header">' . e($b['type']) . ' en (' . (int) $b['x'] . ', ' . (int) $b['y']
+        . ', ' . (int) $b['z'] . ') · ' . e($b['plan'])
         . '</div><div class="card-body">' . $body . '</div></div>';
 }
 
@@ -398,9 +394,12 @@ if (($_GET['action'] ?? '') === 'edit') {
     }
     $isEdifice = (bool) (new RaceService())->getRaceByName((string) $row['type'])?->isEdifice();
 
-    echo admin_layout('Bâtiments posés', renderFlashMessage()
-        . building_render_edit($row, $description, $factions, $dialogNames, $isEdifice, $csrfToken, $images, (string) $player->portrait)
-        . building_render_fabric((int) $row['id'], $csrfToken));
+    echo admin_layout(
+        'Bâtiment : ' . e($row['name']) . ' <span class="text-muted">#' . (int) $row['id'] . '</span>',
+        building_render_edit($row, $description, $factions, $dialogNames, $isEdifice, $csrfToken, $images, (string) $player->portrait)
+            . building_render_fabric((int) $row['id'], $csrfToken),
+        ['back' => ['/admin/buildings.php', 'Bâtiments posés']]
+    );
     exit();
 }
 
@@ -427,4 +426,4 @@ $content = building_render_place_form($types, $plans, $factions, $dialogNames, $
     )
     . building_render_pager($page, $pages, $filters);
 
-echo admin_layout('Bâtiments posés', renderFlashMessage() . $content);
+echo admin_layout('Bâtiments posés', $content);

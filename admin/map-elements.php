@@ -21,7 +21,7 @@ $service = new MapElementService();
 $plans = (new NpcAdminService())->listPlans();
 $plan = stringWithDefault('plan', (string) ($_GET['plan'] ?? ''));
 if (!in_array($plan, $plans, true)) {
-    $plan = in_array('gaia', $plans, true) ? 'gaia' : ($plans[0] ?? '');
+    $plan = in_array(plans()->worldPlan(), $plans, true) ? plans()->worldPlan() : ($plans[0] ?? '');
 }
 $backTo = 'map-elements.php?plan=' . urlencode($plan);
 
@@ -29,12 +29,7 @@ $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['element_place']) || isset($_POST['element_remove'])
         || isset($_POST['element_remove_bulk']) || isset($_POST['element_purge']));
 if ($isStateChangingPost) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-    } catch (RuntimeException $e) {
-        setFlash('danger', $e->getMessage());
-        redirectTo($backTo);
-    }
+    requireAdminPost($backTo);
 
     try {
         if (isset($_POST['element_place'])) {
@@ -89,23 +84,11 @@ ob_start();
 ?>
 
 <div class="container">
-    <h3>Éléments posés</h3>
-
-    <?= renderFlashMessage() ?>
-
-    <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-        Un élément posé sur une case applique <strong>l'effet de son type</strong> aux personnages qui
-        marchent dessus (boue, ronce…) ; il se choisit dans <a href="/admin/element-types.php">Types</a>. Durée vide = permanent (jamais purgé) ;
-        reposer un élément prolonge sa durée. Une case ne peut avoir qu'un élément, et seulement sur un sol.
-        Les traces de pas et le drapeau sont des <em>marques</em>, une couche à part (Tiled, couche « marks »).
-    </div>
-
-    <div class="card mt-3">
+    <div class="card">
         <div class="card-body py-2 d-flex align-items-center gap-3 flex-wrap">
             <form method="get" class="d-flex align-items-center gap-2 flex-wrap mb-0">
-                <span class="text-muted" style="font-size:13px;"><i class="fas fa-map"></i> Plan :</span>
-                <select name="plan" class="form-control form-control-sm d-inline-block" style="width:auto"
-                        onchange="this.form.submit()">
+                <span class="text-muted"><i class="fas fa-map"></i> Plan :</span>
+                <select name="plan" class="form-control form-control-sm w-auto" data-autosubmit>
                     <?php foreach ($plans as $candidate): ?>
                         <option value="<?= e($candidate) ?>" <?= $candidate === $plan ? 'selected' : '' ?>>
                             <?= e($candidate) ?>
@@ -124,7 +107,7 @@ ob_start();
                 <?= $csrf->renderTokenField() ?>
                 <input type="hidden" name="plan" value="<?= e($plan) ?>">
                 <div class="form-group mb-0">
-                    <label style="font-size:13px;">Élément</label>
+                    <label>Élément</label>
                     <select name="name" class="form-control form-control-sm" required>
                         <?php foreach ($placeable as $candidate): ?>
                             <option value="<?= e($candidate) ?>"><?= e($candidate) ?><?= in_array($candidate, $withEffect, true) ? '' : ' (décor, sans effet)' ?></option>
@@ -132,24 +115,24 @@ ob_start();
                     </select>
                 </div>
                 <div class="form-group mb-0" style="width:5.5rem;">
-                    <label style="font-size:13px;">x</label>
+                    <label>x</label>
                     <input type="number" class="form-control form-control-sm" name="x" required>
                 </div>
                 <div class="form-group mb-0" style="width:5.5rem;">
-                    <label style="font-size:13px;">y</label>
+                    <label>y</label>
                     <input type="number" class="form-control form-control-sm" name="y" required>
                 </div>
                 <div class="form-group mb-0" style="width:5.5rem;">
-                    <label style="font-size:13px;" title="Étage : 0 = sol, négatif = souterrain">z</label>
+                    <label title="Étage : 0 = sol, négatif = souterrain">z</label>
                     <input type="number" class="form-control form-control-sm" name="z" value="0" required>
                 </div>
                 <div class="form-group mb-0" style="width:8rem;">
-                    <label style="font-size:13px;" title="Un tour de référence dure 18 h">Durée (tours)</label>
+                    <label title="Un tour de référence dure 18 h">Durée (tours)</label>
                     <input type="number" class="form-control form-control-sm" name="turns" min="1" step="1"
                            placeholder="permanent">
                 </div>
                 <div class="form-group mb-0" style="width:6rem;">
-                    <label style="font-size:13px;" title="L'image est affichée avec cette rotation : un seul fichier pour les quatre orientations">Rotation</label>
+                    <label title="L'image est affichée avec cette rotation : un seul fichier pour les quatre orientations">Rotation</label>
                     <select name="rotation" class="form-control form-control-sm">
                         <?php foreach (\App\Service\TiledMapService::ROTATIONS as $angle): ?>
                             <option value="<?= $angle ?>"><?= $angle ?>°</option>
@@ -175,7 +158,7 @@ ob_start();
                     <h5 class="card-title mb-0">Éléments — <?= e($plan) ?></h5>
                     <span class="badge bg-secondary"><?= count($entries) ?> posés</span>
                     <button type="submit" name="element_purge" value="1" class="btn btn-sm btn-outline-secondary ml-auto"
-                            onclick="return confirm('Purger tous les éléments expirés (tous plans confondus), comme le cron horaire ?');"
+                            data-confirm="Purger tous les éléments expirés (tous plans confondus), comme le cron horaire ?"
                             title="Supprime les éléments dont la durée est écoulée, sur tous les plans ; les permanents sont conservés.">
                         <i class="fas fa-broom"></i> Purger les expirés<?= $expired > 0 ? ' (' . $expired . ' ici)' : '' ?>
                     </button>
@@ -184,11 +167,9 @@ ob_start();
                 <?php if ($entries === []): ?>
                     <div class="alert alert-info mb-0">Aucun élément sur ce plan.</div>
                 <?php else: ?>
-                    <table class="table table-sm table-striped" style="font-size:13px;" data-admin-list data-page-size="40">
+                    <table class="table table-sm table-striped" data-admin-list data-page-size="40">
                         <thead><tr>
-                            <th style="width:28px;"><input type="checkbox"
-                                onclick="this.closest('table').querySelectorAll('input[name=\'ids[]\']').forEach(c => c.checked = this.checked)"
-                                title="Tout sélectionner"></th>
+                            <th><input type="checkbox" data-check-all title="Tout sélectionner"></th>
                             <th></th><th>Élément</th><th>Case (x,y,z)</th><th>Expiration</th><th></th>
                         </tr></thead>
                         <tbody>
@@ -213,10 +194,10 @@ ob_start();
                                         <?= e(date('d/m/Y H:i', $entry['endTime'])) ?>
                                     <?php endif; ?>
                                 </td>
-                                <td style="white-space:nowrap;">
+                                <td class="text-nowrap">
                                     <button type="submit" name="element_remove" value="<?= $entry['id'] ?>"
                                             class="btn btn-sm btn-outline-danger"
-                                            onclick="return confirm('Retirer « <?= e($entry['name']) ?> » de la case (<?= $entry['x'] ?>,<?= $entry['y'] ?>) ?');">
+                                            data-confirm="Retirer « <?= e($entry['name']) ?> » de la case (<?= $entry['x'] ?>,<?= $entry['y'] ?>) ?">
                                         Retirer
                                     </button>
                                 </td>
@@ -225,7 +206,7 @@ ob_start();
                         </tbody>
                     </table>
                     <button type="submit" name="element_remove_bulk" value="1" class="btn btn-sm btn-outline-danger"
-                            onclick="return confirm('Retirer tous les éléments sélectionnés ?');">
+                            data-confirm="Retirer tous les éléments sélectionnés ?">
                         <i class="fas fa-trash"></i> Retirer la sélection
                     </button>
                 <?php endif; ?>
@@ -237,4 +218,7 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Éléments posés', $content);
+echo admin_layout('Éléments posés', $content, ['intro' => 'Un élément posé sur une case applique <strong>l\'effet de son type</strong> aux personnages qui
+        marchent dessus (boue, ronce…) ; il se choisit dans <a href="/admin/element-types.php">Types</a>. Durée vide = permanent (jamais purgé) ;
+        reposer un élément prolonge sa durée. Une case ne peut avoir qu\'un élément, et seulement sur un sol.
+        Les traces de pas et le drapeau sont des <em>marques</em>, une couche à part (Tiled, couche « marks »).']);

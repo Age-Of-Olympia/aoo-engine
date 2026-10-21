@@ -19,7 +19,6 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\AdminMenuAccessService;
-use App\Service\CsrfProtectionService;
 use App\Service\PlanAdminService;
 use App\Service\PlanConfigService;
 use App\Service\TiledMapService;
@@ -28,16 +27,7 @@ use Classes\Db;
 
 (new AdminMenuAccessService())->enforce('maps.plans');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirectTo('/admin/plans.php');
-}
-
-try {
-    (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
-} catch (\Throwable $e) {
-    setFlash('warning', 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
-    redirectTo('/admin/plans.php');
-}
+requireAdminPost('/admin/plans.php');
 
 $action = $_GET['action'] ?? '';
 $plan = strtolower(trim((string) ($_POST['plan'] ?? '')));

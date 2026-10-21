@@ -16,36 +16,30 @@ use App\Service\Map\HarvestCatalogService;
 $csrf = new CsrfProtectionService();
 $service = new HarvestCatalogService();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_harvest'])) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+if (isset($_POST['save_harvest'])) {
+    handleAdminPost('/admin/harvest-seed.php', function () use ($service): string {
         $saved = $service->save(is_array($_POST['rows'] ?? null) ? $_POST['rows'] : []);
-        setFlash('success', sprintf('%d rendement(s) enregistré(s).', $saved));
-    } catch (\Throwable $e) {
-        setFlash('danger', 'Échec de l\'enregistrement : ' . $e->getMessage());
-    }
+
+        return sprintf('%d rendement(s) enregistré(s).', $saved);
+    });
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_harvest'])) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-        $added = $service->add((string) ($_POST['plan'] ?? ''), (int) ($_POST['race_id'] ?? 0));
-        setFlash($added ? 'success' : 'warning', $added
-            ? 'Exception ajoutée : à régler ci-dessous.'
-            : 'Rien ajouté : ce type a déjà une exception sur ce plan, ou le plan ou le type est inconnu.');
-    } catch (\Throwable $e) {
-        setFlash('danger', 'Échec de l\'ajout : ' . $e->getMessage());
-    }
+if (isset($_POST['add_harvest'])) {
+    handleAdminPost('/admin/harvest-seed.php', function () use ($service): string {
+        if (!$service->add((string) ($_POST['plan'] ?? ''), (int) ($_POST['race_id'] ?? 0))) {
+            throw new \InvalidArgumentException(
+                'Rien ajouté : ce type a déjà une exception sur ce plan, ou le plan ou le type est inconnu.'
+            );
+        }
+
+        return 'Exception ajoutée : à régler ci-dessous.';
+    });
 }
 
 $configured = $service->configured();
 
 ob_start();
 ?>
-<h1>Rendements par plan</h1>
-
-<?= renderFlashMessage() ?>
-
 <?php $missing = $service->plansMissingYields(); ?>
 <?php if ($missing !== []): ?>
     <div class="alert alert-danger">
@@ -70,10 +64,10 @@ ob_start();
     </div>
 <?php endif; ?>
 
-<div class="card mt-3">
+<div class="card">
+        <div class="card-header">Exceptions par plan</div>
         <div class="card-body">
-            <h5 class="card-title">Exceptions par plan</h5>
-            <p class="text-muted" style="font-size: 13px;">
+            <p class="text-muted">
                 Le rendement d'un récoltable est défini sur son type (Types récoltables) et vaut sur tous
                 les plans ; un plan n'a rien à déclarer pour que fouiller rapporte.
                 Une ligne ici est une <strong>exception</strong> : le même arbre donne moins dans le désert
@@ -83,12 +77,12 @@ ob_start();
 
             <form method="post" class="form-inline mb-3">
                 <input type="hidden" name="csrf_token" value="<?= e($csrf->generateToken()) ?>" />
-                <select name="plan" class="form-select mr-2" style="width: auto;" required>
+                <select name="plan" class="form-select" required>
                     <?php foreach (plans()->all() as $slug => $plan): ?>
                         <option value="<?= e($slug) ?>"><?= e($slug) ?></option>
                     <?php endforeach; ?>
                 </select>
-                <select name="race_id" class="form-select mr-2" style="width: auto;" required>
+                <select name="race_id" class="form-select" required>
                     <?php foreach ($service->resourceTypes() as $raceId => $type): ?>
                         <option value="<?= (int) $raceId ?>"><?= e($type) ?></option>
                     <?php endforeach; ?>
@@ -113,11 +107,11 @@ ob_start();
                         <tr>
                             <td><?= e($row['plan']) ?></td>
                             <td><?= e($row['type']) ?></td>
-                            <td><input type="text" class="form-select" style="width: 10rem;"
+                            <td><input type="text" class="form-select form-control-sm" style="min-width: 8rem;"
                                        name="rows[<?= $key ?>][item]" value="<?= e($row['item']) ?>" /></td>
-                            <td><input type="number" min="0" max="100" class="form-select" style="width: 6rem;"
+                            <td><input type="number" min="0" max="100" class="form-select form-control-sm" style="min-width: 5rem;"
                                        name="rows[<?= $key ?>][exhaust]" value="<?= $row['exhaust'] === null ? '' : (int) $row['exhaust'] ?>" /></td>
-                            <td><input type="number" min="0" max="1000" class="form-select" style="width: 6rem;"
+                            <td><input type="number" min="0" max="1000" class="form-select form-control-sm" style="min-width: 5rem;"
                                        name="rows[<?= $key ?>][regrow]" value="<?= $row['regrow'] === null ? '' : (int) $row['regrow'] ?>" /></td>
                         </tr>
                     <?php endforeach; ?>
@@ -131,4 +125,4 @@ ob_start();
     </div>
 <?php
 
-echo admin_layout('Rendements', ob_get_clean());
+echo admin_layout('Rendements par plan', ob_get_clean());

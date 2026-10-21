@@ -90,6 +90,8 @@ $renderParams = static function (ParameterSchema $schema, array $params, string 
 };
 
 /* ---------- Panel 1: actions list ---------- */
+$ownerCounts = (new \App\Service\SkillOwnershipService())->actionOwnerCounts();
+$ownersLabel = static fn (int $n): string => $n . ' joueur' . ($n > 1 ? 's' : '');
 ob_start();
 foreach ($actions as $item) {
     $active = ($action && $item->getId() === $action->getId()) ? ' wb-item--active' : '';
@@ -104,8 +106,8 @@ foreach ($actions as $item) {
         . (new \App\View\Action\ActionIconView())->forAction($item, 'i', ['wb-item-icon'])
         . '<span class="wb-item-text">'
         . '<span class="wb-item-name"' . $nameStyle . '>' . e($item->getDisplayName()) . '</span>'
-        . '<span class="wb-item-meta">' . e(action_type_label($item)) . ' · niv.' . e($item->getLevel())
-        . ' · ' . $item->getConditions()->count() . 'c/' . $item->getOutcomes()->count() . 'o' . $raceMeta . '</span>'
+        . '<span class="wb-item-meta">' . e(action_type_label($item)) . ' · niv.' . e($item->getLevel()) . $raceMeta
+        . (($ownerCounts[$item->getName()] ?? 0) > 0 ? ' · ' . $ownersLabel($ownerCounts[$item->getName()]) : '') . '</span>'
         . '</span>'
         . '</a>';
 }
@@ -129,6 +131,10 @@ if ($action === null) {
             . e((new ActionTargeting())->label($action)) . '</span>'
         . ($action->getCategory() ? '<span class="wb-chip">' . e($action->getCategory()) . '</span>' : '')
         . '<code class="wb-chip">' . e($action->getName()) . '</code>'
+        . (($ownerCounts[$action->getName()] ?? 0) > 0
+            ? '<a class="wb-chip" href="/admin/skill-owners.php?type=action&amp;name=' . urlencode($action->getName()) . '">'
+                . $ownersLabel($ownerCounts[$action->getName()]) . '</a>'
+            : '<span class="wb-chip">aucun joueur</span>')
         . '</div>';
 
     // Legacy rows can hold NULL in these NOT NULL columns, which makes the typed
@@ -310,19 +316,19 @@ $listBody = (new WorkbenchListHeaderView())->render($createFormHtml, 'action', '
     . '<input type="text" class="wb-search" id="wb-search" placeholder="Filtrer…" autocomplete="off">'
     . '<div class="wb-list" id="wb-list">' . $listHtml . '</div>';
 
-$editorHead = '<div class="wb-tabbtns">'
-    . '<button type="button" class="wb-tab-btn' . ($activeTab === 'config' ? ' active' : '') . '" data-tab="config">Configurer</button>'
-    . '<button type="button" class="wb-tab-btn' . ($activeTab === 'sim' ? ' active' : '') . '" data-tab="sim">Simuler</button>'
+$editorHead = '<div class="nav-tabs wb-tabbar" role="tablist">'
+    . '<button type="button" class="nav-link' . ($activeTab === 'config' ? ' active' : '') . '" data-tab="config">Configurer</button>'
+    . '<button type="button" class="nav-link' . ($activeTab === 'sim' ? ' active' : '') . '" data-tab="sim">Simuler</button>'
     . '</div><span class="wb-editor-title"'
     . ($action && (string) $action->getRace() !== '' ? ' style="color: ' . e(RaceService::getRaceColor($action->getRace())) . '"' : '')
     . '>' . ($action ? e($action->getDisplayName()) : '') . '</span>';
 
-$editorBody = '<div class="wb-tab wb-config" data-tab="config"' . ($activeTab === 'config' ? '' : ' hidden') . '>' . renderFlashMessage() . $configHtml . '</div>'
-    . '<div class="wb-tab wb-sim" data-tab="sim"' . ($activeTab === 'sim' ? '' : ' hidden') . '>' . $simHtml . '</div>';
+$editorBody = '<div class="wb-pane wb-config" data-tab="config"' . ($activeTab === 'config' ? '' : ' hidden') . '>' . renderFlashMessage() . $configHtml . '</div>'
+    . '<div class="wb-pane wb-sim" data-tab="sim"' . ($activeTab === 'sim' ? '' : ' hidden') . '>' . $simHtml . '</div>';
 
-$content = (new WorkbenchLayoutView())->render('Actions', count($actions), $listBody, $editorHead, $editorBody, 'wb-tabs')
+$content = (new WorkbenchLayoutView())->render('Actions', count($actions), $listBody, $editorHead, $editorBody, 'wb-col-head--tabs')
     . '<script>window.WB_ICONS = ' . json_encode((new RpgAwesomeIcons())->all(), JSON_UNESCAPED_SLASHES) . ';</script>';
-echo admin_layout('Workbench', $content, [
+echo admin_layout('Configuration des actions', $content, [
     'styles' => ['/css/rpg-awesome.min.css', '/admin/css/action-simulate.css', '/admin/css/icon-picker.css', '/admin/css/action-workbench.css'],
     'scripts' => ['/admin/js/action-simulate.js', '/admin/js/icon-picker.js', '/admin/js/action-workbench.js'],
 ]);

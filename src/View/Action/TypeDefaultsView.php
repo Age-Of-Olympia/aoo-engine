@@ -86,7 +86,7 @@ final class TypeDefaultsView
 
         return '<div class="wb"><div class="wb-col"><div class="wb-col-head">Types d\'action</div>'
             . '<div class="wb-col-body">' . $listHeader . $treeRail . '</div></div>'
-            . '<div class="wb-col wb-col--wide"><div class="wb-col-body">' . $this->tabs($tabs) . '</div></div></div>';
+            . '<div class="wb-col"><div class="wb-col-body">' . $this->tabs($tabs) . '</div></div></div>';
     }
 
     /**
@@ -102,12 +102,12 @@ final class TypeDefaultsView
         $panels = '';
         foreach ($tabs as $index => $tab) {
             $active = $index === 0;
-            $bar .= '<button type="button" class="wb-tab' . ($active ? ' wb-tab--active' : '') . '" data-tab="' . $index . '">'
+            $bar .= '<button type="button" class="nav-link' . ($active ? ' active' : '') . '" data-tab="' . $index . '">'
                 . $this->esc($tab['label']) . '</button>';
             $panels .= '<div class="wb-tabpanel" data-tab="' . $index . '"' . ($active ? '' : ' hidden') . '>' . $tab['html'] . '</div>';
         }
 
-        return '<div class="wb-tabs" role="tablist">' . $bar . '</div>' . $panels;
+        return '<div class="nav-tabs wb-tabbar" role="tablist">' . $bar . '</div>' . $panels;
     }
 
 }

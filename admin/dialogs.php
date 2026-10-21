@@ -72,28 +72,7 @@ function dialogs_render_list(array $dialogs, array $references, array $buildingR
             . '</tr>';
     }
 
-    return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">Dialogues</h1>'
-        . '<div class="d-flex gap-2">'
-        . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=dialog"'
-        . ' title="Télécharger tous les dialogues en bundle JSON, ré-importable ici ou sur un autre environnement">'
-        . '<i class="fas fa-download"></i> Exporter (JSON)</a>'
-        . '<a class="btn btn-outline-secondary" href="/admin/action-import.php"'
-        . ' title="Importer un bundle JSON (avec prévisualisation avant application)">'
-        . '<i class="fas fa-upload"></i> Importer</a>'
-        . '<a class="btn btn-primary" href="/admin/dialogs.php?action=new">+ Nouveau dialogue</a>'
-        . '</div></div>'
-
-        . '<div class="alert alert-info" style="font-size:13px;line-height:1.5;">'
-        . 'Un dialogue est déclenché par une case <code style="display:inline">map_dialogs</code>'
-        . ' (params « nom,avatar,dialogue », posés via l\'éditeur Tiled) ou directement par le code'
-        . ' (inscription, marchands). Structure : des nœuds <code style="display:inline">{id, text, options}</code>,'
-        . ' le nœud <code style="display:inline">bonjour</code> est le point d\'entrée ; chaque option mène à un'
-        . ' nœud (<code style="display:inline">go</code>), une page (<code style="display:inline">url</code>)'
-        . ' ou pose une variable (<code style="display:inline">set</code>).</div>'
-
-
-        . '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
+    return '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
         . '<th>Code</th><th>Nom du PNJ</th><th>Type</th><th>Nœuds</th><th>Statut</th>'
         . '<th title="Déclencheurs map_dialogs référençant ce dialogue">Références</th><th></th>'
         . '</tr></thead><tbody>' . $rows . '</tbody></table>';
@@ -145,10 +124,6 @@ function dialogs_render_form(?array $dialog, string $csrfToken): string
 {
     $isEdit = $dialog !== null;
     $action = $isEdit ? 'update' : 'create';
-    $title = $isEdit
-        ? 'Dialogue : <code>' . e($dialog['name']) . '</code>'
-        : 'Nouveau dialogue';
-
     $nameField = $isEdit
         ? '<input type="hidden" name="name" value="' . e($dialog['name']) . '">'
             . '<input type="text" class="form-control" value="' . e($dialog['name']) . '" disabled>'
@@ -166,18 +141,7 @@ function dialogs_render_form(?array $dialog, string $csrfToken): string
             'options' => [['go' => 'EXIT', 'text' => '[partir]']],
         ]], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-    return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">' . $title . '</h1>'
-        . '<div class="d-flex gap-2">'
-        . '<a class="btn btn-sm btn-outline-secondary" href="/admin/dialogs.php">← Retour à la liste</a>'
-        . ($isEdit
-            ? '<a class="btn btn-sm btn-outline-secondary" title="Exporter ce dialogue (bundle JSON)"'
-                . ' href="/admin/action-export.php?type=dialog&amp;dialog=' . e(urlencode($dialog['name'])) . '">'
-                . '<i class="fas fa-download"></i> JSON</a>'
-            : '')
-        . '</div></div>'
-
-        . '<form method="post" action="/admin/dialogs-save.php?action=' . $action . '">'
+    return '<form method="post" action="/admin/dialogs-save.php?action=' . $action . '">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
 
         . '<div class="card mb-3"><div class="card-header">Identité</div><div class="card-body"><div class="row">'
@@ -191,7 +155,7 @@ function dialogs_render_form(?array $dialog, string $csrfToken): string
         . '<div class="form-group col-md-2"><label>Custom</label>'
         . '<input type="text" class="form-control" name="custom" value="' . e($isEdit ? $dialog['custom'] : '') . '"></div>'
         . '<div class="form-group col-md-2"><label>Statut</label><div>'
-        . '<label style="cursor:pointer;"><input type="checkbox" name="is_active" '
+        . '<label><input type="checkbox" name="is_active" '
         . checked(!$isEdit || $dialog['is_active']) . '> Actif</label>'
         . '<small class="form-text text-muted">Inactif : le jeu lit le fichier JSON s\'il existe.</small>'
         . '</div></div>'
@@ -199,18 +163,18 @@ function dialogs_render_form(?array $dialog, string $csrfToken): string
 
         . '<div class="card mb-3"><div class="card-header">Nœuds (JSON)</div><div class="card-body">'
         . '<textarea class="form-control" name="dialog_data" rows="24" spellcheck="false"'
-        . ' style="font-family:monospace;font-size:12px;">' . e($nodesJson) . '</textarea>'
-        . '<small class="form-text text-muted">Liste de nœuds <code style="display:inline">{id, text, options}</code>.'
-        . ' Le nœud <code style="display:inline">bonjour</code> est affiché en premier ; chaque option a un'
-        . ' <code style="display:inline">text</code> et une cible : <code style="display:inline">go</code>'
-        . ' (id de nœud, <code style="display:inline">EXIT</code>/<code style="display:inline">RESET</code>),'
-        . ' <code style="display:inline">url</code> ou <code style="display:inline">set</code>.'
-        . ' Optionnels sur un nœud : <code style="display:inline">avatar</code>,'
-        . ' <code style="display:inline">type</code>, <code style="display:inline">shuffle</code>'
+        . ' style="font-family:var(--font-mono);font-size:12px;">' . e($nodesJson) . '</textarea>'
+        . '<small class="form-text text-muted">Liste de nœuds <code>{id, text, options}</code>.'
+        . ' Le nœud <code>bonjour</code> est affiché en premier ; chaque option a un'
+        . ' <code>text</code> et une cible : <code>go</code>'
+        . ' (id de nœud, <code>EXIT</code>/<code>RESET</code>),'
+        . ' <code>url</code> ou <code>set</code>.'
+        . ' Optionnels sur un nœud : <code>avatar</code>,'
+        . ' <code>type</code>, <code>shuffle</code>'
         . ' (mélange les options). Placeholders PLAYER_NAME / PLAYER_ID / TARGET_ID dans les textes et urls.<br>'
-        . ' Une option <code style="display:inline">url</code> vers merchant.php ou warschool.php ouvre un'
+        . ' Une option <code>url</code> vers merchant.php ou warschool.php ouvre un'
         . ' comptoir : son bouton sur la carte se règle dans « Boutons de comptoir », plus bas'
-        . ' (clés <code style="display:inline">icon</code> et <code style="display:inline">button</code>).</small>'
+        . ' (clés <code>icon</code> et <code>button</code>).</small>'
         . '</div></div>'
 
         . ($isEdit ? dialogs_render_counters(json_decode((string) json_encode($dialog['nodes']), true) ?: []) : '')
@@ -241,7 +205,7 @@ function dialogs_render_delete_zone(string $name, string $csrfToken): string
             . ' utilisent ce dialogue — détachez-les d\'abord (<a href="/admin/buildings.php">Bâtiments</a>).</p>';
     } else {
         $body = '<form method="post" action="/admin/dialogs-save.php?action=delete" class="d-flex align-items-center gap-3"'
-            . ' onsubmit="return confirm(\'Supprimer définitivement le dialogue « ' . e($name) . ' » ?\');">'
+            . ' data-confirm="' . e('Supprimer définitivement le dialogue « ' . $name . ' » ?') . '">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="name" value="' . e($name) . '">'
             . '<button type="submit" class="btn btn-outline-danger">Supprimer le dialogue</button>'
@@ -250,8 +214,7 @@ function dialogs_render_delete_zone(string $name, string $csrfToken): string
             . '</form>';
     }
 
-    return '<div class="card mt-4 border-danger"><div class="card-header text-danger">Zone dangereuse</div>'
-        . '<div class="card-body">' . $body . '</div></div>';
+    return dangerZone($body);
 }
 
 /* -------------------------------------------------------------------------
@@ -263,7 +226,12 @@ $dialogs = $service->listGameDialogs();
 
 $action = $_GET['action'] ?? 'list';
 
+$options = [
+    'styles' => ['/css/rpg-awesome.min.css', '/admin/css/icon-picker.css'],
+    'scripts' => ['/admin/js/icon-picker.js'],
+];
 if ($action === 'new') {
+    $title = 'Nouveau dialogue';
     $content = dialogs_render_form(null, $csrfToken);
 } elseif ($action === 'edit') {
     $name = strtolower(trim((string) ($_GET['name'] ?? '')));
@@ -271,8 +239,26 @@ if ($action === 'new') {
         setFlash('warning', 'Dialogue introuvable (pas encore seedé ?).');
         redirectTo('/admin/dialogs.php');
     }
+    $title = 'Dialogue : <code>' . e($name) . '</code>';
+    $options['actions'] = '<a class="btn btn-sm btn-outline-secondary" title="Exporter ce dialogue (bundle JSON)"'
+        . ' href="/admin/action-export.php?type=dialog&amp;dialog=' . e(urlencode($name)) . '">'
+        . '<i class="fas fa-download"></i> JSON</a>';
     $content = dialogs_render_form($dialogs[$name], $csrfToken);
 } else {
+    $title = 'Dialogues';
+    $options['actions'] = '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=dialog"'
+        . ' title="Télécharger tous les dialogues en bundle JSON, ré-importable ici ou sur un autre environnement">'
+        . '<i class="fas fa-download"></i> Exporter (JSON)</a>'
+        . '<a class="btn btn-outline-secondary" href="/admin/action-import.php"'
+        . ' title="Importer un bundle JSON (avec prévisualisation avant application)">'
+        . '<i class="fas fa-upload"></i> Importer</a>'
+        . '<a class="btn btn-primary" href="/admin/dialogs.php?action=new">+ Nouveau dialogue</a>';
+    $options['intro'] = 'Un dialogue est déclenché par une case <code>map_dialogs</code>'
+        . ' (params « nom,avatar,dialogue », posés via l\'éditeur Tiled) ou directement par le code'
+        . ' (inscription, marchands). Structure : des nœuds <code>{id, text, options}</code>,'
+        . ' le nœud <code>bonjour</code> est le point d\'entrée ; chaque option mène à un'
+        . ' nœud (<code>go</code>), une page (<code>url</code>)'
+        . ' ou pose une variable (<code>set</code>).';
     $content = dialogs_render_list(
         $dialogs,
         $service->mapDialogReferenceCounts(),
@@ -280,12 +266,12 @@ if ($action === 'new') {
     );
 }
 
-/* Catalogue d'icônes du sélecteur (IconFieldView) — même mécanisme que
- * le workbench des actions et l'admin des effets. */
-$content .= '<script>window.WB_ICONS = '
-    . json_encode((new RpgAwesomeIcons())->all(), JSON_UNESCAPED_SLASHES) . ';</script>';
+if ($title !== 'Dialogues') {
+    $options['back'] = ['/admin/dialogs.php', 'Dialogues'];
+    /* Catalogue d'icônes du sélecteur (IconFieldView) — même mécanisme que
+     * le workbench des actions et l'admin des effets ; le formulaire seul en a besoin. */
+    $content .= '<script>window.WB_ICONS = '
+        . json_encode((new RpgAwesomeIcons())->all(), JSON_UNESCAPED_SLASHES) . ';</script>';
+}
 
-echo admin_layout('Dialogues', renderFlashMessage() . $content, [
-    'styles' => ['/css/rpg-awesome.min.css', '/admin/css/icon-picker.css'],
-    'scripts' => ['/admin/js/icon-picker.js'],
-]);
+echo admin_layout($title, $content, $options);

@@ -30,15 +30,7 @@ use Classes\Db;
 $backTerm = trim((string) ($_POST['q'] ?? ''));
 $back = '/admin/admin-access.php' . ($backTerm !== '' ? '?q=' . urlencode($backTerm) . '#manager' : '');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirectTo($back);
-}
-
-$csrf = new CsrfProtectionService();
-if (!$csrf->validateToken($_POST['csrf_token'] ?? null)) {
-    setFlash('warning', 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
-    redirectTo($back);
-}
+requireAdminPost($back);
 
 $targetId = (int) ($_POST['player_id'] ?? 0);
 $option   = (string) ($_POST['option'] ?? '');
@@ -78,7 +70,7 @@ try {
         setFlash('success', 'Option ' . e($option) . ' ajoutée à '
             . e($target->data->name) . ' (#' . $targetId . ').');
     }
-    $csrf->regenerateToken();
+    (new CsrfProtectionService())->regenerateToken();
 } catch (\Throwable $exception) {
     setFlash('danger', "Erreur lors de la mise à jour de l'option.");
 }

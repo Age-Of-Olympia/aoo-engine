@@ -1,66 +1,81 @@
-# Admin Design System — spec (proposal)
+# Admin — design system and page conventions
 
-Status: **approved — phase 1 (foundation) landing.** Reference stylesheet:
-`admin/css/admin-design-system.css`, loaded globally after `admin.css` in `admin/layout.php`.
+One stylesheet, `admin/css/admin.css`, one shell script, `admin/js/admin.js`, one layout,
+`admin/layout.php`. Page stylesheets (`action-workbench.css`, `footprints.css`…) only add what
+is theirs, never redefine a button, a card or a table.
 
-## Why
+## Look
 
-The admin has no design system. Concretely:
+The admin belongs to the engine, not to a world: it does not load the game's `main.min.css`,
+nor its fonts or colours. A neutral console, one accent.
 
-- **No tokens** — every colour (`#3498db`, `#2c3e50`, …) is hardcoded ad-hoc throughout `admin/css/admin.css`. No single source of truth for palette, type, spacing.
-- **The game `main.min.css` leaks into admin** — `button{background:rgba(255,255,255,.4);box-shadow:…inset}`, `code{display:block;background:url(.jpeg)}`, serif headings, input-focus parchment. Admin only partially overrides these, so look depends on cascade accidents.
-- **Partial components** — `.btn`/`.btn-*` exist and most pages use them, but features add one-offs (`.wb-tab-btn`, `.wb-modal-close`, `.admin-modal-close`) that diverge. This is the "button colours aren't the same" symptom.
+| Token | Value | Use |
+|---|---|---|
+| `--page` / `--paper` / `--surface-alt` | `#f1f3f5` / `#fff` / `#f7f8fa` | page, cards and inputs, card and table heads |
+| `--ink` / `--mute` / `--rule` | `#1b2026` / `#5d6874` / `#dde1e6` | text, secondary text, hairlines |
+| `--accent` (+ `-hover`, `-wash`) | `#0b6e72` | primary buttons, active nav, focus ring |
+| `--slate` | `#2b3440` | secondary buttons |
+| `--info` `--success` `--warning` `--danger` (+ `-wash`) | | badges, alerts, outline buttons |
 
-Goal: one **tokenized, intentional** look — the bronze direction — applied across every admin page, so admin is *pretty and consistent together*.
+One family: the system UI stack (no webfont to load), a monospace stack for codes. Labels and
+table headers in sentence case, numbers in tables tabular.
 
-## Scope & safety
+## A page
 
-Everything is scoped under `.admin-layout`, the wrapper present only on admin pages. In-game pages are never touched. The system is **additive**: it overrides `admin.css` and the game base by specificity, so it can roll out page-by-page without a big-bang rewrite.
+```php
+require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 
-## Tokens
+echo admin_layout('Effets', $content, [
+    'actions' => '<a class="btn btn-primary" href="?action=new">+ Nouvel effet</a>',
+    'intro'   => 'Un effet modifie les caractéristiques de qui le porte…',   // optional
+    'back'    => ['/admin/effects.php', 'Effets'],                        // sub-pages
+    'styles'  => ['/admin/css/icon-picker.css'],
+    'scripts' => ['/admin/js/icon-picker.js'],
+]);
+```
 
-Defined on `.admin-layout`:
+The layout draws the head — breadcrumb taken from the menu, title, intro, actions — and the
+pending flash message under it. A page never prints its own `<h1>` nor calls
+`renderFlashMessage()`. `'header' => false` is for a page that draws its own head (monitoring).
 
-| Group | Tokens |
+The menu is `admin_nav_tree()` in `layout.php`: a new page is one line there plus its right in
+`AdminMenuAccessService::PAGES`. A sub-page (edit form, import step) is listed in its link's
+`also`, so the link lights up and the breadcrumb follows.
+
+## Posting
+
+```php
+// admin/thing-save.php
+(new AdminMenuAccessService())->enforce('things.edit');
+handleAdminPost('/admin/things.php', function (): string {
+    (new ThingService())->save($_POST);
+    return 'Objet enregistré.';
+});
+```
+
+`handleAdminPost` checks the method and the CSRF token, runs the action, flashes its message
+(or the exception's: warning for `InvalidArgumentException`, error otherwise) and redirects.
+`requireAdminPost($back)` is the same prologue alone, for an endpoint with several outcomes.
+
+## Components
+
+| Need | Markup / helper |
 |---|---|
-| Palette | `--slate #2c3e50` · `--ink #23303c` · `--mute #857f76` · `--rule #e6e1d8` · `--paper #fff` · `--parchment #faf8f4` · `--page #f1efe8` |
-| Accent | `--bronze #8a5a2b` · `--bronze-bright #b07d3f` · `--bronze-wash #f4ead7` |
-| Semantic | `--info #2f6db0` · `--success #2f7a4f` · `--danger #b23a2c` · `--warning #b07d1f` |
-| Type | `--font-display goudy` (headings) · `--font-body` system stack · `--font-mono` |
-| Form | `--r 4px` · `--r-lg 8px` · `--shadow-sm` · `--shadow` · `--t .15s` |
+| Form field | `formField`, `formInput`, `formSelect`, `formTextarea`, `formCheckbox`, `formCard` |
+| Table | `renderTable()`; `data-admin-list data-page-size="50" data-facets="type:Type"` adds search, facets, paging. Every `.table` scrolls in its own box (admin.js) |
+| Ask before acting | `data-confirm="Supprimer … ?"` on the form, the submit button or the link |
+| Submit on change | `data-autosubmit` on the field |
+| Tick every row | `data-check-all` on the header checkbox (visible rows only) |
+| Delete / rename | `dangerZone($html)` at the bottom of the edit form |
+| Row menu | `<details class="row-popover"><summary class="btn btn-sm …">…</summary><div class="row-popover-panel">…</div></details>` |
+| Tabs | `.nav-tabs > .nav-link.active`, panels `.tab-pane.active` |
+| Status | `.badge` + `-success` `-warning` `-danger` `-info` `-secondary`; `.badge-solid` for the loud version |
+| Folding panel | `<details class="card"><summary>…</summary>…</details>` |
 
-`goudy` (the game's display face) is reused for headings — authentic, already loaded, no new dependency.
+The utility classes are the Bootstrap 4/5 subset the pages already used (`mb-0`, `text-danger`,
+`col-md-4`, `form-row`, `input-group`…), both spellings; admin.css lists them.
 
-## Insulation layer
+## Small screens
 
-Scoped resets that neutralize the game base inside admin:
-
-- `code` → inline bronze monospace (was a block with a JPEG background).
-- `button/input/select/textarea` → drop the game's inset box-shadow.
-- `.admin-main` → warm `--page` background, left-aligned text, body font; headings → `goudy`.
-
-## Components (in the reference stylesheet)
-
-Buttons (`.btn`, `-primary` bronze, `-secondary` slate, `-danger`, `-outline-*`, `-sm`) ·
-Cards (`.card`, `.card-header` parchment+goudy, `.card-body`) ·
-Tables (`.table`, `-striped`, `-hover`, `.row-group` section rows) ·
-Badges (`.badge` bronze + `-info/-success/-warning/-secondary`) ·
-Forms (`.form-control` with bronze focus ring, `.form-label` eyebrow) ·
-Alerts (`.alert-*`) ·
-Sidebar (slate kept; bronze hover/active with left edge) ·
-`.eyebrow` utility.
-
-## Migration plan (phased, low-risk)
-
-1. **Land the foundation** — add `admin-design-system.css`, load it last in `admin/layout.php` after `admin.css`. Tokens + insulation + components take effect everywhere immediately (additive; nothing else changes structurally).
-2. **Audit per page** — walk each admin page, screenshot, fix any element still styled by a stale `admin.css` rule or a feature one-off; fold `.wb-*`/modal buttons into the system.
-3. **Retire dead rules** — once pages are clean, delete superseded hardcoded blocks from `admin.css` and collapse it into the system.
-4. **Document** — component usage cheatsheet so new admin pages start from the system.
-
-Each phase is its own small MR; the loadout pages (#604) inherit the look for free once phase 1 lands.
-
-## Open decisions
-
-- **Accent weight** — bronze as the single accent, or keep steel-blue for links/`info` (current sample keeps blue for `info` badges only).
-- **Page background** — warm parchment `--page` vs the cooler current grey; affects every page's feel.
-- **Heading face everywhere** — `goudy` for all admin headings (sample) vs only page titles.
+Below 900px the sidebar becomes a drawer opened from a top bar, `col-md-*` cells stack, tables
+scroll sideways. Mobile is a fallback, not the main use: it must work, not shine.

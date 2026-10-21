@@ -20,6 +20,7 @@ This file holds what applies to every session. Everything else is a path-scoped 
 | `frontend-assets.md` | `js/`, `css/`, `src/View/`, `Classes/Ui.php` |
 | `cypress.md` | `cypress/`, `scripts/testing/` |
 | `database.md` | `src/Migrations/`, `db/`, DB config |
+| `admin.md` | `admin/` |
 
 Longer write-ups live in `docs/`: `tutorial-system-overview.md`, `cypress-testing-guide.md`,
 `conventions-code.md`, `tiled-editor-guide.md`, `roadmap.html`, and the `design-*.md` /

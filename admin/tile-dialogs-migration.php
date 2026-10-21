@@ -85,15 +85,16 @@ foreach ($counts as $action => $n) {
     $summary .= '<li><strong>' . $n . '</strong> — ' . e($action) . '</li>';
 }
 
-$body = '<p class="text-muted">Un déclencheur de case s\'affiche désormais <strong>même</strong> quand un bâtiment'
+$intro = 'Un déclencheur de case s\'affiche désormais <strong>même</strong> quand un bâtiment'
     . ' l\'occupe. Transférer un texte sans retirer son déclencheur le ferait donc apparaître deux fois :'
-    . ' l\'application supprime le déclencheur repris, dans la même opération.</p>';
+    . ' l\'application supprime le déclencheur repris, dans la même opération.';
+$body = '';
 
 if ($plan === []) {
     $body .= '<div class="alert alert-success">Aucun déclencheur de case à reprendre.</div>';
 } else {
-    $body .= '<div class="card mb-3"><div class="card-body">'
-        . '<h5>Ce qui serait fait</h5><ul class="mb-2">' . $summary . '</ul>'
+    $body .= '<div class="card mb-3"><div class="card-header">Ce qui serait fait</div><div class="card-body">'
+        . '<ul class="mb-2">' . $summary . '</ul>'
         . ($dropped > 0
             ? '<p class="mb-2"><strong>' . $dropped . '</strong> ligne(s) écartée(s) : lignes vides et versions'
                 . ' antérieures sur une même case. La dernière édition est conservée ; les doublons ne sont jamais'
@@ -102,7 +103,7 @@ if ($plan === []) {
         . '<form method="post" action="/admin/tile-dialogs-migration-save.php">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
         . '<button class="btn btn-primary" type="submit" name="apply" value="1"'
-        . ' onclick="return confirm(\'Reprendre les ' . count($plan) . ' cases ? Les déclencheurs repris seront supprimés.\');">'
+        . ' data-confirm="Reprendre les ' . count($plan) . ' cases ? Les déclencheurs repris seront supprimés.">'
         . 'Appliquer</button>'
         . '</form></div></div>';
 
@@ -118,4 +119,4 @@ if ($plan === []) {
 
 }
 
-echo admin_layout('Dialogues de case', renderFlashMessage() . $body, ['scripts' => ['/admin/js/tp-copy.js']]);
+echo admin_layout('Dialogues de case', $body, ['intro' => $intro, 'scripts' => ['/admin/js/tp-copy.js']]);
