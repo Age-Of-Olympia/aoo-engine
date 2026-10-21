@@ -6,8 +6,11 @@ use App\Interface\ActorInterface;
 
 class Log{
 
-    /** Types d'événements visibles par leur seul propriétaire (récap de tour, passif appris). */
-    public const PRIVATE_TYPES = ['turn', 'learn'];
+    /** Types d'événements visibles par leur seul propriétaire (récap de tour, passif appris, réception d'un échange). */
+    public const PRIVATE_TYPES = ['turn', 'learn', 'player_exchange_received'];
+
+    /** Public character events that remain witness-visible on hidden-character plans. */
+    public const PUBLIC_CHARACTER_TYPES = ['player_exchange'];
 
     // Propriétés pour l'injection de dépendances (tests)
     private static $dbInstance = null;
@@ -65,6 +68,20 @@ class Log{
             return null;
         }
 
+        /* L'entrée de réception ne décrit que le point de vue du destinataire.
+         * L'entrée d'envoi reste publique dans la perception des témoins. */
+        if ($row->type === 'player_exchange_received') {
+            return (int) $row->player_id === (int) $player->id ? $row : null;
+        }
+        if ($row->type === 'player_exchange') {
+            if ((int) $row->player_id === (int) $player->id) {
+                return $row;
+            }
+            if ((int) $row->target_id === (int) $player->id) {
+                return null;
+            }
+        }
+
         // If the event is about the player, as doer or as target, it is displayed once
         if ($row->player_id == $player->id) {
             return $row->type != "hidden_action_other_player" ? $row : null;
@@ -93,7 +110,8 @@ class Log{
         // For normal players, use explicit visibility conditions
         else {
             $planRequestsHideCharacters = !$planJson || (isset($planJson->player_visibility) && $planJson->player_visibility === false);
-            $isAlwaysVisibleCharacter = $row->player_id <= 0; // PNJ actions are always visible
+            $isAlwaysVisibleCharacter = $row->player_id <= 0
+                || in_array((string) $row->type, self::PUBLIC_CHARACTER_TYPES, true);
 
             if ($planRequestsHideCharacters && !$isAlwaysVisibleCharacter) {
                 return null;
@@ -105,10 +123,22 @@ class Log{
         // (the plan may hold underscores itself, hence the limit of 4 parts).
         [$x, $y, $z, $plan] = array_pad(explode('_', (string) $row->coords_computed, 4), 4, '');
 
-        $inRange = (string) $row->movement_plan === $plan
-            && (string) $row->movement_z === $z
-            && abs((int) $x - (int) $row->movement_x) <= $perception
-            && abs((int) $y - (int) $row->movement_y) <= $perception;
+        $movementPlan = $row->movement_plan;
+        $movementX = $row->movement_x;
+        $movementY = $row->movement_y;
+        $movementZ = $row->movement_z;
+        if ($row->type === 'player_exchange' && $movementPlan === null) {
+            $movementCoords = $player->getCoords();
+            $movementPlan = $movementCoords->plan ?? null;
+            $movementX = $movementCoords->x ?? null;
+            $movementY = $movementCoords->y ?? null;
+            $movementZ = $movementCoords->z ?? null;
+        }
+
+        $inRange = (string) $movementPlan === $plan
+            && (string) $movementZ === $z
+            && abs((int) $x - (int) $movementX) <= $perception
+            && abs((int) $y - (int) $movementY) <= $perception;
 
         return $inRange ? $row : null;
     }
@@ -346,7 +376,7 @@ private static function filterRows(array $rows, int $playerId): array {
     }
 
 
-    public static function put(ActorInterface $player, $target, $text, $type='', $hiddenText='', $logTime=''){
+    public static function put(ActorInterface $player, $target, $text, $type='', $hiddenText='', $logTime='', bool $forcePublic = false){
 
 
         $coords = $player->getCoords();
@@ -364,7 +394,7 @@ private static function filterRows(array $rows, int $playerId): array {
         $plan ??= '';
 
         // hide log in incognitoMode or invisibleMode
-        if($player->have_option('incognitoMode') || $player->have_option('invisibleMode')){
+        if(!$forcePublic && ($player->have_option('incognitoMode') || $player->have_option('invisibleMode'))){
             $text = "Plan d'origine : ".$plan." - ".$text;
             $plan = "birdland"; // show logs in birdlands for posterity
         }

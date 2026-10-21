@@ -3,19 +3,16 @@
 namespace App\View\Observe;
 
 use App\Entity\BuildingDetails;
-use App\Enum\EntityCategory;
 use App\Factory\PlayerFactory;
 use App\Interface\ActionInterface;
 use App\Interface\ActorInterface;
 use App\Service\Action\ActionTargeting;
 use App\Service\ActionService;
-use App\Service\BuildingService;
-use App\Service\FactionService;
+use App\Service\PlayerExchangeService;
 use App\Service\RaceService;
 use App\View\Entity\EntityParts;
 use App\View\Entity\EntityProfile;
 use Classes\Player;
-use Classes\Str;
 use Classes\Ui;
 use Classes\View;
 
@@ -162,6 +159,16 @@ final class EntityCardView
         }
 
         $html .= self::actionButtonsHtml($player, $target);
+
+        if ((int) $player->id !== (int) $target->id
+            && in_array((string) ($target->data->player_type ?? ''), ['real', 'npc', 'tutorial'], true)) {
+            $atContact = View::get_distance($player->getCoords(), $target->getCoords()) <= 1;
+            $incomingProposal = $atContact
+                && (new PlayerExchangeService())->hasIncomingValidatedProposal($player, $target);
+            $html .= $atContact
+                ? '<a href="give.php?targetId=' . (int) $target->id . '"><button class="action' . ($incomingProposal ? ' player-exchange-incoming' : '') . '"><span class="ra ' . ($incomingProposal ? 'ra-hand-emblem player-exchange-incoming-icon' : 'ra-hand') . '"></span> <span class="action-name">' . ($incomingProposal ? 'Recevoir' : 'Donner') . '</span></button></a>'
+                : '<button class="action" disabled title="Approchez-vous pour donner"><span class="ra ra-hand"></span> <span class="action-name">Donner (trop loin)</span></button>';
+        }
 
         /* class="action" comme Missive : sans elle, la grille d'actions
          * du HUD ignore ces boutons (nom toujours affiché, taille libre).

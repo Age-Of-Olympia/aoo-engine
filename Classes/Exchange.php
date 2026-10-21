@@ -10,6 +10,7 @@ class Exchange{
     public int $id;
     public int $playerId;
     public int $targetId;
+    public string $exchangeType = 'merchant';
     public int $targetOk=0;
     public int $playerOk=0;
     public $updateTime;
@@ -32,7 +33,7 @@ class Exchange{
             exit('get data impossible, relies on id');
 
         $sql = '
-        SELECT player_id, target_id, player_ok, target_ok, update_time
+        SELECT player_id, target_id, player_ok, target_ok, update_time, exchange_type
         FROM items_exchanges
         where id = ?
         ';
@@ -44,6 +45,7 @@ class Exchange{
         while($row = $res->fetch_object()){
             $this->playerId = $row->player_id;
             $this->targetId = $row->target_id;
+            $this->exchangeType = $row->exchange_type;
             $this->playerOk = $row->player_ok;
             $this->targetOk = $row->target_ok;
             $this->updateTime = $row->update_time;
@@ -83,7 +85,7 @@ class Exchange{
         }
     }
 
-    public function create($playerId,$targetId){
+    public function create($playerId,$targetId, string $exchangeType = 'merchant'){
 
         $this->playerId = $playerId;
         $this->targetId = $targetId;
@@ -91,6 +93,7 @@ class Exchange{
         $values = array(
             'player_id'=>$playerId,
             'target_id'=>$targetId,
+            'exchange_type'=>$exchangeType,
             'update_time'=>time()
         );
         $this->db->insert('items_exchanges', $values);

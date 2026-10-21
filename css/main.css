@@ -350,6 +350,23 @@ input[type="text"], input[type="password"], input[type="number"]{
 
     animation: blinker 1.5s linear infinite;
 }
+
+.player-exchange-incoming-icon {
+    color: #b00000;
+    animation: player-exchange-incoming-pulse 2.4s ease-in-out infinite;
+}
+
+.player-exchange-incoming .action-name {
+    color: #b00000;
+    font-weight: 700;
+}
+
+@keyframes player-exchange-incoming-pulse {
+    50% {
+        opacity: 0.35;
+    }
+}
+
 @keyframes blinker {
     50% {
         opacity: 0;

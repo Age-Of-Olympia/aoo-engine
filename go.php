@@ -343,6 +343,9 @@ if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMod
 $db->commit();
 $stepNotices = $player->go($goCoords);
 
+/* A successful step that breaks contact cancels character exchanges. */
+(new \App\Service\PlayerExchangeService())->cancelOpenExchangesAfterMove($player, $goCoords);
+
 // The cell's element may have taken the last PV (effects.pv_on_apply).
 if ($player->getRemaining('pv') < 1) {
     \App\Service\PlayerService::processSelfDeath($player, 'aux éléments');

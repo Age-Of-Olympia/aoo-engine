@@ -8,6 +8,7 @@ use App\View\MenuView;
 use App\View\DeathView;
 use App\View\NewTurnView;
 use App\Factory\PlayerFactory;
+use Classes\Exchange;
 use App\Tutorial\TutorialHelper;
 use App\Tutorial\TutorialFeatureFlag;
 use App\Tutorial\TutorialSessionManager;
@@ -310,6 +311,36 @@ if (isset($_GET['hud'])) {
 <?php MainView::render($player) ?>
 
 <?php } ?>
+
+<?php
+if (!$inTutorial && !$isInvisible && !$isBrandNew && !$autoStarting && (int) $player->id === (int) $mainPlayerId) {
+    $seenExchangeIds = $_SESSION['playerExchangePromptSeen'] ?? [];
+    $seenExchangeIds = is_array($seenExchangeIds) ? array_map('intval', $seenExchangeIds) : [];
+    foreach (Exchange::get_open_exchanges((int) $player->id) as $pendingExchange) {
+        if ($pendingExchange->exchangeType !== 'player'
+            || (int) $pendingExchange->targetId !== (int) $player->id
+            || (int) $pendingExchange->targetOk === 1
+            || in_array((int) $pendingExchange->id, $seenExchangeIds, true)) {
+            continue;
+        }
+
+        $sender = PlayerFactory::legacy((int) $pendingExchange->playerId);
+        $sender->get_data();
+        $senderName = htmlspecialchars((string) $sender->data->name, ENT_QUOTES, 'UTF-8');
+        $exchangeUrl = 'give.php?targetId=' . (int) $sender->id . '&exchangeId=' . (int) $pendingExchange->id;
+        $seenExchangeIds[] = (int) $pendingExchange->id;
+        $_SESSION['playerExchangePromptSeen'] = array_slice($seenExchangeIds, -100);
+        echo '<div id="player-exchange-prompt" role="dialog" aria-modal="true" style="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;">'
+            . '<div style="background:#fff;padding:24px;border-radius:8px;max-width:420px;text-align:center;box-shadow:0 4px 20px #0008;">'
+            . '<p>' . $senderName . ' vous a proposé un échange.</p>'
+            . '<button type="button" id="player-exchange-prompt-dismiss">D’accord</button> '
+            . '<button type="button" id="player-exchange-prompt-open">Voyons voir ça</button>'
+            . '</div></div>'
+            . '<script>(function(){var prompt=document.getElementById("player-exchange-prompt");document.getElementById("player-exchange-prompt-dismiss").addEventListener("click",function(){prompt.remove();});document.getElementById("player-exchange-prompt-open").addEventListener("click",function(){var url=' . json_encode($exchangeUrl) . ';prompt.remove();if(typeof window.hudNavigate==="function"){window.hudNavigate(url);}else{window.location.href=url;}});})();</script>';
+        break;
+    }
+}
+?>
 
 <?php
 // Clear auto-start flag after menu is rendered (JavaScript will pick it up)

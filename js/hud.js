@@ -2087,6 +2087,9 @@
         if (/^container\.php\?targetId=\d+$/.test(href)) {
             return href.replace(/^container\.php/, 'load_container.php');
         }
+        if (/^give\.php\?targetId=-?\d+(&exchangeId=\d+)?$/.test(href)) {
+            return href.replace(/^give\.php/, 'load_give.php');
+        }
         if (/^logs\.php/.test(href)) {
             return href.replace(/^logs\.php/, 'load_logs.php');
         }
