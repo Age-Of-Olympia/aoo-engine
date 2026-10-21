@@ -20,21 +20,11 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 use App\Entity\Faction;
 use App\Entity\FactionRole;
 use App\Service\AdminMenuAccessService;
-use App\Service\CsrfProtectionService;
 use App\Service\FactionService;
 
 (new AdminMenuAccessService())->enforce('factions.edit');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirectTo('/admin/factions.php');
-}
-
-try {
-    (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
-} catch (\Throwable $e) {
-    setFlash('warning', 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
-    redirectTo('/admin/factions.php');
-}
+requireAdminPost('/admin/factions.php');
 
 $service = new FactionService();
 $action = $_GET['action'] ?? '';

@@ -20,9 +20,8 @@ $db = new Db();
 $csrf = new CsrfProtectionService();
 $elements = new MapElementService();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['element_type'])) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+if (isset($_POST['element_type'])) {
+    handleAdminPost('element-types.php', function () use ($elements): string {
         $name = (string) $_POST['element_type'];
         $effect = trim((string) ($_POST['effect'] ?? ''));
         $elements->setEffect($name, $effect === '' ? null : $effect);
@@ -34,13 +33,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['element_type'])) {
         $elements->setSpill($name, (int) ($_POST['lifetime_turns'] ?? 2), (int) ($_POST['spill_chance'] ?? 100));
         // Last: it needs element_types.depth, added by a migration
         $elements->setDepth($name, (int) ($_POST['depth'] ?? MapElementService::DEPTH_VOLUME));
-        setFlash('success', $effect === ''
+
+        return $effect === ''
             ? "« {$name} » est maintenant un décor, sans effet."
-            : "Marcher sur « {$name} » applique maintenant l'effet « {$effect} ».");
-    } catch (Throwable $e) {
-        setFlash('danger', $e->getMessage());
-    }
-    redirectTo('element-types.php'); // PRG
+            : "Marcher sur « {$name} » applique maintenant l'effet « {$effect} ».";
+    });
 }
 
 $effects = [];
@@ -71,7 +68,7 @@ $rows = [];
 
 // Each control under its caption: the row is too long to read on tooltips alone
 $field = static fn (string $caption, string $control): string =>
-    '<label class="mb-0 small text-muted" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px">' . e($caption) . $control . '</label>';
+    '<label class="mb-0 small text-muted d-flex flex-column align-items-start gap-1">' . e($caption) . $control . '</label>';
 
 foreach ($names as $name) {
     $effect = $elements->effectOf($name);
@@ -80,7 +77,7 @@ foreach ($names as $name) {
 
     $thumb = $image !== null
         ? '<img class="tile-thumb" src="/' . e($image) . '" height="28" loading="lazy" alt=""'
-            . ' style="image-rendering:pixelated;border:1px solid #ddd;">'
+            . ' style="image-rendering:pixelated;">'
         : '<span class="badge badge-warning" title="Posé sur la carte mais aucune image dans img/elements/ :'
             . ' rien n\'est affiché sur la case">sans image</span>';
 
@@ -130,7 +127,7 @@ foreach ($names as $name) {
 
     $rows[] = '<tr>'
         . '<td>' . $thumb . '</td>'
-        . '<td><code style="display:inline">' . e($name) . '</code></td>'
+        . '<td><code>' . e($name) . '</code></td>'
         . '<td>' . $does . '</td>'
         . '<td>' . ($count > 0
             ? '<a href="/admin/map-elements.php">' . $count . '</a>'
@@ -140,9 +137,7 @@ foreach ($names as $name) {
 
 $inert = count(array_filter($names, static fn (string $name): bool => $elements->effectOf($name) === null));
 
-$content = '<div class="d-flex justify-content-between align-items-center mb-3">'
-    . '<h1 class="mb-0">Types d\'éléments</h1></div>'
-    . '<p class="text-muted">Éléments que le pinceau de Tiled peut poser sur une case. '
+$intro = 'Éléments que le pinceau de Tiled peut poser sur une case. '
     . 'La liste vient des <strong>images</strong> de <code>img/elements/</code> ; '
     . 'l\'<strong>effet choisi</strong> est appliqué quand on marche sur la case. '
     . 'Tant qu\'aucun n\'a été choisi, c\'est l\'effet du même nom, s\'il existe. '
@@ -158,9 +153,9 @@ $content = '<div class="d-flex justify-content-between align-items-center mb-3">
     . 'à niveau égal, l\'ordre alphabétique.'
     . ($inert > 0
         ? ' <strong>' . $inert . ' type(s) sans effet</strong> sur cette carte.'
-        : '')
-    . '</p>'
-    . renderTable(
+        : '');
+
+$content = renderTable(
         [
             '',
             'Nom',
@@ -171,4 +166,4 @@ $content = '<div class="d-flex justify-content-between align-items-center mb-3">
         'class="table table-striped table-sm" data-admin-list data-page-size="30"'
     );
 
-echo admin_layout('Types d\'éléments', renderFlashMessage() . $content);
+echo admin_layout('Types d\'éléments', $content, ['intro' => $intro]);

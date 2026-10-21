@@ -83,17 +83,14 @@ function recipe_render_list(string $csrfToken): string
             . '<a class="btn btn-sm btn-outline-secondary" title="Exporter le bundle JSON"'
             . ' href="/admin/action-export.php?type=recipe&name=' . e(urlencode($r->name)) . '">JSON</a> '
             . '<form method="post" action="/admin/recipes-save.php?action=delete" class="d-inline"'
-            . ' onsubmit="return confirm(' . e(json_encode('Supprimer la recette ' . $r->name . ' ?', JSON_UNESCAPED_UNICODE)) . ');">'
+            . ' data-confirm="' . e('Supprimer la recette ' . $r->name . ' ?') . '">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="id" value="' . (int) $r->id . '">'
             . '<button class="btn btn-sm btn-outline-danger" type="submit">Supprimer</button></form>'
             . '</td></tr>';
     }
 
-    return '<p><a class="btn btn-primary" href="/admin/recipes.php?action=new">Nouvelle recette</a> '
-        . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=recipe">Exporter tout (JSON)</a> '
-        . '<a class="btn btn-outline-secondary" href="/admin/action-import.php">Importer</a></p>'
-        . renderTable(['Recette', 'Ingrédients', 'Résultats', 'Races', 'Atelier', ''], $rows,
+    return renderTable(['Recette', 'Ingrédients', 'Résultats', 'Races', 'Atelier', ''], $rows,
             'data-admin-list data-page-size="50"');
 }
 
@@ -171,12 +168,10 @@ function recipe_render_form(?object $recipe, string $csrfToken): string
         . '<div class="row"><div class="col-md-4"><h5>Ingrédients</h5>' . $ingredientRows . '</div>'
         . '<div class="col-md-4"><h5>Résultats</h5>' . $resultRows . '</div>'
         . '<div class="col-md-4"><h5>Races <small class="text-muted">(aucune = toutes)</small></h5>' . $raceBoxes . '</div></div>'
-        . '<button class="btn btn-primary" type="submit">Enregistrer</button> '
-        . '<a class="btn btn-secondary" href="/admin/recipes.php">Retour</a>'
+        . '<button class="btn btn-primary" type="submit">Enregistrer</button>'
         . '</form>';
 
-    return '<div class="card"><div class="card-header">' . ($isEdit ? 'Recette « ' . e($recipe->name) . ' »' : 'Nouvelle recette') . '</div>'
-        . '<div class="card-body">' . $body . '</div></div>';
+    return '<div class="card"><div class="card-body">' . $body . '</div></div>';
 }
 
 /* -------------------------------------------------------------------------
@@ -185,7 +180,9 @@ function recipe_render_form(?object $recipe, string $csrfToken): string
 $csrfToken = (new CsrfProtectionService())->generateToken();
 $action = $_GET['action'] ?? 'list';
 
+$options = ['back' => ['/admin/recipes.php', 'Recettes']];
 if ($action === 'new') {
+    $title = 'Nouvelle recette';
     $content = recipe_render_form(null, $csrfToken);
 } elseif ($action === 'edit') {
     $res = (new Db())->exe('SELECT * FROM craft_recipes WHERE id = ?', (int) ($_GET['id'] ?? 0));
@@ -194,9 +191,14 @@ if ($action === 'new') {
         setFlash('warning', 'Recette introuvable.');
         redirectTo('/admin/recipes.php');
     }
+    $title = 'Recette « ' . e($recipe->name) . ' »';
     $content = recipe_render_form($recipe, $csrfToken);
 } else {
+    $title = 'Recettes';
+    $options = ['actions' => '<a class="btn btn-primary" href="/admin/recipes.php?action=new">Nouvelle recette</a>'
+        . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=recipe">Exporter tout (JSON)</a>'
+        . '<a class="btn btn-outline-secondary" href="/admin/action-import.php">Importer</a>'];
     $content = recipe_render_list($csrfToken);
 }
 
-echo admin_layout('Recettes', renderFlashMessage() . $content);
+echo admin_layout($title, $content, $options);

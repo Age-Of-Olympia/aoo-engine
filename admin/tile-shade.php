@@ -18,49 +18,42 @@ $csrf = new CsrfProtectionService();
 $shade = new CellShadeService();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['shade_step'])) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+    handleAdminPost('/admin/tile-shade.php', function () use ($shade): string {
         $shade->save(
             (float) str_replace(',', '.', (string) $_POST['shade_step']),
             (int) ($_POST['shade_max'] ?? CellShadeService::DEFAULT_MAX),
             (string) ($_POST['shade_color'] ?? CellShadeService::DEFAULT_COLOR)
         );
-        setFlash('success', 'Réglages des ombres enregistrés.');
-    } catch (\Throwable $e) {
-        setFlash('danger', $e->getMessage());
-    }
-    redirectTo('/admin/tile-shade.php');
+
+        return 'Réglages des ombres enregistrés.';
+    });
 }
 
 ob_start();
 ?>
 
 <div class="container">
-    <h2 class="section-title">Ombres des cases</h2>
-
-    <?= renderFlashMessage() ?>
-
-    <div class="card mt-3">
-        <div class="card-header"><strong>Ombres des cases</strong></div>
+    <div class="card">
+        <div class="card-header">Réglages</div>
         <div class="card-body">
             <form method="post" action="tile-shade.php">
                 <?= $csrf->renderTokenField() ?>
 
-                <p class="text-muted" style="font-size: 13px;">
+                <p class="text-muted">
                     Une case a un <em>niveau</em> d'ombre (0 à
                     <?= (int) $shade->maxLevel() ?>), posé au pinceau dans
                     l'éditeur ; chaque clic supplémentaire assombrit. Ces réglages
                     définissent le rendu d'un niveau à l'écran : les changer ne
                     demande pas de reprendre les cases.
                 </p>
-                <p class="text-muted" style="font-size: 13px;">
+                <p class="text-muted">
                     <strong>Ce sont les valeurs par défaut.</strong> Chaque plan
                     peut les remplacer (une grotte plus sombre, un plan de
                     glace plus bleu) depuis
                     <a href="plans.php">Plans</a> ou depuis Tiled, avec les
-                    propriétés <code style="display:inline">shade_step</code>,
-                    <code style="display:inline">shade_max</code> et
-                    <code style="display:inline">shade_color</code>.
+                    propriétés <code>shade_step</code>,
+                    <code>shade_max</code> et
+                    <code>shade_color</code>.
                 </p>
 
                 <label class="form-label mb-0">Opacité d'un niveau (entre 0 et 1)</label>
@@ -79,7 +72,7 @@ ob_start();
                     <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                 </div>
 
-                <div class="text-muted mt-2" style="font-size: 13px;">
+                <div class="text-muted mt-2">
                     Rendu des niveaux :
                     <?php foreach (range(1, min(5, $shade->maxLevel())) as $level): ?>
                         <span style="display:inline-block;width:34px;height:18px;vertical-align:middle;
@@ -91,9 +84,9 @@ ob_start();
                         <span style="font-size:12px;"><?= $level ?> — <?= round($shade->opacityFor($level) * 100, 1) ?> %</span>
                     <?php endforeach; ?>
                 </div>
-                <div class="text-muted mt-1" style="font-size: 13px;">
+                <div class="text-muted mt-1">
                     Le défaut (<?= CellShadeService::DEFAULT_STEP ?>) reproduit exactement l'ancien
-                    décor <code style="display:inline">ombre</code> ; le modifier éclaircit ou
+                    décor <code>ombre</code> ; le modifier éclaircit ou
                     fonce toute la carte d'un coup.
                 </div>
             </form>

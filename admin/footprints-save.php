@@ -13,7 +13,6 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
-use App\Service\CsrfProtectionService;
 use App\Service\Map\EntityCellService;
 use App\Service\Map\EntityTypeFootprintService;
 use App\Service\Map\SceneryObjectService;
@@ -32,9 +31,9 @@ $service = new EntityTypeFootprintService();
 $back = (string) ($_POST['back'] ?? '');
 $back = preg_match('/^\?(type=[^&]*|kind=[a-z]+)$/', $back) ? $back : '';
 
-try {
-    (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
+requireAdminPost('/admin/footprints.php' . $back);
 
+try {
     if (($_POST['action'] ?? '') === 'remove') {
         $ids = array_map('intval', (array) ($_POST['ids'] ?? []));
         $removed = (new SceneryObjectService())->removeEntities($ids);

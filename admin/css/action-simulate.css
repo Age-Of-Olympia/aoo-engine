@@ -1,4 +1,4 @@
-/* Simulation form component, shared by action-simulate.php and the workbench. */
+/* Simulation form component of the workbench "Simuler" tab. */
 
 .sim-form { max-width: none; }
 
@@ -175,4 +175,10 @@
 .sim-detail > .sim-dice { flex: 1 1 260px; min-width: 0; }
 .sim-dice-list { margin: 0; padding-left: 20px; font-size: 13px; }
 .sim-dice-list li { margin-bottom: 3px; }
-.sim-dice-spec { display: inline-block; min-width: 44px; color: var(--bronze); font-weight: 600; }
+.sim-dice-spec { display: inline-block; min-width: 44px; color: var(--accent); font-weight: 600; }
+
+/* Small screens: one fighter panel under the other. */
+@media (max-width: 760px) {
+    .sim-sides { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; gap: 12px; }
+    .sim-panel { grid-row: auto; grid-template-rows: none; }
+}

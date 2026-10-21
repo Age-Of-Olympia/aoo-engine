@@ -48,6 +48,12 @@ $rank = static fn (MonitoringResult $r): int => (int) array_search($r->status, M
 
 $sections = [];
 $tally = array_fill_keys(array_map(static fn ($s) => $s->value, MonitoringStatus::cases()), 0);
+/** A character named « Nom (#id) » by a check opens its sheet. */
+function mon_link_characters(string $escaped): string
+{
+    return (string) preg_replace('/\(#(-?\d+)\)/', '(<a href="/admin/player-edit.php?id=$1">#$1</a>)', $escaped);
+}
+
 foreach ((new MonitoringService())->results() as $result) {
     $sections[$result->section][] = $result;
     $tally[$result->status->value]++;
@@ -107,7 +113,7 @@ foreach ($sections as $section => $results) {
         foreach ($result->lines as $line) {
             $lines .= '<tr' . ($line['status'] ? ' class="is-' . $line['status']->value . '"' : '') . '>'
                 . ($line['label'] === '' ? '<td colspan="2">' : '<th scope="row">' . e($line['label']) . '</th><td>')
-                . e($line['text']) . '</td></tr>';
+                . mon_link_characters(e($line['text'])) . '</td></tr>';
         }
         $rows .= '<li class="mon-check is-' . $status . '" id="' . $id . '"><details' . ($status === 'error' ? ' open' : '') . '>'
             . '<summary class="mon-check-head">' . $head . '</summary>'
@@ -138,4 +144,5 @@ $content = '<div class="mon">'
     . '<div class="mon-grid">' . implode('', array_map(
         static fn (array $c): string => '<div class="mon-col">' . $c['html'] . '</div>', $columns)) . '</div></div>';
 
-echo admin_layout('Monitoring', $content, ['styles' => ['/admin/css/monitoring.css']]);
+// The verdict banner is this page's head.
+echo admin_layout('Monitoring', $content, ['styles' => ['/admin/css/monitoring.css'], 'header' => false]);

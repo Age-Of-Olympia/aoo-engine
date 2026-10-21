@@ -1,24 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Function building_render_edit\(\) has parameter \$b with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: admin/buildings.php
-
-		-
-			message: '#^Function building_render_edit\(\) has parameter \$dialogNames with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: admin/buildings.php
-
-		-
-			message: '#^Function building_render_edit\(\) has parameter \$factions with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: admin/buildings.php
-
-		-
 			message: '#^Function deploy\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -83,24 +65,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: admin/items.php
-
-		-
-			message: '#^Function admin_layout\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: admin/layout.php
-
-		-
-			message: '#^Function admin_layout\(\) has parameter \$content with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: admin/layout.php
-
-		-
-			message: '#^Function admin_layout\(\) has parameter \$title with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: admin/layout.php
 
 		-
 			message: '#^Method App\\Service\\ViewService\:\:getAllPlans\(\) invoked with 1 parameter, 0 required\.$#'
@@ -173,18 +137,6 @@ parameters:
 			identifier: identical.alwaysFalse
 			count: 1
 			path: admin/tutorial-step-editor.php
-
-		-
-			message: '#^Function PrintRecipe\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: admin/view_recipes.php
-
-		-
-			message: '#^Function PrintRecipe\(\) has parameter \$recipe with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: admin/view_recipes.php
 
 		-
 			message: '#^Function getConnection not found\.$#'

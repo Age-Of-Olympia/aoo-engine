@@ -26,6 +26,7 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
+use App\Service\AdminAuthorizationService;
 use App\Service\AdminSettingsService;
 use App\Service\CsrfProtectionService;
 use App\Service\DateFormatService;
@@ -44,10 +45,10 @@ $repairSettings = new \App\Service\AdminSettingsService();
 $seasonService = new SeasonService();
 $tiledExtension = new TiledExtensionService();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['world_settings'])) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-
+/* Each form posts its own marker field; the first one present picks the
+ * setting saved. */
+$settingForms = [
+    'world_settings' => function () use ($seasonService): string {
         $season = (int) ($_POST['game_season'] ?? 0);
         if ($season < 1) {
             throw new \RuntimeException('Saison invalide (numéro attendu, 1 ou plus).');
@@ -74,97 +75,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['world_settings'])) {
         $seasonService->setCurrent($season);
         PlanService::forget();
 
-        setFlash('success', 'Réglages du monde enregistrés.');
-    } catch (\Throwable $e) {
-        setFlash('danger', 'Échec : ' . $e->getMessage());
-    }
-    redirectTo('/admin/index.php');
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['repair_full_share'])) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        return 'Réglages du monde enregistrés.';
+    },
+    'repair_full_share' => function () use ($repairSettings): string {
         foreach (array_keys(\App\Service\RepairService::SETTINGS) as $name) {
             $percent = max(0, (int) ($_POST[$name] ?? 0));
             $repairSettings->set($name, (string) ($name === 'recycle_share' ? min(100, $percent) : $percent));
         }
-        setFlash('success', 'Atelier : réglages enregistrés.');
-    } catch (\Throwable $e) {
-        setFlash('danger', 'Échec : ' . $e->getMessage());
-    }
-    redirectTo('/admin/index.php');
-}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reassign_settings'])) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        return 'Atelier : réglages enregistrés.';
+    },
+    'reassign_settings' => function (): string {
         $free = isset($_POST[PlayerCaracsService::SETTING_FREE_REASSIGN]);
         (new AdminSettingsService())->set(PlayerCaracsService::SETTING_FREE_REASSIGN, $free ? '1' : '0');
-        setFlash('success', $free ? 'Réassignation gratuite activée.' : 'Réassignation au prix normal.');
-    } catch (\Throwable $e) {
-        setFlash('danger', 'Échec : ' . $e->getMessage());
-    }
-    redirectTo('/admin/index.php');
-}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['harvest_default_pv'])) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        return $free ? 'Réassignation gratuite activée.' : 'Réassignation au prix normal.';
+    },
+    'harvest_default_pv' => function () use ($harvestDefaults): string {
         $harvestDefaults->setPv((int) $_POST['harvest_default_pv']);
-        setFlash('success', 'Points de vie par défaut d\'une ressource : ' . $harvestDefaults->pv() . '.');
-    } catch (\Throwable $e) {
-        setFlash('danger', 'Échec : ' . $e->getMessage());
-    }
-}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['decay_rate_default'])) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        return 'Points de vie par défaut d\'une ressource : ' . $harvestDefaults->pv() . '.';
+    },
+    'decay_rate_default' => function () use ($decayDefaults): string {
         $decayDefaults->setRate((int) $_POST['decay_rate_default']);
         $decayDefaults->setGraceTurns((int) ($_POST['decay_grace_turns'] ?? 0));
-        setFlash('success', 'Décrépitude : ' . $decayDefaults->rate() . ' PV par tour après '
-            . $decayDefaults->graceTurns() . ' tour(s) sans usage.');
-    } catch (\Throwable $e) {
-        setFlash('danger', 'Échec : ' . $e->getMessage());
-    }
-    redirectTo('/admin/index.php');
-}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tiled_min_extension'])) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        return 'Décrépitude : ' . $decayDefaults->rate() . ' PV par tour après '
+            . $decayDefaults->graceTurns() . ' tour(s) sans usage.';
+    },
+    'tiled_min_extension' => function () use ($tiledExtension): string {
         $tiledExtension->setMinimum((string) $_POST['tiled_min_extension']);
-        setFlash('success', 'Extension Tiled : version minimale portée à ' . $tiledExtension->minimum() . '.');
-    } catch (\Throwable $e) {
-        setFlash('danger', 'Échec : ' . $e->getMessage());
-    }
-    redirectTo('/admin/index.php');
-}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import_bundle_max_mb'])) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        return 'Extension Tiled : version minimale portée à ' . $tiledExtension->minimum() . '.';
+    },
+    'import_bundle_max_mb' => function (): string {
         $mb = (int) $_POST['import_bundle_max_mb'];
         if ($mb < 1) {
             throw new \RuntimeException('Taille invalide (1 Mo ou plus).');
         }
         (new AdminSettingsService())->set('import_bundle_max_mb', (string) $mb);
-        setFlash('success', 'Import de bundle : taille maximale portée à ' . $mb . ' Mo.');
-    } catch (\Throwable $e) {
-        setFlash('danger', 'Échec : ' . $e->getMessage());
-    }
-    redirectTo('/admin/index.php');
-}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['date_format'])) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        return 'Import de bundle : taille maximale portée à ' . $mb . ' Mo.';
+    },
+    'date_format' => function () use ($dateFormat): string {
         $dateFormat->set((string) $_POST['date_format']);
-        setFlash('success', 'Format des dates enregistré.');
-    } catch (\Throwable $e) {
-        setFlash('danger', $e->getMessage());
+
+        return 'Format des dates enregistré.';
+    },
+];
+/* The settings hold for the whole game: an admin sees the alerts, only a
+ * super-admin changes what is below them. */
+$canChangeSettings = AdminAuthorizationService::isSuperAdmin();
+
+foreach ($settingForms as $marker => $save) {
+    if ($canChangeSettings && isset($_POST[$marker])) {
+        handleAdminPost('/admin/index.php', $save);
     }
-    redirectTo('/admin/index.php'); /* PRG : pas de re-soumission au refresh */
 }
 
 $today = date('Y-m-d');
@@ -173,10 +139,6 @@ ob_start();
 ?>
 
 <div class="container">
-    <h2 class="section-title">Tableau de bord</h2>
-    <p class="text-content">Choisissez une entrée dans le menu latéral, ou réglez les options générales ci-dessous.</p>
-
-    <?= renderFlashMessage() ?>
 
     <?php
     /* Ce qui casse en silence si personne ne regarde : un plan qui porte des
@@ -192,6 +154,16 @@ ob_start();
         </div>
     <?php endif; ?>
 
+    <?php foreach ([plans()->worldPlan() => 'Le plan principal', plans()->deathPlan() => 'Le plan des morts'] as $slug => $role): ?>
+        <?php if (!plans()->exists($slug)): ?>
+            <div class="alert alert-danger mt-3">
+                <strong><?= e($role) ?> « <?= e($slug) ?> » n'a pas de configuration.</strong>
+                Choisissez un plan existant dans les réglages du monde, ou créez ce plan.
+            </div>
+        <?php endif; ?>
+    <?php endforeach; ?>
+
+    <?php if ($canChangeSettings): ?>
     <div class="row mt-3">
     <div class="col-md-6">
     <div class="card">
@@ -263,9 +235,9 @@ ob_start();
                     </select>
                     <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                 </div>
-                <div class="text-muted mt-2" style="font-size: 13px;">
+                <div class="form-text">
                     Aujourd'hui s'affiche : « <?= e($dateFormat->format($today)) ?> ».
-                    Utilisé par les affichages qui passent par <code style="display:inline">DateFormatService</code>
+                    Utilisé par les affichages qui passent par <code>DateFormatService</code>
                     (chroniques de l'accueil…) ; la saisie admin reste en JJ/MM/AAAA.
                 </div>
             </form>
@@ -401,9 +373,14 @@ ob_start();
     </div>
     </div>
     </div>
+    <?php endif; ?>
 
 </div>
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Tableau de bord', $content);
+echo admin_layout('Tableau de bord', $content, [
+    'intro' => $canChangeSettings
+        ? 'Ce qui demande votre attention, puis les réglages qui valent pour tout le jeu.'
+        : 'Ce qui demande votre attention. Les réglages du jeu sont réservés aux super-admins.',
+]);

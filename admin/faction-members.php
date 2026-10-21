@@ -82,7 +82,7 @@ foreach ($service->getAllFactions() as $faction) {
  * (faction supprimée / jamais cataloguée) est proposé quand même, marqué
  * ⚠ par la sentinelle générique de renderSelectOptions.
  */
-function member_faction_select(string $field, string $current, array $factionNames): string
+function member_faction_select(string $field, string $current, array $factionNames, string $form): string
 {
     $options = [];
     foreach ($factionNames as $code => $name) {
@@ -94,15 +94,15 @@ function member_faction_select(string $field, string $current, array $factionNam
         $options,
         $current !== '' ? $current : null,
         '— aucune —',
-        'class="form-control form-control-sm member-faction" data-role-target="' . e($field) . 'Role"'
+        'class="form-control form-control-sm member-faction" data-role-target="' . e($field) . 'Role" form="' . $form . '"'
     );
 }
 
 /** <select> de rôle pour la faction courante (index positionnel). */
-function member_role_select(string $field, string $factionCode, int $current, array $rolesByFaction): string
+function member_role_select(string $field, string $factionCode, int $current, array $rolesByFaction, string $form): string
 {
     if ($factionCode === '') {
-        return formSelect($field, ['0' => '—'], '0', null, 'class="form-control form-control-sm"');
+        return formSelect($field, ['0' => '—'], '0', null, 'class="form-control form-control-sm" form="' . $form . '"');
     }
 
     $roles = $rolesByFaction[$factionCode] ?? [];
@@ -116,7 +116,7 @@ function member_role_select(string $field, string $factionCode, int $current, ar
         $options[(string) $current] = '⚠ ' . $current . ' (hors limites)';
     }
 
-    return formSelect($field, $options, (string) $current, null, 'class="form-control form-control-sm"');
+    return formSelect($field, $options, (string) $current, null, 'class="form-control form-control-sm" form="' . $form . '"');
 }
 
 /* ---- Rendu --------------------------------------------------------------- */
@@ -128,20 +128,23 @@ foreach ($factionNames as $code => $name) {
 $rows = '';
 foreach ($characters as $row) {
     $id = (int) $row['id'];
-    $rows .= '<tr><form method="post" action="/admin/faction-members-save.php">'
-        . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
-        . '<input type="hidden" name="playerId" value="' . $id . '">'
-        . '<input type="hidden" name="back" value="' . e('faction=' . urlencode($factionFilter) . '&q=' . urlencode($query)) . '">'
+    // A form cannot wrap a table row: it sits in the last cell, the selects join it by id.
+    $form = 'member-' . $id;
+    $rows .= '<tr>'
         . '<td><code>' . $id . '</code></td>'
         . '<td><a href="/infos.php?targetId=' . $id . '">' . e($row['name']) . '</a>'
         . ($row['player_type'] !== 'real' ? ' <span class="badge badge-secondary">PNJ</span>' : '') . '</td>'
         . '<td>' . e($row['race']) . '</td>'
-        . '<td>' . member_faction_select('faction', (string) $row['faction'], $factionNames) . '</td>'
-        . '<td>' . member_role_select('factionRole', (string) $row['faction'], (int) $row['factionRole'], $rolesByFaction) . '</td>'
-        . '<td>' . member_faction_select('secretFaction', (string) $row['secretFaction'], $factionNames) . '</td>'
-        . '<td>' . member_role_select('secretFactionRole', (string) $row['secretFaction'], (int) $row['secretFactionRole'], $rolesByFaction) . '</td>'
-        . '<td><button type="submit" class="btn btn-sm btn-primary">Enregistrer</button></td>'
-        . '</form></tr>';
+        . '<td>' . member_faction_select('faction', (string) $row['faction'], $factionNames, $form) . '</td>'
+        . '<td>' . member_role_select('factionRole', (string) $row['faction'], (int) $row['factionRole'], $rolesByFaction, $form) . '</td>'
+        . '<td>' . member_faction_select('secretFaction', (string) $row['secretFaction'], $factionNames, $form) . '</td>'
+        . '<td>' . member_role_select('secretFactionRole', (string) $row['secretFaction'], (int) $row['secretFactionRole'], $rolesByFaction, $form) . '</td>'
+        . '<td><form method="post" action="/admin/faction-members-save.php" id="' . $form . '">'
+        . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+        . '<input type="hidden" name="playerId" value="' . $id . '">'
+        . '<input type="hidden" name="back" value="' . e('faction=' . urlencode($factionFilter) . '&q=' . urlencode($query)) . '">'
+        . '<button type="submit" class="btn btn-sm btn-primary">Enregistrer</button></form></td>'
+        . '</tr>';
 }
 
 $rolesJson = json_encode($rolesByFaction, JSON_UNESCAPED_UNICODE) ?: '{}';
@@ -170,11 +173,7 @@ $script = <<<HTML
 </script>
 HTML;
 
-$content = '<div class="d-flex justify-content-between align-items-center mb-3">'
-    . '<h1 class="mb-0">Membres des factions</h1>'
-    . '<a class="btn btn-sm btn-outline-secondary" href="/admin/factions.php">← Factions</a></div>'
-
-    . '<form method="get" class="form-inline mb-3" style="gap: 8px;">'
+$content = '<form method="get" class="form-inline mb-3">'
     . formSelect('faction', $filterChoices, $factionFilter !== '' ? $factionFilter : null, 'Choisir un filtre…')
     . '<input type="text" class="form-control" name="q" value="' . e($query) . '"'
     . ' placeholder="Nom ou matricule…">'
@@ -201,4 +200,4 @@ if ($factionFilter === '' && $query === '') {
         . ' limites à corriger.</small>';
 }
 
-echo admin_layout('Factions — membres', renderFlashMessage() . $content . $script);
+echo admin_layout('Membres des factions', $content . $script);

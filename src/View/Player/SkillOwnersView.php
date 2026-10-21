@@ -16,19 +16,7 @@ final class SkillOwnersView
     /**
      * @param array<int, array{id:int, name:string, race:string}> $players
      */
-    public function render(string $title, string $backHref, string $backLabel, array $players): string
-    {
-        return '<div class="d-flex justify-content-between align-items-center mb-3">'
-            . '<h1 class="mb-0">' . $this->esc($title) . '</h1>'
-            . '<a class="btn btn-sm btn-outline-secondary" href="' . $this->esc($backHref) . '">← ' . $this->esc($backLabel) . '</a>'
-            . '</div>'
-            . $this->roster($players);
-    }
-
-    /**
-     * @param array<int, array{id:int, name:string, race:string}> $players
-     */
-    private function roster(array $players): string
+    public function render(array $players): string
     {
         if ($players === []) {
             return '<p class="text-muted">Aucun joueur ne possède cette compétence.</p>';

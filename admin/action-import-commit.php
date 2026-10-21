@@ -2,26 +2,18 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
-use App\Service\AdminAuthorizationService;
 use App\Service\AdminMenuAccessService;
-use App\Service\CsrfProtectionService;
 use App\Service\ImportExport\BundleEnvelope;
 use App\Service\ImportExport\ImporterRegistry;
 use App\Service\ImportExport\PlanImporter;
 
 (new AdminMenuAccessService())->enforce('actions.import');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /admin/action-import.php');
-    exit;
-}
+requireAdminPost('/admin/action-import.php');
 
-$csrf = new CsrfProtectionService();
 $json = $_SESSION['action_import_bundle'] ?? null;
 
 try {
-    $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-
     if (!is_string($json) || $json === '') {
         throw new InvalidArgumentException('Aucun bundle à appliquer. Importez d\'abord un fichier.');
     }
@@ -56,15 +48,12 @@ try {
         $_SESSION['plan_import_jobs'] = $importer->stage($parsed->objects, $preview);
         unset($_SESSION['action_import_bundle']);
 
-        $csrf->regenerateToken();
-        header('Location: /admin/action-import-run.php');
-        exit;
+        redirectTo('/admin/action-import-run.php');
     }
 
     $report = $importer->import($parsed->objects);
 
     unset($_SESSION['action_import_bundle'], $_SESSION['action_import_filename']);
-    $csrf->regenerateToken();
 
     if ($report->hasRejections()) {
         $first = $report->rejected()[0];
@@ -85,5 +74,4 @@ try {
     setFlash('danger', 'Échec de l\'import : ' . $exception->getMessage());
 }
 
-header('Location: /admin/action-import.php');
-exit;
+redirectTo('/admin/action-import.php');

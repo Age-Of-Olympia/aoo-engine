@@ -9,19 +9,10 @@ use App\Service\PlayerSkillsService;
 
 (new AdminMenuAccessService())->enforce('players.sheet');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /admin/players.php');
-    exit;
-}
-
-$csrf = new CsrfProtectionService();
 $service = new PlayerSkillsService();
 $playerId = (int) ($_POST['player_id'] ?? 0);
 
-if (!$csrf->validateToken($_POST['csrf_token'] ?? null)) {
-    setFlash('warning', 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
-    redirectTo('/admin/player-skills.php?id=' . $playerId);
-}
+requireAdminPost('/admin/player-skills.php?id=' . $playerId);
 
 try {
     if ($service->getPlayerSummary($playerId) === null) {
@@ -47,12 +38,11 @@ try {
             $changes['passives_removed']
         ));
     }
-    $csrf->regenerateToken();
+    (new CsrfProtectionService())->regenerateToken();
 } catch (\InvalidArgumentException $exception) {
     setFlash('warning', $exception->getMessage());
 } catch (\Throwable $exception) {
     setFlash('danger', "Erreur lors de l'enregistrement des compétences.");
 }
 
-header('Location: /admin/player-skills.php?id=' . $playerId);
-exit;
+redirectTo('/admin/player-skills.php?id=' . $playerId);

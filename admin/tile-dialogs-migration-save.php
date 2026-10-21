@@ -11,17 +11,10 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
-use App\Service\CsrfProtectionService;
 use App\Service\TileDialogMigrationService;
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST['apply'])) {
-    redirectTo('/admin/tile-dialogs-migration.php');
-}
-
-try {
-    (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
-} catch (\Throwable $e) {
-    setFlash('danger', 'Jeton invalide, rien n\'a été fait.');
+requireAdminPost('/admin/tile-dialogs-migration.php');
+if (empty($_POST['apply'])) {
     redirectTo('/admin/tile-dialogs-migration.php');
 }
 

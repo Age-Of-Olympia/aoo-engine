@@ -13,21 +13,11 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\AdminMenuAccessService;
-use App\Service\CsrfProtectionService;
 use Classes\Db;
 
 (new AdminMenuAccessService())->enforce('items.edit');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirectTo('/admin/items.php');
-}
-
-try {
-    (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
-} catch (\Throwable $e) {
-    setFlash('warning', 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
-    redirectTo('/admin/items.php');
-}
+requireAdminPost('/admin/items.php');
 
 $action = $_GET['action'] ?? '';
 if (!in_array($action, ['update', 'create', 'delete', 'upload-image'], true)) {

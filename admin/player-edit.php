@@ -99,12 +99,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['player_save'])) {
         // Vitalités : le restant voulu devient un écart en players_bonus
         // (restant = carac + n). Écart nul → ligne supprimée, comme le
         // ménage de fin de tour.
+        $healFull = !empty($_POST['heal_full']);
         foreach (PLAYER_EDIT_VITALS as $trait => $label) {
-            if (!isset($_POST['vitals'][$trait]) || $_POST['vitals'][$trait] === '') {
+            if (!$healFull && (!isset($_POST['vitals'][$trait]) || $_POST['vitals'][$trait] === '')) {
                 continue;
             }
-            $wanted = (int) $_POST['vitals'][$trait];
             $max = (int) ($player->caracs->$trait ?? 0);
+            $wanted = $healFull ? $max : (int) $_POST['vitals'][$trait];
             $n = $wanted - $max;
 
             if ($n === 0) {
@@ -369,19 +370,18 @@ $identity = formCard('Identité', ''
     . ' · ' . e((string) $player->data->race)
     . ' · ' . e((string) ($player->data->player_type ?? 'real')) . '</p>');
 
-$position = formCard('Position', '<div class="d-flex flex-wrap" style="gap:.5rem">'
+$position = formCard('Position', '<div class="d-flex flex-wrap gap-2">'
     . formField('X', formInput('x', (string) $coords->x, 'type="number"'))
     . formField('Y', formInput('y', (string) $coords->y, 'type="number"'))
     . formField('Z', formInput('z', (string) $coords->z, 'type="number"'))
-    . formField('Plan', formInput('plan', (string) $coords->plan))
+    . formField('Plan', formSelect('plan', plan_choices(), (string) $coords->plan))
     . '</div>'
     . '<p class="text-muted mb-0">Téléportation directe : aucune règle de déplacement appliquée.</p>');
 
 $vitals = formCard('Vitalités restantes', ''
     . '<table class="table table-sm mb-2"><thead><tr><th></th><th>Max (caracs)</th><th>Restant</th></tr></thead>'
     . '<tbody>' . $vitalsRows . '</tbody></table>'
-    . '<p class="text-muted mb-0">La valeur restante est enregistrée dans <code>players_bonus</code> (blessure = PV restants réduits) ;'
-    . ' une valeur restante égale au max supprime l\'écart.</p>');
+    . formCheckbox('heal_full', false, 'Tout remettre au maximum'));
 
 $turn = formCard('Tour', ''
     . '<p class="mb-2">' . e($turnInfo) . '</p>'
@@ -415,7 +415,7 @@ foreach (CARACS as $k => $short) {
         . '<td>' . $owned . '</td>'
         . '<td>' . ($paid > 0 ? $paid . ' PI' : '—') . '</td>'
         . '<td>' . $next . ' PI</td>'
-        . '<td><form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex" style="gap:.25rem">'
+        . '<td><form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex gap-1">'
         . $csrf->renderTokenField()
         . '<input type="hidden" name="id" value="' . (int) $id . '">'
         . '<input type="hidden" name="carac" value="' . e($k) . '">'
@@ -424,7 +424,7 @@ foreach (CARACS as $k => $short) {
         . ($owned > 0 && $canRemoveRank
             ? '<button type="submit" name="upgrade_remove" value="1" class="btn btn-sm btn-outline-danger"'
                 . ' title="Retirer le rang le plus cher, coût remboursé en PI"'
-                . ' onclick="return confirm(\'Retirer un rang de ' . e($short) . ' ?\');">−1</button>'
+                . ' data-confirm="' . e('Retirer un rang de ' . $short . ' ?') . '">−1</button>'
             : '')
         . '</form></td>'
         . '</tr>';
@@ -449,7 +449,7 @@ if ($isPnj) {
     $coherence = '<p class="mb-2"><span class="badge badge-success">XP et PI en phase</span>'
         . ' <small class="text-muted">min(XP, plafond de saison) = PI disponibles + coût des rangs achetés</small></p>';
 } else {
-    $coherence = '<div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between mb-2" style="gap:.5rem">'
+    $coherence = '<div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between mb-2 gap-2">'
         . '<span>Écart de <strong>' . sprintf('%+d', $offset) . ' PI</strong> — attendu :'
         . ' PI disponibles = min(XP, ' . SEASON_XP . ') − coût des rangs achetés.</span>'
         . '<form method="post" action="player-edit.php?id=' . (int) $id . '">'
@@ -467,14 +467,14 @@ $progression = formCard('Progression (XP / PI)', ''
     . ' · PI disponibles <strong>' . (int) $player->data->pi . '</strong>'
     . ' · Points bonus <strong>' . (int) $player->data->bonus_points . '</strong></p>'
     . $coherence
-    . '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex flex-wrap align-items-end" style="gap:.5rem">'
+    . '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex flex-wrap align-items-end gap-2">'
     . $csrf->renderTokenField()
     . '<input type="hidden" name="id" value="' . (int) $id . '">'
     . formField('Écart d\'XP (±)', formInput('xp_delta', '', 'type="number" placeholder="+500" required style="max-width:8rem"'))
     . '<button type="submit" name="xp_add" value="1" class="btn btn-outline-primary mb-3">Appliquer</button>'
     . '</form>'
     . ($isPnj
-        ? '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex flex-wrap align-items-end" style="gap:.5rem">'
+        ? '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex flex-wrap align-items-end gap-2">'
             . $csrf->renderTokenField()
             . '<input type="hidden" name="id" value="' . (int) $id . '">'
             . formField('Écart de PI (±)', formInput('pi_delta', '', 'type="number" placeholder="+200" required style="max-width:8rem"'),
@@ -503,8 +503,8 @@ while ($stockRow = $stock->fetch_object()) {
         . '<td><code>' . e($stockRow->name) . '</code>'
         . ($stockRow->equiped !== '' ? ' <span class="badge badge-info">' . e($stockRow->equiped) . '</span>' : '') . '</td>'
         . '<td>×' . (int) $stockRow->n . '</td>'
-        . '<td><form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex" style="gap:.25rem"'
-        . ' onsubmit="return confirm(\'Retirer « ' . e($stockRow->name) . ' » de l\\\'inventaire ?\');">'
+        . '<td><form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex gap-1"'
+        . ' data-confirm="' . e('Retirer « ' . $stockRow->name . ' » de l\'inventaire ?') . '">'
         . $csrf->renderTokenField()
         . '<input type="hidden" name="id" value="' . (int) $id . '">'
         . '<input type="hidden" name="item_id" value="' . (int) $stockRow->item_id . '">'
@@ -525,7 +525,7 @@ $inventory = formCard('Inventaire (piles)', ''
         ? '<p class="text-muted">Inventaire vide.</p>'
         : '<table class="table table-sm mb-2"><thead><tr><th>Objet</th><th>Qté</th><th></th></tr></thead>'
             . '<tbody>' . $inventoryRows . '</tbody></table>')
-    . '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex flex-wrap align-items-end" style="gap:.5rem">'
+    . '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex flex-wrap align-items-end gap-2">'
     . $csrf->renderTokenField()
     . '<input type="hidden" name="id" value="' . (int) $id . '">'
     . formField('Objet (nom technique)', formInput('item_name', '', 'list="pe-items" placeholder="pioche" required'))
@@ -553,7 +553,7 @@ foreach ($player->getEffects() as $carried) {
     // Value and duration are edited in place: the row's form carries
     // both buttons (Modifier overwrites, Lever removes).
     $updateForm = '<form method="post" action="player-edit.php?id=' . (int) $id . '"'
-        . ' id="effect-row-' . e($carried->getName()) . '" class="d-flex align-items-center" style="gap:.25rem">'
+        . ' id="effect-row-' . e($carried->getName()) . '" class="d-flex align-items-center gap-1">'
         . $csrf->renderTokenField()
         . '<input type="hidden" name="id" value="' . (int) $id . '">'
         . '<input type="hidden" name="effect_name" value="' . e($carried->getName()) . '">';
@@ -565,7 +565,7 @@ foreach ($player->getEffects() as $carried) {
         . '<td><input type="number" class="form-control form-control-sm" name="effect_value" min="1"'
         . ' value="' . (int) $carried->getValue() . '" style="width:5rem"'
         . ' form="effect-row-' . e($carried->getName()) . '"></td>'
-        . '<td><div class="d-flex align-items-center" style="gap:.5rem">'
+        . '<td><div class="d-flex align-items-center gap-2">'
         . '<input type="number" class="form-control form-control-sm" name="duration" min="0"'
         . ' value="' . ($infinite ? '' : $endTime) . '" style="width:5rem"'
         . ' form="effect-row-' . e($carried->getName()) . '">'
@@ -575,7 +575,7 @@ foreach ($player->getEffects() as $carried) {
         . '<td>' . $updateForm
         . '<button type="submit" name="effect_update" value="1" class="btn btn-sm btn-outline-primary">Modifier</button>'
         . '<button type="submit" name="effect_remove" value="1" class="btn btn-sm btn-outline-danger"'
-        . ' onclick="return confirm(\'Retirer « ' . e($effectService->getLabel($carried->getName())) . ' » ?\');">Retirer</button>'
+        . ' data-confirm="' . e('Retirer « ' . $effectService->getLabel($carried->getName()) . ' » ?') . '">Retirer</button>'
         . '</form></td>'
         . '</tr>';
 }
@@ -593,7 +593,7 @@ $effects = formCard('Effets', ''
         ? '<p class="text-muted">Aucun effet en cours.</p>'
         : '<table class="table table-sm mb-2"><thead><tr><th>Effet</th><th>Valeur</th><th>Durée restante (tours)</th><th></th></tr></thead>'
             . '<tbody>' . $effectRows . '</tbody></table>')
-    . '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex flex-wrap align-items-end" style="gap:.5rem">'
+    . '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex flex-wrap align-items-end gap-2">'
     . $csrf->renderTokenField()
     . '<input type="hidden" name="id" value="' . (int) $id . '">'
     . formField('Effet', formSelect('effect_name', $effectOptions, null, '— choisir —', 'required'))
@@ -614,13 +614,13 @@ $body = '<form method="post" action="player-edit.php?id=' . (int) $id . '">'
     . $csrfField
     . '<input type="hidden" name="id" value="' . (int) $id . '">'
     . $identity . $position . $vitals . $turn
-    . '<button type="submit" name="player_save" value="1" class="btn btn-primary">Enregistrer</button> '
-    . '<a class="btn btn-outline-secondary" href="players.php">Retour à la liste</a>'
+    . '<button type="submit" name="player_save" value="1" class="btn btn-primary">Enregistrer</button>'
     . '</form>'
     . $progression
     . $inventory
     . $effects;
 
-echo admin_layout('Édition — ' . $player->data->name, renderFlashMessage() . $body, [
+echo admin_layout(e($player->data->name) . ' <span class="text-muted">(#' . (int) $id . ')</span>', $body, [
+    'back' => ['/admin/players.php', 'Personnages'],
     'scripts' => ['/admin/js/scroll-keeper.js'],
 ]);

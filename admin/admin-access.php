@@ -164,7 +164,7 @@ if ($lookupDisambig !== null) {
             . '</a></li>';
     }
     $managerPanel .= '<div class="alert alert-warning">Plusieurs personnages portent ce nom — '
-        . 'choisissez par matricule :<ul style="margin:.4rem 0 0">' . $items . '</ul></div>';
+        . 'choisissez par matricule :<ul class="mb-0 mt-1">' . $items . '</ul></div>';
 }
 if ($lookupPlayer !== null) {
     $toggles = '';
@@ -176,14 +176,14 @@ if ($lookupPlayer !== null) {
     // at least visible (legacy/unknown), even if not toggleable here.
     $unknown = array_diff($lookupOptions, ADMIN_ACCESS_VALID_OPTIONS);
     $unknownNote = $unknown
-        ? '<p class="aa-muted" style="margin-top:10px">Autres options présentes (non gérées ici) : '
+        ? '<p class="aa-muted mt-2">Autres options présentes (non gérées ici) : '
             . e(implode(', ', $unknown)) . '</p>'
         : '';
 
     $managerPanel .= '<div class="card">'
-        . '<div class="card-header"><h3 class="card-title">' . e($lookupPlayer['name'])
-            . ' <span class="aa-muted">(#' . (int) $lookupPlayer['id'] . ')</span></h3></div>'
-        . '<div class="card-body" style="padding:14px">'
+        . '<div class="card-header">' . e($lookupPlayer['name'])
+            . ' <span class="aa-muted">(#' . (int) $lookupPlayer['id'] . ')</span></div>'
+        . '<div class="card-body">'
         . '<p class="aa-muted">Cliquez pour ajouter / retirer une option. Les options en gras confèrent des droits admin.</p>'
         . '<div class="aa-opts">' . $toggles . '</div>'
         . $unknownNote
@@ -194,15 +194,10 @@ $dashboardCount    = count($dashboard);
 $lookupTermEscaped = e($lookupTerm);
 
 $content = <<<HTML
-<h2 class="section-title">🛡️ Accès admin &amp; gestion des options</h2>
-<p class="text-content">Vue des accès admin / super-admin (directs ou via PNJ contrôlé) et gestion des options par personnage.</p>
-
-<div class="card" style="margin-bottom:22px">
-    <div class="card-header">
-        <h3 class="card-title">Accès administrateur ({$dashboardCount})</h3>
-    </div>
+<div class="card mb-4">
+    <div class="card-header">Accès administrateur ({$dashboardCount})</div>
     <div class="card-body">
-        <p class="aa-muted" style="padding:10px 14px 0">Ces comptes conserveraient leur accès lors d'un verrouillage d'environnement de test.</p>
+        <p class="aa-muted">Ces comptes conserveraient leur accès lors d'un verrouillage d'environnement de test.</p>
         <div class="table-responsive">
             <table class="table table-striped table-hover">
                 <thead>
@@ -224,12 +219,13 @@ $content = <<<HTML
 
 <h2 class="section-title" id="manager">Gestion des options d'un personnage</h2>
 <form method="get" action="/admin/admin-access.php" class="aa-lookup">
-    <input type="text" name="q" value="{$lookupTermEscaped}" placeholder="Matricule ou nom exact…">
+    <input type="text" class="form-control" name="q" value="{$lookupTermEscaped}" placeholder="Matricule ou nom exact…">
     <button type="submit" class="btn btn-primary">Rechercher</button>
 </form>
 {$managerPanel}
 HTML;
 
-echo admin_layout('Accès & options', renderFlashMessage() . $content, [
+echo admin_layout('Accès &amp; options', $content, [
+    'intro' => 'Vue des accès admin / super-admin (directs ou via PNJ contrôlé) et gestion des options par personnage.',
     'styles' => ['/admin/css/admin-access.css'],
 ]);

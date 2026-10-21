@@ -1,28 +1,29 @@
 /* Action workbench layout: actions list + Configurer/Simuler tabs.
    Loaded after admin.css and action-simulate.css (it overrides .wb-sim bits). */
 
-.admin-main { padding: 0 !important; }
+/* The workbench fills the screen under the page head: the main column
+   becomes a full-height flex column and the two panels scroll inside it. */
+.admin-main:has(> .wb) { display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; padding-bottom: 16px; }
+.admin-main:has(> .wb) > .page-head { margin-bottom: 12px; }
 .wb {
+    flex: 1 1 auto;
+    min-height: 0;
     display: grid;
     grid-template-columns: 250px minmax(0, 1fr);
     gap: 12px;
-    height: 100vh;
-    padding: 12px 14px 12px 20px;
-    box-sizing: border-box;
-    background: #ecf0f1;
 }
 .wb-col { display: flex; flex-direction: column; min-height: 0; background: var(--paper); border: 1px solid var(--rule); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
-.wb-col-head { padding: 10px 12px; background: var(--parchment); border-bottom: 1px solid var(--rule); font-weight: 600; font-family: var(--font-display); color: var(--ink); display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: 0 0 auto; }
+.wb-col-head { padding: 10px 12px; background: var(--surface-alt); border-bottom: 1px solid var(--rule); font-weight: 600; color: var(--ink); display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: 0 0 auto; }
 .wb-col-head small { font-weight: 400; color: var(--mute); }
 .wb-col-body { padding: 10px 12px; overflow: auto; flex: 1 1 auto; }
 
 .wb-search { width: 100%; padding: 7px 10px; border: 1px solid var(--rule); border-radius: 6px; font-size: 13px; box-sizing: border-box; }
 .wb-list { margin-top: 8px; display: flex; flex-direction: column; gap: 2px; }
 .wb-item { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 6px; text-decoration: none; color: var(--ink); border: 1px solid transparent; }
-.wb-item:hover { background: var(--bronze-wash); }
-.wb-item--active { background: var(--bronze-wash); border-color: rgba(138, 90, 43, .35); }
+.wb-item:hover { background: var(--accent-wash); }
+.wb-item--active { background: var(--accent-wash); border-color: rgba(138, 90, 43, .35); }
 .wb-item-icon { flex: 0 0 auto; width: 20px; text-align: center; font-size: 16px; color: var(--mute); }
-.wb-item--active .wb-item-icon { color: var(--bronze); }
+.wb-item--active .wb-item-icon { color: var(--accent); }
 .wb-item-text { display: flex; flex-direction: column; min-width: 0; }
 .wb-item-name { font-weight: 600; font-size: 13px; }
 .wb-item-meta { font-size: 11px; color: var(--mute); }
@@ -56,7 +57,7 @@
 /* Pack condition/outcome blocks into responsive columns so they sit side by side. */
 .wb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; align-items: start; }
 .wb-block { border: 1px solid var(--rule); border-radius: 8px; margin-bottom: 0; }
-.wb-block-head { position: relative; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; background: var(--bronze-wash); padding: 7px 28px 7px 11px; border-bottom: 1px solid var(--rule); font-weight: 600; font-size: 13px; border-radius: 8px 8px 0 0; color: var(--ink); }
+.wb-block-head { position: relative; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; background: var(--accent-wash); padding: 7px 28px 7px 11px; border-bottom: 1px solid var(--rule); font-weight: 600; font-size: 13px; border-radius: 8px 8px 0 0; color: var(--ink); }
 .wb-outcome-target { font-size: 11px; font-weight: 400; padding: 1px 4px; border: 1px solid var(--rule); border-radius: 10px; background: #eef6fb; color: #2e6da4; }
 .wb-block-body { padding: 9px 11px; display: grid; grid-template-columns: 1fr; gap: 4px; }
 
@@ -68,7 +69,7 @@
 .wb .form-group > select.form-control { height: 28px; }
 .wb select[multiple].form-control { height: 58px; flex: 1 1 auto; }
 .wb .form-check { margin: 0 0 4px; }
-.wb-inst-name { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12px; color: var(--bronze); margin-top: 2px; }
+.wb-inst-name { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12px; color: var(--accent); margin-top: 2px; }
 .wb-raw { grid-column: 1 / -1; font-size: 12px; color: var(--mute); }
 .wb-raw code { word-break: break-all; }
 
@@ -81,8 +82,8 @@
 .wb-raw-row .wb-raw-v { flex: 1 1 auto; min-width: 0; padding: 3px 7px; font-size: 13px; height: 28px; }
 .wb-raw-del { flex: 0 0 auto; border: 1px solid var(--rule); background: #f7f9fb; color: var(--danger); border-radius: 6px; width: 26px; height: 28px; cursor: pointer; line-height: 1; }
 .wb-raw-del:hover { background: #fdecea; }
-.wb-raw-add { border: 1px dashed var(--rule); background: #fff; color: var(--bronze); border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
-.wb-raw-add:hover { background: var(--bronze-wash); }
+.wb-raw-add { border: 1px dashed var(--rule); background: #fff; color: var(--accent); border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
+.wb-raw-add:hover { background: var(--accent-wash); }
 /* Configurer labels can be long — let them wrap instead of spilling out of the box. */
 .wb-config .form-group { align-items: flex-start; }
 .wb-config .form-group > label { white-space: normal; flex: 0 1 48%; line-height: 1.25; }
@@ -96,13 +97,10 @@
 .wb-delete-form { display: none; }
 .wb-muted, .wb-empty { color: var(--mute); font-size: 13px; }
 
-/* Tabs in the main column */
-.wb-tabs { padding: 0 6px; }
-.wb-tabbtns { display: flex; gap: 2px; }
-.wb-tab-btn { border: 0; background: transparent; padding: 11px 16px; font-size: 14px; font-weight: 600; color: var(--mute); cursor: pointer; border-bottom: 2px solid transparent; }
-.wb-tab-btn:hover { color: var(--ink); }
-.wb-tab-btn.active { color: var(--bronze); border-bottom-color: var(--bronze); }
-.wb-tab[hidden] { display: none; }
+/* Configurer / Simuler: the shared .nav-tabs, sitting on the head's bottom rule. */
+.wb-col-head--tabs { padding: 6px 12px 0; align-items: flex-end; }
+.wb-col-head--tabs .nav-tabs { margin: 0 0 -1px; border-bottom: 0; font-family: var(--font-body); }
+.wb-col-head--tabs .wb-editor-title { align-self: center; padding-bottom: 6px; }
 
 /* Simulate tab — full width, readable. The form's own layout lives in
    action-simulate.css; the workbench only strips the card chrome here. */
@@ -117,7 +115,7 @@
 .wb-sim-result .sim-distribution { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 0; background: none; border: 0; font-size: 13px; }
 .wb-sim-result .sim-distribution > span:not(.sim-dist-runs) { display: inline-flex; flex-direction: column; gap: 1px; padding: 6px 13px; background: #fff; border: 1px solid #dbe7f2; border-radius: 8px; color: var(--mute); font-size: 12px; line-height: 1.25; }
 .wb-sim-result .sim-distribution > span strong { font-size: 18px; font-weight: 700; color: var(--ink); }
-.wb-sim-result .sim-distribution .sim-dist-runs { align-self: stretch; display: inline-flex; align-items: center; background: var(--bronze); color: #fff; border-radius: 8px; padding: 0 12px; font-weight: 700; }
+.wb-sim-result .sim-distribution .sim-dist-runs { align-self: stretch; display: inline-flex; align-items: center; background: var(--accent); color: #fff; border-radius: 8px; padding: 0 12px; font-weight: 700; }
 .wb-sim-result .card.mt-3 { margin: 12px 0 0 !important; max-width: none !important; }
 
 /* Result modal (auto-opened after a run; re-running re-opens it). */
@@ -160,8 +158,7 @@
 .wb-add { display: flex; gap: 6px; margin: 8px 0 4px; }
 .wb-add select.form-control { flex: 1; font-size: 13px; height: 30px; }
 
-/* Add controls live in the section-title row; give them explicit visible
-   styling (the admin theme renders btn-default invisibly). */
+/* Add controls live in the section-title row. */
 .wb-section-title--row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .wb-section-title--row .wb-add { margin: 0; text-transform: none; letter-spacing: 0; }
 .wb-add button { background: #eef2f6; border: 1px solid var(--rule); color: var(--ink); border-radius: 6px; padding: 3px 10px; cursor: pointer; font: inherit; font-size: 12px; white-space: nowrap; }
@@ -209,15 +206,6 @@
     border-radius: 2px;
 }
 
-/* Type-defaults editor tabs (Instructions / Expérience / Journal) */
-.wb-tabs { display: flex; gap: 2px; border-bottom: 2px solid var(--rule); margin: -2px 0 14px; flex-wrap: wrap; }
-.wb-tab {
-    appearance: none; border: 0; background: none; font: inherit;
-    padding: 9px 16px; margin-bottom: -2px; color: var(--mute); font-weight: 600; font-size: 13px;
-    border-bottom: 2px solid transparent; border-radius: 6px 6px 0 0;
-}
-.wb-tab--active { color: var(--ink); border-bottom-color: var(--bronze-bright); }
-.wb-tabpanel[hidden] { display: none; }
 /* The first section title inside a panel is redundant with the tab label. */
 .wb-tabpanel > .wb-form > .wb-section-title:first-child,
 .wb-tabpanel > .wb-form:first-child > .wb-section-title:first-child { margin-top: 0; }
@@ -240,12 +228,25 @@
 .wb-color-swatch input { position: absolute; opacity: 0; width: 0; height: 0; }
 .wb-color-dot { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, .25); box-sizing: border-box; }
 .wb-color-dot--default { background: #fff; background-image: linear-gradient(45deg, transparent 44%, var(--danger) 44%, var(--danger) 56%, transparent 56%); }
-.wb-color-swatch input:checked + .wb-color-dot { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--bronze-bright); }
+.wb-color-swatch input:checked + .wb-color-dot { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent-hover); }
 
 /* Action title in the editor head — readable on the Configurer tab (was a faint
    <small>, leaving you unsure which action you were editing). */
 .wb-col-head .wb-editor-title { font-weight: 700; font-size: 15px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* "Qui a ce passif ?" owner count by the chip in the passive editor. */
-.wb-owners { display: inline-block; margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--bronze); }
+.wb-owners { display: inline-block; margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--accent); }
 .wb-owners--none { color: var(--mute); font-weight: 400; }
+
+/* Small screens: list above editor, the page scrolls instead of the panels. */
+@media (max-width: 900px) {
+    .admin-main:has(> .wb) { display: block; height: auto; }
+    .wb, .wb--folded { grid-template-columns: minmax(0, 1fr); }
+    .wb-col--list .wb-col-body { max-height: 40vh; }
+    .wb-fold-toggle { display: none; }
+    .wb-col-body { overflow: visible; }
+    .wb-col--list .wb-col-body { overflow: auto; }
+    .wb-config .form-group { flex-wrap: wrap; }
+    .wb-config .form-group > label { flex: 1 1 100%; }
+    .wb-modal-panel { width: calc(100% - 16px); margin: 8px auto; max-height: calc(100vh - 16px); }
+}

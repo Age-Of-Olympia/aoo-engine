@@ -1,5 +1,6 @@
 <?php
 require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
+require_once __DIR__ . '/helpers.php';
 use App\Service\AdminMenuAccessService;
 use App\Service\AdminAuthorizationService;
 
@@ -10,293 +11,291 @@ use App\Service\AdminAuthorizationService;
 (new AdminMenuAccessService())->enforcePage(basename($_SERVER['PHP_SELF']));
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20261010';
+const ADMIN_ASSET_VERSION = '20261021';
 
-/** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
-const MAIN_CSS_VERSION = '20261016';
 
 /**
- * Render the admin chrome (sidebar + main column) around a page's $content.
+ * The admin menu, the one place pages are named and placed. Sections follow
+ * who uses them: animation first, then the map maker, the designer, the
+ * newcomers' welcome, the operator.
  *
- * Page-specific assets are injected via $assets so each page keeps its styles
- * and scripts in their own files rather than inline:
- *   $assets['styles']  list<string> of CSS paths (versioned automatically)
- *   $assets['scripts'] list<string> of JS paths (versioned automatically)
+ * A link is [label, href] or [label, href, also]: `also` lists the sub-pages
+ * reached from it (an edit form, an import step), which light the link up
+ * and borrow its breadcrumb. A group is [title, links]; a section is
+ * ['section' => title, 'items' => groups or links]. A link with a query
+ * (Formes per kind) is active only when the request carries that query.
  *
- * @param array{styles?: list<string>, scripts?: list<string>} $assets
+ * @return list<mixed>
  */
-function admin_layout($title, $content, array $assets = []) {
-    // Get current page for active menu highlighting
-    $currentPage = basename($_SERVER['PHP_SELF']);
+function admin_nav_tree(): array
+{
+    return [
+        ['Tableau de bord', '/admin/index.php'],
 
-    // Per-menu access: hide links the viewer cannot open. The viewer is already
-    // an admin (enforced at include time); the only question is super-admin.
-    $access = new AdminMenuAccessService();
-    $viewerIsSuperAdmin = AdminAuthorizationService::isSuperAdmin();
+        ['section' => 'Animation', 'items' => [
+            ['Personnages', '/admin/players.php', ['player-skills.php', 'player-edit.php']],
+            ['PNJ', '/admin/pnjs.php'],
+            ['Évènements spéciaux', '/admin/special-events.php'],
+            ['Membres des factions', '/admin/faction-members.php'],
+            ['Bâtiments posés', '/admin/buildings.php'],
+            ['Éléments posés', '/admin/map-elements.php'],
+            ['Captures', '/admin/screenshots.php'],
+        ]],
 
-    // A nav link, or '' when the viewer cannot access that page.
-    $navLink = function($page, $label, $href) use ($currentPage, $access, $viewerIsSuperAdmin) {
-        if (!$access->canAccessPage($page, $viewerIsSuperAdmin)) {
+        ['section' => 'Le monde', 'items' => [
+            ['Plans', '/admin/plans.php'],
+            ['Génération des cartes', [
+                ['Carte monde', '/admin/world_map.php'],
+                ['Cartes locales', '/admin/local_maps.php'],
+                ['Couleurs', '/admin/tile-colors.php'],
+                ['Ombres', '/admin/tile-shade.php'],
+            ]],
+            ['Tuiles & images', '/admin/tile-assets.php'],
+            ['Transitions de terrain', '/admin/terrain-transitions.php'],
+            ['Formes', '/admin/footprints.php'],
+            ['Images des bâtiments', '/admin/structure-images.php'],
+        ]],
+
+        ['section' => 'Catalogues', 'items' => [
+            ['Peuples', [
+                ['Races', '/admin/races.php'],
+                ['Avatars & portraits', '/admin/avatars-portraits.php'],
+                ['Factions', '/admin/factions.php'],
+            ]],
+            ['Plateau', [
+                ['Bâtiments', '/admin/structure-types.php'],
+                ['Décors', '/admin/scenery-types.php'],
+                ['Ressources', '/admin/harvest-types.php'],
+                ['Rendements par plan', '/admin/harvest-seed.php'],
+                ['Plantes', '/admin/plant-types.php'],
+                ['Routes', '/admin/route-types.php'],
+                ['Éléments', '/admin/element-types.php'],
+                ['Composeur d\'éléments', '/admin/element-composer.php'],
+            ]],
+            ['Objets', [
+                ['Objets', '/admin/items.php', ['item-owners.php']],
+                ['Recettes', '/admin/recipes.php'],
+            ]],
+            ['Compétences', [
+                ['Actions', '/admin/action-workbench.php', ['actions.php']],
+                ['Passifs', '/admin/passive-workbench.php'],
+                ['Défauts par type', '/admin/action-type-defaults.php'],
+                ['Statistiques', '/admin/skill-stats.php', ['skill-owners.php']],
+            ]],
+            ['Effets', '/admin/effects.php'],
+            ['Dialogues', '/admin/dialogs.php'],
+        ]],
+
+        ['section' => 'Accueil des joueurs', 'items' => [
+            ['Page d\'accueil', '/admin/landing.php', ['landing-seed.php']],
+            ['Missive d\'accueil', '/admin/welcome-missive.php'],
+            ['Tutoriel', [
+                ['Catalogue', '/admin/tutorial-catalog.php'],
+                ['Étapes', '/admin/tutorial.php', ['tutorial-step-editor.php']],
+                ['PNJ', '/admin/tutorial-npcs.php'],
+                ['Options', '/admin/tutorial-settings.php'],
+            ]],
+        ]],
+
+        ['section' => 'Administration', 'items' => [
+            ['Contrôle d\'accès', '/admin/access-control.php'],
+            ['Admins & options', '/admin/admin-access.php'],
+            ['Import / export', '/admin/action-import.php', ['action-import-preview.php', 'action-import-run.php']],
+            ['Crons', '/admin/crons.php'],
+            ['Monitoring', '/admin/monitoring.php'],
+            ['Wiki', '/admin/wiki.php'],
+            ['Maintenance', [
+                ['Renommage de saison', '/admin/plan-season-rename.php'],
+                ['Catégories à corriger', '/admin/entity-kinds.php'],
+                ['Dialogues de case', '/admin/tile-dialogs-migration.php'],
+            ]],
+        ]],
+    ];
+}
+
+/**
+ * Is this nav link the page being served (or one of its sub-pages)?
+ *
+ * @param list<string> $also
+ */
+function admin_nav_is_active(string $href, array $also, string $currentPage): bool
+{
+    if (in_array($currentPage, $also, true)) {
+        return true;
+    }
+    if (basename((string) parse_url($href, PHP_URL_PATH)) !== $currentPage) {
+        return false;
+    }
+    parse_str((string) parse_url($href, PHP_URL_QUERY), $wanted);
+
+    foreach ($wanted as $key => $value) {
+        if (($_GET[$key] ?? null) !== $value) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Render the nav and find the breadcrumb of the current page, in one walk.
+ *
+ * @param list<mixed> $tree admin_nav_tree()
+ * @return array{0: string, 1: list<string>} [nav HTML, crumbs]
+ */
+function admin_nav_render(array $tree, string $currentPage, callable $canOpen): array
+{
+    $crumbs = [];
+
+    $link = function (array $item, array $trail) use ($currentPage, $canOpen, &$crumbs): string {
+        [$label, $href] = $item;
+        $page = basename((string) parse_url($href, PHP_URL_PATH));
+        if (!$canOpen($page)) {
             return '';
         }
-        /* A link carrying a query (Formes per kind) is active only when the
-         * request carries the same one, or every section would light up. */
-        $query = (string) parse_url($href, PHP_URL_QUERY);
-        $isActive = ($currentPage === $page && ($query === '' || $query === ($_SERVER['QUERY_STRING'] ?? ''))) ||
-                    ($page === 'tutorial.php' && $currentPage === 'tutorial-step-editor.php') ||
-                    ($page === 'players.php' && $currentPage === 'player-skills.php');
-        $activeClass = $isActive ? ' active' : '';
-        return "<a href=\"$href\" class=\"nav-link$activeClass\">$label</a>";
+        $active = admin_nav_is_active($href, $item[2] ?? [], $currentPage);
+        if ($active && !$crumbs) {
+            $crumbs = $trail;
+        }
+
+        return '<a href="' . e($href) . '" class="nav-link' . ($active ? ' active" aria-current="page' : '') . '">'
+            . e($label) . '</a>';
     };
 
-    // A collapsible group; returns '' when the viewer can access none of its
-    // items, so empty groups never render.
-    $navGroup = function(string $title, array $items, array $activePages) use ($navLink, $currentPage) {
-        $links = [];
-        foreach ($items as [$page, $label, $href]) {
-            $link = $navLink($page, $label, $href);
-            if ($link !== '') {
-                $links[] = $link;
+    // A folding box; '' when nothing inside survived the access filter.
+    $fold = function (string $kind, string $title, array $children): string {
+        $children = array_filter($children);
+        if (!$children) {
+            return '';
+        }
+        $inner = implode('', $children);
+        $open = str_contains($inner, ' active"') ? " nav-{$kind}-open" : '';
+
+        return "<div class=\"nav-{$kind}{$open}\">"
+            . "<button type=\"button\" class=\"nav-{$kind}-title\">" . e($title) . '</button>'
+            . "<div class=\"nav-{$kind}-children\">{$inner}</div></div>";
+    };
+
+    $items = function (array $list, array $trail) use (&$items, $link, $fold): array {
+        $html = [];
+        foreach ($list as $item) {
+            if (isset($item['section'])) {
+                $html[] = $fold('section', $item['section'], $items($item['items'], [$item['section']]));
+            } elseif (is_array($item[1])) {
+                $html[] = $fold('group', $item[0], $items($item[1], [...$trail, $item[0]]));
+            } else {
+                $html[] = $link($item, $trail);
             }
         }
-        if (!$links) {
-            return '';
-        }
-        $openClass = in_array($currentPage, $activePages, true) || str_contains(implode('', $links), 'nav-link active')
-            ? ' nav-group-open'
-            : '';
-        return "<div class=\"nav-group{$openClass}\">\n                "
-            . "    <span class=\"nav-group-title\">{$title}</span>\n                "
-            . "    <div class=\"nav-group-children\">\n                    "
-            . implode("\n                    ", $links) . "\n                "
-            . "    </div>\n                "
-            . "</div>";
+
+        return $html;
     };
 
-    /* A section: a caption over a run of groups, foldable like a group.
-     *
-     * It opens on its own when the current page is inside it — the rendered
-     * children carry `active` or `nav-group-open`, so no page list to keep in
-     * step with the groups. Emitted only when something survived the access
-     * filter, so a plain admin never sees a caption over nothing. */
-    $navSection = function(string $title, array $parts): string {
-        $parts = array_filter($parts);
+    return [implode("\n", array_filter($items($tree, []))), $crumbs];
+}
 
-        if (!$parts) {
-            return '';
+/**
+ * Render the admin chrome around a page's $content.
+ *
+ * The layout draws the page head — breadcrumb from the menu, the title, an
+ * optional intro and actions — then the pending flash message, then the
+ * content. Options:
+ *   styles / scripts  list<string> page assets (versioned automatically)
+ *   actions           HTML of the buttons on the right of the title
+ *   intro             HTML of one explanatory paragraph under the title
+ *   back              [href, label] link above the title, for a sub-page
+ *   header            false for a page drawing its own head (monitoring)
+ *
+ * @param array{styles?: list<string>, scripts?: list<string>, actions?: string, intro?: string,
+ *              back?: array{0: string, 1: string}, header?: bool} $options
+ */
+function admin_layout(string $title, string $content, array $options = []): string
+{
+    $currentPage = basename($_SERVER['PHP_SELF']);
+
+    // Per-menu access: hide links the viewer cannot open.
+    $access = new AdminMenuAccessService();
+    $viewerIsSuperAdmin = AdminAuthorizationService::isSuperAdmin();
+    [$navigation, $crumbs] = admin_nav_render(
+        admin_nav_tree(),
+        $currentPage,
+        fn(string $page): bool => $access->canAccessPage($page, $viewerIsSuperAdmin)
+    );
+
+    $head = '';
+    if (($options['header'] ?? true) !== false) {
+        $trail = array_map(fn(string $crumb): string => '<span>' . e($crumb) . '</span>', $crumbs);
+        if (isset($options['back'])) {
+            // The list a sub-page returns to is often the menu's last crumb: link it instead of repeating it.
+            $backLink = '<span><a href="' . e($options['back'][0]) . '">' . e($options['back'][1]) . '</a></span>';
+            if (end($crumbs) === $options['back'][1]) {
+                array_pop($trail);
+            }
+            $trail[] = $backLink;
         }
+        $head = '<header class="page-head"><div class="page-head-text">'
+            . ($trail ? '<nav class="page-crumbs" aria-label="Fil d\'Ariane">' . implode('', $trail) . '</nav>' : '')
+            . '<h1>' . $title . '</h1>'
+            . (isset($options['intro']) ? '<div class="page-intro">' . $options['intro'] . '</div>' : '')
+            . '</div>'
+            . (isset($options['actions']) ? '<div class="page-actions">' . $options['actions'] . '</div>' : '')
+            . '</header>';
+    }
 
-        $children = implode("\n                    ", $parts);
-        $openClass = str_contains($children, 'nav-link active') || str_contains($children, 'nav-group-open')
-            ? ' nav-section-open'
-            : '';
-
-        return "<div class=\"nav-section{$openClass}\">\n                "
-            . "    <span class=\"nav-section-title\">{$title}</span>\n                "
-            . "    <div class=\"nav-section-children\">\n                    "
-            . $children . "\n                "
-            . "    </div>\n                "
-            . "</div>";
-    };
-
-    $tutorialPages = ['tutorial-catalog.php', 'tutorial.php', 'tutorial-step-editor.php',
-                      'tutorial-npcs.php', 'tutorial-settings.php'];
-    $mapPages = ['world_map.php', 'plans.php', 'plan-season-rename.php', 'local_maps.php',
-                 'terrain-transitions.php', 'tile-assets.php', 'element-composer.php', 'tile-colors.php',
-                 'tile-shade.php', 'screenshots.php'];
-    $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php', 'passive-workbench.php',
-                    'action-import.php', 'action-import-preview.php'];
-    $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
-                    'pnjs.php', 'avatars-portraits.php', 'welcome-missive.php'];
-    $racePages = ['races.php'];
-    $itemPages = ['items.php', 'recipes.php'];
-    $factionPages = ['factions.php', 'faction-members.php'];
-    $dialogPages = ['dialogs.php'];
-    $sceneryPages = ['scenery-types.php'];
-
-    /* The two pages one lands on stay at the top, outside any section.
-     * Then four sections, in the order one thinks about the game: what is
-     * placed on the board, the catalogues that govern it, the people, the
-     * tools. `array_filter` still drops what the viewer cannot open. */
-    $navParts = array_filter([
-        $navLink('index.php', 'Tableau de bord', '/admin/index.php'),
-        $navLink('landing.php', 'Page d\'accueil', '/admin/landing.php'),
-
-        $navSection('Le monde', [
-            $navGroup('Cartes', [
-                ['world_map.php', 'Carte monde', '/admin/world_map.php'],
-                ['plans.php', 'Plans', '/admin/plans.php'],
-                ['plan-season-rename.php', 'Renommage de saison', '/admin/plan-season-rename.php'],
-                ['local_maps.php', 'Cartes locales', '/admin/local_maps.php'],
-                ['terrain-transitions.php', 'Transitions de terrain', '/admin/terrain-transitions.php'],
-                ['tile-assets.php', 'Tuiles &amp; images', '/admin/tile-assets.php'],
-                ['element-composer.php', 'Composeur d\'éléments', '/admin/element-composer.php'],
-                ['tile-colors.php', 'Couleurs de carte', '/admin/tile-colors.php'],
-                ['tile-shade.php', 'Ombres des cases', '/admin/tile-shade.php'],
-                ['screenshots.php', 'Captures', '/admin/screenshots.php'],
-            ], $mapPages),
-            $navGroup('Bâtiments', [
-                // Pas de « Liste » ici : partout ailleurs elle désigne le
-                // catalogue — le catalogue des bâtiments, ce sont les Types ;
-                // cette page-ci gère les instances posées dans le monde.
-                ['buildings.php', 'Posés', '/admin/buildings.php'],
-                ['structure-types.php', 'Types', '/admin/structure-types.php'],
-                ['structure-images.php', 'Images', '/admin/structure-images.php'],
-                ['footprints.php', 'Formes', '/admin/footprints.php?kind=building'],
-                ['entity-kinds.php', 'Catégories à corriger', '/admin/entity-kinds.php'],
-                // Reprise ponctuelle des déclencheurs de case hérités : à
-                // retirer du menu une fois la carte reprise partout.
-                ['tile-dialogs-migration.php', 'Dialogues de case', '/admin/tile-dialogs-migration.php'],
-            ], ['buildings.php', 'structure-types.php', 'structure-images.php', 'entity-kinds.php', 'tile-dialogs-migration.php']),
-            $navGroup('Décors', [
-                ['scenery-types.php', 'Types', '/admin/scenery-types.php'],
-                ['footprints.php', 'Formes', '/admin/footprints.php?kind=scenery'],
-            ], $sceneryPages),
-            $navGroup('Ressources', [
-                ['harvest-types.php', 'Types récoltables', '/admin/harvest-types.php'],
-                ['harvest-seed.php', 'Rendements', '/admin/harvest-seed.php'],
-                ['footprints.php', 'Formes', '/admin/footprints.php?kind=resource'],
-            ], ['harvest-types.php', 'harvest-seed.php']),
-            /* Les plantes ont leur propre entrée : elles se récoltent comme les
-               ressources, et c'est tout ce qu'elles partagent — une seule liste
-               obligerait l'animateur à trier ce qui bloque de ce qui se
-               traverse. */
-            $navGroup('Plantes', [
-                ['plant-types.php', 'Types', '/admin/plant-types.php'],
-                ['footprints.php', 'Formes', '/admin/footprints.php?kind=plant'],
-            ], ['plant-types.php']),
-            $navGroup('Routes', [
-                ['route-types.php', 'Types', '/admin/route-types.php'],
-            ], ['route-types.php']),
-            /* Un élément posé applique l'effet de son nom quand on marche
-             * dessus : le catalogue et ce qui en est posé, même sujet. */
-            $navGroup('Éléments', [
-                ['element-types.php', 'Types', '/admin/element-types.php'],
-                ['effects.php', 'Effets', '/admin/effects.php'],
-                ['map-elements.php', 'Posés', '/admin/map-elements.php'],
-            ], ['element-types.php', 'effects.php', 'map-elements.php']),
-            $navGroup('Dialogues', [
-                ['dialogs.php', 'Liste', '/admin/dialogs.php'],
-            ], $dialogPages),
-        ]),
-
-        $navSection('Les règles', [
-            $navGroup('Races', [
-                ['races.php', 'Liste', '/admin/races.php'],
-                ['footprints.php', 'Formes', '/admin/footprints.php?kind=character'],
-            ], $racePages),
-            $navGroup('Objets', [
-                ['items.php', 'Liste', '/admin/items.php'],
-                ['recipes.php', 'Recettes', '/admin/recipes.php'],
-            ], $itemPages),
-            $navGroup('Actions', [
-                ['actions.php', 'Liste', '/admin/actions.php'],
-                ['action-workbench.php', 'Configuration actions', '/admin/action-workbench.php'],
-                ['passive-workbench.php', 'Configuration passifs', '/admin/passive-workbench.php'],
-                ['action-type-defaults.php', 'Défauts par type', '/admin/action-type-defaults.php'],
-                ['action-import.php', 'Importer', '/admin/action-import.php'],
-            ], $actionPages),
-            $navGroup('Factions', [
-                ['factions.php', 'Liste', '/admin/factions.php'],
-                ['faction-members.php', 'Membres', '/admin/faction-members.php'],
-            ], $factionPages),
-        ]),
-
-        $navSection('Les joueurs', [
-            $navGroup('Personnages', [
-                ['players.php', 'Compétences', '/admin/players.php'],
-                ['pnjs.php', 'PNJ', '/admin/pnjs.php'],
-                ['welcome-missive.php', 'Missive d\'accueil', '/admin/welcome-missive.php'],
-                ['avatars-portraits.php', 'Avatars &amp; portraits', '/admin/avatars-portraits.php'],
-                ['skill-stats.php', 'Statistiques', '/admin/skill-stats.php'],
-                ['admin-access.php', 'Accès &amp; options', '/admin/admin-access.php'],
-            ], $playerPages),
-            // Superadmin-only: self-hides for plain admins (defaults to superadmin).
-            $navLink('access-control.php', 'Contrôle d\'accès', '/admin/access-control.php'),
-        ]),
-
-        $navSection('Outils', [
-            $navGroup('Tutoriel', [
-                ['tutorial-catalog.php', 'Catalogue', '/admin/tutorial-catalog.php'],
-                ['tutorial.php', 'Étapes', '/admin/tutorial.php'],
-                ['tutorial-npcs.php', 'PNJ', '/admin/tutorial-npcs.php'],
-                ['tutorial-settings.php', 'Options', '/admin/tutorial-settings.php'],
-            ], $tutorialPages),
-            $navLink('wiki.php', 'Wiki', '/admin/wiki.php'),
-            $navLink('crons.php', 'Crons', '/admin/crons.php'),
-            $navLink('special-events.php', 'Évènements spéciaux', '/admin/special-events.php'),
-            $navLink('monitoring.php', 'Monitoring', '/admin/monitoring.php'),
-        ]),
-    ]);
-
-    $navigation = implode("\n                ", $navParts);
+    // A page that did not print its flash gets it under the head.
+    $flash = renderFlashMessage();
 
     $version = ADMIN_ASSET_VERSION;
-    $mainCssVersion = MAIN_CSS_VERSION;
+    $tabTitle = strip_tags($title);
 
     $styleLinks = '';
-    foreach ($assets['styles'] ?? [] as $href) {
+    foreach ($options['styles'] ?? [] as $href) {
         $styleLinks .= "\n    <link rel=\"stylesheet\" href=\"{$href}?v={$version}\">";
     }
     $scriptTags = '';
-    foreach ($assets['scripts'] ?? [] as $src) {
+    foreach ($options['scripts'] ?? [] as $src) {
         $scriptTags .= "\n    <script src=\"{$src}?v={$version}\"></script>";
     }
 
     return <<<HTML
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>$title - Admin of Olympia</title>
-    <link href="/css/main.min.css?v=$mainCssVersion" rel="stylesheet">
+    <title>$tabTitle · Administration</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="/admin/css/admin.css?v=$version">
-    <link rel="stylesheet" href="/admin/css/admin-design-system.css?v=$version">
-    <link rel="stylesheet" href="/css/modal.css?v=$mainCssVersion">$styleLinks
+    <link rel="stylesheet" href="/css/modal.css?v=$version">$styleLinks
     <script src="/js/modal.js?v=$version"></script>
+    <script src="/admin/js/admin.js?v=$version" defer></script>
     <script src="/admin/js/admin-list.js?v=$version" defer></script>
 </head>
 <body>
     <div class="admin-layout">
-        <div class="admin-sidebar">
-            <h1 class="main-title">Admin of Olympia</h1>
-            <nav class="vertical-nav">
+        <header class="admin-topbar">
+            <button type="button" class="admin-nav-toggle" aria-controls="admin-sidebar" aria-expanded="false"
+                    aria-label="Menu">&#9776;</button>
+            <span class="admin-topbar-title">$tabTitle</span>
+        </header>
+        <aside class="admin-sidebar" id="admin-sidebar">
+            <a class="admin-brand" href="/admin/index.php">Administration</a>
+            <nav class="vertical-nav" aria-label="Administration">
                 $navigation
             </nav>
             <div class="sidebar-footer">
-                <a href="/index.php" class="nav-link nav-back-to-game">&larr; Retour au jeu</a>
+                <a href="/index.php">&larr; Retour au jeu</a>
             </div>
-        </div>
+        </aside>
+        <div class="admin-scrim"></div>
 
-        <div class="admin-main">
+        <main class="admin-main">
+            $head
+            $flash
             $content
-        </div>
+        </main>
     </div>$scriptTags
-    <script>(function(){
-        var nav = document.querySelector('.vertical-nav');
-        if (!nav) return;
-        var KEY = 'adminNavOpen';
-        var open = {};
-        try { open = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
-        /* Sections and groups fold the same way; only their class differs. */
-        [['.nav-group', 'nav-group-title', 'nav-group-open'],
-         ['.nav-section', 'nav-section-title', 'nav-section-open']].forEach(function (kind) {
-            nav.querySelectorAll(kind[0]).forEach(function (box) {
-                var title = box.querySelector('.' + kind[1]);
-                if (!title) return;
-                var name = kind[0] + ' ' + title.textContent.trim();
-                if (open[name]) box.classList.add(kind[2]);
-                title.addEventListener('click', function () {
-                    open[name] = box.classList.toggle(kind[2]);
-                    try { localStorage.setItem(KEY, JSON.stringify(open)); } catch (e) {}
-                });
-            });
-        });
-    })();</script>
 </body>
 </html>
 HTML;
 }
-?>

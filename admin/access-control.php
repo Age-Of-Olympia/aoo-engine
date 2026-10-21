@@ -41,7 +41,7 @@ foreach ($rowsByGroup as $group => $rows) {
             : '<span class="text-muted">défaut</span>';
 
         $select = formSelect('level[' . $menu['right'] . ']', $levelOptions, $menu['level'], null,
-            'class="form-control form-control-sm" style="max-width:12rem"');
+            'class="form-control form-control-sm w-auto"');
 
         $trs .= '<tr>'
             . '<td>' . e($menu['label']) . '</td>'
@@ -51,18 +51,14 @@ foreach ($rowsByGroup as $group => $rows) {
     }
 
     $sections .= '<div class="card mb-3">'
-        . '<div class="card-header"><h3 class="card-title">' . e($group) . '</h3></div>'
-        . '<div class="card-body" style="padding:0">'
+        . '<div class="card-header">' . e($group) . '</div>'
+        . '<div class="card-body p-0">'
         . '<table class="table table-striped mb-0"><thead><tr>'
         . '<th>Menu</th><th>Niveau requis</th><th></th></tr></thead><tbody>'
         . $trs . '</tbody></table></div></div>';
 }
 
 $content = <<<HTML
-<h2 class="section-title">🔐 Contrôle d'accès des menus</h2>
-<p class="text-content">Définissez le niveau requis pour chaque menu du dashboard. Les menus laissés en
-« Super-admin » ne sont visibles et accessibles qu'aux super-admins. Cette page reste toujours réservée
-aux super-admins.</p>
 <form method="post" action="/admin/access-control-save.php">
     <input type="hidden" name="csrf_token" value="{$csrfToken}">
     {$sections}
@@ -70,4 +66,8 @@ aux super-admins.</p>
 </form>
 HTML;
 
-echo admin_layout("Contrôle d'accès", renderFlashMessage() . $content);
+echo admin_layout("Contrôle d'accès", $content, [
+    'intro' => 'Définissez le niveau requis pour chaque menu du dashboard. Les menus laissés en'
+        . ' « Super-admin » ne sont visibles et accessibles qu\'aux super-admins. Cette page reste toujours'
+        . ' réservée aux super-admins.',
+]);

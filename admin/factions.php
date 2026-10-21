@@ -27,6 +27,8 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Entity\Faction;
+use App\Service\Action\RpgAwesomeIcons;
+use App\View\Action\IconFieldView;
 use App\Entity\FactionRole;
 use App\Service\CsrfProtectionService;
 use App\Service\FactionService;
@@ -90,18 +92,7 @@ function faction_render_list(array $factions): string
             . '</tr>';
     }
 
-    return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">Factions</h1>'
-        . '<div class="d-flex gap-2">'
-        . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=faction"'
-        . ' title="Télécharger toutes les factions en bundle JSON, ré-importable ici ou sur un autre environnement">'
-        . '<i class="fas fa-download"></i> Exporter (JSON)</a>'
-        . '<a class="btn btn-outline-secondary" href="/admin/action-import.php"'
-        . ' title="Importer un bundle JSON (avec prévisualisation avant application)">'
-        . '<i class="fas fa-upload"></i> Importer</a>'
-        . '<a class="btn btn-primary" href="/admin/factions.php?action=new">+ Nouvelle faction</a>'
-        . '</div></div>'
-        . '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
+    return '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
         . '<th>Code</th><th>Icône</th><th>Nom</th><th>Statut</th><th>Respawn</th>'
         . '<th>Rôles</th><th title="Personnages référençant cette faction (players.faction / secretFaction)">Membres</th><th></th>'
         . '</tr></thead><tbody>' . $rows . '</tbody></table>';
@@ -138,9 +129,6 @@ function faction_render_form(?Faction $faction, string $csrfToken): string
     $respawnInput = static fn (string $name, string $axis): string =>
         '<input type="number" class="form-control form-control-sm" name="' . $name . '" value="'
         . $respawn[$axis] . '" placeholder="' . $axis . '" aria-label="' . $axis . '">';
-    $title = $isEdit
-        ? 'Faction : ' . e($faction->getName()) . ' <span class="text-muted">(' . e($faction->getCode()) . ')</span>'
-        : 'Nouvelle faction';
 
     $codeField = $isEdit
         ? '<input type="hidden" name="code" value="' . e($faction->getCode()) . '">'
@@ -214,11 +202,7 @@ function faction_render_form(?Faction $faction, string $csrfToken): string
 </script>
 HTML;
 
-    return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">' . $title . '</h1>'
-        . '<a class="btn btn-sm btn-outline-secondary" href="/admin/factions.php">← Retour à la liste</a></div>'
-
-        . '<form method="post" action="/admin/factions-save.php?action=' . $action . '">'
+    return '<form method="post" action="/admin/factions-save.php?action=' . $action . '">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
 
         . '<div class="card mb-3"><div class="card-header">Identité</div><div class="card-body"><div class="row">'
@@ -226,15 +210,12 @@ HTML;
         . '<div class="form-group col-md-3"><label>Nom affiché</label>'
         . '<input type="text" class="form-control" name="name" required value="'
         . e($isEdit ? $faction->getName() : '') . '"></div>'
-        . '<div class="form-group col-md-3"><label>Icône (classe ra)</label>'
-        . '<input type="text" class="form-control" name="raFont" value="'
-        . e($isEdit ? $faction->getRaFont() : '') . '" placeholder="ex: ra-moon-sun">'
-        . '<small class="form-text text-muted">Police RPG-Awesome — affichée sur la page faction,'
-        . ' les cartes et les forums.</small></div>'
+        . '<div class="form-group col-md-3"><label>Icône</label>'
+        . (new IconFieldView())->render($isEdit ? (string) $faction->getRaFont() : '', 'raFont', null, 'icon_color', false)
+        . '<small class="form-text text-muted">Affichée sur la page faction, les cartes et les forums.</small></div>'
         . '<div class="form-group col-md-3"><label>Plan de respawn</label>'
-        . '<input type="text" class="form-control" name="respawnPlan" value="'
-        . e($isEdit ? $faction->getRespawnPlan() : plans()->worldPlan()) . '">'
-        . '<small class="form-text text-muted">Destination à la sortie des enfers.</small>'
+        . formSelect('respawnPlan', plan_choices(), $isEdit ? (string) $faction->getRespawnPlan() : plans()->worldPlan())
+        . '<small class="form-text text-muted">Où revient un membre après sa mort.</small>'
         . '<div class="d-flex mt-1" title="Case d\'arrivée (x, y, z) — la plus proche libre si occupée">'
         . $respawnInput('respawnX', 'x') . $respawnInput('respawnY', 'y') . $respawnInput('respawnZ', 'z')
         . '</div></div>'
@@ -255,7 +236,7 @@ HTML;
         . '</div></div></div>'
 
         . '<div class="card mb-3"><div class="card-header">Rôles (ordonnés)</div><div class="card-body">'
-        . '<div class="alert alert-warning py-1" style="font-size: 13px;">'
+        . '<div class="alert alert-warning py-1">'
         . '⚠ Le rôle d\'un membre est un <strong>index</strong> dans cette liste (players.factionRole) :'
         . ' supprimer ou réordonner des rôles change le rôle affiché des membres existants ;'
         . ' corrigez ensuite via la page <a href="/admin/faction-members.php">Membres</a>.</div>'
@@ -264,7 +245,7 @@ HTML;
         . '</tr></thead><tbody>' . $roleRows . '</tbody></table>'
         . '<template id="faction-role-template"><table>' . $templateRow . '</table></template>'
         . '<button type="button" class="btn btn-sm btn-outline-primary" id="faction-role-add">+ Ajouter un rôle</button>'
-        . '<div class="alert alert-info mt-3 mb-0" style="font-size: 13px;">'
+        . '<div class="alert alert-info mt-3 mb-0">'
         . 'ℹ️ Mêmes drapeaux que l\'échelle du panneau de faction en jeu. « Accueil » : rang donné aux'
         . ' recrues (le premier coché l\'emporte). Le second nom s\'affiche au choix du membre (Roi / Reine).'
         . '</div>'
@@ -292,8 +273,7 @@ function faction_render_delete_zone(Faction $faction, string $csrfToken): string
             . ' <a href="/admin/faction-members.php?faction=' . e(urlencode($faction->getCode())) . '">Membres</a>,'
             . ' ou cochez « Cachée » pour la retirer du jeu sans la supprimer.</p>'
         : '<form method="post" action="/admin/factions-save.php?action=delete" class="d-flex align-items-center gap-3"'
-            . ' onsubmit="return confirm(\'Supprimer définitivement la faction « '
-            . e($faction->getCode()) . ' » et ses rôles ?\');">'
+            . ' data-confirm="' . e('Supprimer définitivement la faction « ' . $faction->getCode() . ' » et ses rôles ?') . '">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="code" value="' . e($faction->getCode()) . '">'
             . '<button type="submit" class="btn btn-outline-danger">Supprimer la faction</button>'
@@ -301,8 +281,7 @@ function faction_render_delete_zone(Faction $faction, string $csrfToken): string
             . ' pensez à exporter un bundle JSON avant, pour pouvoir la restaurer.</small>'
             . '</form>';
 
-    return '<div class="card mt-4 border-danger"><div class="card-header text-danger">Zone dangereuse</div>'
-        . '<div class="card-body">' . $body . '</div></div>';
+    return dangerZone($body);
 }
 
 /* -------------------------------------------------------------------------
@@ -313,7 +292,9 @@ $service = new FactionService();
 
 $action = $_GET['action'] ?? 'list';
 
+$options = ['back' => ['/admin/factions.php', 'Factions']];
 if ($action === 'new') {
+    $title = 'Nouvelle faction';
     $content = faction_render_form(null, $csrfToken);
 } elseif ($action === 'edit') {
     $faction = $service->getFactionByCode((string) ($_GET['code'] ?? ''));
@@ -321,9 +302,25 @@ if ($action === 'new') {
         setFlash('warning', 'Faction introuvable.');
         redirectTo('/admin/factions.php');
     }
+    $title = 'Faction : ' . e($faction->getName()) . ' <span class="text-muted">(' . e($faction->getCode()) . ')</span>';
     $content = faction_render_form($faction, $csrfToken);
+}
+if ($action === 'new' || $action === 'edit') {
+    $options['styles'] = ['/css/rpg-awesome.min.css', '/admin/css/icon-picker.css'];
+    $options['scripts'] = ['/admin/js/icon-picker.js'];
+    // Icon catalogue of the picker (IconFieldView), as on the effects form.
+    $content .= '<script>window.WB_ICONS = '
+        . json_encode((new RpgAwesomeIcons())->all(), JSON_UNESCAPED_SLASHES) . ';</script>';
 } else {
+    $title = 'Factions';
+    $options = ['actions' => '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=faction"'
+        . ' title="Télécharger toutes les factions en bundle JSON, ré-importable ici ou sur un autre environnement">'
+        . '<i class="fas fa-download"></i> Exporter (JSON)</a>'
+        . '<a class="btn btn-outline-secondary" href="/admin/action-import.php"'
+        . ' title="Importer un bundle JSON (avec prévisualisation avant application)">'
+        . '<i class="fas fa-upload"></i> Importer</a>'
+        . '<a class="btn btn-primary" href="/admin/factions.php?action=new">+ Nouvelle faction</a>'];
     $content = faction_render_list($service->getAllFactions());
 }
 
-echo admin_layout('Factions', renderFlashMessage() . $content);
+echo admin_layout($title, $content, $options);

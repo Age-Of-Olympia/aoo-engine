@@ -75,14 +75,14 @@ function plans_build_inventory(Db $db): array
 function plans_status_badge(object $plan): string
 {
     if ($plan->hasConfig && $plan->hasCoords) {
-        return '<span class="badge" style="background-color:#198754;color:#fff;">cohérent</span>';
+        return '<span class="badge badge-solid badge-success">cohérent</span>';
     }
     if ($plan->hasCoords) {
-        return '<span class="badge" style="background-color:#dc3545;color:#fff;" title="Des coordonnées existent en base'
+        return '<span class="badge badge-solid badge-danger" title="Des coordonnées existent en base'
             . ' mais la table plans n\'a pas de ligne « ' . e($plan->id) . ' » : aucune récolte, pas de bornes de carte.">'
             . 'coords sans config</span>';
     }
-    return '<span class="badge" style="background-color:#f0ad4e;color:#fff;" title="Une config existe mais aucune'
+    return '<span class="badge badge-solid badge-warning" title="Une config existe mais aucune'
         . ' coordonnée en base : plan orphelin (jamais créé, ou base purgée).">config sans coords</span>';
 }
 
@@ -198,23 +198,23 @@ function plans_render_list(array $inventory, Db $db, string $csrfToken): string
         if ($plan->hasConfig) {
             $raw = plans()->read($plan->id);
             if ($raw === null || $raw === false) {
-                $validationCell = '<span class="badge" style="background-color:#dc3545;color:#fff;">config absente</span>';
+                $validationCell = '<span class="badge badge-solid badge-danger">config absente</span>';
             } else {
                 $v = PlanJsonValidator::validate($raw, $plan->id, $db);
                 $badges = '';
                 if (count($v['errors']) > 0) {
-                    $badges .= '<span class="badge" style="background-color:#dc3545;color:#fff;">' . count($v['errors']) . ' err.</span> ';
+                    $badges .= '<span class="badge badge-solid badge-danger">' . count($v['errors']) . ' err.</span> ';
                 }
                 if (count($v['warnings']) > 0) {
-                    $badges .= '<span class="badge" style="background-color:#f0ad4e;color:#fff;">' . count($v['warnings']) . ' avert.</span>';
+                    $badges .= '<span class="badge badge-solid badge-warning">' . count($v['warnings']) . ' avert.</span>';
                 }
                 $validationCell = $badges !== ''
                     ? '<span class="plan-validation" tabindex="0">' . trim($badges)
                         . '<span class="plan-validation-detail" role="tooltip">'
-                        . plans_validation_list($v['errors'], '#dc3545', 'Erreurs')
-                        . plans_validation_list($v['warnings'], '#f0ad4e', 'Avertissements')
+                        . plans_validation_list($v['errors'], 'var(--danger)', 'Erreurs')
+                        . plans_validation_list($v['warnings'], 'var(--warning)', 'Avertissements')
                         . '</span></span>'
-                    : '<span class="badge" style="background-color:#198754;color:#fff;">OK</span>';
+                    : '<span class="badge badge-solid badge-success">OK</span>';
             }
         }
 
@@ -230,13 +230,13 @@ function plans_render_list(array $inventory, Db $db, string $csrfToken): string
             . '<td>' . $coordsCell . '</td>'
             . '<td>' . $validationCell . '</td>'
             . '<td>' . plans_map_thumb($localMaps[$plan->id] ?? [], $plan->id === $worldPlan ? $worldLayers : null) . '</td>'
-            . '<td><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">'
+            . '<td><div class="d-flex flex-wrap gap-1 align-items-center">'
             . '<a class="btn btn-sm btn-outline-primary" href="/admin/plans.php?action=edit&amp;plan='
             . e(urlencode($plan->id)) . '">Éditer</a>'
             . '<a class="btn btn-sm btn-outline-secondary" title="Exporter ce plan (bundle JSON : config + coords + couches)"'
             . ' href="/admin/action-export.php?type=plan&amp;plan=' . e(urlencode($plan->id)) . '">JSON</a>'
             . ($plan->hasConfig && $plan->hasCoords
-                ? '<form method="post" action="/admin/plans-save.php?action=generate-map" style="margin:0">'
+                ? '<form method="post" action="/admin/plans-save.php?action=generate-map" class="m-0">'
                     . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
                     . '<input type="hidden" name="plan" value="' . e($plan->id) . '">'
                     . '<button type="submit" class="btn btn-sm btn-outline-secondary" title="Générer les images de la carte de ce plan">'
@@ -246,30 +246,11 @@ function plans_render_list(array $inventory, Db $db, string $csrfToken): string
             . '</tr>';
     }
 
-    return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">Plans</h1>'
-        . '<div class="d-flex gap-2">'
-        . '<a class="btn btn-outline-secondary" href="/admin/action-import.php"'
-        . ' title="Importer un bundle JSON de plan (avec prévisualisation avant application)">'
-        . '<i class="fas fa-upload"></i> Importer</a>'
-        . '<a class="btn btn-primary" href="/admin/plans.php?action=new">+ Nouveau plan</a>'
-        . '</div></div>'
-
-        . '<div class="alert alert-info" style="font-size:13px;line-height:1.5;">'
-        . '<strong>Qu\'est-ce qu\'un plan ?</strong> Deux parties qui doivent rester cohérentes : '
-        . '<strong>une config</strong> (tables <code style="display:inline;white-space:nowrap">plans</code> /'
-        . ' <code style="display:inline;white-space:nowrap">plan_z_levels</code>'
-        . ' : nom, niveaux Z, bornes visibles…) et <strong>des coordonnées en base</strong>'
-        . ' (table <code style="display:inline;white-space:nowrap">coords</code> + couches'
-        . ' <code style="display:inline;white-space:nowrap">map_*</code>).'
-        . ' Le contenu des cartes s\'édite via l\'extension Tiled ; la génération des PNG se fait sur'
-        . ' <a href="/admin/local_maps.php">Cartes locales</a>.</div>'
-
-        . '<div class="card mb-3"><div class="card-body py-2 d-flex align-items-center justify-content-between flex-wrap gap-3">'
+    return '<div class="card mb-3"><div class="card-body py-2 d-flex align-items-center justify-content-between flex-wrap gap-3">'
         . render_season_filter($seasonFilter)
         /* The GLOBAL settings (current season, world and death plans) live
            on the dashboard: admin → Réglages du monde. */
-        . '<a class="btn btn-sm btn-outline-secondary" href="/admin/index.php" style="font-size:13px;">'
+        . '<a class="btn btn-sm btn-outline-secondary" href="/admin/index.php">'
         . '<i class="fas fa-globe"></i> Saison courante : ' . e((string) (new \App\Service\SeasonService())->current())
         . ' (régler)</a>'
         . '</div></div>'
@@ -296,6 +277,9 @@ function plans_render_list(array $inventory, Db $db, string $csrfToken): string
         . 'max-width:min(520px,70vw);background:#fff;border:1px solid #999;box-shadow:0 6px 24px rgba(0,0,0,.3);'
         . 'padding:8px 10px;font-size:12px;line-height:1.5;white-space:normal;text-align:left}'
         . '.plan-validation-detail ul{margin:2px 0 6px;padding-left:18px}'
+        /* No room on the left of the thumbnail on a phone: open below it. */
+        . '@media (max-width:900px){.plan-map-preview{right:auto;left:0;top:calc(100% + 6px);transform:none;max-width:calc(100vw - 40px)}'
+        . '.plan-map-preview-stack{max-width:calc(100vw - 60px)}}'
         . '.plan-validation:hover .plan-validation-detail,.plan-validation:focus .plan-validation-detail{display:block}'
         . '.plan-generate-status{display:block;font-size:12px;margin-top:4px;white-space:normal}'
         . '</style>'
@@ -358,11 +342,7 @@ function plans_render_new_form(array $inventory, string $csrfToken): string
 </script>
 HTML;
 
-    return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">Nouveau plan</h1>'
-        . '<a class="btn btn-sm btn-outline-secondary" href="/admin/plans.php">← Retour à la liste</a></div>'
-
-        . '<form method="post" action="/admin/plans-save.php?action=create">'
+    return '<form method="post" action="/admin/plans-save.php?action=create">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
 
         . '<div class="card mb-3"><div class="card-header">Identité</div><div class="card-body"><div class="row">'
@@ -370,7 +350,7 @@ HTML;
         . '<input type="text" class="form-control" name="plan" required pattern="[a-z0-9_-]{1,64}"'
         . ' placeholder="ex: foret_noire">'
         . '<small class="form-text text-muted">Minuscules / chiffres / _ / - (64 max), valeur de'
-        . ' <code style="display:inline">coords.plan</code>. Non modifiable ensuite.</small></div>'
+        . ' <code>coords.plan</code>. Non modifiable ensuite.</small></div>'
         . '<div class="form-group col-md-4"><label>Nom affiché</label>'
         . '<input type="text" class="form-control" name="name" required placeholder="ex: Forêt Noire"></div>'
         . '<div class="form-group col-md-4"><label>Nom court</label>'
@@ -380,10 +360,10 @@ HTML;
 
         . '<div class="card mb-3"><div class="card-header">Mode de création</div><div class="card-body">'
         . '<div class="form-group">'
-        . '<label class="d-block" style="cursor:pointer;"><input type="radio" name="mode" value="blank" checked> '
+        . '<label class="d-block"><input type="radio" name="mode" value="blank" checked> '
         . '<strong>Plan vierge</strong> : crée le fichier JSON minimal et une case d\'amorce (0,0,0).'
         . ' Le contenu (tuiles, murs…) s\'authore ensuite via l\'extension Tiled.</label>'
-        . '<label class="d-block mt-2" style="cursor:pointer;"><input type="radio" name="mode" value="clone"> '
+        . '<label class="d-block mt-2"><input type="radio" name="mode" value="clone"> '
         . '<strong>Cloner un plan modèle</strong> : copie le JSON, toutes les coordonnées et les couches'
         . ' (tuiles, murs, éléments…). Les constructions de joueurs, les personnages et les objets au sol'
         . ' ne sont jamais copiés.</label>'
@@ -444,7 +424,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         $width = $type === 'text' ? 'col-12' : 'col-md-3 col-6';
 
         return '<div class="form-group ' . $width . '"><label>' . e($label)
-            . ' <code style="display:inline;font-size:11px;">' . e($key) . '</code></label>'
+            . ' <code>' . e($key) . '</code></label>'
             . $input . $hint . '</div>';
     };
 
@@ -490,10 +470,10 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         $zConfig = $configService->readZLevel($planId, $z);
         $origin = '';
         if (!in_array($z, $jsonZ, true)) {
-            $origin = ' <span class="badge" style="background-color:#f0ad4e;color:#fff;"'
+            $origin = ' <span class="badge badge-solid badge-warning"'
                 . ' title="Des coords existent pour ce niveau mais le JSON ne le déclare pas : enregistrer corrige.">en base seulement</span>';
         } elseif (!in_array($z, $plan->zLevels, true)) {
-            $origin = ' <span class="badge" style="background-color:#f0ad4e;color:#fff;"'
+            $origin = ' <span class="badge badge-solid badge-warning"'
                 . ' title="Déclaré dans le JSON mais aucune coordonnée en base pour ce niveau.">JSON seulement</span>';
         }
 
@@ -519,8 +499,8 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
 
         $zDeleteForms .= '<form id="plan-delz-' . $z . '" method="post"'
             . ' action="/admin/plans-save.php?action=delete-z"'
-            . ' onsubmit="return confirm(\'Supprimer le niveau z=' . $z . ' du plan « ' . e($planId)
-            . ' » : toutes ses cases et couches ?\');">'
+            . ' data-confirm="' . e('Supprimer le niveau z=' . $z . ' du plan « ' . $planId
+                . ' » : toutes ses cases et couches ?') . '">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="plan" value="' . e($planId) . '">'
             . '<input type="hidden" name="z" value="' . $z . '">'
@@ -542,22 +522,12 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
     $bgChoices = (new TileCatalogService())->backgroundChoices();
     $bgCatalog = renderDatalist('plans-bg-catalog', array_combine($bgChoices, $bgChoices) ?: []);
 
-    return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">Plan : ' . e($plan->name) . ' <span class="text-muted">(' . e($planId) . ')</span></h1>'
-        . '<div class="d-flex gap-2">'
-        . '<a class="btn btn-sm btn-outline-secondary" href="/admin/plans.php">← Retour</a>'
-        . '<a class="btn btn-sm btn-outline-secondary" title="Exporter ce plan (bundle JSON : config + coords + couches)"'
-        . ' href="/admin/action-export.php?type=plan&amp;plan=' . e(urlencode($planId)) . '">'
-        . '<i class="fas fa-download"></i> JSON</a>'
-        . '<a class="btn btn-sm btn-outline-secondary" href="/admin/local_maps.php" title="Génération des PNG de carte">Cartes locales</a>'
-        . '</div></div>'
-
-        . (!$plan->hasCoords
-            ? '<div class="alert alert-warning" style="font-size:13px;">Plan orphelin : config sans aucune'
+    return (!$plan->hasCoords
+            ? '<div class="alert alert-warning">Plan orphelin : config sans aucune'
                 . ' coordonnée en base. Importez un bundle, ou créez la case d\'amorce en le recréant après suppression.</div>'
             : '')
         . (!$plan->hasConfig
-            ? '<div class="alert alert-danger" style="font-size:13px;">Ce plan n\'a pas de config'
+            ? '<div class="alert alert-danger">Ce plan n\'a pas de config'
                 . ' (table plans). Enregistrer ce formulaire la créera.</div>'
             : '')
 
@@ -602,7 +572,7 @@ function plans_render_delete_zone(string $planId, string $csrfToken): string
 
     $warningsHtml = '';
     if ($preflight['warnings'] !== []) {
-        $warningsHtml = '<ul class="mb-2 text-muted" style="font-size:13px;">';
+        $warningsHtml = '<ul class="mb-2 text-muted small">';
         foreach ($preflight['warnings'] as $w) {
             $warningsHtml .= '<li>' . e($w['detail']) . '</li>';
         }
@@ -622,15 +592,15 @@ function plans_render_delete_zone(string $planId, string $csrfToken): string
             foreach ($soft as $b) {
                 $items .= '<li>' . e($b['detail']) . '</li>';
             }
-            $forceField = '<ul class="mb-2 text-muted" style="font-size:13px;">' . $items . '</ul>'
-                . '<label class="d-block mb-3" style="cursor:pointer;"><input type="checkbox" name="force"> '
+            $forceField = '<ul class="mb-2 text-muted small">' . $items . '</ul>'
+                . '<label class="d-block mb-3"><input type="checkbox" name="force"> '
                 . 'Forcer : supprimer les PNJ du plan (et leurs données) et détacher les logs.</label>';
         }
 
         $body = $warningsHtml
             . '<form method="post" action="/admin/plans-save.php?action=delete"'
-            . ' onsubmit="return confirm(\'Supprimer définitivement le plan « ' . e($planId)
-            . ' » : fichier JSON, coordonnées, toutes les couches et les PNG générés ?\');">'
+            . ' data-confirm="' . e('Supprimer définitivement le plan « ' . $planId
+                . ' » : fichier JSON, coordonnées, toutes les couches et les PNG générés ?') . '">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="plan" value="' . e($planId) . '">'
             . $forceField
@@ -644,12 +614,12 @@ function plans_render_delete_zone(string $planId, string $csrfToken): string
     // Vider les cases : mêmes gardes que la suppression, mais la
     // configuration JSON (et les PNG) restent — le plan se re-peuple.
     $clearBody = '<form method="post" action="/admin/plans-save.php?action=clear"'
-        . ' onsubmit="return confirm(\'Vider toutes les cases du plan « ' . e($planId)
-        . ' » (coordonnées et couches) ? La configuration JSON est conservée.\');">'
+        . ' data-confirm="' . e('Vider toutes les cases du plan « ' . $planId
+            . ' » (coordonnées et couches) ? La configuration JSON est conservée.') . '">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
         . '<input type="hidden" name="plan" value="' . e($planId) . '">'
         . ($hard === [] && $soft !== []
-            ? '<label class="d-block mb-3" style="cursor:pointer;"><input type="checkbox" name="force"> '
+            ? '<label class="d-block mb-3"><input type="checkbox" name="force"> '
                 . 'Forcer : supprimer les PNJ du plan (et leurs données) et détacher les logs.</label>'
             : '')
         . plans_typed_confirm_field($planId)
@@ -659,8 +629,8 @@ function plans_render_delete_zone(string $planId, string $csrfToken): string
 
     // Renommage : code technique + coords + références par nom + fichiers.
     $renameBody = '<form method="post" action="/admin/plans-save.php?action=rename"'
-        . ' onsubmit="return confirm(\'Renommer le plan « ' . e($planId)
-        . ' » partout (coordonnées, respawn de factions, races, téléporteurs, fichiers) ?\');">'
+        . ' data-confirm="' . e('Renommer le plan « ' . $planId
+            . ' » partout (coordonnées, respawn de factions, races, téléporteurs, fichiers) ?') . '">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
         . '<input type="hidden" name="plan" value="' . e($planId) . '">'
         . '<div class="form-group"><label>Nouveau code technique</label>'
@@ -670,12 +640,9 @@ function plans_render_delete_zone(string $planId, string $csrfToken): string
         . '<button type="submit" class="btn btn-outline-danger">Renommer le plan</button>'
         . '</form>';
 
-    return '<div class="card mt-4 border-danger"><div class="card-header text-danger">Zone dangereuse</div>'
-        . '<div class="card-body">'
-        . '<h6>Renommer</h6>' . $renameBody
+    return dangerZone('<h6>Renommer</h6>' . $renameBody
         . '<hr><h6>Vider les cases</h6>' . $clearBody
-        . '<hr><h6>Supprimer</h6>' . $body
-        . '</div></div>';
+        . '<hr><h6>Supprimer</h6>' . $body);
 }
 
 /**
@@ -700,7 +667,10 @@ $inventory = plans_build_inventory($db);
 
 $action = $_GET['action'] ?? 'list';
 
+$back = ['/admin/plans.php', 'Plans'];
 if ($action === 'new') {
+    $title = 'Nouveau plan';
+    $options = ['back' => $back];
     $content = plans_render_new_form($inventory, $csrfToken);
 } elseif ($action === 'edit') {
     $planId = strtolower(trim((string) ($_GET['plan'] ?? '')));
@@ -708,9 +678,31 @@ if ($action === 'new') {
         setFlash('warning', 'Plan introuvable.');
         redirectTo('/admin/plans.php');
     }
-    $content = plans_render_edit_form($inventory[$planId], $csrfToken, $db);
+    $plan = $inventory[$planId];
+    $title = 'Plan : ' . e($plan->name) . ' <span class="text-muted">(' . e($planId) . ')</span>';
+    $options = [
+        'back' => $back,
+        'actions' => '<a class="btn btn-sm btn-outline-secondary" title="Exporter ce plan (bundle JSON : config + coords + couches)"'
+            . ' href="/admin/action-export.php?type=plan&amp;plan=' . e(urlencode($planId)) . '">'
+            . '<i class="fas fa-download"></i> JSON</a>'
+            . '<a class="btn btn-sm btn-outline-secondary" href="/admin/local_maps.php" title="Génération des PNG de carte">Cartes locales</a>',
+    ];
+    $content = plans_render_edit_form($plan, $csrfToken, $db);
 } else {
+    $title = 'Plans';
+    $options = [
+        'actions' => '<a class="btn btn-outline-secondary" href="/admin/action-import.php"'
+            . ' title="Importer un bundle JSON de plan (avec prévisualisation avant application)">'
+            . '<i class="fas fa-upload"></i> Importer</a>'
+            . '<a class="btn btn-primary" href="/admin/plans.php?action=new">+ Nouveau plan</a>',
+        'intro' => '<strong>Qu\'est-ce qu\'un plan ?</strong> Deux parties qui doivent rester cohérentes : '
+            . '<strong>une config</strong> (tables <code>plans</code> / <code>plan_z_levels</code>'
+            . ' : nom, niveaux Z, bornes visibles…) et <strong>des coordonnées en base</strong>'
+            . ' (table <code>coords</code> + couches <code>map_*</code>).'
+            . ' Le contenu des cartes s\'édite via l\'extension Tiled ; la génération des PNG se fait sur'
+            . ' <a href="/admin/local_maps.php">Cartes locales</a>.',
+    ];
     $content = plans_render_list($inventory, $db, $csrfToken);
 }
 
-echo admin_layout('Plans', renderFlashMessage() . $content);
+echo admin_layout($title, $content, $options);

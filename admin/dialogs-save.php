@@ -14,21 +14,11 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\AdminMenuAccessService;
-use App\Service\CsrfProtectionService;
 use App\Service\DialogService;
 
 (new AdminMenuAccessService())->enforce('dialogs.edit');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirectTo('/admin/dialogs.php');
-}
-
-try {
-    (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
-} catch (\Throwable $e) {
-    setFlash('warning', 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
-    redirectTo('/admin/dialogs.php');
-}
+requireAdminPost('/admin/dialogs.php');
 
 $service = new DialogService();
 $action = $_GET['action'] ?? '';

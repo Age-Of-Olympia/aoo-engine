@@ -41,9 +41,8 @@ if ($isEdit) {
     $step = $result->fetch_assoc();
 
     if (!$step) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Step not found'];
-        header('Location: tutorial.php');
-        exit;
+        setFlash('danger', 'Step not found');
+        redirectTo('/admin/tutorial.php');
     }
 
     // Load related data
@@ -107,14 +106,6 @@ ob_start();
 ?>
 
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><?= $isEdit ? 'Edit Step: ' . htmlspecialchars($step['title']) : 'Create New Tutorial Step' ?></h1>
-        <a href="tutorial.php" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Tutorial Admin
-        </a>
-    </div>
-
-    <?= renderFlashMessage() ?>
 
     <!-- Quick Actions Panel -->
     <div class="card mb-3 quick-actions-card">
@@ -136,7 +127,7 @@ ob_start();
                     <button type="button" class="btn btn-outline-secondary" id="btn-import" title="Import from JSON">
                         <i class="fas fa-download"></i> Import
                     </button>
-                    <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                    <input type="file" id="import-file-input" accept=".json" hidden>
                     <button type="button" class="btn btn-outline-info" id="btn-test" title="Test this step">
                         <i class="fas fa-play"></i> Test
                     </button>
@@ -152,7 +143,7 @@ ob_start();
         <?php endif; ?>
 
         <!-- Tab Navigation -->
-        <ul class="nav nav-tabs mb-4" role="tablist">
+        <ul class="nav-tabs" id="stepTabs" role="tablist">
             <li class="nav-item">
                 <a class="nav-link active" id="basic-tab" data-toggle="tab" href="#basic" role="tab">
                     Basic Info
@@ -863,7 +854,7 @@ document.querySelectorAll('[data-toggle="tab"]').forEach(tab => {
         });
 
         // Remove active from all tabs
-        document.querySelectorAll('.nav-link').forEach(link => {
+        document.querySelectorAll('#stepTabs .nav-link').forEach(link => {
             link.classList.remove('active');
         });
 
@@ -1213,10 +1204,10 @@ document.getElementById('btn-preview').addEventListener('click', function() {
             </div>
             <div class="preview-modal-body">
                 <div class="preview-container">
-                    <div class="tutorial-tooltip ${position}">
+                    <div class="tutorial-tooltip">
                         <div class="tooltip-content">
-                            <h3 class="tooltip-title">${title}</h3>
-                            <div class="tooltip-text">${text}</div>
+                            <h3 class="tooltip-title"></h3>
+                            <div class="tooltip-text"></div>
                             <button class="btn-tutorial-primary">Suivant &rarr;</button>
                         </div>
                     </div>
@@ -1225,6 +1216,10 @@ document.getElementById('btn-preview').addEventListener('click', function() {
         </div>
     `;
 
+    /* As in game (TutorialTooltip.js): the title is text, the step text is HTML. */
+    overlay.querySelector('.tutorial-tooltip').classList.add(position);
+    overlay.querySelector('.tooltip-title').textContent = title;
+    overlay.querySelector('.tooltip-text').innerHTML = text;
     document.body.appendChild(overlay);
 
     // Close on button click or overlay click
@@ -1430,134 +1425,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<style>
-.font-monospace {
-    font-family: 'Courier New', monospace;
-    font-size: 0.9em;
-}
-
-.nav-tabs .nav-link {
-    border-radius: 0.25rem 0.25rem 0 0;
-}
-
-.nav-tabs .nav-link.active {
-    background-color: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-}
-
-.card {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.btn-lg {
-    padding: 0.75rem 1.5rem;
-    font-size: 1.1rem;
-}
-
-/* Preview Modal Styles */
-.preview-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-}
-
-.preview-modal {
-    background: white;
-    border-radius: 8px;
-    max-width: 800px;
-    width: 90%;
-    max-height: 90vh;
-    overflow: auto;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-}
-
-.preview-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.preview-modal-header h5 {
-    margin: 0;
-    font-size: 1.25rem;
-}
-
-.preview-modal-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: #6c757d;
-    padding: 0;
-    line-height: 1;
-}
-
-.preview-modal-close:hover {
-    color: #333;
-}
-
-.preview-modal-body {
-    padding: 1.5rem;
-}
-
-.preview-container {
-    min-height: 300px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 8px;
-    padding: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.preview-container .tutorial-tooltip {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    padding: 1.5rem;
-    max-width: 400px;
-}
-
-.preview-container .tooltip-title {
-    font-size: 1.25rem;
-    font-weight: bold;
-    margin-bottom: 0.75rem;
-    color: #333;
-}
-
-.preview-container .tooltip-text {
-    font-size: 1rem;
-    line-height: 1.5;
-    color: #666;
-    margin-bottom: 1rem;
-}
-
-.preview-container .btn-tutorial-primary {
-    background: #007bff;
-    color: white;
-    border: none;
-    padding: 0.5rem 1.5rem;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-}
-</style>
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Tutorial Step Editor', $content);
+echo admin_layout($isEdit ? 'Étape : ' . e($step['title']) : 'Nouvelle étape', $content, [
+    'back' => ['/admin/tutorial.php', 'Étapes'],
+    'styles' => ['/admin/css/tutorial-admin.css'],
+]);
 ?>

@@ -11,12 +11,10 @@ final class ImportFormView
 {
     public function render(string $csrfTokenField): string
     {
-        return '<form method="post" action="/admin/action-import.php" enctype="multipart/form-data" class="wb-form">'
+        return '<form method="post" action="/admin/action-import.php" enctype="multipart/form-data" class="card">'
+            . '<div class="card-body d-flex flex-wrap align-items-center gap-3">'
             . $csrfTokenField
-            . '<p class="wb-muted">Importez un bundle <code>aoo.config-bundle</code> (.json) exporté depuis cette page.'
-            . ' L\'import est transactionnel : en cas de rejet, rien n\'est appliqué.</p>'
-            . '<div class="wb-form-actions">'
-            . '<input type="file" name="bundle" accept="application/json,.json" required>'
+            . '<input type="file" name="bundle" class="form-control-file" accept="application/json,.json" required>'
             . '<button type="submit" class="btn btn-primary">Prévisualiser l\'import</button>'
             . '</div>'
             . '</form>';

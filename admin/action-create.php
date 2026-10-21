@@ -3,21 +3,13 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\Action\ActionCreateService;
-use App\Service\AdminAuthorizationService;
 use App\Service\AdminMenuAccessService;
-use App\Service\CsrfProtectionService;
 
 (new AdminMenuAccessService())->enforce('actions.edit');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /admin/action-workbench.php');
-    exit;
-}
-
-$csrf = new CsrfProtectionService();
+requireAdminPost('/admin/action-workbench.php');
 
 try {
-    $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
     $action = (new ActionCreateService())->create(
         (string) ($_POST['type'] ?? ''),
         (string) ($_POST['name'] ?? ''),
@@ -28,14 +20,11 @@ try {
         (string) ($_POST['icon_color'] ?? '') ?: null,
     );
     setFlash('success', 'Action créée.');
-    $csrf->regenerateToken();
-    header('Location: /admin/action-workbench.php?id=' . (int) $action->getId());
-    exit;
+    redirectTo('/admin/action-workbench.php?id=' . (int) $action->getId());
 } catch (\InvalidArgumentException $exception) {
     setFlash('warning', $exception->getMessage());
 } catch (\Throwable $exception) {
     setFlash('danger', "Erreur lors de la création de l'action.");
 }
 
-header('Location: /admin/action-workbench.php');
-exit;
+redirectTo('/admin/action-workbench.php');

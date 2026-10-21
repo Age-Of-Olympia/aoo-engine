@@ -35,20 +35,8 @@ ob_start();
 ?>
 
 <div class="container">
-    <h3>Page d'accueil — sections éditoriales</h3>
-
-    <?= renderFlashMessage() ?>
-
-    <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-        L'accueil affiche tout sur le <strong>premier écran</strong> (sans défiler, sur un écran de bureau) :
-        les sections de texte et la galerie dans la marge gauche, les 3 dernières chroniques dans la marge droite.
-        <strong>Budgets conseillés</strong> : présentation ≈ 4-6 lignes ; chroniques de 1-2 lignes ;
-        4 planches actives dans la galerie. Une ligne <em>inactive</em> disparaît de l'accueil sans être perdue.
-        Base vide (nouveau déploiement) ? <a href="landing-seed.php">Créer le contenu initial</a>.
-    </div>
-
     <!-- ============ Sections de texte ============ -->
-    <div class="card mt-3">
+    <div class="card">
         <div class="card-header"><strong>Sections de texte</strong> — marge gauche de l'accueil</div>
         <div class="card-body">
             <?php foreach ($sections as $section): ?>
@@ -66,25 +54,25 @@ ob_start();
                     </div>
                     <div>
                         <label class="form-label mb-0">Ordre</label>
-                        <input type="number" name="position" class="form-control" style="width: 90px;" value="<?= (int) $section->position ?>" />
+                        <input type="number" name="position" class="form-control w-auto" value="<?= (int) $section->position ?>" />
                     </div>
                     <label class="form-check-label mb-2">
                         <input type="checkbox" name="is_active" <?= checked((bool) $section->is_active) ?> /> visible
                     </label>
                 </div>
-                <label class="form-label mb-0">Corps (HTML : <code style="display:inline">&lt;p&gt;…&lt;/p&gt;</code>)</label>
-                <textarea name="body" class="form-control" rows="4" style="font-family: monospace; font-size: 12px;"><?= e($section->body) ?></textarea>
+                <label class="form-label mb-0">Corps (HTML : <code>&lt;p&gt;…&lt;/p&gt;</code>)</label>
+                <textarea name="body" class="form-control font-monospace" rows="4"><?= e($section->body) ?></textarea>
                 <div class="mt-2 d-flex gap-2">
                     <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                     <button type="submit" class="btn btn-sm btn-outline-danger"
                         formaction="landing-save.php?action=section-delete"
-                        onclick="return confirm('Supprimer la section « <?= e($section->slug) ?> » ?');">Supprimer</button>
+                        data-confirm="Supprimer la section « <?= e($section->slug) ?> » ?">Supprimer</button>
                 </div>
             </form>
             <?php endforeach; ?>
 
             <details<?= $sections === [] ? ' open' : '' ?>>
-                <summary class="mb-2" style="cursor: pointer;">Nouvelle section</summary>
+                <summary class="mb-2">Nouvelle section</summary>
                 <form method="post" action="landing-save.php?action=section-save">
                     <?= $csrf->renderTokenField() ?>
                     <div class="d-flex gap-3 flex-wrap align-items-end mb-2">
@@ -98,14 +86,14 @@ ob_start();
                         </div>
                         <div>
                             <label class="form-label mb-0">Ordre</label>
-                            <input type="number" name="position" class="form-control" style="width: 90px;" value="0" />
+                            <input type="number" name="position" class="form-control w-auto" value="0" />
                         </div>
                         <label class="form-check-label mb-2">
                             <input type="checkbox" name="is_active" checked /> visible
                         </label>
                     </div>
                     <label class="form-label mb-0">Corps (HTML)</label>
-                    <textarea name="body" class="form-control" rows="3" style="font-family: monospace; font-size: 12px;"></textarea>
+                    <textarea name="body" class="form-control font-monospace" rows="3"></textarea>
                     <button type="submit" class="btn btn-sm btn-primary mt-2">Créer</button>
                 </form>
             </details>
@@ -123,14 +111,14 @@ ob_start();
                 <div class="d-flex gap-3 flex-wrap align-items-end mb-2">
                     <div>
                         <label class="form-label mb-0">Date (JJ/MM/AAAA)
-                            <span class="text-muted" style="font-weight: normal;">
+                            <span class="text-muted small">
                                 — affichée « <?= e($dateFormat->format($entry->news_date)) ?> »</span>
                         </label>
-                        <input type="text" name="news_date" class="form-control" style="width: 130px;"
+                        <input type="text" name="news_date" class="form-control w-auto"
                                value="<?= e(date('d/m/Y', strtotime($entry->news_date))) ?>"
                                pattern="\d{1,2}/\d{1,2}/\d{4}" placeholder="JJ/MM/AAAA" required />
                     </div>
-                    <div style="flex: 1; min-width: 220px;">
+                    <div class="flex-grow-1">
                         <label class="form-label mb-0">Titre</label>
                         <input type="text" name="title" class="form-control" value="<?= e($entry->title) ?>" required />
                     </div>
@@ -144,23 +132,23 @@ ob_start();
                     <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                     <button type="submit" class="btn btn-sm btn-outline-danger"
                         formaction="landing-save.php?action=news-delete"
-                        onclick="return confirm('Supprimer cette chronique ?');">Supprimer</button>
+                        data-confirm="Supprimer cette chronique ?">Supprimer</button>
                 </div>
             </form>
             <?php endforeach; ?>
 
             <details<?= $news === [] ? ' open' : '' ?>>
-                <summary class="mb-2" style="cursor: pointer;">Nouvelle chronique</summary>
+                <summary class="mb-2">Nouvelle chronique</summary>
                 <form method="post" action="landing-save.php?action=news-save">
                     <?= $csrf->renderTokenField() ?>
                     <div class="d-flex gap-3 flex-wrap align-items-end mb-2">
                         <div>
                             <label class="form-label mb-0">Date (JJ/MM/AAAA)</label>
-                            <input type="text" name="news_date" class="form-control" style="width: 130px;"
+                            <input type="text" name="news_date" class="form-control w-auto"
                                    value="<?= e(date('d/m/Y')) ?>"
                                    pattern="\d{1,2}/\d{1,2}/\d{4}" placeholder="JJ/MM/AAAA" required />
                         </div>
-                        <div style="flex: 1; min-width: 220px;">
+                        <div class="flex-grow-1">
                             <label class="form-label mb-0">Titre</label>
                             <input type="text" name="title" class="form-control" required />
                         </div>
@@ -193,9 +181,9 @@ ob_start();
                     <input type="text" name="caption" class="form-control form-control-sm mb-1"
                            value="<?= e($image->caption) ?>" placeholder="Légende" />
                     <div class="d-flex gap-2 align-items-center mb-2">
-                        <input type="number" name="position" class="form-control form-control-sm" style="width: 70px;"
+                        <input type="number" name="position" class="form-control form-control-sm w-auto"
                                value="<?= (int) $image->position ?>" title="Ordre" />
-                        <label class="form-check-label" style="font-size: 13px;">
+                        <label class="form-check-label small">
                             <input type="checkbox" name="is_active" <?= checked((bool) $image->is_active) ?> /> visible
                         </label>
                     </div>
@@ -203,14 +191,14 @@ ob_start();
                         <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                         <button type="submit" class="btn btn-sm btn-outline-danger"
                             formaction="landing-save.php?action=image-delete"
-                            onclick="return confirm('Supprimer cet aperçu ?');">Supprimer</button>
+                            data-confirm="Supprimer cet aperçu ?">Supprimer</button>
                     </div>
                 </form>
                 <?php endforeach; ?>
             </div>
 
             <details class="mt-3"<?= $images === [] ? ' open' : '' ?>>
-                <summary class="mb-2" style="cursor: pointer;">Ajouter un aperçu</summary>
+                <summary class="mb-2">Ajouter un aperçu</summary>
                 <form method="post" action="landing-save.php?action=image-add" enctype="multipart/form-data">
                     <?= $csrf->renderTokenField() ?>
                     <div class="d-flex gap-3 flex-wrap align-items-end">
@@ -219,13 +207,13 @@ ob_start();
                                 max <?= e(iniSizeLabel((string) ini_get('upload_max_filesize'))) ?>)</label>
                             <input type="file" name="image_file" class="form-control" accept="image/*" required />
                         </div>
-                        <div style="flex: 1; min-width: 220px;">
+                        <div class="flex-grow-1">
                             <label class="form-label mb-0">Légende</label>
                             <input type="text" name="caption" class="form-control" placeholder="Les plaines de Gaïa" />
                         </div>
                         <div>
                             <label class="form-label mb-0">Ordre</label>
-                            <input type="number" name="position" class="form-control" style="width: 90px;" value="0" />
+                            <input type="number" name="position" class="form-control w-auto" value="0" />
                         </div>
                         <button type="submit" class="btn btn-sm btn-primary mb-1">Ajouter</button>
                     </div>
@@ -237,4 +225,10 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Page d\'accueil', $content);
+echo admin_layout('Page d\'accueil', $content, [
+    'intro' => 'L\'accueil affiche tout sur le <strong>premier écran</strong> (sans défiler, sur un écran de bureau) :'
+        . ' les sections de texte et la galerie dans la marge gauche, les 3 dernières chroniques dans la marge droite.'
+        . ' <strong>Budgets conseillés</strong> : présentation ≈ 4-6 lignes ; chroniques de 1-2 lignes ;'
+        . ' 4 planches actives dans la galerie. Une ligne <em>inactive</em> disparaît de l\'accueil sans être perdue.',
+    'actions' => '<a class="btn btn-outline-secondary" href="/admin/landing-seed.php">Contenu initial (base vide)</a>',
+]);

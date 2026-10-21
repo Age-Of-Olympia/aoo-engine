@@ -112,10 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['run_group']) || isse
 
 // ----- Affichage -----
 
-$content = '<div class="d-flex justify-content-between align-items-center mb-3">'
-    . '<h1 class="mb-0">Crons</h1></div>'
-    . '<p class="text-muted">Exécution manuelle des crons : un groupe entier dans l\'ordre, ou un script'
-    . ' seul. Le code exécuté est le même que celui de l\'exécution planifiée de la nuit.</p>';
+$content = '';
 
 // Report of the run just done (stored by the POST, shown once).
 if (!empty($_SESSION['cron_run_report'])) {
@@ -142,7 +139,7 @@ foreach ($catalog as $group => $scripts) {
                 : '')
             . '</td>'
             . '<td class="text-right"><form method="post" action="/admin/crons.php" class="d-inline"'
-            . ' onsubmit="return confirm(\'Jouer « ' . e($group . '/' . $script) . ' » maintenant ?\');">'
+            . ' data-confirm="' . e('Jouer « ' . $group . '/' . $script . ' » maintenant ?') . '">'
             . $csrf->renderTokenField()
             . '<input type="hidden" name="group" value="' . e($group) . '">'
             . '<input type="hidden" name="script" value="' . e($script) . '">'
@@ -152,7 +149,7 @@ foreach ($catalog as $group => $scripts) {
     }
 
     $runAll = '<form method="post" action="/admin/crons.php" class="d-inline"'
-        . ' onsubmit="return confirm(\'Jouer le groupe « ' . e($group) . ' » complet, dans l\\\'ordre ?\');">'
+        . ' data-confirm="' . e('Jouer le groupe « ' . $group . ' » complet, dans l\'ordre ?') . '">'
         . $csrf->renderTokenField()
         . '<input type="hidden" name="group" value="' . e($group) . '">'
         . '<button type="submit" name="run_group" value="1" class="btn btn-sm btn-primary">Tout jouer (ordre)</button>'
@@ -188,4 +185,7 @@ $content .= formCard('Dernières traces (audit)', $historyRows === []
     ? '<p class="text-muted mb-0">Aucune trace de cron dans l\'audit.</p>'
     : '<table class="table table-sm mb-0"><tbody>' . implode('', $historyRows) . '</tbody></table>');
 
-echo admin_layout('Crons', renderFlashMessage() . $content);
+echo admin_layout('Crons', $content, [
+    'intro' => 'Exécution manuelle des crons : un groupe entier dans l\'ordre, ou un script'
+        . ' seul. Le code exécuté est le même que celui de l\'exécution planifiée de la nuit.',
+]);

@@ -17,12 +17,7 @@ $csrf = new CsrfProtectionService();
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-    } catch (\RuntimeException $e) {
-        setFlash('danger', 'Security validation failed. Please refresh and try again.');
-        redirectTo('tutorial-settings.php');
-    }
+    requireAdminPost('/admin/tutorial-settings.php');
 
     // Update global enabled setting
     if (isset($_POST['update_global'])) {
@@ -90,11 +85,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         setFlash('success', 'Reward settings updated successfully');
     }
 
-    // Regenerate CSRF token
-    $csrf->regenerateToken();
     TutorialFeatureFlag::clearCache();
 
-    redirectTo('tutorial-settings.php');
+    redirectTo('/admin/tutorial-settings.php');
 }
 
 // Load current settings
@@ -125,7 +118,7 @@ if (!empty($whitelistedPlayers)) {
 
 // Fetch all players for the "add player" dropdown
 $allPlayers = [];
-$result = $database->exe("SELECT id, name, race FROM players WHERE id > 0 ORDER BY name LIMIT 100");
+$result = $database->exe("SELECT id, name, race FROM players WHERE player_type = 'real' ORDER BY name");
 while ($row = $result->fetch_assoc()) {
     $allPlayers[] = $row;
 }
@@ -139,15 +132,12 @@ ob_start();
 ?>
 
 <div>
-    <h1><i class="fas fa-cog"></i> Tutorial Feature Flags</h1>
-
-    <?= renderFlashMessage() ?>
 
     <!-- Override Warnings -->
     <?php if ($hasEnvOverride || $hasConstantOverride || $hasPlayerListOverride): ?>
         <div class="alert alert-warning">
             <strong><i class="fas fa-exclamation-triangle"></i> Configuration Override Active</strong>
-            <p style="margin: 10px 0 0 0; font-size: 0.9em;">
+            <p class="mt-2 mb-0">
                 <?php if ($hasEnvOverride): ?>
                     <code>TUTORIAL_V2_ENABLED</code> environment variable is set - overrides database setting.<br>
                 <?php endif; ?>
@@ -162,7 +152,7 @@ ob_start();
     <?php endif; ?>
 
     <!-- Reward Settings Card (Full Width) -->
-    <div class="card" style="margin-bottom: 20px;">
+    <div class="card">
         <div class="card-header">
             <h3><i class="fas fa-trophy"></i> Tutorial Rewards</h3>
         </div>
@@ -170,13 +160,13 @@ ob_start();
             <form method="post">
                 <?= $csrf->renderTokenField() ?>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <div class="row">
                     <!-- Skip Rewards -->
-                    <div>
-                        <h5 style="margin-bottom: 15px; color: #f44336;">
+                    <div class="col-md-6">
+                        <h5 class="text-danger">
                             <i class="fas fa-forward"></i> Skip Rewards (Without Completion)
                         </h5>
-                        <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">
+                        <p class="form-text mb-3">
                             Rewards given when player skips the tutorial without completing it.
                         </p>
 
@@ -214,11 +204,11 @@ ob_start();
                     </div>
 
                     <!-- Completion Rewards -->
-                    <div>
-                        <h5 style="margin-bottom: 15px; color: #4CAF50;">
+                    <div class="col-md-6">
+                        <h5 class="text-success">
                             <i class="fas fa-check-circle"></i> Completion Rewards
                         </h5>
-                        <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">
+                        <p class="form-text mb-3">
                             Rewards given when player completes all tutorial steps.
                         </p>
 
@@ -256,12 +246,13 @@ ob_start();
                     </div>
                 </div>
 
-                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #dee2e6;">
+                <hr>
+                <div>
                     <button type="submit" name="update_rewards" class="btn btn-primary">
                         <i class="fas fa-save"></i> Save Reward Settings
                     </button>
 
-                    <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                    <div class="alert alert-secondary mt-3 mb-0">
                         <small>
                             <strong>Current Difference:</strong>
                             Completion gives <strong><?= $completionRewardXP - $skipRewardXP ?> more XP</strong>
@@ -273,9 +264,9 @@ ob_start();
         </div>
     </div>
 
-    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+    <div class="row">
         <!-- Global Settings Card -->
-        <div style="flex: 1; min-width: 400px;">
+        <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
                     <h3><i class="fas fa-globe"></i> Global Settings</h3>
@@ -328,7 +319,8 @@ ob_start();
                     </form>
 
                     <!-- Current Status -->
-                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #dee2e6;">
+                    <hr>
+                <div>
                         <h5>Current Status</h5>
                         <table class="table table-sm">
                             <tr>
@@ -352,7 +344,7 @@ ob_start();
         </div>
 
         <!-- Whitelist Card -->
-        <div style="flex: 1; min-width: 400px;">
+        <div class="col-md-6">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3><i class="fas fa-users"></i> Whitelisted Players</h3>
@@ -360,7 +352,7 @@ ob_start();
                 </div>
                 <div class="card-body">
                     <?php if ($hasPlayerListOverride): ?>
-                        <div class="alert alert-warning" style="font-size: 0.9em;">
+                        <div class="alert alert-warning">
                             <i class="fas fa-info-circle"></i> Whitelist is defined in config.php and cannot be edited here.
                         </div>
                     <?php endif; ?>
@@ -368,7 +360,7 @@ ob_start();
                     <!-- Add Player Form -->
                     <form method="post" class="mb-3">
                         <?= $csrf->renderTokenField() ?>
-                        <div class="d-flex" style="gap: 10px;">
+                        <div class="d-flex gap-2">
                             <?php
                             $playerChoices = [];
                             foreach ($allPlayers as $player) {
@@ -417,7 +409,7 @@ ob_start();
                                             <td><?= $player ? e($player['name']) : '<em class="text-muted">Unknown</em>' ?></td>
                                             <td><?= $player ? e($player['race']) : '-' ?></td>
                                             <td>
-                                                <form method="post" style="display: inline;">
+                                                <form method="post" class="d-inline">
                                                     <?= $csrf->renderTokenField() ?>
                                                     <input type="hidden" name="player_id" value="<?= $playerId ?>">
                                                     <button
@@ -440,12 +432,13 @@ ob_start();
 
                     <!-- Raw Edit -->
                     <?php if (!$hasPlayerListOverride): ?>
-                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
+                        <hr>
+                <div>
                             <details>
-                                <summary style="cursor: pointer; color: #6c757d;">
+                                <summary class="text-muted">
                                     <i class="fas fa-edit"></i> Edit Raw Player IDs
                                 </summary>
-                                <form method="post" style="margin-top: 10px;">
+                                <form method="post" class="mt-2">
                                     <?= $csrf->renderTokenField() ?>
                                     <div class="form-group">
                                         <textarea
@@ -469,13 +462,13 @@ ob_start();
     </div>
 
     <!-- Quick Test Section -->
-    <div class="card" style="margin-top: 20px;">
+    <div class="card">
         <div class="card-header">
             <h3><i class="fas fa-flask"></i> Quick Test</h3>
         </div>
         <div class="card-body">
             <p>Test if a specific player can access the tutorial:</p>
-            <div class="d-flex" style="gap: 10px; align-items: center;">
+            <div class="d-flex gap-2 align-items-center">
                 <input type="number" id="test_player_id" class="form-control" placeholder="Player ID" style="max-width: 150px;">
                 <button type="button" class="btn btn-info" onclick="testPlayer()">
                     <i class="fas fa-search"></i> Test Access
@@ -510,35 +503,8 @@ function testPlayer() {
 }
 </script>
 
-<style>
-details summary {
-    padding: 8px 0;
-}
-details summary::-webkit-details-marker {
-    display: none;
-}
-details summary::before {
-    content: '▶ ';
-    font-size: 0.8em;
-}
-details[open] summary::before {
-    content: '▼ ';
-}
-.form-check {
-    padding-left: 0;
-}
-.form-check-input {
-    margin-right: 10px;
-    width: 18px;
-    height: 18px;
-    vertical-align: middle;
-}
-.form-check-label {
-    vertical-align: middle;
-}
-</style>
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Tutorial Feature Flags', $content);
+echo admin_layout('Options du tutoriel', $content);
 ?>

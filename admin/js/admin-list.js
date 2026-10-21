@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
         toolbar.className = 'admin-list-toolbar';
         var search = document.createElement('input');
         search.type = 'search';
-        search.className = 'form-control form-control-sm';
+        search.className = 'form-control';
         search.placeholder = table.getAttribute('data-search-placeholder') || 'Rechercher…';
         toolbar.appendChild(search);
 
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
             var select = document.createElement('select');
-            select.className = 'form-control form-control-sm';
+            select.className = 'form-control';
             select.appendChild(new Option(parts[1] || parts[0], ''));
             Object.keys(values).sort().forEach(function (value) {
                 select.appendChild(new Option(value + ' (' + values[value] + ')', value));
@@ -62,7 +62,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var counter = document.createElement('small');
         counter.className = 'text-muted';
         toolbar.appendChild(counter);
-        table.parentNode.insertBefore(toolbar, table);
+        var box = table.closest('.table-responsive') || table;
+        box.parentNode.insertBefore(toolbar, box);
 
         var pager = document.createElement('div');
         pager.className = 'admin-list-pager';
@@ -73,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function () {
         pager.appendChild(prev);
         pager.appendChild(info);
         pager.appendChild(next);
-        table.parentNode.insertBefore(pager, table.nextSibling);
+        box.parentNode.insertBefore(pager, box.nextSibling);
 
         function pagerButton(label) {
             var button = document.createElement('button');

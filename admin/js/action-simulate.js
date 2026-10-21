@@ -1,4 +1,4 @@
-/* Simulation form behaviour, shared by action-simulate.php and the workbench.
+/* Simulation form behaviour of the workbench "Simuler" tab.
    Extracted from App\View\Action\SimulationFormView. */
 
 /* Clone the last effect row (cleared) so admins can add name+value pairs. */

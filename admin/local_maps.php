@@ -1,5 +1,4 @@
 <?php
-// admin/local_maps.php
 require_once __DIR__ . '/layout.php';
 require_once __DIR__ . '/helpers.php';
 use Classes\Db;
@@ -17,22 +16,17 @@ if (isset($_SESSION['generated_layers']) && strpos(json_encode($_SESSION['genera
 
 $database = new Db();
 $csrf = new CsrfProtectionService();
-$viewService = new ViewService($database, 0, 0, 0, 0, $selectedPlan ?? null);
+$selectedPlan   = optionalString('selected_plan');
+$selectedZLevel = optionalString('selected_z_level');
+$viewService = new ViewService($database, 0, 0, 0, 0, $selectedPlan);
 
 // Get all available plans (local maps)
 $allPlans = $viewService->getAllPlans('all');
-$selectedPlan   = optionalString('selected_plan');
-$selectedZLevel = optionalString('selected_z_level');
 
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['cleanup_local']) || isset($_POST['generate_local']) || isset($_POST['autodetect_bounds']));
 if ($isStateChangingPost) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-    } catch (RuntimeException $e) {
-        setFlash('danger', $e->getMessage());
-        redirectTo('local_maps.php');
-    }
+    requireAdminPost('local_maps.php');
 }
 
 usort($allPlans, 'plan_order');
@@ -99,7 +93,7 @@ if (isset($_POST['cleanup_local'])) {
         }
     }
     
-    $_SESSION['cleanup_report'] = [
+    $cleanupReport = [
         'kept' => $kept,
         'deleted' => $deleted
     ];
@@ -114,11 +108,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_local'])) {
         $results = $viewService->generateLocalMap($layers);
         
         if (!empty($results)) {
-            $_SESSION['flash'] = ['type' => 'success', 'message' => "Couches générées avec succès".($selectedZLevel !== null ? " pour le niveau Z $selectedZLevel" : '')];
+            setFlash('success', 'Couches générées avec succès' . ($selectedZLevel !== null ? " pour le niveau Z $selectedZLevel" : ''));
             $_SESSION['generated_layers'] = $results;
         }
     } catch (Exception $e) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Erreur lors de la génération : ' . $e->getMessage()];
+        setFlash('danger', 'Erreur lors de la génération : ' . $e->getMessage());
     }
 }
 
@@ -126,22 +120,7 @@ ob_start();
 ?>
 
 <div class="container">
-    <h3>Gestion des cartes locales</h3>
-
-    <?= renderFlashMessage() ?>
-
-    <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-        <strong>Qu'est-ce qu'une carte locale ?</strong>
-        Elle est constituée de deux éléments qui doivent être cohérents :
-        <ul class="mb-1 mt-1">
-            <li><strong>Une config de plan</strong> (tables <code style="display:inline;white-space:nowrap">plans</code> / <code style="display:inline;white-space:nowrap">plan_z_levels</code>) : nom, niveaux Z, bornes visibles…</li>
-            <li><strong>Des coordonnées en base</strong> : chaque case dans la table <code style="display:inline;white-space:nowrap">coords</code> (tiles, éléments, murs…)</li>
-        </ul>
-        Un niveau Z peut exister côté coords sans être déclaré dans la config (et inversement) : la validation ci-dessous détecte ces incohérences.
-        Si un niveau n'a volontairement pas de carte, cochez « Pas de carte » dans l'édition du plan (option MapUnavailable).
-    </div>
-
-    <div class="card mt-3">
+    <div class="card">
         <div class="card-body py-2">
             <?= render_season_filter($seasonFilter) ?>
         </div>
@@ -186,14 +165,14 @@ ob_start();
         $totalPlans    = count($overviewPlans);
     ?>
     <details class="card mt-3">
-        <summary class="card-body" style="cursor:pointer;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+        <summary class="d-flex align-items-center gap-2 flex-wrap">
             <h5 class="card-title mb-0">Vue d'ensemble : santé des plans (<?= e(season_filter_label($seasonFilter)) ?>)</h5>
-            <span class="badge" style="background-color:#dc3545;color:#fff;"><?= $errPlanCount ?> avec erreurs</span>
-            <span class="badge" style="background-color:#f0ad4e;color:#fff;"><?= $warnPlanCount ?> avec avertissements seuls</span>
-            <span class="badge" style="background-color:#198754;color:#fff;"><?= $okCount ?> sans problème</span>
+            <span class="badge badge-solid badge-danger"><?= $errPlanCount ?> avec erreurs</span>
+            <span class="badge badge-solid badge-warning"><?= $warnPlanCount ?> avec avertissements seuls</span>
+            <span class="badge badge-solid badge-success"><?= $okCount ?> sans problème</span>
             <small class="text-muted">sur <?= $totalPlans ?> plans</small>
         </summary>
-        <div class="card-body" style="border-top:1px solid #e5e5e5;">
+        <div class="card-body">
             <p class="text-muted small mb-3">Tous les problèmes détectés sur les plans affichés (filtre de saison ci-dessus), sans avoir à les ouvrir un par un. Cliquez sur « Ouvrir » pour aller au plan concerné.</p>
 
             <?php if (empty($plansWithIssues)): ?>
@@ -204,23 +183,24 @@ ob_start();
                     $variant = $x['errCount'] > 0 ? 'danger' : 'warning';
                     $season  = ($p->season ?? null) === null ? 'toutes' : 'S' . $p->season;
                 ?>
-                    <details class="alert alert-<?= $variant ?> mb-2" style="padding:0;">
-                        <summary style="cursor:pointer;padding:.5rem .75rem;font-weight:600;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+                    <details class="alert alert-<?= $variant ?> mb-2">
+                        <summary class="d-flex align-items-center gap-2 flex-wrap">
                             <span><?= e($p->name) ?> <small class="text-muted">(<?= e($p->id) ?>) · <?= $season ?></small></span>
                             <?php if ($x['errCount'] > 0): ?>
-                                <span class="badge" style="background-color:#dc3545;color:#fff;"><?= $x['errCount'] ?> erreur<?= $x['errCount'] > 1 ? 's' : '' ?></span>
+                                <span class="badge badge-solid badge-danger"><?= $x['errCount'] ?> erreur<?= $x['errCount'] > 1 ? 's' : '' ?></span>
                             <?php endif; ?>
                             <?php if ($x['warnCount'] > 0): ?>
-                                <span class="badge" style="background-color:#f0ad4e;color:#fff;"><?= $x['warnCount'] ?> avert.</span>
+                                <span class="badge badge-solid badge-warning"><?= $x['warnCount'] ?> avert.</span>
                             <?php endif; ?>
-                            <a href="#" onclick="event.stopPropagation();selectLocalPlan(<?= e(json_encode($p->id)) ?>);return false;" class="btn btn-secondary btn-sm" style="margin-left:auto;">
-                                <i class="fas fa-arrow-right"></i> Ouvrir
-                            </a>
+                            <form method="post" class="ml-auto m-0">
+                                <input type="hidden" name="selected_plan" value="<?= e($p->id) ?>">
+                                <button type="submit" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-right"></i> Ouvrir</button>
+                            </form>
                         </summary>
-                        <div style="padding:.25rem .5rem .5rem;">
+                        <div class="p-2">
                             <?php
                             if ($x['v'] === null) {
-                                render_validation_group([$x['emptyMsg']], 'danger', 'fa-times-circle', '#dc3545', 'Erreur', true);
+                                render_validation_group([$x['emptyMsg']], 'danger', 'fa-times-circle', 'Erreur', true);
                             } else {
                                 render_validation_report($x['v'], false);
                             }
@@ -232,16 +212,6 @@ ob_start();
         </div>
     </details>
 
-    <script>
-    /* Sélectionne un plan depuis la vue d'ensemble et soumet le formulaire de choix. */
-    function selectLocalPlan(id) {
-        var select = document.getElementById('planSelect');
-        if (select) {
-            select.value = id;
-            document.getElementById('planForm').submit();
-        }
-    }
-    </script>
     <?php endif; ?>
 
     <div class="card mt-3">
@@ -286,7 +256,7 @@ ob_start();
                     echo formSelect('selected_plan', $planChoices,
                         $selectedPlan !== '' ? $selectedPlan : null,
                         '-- Sélectionner un plan (' . season_filter_label($seasonFilter) . ') --',
-                        'class="form-control" id="planSelect" onchange="this.form.submit()"');
+                        'class="form-control" id="planSelect" data-autosubmit');
                     ?>
                     <?php if (empty($filteredPlans)): ?>
                         <small class="text-muted">Aucun plan ne correspond au filtre « <?= e(season_filter_label($seasonFilter)) ?> » — élargir le filtre ci-dessus.</small>
@@ -296,13 +266,13 @@ ob_start();
             </form>
             
             <?php if ($selectedPlan): ?>
-                <div class="mt-4" style="padding:1rem;border:1px solid #d6d8db;border-radius:.375rem;background:#fff;">
+                <div class="mt-4 p-3 border rounded">
                     <?php
                         $selectedPlanData = array_filter($allPlans, fn($p) => $p->id === $selectedPlan);
                         $plan = reset($selectedPlanData);
                         $seasonBadge = ' ' . season_badge($plan->season ?? null);
                     ?>
-                    <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
                         <div>
                             <strong>Plan sélectionné : <?= e($plan->name) ?> (<?= e($plan->id) ?>)<?= $seasonBadge ?></strong>
                             <?php if ($plan->hasZLevels ?? false): ?>
@@ -351,7 +321,7 @@ ob_start();
                                 echo formSelect('selected_z_level', $zChoices,
                                     ($selectedZLevel !== null && $selectedZLevel !== '') ? (string) $selectedZLevel : null,
                                     '-- Tous les niveaux --',
-                                    'class="form-control" id="zLevelSelect" onchange="this.form.submit()"');
+                                    'class="form-control" id="zLevelSelect" data-autosubmit');
                                 ?>
                             </div>
                             <?php if ($selectedZLevel !== null && $selectedZLevel !== ''):
@@ -428,13 +398,12 @@ ob_start();
                 </div>
             <?php endif; ?>
             
-            <?php if (isset($_SESSION['cleanup_report'])): ?>
+            <?php if (isset($cleanupReport)): ?>
                 <div class="alert alert-success mt-3">
                     <strong>Résultats du nettoyage :</strong><br><br>
-                    <strong>Fichiers conservés :</strong><br><?=implode("<br>", $_SESSION['cleanup_report']['kept'])?><br><br>
-                    <strong>Fichiers supprimés :</strong><br><?=(count($_SESSION['cleanup_report']['deleted']) ? implode("<br>", $_SESSION['cleanup_report']['deleted']) : "Aucun")?>
+                    <strong>Fichiers conservés :</strong><br><?=implode("<br>", $cleanupReport['kept'])?><br><br>
+                    <strong>Fichiers supprimés :</strong><br><?=(count($cleanupReport['deleted']) ? implode("<br>", $cleanupReport['deleted']) : "Aucun")?>
                 </div>
-                <?php unset($_SESSION['cleanup_report']); ?>
             <?php endif; ?>
             
             <?php if (isset($_SESSION['generated_layers'])): ?>
@@ -522,7 +491,7 @@ ob_start();
         <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div>
                 <h5 class="card-title mb-1">Transitions de terrain (pinceau Terrain de Tiled)</h5>
-                <p class="text-muted mb-0" style="font-size:13px;">
+                <p class="text-muted small mb-0">
                     Classification des tuiles du plan (terrain / hors terrain), audit des frontières
                     et génération des fondus manquants : sur la page dédiée.
                 </p>
@@ -538,5 +507,11 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Gestion des cartes locales', $content);
-?>
+echo admin_layout('Cartes locales', $content, ['intro' => '<strong>Qu\'est-ce qu\'une carte locale ?</strong>
+        Elle est constituée de deux éléments qui doivent être cohérents :
+        <ul class="mb-1 mt-1">
+            <li><strong>Une config de plan</strong> (tables <code>plans</code> / <code>plan_z_levels</code>) : nom, niveaux Z, bornes visibles…</li>
+            <li><strong>Des coordonnées en base</strong> : chaque case dans la table <code>coords</code> (tiles, éléments, murs…)</li>
+        </ul>
+        Un niveau Z peut exister côté coords sans être déclaré dans la config (et inversement) : la validation ci-dessous détecte ces incohérences.
+        Si un niveau n\'a volontairement pas de carte, cochez « Pas de carte » dans l\'édition du plan (option MapUnavailable).']);

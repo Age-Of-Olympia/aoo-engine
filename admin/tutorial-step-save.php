@@ -11,9 +11,7 @@
 require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
 require_once(__DIR__ . '/helpers.php');
 
-use App\Service\AdminAuthorizationService;
 use App\Service\AdminMenuAccessService;
-use App\Service\CsrfProtectionService;
 use App\Service\TutorialStepValidationService;
 use App\Service\TutorialStepSaveService;
 use Classes\Db;
@@ -21,51 +19,32 @@ use Classes\Db;
 // Check admin authorization
 (new AdminMenuAccessService())->enforce('tutorial.steps');
 
-// Only accept POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirectTo('tutorial.php');
-}
+// Get database ID from db_step_id (for edits), not from step_id field
+$dbStepId = optionalInt('db_step_id');
+$isEdit = $dbStepId !== null;
+$editorUrl = '/admin/tutorial-step-editor.php' . ($isEdit ? "?id={$dbStepId}" : '');
 
-// Initialize services
-$csrf = new CsrfProtectionService();
+// POST with a valid token only; a refused one is not stashed into the editor.
+requireAdminPost($editorUrl);
+
 $database = new Db();
 $validator = new TutorialStepValidationService();
 $saveService = new TutorialStepSaveService($database, $validator);
 
-// Get database ID from db_step_id (for edits), not from step_id field
-$dbStepId = optionalInt('db_step_id');
-$isEdit = $dbStepId !== null;
-
 try {
-    // CSRF Protection
-    $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-
-    // Save step using service
-    $savedStepId = $saveService->saveStep($_POST, $dbStepId);
-
-    // Regenerate CSRF token for next request
-    $csrf->regenerateToken();
+    $saveService->saveStep($_POST, $dbStepId);
 
     // Success flash message
     setFlash('success', ($isEdit ? 'Step updated' : 'Step created') . ' successfully!');
 
-    redirectTo('tutorial.php');
+    redirectTo('/admin/tutorial.php');
 
 } catch (\InvalidArgumentException $e) {
     // Validation errors - user-friendly messages
     setFlash('warning', $e->getMessage());
     stashOldInput();
 
-    // Redirect back to form with step ID if editing
-    redirectTo('tutorial-step-editor.php' . ($isEdit ? "?id={$dbStepId}" : ''));
-
-} catch (\RuntimeException $e) {
-    // Security errors (CSRF, etc.) - user-friendly messages.
-    // No stash: a CSRF-failed POST is untrusted and must not be
-    // replayed into the editor from the session.
-    setFlash('danger', $e->getMessage());
-
-    redirectTo('tutorial-step-editor.php' . ($isEdit ? "?id={$dbStepId}" : ''));
+    redirectTo($editorUrl);
 
 } catch (\Exception $e) {
     // Unexpected errors - log technical details, show generic message
@@ -74,7 +53,7 @@ try {
     setFlash('danger', 'An unexpected error occurred while saving. Please try again or contact support if the problem persists.');
     stashOldInput();
 
-    redirectTo('tutorial-step-editor.php' . ($isEdit ? "?id={$dbStepId}" : ''));
+    redirectTo($editorUrl);
 }
 
 /**

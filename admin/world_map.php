@@ -1,5 +1,4 @@
 <?php
-// admin/maps.php
 require_once __DIR__ . '/layout.php';
 require_once __DIR__ . '/helpers.php';
 
@@ -18,12 +17,7 @@ if (isset($_SESSION['generated_layers']) && strpos(json_encode($_SESSION['genera
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-    } catch (RuntimeException $e) {
-        setFlash('danger', $e->getMessage());
-        redirectTo('world_map.php');
-    }
+    requireAdminPost('world_map.php');
 
     if (isset($_POST['generate_global'])) {
         try {
@@ -31,13 +25,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $results = $viewService->generateGlobalMap($layers);
             
             if (!empty($results)) {
-                $_SESSION['flash'] = ['type' => 'success', 'message' => 'Couches de la carte monde générées avec succès'];
+                setFlash('success', 'Couches de la carte monde générées avec succès');
                 $_SESSION['generated_layers'] = $results;
             } else {
-                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Échec de la génération des couches'];
+                setFlash('danger', 'Échec de la génération des couches');
             }
         } catch (Exception $e) {
-            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Erreur lors de la génération : ' . $e->getMessage()];
+            setFlash('danger', 'Erreur lors de la génération : ' . $e->getMessage());
         }
     }
     
@@ -74,12 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
-        // Format detailed message
-        $message = "<strong>Rapport de nettoyage :</strong><br>";
-        $message .= "<strong>Supprimés :</strong> " . (count($report['deleted']) ? implode(', ', $report['deleted']) : 'aucun') . "<br>";
-        $message .= "<strong>Conservés :</strong> " . implode(', ', $report['kept']);
-        
-        $_SESSION['flash'] = ['type' => 'success', 'message' => $message, 'html' => true];
+        setFlash('success', 'Nettoyage — supprimés : '
+            . ($report['deleted'] ? implode(', ', $report['deleted']) : 'aucun')
+            . ' ; conservés : ' . implode(', ', $report['kept']));
     }
     
     if (isset($_POST['show_latest'])) {
@@ -113,22 +104,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['generated_layers'] = $orderedLayers;
         }
     }
+
+    redirectTo('world_map.php');
 }
 
 ob_start();
 ?>
 
 <div class="container">
-    <h3>Gestion de la carte monde</h3>
-
-    <?php if (isset($_SESSION['flash'])): ?>
-        <div class="alert alert-<?=$_SESSION['flash']['type']?>" role="alert">
-            <?= $_SESSION['flash']['html'] ?? false ? $_SESSION['flash']['message'] : htmlspecialchars($_SESSION['flash']['message']) ?>
-        </div>
-        <?php unset($_SESSION['flash']); ?>
-    <?php endif; ?>
-
-    <div class="card mt-3">
+    <div class="card">
         <div class="card-body">
             <h5 class="card-title">Nettoyer les anciennes cartes</h5>
             <form method="post" class="d-flex align-items-center gap-3">
@@ -185,5 +169,4 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Gestion carte monde', $content);
-?>
+echo admin_layout('Carte monde', $content);

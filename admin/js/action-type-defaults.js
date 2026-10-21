@@ -3,7 +3,7 @@
 (function () {
     'use strict';
     var KEY = 'aoo.typeDefaults.tab';
-    var tabs = Array.prototype.slice.call(document.querySelectorAll('.wb-tab'));
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.wb-tabbar .nav-link'));
     var panels = Array.prototype.slice.call(document.querySelectorAll('.wb-tabpanel'));
     if (!tabs.length) {
         return;
@@ -11,7 +11,7 @@
 
     function activate(index) {
         tabs.forEach(function (tab) {
-            tab.classList.toggle('wb-tab--active', tab.getAttribute('data-tab') === String(index));
+            tab.classList.toggle('active', tab.getAttribute('data-tab') === String(index));
         });
         panels.forEach(function (panel) {
             panel.hidden = panel.getAttribute('data-tab') !== String(index);
@@ -28,7 +28,7 @@
 
     var saved = null;
     try { saved = sessionStorage.getItem(KEY); } catch (e) { /* ignore */ }
-    if (saved !== null && document.querySelector('.wb-tab[data-tab="' + saved + '"]')) {
+    if (saved !== null && document.querySelector('.wb-tabbar .nav-link[data-tab="' + saved + '"]')) {
         activate(saved);
     }
 })();

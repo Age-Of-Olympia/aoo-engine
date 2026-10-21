@@ -1,362 +1,138 @@
-/**
- * Tutorial Admin Panel - Enhanced UI/UX Styles
- */
+/* Tutorial admin pages: what only they draw. Buttons, cards, tabs, badges,
+   pagination and progress come from admin.css. */
 
-/* ========================================
-   Template Selector
-   ======================================== */
-#template_selector:focus {
-    border-color: #28a745;
-    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
-}
+.tutorial-icon { font-size: 1.5rem; vertical-align: middle; }
 
-/* ========================================
-   Relevant Field Highlighting
-   ======================================== */
-.relevant-field {
-    background-color: #f8f9fa;
-    border-left: 3px solid #007bff;
-    padding-left: 1rem;
-    transition: all 0.3s ease;
-}
+/* Difficulty of a catalogue tutorial */
+.badge-beginner { background: var(--success-wash); color: var(--success); }
+.badge-intermediate { background: var(--warning-wash); color: var(--warning); }
+.badge-advanced { background: var(--danger-wash); color: var(--danger); }
 
-.relevant-field label {
-    font-weight: 600;
-    color: #007bff;
-}
-
-/* ========================================
-   Tab Status Indicators
-   ======================================== */
-.tab-status {
-    margin-left: 0.5rem;
-    font-size: 0.875rem;
-}
-
-.tab-status .fa-check-circle {
-    color: #28a745;
-}
-
-.tab-status .fa-exclamation-triangle {
-    color: #ffc107;
-}
-
-.tab-status .fa-times-circle {
-    color: #dc3545;
-}
-
-.tab-status .fa-circle {
-    color: #6c757d;
-}
-
-/* ========================================
-   Quick Actions Panel
-   ======================================== */
-.quick-actions-card {
-    position: sticky;
-    top: 10px;
-    z-index: 100;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-}
-
-/* ========================================
-   Preview Modal
-   ======================================== */
-.preview-container {
-    min-height: 400px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 8px;
-    padding: 2rem;
-    display: flex;
+/* Session counters above the sessions table */
+.session-stats-inline { display: flex; flex-wrap: wrap; gap: 8px; }
+.stat-badge {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
 }
+.stat-badge.bg-success { background: var(--success-wash); color: var(--success); }
+.stat-badge.bg-primary { background: var(--accent-wash); color: var(--accent); }
+.stat-badge.bg-info { background: var(--info-wash); color: var(--info); }
 
-.preview-container .tutorial-tooltip {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    padding: 1.5rem;
-    max-width: 400px;
-    animation: fadeIn 0.3s ease;
+/* A session's steps, as a vertical timeline */
+.timeline { position: relative; max-height: 400px; overflow-y: auto; padding-left: 2rem; }
+.timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--rule); }
+.timeline-item { position: relative; padding-bottom: 1rem; }
+.timeline-marker {
+    position: absolute;
+    left: -2rem;
+    width: 14px;
+    height: 14px;
+    margin-top: 2px;
+    border: 2px solid var(--paper);
+    border-radius: 50%;
+    background: var(--mute);
+    box-shadow: 0 0 0 2px var(--rule);
 }
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.timeline-item.in-progress .timeline-marker { animation: tutorial-pulse 2s infinite; }
+@keyframes tutorial-pulse {
+    50% { opacity: 0.7; transform: scale(1.2); }
 }
+.timeline-content { padding: 0.5rem 0.75rem; border-radius: var(--r); background: var(--surface-alt); font-size: 0.9rem; }
 
-.preview-container .tooltip-title {
-    font-size: 1.25rem;
-    font-weight: bold;
-    margin-bottom: 0.75rem;
-    color: #333;
-}
-
-.preview-container .tooltip-text {
-    font-size: 1rem;
-    line-height: 1.5;
-    color: #666;
-    margin-bottom: 1rem;
-}
-
-.preview-container .btn-tutorial-primary {
-    background: #007bff;
-    color: white;
-    border: none;
-    padding: 0.5rem 1.5rem;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.3s ease;
-}
-
-.preview-container .btn-tutorial-primary:hover {
-    background: #0056b3;
-}
-
-/* ========================================
-   Toast Notifications
-   ======================================== */
+/* Toast after an AJAX action */
 .toast-notification {
     position: fixed;
     top: 20px;
     right: 20px;
     z-index: 9999;
-    min-width: 300px;
-    animation: slideIn 0.3s ease;
+    width: min(360px, calc(100vw - 40px));
 }
 
-@keyframes slideIn {
-    from {
-        transform: translateX(400px);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-/* ========================================
-   Form Improvements
-   ======================================== */
-.form-group label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-
-.form-group small.form-text {
-    color: #6c757d;
-    font-size: 0.875rem;
-}
-
-.help-icon {
-    color: #6c757d;
-    cursor: help;
-    margin-left: 0.25rem;
-}
-
-.help-icon:hover {
-    color: #007bff;
-}
-
-/* ========================================
-   Collapsible Sections
-   ======================================== */
-.advanced-section {
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    padding: 0;
-    margin-top: 1rem;
-}
-
-.advanced-section summary {
-    padding: 1rem;
-    background: #f8f9fa;
-    cursor: pointer;
-    font-weight: 600;
-    list-style: none;
+/* Session detail and step preview: one modal look */
+.admin-modal-overlay, .preview-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: center;
+    background: rgba(20, 28, 36, 0.55);
+}
+.admin-modal, .preview-modal {
+    width: min(800px, 92vw);
+    max-height: 90vh;
+    overflow: auto;
+    border-radius: var(--r-lg);
+    background: var(--paper);
+    box-shadow: var(--shadow);
+}
+.admin-modal-header, .preview-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface-alt);
+}
+.admin-modal-header h5, .preview-modal-header h5 { margin: 0; font-size: 1.05rem; font-weight: 600; }
+.admin-modal-close, .preview-modal-close {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--mute);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+}
+.admin-modal-close:hover, .preview-modal-close:hover { color: var(--ink); background: none; }
+.admin-modal-body, .preview-modal-body { padding: 1.25rem; }
+.admin-modal-body { max-height: 60vh; overflow-y: auto; }
+.admin-modal-footer { padding: 0.9rem 1.25rem; border-top: 1px solid var(--rule); text-align: right; }
+
+/* Step preview: the in-game tooltip on a neutral stage */
+.preview-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    padding: 2rem 1rem;
+    border-radius: var(--r-lg);
+    background: var(--slate);
+}
+.preview-container .tutorial-tooltip {
+    max-width: 400px;
+    padding: 1.5rem;
+    border-radius: var(--r-lg);
+    background: var(--paper);
+    box-shadow: var(--shadow);
+}
+.preview-container .tooltip-title { margin-bottom: 0.75rem; font-size: 1.2rem; font-weight: 700; color: var(--ink); }
+.preview-container .tooltip-text { margin-bottom: 1rem; line-height: 1.5; color: var(--mute); }
+.preview-container .btn-tutorial-primary {
+    padding: 0.5rem 1.5rem;
+    border: 0;
+    border-radius: var(--r);
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
 }
 
-.advanced-section summary::-webkit-details-marker {
-    display: none;
-}
+/* Step editor */
+.tab-status { margin-left: 0.4rem; font-size: 0.85rem; }
+.tab-status .fa-check-circle { color: var(--success); }
+.tab-status .fa-exclamation-triangle { color: var(--warning); }
+.tab-status .fa-times-circle { color: var(--danger); }
+.tab-status .fa-circle { color: var(--mute); }
+.quick-actions-card { position: sticky; top: 10px; z-index: 5; }
+.help-icon { margin-left: 0.25rem; color: var(--mute); cursor: help; }
+.help-icon:hover { color: var(--accent); }
 
-.advanced-section summary::after {
-    content: '▼';
-    transition: transform 0.3s ease;
-}
-
-.advanced-section[open] summary::after {
-    transform: rotate(-180deg);
-}
-
-.advanced-content {
-    padding: 1rem;
-}
-
-.optional-badge {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    background: #6c757d;
-    color: white;
-    border-radius: 12px;
-}
-
-/* ========================================
-   Session Management Styles
-   ======================================== */
-.session-card {
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 1rem;
-    background: white;
-    transition: box-shadow 0.3s ease;
-}
-
-.session-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.session-card-completed {
-    border-left: 4px solid #28a745;
-    padding: 0.75rem;
-    background: #f8f9fa;
-}
-
-.timeline {
-    position: relative;
-    padding-left: 2rem;
-}
-
-.timeline::before {
-    content: '';
-    position: absolute;
-    left: 8px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: #dee2e6;
-}
-
-.timeline-item {
-    position: relative;
-    padding-bottom: 1.5rem;
-}
-
-.timeline-marker {
-    position: absolute;
-    left: -2rem;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #28a745;
-    border: 2px solid white;
-    box-shadow: 0 0 0 2px #dee2e6;
-}
-
-.timeline-item.in-progress .timeline-marker {
-    background: #007bff;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.7;
-        transform: scale(1.1);
-    }
-}
-
-.timeline-content {
-    background: #f8f9fa;
-    padding: 0.75rem;
-    border-radius: 4px;
-}
-
-/* ========================================
-   Responsive Adjustments
-   ======================================== */
-@media (max-width: 768px) {
-    .quick-actions-card {
-        position: static;
-    }
-
-    .preview-container {
-        min-height: 300px;
-    }
-
-    .timeline {
-        padding-left: 1.5rem;
-    }
-}
-
-/* ========================================
-   Validation States
-   ======================================== */
-.form-control.is-valid {
-    border-color: #28a745;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right calc(0.375em + 0.1875rem) center;
-    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-}
-
-.form-control.is-invalid {
-    border-color: #dc3545;
-}
-
-.valid-feedback {
-    color: #28a745;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-}
-
-.invalid-feedback {
-    color: #dc3545;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-}
-
-/* ========================================
-   Loading States
-   ======================================== */
-.btn.loading {
-    position: relative;
-    color: transparent;
-}
-
-.btn.loading::after {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    top: 50%;
-    left: 50%;
-    margin-left: -8px;
-    margin-top: -8px;
-    border: 2px solid #fff;
-    border-radius: 50%;
-    border-top-color: transparent;
-    animation: spinner 0.6s linear infinite;
-}
-
-@keyframes spinner {
-    to {
-        transform: rotate(360deg);
-    }
+@media (max-width: 900px) {
+    .quick-actions-card { position: static; }
 }

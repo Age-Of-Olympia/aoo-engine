@@ -169,11 +169,9 @@ function renderFlashMessage(): string
     $message = e($flash['message'] ?? '');
 
     return <<<HTML
-    <div class="alert alert-{$type} alert-dismissible fade show" role="alert">
+    <div class="alert alert-{$type} alert-dismissible" role="alert">
         {$message}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
+        <button type="button" class="close" aria-label="Fermer">&times;</button>
     </div>
 HTML;
 }
@@ -299,19 +297,16 @@ function renderDatalist(string $id, array $options): string
  *
  * @param string[] $items Messages déjà prêts à l'affichage (parties dynamiques échappées par PlanJsonValidator)
  */
-function render_validation_group(array $items, string $variant, string $icon, string $color, string $label, bool $open): void
+function render_validation_group(array $items, string $variant, string $icon, string $label, bool $open): void
 {
     if (empty($items)) {
         return;
     }
-    $openAttr   = $open ? ' open' : '';
-    $badgeStyle = 'background-color:' . $color . ';color:#fff;';
-    echo '<details class="alert alert-' . $variant . ' mb-2" style="padding:0;"' . $openAttr . '>';
-    echo   '<summary style="cursor:pointer;padding:.5rem .75rem;font-weight:600;">';
-    echo     '<i class="fas ' . $icon . '"></i> ' . e($label);
-    echo     ' <span class="badge" style="' . $badgeStyle . '">' . count($items) . '</span>';
+    echo '<details class="alert alert-' . $variant . ' mb-2"' . ($open ? ' open' : '') . '>';
+    echo   '<summary><i class="fas ' . $icon . '"></i> ' . e($label);
+    echo     ' <span class="badge badge-solid badge-' . $variant . '">' . count($items) . '</span>';
     echo   '</summary>';
-    echo   '<ul class="mb-0" style="padding:.25rem .75rem .75rem 2.2rem;font-size:13px;line-height:1.6;">';
+    echo   '<ul>';
     foreach ($items as $msg) {
         echo '<li>' . $msg . '</li>';
     }
@@ -329,10 +324,10 @@ function render_validation_report(array $validation, bool $includeOk = true): vo
 {
     $z = $validation['z'];
 
-    render_validation_group($z['errors'],   'danger',  'fa-times-circle',        '#dc3545', 'Erreurs (niveaux Z)', true);
-    render_validation_group($z['warnings'], 'warning', 'fa-exclamation-triangle', '#f0ad4e', 'Avertissements (niveaux Z)', true);
+    render_validation_group($z['errors'],   'danger',  'fa-times-circle',        'Erreurs (niveaux Z)', true);
+    render_validation_group($z['warnings'], 'warning', 'fa-exclamation-triangle', 'Avertissements (niveaux Z)', true);
     if ($includeOk) {
-        render_validation_group($z['ok'], 'success', 'fa-check-circle', '#198754', 'Validations OK (niveaux Z)', false);
+        render_validation_group($z['ok'], 'success', 'fa-check-circle', 'Validations OK (niveaux Z)', false);
     }
 }
 
@@ -451,14 +446,14 @@ function render_season_filter(string $current): string
     }
     $choices['all'] = 'Toutes';
 
-    $html = '<form method="post" class="d-flex align-items-center gap-3 flex-wrap" style="font-size:13px;">';
+    $html = '<form method="post" class="d-flex align-items-center gap-3 flex-wrap small">';
     $html .= '<span class="text-muted"><i class="fas fa-filter"></i> Plans affichés :</span>';
     foreach ($choices as $value => $label) {
-        $html .= '<label class="mb-0" style="cursor:pointer;">'
+        $html .= '<label class="mb-0">'
             . '<input type="radio" name="season_filter" value="' . e($value) . '"'
             // Numeric array keys come back as int.
             . ' ' . checked($current === (string) $value)
-            . ' onchange="this.form.submit()"> '
+            . ' data-autosubmit> '
             . e($label)
             . '</label>';
     }
@@ -565,4 +560,91 @@ function renderTable(array $headers, array $rows, string $attrs = ''): string
     return '<div class="table-responsive"><table' . $classAttr . ($attrs !== '' ? ' ' . $attrs : '') . '>'
         . '<thead><tr>' . $head . '</tr></thead>'
         . '<tbody>' . implode('', $rows) . '</tbody></table></div>';
+}
+
+/**
+ * The card closing an edit form with what cannot be undone (delete,
+ * rename). Its buttons ask first through data-confirm (admin/js/admin.js).
+ */
+function dangerZone(string $bodyHtml): string
+{
+    return '<div class="card mt-4 border-danger"><div class="card-header">Zone dangereuse</div>'
+        . '<div class="card-body">' . $bodyHtml . '</div></div>';
+}
+
+/**
+ * Prologue of every state-changing admin request: a non-POST or a request
+ * without a valid CSRF token goes back to $back with nothing done.
+ */
+function requireAdminPost(string $back): void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        redirectTo($back);
+    }
+    if (!(new \App\Service\CsrfProtectionService())->validateToken($_POST['csrf_token'] ?? null)) {
+        setFlash('warning', 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
+        redirectTo($back);
+    }
+}
+
+/**
+ * One admin form submission, posted then redirected (PRG): check the request,
+ * run $action, flash what it returns, go to $redirect. An exception becomes
+ * the flash instead — a warning for a refused input, an error otherwise.
+ *
+ * @param callable(): string $action returns the success message
+ */
+function handleAdminPost(string $redirect, callable $action): never
+{
+    requireAdminPost($redirect);
+    try {
+        setFlash('success', $action());
+    } catch (\InvalidArgumentException $e) {
+        setFlash('warning', $e->getMessage());
+    } catch (\Throwable $e) {
+        setFlash('danger', 'Échec : ' . $e->getMessage());
+    }
+    redirectTo($redirect);
+}
+
+/**
+ * Plans a form can point at: configured plans and plans that only have
+ * cells, by name when configured. Tutorial instances are private to their
+ * player: left out.
+ *
+ * @return array<string, string> slug => label
+ */
+function plan_choices(): array
+{
+    $slugs = array_keys(plans()->all());
+    $res = (new \Classes\Db())->exe('SELECT DISTINCT plan FROM coords');
+    while ($row = $res->fetch_assoc()) {
+        $slugs[] = (string) $row['plan'];
+    }
+
+    $choices = [];
+    foreach (array_unique($slugs) as $slug) {
+        if (!str_starts_with($slug, 'tut_')) {
+            $config = plans()->read($slug);
+            $choices[$slug] = $config ? ($config->name ?? $slug) . ' (' . $slug . ')' : $slug;
+        }
+    }
+    asort($choices);
+
+    return $choices;
+}
+
+/**
+ * Character races (players, PNJ) by their display name.
+ *
+ * @return array<string, string> code => label
+ */
+function character_race_choices(): array
+{
+    $choices = [];
+    foreach ((new \App\Service\RaceService())->getRacesByKind('character') as $race) {
+        $choices[$race->getName()] = $race->getLabel();
+    }
+
+    return $choices;
 }

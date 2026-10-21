@@ -20,9 +20,10 @@ $csrf = new CsrfProtectionService();
 $service = new PlanSeasonRenameService();
 $report = null;
 
+/* The POST renders its own report on the same request: no redirect. */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['apply_renames'])) {
+    requireAdminPost('/admin/plan-season-rename.php');
     try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
         $report = $service->apply();
         if ($report['failed'] !== null) {
             setFlash('danger', sprintf(
@@ -51,26 +52,6 @@ $currentSeason = (new SeasonService())->current();
 
 ob_start();
 ?>
-<h1>Plans — renommage de saison</h1>
-
-<?= renderFlashMessage() ?>
-
-<div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-    <strong>Pourquoi cette page ?</strong>
-    La saison est une colonne (<code style="display:inline">plans.season</code>) : le suffixe
-    <code style="display:inline">_sX</code> du nom est un reste de l'ancien système. Cette page donne le nom de base
-    aux plans de la <strong>saison courante (<?= (int) $currentSeason ?>)</strong> et ajoute leur numéro de saison
-    au nom des archives. Rejouable à chaque ouverture de saison.
-    <ul class="mb-0 mt-1">
-        <li>Chaque renommage est répercuté partout : coords, journaux, rendements, réglages, téléporteurs,
-            conditions d'action, PNG de minimap.</li>
-        <li>Un plan sans fond configuré, qui utilise <code style="display:inline">img/tiles/&lt;nom&gt;</code>,
-            reçoit ce fond dans sa config avant le renommage : l'affichage ne change pas.</li>
-        <li>Les conflits (nom de base déjà utilisé par la saison courante ou par un plan de toutes saisons) sont ignorés
-            et signalés : à trancher à la main.</li>
-    </ul>
-</div>
-
 <?php if ($report !== null && $report['renamed'] !== []): ?>
     <div class="card mb-3">
         <div class="card-body">
@@ -88,9 +69,9 @@ ob_start();
         <h5 class="card-title">Ce qu'un lancement ferait</h5>
 
         <?php if ($preview['skipped'] !== []): ?>
-            <div class="alert alert-warning py-1" style="font-size: 13px;">
+            <div class="alert alert-warning py-1">
                 <?php foreach ($preview['skipped'] as $slug => $why): ?>
-                    <div><code style="display:inline"><?= e($slug) ?></code> — <?= e($why) ?></div>
+                    <div><code><?= e($slug) ?></code> — <?= e($why) ?></div>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
@@ -98,7 +79,7 @@ ob_start();
         <?php if ($preview['operations'] === []): ?>
             <div class="alert alert-success mb-0">Rien à renommer : les noms sont déjà normalisés.</div>
         <?php else: ?>
-            <table class="table table-striped table-sm" style="max-width: 760px;">
+            <table class="table table-striped table-sm">
                 <thead><tr><th>Ordre</th><th>De</th><th>Vers</th><th>Nature</th><th>Fond épinglé</th></tr></thead>
                 <tbody>
                 <?php foreach ($preview['operations'] as $i => $op): ?>
@@ -109,14 +90,14 @@ ob_start();
                         <td><?= $op['kind'] === 'archive'
                             ? '<span class="badge bg-secondary">archive déplacée</span>'
                             : '<span class="badge bg-success">suffixe retiré</span>' ?></td>
-                        <td style="font-size:12px;"><?= $op['pinBg'] !== null ? e($op['pinBg']) : '—' ?></td>
+                        <td class="small"><?= $op['pinBg'] !== null ? e($op['pinBg']) : '—' ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
             </table>
 
             <form method="post" class="d-flex align-items-center gap-3"
-                  onsubmit="return confirm('Renommer <?= count($preview['operations']) ?> plan(s) ? Chaque renommage est définitif (l\'historique est renommé aussi).');">
+                  data-confirm="Renommer <?= count($preview['operations']) ?> plan(s) ? Chaque renommage est définitif (l'historique est renommé aussi).">
                 <?= $csrf->renderTokenField() ?>
                 <button type="submit" name="apply_renames" class="btn btn-primary">
                     <i class="fas fa-signature"></i> Renommer <?= count($preview['operations']) ?> plan(s)
@@ -129,4 +110,20 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Plans — renommage de saison', $content);
+ob_start();
+?>
+<strong>Pourquoi cette page ?</strong>
+    La saison est une colonne (<code>plans.season</code>) : le suffixe
+    <code>_sX</code> du nom est un reste de l'ancien système. Cette page donne le nom de base
+    aux plans de la <strong>saison courante (<?= (int) $currentSeason ?>)</strong> et ajoute leur numéro de saison
+    au nom des archives. Rejouable à chaque ouverture de saison.
+    <ul class="mb-0 mt-1">
+        <li>Chaque renommage est répercuté partout : coords, journaux, rendements, réglages, téléporteurs,
+            conditions d'action, PNG de minimap.</li>
+        <li>Un plan sans fond configuré, qui utilise <code>img/tiles/&lt;nom&gt;</code>,
+            reçoit ce fond dans sa config avant le renommage : l'affichage ne change pas.</li>
+        <li>Les conflits (nom de base déjà utilisé par la saison courante ou par un plan de toutes saisons) sont ignorés
+            et signalés : à trancher à la main.</li>
+    </ul>
+<?php
+echo admin_layout('Renommage de saison', $content, ['intro' => ob_get_clean()]);

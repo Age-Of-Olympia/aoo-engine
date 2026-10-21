@@ -41,12 +41,7 @@ $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
         || ($structureMode && (isset($_POST['image_replace']) || isset($_POST['image_replace_all'])
             || isset($_POST['state_upload']) || isset($_POST['state_delete']))));
 if ($isStateChangingPost) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-    } catch (RuntimeException $e) {
-        setFlash('danger', $e->getMessage());
-        redirectTo($backTo);
-    }
+    requireAdminPost($backTo);
 
     $uploadedFile = static function (): string {
         $file = $_FILES['image_file'] ?? null;
@@ -137,34 +132,26 @@ $thumbHeight = $type === ImageType::PORTRAIT ? 76 : 50;
 $usersByPath = $entries !== [] ? $service->usersByPath($type, $race) : [];
 $imageDir = '/img/' . ($type === ImageType::PORTRAIT ? 'portraits' : 'avatars') . '/' . $race . '/';
 
+$intro = $structureMode
+    ? 'Images des types de bâtiments : chaque exemplaire posé affiche une image du stock,
+        choisie dans l\'éditeur de carte (une vignette par image) ou dans admin → Bâtiments → Éditer ;
+        à défaut, la première image du stock (sinon le sprite de mur du même nom).
+        <strong>Remplacer</strong> change une image pour les exemplaires qui l\'affichent ;
+        <strong>Supprimer</strong> fait passer ses exemplaires sur la première image ;
+        <strong>Remplacer toutes les images</strong> met une seule image sur tous les exemplaires.
+        Un type à plusieurs cases utilise l\'image découpée selon sa forme (Formes → Découper), pas le stock.'
+    : 'Images de personnage par race : avatars (50×50, carte et listes) et portraits
+        (210×320 + miniature 50×79, fiche de personnage). L\'ajout redimensionne l\'image à la taille
+        attendue et la numérote avec le compteur de la race ; la suppression est refusée tant
+        qu\'un joueur utilise l\'image. Les joueurs choisissent leur image en jeu ; cette page gère le stock.';
+
 ob_start();
 ?>
 
 <div class="container">
-    <h3><?= e($pageTitle) ?></h3>
-
-    <?= renderFlashMessage() ?>
-
-    <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-        <?php if ($structureMode): ?>
-            Images des types de bâtiments : chaque exemplaire posé affiche une image du stock,
-            choisie dans l'éditeur de carte (une vignette par image) ou dans admin → Bâtiments → Éditer ;
-            à défaut, la première image du stock (sinon le sprite de mur du même nom).
-            <strong>Remplacer</strong> change une image pour les exemplaires qui l'affichent ;
-            <strong>Supprimer</strong> fait passer ses exemplaires sur la première image ;
-            <strong>Remplacer toutes les images</strong> met une seule image sur tous les exemplaires.
-            Un type à plusieurs cases utilise l'image découpée selon sa forme (Formes → Découper), pas le stock.
-        <?php else: ?>
-            Images de personnage par race : avatars (50×50, carte et listes) et portraits
-            (210×320 + miniature 50×79, fiche de personnage). L'ajout redimensionne l'image à la taille
-            attendue et la numérote avec le compteur de la race ; la suppression est refusée tant
-            qu'un joueur utilise l'image. Les joueurs choisissent leur image en jeu ; cette page gère le stock.
-        <?php endif; ?>
-    </div>
-
-    <div class="card mt-3">
+    <div class="card">
         <div class="card-body py-2 d-flex align-items-center gap-3 flex-wrap">
-            <span class="text-muted" style="font-size:13px;"><i class="fas fa-image"></i> Image :</span>
+            <span class="text-muted small"><i class="fas fa-image"></i> Image :</span>
             <?php // La race suit le changement de type (et réciproquement) :
                   // sans elle, chaque sélecteur réinitialisait l'autre. ?>
             <?php foreach (ImageType::cases() as $candidate): ?>
@@ -173,7 +160,7 @@ ob_start();
                     <?= e(ucfirst($candidate->value)) ?>s
                 </a>
             <?php endforeach; ?>
-            <span class="text-muted" style="font-size:13px;margin-left:1rem;">
+            <span class="text-muted small ml-3">
                 <i class="fas fa-dragon"></i> <?= $structureMode ? 'Type :' : 'Race :' ?></span>
             <?php foreach ($races as $candidate): ?>
                 <a href="<?= e($selfPage) ?>?type=<?= e($type->value) ?>&amp;race=<?= e(urlencode($candidate)) ?>"
@@ -201,7 +188,7 @@ ob_start();
     ?>
     <div class="card mt-3">
         <div class="card-body py-2 d-flex align-items-center gap-3 flex-wrap">
-            <span class="text-muted" style="font-size:13px;"><i class="fas fa-chess-rook"></i> Sprite sur le plateau :</span>
+            <span class="text-muted small"><i class="fas fa-chess-rook"></i> Sprite sur le plateau :</span>
             <?php if ($effective !== ''): ?>
                 <img src="/<?= e($effective) ?>" height="40" style="object-fit:contain;border:1px solid #ddd;background:#fff;" alt="">
                 <code style="font-size:12px;"><?= e($effective) ?></code>
@@ -236,7 +223,7 @@ ob_start();
     <div class="card mt-3">
         <div class="card-body">
             <h5 class="card-title">Images d'état</h5>
-            <table class="table table-sm mb-0" style="font-size:13px;">
+            <table class="table table-sm mb-0">
                 <tbody>
                 <?php foreach ($stateVariants as $variant => $label):
                     $own = $service->statePath($race, $variant);
@@ -265,7 +252,7 @@ ob_start();
                             </form>
                             <?php if ($current === $own): ?>
                                 <form method="post" class="d-inline mb-0"
-                                      onsubmit="return confirm('Supprimer <?= e($own) ?> ?');">
+                                      data-confirm="Supprimer <?= e($own) ?> ?">
                                     <?= $csrf->renderTokenField() ?>
                                     <input type="hidden" name="type" value="<?= e($type->value) ?>">
                                     <input type="hidden" name="race" value="<?= e($race) ?>">
@@ -292,7 +279,7 @@ ob_start();
                 <input type="hidden" name="type" value="<?= e($type->value) ?>">
                 <input type="hidden" name="race" value="<?= e($race) ?>">
                 <div class="form-group mb-0">
-                    <label style="font-size:13px;">Image (png / jpeg / webp / gif, max 4 Mo)</label>
+                    <label class="small">Image (png / jpeg / webp / gif, max 4 Mo)</label>
                     <input type="file" class="form-control-file" name="image_file" accept=".png,.jpg,.jpeg,.webp,.gif" required>
                 </div>
                 <button type="submit" name="image_upload" value="1" class="btn btn-primary btn-sm">
@@ -304,12 +291,12 @@ ob_start();
             </form>
             <?php if ($structureMode && $entries !== []): ?>
                 <form method="post" enctype="multipart/form-data" class="d-flex align-items-end gap-3 flex-wrap mt-3"
-                      onsubmit="return confirm('Remplacer les <?= count($entries) ?> image(s) du type par celle-ci ? Tous les exemplaires posés l\'afficheront.');">
+                      data-confirm="Remplacer les <?= count($entries) ?> image(s) du type par celle-ci ? Tous les exemplaires posés l'afficheront.">
                     <?= $csrf->renderTokenField() ?>
                     <input type="hidden" name="type" value="<?= e($type->value) ?>">
                     <input type="hidden" name="race" value="<?= e($race) ?>">
                     <div class="form-group mb-0">
-                        <label style="font-size:13px;">Remplacer toutes les images par</label>
+                        <label class="small">Remplacer toutes les images par</label>
                         <input type="file" class="form-control-file" name="image_file" accept=".png,.jpg,.jpeg,.webp,.gif" required>
                     </div>
                     <button type="submit" name="image_replace_all" value="1" class="btn btn-outline-danger btn-sm">
@@ -326,9 +313,9 @@ ob_start();
                 <h5 class="card-title mb-0"><?= e(ucfirst($type->value)) ?>s — <?= e($race) ?></h5>
                 <span class="badge bg-secondary"><?= count($entries) ?> images</span>
                 <?php if (count($withProblems) > 0): ?>
-                    <span class="badge" style="background-color:#f0ad4e;color:#fff;"><?= count($withProblems) ?> avec problème(s)</span>
+                    <span class="badge badge-solid badge-warning"><?= count($withProblems) ?> avec problème(s)</span>
                 <?php else: ?>
-                    <span class="badge" style="background-color:#198754;color:#fff;">aucun problème</span>
+                    <span class="badge badge-solid badge-success">aucun problème</span>
                 <?php endif; ?>
             </div>
 
@@ -338,7 +325,7 @@ ob_start();
                         ? ' — le plateau utilise le sprite hérité ci-dessus.' : '.')
                     : 'Aucune image pour cette race.' ?></div>
             <?php else: ?>
-                <table class="table table-sm table-striped" style="font-size:13px;" data-admin-list data-page-size="40">
+                <table class="table table-sm table-striped" data-admin-list data-page-size="40">
                     <thead><tr>
                         <th></th><th>Fichier</th><th>Taille</th>
                         <?php if ($type === ImageType::PORTRAIT): ?><th>Miniature</th><?php endif; ?>
@@ -373,7 +360,7 @@ ob_start();
                                 <?php $imageUsers = $usersByPath['img/' . ($type === ImageType::PORTRAIT ? 'portraits' : 'avatars') . '/' . $race . '/' . $entry['file']] ?? []; ?>
                                 <?php if ($imageUsers !== []): ?>
                                     <details class="row-popover">
-                                        <summary class="btn btn-sm btn-outline-secondary" style="cursor:pointer;list-style:none;"
+                                        <summary class="btn btn-sm btn-outline-secondary"
                                                  title="<?= $structureMode ? 'Exemplaires posés' : 'Joueurs utilisant cette image' ?>"><strong><?= count($imageUsers) ?></strong></summary>
                                         <div class="row-popover-panel" style="max-height:12rem;overflow:auto;">
                                             <?php foreach ($imageUsers as $userLabel): ?>
@@ -387,18 +374,18 @@ ob_start();
                             </td>
                             <td>
                                 <?php foreach ($entry['problems'] as $problem): ?>
-                                    <div class="text-warning" style="font-size:12px;"><i class="fas fa-exclamation-triangle"></i> <?= e($problem) ?></div>
+                                    <div class="text-warning small"><i class="fas fa-exclamation-triangle"></i> <?= e($problem) ?></div>
                                 <?php endforeach; ?>
                             </td>
                             <td style="white-space:nowrap;">
                                 <?php if (!$entry['missing']): ?>
                                     <?php if (count($races) > 1): ?>
-                                    <details class="row-popover" style="display:inline-block;">
-                                        <summary class="btn btn-sm btn-outline-secondary" style="cursor:pointer;list-style:none;"
+                                    <details class="row-popover">
+                                        <summary class="btn btn-sm btn-outline-secondary"
                                                  title="Déplacer l'image vers <?= $structureMode ? 'un autre type' : 'une autre race' ?>"
                                                  <?= $entry['usage'] > 0 && !$structureMode ? 'aria-disabled="true"' : '' ?>>Déplacer</summary>
                                         <form method="post" class="row-popover-panel d-flex gap-2"
-                                              onsubmit="return confirm('Déplacer « <?= e($entry['file']) ?> » vers <?= $structureMode ? 'le type sélectionné' : 'la race sélectionnée' ?> ?');">
+                                              data-confirm="Déplacer « <?= e($entry['file']) ?> » vers <?= $structureMode ? 'le type sélectionné' : 'la race sélectionnée' ?> ?">
                                             <?= $csrf->renderTokenField() ?>
                                             <input type="hidden" name="type" value="<?= e($type->value) ?>">
                                             <input type="hidden" name="race" value="<?= e($race) ?>">
@@ -411,7 +398,7 @@ ob_start();
                                                 }
                                             }
                                             echo formSelect('target_race', $raceChoices, null, null,
-                                                'class="form-control form-control-sm" style="width:140px;"');
+                                                'class="form-control form-control-sm w-auto"');
                                             ?>
                                             <button type="submit" name="image_move" value="1" class="btn btn-sm btn-primary"
                                                     <?= $entry['usage'] > 0 && !$structureMode ? 'disabled title="Encore utilisée par des joueurs"' : '' ?>>OK</button>
@@ -419,8 +406,8 @@ ob_start();
                                     </details>
                                     <?php endif; ?>
                                     <?php if ($structureMode): ?>
-                                    <details class="row-popover" style="display:inline-block;">
-                                        <summary class="btn btn-sm btn-outline-primary" style="cursor:pointer;list-style:none;"
+                                    <details class="row-popover">
+                                        <summary class="btn btn-sm btn-outline-primary"
                                                  title="Remplacer cette image : les exemplaires posés suivent">Remplacer</summary>
                                         <form method="post" enctype="multipart/form-data" class="row-popover-panel d-flex gap-2">
                                             <?= $csrf->renderTokenField() ?>
@@ -432,8 +419,8 @@ ob_start();
                                         </form>
                                     </details>
                                     <?php endif; ?>
-                                    <form method="post" style="display:inline-block;"
-                                          onsubmit="return confirm('Supprimer définitivement « <?= e($entry['file']) ?> » ?');">
+                                    <form method="post" class="d-inline-block"
+                                          data-confirm="Supprimer définitivement « <?= e($entry['file']) ?> » ?">
                                         <?= $csrf->renderTokenField() ?>
                                         <input type="hidden" name="type" value="<?= e($type->value) ?>">
                                         <input type="hidden" name="race" value="<?= e($race) ?>">
@@ -457,4 +444,4 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-echo admin_layout($pageTitle, $content);
+echo admin_layout(e($pageTitle), $content, ['intro' => $intro]);

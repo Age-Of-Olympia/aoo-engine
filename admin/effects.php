@@ -123,21 +123,7 @@ function effect_render_list(array $effects): string
             . '</tr>';
     }
 
-    return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">Effets</h1>'
-        . '<div class="d-flex gap-2">'
-        . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=effect"'
-        . ' title="Télécharger tout le catalogue en bundle JSON, ré-importable ici ou sur un autre environnement">'
-        . '<i class="fas fa-download"></i> Exporter (JSON)</a>'
-        . '<a class="btn btn-outline-secondary" href="/admin/action-import.php"'
-        . ' title="Importer un bundle JSON (avec prévisualisation avant application)">'
-        . '<i class="fas fa-upload"></i> Importer</a>'
-        . '<a class="btn btn-outline-secondary" href="/admin/wiki.php?type=effect"'
-        . ' title="Markup DokuWiki de la page regles:effets, généré depuis le catalogue">'
-        . '<i class="fas fa-book"></i> Wiki</a>'
-        . '<a class="btn btn-primary" href="/admin/effects.php?action=new">+ Nouvel effet</a>'
-        . '</div></div>'
-        . renderTable(
+    return renderTable(
             ['', 'Code', 'Nom', 'Statut', 'Modificateurs',
              ['Porteurs', 'title="Personnages portant actuellement cet effet"'], ''],
             $rows,
@@ -192,9 +178,6 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
 {
     $isEdit = $effect !== null;
     $action = $isEdit ? 'update' : 'create';
-    $title = $isEdit
-        ? 'Effet : ' . e($effect->getLabel()) . ' <span class="text-muted">(' . e($effect->getName()) . ')</span>'
-        : 'Nouvel effet';
 
     $nameField = $isEdit
         ? formField('Code',
@@ -358,11 +341,7 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
             . ' quand l\'objet casse.')
         . '</div>';
 
-    return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">' . $title . '</h1>'
-        . '<a class="btn btn-sm btn-outline-secondary" href="/admin/effects.php">← Retour à la liste</a></div>'
-
-        . '<form method="post" action="/admin/effects-save.php?action=' . $action . '">'
+    return '<form method="post" action="/admin/effects-save.php?action=' . $action . '">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
         . formCard('Identité', $identite)
         . formCard('Comportement', $comportement)
@@ -390,8 +369,7 @@ function effect_render_delete_zone(Effect $effect, string $csrfToken): string
         ? '<p class="mb-0 text-muted">Suppression impossible : cet effet est encore appliqué à '
             . $carriers . ' personnage' . ($carriers > 1 ? 's' : '') . '. Attendez son expiration ou retirez-le d\'abord.</p>'
         : '<form method="post" action="/admin/effects-save.php?action=delete" class="d-flex align-items-center gap-3"'
-            . ' onsubmit="return confirm(\'Supprimer définitivement l\\\'effet « '
-            . e($effect->getName()) . ' » ?\');">'
+            . ' data-confirm="' . e('Supprimer définitivement l\'effet « ' . $effect->getName() . ' » ?') . '">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="name" value="' . e($effect->getName()) . '">'
             . '<button type="submit" class="btn btn-outline-danger">Supprimer l\'effet</button>'
@@ -399,8 +377,7 @@ function effect_render_delete_zone(Effect $effect, string $csrfToken): string
             . ' afficheront « ⚠ inconnue » au workbench.</small>'
             . '</form>';
 
-    return '<div class="card mt-4 border-danger"><div class="card-header text-danger">Zone dangereuse</div>'
-        . '<div class="card-body">' . $body . '</div></div>';
+    return dangerZone($body);
 }
 
 /* -------------------------------------------------------------------------
@@ -415,6 +392,7 @@ if ($action === 'wiki') {
     // ancienne adresse : la fiche vit au registre commun désormais
     redirectTo('/admin/wiki.php?type=effect');
 } elseif ($action === 'new') {
+    $title = 'Nouvel effet';
     $content = effect_render_form(null, $csrfToken);
 } elseif ($action === 'edit') {
     $effect = $service->getEffectByName((string) ($_GET['name'] ?? ''));
@@ -422,17 +400,34 @@ if ($action === 'wiki') {
         setFlash('warning', 'Effet introuvable.');
         redirectTo('/admin/effects.php');
     }
+    $title = 'Effet : ' . e($effect->getLabel()) . ' <span class="text-muted">(' . e($effect->getName()) . ')</span>';
     $content = effect_render_form($effect, $csrfToken);
 } else {
     $content = effect_render_list($service->getAllEffects());
 }
 
-/* Catalogue d'icônes du sélecteur (IconFieldView) — même mécanisme que
- * le workbench des actions. */
-$content .= '<script>window.WB_ICONS = '
-    . json_encode((new RpgAwesomeIcons())->all(), JSON_UNESCAPED_SLASHES) . ';</script>';
-
-echo admin_layout('Effets', renderFlashMessage() . $content, [
+$options = [
     'styles' => ['/css/rpg-awesome.min.css', '/admin/css/icon-picker.css'],
     'scripts' => ['/admin/js/icon-picker.js'],
-]);
+];
+if (isset($title)) {
+    $options['back'] = ['/admin/effects.php', 'Effets'];
+    /* Catalogue d'icônes du sélecteur (IconFieldView) — même mécanisme que
+     * le workbench des actions ; le formulaire seul en a besoin. */
+    $content .= '<script>window.WB_ICONS = '
+        . json_encode((new RpgAwesomeIcons())->all(), JSON_UNESCAPED_SLASHES) . ';</script>';
+} else {
+    $title = 'Effets';
+    $options['actions'] = '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=effect"'
+        . ' title="Télécharger tout le catalogue en bundle JSON, ré-importable ici ou sur un autre environnement">'
+        . '<i class="fas fa-download"></i> Exporter (JSON)</a>'
+        . '<a class="btn btn-outline-secondary" href="/admin/action-import.php"'
+        . ' title="Importer un bundle JSON (avec prévisualisation avant application)">'
+        . '<i class="fas fa-upload"></i> Importer</a>'
+        . '<a class="btn btn-outline-secondary" href="/admin/wiki.php?type=effect"'
+        . ' title="Markup DokuWiki de la page regles:effets, généré depuis le catalogue">'
+        . '<i class="fas fa-book"></i> Wiki</a>'
+        . '<a class="btn btn-primary" href="/admin/effects.php?action=new">+ Nouvel effet</a>';
+}
+
+echo admin_layout($title, $content, $options);

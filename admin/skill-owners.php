@@ -15,11 +15,11 @@ if ($type === 'action') {
     $action = $name !== '' ? (new ActionCatalogService())->findByName($name) : null;
     if ($action === null) {
         setFlash('warning', 'Action introuvable.');
-        redirectTo('/admin/actions.php');
+        redirectTo('/admin/action-workbench.php');
     }
     $title = 'Joueurs ayant « ' . $action->getDisplayName() . ' »';
     $players = $ownership->actionOwners($name);
-    $backHref = '/admin/actions.php';
+    $backHref = '/admin/action-workbench.php';
     $backLabel = 'Actions';
 } elseif ($type === 'passive') {
     $id = (int) ($_GET['id'] ?? 0);
@@ -34,9 +34,9 @@ if ($type === 'action') {
     $backLabel = 'Passifs';
 } else {
     setFlash('warning', 'Compétence introuvable.');
-    redirectTo('/admin/actions.php');
+    redirectTo('/admin/action-workbench.php');
 }
 
-$body = (new SkillOwnersView())->render($title, $backHref, $backLabel, $players);
+$body = (new SkillOwnersView())->render($players);
 
-echo admin_layout($title, renderFlashMessage() . $body);
+echo admin_layout(e($title), $body, ['back' => [$backHref, $backLabel]]);

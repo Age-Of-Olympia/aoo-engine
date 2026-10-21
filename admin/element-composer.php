@@ -1,5 +1,4 @@
 <?php
-// admin/element-composer.php
 /**
  * Composeur d'éléments (admin → Cartes) : fabrique une tuile SVG animée à
  * partir de filtres SVG (bruit, dégradé de couleurs, déformation d'une
@@ -21,9 +20,9 @@ $csrf = new CsrfProtectionService();
 $service = new TileAssetService();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['svg_save'])) {
+    requireAdminPost('element-composer.php');
     $layer = trim((string) ($_POST['layer'] ?? 'elements'));
     try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
         $name = trim((string) ($_POST['name'] ?? ''));
         // The page sends the snapshot as a data: URL
         $png = base64_decode(preg_replace('#^data:image/png;base64,#', '', (string) ($_POST['png'] ?? '')), true);
@@ -83,23 +82,6 @@ ob_start();
 @media (max-width:1100px){.composer{grid-template-columns:1fr;}.composer-preview{position:static;}}
 </style>
 <div class="container">
-    <h3>Composeur d'éléments</h3>
-
-    <?= renderFlashMessage() ?>
-
-    <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-        Une tuile SVG de 50×50 faite de filtres : un bruit coloré (eau, lave, brume…), ou une image de base
-        déformée par ce bruit. L'animation est du SVG natif, sans JavaScript en jeu. Le fichier est écrit dans
-        <code style="display:inline">img/&lt;couche&gt;/&lt;nom&gt;.svg</code>. Un élément qui a le
-        nom d'un effet du catalogue applique cet effet quand on marche dessus ; sans effet, c'est un décor.
-        Deux éléments dont le nom commence par le même mot avant <code style="display:inline">_</code>
-        (eau, eau_cascade) sont raccordés bord à bord ; contre tout autre voisin, le bord est estompé.
-        La page Éléments permet de poser un élément avec une rotation : un seul fichier suffit pour les
-        quatre orientations. Tiled ne sait pas dessiner les filtres : un aperçu fixe
-        <code style="display:inline">&lt;nom&gt;.png</code> est enregistré à côté, et c'est lui que Tiled
-        affiche. Un SVG composé sans aperçu : le recharger ci-dessous, puis l'enregistrer de nouveau.
-    </div>
-
     <div class="composer">
         <div class="card">
             <div class="card-body" id="composer">
@@ -237,7 +219,7 @@ ob_start();
         </div>
     </div>
 
-    <details class="card mt-3"><summary class="card-body py-2" style="cursor:pointer;font-size:13px;">Source SVG</summary>
+    <details class="card mt-3"><summary>Source SVG</summary>
         <pre id="svg-src" class="mb-0 px-3 pb-3" style="font-size:11px;max-height:20rem;overflow:auto;"></pre></details>
 </div>
 
@@ -528,4 +510,13 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Composeur d\'éléments', $content);
+echo admin_layout('Composeur d\'éléments', $content, ['intro' => 'Une tuile SVG de 50×50 faite de filtres : un bruit coloré (eau, lave, brume…), ou une image de base
+        déformée par ce bruit. L\'animation est du SVG natif, sans JavaScript en jeu. Le fichier est écrit dans
+        <code>img/&lt;couche&gt;/&lt;nom&gt;.svg</code>. Un élément qui a le
+        nom d\'un effet du catalogue applique cet effet quand on marche dessus ; sans effet, c\'est un décor.
+        Deux éléments dont le nom commence par le même mot avant <code>_</code>
+        (eau, eau_cascade) sont raccordés bord à bord ; contre tout autre voisin, le bord est estompé.
+        La page Éléments permet de poser un élément avec une rotation : un seul fichier suffit pour les
+        quatre orientations. Tiled ne sait pas dessiner les filtres : un aperçu fixe
+        <code>&lt;nom&gt;.png</code> est enregistré à côté, et c\'est lui que Tiled
+        affiche. Un SVG composé sans aperçu : le recharger ci-dessous, puis l\'enregistrer de nouveau.']);

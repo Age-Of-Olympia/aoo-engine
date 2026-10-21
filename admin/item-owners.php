@@ -54,11 +54,7 @@ foreach ($owners as $owner) {
         . '</tr>';
 }
 
-$content = '<div class="d-flex justify-content-between align-items-center mb-3">'
-    . '<h1 class="mb-0">' . e($title) . '</h1>'
-    . '<a class="btn btn-sm btn-outline-secondary" href="/admin/items.php">← Objets</a>'
-    . '</div>'
-    . ($owners === []
+$content = ($owners === []
         ? '<p class="text-muted">Aucun joueur ne détient cet objet.</p>'
         : '<p class="text-muted mb-2">' . count($owners) . ' joueur(s)</p>'
             . '<p class="text-muted small mb-2">Mettre en vente ou proposer en échange débite la banque :'
@@ -69,4 +65,4 @@ $content = '<div class="d-flex justify-content-between align-items-center mb-3">
                 'class="table table-striped table-hover table-sm" data-admin-list data-page-size="30"'
             ));
 
-echo admin_layout($title, renderFlashMessage() . $content);
+echo admin_layout(e($title), $content, ['back' => ['/admin/items.php', 'Objets']]);

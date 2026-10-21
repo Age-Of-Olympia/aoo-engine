@@ -7,7 +7,7 @@ use App\Entity\Faction;
 use App\Entity\Race;
 use App\Service\Action\ActionCatalogService;
 use App\Service\Action\ActionPassiveCatalogService;
-use App\Service\AdminAuthorizationService;
+use App\Service\AdminMenuAccessService;
 use App\Service\ImportExport\BundleDownload;
 use App\Service\ImportExport\BundleEnvelope;
 use App\Service\DialogService;
@@ -16,19 +16,30 @@ use App\Service\ImportExport\ExporterRegistry;
 use App\Service\ImportExport\PlanExporter;
 use App\Service\TiledMapService;
 
-AdminAuthorizationService::DoAdminCheck();
-
 /*
  * Read-only JSON download. Deliberately does NOT include admin/layout.php: the
  * response is a file attachment, not an HTML page. ?type picks the object family
  * (default action); ?id exports a single action; otherwise the whole catalogue.
+ * Each family needs the right of the page that edits it; an unknown one, admin.
  */
 $type = (string) ($_GET['type'] ?? 'action');
+$exportRights = [
+    'action' => 'actions.list',
+    'passive' => 'actions.passives',
+    'action-type' => 'actions.type-defaults',
+    'race' => 'races.edit',
+    'faction' => 'factions.edit',
+    'plan' => 'maps.plans',
+    'dialog' => 'dialogs.edit',
+    'item' => 'items.edit',
+    'recipe' => 'items.recipes',
+    'effect' => 'effects.edit',
+];
+(new AdminMenuAccessService())->enforce($exportRights[$type] ?? 'dashboard.view');
 $exporter = (new ExporterRegistry())->exporterFor($type);
 if ($exporter === null) {
     setFlash('warning', "Type d'export inconnu : « {$type} ».");
-    header('Location: /admin/actions.php');
-    exit;
+    redirectTo('/admin/action-workbench.php');
 }
 
 $id = (int) ($_GET['id'] ?? 0);
@@ -49,8 +60,7 @@ if (($type === 'item' || $type === 'recipe') && $naturalName !== '') {
         $objects = [$exporter->exportOne($naturalName)];
     } catch (\InvalidArgumentException $e) {
         setFlash('warning', $e->getMessage());
-        header('Location: /admin/' . ($type === 'item' ? 'items' : 'recipes') . '.php');
-        exit;
+        redirectTo('/admin/' . ($type === 'item' ? 'items' : 'recipes') . '.php');
     }
     $filename = BundleDownload::filename($type, $naturalName);
     $json = BundleEnvelope::encode(BundleEnvelope::build($type, $objects));
@@ -64,8 +74,7 @@ if (($type === 'item' || $type === 'recipe') && $naturalName !== '') {
 if ($type === 'plan' && $planId !== '') {
     if (!preg_match(TiledMapService::PLAN_NAME_PATTERN, $planId)) {
         setFlash('warning', 'Nom de plan invalide.');
-        header('Location: /admin/plans.php');
-        exit;
+        redirectTo('/admin/plans.php');
     }
     /** @var PlanExporter $exporter */
     $objects = [$exporter->exportOne($planId)];
@@ -75,8 +84,7 @@ if ($type === 'plan' && $planId !== '') {
         || !(new DialogService())->gameDialogExists($dialogName)
     ) {
         setFlash('warning', 'Dialogue introuvable.');
-        header('Location: /admin/dialogs.php');
-        exit;
+        redirectTo('/admin/dialogs.php');
     }
     /** @var DialogExporter $exporter */
     $objects = [$exporter->exportOne($dialogName)];
@@ -94,8 +102,7 @@ if ($type === 'plan' && $planId !== '') {
     };
     if ($object === null) {
         setFlash('warning', 'Objet introuvable.');
-        header('Location: /admin/actions.php');
-        exit;
+        redirectTo('/admin/action-workbench.php');
     }
     $objects = [$exporter->toArray($object)];
     // Factions: filename from the stable code, not the display name (accents, &…).

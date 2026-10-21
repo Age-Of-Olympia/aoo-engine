@@ -1,5 +1,4 @@
 <?php
-// admin/terrain-transitions.php
 /**
  * Transitions de terrain (autotiling Tiled) — admin dashboard → Cartes.
  *
@@ -48,12 +47,7 @@ $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
         || isset($_POST['regenerate_transitions']) || isset($_POST['delete_transitions'])
         || isset($_POST['cleanup_orphans']) || isset($_POST['import_terrains_file']));
 if ($isStateChangingPost) {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-    } catch (RuntimeException $e) {
-        setFlash('danger', $e->getMessage());
-        redirectTo('terrain-transitions.php');
-    }
+    requireAdminPost('terrain-transitions.php');
 }
 
 // Classement terrain / hors terrain : les cases cochées du formulaire sont
@@ -92,7 +86,7 @@ if ($isStateChangingPost && isset($_POST['regenerate_transitions']) && $selected
         $bySet = $service->planTransitionsBySet($selectedPlan);
 
         $chosenSets = array_filter((array) ($_POST['regenerate_sets'] ?? []), 'is_string');
-        if (!empty($_POST['regenerate_all_plan'])) { // champ caché rempli par le bouton « Tout le plan »
+        if ($_POST['regenerate_transitions'] === 'all') { // bouton « Tout le plan »
             $chosenSets = array_keys($bySet);
         }
 
@@ -173,20 +167,7 @@ ob_start();
 ?>
 
 <div class="container">
-    <h3>Transitions de terrain (pinceau Terrain de Tiled)</h3>
-
-    <?= renderFlashMessage() ?>
-
-    <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-        <strong>Trois étapes :</strong>
-        <ol class="mb-0 mt-1">
-            <li><strong>Classer</strong> les tuiles du plan : terrain (biome fondable) ou hors terrain (décor, escaliers, runes…). Le classement est enregistré en base ; sur un serveur neuf il est vide, tout se classe ici.</li>
-            <li><strong>Auditer</strong> : chaque endroit où 2 à 4 terrains se touchent exige ses tuiles de fondu, sinon le pinceau Terrain pose la tuile la plus proche (morceaux d'autres biomes).</li>
-            <li><strong>Générer</strong> les fondus manquants (<code style="display:inline">img/tiles/</code> + wangId) et les vérifier dans la galerie.</li>
-        </ol>
-    </div>
-
-    <div class="card mt-3">
+    <div class="card">
         <div class="card-body py-2">
             <?= render_season_filter($seasonFilter) ?>
         </div>
@@ -197,9 +178,9 @@ ob_start();
     $terrainsFile = $importService->loadTerrains() === [] ? $importService->terrainsFilePath() : null;
     ?>
     <?php if ($terrainsFile !== null): ?>
-        <div class="alert alert-warning d-flex align-items-center gap-3" style="font-size:13px;">
+        <div class="alert alert-warning d-flex align-items-center gap-3">
             <span>Les terrains sont désormais en base, encore vide sur ce serveur : importer l'ancien
-                <code style="display:inline"><?= e(basename(dirname($terrainsFile)) . '/terrains.json') ?></code> (une seule fois).</span>
+                <code><?= e(basename(dirname($terrainsFile)) . '/terrains.json') ?></code> (une seule fois).</span>
             <form method="post" class="mb-0">
                 <?= $csrf->renderTokenField() ?>
                 <button type="submit" name="import_terrains_file" class="btn btn-warning btn-sm">
@@ -212,7 +193,7 @@ ob_start();
     <div class="card mt-3">
         <div class="card-body py-2">
             <form method="post" class="d-flex align-items-center gap-3"
-                  onsubmit="return confirm('Retirer les déclarations de fondus sans image et supprimer les images trans_* non déclarées ? Les fondus posés sur une carte ne sont jamais touchés.');">
+                  data-confirm="Retirer les déclarations de fondus sans image et supprimer les images trans_* non déclarées ? Les fondus posés sur une carte ne sont jamais touchés.">
                 <?= $csrf->renderTokenField() ?>
                 <button type="submit" name="cleanup_orphans" class="btn btn-outline-secondary btn-sm">
                     <i class="fas fa-broom"></i> Ménage des fondus orphelins
@@ -235,7 +216,7 @@ ob_start();
                     echo formSelect('selected_plan', $planChoices,
                         $selectedPlan !== '' ? $selectedPlan : null,
                         '-- Sélectionner un plan (' . season_filter_label($seasonFilter) . ') --',
-                        'class="form-control" id="planSelect" onchange="this.form.submit()"');
+                        'class="form-control" id="planSelect" data-autosubmit');
                     ?>
                     <?php if (empty($filteredPlans)): ?>
                         <small class="text-muted">Aucun plan ne correspond au filtre « <?= e(season_filter_label($seasonFilter)) ?> » — élargir le filtre ci-dessus.</small>
@@ -259,7 +240,7 @@ ob_start();
         <div class="card mt-3">
             <div class="card-body">
                 <h5 class="card-title">1. Classification des tuiles du plan</h5>
-                <p class="text-muted mb-2" style="font-size:13px;line-height:1.5;">
+                <p class="text-muted mb-2">
                     Cochez les tuiles qui sont des <strong>terrains</strong> (biomes à fondre entre eux) ;
                     laissez décoché le décor posé au sol (escaliers, lits, runes…). Déclasser une tuile
                     ne détruit rien : ses fondus déjà générés restent en place et elle peut être re-déclarée.
@@ -269,7 +250,7 @@ ob_start();
                     <div class="alert alert-info mb-0">Aucune tuile de sol en base pour ce plan.</div>
                 <?php else: ?>
                     <?php if ($terrainCount === 0): ?>
-                        <div class="alert alert-warning py-1" style="font-size:13px;">
+                        <div class="alert alert-warning py-1">
                             <i class="fas fa-exclamation-triangle"></i>
                             Aucune tuile de ce plan n'est classée terrain — probablement des
                             terrains encore vides sur ce serveur. Commencez par cocher les biomes ci-dessous.
@@ -279,10 +260,10 @@ ob_start();
                     <form method="post">
                         <?= $csrf->renderTokenField() ?>
                         <input type="hidden" name="selected_plan" value="<?= e($selectedPlan) ?>">
-                        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:.75rem;">
+                        <div class="d-flex flex-wrap gap-2 mb-3">
                             <?php foreach ($classification as $tile): ?>
                                 <?php if ($tile['isTransition']): continue; endif; ?>
-                                <label style="border:1px solid <?= $tile['isTerrain'] ? '#198754' : '#ddd' ?>;border-radius:.375rem;padding:6px;text-align:center;cursor:pointer;width:86px;font-size:11px;background:<?= $tile['isTerrain'] ? '#f2fbf6' : '#fff' ?>;">
+                                <label style="display:block;font-weight:400;border:1px solid <?= $tile['isTerrain'] ? 'var(--success)' : 'var(--rule)' ?>;border-radius:.375rem;padding:6px;text-align:center;cursor:pointer;width:86px;font-size:11px;background:<?= $tile['isTerrain'] ? 'var(--success-wash)' : 'var(--paper)' ?>;">
                                     <img class="tile-thumb" src="/img/tiles/<?= e($tile['name']) ?>.png" width="50" height="50" loading="lazy"
                                          style="image-rendering:pixelated;display:block;margin:0 auto 4px;" alt="">
                                     <input type="hidden" name="listed_tiles[]" value="<?= e($tile['name']) ?>">
@@ -299,7 +280,7 @@ ob_start();
 
                     <?php $transitionTiles = array_filter($classification, fn(array $t) => $t['isTransition']); ?>
                     <?php if ($transitionTiles !== []): ?>
-                        <p class="text-muted mt-2 mb-0" style="font-size:12px;">
+                        <p class="text-muted small mt-2 mb-0">
                             Fondus déjà posés sur le plan (non classables) :
                             <?= count($transitionTiles) ?> tuile(s) trans_*.
                         </p>
@@ -315,7 +296,7 @@ ob_start();
                 <?php if (empty($terrainAudit['zLevels'])): ?>
                     <div class="alert alert-info mb-0">Aucune tuile de sol en base pour ce plan.</div>
                 <?php else: ?>
-                    <table class="table table-sm mb-2" style="font-size:13px;">
+                    <table class="table table-sm mb-2">
                         <thead><tr><th>Niveau Z</th><th>Cases</th><th>Paires</th><th>Trios</th><th>Quatuors</th></tr></thead>
                         <tbody>
                         <?php foreach ($terrainAudit['zLevels'] as $z => $zStats): ?>
@@ -331,7 +312,7 @@ ob_start();
                     </table>
 
                     <?php if (!empty($terrainAudit['ignored'])): ?>
-                        <p class="text-muted mb-2" style="font-size:12px;">
+                        <p class="text-muted small mb-2">
                             Tuiles hors terrain ignorées (modifiable à l'étape 1) : <?= e(implode(', ', $terrainAudit['ignored'])) ?>
                         </p>
                     <?php endif; ?>
@@ -342,20 +323,20 @@ ob_start();
                     ?>
 
                     <?php if (!empty($conflictSets)): ?>
-                        <div class="alert alert-warning py-1" style="font-size:13px;">
+                        <div class="alert alert-warning py-1">
                             <i class="fas fa-exclamation-triangle"></i> Ensembles ignorés (biomes de même couleur) :
                             <?= e(implode(' ; ', array_map(fn(array $s) => implode(' / ', $s['tiles']), $conflictSets))) ?>
                         </div>
                     <?php endif; ?>
 
                     <?php if ($terrainAudit['missingTiles'] > 0): ?>
-                        <details class="alert alert-warning mb-2" style="padding:0;">
-                            <summary style="cursor:pointer;padding:.5rem .75rem;font-weight:600;">
+                        <details class="alert alert-warning mb-2">
+                            <summary>
                                 <i class="fas fa-exclamation-triangle"></i>
                                 <?= count($incompleteSets) ?> ensemble(s) incomplet(s)
-                                <span class="badge" style="background-color:#f0ad4e;color:#fff;"><?= $terrainAudit['missingTiles'] ?> tuiles à générer</span>
+                                <span class="badge badge-solid badge-warning"><?= $terrainAudit['missingTiles'] ?> tuiles à générer</span>
                             </summary>
-                            <ul class="mb-0" style="padding:.25rem .75rem .75rem 2.2rem;font-size:13px;line-height:1.6;">
+                            <ul>
                                 <?php foreach ($incompleteSets as $set): ?>
                                     <li><?= e(implode(' / ', $set['tiles'])) ?> — <?= $set['missing'] ?>/<?= $set['total'] ?> manquantes</li>
                                 <?php endforeach; ?>
@@ -370,7 +351,7 @@ ob_start();
                             <small class="text-muted">Écrit les PNG dans img/tiles/ et déclare leurs wangId — peut prendre une minute sur un gros plan.</small>
                         </form>
                     <?php else: ?>
-                        <div class="alert alert-success py-1 mb-0" style="font-size:13px;">
+                        <div class="alert alert-success py-1 mb-0">
                             <i class="fas fa-check-circle"></i>
                             Toutes les transitions requises existent (<?= count($terrainAudit['sets']) ?> ensembles de biomes).
                         </div>
@@ -382,7 +363,7 @@ ob_start();
                 <?php if ($transitionsBySet !== []): ?>
                     <hr>
                     <h6 class="text-muted">Fondus existants du plan — vérifier et régénérer</h6>
-                    <p class="text-muted mb-2" style="font-size:12px;">
+                    <p class="text-muted small mb-2">
                         Aperçu des fondus tels que le jeu les affiche sur ce serveur. Un ensemble aux couleurs
                         fausses (fondu vers le noir, image d'un biome modifiée…) peut être réécrit à partir des
                         images de base actuelles ; les wangId ne changent pas.
@@ -391,17 +372,16 @@ ob_start();
                         <?= $csrf->renderTokenField() ?>
                         <input type="hidden" name="selected_plan" value="<?= e($selectedPlan) ?>">
                         <?php foreach ($transitionsBySet as $setLabel => $names): ?>
-                            <details class="mb-2" style="border:1px solid #e5e5e5;border-radius:.375rem;">
-                                <summary style="cursor:pointer;padding:.4rem .75rem;font-size:13px;font-weight:600;">
-                                    <input type="checkbox" name="regenerate_sets[]" value="<?= e($setLabel) ?>"
-                                           onclick="event.stopPropagation();">
+                            <details class="mb-2 border rounded">
+                                <summary class="px-3 py-1 small">
+                                    <input type="checkbox" name="regenerate_sets[]" value="<?= e($setLabel) ?>">
                                     <?= e($setLabel) ?> <span class="badge bg-secondary"><?= count($names) ?> tuiles</span>
                                 </summary>
-                                <div style="padding:.5rem .75rem;display:flex;flex-wrap:wrap;gap:4px;">
+                                <div class="d-flex flex-wrap gap-1 p-2">
                                     <?php foreach ($names as $name): ?>
                                         <img class="tile-thumb" src="/img/tiles/<?= e($name) ?>.png" width="50" height="50"
                                              title="<?= e($name) ?>" loading="lazy"
-                                             style="image-rendering:pixelated;border:1px solid #ddd;">
+                                             style="image-rendering:pixelated;">
                                     <?php endforeach; ?>
                                 </div>
                             </details>
@@ -410,12 +390,10 @@ ob_start();
                             <button type="submit" name="regenerate_transitions" class="btn btn-outline-secondary btn-sm">
                                 <i class="fas fa-sync"></i> Régénérer la sélection
                             </button>
-                            <button type="submit" name="regenerate_transitions" class="btn btn-outline-secondary btn-sm"
-                                    onclick="this.form.regenerate_all_plan.value=1;"
+                            <button type="submit" name="regenerate_transitions" value="all" class="btn btn-outline-secondary btn-sm"
                                     formnovalidate>
                                 <i class="fas fa-sync"></i> Tout le plan (<?= array_sum(array_map('count', $transitionsBySet)) ?> fondus)
                             </button>
-                            <input type="hidden" name="regenerate_all_plan" value="">
                             <small class="text-muted">Seuls les fondus des biomes de ce plan sont concernés.</small>
                         </div>
                     </form>
@@ -423,7 +401,7 @@ ob_start();
 
                 <?php if ($transitionsBySet !== [] || array_filter($classification, fn(array $t) => str_starts_with($t['name'], 'trans_'))): ?>
                     <form method="post" class="d-flex align-items-center gap-3 mt-3"
-                          onsubmit="return confirm('Supprimer tous les fondus de ce plan ? Les fichiers et wangId disparaissent, et les cases qui les portent (sur tous les plans) reprennent un biome plein.');">
+                          data-confirm="Supprimer tous les fondus de ce plan ? Les fichiers et wangId disparaissent, et les cases qui les portent (sur tous les plans) reprennent un biome plein.">
                         <?= $csrf->renderTokenField() ?>
                         <input type="hidden" name="selected_plan" value="<?= e($selectedPlan) ?>">
                         <button type="submit" name="delete_transitions" class="btn btn-outline-danger btn-sm">
@@ -437,15 +415,15 @@ ob_start();
                     <div class="mt-3">
                         <h6 class="text-muted">Tuiles générées — vérifier les fondus :</h6>
                         <?php foreach ($transitionReport['generated'] as $setLabel => $names): ?>
-                            <details class="mb-2" style="border:1px solid #e5e5e5;border-radius:.375rem;">
-                                <summary style="cursor:pointer;padding:.4rem .75rem;font-size:13px;font-weight:600;">
+                            <details class="mb-2 border rounded">
+                                <summary class="px-3 py-1 small">
                                     <?= e($setLabel) ?> <span class="badge bg-secondary"><?= count($names) ?> tuiles</span>
                                 </summary>
-                                <div style="padding:.5rem .75rem;display:flex;flex-wrap:wrap;gap:4px;">
+                                <div class="d-flex flex-wrap gap-1 p-2">
                                     <?php foreach ($names as $name): ?>
                                         <img class="tile-thumb" src="/img/tiles/<?= e($name) ?>.png" width="50" height="50"
                                              title="<?= e($name) ?>" loading="lazy"
-                                             style="image-rendering:pixelated;border:1px solid #ddd;">
+                                             style="image-rendering:pixelated;">
                                     <?php endforeach; ?>
                                 </div>
                             </details>
@@ -465,4 +443,9 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Transitions de terrain', $content);
+echo admin_layout('Transitions de terrain', $content, ['intro' => '<strong>Trois étapes :</strong>
+        <ol class="mb-0 mt-1">
+            <li><strong>Classer</strong> les tuiles du plan : terrain (biome fondable) ou hors terrain (décor, escaliers, runes…). Le classement est enregistré en base ; sur un serveur neuf il est vide, tout se classe ici.</li>
+            <li><strong>Auditer</strong> : chaque endroit où 2 à 4 terrains se touchent exige ses tuiles de fondu, sinon le pinceau Terrain pose la tuile la plus proche (morceaux d\'autres biomes).</li>
+            <li><strong>Générer</strong> les fondus manquants (<code>img/tiles/</code> + wangId) et les vérifier dans la galerie.</li>
+        </ol>']);

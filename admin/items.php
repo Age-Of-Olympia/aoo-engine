@@ -258,9 +258,9 @@ function items_render_list(array $items, string $csrfToken): string
         // (instances, sol, recettes, marché) sont re-vérifiées côté
         // items-save.php avec le détail du refus.
         $owners = $ownerCounts[(int) $row->id] ?? 0;
-        $deleteButton = ' <form method="post" style="display:inline"'
+        $deleteButton = ' <form method="post" class="d-inline"'
             . ' action="/admin/items-save.php?action=delete"'
-            . ' onsubmit="return confirm(\'Supprimer définitivement « ' . e($row->name) . ' » du catalogue ?\');">'
+            . ' data-confirm="' . e('Supprimer définitivement « ' . $row->name . ' » du catalogue ?') . '">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="id" value="' . (int) $row->id . '">'
             . '<button class="btn btn-sm btn-outline-danger"'
@@ -272,7 +272,7 @@ function items_render_list(array $items, string $csrfToken): string
         // badge orange dans la colonne Type, comme la liste des plans.
         $issues = items_type_inconsistencies($row, $type);
         $issuesBadge = $issues !== []
-            ? ' <span class="badge" style="background-color:#f0ad4e;color:#fff;"'
+            ? ' <span class="badge badge-solid badge-warning"'
                 . ' title="Champs renseignés sans rapport avec le type : ' . e(implode(', ', $issues)) . ' — ouvrez la fiche pour corriger.">'
                 . '<i class="fas fa-exclamation-triangle"></i> ' . count($issues) . '</span>'
             : '';
@@ -298,12 +298,7 @@ function items_render_list(array $items, string $csrfToken): string
             . '</tr>';
     }
 
-    $toolbar = '<p><a class="btn btn-primary" href="/admin/items.php?action=new">Nouvel objet</a> '
-        . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=item">Exporter tout (JSON)</a> '
-        . '<a class="btn btn-outline-secondary" href="/admin/action-import.php">Importer</a></p>';
-
-    return $toolbar
-        . renderTable(
+    return renderTable(
             ['Objet', 'Type', 'Flags', 'Sort lié', 'Usure', 'Joueurs', ''],
             $rows,
             'class="table table-sm table-striped align-middle" data-admin-list data-page-size="50" data-facets="type:Type"'
@@ -493,7 +488,7 @@ function items_edit_section(string $title, string $digest, bool $open, string $h
     ?string $forType = null, bool $warnNow = false): string
 {
     $warnBadge = $forType !== null
-        ? '<span class="badge item-section-warn" style="background-color:#f0ad4e;color:#fff;"'
+        ? '<span class="badge badge-solid badge-warning item-section-warn"'
             . ($warnNow ? '' : ' hidden')
             . ' title="Section renseignée alors que le type de l\'objet ne l\'utilise pas'
             . ' — nettoyez-la ou changez le type.">'
@@ -630,7 +625,7 @@ function items_render_edit(object $row, string $csrfToken): string
     }
     $imagesPanel = '<div class="card mb-3"><div class="card-header">Images</div>'
         . '<div class="card-body py-2">'
-        . '<div class="d-flex flex-wrap" style="gap: 8px; align-items: flex-start;">' . $imagesPanel . '</div>'
+        . '<div class="d-flex flex-wrap align-items-start gap-2">' . $imagesPanel . '</div>'
         . '<div><small class="text-muted">L\'image importée est convertie au format de l\'emplacement'
         . ' (webp objet/vignette, png carte) sans redimensionnement.</small></div>'
         . '</div></div>';
@@ -701,8 +696,8 @@ function items_render_edit(object $row, string $csrfToken): string
                     . ' Choisir une valeur de la liste, ou « aucun ».</span><br>'
                 : '')
             . 'Type d\'arme pour le combat, ou couche posée au sol (routes).')
-        . formField('Race (objet racial)', formInput('race', (string) ($row->race ?? '')),
-            'form-group', 'Code de race (nain, elfe…) : colore le nom de l\'objet — vide : commun.');
+        . formField('Race (objet racial)', formSelect('race', character_race_choices(), (string) ($row->race ?? ''), '— commun —'),
+            'form-group', 'Colore le nom de l\'objet à la couleur de la race.');
 
     $flags = $flagBoxes
         . formField('Sort lié', item_spell_select('spell', (string) $row->spell),
@@ -710,10 +705,10 @@ function items_render_edit(object $row, string $csrfToken): string
             'Objet à sort intégré : une fois équipé, il donne ce sort, hors plafond'
             . ' de compétences et sans occuper de place. Le sort'
             . ' disparaît quand l\'objet est retiré.')
-        . formField('Exotique (race)', formInput('exotique', (string) $row->exotique),
-            'form-group', 'Code de race : seule cette race peut équiper l\'objet.');
+        . formField('Exotique (race)', formSelect('exotique', character_race_choices(), (string) $row->exotique, '— toutes —'),
+            'form-group', 'Seule cette race peut équiper l\'objet.');
 
-    $usure = '<p class="text-muted mb-2" style="font-size:88%">Frapper, encaisser et mourir usent'
+    $usure = '<p class="text-muted small mb-2">Frapper, encaisser et mourir usent'
         . ' l\'équipement <b>par défaut</b> : rien à cocher ici pour que cela marche. Les cases'
         . ' ci-dessous ne concernent que l\'usure <b>par tour</b>, celle des bottes et des outils.</p>'
         . formField('Rôle au combat',
@@ -737,13 +732,13 @@ function items_render_edit(object $row, string $csrfToken): string
             formSelect('requires_building', building_type_names(), (string) ($row->requires_building ?? ''), '— aucun —'),
             'form-group', 'Ce bâtiment doit être achevé sur le plan pour que l\'objet s\'y construise (la banque pour les coffres).');
 
-    $caracsCol = '<p class="text-muted mb-2" style="font-size:88%">Double lecture selon le type :'
+    $caracsCol = '<p class="text-muted small mb-2">Double lecture selon le type :'
         . ' sur un <b>équipement</b>, modificateurs du porteur tant que l\'objet est porté ;'
         . ' sur un <b>consommable</b>, quantités rendues à la consommation (PV, PM, MVT, A, AE).'
         . ' Sans effet sur un objet <b>posé</b> (coffre) : sa vie est la durabilité max, le reste est à zéro.</p>'
         . '<div class="row">' . $caracInputs . '</div>';
 
-    $speciaux = '<p class="text-muted mb-2" style="font-size:88%">Modificateurs du porteur — sur un consommable,'
+    $speciaux = '<p class="text-muted small mb-2">Modificateurs du porteur — sur un consommable,'
         . ' PR / PF / Malus s\'appliquent aussi à la consommation.</p>'
         . '<div class="row">' . $specialInputs . '</div>'
         . formField('Munitions (noms, séparés par des virgules)', formInput('munitions', $munitions),
@@ -756,7 +751,7 @@ function items_render_edit(object $row, string $csrfToken): string
         . item_effect_multiselect('effets_retires', $effectsRemoved, 'Effets retirés',
             'Retirés à la consommation (antidote…). Catalogue : admin → Effets.');
 
-    $graine = '<p class="text-muted mb-2" style="font-size:88%">Objet de type <b>graine</b> posé seul au sol :'
+    $graine = '<p class="text-muted small mb-2">Objet de type <b>graine</b> posé seul au sol :'
         . ' chaque jour, une pousse est tirée au hasard parmi les lignes ci-dessous, puis germe avec'
         . ' 1 chance sur N ; la graine disparaît alors. Ligne au nom vidé = supprimée ;'
         . ' la ligne vierge sert à en ajouter une.</p>'
@@ -923,18 +918,12 @@ function items_render_edit(object $row, string $csrfToken): string
         . $labelField
         . ($isNew ? '' : $imagesPanel)
         . '<div class="item-sections">' . $sections . '</div>'
-        . '<button class="btn btn-primary" type="submit">Enregistrer</button> '
-        . '<a class="btn btn-secondary" href="/admin/items.php">Retour</a>'
+        . '<button class="btn btn-primary" type="submit">Enregistrer</button>'
         . '</form>'
         . ($isNew ? '' : $imageUploadForms)
         . $sectionScript;
 
-    $header = $isNew
-        ? 'Nouvel objet'
-        : e(ucfirst($row->name)) . ' <code>#' . (int) $row->id . '</code>';
-
-    return '<div class="card"><div class="card-header">' . $header . '</div>'
-        . '<div class="card-body">' . $body . '</div></div>';
+    return $body;
 }
 
 /* -------------------------------------------------------------------------
@@ -962,6 +951,8 @@ if ($action === 'new') {
     $blank->wear_rate = 1;
     $blank->durability_max = 100;
     $blank->capacity = null;
+    $title = 'Nouvel objet';
+    $options = ['back' => ['/admin/items.php', 'Objets']];
     $content = items_render_edit($blank, $csrfToken);
 } elseif ($action === 'edit') {
     $id = (int) ($_GET['id'] ?? 0);
@@ -971,9 +962,15 @@ if ($action === 'new') {
         setFlash('warning', 'Objet introuvable.');
         redirectTo('/admin/items.php');
     }
+    $title = e(ucfirst($row->name)) . ' <code>#' . (int) $row->id . '</code>';
+    $options = ['back' => ['/admin/items.php', 'Objets']];
     $content = items_render_edit($row, $csrfToken);
 } else {
+    $title = 'Objets';
+    $options = ['actions' => '<a class="btn btn-primary" href="/admin/items.php?action=new">Nouvel objet</a>'
+        . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=item">Exporter tout (JSON)</a>'
+        . '<a class="btn btn-outline-secondary" href="/admin/action-import.php">Importer</a>'];
     $content = items_render_list(items_catalog(), $csrfToken);
 }
 
-echo admin_layout('Objets', renderFlashMessage() . $content);
+echo admin_layout($title, $content, $options);

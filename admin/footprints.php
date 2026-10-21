@@ -195,17 +195,6 @@ ob_start();
 ?>
 
 <div class="container">
-    <h2 class="section-title">Emprises<?= $onlyType !== '' ? ' — ' . e($onlyType) : ($onlyKind !== '' ? ' — ' . e($faces[$onlyKind]->title) : '') ?></h2>
-
-    <p class="text-content">
-        Un type — personnage, bâtiment, décor, plante — peut occuper plusieurs cases.
-        Cette page définit <strong>les cases occupées par un type</strong> et
-        <strong>ce que chaque case bloque</strong> : les personnages, les projectiles, les deux ou rien. Sur le plateau, l'image d'un type
-        couvre toute son emprise (50 px par case) ; un décor en morceaux est affiché morceau
-        par morceau. Quand c'est possible, la forme est calculée automatiquement à partir d'un
-        exemplaire posé sur la carte ou de l'image entière ; une forme définie ici a priorité.
-    </p>
-
     <p class="fp-note">
         <strong>Clic sur une case vide</strong> : ajout à la figure.
         <strong>Clic sur une case pleine</strong> : la case passe à l'état suivant — tout passe,
@@ -214,8 +203,6 @@ ob_start();
         <strong>Glisser-déposer d'un morceau</strong> sur une case vide : correction de la figure.
         Enregistrer applique la forme aux exemplaires déjà posés.
     </p>
-
-    <?= renderFlashMessage() ?>
 
     <?php if ($retirement !== null && $retirement['droppable']): ?>
         <div class="alert alert-success">
@@ -288,7 +275,7 @@ ob_start();
     <?php endif; ?>
 
     <div class="fp-toolbar">
-        <input type="search" id="fp-search" class="form-select fp-search"
+        <input type="search" id="fp-search" class="form-control fp-search"
                placeholder="Chercher un type…" aria-label="Chercher un type" />
 
         <div class="fp-filters" role="group" aria-label="Filtrer par état">
@@ -466,7 +453,7 @@ ob_start();
                                 <input type="text" name="to" value="<?= e($image['file']) ?>" pattern="[a-z0-9_-]+\.png" required />
                                 <button type="submit" name="action" value="rename" class="btn btn-sm btn-secondary">Renommer</button>
                                 <button type="submit" name="action" value="delete" class="btn btn-sm btn-outline-danger" formnovalidate
-                                        onclick="return confirm(<?= e(json_encode('Supprimer définitivement « ' . $image['file'] . ' » ?', JSON_UNESCAPED_UNICODE)) ?>);">Supprimer</button>
+                                        data-confirm="Supprimer définitivement « <?= e($image['file']) ?> » ?">Supprimer</button>
                             <?php endif; ?>
                         </form>
                     <?php endforeach; ?>
@@ -494,7 +481,15 @@ ob_start();
 <?php
 $content = ob_get_clean();
 
-echo admin_layout('Emprises', $content, [
+$title = 'Formes' . ($onlyType !== '' ? ' — ' . e($onlyType) : ($onlyKind !== '' ? ' — ' . e($faces[$onlyKind]->title) : ''));
+
+echo admin_layout($title, $content, [
+    'intro'   => 'Un type — personnage, bâtiment, décor, plante — peut occuper plusieurs cases.
+        Cette page définit <strong>les cases occupées par un type</strong> et
+        <strong>ce que chaque case bloque</strong> : les personnages, les projectiles, les deux ou rien. Sur le plateau, l\'image d\'un type
+        couvre toute son emprise (50 px par case) ; un décor en morceaux est affiché morceau
+        par morceau. Quand c\'est possible, la forme est calculée automatiquement à partir d\'un
+        exemplaire posé sur la carte ou de l\'image entière ; une forme définie ici a priorité.',
     'styles'  => ['/admin/css/footprints.css'],
     'scripts' => ['/admin/js/footprints.js', '/admin/js/tp-copy.js'],
 ]);

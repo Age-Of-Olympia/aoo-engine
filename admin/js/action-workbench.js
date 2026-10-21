@@ -40,7 +40,8 @@ document.addEventListener('click', function (e) {
     var wb = document.querySelector('.wb');
     var btn = document.getElementById('wb-fold');
     if (!wb || !btn) { return; }
-    if (localStorage.getItem('wb-folded') === '1') { wb.classList.add('wb--folded'); }
+    /* The rail is a desktop affordance: small screens stack the list instead. */
+    if (localStorage.getItem('wb-folded') === '1' && window.matchMedia('(min-width: 901px)').matches) { wb.classList.add('wb--folded'); }
     btn.addEventListener('click', function () {
         var folded = wb.classList.toggle('wb--folded');
         localStorage.setItem('wb-folded', folded ? '1' : '0');
@@ -92,11 +93,11 @@ document.querySelectorAll('.wb-cond-search').forEach(function (input) {
     });
 });
 /* Configurer / Simuler tab switching. */
-document.querySelectorAll('.wb-tab-btn').forEach(function (btn) {
+document.querySelectorAll('.wb-col-head .wb-tabbar .nav-link').forEach(function (btn) {
     btn.addEventListener('click', function () {
         var tab = btn.getAttribute('data-tab');
-        document.querySelectorAll('.wb-tab-btn').forEach(function (b) { b.classList.toggle('active', b === btn); });
-        document.querySelectorAll('.wb-tab').forEach(function (p) { p.hidden = p.getAttribute('data-tab') !== tab; });
+        btn.parentNode.querySelectorAll('.nav-link').forEach(function (b) { b.classList.toggle('active', b === btn); });
+        document.querySelectorAll('.wb-pane').forEach(function (p) { p.hidden = p.getAttribute('data-tab') !== tab; });
         /* Keep the tab in the URL so a refresh stays on it. */
         var url = new URL(window.location);
         url.searchParams.set('tab', tab);

@@ -79,7 +79,7 @@ final class SimulationFormView
             . '</div>'
             . $this->context($bySide[SimulationField::SIDE_SHARED], $posted, $defaultDistance);
 
-        return '<h1>Simuler : ' . $this->esc($action->getDisplayName()) . '</h1>'
+        return '<h2>Simuler : ' . $this->esc($action->getDisplayName()) . '</h2>'
             . '<p class="text-muted">Simulation via le moteur réel : conditions, jets, dégâts, messages et logs sont ceux du jeu.</p>'
             . '<form method="post" class="card sim-form">'
             . '<input type="hidden" name="id" value="' . $id . '">'

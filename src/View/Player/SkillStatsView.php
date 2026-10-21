@@ -33,8 +33,7 @@ final class SkillStatsView
         array $players,
         string $populationLabel = 'Joueurs réels'
     ): string {
-        return '<h1 class="mb-3">Compétences — statistiques</h1>'
-            . $this->summary($summary, $populationLabel)
+        return $this->summary($summary, $populationLabel)
             . '<div class="stats-grid">'
             . $this->adoption('Adoption des actions', 'Action', $actionAdoption, $summary['players'])
             . $this->adoption('Adoption des passifs', 'Passif', $passiveAdoption, $summary['players'])

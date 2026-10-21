@@ -29,17 +29,8 @@
     cursor: pointer;
 }
 
-/* The game styles <code> as a block with a textured background; the slug here
-   is an inline label, so reset it back to plain inline monospace. */
-.skills-columns code {
-    display: inline;
-    background: none;
-    padding: 0;
-    white-space: normal;
-}
-
-/* Owned (checked) rows get a faint tint in the admin's blue accent so they
-   stay scannable down a long catalog. */
+/* Owned (checked) rows get a faint accent tint so they stay scannable down a
+   long catalog. */
 .skills-col tbody tr:has(.skills-checkbox:checked) {
-    background: rgba(52, 152, 219, 0.10);
+    background: var(--accent-wash);
 }

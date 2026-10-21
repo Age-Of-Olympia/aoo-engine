@@ -115,7 +115,7 @@ final class PassiveWorkbenchView
             . '</form>'
             // Sibling delete form; its button lives in the shared footer (form= attr).
             . '<form method="post" action="/admin/passive-delete.php" id="wb-passive-delete-form" class="wb-delete-form"'
-            . ' onsubmit="var f=this; aooConfirm(\'Supprimer définitivement ce passif ?\').then(function(ok){ if(ok){ f.submit(); } }); return false;">'
+            . ' data-confirm="Supprimer définitivement ce passif ?">'
             . $csrfTokenField
             . '<input type="hidden" name="passive_id" value="' . (int) $passive->getId() . '">'
             . '</form>'

@@ -94,7 +94,7 @@ foreach ($palette as $name => $rgb) {
     $deleteCell = $name === 'default'
         ? '<span class="text-muted" title="Couleur par défaut des tuiles inconnues ; non supprimable">—</span>'
         : '<form method="post" action="/admin/tile-colors-save.php?action=delete"'
-            . ' onsubmit="return confirm(\'Supprimer la couleur de « ' . e((string) $name) . ' » ? La tuile prendra la couleur default.\');">'
+            . ' data-confirm="' . e('Supprimer la couleur de « ' . $name . ' » ? La tuile prendra la couleur default.') . '">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="name" value="' . e((string) $name) . '">'
             . '<button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>'
@@ -118,15 +118,15 @@ $addForm = '<form method="post" action="/admin/tile-colors-save.php?action=save"
     . '<button type="submit" class="btn btn-primary btn-sm">+ Ajouter</button>'
     . '</form>';
 
-$content = '<div class="d-flex justify-content-between align-items-center mb-3">'
-    . '<h1 class="mb-0">Couleurs de carte</h1>' . $addForm . '</div>'
-    . '<p class="text-muted">Couleur de chaque tuile/biome sur la carte monde générée. Une tuile absente de la '
-    . 'palette prend la couleur <code>default</code> ; les tuiles de transition mélangent automatiquement '
-    . 'les couleurs de leurs biomes. Regénérer la carte (Cartes · Carte monde) pour voir le résultat.</p>'
-    . renderTable(
+$content = renderTable(
         [['Tuile', 'title="Image de la tuile dans img/tiles, quand elle existe"'], '', 'Nom', 'Valeur', 'Couleur', ''],
         $rows,
         'class="table table-striped table-sm" data-admin-list data-page-size="30"'
     );
 
-echo admin_layout('Couleurs de carte', renderFlashMessage() . $content);
+echo admin_layout('Couleurs de carte', $content, [
+    'actions' => $addForm,
+    'intro' => 'Couleur de chaque tuile/biome sur la carte monde générée. Une tuile absente de la '
+        . 'palette prend la couleur <code>default</code> ; les tuiles de transition mélangent automatiquement '
+        . 'les couleurs de leurs biomes. Regénérer la carte (Cartes · Carte monde) pour voir le résultat.',
+]);

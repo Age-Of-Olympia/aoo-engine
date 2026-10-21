@@ -15,12 +15,7 @@ $csrf = new CsrfProtectionService();
 $service = new EntityRekindService();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
-    } catch (RuntimeException $e) {
-        setFlash('danger', $e->getMessage());
-        redirectTo('entity-kinds.php');
-    }
+    requireAdminPost('entity-kinds.php');
 
     $ids = match (true) {
         isset($_POST['rekind_one']) => [(int) $_POST['rekind_one']],
@@ -44,18 +39,6 @@ ob_start();
 ?>
 
 <div class="container">
-    <h3>Catégories à corriger</h3>
-
-    <?= renderFlashMessage() ?>
-
-    <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-        Entités posées dont la catégorie ne correspond plus à celle de leur type, par exemple un arbre posé
-        comme bâtiment alors que son type est une ressource. Corriger une entité lui donne la catégorie de son
-        type : l'id, la position, les PV, le propriétaire et l'inventaire ne changent pas. Une entité qui quitte
-        la catégorie Bâtiment perd son dialogue et son chantier en cours.
-        Enregistrer un type corrige aussi tous ses exemplaires.
-    </div>
-
     <!-- Enter in the list search must not submit the form (first button = Tout corriger). -->
     <form method="post" class="mb-0"
           onkeydown="if (event.key === 'Enter' &amp;&amp; event.target.type === 'search') event.preventDefault();">
@@ -65,7 +48,8 @@ ob_start();
             <span class="badge bg-secondary"><?= count($rows) ?> entité(s)</span>
             <?php if ($rows !== []): ?>
                 <button type="submit" name="rekind_all" value="1" class="btn btn-sm btn-primary ml-auto"
-                        onclick="return confirm('Corriger les <?= count($rows) ?> entités de la liste ?<?= $buildings > 0 ? "\\n\\nLes {$buildings} bâtiments de la liste {$buildingWarning}" : '' ?>');">
+                        data-confirm="<?= e('Corriger les ' . count($rows) . ' entités de la liste ?'
+                            . ($buildings > 0 ? "\n\nLes {$buildings} bâtiments de la liste {$buildingWarning}" : '')) ?>">
                     Tout corriger
                 </button>
             <?php endif; ?>
@@ -74,11 +58,10 @@ ob_start();
         <?php if ($rows === []): ?>
             <div class="alert alert-success mb-0">Toutes les entités posées ont la catégorie de leur type.</div>
         <?php else: ?>
-            <table class="table table-sm table-striped" style="font-size:13px;" data-admin-list data-page-size="50"
+            <table class="table table-sm table-striped" data-admin-list data-page-size="50"
                    data-facets="type:Type,placed:Catégorie posée,target:Catégorie du type,plan:Plan">
                 <thead><tr>
-                    <th style="width:28px;"><input type="checkbox" title="Sélectionner les lignes affichées"
-                        onclick="this.closest('table').querySelectorAll('tbody tr').forEach(r => { if (r.offsetParent !== null) r.querySelector('input').checked = this.checked; })"></th>
+                    <th><input type="checkbox" data-check-all title="Sélectionner les lignes affichées"></th>
                     <th>Id</th><th>Type</th><th>Plan</th><th>Case (x,y,z)</th>
                     <th>Catégorie posée</th><th>Catégorie du type</th><th></th>
                 </tr></thead>
@@ -96,7 +79,7 @@ ob_start();
                         <td><?= e($families[$row['type_kind']] ?? $row['type_kind']) ?></td>
                         <td><button type="submit" name="rekind_one" value="<?= $row['id'] ?>"
                                     class="btn btn-sm btn-outline-primary"<?= $row['player_type'] === 'building'
-                                        ? " onclick=\"return confirm('Ce bâtiment perdra son dialogue et son chantier en cours. Continuer ?');\""
+                                        ? ' data-confirm="Ce bâtiment perdra son dialogue et son chantier en cours. Continuer ?"'
                                         : '' ?>>Corriger</button></td>
                     </tr>
                 <?php endforeach; ?>
@@ -113,4 +96,8 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Catégories à corriger', $content);
+echo admin_layout('Catégories à corriger', $content, ['intro' => 'Entités posées dont la catégorie ne correspond plus à celle de leur type, par exemple un arbre posé
+        comme bâtiment alors que son type est une ressource. Corriger une entité lui donne la catégorie de son
+        type : l\'id, la position, les PV, le propriétaire et l\'inventaire ne changent pas. Une entité qui quitte
+        la catégorie Bâtiment perd son dialogue et son chantier en cours.
+        Enregistrer un type corrige aussi tous ses exemplaires.']);

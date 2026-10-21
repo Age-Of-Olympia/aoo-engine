@@ -1,21 +1,14 @@
 /* Admin Access dashboard & options manager — page-specific styles.
-   Loaded by admin/admin-access.php via the layout's $assets['styles']. */
+   Loaded by admin/admin-access.php. */
 
-.aa-muted { color: #888; font-size: 0.9em; }
+.aa-muted { color: var(--mute); font-size: 0.9em; }
 
 /* Access badges in the dashboard */
 .aa-badge--sa { background: var(--danger, #d93025); color: #fff; }
 .aa-badge--a  { background: var(--info, #1a73e8); color: #fff; }
 
 /* Lookup form */
-.aa-lookup { display: flex; gap: 8px; margin: 10px 0 18px; }
-.aa-lookup input[type="text"] {
-    padding: 8px 10px;
-    font-size: 1em;
-    min-width: 280px;
-    border: 1px solid #c9cdd2;
-    border-radius: 6px;
-}
+.aa-lookup { display: flex; gap: 8px; margin: 10px 0 18px; max-width: 32rem; }
 
 /* Option toggle grid */
 .aa-opts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }

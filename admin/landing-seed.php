@@ -46,15 +46,11 @@ ob_start();
 ?>
 
 <div class="container">
-    <h3>Page d'accueil — seed du contenu initial</h3>
-
-    <?= renderFlashMessage() ?>
-
-    <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
+    <div class="alert alert-info">
         Crée le contenu éditorial initial de l'accueil (présentation, 3 chroniques, 5 aperçus).
         <ul class="mb-0 mt-1">
             <li>Les <strong>images ne sont pas dans git</strong> : déposez d'abord les fichiers dans
-                <code style="display:inline">img/ui/landing/</code> (archive fournie par l'équipe) —
+                <code>img/ui/landing/</code> (archive fournie par l'équipe) —
                 une ligne d'image n'est créée que si son fichier existe.</li>
             <li><strong>Création seulement</strong> : une section, chronique ou image déjà en base est
                 préservée telle quelle ; relancer n'écrase jamais une édition admin.</li>
@@ -64,13 +60,12 @@ ob_start();
     <form method="post">
         <?= $csrf->renderTokenField() ?>
         <button type="submit" name="seed_landing" value="1" class="btn btn-primary">Lancer le seed</button>
-        <a href="landing.php" class="btn btn-outline-secondary">← Retour à la gestion du contenu</a>
     </form>
 
     <?php if ($report !== null): ?>
     <div class="card mt-3">
         <div class="card-header"><strong>Rapport</strong></div>
-        <div class="card-body" style="font-size: 13px;">
+        <div class="card-body small">
             <?php foreach ($report['created'] as $item): ?>
                 <div><span class="badge badge-success">créé</span> <?= e($item) ?></div>
             <?php endforeach; ?>
@@ -87,4 +82,4 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Page d\'accueil — seed', $content);
+echo admin_layout('Contenu initial de l\'accueil', $content, ['back' => ['/admin/landing.php', 'Page d\'accueil']]);

@@ -19,7 +19,7 @@ $ownerCount = $selected !== null
 
 $body = (new PassiveWorkbenchView())->render($passives, $selected, $csrf->renderTokenField(), $ownerCount);
 
-echo admin_layout('Passifs', renderFlashMessage() . $body, [
+echo admin_layout('Configuration des passifs', $body, [
     'styles' => ['/css/rpg-awesome.min.css', '/admin/css/action-workbench.css'],
     'scripts' => ['/admin/js/action-workbench.js'],
 ]);
