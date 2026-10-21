@@ -184,11 +184,11 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
             '<input type="hidden" name="name" value="' . e($effect->getName()) . '">'
             . formInput('', $effect->getName(), 'disabled'),
             'form-group col-md-3',
-            'Le code est référencé par players_effects et les paramètres d\'actions — non modifiable.')
+            'Non modifiable : les personnages qui portent l\'effet et les actions qui le posent y sont rattachés.')
         : formField('Code',
             formInput('name', '', 'required pattern="[a-z][a-z0-9_]*" placeholder="ex: gel"'),
             'form-group col-md-3',
-            'Minuscules / chiffres / _ — stocké dans players_effects.name.');
+            'Minuscules, chiffres et _ uniquement ; non modifiable ensuite.');
 
     // Annulations : tout le catalogue de gameplay sauf soi-même —
     // multi-sélection, un effet peut en annuler plusieurs.

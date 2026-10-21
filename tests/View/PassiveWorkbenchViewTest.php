@@ -19,6 +19,6 @@ class PassiveWorkbenchViewTest extends TestCase
 
         $html = (new PassiveWorkbenchView())->render([$passive], null, '');
 
-        $this->assertStringContainsString('spell-slot · niv.1</span>', $html);
+        $this->assertStringContainsString('Emplacement de sort<code class="tech-name">spell-slot</code> · niv.1</span>', $html);
     }
 }

@@ -239,6 +239,11 @@ details > summary { cursor: pointer; }
     color: var(--mute);
 }
 .sidebar-footer a:hover { background: var(--neutral-wash); color: var(--ink); text-decoration: none; }
+.tech-switch { margin: 0 0 4px; padding: 6px 10px; color: var(--mute); font-size: 12.5px; }
+
+/* Codes behind their labels (techLabel()): shown on demand only. */
+.tech-name { display: none; }
+.show-tech .tech-name { display: inline; margin-left: 0.3em; }
 
 .admin-main {
     margin-left: var(--sidebar-w);

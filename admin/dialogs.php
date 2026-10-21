@@ -23,6 +23,9 @@ use App\Service\DialogService;
 use App\View\Action\IconFieldView;
 use App\Service\Action\RpgAwesomeIcons;
 
+/** What a dialogue opens from, by its stored type. */
+const DIALOG_TYPE_LABELS = ['pnj' => 'PNJ', 'building' => 'Bâtiment'];
+
 /** Marqueurs des dialogues branchés en dur dans le code du jeu. */
 function dialog_special_badge(string $name): string
 {
@@ -56,8 +59,10 @@ function dialogs_render_list(array $dialogs, array $references, array $buildingR
 
         $rows .= '<tr>'
             . '<td><code>' . e($dialog['name']) . '</code>' . dialog_special_badge($dialog['name']) . '</td>'
-            . '<td>' . e($dialog['npc_name']) . '</td>'
-            . '<td>' . e($dialog['type']) . '</td>'
+            . '<td>' . ($dialog['npc_name'] === 'TARGET_NAME'
+                ? '<span class="text-muted">nom du bâtiment ou du PNJ</span><code class="tech-name">TARGET_NAME</code>'
+                : e($dialog['npc_name'])) . '</td>'
+            . '<td>' . techLabel(DIALOG_TYPE_LABELS[$dialog['type']] ?? $dialog['type'], (string) $dialog['type']) . '</td>'
             . '<td>' . count($dialog['nodes']) . '</td>'
             . '<td>' . ($dialog['is_active']
                 ? '<span class="badge badge-success">actif</span>'
@@ -74,7 +79,7 @@ function dialogs_render_list(array $dialogs, array $references, array $buildingR
 
     return '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
         . '<th>Code</th><th>Nom du PNJ</th><th>Type</th><th>Nœuds</th><th>Statut</th>'
-        . '<th title="Déclencheurs map_dialogs référençant ce dialogue">Références</th><th></th>'
+        . '<th title="Cases (posées dans Tiled) et bâtiments qui ouvrent ce dialogue">Utilisé par</th><th></th>'
         . '</tr></thead><tbody>' . $rows . '</tbody></table>';
 }
 
@@ -127,11 +132,10 @@ function dialogs_render_form(?array $dialog, string $csrfToken): string
     $nameField = $isEdit
         ? '<input type="hidden" name="name" value="' . e($dialog['name']) . '">'
             . '<input type="text" class="form-control" value="' . e($dialog['name']) . '" disabled>'
-            . '<small class="form-text text-muted">Le code est référencé par les déclencheurs map_dialogs — non modifiable.</small>'
+            . '<small class="form-text text-muted">Non modifiable : les cases et bâtiments qui ouvrent ce dialogue y sont rattachés.</small>'
         : '<input type="text" class="form-control" name="name" required pattern="[a-z0-9_-]{1,100}"'
             . ' placeholder="ex: forgeron">'
-            . '<small class="form-text text-muted">Minuscules / chiffres / _ / - (100 max) — référencé par les'
-            . ' déclencheurs map_dialogs (3e champ des params).</small>';
+            . '<small class="form-text text-muted">Minuscules, chiffres, _ et - (100 max) ; non modifiable ensuite.</small>';
 
     $nodesJson = $isEdit
         ? json_encode($dialog['nodes'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
@@ -149,7 +153,8 @@ function dialogs_render_form(?array $dialog, string $csrfToken): string
         . '<div class="form-group col-md-3"><label>Nom du PNJ affiché</label>'
         . '<input type="text" class="form-control" name="npc_name" value="'
         . e($isEdit ? $dialog['npc_name'] : 'TARGET_NAME') . '">'
-        . '<small class="form-text text-muted">Placeholders : TARGET_NAME (PNJ ciblé), PLAYER_NAME.</small></div>'
+        . '<small class="form-text text-muted"><code>TARGET_NAME</code> affiche le nom du bâtiment ou du PNJ,'
+        . ' <code>PLAYER_NAME</code> celui du joueur.</small></div>'
         . '<div class="form-group col-md-2"><label>Type</label>'
         . '<input type="text" class="form-control" name="type" value="' . e($isEdit ? $dialog['type'] : 'pnj') . '"></div>'
         . '<div class="form-group col-md-2"><label>Custom</label>'
@@ -199,7 +204,7 @@ function dialogs_render_delete_zone(string $name, string $csrfToken): string
             . ' inscription (options de races). Décochez « Actif » pour revenir au fichier JSON.</p>';
     } elseif ($references > 0) {
         $body = '<p class="mb-0 text-muted">Suppression impossible : ' . $references . ' déclencheur(s)'
-            . ' map_dialogs référencent ce dialogue — retirez-les d\'abord (éditeur Tiled).</p>';
+            . ' de case ouvrent ce dialogue — retirez-les d\'abord dans Tiled.</p>';
     } elseif ($buildingReferences > 0) {
         $body = '<p class="mb-0 text-muted">Suppression impossible : ' . $buildingReferences . ' bâtiment(s)'
             . ' utilisent ce dialogue — détachez-les d\'abord (<a href="/admin/buildings.php">Bâtiments</a>).</p>';
@@ -253,12 +258,11 @@ if ($action === 'new') {
         . ' title="Importer un bundle JSON (avec prévisualisation avant application)">'
         . '<i class="fas fa-upload"></i> Importer</a>'
         . '<a class="btn btn-primary" href="/admin/dialogs.php?action=new">+ Nouveau dialogue</a>';
-    $options['intro'] = 'Un dialogue est déclenché par une case <code>map_dialogs</code>'
-        . ' (params « nom,avatar,dialogue », posés via l\'éditeur Tiled) ou directement par le code'
-        . ' (inscription, marchands). Structure : des nœuds <code>{id, text, options}</code>,'
-        . ' le nœud <code>bonjour</code> est le point d\'entrée ; chaque option mène à un'
-        . ' nœud (<code>go</code>), une page (<code>url</code>)'
-        . ' ou pose une variable (<code>set</code>).';
+    $options['intro'] = 'Un dialogue s\'ouvre depuis une case posée dans Tiled'
+        . '<code class="tech-name">map_dialogs</code>, un bâtiment, ou le jeu lui-même (inscription, marchands).'
+        . ' Il commence au nœud <code>bonjour</code> ; chaque réponse mène à un autre nœud'
+        . '<code class="tech-name">go</code>, ouvre une page<code class="tech-name">url</code>'
+        . ' ou enregistre un choix<code class="tech-name">set</code>.';
     $content = dialogs_render_list(
         $dialogs,
         $service->mapDialogReferenceCounts(),

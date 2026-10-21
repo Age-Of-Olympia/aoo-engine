@@ -25,7 +25,7 @@ header('Content-Type: application/json; charset=utf-8');
 // embedded in any page the admin loads cannot silently fire this.
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+    echo json_encode(['success' => false, 'error' => 'Requête invalide (POST attendu).']);
     exit;
 }
 
@@ -37,7 +37,7 @@ try {
     $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
 } catch (RuntimeException $e) {
     http_response_code(403);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.']);
     exit;
 }
 
@@ -56,8 +56,8 @@ $stepCount = $db->exe("SELECT COUNT(*) as cnt FROM tutorial_steps WHERE version 
 if ($stepCount['cnt'] == 0) {
     echo json_encode([
         'success' => false,
-        'error' => "Aucun step actif pour la version '$version'",
-        'hint' => 'Créez des steps dans l\'éditeur avec cette version'
+        'error' => "Aucune étape active pour la version '$version'",
+        'hint' => 'Créez des étapes avec cette version dans l\'éditeur'
     ]);
     exit;
 }
@@ -130,8 +130,8 @@ try {
     $rawMessage = $e->getMessage();
     if (stripos($rawMessage, 'Invalid race') !== false) {
         $friendly = "Race '" . ($player->data->race ?? '?') . "' incompatible avec le tutoriel. "
-                  . "Le launcher tente normalement un override automatique vers 'nain' — "
-                  . "vérifiez que la chaîne d'override n'a pas été contournée.";
+                  . "Le lancement remplace normalement la race par « nain » : "
+                  . "vérifiez que ce remplacement a bien eu lieu.";
     } else {
         $friendly = $rawMessage;
     }

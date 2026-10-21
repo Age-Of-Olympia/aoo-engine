@@ -11,17 +11,22 @@ final class PlayerSearchView
     public function render(array $players): string
     {
         $rows = '';
+        $raceLabels = [];
+        foreach ((new \App\Service\RaceService())->getRacesByKind('character') as $race) {
+            $raceLabels[$race->getName()] = $race->getLabel();
+        }
         foreach ($players as $player) {
+            $raceLabel = $raceLabels[$player['race']] ?? $player['race'];
             $isNpc = $player['player_type'] === 'npc';
             $active = !empty($player['active']);
 
             $rows .= '<tr data-type="' . ($isNpc ? 'PNJ' : 'Joueur') . '"'
-                . ' data-race="' . $this->esc(ucfirst($player['race'])) . '"'
+                . ' data-race="' . $this->esc($raceLabel) . '"'
                 . ' data-status="' . ($active ? 'Actif' : 'Inactif') . '">'
                 . '<td>' . (int) $player['id'] . '</td>'
                 . '<td>' . $this->esc($player['name']) . '</td>'
                 . '<td>' . $this->typeBadge($isNpc) . '</td>'
-                . '<td>' . $this->esc($player['race']) . '</td>'
+                . '<td>' . $this->esc($raceLabel) . '</td>'
                 . '<td>' . self::statusBadge($active) . '</td>'
                 . '<td>' . (int) $player['xp'] . '</td>'
                 . '<td class="text-nowrap"><a class="btn btn-sm btn-outline-primary" href="/admin/player-edit.php?id='

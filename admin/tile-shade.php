@@ -50,10 +50,8 @@ ob_start();
                     <strong>Ce sont les valeurs par défaut.</strong> Chaque plan
                     peut les remplacer (une grotte plus sombre, un plan de
                     glace plus bleu) depuis
-                    <a href="plans.php">Plans</a> ou depuis Tiled, avec les
-                    propriétés <code>shade_step</code>,
-                    <code>shade_max</code> et
-                    <code>shade_color</code>.
+                    <a href="plans.php">Plans</a> ou depuis Tiled
+                   <code class="tech-name">shade_step, shade_max, shade_color</code>.
                 </p>
 
                 <label class="form-label mb-0">Opacité d'un niveau (entre 0 et 1)</label>

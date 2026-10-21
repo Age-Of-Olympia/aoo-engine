@@ -2,6 +2,7 @@
 
 namespace App\View\Action;
 
+use App\Action\Schema\TechnicalLabels;
 use App\Action\Schema\ActionSchemaCatalog;
 use App\Entity\ActionTypePrecondition;
 
@@ -64,6 +65,7 @@ final class TypePreconditionsView
             rows: $rows,
             emptyLabel: 'Aucune précondition pour ' . $scopeLabel . '.',
             hidden: ['type_key' => $scopeKey, 'selected_type' => $selectedType],
+            labelOf: TechnicalLabels::condition(...),
         );
     }
 }

@@ -22,7 +22,7 @@ if ($action === 'delete') {
     $id = isset($_POST['id']) ? (int) $_POST['id'] : 0;
     if ($id > 0) {
         $db->exe("DELETE FROM tutorial_npcs WHERE id = ?", [$id]);
-        setFlash('success', "NPC #{$id} supprimé.");
+        setFlash('success', "PNJ #{$id} supprimé.");
     }
     redirectTo('/admin/tutorial-npcs.php');
 }
@@ -48,7 +48,7 @@ $isActive = isset($_POST['is_active']) ? 1 : 0;
 // Validation
 $errors = [];
 if ($role === '') $errors[] = 'Rôle requis.';
-if (!in_array($spawnMode, ['template', 'dynamic'], true)) $errors[] = 'Mode de spawn invalide.';
+if (!in_array($spawnMode, ['template', 'dynamic'], true)) $errors[] = 'Mode d\'apparition invalide.';
 if ($name === '') $errors[] = 'Nom requis.';
 if ($race === '' || (new \App\Service\RaceService())->getRaceByName($race) === null) {
     $errors[] = 'Race invalide.';
@@ -79,7 +79,7 @@ if ($id) {
             $id,
         ]
     );
-    setFlash('success', "NPC #{$id} mis à jour.");
+    setFlash('success', "PNJ #{$id} mis à jour.");
 } else {
     $db->exe(
         "INSERT INTO tutorial_npcs
@@ -91,7 +91,7 @@ if ($id) {
             $text, $energie, $spawnAtStepId, $isActive,
         ]
     );
-    setFlash('success', "NPC créé.");
+    setFlash('success', "PNJ créé.");
 }
 
 redirectTo('/admin/tutorial-npcs.php');

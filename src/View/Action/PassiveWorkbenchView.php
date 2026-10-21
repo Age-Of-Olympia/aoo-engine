@@ -26,6 +26,8 @@ final class PassiveWorkbenchView
         'mixte' => 'Mixte',
         'buff' => 'Buff',
         'spell-slot' => 'Emplacement de sort',
+        'malus' => 'Malus',
+        'esquive_tir' => 'Esquive des tirs',
     ];
     /** Passives have no stored icon; fall back to a glyph per type for the list / folded rail. */
     private const TYPE_ICONS = ['att' => 'ra-sword', 'def' => 'ra-shield', 'mixte' => 'ra-crossed-swords'];
@@ -49,7 +51,15 @@ final class PassiveWorkbenchView
         $list = '';
         foreach ($passives as $passive) {
             $active = ($selected !== null && $passive->getId() === $selected->getId()) ? ' wb-item--active' : '';
-            $search = strtolower($passive->getName() . ' ' . $passive->getDisplayName() . ' ' . ($passive->getCategory() ?? ''));
+            $type = (string) $passive->getType();
+            $typeLabel = self::TYPES[$type] ?? $type;
+            $search = strtolower($passive->getName() . ' ' . $passive->getDisplayName() . ' ' . $type . ' ' . $typeLabel . ' ' . ($passive->getCategory() ?? ''));
+            // Empty parts are dropped so no dangling separator shows.
+            $meta = array_filter([
+                $type !== '' ? $this->labelWithCode($typeLabel, $type) : '',
+                'niv.' . (int) $passive->getLevel(),
+                $passive->getRace() !== null ? $this->esc($passive->getRace()) : '',
+            ]);
             $icon = self::TYPE_ICONS[$passive->getType()] ?? 'ra-aura';
             // Same item structure as the action list (icon + wb-item-text) so the
             // folded rail shows the icon and hides the text, instead of breaking.
@@ -59,8 +69,7 @@ final class PassiveWorkbenchView
                 . (new ActionIconView())->render($icon, null, 'i', ['wb-item-icon'])
                 . '<span class="wb-item-text">'
                 . '<span class="wb-item-name">' . $this->esc($passive->getDisplayName()) . '</span>'
-                . '<span class="wb-item-meta">' . $this->esc($passive->getType()) . ' · niv.' . (int) $passive->getLevel()
-                . ($passive->getRace() !== null ? ' · ' . $this->esc($passive->getRace()) : '') . '</span>'
+                . '<span class="wb-item-meta">' . implode(' · ', $meta) . '</span>'
                 . '</span>'
                 . '</a>';
         }
@@ -235,7 +244,7 @@ final class PassiveWorkbenchView
     private function journalFields(ActionPassive $passive): string
     {
         return '<div class="wb-section-title">Messages de journal</div>'
-            . '<p class="wb-muted">Placeholders : <code>{actor}</code> (le porteur du passif), <code>{target}</code> (l\'autre partie), '
+            . '<p class="wb-muted">Variables : <code>{actor}</code> (le porteur du passif), <code>{target}</code> (l\'autre partie), '
             . '<code>{passive}</code> (nom affiché), <code>{action}</code> (l\'action en cours, vide à l\'apprentissage). '
             . 'Vide = aucune ligne ; le déclenchement est vide par défaut, à renseigner passif par passif.</p>'
             . $this->textarea('triggerTemplate', 'Déclenchement (public, quand le passif agit pendant une action)', (string) $passive->getTriggerTemplate(), 2)

@@ -35,7 +35,7 @@ try {
     $saveService->saveStep($_POST, $dbStepId);
 
     // Success flash message
-    setFlash('success', ($isEdit ? 'Step updated' : 'Step created') . ' successfully!');
+    setFlash('success', $isEdit ? 'Étape enregistrée.' : 'Étape créée.');
 
     redirectTo('/admin/tutorial.php');
 
@@ -50,7 +50,7 @@ try {
     // Unexpected errors - log technical details, show generic message
     error_log("[TutorialStepSave] Unexpected error: " . $e->getMessage());
 
-    setFlash('danger', 'An unexpected error occurred while saving. Please try again or contact support if the problem persists.');
+    setFlash('danger', 'Erreur inattendue pendant l\'enregistrement. Réessayez ; si l\'erreur persiste, prévenez un développeur.');
     stashOldInput();
 
     redirectTo($editorUrl);

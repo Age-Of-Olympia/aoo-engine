@@ -2,6 +2,7 @@
 
 namespace App\View\Action;
 
+use App\Action\Schema\TechnicalLabels;
 use App\Trait\RendersInheritanceBannerTrait;
 use App\Trait\EscapesHtmlTrait;
 /**
@@ -19,9 +20,9 @@ final class TypeLogEditorView
         return '<form method="post" action="/admin/action-type-log-save.php" class="wb-form wb-logs">'
             . $csrfTokenField
             . '<input type="hidden" name="type_key" value="' . $this->esc($typeKey) . '">'
-            . '<div class="wb-section-title">Messages de journal « ' . $this->esc($typeKey) . ' »</div>'
+            . '<div class="wb-section-title">Messages de journal « ' . $this->esc(TechnicalLabels::actionType($typeKey)) . ' »</div>'
             . $this->inheritanceBanner($typeKey, $inheritedFrom, $overriddenParent)
-            . '<p class="wb-muted">Placeholders : <code>{actor}</code>, <code>{target}</code>, <code>{action}</code> '
+            . '<p class="wb-muted">Variables : <code>{actor}</code>, <code>{target}</code>, <code>{action}</code> '
             . '(nom affiché), <code>{weapon}</code> (« avec &lt;arme&gt; », vide pour les animaux), '
             . '<code>{item}</code> (objets fabriqués et quantités, artisanat). '
             . 'Laisser vide pour aucune ligne. Hérité par les types enfants sans message propre.</p>'

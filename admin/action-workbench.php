@@ -8,6 +8,7 @@ use App\Action\Schema\Form\ParameterFieldRenderer;
 use App\Action\Schema\Form\RawParamsEditor;
 use App\Action\Schema\OptionCatalog;
 use App\Action\Schema\ParameterSchema;
+use App\Action\Schema\TechnicalLabels;
 use App\Service\Action\ActionCatalogService;
 use App\Service\Action\ActionConditionEditService;
 use App\Service\Action\ActionCreateService;
@@ -92,6 +93,11 @@ $renderParams = static function (ParameterSchema $schema, array $params, string 
 /* ---------- Panel 1: actions list ---------- */
 $ownerCounts = (new \App\Service\SkillOwnershipService())->actionOwnerCounts();
 $ownersLabel = static fn (int $n): string => $n . ' joueur' . ($n > 1 ? 's' : '');
+// Display names carried by more than one action: name => codes.
+$codesByName = [];
+foreach ($actions as $item) {
+    $codesByName[mb_strtolower(trim($item->getDisplayName()))][] = $item->getName();
+}
 ob_start();
 foreach ($actions as $item) {
     $active = ($action && $item->getId() === $action->getId()) ? ' wb-item--active' : '';
@@ -100,13 +106,20 @@ foreach ($actions as $item) {
     $itemRace = (string) $item->getRace();
     $nameStyle = $itemRace !== '' ? ' style="color: ' . e(RaceService::getRaceColor($itemRace)) . '"' : '';
     $raceMeta = $itemRace !== '' ? ' · ' . e(ucfirst($itemRace)) : '';
+    $twins = $codesByName[mb_strtolower(trim($item->getDisplayName()))];
     echo '<a class="wb-item' . $active . '" href="/admin/action-workbench.php?id=' . (int) $item->getId() . '&tab=' . $activeTab . '"'
         . ' title="' . e($item->getDisplayName()) . '"'
-        . ' data-search="' . e(strtolower($item->getName() . ' ' . $item->getDisplayName() . ' ' . action_type_label($item) . ' ' . $item->getCategory())) . '">'
+        . ' data-search="' . e(mb_strtolower($item->getName() . ' ' . $item->getDisplayName() . ' ' . action_type_label($item)
+            . ' ' . TechnicalLabels::actionType(action_type_label($item)) . ' ' . $item->getCategory())) . '">'
         . (new \App\View\Action\ActionIconView())->forAction($item, 'i', ['wb-item-icon'])
         . '<span class="wb-item-text">'
-        . '<span class="wb-item-name"' . $nameStyle . '>' . e($item->getDisplayName()) . '</span>'
-        . '<span class="wb-item-meta">' . e(action_type_label($item)) . ' · niv.' . e($item->getLevel()) . $raceMeta
+        . '<span class="wb-item-name"' . $nameStyle . '>' . e($item->getDisplayName())
+        . (count($twins) > 1
+            ? ' <span class="badge badge-warning" title="Même nom que : ' . e(implode(', ', array_diff($twins, [$item->getName()]))) . '">doublon</span>'
+            : '')
+        . '</span>'
+        . '<span class="wb-item-meta">' . techLabel(TechnicalLabels::actionType(action_type_label($item)), action_type_label($item))
+        . ' · niv.' . e($item->getLevel()) . $raceMeta
         . (($ownerCounts[$item->getName()] ?? 0) > 0 ? ' · ' . $ownersLabel($ownerCounts[$item->getName()]) : '') . '</span>'
         . '</span>'
         . '</a>';
@@ -126,8 +139,8 @@ if ($action === null) {
     echo '<input type="hidden" name="return_to" value="/admin/action-workbench.php?id=' . (int) $action->getId() . '">';
 
     echo '<div class="wb-meta">'
-        . '<span class="badge badge-info">' . e(action_type_label($action)) . '</span>'
-        . '<span class="badge badge-secondary" title="Cible déterminée par le type d\'action et les outcomes « sur soi »">'
+        . '<span class="badge badge-info">' . techLabel(TechnicalLabels::actionType(action_type_label($action)), action_type_label($action)) . '</span>'
+        . '<span class="badge badge-secondary" title="Cible déterminée par le type d\'action et les résultats « sur soi »">'
             . e((new ActionTargeting())->label($action)) . '</span>'
         . ($action->getCategory() ? '<span class="wb-chip">' . e($action->getCategory()) . '</span>' : '')
         . '<code class="wb-chip">' . e($action->getName()) . '</code>'
@@ -168,13 +181,14 @@ if ($action === null) {
     $currentType = (string) \App\Factory\EntityManagerFactory::getEntityManager()
         ->getClassMetadata(get_class($action))->discriminatorValue;
     echo '<label class="wb-field"><span>Type</span>'
-        . formSelect('type', $actionTypes, $currentType !== '' ? $currentType : null, null,
+        . formSelect('type', array_map(TechnicalLabels::actionType(...), array_combine(array_keys($actionTypes), array_keys($actionTypes))),
+            $currentType !== '' ? $currentType : null, null,
             'class="form-control" data-original="' . e($currentType) . '"'
             . ' title="Le type définit le comportement (ciblage, instructions héritées).'
-            . ' Changer de type conserve les conditions et les outcomes, à vérifier ensuite"'
+            . ' Changer de type conserve les conditions et les résultats, à vérifier ensuite"'
             . ' onchange="if(this.value !== this.dataset.original'
             . ' &amp;&amp; !confirm(\'Changer le type de cette action ?'
-            . ' Les conditions et outcomes existants sont conservés mais peuvent'
+            . ' Les conditions et résultats existants sont conservés mais peuvent'
             . ' ne plus convenir au nouveau type.\')) this.value = this.dataset.original;"')
         . '</label>';
 
@@ -211,7 +225,7 @@ if ($action === null) {
         $schema = $schemaCatalog->schemaForCondition($condition->getConditionType());
         $params = $condition->getParameters() ?? [];
         echo '<div class="wb-block">';
-        echo '<div class="wb-block-head">' . e($condition->getConditionType())
+        echo '<div class="wb-block-head">' . techLabel(TechnicalLabels::condition($condition->getConditionType()), $condition->getConditionType())
             . ($condition->isBlocking() ? ' <span class="badge badge-warning">bloquante</span>' : '')
             . ($condition->isDisplayContext() ? ' <span class="badge badge-info">contextuelle</span>' : '')
             . $conditionEditor->removeButton((int) $condition->getId()) . '</div>';
@@ -236,14 +250,14 @@ if ($action === null) {
     }
     echo '</div>';
 
-    echo '<div class="wb-section-title wb-section-title--row">Outcomes' . $outcomeEditor->addOutcomeControls() . '</div>';
+    echo '<div class="wb-section-title wb-section-title--row">Résultats' . $outcomeEditor->addOutcomeControls() . '</div>';
     if ($action->getOutcomes()->count() === 0) {
-        echo '<p class="wb-muted">Aucun outcome.</p>';
+        echo '<p class="wb-muted">Aucun résultat.</p>';
     }
     echo '<div class="wb-grid">';
     foreach ($action->getOutcomes() as $outcome) {
         echo '<div class="wb-block">';
-        echo '<div class="wb-block-head">Outcome '
+        echo '<div class="wb-block-head">Résultat '
             . ($outcome->isOnSuccess() ? '<span class="badge badge-success">succès</span>' : '<span class="badge badge-danger">échec</span>')
             . ' ' . $outcomeEditor->targetToggle((int) $outcome->getId(), $outcome->getApplyTo())
             . ($outcome->getName() ? ' <code class="wb-chip">' . e($outcome->getName()) . '</code>' : '')
@@ -257,7 +271,7 @@ if ($action === null) {
             $instructionType = OutcomeInstructionFactory::typeOf($instruction);
             $schema = $schemaCatalog->schemaForOutcomeInstruction($instructionType);
             $params = $instruction->getParameters() ?? [];
-            echo '<div class="wb-inst-name">' . e($instructionType)
+            echo '<div class="wb-inst-name">' . techLabel(TechnicalLabels::instruction($instructionType), $instructionType)
                 . $outcomeEditor->removeInstructionButton((int) $instruction->getId()) . '</div>';
             echo $renderParams($schema, $params, 'inst[' . (int) $instruction->getId() . ']', 'inst_raw[' . (int) $instruction->getId() . ']');
         }

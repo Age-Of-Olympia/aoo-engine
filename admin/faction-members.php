@@ -134,7 +134,7 @@ foreach ($characters as $row) {
         . '<td><code>' . $id . '</code></td>'
         . '<td><a href="/infos.php?targetId=' . $id . '">' . e($row['name']) . '</a>'
         . ($row['player_type'] !== 'real' ? ' <span class="badge badge-secondary">PNJ</span>' : '') . '</td>'
-        . '<td>' . e($row['race']) . '</td>'
+        . '<td>' . e(character_race_choices()[$row['race']] ?? $row['race']) . '</td>'
         . '<td>' . member_faction_select('faction', (string) $row['faction'], $factionNames, $form) . '</td>'
         . '<td>' . member_role_select('factionRole', (string) $row['faction'], (int) $row['factionRole'], $rolesByFaction, $form) . '</td>'
         . '<td>' . member_faction_select('secretFaction', (string) $row['secretFaction'], $factionNames, $form) . '</td>'
@@ -195,9 +195,9 @@ if ($factionFilter === '' && $query === '') {
         . '<th>Faction</th><th>Rôle</th>'
         . '<th>Faction secrète</th><th>Rôle secret</th><th></th>'
         . '</tr></thead><tbody>' . $rows . '</tbody></table>'
-        . '<small class="text-muted">Le rôle est un index dans la liste ordonnée des rôles de la faction'
-        . ' (players.factionRole). Les entrées ⚠ signalent un code de faction inconnu ou un index hors'
-        . ' limites à corriger.</small>';
+        . '<small class="text-muted">Le rôle est la position dans la liste des rôles de la faction'
+        . '<code class="tech-name">players.factionRole</code>. Un ⚠ signale une faction inconnue ou un rôle'
+        . ' qui n\'existe plus : à corriger.</small>';
 }
 
 echo admin_layout('Membres des factions', $content . $script);

@@ -1,8 +1,6 @@
 <?php
 /**
- * Tutorial Catalog Management
- *
- * Admin panel for managing multiple tutorials and launching them for testing.
+ * Tutorial catalogue: the tutorials, their settings, and a launcher to test them.
  */
 
 require_once __DIR__ . '/layout.php';
@@ -29,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
         $csrfValid = true;
     } catch (RuntimeException $e) {
-        $message = $e->getMessage();
+        $message = 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.';
         $messageType = 'danger';
     }
 }
@@ -56,7 +54,7 @@ if ($csrfValid) {
             $message = $e->getMessage();
             $messageType = 'danger';
         } catch (Exception $e) {
-            $message = 'Erreur: ' . $e->getMessage();
+            $message = 'Erreur : ' . $e->getMessage();
             $messageType = 'danger';
         }
     } elseif ($action === 'delete') {
@@ -66,7 +64,7 @@ if ($csrfValid) {
             $message = 'Tutoriel supprimé.';
             $messageType = 'success';
         } catch (Exception $e) {
-            $message = 'Erreur: ' . $e->getMessage();
+            $message = 'Erreur : ' . $e->getMessage();
             $messageType = 'danger';
         }
     }
@@ -121,7 +119,7 @@ ob_start();
                                 <th>Tutoriel</th>
                                 <th>Version</th>
                                 <th>Difficulté</th>
-                                <th>Steps</th>
+                                <th>Étapes</th>
                                 <th>Statut</th>
                                 <th>Actions</th>
                             </tr>
@@ -138,13 +136,13 @@ ob_start();
                                 <td><code><?= htmlspecialchars($tut['version']) ?></code></td>
                                 <td>
                                     <span class="badge badge-<?= $tut['difficulty'] ?>">
-                                        <?= ucfirst($tut['difficulty']) ?>
+                                        <?= techLabel(['beginner' => 'Débutant', 'intermediate' => 'Intermédiaire', 'advanced' => 'Avancé'][$tut['difficulty']] ?? (string) $tut['difficulty'], (string) $tut['difficulty']) ?>
                                     </span>
                                     <br>
                                     <small>~<?= $tut['estimated_minutes'] ?> min</small>
                                 </td>
                                 <td>
-                                    <span class="badge badge-info"><?= $tut['step_count'] ?> steps</span>
+                                    <span class="badge badge-info"><?= $tut['step_count'] ?> étapes</span>
                                 </td>
                                 <td>
                                     <?php if ($tut['is_active']): ?>
@@ -163,10 +161,10 @@ ob_start();
                                             Lancer
                                         </button>
                                         <a href="?edit=<?= $tut['id'] ?>" class="btn btn-outline-primary btn-sm" title="Modifier">
-                                            Edit
+                                            Modifier
                                         </a>
-                                        <a href="/admin/tutorial.php?version=<?= urlencode($tut['version']) ?>" class="btn btn-info btn-sm" title="Voir les steps">
-                                            Steps
+                                        <a href="/admin/tutorial.php?version=<?= urlencode($tut['version']) ?>" class="btn btn-info btn-sm" title="Voir les étapes">
+                                            Étapes
                                         </a>
                                         <?php if ($tut['version'] !== '1.0.0'): ?>
                                         <form method="POST" class="d-inline" data-confirm="Supprimer ce tutoriel ?">
@@ -174,7 +172,7 @@ ob_start();
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="id" value="<?= $tut['id'] ?>">
                                             <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">
-                                                X
+                                                Supprimer
                                             </button>
                                         </form>
                                         <?php endif; ?>
@@ -209,7 +207,7 @@ ob_start();
                         <input type="text" name="version" class="form-control" required
                                placeholder="ex: 2.0.0-craft"
                                value="<?= htmlspecialchars($formData['version'] ?? '') ?>">
-                        <small class="form-text">Identifiant unique (sera utilisé dans tutorial_steps)</small>
+                        <small class="form-text">Identifiant unique, repris par chaque étape de ce tutoriel <code class="tech-name">tutorial_steps.version</code></small>
                     </div>
 
                     <div class="form-group">
@@ -232,7 +230,7 @@ ob_start();
                                 <input type="text" name="icon" class="form-control"
                                        placeholder="ra-anvil"
                                        value="<?= htmlspecialchars($formData['icon'] ?? 'ra-book') ?>">
-                                <small class="form-text"><a href="https://nagoshiashumern.github.io/Rpg-Awesome/" target="_blank">RPG Awesome</a></small>
+                                <small class="form-text"><a href="https://nagoshiashumern.github.io/Rpg-Awesome/" target="_blank">Liste des icônes</a></small>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -266,22 +264,20 @@ ob_start();
 
                     <div class="form-group">
                         <label>Plan (carte)</label>
-                        <input type="text" name="plan" class="form-control"
-                               placeholder="tutorial"
-                               value="<?= htmlspecialchars($formData['plan'] ?? 'tutorial') ?>">
+                        <?= formSelect('plan', plan_choices(), (string) ($formData['plan'] ?? 'tutorial')) ?>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Spawn X</label>
+                                <label>Arrivée X</label>
                                 <input type="number" name="spawn_x" class="form-control"
                                        value="<?= $formData['spawn_x'] ?? 0 ?>">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Spawn Y</label>
+                                <label>Arrivée Y</label>
                                 <input type="number" name="spawn_y" class="form-control"
                                        value="<?= $formData['spawn_y'] ?? 0 ?>">
                             </div>
@@ -289,11 +285,11 @@ ob_start();
                     </div>
 
                     <div class="form-group">
-                        <label>Prérequis (versions JSON)</label>
+                        <label>Tutoriels à terminer avant</label>
                         <input type="text" name="prerequisites" class="form-control"
                                placeholder='["1.0.0"]'
                                value="<?= htmlspecialchars($formData['prerequisites'] ?? '') ?>">
-                        <small class="form-text">Tutoriels à compléter avant (format JSON)</small>
+                        <small class="form-text">Versions des tutoriels, en liste JSON <code class="tech-name">["1.0.0"]</code></small>
                     </div>
 
                     <div class="form-group form-check">
@@ -342,16 +338,16 @@ document.querySelectorAll('.btn-launch-tutorial').forEach(function(btn) {
             .then(function(response) { return response.json(); })
             .then(function(data) {
                 if (data.success) {
-                    alert('Tutoriel lancé: ' + data.tutorial_name + '\n' + data.step_count + ' étapes');
+                    alert('Tutoriel lancé : ' + data.tutorial_name + '\n' + data.step_count + ' étapes');
                     window.location.href = data.redirect || '/index.php';
                 } else {
-                    alert('Erreur: ' + (data.error || 'Erreur inconnue') + (data.hint ? '\n\n' + data.hint : ''));
+                    alert('Erreur : ' + (data.error || 'Erreur inconnue') + (data.hint ? '\n\n' + data.hint : ''));
                     btn.disabled = false;
                     btn.textContent = 'Lancer';
                 }
             })
             .catch(function(err) {
-                alert('Erreur réseau: ' + err.message);
+                alert('Erreur réseau : ' + err.message);
                 btn.disabled = false;
                 btn.textContent = 'Lancer';
             });

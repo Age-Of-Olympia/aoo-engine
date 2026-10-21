@@ -2,6 +2,7 @@
 
 namespace App\View\Action;
 
+use App\Action\Schema\TechnicalLabels;
 use App\Trait\RendersOptionsTrait;
 /**
  * Workbench controls for adding/removing an action's conditions. These render
@@ -20,7 +21,7 @@ final class ConditionEditorView
     public function addControls(array $types): string
     {
         return '<div class="wb-add">'
-            . '<select class="form-control" name="condition_type">' . $this->optionsList($types) . '</select>'
+            . '<select class="form-control" name="condition_type">' . $this->labeledOptions($types, TechnicalLabels::condition(...)) . '</select>'
             . '<button type="submit" class="btn btn-sm btn-default" formaction="/admin/action-condition-add.php" formnovalidate>+ Condition</button>'
             . '</div>';
     }

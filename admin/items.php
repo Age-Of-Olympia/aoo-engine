@@ -42,7 +42,7 @@ const ITEM_FLAG_LABELS = [
     'is_bankable' => 'Stockable en banque',
     'is_deprecated' => 'Déprécié',
     'vanish_on_break' => 'Disparaît une fois brisé (le butin est répandu au sol, pas d\'épave)',
-    'magique' => 'Magique (équipé, les dégâts d\'attaque passent sur la M)',
+    'magique' => 'Magique (équipé, les dégâts d\'attaque utilisent la Puissance)',
     'lockable' => 'Se ferme (posé : coffre avec serrure)',
     'blocks_passage' => 'Posé, bloque le passage',
     'blocks_projectiles' => 'Posé, bloque les tirs',
@@ -123,7 +123,9 @@ function item_flag_badges(object $row): string
         $badges[] = '<span class="badge badge-warning">Non bancable</span>';
     }
     if (!empty($row->exotique)) {
-        $badges[] = '<span class="badge badge-secondary">Exotique (' . e($row->exotique) . ')</span>';
+        static $raceLabels = null;
+        $raceLabels ??= character_race_choices();
+        $badges[] = '<span class="badge badge-secondary">Exotique (' . e($raceLabels[$row->exotique] ?? $row->exotique) . ')</span>';
     }
     return $badges === [] ? '<span class="text-muted">—</span>' : implode(' ', $badges);
 }
@@ -281,8 +283,8 @@ function items_render_list(array $items, string $csrfToken): string
         $rows[] = '<tr data-type="' . ($type !== '' ? e(ucfirst($type)) : 'Sans type') . '">'
             . '<td><img src="/img/items/' . e($row->name) . '_mini.webp" style="max-height:24px"'
             . ' onerror="this.style.display=\'none\'" alt=""> '
-            . (trim((string) ($row->label ?? '')) !== '' ? '<b>' . e($row->label) . '</b> ' : '')
-            . '<code>' . e($row->name) . '</code>' . $mapThumbs . '</td>'
+            . (trim((string) ($row->label ?? '')) !== '' ? techLabel($row->label, $row->name) : '<code>' . e($row->name) . '</code>')
+            . $mapThumbs . '</td>'
             . '<td>' . item_type_badge($type) . $issuesBadge . '</td>'
             . '<td>' . item_flag_badges($row) . '</td>'
             . '<td>' . ($row->spell !== '' && $row->spell !== null ? e($row->spell) : '<span class="text-muted">—</span>') . '</td>'
@@ -448,7 +450,7 @@ function items_grow_rows(array $growTo): string
 {
     $rows = '<div class="d-flex gap-2 text-muted" style="font-size:85%;">'
         . '<span style="flex:2;">Pousse (nom posé sur la carte)</span>'
-        . '<span style="flex:2;">Table cible</span>'
+        . '<span style="flex:2;">Couche</span>'
         . '<span style="flex:1;">1 chance sur…</span></div>';
 
     foreach (array_merge($growTo, [null]) as $entry) {
@@ -464,8 +466,9 @@ function items_grow_rows(array $growTo): string
 
     return '<div class="form-group">' . $rows
         . renderDatalist('grow-tables', ['plants' => '', 'resources' => '', 'foregrounds' => ''])
-        . '<small class="text-muted"><code>plants</code> et <code>resources</code> posent une entité de ce type ;'
-        . ' une autre table reçoit une ligne <code>map_&lt;table&gt;</code> sous ce nom.</small></div>';
+        . '<small class="text-muted"><code>plants</code> pose une plante, <code>resources</code> une ressource ;'
+        . ' <code>foregrounds</code> pose un décor de premier plan sous ce nom'
+        . '<code class="tech-name">map_&lt;couche&gt;</code>.</small></div>';
 }
 
 /**
@@ -651,11 +654,11 @@ function items_render_edit(object $row, string $csrfToken): string
      * (Usure / À la consommation / Graine) via data-for-type. */
     $typeValue = (string) ($row->type ?? '');
     $typeOptions = [
-        'equipement' => 'equipement',
-        'consommable' => 'consommable',
-        Item::TYPE_CONSTRUCTIBLE => Item::TYPE_CONSTRUCTIBLE,
-        'graine' => 'graine',
-        Item::TYPE_QUETE => Item::TYPE_QUETE,
+        'equipement' => 'Équipement',
+        'consommable' => 'Consommable',
+        Item::TYPE_CONSTRUCTIBLE => 'Constructible',
+        'graine' => 'Graine',
+        Item::TYPE_QUETE => 'Objet de quête',
     ];
     $typesInDb = (new \Classes\Db())->exe("SELECT DISTINCT type FROM items WHERE type != '' ORDER BY type");
     while ($typeRow = $typesInDb->fetch_object()) {
@@ -674,11 +677,11 @@ function items_render_edit(object $row, string $csrfToken): string
                 '— sans usage direct (matériau…)',
                 'class="form-control" id="item-type-select"'),
             'form-group',
-            'Définit l\'action « Utiliser » : <b>equipement</b> s\'équipe (1 Ae),'
-            . ' <b>consommable</b> se consomme (1 A),'
-            . ' <b>' . Item::TYPE_CONSTRUCTIBLE . '</b> se construit sur la carte,'
-            . ' <b>graine</b> germe une fois posée au sol,'
-            . ' <b>' . Item::TYPE_QUETE . '</b> (carte, clef, relique…) n\'a aucune mécanique.'
+            'Définit l\'action « Utiliser » : un <b>équipement</b> s\'équipe (1 Ae),'
+            . ' un <b>consommable</b> se consomme (1 A),'
+            . ' un <b>constructible</b> se construit sur la carte,'
+            . ' une <b>graine</b> germe une fois posée au sol,'
+            . ' un <b>objet de quête</b> (carte, clef, relique…) n\'a aucune mécanique.'
             . ' Le choix ouvre la section correspondante ci-contre.')
         . formField('Emplacement',
             formSelect('emplacement',
@@ -764,9 +767,9 @@ function items_render_edit(object $row, string $csrfToken): string
             item_strike_effect_rows($strikeEffects),
             'form-group',
             'Arme équipée : chaque ligne indique quand l\'effet est posé (coup réussi ou raté) et sur qui (le porteur ou la cible).')
-        . formField('Interdits (JSON)', formTextarea('forbid', (string) ($row->forbid ?? ''), 2),
+        . formField('Interdictions (JSON)', formTextarea('forbid', (string) ($row->forbid ?? ''), 2),
             'form-group', '<code>{"market":1}</code> : invendable au marché et aux contrats (ex : l\'or).')
-        . formField('Extra (JSON, clés héritées — sans perte)', formTextarea('extra', $extraDisplay, 2),
+        . formField('Autres données (JSON)', formTextarea('extra', $extraDisplay, 2),
             'form-group',
             'Clés historiques diverses, conservées telles quelles. Les effets de'
             . ' consommation s\'éditent dans leur section, plus dans cette zone.');

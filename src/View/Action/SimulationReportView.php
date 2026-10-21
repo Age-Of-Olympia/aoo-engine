@@ -34,7 +34,7 @@ final class SimulationReportView
                 . '<div class="card-header"><h3 class="card-title">Exemple détaillé</h3></div>'
                 . '<div class="card-body">'
                 . (new ActionResultsView($this->report->sample))->getActionResults()
-                . '<hr><strong>Logs</strong>'
+                . '<hr><strong>Journal</strong>'
                 . '<p class="text-muted">Acteur : ' . $this->esc($logs['actor'] ?? '') . '</p>'
                 . '<p class="text-muted">Cible : ' . $this->esc($logs['target'] ?? '') . '</p>'
                 . '</div></div>';

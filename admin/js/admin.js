@@ -8,7 +8,8 @@
  *  - data-confirm="message" on a form, a submit button or a link asks first;
  *  - data-autosubmit on a field submits its form when it changes;
  *  - data-check-all on a header checkbox ticks the visible rows of its table;
- *  - the × of a flash message closes it.
+ *  - the × of a flash message closes it;
+ *  - « Noms techniques » in the sidebar shows the codes behind labels.
  */
 (function () {
     var body = document.body;
@@ -31,6 +32,16 @@
                 title.setAttribute('aria-expanded', open[name]);
                 try { localStorage.setItem(KEY, JSON.stringify(open)); } catch (e) { /* private mode */ }
             });
+        });
+    }
+
+    // « Noms techniques »: codes beside their labels, remembered per browser.
+    var techSwitch = document.querySelector('[data-tech-names]');
+    if (techSwitch) {
+        techSwitch.checked = body.classList.contains('show-tech');
+        techSwitch.addEventListener('change', function () {
+            body.classList.toggle('show-tech', techSwitch.checked);
+            try { localStorage.setItem('adminTechNames', techSwitch.checked ? '1' : '0'); } catch (e) { /* private mode */ }
         });
     }
 

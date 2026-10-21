@@ -237,8 +237,9 @@ ob_start();
                 </div>
                 <div class="form-text">
                     Aujourd'hui s'affiche : « <?= e($dateFormat->format($today)) ?> ».
-                    Utilisé par les affichages qui passent par <code>DateFormatService</code>
-                    (chroniques de l'accueil…) ; la saisie admin reste en JJ/MM/AAAA.
+                    Sert aux dates affichées aux joueurs (chroniques de l'accueil…) ;
+                    la saisie dans l'admin reste en JJ/MM/AAAA.
+                   <code class="tech-name">DateFormatService</code>
                 </div>
             </form>
 
@@ -303,8 +304,9 @@ ob_start();
                 <?php $repairField('recycle_share', '% des ingrédients rendus au recyclage d\'un objet brisé (100 au maximum)'); ?>
                 <button type="submit" class="btn btn-sm btn-primary mt-2">Enregistrer</button>
                 <small class="form-text text-muted">
-                    Prix des ressources : colonne <code>price</code> de chaque objet. Points de vie d'un
-                    objet : sa colonne <code>durability_max</code>. <strong>Lu à chaque devis.</strong>
+                    Prix des ressources : le prix de chaque objet<code class="tech-name">price</code>.
+                    Points de vie d'un objet : sa durabilité maximale<code class="tech-name">durability_max</code>.
+                    <strong>Lu à chaque devis.</strong>
                 </small>
             </form>
 
@@ -363,10 +365,11 @@ ob_start();
                     <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                 </div>
                 <small class="form-text text-muted">
-                    Taille maximale du fichier .json accepté par Actions → Import. Le serveur limite aussi la
-                    requête : ici <?= e(ini_get('upload_max_filesize')) ?> (upload_max_filesize),
-                    <?= e(ini_get('post_max_size')) ?> (post_max_size) ; un réglage plus élevé n'a
-                    pas d'effet.
+                    Taille maximale du fichier .json accepté par Administration → Import / export.
+                    Le serveur accepte au plus <?= e(iniSizeLabel((string) ini_get('upload_max_filesize'))) ?> par fichier
+                   <code class="tech-name">upload_max_filesize</code> et
+                    <?= e(iniSizeLabel((string) ini_get('post_max_size'))) ?> par envoi
+                   <code class="tech-name">post_max_size</code> ; un réglage plus élevé n'a pas d'effet.
                 </small>
             </form>
         </div>

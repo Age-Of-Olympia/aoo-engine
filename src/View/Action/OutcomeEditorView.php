@@ -2,11 +2,12 @@
 
 namespace App\View\Action;
 
+use App\Action\Schema\TechnicalLabels;
 use App\Trait\RendersOptionsTrait;
 use App\Enum\OutcomeTarget;
 
 /**
- * Workbench controls for adding/removing an action's outcomes and their
+ * Workbench controls for adding/removing an action's outcomes (« résultats ») and their
  * instructions. Like ConditionEditorView these render INSIDE the Configurer save
  * form, so they are not <form>s: the buttons use formaction (+ formnovalidate)
  * to post to the endpoints while reusing the save form's csrf_token/action_id.
@@ -20,8 +21,8 @@ final class OutcomeEditorView
     public function addOutcomeControls(): string
     {
         return '<div class="wb-add">'
-            . '<button type="submit" class="btn btn-sm btn-default" name="on_success" value="1" formaction="/admin/action-outcome-add.php" formnovalidate>+ Outcome succès</button>'
-            . '<button type="submit" class="btn btn-sm btn-default" name="on_success" value="0" formaction="/admin/action-outcome-add.php" formnovalidate>+ Outcome échec</button>'
+            . '<button type="submit" class="btn btn-sm btn-default" name="on_success" value="1" formaction="/admin/action-outcome-add.php" formnovalidate>+ Résultat en cas de succès</button>'
+            . '<button type="submit" class="btn btn-sm btn-default" name="on_success" value="0" formaction="/admin/action-outcome-add.php" formnovalidate>+ Résultat en cas d\'échec</button>'
             . '</div>';
     }
 
@@ -34,7 +35,7 @@ final class OutcomeEditorView
      */
     public function targetToggle(int $outcomeId, OutcomeTarget $applyTo): string
     {
-        return '<select class="wb-outcome-target" name="outcome_apply_to[' . $outcomeId . ']" title="Sur qui s\'applique cet outcome">'
+        return '<select class="wb-outcome-target" name="outcome_apply_to[' . $outcomeId . ']" title="Sur qui s\'applique ce résultat">'
             . $this->option(OutcomeTarget::Target->value, 'sur la cible', $applyTo === OutcomeTarget::Target)
             . $this->option(OutcomeTarget::Self->value, 'sur soi', $applyTo === OutcomeTarget::Self)
             . $this->option(OutcomeTarget::Both->value, 'sur soi ou la cible', $applyTo === OutcomeTarget::Both)
@@ -45,7 +46,7 @@ final class OutcomeEditorView
     {
         return '<button type="submit" class="wb-remove-btn" name="outcome_id" value="' . $outcomeId . '"'
             . ' formaction="/admin/action-outcome-remove.php" formnovalidate'
-            . ' data-confirm="Retirer cet outcome et ses instructions ?" title="Retirer">&times;</button>';
+            . ' data-confirm="Retirer ce résultat et ses instructions ?" title="Retirer">&times;</button>';
     }
 
     /**
@@ -54,7 +55,7 @@ final class OutcomeEditorView
     public function addInstructionControls(int $outcomeId, array $types): string
     {
         return '<div class="wb-add">'
-            . '<select class="form-control" name="instruction_type_' . $outcomeId . '">' . $this->optionsList($types) . '</select>'
+            . '<select class="form-control" name="instruction_type_' . $outcomeId . '">' . $this->labeledOptions($types, TechnicalLabels::instruction(...)) . '</select>'
             . '<button type="submit" class="btn btn-sm btn-default" name="outcome_id" value="' . $outcomeId . '"'
             . ' formaction="/admin/action-instruction-add.php" formnovalidate>+ Instruction</button>'
             . '</div>';

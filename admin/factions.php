@@ -94,7 +94,7 @@ function faction_render_list(array $factions): string
 
     return '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
         . '<th>Code</th><th>Icône</th><th>Nom</th><th>Statut</th><th>Respawn</th>'
-        . '<th>Rôles</th><th title="Personnages référençant cette faction (players.faction / secretFaction)">Membres</th><th></th>'
+        . '<th>Rôles</th><th title="Personnages membres de cette faction, ouvertement ou en secret">Membres</th><th></th>'
         . '</tr></thead><tbody>' . $rows . '</tbody></table>';
 }
 
@@ -133,10 +133,11 @@ function faction_render_form(?Faction $faction, string $csrfToken): string
     $codeField = $isEdit
         ? '<input type="hidden" name="code" value="' . e($faction->getCode()) . '">'
             . '<input type="text" class="form-control" value="' . e($faction->getCode()) . '" disabled>'
-            . '<small class="form-text text-muted">Le code est référencé par players.faction — non modifiable.</small>'
+            . '<small class="form-text text-muted">Non modifiable : les membres y sont rattachés'
+            . '<code class="tech-name">players.faction</code>.</small>'
         : '<input type="text" class="form-control" name="code" required pattern="[a-z][a-z0-9_]*"'
             . ' placeholder="ex: cercle_des_brumes">'
-            . '<small class="form-text text-muted">Minuscules / chiffres / _ — stocké dans players.faction.</small>';
+            . '<small class="form-text text-muted">Minuscules, chiffres et _ uniquement ; non modifiable ensuite.</small>';
 
     $flagHeaders = '';
     foreach (FactionRole::FLAG_LABELS as $flag => $label) {
@@ -230,15 +231,16 @@ HTML;
         . '<label class="mr-3"><input type="checkbox" name="hidden" '
         . checked($isEdit && $faction->isHidden()) . '> Cachée (page visible des admins seuls)</label><br>'
         . '<label><input type="checkbox" name="secret" '
-        . checked($isEdit && $faction->isSecret()) . '> Secrète (membres via players.secretFaction,'
-        . ' effectif masqué aux non-membres)</label>'
+        . checked($isEdit && $faction->isSecret()) . '> Secrète (liste des membres cachée'
+        . ' à qui n\'en fait pas partie)</label>'
         . '</div></div>'
         . '</div></div></div>'
 
         . '<div class="card mb-3"><div class="card-header">Rôles (ordonnés)</div><div class="card-body">'
         . '<div class="alert alert-warning py-1">'
-        . '⚠ Le rôle d\'un membre est un <strong>index</strong> dans cette liste (players.factionRole) :'
-        . ' supprimer ou réordonner des rôles change le rôle affiché des membres existants ;'
+        . '⚠ Le rôle d\'un membre est sa <strong>position</strong> dans cette liste'
+        . '<code class="tech-name">players.factionRole</code> :'
+        . ' supprimer ou réordonner des rôles change le rôle des membres existants ;'
         . ' corrigez ensuite via la page <a href="/admin/faction-members.php">Membres</a>.</div>'
         . '<table class="table table-sm mb-2" id="faction-roles"><thead><tr>'
         . '<th>#</th><th style="min-width:180px">Nom</th>' . $flagHeaders . '<th></th>'

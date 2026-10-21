@@ -75,15 +75,15 @@ function plans_build_inventory(Db $db): array
 function plans_status_badge(object $plan): string
 {
     if ($plan->hasConfig && $plan->hasCoords) {
-        return '<span class="badge badge-solid badge-success">cohérent</span>';
+        return '<span class="badge badge-solid badge-success">complet</span>';
     }
     if ($plan->hasCoords) {
-        return '<span class="badge badge-solid badge-danger" title="Des coordonnées existent en base'
-            . ' mais la table plans n\'a pas de ligne « ' . e($plan->id) . ' » : aucune récolte, pas de bornes de carte.">'
-            . 'coords sans config</span>';
+        return '<span class="badge badge-solid badge-danger" title="Le plan a des cases mais pas de'
+            . ' configuration : aucune récolte, pas de bornes de carte.">'
+            . 'cases sans configuration</span>';
     }
-    return '<span class="badge badge-solid badge-warning" title="Une config existe mais aucune'
-        . ' coordonnée en base : plan orphelin (jamais créé, ou base purgée).">config sans coords</span>';
+    return '<span class="badge badge-solid badge-warning" title="Le plan est configuré mais n\'a'
+        . ' aucune case : jamais rempli dans Tiled, ou base vidée.">configuration sans cases</span>';
 }
 
 /** Rapport PlanJsonValidator d'un plan, en chaîne (les helpers echo-ent). */
@@ -349,8 +349,8 @@ HTML;
         . '<div class="form-group col-md-4"><label>Code du plan</label>'
         . '<input type="text" class="form-control" name="plan" required pattern="[a-z0-9_-]{1,64}"'
         . ' placeholder="ex: foret_noire">'
-        . '<small class="form-text text-muted">Minuscules / chiffres / _ / - (64 max), valeur de'
-        . ' <code>coords.plan</code>. Non modifiable ensuite.</small></div>'
+        . '<small class="form-text text-muted">Minuscules, chiffres, _ et - (64 max).'
+        . ' Non modifiable ensuite.</small></div>'
         . '<div class="form-group col-md-4"><label>Nom affiché</label>'
         . '<input type="text" class="form-control" name="name" required placeholder="ex: Forêt Noire"></div>'
         . '<div class="form-group col-md-4"><label>Nom court</label>'
@@ -370,7 +370,7 @@ HTML;
         . '</div>'
         . '<div class="form-group col-md-6 px-0"><label>Plan modèle</label>'
         . formSelect('template', $templateChoices, null, 'Choisir un plan modèle', 'class="form-control" disabled')
-        . '<small class="form-text text-muted">Seuls les plans cohérents (JSON + coords) sont proposés.</small></div>'
+        . '<small class="form-text text-muted">Seuls les plans complets (configuration et cases) sont proposés.</small></div>'
         . '</div></div>'
 
         . '<button type="submit" class="btn btn-primary">Créer le plan</button>'
@@ -424,7 +424,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         $width = $type === 'text' ? 'col-12' : 'col-md-3 col-6';
 
         return '<div class="form-group ' . $width . '"><label>' . e($label)
-            . ' <code>' . e($key) . '</code></label>'
+            . '<code class="tech-name">' . e($key) . '</code></label>'
             . $input . $hint . '</div>';
     };
 
@@ -511,9 +511,9 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         ? '<p class="text-muted mb-0">Aucun niveau Z (ni en base, ni dans le JSON). La première édition Tiled en créera.</p>'
         : '<table class="table table-sm mb-1"><thead><tr>'
             . '<th style="width:22%">Niveau</th><th>Nom affiché</th>'
-            . '<th style="width:12%" class="text-center" title="Niveau volontairement sans carte (MapUnavailable)">Sans carte</th>'
-            . '<th style="width:10%" class="text-center" title="Un coffre peut-il être posé à ce niveau ? (condition ChestSite de l\'action construire)">Coffres</th>'
-            . '<th style="width:26%" title="Bornes visibles « minX,maxX,minY,maxY », ou « auto » (recalculées au prochain push Tiled)">Bornes visibles</th>'
+            . '<th style="width:12%" class="text-center" title="Niveau volontairement sans carte">Sans carte</th>'
+            . '<th style="width:10%" class="text-center" title="Un joueur peut-il poser un coffre à ce niveau ?">Coffres</th>'
+            . '<th style="width:26%" title="Zone affichée : « minX,maxX,minY,maxY », ou « auto » (recalculée au prochain envoi depuis Tiled)">Bornes visibles</th>'
             . '<th style="width:10%"></th>'
             . '</tr></thead><tbody>' . $zRows . '</tbody></table>'
             . '<small class="text-muted">Bornes : « minX,maxX,minY,maxY » explicites, ou « auto », recalculées'
@@ -527,8 +527,8 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
                 . ' coordonnée en base. Importez un bundle, ou créez la case d\'amorce en le recréant après suppression.</div>'
             : '')
         . (!$plan->hasConfig
-            ? '<div class="alert alert-danger">Ce plan n\'a pas de config'
-                . ' (table plans). Enregistrer ce formulaire la créera.</div>'
+            ? '<div class="alert alert-danger">Ce plan n\'a pas de configuration.'
+                . ' Enregistrer ce formulaire la créera.</div>'
             : '')
 
         . '<form method="post" action="/admin/plans-save.php?action=update">'
@@ -695,11 +695,10 @@ if ($action === 'new') {
             . ' title="Importer un bundle JSON de plan (avec prévisualisation avant application)">'
             . '<i class="fas fa-upload"></i> Importer</a>'
             . '<a class="btn btn-primary" href="/admin/plans.php?action=new">+ Nouveau plan</a>',
-        'intro' => '<strong>Qu\'est-ce qu\'un plan ?</strong> Deux parties qui doivent rester cohérentes : '
-            . '<strong>une config</strong> (tables <code>plans</code> / <code>plan_z_levels</code>'
-            . ' : nom, niveaux Z, bornes visibles…) et <strong>des coordonnées en base</strong>'
-            . ' (table <code>coords</code> + couches <code>map_*</code>).'
-            . ' Le contenu des cartes s\'édite via l\'extension Tiled ; la génération des PNG se fait sur'
+        'intro' => 'Un plan, c\'est sa configuration (nom, niveaux, zone affichée)'
+            . '<code class="tech-name">plans, plan_z_levels</code> et ses cases'
+            . '<code class="tech-name">coords, map_*</code>.'
+            . ' Les cases se remplissent dans Tiled ; les images se génèrent dans'
             . ' <a href="/admin/local_maps.php">Cartes locales</a>.',
     ];
     $content = plans_render_list($inventory, $db, $csrfToken);

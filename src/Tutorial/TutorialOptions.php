@@ -15,45 +15,45 @@ namespace App\Tutorial;
 final class TutorialOptions
 {
     public const STEP_TYPES = [
-        'info'           => 'Info',
-        'welcome'        => 'Welcome',
-        'dialog'         => 'Dialog',
-        'movement'       => 'Movement',
-        'movement_limit' => 'Movement Limit',
+        'info'           => 'Information',
+        'welcome'        => 'Accueil',
+        'dialog'         => 'Dialogue',
+        'movement'       => 'Déplacement',
+        'movement_limit' => 'Limite de déplacement',
         'action'         => 'Action',
-        'action_intro'   => 'Action Intro',
-        'ui_interaction' => 'UI Interaction',
+        'action_intro'   => 'Présentation d\'une action',
+        'ui_interaction' => 'Clic dans l\'interface',
         'combat'         => 'Combat',
-        'combat_intro'   => 'Combat Intro',
+        'combat_intro'   => 'Présentation du combat',
         'exploration'    => 'Exploration',
     ];
 
     public const VALIDATION_TYPES = [
-        'any_movement'         => 'Any Movement',
-        'movements_depleted'   => 'Movements Depleted',
-        'position'             => 'Position (exact X, Y)',
-        'adjacent_to_position' => 'Adjacent to Position',
-        'action_used'          => 'Action Used',
-        'ui_panel_opened'      => 'UI Panel Opened',
-        'ui_element_hidden'    => 'UI Element Hidden',
-        'ui_interaction'       => 'UI Interaction (element clicked)',
-        'specific_count'       => 'Specific Count',
+        'any_movement'         => 'Un déplacement quelconque',
+        'movements_depleted'   => 'Mouvements épuisés',
+        'position'             => 'Position exacte (X, Y)',
+        'adjacent_to_position' => 'À côté d\'une position',
+        'action_used'          => 'Action utilisée',
+        'ui_panel_opened'      => 'Panneau ouvert',
+        'ui_element_hidden'    => 'Élément masqué',
+        'ui_interaction'       => 'Clic sur un élément',
+        'specific_count'       => 'Nombre de déplacements',
     ];
 
     public const INTERACTION_MODES = [
-        'blocking'      => 'Blocking (full overlay)',
-        'semi-blocking' => 'Semi-blocking (allow specific elements)',
-        'open'          => 'Open (no overlay)',
+        'blocking'      => 'Bloquant (voile sur tout l\'écran)',
+        'semi-blocking' => 'Semi-bloquant (certains éléments cliquables)',
+        'open'          => 'Libre (sans voile)',
     ];
 
     public const TOOLTIP_POSITIONS = [
-        'top'           => 'Top',
-        'bottom'        => 'Bottom',
-        'left'          => 'Left',
-        'right'         => 'Right',
-        'center'        => 'Center (Middle)',
-        'center-top'    => 'Center (Top)',
-        'center-bottom' => 'Center (Bottom)',
+        'top'           => 'En haut',
+        'bottom'        => 'En bas',
+        'left'          => 'À gauche',
+        'right'         => 'À droite',
+        'center'        => 'Au centre',
+        'center-top'    => 'Au centre, en haut',
+        'center-bottom' => 'Au centre, en bas',
     ];
 
     /**

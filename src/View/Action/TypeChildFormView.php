@@ -31,6 +31,7 @@ final class TypeChildFormView
      * @param array<int, string>                        $childOptions the addable child types
      * @param array<int, array{id: int, childType: string, schema: ParameterSchema, params: array<string, mixed>, typedPrefix: string, rawPrefix: string, headExtra: string}> $rows
      * @param array<string, string>                     $hidden       extra hidden inputs (name => value)
+     * @param (callable(string): string)|null          $labelOf      child type => its label (default: the type)
      */
     public function render(
         string $saveAction,
@@ -46,10 +47,12 @@ final class TypeChildFormView
         array $rows,
         string $emptyLabel,
         array $hidden = [],
+        ?callable $labelOf = null,
     ): string {
+        $labelOf ??= static fn (string $type): string => $type;
         $blocks = '';
         foreach ($rows as $row) {
-            $blocks .= '<div class="wb-block"><div class="wb-block-head">' . $this->esc($row['childType'])
+            $blocks .= '<div class="wb-block"><div class="wb-block-head">' . $this->labelWithCode($labelOf($row['childType']), $row['childType'])
                 . $row['headExtra']
                 . $this->removeButton($removeAction, $removeIdName, $row['id'], $removeConfirm)
                 . '</div><div class="wb-block-body">'
@@ -57,7 +60,7 @@ final class TypeChildFormView
                 . '</div></div>';
         }
 
-        $options = $this->optionsList($childOptions);
+        $options = $this->labeledOptions($childOptions, $labelOf);
 
         $hiddenInputs = '';
         foreach ($hidden as $name => $value) {

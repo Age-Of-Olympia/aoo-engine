@@ -62,7 +62,7 @@ ob_start();
                    data-facets="type:Type,placed:Catégorie posée,target:Catégorie du type,plan:Plan">
                 <thead><tr>
                     <th><input type="checkbox" data-check-all title="Sélectionner les lignes affichées"></th>
-                    <th>Id</th><th>Type</th><th>Plan</th><th>Case (x,y,z)</th>
+                    <th>N°</th><th>Type</th><th>Plan</th><th>Case (x,y,z)</th>
                     <th>Catégorie posée</th><th>Catégorie du type</th><th></th>
                 </tr></thead>
                 <tbody>
@@ -71,8 +71,8 @@ ob_start();
                         data-placed="<?= e($families[$row['player_type']] ?? $row['player_type']) ?>"
                         data-target="<?= e($families[$row['type_kind']] ?? $row['type_kind']) ?>">
                         <td><input type="checkbox" name="ids[]" value="<?= $row['id'] ?>"<?= $row['player_type'] === 'building' ? ' data-building="1"' : '' ?>></td>
-                        <td><?= $row['id'] ?> <small class="text-muted">#<?= $row['display_id'] ?></small></td>
-                        <td><?= e($row['label']) ?> <code><?= e($row['race']) ?></code></td>
+                        <td>#<?= $row['display_id'] ?><code class="tech-name"><?= $row['id'] ?></code></td>
+                        <td><?= techLabel((string) $row['label'], (string) $row['race']) ?></td>
                         <td><?= e($row['plan'] ?? '—') ?></td>
                         <td><?= $row['x'] !== null ? "{$row['x']},{$row['y']},{$row['z']}" : '—' ?></td>
                         <td><?= e($families[$row['player_type']] ?? $row['player_type']) ?></td>

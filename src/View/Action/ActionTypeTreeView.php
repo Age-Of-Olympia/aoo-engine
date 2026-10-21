@@ -47,7 +47,8 @@ final class ActionTypeTreeView
 
             $link = '<a class="tt-link' . ($node->key === $activeKey ? ' tt-link--active' : '') . '"'
                 . ' href="' . $this->esc($hrefBase) . '?type=' . urlencode($node->key) . '">'
-                . $this->esc($node->label) . '</a>';
+                . $this->esc($node->label)
+                . ($node->label !== $node->key ? ' <code class="tech-name">' . $this->esc($node->key) . '</code>' : '') . '</a>';
 
             $badge = '<span class="tt-badge' . ($count === 0 ? ' tt-badge--zero' : '') . '"'
                 . ' title="' . $count . ' instruction(s) propre(s)">' . $count . '</span>';

@@ -40,7 +40,7 @@ final class RawParamsEditor
         $rows .= $this->row($namePrefix, 'b', '', '');
 
         return '<div class="wb-raw-editor" data-raw-prefix="' . $this->escape($namePrefix) . '">'
-            . '<div class="wb-raw-title">Paramètres bruts <small>clé → valeur (JSON)</small></div>'
+            . '<div class="wb-raw-title">Paramètres avancés <small>clé → valeur</small></div>'
             . '<div class="wb-raw-rows">' . $rows . '</div>'
             . '<button type="button" class="wb-raw-add">+ Ajouter</button>'
             . '</div>';

@@ -44,7 +44,7 @@ function renderNpcForm(?array $npc, array $versions, array $stepsByVersion, arra
 {
     $isEdit = $npc !== null;
     $action = $isEdit ? "tutorial-npcs-save.php?id={$npc['id']}" : "tutorial-npcs-save.php";
-    $title = $isEdit ? "Modifier NPC #{$npc['id']}" : "Nouveau NPC";
+    $title = $isEdit ? "Modifier le PNJ #{$npc['id']}" : "Nouveau PNJ";
 
     $val = function (string $key, $default = '') use ($npc) {
         if (!$npc || !array_key_exists($key, $npc)) return $default;
@@ -78,8 +78,8 @@ function renderNpcForm(?array $npc, array $versions, array $stepsByVersion, arra
         strtolower((string) $val('race', 'nain')));
 
     $modeSelect = formSelect('spawn_mode', [
-        'template' => 'template (placé sur la carte au démarrage)',
-        'dynamic' => 'dynamic (spawn relatif au joueur)',
+        'template' => 'Fixe : placé sur la carte au démarrage',
+        'dynamic' => 'Dynamique : apparaît près du joueur',
     ], (string) $val('spawn_mode'), null, 'class="form-control" id="npc_spawn_mode" required');
 
     $isActive     = ((int) $val('is_active', 1)) === 1 ? ' checked' : '';
@@ -102,10 +102,10 @@ function renderNpcForm(?array $npc, array $versions, array $stepsByVersion, arra
         <div class="col-md-3 form-group">
           <label>Rôle</label>
           <input type="text" class="form-control" name="role" value="{$h($val('role'))}" placeholder="guide, enemy, …" required>
-          <small class="text-muted">Étiquette libre pour identifier le NPC dans l'admin.</small>
+          <small class="text-muted">Étiquette libre pour retrouver le PNJ dans l'admin.</small>
         </div>
         <div class="col-md-3 form-group">
-          <label>Mode de spawn</label>
+          <label>Apparition</label>
           {$modeSelect}
         </div>
         <div class="col-md-3 form-group">
@@ -161,11 +161,11 @@ function renderNpcForm(?array $npc, array $versions, array $stepsByVersion, arra
       </div>
 
       <div class="form-group" id="npc_spawn_step_wrapper">
-        <label>Spawn à l'étape (dynamic uniquement)</label>
+        <label>Apparaît à l'étape (PNJ dynamique)</label>
         <select class="form-control" name="spawn_at_step_id" id="npc_spawn_step_id"></select>
         <small class="text-muted">
-          Pour les NPCs <code>dynamic</code> : étape qui déclenche l'apparition.
-          Laisser vide = spawn dès le début de la session.
+          Pour un PNJ dynamique : l'étape qui le fait apparaître.
+          Vide : il apparaît dès le début de la session.
         </small>
       </div>
 
@@ -224,7 +224,7 @@ if ($action === 'new') {
     $res = $database->exe("SELECT * FROM tutorial_npcs WHERE id = ?", [$npcId]);
     $npc = $res->fetch_assoc();
     if (!$npc) {
-        $content .= "<div class=\"alert alert-danger\">NPC #{$npcId} introuvable</div>";
+        $content .= "<div class=\"alert alert-danger\">PNJ #{$npcId} introuvable</div>";
     } else {
         $content .= renderNpcForm($npc, $versions, $stepsByVersion, $races, $csrfToken);
     }
@@ -244,18 +244,18 @@ if ($action === 'new') {
     }
 
     if (empty($rows)) {
-        $content .= '<p class="text-muted">Aucun NPC configuré pour le tutoriel.</p>';
+        $content .= '<p class="text-muted">Aucun PNJ configuré pour le tutoriel.</p>';
     } else {
         $h = fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
         $content .= '<table class="table table-striped" data-admin-list data-page-size="50"><thead><tr>'
                   . '<th>ID</th><th>Version</th><th>Rôle</th><th>Mode</th>'
                   . '<th>X / Y</th><th>Nom</th><th>Race</th>'
-                  . '<th>Spawn step</th><th>Actif</th><th>Actions</th>'
+                  . '<th>Apparition</th><th>Actif</th><th>Actions</th>'
                   . '</tr></thead><tbody>';
         foreach ($rows as $r) {
             $modeBadge = $r['spawn_mode'] === 'template'
-                ? '<span class="badge bg-info">template</span>'
-                : '<span class="badge bg-warning text-dark">dynamic</span>';
+                ? '<span class="badge bg-info">' . techLabel('Fixe', 'template') . '</span>'
+                : '<span class="badge bg-warning">' . techLabel('Dynamique', 'dynamic') . '</span>';
             $stepCell = $r['step_name']
                 ? "<code>{$h($r['step_name'])}</code><br><small class=\"text-muted\">{$h($r['step_title'])}</small>"
                 : '<small class="text-muted">au démarrage</small>';
@@ -275,7 +275,7 @@ if ($action === 'new') {
                 . '<td>%d</td><td>%s</td><td>%s</td><td>%s</td>'
                 . '<td>%d, %d</td><td>%s</td><td>%s</td>'
                 . '<td>%s</td><td>%s</td>'
-                . '<td><a href="tutorial-npcs.php?action=edit&id=%d" class="btn btn-sm btn-outline-primary">Éditer</a> %s</td>'
+                . '<td><a href="tutorial-npcs.php?action=edit&id=%d" class="btn btn-sm btn-outline-primary">Modifier</a> %s</td>'
                 . '</tr>',
                 (int) $r['id'], $h($r['version']), $h($r['role']), $modeBadge,
                 (int) $r['x'], (int) $r['y'], $h($r['name']), $h($r['race']),

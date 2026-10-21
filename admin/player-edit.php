@@ -367,8 +367,8 @@ $csrfField = $csrf->renderTokenField();
 $identity = formCard('Identité', ''
     . formField('Nom', formInput('name', $player->data->name))
     . '<p class="text-muted mb-0">Matricule ' . (int) $player->id
-    . ' · ' . e((string) $player->data->race)
-    . ' · ' . e((string) ($player->data->player_type ?? 'real')) . '</p>');
+    . ' · ' . techLabel(character_race_choices()[(string) $player->data->race] ?? (string) $player->data->race, (string) $player->data->race)
+    . ' · ' . (($player->data->player_type ?? 'real') === 'npc' ? 'PNJ' : 'Joueur') . '</p>');
 
 $position = formCard('Position', '<div class="d-flex flex-wrap gap-2">'
     . formField('X', formInput('x', (string) $coords->x, 'type="number"'))

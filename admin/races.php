@@ -199,6 +199,7 @@ function race_placed_cell(array $byPlan): string
 function race_render_list(array $races, TypeEditorFace $face): string
 {
     $selfPage = $face->page;
+    $factionNames = (new FactionService())->getFactionNames();
 
     if ($face->isStructure()) {
         // « Posés » : entités de ce type actuellement dans le monde, par plan.
@@ -262,7 +263,9 @@ function race_render_list(array $races, TypeEditorFace $face): string
                 . '<td>' . race_placed_cell($placedByType[$race->getName()] ?? []) . '</td>';
         } else {
             $characters = $charactersByRace[$race->getName()] ?? ['players' => 0, 'inactive' => 0, 'npcs' => 0];
-            $rows .= '<td>' . e($race->getFaction()) . '</td>'
+            $rows .= '<td>' . ($race->getFaction() !== ''
+                    ? techLabel($factionNames[$race->getFaction()] ?? $race->getFaction(), $race->getFaction())
+                    : '') . '</td>'
                 . '<td>' . (int) $race->getCarac('pv') . ' PV / ' . (int) $race->getCarac('mvt') . ' Mvt / '
                 . (int) $race->getCarac('a') . ' A</td>'
                 . '<td>' . count($race->getStarterActionNames()) . ' actions, '
@@ -375,10 +378,11 @@ function race_render_form(?Race $race, string $csrfToken, TypeEditorFace $face):
     $nameField = $isEdit
         ? '<input type="hidden" name="name" value="' . e($race->getName()) . '">'
             . '<input type="text" class="form-control" value="' . e($race->getName()) . '" disabled>'
-            . '<small class="form-text text-muted">Le code est référencé par players.race — non modifiable.</small>'
+            . '<small class="form-text text-muted">Non modifiable : les personnages de cette race y sont rattachés'
+            . '<code class="tech-name">players.race</code>.</small>'
         : '<input type="text" class="form-control" name="name" required pattern="[a-z][a-z0-9_]*"'
             . ' placeholder="ex: centaure">'
-            . '<small class="form-text text-muted">Minuscules / chiffres / _ — stocké dans players.race.</small>';
+            . '<small class="form-text text-muted">Minuscules, chiffres et _ uniquement ; non modifiable ensuite.</small>';
 
     $caracInputs = '';
     foreach (CARACS as $key => $short) {
@@ -675,7 +679,7 @@ HTML;
         . '<div class="form-group col-md-2"><label>Couleur de fond</label>'
         . '<input type="color" class="form-control" name="bgColor" value="'
         . e($isEdit ? $race->getBgColor() : '#FFFFFF') . '">'
-        . '<small class="form-text text-muted">Carte, classements, bordures raceHint.</small></div>'
+        . '<small class="form-text text-muted">Carte, classements, bordures de couleur des races.</small></div>'
         . '<div class="form-group col-md-2"><label>Couleur du texte</label>'
         . '<input type="text" class="form-control" name="color" value="'
         . e($isEdit ? $race->getColor() : 'black') . '"></div>'
@@ -688,7 +692,7 @@ HTML;
                 . '<input type="hidden" name="plan" value="' . e($isEdit ? $race->getPlan() : '') . '">'
             : '<div class="form-group col-md-3"><label>Faction de départ</label>'
                 . race_faction_select($isEdit ? $race->getFaction() : '')
-                . '<small class="form-text text-muted">Copiée dans players.faction à la création du personnage.'
+                . '<small class="form-text text-muted">Faction d\'un personnage de cette race à sa création.'
                 . ' Plusieurs races peuvent partager une faction.</small></div>'
                 . '<div class="form-group col-md-3"><label>Plan d\'origine</label>'
                 . formSelect('plan', plan_choices(), $isEdit ? (string) $race->getPlan() : null, '— aucun —') . '</div>')

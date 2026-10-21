@@ -16,6 +16,13 @@ use App\Service\TileAssetService;
 $csrf = new CsrfProtectionService();
 $service = new TileAssetService();
 
+/** Board layers by what an admin calls them; the key is the image folder and the Tiled layer. */
+const TILE_LAYER_LABELS = [
+    'tiles' => 'Sols', 'routes' => 'Routes', 'plants' => 'Plantes', 'resources' => 'Ressources',
+    'elements' => 'Éléments', 'marks' => 'Marques', 'foregrounds' => 'Premiers plans',
+    'triggers' => 'Déclencheurs', 'dialogs' => 'Dialogues',
+];
+
 $layer = stringWithDefault('layer', (string) ($_GET['layer'] ?? 'tiles'));
 if (!in_array($layer, $service->layers(), true)) {
     $layer = 'tiles';
@@ -97,7 +104,7 @@ ob_start();
             <?php foreach ($service->layers() as $candidate): ?>
                 <a href="/admin/tile-assets.php?layer=<?= e(urlencode($candidate)) ?>"
                    class="btn btn-sm <?= $candidate === $layer ? 'btn-primary' : 'btn-outline-secondary' ?>">
-                    <?= e($candidate) ?>
+                    <?= techLabel(TILE_LAYER_LABELS[$candidate] ?? $candidate, $candidate) ?>
                 </a>
             <?php endforeach; ?>
         </div>
@@ -105,7 +112,7 @@ ob_start();
 
     <div class="card mt-3">
         <div class="card-body">
-            <h5 class="card-title">Ajouter une image (couche <?= e($layer) ?>)</h5>
+            <h5 class="card-title">Ajouter une image (<?= e(TILE_LAYER_LABELS[$layer] ?? $layer) ?>)</h5>
             <form method="post" enctype="multipart/form-data" class="d-flex align-items-end gap-3 flex-wrap">
                 <?= $csrf->renderTokenField() ?>
                 <input type="hidden" name="layer" value="<?= e($layer) ?>">
@@ -130,7 +137,7 @@ ob_start();
     <div class="card mt-3">
         <div class="card-body">
             <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
-                <h5 class="card-title mb-0">Inventaire — <?= e($layer) ?></h5>
+                <h5 class="card-title mb-0">Inventaire — <?= e(TILE_LAYER_LABELS[$layer] ?? $layer) ?></h5>
                 <span class="badge bg-secondary"><?= count($inventory['entries']) ?> images</span>
                 <?php if (count($withProblems) > 0): ?>
                     <span class="badge badge-solid badge-warning"><?= count($withProblems) ?> avec problème(s)</span>
@@ -138,12 +145,12 @@ ob_start();
                     <span class="badge badge-solid badge-success">aucun problème</span>
                 <?php endif; ?>
                 <?php if ($inventory['transitions'] > 0): ?>
-                    <small class="text-muted"><?= $inventory['transitions'] ?> fondus trans_* non listés (page Transitions de terrain)</small>
+                    <small class="text-muted"><?= $inventory['transitions'] ?> fondus non listés (voir Transitions de terrain)</small>
                 <?php endif; ?>
             </div>
 
             <?php if ($inventory['entries'] === []): ?>
-                <div class="alert alert-info mb-0">Aucune image dans img/<?= e($layer) ?>/.</div>
+                <div class="alert alert-info mb-0">Aucune image dans cette couche<code class="tech-name">img/<?= e($layer) ?>/</code>.</div>
             <?php else: ?>
                 <table class="table table-sm table-striped" data-admin-list data-page-size="50">
                     <thead><tr>
@@ -208,7 +215,7 @@ ob_start();
                                             $layerChoices = [];
                                             foreach ($service->layers() as $target) {
                                                 if ($target !== $layer) {
-                                                    $layerChoices[$target] = $target;
+                                                    $layerChoices[$target] = TILE_LAYER_LABELS[$target] ?? $target;
                                                 }
                                             }
                                             echo formSelect('target_layer', $layerChoices, null, null,
@@ -240,8 +247,7 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Tuiles & images', $content, ['intro' => 'Inventaire des images de <code>img/&lt;couche&gt;/</code> avec leurs problèmes connus
-        (image à palette, cause des fondus noirs ; formats multiples ; nom invalide ; image posée sur une carte
-        mais absente du serveur…). L\'ajout convertit les PNG et GIF en PNG vraies couleurs et conserve les WebP tels quels ; la suppression est
-        refusée tant que l\'image est posée quelque part ; le renommage met à jour les cartes et les terrains.
-        Les fondus générés (<code>trans_*</code>) se gèrent depuis la page Transitions de terrain.']);
+echo admin_layout('Tuiles & images', $content, ['intro' => 'Les images de chaque couche de la carte et leurs problèmes'
+        . ' (image à palette qui noircit les fondus, nom invalide, image posée mais absente du serveur…).'
+        . ' Une image posée quelque part ne peut pas être supprimée ; la renommer met à jour les cartes.'
+        . ' Les fondus se gèrent dans Transitions de terrain.']);

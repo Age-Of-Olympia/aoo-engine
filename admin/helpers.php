@@ -641,10 +641,25 @@ function plan_choices(): array
  */
 function character_race_choices(): array
 {
-    $choices = [];
-    foreach ((new \App\Service\RaceService())->getRacesByKind('character') as $race) {
-        $choices[$race->getName()] = $race->getLabel();
+    static $choices = null;
+    if ($choices === null) {
+        $choices = [];
+        foreach ((new \App\Service\RaceService())->getRacesByKind('character') as $race) {
+            $choices[$race->getName()] = $race->getLabel();
+        }
     }
 
     return $choices;
+}
+
+/**
+ * A code shown by its French label, the code itself kept beside it for who
+ * turned on « Noms techniques » in the sidebar (admin.css hides .tech-name
+ * otherwise). Both are escaped here.
+ */
+function techLabel(string $label, string $code): string
+{
+    return $label === $code
+        ? '<code>' . e($code) . '</code>'
+        : e($label) . '<code class="tech-name">' . e($code) . '</code>';
 }
