@@ -2,7 +2,7 @@
 /**
  * PNJ management — mutations (POST only). Companion to admin/pnjs.php.
  *
- * Routed on ?action: create | update | assign | unassign | retire.
+ * Routed on ?action: create | update | assign | unassign | retire | embody.
  * Every branch is CSRF-validated and admin-gated; touching a PNJ that carries
  * isSuperAdmin additionally requires the actor to be a super-admin (mirrors the
  * `pnj` console command guard). Redirects back (PRG) with a flash.
@@ -13,6 +13,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\AdminAuthorizationService;
 use App\Service\AdminMenuAccessService;
+use App\Service\ImpersonationService;
 use App\Service\PlayerLookupService;
 use App\Service\PlayerOptionsService;
 use App\Service\PlayerPnjService;
@@ -112,6 +113,29 @@ if ($action === 'update') {
         setFlash('danger', 'Erreur lors de la mise à jour du PNJ.');
     }
     redirectTo('/admin/pnjs.php?action=edit&id=' . $pnjId);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Play the PNJ now: the logged-in account gets it in its PNJ list if it
+ * was not there, then the session switches to it as the in-game PNJ
+ * switch does (scripts/pnjs/switch.php). */
+if ($action === 'embody') {
+    $pnjId = (int) ($_POST['pnj_id'] ?? 0);
+    $resolveAndGuardPnj($pnjId);
+
+    $mainId = (int) ($_SESSION['mainPlayerId'] ?? 0);
+    $pnjService = new PlayerPnjService();
+    if ($pnjService->getByPlayerIdAndPnjId($mainId, $pnjId) === null) {
+        $pnjService->create($mainId, $pnjId, true);
+    }
+
+    $impersonation = new ImpersonationService();
+    if ((int) ($_SESSION['playerId'] ?? 0) !== $mainId) {
+        $impersonation->release();
+    }
+    $impersonation->driveAs($pnjId);
+
+    redirectTo('/index.php');
 }
 
 /* ---------------------------------------------------------------------- */

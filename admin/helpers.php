@@ -663,3 +663,12 @@ function techLabel(string $label, string $code): string
         ? '<code>' . e($code) . '</code>'
         : e($label) . '<code class="tech-name">' . e($code) . '</code>';
 }
+
+/** « Incarner » a PNJ: the account plays it in game right away (pnjs-save.php?action=embody). */
+function embodyButton(int $pnjId, string $csrfToken, string $class = 'btn btn-sm btn-primary'): string
+{
+    return '<form method="post" action="/admin/pnjs-save.php?action=embody" class="d-inline">'
+        . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+        . '<input type="hidden" name="pnj_id" value="' . $pnjId . '">'
+        . '<button type="submit" class="' . e($class) . '" title="Jouer ce PNJ dans le jeu">Incarner</button></form>';
+}
