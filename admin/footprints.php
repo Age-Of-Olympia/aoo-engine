@@ -459,18 +459,24 @@ ob_start();
                     <?php endforeach; ?>
                     <?php endforeach; ?>
 
-                    <?php if (!$figure->isSingleCell()): ?>
-                        <form method="post" action="footprints-images.php" enctype="multipart/form-data" class="fp-image fp-image--cut">
-                            <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
-                            <input type="hidden" name="type" value="<?= e($name) ?>" />
-                            <input type="hidden" name="action" value="cut" />
+                    <form method="post" action="footprints-images.php" enctype="multipart/form-data" class="fp-image fp-image--cut">
+                        <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
+                        <input type="hidden" name="type" value="<?= e($name) ?>" />
+                        <input type="hidden" name="action" value="cut" />
+                        <?php if ($figure->isSingleCell()): ?>
+                            <label>Image de la case
+                                <input type="file" name="sheet" accept="image/png,image/webp,image/gif,image/jpeg" required />
+                            </label>
+                            <button type="submit" class="btn btn-sm btn-primary">Envoyer</button>
+                            <small class="text-muted">Ramenée à 50×50 et écrite en <code>img/<?= e($dirs[0]) ?>/<?= e($name) ?>.png</code>, à la place de l'actuelle.</small>
+                        <?php else: ?>
                             <label>Découper selon la forme
                                 <input type="file" name="sheet" accept="image/png,image/webp,image/gif,image/jpeg" />
                             </label>
                             <button type="submit" class="btn btn-sm btn-primary">Découper</button>
                             <small class="text-muted">Morceaux écrits dans <code>img/<?= e($dirs[0]) ?>/</code>. Sans fichier envoyé, la découpe utilise <code><?= e($name) ?>.png</code> de ce dossier et remplace les morceaux existants.</small>
-                        </form>
-                    <?php endif; ?>
+                        <?php endif; ?>
+                    </form>
                 </div>
             <?php endif; ?>
         </section>

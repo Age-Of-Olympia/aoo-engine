@@ -54,6 +54,7 @@ function admin_nav_tree(): array
             ['Transitions de terrain', '/admin/terrain-transitions.php'],
             ['Formes', '/admin/footprints.php'],
             ['Images des bâtiments', '/admin/structure-images.php'],
+            ['Composeur d\'éléments', '/admin/element-composer.php'],
         ]],
 
         ['section' => 'Catalogues', 'items' => [
@@ -70,7 +71,6 @@ function admin_nav_tree(): array
                 ['Plantes', '/admin/plant-types.php'],
                 ['Routes', '/admin/route-types.php'],
                 ['Éléments', '/admin/element-types.php'],
-                ['Composeur d\'éléments', '/admin/element-composer.php'],
             ]],
             ['Objets', [
                 ['Objets', '/admin/items.php', ['item-owners.php']],

@@ -42,7 +42,7 @@ $backTo = $selfPage . '?type=' . urlencode($type->value) . '&race=' . urlencode(
 
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['image_upload']) || isset($_POST['image_delete'])
-        || isset($_POST['image_adopt']) || isset($_POST['image_move'])
+        || isset($_POST['image_move'])
         || ($structureMode && (isset($_POST['image_replace']) || isset($_POST['image_replace_all'])
             || isset($_POST['state_upload']) || isset($_POST['state_delete']))));
 if ($isStateChangingPost) {
@@ -62,16 +62,6 @@ if ($isStateChangingPost) {
             $created = $service->upload($type, $race, $uploadedFile());
             setFlash('success', ucfirst($type->value) . " « {$created} » ajouté pour la race {$race}"
                 . ($type === ImageType::PORTRAIT ? ' (miniature générée)' : '') . '.');
-        } elseif (isset($_POST['image_adopt'])) {
-            // Copie le sprite hérité (mur du même nom, webp dédié) dans le
-            // stock — verbatim, pour garder transparence et pixels.
-            $inherited = \App\Service\BuildingService::resolveAvatar($race);
-            if ($inherited === '' || str_starts_with($inherited, 'img/avatars/' . $race . '/')) {
-                throw new RuntimeException('Rien à copier : le sprite vient déjà du stock (ou il n\'y en a pas).');
-            }
-            $created = $service->adopt($type, $race, $inherited);
-            setFlash('success', "Sprite hérité « {$inherited} » copié dans le stock : « {$created} »"
-                . ' : le plateau utilise désormais cette image.');
         } elseif (isset($_POST['image_move'])) {
             $name = trim((string) ($_POST['file'] ?? ''));
             $target = trim((string) ($_POST['target_race'] ?? ''));
@@ -187,8 +177,7 @@ ob_start();
             $effective === '' => '',
             str_starts_with($effective, 'img/avatars/' . $race . '/') => 'première image du stock ci-dessous',
             str_contains($effective, '/_composed/') => 'assemblé à partir des morceaux de la forme — le stock n\'est pas utilisé',
-            str_starts_with($effective, 'img/walls/') => 'hérité du sprite de mur du même nom — ajoutez une image au stock pour le remplacer',
-            default => 'fichier dédié ' . $effective . ' — ajoutez une image au stock pour le remplacer',
+            default => 'image du type, à changer dans Formes',
         };
     ?>
     <div class="card mt-3">
@@ -198,20 +187,10 @@ ob_start();
                 <img src="/<?= e($effective) ?>" height="40" style="object-fit:contain;border:1px solid #ddd;background:#fff;" alt="">
                 <code style="font-size:12px;"><?= e($effective) ?></code>
                 <small class="text-muted"><?= e($effectiveSource) ?></small>
-                <?php if (str_contains($effective, '/_composed/')): ?>
+                <?php if (!str_starts_with($effective, 'img/avatars/' . $race . '/')): ?>
                     <a class="btn btn-sm btn-outline-primary" href="/admin/footprints.php?type=<?= e(urlencode($race)) ?>">
-                        Changer l'image : Formes → Découper
+                        Changer l'image : Formes
                     </a>
-                <?php elseif (!str_starts_with($effective, 'img/avatars/' . $race . '/')): ?>
-                    <form method="post" class="d-inline mb-0">
-                        <?= $csrf->renderTokenField() ?>
-                        <input type="hidden" name="type" value="<?= e($type->value) ?>">
-                        <input type="hidden" name="race" value="<?= e($race) ?>">
-                        <button type="submit" name="image_adopt" value="1" class="btn btn-sm btn-outline-primary"
-                                title="Copie le fichier tel quel dans le stock du type ; l'image est ensuite gérée ici">
-                            <i class="fas fa-download"></i> Copier dans le stock
-                        </button>
-                    </form>
                 <?php endif; ?>
             <?php else: ?>
                 <small class="text-muted">aucun — les entités posées affichent leurs initiales.</small>

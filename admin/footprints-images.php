@@ -4,7 +4,8 @@
  *
  * Two gestures on the folder the type's kind keeps its images in:
  *   cut    — a whole picture (uploaded, or the one the board draws) sliced
- *            into `<type>_<n>.png` pieces along the declared shape;
+ *            into `<type>_<n>.png` pieces along the declared shape, or
+ *            written whole as `<type>.png` for a one-cell shape;
  *   rename — a file of that folder given another name (`banque_naine.png`
  *            → `banque.png`), never moved out of it;
  *   delete — a file of that folder removed (a stale piece, a namesake);
@@ -18,6 +19,8 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 use App\Service\Map\CompositeSpriteService;
 use App\Service\Map\EntitySpriteService;
 use App\Service\Map\EntityTypeFootprintService;
+use App\Service\Map\Footprint;
+use App\Service\Map\SceneryFootprintDeriver;
 
 $type = trim((string) ($_POST['type'] ?? ''));
 $back = '/admin/footprints.php?type=' . urlencode($type);
@@ -126,9 +129,11 @@ try {
 
     $footprint = (new EntityTypeFootprintService())->catalogue()[$type] ?? null;
 
-    if ($footprint === null || $footprint->isSingleCell()) {
-        throw new RuntimeException('Emprise d\'une seule case : rien à découper. Définir d\'abord la forme.');
+    // No shape and no pieces: one cell, as the page draws it.
+    if ($footprint === null && ((new SceneryFootprintDeriver())->piecesOnDisk($dir)[$type] ?? []) !== []) {
+        throw new RuntimeException('Forme inconnue : la définir d\'abord.');
     }
+    $footprint ??= Footprint::fromOffsets([[0, 0]]);
 
     /* The picture to cut: the one sent, else the type's whole picture in
      * its folder — never the stitched one, which IS the pieces. */
@@ -149,7 +154,7 @@ try {
 
     EntitySpriteService::forget();
     $followed = (new \App\Service\BuildingService())->refreshTypeSprites($type);
-    setFlash('success', count($pieces) . ' morceaux écrits dans img/' . $dir . '/'
+    setFlash('success', ($footprint->isSingleCell() ? $type . '.png écrite' : count($pieces) . ' morceaux écrits') . ' dans img/' . $dir . '/'
         . ($followed > 0 ? ' ; ' . $followed . ' exemplaire(s) posé(s) suivent la nouvelle image.' : '.'));
 } catch (\Throwable $e) {
     setFlash('danger', $e->getMessage());

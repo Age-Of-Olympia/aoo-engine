@@ -198,7 +198,8 @@ final class CompositeSpriteService
      * removed: both would claim the same cell. The source is
      * first brought to the box size (50 px a cell), so any drawing of the
      * right proportions does. The stale composition is dropped, so the next
-     * board stitches the new pieces.
+     * board stitches the new pieces. A one-cell figure has no pieces: its
+     * picture is written whole, as `<family>.png`.
      *
      * @return array<int, string> piece => web path written, empty when the source is unreadable
      */
@@ -238,12 +239,12 @@ final class CompositeSpriteService
             [$name, $other] = $imageDir === \App\Entity\SceneryType::IMAGE_DIR
                 ? [(string) $piece, $padded]
                 : [$padded, (string) $piece];
-            $webPath = 'img/' . $imageDir . '/' . $family . '_' . $name . '.png';
+            $webPath = 'img/' . $imageDir . '/' . $family . ($footprint->isSingleCell() ? '' : '_' . $name) . '.png';
 
             if (imagepng($cell, $root . '/' . $webPath)) {
                 $written[$piece] = $webPath;
 
-                if ($other !== $name) {
+                if ($other !== $name && !$footprint->isSingleCell()) {
                     @unlink($root . '/img/' . $imageDir . '/' . $family . '_' . $other . '.png');
                 }
             }
