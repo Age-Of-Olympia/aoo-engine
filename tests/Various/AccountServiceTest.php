@@ -84,6 +84,28 @@ class AccountServiceTest extends LegacyPlayerFixtureTestCase
     }
 
     /** Wiping an account leaves the character standing. */
+    public function testABlockMarksBothHashesOnceAndUnblockingRestoresThem(): void
+    {
+        $id = (int) $this->createRealPlayer('GmBloque')->id;
+        $accounts = new AccountService($this->link);
+        $accounts->setPassword($id, 'condensat');
+        $accounts->setMail($id, 'courriel', 'a@b.c');
+        $this->link->insert('remember_tokens', [
+            'selector' => 'sel-bloque', 'validator_hash' => 'h', 'player_id' => $id, 'footprint' => '', 'expires' => time() + 60,
+        ]);
+        $read = fn (): array => $this->link->fetchNumeric('SELECT psw, mail, plain_mail FROM accounts WHERE player_id = ?', [$id]);
+
+        $accounts->setBlocked($id, true);
+        $accounts->setBlocked($id, true);
+        $this->assertSame(['!condensat', '!courriel', 'a@b.c'], $read(), 'one mark, however many clicks');
+        $this->assertTrue($accounts->isBlocked($id));
+        $this->assertFalse($this->link->fetchOne('SELECT 1 FROM remember_tokens WHERE player_id = ?', [$id]), 'the cookie skips the password');
+
+        $accounts->setBlocked($id, false);
+        $this->assertSame(['condensat', 'courriel', 'a@b.c'], $read());
+        $this->assertFalse($accounts->isBlocked($id));
+    }
+
     public function testForgettingClearsTheMailButKeepsTheCharacter(): void
     {
         $player = $this->createRealPlayer('GmOublie');

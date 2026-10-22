@@ -13,6 +13,7 @@ require_once __DIR__ . '/layout.php';
 require_once __DIR__ . '/helpers.php';
 
 use App\Factory\PlayerFactory;
+use App\Service\AccountService;
 use App\Service\AdminMenuAccessService;
 use App\Service\PlayerLookupService;
 use App\Service\CsrfProtectionService;
@@ -402,6 +403,19 @@ foreach ($animationForms as $marker => $run) {
     }
 }
 
+$canBlock = (new AdminMenuAccessService())->viewerAllows('players.block');
+if (isset($_POST['account_block'])) {
+    handleAdminPost($backTo, function () use ($canBlock, $player, $id): string {
+        if (!$canBlock) {
+            throw new \InvalidArgumentException('Votre niveau d\'accès ne permet pas de bloquer un compte.');
+        }
+        $block = $_POST['account_block'] === '1';
+        (new AccountService())->setBlocked($id, $block);
+
+        return 'Compte de ' . $player->data->name . ($block ? ' bloqué.' : ' débloqué.');
+    });
+}
+
 $vitalsRows = '';
 foreach (PLAYER_EDIT_VITALS as $trait => $label) {
     $max = (int) ($player->caracs->$trait ?? 0);
@@ -691,12 +705,32 @@ $animation = formCard('Animation', ''
     . $csrfField . '<input type="hidden" name="id" value="' . (int) $id . '">'
     . '<button type="submit" name="log_delete_last" value="1" class="btn btn-sm btn-outline-danger">Retirer la dernière ligne du journal</button></form>');
 
+$account = '';
+if (($player->data->player_type ?? 'real') === 'real') {
+    $isBlocked = (new AccountService())->isBlocked($id);
+    $account = formCard('Compte', '<div class="d-flex flex-wrap align-items-center gap-2">'
+        . ($isBlocked
+            ? '<span class="badge badge-danger">Bloqué</span>'
+            : '<span class="badge badge-success">Ouvert</span>')
+        . ($canBlock
+            ? '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="ml-auto"'
+                . ' data-confirm="' . e(($isBlocked ? 'Débloquer' : 'Bloquer') . ' le compte de ' . $player->data->name . ' ?') . '">'
+                . $csrfField . '<input type="hidden" name="id" value="' . (int) $id . '">'
+                . '<button type="submit" name="account_block" value="' . ($isBlocked ? '0' : '1') . '" class="btn btn-sm '
+                . ($isBlocked ? 'btn-outline-primary">Débloquer' : 'btn-outline-danger">Bloquer') . '</button></form>'
+            : '')
+        . '</div>'
+        . '<p class="text-muted mb-0 mt-2">Bloquer met un « ! » devant le mot de passe et l\'adresse enregistrés,'
+        . ' ferme la partie en cours et oublie les navigateurs mémorisés.</p>');
+}
+
 $body = '<form method="post" action="player-edit.php?id=' . (int) $id . '">'
     . $csrfField
     . '<input type="hidden" name="id" value="' . (int) $id . '">'
     . $identity . $position . $vitals . $turn
     . '<button type="submit" name="player_save" value="1" class="btn btn-primary">Enregistrer</button>'
     . '</form>'
+    . $account
     . $animation
     . $inventory
     . $effects

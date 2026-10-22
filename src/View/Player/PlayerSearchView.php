@@ -19,15 +19,16 @@ final class PlayerSearchView
             $raceLabel = $raceLabels[$player['race']] ?? $player['race'];
             $isNpc = $player['player_type'] === 'npc';
             $active = !empty($player['active']);
+            $status = !empty($player['blocked']) ? 'Bloqué' : ($active ? 'Actif' : 'Inactif');
 
             $rows .= '<tr data-type="' . ($isNpc ? 'PNJ' : 'Joueur') . '"'
                 . ' data-race="' . $this->esc($raceLabel) . '"'
-                . ' data-status="' . ($active ? 'Actif' : 'Inactif') . '">'
+                . ' data-status="' . $status . '">'
                 . '<td>' . (int) $player['id'] . '</td>'
                 . '<td>' . $this->esc($player['name']) . '</td>'
                 . '<td>' . $this->typeBadge($isNpc) . '</td>'
                 . '<td>' . $this->esc($raceLabel) . '</td>'
-                . '<td>' . self::statusBadge($active) . '</td>'
+                . '<td>' . ($status === 'Bloqué' ? '<span class="badge badge-danger">Bloqué</span>' : self::statusBadge($active)) . '</td>'
                 . '<td>' . (int) $player['xp'] . '</td>'
                 . '<td class="text-nowrap"><a class="btn btn-sm btn-outline-primary" href="/admin/player-edit.php?id='
                 . (int) $player['id'] . '">Fiche</a> '

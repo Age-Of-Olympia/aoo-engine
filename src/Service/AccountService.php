@@ -84,6 +84,39 @@ final class AccountService
         ]);
     }
 
+    /**
+     * An admin block is a mark in front of both hashes: no password or reset
+     * can match any more, and taking it off gives the account back as it was.
+     */
+    public const BLOCK_MARK = '!';
+
+    public function isBlocked(int $playerId): bool
+    {
+        return str_starts_with((string) $this->readOne($playerId, 'psw'), self::BLOCK_MARK);
+    }
+
+    /**
+     * Blocking also logs the character out: remembered browsers (the cookie
+     * skips the password) and open sessions.
+     */
+    public function setBlocked(int $playerId, bool $blocked): void
+    {
+        $mark = self::BLOCK_MARK;
+        $set = static fn (string $c): string => $blocked
+            ? "{$c} = IF({$c} LIKE '{$mark}%', {$c}, CONCAT('{$mark}', {$c}))"
+            : "{$c} = IF({$c} LIKE '{$mark}%', SUBSTRING({$c}, 2), {$c})";
+
+        $this->conn->executeStatement(
+            'UPDATE accounts SET ' . $set('psw') . ', ' . $set('mail') . ' WHERE player_id = ?',
+            [$playerId]
+        );
+        if ($blocked) {
+            $login = new LoginService($this->conn);
+            $login->forgetAll($playerId);
+            $login->endSessionsOf($playerId);
+        }
+    }
+
     /** A character born without credentials still gets its row. */
     public function ensureRow(int $playerId): void
     {

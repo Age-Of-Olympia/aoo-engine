@@ -66,4 +66,19 @@ class LoginServiceTest extends LegacyPlayerFixtureTestCase
 
         $this->assertFalse($login->resume());
     }
+
+    public function testEndingSessionsDeletesOnlyThatAccountsFiles(): void
+    {
+        $dir = sys_get_temp_dir() . '/aoo-sessions-' . uniqid();
+        mkdir($dir);
+        file_put_contents($dir . '/sess_mine', 'playerId|i:-5;mainPlayerId|i:2;');
+        file_put_contents($dir . '/sess_other', 'mainPlayerId|i:23;');
+        file_put_contents($dir . '/sess_lookalike', 'otherMainPlayerId|i:2;');
+
+        (new LoginService($this->link))->endSessionsOf(2, $dir);
+        $this->assertSame(['sess_lookalike', 'sess_other'], array_values(array_diff(scandir($dir), ['.', '..'])));
+
+        array_map('unlink', glob($dir . '/*'));
+        rmdir($dir);
+    }
 }
