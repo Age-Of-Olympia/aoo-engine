@@ -131,6 +131,22 @@ final class LoginService
         $this->conn->executeStatement('DELETE FROM remember_tokens WHERE player_id = ?', [$playerId]);
     }
 
+    /**
+     * Ends the character's open sessions by deleting their files, which carry
+     * the account as `mainPlayerId|i:<id>;`.
+     * ponytail: a request in flight at that instant writes its file back;
+     * check a flag per request if that ever matters.
+     */
+    public function endSessionsOf(int $playerId, ?string $dir = null): void
+    {
+        $dir ??= session_save_path() ?: sys_get_temp_dir();
+        foreach (glob($dir . '/sess_*') ?: [] as $file) {
+            if (preg_match('/(^|[;}])mainPlayerId\|i:' . $playerId . ';/', (string) @file_get_contents($file)) === 1) {
+                @unlink($file);
+            }
+        }
+    }
+
     private function sendCookie(string $value, int $expires): void
     {
         $_COOKIE[self::COOKIE] = $value;

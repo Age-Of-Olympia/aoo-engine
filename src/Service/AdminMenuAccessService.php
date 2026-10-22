@@ -63,6 +63,7 @@ class AdminMenuAccessService
 
         'players.sheet'            => ['Joueurs · Compétences et fiche', 'Joueurs', self::LEVEL_ADMIN],
         'players.rank-removal'     => ['Joueurs · Retrait de rang', 'Joueurs', self::LEVEL_SUPERADMIN],
+        'players.block'            => ['Joueurs · Blocage de compte', 'Joueurs', self::LEVEL_SUPERADMIN],
         'players.npcs'             => ['Joueurs · PNJ', 'Joueurs', self::LEVEL_ADMIN],
         'players.images'           => ['Joueurs · Avatars & portraits', 'Joueurs', self::LEVEL_ADMIN],
         'players.welcome-missive'  => ['Joueurs · Missive d\'accueil', 'Joueurs', self::LEVEL_ADMIN],

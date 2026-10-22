@@ -21,7 +21,8 @@ class PlayerSkillsService
 {
     /** Columns surfaced in search results and the skills header. */
     private const SUMMARY_FIELDS = 'p.id, p.name, p.race, p.player_type,
-        COALESCE(g.xp, 0) AS xp, COALESCE(a.last_login_time, 0) AS lastLoginTime';
+        COALESCE(g.xp, 0) AS xp, COALESCE(a.last_login_time, 0) AS lastLoginTime,
+        COALESCE(a.psw LIKE \'' . AccountService::BLOCK_MARK . '%\', 0) AS blocked';
 
     private const SUMMARY_FROM = 'players p
         LEFT JOIN progression g ON g.player_id = p.id
@@ -33,7 +34,7 @@ class PlayerSkillsService
      * a Statut filter (Actifs / Inactifs) narrow the list. Tutorial and other
      * ephemeral character kinds stay excluded.
      *
-     * @return array<int, array{id:int, name:string, race:string, player_type:string, xp:int, lastLoginTime:int, active:bool}>
+     * @return array<int, array{id:int, name:string, race:string, player_type:string, xp:int, lastLoginTime:int, active:bool, blocked:bool}>
      */
     public function listCharacters(): array
     {
@@ -47,7 +48,7 @@ class PlayerSkillsService
     /**
      * Load a single player's summary row, or null when no such id exists.
      *
-     * @return array{id:int, name:string, race:string, player_type:string, xp:int, lastLoginTime:int, active:bool}|null
+     * @return array{id:int, name:string, race:string, player_type:string, xp:int, lastLoginTime:int, active:bool, blocked:bool}|null
      */
     public function getPlayerSummary(int $playerId): ?array
     {
@@ -152,7 +153,7 @@ class PlayerSkillsService
     }
 
     /**
-     * @return array<int, array{id:int, name:string, race:string, player_type:string, xp:int, lastLoginTime:int, active:bool}>
+     * @return array<int, array{id:int, name:string, race:string, player_type:string, xp:int, lastLoginTime:int, active:bool, blocked:bool}>
      */
     private function hydrateRows(\mysqli_result $res): array
     {
@@ -172,6 +173,7 @@ class PlayerSkillsService
                 'xp'            => (int) $row['xp'],
                 'lastLoginTime' => $lastLoginTime,
                 'active'        => !PlayerService::isInactiveSince($lastLoginTime),
+                'blocked'       => (bool) $row['blocked'],
             ];
         }
 
