@@ -168,7 +168,35 @@ class Exchange{
         return $this->id>0 && ($this->playerOk==0 || $this->targetOk==0);
     }
     
+    /**
+     * Locks the exchange row until the transaction ends and reloads flags and
+     * items from it: two concurrent settlements (a double click) cannot both
+     * deliver. The later one finds the exchange closed and throws.
+     */
+    public function lockInProgress(): void
+    {
+        $row = $this->db->exe(
+            'SELECT player_ok, target_ok, update_time FROM items_exchanges WHERE id = ? FOR UPDATE',
+            array($this->id)
+        )->fetch_object();
+        if (!$row || ((int) $row->player_ok !== 0 && (int) $row->target_ok !== 0)) {
+            throw new \InvalidArgumentException('Cet échange n’est plus disponible.');
+        }
+        $this->playerOk = (int) $row->player_ok;
+        $this->targetOk = (int) $row->target_ok;
+        $this->updateTime = $row->update_time;
+        $this->items = [];
+        $this->get_items_data();
+    }
+
+    /** Throws when the deal changed since it was loaded: what is agreed is what was shown. */
     public function accept_exchange($Istarget){
+        $shown = $this->updateTime;
+        $this->lockInProgress();
+        if ((int) $shown !== (int) $this->updateTime) {
+            throw new \InvalidArgumentException('L’échange a été modifié. Vérifiez les objets avant de valider.');
+        }
+
         $sql = '
         UPDATE
         items_exchanges
@@ -189,12 +217,8 @@ class Exchange{
         $this->db->exe($sql, array(time(),$this->id));
     }
 
+    /** Unconditional: in-memory flags may predate the other party's accept. */
     public function refuse_exchange($Istarget,$IsPlayer){
-        $editNeeded = $Istarget && $this->targetOk==1;
-        $editNeeded = $editNeeded || ($IsPlayer && $this->playerOk==1);
-        if(!$editNeeded){
-            return;
-        }
         $sql = '
         UPDATE
         items_exchanges
@@ -357,6 +381,7 @@ class Exchange{
      */
     public function cancelReturns(Player $canceller, Player $other): void
     {
+        $this->lockInProgress();
         $bag = new \App\Service\ContainerService();
         $own = $this->contentsOf((int) $canceller->id);
         $lines = count($own['exemplars']);

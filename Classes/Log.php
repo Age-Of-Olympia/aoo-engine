@@ -379,7 +379,7 @@ private static function filterRows(array $rows, int $playerId): array {
     }
 
 
-    public static function put(ActorInterface $player, $target, $text, $type='', $hiddenText='', $logTime='', bool $forcePublic = false){
+    public static function put(ActorInterface $player, $target, $text, $type='', $hiddenText='', $logTime=''){
 
 
         $coords = $player->getCoords();
@@ -397,7 +397,7 @@ private static function filterRows(array $rows, int $playerId): array {
         $plan ??= '';
 
         // hide log in incognitoMode or invisibleMode
-        if(!$forcePublic && ($player->have_option('incognitoMode') || $player->have_option('invisibleMode'))){
+        if($player->have_option('incognitoMode') || $player->have_option('invisibleMode')){
             $text = "Plan d'origine : ".$plan." - ".$text;
             $plan = "birdland"; // show logs in birdlands for posterity
         }

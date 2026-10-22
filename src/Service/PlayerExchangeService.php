@@ -74,6 +74,7 @@ final class PlayerExchangeService
     /** Return both parties' escrowed items to their own bags and close the deal. */
     public function cancel(Exchange $exchange, Player $first, Player $second): void
     {
+        $exchange->lockInProgress();
         foreach ([$first, $second] as $owner) {
             $contents = $exchange->contentsOf((int) $owner->id);
             if ($contents['stacks'] !== [] || $contents['exemplars'] !== []) {

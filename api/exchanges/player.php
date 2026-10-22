@@ -86,8 +86,8 @@ try {
                     $time = time();
                     $initiator->getCoords();
                     $recipient->getCoords();
-                    Log::put($initiator, $recipient, $initiator->data->name . ' a donné à ' . $recipient->data->name . ' : ' . $fromInitiator . '; ' . $recipient->data->name . ' a donné : ' . $fromRecipient . '.', 'player_exchange', '', $time, forcePublic: true);
-                    Log::put($recipient, $initiator, $recipient->data->name . ' a reçu de ' . $initiator->data->name . ' : ' . $fromInitiator . '; ' . $recipient->data->name . ' a donné : ' . $fromRecipient . '.', 'player_exchange_received', '', $time, forcePublic: true);
+                    Log::put($initiator, $recipient, $initiator->data->name . ' a donné à ' . $recipient->data->name . ' : ' . $fromInitiator . '; ' . $recipient->data->name . ' a donné : ' . $fromRecipient . '.', 'player_exchange', '', $time);
+                    Log::put($recipient, $initiator, $recipient->data->name . ' a reçu de ' . $initiator->data->name . ' : ' . $fromInitiator . '; ' . $recipient->data->name . ' a donné : ' . $fromRecipient . '.', 'player_exchange_received', '', $time);
                     $exchange->purge_items();
                 }
             }

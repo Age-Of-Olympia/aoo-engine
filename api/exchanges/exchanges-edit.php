@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     } catch (Throwable $th) {
       $exchange->db->rollback_transaction('create_exchange');
-      ExitError('Erreur lors de l\'acceptation/refus de l\'échange');
+      ExitError($th instanceof InvalidArgumentException ? $th->getMessage() : 'Erreur lors de l\'acceptation/refus de l\'échange');
     }
     $exchange->db->commit_transaction('accept_or_reffuse_exchange');
 

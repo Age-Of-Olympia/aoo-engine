@@ -268,6 +268,43 @@ class ExchangeInstanceBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(2, $pierre->get_n($other, bank: true, includeInstances: false), 'the other party is not: bank');
     }
 
+    /** A double click: two requests loaded the deal before either settled it. */
+    public function testASecondAcceptOfTheSameDealDeliversNothing(): void
+    {
+        $offering = $this->createRealPlayer('GmTwiceGive');
+        $target = $this->createRealPlayer('GmTwiceTake');
+        $bois = $this->itemOrSkip('bois');
+        $bois->add_item($offering, 5);
+
+        $exchange = $this->openExchange($offering->id, $target->id);
+        $exchange->get_items_data();
+        $exchange->give($offering, 5, $bois->id);
+        $exchange->get_base_data();
+        $exchange->accept_exchange(false);
+
+        $load = function () use ($exchange): Exchange {
+            $copy = new Exchange($exchange->id);
+            $copy->get_base_data();
+            $copy->get_items_data();
+
+            return $copy;
+        };
+        $first = $load();
+        $second = $load();
+
+        $first->accept_exchange(true);
+        $this->assertSame([1, 1], [$first->playerOk, $first->targetOk]);
+        $first->give_items($offering, $target, true);
+        $first->purge_items();
+
+        try {
+            $second->accept_exchange(true);
+            $this->fail('a settled deal must refuse a second accept');
+        } catch (\InvalidArgumentException) {
+        }
+        $this->assertSame(5, $bois->get_n($target, includeInstances: false), 'delivered once');
+    }
+
     public function testCancelIsRefusedWhenTheCancellersBagIsFull(): void
     {
         $canceller = $this->createRealPlayer('GmCancelFull');
