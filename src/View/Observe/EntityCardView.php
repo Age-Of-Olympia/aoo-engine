@@ -2,6 +2,7 @@
 
 namespace App\View\Observe;
 
+use App\Entity\Action;
 use App\Entity\BuildingDetails;
 use App\Factory\PlayerFactory;
 use App\Interface\ActionInterface;
@@ -239,7 +240,7 @@ final class EntityCardView
         $html = '';
         foreach ($actions as $actionName) {
             $actionData = $actionService->getActionByName($actionName);
-            if ($actionData == null) {
+            if (!($actionData instanceof Action)) {
                 continue;
             }
 
@@ -436,7 +437,7 @@ final class EntityCardView
     }
 
     /** Un bouton d'action du panneau (coût en info-bulle, coords de la cible). */
-    private static function buildActionToDisplay(ActorInterface $target, ActionInterface $action, ActionService $actionService, ?string $nameOverride = null, ?ActorInterface $actor = null): string
+    private static function buildActionToDisplay(ActorInterface $target, Action $action, ActionService $actionService, ?string $nameOverride = null, ?ActorInterface $actor = null): string
     {
         if ($action->getName() === 'donner' && $target instanceof Player && $actor instanceof Player) {
             $incomingProposal = (new PlayerExchangeService())->hasIncomingValidatedProposal($actor, $target);
