@@ -333,7 +333,7 @@ if (!$inTutorial && !$isInvisible && !$isBrandNew && !$autoStarting && (int) $pl
         echo '<div id="player-exchange-prompt" role="dialog" aria-modal="true" style="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;">'
             . '<div style="background:#fff;padding:24px;border-radius:8px;max-width:420px;text-align:center;box-shadow:0 4px 20px #0008;">'
             . '<p>' . $senderName . ' vous a proposé un échange.</p>'
-            . '<button type="button" id="player-exchange-prompt-dismiss">D’accord</button> '
+            . '<button type="button" id="player-exchange-prompt-dismiss">Plus tard</button> '
             . '<button type="button" id="player-exchange-prompt-open">Voyons voir ça</button>'
             . '</div></div>'
             . '<script>(function(){var prompt=document.getElementById("player-exchange-prompt");document.getElementById("player-exchange-prompt-dismiss").addEventListener("click",function(){prompt.remove();});document.getElementById("player-exchange-prompt-open").addEventListener("click",function(){var url=' . json_encode($exchangeUrl) . ';prompt.remove();if(typeof window.hudNavigate==="function"){window.hudNavigate(url);}else{window.location.href=url;}});})();</script>';

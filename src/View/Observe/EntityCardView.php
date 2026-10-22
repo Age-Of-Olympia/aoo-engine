@@ -160,16 +160,6 @@ final class EntityCardView
 
         $html .= self::actionButtonsHtml($player, $target);
 
-        if ((int) $player->id !== (int) $target->id
-            && in_array((string) ($target->data->player_type ?? ''), ['real', 'npc', 'tutorial'], true)) {
-            $atContact = View::get_distance($player->getCoords(), $target->getCoords()) <= 1;
-            $incomingProposal = $atContact
-                && (new PlayerExchangeService())->hasIncomingValidatedProposal($player, $target);
-            $html .= $atContact
-                ? '<a href="give.php?targetId=' . (int) $target->id . '"><button class="action' . ($incomingProposal ? ' player-exchange-incoming' : '') . '"><span class="ra ' . ($incomingProposal ? 'ra-hand-emblem player-exchange-incoming-icon' : 'ra-hand') . '"></span> <span class="action-name">' . ($incomingProposal ? 'Recevoir' : 'Donner') . '</span></button></a>'
-                : '<button class="action" disabled title="Approchez-vous pour donner"><span class="ra ra-hand"></span> <span class="action-name">Donner (trop loin)</span></button>';
-        }
-
         /* class="action" comme Missive : sans elle, la grille d'actions
          * du HUD ignore ces boutons (nom toujours affiché, taille libre).
          * Un bouton par comptoir servi, avec son icône et son libellé
@@ -448,6 +438,20 @@ final class EntityCardView
     /** Un bouton d'action du panneau (coût en info-bulle, coords de la cible). */
     private static function buildActionToDisplay(ActorInterface $target, ActionInterface $action, ActionService $actionService, ?string $nameOverride = null, ?ActorInterface $actor = null): string
     {
+        if ($action->getName() === 'donner' && $target instanceof Player && $actor instanceof Player) {
+            $incomingProposal = (new PlayerExchangeService())->hasIncomingValidatedProposal($actor, $target);
+            $iconView = new \App\View\Action\ActionIconView();
+            $icon = $incomingProposal
+                ? $iconView->render('ra-hand-emblem', null, 'span', ['player-exchange-incoming-icon'])
+                : $iconView->forAction($action, 'span');
+            $buttonClass = $incomingProposal ? 'action player-exchange-incoming' : 'action';
+            $label = $incomingProposal ? 'Recevoir' : $action->getDisplayName();
+
+            return '<a href="give.php?targetId=' . (int) $target->id . '"><button class="' . $buttonClass . '">'
+                . $icon . ' <span class="action-name">' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</span>'
+                . '</button></a><br/>';
+        }
+
         $icon = (new \App\View\Action\ActionIconView())->forAction($action, 'span');
         $costs = $actionService->getCostsArray(null, $action, $actor);
         if ($costs !== []) {
