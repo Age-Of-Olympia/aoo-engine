@@ -149,6 +149,27 @@ class EntitySpriteServiceTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    /** One cell, no pieces: the upload becomes the type's picture, the one the board draws. */
+    public function testAOneCellUploadIsWrittenWhole(): void
+    {
+        $this->seedBuildingType();
+        $footprints = new EntityTypeFootprintService($this->link);
+        $footprints->declare(self::TYPE, 1, 1, [[0, 0]]);
+        $this->png('img/walls/' . self::TYPE . '_source.png', 80, 80);
+
+        $pieces = (new CompositeSpriteService())->cutPieces(
+            'walls',
+            self::TYPE,
+            $footprints->catalogue()[self::TYPE],
+            $_SERVER['DOCUMENT_ROOT'] . '/img/walls/' . self::TYPE . '_source.png'
+        );
+        $this->written[] = $_SERVER['DOCUMENT_ROOT'] . '/img/walls/' . self::TYPE . '.png';
+
+        $this->assertSame(['img/walls/' . self::TYPE . '.png'], array_values($pieces));
+        $this->assertSame([50, 50], array_slice((array) getimagesize($_SERVER['DOCUMENT_ROOT'] . '/' . $pieces[0]), 0, 2));
+        $this->assertSame($pieces[0], BuildingService::resolveAvatar(self::TYPE));
+    }
+
     public function testATypeWithoutPiecesHasNoStitchedSprite(): void
     {
         $this->assertNull((new EntitySpriteService())->spriteOf('gm_sprite_unknown'));
