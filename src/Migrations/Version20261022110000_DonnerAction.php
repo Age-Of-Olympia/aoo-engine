@@ -18,6 +18,11 @@ final class Version20261022110000_DonnerAction extends AbstractMigration
     public function up(Schema $schema): void
     {
         $this->addSql(
+            "INSERT INTO action_type_logs (type_key, actor_template, target_template)
+             SELECT 'give', '{actor} a proposé un échange à {target}.', '{actor} vous a proposé un échange.'
+             WHERE NOT EXISTS (SELECT 1 FROM action_type_logs WHERE type_key = 'give')"
+        );
+        $this->addSql(
             "INSERT INTO actions (name, icon, type, display_name, text, level, category, innate)
              SELECT 'donner', 'ra-hand', 'give', 'Donner', 'Propose un échange d’objets à un personnage au contact.', 1, 'utility', 1
              WHERE NOT EXISTS (SELECT 1 FROM actions WHERE name = 'donner')"
@@ -47,6 +52,7 @@ final class Version20261022110000_DonnerAction extends AbstractMigration
 
     public function down(Schema $schema): void
     {
+        $this->addSql("DELETE FROM action_type_logs WHERE type_key = 'give'");
         $this->addSql("DELETE c FROM action_conditions c JOIN actions a ON a.id = c.action_id WHERE a.name = 'donner'");
         $this->addSql("DELETE o FROM action_outcomes o JOIN actions a ON a.id = o.action_id WHERE a.name = 'donner'");
         $this->addSql("DELETE FROM actions WHERE name = 'donner'");

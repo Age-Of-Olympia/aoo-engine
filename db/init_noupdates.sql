@@ -108,6 +108,7 @@ INSERT INTO `action_type_logs` (`type_key`,`actor_template`,`target_template`) V
 ('buff','{actor} a lancé {action}.',NULL),
 ('heal','{actor} a lancé {action} sur {target}.','{target} a été soigné par {actor} avec {action}.'),
 ('pray','{actor} a prié.',NULL),
+('give','{actor} a proposé un échange à {target}.','{actor} vous a proposé un échange.'),
 ('rest','Vous vous êtes reposé.',NULL),
 ('run','Vous avez couru.',NULL),
 ('search','Vous avez fouillé les alentours.',NULL),
