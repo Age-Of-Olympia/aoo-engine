@@ -135,7 +135,10 @@ class Log{
             $movementZ = $movementCoords->z ?? null;
         }
 
-        $inRange = (string) $movementPlan === $plan
+        // No known position, or no cell for the row: out of range. Cast to
+        // strings, both would read '' and match anywhere.
+        $inRange = $movementPlan !== null && $plan !== ''
+            && (string) $movementPlan === $plan
             && (string) $movementZ === $z
             && abs((int) $x - (int) $movementX) <= $perception
             && abs((int) $y - (int) $movementY) <= $perception;

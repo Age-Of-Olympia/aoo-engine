@@ -209,6 +209,22 @@ class LogTest extends TestCase
     }
 
     #[Group('log-get')]
+    public function testStrangersHiddenActionInvisibleToViewerWithoutMove(): void
+    {
+        $this->testDb->insertLog([
+            'type' => 'hidden_action',
+            'text' => 'Stranger hidden action',
+            'player_id' => 2,
+            'target_id' => 3,
+            'plan' => 'other_plan',
+            'coords_id' => null,
+            'coords_computed' => null,
+        ]);
+
+        $this->assertEmpty(Log::get($this->player));
+    }
+
+    #[Group('log-get')]
     public function testBirdlandLogsAreFiltered(): void
     {
         // Arrange
