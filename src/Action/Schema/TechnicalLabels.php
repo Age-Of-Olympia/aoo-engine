@@ -102,6 +102,7 @@ final class TechnicalLabels
         'distancetechnique' => 'Technique à distance',
         'equip' => 'Équipement',
         'gesture' => 'Geste',
+        'give' => 'Don',
         'heal' => 'Soin',
         'jettechnique' => 'Technique de jet',
         'melee' => 'Attaque de mêlée',
