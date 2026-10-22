@@ -3968,11 +3968,6 @@ parameters:
 			count: 1
 			path: src/View/Observe/EntityCardView.php
 
-		-
-			message: '#^Parameter \#1 \$action of method App\\View\\Action\\ActionIconView\:\:forAction\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/View/Observe/EntityCardView.php
 
 		-
 			message: '#^Method App\\View\\Player\\PlayerSearchView\:\:render\(\) has parameter \$players with no value type specified in iterable type array\.$#'
