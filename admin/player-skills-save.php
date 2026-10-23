@@ -7,10 +7,11 @@ use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\PlayerSkillsService;
 
-(new AdminMenuAccessService())->enforce('players.sheet');
+$playerId = (int) ($_POST['player_id'] ?? 0);
+$access = new AdminMenuAccessService();
+$access->enforce($access->forCharacter('players.sheet', $playerId));
 
 $service = new PlayerSkillsService();
-$playerId = (int) ($_POST['player_id'] ?? 0);
 
 requireAdminPost('/admin/player-skills.php?id=' . $playerId);
 

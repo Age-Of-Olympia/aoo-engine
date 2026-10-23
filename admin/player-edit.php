@@ -33,6 +33,8 @@ if ($id === 0) {
     setFlash('danger', 'Personnage inconnu.');
     redirectTo('players.php');
 }
+$access = new AdminMenuAccessService();
+$access->enforce($access->forCharacter('players.sheet', $id));
 
 $player = PlayerFactory::legacy($id);
 if (!$player->get_data(false)) {
@@ -255,7 +257,7 @@ $piOffset = static function () use ($db, $player, $id): int {
     return min((int) $player->data->xp, SEASON_XP) - (int) $player->data->pi - $paid;
 };
 
-$canRemoveRank = (new AdminMenuAccessService())->viewerAllows('players.rank-removal');
+$canRemoveRank = $access->viewerAllows($access->forCharacter('players.rank-removal', $id));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['xp_add']) || isset($_POST['pi_fix']) || isset($_POST['pi_add'])

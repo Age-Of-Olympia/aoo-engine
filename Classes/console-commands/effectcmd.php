@@ -16,7 +16,7 @@ EOT);
 
     public function accessKey(array $argumentValues): ?string
     {
-        return 'players.sheet';
+        return $this->rightOnCharacter('players.sheet', $argumentValues[0] ?? null);
     }
 
     public function execute(  array $argumentValues ) : string

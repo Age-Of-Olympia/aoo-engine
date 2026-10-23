@@ -179,6 +179,17 @@ abstract class Command
         return null;
     }
 
+    /**
+     * $right on the character named by $playerIdOrName: its PNJ twin when
+     * that character is a PNJ (AdminMenuAccessService::forCharacter()).
+     */
+    protected function rightOnCharacter(string $right, ?string $playerIdOrName): string
+    {
+        $player = ($playerIdOrName ?? '') === '' ? null : $this->getPlayer($playerIdOrName);
+
+        return $player === null ? $right : (new AdminMenuAccessService())->forCharacter($right, (int) $player->id);
+    }
+
     public function executeIfAuthorized( array $argumentValues ): string {
         $key = $this->accessKey($argumentValues);
         if ($key !== null) {

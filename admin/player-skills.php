@@ -4,6 +4,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\Action\ActionCatalogService;
 use App\Service\Action\ActionPassiveCatalogService;
+use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\PlayerActionsService;
 use App\Service\PlayerSkillsService;
@@ -20,6 +21,8 @@ if ($summary === null || !in_array($summary['player_type'], ['real', 'npc'], tru
     setFlash('warning', 'Joueur introuvable.');
     redirectTo('/admin/players.php');
 }
+$access = new AdminMenuAccessService();
+$access->enforce($access->forType('players.sheet', $summary['player_type']));
 
 $ownedActionNames = (new PlayerActionsService())->getActions($id);
 $ownedPassiveIds = array_map(

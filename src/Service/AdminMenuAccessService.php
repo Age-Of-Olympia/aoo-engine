@@ -61,14 +61,17 @@ class AdminMenuAccessService
         'actions.type-defaults'    => ['Actions · Défauts par type', 'Actions', self::LEVEL_SUPERADMIN],
         'actions.import'           => ['Actions · Importer', 'Actions', self::LEVEL_SUPERADMIN],
 
-        'players.sheet'            => ['Joueurs · Compétences et fiche', 'Joueurs', self::LEVEL_ADMIN],
-        'players.rank-removal'     => ['Joueurs · Retrait de rang', 'Joueurs', self::LEVEL_SUPERADMIN],
+        'players.sheet'            => ['Joueurs · Fiche et compétences des PJ', 'Joueurs', self::LEVEL_ADMIN],
+        'players.rank-removal'     => ['Joueurs · Retrait de rang des PJ', 'Joueurs', self::LEVEL_SUPERADMIN],
         'players.block'            => ['Joueurs · Blocage de compte', 'Joueurs', self::LEVEL_SUPERADMIN],
-        'players.npcs'             => ['Joueurs · PNJ', 'Joueurs', self::LEVEL_ADMIN],
         'players.images'           => ['Joueurs · Avatars & portraits', 'Joueurs', self::LEVEL_ADMIN],
         'players.welcome-missive'  => ['Joueurs · Missive d\'accueil', 'Joueurs', self::LEVEL_ADMIN],
         'players.stats'            => ['Joueurs · Statistiques', 'Joueurs', self::LEVEL_ADMIN],
         'players.options'          => ['Joueurs · Accès & options', 'Joueurs', self::LEVEL_SUPERADMIN],
+
+        'players.npcs'             => ['PNJ · Liste, création, propriétaires et retrait', 'PNJ', self::LEVEL_ADMIN],
+        // Everything the character rights allow, on PNJs only (NPC_TWINS)
+        'npcs.sheet'               => ['PNJ · Fiche, compétences, retrait de rang et console player', 'PNJ', self::LEVEL_ADMIN],
 
         'items.edit'               => ['Objets', 'Divers', self::LEVEL_SUPERADMIN],
         'items.recipes'            => ['Objets · Recettes', 'Divers', self::LEVEL_SUPERADMIN],
@@ -89,7 +92,7 @@ class AdminMenuAccessService
         'forum.moderate'           => ['Forum · Modération (supprimer, renommer)', 'Forum', self::LEVEL_ADMIN],
 
         // Console commands with no panel page
-        'console.player'           => ['Console · player (PJ, banque, journal, msg, purge)', 'Console', self::LEVEL_ADMIN],
+        'console.player'           => ['Console · player sur les joueurs (création de PJ, banque, journal, msg, purge)', 'Console', self::LEVEL_ADMIN],
         'console.session'          => ['Console · session', 'Console', self::LEVEL_ADMIN],
         'console.quest'            => ['Console · quest', 'Console', self::LEVEL_ADMIN],
         'console.missive'          => ['Console · missive', 'Console', self::LEVEL_ADMIN],
@@ -102,6 +105,16 @@ class AdminMenuAccessService
         'console.rgpd'             => ['Console · rgpd', 'Console', self::LEVEL_SUPERADMIN],
         'console.season'           => ['Console · season', 'Console', self::LEVEL_SUPERADMIN],
         'console.tool'             => ['Console · tool', 'Console', self::LEVEL_SUPERADMIN],
+    ];
+
+    /**
+     * Character right => the right governing it when the character is a PNJ,
+     * so an animateur can run PNJs without touching players.
+     */
+    private const NPC_TWINS = [
+        'players.sheet'        => 'npcs.sheet',
+        'players.rank-removal' => 'npcs.sheet',
+        'console.player'       => 'npcs.sheet',
     ];
 
     /** Panel page => the right it needs. */
@@ -238,7 +251,38 @@ class AdminMenuAccessService
     public function canAccessPage(string $page, bool $viewerIsSuperAdmin): bool
     {
         return $viewerIsSuperAdmin
-            || (($right = $this->rightOfPage($page)) !== null && $this->canAccess($right, false));
+            || (($right = $this->rightOfPage($page)) !== null && $this->opensToAdmins($right));
+    }
+
+    /**
+     * The right governing $right on one character: its PNJ twin when that
+     * character is a PNJ, $right itself otherwise.
+     */
+    public function forCharacter(string $right, int $characterId): string
+    {
+        if (!isset(self::NPC_TWINS[$right])) {
+            return $right;
+        }
+        $row = (new Db())->exe('SELECT player_type FROM players WHERE id = ?', $characterId)->fetch_object();
+
+        return $this->forType($right, (string) ($row->player_type ?? ''));
+    }
+
+    /** forCharacter() when the caller already holds the character's player_type. */
+    public function forType(string $right, string $playerType): string
+    {
+        return $playerType === 'npc' ? self::NPC_TWINS[$right] ?? $right : $right;
+    }
+
+    /**
+     * A page under a character right opens when the right or its PNJ twin
+     * does; the page then checks forCharacter() on the character it edits.
+     */
+    private function opensToAdmins(string $right): bool
+    {
+        $twin = self::NPC_TWINS[$right] ?? null;
+
+        return $this->canAccess($right, false) || ($twin !== null && $this->canAccess($twin, false));
     }
 
     /**
@@ -287,7 +331,10 @@ class AdminMenuAccessService
             AdminAuthorizationService::DoSuperAdminCheck();
             return;
         }
-        $this->enforce($right);
+        AdminAuthorizationService::DoAdminCheck();
+        if (!$this->opensToAdmins($right)) {
+            AdminAuthorizationService::DoSuperAdminCheck();
+        }
     }
 
     /**

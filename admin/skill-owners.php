@@ -4,8 +4,12 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\Action\ActionCatalogService;
 use App\Service\Action\ActionPassiveCatalogService;
+use App\Service\AdminMenuAccessService;
 use App\Service\SkillOwnershipService;
 use App\View\Player\SkillOwnersView;
+
+// Lists real players only: the PNJ right does not open it
+(new AdminMenuAccessService())->enforce('players.sheet');
 
 $type = (string) ($_GET['type'] ?? '');
 $ownership = new SkillOwnershipService();

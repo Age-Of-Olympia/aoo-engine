@@ -41,12 +41,12 @@ EOT);
             return count(explode(',', $argumentValues[2] ?? '')) === 2 ? 'players.npcs' : 'console.player';
         }
         if ($action === 'removeupgrade') {
-            return 'players.rank-removal';
+            return $this->rightOnCharacter('players.rank-removal', $argumentValues[1] ?? null);
         }
         if (in_array($action, ['edit', 'additem', 'addxp', 'addupgrade', 'unequip', 'checkpi'], true)) {
-            return 'players.sheet';
+            return $this->rightOnCharacter('players.sheet', $argumentValues[1] ?? null);
         }
-        return 'console.player';
+        return $this->rightOnCharacter('console.player', $argumentValues[1] ?? null);
     }
 
     public function execute(  array $argumentValues ) : string
