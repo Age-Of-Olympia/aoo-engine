@@ -198,6 +198,7 @@ final class TopBarView
             /* Le bouton mène à l'ACCUEIL du forum (catégories) ; les
              * derniers messages y restent à un clic. */
             . '<a href="forum.php" data-label="Forum" title="Forum — ' . self::lastPostTitle($player) . '"><button><span class="ra ra-speech-bubbles"></span>' . $forumBadge . '</button></a>'
+            . '<a href="account.php" title="Profil"><button><span class="ra ra-wrench"></span></button></a>'
             . '<a href="index.php?menu" title="Menu principal"><button><span class="ra ra-castle-emblem"></span></button></a>'
             . '<a href="index.php?logout" title="Se déconnecter"><button><span class="ra ra-footprint"></span></button></a>'
             . '</div>';

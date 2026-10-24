@@ -8,7 +8,7 @@ describe('lot 2 panel escapes', () => {
         cy.wait(1000);
 
         /* Profil : mdj et histoire absents, mot de passe présent */
-        cy.get('#hud-rail a[href="account.php"]').first().click({ force: true });
+        cy.get('#hud-topbar a[href="account.php"]').first().click({ force: true });
         cy.wait(1200);
         cy.get('.hud-panel--open .hud-panel-content')
             .should('contain.text', 'Changer Mot de Passe')

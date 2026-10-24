@@ -55,7 +55,7 @@ describe('lot 2 fixes round 2', () => {
 
         cy.get('#player-avatar img').invoke('attr', 'src').then((before) => {
 
-            cy.get('#hud-rail a[href="account.php"]').first().click({ force: true });
+            cy.get('#hud-topbar a[href="account.php"]').first().click({ force: true });
             cy.wait(1200);
             cy.get('.hud-panel--open a[href="account.php?avatars"]').first().click();
             cy.wait(2000);

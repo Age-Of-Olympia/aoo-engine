@@ -2627,15 +2627,17 @@
          * livre) — son icône peinte passe à Sorts & Techniques. */
         $('#hud-rail a[href^="logs.php"]').remove();
 
+        /* Profil rejoint les boutons hors jeu du bandeau haut
+         * (TopBarView). */
+        $('#hud-rail #menu > a[href="account.php"]:not(.hud-quick-clone)').remove();
+
         /* Séparateurs de groupes du rail : le personnage (caracs,
          * sorts, possessions) / le monde (évènements, carte,
-         * missives) / le compte. Posés après le repositionnement. */
-        var $menu = $('#hud-rail #menu');
+         * missives) / la faction. Posés après le repositionnement. */
         $('<span class="hud-rail-sep"></span>').insertAfter('#show-bank');
-        $('<span class="hud-rail-sep"></span>')
-            .insertAfter($menu.children('a[href="forum.php?forum=Missives"]'));
+        $('<span class="hud-rail-sep"></span>').insertBefore('#show-faction');
 
-        /* Rail : Inventaire, Artisanat, Banque, Sorts, Profil,
+        /* Rail : Inventaire, Artisanat, Banque, Sorts,
          * Missives, Carte… — plus AUCUN gestionnaire dédié : leurs
          * hrefs pleine-page ont tous un fragment (panelUrl), le
          * routeur global de liens (plus bas) les ouvre en panneau.

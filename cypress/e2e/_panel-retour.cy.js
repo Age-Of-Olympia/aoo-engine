@@ -13,7 +13,7 @@ describe('panel retour', () => {
         cy.get('.hud-panel--open .hud-panel-content a[href="index.php"]').should('not.be.visible');
         cy.screenshot('personnage-no-retour', { capture: 'viewport', overwrite: true });
 
-        cy.get('#hud-rail a[href="account.php"]').click({ force: true });
+        cy.get('#hud-topbar a[href="account.php"]').click({ force: true });
         cy.wait(1000);
         cy.get('.hud-panel--open .hud-panel-content a[href="index.php"]').should('not.be.visible');
     });
