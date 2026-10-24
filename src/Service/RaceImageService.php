@@ -217,7 +217,7 @@ class RaceImageService
             throw new RuntimeException('Impossible de créer ' . $dir);
         }
 
-        $number = $type === ImageType::PORTRAIT ? $race->getPortraitNextNumber() : $race->getAvatarNextNumber();
+        $number = $this->freeNumber($type, $race, $dir);
         $info = @getimagesize($tmpPath);
         $extension = self::outputExtension(is_array($info) ? (string) $info['mime'] : '');
         $fileName = $type->buildFilename($number, $extension);
@@ -327,7 +327,7 @@ class RaceImageService
             throw new RuntimeException('Impossible de créer ' . $targetDir);
         }
 
-        $number = $type === ImageType::PORTRAIT ? $race->getPortraitNextNumber() : $race->getAvatarNextNumber();
+        $number = $this->freeNumber($type, $race, $targetDir);
         $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
         $newName = $number . '.' . $extension;
         if (!rename($sourceDir . '/' . $fileName, $targetDir . '/' . $newName)) {
@@ -466,6 +466,20 @@ class RaceImageService
         if (!$written) {
             throw new RuntimeException('Écriture impossible : ' . $destinationPath);
         }
+    }
+
+    /**
+     * First counter number with no file of any extension in $dir, the counter
+     * moved up to it: files copied by hand or a counter left behind never get
+     * overwritten.
+     */
+    private function freeNumber(ImageType $type, Race $race, string $dir): int
+    {
+        $portrait = $type === ImageType::PORTRAIT;
+        while (glob($dir . '/' . ($portrait ? $race->getPortraitNextNumber() : $race->getAvatarNextNumber()) . '.*') !== []) {
+            $portrait ? $race->incrementPortraitNextNumber() : $race->incrementAvatarNextNumber();
+        }
+        return $portrait ? $race->getPortraitNextNumber() : $race->getAvatarNextNumber();
     }
 
     private function baseDir(ImageType $type): string

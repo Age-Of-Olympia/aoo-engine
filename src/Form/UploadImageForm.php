@@ -46,62 +46,8 @@ class UploadImageForm
 
 ?>
 
-        <!DOCTYPE html>
-        <html>
-
-        <head>
-            <title>Upload portrait ou avatar</title>
-            <link rel="stylesheet" href="/css/modal.css" />
-            <script src="/js/modal.js?v=20261017"></script>
-
-        </head>
-        <script>
-            // A small helper to fetch the next number:
-            async function updateNextNumber() {
-                // If we locked "type" or "raceId", they might be hidden inputs.
-                // Make sure we pick up their values correctly (or from the dropdown).
-                const typeSelect = document.getElementById('type');
-                const raceIdSelect = document.getElementById('raceId');
-
-                // If the elements exist, pick up from them; otherwise from hidden fields
-                const type = typeSelect ? typeSelect.value : document.querySelector('input[name="type"]').value;
-                const raceId = raceIdSelect ? raceIdSelect.value : document.querySelector('input[name="raceId"]').value;
-
-                // Build the query URL
-                const url = `/api/account/get_next_number_api.php?type=${encodeURIComponent(type)}&raceId=${encodeURIComponent(raceId)}`;
-
-                try {
-                    const response = await fetch(url);
-                    const data = await response.json();
-
-                    if (data.error) {
-                        alert("Erreur : " + data.error);
-                        return;
-                    }
-
-                    // data.nextNumber should contain the value we want
-                    document.getElementById('number').value = data.nextNumber;
-                } catch (e) {
-                    console.error("Failed to fetch next number", e);
-                }
-            }
-
-            // We'll call updateNextNumber whenever the user changes "type" or "race"
-            document.addEventListener('DOMContentLoaded', () => {
-                // Only attach event listeners if the elements actually exist
-                if (document.getElementById('type')) {
-                    document.getElementById('type').addEventListener('change', updateNextNumber);
-                }
-                if (document.getElementById('raceId')) {
-                    document.getElementById('raceId').addEventListener('change', updateNextNumber);
-                }
-
-                // Optionally call it once on page load
-                updateNextNumber();
-            });
-        </script>
-
-        <body>
+        <link rel="stylesheet" href="/css/modal.css" />
+        <script src="/js/modal.js?v=20261017"></script>
             <?php
 
 
@@ -147,10 +93,6 @@ class UploadImageForm
                     </select>
                 <?php endif; ?>
 
-                <!-- Portrait or Avatar Number -->
-                <label for="number">Numéro du fichier :</label>
-                <input type="number" name="number" id="number" required>
-
                 <!-- The file input -->
                 <label for="image">Fichier :</label>
                 <input type="file" name="image" id="image" accept="image/jpeg,image/png" required>
@@ -159,6 +101,8 @@ class UploadImageForm
             </form>
 
             <script>
+            /* A block, not the global scope: the HUD panel runs this script again on each opening. */
+            {
                 // Grab references to our modals
                 const waitingModal = document.getElementById('waitingModal');
                 const resultModal = document.getElementById('resultModal');
@@ -209,10 +153,8 @@ class UploadImageForm
                 });
 
                 bindModalButton(resultModal, true);
+            }
             </script>
-        </body>
-
-        </html>
 <?php
     }
 }

@@ -107,6 +107,22 @@ class RaceImageServiceTest extends TestCase
         $this->assertNotSame($created, $second);
     }
 
+    public function testUploadSkipsNumbersAlreadyOnDisk(): void
+    {
+        $tmp = $this->root . '/source.png';
+        imagepng(imagecreatetruecolor(60, 60), $tmp);
+        $first = (int) $this->service->upload(ImageType::AVATAR, 'nain', $tmp);
+
+        // a file copied by hand under the next number, other extension
+        $this->writeImage('img/avatars/nain/' . ($first + 1) . '.jpeg', 10, 10);
+
+        $second = $this->service->upload(ImageType::AVATAR, 'nain', $tmp);
+        unlink($tmp);
+
+        $this->assertSame(($first + 2) . '.png', $second);
+        $this->assertSame(10, getimagesize($this->root . '/img/avatars/nain/' . ($first + 1) . '.jpeg')[0], 'fichier existant intact');
+    }
+
     public function testAvatarExpectedSizeSpansTheTypeFootprint(): void
     {
         $footprints = new \App\Service\Map\EntityTypeFootprintService();
