@@ -24,6 +24,7 @@ class ConditionRegistry
             'RequiresAmmo' => new RequiresAmmoCondition(),
             'RequiresResource' => new RequiresResourceCondition(),
             'RequiresDamagedTarget' => new RequiresDamagedTargetCondition(),
+            'Push' => new PushCondition(),
             'RequiresRepairableTarget' => new RequiresRepairableTargetCondition(),
             'RepairBill' => new RepairBillCondition(),
             'RequiresLockControl' => new RequiresLockControlCondition(),

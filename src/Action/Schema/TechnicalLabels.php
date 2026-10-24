@@ -22,6 +22,7 @@ final class TechnicalLabels
         'RequiresAmmo' => 'Munitions',
         'RequiresResource' => 'Ressource à proximité',
         'RequiresDamagedTarget' => 'Cible blessée ou abîmée',
+        'Push' => 'Poussée (force contre stabilité)',
         'RequiresRepairableTarget' => 'Cible réparable',
         'RepairBill' => 'Coût de la réparation',
         'RequiresLockControl' => 'Contrôle de la serrure',
