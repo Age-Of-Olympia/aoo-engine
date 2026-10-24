@@ -22,17 +22,23 @@ if(!empty($_POST['img'])){
 
 echo '<div><a href="account.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
+echo '<div class="account-gallery">';
+
 foreach(File::scan_dir($dir) as $e){
 
     echo '<img style="cursor: pointer" src="img/ui/fillers/50.png" data-src="'. $dir . $e .'" data-img="'. $e .'" width="50" />';
 }
+
+echo '</div>';
 
 ?>
 <script src="js/progressive_loader.js?v=20260716"></script>
 <script>
 $(document).ready(function(){
 
-    $('img').click(function(e){
+    /* Gallery images only: in the HUD panel the rest of the page (character
+     * switcher, banner) stays, and a page-wide handler would outlive the panel. */
+    $('.account-gallery').on('click', 'img', function(e){
 
         let img = $(this).data('img');
         /* progressive_loader.js retire data-src une fois l'image

@@ -35,7 +35,7 @@ if(!empty($_POST['img'])){
 echo '<div><a href="account.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
 
-echo '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 210px));">';
+echo '<div class="account-gallery" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 210px));">';
 
 
 foreach(File::scan_dir($dir) as $e){
@@ -63,7 +63,9 @@ echo '</div>';
 <script>
 $(document).ready(function(){
 
-    $('img').click(function(e){
+    /* Gallery images only: in the HUD panel the rest of the page (character
+     * switcher, banner) stays, and a page-wide handler would outlive the panel. */
+    $('.account-gallery').on('click', 'img', function(e){
 
         let img = $(this).data('img');
 
