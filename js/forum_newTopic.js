@@ -1,21 +1,5 @@
 $(document).ready(function(e){
 
-    $('.name').click(function(e){
-
-        if($(this).val() == 'Titre du sujet'){
-
-            $(this).val('');
-        }
-    });
-
-    $('textarea').click(function(e){
-
-        if($(this).val() == 'Message'){
-
-            $(this).val('');
-        }
-    });
-
     $('.submit').click(function(e){
 
 

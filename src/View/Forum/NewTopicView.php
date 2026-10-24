@@ -31,7 +31,18 @@ class NewTopicView
         $player = PlayerFactory::active();
         $player->get_data();
 
-        if (!empty($_POST['text']) && !empty($_POST['name'])) {
+        if (isset($_POST['text'], $_POST['name'])) {
+
+            // a blank title or the placeholder text is no title
+            if (in_array(trim($_POST['name']), ['', 'Titre du sujet'], true)) {
+
+                ExitError('Votre titre doit contenir du texte.');
+            }
+
+            if (trim($_POST['text']) === '') {
+
+                ExitError('Votre message doit contenir du texte.');
+            }
 
             if ($_POST['currentSessionId'] != $_SESSION['playerId']) {
 
@@ -146,15 +157,7 @@ class NewTopicView
         }
 
 
-        $autosave = Forum::get_autosave($player);
-
-
-        $msg = 'Message';
-
-        if ($autosave != '') {
-
-            $msg = $autosave;
-        }
+        $msg = Forum::get_autosave($player);
 
         echo '<div id="currentSessionId" style="display:none;">' . $_SESSION['playerId'] . '</div>';
         echo '
@@ -168,13 +171,14 @@ class NewTopicView
     type="text"
     class="name tr-topic2"
     style="width: 100%"
-    value="Titre du sujet"
+    placeholder="Titre du sujet"
     />
 <br />
 <textarea
     class="box-shadow tr-topic1"
      style="width: 100%"
     rows="20"
+    placeholder="Message"
     ';
 
         echo Str::minify(ob_get_clean());
@@ -208,7 +212,7 @@ class NewTopicView
 
 ?>
         <script src="js/autosave.js?v=20261011"></script>
-        <script src="js/forum_newTopic.js?v=20260716"></script>
+        <script src="js/forum_newTopic.js?v=20261024"></script>
 <?php
     }
 }
