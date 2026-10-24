@@ -29,13 +29,14 @@ class MissiveView
                     $player->data->faction == $faction ||
                     ($player->data->secretFaction != '' && $player->data->secretFaction == $faction)
                 ) {
-                    $sql = 'SELECT id FROM players where ( faction = ? or secretFaction = ?) AND player_type = "real" ORDER BY name';
+                    // Active members only: an inactive player would never read it
+                    $sql = 'SELECT p.id FROM players p JOIN accounts a ON a.player_id = p.id
+                            WHERE (p.faction = ? OR p.secretFaction = ?) AND p.player_type = "real"
+                            AND a.last_login_time >= ? ORDER BY p.name';
 
                     $db = new Db();
 
-                    $timeLimit = time() - INACTIVE_TIME;
-
-                    $res = $db->exe($sql, array($faction, $faction));
+                    $res = $db->exe($sql, array($faction, $faction, time() - INACTIVE_TIME));
 
                     while ($row = $res->fetch_object()) {
                         Forum::add_dest($player, $row->id,  $topJson, $destTbl);
