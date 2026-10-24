@@ -4,6 +4,7 @@ namespace App\View\Inventory;
 
 use App\Factory\PlayerFactory;
 use Classes\Item;
+use App\Entity\Recipe;
 use App\Service\RecipeService;
 use Classes\Ui;
 use Classes\Str;
@@ -126,7 +127,7 @@ class CraftView
             ';
             }
 
-            echo '<br />';
+            echo '<br />' . self::recipeNotes($recipeList[0], $recipeService);
 
 
             echo 'Coût des matériaux ~' . $recipeList[0]->get_cost() . 'Po<br />';
@@ -196,7 +197,7 @@ class CraftView
             </td>
             <td>
                 ' . $artItem->data->name . '<br />
-                
+                ' . self::recipeNotes($recipe, $recipeService) . '
                 ';
 
 
@@ -307,6 +308,24 @@ class CraftView
             });
         </script>
 <?php
+    }
+
+    /** Batch size when not 1, and the workshop, shown whatever the ingredients carried. */
+    private static function recipeNotes(Recipe $recipe, RecipeService $recipeService): string
+    {
+        $notes = '';
+
+        $count = $recipe->getRecipeResults()[0]->getCount();
+        if ($count !== 1) {
+            $notes .= '<small>Lot de ' . $count . '</small><br />';
+        }
+
+        $workshop = $recipeService->workshopLabel($recipe);
+        if ($workshop !== null) {
+            $notes .= '<small>À fabriquer près de : ' . htmlspecialchars($workshop) . '</small><br />';
+        }
+
+        return $notes;
     }
 
     /**

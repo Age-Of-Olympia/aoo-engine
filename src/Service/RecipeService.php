@@ -275,10 +275,19 @@ class RecipeService
             return false;
         }
 
-        $race = (new RaceService())->getRaceByName($workshop);
-        $label = $race !== null ? $race->getLabel() : $workshop;
-        $message = "Il faut être près de : {$label}.";
+        $message = 'Il faut être près de : ' . $this->workshopLabel($recipe) . '.';
 
         return false;
+    }
+
+    /** Display name of the workshop the recipe needs, null when it needs none. */
+    public function workshopLabel(Recipe $recipe): ?string
+    {
+        $workshop = $recipe->getWorkshop();
+        if ($workshop === null) {
+            return null;
+        }
+
+        return (new RaceService())->getRaceByName($workshop)?->getLabel() ?? $workshop;
     }
 }
