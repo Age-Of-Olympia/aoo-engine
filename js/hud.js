@@ -3069,9 +3069,15 @@
             mdjEditMode($(this).closest('.hud-feed-item--mdj'));
         });
 
+        /* Enter sends, Shift+Enter breaks the line; on a touch keyboard
+         * (no Shift) Enter breaks the line and the button sends. */
         $('#hud-mdj-input').on('keydown', function (e) {
             if (e.key === 'Escape' && $('#hud-mdj-form').data('editId')) {
                 mdjEditMode(null);
+            }
+            if (e.key === 'Enter' && !e.shiftKey && !window.matchMedia('(pointer: coarse)').matches) {
+                e.preventDefault();
+                $('#hud-mdj-form').trigger('submit');
             }
         });
 

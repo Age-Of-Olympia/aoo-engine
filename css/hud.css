@@ -1901,7 +1901,7 @@ body:has(#hud) #view-landing-wrapper {
     box-shadow: inset 2px 0 0 var(--hud-bronze);
 }
 
-#hud-mdj-form.hud-mdj-form--editing input {
+#hud-mdj-form.hud-mdj-form--editing textarea {
     border-width: 2px;
 }
 
@@ -1987,9 +1987,13 @@ body:has(#hud) #view-landing-wrapper {
     border-top: 1px solid var(--hud-line);
 }
 
-#hud-mdj-form input {
+#hud-mdj-form textarea {
     flex: 1 1 auto;
     min-width: 0;
+    max-height: 6em;
+    field-sizing: content;
+    resize: none;
+    font: inherit;
     padding: 5px 8px;
     border: 1px solid var(--hud-bronze);
     border-radius: 4px;

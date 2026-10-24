@@ -30,7 +30,7 @@ final class SidePanelView
             . '<div id="hud-feed-mdj" class="hud-feed">Chargement…</div>'
             . '<div id="hud-feed-events" class="hud-feed" style="display:none;">Chargement…</div>'
             . '<form id="hud-mdj-form" autocomplete="off">'
-            . '<input type="text" id="hud-mdj-input" maxlength="255" placeholder="Votre message du jour…" />'
+            . '<textarea id="hud-mdj-input" maxlength="255" rows="1" placeholder="Votre message du jour…"></textarea>'
             . '<button type="submit" title="Publier"><span class="ra ra-quill-ink"></span></button>'
             . '</form>'
             . '</aside>';
