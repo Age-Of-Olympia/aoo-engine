@@ -2402,10 +2402,22 @@ class Player implements ActorInterface {
         Player::refresh_classements();
 
 
+        // Enable action details by default for all new players
+        $player->add_option('showActionDetails');
+
+        // The redesigned layout is the default; the account page can switch back.
+        $player->add_option('newHud');
+
+        /* Bordure de race réservée aux personnages par défaut : sur un
+         * mur ou un coffre, le liseré encombre le décor sans rien
+         * apprendre. Ceux qui la veulent partout la réactivent dans le
+         * popover « Affichage ». */
+        $player->add_option('hideStructureBorders');
+
         if($pnj){
 
-            //par défaut les pnjs sont créés en mode incognito
-            $player->add_option('incognitoMode');
+            // A new PNJ stays visible on the map but out of recipient searches.
+            $player->add_option('anonymeMode');
 
             return $id;
         }
@@ -2425,18 +2437,6 @@ class Player implements ActorInterface {
         if ($type === 'real' && $id === 1) {
             $player->add_option('isAdmin');
         }
-
-        // Enable action details by default for all new players
-        $player->add_option('showActionDetails');
-
-        // The redesigned layout is the default; the account page can switch back.
-        $player->add_option('newHud');
-
-        /* Bordure de race réservée aux personnages par défaut : sur un
-         * mur ou un coffre, le liseré encombre le décor sans rien
-         * apprendre. Ceux qui la veulent partout la réactivent dans le
-         * popover « Affichage ». */
-        $player->add_option('hideStructureBorders');
 
         Dialog::refresh_register_dialog();
 

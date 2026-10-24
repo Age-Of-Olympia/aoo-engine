@@ -88,8 +88,8 @@ Age of Olympia is a **turn-based survival RPG** where players:
 - Initializes at coordinates (0,0) on plan 'gaia'
 - Default options applied:
   - First player (ID 1) gets `isAdmin`
-  - All new players get `showActionDetails` (as of recent change)
-  - PNJs get `incognitoMode`
+  - All new players and PNJs get `showActionDetails`, `newHud`, `hideStructureBorders`
+  - PNJs get `anonymeMode` (visible on the map, out of recipient searches); `player create Nom race` makes a PNJ, `race,pj` a PJ
 
 **Player Data**:
 - Core data: `$player->data` (loaded via `$player->get_data()`)
