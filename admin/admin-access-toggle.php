@@ -9,8 +9,8 @@
  *   - Admin-only (DoAdminCheck).
  *   - CSRF-validated (same token the dashboard forms embed).
  *   - Option restricted to the shared whitelist — no arbitrary option writes.
- *   - Granting/revoking isSuperAdmin additionally requires the actor to be a
- *     super-admin (privilege-escalation guard).
+ *   - Granting/revoking isAdmin or isSuperAdmin additionally requires the
+ *     actor to be a super-admin (privilege-escalation guard).
  */
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
@@ -45,8 +45,8 @@ if ($targetId === 0) {
     redirectTo($back);
 }
 
-// Granting or revoking super-admin is a privilege escalation → super-admin only.
-if ($option === 'isSuperAdmin') {
+// Granting or revoking an admin right is a privilege escalation → super-admin only.
+if (in_array($option, ADMIN_ACCESS_PRIVILEGED_OPTIONS, true)) {
     AdminAuthorizationService::DoSuperAdminCheck();
 }
 
@@ -71,6 +71,8 @@ try {
             . e($target->data->name) . ' (#' . $targetId . ').');
     }
     (new CsrfProtectionService())->regenerateToken();
+} catch (\InvalidArgumentException $exception) {
+    setFlash('warning', e($exception->getMessage()));
 } catch (\Throwable $exception) {
     setFlash('danger', "Erreur lors de la mise à jour de l'option.");
 }

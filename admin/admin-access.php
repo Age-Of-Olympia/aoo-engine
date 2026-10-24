@@ -4,10 +4,8 @@
  * -----------------------------------------------
  * Admin-dashboard page (sidebar → Joueurs → « Accès & options »). Two jobs:
  *
- *   1. DASHBOARD  — who holds admin / super-admin rights, and HOW they reach
- *                   them: directly on their character, or through a controlled
- *                   PNJ (players_pnjs). This mirrors the test-env lock-down
- *                   predicate, so the list == the accounts a lock would spare.
+ *   1. DASHBOARD  — who holds admin / super-admin rights. A PNJ never
+ *                   carries them (AdminAuthorizationService).
  *
  *   2. MANAGER    — look up any character and toggle its options (add if
  *                   missing, remove if present) — the GUI equivalent of the
@@ -15,7 +13,7 @@
  *
  * Rendering only. The option toggle POSTs to admin-access-toggle.php, which is
  * CSRF-validated and re-checks authority (super-admin required to touch
- * isSuperAdmin) before redirecting back here (PRG pattern).
+ * isAdmin or isSuperAdmin) before redirecting back here (PRG pattern).
  *
  * Access control: layout.php runs AdminAuthorizationService::DoAdminCheck(), so
  * only admins can open this page.
@@ -36,42 +34,24 @@ $csrfToken = (new CsrfProtectionService())->generateToken();
 /* -------------------------------------------------------------------------
  * DATA: admin-access dashboard
  *
- * One row per privileged real character, showing whether the right is
- * direct and which admin PNJ(s) it controls. Same predicate as the test-env
- * lock-down UPDATE, so this list == the accounts that would keep access.
+ * One row per real character holding isAdmin or isSuperAdmin.
  * ---------------------------------------------------------------------- */
 $dashboardSql = "
 SELECT
     p.id,
     p.name,
     MAX(CASE WHEN o.name = 'isAdmin'      THEN 1 ELSE 0 END) AS direct_admin,
-    MAX(CASE WHEN o.name = 'isSuperAdmin' THEN 1 ELSE 0 END) AS direct_superadmin,
-    GROUP_CONCAT(
-        DISTINCT CONCAT(pnj.name, ' (#', pnj.id, ':', o2.name, ')')
-        ORDER BY pnj.id SEPARATOR ', '
-    ) AS via_pnjs
+    MAX(CASE WHEN o.name = 'isSuperAdmin' THEN 1 ELSE 0 END) AS direct_superadmin
 FROM players p
-LEFT JOIN players_options o
-       ON o.player_id = p.id
-      AND o.name IN ('isAdmin', 'isSuperAdmin')
-LEFT JOIN players_pnjs pp
-       ON pp.player_id = p.id
-LEFT JOIN players_options o2
-       ON o2.player_id = pp.pnj_id
-      AND o2.name IN ('isAdmin', 'isSuperAdmin')
-LEFT JOIN players pnj
-       ON pnj.id = pp.pnj_id
-      AND o2.name IS NOT NULL
+JOIN players_options o
+  ON o.player_id = p.id
+ AND o.name IN ('isAdmin', 'isSuperAdmin')
 WHERE p.player_type = 'real'
 GROUP BY p.id, p.name
-HAVING direct_admin = 1 OR direct_superadmin = 1 OR via_pnjs IS NOT NULL
 ORDER BY p.id
 ";
 
 $dashboard = [];
-// GROUP_CONCAT (via_pnjs) truncates silently at group_concat_max_len (default
-// 1024); raise it so a heavily-controlled account's PNJ list is never cut off.
-$db->exe('SET SESSION group_concat_max_len = 1000000');
 $res = $db->exe($dashboardSql);
 while ($row = $res->fetch_object()) {
     $dashboard[] = $row;
@@ -124,7 +104,7 @@ $renderToggle = static function (int $playerId, string $option, bool $active)
 /* Dashboard rows */
 $dashboardRows = '';
 if (!$dashboard) {
-    $dashboardRows = '<tr><td colspan="5" class="aa-muted">Aucun compte avec accès admin.</td></tr>';
+    $dashboardRows = '<tr><td colspan="4" class="aa-muted">Aucun compte avec accès admin.</td></tr>';
 }
 foreach ($dashboard as $d) {
     $directBadges = '';
@@ -138,13 +118,10 @@ foreach ($dashboard as $d) {
         $directBadges = '<span class="aa-muted">—</span>';
     }
 
-    $via = $d->via_pnjs !== null ? e($d->via_pnjs) : '<span class="aa-muted">—</span>';
-
     $dashboardRows .= '<tr>'
         . '<td>' . (int) $d->id . '</td>'
         . '<td>' . e($d->name) . '</td>'
         . '<td>' . $directBadges . '</td>'
-        . '<td>' . $via . '</td>'
         . '<td><a class="btn btn-sm btn-outline-primary" href="/admin/admin-access.php?q='
             . (int) $d->id . '#manager">Gérer</a></td>'
         . '</tr>';
@@ -204,8 +181,7 @@ $content = <<<HTML
                     <tr>
                         <th>#</th>
                         <th>Nom</th>
-                        <th>Accès direct</th>
-                        <th>Accès via PNJ contrôlé(s)</th>
+                        <th>Accès</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -226,6 +202,6 @@ $content = <<<HTML
 HTML;
 
 echo admin_layout('Accès &amp; options', $content, [
-    'intro' => 'Vue des accès admin / super-admin (directs ou via PNJ contrôlé) et gestion des options par personnage.',
+    'intro' => 'Vue des accès admin / super-admin et gestion des options par personnage.',
     'styles' => ['/admin/css/admin-access.css'],
 ]);

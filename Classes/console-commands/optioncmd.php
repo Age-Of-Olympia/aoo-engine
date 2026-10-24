@@ -31,7 +31,7 @@ EOT);
             $this->result->Warning('Option non reconnue. Options valides: '. implode(', ', $valid_options));
             return '';
         }
-        if ( $argumentValues[1] == 'isSuperAdmin'){
+        if (in_array($argumentValues[1], PlayerOptionsService::PRIVILEGED_OPTIONS, true)) {
            AdminAuthorizationService::DoSuperAdminCheck();
         }
 
