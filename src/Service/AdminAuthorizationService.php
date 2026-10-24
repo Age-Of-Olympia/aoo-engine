@@ -78,6 +78,12 @@ class AdminAuthorizationService
         }
     }
 
+    /** The admin button: the highest level held, forced on the character played. */
+    public static function sudoHighest(): void
+    {
+        self::sudo(self::loginHas('isSuperAdmin') ? self::SUDO_SUPERADMIN : self::SUDO_ADMIN, true);
+    }
+
     /** A PNJ (negative id) may carry the rights; a real player's character only when forced. */
     private static function playedAllows(): bool
     {

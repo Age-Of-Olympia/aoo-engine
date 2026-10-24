@@ -138,12 +138,24 @@ final class TopBarView
                 </script>';
         }
 
-        /* Panneau d'administration (/admin) pour tout admin : le menu
-         * n'y montre que ce que son niveau ouvre. La console texte reste
-         * sur la touche ² et la page Profil. */
+        /* Panneau d'administration (/admin) pour tout compte qui détient
+         * des droits : désactivés, le bouton les active d'abord
+         * (api/account/sudo.php). Le menu n'y montre que ce que son niveau
+         * ouvre. Fragment script: delegated, namespaced. */
         if (\App\Service\AdminAuthorizationService::isAdmin()) {
             echo '<a href="admin/" title="Panneau d\'administration">'
                 . '<button><span class="ra ra-cog"></span></button></a>';
+        } elseif (\App\Service\AdminAuthorizationService::canElevate()) {
+            echo '<button id="hud-admin-sudo" title="Activer ses droits et ouvrir le panneau d\'administration">'
+                . '<span class="ra ra-cog"></span></button>'
+                . '<script>
+                    $(document).off("click.adminSudo", "#hud-admin-sudo")
+                        .on("click.adminSudo", "#hud-admin-sudo", function(){
+                            aooGestureFetch("api/account/sudo.php", {}, function(){
+                                document.location = "admin/";
+                            });
+                        });
+                </script>';
         }
 
         /* L'éditeur de carte, pour qui y a droit. Il se trouvait par son
