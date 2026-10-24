@@ -74,7 +74,7 @@ $ownedSpells = array_merge($spellList, array_keys($grantedSpells));
 if (!$ownedSpells) {
     echo '<tr><td colspan="'.$maxColSpan.'" align="center">Aucun sort ni technique appris : les arbres ci-dessous montrent ce qui vous est ouvert.</td></tr>';
 } else {
-    echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Bonus</th><th>Effet</th><th>Type</th><th>Niveau</th><th>Action</th></tr>';
+    echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Bonus</th><th>Description</th><th>Type</th><th>Niveau</th><th>Action</th></tr>';
 }
 
 $actionService = new ActionService();
