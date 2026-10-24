@@ -40,7 +40,8 @@ class NpcAdminRightsTest extends LegacyPlayerFixtureTestCase
         $this->assertSame('players.rank-removal', $commands['player']->accessKey(['removeupgrade', (string) $real->id, 'A']));
         $this->assertSame('npcs.sheet', $commands['player']->accessKey(['addbank', (string) $npcId, 'or', '10']));
         $this->assertSame('console.player', $commands['player']->accessKey(['addbank', (string) $real->id, 'or', '10']));
-        $this->assertSame('console.player', $commands['player']->accessKey(['create', 'Orcrist', 'olympien']));
+        $this->assertSame('console.player', $commands['player']->accessKey(['create', 'Orcrist', 'olympien,pj']));
+        $this->assertSame('players.npcs', $commands['player']->accessKey(['create', 'Ocyrhoée', 'elfe']));
     }
 
     private function createNpc(): int

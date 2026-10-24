@@ -14,8 +14,8 @@ class PlayerCmd extends Command
         parent::setDescription(<<<EOT
 Manipule la table "players et les éléments associés à un player
 Exemple:
-> player create Orcrist olympien
-> player create Ocyrhoée elfe,pnj
+> player create Ocyrhoée elfe        (PNJ)
+> player create Orcrist olympien,pj  (PJ)
 > player edit Finn race lutin
 > player edit 1 name Léo
 > player additem Orcrist or 100
@@ -37,8 +37,8 @@ EOT);
     {
         $action = strtolower($argumentValues[0]);
         if ($action === 'create') {
-            // "race,anything" creates a PNJ, see create_player()
-            return count(explode(',', $argumentValues[2] ?? '')) === 2 ? 'players.npcs' : 'console.player';
+            // "race,pj" creates a PJ, a bare race a PNJ: see create_player()
+            return str_ends_with(strtolower($argumentValues[2] ?? ''), ',pj') ? 'console.player' : 'players.npcs';
         }
         if ($action === 'removeupgrade') {
             return $this->rightOnCharacter('players.rank-removal', $argumentValues[1] ?? null);
@@ -161,21 +161,16 @@ function create_player($argumentValues){
     $optList = explode(',', $argumentValues[2]);
 
 
-    $pnj = false;
+    // A PNJ unless the race carries ",pj": a PJ is the rare case.
+    $race = $optList[0];
+    $kind = strtolower($optList[1] ?? 'pnj');
 
+    if(count($optList) > 2 || !in_array($kind, ['pnj', 'pj'], true)){
 
-    if(count($optList) == 1){
-
-        list($race) = $optList;
+        return 'invalid option ('. $argumentValues[2] .'). Must be: "race" (PNJ) or "race,pj" (PJ), ie. "elfe" or "lutin,pj"';
     }
-    elseif(count($optList) == 2){
 
-        list($race, $pnj) = $optList;
-    }
-    else{
-
-        return 'invalid option ('. $argumentValues[2] .'). Must be: "race" or "race,pnj", ie. "elfe" or "lutin,pnj"';
-    }
+    $pnj = $kind === 'pnj';
 
 
     if(!$raceJson = (new \App\Service\RaceService())->getRaceData($race)){

@@ -47,7 +47,8 @@ class ConsoleAccessKeyTest extends TestCase
         $player = CommandFactory::initCommmandFactory()->getCommands()['player'];
 
         $this->assertSame('players.npcs', $player->accessKey(['create', 'Ocyrhoée', 'elfe,pnj']));
-        $this->assertSame('console.player', $player->accessKey(['create', 'Orcrist', 'olympien']));
+        $this->assertSame('players.npcs', $player->accessKey(['create', 'Ocyrhoée', 'elfe']));
+        $this->assertSame('console.player', $player->accessKey(['create', 'Orcrist', 'olympien,pj']));
         $this->assertSame('players.rank-removal', $player->accessKey(['removeupgrade', 'Orcrist', 'A']));
         $this->assertSame('players.sheet', $player->accessKey(['addupgrade', 'Orcrist', 'A']));
     }
