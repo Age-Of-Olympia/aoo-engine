@@ -141,21 +141,13 @@ final class TopBarView
         /* Panneau d'administration (/admin) pour tout compte qui détient
          * des droits : désactivés, le bouton les active d'abord
          * (api/account/sudo.php). Le menu n'y montre que ce que son niveau
-         * ouvre. Fragment script: delegated, namespaced. */
+         * ouvre. Fragment script: delegated, namespaced (below). */
         if (\App\Service\AdminAuthorizationService::isAdmin()) {
             echo '<a href="admin/" title="Panneau d\'administration">'
                 . '<button><span class="ra ra-cog"></span></button></a>';
         } elseif (\App\Service\AdminAuthorizationService::canElevate()) {
-            echo '<button id="hud-admin-sudo" title="Activer ses droits et ouvrir le panneau d\'administration">'
-                . '<span class="ra ra-cog"></span></button>'
-                . '<script>
-                    $(document).off("click.adminSudo", "#hud-admin-sudo")
-                        .on("click.adminSudo", "#hud-admin-sudo", function(){
-                            aooGestureFetch("api/account/sudo.php", {}, function(){
-                                document.location = "admin/";
-                            });
-                        });
-                </script>';
+            echo '<button class="hud-sudo-open" data-href="admin/" title="Activer ses droits et ouvrir le panneau d\'administration">'
+                . '<span class="ra ra-cog"></span></button>';
         }
 
         /* L'éditeur de carte, pour qui y a droit. Il se trouvait par son
@@ -165,6 +157,25 @@ final class TopBarView
         if (\App\Service\AdminAuthorizationService::isAdmin()) {
             echo '<a href="tiled.php" title="Éditer le damier">'
                 . '<button><span class="ra ra-hammer"></span></button></a>';
+        } elseif ((int) $player->id < 0 && \App\Service\AdminAuthorizationService::canElevate()) {
+            /* On a PNJ the rights only wait for sudo; on a PJ the button
+             * waits for sudo to have been typed. */
+            echo '<button class="hud-sudo-open" data-href="tiled.php" title="Activer ses droits et éditer le damier">'
+                . '<span class="ra ra-hammer"></span></button>';
+        }
+
+        /* A button standing for disabled rights: enable them
+         * (api/account/sudo.php), then go where it leads. */
+        if (\App\Service\AdminAuthorizationService::canElevate()) {
+            echo '<script>
+                $(document).off("click.sudoOpen", ".hud-sudo-open")
+                    .on("click.sudoOpen", ".hud-sudo-open", function(){
+                        var href = $(this).data("href");
+                        aooGestureFetch("api/account/sudo.php", {}, function(){
+                            document.location = href;
+                        });
+                    });
+            </script>';
         }
 
         /* Redraw the board from the board: it is cached per player, and
