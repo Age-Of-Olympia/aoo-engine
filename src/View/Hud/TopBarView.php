@@ -146,7 +146,7 @@ final class TopBarView
             echo '<a href="admin/" title="Panneau d\'administration">'
                 . '<button><span class="ra ra-cog"></span></button></a>';
         } elseif (\App\Service\AdminAuthorizationService::canElevate()) {
-            echo '<button class="hud-sudo-open" data-href="admin/" title="Activer ses droits et ouvrir le panneau d\'administration">'
+            echo '<button class="hud-sudo-open" data-href="admin/" data-label="Administration" title="Activer ses droits et ouvrir le panneau d\'administration">'
                 . '<span class="ra ra-cog"></span></button>';
         }
 
@@ -160,7 +160,7 @@ final class TopBarView
         } elseif ((int) $player->id < 0 && \App\Service\AdminAuthorizationService::canElevate()) {
             /* On a PNJ the rights only wait for sudo; on a PJ the button
              * waits for sudo to have been typed. */
-            echo '<button class="hud-sudo-open" data-href="tiled.php" title="Activer ses droits et éditer le damier">'
+            echo '<button class="hud-sudo-open" data-href="tiled.php" data-label="Tiled" title="Activer ses droits et éditer le damier">'
                 . '<span class="ra ra-hammer"></span></button>';
         }
 

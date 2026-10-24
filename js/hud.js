@@ -2518,11 +2518,18 @@
          * .hud-quick, ils étaient inatteignables — clones en fin de
          * tiroir, après un séparateur. Le rail desktop les ignore
          * (CSS ≥1024px sur .hud-quick-clone). */
-        var $quick = $('#hud-topbar .hud-quick a');
+        var $quick = $('#hud-topbar .hud-quick').children('a, button');
         if ($quick.length) {
             $('<span class="hud-rail-sep hud-quick-clone"></span>').appendTo('#hud-rail #menu');
             $quick.each(function () {
-                $(this).clone().addClass('hud-quick-clone').appendTo('#hud-rail #menu');
+                /* A bare button (sudo, back to one's character) gets a
+                 * link around it: same drawer entry, same label, its
+                 * delegated handler still answers. */
+                var $entry = this.tagName === 'A'
+                    ? $(this).clone()
+                    : $('<a></a>').attr({ title: this.title, 'data-label': this.dataset.label || null })
+                        .append($(this).clone());
+                $entry.addClass('hud-quick-clone').appendTo('#hud-rail #menu');
             });
         }
 
@@ -2534,7 +2541,9 @@
          * et son dernier message). */
         $('#hud-rail #menu > a[title]').each(function () {
             var $btn = $(this).children('button').first();
-            if ($btn.length && !$btn.text().trim()) {
+            /* A count badge (missives, forum) is not a name. */
+            var ownText = $btn.clone().find('.cartouche, .bulle').remove().end().text().trim();
+            if ($btn.length && !ownText) {
                 $btn.append(document.createTextNode(' ' + (this.dataset.label || this.title)));
             }
         });
