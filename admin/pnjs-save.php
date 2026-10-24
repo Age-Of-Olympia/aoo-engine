@@ -116,21 +116,14 @@ if ($action === 'update') {
 }
 
 /* ---------------------------------------------------------------------- */
-/* Play the PNJ now: the logged-in account gets it in its PNJ list if it
- * was not there, then the session switches to it as the in-game PNJ
- * switch does (scripts/pnjs/switch.php). */
+/* Play the PNJ now, once: the PNJ list of the account is left alone, so
+ * going back to the main character ends it. */
 if ($action === 'embody') {
     $pnjId = (int) ($_POST['pnj_id'] ?? 0);
     $resolveAndGuardPnj($pnjId);
 
-    $mainId = (int) ($_SESSION['mainPlayerId'] ?? 0);
-    $pnjService = new PlayerPnjService();
-    if ($pnjService->getByPlayerIdAndPnjId($mainId, $pnjId) === null) {
-        $pnjService->create($mainId, $pnjId, true);
-    }
-
     $impersonation = new ImpersonationService();
-    if ((int) ($_SESSION['playerId'] ?? 0) !== $mainId) {
+    if ((int) ($_SESSION['playerId'] ?? 0) !== (int) ($_SESSION['mainPlayerId'] ?? 0)) {
         $impersonation->release();
     }
     $impersonation->driveAs($pnjId);

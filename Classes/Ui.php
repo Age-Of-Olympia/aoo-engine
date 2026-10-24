@@ -132,17 +132,11 @@ class Ui{
 
     /**
      * The "N req · M http" counter (js/main.js keeps it up to date), for
-     * administrators only — the real player's options, so an admin playing
-     * one of their characters still sees it.
+     * administrators only — those of the login, enabled or not.
      */
     private static function queryCounter(): string
     {
-        $playerId = $_SESSION['mainPlayerId'] ?? $_SESSION['playerId'] ?? null;
-        if (!$playerId) {
-            return '';
-        }
-        $player = \App\Factory\PlayerFactory::legacy((int) $playerId);
-        if (!$player->have_option('isAdmin') && !$player->have_option('isSuperAdmin')) {
+        if (!\App\Service\AdminAuthorizationService::canElevate()) {
             return '';
         }
 

@@ -14,7 +14,10 @@ if(!isset($_SESSION['playerId'])){
     exit();
 }
 
-AdminAuthorizationService::DoAdminCheck();
+// Rights may be disabled: each command checks its own, sudo enables them.
+if (!AdminAuthorizationService::canElevate()) {
+    exit('Action réservée aux admin');
+}
 set_error_handler("warning_handler", E_WARNING);
 function warning_handler($errno, $errstr, $errfile, $errline) {
     /* A custom handler runs even for @-suppressed warnings; since PHP 8,

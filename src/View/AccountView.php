@@ -261,7 +261,7 @@ final class AccountView
 
 
 
-        if ($player->have_option('isAdmin')) {
+        if (\App\Service\AdminAuthorizationService::canElevate()) {
 
 
             echo '

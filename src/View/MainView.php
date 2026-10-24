@@ -91,7 +91,7 @@ class MainView
             echo '<div id="admin-coords"></div>';
 
             // Pass admin status to JavaScript for coordinate tool
-            $isAdmin = $player->have_option('isAdmin') ? 'true' : 'false';
+            $isAdmin = \App\Service\AdminAuthorizationService::isAdmin() ? 'true' : 'false';
             echo '<script>window.isAdmin = ' . $isAdmin . ';</script>';
 
             // Player display option: red × on blocked tiles. Tutorial

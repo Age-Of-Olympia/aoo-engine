@@ -179,7 +179,7 @@ if (!empty($_SESSION['auto_start_tutorial'])) {
 // BUT don't show modal for brand new players (they'll auto-start tutorial)
 // OR if tutorial is being auto-started (from replay/resume)
 $isInvisible = $player->have_option('invisibleMode');
-$isAdmin = $player->have_option('isAdmin');
+$isAdmin = \App\Service\AdminAuthorizationService::isAdmin();
 $inTutorial = TutorialHelper::isInTutorial();
 $autoStarting = isset($_SESSION['auto_start_tutorial']) && $_SESSION['auto_start_tutorial'];
 

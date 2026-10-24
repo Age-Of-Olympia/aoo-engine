@@ -184,7 +184,7 @@ if (!$showWorld && !empty($planJson->pnj)) {
         . ' (' . ($pnjRace->name ?? $pnj->data->race) . ', rang ' . $pnj->data->rank . ')</p>';
 }
 
-if ($player->have_option('isAdmin')) {
+if (\App\Service\AdminAuthorizationService::isAdmin()) {
     echo '<p class="hud-map-admin"><a href="admin/' . ($showWorld ? 'world_map.php' : 'local_maps.php') . '">Gérer les cartes (admin)</a></p>';
 }
 

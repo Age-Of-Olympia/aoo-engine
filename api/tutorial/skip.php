@@ -38,7 +38,7 @@ try {
     }
 
     // Check if player is admin (admins shouldn't skip this way)
-    if ($player->have_option('isAdmin')) {
+    if (\App\Service\AdminAuthorizationService::isAdmin()) {
         echo json_encode([
             'success' => false,
             'error' => 'Admins cannot skip tutorial this way'

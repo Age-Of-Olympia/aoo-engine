@@ -4,7 +4,7 @@ use Classes\Db;
 
 $player = new Player($_SESSION['playerId']);
 
-if(!$player->have_option('isAdmin')){
+if(!\App\Service\AdminAuthorizationService::isAdmin()){
 
     exit('error admin');
 }

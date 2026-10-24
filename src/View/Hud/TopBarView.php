@@ -141,7 +141,7 @@ final class TopBarView
         /* Panneau d'administration (/admin) pour tout admin : le menu
          * n'y montre que ce que son niveau ouvre. La console texte reste
          * sur la touche ² et la page Profil. */
-        if ($player->have_option('isAdmin')) {
+        if (\App\Service\AdminAuthorizationService::isAdmin()) {
             echo '<a href="admin/" title="Panneau d\'administration">'
                 . '<button><span class="ra ra-cog"></span></button></a>';
         }
@@ -150,7 +150,7 @@ final class TopBarView
          * adresse et rien d'autre : même condition d'accès que la page
          * elle-même (AdminAuthorizationService), pour qu'un bouton affiché
          * ne mène jamais à un refus. */
-        if ($player->have_option('isAdmin')) {
+        if (\App\Service\AdminAuthorizationService::isAdmin()) {
             echo '<a href="tiled.php" title="Éditer le damier">'
                 . '<button><span class="ra ra-hammer"></span></button></a>';
         }

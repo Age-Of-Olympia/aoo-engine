@@ -17,8 +17,8 @@ final class ImpersonationService
 
         /* Depth ONE: a mask is worn from one's own face only — going
          * home is always allowed. Chaining masks (a building from a
-         * building, a PNJ's borrowed rights) would let a worn identity
-         * open doors its wearer never owned. */
+         * building) would let a worn identity open doors its wearer
+         * never owned. */
         if (
             $entityId !== $mainId
             && $mainId !== 0

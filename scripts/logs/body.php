@@ -24,7 +24,7 @@ $playerService = new PlayerService($_SESSION['playerId']);
 $raceService = new RaceService();
 $player = $playerService->GetPlayer($_SESSION['playerId']);
 
-$displayAllCondition = $player->have_option('isAdmin') || $player->id <= 1;
+$displayAllCondition = \App\Service\AdminAuthorizationService::isAdmin() || $player->id <= 1;
 
 $player->get_data(false);
 

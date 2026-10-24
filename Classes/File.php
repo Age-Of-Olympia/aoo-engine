@@ -187,7 +187,7 @@ class File{
 
         $max = floor($player->data->pr/COEFFICIENT_PR);
 
-        if($player->have_option('isAdmin')){
+        if(\App\Service\AdminAuthorizationService::isAdmin()){
 
             $max *= 100;
         }

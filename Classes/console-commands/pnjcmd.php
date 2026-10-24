@@ -2,7 +2,6 @@
 use App\Service\PlayerPnjService;
 use Classes\Command;
 use Classes\Argument;
-use App\Service\AdminAuthorizationService;
 class PnjCmd extends Command
 {
     public function __construct() {
@@ -30,11 +29,6 @@ EOT);
         $player->get_data();
         $target=parent::getPlayer($argumentValues[2]);
         $target->get_data();
-
-        //Si le pnj ajouté ou retiré a l'option isSuperAdmin, seul un superAdmin lui même peut le retirer ou l'ajouté
-        if($target->have_option('isSuperAdmin') ){
-            AdminAuthorizationService::DoSuperAdminCheck();
-        }
 
         if($action == 'add'){
             return add_pnj($player, $target);

@@ -74,7 +74,7 @@ if (!isset($_GET['local'])) {
     }
     echo '<h1>Olympia</h1>';
     // Admin-only map panel redirection
-    if ($player->have_option('isAdmin')) {
+    if (\App\Service\AdminAuthorizationService::isAdmin()) {
         echo '<div style="margin-bottom: 15px; padding-top: 10px;">
             <a href="admin/world_map.php"><button>Admin World Map Panel</button></a>
         </div>';
@@ -204,7 +204,7 @@ if(isset($_GET['local'])){
         echo '<br />';
 
         // Admin-only map panel redirection
-        if ($player->have_option('isAdmin')) {
+        if (\App\Service\AdminAuthorizationService::isAdmin()) {
             echo '<div style="margin-bottom: 15px; padding-top: 10px;">
                 <a href="admin/local_maps.php"><button>Admin Local Map Panel</button></a>
             </div>';
@@ -310,7 +310,7 @@ if(isset($_GET['local'])){
                 echo '</svg></div>';
                 
 
-                if ($player->have_option('isAdmin') && !empty($planJson->z_levels)) {
+                if (\App\Service\AdminAuthorizationService::isAdmin() && !empty($planJson->z_levels)) {
 
                     usort($planJson->z_levels, function($a, $b) {
                         return $b->z <=> $a->z;

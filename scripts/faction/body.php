@@ -22,7 +22,7 @@ $player = PlayerFactory::legacy($_SESSION['playerId']);
 $player->get_data();
 
 /* A hidden faction shows nothing, not even its name, to anyone but the admins. */
-if(!empty($facJson->hidden) && !$player->have_option('isAdmin')){
+if(!empty($facJson->hidden) && !\App\Service\AdminAuthorizationService::isAdmin()){
 
     exit('error faction');
 }
@@ -67,7 +67,7 @@ if (!empty($facJson->text)) {
 
 if(isset($facJson->secret)){
 
-    if($player->data->secretFaction == $_GET['faction'] || $player->have_option('isAdmin')){
+    if($player->data->secretFaction == $_GET['faction'] || \App\Service\AdminAuthorizationService::isAdmin()){
         $sql = 'SELECT players.id AS id,avatar,name,race,COALESCE(g.xp, 0) AS xp,secretFactionRole as factionRole,0 as factionRoleVariant,plan FROM players INNER JOIN coords ON coords_id = coords.id LEFT JOIN progression g ON g.player_id = players.id JOIN turns t ON t.player_id = players.id WHERE t.next_turn_time > ? AND secretFaction = ? AND player_type = "real" ORDER BY factionRole DESC, name';
 
         $db = new Db();
@@ -105,7 +105,7 @@ if(isset($facJson->secret)){
  * la règle qui cache déjà le territoire des autres ; l'admin voit tout.
  * Le geste « prendre les commandes » n'appartient qu'aux membres — et
  * l'entité pilotée en ce moment porte le chemin du retour. */
-if ($player->data->faction === ($_GET['faction'] ?? '') || $player->have_option('isAdmin')) {
+if ($player->data->faction === ($_GET['faction'] ?? '') || \App\Service\AdminAuthorizationService::isAdmin()) {
     $code = (string) $_GET['faction'];
     $member = $player->data->faction === $code;
     $factionChests = new \App\Service\FactionChestService();

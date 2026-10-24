@@ -43,7 +43,7 @@ class PostReplyView
 
                 ExitError('error session swich');
             }
-            if (isset($topJson->closed) && $topJson->closed && !$player->have_option('isAdmin')) {
+            if (isset($topJson->closed) && $topJson->closed && !\App\Service\AdminAuthorizationService::isAdmin()) {
 
                 ExitError('error topic is closed only admin can post');
             }
@@ -51,7 +51,7 @@ class PostReplyView
             if ($forumJson->category_id == 'RP' && !isset($topJson->approved)) {
 
 
-                if (!$player->have_option('isAdmin')) {
+                if (!\App\Service\AdminAuthorizationService::isAdmin()) {
 
                     ExitError('error topic must be approved by admin');
                 }

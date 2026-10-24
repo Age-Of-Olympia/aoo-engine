@@ -28,7 +28,7 @@ final class EntityVisibility
 
     private function isAdmin(): bool
     {
-        return (bool) $this->viewer->have_option('isAdmin');
+        return AdminAuthorizationService::isAdmin();
     }
 
     /** The cell is on the viewer's board: same plan and z, inside its view. */

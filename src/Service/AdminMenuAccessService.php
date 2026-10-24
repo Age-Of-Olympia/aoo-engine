@@ -3,7 +3,6 @@
 namespace App\Service;
 
 use Classes\Db;
-use Classes\Player;
 
 /**
  * Admin rights: one entry per thing an admin may do, named after that thing
@@ -287,17 +286,6 @@ class AdminMenuAccessService
 
     /**
      * In-game check of a right, for a viewer who may not be an admin.
-     */
-    public function allows(string $right, Player $player): bool
-    {
-        if (!$player->have_option('isAdmin')) {
-            return false;
-        }
-        return $this->canAccess($right, (bool) $player->have_option('isSuperAdmin'));
-    }
-
-    /**
-     * allows() for the character currently played.
      */
     public function viewerAllows(string $right): bool
     {

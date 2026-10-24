@@ -288,7 +288,7 @@ foreach(OPTIONS as $k=>$e){
 
 
 
-if($player->have_option('isAdmin')){
+if(\App\Service\AdminAuthorizationService::canElevate()){
 
 
     echo '

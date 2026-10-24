@@ -324,7 +324,7 @@ final class EntityCardView
     private static function familyStatusHtml(Player $viewer, Player $target, string $plan, int $x, int $y): string
     {
         return match ((string) ($target->data->player_type ?? '')) {
-            'resource' => self::resourceStatusHtml($viewer, $target, $plan),
+            'resource' => self::resourceStatusHtml($target, $plan),
             'plant' => self::plantStatusHtml($viewer, $x, $y),
             'route' => self::statusBadgeHtml('Courir y est possible', false),
             default => '',
@@ -359,7 +359,7 @@ final class EntityCardView
      * même phrase — « voici l'état de ce qui occupe la case » — et deux styles
      * pour une seule idée finiraient par diverger.
      */
-    private static function resourceStatusHtml(Player $viewer, Player $target, string $plan): string
+    private static function resourceStatusHtml(Player $target, string $plan): string
     {
         // Same catalogue as the search condition: a type without a yield is
         // not harvestable, whatever the map says.
@@ -367,7 +367,7 @@ final class EntityCardView
         $yields = (new \App\Service\Map\HarvestCatalogService())->yieldsFor($plan);
 
         if (!isset($yields[$race])) {
-            $hint = $viewer->have_option('isAdmin') || $viewer->have_option('isSuperAdmin')
+            $hint = \App\Service\AdminAuthorizationService::isAdmin()
                 ? ' <small>(type « ' . htmlspecialchars($race) . ' » sans rendement — '
                     . '<a href="/admin/harvest-types.php?action=edit&name=' . urlencode($race) . '">régler</a>)</small>'
                 : '';

@@ -69,7 +69,7 @@ class MissiveView
 
         if (!empty($_POST['removeDest'])) {
             //player can only remove self, admin car remove anyone
-            if (($_POST['removeDest'] == $player->id) || $player->have_option('isAdmin')) {
+            if (($_POST['removeDest'] == $player->id) || \App\Service\AdminAuthorizationService::isAdmin()) {
                 Forum::remove_dest($_POST['removeDest'], $topJson, $destTbl);
             } else {
                 exit('<div id="error">Impossible de supprimer ce destinataire. Vous pouvez uniquement supprimer votre propre personnage des destinataires de la missive.</div>');

@@ -50,7 +50,7 @@ class TopicView
         $player = $playerService->GetPlayer($_SESSION['playerId']);
         $player->get_data(false);
 
-        $canModerate = (new AdminMenuAccessService())->allows('forum.moderate', $player);
+        $canModerate = (new AdminMenuAccessService())->viewerAllows('forum.moderate');
         $renameLink = $canModerate ? ' <a href="#" class="forum-rename" data-topic="' . $topJson->name . '" data-title="' . htmlentities($topJson->title) . '" style="font-size: 50%;">Renommer</a>' : '';
 
         if (!self::$fragment) {
@@ -143,7 +143,7 @@ class TopicView
         echo '<div id="last"></div>';
 
         $topicClosed = isset($topJson->closed) && $topJson->closed;
-        if (!$topicClosed || $player->have_option('isAdmin')) {
+        if (!$topicClosed || \App\Service\AdminAuthorizationService::isAdmin()) {
 
 
             if (!isset($_GET['hideMenu'])) {
@@ -249,7 +249,7 @@ class TopicView
             $forumJson,
             $player,
             new PlayerService($player->id),
-            (new AdminMenuAccessService())->allows('forum.moderate', $player),
+            (new AdminMenuAccessService())->viewerAllows('forum.moderate'),
             true
         );
         echo '</table>';
@@ -405,7 +405,7 @@ class TopicView
 
                 $player = $playerService->GetPlayer($_SESSION['playerId']);
 
-                if (!$player->have_option('isAdmin')) {
+                if (!\App\Service\AdminAuthorizationService::isAdmin()) {
 
 
                     $text = '[i]Texte dans une langue qui vous est inconnue.[/i]
@@ -463,7 +463,7 @@ class TopicView
                         <span
                             class="give-reward-span"
                         >';
-                if ($player->have_option('isSuperAdmin')) {
+                if (\App\Service\AdminAuthorizationService::isSuperAdmin()) {
                     echo '<a href="forum.php?edit=' . $post->name . '">Edit</a>';
                 }
                 echo '</span>';

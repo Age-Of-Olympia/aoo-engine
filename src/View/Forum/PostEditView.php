@@ -36,7 +36,7 @@ class PostEditView
 
         Forum::check_access($player, $forumJson);
 
-        if (!$player->have_option('isAdmin') && ($postJson->author != $player->id || !empty($topJson->closed))) {
+        if (!\App\Service\AdminAuthorizationService::isAdmin() && ($postJson->author != $player->id || !empty($topJson->closed))) {
 
             exit('cannot edit this post');
         }
