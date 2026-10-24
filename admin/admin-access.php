@@ -4,8 +4,8 @@
  * -----------------------------------------------
  * Admin-dashboard page (sidebar → Joueurs → « Accès & options »). Two jobs:
  *
- *   1. DASHBOARD  — who holds admin / super-admin rights. A PNJ never
- *                   carries them (AdminAuthorizationService).
+ *   1. DASHBOARD  — who holds admin / super-admin rights: players, and
+ *                   PNJs that log in with their own password.
  *
  *   2. MANAGER    — look up any character and toggle its options (add if
  *                   missing, remove if present) — the GUI equivalent of the
@@ -34,7 +34,7 @@ $csrfToken = (new CsrfProtectionService())->generateToken();
 /* -------------------------------------------------------------------------
  * DATA: admin-access dashboard
  *
- * One row per real character holding isAdmin or isSuperAdmin.
+ * One row per character holding isAdmin or isSuperAdmin.
  * ---------------------------------------------------------------------- */
 $dashboardSql = "
 SELECT
@@ -46,7 +46,6 @@ FROM players p
 JOIN players_options o
   ON o.player_id = p.id
  AND o.name IN ('isAdmin', 'isSuperAdmin')
-WHERE p.player_type = 'real'
 GROUP BY p.id, p.name
 ORDER BY p.id
 ";

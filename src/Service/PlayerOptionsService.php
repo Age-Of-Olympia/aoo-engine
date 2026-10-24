@@ -96,9 +96,14 @@ class PlayerOptionsService
      */
     public function addOption(int $playerId, string $name): void
     {
-        // Rights belong to a login (AdminAuthorizationService), never to a PNJ.
-        if ($playerId < 0 && in_array($name, self::PRIVILEGED_OPTIONS, true)) {
-            throw new \InvalidArgumentException('Un PNJ ne porte pas de droits d\'administration.');
+        // Rights belong to a login (AdminAuthorizationService): a PNJ carries
+        // them only when it logs in itself, with its own password.
+        if (
+            $playerId < 0
+            && in_array($name, self::PRIVILEGED_OPTIONS, true)
+            && (new AccountService())->passwordHashOf($playerId) === null
+        ) {
+            throw new \InvalidArgumentException('Un PNJ sans mot de passe ne porte pas de droits d\'administration.');
         }
 
         $db = new Db();

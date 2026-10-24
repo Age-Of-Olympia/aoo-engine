@@ -45,7 +45,7 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
     private mixed $previousLink = null;
 
     /** @var int[] ids created via createRealPlayer(), removed in tearDown */
-    private array $createdPlayerIds = [];
+    protected array $createdPlayerIds = [];
 
     /** @var array<int, int|null> coords_id => pre-existing sang endTime (null = absent) */
     private array $bloodSnapshots = [];

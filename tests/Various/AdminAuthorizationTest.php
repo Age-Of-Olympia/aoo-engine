@@ -2,8 +2,10 @@
 
 namespace Tests\Various;
 
+use App\Service\AccountService;
 use App\Service\AdminAuthorizationService;
 use App\Service\PlayerOptionsService;
+use Classes\Player;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
@@ -88,9 +90,22 @@ class AdminAuthorizationTest extends LegacyPlayerFixtureTestCase
         AdminAuthorizationService::sudo(AdminAuthorizationService::SUDO_ADMIN);
     }
 
-    public function testAPnjCannotBeGivenAdminRights(): void
+    public function testOnlyAPnjWithItsOwnPasswordCanHoldAdminRights(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        (new PlayerOptionsService())->addOption(-999999, 'isAdmin');
+        $pnj = (int) Player::put_player('GmMasque_' . bin2hex(random_bytes(4)), 'nain', true);
+        $this->createdPlayerIds[] = $pnj;
+        $options = new PlayerOptionsService();
+
+        try {
+            $options->addOption($pnj, 'isAdmin');
+            $this->fail('a PNJ without a password must be refused');
+        } catch (\InvalidArgumentException) {
+        }
+
+        (new AccountService($this->link))->setPassword($pnj, password_hash('x', PASSWORD_DEFAULT));
+        $options->addOption($pnj, 'isAdmin');
+        $_SESSION['originalPlayerId'] = $_SESSION['playerId'] = $pnj;
+        AdminAuthorizationService::sudo(AdminAuthorizationService::SUDO_ADMIN);
+        $this->assertTrue(AdminAuthorizationService::isAdmin(), 'a PNJ login plays itself with its rights');
     }
 }

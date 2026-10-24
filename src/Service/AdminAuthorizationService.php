@@ -4,7 +4,8 @@ namespace App\Service;
 
 /**
  * Admin rights belong to whoever logged in (originalPlayerId), never to the
- * character played: a PNJ carries none, so handing one over grants nothing.
+ * character played: handing a PNJ over grants nothing. A PNJ holds rights
+ * only as a login of its own, with a password (PlayerOptionsService).
  * Disabled until `sudo` enables them for the session — an admin's own
  * character plays like any other — and impersonating keeps the level.
  * Played through a real player's character they stay disabled, unless forced
