@@ -15,7 +15,7 @@ union
 /* Une ressource est une entité : elle se décrit comme un bâtiment, par son
    type et son état, et non plus par le signe d'un nombre. */
 select p.coords_id as coords_id, 'ressource' as type, CONVERT(CONCAT(p.race, ' #', p.id) USING utf8mb4) as name,
-       CONVERT(IF(r.exhausted_at IS NULL, 'état = debout', CONCAT('état = épuisée depuis ', r.exhausted_at)) USING utf8mb4) as params
+       CONVERT(r.exhausted_at USING utf8mb4) as params
 from players p left join resources r on r.player_id = p.id
 where p.player_type = 'resource' and p.coords_id = ?
 union
@@ -61,6 +61,23 @@ $res = $db->exe($sql, array_fill(0, substr_count($sql, '?'), $coordsId));
 
 
 $results = $res->fetch_all(MYSQLI_ASSOC);
+
+
+/* Searchable = not exhausted AND its type has a yield on this plan
+   (HarvestCatalogService::yieldsFor, the list fouiller reads). */
+$yields = (new \App\Service\Map\HarvestCatalogService())->yieldsFor((string) $coords->plan);
+foreach ($results as &$row) {
+    if ($row['type'] !== 'ressource') {
+        continue;
+    }
+    $resourceType = strtok($row['name'], ' ');
+    $row['params'] = match (true) {
+        $row['params'] !== null => 'épuisée depuis ' . $row['params'],
+        isset($yields[$resourceType]) => 'fouillable (donne ' . $yields[$resourceType]['item'] . ')',
+        default => 'non fouillable : ne donne rien sur ce plan',
+    };
+}
+unset($row);
 
 
 /* L'OBJET auquel la case appartient, quand elle porte un décor découpé.
