@@ -171,6 +171,8 @@ if ($pos !== null) {
 /* One bar: the tabs (or the plan name), then the layers menu — a
  * native <details>, the switches drop down over the map's corner */
 echo '<div class="hud-map-bar">' . $head
+    . '<span class="hud-map-zoom"><button type="button" data-zoom="1.25" title="Zoomer" aria-label="Zoomer">+</button>'
+    . '<button type="button" data-zoom="0.8" title="Dézoomer" aria-label="Dézoomer" disabled>-</button></span>'
     . '<details class="hud-map-layers"><summary>Couches</summary>'
     . '<div class="layer-controls hud-map-layers-pop">' . $toggles . '</div></details></div>'
     . '<div class="hud-map-frame"><div class="hud-map-stack" style="--map-ratio: ' . $aspect . ';">' . $imgs . '</div></div>';
@@ -252,10 +254,76 @@ echo '</div>';
     drawMapRulers();
     $(window).off('resize.hudMapRulers').on('resize.hudMapRulers', drawMapRulers);
 
-    /* A layer is one element of the stack: toggling it needs no reload */
+    /* A layer is one element of the stack: toggling it needs no reload.
+     * The attribute, not the property: the border is an <svg>, which has
+     * no hidden property. */
     $('.hud-map-layers input').on('change', function () {
-        $('.hud-map-stack [data-layer="' + $(this).data('layer') + '"]').prop('hidden', !this.checked);
+        $('.hud-map-stack [data-layer="' + $(this).data('layer') + '"]').attr('hidden', this.checked ? null : '');
     });
+
+    /* Zoom: the stack grows inside the frame, which scrolls. The point at
+     * the frame's centre stays there; the border is redrawn to follow. */
+    var frame = document.querySelector('.hud-map-frame');
+    var zoom = 1;
+    var ZOOM_MAX = 6;
+
+    function setZoom(z) {
+        z = Math.min(ZOOM_MAX, Math.max(1, z));
+        var cx = (frame.scrollLeft + frame.clientWidth / 2) / frame.scrollWidth;
+        var cy = (frame.scrollTop + frame.clientHeight / 2) / frame.scrollHeight;
+        zoom = z;
+        frame.style.setProperty('--map-zoom', z);
+        drawMapRulers();
+        frame.scrollLeft = cx * frame.scrollWidth - frame.clientWidth / 2;
+        frame.scrollTop = cy * frame.scrollHeight - frame.clientHeight / 2;
+        $('.hud-map-zoom [data-zoom="1.25"]').prop('disabled', z >= ZOOM_MAX);
+        $('.hud-map-zoom [data-zoom="0.8"]').prop('disabled', z <= 1);
+    }
+
+    if (frame) {
+        $('.hud-map-zoom button').on('click', function () {
+            setZoom(zoom * $(this).data('zoom'));
+        });
+
+        frame.addEventListener('wheel', function (e) {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                setZoom(e.deltaY < 0 ? zoom * 1.25 : zoom / 1.25);
+            }
+        }, { passive: false });
+
+        var pinch = null;
+        frame.addEventListener('touchstart', function (e) {
+            if (e.touches.length === 2) {
+                pinch = { d: Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY), z: zoom };
+            }
+        }, { passive: true });
+        frame.addEventListener('touchmove', function (e) {
+            if (pinch && e.touches.length === 2) {
+                e.preventDefault();
+                setZoom(pinch.z * Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY) / pinch.d);
+            }
+        }, { passive: false });
+        frame.addEventListener('touchend', function () { pinch = null; }, { passive: true });
+
+        /* Mouse drag moves the zoomed map; touch scrolls natively */
+        var drag = null;
+        frame.addEventListener('mousedown', function (e) {
+            if (zoom > 1 && e.button === 0) {
+                drag = { x: e.clientX, y: e.clientY, l: frame.scrollLeft, t: frame.scrollTop };
+                e.preventDefault();
+            }
+        });
+        /* Namespaced: this script runs again at each opening of the map */
+        $(window).off('mousemove.hudMapDrag mouseup.hudMapDrag')
+            .on('mousemove.hudMapDrag', function (e) {
+                if (drag) {
+                    frame.scrollLeft = drag.l - (e.clientX - drag.x);
+                    frame.scrollTop = drag.t - (e.clientY - drag.y);
+                }
+            })
+            .on('mouseup.hudMapDrag', function () { drag = null; });
+    }
 })();
 </script>
 <?php
