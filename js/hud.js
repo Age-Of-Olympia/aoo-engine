@@ -289,6 +289,13 @@
      * papier, fermeture par ×, clic sur le fond ou Échap.
      */
     window.hudShowActionResult = function (html, isFinal) {
+        /* The request is taken once: a result from a screen that sets none
+         * must not replay the last one. */
+        if (isFinal) {
+            againAction = window.hudLastAction || null;
+            window.hudLastAction = null;
+        }
+
         /* Tutoriel : pas de modale — elle recouvrirait l'infobulle de
          * l'étape. Le résultat s'écrit dans la fiche recomposée du
          * bandeau, et les pilules se rafraîchissent quand même (l'étape
@@ -311,51 +318,23 @@
         /* Résultat final : l'action a coûté et produit — pilules du
          * bandeau (A, PV…), prochain tour, cible observée (PV,
          * charges d'actions) et flux d'évènements se rafraîchissent. */
-        var refreshed = isFinal ? refreshAfterAction() : null;
-
-        /* Taken once: a result from a screen that sets no action (crafting)
-         * must not replay the last one clicked in the panel. */
         if (isFinal) {
-            againAction = window.hudLastAction || null;
-            window.hudLastAction = null;
+            refreshAfterAction();
         }
 
         var $modal = hudSheet();
         $modal.find('.hud-action-modal-body').html(html);
-        /* Final results only, only while the action is still offered on
-         * the tile, and not after « Action Impossible » : the same click
-         * would be refused the same way. The offer is read on the
-         * REFRESHED panel: after « fermer » the tile offers « ouvrir »,
-         * so there is nothing to do again. */
-        var blocked = $modal.find('.hud-action-modal-body .action-blocked').length > 0;
-        var $again = $modal.find('.hud-action-modal-again').prop('hidden', true);
-        if (isFinal && !blocked) {
-            $.when(refreshed).always(function () {
-                /* Next tick: the observer moving .card-actions into
-                 * #hud-actions runs after the response is injected. */
-                setTimeout(function () {
-                    $again.prop('hidden', !hudLastActionButton().length);
-                }, 0);
-            });
-        }
+        /* Final results only, not after « Action Impossible » (the same
+         * request would be refused the same way) nor when closing reloads
+         * the page. */
+        var blocked = $modal.find('.hud-action-modal-body .action-blocked, .hud-reload-on-close').length > 0;
+        $modal.find('.hud-action-modal-again').prop('hidden', !(isFinal && !blocked && againAction));
         $modal.show();
     };
 
-    /* The action button of the last click (window.hudLastAction, set by
-     * js/observe.js) as it stands in the panel now; empty if gone. */
+    /* The request of the last action (window.hudLastAction = {url, data},
+     * set by js/observe.js and the craft panel), sent again by « Refaire ». */
     var againAction = null;
-
-    function hudLastActionButton() {
-        var last = againAction;
-        if (!last || !last.action) {
-            return $();
-        }
-        var selector = '#hud-actions .action[data-action="' + last.action + '"]';
-        if (last.targetId !== undefined && last.targetId !== '') {
-            selector += '[data-target-id="' + last.targetId + '"]';
-        }
-        return $(selector).first();
-    }
 
     /*
      * The paper sheet over the board, shared by the action result and the
@@ -405,19 +384,19 @@
             }
         });
         $modal.find('.hud-action-modal-close').on('click', hudSheetHide);
-        /* Replays the live action button, re-observed since the
-         * result: fresh coordinates, and action.php re-runs every
-         * check (points, charges, moved target) as for a normal click.
-         * Shown by hudShowActionResult only. */
+        /* Sends the same request again: action.php re-runs every check
+         * (points, ingredients, moved target) as for a normal click. */
         $modal.find('.hud-action-modal-again').on('click', function () {
-            var $again = hudLastActionButton();
+            var again = againAction;
             hudSheetHide();
-            if ($again.length) {
-                /* A jQuery trigger skips the panel's native arming
-                 * listener, which is what pins window.visible. */
-                window.visible = true;
-                $again.trigger('click.observe');
+            if (!again) {
+                return;
             }
+            window.hudLastAction = again;
+            $.post(again.url, again.data, function (data) {
+                window.hudShowActionResult(data, true);
+                reloadAllPanels();
+            });
         });
         $(document).on('keydown.hudActionModal', function (e) {
             if (e.key === 'Escape' && $modal.is(':visible')) {

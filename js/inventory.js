@@ -237,13 +237,15 @@ $(document).ready(function(){
 
                     var genericAction = window.useKind == 'consume' ? 'consommer' : 'equiper';
 
-                    $.post('action.php', { action: genericAction, itemId: window.id, instanceId: window.instanceId || '', rowEquipped: window.rowEquipped ? '1' : '0' }, function(data){
+                    var request = { action: genericAction, itemId: window.id, instanceId: window.instanceId || '', rowEquipped: window.rowEquipped ? '1' : '0' };
+
+                    $.post('action.php', request, function(data){
 
                         if(window.hudShowActionResult){
 
-                            /* Not a tile action: no « Refaire » replaying the
-                             * previous tile click from here. */
-                            window.hudLastAction = null;
+                            /* « Refaire » consumes another one; equipping
+                             * twice means nothing */
+                            window.hudLastAction = genericAction == 'consommer' ? { url: 'action.php', data: request } : null;
                             window.hudShowActionResult(data, true);
                             /* le panneau d'inventaire se recharge sous la
                              * modale : le compte d'exemplaires est à jour */

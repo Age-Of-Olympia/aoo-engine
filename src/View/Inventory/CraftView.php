@@ -289,10 +289,14 @@ class CraftView
                  * `fabriquer` action receives the recipe via recipeId —
                  * rules and consumption stay in RecipeService, the event
                  * is logged like any action. */
-                $.post('action.php', { action: 'fabriquer', recipeId: recipeId }, function(data){
+                var request = { action: 'fabriquer', recipeId: recipeId };
+
+                $.post('action.php', request, function(data){
 
                     if(window.hudShowActionResult){
 
+                        /* sent again by « Refaire la même action » (js/hud.js) */
+                        window.hudLastAction = { url: 'action.php', data: request };
                         window.hudShowActionResult(data, true);
                         /* the inventory panel reloads under the modal:
                          * the ingredient counts are up to date */

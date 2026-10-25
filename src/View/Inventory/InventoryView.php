@@ -113,7 +113,7 @@ window.hasFaction = ' . ((string) ($player->get_data(false)->faction ?? '') !== 
 
 ?>
         <script src="js/progressive_loader.js?v=20260716"></script>
-        <script src="js/inventory.js?v=20261020"></script>
+        <script src="js/inventory.js?v=20261025"></script>
 <?php
     }
 

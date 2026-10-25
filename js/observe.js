@@ -93,9 +93,10 @@ $(document).ready(function(){
             return false;
         }
 
-        /* Read by the result modal's "Refaire" button (js/hud.js), which
-         * replays the live button rather than these coordinates. */
-        window.hudLastAction = {action: action, targetId: targetId};
+        let postData = Object.assign({'action':action, 'targetId':targetId, 'coordsX': coordsX, 'coordsY': coordsY, 'coordsZ': coordsZ, 'coordsPlan': coordsPlan}, text === undefined ? {} : {'text': text});
+
+        /* Sent again by the result modal's "Refaire" button (js/hud.js) */
+        window.hudLastAction = {url: url, data: postData};
 
 
         /* HUD : le résultat arrive dans une modale par-dessus le damier
@@ -129,7 +130,7 @@ $(document).ready(function(){
         $.ajax({
             type: "POST",
             url: url,
-            data: Object.assign({'action':action, 'targetId':targetId, 'coordsX': coordsX, 'coordsY': coordsY, 'coordsZ': coordsZ, 'coordsPlan': coordsPlan}, text === undefined ? {} : {'text': text}),
+            data: postData,
             success: function(data)
             {
                 if(window.hudShowActionResult){
