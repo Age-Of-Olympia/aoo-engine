@@ -6,7 +6,7 @@ variables:
   # Can also be overridden permanently via a project CI/CD variable
   # (Settings > CI/CD > Variables) — no code change needed either way.
   EXPERIMENTAL_BRANCH:
-    value: "saison-3"
+    value: "experimental"
     description: "Branch deployed to the experimental environment (set this to the branch you are running the pipeline on)."
   # Tag VERSIONNÉ de l'image de test — à bumper dans le même commit qu'un
   # changement de Dockerfile.test. Avec la pull policy if-not-present du
