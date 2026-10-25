@@ -218,6 +218,7 @@ final class OptionCatalog
             FieldType::ITEM => $this->items(),
             FieldType::ACTION => $this->actions(),
             FieldType::PLAN => $this->plans(),
+            FieldType::TILE => $this->tiles(),
             default => [],
         };
     }
@@ -244,6 +245,18 @@ final class OptionCatalog
         }
 
         return $plans;
+    }
+
+    /**
+     * Ground tiles an editor can paint (the img/tiles palette).
+     *
+     * @return array<string, string> name => name
+     */
+    public function tiles(): array
+    {
+        $names = (new \App\Service\TileCatalogService())->buildCatalog(['tiles'])['catalog']['tiles'] ?? [];
+
+        return array_combine($names, $names) ?: [];
     }
 
     /**

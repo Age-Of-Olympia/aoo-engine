@@ -4,7 +4,9 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Action\Condition\ConditionObject;
 use App\Entity\OutcomeInstruction;
+use App\Enum\FieldType;
 use App\Interface\HasParameterSchemaInterface;
+use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use Classes\Db;
 use Classes\Item;
@@ -13,7 +15,7 @@ use Classes\View;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Creuse une galerie (map_tiles 'caverne') sur la case SOUTERRAINE visée
+ * Creuse une galerie (la tuile de sol du paramètre `tile`, 'caverne' par défaut) sur la case SOUTERRAINE visée
  * — l'action `creuser`, déclenchée par le déplacement (go.php POSTe
  * digX/digY avant d'invoquer le moteur ; le mouvement démarre des
  * actions, cadrage du 2026-07-19). La case est relue ici avec les mêmes
@@ -30,7 +32,9 @@ class DigTunnelOutcomeInstruction extends OutcomeInstruction implements HasParam
 {
     public static function parameterSchema(): ParameterSchema
     {
-        return new ParameterSchema();
+        return new ParameterSchema(
+            new ParameterField('tile', FieldType::TILE, 'Tuile de sol creusée', default: 'caverne'),
+        );
     }
 
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult
@@ -84,7 +88,7 @@ class DigTunnelOutcomeInstruction extends OutcomeInstruction implements HasParam
         $pierre = Item::get_item_by_name('pierre');
         $fell = \App\Service\GroundLootService::giveOrDrop($actor, $pierre, 1);
 
-        $db->insert('map_tiles', ['name' => 'caverne', 'coords_id' => $coordsId]);
+        $db->insert('map_tiles', ['name' => $this->getParameters()['tile'] ?? 'caverne', 'coords_id' => $coordsId]);
 
         array_unshift($messages, 'Vous creusez la galerie et trouvez 1 pierre' . ($fell ? \App\Service\GroundLootService::FELL : '') . '.');
 
