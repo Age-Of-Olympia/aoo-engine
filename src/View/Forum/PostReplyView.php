@@ -171,11 +171,11 @@ class PostReplyView
         echo Str::minify(ob_get_clean());
 
 ?>
-        <script src="js/autosave.js?v=20261011"></script>
+        <script src="js/autosave.js?v=20261025"></script>
         <script>
             window.pagesN = <?php echo $nextPagesN ?>;
         </script>
-        <script src="js/forum_reply.js?v=20260716"></script>
+        <script src="js/forum_reply.js?v=20261025"></script>
 <?php
     }
 }

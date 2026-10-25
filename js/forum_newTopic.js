@@ -16,7 +16,7 @@ $(document).ready(function(e){
             return false;
         }
 
-        var text = $('textarea').val();
+        var text = $('#forum-textarea textarea').val();
 
         if(text.trim() == ''){
 

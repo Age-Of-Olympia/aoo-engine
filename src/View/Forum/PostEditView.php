@@ -136,12 +136,12 @@ class PostEditView
         echo Str::minify(ob_get_clean());
 
 ?>
-        <script src="js/autosave.js?v=20261011"></script>
+        <script src="js/autosave.js?v=20261025"></script>
         <script>
             window.topId = <?php echo $postJson->top_id ?>;
             window.pagesN = <?php echo $pagesN ?>;
         </script>
-        <script src="js/forum_edit.js?v=20260716"></script>
+        <script src="js/forum_edit.js?v=20261025"></script>
 <?php
     }
 }

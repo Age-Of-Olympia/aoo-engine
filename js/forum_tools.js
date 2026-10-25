@@ -43,7 +43,7 @@ $(document).ready(function() {
 
     // Fonction pour insérer du texte dans le textarea à l'endroit de la sélection
     function wrapSelectedText(beforeText, afterText) {
-        let textarea = $('textarea');  // Remplacez cela par votre sélecteur de textarea
+        let textarea = $('#forum-textarea textarea');  // Remplacez cela par votre sélecteur de textarea
         let start = textarea[0].selectionStart;
         let end = textarea[0].selectionEnd;
         let text = textarea.val();

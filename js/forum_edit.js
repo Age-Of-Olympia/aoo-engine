@@ -2,7 +2,7 @@ $(document).ready(function(e){
 
     $('.submit').click(function(e){
 
-        var text = $('textarea').val();
+        var text = $('#forum-textarea textarea').val();
 
         if(text.trim() == ''){
 

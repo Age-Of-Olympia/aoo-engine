@@ -36,4 +36,4 @@ echo '
 ';
 
 ?>
-<script src="js/forum_tools.js?v=20260715"></script>
+<script src="js/forum_tools.js?v=20261025"></script>

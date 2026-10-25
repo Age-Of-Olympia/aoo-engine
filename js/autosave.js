@@ -61,14 +61,14 @@ $(document).ready(function(){
 
             if(ok){
 
-                $('textarea').val('').focus();
+                $('#forum-textarea textarea').val('').focus();
             }
         });
     });
 
     $('#add-rows').click(function(e){
 
-        $('textarea').css('height','+=200px');
+        $('#forum-textarea textarea').css('height','+=200px');
 
     });
 
@@ -94,7 +94,7 @@ function insert_img(url) {
 function insert_textarea(addText){
 
     // Sélectionner l'élément textarea
-    var $textarea = $('textarea');
+    var $textarea = $('#forum-textarea textarea');
 
     // Obtenir la position actuelle du curseur
     var curPos = $textarea.prop('selectionStart');
