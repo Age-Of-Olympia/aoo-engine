@@ -288,8 +288,8 @@ function preload(img, element){
 $(document).ready(function(){
 
 
-    // ctrl enter to submit
-    $('textarea').keydown( function(e) {
+    // ctrl enter to submit (not the mdj box: hud.js handles its Enter)
+    $('textarea').not('#hud-mdj-input').keydown( function(e) {
         if ((e.ctrlKey || e.metaKey) && (e.keyCode == 13 || e.keyCode == 10)) {
 
             $('form').submit();
