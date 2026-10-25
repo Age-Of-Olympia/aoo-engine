@@ -136,16 +136,13 @@
     var damierZoom = 1;
     var DAMIER_ZOOM_STEP = 1.25;
 
-    /* Zoom 1 fits the whole board, so the cap grows with the board: at the
-     * cap a big perception shows as few tiles as a 13-tile board, whose
-     * cap is 2.5 plus two steps. */
-    var DAMIER_ZOOM_MAX_13 = 2.5 * DAMIER_ZOOM_STEP * DAMIER_ZOOM_STEP;
-
+    /* Zoom 1 fits the whole board, so the cap grows with the board: a
+     * 13-tile board gets 2.5 plus two steps, a bigger one proportionally. */
     function damierZoomMax() {
         var svg = document.getElementById('svg-view');
         var vb = svg && (svg.dataset.origViewbox || svg.getAttribute('viewBox'));
         var tiles = vb ? Number(vb.split(/[ ,]+/)[2]) / 50 : 13;
-        return Math.max(DAMIER_ZOOM_MAX_13, DAMIER_ZOOM_MAX_13 * tiles / 13);
+        return 2.5 * DAMIER_ZOOM_STEP * DAMIER_ZOOM_STEP * Math.max(1, tiles / 13);
     }
 
     /* Réglages du damier conservés par onglet ET PAR PERSONNAGE
@@ -1305,10 +1302,14 @@
      */
     function initPinchZoom() {
         var map = document.getElementById('game-map');
-        if (!map) {
-            return;
+        if (map) {
+            zoomGestures(map, function () { return damierZoom; }, setDamierZoom);
         }
+    }
 
+    /* Pinch and Ctrl+wheel on el drive a zoom: the board's, and the maps'
+     * (load_map.php, through window.hudZoomGestures). */
+    function zoomGestures(map, getZoom, setZoom) {
         var pinch = null;
         var rafPending = false;
 
@@ -1320,7 +1321,7 @@
 
         map.addEventListener('touchstart', function (e) {
             if (e.touches.length === 2) {
-                pinch = { d: dist(e.touches), z: damierZoom };
+                pinch = { d: dist(e.touches), z: getZoom() };
             }
         }, { passive: true });
 
@@ -1334,7 +1335,7 @@
                 rafPending = true;
                 requestAnimationFrame(function () {
                     rafPending = false;
-                    setDamierZoom(target);
+                    setZoom(target);
                 });
             }
         }, { passive: false });
@@ -1357,7 +1358,7 @@
                 return;
             }
             e.preventDefault();
-            setDamierZoom(e.deltaY < 0 ? damierZoom * DAMIER_ZOOM_STEP : damierZoom / DAMIER_ZOOM_STEP);
+            setZoom(e.deltaY < 0 ? getZoom() * DAMIER_ZOOM_STEP : getZoom() / DAMIER_ZOOM_STEP);
         }, { passive: false });
     }
 
@@ -2448,6 +2449,7 @@
      * recharger la page — le document.location.reload() des scripts
      * hérités fermait le panneau (retour joueurs juillet 2026). */
     window.hudReloadPanels = reloadAllPanels;
+    window.hudZoomGestures = zoomGestures;
     window.hudRefreshAfterAction = refreshAfterAction;
 
     /* Navigation générique pour les scripts hérités qui naviguent en

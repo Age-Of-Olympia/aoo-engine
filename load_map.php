@@ -284,45 +284,9 @@ echo '</div>';
         $('.hud-map-zoom button').on('click', function () {
             setZoom(zoom * $(this).data('zoom'));
         });
-
-        frame.addEventListener('wheel', function (e) {
-            if (e.ctrlKey) {
-                e.preventDefault();
-                setZoom(e.deltaY < 0 ? zoom * 1.25 : zoom / 1.25);
-            }
-        }, { passive: false });
-
-        var pinch = null;
-        frame.addEventListener('touchstart', function (e) {
-            if (e.touches.length === 2) {
-                pinch = { d: Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY), z: zoom };
-            }
-        }, { passive: true });
-        frame.addEventListener('touchmove', function (e) {
-            if (pinch && e.touches.length === 2) {
-                e.preventDefault();
-                setZoom(pinch.z * Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY) / pinch.d);
-            }
-        }, { passive: false });
-        frame.addEventListener('touchend', function () { pinch = null; }, { passive: true });
-
-        /* Mouse drag moves the zoomed map; touch scrolls natively */
-        var drag = null;
-        frame.addEventListener('mousedown', function (e) {
-            if (zoom > 1 && e.button === 0) {
-                drag = { x: e.clientX, y: e.clientY, l: frame.scrollLeft, t: frame.scrollTop };
-                e.preventDefault();
-            }
-        });
-        /* Namespaced: this script runs again at each opening of the map */
-        $(window).off('mousemove.hudMapDrag mouseup.hudMapDrag')
-            .on('mousemove.hudMapDrag', function (e) {
-                if (drag) {
-                    frame.scrollLeft = drag.l - (e.clientX - drag.x);
-                    frame.scrollTop = drag.t - (e.clientY - drag.y);
-                }
-            })
-            .on('mouseup.hudMapDrag', function () { drag = null; });
+        if (window.hudZoomGestures) {
+            window.hudZoomGestures(frame, function () { return zoom; }, setZoom);
+        }
     }
 })();
 </script>

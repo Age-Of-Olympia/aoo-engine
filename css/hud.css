@@ -523,7 +523,8 @@ body:has(#hud) #svg-container .blocked-tile-marker {
 
 /* Police système (Gloock n'a pas de « − » net), fond parchemin
  * opaque : lisible au-dessus des tuiles. */
-#hud-zoom button {
+#hud-zoom button,
+.hud-map-zoom button {
     width: 30px;
     height: 30px;
     padding: 0;
@@ -539,11 +540,13 @@ body:has(#hud) #svg-container .blocked-tile-marker {
     cursor: pointer;
 }
 
-#hud-zoom button:hover:not(:disabled) {
+#hud-zoom button:hover:not(:disabled),
+.hud-map-zoom button:hover:not(:disabled) {
     background: var(--hud-parchment);
 }
 
-#hud-zoom button:disabled {
+#hud-zoom button:disabled,
+.hud-map-zoom button:disabled {
     opacity: 0.35;
     cursor: default;
 }
@@ -2180,20 +2183,6 @@ body:has(#hud) #view-landing-wrapper {
     margin-left: auto;
 }
 
-.hud-map-zoom button {
-    min-width: 30px;
-    padding: 4px 8px;
-    background: var(--hud-parchment);
-    border: 1px solid var(--hud-line);
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.hud-map-zoom button:disabled {
-    opacity: .4;
-    cursor: default;
-}
-
 /* The summary looks like the paper buttons (css/paper-app.css) */
 .hud-map-layers > summary {
     list-style: none;
@@ -2242,6 +2231,8 @@ body:has(#hud) #view-landing-wrapper {
     min-height: 240px;
     container-type: size;
     overflow: auto;
+    /* two fingers zoom the map, not the page (same as #game-map) */
+    touch-action: pan-x pan-y;
     /* safe: a zoomed map wider than the frame starts at its left edge,
      * border included, instead of overflowing on both sides */
     display: flex;
