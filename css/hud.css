@@ -3007,6 +3007,27 @@ body:has(#hud) #debug-flags {
         min-height: 0;
     }
 
+    /* Unzoomed board (no inline size from fitDamier): the SVG takes the
+     * viewBox ratio instead of the frame height. Stretched in a frame
+     * taller than wide (folded band), it showed the row drawn past the
+     * viewBox under the bottom ruler. Centred when the frame is taller,
+     * top-aligned when it scrolls (auto margins never go negative). The
+     * container carries an inline display:block, #view is the flex box. */
+    #hud #view {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #hud #view #svg-container {
+        flex: none;
+        height: auto;
+        margin: auto 0;
+    }
+
+    #hud #svg-view {
+        height: auto;
+    }
+
     /* --- Carrousel bas : 3 positions scroll-snap --- */
     #hud-carousel {
         display: flex;
@@ -3267,8 +3288,8 @@ body:has(#hud) #debug-flags {
     #hud-carousel #hud-actions .card-actions {
         grid-auto-flow: column;
         grid-template-columns: none;
-        grid-template-rows: 60px;
-        grid-auto-columns: 60px;
+        grid-template-rows: 48px;
+        grid-auto-columns: 48px;
         justify-content: safe center;
         gap: 10px;
         padding: 0;
@@ -3277,16 +3298,16 @@ body:has(#hud) #debug-flags {
     }
 
     #hud-carousel #hud-actions .card-actions:has(.action:nth-child(6)) {
-        grid-template-rows: repeat(2, 60px);
+        grid-template-rows: repeat(2, 48px);
     }
 
     #hud-carousel #hud-actions .action {
-        width: 60px;
-        height: 60px;
+        width: 48px;
+        height: 48px;
     }
 
     #hud-carousel #hud-actions .action .ra {
-        font-size: 26px;
+        font-size: 22px;
     }
 
     /* Armed-action hint (js/hud.js hintHost): appended to the pane
@@ -3353,6 +3374,58 @@ body:has(#hud) #debug-flags {
         color: var(--hud-parchment);
         border-color: var(--hud-ink);
         box-shadow: none;
+    }
+
+    /* Tapping the active segment folds the band (js/hud.js setFolded) */
+    .hud-seg--active::after {
+        content: "▾";
+    }
+
+    /* --- Folded band: the board takes the height ---
+     * Only the action strip of the observed tile stays above the
+     * segments; with no action, the band shrinks to the segments. No
+     * segment is active, tapping one unfolds on its pane. Overflow
+     * visible so the armed-action hint can rise over the board. */
+    #hud.hud--sheet-folded #hud-carousel {
+        flex: 0 0 auto;
+        overflow: visible;
+    }
+
+    #hud.hud--sheet-folded #hud-side,
+    #hud.hud--sheet-folded #hud-sel-pane #ajax-data {
+        display: none;
+    }
+
+    #hud.hud--sheet-folded #hud-sel-pane {
+        overflow: visible;
+    }
+
+    /* The strip keeps one row's height, empty or not: tapping tiles
+     * must never resize the board. Beyond five actions it scrolls
+     * sideways instead of growing a second row. */
+    #hud.hud--sheet-folded #hud-sel-pane #hud-actions {
+        display: block;
+        height: 48px;
+    }
+
+    #hud.hud--sheet-folded #hud-carousel #hud-actions .card-actions {
+        grid-template-rows: 48px;
+    }
+
+    #hud.hud--sheet-folded #hud-sel-pane #hud-actions:empty::before {
+        content: "Touchez une case pour agir.";
+        margin: 0;
+        line-height: 48px;
+    }
+
+    #hud.hud--sheet-folded .hud-seg--active {
+        background: var(--hud-veil);
+        color: var(--hud-ink);
+        border-color: var(--hud-line);
+    }
+
+    #hud.hud--sheet-folded .hud-seg--active::after {
+        content: none;
     }
 
     .hud-seg-badge {

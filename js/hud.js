@@ -2581,9 +2581,60 @@
 
         $carousel.on('scroll', syncDots);
 
+        /* Folding the bottom band gives its height to the board: tapping
+         * the active segment folds it down to the action strip, tapping
+         * a segment unfolds it on that pane. Remembered per character. */
+        var FOLD_KEY = 'hudSheetFolded';
+
+        function setFolded(folded) {
+            $('#hud').toggleClass('hud--sheet-folded', folded);
+            aooStore.setLocal(FOLD_KEY, folded ? '1' : '');
+            /* the board frame changed size without a window resize */
+            $(window).trigger('resize');
+        }
+
         $dots.on('click', '.hud-seg', function () {
-            scrollCarouselTo($(this).data('index'), true);
+            var index = $(this).data('index');
+            if ($('#hud').hasClass('hud--sheet-folded')) {
+                setFolded(false);
+                scrollCarouselTo(index, false);
+            } else if ($(this).hasClass('hud-seg--active')) {
+                setFolded(true);
+            } else {
+                scrollCarouselTo(index, true);
+            }
         });
+
+        if (isMobileViewport() && aooStore.getLocal(FOLD_KEY) === '1') {
+            $('#hud').addClass('hud--sheet-folded');
+        }
+
+        /* Fullscreen hides the browser bars (Android; iOS Safari has no
+         * Fullscreen API for pages, the entry is then absent). */
+        if (isMobileDevice() && document.fullscreenEnabled) {
+            var $fs = $('<a id="hud-fullscreen" title="Plein écran"><button><span class="ra ra-sunbeams"></span> Plein écran</button></a>');
+            /* with the menu entries, before the top-bar shortcuts */
+            var $sep = $('#hud-rail #menu > .hud-rail-sep.hud-quick-clone');
+            if ($sep.length) {
+                $fs.insertBefore($sep);
+            } else {
+                $fs.appendTo('#hud-rail #menu');
+            }
+            $fs.on('click', function (e) {
+                e.preventDefault();
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                } else {
+                    document.documentElement.requestFullscreen();
+                }
+            });
+            $(document).on('fullscreenchange', function () {
+                var on = !!document.fullscreenElement;
+                $fs.attr('title', on ? 'Quitter le plein écran' : 'Plein écran')
+                    .find('button').contents().last()
+                    .replaceWith(on ? ' Quitter le plein écran' : ' Plein écran');
+            });
+        }
 
         /* Position par défaut : sélection (milieu), sans animation */
         if (isMobileViewport()) {
