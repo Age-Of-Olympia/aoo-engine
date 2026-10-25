@@ -42,7 +42,7 @@ class TileAssetService
      *
      * @return array{
      *   entries: list<array{name: string, files: list<string>, width: int, height: int,
-     *                       usage: int, isTerrain: bool, problems: list<string>, missing: bool}>,
+     *                       usage: int, isTerrain: bool, problems: list<string>, missing: bool, plans: list<string>}>,
      *   transitions: int
      * }
      */
@@ -67,13 +67,21 @@ class TileAssetService
         $terrainTiles = $layer === TerrainTransitionService::GROUND_LAYER
             ? $this->declaredTerrainTiles($layer) : [];
 
+        $planGrounds = $layer === TerrainTransitionService::GROUND_LAYER ? $this->planGrounds() : [];
+
         $entries = [];
         foreach ($files as $name => $nameFiles) {
             if (str_starts_with((string) $name, 'trans_')) {
                 $transitions++;
                 continue;
             }
-            $entries[] = $this->buildEntry($layer, (string) $name, $nameFiles, $usage, $terrainTiles);
+            $entry = $this->buildEntry($layer, (string) $name, $nameFiles, $usage, $terrainTiles);
+            $entry['plans'] = $planGrounds[$name] ?? [];
+            if ($entry['plans'] !== []) {
+                // A plan ground is drawn under every bare cell: in use
+                $entry['problems'] = array_values(array_diff($entry['problems'], ['posée sur aucune carte']));
+            }
+            $entries[] = $entry;
         }
 
         // Noms posés sur les cartes dont l'image a disparu : tuiles cassées
@@ -83,7 +91,7 @@ class TileAssetService
                     'name' => (string) $name, 'files' => [], 'width' => 0, 'height' => 0,
                     'usage' => $count, 'isTerrain' => isset($terrainTiles[$name]),
                     'problems' => ["référencée sur les cartes ({$count} case(s)) mais image absente — tuile cassée en jeu"],
-                    'missing' => true,
+                    'missing' => true, 'plans' => [],
                 ];
             }
         }
@@ -241,6 +249,7 @@ class TileAssetService
         if (isset($this->declaredTerrainTiles($layer)[$name])) {
             throw new RuntimeException("« {$name} » est déclarée terrain — déclassez-la d'abord (page Transitions de terrain).");
         }
+        $this->assertNoPlanGround($layer, $name);
 
         foreach ($files as $file) {
             if (!unlink($this->root . '/img/' . TiledMapService::layerImageDir($layer) . '/' . $file)) {
@@ -283,6 +292,7 @@ class TileAssetService
             && isset($this->declaredTerrainTiles($fromLayer)[$name])) {
             throw new RuntimeException("« {$name} » est déclarée terrain — déclassez-la d'abord (page Transitions de terrain).");
         }
+        $this->assertNoPlanGround($fromLayer, $name);
 
         $targetDir = $this->root . '/img/' . $toLayer;
         if (!is_dir($targetDir) || !is_writable($targetDir)) {
@@ -554,6 +564,34 @@ class TileAssetService
             static fn(array $row): string => $row['x'] . ', ' . $row['y'] . ' (z' . $row['z'] . ') ' . $row['plan'],
             $rows
         );
+    }
+
+    /**
+     * Ground images plans draw under their bare cells: the bg, or without
+     * one the slug-named fallback the board reads.
+     *
+     * @return array<string, list<string>> image name => plan slugs
+     */
+    private function planGrounds(): array
+    {
+        $grounds = [];
+        foreach ($this->connection()->fetchAllKeyValue('SELECT slug, bg FROM plans') as $slug => $bg) {
+            $grounds[$bg ? pathinfo((string) $bg, PATHINFO_FILENAME) : (string) $slug][] = (string) $slug;
+        }
+
+        return $grounds;
+    }
+
+    private function assertNoPlanGround(string $layer, string $name): void
+    {
+        if ($layer !== TerrainTransitionService::GROUND_LAYER) {
+            return;
+        }
+        $plans = $this->planGrounds()[$name] ?? [];
+        if ($plans !== []) {
+            throw new RuntimeException("« {$name} » est le fond de " . count($plans) . ' plan(s) ('
+                . implode(', ', $plans) . ') — changez-le d\'abord (page Plans).');
+        }
     }
 
     private function connection(): \Doctrine\DBAL\Connection

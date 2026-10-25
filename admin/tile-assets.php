@@ -183,6 +183,9 @@ ob_start();
                                 <?php else: ?>
                                     <span class="text-muted">0</span>
                                 <?php endif; ?>
+                                <?php if ($entry['plans'] !== []): ?>
+                                    <span class="badge badge-solid badge-info" title="<?= e(implode(', ', $entry['plans'])) ?>">fond de <?= count($entry['plans']) ?> plan(s)</span>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <?php foreach ($entry['problems'] as $problem): ?>
@@ -230,7 +233,7 @@ ob_start();
                                         <input type="hidden" name="layer" value="<?= e($layer) ?>">
                                         <input type="hidden" name="name" value="<?= e($entry['name']) ?>">
                                         <button type="submit" name="asset_delete" value="1" class="btn btn-sm btn-outline-danger"
-                                                <?= $entry['usage'] > 0 || $entry['isTerrain'] ? 'disabled title="Encore utilisée ou déclarée terrain"' : '' ?>>
+                                                <?= $entry['usage'] > 0 || $entry['isTerrain'] || $entry['plans'] !== [] ? 'disabled title="Encore utilisée, déclarée terrain ou fond de plan"' : '' ?>>
                                             Supprimer
                                         </button>
                                     </form>
@@ -249,5 +252,5 @@ ob_start();
 $content = ob_get_clean();
 echo admin_layout('Tuiles & images', $content, ['intro' => 'Les images de chaque couche de la carte et leurs problèmes'
         . ' (image à palette qui noircit les fondus, nom invalide, image posée mais absente du serveur…).'
-        . ' Une image posée quelque part ne peut pas être supprimée ; la renommer met à jour les cartes.'
+        . ' Une image posée quelque part ou servant de fond à un plan ne peut pas être supprimée ; la renommer met à jour les cartes.'
         . ' Les fondus se gèrent dans Transitions de terrain.']);

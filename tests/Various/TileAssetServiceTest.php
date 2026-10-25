@@ -40,6 +40,7 @@ class TileAssetServiceTest extends TestCase
             $this->link->executeStatement('DELETE FROM map_tiles WHERE name = ?', [$name]);
         }
         $this->link->executeStatement("DELETE FROM coords WHERE plan = 'plan_test_tuiles'");
+        $this->link->executeStatement("DELETE FROM plans WHERE slug = 'plan_test_fond'");
         $this->placedTileNames = [];
 
         foreach (glob($this->root . '/img/*/*') ?: [] as $file) {
@@ -219,6 +220,20 @@ class TileAssetServiceTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/encore posée/');
         $this->service->delete('tiles', 'caverne');
+    }
+
+    public function testAPlanBackgroundIsCountedAndCannotBeDeleted(): void
+    {
+        $this->writeTruecolorPng('tuile_test_fond');
+        $this->link->insert('plans', ['slug' => 'plan_test_fond', 'name' => 'Fond', 'bg' => 'img/tiles/tuile_test_fond.png']);
+
+        $byName = array_column($this->service->inventory('tiles')['entries'], null, 'name');
+        $this->assertSame(['plan_test_fond'], $byName['tuile_test_fond']['plans']);
+        $this->assertSame([], $byName['tuile_test_fond']['problems'], 'a plan ground is in use');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/fond de 1 plan/');
+        $this->service->delete('tiles', 'tuile_test_fond');
     }
 
     public function testMoveChangesLayerAndRefusesWhenStillPlaced(): void

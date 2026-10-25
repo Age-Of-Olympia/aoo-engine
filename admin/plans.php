@@ -399,14 +399,22 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         'player_visibility' => ['Visibilité des joueurs', 'false = les autres personnages sont masqués et ne bloquent pas les cases (mode tutoriel).'],
         'pnj'               => ['PNJ', 'Nombre de PNJ du plan (peuplement).'],
         'size'              => ['Taille', 'Taille de rendu des tuiles.'],
-        'bg'                => ['Image de fond', 'Chemin img/… ; le fichier doit exister (repli : img/tiles/&lt;plan&gt;.webp).'],
+        'bg'                => ['Image de fond', 'Sol dessiné sous les cases sans tuile, au niveau 0 (repli : img/tiles/&lt;plan&gt;.webp).'],
         'mask'              => ['Masque', 'Superposition (brume, tempête…), niveaux z ≥ 0 uniquement.'],
         'scrollingMask'     => ['Défilement du masque', 'Durée d\'animation du masque (0/vide = statique).'],
         'verticalScrolling' => ['Défilement vertical', 'Direction du défilement du masque.'],
         'comment'           => ['Commentaire', 'Note pour les admins, jamais affichée en jeu.'],
     ];
 
-    $renderField = function (string $key, string $type) use ($values, $fieldHelp): string {
+    // bg: any ground image, palette tile or large background; mask: the large ones
+    $tileCatalog = new TileCatalogService();
+    $byName = static fn(array $paths): array => array_combine($paths, array_map(
+        static fn(string $path): string => pathinfo($path, PATHINFO_FILENAME), $paths)) ?: [];
+    $backgrounds = $byName($tileCatalog->backgroundChoices());
+    $imageChoices = ['bg' => $byName(array_values($tileCatalog->buildCatalog(['tiles'])['images'])) + $backgrounds, 'mask' => $backgrounds];
+    asort($imageChoices['bg']);
+
+    $renderField = function (string $key, string $type) use ($values, $fieldHelp, $imageChoices): string {
         [$label, $help] = $fieldHelp[$key];
         $value = $values[$key];
         $hint = '<small class="form-text text-muted">' . $help . ' <em>Vide = clé retirée du JSON.</em></small>';
@@ -415,8 +423,10 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
             'int' => '<input type="number" step="1" class="form-control" name="config[' . e($key) . ']" value="' . e($value) . '">',
             'bool' => formSelect('config[' . $key . ']', ['true' => 'true', 'false' => 'false'],
                 $value !== '' ? $value : null, '(défaut : clé absente)'),
-            'image' => '<input type="text" class="form-control" name="config[' . e($key) . ']" value="' . e($value) . '"'
-                . ' list="plans-bg-catalog" placeholder="img/tiles/…">',
+            // A saved value outside the list stays selectable, flagged
+            'image' => formSelect('config[' . $key . ']',
+                $imageChoices[$key] + ($value !== '' && !isset($imageChoices[$key][$value]) ? [$value => $value . ' (introuvable)'] : []),
+                $value !== '' ? $value : null, $key === 'bg' ? '(aucune : img/tiles/<plan>.webp)' : '(aucun)'),
             'text' => '<textarea class="form-control" name="config[' . e($key) . ']" rows="3">' . e($value) . '</textarea>',
             default => '<input type="text" class="form-control" name="config[' . e($key) . ']" value="' . e($value) . '">',
         };
@@ -519,9 +529,6 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
             . '<small class="text-muted">Bornes : « minX,maxX,minY,maxY » explicites, ou « auto », recalculées'
             . ' sur l\'étendue réelle au prochain push Tiled du niveau.</small>';
 
-    $bgChoices = (new TileCatalogService())->backgroundChoices();
-    $bgCatalog = renderDatalist('plans-bg-catalog', array_combine($bgChoices, $bgChoices) ?: []);
-
     return (!$plan->hasCoords
             ? '<div class="alert alert-warning">Plan orphelin : config sans aucune'
                 . ' coordonnée en base. Importez un bundle, ou créez la case d\'amorce en le recréant après suppression.</div>'
@@ -554,8 +561,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         . '<div class="card-body">' . plans_validation_html($planId, $db, true) . '</div></div>'
 
         . plans_render_delete_zone($planId, $csrfToken)
-        . $zDeleteForms
-        . $bgCatalog;
+        . $zDeleteForms;
 }
 
 /**
