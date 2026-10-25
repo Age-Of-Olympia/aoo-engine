@@ -313,6 +313,13 @@
          * charges d'actions) et flux d'évènements se rafraîchissent. */
         var refreshed = isFinal ? refreshAfterAction() : null;
 
+        /* Taken once: a result from a screen that sets no action (crafting)
+         * must not replay the last one clicked in the panel. */
+        if (isFinal) {
+            againAction = window.hudLastAction || null;
+            window.hudLastAction = null;
+        }
+
         var $modal = hudSheet();
         $modal.find('.hud-action-modal-body').html(html);
         /* Final results only, only while the action is still offered on
@@ -336,8 +343,10 @@
 
     /* The action button of the last click (window.hudLastAction, set by
      * js/observe.js) as it stands in the panel now; empty if gone. */
+    var againAction = null;
+
     function hudLastActionButton() {
-        var last = window.hudLastAction;
+        var last = againAction;
         if (!last || !last.action) {
             return $();
         }
