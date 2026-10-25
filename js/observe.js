@@ -95,7 +95,8 @@ $(document).ready(function(){
 
         /* Read by the result modal's "Refaire" button (js/hud.js), which
          * replays the live button rather than these coordinates. */
-        window.hudLastAction = {action: action, targetId: targetId};
+        window.hudLastAction = {selector: '#hud-actions .action[data-action="' + action + '"]'
+            + (targetId !== undefined && targetId !== '' ? '[data-target-id="' + targetId + '"]' : '')};
 
 
         /* HUD : le résultat arrive dans une modale par-dessus le damier

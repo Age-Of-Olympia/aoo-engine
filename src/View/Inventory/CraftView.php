@@ -274,7 +274,9 @@ class CraftView
         ?>
         <script src="js/progressive_loader.js?v=20260716"></script>
         <script>
-            $('input[type="button"]').click(function(e) {
+            /* click.observe, like the panel's actions: « Refaire la même
+             * action » (js/hud.js) clicks this button again */
+            $('input[type="button"]').off('click.observe').on('click.observe', function(e) {
 
                 var recipeId = $(this).attr('itemId');
 
@@ -293,6 +295,7 @@ class CraftView
 
                     if(window.hudShowActionResult){
 
+                        window.hudLastAction = {selector: 'input[type="button"][itemId="' + recipeId + '"]'};
                         window.hudShowActionResult(data, true);
                         /* the inventory panel reloads under the modal:
                          * the ingredient counts are up to date */

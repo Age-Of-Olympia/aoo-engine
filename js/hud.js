@@ -341,20 +341,12 @@
         $modal.show();
     };
 
-    /* The action button of the last click (window.hudLastAction, set by
-     * js/observe.js) as it stands in the panel now; empty if gone. */
+    /* The button of the last click (window.hudLastAction = {selector}, set
+     * by js/observe.js and the craft panel) as it stands now; empty if gone. */
     var againAction = null;
 
     function hudLastActionButton() {
-        var last = againAction;
-        if (!last || !last.action) {
-            return $();
-        }
-        var selector = '#hud-actions .action[data-action="' + last.action + '"]';
-        if (last.targetId !== undefined && last.targetId !== '') {
-            selector += '[data-target-id="' + last.targetId + '"]';
-        }
-        return $(selector).first();
+        return againAction ? $(againAction.selector).first() : $();
     }
 
     /*
