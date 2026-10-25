@@ -54,6 +54,7 @@ class Exchange{
     }
 
     public function get_items_data() {
+        $this->items = [];
         /* id : la table n'avait AUCUNE clé primaire, si bien qu'on ne
          * savait viser une ligne que par ses valeurs — et supprimer donc
          * toutes les lignes identiques d'un coup. Invisible tant que
