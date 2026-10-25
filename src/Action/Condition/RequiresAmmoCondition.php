@@ -50,8 +50,9 @@ class RequiresAmmoCondition extends BaseCondition implements HasParameterSchemaI
         } else {
             $item = new Item($itemId);
             $item->get_data();
+            // The equipped list is keyed by catalogue id
             $itemsEquiped = $item->get_item_list($actor, false, true);
-            if (sizeof($itemsEquiped) == 0) {
+            if (!isset($itemsEquiped[$itemId])) {
                 array_push($details, "Pas de ".$item->data->name . ' équipé.');
             } else {
                 $costIsAffordable = true;
