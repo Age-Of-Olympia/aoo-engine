@@ -10,6 +10,10 @@ class OnHideReloadView
     public static function render(Player $player): void
     {
 
+        // The caracs were read before the action: re-read them, or a
+        // perception buff redraws (and caches) the board at the old size
+        $player->get_caracs();
+
         echo '<div id="data" style="display: none;">';
 
         MainView::render($player);
