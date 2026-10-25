@@ -134,8 +134,19 @@
      * même damierZoom (initPinchZoom), la page ne zoome pas.
      */
     var damierZoom = 1;
-    var DAMIER_ZOOM_MAX = 2.5;
     var DAMIER_ZOOM_STEP = 1.25;
+
+    /* Zoom 1 fits the whole board, so the cap grows with the board: at the
+     * cap a big perception shows as few tiles as a 13-tile board, whose
+     * cap is 2.5 plus two steps. */
+    var DAMIER_ZOOM_MAX_13 = 2.5 * DAMIER_ZOOM_STEP * DAMIER_ZOOM_STEP;
+
+    function damierZoomMax() {
+        var svg = document.getElementById('svg-view');
+        var vb = svg && (svg.dataset.origViewbox || svg.getAttribute('viewBox'));
+        var tiles = vb ? Number(vb.split(/[ ,]+/)[2]) / 50 : 13;
+        return Math.max(DAMIER_ZOOM_MAX_13, DAMIER_ZOOM_MAX_13 * tiles / 13);
+    }
 
     /* Réglages du damier conservés par onglet ET PAR PERSONNAGE
      * (js/aoo-store.js) : le déplacement recharge la page (view.js), le
@@ -272,13 +283,13 @@
     }
 
     function setDamierZoom(zoom) {
-        damierZoom = Math.min(DAMIER_ZOOM_MAX, Math.max(1, zoom));
+        damierZoom = Math.min(damierZoomMax(), Math.max(1, zoom));
         aooStore.set(DAMIER_ZOOM_KEY, String(damierZoom));
         fitDamier();
         centerMap();
         redrawBlockedMarkers();
         $('#hud-zoom-out').prop('disabled', damierZoom <= 1);
-        $('#hud-zoom-in').prop('disabled', damierZoom >= DAMIER_ZOOM_MAX);
+        $('#hud-zoom-in').prop('disabled', damierZoom >= damierZoomMax());
     }
 
     /*
