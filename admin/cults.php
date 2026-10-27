@@ -9,7 +9,9 @@ use App\Service\RaceService;
 
 const CULTS_PER_PAGE = 50;
 
-/** @param array<string, string> $plans */
+/** @param array{id:int,name:string,player_type:string,x:int,y:int,z:int,plan:string}|null $god
+ *  @param array<string, string> $plans
+ */
 function cult_render_form(?array $god, array $plans, string $csrfToken): string
 {
     $isEdit = $god !== null;
@@ -35,14 +37,20 @@ function cult_render_form(?array $god, array $plans, string $csrfToken): string
         . '</div><div class="card-body">' . $form . '</div></div>';
 }
 
-/** @param array{x:int,y:int,z:int,plan:string} $row */
+/**
+ * @param array{x:int,y:int,z:int,plan:string} $row
+ * @param array<string, string> $planLabels
+ */
 function cult_position(array $row, array $planLabels): string
 {
     return '(' . (int) $row['x'] . ', ' . (int) $row['y'] . ', ' . (int) $row['z'] . ') · '
         . e($planLabels[$row['plan']] ?? $row['plan']);
 }
 
-/** @param array{plan:string,q:string} $filters @param list<string> $plans */
+/**
+ * @param array{plan:string,q:string} $filters
+ * @param list<string> $plans
+ */
 function cult_render_filters(array $filters, array $plans, int $total): string
 {
     $planLabels = array_intersect_key(plan_choices(), array_flip($plans));
@@ -53,7 +61,9 @@ function cult_render_filters(array $filters, array $plans, int $total): string
         . '<small class="text-muted">' . $total . ' culte(s)</small></form>';
 }
 
-/** @param list<array<string, mixed>> $gods @param array{plan:string,q:string} $filters */
+/** @param list<array{id:int,name:string,player_type:string,x:int,y:int,z:int,plan:string}> $gods
+ *  @param array<string, string> $planLabels
+ */
 function cult_render_list(array $gods, string $csrfToken, array $planLabels): string
 {
     if ($gods === []) {
@@ -79,7 +89,9 @@ function cult_render_list(array $gods, string $csrfToken, array $planLabels): st
         . $rows . '</tbody></table></div>';
 }
 
-/** @param array<string, string> $planLabels */
+/** @param array{id:int,name:string,player_type:string,x:int,y:int,z:int,plan:string} $god
+ *  @param array<string, string> $planLabels
+ */
 function cult_render_details(CultAdminService $service, array $god, array $planLabels): string
 {
     $raceService = new RaceService();
