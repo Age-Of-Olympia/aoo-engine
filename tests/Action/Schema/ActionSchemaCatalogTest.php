@@ -60,7 +60,7 @@ class ActionSchemaCatalogTest extends TestCase
     {
         $schema = $this->catalog->schemaForOutcomeInstruction('malus');
 
-        $this->assertSame(1, $schema->field('rollDivisor')->default);
+        $this->assertSame(0, $schema->field('rollDivisor')->default);
         $to = $schema->field('to');
         $this->assertSame(FieldType::ENUM, $to->type);
         $this->assertSame(['actor' => 'Acteur', 'target' => 'Cible'], $to->options);

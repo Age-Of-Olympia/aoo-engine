@@ -17,7 +17,7 @@ class MalusOutcomeInstruction extends OutcomeInstruction implements HasParameter
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema(
-            new ParameterField('rollDivisor', FieldType::INT, 'Diviseur du jet', default: 1),
+            new ParameterField('rollDivisor', FieldType::INT, 'Diviseur du jet (0 = 1D3 seul)', default: 0),
             new ParameterField('to', FieldType::ENUM, 'Appliquer à', default: 'target', options: ['actor' => 'Acteur', 'target' => 'Cible']),
         );
     }

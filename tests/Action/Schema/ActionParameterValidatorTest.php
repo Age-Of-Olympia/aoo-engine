@@ -102,7 +102,7 @@ class ActionParameterValidatorTest extends TestCase
     {
         $result = $this->validator->coerce($this->catalog->schemaForOutcomeInstruction('malus'), []);
 
-        $this->assertSame(1, $result['rollDivisor']);
+        $this->assertSame(0, $result['rollDivisor']);
         $this->assertSame('target', $result['to']);
     }
 

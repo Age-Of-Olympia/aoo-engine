@@ -97,6 +97,6 @@ class ParameterFieldRendererTest extends TestCase
     {
         $field = $this->field($this->catalog->schemaForOutcomeInstruction('malus'), 'rollDivisor');
 
-        $this->assertStringContainsString('value="1"', $this->renderer->render($field, 'p[rollDivisor]'));
+        $this->assertStringContainsString('value="0"', $this->renderer->render($field, 'p[rollDivisor]'));
     }
 }
