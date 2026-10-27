@@ -112,10 +112,7 @@ describe('Tutorial System - Resume & Persistence Test', () => {
     cy.visit('/index.php');
     cy.wait(2000);
     cy.get('body').then(($body) => {
-      if ($body.find('button:contains("Reprendre")').length > 0) {
-        cy.get('button:contains("Reprendre")').click();
-        cy.wait(2000);
-      } else if ($body.find('a:contains("Continuer le tutoriel")').length > 0) {
+      if ($body.find('a:contains("Continuer le tutoriel")').length > 0) {
         cy.get('a:contains("Continuer le tutoriel")').click();
         cy.wait(2000);
       }

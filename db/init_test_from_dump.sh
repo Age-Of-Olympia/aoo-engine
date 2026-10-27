@@ -291,20 +291,39 @@ INSERT IGNORE INTO coords (id, x, y, z, plan) VALUES
 
 -- Create test characters for Cypress tests
 -- Valid races: nain, geant, olympien, hs, elfe, lutin, humain, dieu, ame
-INSERT INTO players (id, name, race, psw, mail, plain_mail, nextTurnTime, coords_id, faction, avatar, portrait, player_type, display_id) VALUES
+INSERT INTO players (id, name, race, coords_id, faction, avatar, portrait, player_type, display_id) VALUES
 -- Workflow test player (ID 7, password: D0Oy7GF6ixBEo#>1RE{rG%9/5rk\\d*wk]**z\`\$pI)
-(7, 'TestWorkflowPlayer', 'humain', '\$2y\$10\$kw/kfYX8diry1vsFDjJvtelh7Fxl4rQ09q.FDNHBN/qcQtXCdGEqS', 'workflow@test.com', 'workflow@test.com', UNIX_TIMESTAMP(), 1, 'zeus', 'img/avatars/humain/1.png', 'img/portraits/humain/1.jpeg', 'real', 1),
+(7, 'TestWorkflowPlayer', 'humain', 1, 'zeus', 'img/avatars/humain/1.png', 'img/portraits/humain/1.jpeg', 'real', 1),
 -- Admin account (password: test)
-(100, 'TestAdmin', 'nain', '\$2y\$10\$N3yzGhEWxAilNdXIA42dKOwqk1CHgSlAhV/DGQJVaVv4RAo1xKfnO', 'admin@test.com', 'admin@test.com', UNIX_TIMESTAMP(), 1, 'hephaestos', 'img/avatars/nain/1.png', 'img/portraits/nain/1.jpeg', 'real', 2),
+(100, 'TestAdmin', 'nain', 1, 'hephaestos', 'img/avatars/nain/1.png', 'img/portraits/nain/1.jpeg', 'real', 2),
 -- Fresh player for tutorial tests (password: testpass)
-(101, 'TestFreshPlayer', 'elfe', '\$2y\$10\$LJiJdZasGC56wvjiHyIl7./pqnAaoPQcFqRM6PYXGJ745wQX33jN2', 'fresh@test.com', 'fresh@test.com', UNIX_TIMESTAMP(), 1, 'artemis', 'img/avatars/elfe/1.png', 'img/portraits/elfe/1.jpeg', 'real', 3),
+(101, 'TestFreshPlayer', 'elfe', 1, 'artemis', 'img/avatars/elfe/1.png', 'img/portraits/elfe/1.jpeg', 'real', 3),
 -- Tutorial started player (password: testpass)
-(102, 'TestTutorialStarted', 'humain', '\$2y\$10\$LJiJdZasGC56wvjiHyIl7./pqnAaoPQcFqRM6PYXGJ745wQX33jN2', 'started@test.com', 'started@test.com', UNIX_TIMESTAMP(), 51602, 'zeus', 'img/avatars/humain/1.png', 'img/portraits/humain/1.jpeg', 'real', 4),
+(102, 'TestTutorialStarted', 'humain', 51602, 'zeus', 'img/avatars/humain/1.png', 'img/portraits/humain/1.jpeg', 'real', 4),
 -- Tutorial completed player (password: testpass)
-(103, 'TestTutorialCompleted', 'nain', '\$2y\$10\$LJiJdZasGC56wvjiHyIl7./pqnAaoPQcFqRM6PYXGJ745wQX33jN2', 'completed@test.com', 'completed@test.com', UNIX_TIMESTAMP(), 1, 'hephaestos', 'img/avatars/nain/1.png', 'img/portraits/nain/1.jpeg', 'real', 5),
+(103, 'TestTutorialCompleted', 'nain', 1, 'hephaestos', 'img/avatars/nain/1.png', 'img/portraits/nain/1.jpeg', 'real', 5),
 -- Tutorial skipped player (password: testpass)
-(104, 'TestTutorialSkipped', 'elfe', '\$2y\$10\$LJiJdZasGC56wvjiHyIl7./pqnAaoPQcFqRM6PYXGJ745wQX33jN2', 'skipped@test.com', 'skipped@test.com', UNIX_TIMESTAMP(), 1, 'artemis', 'img/avatars/elfe/1.png', 'img/portraits/elfe/1.jpeg', 'real', 6)
-ON DUPLICATE KEY UPDATE psw = VALUES(psw), race = VALUES(race);
+(104, 'TestTutorialSkipped', 'elfe', 1, 'artemis', 'img/avatars/elfe/1.png', 'img/portraits/elfe/1.jpeg', 'real', 6)
+ON DUPLICATE KEY UPDATE race = VALUES(race);
+
+-- Credentials and turn clock live in their satellite tables
+INSERT INTO accounts (player_id, psw, mail, plain_mail) VALUES
+(7, '\$2y\$10\$kw/kfYX8diry1vsFDjJvtelh7Fxl4rQ09q.FDNHBN/qcQtXCdGEqS', 'workflow@test.com', 'workflow@test.com'),
+(100, '\$2y\$10\$N3yzGhEWxAilNdXIA42dKOwqk1CHgSlAhV/DGQJVaVv4RAo1xKfnO', 'admin@test.com', 'admin@test.com'),
+(101, '\$2y\$10\$LJiJdZasGC56wvjiHyIl7./pqnAaoPQcFqRM6PYXGJ745wQX33jN2', 'fresh@test.com', 'fresh@test.com'),
+(102, '\$2y\$10\$LJiJdZasGC56wvjiHyIl7./pqnAaoPQcFqRM6PYXGJ745wQX33jN2', 'started@test.com', 'started@test.com'),
+(103, '\$2y\$10\$LJiJdZasGC56wvjiHyIl7./pqnAaoPQcFqRM6PYXGJ745wQX33jN2', 'completed@test.com', 'completed@test.com'),
+(104, '\$2y\$10\$LJiJdZasGC56wvjiHyIl7./pqnAaoPQcFqRM6PYXGJ745wQX33jN2', 'skipped@test.com', 'skipped@test.com')
+ON DUPLICATE KEY UPDATE psw = VALUES(psw);
+
+INSERT INTO turns (player_id, next_turn_time) VALUES
+(7, UNIX_TIMESTAMP()),
+(100, UNIX_TIMESTAMP()),
+(101, UNIX_TIMESTAMP()),
+(102, UNIX_TIMESTAMP()),
+(103, UNIX_TIMESTAMP()),
+(104, UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE next_turn_time = VALUES(next_turn_time);
 
 -- Set admin option for TestAdmin
 INSERT IGNORE INTO players_options (player_id, name) VALUES (100, 'isAdmin');
@@ -354,8 +373,8 @@ SELECT ec.player_id, tc.id, ec.plan, ec.z, ec.x, ec.y, ec.piece, ec.role
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- Add Gaïa NPC (tutorial guide) at (1, 0)
-INSERT IGNORE INTO players (id, player_type, display_id, name, coords_id, race, xp, pi, energie, psw, mail, plain_mail, avatar, portrait, text)
-SELECT -999999, 'npc', 999999, 'Gaïa', c.id, 'dieu', 0, 0, 100, '', '', '', 'img/avatars/dieu/1.png', 'img/portraits/dieu/1.jpeg', 'Gaïa, déesse de la Terre, guide les nouveaux joueurs dans leur apprentissage.'
+INSERT IGNORE INTO players (id, player_type, display_id, name, coords_id, race, energie, avatar, portrait, text)
+SELECT -999999, 'npc', 999999, 'Gaïa', c.id, 'dieu', 100, 'img/avatars/dieu/1.png', 'img/portraits/dieu/1.jpeg', 'Gaïa, déesse de la Terre, guide les nouveaux joueurs dans leur apprentissage.'
 FROM coords c
 WHERE c.plan = 'tutorial' AND c.x = 1 AND c.y = 0 AND c.z = 0;
 TESTDATA
