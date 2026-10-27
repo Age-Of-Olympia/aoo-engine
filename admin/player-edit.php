@@ -58,6 +58,13 @@ const PLAYER_EDIT_VITALS = [
     'ae'  => 'Ae',
 ];
 
+/** Counters stored as `players` columns, edited as absolute values (floored at 0). */
+const PLAYER_EDIT_COUNTERS = [
+    'malus'   => 'Malus',
+    'energie' => 'Énergie',
+    'pf'      => 'PF',
+];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['player_save'])) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
@@ -121,6 +128,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['player_save'])) {
                     array($id, $trait, $n)
                 );
             }
+        }
+
+        // Column names come from the PLAYER_EDIT_COUNTERS whitelist, never from the request.
+        foreach (PLAYER_EDIT_COUNTERS as $column => $label) {
+            $raw = $_POST['counters'][$column] ?? '';
+            if ($raw === '' || (int) $raw === (int) $player->data->$column) {
+                continue;
+            }
+            $db->exe("UPDATE players SET {$column} = ? WHERE id = ?", array(max(0, (int) $raw), $id));
         }
 
         // Tour : l'horloge repasse dans le passé, le prochain chargement
@@ -456,6 +472,18 @@ $vitals = formCard('Vitalités restantes', ''
     . '<tbody>' . $vitalsRows . '</tbody></table>'
     . formCheckbox('heal_full', false, 'Tout remettre au maximum'));
 
+$countersRows = '';
+foreach (PLAYER_EDIT_COUNTERS as $column => $label) {
+    $countersRows .= '<tr>'
+        . '<th scope="row">' . e($label) . '</th>'
+        . '<td><input type="number" min="0" class="form-control" style="max-width:8rem"'
+        . ' name="counters[' . e($column) . ']" value="' . (int) $player->data->$column . '"></td>'
+        . '</tr>';
+}
+$counters = formCard('Compteurs', ''
+    . '<table class="table table-sm mb-0"><thead><tr><th></th><th>Valeur</th></tr></thead>'
+    . '<tbody>' . $countersRows . '</tbody></table>');
+
 $turn = formCard('Tour', ''
     . '<p class="mb-2">' . e($turnInfo) . '</p>'
     . formCheckbox('turn_now', false, 'Rendre le tour disponible maintenant'));
@@ -729,7 +757,9 @@ if (($player->data->player_type ?? 'real') === 'real') {
 $body = '<form method="post" action="player-edit.php?id=' . (int) $id . '">'
     . $csrfField
     . '<input type="hidden" name="id" value="' . (int) $id . '">'
-    . $identity . $position . $vitals . $turn
+    . $identity . $position
+    . '<div class="row"><div class="col-md-7">' . $vitals . '</div><div class="col-md-5">' . $counters . '</div></div>'
+    . $turn
     . '<button type="submit" name="player_save" value="1" class="btn btn-primary">Enregistrer</button>'
     . '</form>'
     . $account
