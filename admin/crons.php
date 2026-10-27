@@ -27,6 +27,8 @@ const CRONS_DIR = __DIR__ . '/../scripts/crons';
 
 /** Business rules shown under a script, keyed "group/script". */
 const CRON_NOTES = [
+    'monthly/altar_conquest.php' =>
+        'Cron mensuel prévu le dernier jour du mois. Aucun traitement pour le moment.',
     'daily/80_onesignal_sync.php' =>
         'Envoie les joueurs à OneSignal pour les campagnes mail. Qui : les vrais joueurs avec un email'
         . ' (pas les PNJ, le tutoriel, le matricule 1 ni les adresses bidon comme vide@vide.fr).'
@@ -157,7 +159,8 @@ foreach ($catalog as $group => $scripts) {
 
     $content .= '<div class="card mb-3">'
         . '<div class="card-header d-flex justify-content-between align-items-center">'
-        . '<span>' . e(ucfirst($group)) . ' <small class="text-muted">(' . count($scripts) . ' scripts)</small></span>'
+        . '<span>' . e($group === 'monthly' ? 'Mensuel · dernier jour du mois' : ucfirst($group))
+        . ' <small class="text-muted">(' . count($scripts) . ' scripts)</small></span>'
         . $runAll . '</div>'
         . '<div class="card-body p-0"><table class="table table-sm table-striped mb-0"><tbody>'
         . implode('', $rows)

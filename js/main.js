@@ -26,6 +26,74 @@ function load_data(data, element){
     $(element).html(data);
 }
 
+/* Live countdown rendered by the Faith ranking, including when the ranking
+ * arrives later as a HUD panel fragment. */
+(function () {
+    var selector = '[data-faith-reward-countdown]';
+
+    function initializeCountdown(element) {
+        if (element.dataset.countdownInitialized) {
+            return;
+        }
+        element.dataset.countdownInitialized = '1';
+
+        var output = element.querySelector('[data-countdown-value]');
+        var deadline = Number(element.dataset.deadline) * 1000;
+        var timer = null;
+        if (!output || !Number.isFinite(deadline)) {
+            return;
+        }
+
+        function update() {
+            var remaining = Math.max(0, deadline - Date.now());
+            var seconds = Math.floor(remaining / 1000);
+            var days = Math.floor(seconds / 86400);
+            var hours = Math.floor((seconds % 86400) / 3600);
+            var minutes = Math.floor((seconds % 3600) / 60);
+            var rest = seconds % 60;
+            var time = (days > 0 ? days + ' j ' : '')
+                + String(hours).padStart(2, '0') + ' h '
+                + String(minutes).padStart(2, '0') + ' min '
+                + String(rest).padStart(2, '0') + ' s';
+            output.textContent = time;
+
+            if (remaining <= 0) {
+                if (timer !== null) {
+                    window.clearInterval(timer);
+                }
+            }
+        }
+
+        timer = window.setInterval(update, 1000);
+        update();
+    }
+
+    function initializeWithin(node) {
+        if (node.nodeType !== Node.ELEMENT_NODE) {
+            return;
+        }
+        if (node.matches(selector)) {
+            initializeCountdown(node);
+        }
+        node.querySelectorAll(selector).forEach(initializeCountdown);
+    }
+
+    function start() {
+        initializeWithin(document.documentElement);
+        new MutationObserver(function (records) {
+            records.forEach(function (record) {
+                record.addedNodes.forEach(initializeWithin);
+            });
+        }).observe(document.body, { childList: true, subtree: true });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+    } else {
+        start();
+    }
+})();
+
 /* Query counter (footer "N req"): the page's own SQL count, plus the
  * Server-Timing "db" entry of every XHR and fetch made since, plus the
  * requests that reached the network (a cached file has no transferSize).

@@ -34,6 +34,8 @@ class AdminMenuAccessService
         'tutorial.steps'           => ['Tutoriel · Étapes', 'Tutoriel', self::LEVEL_ADMIN],
         'tutorial.npcs'            => ['Tutoriel · PNJ', 'Tutoriel', self::LEVEL_ADMIN],
         'tutorial.settings'        => ['Tutoriel · Options', 'Tutoriel', self::LEVEL_ADMIN],
+        'faith.cults'              => ['Foi · Cultes', 'Foi', self::LEVEL_SUPERADMIN],
+        'faith.rewards'            => ['Foi · Récompenses', 'Foi', self::LEVEL_SUPERADMIN],
 
         'maps.world'               => ['Cartes · Carte monde', 'Cartes', self::LEVEL_ADMIN],
         // Creating and deleting plans is destructive
@@ -129,6 +131,8 @@ class AdminMenuAccessService
         'tutorial-npcs.php'        => 'tutorial.npcs',
         'tutorial-npcs-save.php'   => 'tutorial.npcs',
         'tutorial-settings.php'    => 'tutorial.settings',
+        'cults.php'                => 'faith.cults',
+        'faith-rewards.php'        => 'faith.rewards',
         'world_map.php'            => 'maps.world',
         'plans.php'                => 'maps.plans',
         'plans-save.php'           => 'maps.plans',

@@ -44,6 +44,10 @@ function admin_nav_tree(): array
 
         ['section' => 'Le monde', 'items' => [
             ['Plans', '/admin/plans.php'],
+            ['Foi', [
+                ['Cultes', '/admin/cults.php'],
+                ['Récompenses', '/admin/faith-rewards.php'],
+            ]],
             ['Génération des cartes', [
                 ['Carte monde', '/admin/world_map.php'],
                 ['Cartes locales', '/admin/local_maps.php'],

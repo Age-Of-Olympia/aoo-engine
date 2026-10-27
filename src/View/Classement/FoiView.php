@@ -3,6 +3,8 @@
 namespace App\View\Classement;
 
 use Classes\Db;
+use DateTimeImmutable;
+use DateTimeZone;
 
 class FoiView
 {
@@ -133,7 +135,7 @@ class FoiView
 
         echo '</table>';
 
-        echo '<br /><div style="text-align: center; font-weight: bold;">';
+        echo '<br /><h3>';
         if ($maxPlans <= 0) {
             echo "Aucun Dieu ne contrôle de plan actuellement.";
         } elseif ($isEquality) {
@@ -141,8 +143,16 @@ class FoiView
         } else {
             echo "Le Dieu qui contrôle le plus de plans est " . htmlspecialchars($nomLeader) . " avec " . $maxPlans . " plans contrôlés.";
         }
-        echo '</div><br />';
+        echo '</h3><br />';
 
         });
+
+        $nextDistribution = (new DateTimeImmutable('now', new DateTimeZone('Europe/Paris')))
+            ->modify('first day of next month')
+            ->setTime(0, 0);
+        echo '<h3 class="faith-reward-countdown" data-faith-reward-countdown data-deadline="'
+            . $nextDistribution->getTimestamp() . '">'
+            . 'Temps restant avant la prochaine distribution de récompenses : '
+            . '<span data-countdown-value></span></h3>';
     }
 }
