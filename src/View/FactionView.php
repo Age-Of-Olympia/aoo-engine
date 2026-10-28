@@ -482,7 +482,7 @@ class FactionView
      */
     private static function chestStewardCellHtml(int $chestId, string $text, array $members): string
     {
-        $options = '';
+        $options = '<option value="" selected disabled>— Sélectionnez —</option>';
         foreach ($members as $m) {
             $options .= '<option value="' . $m['id'] . '">' . htmlspecialchars($m['name'], ENT_QUOTES, 'UTF-8') . '</option>';
         }
@@ -621,6 +621,10 @@ class FactionView
                 .on('click.factionAssets', '.faction-chest-offer', function(){
                     var chestId = $(this).data('chest');
                     var memberId = $('.faction-chest-member[data-chest="' + chestId + '"]').val();
+                    if (!memberId) {
+                        aooAlert('Choisissez un membre à qui offrir ce coffre.');
+                        return;
+                    }
                     chestCall({ action: 'offer', chestId: chestId, memberId: memberId });
                 });
 
