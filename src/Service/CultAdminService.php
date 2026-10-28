@@ -101,11 +101,13 @@ final class CultAdminService
         ], $this->connection->fetchAllAssociative(
             "SELECT p.id, p.name, p.race, p.pf, c.x, c.y, c.z, c.plan
                FROM players p
+               JOIN accounts a ON a.player_id = p.id
                LEFT JOIN coords c ON c.id = p.coords_id
               WHERE p.godId = ? AND p.id <> ?
                 AND p.player_type IN ('real', 'npc', 'tutorial')
+                AND a.last_login_time >= ?
               ORDER BY p.name, p.id",
-            [$godId, $godId]
+            [$godId, $godId, time() - INACTIVE_TIME]
         ));
     }
 
