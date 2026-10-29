@@ -747,6 +747,17 @@ class Item{
                 $return[] = '<font color="red">PF'. $carac .'</font>';
         }
 
+        //special xp
+        if(!empty($itemJson->xp)){
+
+            $carac = $itemJson->xp;
+
+            if( $carac > 0 )
+                $return[] = '<font color="blue">XP+'. $carac .'</font>';
+            if( $carac < 0 )
+                $return[] = '<font color="red">XP'. $carac .'</font>';
+        }
+
         //special malus
         if(!empty($itemJson->malus)){
 

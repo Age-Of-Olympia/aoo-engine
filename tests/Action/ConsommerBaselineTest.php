@@ -105,4 +105,27 @@ class ConsommerBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertTrue($results->isBlocked(), 'gold is not a consumable: ItemPick admissibility must block');
         $this->assertSame(5, $or->get_n(PlayerFactory::legacy($drinker->id)), 'nothing may be spent');
     }
+
+    public function testAnXpOnlyPotionIsConsumableAndGrantsXp(): void
+    {
+        // XP alone is a payload: the item must not be refused as "does nothing"
+        $drinker = $this->createRealPlayer('GmScholar');
+        $drinker->getCoords();
+        $drinker->get_caracs();
+        $xpBefore = (int) $drinker->data->xp;
+
+        $potion = $this->sowCatalogItem('gm_potion_xp', ['type' => 'consommable', 'xp' => 5]);
+        $potion->add_item($drinker, 1);
+
+        $_POST['itemId'] = (string) $potion->id;
+        $results = (new ActionExecutorService($this->actionOrSkip('consommer'), $drinker, $drinker))->executeAction();
+
+        $this->assertFalse($results->isBlocked(), 'an XP-only potion is a consumable');
+        $fresh = PlayerFactory::legacy($drinker->id);
+        $fresh->get_data();
+        // the action's own XP (action_type_xp) comes on top of the potion's
+        $actionXp = (int) ($results->getXpResultsArray()['actor'] ?? 0);
+        $this->assertSame($xpBefore + 5 + $actionXp, (int) $fresh->data->xp, 'the potion grants its XP');
+        $this->assertSame(0, $potion->get_n($fresh), 'the potion is consumed');
+    }
 }

@@ -60,6 +60,9 @@ class InventoryService
     public const USE_EQUIP = 'equip';
     public const USE_CONSUME = 'consume';
 
+    /** Numeric keys applyConsumablePayload acts on — keep both in sync. */
+    private const PAYLOAD_KEYS = ['pv', 'pm', 'mvt', 'a', 'ae', 'malus', 'pr', 'pf', 'xp'];
+
     /**
      * Ce que « Utiliser » ferait pour cet objet — null quand RIEN : un
      * consommable sans aucun bonus, tout objet sans usage. Source unique
@@ -82,7 +85,7 @@ class InventoryService
     /** Au moins un bonus/effet que la consommation appliquerait. */
     private static function hasConsumablePayload(object $data): bool
     {
-        foreach (['pv', 'pm', 'mvt', 'a', 'ae', 'malus', 'pr', 'pf'] as $key) {
+        foreach (self::PAYLOAD_KEYS as $key) {
             if (!empty($data->$key)) {
                 return true;
             }
