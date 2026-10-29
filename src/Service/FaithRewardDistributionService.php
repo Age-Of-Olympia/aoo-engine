@@ -96,7 +96,7 @@ final class FaithRewardDistributionService
                     $reward = $rewards[random_int(0, count($rewards) - 1)];
                     $playerName = (string) $connection->fetchOne('SELECT name FROM players WHERE id = ?', [$playerId]);
                     $connection->executeStatement(
-                        'INSERT INTO players_items (player_id, item_id, n) VALUES (?, ?, ?)
+                        'INSERT INTO players_items_bank (player_id, item_id, n) VALUES (?, ?, ?)
                          ON DUPLICATE KEY UPDATE n = n + VALUES(n)',
                         [$playerId, (int) $reward['item_id'], (int) $reward['quantity']]
                     );
