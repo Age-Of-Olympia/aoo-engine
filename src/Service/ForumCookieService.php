@@ -53,16 +53,14 @@ class ForumCookieService
         }
 
         if ($topJson->forum_id == 'Missives' ) {
-            if(!ENABLE_NO_PR_COOKIES_IN_MISSIVES)
+            if(!(new ReputationSettingsService())->missiveCookies())
                 throw new Exception("Impossible de donner un cookie sur une missive");
         }
         else {
             $author = new Player($postJson->author);
             $player = new Player($playerId);
-            (new ReputationService())->add(
-                (int) $author->id,
-                $author->check_share_factions($player) ? ReputationService::PER_COOKIE_SAME_FACTION : ReputationService::PER_COOKIE
-            );
+            $reputation = new ReputationService();
+            $reputation->add((int) $author->id, $reputation->perCookie($author->check_share_factions($player)));
         }
         
         $this->create($playerId,$postName);        

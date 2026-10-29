@@ -125,10 +125,8 @@ define('ONE_DAY', 86400);
 define('ONE_HOUR', 3600);
 // INACTIVE TIME
 define('INACTIVE_TIME', ONE_WEEK);
-// Nombre de jours pendant lesquels c'est autorisé de donner un cookie sur un post
-define('MAX_DAYS_COOKIE_FORUM', 14);
-//active les cookie dans les missives
-define('ENABLE_NO_PR_COOKIES_IN_MISSIVES', TRUE);
+/* Délai des cookies du forum et cookies dans les missives : en base
+ * (admin_settings), via App\Service\ReputationSettingsService. */
 
 
 define('DAYS_OF_WEEK', array(

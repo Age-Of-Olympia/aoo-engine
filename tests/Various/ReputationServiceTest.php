@@ -2,7 +2,9 @@
 
 namespace Tests\Various;
 
+use App\Service\AdminSettingsService;
 use App\Service\ReputationService;
+use App\Service\ReputationSettingsService;
 use App\Simulation\SimulationGuard;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -11,17 +13,25 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 /**
  * Reputation is stored in tenths of a PR and spoken in PR everywhere else.
  * These cases pin the conversion on every write, the reads, what players
- * see, and the forum reward drawn every REWARD_EVERY PR.
+ * see, and the forum reward drawn at every milestone. The gains, the
+ * milestone and the titles are the seeded settings unless a case sets them.
  */
 #[Group('entities-baseline')]
 class ReputationServiceTest extends LegacyPlayerFixtureTestCase
 {
     private ?int $playerId = null;
+    private ?int $titleId = null;
 
     protected function tearDown(): void
     {
-        if ($this->playerId !== null && $this->link !== null) {
-            $this->link->executeStatement('DELETE FROM players_forum_rewards WHERE to_player_id = ?', [$this->playerId]);
+        if ($this->link !== null) {
+            if ($this->playerId !== null) {
+                $this->link->executeStatement('DELETE FROM players_forum_rewards WHERE to_player_id = ?', [$this->playerId]);
+            }
+            if ($this->titleId !== null) {
+                (new ReputationSettingsService($this->link))->removeTitle($this->titleId);
+            }
+            $this->link->executeStatement('DELETE FROM admin_settings WHERE name = ?', [ReputationSettingsService::REWARD_EVERY]);
         }
         parent::tearDown();
     }
@@ -40,8 +50,8 @@ class ReputationServiceTest extends LegacyPlayerFixtureTestCase
     {
         $id = $this->playerWithStoredPr(0);
 
-        $this->reputation()->add($id, ReputationService::PER_COOKIE);
-        $this->reputation()->add($id, ReputationService::PER_COOKIE_SAME_FACTION);
+        $this->reputation()->add($id, $this->reputation()->perCookie(false));
+        $this->reputation()->add($id, $this->reputation()->perCookie(true));
 
         $this->assertSame(4, $this->storedPr($id));
         $this->assertSame(0.4, $this->reputation()->of($id));
@@ -112,7 +122,7 @@ class ReputationServiceTest extends LegacyPlayerFixtureTestCase
         $pr = ReputationService::fromStored(2);
 
         $this->assertSame('0', ReputationService::format($pr));
-        $this->assertSame('Inconnu', ReputationService::title($pr));
+        $this->assertSame('Inconnu', $this->reputation()->title($pr));
     }
 
     public function testTheDisplayIsFlooredAndNeverNegative(): void
@@ -125,7 +135,7 @@ class ReputationServiceTest extends LegacyPlayerFixtureTestCase
     #[DataProvider('titles')]
     public function testTitleThresholds(float $pr, string $title): void
     {
-        $this->assertSame($title, ReputationService::title($pr));
+        $this->assertSame($title, $this->reputation()->title($pr));
     }
 
     /** @return array<string, array{float, string}> */
@@ -171,9 +181,28 @@ class ReputationServiceTest extends LegacyPlayerFixtureTestCase
 
     public function testAFractionalGainReachesTheMilestone(): void
     {
-        $this->reputation()->add($this->playerWithStoredPr(48), ReputationService::PER_COOKIE);
+        $this->reputation()->add($this->playerWithStoredPr(48), 0.3);
 
         $this->assertSame(1, $this->rewards(), '4.8 → 5.1 PR');
+    }
+
+    public function testTheMilestoneFollowsTheSetting(): void
+    {
+        (new AdminSettingsService())->set(ReputationSettingsService::REWARD_EVERY, '2');
+
+        $this->reputation()->add($this->playerWithStoredPr(10), 1);
+
+        $this->assertSame(1, $this->rewards(), '1 → 2 PR, a reward every 2 PR');
+    }
+
+    public function testATitleAddedInTheAdminIsShown(): void
+    {
+        $settings = new ReputationSettingsService($this->link);
+        $settings->addTitle(60, 'Remarqué');
+        $this->titleId = (int) $this->link->fetchOne('SELECT id FROM reputation_titles WHERE threshold = 60');
+
+        $this->assertSame('Remarqué', $this->reputation()->title(60.0));
+        $this->assertSame('Connu', $this->reputation()->title(59.9));
     }
 
     public function testALossRewardsNothing(): void

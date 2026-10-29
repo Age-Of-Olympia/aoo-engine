@@ -46,13 +46,14 @@ final class PlayersTableView
 
         $n = 1;
         $raceService = new RaceService();
+        $reputation = new ReputationService();
 
         foreach($list as $player){
 
             $raceJson = $raceService->getRaceData($player->race);
 
             $pr = ReputationService::fromStored((int) $player->pr);
-            $reput = ReputationService::title($pr);
+            $reput = $reputation->title($pr);
 
             echo '
             <tr class="race-row" style="--race-bg: '. $raceJson->bgColor .'; color: '. $raceJson->color .'; background: '. $raceJson->bgColor .'">

@@ -14,7 +14,7 @@ echo '
 <div id="pr-wrapper" class="glow">
     Points de Réputation:<br />
     <span id="pr">0</span><br />
-    <span id="pr-text">'. ReputationService::title($targetPr) .'</span>
+    <span id="pr-text">'. (new ReputationService())->title($targetPr) .'</span>
 </div>
 <style>
 #filler{visibility: hidden;}

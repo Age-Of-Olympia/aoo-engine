@@ -17,29 +17,25 @@ final class ReputationService
     /** Stored units per PR. */
     private const SCALE = 10;
 
-    /** Gains, in PR. */
-    public const PER_POST = 1.0;
-    public const PER_COOKIE = 0.3;
-    public const PER_COOKIE_SAME_FACTION = 0.1;
-
-    /** A forum reward is drawn each time the balance reaches a multiple of this many PR. */
-    public const REWARD_EVERY = 5;
-
-    /** Lower bound (PR) of each title, highest first. */
-    private const TITLES = [
-        2500 => 'Divin',
-        1250 => 'Mythologique',
-        500 => 'Légendaire',
-        250 => 'Héroïque',
-        100 => 'Populaire',
-        25 => 'Connu',
-    ];
-
     private Connection $conn;
+    private ReputationSettingsService $settings;
 
-    public function __construct(?Connection $conn = null)
+    public function __construct(?Connection $conn = null, ?ReputationSettingsService $settings = null)
     {
         $this->conn = $conn ?? EntityManagerFactory::getEntityManager()->getConnection();
+        $this->settings = $settings ?? new ReputationSettingsService($this->conn);
+    }
+
+    /** What a forum post earns its author. */
+    public function perPost(): float
+    {
+        return $this->settings->perPost();
+    }
+
+    /** What a cookie earns the author of the post; less from a faction mate. */
+    public function perCookie(bool $sameFaction): float
+    {
+        return $sameFaction ? $this->settings->perCookieSameFaction() : $this->settings->perCookie();
     }
 
     /** A raw `players.pr` value (SQL rows, `$player->data->pr`, Character::getPr()) in PR. */
@@ -88,7 +84,7 @@ final class ReputationService
         });
 
         // Outside the transaction: the reward goes through the legacy connection
-        $step = self::REWARD_EVERY * self::SCALE;
+        $step = $this->settings->rewardEvery() * self::SCALE;
         for ($n = max(0, intdiv($before, $step)) + 1; $n * $step <= $before + $delta; $n++) {
             Forum::put_reward($playerId);
         }
@@ -105,14 +101,8 @@ final class ReputationService
         return (string) max(0, (int) floor($pr));
     }
 
-    public static function title(float $pr): string
+    public function title(float $pr): string
     {
-        foreach (self::TITLES as $threshold => $title) {
-            if ($pr >= $threshold) {
-                return $title;
-            }
-        }
-
-        return 'Inconnu';
+        return $this->settings->title($pr);
     }
 }

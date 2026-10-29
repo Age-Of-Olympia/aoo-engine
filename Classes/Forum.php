@@ -4,6 +4,7 @@ namespace Classes;
 use App\Factory\PlayerFactory;
 use App\Service\FactionService;
 use App\Service\ReputationService;
+use App\Service\ReputationSettingsService;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -335,7 +336,8 @@ class Forum{
         $forumJson = json()->decode('forum', 'forums/' . $topJson->forum_id);
 
         if($topJson->forum_id != 'Missives' && $forumJson->category_id != 'HRP'){
-            (new ReputationService())->add((int) $player->id, ReputationService::PER_POST);
+            $reputation = new ReputationService();
+            $reputation->add((int) $player->id, $reputation->perPost());
             $player->refresh_data();
             Forum::put_keywords($postId, $text);
         }
@@ -347,59 +349,23 @@ class Forum{
     }
 
 
-    /** A weighted draw among the rewards: 1 is the most frequent, 4 the rarest. */
-    private static function drawRandomReward(): int
-    {
-        // Define the rewards and their weights
-        $rewards = [1, 2, 3, 4];
-        $weights = [4, 2, 1.33, 1];
-
-        // Normalize the weights
-        $total_weight = array_sum($weights);
-        $normalized_weights = array_map(function($weight) use ($total_weight) {
-            return $weight / $total_weight;
-        }, $weights);
-
-        // Create cumulative weights
-        $cumulative_weights = [];
-        $cumulative_sum = 0;
-        foreach ($normalized_weights as $weight) {
-            $cumulative_sum += $weight;
-            $cumulative_weights[] = $cumulative_sum;
-        }
-
-        // Generate a random number between 0 and 1
-        $rand = mt_rand() / mt_getrandmax();
-
-        // Find the reward corresponding to the random number
-        foreach ($cumulative_weights as $index => $cumulative_weight) {
-            if ($rand < $cumulative_weight) {
-                return $rewards[$index];
-            }
-        }
-
-        // Fallback return (should not be reached)
-        return end($rewards);
-    }
-
-
     public static function put_reward(int $playerId): void{
 
 
-        $reward = self::drawRandomReward();
+        $reward = (new ReputationSettingsService())->drawRewardTier();
 
         $path = 'img/ui/forum/rewards/';
 
         $directory = File::get_random_directory($path);
 
-        $url = $path .'/'. $directory .'/'. $reward .'.png';
+        $url = $path .'/'. $directory .'/'. $reward['tier'] .'.png';
 
 
         $values = array(
             'from_player_id'=>$playerId,
             'to_player_id'=>$playerId,
             'img'=>$url,
-            'pr'=>$reward
+            'pr'=>$reward['pr']
         );
 
         $db = new Db();

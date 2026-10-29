@@ -3,6 +3,7 @@
 namespace App\View\Forum;
 use App\Factory\PlayerFactory;
 use App\Service\ForumCookieService;
+use App\Service\ReputationSettingsService;
 
 
 class CookieView
@@ -39,7 +40,7 @@ class CookieView
             $tooltip.=' - Vous êtes l\'auteur du message ';
         } else {            
             $postTimestamp = $postJson->name / 1000;
-            $sevenDaysAgo = time() - (MAX_DAYS_COOKIE_FORUM * 24 * 60 * 60);
+            $sevenDaysAgo = time() - ((new ReputationSettingsService())->cookieMaxDays() * 24 * 60 * 60);
 
             if ($postTimestamp < $sevenDaysAgo) { // Si post trop vieux, pas de possibilité de donner un cookie
                 echo ' <img class="give-cookie disable"

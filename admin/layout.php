@@ -48,6 +48,7 @@ function admin_nav_tree(): array
                 ['Cultes', '/admin/cults.php'],
                 ['Récompenses', '/admin/faith-rewards.php'],
             ]],
+            ['Réputation', '/admin/reputation.php'],
             ['Génération des cartes', [
                 ['Carte monde', '/admin/world_map.php'],
                 ['Cartes locales', '/admin/local_maps.php'],

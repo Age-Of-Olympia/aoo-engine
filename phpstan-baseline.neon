@@ -1712,12 +1712,6 @@ parameters:
 			path: src/Service/ForumCookieService.php
 
 		-
-			message: '#^Negated boolean expression is always false\.$#'
-			identifier: booleanNot.alwaysFalse
-			count: 1
-			path: src/Service/ForumCookieService.php
-
-		-
 			message: '#^Property App\\Service\\ForumCookieService\:\:\$entityManager has no type specified\.$#'
 			identifier: missingType.property
 			count: 1
@@ -3829,12 +3823,6 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 4
 			path: src/View/Forum/MissiveView.php
-
-		-
-			message: '#^Right side of \|\| is always true\.$#'
-			identifier: booleanOr.rightAlwaysTrue
-			count: 1
-			path: src/View/Forum/TopicView.php
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>text" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'

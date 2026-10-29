@@ -36,6 +36,8 @@ class AdminMenuAccessService
         'tutorial.settings'        => ['Tutoriel · Options', 'Tutoriel', self::LEVEL_ADMIN],
         'faith.cults'              => ['Foi · Cultes', 'Foi', self::LEVEL_SUPERADMIN],
         'faith.rewards'            => ['Foi · Récompenses', 'Foi', self::LEVEL_SUPERADMIN],
+        // Game balance: what posts and cookies are worth, the titles
+        'reputation.settings'      => ['Réputation', 'Réputation', self::LEVEL_SUPERADMIN],
 
         'maps.world'               => ['Cartes · Carte monde', 'Cartes', self::LEVEL_ADMIN],
         // Creating and deleting plans is destructive
@@ -133,6 +135,8 @@ class AdminMenuAccessService
         'tutorial-settings.php'    => 'tutorial.settings',
         'cults.php'                => 'faith.cults',
         'faith-rewards.php'        => 'faith.rewards',
+        'reputation.php'           => 'reputation.settings',
+        'reputation-save.php'      => 'reputation.settings',
         'world_map.php'            => 'maps.world',
         'plans.php'                => 'maps.plans',
         'plans-save.php'           => 'maps.plans',

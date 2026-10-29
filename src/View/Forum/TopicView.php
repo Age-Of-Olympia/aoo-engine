@@ -12,6 +12,7 @@ use App\Service\FactionService;
 use App\Service\PlayerService;
 use App\Service\RaceService;
 use App\Service\ReputationService;
+use App\Service\ReputationSettingsService;
 use App\View\InfosView;
 use App\View\MenuView;
 use App\View\Forum\CookieView;
@@ -280,6 +281,8 @@ class TopicView
     ): int|string {
         $raceService = new RaceService();
         $factionService = new FactionService();
+        $reputation = new ReputationService();
+        $missiveCookies = (new ReputationSettingsService())->missiveCookies();
 
         $lastRenderedPost = 0;
 
@@ -335,7 +338,7 @@ class TopicView
             $raceJson = $raceService->getRaceData($author->data->race);
             $pnjText = $author->id < 0 ? ' - PNJ' : '';
 
-            echo '<div class="post-author-meta" style="font-size: 88%;"><i>' . $raceJson->name . $pnjText . ' - <a href="infos.php?targetId=' . $author->id . '&reputation">' . ReputationService::title(ReputationService::fromStored((int) $author->data->pr)) . '</a> Rang ' . $author->data->rank . '</i></div>';
+            echo '<div class="post-author-meta" style="font-size: 88%;"><i>' . $raceJson->name . $pnjText . ' - <a href="infos.php?targetId=' . $author->id . '&reputation">' . $reputation->title(ReputationService::fromStored((int) $author->data->pr)) . '</a> Rang ' . $author->data->rank . '</i></div>';
 
 
 
@@ -488,7 +491,7 @@ class TopicView
 
             echo '
                 </div>';
-                 if (!$readOnly && ($topJson->forum_id != 'Missives' || ENABLE_NO_PR_COOKIES_IN_MISSIVES)) {
+                 if (!$readOnly && ($topJson->forum_id != 'Missives' || $missiveCookies)) {
                      CookieView::displayCookieView($postJson,$player);
                 }
                 
