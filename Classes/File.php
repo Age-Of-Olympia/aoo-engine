@@ -1,6 +1,7 @@
 <?php
 namespace Classes;
 
+use App\Service\ReputationService;
 use DirectoryIterator;
 
 class File{
@@ -185,7 +186,7 @@ class File{
         }
 
 
-        $max = floor($player->data->pr/COEFFICIENT_PR);
+        $max = (int) ReputationService::format(ReputationService::fromStored((int) $player->data->pr));
 
         if(\App\Service\AdminAuthorizationService::isAdmin()){
 

@@ -59,11 +59,10 @@ class ForumCookieService
         else {
             $author = new Player($postJson->author);
             $player = new Player($playerId);
-            if ($author->check_share_factions(($player))) {
-                $author->put_pr(PR_PER_COOKIE_SAME_FACTION);
-            } else {
-                $author->put_pr(PR_PER_COOKIE);
-            }
+            (new ReputationService())->add(
+                (int) $author->id,
+                $author->check_share_factions($player) ? ReputationService::PER_COOKIE_SAME_FACTION : ReputationService::PER_COOKIE
+            );
         }
         
         $this->create($playerId,$postName);        

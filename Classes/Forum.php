@@ -3,6 +3,7 @@ namespace Classes;
 
 use App\Factory\PlayerFactory;
 use App\Service\FactionService;
+use App\Service\ReputationService;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -73,9 +74,7 @@ class Forum{
         }
 
 
-        $target = PlayerFactory::legacy((int) $postJson->author);
-
-        $target->put_pr($reward->pr*COEFFICIENT_PR);
+        (new ReputationService())->add((int) $postJson->author, (float) $reward->pr);
 
 
         $postJson->rewards[] = (object) $reward;
@@ -336,7 +335,8 @@ class Forum{
         $forumJson = json()->decode('forum', 'forums/' . $topJson->forum_id);
 
         if($topJson->forum_id != 'Missives' && $forumJson->category_id != 'HRP'){
-            $player->put_pr(PR_PER_POST);
+            (new ReputationService())->add((int) $player->id, ReputationService::PER_POST);
+            $player->refresh_data();
             Forum::put_keywords($postId, $text);
         }
         
@@ -383,7 +383,7 @@ class Forum{
     }
 
 
-    public static function put_reward($player){
+    public static function put_reward(int $playerId): void{
 
 
         $reward = self::drawRandomReward();
@@ -396,8 +396,8 @@ class Forum{
 
 
         $values = array(
-            'from_player_id'=>$player->id,
-            'to_player_id'=>$player->id,
+            'from_player_id'=>$playerId,
+            'to_player_id'=>$playerId,
             'img'=>$url,
             'pr'=>$reward
         );

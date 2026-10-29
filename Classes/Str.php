@@ -156,27 +156,6 @@ class Str{
     }
 
 
-    public static function get_reput($pr){
-
-        if( $pr < 25 )
-            $rank = "Inconnu";
-        elseif( $pr < 100 )
-            $rank = "Connu";
-        elseif( $pr < 250 )
-            $rank = "Populaire";
-        elseif( $pr < 500 )
-            $rank = "Héroïque";
-        elseif( $pr < 1250 )
-            $rank = "Légendaire";
-        elseif( $pr < 2500 )
-            $rank = "Mythologique";
-        else
-            $rank = "Divin";
-
-        return $rank;
-    }
-
-
     public static function check_name( $str ){
 
         if(trim($str) == '') return false;

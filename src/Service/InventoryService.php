@@ -222,8 +222,9 @@ class InventoryService
                     if ((int) $qte === 0) {
                         break;
                     }
-                    $player->put_pr($qte*COEFFICIENT_PR);
-                    $details[] = sprintf('%+d PR', $qte*COEFFICIENT_PR);
+                    (new ReputationService())->add((int) $player->id, (float) $qte);
+                    $player->refresh_data();
+                    $details[] = sprintf('%+d PR', $qte);
                     break;
 
                 case "pf":

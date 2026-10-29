@@ -971,38 +971,6 @@ class Player implements ActorInterface {
     }
 
 
-    public function put_pr($pr){
-
-
-        if(!isset($this->data)){
-
-            $this->get_data();
-        }
-
-        if ($this->data->pr < $this->data->pr+$pr){
-
-            // From pr + 1: the milestone the player stands on was rewarded when reached
-            for($n=$this->data->pr+1; $n<=$this->data->pr+$pr; $n++){
-                
-                if($n %50 == 0){
-
-                    Forum::put_reward($this);
-                }
-            }
-        }
-
-
-        $sql = 'UPDATE players SET pr = pr + ? WHERE id = ?';
-
-        $db = new Db();
-
-        $db->exe($sql, array($pr, $this->id));
-
-
-        $this->refresh_data();
-    }
-
-
     public function put_kill($target, $xp, $assist=0, $is_inactive=0){
 
 

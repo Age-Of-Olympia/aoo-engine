@@ -8,6 +8,7 @@ use App\Service\AccountService;
 use App\Service\PlayerService;
 use App\Service\ProgressionService;
 use App\Service\RaceService;
+use App\Service\ReputationService;
 use App\View\Entity\EntityParts;
 use App\View\Entity\EntityProfile;
 use Classes\Item;
@@ -90,7 +91,7 @@ final class InfosSheetView
             && PlayerService::isInactiveSince((new AccountService())->lastLoginOf($targetEntity->getId()));
         $inactifText = ($targetEntity->getId() > 0 && $isInactive) ? ' (inactif)' : '';
 
-        echo '<div>' . $raceJson->name . $pnjText . $inactifText . ' - <a href="infos.php?targetId=' . $targetEntity->getId() . '&reputation">' . Str::get_reput(floor($targetEntity->getPr() / COEFFICIENT_PR)) . '</a> Rang ' . (new ProgressionService())->of([$targetEntity->getId()])[$targetEntity->getId()]['rank'] . ' <span style="opacity: 0.6; font-size: 88%; white-space: nowrap;">· mat. ' . $targetEntity->getDisplayId() . '</span></div>';
+        echo '<div>' . $raceJson->name . $pnjText . $inactifText . ' - <a href="infos.php?targetId=' . $targetEntity->getId() . '&reputation">' . ReputationService::title(ReputationService::fromStored($targetEntity->getPr())) . '</a> Rang ' . (new ProgressionService())->of([$targetEntity->getId()])[$targetEntity->getId()]['rank'] . ' <span style="opacity: 0.6; font-size: 88%; white-space: nowrap;">· mat. ' . $targetEntity->getDisplayId() . '</span></div>';
 
 
         echo EntityParts::factionLinesHtml($profile);

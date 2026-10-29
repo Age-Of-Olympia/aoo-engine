@@ -11,6 +11,7 @@ use App\Service\AdminMenuAccessService;
 use App\Service\FactionService;
 use App\Service\PlayerService;
 use App\Service\RaceService;
+use App\Service\ReputationService;
 use App\View\InfosView;
 use App\View\MenuView;
 use App\View\Forum\CookieView;
@@ -334,7 +335,7 @@ class TopicView
             $raceJson = $raceService->getRaceData($author->data->race);
             $pnjText = $author->id < 0 ? ' - PNJ' : '';
 
-            echo '<div class="post-author-meta" style="font-size: 88%;"><i>' . $raceJson->name . $pnjText . ' - <a href="infos.php?targetId=' . $author->id . '&reputation">' . Str::get_reput(floor($author->data->pr/COEFFICIENT_PR)) . '</a> Rang ' . $author->data->rank . '</i></div>';
+            echo '<div class="post-author-meta" style="font-size: 88%;"><i>' . $raceJson->name . $pnjText . ' - <a href="infos.php?targetId=' . $author->id . '&reputation">' . ReputationService::title(ReputationService::fromStored((int) $author->data->pr)) . '</a> Rang ' . $author->data->rank . '</i></div>';
 
 
 

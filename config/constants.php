@@ -127,18 +127,9 @@ define('ONE_HOUR', 3600);
 define('INACTIVE_TIME', ONE_WEEK);
 // Nombre de jours pendant lesquels c'est autorisé de donner un cookie sur un post
 define('MAX_DAYS_COOKIE_FORUM', 14);
-// nombre de PR par post (1PR=10)
-define('PR_PER_POST', 10);
-// nombre de PR par post (1PR=10)
-define('PR_PER_COOKIE', 3);
-// nombre de PR par post (1PR=10)
-define('PR_PER_COOKIE_SAME_FACTION', 1);
 //active les cookie dans les missives
 define('ENABLE_NO_PR_COOKIES_IN_MISSIVES', TRUE);
 
-
-// Coefficient de division en base pour affichage
-define('COEFFICIENT_PR', 10);
 
 define('DAYS_OF_WEEK', array(
     'Dimanche',

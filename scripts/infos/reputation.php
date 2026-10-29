@@ -1,16 +1,20 @@
 <?php
-use Classes\Str;
+use App\Service\ReputationService;
 use Classes\Db;
 
 /* L'enveloppe Ui vit dans le contrôleur : infos.php la crée, le
  * fragment load_infos.php (panneau HUD) inclut ce corps tel quel. */
+
+$targetPr = ReputationService::fromStored((int) $target->data->pr);
+// Whole PR the counter climbs to: 0.2 PR shows 0, the title straight away
+$shownPr = (int) ReputationService::format($targetPr);
 
 echo '<div><a href="infos.php?targetId='. $target->id .'"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 echo '
 <div id="pr-wrapper" class="glow">
     Points de Réputation:<br />
     <span id="pr">0</span><br />
-    <span id="pr-text">'. Str::get_reput(floor($target->data->pr/COEFFICIENT_PR)) .'</span>
+    <span id="pr-text">'. ReputationService::title($targetPr) .'</span>
 </div>
 <style>
 #filler{visibility: hidden;}
@@ -44,7 +48,7 @@ echo '
 
     var interval = setInterval(function () {
 
-        <?php if(!$target->data->pr): ?>
+        <?php if($shownPr === 0): ?>
 
         $('#pr-text').fadeIn('slow');
 
@@ -60,7 +64,7 @@ echo '
         $badge.html(value);
 
 
-        if( value == <?php echo floor($target->data->pr/COEFFICIENT_PR) ?> ){
+        if( value >= <?php echo $shownPr ?> ){
 
             $('#pr-text').fadeIn('slow');
 

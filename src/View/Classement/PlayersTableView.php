@@ -3,7 +3,7 @@
 namespace App\View\Classement;
 
 use App\Service\RaceService;
-use Classes\Str;
+use App\Service\ReputationService;
 
 /**
  * Table de classement des joueurs — l'ex-fonction globale
@@ -51,7 +51,8 @@ final class PlayersTableView
 
             $raceJson = $raceService->getRaceData($player->race);
 
-            $reput = Str::get_reput(floor($player->pr/COEFFICIENT_PR));
+            $pr = ReputationService::fromStored((int) $player->pr);
+            $reput = ReputationService::title($pr);
 
             echo '
             <tr class="race-row" style="--race-bg: '. $raceJson->bgColor .'; color: '. $raceJson->color .'; background: '. $raceJson->bgColor .'">
@@ -69,7 +70,7 @@ final class PlayersTableView
                 }
                 elseif(isset($list[0]->showReput)){
 
-                    echo '<td align="center">'. floor($player->pr/COEFFICIENT_PR) .'</td>';
+                    echo '<td align="center">'. ReputationService::format($pr) .'</td>';
                 }
 
                 echo '
