@@ -9,9 +9,7 @@ use App\Service\RaceService;
 
 const CULTS_PER_PAGE = 50;
 
-/** @param array{id:int,name:string,player_type:string,x:int,y:int,z:int,plan:string}|null $god
- *  @param array<string, string> $plans
- */
+/** @param list<array{id:int,name:string,race:string}> $candidates */
 function cult_render_form(array $candidates, string $csrfToken): string
 {
     $options = '<option value="">— Choisir un PNJ —</option>';
