@@ -25,7 +25,15 @@ handleAdminPost($redirect, static function () use ($action, $id): string {
         return "Culte retiré. {$removed['followers']} fidèle(s) ont perdu leurs PF ; {$removed['altars']} autel(s) désaffilié(s).";
     }
 
-    $name = trim((string) ($_POST['name'] ?? ''));
+    if ($action === 'add') {
+        $pnjId = (int) ($_POST['pnj_id'] ?? 0);
+        if ($pnjId === 0) {
+            throw new InvalidArgumentException('Veuillez sélectionner un PNJ.');
+        }
+        $service->addCult($pnjId);
+        return "Le PNJ #{$pnjId} peut désormais être prié.";
+    }
+
     foreach (['x', 'y', 'z'] as $coordinate) {
         if (!isset($_POST[$coordinate]) || !is_numeric($_POST[$coordinate])) {
             throw new InvalidArgumentException('Les coordonnées X, Y et Z sont obligatoires.');
@@ -36,14 +44,11 @@ handleAdminPost($redirect, static function () use ($action, $id): string {
     $z = (int) $_POST['z'];
     $plan = trim((string) ($_POST['plan'] ?? ''));
 
-    if ($action === 'add') {
-        $newId = $service->create($name, $x, $y, $z, $plan);
-        return "Culte « {$name} » créé (matricule #{$newId}).";
-    }
     if ($action === 'edit') {
         if ($id === 0) {
             throw new InvalidArgumentException('Matricule du dieu manquant.');
         }
+        $name = trim((string) ($_POST['name'] ?? ''));
         $service->update($id, $name, $x, $y, $z, $plan);
         return "Divinité #{$id} enregistrée.";
     }

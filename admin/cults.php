@@ -12,29 +12,30 @@ const CULTS_PER_PAGE = 50;
 /** @param array{id:int,name:string,player_type:string,x:int,y:int,z:int,plan:string}|null $god
  *  @param array<string, string> $plans
  */
-function cult_render_form(?array $god, array $plans, string $csrfToken): string
+function cult_render_form(array $candidates, string $csrfToken): string
 {
-    $isEdit = $god !== null;
-    $plan = $isEdit ? (string) $god['plan'] : (string) (array_key_first($plans) ?? '');
-    $position = $isEdit ? $god : ['x' => 0, 'y' => 0, 'z' => 0];
-    $form = '<form method="post" action="/admin/cults-save.php" class="row g-2">'
+    $options = '<option value="">— Choisir un PNJ —</option>';
+    foreach ($candidates as $candidate) {
+        $options .= '<option value="' . (int) $candidate['id'] . '" data-race="' . e($candidate['race']) . '">'
+            . e($candidate['name']) . ' (#' . (int) $candidate['id'] . ' · ' . e($candidate['race']) . ')</option>';
+    }
+    $form = '<form method="post" action="/admin/cults-save.php" class="row g-2" id="cult-add-form">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
-        . '<input type="hidden" name="action" value="' . ($isEdit ? 'edit' : 'add') . '">'
-        . ($isEdit ? '<input type="hidden" name="id" value="' . (int) $god['id'] . '">' : '')
-        . '<div class="col-md-4"><label class="form-label">Nom du dieu</label>'
-        . '<input type="text" name="name" class="form-control" maxlength="255" required value="'
-        . e($isEdit ? (string) $god['name'] : '') . '"></div>'
-        . '<div class="col-md-1"><label class="form-label">X</label><input type="number" name="x" class="form-control" required value="' . (int) $position['x'] . '"></div>'
-        . '<div class="col-md-1"><label class="form-label">Y</label><input type="number" name="y" class="form-control" required value="' . (int) $position['y'] . '"></div>'
-        . '<div class="col-md-1"><label class="form-label">Z</label><input type="number" name="z" class="form-control" required value="' . (int) $position['z'] . '"></div>'
-        . '<div class="col-md-3"><label class="form-label">Plan</label>'
-        . formSelect('plan', $plans, $plan, null, 'class="form-control" required') . '</div>'
-        . '<div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary" type="submit">'
-        . ($isEdit ? 'Enregistrer' : 'Ajouter le culte') . '</button></div>'
+        . '<input type="hidden" name="action" value="add">'
+        . '<div class="col-md-6"><label class="form-label" for="cult-npc">PNJ</label>'
+        . '<select name="pnj_id" id="cult-npc" class="form-control" required>' . $options . '</select></div>'
+        . '<div class="col-md-4 d-flex align-items-end"><label class="form-check-label">'
+        . '<input type="checkbox" class="form-check-input" id="cult-all-races"> Inclure les autres races</label></div>'
+        . '<div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary" type="submit">Ajouter le culte</button></div>'
         . '</form>';
 
-    return '<div class="card mb-4"><div class="card-header">' . ($isEdit ? 'Éditer la divinité' : 'Ajouter un culte')
-        . '</div><div class="card-body">' . $form . '</div></div>';
+    $script = '<script>(function(){const check=document.getElementById("cult-all-races");const select=document.getElementById("cult-npc");'
+        . 'function filter(){let selected=select.value;Array.from(select.options).forEach(function(option){if(!option.value)return;'
+        . 'const visible=check.checked||option.dataset.race==="dieu";option.hidden=!visible;option.disabled=!visible;});'
+        . 'if(select.selectedOptions.length&&select.selectedOptions[0].disabled)select.value="";else if(selected)select.value=selected;}'
+        . 'check.addEventListener("change",filter);filter();})();</script>';
+
+    return '<div class="card mb-4"><div class="card-header">Ajouter un culte</div><div class="card-body">' . $form . '</div></div>' . $script;
 }
 
 /**
@@ -73,7 +74,7 @@ function cult_render_list(array $gods, string $csrfToken, array $planLabels): st
     $rows = '';
     foreach ($gods as $god) {
         $id = (int) $god['id'];
-        $actions = '<a class="btn btn-sm btn-outline-primary" href="/admin/cults.php?action=edit&amp;id=' . $id . '">Éditer</a> '
+        $actions = '<a class="btn btn-sm btn-outline-primary" href="/admin/pnjs.php?action=edit&amp;id=' . $id . '">Gérer</a> '
             . '<a class="btn btn-sm btn-outline-secondary" href="/admin/cults.php?action=view&amp;id=' . $id . '">Consulter</a> '
             . '<form method="post" action="/admin/cults-save.php" class="d-inline" data-confirm="'
             . e('Retirer ' . $god['name'] . ' #' . $id . ' ? Ses fidèles perdront leur dieu et tous leurs PF ; les autels seront désaffiliés.') . '">'
@@ -128,17 +129,19 @@ $planLabels = array_intersect_key(plan_choices(), array_flip($plans));
 $action = (string) ($_GET['action'] ?? '');
 $id = (int) ($_GET['id'] ?? 0);
 
-if ($action === 'edit' || $action === 'view') {
+if ($action === 'edit') {
+    redirectTo('/admin/pnjs.php?action=edit&id=' . $id);
+}
+
+if ($action === 'view') {
     $god = $service->getGod($id);
     if ($god === null) {
         setFlash('warning', "Aucun culte pour le dieu #{$id}.");
         redirectTo('/admin/cults.php');
     }
-    $content = $action === 'edit'
-        ? cult_render_form($god, $planLabels, $csrfToken)
-        : cult_render_details($service, $god, $planLabels);
+    $content = cult_render_details($service, $god, $planLabels);
     echo admin_layout(
-        ($action === 'edit' ? 'Éditer · ' : 'Consulter · ') . e($god['name']) . ' <span class="text-muted">#' . $id . '</span>',
+        'Consulter · ' . e($god['name']) . ' <span class="text-muted">#' . $id . '</span>',
         $content,
         ['back' => ['/admin/cults.php', 'Cultes']]
     );
@@ -153,7 +156,7 @@ $page = max(1, (int) ($_GET['page'] ?? 1));
 $total = $service->countGods($filters);
 $pages = max(1, (int) ceil($total / CULTS_PER_PAGE));
 $page = min($page, $pages);
-$content = cult_render_form(null, $planLabels, $csrfToken)
+$content = cult_render_form($service->cultCandidates(true), $csrfToken)
     . cult_render_filters($filters, $plans, $total)
     . cult_render_list($service->listGods($filters, CULTS_PER_PAGE, ($page - 1) * CULTS_PER_PAGE), $csrfToken, $planLabels);
 if ($pages > 1) {

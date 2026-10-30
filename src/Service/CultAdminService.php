@@ -27,6 +27,48 @@ final class CultAdminService
         ));
     }
 
+    /** @return list<array{id:int,name:string,race:string}> */
+    public function cultCandidates(bool $includeOtherRaces = false): array
+    {
+        $raceFilter = $includeOtherRaces ? '' : " AND p.race = 'dieu'";
+        return array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'],
+            'name' => (string) $row['name'],
+            'race' => (string) $row['race'],
+        ], $this->connection->fetchAllAssociative(
+            "SELECT p.id, p.name, p.race
+               FROM players p
+              WHERE p.player_type = 'npc'{$raceFilter}
+                AND NOT EXISTS (
+                    SELECT 1 FROM players_options o
+                     WHERE o.player_id = p.id AND o.name = 'prayable'
+                )
+              ORDER BY p.name, p.id"
+        ));
+    }
+
+    public function addCult(int $npcId): void
+    {
+        $npc = $this->connection->fetchAssociative(
+            "SELECT p.id, p.name
+               FROM players p
+              WHERE p.id = ? AND p.player_type = 'npc'
+                AND NOT EXISTS (
+                    SELECT 1 FROM players_options o
+                     WHERE o.player_id = p.id AND o.name = 'prayable'
+                )",
+            [$npcId]
+        );
+        if ($npc === false) {
+            throw new \InvalidArgumentException('Ce PNJ est introuvable ou possède déjà un culte.');
+        }
+
+        (new PlayerOptionsService())->addOption($npcId, 'prayable');
+        PlayerOptionsService::resetCache($npcId);
+        BoardChanges::viewer($npcId);
+        (new AuditService())->addAuditLog("CultAdminService::addCult #{$npcId} '{$npc['name']}'");
+    }
+
     /** @param array{plan?: string, q?: string} $filters
      *  @return list<array{id:int,name:string,player_type:string,x:int,y:int,z:int,plan:string}>
      */
@@ -71,7 +113,7 @@ final class CultAdminService
             "SELECT p.id, p.name, p.player_type, c.x, c.y, c.z, c.plan
                FROM players p
                JOIN coords c ON c.id = p.coords_id
-              WHERE p.id = ? AND p.race = 'dieu' AND {$this->prayableSql()}",
+              WHERE p.id = ? AND {$this->prayableSql()}",
             [$id]
         );
 
@@ -236,7 +278,7 @@ final class CultAdminService
      */
     private function filterSql(array $filters): array
     {
-        $clauses = ["p.race = 'dieu'", $this->prayableSql()];
+        $clauses = [$this->prayableSql()];
         $params = [];
         if (($filters['plan'] ?? '') !== '') {
             $clauses[] = 'c.plan = ?';
