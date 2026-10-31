@@ -51,7 +51,8 @@ $buttonClass = '';
  * « Oublier » vit sur chaque ligne. */
 $maxColSpan = 9;
 
-$nbComp = SkillPrerequisiteService::forPlayer($player->getId())->capCount();
+$skillPrerequisites = SkillPrerequisiteService::forPlayer($player->getId());
+$nbComp = $skillPrerequisites->capCount();
 $numberOfSpellsAvailable = NUMBER_MAX_COMP - $nbComp;
 $maxSpells = NUMBER_MAX_COMP;
 
@@ -66,6 +67,7 @@ if($numberOfSpellsAvailable < 0){
     echo '<p style="color: black; text-align: center; margin: 6px 0; font-family: sans-serif; font-size: 1.05em;">Compétences apprises : '. $nbComp .'/'. $maxSpells .' (sorts + passifs cumulés)</p>';
 }
 
+echo '<style>.spell-row-muted>td:not(.item-actions){opacity:.45;filter:grayscale(1)}</style>';
 echo '<table class="box-shadow marbre" border="1" cellspacing="0" align="center">';
 echo '<tr><th colspan="'.$maxColSpan.'">Sorts et Techniques Possédés</th></tr>';
 
@@ -89,6 +91,14 @@ foreach($ownedSpells as $e){
         continue;
     }
 
+    $spellUsable = $grantedBy !== null
+        || !in_array($e, $spellList, true)
+        || $skillPrerequisites->areOwnedActionPrerequisitesMet($spell);
+    $spellRowClass = (!$spellUsable || $trStyle !== '') ? ' class="spell-row-muted"' : '';
+    $spellRowTitle = !$spellUsable
+        ? ' title="Pré-requis ou emplacement de sort manquant"'
+        : '';
+
     $img = (file_exists('img/spells/'.$e.'.jpeg') ? 'img/spells/'. $e .'.jpeg' : 'img/spells/todo.jpeg');
 
     $cost = $costView->forAction($spell);
@@ -100,20 +110,30 @@ foreach($ownedSpells as $e){
 
     $outcomeInstructionService = new OutcomeInstructionService();
 
-    // getOutcomeInstructionByTypeByOutcome renvoie un tableau d'instructions : on lit les params du premier
-    $instructionLifeLoss = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome("LifeLossOutcomeInstruction", $outcomes[0]->getId());
-    if (!empty($instructionLifeLoss)) {
-        $instructionParameters = $instructionLifeLoss[0]->getParameters();
-        if (isset($instructionParameters['bonusDamagesTrait'])) {
-            $bonusDamages = $instructionParameters['bonusDamagesTrait'];
+    // Some catalogue entries have no success outcome (for example, utility spells).
+    $firstOutcome = $outcomes[0] ?? null;
+    if ($firstOutcome !== null) {
+        // getOutcomeInstructionByTypeByOutcome returns a list; read the first instruction's parameters.
+        $instructionLifeLoss = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome(
+            'LifeLossOutcomeInstruction',
+            $firstOutcome->getId()
+        );
+        if (!empty($instructionLifeLoss)) {
+            $instructionParameters = $instructionLifeLoss[0]->getParameters();
+            if (isset($instructionParameters['bonusDamagesTrait'])) {
+                $bonusDamages = $instructionParameters['bonusDamagesTrait'];
+            }
         }
-    }
 
-    $instructionHealing = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome("HealingOutcomeInstruction", $outcomes[0]->getId());
-    if (!empty($instructionHealing)) {
-        $instructionParameters = $instructionHealing[0]->getParameters();
-        if (isset($instructionParameters['bonusHealingTrait'])) {
-            $bonusHeal = $instructionParameters['bonusHealingTrait'];
+        $instructionHealing = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome(
+            'HealingOutcomeInstruction',
+            $firstOutcome->getId()
+        );
+        if (!empty($instructionHealing)) {
+            $instructionParameters = $instructionHealing[0]->getParameters();
+            if (isset($instructionParameters['bonusHealingTrait'])) {
+                $bonusHeal = $instructionParameters['bonusHealingTrait'];
+            }
         }
     }
 
@@ -187,7 +207,7 @@ foreach($ownedSpells as $e){
     }
 
     echo '
-    <tr '. $trStyle .'>
+    <tr'. $spellRowClass . $spellRowTitle .'>
         <td valign="top" width="50">
             <img src="'. $img .'" width="50" />
         </td>

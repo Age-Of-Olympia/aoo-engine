@@ -121,9 +121,15 @@ $action = ActionFactory::getAction($_POST["action"]);
  * câblé produisait donc une attaque de mêlée au lieu d'une erreur —
  * un fourre-tout silencieux, et le contraire de ce qu'on veut d'un
  * point d'entrée qui exécute des actions de jeu. */
-if ($action == null) {
+if (!$action instanceof \App\Entity\Action) {
 
     exit('Action inconnue.');
+}
+
+$ownedActionTypes = (new \App\Service\PlayerActionsService())->getActionsWithType($player->getId());
+if (($ownedActionTypes[$action->getName()] ?? '') === 'sort'
+    && !\App\Service\WarSchool\SkillPrerequisiteService::forPlayer($player->getId())->areOwnedActionPrerequisitesMet($action)) {
+    exit('Les pré-requis de cette compétence ne sont plus remplis.');
 }
 
 try {

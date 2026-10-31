@@ -236,6 +236,8 @@ final class EntityCardView
         $actionTargeting = new ActionTargeting();
         $actionService->preload($player->get_actions());
         $actions = self::sortActionsByCategory($player, $player->get_actions(), $actionService);
+        $actionTypes = (new \App\Service\PlayerActionsService())->getActionsWithType($player->getId());
+        $prerequisites = \App\Service\WarSchool\SkillPrerequisiteService::forPlayer($player->getId());
 
         $html = '';
         foreach ($actions as $actionName) {
@@ -244,8 +246,18 @@ final class EntityCardView
                 continue;
             }
 
-            if (self::isDisplayable($player, $target, $actionData, $actionTargeting)) {
-                $html .= self::buildActionToDisplay($target, $actionData, $actionService, actor: $player);
+            $isLearnedSkill = ($actionTypes[$actionName] ?? '') === 'sort';
+            $prerequisitesMet = !$isLearnedSkill || $prerequisites->areOwnedActionPrerequisitesMet($actionData);
+            $targetable = self::isDisplayable($player, $target, $actionData, $actionTargeting);
+
+            if ($targetable) {
+                $html .= self::buildActionToDisplay(
+                    $target,
+                    $actionData,
+                    $actionService,
+                    actor: $player,
+                    usable: $prerequisitesMet
+                );
             }
         }
 
@@ -437,7 +449,7 @@ final class EntityCardView
     }
 
     /** Un bouton d'action du panneau (coût en info-bulle, coords de la cible). */
-    private static function buildActionToDisplay(ActorInterface $target, Action $action, ActionService $actionService, ?string $nameOverride = null, ?ActorInterface $actor = null): string
+    private static function buildActionToDisplay(ActorInterface $target, Action $action, ActionService $actionService, ?string $nameOverride = null, ?ActorInterface $actor = null, bool $usable = true): string
     {
         if ($action->getName() === 'donner' && $target instanceof Player && $actor instanceof Player) {
             $incomingProposal = (new PlayerExchangeService())->hasIncomingValidatedProposal($actor, $target);
@@ -473,7 +485,8 @@ final class EntityCardView
         }
 
         return '<button
-                class="action"
+                class="action' . ($usable ? '' : ' action--unusable') . '"
+                ' . ($usable ? '' : 'disabled title="Action indisponible, les pré-requis ne sont pas remplis" style="opacity:.45;filter:grayscale(1);cursor:not-allowed"') . '
                 data-coords-x="' . $target->getCoords()->x . '"
                 data-coords-y="' . $target->getCoords(refresh:false)->y . '"
                 data-coords-z="' . $target->getCoords(refresh:false)->z . '"

@@ -29,6 +29,22 @@ class PlayerPassiveService
 
     public function getPassivesByPlayerId(int $playerId): array
     {
+        $passives = $this->getLearnedPassivesByPlayerId($playerId);
+        if ($passives === []) {
+            return [];
+        }
+
+        $prerequisites = \App\Service\WarSchool\SkillPrerequisiteService::forPlayer($playerId);
+
+        return array_values(array_filter(
+            $passives,
+            static fn (ActionPassive $passive): bool => $prerequisites->areOwnedPassivePrerequisitesMet($passive)
+        ));
+    }
+
+    /** @return list<ActionPassive> All learned passives, including those currently locked by lost prerequisites. */
+    public function getLearnedPassivesByPlayerId(int $playerId): array
+    {
         $repo = $this->entityManager->getRepository(PlayerPassive::class);
         $load = fn(): array => $repo->findBy(['playerId' => $playerId]);
         $results = QueryCache::remember(['players_passives'], 'passives:' . $playerId, $load);
@@ -62,6 +78,11 @@ class PlayerPassiveService
         ]);
 
         if ($result === null) {
+            return 0;
+        }
+
+        $prerequisites = \App\Service\WarSchool\SkillPrerequisiteService::forPlayer($playerId);
+        if (!$prerequisites->owns($result->getName()) || !$prerequisites->areOwnedPassivePrerequisitesMet($result)) {
             return 0;
         }
 
@@ -100,6 +121,10 @@ class PlayerPassiveService
     {
         $passive = $this->entityManager->getRepository(ActionPassive::class)->findOneBy(['name' => $name]);
         if ($passive === null || !$this->hasPassiveByPlayerId($playerId, $passive->getId())) {
+            return false;
+        }
+        $prerequisites = \App\Service\WarSchool\SkillPrerequisiteService::forPlayer($playerId);
+        if (!$prerequisites->areOwnedPassivePrerequisitesMet($passive)) {
             return false;
         }
         $this->markTriggered($passive);

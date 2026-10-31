@@ -112,10 +112,12 @@ final class SkillTreeView
             . '.ws-content .ws-level-head.ws-locked{color:#888}'
             . '.ws-content .ws-level-head.ws-open{border-left:4px solid #27ae60}'
             . '.ws-content .ws-gate{font-size:.85em}'
+            . '.ws-content .ws-gate.ws-ko{color:#c0392b;font-weight:bold}'
             . '.ws-content .ws-card{display:flex;gap:8px;padding:6px;border-radius:5px;border:2px solid rgba(0,0,0,.15);background:rgba(255,255,255,.35)}'
             . '.ws-content .ws-card img{width:48px;height:48px;flex:none;border-radius:4px}'
             . '.ws-content .ws-card-body{display:flex;flex-direction:column;gap:3px;min-width:0}'
             . '.ws-content .ws-card.ws-owned{border-color:#27ae60;background:rgba(39,174,96,.12)}'
+            . '.ws-content .ws-card.ws-disabled{opacity:.48;filter:grayscale(1)}'
             . '.ws-content .ws-card.ws-open{border-color:#2980b9;border-style:dashed}'
             . '.ws-content .ws-card.ws-locked{opacity:.55}'
             . '.ws-content .ws-state{font-size:.8em;text-transform:uppercase;letter-spacing:.05em;padding:1px 6px;border-radius:9px;color:#fff;background:#888}'
@@ -236,19 +238,25 @@ final class SkillTreeView
     private function levelHead(SkillTab $tab, int $level, SkillPrerequisiteService $prereqs): string
     {
         $open = $prereqs->isLevelOpen($tab->category, $level);
+        $gateFailed = false;
 
         if ($tab->spells) {
-            $gate = 'Emplacements : ' . $prereqs->spellCountAt($level) . '/' . $prereqs->spellSlotsAt($level);
+            $count = $prereqs->spellCountAt($level);
+            $slots = $prereqs->spellSlotsAt($level);
+            $gateFailed = $count > $slots;
+            $gate = 'Emplacements : ' . $count . '/' . $slots;
         } elseif ($level === 1) {
             $gate = 'Toujours ouvert';
         } else {
             $required = SkillPrerequisiteService::requiredPerLevel($tab->category);
-            $gate = 'Niveau ' . ($level - 1) . ' : ' . min($prereqs->treeCountAt($tab->category, $level - 1), $required) . '/' . $required . ' apprise' . ($required > 1 ? 's' : '');
+            $count = min($prereqs->treeCountAt($tab->category, $level - 1), $required);
+            $gateFailed = $count < $required;
+            $gate = 'Niveau ' . ($level - 1) . ' : ' . $count . '/' . $required . ' apprise' . ($required > 1 ? 's' : '');
         }
 
         return '<div class="ws-level-head' . ($open ? ' ws-open' : ' ws-locked') . '">'
             . '<strong>Niveau ' . $level . '</strong>'
-            . '<span class="ws-gate">' . $this->esc($gate) . '</span>'
+            . '<span class="ws-gate' . ($gateFailed ? ' ws-ko' : '') . '">' . $this->esc($gate) . '</span>'
             . '</div>';
     }
 
@@ -266,9 +274,11 @@ final class SkillTreeView
         $isPassive = $skill instanceof ActionPassive;
         $owned = $prereqs->owns($name);
         $learnable = $this->learnable($skill, $player);
-        $usable = $isPassive ? $prereqs->isPassiveUsable($skill) : $prereqs->isUsable($skill);
+        $usable = $owned
+            ? ($isPassive ? $prereqs->areOwnedPassivePrerequisitesMet($skill) : $prereqs->areOwnedActionPrerequisitesMet($skill))
+            : ($isPassive ? $prereqs->isPassiveUsable($skill) : $prereqs->isUsable($skill));
         [$state, $stateLabel] = $owned
-            ? ['ws-owned', 'Apprise']
+            ? ($usable ? ['ws-owned', 'Apprise'] : ['ws-owned ws-disabled', 'Pré-requis manquants'])
             : (($learnable && $usable) ? ['ws-open', 'Disponible'] : ['ws-locked', 'Verrouillée']);
 
         $race = $skill->getRace();

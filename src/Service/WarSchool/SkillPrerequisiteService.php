@@ -102,13 +102,10 @@ final class SkillPrerequisiteService
     public static function forPlayer(int $playerId): self
     {
         $passives = [];
-        $spellSlots = [];
-        foreach ((new PlayerPassiveService())->getPassivesByPlayerId($playerId) as $passive) {
-            if ($passive->getType() === 'spell-slot') {
-                // a slot passive opens slots at its own level
-                $level = $passive->getLevel();
-                $spellSlots[$level] = ($spellSlots[$level] ?? 0) + (int) $passive->getValue();
-            }
+        $learnedPassives = (new PlayerPassiveService())->getLearnedPassivesByPlayerId($playerId);
+        $ownedActions = (new PlayerActionsService())->getActionsWithType($playerId);
+        $catalog = (new ActionService())->getCatalogMeta();
+        foreach ($learnedPassives as $passive) {
             $passives[] = [
                 'name' => $passive->getName(),
                 'category' => $passive->getCategory(),
@@ -116,9 +113,26 @@ final class SkillPrerequisiteService
             ];
         }
 
+        $allSpellSlots = [];
+        foreach ($learnedPassives as $passive) {
+            if ($passive->getType() === 'spell-slot') {
+                $level = $passive->getLevel();
+                $allSpellSlots[$level] = ($allSpellSlots[$level] ?? 0) + (int) $passive->getValue();
+            }
+        }
+
+        $snapshot = new self($ownedActions, $catalog, $passives, $allSpellSlots, NUMBER_MAX_COMP);
+        $spellSlots = [];
+        foreach ($learnedPassives as $passive) {
+            if ($passive->getType() === 'spell-slot' && $snapshot->areOwnedPassivePrerequisitesMet($passive)) {
+                $level = $passive->getLevel();
+                $spellSlots[$level] = ($spellSlots[$level] ?? 0) + (int) $passive->getValue();
+            }
+        }
+
         return new self(
-            (new PlayerActionsService())->getActionsWithType($playerId),
-            (new ActionService())->getCatalogMeta(),
+            $ownedActions,
+            $catalog,
             $passives,
             $spellSlots,
             NUMBER_MAX_COMP
@@ -190,9 +204,21 @@ final class SkillPrerequisiteService
         return $this->isSkillUsable($passive->getCategory(), $passive->getLevel(), $passive->getPrerequisites());
     }
 
-    public function isSkillUsable(?string $category, int $level, ?string $prerequisitesJson): bool
+    /** Learned spells need a slot at their level; all named and tree requirements still apply. */
+    public function areOwnedActionPrerequisitesMet(ActionInterface $action): bool
     {
-        if (!$this->passesTreeGate($category, $level)) {
+        return $this->isSkillUsable($action->getCategory(), $action->getLevel(), $action->getPrerequisites(), true);
+    }
+
+    /** Existing passives remain subject to their tree and named requirements. */
+    public function areOwnedPassivePrerequisitesMet(ActionPassive $passive): bool
+    {
+        return $this->isSkillUsable($passive->getCategory(), $passive->getLevel(), $passive->getPrerequisites(), true);
+    }
+
+    public function isSkillUsable(?string $category, int $level, ?string $prerequisitesJson, bool $alreadyOwned = false): bool
+    {
+        if (!$this->passesTreeGate($category, $level, $alreadyOwned)) {
             return false;
         }
 
@@ -213,7 +239,7 @@ final class SkillPrerequisiteService
         return true;
     }
 
-    private function passesTreeGate(?string $category, int $level): bool
+    private function passesTreeGate(?string $category, int $level, bool $alreadyOwned = false): bool
     {
         $tree = self::tree($category);
 
@@ -222,10 +248,10 @@ final class SkillPrerequisiteService
         }
 
         if ($tree === 'spell') {
-            return $this->hasFreeSpellSlot($level);
+            return $alreadyOwned ? $this->spellSlotsAt($level) > 0 : $this->hasFreeSpellSlot($level);
         }
 
-        if ($level === self::MAX_TREE_LEVEL && in_array($tree, self::PRIMARY_TREES, true)) {
+        if (!$alreadyOwned && $level === self::MAX_TREE_LEVEL && in_array($tree, self::PRIMARY_TREES, true)) {
             if ($this->hasOtherPrimaryLevelMax($tree)) {
                 return false;
             }
