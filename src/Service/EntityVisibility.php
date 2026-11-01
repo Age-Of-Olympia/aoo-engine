@@ -96,6 +96,14 @@ final class EntityVisibility
     public function readsInscriptionOf(Player $thing, ?BuildingDetails $details): bool
     {
         $id = (int) $thing->id;
+
+        /* A character's message du jour is part of the details already
+         * shown throughout Perception. Structures keep their own reading
+         * range: from afar by type, otherwise from beside. */
+        if (!\App\Enum\EntityCategory::fromPlayerType($thing->data->player_type ?? null)->isStructure()) {
+            return $this->seesDetailsOf($id);
+        }
+
         $container = new ContainerService();
 
         return BuildingService::readsFromAfar($thing, $details)

@@ -309,9 +309,6 @@ final class EntityCardView
             return '';
         }
 
-        $readsFromAfar = $inscription !== ''
-            && \App\Service\BuildingService::readsFromAfar($target, $buildingDetails);
-
         /* To the whole entity: one talks to a building from any of its
          * cells, not only the one clicked. */
         $distance = View::get_distance_to_entity($player->getCoords(), (int) $target->id, $target->getCoords());
@@ -322,7 +319,11 @@ final class EntityCardView
         /* Trop loin : on le DIT plutôt que de masquer le bouton. Une
          * affordance absente ne se distingue pas d'un objet muet — le
          * joueur ne saurait jamais qu'il avait quelque chose à lire. */
-        if (!$readsFromAfar && $distance > 1) {
+        $canAccess = $inscription !== ''
+            ? (new \App\Service\EntityVisibility($player))->readsInscriptionOf($target, $buildingDetails)
+            : $distance <= 1;
+
+        if (!$canAccess) {
             return '<button class="action" disabled title="Approchez-vous pour ' . strtolower($label) . '">'
                 . '<span class="ra ' . $icon . '"></span> '
                 . '<span class="action-name">' . ($inscription !== '' ? 'Trop loin pour lire' : 'Trop loin pour parler')
