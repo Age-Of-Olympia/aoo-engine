@@ -173,10 +173,14 @@ class ActionSimulationServiceTest extends TestCase
         $this->assertSame(7, DistanceComputeCondition::targetDefenseValue(8, 4));
     }
 
-    public function testDistanceMalusAndThresholdFormulas(): void
+    public function testDistanceMalusDependsOnEquippedWeaponType(): void
     {
-        $this->assertSame(0, DistanceComputeCondition::distanceMalusFor(2));
-        $this->assertSame(3, DistanceComputeCondition::distanceMalusFor(4));
+        $this->assertSame(0, DistanceComputeCondition::distanceMalusFor(2, 'tir'));
+        $this->assertSame(2, DistanceComputeCondition::distanceMalusFor(3, 'tir'));
+        $this->assertSame(3, DistanceComputeCondition::distanceMalusFor(4, 'tir'));
+        $this->assertSame(2, DistanceComputeCondition::distanceMalusFor(3, 'jet'));
+        $this->assertSame(4, DistanceComputeCondition::distanceMalusFor(4, 'jet'));
+        $this->assertSame(0, DistanceComputeCondition::distanceMalusFor(4, 'melee'));
         $this->assertSame(10, DistanceComputeCondition::distanceThresholdFor(4));
     }
 

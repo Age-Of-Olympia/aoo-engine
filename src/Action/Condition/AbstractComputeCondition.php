@@ -154,7 +154,7 @@ abstract class AbstractComputeCondition extends BaseCondition
         return $this->distance <= 1 || $actorTotal >= $this->getDistanceTreshold($actor);
     }
 
-    protected function getDistanceMalus(): int
+    protected function getDistanceMalus(ActorInterface $actor): int
     {
         return 0;
     }

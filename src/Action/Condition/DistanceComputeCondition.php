@@ -19,11 +19,20 @@ class DistanceComputeCondition extends ComputeCondition implements DeclaresSimul
         return self::physicalDefenseSimulationInputs($params);
     }
 
-    public static function distanceMalusFor(int $distance): int
+    public static function distanceMalusFor(int $distance, ?string $weaponType): int
     {
-        $cellCount = $distance - 1;
+        $distanceBeyondTwo = $distance - 2;
+        if ($distanceBeyondTwo <= 0) {
+            return 0;
+        }
 
-        return $cellCount > 2 ? ($cellCount - 2) * 3 : 0;
+        $malusPerCell = match ($weaponType) {
+            'tir' => 1.5,
+            'jet' => 2.0,
+            default => 2.5,
+        };
+
+        return (int) ceil($malusPerCell * $distanceBeyondTwo);
     }
 
     public static function distanceThresholdFor(int $distance): int
@@ -81,7 +90,9 @@ class DistanceComputeCondition extends ComputeCondition implements DeclaresSimul
     }
 
     
-    protected function getDistanceMalus(): int {
-        return self::distanceMalusFor($this->distance);
+    protected function getDistanceMalus(ActorInterface $actor): int {
+        $weaponType = $actor->emplacements->main1->data->subtype ?? null;
+
+        return self::distanceMalusFor($this->distance, $weaponType);
     }
 }

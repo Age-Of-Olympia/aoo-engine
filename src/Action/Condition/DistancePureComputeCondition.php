@@ -4,13 +4,12 @@ namespace App\Action\Condition;
 use App\Interface\ActorInterface;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetailView;
-use Classes\View;
 
 class DistancePureComputeCondition extends ComputePureCondition
 {
 
     protected function getDistanceTreshold(ActorInterface $actor) : int {
-        return floor(($this->distance) * 2.5);
+        return DistanceComputeCondition::distanceThresholdFor($this->distance);
     }
 
     protected function computeTarget($target, $dice, $conditionObject)
@@ -50,12 +49,9 @@ class DistancePureComputeCondition extends ComputePureCondition
     }
 
     
-    protected function getDistanceMalus(): int {
-        $distanceMalus = 0;
-        $cellCount = $this->distance - 1;
-        if($cellCount > 2){
-            $distanceMalus = ($cellCount - 2) * 3;
-        }
-        return $distanceMalus;
+    protected function getDistanceMalus(ActorInterface $actor): int {
+        $weaponType = $actor->emplacements->main1->data->subtype ?? null;
+
+        return DistanceComputeCondition::distanceMalusFor($this->distance, $weaponType);
     }
 }

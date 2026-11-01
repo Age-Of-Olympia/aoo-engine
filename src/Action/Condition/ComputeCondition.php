@@ -64,7 +64,7 @@ class ComputeCondition extends AbstractComputeCondition implements HasParameterS
         // Modificateurs du jet d'attaque portés par les effets (catalogue :
         // roll_attack_mod — ex-dexterite/maladresse codées en dur).
         $mods = (new \App\Service\EffectService())->modifierContributions($actor->getEffects(), 'getRollAttackMod');
-        $distanceMalus = $this->getDistanceMalus();
+        $distanceMalus = $this->getDistanceMalus($actor);
         $total = array_sum($actorRoll->roll) + $bonus + $mods['pos'] - $mods['neg'] - $distanceMalus;
 
         $detail = new RollDetail(

@@ -52,7 +52,7 @@ class MeleeComputeCondition extends ComputeCondition implements DeclaresSimulati
         return array($targetRoll->roll, $total, (new RollDetailView())->renderTarget($detail));
     }
 
-    protected function getDistanceMalus(): int {
+    protected function getDistanceMalus(\App\Interface\ActorInterface $actor): int {
         $distanceMalus = 0;
         if($this->distance > 2){
             $distanceMalus = $this->distance * ($this->distance - 1);

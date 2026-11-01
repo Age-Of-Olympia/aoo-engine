@@ -25,7 +25,7 @@ class ComputePureCondition extends AbstractComputeCondition implements HasParame
         $bonus = $conditionObject->getActorRollBonus();
         $tooltipOtherTxt = !empty($actorRollBonus) ? 'Bonus de compétence : ' . $actorRollBonus . ' ' : '';
         $actorTotal = array_sum($actorRoll->roll) + $bonus;
-        $distanceMalus = $this->getDistanceMalus();
+        $distanceMalus = $this->getDistanceMalus($actor);
         $distanceMalusTxt = ($distanceMalus) ? ' - '. $distanceMalus .' (Distance)' : '';
         $actorTotal = $actorTotal - $distanceMalus;
         $actorTxt = 'Jet '. $actor->data->name .' = ' . '<span style="text-decoration: underline;" flow="up" tooltip="' . $distanceMalusTxt . (($distanceMalusTxt) ? ', ' . $tooltipOtherTxt : $tooltipOtherTxt) . RollDetailView::advantageTooltip($actorRoll) . '">' . $actorTotal . '</span> (Jet pur)';
