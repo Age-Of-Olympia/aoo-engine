@@ -89,7 +89,7 @@ class PostEditView
 
 
         echo '
-<div id="forum-textarea">
+<div id="forum-textarea" data-draft="edit:' . htmlspecialchars($postJson->name) . '" data-draft-owner="' . $player->id . '">
 ';
 
         include('scripts/forum/tools.php');
@@ -136,12 +136,12 @@ class PostEditView
         echo Str::minify(ob_get_clean());
 
 ?>
-        <script src="js/autosave.js?v=20261025"></script>
+        <script src="js/autosave.js?v=20261102"></script>
         <script>
             window.topId = <?php echo $postJson->top_id ?>;
             window.pagesN = <?php echo $pagesN ?>;
         </script>
-        <script src="js/forum_edit.js?v=20261025"></script>
+        <script src="js/forum_edit.js?v=20261102"></script>
 <?php
     }
 }

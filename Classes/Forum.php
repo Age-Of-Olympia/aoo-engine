@@ -527,43 +527,6 @@ class Forum{
     }
 
 
-    public static function put_autosave($playerId, $text){
-
-
-        if(!is_numeric($playerId)){
-
-            $playerId = $playerId->id;
-        }
-
-        $myfile = fopen('datas/private/players/'. $playerId .'.save', "w") or die("Unable to open file!");
-        fwrite($myfile, htmlentities($text));
-        fclose($myfile);
-    }
-
-
-    public static function get_autosave($playerId) : string{
-
-
-        if(!is_numeric($playerId)){
-
-            $playerId = $playerId->id;
-        }
-
-
-        $file = 'datas/private/players/'. $playerId .'.save';
-
-        if(file_exists($file)){
-
-            return file_get_contents($file);
-        }
-
-        else{
-
-            return '';
-        }
-    }
-
-
     public static function extract_keywords($content) {
 
 

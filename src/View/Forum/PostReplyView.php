@@ -86,13 +86,6 @@ class PostReplyView
             }
 
 
-            // delete autosave
-            $file = 'datas/private/players/' . $player->id . '.save';
-            if (file_exists($file)) {
-                unlink($file); // Delete the file
-            }
-
-
             ExitSuccess($replyId);
         }
 
@@ -117,11 +110,8 @@ class PostReplyView
         echo '<h2>Répondre</h2>';
 
 
-        $autoSave = Forum::get_autosave($player);
-
-
         echo '
-<div id="forum-textarea">
+<div id="forum-textarea" data-draft="reply:' . htmlspecialchars($topJson->name) . '" data-draft-owner="' . $player->id . '">
 ';
 
         include('scripts/forum/tools.php');
@@ -136,7 +126,7 @@ class PostReplyView
 
         echo Str::minify(ob_get_clean());
 
-        echo '>' . $autoSave . '</textarea>';
+        echo '></textarea>';
 
         ob_start();
 
@@ -171,11 +161,11 @@ class PostReplyView
         echo Str::minify(ob_get_clean());
 
 ?>
-        <script src="js/autosave.js?v=20261025"></script>
+        <script src="js/autosave.js?v=20261102"></script>
         <script>
             window.pagesN = <?php echo $nextPagesN ?>;
         </script>
-        <script src="js/forum_reply.js?v=20261025"></script>
+        <script src="js/forum_reply.js?v=20261102"></script>
 <?php
     }
 }

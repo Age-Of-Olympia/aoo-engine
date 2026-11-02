@@ -170,7 +170,7 @@ class Ui{
         }
 
         return '<script>window.aooCharacterId = ' . (int) $characterId . ';</script>'
-            . '<script src="js/aoo-store.js?v=20260727"></script>';
+            . '<script src="js/aoo-store.js?v=20261102"></script>';
     }
 
     /**

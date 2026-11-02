@@ -59,6 +59,9 @@ $(document).ready(function() {
             textarea.val(newText);
         }
 
+        // Enregistre le brouillon (js/autosave.js)
+        textarea.trigger('input');
+
         // Replace le curseur à la fin de l'insertion
         textarea[0].selectionStart = textarea[0].selectionEnd = start + beforeText.length;
         textarea.focus();

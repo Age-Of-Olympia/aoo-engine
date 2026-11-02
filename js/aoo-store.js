@@ -17,7 +17,13 @@
  *
  * API :
  *   aooStore.get(nom) / set(nom, valeur) / remove(nom)   — sessionStorage
- *   aooStore.getLocal(nom) / setLocal(nom, valeur)       — localStorage
+ *   aooStore.getLocal(nom) / setLocal(nom, valeur) / removeLocal(nom)
+ *                                                        — localStorage
+ *
+ * Les accès localStorage acceptent un identifiant de personnage explicite
+ * en dernier argument. Un fragment rendu par le serveur sait mieux que la
+ * page qui l'accueille quel personnage est actif : un changement de pnj
+ * dans un autre onglet bascule la session sans recharger celui-ci.
  *
  * `window.aooCharacterId` est posé juste avant par le serveur (Classes\Ui).
  * Absent — page hors session, fragment isolé —, l'étagère retombe sur une
@@ -40,8 +46,8 @@ window.aooStore = (function () {
     ];
     var LEGACY_LOCAL = ['hudEventsSeen'];
 
-    function key(name) {
-        return name + '@' + id;
+    function key(name, characterId) {
+        return name + '@' + (characterId || id);
     }
 
     function adopt(store, names) {
@@ -78,11 +84,14 @@ window.aooStore = (function () {
             try { sessionStorage.removeItem(key(name)); } catch (err) { /* idem */ }
         },
 
-        getLocal: function (name) {
-            try { return localStorage.getItem(key(name)); } catch (err) { return null; }
+        getLocal: function (name, characterId) {
+            try { return localStorage.getItem(key(name, characterId)); } catch (err) { return null; }
         },
-        setLocal: function (name, value) {
-            try { localStorage.setItem(key(name), value); } catch (err) { /* idem */ }
+        setLocal: function (name, value, characterId) {
+            try { localStorage.setItem(key(name, characterId), value); } catch (err) { /* idem */ }
+        },
+        removeLocal: function (name, characterId) {
+            try { localStorage.removeItem(key(name, characterId)); } catch (err) { /* idem */ }
         }
     };
 })();

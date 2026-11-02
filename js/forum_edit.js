@@ -25,6 +25,9 @@ $(document).ready(function(e){
             }, // serializes the form's elements.
             success: function(data)
             {
+                /* Envoyé : le brouillon a rempli son office (js/autosave.js). */
+                window.forumDraftClear();
+
                 /* HUD : rouvrir le fil dans le panneau au lieu de
                  * naviguer vers la page héritée. */
                 if(window.hudOpenPanel){

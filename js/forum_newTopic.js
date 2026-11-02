@@ -62,6 +62,9 @@ $(document).ready(function(e){
                         $('.submit').prop('disabled', false);
                     }
                     else{
+                        /* Envoyé : le brouillon a rempli son office (js/autosave.js). */
+                        window.forumDraftClear();
+
                         /* HUD : ouvrir le nouveau fil dans le panneau
                          * au lieu de naviguer vers la page héritée. */
                         if(window.hudOpenPanel){

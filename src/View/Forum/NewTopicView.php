@@ -157,11 +157,15 @@ class NewTopicView
         }
 
 
-        $msg = Forum::get_autosave($player);
+        /* One draft per forum, and per recipient for a targeted missive */
+        $draftKey = 'new:' . $forumJson->name;
+        if (!empty($_GET['targetId'])) {
+            $draftKey .= ':' . (int) $_GET['targetId'];
+        }
 
         echo '<div id="currentSessionId" style="display:none;">' . $_SESSION['playerId'] . '</div>';
         echo '
-<div id="forum-textarea">
+<div id="forum-textarea" data-draft="' . htmlspecialchars($draftKey) . '" data-draft-owner="' . $player->id . '">
 ';
 
         include('scripts/forum/tools.php');
@@ -183,7 +187,7 @@ class NewTopicView
 
         echo Str::minify(ob_get_clean());
 
-        echo '>' . $msg . '</textarea>';
+        echo '></textarea>';
 
         ob_start();
 
@@ -211,8 +215,8 @@ class NewTopicView
 
 
 ?>
-        <script src="js/autosave.js?v=20261025"></script>
-        <script src="js/forum_newTopic.js?v=20261025"></script>
+        <script src="js/autosave.js?v=20261102"></script>
+        <script src="js/forum_newTopic.js?v=20261102"></script>
 <?php
     }
 }
