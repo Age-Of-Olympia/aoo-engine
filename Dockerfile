@@ -1,4 +1,13 @@
-FROM php:8.4-apache
+# Registry prefix for a Docker Hub mirror, e.g. "artifactory.example.com/dockerhub-remote/" (trailing slash).
+# Empty means Docker Hub.
+ARG DOCKER_REGISTRY=
+FROM ${DOCKER_REGISTRY}library/php:8.4-apache
+
+# Extra CA certificates (*.crt) from .devcontainer/certs/, for networks behind a TLS-inspecting proxy.
+# The folder is empty by default; Node gets the same bundle so npm trusts them too.
+COPY .devcontainer/certs/ /usr/local/share/ca-certificates/extra/
+RUN update-ca-certificates
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
 
 
 ARG UID=1000

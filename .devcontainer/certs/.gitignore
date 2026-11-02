@@ -1,0 +1,3 @@
+# Local CA certificates (e.g. a corporate TLS-inspecting proxy); never committed.
+*
+!.gitignore

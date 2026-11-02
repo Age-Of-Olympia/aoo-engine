@@ -5,6 +5,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+        DOCKER_REGISTRY: ${DOCKER_REGISTRY:-}
     volumes:
       - .:/var/www/html
       - ${AOO_GAME_DATA:-./datas}:/var/www/html/datas
@@ -15,7 +19,7 @@ services:
     depends_on:
       - mariadb-aoo4
   mariadb-aoo4:
-    image: mariadb:latest
+    image: ${DOCKER_REGISTRY:-}library/mariadb:latest
     environment:
       MYSQL_ROOT_PASSWORD: passwordRoot
       MYSQL_DATABASE: ${DB_NAME:-aoo4}
@@ -26,7 +30,7 @@ services:
       - ./db/init_noupdates.sql:/docker-entrypoint-initdb.d/1-init-data.sql
       - ./db/init_test_complete.sql:/docker-entrypoint-initdb.d/2-init-test-complete.sql
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin
+    image: ${DOCKER_REGISTRY:-}phpmyadmin/phpmyadmin
     ports:
       - "8081:80"
     environment:
