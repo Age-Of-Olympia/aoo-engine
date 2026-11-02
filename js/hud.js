@@ -2839,36 +2839,6 @@
                 });
         });
 
-        /* Clic hors du panneau : fermeture (comme un popover). Sont
-         * exclus le panneau lui-même, le rail et la modale de résultat
-         * (son fond se ferme déjà lui-même, le panneau reste) — et
-         * tout lien qui OUVRE un panneau (même règle panelUrl que le
-         * routeur global : le clic qui vient d'ouvrir ne referme pas). */
-        $(document).on('click', function (e) {
-            if (!openPanels.length) {
-                return;
-            }
-            /* Cible détachée du DOM : le gestionnaire de l'élément a
-             * déjà re-rendu son conteneur (lien de fil de missive,
-             * bouton +1…). Un tel clic vient toujours de DANS un
-             * composant vivant, jamais du dehors — closest() ne peut
-             * plus le prouver puisque l'ancêtre est détaché. */
-            if (!e.target.isConnected) {
-                return;
-            }
-            /* .ui-autocomplete: jQuery UI appends its suggestion list to <body> */
-            if ($(e.target).closest(
-                '.hud-panel, #hud-rail, #hud-burger, #hud-action-modal, .ui-autocomplete'
-            ).length) {
-                return;
-            }
-            var $link = $(e.target).closest('a[href]');
-            if ($link.length && panelUrl($link.attr('href'))) {
-                return;
-            }
-            closePanelAt(openPanels.length - 1);
-        });
-
         $(document).on('keydown', function (e) {
             if (e.key === 'Escape' && openPanels.length) {
                 closePanelAt(openPanels.length - 1);
