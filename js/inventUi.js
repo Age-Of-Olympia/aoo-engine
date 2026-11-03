@@ -79,8 +79,8 @@ $(document).ready(function(){
             else if(window.useKind == 'consume'){
 
                 $('.action[data-action="use"]')
-                .html('Utiliser (1 A)')
-                .prop('disabled', (window.aLeft <= 0));
+                .html('Utiliser (1 Ac)')
+                .prop('disabled', (window.acLeft <= 0));
             }
             else{
 

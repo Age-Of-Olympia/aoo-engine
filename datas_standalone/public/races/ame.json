@@ -17,6 +17,7 @@
     "rm": 5,
     "spd": 1,
     "ae": 0,
+    "ac": 0,
     "bgColor": "#cccccc",
     "color": "#333333",
     "plan": "tutorial",

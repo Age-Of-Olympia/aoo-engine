@@ -14,7 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
  * Applique la charge du CONSOMMABLE fourni au geste (condition ItemPick
  * → ConditionObject) : bonus, malus, PR/PF, effets ± — la source unique
  * InventoryService::applyConsumablePayload, partagée avec le geste
- * d'inventaire historique. Le coût (1 A, RequiresTraitValue) et le
+ * d'inventaire historique. Le coût (1 Ac, RequiresTraitValue) et le
  * retrait de l'exemplaire (RequiresItem consume) sont des CONDITIONS de
  * l'action générique « consommer » — l'instruction n'applique que les
  * effets. PAS de Log::put ici : le moteur d'actions journalise déjà le

@@ -64,7 +64,7 @@ final class UpgradesView
 
         foreach (CARACS as $k => $e) {
 
-            if ($k == 'ae' || $k == 'spd' || $k == 'sac') {
+            if ($k == 'ae' || $k == 'ac' || $k == 'spd' || $k == 'sac') {
 
                 continue;
             }

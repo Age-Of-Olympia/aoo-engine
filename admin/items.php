@@ -191,7 +191,7 @@ function item_type_badge(string $type): string
 {
     $styles = [
         'equipement' => ['Équipement', 'primary', 'Se porte (1 Ae)'],
-        'consommable' => ['Consommable', 'success', 'Se consomme (1 A)'],
+        'consommable' => ['Consommable', 'success', 'Se consomme (1 Ac)'],
         Item::TYPE_CONSTRUCTIBLE => ['Constructible', 'warning',
             'Système actuel : construit depuis l\'inventaire comme entité bâtiment (PV, porte, fiche)'],
         'structure' => ['Structure (ancien)', 'danger',
@@ -678,7 +678,7 @@ function items_render_edit(object $row, string $csrfToken): string
                 'class="form-control" id="item-type-select"'),
             'form-group',
             'Définit l\'action « Utiliser » : un <b>équipement</b> s\'équipe (1 Ae),'
-            . ' un <b>consommable</b> se consomme (1 A),'
+            . ' un <b>consommable</b> se consomme (1 Ac),'
             . ' un <b>constructible</b> se construit sur la carte,'
             . ' une <b>graine</b> germe une fois posée au sol,'
             . ' un <b>objet de quête</b> (carte, clef, relique…) n\'a aucune mécanique.'
@@ -737,7 +737,7 @@ function items_render_edit(object $row, string $csrfToken): string
 
     $caracsCol = '<p class="text-muted small mb-2">Double lecture selon le type :'
         . ' sur un <b>équipement</b>, modificateurs du porteur tant que l\'objet est porté ;'
-        . ' sur un <b>consommable</b>, quantités rendues à la consommation (PV, PM, MVT, A, AE).'
+        . ' sur un <b>consommable</b>, quantités rendues à la consommation (PV, PM, MVT, A, AE, AC).'
         . ' Sans effet sur un objet <b>posé</b> (coffre) : sa vie est la durabilité max, le reste est à zéro.</p>'
         . '<div class="row">' . $caracInputs . '</div>';
 

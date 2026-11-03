@@ -17,6 +17,7 @@
     "rm": 4,
     "spd": 16,
     "ae": 1,
+    "ac": 1,
     "bgColor": "white",
     "color": "black",
     "plan": "antre_les_confins",

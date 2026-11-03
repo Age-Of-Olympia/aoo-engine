@@ -17,7 +17,7 @@ final class ItemWikiRenderer implements WikiSheetRendererInterface
     private const TYPE_ORDER = ['equipement', 'consommable', 'constructible', 'matiere', 'quete'];
 
     private const PAYLOAD_LABELS = [
-        'pv' => 'PV', 'pm' => 'PM', 'mvt' => 'Mvt', 'a' => 'A', 'ae' => 'Ae',
+        'pv' => 'PV', 'pm' => 'PM', 'mvt' => 'Mvt', 'a' => 'A', 'ae' => 'Ae', 'ac' => 'Ac',
         'pr' => 'PR', 'pf' => 'PF', 'malus' => 'malus', 'xp' => 'XP',
     ];
 

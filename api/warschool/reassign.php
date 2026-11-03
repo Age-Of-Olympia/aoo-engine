@@ -21,8 +21,8 @@ $POST_DATA = json_decode(file_get_contents('php://input'), true) ?: $_POST;
 
 $caracKey = (string) ($POST_DATA['carac'] ?? '');
 
-/* Neither Ae nor Spd is bought: they have no rank to give back. */
-if (!isset(CARACS[$caracKey]) || $caracKey === 'ae' || $caracKey === 'spd') {
+/* Neither Ae, Ac nor Spd is bought: they have no rank to give back. */
+if (!isset(CARACS[$caracKey]) || in_array($caracKey, ['ae', 'ac', 'spd'], true)) {
     ExitError('Caractéristique invalide.');
 }
 

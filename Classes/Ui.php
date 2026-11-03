@@ -353,10 +353,12 @@ class Ui{
      *                                boutons de ligne qui en coûtent
      *                                (équiper) — mêmes règles
      *                                qu'InventoryService::useItem.
-     * @param int|null    $aLeft      Actions restantes : grise Utiliser
-     *                                des consommables/structures.
+     * @param int|null    $aLeft      Actions restantes : grise Construire
+     *                                des constructibles.
+     * @param int|null    $acLeft     Ac restantes ce tour : grise Utiliser
+     *                                des consommables.
      */
-    public static function print_inventory($itemList, ?string $aeInfo = null, bool $rowActions = false, ?int $aeLeft = null, ?int $aLeft = null, ?string $bagLabel = null){
+    public static function print_inventory($itemList, ?string $poolInfo = null, bool $rowActions = false, ?int $aeLeft = null, ?int $aLeft = null, ?int $acLeft = null, ?string $bagLabel = null){
 
 
         $defaultItem = new Item(1);
@@ -414,9 +416,9 @@ class Ui{
         <td align="right">
             ';
 
-            if($aeInfo !== null){
+            if($poolInfo !== null){
 
-                echo $aeInfo;
+                echo $poolInfo;
             }
 
             echo '<input type="text" value="chercher" id="item-search" style="opacity: 0.5;" class="desaturate" />';
@@ -580,7 +582,7 @@ class Ui{
 
                 /* Mêmes règles de coût qu'InventoryService::useItem et
                  * js/inventUi.js : déséquiper est gratuit ; équiper
-                 * coûte 1 Ae ; consommer coûte 1 A. Sans le point
+                 * coûte 1 Ae ; consommer coûte 1 Ac. Sans le point
                  * requis, le bouton est grisé et l'infobulle dit
                  * pourquoi. */
                 $isEquipped = !empty($row->equiped);
@@ -606,8 +608,8 @@ class Ui{
                 }
                 elseif($useKind === \App\Service\InventoryService::USE_CONSUME){
 
-                    $usable = ($aLeft === null || $aLeft > 0);
-                    $useTitle = $usable ? 'Utiliser (1 A)' : 'Utiliser (1 A) — plus d\'Action ce tour';
+                    $usable = ($acLeft === null || $acLeft > 0);
+                    $useTitle = $usable ? 'Utiliser (1 Ac)' : 'Utiliser (1 Ac) — plus d\'Action de Consommable ce tour';
                 }
                 else{
 
@@ -694,7 +696,7 @@ class Ui{
         window.n =    <?php echo $defaultItemN ?>;
         window.price =    1;
         </script>
-        <script src="js/inventUi.js?v=20261018"></script>
+        <script src="js/inventUi.js?v=20261103"></script>
         <?php
 
         return Str::minify(ob_get_clean());

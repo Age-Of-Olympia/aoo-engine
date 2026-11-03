@@ -108,7 +108,7 @@ class TurnProcessingService
         );
 
         (new Db())->exe(
-            'DELETE FROM players_bonus WHERE player_id = ? AND name IN("ae","a","mvt")',
+            'DELETE FROM players_bonus WHERE player_id = ? AND name IN("ae","ac","a","mvt")',
             $entity->id
         );
 
@@ -200,7 +200,7 @@ class TurnProcessingService
         }
 
         // Ae, A et Mvt repartent de zéro à chaque tour.
-        $db->exe('DELETE FROM players_bonus WHERE player_id = ? AND name IN("ae","a","mvt")', $player->id);
+        $db->exe('DELETE FROM players_bonus WHERE player_id = ? AND name IN("ae","ac","a","mvt")', $player->id);
 
         // Malus de mouvement au tour (catalogue : turn_mvt_malus,
         // ex-ralentissement codé en dur) — la valeur portée fait le malus.
@@ -306,7 +306,7 @@ class TurnProcessingService
             return null;
         }
 
-        if (!in_array($k, ['ae', 'a', 'mvt'])) {
+        if (!in_array($k, ['ae', 'ac', 'a', 'mvt'])) {
             $player->putBonus([$k => $val]);
         }
 

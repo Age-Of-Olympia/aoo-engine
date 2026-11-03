@@ -61,7 +61,7 @@ class InventoryService
     public const USE_CONSUME = 'consume';
 
     /** Numeric keys applyConsumablePayload acts on — keep both in sync. */
-    private const PAYLOAD_KEYS = ['pv', 'pm', 'mvt', 'a', 'ae', 'malus', 'pr', 'pf', 'xp'];
+    private const PAYLOAD_KEYS = ['pv', 'pm', 'mvt', 'a', 'ae', 'ac', 'malus', 'pr', 'pf', 'xp'];
 
     /**
      * Ce que « Utiliser » ferait pour cet objet — null quand RIEN : un
@@ -143,18 +143,15 @@ class InventoryService
             }
         } elseif ($item->data->type == 'consommable') {
             //cas des objets consommables :
-            //coûte 1A pour être consommés
+            // costs 1 Ac (consumable action)
+            if ($player->getRemaining('ac') < 1) {
 
-            //On verifie que le joueur a assez d'action
-            if ($player->getRemaining('a') < 1) {
-
-                exit('error a');
+                exit('error ac');
             }
 
             $details = self::applyConsumablePayload($player, $item);
 
-            //on enlève l'action utilisée
-            $player->putBonus(array('a' => -1));
+            $player->putBonus(array('ac' => -1));
 
             //on enlève un exemplaire de l'objet
             $item->add_item($player, -1);
@@ -181,7 +178,7 @@ class InventoryService
     }
 
     /**
-     * Applique la CHARGE d'un consommable (bonus pv/pm/mvt/a/ae, malus,
+     * Applique la CHARGE d'un consommable (bonus pv/pm/mvt/a/ae/ac, malus,
      * PR, PF, XP, effets ±) sans toucher au coût ni à la pile — source unique
      * partagée entre le geste d'inventaire (useItem) et l'action
      * générique « consommer » (ApplyConsumableOutcomeInstruction).
@@ -201,13 +198,14 @@ class InventoryService
                 case "mvt":
                 case "a":
                 case "ae":
+                case "ac":
                     /* les colonnes à 0 (la fiche item les porte toutes)
                      * ne font rien : ni bonus, ni ligne de message */
                     if ((int) $qte === 0) {
                         break;
                     }
                     $player->putBonus([$bonus => $qte]);
-                    $details[] = sprintf('%+d %s', $qte, $bonus === 'ae' ? 'Ae' : strtoupper($bonus));
+                    $details[] = sprintf('%+d %s', $qte, in_array($bonus, ['ae', 'ac'], true) ? ucfirst($bonus) : strtoupper($bonus));
                     break;
 
                 case "malus":

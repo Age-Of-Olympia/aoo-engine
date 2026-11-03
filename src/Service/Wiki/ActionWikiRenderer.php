@@ -27,7 +27,7 @@ final class ActionWikiRenderer implements WikiSheetRendererInterface
     }
 
     private const TRAIT_LABELS = [
-        'a' => 'A', 'ae' => 'Ae', 'mvt' => 'Mvt', 'pm' => 'PM',
+        'a' => 'A', 'ae' => 'Ae', 'ac' => 'Ac', 'mvt' => 'Mvt', 'pm' => 'PM',
         'pv' => 'PV', 'pf' => 'PF', 'energie' => 'Énergie',
     ];
 

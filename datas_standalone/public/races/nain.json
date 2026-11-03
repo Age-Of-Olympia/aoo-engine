@@ -17,6 +17,7 @@
     "rm": 4,
     "spd": 16,
     "ae": 1,
+    "ac": 1,
     "bgColor": "#FF0000",
     "color": "black",
     "plan": "banque_des_lutins",

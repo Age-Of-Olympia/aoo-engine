@@ -41,6 +41,7 @@ class UpgradeCostTest extends TestCase
         $service = new PlayerCaracsService();
 
         $this->assertNull($service->getUpgradeProgress('ae'));
+        $this->assertNull($service->getUpgradeProgress('ac'));
         $this->assertSame(0, $service->returnCost('ae', 0));
         $this->assertSame(0, $service->returnCost('carac-inexistante', 3));
     }
@@ -51,8 +52,8 @@ class UpgradeCostTest extends TestCase
 
         foreach (array_keys(CARACS) as $carac) {
 
-            // ae comes from the equipment, sac from the race: neither is bought.
-            if ($carac === 'ae' || $carac === 'sac') {
+            // ae/ac come from the race and equipment, sac from the race: none is bought.
+            if ($carac === 'ae' || $carac === 'ac' || $carac === 'sac') {
 
                 continue;
             }

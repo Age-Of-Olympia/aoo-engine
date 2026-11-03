@@ -15,8 +15,15 @@ if($k == 'spd'){
     exit('error carac: spd');
 }
 
+// Only caracs with a cost grid are bought (Ae, Ac, Sac are not).
+$caracsService = new PlayerCaracsService();
+if($caracsService->getUpgradeProgress($k) === null){
 
-$cost = (new PlayerCaracsService())->returnCost($k, $player->upgrades->$k);
+    exit('error carac: '. $k);
+}
+
+
+$cost = $caracsService->returnCost($k, $player->upgrades->$k);
 
 
 // The balance is checked by the debit itself: two requests arriving together

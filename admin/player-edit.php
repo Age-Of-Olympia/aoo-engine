@@ -3,7 +3,7 @@
 /**
  * Character edit sheet (admin dashboard → Personnages → Compétences →
  * Éditer): name, position (teleport), remaining vitals (PV, PM, MVT, A,
- * Ae — written to players_bonus, the same mechanic as wounds and point
+ * Ae, Ac — written to players_bonus, the same mechanic as wounds and point
  * spending), turn reset, progression (XP, PI, carac ranks, XP/PI audit),
  * inventory and effects. Built for playtesting: wound a character, give
  * their points back, move them, adjust their progression — without
@@ -56,6 +56,7 @@ const PLAYER_EDIT_VITALS = [
     'mvt' => 'MVT',
     'a'   => 'A',
     'ae'  => 'Ae',
+    'ac'  => 'Ac',
 ];
 
 /** Counters stored as `players` columns, edited as absolute values (floored at 0). */

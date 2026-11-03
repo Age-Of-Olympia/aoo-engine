@@ -68,6 +68,30 @@ class TurnProcessingBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertStringContainsString('Prochain tour le', (string) $event['text']);
     }
 
+    public function testADueTurnRefillsTheEquipAndConsumableActions(): void
+    {
+        $player = $this->createRealPlayer('GmTurn');
+        $_SESSION = ['playerId' => (int) $player->id];
+        $player->get_caracs();
+        $player->putBonus(['ae' => -1, 'ac' => -1]);
+
+        $this->link->executeStatement(
+            'UPDATE turns SET next_turn_time = ? WHERE player_id = ?',
+            [time() - 60, (int) $player->id]
+        );
+        $player->refresh_data();
+
+        $this->assertNotNull((new TurnProcessingService())->processIfDue($player));
+
+        $this->assertFalse(
+            $this->link->fetchOne(
+                "SELECT n FROM players_bonus WHERE player_id = ? AND name IN ('ae', 'ac')",
+                [(int) $player->id]
+            ),
+            'a new turn gives Ae and Ac back to their max'
+        );
+    }
+
     public function testATurnNotDueDoesNothing(): void
     {
         $player = $this->createRealPlayer('GmTurn');

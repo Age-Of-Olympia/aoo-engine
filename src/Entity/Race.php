@@ -265,6 +265,9 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     #[ORM\Column(type: "integer", options: ["default" => 0])]
     private int $ae = 0;
 
+    #[ORM\Column(type: "integer", options: ["default" => 0])]
+    private int $ac = 0;
+
     #[ORM\Column(type: "integer", options: array("default"=>1))]
     private int $portraitNextNumber = 1;
 

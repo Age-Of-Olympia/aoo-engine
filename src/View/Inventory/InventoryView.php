@@ -70,9 +70,10 @@ class InventoryView
 
         $itemList = Item::get_item_list($player->id, bank: $itemsFromBank);
 
-        /* Compteur d'Actions d'Équipement : la carac n'apparaît plus
-         * dans le nouveau HUD (pilules et page d'amélioration l'ignorent),
-         * on l'affiche là où elle sert — équiper/déséquiper un objet. */
+        /* Compteurs d'Actions d'Équipement et de Consommable : ces caracs
+         * n'apparaissent pas dans le nouveau HUD (pilules et page
+         * d'amélioration les ignorent), on les affiche là où elles
+         * servent — équiper/déséquiper, consommer un objet. */
         /* The bag section carries its own gauge (Ui::print_inventory,
          * $bagLabel): the limit reads exactly on what it counts —
          * ContainerService is the one rule that also refuses the line. */
@@ -82,17 +83,22 @@ class InventoryView
             : 'Dans votre sac (' . $capacityService->lineCountOf((int) $player->id)
                 . ($bagCapacity !== null ? '/' . $bagCapacity : '') . ' lignes)';
 
-        $aeInfo = '<span class="inventory-ae" style="float: left; line-height: 28px;" flow="right" tooltip="'
-            . CARACS_TXT_LONG['ae'] . '">'
-            . 'Actions d\'équipement : ' . $player->getRemaining('ae') . '/' . $player->get_caracsJson()->ae
-            . '</span>';
+        $caracsMax = $player->get_caracsJson();
+        $poolInfo = '';
+        foreach (['ae' => 'Actions d\'équipement', 'ac' => 'Actions de consommable'] as $pool => $label) {
+            $poolInfo .= '<span class="inventory-' . $pool . '" style="float: left; line-height: 28px; margin-right: 12px;"'
+                . ' flow="right" tooltip="' . CARACS_TXT_LONG[$pool] . '">'
+                . $label . ' : ' . $player->getRemaining($pool) . '/' . ($caracsMax->$pool ?? 0)
+                . '</span>';
+        }
 
         $data = Ui::print_inventory(
             $itemList,
-            $aeInfo,
+            $poolInfo,
             rowActions: $hudPanel,
             aeLeft: $player->getRemaining('ae'),
             aLeft: $player->getRemaining('a'),
+            acLeft: $player->getRemaining('ac'),
             bagLabel: $bagLabel
         );
         $data .= '
@@ -100,6 +106,7 @@ class InventoryView
 window.freeEmp = ' . Item::get_free_emplacement($player) . ';
 window.aeLeft = ' . $player->getRemaining('ae') . ';
 window.aLeft = ' . $player->getRemaining('a') . ';
+window.acLeft = ' . $player->getRemaining('ac') . ';
 window.hasFaction = ' . ((string) ($player->get_data(false)->faction ?? '') !== '' ? 'true' : 'false') . ';
 </script>
 ';

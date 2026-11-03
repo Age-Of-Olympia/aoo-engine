@@ -18,6 +18,7 @@
     "rm": 6,
     "spd": 16,
     "ae": 1,
+    "ac": 1,
     "bgColor": "#008000",
     "color": "black",
     "plan": "arcadia",

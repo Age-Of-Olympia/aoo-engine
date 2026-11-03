@@ -25,7 +25,7 @@ use Doctrine\DBAL\Connection;
 final class PoolSpendService
 {
     /** The per-turn pool; spending any other trait is not this service's job. */
-    public const POOL_TRAITS = ['a', 'mvt', 'pm', 'ae'];
+    public const POOL_TRAITS = ['a', 'mvt', 'pm', 'ae', 'ac'];
 
     /** A cost no pool reaches: "spend everything left" as a plain spend. */
     private const WHOLE_POOL = 1000000;

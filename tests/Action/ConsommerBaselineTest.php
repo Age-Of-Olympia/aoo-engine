@@ -10,7 +10,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 /**
  * L'action GÉNÉRIQUE 'consommer' de bout en bout : l'objet arrive à
  * l'exécution
- * (POST itemId → ItemPick), le coût 1 A et le retrait de l'exemplaire
+ * (POST itemId → ItemPick), le coût 1 Ac et le retrait de l'exemplaire
  * sont des conditions, la charge (bonus, effets) une instruction —
  * même résultat observable que le geste d'inventaire historique.
  */
@@ -24,12 +24,13 @@ class ConsommerBaselineTest extends LegacyPlayerFixtureTestCase
         parent::tearDown();
     }
 
-    public function testDrinkingAPotionHealsConsumesAndCostsOneA(): void
+    public function testDrinkingAPotionHealsConsumesAndCostsOneAc(): void
     {
         $drinker = $this->createRealPlayer('GmDrinker');
         $drinker->getCoords();
         $drinker->get_caracs();
         $maxA = (int) $drinker->caracs->a;
+        $maxAc = (int) $drinker->caracs->ac;
         $this->snapshotBloodAt((int) $drinker->data->coords_id);
 
         $potion = $this->sowCatalogItem('gm_potion_soin', ['type' => 'consommable', 'pv' => 10]);
@@ -49,7 +50,25 @@ class ConsommerBaselineTest extends LegacyPlayerFixtureTestCase
             'the potion payload (+10 PV) is applied through the shared applyConsumablePayload'
         );
         $this->assertSame(0, $potion->get_n($fresh), 'the potion is consumed (RequiresItem via ItemPick)');
-        $this->assertSame($maxA - 1, $fresh->getRemaining('a'), 'the action costs exactly 1 A');
+        $this->assertSame($maxAc - 1, $fresh->getRemaining('ac'), 'the action costs exactly 1 Ac');
+        $this->assertSame($maxA, $fresh->getRemaining('a'), 'consuming no longer costs any A');
+    }
+
+    public function testWithoutAcTheActionBlocksAndNothingIsConsumed(): void
+    {
+        $drinker = $this->createRealPlayer('GmSated');
+        $drinker->getCoords();
+        $drinker->get_caracs();
+        $drinker->putBonus(['ac' => -(int) $drinker->caracs->ac]);
+
+        $potion = $this->sowCatalogItem('gm_potion_soin', ['type' => 'consommable', 'pv' => 10]);
+        $potion->add_item($drinker, 1);
+        $_POST['itemId'] = (string) $potion->id;
+
+        $results = (new ActionExecutorService($this->actionOrSkip('consommer'), $drinker, $drinker))->executeAction();
+
+        $this->assertTrue($results->isBlocked(), 'no Ac left: the cost condition must block');
+        $this->assertSame(1, $potion->get_n(PlayerFactory::legacy($drinker->id)), 'nothing may be consumed');
     }
 
     public function testWithoutThePotionTheActionBlocksAndCostsNothing(): void

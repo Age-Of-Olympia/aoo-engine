@@ -52,6 +52,7 @@ define('CARACS', array(
     'rm'=>'RM',
     'spd'=>'Spd',
     'ae'=>'Ae',
+    'ac'=>'Ac',
     'sac'=>'Sac'
 ));
 
@@ -80,6 +81,7 @@ define('CARACS_TXT', array(
     'r'=>'Récupération',
     'rm'=>'Récupération Magique',
     'ae'=> 'Action d\'Equipement',
+    'ac'=> 'Action de Consommable',
     'sac'=>'Contenance du sac (lignes)',
     'foi'=>'Nombre de points de Foi',
     'xp'=>'Points d\'Expérience',
@@ -104,6 +106,7 @@ define('CARACS_TXT_LONG', array(
     'r'=>'Récupération, nombre de points de vie récupérés par tour',
     'rm'=>'Récupération Magique, nombre de points de magie récupérés par tour',
     'ae'=> 'Action d\'Equipement, permet d\'équiper ou de déséquiper un objet',
+    'ac'=> 'Action de Consommable, permet de consommer un objet (potion, nourriture…)',
     'foi'=>'Nombre de points de Foi, gagné en priant votre dieu',
     'xp'=>'Points d\'Expérience',
     'pi'=>'Points d\'Investissement, permet d\'améliorer vos caractéristiques',
