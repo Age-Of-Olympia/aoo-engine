@@ -11,21 +11,37 @@
  * arrière-plan, pour reprendre le brouillon sur un autre appareil. Le
  * fragment apporte la copie serveur (data-draft-server) : à l'ouverture,
  * le plus récent des deux (champ at) l'emporte. Une copie serveur vide
- * est un brouillon envoyé ou effacé ailleurs. */
+ * est un brouillon envoyé ou effacé ailleurs.
+ *
+ * Toutes les dates at sont à l'heure du serveur : chaque formulaire et
+ * chaque réponse de draft.php la donnent, le navigateur en tire son
+ * décalage. Deux appareils mal réglés se comparent ainsi sur la même
+ * horloge, et aucune date ne part dans le futur (elle ne serait jamais
+ * purgée et gagnerait toutes les comparaisons). */
 var DRAFT_PREFIX = 'forumDraft:';
 var DRAFT_MAX_AGE = 30 * 24 * 3600 * 1000;
 var DRAFT_SYNC_DELAY = 5000;
 var DRAFT_SYNC_URL = 'api/forum/draft.php';
 
+/* Décalage horloge serveur - horloge locale, en ms. */
+window.forumDraftClockOffset = window.forumDraftClockOffset || 0;
+
+/* Maintenant, à l'heure du serveur. */
+function draftNow(){
+    return Math.round(Date.now() + window.forumDraftClockOffset);
+}
+
 /* Envois en attente, par clé@personnage : survivent à la réexécution du
  * fragment HUD et à la fermeture du panneau. */
 window.forumDraftPending = window.forumDraftPending || {};
 
-/* Brouillons abandonnés depuis plus de DRAFT_MAX_AGE, tous personnages. */
+/* Brouillons abandonnés depuis plus de DRAFT_MAX_AGE, tous personnages.
+ * Une date future (horloge en avance avant ce recalage) est ramenée à
+ * maintenant : elle vieillira et sera purgée comme les autres. */
 function purgeForumDrafts(){
 
     try {
-        var now = Date.now();
+        var now = draftNow();
         for(var i = localStorage.length - 1; i >= 0; i--){
             var k = localStorage.key(i);
             if(!k || k.indexOf(DRAFT_PREFIX) !== 0){
@@ -35,6 +51,10 @@ function purgeForumDrafts(){
             try { draft = JSON.parse(localStorage.getItem(k)); } catch (err) { /* illisible : purgé */ }
             if(!draft || !draft.at || now - draft.at > DRAFT_MAX_AGE){
                 localStorage.removeItem(k);
+            }
+            else if(draft.at > now){
+                draft.at = now;
+                localStorage.setItem(k, JSON.stringify(draft));
             }
         }
     } catch (err) { /* stockage indisponible : rien à purger */ }
@@ -54,7 +74,28 @@ function sendForumDraft(id){
     window.forumDraftLastSent = window.forumDraftLastSent || {};
     window.forumDraftLastSent[id] = pending.lastSent;
 
-    aooFetch(DRAFT_SYNC_URL, pending.payload).catch(function(){ /* hors ligne */ });
+    var sentAt = Date.now();
+    aooFetch(DRAFT_SYNC_URL, pending.payload).then(function(data){
+
+        var result = data && data.result;
+        if(!result || !result.serverNow){
+            return;
+        }
+        /* l'heure serveur date du milieu de l'aller-retour */
+        window.forumDraftClockOffset = result.serverNow - (sentAt + Date.now()) / 2;
+
+        /* date future recalée par le serveur : la copie locale suit, si
+         * elle n'a pas changé depuis l'envoi */
+        if(result.at && result.at !== pending.payload.at){
+            var name = DRAFT_PREFIX + pending.payload.key;
+            var local = null;
+            try { local = JSON.parse(aooStore.getLocal(name, pending.payload.owner)); } catch (err) { /* illisible */ }
+            if(local && local.at === pending.payload.at && result.at < local.at){
+                local.at = result.at;
+                aooStore.setLocal(name, JSON.stringify(local), pending.payload.owner);
+            }
+        }
+    }).catch(function(){ /* hors ligne */ });
 }
 
 /* Tout ce qui attend part par beacon : la page se ferme ou passe en
@@ -140,6 +181,11 @@ $(document).ready(function(){
 
     draftName = DRAFT_PREFIX + draftName;
 
+    var serverNow = Number($form.data('draft-server-now'));
+    if(serverNow){
+        window.forumDraftClockOffset = serverNow - Date.now();
+    }
+
     purgeForumDrafts();
 
     var syncId = draftName + '@' + draftOwner;
@@ -167,6 +213,10 @@ $(document).ready(function(){
 
     var local = null;
     try { local = JSON.parse(aooStore.getLocal(draftName, draftOwner)); } catch (err) { /* illisible */ }
+    if(local && local.at > draftNow()){
+        local.at = draftNow();
+        aooStore.setLocal(draftName, JSON.stringify(local), draftOwner);
+    }
     var server = $form.data('draft-server') || null;
 
     var draft = local;
@@ -205,7 +255,7 @@ $(document).ready(function(){
 
         var text = $area.val();
         var title = $title.length ? $title.val() : '';
-        var at = Date.now();
+        var at = draftNow();
 
         /* vidé : le serveur en garde une trace pour les autres appareils */
         syncDraft(text, title, at);

@@ -13,12 +13,16 @@ use InvalidArgumentException;
  * One JSON file per character, mapping a draft key to {text, title, at}.
  * A sent or emptied draft is kept as a tombstone (empty text) so that a
  * device still holding the old local copy drops it instead of reviving it.
+ *
+ * At most MAX_DRAFTS entries per character, so forged keys cannot fill the
+ * disk: past it, tombstones go first, then the oldest drafts.
  */
 class ForumDraftService
 {
     public const MAX_AGE_MS = 30 * 24 * 3600 * 1000;
     public const MAX_TEXT = 65535;
     public const MAX_TITLE = 255;
+    public const MAX_DRAFTS = 30;
 
     private string $dir;
 
@@ -56,8 +60,14 @@ class ForumDraftService
         return $drafts[$key] ?? null;
     }
 
-    /** Last writer wins: a write older than the stored one is dropped. */
-    public function save(int $ownerId, string $key, string $text, string $title, int $at): void
+    /**
+     * Last writer wins: a write older than the stored one is dropped. A date
+     * in the future is brought back to server time, otherwise it would win
+     * every comparison and never be purged.
+     *
+     * @return int the `at` now stored for this key
+     */
+    public function save(int $ownerId, string $key, string $text, string $title, int $at): int
     {
         if (!self::isValidKey($key)) {
             throw new InvalidArgumentException('Clé de brouillon invalide.');
@@ -72,14 +82,21 @@ class ForumDraftService
             $title = '';
         }
 
-        $this->update($ownerId, function (array $drafts) use ($key, $text, $title, $at): array {
+        $at = min($at, self::serverNow());
+        $stored = $at;
+
+        $this->update($ownerId, function (array $drafts) use ($key, $text, $title, $at, &$stored): array {
             if (isset($drafts[$key]) && $drafts[$key]['at'] > $at) {
+                $stored = $drafts[$key]['at'];
+
                 return $drafts;
             }
             $drafts[$key] = ['text' => $text, 'title' => $title, 'at' => $at];
 
             return $drafts;
         });
+
+        return $stored;
     }
 
     /**
@@ -89,23 +106,28 @@ class ForumDraftService
     public function clear(int $ownerId, string $key): void
     {
         try {
-            $this->save($ownerId, $key, '', '', self::now());
+            $this->save($ownerId, $key, '', '', self::serverNow());
         } catch (\Throwable $e) {
             error_log('ForumDraftService::clear: ' . $e->getMessage());
         }
     }
 
-    /** data-draft, data-draft-owner and data-draft-server for #forum-textarea. */
+    /**
+     * data-draft, data-draft-owner, data-draft-server and the server clock
+     * (data-draft-server-now) the browser aligns its own dates on.
+     */
     public function dataAttributes(int $ownerId, string $key): string
     {
         $server = $this->get($ownerId, $key);
 
         return 'data-draft="' . htmlspecialchars($key) . '"'
             . ' data-draft-owner="' . $ownerId . '"'
-            . ' data-draft-server="' . htmlspecialchars((string) json_encode($server)) . '"';
+            . ' data-draft-server="' . htmlspecialchars((string) json_encode($server)) . '"'
+            . ' data-draft-server-now="' . self::serverNow() . '"';
     }
 
-    private static function now(): int
+    /** Milliseconds, the clock every draft `at` is expressed in. */
+    public static function serverNow(): int
     {
         return (int) round(microtime(true) * 1000);
     }
@@ -142,8 +164,8 @@ class ForumDraftService
             flock($handle, LOCK_EX);
             $drafts = $change(self::decode((string) stream_get_contents($handle)));
 
-            $limit = self::now() - self::MAX_AGE_MS;
-            $drafts = array_filter($drafts, fn (array $draft): bool => $draft['at'] >= $limit);
+            $limit = self::serverNow() - self::MAX_AGE_MS;
+            $drafts = self::cap(array_filter($drafts, fn (array $draft): bool => $draft['at'] >= $limit));
 
             ftruncate($handle, 0);
             rewind($handle);
@@ -155,6 +177,35 @@ class ForumDraftService
         }
     }
 
+    /**
+     * Evicts down to MAX_DRAFTS: tombstones before drafts, oldest first in
+     * each, so sending a message never costs another draft its place.
+     *
+     * @param array<string, array{text: string, title: string, at: int}> $drafts
+     * @return array<string, array{text: string, title: string, at: int}>
+     */
+    private static function cap(array $drafts): array
+    {
+        $excess = count($drafts) - self::MAX_DRAFTS;
+        if ($excess <= 0) {
+            return $drafts;
+        }
+
+        $order = array_keys($drafts);
+        usort($order, function (string $a, string $b) use ($drafts): int {
+            $aLive = $drafts[$a]['text'] !== '' || $drafts[$a]['title'] !== '';
+            $bLive = $drafts[$b]['text'] !== '' || $drafts[$b]['title'] !== '';
+
+            return [$aLive, $drafts[$a]['at']] <=> [$bLive, $drafts[$b]['at']];
+        });
+
+        foreach (array_slice($order, 0, $excess) as $key) {
+            unset($drafts[$key]);
+        }
+
+        return $drafts;
+    }
+
     /** @return array<string, array{text: string, title: string, at: int}> */
     private static function decode(string $json): array
     {
@@ -163,13 +214,15 @@ class ForumDraftService
             return [];
         }
 
+        // dates written in the future before they were clamped on save
+        $now = self::serverNow();
         $valid = [];
         foreach ($drafts as $key => $draft) {
             if (is_array($draft) && isset($draft['text'], $draft['at'])) {
                 $valid[(string) $key] = [
                     'text' => (string) $draft['text'],
                     'title' => (string) ($draft['title'] ?? ''),
-                    'at' => (int) $draft['at'],
+                    'at' => min((int) $draft['at'], $now),
                 ];
             }
         }

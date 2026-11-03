@@ -33,17 +33,20 @@ if (!in_array($ownerId, $allowed, true)) {
 }
 
 try {
-  (new ForumDraftService())->save(
+  $at = (new ForumDraftService())->save(
     $ownerId,
     $POST_DATA['key'],
     $POST_DATA['text'],
     is_string($POST_DATA['title'] ?? null) ? $POST_DATA['title'] : '',
     (int) $POST_DATA['at']
   );
+
+  /* the stored date (clamped if it came from the future) and the server
+   * clock, which the browser aligns its own dates on */
+  ExitSuccess(['at' => $at, 'serverNow' => ForumDraftService::serverNow()]);
 } catch (InvalidArgumentException $e) {
   ExitError($e->getMessage());
 } catch (Throwable $th) {
   ExitError('Erreur lors de l\'enregistrement du brouillon');
 }
 
-ExitSuccess('ok');

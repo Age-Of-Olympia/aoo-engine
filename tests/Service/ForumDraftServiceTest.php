@@ -77,6 +77,63 @@ class ForumDraftServiceTest extends TestCase
         $this->assertNotNull($this->service->get(2, 'reply:2'));
     }
 
+    public function testTheOldestDraftIsEvictedPastTheLimit(): void
+    {
+        $at = self::now();
+        for ($i = 0; $i <= ForumDraftService::MAX_DRAFTS; $i++) {
+            $this->service->save(2, 'reply:' . $i, 'texte ' . $i, '', $at + $i);
+        }
+
+        $this->assertNull($this->service->get(2, 'reply:0'));
+        $this->assertNotNull($this->service->get(2, 'reply:1'));
+        $this->assertNotNull($this->service->get(2, 'reply:' . ForumDraftService::MAX_DRAFTS));
+    }
+
+    public function testTombstonesAreEvictedBeforeDrafts(): void
+    {
+        $at = self::now();
+        // the oldest entry is a tombstone, the next one a live draft
+        $this->service->save(2, 'reply:old', '', '', $at - 1000);
+        for ($i = 1; $i < ForumDraftService::MAX_DRAFTS; $i++) {
+            $this->service->save(2, 'reply:' . $i, 'texte ' . $i, '', $at + $i);
+        }
+
+        // sending a message once the file is full keeps every live draft
+        $this->service->clear(2, 'reply:sent');
+
+        $this->assertNull($this->service->get(2, 'reply:old'));
+        for ($i = 1; $i < ForumDraftService::MAX_DRAFTS; $i++) {
+            $this->assertSame('texte ' . $i, $this->service->get(2, 'reply:' . $i)['text']);
+        }
+        $this->assertNotNull($this->service->get(2, 'reply:sent'));
+    }
+
+    public function testADateInTheFutureIsBroughtBackToServerTime(): void
+    {
+        $stored = $this->service->save(2, 'reply:123', 'texte', '', ForumDraftService::serverNow() + 3600 * 1000);
+
+        $this->assertLessThanOrEqual(ForumDraftService::serverNow(), $stored);
+        $this->assertSame($stored, $this->service->get(2, 'reply:123')['at']);
+    }
+
+    public function testAnIgnoredWriteReturnsTheStoredDate(): void
+    {
+        $at = ForumDraftService::serverNow();
+        $this->service->save(2, 'reply:123', 'récent', '', $at);
+
+        $this->assertSame($at, $this->service->save(2, 'reply:123', 'ancien', '', $at - 1000));
+    }
+
+    public function testAFutureDateAlreadyOnDiskIsReadAsNow(): void
+    {
+        file_put_contents(
+            $this->dir . '/2.drafts.json',
+            (string) json_encode(['reply:123' => ['text' => 'x', 'title' => '', 'at' => PHP_INT_MAX]])
+        );
+
+        $this->assertLessThanOrEqual(ForumDraftService::serverNow(), $this->service->get(2, 'reply:123')['at']);
+    }
+
     public function testAnInvalidKeyIsRefused(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -100,6 +157,7 @@ class ForumDraftServiceTest extends TestCase
 
         $this->assertStringContainsString('data-draft="reply:9"', $attributes);
         $this->assertStringContainsString('data-draft-owner="2"', $attributes);
+        $this->assertMatchesRegularExpression('/data-draft-server-now="\d+"/', $attributes);
         $this->assertStringNotContainsString('<b>', $attributes);
     }
 }
