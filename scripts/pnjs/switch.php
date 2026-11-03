@@ -12,12 +12,7 @@ use App\Service\PlayerPnjService;
 $mainId = (int) $_SESSION['mainPlayerId'];
 $target = (int) $_POST['switch'];
 
-$allowed = [$mainId];
-foreach ((new PlayerPnjService())->getByPlayerId($mainId) as $playerPnj) {
-    $allowed[] = (int) $playerPnj->getPnjId();
-}
-
-if (!in_array($target, $allowed, true)) {
+if (!in_array($target, (new PlayerPnjService())->controllableIds($mainId), true)) {
     exit('error pnj');
 }
 

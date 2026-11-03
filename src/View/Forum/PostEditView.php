@@ -2,6 +2,7 @@
 
 namespace App\View\Forum;
 
+use App\Service\ForumDraftService;
 use App\Service\PlayerService;
 use Classes\Forum;
 use Classes\Json;
@@ -56,6 +57,8 @@ class PostEditView
 
             Json::write_json('datas/private/forum/posts/' . $postJson->name . '.json', $data);
 
+            (new ForumDraftService())->clear((int) $player->id, ForumDraftService::editKey($postJson->name));
+
 
             echo $postJson->name;
 
@@ -89,7 +92,7 @@ class PostEditView
 
 
         echo '
-<div id="forum-textarea" data-draft="edit:' . htmlspecialchars($postJson->name) . '" data-draft-owner="' . $player->id . '">
+<div id="forum-textarea" ' . (new ForumDraftService())->dataAttributes((int) $player->id, ForumDraftService::editKey($postJson->name)) . '>
 ';
 
         include('scripts/forum/tools.php');
@@ -136,7 +139,7 @@ class PostEditView
         echo Str::minify(ob_get_clean());
 
 ?>
-        <script src="js/autosave.js?v=20261102"></script>
+        <script src="js/autosave.js?v=20261103"></script>
         <script>
             window.topId = <?php echo $postJson->top_id ?>;
             window.pagesN = <?php echo $pagesN ?>;

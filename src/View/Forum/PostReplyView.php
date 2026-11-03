@@ -3,6 +3,7 @@
 namespace App\View\Forum;
 
 use App\Factory\PlayerFactory;
+use App\Service\ForumDraftService;
 use App\Service\PlayerService;
 use Classes\Forum;
 use Classes\Ui;
@@ -68,6 +69,8 @@ class PostReplyView
             // create post
             $replyId = Forum::put_post($player, $topJson, $_POST['text']);
 
+            (new ForumDraftService())->clear((int) $player->id, ForumDraftService::replyKey($topJson->name));
+
 
             // delete missives views
             if ($topJson->forum_id == 'Missives') {
@@ -111,7 +114,7 @@ class PostReplyView
 
 
         echo '
-<div id="forum-textarea" data-draft="reply:' . htmlspecialchars($topJson->name) . '" data-draft-owner="' . $player->id . '">
+<div id="forum-textarea" ' . (new ForumDraftService())->dataAttributes((int) $player->id, ForumDraftService::replyKey($topJson->name)) . '>
 ';
 
         include('scripts/forum/tools.php');
@@ -161,7 +164,7 @@ class PostReplyView
         echo Str::minify(ob_get_clean());
 
 ?>
-        <script src="js/autosave.js?v=20261102"></script>
+        <script src="js/autosave.js?v=20261103"></script>
         <script>
             window.pagesN = <?php echo $nextPagesN ?>;
         </script>

@@ -29,6 +29,21 @@ class PlayerPnjService
         return $repo->findBy(['player_id' => $playerId]);
     }
 
+    /**
+     * Characters an account may act as: its main character and its pnjs.
+     *
+     * @return int[]
+     */
+    public function controllableIds(int $mainId): array
+    {
+        $ids = [$mainId];
+        foreach ($this->getByPlayerId($mainId) as $playerPnj) {
+            $ids[] = (int) $playerPnj->getPnjId();
+        }
+
+        return $ids;
+    }
+
     public function create(int $playerId, int $pnjId, bool $displayed ) : void
     {
         $playerPnj = new PlayerPnj();

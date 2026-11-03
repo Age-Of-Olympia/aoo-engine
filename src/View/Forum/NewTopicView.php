@@ -3,6 +3,7 @@
 namespace App\View\Forum;
 
 use App\Factory\PlayerFactory;
+use App\Service\ForumDraftService;
 use App\Service\PlayerService;
 use Classes\Forum;
 use Classes\Str;
@@ -54,6 +55,11 @@ class NewTopicView
 
             // create topic
             $topJson = Forum::put_topic($player, $forumJson, title: $_POST['name'], text: $_POST['text']);
+
+            (new ForumDraftService())->clear(
+                (int) $player->id,
+                ForumDraftService::newTopicKey($forumJson->name, empty($_POST['destId']) ? null : (int) $_POST['destId'])
+            );
 
 
             // missives
@@ -157,15 +163,11 @@ class NewTopicView
         }
 
 
-        /* One draft per forum, and per recipient for a targeted missive */
-        $draftKey = 'new:' . $forumJson->name;
-        if (!empty($_GET['targetId'])) {
-            $draftKey .= ':' . (int) $_GET['targetId'];
-        }
+        $draftKey = ForumDraftService::newTopicKey($forumJson->name, empty($_GET['targetId']) ? null : (int) $_GET['targetId']);
 
         echo '<div id="currentSessionId" style="display:none;">' . $_SESSION['playerId'] . '</div>';
         echo '
-<div id="forum-textarea" data-draft="' . htmlspecialchars($draftKey) . '" data-draft-owner="' . $player->id . '">
+<div id="forum-textarea" ' . (new ForumDraftService())->dataAttributes((int) $player->id, $draftKey) . '>
 ';
 
         include('scripts/forum/tools.php');
@@ -215,7 +217,7 @@ class NewTopicView
 
 
 ?>
-        <script src="js/autosave.js?v=20261102"></script>
+        <script src="js/autosave.js?v=20261103"></script>
         <script src="js/forum_newTopic.js?v=20261102"></script>
 <?php
     }

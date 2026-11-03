@@ -4,9 +4,22 @@
  * du panneau ou de la page. La clé et le personnage qui écrit viennent du
  * serveur (data-draft, data-draft-owner) : le fragment sait quel
  * personnage postera, la page hôte peut l'ignorer après un changement de
- * pnj dans un autre onglet. */
+ * pnj dans un autre onglet.
+ *
+ * Une copie part au serveur (api/forum/draft.php) au plus toutes les
+ * DRAFT_SYNC_DELAY, et par beacon quand la page se ferme ou passe en
+ * arrière-plan, pour reprendre le brouillon sur un autre appareil. Le
+ * fragment apporte la copie serveur (data-draft-server) : à l'ouverture,
+ * le plus récent des deux (champ at) l'emporte. Une copie serveur vide
+ * est un brouillon envoyé ou effacé ailleurs. */
 var DRAFT_PREFIX = 'forumDraft:';
 var DRAFT_MAX_AGE = 30 * 24 * 3600 * 1000;
+var DRAFT_SYNC_DELAY = 5000;
+var DRAFT_SYNC_URL = 'api/forum/draft.php';
+
+/* Envois en attente, par clé@personnage : survivent à la réexécution du
+ * fragment HUD et à la fermeture du panneau. */
+window.forumDraftPending = window.forumDraftPending || {};
 
 /* Brouillons abandonnés depuis plus de DRAFT_MAX_AGE, tous personnages. */
 function purgeForumDrafts(){
@@ -26,6 +39,65 @@ function purgeForumDrafts(){
         }
     } catch (err) { /* stockage indisponible : rien à purger */ }
 }
+
+/* Envoi d'un brouillon en attente ; l'échec est silencieux, la copie
+ * locale reste et repartira à la prochaine ouverture. */
+function sendForumDraft(id){
+
+    var pending = window.forumDraftPending[id];
+    if(!pending){
+        return;
+    }
+    clearTimeout(pending.timer);
+    delete window.forumDraftPending[id];
+    pending.lastSent = Date.now();
+    window.forumDraftLastSent = window.forumDraftLastSent || {};
+    window.forumDraftLastSent[id] = pending.lastSent;
+
+    aooFetch(DRAFT_SYNC_URL, pending.payload).catch(function(){ /* hors ligne */ });
+}
+
+/* Tout ce qui attend part par beacon : la page se ferme ou passe en
+ * arrière-plan (mobile), une requête classique serait coupée. */
+function flushForumDrafts(){
+
+    Object.keys(window.forumDraftPending).forEach(function(id){
+
+        var pending = window.forumDraftPending[id];
+        clearTimeout(pending.timer);
+        delete window.forumDraftPending[id];
+
+        /* text/plain : un Blob JSON n'est pas accepté par tous les navigateurs */
+        var body = new Blob([JSON.stringify(pending.payload)], {type: 'text/plain'});
+        if(!navigator.sendBeacon || !navigator.sendBeacon(DRAFT_SYNC_URL, body)){
+            aooFetch(DRAFT_SYNC_URL, pending.payload).catch(function(){ /* hors ligne */ });
+        }
+    });
+}
+
+/* Au plus un envoi par DRAFT_SYNC_DELAY pendant la frappe, et un dernier
+ * après la dernière frappe. */
+function scheduleForumDraftSync(id, payload){
+
+    var lastSent = (window.forumDraftLastSent || {})[id] || 0;
+    var pending = window.forumDraftPending[id];
+    if(pending){
+        clearTimeout(pending.timer);
+    }
+
+    var wait = Math.max(0, DRAFT_SYNC_DELAY - (Date.now() - lastSent));
+    window.forumDraftPending[id] = {
+        payload: payload,
+        timer: setTimeout(function(){ sendForumDraft(id); }, wait)
+    };
+}
+
+$(window).off('pagehide.forumDraft').on('pagehide.forumDraft', flushForumDrafts);
+$(document).off('visibilitychange.forumDraft').on('visibilitychange.forumDraft', function(){
+    if(document.visibilityState === 'hidden'){
+        flushForumDrafts();
+    }
+});
 
 $(document).ready(function(){
 
@@ -70,12 +142,53 @@ $(document).ready(function(){
 
     purgeForumDrafts();
 
+    var syncId = draftName + '@' + draftOwner;
+
+    /* Message envoyé : le serveur a effacé sa copie, rien ne doit plus
+     * partir de ce brouillon. */
     window.forumDraftClear = function(){
+        var pending = window.forumDraftPending[syncId];
+        if(pending){
+            clearTimeout(pending.timer);
+            delete window.forumDraftPending[syncId];
+        }
         aooStore.removeLocal(draftName, draftOwner);
     };
 
-    var draft = null;
-    try { draft = JSON.parse(aooStore.getLocal(draftName, draftOwner)); } catch (err) { /* illisible */ }
+    var syncDraft = function(text, title, at){
+        scheduleForumDraftSync(syncId, {
+            'owner': draftOwner,
+            'key': draftName.slice(DRAFT_PREFIX.length),
+            'text': text,
+            'title': title,
+            'at': at
+        });
+    };
+
+    var local = null;
+    try { local = JSON.parse(aooStore.getLocal(draftName, draftOwner)); } catch (err) { /* illisible */ }
+    var server = $form.data('draft-server') || null;
+
+    var draft = local;
+    if(server && (!local || server.at > local.at)){
+
+        if((server.text || '') == '' && (server.title || '') == ''){
+            /* envoyé ou effacé sur un autre appareil */
+            window.forumDraftClear();
+            draft = null;
+        }
+        else{
+            draft = {'text': server.text, 'at': server.at};
+            if($title.length){
+                draft.title = server.title || '';
+            }
+            aooStore.setLocal(draftName, JSON.stringify(draft), draftOwner);
+        }
+    }
+    else if(local && (!server || local.at > server.at)){
+        /* tapé hors ligne, ou envoi coupé : le serveur rattrape */
+        syncDraft(local.text || '', local.title || '', local.at);
+    }
 
     /* En édition la textarea porte le message d'origine : le brouillon
      * ne le remplace que s'il en diffère. */
@@ -92,13 +205,17 @@ $(document).ready(function(){
 
         var text = $area.val();
         var title = $title.length ? $title.val() : '';
+        var at = Date.now();
+
+        /* vidé : le serveur en garde une trace pour les autres appareils */
+        syncDraft(text, title, at);
 
         if(text.trim() == '' && title.trim() == ''){
-            window.forumDraftClear();
+            aooStore.removeLocal(draftName, draftOwner);
             return;
         }
 
-        var value = {'text': text, 'at': Date.now()};
+        var value = {'text': text, 'at': at};
         if($title.length){
             value.title = title;
         }
