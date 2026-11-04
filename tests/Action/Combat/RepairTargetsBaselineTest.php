@@ -129,7 +129,7 @@ class RepairTargetsBaselineTest extends LegacyPlayerFixtureTestCase
         $this->assertTrue($targeting->canTargetEntity($attack, 'real'));
     }
 
-    private function repairer(): \App\Interface\ActionInterface
+    private function repairer(): \App\Entity\Action
     {
         $action = ActionFactory::getAction('reparer');
 

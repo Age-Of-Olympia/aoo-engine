@@ -337,7 +337,7 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         return $player;
     }
 
-    protected function actionOrSkip(string $name): \App\Interface\ActionInterface
+    protected function actionOrSkip(string $name): \App\Entity\Action
     {
         $action = \App\Factory\ActionFactory::getAction($name);
         if ($action === null) {

@@ -2,12 +2,12 @@
 
 namespace App\Factory;
 
-use App\Interface\ActionInterface;
+use App\Entity\Action;
 use App\Service\ActionService;
 
 class ActionFactory
 {
-    public static function getAction(string $name): ?ActionInterface
+    public static function getAction(string $name): ?Action
     {
         // keep by type for melee and shoot
         // add by name fot the others

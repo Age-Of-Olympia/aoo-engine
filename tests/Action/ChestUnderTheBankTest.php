@@ -48,7 +48,7 @@ class ChestUnderTheBankTest extends LegacyPlayerFixtureTestCase
         parent::tearDown();
     }
 
-    private function construireWithChestSiteOrSkip(): \App\Interface\ActionInterface
+    private function construireWithChestSiteOrSkip(): \App\Entity\Action
     {
         $action = $this->actionOrSkip('construire');
 

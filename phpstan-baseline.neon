@@ -234,7 +234,6 @@ parameters:
 			count: 1
 			path: config/functions.php
 
-
 		-
 			message: '#^Function timestampNormalization\(\) has no return type specified\.$#'
 			identifier: missingType.return
@@ -2034,7 +2033,6 @@ parameters:
 			identifier: missingType.parameter
 			count: 1
 			path: src/Service/PlayerService.php
-
 
 		-
 			message: '#^Property App\\Service\\PlayerService\:\:\$playerCache has no type specified\.$#'
@@ -3885,31 +3883,6 @@ parameters:
 			path: src/View/Observe/EntityCardView.php
 
 		-
-			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:canTargetEntity\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/View/Observe/EntityCardView.php
-
-		-
-			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:canTargetOther\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/View/Observe/EntityCardView.php
-
-		-
-			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:canTargetSelf\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/View/Observe/EntityCardView.php
-
-		-
-			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:matchesDisplayContext\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/View/Observe/EntityCardView.php
-
-
-		-
 			message: '#^Method App\\View\\Player\\PlayerSearchView\:\:render\(\) has parameter \$players with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -3932,18 +3905,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/View/WarSchool/SkillTreeView.php
-
-		-
-			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:matchesDisplayContext\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 2
-			path: tests/Action/ActionDisplayContextBaselineTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:matchesDisplayContext\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface\|null given\.$#'
-			identifier: argument.type
-			count: 2
-			path: tests/Action/ActionDisplayContextBaselineTest.php
 
 		-
 			message: '#^Method Tests\\Action\\ActionResultsTest\:\:testConstructorAndGetters\(\) has no return type specified\.$#'
@@ -3970,52 +3931,10 @@ parameters:
 			path: tests/Action/ChestUnderTheBankTest.php
 
 		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Action/ChestUnderTheBankTest.php
-
-		-
 			message: '#^Method Tests\\Action\\Combat\\ActionSimulationServiceTest\:\:condition\(\) has parameter \$params with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: tests/Action/Combat/ActionSimulationServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Action/Combat/AttackResolutionBaselineTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 3
-			path: tests/Action/Combat/BuildingCombatBaselineTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Action/Combat/BuildingCombatBaselineTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Action/Combat/ChestBreaksUnderAttackBaselineTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 3
-			path: tests/Action/Combat/ConstruireBaselineTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Action/Combat/ExecutorResolvesDeathTest.php
 
 		-
 			message: '#^Method Tests\\Action\\Combat\\LineOfFireTest\:\:key\(\) has parameter \$tile with no value type specified in iterable type array\.$#'
@@ -4034,36 +3953,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: tests/Action/Combat/ObstacleConditionTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 4
-			path: tests/Action/Combat/RepairExemplarBaselineTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 3
-			path: tests/Action/Combat/RepairTargetsBaselineTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:canTargetEntity\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 5
-			path: tests/Action/Combat/RepairTargetsBaselineTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of method App\\Service\\Action\\ActionTargeting\:\:matchesDisplayContext\(\) expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 3
-			path: tests/Action/Combat/RepairTargetsBaselineTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 2
-			path: tests/Action/Combat/WeaponEffectsOnHitAndMissTest.php
 
 		-
 			message: '#^Method Tests\\Action\\Compute\\ComputeConditionCharacterizationTest\:\:check\(\) has no return type specified\.$#'
@@ -4090,12 +3979,6 @@ parameters:
 			path: tests/Action/Condition/RequiresWeaponTypeConditionTest.php
 
 		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 6
-			path: tests/Action/ConsommerBaselineTest.php
-
-		-
 			message: '#^Method Tests\\Action\\ConsumableEffectDurationTest\:\:drinkerWith\(\) has parameter \$extra with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -4106,30 +3989,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: tests/Action/ConsumableEffectDurationTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 2
-			path: tests/Action/CreuserBaselineTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 3
-			path: tests/Action/EquiperBaselineTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 2
-			path: tests/Action/FabriquerBaselineTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 6
-			path: tests/Action/FouillerBaselineTest.php
 
 		-
 			message: '#^Method Tests\\Action\\ImportExport\\ActionImporterPreviewTest\:\:importer\(\) has parameter \$knownRaces with no value type specified in iterable type array\.$#'
@@ -4562,18 +4421,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: tests/Various/BankLifecycleTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 2
-			path: tests/Various/ConstructionSiteTest.php
-
-		-
-			message: '#^Parameter \#1 \$action of class App\\Service\\ActionExecutorService constructor expects App\\Entity\\Action, App\\Interface\\ActionInterface given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Various/FabricTest.php
 
 		-
 			message: '#^Parameter \#1 \$rows of method App\\Service\\Map\\HarvestCatalogService\:\:save\(\) expects array\<int, array\<string, mixed\>\>, array\<string, array\<string, string\>\> given\.$#'

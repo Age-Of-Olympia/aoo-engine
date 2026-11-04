@@ -5,7 +5,6 @@ namespace App\View\Observe;
 use App\Entity\Action;
 use App\Entity\BuildingDetails;
 use App\Factory\PlayerFactory;
-use App\Interface\ActionInterface;
 use App\Interface\ActorInterface;
 use App\Service\Action\ActionTargeting;
 use App\Service\ActionService;
@@ -270,7 +269,7 @@ final class EntityCardView
      * Barbier sur une palissade), et contexte d'affichage (conditions
      * display_context, ex. RequiresDistance = visible à portée).
      */
-    private static function isDisplayable(Player $player, Player $target, ActionInterface $actionData, ActionTargeting $actionTargeting): bool
+    private static function isDisplayable(Player $player, Player $target, Action $actionData, ActionTargeting $actionTargeting): bool
     {
         $allowed = ($player->id == $target->id)
             ? $actionTargeting->canTargetSelf($actionData)

@@ -17,7 +17,7 @@ class ActionService
      * A card lists a dozen actions and asks for each more than once; any
      * write since the read may have changed one, so the map is dropped then.
      *
-     * @var array<string, ?ActionInterface>
+     * @var array<string, ?Action>
      */
     private static array $byName = [];
     private static int $readAtWrites = -1;
@@ -29,7 +29,7 @@ class ActionService
     }
 
     /** The action named so, hydrated as its concrete subclass, or null. */
-    public function getActionByName(string $name): ?ActionInterface
+    public function getActionByName(string $name): ?Action
     {
         $this->forgetIfWritten();
         if (!array_key_exists($name, self::$byName)) {
