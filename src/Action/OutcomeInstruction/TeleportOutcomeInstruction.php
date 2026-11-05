@@ -6,6 +6,7 @@ use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
 use App\Enum\FieldType;
 use App\Interface\HasParameterSchemaInterface;
+use App\Service\PlanAdminService;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use Doctrine\ORM\Mapping as ORM;
@@ -72,6 +73,13 @@ class TeleportOutcomeInstruction extends OutcomeInstruction implements HasParame
                 $coordY = $explodedCoord[1] == "y"?$actor->coords->y:$explodedCoord[1];
                 $coordZ = $explodedCoord[2] == "z"?$actor->coords->z:$explodedCoord[2];
                 $plan = $explodedCoord[3] == "plan"?$actor->coords->plan:$explodedCoord[3];
+                // go() would create coords on an unknown plan: refuse instead.
+                if (!(new PlanAdminService())->planExists((string) $plan)) {
+                    error_log('[tp] action ' . ($this->getOutcome()?->getAction()?->getName() ?? '?') . ' vers un plan inconnu : ' . $plan);
+                    return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: array(
+                        'Cette téléportation mène vers un plan inexistant (« ' . $plan . ' »). Signalez ce bug à l\'équipe.'
+                    ));
+                }
                 $tpCoords = (object) array(
                     'x'=>$coordX,
                     'y'=>$coordY,
