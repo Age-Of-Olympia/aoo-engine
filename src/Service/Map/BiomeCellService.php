@@ -5,7 +5,9 @@ namespace App\Service\Map;
 use App\Factory\EntityManagerFactory;
 use App\Module\Module;
 use App\Module\Modules;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\ParameterType;
 
 /**
  * Sole writer of `biome_cells` — the cells of each biome, from the outlines.
@@ -29,6 +31,9 @@ final class BiomeCellService
     private const WHOLE_PLAN = ['xMin' => -2147483648, 'xMax' => 2147483647, 'yMin' => -2147483648, 'yMax' => 2147483647];
 
     private Connection $db;
+
+    /** @var list<string>|null names of the transition tiles, read once per instance */
+    private ?array $transitionTileNames = null;
 
     public function __construct(?Connection $db = null)
     {
@@ -124,6 +129,37 @@ final class BiomeCellService
         }
 
         return $coverage;
+    }
+
+    /**
+     * Transition tiles of the surface ground that a single biome covers:
+     * the ground says two biomes meet there, the outlines say otherwise.
+     * Usually the neighbour's outline stops a row short.
+     *
+     * @return list<array{int, int}> [x, y]
+     */
+    public function loneTransitions(string $plan): array
+    {
+        $lone = [];
+        // From the transition tiles, few, to their biomes through the primary key
+        foreach (array_chunk($this->transitionTileNames(), self::BATCH) as $names) {
+            $rows = $this->db->fetchAllNumeric(
+                'SELECT c.x, c.y FROM map_tiles t
+                 JOIN coords c ON c.id = t.coords_id
+                 JOIN plans p ON p.slug = c.plan
+                 JOIN biome_cells bc ON bc.plan_id = p.id AND bc.x = c.x AND bc.y = c.y
+                 WHERE c.plan = ? AND c.z = 0 AND t.foreground = 0 AND t.name IN (?)
+                 GROUP BY c.x, c.y HAVING COUNT(*) = 1
+                 ORDER BY c.y DESC, c.x',
+                [$plan, $names],
+                [ParameterType::STRING, ArrayParameterType::STRING]
+            );
+            foreach ($rows as [$x, $y]) {
+                $lone[] = [(int) $x, (int) $y];
+            }
+        }
+
+        return $lone;
     }
 
     /**
@@ -310,7 +346,7 @@ final class BiomeCellService
      */
     private function transitionCells(int $planId, array $area, array $overlaps): array
     {
-        $transitionTiles = array_flip($this->db->fetchFirstColumn('SELECT name FROM terrain_tiles WHERE wang_id IS NOT NULL'));
+        $transitionTiles = array_flip($this->transitionTileNames());
         if ($transitionTiles === []) {
             return [];
         }
@@ -333,5 +369,14 @@ final class BiomeCellService
         }
 
         return $found;
+    }
+
+    /** @return list<string> */
+    private function transitionTileNames(): array
+    {
+        return $this->transitionTileNames ??= array_map(
+            'strval',
+            $this->db->fetchFirstColumn('SELECT name FROM terrain_tiles WHERE wang_id IS NOT NULL')
+        );
     }
 }
