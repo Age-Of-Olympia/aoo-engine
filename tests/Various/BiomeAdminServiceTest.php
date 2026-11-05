@@ -82,6 +82,19 @@ class BiomeAdminServiceTest extends TestCase
         ));
     }
 
+    public function testAUsedTypeCanBeRenamedButNotToATakenName(): void
+    {
+        $type = $this->service->saveType(0, 'test_admin_bois', 'Bois', '#336633');
+        $this->service->saveType(0, 'test_admin_marais', 'Marais', '#556644');
+        $wood = $this->service->saveBiome(0, self::PLAN, $type, 'Bois', '0,0 2,0 2,2 0,2', 0);
+
+        $this->assertSame($type, $this->service->saveType($type, 'test_admin_foret_claire', 'Bois', '#336633'));
+        $this->assertSame($type, (int) $this->db->fetchOne('SELECT biome_type_id FROM biomes WHERE id = ?', [$wood['id']]));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->service->saveType($type, 'test_admin_marais', 'Bois', '#336633');
+    }
+
     public function testAZoneCoveringNothingAndAUsedTypeAreRefused(): void
     {
         $type = $this->service->saveType(0, 'test_admin_desert', 'Désert', '#ccaa66');
