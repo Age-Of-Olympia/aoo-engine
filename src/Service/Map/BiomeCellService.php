@@ -85,18 +85,45 @@ final class BiomeCellService
      */
     public function namesAt(string $plan, int $x, int $y): array
     {
+        $coverage = $this->coverage($plan, ['xMin' => $x, 'xMax' => $x, 'yMin' => $y, 'yMax' => $y]);
+
+        return array_map(
+            static fn (int $id): string => $coverage['biomes'][$id]['name'],
+            $coverage['cells'][$x . ',' . $y] ?? []
+        );
+    }
+
+    /**
+     * The biomes over an area of the plan, for an overlay: each biome once
+     * with its type's colour, and each cell's biome ids, the top one first.
+     * Empty while the module is off.
+     *
+     * @param array{xMin: int, xMax: int, yMin: int, yMax: int} $area
+     * @return array{biomes: array<int, array{name: string, color: string}>, cells: array<string, list<int>>} cells keyed "x,y"
+     */
+    public function coverage(string $plan, array $area): array
+    {
+        $coverage = ['biomes' => [], 'cells' => []];
         if (!Modules::on(Module::Biomes)) {
-            return [];
+            return $coverage;
         }
 
-        return array_map('strval', $this->db->fetchFirstColumn(
-            'SELECT b.name FROM biome_cells c
+        $rows = $this->db->fetchAllAssociative(
+            'SELECT c.x, c.y, b.id, b.name, t.color FROM biome_cells c
              JOIN plans p ON p.id = c.plan_id
              JOIN biomes b ON b.id = c.biome_id
-             WHERE p.slug = ? AND c.x = ? AND c.y = ?
+             JOIN biome_types t ON t.id = b.biome_type_id
+             WHERE p.slug = ? AND c.x BETWEEN ? AND ? AND c.y BETWEEN ? AND ?
              ORDER BY b.stack_order DESC, b.id DESC',
-            [$plan, $x, $y]
-        ));
+            [$plan, ...self::bounds($area)]
+        );
+        foreach ($rows as $row) {
+            $id = (int) $row['id'];
+            $coverage['biomes'][$id] ??= ['name' => (string) $row['name'], 'color' => (string) $row['color']];
+            $coverage['cells'][$row['x'] . ',' . $row['y']][] = $id;
+        }
+
+        return $coverage;
     }
 
     /**
