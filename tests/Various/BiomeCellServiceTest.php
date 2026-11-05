@@ -59,6 +59,12 @@ class BiomeCellServiceTest extends TestCase
         $this->assertSame([[0, 0], [0, 1], [0, 2], [1, 0], [2, 0]], $cells);
     }
 
+    public function testSelfCrossingOutlineCountsTheCrossingCellOnce(): void
+    {
+        // A bowtie whose two diagonals cross on the centre of (2, 0)
+        $this->assertSame([[2, 0]], BiomeCellService::cellsInside([[2, 0], [3, 1], [3, 0], [2, 1]]));
+    }
+
     public function testBrokenOutlineCoversNothing(): void
     {
         $this->assertSame([], BiomeCellService::cellsInside([[0, 0], [1, 1]]));
@@ -97,6 +103,24 @@ class BiomeCellServiceTest extends TestCase
         $this->assertSame(1, (new BiomeCellService($this->db))->rebuild($this->planId));
         $this->assertSame([], $this->biomesAt(0, 0));
         $this->assertSame([$id], $this->biomesAt(5, 5));
+    }
+
+    public function testRebuildOfAnAreaGivesBackWhatTheMovedZoneHid(): void
+    {
+        $forest = $this->biome('Forêt', [[0, 0], [10, 0], [10, 10], [0, 10]], 0);
+        $old = [[1, 1], [2, 1], [2, 2], [1, 2]];
+        $lake = $this->biome('Lac', $old, 1);
+        $cells = new BiomeCellService($this->db);
+        $cells->rebuild($this->planId);
+
+        $new = [[5, 5], [6, 5], [6, 6], [5, 6]];
+        $this->db->update('biomes', ['zone' => json_encode($new)], ['id' => $lake]);
+
+        $this->assertSame(25, $cells->rebuild($this->planId, BiomeCellService::areaOf($new, $old)), 'x 1..5 × y 1..5');
+        $this->assertSame([$forest], $this->biomesAt(1, 1));
+        $this->assertSame([$lake], $this->biomesAt(5, 5));
+        $this->assertSame([$forest], $this->biomesAt(9, 9));
+        $this->assertSame(100, (int) $this->db->fetchOne('SELECT COUNT(*) FROM biome_cells WHERE plan_id = ?', [$this->planId]));
     }
 
     /** @param list<array{int, int}> $zone */

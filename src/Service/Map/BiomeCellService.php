@@ -17,7 +17,14 @@ use Doctrine\DBAL\Connection;
  */
 final class BiomeCellService
 {
-    private const INSERT_BATCH = 1000;
+    /** Rows per INSERT statement */
+    private const BATCH = 5000;
+
+    /** Slack for float error when a crossing falls exactly on a cell centre */
+    private const EPSILON = 1e-9;
+
+    /** An area covering any cell the INT columns can hold */
+    private const WHOLE_PLAN = ['xMin' => -2147483648, 'xMax' => 2147483647, 'yMin' => -2147483648, 'yMax' => 2147483647];
 
     private Connection $db;
 
@@ -26,141 +33,234 @@ final class BiomeCellService
         $this->db = $db ?? EntityManagerFactory::getEntityManager()->getConnection();
     }
 
-    /** Recompute every cell of the plan's biomes; returns the rows written. */
-    public function rebuild(int $planId): int
+    /**
+     * Recompute the plan's biome cells inside $area (the whole plan when
+     * null) and return how many rows that area now holds. Saving a biome
+     * can only change the cells under its old and new outline: callers
+     * pass areaOf(new outline, old outline).
+     *
+     * @param array{xMin: int, xMax: int, yMin: int, yMax: int}|null $area cells included
+     */
+    public function rebuild(int $planId, ?array $area = null): int
     {
-        // One id per cell, the top one; the ones it hides only where zones overlap
-        $top = [];
-        $under = [];
-        $biomes = $this->db->fetchAllAssociative(
-            'SELECT id, zone FROM biomes WHERE plan_id = ? ORDER BY stack_order, id',
-            [$planId]
-        );
-        foreach ($biomes as $biome) {
-            $id = (int) $biome['id'];
-            foreach (self::eachCellInside((array) json_decode((string) $biome['zone'], true)) as [$x, $y]) {
-                $key = $x . ',' . $y;
-                if (isset($top[$key])) {
-                    $under[$key][] = $top[$key];
+        $area ??= self::WHOLE_PLAN;
+        [$top, $hidden] = $this->stack($planId, $area);
+        $transitions = $hidden === [] ? [] : $this->transitionCells($planId, $area, $hidden);
+
+        // One row per cell for its top biome; a transition cell gets one per biome covering it.
+        // Rows go out x then y, the primary key's order, so the inserts append to the index
+        $rows = [];
+        ksort($top);
+        foreach ($top as $x => $column) {
+            ksort($column);
+            foreach ($column as $y => $topId) {
+                $biomeIds = isset($transitions[$x][$y]) ? [...$hidden[$x][$y], $topId] : [$topId];
+                foreach ($biomeIds as $biomeId) {
+                    // All ints built here, so inlined instead of thousands of bound parameters
+                    $rows[] = '(' . $planId . ',' . $x . ',' . $y . ',' . $biomeId . ')';
                 }
-                $top[$key] = $id;
             }
         }
-        $transitions = $under === [] ? [] : $this->transitionCells($planId, array_keys($under));
 
-        return (int) $this->db->transactional(function (Connection $db) use ($planId, $top, $under, $transitions): int {
-            $db->executeStatement('DELETE FROM biome_cells WHERE plan_id = ?', [$planId]);
-
-            $written = 0;
-            $chunk = [];
-            foreach ($top as $key => $id) {
-                [$x, $y] = explode(',', (string) $key);
-                foreach (isset($transitions[$key]) ? [...$under[$key], $id] : [$id] as $biomeId) {
-                    $chunk[] = [$planId, (int) $x, (int) $y, $biomeId];
-                }
-                if (count($chunk) >= self::INSERT_BATCH) {
-                    $written += self::insert($db, $chunk);
-                    $chunk = [];
-                }
+        $this->db->transactional(function (Connection $db) use ($planId, $area, $rows): void {
+            $db->executeStatement(
+                'DELETE FROM biome_cells WHERE plan_id = ? AND x BETWEEN ? AND ? AND y BETWEEN ? AND ?',
+                [$planId, ...self::bounds($area)]
+            );
+            foreach (array_chunk($rows, self::BATCH) as $chunk) {
+                $db->executeStatement('INSERT INTO biome_cells (plan_id, x, y, biome_id) VALUES ' . implode(',', $chunk));
             }
-            $written += self::insert($db, $chunk);
-
-            return $written;
         });
-    }
 
-    /** @param list<array{int, int, int, int}> $rows */
-    private static function insert(Connection $db, array $rows): int
-    {
-        if ($rows === []) {
-            return 0;
-        }
-
-        return $db->executeStatement(
-            'INSERT INTO biome_cells (plan_id, x, y, biome_id) VALUES '
-                . implode(',', array_fill(0, count($rows), '(?, ?, ?, ?)')),
-            array_merge(...$rows)
-        );
+        return count($rows);
     }
 
     /**
-     * Cells whose centre is inside the outline or on its edge.
+     * Cells whose centre is inside the outline or on its edge, sorted.
      *
      * @param array<mixed> $zone [[x, y], ...] corner vertices
      * @return list<array{int, int}>
      */
     public static function cellsInside(array $zone): array
     {
-        return iterator_to_array(self::eachCellInside($zone), false);
+        $cells = [];
+        foreach (self::runs($zone, self::WHOLE_PLAN) as [$y, $from, $to]) {
+            for ($x = $from; $x <= $to; $x++) {
+                $cells[] = [$x, $y];
+            }
+        }
+        sort($cells);
+
+        return $cells;
     }
 
     /**
+     * Whether the outline covers at least one cell; stops at the first.
+     *
      * @param array<mixed> $zone
-     * @return \Generator<array{int, int}>
      */
-    private static function eachCellInside(array $zone): \Generator
+    public static function coversACell(array $zone): bool
     {
-        $points = array_values(array_filter(
-            $zone,
-            static fn ($p): bool => is_array($p) && count($p) >= 2 && is_numeric($p[0]) && is_numeric($p[1])
-        ));
-        if (count($points) < 3) {
+        return self::runs($zone, self::WHOLE_PLAN)->valid();
+    }
+
+    /**
+     * The rectangle of cells the outlines can cover, null when none can.
+     *
+     * @param array<mixed> ...$zones
+     * @return array{xMin: int, xMax: int, yMin: int, yMax: int}|null
+     */
+    public static function areaOf(array ...$zones): ?array
+    {
+        $corners = array_merge(...array_map(self::corners(...), $zones));
+        if ($corners === []) {
+            return null;
+        }
+        $xs = array_column($corners, 0);
+        $ys = array_column($corners, 1);
+
+        // Corners x..x' bound the cells x..x' - 1
+        return [
+            'xMin' => (int) floor(min($xs)),
+            'xMax' => (int) ceil(max($xs)) - 1,
+            'yMin' => (int) floor(min($ys)),
+            'yMax' => (int) ceil(max($ys)) - 1,
+        ];
+    }
+
+    /**
+     * Which biome is on top of each cell of the area, and which ones it
+     * hides. Two maps rather than one list per cell: overlaps are rare, and
+     * an array per cell triples the memory.
+     *
+     * @param array{xMin: int, xMax: int, yMin: int, yMax: int} $area
+     * @return array{array<int, array<int, int>>, array<int, array<int, list<int>>>} [top, hidden], both [x][y]
+     */
+    private function stack(int $planId, array $area): array
+    {
+        $top = [];
+        $hidden = [];
+        $biomes = $this->db->fetchAllAssociative(
+            'SELECT id, zone FROM biomes WHERE plan_id = ? ORDER BY stack_order, id',
+            [$planId]
+        );
+        // Bottom first: each biome covers what was laid before it
+        foreach ($biomes as $biome) {
+            $id = (int) $biome['id'];
+            foreach (self::runs((array) json_decode((string) $biome['zone'], true), $area) as [$y, $from, $to]) {
+                for ($x = $from; $x <= $to; $x++) {
+                    if (isset($top[$x][$y])) {
+                        $hidden[$x][$y][] = $top[$x][$y];
+                    }
+                    $top[$x][$y] = $id;
+                }
+            }
+        }
+
+        return [$top, $hidden];
+    }
+
+    /**
+     * The outline's cells, row by row, as runs [y, first x, last x], cut
+     * to the area.
+     *
+     * Each row's centre line (y + .5) crosses the outline an even number of
+     * times; sorted, the crossings pair up: inside from the 1st to the 2nd,
+     * from the 3rd to the 4th, and so on. Corners sit on whole numbers, so
+     * a centre line never runs through a corner nor along an edge.
+     *
+     * @param array<mixed> $zone
+     * @param array{xMin: int, xMax: int, yMin: int, yMax: int} $area
+     * @return \Generator<array{int, int, int}>
+     */
+    private static function runs(array $zone, array $area): \Generator
+    {
+        $corners = self::corners($zone);
+        if ($corners === []) {
             return;
         }
-        $points = array_map(static fn (array $p): array => [(float) $p[0], (float) $p[1]], $points);
+        $ys = array_column($corners, 1);
+        $firstRow = max((int) floor(min($ys)), $area['yMin']);
+        $lastRow = min((int) ceil(max($ys)) - 1, $area['yMax']);
 
-        $xs = array_column($points, 0);
-        $ys = array_column($points, 1);
-        for ($x = (int) floor(min($xs)); $x < (int) ceil(max($xs)); $x++) {
-            for ($y = (int) floor(min($ys)); $y < (int) ceil(max($ys)); $y++) {
-                if (self::contains($points, $x + 0.5, $y + 0.5)) {
-                    yield [$x, $y];
+        for ($y = $firstRow; $y <= $lastRow; $y++) {
+            $lastTaken = PHP_INT_MIN;
+            foreach (array_chunk(self::crossings($corners, $y + 0.5), 2) as [$enter, $leave]) {
+                // The cells whose centre x + .5 lies between the two crossings, both included
+                $from = (int) ceil($enter - 0.5 - self::EPSILON);
+                $to = (int) floor($leave - 0.5 + self::EPSILON);
+                // A self-crossing outline can start a run on the cell the previous one ended on
+                $from = max($from, $lastTaken + 1, $area['xMin']);
+                $to = min($to, $area['xMax']);
+                if ($from <= $to) {
+                    yield [$y, $from, $to];
+                    $lastTaken = $to;
                 }
             }
         }
     }
 
     /**
-     * Even-odd ray cast; a point on an edge counts as inside, so a cell
-     * cut through its centre by a diagonal belongs to both zones.
+     * Where the horizontal line at $y crosses the outline's edges, sorted.
      *
-     * @param list<array{float, float}> $points
+     * @param list<array{float, float}> $corners
+     * @return list<float> x of each crossing
      */
-    private static function contains(array $points, float $px, float $py): bool
+    private static function crossings(array $corners, float $y): array
     {
-        $inside = false;
-        $n = count($points);
-        for ($i = 0, $j = $n - 1; $i < $n; $j = $i++) {
-            [$xi, $yi] = $points[$i];
-            [$xj, $yj] = $points[$j];
-
-            $cross = ($xj - $xi) * ($py - $yi) - ($yj - $yi) * ($px - $xi);
-            if (abs($cross) < 1e-9
-                && $px >= min($xi, $xj) && $px <= max($xi, $xj)
-                && $py >= min($yi, $yj) && $py <= max($yi, $yj)) {
-                return true;
+        $xs = [];
+        $from = end($corners);
+        foreach ($corners as $to) {
+            [$x1, $y1] = $from;
+            [$x2, $y2] = $to;
+            if (($y1 > $y) !== ($y2 > $y)) {
+                $xs[] = $x1 + ($y - $y1) * ($x2 - $x1) / ($y2 - $y1);
             }
-
-            if (($yi > $py) !== ($yj > $py)
-                && $px < ($xj - $xi) * ($py - $yi) / ($yj - $yi) + $xi) {
-                $inside = !$inside;
-            }
+            $from = $to;
         }
+        sort($xs);
 
-        return $inside;
+        return $xs;
     }
 
     /**
-     * Overlapping cells whose surface tile is a transition (a wangId in
-     * terrain_tiles).
-     *
-     * @param list<string> $keys "x,y"
-     * @return array<string, true>
+     * @param array<mixed> $zone
+     * @return list<array{float, float}> the well-formed corners; none when fewer than three
      */
-    private function transitionCells(int $planId, array $keys): array
+    private static function corners(array $zone): array
     {
-        $wang = array_flip($this->db->fetchFirstColumn('SELECT name FROM terrain_tiles WHERE wang_id IS NOT NULL'));
-        if ($wang === []) {
+        $points = array_values(array_filter(
+            $zone,
+            static fn ($p): bool => is_array($p) && count($p) >= 2 && is_numeric($p[0]) && is_numeric($p[1])
+        ));
+        if (count($points) < 3) {
+            return [];
+        }
+
+        return array_map(static fn (array $p): array => [(float) $p[0], (float) $p[1]], $points);
+    }
+
+    /**
+     * @param array{xMin: int, xMax: int, yMin: int, yMax: int} $area
+     * @return list<int> for "x BETWEEN ? AND ? AND y BETWEEN ? AND ?"
+     */
+    private static function bounds(array $area): array
+    {
+        return [$area['xMin'], $area['xMax'], $area['yMin'], $area['yMax']];
+    }
+
+    /**
+     * Cells of the area under several biomes whose surface tile is a
+     * transition (a wangId in terrain_tiles).
+     *
+     * @param array{xMin: int, xMax: int, yMin: int, yMax: int} $area
+     * @param array<int, array<int, mixed>> $overlaps [x][y]
+     * @return array<int, array<int, true>> [x][y]
+     */
+    private function transitionCells(int $planId, array $area, array $overlaps): array
+    {
+        $transitionTiles = array_flip($this->db->fetchFirstColumn('SELECT name FROM terrain_tiles WHERE wang_id IS NOT NULL'));
+        if ($transitionTiles === []) {
             return [];
         }
 
@@ -168,15 +268,16 @@ final class BiomeCellService
         $tiles = $this->db->fetchAllAssociative(
             'SELECT c.x, c.y, t.name FROM map_tiles t
              JOIN coords c ON c.id = t.coords_id
-             WHERE c.plan = (SELECT slug FROM plans WHERE id = ?) AND c.z = 0 AND t.foreground = 0',
-            [$planId]
+             WHERE c.plan = (SELECT slug FROM plans WHERE id = ?) AND c.z = 0 AND t.foreground = 0
+               AND c.x BETWEEN ? AND ? AND c.y BETWEEN ? AND ?',
+            [$planId, ...self::bounds($area)]
         );
-        $wanted = array_flip($keys);
         $found = [];
         foreach ($tiles as $tile) {
-            $key = $tile['x'] . ',' . $tile['y'];
-            if (isset($wanted[$key], $wang[$tile['name']])) {
-                $found[$key] = true;
+            $x = (int) $tile['x'];
+            $y = (int) $tile['y'];
+            if (isset($overlaps[$x][$y], $transitionTiles[$tile['name']])) {
+                $found[$x][$y] = true;
             }
         }
 
