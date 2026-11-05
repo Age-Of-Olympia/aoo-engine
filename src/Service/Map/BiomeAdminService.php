@@ -192,7 +192,7 @@ final class BiomeAdminService
         return $choices;
     }
 
-    /** @return list<array{id: int, race_id: int, label: string, chance: int, max_count: int, z_min: int, z_max: int}> */
+    /** @return list<array{id: int, race_id: int, label: string, chance: int, density: float, z_min: int, z_max: int}> */
     public function populations(int $biomeId): array
     {
         return array_map(static fn (array $row): array => [
@@ -200,7 +200,7 @@ final class BiomeAdminService
             'race_id' => (int) $row['race_id'],
             'label' => self::typeLabel($row),
             'chance' => (int) $row['chance'],
-            'max_count' => (int) $row['max_count'],
+            'density' => (float) $row['density'],
             'z_min' => (int) $row['z_min'],
             'z_max' => (int) $row['z_max'],
         ], $this->db->fetchAllAssociative(
@@ -223,23 +223,26 @@ final class BiomeAdminService
     }
 
     /** One type in one biome: added, or its numbers replaced. */
-    public function savePopulation(int $biomeId, int $raceId, int $chance, int $maxCount, int $zMin, int $zMax): void
+    public function savePopulation(int $biomeId, int $raceId, int $chance, float $density, int $zMin, int $zMax): void
     {
         if (!array_key_exists($raceId, $this->growableTypes())) {
             throw new InvalidArgumentException('Choisissez une plante ou une ressource.');
         }
-        if ($chance < 1 || $maxCount < 1) {
-            throw new InvalidArgumentException('La chance (1 sur N) et le maximum valent au moins 1.');
+        if ($chance < 1) {
+            throw new InvalidArgumentException('La chance (1 sur N) vaut au moins 1.');
+        }
+        if ($density <= 0 || $density > 100) {
+            throw new InvalidArgumentException('La densité va de 0,01 à 100 pour 100 cases.');
         }
         if ($zMin > $zMax) {
             throw new InvalidArgumentException('Le niveau z minimum dépasse le maximum.');
         }
 
         $this->db->executeStatement(
-            'INSERT INTO biome_populations (biome_id, race_id, chance, max_count, z_min, z_max) VALUES (?, ?, ?, ?, ?, ?)
-             ON DUPLICATE KEY UPDATE chance = VALUES(chance), max_count = VALUES(max_count),
+            'INSERT INTO biome_populations (biome_id, race_id, chance, density, z_min, z_max) VALUES (?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE chance = VALUES(chance), density = VALUES(density),
                  z_min = VALUES(z_min), z_max = VALUES(z_max)',
-            [$biomeId, $raceId, $chance, $maxCount, $zMin, $zMax]
+            [$biomeId, $raceId, $chance, $density, $zMin, $zMax]
         );
     }
 

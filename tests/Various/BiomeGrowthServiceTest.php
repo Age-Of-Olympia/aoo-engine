@@ -52,21 +52,22 @@ class BiomeGrowthServiceTest extends LegacyPlayerFixtureTestCase
         parent::tearDown();
     }
 
-    public function testGrowsOnFreeGroundUpToTheMaximum(): void
+    public function testGrowsOnFreeGroundUpToTheDensity(): void
     {
-        $this->population(2);
+        // 60 per 100 of the 4 cells with ground: 2 (the bare fifth cell would make it 3)
+        $this->population(60);
 
         $grown = $this->grow();
 
-        $this->assertCount(2, $grown, 'the maximum stops the third');
+        $this->assertCount(2, $grown, 'the density stops the third');
         $this->assertSame(2, $this->plantsOnPlan());
         $this->assertNotContains($this->coordsIdOn(self::PLAN, 3, 0), $grown, 'nothing grows under the fire');
     }
 
-    public function testPlantsAlreadyThereCountTowardsTheMaximum(): void
+    public function testPlantsAlreadyThereCountTowardsTheDensity(): void
     {
         PlantsService::plantAt($this->plant, $this->coordsIdOn(self::PLAN, 0, 0));
-        $this->population(2);
+        $this->population(60);
 
         $this->assertCount(1, $this->grow());
         $this->assertSame(2, $this->plantsOnPlan());
@@ -74,7 +75,7 @@ class BiomeGrowthServiceTest extends LegacyPlayerFixtureTestCase
 
     public function testNothingGrowsWhileTheModuleIsOff(): void
     {
-        $this->population(5);
+        $this->population(100);
         Modules::force(Module::Biomes, false);
 
         $this->assertSame([], $this->grow());
@@ -97,9 +98,9 @@ class BiomeGrowthServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame([$outside], $cells);
     }
 
-    private function population(int $max): void
+    private function population(float $density): void
     {
-        (new BiomeAdminService($this->link))->savePopulation($this->biomeId, $this->plantId, 3, $max, 0, 0);
+        (new BiomeAdminService($this->link))->savePopulation($this->biomeId, $this->plantId, 3, $density, 0, 0);
     }
 
     /** @return list<int> */

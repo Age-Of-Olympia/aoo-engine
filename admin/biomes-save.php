@@ -38,7 +38,7 @@ handleAdminPost($redirect, static function (): string {
                 $id,
                 (int) ($_POST['race_id'] ?? 0),
                 (int) ($_POST['chance'] ?? 0),
-                (int) ($_POST['max_count'] ?? 0),
+                (float) str_replace(',', '.', (string) ($_POST['density'] ?? 0)),
                 (int) ($_POST['z_min'] ?? 0),
                 (int) ($_POST['z_max'] ?? 0)
             );

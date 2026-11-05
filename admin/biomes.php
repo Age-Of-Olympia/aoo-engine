@@ -7,6 +7,7 @@ use App\Module\Module;
 use App\Module\Modules;
 use App\Service\CsrfProtectionService;
 use App\Service\Map\BiomeAdminService;
+use App\Service\Map\BiomeGrowthService;
 
 $service = new BiomeAdminService();
 $token = '<input type="hidden" name="csrf_token" value="' . e((new CsrfProtectionService())->generateToken()) . '">';
@@ -115,12 +116,15 @@ if ($edited) {
     $hidden = ['id' => $edited['id'], 'edit' => $edited['id'], 'plan_filter' => $plan];
     $numbers = static fn (array $p): string =>
         formField('Chance : 1 sur', formInput('chance', (string) ($p['chance'] ?? 20), 'type="number" min="1" required'), 'form-group col-md-2 mb-0')
-        . formField('Maximum', formInput('max_count', (string) ($p['max_count'] ?? 30), 'type="number" min="1" required'), 'form-group col-md-2 mb-0')
+        . formField('Pour 100 cases', formInput('density', (string) ($p['density'] ?? 5), 'type="number" min="0.01" max="100" step="0.01" required'), 'form-group col-md-2 mb-0')
         . formField('z min', formInput('z_min', (string) ($p['z_min'] ?? 0), 'type="number" required'), 'form-group col-md-1 mb-0')
         . formField('z max', formInput('z_max', (string) ($p['z_max'] ?? 0), 'type="number" required'), 'form-group col-md-1 mb-0');
     $populationRows = [];
+    $growth = new BiomeGrowthService();
     foreach ($service->populations($edited['id']) as $population) {
-        $populationRows[] = '<tr><td>' . e($population['label']) . '</td><td>'
+        $cap = $growth->cap(['biome_id' => $edited['id']] + $population);
+        $populationRows[] = '<tr><td>' . e($population['label'])
+            . '<br><small class="text-muted">≈ ' . $cap . ' aujourd\'hui</small></td><td>'
             . biome_form($token, 'save_population', '<div class="form-row align-items-end">' . $numbers($population)
                 . '<div class="col-md-2"><button class="btn btn-sm btn-primary" type="submit">Enregistrer</button></div></div>',
                 $hidden + ['race_id' => $population['race_id']])
@@ -131,7 +135,8 @@ if ($edited) {
     }
     $populationsCard = '<div id="populations">' . formCard('Ce qui pousse dans ' . $edited['name'],
         '<p class="text-muted">Chaque nuit, chaque case libre du biome (sol posé, rien dessus) a une chance sur N'
-        . ' de voir pousser ce type, tant que le biome en compte moins que le maximum, plantations des joueurs comprises.</p>'
+        . ' de voir pousser ce type, tant que le biome en compte moins que sa densité :'
+        . ' 5 pour 100 cases, sur un biome de 300 cases avec du sol, arrête la pousse à 15, plantations des joueurs comprises.</p>'
         . ($populationRows === [] ? '<p class="text-muted">Rien ne pousse encore ici.</p>' : renderTable(['Type', 'Réglages', ''], $populationRows))
         . '<hr>' . biome_form($token, 'save_population', '<div class="form-row align-items-end">'
             . formField('Type', formSelect('race_id', $service->growableTypes(), null, '— Choisir —', 'required'), 'form-group col-md-4 mb-0')
