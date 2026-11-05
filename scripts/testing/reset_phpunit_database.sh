@@ -70,7 +70,7 @@ for table in \
     tutorial_catalog tutorial_steps tutorial_step_ui tutorial_step_validation \
     tutorial_step_prerequisites tutorial_step_features tutorial_step_highlights \
     tutorial_step_interactions tutorial_step_context_changes \
-    tutorial_step_next_preparation tutorial_npcs tutorial_dialogs tutorial_settings \
+    tutorial_step_next_preparation tutorial_npcs tutorial_dialogs tutorial_settings modules \
     reputation_titles reputation_reward_tiers \
     tile_colors doctrine_migration_versions
 do
