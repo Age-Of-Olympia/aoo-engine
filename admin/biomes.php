@@ -41,12 +41,13 @@ if (!Modules::on(Module::Biomes)) {
 // Types
 $rows = [];
 foreach ($types as $type) {
-    $rows[] = '<tr><td><code>' . e($type['name']) . '</code></td><td>'
+    $rows[] = '<tr><td>'
         . biome_form($token, 'save_type', '<div class="d-flex gap-2">'
+            . formInput('name', $type['name'], 'class="form-control form-control-sm" pattern="' . BiomeAdminService::TYPE_NAME_PATTERN . '" required')
             . formInput('label', $type['label'], 'class="form-control form-control-sm" required')
             . formInput('color', $type['color'], 'type="color" class="form-control form-control-sm" style="width:4em"')
             . '<button class="btn btn-sm btn-primary" type="submit">Enregistrer</button></div>',
-            ['id' => $type['id'], 'name' => $type['name']])
+            ['id' => $type['id']])
         . '</td><td>' . $type['biomes'] . '</td><td>'
         . ($type['biomes'] === 0
             ? biome_form($token, 'delete_type', '<button class="btn btn-sm btn-outline-danger" type="submit">Supprimer</button>',
@@ -61,7 +62,7 @@ $addType = biome_form($token, 'save_type', '<div class="d-flex flex-wrap gap-2 a
     . '<button class="btn btn-primary" type="submit">Ajouter le type</button></div>', ['id' => 0]);
 $content .= formCard('Types de biome', ($types === []
         ? '<p class="text-muted">Aucun type pour l\'instant.</p>'
-        : renderTable(['Nom', 'Libellé et couleur', 'Biomes', ''], $rows))
+        : renderTable(['Nom technique, libellé et couleur', 'Biomes', ''], $rows))
     . '<hr>' . $addType);
 
 // Biomes

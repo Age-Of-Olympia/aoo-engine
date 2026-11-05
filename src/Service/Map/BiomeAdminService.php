@@ -12,6 +12,9 @@ use InvalidArgumentException;
  */
 final class BiomeAdminService
 {
+    /** A type's technical name; the admin form checks it with the same pattern */
+    public const TYPE_NAME_PATTERN = '[a-z0-9_]{1,64}';
+
     private Connection $db;
 
     public function __construct(?Connection $db = null)
@@ -40,7 +43,7 @@ final class BiomeAdminService
     {
         $name = trim($name);
         $label = trim($label);
-        if (!preg_match('/^[a-z0-9_]{1,64}$/', $name)) {
+        if (!preg_match('/^' . self::TYPE_NAME_PATTERN . '$/', $name)) {
             throw new InvalidArgumentException('Nom technique : minuscules, chiffres et _ seulement (ex. foret_dense).');
         }
         if ($label === '') {
