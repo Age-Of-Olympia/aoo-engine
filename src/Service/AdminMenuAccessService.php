@@ -43,6 +43,7 @@ class AdminMenuAccessService
         // Creating and deleting plans is destructive
         'maps.plans'               => ['Cartes · Plans', 'Cartes', self::LEVEL_SUPERADMIN],
         'maps.local'               => ['Cartes · Cartes locales', 'Cartes', self::LEVEL_ADMIN],
+        'maps.biomes'              => ['Cartes · Biomes', 'Cartes', self::LEVEL_ADMIN],
         'maps.terrain-transitions' => ['Cartes · Transitions de terrain', 'Cartes', self::LEVEL_ADMIN],
         'maps.tiles'               => ['Cartes · Tuiles & images', 'Cartes', self::LEVEL_ADMIN],
         'maps.colors'              => ['Cartes · Couleurs de carte', 'Cartes', self::LEVEL_ADMIN],
@@ -144,6 +145,8 @@ class AdminMenuAccessService
         'plans-save.php'           => 'maps.plans',
         'plan-season-rename.php'   => 'maps.plans',
         'local_maps.php'           => 'maps.local',
+        'biomes.php'               => 'maps.biomes',
+        'biomes-save.php'          => 'maps.biomes',
         'terrain-transitions.php'  => 'maps.terrain-transitions',
         'tile-assets.php'          => 'maps.tiles',
         'tile-colors.php'          => 'maps.colors',

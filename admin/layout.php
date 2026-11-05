@@ -44,6 +44,8 @@ function admin_nav_tree(): array
 
         ['section' => 'Le monde', 'items' => [
             ['Plans', '/admin/plans.php'],
+            // A module's pages leave the menu while it is off
+            ...(\App\Module\Modules::on(\App\Module\Module::Biomes) ? [['Biomes', '/admin/biomes.php']] : []),
             ['Foi', [
                 ['Cultes', '/admin/cults.php'],
                 ['Récompenses', '/admin/faith-rewards.php'],
