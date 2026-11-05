@@ -48,7 +48,7 @@ class PlantsService
         t.coords_id = c.id
         WHERE
         t.name = 'grow'
-        AND " . self::freeSoilSql('t.coords_id') . ";
+        AND " . self::freeSoilSql('t.coords_id') . self::outsideBiomesSql() . ";
         ";
 
         $db = new Db();
@@ -58,6 +58,17 @@ class PlantsService
         return $res;
     }
 
+
+    /** Biomes on: their own populations replace the grow triggers inside them. */
+    private static function outsideBiomesSql(): string
+    {
+        if (!\App\Module\Modules::on(\App\Module\Module::Biomes)) {
+            return '';
+        }
+
+        return " AND NOT EXISTS (SELECT 1 FROM biome_cells bc JOIN plans pl ON pl.id = bc.plan_id
+                                  WHERE pl.slug = c.plan AND bc.x = c.x AND bc.y = c.y)";
+    }
 
     /**
      * SQL condition: nothing grows on the cell yet — no plant, no element,

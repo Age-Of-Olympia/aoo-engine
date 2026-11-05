@@ -9,7 +9,8 @@ use App\Service\Map\BiomeAdminService;
 (new AdminMenuAccessService())->enforce('maps.biomes');
 
 $filter = (string) ($_POST['plan_filter'] ?? '');
-$redirect = '/admin/biomes.php' . ($filter !== '' ? '?plan=' . urlencode($filter) : '');
+$back = array_filter(['plan' => $filter, 'edit' => (string) ($_POST['edit'] ?? '')]);
+$redirect = '/admin/biomes.php' . ($back !== [] ? '?' . http_build_query($back) : '') . (isset($back['edit']) ? '#populations' : '');
 
 handleAdminPost($redirect, static function (): string {
     $service = new BiomeAdminService();
@@ -32,6 +33,19 @@ handleAdminPost($redirect, static function (): string {
                 (int) ($_POST['stack_order'] ?? 0)
             );
             return 'Biome enregistré : ' . $saved['cells'] . ' case(s).';
+        case 'save_population':
+            $service->savePopulation(
+                $id,
+                (int) ($_POST['race_id'] ?? 0),
+                (int) ($_POST['chance'] ?? 0),
+                (int) ($_POST['max_count'] ?? 0),
+                (int) ($_POST['z_min'] ?? 0),
+                (int) ($_POST['z_max'] ?? 0)
+            );
+            return 'Pousse enregistrée.';
+        case 'delete_population':
+            $service->deletePopulation((int) ($_POST['population_id'] ?? 0));
+            return 'Pousse retirée.';
         case 'delete_biome':
             $service->deleteBiome($id);
             return 'Biome supprimé.';

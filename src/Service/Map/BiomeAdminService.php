@@ -179,6 +179,63 @@ final class BiomeAdminService
         );
     }
 
+    /** @return array<int, string> race id => label, for what can grow (plants and resources) */
+    public function growableTypes(): array
+    {
+        $choices = [];
+        foreach ($this->db->fetchAllAssociative(
+            "SELECT id, name, label, type_kind FROM races WHERE type_kind IN ('plant', 'resource') ORDER BY type_kind, label"
+        ) as $row) {
+            $choices[(int) $row['id']] = ($row['label'] ?: $row['name']) . ($row['type_kind'] === 'resource' ? ' (ressource)' : '');
+        }
+
+        return $choices;
+    }
+
+    /** @return list<array{id: int, race_id: int, label: string, chance: int, max_count: int, z_min: int, z_max: int}> */
+    public function populations(int $biomeId): array
+    {
+        return array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'],
+            'race_id' => (int) $row['race_id'],
+            'label' => (string) ($row['label'] ?: $row['name']),
+            'chance' => (int) $row['chance'],
+            'max_count' => (int) $row['max_count'],
+            'z_min' => (int) $row['z_min'],
+            'z_max' => (int) $row['z_max'],
+        ], $this->db->fetchAllAssociative(
+            'SELECT bp.*, r.name, r.label FROM biome_populations bp JOIN races r ON r.id = bp.race_id
+             WHERE bp.biome_id = ? ORDER BY r.label',
+            [$biomeId]
+        ));
+    }
+
+    /** One type in one biome: added, or its numbers replaced. */
+    public function savePopulation(int $biomeId, int $raceId, int $chance, int $maxCount, int $zMin, int $zMax): void
+    {
+        if (!array_key_exists($raceId, $this->growableTypes())) {
+            throw new InvalidArgumentException('Choisissez une plante ou une ressource.');
+        }
+        if ($chance < 1 || $maxCount < 1) {
+            throw new InvalidArgumentException('La chance (1 sur N) et le maximum valent au moins 1.');
+        }
+        if ($zMin > $zMax) {
+            throw new InvalidArgumentException('Le niveau z minimum dépasse le maximum.');
+        }
+
+        $this->db->executeStatement(
+            'INSERT INTO biome_populations (biome_id, race_id, chance, max_count, z_min, z_max) VALUES (?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE chance = VALUES(chance), max_count = VALUES(max_count),
+                 z_min = VALUES(z_min), z_max = VALUES(z_max)',
+            [$biomeId, $raceId, $chance, $maxCount, $zMin, $zMax]
+        );
+    }
+
+    public function deletePopulation(int $id): void
+    {
+        $this->db->delete('biome_populations', ['id' => $id]);
+    }
+
     /**
      * "0,0  10,0  10,8  0,8" (spaces, line breaks or ; between corners) → [[0, 0], [10, 0], ...].
      *
