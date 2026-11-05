@@ -14,6 +14,7 @@ use App\Service\RaceService;
 use App\Service\FactionService;
 use App\Service\Mail\MailContactSyncService;
 use App\Tutorial\TutorialFeatureFlag;
+use App\Tutorial\TutorialHelper;
 
 define('NO_LOGIN', true);
 
@@ -105,35 +106,26 @@ if(!empty($_POST['race'])){
 
         $player->get_data();
 
-        // Check if new tutorial system is enabled for this player
+        // Every new player starts on waiting_room: the tutorial exit sends
+        // them to their faction's city.
+        $goCoords = (object) array(
+            'x' => 0,
+            'y' => 0,
+            'z' => 0,
+            'plan' => 'waiting_room'
+        );
+        $coordsId = View::get_free_coords_id_arround($goCoords);
+        $db->exe('UPDATE players SET coords_id = ? WHERE id = ?', array($coordsId, $player->id));
+        (new \App\Service\Map\EntityCellService())->syncCells((int) $player->id);
+        $player->get_data();
+
         $useNewTutorial = TutorialFeatureFlag::isEnabledForPlayer($player->id);
-
         if ($useNewTutorial) {
-            // Spawn on waiting_room plan until player makes tutorial decision
-            $spawnPlan = "waiting_room";
-
-            $goCoords = (object) array(
-                'x' => 0,
-                'y' => 0,
-                'z' => 0,
-                'plan' => $spawnPlan
-            );
-
-            $coordsId = View::get_free_coords_id_arround($goCoords);
-
-            // Update player's coordinates to waiting_room
-            $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
-            $db->exe($sql, array($coordsId, $player->id));
-
-            (new \App\Service\Map\EntityCellService())->syncCells((int) $player->id);
-
-            // Reload player data with new coordinates
-            $player->get_data();
-
-            // Enable invisibleMode so new players are invisible until they complete tutorial
+            // Invisible until they leave the tutorial
             $player->add_option('invisibleMode');
-
-            error_log("[Register] New player {$player->id} spawned on waiting_room plan with invisibleMode");
+        } else {
+            // No tutorial: the exit of a skipped one, right away (city, race actions, starter pack)
+            TutorialHelper::finalizeExitToGame($player, TUTORIAL_SKIP_REWARD, false);
         }
 
         $plainMail = strtolower($_POST['mail']);

@@ -6,7 +6,6 @@ use Classes\Ui;
 use Classes\Str;
 use Classes\File;
 use Classes\Db;
-use App\Tutorial\TutorialFeatureFlag;
 use App\Tutorial\TutorialSessionManager;
 
 require_once('config.php');
@@ -232,20 +231,6 @@ foreach(OPTIONS as $k=>$e){
                 echo '
                 <a href="account.php?story"><button>Changer</button></a>
                 ';
-            }
-            elseif($k == 'showTuto'){
-                // Feature flag determines which tutorial system to use
-                if (TutorialFeatureFlag::isEnabledForPlayer($player->id)) {
-                    // New tutorial system - use URL parameter to trigger replay
-                    echo '
-                    <a href="index.php?replay_tutorial=1"><button style="width: 100%;">Tutoriel</button></a>
-                    ';
-                } else {
-                    // Old tutorial system
-                    echo '
-                    <a href="index.php?tutorial"><button style="width: 100%;">Tutoriel</button></a>
-                    ';
-                }
             }
             elseif($k == 'nextTurn'){
 

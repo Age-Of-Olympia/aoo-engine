@@ -81,17 +81,13 @@ final class AccountView
             'anonymeMode' => "Mode Incognito/Anonyme (PNJ)<br /><sup>Non trouvable dans les recherches de destinataires</sup>",
         );
 
-        // Conditionally add tutorial replay option
-        // Show for players who have completed tutorial before (regardless of feature flag)
         $db = new Db();
         $sessionManager = new TutorialSessionManager($db);
         $hasCompletedTutorial = $sessionManager->hasCompletedBefore($player->id);
 
-        // Always show replay option if player has completed tutorial
-        // The feature flag will determine which tutorial system to use (new vs old)
-        // NPCs (negative ids) never get the option — it's not meaningful for them
-        // and the legacy fallback would otherwise activate via the !isEnabled branch.
-        if ($player->id >= 0 && ($hasCompletedTutorial || !TutorialFeatureFlag::isEnabledForPlayer($player->id))) {
+        // Replay is for a player who finished it, while the tutorial is open to them.
+        // NPCs (negative ids) never get it: isEnabledForPlayer() refuses them.
+        if ($hasCompletedTutorial && TutorialFeatureFlag::isEnabledForPlayer($player->id)) {
             $options['showTuto'] = "Rejouer le tutoriel";
         }
 
@@ -220,18 +216,9 @@ final class AccountView
                     ';
                 }
             } elseif ($k == 'showTuto') {
-                // Feature flag determines which tutorial system to use
-                if (TutorialFeatureFlag::isEnabledForPlayer($player->id)) {
-                    // New tutorial system - use URL parameter to trigger replay
-                    echo '
-                    <a href="index.php?replay_tutorial=1"><button style="width: 100%;">Tutoriel</button></a>
-                    ';
-                } else {
-                    // Old tutorial system
-                    echo '
-                    <a href="index.php?tutorial"><button style="width: 100%;">Tutoriel</button></a>
-                    ';
-                }
+                echo '
+                <a href="index.php?replay_tutorial=1"><button style="width: 100%;">Tutoriel</button></a>
+                ';
             } elseif ($k == 'changeMail') {
                 // Disable email change for PNJs
                 if ($player->id > 0) {
