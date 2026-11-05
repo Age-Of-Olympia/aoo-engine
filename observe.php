@@ -234,6 +234,13 @@ if($res->num_rows){
     echo '<div class="case-infos"><div class="text">⛔ Case non praticable.</div></div>';
 }
 
+// The cell's biomes, the top one first; none while the module is off
+$biomes = (new \App\Service\Map\BiomeCellService())->namesAt((string) $coords->plan, (int) $x, (int) $y);
+if ($biomes !== []) {
+    echo '<div class="case-infos"><div class="text">🗺️ ' . (count($biomes) > 1 ? 'Biomes' : 'Biome') . ' : '
+        . htmlspecialchars(implode(' / ', $biomes), ENT_QUOTES, 'UTF-8') . '</div></div>';
+}
+
 
 /* Ligne de tir depuis le joueur vers la case observée : cases
  * traversées + premier obstacle (structure blocks_projectiles ou
