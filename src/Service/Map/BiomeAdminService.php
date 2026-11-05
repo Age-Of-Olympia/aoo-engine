@@ -122,6 +122,13 @@ final class BiomeAdminService
             throw new InvalidArgumentException('Le nom du biome est obligatoire.');
         }
         $zone = self::parseZone($zoneText);
+        $crossing = self::crossingSides($zone);
+        if ($crossing !== null) {
+            [$first, $second] = array_map(self::sideText(...), $crossing);
+            throw new InvalidArgumentException(
+                'Le contour se croise : le côté ' . $first . ' coupe le côté ' . $second . '. Vérifiez l\'ordre des coins.'
+            );
+        }
         if (!BiomeCellService::coversACell($zone)) {
             throw new InvalidArgumentException('Cette zone ne couvre aucune case.');
         }
@@ -191,6 +198,57 @@ final class BiomeAdminService
         }
 
         return $zone;
+    }
+
+    /**
+     * The first two sides of the outline that cross each other, null when
+     * none do. Sides that only touch, or run along each other (the way in
+     * and out of a clearing), do not count.
+     *
+     * @param list<array{int, int}> $zone
+     * @return array{array{array{int, int}, array{int, int}}, array{array{int, int}, array{int, int}}}|null
+     */
+    private static function crossingSides(array $zone): ?array
+    {
+        $sides = [];
+        foreach ($zone as $i => $corner) {
+            $sides[] = [$corner, $zone[($i + 1) % count($zone)]];
+        }
+
+        // ponytail: every pair of sides, fine for the hundreds of corners an outline has
+        $count = count($sides);
+        for ($i = 0; $i < $count; $i++) {
+            [$a, $b] = $sides[$i];
+            for ($j = $i + 1; $j < $count; $j++) {
+                [$c, $d] = $sides[$j];
+                // Each side has the other's two ends strictly on opposite sides of it
+                if (self::turn($a, $b, $c) * self::turn($a, $b, $d) < 0
+                    && self::turn($c, $d, $a) * self::turn($c, $d, $b) < 0) {
+                    return [[$a, $b], [$c, $d]];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Which way the path $from → $to → $point turns: positive left,
+     * negative right, 0 when the three are aligned.
+     *
+     * @param array{int, int} $from
+     * @param array{int, int} $to
+     * @param array{int, int} $point
+     */
+    private static function turn(array $from, array $to, array $point): int
+    {
+        return ($to[0] - $from[0]) * ($point[1] - $from[1]) - ($to[1] - $from[1]) * ($point[0] - $from[0]);
+    }
+
+    /** @param array{array{int, int}, array{int, int}} $side "x,y → x,y" */
+    private static function sideText(array $side): string
+    {
+        return implode(' → ', array_map(static fn (array $corner): string => $corner[0] . ',' . $corner[1], $side));
     }
 
     /** @param array<mixed> $zone */
