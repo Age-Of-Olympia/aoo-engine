@@ -3,6 +3,8 @@
 namespace App\Service\Map;
 
 use App\Factory\EntityManagerFactory;
+use App\Module\Module;
+use App\Module\Modules;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -73,6 +75,28 @@ final class BiomeCellService
         });
 
         return count($rows);
+    }
+
+    /**
+     * Names of the biomes of a cell, the top one first; none while the
+     * module is off.
+     *
+     * @return list<string>
+     */
+    public function namesAt(string $plan, int $x, int $y): array
+    {
+        if (!Modules::on(Module::Biomes)) {
+            return [];
+        }
+
+        return array_map('strval', $this->db->fetchFirstColumn(
+            'SELECT b.name FROM biome_cells c
+             JOIN plans p ON p.id = c.plan_id
+             JOIN biomes b ON b.id = c.biome_id
+             WHERE p.slug = ? AND c.x = ? AND c.y = ?
+             ORDER BY b.stack_order DESC, b.id DESC',
+            [$plan, $x, $y]
+        ));
     }
 
     /**

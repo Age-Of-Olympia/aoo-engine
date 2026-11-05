@@ -3,6 +3,8 @@
 namespace Tests\Various;
 
 use App\Factory\EntityManagerFactory;
+use App\Module\Module;
+use App\Module\Modules;
 use App\Service\Map\BiomeCellService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
@@ -32,6 +34,7 @@ class BiomeCellServiceTest extends TestCase
     protected function tearDown(): void
     {
         // The plans row takes its biomes and their cells with it
+        Modules::reset();
         $this->purgePlan($this->db, self::PLAN);
         $this->db->executeStatement("DELETE FROM biome_types WHERE name = 'test_biome_type'");
         $this->db->executeStatement('DELETE FROM terrain_tiles WHERE name = ?', [self::WANG_TILE]);
@@ -121,6 +124,24 @@ class BiomeCellServiceTest extends TestCase
         $this->assertSame([$lake], $this->biomesAt(5, 5));
         $this->assertSame([$forest], $this->biomesAt(9, 9));
         $this->assertSame(100, (int) $this->db->fetchOne('SELECT COUNT(*) FROM biome_cells WHERE plan_id = ?', [$this->planId]));
+    }
+
+    public function testNamesAtListsTheTopBiomeFirstAndNothingWhileTheModuleIsOff(): void
+    {
+        $this->db->insert('terrain_tiles', ['layer' => 'tiles', 'name' => self::WANG_TILE, 'wang_id' => '1,0,1,0,2,0,2,0']);
+        $this->db->insert('map_tiles', ['name' => self::WANG_TILE, 'coords_id' => $this->coordsIdOn(self::PLAN, 1, 0)]);
+        $this->biome('Prairie', [[0, 0], [2, 0], [2, 1], [0, 1]], 0);
+        $this->biome('Désert', [[1, 0], [3, 0], [3, 1], [1, 1]], 1);
+        $cells = new BiomeCellService($this->db);
+        $cells->rebuild($this->planId);
+
+        Modules::force(Module::Biomes, true);
+        $this->assertSame(['Désert', 'Prairie'], $cells->namesAt(self::PLAN, 1, 0));
+        $this->assertSame(['Prairie'], $cells->namesAt(self::PLAN, 0, 0));
+        $this->assertSame([], $cells->namesAt(self::PLAN, 7, 7));
+
+        Modules::force(Module::Biomes, false);
+        $this->assertSame([], $cells->namesAt(self::PLAN, 0, 0));
     }
 
     /** @param list<array{int, int}> $zone */
