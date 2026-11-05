@@ -131,7 +131,9 @@ class ForumDraftServiceTest extends TestCase
             (string) json_encode(['reply:123' => ['text' => 'x', 'title' => '', 'at' => PHP_INT_MAX]])
         );
 
-        $this->assertLessThanOrEqual(ForumDraftService::serverNow(), $this->service->get(2, 'reply:123')['at']);
+        // Read first: the bound must come after get() clamps the date to its own now
+        $read = $this->service->get(2, 'reply:123')['at'];
+        $this->assertLessThanOrEqual(ForumDraftService::serverNow(), $read);
     }
 
     public function testAnInvalidKeyIsRefused(): void
