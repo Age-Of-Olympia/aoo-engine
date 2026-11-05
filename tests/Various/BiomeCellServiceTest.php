@@ -144,6 +144,26 @@ class BiomeCellServiceTest extends TestCase
         $this->assertSame([], $cells->namesAt(self::PLAN, 0, 0));
     }
 
+    public function testCoverageListsEachCellsBiomesTopFirstWithTheirColour(): void
+    {
+        $this->db->insert('terrain_tiles', ['layer' => 'tiles', 'name' => self::WANG_TILE, 'wang_id' => '1,0,1,0,2,0,2,0']);
+        $this->db->insert('map_tiles', ['name' => self::WANG_TILE, 'coords_id' => $this->coordsIdOn(self::PLAN, 1, 0)]);
+        $grass = $this->biome('Prairie', [[0, 0], [2, 0], [2, 1], [0, 1]], 0);
+        $sand = $this->biome('Désert', [[1, 0], [3, 0], [3, 1], [1, 1]], 1);
+        $cells = new BiomeCellService($this->db);
+        $cells->rebuild($this->planId);
+        $area = ['xMin' => 0, 'xMax' => 1, 'yMin' => 0, 'yMax' => 0];
+
+        Modules::force(Module::Biomes, true);
+        $coverage = $cells->coverage(self::PLAN, $area);
+        ksort($coverage['cells']);
+        $this->assertSame(['0,0' => [$grass], '1,0' => [$sand, $grass]], $coverage['cells'], 'cell (2, 0) is outside the area');
+        $this->assertSame(['name' => 'Désert', 'color' => '#3f6b4f'], $coverage['biomes'][$sand]);
+
+        Modules::force(Module::Biomes, false);
+        $this->assertSame(['biomes' => [], 'cells' => []], $cells->coverage(self::PLAN, $area));
+    }
+
     /** @param list<array{int, int}> $zone */
     private function biome(string $name, array $zone, int $stackOrder): int
     {

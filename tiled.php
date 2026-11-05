@@ -105,9 +105,24 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
 $ui = new Ui(title:"Tiled");
 
 
-$view = new View($player->coords, p:10, tiled:true);
+/** Cells shown around the editor on each side */
+const TILED_VIEW_RANGE = 10;
+/** Extra cells of biome data for a viewer wider than one cell, whose zone grows past the range */
+const TILED_BIOME_MARGIN = 5;
+
+$view = new View($player->coords, p:TILED_VIEW_RANGE, tiled:true);
 
 $data = $view->get_view();
+
+/* Biomes of the area on screen, sent with the view so the overlay follows an
+ * AJAX refresh: the script repaints right after the board is replaced. */
+$biomeReach = TILED_VIEW_RANGE + TILED_BIOME_MARGIN;
+$biomeCoverage = (new \App\Service\Map\BiomeCellService())->coverage((string) $player->coords->plan, [
+    'xMin' => (int) $player->coords->x - $biomeReach, 'xMax' => (int) $player->coords->x + $biomeReach,
+    'yMin' => (int) $player->coords->y - $biomeReach, 'yMax' => (int) $player->coords->y + $biomeReach,
+]);
+$data .= '<script>window.tiledBiomes = ' . json_encode($biomeCoverage, JSON_HEX_TAG | JSON_HEX_APOS)
+    . '; if (window.paintBiomes) { window.paintBiomes(); }</script>';
 
 // View-only mode: return just the map view HTML for AJAX refresh
 if(!empty($_GET['view_only'])){
@@ -507,6 +522,10 @@ echo '
     <div class="back-button">
         <a href="index.php"><button>← Retour</button></a>
         <button id="toggle-blocked-tiles" type="button" title="Afficher les cases bloquantes (murs, joueurs, déclencheurs « interdit »)">⛔ Cases bloquantes</button>
+        '. (\App\Module\Modules::on(\App\Module\Module::Biomes)
+            ? '<button id="toggle-biomes" type="button" title="Colorer chaque case selon son biome (celui du dessus là où plusieurs se chevauchent)">🗺️ Biomes</button>'
+                . '<span id="biome-legend" class="biome-legend" hidden></span>'
+            : '') .'
     </div>
 
     <div id="tool-div">';
@@ -648,7 +667,195 @@ document.addEventListener("DOMContentLoaded", function() {
     window.addEventListener("resize", redraw);
 });
 </script>
+<script>
+/* Tiled editor: tint each cell with the colour of its top biome, draw the
+   borders where the top biome changes, outline the cells under several
+   biomes (transition tiles) and list the biomes on screen. The data comes with the view (window.tiledBiomes); the view
+   calls paintBiomes again after each AJAX refresh of the board. */
+document.addEventListener("DOMContentLoaded", function() {
+    const button = document.getElementById("toggle-biomes");
+    if (!button) return;
+    const legend = document.getElementById("biome-legend");
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    const BORDER_WIDTH = 3;
+    let on = false;
+
+    function paintCell(rect, biomeIds, biomes) {
+        if (!on || !biomeIds) {
+            rect.setAttribute("fill", "transparent");
+            ["fill-opacity", "stroke", "stroke-dasharray"].forEach(name => rect.removeAttribute(name));
+            return;
+        }
+        rect.setAttribute("fill", biomes[biomeIds[0]].color);
+        rect.setAttribute("fill-opacity", "0.45");
+        if (biomeIds.length > 1) {
+            rect.setAttribute("stroke", "#fff");
+            rect.setAttribute("stroke-dasharray", "4 3");
+        }
+    }
+
+    /* Where the top biome changes between two plain cells, a line on their
+       shared side. A transition cell holds the change itself: the line runs
+       through its middle, centre to centre with the next transition cell,
+       and a plain cell leaves that side to it. Where a plain border ends next
+       to a transition cell, a short line joins its end to that cell's centre,
+       so the border stays one line. Sides are found by comparing the two
+       cells' positions, whichever way the y axis runs. */
+    function drawBorders(rects, cells, biomes) {
+        rects.forEach(function(rect, key) {
+            const ids = cells[key] || [];
+            if (ids.length === 0) return;
+            const isTransition = ids.length > 1;
+            const [x, y] = key.split(",").map(Number);
+            [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function([dx, dy]) {
+                const neighbourKey = (x + dx) + "," + (y + dy);
+                const neighbour = rects.get(neighbourKey);
+                const neighbourIds = cells[neighbourKey] || [];
+                if (!neighbour) return;
+                if (isTransition) {
+                    /* Each side draws its half, from its centre to the shared side */
+                    if (neighbourIds.length > 1) {
+                        const color = borderColor(biomes[ids[0]].color, biomes[ids[1]].color);
+                        rect.parentNode.appendChild(segment(rect, neighbour, color, "middle"));
+                    }
+                    return;
+                }
+                const takenByTransition = neighbourIds.length > 1 && neighbourIds.includes(ids[0]);
+                if (neighbourIds[0] === ids[0] || takenByTransition) return;
+                const other = neighbourIds[0] === undefined ? ids[0] : neighbourIds[0];
+                const color = borderColor(biomes[ids[0]].color, biomes[other].color);
+                rect.parentNode.appendChild(segment(rect, neighbour, color, "side"));
+                /* The side's two ends touch the cells on either side of it, along the other axis */
+                [[dy, dx], [-dy, -dx]].forEach(function([ax, ay]) {
+                    const besideKey = (x + ax) + "," + (y + ay);
+                    const beside = rects.get(besideKey);
+                    if (beside && (cells[besideKey] || []).length > 1) {
+                        rect.parentNode.appendChild(connector(rect, neighbour, beside, color));
+                    }
+                });
+            });
+        });
+    }
+
+    /* Opposite hue of the two biomes' mix, fully saturated: it stands out
+       against both tints, where a plain RGB inversion of a mid tone is grey. */
+    function borderColor(colorA, colorB) {
+        const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+        const [r, g, b] = rgb(colorA).map((channel, i) => (channel + rgb(colorB)[i]) / 2);
+        const max = Math.max(r, g, b);
+        const delta = max - Math.min(r, g, b);
+        /* Hue in sixths of the circle, from whichever channel is strongest */
+        let sixths = 0;
+        if (delta > 0 && max === r) {
+            sixths = ((g - b) / delta) % 6;
+        } else if (delta > 0 && max === g) {
+            sixths = (b - r) / delta + 2;
+        } else if (delta > 0) {
+            sixths = (r - g) / delta + 4;
+        }
+        return "hsl(" + Math.round(sixths * 60 + 180) + ", 100%, 50%)";
+    }
+
+    /* "side": the whole side the cell shares with its neighbour.
+       "middle": from the cell's centre to the middle of that side. */
+    function segment(rect, neighbour, color, kind) {
+        const box = boxOf(rect);
+        const towardX = Math.sign(+neighbour.getAttribute("x") - box.x);
+        const towardY = Math.sign(+neighbour.getAttribute("y") - box.y);
+        const centre = {x: box.x + box.size / 2, y: box.y + box.size / 2};
+        const sideX = centre.x + towardX * box.size / 2;
+        const sideY = centre.y + towardY * box.size / 2;
+        let ends;
+        if (kind === "middle") {
+            ends = {x1: centre.x, y1: centre.y, x2: sideX, y2: sideY};
+        } else if (towardX !== 0) {
+            ends = {x1: sideX, x2: sideX, y1: box.y, y2: box.y + box.size};
+        } else {
+            ends = {x1: box.x, x2: box.x + box.size, y1: sideY, y2: sideY};
+        }
+        return line(ends, color);
+    }
+
+    function line(ends, color) {
+        const element = document.createElementNS(SVG_NS, "line");
+        Object.entries(ends).forEach(([name, value]) => element.setAttribute(name, value));
+        element.setAttribute("class", "biome-border");
+        element.setAttribute("stroke", color);
+        element.setAttribute("stroke-width", BORDER_WIDTH);
+        element.setAttribute("stroke-linecap", "round");
+        element.setAttribute("pointer-events", "none");
+        return element;
+    }
+
+    function boxOf(rect) {
+        return {x: +rect.getAttribute("x"), y: +rect.getAttribute("y"), size: +rect.getAttribute("width")};
+    }
+
+    /* From the corner the cell shares with both "across" and "beside", to
+       the centre of "beside" (a transition cell) */
+    function connector(rect, across, beside, color) {
+        const box = boxOf(rect);
+        const half = box.size / 2;
+        const centre = {x: box.x + half, y: box.y + half};
+        const toward = (other, axis) => Math.sign(+other.getAttribute(axis) - box[axis]);
+        const corner = {
+            x: centre.x + half * (toward(across, "x") || toward(beside, "x")),
+            y: centre.y + half * (toward(across, "y") || toward(beside, "y")),
+        };
+        return line({x1: corner.x, y1: corner.y, x2: +beside.getAttribute("x") + half, y2: +beside.getAttribute("y") + half}, color);
+    }
+
+    function fillLegend(shownIds, biomes) {
+        legend.replaceChildren(...[...shownIds].map(function(id) {
+            const chip = document.createElement("span");
+            chip.className = "biome-chip";
+            chip.style.setProperty("--biome-color", biomes[id].color);
+            chip.textContent = biomes[id].name;
+            return chip;
+        }));
+        legend.hidden = !on || shownIds.size === 0;
+    }
+
+    window.paintBiomes = function() {
+        const data = window.tiledBiomes || {biomes: {}, cells: {}};
+        const shownIds = new Set();
+        const rects = new Map();
+        document.querySelectorAll("#map-view-container .biome-border").forEach(line => line.remove());
+        document.querySelectorAll("#map-view-container rect.case[data-coords]").forEach(function(rect) {
+            const biomeIds = data.cells[rect.dataset.coords];
+            rects.set(rect.dataset.coords, rect);
+            paintCell(rect, biomeIds, data.biomes);
+            if (on && biomeIds) biomeIds.forEach(id => shownIds.add(id));
+        });
+        if (on) drawBorders(rects, data.cells, data.biomes);
+        fillLegend(shownIds, data.biomes);
+    };
+
+    button.addEventListener("click", function() {
+        on = !on;
+        button.classList.toggle("active", on);
+        window.paintBiomes();
+    });
+});
+</script>
 <style>
+#toggle-biomes.active {
+    background: #3f6b4f;
+    color: #fff;
+}
+.biome-legend {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+.biome-chip {
+    border-left: 12px solid var(--biome-color);
+    background: rgba(255, 255, 255, 0.85);
+    padding: 0 6px;
+    font-size: 12px;
+}
 #toggle-blocked-tiles.active {
     background: #c0392b;
     color: #fff;
