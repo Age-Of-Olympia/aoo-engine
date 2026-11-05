@@ -81,21 +81,23 @@ class BiomeGrowthServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame([], $this->grow());
     }
 
-    public function testGrowTriggersInsideABiomeGiveWayToIt(): void
+    public function testGrowTriggersKeepWorkingInsideABiome(): void
     {
-        $this->link->insert('map_triggers', ['name' => 'grow', 'params' => $this->plant, 'coords_id' => $this->coordsIdOn(self::PLAN, 1, 0)]);
+        $inside = $this->coordsIdOn(self::PLAN, 1, 0);
         $outside = $this->coordsIdOn(self::PLAN, 9, 0);
-        $this->link->insert('map_triggers', ['name' => 'grow', 'params' => $this->plant, 'coords_id' => $outside]);
+        foreach ([$inside, $outside] as $coordsId) {
+            $this->link->insert('map_triggers', ['name' => 'grow', 'params' => $this->plant, 'coords_id' => $coordsId]);
+        }
 
         $cells = [];
         $res = PlantsService::getTriggerGrow();
         while ($row = $res->fetch_object()) {
-            if ($row->coords_id == $outside || $row->coords_id == $this->coordsIdOn(self::PLAN, 1, 0)) {
+            if (in_array((int) $row->coords_id, [$inside, $outside], true)) {
                 $cells[] = (int) $row->coords_id;
             }
         }
 
-        $this->assertSame([$outside], $cells);
+        $this->assertEqualsCanonicalizing([$inside, $outside], $cells, 'the biome adds to the triggers, it does not replace them');
     }
 
     private function population(float $density): void
