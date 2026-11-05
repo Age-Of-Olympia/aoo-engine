@@ -93,11 +93,18 @@ $form = $types === []
         . formField('Type', formSelect('type_id', $typeChoices, isset($edited) ? (string) array_search($edited['type'], $typeChoices, true) : null), 'form-group col-md-3')
         . formField('Plan', formSelect('plan', plan_choices(), $edited['plan'] ?? ($plan !== '' ? $plan : null)), 'form-group col-md-3')
         . formField('Empilement', formInput('stack_order', (string) ($edited['stack_order'] ?? 0), 'type="number"'), 'form-group col-md-2',
-            'Le plus grand gagne là où des zones se chevauchent.')
+            'Là où des biomes se chevauchent, celui qui a l\'empilement le plus grand l\'emporte.'
+            . ' Sur une tuile de transition, la case appartient à chacun d\'eux.')
         . '</div>'
         . formField('Coins de la zone', formTextarea('zone', $edited['zone'] ?? '', 2, 'placeholder="0,0  10,0  10,8  0,8" required'), 'form-group',
-            'Les coins, dans l\'ordre du contour, au format x,y. La case (x, y) a pour coins x,y et x+1,y+1 :'
-            . ' <code>0,0 10,0 10,8 0,8</code> couvre les cases de (0, 0) à (9, 7).')
+            'Les coins du contour au format x,y, séparés par des espaces, dans l\'ordre où on en fait le tour.'
+            . ' Les coordonnées désignent les angles des cases : la case (x, y) va de l\'angle x,y à l\'angle x+1,y+1.'
+            . ' Ainsi, <code>0,0 10,0 10,8 0,8</code> couvre les cases de (0, 0) à (9, 7).'
+            . '<br>Une case fait partie du biome quand son centre est dans le contour ou sur un de ses côtés.'
+            . ' La page accepte toutes les formes (en L, en couloir, en spirale, avec des côtés en diagonale), tant que le contour ne se croise pas.'
+            . '<br>Pour une clairière dans une forêt, entrez dans la clairière par un côté, faites-en le tour, puis ressortez par le même chemin :'
+            . ' <code>0,0 10,0 10,10 0,10 0,4 4,4 4,6 6,6 6,4 4,4 0,4</code> laisse un trou de (4, 4) à (5, 5).'
+            . ' Pour deux morceaux séparés, créez deux biomes du même type.')
         . '<button class="btn btn-primary" type="submit">' . ($edited ? 'Enregistrer' : 'Ajouter le biome') . '</button>'
         . ($edited ? ' <a class="btn btn-outline-secondary" href="?' . e(http_build_query(['plan' => $plan])) . '">Annuler</a>' : ''),
         ['id' => $edited['id'] ?? 0, 'plan_filter' => $plan], 'id="biome-form"');
@@ -108,5 +115,5 @@ $content .= formCard('Biomes', $filter
 
 echo admin_layout('Biomes', $content, [
     'intro' => 'Un biome est une zone d\'un plan avec ses propres règles, valable à tous les niveaux z.'
-        . ' Enregistrer un biome recalcule les cases de son plan.',
+        . ' À chaque enregistrement, la page recalcule les cases sous l\'ancien et le nouveau contour du biome.',
 ]);

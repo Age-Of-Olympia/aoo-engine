@@ -97,4 +97,20 @@ class BiomeAdminServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->service->deleteType($type);
     }
+
+    public function testASelfCrossingOutlineIsRefusedButAClearingIsNot(): void
+    {
+        $type = $this->service->saveType(0, 'test_admin_foret', 'Forêt', '#336633');
+
+        try {
+            $this->service->saveBiome(0, self::PLAN, $type, 'Nœud', '2,0 3,1 3,0 2,1', 0);
+            $this->fail('a bowtie outline was accepted');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('2,0 → 3,1 coupe le côté 3,0 → 2,1', $e->getMessage());
+        }
+
+        // In along y = 4, around the clearing, back out the same way: sides that run along each other
+        $saved = $this->service->saveBiome(0, self::PLAN, $type, 'Forêt', '0,0 10,0 10,10 0,10 0,4 4,4 4,6 6,6 6,4 4,4 0,4', 0);
+        $this->assertSame(96, $saved['cells'], '100 cells less the 2 × 2 clearing');
+    }
 }
