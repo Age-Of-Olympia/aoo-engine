@@ -106,6 +106,7 @@ function admin_nav_tree(): array
             ['Contrôle d\'accès', '/admin/access-control.php'],
             ['Admins & options', '/admin/admin-access.php'],
             ['Import / export', '/admin/action-import.php', ['action-import-preview.php', 'action-import-run.php']],
+            ['Modules', '/admin/modules.php'],
             ['Crons', '/admin/crons.php'],
             ['Monitoring', '/admin/monitoring.php'],
             ['Wiki', '/admin/wiki.php'],

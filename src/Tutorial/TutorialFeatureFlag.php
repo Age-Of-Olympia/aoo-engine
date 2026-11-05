@@ -2,16 +2,16 @@
 
 namespace App\Tutorial;
 
+use App\Module\Module;
+use App\Module\Modules;
 use Classes\Db;
 
 /**
  * Feature flags for tutorial system
  *
- * Allows gradual rollout without breaking existing functionality.
- * Can enable new tutorial system for specific players (admins, testers)
- * while keeping old system active for everyone else.
- *
- * Settings are stored in tutorial_settings table and can be managed via admin panel.
+ * Who gets the tutorial comes from the tutorial module (App\Module\Modules):
+ * on for everyone, or for its testers. The other settings (rewards, offer
+ * to new players) stay in the tutorial_settings table.
  */
 class TutorialFeatureFlag
 {
@@ -42,14 +42,8 @@ class TutorialFeatureFlag
             return TUTORIAL_V2_ENABLED === true;
         }
 
-        // Check database setting
-        $settings = self::getSettings();
-        if (isset($settings['global_enabled'])) {
-            return filter_var($settings['global_enabled'], FILTER_VALIDATE_BOOLEAN);
-        }
-
-        // Default: disabled (safe default)
-        return false;
+        // The tutorial module, set in Administration → Modules
+        return Modules::on(Module::Tutorial);
     }
 
     /**
@@ -96,16 +90,8 @@ class TutorialFeatureFlag
             return TUTORIAL_V2_TEST_PLAYERS;
         }
 
-        // Check database setting
-        $settings = self::getSettings();
-        if (isset($settings['whitelisted_players']) && $settings['whitelisted_players'] !== '') {
-            $ids = array_map('intval', explode(',', $settings['whitelisted_players']));
-            return array_filter($ids, fn($id) => $id > 0);
-        }
-
-        // No default whitelist: opt-in only. Empty avoids leaking
-        // tutorial access to the first three real player IDs in prod.
-        return [];
+        // The tutorial module's testers
+        return Modules::players(Module::Tutorial);
     }
 
     /**
@@ -179,29 +165,6 @@ class TutorialFeatureFlag
             error_log("[TutorialFeatureFlag] Error updating setting: " . $e->getMessage());
             return false;
         }
-    }
-
-    /**
-     * Add a player to the whitelist
-     */
-    public static function addWhitelistedPlayer(int $playerId): bool
-    {
-        $current = self::getWhitelistedPlayers();
-        if (!in_array($playerId, $current, true)) {
-            $current[] = $playerId;
-            return self::updateSetting('whitelisted_players', implode(',', $current));
-        }
-        return true;
-    }
-
-    /**
-     * Remove a player from the whitelist
-     */
-    public static function removeWhitelistedPlayer(int $playerId): bool
-    {
-        $current = self::getWhitelistedPlayers();
-        $updated = array_filter($current, fn($id) => $id !== $playerId);
-        return self::updateSetting('whitelisted_players', implode(',', $updated));
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace Tests\Tutorial;
 
+use App\Module\Module;
+use App\Module\Modules;
 use App\Tutorial\TutorialFeatureFlag;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -14,7 +16,7 @@ use ReflectionProperty;
  * The flag has four ordered sources:
  *   1. $_ENV['TUTORIAL_V2_ENABLED']
  *   2. PHP constant TUTORIAL_V2_ENABLED (defined in config.php)
- *   3. DB row tutorial_settings.global_enabled (cached for 5 min)
+ *   3. the tutorial module (Modules), whose testers make the whitelist
  *   4. default false
  *
  * Source 2 (constant) and the DB path's actual query are NOT covered
@@ -26,10 +28,9 @@ use ReflectionProperty;
  *   - the actual DB read is tested by Cypress end-to-end.
  *
  * What IS covered: every other branch reachable via $_ENV manipulation
- * + the private $settingsCache priming pattern established in
- * TutorialPlaceholderServiceTest. That pins the env-precedence rule
- * and the cache-fallback behaviour, which are the actual mistakes
- * future refactors are likely to make.
+ * + Modules::force() for the module state. That pins the env-precedence
+ * rule and the module fallback, which are the actual mistakes future
+ * refactors are likely to make.
  */
 #[Group('tutorial-feature-flag')]
 class TutorialFeatureFlagTest extends TestCase
@@ -43,12 +44,14 @@ class TutorialFeatureFlagTest extends TestCase
         $this->cacheProp->setValue(null, null);
 
         unset($_ENV['TUTORIAL_V2_ENABLED']);
+        Modules::force(Module::Tutorial, false);
     }
 
     protected function tearDown(): void
     {
         $this->cacheProp->setValue(null, null);
         unset($_ENV['TUTORIAL_V2_ENABLED']);
+        Modules::reset();
     }
 
     /**
@@ -77,62 +80,43 @@ class TutorialFeatureFlagTest extends TestCase
     {
         $_ENV['TUTORIAL_V2_ENABLED'] = 'false';
 
-        // Even with the cached DB setting saying enabled, env wins.
-        $this->primeCache(['global_enabled' => 'true']);
+        // Even with the module on, env wins.
+        Modules::force(Module::Tutorial, true);
 
         $this->assertFalse(TutorialFeatureFlag::isEnabled());
     }
 
-    public function testFallsBackToCachedDbSettingWhenEnvAbsent(): void
+    public function testFallsBackToModuleWhenEnvAbsent(): void
     {
-        $this->primeCache(['global_enabled' => 'true']);
+        Modules::force(Module::Tutorial, true);
 
         $this->assertTrue(TutorialFeatureFlag::isEnabled());
     }
 
-    public function testReturnsFalseWhenNoSourceProvidesValue(): void
+    public function testReturnsFalseWhenModuleOff(): void
     {
-        // Empty cache simulates "DB query returned no rows" — the safe
-        // default per the doc comment is OFF.
-        $this->primeCache([]);
-
         $this->assertFalse(TutorialFeatureFlag::isEnabled());
     }
 
-    public function testWhitelistFromCachedCsvSetting(): void
+    public function testWhitelistIsTheModuleTesters(): void
     {
-        $this->primeCache(['whitelisted_players' => '10,20,30']);
+        Modules::force(Module::Tutorial, false, [10, 20, 30]);
 
         $this->assertSame([10, 20, 30], TutorialFeatureFlag::getWhitelistedPlayers());
     }
 
-    public function testWhitelistDropsZeroAndNegativeIdsFromCsv(): void
+    public function testWhitelistDefaultsToEmpty(): void
     {
-        // intval('abc') is 0, then array_filter drops <=0. Same for
-        // explicit "-5". Pins the input-sanitisation contract.
-        $this->primeCache(['whitelisted_players' => '10,abc,-5,20']);
-
-        $result = array_values(TutorialFeatureFlag::getWhitelistedPlayers());
-
-        $this->assertSame([10, 20], $result);
-    }
-
-    public function testWhitelistDefaultsToEmptyWhenSettingMissing(): void
-    {
-        // Empty cache + no constant defined → empty whitelist.
-        // The previous [1, 2, 3] dev fallback leaked tutorial access to
-        // the first three real player IDs in prod, so the default is
-        // now opt-in only.
-        $this->primeCache([]);
-
+        // No default whitelist: the old [1, 2, 3] dev fallback leaked
+        // tutorial access to the first three real player IDs in prod.
         $this->assertSame([], TutorialFeatureFlag::getWhitelistedPlayers());
     }
 
     public function testIsEnabledForPlayerHonorsWhitelistWhenGloballyDisabled(): void
     {
-        // global_enabled missing → isEnabled() returns false → the
-        // whitelist gate is the ONLY way through.
-        $this->primeCache(['whitelisted_players' => '42,99']);
+        // Module off → isEnabled() returns false → the testers gate is
+        // the ONLY way through.
+        Modules::force(Module::Tutorial, false, [42, 99]);
 
         $this->assertTrue(TutorialFeatureFlag::isEnabledForPlayer(42));
         $this->assertTrue(TutorialFeatureFlag::isEnabledForPlayer(99));
@@ -143,10 +127,7 @@ class TutorialFeatureFlagTest extends TestCase
     {
         // NPCs use negative IDs — globally enabled OR whitelisted, they
         // must never reach the tutorial flow.
-        $this->primeCache([
-            'global_enabled'      => 'true',
-            'whitelisted_players' => '-1,-1000023',
-        ]);
+        Modules::force(Module::Tutorial, true, [-1, -1000023]);
 
         $this->assertFalse(TutorialFeatureFlag::isEnabledForPlayer(-1));
         $this->assertFalse(TutorialFeatureFlag::isEnabledForPlayer(-1000023));
@@ -154,7 +135,7 @@ class TutorialFeatureFlagTest extends TestCase
 
     public function testClearCacheResetsState(): void
     {
-        $this->primeCache(['global_enabled' => 'true']);
+        $this->primeCache(['skip_reward_xp' => '50']);
         $this->assertTrue(TutorialFeatureFlag::getCacheStats()['cached']);
 
         TutorialFeatureFlag::clearCache();

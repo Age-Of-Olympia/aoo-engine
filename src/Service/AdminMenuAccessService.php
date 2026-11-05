@@ -89,6 +89,8 @@ class AdminMenuAccessService
         'buildings.types'          => ['Bâtiments · Types', 'Divers', self::LEVEL_SUPERADMIN],
         'wiki.generate'            => ['Wiki', 'Divers', self::LEVEL_ADMIN],
         // Replays scheduled scripts, deletions included
+        // Turns whole features on or off for the server
+        'tools.modules'            => ['Outils · Modules', 'Divers', self::LEVEL_SUPERADMIN],
         'tools.crons'              => ['Outils · Crons', 'Divers', self::LEVEL_SUPERADMIN],
         'tools.special-events'     => ['Outils · Évènements spéciaux', 'Divers', self::LEVEL_ADMIN],
 
@@ -228,6 +230,7 @@ class AdminMenuAccessService
         'tile-dialogs-migration.php' => 'buildings.types',
         'tile-dialogs-migration-save.php' => 'buildings.types',
         'wiki.php'                 => 'wiki.generate',
+        'modules.php'              => 'tools.modules',
         'crons.php'                => 'tools.crons',
         'special-events.php'       => 'tools.special-events',
     ];
