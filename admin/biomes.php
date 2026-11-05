@@ -7,6 +7,7 @@ use App\Module\Module;
 use App\Module\Modules;
 use App\Service\CsrfProtectionService;
 use App\Service\Map\BiomeAdminService;
+use App\Service\Map\BiomeCellService;
 use App\Service\Map\BiomeGrowthService;
 
 $service = new BiomeAdminService();
@@ -83,6 +84,26 @@ foreach ($biomes as $biome) {
         . '</td></tr>';
 }
 
+// Transition tiles a single biome covers, per plan on the list
+const LONE_TRANSITIONS_SHOWN = 5;
+$loneWarnings = '';
+$biomeCells = new BiomeCellService();
+foreach (array_unique(array_column($biomes, 'plan')) as $biomePlan) {
+    $lone = $biomeCells->loneTransitions($biomePlan);
+    if ($lone === []) {
+        continue;
+    }
+    $examples = implode(', ', array_map(
+        static fn (array $cell): string => '(' . $cell[0] . ', ' . $cell[1] . ')',
+        array_slice($lone, 0, LONE_TRANSITIONS_SHOWN)
+    ));
+    $loneWarnings .= '<div class="alert alert-warning">Plan ' . e($biomePlan) . ' : ' . count($lone)
+        . ' tuile(s) de transition dans un seul biome, par exemple ' . $examples . (count($lone) > LONE_TRANSITIONS_SHOWN ? '…' : '') . '.'
+        . ' Le sol y marque la rencontre de deux biomes, mais un seul contour couvre la case :'
+        . ' en général, il manque une rangée au contour du biome voisin.'
+        . ' Le calque Biomes de Tiled les affiche sans contour pointillé.</div>';
+}
+
 $filter = '<form method="get" class="d-flex gap-2 align-items-center mb-2">'
     . formSelect('plan', plan_choices(), $plan !== '' ? $plan : null, 'Plan : tous', 'class="form-control form-control-sm w-auto" data-autosubmit')
     . '<small class="text-muted">' . count($biomes) . ' biome(s)</small></form>';
@@ -146,7 +167,7 @@ if ($edited) {
     ) . '</div>';
 }
 
-$content .= formCard('Biomes', $filter
+$content .= formCard('Biomes', $loneWarnings . $filter
     . ($biomes === [] ? '<p class="text-muted">Aucun biome.</p>' : renderTable(['Biome', 'Type', 'Plan', 'Cases', 'Empilement', ''], $rows))
     . '<hr><h5>' . ($edited ? 'Modifier ' . e($edited['name']) : 'Nouveau biome') . '</h5>' . $form)
     . $populationsCard;

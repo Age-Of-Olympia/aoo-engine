@@ -144,6 +144,20 @@ class BiomeCellServiceTest extends TestCase
         $this->assertSame([], $cells->namesAt(self::PLAN, 0, 0));
     }
 
+    public function testATransitionTileUnderASingleBiomeIsFlagged(): void
+    {
+        $this->db->insert('terrain_tiles', ['layer' => 'tiles', 'name' => self::WANG_TILE, 'wang_id' => '1,0,1,0,2,0,2,0']);
+        foreach ([[1, 0], [5, 0]] as [$x, $y]) {
+            $this->db->insert('map_tiles', ['name' => self::WANG_TILE, 'coords_id' => $this->coordsIdOn(self::PLAN, $x, $y)]);
+        }
+        // (1, 0) is under both biomes; (5, 0) only under the meadow, whose outline goes on alone
+        $this->biome('Prairie', [[0, 0], [6, 0], [6, 1], [0, 1]], 0);
+        $this->biome('Désert', [[1, 0], [3, 0], [3, 1], [1, 1]], 1);
+        (new BiomeCellService($this->db))->rebuild($this->planId);
+
+        $this->assertSame([[5, 0]], (new BiomeCellService($this->db))->loneTransitions(self::PLAN));
+    }
+
     public function testCoverageListsEachCellsBiomesTopFirstWithTheirColour(): void
     {
         $this->db->insert('terrain_tiles', ['layer' => 'tiles', 'name' => self::WANG_TILE, 'wang_id' => '1,0,1,0,2,0,2,0']);
