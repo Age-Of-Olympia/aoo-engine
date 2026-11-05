@@ -184,9 +184,9 @@ final class BiomeAdminService
     {
         $choices = [];
         foreach ($this->db->fetchAllAssociative(
-            "SELECT id, name, label, type_kind FROM races WHERE type_kind IN ('plant', 'resource') ORDER BY type_kind, label"
+            "SELECT id, name, label, type_kind FROM races WHERE type_kind IN ('plant', 'resource') ORDER BY type_kind, label, name"
         ) as $row) {
-            $choices[(int) $row['id']] = ($row['label'] ?: $row['name']) . ($row['type_kind'] === 'resource' ? ' (ressource)' : '');
+            $choices[(int) $row['id']] = self::typeLabel($row) . ($row['type_kind'] === 'resource' ? ' (ressource)' : '');
         }
 
         return $choices;
@@ -198,16 +198,28 @@ final class BiomeAdminService
         return array_map(static fn (array $row): array => [
             'id' => (int) $row['id'],
             'race_id' => (int) $row['race_id'],
-            'label' => (string) ($row['label'] ?: $row['name']),
+            'label' => self::typeLabel($row),
             'chance' => (int) $row['chance'],
             'max_count' => (int) $row['max_count'],
             'z_min' => (int) $row['z_min'],
             'z_max' => (int) $row['z_max'],
         ], $this->db->fetchAllAssociative(
             'SELECT bp.*, r.name, r.label FROM biome_populations bp JOIN races r ON r.id = bp.race_id
-             WHERE bp.biome_id = ? ORDER BY r.label',
+             WHERE bp.biome_id = ? ORDER BY r.label, r.name',
             [$biomeId]
         ));
+    }
+
+    /**
+     * Several types share a label (Pierre: pierre1, pierre2…): the code name tells them apart.
+     *
+     * @param array<string, mixed> $row races.name and races.label
+     */
+    private static function typeLabel(array $row): string
+    {
+        $label = (string) ($row['label'] ?: $row['name']);
+
+        return strcasecmp($label, (string) $row['name']) === 0 ? $label : $label . ' · ' . $row['name'];
     }
 
     /** One type in one biome: added, or its numbers replaced. */
