@@ -105,18 +105,19 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
 $ui = new Ui(title:"Tiled");
 
 
-/** Cells shown around the editor on each side */
-const TILED_VIEW_RANGE = 10;
+/** Fewest cells shown around the editor on each side; a character who sees farther keeps their Perception */
+const TILED_MIN_VIEW_RANGE = 10;
 /** Extra cells of biome data for a viewer wider than one cell, whose zone grows past the range */
 const TILED_BIOME_MARGIN = 5;
 
-$view = new View($player->coords, p:TILED_VIEW_RANGE, tiled:true);
+$viewRange = max(TILED_MIN_VIEW_RANGE, (int) ($player->get_caracsJson()->p ?? 0));
+$view = new View($player->coords, p:$viewRange, tiled:true);
 
 $data = $view->get_view();
 
 /* Biomes of the area on screen, sent with the view so the overlay follows an
  * AJAX refresh: the script repaints right after the board is replaced. */
-$biomeReach = TILED_VIEW_RANGE + TILED_BIOME_MARGIN;
+$biomeReach = $viewRange + TILED_BIOME_MARGIN;
 $biomeCoverage = (new \App\Service\Map\BiomeCellService())->coverage((string) $player->coords->plan, [
     'xMin' => (int) $player->coords->x - $biomeReach, 'xMax' => (int) $player->coords->x + $biomeReach,
     'yMin' => (int) $player->coords->y - $biomeReach, 'yMax' => (int) $player->coords->y + $biomeReach,
