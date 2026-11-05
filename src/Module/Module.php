@@ -12,11 +12,13 @@ namespace App\Module;
 enum Module: string
 {
     case Tutorial = 'tutorial';
+    case Biomes = 'biomes';
 
     public function label(): string
     {
         return match ($this) {
             self::Tutorial => 'Tutoriel',
+            self::Biomes => 'Biomes',
         };
     }
 
@@ -24,6 +26,8 @@ enum Module: string
     {
         return match ($this) {
             self::Tutorial => 'Le tutoriel des nouveaux joueurs. Désactivé : seuls les testeurs y ont accès.',
+            self::Biomes => 'Des zones de la carte avec leurs propres règles. Désactivé : chaque case se comporte'
+                . ' comme une case sans biome, et les biomes restent en base.',
         };
     }
 }
