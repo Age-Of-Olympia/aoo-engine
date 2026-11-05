@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Service\Map\BiomeCellService;
 use Classes\Db;
 use RuntimeException;
 
@@ -91,7 +92,7 @@ class PlanAdminService
      * l'état runtime.
      *
      * @param array<string, mixed> $jsonOverrides clés du JSON cible surchargées (name…)
-     * @return array{coords: int, layers: array<string, int>} lignes copiées
+     * @return array{coords: int, layers: array<string, int>, biomes: int} lignes copiées
      * @throws RuntimeException code 400, 404 (source sans coords) ou 409 (cible existe)
      */
     public function clonePlan(string $sourcePlan, string $targetPlan, array $jsonOverrides = []): array
@@ -149,7 +150,33 @@ class PlanAdminService
         }
         $this->planConfig->copy($sourcePlan, $targetPlan, $jsonOverrides);
 
+        // Biomes hang on the plan row, which only exists from here
+        $report['biomes'] = $this->copyBiomes($sourcePlan, $targetPlan);
+
         return $report;
+    }
+
+    /** @return int biomes copied, their cells recomputed */
+    private function copyBiomes(string $sourcePlan, string $targetPlan): int
+    {
+        $targetId = $this->db->exe('SELECT id FROM plans WHERE slug = ?', $targetPlan)->fetch_object()->id ?? null;
+        if ($targetId === null) {
+            return 0;
+        }
+
+        $n = (int) $this->db->exe(
+            'INSERT INTO biomes (plan_id, biome_type_id, name, zone, stack_order)
+             SELECT ?, b.biome_type_id, b.name, b.zone, b.stack_order
+             FROM biomes b JOIN plans p ON p.id = b.plan_id WHERE p.slug = ?',
+            array($targetId, $sourcePlan),
+            false,
+            true
+        );
+        if ($n > 0) {
+            (new BiomeCellService())->rebuild((int) $targetId);
+        }
+
+        return $n;
     }
 
     /**

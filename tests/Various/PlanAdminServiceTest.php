@@ -135,6 +135,31 @@ class PlanAdminServiceTest extends TestCase
         $this->assertFalse($config['player_visibility'], 'le reste de la config source voyage');
     }
 
+    public function testCloneCarriesBiomesAndTheirCells(): void
+    {
+        $this->seedSourcePlan();
+        $srcId = (int) $this->link->fetchOne('SELECT id FROM plans WHERE slug = ?', [self::SRC]);
+        $this->link->insert('biome_types', ['name' => 'plan_test_adm_type', 'label' => 'Test']);
+        $this->link->insert('biomes', [
+            'plan_id' => $srcId,
+            'biome_type_id' => (int) $this->link->lastInsertId(),
+            'name' => 'Forêt du test',
+            'zone' => json_encode([[0, 0], [2, 0], [2, 2], [0, 2]]),
+        ]);
+
+        $report = (new PlanAdminService())->clonePlan(self::SRC, self::CLONE);
+
+        $this->assertSame(1, $report['biomes']);
+        $this->assertSame(['Forêt du test'], $this->link->fetchFirstColumn(
+            'SELECT b.name FROM biomes b JOIN plans p ON p.id = b.plan_id WHERE p.slug = ?',
+            [self::CLONE]
+        ));
+        $this->assertSame(4, (int) $this->link->fetchOne(
+            'SELECT COUNT(*) FROM biome_cells bc JOIN plans p ON p.id = bc.plan_id WHERE p.slug = ?',
+            [self::CLONE]
+        ));
+    }
+
     public function testClonePlanRefusesExistingTargetAndUnknownSource(): void
     {
         $service = new PlanAdminService();
@@ -459,6 +484,8 @@ class PlanAdminServiceTest extends TestCase
         $this->link->executeStatement("DELETE FROM coords WHERE plan LIKE 'plan_test_adm_%'");
 
         $this->link->executeStatement("DELETE FROM plans WHERE slug LIKE 'plan_test_adm_%'");
+        // After the plans: their biomes hold the type by a RESTRICT key
+        $this->link->executeStatement("DELETE FROM biome_types WHERE name = 'plan_test_adm_type'");
         $this->link->executeStatement("DELETE FROM plan_import_progress WHERE plan LIKE 'plan_test_adm_%'");
         PlanService::forget();
         // L'identity map gagnerait sur la base : une entité Plan d'un test
