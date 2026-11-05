@@ -537,6 +537,14 @@ echo '
     <div class="tool-sidebar">
         <h2>🎨 Palette de Tuiles</h2>';
 
+/* Images hidden from the palettes in admin → Tuiles & images: one query,
+   then an isset() per thumbnail. Without the table, the palette stays whole. */
+try {
+    $hiddenTiles = (new \App\Service\TilePaletteVisibilityService())->hiddenByLayer();
+} catch (Throwable $hiddenTilesError) {
+    $hiddenTiles = [];
+}
+
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_indestructibles.php';
 
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_plants.php';

@@ -5,6 +5,7 @@ namespace Tests\Various;
 use App\Service\TerrainTransitionService;
 use App\Service\TileAssetService;
 use App\Service\TileCatalogService;
+use App\Service\TilePaletteVisibilityService;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Tests\Support\LegacyBootstrapTrait;
@@ -41,6 +42,7 @@ class TileAssetServiceTest extends TestCase
         }
         $this->link->executeStatement("DELETE FROM coords WHERE plan = 'plan_test_tuiles'");
         $this->link->executeStatement("DELETE FROM plans WHERE slug = 'plan_test_fond'");
+        $this->link->executeStatement("DELETE FROM tile_palette_hidden WHERE name LIKE 'tuile_test_%'");
         $this->placedTileNames = [];
 
         foreach (glob($this->root . '/img/*/*') ?: [] as $file) {
@@ -252,6 +254,27 @@ class TileAssetServiceTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/encore posée/');
         $this->service->move('tiles', 'caverne', 'foregrounds');
+    }
+
+    public function testThePaletteMarkShowsInTheInventoryAndFollowsTheImage(): void
+    {
+        mkdir($this->root . '/img/foregrounds', 0777, true);
+        $this->writeTruecolorPng('tuile_test_masquee');
+        $palette = new TilePaletteVisibilityService();
+        $palette->setHidden('tiles', 'tuile_test_masquee', true);
+
+        $byName = array_column($this->service->inventory('tiles')['entries'], null, 'name');
+        $this->assertTrue($byName['tuile_test_masquee']['hidden']);
+
+        $this->service->rename('tiles', 'tuile_test_masquee', 'tuile_test_masquee2');
+        $this->assertTrue($palette->isHidden('tiles', 'tuile_test_masquee2'));
+        $this->assertFalse($palette->isHidden('tiles', 'tuile_test_masquee'));
+
+        $this->service->move('tiles', 'tuile_test_masquee2', 'foregrounds');
+        $this->assertTrue($palette->isHidden('foregrounds', 'tuile_test_masquee2'));
+
+        $this->service->delete('foregrounds', 'tuile_test_masquee2');
+        $this->assertFalse($palette->isHidden('foregrounds', 'tuile_test_masquee2'));
     }
 
     public function testRenameCarriesTheTransitionsThatEmbedTheName(): void

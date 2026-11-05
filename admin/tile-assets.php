@@ -12,6 +12,7 @@ require_once __DIR__ . '/helpers.php';
 
 use App\Service\CsrfProtectionService;
 use App\Service\TileAssetService;
+use App\Service\TilePaletteVisibilityService;
 
 $csrf = new CsrfProtectionService();
 $service = new TileAssetService();
@@ -30,7 +31,8 @@ if (!in_array($layer, $service->layers(), true)) {
 
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['asset_upload']) || isset($_POST['asset_delete'])
-        || isset($_POST['asset_rename']) || isset($_POST['asset_move']));
+        || isset($_POST['asset_rename']) || isset($_POST['asset_move'])
+        || isset($_POST['asset_palette_hidden']));
 if ($isStateChangingPost) {
     requireAdminPost('tile-assets.php?layer=' . urlencode($layer));
 
@@ -68,6 +70,12 @@ if ($isStateChangingPost) {
             $target = trim((string) ($_POST['target_layer'] ?? ''));
             $service->move($layer, $name, $target);
             setFlash('success', "« {$name} » déplacée de la couche {$layer} vers {$target}.");
+        } elseif (isset($_POST['asset_palette_hidden'])) {
+            $name = trim((string) ($_POST['name'] ?? ''));
+            $hidden = ($_POST['hidden'] ?? '0') === '1';
+            (new TilePaletteVisibilityService())->setHidden($layer, $name, $hidden);
+            setFlash('success', "« {$name} » " . ($hidden ? 'masquée dans' : 'réaffichée dans')
+                . ' les palettes d\'éditeur (tiled et Tiled).');
         }
     } catch (Throwable $e) {
         setFlash('danger', $e->getMessage());
@@ -93,6 +101,7 @@ try {
 }
 
 $withProblems = array_filter($inventory['entries'], fn(array $entry) => $entry['problems'] !== []);
+$hiddenCount = count(array_filter($inventory['entries'], fn(array $entry) => $entry['hidden']));
 
 ob_start();
 ?>
@@ -144,6 +153,9 @@ ob_start();
                 <?php else: ?>
                     <span class="badge badge-solid badge-success">aucun problème</span>
                 <?php endif; ?>
+                <?php if ($hiddenCount > 0): ?>
+                    <span class="badge bg-secondary" title="Absentes des palettes de tiled et de Tiled"><?= $hiddenCount ?> masquée(s) des palettes</span>
+                <?php endif; ?>
                 <?php if ($inventory['transitions'] > 0): ?>
                     <small class="text-muted"><?= $inventory['transitions'] ?> fondus non listés (voir Transitions de terrain)</small>
                 <?php endif; ?>
@@ -155,7 +167,8 @@ ob_start();
                 <table class="table table-sm table-striped" data-admin-list data-page-size="50">
                     <thead><tr>
                         <th></th><th>Nom</th><th>Fichier(s)</th><th>Taille</th>
-                        <th title="Cases posées sur l'ensemble des cartes">Usage</th><th>Problèmes</th><th></th>
+                        <th title="Cases posées sur l'ensemble des cartes">Usage</th><th>Problèmes</th>
+                        <th title="Masquer cette image dans les palettes de tiled et de Tiled (elle reste affichée là où elle est déjà posée)">Palette</th><th></th>
                     </tr></thead>
                     <tbody>
                     <?php foreach ($inventory['entries'] as $entry): ?>
@@ -191,6 +204,21 @@ ob_start();
                                 <?php foreach ($entry['problems'] as $problem): ?>
                                     <div class="text-warning small"><i class="fas fa-exclamation-triangle"></i> <?= e($problem) ?></div>
                                 <?php endforeach; ?>
+                            </td>
+                            <td class="text-nowrap">
+                                <?php if (!$entry['missing']): ?>
+                                    <form method="post" class="mb-0">
+                                        <?= $csrf->renderTokenField() ?>
+                                        <input type="hidden" name="layer" value="<?= e($layer) ?>">
+                                        <input type="hidden" name="name" value="<?= e($entry['name']) ?>">
+                                        <input type="hidden" name="asset_palette_hidden" value="1">
+                                        <input type="hidden" name="hidden" value="0">
+                                        <label class="mb-0 small" title="Masquer dans les palettes de tiled et de Tiled">
+                                            <input type="checkbox" name="hidden" value="1" <?= checked($entry['hidden']) ?> data-autosubmit>
+                                            masquée
+                                        </label>
+                                    </form>
+                                <?php endif; ?>
                             </td>
                             <td class="text-nowrap">
                                 <?php if (!$entry['missing']): ?>
@@ -253,4 +281,5 @@ $content = ob_get_clean();
 echo admin_layout('Tuiles & images', $content, ['intro' => 'Les images de chaque couche de la carte et leurs problèmes'
         . ' (image à palette qui noircit les fondus, nom invalide, image posée mais absente du serveur…).'
         . ' Une image posée quelque part ou servant de fond à un plan ne peut pas être supprimée ; la renommer met à jour les cartes.'
+        . ' « Masquée » retire l\'image des palettes de tiled et de Tiled sans toucher aux cases où elle est déjà posée.'
         . ' Les fondus se gèrent dans Transitions de terrain.']);

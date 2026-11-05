@@ -36,6 +36,12 @@ foreach(File::scan_dir('img/tiles/') as $file){
     $e = pathinfo($file, PATHINFO_FILENAME);
     $url = 'img/tiles/'. $file;
 
+    // Hidden from the palettes in admin → Tuiles & images; checked before the image is sized
+    if(isset($hiddenTiles['tiles'][$e])){
+
+        continue;
+    }
+
     // The plan backgrounds and weather textures live here too: only tile-sized images are brushes
     $size = \App\Service\TileCatalogService::imageSize($url);
     if(!$size || max($size) > \App\Service\TiledMapService::TILE_SIZE * 1.2){

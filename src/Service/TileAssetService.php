@@ -42,7 +42,8 @@ class TileAssetService
      *
      * @return array{
      *   entries: list<array{name: string, files: list<string>, width: int, height: int,
-     *                       usage: int, isTerrain: bool, problems: list<string>, missing: bool, plans: list<string>}>,
+     *                       usage: int, isTerrain: bool, problems: list<string>, missing: bool, plans: list<string>,
+     *                       hidden: bool}>,
      *   transitions: int
      * }
      */
@@ -68,6 +69,7 @@ class TileAssetService
             ? $this->declaredTerrainTiles($layer) : [];
 
         $planGrounds = $layer === TerrainTransitionService::GROUND_LAYER ? $this->planGrounds() : [];
+        $hidden = $this->palette()->hiddenNames($layer);
 
         $entries = [];
         foreach ($files as $name => $nameFiles) {
@@ -77,6 +79,7 @@ class TileAssetService
             }
             $entry = $this->buildEntry($layer, (string) $name, $nameFiles, $usage, $terrainTiles);
             $entry['plans'] = $planGrounds[$name] ?? [];
+            $entry['hidden'] = isset($hidden[$name]);
             if ($entry['plans'] !== []) {
                 // A plan ground is drawn under every bare cell: in use
                 $entry['problems'] = array_values(array_diff($entry['problems'], ['posée sur aucune carte']));
@@ -91,7 +94,7 @@ class TileAssetService
                     'name' => (string) $name, 'files' => [], 'width' => 0, 'height' => 0,
                     'usage' => $count, 'isTerrain' => isset($terrainTiles[$name]),
                     'problems' => ["référencée sur les cartes ({$count} case(s)) mais image absente — tuile cassée en jeu"],
-                    'missing' => true, 'plans' => [],
+                    'missing' => true, 'plans' => [], 'hidden' => false,
                 ];
             }
         }
@@ -256,6 +259,7 @@ class TileAssetService
                 throw new RuntimeException('Suppression impossible : ' . $file);
             }
         }
+        $this->palette()->forget($layer, $name);
         \App\Service\Map\BoardChanges::world();
     }
 
@@ -304,6 +308,7 @@ class TileAssetService
                 throw new RuntimeException('Déplacement impossible : ' . $file);
             }
         }
+        $this->palette()->move($fromLayer, $name, $toLayer);
         \App\Service\Map\BoardChanges::world();
     }
 
@@ -361,6 +366,7 @@ class TileAssetService
                     throw new RuntimeException('Renommage du fichier impossible : ' . $file);
                 }
             }
+            $this->palette()->rename($layer, $old, $new);
 
             foreach ($transitions['renamed'] as $from => $to) {
                 $connection->executeStatement('UPDATE map_' . $layer . ' SET name = ? WHERE name = ?', [$to, $from]);
@@ -592,6 +598,14 @@ class TileAssetService
             throw new RuntimeException("« {$name} » est le fond de " . count($plans) . ' plan(s) ('
                 . implode(', ', $plans) . ') — changez-le d\'abord (page Plans).');
         }
+    }
+
+    /** Same connection as the file operations: a rename keeps its mark inside the transaction. */
+    private function palette(): TilePaletteVisibilityService
+    {
+        $this->connection();
+
+        return new TilePaletteVisibilityService($this->entityManager);
     }
 
     private function connection(): \Doctrine\DBAL\Connection

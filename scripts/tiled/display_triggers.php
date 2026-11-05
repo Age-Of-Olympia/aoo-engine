@@ -12,6 +12,12 @@ echo '
    retrait du code qui l'exécute, et proposait des déclencheurs inertes. */
 foreach(TriggerPaletteService::playableNames() as $e){
 
+    if(isset($hiddenTiles['triggers'][$e])){
+
+        continue;
+    }
+
+
 
     $params = '';
 

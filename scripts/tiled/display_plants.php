@@ -10,6 +10,12 @@ echo '
 
 foreach(File::scan_dir('img/plants/', without:".png") as $e){
 
+    if(isset($hiddenTiles['plants'][$e])){
+
+        continue;
+    }
+
+
     echo '<img
         class="map plants select-name"
         data-type="plants"
