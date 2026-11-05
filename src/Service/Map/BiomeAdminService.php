@@ -122,7 +122,7 @@ final class BiomeAdminService
             throw new InvalidArgumentException('Le nom du biome est obligatoire.');
         }
         $zone = self::parseZone($zoneText);
-        if (BiomeCellService::cellsInside($zone) === []) {
+        if (!BiomeCellService::coversACell($zone)) {
             throw new InvalidArgumentException('Cette zone ne couvre aucune case.');
         }
 
@@ -133,19 +133,23 @@ final class BiomeAdminService
             'zone' => json_encode($zone),
             'stack_order' => $stackOrder,
         ];
-        $oldPlan = null;
+        $old = false;
         if ($id === 0) {
             $this->db->insert('biomes', $row);
             $id = (int) $this->db->lastInsertId();
         } else {
-            $oldPlan = $this->db->fetchOne('SELECT plan_id FROM biomes WHERE id = ?', [$id]);
+            $old = $this->db->fetchAssociative('SELECT plan_id, zone FROM biomes WHERE id = ?', [$id]);
             $this->db->update('biomes', $row, ['id' => $id]);
         }
 
+        // Only the cells under the new and the old outline can change, on their own plans
+        $outlines = [(int) $planId => [$zone]];
+        if ($old !== false) {
+            $outlines[(int) $old['plan_id']][] = (array) json_decode((string) $old['zone'], true);
+        }
         $cells = new BiomeCellService($this->db);
-        $cells->rebuild((int) $planId);
-        if ($oldPlan !== false && $oldPlan !== null && (int) $oldPlan !== (int) $planId) {
-            $cells->rebuild((int) $oldPlan);
+        foreach ($outlines as $outlinePlan => $zones) {
+            $cells->rebuild($outlinePlan, BiomeCellService::areaOf(...$zones));
         }
 
         return [
@@ -156,13 +160,16 @@ final class BiomeAdminService
 
     public function deleteBiome(int $id): void
     {
-        $planId = $this->db->fetchOne('SELECT plan_id FROM biomes WHERE id = ?', [$id]);
-        if ($planId === false) {
+        $biome = $this->db->fetchAssociative('SELECT plan_id, zone FROM biomes WHERE id = ?', [$id]);
+        if ($biome === false) {
             return;
         }
         // Its own cells go by cascade; the ones it hid come back with the rebuild
         $this->db->delete('biomes', ['id' => $id]);
-        (new BiomeCellService($this->db))->rebuild((int) $planId);
+        (new BiomeCellService($this->db))->rebuild(
+            (int) $biome['plan_id'],
+            BiomeCellService::areaOf((array) json_decode((string) $biome['zone'], true))
+        );
     }
 
     /**
