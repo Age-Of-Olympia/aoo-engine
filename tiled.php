@@ -107,7 +107,7 @@ $ui = new Ui(title:"Tiled");
 
 /** Fewest cells shown around the editor on each side; a character who sees farther keeps their Perception */
 const TILED_MIN_VIEW_RANGE = 10;
-/** Extra cells of biome data for a viewer wider than one cell, whose zone grows past the range */
+/** Extra cells of biome data past the view: a viewer wider than one cell sees farther, and a border leaving the view is followed to its edge */
 const TILED_BIOME_MARGIN = 5;
 
 $viewRange = max(TILED_MIN_VIEW_RANGE, (int) ($player->get_caracsJson()->p ?? 0));
@@ -706,44 +706,59 @@ document.addEventListener("DOMContentLoaded", function() {
     /* Where the top biome changes between two plain cells, a line on their
        shared side. A transition cell holds the change itself: the line runs
        through its middle, centre to centre with the next transition cell,
-       and a plain cell leaves that side to it. Where a plain border ends next
-       to a transition cell, a short line joins its end to that cell's centre,
-       so the border stays one line. Sides are found by comparing the two
-       cells' positions, whichever way the y axis runs. */
+       out to the edge of the view when the band goes on past it, and a plain
+       cell leaves that side to it. Where a plain border ends next to a
+       transition cell, a short line joins its end to that cell's centre, so
+       the border stays one line. */
     function drawBorders(rects, cells, biomes) {
+        const axes = screenAxes(rects);
+        const toScreen = (dx, dy) => ({x: dx * axes.x, y: dy * axes.y});
         rects.forEach(function(rect, key) {
             const ids = cells[key] || [];
             if (ids.length === 0) return;
-            const isTransition = ids.length > 1;
             const [x, y] = key.split(",").map(Number);
             [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function([dx, dy]) {
                 const neighbourKey = (x + dx) + "," + (y + dy);
-                const neighbour = rects.get(neighbourKey);
                 const neighbourIds = cells[neighbourKey] || [];
-                if (!neighbour) return;
-                if (isTransition) {
-                    /* Each side draws its half, from its centre to the shared side */
+                if (ids.length > 1) {
+                    /* Each side draws its half, from its centre to the shared side; the
+                       data reaches past the view, so a band leaving it is followed */
                     if (neighbourIds.length > 1) {
                         const color = borderColor(biomes[ids[0]].color, biomes[ids[1]].color);
-                        rect.parentNode.appendChild(segment(rect, neighbour, color, "middle"));
+                        rect.parentNode.appendChild(segment(rect, toScreen(dx, dy), color, "middle"));
                     }
                     return;
                 }
                 const takenByTransition = neighbourIds.length > 1 && neighbourIds.includes(ids[0]);
-                if (neighbourIds[0] === ids[0] || takenByTransition) return;
+                if (!rects.has(neighbourKey) || neighbourIds[0] === ids[0] || takenByTransition) return;
                 const other = neighbourIds[0] === undefined ? ids[0] : neighbourIds[0];
                 const color = borderColor(biomes[ids[0]].color, biomes[other].color);
-                rect.parentNode.appendChild(segment(rect, neighbour, color, "side"));
+                const toward = toScreen(dx, dy);
+                rect.parentNode.appendChild(segment(rect, toward, color, "side"));
                 /* The side's two ends touch the cells on either side of it, along the other axis */
                 [[dy, dx], [-dy, -dx]].forEach(function([ax, ay]) {
                     const besideKey = (x + ax) + "," + (y + ay);
-                    const beside = rects.get(besideKey);
-                    if (beside && (cells[besideKey] || []).length > 1) {
-                        rect.parentNode.appendChild(connector(rect, neighbour, beside, color));
+                    if (rects.has(besideKey) && (cells[besideKey] || []).length > 1) {
+                        rect.parentNode.appendChild(connector(rect, toward, toScreen(ax, ay), color));
                     }
                 });
             });
         });
+    }
+
+    /* Which way x and y run on screen (+1 or -1), read from two neighbouring
+       cells: the board draws y upwards, the SVG counts it downwards */
+    function screenAxes(rects) {
+        for (const [key, rect] of rects) {
+            const [x, y] = key.split(",").map(Number);
+            const right = rects.get((x + 1) + "," + y);
+            const above = rects.get(x + "," + (y + 1));
+            if (right && above) {
+                const box = boxOf(rect);
+                return {x: Math.sign(boxOf(right).x - box.x), y: Math.sign(boxOf(above).y - box.y)};
+            }
+        }
+        return {x: 1, y: -1};
     }
 
     /* Opposite hue of the two biomes' mix, fully saturated: it stands out
@@ -765,19 +780,17 @@ document.addEventListener("DOMContentLoaded", function() {
         return "hsl(" + Math.round(sixths * 60 + 180) + ", 100%, 50%)";
     }
 
-    /* "side": the whole side the cell shares with its neighbour.
+    /* "side": the cell's whole side in screen direction `toward`.
        "middle": from the cell's centre to the middle of that side. */
-    function segment(rect, neighbour, color, kind) {
+    function segment(rect, toward, color, kind) {
         const box = boxOf(rect);
-        const towardX = Math.sign(+neighbour.getAttribute("x") - box.x);
-        const towardY = Math.sign(+neighbour.getAttribute("y") - box.y);
         const centre = {x: box.x + box.size / 2, y: box.y + box.size / 2};
-        const sideX = centre.x + towardX * box.size / 2;
-        const sideY = centre.y + towardY * box.size / 2;
+        const sideX = centre.x + toward.x * box.size / 2;
+        const sideY = centre.y + toward.y * box.size / 2;
         let ends;
         if (kind === "middle") {
             ends = {x1: centre.x, y1: centre.y, x2: sideX, y2: sideY};
-        } else if (towardX !== 0) {
+        } else if (toward.x !== 0) {
             ends = {x1: sideX, x2: sideX, y1: box.y, y2: box.y + box.size};
         } else {
             ends = {x1: box.x, x2: box.x + box.size, y1: sideY, y2: sideY};
@@ -800,18 +813,16 @@ document.addEventListener("DOMContentLoaded", function() {
         return {x: +rect.getAttribute("x"), y: +rect.getAttribute("y"), size: +rect.getAttribute("width")};
     }
 
-    /* From the corner the cell shares with both "across" and "beside", to
-       the centre of "beside" (a transition cell) */
+    /* From the corner between the cell's side toward `across` and its side
+       toward `beside`, to the centre of the cell beside (a transition cell) */
     function connector(rect, across, beside, color) {
         const box = boxOf(rect);
         const half = box.size / 2;
         const centre = {x: box.x + half, y: box.y + half};
-        const toward = (other, axis) => Math.sign(+other.getAttribute(axis) - box[axis]);
-        const corner = {
-            x: centre.x + half * (toward(across, "x") || toward(beside, "x")),
-            y: centre.y + half * (toward(across, "y") || toward(beside, "y")),
-        };
-        return line({x1: corner.x, y1: corner.y, x2: +beside.getAttribute("x") + half, y2: +beside.getAttribute("y") + half}, color);
+        return line({
+            x1: centre.x + half * (across.x + beside.x), y1: centre.y + half * (across.y + beside.y),
+            x2: centre.x + box.size * beside.x, y2: centre.y + box.size * beside.y,
+        }, color);
     }
 
     function fillLegend(shownIds, biomes) {
