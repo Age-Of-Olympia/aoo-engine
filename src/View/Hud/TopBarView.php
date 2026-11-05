@@ -113,6 +113,7 @@ final class TopBarView
             . '<span id="hud-location" title="Position actuelle">'
             . '<span class="hud-plan">' . $planName . ' — </span>'
             . '(' . $coords->x . ', ' . $coords->y . ', ' . $coords->z . ')'
+            . self::biomes($coords)
             . '</span>'
             . '<sup>' . self::nextTurn($player) . '</sup>'
             . '</div>';
@@ -249,6 +250,16 @@ final class TopBarView
         }
 
         return '<span id="hud-effects">' . $chips . '</span>';
+    }
+
+    /** The biome the player stands in, after the coordinates; both of them on a transition. */
+    private static function biomes(object $coords): string
+    {
+        $names = (new \App\Service\Map\BiomeCellService())->namesAt((string) $coords->plan, (int) $coords->x, (int) $coords->y);
+
+        return $names === []
+            ? ''
+            : '<span class="hud-biome"> · ' . htmlspecialchars(implode(' / ', $names), ENT_QUOTES, 'UTF-8') . '</span>';
     }
 
     /**
