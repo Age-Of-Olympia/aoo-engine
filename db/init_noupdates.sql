@@ -364,6 +364,56 @@ CREATE TABLE IF NOT EXISTS `admin_settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 INSERT IGNORE INTO `admin_settings` (`name`,`value`) VALUES ('pnj_retire_plan','pnjs');
 INSERT IGNORE INTO `admin_settings` (`name`,`value`) VALUES ('tiled_min_extension','0.4.0');
+-- Reputation tuning (see Version20261029100000_ReputationIsConfigurable and ReputationService).
+INSERT IGNORE INTO `admin_settings` (`name`,`value`) VALUES ('reputation_per_post','1');
+INSERT IGNORE INTO `admin_settings` (`name`,`value`) VALUES ('reputation_per_cookie','0.3');
+INSERT IGNORE INTO `admin_settings` (`name`,`value`) VALUES ('reputation_per_cookie_same_faction','0.1');
+INSERT IGNORE INTO `admin_settings` (`name`,`value`) VALUES ('reputation_reward_every','5');
+INSERT IGNORE INTO `admin_settings` (`name`,`value`) VALUES ('forum_cookie_max_days','14');
+INSERT IGNORE INTO `admin_settings` (`name`,`value`) VALUES ('forum_missive_cookies','1');
+
+--
+-- Reputation titles and reward tiers (see
+-- Version20261029100000_ReputationIsConfigurable and ReputationService).
+--
+CREATE TABLE IF NOT EXISTS `reputation_titles` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `threshold` int(11) NOT NULL,
+  `title` varchar(64) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_reputation_titles_threshold` (`threshold`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+INSERT IGNORE INTO `reputation_titles` (`threshold`,`title`) VALUES
+  (0,'Inconnu'),
+  (25,'Connu'),
+  (100,'Populaire'),
+  (250,'Héroïque'),
+  (500,'Légendaire'),
+  (1250,'Mythologique'),
+  (2500,'Divin');
+
+CREATE TABLE IF NOT EXISTS `reputation_reward_tiers` (
+  `tier` tinyint(4) NOT NULL,
+  `pr` int(11) NOT NULL,
+  `weight` decimal(6,2) NOT NULL,
+  PRIMARY KEY (`tier`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+INSERT IGNORE INTO `reputation_reward_tiers` (`tier`,`pr`,`weight`) VALUES
+  (1,1,4.00),
+  (2,2,2.00),
+  (3,3,1.33),
+  (4,4,1.00);
+
+--
+-- Images left out of the editor palettes (see
+-- Version20261105100000_TilePaletteHidden and TilePaletteVisibilityService).
+-- An image without a row is offered as usual.
+--
+CREATE TABLE IF NOT EXISTS `tile_palette_hidden` (
+  `layer` varchar(32) NOT NULL,
+  `name` varchar(191) NOT NULL,
+  PRIMARY KEY (`layer`,`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
