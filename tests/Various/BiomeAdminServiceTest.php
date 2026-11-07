@@ -34,7 +34,7 @@ class BiomeAdminServiceTest extends TestCase
         $this->purgePlan($this->db, self::PLAN);
         $this->purgePlan($this->db, self::OTHER_PLAN);
         $this->db->executeStatement("DELETE FROM biome_types WHERE name LIKE 'test_admin_%'");
-        $this->db->executeStatement("DELETE FROM terrain_colors WHERE layer = 'tiles' AND name = 'test_admin_mousse'");
+        $this->db->executeStatement("DELETE FROM terrain_colors WHERE layer = 'tiles' AND name IN ('test_admin_mousse', 'test_admin_tourbe')");
     }
 
     public function testParseZoneReadsCornersWhateverTheSeparator(): void
@@ -96,18 +96,28 @@ class BiomeAdminServiceTest extends TestCase
         $this->service->saveType($type, 'test_admin_marais', 'Bois', '#336633');
     }
 
-    public function testAGroundPaletteIsSavedAndAnUnknownTerrainRefused(): void
+    public function testAPaletteAddsUpToAHundredPercentOfKnownTerrains(): void
     {
-        $position = (int) $this->db->fetchOne("SELECT COALESCE(MAX(position), 0) + 1 FROM terrain_colors WHERE layer = 'tiles'");
-        $this->db->insert('terrain_colors', ['layer' => 'tiles', 'position' => $position, 'name' => 'test_admin_mousse']);
+        foreach (['test_admin_mousse', 'test_admin_tourbe'] as $terrain) {
+            $position = (int) $this->db->fetchOne("SELECT COALESCE(MAX(position), 0) + 1 FROM terrain_colors WHERE layer = 'tiles'");
+            $this->db->insert('terrain_colors', ['layer' => 'tiles', 'position' => $position, 'name' => $terrain]);
+        }
         $type = $this->service->saveType(0, 'test_admin_tourbiere', 'Tourbière', '#556644');
 
-        $this->service->saveGrounds($type, ['test_admin_mousse' => 60, 'test_admin_absent' => 0]);
+        $this->service->saveGrounds($type, ['test_admin_mousse' => 60, 'test_admin_tourbe' => 40]);
         $saved = array_column($this->service->types(), 'grounds', 'id');
-        $this->assertSame(['test_admin_mousse' => 60], $saved[$type], 'a weight of 0 leaves the terrain out');
+        $this->assertSame(['test_admin_mousse' => 60, 'test_admin_tourbe' => 40], $saved[$type]);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->service->saveGrounds($type, ['test_admin_inconnu' => 10]);
+        foreach ([['test_admin_mousse' => 60, 'test_admin_tourbe' => 30], ['test_admin_inconnu' => 100]] as $refused) {
+            try {
+                $this->service->saveGrounds($type, $refused);
+                $this->fail('accepted: ' . json_encode($refused));
+            } catch (InvalidArgumentException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+        $saved = array_column($this->service->types(), 'grounds', 'id');
+        $this->assertSame(['test_admin_mousse' => 60, 'test_admin_tourbe' => 40], $saved[$type], 'a refused palette changes nothing');
     }
 
     public function testAZoneCoveringNothingAndAUsedTypeAreRefused(): void

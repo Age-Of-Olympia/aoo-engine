@@ -20,6 +20,12 @@ final class BiomeAdminService
     public const DEFAULT_PATCH_SCALE = 6;
     public const MAX_PATCH_SCALE = 64;
 
+    /** Terrains per palette: every pair of them needs its transitions (14 tiles for two, 36 for three) */
+    public const MAX_GROUNDS = 3;
+
+    /** A palette's shares, in percent, add up to this */
+    public const FULL_PALETTE = 100;
+
     private Connection $db;
 
     public function __construct(?Connection $db = null)
@@ -62,16 +68,28 @@ final class BiomeAdminService
     /**
      * The type's ground palette, replaced: what grows in its biomes grows on
      * these terrains only, and the biome brush paints them in proportion to
-     * their weights ("60 herbe, 25 mousse, 15 terre").
+     * their shares ("60 % herbe, 25 % mousse, 15 % terre").
      *
-     * @param array<string, int> $weights terrain => weight; a weight of 0 leaves the terrain out, none: any ground
+     * @param array<string, int> $weights terrain => share in percent, adding up to 100; none: any ground
      */
     public function saveGrounds(int $typeId, array $weights): void
     {
-        $weights = array_filter($weights, static fn (int $weight): bool => $weight > 0);
         $unknown = array_diff(array_keys($weights), $this->groundTerrains());
         if ($unknown !== []) {
             throw new InvalidArgumentException('Sol inconnu : ' . implode(', ', $unknown) . '.');
+        }
+        if (count($weights) > self::MAX_GROUNDS) {
+            throw new InvalidArgumentException('Une palette compte au plus ' . self::MAX_GROUNDS . ' sols.');
+        }
+        foreach ($weights as $terrain => $weight) {
+            if ($weight < 1 || $weight > self::FULL_PALETTE) {
+                throw new InvalidArgumentException('La part de ' . $terrain . ' va de 1 à ' . self::FULL_PALETTE . ' %.');
+            }
+        }
+        if ($weights !== [] && array_sum($weights) !== self::FULL_PALETTE) {
+            throw new InvalidArgumentException(
+                'Les parts de la palette font ' . array_sum($weights) . ' % : il faut ' . self::FULL_PALETTE . ' % tout juste.'
+            );
         }
 
         $this->db->transactional(static function (Connection $db) use ($typeId, $weights): void {

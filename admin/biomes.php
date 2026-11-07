@@ -40,11 +40,12 @@ if (!Modules::on(Module::Biomes)) {
 
 // Types
 $terrains = $service->groundTerrains();
-$groundWeights = static fn (array $palette): string => $terrains === [] ? '' : '<div class="d-flex flex-wrap gap-2 small mt-1 align-items-center">Sols :'
-    . implode('', array_map(static fn (string $terrain): string => '<label>' . e($terrain) . ' '
-        . formInput('grounds[' . $terrain . ']', (string) ($palette[$terrain] ?? 0), 'type="number" min="0" class="form-control form-control-sm d-inline-block" style="width:5em"')
-        . '</label>', $terrains))
-    . '</div>';
+$paletteLink = static fn (int $typeId): string => '?' . e(http_build_query(array_filter(['plan' => $plan, 'palette' => $typeId]))) . '#palette';
+$paletteSummary = static fn (array $type): string => '<div class="small text-muted mt-1">Sols : '
+    . ($type['grounds'] === []
+        ? 'tout sol'
+        : e(implode(' · ', array_map(static fn (string $terrain, int $share): string => $terrain . ' ' . $share . ' %', array_keys($type['grounds']), $type['grounds']))))
+    . ' — <a href="' . $paletteLink($type['id']) . '">Palette</a></div>';
 $rows = [];
 foreach ($types as $type) {
     $rows[] = '<tr><td>'
@@ -55,7 +56,7 @@ foreach ($types as $type) {
             . formInput('patch_scale', (string) $type['patch_scale'], 'type="number" min="1" max="' . BiomeAdminService::MAX_PATCH_SCALE
                 . '" class="form-control form-control-sm" style="width:5em" title="Taille des plaques du pinceau, en cases"')
             . '<button class="btn btn-sm btn-primary" type="submit">Enregistrer</button></div>'
-            . $groundWeights($type['grounds']),
+            . $paletteSummary($type),
             ['id' => $type['id']])
         . '</td><td>' . $type['biomes'] . '</td><td>'
         . ($type['biomes'] === 0
@@ -72,11 +73,60 @@ $addType = biome_form($token, 'save_type', '<div class="d-flex flex-wrap gap-2 a
 $content .= formCard('Types de biome', ($types === []
         ? '<p class="text-muted">Aucun type pour l\'instant.</p>'
         : renderTable(['Nom technique, libellé, couleur, taille des plaques et sols', 'Biomes', ''], $rows))
-    . ($terrains === [] ? '' : '<p class="text-muted small">Sols : le poids de chaque terrain dans les biomes du type ;'
-        . ' 0 le laisse de côté. Les plantes ne poussent que sur ces terrains, leurs tuiles et les transitions entre eux,'
-        . ' et le pinceau de biome les peint en proportion de leur poids (60, 25 et 15 donnent 60 %, 25 % et 15 %).'
-        . ' Sans aucun sol, les plantes poussent sur tout sol. La case à côté de la couleur règle la taille des plaques du pinceau, en cases.</p>')
+    . '<p class="text-muted small">La case à côté de la couleur règle la taille des plaques du pinceau de biome, en cases.</p>'
     . '<hr>' . $addType);
+
+// The palette of one type: up to MAX_GROUNDS terrains, shares adding up to 100 %
+$paletteType = null;
+foreach ($types as $type) {
+    if ($type['id'] === (int) ($_GET['palette'] ?? 0)) {
+        $paletteType = $type;
+    }
+}
+if ($paletteType !== null) {
+    $choices = array_combine($terrains, $terrains);
+    $lines = array_slice(array_pad(array_map(null, array_keys($paletteType['grounds']), $paletteType['grounds']), BiomeAdminService::MAX_GROUNDS, [null, null]), 0, BiomeAdminService::MAX_GROUNDS);
+    $paletteRows = '';
+    foreach ($lines as [$terrain, $share]) {
+        $paletteRows .= '<div class="form-row align-items-end mb-2">'
+            . formField('Terrain', formSelect('terrain[]', $choices, $terrain, '— aucun —'), 'form-group col-md-5 mb-0')
+            . formField('Part', formInput('share[]', $share === null ? '' : (string) $share, 'type="number" min="1" max="' . BiomeAdminService::FULL_PALETTE . '" placeholder="%"'), 'form-group col-md-2 mb-0')
+            . '</div>';
+    }
+    $content .= '<div id="palette">' . formCard('Palette de ' . $paletteType['label'], $terrains === []
+        ? '<p class="text-muted">Aucun terrain classé sur ce serveur. Classez les sols d\'un plan dans'
+            . ' <a href="/admin/terrain-transitions.php">Transitions de terrain</a> : chaque terrain apparaît ensuite dans cette liste.</p>'
+        : '<p class="text-muted small">Dans les biomes de ce type, les plantes ne poussent que sur ces terrains, leurs tuiles et les transitions'
+            . ' entre eux ; le pinceau de biome les peint selon leurs parts. Au plus ' . BiomeAdminService::MAX_GROUNDS . ' terrains,'
+            . ' dont toutes les transitions existent, et des parts qui font ' . BiomeAdminService::FULL_PALETTE . ' % tout juste.'
+            . ' Sans aucun terrain, les plantes poussent sur tout sol.</p>'
+            . biome_form($token, 'save_palette', $paletteRows
+                . '<p id="palette-total" class="small"></p>'
+                . '<button class="btn btn-primary" type="submit">Enregistrer la palette</button>'
+                . ' <a class="btn btn-outline-secondary" href="?' . e(http_build_query(array_filter(['plan' => $plan]))) . '">Fermer</a>',
+                ['id' => $paletteType['id'], 'plan_filter' => $plan, 'palette' => $paletteType['id']], 'id="palette-form"')
+            . '<script>
+                /* Live total of the shares whose terrain is chosen */
+                (function () {
+                    var form = document.getElementById("palette-form");
+                    var total = document.getElementById("palette-total");
+                    function refresh() {
+                        var sum = 0;
+                        form.querySelectorAll(".form-row").forEach(function (row) {
+                            if (row.querySelector("select").value !== "") {
+                                sum += parseInt(row.querySelector("input").value, 10) || 0;
+                            }
+                        });
+                        total.textContent = "Total : " + sum + " %";
+                        total.style.color = sum === ' . BiomeAdminService::FULL_PALETTE . ' || sum === 0 ? "" : "var(--danger, #c0392b)";
+                    }
+                    form.addEventListener("input", refresh);
+                    form.addEventListener("change", refresh);
+                    refresh();
+                })();
+            </script>'
+    ) . '</div>';
+}
 
 // Biomes
 $editId = (int) ($_GET['edit'] ?? 0);
