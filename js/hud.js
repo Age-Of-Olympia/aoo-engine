@@ -2329,7 +2329,32 @@
         }
         aooStore.set('hudPanels', JSON.stringify(openPanels));
         aooStore.set('hudPanelHistory', JSON.stringify(panelHistory));
+        syncPanelHistoryEntry();
     }
+
+    /* Browser Back: one history entry stands for "a panel is open".
+     * Opening pushes it, closing by hand pops it, so Back never lands
+     * on a stale entry; Back itself pops it and the popstate handler
+     * goes to the previous panel or closes the open one. */
+    function syncPanelHistoryEntry() {
+        var onPanelEntry = !!(history.state && history.state.hudPanel);
+        if (openPanels.length && !onPanelEntry) {
+            history.pushState({ hudPanel: true }, '');
+        } else if (!openPanels.length && onPanelEntry) {
+            history.back();
+        }
+    }
+
+    $(window).off('popstate.hudPanel').on('popstate.hudPanel', function () {
+        if (!openPanels.length) {
+            return;
+        }
+        if (panelHistory.length) {
+            goBackPanel();
+        } else {
+            closePanelAt(openPanels.length - 1);
+        }
+    });
 
     function reloadAllPanels() {
         openPanels.forEach(function (entry, slot) {
