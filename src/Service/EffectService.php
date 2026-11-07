@@ -307,32 +307,6 @@ class EffectService
         return $controllers;
     }
 
-    /** @return array<string, string[]> corruption name => breakable materials (ex-ITEM_CORRUPTIONS). */
-    public function getCorruptionMaterials(): array
-    {
-        $map = [];
-        foreach ($this->catalog() as $name => $effect) {
-            if ($effect->getCorruptionBreakChance() !== null) {
-                $map[$name] = $effect->getCorruptionMaterialNames();
-            }
-        }
-
-        return $map;
-    }
-
-    /** @return array<string, int> corruption name => extra break chance (ex-ITEM_CORRUPT_BREAKCHANCES). */
-    public function getCorruptionBreakChances(): array
-    {
-        $map = [];
-        foreach ($this->catalog() as $name => $effect) {
-            if ($effect->getCorruptionBreakChance() !== null) {
-                $map[$name] = $effect->getCorruptionBreakChance();
-            }
-        }
-
-        return $map;
-    }
-
     /**
      * Contributions d'un modificateur de combat sur des effets PORTÉS
      * (players_effects) : chaque effet contribue valeur × modificateur

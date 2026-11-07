@@ -63,7 +63,6 @@ final class TechnicalLabels
         'applyconsumable' => 'Appliquer un consommable',
         'applystatus' => 'Appliquer un effet',
         'craftrecipe' => 'Fabriquer une recette',
-        'damageobject' => 'Abîmer l\'équipement',
         'digtunnel' => 'Creuser une galerie',
         'dropweapon' => 'Faire lâcher l\'arme',
         'enchant' => 'Enchanter',

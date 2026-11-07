@@ -78,19 +78,6 @@ class EffectServiceTest extends TestCase
         $this->assertSame([], $this->service->getControllersOf('poison'));
     }
 
-    public function testCorruptionMapsUseTheNormalizedPlantsKey(): void
-    {
-        $materials = $this->service->getCorruptionMaterials();
-
-        $this->assertArrayHasKey('corruption_des_plantes', $materials);
-        $this->assertArrayNotHasKey('corruption_du_plantes', $materials);
-        $this->assertContains('adonis', $materials['corruption_des_plantes']);
-        $this->assertSame(['bronze', 'nickel'], $materials['corruption_du_metal']);
-
-        $chances = $this->service->getCorruptionBreakChances();
-        $this->assertSame(array_keys($materials), array_keys($chances));
-    }
-
     public function testCombatAndTurnBehaviorsMatchTheOldHardcodedRules(): void
     {
         $carry = static function (string $name, int $value = 1): \App\Entity\PlayerEffect {
