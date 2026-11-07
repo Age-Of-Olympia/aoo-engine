@@ -126,11 +126,39 @@ class Forum{
 
         Json::write_json('datas/private/forum/posts/'. $postJson->name .'.json', Json::encode($postJson));
 
+        $topJson = json()->decode('forum', 'topics/'. $postJson->top_id);
+
+        self::refresh_last($topJson);
+
         if($hidden !== null){
             (new Db())->delete('forums_keywords', array('postName'=>$postJson->name));
         }
-        elseif(json()->decode('forum', 'topics/'. $postJson->top_id)->forum_id != 'Missives'){
+        elseif($topJson->forum_id != 'Missives'){
             self::put_keywords($postJson->name, $postJson->text, deleteBefore: true);
+        }
+    }
+
+
+    /**
+     * Points the topic's last reply at its newest post still standing:
+     * a hidden or deleted post is no reply. Left as is when none stands.
+     */
+    public static function refresh_last(object $topJson): void{
+
+        foreach(array_reverse($topJson->posts) as $post){
+
+            $postJson = json()->decode('forum', 'posts/'. $post->name);
+
+            if(!empty($postJson->deleted)){
+                continue;
+            }
+
+            if($topJson->last->time != $postJson->name){
+                $topJson->last = (object) array('author'=>$postJson->author, 'time'=>$postJson->name);
+                Json::write_json('datas/private/forum/topics/'. $topJson->name .'.json', Json::encode($topJson));
+            }
+
+            return;
         }
     }
 
