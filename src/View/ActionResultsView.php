@@ -107,10 +107,10 @@ class ActionResultsView
     {
         $html = '';
         foreach ($this->actionResults->getOutcomesResultsArray() as $effectResult) {
-            // An outcome that refused shows its refusal even when the roll
-            // succeeded — it used to render its (empty) success messages.
-            $refused = $effectResult instanceof OutcomeResult && !$effectResult->isSuccess();
-            $messages = $this->actionResults->isSuccess() && !$refused
+            // An outcome tells what it did, whatever the roll: one run on a
+            // miss (malus, a breakage on failure) still did it. A refusal
+            // tells why.
+            $messages = $effectResult->isSuccess()
                 ? $effectResult->getOutcomeSuccessMessages()
                 : $effectResult->getOutcomeFailureMessages();
             foreach ($messages as $message) {

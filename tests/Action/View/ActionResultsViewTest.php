@@ -11,9 +11,9 @@ use PHPUnit\Framework\TestCase;
 /**
  * What the player reads after an action: the header follows the roll,
  * except when every outcome refused — then nothing the player asked for
- * happened, and each refused outcome shows its own refusal message even
- * under a successful roll (a recipe short of ingredients used to render
- * "Réussite !" with no explanation).
+ * happened. Each outcome shows what it did, or its refusal, whatever the
+ * roll (a recipe short of ingredients used to render "Réussite !" with no
+ * explanation).
  */
 #[Group('action')]
 class ActionResultsViewTest extends TestCase
@@ -55,13 +55,17 @@ class ActionResultsViewTest extends TestCase
         $this->assertStringContainsString('Le coffre a résisté', $html);
     }
 
-    public function testAFailedRollStillRendersTheFailureMessages(): void
+    /** An outcome run on a miss (malus, breakage) tells what it did (#137). */
+    public function testAFailedRollRendersWhatItsOutcomesDid(): void
     {
-        $html = $this->render(false, false, [new OutcomeResult(true, ['jamais montré'], ['Vous subissez un malus'])]);
+        $html = $this->render(false, false, [
+            new OutcomeResult(true, ['Vous cassez votre épée'], []),
+            new OutcomeResult(false, [], ["L'arme reste entre ses mains"]),
+        ]);
 
         $this->assertStringContainsString('Echec !', $html);
-        $this->assertStringContainsString('Vous subissez un malus', $html);
-        $this->assertStringNotContainsString('jamais montré', $html);
+        $this->assertStringContainsString('Vous cassez votre épée', $html);
+        $this->assertStringContainsString("L'arme reste entre ses mains", $html);
     }
 
     public function testBlockedRendersActionImpossible(): void
