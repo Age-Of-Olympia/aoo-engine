@@ -39,6 +39,11 @@ if (!Modules::on(Module::Biomes)) {
 }
 
 // Types
+$terrains = $service->groundTerrains();
+$groundBoxes = static fn (array $palette): string => $terrains === [] ? '' : '<div class="d-flex flex-wrap gap-2 small mt-1">Sols :'
+    . implode('', array_map(static fn (string $terrain): string => '<label><input type="checkbox" name="grounds[]" value="' . e($terrain) . '" '
+        . checked(in_array($terrain, $palette, true)) . '> ' . e($terrain) . '</label>', $terrains))
+    . '</div>';
 $rows = [];
 foreach ($types as $type) {
     $rows[] = '<tr><td>'
@@ -46,7 +51,8 @@ foreach ($types as $type) {
             . formInput('name', $type['name'], 'class="form-control form-control-sm" pattern="' . BiomeAdminService::TYPE_NAME_PATTERN . '" required')
             . formInput('label', $type['label'], 'class="form-control form-control-sm" required')
             . formInput('color', $type['color'], 'type="color" class="form-control form-control-sm" style="width:4em"')
-            . '<button class="btn btn-sm btn-primary" type="submit">Enregistrer</button></div>',
+            . '<button class="btn btn-sm btn-primary" type="submit">Enregistrer</button></div>'
+            . $groundBoxes($type['grounds']),
             ['id' => $type['id']])
         . '</td><td>' . $type['biomes'] . '</td><td>'
         . ($type['biomes'] === 0
@@ -63,6 +69,8 @@ $addType = biome_form($token, 'save_type', '<div class="d-flex flex-wrap gap-2 a
 $content .= formCard('Types de biome', ($types === []
         ? '<p class="text-muted">Aucun type pour l\'instant.</p>'
         : renderTable(['Nom technique, libellé et couleur', 'Biomes', ''], $rows))
+    . ($terrains === [] ? '' : '<p class="text-muted small">Sols : dans les biomes du type, les plantes ne poussent que sur ces terrains,'
+        . ' leurs tuiles et les transitions entre eux. Sans sol coché, elles poussent sur tout sol.</p>')
     . '<hr>' . $addType);
 
 // Biomes

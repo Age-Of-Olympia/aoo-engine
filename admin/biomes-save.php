@@ -18,7 +18,8 @@ handleAdminPost($redirect, static function (): string {
 
     switch ((string) ($_POST['action'] ?? '')) {
         case 'save_type':
-            $service->saveType($id, (string) ($_POST['name'] ?? ''), (string) ($_POST['label'] ?? ''), (string) ($_POST['color'] ?? ''));
+            $typeId = $service->saveType($id, (string) ($_POST['name'] ?? ''), (string) ($_POST['label'] ?? ''), (string) ($_POST['color'] ?? ''));
+            $service->saveGrounds($typeId, array_map('strval', (array) ($_POST['grounds'] ?? [])));
             return 'Type enregistré.';
         case 'delete_type':
             $service->deleteType($id);

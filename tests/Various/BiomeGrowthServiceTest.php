@@ -19,6 +19,12 @@ class BiomeGrowthServiceTest extends LegacyPlayerFixtureTestCase
     private string $plant;
     private int $plantId;
     private int $biomeId;
+    private int $typeId;
+
+    /** A ground terrain of the test, its plain tile, and a transition between it and an unknown terrain */
+    private const MOSS = 'test_growth_mousse';
+    private const MOSS_TILE = 'test_growth_mousse_tile';
+    private const MOSS_EDGE = 'test_growth_mousse_edge';
 
     protected function setUp(): void
     {
@@ -39,8 +45,8 @@ class BiomeGrowthServiceTest extends LegacyPlayerFixtureTestCase
         $this->link->insert('map_elements', ['name' => 'feu', 'coords_id' => $this->coordsIdOn(self::PLAN, 3, 0), 'endTime' => 0]);
 
         $admin = new BiomeAdminService($this->link);
-        $type = $admin->saveType(0, 'test_growth_prairie', 'Prairie', '#88aa44');
-        $this->biomeId = $admin->saveBiome(0, self::PLAN, $type, 'Prairie', '0,0 5,0 5,1 0,1', 0)['id'];
+        $this->typeId = $admin->saveType(0, 'test_growth_prairie', 'Prairie', '#88aa44');
+        $this->biomeId = $admin->saveBiome(0, self::PLAN, $this->typeId, 'Prairie', '0,0 5,0 5,1 0,1', 0)['id'];
         Modules::force(Module::Biomes, true);
     }
 
@@ -49,6 +55,8 @@ class BiomeGrowthServiceTest extends LegacyPlayerFixtureTestCase
         Modules::reset();
         $this->purgePlan($this->link, self::PLAN);
         $this->link->executeStatement("DELETE FROM biome_types WHERE name = 'test_growth_prairie'");
+        $this->link->executeStatement("DELETE FROM terrain_colors WHERE layer = 'tiles' AND name = ?", [self::MOSS]);
+        $this->link->executeStatement("DELETE FROM terrain_tiles WHERE layer = 'tiles' AND name IN (?, ?)", [self::MOSS_TILE, self::MOSS_EDGE]);
         parent::tearDown();
     }
 
@@ -71,6 +79,21 @@ class BiomeGrowthServiceTest extends LegacyPlayerFixtureTestCase
 
         $this->assertCount(1, $this->grow());
         $this->assertSame(2, $this->plantsOnPlan());
+    }
+
+    public function testAGroundPaletteKeepsGrowthOnItsTerrains(): void
+    {
+        $position = (int) $this->link->fetchOne("SELECT COALESCE(MAX(position), 0) + 1 FROM terrain_colors WHERE layer = 'tiles'");
+        $this->link->insert('terrain_colors', ['layer' => 'tiles', 'position' => $position, 'name' => self::MOSS]);
+        $this->link->insert('terrain_tiles', ['layer' => 'tiles', 'name' => self::MOSS_TILE, 'color' => self::MOSS]);
+        // Half moss, half a terrain outside the palette
+        $this->link->insert('terrain_tiles', ['layer' => 'tiles', 'name' => self::MOSS_EDGE, 'wang_id' => "0,$position,0,$position,0,999,0,999"]);
+        $this->link->update('map_tiles', ['name' => self::MOSS_TILE], ['coords_id' => $this->coordsIdOn(self::PLAN, 0, 0)]);
+        $this->link->update('map_tiles', ['name' => self::MOSS_EDGE], ['coords_id' => $this->coordsIdOn(self::PLAN, 1, 0)]);
+        (new BiomeAdminService($this->link))->saveGrounds($this->typeId, [self::MOSS]);
+        $this->population(100);
+
+        $this->assertSame([$this->coordsIdOn(self::PLAN, 0, 0)], $this->grow(), 'only the moss tile: not the grass, nor the half-moss edge');
     }
 
     public function testNothingGrowsWhileTheModuleIsOff(): void
