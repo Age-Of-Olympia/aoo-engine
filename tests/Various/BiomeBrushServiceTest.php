@@ -126,6 +126,24 @@ class BiomeBrushServiceTest extends TestCase
         $this->assertNotContains($gone, $painted['tiles']);
     }
 
+    public function testPaintingACellReplacesItsGround(): void
+    {
+        $coordsId = $this->coordsIdOn(self::PLAN, 3, 4);
+        $this->db->insert('map_tiles', ['name' => 'test_brush_old', 'coords_id' => $coordsId, 'foreground' => 0]);
+        $brush = new BiomeBrushService($this->db);
+
+        $first = $brush->paintCell($coordsId);
+        $brush->paintCell($coordsId);
+
+        $this->assertSame('Prairie', $first['biome']);
+        $this->assertSame(
+            [$brush->paint($this->biomeId, ['xMin' => 3, 'xMax' => 3, 'yMin' => 4, 'yMax' => 4])['tiles']['3,4']],
+            $this->db->fetchFirstColumn('SELECT name FROM map_tiles WHERE coords_id = ? AND foreground = 0', [$coordsId]),
+            'one ground row, the brush tile'
+        );
+        $this->assertNull($brush->paintCell($this->coordsIdOn(self::PLAN, 40, 40))['biome'], 'no biome, nothing painted');
+    }
+
     public function testATypeWithoutGroundsCannotPaint(): void
     {
         (new BiomeAdminService($this->db))->saveGrounds($this->typeId, []);

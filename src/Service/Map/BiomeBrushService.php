@@ -89,6 +89,42 @@ final class BiomeBrushService
     }
 
     /**
+     * Paint one cell with its top biome's palette: its ground tile is
+     * replaced, the cells of the biomes recomputed (a transition can make
+     * the cell belong to several).
+     *
+     * @return array{biome: ?string, tile: ?string, missing: list<string>} biome null: the cell has none
+     */
+    public function paintCell(int $coordsId): array
+    {
+        $cell = $this->db->fetchAssociative(
+            'SELECT b.id, b.name, c.x, c.y FROM coords c
+             JOIN plans p ON p.slug = c.plan
+             JOIN biome_cells bc ON bc.plan_id = p.id AND bc.x = c.x AND bc.y = c.y
+             JOIN biomes b ON b.id = bc.biome_id
+             WHERE c.id = ?
+             ORDER BY b.stack_order DESC, b.id DESC LIMIT 1',
+            [$coordsId]
+        );
+        if ($cell === false) {
+            return ['biome' => null, 'tile' => null, 'missing' => []];
+        }
+
+        [$x, $y] = [(int) $cell['x'], (int) $cell['y']];
+        $painted = $this->paint((int) $cell['id'], ['xMin' => $x, 'xMax' => $x, 'yMin' => $y, 'yMax' => $y]);
+        $tile = $painted['tiles'][$x . ',' . $y] ?? null;
+        if ($tile !== null) {
+            $this->db->transactional(static function (Connection $db) use ($coordsId, $tile): void {
+                $db->delete('map_tiles', ['coords_id' => $coordsId, 'foreground' => 0]);
+                $db->insert('map_tiles', ['name' => $tile, 'coords_id' => $coordsId, 'foreground' => 0]);
+            });
+            (new BiomeCellService($this->db))->groundChanged($coordsId);
+        }
+
+        return ['biome' => (string) $cell['name'], 'tile' => $tile, 'missing' => $painted['missing']];
+    }
+
+    /**
      * @return array{seed: int, scale: int, weights: array<string, int>}
      */
     private function settings(int $biomeId): array
