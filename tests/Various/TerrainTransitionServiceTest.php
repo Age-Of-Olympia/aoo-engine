@@ -165,6 +165,21 @@ class TerrainTransitionServiceTest extends TestCase
         $this->assertSame('vert', $saved['tiles']['vert']);
     }
 
+    public function testAPaletteGetsTheTransitionsItLacks(): void
+    {
+        $this->isolateTerrainTables();
+        $this->writeSolidTile('rouge', 255, 0, 0);
+        $this->writeSolidTile('bleu', 0, 0, 255);
+        $this->writeSolidTile('vert', 0, 255, 0);
+        $this->service->classifyTiles('tiles', ['rouge', 'bleu', 'vert'], []);
+
+        $first = $this->service->generateForTerrains(['rouge', 'bleu', 'vert']);
+
+        $this->assertCount(3 * 14 + 36, $first, 'three pairs of 14, and the 36 of the trio');
+        $this->assertFileExists($this->root . '/img/tiles/trans_bleu_rouge_aaab.png');
+        $this->assertSame([], $this->service->generateForTerrains(['rouge', 'bleu', 'vert']), 'nothing left to generate');
+    }
+
     public function testPaletteSourceBlendsLikeTruecolor(): void
     {
         // PNG à palette : imagecolorat y renvoie l'index, pas la couleur —

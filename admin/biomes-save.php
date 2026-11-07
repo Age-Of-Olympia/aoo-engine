@@ -6,6 +6,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 use App\Service\AdminMenuAccessService;
 use App\Service\Map\BiomeAdminService;
 use App\Service\Map\BiomeBrushService;
+use App\Service\TerrainTransitionService;
 
 (new AdminMenuAccessService())->enforce('maps.biomes');
 
@@ -41,7 +42,18 @@ handleAdminPost($redirect, static function (): string {
                 $shares[$terrain] = (int) ($_POST['share'][$line] ?? 0);
             }
             $service->saveGrounds($id, $shares);
-            return 'Palette enregistrée.';
+            if (count($shares) < 2) {
+                return 'Palette enregistrée.';
+            }
+            // The brush needs every transition between the palette's terrains
+            try {
+                $generated = count((new TerrainTransitionService())->generateForTerrains(array_keys($shares)));
+            } catch (\RuntimeException $e) {
+                return 'Palette enregistrée, mais les transitions entre ses sols n\'ont pas pu être générées : ' . $e->getMessage();
+            }
+            return 'Palette enregistrée' . ($generated > 0
+                ? ', ' . $generated . ' transition(s) générée(s). Repeignez le biome pour les voir.'
+                : ', ses transitions existent déjà.');
         case 'delete_type':
             $service->deleteType($id);
             return 'Type supprimé.';
