@@ -9,8 +9,9 @@ use App\Service\Map\BiomeAdminService;
 (new AdminMenuAccessService())->enforce('maps.biomes');
 
 $filter = (string) ($_POST['plan_filter'] ?? '');
-$back = array_filter(['plan' => $filter, 'edit' => (string) ($_POST['edit'] ?? '')]);
-$redirect = '/admin/biomes.php' . ($back !== [] ? '?' . http_build_query($back) : '') . (isset($back['edit']) ? '#populations' : '');
+$back = array_filter(['plan' => $filter, 'edit' => (string) ($_POST['edit'] ?? ''), 'palette' => (string) ($_POST['palette'] ?? '')]);
+$anchor = isset($back['palette']) ? '#palette' : (isset($back['edit']) ? '#populations' : '');
+$redirect = '/admin/biomes.php' . ($back !== [] ? '?' . http_build_query($back) : '') . $anchor;
 
 handleAdminPost($redirect, static function (): string {
     $service = new BiomeAdminService();
@@ -18,9 +19,28 @@ handleAdminPost($redirect, static function (): string {
 
     switch ((string) ($_POST['action'] ?? '')) {
         case 'save_type':
-            $typeId = $service->saveType($id, (string) ($_POST['name'] ?? ''), (string) ($_POST['label'] ?? ''), (string) ($_POST['color'] ?? ''));
-            $service->saveGrounds($typeId, array_map('strval', (array) ($_POST['grounds'] ?? [])));
+            $service->saveType(
+                $id,
+                (string) ($_POST['name'] ?? ''),
+                (string) ($_POST['label'] ?? ''),
+                (string) ($_POST['color'] ?? ''),
+                (int) ($_POST['patch_scale'] ?? BiomeAdminService::DEFAULT_PATCH_SCALE)
+            );
             return 'Type enregistré.';
+        case 'save_palette':
+            $shares = [];
+            foreach ((array) ($_POST['terrain'] ?? []) as $line => $terrain) {
+                $terrain = (string) $terrain;
+                if ($terrain === '') {
+                    continue;
+                }
+                if (isset($shares[$terrain])) {
+                    throw new InvalidArgumentException('Le terrain ' . $terrain . ' figure deux fois dans la palette.');
+                }
+                $shares[$terrain] = (int) ($_POST['share'][$line] ?? 0);
+            }
+            $service->saveGrounds($id, $shares);
+            return 'Palette enregistrée.';
         case 'delete_type':
             $service->deleteType($id);
             return 'Type supprimé.';
@@ -31,7 +51,8 @@ handleAdminPost($redirect, static function (): string {
                 (int) ($_POST['type_id'] ?? 0),
                 (string) ($_POST['name'] ?? ''),
                 (string) ($_POST['zone'] ?? ''),
-                (int) ($_POST['stack_order'] ?? 0)
+                (int) ($_POST['stack_order'] ?? 0),
+                ($_POST['seed'] ?? '') === '' ? null : (int) $_POST['seed']
             );
             return 'Biome enregistré : ' . $saved['cells'] . ' case(s).';
         case 'save_population':
