@@ -412,6 +412,50 @@ class TerrainTransitionService
     }
 
     /**
+     * The transitions a biome palette needs, generated where missing: every
+     * pair of its terrains, and the trio when it has three. Each terrain
+     * blends from its plain tile (the first one classified with its colour).
+     *
+     * @param list<string> $terrainNames terrain_colors names
+     * @return list<string> names of the tiles generated
+     */
+    public function generateForTerrains(array $terrainNames, string $layer = self::GROUND_LAYER): array
+    {
+        $terrains = $this->loadTerrains();
+        $cfg = &$this->layerConfig($terrains, $layer);
+        $skipKeys = $this->existingWangKeys($cfg);
+
+        $plain = [];
+        foreach ($cfg['tiles'] as $name => $spec) {
+            if (is_string($spec) && in_array($spec, $terrainNames, true)) {
+                $plain[$spec] ??= (string) $name;
+            }
+        }
+        $names = array_values($plain);
+        sort($names);
+
+        $sets = [];
+        foreach ($names as $i => $first) {
+            foreach (array_slice($names, $i + 1) as $second) {
+                $sets[] = [$first, $second];
+            }
+        }
+        if (count($names) === 3) {
+            $sets[] = $names;
+        }
+
+        $generated = [];
+        foreach ($sets as $set) {
+            $generated = [...$generated, ...$this->generateSet($cfg, $layer, $set, $skipKeys)];
+        }
+        if ($generated !== []) {
+            $this->saveTerrains($terrains);
+        }
+
+        return $generated;
+    }
+
+    /**
      * Classification des tuiles du sol d'un plan : chaque nom distinct posé
      * (tous niveaux z), avec son statut terrain (tuile pleine déclarée dans
      * en base) et son nombre d'occurrences. Les fondus générés

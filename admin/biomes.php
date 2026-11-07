@@ -98,7 +98,8 @@ if ($paletteType !== null) {
             . ' <a href="/admin/terrain-transitions.php">Transitions de terrain</a> : chaque terrain apparaît ensuite dans cette liste.</p>'
         : '<p class="text-muted small">Dans les biomes de ce type, les plantes ne poussent que sur ces terrains, leurs tuiles et les transitions'
             . ' entre eux ; le pinceau de biome les peint selon leurs parts. Au plus ' . BiomeAdminService::MAX_GROUNDS . ' terrains,'
-            . ' dont toutes les transitions existent, et des parts qui font ' . BiomeAdminService::FULL_PALETTE . ' % tout juste.'
+            . ' et des parts qui font ' . BiomeAdminService::FULL_PALETTE . ' % tout juste. L\'enregistrement génère les transitions'
+            . ' qui manquent entre ces terrains.'
             . ' Sans aucun terrain, les plantes poussent sur tout sol.</p>'
             . biome_form($token, 'save_palette', $paletteRows
                 . '<p id="palette-total" class="small"></p>'
