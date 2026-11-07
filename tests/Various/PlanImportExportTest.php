@@ -6,6 +6,7 @@ use App\Service\ImportExport\ExporterRegistry;
 use App\Service\ImportExport\ImporterRegistry;
 use App\Service\ImportExport\PlanExporter;
 use App\Service\ImportExport\PlanImporter;
+use App\Service\Map\BiomeAdminService;
 use App\Service\Map\EntityPlacementService;
 use App\Service\PlanConfigService;
 use App\Service\PlanService;
@@ -107,6 +108,36 @@ class PlanImportExportTest extends TestCase
         $again = $importer->import([$payload]);
         $this->assertSame([self::IMPORTED], $again->updated());
         $this->assertEquals($payload['layers'], $exporter->exportOne(self::IMPORTED)['layers'], 'ré-import idempotent');
+    }
+
+    public function testBiomesTravelWithTheirTypeAndWhatGrowsInThem(): void
+    {
+        $this->seedSourcePlan();
+        if ($this->link->fetchOne('SELECT id FROM plans WHERE slug = ?', [self::SRC]) === false) {
+            $this->link->insert('plans', ['slug' => self::SRC, 'name' => self::SRC]);
+        }
+        $plant = (int) $this->link->fetchOne("SELECT id FROM races WHERE type_kind = 'plant' ORDER BY name LIMIT 1");
+        $admin = new BiomeAdminService($this->link);
+        $type = $admin->saveType(0, 'test_ie_bois', 'Bois', '#336633');
+        $wood = $admin->saveBiome(0, self::SRC, $type, 'Bois', '0,0 2,0 2,2 0,2', 0);
+        $admin->savePopulation($wood['id'], $plant, 20, 5.5, 0, 0);
+
+        $payload = (new PlanExporter())->exportOne(self::SRC);
+        $payload['plan'] = self::IMPORTED;
+        (new PlanImporter())->import([$payload]);
+
+        $this->assertEquals($payload['biomes'], (new PlanExporter())->exportOne(self::IMPORTED)['biomes']);
+        $this->assertSame('test_ie_bois', $payload['biomes'][0]['type']['name']);
+        $this->assertSame(1, (int) $this->link->fetchOne("SELECT COUNT(*) FROM biome_types WHERE name = 'test_ie_bois'"), 'the existing type is reused');
+        $this->assertSame(4, (int) $this->link->fetchOne(
+            'SELECT COUNT(*) FROM biome_cells bc JOIN plans p ON p.id = bc.plan_id WHERE p.slug = ?',
+            [self::IMPORTED]
+        ), 'the cells are computed on import');
+
+        // A bundle from before biomes travelled leaves the plan's biomes alone
+        unset($payload['biomes']);
+        (new PlanImporter())->import([$payload]);
+        $this->assertCount(1, (new PlanExporter())->exportOne(self::IMPORTED)['biomes']);
     }
 
     /**
@@ -463,6 +494,8 @@ class PlanImportExportTest extends TestCase
         $this->link->executeStatement("DELETE FROM coords WHERE plan LIKE 'plan_test_ie_%'");
 
         $this->link->executeStatement("DELETE FROM plans WHERE slug LIKE 'plan_test_ie_%'");
+        // After the plans: their biomes go with them, and a type is only deleted once no biome uses it
+        $this->link->executeStatement("DELETE FROM biome_types WHERE name = 'test_ie_bois'");
         PlanService::forget();
         // L'identity map gagnerait sur la base : une entité Plan d'un test
         // précédent masquerait la ligne recréée.

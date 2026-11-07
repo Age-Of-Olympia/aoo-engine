@@ -2,6 +2,7 @@
 
 namespace App\Service\ImportExport;
 
+use App\Service\Map\BiomeBundleService;
 use App\Service\Map\BiomeCellService;
 use App\Factory\EntityManagerFactory;
 use App\Service\PlanConfigService;
@@ -142,10 +143,15 @@ final class PlanImportRun
 
     public function finish(): void
     {
-        // The config rides on the first step, written once every step has run
-        $config = $this->load(0)['config'] ?? null;
-        if (is_array($config)) {
-            (new PlanConfigService())->replace($this->plan, $config);
+        // The config and the biomes ride on the first step, written once every step has run
+        $first = $this->load(0);
+        if (is_array($first['config'] ?? null)) {
+            (new PlanConfigService())->replace($this->plan, $first['config']);
+        }
+        if (is_array($first['biomes'] ?? null)) {
+            foreach ((new BiomeBundleService($this->conn))->replace($this->plan, $first['biomes']) as $skipped) {
+                $this->report->warn($this->plan, $skipped);
+            }
         }
 
         (new BiomeCellService($this->conn))->planGroundChanged($this->plan);
@@ -207,7 +213,7 @@ final class PlanImportRun
         $levels = array_values(array_unique(array_column($cells, 2)));
         sort($levels);
 
-        $steps = [['label' => 'contenu remplacé', 'do' => 'purge', 'levels' => $levels, 'config' => $payload['config']]];
+        $steps = [['label' => 'contenu remplacé', 'do' => 'purge', 'levels' => $levels, 'config' => $payload['config'], 'biomes' => $payload['biomes'] ?? null]];
 
         foreach (array_chunk($cells, self::CHUNK) as $i => $chunk) {
             $steps[] = ['label' => 'cases (' . ($i + 1) . ')', 'do' => 'coords', 'cells' => $chunk];
