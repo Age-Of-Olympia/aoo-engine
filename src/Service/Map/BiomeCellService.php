@@ -83,6 +83,37 @@ final class BiomeCellService
     }
 
     /**
+     * The surface ground of this cell was painted or erased: a transition
+     * tile decides whether the cell belongs to its top biome or to every
+     * biome covering it. Nothing to do on a plan without biomes.
+     */
+    public function groundChanged(int $coordsId): void
+    {
+        $cell = $this->db->fetchAssociative(
+            'SELECT p.id AS plan_id, c.x, c.y FROM coords c
+             JOIN plans p ON p.slug = c.plan
+             WHERE c.id = ? AND c.z = 0 AND EXISTS (SELECT 1 FROM biomes b WHERE b.plan_id = p.id)',
+            [$coordsId]
+        );
+        if ($cell !== false) {
+            [$x, $y] = [(int) $cell['x'], (int) $cell['y']];
+            $this->rebuild((int) $cell['plan_id'], ['xMin' => $x, 'xMax' => $x, 'yMin' => $y, 'yMax' => $y]);
+        }
+    }
+
+    /** The surface ground of a whole plan was rewritten (Tiled push, import, deleted level). */
+    public function planGroundChanged(string $plan): void
+    {
+        $planId = $this->db->fetchOne(
+            'SELECT p.id FROM plans p WHERE p.slug = ? AND EXISTS (SELECT 1 FROM biomes b WHERE b.plan_id = p.id)',
+            [$plan]
+        );
+        if ($planId !== false) {
+            $this->rebuild((int) $planId);
+        }
+    }
+
+    /**
      * Names of the biomes of a cell, the top one first; none while the
      * module is off.
      *

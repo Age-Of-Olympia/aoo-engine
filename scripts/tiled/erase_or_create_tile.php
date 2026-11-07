@@ -210,4 +210,7 @@ if($_POST['type'] == 'eraser'){
 /* Idem à la pose : `BuildingService::place` rafraîchit déjà pour les
  * bâtiments, mais rien ne le faisait pour un sol, un décor ou une
  * ressource. */
+if (in_array($_POST['type'], ['tiles', 'eraser'], true)) {
+    (new \App\Service\Map\BiomeCellService())->groundChanged((int) $coordsId);
+}
 \App\Service\Map\BoardChanges::cellId((int) $coordsId);
