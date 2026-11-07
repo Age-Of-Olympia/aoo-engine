@@ -96,6 +96,21 @@ class BiomeCellServiceTest extends TestCase
         $this->assertSame([$grass], $this->biomesAt(0, 0));
     }
 
+    public function testATransitionInsideABiomeBordersNothing(): void
+    {
+        $this->db->insert('terrain_tiles', ['layer' => 'tiles', 'name' => self::WANG_TILE, 'wang_id' => '1,0,1,0,2,0,2,0']);
+        foreach ([[2, 2], [1, 2]] as [$x, $y]) {
+            $this->db->insert('map_tiles', ['name' => self::WANG_TILE, 'coords_id' => $this->coordsIdOn(self::PLAN, $x, $y)]);
+        }
+        $grass = $this->biome('Prairie', [[0, 0], [5, 0], [5, 5], [0, 5]], 0);
+        $sand = $this->biome('Désert', [[1, 1], [4, 1], [4, 4], [1, 4]], 1);
+
+        (new BiomeCellService($this->db))->rebuild($this->planId);
+
+        $this->assertSame([$sand], $this->biomesAt(2, 2), 'in the middle of the desert: its own grounds meet');
+        $this->assertSame([$grass, $sand], $this->biomesAt(1, 2), 'on its edge, next to the grassland');
+    }
+
     public function testPaintingOrErasingATransitionTileUpdatesItsCell(): void
     {
         $this->db->insert('terrain_tiles', ['layer' => 'tiles', 'name' => self::WANG_TILE, 'wang_id' => '1,0,1,0,2,0,2,0']);
@@ -165,15 +180,16 @@ class BiomeCellServiceTest extends TestCase
     public function testATransitionTileUnderASingleBiomeIsFlagged(): void
     {
         $this->db->insert('terrain_tiles', ['layer' => 'tiles', 'name' => self::WANG_TILE, 'wang_id' => '1,0,1,0,2,0,2,0']);
-        foreach ([[1, 0], [5, 0]] as [$x, $y]) {
+        foreach ([[1, 0], [4, 0], [6, 0]] as [$x, $y]) {
             $this->db->insert('map_tiles', ['name' => self::WANG_TILE, 'coords_id' => $this->coordsIdOn(self::PLAN, $x, $y)]);
         }
-        // (1, 0) is under both biomes; (5, 0) only under the meadow, whose outline goes on alone
-        $this->biome('Prairie', [[0, 0], [6, 0], [6, 1], [0, 1]], 0);
-        $this->biome('Désert', [[1, 0], [3, 0], [3, 1], [1, 1]], 1);
+        // (1, 0) is shared by both biomes; (4, 0) touches the desert, whose outline stops a cell
+        // short; (6, 0) is inside the meadow, a transition between its own grounds
+        $this->biome('Prairie', [[0, 0], [8, 0], [8, 1], [0, 1]], 0);
+        $this->biome('Désert', [[1, 0], [4, 0], [4, 1], [1, 1]], 1);
         (new BiomeCellService($this->db))->rebuild($this->planId);
 
-        $this->assertSame([[5, 0]], (new BiomeCellService($this->db))->loneTransitions(self::PLAN));
+        $this->assertSame([[4, 0]], (new BiomeCellService($this->db))->loneTransitions(self::PLAN));
     }
 
     public function testCoverageListsEachCellsBiomesTopFirstWithTheirColour(): void

@@ -16,8 +16,11 @@ use Doctrine\DBAL\ParameterType;
  * spans the corners x..x+1 and y..y+1, its centre is (x + .5, y + .5). A
  * cell is in a biome when its centre is inside the outline or on its edge.
  * Where outlines overlap, the highest stack_order wins (then the highest
- * id), except on a transition tile of the surface ground: there the cell
- * belongs to every biome covering it.
+ * id), except on a transition tile of the surface ground at the meeting of
+ * two biomes: the cell also belongs to each covering biome that is on top
+ * of one of its four neighbours. A transition inside a biome, between two
+ * grounds of its own palette, borders nothing and leaves the cell to its
+ * top biome.
  */
 final class BiomeCellService
 {
@@ -51,17 +54,28 @@ final class BiomeCellService
     public function rebuild(int $planId, ?array $area = null): int
     {
         $area ??= self::WHOLE_PLAN;
-        [$top, $hidden] = $this->stack($planId, $area);
+        // One cell wider: the cells on the area's edge see their neighbours' top biome
+        [$top, $hidden] = $this->stack($planId, [
+            'xMin' => $area['xMin'] - 1, 'xMax' => $area['xMax'] + 1,
+            'yMin' => $area['yMin'] - 1, 'yMax' => $area['yMax'] + 1,
+        ]);
         $transitions = $hidden === [] ? [] : $this->transitionCells($planId, $area, $hidden);
 
-        // One row per cell for its top biome; a transition cell gets one per biome covering it.
-        // Rows go out x then y, the primary key's order, so the inserts append to the index
+        // One row per cell for its top biome; a transition cell gets one more per covered
+        // biome it borders. Rows go out x then y, the primary key's order, so the inserts
+        // append to the index
         $rows = [];
         ksort($top);
         foreach ($top as $x => $column) {
+            if ($x < $area['xMin'] || $x > $area['xMax']) {
+                continue;
+            }
             ksort($column);
             foreach ($column as $y => $topId) {
-                $biomeIds = isset($transitions[$x][$y]) ? [...$hidden[$x][$y], $topId] : [$topId];
+                if ($y < $area['yMin'] || $y > $area['yMax']) {
+                    continue;
+                }
+                $biomeIds = isset($transitions[$x][$y]) ? [...self::bordered($top, $hidden[$x][$y], $x, $y), $topId] : [$topId];
                 foreach ($biomeIds as $biomeId) {
                     // All ints built here, so inlined instead of thousands of bound parameters
                     $rows[] = '(' . $planId . ',' . $x . ',' . $y . ',' . $biomeId . ')';
@@ -163,9 +177,11 @@ final class BiomeCellService
     }
 
     /**
-     * Transition tiles of the surface ground that a single biome covers:
-     * the ground says two biomes meet there, the outlines say otherwise.
-     * Usually the neighbour's outline stops a row short.
+     * Transition tiles of the surface ground that a single biome covers
+     * although they touch another biome's cell: the ground says the two
+     * meet there, the outlines say otherwise. Usually the neighbour's
+     * outline stops a row short. A transition inside a biome, between two
+     * grounds of its palette, is no meeting and is left out.
      *
      * @return list<array{int, int}> [x, y]
      */
@@ -189,8 +205,40 @@ final class BiomeCellService
                 $lone[] = [(int) $x, (int) $y];
             }
         }
+        if ($lone === []) {
+            return [];
+        }
 
-        return $lone;
+        $planId = (int) $this->db->fetchOne('SELECT id FROM plans WHERE slug = ?', [$plan]);
+        [$top] = $this->stack($planId, [
+            'xMin' => min(array_column($lone, 0)) - 1, 'xMax' => max(array_column($lone, 0)) + 1,
+            'yMin' => min(array_column($lone, 1)) - 1, 'yMax' => max(array_column($lone, 1)) + 1,
+        ]);
+
+        return array_values(array_filter($lone, static function (array $cell) use ($top): bool {
+            [$x, $y] = $cell;
+            foreach ([[$x - 1, $y], [$x + 1, $y], [$x, $y - 1], [$x, $y + 1]] as [$nx, $ny]) {
+                if (isset($top[$nx][$ny]) && $top[$nx][$ny] !== $top[$x][$y]) {
+                    return true;
+                }
+            }
+
+            return false;
+        }));
+    }
+
+    /**
+     * The covered biomes a transition cell borders: those on top of one of its four neighbours.
+     *
+     * @param array<int, array<int, int>> $top [x][y] top biome
+     * @param list<int> $covered the biomes under the cell's top one
+     * @return list<int>
+     */
+    private static function bordered(array $top, array $covered, int $x, int $y): array
+    {
+        $around = [$top[$x - 1][$y] ?? null, $top[$x + 1][$y] ?? null, $top[$x][$y - 1] ?? null, $top[$x][$y + 1] ?? null];
+
+        return array_values(array_filter($covered, static fn (int $id): bool => in_array($id, $around, true)));
     }
 
     /**
