@@ -2,6 +2,7 @@
 
 namespace App\Service\ImportExport;
 
+use App\Service\Map\BiomeBundleService;
 use App\Service\PlanAdminService;
 use App\Service\TiledMapService;
 use Classes\Db;
@@ -146,7 +147,10 @@ final class PlanImporter extends AbstractDbalImporter
             $layers[$layer] ??= [];
         }
 
-        return ['plan' => $plan, 'config' => $config, 'coords' => $coords, 'layers' => $layers, 'buildings' => $buildings];
+        // Absent from a bundle exported before biomes travelled: the plan keeps its own
+        $biomes = array_key_exists('biomes', $object) ? BiomeBundleService::validate($object['biomes']) : null;
+
+        return ['plan' => $plan, 'config' => $config, 'coords' => $coords, 'layers' => $layers, 'buildings' => $buildings, 'biomes' => $biomes];
     }
 
     /** @param array{plan: string, layers: array<string, array>, buildings: ?list<array<string, mixed>>} $payload */

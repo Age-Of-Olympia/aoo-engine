@@ -3,6 +3,7 @@
 namespace App\Service\ImportExport;
 
 use App\Interface\ObjectExporterInterface;
+use App\Service\Map\BiomeBundleService;
 use App\Service\PlanConfigService;
 use App\Service\TiledMapService;
 use Classes\Db;
@@ -65,6 +66,7 @@ final class PlanExporter implements ObjectExporterInterface
             'config' => $this->planConfig->readFull($plan),
             'coords' => $this->allCoords($plan),
             'layers' => $this->tiledMap->exportAllLayers($plan),
+            'biomes' => (new BiomeBundleService())->export($plan),
         ];
     }
 

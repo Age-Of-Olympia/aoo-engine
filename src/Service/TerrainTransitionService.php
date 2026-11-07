@@ -35,7 +35,7 @@ class TerrainTransitionService
 
     /** Positions des coins TL,TR,BR,BL dans un wangId Tiled
      *  ([haut, TR, droite, BR, bas, BL, gauche, TL]). */
-    private const WANG_POSITIONS = [7, 1, 3, 5];
+    public const WANG_POSITIONS = [7, 1, 3, 5];
 
     private string $root;
 

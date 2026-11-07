@@ -8,6 +8,22 @@ use Classes\Db;
 
 if($_POST['type'] == 'eraser'){
     include 'erase_map.php';
+} elseif($_POST['type'] === 'biome_brush'){
+
+    /* One brush for the whole zone: its tiles are read once (they number in the thousands). */
+    try {
+        $painted = ($biomeBrush ??= new \App\Service\Map\BiomeBrushService())->paintCell((int) $coordsId);
+        echo match (true) {
+            $painted['biome'] === null => 'aucun biome sur cette case ',
+            $painted['tile'] === null => 'aucune tuile pour ' . $painted['biome'] . ' ',
+            default => $painted['tile'] . ' ',
+        };
+        foreach ($painted['missing'] as $corners) {
+            echo '(transition manquante : ' . $corners . ') ';
+        }
+    } catch (\InvalidArgumentException $e) {
+        echo 'refusé : ' . $e->getMessage() . ' ';
+    }
 } elseif($_POST['type'] == 'buildings'){
 
     /* Poser un bâtiment = créer une ENTITÉ (PV du type, attaquable) — le
