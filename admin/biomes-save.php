@@ -5,6 +5,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\AdminMenuAccessService;
 use App\Service\Map\BiomeAdminService;
+use App\Service\Map\BiomeBrushService;
 
 (new AdminMenuAccessService())->enforce('maps.biomes');
 
@@ -68,6 +69,9 @@ handleAdminPost($redirect, static function (): string {
         case 'delete_population':
             $service->deletePopulation((int) ($_POST['population_id'] ?? 0));
             return 'Pousse retirée.';
+        case 'reseed_biome':
+            $seed = (new BiomeBrushService())->reseed($id);
+            return 'Nouvelle graine : ' . $seed . '. Repeignez le biome avec le pinceau de biome du Tiled de l\'admin pour voir le nouveau dessin.';
         case 'delete_biome':
             $service->deleteBiome($id);
             return 'Biome supprimé.';

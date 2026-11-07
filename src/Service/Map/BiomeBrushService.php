@@ -4,6 +4,7 @@ namespace App\Service\Map;
 
 use App\Factory\EntityManagerFactory;
 use App\Service\TerrainTransitionService;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use InvalidArgumentException;
 
@@ -19,6 +20,9 @@ use InvalidArgumentException;
  */
 final class BiomeBrushService
 {
+    /** Rows per INSERT or DELETE statement */
+    private const BATCH = 1000;
+
     /** Noise samples per side of the square that sets the weights' thresholds */
     private const SAMPLES = 64;
 
@@ -89,16 +93,16 @@ final class BiomeBrushService
     }
 
     /**
-     * Paint one cell with its top biome's palette: its ground tile is
-     * replaced, the cells of the biomes recomputed (a transition can make
-     * the cell belong to several).
+     * Paint the whole biome on top at this cell, on the cell's level: every
+     * cell where that biome is on top gets its ground tile, in one batch,
+     * then the biomes' cells and the boards around are refreshed once.
      *
-     * @return array{biome: ?string, tile: ?string, missing: list<string>} biome null: the cell has none
+     * @return array{biome: ?string, coords: list<int>, missing: list<string>} biome null: the cell has none
      */
-    public function paintCell(int $coordsId): array
+    public function paintBiome(int $coordsId): array
     {
-        $cell = $this->db->fetchAssociative(
-            'SELECT b.id, b.name, c.x, c.y FROM coords c
+        $biome = $this->db->fetchAssociative(
+            'SELECT b.id, b.name, b.plan_id, c.plan, c.z FROM coords c
              JOIN plans p ON p.slug = c.plan
              JOIN biome_cells bc ON bc.plan_id = p.id AND bc.x = c.x AND bc.y = c.y
              JOIN biomes b ON b.id = bc.biome_id
@@ -106,22 +110,99 @@ final class BiomeBrushService
              ORDER BY b.stack_order DESC, b.id DESC LIMIT 1',
             [$coordsId]
         );
-        if ($cell === false) {
-            return ['biome' => null, 'tile' => null, 'missing' => []];
+        if ($biome === false) {
+            return ['biome' => null, 'coords' => [], 'missing' => []];
         }
 
-        [$x, $y] = [(int) $cell['x'], (int) $cell['y']];
-        $painted = $this->paint((int) $cell['id'], ['xMin' => $x, 'xMax' => $x, 'yMin' => $y, 'yMax' => $y]);
-        $tile = $painted['tiles'][$x . ',' . $y] ?? null;
-        if ($tile !== null) {
-            $this->db->transactional(static function (Connection $db) use ($coordsId, $tile): void {
-                $db->delete('map_tiles', ['coords_id' => $coordsId, 'foreground' => 0]);
-                $db->insert('map_tiles', ['name' => $tile, 'coords_id' => $coordsId, 'foreground' => 0]);
-            });
-            (new BiomeCellService($this->db))->groundChanged($coordsId);
+        $cells = $this->topCells((int) $biome['id']);
+        $area = [
+            'xMin' => min(array_column($cells, 0)), 'xMax' => max(array_column($cells, 0)),
+            'yMin' => min(array_column($cells, 1)), 'yMax' => max(array_column($cells, 1)),
+        ];
+        $painted = $this->paint((int) $biome['id'], $area);
+        [$plan, $z] = [(string) $biome['plan'], (int) $biome['z']];
+
+        $coordsIds = $this->coordsIds($plan, $z, $cells);
+        $rows = [];
+        foreach ($coordsIds as $key => $id) {
+            if (isset($painted['tiles'][$key])) {
+                $rows[$id] = $painted['tiles'][$key];
+            }
+        }
+        $this->db->transactional(static function (Connection $db) use ($rows): void {
+            foreach (array_chunk($rows, self::BATCH, true) as $chunk) {
+                $db->executeStatement(
+                    'DELETE FROM map_tiles WHERE foreground = 0 AND coords_id IN (?)',
+                    [array_keys($chunk)],
+                    [ArrayParameterType::INTEGER]
+                );
+                $db->executeStatement(
+                    'INSERT INTO map_tiles (name, coords_id, foreground) VALUES ' . implode(',', array_fill(0, count($chunk), '(?, ?, 0)')),
+                    array_merge(...array_map(static fn (int $id, string $tile): array => [$tile, $id], array_keys($chunk), $chunk))
+                );
+            }
+        });
+
+        // Transitions just painted can make cells belong to several biomes
+        (new BiomeCellService($this->db))->rebuild((int) $biome['plan_id'], $area);
+        BoardChanges::cells($plan, $z, $area['xMin'], $area['xMax'], $area['yMin'], $area['yMax']);
+
+        return ['biome' => (string) $biome['name'], 'coords' => array_keys($rows), 'missing' => $painted['missing']];
+    }
+
+    /**
+     * The cells where this biome is on top (highest stack order, then highest id).
+     *
+     * @return list<array{int, int}> [x, y]
+     */
+    private function topCells(int $biomeId): array
+    {
+        return array_map(static fn (array $row): array => [(int) $row['x'], (int) $row['y']], $this->db->fetchAllAssociative(
+            'SELECT bc.x, bc.y FROM biome_cells bc JOIN biomes b ON b.id = bc.biome_id
+             WHERE bc.biome_id = ? AND NOT EXISTS (
+                 SELECT 1 FROM biome_cells o JOIN biomes ob ON ob.id = o.biome_id
+                 WHERE o.plan_id = bc.plan_id AND o.x = bc.x AND o.y = bc.y
+                   AND (ob.stack_order > b.stack_order OR (ob.stack_order = b.stack_order AND ob.id > b.id)))',
+            [$biomeId]
+        ));
+    }
+
+    /**
+     * The coords ids of these cells on that level, created where missing.
+     *
+     * @param list<array{int, int}> $cells
+     * @return array<string, int> "x,y" => coords id
+     */
+    private function coordsIds(string $plan, int $z, array $cells): array
+    {
+        foreach (array_chunk($cells, self::BATCH) as $chunk) {
+            $this->db->executeStatement(
+                'INSERT IGNORE INTO coords (x, y, z, plan) VALUES ' . implode(',', array_fill(0, count($chunk), '(?, ?, ?, ?)')),
+                array_merge(...array_map(static fn (array $cell): array => [$cell[0], $cell[1], $z, $plan], $chunk))
+            );
+        }
+        $wanted = array_flip(array_map(static fn (array $cell): string => $cell[0] . ',' . $cell[1], $cells));
+        $ids = [];
+        foreach ($this->db->fetchAllAssociative(
+            'SELECT id, x, y FROM coords WHERE plan = ? AND z = ? AND x BETWEEN ? AND ? AND y BETWEEN ? AND ?',
+            [$plan, $z, min(array_column($cells, 0)), max(array_column($cells, 0)), min(array_column($cells, 1)), max(array_column($cells, 1))]
+        ) as $row) {
+            $key = $row['x'] . ',' . $row['y'];
+            if (isset($wanted[$key])) {
+                $ids[$key] = (int) $row['id'];
+            }
         }
 
-        return ['biome' => (string) $cell['name'], 'tile' => $tile, 'missing' => $painted['missing']];
+        return $ids;
+    }
+
+    /** A new seed for the biome: its next painting draws other patches. */
+    public function reseed(int $biomeId): int
+    {
+        $seed = random_int(1, PHP_INT_MAX >> 32);
+        $this->db->update('biomes', ['seed' => $seed], ['id' => $biomeId]);
+
+        return $seed;
     }
 
     /**

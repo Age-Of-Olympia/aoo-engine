@@ -8,7 +8,7 @@ $brushIcon = 'data:image/svg+xml,' . rawurlencode(
 echo '<details>';
 echo '<summary style="cursor: pointer; font-weight: bold; margin: 10px 0;"><h3 style="display: inline;">Pinceau de biome</h3></summary>';
 echo '<div>
-    <img class="map select-name" data-type="biome_brush" data-name="biome_brush" src="' . $brushIcon . '" title="Peindre le sol avec la palette du biome de la case" />
-    <p style="font-size: 0.85em;">Chaque case prend le sol que lui donne la palette de son biome (Le monde &gt; Biomes) : poids des sols, taille des plaques et graine du biome. Une zone se peint d\'un coup, et donne le même résultat que case par case.</p>
+    <img class="map select-name" data-type="biome_brush" data-name="biome_brush" src="' . $brushIcon . '" title="Peindre tout le biome de la case avec sa palette" />
+    <p style="font-size: 0.85em;">Un clic sur une case peint tout le biome du dessus à cet endroit, sur ce niveau, avec sa palette (Le monde &gt; Biomes) : parts des sols, taille des plaques et graine du biome. Repeindre redonne le même dessin ; pour un autre tirage, cliquez « Nouveau tirage » sur la fiche du biome.</p>
 </div>';
 echo '</details>';

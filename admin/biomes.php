@@ -234,7 +234,8 @@ if ($edited) {
 
 $content .= formCard('Biomes', $loneWarnings . $filter
     . ($biomes === [] ? '<p class="text-muted">Aucun biome.</p>' : renderTable(['Biome', 'Type', 'Plan', 'Cases', 'Empilement', ''], $rows))
-    . '<hr><h5>' . ($edited ? 'Modifier ' . e($edited['name']) : 'Nouveau biome') . '</h5>' . $form)
+    . '<hr><h5>' . ($edited ? 'Modifier ' . e($edited['name']) : 'Nouveau biome') . '</h5>' . $form
+    . ($edited ? biome_form($token, 'reseed_biome', '<button class="btn btn-sm btn-outline-secondary mt-2" type="submit" title="Tire une nouvelle graine : le prochain coup de pinceau de biome dessine d\'autres plaques">Nouveau tirage du pinceau</button>', ['id' => $edited['id'], 'plan_filter' => $plan, 'edit' => $edited['id']]) : ''))
     . $populationsCard;
 
 echo admin_layout('Biomes', $content, [

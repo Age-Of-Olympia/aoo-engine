@@ -10,19 +10,23 @@ if($_POST['type'] == 'eraser'){
     include 'erase_map.php';
 } elseif($_POST['type'] === 'biome_brush'){
 
-    /* One brush for the whole zone: its tiles are read once (they number in the thousands). */
-    try {
-        $painted = ($biomeBrush ??= new \App\Service\Map\BiomeBrushService())->paintCell((int) $coordsId);
-        echo match (true) {
-            $painted['biome'] === null => 'aucun biome sur cette case ',
-            $painted['tile'] === null => 'aucune tuile pour ' . $painted['biome'] . ' ',
-            default => $painted['tile'] . ' ',
-        };
-        foreach ($painted['missing'] as $corners) {
-            echo '(transition manquante : ' . $corners . ') ';
+    /* One click paints the whole biome on top at the cell. In zone mode this
+       script runs once per cell: a cell already painted by an earlier stroke
+       of the same request is skipped. */
+    $biomePainted ??= [];
+    if (!isset($biomePainted[(int) $coordsId])) {
+        try {
+            $painted = ($biomeBrush ??= new \App\Service\Map\BiomeBrushService())->paintBiome((int) $coordsId);
+            $biomePainted += array_fill_keys($painted['coords'], true);
+            echo $painted['biome'] === null
+                ? 'aucun biome sur cette case '
+                : $painted['biome'] . ' : ' . count($painted['coords']) . ' case(s) peinte(s) ';
+            foreach ($painted['missing'] as $corners) {
+                echo '(transition manquante : ' . $corners . ') ';
+            }
+        } catch (\InvalidArgumentException $e) {
+            echo 'refusé : ' . $e->getMessage() . ' ';
         }
-    } catch (\InvalidArgumentException $e) {
-        echo 'refusé : ' . $e->getMessage() . ' ';
     }
 } elseif($_POST['type'] == 'buildings'){
 
