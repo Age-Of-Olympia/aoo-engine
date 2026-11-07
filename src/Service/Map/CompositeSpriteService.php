@@ -233,6 +233,8 @@ final class CompositeSpriteService
             $cell = imagecreatetruecolor(self::CELL, self::CELL);
             imagealphablending($cell, false);
             imagesavealpha($cell, true);
+            // imagecopy skips the source's transparent colour: those pixels keep the cell's background
+            imagefilledrectangle($cell, 0, 0, self::CELL - 1, self::CELL - 1, imagecolorallocatealpha($cell, 0, 0, 0, 127));
             imagecopy($cell, $source, 0, 0, $col * self::CELL, $row * self::CELL, self::CELL, self::CELL);
 
             $padded = sprintf('%02d', $piece);

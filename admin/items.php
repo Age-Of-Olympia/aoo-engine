@@ -48,6 +48,9 @@ const ITEM_FLAG_LABELS = [
     'blocks_projectiles' => 'Posé, bloque les tirs',
 ];
 
+/** 0/1 columns of Item::SPECIAL_KEYS (seeder, bundles) ticked with the flags; saved by the specials loop. */
+const ITEM_SPECIAL_FLAG_LABELS = ['spellMalus' => 'Interdit la magie (équipé, le porteur ne peut plus lancer de sorts)'];
+
 /** @return array<string, string> structure types an object may require, name => label */
 function building_type_names(): array
 {
@@ -523,6 +526,10 @@ function items_render_edit(object $row, string $csrfToken): string
         $flagBoxes .= '<label class="d-block"><input type="checkbox" name="' . $col . '" '
             . checked(!empty($row->$col)) . '> ' . ITEM_FLAG_LABELS[$col] . '</label>';
     }
+    foreach (ITEM_SPECIAL_FLAG_LABELS as $col => $label) {
+        $flagBoxes .= '<label class="d-block"><input type="checkbox" name="' . $col . '" value="1" '
+            . checked(!empty($row->$col)) . '> ' . $label . '</label>';
+    }
 
     $caracInputs = '';
     foreach (\App\Enum\Caracs::KEYS as $k) {
@@ -532,12 +539,13 @@ function items_render_edit(object $row, string $csrfToken): string
 
     $specialLabels = [
         'esquive' => 'Esquive', 'pr' => 'PR', 'pf' => 'PF', 'malus' => 'Malus',
-        'spellMalus' => 'Malus de sort', 'fixedF' => 'F fixée', 'mDamage' => 'Dégâts magiques',
+        'fixedF' => 'F fixée', 'mDamage' => 'Dégâts magiques',
         'demolition' => 'Démolition', 'craftedByN' => 'Craft (n)', 'lootChance' => 'Chance de loot (%)',
         'grow_rate' => 'Repousse (1 chance sur n)', 'xp' => 'XP',
     ];
     $specialInputs = '';
-    foreach (Item::SPECIAL_KEYS as $col) {
+    $specialNumberKeys = array_diff(Item::SPECIAL_KEYS, array_keys(ITEM_SPECIAL_FLAG_LABELS));
+    foreach ($specialNumberKeys as $col) {
         $specialInputs .= '<div class="col-4 form-group"><label>' . $specialLabels[$col] . '</label>'
             . '<input type="number" class="form-control form-control-sm" name="' . $col . '" value="' . (int) ($row->$col ?? 0) . '"></div>';
     }
@@ -778,12 +786,12 @@ function items_render_edit(object $row, string $csrfToken): string
      * l'ouvrir — seuls les volets qui portent quelque chose (ou que le
      * type de l'objet appelle) démarrent dépliés. */
     $emplacementValue = (string) ($row->emplacement ?? '');
-    $flagCount = count(array_filter(Item::FLAG_KEYS, static fn (string $c): bool => !empty($row->$c)));
+    $flagCount = count(array_filter([...Item::FLAG_KEYS, ...array_keys(ITEM_SPECIAL_FLAG_LABELS)], static fn (string $c): bool => !empty($row->$c)));
     $magie = array_filter([(string) $row->spell, (string) $row->exotique]);
     $wearRate = (int) $row->wear_rate;
     $wearProfile = (string) ($row->wear_profile ?? '');
     $caracsCount = count(array_filter(\App\Enum\Caracs::KEYS, static fn (string $k): bool => (int) ($row->$k ?? 0) !== 0));
-    $specialCount = count(array_filter(Item::SPECIAL_KEYS, static fn (string $k): bool => (int) ($row->$k ?? 0) !== 0));
+    $specialCount = count(array_filter($specialNumberKeys, static fn (string $k): bool => (int) ($row->$k ?? 0) !== 0));
     $munitionsCount = $munitions === '' ? 0 : count(explode(',', $munitions));
     $jsonSet = array_keys(array_filter([
         'add_effects' => trim((string) ($row->add_effects ?? '')) !== '',

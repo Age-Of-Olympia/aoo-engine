@@ -410,6 +410,49 @@ class TileAssetService
         ];
     }
 
+    /**
+     * Puts $new on every cell of every plan that shows $old in this layer.
+     * The files stay: $old becomes unused and can then be deleted.
+     *
+     * @return int cells updated
+     */
+    public function replace(string $layer, string $old, string $new): int
+    {
+        $this->assertLayer($layer);
+        if (!isset(TiledMapService::rowLayers()[$layer])) {
+            throw new RuntimeException('Remplacement impossible sur une couche d\'entités : ' . $layer);
+        }
+        if ($old === $new) {
+            throw new RuntimeException('Image de remplacement identique.');
+        }
+        if ($this->existingFiles($layer, $new) === []) {
+            throw new RuntimeException("Image inconnue : {$new}.");
+        }
+
+        $table = 'map_' . $layer;
+        $connection = $this->connection();
+        $connection->beginTransaction();
+        try {
+            // A cell already showing $new keeps that row: (name, coords_id) is unique on some layers
+            $merged = 0;
+            if (!TiledMapService::AUTHORABLE_LAYERS[$layer]['paramsInKey']) {
+                $merged = (int) $connection->executeStatement(
+                    "DELETE o FROM {$table} o JOIN {$table} n ON n.coords_id = o.coords_id AND n.name = ? WHERE o.name = ?",
+                    [$new, $old]
+                );
+            }
+            $updated = $merged + (int) $connection->executeStatement("UPDATE {$table} SET name = ? WHERE name = ?", [$new, $old]);
+            $connection->commit();
+        } catch (\Throwable $exception) {
+            $connection->rollBack();
+            throw $exception;
+        }
+
+        \App\Service\Map\BoardChanges::world();
+
+        return $updated;
+    }
+
     /* ------------------------------------------------------------------ */
 
     /**

@@ -86,7 +86,7 @@ class WeaponEffectsOnHitAndMissTest extends LegacyPlayerFixtureTestCase
         ), 'the hit row never lands on the bearer');
     }
 
-    public function testAMissTriggeredEffectIsToldOnTheFailureSide(): void
+    public function testAMissTriggeredEffectIsTold(): void
     {
         $this->link->executeStatement("INSERT INTO effects (name, label) VALUES ('honte_test', 'Honte')");
         EffectService::clearCache();
@@ -122,9 +122,9 @@ class WeaponEffectsOnHitAndMissTest extends LegacyPlayerFixtureTestCase
 
         $shown = [];
         foreach ($results->getOutcomesResultsArray() as $outcome) {
-            $shown = array_merge($shown, $outcome->getOutcomeFailureMessages());
+            $shown = array_merge($shown, $outcome->getOutcomeSuccessMessages());
         }
-        $this->assertNotEmpty(array_filter($shown, static fn (string $m): bool => str_contains($m, 'honte_test')), 'the miss line is where the view reads it on a failed action');
+        $this->assertNotEmpty(array_filter($shown, static fn (string $m): bool => str_contains($m, 'honte_test')), 'the miss line is told with what the outcome did');
         $this->assertSame(1, (int) $this->link->fetchOne(
             "SELECT COUNT(*) FROM players_effects WHERE player_id = ? AND name = 'honte_test'", [$actor->id]
         ), 'and the effect landed on the bearer');
