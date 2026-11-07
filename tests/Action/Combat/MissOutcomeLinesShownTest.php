@@ -2,6 +2,7 @@
 
 namespace Tests\Action\Combat;
 
+use App\Action\OutcomeInstruction\DamageObjectOutcomeInstruction;
 use App\Factory\ActionFactory;
 use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
@@ -40,4 +41,23 @@ class MissOutcomeLinesShownTest extends LegacyPlayerFixtureTestCase
         $this->assertStringContainsString('malus à ' . $target->data->name, (new ActionResultsView($results))->getActionResults());
     }
 
+    /** A miss may break the attacker's weapon too, never the target's armour. */
+    public function testAMissMayBreakTheAttackersWeapon(): void
+    {
+        $action = ActionFactory::getAction('melee');
+        if ($action === null) {
+            $this->markTestSkipped("actions catalog not seeded (no 'melee' row).");
+        }
+
+        $onMiss = [];
+        foreach ($action->getOnSuccessOutcomes(false) as $outcome) {
+            foreach ($outcome->getInstructions() as $instruction) {
+                if ($instruction instanceof DamageObjectOutcomeInstruction) {
+                    $onMiss[] = $instruction->getParameters()['player'] ?? 'BOTH';
+                }
+            }
+        }
+
+        $this->assertSame(['ACTOR'], $onMiss);
+    }
 }
