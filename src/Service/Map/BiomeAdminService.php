@@ -3,6 +3,7 @@
 namespace App\Service\Map;
 
 use App\Factory\EntityManagerFactory;
+use App\Service\TerrainTransitionService;
 use Doctrine\DBAL\Connection;
 use InvalidArgumentException;
 
@@ -22,20 +23,56 @@ final class BiomeAdminService
         $this->db = $db ?? EntityManagerFactory::getEntityManager()->getConnection();
     }
 
-    /** @return list<array{id: int, name: string, label: string, color: string, biomes: int}> */
+    /** @return list<array{id: int, name: string, label: string, color: string, biomes: int, grounds: list<string>}> */
     public function types(): array
     {
+        $grounds = [];
+        foreach ($this->db->fetchAllAssociative('SELECT biome_type_id, terrain FROM biome_type_grounds ORDER BY terrain') as $row) {
+            $grounds[(int) $row['biome_type_id']][] = (string) $row['terrain'];
+        }
+
         return array_map(static fn (array $row): array => [
             'id' => (int) $row['id'],
             'name' => (string) $row['name'],
             'label' => (string) $row['label'],
             'color' => (string) $row['color'],
             'biomes' => (int) $row['biomes'],
+            'grounds' => $grounds[(int) $row['id']] ?? [],
         ], $this->db->fetchAllAssociative(
             'SELECT t.id, t.name, t.label, t.color, COUNT(b.id) AS biomes
              FROM biome_types t LEFT JOIN biomes b ON b.biome_type_id = t.id
              GROUP BY t.id ORDER BY t.label'
         ));
+    }
+
+    /** @return list<string> the ground terrains a palette can hold */
+    public function groundTerrains(): array
+    {
+        return array_map('strval', $this->db->fetchFirstColumn(
+            'SELECT name FROM terrain_colors WHERE layer = ? ORDER BY name',
+            [TerrainTransitionService::GROUND_LAYER]
+        ));
+    }
+
+    /**
+     * The type's ground palette, replaced: what grows in its biomes grows on these terrains only.
+     *
+     * @param list<string> $terrains none: any ground
+     */
+    public function saveGrounds(int $typeId, array $terrains): void
+    {
+        $terrains = array_values(array_unique($terrains));
+        $unknown = array_diff($terrains, $this->groundTerrains());
+        if ($unknown !== []) {
+            throw new InvalidArgumentException('Sol inconnu : ' . implode(', ', $unknown) . '.');
+        }
+
+        $this->db->transactional(static function (Connection $db) use ($typeId, $terrains): void {
+            $db->delete('biome_type_grounds', ['biome_type_id' => $typeId]);
+            foreach ($terrains as $terrain) {
+                $db->insert('biome_type_grounds', ['biome_type_id' => $typeId, 'terrain' => $terrain]);
+            }
+        });
     }
 
     /** Create the type when $id is 0, update it otherwise; returns its id. */

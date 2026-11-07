@@ -6,6 +6,8 @@ use App\Factory\EntityManagerFactory;
 use App\Module\Module;
 use App\Module\Modules;
 use App\Service\PlantsService;
+use App\Service\TerrainTransitionService;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -25,6 +27,9 @@ final class BiomeGrowthService
 
     /** @var callable(int): int a die with that many sides */
     private $roll;
+
+    /** @var array{positions: array<int, string>, tiles: array<string, string|list<int>>}|null ground terrains, read once */
+    private ?array $terrains = null;
 
     public function __construct(?Connection $db = null, ?callable $roll = null)
     {
@@ -99,12 +104,20 @@ final class BiomeGrowthService
 
     /**
      * The biome's cells with ground on the population's levels: they set the cap, the free ones get the rolls.
+     * A type with a ground palette counts only the cells whose ground belongs to it.
      *
      * @param array<string, mixed> $population
      * @return array<int, bool> coords id => free
      */
     private function groundCells(array $population): array
     {
+        $tiles = $this->acceptedTiles((int) $population['biome_id']);
+        if ($tiles === []) {
+            return [];
+        }
+
+        $params = [$population['biome_id'], $population['z_min'], $population['z_max']];
+
         return array_map('boolval', $this->db->fetchAllKeyValue(
             'SELECT c.id, NOT EXISTS (SELECT 1 FROM entity_cells ec WHERE ec.coords_id = c.id)
                  AND ' . PlantsService::freeSoilSql('c.id') . '
@@ -112,8 +125,58 @@ final class BiomeGrowthService
              JOIN plans pl ON pl.id = bc.plan_id
              JOIN coords c ON c.plan = pl.slug AND c.x = bc.x AND c.y = bc.y
              WHERE bc.biome_id = ? AND c.z BETWEEN ? AND ?
-               AND EXISTS (SELECT 1 FROM map_tiles t WHERE t.coords_id = c.id AND t.foreground = 0)',
-            [$population['biome_id'], $population['z_min'], $population['z_max']]
+               AND EXISTS (SELECT 1 FROM map_tiles t WHERE t.coords_id = c.id AND t.foreground = 0'
+                . ($tiles === null ? '' : ' AND t.name IN (?)') . ')',
+            $tiles === null ? $params : [...$params, $tiles],
+            $tiles === null ? [] : [count($params) => ArrayParameterType::STRING]
         ));
+    }
+
+    /**
+     * The ground tiles the biome's palette accepts: a terrain's own tiles, and
+     * the transitions whose corners all belong to the palette.
+     *
+     * @return list<string>|null null: no palette, any ground
+     */
+    private function acceptedTiles(int $biomeId): ?array
+    {
+        $palette = $this->db->fetchFirstColumn(
+            'SELECT g.terrain FROM biome_type_grounds g JOIN biomes b ON b.biome_type_id = g.biome_type_id WHERE b.id = ?',
+            [$biomeId]
+        );
+        if ($palette === []) {
+            return null;
+        }
+
+        $this->terrains ??= $this->terrainTiles();
+        $accepted = [];
+        foreach ($this->terrains['tiles'] as $name => $terrain) {
+            $corners = is_string($terrain)
+                ? [$terrain]
+                // wang values are positions in terrain_colors, 0 for an unused corner
+                : array_map(fn (int $position): string => $this->terrains['positions'][$position] ?? '', array_filter($terrain));
+            if ($corners !== [] && array_diff($corners, $palette) === []) {
+                $accepted[] = (string) $name;
+            }
+        }
+
+        return $accepted;
+    }
+
+    /** @return array{positions: array<int, string>, tiles: array<string, string|list<int>>} */
+    private function terrainTiles(): array
+    {
+        $layer = TerrainTransitionService::GROUND_LAYER;
+        $tiles = [];
+        foreach ($this->db->fetchAllAssociative('SELECT name, color, wang_id FROM terrain_tiles WHERE layer = ?', [$layer]) as $row) {
+            $tiles[(string) $row['name']] = $row['wang_id'] !== null
+                ? array_map('intval', explode(',', (string) $row['wang_id']))
+                : (string) $row['color'];
+        }
+
+        return [
+            'positions' => array_map('strval', $this->db->fetchAllKeyValue('SELECT position, name FROM terrain_colors WHERE layer = ?', [$layer])),
+            'tiles' => $tiles,
+        ];
     }
 }
