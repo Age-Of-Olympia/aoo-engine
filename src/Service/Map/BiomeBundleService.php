@@ -27,7 +27,7 @@ final class BiomeBundleService
     public function export(string $plan): array
     {
         $biomes = $this->db->fetchAllAssociative(
-            'SELECT b.id, b.name, b.zone, b.stack_order, t.id AS type_id, t.name AS type, t.label, t.color
+            'SELECT b.id, b.name, b.zone, b.stack_order, b.seed, t.id AS type_id, t.name AS type, t.label, t.color, t.patch_scale
              FROM biomes b JOIN plans p ON p.id = b.plan_id JOIN biome_types t ON t.id = b.biome_type_id
              WHERE p.slug = ? ORDER BY b.stack_order, b.id',
             [$plan]
@@ -39,11 +39,11 @@ final class BiomeBundleService
 
         $grounds = [];
         foreach ($this->db->fetchAllAssociative(
-            'SELECT biome_type_id, terrain FROM biome_type_grounds WHERE biome_type_id IN (?) ORDER BY terrain',
+            'SELECT biome_type_id, terrain, weight FROM biome_type_grounds WHERE biome_type_id IN (?) ORDER BY terrain',
             [array_unique(array_column($biomes, 'type_id'))],
             [ArrayParameterType::INTEGER]
         ) as $row) {
-            $grounds[(int) $row['biome_type_id']][] = (string) $row['terrain'];
+            $grounds[(int) $row['biome_type_id']][(string) $row['terrain']] = (int) $row['weight'];
         }
         $populations = [];
         foreach ($this->db->fetchAllAssociative(
@@ -68,10 +68,12 @@ final class BiomeBundleService
                 'name' => (string) $biome['type'],
                 'label' => (string) $biome['label'],
                 'color' => (string) $biome['color'],
+                'patch_scale' => (int) $biome['patch_scale'],
                 'grounds' => $grounds[(int) $biome['type_id']] ?? [],
             ],
             'zone' => json_decode((string) $biome['zone'], true),
             'stack_order' => (int) $biome['stack_order'],
+            'seed' => (int) $biome['seed'],
             'populations' => $populations[(int) $biome['id']] ?? [],
         ], $biomes);
     }
@@ -126,6 +128,8 @@ final class BiomeBundleService
                     'name' => (string) $biome['name'],
                     'zone' => json_encode($biome['zone']),
                     'stack_order' => (int) ($biome['stack_order'] ?? 0),
+                    // A bundle without a seed: the biome draws its own, as a new one does
+                    'seed' => (int) ($biome['seed'] ?? 0) ?: random_int(1, PHP_INT_MAX >> 32),
                 ]);
                 $biomeId = (int) $db->lastInsertId();
                 foreach ($biome['populations'] ?? [] as $population) {
@@ -164,12 +168,13 @@ final class BiomeBundleService
             'name' => $type['name'],
             'label' => (string) ($type['label'] ?? $type['name']),
             'color' => (string) ($type['color'] ?? '#888888'),
+            'patch_scale' => (int) ($type['patch_scale'] ?? BiomeAdminService::DEFAULT_PATCH_SCALE),
         ]);
         $id = (int) $db->lastInsertId();
         // A terrain this server does not know would match no tile, and nothing would grow
         $known = $db->fetchFirstColumn('SELECT name FROM terrain_colors WHERE layer = ?', [TerrainTransitionService::GROUND_LAYER]);
-        foreach (array_intersect(array_map('strval', (array) ($type['grounds'] ?? [])), $known) as $terrain) {
-            $db->insert('biome_type_grounds', ['biome_type_id' => $id, 'terrain' => $terrain]);
+        foreach (array_intersect_key((array) ($type['grounds'] ?? []), array_flip($known)) as $terrain => $weight) {
+            $db->insert('biome_type_grounds', ['biome_type_id' => $id, 'terrain' => (string) $terrain, 'weight' => max(1, (int) $weight)]);
         }
 
         return $id;

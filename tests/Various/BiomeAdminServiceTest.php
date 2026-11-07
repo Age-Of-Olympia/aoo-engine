@@ -102,12 +102,12 @@ class BiomeAdminServiceTest extends TestCase
         $this->db->insert('terrain_colors', ['layer' => 'tiles', 'position' => $position, 'name' => 'test_admin_mousse']);
         $type = $this->service->saveType(0, 'test_admin_tourbiere', 'Tourbière', '#556644');
 
-        $this->service->saveGrounds($type, ['test_admin_mousse']);
+        $this->service->saveGrounds($type, ['test_admin_mousse' => 60, 'test_admin_absent' => 0]);
         $saved = array_column($this->service->types(), 'grounds', 'id');
-        $this->assertSame(['test_admin_mousse'], $saved[$type]);
+        $this->assertSame(['test_admin_mousse' => 60], $saved[$type], 'a weight of 0 leaves the terrain out');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->service->saveGrounds($type, ['test_admin_inconnu']);
+        $this->service->saveGrounds($type, ['test_admin_inconnu' => 10]);
     }
 
     public function testAZoneCoveringNothingAndAUsedTypeAreRefused(): void

@@ -90,7 +90,7 @@ class BiomeGrowthServiceTest extends LegacyPlayerFixtureTestCase
         $this->link->insert('terrain_tiles', ['layer' => 'tiles', 'name' => self::MOSS_EDGE, 'wang_id' => "0,$position,0,$position,0,999,0,999"]);
         $this->link->update('map_tiles', ['name' => self::MOSS_TILE], ['coords_id' => $this->coordsIdOn(self::PLAN, 0, 0)]);
         $this->link->update('map_tiles', ['name' => self::MOSS_EDGE], ['coords_id' => $this->coordsIdOn(self::PLAN, 1, 0)]);
-        (new BiomeAdminService($this->link))->saveGrounds($this->typeId, [self::MOSS]);
+        (new BiomeAdminService($this->link))->saveGrounds($this->typeId, [self::MOSS => 1]);
         $this->population(100);
 
         $this->assertSame([$this->coordsIdOn(self::PLAN, 0, 0)], $this->grow(), 'only the moss tile: not the grass, nor the half-moss edge');

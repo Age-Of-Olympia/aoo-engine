@@ -40,9 +40,10 @@ if (!Modules::on(Module::Biomes)) {
 
 // Types
 $terrains = $service->groundTerrains();
-$groundBoxes = static fn (array $palette): string => $terrains === [] ? '' : '<div class="d-flex flex-wrap gap-2 small mt-1">Sols :'
-    . implode('', array_map(static fn (string $terrain): string => '<label><input type="checkbox" name="grounds[]" value="' . e($terrain) . '" '
-        . checked(in_array($terrain, $palette, true)) . '> ' . e($terrain) . '</label>', $terrains))
+$groundWeights = static fn (array $palette): string => $terrains === [] ? '' : '<div class="d-flex flex-wrap gap-2 small mt-1 align-items-center">Sols :'
+    . implode('', array_map(static fn (string $terrain): string => '<label>' . e($terrain) . ' '
+        . formInput('grounds[' . $terrain . ']', (string) ($palette[$terrain] ?? 0), 'type="number" min="0" class="form-control form-control-sm d-inline-block" style="width:5em"')
+        . '</label>', $terrains))
     . '</div>';
 $rows = [];
 foreach ($types as $type) {
@@ -51,8 +52,10 @@ foreach ($types as $type) {
             . formInput('name', $type['name'], 'class="form-control form-control-sm" pattern="' . BiomeAdminService::TYPE_NAME_PATTERN . '" required')
             . formInput('label', $type['label'], 'class="form-control form-control-sm" required')
             . formInput('color', $type['color'], 'type="color" class="form-control form-control-sm" style="width:4em"')
+            . formInput('patch_scale', (string) $type['patch_scale'], 'type="number" min="1" max="' . BiomeAdminService::MAX_PATCH_SCALE
+                . '" class="form-control form-control-sm" style="width:5em" title="Taille des plaques du pinceau, en cases"')
             . '<button class="btn btn-sm btn-primary" type="submit">Enregistrer</button></div>'
-            . $groundBoxes($type['grounds']),
+            . $groundWeights($type['grounds']),
             ['id' => $type['id']])
         . '</td><td>' . $type['biomes'] . '</td><td>'
         . ($type['biomes'] === 0
@@ -68,9 +71,11 @@ $addType = biome_form($token, 'save_type', '<div class="d-flex flex-wrap gap-2 a
     . '<button class="btn btn-primary" type="submit">Ajouter le type</button></div>', ['id' => 0]);
 $content .= formCard('Types de biome', ($types === []
         ? '<p class="text-muted">Aucun type pour l\'instant.</p>'
-        : renderTable(['Nom technique, libellé et couleur', 'Biomes', ''], $rows))
-    . ($terrains === [] ? '' : '<p class="text-muted small">Sols : dans les biomes du type, les plantes ne poussent que sur ces terrains,'
-        . ' leurs tuiles et les transitions entre eux. Sans sol coché, elles poussent sur tout sol.</p>')
+        : renderTable(['Nom technique, libellé, couleur, taille des plaques et sols', 'Biomes', ''], $rows))
+    . ($terrains === [] ? '' : '<p class="text-muted small">Sols : le poids de chaque terrain dans les biomes du type ;'
+        . ' 0 le laisse de côté. Les plantes ne poussent que sur ces terrains, leurs tuiles et les transitions entre eux,'
+        . ' et le pinceau de biome les peint en proportion de leur poids (60, 25 et 15 donnent 60 %, 25 % et 15 %).'
+        . ' Sans aucun sol, les plantes poussent sur tout sol. La case à côté de la couleur règle la taille des plaques du pinceau, en cases.</p>')
     . '<hr>' . $addType);
 
 // Biomes
@@ -127,6 +132,8 @@ $form = $types === []
             'Là où des biomes se chevauchent, celui qui a l\'empilement le plus grand l\'emporte.'
             . ' Sur une tuile de transition, la case appartient à chacun d\'eux.')
         . '</div>'
+        . formField('Graine du pinceau', formInput('seed', isset($edited) ? (string) $edited['seed'] : '', 'type="number" min="1" placeholder="tirée au hasard"'), 'form-group',
+            'Le pinceau de biome tire ses plaques de sol à partir de cette graine : une autre graine donne un autre tirage.')
         . formField('Coins de la zone', formTextarea('zone', $edited['zone'] ?? '', 2, 'placeholder="0,0  10,0  10,8  0,8" required'), 'form-group',
             'Les coins du contour au format x,y, séparés par des espaces, dans l\'ordre où on en fait le tour.'
             . ' Les coordonnées désignent les angles des cases : la case (x, y) va de l\'angle x,y à l\'angle x+1,y+1.'

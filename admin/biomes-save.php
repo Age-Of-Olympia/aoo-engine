@@ -18,8 +18,14 @@ handleAdminPost($redirect, static function (): string {
 
     switch ((string) ($_POST['action'] ?? '')) {
         case 'save_type':
-            $typeId = $service->saveType($id, (string) ($_POST['name'] ?? ''), (string) ($_POST['label'] ?? ''), (string) ($_POST['color'] ?? ''));
-            $service->saveGrounds($typeId, array_map('strval', (array) ($_POST['grounds'] ?? [])));
+            $typeId = $service->saveType(
+                $id,
+                (string) ($_POST['name'] ?? ''),
+                (string) ($_POST['label'] ?? ''),
+                (string) ($_POST['color'] ?? ''),
+                (int) ($_POST['patch_scale'] ?? BiomeAdminService::DEFAULT_PATCH_SCALE)
+            );
+            $service->saveGrounds($typeId, array_map('intval', (array) ($_POST['grounds'] ?? [])));
             return 'Type enregistré.';
         case 'delete_type':
             $service->deleteType($id);
@@ -31,7 +37,8 @@ handleAdminPost($redirect, static function (): string {
                 (int) ($_POST['type_id'] ?? 0),
                 (string) ($_POST['name'] ?? ''),
                 (string) ($_POST['zone'] ?? ''),
-                (int) ($_POST['stack_order'] ?? 0)
+                (int) ($_POST['stack_order'] ?? 0),
+                ($_POST['seed'] ?? '') === '' ? null : (int) $_POST['seed']
             );
             return 'Biome enregistré : ' . $saved['cells'] . ' case(s).';
         case 'save_population':

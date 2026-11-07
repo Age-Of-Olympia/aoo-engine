@@ -16,6 +16,10 @@ final class BiomeAdminService
     /** A type's technical name; the admin form checks it with the same pattern */
     public const TYPE_NAME_PATTERN = '[a-z0-9_]{1,64}';
 
+    /** Patch size of the biome brush, in cells: 4 gives patches of a few cells, 32 large regions */
+    public const DEFAULT_PATCH_SCALE = 6;
+    public const MAX_PATCH_SCALE = 64;
+
     private Connection $db;
 
     public function __construct(?Connection $db = null)
@@ -23,12 +27,12 @@ final class BiomeAdminService
         $this->db = $db ?? EntityManagerFactory::getEntityManager()->getConnection();
     }
 
-    /** @return list<array{id: int, name: string, label: string, color: string, biomes: int, grounds: list<string>}> */
+    /** @return list<array{id: int, name: string, label: string, color: string, patch_scale: int, biomes: int, grounds: array<string, int>}> */
     public function types(): array
     {
         $grounds = [];
-        foreach ($this->db->fetchAllAssociative('SELECT biome_type_id, terrain FROM biome_type_grounds ORDER BY terrain') as $row) {
-            $grounds[(int) $row['biome_type_id']][] = (string) $row['terrain'];
+        foreach ($this->db->fetchAllAssociative('SELECT biome_type_id, terrain, weight FROM biome_type_grounds ORDER BY terrain') as $row) {
+            $grounds[(int) $row['biome_type_id']][(string) $row['terrain']] = (int) $row['weight'];
         }
 
         return array_map(static fn (array $row): array => [
@@ -36,10 +40,11 @@ final class BiomeAdminService
             'name' => (string) $row['name'],
             'label' => (string) $row['label'],
             'color' => (string) $row['color'],
+            'patch_scale' => (int) $row['patch_scale'],
             'biomes' => (int) $row['biomes'],
             'grounds' => $grounds[(int) $row['id']] ?? [],
         ], $this->db->fetchAllAssociative(
-            'SELECT t.id, t.name, t.label, t.color, COUNT(b.id) AS biomes
+            'SELECT t.id, t.name, t.label, t.color, t.patch_scale, COUNT(b.id) AS biomes
              FROM biome_types t LEFT JOIN biomes b ON b.biome_type_id = t.id
              GROUP BY t.id ORDER BY t.label'
         ));
@@ -55,28 +60,30 @@ final class BiomeAdminService
     }
 
     /**
-     * The type's ground palette, replaced: what grows in its biomes grows on these terrains only.
+     * The type's ground palette, replaced: what grows in its biomes grows on
+     * these terrains only, and the biome brush paints them in proportion to
+     * their weights ("60 herbe, 25 mousse, 15 terre").
      *
-     * @param list<string> $terrains none: any ground
+     * @param array<string, int> $weights terrain => weight; a weight of 0 leaves the terrain out, none: any ground
      */
-    public function saveGrounds(int $typeId, array $terrains): void
+    public function saveGrounds(int $typeId, array $weights): void
     {
-        $terrains = array_values(array_unique($terrains));
-        $unknown = array_diff($terrains, $this->groundTerrains());
+        $weights = array_filter($weights, static fn (int $weight): bool => $weight > 0);
+        $unknown = array_diff(array_keys($weights), $this->groundTerrains());
         if ($unknown !== []) {
             throw new InvalidArgumentException('Sol inconnu : ' . implode(', ', $unknown) . '.');
         }
 
-        $this->db->transactional(static function (Connection $db) use ($typeId, $terrains): void {
+        $this->db->transactional(static function (Connection $db) use ($typeId, $weights): void {
             $db->delete('biome_type_grounds', ['biome_type_id' => $typeId]);
-            foreach ($terrains as $terrain) {
-                $db->insert('biome_type_grounds', ['biome_type_id' => $typeId, 'terrain' => $terrain]);
+            foreach ($weights as $terrain => $weight) {
+                $db->insert('biome_type_grounds', ['biome_type_id' => $typeId, 'terrain' => $terrain, 'weight' => $weight]);
             }
         });
     }
 
     /** Create the type when $id is 0, update it otherwise; returns its id. */
-    public function saveType(int $id, string $name, string $label, string $color): int
+    public function saveType(int $id, string $name, string $label, string $color, int $patchScale = self::DEFAULT_PATCH_SCALE): int
     {
         $name = trim($name);
         $label = trim($label);
@@ -89,13 +96,16 @@ final class BiomeAdminService
         if (!preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
             throw new InvalidArgumentException('Couleur attendue au format #rrggbb.');
         }
+        if ($patchScale < 1 || $patchScale > self::MAX_PATCH_SCALE) {
+            throw new InvalidArgumentException('La taille des plaques va de 1 à ' . self::MAX_PATCH_SCALE . ' cases.');
+        }
 
         $taken = $this->db->fetchOne('SELECT id FROM biome_types WHERE name = ? AND id <> ?', [$name, $id]);
         if ($taken !== false) {
             throw new InvalidArgumentException('Un type porte déjà le nom ' . $name . '.');
         }
 
-        $row = ['name' => $name, 'label' => $label, 'color' => strtolower($color)];
+        $row = ['name' => $name, 'label' => $label, 'color' => strtolower($color), 'patch_scale' => $patchScale];
         if ($id === 0) {
             $this->db->insert('biome_types', $row);
             return (int) $this->db->lastInsertId();
@@ -115,12 +125,12 @@ final class BiomeAdminService
 
     /**
      * @return list<array{id: int, plan: string, type: string, color: string, name: string,
-     *     zone: string, stack_order: int, cells: int}>
+     *     zone: string, stack_order: int, seed: int, cells: int}>
      */
     public function biomes(string $plan = ''): array
     {
         $rows = $this->db->fetchAllAssociative(
-            'SELECT b.id, p.slug AS plan, t.label AS type, t.color, b.name, b.zone, b.stack_order,
+            'SELECT b.id, p.slug AS plan, t.label AS type, t.color, b.name, b.zone, b.stack_order, b.seed,
                     (SELECT COUNT(*) FROM biome_cells c WHERE c.biome_id = b.id) AS cells
              FROM biomes b
              JOIN plans p ON p.id = b.plan_id
@@ -138,6 +148,7 @@ final class BiomeAdminService
             'name' => (string) $row['name'],
             'zone' => self::zoneText((array) json_decode((string) $row['zone'], true)),
             'stack_order' => (int) $row['stack_order'],
+            'seed' => (int) $row['seed'],
             'cells' => (int) $row['cells'],
         ], $rows);
     }
@@ -146,9 +157,10 @@ final class BiomeAdminService
      * Create the biome when $id is 0, update it otherwise, then recompute
      * the cells of its plan (and of its old plan if it moved).
      *
+     * @param int|null $seed the brush draw; null keeps it, or draws one for a new biome
      * @return array{id: int, cells: int} the biome and how many cells it covers
      */
-    public function saveBiome(int $id, string $plan, int $typeId, string $name, string $zoneText, int $stackOrder): array
+    public function saveBiome(int $id, string $plan, int $typeId, string $name, string $zoneText, int $stackOrder, ?int $seed = null): array
     {
         $planId = $this->db->fetchOne('SELECT id FROM plans WHERE slug = ?', [$plan]);
         if ($planId === false) {
@@ -180,6 +192,9 @@ final class BiomeAdminService
             'zone' => json_encode($zone),
             'stack_order' => $stackOrder,
         ];
+        if ($seed !== null || $id === 0) {
+            $row['seed'] = $seed ?? random_int(1, PHP_INT_MAX >> 32);
+        }
         $old = false;
         if ($id === 0) {
             $this->db->insert('biomes', $row);
