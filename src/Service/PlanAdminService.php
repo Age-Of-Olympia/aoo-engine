@@ -479,7 +479,10 @@ class PlanAdminService
             );
         }
 
-        return $this->purgePlanRows($plan, $force);
+        $report = $this->purgePlanRows($plan, $force);
+        (new BiomeCellService())->planGroundChanged($plan);
+
+        return $report;
     }
 
     /**
@@ -717,6 +720,9 @@ class PlanAdminService
         // Config après la base : la ligne ne doit pas réapparaître via
         // l'union DB ∪ JSON de l'éditeur.
         $this->planConfig->removeZLevel($plan, $z);
+        if ($z === 0) {
+            (new BiomeCellService())->planGroundChanged($plan);
+        }
 
         return $report;
     }

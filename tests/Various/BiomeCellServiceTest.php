@@ -96,6 +96,24 @@ class BiomeCellServiceTest extends TestCase
         $this->assertSame([$grass], $this->biomesAt(0, 0));
     }
 
+    public function testPaintingOrErasingATransitionTileUpdatesItsCell(): void
+    {
+        $this->db->insert('terrain_tiles', ['layer' => 'tiles', 'name' => self::WANG_TILE, 'wang_id' => '1,0,1,0,2,0,2,0']);
+        $grass = $this->biome('Prairie', [[0, 0], [2, 0], [2, 1], [0, 1]], 0);
+        $sand = $this->biome('Désert', [[1, 0], [3, 0], [3, 1], [1, 1]], 1);
+        $cells = new BiomeCellService($this->db);
+        $cells->rebuild($this->planId);
+        $coordsId = $this->coordsIdOn(self::PLAN, 1, 0);
+
+        $this->db->insert('map_tiles', ['name' => self::WANG_TILE, 'coords_id' => $coordsId]);
+        $cells->groundChanged($coordsId);
+        $this->assertSame([$grass, $sand], $this->biomesAt(1, 0), 'painted: the cell joins both biomes');
+
+        $this->db->delete('map_tiles', ['coords_id' => $coordsId]);
+        $cells->groundChanged($coordsId);
+        $this->assertSame([$sand], $this->biomesAt(1, 0), 'erased: back to the top biome');
+    }
+
     public function testRebuildReplacesTheOldCells(): void
     {
         $id = $this->biome('Forêt', [[0, 0], [2, 0], [2, 2], [0, 2]], 0);

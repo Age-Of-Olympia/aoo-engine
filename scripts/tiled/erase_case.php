@@ -10,4 +10,7 @@ foreach ($notices as $notice) {
     echo '<div class="erase-notice">' . $notice . '</div>';
 }
 
+if ($type === 'map_tiles') {
+    (new \App\Service\Map\BiomeCellService())->groundChanged((int) $coordsId);
+}
 \App\Service\Map\BoardChanges::cellId((int) $coordsId);
