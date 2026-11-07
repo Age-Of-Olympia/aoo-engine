@@ -126,6 +126,41 @@ class BiomeBrushServiceTest extends TestCase
         $this->assertNotContains($gone, $painted['tiles']);
     }
 
+    public function testOneClickPaintsTheWholeBiomeButNotTheOneOnTop(): void
+    {
+        $clicked = $this->coordsIdOn(self::PLAN, 3, 4);
+        $this->db->insert('map_tiles', ['name' => 'test_brush_old', 'coords_id' => $clicked, 'foreground' => 0]);
+        $admin = new BiomeAdminService($this->db);
+        $admin->saveBiome(0, self::PLAN, $this->typeId, 'Clairière', '10,10 12,10 12,12 10,12', 1);
+        $brush = new BiomeBrushService($this->db);
+
+        $painted = $brush->paintBiome($clicked);
+        $brush->paintBiome($clicked);
+
+        $this->assertSame('Prairie', $painted['biome']);
+        $this->assertCount(400 - 4, $painted['coords'], 'every cell of the biome, except the 4 of the glade on top');
+        $expected = $brush->paint($this->biomeId, self::AREA)['tiles'];
+        $grounds = $this->db->fetchAllAssociative(
+            "SELECT c.x, c.y, t.name FROM map_tiles t JOIN coords c ON c.id = t.coords_id WHERE c.plan = ? AND t.foreground = 0",
+            [self::PLAN]
+        );
+        $this->assertCount(400 - 4, $grounds, 'one ground row per cell, even painted twice');
+        foreach ($grounds as $ground) {
+            $this->assertSame($expected[$ground['x'] . ',' . $ground['y']], $ground['name']);
+        }
+        $this->assertNull($brush->paintBiome($this->coordsIdOn(self::PLAN, 40, 40))['biome'], 'no biome, nothing painted');
+    }
+
+    public function testANewSeedDrawsOtherPatches(): void
+    {
+        $brush = new BiomeBrushService($this->db);
+        $before = $brush->paint($this->biomeId, self::AREA)['tiles'];
+
+        $brush->reseed($this->biomeId);
+
+        $this->assertNotEquals($before, $brush->paint($this->biomeId, self::AREA)['tiles']);
+    }
+
     public function testATypeWithoutGroundsCannotPaint(): void
     {
         (new BiomeAdminService($this->db))->saveGrounds($this->typeId, []);

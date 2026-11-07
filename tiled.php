@@ -567,6 +567,10 @@ try {
 
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_indestructibles.php';
 
+if (\App\Module\Modules::on(\App\Module\Module::Biomes)) {
+    include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_biome_brush.php';
+}
+
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_plants.php';
 
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_resources.php';
