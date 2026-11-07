@@ -31,7 +31,7 @@ if (!in_array($layer, $service->layers(), true)) {
 
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['asset_upload']) || isset($_POST['asset_delete'])
-        || isset($_POST['asset_rename']) || isset($_POST['asset_move'])
+        || isset($_POST['asset_rename']) || isset($_POST['asset_move']) || isset($_POST['asset_replace'])
         || isset($_POST['asset_palette_hidden']));
 if ($isStateChangingPost) {
     requireAdminPost('tile-assets.php?layer=' . urlencode($layer));
@@ -65,6 +65,11 @@ if ($isStateChangingPost) {
             }
             setFlash('success', "« {$old} » renommée en « {$new} » — "
                 . $result['rowsUpdated'] . ' case(s) de carte mises à jour.' . $notice);
+        } elseif (isset($_POST['asset_replace'])) {
+            $old = trim((string) ($_POST['name'] ?? ''));
+            $new = trim((string) ($_POST['new_name'] ?? ''));
+            $cells = $service->replace($layer, $old, $new);
+            setFlash('success', "« {$old} » remplacée par « {$new} » sur {$cells} case(s).");
         } elseif (isset($_POST['asset_move'])) {
             $name = trim((string) ($_POST['name'] ?? ''));
             $target = trim((string) ($_POST['target_layer'] ?? ''));
@@ -164,6 +169,11 @@ ob_start();
             <?php if ($inventory['entries'] === []): ?>
                 <div class="alert alert-info mb-0">Aucune image dans cette couche<code class="tech-name">img/<?= e($layer) ?>/</code>.</div>
             <?php else: ?>
+                <datalist id="tile-asset-names">
+                    <?php foreach ($inventory['entries'] as $entry): ?>
+                        <?php if (!$entry['missing']): ?><option value="<?= e($entry['name']) ?>"><?php endif; ?>
+                    <?php endforeach; ?>
+                </datalist>
                 <table class="table table-sm table-striped" data-admin-list data-page-size="50">
                     <thead><tr>
                         <th></th><th>Nom</th><th>Fichier(s)</th><th>Taille</th>
@@ -221,6 +231,21 @@ ob_start();
                                 <?php endif; ?>
                             </td>
                             <td class="text-nowrap">
+                                <?php if ($entry['usage'] > 0 && isset(\App\Service\TiledMapService::rowLayers()[$layer])): ?>
+                                    <details class="row-popover">
+                                        <summary class="btn btn-sm btn-outline-secondary"
+                                                 title="Poser une autre image sur toutes les cases qui montrent celle-ci">Remplacer</summary>
+                                        <form method="post" class="row-popover-panel d-flex gap-2"
+                                              data-confirm="Remplacer « <?= e($entry['name']) ?> » sur ses <?= $entry['usage'] ?> case(s), tous plans confondus ?">
+                                            <?= $csrf->renderTokenField() ?>
+                                            <input type="hidden" name="layer" value="<?= e($layer) ?>">
+                                            <input type="hidden" name="name" value="<?= e($entry['name']) ?>">
+                                            <input type="text" class="form-control form-control-sm" name="new_name" list="tile-asset-names"
+                                                   required placeholder="image de remplacement" style="width:11rem;">
+                                            <button type="submit" name="asset_replace" value="1" class="btn btn-sm btn-primary">OK</button>
+                                        </form>
+                                    </details>
+                                <?php endif; ?>
                                 <?php if (!$entry['missing']): ?>
                                     <details class="row-popover">
                                         <summary class="btn btn-sm btn-outline-secondary">Renommer</summary>
@@ -281,5 +306,6 @@ $content = ob_get_clean();
 echo admin_layout('Tuiles & images', $content, ['intro' => 'Les images de chaque couche de la carte et leurs problèmes'
         . ' (image à palette qui noircit les fondus, nom invalide, image posée mais absente du serveur…).'
         . ' Une image posée quelque part ou servant de fond à un plan ne peut pas être supprimée ; la renommer met à jour les cartes.'
+        . ' « Remplacer » pose une autre image sur toutes ses cases, tous plans confondus.'
         . ' « Masquée » retire l\'image des palettes de tiled et de Tiled sans toucher aux cases où elle est déjà posée.'
         . ' Les fondus se gèrent dans Transitions de terrain.']);

@@ -224,6 +224,23 @@ class TileAssetServiceTest extends TestCase
         $this->service->delete('tiles', 'caverne');
     }
 
+    public function testReplacePutsTheNewImageOnEveryCellOfTheOld(): void
+    {
+        $this->placeTileOnAMap('tuile_test_ancienne');
+        $this->placeTileOnAMap('tuile_test_ancienne');
+        $this->writeTruecolorPng('tuile_test_nouvelle');
+        $this->placedTileNames[] = 'tuile_test_nouvelle';
+
+        $this->assertSame(2, $this->service->replace('tiles', 'tuile_test_ancienne', 'tuile_test_nouvelle'));
+
+        $count = fn(string $name): int => (int) $this->link->fetchOne('SELECT COUNT(*) FROM map_tiles WHERE name = ?', [$name]);
+        $this->assertSame(0, $count('tuile_test_ancienne'));
+        $this->assertSame(2, $count('tuile_test_nouvelle'));
+
+        $this->expectExceptionMessageMatches('/Image inconnue/');
+        $this->service->replace('tiles', 'tuile_test_nouvelle', 'tuile_test_absente');
+    }
+
     public function testAPlanBackgroundIsCountedAndCannotBeDeleted(): void
     {
         $this->writeTruecolorPng('tuile_test_fond');
