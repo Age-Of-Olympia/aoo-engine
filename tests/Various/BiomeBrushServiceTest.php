@@ -151,6 +151,32 @@ class BiomeBrushServiceTest extends TestCase
         $this->assertNull($brush->paintBiome($this->coordsIdOn(self::PLAN, 40, 40))['biome'], 'no biome, nothing painted');
     }
 
+    public function testTheEdgeJoinsTheGroundAlreadyLaidNextToIt(): void
+    {
+        (new BiomeAdminService($this->db))->saveGrounds($this->typeId, [self::GRASS => 100]);
+        // Moss east of the biome, and a tile of no terrain west of it
+        foreach (range(0, 19) as $y) {
+            $this->db->insert('map_tiles', ['name' => self::MOSS, 'coords_id' => $this->coordsIdOn(self::PLAN, 20, $y), 'foreground' => 0]);
+        }
+        $this->db->insert('map_tiles', ['name' => 'test_brush_inconnu', 'coords_id' => $this->coordsIdOn(self::PLAN, -1, 5), 'foreground' => 0]);
+        $brush = new BiomeBrushService($this->db);
+
+        $painted = $brush->paintBiome($this->coordsIdOn(self::PLAN, 3, 4));
+
+        $this->assertSame([], $painted['missing']);
+        $this->assertSame(['test_brush_inconnu'], $painted['unreadable']);
+        foreach (range(0, 19) as $y) {
+            $tile = (string) $this->db->fetchOne(
+                'SELECT name FROM map_tiles WHERE coords_id = ? AND foreground = 0',
+                [$this->coordsIdOn(self::PLAN, 19, $y)]
+            );
+            [$topLeft, $topRight, $bottomRight, $bottomLeft] = $this->cornersOf[$tile];
+            $this->assertSame([self::GRASS, self::MOSS, self::MOSS, self::GRASS], [$topLeft, $topRight, $bottomRight, $bottomLeft], "edge cell 19,$y");
+        }
+        $inner = (string) $this->db->fetchOne('SELECT name FROM map_tiles WHERE coords_id = ? AND foreground = 0', [$this->coordsIdOn(self::PLAN, 10, 10)]);
+        $this->assertSame(self::GRASS, $inner, 'inside, the palette alone');
+    }
+
     public function testANewSeedDrawsOtherPatches(): void
     {
         $brush = new BiomeBrushService($this->db);

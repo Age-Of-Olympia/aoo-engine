@@ -21,8 +21,18 @@ if($_POST['type'] == 'eraser'){
             echo $painted['biome'] === null
                 ? 'aucun biome sur cette case '
                 : $painted['biome'] . ' : ' . count($painted['coords']) . ' case(s) peinte(s) ';
+            if ($painted['generated'] > 0) {
+                echo '(' . $painted['generated'] . ' transition(s) générée(s) vers les sols voisins) ';
+            }
             foreach ($painted['missing'] as $corners) {
                 echo '(transition manquante : ' . $corners . ') ';
+            }
+            foreach ($painted['errors'] as $error) {
+                echo '(génération impossible : ' . $error . ') ';
+            }
+            if ($painted['unreadable'] !== []) {
+                echo '(bord non raccordé : ' . implode(', ', $painted['unreadable'])
+                    . ' n\'appartient à aucun terrain, classez-le dans Transitions de terrain) ';
             }
         } catch (\InvalidArgumentException $e) {
             echo 'refusé : ' . $e->getMessage() . ' ';

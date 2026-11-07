@@ -34,7 +34,7 @@ final class BiomeBrushService
 
     private Connection $db;
 
-    /** @var array{positions: array<string, int>, plain: array<string, list<string>>, wang: array<string, string>}|null */
+    /** @var array{positions: array<string, int>, plain: array<string, list<string>>, wang: array<string, string>, corners: array<string, list<string>>}|null */
     private ?array $tiles = null;
 
     public function __construct(?Connection $db = null)
@@ -47,9 +47,10 @@ final class BiomeBrushService
      * covers (the cell then takes the plain tile of its top-left terrain).
      *
      * @param array{xMin: int, xMax: int, yMin: int, yMax: int} $area cells included
+     * @param array<string, string> $fixedCorners "x,y" corner => terrain decided beforehand (the ground across the edge)
      * @return array{tiles: array<string, string>, missing: list<string>} tiles keyed "x,y"
      */
-    public function paint(int $biomeId, array $area): array
+    public function paint(int $biomeId, array $area, array $fixedCorners = []): array
     {
         $settings = $this->settings($biomeId);
         $noise = new GroundNoise($settings['seed']);
@@ -61,6 +62,10 @@ final class BiomeBrushService
         $corner = [];
         for ($cx = $area['xMin']; $cx <= $area['xMax'] + 1; $cx++) {
             for ($cy = $area['yMin']; $cy <= $area['yMax'] + 1; $cy++) {
+                if (isset($fixedCorners[$cx . ',' . $cy])) {
+                    $corner[$cx][$cy] = $fixedCorners[$cx . ',' . $cy];
+                    continue;
+                }
                 $value = $noise->at($cx / $settings['scale'], $cy / $settings['scale']);
                 $index = 0;
                 while ($index < count($thresholds) && $value >= $thresholds[$index]) {
@@ -97,7 +102,12 @@ final class BiomeBrushService
      * cell where that biome is on top gets its ground tile, in one batch,
      * then the biomes' cells and the boards around are refreshed once.
      *
-     * @return array{biome: ?string, coords: list<int>, missing: list<string>} biome null: the cell has none
+     * At the biome's edge, the corners it shares with the ground already
+     * laid next to it keep that ground's terrains: the edge cells take a
+     * transition towards the neighbour, generated when the pair lacks it.
+     *
+     * @return array{biome: ?string, coords: list<int>, missing: list<string>, unreadable: list<string>, generated: int, errors: list<string>}
+     *     biome null: the cell has none; unreadable: neighbouring tiles classified in no terrain
      */
     public function paintBiome(int $coordsId): array
     {
@@ -111,7 +121,7 @@ final class BiomeBrushService
             [$coordsId]
         );
         if ($biome === false) {
-            return ['biome' => null, 'coords' => [], 'missing' => []];
+            return ['biome' => null, 'coords' => [], 'missing' => [], 'unreadable' => [], 'generated' => 0, 'errors' => []];
         }
 
         $cells = $this->topCells((int) $biome['id']);
@@ -119,8 +129,31 @@ final class BiomeBrushService
             'xMin' => min(array_column($cells, 0)), 'xMax' => max(array_column($cells, 0)),
             'yMin' => min(array_column($cells, 1)), 'yMax' => max(array_column($cells, 1)),
         ];
-        $painted = $this->paint((int) $biome['id'], $area);
         [$plan, $z] = [(string) $biome['plan'], (int) $biome['z']];
+        $edge = $this->edgeCorners($plan, $z, $cells, $area);
+        $painted = $this->paint((int) $biome['id'], $area, $edge['fixed']);
+
+        // Joins towards the neighbours can need transitions no palette asked for
+        $generated = 0;
+        $errors = [];
+        if ($painted['missing'] !== []) {
+            $transitions = new TerrainTransitionService();
+            foreach ($painted['missing'] as $combination) {
+                $terrains = array_values(array_unique(explode(' / ', $combination)));
+                if (count($terrains) > BiomeAdminService::MAX_GROUNDS) {
+                    continue;
+                }
+                try {
+                    $generated += count($transitions->generateForTerrains($terrains));
+                } catch (\RuntimeException $e) {
+                    $errors[$e->getMessage()] = true;
+                }
+            }
+            if ($generated > 0) {
+                $this->tiles = null;
+                $painted = $this->paint((int) $biome['id'], $area, $edge['fixed']);
+            }
+        }
 
         $coordsIds = $this->coordsIds($plan, $z, $cells);
         $rows = [];
@@ -147,7 +180,58 @@ final class BiomeBrushService
         (new BiomeCellService($this->db))->rebuild((int) $biome['plan_id'], $area);
         BoardChanges::cells($plan, $z, $area['xMin'], $area['xMax'], $area['yMin'], $area['yMax']);
 
-        return ['biome' => (string) $biome['name'], 'coords' => array_keys($rows), 'missing' => $painted['missing']];
+        return [
+            'biome' => (string) $biome['name'],
+            'coords' => array_keys($rows),
+            'missing' => $painted['missing'],
+            'unreadable' => $edge['unreadable'],
+            'generated' => $generated,
+            'errors' => array_keys($errors),
+        ];
+    }
+
+    /**
+     * The terrains of the corners the biome shares with the ground laid
+     * just outside it, on that level, read from the tiles there.
+     *
+     * @param list<array{int, int}> $cells the biome's cells
+     * @param array{xMin: int, xMax: int, yMin: int, yMax: int} $area their rectangle
+     * @return array{fixed: array<string, string>, unreadable: list<string>} fixed: "x,y" corner => terrain
+     */
+    private function edgeCorners(string $plan, int $z, array $cells, array $area): array
+    {
+        $inside = array_flip(array_map(static fn (array $cell): string => $cell[0] . ',' . $cell[1], $cells));
+        $tiles = $this->tiles ??= $this->loadTiles();
+
+        $grounds = [];
+        foreach ($this->db->fetchAllAssociative(
+            'SELECT c.x, c.y, t.name FROM coords c JOIN map_tiles t ON t.coords_id = c.id AND t.foreground = 0
+             WHERE c.plan = ? AND c.z = ? AND c.x BETWEEN ? AND ? AND c.y BETWEEN ? AND ?
+             ORDER BY t.id',
+            [$plan, $z, $area['xMin'] - 1, $area['xMax'] + 1, $area['yMin'] - 1, $area['yMax'] + 1]
+        ) as $row) {
+            $key = $row['x'] . ',' . $row['y'];
+            if (!isset($inside[$key])) {
+                // The last row laid is the one drawn
+                $grounds[$key] = [(int) $row['x'], (int) $row['y'], (string) $row['name']];
+            }
+        }
+
+        $fixed = [];
+        $unreadable = [];
+        foreach ($grounds as [$x, $y, $name]) {
+            $four = $tiles['corners'][$name] ?? null;
+            if ($four === null) {
+                $unreadable[$name] = true;
+                continue;
+            }
+            // TL, TR, BR, BL of cell (x, y): the game's y grows northwards
+            foreach ([[$x, $y + 1], [$x + 1, $y + 1], [$x + 1, $y], [$x, $y]] as $i => [$cx, $cy]) {
+                $fixed[$cx . ',' . $cy] ??= $four[$i];
+            }
+        }
+
+        return ['fixed' => $fixed, 'unreadable' => array_keys($unreadable)];
     }
 
     /**
@@ -267,28 +351,36 @@ final class BiomeBrushService
      * The ground tiles by terrain (plain tiles, several when a terrain has
      * variants) and by corners (wang transitions).
      *
-     * @return array{positions: array<string, int>, plain: array<string, list<string>>, wang: array<string, string>}
+     * @return array{positions: array<string, int>, plain: array<string, list<string>>, wang: array<string, string>, corners: array<string, list<string>>}
+     *     corners: the terrains at TL, TR, BR, BL of every classified tile
      */
     private function loadTiles(): array
     {
         $layer = TerrainTransitionService::GROUND_LAYER;
         $positions = array_map('intval', $this->db->fetchAllKeyValue('SELECT name, position FROM terrain_colors WHERE layer = ?', [$layer]));
+        $terrainAt = array_flip($positions);
         $plain = [];
         $wang = [];
+        $corners = [];
         foreach ($this->db->fetchAllAssociative(
             'SELECT name, color, wang_id FROM terrain_tiles WHERE layer = ? ORDER BY name',
             [$layer]
         ) as $row) {
+            $name = (string) $row['name'];
             if ($row['wang_id'] === null) {
-                $plain[(string) $row['color']][] = (string) $row['name'];
+                $plain[(string) $row['color']][] = $name;
+                $corners[$name] = array_fill(0, 4, (string) $row['color']);
                 continue;
             }
             $wangId = array_map('intval', explode(',', (string) $row['wang_id']));
-            $corners = array_map(static fn (int $slot): int => $wangId[$slot], TerrainTransitionService::WANG_POSITIONS);
-            $wang[implode(',', $corners)] ??= (string) $row['name'];
+            $slots = array_map(static fn (int $slot): int => $wangId[$slot], TerrainTransitionService::WANG_POSITIONS);
+            $wang[implode(',', $slots)] ??= $name;
+            if (!in_array(0, $slots, true)) {
+                $corners[$name] = array_map(static fn (int $position): string => $terrainAt[$position] ?? '', $slots);
+            }
         }
 
-        return ['positions' => $positions, 'plain' => $plain, 'wang' => $wang];
+        return ['positions' => $positions, 'plain' => $plain, 'wang' => $wang, 'corners' => $corners];
     }
 
     /**
