@@ -257,6 +257,7 @@ class ActionExecutorService
                 $this->applyActionOutcome($outcomeEntity);
             }
             $this->applyEquippedItemsEffects('miss');
+            $this->wearWeaponOnMiss();
         }
 
         // Inherited type-level instructions (data-driven defaults for the action
@@ -377,6 +378,36 @@ class ActionExecutorService
     {
         $result = $outcomeInstruction->execute($this->actor, $this->target, $this->conditionObject);
         array_push($this->outcomeResultsArray, $result);
+    }
+
+    /**
+     * A missed blow wears the weapon as a landed one does: a hit wears it in
+     * LifeLossOutcomeInstruction, so the miss of an action that deals that
+     * damage wears it here. Protections only wear when the blow lands.
+     */
+    private function wearWeaponOnMiss(): void
+    {
+        if ($this->simulationMode || $this->actor->isSimulated() || !$this->hitDealsDamage()) {
+            return;
+        }
+
+        $recap = (new WearService())->wearWeaponOnAttack((int) $this->actor->id);
+        if ($recap !== []) {
+            $this->outcomeResultsArray[] = new OutcomeResult(true, outcomeSuccessMessages: $recap, outcomeFailureMessages: []);
+        }
+    }
+
+    private function hitDealsDamage(): bool
+    {
+        foreach ($this->action->getOnSuccessOutcomes() as $outcomeEntity) {
+            foreach ($outcomeEntity->getInstructions() as $instruction) {
+                if ($instruction instanceof \App\Action\OutcomeInstruction\LifeLossOutcomeInstruction) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
