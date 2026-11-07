@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Service\Map\BiomeCellService;
 use Classes\Db;
 use Classes\View;
 use RuntimeException;
@@ -574,6 +575,10 @@ class TiledMapService
             // Unlike map_*, the final state may differ from the rows received
             // (refused placements): re-read the actual entities
             $postLayers[self::BUILDINGS_LAYER] = $this->fetchBuildingRows($plan, $z);
+        }
+
+        if ($z === 0 && array_key_exists('tiles', $incomingLayers)) {
+            (new BiomeCellService())->planGroundChanged($plan);
         }
 
         return [

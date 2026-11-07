@@ -2,6 +2,7 @@
 
 namespace App\Service\ImportExport;
 
+use App\Service\Map\BiomeCellService;
 use App\Factory\EntityManagerFactory;
 use App\Service\PlanConfigService;
 use App\Service\TiledMapService;
@@ -147,6 +148,7 @@ final class PlanImportRun
             (new PlanConfigService())->replace($this->plan, $config);
         }
 
+        (new BiomeCellService($this->conn))->planGroundChanged($this->plan);
         $this->progress->clear($this->fingerprint, $this->plan);
         $this->conn->executeStatement(
             'DELETE FROM plan_import_steps WHERE fingerprint = ? AND plan = ?',
