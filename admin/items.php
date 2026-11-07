@@ -37,7 +37,6 @@ const ITEM_WEAR_PROFILE_LABELS = [
 /** Libellés UI des flags — les CLÉS viennent de Item::FLAG_KEYS. */
 const ITEM_FLAG_LABELS = [
     'cursed' => 'Maudit (ne se lâche ni se déséquipe)',
-    'enchanted' => 'Enchanté (ne casse pas)',
     'vorpal' => 'Vorpal',
     'is_bankable' => 'Stockable en banque',
     'is_deprecated' => 'Déprécié',
@@ -113,7 +112,6 @@ function item_flag_badges(object $row): string
     $badges = [];
     foreach ([
         'cursed' => ['Maudit', 'danger'],
-        'enchanted' => ['Enchanté', 'info'],
         'vorpal' => ['Vorpal', 'info'],
         'magique' => ['Magique', 'success'],
         'is_deprecated' => ['Déprécié', 'secondary'],

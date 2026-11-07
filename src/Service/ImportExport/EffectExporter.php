@@ -13,7 +13,7 @@ use InvalidArgumentException;
  * effect `name` (referenced by players_effects and action parameters).
  * The payload carries everything the effect editor manages : identité
  * (label, description, icône), drapeaux (caché, marqueur), buff/debuff,
- * la liste des effets annulés et la corruption (chance + matériaux).
+ * et la liste des effets annulés.
  */
 final class EffectExporter implements ObjectExporterInterface
 {
@@ -77,8 +77,6 @@ final class EffectExporter implements ObjectExporterInterface
             'blocksTrading'         => $entity->blocksTrading(),
             'stackRefreshDuration'  => $entity->isStackRefreshDuration(),
             'controls'              => $entity->getControlNames(),
-            'corruptionBreakChance' => $entity->getCorruptionBreakChance(),
-            'corruptionMaterials'   => $entity->getCorruptionMaterialNames(),
         ];
     }
 }

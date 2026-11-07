@@ -145,8 +145,8 @@ define('DAYS_OF_WEEK', array(
  * effects, elements
  *
  * Le catalogue des effets (icônes, libellés, effets cachés, buffs/debuffs,
- * cycle élémentaire, corruptions et matériaux corruptibles) vit en base :
- * tables `effects` et `effect_corruption_materials`, servies par
+ * cycle élémentaire) vit en base : tables `effects` et `effect_controls`,
+ * servies par
  * App\Service\EffectService et éditées via admin/effects.php.
  */
 
@@ -170,10 +170,7 @@ define('ITEM_DROP', 10); // 10% de drop sur les désarmements et loots
 
 define('ITEM_LIMIT', 3);
 
-/* ITEM_PLANTS, ITEM_CORRUPTIONS et ITEM_CORRUPT_BREAKCHANCES : en base (effects.corruption_break_chance, effect_corruption_materials). */
-
 define('ITEMS_OPT', array(
-    'enchanted'=>'*',
     'vorpal'=>'~',
     'cursed'=>'',
     'blessed_by_id'=>'+',

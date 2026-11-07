@@ -14,7 +14,7 @@ use Doctrine\DBAL\Connection;
  * Appelé par la migration Version20260717180000_ItemsFromJson ; ses
  * listes de colonnes servent aussi à l'admin et aux bundles.
  *
- * Ne touche JAMAIS : les flags déjà en base (cursed, enchanted, spell…
+ * Ne touche JAMAIS : les flags déjà en base (cursed, vorpal, spell…
  * les copies JSON sont des instantanés périmés), ni les lignes déjà
  * marquées stats_in_db (réglages admin préservés).
  */

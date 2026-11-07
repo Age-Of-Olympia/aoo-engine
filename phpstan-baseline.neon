@@ -691,12 +691,6 @@ parameters:
 			path: src/Action/Condition/ForbidIfHasEffectCondition.php
 
 		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Action/Condition/ForbidOnEquipedObjectStatusCondition.php
-
-		-
 			message: '#^Method App\\Action\\Condition\\MeleeComputeCondition\:\:computeTarget\(\) has parameter \$conditionObject with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1

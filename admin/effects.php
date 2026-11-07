@@ -6,10 +6,10 @@
  *   - list (default): the whole catalog with icon, flags and modifiers.
  *   - edit / new    : one form for everything an effect defines — identity
  *                     (label, description, icône), comportement (caché,
- *                     buff/debuff de carac, contrôle élémentaire), corruption
- *                     (chance de casse + matériaux), marqueur de carte.
+ *                     buff/debuff de carac, contrôle élémentaire), marqueur
+ *                     de carte.
  *
- * Effects were migrated from the EFFECTS_* / ELE_* / ITEM_CORRUPT* constants
+ * Effects were migrated from the EFFECTS_* / ELE_* constants
  * to the DB (Version20260719120000_EffectsFromConstants); this page is the
  * editing surface that replaces hand-editing config/constants.php. Delete is
  * guarded: refused while any character still carries the effect
@@ -33,9 +33,6 @@ function effect_flag_badges(Effect $effect): string
     $badges = [];
     if ($effect->isHidden()) {
         $badges[] = '<span class="badge badge-secondary" title="Effet temporaire : retiré au nouveau tour ou à l\'usage, jamais affiché sur les fiches">Caché</span>';
-    }
-    if ($effect->getCorruptionBreakChance() !== null) {
-        $badges[] = '<span class="badge badge-warning" title="Corruption : augmente le risque de casse des objets faits de ses matériaux">Corruption</span>';
     }
 
     return implode(' ', $badges);
@@ -202,9 +199,6 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
         }
     }
 
-    $breakChance = $isEdit ? $effect->getCorruptionBreakChance() : null;
-    $materials = $isEdit ? implode("\n", $effect->getCorruptionMaterialNames()) : '';
-
     $identite = '<div class="row">'
         . $nameField
         . formField('Nom affiché', formInput('label', $isEdit ? $effect->getLabel() : '', 'required'), 'form-group col-md-3')
@@ -327,20 +321,6 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
             'form-group col-md-3')
         . '</div>';
 
-    $corruption = '<div class="row">'
-        . formField('Chance de casse supplémentaire (%)',
-            formInput('corruption_break_chance', $breakChance === null ? '' : (string) $breakChance,
-                'type="number" min="0" max="100"'),
-            'form-group col-md-4',
-            'Vide = pas de corruption. S\'applique aux objets fabriqués avec les matériaux ci-contre'
-            . ' quand le porteur attaque ou défend.')
-        . formField('Matériaux corruptibles (un par ligne)',
-            formTextarea('corruption_materials', $materials, 4, 'spellcheck="false"'),
-            'form-group col-md-8',
-            'Noms d\'objets-matériaux (bronze, cuir…) — un matériau corrompu n\'est pas restitué'
-            . ' quand l\'objet casse.')
-        . '</div>';
-
     return '<form method="post" action="/admin/effects-save.php?action=' . $action . '">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
         . formCard('Identité', $identite)
@@ -349,7 +329,6 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
         . formCard('Défense (posture)', $posture)
         . formCard('Présence (vol, coûts, échanges)', $auras)
         . formCard('Au nouveau tour', $tour)
-        . formCard('Corruption', $corruption)
         . '<button type="submit" class="btn btn-primary">' . ($isEdit ? 'Enregistrer' : 'Créer l\'effet') . '</button>'
         . '</form>'
         . ($isEdit ? effect_render_delete_zone($effect, $csrfToken) : '');

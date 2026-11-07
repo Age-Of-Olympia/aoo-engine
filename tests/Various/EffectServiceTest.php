@@ -7,9 +7,8 @@ use PHPUnit\Framework\TestCase;
 use Tests\Support\LegacyBootstrapTrait;
 
 /**
- * DB-backed EffectService (effects / effect_corruption_materials), the
- * replacement for the EFFECTS_* / ELE_* / ITEM_CORRUPT* constants of
- * config/constants.php.
+ * DB-backed EffectService (effects / effect_controls), the replacement for
+ * the EFFECTS_* / ELE_* constants of config/constants.php.
  *
  * Pins the invariants those constants carried, on the migration seed:
  *  - the master-list contract: exists() knows a seeded effect, refuses an
@@ -18,8 +17,6 @@ use Tests\Support\LegacyBootstrapTrait;
  *  - the buff/debuff carac maps (ex-ELE_DEBUFFS / ELE_BUFFS);
  *  - the elemental cycle and its COMPUTED inverse (ex-ELE_CONTROLS /
  *    ELE_IS_CONTROLED);
- *  - the corruption maps under the normalized 'corruption_des_plantes'
- *    key (ex-ITEM_CORRUPTIONS, fixed spelling);
  *  - mark_turns: what an effect adds to the footsteps of its bearer.
  *
  * Skips cleanly when the DB is unreachable (same convention as

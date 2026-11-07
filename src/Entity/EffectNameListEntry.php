@@ -4,9 +4,8 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * One named entry of an effect's ordered name list — the corruption
- * materials and the controlled-effects list share this shape (même
- * patron que RaceNameListEntry).
+ * One named entry of an effect's ordered name list — the
+ * controlled-effects list (même patron que RaceNameListEntry).
  */
 #[ORM\MappedSuperclass]
 abstract class EffectNameListEntry
