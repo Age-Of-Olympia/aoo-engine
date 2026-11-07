@@ -26,6 +26,11 @@ foreach(File::scan_dir('img/walls/', $without=".png") as $e){
         continue;
     }
 
+    if(isset($hiddenTiles['resources'][$e])){
+
+        continue;
+    }
+
     // Only the types still laid as resources on this plan are offered
     if(!ResourcePaletteService::isAuthorable($e, $player->coords->plan)){
 
@@ -51,7 +56,7 @@ foreach(File::scan_dir('img/walls/', $without=".png") as $e){
    image stock, resolved like a building's. */
 foreach(StructureTypeService::names() as $name){
 
-    if(isset($shown[$name]) || !StructureTypeService::isHarvestable($name)){
+    if(isset($shown[$name]) || isset($hiddenTiles['resources'][$name]) || !StructureTypeService::isHarvestable($name)){
 
         continue;
     }

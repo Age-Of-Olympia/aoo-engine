@@ -253,6 +253,22 @@ class TiledMapService
             fn(array $composite) => ResourcePaletteService::isAuthorable($composite['name'], $plan)
         ));
 
+        // Images hidden in admin → Tuiles & images leave the palette only:
+        // $images keeps them, so a pulled plan where they are placed still renders.
+        $palette = new TilePaletteVisibilityService();
+        foreach (array_keys($catalog) as $layer) {
+            $catalog[$layer] = $palette->filter($layer, $catalog[$layer]);
+        }
+        foreach ($composites as $layer => $list) {
+            $hidden = $palette->hiddenNames($layer);
+            if ($hidden !== []) {
+                $composites[$layer] = array_values(array_filter(
+                    $list,
+                    static fn(array $composite) => !isset($hidden[$composite['name']])
+                ));
+            }
+        }
+
         // Buildings palette: the structure type catalog (same entries as
         // admin → Bâtiments), sprite resolved as at render time
         $catalog[self::BUILDINGS_LAYER] = [];

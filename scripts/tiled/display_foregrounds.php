@@ -16,6 +16,9 @@ foreach(File::scan_dir('img/foregrounds/') as $file){
         continue;
     }
     $e = pathinfo($file, PATHINFO_FILENAME);
+    if(isset($hiddenTiles['foregrounds'][$e])){
+        continue;
+    }
     $url = 'img/foregrounds/'. $file;
 
     if(str_starts_with($e, 'unique_')){

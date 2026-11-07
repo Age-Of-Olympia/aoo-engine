@@ -11,6 +11,11 @@ echo '
 
 foreach(File::scan_dir('img/'. $layer .'/') as $e){
 
+    if(isset($hiddenTiles[$layer][explode('.', $e)[0]])){
+
+        continue;
+    }
+
     echo '<img
         class="map select-name"
         data-type="'. $layer .'"

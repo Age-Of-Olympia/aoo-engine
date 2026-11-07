@@ -10,6 +10,12 @@ echo '
 $elementImages = new \App\Service\MapElementService();
 foreach($elementImages->placeableNames() as $name){
 
+    if(isset($hiddenTiles['elements'][$name])){
+
+        continue;
+    }
+
+
     // One image per name, the one the board draws
     echo '<img
         class="map ele"

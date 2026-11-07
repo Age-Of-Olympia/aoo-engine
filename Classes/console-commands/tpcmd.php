@@ -115,9 +115,7 @@ EOT);
         // Un plan inconnu créerait des coords fantômes au premier go()
         // (plans « créés par erreur » en base) : refuser la faute de frappe
         // plutôt que d'inventer le plan.
-        $db = new Db();
-        $res = $db->exe('SELECT 1 FROM coords WHERE plan = ? LIMIT 1', $plan);
-        if (!$res->fetch_row()) {
+        if (!(new \App\Service\PlanAdminService())->planExists((string) $plan)) {
             return '<font color="red">plan inconnu : '. htmlspecialchars($plan)
                 .' — « tp list-plans » pour la liste</font>';
         }
