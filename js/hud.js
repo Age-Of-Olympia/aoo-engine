@@ -210,17 +210,23 @@
             svg.style.width = '';
             svg.style.height = '';
             svg.style.maxWidth = '';
+            map.style.width = '';
             return;
         }
 
         /* Toute la hauteur du cadre (−2px de garde d'arrondi), la
          * largeur suit le ratio carré du viewBox. En mode théâtre la
          * colonne du plateau est AUTO (dimensionnée par son contenu) :
-         * la hauteur de scène est la seule référence stable. */
-        var base = $('#hud').hasClass('hud--theater')
+         * la hauteur de scène est la seule référence stable, et le
+         * cadre garde la largeur du plateau non zoomé — sinon le
+         * damier zoomé élargit la colonne au lieu de défiler. */
+        var theater = $('#hud').hasClass('hud--theater') && !isMobileViewport();
+        var base = theater
             ? map.clientHeight
             : Math.min(map.clientWidth, map.clientHeight);
-        var side = Math.max(120, base - 2) * damierZoom;
+        var fitted = Math.max(120, base - 2);
+        var side = fitted * damierZoom;
+        map.style.width = theater ? fitted + 'px' : '';
         svg.style.width = side + 'px';
         svg.style.height = side + 'px';
         svg.style.maxWidth = 'none';
