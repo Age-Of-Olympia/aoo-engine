@@ -22,7 +22,7 @@ class Ui{
 
         echo '
         <!DOCTYPE html>
-        <html lang="fr">
+        <html lang="' . (new \App\Service\GameLanguageService())->current() . '">
             <head>
                 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -75,7 +75,7 @@ class Ui{
         echo '
                 <!-- Modal System -->
                 <link href="css/modal.css?v=20261109" rel="stylesheet">
-                <script src="js/modal.js?v=20261109"></script>
+                <script src="js/modal.js?v=20261110"></script>
 
                 <!-- Tutorial System -->
                 <link href="css/tutorial/tutorial.css?v=' . $tutorialVersion . '" rel="stylesheet">
