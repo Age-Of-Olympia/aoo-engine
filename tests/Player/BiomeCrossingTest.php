@@ -68,9 +68,16 @@ class BiomeCrossingTest extends LegacyPlayerFixtureTestCase
     {
         $walker = $this->walkerOutside();
 
-        $this->assertSame(['Vous entrez dans le bois.'], $walker->go($this->tile(0, 0, self::PLAN)));
+        $this->assertSame(
+            ['Vous entrez dans le bois.', 'Bois de test : effet Brume, jusqu\'à la sortie du biome.'],
+            $walker->go($this->tile(0, 0, self::PLAN))
+        );
         $this->assertNotEmpty($walker->have_effect(self::EFFECT));
         $this->assertSame([], $walker->go($this->tile(1, 1, self::PLAN)), 'a step inside the biome crosses nothing');
+
+        $logged = $this->link->fetchFirstColumn("SELECT text FROM players_logs WHERE player_id = ? AND type = 'biome' ORDER BY id", [(int) $walker->id]);
+        $this->assertSame('Vous entrez dans le bois.', $logged[0]);
+        $this->assertStringContainsString(self::EFFECT, $logged[1], 'the log names the effect too');
     }
 
     public function testLeavingSaysItsMessageAndEndsTheEffect(): void
@@ -78,7 +85,7 @@ class BiomeCrossingTest extends LegacyPlayerFixtureTestCase
         $walker = $this->walkerOutside();
         $walker->go($this->tile(0, 0, self::PLAN));
 
-        $this->assertSame(['Vous sortez du bois.'], $walker->go($this->tile(-1, 0, self::PLAN)));
+        $this->assertSame(['Vous sortez du bois.', 'Bois de test : l\'effet Brume prend fin.'], $walker->go($this->tile(-1, 0, self::PLAN)));
         $this->assertEmpty($walker->have_effect(self::EFFECT));
     }
 
@@ -88,8 +95,8 @@ class BiomeCrossingTest extends LegacyPlayerFixtureTestCase
             'enter_effect' => self::EFFECT, 'enter_effect_turns' => 3, 'enter_effect_ends_on_exit' => false,
         ]));
         $walker = $this->walkerOutside();
-        $walker->go($this->tile(0, 0, self::PLAN));
-        $walker->go($this->tile(-1, 0, self::PLAN));
+        $this->assertSame(['Vous entrez dans le bois.', 'Bois de test : effet Brume, pour 3 tours.'], $walker->go($this->tile(0, 0, self::PLAN)));
+        $this->assertSame(['Vous sortez du bois.'], $walker->go($this->tile(-1, 0, self::PLAN)), 'nothing ends');
 
         $this->assertNotEmpty($walker->have_effect(self::EFFECT));
     }
@@ -115,7 +122,10 @@ class BiomeCrossingTest extends LegacyPlayerFixtureTestCase
         $this->assertSame([], $moves->move((int) $walker->id, $this->coordsAt(-1, 0), BiomeEvents::None)['messages']);
         $this->assertEmpty($walker->have_effect(self::EFFECT));
 
-        $this->assertSame(['Vous entrez dans le bois.'], $moves->move((int) $walker->id, $this->coordsAt(1, 1), BiomeEvents::Arrive)['messages']);
+        $this->assertSame(
+            ['Vous entrez dans le bois.', 'Bois de test : effet Brume, jusqu\'à la sortie du biome.'],
+            $moves->move((int) $walker->id, $this->coordsAt(1, 1), BiomeEvents::Arrive)['messages']
+        );
     }
 
     public function testNothingHappensWithTheModuleOff(): void
