@@ -14,6 +14,7 @@ use App\Service\RaceService;
 use App\Service\ReputationService;
 use App\Service\ReputationSettingsService;
 use App\View\InfosView;
+use App\View\MatriculeView;
 use App\View\MenuView;
 use App\View\Forum\CookieView;
 
@@ -332,7 +333,7 @@ class TopicView
                 >
                 ';
 
-            echo '<div><a href="infos.php?targetId=' . $author->id . '">' . $author->data->name . '</a>, mat.' . $author->id . '</div>';
+            echo '<div><a href="infos.php?targetId=' . $author->id . '">' . $author->data->name . '</a>, mat.' . MatriculeView::label($author) . '</div>';
 
 
             $raceJson = $raceService->getRaceData($author->data->race);

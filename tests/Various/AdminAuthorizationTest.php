@@ -3,8 +3,10 @@
 namespace Tests\Various;
 
 use App\Service\AccountService;
+use App\Interface\HasMatriculeInterface;
 use App\Service\AdminAuthorizationService;
 use App\Service\PlayerOptionsService;
+use App\View\MatriculeView;
 use Classes\Player;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
@@ -107,5 +109,25 @@ class AdminAuthorizationTest extends LegacyPlayerFixtureTestCase
         $_SESSION['originalPlayerId'] = $_SESSION['playerId'] = $pnj;
         AdminAuthorizationService::sudo(AdminAuthorizationService::SUDO_ADMIN);
         $this->assertTrue(AdminAuthorizationService::isAdmin(), 'a PNJ login plays itself with its rights');
+    }
+
+    public function testOnlyAnAdminUnderSudoSeesTheConsoleIdBesideTheMatricule(): void
+    {
+        $admin = (int) $this->createRealPlayer('GmScribe')->id;
+        $this->link->executeStatement('INSERT INTO players_options (player_id, name) VALUES (?, ?)', [$admin, 'isAdmin']);
+        PlayerOptionsService::resetCache();
+        $_SESSION['originalPlayerId'] = $admin;
+        $_SESSION['playerId'] = -299;
+        unset($_SESSION['sudo'], $_SESSION['sudoForced']);
+
+        $pnj = new class implements HasMatriculeInterface {
+            public function getId(): int { return -299; }
+            public function getDisplayId(): int { return 42; }
+        };
+        $this->assertSame('42', MatriculeView::label($pnj), 'no sudo: the matricule players see');
+
+        AdminAuthorizationService::sudo(AdminAuthorizationService::SUDO_ADMIN);
+        $this->assertSame('42 · id -299', MatriculeView::label($pnj));
+        $this->assertSame('7', MatriculeView::forIds(7, 7), 'a real player has one number');
     }
 }

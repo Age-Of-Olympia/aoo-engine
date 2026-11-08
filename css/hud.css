@@ -123,6 +123,8 @@ body:has(#hud)::after {
     gap: 8px;
     box-sizing: border-box;
     height: 100vh;
+    /* Safari on iPad counts its toolbars in 100vh: the bottom row fell off screen */
+    height: 100dvh;
     padding: 8px;
 }
 
@@ -436,6 +438,7 @@ body:has(#hud) #load-caracs {
     z-index: 60;
     max-width: calc(100vw - 100px);
     max-height: calc(100vh - 100px);
+    max-height: calc(100dvh - 100px);
     overflow: auto;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }

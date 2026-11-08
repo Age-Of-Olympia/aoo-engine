@@ -21,8 +21,8 @@ final class TrainXpCalculator implements XpCalculatorInterface, MutatesActorsInt
         $params = array_merge(self::defaults(), $params);
 
         return [
-            'actor' => $this->sideXp($params, $actor, $target),
-            'target' => $this->sideXp($params, $target, $actor),
+            'actor' => self::sideXp($params, $actor, $target),
+            'target' => self::sideXp($params, $target, $actor),
         ];
     }
 
@@ -33,11 +33,12 @@ final class TrainXpCalculator implements XpCalculatorInterface, MutatesActorsInt
     }
 
     /**
-     * XP for $self sparring against $other.
+     * XP for $self sparring against $other. Also the XP for hitting a
+     * structure ({@see AttackXpCalculator}), with the attack rule's knobs.
      *
-     * @param array<string, int> $params
+     * @param array{base: int, energieHighBonus: int, energieAnyBonus: int, rankBonus: int} $params
      */
-    private function sideXp(array $params, ActorInterface $self, ActorInterface $other): int
+    public static function sideXp(array $params, ActorInterface $self, ActorInterface $other): int
     {
         $energie = $self->data->energie;
         $xp = $params['base'];

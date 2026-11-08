@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Enum\EntityCategory;
+use App\View\MatriculeView;
 use App\View\OnHideReloadView;
 use Classes\Db;
 use Classes\Player;
@@ -46,7 +47,7 @@ class PlayerService
     public function searchNonAnonymePlayer(string $searchKey): array
     {
         
-        $sql = 'select players.id, players.name, coalesce(races.label, players.race) as race
+        $sql = 'select players.id, players.display_id, players.name, coalesce(races.label, players.race) as race
                 from players
                 left JOIN players_options on players_options.player_id=players.id and players_options.name = "anonymeMode"
                 left JOIN races on CONVERT(races.name USING utf8mb4) = CONVERT(players.race USING utf8mb4)
@@ -62,7 +63,7 @@ class PlayerService
         // jQuery UI autocomplete items: label is shown, value (the id) tells homonyms apart.
         while($row = $res->fetch_object()){
             $list[] = [
-                'label' => $row->name . ' (' . $row->race . ', mat. ' . $row->id . ')',
+                'label' => $row->name . ' (' . $row->race . ', mat. ' . MatriculeView::forIds((int) $row->id, (int) $row->display_id ?: (int) $row->id) . ')',
                 'value' => (int) $row->id,
                 'name'  => $row->name,
             ];

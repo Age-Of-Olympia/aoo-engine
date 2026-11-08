@@ -257,7 +257,7 @@ if($annonceJson){
     // Définir la locale en français
     $jour= DAYS_OF_WEEK[getdate($annonceJson->time)["wday"]];
     /* Chip papier (css/landing.css) — l'ancien style inline noir gagnait la cascade. */
-    echo '<div id="index-changelog"><a class="install-app" href="https://age-of-olympia.net/wiki/doku.php?id=dev:changelog"><img src="img/ui/partenaires/code.gif" /> '. $annonceJson->text .' ('. $jour .' '. date('d/m/Y', $annonceJson->time) .')</a></div>';
+    echo '<div id="index-changelog"><a class="install-app" href="https://gitlab.com/age-of-olympia/aoo-engine/-/releases" target="_blank" rel="noopener"><img src="img/ui/partenaires/code.gif" /> '. $annonceJson->text .' ('. $jour .' '. date('d/m/Y', $annonceJson->time) .')</a></div>';
 }
 
 /* Le Discord du jeu vit désormais dans la carte de menu (après le

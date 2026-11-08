@@ -4,6 +4,7 @@ namespace App\View\Hud;
 
 use App\Service\PlayerEffectService;
 use App\Service\RaceService;
+use App\View\MatriculeView;
 use Classes\Player;
 use Classes\Str;
 
@@ -51,7 +52,7 @@ final class TopBarView
             . '</div>'
             . '<div class="hud-chip-id">'
             . '<a id="hud-chip-name" href="infos.php?targetId=' . $player->id . '">' . $player->data->name . '</a>'
-            . '<sup>' . $raceName . ' · Rang ' . $player->data->rank . ' · mat.' . $player->getDisplayId() . '</sup>'
+            . '<sup>' . $raceName . ' · Rang ' . $player->data->rank . ' · mat.' . MatriculeView::label($player) . '</sup>'
             . '</div>'
             . '</div>';
 

@@ -114,6 +114,7 @@ final class HudLayoutView
 
         echo '</div>';
 
+        echo '<script src="js/zoom-gestures.js?v=' . self::VERSION . '"></script>';
         echo '<script src="js/hud.js?v=' . self::VERSION . '"></script>';
     }
 }

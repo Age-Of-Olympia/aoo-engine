@@ -69,6 +69,46 @@ class XpCalculatorTest extends TestCase
         $this->assertSame(1, (new AttackXpCalculator())->calculate(AttackXpCalculator::defaults(), true, $actor, $target)['actor']);
     }
 
+    public function testAHitOnAStructureEarnsTheTrainingXpWhateverTheRankGap(): void
+    {
+        $actor = $this->player(['rank' => 5, 'energie' => 5]);
+        $wall = $this->player(['rank' => 1, 'player_type' => 'building']);
+        $calc = new AttackXpCalculator();
+
+        // base 1 + energie > 2 + energie > 0 = 3, where the rank cap gave 0.
+        $this->assertSame(['actor' => 3, 'target' => 0], $calc->calculate(AttackXpCalculator::defaults(), true, $actor, $wall));
+        // A miss earns nothing, and the structure never earns.
+        $this->assertSame(['actor' => 0, 'target' => 0], $calc->calculate(AttackXpCalculator::defaults(), false, $actor, $wall));
+
+        $tired = $this->player(['rank' => 5, 'energie' => 0]);
+        $tree = $this->player(['rank' => 1, 'player_type' => 'resource']);
+        $this->assertSame(1, $calc->calculate(AttackXpCalculator::defaults(), true, $tired, $tree)['actor']);
+    }
+
+    public function testAStructureRankedAboveTheAttackerAddsTheRankBonus(): void
+    {
+        $actor = $this->player(['rank' => 2, 'energie' => 5]);
+        $keep = $this->player(['rank' => 4, 'player_type' => 'building']);
+
+        $this->assertSame(4, (new AttackXpCalculator())->calculate(AttackXpCalculator::defaults(), true, $actor, $keep)['actor']);
+    }
+
+    public function testOnlyASuccessfulHitOnAStructureSpendsOneEnergie(): void
+    {
+        $calc = new AttackXpCalculator();
+        $wall = $this->player(['player_type' => 'building']);
+        $foe = $this->player(['player_type' => 'real']);
+
+        $hitter = $this->player([]);
+        $hitter->expects($this->once())->method('putEnergie')->with(-1);
+        $calc->applyMutations(AttackXpCalculator::defaults(), true, $hitter, $wall);
+
+        $other = $this->player([]);
+        $other->expects($this->never())->method('putEnergie');
+        $calc->applyMutations(AttackXpCalculator::defaults(), false, $other, $wall);
+        $calc->applyMutations(AttackXpCalculator::defaults(), true, $other, $foe);
+    }
+
     public function testStealIsCappedAndGivesTargetFailOnAMiss(): void
     {
         $actor = $this->player([]);

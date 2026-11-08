@@ -2,6 +2,7 @@
 
 use App\Service\PlayerService;
 use App\Service\RaceService;
+use App\View\MatriculeView;
 use App\View\QuestsView;
 use Classes\Log;
 use Classes\Str;
@@ -155,7 +156,7 @@ echo '
                 </td>
             <td class="log-td" style="--race-bg: '. ($actorRaceJson->bgColor ?? '') .'; --race-fg: '. ($actorRaceJson->color ?? '') .';">
                 <span class="log-actor">'. $actor->data->name .'<br />
-                (<a href="infos.php?targetId='. $actor->id .'">mat.'. $actor->getDisplayId() .'</a>)</span>
+                (<a href="infos.php?targetId='. $actor->id .'">mat.'. MatriculeView::label($actor) .'</a>)</span>
             </td>
             ';
 
@@ -164,7 +165,7 @@ echo '
                 echo '
                 <td class="log-td" style="--race-bg: '. ($targetRaceJson->bgColor ?? '') .'; --race-fg: '. ($targetRaceJson->color ?? '') .';">
                     <span class="log-actor">'. $target->data->name .'<br />
-                    (<a href="infos.php?targetId='. $target->id .'">mat.'. $target->getDisplayId() .'</a>)</span>
+                    (<a href="infos.php?targetId='. $target->id .'">mat.'. MatriculeView::label($target) .'</a>)</span>
                 </td>
                 ';
             }

@@ -1,3 +1,13 @@
+/* The board after an edit, at the same scroll: the new board has the same
+   size (zoom included, tiled.php), so the view does not jump */
+function replaceBoard(viewHtml){
+  var container = document.getElementById('map-view-container');
+  var left = container.scrollLeft, top = container.scrollTop;
+  $(container).html(viewHtml);
+  container.scrollLeft = left;
+  container.scrollTop = top;
+}
+
 function selectPreviousTool($customCursor){
   let selectedTool = getParameterByName('selectedTool');
 
@@ -215,7 +225,7 @@ $(document).on("click", ".delete-btn", function () {
           deleteData.force = 1;
           $.post('tiled.php', deleteData, function(){
             $.get('tiled.php', {'view_only': 1}, function(viewHtml){
-              $('#map-view-container').html(viewHtml);
+              replaceBoard(viewHtml);
             });
           });
         });
@@ -227,7 +237,7 @@ $(document).on("click", ".delete-btn", function () {
         url: 'tiled.php',
         data: {'view_only': 1},
         success: function(viewHtml) {
-          $('#map-view-container').html(viewHtml);
+          replaceBoard(viewHtml);
           // Close the modal
           const infoModal = document.getElementById('tile-info');
           if(infoModal) {
@@ -447,7 +457,7 @@ $(document).ready(function(){
                 'selectedParams': params
               },
               success: function(viewHtml) {
-                $('#map-view-container').html(viewHtml);
+                replaceBoard(viewHtml);
 
                 // Reselect the tool after map reload
                 $('.map').filter(function() {

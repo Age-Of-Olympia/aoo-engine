@@ -124,7 +124,7 @@ $biomeCoverage = (new \App\Service\Map\BiomeCellService())->coverage((string) $p
     'yMin' => (int) $player->coords->y - $biomeReach, 'yMax' => (int) $player->coords->y + $biomeReach,
 ]);
 $data .= '<script>window.tiledBiomes = ' . json_encode($biomeCoverage, JSON_HEX_TAG | JSON_HEX_APOS)
-    . '; if (window.paintBiomes) { window.paintBiomes(); }</script>';
+    . '; if (window.paintBiomes) { window.paintBiomes(); } if (window.applyTiledZoom) { window.applyTiledZoom(); }</script>';
 
 // View-only mode: return just the map view HTML for AJAX refresh
 if(!empty($_GET['view_only'])){
@@ -221,6 +221,11 @@ echo '
         padding: 10px;
         box-sizing: border-box;
         background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* The editor container scrolls a zoomed board, not the inner #view */
+    #map-view-container #view {
+        overflow: visible;
     }
 
     /* Tool palette - fixed right sidebar */
@@ -523,6 +528,8 @@ echo '
 <div class="top-toolbar">
     <div class="back-button">
         <a href="index.php"><button>← Retour</button></a>
+        <button id="tiled-zoom-in" type="button" title="Zoomer (Ctrl + molette)" aria-label="Zoomer">+</button>
+        <button id="tiled-zoom-out" type="button" title="Dézoomer (Ctrl + molette)" aria-label="Dézoomer" disabled>-</button>
         <button id="toggle-blocked-tiles" type="button" title="Afficher les cases bloquantes (murs, joueurs, déclencheurs « interdit »)">⛔ Cases bloquantes</button>
         '. (\App\Module\Modules::on(\App\Module\Module::Biomes)
             ? '<button id="toggle-biomes" type="button" title="Colorer chaque case selon son biome (celui du dessus là où plusieurs se chevauchent ; une case de transition, rayée, appartient à chacun de ses biomes)">🗺️ Biomes</button>'
@@ -650,7 +657,49 @@ $modalView->displayModal('tile-info','info-display');
 
 <script src="js/admin-tools.js?v=20260715"></script>
 <script src="js/blocked-tiles.js?v=20260727"></script>
-<script src="js/tiled.js?v=20260918"></script>
+<script src="js/tiled.js?v=20261108"></script>
+<script src="js/zoom-gestures.js?v=<?= \App\View\Hud\HudLayoutView::VERSION ?>"></script>
+<script>
+/* Zoom of the board, as on the game board: the buttons and Ctrl+wheel or
+   pinch (js/zoom-gestures.js). Zoom 1 is the board's own fit; beyond, the
+   SVG gets an explicit size and the container scrolls, the point at its
+   centre staying there. Applied again after each AJAX refresh of the board. */
+document.addEventListener("DOMContentLoaded", function() {
+    var container = document.getElementById("map-view-container");
+    var ZOOM_STEP = 1.25;
+    var ZOOM_MAX = 4;
+    var zoom = 1;
+
+    window.applyTiledZoom = function() {
+        var svg = document.getElementById("svg-view");
+        if (!svg) return;
+        /* Zoom 1 fits the view's width, at most the board's own size; computed
+           rather than measured, so the scroll stays put through a refresh */
+        var viewBox = svg.viewBox.baseVal;
+        var fitted = Math.min(document.getElementById("view").clientWidth, viewBox.width);
+        svg.style.width = zoom > 1 ? fitted * zoom + "px" : "";
+        svg.style.height = zoom > 1 ? fitted * zoom * viewBox.height / viewBox.width + "px" : "";
+        svg.style.maxWidth = zoom > 1 ? "none" : "";
+        document.getElementById("tiled-zoom-in").disabled = zoom >= ZOOM_MAX;
+        document.getElementById("tiled-zoom-out").disabled = zoom <= 1;
+        /* the blocked-tile markers are placed in pixels: redrawn on resize */
+        window.dispatchEvent(new Event("resize"));
+    };
+
+    function setZoom(z) {
+        var cx = (container.scrollLeft + container.clientWidth / 2) / container.scrollWidth;
+        var cy = (container.scrollTop + container.clientHeight / 2) / container.scrollHeight;
+        zoom = Math.min(ZOOM_MAX, Math.max(1, z));
+        window.applyTiledZoom();
+        container.scrollLeft = cx * container.scrollWidth - container.clientWidth / 2;
+        container.scrollTop = cy * container.scrollHeight - container.clientHeight / 2;
+    }
+
+    document.getElementById("tiled-zoom-in").addEventListener("click", function() { setZoom(zoom * ZOOM_STEP); });
+    document.getElementById("tiled-zoom-out").addEventListener("click", function() { setZoom(zoom / ZOOM_STEP); });
+    window.zoomGestures(container, function() { return zoom; }, setZoom, ZOOM_STEP);
+});
+</script>
 <script>
 /* Tiled editor: toggle the "blocked tiles" overlay so admins can
    verify forbidden triggers / walls / players visually. Reuses
