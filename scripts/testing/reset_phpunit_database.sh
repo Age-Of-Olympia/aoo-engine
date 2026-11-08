@@ -65,7 +65,7 @@ for table in \
     actions action_conditions action_outcomes outcome_instructions \
     action_type_logs action_type_xp action_type_instructions action_type_preconditions \
     action_condition_preconditions action_passives \
-    effects effect_controls effect_corruption_materials \
+    effects effect_controls \
     factions faction_roles dialogs \
     tutorial_catalog tutorial_steps tutorial_step_ui tutorial_step_validation \
     tutorial_step_prerequisites tutorial_step_features tutorial_step_highlights \

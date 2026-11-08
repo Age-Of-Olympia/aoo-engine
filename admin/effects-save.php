@@ -53,10 +53,6 @@ $validate = static function () use ($service): ?string {
     if (!preg_match('/^ra-[a-z0-9-]+$/', (string) ($_POST['icon'] ?? ''))) {
         return 'Icône invalide (classe RPG-Awesome attendue, ex : ra-small-fire).';
     }
-    $breakChance = trim((string) ($_POST['corruption_break_chance'] ?? ''));
-    if ($breakChance !== '' && (!is_numeric($breakChance) || (int) $breakChance < 0 || (int) $breakChance > 100)) {
-        return 'Chance de casse invalide (0-100, ou vide).';
-    }
     foreach (array_keys((array) ($_POST['carac_mods'] ?? [])) as $carac) {
         if (!isset(CARACS[$carac])) {
             return "Caractéristique inconnue : {$carac}.";
@@ -109,14 +105,7 @@ $applyForm = static function (Effect $effect): void {
     $effect->setCostMultiplier(booleanCheckbox('cost_multiplier'));
     $effect->setBlocksTrading(booleanCheckbox('blocks_trading'));
     $effect->setStackRefreshDuration(booleanCheckbox('stack_refresh_duration'));
-
-    $breakChance = trim((string) ($_POST['corruption_break_chance'] ?? ''));
-    $effect->setCorruptionBreakChance($breakChance === '' ? null : (int) $breakChance);
 };
-
-/** One material per non-empty line. */
-$materials = static fn (): array =>
-    preg_split('/\R+/', trim((string) ($_POST['corruption_materials'] ?? ''))) ?: [];
 
 /** Selected cancellation targets, lowercased. */
 $controls = static fn (): array =>
@@ -140,7 +129,6 @@ if ($action === 'create') {
     $effect = new Effect($name);
     $applyForm($effect);
     $service->save($effect);
-    $service->replaceCorruptionMaterials($effect, $materials());
     $service->replaceControls($effect, $controls());
 
     setFlash('success', "Effet « {$name} » créé.");
@@ -156,7 +144,6 @@ if ($action === 'update') {
 
     $applyForm($effect);
     $service->save($effect);
-    $service->replaceCorruptionMaterials($effect, $materials());
     $service->replaceControls($effect, $controls());
 
     setFlash('success', 'Effet « ' . $effect->getLabel() . ' » enregistré.');

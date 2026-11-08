@@ -120,10 +120,6 @@ final class EffectWikiRenderer implements WikiSheetRendererInterface
         if ($effect->isBuildableOver()) {
             $rules[] = 'Au sol : n\'empêche ni construction ni aménagement de la case.';
         }
-        if ($effect->getCorruptionBreakChance() !== null) {
-            $rules[] = 'Corruption : fragilise le matériel contenant '
-                . implode(', ', $effect->getCorruptionMaterialNames()) . '.';
-        }
 
         return $rules;
     }

@@ -110,15 +110,11 @@ final class EffectImporter extends AbstractObjectImporter
         $effect->setCostMultiplier((bool) ($plan['costMultiplier'] ?? false));
         $effect->setBlocksTrading((bool) ($plan['blocksTrading'] ?? false));
         $effect->setStackRefreshDuration((bool) ($plan['stackRefreshDuration'] ?? false));
-        $effect->setCorruptionBreakChance(
-            is_numeric($plan['corruptionBreakChance'] ?? null) ? (int) $plan['corruptionBreakChance'] : null
-        );
 
         // Flush intermédiaire (dans la transaction du lot) : les listes
         // s'écrivent en SQL direct et exigent l'id de l'effet.
         $this->effects->save($effect);
         $this->effects->replaceControls($effect, $this->nameList($plan, 'controls'));
-        $this->effects->replaceCorruptionMaterials($effect, $this->nameList($plan, 'corruptionMaterials'));
     }
 
     /**
@@ -152,17 +148,9 @@ final class EffectImporter extends AbstractObjectImporter
             }
         }
 
-        $breakChance = $object['corruptionBreakChance'] ?? null;
-        if ($breakChance !== null && (!is_numeric($breakChance) || (int) $breakChance < 0 || (int) $breakChance > 100)) {
-            $report->reject($name, 'Chance de casse invalide (0-100, ou absente).');
+        if (isset($object['controls']) && !is_array($object['controls'])) {
+            $report->reject($name, 'Liste « controls » invalide (tableau de noms attendu).');
             return null;
-        }
-
-        foreach (['controls', 'corruptionMaterials'] as $listKey) {
-            if (isset($object[$listKey]) && !is_array($object[$listKey])) {
-                $report->reject($name, "Liste « {$listKey} » invalide (tableau de noms attendu).");
-                return null;
-            }
         }
 
         return $name;

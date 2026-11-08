@@ -141,7 +141,7 @@ final class AnimatedLayersView
                 $fill = $shape
                     ? '<image href="'. $shape .'" width="'. $t .'" height="'. $t .'"'. ($group['turn'] ? ' transform="rotate('. $group['turn'] .' '. ($t / 2) .' '. ($t / 2) .')"' : '') .'/>'
                     : '<rect width="'. $t .'" height="'. $t .'" fill="#fff"/>';
-                $mask .= '<svg x="'. ($cell['x'] - $left) .'" y="'. ($cell['y'] - $top) .'" width="'. $t .'" height="'. $t .'">'
+                $mask .= '<svg x="'. ($cell['x'] - $left + $t) .'" y="'. ($cell['y'] - $top + $t) .'" width="'. $t .'" height="'. $t .'">'
                     . ($cell['edge'] ? '<g mask="url(#elem-edge-'. $cell['edge'] .')">' : '<g>')
                     . ($cell['clip'] ? '<g mask="url(#'. $cell['clip'] .')">' : '<g>')
                     . $fill .'</g></g></svg>';
@@ -169,10 +169,15 @@ final class AnimatedLayersView
                 $css .= '@keyframes '. $id .'-'. $n .'{'. $move['keyframes'] .'}';
             }
 
-            $body .= '<mask id="'. $id .'" maskUnits="userSpaceOnUse" x="0" y="0" width="'. $w .'" height="'. $h .'">'. $mask .'</mask>'
-                . '<svg x="'. $left .'" y="'. $top .'" width="'. $w .'" height="'. $h .'" overflow="hidden">'
-                . '<foreignObject width="'. $w .'" height="'. $h .'" mask="url(#'. $id .')" pointer-events="none">'
-                . '<div xmlns="http://www.w3.org/1999/xhtml" style="position:relative;width:'. $w .'px;height:'. $h .'px;overflow:hidden;opacity:'. $group['opacity'] .'">'
+            /* The masked box keeps an empty tile around the layer. Chromium
+             * leaves the device-pixel row that the masked box's edge cuts
+             * out of the mask at a fractional zoom: on the layer's own edge,
+             * that row showed the texture across the whole layer. */
+            [$mw, $mh] = [$w + 2 * $t, $h + 2 * $t];
+            $body .= '<mask id="'. $id .'" maskUnits="userSpaceOnUse" x="0" y="0" width="'. $mw .'" height="'. $mh .'">'. $mask .'</mask>'
+                . '<svg x="'. ($left - $t) .'" y="'. ($top - $t) .'" width="'. $mw .'" height="'. $mh .'" overflow="hidden">'
+                . '<foreignObject width="'. $mw .'" height="'. $mh .'" mask="url(#'. $id .')" pointer-events="none">'
+                . '<div xmlns="http://www.w3.org/1999/xhtml" style="position:relative;left:'. $t .'px;top:'. $t .'px;width:'. $w .'px;height:'. $h .'px;overflow:hidden;opacity:'. $group['opacity'] .'">'
                 . '<div class="anim-layer-frame" style="'. $frame .'">'. $inner .'</div></div>'
                 . '</foreignObject></svg>';
         }

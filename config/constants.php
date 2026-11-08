@@ -145,8 +145,8 @@ define('DAYS_OF_WEEK', array(
  * effects, elements
  *
  * Le catalogue des effets (icônes, libellés, effets cachés, buffs/debuffs,
- * cycle élémentaire, corruptions et matériaux corruptibles) vit en base :
- * tables `effects` et `effect_corruption_materials`, servies par
+ * cycle élémentaire) vit en base : tables `effects` et `effect_controls`,
+ * servies par
  * App\Service\EffectService et éditées via admin/effects.php.
  */
 
@@ -168,14 +168,9 @@ define('DMG_CRIT', 5); // 5% de critique (+3 dégâts) sur un ennemi sans casque
 
 define('ITEM_DROP', 10); // 10% de drop sur les désarmements et loots
 
-define('ITEM_BREAK', 0); // 1% de break sur une attaque ou une défense
-
 define('ITEM_LIMIT', 3);
 
-/* ITEM_PLANTS, ITEM_CORRUPTIONS et ITEM_CORRUPT_BREAKCHANCES : en base (effects.corruption_break_chance, effect_corruption_materials). */
-
 define('ITEMS_OPT', array(
-    'enchanted'=>'*',
     'vorpal'=>'~',
     'cursed'=>'',
     'blessed_by_id'=>'+',
@@ -247,7 +242,6 @@ define('FISHING', false); // si true, les players pêchent constemment
 define('CACHED_KILLS', true); // si false, infos>kills n'est pas cached
 define('CACHED_QUESTS', true); // si false, logs>quests n'est pas cached
 define('CACHED_CLASSEMENTS', true); // si false, classemens.php n'est pas cached
-define('AUTO_BREAK', false); // si true, l'équipement casse (100% de chance)
 define('AUTO_FAIL', false); // si true, les attaques ratent forcément
 
 /*

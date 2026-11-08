@@ -209,7 +209,12 @@
         if (isMobileDevice() && damierZoom <= 1) {
             svg.style.width = '';
             svg.style.height = '';
-            svg.style.maxWidth = '';
+            /* The natural size follows the frame's width: in a frame
+             * wider than tall (tablet in portrait), cap it at the
+             * frame's height so the whole board shows. */
+            svg.style.maxWidth = map.clientHeight < map.clientWidth
+                ? Math.max(120, map.clientHeight - 2) + 'px'
+                : '';
             map.style.width = '';
             return;
         }
@@ -3188,6 +3193,25 @@
             buildMapRulers();
             redrawBlockedMarkers();
         });
+
+        /* The frame also changes size while the window does not: panels
+         * moved into the carousel by initMobile, a side panel filling up.
+         * Only a change of the frame's own box refits, so the refit
+         * cannot feed itself. */
+        var damierFrame = document.getElementById('game-map');
+        if (damierFrame && window.ResizeObserver) {
+            var fittedBox = '';
+            new ResizeObserver(function () {
+                var box = damierFrame.clientWidth + 'x' + damierFrame.clientHeight;
+                if (box === fittedBox) {
+                    return;
+                }
+                fittedBox = box;
+                fitDamier();
+                buildMapRulers();
+                redrawBlockedMarkers();
+            }).observe(damierFrame);
+        }
 
         /* La carte est re-rendue après un déplacement (view.js) : la
          * taille, les règles et les ⛔ se recalent après chaque vague

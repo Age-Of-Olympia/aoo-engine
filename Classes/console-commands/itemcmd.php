@@ -11,9 +11,8 @@ class ItemCmd extends Command
             new Argument('item_name',false),new Argument('private',true)]);
         parent::setDescription(<<<EOT
 Gestion des Objets
-Creation d'un objet en donnant son nom, sera public si pas d'argument private. Création d'objet enchanté ou maudites
+Creation d'un objet en donnant son nom, sera public si pas d'argument private. Création d'objet vorpal ou maudit
 create: Objet normal
-create-enchanted: objet enchanté
 create-cursed: objet maudit
 create-vorpal: objet vorpal
 Exemple:
@@ -40,7 +39,7 @@ EOT);
             return create_item($argumentValues);
         }
 
-        if(in_array($action, array('create-enchanted','create-vorpal','create-cursed'))){
+        if(in_array($action, array('create-vorpal','create-cursed'))){
             return create_special($argumentValues,$action);
         }
 

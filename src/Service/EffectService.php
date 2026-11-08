@@ -8,8 +8,8 @@ use RuntimeException;
 
 /**
  * Single gateway to effect definitions, now stored in the DB (effects,
- * effect_corruption_materials) instead of the EFFECTS_* / ELE_* /
- * ITEM_CORRUPT* constants of config/constants.php.
+ * effect_controls) instead of the EFFECTS_* / ELE_* constants of
+ * config/constants.php.
  *
  * The catalog is tiny (~60 rows) and consulted on hot paths (caracs
  * loading, every icon render), so it is loaded whole once per request.
@@ -307,32 +307,6 @@ class EffectService
         return $controllers;
     }
 
-    /** @return array<string, string[]> corruption name => breakable materials (ex-ITEM_CORRUPTIONS). */
-    public function getCorruptionMaterials(): array
-    {
-        $map = [];
-        foreach ($this->catalog() as $name => $effect) {
-            if ($effect->getCorruptionBreakChance() !== null) {
-                $map[$name] = $effect->getCorruptionMaterialNames();
-            }
-        }
-
-        return $map;
-    }
-
-    /** @return array<string, int> corruption name => extra break chance (ex-ITEM_CORRUPT_BREAKCHANCES). */
-    public function getCorruptionBreakChances(): array
-    {
-        $map = [];
-        foreach ($this->catalog() as $name => $effect) {
-            if ($effect->getCorruptionBreakChance() !== null) {
-                $map[$name] = $effect->getCorruptionBreakChance();
-            }
-        }
-
-        return $map;
-    }
-
     /**
      * Contributions d'un modificateur de combat sur des effets PORTÉS
      * (players_effects) : chaque effet contribue valeur × modificateur
@@ -534,41 +508,22 @@ class EffectService
     }
 
     /**
-     * Replace a corruption's material list (admin edit).
-     *
-     * @param string[] $materials
-     */
-    public function replaceCorruptionMaterials(Effect $effect, array $materials): void
-    {
-        $this->replaceNameList('effect_corruption_materials', $effect, $materials);
-    }
-
-    /**
-     * Replace the list of effects this one cancels (admin edit).
+     * Replace the list of effects this one cancels (admin edit). Plain SQL
+     * delete+insert, same rationale as RaceService::replaceNameLists (name
+     * strings without FK identity, sidesteps ORM insert-before-delete
+     * collisions on the unique key).
      *
      * @param string[] $controlledNames
      */
     public function replaceControls(Effect $effect, array $controlledNames): void
     {
-        $this->replaceNameList('effect_controls', $effect, $controlledNames);
-    }
-
-    /**
-     * Plain SQL delete+insert, same rationale as
-     * RaceService::replaceNameLists (name strings without FK identity,
-     * sidesteps ORM insert-before-delete collisions on the unique key).
-     *
-     * @param string[] $names
-     */
-    private function replaceNameList(string $table, Effect $effect, array $names): void
-    {
         $connection = $this->entityManager()->getConnection();
-        $names = array_values(array_unique(array_filter(array_map('trim', $names))));
+        $names = array_values(array_unique(array_filter(array_map('trim', $controlledNames))));
 
-        $connection->executeStatement("DELETE FROM {$table} WHERE effect_id = ?", [$effect->getId()]);
+        $connection->executeStatement('DELETE FROM effect_controls WHERE effect_id = ?', [$effect->getId()]);
         foreach ($names as $position => $name) {
             $connection->executeStatement(
-                "INSERT INTO {$table} (effect_id, name, position) VALUES (?, ?, ?)",
+                'INSERT INTO effect_controls (effect_id, name, position) VALUES (?, ?, ?)',
                 [$effect->getId(), $name, $position]
             );
         }

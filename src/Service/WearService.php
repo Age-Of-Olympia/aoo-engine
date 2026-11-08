@@ -37,9 +37,7 @@ use Doctrine\ORM\EntityManagerInterface;
  * `wear_profile = 'none'`, not by a zero multiplier.
  *
  * Thresholds (décision équipe): 0 = brisé — the item stays worn but
- * stops contributing caracs (get_caracs skips it); < 0 = détruit —
- * possible only through bigger immediate decrements (DamageObject),
- * never through wear, which floors at 0.
+ * stops contributing caracs (get_caracs skips it); wear floors at 0.
  */
 class WearService
 {

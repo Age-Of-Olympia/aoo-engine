@@ -7,8 +7,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * One entry of the effect catalog (formerly the EFFECTS_RA_FONT,
- * EFFECTS_HIDDEN, EFFECTS_TXT, ELE_DEBUFFS/ELE_BUFFS, ELE_CONTROLS and
- * ITEM_CORRUPTIONS/ITEM_CORRUPT_BREAKCHANCES constants).
+ * EFFECTS_HIDDEN, EFFECTS_TXT, ELE_DEBUFFS/ELE_BUFFS and ELE_CONTROLS
+ * constants).
  *
  * This is the DEFINITION of an effect; the per-player state stays in
  * players_effects ({@see PlayerEffect}), whose `name` references
@@ -31,7 +31,7 @@ class Effect
     #[ORM\Column(type: "string", length: 100, unique: true)]
     private string $name;
 
-    /** Display name ("Clé de bras", "Corruption du Bois"…). */
+    /** Display name ("Clé de bras", "Feu"…). */
     #[ORM\Column(type: "string", length: 100, options: ["default" => ""])]
     private string $label = '';
 
@@ -85,14 +85,6 @@ class Effect
     #[ORM\OneToMany(targetEntity: EffectControl::class, mappedBy: "effect", cascade: ["persist", "remove"], orphanRemoval: true)]
     #[ORM\OrderBy(["position" => "ASC"])]
     private Collection $controls;
-
-    /**
-     * Extra break chance (percent) a corruption adds to worn items made
-     * of its materials. Null = not a corruption; the material list lives
-     * in effect_corruption_materials.
-     */
-    #[ORM\Column(type: "integer", nullable: true, name: "corruption_break_chance")]
-    private ?int $corruptionBreakChance = null;
 
     /**
      * Modificateurs de combat, multipliés par la VALEUR portée
@@ -207,15 +199,9 @@ class Effect
     #[ORM\Column(type: "boolean", options: ["default" => false], name: "buildable_over")]
     private bool $buildableOver = false;
 
-    /** @var Collection<int, EffectCorruptionMaterial> */
-    #[ORM\OneToMany(targetEntity: EffectCorruptionMaterial::class, mappedBy: "effect", cascade: ["persist", "remove"], orphanRemoval: true)]
-    #[ORM\OrderBy(["position" => "ASC"])]
-    private Collection $corruptionMaterials;
-
     public function __construct(string $name)
     {
         $this->name = strtolower($name);
-        $this->corruptionMaterials = new ArrayCollection();
         $this->controls = new ArrayCollection();
     }
 
@@ -318,16 +304,6 @@ class Effect
             static fn (EffectControl $control): string => $control->getName(),
             $this->controls->toArray()
         );
-    }
-
-    public function getCorruptionBreakChance(): ?int
-    {
-        return $this->corruptionBreakChance;
-    }
-
-    public function setCorruptionBreakChance(?int $chance): void
-    {
-        $this->corruptionBreakChance = $chance;
     }
 
     public function getRollAttackMod(): int
@@ -539,20 +515,5 @@ class Effect
     public function setBuildableOver(bool $buildableOver): void
     {
         $this->buildableOver = $buildableOver;
-    }
-
-    /** @return string[] Material names this corruption can break. */
-    public function getCorruptionMaterialNames(): array
-    {
-        return array_map(
-            static fn (EffectCorruptionMaterial $material): string => $material->getName(),
-            $this->corruptionMaterials->toArray()
-        );
-    }
-
-    /** @return Collection<int, EffectCorruptionMaterial> */
-    public function getCorruptionMaterials(): Collection
-    {
-        return $this->corruptionMaterials;
     }
 }

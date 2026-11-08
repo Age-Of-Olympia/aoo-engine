@@ -25,9 +25,6 @@ class Item implements OwnsCaracsInterface, LockableInterface, ObstructsInterface
     private bool $private = false;
 
     #[ORM\Column(type: "boolean")]
-    private bool $enchanted = false;
-
-    #[ORM\Column(type: "boolean")]
     private bool $vorpal = false;
 
     #[ORM\Column(type: "boolean")]
@@ -128,10 +125,6 @@ class Item implements OwnsCaracsInterface, LockableInterface, ObstructsInterface
     public function isPrivate(): bool
     {
         return $this->private;
-    }
-    public function isEnchanted(): bool
-    {
-        return $this->enchanted;
     }
     public function isVorpal(): bool
     {

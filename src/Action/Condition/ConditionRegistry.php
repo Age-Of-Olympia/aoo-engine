@@ -20,7 +20,6 @@ class ConditionRegistry
             'RequiresWeaponCraftedWith' => new RequiresWeaponCraftedWithCondition(),
             'NoBerserk' => new NoBerserkCondition(),
             'ForbidIfHasEffect'   => new ForbidIfHasEffectCondition(),
-            'ForbidOnEquipedObjectStatus' => new ForbidOnEquipedObjectStatusCondition(),
             'RequiresAmmo' => new RequiresAmmoCondition(),
             'RequiresResource' => new RequiresResourceCondition(),
             'RequiresDamagedTarget' => new RequiresDamagedTargetCondition(),

@@ -12,12 +12,12 @@ use Classes\Item;
  */
 class SimulatedItem extends Item
 {
-    public function __construct(string $subtype, string $name, bool $enchanted = false)
+    public function __construct(string $subtype, string $name)
     {
         // Deliberately NOT calling parent::__construct() — it loads the item from the DB.
         $this->id = 0;
         $this->data = (object) ['subtype' => $subtype, 'name' => $name, 'addEffects' => []];
-        $this->row = (object) ['name' => $name, 'enchanted' => $enchanted];
+        $this->row = (object) ['name' => $name];
     }
 
     /**
@@ -31,7 +31,7 @@ class SimulatedItem extends Item
     public static function fromData(object|array $data): self
     {
         $data = (object) $data;
-        $item = new self((string) ($data->subtype ?? ''), (string) ($data->name ?? ''), (bool) ($data->enchanted ?? false));
+        $item = new self((string) ($data->subtype ?? ''), (string) ($data->name ?? ''));
         foreach ((array) $data as $key => $value) {
             $item->data->{$key} = $value;
         }

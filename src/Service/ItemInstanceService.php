@@ -12,7 +12,7 @@ use Doctrine\ORM\EntityManagerInterface;
  * lazy-promotion policy:
  *
  *   - promote(): a pristine unit leaves its stack and becomes an
- *     instance — called by the state events (equip, enchant, wear,
+ *     instance — called by the state events (equip, wear,
  *     map placement). Transactional: stack −1 + instance + link, or
  *     nothing.
  *   - create(): a brand-new instance born at craft (creator, date,
