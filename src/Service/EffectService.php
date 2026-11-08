@@ -146,9 +146,7 @@ class EffectService
         $icon = $effect === null ? '' : $effect->getIcon();
         $iconMarkup = $icon !== '' ? ' <span class="ra ' . $icon . '"></span>' : '';
 
-        $time = PlayerEffectService::isInfinite($duration)
-            ? 'sans limite de durée'
-            : ($duration === 0 ? 'jusqu\'au prochain tour' : 'pour ' . $duration . ' tour' . ($duration > 1 ? 's' : ''));
+        $time = self::durationText($duration);
 
         $valueLabel = ($stackable ? '+' : 'x') . $value;
         $what = $this->describe($name, $value);
@@ -166,6 +164,14 @@ class EffectService
         ]);
 
         return $own . ' (' . $valueLabel . ', ' . $time . $whatLabel . ')';
+    }
+
+    /** "pour 3 tours", "jusqu'au prochain tour", "sans limite de durée": a duration in turns, as the player reads it */
+    public static function durationText(int $duration): string
+    {
+        return PlayerEffectService::isInfinite($duration)
+            ? 'sans limite de durée'
+            : ($duration === 0 ? 'jusqu\'au prochain tour' : 'pour ' . $duration . ' tour' . ($duration > 1 ? 's' : ''));
     }
 
     /** "Lave : vous avez perdu 30 PV et 2 Mvt." — what landing on $where took, '' when nothing. */
