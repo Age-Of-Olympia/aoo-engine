@@ -115,8 +115,7 @@ if(!empty($_POST['race'])){
             'plan' => 'waiting_room'
         );
         $coordsId = View::get_free_coords_id_arround($goCoords);
-        $db->exe('UPDATE players SET coords_id = ? WHERE id = ?', array($coordsId, $player->id));
-        (new \App\Service\Map\EntityCellService())->syncCells((int) $player->id);
+        (new \App\Service\Map\CharacterMoveService())->move((int) $player->id, (int) $coordsId);
         $player->get_data();
 
         $useNewTutorial = TutorialFeatureFlag::isEnabledForPlayer($player->id);

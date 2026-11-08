@@ -323,9 +323,7 @@ class TutorialHelper
             $coordsId = $row['id'];
         }
 
-        $db->exe('UPDATE players SET coords_id = ? WHERE id = ?', array($coordsId, $player->id));
-
-        (new \App\Service\Map\EntityCellService())->syncCells((int) $player->id);
+        (new \App\Service\Map\CharacterMoveService())->move((int) $player->id, (int) $coordsId);
         \App\Service\Map\BoardChanges::cellId((int) $coordsId);
 
         /* getCoords() est mémoïsé : invalider après l'écriture directe

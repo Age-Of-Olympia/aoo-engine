@@ -35,8 +35,7 @@ $c->executeStatement("UPDATE effects SET carac_mods='{\"a\":-1}', loss_mods='{\"
 $mk = function (string $name, int $coordsId) use ($c, $hash): int {
     $id = \Classes\Player::put_player($name, 'nain');
     (new \App\Service\AccountService())->setPassword($id, $hash);
-    $c->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$coordsId, $id]);
-    (new \App\Service\Map\EntityCellService($c))->syncCells($id);
+    (new \App\Service\Map\CharacterMoveService($c))->move($id, (int) $coordsId);
     $c->executeStatement("INSERT IGNORE INTO players_options (player_id, name) VALUES (?, 'newHud')", [$id]);
     return $id;
 };
