@@ -4,6 +4,7 @@ use App\Factory\PlayerFactory;
 use App\Service\PlayerPnjService;
 use App\Service\RaceService;
 use App\Service\PlayerEffectService;
+use App\View\MatriculeView;
 use Classes\Str;
 use Classes\Ui;
 
@@ -92,7 +93,7 @@ foreach($playersTbl as $pnj){
         <div style="position: relative;">'. $mails .'
             <div class="infos-effects">'. implode('<br />', $effectsTbl) .'</div>
             <span style="position: relative; display: inline-block;"><img class="portrait" style="display: block;" src="'. $pnj->data->portrait .'" />'. $pvVeil .'</span><br />
-            '. $pnj->data->name .'<br /><span style="font-size: 88%;">mat.'. $pnj->id .'<br />
+            '. $pnj->data->name .'<br /><span style="font-size: 88%;">mat.'. MatriculeView::label($pnj) .'<br />
             '. ($raceJson?->name ?? '???') .'<br />Rang '. $pnj->data->rank .'</span>
         </div>';
     if($pnj->id!=$_SESSION['originalPlayerId']){  
@@ -122,7 +123,7 @@ foreach($hiddenPnjs as $hiddenPnj){
     }else{
         $mails = '';
     }
-    echo '<div data-player-id="'. $_SESSION['playerId'] .'" data-id="'. $hiddenPnj->id .'" >'. $hiddenPnj->data->name .' - <span style="font-size: 88%;">mat.'. $hiddenPnj->id .' - 
+    echo '<div data-player-id="'. $_SESSION['playerId'] .'" data-id="'. $hiddenPnj->id .'" >'. $hiddenPnj->data->name .' - <span style="font-size: 88%;">mat.'. MatriculeView::label($hiddenPnj) .' - 
             '. ($raceJson?->name ?? '???') .' - Rang '. $hiddenPnj->data->rank .' '.$mails.'
             <button class="showPnj" data-player-id="'. $_SESSION['originalPlayerId'] .'" data-id="'. $hiddenPnj->id .'">Afficher</button>
             <button class="impersonate" data-id="'. $hiddenPnj->id .'">Jouer</button>

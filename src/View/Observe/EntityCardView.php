@@ -12,6 +12,7 @@ use App\Service\PlayerExchangeService;
 use App\Service\RaceService;
 use App\View\Entity\EntityParts;
 use App\View\Entity\EntityProfile;
+use App\View\MatriculeView;
 use Classes\Player;
 use Classes\Ui;
 use Classes\View;
@@ -86,7 +87,7 @@ final class EntityCardView
                 . '<a href="#" class="case-other" data-observe-entity="' . $id . '"'
                 . ' data-observe-coords="' . (int) $x . ',' . (int) $y . '">'
                 . htmlspecialchars((string) $other->data->name, ENT_QUOTES, 'UTF-8') . '</a>'
-                . ' [' . $other->getDisplayId() . ']</div> </div>';
+                . ' [' . MatriculeView::label($other) . ']</div> </div>';
         }
     }
 

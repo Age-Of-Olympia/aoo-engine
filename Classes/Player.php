@@ -3,6 +3,7 @@ namespace Classes;
 
 use App\Enum\EquipResult;
 use App\Interface\ActorInterface;
+use App\Interface\HasMatriculeInterface;
 use App\Action\Condition\ConditionObject;
 use App\Service\ActionPassiveService;
 use App\Service\PlayerActionsService;
@@ -16,7 +17,7 @@ use App\Service\RaceService;
 use Exception;
 use Throwable;
 
-class Player implements ActorInterface {
+class Player implements ActorInterface, HasMatriculeInterface {
 
     public function isSimulated(): bool { return false; }
 

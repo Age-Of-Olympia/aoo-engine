@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Interface\HasMatriculeInterface;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -47,7 +48,7 @@ use Doctrine\ORM\Mapping as ORM;
        which a `map_routes` line never could. */
     'route' => Road::class,
 ])]
-abstract class GameEntity
+abstract class GameEntity implements HasMatriculeInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
