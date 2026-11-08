@@ -151,6 +151,21 @@ class BiomeBrushServiceTest extends TestCase
         $this->assertNull($brush->paintBiome($this->coordsIdOn(self::PLAN, 40, 40))['biome'], 'no biome, nothing painted');
     }
 
+    public function testTheExtensionPaintsABiomeByItsIdOnTheLevelItNames(): void
+    {
+        $brush = new BiomeBrushService($this->db);
+
+        $painted = $brush->paintBiomeOnLevel($this->biomeId, -1);
+
+        $this->assertSame('Prairie', $painted['biome']);
+        $this->assertCount(400, $painted['coords']);
+        $this->assertSame([-1], array_map('intval', $this->db->fetchFirstColumn(
+            'SELECT DISTINCT c.z FROM map_tiles t JOIN coords c ON c.id = t.coords_id WHERE c.plan = ?',
+            [self::PLAN]
+        )));
+        $this->assertNull($brush->paintBiomeOnLevel(0, 0)['biome'], 'no such biome, nothing painted');
+    }
+
     public function testTheEdgeJoinsTheGroundAlreadyLaidNextToIt(): void
     {
         (new BiomeAdminService($this->db))->saveGrounds($this->typeId, [self::GRASS => 100]);
