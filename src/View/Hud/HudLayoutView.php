@@ -21,7 +21,7 @@ use Classes\Ui;
 final class HudLayoutView
 {
     /** Cache-busting des assets du HUD — à incrémenter à chaque modif CSS/JS. */
-    public const VERSION = '20261110';
+    public const VERSION = '20261111';
 
     public static function render(Player $player): void
     {
@@ -114,6 +114,7 @@ final class HudLayoutView
 
         echo '</div>';
 
+        echo '<script src="js/zoom-gestures.js?v=' . self::VERSION . '"></script>';
         echo '<script src="js/hud.js?v=' . self::VERSION . '"></script>';
     }
 }

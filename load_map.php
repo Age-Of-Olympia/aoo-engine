@@ -266,6 +266,7 @@ echo '</div>';
     var frame = document.querySelector('.hud-map-frame');
     var zoom = 1;
     var ZOOM_MAX = 6;
+    var ZOOM_STEP = 1.25;
 
     function setZoom(z) {
         z = Math.min(ZOOM_MAX, Math.max(1, z));
@@ -284,8 +285,8 @@ echo '</div>';
         $('.hud-map-zoom button').on('click', function () {
             setZoom(zoom * $(this).data('zoom'));
         });
-        if (window.hudZoomGestures) {
-            window.hudZoomGestures(frame, function () { return zoom; }, setZoom);
+        if (window.zoomGestures) {
+            window.zoomGestures(frame, function () { return zoom; }, setZoom, ZOOM_STEP);
         }
     }
 })();

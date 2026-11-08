@@ -1314,63 +1314,8 @@
     function initPinchZoom() {
         var map = document.getElementById('game-map');
         if (map) {
-            zoomGestures(map, function () { return damierZoom; }, setDamierZoom);
+            window.zoomGestures(map, function () { return damierZoom; }, setDamierZoom, DAMIER_ZOOM_STEP);
         }
-    }
-
-    /* Pinch and Ctrl+wheel on el drive a zoom: the board's, and the maps'
-     * (load_map.php, through window.hudZoomGestures). */
-    function zoomGestures(map, getZoom, setZoom) {
-        var pinch = null;
-        var rafPending = false;
-
-        function dist(touches) {
-            var dx = touches[0].clientX - touches[1].clientX;
-            var dy = touches[0].clientY - touches[1].clientY;
-            return Math.sqrt(dx * dx + dy * dy) || 1;
-        }
-
-        map.addEventListener('touchstart', function (e) {
-            if (e.touches.length === 2) {
-                pinch = { d: dist(e.touches), z: getZoom() };
-            }
-        }, { passive: true });
-
-        map.addEventListener('touchmove', function (e) {
-            if (!pinch || e.touches.length !== 2) {
-                return;
-            }
-            e.preventDefault();
-            var target = pinch.z * dist(e.touches) / pinch.d;
-            if (!rafPending) {
-                rafPending = true;
-                requestAnimationFrame(function () {
-                    rafPending = false;
-                    setZoom(target);
-                });
-            }
-        }, { passive: false });
-
-        map.addEventListener('touchend', function (e) {
-            if (e.touches.length < 2) {
-                pinch = null;
-            }
-        }, { passive: true });
-
-        map.addEventListener('touchcancel', function () {
-            pinch = null;
-        }, { passive: true });
-
-        /* Ctrl + molette sur le plateau : un cran de zoom du damier
-         * (même pas que les boutons + / −) à la place du zoom de PAGE
-         * du navigateur — non passif, sinon preventDefault est ignoré. */
-        map.addEventListener('wheel', function (e) {
-            if (!e.ctrlKey) {
-                return;
-            }
-            e.preventDefault();
-            setZoom(e.deltaY < 0 ? getZoom() * DAMIER_ZOOM_STEP : getZoom() / DAMIER_ZOOM_STEP);
-        }, { passive: false });
     }
 
     /*
@@ -2485,7 +2430,6 @@
      * recharger la page — le document.location.reload() des scripts
      * hérités fermait le panneau (retour joueurs juillet 2026). */
     window.hudReloadPanels = reloadAllPanels;
-    window.hudZoomGestures = zoomGestures;
     window.hudRefreshAfterAction = refreshAfterAction;
 
     /* Navigation générique pour les scripts hérités qui naviguent en
