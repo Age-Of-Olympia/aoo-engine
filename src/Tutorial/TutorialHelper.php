@@ -323,7 +323,7 @@ class TutorialHelper
             $coordsId = $row['id'];
         }
 
-        (new \App\Service\Map\CharacterMoveService())->move((int) $player->id, (int) $coordsId);
+        (new \App\Service\Map\CharacterMoveService())->move((int) $player->id, $coordsId);
         \App\Service\Map\BoardChanges::cellId((int) $coordsId);
 
         /* getCoords() est mémoïsé : invalider après l'écriture directe

@@ -284,7 +284,7 @@ class NpcAdminService
             // The cell it leaves; nobody watches the retirement plan.
             \App\Service\Map\BoardChanges::entity($pnjId);
             if ((new Db())->exe("SELECT 1 FROM players WHERE id = ? AND player_type = 'npc'", [$pnjId])->num_rows > 0) {
-                (new \App\Service\Map\CharacterMoveService())->move($pnjId, (int) $coordsId);
+                (new \App\Service\Map\CharacterMoveService())->move($pnjId, $coordsId);
             }
         }
     }

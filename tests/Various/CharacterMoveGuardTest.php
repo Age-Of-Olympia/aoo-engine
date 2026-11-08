@@ -17,8 +17,26 @@ class CharacterMoveGuardTest extends TestCase
     /** Where the game's code lives; migrations rewrite tables, they move no one */
     private const SCANNED = ['src', 'Classes', 'api', 'admin', 'scripts'];
 
-    /** An UPDATE of players SETTING coords_id to a value, before its WHERE (NULL takes an object off the board) */
-    private const WRITE = '/UPDATE\s+`?players`?\s+SET\b(?:(?!\bWHERE\b)[^;])*?\bcoords_id\s*=\s*[?:]/is';
+    /** An UPDATE of players SETTING coords_id to anything but NULL (which takes an object off the board), before its WHERE */
+    private const WRITE = '/UPDATE\s+`?players`?\s+SET\b(?:(?!\bWHERE\b)[^;])*?\bcoords_id\s*=(?!\s*NULL\b)/is';
+
+    public function testThePatternCatchesAnyValueButNull(): void
+    {
+        foreach ([
+            "'UPDATE players SET coords_id = ? WHERE id = ?'",
+            "'UPDATE players SET coords_id = ' . \$id . ' WHERE id = ?'",
+            "\"UPDATE `players`\n SET name = ?,\n coords_id = :cell WHERE id = :id\"",
+            "'UPDATE players SET coords_id = (SELECT id FROM coords LIMIT 1)'",
+        ] as $write) {
+            $this->assertMatchesRegularExpression(self::WRITE, $write);
+        }
+        foreach ([
+            "'UPDATE players SET coords_id = NULL, holder_id = ? WHERE id = ? AND coords_id = ?'",
+            "'UPDATE players SET name = ? WHERE coords_id = ?'",
+        ] as $notAWrite) {
+            $this->assertDoesNotMatchRegularExpression(self::WRITE, $notAWrite);
+        }
+    }
 
     public function testNothingButTheMoveServiceWritesACharacterCell(): void
     {

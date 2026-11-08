@@ -203,11 +203,11 @@ final class CultAdminService
 
         $name = $this->validateName($name);
         $coordsId = $this->coordsId($x, $y, $z, $plan);
-        $oldCoordsId = (int) $this->connection->fetchOne('SELECT coords_id FROM players WHERE id = ?', [$id]);
+        $oldCoordsId = $coordsId;
         // Only a god is renamed and moved: a prayable character of another race keeps both
         if ($this->connection->fetchOne("SELECT 1 FROM players WHERE id = ? AND race = 'dieu'", [$id]) !== false) {
             $this->connection->executeStatement('UPDATE players SET name = ? WHERE id = ?', [$name, $id]);
-            (new CharacterMoveService($this->connection))->move($id, $coordsId);
+            $oldCoordsId = (int) (new CharacterMoveService($this->connection))->move($id, $coordsId)['from'];
         }
         BoardChanges::cellId($oldCoordsId, $coordsId);
         BoardChanges::viewer($id);
