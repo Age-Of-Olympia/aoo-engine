@@ -89,6 +89,17 @@ class AnimatedLayersViewTest extends TestCase
         $this->assertStringContainsString('opacity:0.3', $html);
     }
 
+    public function testLayerEdgeStaysAnEmptyTileAwayFromTheMaskedBox(): void
+    {
+        $layers = new AnimatedLayersView();
+        $layers->add($this->file('fire.gif', 'GIF89a'), 1.0, 0, [0, 0], 100, 200, 0, '');
+        $html = $layers->render();
+
+        $this->assertStringContainsString('<mask id="layer-elements-0" maskUnits="userSpaceOnUse" x="0" y="0" width="150" height="150"><svg x="50" y="50"', $html);
+        $this->assertStringContainsString('<svg x="50" y="150" width="150" height="150" overflow="hidden"><foreignObject width="150" height="150"', $html);
+        $this->assertStringContainsString('position:relative;left:50px;top:50px;width:50px;height:50px;', $html);
+    }
+
     public function testEmptyStillRendersTheGroup(): void
     {
         $this->assertSame('<g id="anim-layers-tiles" class="anim-layers"></g>', (new AnimatedLayersView('tiles'))->render());
