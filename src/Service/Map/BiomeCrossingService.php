@@ -6,7 +6,6 @@ use App\Factory\EntityManagerFactory;
 use App\Factory\PlayerFactory;
 use App\Module\Module;
 use App\Module\Modules;
-use App\Service\EffectService;
 use App\Service\PlayerEffectService;
 use Classes\Log;
 use Classes\Player;
@@ -79,9 +78,7 @@ final class BiomeCrossingService
         $effect = $biome['enter_effect'];
         if ($effect !== '' && $biome['ends_on_exit'] && $character->have_effect($effect)) {
             $character->end_effect($effect);
-            if (!$effects->isHidden($effect)) {
-                $said[] = 'L\'effet ' . self::effect($effects, $effect) . ' prend fin.';
-            }
+            $said[] = $effects->endHtml([$effect]);
         }
 
         return self::line(false, $biome['name'], $said);
@@ -103,12 +100,8 @@ final class BiomeCrossingService
         if ($effect !== '' && $effects->exists($effect)) {
             $duration = $biome['turns'] ?? PlayerEffectService::DURATION_INFINITE;
             $ended = $character->add_effect($effect, $duration, $biome['value']);
-            if (!$effects->isHidden($effect)) {
-                $said[] = 'Effet ' . self::effect($effects, $effect) . ', '
-                    . ($biome['turns'] === null && $biome['ends_on_exit'] ? 'jusqu\'à la sortie du biome' : EffectService::durationText($duration)) . '.';
-            }
-            $said[] = self::text(self::sentence($effects->tookText($effect, $biome['value'])));
-            $said[] = self::text(self::sentence($effects->endText($ended)));
+            $until = $biome['turns'] === null && $biome['ends_on_exit'] ? 'jusqu\'à la sortie du biome' : '';
+            $said[] = $effects->landingNotice($effect, $duration, $biome['value'], $ended, $until);
         }
 
         return self::line(true, $biome['name'], $said);
@@ -131,24 +124,10 @@ final class BiomeCrossingService
             . self::text($biome) . '</strong> : ' . implode(' ', $said);
     }
 
-    /** An effect as the player reads it: its catalog icon, then its label */
-    private static function effect(EffectService $effects, string $name): string
-    {
-        $icon = $effects->getIcon($name);
-
-        return ($icon === '' ? '' : '<span class="ra ' . htmlspecialchars($icon, ENT_QUOTES, 'UTF-8') . '"></span> ') . self::text($effects->getLabel($name));
-    }
-
     /** Plain text made safe inside the HTML line */
     private static function text(string $text): string
     {
         return htmlspecialchars($text, ENT_NOQUOTES, 'UTF-8');
-    }
-
-    /** "vous avez perdu 5 PV" → "Vous avez perdu 5 PV."; '' stays '' */
-    private static function sentence(string $text): string
-    {
-        return $text === '' ? '' : ucfirst($text) . '.';
     }
 
     /**
