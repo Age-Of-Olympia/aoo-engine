@@ -30,6 +30,7 @@ use App\Service\AdminAuthorizationService;
 use App\Service\AdminSettingsService;
 use App\Service\CsrfProtectionService;
 use App\Service\DateFormatService;
+use App\Service\GameLanguageService;
 use App\Service\EffectService;
 use App\Service\Map\HarvestDefaultsService;
 use App\Service\PlanService;
@@ -39,6 +40,7 @@ use App\Service\TiledExtensionService;
 
 $csrf = new CsrfProtectionService();
 $dateFormat = new DateFormatService();
+$gameLanguage = new GameLanguageService();
 $harvestDefaults = new HarvestDefaultsService();
 $decayDefaults = new \App\Service\Decay\DecayDefaultsService();
 $repairSettings = new \App\Service\AdminSettingsService();
@@ -121,6 +123,11 @@ $settingForms = [
         $dateFormat->set((string) $_POST['date_format']);
 
         return 'Format des dates enregistré.';
+    },
+    'game_language' => function () use ($gameLanguage): string {
+        $gameLanguage->set((string) $_POST['game_language']);
+
+        return 'Langue du jeu enregistrée.';
     },
 ];
 /* The settings hold for the whole game: an admin sees the alerts, only a
@@ -240,6 +247,24 @@ ob_start();
                     Sert aux dates affichées aux joueurs (chroniques de l'accueil…) ;
                     la saisie dans l'admin reste en JJ/MM/AAAA.
                    <code class="tech-name">DateFormatService</code>
+                </div>
+            </form>
+
+            <hr />
+
+            <form method="post" action="index.php">
+                <?= $csrf->renderTokenField() ?>
+                <label class="form-label mb-0">Langue du jeu</label>
+                <div class="d-flex gap-2 align-items-center">
+                    <select name="game_language" class="form-select" style="max-width: 340px;">
+                        <?= renderSelectOptions(GameLanguageService::LANGUAGES, $gameLanguage->current()) ?>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
+                </div>
+                <div class="form-text">
+                    Déclarée par chaque page du jeu. En français, dans les fenêtres de message,
+                    la ponctuation ! ? : ; reste sur la même ligne que le mot qui la précède.
+                   <code class="tech-name">GameLanguageService</code>
                 </div>
             </form>
 

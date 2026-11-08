@@ -44,6 +44,20 @@
 
 (function () {
 
+  /* French spacing, when the page is in French (<html lang>, the game
+   * language set in the admin): the space before ! ? : ; never breaks, so
+   * the mark never starts a line alone. Text nodes only: an HTML message
+   * keeps its tags as they are. */
+  function frenchSpacing(node) {
+    if (document.documentElement.lang !== 'fr') {
+      return;
+    }
+    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+    for (let textNode = walker.nextNode(); textNode; textNode = walker.nextNode()) {
+      textNode.nodeValue = textNode.nodeValue.replace(/ ([!?:;])/g, '\u00A0$1');
+    }
+  }
+
   function buildDialog(message, options) {
     const bg = document.createElement('div');
     bg.className = 'modal-bg aoo-dialog-bg';
@@ -63,6 +77,7 @@
     } else {
       text.textContent = String(message == null ? '' : message);
     }
+    frenchSpacing(text);
     box.appendChild(text);
 
     let input = null;

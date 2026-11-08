@@ -11,7 +11,7 @@ use App\Service\AdminAuthorizationService;
 (new AdminMenuAccessService())->enforcePage(basename($_SERVER['PHP_SELF']));
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20261109';
+const ADMIN_ASSET_VERSION = '20261110';
 
 
 /**
@@ -254,6 +254,7 @@ function admin_layout(string $title, string $content, array $options = []): stri
     $flash = renderFlashMessage();
 
     $version = ADMIN_ASSET_VERSION;
+    $lang = (new \App\Service\GameLanguageService())->current();
     $tabTitle = strip_tags($title);
 
     $styleLinks = '';
@@ -267,7 +268,7 @@ function admin_layout(string $title, string $content, array $options = []): stri
 
     return <<<HTML
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{$lang}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

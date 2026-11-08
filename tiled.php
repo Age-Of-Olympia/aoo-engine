@@ -553,7 +553,7 @@ echo '</div>
 <div class="tiled-container">
     <!-- Map view on the left -->
     <div id="map-view-container">
-        <script src="js/modal.js?v=20261109"></script>
+        <script src="js/modal.js?v=20261110"></script>
         ';
 
 echo $data;
