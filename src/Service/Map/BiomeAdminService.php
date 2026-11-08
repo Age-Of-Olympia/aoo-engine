@@ -20,8 +20,8 @@ final class BiomeAdminService
     public const DEFAULT_PATCH_SCALE = 6;
     public const MAX_PATCH_SCALE = 64;
 
-    /** Terrains per palette: every pair of them needs its transitions (14 tiles for two, 36 for three) */
-    public const MAX_GROUNDS = 3;
+    /** Ground lines the palette form offers before "Ajouter un sol" */
+    public const DEFAULT_GROUNDS = 3;
 
     /** A palette's shares, in percent, add up to this */
     public const FULL_PALETTE = 100;
@@ -77,9 +77,6 @@ final class BiomeAdminService
         $unknown = array_diff(array_keys($weights), $this->groundTerrains());
         if ($unknown !== []) {
             throw new InvalidArgumentException('Sol inconnu : ' . implode(', ', $unknown) . '.');
-        }
-        if (count($weights) > self::MAX_GROUNDS) {
-            throw new InvalidArgumentException('Une palette compte au plus ' . self::MAX_GROUNDS . ' sols.');
         }
         foreach ($weights as $terrain => $weight) {
             if ($weight < 1 || $weight > self::FULL_PALETTE) {

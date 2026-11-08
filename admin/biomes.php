@@ -76,7 +76,7 @@ $content .= formCard('Types de biome', ($types === []
     . '<p class="text-muted small">La case à côté de la couleur règle la taille des plaques du pinceau de biome, en cases.</p>'
     . '<hr>' . $addType);
 
-// The palette of one type: up to MAX_GROUNDS terrains, shares adding up to 100 %
+// The palette of one type: any number of terrains, shares adding up to 100 %
 $paletteType = null;
 foreach ($types as $type) {
     if ($type['id'] === (int) ($_GET['palette'] ?? 0)) {
@@ -85,7 +85,7 @@ foreach ($types as $type) {
 }
 if ($paletteType !== null) {
     $choices = array_combine($terrains, $terrains);
-    $lines = array_slice(array_pad(array_map(null, array_keys($paletteType['grounds']), $paletteType['grounds']), BiomeAdminService::MAX_GROUNDS, [null, null]), 0, BiomeAdminService::MAX_GROUNDS);
+    $lines = array_pad(array_map(null, array_keys($paletteType['grounds']), $paletteType['grounds']), BiomeAdminService::DEFAULT_GROUNDS, [null, null]);
     $paletteRows = '';
     foreach ($lines as [$terrain, $share]) {
         $paletteRows .= '<div class="form-row align-items-end mb-2">'
@@ -97,11 +97,12 @@ if ($paletteType !== null) {
         ? '<p class="text-muted">Aucun terrain classé sur ce serveur. Classez les sols d\'un plan dans'
             . ' <a href="/admin/terrain-transitions.php">Transitions de terrain</a> : chaque terrain apparaît ensuite dans cette liste.</p>'
         : '<p class="text-muted small">Dans les biomes de ce type, les plantes ne poussent que sur ces terrains, leurs tuiles et les transitions'
-            . ' entre eux ; le pinceau de biome les peint selon leurs parts. Au plus ' . BiomeAdminService::MAX_GROUNDS . ' terrains,'
-            . ' et des parts qui font ' . BiomeAdminService::FULL_PALETTE . ' % tout juste. L\'enregistrement génère les transitions'
-            . ' qui manquent entre ces terrains.'
+            . ' entre eux ; le pinceau de biome les peint selon leurs parts, qui font ' . BiomeAdminService::FULL_PALETTE . ' % tout juste.'
+            . ' L\'enregistrement génère les transitions qui manquent entre ces terrains : 14 tuiles pour deux sols, 78 pour trois,'
+            . ' 252 pour quatre, 620 pour cinq.'
             . ' Sans aucun terrain, les plantes poussent sur tout sol.</p>'
-            . biome_form($token, 'save_palette', $paletteRows
+            . biome_form($token, 'save_palette', '<div id="palette-rows">' . $paletteRows . '</div>'
+                . '<button class="btn btn-sm btn-outline-secondary mb-2" type="button" id="palette-add">Ajouter un sol</button>'
                 . '<p id="palette-total" class="small"></p>'
                 . '<button class="btn btn-primary" type="submit">Enregistrer la palette</button>'
                 . ' <a class="btn btn-outline-secondary" href="?' . e(http_build_query(array_filter(['plan' => $plan]))) . '">Fermer</a>',
@@ -121,6 +122,13 @@ if ($paletteType !== null) {
                         total.textContent = "Total : " + sum + " %";
                         total.style.color = sum === ' . BiomeAdminService::FULL_PALETTE . ' || sum === 0 ? "" : "var(--danger, #c0392b)";
                     }
+                    document.getElementById("palette-add").addEventListener("click", function () {
+                        var rows = document.getElementById("palette-rows");
+                        var row = rows.lastElementChild.cloneNode(true);
+                        row.querySelector("select").value = "";
+                        row.querySelector("input").value = "";
+                        rows.appendChild(row);
+                    });
                     form.addEventListener("input", refresh);
                     form.addEventListener("change", refresh);
                     refresh();

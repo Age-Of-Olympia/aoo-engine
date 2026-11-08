@@ -413,8 +413,9 @@ class TerrainTransitionService
 
     /**
      * The transitions a biome palette needs, generated where missing: every
-     * pair of its terrains, and the trio when it has three. Each terrain
-     * blends from its plain tile (the first one classified with its colour).
+     * set of two to four of its terrains, four being the corners of a cell.
+     * Each terrain blends from its plain tile (the first one classified with
+     * its colour).
      *
      * @param list<string> $terrainNames terrain_colors names
      * @return list<string> names of the tiles generated
@@ -434,15 +435,16 @@ class TerrainTransitionService
         $names = array_values($plain);
         sort($names);
 
-        $sets = [];
-        foreach ($names as $i => $first) {
-            foreach (array_slice($names, $i + 1) as $second) {
-                $sets[] = [$first, $second];
+        // Subsets of at most four names, built in sorted order; a single name needs no transition
+        $sets = [[]];
+        foreach ($names as $name) {
+            foreach ($sets as $set) {
+                if (count($set) < self::CORNER_COUNT) {
+                    $sets[] = [...$set, $name];
+                }
             }
         }
-        if (count($names) === 3) {
-            $sets[] = $names;
-        }
+        $sets = array_filter($sets, static fn (array $set): bool => count($set) >= 2);
 
         $generated = [];
         foreach ($sets as $set) {
