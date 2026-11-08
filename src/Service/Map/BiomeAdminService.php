@@ -20,6 +20,10 @@ final class BiomeAdminService
     public const DEFAULT_PATCH_SCALE = 6;
     public const MAX_PATCH_SCALE = 64;
 
+    /** Ragged edge of the biome brush, in cells: how far the ground across the edge reaches in; 0 keeps the zone's straight edge */
+    public const DEFAULT_EDGE_WIDTH = 2;
+    public const MAX_EDGE_WIDTH = 16;
+
     /** Ground lines the palette form offers before "Ajouter un sol" */
     public const DEFAULT_GROUNDS = 3;
 
@@ -33,7 +37,7 @@ final class BiomeAdminService
         $this->db = $db ?? EntityManagerFactory::getEntityManager()->getConnection();
     }
 
-    /** @return list<array{id: int, name: string, label: string, color: string, patch_scale: int, biomes: int, grounds: array<string, int>}> */
+    /** @return list<array{id: int, name: string, label: string, color: string, patch_scale: int, edge_width: int, biomes: int, grounds: array<string, int>}> */
     public function types(): array
     {
         $grounds = [];
@@ -47,10 +51,11 @@ final class BiomeAdminService
             'label' => (string) $row['label'],
             'color' => (string) $row['color'],
             'patch_scale' => (int) $row['patch_scale'],
+            'edge_width' => (int) $row['edge_width'],
             'biomes' => (int) $row['biomes'],
             'grounds' => $grounds[(int) $row['id']] ?? [],
         ], $this->db->fetchAllAssociative(
-            'SELECT t.id, t.name, t.label, t.color, t.patch_scale, COUNT(b.id) AS biomes
+            'SELECT t.id, t.name, t.label, t.color, t.patch_scale, t.edge_width, COUNT(b.id) AS biomes
              FROM biome_types t LEFT JOIN biomes b ON b.biome_type_id = t.id
              GROUP BY t.id ORDER BY t.label'
         ));
@@ -98,7 +103,14 @@ final class BiomeAdminService
     }
 
     /** Create the type when $id is 0, update it otherwise; returns its id. */
-    public function saveType(int $id, string $name, string $label, string $color, int $patchScale = self::DEFAULT_PATCH_SCALE): int
+    public function saveType(
+        int $id,
+        string $name,
+        string $label,
+        string $color,
+        int $patchScale = self::DEFAULT_PATCH_SCALE,
+        int $edgeWidth = self::DEFAULT_EDGE_WIDTH
+    ): int
     {
         $name = trim($name);
         $label = trim($label);
@@ -114,13 +126,16 @@ final class BiomeAdminService
         if ($patchScale < 1 || $patchScale > self::MAX_PATCH_SCALE) {
             throw new InvalidArgumentException('La taille des plaques va de 1 à ' . self::MAX_PATCH_SCALE . ' cases.');
         }
+        if ($edgeWidth < 0 || $edgeWidth > self::MAX_EDGE_WIDTH) {
+            throw new InvalidArgumentException('La lisière va de 0 à ' . self::MAX_EDGE_WIDTH . ' cases.');
+        }
 
         $taken = $this->db->fetchOne('SELECT id FROM biome_types WHERE name = ? AND id <> ?', [$name, $id]);
         if ($taken !== false) {
             throw new InvalidArgumentException('Un type porte déjà le nom ' . $name . '.');
         }
 
-        $row = ['name' => $name, 'label' => $label, 'color' => strtolower($color), 'patch_scale' => $patchScale];
+        $row = ['name' => $name, 'label' => $label, 'color' => strtolower($color), 'patch_scale' => $patchScale, 'edge_width' => $edgeWidth];
         if ($id === 0) {
             $this->db->insert('biome_types', $row);
             return (int) $this->db->lastInsertId();

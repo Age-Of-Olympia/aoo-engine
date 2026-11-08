@@ -185,7 +185,9 @@ class BiomeBrushServiceTest extends TestCase
 
     public function testTheEdgeJoinsTheGroundAlreadyLaidNextToIt(): void
     {
-        (new BiomeAdminService($this->db))->saveGrounds($this->typeId, [self::GRASS => 100]);
+        $admin = new BiomeAdminService($this->db);
+        $admin->saveType($this->typeId, 'test_brush_prairie', 'Prairie', '#88aa44', 4, 0);
+        $admin->saveGrounds($this->typeId, [self::GRASS => 100]);
         // Moss east of the biome, and a tile of no terrain west of it
         foreach (range(0, 19) as $y) {
             $this->db->insert('map_tiles', ['name' => self::MOSS, 'coords_id' => $this->coordsIdOn(self::PLAN, 20, $y), 'foreground' => 0]);
@@ -209,6 +211,45 @@ class BiomeBrushServiceTest extends TestCase
         $this->assertSame(self::GRASS, $inner, 'inside, the palette alone');
     }
 
+    public function testTheRaggedEdgeLetsTheGroundAcrossReachInOverItsWidth(): void
+    {
+        $this->layMossEastOfTheBiome();
+        $brush = new BiomeBrushService($this->db);
+
+        $brush->paintBiome($this->coordsIdOn(self::PLAN, 3, 4));
+
+        $deepest = 20;
+        foreach ($this->groundsOfTheBiome() as $key => $tile) {
+            [$x] = array_map('intval', explode(',', $key));
+            foreach ($this->cornersOf[$tile] as $i => $terrain) {
+                if ($terrain === self::MOSS) {
+                    // TL and BL sit on the cell's west side, TR and BR on its east side
+                    $deepest = min($deepest, in_array($i, [0, 3], true) ? $x : $x + 1);
+                }
+            }
+        }
+        $this->assertLessThan(20, $deepest, 'the moss reaches past the edge corners');
+        $this->assertGreaterThanOrEqual(20 - BiomeAdminService::DEFAULT_EDGE_WIDTH, $deepest, 'and no deeper than the edge width');
+    }
+
+    public function testAStrokeOnTheRaggedEdgeMatchesTheWholeFillThere(): void
+    {
+        $this->layMossEastOfTheBiome();
+        $brush = new BiomeBrushService($this->db);
+        $brush->paintBiome($this->coordsIdOn(self::PLAN, 3, 4));
+        $whole = $this->groundsOfTheBiome();
+        $this->db->executeStatement(
+            'DELETE t FROM map_tiles t JOIN coords c ON c.id = t.coords_id WHERE c.plan = ? AND c.x < 20',
+            [self::PLAN]
+        );
+
+        $brush->paintBiomeOnLevel($this->biomeId, 0, ['xMin' => 14, 'xMax' => 19, 'yMin' => 5, 'yMax' => 9]);
+
+        $stroke = $this->groundsOfTheBiome();
+        $this->assertCount(6 * 5, $stroke);
+        $this->assertSame(array_intersect_key($whole, $stroke), $stroke);
+    }
+
     public function testANewSeedDrawsOtherPatches(): void
     {
         $brush = new BiomeBrushService($this->db);
@@ -217,6 +258,30 @@ class BiomeBrushServiceTest extends TestCase
         $brush->reseed($this->biomeId);
 
         $this->assertNotEquals($before, $brush->paint($this->biomeId, self::AREA)['tiles']);
+    }
+
+    /** One palette terrain, and moss laid in the column just east of the biome */
+    private function layMossEastOfTheBiome(): void
+    {
+        (new BiomeAdminService($this->db))->saveGrounds($this->typeId, [self::GRASS => 100]);
+        foreach (range(0, 19) as $y) {
+            $this->db->insert('map_tiles', ['name' => self::MOSS, 'coords_id' => $this->coordsIdOn(self::PLAN, 20, $y), 'foreground' => 0]);
+        }
+    }
+
+    /** @return array<string, string> "x,y" => ground tile, for the biome's cells */
+    private function groundsOfTheBiome(): array
+    {
+        $grounds = [];
+        foreach ($this->db->fetchAllAssociative(
+            'SELECT c.x, c.y, t.name FROM map_tiles t JOIN coords c ON c.id = t.coords_id
+             WHERE c.plan = ? AND t.foreground = 0 AND c.x < 20 ORDER BY c.x, c.y',
+            [self::PLAN]
+        ) as $row) {
+            $grounds[$row['x'] . ',' . $row['y']] = (string) $row['name'];
+        }
+
+        return $grounds;
     }
 
     public function testATypeWithoutGroundsCannotPaint(): void

@@ -29,16 +29,29 @@ final class BiomeBrushService
     /** Patches per side of that square: enough for the proportions to hold */
     private const SAMPLED_PATCHES = 16;
 
+    /** The ragged edge's own draw: another seed, and bumps a few cells long along the edge */
+    private const EDGE_SEED = 0x5EED;
+    private const EDGE_SCALE = 3;
+
+    /** The corners around a corner, diagonals included */
+    private const AROUND = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
+
     /** What a stroke reports when no biome is on top there */
     private const NOTHING_PAINTED = ['biome' => null, 'coords' => [], 'missing' => [], 'unreadable' => [], 'generated' => 0, 'errors' => []];
 
     /** @var array<string, list<float>> thresholds per (seed, scale, weights), for the whole request */
     private static array $thresholds = [];
 
+    /** @var array<int, list<float>> sorted noise samples per seed, for the whole request */
+    private static array $samples = [];
+
     private Connection $db;
 
     /** @var array{positions: array<string, int>, plain: array<string, list<string>>, wang: array<string, string>, corners: array<string, list<string>>}|null */
     private ?array $tiles = null;
+
+    /** @var array<int, array{seed: int, scale: int, edge: int, weights: array<string, int>}> per biome: a stroke reads them for the fill and for the edge */
+    private array $settings = [];
 
     public function __construct(?Connection $db = null)
     {
@@ -154,7 +167,8 @@ final class BiomeBrushService
      */
     private function paintTopCells(array $biome, ?array $within = null): array
     {
-        $cells = $this->topCells((int) $biome['id']);
+        $biomeCells = $this->topCells((int) $biome['id']);
+        $cells = $biomeCells;
         if ($within !== null) {
             $cells = array_values(array_filter($cells, static fn (array $cell): bool => $cell[0] >= $within['xMin']
                 && $cell[0] <= $within['xMax'] && $cell[1] >= $within['yMin'] && $cell[1] <= $within['yMax']));
@@ -168,7 +182,8 @@ final class BiomeBrushService
         ];
         [$plan, $z] = [(string) $biome['plan'], (int) $biome['z']];
         $edge = $this->edgeCorners($plan, $z, $cells, $area);
-        $painted = $this->paint((int) $biome['id'], $area, $edge['fixed']);
+        $fixed = $edge['fixed'] + $this->raggedEdge((int) $biome['id'], $plan, $z, $biomeCells, $area);
+        $painted = $this->paint((int) $biome['id'], $area, $fixed);
 
         // Joins towards the neighbours can need transitions no palette asked for
         $generated = 0;
@@ -185,7 +200,7 @@ final class BiomeBrushService
             }
             if ($generated > 0) {
                 $this->tiles = null;
-                $painted = $this->paint((int) $biome['id'], $area, $edge['fixed']);
+                $painted = $this->paint((int) $biome['id'], $area, $fixed);
             }
         }
 
@@ -269,6 +284,90 @@ final class BiomeBrushService
     }
 
     /**
+     * The ragged edge: near the biome's edge, a corner takes the terrain of
+     * the ground laid outside the biome, when a second draw of the noise
+     * falls under a chance that shrinks with the distance to that ground
+     * (corners, counted diagonally too). It reads only the ground outside
+     * the biome, which no stroke paints, and the noise: a stroke draws the
+     * edge a fill of the whole biome would.
+     *
+     * @param list<array{int, int}> $biomeCells every cell where the biome is on top
+     * @param array{xMin: int, xMax: int, yMin: int, yMax: int} $area the cells painted
+     * @return array<string, string> "x,y" corner => terrain
+     */
+    private function raggedEdge(int $biomeId, string $plan, int $z, array $biomeCells, array $area): array
+    {
+        $settings = $this->settings($biomeId);
+        $width = $settings['edge'];
+        if ($width === 0) {
+            return [];
+        }
+        $inside = array_flip(array_map(static fn (array $cell): string => $cell[0] . ',' . $cell[1], $biomeCells));
+        $tiles = $this->tiles ??= $this->loadTiles();
+
+        // A shortest path between two corners stays in their rectangle: reach + 1 around the area's corners is enough
+        $reach = $width + 1;
+        $box = ['xMin' => $area['xMin'] - $reach, 'xMax' => $area['xMax'] + 1 + $reach, 'yMin' => $area['yMin'] - $reach, 'yMax' => $area['yMax'] + 1 + $reach];
+        $grounds = [];
+        foreach ($this->db->fetchAllAssociative(
+            'SELECT c.x, c.y, t.name FROM coords c JOIN map_tiles t ON t.coords_id = c.id AND t.foreground = 0
+             WHERE c.plan = ? AND c.z = ? AND c.x BETWEEN ? AND ? AND c.y BETWEEN ? AND ?
+             ORDER BY t.id',
+            [$plan, $z, $box['xMin'], $box['xMax'], $box['yMin'], $box['yMax']]
+        ) as $row) {
+            if (!isset($inside[$row['x'] . ',' . $row['y']])) {
+                $grounds[$row['x'] . ',' . $row['y']] = [(int) $row['x'], (int) $row['y'], (string) $row['name']];
+            }
+        }
+
+        // Distance 0: the corners of that ground; a corner two grounds share takes the first terrain by name, whatever the read order
+        $reached = [];
+        foreach ($grounds as [$x, $y, $name]) {
+            foreach ([[$x, $y + 1], [$x + 1, $y + 1], [$x + 1, $y], [$x, $y]] as $i => [$cx, $cy]) {
+                $terrain = $tiles['corners'][$name][$i] ?? '';
+                $key = $cx . ',' . $cy;
+                if ($terrain !== '' && (!isset($reached[$key]) || strcmp($terrain, $reached[$key]) < 0)) {
+                    $reached[$key] = $terrain;
+                }
+            }
+        }
+
+        $edgeSeed = $settings['seed'] ^ self::EDGE_SEED;
+        $noise = new GroundNoise($edgeSeed);
+        $sample = self::sample($noise, $edgeSeed);
+        $taken = [];
+        $frontier = $reached;
+        for ($distance = 1; $distance <= $width && $frontier !== []; $distance++) {
+            $next = [];
+            foreach ($frontier as $key => $terrain) {
+                [$x, $y] = array_map('intval', explode(',', (string) $key));
+                foreach (self::AROUND as [$dx, $dy]) {
+                    [$cx, $cy] = [$x + $dx, $y + $dy];
+                    $neighbour = $cx . ',' . $cy;
+                    if (isset($reached[$neighbour]) || $cx < $box['xMin'] || $cx > $box['xMax'] || $cy < $box['yMin'] || $cy > $box['yMax']) {
+                        continue;
+                    }
+                    if (!isset($next[$neighbour]) || strcmp($terrain, $next[$neighbour]) < 0) {
+                        $next[$neighbour] = $terrain;
+                    }
+                }
+            }
+            $chance = 1 - $distance / ($width + 1);
+            foreach ($next as $key => $terrain) {
+                $reached[$key] = $terrain;
+                [$cx, $cy] = array_map('intval', explode(',', (string) $key));
+                $inArea = $cx >= $area['xMin'] && $cx <= $area['xMax'] + 1 && $cy >= $area['yMin'] && $cy <= $area['yMax'] + 1;
+                if ($inArea && self::rank($sample, $noise->at($cx / self::EDGE_SCALE, $cy / self::EDGE_SCALE)) < $chance) {
+                    $taken[$key] = $terrain;
+                }
+            }
+            $frontier = $next;
+        }
+
+        return $taken;
+    }
+
+    /**
      * The cells where this biome is on top (highest stack order, then highest id).
      *
      * @return list<array{int, int}> [x, y]
@@ -319,17 +418,21 @@ final class BiomeBrushService
     {
         $seed = random_int(1, PHP_INT_MAX >> 32);
         $this->db->update('biomes', ['seed' => $seed], ['id' => $biomeId]);
+        unset($this->settings[$biomeId]);
 
         return $seed;
     }
 
     /**
-     * @return array{seed: int, scale: int, weights: array<string, int>}
+     * @return array{seed: int, scale: int, edge: int, weights: array<string, int>}
      */
     private function settings(int $biomeId): array
     {
+        if (isset($this->settings[$biomeId])) {
+            return $this->settings[$biomeId];
+        }
         $biome = $this->db->fetchAssociative(
-            'SELECT b.seed, b.biome_type_id, t.patch_scale FROM biomes b JOIN biome_types t ON t.id = b.biome_type_id WHERE b.id = ?',
+            'SELECT b.seed, b.biome_type_id, t.patch_scale, t.edge_width FROM biomes b JOIN biome_types t ON t.id = b.biome_type_id WHERE b.id = ?',
             [$biomeId]
         );
         if ($biome === false) {
@@ -343,7 +446,12 @@ final class BiomeBrushService
             throw new InvalidArgumentException('Ce type de biome n\'a pas de sols : réglez sa palette dans Le monde > Biomes.');
         }
 
-        return ['seed' => (int) $biome['seed'], 'scale' => max(1, (int) $biome['patch_scale']), 'weights' => $weights];
+        return $this->settings[$biomeId] = [
+            'seed' => (int) $biome['seed'],
+            'scale' => max(1, (int) $biome['patch_scale']),
+            'edge' => max(0, (int) $biome['edge_width']),
+            'weights' => $weights,
+        ];
     }
 
     /**
@@ -351,7 +459,7 @@ final class BiomeBrushService
      * terrain covers its share of the corners: quantiles of a fixed sample
      * of the field, the same whatever area is painted.
      *
-     * @param array{seed: int, scale: int, weights: array<string, int>} $settings
+     * @param array{seed: int, scale: int, edge: int, weights: array<string, int>} $settings
      * @return list<float> one threshold between two consecutive terrains
      */
     private function thresholds(GroundNoise $noise, array $settings): array
@@ -361,15 +469,7 @@ final class BiomeBrushService
             return self::$thresholds[$key];
         }
 
-        $step = self::SAMPLED_PATCHES * $settings['scale'] / self::SAMPLES;
-        $values = [];
-        for ($i = 0; $i < self::SAMPLES; $i++) {
-            for ($j = 0; $j < self::SAMPLES; $j++) {
-                $values[] = $noise->at($i * $step / $settings['scale'], $j * $step / $settings['scale']);
-            }
-        }
-        sort($values);
-
+        $values = self::sample($noise, $settings['seed']);
         $total = array_sum($settings['weights']);
         $thresholds = [];
         $covered = 0;
@@ -379,6 +479,50 @@ final class BiomeBrushService
         }
 
         return self::$thresholds[$key] = $thresholds;
+    }
+
+    /**
+     * A fixed sample of the noise field, sorted: its values set the
+     * thresholds, and give a value its rank among all the field's.
+     *
+     * @return list<float>
+     */
+    private static function sample(GroundNoise $noise, int $seed): array
+    {
+        if (isset(self::$samples[$seed])) {
+            return self::$samples[$seed];
+        }
+        $step = self::SAMPLED_PATCHES / self::SAMPLES;
+        $values = [];
+        for ($i = 0; $i < self::SAMPLES; $i++) {
+            for ($j = 0; $j < self::SAMPLES; $j++) {
+                $values[] = $noise->at($i * $step, $j * $step);
+            }
+        }
+        sort($values);
+
+        return self::$samples[$seed] = $values;
+    }
+
+    /**
+     * The share of the sorted sample below the value, within [0, 1]: the
+     * noise clusters around 0, its rank spreads evenly.
+     *
+     * @param list<float> $sorted
+     */
+    private static function rank(array $sorted, float $value): float
+    {
+        [$low, $high] = [0, count($sorted)];
+        while ($low < $high) {
+            $middle = intdiv($low + $high, 2);
+            if ($sorted[$middle] < $value) {
+                $low = $middle + 1;
+            } else {
+                $high = $middle;
+            }
+        }
+
+        return $low / count($sorted);
     }
 
     /**
