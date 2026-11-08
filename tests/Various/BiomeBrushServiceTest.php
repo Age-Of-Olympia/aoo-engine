@@ -20,6 +20,9 @@ class BiomeBrushServiceTest extends TestCase
     private const MOSS = 'test_brush_mousse';
     private const AREA = ['xMin' => 0, 'xMax' => 19, 'yMin' => 0, 'yMax' => 19];
 
+    /** The lisière tests' width: off by default, set on the type */
+    private const RAGGED_WIDTH = 3;
+
     private Connection $db;
     private int $biomeId;
     private int $typeId;
@@ -213,7 +216,7 @@ class BiomeBrushServiceTest extends TestCase
 
     public function testTheRaggedEdgeLetsTheGroundAcrossReachInOverItsWidth(): void
     {
-        $this->layMossEastOfTheBiome();
+        $this->layMossEastOfARaggedBiome();
         $brush = new BiomeBrushService($this->db);
 
         $brush->paintBiome($this->coordsIdOn(self::PLAN, 3, 4));
@@ -229,12 +232,12 @@ class BiomeBrushServiceTest extends TestCase
             }
         }
         $this->assertLessThan(20, $deepest, 'the moss reaches past the edge corners');
-        $this->assertGreaterThanOrEqual(20 - BiomeAdminService::DEFAULT_EDGE_WIDTH, $deepest, 'and no deeper than the edge width');
+        $this->assertGreaterThanOrEqual(20 - self::RAGGED_WIDTH, $deepest, 'and no deeper than the edge width');
     }
 
     public function testAStrokeOnTheRaggedEdgeMatchesTheWholeFillThere(): void
     {
-        $this->layMossEastOfTheBiome();
+        $this->layMossEastOfARaggedBiome();
         $brush = new BiomeBrushService($this->db);
         $brush->paintBiome($this->coordsIdOn(self::PLAN, 3, 4));
         $whole = $this->groundsOfTheBiome();
@@ -260,10 +263,12 @@ class BiomeBrushServiceTest extends TestCase
         $this->assertNotEquals($before, $brush->paint($this->biomeId, self::AREA)['tiles']);
     }
 
-    /** One palette terrain, and moss laid in the column just east of the biome */
-    private function layMossEastOfTheBiome(): void
+    /** One palette terrain, a lisière on the type, and moss laid in the column just east of the biome */
+    private function layMossEastOfARaggedBiome(): void
     {
-        (new BiomeAdminService($this->db))->saveGrounds($this->typeId, [self::GRASS => 100]);
+        $admin = new BiomeAdminService($this->db);
+        $admin->saveType($this->typeId, 'test_brush_prairie', 'Prairie', '#88aa44', 4, self::RAGGED_WIDTH);
+        $admin->saveGrounds($this->typeId, [self::GRASS => 100]);
         foreach (range(0, 19) as $y) {
             $this->db->insert('map_tiles', ['name' => self::MOSS, 'coords_id' => $this->coordsIdOn(self::PLAN, 20, $y), 'foreground' => 0]);
         }

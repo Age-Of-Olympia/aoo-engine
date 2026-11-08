@@ -20,8 +20,8 @@ final class BiomeAdminService
     public const DEFAULT_PATCH_SCALE = 6;
     public const MAX_PATCH_SCALE = 64;
 
-    /** Ragged edge of the biome brush, in cells: how far the ground across the edge reaches in; 0 keeps the zone's straight edge */
-    public const DEFAULT_EDGE_WIDTH = 2;
+    /** Ragged edge of the biome brush, in cells: how far the ground across the edge reaches in; 0, the default, keeps a hand-drawn zone's straight edge */
+    public const DEFAULT_EDGE_WIDTH = 0;
     public const MAX_EDGE_WIDTH = 16;
 
     /** Ground lines the palette form offers before "Ajouter un sol" */
