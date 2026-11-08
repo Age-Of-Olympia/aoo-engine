@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Factory\EntityManagerFactory;
 use App\Service\Map\BoardChanges;
+use App\Service\Map\BiomeEvents;
 use App\Service\Map\CharacterMoveService;
 use Classes\Player;
 use Classes\View;
@@ -184,7 +185,7 @@ final class CultAdminService
         $coordsId = $this->coordsId($x, $y, $z, $plan);
 
         $id = (new NpcAdminService())->createPnj($name, 'dieu');
-        $moved = (new CharacterMoveService($this->connection))->move($id, $coordsId);
+        $moved = (new CharacterMoveService($this->connection))->move($id, $coordsId, BiomeEvents::None);
         (new PlayerOptionsService())->addOption($id, 'prayable');
         BoardChanges::cellId((int) $moved['from'], $coordsId);
         BoardChanges::viewer($id);
@@ -207,7 +208,7 @@ final class CultAdminService
         // Only a god is renamed and moved: a prayable character of another race keeps both
         if ($this->connection->fetchOne("SELECT 1 FROM players WHERE id = ? AND race = 'dieu'", [$id]) !== false) {
             $this->connection->executeStatement('UPDATE players SET name = ? WHERE id = ?', [$name, $id]);
-            $oldCoordsId = (int) (new CharacterMoveService($this->connection))->move($id, $coordsId)['from'];
+            $oldCoordsId = (int) (new CharacterMoveService($this->connection))->move($id, $coordsId, BiomeEvents::None)['from'];
         }
         BoardChanges::cellId($oldCoordsId, $coordsId);
         BoardChanges::viewer($id);

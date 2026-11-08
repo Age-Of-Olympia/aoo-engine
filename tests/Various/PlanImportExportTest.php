@@ -121,6 +121,10 @@ class PlanImportExportTest extends TestCase
         $type = $admin->saveType(0, 'test_ie_bois', 'Bois', '#336633');
         $wood = $admin->saveBiome(0, self::SRC, $type, 'Bois', '0,0 2,0 2,2 0,2', 0);
         $admin->savePopulation($wood['id'], $plant, 20, 5.5, 0, 0);
+        $admin->saveCrossing('biomes', $wood['id'], [
+            'enter_message' => 'Bienvenue au bois.', 'exit_message' => '', 'enter_effect' => null,
+            'enter_effect_turns' => null, 'enter_effect_value' => 1, 'enter_effect_ends_on_exit' => true,
+        ]);
 
         $payload = (new PlanExporter())->exportOne(self::SRC);
         $payload['plan'] = self::IMPORTED;
@@ -128,6 +132,7 @@ class PlanImportExportTest extends TestCase
 
         $this->assertEquals($payload['biomes'], (new PlanExporter())->exportOne(self::IMPORTED)['biomes']);
         $this->assertSame('test_ie_bois', $payload['biomes'][0]['type']['name']);
+        $this->assertSame('Bienvenue au bois.', $payload['biomes'][0]['crossing']['enter_message'], 'what entering does travels too');
         $this->assertSame(1, (int) $this->link->fetchOne("SELECT COUNT(*) FROM biome_types WHERE name = 'test_ie_bois'"), 'the existing type is reused');
         $this->assertSame(4, (int) $this->link->fetchOne(
             'SELECT COUNT(*) FROM biome_cells bc JOIN plans p ON p.id = bc.plan_id WHERE p.slug = ?',

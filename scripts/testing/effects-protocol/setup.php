@@ -35,7 +35,7 @@ $c->executeStatement("UPDATE effects SET carac_mods='{\"a\":-1}', loss_mods='{\"
 $mk = function (string $name, int $coordsId) use ($c, $hash): int {
     $id = \Classes\Player::put_player($name, 'nain');
     (new \App\Service\AccountService())->setPassword($id, $hash);
-    (new \App\Service\Map\CharacterMoveService($c))->move($id, $coordsId);
+    (new \App\Service\Map\CharacterMoveService($c))->move($id, $coordsId, \App\Service\Map\BiomeEvents::None);
     $c->executeStatement("INSERT IGNORE INTO players_options (player_id, name) VALUES (?, 'newHud')", [$id]);
     return $id;
 };

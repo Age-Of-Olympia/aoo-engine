@@ -39,7 +39,7 @@ class CharacterMoveServiceTest extends TestCase
 
         $moved = (new CharacterMoveService($this->db))->move($character, $reached);
 
-        $this->assertSame(['from' => $start, 'to' => $reached], $moved);
+        $this->assertSame(['from' => $start, 'to' => $reached, 'messages' => []], $moved);
         $this->assertSame($reached, (int) $this->db->fetchOne('SELECT coords_id FROM players WHERE id = ?', [$character]));
         $this->assertSame(
             [[3, 4]],
@@ -68,7 +68,7 @@ class CharacterMoveServiceTest extends TestCase
 
         $moved = SimulationGuard::run(fn (): array => (new CharacterMoveService($this->db))->move($character, $reached));
 
-        $this->assertSame(['from' => $start, 'to' => $reached], $moved, 'the preview still says where the move would go');
+        $this->assertSame(['from' => $start, 'to' => $reached, 'messages' => []], $moved, 'the preview still says where the move would go');
         $this->assertSame($start, (int) $this->db->fetchOne('SELECT coords_id FROM players WHERE id = ?', [$character]));
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Service\Map;
 
 use App\Factory\EntityManagerFactory;
+use App\Service\EffectService;
 use App\Service\TerrainTransitionService;
 use Doctrine\DBAL\Connection;
 use InvalidArgumentException;
@@ -26,6 +27,9 @@ final class BiomeAdminService
 
     /** Ground lines the palette form offers before "Ajouter un sol" */
     public const DEFAULT_GROUNDS = 3;
+
+    /** What entering and leaving does, on biome_types and on biomes (where NULL keeps the type's value) */
+    public const CROSSING_COLUMNS = ['enter_message', 'exit_message', 'enter_effect', 'enter_effect_turns', 'enter_effect_value', 'enter_effect_ends_on_exit'];
 
     /** A palette's shares, in percent, add up to this */
     public const FULL_PALETTE = 100;
@@ -248,6 +252,64 @@ final class BiomeAdminService
             'id' => $id,
             'cells' => (int) $this->db->fetchOne('SELECT COUNT(*) FROM biome_cells WHERE biome_id = ?', [$id]),
         ];
+    }
+
+    /**
+     * What entering and leaving does, as stored, for a type ('biome_types') or one biome ('biomes').
+     *
+     * @return array<string, mixed>
+     */
+    public function crossing(string $table, int $id): array
+    {
+        $row = $this->db->fetchAssociative(
+            'SELECT ' . implode(', ', self::CROSSING_COLUMNS) . ' FROM ' . self::crossingTable($table) . ' WHERE id = ?',
+            [$id]
+        );
+
+        return $row === false ? [] : $row;
+    }
+
+    /**
+     * Save what entering and leaving does. An empty message is none on a
+     * type, the type's on a biome; a biome's effect null keeps the type's
+     * effect with its turns, intensity and ending.
+     *
+     * @param array{enter_message: string, exit_message: string, enter_effect: ?string, enter_effect_turns: ?int, enter_effect_value: int, enter_effect_ends_on_exit: bool} $settings
+     *     enter_effect '' = none; enter_effect_turns null = no end
+     */
+    public function saveCrossing(string $table, int $id, array $settings): void
+    {
+        $table = self::crossingTable($table);
+        $effect = $settings['enter_effect'];
+        if ($effect === null && $table === 'biome_types') {
+            $effect = '';
+        }
+        if ($effect !== null && $effect !== '' && !(new EffectService())->exists($effect)) {
+            throw new InvalidArgumentException('Effet inconnu : ' . $effect . '.');
+        }
+        if ($settings['enter_effect_turns'] !== null && $settings['enter_effect_turns'] < 0) {
+            throw new InvalidArgumentException('La durée de l\'effet se compte en tours, à partir de 0.');
+        }
+        $message = static fn (string $text): ?string => trim($text) === '' ? null : trim($text);
+        $ownEffect = $effect !== null;
+
+        $this->db->update($table, [
+            'enter_message' => $message($settings['enter_message']),
+            'exit_message' => $message($settings['exit_message']),
+            'enter_effect' => $effect,
+            'enter_effect_turns' => $ownEffect ? $settings['enter_effect_turns'] : null,
+            'enter_effect_value' => $ownEffect ? max(1, $settings['enter_effect_value']) : null,
+            'enter_effect_ends_on_exit' => $ownEffect ? (int) $settings['enter_effect_ends_on_exit'] : null,
+        ], ['id' => $id]);
+    }
+
+    private static function crossingTable(string $table): string
+    {
+        if (!in_array($table, ['biome_types', 'biomes'], true)) {
+            throw new InvalidArgumentException('Table inconnue : ' . $table . '.');
+        }
+
+        return $table;
     }
 
     public function deleteBiome(int $id): void

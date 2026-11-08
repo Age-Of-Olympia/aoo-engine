@@ -15,6 +15,15 @@ $token = '<input type="hidden" name="csrf_token" value="' . e((new CsrfProtectio
 $plan = (string) ($_GET['plan'] ?? '');
 $types = $service->types();
 $typeChoices = array_column($types, 'label', 'id');
+$effects = [];
+foreach ((new \App\Service\EffectService())->getAllEffects() as $catalogEffect) {
+    $effects[$catalogEffect->getName()] = $catalogEffect->getLabel() !== ''
+        ? $catalogEffect->getLabel() . ' (' . $catalogEffect->getName() . ')'
+        : $catalogEffect->getName();
+}
+asort($effects);
+$crossingHelp = '<p class="text-muted small">Le message s\'affiche au joueur après son pas, et reste dans ses évènements.'
+    . ' L\'effet se pose à l\'entrée ; à la sortie, la page le retire, ou le laisse courir jusqu\'au bout de sa durée.</p>';
 
 /**
  * A POST form to biomes-save.php with its action and hidden fields.
@@ -32,6 +41,32 @@ function biome_form(string $token, string $action, string $body, array $hidden =
         . $token . $fields . $body . '</form>';
 }
 
+/** The effect choice of a biome that keeps its type's effect */
+const CROSSING_TYPE_EFFECT = '__type__';
+
+/**
+ * The fields of what entering and leaving does, for a type or one biome.
+ *
+ * @param array<string, mixed> $values as stored (BiomeAdminService::crossing)
+ * @param array<string, string> $effects name => label
+ */
+function crossing_fields(array $values, array $effects, bool $forBiome): string
+{
+    $effect = $values['enter_effect'] ?? null;
+    $effectChoices = ($forBiome ? [CROSSING_TYPE_EFFECT => 'Comme le type'] : []) + ['' => 'Aucun'] + $effects;
+    $inherited = $forBiome ? 'placeholder="Vide : celui du type"' : 'placeholder="Vide : aucun message"';
+
+    return '<div class="form-row">'
+        . formField('Message à l\'entrée', formTextarea('enter_message', (string) ($values['enter_message'] ?? ''), 2, $inherited), 'form-group col-md-6')
+        . formField('Message à la sortie', formTextarea('exit_message', (string) ($values['exit_message'] ?? ''), 2, $inherited), 'form-group col-md-6')
+        . '</div><div class="form-row align-items-end">'
+        . formField('Effet à l\'entrée', formSelect('enter_effect', $effectChoices, $effect === null && $forBiome ? CROSSING_TYPE_EFFECT : (string) $effect), 'form-group col-md-4')
+        . formField('Durée (tours)', formInput('enter_effect_turns', isset($values['enter_effect_turns']) ? (string) $values['enter_effect_turns'] : '', 'type="number" min="0" placeholder="sans fin"'), 'form-group col-md-2')
+        . formField('Intensité', formInput('enter_effect_value', (string) ($values['enter_effect_value'] ?? 1), 'type="number" min="1"'), 'form-group col-md-2')
+        . '<div class="form-group col-md-4">' . formCheckbox('enter_effect_ends_on_exit', (bool) ($values['enter_effect_ends_on_exit'] ?? true), 'Effet retiré à la sortie') . '</div>'
+        . '</div>';
+}
+
 $content = '';
 if (!Modules::on(Module::Biomes)) {
     $content .= '<div class="alert alert-warning">Le module Biomes est désactivé : les biomes n\'ont aucun effet en jeu.'
@@ -45,7 +80,8 @@ $paletteSummary = static fn (array $type): string => '<div class="small text-mut
     . ($type['grounds'] === []
         ? 'tout sol'
         : e(implode(' · ', array_map(static fn (string $terrain, int $share): string => $terrain . ' ' . $share . ' %', array_keys($type['grounds']), $type['grounds']))))
-    . ' — <a href="' . $paletteLink($type['id']) . '">Palette</a></div>';
+    . ' — <a href="' . $paletteLink($type['id']) . '">Palette</a>'
+    . ' — <a href="?' . e(http_build_query(array_filter(['plan' => $plan, 'crossing' => $type['id']]))) . '#crossing">Entrée et sortie</a></div>';
 $rows = [];
 foreach ($types as $type) {
     $rows[] = '<tr><td>'
@@ -137,6 +173,20 @@ if ($paletteType !== null) {
                     refresh();
                 })();
             </script>'
+    ) . '</div>';
+}
+
+// What entering and leaving a biome of one type does
+foreach ($types as $type) {
+    if ($type['id'] !== (int) ($_GET['crossing'] ?? 0)) {
+        continue;
+    }
+    $content .= '<div id="crossing">' . formCard('Entrée et sortie : ' . $type['label'], $crossingHelp
+        . biome_form($token, 'save_type_crossing',
+            crossing_fields($service->crossing('biome_types', $type['id']), $effects, false)
+            . '<button class="btn btn-primary" type="submit">Enregistrer</button>'
+            . ' <a class="btn btn-outline-secondary" href="?' . e(http_build_query(array_filter(['plan' => $plan]))) . '">Fermer</a>',
+            ['id' => $type['id'], 'plan_filter' => $plan, 'crossing' => $type['id']])
     ) . '</div>';
 }
 
@@ -248,7 +298,14 @@ $content .= formCard('Biomes', $loneWarnings . $filter
     . ($biomes === [] ? '<p class="text-muted">Aucun biome.</p>' : renderTable(['Biome', 'Type', 'Plan', 'Cases', 'Empilement', ''], $rows))
     . '<hr><h5>' . ($edited ? 'Modifier ' . e($edited['name']) : 'Nouveau biome') . '</h5>' . $form
     . ($edited ? biome_form($token, 'reseed_biome', '<button class="btn btn-sm btn-outline-secondary mt-2" type="submit" title="Tire une nouvelle graine : le prochain coup de pinceau de biome dessine d\'autres plaques">Nouveau tirage du pinceau</button>', ['id' => $edited['id'], 'plan_filter' => $plan, 'edit' => $edited['id']]) : ''))
-    . $populationsCard;
+    . $populationsCard
+    . ($edited ? '<div id="biome-crossing">' . formCard('Entrée et sortie : ' . $edited['name'], $crossingHelp
+        . '<p class="text-muted small">Ce qui reste vide ou « Comme le type » reprend le réglage du type.</p>'
+        . biome_form($token, 'save_biome_crossing',
+            crossing_fields($service->crossing('biomes', $edited['id']), $effects, true)
+            . '<button class="btn btn-primary" type="submit">Enregistrer</button>',
+            ['id' => $edited['id'], 'plan_filter' => $plan, 'edit' => $edited['id']])
+    ) . '</div>' : '');
 
 echo admin_layout('Biomes', $content, [
     'intro' => 'Un biome est une zone d\'un plan avec ses propres règles, valable à tous les niveaux z.'

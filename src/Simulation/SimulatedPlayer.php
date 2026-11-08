@@ -176,7 +176,7 @@ class SimulatedPlayer extends Player
     }
 
     /** @return list<string> */
-    public function go($goCoords): array
+    public function go($goCoords, \App\Service\Map\BiomeEvents $biomeEvents = \App\Service\Map\BiomeEvents::Cross): array
     {
         return [];
     }

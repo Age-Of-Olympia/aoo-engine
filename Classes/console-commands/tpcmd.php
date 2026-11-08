@@ -8,13 +8,14 @@ use Classes\View;
 class TpCmd extends Command
 {
     public function __construct() {
-        parent::__construct("tp",[new Argument('action',true), new Argument('target',true)]);
+        parent::__construct("tp",[new Argument('action',true), new Argument('target',true), new Argument('events',true)]);
         parent::setDescription(<<<EOT
 Usage:
 > tp <player_name> <x,y,z,plan> (téléporte le joueur aux coordonnées)
 > tp <player_name> <other_player> (téléporte à côté d'un autre joueur)
 > tp everyone <x,y,z,plan> (change tous le monde de plan)
 > tp list-plans (affiche tous les plans disponibles)
+Avec -events en dernier, l'entrée et la sortie de biome se déclenchent (message, effet).
 EOT);
     }
 
@@ -45,6 +46,7 @@ EOT);
         }
 
         $coordsTbl = explode(',', $argumentValues[1]);
+        $biomeEvents = in_array('-events', $argumentValues, true) ? \App\Service\Map\BiomeEvents::Cross : \App\Service\Map\BiomeEvents::None;
 
         if(is_numeric($argumentValues[1]) || count($coordsTbl) == 1){
 
@@ -58,7 +60,7 @@ EOT);
 
             $coordsId = View::get_free_coords_id_arround($goCoords);
             $goCoords->coordsId = $coordsId;
-            $player->go($goCoords);
+            $player->go($goCoords, $biomeEvents);
 
             \App\Service\Map\BoardChanges::viewer((int) $player->id);
 
@@ -144,7 +146,7 @@ EOT);
             );
 
 
-            $player->go($coords);
+            $player->go($coords, $biomeEvents);
 
             \App\Service\Map\BoardChanges::viewer((int) $player->id);
 

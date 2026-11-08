@@ -6,6 +6,10 @@
  *  - below 900px the sidebar is a drawer opened from the top bar;
  *  - every .table scrolls in its own box instead of widening the page;
  *  - data-confirm="message" on a form, a submit button or a link asks first;
+ *  - data-ask="question" on a form or a submit button asks yes or no, puts
+ *    1 or 0 in the field named by data-ask-field and sends the form either
+ *    way (closing the dialog sends nothing); data-ask-if-changed="x,y" asks
+ *    only when one of those fields changed;
  *  - data-autosubmit on a field submits its form when it changes;
  *  - data-check-all on a header checkbox ticks the visible rows of its table;
  *  - the × of a flash message closes it;
@@ -116,6 +120,53 @@
             }
         });
     }, true);
+
+    function changed(field) {
+        if (field.tagName === 'SELECT') {
+            var initial = Array.prototype.find.call(field.options, function (option) { return option.defaultSelected; });
+            return field.value !== (initial ? initial.value : field.options[0] && field.options[0].value);
+        }
+        return field.value !== field.defaultValue;
+    }
+    var answered = false;
+    document.addEventListener('submit', function (event) {
+        if (answered) {
+            answered = false;
+            return;
+        }
+        var form = event.target;
+        var submitter = event.submitter || null;
+        var source = submitter && submitter.hasAttribute('data-ask') ? submitter : form;
+        var question = source.getAttribute('data-ask');
+        if (!question) {
+            return;
+        }
+        var watched = (source.getAttribute('data-ask-if-changed') || '').split(',').filter(Boolean);
+        if (watched.length && !watched.some(function (name) { return form.elements[name] && changed(form.elements[name]); })) {
+            return;
+        }
+        event.preventDefault();
+        var choice = window.aooChoose
+            ? window.aooChoose(question, [{ value: '1', label: 'Oui' }, { value: '0', label: 'Non' }], '1')
+            : Promise.resolve(window.confirm(question) ? '1' : '0');
+        choice.then(function (value) {
+            if (value === null) {
+                return;
+            }
+            var name = source.getAttribute('data-ask-field');
+            var field = form.elements[name];
+            if (!field) {
+                field = document.createElement('input');
+                field.type = 'hidden';
+                field.name = name;
+                form.appendChild(field);
+            }
+            field.value = value;
+            answered = true;
+            form.requestSubmit(submitter);
+        });
+    }, true);
+
     document.addEventListener('click', function (event) {
         var link = event.target.closest('a[data-confirm]');
         if (link) {

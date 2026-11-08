@@ -145,13 +145,14 @@ class PlanAdminServiceTest extends TestCase
             'biome_type_id' => (int) $this->link->lastInsertId(),
             'name' => 'Forêt du test',
             'zone' => json_encode([[0, 0], [2, 0], [2, 2], [0, 2]]),
+            'enter_message' => 'Vous entrez dans la forêt du test.',
         ]);
 
         $report = (new PlanAdminService())->clonePlan(self::SRC, self::CLONE);
 
         $this->assertSame(1, $report['biomes']);
-        $this->assertSame(['Forêt du test'], $this->link->fetchFirstColumn(
-            'SELECT b.name FROM biomes b JOIN plans p ON p.id = b.plan_id WHERE p.slug = ?',
+        $this->assertSame(['Forêt du test' => 'Vous entrez dans la forêt du test.'], $this->link->fetchAllKeyValue(
+            'SELECT b.name, b.enter_message FROM biomes b JOIN plans p ON p.id = b.plan_id WHERE p.slug = ?',
             [self::CLONE]
         ));
         $this->assertSame(4, (int) $this->link->fetchOne(

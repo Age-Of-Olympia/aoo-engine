@@ -71,7 +71,8 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
     if($_POST['type'] == 'tp'){
         
         $coords->coordsId = $coordsId;
-        $player->go($coords);
+        // Moving around the editor: no biome entry or exit for the admin's own character
+        $player->go($coords, \App\Service\Map\BiomeEvents::None);
         exit('tp');
     }
 
