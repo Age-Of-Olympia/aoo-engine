@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['player_save'])) {
                 throw new RuntimeException('Coordonnées invalides.');
             }
             \App\Service\Map\BoardChanges::entity($id);
-            (new \App\Service\Map\CharacterMoveService())->move($id, $coordsId);
+            (new \App\Service\Map\CharacterMoveService())->move($id, $coordsId, \App\Service\Map\BiomeEvents::fromAdminAnswer($_POST['biome_events'] ?? null));
             \App\Service\Map\BoardChanges::cell($goCoords);
         }
 
@@ -383,7 +383,7 @@ $animationForms = [
         }
         // Same as the console « tp <nom> <autre> »: the nearest free cell around the other one.
         $goCoords->coordsId = View::get_free_coords_id_arround($goCoords);
-        $player->go($goCoords);
+        $player->go($goCoords, \App\Service\Map\BiomeEvents::fromAdminAnswer($_POST['biome_events'] ?? null));
         \App\Service\Map\BoardChanges::viewer($id);
 
         return $player->data->name . ' est à côté de ' . $other->data->name . '.';
@@ -452,6 +452,11 @@ $turnInfo = $nextTurn > time()
     : 'Tour déjà disponible.';
 
 $csrfField = $csrf->renderTokenField();
+
+/* A placement asks whether the biomes crossed fire their entry and exit (message, effect) */
+$biomeQuestion = \App\Module\Modules::on(\App\Module\Module::Biomes)
+    ? ' data-ask="' . e('Déclencher l\'entrée et la sortie de biome (message, effet) ?') . '" data-ask-field="biome_events"'
+    : '';
 
 $identity = formCard('Identité', ''
     . formField('Nom', formInput('name', $player->data->name))
@@ -719,7 +724,7 @@ $animationForm = static fn (string $inner): string => '<form method="post" actio
 $animation = formCard('Animation', ''
     . $animationForm(formField('Téléporter à côté de', '<div class="input-group">'
         . formInput('near', '', 'placeholder="Nom ou matricule" required')
-        . '<div class="input-group-append"><button type="submit" name="tp_near" value="1" class="btn btn-outline-primary">Téléporter</button></div></div>',
+        . '<div class="input-group-append"><button type="submit" name="tp_near" value="1" class="btn btn-outline-primary"' . $biomeQuestion . '>Téléporter</button></div></div>',
         'form-group mb-0', 'Sur la case libre la plus proche de ce personnage.'))
     . '<hr>'
     . $animationForm(formField('Écrire une missive', formInput('missive_title', '', 'placeholder="Titre" required'))
@@ -760,7 +765,8 @@ $body = '<form method="post" action="player-edit.php?id=' . (int) $id . '">'
     . $identity . $position
     . '<div class="row"><div class="col-md-7">' . $vitals . '</div><div class="col-md-5">' . $counters . '</div></div>'
     . $turn
-    . '<button type="submit" name="player_save" value="1" class="btn btn-primary">Enregistrer</button>'
+    . '<button type="submit" name="player_save" value="1" class="btn btn-primary"'
+    . ($biomeQuestion === '' ? '' : $biomeQuestion . ' data-ask-if-changed="x,y,z,plan"') . '>Enregistrer</button>'
     . '</form>'
     . $account
     . $animation

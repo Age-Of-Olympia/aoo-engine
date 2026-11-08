@@ -164,9 +164,10 @@ class PlanAdminService
             return 0;
         }
 
+        $crossing = implode(', ', \App\Service\Map\BiomeAdminService::CROSSING_COLUMNS);
         $n = (int) $this->db->exe(
-            'INSERT INTO biomes (plan_id, biome_type_id, name, zone, stack_order)
-             SELECT ?, b.biome_type_id, b.name, b.zone, b.stack_order
+            'INSERT INTO biomes (plan_id, biome_type_id, name, zone, stack_order, ' . $crossing . ')
+             SELECT ?, b.biome_type_id, b.name, b.zone, b.stack_order, b.' . str_replace(', ', ', b.', $crossing) . '
              FROM biomes b JOIN plans p ON p.id = b.plan_id WHERE p.slug = ?',
             array($targetId, $sourcePlan),
             false,

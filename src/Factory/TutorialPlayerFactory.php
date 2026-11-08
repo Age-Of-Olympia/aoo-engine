@@ -146,6 +146,9 @@ class TutorialPlayerFactory
             'is_active'           => true,
         ]);
 
+        // The character appears on its starting cell: entering the biome there, if any
+        (new \App\Service\Map\CharacterMoveService($conn))->move($actualPlayerId, (int) $startingCoordsId, \App\Service\Map\BiomeEvents::Arrive);
+
         // Step 11: Hydrate the entity via Doctrine and return it.
         // Clear the EntityManager first so the find() hits the DB
         // rather than the identity map — the row we just inserted

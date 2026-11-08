@@ -26,8 +26,13 @@ final class BiomeBundleService
     /** @return list<array<string, mixed>> */
     public function export(string $plan): array
     {
+        $crossing = implode(', ', array_map(
+            static fn (string $column): string => "t.{$column} AS type_{$column}, b.{$column} AS biome_{$column}",
+            BiomeAdminService::CROSSING_COLUMNS
+        ));
         $biomes = $this->db->fetchAllAssociative(
-            'SELECT b.id, b.name, b.zone, b.stack_order, b.seed, t.id AS type_id, t.name AS type, t.label, t.color, t.patch_scale, t.edge_width
+            'SELECT b.id, b.name, b.zone, b.stack_order, b.seed, t.id AS type_id, t.name AS type, t.label, t.color, t.patch_scale, t.edge_width, '
+            . $crossing . '
              FROM biomes b JOIN plans p ON p.id = b.plan_id JOIN biome_types t ON t.id = b.biome_type_id
              WHERE p.slug = ? ORDER BY b.stack_order, b.id',
             [$plan]
@@ -71,12 +76,49 @@ final class BiomeBundleService
                 'patch_scale' => (int) $biome['patch_scale'],
                 'edge_width' => (int) $biome['edge_width'],
                 'grounds' => $grounds[(int) $biome['type_id']] ?? [],
+                'crossing' => self::crossingOf($biome, 'type_'),
             ],
             'zone' => json_decode((string) $biome['zone'], true),
             'stack_order' => (int) $biome['stack_order'],
             'seed' => (int) $biome['seed'],
             'populations' => $populations[(int) $biome['id']] ?? [],
+            'crossing' => self::crossingOf($biome, 'biome_'),
         ], $biomes);
+    }
+
+    /** @param array<mixed> $owner a type or a biome of the bundle: its "crossing", if any, holds plain values */
+    private static function crossingIsScalar(array $owner): bool
+    {
+        $crossing = $owner['crossing'] ?? [];
+
+        return is_array($crossing) && array_filter($crossing, static fn (mixed $value): bool => $value !== null && !is_scalar($value)) === [];
+    }
+
+    /**
+     * What entering and leaving does, read from the export's prefixed columns.
+     *
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    private static function crossingOf(array $row, string $prefix): array
+    {
+        $crossing = [];
+        foreach (BiomeAdminService::CROSSING_COLUMNS as $column) {
+            $crossing[$column] = $row[$prefix . $column];
+        }
+
+        return $crossing;
+    }
+
+    /**
+     * The bundle's entry and exit settings, its known columns only; an older bundle has none.
+     *
+     * @param array<string, mixed> $owner a type or a biome of the bundle
+     * @return array<string, mixed>
+     */
+    private static function crossingFrom(array $owner): array
+    {
+        return array_intersect_key((array) ($owner['crossing'] ?? []), array_flip(BiomeAdminService::CROSSING_COLUMNS));
     }
 
     /**
@@ -93,6 +135,7 @@ final class BiomeBundleService
             $type = $biome['type'] ?? null;
             if (!is_string($biome['name'] ?? null) || !is_array($type) || !is_string($type['name'] ?? null)
                 || !is_array($biome['zone'] ?? null) || !is_array($biome['populations'] ?? [])
+                || !self::crossingIsScalar($biome) || !self::crossingIsScalar($type)
             ) {
                 throw new RuntimeException('Biome incomplet dans le bundle : nom, type et zone sont attendus.');
             }
@@ -131,7 +174,7 @@ final class BiomeBundleService
                     'stack_order' => (int) ($biome['stack_order'] ?? 0),
                     // A bundle without a seed: the biome draws its own, as a new one does
                     'seed' => (int) ($biome['seed'] ?? 0) ?: random_int(1, PHP_INT_MAX >> 32),
-                ]);
+                ] + self::crossingFrom($biome));
                 $biomeId = (int) $db->lastInsertId();
                 foreach ($biome['populations'] ?? [] as $population) {
                     $raceId = $races[(string) ($population['race'] ?? '')] ?? null;
@@ -171,7 +214,7 @@ final class BiomeBundleService
             'color' => (string) ($type['color'] ?? '#888888'),
             'patch_scale' => (int) ($type['patch_scale'] ?? BiomeAdminService::DEFAULT_PATCH_SCALE),
             'edge_width' => (int) ($type['edge_width'] ?? BiomeAdminService::DEFAULT_EDGE_WIDTH),
-        ]);
+        ] + self::crossingFrom($type));
         $id = (int) $db->lastInsertId();
         // A terrain this server does not know would match no tile, and nothing would grow
         $known = $db->fetchFirstColumn('SELECT name FROM terrain_colors WHERE layer = ?', [TerrainTransitionService::GROUND_LAYER]);

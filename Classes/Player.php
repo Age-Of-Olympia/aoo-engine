@@ -773,10 +773,8 @@ class Player implements ActorInterface {
     }
 
 
-    /** @return list<string> what the cell's elements took or gave on arrival (EffectService::stepNotice) */
-    public function go($goCoords){
-
-        $notices = array();
+    /** @return list<string> what the biomes crossed said, then what the cell's elements took or gave on arrival (EffectService::stepNotice) */
+    public function go($goCoords, \App\Service\Map\BiomeEvents $biomeEvents = \App\Service\Map\BiomeEvents::Cross){
 
 
         // store older coords
@@ -803,7 +801,7 @@ class Player implements ActorInterface {
          * les ANCIENNES coordonnées jusqu'à la fin de go() (le
          * rafraîchissement SVG de l'ancien plan en dépend), puis go()
          * pose lui-même les nouvelles ($this->coords = $goCoords). */
-        (new \App\Service\Map\CharacterMoveService())->move((int) $this->id, $coordsId);
+        $notices = (new \App\Service\Map\CharacterMoveService())->move((int) $this->id, $coordsId, $biomeEvents)['messages'];
 
         $db = new Db();
 

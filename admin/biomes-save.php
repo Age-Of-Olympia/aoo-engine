@@ -11,8 +11,19 @@ use App\Service\TerrainTransitionService;
 (new AdminMenuAccessService())->enforce('maps.biomes');
 
 $filter = (string) ($_POST['plan_filter'] ?? '');
-$back = array_filter(['plan' => $filter, 'edit' => (string) ($_POST['edit'] ?? ''), 'palette' => (string) ($_POST['palette'] ?? '')]);
-$anchor = isset($back['palette']) ? '#palette' : (isset($back['edit']) ? '#populations' : '');
+$back = array_filter([
+    'plan' => $filter,
+    'edit' => (string) ($_POST['edit'] ?? ''),
+    'palette' => (string) ($_POST['palette'] ?? ''),
+    'crossing' => (string) ($_POST['crossing'] ?? ''),
+]);
+$anchor = match (true) {
+    isset($back['palette']) => '#palette',
+    isset($back['crossing']) => '#crossing',
+    ($_POST['action'] ?? '') === 'save_biome_crossing' => '#biome-crossing',
+    isset($back['edit']) => '#populations',
+    default => '',
+};
 $redirect = '/admin/biomes.php' . ($back !== [] ? '?' . http_build_query($back) : '') . $anchor;
 
 handleAdminPost($redirect, static function (): string {
@@ -55,6 +66,19 @@ handleAdminPost($redirect, static function (): string {
             return 'Palette enregistrée' . ($generated > 0
                 ? ', ' . $generated . ' transition(s) générée(s). Repeignez le biome pour les voir.'
                 : ', ses transitions existent déjà.');
+        case 'save_type_crossing':
+        case 'save_biome_crossing':
+            $effect = (string) ($_POST['enter_effect'] ?? '');
+            $turns = trim((string) ($_POST['enter_effect_turns'] ?? ''));
+            $service->saveCrossing($_POST['action'] === 'save_type_crossing' ? 'biome_types' : 'biomes', $id, [
+                'enter_message' => (string) ($_POST['enter_message'] ?? ''),
+                'exit_message' => (string) ($_POST['exit_message'] ?? ''),
+                'enter_effect' => $effect === '__type__' ? null : $effect,
+                'enter_effect_turns' => $turns === '' ? null : (int) $turns,
+                'enter_effect_value' => (int) ($_POST['enter_effect_value'] ?? 1),
+                'enter_effect_ends_on_exit' => !empty($_POST['enter_effect_ends_on_exit']),
+            ]);
+            return 'Entrée et sortie enregistrées.';
         case 'delete_type':
             $service->deleteType($id);
             return 'Type supprimé.';
