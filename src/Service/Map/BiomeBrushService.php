@@ -29,6 +29,9 @@ final class BiomeBrushService
     /** Patches per side of that square: enough for the proportions to hold */
     private const SAMPLED_PATCHES = 16;
 
+    /** What a stroke reports when no biome is on top there */
+    private const NOTHING_PAINTED = ['biome' => null, 'coords' => [], 'missing' => [], 'unreadable' => [], 'generated' => 0, 'errors' => []];
+
     /** @var array<string, list<float>> thresholds per (seed, scale, weights), for the whole request */
     private static array $thresholds = [];
 
@@ -120,11 +123,36 @@ final class BiomeBrushService
              ORDER BY b.stack_order DESC, b.id DESC LIMIT 1',
             [$coordsId]
         );
-        if ($biome === false) {
-            return ['biome' => null, 'coords' => [], 'missing' => [], 'unreadable' => [], 'generated' => 0, 'errors' => []];
-        }
 
+        return $biome === false ? self::NOTHING_PAINTED : $this->paintTopCells($biome);
+    }
+
+    /**
+     * Same as paintBiome(), for a biome named by its id, on one level.
+     *
+     * @return array{biome: ?string, coords: list<int>, missing: list<string>, unreadable: list<string>, generated: int, errors: list<string>}
+     *     biome null: no such biome, or it is on top nowhere
+     */
+    public function paintBiomeOnLevel(int $biomeId, int $z): array
+    {
+        $biome = $this->db->fetchAssociative(
+            'SELECT b.id, b.name, b.plan_id, p.slug AS plan, ? AS z FROM biomes b JOIN plans p ON p.id = b.plan_id WHERE b.id = ?',
+            [$z, $biomeId]
+        );
+
+        return $biome === false ? self::NOTHING_PAINTED : $this->paintTopCells($biome);
+    }
+
+    /**
+     * @param array<string, mixed> $biome id, name, plan_id, plan, z
+     * @return array{biome: ?string, coords: list<int>, missing: list<string>, unreadable: list<string>, generated: int, errors: list<string>}
+     */
+    private function paintTopCells(array $biome): array
+    {
         $cells = $this->topCells((int) $biome['id']);
+        if ($cells === []) {
+            return self::NOTHING_PAINTED;
+        }
         $area = [
             'xMin' => min(array_column($cells, 0)), 'xMax' => max(array_column($cells, 0)),
             'yMin' => min(array_column($cells, 1)), 'yMax' => max(array_column($cells, 1)),

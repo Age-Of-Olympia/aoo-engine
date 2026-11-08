@@ -252,6 +252,99 @@ final class BiomeAdminService
         );
     }
 
+    /**
+     * The plan's zones as the Tiled extension draws them, bottom first
+     * (Tiled draws the later objects on top), with the types it can pick
+     * and the fingerprint pushZones() checks.
+     *
+     * @return array{types: list<array{name: string, label: string, color: string}>,
+     *     zones: list<array{id: int, type: string, name: string, zone: list<array{int, int}>}>, version: string}
+     */
+    public function zonesOf(string $plan): array
+    {
+        $zones = array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'],
+            'type' => (string) $row['type'],
+            'name' => (string) $row['name'],
+            'zone' => (array) json_decode((string) $row['zone'], true),
+        ], $this->db->fetchAllAssociative(
+            'SELECT b.id, t.name AS type, b.name, b.zone FROM biomes b
+             JOIN plans p ON p.id = b.plan_id JOIN biome_types t ON t.id = b.biome_type_id
+             WHERE p.slug = ? ORDER BY b.stack_order, b.id',
+            [$plan]
+        ));
+
+        return [
+            'types' => $this->db->fetchAllAssociative('SELECT name, label, color FROM biome_types ORDER BY label'),
+            'zones' => $zones,
+            'version' => md5((string) json_encode($zones)),
+        ];
+    }
+
+    /**
+     * Apply the zones drawn in the Tiled extension: a zone with an id
+     * updates that biome, one without creates it, and the plan's biomes
+     * missing from the list are deleted. The list order is the stack
+     * order. Unchanged zones are not rewritten, so their cells are not
+     * recomputed. All or nothing.
+     *
+     * @param array<mixed> $zones as received: {id?, type, name, zone: [[x, y], ...]} each
+     * @return array{created: int, updated: int, deleted: list<string>, version: string, ids: list<int>}
+     *     ids: the biomes in the order pushed, new ones included
+     */
+    public function pushZones(string $plan, array $zones, string $expectedVersion): array
+    {
+        $state = $this->zonesOf($plan);
+        if (!hash_equals($state['version'], $expectedVersion)) {
+            throw new \RuntimeException('Les biomes ont changé depuis le pull : refaire un pull avant de pousser.', 409);
+        }
+        $current = [];
+        foreach ($state['zones'] as $stackOrder => $zone) {
+            $current[$zone['id']] = array_merge($zone, ['stack_order' => $stackOrder]);
+        }
+        $typeIds = array_map('intval', $this->db->fetchAllKeyValue('SELECT name, id FROM biome_types'));
+
+        $report = ['created' => 0, 'updated' => 0, 'deleted' => []];
+        $this->db->transactional(function () use ($plan, $zones, $current, $typeIds, &$report): void {
+            $kept = [];
+            foreach (array_values($zones) as $stackOrder => $zone) {
+                $zone = (array) $zone;
+                $id = (int) ($zone['id'] ?? 0);
+                $name = (string) ($zone['name'] ?? '');
+                $type = (string) ($zone['type'] ?? '');
+                if ($id !== 0 && !isset($current[$id])) {
+                    throw new InvalidArgumentException('Biome ' . $id . ' (' . $name . ') inconnu sur ce plan.');
+                }
+                if (!isset($typeIds[$type])) {
+                    throw new InvalidArgumentException('Biome "' . $name . '" : type inconnu "' . $type . '".');
+                }
+                $kept[$id] = true;
+                $corners = array_map(
+                    static fn ($corner): array => [(int) ($corner[0] ?? 0), (int) ($corner[1] ?? 0)],
+                    array_filter((array) ($zone['zone'] ?? []), 'is_array')
+                );
+                $wanted = ['id' => $id, 'type' => $type, 'name' => $name, 'zone' => array_values($corners), 'stack_order' => $stackOrder];
+                if ($id !== 0 && $current[$id] === $wanted) {
+                    continue;
+                }
+                try {
+                    $this->saveBiome($id, $plan, $typeIds[$type], $name, self::zoneText($wanted['zone']), $stackOrder);
+                } catch (InvalidArgumentException $e) {
+                    throw new InvalidArgumentException('Biome "' . $name . '" : ' . $e->getMessage(), 0, $e);
+                }
+                $report[$id === 0 ? 'created' : 'updated']++;
+            }
+            foreach (array_diff_key($current, $kept) as $id => $zone) {
+                $this->deleteBiome($id);
+                $report['deleted'][] = $zone['name'];
+            }
+        });
+
+        $after = $this->zonesOf($plan);
+
+        return $report + ['version' => $after['version'], 'ids' => array_column($after['zones'], 'id')];
+    }
+
     /** @return array<int, string> race id => label, for what can grow (plants and resources) */
     public function growableTypes(): array
     {

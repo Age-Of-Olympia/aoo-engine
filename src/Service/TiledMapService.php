@@ -2,6 +2,9 @@
 
 namespace App\Service;
 
+use App\Module\Module;
+use App\Module\Modules;
+use App\Service\Map\BiomeAdminService;
 use App\Service\Map\BiomeCellService;
 use Classes\Db;
 use Classes\View;
@@ -318,6 +321,8 @@ class TiledMapService
                 'values' => $this->planConfig->read($plan),
             ],
             'zConfig'    => $this->planConfig->readZLevel($plan, $z),
+            // A plan's biomes are the same at every z: each level carries them, the extension reads one
+            'biomes'     => Modules::on(Module::Biomes) ? (new BiomeAdminService())->zonesOf($plan) : null,
         ];
     }
 

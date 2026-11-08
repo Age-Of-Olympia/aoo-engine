@@ -70,6 +70,49 @@ class BiomeAdminServiceTest extends TestCase
         $this->assertSame(16, (int) $this->db->fetchOne('SELECT COUNT(*) FROM biome_cells WHERE biome_id = ?', [$forest['id']]));
     }
 
+    public function testTheExtensionPushReplacesThePlanZonesInItsOrder(): void
+    {
+        $this->service->saveType(0, 'test_admin_foret', 'Forêt', '#336633');
+        $type = $this->service->saveType(0, 'test_admin_lac', 'Lac', '#3366cc');
+        $lake = $this->service->saveBiome(0, self::PLAN, $type, 'Lac', '0,0 2,0 2,2 0,2', 0)['id'];
+        $this->service->saveBiome(0, self::PLAN, $type, 'Mare', '5,5 6,5 6,6 5,6', 0);
+        $pulled = $this->service->zonesOf(self::PLAN);
+        $this->assertSame(['Lac', 'Mare'], array_column($pulled['zones'], 'name'));
+
+        // A forest drawn under the lake, the pond erased
+        $report = $this->service->pushZones(self::PLAN, [
+            ['type' => 'test_admin_foret', 'name' => 'Bois', 'zone' => [[0, 0], [4, 0], [4, 4], [0, 4]]],
+            $pulled['zones'][0],
+        ], $pulled['version']);
+
+        $this->assertSame(['created' => 1, 'updated' => 1, 'deleted' => ['Mare']], array_diff_key($report, ['version' => true, 'ids' => true]));
+        $this->assertSame($lake, $report['ids'][1], 'ids in the order pushed');
+        $this->assertSame(4, (int) $this->db->fetchOne('SELECT COUNT(*) FROM biome_cells WHERE biome_id = ?', [$lake]), 'the lake stays on top');
+        $this->assertSame($report['version'], $this->service->zonesOf(self::PLAN)['version']);
+
+        $this->expectExceptionCode(409);
+        $this->service->pushZones(self::PLAN, [], $pulled['version']);
+    }
+
+    public function testAPushWithAnUnknownTypeWritesNothing(): void
+    {
+        $type = $this->service->saveType(0, 'test_admin_lac', 'Lac', '#3366cc');
+        $this->service->saveBiome(0, self::PLAN, $type, 'Lac', '0,0 2,0 2,2 0,2', 0);
+        $pulled = $this->service->zonesOf(self::PLAN);
+
+        try {
+            $this->service->pushZones(self::PLAN, [
+                ['type' => 'test_admin_lac', 'name' => 'Étang', 'zone' => [[5, 5], [6, 5], [6, 6]]],
+                ['type' => 'test_admin_volcan', 'name' => 'Cratère', 'zone' => [[9, 9], [12, 9], [12, 12]]],
+            ], $pulled['version']);
+            $this->fail('unknown type accepted');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('Cratère', $e->getMessage());
+        }
+
+        $this->assertSame($pulled, $this->service->zonesOf(self::PLAN));
+    }
+
     public function testMovingABiomeToAnotherPlanClearsItsOldPlan(): void
     {
         $type = $this->service->saveType(0, 'test_admin_lac', 'Lac', '#3366cc');
