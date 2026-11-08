@@ -26,9 +26,10 @@ final class CharacterMoveService
     }
 
     /**
-     * @return array{from: ?int, to: int} coords ids: the cell left (null: off the board) and the cell reached
+     * @param int|null $coordsId null takes the character off the board, as the callers' unchecked lookups always did
+     * @return array{from: ?int, to: ?int} coords ids: the cell left and the cell reached (null: off the board)
      */
-    public function move(int $characterId, int $coordsId): array
+    public function move(int $characterId, ?int $coordsId): array
     {
         $from = $this->db->fetchOne('SELECT coords_id FROM players WHERE id = ?', [$characterId]);
         $moved = ['from' => $from === false || $from === null ? null : (int) $from, 'to' => $coordsId];

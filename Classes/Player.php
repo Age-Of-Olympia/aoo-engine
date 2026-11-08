@@ -804,10 +804,9 @@ class Player implements ActorInterface, HasMatriculeInterface {
          * les ANCIENNES coordonnées jusqu'à la fin de go() (le
          * rafraîchissement SVG de l'ancien plan en dépend), puis go()
          * pose lui-même les nouvelles ($this->coords = $goCoords). */
-        (new \App\Service\Map\CharacterMoveService())->move((int) $this->id, (int) $coordsId);
+        (new \App\Service\Map\CharacterMoveService())->move((int) $this->id, $coordsId);
 
         $db = new Db();
-
 
         // territory change
         if($goCoords->plan != $oldCoords->plan){

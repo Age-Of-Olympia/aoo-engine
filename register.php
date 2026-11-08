@@ -115,7 +115,7 @@ if(!empty($_POST['race'])){
             'plan' => 'waiting_room'
         );
         $coordsId = View::get_free_coords_id_arround($goCoords);
-        (new \App\Service\Map\CharacterMoveService())->move((int) $player->id, (int) $coordsId);
+        (new \App\Service\Map\CharacterMoveService())->move((int) $player->id, $coordsId);
         $player->get_data();
 
         $useNewTutorial = TutorialFeatureFlag::isEnabledForPlayer($player->id);

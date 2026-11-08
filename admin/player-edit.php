@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['player_save'])) {
                 throw new RuntimeException('Coordonnées invalides.');
             }
             \App\Service\Map\BoardChanges::entity($id);
-            (new \App\Service\Map\CharacterMoveService())->move($id, (int) $coordsId);
+            (new \App\Service\Map\CharacterMoveService())->move($id, $coordsId);
             \App\Service\Map\BoardChanges::cell($goCoords);
         }
 
