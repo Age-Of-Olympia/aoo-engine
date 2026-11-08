@@ -83,7 +83,10 @@ class ElementTypeEffectTest extends LegacyPlayerFixtureTestCase
         $cell = $this->tile(3, 0);
         Element::put('glu_test', (int) \Classes\View::get_coords_id($cell), 4);
 
-        $this->assertSame(['Lave : vous avez perdu 30 PV et 2 Mvt.'], $player->go($cell));
+        $this->assertSame(
+            ['<strong>Lave</strong> : Effet <span class="ra ra-fairy-wand"></span> Glu, pour 3 tours. Vous avez perdu 30 PV et 2 Mvt.'],
+            $player->go($cell)
+        );
         $this->assertSame('', (new EffectService())->describe('glu_test', 2, false), 'nothing lasting to show');
     }
 
@@ -101,7 +104,10 @@ class ElementTypeEffectTest extends LegacyPlayerFixtureTestCase
         $cell = $this->tile(4, 0);
         Element::put('glu_test', (int) \Classes\View::get_coords_id($cell), 4);
 
-        $this->assertSame(['Eau : l\'effet Colle prend fin.'], $player->go($cell));
+        $this->assertSame(
+            ['<strong>Eau</strong> : Effet <span class="ra ra-fairy-wand"></span> Glu, pour 1 tour. L\'effet <span class="ra ra-fairy-wand"></span> Colle prend fin.'],
+            $player->go($cell)
+        );
         $this->assertEmpty($player->have_effect('colle_test'));
     }
 

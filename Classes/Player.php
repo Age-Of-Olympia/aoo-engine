@@ -871,16 +871,11 @@ class Player implements ActorInterface {
                 // "move": those stay out of the events feed.
                 Log::put($this, $this, $this->effectService->landingMessage($effect, $this->data->name, $this->data->name, $duration, $value), 'element');
 
-                $notice = $this->effectService->stepNotice($effect, $value, $elements->labelOf($row->name));
+                // "Lave : Effet [icon] Brûlure, pour 2 tours. Vous avez perdu 30 PV."
+                $notice = $this->effectService->landingNotice($effect, $duration, $value, $ended);
                 if($notice !== ''){
 
-                    $notices[] = htmlspecialchars($notice, ENT_NOQUOTES, 'UTF-8');
-                }
-
-                $notice = $this->effectService->cancelNotice($ended, $elements->labelOf($row->name));
-                if($notice !== ''){
-
-                    $notices[] = htmlspecialchars($notice, ENT_NOQUOTES, 'UTF-8');
+                    $notices[] = '<strong>' . htmlspecialchars($elements->labelOf($row->name), ENT_NOQUOTES, 'UTF-8') . '</strong> : ' . $notice;
                 }
             }
         }

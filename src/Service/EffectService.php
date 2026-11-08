@@ -174,16 +174,66 @@ class EffectService
             : ($duration === 0 ? 'jusqu\'au prochain tour' : 'pour ' . $duration . ' tour' . ($duration > 1 ? 's' : ''));
     }
 
-    /** "Lave : vous avez perdu 30 PV et 2 Mvt." — what landing on $where took, '' when nothing. */
-    public function stepNotice(string $name, int $value, string $where): string
+    /**
+     * "Effet [icon] Brûlure, pour 2 tours. Vous avez perdu 30 PV. L'effet
+     * [icon] Colle prend fin." — an effect a step put on (ground element,
+     * biome), as the player reads it after the step: escaped HTML. A hidden
+     * effect says only what it takes and what it cancels; '' when nothing.
+     *
+     * @param list<string> $ended the effects it cancelled (Player::add_effect)
+     * @param string $until how long it lasts when not its duration ("jusqu'à la sortie du biome")
+     */
+    public function landingNotice(string $name, int $duration, int $value, array $ended, string $until = ''): string
     {
+        $said = [];
+        if (!$this->isHidden($name)) {
+            $said[] = 'Effet ' . $this->nameHtml($name) . ', ' . self::html($until !== '' ? $until : self::durationText($duration)) . '.';
+        }
         $took = $this->tookText($name, $value);
+        if ($took !== '') {
+            $said[] = self::html(ucfirst($took)) . '.';
+        }
+        $said[] = $this->endHtml($ended);
 
-        return $took === '' ? '' : $where . ' : ' . $took . '.';
+        return implode(' ', array_filter($said, static fn (string $sentence): bool => $sentence !== ''));
+    }
+
+    /**
+     * "L'effet [icon] Brûlure prend fin.", "Les effets [icon] A et [icon] B
+     * prennent fin.": escaped HTML, hidden effects left out; '' when none.
+     *
+     * @param list<string> $ended
+     */
+    public function endHtml(array $ended): string
+    {
+        $names = [];
+        foreach (array_unique($ended) as $name) {
+            if (!$this->isHidden($name)) {
+                $names[] = $this->nameHtml($name);
+            }
+        }
+
+        if ($names === []) {
+            return '';
+        }
+        if (count($names) === 1) {
+            return 'L\'effet ' . $names[0] . ' prend fin.';
+        }
+        $last = array_pop($names);
+
+        return 'Les effets ' . implode(', ', $names) . ' et ' . $last . ' prennent fin.';
+    }
+
+    /** An effect as the player reads it: its catalog icon, then its label, as escaped HTML */
+    public function nameHtml(string $name): string
+    {
+        $icon = $this->getIcon($name);
+
+        return ($icon === '' ? '' : '<span class="ra ' . htmlspecialchars($icon, ENT_QUOTES, 'UTF-8') . '"></span> ') . self::html($this->getLabel($name));
     }
 
     /** "vous avez perdu 30 PV et 2 Mvt": what the effect takes or gives as it lands, '' when nothing */
-    public function tookText(string $name, int $value): string
+    private function tookText(string $name, int $value): string
     {
         $moved = ['perdu' => [], 'gagné' => []];
         foreach ($this->lossesOf($name, $value) as $carac => $n) {
@@ -203,43 +253,10 @@ class EffectService
         return $clauses === [] ? '' : 'vous avez ' . implode(' et ', $clauses);
     }
 
-    /**
-     * "Eau : l'effet Brûlure prend fin." — the effects landing on $where
-     * cancelled (Player::add_effect), hidden ones left out; '' when none.
-     *
-     * @param list<string> $ended
-     */
-    public function cancelNotice(array $ended, string $where): string
+    /** Plain text made safe inside an HTML line */
+    private static function html(string $text): string
     {
-        $end = $this->endText($ended);
-
-        return $end === '' ? '' : $where . ' : ' . $end . '.';
-    }
-
-    /**
-     * "l'effet Brûlure prend fin", "les effets A et B prennent fin": hidden
-     * ones left out; '' when none.
-     *
-     * @param list<string> $ended
-     */
-    public function endText(array $ended): string
-    {
-        $labels = [];
-        foreach (array_unique($ended) as $name) {
-            if (!$this->isHidden($name)) {
-                $labels[] = $this->getLabel($name);
-            }
-        }
-
-        if ($labels === []) {
-            return '';
-        }
-        if (count($labels) === 1) {
-            return 'l\'effet ' . $labels[0] . ' prend fin';
-        }
-        $last = array_pop($labels);
-
-        return 'les effets ' . implode(', ', $labels) . ' et ' . $last . ' prennent fin';
+        return htmlspecialchars($text, ENT_NOQUOTES, 'UTF-8');
     }
 
     /** Combat modifier getters (each × the carried value), as the player reads them. */
