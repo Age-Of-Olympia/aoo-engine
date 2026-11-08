@@ -166,6 +166,23 @@ class BiomeBrushServiceTest extends TestCase
         $this->assertNull($brush->paintBiomeOnLevel(0, 0)['biome'], 'no such biome, nothing painted');
     }
 
+    public function testAStrokeInARectangleMatchesTheWholeFillThere(): void
+    {
+        $brush = new BiomeBrushService($this->db);
+        $whole = $brush->paint($this->biomeId, self::AREA)['tiles'];
+
+        $painted = $brush->paintBiomeOnLevel($this->biomeId, 0, ['xMin' => 5, 'xMax' => 8, 'yMin' => -3, 'yMax' => 2]);
+
+        $this->assertCount(4 * 3, $painted['coords'], 'only the biome cells of the rectangle');
+        foreach ($this->db->fetchAllAssociative(
+            'SELECT c.x, c.y, t.name FROM map_tiles t JOIN coords c ON c.id = t.coords_id WHERE c.plan = ?',
+            [self::PLAN]
+        ) as $ground) {
+            $this->assertSame($whole[$ground['x'] . ',' . $ground['y']], $ground['name'], 'inside, no ground around: the same draw');
+        }
+        $this->assertNull($brush->paintBiomeOnLevel($this->biomeId, 0, ['xMin' => 30, 'xMax' => 31, 'yMin' => 0, 'yMax' => 0])['biome']);
+    }
+
     public function testTheEdgeJoinsTheGroundAlreadyLaidNextToIt(): void
     {
         (new BiomeAdminService($this->db))->saveGrounds($this->typeId, [self::GRASS => 100]);

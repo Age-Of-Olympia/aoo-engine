@@ -128,28 +128,37 @@ final class BiomeBrushService
     }
 
     /**
-     * Same as paintBiome(), for a biome named by its id, on one level.
+     * Same as paintBiome(), for a biome named by its id, on one level,
+     * optionally only inside a rectangle: the noise is the same, so the
+     * part painted matches a later fill of the whole biome, and its edge
+     * joins the ground around it like the biome's own edge does.
      *
+     * @param array{xMin: int, xMax: int, yMin: int, yMax: int}|null $area cells included
      * @return array{biome: ?string, coords: list<int>, missing: list<string>, unreadable: list<string>, generated: int, errors: list<string>}
-     *     biome null: no such biome, or it is on top nowhere
+     *     biome null: no such biome, or it is on top nowhere (in the area)
      */
-    public function paintBiomeOnLevel(int $biomeId, int $z): array
+    public function paintBiomeOnLevel(int $biomeId, int $z, ?array $area = null): array
     {
         $biome = $this->db->fetchAssociative(
             'SELECT b.id, b.name, b.plan_id, p.slug AS plan, ? AS z FROM biomes b JOIN plans p ON p.id = b.plan_id WHERE b.id = ?',
             [$z, $biomeId]
         );
 
-        return $biome === false ? self::NOTHING_PAINTED : $this->paintTopCells($biome);
+        return $biome === false ? self::NOTHING_PAINTED : $this->paintTopCells($biome, $area);
     }
 
     /**
      * @param array<string, mixed> $biome id, name, plan_id, plan, z
+     * @param array{xMin: int, xMax: int, yMin: int, yMax: int}|null $within only the top cells inside it
      * @return array{biome: ?string, coords: list<int>, missing: list<string>, unreadable: list<string>, generated: int, errors: list<string>}
      */
-    private function paintTopCells(array $biome): array
+    private function paintTopCells(array $biome, ?array $within = null): array
     {
         $cells = $this->topCells((int) $biome['id']);
+        if ($within !== null) {
+            $cells = array_values(array_filter($cells, static fn (array $cell): bool => $cell[0] >= $within['xMin']
+                && $cell[0] <= $within['xMax'] && $cell[1] >= $within['yMin'] && $cell[1] <= $within['yMax']));
+        }
         if ($cells === []) {
             return self::NOTHING_PAINTED;
         }
