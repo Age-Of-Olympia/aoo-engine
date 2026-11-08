@@ -356,24 +356,24 @@ class TutorialTooltip {
         }
 
         /* Narrow screens: the stylesheet pins the tooltip to the bottom
-         * edge, over the action strip. A target in the lower half (an
-         * action button) moves it to the top edge instead. */
+         * edge, over the action strip. When that edge would cover more of
+         * the target (and, on the board, of the path to it) than the top
+         * edge would, it moves to the top edge instead. */
         if (window.innerWidth <= 768) {
-            const target = this.currentTargetSelector ? $(this.currentTargetSelector)[0] : null;
-            const rect = target ? target.getBoundingClientRect() : null;
-            this.$tooltip.toggleClass('mobile-top', !!rect && rect.top + rect.height / 2 > window.innerHeight / 2);
+            const $target = this.currentTargetSelector ? $(this.currentTargetSelector) : $();
+            const zone = $target.length ? this.keepClearZone($target) : null;
+            const h = this.$tooltip.outerHeight();
+            const W = window.innerWidth, H = window.innerHeight;
+            const atTop = !!zone && TutorialTooltip.overlapArea(zone, { left: 0, top: H - h, right: W, bottom: H })
+                > TutorialTooltip.overlapArea(zone, { left: 0, top: 0, right: W, bottom: h });
+            this.$tooltip.toggleClass('mobile-top', atTop);
             return;
         }
 
         if (this.currentTargetSelector) {
             const $target = $(this.currentTargetSelector);
             if ($target.length > 0) {
-                // Smart-flip the configured position only when the
-                // default would land the tooltip directly on the
-                // player's side of the target — i.e. covering the
-                // path the player just walked or needs to click on.
-                // Falls through unchanged for everything else.
-                const effectivePos = this.smartFlipPosition(this.currentPosition, $target);
+                const effectivePos = this.clearSide(this.currentPosition, $target);
                 // Sync the position class on the tooltip so the arrow
                 // (CSS-driven by .top / .bottom / .left / .right /
                 // .center-top / .center-bottom) follows the flip.
@@ -394,66 +394,65 @@ class TutorialTooltip {
     }
 
     /**
-     * If the configured tooltip position would put the tooltip on the
-     * same side as the player avatar (and so cover the path/cell the
-     * player needs to interact with), return the opposite position.
-     * Otherwise return the input unchanged.
-     *
-     * Constraints — only flips when ALL of these hold:
-     *   - target is inside the map (#view): non-map UI elements have
-     *     no notion of "player side"
-     *   - player avatar (#current-player-avatar) is on screen
-     *   - target is NOT the player avatar itself
-     *   - the configured position has a clear side that maps to a
-     *     direction (top / bottom / left / right / center-top /
-     *     center-bottom). center / unrecognized values fall through.
+     * The side to place the tooltip on: the configured one when its tooltip
+     * leaves the keep-clear zone free, else the opposite side, then the two
+     * others; failing that, the side covering the least of the zone and of
+     * the off-screen area. Centred positions are kept as configured.
      */
-    smartFlipPosition(position, $target) {
-        if (!$target || !$target.length) {
+    clearSide(position, $target) {
+        const opposite = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' };
+        if (!(position in opposite)) {
             return position;
         }
+        const zone = this.keepClearZone($target);
+        const rect = $target[0].getBoundingClientRect();
+        const w = this.$tooltip.outerWidth();
+        const h = this.$tooltip.outerHeight();
+        const screen = { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight };
+
+        const sides = [position, opposite[position], ...Object.keys(opposite).filter(s => s !== position && s !== opposite[position])];
+        let best = position;
+        let bestCost = Infinity;
+        for (const side of sides) {
+            const { top, left } = this.nearCoords(rect, side, w, h);
+            const box = { left, top, right: left + w, bottom: top + h };
+            const offScreen = w * h - TutorialTooltip.overlapArea(box, screen);
+            const cost = TutorialTooltip.overlapArea(box, zone) + offScreen;
+            if (cost === 0) {
+                return side;
+            }
+            if (cost < bestCost) {
+                best = side;
+                bestCost = cost;
+            }
+        }
+        return best;
+    }
+
+    /**
+     * What the tooltip must not cover: the target and, for a board cell,
+     * the player's character and every cell between them. A shortest path
+     * on the grid stays inside the box spanning both, so that box is it.
+     */
+    keepClearZone($target) {
+        const t = $target[0].getBoundingClientRect();
+        const zone = { left: t.left, top: t.top, right: t.right, bottom: t.bottom };
         const $view = $('#view');
-        if (!$view.length || !$.contains($view[0], $target[0])) {
-            return position;
+        const player = document.getElementById('current-player-avatar');
+        if (player && $view.length && $.contains($view[0], $target[0])) {
+            const p = player.getBoundingClientRect();
+            zone.left = Math.min(zone.left, p.left);
+            zone.top = Math.min(zone.top, p.top);
+            zone.right = Math.max(zone.right, p.right);
+            zone.bottom = Math.max(zone.bottom, p.bottom);
         }
-        const $player = $('#current-player-avatar');
-        if (!$player.length || $player[0] === $target[0]) {
-            return position;
-        }
+        return zone;
+    }
 
-        const flips = {
-            'top':           'bottom',
-            'bottom':        'top',
-            'left':          'right',
-            'right':         'left',
-            'center-top':    'center-bottom',
-            'center-bottom': 'center-top'
-        };
-        const sideOf = {
-            'top':           'top',
-            'bottom':        'bottom',
-            'left':          'left',
-            'right':         'right',
-            'center-top':    'top',
-            'center-bottom': 'bottom'
-        };
-        if (!(position in flips)) {
-            return position;
-        }
-
-        const tr = $target[0].getBoundingClientRect();
-        const pr = $player[0].getBoundingClientRect();
-        const dx = (pr.left + pr.width / 2) - (tr.left + tr.width / 2);
-        const dy = (pr.top + pr.height / 2) - (tr.top + tr.height / 2);
-
-        let playerSide;
-        if (Math.abs(dx) > Math.abs(dy)) {
-            playerSide = dx > 0 ? 'right' : 'left';
-        } else {
-            playerSide = dy > 0 ? 'bottom' : 'top';
-        }
-
-        return sideOf[position] === playerSide ? flips[position] : position;
+    static overlapArea(a, b) {
+        const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        return w > 0 && h > 0 ? w * h : 0;
     }
 
     /**
@@ -664,83 +663,12 @@ class TutorialTooltip {
             return;
         }
 
-        // Get viewport-relative position for fixed positioning
-        // Don't use TutorialPositionManager because it adds scroll offset for absolute positioning
-        const rect = $target[0].getBoundingClientRect();
-        const pos = {
-            top: rect.top,
-            left: rect.left,
-            width: rect.width,
-            height: rect.height
-        };
-
-        // Get tooltip dimensions (should be visible at this point via show() method)
-        const tooltipWidth = this.$tooltip.outerWidth();
-        const tooltipHeight = this.$tooltip.outerHeight();
-        const windowWidth = $(window).width();
-        const windowHeight = $(window).height();
-
-        let top, left;
-
-        switch (position) {
-            case 'top':
-                top = pos.top - tooltipHeight - 20;
-                left = pos.left + (pos.width / 2) - (tooltipWidth / 2);
-                break;
-
-            case 'bottom':
-                top = pos.top + pos.height + 20;
-                left = pos.left + (pos.width / 2) - (tooltipWidth / 2);
-                break;
-
-            case 'left':
-                top = pos.top + (pos.height / 2) - (tooltipHeight / 2);
-                left = pos.left - tooltipWidth - 20;
-                break;
-
-            case 'right':
-                top = pos.top + (pos.height / 2) - (tooltipHeight / 2);
-                // Add extra spacing for map tiles to avoid covering them
-                left = pos.left + pos.width + 80;
-                break;
-
-            case 'center':
-            case 'center-center':
-                this.positionCenter('center');
-                return;
-
-            case 'center-top':
-                this.positionCenter('top');
-                return;
-
-            case 'center-bottom':
-                this.positionCenter('bottom');
-                return;
-
-            default:
-                this.positionCenter('center');
-                return;
+        if (!['top', 'bottom', 'left', 'right'].includes(position)) {
+            this.applyCenterPosition(position);
+            return;
         }
 
-        // Boundary detection - ONLY adjust horizontal position to stay on screen
-        // Don't adjust vertical position as it causes tooltip to jump when viewport height changes
-        const originalTop = top;
-        const originalLeft = left;
-
-        // Only adjust left/right to prevent going off-screen horizontally
-        if (left < 10) left = 10;
-        if (left + tooltipWidth > windowWidth - 10) {
-            left = windowWidth - tooltipWidth - 10;
-        }
-
-        // For vertical: only prevent going above the top, but allow going below viewport
-        // This prevents the tooltip from jumping when dev tools open/close
-        if (top < 10) top = 10;
-        // Remove bottom boundary check - let it go below viewport if needed
-
-        // Debug: log if position changed due to boundary detection
-        if (top !== originalTop || left !== originalLeft) {
-        }
+        const { top, left } = this.nearCoords($target[0].getBoundingClientRect(), position, this.$tooltip.outerWidth(), this.$tooltip.outerHeight());
 
         // Apply position - clear all position properties to avoid conflicts
         // Use 'fixed' to be consistent with CSS and avoid scroll offset issues
@@ -753,6 +681,36 @@ class TutorialTooltip {
             width: 'auto',    // Clear width
             height: 'auto'    // Clear height
         });
+    }
+
+    /**
+     * Viewport coordinates of a w x h tooltip on `position` side of `rect`,
+     * kept on screen horizontally and below the top edge (not above the
+     * bottom one, so it does not jump when the viewport height changes).
+     */
+    nearCoords(rect, position, w, h) {
+        let top, left;
+        switch (position) {
+            case 'top':
+                top = rect.top - h - 20;
+                left = rect.left + rect.width / 2 - w / 2;
+                break;
+            case 'bottom':
+                top = rect.top + rect.height + 20;
+                left = rect.left + rect.width / 2 - w / 2;
+                break;
+            case 'left':
+                top = rect.top + rect.height / 2 - h / 2;
+                left = rect.left - w - 20;
+                break;
+            default: /* right: extra spacing keeps the neighbouring tiles visible */
+                top = rect.top + rect.height / 2 - h / 2;
+                left = rect.left + rect.width + 80;
+        }
+        left = Math.max(10, Math.min(left, window.innerWidth - w - 10));
+        top = Math.max(10, top);
+
+        return { top, left };
     }
 
     /**
