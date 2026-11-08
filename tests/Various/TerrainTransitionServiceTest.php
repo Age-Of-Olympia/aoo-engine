@@ -178,6 +178,12 @@ class TerrainTransitionServiceTest extends TestCase
         $this->assertCount(3 * 14 + 36, $first, 'three pairs of 14, and the 36 of the trio');
         $this->assertFileExists($this->root . '/img/tiles/trans_bleu_rouge_aaab.png');
         $this->assertSame([], $this->service->generateForTerrains(['rouge', 'bleu', 'vert']), 'nothing left to generate');
+
+        $this->writeSolidTile('jaune', 255, 255, 0);
+        $this->service->classifyTiles('tiles', ['jaune'], []);
+        $this->assertCount(6 * 14 + 4 * 36 + 24 - count($first), $this->service->generateForTerrains(['rouge', 'bleu', 'vert', 'jaune']),
+            'a fourth terrain adds its three pairs, three trios and the quartet');
+        $this->assertFileExists($this->root . '/img/tiles/trans_bleu_jaune_rouge_vert_abcd.png');
     }
 
     public function testPaletteSourceBlendsLikeTruecolor(): void

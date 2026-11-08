@@ -177,9 +177,6 @@ final class BiomeBrushService
             $transitions = new TerrainTransitionService();
             foreach ($painted['missing'] as $combination) {
                 $terrains = array_values(array_unique(explode(' / ', $combination)));
-                if (count($terrains) > BiomeAdminService::MAX_GROUNDS) {
-                    continue;
-                }
                 try {
                     $generated += count($transitions->generateForTerrains($terrains));
                 } catch (\RuntimeException $e) {
