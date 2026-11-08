@@ -866,14 +866,17 @@ class Player implements ActorInterface, HasMatriculeInterface {
 
                 $duration = $elements->effectDurationOf($row->name);
                 $value = $elements->effectValueOf($row->name);
+                $alreadyOn = $this->have_effect($effect) > 0;
                 $ended = $this->add_effect($effect, $duration, $value);
 
                 // The walker's log keeps what the ground did (effect, PV). Not a
                 // "move": those stay out of the events feed.
                 Log::put($this, $this, $this->effectService->landingMessage($effect, $this->data->name, $this->data->name, $duration, $value), 'element');
 
-                // "Lave : Effet [icon] Brûlure, pour 2 tours. Vous avez perdu 30 PV."
-                $notice = $this->effectService->landingNotice($effect, $duration, $value, $ended);
+                // "Lave : Effet [icon] Brûlure, pour 2 tours. Vous avez perdu 30 PV." Walking on
+                // through the same water says nothing again, unless the step takes or ends something.
+                $takes = array_filter($this->effectService->lossesOf($effect, $value)) !== array();
+                $notice = $alreadyOn && !$takes && $ended === array() ? '' : $this->effectService->landingNotice($effect, $duration, $value, $ended);
                 if($notice !== ''){
 
                     $notices[] = '<strong>' . htmlspecialchars($elements->labelOf($row->name), ENT_NOQUOTES, 'UTF-8') . '</strong> : ' . $notice;
