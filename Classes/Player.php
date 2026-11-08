@@ -774,7 +774,7 @@ class Player implements ActorInterface, HasMatriculeInterface {
     }
 
 
-    /** @return list<string> what the biomes crossed said, then what the cell's elements took or gave on arrival (EffectService::stepNotice) */
+    /** @return list<string> HTML lines, escaped: what the biomes crossed said, then what the cell's elements took or gave on arrival (EffectService::stepNotice) */
     public function go($goCoords, \App\Service\Map\BiomeEvents $biomeEvents = \App\Service\Map\BiomeEvents::Cross){
 
 
@@ -875,13 +875,13 @@ class Player implements ActorInterface, HasMatriculeInterface {
                 $notice = $this->effectService->stepNotice($effect, $value, $elements->labelOf($row->name));
                 if($notice !== ''){
 
-                    $notices[] = $notice;
+                    $notices[] = htmlspecialchars($notice, ENT_NOQUOTES, 'UTF-8');
                 }
 
                 $notice = $this->effectService->cancelNotice($ended, $elements->labelOf($row->name));
                 if($notice !== ''){
 
-                    $notices[] = $notice;
+                    $notices[] = htmlspecialchars($notice, ENT_NOQUOTES, 'UTF-8');
                 }
             }
         }

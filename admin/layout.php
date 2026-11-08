@@ -11,7 +11,7 @@ use App\Service\AdminAuthorizationService;
 (new AdminMenuAccessService())->enforcePage(basename($_SERVER['PHP_SELF']));
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20261108';
+const ADMIN_ASSET_VERSION = '20261109';
 
 
 /**

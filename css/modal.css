@@ -27,6 +27,17 @@
   white-space: pre-line;
   line-height: 1.45;
 }
+/* Biome crossed on a step (alert and log): its name, coloured by the way */
+.biome-in,
+.biome-out {
+  font-weight: 700;
+}
+.biome-in {
+  color: #2f6b3a; /* forest green: entering */
+}
+.biome-out {
+  color: #8d6839; /* the HUD's bronze: leaving */
+}
 .aoo-dialog-input {
   display: block;
   width: 100%;
