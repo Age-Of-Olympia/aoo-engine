@@ -15,7 +15,7 @@ class ElementTypeEffectTest extends LegacyPlayerFixtureTestCase
 {
     protected function tearDown(): void
     {
-        $this->link->executeStatement("DELETE FROM map_elements WHERE name = 'glu_test'");
+        $this->link->executeStatement("DELETE FROM map_elements WHERE name IN ('glu_test', 'colle_test')");
         $this->link->executeStatement("DELETE FROM element_types WHERE name = 'glu_test'");
         $this->link->executeStatement("DELETE FROM effects WHERE name IN ('glu_test', 'colle_test')");
         $this->link->executeStatement("UPDATE races SET bleeds = 'sang' WHERE bleeds = 'glu_test'");
@@ -88,6 +88,28 @@ class ElementTypeEffectTest extends LegacyPlayerFixtureTestCase
             $player->go($cell)
         );
         $this->assertSame('', (new EffectService())->describe('glu_test', 2, false), 'nothing lasting to show');
+    }
+
+    /** Walking on through the same water tells nothing again; lava, which burns at each step, does. */
+    public function testOnlyTheFirstStepIntoAnElementTellsItsEffect(): void
+    {
+        $this->link->executeStatement(
+            "INSERT INTO effects (name, label) VALUES ('glu_test', 'Glu'), ('colle_test', 'Colle')"
+        );
+        $this->link->executeStatement("UPDATE effects SET loss_mods = '{\"pv\":-1}' WHERE name = 'colle_test'");
+        EffectService::clearCache();
+        $player = $this->createRealPlayer('GmGluGue');
+        foreach ([[4, 0], [5, 0]] as [$x, $y]) {
+            Element::put('glu_test', (int) \Classes\View::get_coords_id($this->tile($x, $y)), 4);
+        }
+        foreach ([[6, 0], [7, 0]] as [$x, $y]) {
+            Element::put('colle_test', (int) \Classes\View::get_coords_id($this->tile($x, $y)), 4);
+        }
+
+        $this->assertCount(1, $player->go($this->tile(4, 0)), 'the first step tells the effect');
+        $this->assertSame([], $player->go($this->tile(5, 0)), 'the next one, with the effect still on, says nothing');
+        $this->assertCount(1, $player->go($this->tile(6, 0)));
+        $this->assertCount(1, $player->go($this->tile(7, 0)), 'a step that takes something always tells it');
     }
 
     /** The step tells which carried effect the element's effect put out. */
