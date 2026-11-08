@@ -17,6 +17,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 class BiomeCrossingTest extends LegacyPlayerFixtureTestCase
 {
     private const PLAN = 'test_crossing';
+    private const NBSP = "\u{00A0}";
     private const TYPE = 'test_crossing_foret';
     private const EFFECT = 'test_crossing_brume';
 
@@ -69,14 +70,14 @@ class BiomeCrossingTest extends LegacyPlayerFixtureTestCase
         $walker = $this->walkerOutside();
 
         $this->assertSame(
-            ['<strong class="biome-in" title="Entrée"><span class="ra ra-footprint"></span> Bois de test</strong> : Vous entrez dans le bois. Effet <span class="ra ra-fairy-wand"></span> Brume, jusqu\'à la sortie du biome.'],
+            ['<strong class="biome-in" title="Entrée"><span class="ra ra-footprint"></span> Bois de test</strong>' . self::NBSP . ': Vous entrez dans le bois. Effet <span class="ra ra-fairy-wand"></span> Brume, jusqu\'à la sortie du biome.'],
             $walker->go($this->tile(0, 0, self::PLAN))
         );
         $this->assertNotEmpty($walker->have_effect(self::EFFECT));
         $this->assertSame([], $walker->go($this->tile(1, 1, self::PLAN)), 'a step inside the biome crosses nothing');
 
         $logged = $this->link->fetchFirstColumn("SELECT text FROM players_logs WHERE player_id = ? AND type = 'biome' ORDER BY id", [(int) $walker->id]);
-        $this->assertSame(['<strong class="biome-in" title="Entrée"><span class="ra ra-footprint"></span> Bois de test</strong> : Vous entrez dans le bois. Effet <span class="ra ra-fairy-wand"></span> Brume, jusqu\'à la sortie du biome.'], $logged, 'the log keeps the same line');
+        $this->assertSame(['<strong class="biome-in" title="Entrée"><span class="ra ra-footprint"></span> Bois de test</strong>' . self::NBSP . ': Vous entrez dans le bois. Effet <span class="ra ra-fairy-wand"></span> Brume, jusqu\'à la sortie du biome.'], $logged, 'the log keeps the same line');
     }
 
     public function testLeavingSaysItsMessageAndEndsTheEffect(): void
@@ -84,7 +85,7 @@ class BiomeCrossingTest extends LegacyPlayerFixtureTestCase
         $walker = $this->walkerOutside();
         $walker->go($this->tile(0, 0, self::PLAN));
 
-        $this->assertSame(['<strong class="biome-out" title="Sortie"><span class="ra ra-trail"></span> Bois de test</strong> : Vous sortez du bois. L\'effet <span class="ra ra-fairy-wand"></span> Brume prend fin.'], $walker->go($this->tile(-1, 0, self::PLAN)));
+        $this->assertSame(['<strong class="biome-out" title="Sortie"><span class="ra ra-trail"></span> Bois de test</strong>' . self::NBSP . ': Vous sortez du bois. L\'effet <span class="ra ra-fairy-wand"></span> Brume prend fin.'], $walker->go($this->tile(-1, 0, self::PLAN)));
         $this->assertEmpty($walker->have_effect(self::EFFECT));
     }
 
@@ -95,8 +96,8 @@ class BiomeCrossingTest extends LegacyPlayerFixtureTestCase
         $walker->go($this->tile(0, 0, self::PLAN));
 
         $this->assertSame([
-            '<strong class="biome-out" title="Sortie"><span class="ra ra-trail"></span> Bois de test</strong> : Vous sortez du bois. L\'effet <span class="ra ra-fairy-wand"></span> Brume prend fin.',
-            '<strong class="biome-in" title="Entrée"><span class="ra ra-footprint"></span> Clairière</strong> : Vous entrez dans le bois. Effet <span class="ra ra-fairy-wand"></span> Brume, jusqu\'à la sortie du biome.',
+            '<strong class="biome-out" title="Sortie"><span class="ra ra-trail"></span> Bois de test</strong>' . self::NBSP . ': Vous sortez du bois. L\'effet <span class="ra ra-fairy-wand"></span> Brume prend fin.',
+            '<strong class="biome-in" title="Entrée"><span class="ra ra-footprint"></span> Clairière</strong>' . self::NBSP . ': Vous entrez dans le bois. Effet <span class="ra ra-fairy-wand"></span> Brume, jusqu\'à la sortie du biome.',
         ], $walker->go($this->tile(-1, 0, self::PLAN)));
     }
 
@@ -106,8 +107,8 @@ class BiomeCrossingTest extends LegacyPlayerFixtureTestCase
             'enter_effect' => self::EFFECT, 'enter_effect_turns' => 3, 'enter_effect_ends_on_exit' => false,
         ]));
         $walker = $this->walkerOutside();
-        $this->assertSame(['<strong class="biome-in" title="Entrée"><span class="ra ra-footprint"></span> Bois de test</strong> : Vous entrez dans le bois. Effet <span class="ra ra-fairy-wand"></span> Brume, pour 3 tours.'], $walker->go($this->tile(0, 0, self::PLAN)));
-        $this->assertSame(['<strong class="biome-out" title="Sortie"><span class="ra ra-trail"></span> Bois de test</strong> : Vous sortez du bois.'], $walker->go($this->tile(-1, 0, self::PLAN)), 'nothing ends');
+        $this->assertSame(['<strong class="biome-in" title="Entrée"><span class="ra ra-footprint"></span> Bois de test</strong>' . self::NBSP . ': Vous entrez dans le bois. Effet <span class="ra ra-fairy-wand"></span> Brume, pour 3 tours.'], $walker->go($this->tile(0, 0, self::PLAN)));
+        $this->assertSame(['<strong class="biome-out" title="Sortie"><span class="ra ra-trail"></span> Bois de test</strong>' . self::NBSP . ': Vous sortez du bois.'], $walker->go($this->tile(-1, 0, self::PLAN)), 'nothing ends');
 
         $this->assertNotEmpty($walker->have_effect(self::EFFECT));
     }
@@ -115,17 +116,17 @@ class BiomeCrossingTest extends LegacyPlayerFixtureTestCase
     public function testABiomeReplacesWhatItsTypeSets(): void
     {
         $this->admin->saveCrossing('biomes', $this->biomeId, $this->settings([
-            'enter_message' => 'Bienvenue au <b>bois</b> de test.', 'exit_message' => '', 'enter_effect' => '',
+            'enter_message' => 'Bienvenue au <b>bois</b> de test !', 'exit_message' => '', 'enter_effect' => '',
         ]));
         $walker = $this->walkerOutside();
 
         $this->assertSame(
-            ['<strong class="biome-in" title="Entrée"><span class="ra ra-footprint"></span> Bois de test</strong> : Bienvenue au &lt;b&gt;bois&lt;/b&gt; de test.'],
+            ['<strong class="biome-in" title="Entrée"><span class="ra ra-footprint"></span> Bois de test</strong>' . self::NBSP . ': Bienvenue au &lt;b&gt;bois&lt;/b&gt; de test' . self::NBSP . '!'],
             $walker->go($this->tile(0, 0, self::PLAN)),
-            'the admin\'s message shows as typed, never as HTML'
+            'the admin\'s message shows as typed, never as HTML, and its ! never starts a line alone'
         );
         $this->assertEmpty($walker->have_effect(self::EFFECT), 'no effect in this biome');
-        $this->assertSame(['<strong class="biome-out" title="Sortie"><span class="ra ra-trail"></span> Bois de test</strong> : Vous sortez du bois.'], $walker->go($this->tile(-1, 0, self::PLAN)), 'an empty message: the type\'s');
+        $this->assertSame(['<strong class="biome-out" title="Sortie"><span class="ra ra-trail"></span> Bois de test</strong>' . self::NBSP . ': Vous sortez du bois.'], $walker->go($this->tile(-1, 0, self::PLAN)), 'an empty message: the type\'s');
     }
 
     public function testASilentPlacementCrossesNothingAndAnArrivalOnlyEnters(): void
@@ -138,7 +139,7 @@ class BiomeCrossingTest extends LegacyPlayerFixtureTestCase
         $this->assertEmpty($walker->have_effect(self::EFFECT));
 
         $this->assertSame(
-            ['<strong class="biome-in" title="Entrée"><span class="ra ra-footprint"></span> Bois de test</strong> : Vous entrez dans le bois. Effet <span class="ra ra-fairy-wand"></span> Brume, jusqu\'à la sortie du biome.'],
+            ['<strong class="biome-in" title="Entrée"><span class="ra ra-footprint"></span> Bois de test</strong>' . self::NBSP . ': Vous entrez dans le bois. Effet <span class="ra ra-fairy-wand"></span> Brume, jusqu\'à la sortie du biome.'],
             $moves->move((int) $walker->id, $this->coordsAt(1, 1), BiomeEvents::Arrive)['messages']
         );
     }
@@ -158,7 +159,7 @@ class BiomeCrossingTest extends LegacyPlayerFixtureTestCase
         EffectService::clearCache();
         $walker = $this->walkerOutside();
 
-        $this->assertSame(['<strong class="biome-in" title="Entrée"><span class="ra ra-footprint"></span> Bois de test</strong> : Vous entrez dans le bois.'], $walker->go($this->tile(0, 0, self::PLAN)));
+        $this->assertSame(['<strong class="biome-in" title="Entrée"><span class="ra ra-footprint"></span> Bois de test</strong>' . self::NBSP . ': Vous entrez dans le bois.'], $walker->go($this->tile(0, 0, self::PLAN)));
         $this->assertSame($this->coordsAt(0, 0), (int) $this->link->fetchOne('SELECT coords_id FROM players WHERE id = ?', [(int) $walker->id]));
     }
 

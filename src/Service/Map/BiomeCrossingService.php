@@ -29,6 +29,9 @@ use Doctrine\DBAL\Connection;
  */
 final class BiomeCrossingService
 {
+    /** The no-break space French puts before ! ? : ; */
+    private const NBSP = "\u{00A0}";
+
     private Connection $db;
 
     public function __construct(?Connection $db = null)
@@ -128,7 +131,7 @@ final class BiomeCrossingService
         }
 
         return '<strong class="' . ($entering ? 'biome-in" title="Entrée"><span class="ra ra-footprint"></span> ' : 'biome-out" title="Sortie"><span class="ra ra-trail"></span> ')
-            . self::text($biome) . '</strong> : ' . implode(' ', $said);
+            . self::text($biome) . '</strong>' . self::NBSP . ': ' . implode(' ', $said);
     }
 
     /** An effect as the player reads it: its catalog icon, then its label */
@@ -139,10 +142,13 @@ final class BiomeCrossingService
         return ($icon === '' ? '' : '<span class="ra ' . htmlspecialchars($icon, ENT_QUOTES, 'UTF-8') . '"></span> ') . self::text($effects->getLabel($name));
     }
 
-    /** Plain text made safe inside the HTML line */
+    /**
+     * Plain text made safe inside the HTML line, French style: the space
+     * before ! ? : ; never breaks, so the mark never starts a line alone.
+     */
     private static function text(string $text): string
     {
-        return htmlspecialchars($text, ENT_NOQUOTES, 'UTF-8');
+        return (string) preg_replace('/ ([!?:;])/u', self::NBSP . '$1', htmlspecialchars($text, ENT_NOQUOTES, 'UTF-8'));
     }
 
     /** "vous avez perdu 5 PV" → "Vous avez perdu 5 PV."; '' stays '' */
