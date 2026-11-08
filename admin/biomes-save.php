@@ -26,7 +26,8 @@ handleAdminPost($redirect, static function (): string {
                 (string) ($_POST['name'] ?? ''),
                 (string) ($_POST['label'] ?? ''),
                 (string) ($_POST['color'] ?? ''),
-                (int) ($_POST['patch_scale'] ?? BiomeAdminService::DEFAULT_PATCH_SCALE)
+                (int) ($_POST['patch_scale'] ?? BiomeAdminService::DEFAULT_PATCH_SCALE),
+                (int) ($_POST['edge_width'] ?? BiomeAdminService::DEFAULT_EDGE_WIDTH)
             );
             return 'Type enregistré.';
         case 'save_palette':

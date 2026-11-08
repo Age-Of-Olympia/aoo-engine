@@ -55,6 +55,8 @@ foreach ($types as $type) {
             . formInput('color', $type['color'], 'type="color" class="form-control form-control-sm" style="width:4em"')
             . formInput('patch_scale', (string) $type['patch_scale'], 'type="number" min="1" max="' . BiomeAdminService::MAX_PATCH_SCALE
                 . '" class="form-control form-control-sm" style="width:5em" title="Taille des plaques du pinceau, en cases"')
+            . formInput('edge_width', (string) $type['edge_width'], 'type="number" min="0" max="' . BiomeAdminService::MAX_EDGE_WIDTH
+                . '" class="form-control form-control-sm" style="width:5em" title="Lisière du pinceau, en cases (0 : bord droit)"')
             . '<button class="btn btn-sm btn-primary" type="submit">Enregistrer</button></div>'
             . $paletteSummary($type),
             ['id' => $type['id']])
@@ -72,8 +74,9 @@ $addType = biome_form($token, 'save_type', '<div class="d-flex flex-wrap gap-2 a
     . '<button class="btn btn-primary" type="submit">Ajouter le type</button></div>', ['id' => 0]);
 $content .= formCard('Types de biome', ($types === []
         ? '<p class="text-muted">Aucun type pour l\'instant.</p>'
-        : renderTable(['Nom technique, libellé, couleur, taille des plaques et sols', 'Biomes', ''], $rows))
-    . '<p class="text-muted small">La case à côté de la couleur règle la taille des plaques du pinceau de biome, en cases.</p>'
+        : renderTable(['Nom technique, libellé, couleur, taille des plaques, lisière et sols', 'Biomes', ''], $rows))
+    . '<p class="text-muted small">Les deux cases à côté de la couleur règlent le pinceau de biome, en cases : la taille des plaques,'
+    . ' puis la lisière (jusqu\'où le sol d\'à côté entre dans le biome ; 0 : bord droit).</p>'
     . '<hr>' . $addType);
 
 // The palette of one type: any number of terrains, shares adding up to 100 %

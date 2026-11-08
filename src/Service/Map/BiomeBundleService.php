@@ -27,7 +27,7 @@ final class BiomeBundleService
     public function export(string $plan): array
     {
         $biomes = $this->db->fetchAllAssociative(
-            'SELECT b.id, b.name, b.zone, b.stack_order, b.seed, t.id AS type_id, t.name AS type, t.label, t.color, t.patch_scale
+            'SELECT b.id, b.name, b.zone, b.stack_order, b.seed, t.id AS type_id, t.name AS type, t.label, t.color, t.patch_scale, t.edge_width
              FROM biomes b JOIN plans p ON p.id = b.plan_id JOIN biome_types t ON t.id = b.biome_type_id
              WHERE p.slug = ? ORDER BY b.stack_order, b.id',
             [$plan]
@@ -69,6 +69,7 @@ final class BiomeBundleService
                 'label' => (string) $biome['label'],
                 'color' => (string) $biome['color'],
                 'patch_scale' => (int) $biome['patch_scale'],
+                'edge_width' => (int) $biome['edge_width'],
                 'grounds' => $grounds[(int) $biome['type_id']] ?? [],
             ],
             'zone' => json_decode((string) $biome['zone'], true),
@@ -169,6 +170,7 @@ final class BiomeBundleService
             'label' => (string) ($type['label'] ?? $type['name']),
             'color' => (string) ($type['color'] ?? '#888888'),
             'patch_scale' => (int) ($type['patch_scale'] ?? BiomeAdminService::DEFAULT_PATCH_SCALE),
+            'edge_width' => (int) ($type['edge_width'] ?? BiomeAdminService::DEFAULT_EDGE_WIDTH),
         ]);
         $id = (int) $db->lastInsertId();
         // A terrain this server does not know would match no tile, and nothing would grow
