@@ -33,6 +33,10 @@ final class TypeXpEditorView
         'energieHighBonus' => "Bonus énergie (> 2)",
         'energieAnyBonus' => 'Bonus énergie (> 0)',
         'rankBonus' => 'Bonus rang inférieur',
+        'structureBase' => 'Structure : base',
+        'structureEnergieHighBonus' => 'Structure : bonus énergie (> 2)',
+        'structureEnergieAnyBonus' => 'Structure : bonus énergie (> 0)',
+        'structureRankBonus' => 'Structure : bonus rang inférieur',
     ];
 
     private const MODE_LABELS = [
