@@ -382,5 +382,5 @@ if (($_POST['hud'] ?? '') === '1' && $printed !== null && trim($printed) === '')
 }
 elseif ($stepNotices !== []) {
     // Legacy layout: printing anything skips view.js's reload, so reload here.
-    echo '<script>aooAlert(' . json_encode(implode("\n", $stepNotices)) . ').then(function(){document.location.reload();});</script>';
+    echo '<script>aooAlert(' . json_encode(implode("\n", $stepNotices)) . ', {html: true}).then(function(){document.location.reload();});</script>';
 }

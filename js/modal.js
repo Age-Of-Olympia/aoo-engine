@@ -55,8 +55,14 @@
     const text = document.createElement('div');
     text.className = 'aoo-dialog-text';
     /* textContent : les messages viennent parfois du serveur — pas
-     * d'injection HTML, les \n sont rendus par white-space:pre-line */
-    text.textContent = String(message == null ? '' : message);
+     * d'injection HTML, les \n sont rendus par white-space:pre-line.
+     * html: true seulement pour un message que le serveur a échappé
+     * lui-même (lignes d'un pas, biomes). */
+    if (options.html) {
+      text.innerHTML = String(message == null ? '' : message);
+    } else {
+      text.textContent = String(message == null ? '' : message);
+    }
     box.appendChild(text);
 
     let input = null;
@@ -151,8 +157,8 @@
     });
   }
 
-  window.aooAlert = function (message) {
-    return buildDialog(message, { cancel: false, cancelValue: undefined });
+  window.aooAlert = function (message, options) {
+    return buildDialog(message, { cancel: false, cancelValue: undefined, html: !!(options && options.html) });
   };
 
   window.aooConfirm = function (message) {
