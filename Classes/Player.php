@@ -803,15 +803,9 @@ class Player implements ActorInterface {
          * les ANCIENNES coordonnées jusqu'à la fin de go() (le
          * rafraîchissement SVG de l'ancien plan en dépend), puis go()
          * pose lui-même les nouvelles ($this->coords = $goCoords). */
-        $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
+        (new \App\Service\Map\CharacterMoveService())->move((int) $this->id, (int) $coordsId);
 
         $db = new Db();
-        $db->exe($sql, array($coordsId, $this->id));
-
-        /* L'emprise suit le pas. Elle ne se lit pas encore (L3 la pose, L4
-         * la branchera), mais une ancre laissée derrière ferait démarrer la
-         * suite d'une carte fausse. */
-        (new \App\Service\Map\EntityCellService())->syncCells((int) $this->id);
 
 
         // territory change

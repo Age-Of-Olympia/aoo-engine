@@ -4,7 +4,7 @@ namespace App\Service;
 
 use App\Factory\EntityManagerFactory;
 use App\Service\Map\BoardChanges;
-use App\Service\Map\EntityCellService;
+use App\Service\Map\CharacterMoveService;
 use Classes\Player;
 use Classes\View;
 use Doctrine\DBAL\Connection;
@@ -184,11 +184,9 @@ final class CultAdminService
         $coordsId = $this->coordsId($x, $y, $z, $plan);
 
         $id = (new NpcAdminService())->createPnj($name, 'dieu');
-        $oldCoordsId = (int) $this->connection->fetchOne('SELECT coords_id FROM players WHERE id = ?', [$id]);
-        $this->connection->executeStatement('UPDATE players SET coords_id = ? WHERE id = ?', [$coordsId, $id]);
+        $moved = (new CharacterMoveService($this->connection))->move($id, $coordsId);
         (new PlayerOptionsService())->addOption($id, 'prayable');
-        (new EntityCellService())->syncCells($id);
-        BoardChanges::cellId($oldCoordsId, $coordsId);
+        BoardChanges::cellId((int) $moved['from'], $coordsId);
         BoardChanges::viewer($id);
 
         (new AuditService())->addAuditLog("CultAdminService::create #{$id} '{$name}'");
@@ -206,11 +204,11 @@ final class CultAdminService
         $name = $this->validateName($name);
         $coordsId = $this->coordsId($x, $y, $z, $plan);
         $oldCoordsId = (int) $this->connection->fetchOne('SELECT coords_id FROM players WHERE id = ?', [$id]);
-        $this->connection->executeStatement(
-            "UPDATE players SET name = ?, coords_id = ? WHERE id = ? AND race = 'dieu'",
-            [$name, $coordsId, $id]
-        );
-        (new EntityCellService())->syncCells($id);
+        // Only a god is renamed and moved: a prayable character of another race keeps both
+        if ($this->connection->fetchOne("SELECT 1 FROM players WHERE id = ? AND race = 'dieu'", [$id]) !== false) {
+            $this->connection->executeStatement('UPDATE players SET name = ? WHERE id = ?', [$name, $id]);
+            (new CharacterMoveService($this->connection))->move($id, $coordsId);
+        }
         BoardChanges::cellId($oldCoordsId, $coordsId);
         BoardChanges::viewer($id);
 
