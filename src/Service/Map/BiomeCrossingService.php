@@ -22,11 +22,10 @@ use Doctrine\DBAL\Connection;
  *
  * Called by {@see CharacterMoveService} only: every move goes through it.
  *
- * Each line said has two forms: what the character reads after the move
- * (plain text) and what its log keeps (HTML); null when it goes to one only.
+ * Each biome crossed says one HTML line, its name first and coloured by
+ * the way: the character reads it after the move, and its log keeps it.
  *
  * @phpstan-type Biome array{id: int, name: string, enter_message: string, exit_message: string, enter_effect: string, turns: ?int, value: int, ends_on_exit: bool}
- * @phpstan-type Line array{notice: ?string, log: ?string}
  */
 final class BiomeCrossingService
 {
@@ -40,7 +39,7 @@ final class BiomeCrossingService
     /**
      * @param ?int $left coords id of the cell left (null: the character appears)
      * @param ?int $reached coords id of the cell reached (null: off the board)
-     * @return list<string> what the character reads after the move
+     * @return list<string> what the character reads after the move, as HTML lines
      */
     public function cross(int $characterId, ?int $left, ?int $reached): array
     {
@@ -56,92 +55,100 @@ final class BiomeCrossingService
 
         $character = PlayerFactory::legacy($characterId);
         $character->get_data();
-        $lines = array_merge(
-            $exited === null ? [] : $this->leave($character, $exited),
-            $entered === null ? [] : $this->enter($character, $entered),
-        );
-        foreach (self::said($lines, 'log') as $log) {
-            Log::put($character, $character, $log, 'biome');
+        $lines = array_values(array_filter([
+            $exited === null ? null : $this->leave($character, $exited),
+            $entered === null ? null : $this->enter($character, $entered),
+        ]));
+        foreach ($lines as $line) {
+            Log::put($character, $character, $line, 'biome');
         }
 
-        return self::said($lines, 'notice');
+        return $lines;
     }
 
     /**
-     * The exit message, and the end of the entry effect when the exit ends it.
+     * "Micro-désert : L'effet [icon] Brûlure prend fin." — the exit
+     * message, and the end of the entry effect when the exit ends it.
      *
      * @param Biome $biome
-     * @return list<Line>
      */
-    private function leave(Player $character, array $biome): array
+    private function leave(Player $character, array $biome): ?string
     {
-        $lines = [self::both($biome['exit_message'])];
+        $said = [self::text($biome['exit_message'])];
+        $effects = $character->effectService;
         $effect = $biome['enter_effect'];
         if ($effect !== '' && $biome['ends_on_exit'] && $character->have_effect($effect)) {
             $character->end_effect($effect);
-            $lines[] = self::both($character->effectService->cancelNotice([$effect], $biome['name']));
+            if (!$effects->isHidden($effect)) {
+                $said[] = 'L\'effet ' . self::effect($effects, $effect) . ' prend fin.';
+            }
         }
 
-        return $lines;
+        return self::line(false, $biome['name'], $said);
     }
 
     /**
-     * The entry message, then the effect put on: what it is and for how
-     * long, what it takes or gives, the effects it cancels.
+     * "Bois du Nord : Bienvenue. Effet [icon] Brume, pour 3 tours." — the
+     * entry message, then the effect put on: what it is and for how long,
+     * what it takes or gives, the effects it cancels.
      *
      * @param Biome $biome
-     * @return list<Line>
      */
-    private function enter(Player $character, array $biome): array
+    private function enter(Player $character, array $biome): ?string
     {
-        $lines = [self::both($biome['enter_message'])];
+        $said = [self::text($biome['enter_message'])];
         $effects = $character->effectService;
         $effect = $biome['enter_effect'];
         // An effect removed from the catalog since would stop the move (add_effect exits on an unknown name)
-        if ($effect === '' || !$effects->exists($effect)) {
-            return $lines;
+        if ($effect !== '' && $effects->exists($effect)) {
+            $duration = $biome['turns'] ?? PlayerEffectService::DURATION_INFINITE;
+            $ended = $character->add_effect($effect, $duration, $biome['value']);
+            if (!$effects->isHidden($effect)) {
+                $said[] = 'Effet ' . self::effect($effects, $effect) . ', '
+                    . ($biome['turns'] === null && $biome['ends_on_exit'] ? 'jusqu\'à la sortie du biome' : EffectService::durationText($duration)) . '.';
+            }
+            $said[] = self::text(self::sentence($effects->tookText($effect, $biome['value'])));
+            $said[] = self::text(self::sentence($effects->endText($ended)));
         }
 
-        $duration = $biome['turns'] ?? PlayerEffectService::DURATION_INFINITE;
-        $ended = $character->add_effect($effect, $duration, $biome['value']);
-        $name = (string) $character->data->name;
-        $lines[] = [
-            'notice' => $effects->isHidden($effect) ? null : self::effectNotice($biome, $effects->getLabel($effect), $duration),
-            'log' => $effects->landingMessage($effect, $name, $name, $duration, $biome['value']),
-        ];
-        // The log line above already counts what the effect takes or gives
-        $lines[] = ['notice' => $effects->stepNotice($effect, $biome['value'], $biome['name']), 'log' => null];
-        $lines[] = self::both($effects->cancelNotice($ended, $biome['name']));
-
-        return $lines;
+        return self::line(true, $biome['name'], $said);
     }
 
     /**
-     * "Bois du Nord : effet Brume, pour 3 tours."
+     * One HTML line per biome crossed: its name first, with the way's icon
+     * and colour (css/modal.css), then what it says; null when it says nothing.
      *
-     * @param Biome $biome
+     * @param list<string> $said HTML sentences, escaped where they were written
      */
-    private static function effectNotice(array $biome, string $label, int $duration): string
+    private static function line(bool $entering, string $biome, array $said): ?string
     {
-        $until = $biome['turns'] === null && $biome['ends_on_exit'] ? 'jusqu\'à la sortie du biome' : EffectService::durationText($duration);
+        $said = array_filter($said, static fn (string $text): bool => $text !== '');
+        if ($said === []) {
+            return null;
+        }
 
-        return $biome['name'] . ' : effet ' . $label . ', ' . $until . '.';
+        return '<strong class="' . ($entering ? 'biome-in" title="Entrée"><span class="ra ra-footprint"></span> ' : 'biome-out" title="Sortie"><span class="ra ra-trail"></span> ')
+            . self::text($biome) . '</strong> : ' . implode(' ', $said);
     }
 
-    /** @return Line one line for the character and, escaped, for its log */
-    private static function both(string $text): array
+    /** An effect as the player reads it: its catalog icon, then its label */
+    private static function effect(EffectService $effects, string $name): string
     {
-        return ['notice' => $text, 'log' => htmlspecialchars($text, ENT_QUOTES, 'UTF-8')];
+        $icon = $effects->getIcon($name);
+
+        return ($icon === '' ? '' : '<span class="ra ' . htmlspecialchars($icon, ENT_QUOTES, 'UTF-8') . '"></span> ') . self::text($effects->getLabel($name));
     }
 
-    /**
-     * @param list<Line> $lines
-     * @param 'notice'|'log' $where
-     * @return list<string> the lines said there, empty ones left out
-     */
-    private static function said(array $lines, string $where): array
+    /** Plain text made safe inside the HTML line */
+    private static function text(string $text): string
     {
-        return array_values(array_filter(array_column($lines, $where), static fn (?string $text): bool => $text !== null && $text !== ''));
+        return htmlspecialchars($text, ENT_NOQUOTES, 'UTF-8');
+    }
+
+    /** "vous avez perdu 5 PV" → "Vous avez perdu 5 PV."; '' stays '' */
+    private static function sentence(string $text): string
+    {
+        return $text === '' ? '' : ucfirst($text) . '.';
     }
 
     /**

@@ -177,6 +177,14 @@ class EffectService
     /** "Lave : vous avez perdu 30 PV et 2 Mvt." — what landing on $where took, '' when nothing. */
     public function stepNotice(string $name, int $value, string $where): string
     {
+        $took = $this->tookText($name, $value);
+
+        return $took === '' ? '' : $where . ' : ' . $took . '.';
+    }
+
+    /** "vous avez perdu 30 PV et 2 Mvt": what the effect takes or gives as it lands, '' when nothing */
+    public function tookText(string $name, int $value): string
+    {
         $moved = ['perdu' => [], 'gagné' => []];
         foreach ($this->lossesOf($name, $value) as $carac => $n) {
             if ($n !== 0) {
@@ -192,7 +200,7 @@ class EffectService
             }
         }
 
-        return $clauses === [] ? '' : $where . ' : vous avez ' . implode(' et ', $clauses) . '.';
+        return $clauses === [] ? '' : 'vous avez ' . implode(' et ', $clauses);
     }
 
     /**
@@ -202,6 +210,19 @@ class EffectService
      * @param list<string> $ended
      */
     public function cancelNotice(array $ended, string $where): string
+    {
+        $end = $this->endText($ended);
+
+        return $end === '' ? '' : $where . ' : ' . $end . '.';
+    }
+
+    /**
+     * "l'effet Brûlure prend fin", "les effets A et B prennent fin": hidden
+     * ones left out; '' when none.
+     *
+     * @param list<string> $ended
+     */
+    public function endText(array $ended): string
     {
         $labels = [];
         foreach (array_unique($ended) as $name) {
@@ -214,11 +235,11 @@ class EffectService
             return '';
         }
         if (count($labels) === 1) {
-            return $where . ' : l\'effet ' . $labels[0] . ' prend fin.';
+            return 'l\'effet ' . $labels[0] . ' prend fin';
         }
         $last = array_pop($labels);
 
-        return $where . ' : les effets ' . implode(', ', $labels) . ' et ' . $last . ' prennent fin.';
+        return 'les effets ' . implode(', ', $labels) . ' et ' . $last . ' prennent fin';
     }
 
     /** Combat modifier getters (each × the carried value), as the player reads them. */

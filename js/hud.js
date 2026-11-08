@@ -745,7 +745,7 @@
 
         /* What the cell's element took on arrival (lava, mud…). */
         if (data.notice) {
-            aooAlert(data.notice);
+            aooAlert(data.notice, { html: true });
         }
     };
 
