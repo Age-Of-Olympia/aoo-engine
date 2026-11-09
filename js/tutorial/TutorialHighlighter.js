@@ -329,19 +329,10 @@ class TutorialHighlighter {
     }
 
     /**
-     * Drop a red × on every .case inside a padded highlight zone that
-     * is NOT walkable (no .go class) and is NOT the player's own tile.
-     * Visual cue for the user: "you can walk in this lit area, but not
-     * on tiles marked with ×".
-     *
-     * Idempotent — clears previous markers first.
+     * Screen rects of every padded highlight (e.g. the one-tile ring
+     * around the player on a movement step), padding included.
      */
-    refreshBlockedTileMarkers() {
-        // Collect the screen rects of every padded highlight zone —
-        // delegate the per-tile placement to the shared helper in
-        // blocked-tiles.js (also used by the regular-game display
-        // option `showBlockedTiles`). Empty zones array → no padded
-        // highlights → no markers.
+    paddedZones() {
         const zones = [];
         this.highlights.forEach(item => {
             if (!item.padding || item.padding <= 0) {
@@ -362,6 +353,22 @@ class TutorialHighlighter {
                 bottom: r.bottom + item.padding
             });
         });
+        return zones;
+    }
+
+    /**
+     * Drop a red × on every .case inside a padded highlight zone that
+     * is NOT walkable (no .go class) and is NOT the player's own tile.
+     * Visual cue for the user: "you can walk in this lit area, but not
+     * on tiles marked with ×".
+     *
+     * Idempotent — clears previous markers first.
+     */
+    refreshBlockedTileMarkers() {
+        // Per-tile placement is delegated to the shared helper in
+        // blocked-tiles.js (also used by the regular-game display
+        // option `showBlockedTiles`). No padded highlight → no markers.
+        const zones = this.paddedZones();
 
         if (typeof window.drawBlockedTileMarkers !== 'function') {
             return;

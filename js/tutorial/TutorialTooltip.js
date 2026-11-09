@@ -430,22 +430,26 @@ class TutorialTooltip {
     }
 
     /**
-     * What the tooltip must not cover: the target and, for a board cell,
+     * What the tooltip must not cover: the target, every padded highlight
+     * (the ring of cells the player may walk to) and, for a board cell,
      * the player's character and every cell between them. A shortest path
      * on the grid stays inside the box spanning both, so that box is it.
      */
     keepClearZone($target) {
         const t = $target[0].getBoundingClientRect();
         const zone = { left: t.left, top: t.top, right: t.right, bottom: t.bottom };
+        const extend = (rect) => {
+            zone.left = Math.min(zone.left, rect.left);
+            zone.top = Math.min(zone.top, rect.top);
+            zone.right = Math.max(zone.right, rect.right);
+            zone.bottom = Math.max(zone.bottom, rect.bottom);
+        };
         const $view = $('#view');
         const player = document.getElementById('current-player-avatar');
         if (player && $view.length && $.contains($view[0], $target[0])) {
-            const p = player.getBoundingClientRect();
-            zone.left = Math.min(zone.left, p.left);
-            zone.top = Math.min(zone.top, p.top);
-            zone.right = Math.max(zone.right, p.right);
-            zone.bottom = Math.max(zone.bottom, p.bottom);
+            extend(player.getBoundingClientRect());
         }
+        (window.tutorialUI?.highlighter?.paddedZones() ?? []).forEach(extend);
         return zone;
     }
 
