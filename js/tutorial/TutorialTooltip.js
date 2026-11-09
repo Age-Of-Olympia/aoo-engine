@@ -361,11 +361,11 @@ class TutorialTooltip {
          * edge would, it moves to the top edge instead. */
         if (window.innerWidth <= 768) {
             const $target = this.currentTargetSelector ? $(this.currentTargetSelector) : $();
-            const zone = $target.length ? this.keepClearZone($target) : null;
+            const zones = $target.length ? this.keepClearZones($target) : [];
             const h = this.$tooltip.outerHeight();
             const W = window.innerWidth, H = window.innerHeight;
-            const atTop = !!zone && TutorialTooltip.overlapArea(zone, { left: 0, top: H - h, right: W, bottom: H })
-                > TutorialTooltip.overlapArea(zone, { left: 0, top: 0, right: W, bottom: h });
+            const atTop = TutorialTooltip.coveredArea({ left: 0, top: H - h, right: W, bottom: H }, zones)
+                > TutorialTooltip.coveredArea({ left: 0, top: 0, right: W, bottom: h }, zones);
             this.$tooltip.toggleClass('mobile-top', atTop);
             return;
         }
@@ -404,7 +404,7 @@ class TutorialTooltip {
         if (!(position in opposite)) {
             return position;
         }
-        const zone = this.keepClearZone($target);
+        const zones = this.keepClearZones($target);
         const rect = $target[0].getBoundingClientRect();
         const w = this.$tooltip.outerWidth();
         const h = this.$tooltip.outerHeight();
@@ -417,7 +417,7 @@ class TutorialTooltip {
             const { top, left } = this.nearCoords(rect, side, w, h);
             const box = { left, top, right: left + w, bottom: top + h };
             const offScreen = w * h - TutorialTooltip.overlapArea(box, screen);
-            const cost = TutorialTooltip.overlapArea(box, zone) + offScreen;
+            const cost = TutorialTooltip.coveredArea(box, zones) + offScreen;
             if (cost === 0) {
                 return side;
             }
@@ -430,27 +430,31 @@ class TutorialTooltip {
     }
 
     /**
-     * What the tooltip must not cover: the target, every padded highlight
-     * (the ring of cells the player may walk to) and, for a board cell,
-     * the player's character and every cell between them. A shortest path
-     * on the grid stays inside the box spanning both, so that box is it.
+     * What the tooltip must not cover, as separate rects: the target and,
+     * for a board cell, the player's character and every cell between them
+     * (a shortest path on the grid stays inside the box spanning both),
+     * then each padded highlight (the ring of cells the player may walk
+     * to). Kept apart: one box spanning a top-bar target and a board ring
+     * would cover the whole screen and leave no clear side.
      */
-    keepClearZone($target) {
+    keepClearZones($target) {
         const t = $target[0].getBoundingClientRect();
         const zone = { left: t.left, top: t.top, right: t.right, bottom: t.bottom };
-        const extend = (rect) => {
-            zone.left = Math.min(zone.left, rect.left);
-            zone.top = Math.min(zone.top, rect.top);
-            zone.right = Math.max(zone.right, rect.right);
-            zone.bottom = Math.max(zone.bottom, rect.bottom);
-        };
         const $view = $('#view');
         const player = document.getElementById('current-player-avatar');
         if (player && $view.length && $.contains($view[0], $target[0])) {
-            extend(player.getBoundingClientRect());
+            const playerRect = player.getBoundingClientRect();
+            zone.left = Math.min(zone.left, playerRect.left);
+            zone.top = Math.min(zone.top, playerRect.top);
+            zone.right = Math.max(zone.right, playerRect.right);
+            zone.bottom = Math.max(zone.bottom, playerRect.bottom);
         }
-        (window.tutorialUI?.highlighter?.paddedZones() ?? []).forEach(extend);
-        return zone;
+        return [zone, ...(window.tutorialUI?.highlighter?.paddedZones() ?? [])];
+    }
+
+    /** Area of box covering any of the zones (overlaps between zones counted twice). */
+    static coveredArea(box, zones) {
+        return zones.reduce((sum, zone) => sum + TutorialTooltip.overlapArea(box, zone), 0);
     }
 
     static overlapArea(a, b) {
