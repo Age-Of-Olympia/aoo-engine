@@ -9,4 +9,10 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 
 header('Content-Type: application/json; charset=utf-8');
 
-echo json_encode(['stale' => \App\Service\Map\BoardChanges::isStale((int) $_SESSION['playerId'])]);
+$playerId = (int) $_SESSION['playerId'];
+
+echo json_encode([
+    'stale' => \App\Service\Map\BoardChanges::isStale($playerId),
+    // Compared by the HUD with #hud-topbar[data-live] (TopBarView).
+    'live' => \App\View\Hud\TopBarView::liveSignature($playerId),
+]);

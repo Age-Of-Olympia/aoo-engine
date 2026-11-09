@@ -515,19 +515,31 @@
             }
             $.getJSON('api/map/board_stale.php').done(function (data) {
                 if (data && data.stale) {
-                    refreshAfterAction();
+                    refreshAfterAction(true);
+                } else if (data && data.live !== $('#hud-topbar').attr('data-live')) {
+                    /* Someone else changed our values (hit, spell,
+                     * effect): only the bar needs redrawing. */
+                    refreshTopBar(true);
                 }
             });
         }, BOARD_POLL_MS);
     }
 
-    function refreshAfterAction() {
-        $.ajax({ url: document.location.href, cache: false })
+    /* Re-renders the page server side and copies the live values:
+     * pills, board sprites, next turn. A poll is not the player coming
+     * back: X-Aoo-Poll keeps index.php from starting a due turn. */
+    function refreshTopBar(fromPoll) {
+        return $.ajax({ url: document.location.href, cache: false, headers: fromPoll === true ? { 'X-Aoo-Poll': '1' } : {} })
             .done(function (html) {
                 var doc = new DOMParser().parseFromString(html, 'text/html');
 
                 refreshPills(doc);
                 refreshBoardSprites(doc);
+
+                var freshBar = doc.getElementById('hud-topbar');
+                if (freshBar) {
+                    $('#hud-topbar').attr('data-live', freshBar.getAttribute('data-live'));
+                }
 
                 var freshTimer = doc.getElementById('next-turn-timer');
                 var timer = document.getElementById('next-turn-timer');
@@ -536,7 +548,10 @@
                     timer.title = freshTimer.title || timer.title;
                 }
             });
+    }
 
+    function refreshAfterAction(fromPoll) {
+        refreshTopBar(fromPoll);
         loadFeed('events');
 
         return refreshSelection();
@@ -2431,6 +2446,7 @@
      * hérités fermait le panneau (retour joueurs juillet 2026). */
     window.hudReloadPanels = reloadAllPanels;
     window.hudRefreshAfterAction = refreshAfterAction;
+    window.hudRefreshTopBar = refreshTopBar;
 
     /* Navigation générique pour les scripts hérités qui naviguent en
      * JS (options de dialogue marchand/instructeur…) : panneau si

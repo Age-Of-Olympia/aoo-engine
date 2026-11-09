@@ -21,7 +21,7 @@ use Classes\Ui;
 final class HudLayoutView
 {
     /** Cache-busting des assets du HUD — à incrémenter à chaque modif CSS/JS. */
-    public const VERSION = '20261111';
+    public const VERSION = '20261111a';
 
     public static function render(Player $player): void
     {

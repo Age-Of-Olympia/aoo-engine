@@ -296,7 +296,8 @@ if (isset($_GET['hud'])) {
 ?>
 <?php DeathView::renderDeathScreen($player) ?>
 
-<div id="new-turn"><?php NewTurnView::renderNewTurn($player) ?></div>
+<?php /* A HUD poll (js/hud.js) never starts a turn: only the player does. */ ?>
+<div id="new-turn"><?php if (empty($_SERVER['HTTP_X_AOO_POLL'])) NewTurnView::renderNewTurn($player) ?></div>
 
 <?php if ($useNewHud) { ?>
 

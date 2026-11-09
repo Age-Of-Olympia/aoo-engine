@@ -327,6 +327,10 @@ class TutorialUI {
                         // Update XP bar
                         this.updateXPBar();
 
+                        /* advance.php may have refilled MVT or A for the
+                         * next step: the pills must show what it says. */
+                        window.hudRefreshTopBar?.();
+
                         // Render next step
                         if (response.step_data) {
                             this.renderStep(response.step_data);

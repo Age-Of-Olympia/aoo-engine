@@ -40,7 +40,7 @@ final class TopBarView
 
         ob_start();
 
-        echo '<header id="hud-topbar">';
+        echo '<header id="hud-topbar" data-live="' . self::liveSignature($player->id) . '">';
 
         /* Hamburger (mobile uniquement, masqué en CSS ≥1024px) :
          * ouvre le rail en tiroir latéral. */
@@ -208,6 +208,26 @@ final class TopBarView
         echo '</header>';
 
         echo Str::minify(ob_get_clean());
+    }
+
+    /**
+     * Fingerprint of what the pills show: spent/gained points (bonus rows),
+     * malus, faith, energy, effects and the turn clock. The HUD poll
+     * compares it to the rendered one and redraws the bar when it moved.
+     */
+    public static function liveSignature(int $playerId): string
+    {
+        $row = (new \Classes\Db())->exe(
+            'SELECT CONCAT_WS("|",
+                (SELECT GROUP_CONCAT(name, ":", n ORDER BY name) FROM players_bonus WHERE player_id = ?),
+                (SELECT CONCAT_WS(",", malus, pf, energie) FROM players WHERE id = ?),
+                (SELECT GROUP_CONCAT(name, ":", COALESCE(endTime, "") ORDER BY name) FROM players_effects WHERE player_id = ?),
+                (SELECT next_turn_time FROM turns WHERE player_id = ?)
+            ) AS live',
+            array($playerId, $playerId, $playerId, $playerId)
+        )->fetch_object();
+
+        return md5((string) ($row->live ?? ''));
     }
 
     /**
