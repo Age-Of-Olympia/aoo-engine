@@ -15,7 +15,10 @@ final class AltarControlService
         $this->connection = EntityManagerFactory::getEntityManager()->getConnection();
     }
 
-    /** @param list<string>|null $plans @return list<string> */
+    /**
+     * @param list<string>|null $plans
+     * @return list<string>
+     */
     public function contestedPlans(?array $plans = null): array
     {
         $filter = '';
