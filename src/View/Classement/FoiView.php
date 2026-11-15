@@ -3,6 +3,7 @@
 namespace App\View\Classement;
 
 use Classes\Db;
+use App\Service\AltarControlService;
 use DateTimeImmutable;
 use DateTimeZone;
 
@@ -31,6 +32,9 @@ class FoiView
         $seasonPlans = array_keys(plans()->forSeason()) ?: [''];
         $inSeason = '(' . implode(',', array_fill(0, count($seasonPlans), '?')) . ')';
         $onSeasonPlan = 'coords_id IN (SELECT id FROM coords WHERE plan IN ' . $inSeason . ')';
+        $contestedPlans = (new AltarControlService())->contestedPlans($seasonPlans);
+        $controlledPlans = array_values(array_diff($seasonPlans, $contestedPlans)) ?: [''];
+        $inControlledPlans = '(' . implode(',', array_fill(0, count($controlledPlans), '?')) . ')';
 
         $sql = '
         SELECT
@@ -60,15 +64,7 @@ class FoiView
             FROM players AS a
             JOIN entity_cells AS ec ON ec.player_id = a.id
             WHERE a.race = "altar" AND a.godId != 0
-            AND ec.plan IN ' . $inSeason . '
-            AND ec.plan IN (
-                SELECT ec2.plan
-                FROM players AS a2
-                JOIN entity_cells AS ec2 ON ec2.player_id = a2.id
-                WHERE a2.race = "altar" AND a2.godId != 0
-                GROUP BY ec2.plan
-                HAVING COUNT(DISTINCT a2.godId) = 1
-            )
+            AND ec.plan IN ' . $inControlledPlans . '
             GROUP BY a.godId
         ) AS excl ON excl.godId = g.id
         WHERE g.race = "dieu"
@@ -84,7 +80,7 @@ class FoiView
         ORDER BY total_foi DESC
         ';
 
-        $res = $db->exe($sql, array_merge($seasonPlans, $seasonPlans, $seasonPlans));
+        $res = $db->exe($sql, array_merge($seasonPlans, $seasonPlans, $controlledPlans));
 
         echo '
         <h2>Dieux les plus vénérés</h2>

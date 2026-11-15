@@ -153,10 +153,11 @@ final class CultAdminService
         ));
     }
 
-    /** @return list<array{id:int,name:string,x:int,y:int,z:int,plan:string,pv:int}> */
+    /** @return list<array{id:int,name:string,x:int,y:int,z:int,plan:string,pv:int,contested:bool}> */
     public function altars(int $godId): array
     {
         $altarPv = (new RaceService())->getRaceByName('altar')?->getCarac('pv') ?? 0;
+        $contestedPlans = array_fill_keys((new AltarControlService())->contestedPlans(), true);
         $rows = $this->connection->fetchAllAssociative(
             "SELECT p.id, p.name, c.x, c.y, c.z, c.plan, COALESCE(pb.n, 0) AS pv_bonus
                FROM players p
@@ -175,6 +176,7 @@ final class CultAdminService
             'z' => (int) $row['z'],
             'plan' => (string) $row['plan'],
             'pv' => $altarPv + (int) $row['pv_bonus'],
+            'contested' => isset($contestedPlans[(string) $row['plan']]),
         ], $rows);
     }
 

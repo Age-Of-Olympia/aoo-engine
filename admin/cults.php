@@ -105,8 +105,12 @@ function cult_render_details(CultAdminService $service, array $god, array $planL
     $altars = '';
     $altarRows = $service->altars((int) $god['id']);
     foreach ($altarRows as $altar) {
+        $position = cult_position($altar, $planLabels);
+        if ($altar['contested']) {
+            $position .= ' <strong class="text-danger ml-3">(Contesté)</strong>';
+        }
         $altars .= '<tr><td>' . e($altar['name']) . ' <small class="text-muted">#' . $altar['id'] . '</small></td>'
-            . '<td>' . cult_position($altar, $planLabels) . '</td><td>' . $altar['pv'] . '</td></tr>';
+            . '<td>' . $position . '</td><td>' . $altar['pv'] . '</td></tr>';
     }
 
     $followersTable = $followers !== ''
