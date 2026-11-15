@@ -29,7 +29,7 @@ class DistanceComputeCondition extends ComputeCondition implements DeclaresSimul
         $malusPerCell = match ($weaponType) {
             'tir' => 1.5,
             'jet' => 2.0,
-            default => 2.5,
+            default => 2.0,
         };
 
         return (int) ceil($malusPerCell * $distanceBeyondTwo);
@@ -37,7 +37,7 @@ class DistanceComputeCondition extends ComputeCondition implements DeclaresSimul
 
     public static function distanceThresholdFor(int $distance): int
     {
-        return (int) floor($distance * 2.5);
+        return (int) ceil($distance * 2.5);
     }
 
     protected function getDistanceTreshold(ActorInterface $actor) : int {

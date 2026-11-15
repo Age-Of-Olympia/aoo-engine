@@ -123,7 +123,13 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
             if ($distanceInfluence) {
                 $distance = View::get_distance_to_entity($actor->getCoords(), $target->getId(), $target->getCoords());
                 $cellCount = $distance - 1;
-                $totalDamages = $totalDamages - $cellCount;
+                $weaponType = $actor->emplacements->main1->data->subtype ?? null;
+                $distanceMalus = match ($weaponType) {
+                    'tir' => max(0, $distance - 2),
+                    'jet' => max(0, (int) ceil(($distance - 2) / 2)),
+                    default => max(0, $distance - 2),
+                };
+                $totalDamages -= $distanceMalus;
             }
             if ($sautInfluence) {
                 $distance = View::get_distance_to_entity($actor->getCoords(), $target->getId(), $target->getCoords());
@@ -221,7 +227,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
             }
             $distanceText = "";
             if ($distanceInfluence) {
-                $distanceText = ' - '. $cellCount. ' (Distance)';
+                $distanceText = ' - '. $distanceMalus. ' (Distance)';
             }
             if ($sautInfluence) {
                 $distanceText = ' + '. floor(0.5 * $cellCount) . ' (Distance)';
