@@ -481,25 +481,13 @@
      * prochain tour. La cible observée est re-observée (PV, charges)
      * et le flux d'évènements rechargé.
      */
-    /* Pilules du bandeau haut, remplacées une à une depuis un re-rendu
-     * serveur : innerHTML ET class/style — la jauge intégrée
-     * (--hud-missing) vit dans les attributs de la pilule elle-même. */
+    /* Top bar pills, from a server re-render. Swapped as a block: the
+     * malus and dodge pills, like the effect chips, are only rendered
+     * while their value is not zero. */
     function refreshPills(doc) {
-        $('.hud-pill').each(function () {
-            var fresh = doc.getElementById(this.id);
-            if (fresh) {
-                this.innerHTML = fresh.innerHTML;
-                this.className = fresh.className;
-                this.setAttribute('style', fresh.getAttribute('style') || '');
-            }
-        });
-
-        /* Effets : remplacés en bloc — contrairement aux pilules
-         * fixes, ils apparaissent et disparaissent. */
-        var freshEffects = doc.getElementById('hud-effects');
-        var effects = document.getElementById('hud-effects');
-        if (freshEffects && effects) {
-            effects.innerHTML = freshEffects.innerHTML;
+        var fresh = doc.querySelector('#hud-topbar .hud-pills');
+        if (fresh) {
+            $('#hud-topbar .hud-pills').html(fresh.innerHTML);
         }
     }
 
@@ -1077,8 +1065,8 @@
             }
         });
 
-        /* Pilules du bandeau haut (PA, MVT…) : remplacées une à
-         * une, le reste du bandeau garde ses gestionnaires. */
+        /* Top bar pills (A, Mvt…): only their container is redrawn,
+         * the rest of the bar keeps its handlers. */
         refreshPills(doc);
 
         /* Sélection et actions de l'ancienne case : obsolètes. */
