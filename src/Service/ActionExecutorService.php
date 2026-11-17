@@ -4,6 +4,7 @@ namespace App\Service;
 use Classes\Player;
 use App\Entity\ActionOutcome;
 use App\Action\ActionResults;
+use App\Action\DeathReport;
 use App\Action\Condition\ConditionRegistry;
 use App\Action\Condition\ConditionObject;
 use App\Action\Condition\ConditionResult;
@@ -40,7 +41,8 @@ class ActionExecutorService
     private int $finalTargetPv;
     private bool $blocked = false;
     private ConditionObject $conditionObject;
-    private string $deathOutput = '';
+    /** @var list<DeathReport> */
+    private array $deathReports = [];
 
     /** @param array<string, mixed> $input what the player picked for this run, handed to the rules */
     public function __construct(Action $action, Player $actor, Player $target, bool $simulationMode = false, ?ActionTypeInstructionResolver $typeInstructionResolver = null, ?ActionTypePreconditionResolver $preconditionResolver = null, ?ConditionPreconditionResolver $conditionPreconditionResolver = null, ?ActionLogResolver $logResolver = null, ?ActionXpResolver $xpResolver = null, array $input = []){
@@ -187,9 +189,10 @@ class ActionExecutorService
     }
 
     /** The kill report, for a caller that renders a page. */
-    public function getDeathOutput(): string
+    /** @return list<DeathReport> */
+    public function getDeathReports(): array
     {
-        return $this->deathOutput;
+        return $this->deathReports;
     }
 
     /**
@@ -213,12 +216,9 @@ class ActionExecutorService
 
         $onSelf = (int) $this->actor->id === (int) $this->target->id;
 
-        ob_start();
-
         if (!$onSelf && $this->actor->getRemaining('pv') < 1) {
             PlayerService::processSelfDeath($this->actor, 'à ses propres effets');
-            echo '<b><font color="red">Vous succombez à vos propres effets.</font></b>';
-            \App\View\OnHideReloadView::render($this->actor);
+            $this->deathReports[] = new DeathReport(DeathReport::SUCCUMBED);
         }
 
         $targetPv = $this->target->getRemaining('pv');
@@ -226,11 +226,9 @@ class ActionExecutorService
             if ($onSelf) {
                 PlayerService::processSelfDeath($this->target, 'à ses propres effets');
             } else {
-                PlayerService::ProcessTargetDeath($this->actor, $this->target);
+                $this->deathReports[] = PlayerService::ProcessTargetDeath($this->actor, $this->target);
             }
         }
-
-        $this->deathOutput = (string) ob_get_clean();
     }
 
     private function applyCosts(): array

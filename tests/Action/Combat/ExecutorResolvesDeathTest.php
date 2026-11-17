@@ -61,7 +61,7 @@ class ExecutorResolvesDeathTest extends LegacyPlayerFixtureTestCase
             } finally {
                 ob_end_clean();
             }
-            $output = $executor->getDeathOutput();
+            $output = \App\View\DeathReportView::render($executor->getDeathReports(), $actor);
 
             if ($output !== '') {
                 break;

@@ -2,9 +2,9 @@
 
 namespace App\Service;
 
+use App\Action\DeathReport;
 use App\Enum\EntityCategory;
 use App\View\MatriculeView;
-use App\View\OnHideReloadView;
 use Classes\Db;
 use Classes\Player;
 use Classes\Log;
@@ -108,11 +108,10 @@ class PlayerService
         $player->death($rank);
     }
 
-    public static function ProcessTargetDeath(Player $player, Player $target): void
+    public static function ProcessTargetDeath(Player $player, Player $target): DeathReport
     {
         if ($target->getRemaining('pv') > 0) {
-
-            exit('error not dead');
+            throw new \LogicException('error not dead');
         }
 
         // Une structure ne meurt pas comme un personnage : pas de partage
@@ -121,7 +120,8 @@ class PlayerService
         // pour couvrir TOUTE la branche structure (building ET unique).
         if (EntityCategory::fromPlayerType($target->getPlayerType()) === EntityCategory::Structure) {
             self::processStructureDestruction($player, $target);
-            return;
+
+            return new DeathReport(DeathReport::DESTROYED);
         }
 
 
@@ -134,27 +134,15 @@ class PlayerService
 
         Log::put($target, $player, $text, type: "kill", hiddenText: '', logTime: $timestamp);
 
-
-        echo '<b><font color="red">Vous tuez votre adversaire.</font></b>';
-
-
-        echo '
-<div class="action-details">
-    ';
-
         $distributedXp = $target->distribute_xp();
+        $xpGains = [];
 
         foreach ($distributedXp as $k => $e) {
             if ($k == 'xp_to_distribute') {
-                if ($e == 0 && $target->data->isInactive) {
-                    echo 'Partage de ' . $e . 'Xp (joueur inactif):<br />';
-                } else {
-                    echo 'Partage de ' . $e . 'Xp:<br />';
-                }
                 continue;
             }
             if ($k == 'remaining_xp') {
-                echo $player->data->name . ' +' . $e . 'Xp bonus<br />';
+                $xpGains[] = ['name' => (string) $player->data->name, 'xp' => (int) $e, 'bonus' => true];
                 $player->put_xp($e);
                 continue;
             }
@@ -164,13 +152,10 @@ class PlayerService
                 $assistant->put_xp($e);
                 $assist = ($assistant->id == $player->id) ? 0 : 1;
                 $assistant->put_kill($target, $e, $assist, ($target->data->isInactive ? 1 : 0));
-                echo $assistant->data->name . ' +' . $e . 'Xp<br />';
+                $xpGains[] = ['name' => (string) $assistant->data->name, 'xp' => (int) $e, 'bonus' => false];
             }
         }
         $target->refresh_kills(); //clear html cache pour le tué 
-        echo '
-</div>
-';
 
         //Retrait de 10xRang XP/PI au personnage tué (param dans constants.php)
         $rank = (int) $target->data->rank;
@@ -178,8 +163,12 @@ class PlayerService
 
         $target->death($rank);
 
-
-        OnHideReloadView::render($player);
+        return new DeathReport(
+            DeathReport::KILLED,
+            (int) $distributedXp['xp_to_distribute'],
+            (bool) $target->data->isInactive,
+            $xpGains,
+        );
     }
 
     /**
@@ -230,10 +219,6 @@ class PlayerService
                 $lifecycle->fell((int) $target->id, (string) $goCoords->plan, $faction);
             }
         }
-
-        echo '<b><font color="red">Vous détruisez la structure.</font></b>';
-
-        OnHideReloadView::render($player);
     }
 
     public function playerUpdateVisible($value): void

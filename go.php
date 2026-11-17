@@ -222,7 +222,7 @@ if($goCoords->z < 0){
         $digExecutor = new \App\Service\ActionExecutorService($digAction, $player, $player, input: ['digX' => $goCoords->x, 'digY' => $goCoords->y]);
         $digResults = $digExecutor->executeAction();
         // Creuser peut coûter la vie : l'exécuteur tranche, la page affiche.
-        echo $digExecutor->getDeathOutput();
+        echo \App\View\DeathReportView::render($digExecutor->getDeathReports(), $player);
 
         /* Une action laisse TOUJOURS un événement, d'où qu'elle parte —
          * ici du déplacement (récap détaillé : le même rendu

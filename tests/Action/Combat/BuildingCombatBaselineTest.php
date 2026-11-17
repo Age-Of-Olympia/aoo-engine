@@ -220,11 +220,11 @@ class BuildingCombatBaselineTest extends LegacyPlayerFixtureTestCase
 
         ob_start();
         try {
-            PlayerService::ProcessTargetDeath($attacker, $building);
-            $output = ob_get_contents();
+            $report = PlayerService::ProcessTargetDeath($attacker, $building);
         } finally {
             ob_end_clean();
         }
+        $output = \App\View\DeathReportView::render([$report], $attacker);
 
         $this->assertStringContainsString('Vous détruisez la structure.', (string) $output);
 

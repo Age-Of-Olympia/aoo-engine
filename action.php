@@ -9,6 +9,7 @@ use App\Service\ActionService;
 use App\Service\PlayerService;
 use App\Service\ScreenshotService;
 use App\View\ActionResultsView;
+use App\View\DeathReportView;
 use App\View\OnHideReloadView;
 use Classes\Log;
 use Classes\View;
@@ -135,6 +136,8 @@ if (($ownedActionTypes[$action->getName()] ?? '') === 'sort'
 try {
     $actionExecutor = new ActionExecutorService($action, $player, $target, input: $_POST);
     $actionResults = $actionExecutor->executeAction();
+    // Rendered now, placed below: the reload reads the board as the deaths left it.
+    $deathHtml = DeathReportView::render($actionExecutor->getDeathReports(), $player);
     $actionResultsView = new ActionResultsView($actionResults);
     // this make a "echo" needed while the huge action.php file exists
     $actionResultsView->displayActionResults();
@@ -175,9 +178,7 @@ try {
  * la page ne fait que placer le compte rendu. */
 $targetPvAfter = isset($actionExecutor) ? $actionExecutor->getFinalTargetPv() : $target->getRemaining('pv');
 
-if (isset($actionExecutor)) {
-    echo $actionExecutor->getDeathOutput();
-}
+echo $deathHtml ?? '';
 
 if($targetPvBefore != $targetPvAfter){
 
