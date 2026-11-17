@@ -133,7 +133,7 @@ if (($ownedActionTypes[$action->getName()] ?? '') === 'sort'
 }
 
 try {
-    $actionExecutor = new ActionExecutorService($action, $player, $target);
+    $actionExecutor = new ActionExecutorService($action, $player, $target, input: $_POST);
     $actionResults = $actionExecutor->executeAction();
     $actionResultsView = new ActionResultsView($actionResults);
     // this make a "echo" needed while the huge action.php file exists

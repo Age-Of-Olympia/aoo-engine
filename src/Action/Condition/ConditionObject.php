@@ -36,7 +36,14 @@ class ConditionObject
     protected ?array $attackEffects = null;
 
 
-    public function __construct() {
+    /** @param array<string, mixed> $input what the player picked for this run: an item, a cell, a recipe… */
+    public function __construct(private array $input = [])
+    {
+    }
+
+    public function input(string $key): mixed
+    {
+        return $this->input[$key] ?? null;
     }
 
     public function getBuildCoords(): ?object

@@ -36,19 +36,9 @@ class ItemPickCondition extends BaseCondition implements HasParameterSchemaInter
         );
     }
 
-    /** L'id d'objet fourni à la requête, ou null. */
-    public static function requestedItemId(): ?int
+    /** An item or instance id as the client sent it, or null. */
+    public static function numericId(mixed $raw): ?int
     {
-        $raw = $_POST['itemId'] ?? null;
-
-        return is_numeric($raw) ? (int) $raw : null;
-    }
-
-    /** L'instance précise désignée au geste (ligne d'instance cliquée), ou null. */
-    public static function requestedInstanceId(): ?int
-    {
-        $raw = $_POST['instanceId'] ?? null;
-
         return is_numeric($raw) ? (int) $raw : null;
     }
 
@@ -59,9 +49,9 @@ class ItemPickCondition extends BaseCondition implements HasParameterSchemaInter
      * le client n'a pas fourni le contexte de ligne : Player::equip
      * retombe alors sur la bascule héritée par objet catalogue.
      */
-    public static function requestedEquippedLine(): ?bool
+    public static function equippedLine(mixed $raw): ?bool
     {
-        return match ((string) ($_POST['rowEquipped'] ?? '')) {
+        return match ((string) $raw) {
             '1' => true,
             '0' => false,
             default => null,
@@ -70,7 +60,7 @@ class ItemPickCondition extends BaseCondition implements HasParameterSchemaInter
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        $itemId = self::requestedItemId();
+        $itemId = self::numericId($conditionObject->input('itemId'));
         if ($itemId === null) {
             return new ConditionResult(false, array(), ['Aucun objet fourni pour cette action.'], blocking: true);
         }
@@ -102,8 +92,8 @@ class ItemPickCondition extends BaseCondition implements HasParameterSchemaInter
         }
 
         $conditionObject->setPickedItem($item);
-        $conditionObject->setPickedInstanceId(self::requestedInstanceId());
-        $conditionObject->setPickedEquippedLine(self::requestedEquippedLine());
+        $conditionObject->setPickedInstanceId(self::numericId($conditionObject->input('instanceId')));
+        $conditionObject->setPickedEquippedLine(self::equippedLine($conditionObject->input('rowEquipped')));
 
         return new ConditionResult(true, array(), array());
     }

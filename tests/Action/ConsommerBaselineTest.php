@@ -18,12 +18,6 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 class ConsommerBaselineTest extends LegacyPlayerFixtureTestCase
 {
 
-    protected function tearDown(): void
-    {
-        unset($_POST['itemId']);
-        parent::tearDown();
-    }
-
     public function testDrinkingAPotionHealsConsumesAndCostsOneAc(): void
     {
         $drinker = $this->createRealPlayer('GmDrinker');
@@ -37,8 +31,7 @@ class ConsommerBaselineTest extends LegacyPlayerFixtureTestCase
         $potion->add_item($drinker, 1);
         $drinker->putBonus(['pv' => -20]);
 
-        $_POST['itemId'] = (string) $potion->id;
-        $results = (new ActionExecutorService($this->actionOrSkip('consommer'), $drinker, $drinker))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('consommer'), $drinker, $drinker, input: ['itemId' => (string) $potion->id]))->executeAction();
 
         $this->assertFalse($results->isBlocked(), 'owning the potion, the action must pass');
         $this->assertTrue($results->isSuccess(), 'consommer has no dice: passing conditions means success');
@@ -63,9 +56,8 @@ class ConsommerBaselineTest extends LegacyPlayerFixtureTestCase
 
         $potion = $this->sowCatalogItem('gm_potion_soin', ['type' => 'consommable', 'pv' => 10]);
         $potion->add_item($drinker, 1);
-        $_POST['itemId'] = (string) $potion->id;
 
-        $results = (new ActionExecutorService($this->actionOrSkip('consommer'), $drinker, $drinker))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('consommer'), $drinker, $drinker, input: ['itemId' => (string) $potion->id]))->executeAction();
 
         $this->assertTrue($results->isBlocked(), 'no Ac left: the cost condition must block');
         $this->assertSame(1, $potion->get_n(PlayerFactory::legacy($drinker->id)), 'nothing may be consumed');
@@ -79,9 +71,8 @@ class ConsommerBaselineTest extends LegacyPlayerFixtureTestCase
         $maxA = (int) $drinker->caracs->a;
 
         $potion = $this->sowCatalogItem('gm_potion_soin', ['type' => 'consommable', 'pv' => 10]);
-        $_POST['itemId'] = (string) $potion->id;
 
-        $results = (new ActionExecutorService($this->actionOrSkip('consommer'), $drinker, $drinker))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('consommer'), $drinker, $drinker, input: ['itemId' => (string) $potion->id]))->executeAction();
 
         $this->assertTrue($results->isBlocked(), 'no potion owned: ItemPick must block');
         $this->assertSame($maxA, PlayerFactory::legacy($drinker->id)->getRemaining('a'), 'a blocked action must not cost the A');
@@ -99,9 +90,8 @@ class ConsommerBaselineTest extends LegacyPlayerFixtureTestCase
 
         $potion = $this->sowCatalogItem('gm_potion_soin', ['type' => 'consommable', 'pv' => 10]);
         $potion->add_item($drinker, 1);
-        $_POST['itemId'] = (string) $potion->id;
 
-        $results = (new ActionExecutorService($this->actionOrSkip('consommer'), $drinker, $other))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('consommer'), $drinker, $other, input: ['itemId' => (string) $potion->id]))->executeAction();
 
         $this->assertTrue($results->isBlocked(), "visée 'self' : une cible tierce doit bloquer");
         $this->assertSame(1, $potion->get_n(PlayerFactory::legacy($drinker->id)), 'nothing may be consumed');
@@ -117,9 +107,8 @@ class ConsommerBaselineTest extends LegacyPlayerFixtureTestCase
 
         $or = $this->itemOrSkip('or');
         $or->add_item($drinker, 5);
-        $_POST['itemId'] = (string) $or->id;
 
-        $results = (new ActionExecutorService($this->actionOrSkip('consommer'), $drinker, $drinker))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('consommer'), $drinker, $drinker, input: ['itemId' => (string) $or->id]))->executeAction();
 
         $this->assertTrue($results->isBlocked(), 'gold is not a consumable: ItemPick admissibility must block');
         $this->assertSame(5, $or->get_n(PlayerFactory::legacy($drinker->id)), 'nothing may be spent');
@@ -136,8 +125,7 @@ class ConsommerBaselineTest extends LegacyPlayerFixtureTestCase
         $potion = $this->sowCatalogItem('gm_potion_xp', ['type' => 'consommable', 'xp' => 5]);
         $potion->add_item($drinker, 1);
 
-        $_POST['itemId'] = (string) $potion->id;
-        $results = (new ActionExecutorService($this->actionOrSkip('consommer'), $drinker, $drinker))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('consommer'), $drinker, $drinker, input: ['itemId' => (string) $potion->id]))->executeAction();
 
         $this->assertFalse($results->isBlocked(), 'an XP-only potion is a consumable');
         $fresh = PlayerFactory::legacy($drinker->id);

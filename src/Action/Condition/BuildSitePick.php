@@ -15,9 +15,9 @@ use Classes\View;
 final class BuildSitePick
 {
     /** Le joueur a-t-il choisi une case (mode picker) ? */
-    public static function requested(): bool
+    public static function requested(ConditionObject $pick): bool
     {
-        return isset($_POST['buildX'], $_POST['buildY']);
+        return $pick->input('buildX') !== null && $pick->input('buildY') !== null;
     }
 
     /**
@@ -33,18 +33,18 @@ final class BuildSitePick
      * @param string|null $type type de structure en cours de construction —
      *        null : emprise d'une case (règle historique)
      */
-    public static function resolve(object $actorCoords, ?string $type = null): ?object
+    public static function resolve(ConditionObject $pick, object $actorCoords, ?string $type = null): ?object
     {
-        if (!self::requested()) {
+        if (!self::requested($pick)) {
             return null;
         }
-        if (!is_numeric($_POST['buildX']) || !is_numeric($_POST['buildY'])) {
+        if (!is_numeric($pick->input('buildX')) || !is_numeric($pick->input('buildY'))) {
             // (int)'abc' vaudrait 0 : du bruit ne doit pas résoudre en (0,0).
             return null;
         }
 
-        $x = (int) $_POST['buildX'];
-        $y = (int) $_POST['buildY'];
+        $x = (int) $pick->input('buildX');
+        $y = (int) $pick->input('buildY');
 
         $offsets = [[0, 0]];
         if ($type !== null) {

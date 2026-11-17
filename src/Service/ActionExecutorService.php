@@ -42,7 +42,8 @@ class ActionExecutorService
     private ConditionObject $conditionObject;
     private string $deathOutput = '';
 
-    public function __construct(Action $action, Player $actor, Player $target, bool $simulationMode = false, ?ActionTypeInstructionResolver $typeInstructionResolver = null, ?ActionTypePreconditionResolver $preconditionResolver = null, ?ConditionPreconditionResolver $conditionPreconditionResolver = null, ?ActionLogResolver $logResolver = null, ?ActionXpResolver $xpResolver = null){
+    /** @param array<string, mixed> $input what the player picked for this run, handed to the rules */
+    public function __construct(Action $action, Player $actor, Player $target, bool $simulationMode = false, ?ActionTypeInstructionResolver $typeInstructionResolver = null, ?ActionTypePreconditionResolver $preconditionResolver = null, ?ConditionPreconditionResolver $conditionPreconditionResolver = null, ?ActionLogResolver $logResolver = null, ?ActionXpResolver $xpResolver = null, array $input = []){
         $this->conditionRegistry = new ConditionRegistry();
         $this->typeInstructionResolver = $typeInstructionResolver ?? new ActionTypeInstructionResolver();
         $this->logResolver = $logResolver ?? new ActionLogResolver();
@@ -60,7 +61,7 @@ class ActionExecutorService
         // which is skipped in simulation — so don't construct it (it would hit the DB).
         $this->playerService = $simulationMode ? null : new PlayerService($actor->id);
         $this->initialTargetPv = $target->getRemaining('pv');
-        $this->conditionObject = new ConditionObject();
+        $this->conditionObject = new ConditionObject($input);
         $this->conditionObject->setAction($this->action);
     }
 
@@ -131,7 +132,7 @@ class ActionExecutorService
         }
         
         // 5) LOG — from the action's per-type templates (action_type_logs).
-        $logsArray = $this->logResolver->resolve($this->action, $this->actor, $this->target, $this->conditionObject->getPickedItem());
+        $logsArray = $this->logResolver->resolve($this->action, $this->actor, $this->target, $this->conditionObject);
 
         // 6) The arena capture is triggered from action.php, after the Log::put
         //    calls, where the event text is available.

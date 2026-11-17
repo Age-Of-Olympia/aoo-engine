@@ -39,8 +39,8 @@ class DigTunnelOutcomeInstruction extends OutcomeInstruction implements HasParam
 
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult
     {
-        $digX = $_POST['digX'] ?? null;
-        $digY = $_POST['digY'] ?? null;
+        $digX = $conditionObject->input('digX');
+        $digY = $conditionObject->input('digY');
         if (!is_numeric($digX) || !is_numeric($digY)) {
             return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: ['Aucune case à creuser fournie.']);
         }

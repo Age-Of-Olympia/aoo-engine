@@ -14,12 +14,6 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('action')]
 class InscriptionGestureTest extends LegacyPlayerFixtureTestCase
 {
-    protected function tearDown(): void
-    {
-        unset($_POST['text']);
-        parent::tearDown();
-    }
-
     /** @return array{0: int, 1: int} chest id, owner standing beside it */
     private function ownedChestWithOwnerBeside(): array
     {
@@ -69,8 +63,7 @@ class InscriptionGestureTest extends LegacyPlayerFixtureTestCase
         $actor = $this->loadedCharacter($owner);
         $before = $actor->getRemaining('a');
 
-        $_POST['text'] = 'Réserve';
-        $results = (new ActionExecutorService($action, $actor, $this->loadedCharacter($chest)))->executeAction();
+        $results = (new ActionExecutorService($action, $actor, $this->loadedCharacter($chest), input: ['text' => 'Réserve']))->executeAction();
 
         $this->assertFalse($results->isBlocked());
         $this->assertSame('Réserve', $this->link->fetchOne('SELECT text FROM players WHERE id = ?', [$chest]));
@@ -82,7 +75,6 @@ class InscriptionGestureTest extends LegacyPlayerFixtureTestCase
         $action = $this->ecrire();
         [$chest, $owner] = $this->ownedChestWithOwnerBeside();
 
-        unset($_POST['text']);
         $results = (new ActionExecutorService($action, $this->loadedCharacter($owner), $this->loadedCharacter($chest)))->executeAction();
 
         $this->assertTrue($results->isBlocked(), 'no text sent (prompt cancelled): nothing written, nothing paid');

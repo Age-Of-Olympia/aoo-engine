@@ -35,8 +35,6 @@ class ChestUnderTheBankTest extends LegacyPlayerFixtureTestCase
 
     protected function tearDown(): void
     {
-        unset($_POST['itemId'], $_POST['buildFor']);
-
         /* The chests `construire` placed are no fixture's: hand them to the
          * fixture cleanup, or they outlive the test with their fabric rows. */
         foreach ($this->link->fetchFirstColumn(
@@ -101,14 +99,9 @@ class ChestUnderTheBankTest extends LegacyPlayerFixtureTestCase
 
     private function build(Player $builder, \Classes\Item $item, string $buildFor = ''): \App\Action\ActionResults
     {
-        $_POST['itemId'] = (string) $item->id;
-        if ($buildFor === '') {
-            unset($_POST['buildFor']);
-        } else {
-            $_POST['buildFor'] = $buildFor;
-        }
+        $input = ['itemId' => (string) $item->id] + ($buildFor === '' ? [] : ['buildFor' => $buildFor]);
 
-        return (new ActionExecutorService($this->construireWithChestSiteOrSkip(), $builder, $builder))->executeAction();
+        return (new ActionExecutorService($this->construireWithChestSiteOrSkip(), $builder, $builder, input: $input))->executeAction();
     }
 
     /** The chest standing on the plan for this builder's scene, or null. */

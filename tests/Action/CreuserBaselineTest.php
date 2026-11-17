@@ -20,7 +20,6 @@ class CreuserBaselineTest extends LegacyPlayerFixtureTestCase
 
     protected function tearDown(): void
     {
-        unset($_POST['digX'], $_POST['digY']);
         $this->link->executeStatement(
             "DELETE t FROM map_tiles t JOIN coords c ON c.id = t.coords_id WHERE c.plan = 'gaia' AND c.z = -1"
         );
@@ -45,10 +44,8 @@ class CreuserBaselineTest extends LegacyPlayerFixtureTestCase
 
         $pierre = $this->itemOrSkip('pierre');
         $xpBefore = (int) $this->link->fetchOne('SELECT COALESCE((SELECT xp FROM progression WHERE player_id = ?), 0)', [$digger->id]);
-        $_POST['digX'] = '1';
-        $_POST['digY'] = '3';
 
-        $results = (new ActionExecutorService($this->actionOrSkip('creuser'), $digger, $digger))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('creuser'), $digger, $digger, input: ['digX' => '1', 'digY' => '3']))->executeAction();
 
         $this->assertFalse($results->isBlocked(), 'underground and adjacent: the dig must pass');
         $this->assertTrue($results->isSuccess());
@@ -80,11 +77,9 @@ class CreuserBaselineTest extends LegacyPlayerFixtureTestCase
         $digger->get_caracs();
 
         $maxA = (int) $digger->caracs->a;
-        $_POST['digX'] = (string) ((int) $digger->coords->x + 1);
-        $_POST['digY'] = (string) $digger->coords->y;
 
         $tilesBefore = (int) $this->link->fetchOne('SELECT COUNT(*) FROM map_tiles');
-        $results = (new ActionExecutorService($this->actionOrSkip('creuser'), $digger, $digger))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('creuser'), $digger, $digger, input: ['digX' => (string) ((int) $digger->coords->x + 1), 'digY' => (string) $digger->coords->y]))->executeAction();
 
         $this->assertTrue($results->isBlocked(), 'digging at z >= 0 must be BLOCKED (DigSite, before any payment)');
         $this->assertSame(

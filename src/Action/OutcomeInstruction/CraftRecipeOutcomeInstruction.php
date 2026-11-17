@@ -30,7 +30,7 @@ class CraftRecipeOutcomeInstruction extends OutcomeInstruction implements HasPar
 
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult
     {
-        $recipeId = $_POST['recipeId'] ?? null;
+        $recipeId = $conditionObject->input('recipeId');
         if (!is_numeric($recipeId)) {
             return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: ['Aucune recette fournie au geste.']);
         }

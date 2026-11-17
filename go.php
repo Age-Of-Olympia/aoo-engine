@@ -213,16 +213,13 @@ if($goCoords->z < 0){
          * des actions) : coût 1 A, pierre, malus sans Pioche et galerie
          * vivent dans ses conditions/instructions — go.php ne fait que
          * fournir la case visée et raconter le résultat. */
-        $_POST['digX'] = (string) $goCoords->x;
-        $_POST['digY'] = (string) $goCoords->y;
-
         $digAction = \App\Factory\ActionFactory::getAction('creuser');
         if($digAction === null){
 
             exit('error creuser action missing (run migrations)');
         }
 
-        $digExecutor = new \App\Service\ActionExecutorService($digAction, $player, $player);
+        $digExecutor = new \App\Service\ActionExecutorService($digAction, $player, $player, input: ['digX' => $goCoords->x, 'digY' => $goCoords->y]);
         $digResults = $digExecutor->executeAction();
         // Creuser peut coûter la vie : l'exécuteur tranche, la page affiche.
         echo $digExecutor->getDeathOutput();

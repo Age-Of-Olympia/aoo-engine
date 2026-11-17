@@ -19,15 +19,9 @@ class InscriptionTextCondition extends BaseCondition implements HasParameterSche
         return new ParameterSchema();
     }
 
-    /** The posted text, or null when none was sent. */
-    public static function requestedText(): ?string
-    {
-        return isset($_POST['text']) ? (string) $_POST['text'] : null;
-    }
-
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        if (self::requestedText() === null) {
+        if ($conditionObject->input('text') === null) {
             return new ConditionResult(false, array(), array('Écrivez le texte depuis la fiche de l\'objet.'));
         }
 

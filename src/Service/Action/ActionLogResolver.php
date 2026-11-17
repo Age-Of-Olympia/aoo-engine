@@ -2,6 +2,7 @@
 
 namespace App\Service\Action;
 
+use App\Action\Condition\ConditionObject;
 use App\Entity\Action;
 use App\Entity\ActionPassive;
 use App\Entity\ActionTypeLog;
@@ -38,7 +39,7 @@ final class ActionLogResolver
     /**
      * @return array{actor: string, target: string}
      */
-    public function resolve(Action $action, Player $actor, Player $target, ?Item $pickedItem = null): array
+    public function resolve(Action $action, Player $actor, Player $target, ?ConditionObject $picks = null): array
     {
         $config = $this->configFor($action);
         if ($config === null) {
@@ -46,8 +47,8 @@ final class ActionLogResolver
         }
 
         return [
-            'actor' => $this->render($config->getActorTemplate(), $action, $actor, $target, $pickedItem),
-            'target' => $this->render($config->getTargetTemplate(), $action, $actor, $target, $pickedItem),
+            'actor' => $this->render($config->getActorTemplate(), $action, $actor, $target, $picks),
+            'target' => $this->render($config->getTargetTemplate(), $action, $actor, $target, $picks),
         ];
     }
 
@@ -68,7 +69,7 @@ final class ActionLogResolver
         return str_replace('{passive}', $passive->getDisplayName(), $this->render($template, $action, $holder, $other));
     }
 
-    public function render(?string $template, ?Action $action, Player $actor, Player $target, ?Item $pickedItem = null): string
+    public function render(?string $template, ?Action $action, Player $actor, Player $target, ?ConditionObject $picks = null): string
     {
         if ($template === null || $template === '') {
             return '';
@@ -82,16 +83,15 @@ final class ActionLogResolver
             // The item picked at execution (ItemPick), else what the posted recipe makes.
             '{item}' => match (true) {
                 !str_contains($template, '{item}') => '',
-                $pickedItem !== null => (string) ($pickedItem->data->name ?? ''),
-                default => $this->craftedItems(),
+                $picks?->getPickedItem() !== null => (string) ($picks->getPickedItem()->data->name ?? ''),
+                default => $this->craftedItems($picks?->input('recipeId')),
             },
         ]);
     }
 
     /** "Épée (x1), Copeaux (x2)": what the posted recipe makes, as the craft outcome reads it. */
-    private function craftedItems(): string
+    private function craftedItems(mixed $recipeId): string
     {
-        $recipeId = $_POST['recipeId'] ?? null;
         $recipe = is_numeric($recipeId) ? (new RecipeService())->getRecipeById((int) $recipeId) : null;
         if ($recipe === null) {
             return '';

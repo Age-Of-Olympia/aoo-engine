@@ -3,7 +3,6 @@
 namespace App\Action\OutcomeInstruction;
 
 use App\Action\Condition\ConditionObject;
-use App\Action\Condition\InscriptionTextCondition;
 use App\Entity\OutcomeInstruction;
 use App\Interface\HasParameterSchemaInterface;
 use App\Action\Schema\ParameterSchema;
@@ -29,7 +28,7 @@ class InscribeOutcomeInstruction extends OutcomeInstruction implements HasParame
             return new OutcomeResult(true, outcomeSuccessMessages: ['Écrirait sur la cible.'], outcomeFailureMessages: array());
         }
 
-        $text = InscriptionTextCondition::requestedText() ?? '';
+        $text = (string) $conditionObject->input('text');
 
         try {
             (new InscriptionService())->inscribe((int) $target->id, (int) $actor->id, $text);

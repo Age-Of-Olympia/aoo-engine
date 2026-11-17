@@ -22,8 +22,8 @@ class DigSiteCondition extends BaseCondition implements HasParameterSchemaInterf
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        $digX = $_POST['digX'] ?? null;
-        $digY = $_POST['digY'] ?? null;
+        $digX = $conditionObject->input('digX');
+        $digY = $conditionObject->input('digY');
         if (!is_numeric($digX) || !is_numeric($digY)) {
             return new ConditionResult(false, array(), ['Aucune case à creuser fournie.'], blocking: true);
         }

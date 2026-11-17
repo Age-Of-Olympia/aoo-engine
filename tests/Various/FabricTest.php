@@ -30,7 +30,6 @@ class FabricTest extends LegacyPlayerFixtureTestCase
 
     protected function tearDown(): void
     {
-        unset($_POST['itemId']);
         if ($this->materialLootChance !== false) {
             $this->link->executeStatement(
                 'UPDATE items SET lootChance = ? WHERE name = ?',
@@ -92,9 +91,8 @@ class FabricTest extends LegacyPlayerFixtureTestCase
 
         $palissadeItem = $this->itemOrSkip('palissade');
         $palissadeItem->add_item($builder, 1);
-        $_POST['itemId'] = (string) $palissadeItem->id;
 
-        $results = (new ActionExecutorService($action, $builder, $builder))->executeAction();
+        $results = (new ActionExecutorService($action, $builder, $builder, input: ['itemId' => (string) $palissadeItem->id]))->executeAction();
         $this->assertTrue($results->isSuccess());
 
         $built = (int) $this->link->fetchOne(

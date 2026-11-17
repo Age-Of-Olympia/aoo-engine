@@ -34,14 +34,6 @@ class ChestSiteCondition extends BaseCondition implements HasParameterSchemaInte
         return new ParameterSchema();
     }
 
-    /** The POSTed owner choice — personal by default, null if forged. */
-    public static function requestedHousehold(): ?string
-    {
-        $raw = (string) ($_POST['buildFor'] ?? self::FOR_SELF);
-
-        return in_array($raw, [self::FOR_SELF, self::FOR_FACTION], true) ? $raw : null;
-    }
-
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
         if (empty($conditionObject->getPickedItem()?->row->lockable)) {
@@ -53,8 +45,9 @@ class ChestSiteCondition extends BaseCondition implements HasParameterSchemaInte
             return new ConditionResult(true, array(), array());
         }
 
-        $buildFor = self::requestedHousehold();
-        if ($buildFor === null) {
+        // Personal by default; anything but the two households is forged.
+        $buildFor = (string) ($conditionObject->input('buildFor') ?? self::FOR_SELF);
+        if (!in_array($buildFor, [self::FOR_SELF, self::FOR_FACTION], true)) {
             return new ConditionResult(false, array(), ['Choix du propriétaire du coffre invalide.']);
         }
         if ((string) ($actor->data->faction ?? '') === '') {

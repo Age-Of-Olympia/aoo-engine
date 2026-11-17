@@ -26,7 +26,7 @@ class BuildSiteCondition extends BaseCondition implements HasParameterSchemaInte
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        if (!BuildSitePick::requested()) {
+        if (!BuildSitePick::requested($conditionObject)) {
             return new ConditionResult(true, array(), array());
         }
 
@@ -34,11 +34,11 @@ class BuildSiteCondition extends BaseCondition implements HasParameterSchemaInte
          * name IS it (constructible convention). ItemPick may not have run
          * yet, so fall back to the gesture's itemId. */
         $type = $conditionObject->getPickedItem()?->row->name;
-        if ($type === null && is_numeric($_POST['itemId'] ?? null)) {
-            $type = (new \Classes\Item((int) $_POST['itemId']))->row->name ?? null;
+        if ($type === null && is_numeric($conditionObject->input('itemId'))) {
+            $type = (new \Classes\Item((int) $conditionObject->input('itemId')))->row->name ?? null;
         }
 
-        $goCoords = BuildSitePick::resolve($actor->getCoords(), $type !== null ? (string) $type : null);
+        $goCoords = BuildSitePick::resolve($conditionObject, $actor->getCoords(), $type !== null ? (string) $type : null);
 
         if ($goCoords === null) {
             return new ConditionResult(false, array(), [BuildSitePick::REFUSAL], blocking: true);

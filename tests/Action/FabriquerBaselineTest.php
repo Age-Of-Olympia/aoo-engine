@@ -20,12 +20,6 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 class FabriquerBaselineTest extends LegacyPlayerFixtureTestCase
 {
 
-    protected function tearDown(): void
-    {
-        unset($_POST['recipeId']);
-        parent::tearDown();
-    }
-
     public function testCraftingThePalissadeRecipeThroughTheEngine(): void
     {
         $crafter = $this->createRealPlayer('GmSmith');
@@ -41,9 +35,8 @@ class FabriquerBaselineTest extends LegacyPlayerFixtureTestCase
         if ($recipes === []) {
             $this->markTestSkipped('recette palissade absente.');
         }
-        $_POST['recipeId'] = (string) $recipes[0]->getId();
 
-        $results = (new ActionExecutorService($this->actionOrSkip('fabriquer'), $crafter, $crafter))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('fabriquer'), $crafter, $crafter, input: ['recipeId' => (string) $recipes[0]->getId()]))->executeAction();
 
         $this->assertFalse($results->isBlocked());
         $this->assertTrue($results->isSuccess(), 'with the ingredients, crafting must succeed');
@@ -69,10 +62,9 @@ class FabriquerBaselineTest extends LegacyPlayerFixtureTestCase
         if ($recipes === []) {
             $this->markTestSkipped('recette palissade absente.');
         }
-        $_POST['recipeId'] = (string) $recipes[0]->getId();
 
         $bois = $this->itemOrSkip('bois');
-        $results = (new ActionExecutorService($this->actionOrSkip('fabriquer'), $crafter, $crafter))->executeAction();
+        $results = (new ActionExecutorService($this->actionOrSkip('fabriquer'), $crafter, $crafter, input: ['recipeId' => (string) $recipes[0]->getId()]))->executeAction();
 
         // Les conditions passent (fabriquer n'en a pas d'autre) : le refus
         // est un ÉCHEC D'OUTCOME (TryCraftRecipe) — l'observable est

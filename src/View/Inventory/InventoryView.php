@@ -40,8 +40,8 @@ class InventoryView
                 // source unique du contrat client) : instance précise
                 // cliquée, et sens de la bascule — LA ligne cliquée
                 // était-elle portée ? (null = contexte non fourni)
-                $instanceId = ItemPickCondition::requestedInstanceId();
-                $clickedEquippedLine = ItemPickCondition::requestedEquippedLine();
+                $instanceId = ItemPickCondition::numericId($_POST['instanceId'] ?? null);
+                $clickedEquippedLine = ItemPickCondition::equippedLine($_POST['rowEquipped'] ?? null);
 
                 switch ($_POST['action']) {
                     case 'drop':

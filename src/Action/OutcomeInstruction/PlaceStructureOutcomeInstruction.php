@@ -66,11 +66,11 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
 
         $goCoords = clone $actor->coords;
 
-        if (BuildSitePick::requested()) {
+        if (BuildSitePick::requested($conditionObject)) {
             /* Priorité au résultat déposé par BuildSiteCondition (déjà
              * validé, avant tout paiement) ; repli sur le résolveur
              * partagé pour une action sans la condition attachée. */
-            $picked = $conditionObject->getBuildCoords() ?? BuildSitePick::resolve($actor->coords, $type);
+            $picked = $conditionObject->getBuildCoords() ?? BuildSitePick::resolve($conditionObject, $actor->coords, $type);
 
             if ($picked === null) {
                 return new OutcomeResult(

@@ -58,8 +58,8 @@ class PlaceLayerOutcomeInstruction extends OutcomeInstruction implements HasPara
 
         $goCoords = clone $actor->coords;
 
-        if (BuildSitePick::requested()) {
-            $picked = $conditionObject->getBuildCoords() ?? BuildSitePick::resolve($actor->coords);
+        if (BuildSitePick::requested($conditionObject)) {
+            $picked = $conditionObject->getBuildCoords() ?? BuildSitePick::resolve($conditionObject, $actor->coords);
 
             if ($picked === null) {
                 return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: [BuildSitePick::REFUSAL]);

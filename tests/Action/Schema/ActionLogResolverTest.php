@@ -2,6 +2,7 @@
 
 namespace Tests\Action\Schema;
 
+use App\Action\Condition\ConditionObject;
 use App\Action\ConsumeAction;
 use App\Action\MeleeAction;
 use App\Action\SpellAction;
@@ -116,7 +117,7 @@ class ActionLogResolverTest extends TestCase
         $potion = $this->createMock(Item::class);
         $potion->data = (object) ['name' => 'Potion de soin'];
 
-        $result = $this->resolver($rows)->resolve(new ConsumeAction(), $this->player('Dorna'), $this->player('Dorna'), $potion);
+        $result = $this->resolver($rows)->resolve(new ConsumeAction(), $this->player('Dorna'), $this->player('Dorna'), (new ConditionObject())->setPickedItem($potion));
 
         $this->assertSame('Dorna a consommé Potion de soin.', $result['actor']);
     }

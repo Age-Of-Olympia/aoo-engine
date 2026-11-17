@@ -18,12 +18,6 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('action-condition')]
 class BuildSitePickTest extends LegacyPlayerFixtureTestCase
 {
-    protected function tearDown(): void
-    {
-        unset($_POST['buildX'], $_POST['buildY']);
-        parent::tearDown();
-    }
-
     private function atelierFootprintOrSkip(): void
     {
         $row = $this->link->fetchOne("SELECT w FROM entity_type_footprints WHERE type_name = 'atelier'");
@@ -38,10 +32,7 @@ class BuildSitePickTest extends LegacyPlayerFixtureTestCase
         $this->movePlayerTo($builder->id, 90, 90);
         $builder->getCoords();
 
-        $_POST['buildX'] = (string) $x;
-        $_POST['buildY'] = (string) $y;
-
-        return BuildSitePick::resolve($builder->coords, $type);
+        return BuildSitePick::resolve(new ConditionObject(['buildX' => (string) $x, 'buildY' => (string) $y]), $builder->coords, $type);
     }
 
     public function testASingleCellFormKeepsTheAdjacentRule(): void
@@ -76,8 +67,6 @@ class BuildSitePickTest extends LegacyPlayerFixtureTestCase
 
         // The origin, east of the builder, is free; its body cell north-east of it is not.
         $this->placeStructure('mur_pierre', $x + 2, $y - 1);
-        $_POST['buildX'] = (string) ($x + 1);
-        $_POST['buildY'] = (string) $y;
 
         $item = $this->createMock(\Classes\Item::class);
         $item->row = (object) ['name' => 'atelier'];
@@ -86,7 +75,7 @@ class BuildSitePickTest extends LegacyPlayerFixtureTestCase
             $builder,
             null,
             new ActionCondition(),
-            (new ConditionObject())->setPickedItem($item)
+            (new ConditionObject(['buildX' => (string) ($x + 1), 'buildY' => (string) $y]))->setPickedItem($item)
         );
 
         $this->assertFalse($result->isSuccess());
