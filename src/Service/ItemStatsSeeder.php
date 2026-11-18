@@ -45,7 +45,7 @@ class ItemStatsSeeder
     public const SKIP_KEYS = [
         'id', 'name', 'private',
         'enchanted', 'craftedByN', 'vorpal', 'cursed', 'spell',
-        'is_deprecated', 'is_bankable', 'exotique', 'magique',
+        'is_deprecated', 'is_bankable', 'fragile', 'exotique', 'magique',
         'player_id', 'item_id', 'n', 'equiped',
     ];
 

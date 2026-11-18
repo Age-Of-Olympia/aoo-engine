@@ -91,7 +91,22 @@ class RequiresAmmoCondition extends BaseCondition implements HasParameterSchemaI
     
             if($actor->emplacements->main1->data->subtype == 'jet'){
                 $distance = $target !== null ? View::get_distance_to_entity($actor->getCoords(), $target->getId(), $target->getCoords()) : 0;
-                if($target !== null && $distance > 2){
+                $weapon = $actor->emplacements->main1;
+                $fragile = !empty($weapon->row->fragile) || !empty($weapon->data->fragile);
+                if ($target !== null && $fragile) {
+                    if (!$actor->isSimulated()) {
+                        $instanceId = (int) ($weapon->instance_id ?? 0);
+                        if ($instanceId > 0) {
+                            (new \App\Service\ItemInstanceService())->destroy($instanceId);
+                        } else {
+                            $weapon->add_item($actor, -1);
+                        }
+                        $conditionToPay->getAction()->setRefreshScreen(true);
+                    }
+
+                    $text = 'Vous détruisez ' . $weapon->data->name . ' en la lançant.';
+                    array_push($result, $text);
+                } elseif($target !== null && $distance > 2){
                     // A simulation must not drop the weapon onto the real map; still report the loss.
                     if (!$actor->isSimulated()) {
                         $dropCoords = clone $target->coords;

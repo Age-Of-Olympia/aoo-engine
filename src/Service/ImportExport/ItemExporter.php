@@ -67,6 +67,7 @@ final class ItemExporter implements ObjectExporterInterface
             'spell' => (string) ($entity->spell ?? ''),
             'is_deprecated' => (int) $entity->is_deprecated,
             'is_bankable' => (int) $entity->is_bankable,
+            'fragile' => (int) ($entity->fragile ?? 0),
             'exotique' => (string) ($entity->exotique ?? ''),
             'wear_triggers' => (string) ($entity->wear_triggers ?? ''),
             'wear_profile' => (string) ($entity->wear_profile ?? ''),

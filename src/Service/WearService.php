@@ -156,7 +156,7 @@ class WearService
         }
 
         return $this->entityManager->getConnection()->fetchAllAssociative(
-            "SELECT i.id, i.entity_id, " . ItemInstanceService::WEAR_SELECT . ",
+            "SELECT i.id, i.entity_id, " . ItemInstanceService::WEAR_SELECT . ", it.fragile,
                     i.custom_name, " . ItemInstanceService::DISPLAY_NAME . " AS catalog_name, it.wear_rate
              FROM item_instances i
              JOIN players e ON e.id = i.entity_id
@@ -201,6 +201,12 @@ class WearService
         $label = ItemInstanceService::label($row['custom_name'], (string) $row['catalog_name']);
 
         if ($after === 0) {
+            if (!empty($row['fragile'])) {
+                (new ItemInstanceService())->destroy((int) $row['id']);
+
+                return $label . ' <span class="ra ra-broken-shield"></span> a été <b>détruit</b> !';
+            }
+
             return $label . ' <span class="ra ra-broken-shield"></span> s\'est <b>brisé</b> !';
         }
 
@@ -316,7 +322,7 @@ class WearService
         $conn = $this->entityManager->getConnection();
 
         $armed = $conn->fetchAllAssociative(
-            "SELECT i.id, i.entity_id, " . ItemInstanceService::WEAR_SELECT . ",
+            "SELECT i.id, i.entity_id, " . ItemInstanceService::WEAR_SELECT . ", it.fragile,
                     i.custom_name, " . ItemInstanceService::DISPLAY_NAME . " AS catalog_name, it.wear_rate
              FROM item_instances i
              JOIN players e ON e.id = i.entity_id
@@ -346,7 +352,12 @@ class WearService
             $label = ItemInstanceService::label($row['custom_name'], (string) $row['catalog_name']);
 
             if ($after === 0 && $before > 0) {
-                $recap[] = $label . ' <span class="ra ra-broken-shield"></span> s\'est <b>brisé</b> !';
+                if (!empty($row['fragile'])) {
+                    (new ItemInstanceService())->destroy((int) $row['id']);
+                    $recap[] = $label . ' <span class="ra ra-broken-shield"></span> a été <b>détruit</b> !';
+                } else {
+                    $recap[] = $label . ' <span class="ra ra-broken-shield"></span> s\'est <b>brisé</b> !';
+                }
             } else {
                 $recap[] = $label . ' s\'use (−' . ($before - $after) . ').';
             }

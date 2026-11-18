@@ -66,7 +66,7 @@ final class ItemImporter extends AbstractDbalImporter
         $params = [];
 
         foreach ([
-            'private', 'vorpal', 'cursed', 'is_deprecated', 'is_bankable',
+            'private', 'vorpal', 'cursed', 'is_deprecated', 'is_bankable', 'fragile',
             'wear_rate',
         ] as $col) {
             $set[] = "`{$col}` = ?";

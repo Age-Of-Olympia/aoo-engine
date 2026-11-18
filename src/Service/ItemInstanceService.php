@@ -314,6 +314,37 @@ class ItemInstanceService
         });
     }
 
+    /** Destroy an exemplar permanently and remove its location and carried state. */
+    public function destroy(int $instanceId): bool
+    {
+        $conn = $this->entityManager->getConnection();
+
+        return $conn->transactional(function ($conn) use ($instanceId): bool {
+            $entityId = $conn->fetchOne(
+                'SELECT entity_id FROM item_instances WHERE id = ? AND destroyed = 0 FOR UPDATE',
+                [$instanceId]
+            );
+            if ($entityId === false) {
+                return false;
+            }
+
+            $changed = $conn->executeStatement(
+                'UPDATE item_instances SET destroyed = 1, wear_pending = 0 WHERE id = ? AND destroyed = 0',
+                [$instanceId]
+            );
+            if ($changed === 0) {
+                return false;
+            }
+
+            foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
+                $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [(int) $entityId]);
+            }
+            (new \App\Service\Map\EntityLocationService($conn))->shelve((int) $entityId);
+
+            return true;
+        });
+    }
+
     /**
      * Rollback path: return a PRISTINE, unequipped instance to its
      * owner's stack. Refuses as soon as any state diverged (wear,

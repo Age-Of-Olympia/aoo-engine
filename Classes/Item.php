@@ -28,7 +28,7 @@ class Item{
         'esquive', 'pr', 'pf', 'malus', 'spellMalus', 'fixedF', 'mDamage',
         'demolition', 'lootChance', 'grow_rate', 'xp',
     ];
-    public const FLAG_KEYS = ['cursed', 'vorpal', 'is_bankable', 'is_deprecated', 'vanish_on_break', 'magique', 'lockable', 'blocks_passage', 'blocks_projectiles'];
+    public const FLAG_KEYS = ['cursed', 'vorpal', 'is_bankable', 'is_deprecated', 'vanish_on_break', 'fragile', 'magique', 'lockable', 'blocks_passage', 'blocks_projectiles'];
     /**
      * The events the PER-TURN engine still covers. `attack` and `defense`
      * left it: striking and taking a hit now wear immediately, by the

@@ -72,7 +72,9 @@ final class RepairService
     {
         $rows = [];
         foreach ($this->heldExemplars($playerId) as $row) {
-            if ((int) $row['durability'] >= (int) $row['durability_max'] || ItemInstanceService::isBroken((int) $row['durability'])) {
+            if (!empty($row['fragile'])
+                || (int) $row['durability'] >= (int) $row['durability_max']
+                || ItemInstanceService::isBroken((int) $row['durability'])) {
                 continue;
             }
             $row['quote'] = $this->quote($row);
@@ -230,7 +232,7 @@ final class RepairService
     private function heldExemplars(int $playerId): array
     {
         return $this->conn->fetchAllAssociative(
-            'SELECT it.name, it.race, ' . ItemInstanceService::DISPLAY_NAME . ' AS label, i.item_id, i.id AS instance_id,
+            'SELECT it.name, it.race, it.fragile, ' . ItemInstanceService::DISPLAY_NAME . ' AS label, i.item_id, i.id AS instance_id,
                     i.custom_name, e.id AS entity_id, ' . ItemInstanceService::WEAR_SELECT . '
                FROM players e
                JOIN item_instances i ON i.entity_id = e.id
@@ -258,6 +260,9 @@ final class RepairService
     private function heldRepairable(int $playerId, int $instanceId): array
     {
         $row = $this->held($playerId, $instanceId);
+        if (!empty($row['fragile'])) {
+            throw new \RuntimeException('Cet objet ne se répare pas.');
+        }
         if (ItemInstanceService::isBroken((int) $row['durability'])) {
             throw new \RuntimeException('Brisé, cet objet ne se répare plus.');
         }

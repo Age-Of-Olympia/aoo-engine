@@ -34,6 +34,7 @@ class SimulatedItem extends Item
         $item = new self((string) ($data->subtype ?? ''), (string) ($data->name ?? ''));
         foreach ((array) $data as $key => $value) {
             $item->data->{$key} = $value;
+            $item->row->{$key} = $value;
         }
         if (!isset($item->data->addEffects)) {
             $item->data->addEffects = [];

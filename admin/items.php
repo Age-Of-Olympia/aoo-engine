@@ -41,6 +41,7 @@ const ITEM_FLAG_LABELS = [
     'is_bankable' => 'Stockable en banque',
     'is_deprecated' => 'Déprécié',
     'vanish_on_break' => 'Disparaît une fois brisé (le butin est répandu au sol, pas d\'épave)',
+    'fragile' => 'Fragile (non réparable, se détruit à 0 d\'usure)',
     'magique' => 'Magique (équipé, les dégâts d\'attaque utilisent la Puissance)',
     'lockable' => 'Se ferme (posé : coffre avec serrure)',
     'blocks_passage' => 'Posé, bloque le passage',
