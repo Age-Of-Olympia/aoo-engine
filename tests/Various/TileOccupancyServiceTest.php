@@ -490,7 +490,13 @@ class TileOccupancyServiceTest extends LegacyPlayerFixtureTestCase
     {
         $this->requireBuildingsOrSkip();
         $this->sowStructureType('route_test_pas', ['type_kind' => 'route', 'blocks_passage' => 0, 'blocks_projectiles' => 0]);
-        $this->placeStructure('route_test_pas', 70, 0, self::PLAN);
+        $this->trackEntityId((new \App\Service\Map\EntityPlacementService())->create(
+            'route',
+            'route_test_pas',
+            $this->coordsIdOn(self::PLAN, 70, 0),
+            'Route',
+            'img/routes/route_test_pas.png'
+        ));
         $this->placeStructure('mur_pierre', 73, 0, self::PLAN);
 
         $this->assertFalse($this->service->isVacant($this->coordsIdOn(self::PLAN, 73, 0)), 'wall');

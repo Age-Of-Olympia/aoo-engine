@@ -129,6 +129,27 @@ class TiledBuildingsLayerTest extends TestCase
         ));
     }
 
+    public function testADecorOnTheBuildingsLayerIsSkippedNotMadeABuilding(): void
+    {
+        $decor = (string) $this->link->fetchOne("SELECT name FROM races WHERE type_kind = 'scenery' ORDER BY id LIMIT 1");
+        if ($decor === '') {
+            $this->markTestSkipped('Aucun type de décor en base.');
+        }
+
+        $service = new TiledMapService();
+        $export = $service->exportPlan(self::PLAN, 0);
+        $result = $service->importPlan(self::PLAN, 0, [
+            'buildings' => [['x' => 4, 'y' => 4, 'name' => $decor]],
+        ], $export['version']);
+
+        $this->assertSame(0, $result['layers']['buildings']['inserted']);
+        $this->assertCount(1, $result['layers']['buildings']['skipped']);
+        $this->assertFalse($this->link->fetchOne(
+            'SELECT p.id FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ? AND c.x = 4 AND c.y = 4',
+            [self::PLAN]
+        ));
+    }
+
     public function testOccupiedTileIsSkippedWithoutFailingThePush(): void
     {
         $service = new TiledMapService();

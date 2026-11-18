@@ -473,6 +473,13 @@ class BuildingService
                 "'{$type}' n'est pas un type de structure — une race de personnage ne peut pas être posée en bâtiment."
             );
         }
+        /* A decor or a resource laid here would become a building row (Tiled
+         * buildings layer, web editor): only the building family goes through. */
+        if ($race->familyKey() !== \App\Entity\Race::FAMILY_BUILDING) {
+            throw new \InvalidArgumentException(
+                "'{$type}' n'est pas un type de bâtiment (catégorie {$race->getStructureNature()}) : posez-le sur sa propre couche."
+            );
+        }
 
         if ($faction !== '' && $this->factionService->getFactionByCode($faction) === null) {
             throw new \InvalidArgumentException("Faction inconnue : '{$faction}'.");
