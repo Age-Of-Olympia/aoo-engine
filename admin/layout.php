@@ -94,7 +94,7 @@ function admin_nav_tree(): array
         ]],
 
         ['section' => 'Accueil des joueurs', 'items' => [
-            ['Page d\'accueil', '/admin/landing.php', ['landing-seed.php']],
+            ['Page d\'accueil', '/admin/landing.php'],
             ['Missive d\'accueil', '/admin/welcome-missive.php'],
             ['Tutoriel', [
                 ['Catalogue', '/admin/tutorial-catalog.php'],

@@ -230,5 +230,4 @@ echo admin_layout('Page d\'accueil', $content, [
         . ' les sections de texte et la galerie dans la marge gauche, les 3 dernières chroniques dans la marge droite.'
         . ' <strong>Budgets conseillés</strong> : présentation ≈ 4-6 lignes ; chroniques de 1-2 lignes ;'
         . ' 4 planches actives dans la galerie. Une ligne <em>inactive</em> disparaît de l\'accueil sans être perdue.',
-    'actions' => '<a class="btn btn-outline-secondary" href="/admin/landing-seed.php">Contenu initial (base vide)</a>',
 ]);

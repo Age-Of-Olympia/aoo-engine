@@ -217,7 +217,6 @@ class AdminMenuAccessService
         'recipes-save.php'         => 'items.recipes',
         'landing.php'              => 'landing.edit',
         'landing-save.php'         => 'landing.edit',
-        'landing-seed.php'         => 'landing.edit',
         'dialogs.php'              => 'dialogs.edit',
         'dialogs-save.php'         => 'dialogs.edit',
         'races.php'                => 'races.edit',
