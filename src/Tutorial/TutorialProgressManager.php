@@ -2,6 +2,7 @@
 
 namespace App\Tutorial;
 
+use App\Factory\PlayerFactory;
 use App\Factory\TutorialStepFactory;
 use App\Tutorial\Steps\AbstractStep;
 use App\Tutorial\Exceptions\TutorialStepException;
@@ -119,9 +120,6 @@ class TutorialProgressManager
             $this->context->getTutorialXP(),
             $this->context->serializeState()
         );
-
-        // Get step position for progress tracking
-        $stepPosition = $this->calculateStepPosition($nextStepId, $version);
 
         // Get total steps from session
         $totalSteps = $this->stepRepository->getTotalSteps($version);
@@ -335,6 +333,13 @@ class TutorialProgressManager
     private function prepareStepForClient(AbstractStep $step, string $version): array
     {
         $stepData = $step->getData();
+
+        $placeholders = new TutorialPlaceholderService(PlayerFactory::legacy($this->context->getPlayer()->id));
+        foreach (['title', 'text', 'validation_hint'] as $field) {
+            if (isset($stepData[$field]) && is_string($stepData[$field])) {
+                $stepData[$field] = $placeholders->replacePlaceholders($stepData[$field]);
+            }
+        }
 
         // Calculate step position
         $stepData['step_position'] = $this->calculateStepPosition($step->getStepId(), $version);

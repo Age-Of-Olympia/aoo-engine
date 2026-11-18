@@ -3367,12 +3367,6 @@ parameters:
 			path: src/Tutorial/TutorialHelper.php
 
 		-
-			message: '#^Call to function method_exists\(\) with App\\Tutorial\\Steps\\AbstractStep and ''getValidationHint'' will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/Tutorial/TutorialManager.php
-
-		-
 			message: '#^Dead catch \- Exception is never thrown in the try block\.$#'
 			identifier: catch.neverThrown
 			count: 1
@@ -3392,30 +3386,6 @@ parameters:
 
 		-
 			message: '#^Method App\\Tutorial\\TutorialManager\:\:completeTutorial\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Tutorial/TutorialManager.php
-
-		-
-			message: '#^Method App\\Tutorial\\TutorialManager\:\:getCurrentStepForClientById\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Tutorial/TutorialManager.php
-
-		-
-			message: '#^Method App\\Tutorial\\TutorialManager\:\:getStepDataById\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Tutorial/TutorialManager.php
-
-		-
-			message: '#^Method App\\Tutorial\\TutorialManager\:\:processPlaceholders\(\) has parameter \$stepData with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Tutorial/TutorialManager.php
-
-		-
-			message: '#^Method App\\Tutorial\\TutorialManager\:\:processPlaceholders\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Tutorial/TutorialManager.php

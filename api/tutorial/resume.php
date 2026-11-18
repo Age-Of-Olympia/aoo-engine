@@ -71,14 +71,7 @@ try {
                 session_start(); // Restart for subsequent operations
             }
 
-            // Get step data using tutorial player
-            // DO NOT apply prerequisites on resume - only apply when ADVANCING to a step
-            // Otherwise movements/resources get reset every time player moves (page reloads)
-            $stepData = $manager->getCurrentStepForClientById(
-                $session['current_step'],  // Now a step_id (string)
-                $session['tutorial_version'],
-                false  // applyPrerequisites = false (don't reset resources on resume)
-            );
+            $stepData = $resumeResult['step_data'];
 
             // Get tutorial player's data for level/pi
             $tutorialPlayer = PlayerFactory::legacy($session['tutorial_player_id'] ?? $playerId);

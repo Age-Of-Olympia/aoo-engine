@@ -120,8 +120,7 @@ try {
         session_write_close();
         session_start(); // Restart for any subsequent operations
 
-        // Get first step data using step_id
-        $firstStepData = $manager->getCurrentStepForClientById($result['current_step'], $version);
+        $firstStepData = $result['step_data'];
 
         // Calculate total steps from repository (not stored in DB)
         $stepRepository = new \App\Tutorial\TutorialStepRepository();

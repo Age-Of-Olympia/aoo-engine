@@ -2,7 +2,6 @@
 
 namespace App\Tutorial;
 
-use App\Factory\TutorialStepFactory;
 use App\Entity\TutorialPlayer;
 use App\Factory\PlayerFactory;
 use Classes\Player;
@@ -145,91 +144,6 @@ class TutorialManager
             'tutorial_player_id' => $this->tutorialPlayer ? (int) $this->tutorialPlayer->getId() : null,
             'step_data' => $stepData
         ]);
-    }
-
-    /**
-     * Get step data by step_id (name)
-     *
-     * @param string $stepId
-     * @param string $version
-     * @return array|null
-     */
-    public function getStepDataById(string $stepId, string $version = '1.0.0'): ?array
-    {
-        return $this->stepRepository->getStepById($stepId, $version);
-    }
-
-    /**
-     * Get step object by step_id (name)
-     *
-     * @param string $stepId
-     * @param string $version
-     * @return Steps\AbstractStep|null
-     */
-    public function getStepById(string $stepId, string $version = '1.0.0'): ?Steps\AbstractStep
-    {
-        $stepData = $this->getStepDataById($stepId, $version);
-
-        if (!$stepData) {
-            return null;
-        }
-
-        return TutorialStepFactory::createFromData($stepData, $this->context);
-    }
-
-    /**
-     * Get current step with full data for client (by step_id)
-     *
-     * @param string $stepId
-     * @param string $version
-     * @param bool $applyPrerequisites - Whether to apply prerequisites (true for resume, false for normal rendering)
-     * @return array|null
-     */
-    public function getCurrentStepForClientById(string $stepId, string $version = '1.0.0', bool $applyPrerequisites = false): ?array
-    {
-        $step = $this->getStepById($stepId, $version);
-
-        if (!$step) {
-            return null;
-        }
-
-        $stepData = $step->getData();
-        $stepData = $this->processPlaceholders($stepData);
-        $stepData['step_position'] = $this->calculateStepPosition($stepId, $version);
-
-        // Prerequisites only apply on advance / resume entry, not on every render.
-        if ($applyPrerequisites && isset($stepData['config']['prerequisites'])) {
-            $this->context->ensurePrerequisites($stepData['config']['prerequisites']);
-        }
-
-        if ($step->requiresValidation() && method_exists($step, 'getValidationHint')) {
-            $dynamicHint = $step->getValidationHint();
-            if ($dynamicHint) {
-                $stepData['validation_hint'] = $dynamicHint;
-            }
-        }
-
-        return $stepData;
-    }
-
-    private function calculateStepPosition(string $stepId, string $version = '1.0.0'): int
-    {
-        return $this->stepRepository->calculateStepPosition($stepId, $version);
-    }
-
-    private function processPlaceholders(array $stepData): array
-    {
-        $tutorialPlayerId = $this->context->getPlayer()->id;
-        $tutorialPlayer = PlayerFactory::legacy($tutorialPlayerId);
-        $placeholderService = new TutorialPlaceholderService($tutorialPlayer);
-
-        foreach (['title', 'text', 'validation_hint'] as $field) {
-            if (isset($stepData[$field]) && is_string($stepData[$field])) {
-                $stepData[$field] = $placeholderService->replacePlaceholders($stepData[$field]);
-            }
-        }
-
-        return $stepData;
     }
 
     public function advanceStep(array $validationData = []): array
