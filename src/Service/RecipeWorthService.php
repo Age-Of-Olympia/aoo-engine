@@ -214,7 +214,10 @@ final class RecipeWorthService
         return ['name' => (string) $row['name'], 'price' => (int) $row['price']];
     }
 
-    /** @param array<string, mixed> $candidates @param array<string, int> $reserved */
+    /**
+     * @param array<string, mixed> $candidates
+     * @param array<string, int> $reserved
+     */
     private function pickResource(array $candidates, Randomizer $dice, ?int $playerId, array $reserved = []): string
     {
         if ($playerId !== null) {
