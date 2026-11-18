@@ -156,11 +156,15 @@ $(document).ready(function(){
 
     $('#add-rows').click(function(e){
 
+        /* href="#bottom" would fire popstate, which the HUD reads as Back. */
+        e.preventDefault();
+
         $('#forum-textarea textarea').css('height','+=200px');
 
     });
 
     $('#upload').click( function(e) {
+        e.preventDefault();
         $('#drop_file_zone').show();
     });
 
