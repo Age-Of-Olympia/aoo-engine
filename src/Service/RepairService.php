@@ -75,7 +75,8 @@ final class RepairService
             if ((int) $row['durability'] >= (int) $row['durability_max'] || ItemInstanceService::isBroken((int) $row['durability'])) {
                 continue;
             }
-            $row['quote'] = $this->quote($row);
+            $row['quote_seed'] = random_int(0, 2147483647);
+            $row['quote'] = $this->quote($row, (int) $row['quote_seed'], $playerId);
             $rows[] = $row;
         }
 
@@ -100,13 +101,13 @@ final class RepairService
     /**
      * The bill for bringing one exemplar back to full life.
      *
-     * The random draws are seeded by the exemplar, so the quote shown in
-     * the list is the one charged at the click.
+     * The random draws use a quote seed, so the quote shown in the list is
+     * the one charged at the click while a later screen load can reroll it.
      *
      * @param array<string, mixed> $row an exemplar row (name, race, instance_id, durability, durability_max)
      * @return array{resources: array<string, int>, gold: int}|null null without a recipe
      */
-    public function quote(array $row): ?array
+    public function quote(array $row, ?int $seed = null, ?int $playerId = null): ?array
     {
         $recipe = $this->worth->flatten((string) $row['name']);
         if ($recipe === []) {
@@ -117,25 +118,25 @@ final class RepairService
         $missing = (int) $row['durability_max'] - (int) $row['durability'];
         $bill = (int) ceil($this->worth->worthOf($recipe) * $this->ratio('repair_full_share') * $missing / $max);
 
-        $dice = new Randomizer(new Mt19937((int) $row['instance_id']));
-        $resources = $this->worth->resourcesWorth($bill, $recipe, $dice);
+        $dice = new Randomizer(new Mt19937($seed ?? random_int(0, 2147483647)));
+        $resources = $this->worth->resourcesWorth($bill, $recipe, $dice, $playerId);
 
-        $racial = $this->worth->racialResource((string) $row['race'], $recipe, $dice);
+        $racial = $this->worth->racialResource((string) $row['race'], $recipe, $dice, $playerId, $resources);
         if ($racial !== null) {
             $resources[$racial['name']] = ($resources[$racial['name']] ?? 0) + 1;
-            $bill += $racial['price'];
         }
+        $resourceWorth = $this->worth->worthOfResources($resources);
 
         return [
             'resources' => $resources,
-            'gold' => (int) ceil($bill * $this->ratio('repair_gold_margin')),
+            'gold' => (int) ceil($resourceWorth * $this->ratio('repair_gold_margin')),
         ];
     }
 
-    public function repairWithResources(int $playerId, int $instanceId): void
+    public function repairWithResources(int $playerId, int $instanceId, ?int $quoteSeed = null): void
     {
         $row = $this->heldRepairable($playerId, $instanceId);
-        $quote = $this->quote($row);
+        $quote = $this->quote($row, $quoteSeed, $playerId);
         if ($quote === null) {
             throw new \RuntimeException('Sans recette connue, cet objet ne se répare pas.');
         }
@@ -147,10 +148,10 @@ final class RepairService
         });
     }
 
-    public function repairWithGold(int $playerId, int $instanceId): void
+    public function repairWithGold(int $playerId, int $instanceId, ?int $quoteSeed = null): void
     {
         $row = $this->heldRepairable($playerId, $instanceId);
-        $quote = $this->quote($row);
+        $quote = $this->quote($row, $quoteSeed, $playerId);
         if ($quote === null) {
             throw new \RuntimeException('Sans recette connue, cet objet ne se répare pas.');
         }

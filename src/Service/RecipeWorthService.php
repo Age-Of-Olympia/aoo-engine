@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use Classes\Item;
 use Doctrine\DBAL\Connection;
 use Random\Randomizer;
 
@@ -105,6 +106,26 @@ final class RecipeWorthService
         return $worth;
     }
 
+    /** @param array<string, int> $resources */
+    public function worthOfResources(array $resources): float
+    {
+        if ($resources === []) {
+            return 0;
+        }
+
+        $catalog = $this->conn->fetchAllAssociativeIndexed(
+            'SELECT name, price FROM items WHERE name IN (?)',
+            [array_keys($resources)],
+            [\Doctrine\DBAL\ArrayParameterType::STRING]
+        );
+        $worth = 0;
+        foreach ($resources as $name => $count) {
+            $worth += (int) ($catalog[$name]['price'] ?? 0) * $count;
+        }
+
+        return $worth;
+    }
+
     /**
      * Whole resources of the recipe worth $amount: while one is affordable,
      * draw among the priciest affordable ones and pay it. With one price
@@ -116,7 +137,7 @@ final class RecipeWorthService
      * @param Randomizer|null $dice seeded by the caller when the draw must be replayable
      * @return array<string, int> name => count
      */
-    public function resourcesWorth(int $amount, array $recipe, ?Randomizer $dice = null): array
+    public function resourcesWorth(int $amount, array $recipe, ?Randomizer $dice = null, ?int $playerId = null): array
     {
         $dice ??= new Randomizer();
         $prices = [];
@@ -134,13 +155,16 @@ final class RecipeWorthService
                 break;
             }
             $top = max($affordable);
-            $name = $dice->pickArrayKeys(array_filter($affordable, static fn (int $price): bool => $price === $top), 1)[0];
+            $candidates = array_filter($affordable, static fn (int $price): bool => $price === $top);
+            $name = $this->pickResource($candidates, $dice, $playerId, $out);
             $out[$name] = ($out[$name] ?? 0) + 1;
             $amount -= $top;
         }
 
         if ($out === [] && $owed && $prices !== []) {
-            $out[array_search(min($prices), $prices, true)] = 1;
+            $minimum = min($prices);
+            $cheapest = array_filter($prices, static fn (int $price): bool => $price === $minimum);
+            $out[$this->pickResource($cheapest, $dice, $playerId)] = 1;
         }
 
         return $out;
@@ -149,29 +173,63 @@ final class RecipeWorthService
     /**
      * One resource of the object's race (a base one for a common object):
      * drawn from the recipe when it holds one, else the cheapest the
-     * catalog knows.
+     * catalog knows. Tied catalog prices are drawn from, using the caller's
+     * seeded dice when provided.
      *
      * @param array<string, array{count: float, price: int, race: string}> $recipe
+     * @param array<string, int> $reserved resources already selected for this quote
      * @return array{name: string, price: int}|null
      */
-    public function racialResource(string $race, array $recipe, ?Randomizer $dice = null): ?array
+    public function racialResource(
+        string $race,
+        array $recipe,
+        ?Randomizer $dice = null,
+        ?int $playerId = null,
+        array $reserved = []
+    ): ?array
     {
         $dice ??= new Randomizer();
         $race = $race === '' ? 'common' : $race;
 
         $own = array_filter($recipe, static fn (array $line, string $name): bool => $name !== 'or' && $line['race'] === $race, ARRAY_FILTER_USE_BOTH);
         if ($own !== []) {
-            $name = $dice->pickArrayKeys($own, 1)[0];
+            $name = $this->pickResource($own, $dice, $playerId, $reserved);
 
             return ['name' => $name, 'price' => $own[$name]['price']];
         }
 
-        $row = $this->conn->fetchAssociative(
-            "SELECT name, price FROM items WHERE race = ? AND type = 'matiere' AND is_deprecated = 0 ORDER BY price, name LIMIT 1",
+        $rows = $this->conn->fetchAllAssociativeIndexed(
+            "SELECT name, price FROM items WHERE race = ? AND type = 'matiere' AND is_deprecated = 0 ORDER BY price, name",
             [$race]
         );
+        if ($rows === []) {
+            return null;
+        }
 
-        return $row === false ? null : ['name' => (string) $row['name'], 'price' => (int) $row['price']];
+        $minimum = min(array_column($rows, 'price'));
+        $cheapest = array_filter($rows, static fn (array $row): bool => (int) $row['price'] === (int) $minimum);
+        $name = $this->pickResource($cheapest, $dice, $playerId, $reserved);
+        $row = $cheapest[$name];
+
+        return ['name' => (string) $row['name'], 'price' => (int) $row['price']];
+    }
+
+    /** @param array<string, mixed> $candidates @param array<string, int> $reserved */
+    private function pickResource(array $candidates, Randomizer $dice, ?int $playerId, array $reserved = []): string
+    {
+        if ($playerId !== null) {
+            $owned = array_filter(
+                $candidates,
+                static fn (mixed $_, string $name): bool =>
+                    Item::get_item_by_name($name)->get_n($playerId, includeInstances: false) > ($reserved[$name] ?? 0),
+                ARRAY_FILTER_USE_BOTH
+            );
+            if ($owned !== []) {
+                $candidates = $owned;
+            }
+        }
+
+        return (string) $dice->pickArrayKeys($candidates, 1)[0];
     }
 
     /**

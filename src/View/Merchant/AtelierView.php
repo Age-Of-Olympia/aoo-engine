@@ -2,6 +2,7 @@
 
 namespace App\View\Merchant;
 
+use App\Factory\EntityManagerFactory;
 use App\Factory\PlayerFactory;
 use App\Service\ContainerService;
 use App\Service\ItemInstanceService;
@@ -62,8 +63,10 @@ final class AtelierView
             return '<small>Sans recette connue, l\'artisan ne sait pas réparer cela.</small>';
         }
 
-        return self::button($row, 'repair-resources', self::stackList($quote['resources']))
-            . ' ' . self::button($row, 'repair-gold', $quote['gold'] . ' PO');
+        $seed = (int) $row['quote_seed'];
+
+        return self::button($row, 'repair-resources', self::stackList($quote['resources']), $seed)
+            . ' ' . self::button($row, 'repair-gold', $quote['gold'] . ' PO', $seed);
     }
 
     /** @param array<string, mixed> $row */
@@ -73,18 +76,21 @@ final class AtelierView
     }
 
     /** @param array<string, mixed> $row */
-    private static function button(array $row, string $direction, string $label): string
+    private static function button(array $row, string $direction, string $label, ?int $quoteSeed = null): string
     {
         return '<button class="pane-move" data-kind="exemplar" data-direction="' . $direction . '"'
-            . ' data-instance="' . (int) $row['instance_id'] . '">' . $label . '</button>';
+            . ' data-instance="' . (int) $row['instance_id'] . '"'
+            . ($quoteSeed === null ? '' : ' data-quote-seed="' . $quoteSeed . '"') . '>' . $label . '</button>';
     }
 
     /** @param array<string, int> $stacks name => count */
     private static function stackList(array $stacks): string
     {
+        $conn = EntityManagerFactory::getEntityManager()->getConnection();
         $parts = [];
         foreach ($stacks as $name => $count) {
-            $parts[] = $count . ' ' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+            $label = ItemInstanceService::catalogLabel($conn, $name);
+            $parts[] = $count . ' ' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
         }
 
         return implode(' + ', $parts);

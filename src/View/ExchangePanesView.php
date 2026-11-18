@@ -116,7 +116,11 @@ final class ExchangePanesView
                     var action = \$btn.data('kind') + '-' + \$btn.data('direction');
 
                     if(\$btn.data('kind') === 'exemplar'){
-                        paneCall({ action: action, instanceId: \$btn.data('instance') });
+                        var payload = { action: action, instanceId: \$btn.data('instance') };
+                        if(\$btn.attr('data-quote-seed') !== undefined){
+                            payload.quoteSeed = \$btn.data('quote-seed');
+                        }
+                        paneCall(payload);
                         return;
                     }
 

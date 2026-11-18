@@ -31,15 +31,16 @@ if ($accessError !== null) {
 $service = new RepairService();
 $playerId = (int) $player->id;
 $instanceId = (int) ($POST_DATA['instanceId'] ?? 0);
+$quoteSeed = isset($POST_DATA['quoteSeed']) ? (int) $POST_DATA['quoteSeed'] : null;
 
 try {
     switch ($action) {
         case 'exemplar-repair-resources':
-            $service->repairWithResources($playerId, $instanceId);
+            $service->repairWithResources($playerId, $instanceId, $quoteSeed);
             ExitSuccess(['message' => 'Réparé.']);
             break;
         case 'exemplar-repair-gold':
-            $service->repairWithGold($playerId, $instanceId);
+            $service->repairWithGold($playerId, $instanceId, $quoteSeed);
             ExitSuccess(['message' => 'Réparé.']);
             break;
         case 'exemplar-recycle':
