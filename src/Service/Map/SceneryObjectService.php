@@ -335,7 +335,7 @@ final class SceneryObjectService
             'scenery',
             $family,
             $anchorCoordsId,
-            ucfirst(str_replace('_', ' ', $family)),
+            (string) $this->conn->fetchOne('SELECT label FROM races WHERE name = ?', [$family]) ?: $family,
             'img/foregrounds/' . $anchorPieceName . '.png',
             $this->footprints
         );
