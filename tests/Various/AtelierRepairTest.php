@@ -48,16 +48,21 @@ class AtelierRepairTest extends LegacyPlayerFixtureTestCase
         $service = new RepairService();
 
         /* Worth 235, down to 1 PV of 201: ceil(235 × 0.25 × 200/201) = 59
-         * → one rare (50), then one tourbe (5), 4 PO forgiven; plus one
-         * cendre, the elven resource; gold = ceil((59 + 15) × 1.5). */
-        $quote = $service->listRepairable((int) $client->id)[0]['quote'];
+         * → one rare (50), one tourbe (5), plus one cendre (15). The 70 PO
+         * resource basket sets the gold price: ceil(70 × 1.5) = 105. */
+        $row = $service->listRepairable((int) $client->id)[0];
+        $quote = $row['quote'];
         $rares = array_intersect_key($quote['resources'], array_flip(['salpetre_atelier_test', 'mana_atelier_test', 'cuir_atelier_test']));
         $this->assertSame([1], array_values($rares), 'one rare, drawn among the three');
         $this->assertSame(1, $quote['resources']['tourbe_atelier_test']);
         $this->assertSame(1, $quote['resources']['cendre_atelier_test'], 'the racial resource');
         $this->assertCount(3, $quote['resources']);
-        $this->assertSame(111, $quote['gold']);
-        $this->assertSame($quote, $service->listRepairable((int) $client->id)[0]['quote'], 'the draw is replayable: the list and the click agree');
+        $this->assertSame(105, $quote['gold']);
+        $this->assertSame(
+            $quote,
+            $service->quote($row, (int) $row['quote_seed'], (int) $client->id),
+            'the quote seed replays the displayed draw at the click'
+        );
 
         /* Half the wear: ceil(235 × 0.25 × 100/201) = 30 → two cendre
          * (15 each, no rare affordable), plus the racial one. */
@@ -69,7 +74,7 @@ class AtelierRepairTest extends LegacyPlayerFixtureTestCase
         /* The knobs are admin settings, read on every quote. */
         (new \App\Service\AdminSettingsService())->set('repair_full_share', '50');
         try {
-            $this->assertSame(111, $service->listRepairable((int) $client->id)[0]['quote']['gold'], 'half the wear at 50 % = a quarter');
+            $this->assertSame(105, $service->listRepairable((int) $client->id)[0]['quote']['gold'], 'half the wear at 50 % = a quarter');
         } finally {
             $this->link->executeStatement("DELETE FROM admin_settings WHERE name = 'repair_full_share'");
         }
