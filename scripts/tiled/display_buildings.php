@@ -23,6 +23,11 @@ $images = new \App\Service\RaceImageService();
 foreach((new RaceService())->getBuildingTypes() as $race){
 
     $name = $race->getName();
+
+    if($race->isTiledHidden()){
+
+        continue; /* masqué dans admin → Bâtiments */
+    }
     $sprite = BuildingService::resolveAvatar($name);
 
     if($sprite === BuildingService::NO_IMAGE){

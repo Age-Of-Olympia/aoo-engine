@@ -274,6 +274,24 @@ class RaceService
     }
 
     /**
+     * Names of the structure types of a family (Race::FAMILY_BUILDING or
+     * FAMILY_SCENERY) kept out of the tiled / Tiled palettes.
+     *
+     * @return array<string, true>
+     */
+    public function tiledHiddenNames(string $family): array
+    {
+        $hidden = [];
+        foreach ($this->getRacesByKind('structure') as $race) {
+            if ($race->isTiledHidden() && $race->familyKey() === $family) {
+                $hidden[$race->getName()] = true;
+            }
+        }
+
+        return $hidden;
+    }
+
+    /**
      * Building family only: scenery, resource and plant types also carry
      * kind='structure', so getRacesByKind('structure') is wider than this.
      *

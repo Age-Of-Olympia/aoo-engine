@@ -273,6 +273,19 @@ class TiledMapService
             }
         }
 
+        // Scenery types hidden in admin → Types de décor: every piece of the family goes
+        $hiddenScenery = (new RaceService())->tiledHiddenNames(\App\Entity\Race::FAMILY_SCENERY);
+        if ($hiddenScenery !== []) {
+            $inHiddenFamily = static fn(string $name): bool
+                => isset($hiddenScenery[\App\Service\Map\SceneryFootprintDeriver::splitPiece($name)[0]]);
+            $catalog[self::SCENERY_LAYER] = array_values(array_filter($catalog[self::SCENERY_LAYER] ?? [], fn(string $n) => !$inHiddenFamily($n)));
+            $pieces[self::SCENERY_LAYER] = array_values(array_filter($pieces[self::SCENERY_LAYER] ?? [], fn(string $n) => !$inHiddenFamily($n)));
+            $composites[self::SCENERY_LAYER] = array_values(array_filter(
+                $composites[self::SCENERY_LAYER] ?? [],
+                static fn(array $composite) => !$inHiddenFamily($composite['name'])
+            ));
+        }
+
         // Buildings palette: the structure type catalog (same entries as
         // admin → Bâtiments), sprite resolved as at render time
         $catalog[self::BUILDINGS_LAYER] = [];
@@ -283,8 +296,12 @@ class TiledMapService
         while ($row = $res->fetch_assoc()) {
             $types[] = (string) $row['name'];
         }
+        $hiddenTypes = (new RaceService())->tiledHiddenNames(\App\Entity\Race::FAMILY_BUILDING);
         foreach (array_unique($types) as $type) {
-            $catalog[self::BUILDINGS_LAYER][] = $type;
+            // A hidden type leaves the palette but keeps its image: placed copies still render
+            if (!isset($hiddenTypes[$type])) {
+                $catalog[self::BUILDINGS_LAYER][] = $type;
+            }
             $sprite = BuildingService::resolveAvatar($type);
             if ($sprite !== BuildingService::NO_IMAGE) {
                 $images[self::BUILDINGS_LAYER . '/' . $type] = $sprite;

@@ -7,6 +7,12 @@ echo '<details>';
 echo '<summary style="cursor: pointer; font-weight: bold; margin: 10px 0;"><h3 style="display: inline;">Foregrounds (indestructibles, passables)</h3></summary>';
 
 // Separate regular and unique foregrounds
+$hiddenScenery = [];
+try {
+    $hiddenScenery = (new \App\Service\RaceService())->tiledHiddenNames(\App\Entity\Race::FAMILY_SCENERY);
+} catch (Throwable $hiddenSceneryError) {
+    // Without the column the palette stays whole
+}
 $regularForegrounds = [];
 $uniqueForegrounds = [];
 
@@ -16,7 +22,8 @@ foreach(File::scan_dir('img/foregrounds/') as $file){
         continue;
     }
     $e = pathinfo($file, PATHINFO_FILENAME);
-    if(isset($hiddenTiles['foregrounds'][$e])){
+    if(isset($hiddenTiles['foregrounds'][$e])
+        || isset($hiddenScenery[\App\Service\Map\SceneryFootprintDeriver::splitPiece($e)[0]])){
         continue;
     }
     $url = 'img/foregrounds/'. $file;

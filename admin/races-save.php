@@ -261,6 +261,7 @@ $applyForm = static function (Race $race) use ($face, $action): array {
     }
     $race->setPlayable(($kind === 'character' || $newFamily === Race::FAMILY_BUILDING) && booleanCheckbox('playable'));
     $race->setHidden(booleanCheckbox('hidden'));
+    $race->setTiledHidden($kind === 'structure' && booleanCheckbox('tiled_hidden'));
     $race->setBgColor((string) $_POST['bgColor']);
     $race->setColor(stringWithDefault('color', 'black'));
     $race->setWoundColor((string) $_POST['wound_color']);

@@ -134,6 +134,10 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     #[ORM\Column(type: "boolean")]
     private bool $hidden;
 
+    /** Structure types only: left out of the tiled / Tiled palettes (placed copies still render). */
+    #[ORM\Column(name: "tiled_hidden", type: "boolean", options: ["default" => 0])]
+    private bool $tiledHidden = false;
+
     /**
      * Branch of the GameEntity tree this row provides base stats for:
      * 'character' (joueurs, PNJ) or 'structure' (bâtiments, objets
@@ -387,6 +391,16 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     public function setHidden(bool $hidden): void
     {
         $this->hidden = $hidden;
+    }
+
+    public function isTiledHidden(): bool
+    {
+        return $this->tiledHidden;
+    }
+
+    public function setTiledHidden(bool $tiledHidden): void
+    {
+        $this->tiledHidden = $tiledHidden;
     }
 
     public function getKind(): string

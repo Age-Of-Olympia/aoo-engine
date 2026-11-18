@@ -228,7 +228,8 @@ function race_render_list(array $races, TypeEditorFace $face): string
     foreach ($races as $race) {
         $rows .= '<tr>'
             . '<td style="width:48px;">' . race_image_cell($race->getName(), $face) . '</td>'
-            . '<td><code>' . e($race->getName()) . '</code></td>'
+            . '<td><code>' . e($race->getName()) . '</code>'
+            . ($race->isTiledHidden() ? ' <span class="badge badge-secondary" title="Absent des palettes de tiled et de Tiled">masqué</span>' : '') . '</td>'
             . '<td>' . e($race->getLabel()) . '</td>';
 
         if ($face->isStructure()) {
@@ -576,6 +577,11 @@ HTML;
                 . checked($race instanceof StructureType && $race->isReadableFromAfar())
                 . ' title="Coché : l\'inscription de ce type d\'objet est lisible de loin (pancarte, enseigne).'
                 . ' Décoché : il faut être sur une case voisine (plaque gravée, épitaphe)."> Inscription lisible de loin</label> '
+            : '')
+        . ($face->isStructure()
+            ? '<label class="mr-3"><input type="checkbox" name="tiled_hidden" '
+                . checked($isEdit && $race->isTiledHidden())
+                . ' title="Retire ce type des palettes de tiled et de Tiled ; les exemplaires déjà posés restent affichés."> Masqué dans Tiled</label> '
             : '')
         . '<label><input type="checkbox" name="hidden" '
         . checked(!$isEdit || $race->getHidden()) . '> Cachée</label>'
