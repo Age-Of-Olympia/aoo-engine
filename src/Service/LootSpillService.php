@@ -22,6 +22,8 @@ use Classes\Player;
  */
 final class LootSpillService
 {
+    private ?LootRulesService $rules = null;
+
     /**
      * Répand au sol ce que l'entité possède, chaque objet selon sa chance de
      * butin, et journalise la perte.
@@ -240,36 +242,18 @@ final class LootSpillService
         return $rows;
     }
 
-    /**
-     * La chance qu'un objet tombe : le catalogue, puis les stats propres de
-     * l'objet, puis le sort particulier de l'équipé et des PNJ.
-     */
+    /** The item's own chance (catalog, then its legacy stats), through the admin's loot rules. */
     private function chanceFor(Player $entity, Item $loot, object $row): int
     {
-        $lootChance = LOOT_CHANCE_DEFAULT;
+        // Catalog chance: NULL = the default rule, 0 = never drops.
+        $itemChance = isset($row->lootChance) ? (int) $row->lootChance : null;
 
-        // catalog loot chance (items.lootChance, ex-constante LOOT_CHANCE)
-        if (!empty($row->lootChance)) {
-            $lootChance = (int) $row->lootChance;
-        }
-
-        // custom loot chance (source des stats : JSON legacy possible)
+        // Legacy per-item stats (JSON-served items) still win when set.
         if (!empty($loot->data->lootChance)) {
-            $lootChance = $loot->data->lootChance;
+            $itemChance = (int) $loot->data->lootChance;
         }
 
-        if ($row->equiped) {
-            // pnj will not drop equiped item
-            if ($entity->id < 0) {
-                $lootChance = 0;
-            } else {
-                $lootChance = floor($lootChance / 2);
-            }
-        } elseif ($entity->id < 0) {
-            // if pnj and not equiped, will drop everytime
-            $lootChance = 100;
-        }
-
-        return (int) $lootChance;
+        return ($this->rules ??= new LootRulesService())
+            ->chance($itemChance, (bool) $row->equiped, $entity->id < 0);
     }
 }

@@ -76,7 +76,11 @@ final class ItemExporter implements ObjectExporterInterface
         ];
 
         foreach (ItemStatsSeeder::SCALAR_KEYS as $key) {
-            $payload[$key] = is_numeric($entity->$key ?? null) ? $entity->$key + 0 : (string) ($entity->$key ?? '');
+            $payload[$key] = match (true) {
+                is_numeric($entity->$key ?? null) => $entity->$key + 0,
+                in_array($key, ItemStatsSeeder::NULLABLE_KEYS, true) => null,
+                default => (string) ($entity->$key ?? ''),
+            };
         }
 
         foreach (['munitions' => 'munitions', 'forbid' => 'forbid', 'extra' => 'extra'] as $column => $key) {

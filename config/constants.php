@@ -196,10 +196,7 @@ define('ITEM_EMPLACEMENT_FORMAT', array(
 ));
 
 
-define('LOOT_CHANCE_DEFAULT', 30);
-
-
-/* LOOT_CHANCE : en base (items.lootChance), lu par Player::death(). */
+/* Loot chances: items.lootChance and LootRulesService (admin → Butin). */
 
 /* GROW_RATE : en base (items.grow_rate), lu par PlantsService::growSeed(). */
 

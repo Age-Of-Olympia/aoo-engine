@@ -217,7 +217,15 @@ if ($action === 'new') {
     $viewerIsSuperAdmin = AdminAuthorizationService::isSuperAdmin();
     $title = 'Gestion des PNJ';
     $options = ['styles' => ['/admin/css/pnjs.css'],
-        'actions' => '<a class="btn btn-primary" href="/admin/pnjs.php?action=new">+ Créer un PNJ</a>'];
+        'actions' => '<a class="btn btn-primary" href="/admin/pnjs.php?action=new">+ Créer un PNJ</a>',
+        'intro' => (static function (): string {
+            $rules = new \App\Service\LootRulesService();
+
+            return 'Butin : à sa mort, un PNJ lâche ses objets non équipés à '
+                . $rules->get(\App\Service\LootRulesService::NPC_CARRIED_CHANCE) . ' % et ses objets équipés à '
+                . $rules->get(\App\Service\LootRulesService::NPC_EQUIPPED_CHANCE) . ' %, quelle que soit la'
+                . ' chance réglée dans le menu des objets. Réglage : <a href="/admin/index.php">Butin à la mort</a>.';
+        })()];
     $content = pnj_render_list($service->listPnjs(), $csrfToken, $viewerIsSuperAdmin);
 }
 

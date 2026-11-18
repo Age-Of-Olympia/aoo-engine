@@ -34,6 +34,9 @@ class ItemStatsSeeder
      */
     public const STRING_KEYS = ['text', 'emplacement', 'type', 'subtype', 'race', 'wear_profile'];
 
+    /** Numeric keys where NULL means "the default rule", unlike 0. */
+    public const NULLABLE_KEYS = ['lootChance'];
+
     /** Clés complexes stockées en colonnes JSON dédiées. */
     public const JSON_KEYS = ['munitions', 'addEffects', 'forbid'];
 

@@ -417,7 +417,10 @@ $params = array_merge($params, [
 
 foreach (array_merge(\App\Enum\Caracs::KEYS, \Classes\Item::SPECIAL_KEYS) as $key) {
     $set[] = "`{$key}` = ?";
-    $params[] = (int) ($_POST[$key] ?? 0);
+    // An empty loot chance means the default rule; any other empty field is 0.
+    $params[] = $key === 'lootChance' && trim((string) ($_POST[$key] ?? '')) === ''
+        ? null
+        : (int) ($_POST[$key] ?? 0);
 }
 
 $params[] = $id;

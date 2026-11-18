@@ -86,6 +86,10 @@ final class ItemImporter extends AbstractDbalImporter
         }
         foreach (ItemStatsSeeder::SCALAR_KEYS as $key) {
             $set[] = "`{$key}` = ?";
+            if (in_array($key, ItemStatsSeeder::NULLABLE_KEYS, true)) {
+                $params[] = is_numeric($payload[$key] ?? null) ? $payload[$key] : null;
+                continue;
+            }
             $value = $payload[$key] ?? (in_array($key, ItemStatsSeeder::STRING_KEYS, true) ? '' : 0);
             $params[] = is_numeric($value) ? $value : (string) $value;
         }

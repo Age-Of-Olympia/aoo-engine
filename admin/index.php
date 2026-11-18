@@ -96,6 +96,14 @@ $settingForms = [
 
         return 'Points de vie par défaut d\'une ressource : ' . $harvestDefaults->pv() . '.';
     },
+    'loot_rules' => function (): string {
+        $rules = new \App\Service\LootRulesService();
+        foreach (array_keys(\App\Service\LootRulesService::DEFAULTS) as $name) {
+            $rules->set($name, (int) ($_POST[$name] ?? 0));
+        }
+
+        return 'Butin : réglages enregistrés.';
+    },
     'decay_rate_default' => function () use ($decayDefaults): string {
         $decayDefaults->setRate((int) $_POST['decay_rate_default']);
         $decayDefaults->setGraceTurns((int) ($_POST['decay_grace_turns'] ?? 0));
@@ -257,6 +265,37 @@ ob_start();
                 <small class="form-text text-muted">
                     Nombre de coups pour abattre un arbre. Valeur par défaut à la
                     <strong>création</strong> d'un type récoltable ; un type existant conserve sa valeur.
+                </small>
+            </form>
+
+            <hr />
+
+            <form method="post" action="index.php">
+                <?= $csrf->renderTokenField() ?>
+                <input type="hidden" name="loot_rules" value="1" />
+                <label class="form-label mb-0">Butin à la mort</label>
+                <?php $lootRules = new \App\Service\LootRulesService(); ?>
+                <?php foreach ([
+                    \App\Service\LootRulesService::DEFAULT_CHANCE => '% : chance par défaut qu\'un objet tombe',
+                    \App\Service\LootRulesService::PLAYER_EQUIPPED_SHARE => '% de cette chance pour un objet équipé (joueur)',
+                    \App\Service\LootRulesService::NPC_CARRIED_CHANCE => '% : objet non équipé d\'un PNJ',
+                    \App\Service\LootRulesService::NPC_EQUIPPED_CHANCE => '% : objet équipé d\'un PNJ',
+                ] as $name => $label): ?>
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="number" name="<?= $name ?>" min="0" max="100"
+                               class="form-select" style="max-width: 100px;"
+                               value="<?= $lootRules->get($name) ?>" />
+                        <span class="text-muted"><?= e($label) ?></span>
+                    </div>
+                <?php endforeach; ?>
+                <button type="submit" class="btn btn-sm btn-primary mt-2">Enregistrer</button>
+                <small class="form-text text-muted">
+                    À la mort d'un <strong>joueur</strong>, chaque objet tombe selon sa chance : celle de
+                    l'objet (menu des objets), sinon la chance par défaut. Un objet équipé n'en garde que
+                    le pourcentage indiqué : avec 30 % et 50 %, une épée équipée tombe 15 fois sur 100.
+                    Pour un <strong>PNJ</strong>, seules les deux dernières valeurs comptent, quelle que
+                    soit la chance de l'objet. Un coffre détruit répand son contenu selon la chance des
+                    objets, comme un joueur.
                 </small>
             </form>
 

@@ -544,8 +544,20 @@ function items_render_edit(object $row, string $csrfToken): string
     $specialInputs = '';
     $specialNumberKeys = array_diff(Item::SPECIAL_KEYS, array_keys(ITEM_SPECIAL_FLAG_LABELS));
     foreach ($specialNumberKeys as $col) {
+        $value = (string) (int) ($row->$col ?? 0);
+        $extra = '';
+        $help = '';
+        // Loot chance: empty = the default rule, 0 = never drops.
+        if ($col === 'lootChance') {
+            $value = $row->$col === null ? '' : (string) (int) $row->$col;
+            $default = (new \App\Service\LootRulesService())->get(\App\Service\LootRulesService::DEFAULT_CHANCE);
+            $extra = ' min="0" placeholder="' . $default . ' (défaut)"';
+            $help = '<small class="form-text">Vide : chance par défaut (' . $default . ' %). 0 : jamais.'
+                . ' Ne vaut que pour les joueurs et les coffres : voir <a href="/admin/index.php">Butin à la mort</a>.</small>';
+        }
         $specialInputs .= '<div class="col-4 form-group"><label>' . $specialLabels[$col] . '</label>'
-            . '<input type="number" class="form-control form-control-sm" name="' . $col . '" value="' . (int) ($row->$col ?? 0) . '"></div>';
+            . '<input type="number" class="form-control form-control-sm" name="' . $col . '" value="' . $value . '"' . $extra . '>'
+            . $help . '</div>';
     }
 
     $munitions = !empty($row->munitions) ? implode(', ', (array) json_decode((string) $row->munitions, true)) : '';
@@ -960,6 +972,7 @@ if ($action === 'new') {
     $blank->wear_rate = 1;
     $blank->durability_max = 100;
     $blank->capacity = null;
+    $blank->lootChance = null;
     $title = 'Nouvel objet';
     $options = ['back' => ['/admin/items.php', 'Objets']];
     $content = items_render_edit($blank, $csrfToken);

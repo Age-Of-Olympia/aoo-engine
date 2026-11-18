@@ -95,8 +95,8 @@ class ChestSpillsWhenSmashedTest extends LegacyPlayerFixtureTestCase
 
         $itemId = (int) $this->link->fetchOne('SELECT item_id FROM item_instances WHERE entity_id = ?', [$swordId]);
         $before = $this->link->fetchOne('SELECT lootChance FROM items WHERE id = ?', [$itemId]);
-        // Negative: no unit ever falls, everything is lost
-        $this->link->executeStatement('UPDATE items SET lootChance = -1 WHERE id = ?', [$itemId]);
+        // 0: no unit ever falls, everything is lost
+        $this->link->executeStatement('UPDATE items SET lootChance = 0 WHERE id = ?', [$itemId]);
 
         try {
             $this->assertTrue((new BuildingService())->vanish($chestId));
