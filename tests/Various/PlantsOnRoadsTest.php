@@ -48,7 +48,6 @@ class PlantsOnRoadsTest extends LegacyPlayerFixtureTestCase
             "INSERT INTO items (name, type, stats_in_db, extra) VALUES (?, 'graine', 1, ?)",
             [self::SEED, json_encode(['growTo' => [['name' => $plant, 'table' => 'plants', 'chance' => 1]]])]
         );
-        $seedId = (int) $this->link->lastInsertId();
 
         $place = new EntityPlacementService($this->link);
         $onRoad = $this->coordsIdOn(self::PLAN, 1, 1);
@@ -70,9 +69,14 @@ class PlantsOnRoadsTest extends LegacyPlayerFixtureTestCase
         PlantsService::seedBackFromRoads(true);
 
         $this->assertSame(1, $this->plantsOnPlan(), 'the plant off the road stays');
+        // A catalog seed of the same plant may come first: any seed of it will do
         $this->assertSame(
             1,
-            (int) $this->link->fetchOne('SELECT n FROM map_items WHERE coords_id = ? AND item_id = ?', [$onRoad, $seedId])
+            (int) $this->link->fetchOne(
+                "SELECT SUM(mi.n) FROM map_items mi JOIN items i ON i.id = mi.item_id
+                  WHERE mi.coords_id = ? AND i.type = 'graine'",
+                [$onRoad]
+            )
         );
     }
 

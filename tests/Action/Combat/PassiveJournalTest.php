@@ -28,8 +28,14 @@ class PassiveJournalTest extends LegacyPlayerFixtureTestCase
     /** @var int[] players granted a catalog passive here (players_passives has no key onto players) */
     private array $holderIds = [];
 
+    /** @var array{id: int, category: ?string, prerequisites: ?string}|null catalog row loosened by a test */
+    private ?array $restoreInepuisable = null;
+
     protected function tearDown(): void
     {
+        if ($this->link !== null && $this->restoreInepuisable !== null) {
+            $this->link->update('action_passives', $this->restoreInepuisable, ['id' => $this->restoreInepuisable['id']]);
+        }
         if ($this->link !== null && $this->holderIds !== []) {
             $this->link->executeStatement('DELETE FROM players_passives WHERE player_id IN (?)', [$this->holderIds], [ArrayParameterType::INTEGER]);
         }
@@ -139,8 +145,13 @@ class PassiveJournalTest extends LegacyPlayerFixtureTestCase
 
     public function testInepuisableIsNotedWhenItTakesAMalusOff(): void
     {
-        $id = $this->link->fetchOne("SELECT id FROM action_passives WHERE name = 'inepuisable'");
-        if ($id === false) {
+        $row = $this->link->fetchAssociative("SELECT id, category, prerequisites FROM action_passives WHERE name = 'inepuisable'");
+        if ($row !== false) {
+            $id = (int) $row['id'];
+            // The catalog row sits high in a skill tree the fixture target does not climb
+            $this->link->update('action_passives', ['category' => null, 'prerequisites' => null], ['id' => $id]);
+            $this->restoreInepuisable = $row;
+        } else {
             $this->link->insert('action_passives', [
                 'name' => 'inepuisable', 'traits' => json_encode(['malus']), 'type' => 'malus',
                 'carac' => '', 'value' => 1, 'level' => 1, 'display_name' => 'Inépuisables', 'text' => 'test',

@@ -39,6 +39,20 @@ référence outillage/process).
 - **Règle d'ouverture d'un bâtiment** :
   `BuildingService::closureReason()` — unique.
 
+## Accès aux données
+
+Trois styles cohabitent aujourd'hui ; le code neuf suit la règle
+ci-dessous.
+
+- **Lectures et écritures en masse : DBAL** (`$em->getConnection()`),
+  en requêtes préparées. Pour une lecture répétée dans une même
+  requête web, passer par `App\Database\QueryCache::remember()`, qui
+  relance la lecture dès qu'une écriture modifie une de ses tables.
+- **Édition d'un catalogue (admin, bundles) : ORM**, avec les entités
+  et `flush()`.
+- **`Classes\Db` : aucun nouvel appel.** Quand on modifie du code qui
+  l'utilise, on le remplace si c'est sans risque.
+
 ## Commentaires
 
 - Un commentaire explique ce que le code ne PEUT PAS dire (une

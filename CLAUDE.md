@@ -148,9 +148,9 @@ Project-specific weight:
 - **Action system**: `src/Entity/Action.php` is an abstract single-table-inheritance root;
   concrete actions in `src/Action/*Action.php` carry Conditions (prerequisites), Outcomes
   (results) and OutcomeInstructions (processors). Executed by `ActionExecutorService`.
-- **Service layer**: services in `src/Service/` extend `BaseService` and use the Doctrine
-  EntityManager (`ActionExecutorService`, `PlayerService`, `ViewService`, `ForumService`,
-  `InventoryService`…).
+- **Service layer**: plain classes in `src/Service/` (no common parent) that take the
+  Doctrine EntityManager (`ActionExecutorService`, `PlayerService`, `ViewService`,
+  `ForumService`, `InventoryService`…). Data-access rule: `docs/conventions-code.md`.
 - **Views**: classes in `src/View/` render components, `ViewService` assembles, `Classes\Ui`
   generates HTML.
 - **Doctrine**: entities mapped with PHP 8 attributes, EntityManager via
