@@ -31,8 +31,11 @@ final class Version20261118100000_PlacedObjectsTakeTheirTypeLabel extends Abstra
                SET p.name = r.label
              WHERE r.kind = 'structure'
                AND r.label <> ''
-               AND p.name <> r.label
-               AND p.name = CONCAT(UPPER(LEFT(REPLACE(p.race, '_', ' '), 1)), SUBSTRING(REPLACE(p.race, '_', ' '), 2))
+               AND CONVERT(p.name USING utf8mb4) <> CONVERT(r.label USING utf8mb4)
+               AND CONVERT(p.name USING utf8mb4) = CONVERT(
+                   CONCAT(UPPER(LEFT(REPLACE(p.race, '_', ' '), 1)), SUBSTRING(REPLACE(p.race, '_', ' '), 2))
+                   USING utf8mb4
+               )
         ");
     }
 
