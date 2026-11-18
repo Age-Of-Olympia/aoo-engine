@@ -46,6 +46,16 @@ foreach(File::scan_dir(__DIR__ .'/../../../datas/private/forum/posts/', without:
     search_img($postJson->text, $result);
 }
 
+// A picture uploaded for a draft, inserted or not, is not orphaned yet.
+foreach((new \App\Service\ForumDraftService())->everyDraft() as $draft){
+    search_img($draft['text'], $result);
+    foreach($draft['images'] as $image){
+        $key = normalize_upload_key($image);
+        if($key !== null)
+            $result[$key] = true;
+    }
+}
+
 $dir = __DIR__ .'/../../../img/ui/forum/uploads/';
 
 if ($postsRead === 0) {

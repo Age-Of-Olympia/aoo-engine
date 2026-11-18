@@ -178,6 +178,7 @@ $(document).ready(function(){
     var draftOwner = $form.data('draft-owner');
 
     window.forumDraftClear = function(){};
+    window.forumDraftAddImage = null;
 
     if(!draftName || !draftOwner){
         return;
@@ -205,12 +206,16 @@ $(document).ready(function(){
         aooStore.removeLocal(draftName, draftOwner);
     };
 
+    /* Pictures uploaded for this draft: kept so they need no new upload. */
+    var images = [];
+
     var syncDraft = function(text, title, at){
         scheduleForumDraftSync(syncId, {
             'owner': draftOwner,
             'key': draftName.slice(DRAFT_PREFIX.length),
             'text': text,
             'title': title,
+            'images': images,
             'at': at
         });
     };
@@ -226,13 +231,13 @@ $(document).ready(function(){
     var draft = local;
     if(server && (!local || server.at > local.at)){
 
-        if((server.text || '') == '' && (server.title || '') == ''){
+        if((server.text || '') == '' && (server.title || '') == '' && !(server.images || []).length){
             /* envoyé ou effacé sur un autre appareil */
             window.forumDraftClear();
             draft = null;
         }
         else{
-            draft = {'text': server.text, 'at': server.at};
+            draft = {'text': server.text, 'images': server.images || [], 'at': server.at};
             if($title.length){
                 draft.title = server.title || '';
             }
@@ -241,7 +246,13 @@ $(document).ready(function(){
     }
     else if(local && (!server || local.at > server.at)){
         /* tapé hors ligne, ou envoi coupé : le serveur rattrape */
+        images = local.images || []; /* read by syncDraft */
         syncDraft(local.text || '', local.title || '', local.at);
+    }
+
+    images = (draft && draft.images) || [];
+    if(typeof show_uploaded_img === 'function'){
+        images.forEach(show_uploaded_img);
     }
 
     /* En édition la textarea porte le message d'origine : le brouillon
@@ -264,16 +275,23 @@ $(document).ready(function(){
         /* vidé : le serveur en garde une trace pour les autres appareils */
         syncDraft(text, title, at);
 
-        if(text.trim() == '' && title.trim() == ''){
+        if(text.trim() == '' && title.trim() == '' && !images.length){
             aooStore.removeLocal(draftName, draftOwner);
             return;
         }
 
-        var value = {'text': text, 'at': at};
+        var value = {'text': text, 'images': images, 'at': at};
         if($title.length){
             value.title = title;
         }
         aooStore.setLocal(draftName, JSON.stringify(value), draftOwner);
+    };
+
+    window.forumDraftAddImage = function(url){
+        if(images.indexOf(url) === -1){
+            images.push(url);
+            saveDraft();
+        }
     };
 
     $area.on('input', saveDraft);

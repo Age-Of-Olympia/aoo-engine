@@ -10,7 +10,9 @@ use InvalidArgumentException;
  * localStorage (js/autosave.js) and pushes it here less often; whichever
  * side has the newest `at` wins when a form is opened.
  *
- * One JSON file per character, mapping a draft key to {text, title, at}.
+ * One JSON file per character, mapping a draft key to {text, title, images,
+ * at}. `images` lists the pictures uploaded for the draft, so they can be
+ * inserted later without uploading them again.
  * A sent or emptied draft is kept as a tombstone (empty text) so that a
  * device still holding the old local copy drops it instead of reviving it.
  *
@@ -23,6 +25,10 @@ class ForumDraftService
     public const MAX_TEXT = 65535;
     public const MAX_TITLE = 255;
     public const MAX_DRAFTS = 30;
+    public const MAX_IMAGES = 20;
+
+    /** Path upload_img.php gives an uploaded picture. */
+    private const IMAGE_PATH = '#^img/ui/forum/uploads/\d+/[0-9a-f]{32}\.[a-z]{3,4}$#';
 
     private string $dir;
 
@@ -52,7 +58,7 @@ class ForumDraftService
         return mb_strlen($key) <= 200 && preg_match('/^(reply|new|edit):[^\x00-\x1f]+$/u', $key) === 1;
     }
 
-    /** @return array{text: string, title: string, at: int}|null */
+    /** @return array{text: string, title: string, images: list<string>, at: int}|null */
     public function get(int $ownerId, string $key): ?array
     {
         $drafts = $this->read($ownerId);
@@ -65,9 +71,10 @@ class ForumDraftService
      * in the future is brought back to server time, otherwise it would win
      * every comparison and never be purged.
      *
+     * @param array<mixed> $images untrusted: whatever the browser sent
      * @return int the `at` now stored for this key
      */
-    public function save(int $ownerId, string $key, string $text, string $title, int $at): int
+    public function save(int $ownerId, string $key, string $text, string $title, int $at, array $images = []): int
     {
         if (!self::isValidKey($key)) {
             throw new InvalidArgumentException('Clé de brouillon invalide.');
@@ -76,8 +83,10 @@ class ForumDraftService
             throw new InvalidArgumentException('Brouillon trop long.');
         }
 
+        $images = self::validImages($images);
+
         // empty drafts are stored as tombstones, never as stale text
-        if (trim($text) === '' && trim($title) === '') {
+        if (trim($text) === '' && trim($title) === '' && $images === []) {
             $text = '';
             $title = '';
         }
@@ -85,13 +94,13 @@ class ForumDraftService
         $at = min($at, self::serverNow());
         $stored = $at;
 
-        $this->update($ownerId, function (array $drafts) use ($key, $text, $title, $at, &$stored): array {
+        $this->update($ownerId, function (array $drafts) use ($key, $text, $title, $images, $at, &$stored): array {
             if (isset($drafts[$key]) && $drafts[$key]['at'] > $at) {
                 $stored = $drafts[$key]['at'];
 
                 return $drafts;
             }
-            $drafts[$key] = ['text' => $text, 'title' => $title, 'at' => $at];
+            $drafts[$key] = ['text' => $text, 'title' => $title, 'images' => $images, 'at' => $at];
 
             return $drafts;
         });
@@ -137,7 +146,7 @@ class ForumDraftService
         return $this->dir . '/' . $ownerId . '.drafts.json';
     }
 
-    /** @return array<string, array{text: string, title: string, at: int}> */
+    /** @return array<string, array{text: string, title: string, images: list<string>, at: int}> */
     private function read(int $ownerId): array
     {
         $file = $this->path($ownerId);
@@ -151,7 +160,7 @@ class ForumDraftService
     /**
      * Read-modify-write under an exclusive lock, purging old entries.
      *
-     * @param callable(array<string, array{text: string, title: string, at: int}>): array<string, array{text: string, title: string, at: int}> $change
+     * @param callable(array<string, array{text: string, title: string, images: list<string>, at: int}>): array<string, array{text: string, title: string, images: list<string>, at: int}> $change
      */
     private function update(int $ownerId, callable $change): void
     {
@@ -181,8 +190,8 @@ class ForumDraftService
      * Evicts down to MAX_DRAFTS: tombstones before drafts, oldest first in
      * each, so sending a message never costs another draft its place.
      *
-     * @param array<string, array{text: string, title: string, at: int}> $drafts
-     * @return array<string, array{text: string, title: string, at: int}>
+     * @param array<string, array{text: string, title: string, images: list<string>, at: int}> $drafts
+     * @return array<string, array{text: string, title: string, images: list<string>, at: int}>
      */
     private static function cap(array $drafts): array
     {
@@ -193,8 +202,8 @@ class ForumDraftService
 
         $order = array_keys($drafts);
         usort($order, function (string $a, string $b) use ($drafts): int {
-            $aLive = $drafts[$a]['text'] !== '' || $drafts[$a]['title'] !== '';
-            $bLive = $drafts[$b]['text'] !== '' || $drafts[$b]['title'] !== '';
+            $aLive = $drafts[$a]['text'] !== '' || $drafts[$a]['title'] !== '' || $drafts[$a]['images'] !== [];
+            $bLive = $drafts[$b]['text'] !== '' || $drafts[$b]['title'] !== '' || $drafts[$b]['images'] !== [];
 
             return [$aLive, $drafts[$a]['at']] <=> [$bLive, $drafts[$b]['at']];
         });
@@ -206,7 +215,37 @@ class ForumDraftService
         return $drafts;
     }
 
-    /** @return array<string, array{text: string, title: string, at: int}> */
+    /**
+     * Every draft of every character, for the nightly cleanup of unused
+     * uploads: a picture kept in a draft is still in use.
+     *
+     * @return list<array{text: string, title: string, images: list<string>, at: int}>
+     */
+    public function everyDraft(): array
+    {
+        $all = [];
+        foreach (glob($this->dir . '/*.drafts.json') ?: [] as $file) {
+            array_push($all, ...array_values(self::decode((string) file_get_contents($file))));
+        }
+
+        return $all;
+    }
+
+    /**
+     * Only paths upload_img.php could have produced, without duplicates:
+     * the list is echoed back into the page.
+     *
+     * @param array<mixed> $images
+     * @return list<string>
+     */
+    private static function validImages(array $images): array
+    {
+        $valid = array_filter($images, fn ($path): bool => is_string($path) && preg_match(self::IMAGE_PATH, $path) === 1);
+
+        return array_slice(array_values(array_unique($valid)), 0, self::MAX_IMAGES);
+    }
+
+    /** @return array<string, array{text: string, title: string, images: list<string>, at: int}> */
     private static function decode(string $json): array
     {
         $drafts = json_decode($json, true);
@@ -222,6 +261,7 @@ class ForumDraftService
                 $valid[(string) $key] = [
                     'text' => (string) $draft['text'],
                     'title' => (string) ($draft['title'] ?? ''),
+                    'images' => self::validImages((array) ($draft['images'] ?? [])),
                     'at' => min((int) $draft['at'], $now),
                 ];
             }

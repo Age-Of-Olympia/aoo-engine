@@ -39,7 +39,7 @@ class ForumDraftServiceTest extends TestCase
         $this->service->save(2, 'new:La Grande Assemblée', 'Bonjour', 'Titre', $at);
 
         $this->assertSame(
-            ['text' => 'Bonjour', 'title' => 'Titre', 'at' => $at],
+            ['text' => 'Bonjour', 'title' => 'Titre', 'images' => [], 'at' => $at],
             $this->service->get(2, 'new:La Grande Assemblée')
         );
         $this->assertNull($this->service->get(2, 'reply:123'));
@@ -161,5 +161,22 @@ class ForumDraftServiceTest extends TestCase
         $this->assertStringContainsString('data-draft-owner="2"', $attributes);
         $this->assertMatchesRegularExpression('/data-draft-server-now="\d+"/', $attributes);
         $this->assertStringNotContainsString('<b>', $attributes);
+    }
+
+    /** Pictures uploaded for a draft come back with it; nothing else gets in. */
+    public function testUploadedImagesAreKeptWithTheDraft(): void
+    {
+        $image = 'img/ui/forum/uploads/2/' . str_repeat('a', 32) . '.png';
+        $this->service->save(2, 'reply:123', '', '', self::now(), [
+            $image,
+            $image,
+            'javascript:alert(1)',
+            'img/ui/forum/uploads/2/../../../config.php',
+            42,
+        ]);
+
+        $draft = $this->service->get(2, 'reply:123');
+        $this->assertSame([$image], $draft['images'], 'an image alone is a live draft, not a tombstone');
+        $this->assertSame([$image], $this->service->everyDraft()[0]['images'], 'the nightly cleanup sees it');
     }
 }

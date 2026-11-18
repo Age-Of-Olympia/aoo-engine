@@ -20,8 +20,10 @@ function ajax_file_upload(file_obj) {
         xhttp.onload = function(event) {
             var response = this.responseText.trim();
             if (xhttp.status == 200 && !response.startsWith('error')) {
-                $('#uploaded-table tr:last').after('<tr><td><a href="'+response+'">'+response+'</a></td><td><input type="button" value="Insérer" OnClick="insert_img(\''+response+'\');" /></td></tr>');
-                $('#uploaded-table').show();
+                show_uploaded_img(response);
+                if (window.forumDraftAddImage) {
+                    window.forumDraftAddImage(response);
+                }
             } else {
                 alert("Echec de l'envoi du fichier. " + (response || ''));
             }
@@ -31,3 +33,13 @@ function ajax_file_upload(file_obj) {
     }
 }
 
+
+/* One row per uploaded picture. The link opens a new tab: leaving the page
+ * would lose the form being written. */
+function show_uploaded_img(url) {
+    var $link = $('<a target="_blank" rel="noopener"></a>').attr('href', url).text(url);
+    var $insert = $('<input type="button" value="Insérer" />').on('click', function() {
+        insert_img(url);
+    });
+    $('#uploaded-table').append($('<tr></tr>').append($('<td></td>').append($link), $('<td></td>').append($insert))).show();
+}

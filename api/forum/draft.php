@@ -38,7 +38,8 @@ try {
     $POST_DATA['key'],
     $POST_DATA['text'],
     is_string($POST_DATA['title'] ?? null) ? $POST_DATA['title'] : '',
-    (int) $POST_DATA['at']
+    (int) $POST_DATA['at'],
+    is_array($POST_DATA['images'] ?? null) ? array_values($POST_DATA['images']) : []
   );
 
   /* the stored date (clamped if it came from the future) and the server
