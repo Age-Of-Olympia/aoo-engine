@@ -209,9 +209,7 @@ class TutorialManager
             }
         }
 
-        return array_merge($stepData, [
-            'tutorial_state' => $this->context->getPublicState()
-        ]);
+        return $stepData;
     }
 
     private function calculateStepPosition(string $stepId, string $version = '1.0.0'): int

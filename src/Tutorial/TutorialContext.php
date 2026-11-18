@@ -12,7 +12,6 @@ class TutorialContext
 {
     private Player $player;
     private string $mode;
-    private array $tutorialState = [];
 
     // Tutorial progression tracking
     private int $tutorialXP = 0;
@@ -23,15 +22,6 @@ class TutorialContext
     {
         $this->player = $player;
         $this->mode = $mode;
-
-        // Initialize default state
-        $this->tutorialState = [
-            'unlimited_mvt' => false,
-            'unlimited_actions' => false,
-            'invulnerable' => true,
-            'tutorial_zone' => true,
-            'pending_level_up' => false
-        ];
     }
 
     /**
@@ -59,22 +49,6 @@ class TutorialContext
     }
 
     /**
-     * Set tutorial state value
-     */
-    public function setState(string $key, $value): void
-    {
-        $this->tutorialState[$key] = $value;
-    }
-
-    /**
-     * Get tutorial state value
-     */
-    public function getState(string $key, $default = null)
-    {
-        return $this->tutorialState[$key] ?? $default;
-    }
-
-    /**
      * Award XP for completing step
      */
     public function awardXP(int $amount): void
@@ -99,10 +73,6 @@ class TutorialContext
     {
         $this->tutorialLevel++;
         $this->tutorialPI++;
-
-        // Store level up flag for notification
-        $this->tutorialState['pending_level_up'] = true;
-        $this->tutorialState['new_level'] = $this->tutorialLevel;
     }
 
     /**
@@ -139,23 +109,6 @@ class TutorialContext
     }
 
     /**
-     * Get public state for client (API response)
-     */
-    public function getPublicState(): array
-    {
-        return [
-            'mode' => $this->mode,
-            'tutorial_xp' => $this->tutorialXP,
-            'tutorial_level' => $this->tutorialLevel,
-            'tutorial_pi' => $this->tutorialPI,
-            'unlimited_mvt' => $this->tutorialState['unlimited_mvt'] ?? false,
-            'unlimited_actions' => $this->tutorialState['unlimited_actions'] ?? false,
-            'invulnerable' => $this->tutorialState['invulnerable'] ?? true,
-            'tutorial_zone' => true
-        ];
-    }
-
-    /**
      * Serialize state for database storage
      */
     public function serializeState(): string
@@ -164,7 +117,6 @@ class TutorialContext
             'tutorial_xp' => $this->tutorialXP,
             'tutorial_level' => $this->tutorialLevel,
             'tutorial_pi' => $this->tutorialPI,
-            'state' => $this->tutorialState
         ]);
     }
 
@@ -183,7 +135,6 @@ class TutorialContext
             $this->tutorialXP = $data['tutorial_xp'] ?? 0;
             $this->tutorialLevel = $data['tutorial_level'] ?? 1;
             $this->tutorialPI = $data['tutorial_pi'] ?? 0;
-            $this->tutorialState = array_merge($this->tutorialState, $data['state'] ?? []);
         }
     }
 
@@ -243,18 +194,6 @@ class TutorialContext
             }
         }
 
-        if (isset($prerequisites['ensure_enemy'])) {
-            $this->setState('ensure_enemy', $prerequisites['ensure_enemy']);
-        }
-
-        if (isset($prerequisites['ensure_item'])) {
-            $this->setState('ensure_item', $prerequisites['ensure_item']);
-        }
-
-        if (isset($prerequisites['ensure_npc'])) {
-            $this->setState('ensure_npc', $prerequisites['ensure_npc']);
-        }
-
         return true;
     }
 
@@ -283,22 +222,6 @@ class TutorialContext
             }
 
             $player->data->a = (int) $preparation['restore_actions'];
-        }
-
-        if (isset($preparation['spawn_enemy'])) {
-            $this->setState('spawn_enemy_next', $preparation['spawn_enemy']);
-        }
-
-        if (isset($preparation['spawn_item'])) {
-            $this->setState('spawn_item_next', $preparation['spawn_item']);
-        }
-
-        if (isset($preparation['remove_enemy'])) {
-            $this->setState('remove_enemy', $preparation['remove_enemy']);
-        }
-
-        if (isset($preparation['remove_item'])) {
-            $this->setState('remove_item', $preparation['remove_item']);
         }
     }
 

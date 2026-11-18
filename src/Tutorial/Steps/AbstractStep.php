@@ -231,25 +231,14 @@ abstract class AbstractStep
      */
     protected function applyContextChanges(TutorialContext $context, array $changes): void
     {
-        if (isset($changes['unlimited_mvt'])) {
-            $context->setState('unlimited_mvt', $this->toBool($changes['unlimited_mvt']));
-        }
-
-        if (isset($changes['unlimited_actions'])) {
-            $context->setState('unlimited_actions', $this->toBool($changes['unlimited_actions']));
-        }
-
         // Control whether movements are consumed when player moves
         // By default (legacy), tutorial does NOT consume movements
         // Set consume_movements: true to enable movement consumption
         if (isset($changes['consume_movements'])) {
-            $consumeMovements = $this->toBool($changes['consume_movements']);
-            $context->setState('consume_movements', $consumeMovements);
-            $_SESSION['tutorial_consume_movements'] = $consumeMovements;
+            $_SESSION['tutorial_consume_movements'] = $this->toBool($changes['consume_movements']);
         }
 
         if (isset($changes['set_mvt_limit'])) {
-            $context->setState('mvt_limit', $changes['set_mvt_limit']);
             // Use ensurePrerequisites() to properly SET movements (not add)
             // This goes through the turn/bonus system, not direct data->mvt
             $context->ensurePrerequisites([
@@ -259,7 +248,6 @@ abstract class AbstractStep
         }
 
         if (isset($changes['set_action_limit'])) {
-            $context->setState('action_limit', $changes['set_action_limit']);
             // Apply to player
             $context->getPlayer()->data->a = $changes['set_action_limit'];
         }
