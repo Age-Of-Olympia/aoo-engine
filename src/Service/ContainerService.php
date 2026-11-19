@@ -424,7 +424,11 @@ final class ContainerService
         ) === false;
     }
 
-    /** Count distinct refund items that would add a new line to the holder's bag. */
+    /**
+     * Count distinct refund items that would add a new line to the holder's bag.
+     *
+     * @param list<string> $itemNames
+     */
     public function newStackLineCount(int $holderId, array $itemNames): int
     {
         if ($itemNames === []) {

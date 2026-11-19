@@ -56,7 +56,10 @@ final class AtelierView
         );
     }
 
-    /** @param array<string, mixed> $row */
+    /**
+     * @param array<string, mixed> $row
+     * @param array<string, string> $labels
+     */
     private static function repairButtons(array $row, array $labels): string
     {
         $quote = $row['quote'];
@@ -70,7 +73,10 @@ final class AtelierView
             . ' ' . self::button($row, 'repair-gold', $quote['gold'] . ' PO', $seed);
     }
 
-    /** @param array<string, mixed> $row */
+    /**
+     * @param array<string, mixed> $row
+     * @param array<string, string> $labels
+     */
     private static function recycleButton(array $row, array $labels): string
     {
         return self::button($row, 'recycle', 'Recycler → ' . ($row['refund'] === [] ? 'rien' : self::stackList($row['refund'], $labels)));
@@ -84,7 +90,10 @@ final class AtelierView
             . ($quoteSeed === null ? '' : ' data-quote-seed="' . $quoteSeed . '"') . '>' . $label . '</button>';
     }
 
-    /** @param list<array<string, mixed>> $rows @return array<string, string> item name => display label */
+    /**
+     * @param list<array<string, mixed>> $rows
+     * @return array<string, string> item name => display label
+     */
     private static function stackLabels(array $rows): array
     {
         $names = [];
@@ -113,7 +122,10 @@ final class AtelierView
         return $labels;
     }
 
-    /** @param array<string, int> $stacks name => count @param array<string, string> $labels */
+    /**
+     * @param array<string, int> $stacks name => count
+     * @param array<string, string> $labels
+     */
     private static function stackList(array $stacks, array $labels): string
     {
         $parts = [];
