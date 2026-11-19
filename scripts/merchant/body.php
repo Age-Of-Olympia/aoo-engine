@@ -6,8 +6,7 @@ use App\Service\Counter\CounterAccessService;
 use App\Service\Counter\CounterCatalog;
 use App\View\Inventory\InventoryView;
 use App\View\Inventory\BankView;
-use App\View\Merchant\AsksView;
-use App\View\Merchant\BidsView;
+use App\View\Merchant\MarketSideView;
 use App\View\Merchant\ExchangesView;
 use App\View\Merchant\AtelierView;
 
@@ -74,11 +73,8 @@ $market = new Market($target);
 switch($tab){
 
     case 'bids':
-        BidsView::renderBids($player, $market, $target);
-        break;
-
     case 'asks':
-        AsksView::renderAsks($player, $market, $target);
+        MarketSideView::render($tab, $player, $market, $target);
         break;
 
     case 'exchanges':
