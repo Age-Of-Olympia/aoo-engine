@@ -24,17 +24,6 @@ define('DB_CONSTANTS', array(
 ));
 PHPEOF
 
-# 1b. Cypress only (ENABLE_TUTORIAL_V2=1) : force-enable the new tutorial
-#     system — cypress-registered players get fresh auto-incremented IDs (not
-#     the dev whitelist 1/2/3), so TutorialFeatureFlag must not fall back to
-#     that whitelist or index.php logs "Tutorial enabled: NO". test_job must
-#     NOT define it: TutorialFeatureFlagTest exercises the disabled paths.
-if [ "${ENABLE_TUTORIAL_V2:-}" = "1" ]; then
-cat >> config/db_constants.php <<'PHPEOF'
-define('TUTORIAL_V2_ENABLED', true);
-PHPEOF
-fi
-
 # 2. Wait for the mariadb service to accept connections (cold start).
 until mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -e "SELECT 1" >/dev/null 2>&1; do
     echo "waiting for mariadb..."
@@ -56,3 +45,13 @@ mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" aoo4 -e "
 # 5. Apply the tutorial_* migrations the Cypress spec depends on.
 #    --no-all-or-nothing is mandatory (MariaDB auto-commits DDL).
 vendor/bin/doctrine-migrations migrate --no-interaction --allow-no-migration --no-all-or-nothing
+
+# 6. Cypress only (ENABLE_TUTORIAL_V2=1): the tutorial module on for everyone.
+#    Cypress registers fresh players, so the module's testers list cannot
+#    name them.
+if [ "${ENABLE_TUTORIAL_V2:-}" = "1" ]; then
+    mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" aoo4 -e "
+      INSERT INTO modules (name, enabled, players) VALUES ('tutorial', 1, '[]')
+      ON DUPLICATE KEY UPDATE enabled = 1;
+    "
+fi

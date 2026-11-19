@@ -8,6 +8,8 @@ require_once __DIR__ . '/layout.php';
 require_once __DIR__ . '/helpers.php';
 
 use App\Service\CsrfProtectionService;
+use App\Module\Module;
+use App\Module\Modules;
 use App\Tutorial\TutorialFeatureFlag;
 
 $csrf = new CsrfProtectionService();
@@ -47,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 TutorialFeatureFlag::clearCache();
 $settings = TutorialFeatureFlag::getSettings();
 $autoShowNewPlayers = filter_var($settings['auto_show_new_players'] ?? '1', FILTER_VALIDATE_BOOLEAN);
-$whitelistedPlayers = TutorialFeatureFlag::getWhitelistedPlayers();
+$whitelistedPlayers = Modules::players(Module::Tutorial);
 
 // Load reward settings
 $skipRewardXP = (int)($settings['skip_reward_xp'] ?? 50);
@@ -55,33 +57,10 @@ $skipRewardPI = (int)($settings['skip_reward_pi'] ?? 50);
 $completionRewardXP = (int)($settings['completion_reward_xp'] ?? 390);
 $completionRewardPI = (int)($settings['completion_reward_pi'] ?? 390);
 
-// Check for config overrides
-$hasEnvOverride = isset($_ENV['TUTORIAL_V2_ENABLED']);
-$hasConstantOverride = defined('TUTORIAL_V2_ENABLED');
-$hasPlayerListOverride = defined('TUTORIAL_V2_TEST_PLAYERS');
-
 ob_start();
 ?>
 
 <div>
-
-    <!-- Override Warnings -->
-    <?php if ($hasEnvOverride || $hasConstantOverride || $hasPlayerListOverride): ?>
-        <div class="alert alert-warning">
-            <strong><i class="fas fa-exclamation-triangle"></i> Réglage imposé par la configuration du serveur</strong>
-            <p class="mt-2 mb-0">
-                <?php if ($hasEnvOverride): ?>
-                    La variable d'environnement <code>TUTORIAL_V2_ENABLED</code> remplace le réglage du module.<br>
-                <?php endif; ?>
-                <?php if ($hasConstantOverride): ?>
-                    La constante <code>TUTORIAL_V2_ENABLED</code> de config.php remplace le réglage du module.<br>
-                <?php endif; ?>
-                <?php if ($hasPlayerListOverride): ?>
-                    La constante <code>TUTORIAL_V2_TEST_PLAYERS</code> remplace la liste des testeurs du module.<br>
-                <?php endif; ?>
-            </p>
-        </div>
-    <?php endif; ?>
 
     <!-- Reward Settings Card (Full Width) -->
     <div class="card">
@@ -201,7 +180,7 @@ ob_start();
         </div>
         <div class="card-body">
             <p>
-                <?php if (TutorialFeatureFlag::isEnabled()): ?>
+                <?php if (Modules::on(Module::Tutorial)): ?>
                     <span class="badge badge-success"><i class="fas fa-check"></i> Tout le monde</span>
                 <?php else: ?>
                     <span class="badge badge-warning"><i class="fas fa-lock"></i> Testeurs seulement</span>

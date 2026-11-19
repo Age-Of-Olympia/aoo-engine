@@ -281,12 +281,8 @@ If less severe (slow but working), prefer to debug in place rather than roll bac
 
 Most issues can be contained by disabling the new tutorial without touching code:
 
-1. **Toggle feature flag OFF.** Edit `config.php`:
-   ```php
-   const TUTORIAL_V2_ENABLED = false;
-   ```
-   New players fall back to the legacy tutorial path immediately. No deploy needed
-   (PHP picks up the constant change on next request).
+1. **Switch the tutorial module OFF** in Administration › Modules. New players
+   stop getting the tutorial on their next request; no deploy needed.
 
 2. **Drain in-flight sessions** (sessions started before the flag flip will keep
    running until the player completes/cancels — usually within minutes). Two

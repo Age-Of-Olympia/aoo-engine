@@ -3217,12 +3217,6 @@ parameters:
 			path: src/Tutorial/TutorialFeatureFlag.php
 
 		-
-			message: '#^Method App\\Tutorial\\TutorialFeatureFlag\:\:getWhitelistedPlayers\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Tutorial/TutorialFeatureFlag.php
-
-		-
 			message: '#^Property App\\Tutorial\\TutorialFeatureFlag\:\:\$settingsCache type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

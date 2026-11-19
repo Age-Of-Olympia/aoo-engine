@@ -7,7 +7,7 @@ use App\Module\Modules;
 use Classes\Db;
 
 /**
- * Feature flags for tutorial system
+ * Who gets the tutorial, and the tutorial settings
  *
  * Who gets the tutorial comes from the tutorial module (App\Module\Modules):
  * on for everyone, or for its testers. The other settings (rewards, offer
@@ -28,28 +28,8 @@ class TutorialFeatureFlag
     private const CACHE_TTL_SECONDS = 300;
 
     /**
-     * Is new tutorial system enabled globally?
-     */
-    public static function isEnabled(): bool
-    {
-        // Check environment variable first (allows override)
-        if (isset($_ENV['TUTORIAL_V2_ENABLED'])) {
-            return filter_var($_ENV['TUTORIAL_V2_ENABLED'], FILTER_VALIDATE_BOOLEAN);
-        }
-
-        // Check constant (can be set in config.php, allows override)
-        if (defined('TUTORIAL_V2_ENABLED')) {
-            return TUTORIAL_V2_ENABLED === true;
-        }
-
-        // The tutorial module, set in Administration → Modules
-        return Modules::on(Module::Tutorial);
-    }
-
-    /**
-     * Force enable for specific player (for testing)
-     *
-     * Allows admin/test players to use new tutorial even when globally disabled
+     * Does this player get the tutorial? The module decides (on for everyone,
+     * or for its testers), except for whoever cannot follow it.
      */
     public static function isEnabledForPlayer(int $playerId): bool
     {
@@ -70,28 +50,7 @@ class TutorialFeatureFlag
             return false;
         }
 
-        // If globally enabled, everyone gets it
-        if (self::isEnabled()) {
-            return true;
-        }
-
-        // Allow specific whitelisted players
-        $whitelistedPlayers = self::getWhitelistedPlayers();
-        return in_array($playerId, $whitelistedPlayers, true);
-    }
-
-    /**
-     * Get list of whitelisted players who can access tutorial
-     */
-    public static function getWhitelistedPlayers(): array
-    {
-        // Check if defined in config (allows override)
-        if (defined('TUTORIAL_V2_TEST_PLAYERS')) {
-            return TUTORIAL_V2_TEST_PLAYERS;
-        }
-
-        // The tutorial module's testers
-        return Modules::players(Module::Tutorial);
+        return Modules::on(Module::Tutorial, $playerId);
     }
 
     /**
@@ -177,33 +136,4 @@ class TutorialFeatureFlag
     {
         self::$settingsCache = null;
     }
-
-    /**
-     * Get cache statistics (for debugging/monitoring)
-     *
-     * @return array{cached: bool, age_seconds: int|null, ttl_seconds: int, expires_in: int|null}
-     */
-    public static function getCacheStats(): array
-    {
-        if (self::$settingsCache === null) {
-            return [
-                'cached' => false,
-                'age_seconds' => null,
-                'ttl_seconds' => self::CACHE_TTL_SECONDS,
-                'expires_in' => null
-            ];
-        }
-
-        $age = time() - self::$settingsCache['timestamp'];
-        $expiresIn = self::CACHE_TTL_SECONDS - $age;
-
-        return [
-            'cached' => true,
-            'age_seconds' => $age,
-            'ttl_seconds' => self::CACHE_TTL_SECONDS,
-            'expires_in' => max(0, $expiresIn),
-            'is_expired' => $age >= self::CACHE_TTL_SECONDS
-        ];
-    }
-
 }
