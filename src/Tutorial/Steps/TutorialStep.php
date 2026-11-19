@@ -2,9 +2,11 @@
 
 namespace App\Tutorial\Steps;
 
+use App\Factory\PlayerFactory;
 use App\Service\DialogService;
 use App\Tutorial\TutorialContext;
 use App\Tutorial\TutorialHelper;
+use App\Tutorial\TutorialPlaceholderService;
 
 /**
  * One step of the tutorial. Its step_type picks the family that validates it
@@ -84,7 +86,7 @@ class TutorialStep
             'step_number' => $this->stepNumber,
             'step_type' => $this->stepType,
             'title' => $this->title,
-            'text' => $this->getText(),
+            'text' => (string) ($this->config['text'] ?? ''),
             'target_selector' => $this->getTargetSelector(),
             'tooltip_position' => $this->getTooltipPosition(),
             'requires_validation' => $this->requiresValidation(),
@@ -94,68 +96,16 @@ class TutorialStep
             'config' => $this->config
         ];
 
+        $placeholders = new TutorialPlaceholderService(PlayerFactory::legacy($this->context->getPlayer()->id));
+        foreach (['title', 'text', 'validation_hint'] as $field) {
+            $data[$field] = $placeholders->replacePlaceholders($data[$field]);
+        }
+
         if ($this->family() === 'dialog' && isset($this->config['dialog_id'])) {
             $data['dialog'] = (new DialogService(true))->getDialogData($this->config['dialog_id'], $this->context->getPlayer());
         }
 
         return $data;
-    }
-
-    /**
-     * Get step text (with placeholder replacement)
-     *
-     * @return string
-     */
-    private function getText(): string
-    {
-        $text = $this->config['text'] ?? '';
-        return $this->replacePlaceholders($text);
-    }
-
-    /**
-     * Replace placeholders in text
-     *
-     * Supported placeholders:
-     * - {PLAYER_NAME}
-     * - {CURRENT_XP}
-     * - {CURRENT_LEVEL}
-     * - {CURRENT_PI}
-     * - {CURRENT_MVT}
-     * - {MOVEMENT_HINT} - Dynamic hint showing current movement count
-     * - etc.
-     */
-    private function replacePlaceholders(string $text): string
-    {
-        // Use context's player directly (already loaded with correct data)
-        $player = $this->context->getPlayer();
-        if (!isset($player->data)) {
-            $player->get_data();
-        }
-
-        $movementHint = $this->getValidationHint();
-
-        // Get race-based max MVT from RaceService (not player data which may be modified).
-        // RaceService already applies its own default for unknown/missing races;
-        // delegate entirely so the fallback lives in one place.
-        $raceService = new \App\Service\RaceService();
-        $raceMaxMvt = $raceService->getRaceMaxMvt($player->data->race ?? '');
-
-        $replacements = [
-            '{PLAYER_NAME}' => $player->data->name ?? 'Aventurier',
-            '{CURRENT_XP}' => (string)$this->context->getTutorialXP(),
-            '{CURRENT_LEVEL}' => (string)$this->context->getTutorialLevel(),
-            '{CURRENT_PI}' => (string)$this->context->getTutorialPI(),
-            '{CURRENT_MVT}' => (string)($player->data->mvt ?? 0),
-            '{MAX_MVT}' => (string)$raceMaxMvt,
-            '{max_mvt}' => (string)$raceMaxMvt, // lowercase variant for database placeholders
-            '{MOVEMENT_HINT}' => $movementHint,
-        ];
-
-        return str_replace(
-            array_keys($replacements),
-            array_values($replacements),
-            $text
-        );
     }
 
     /**

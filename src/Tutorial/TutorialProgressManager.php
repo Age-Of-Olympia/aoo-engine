@@ -2,7 +2,6 @@
 
 namespace App\Tutorial;
 
-use App\Factory\PlayerFactory;
 use App\Tutorial\Steps\TutorialStep;
 use App\Tutorial\Exceptions\TutorialStepException;
 use App\Tutorial\Exceptions\TutorialValidationException;
@@ -332,13 +331,6 @@ class TutorialProgressManager
     private function prepareStepForClient(TutorialStep $step, string $version): array
     {
         $stepData = $step->getData();
-
-        $placeholders = new TutorialPlaceholderService(PlayerFactory::legacy($this->context->getPlayer()->id));
-        foreach (['title', 'text', 'validation_hint'] as $field) {
-            if (isset($stepData[$field]) && is_string($stepData[$field])) {
-                $stepData[$field] = $placeholders->replacePlaceholders($stepData[$field]);
-            }
-        }
 
         // Calculate step position
         $stepData['step_position'] = $this->calculateStepPosition($step->getStepId(), $version);
