@@ -112,13 +112,7 @@ src/Tutorial/
 ├── TutorialFeatureFlag.php     # Feature toggles
 ├── TutorialMapInstance.php     # Map setup
 └── Steps/
-    ├── AbstractStep.php        # Base class for all steps
-    ├── InfoStep.php            # Information-only steps
-    ├── Movement/
-    │   └── MovementStep.php    # Movement validation
-    ├── ActionStep.php          # Action usage validation
-    ├── UIInteractionStep.php   # UI interaction validation
-    └── CombatStep.php          # Combat validation
+    └── TutorialStep.php        # One class; step_type picks the validation family
 ```
 
 ### Key Classes

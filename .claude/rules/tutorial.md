@@ -46,16 +46,16 @@ Full write-up: [docs/tutorial-system-overview.md](../../docs/tutorial-system-ove
 - **Dialogs**:
   - `tutorial_dialogs`: Dialog configurations (id, dialog_id, npc_name, dialog_data JSON, is_active)
 
-**Step Types** (in `src/Tutorial/Steps/`):
-- **AbstractStep**: Base class for all steps
-- **InfoStep**: Informational dialogs (blocking, no validation)
-- **MovementStep**: Movement validation (any_movement, movements_depleted, position)
-- **ActionStep**: Action usage validation (action_used, action_available)
-- **UIInteractionStep**: UI interaction validation (ui_panel_opened, ui_interaction)
-- **CombatStep**: Combat-related validation
+**Step Types**: one class, `src/Tutorial/Steps/TutorialStep.php`. Its `step_type` picks the
+validation family (`TutorialStep::family()`):
+- `movement`, `movement_intro`, `movement_limit` → movement (always validated)
+- `ui_interaction` → ui (validated unless the step says otherwise)
+- `action` → action (action_used, action_available)
+- `dialog` → adds the NPC dialog to the step data
+- anything else (`info`, `combat`…) → text only, `validate()` always passes
 
 **Step Configuration**:
-Steps are stored in the normalized database schema. The `TutorialStepRepository` performs JOINs across all step tables and converts them into a configuration array that AbstractStep subclasses use. Configuration includes:
+Steps are stored in the normalized database schema. The `TutorialStepRepository` performs JOINs across all step tables and converts them into the configuration array `TutorialStep` uses. Configuration includes:
 
 - **Core** (`tutorial_steps`): step_id, next_step, step_number, step_type, title, text, xp_reward
 - **UI** (`tutorial_step_ui`): target_selector, tooltip_position, interaction_mode, show_delay, auto_advance_delay
@@ -158,14 +158,14 @@ $player = new Player($activePlayerId);
 
 **Step Validation Types**:
 
-**MovementStep** (`src/Tutorial/Steps/Movement/MovementStep.php`):
+**Movement family**:
 - `any_movement`: Player moved at all
 - `movements_depleted`: Player used all MVT points
 - `specific_count`: Player moved X times
 - `position`: Player at exact coordinates (x, y)
 - `adjacent_to_position`: Player adjacent to target (Manhattan distance = 1) - useful for resource gathering
 
-**UIInteractionStep** (`src/Tutorial/Steps/UIInteractionStep.php`):
+**UI family**:
 - `ui_panel_opened`: Specific panel visible
 - `ui_button_clicked`: Specific button clicked
 - `ui_interaction`: Generic element click validation (tracks `element_clicked` parameter)

@@ -45,7 +45,7 @@ class TutorialStepRepository
 
     /**
      * One active step of a version with all its satellites, matched on
-     * $where (a clause on `ts`), in the shape AbstractStep expects.
+     * $where (a clause on `ts`), in the shape TutorialStep expects.
      *
      * @param list<mixed> $params version first, then the clause's own
      */
@@ -313,7 +313,7 @@ class TutorialStepRepository
     /**
      * Convert database row to step data array with config matching old JSON format
      *
-     * This ensures backward compatibility with existing AbstractStep code
+     * This ensures backward compatibility with existing TutorialStep code
      *
      * @param array $row Database row
      * @return array Step data with 'config' array

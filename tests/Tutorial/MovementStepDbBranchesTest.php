@@ -2,7 +2,7 @@
 
 namespace Tests\Tutorial;
 
-use App\Tutorial\Steps\Movement\MovementStep;
+use App\Tutorial\Steps\TutorialStep;
 use PHPUnit\Framework\Attributes\Group;
 use ReflectionClass;
 use ReflectionProperty;
@@ -244,14 +244,15 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
         return (int) $this->conn->lastInsertId();
     }
 
-    private function makeStepWithConfig(array $config): MovementStep
+    private function makeStepWithConfig(array $config): TutorialStep
     {
-        /** @var MovementStep $step */
-        $step = (new ReflectionClass(MovementStep::class))
+        /** @var TutorialStep $step */
+        $step = (new ReflectionClass(TutorialStep::class))
             ->newInstanceWithoutConstructor();
 
         $configProp = new ReflectionProperty($step, 'config');
         $configProp->setValue($step, $config);
+        (new ReflectionProperty($step, 'stepType'))->setValue($step, 'movement');
 
         return $step;
     }

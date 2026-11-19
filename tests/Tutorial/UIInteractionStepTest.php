@@ -2,7 +2,7 @@
 
 namespace Tests\Tutorial;
 
-use App\Tutorial\Steps\UIInteractionStep;
+use App\Tutorial\Steps\TutorialStep;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -33,14 +33,15 @@ use ReflectionProperty;
 #[Group('ui-interaction-step')]
 class UIInteractionStepTest extends TestCase
 {
-    private function makeStepWithConfig(array $config): UIInteractionStep
+    private function makeStepWithConfig(array $config): TutorialStep
     {
-        /** @var UIInteractionStep $step */
-        $step = (new ReflectionClass(UIInteractionStep::class))
+        /** @var TutorialStep $step */
+        $step = (new ReflectionClass(TutorialStep::class))
             ->newInstanceWithoutConstructor();
 
         $configProp = new ReflectionProperty($step, 'config');
         $configProp->setValue($step, $config);
+        (new ReflectionProperty($step, 'stepType'))->setValue($step, 'ui_interaction');
 
         return $step;
     }

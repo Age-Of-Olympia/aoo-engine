@@ -3,8 +3,7 @@
 namespace App\Tutorial;
 
 use App\Factory\PlayerFactory;
-use App\Factory\TutorialStepFactory;
-use App\Tutorial\Steps\AbstractStep;
+use App\Tutorial\Steps\TutorialStep;
 use App\Tutorial\Exceptions\TutorialStepException;
 use App\Tutorial\Exceptions\TutorialValidationException;
 use Classes\Player;
@@ -246,9 +245,9 @@ class TutorialProgressManager
      *
      * Sets up the player state required for this step (movement points, etc.)
      *
-     * @param AbstractStep $step Step to apply prerequisites for
+     * @param TutorialStep $step Step to apply prerequisites for
      */
-    private function applyStepPrerequisites(AbstractStep $step): void
+    private function applyStepPrerequisites(TutorialStep $step): void
     {
         $config = $step->getConfig();
         $prerequisites = $config['prerequisites'] ?? null;
@@ -298,7 +297,7 @@ class TutorialProgressManager
      * IDEMPOTENT one: it is re-applied on every read of the current step,
      * so a resume in a fresh PHP session keeps consuming where it should.
      */
-    private function syncMovementConsumption(AbstractStep $step): void
+    private function syncMovementConsumption(TutorialStep $step): void
     {
         $config = $step->getConfig();
         $prerequisites = $config['prerequisites'] ?? [];
@@ -326,11 +325,11 @@ class TutorialProgressManager
     /**
      * Prepare step data for client (with placeholders replaced)
      *
-     * @param AbstractStep $step Step object
+     * @param TutorialStep $step Step object
      * @param string $version Tutorial version
      * @return array Step data ready for client
      */
-    private function prepareStepForClient(AbstractStep $step, string $version): array
+    private function prepareStepForClient(TutorialStep $step, string $version): array
     {
         $stepData = $step->getData();
 
@@ -356,9 +355,9 @@ class TutorialProgressManager
      *
      * @param string $stepId Step identifier
      * @param string $version Tutorial version
-     * @return AbstractStep|null Step object or null if not found
+     * @return TutorialStep|null Step object or null if not found
      */
-    private function loadStep(string $stepId, string $version): ?AbstractStep
+    private function loadStep(string $stepId, string $version): ?TutorialStep
     {
         $stepData = $this->stepRepository->getStepById($stepId, $version);
 
@@ -366,7 +365,7 @@ class TutorialProgressManager
             return null;
         }
 
-        return TutorialStepFactory::createFromData($stepData, $this->context);
+        return TutorialStep::fromData($stepData, $this->context);
     }
 
     /**

@@ -2,7 +2,7 @@
 
 namespace Tests\Tutorial;
 
-use App\Tutorial\Steps\Movement\MovementStep;
+use App\Tutorial\Steps\TutorialStep;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -41,14 +41,15 @@ class MovementStepTest extends TestCase
      * Build a MovementStep with the given $config primed via reflection.
      * Skips the constructor (which would require a real TutorialContext).
      */
-    private function makeStepWithConfig(array $config): MovementStep
+    private function makeStepWithConfig(array $config): TutorialStep
     {
-        /** @var MovementStep $step */
-        $step = (new ReflectionClass(MovementStep::class))
+        /** @var TutorialStep $step */
+        $step = (new ReflectionClass(TutorialStep::class))
             ->newInstanceWithoutConstructor();
 
         $configProp = new ReflectionProperty($step, 'config');
         $configProp->setValue($step, $config);
+        (new ReflectionProperty($step, 'stepType'))->setValue($step, 'movement');
 
         return $step;
     }

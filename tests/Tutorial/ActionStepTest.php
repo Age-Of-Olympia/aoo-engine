@@ -2,7 +2,7 @@
 
 namespace Tests\Tutorial;
 
-use App\Tutorial\Steps\Actions\ActionStep;
+use App\Tutorial\Steps\TutorialStep;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -37,14 +37,15 @@ use ReflectionProperty;
 #[Group('action-step')]
 class ActionStepTest extends TestCase
 {
-    private function makeStepWithConfig(array $config): ActionStep
+    private function makeStepWithConfig(array $config): TutorialStep
     {
-        /** @var ActionStep $step */
-        $step = (new ReflectionClass(ActionStep::class))
+        /** @var TutorialStep $step */
+        $step = (new ReflectionClass(TutorialStep::class))
             ->newInstanceWithoutConstructor();
 
         $configProp = new ReflectionProperty($step, 'config');
         $configProp->setValue($step, $config);
+        (new ReflectionProperty($step, 'stepType'))->setValue($step, 'action');
 
         return $step;
     }

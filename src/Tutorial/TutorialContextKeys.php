@@ -9,7 +9,7 @@ namespace App\Tutorial;
  * keys.
  *
  * These keys are the dispatch keys used by:
- *  - {@see \App\Tutorial\Steps\AbstractStep::applyContextChanges()} (CONTEXT_CHANGES)
+ *  - {@see \App\Tutorial\Steps\TutorialStep::applyContextChanges()} (CONTEXT_CHANGES)
  *  - {@see \App\Tutorial\TutorialContext::prepareForNextStep()} (NEXT_PREPARATIONS)
  *
  * The admin step editor and {@see \App\Service\TutorialStepValidationService}

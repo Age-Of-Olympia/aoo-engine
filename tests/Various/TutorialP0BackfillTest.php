@@ -2,7 +2,7 @@
 
 namespace Tests\Various;
 
-use App\Tutorial\Steps\Actions\ActionStep;
+use App\Tutorial\Steps\TutorialStep;
 use App\Tutorial\TutorialSessionManager;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -50,9 +50,10 @@ class TutorialP0BackfillTest extends TestCase
             }
         }
 
-        $step = (new ReflectionClass(ActionStep::class))->newInstanceWithoutConstructor();
+        $step = (new ReflectionClass(TutorialStep::class))->newInstanceWithoutConstructor();
         $configProp = new ReflectionProperty($step, 'config');
         $configProp->setValue($step, ['validation_type' => 'action_used']);
+        (new ReflectionProperty($step, 'stepType'))->setValue($step, 'action');
 
         $step->validate(['action_name' => 'melee']);
 
