@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
  * pure-data + config; Phase C exists for what's NOT — the DB-touching
  * branches of MovementStep (movements_depleted, position, adjacent_to_-
  * position) and the integration paths in TutorialManager::completeTutorial,
- * TutorialPlayerCleanup, TutorialEnemyCleanup.
+ * TutorialCleanup.
  *
  * Design constraints:
  *

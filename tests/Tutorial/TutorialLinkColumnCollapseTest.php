@@ -2,7 +2,7 @@
 
 namespace Tests\Tutorial;
 
-use App\Tutorial\TutorialPlayerCleanup;
+use App\Tutorial\TutorialCleanup;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
 
@@ -17,7 +17,7 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
  * Phase 4.5 migration.
  *
  * Pins the behaviour of:
- *   - TutorialPlayerCleanup::cleanupOrphanedTutorialPlayers
+ *   - TutorialCleanup::cleanupOrphanedTutorialPlayers
  *   - TutorialResourceManager::cleanupPrevious (delegates to cleanup)
  */
 #[Group('tutorial-link-collapse')]
@@ -28,7 +28,7 @@ class TutorialLinkColumnCollapseTest extends TutorialIntegrationTestCase
         $realPlayerId = $this->seedRealPlayer();
         [$tutPlayerId, $tutRowId] = $this->seedTutorialPlayer($realPlayerId);
 
-        $cleanup = new TutorialPlayerCleanup($this->conn);
+        $cleanup = new TutorialCleanup($this->conn);
         $cleaned = $cleanup->cleanupOrphanedTutorialPlayers($realPlayerId);
 
         $this->assertSame(1, $cleaned, 'cleanup must find the seeded tutorial player by real_player_id_ref');
@@ -54,7 +54,7 @@ class TutorialLinkColumnCollapseTest extends TutorialIntegrationTestCase
         [$tutA, ] = $this->seedTutorialPlayer($realA);
         [$tutB, $rowB] = $this->seedTutorialPlayer($realB);
 
-        $cleanup = new TutorialPlayerCleanup($this->conn);
+        $cleanup = new TutorialCleanup($this->conn);
         $cleaned = $cleanup->cleanupOrphanedTutorialPlayers($realA);
 
         $this->assertSame(1, $cleaned, 'only real A\'s tutorial player should be cleaned');

@@ -6,7 +6,6 @@ use App\Factory\TutorialPlayerFactory;
 use App\Factory\EntityManagerFactory;
 use App\Entity\TutorialPlayer;
 use App\Tutorial\Exceptions\TutorialException;
-use Psr\Log\NullLogger;
 
 /**
  * Tutorial Resource Manager
@@ -223,11 +222,11 @@ class TutorialResourceManager
      */
     private function removeTutorialEnemy(string $sessionId): void
     {
-        $cleanup = new TutorialEnemyCleanup($this->conn, new NullLogger());
+        $cleanup = new TutorialCleanup($this->conn);
 
         try {
-            $cleanup->removeBySessionId($sessionId);
-        } catch (TutorialEnemyCleanupException $e) {
+            $cleanup->removeEnemiesBySession($sessionId);
+        } catch (TutorialCleanupException $e) {
             error_log("[TutorialResourceManager] Error removing tutorial enemy: " . $e->getMessage());
         }
     }
@@ -268,11 +267,11 @@ class TutorialResourceManager
             }
 
             // Step 1: Clean up enemies first (no foreign key dependencies)
-            $enemyCleanup = new TutorialEnemyCleanup($this->conn, new NullLogger());
+            $cleanup = new TutorialCleanup($this->conn);
             foreach ($sessions as $session) {
                 if ($session['session_id']) {
                     try {
-                        $enemyCleanup->removeBySessionId($session['session_id']);
+                        $cleanup->removeEnemiesBySession($session['session_id']);
                     } catch (\Exception $e) {
                         error_log("[TutorialResourceManager] Error cleaning enemy for session {$session['session_id']}: " . $e->getMessage());
                     }
@@ -281,8 +280,7 @@ class TutorialResourceManager
 
             // Step 2: Clean up tutorial players (must be before map instance deletion)
             // This is critical because players reference coords via foreign key
-            $playerCleanup = new TutorialPlayerCleanup($this->conn, new NullLogger());
-            $cleanedCount = $playerCleanup->cleanupOrphanedTutorialPlayers($realPlayerId);
+            $cleanedCount = $cleanup->cleanupOrphanedTutorialPlayers($realPlayerId);
 
             // Step 3: Delete map instances (deletes coords - must be AFTER player deletion)
             foreach ($sessions as $session) {
@@ -337,8 +335,7 @@ class TutorialResourceManager
             SELECT DISTINCT plan FROM coords WHERE plan LIKE 'tut\\_%'
         ");
 
-        $enemyCleanup = new TutorialEnemyCleanup($this->conn, new NullLogger());
-        $playerCleanup = new TutorialPlayerCleanup($this->conn, new NullLogger());
+        $cleanup = new TutorialCleanup($this->conn);
         $mapInstance = new TutorialMapInstance($this->conn);
 
         foreach ($plans as $plan) {
@@ -369,8 +366,8 @@ class TutorialResourceManager
                 // (players holds coords by foreign key, it must leave before
                 // the instance).
                 foreach ($sessions as $session) {
-                    $enemyCleanup->removeBySessionId((string) $session['tutorial_session_id']);
-                    $playerCleanup->deleteTutorialPlayer((int) $session['id'], (int) $session['player_id']);
+                    $cleanup->removeEnemiesBySession((string) $session['tutorial_session_id']);
+                    $cleanup->deleteTutorialPlayer((int) $session['id'], (int) $session['player_id']);
                 }
 
                 // Leftover tutorial characters whose bookkeeping row is
@@ -384,7 +381,7 @@ class TutorialResourceManager
                     [$plan]
                 );
                 foreach ($leftovers as $leftover) {
-                    $playerCleanup->deleteTutorialPlayer((int) ($leftover['tp_id'] ?? 0), (int) $leftover['id']);
+                    $cleanup->deleteTutorialPlayer((int) ($leftover['tp_id'] ?? 0), (int) $leftover['id']);
                 }
 
                 // A real player on the plan is not ours to delete: report,
@@ -409,7 +406,7 @@ class TutorialResourceManager
         }
 
         // Enemies whose session vanished entirely, wherever they stand.
-        $enemyCleanup->removeOrphanedEnemies();
+        $cleanup->removeOrphanedEnemies();
 
         return $report;
     }
@@ -479,7 +476,7 @@ class TutorialResourceManager
      * cascade, and map instance (coords).
      *
      * Inlined path — no more service-class round-trip.
-     * FK cascade still delegates to TutorialPlayerCleanup (unchanged,
+     * FK cascade still delegates to TutorialCleanup (unchanged,
      * covered by TutorialPlayerCleanupIntegrationTest from !376).
      */
     public function deleteTutorialPlayerAsEntity(
@@ -491,7 +488,7 @@ class TutorialResourceManager
             $this->removeTutorialEnemy($sessionId);
 
             // Step 2: tutorial_players row + players row + FK cascade.
-            // TutorialPlayerCleanup::deleteTutorialPlayer takes
+            // TutorialCleanup::deleteTutorialPlayer takes
             // (tutorial_players.id, players.id). The entity's getId()
             // is the players.id; tutorial_players.id requires one
             // lookup by session.
@@ -501,7 +498,7 @@ class TutorialResourceManager
             );
 
             if ($row !== false) {
-                $cleanup = new TutorialPlayerCleanup($this->conn, new NullLogger());
+                $cleanup = new TutorialCleanup($this->conn);
                 $cleanup->deleteTutorialPlayer(
                     (int) $row['id'],
                     (int) $entity->getId()

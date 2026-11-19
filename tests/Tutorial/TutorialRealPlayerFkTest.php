@@ -13,7 +13,7 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
  *
  * When a real player is deleted, every tutorial player that pointed
  * at them must have its `real_player_id_ref` nulled (NOT cascaded —
- * the tutorial player's own row stays, `TutorialPlayerCleanup`
+ * the tutorial player's own row stays, `TutorialCleanup`
  * handles the orphan).
  *
  * The test skips if the FK isn't applied to the test DB yet: fresh

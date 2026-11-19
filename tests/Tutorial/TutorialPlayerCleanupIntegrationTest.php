@@ -2,12 +2,12 @@
 
 namespace Tests\Tutorial;
 
-use App\Tutorial\TutorialPlayerCleanup;
+use App\Tutorial\TutorialCleanup;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
 
 /**
- * D4 Phase C — integration test for App\Tutorial\TutorialPlayerCleanup.
+ * D4 Phase C — integration test for App\Tutorial\TutorialCleanup.
  *
  * The cleanup service does two things the unit tests can't verify:
  *
@@ -38,7 +38,7 @@ class TutorialPlayerCleanupIntegrationTest extends TutorialIntegrationTestCase
     {
         [$realPlayerId, $tutPlayerId, $tutPlayersRowId] = $this->seedTutorialPlayerWithFkRow();
 
-        $cleanup = new TutorialPlayerCleanup($this->conn);
+        $cleanup = new TutorialCleanup($this->conn);
         $cleanup->deleteTutorialPlayer($tutPlayersRowId, $tutPlayerId);
 
         // Phase 1: tutorial_players row soft-deleted, not removed.
@@ -69,7 +69,7 @@ class TutorialPlayerCleanupIntegrationTest extends TutorialIntegrationTestCase
     {
         $realPlayerId = $this->seedRealPlayer();
 
-        $cleanup = new TutorialPlayerCleanup($this->conn);
+        $cleanup = new TutorialCleanup($this->conn);
         $cleaned = $cleanup->cleanupOrphanedTutorialPlayers($realPlayerId);
 
         $this->assertSame(0, $cleaned);
@@ -83,7 +83,7 @@ class TutorialPlayerCleanupIntegrationTest extends TutorialIntegrationTestCase
         [$tutPlayerId1, $tutRowId1] = $this->seedTutorialPlayer($realPlayerId);
         [$tutPlayerId2, $tutRowId2] = $this->seedTutorialPlayer($realPlayerId);
 
-        $cleanup = new TutorialPlayerCleanup($this->conn);
+        $cleanup = new TutorialCleanup($this->conn);
         $cleaned = $cleanup->cleanupOrphanedTutorialPlayers($realPlayerId);
 
         $this->assertSame(2, $cleaned);
@@ -111,7 +111,7 @@ class TutorialPlayerCleanupIntegrationTest extends TutorialIntegrationTestCase
         // — the guard is specifically for the players-table phase.
         [, , $tutPlayersRowId] = $this->seedTutorialPlayerWithFkRow();
 
-        $cleanup = new TutorialPlayerCleanup($this->conn);
+        $cleanup = new TutorialCleanup($this->conn);
         $cleanup->deleteTutorialPlayer($tutPlayersRowId, -1);
 
         $tutRow = $this->conn->fetchAssociative(
@@ -119,6 +119,27 @@ class TutorialPlayerCleanupIntegrationTest extends TutorialIntegrationTestCase
             [$tutPlayersRowId]
         );
         $this->assertSame(0, (int) $tutRow['is_active'], 'soft delete should still run');
+    }
+
+    public function testRemoveEnemiesBySessionDeletesTheEnemyAndItsTrackingRow(): void
+    {
+        $sessionId = 'tut-' . bin2hex(random_bytes(6));
+        $coordsId = $this->seedTile();
+        $enemyId = -(int) $this->conn->fetchOne('SELECT 1 - LEAST(0, COALESCE(MIN(id), 0)) FROM players');
+        $this->conn->insert('players', [
+            'id' => $enemyId, 'name' => 'Mannequin', 'race' => 'Humain', 'player_type' => 'npc', 'coords_id' => $coordsId,
+        ]);
+        // The PV bonus an enemy gets when it spawns
+        $this->conn->insert('players_bonus', ['player_id' => $enemyId, 'name' => 'pv', 'n' => 5]);
+        $this->conn->insert('tutorial_enemies', [
+            'tutorial_session_id' => $sessionId, 'enemy_player_id' => $enemyId, 'enemy_coords_id' => $coordsId,
+        ]);
+
+        $removed = (new TutorialCleanup($this->conn))->removeEnemiesBySession($sessionId);
+
+        $this->assertSame(1, $removed);
+        $this->assertFalse($this->conn->fetchOne('SELECT id FROM players WHERE id = ?', [$enemyId]));
+        $this->assertFalse($this->conn->fetchOne('SELECT id FROM tutorial_enemies WHERE tutorial_session_id = ?', [$sessionId]));
     }
 
     /**

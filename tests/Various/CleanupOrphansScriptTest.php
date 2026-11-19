@@ -2,8 +2,7 @@
 
 namespace Tests\Various;
 
-use App\Tutorial\TutorialEnemyCleanup;
-use App\Tutorial\TutorialPlayerCleanup;
+use App\Tutorial\TutorialCleanup;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
@@ -22,17 +21,17 @@ class CleanupOrphansScriptTest extends TestCase
         // the test to actually FAIL (not pass-by-static-analysis) if the
         // method is renamed or changes signature. Parameter name is NOT
         // pinned — no caller uses named arguments, so the name is
-        // internal to TutorialEnemyCleanup.
-        $method = new ReflectionMethod(TutorialEnemyCleanup::class, 'removeBySessionId');
+        // internal to TutorialCleanup.
+        $method = new ReflectionMethod(TutorialCleanup::class, 'removeEnemiesBySession');
         $params = $method->getParameters();
 
-        $this->assertCount(1, $params, 'removeBySessionId must take exactly one argument');
+        $this->assertCount(1, $params, 'removeEnemiesBySession must take exactly one argument');
         $this->assertSame('string', (string) $params[0]->getType());
     }
 
     public function testRequiredPlayerCleanupContractMatches(): void
     {
-        $method = new ReflectionMethod(TutorialPlayerCleanup::class, 'deleteTutorialPlayer');
+        $method = new ReflectionMethod(TutorialCleanup::class, 'deleteTutorialPlayer');
         $params = $method->getParameters();
 
         $this->assertCount(2, $params, 'deleteTutorialPlayer must take (int $tutorialPlayersId, int $actualPlayerId)');

@@ -9,10 +9,8 @@
 use App\Tutorial\TutorialHelper;
 use App\Tutorial\TutorialSessionManager;
 use App\Tutorial\TutorialMapInstance;
-use App\Tutorial\TutorialEnemyCleanup;
 use App\Factory\EntityManagerFactory;
 use Classes\Db;
-use Psr\Log\NullLogger;
 
 define('NO_LOGIN', true);
 require_once(__DIR__ . '/../../config.php');

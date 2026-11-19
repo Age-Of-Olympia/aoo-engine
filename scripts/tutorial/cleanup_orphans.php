@@ -34,8 +34,7 @@ define('NO_LOGIN', true);
 require_once __DIR__ . '/../../config.php';
 
 use App\Factory\EntityManagerFactory;
-use App\Tutorial\TutorialEnemyCleanup;
-use App\Tutorial\TutorialPlayerCleanup;
+use App\Tutorial\TutorialCleanup;
 use Classes\Db;
 
 $opts = getopt('', ['hours::', 'dry-run', 'quiet']);
@@ -51,8 +50,7 @@ $logLine = static function (string $msg) use ($quiet): void {
 
 $db = new Db();
 $conn = EntityManagerFactory::getEntityManager()->getConnection();
-$enemyCleanup = new TutorialEnemyCleanup($conn);
-$playerCleanup = new TutorialPlayerCleanup($conn);
+$cleanup = new TutorialCleanup($conn);
 
 $sql = '
     SELECT tutorial_session_id, player_id, tutorial_version, created_at
@@ -90,7 +88,7 @@ while ($row = $result->fetch_assoc()) {
          * Order matters because of FK constraints — enemies before players,
          * progress row last. */
 
-        $enemyCleanup->removeBySessionId($sessionId);
+        $cleanup->removeEnemiesBySession($sessionId);
 
         $tpResult = $db->exe(
             'SELECT id, player_id FROM tutorial_players WHERE tutorial_session_id = ?',
@@ -98,7 +96,7 @@ while ($row = $result->fetch_assoc()) {
         );
         if ($tpResult && $tpResult->num_rows > 0) {
             $tpRow = $tpResult->fetch_assoc();
-            $playerCleanup->deleteTutorialPlayer(
+            $cleanup->deleteTutorialPlayer(
                 (int) $tpRow['id'],
                 (int) $tpRow['player_id']
             );
