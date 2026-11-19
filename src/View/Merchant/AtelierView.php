@@ -35,12 +35,13 @@ final class AtelierView
         if ($rows === []) {
             echo '<p><small>' . ($repair ? 'Rien à réparer' : 'Rien de brisé') . ' dans votre sac.</small></p>';
         } else {
+            $labels = self::stackLabels($rows);
             echo '<table border="1" class="marbre">';
             foreach ($rows as $row) {
                 echo '<tr><td>' . ExchangePanesView::rowSprite((string) $row['name'])
                     . htmlspecialchars(ContainerService::exemplarEntryLabel($row), ENT_QUOTES, 'UTF-8')
                     . ' ' . ItemInstanceService::stateLine($row, withBreak: false) . '</td><td>'
-                    . ($repair ? self::repairButtons($row) : self::recycleButton($row)) . '</td></tr>';
+                    . ($repair ? self::repairButtons($row, $labels) : self::recycleButton($row, $labels)) . '</td></tr>';
             }
             echo '</table>';
         }
@@ -56,7 +57,7 @@ final class AtelierView
     }
 
     /** @param array<string, mixed> $row */
-    private static function repairButtons(array $row): string
+    private static function repairButtons(array $row, array $labels): string
     {
         $quote = $row['quote'];
         if ($quote === null) {
@@ -65,14 +66,14 @@ final class AtelierView
 
         $seed = (int) $row['quote_seed'];
 
-        return self::button($row, 'repair-resources', self::stackList($quote['resources']), $seed)
+        return self::button($row, 'repair-resources', self::stackList($quote['resources'], $labels), $seed)
             . ' ' . self::button($row, 'repair-gold', $quote['gold'] . ' PO', $seed);
     }
 
     /** @param array<string, mixed> $row */
-    private static function recycleButton(array $row): string
+    private static function recycleButton(array $row, array $labels): string
     {
-        return self::button($row, 'recycle', 'Recycler → ' . ($row['refund'] === [] ? 'rien' : self::stackList($row['refund'])));
+        return self::button($row, 'recycle', 'Recycler → ' . ($row['refund'] === [] ? 'rien' : self::stackList($row['refund'], $labels)));
     }
 
     /** @param array<string, mixed> $row */
@@ -83,13 +84,41 @@ final class AtelierView
             . ($quoteSeed === null ? '' : ' data-quote-seed="' . $quoteSeed . '"') . '>' . $label . '</button>';
     }
 
-    /** @param array<string, int> $stacks name => count */
-    private static function stackList(array $stacks): string
+    /** @param list<array<string, mixed>> $rows @return array<string, string> item name => display label */
+    private static function stackLabels(array $rows): array
     {
-        $conn = EntityManagerFactory::getEntityManager()->getConnection();
+        $names = [];
+        foreach ($rows as $row) {
+            foreach ([$row['quote']['resources'] ?? [], $row['refund'] ?? []] as $stacks) {
+                foreach (array_keys($stacks) as $name) {
+                    $names[$name] = true;
+                }
+            }
+        }
+        if ($names === []) {
+            return [];
+        }
+
+        $labels = EntityManagerFactory::getEntityManager()->getConnection()->fetchAllKeyValue(
+            'SELECT name, label FROM items WHERE name IN (?)',
+            [array_keys($names)],
+            [\Doctrine\DBAL\ArrayParameterType::STRING]
+        );
+        foreach (array_keys($names) as $name) {
+            if (trim((string) ($labels[$name] ?? '')) === '') {
+                $labels[$name] = ucfirst(str_replace('_', ' ', $name));
+            }
+        }
+
+        return $labels;
+    }
+
+    /** @param array<string, int> $stacks name => count @param array<string, string> $labels */
+    private static function stackList(array $stacks, array $labels): string
+    {
         $parts = [];
         foreach ($stacks as $name => $count) {
-            $label = ItemInstanceService::catalogLabel($conn, $name);
+            $label = (string) ($labels[$name] ?? ucfirst(str_replace('_', ' ', $name)));
             $parts[] = $count . ' ' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
         }
 

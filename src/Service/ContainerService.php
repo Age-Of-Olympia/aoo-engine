@@ -424,6 +424,28 @@ final class ContainerService
         ) === false;
     }
 
+    /** Count distinct refund items that would add a new line to the holder's bag. */
+    public function newStackLineCount(int $holderId, array $itemNames): int
+    {
+        if ($itemNames === []) {
+            return 0;
+        }
+
+        return (int) $this->conn->fetchOne(
+            "SELECT COUNT(DISTINCT it.id)
+               FROM items it
+               LEFT JOIN players_items pi
+                 ON pi.player_id = ? AND pi.item_id = it.id AND pi.slot = '' AND pi.equiped = ''
+              WHERE it.name IN (?) AND it.name <> ? AND pi.item_id IS NULL",
+            [$holderId, $itemNames, self::COIN],
+            [
+                \Doctrine\DBAL\ParameterType::INTEGER,
+                \Doctrine\DBAL\ArrayParameterType::STRING,
+                \Doctrine\DBAL\ParameterType::STRING,
+            ]
+        );
+    }
+
     /** Would unequipping this worn item take a bag line? Not an intact exemplar that rejoins its pile. */
     public function unequipNeedsLine(int $holderId, int $itemId, ?int $instanceId): bool
     {

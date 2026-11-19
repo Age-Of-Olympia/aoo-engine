@@ -175,12 +175,7 @@ final class RepairService
 
         /* The bag-lines rule: the wreck frees its line, each new stack takes one. */
         $capacity = new ContainerService();
-        $newLines = 0;
-        foreach (array_keys($refund) as $name) {
-            if ($capacity->stackNeedsRoom($playerId, (int) Item::get_item_by_name($name)->id)) {
-                $newLines++;
-            }
-        }
+        $newLines = $capacity->newStackLineCount($playerId, array_keys($refund));
         $max = $capacity->capacityOf($playerId);
         if ($max !== null && $capacity->lineCountOf($playerId) - 1 + $newLines > $max) {
             throw new \RuntimeException('Votre sac est plein.');

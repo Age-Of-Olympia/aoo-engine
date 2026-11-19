@@ -2,7 +2,6 @@
 
 namespace App\Service;
 
-use Classes\Item;
 use Doctrine\DBAL\Connection;
 use Random\Randomizer;
 
@@ -20,6 +19,9 @@ final class RecipeWorthService
 {
     /** @var array<string, array<string, array{count: float, price: int, race: string}>> flatten() per item, for this request */
     private array $flattened = [];
+
+    /** @var array<int, array<string, int>> stack quantities, loaded once per player */
+    private array $ownedCounts = [];
 
     public function __construct(private Connection $conn)
     {
@@ -221,10 +223,16 @@ final class RecipeWorthService
     private function pickResource(array $candidates, Randomizer $dice, ?int $playerId, array $reserved = []): string
     {
         if ($playerId !== null) {
+            $ownedCounts = $this->ownedCounts[$playerId] ??= $this->conn->fetchAllKeyValue(
+                "SELECT items.name, players_items.n
+                 FROM players_items
+                 INNER JOIN items ON items.id = players_items.item_id
+                 WHERE players_items.player_id = ? AND players_items.slot = ''",
+                [$playerId]
+            );
             $owned = array_filter(
                 $candidates,
-                static fn (mixed $_, string $name): bool =>
-                    Item::get_item_by_name($name)->get_n($playerId, includeInstances: false) > ($reserved[$name] ?? 0),
+                static fn (mixed $_, string $name): bool => (int) ($ownedCounts[$name] ?? 0) > ($reserved[$name] ?? 0),
                 ARRAY_FILTER_USE_BOTH
             );
             if ($owned !== []) {
