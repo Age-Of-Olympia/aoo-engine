@@ -133,12 +133,4 @@ final class PlayerFactory
             ->getRepository(\App\Entity\RealPlayer::class)
             ->findOneBy(['name' => $name]);
     }
-
-    /**
-     * Modern entity for the active player (tutorial-aware).
-     */
-    public static function activeEntity(): ?Character
-    {
-        return self::entity(self::activeId());
-    }
 }

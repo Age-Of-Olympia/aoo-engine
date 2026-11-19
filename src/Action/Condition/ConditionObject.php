@@ -9,8 +9,6 @@ class ConditionObject
     protected ?Action $action = null;
     protected ?int $actorRoll = null;
     protected ?int $targetRoll = null;
-    protected ?string $actorRollTrait = null;
-    protected ?string $targetRollTrait = null;
     protected ?int $actorRollBonus = null;
     protected ?int $targetRollBonus = null;
     protected ?bool $actorAdvantage = null;
@@ -133,28 +131,6 @@ class ConditionObject
     public function setActorRollBonus(int $actorRollBonus): self
     {
         $this->actorRollBonus = $actorRollBonus;
-        return $this;
-    }
-
-    public function getActorRollTrait(): ?string
-    {
-        return $this->actorRollTrait;
-    }
-
-    public function setActorRollTrait(string $actorRollTrait): self
-    {
-        $this->actorRollTrait = $actorRollTrait;
-        return $this;
-    }
-
-    public function getTargetRollTrait(): ?string
-    {
-        return $this->targetRollTrait;
-    }
-
-    public function setTargetRollTrait(string $targetRollTrait): self
-    {
-        $this->targetRollTrait = $targetRollTrait;
         return $this;
     }
 

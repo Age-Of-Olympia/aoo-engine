@@ -39,7 +39,6 @@ class BuffComputeCondition extends ComputeCondition implements DeclaresSimulatio
         $params = $condition->getParameters();
         $this->actorRollTrait = $params['actorRollType'] ?? null;
         $conditionObject->setActorRollBonus($params['actorRollBonus'] ?? 0);
-        $conditionObject->setActorRollTrait($params['actorRollType'] ?? 0);
         $conditionObject->setActorAdvantage($params['actorAdvantage'] ?? false);
         $conditionObject->setActorDisadvantage($params['actorDisadvantage'] ?? false);
 

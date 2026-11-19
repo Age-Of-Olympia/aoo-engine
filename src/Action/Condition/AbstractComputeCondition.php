@@ -45,8 +45,6 @@ abstract class AbstractComputeCondition extends BaseCondition
         $this->targetRollTrait = $params['targetRollType'] ?? null;
         $conditionObject->setActorRollBonus($params['actorRollBonus'] ?? 0);
         $conditionObject->setTargetRollBonus($params['targetRollBonus'] ?? 0);
-        $conditionObject->setActorRollTrait($params['actorRollType'] ?? 0);
-        $conditionObject->setTargetRollTrait($params['targetRollType'] ?? 0);
         $conditionObject->setActorAdvantage($params['actorAdvantage'] ?? false);
         $conditionObject->setTargetAdvantage($params['targetAdvantage'] ?? false);
         $conditionObject->setActorDisadvantage($params['actorDisadvantage'] ?? false);

@@ -891,32 +891,6 @@ class TiledMapService
     }
 
     /**
-     * Applies a bundle's buildings layer, z level by z level, with the push's
-     * diff: decor missing from the rows is removed, rows missing from the
-     * plan are placed, everything a player or a faction holds is untouched.
-     *
-     * @param list<array{name: string, x: int, y: int, z: int}> $rows
-     * @return string[] placements refused, one line each
-     */
-    public function importDecorBuildings(string $plan, array $rows): array
-    {
-        $byZ = [];
-        foreach ($rows as $row) {
-            $byZ[(int) $row['z']][] = $row;
-        }
-        foreach ($this->planZLevels($plan) as $z) {
-            $byZ[$z] ??= [];
-        }
-
-        $skipped = [];
-        foreach ($byZ as $z => $zRows) {
-            $skipped = array_merge($skipped, $this->importBuildingsAt($plan, (int) $z, $zRows));
-        }
-
-        return $skipped;
-    }
-
-    /**
      * The decor buildings of ONE level, as a bundle draws them: what the rows
      * no longer name is removed, what they add is placed.
      *
