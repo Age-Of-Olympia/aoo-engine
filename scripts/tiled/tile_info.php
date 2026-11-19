@@ -51,6 +51,17 @@ select  p.coords_id as coords_id, 'buildings' as type, CONVERT(CONCAT(p.race, ' 
                   CONCAT(', faction ', CONVERT(p.faction USING utf8mb4)))) USING utf8mb4) as params
 from buildings b join players p on p.id = b.player_id where p.coords_id = ?
 union
+/* Un coffre posé est un objet (entité `item`), sans ligne `buildings` : sans
+   cette branche, posé puis abîmé il restait sur la carte, introuvable. */
+select ec.coords_id as coords_id, 'objet_pose' as type, CONVERT(CONCAT(p.race, ' #', p.id) USING utf8mb4) as name,
+       CONVERT(CONCAT(IF(w.n < 0, CONCAT('abîmé (', w.n, ' pv)'), 'intact'),
+              IF(p.owner_id IS NULL, '', CONCAT(', propriétaire #', p.owner_id)),
+              IF(CONVERT(p.faction USING utf8mb4) = '', '',
+                 CONCAT(', faction ', CONVERT(p.faction USING utf8mb4)))) USING utf8mb4) as params
+from players p join entity_cells ec on ec.player_id = p.id
+left join players_bonus w on w.player_id = p.id and w.name = 'pv'
+where p.player_type = 'item' and ec.coords_id = ?
+union
 /* L'ombre n'est plus un décor mais une intensité portée par la case
    (coords.shade). Sans cette ligne, une case ombrée n'aurait plus rien à
    dire d'elle-même : on ne saurait ni qu'elle l'est, ni de combien. */

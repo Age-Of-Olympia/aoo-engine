@@ -821,6 +821,33 @@ class BuildingService
     }
 
     /**
+     * Placed objects (a chest is an item exemplar standing on a cell, with no
+     * `buildings` row) holding a cell through their emprise. Intact or worn:
+     * wear is a `pv` wound, not a state, so it never hides them.
+     *
+     * @return array<int, array{player_id: int, owner_id: ?int, faction: string, holds: bool}>
+     */
+    public function placedObjectsOn(int $coordsId): array
+    {
+        $rows = $this->entityManager->getConnection()->fetchAllAssociative(
+            'SELECT DISTINCT p.id AS player_id, p.owner_id, p.faction,
+                    EXISTS (SELECT 1 FROM players_items pi WHERE pi.player_id = p.id)
+                      OR EXISTS (SELECT 1 FROM players h WHERE h.holder_id = p.id) AS holds
+               FROM players p
+               LEFT JOIN entity_cells ec ON ec.player_id = p.id
+              WHERE p.player_type = ? AND (p.coords_id = ? OR ec.coords_id = ?)',
+            [ItemInstanceService::ENTITY_TYPE, $coordsId, $coordsId]
+        );
+
+        return array_map(static fn (array $row): array => [
+            'player_id' => (int) $row['player_id'],
+            'owner_id'  => $row['owner_id'] !== null ? (int) $row['owner_id'] : null,
+            'faction'   => (string) $row['faction'],
+            'holds'     => (bool) $row['holds'],
+        ], $rows);
+    }
+
+    /**
      * May $actorId take this building's commands? Refusals speak the
      * words the player reads. Driving asks the household rule — the
      * owner, a member of its faction, and a thing with neither belongs
@@ -1525,7 +1552,7 @@ class BuildingService
      * naming the branch says so. `DELETE FROM buildings` is a no-op for a
      * family that has no satellite row.
      */
-    public function remove(int $playerId): bool
+    public function remove(int $playerId, bool $force = false): bool
     {
         $conn = $this->entityManager->getConnection();
 
@@ -1551,9 +1578,14 @@ class BuildingService
                 [$playerId, $playerId]
             );
             if ($holds !== false) {
-                return false;
+                if (!$force) {
+                    return false;
+                }
+                // Forced (editor): the contents fall on the cell like a broken chest's.
+                (new \App\Service\LootSpillService())->spill(\App\Factory\PlayerFactory::legacy($playerId), holderSurvives: false);
             }
             $conn->transactional(function ($conn) use ($playerId, $instanceId): void {
+                $conn->executeStatement('DELETE FROM players_items WHERE player_id = ?', [$playerId]);
                 $conn->executeStatement('UPDATE item_instances SET destroyed = 1 WHERE id = ?', [$instanceId]);
                 (new \App\Service\Map\EntityLocationService($conn))->shelve($playerId);
             });

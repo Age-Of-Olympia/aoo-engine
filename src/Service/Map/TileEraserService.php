@@ -18,7 +18,10 @@ final class TileEraserService
     private const TABLE_LAYERS = ['map_tiles', 'map_triggers', 'map_dialogs', 'map_elements', 'map_marks'];
 
     /** Every layer a cell can be emptied of, in the order the eraser runs. */
-    public const LAYERS = [...self::TABLE_LAYERS, 'map_foregrounds', 'buildings', 'ressource', 'plante', 'route'];
+    public const LAYERS = [...self::TABLE_LAYERS, 'map_foregrounds', 'buildings', self::PLACED_OBJECTS, 'ressource', 'plante', 'route'];
+
+    /** Placed objects (chests…): item exemplars standing on the cell, no `buildings` row. */
+    public const PLACED_OBJECTS = 'objet_pose';
 
     /** Lightens the cell by one shade step: undone the way it was painted. */
     public const SHADE_STEP = 'ombre';
@@ -57,6 +60,7 @@ final class TileEraserService
             in_array($layer, self::TABLE_LAYERS, true) => $this->deleteRows($layer, $coordsId),
             $layer === 'map_foregrounds' => $this->eraseScenery($coordsId),
             $layer === 'buildings' => $this->eraseBuildings($coordsId, $force),
+            $layer === self::PLACED_OBJECTS => $this->erasePlacedObjects($coordsId, $force),
             $layer === 'ressource' => $this->removeEntities($resources->idsOn($coordsId)),
             $layer === 'plante' => $this->removeEntities($this->plantsOn($coordsId)),
             $layer === 'route' => $this->removeEntities((new GroundLayerService())->roadsOn($coordsId)),
@@ -117,6 +121,25 @@ final class TileEraserService
 
             // Shelved, not deleted: remove() would clear its players_logs history
             $buildings->vanish($building['player_id']);
+        }
+
+        return $notices;
+    }
+
+    /** @return list<string> */
+    private function erasePlacedObjects(int $coordsId, bool $force): array
+    {
+        $buildings = new BuildingService();
+        $notices = [];
+
+        foreach ($buildings->placedObjectsOn($coordsId) as $object) {
+            // A placed chest always has an owner or a faction: only what it holds is worth protecting.
+            if ($object['holds'] && !$force) {
+                $notices[] = 'objet #' . $object['player_id'] . ' protégé (contient des objets)';
+                continue;
+            }
+
+            $buildings->remove($object['player_id'], $force);
         }
 
         return $notices;

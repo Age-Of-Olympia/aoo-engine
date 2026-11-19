@@ -69,6 +69,26 @@ class TileEraserServiceTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(0, $held());
     }
 
+    /** A placed chest is an item exemplar: worn or not, the info panel lists it and the eraser reaches it. */
+    public function testAWornPlacedChestIsListedAndErasable(): void
+    {
+        $this->requireBuildingsOrSkip();
+        $this->coordsIdOn(self::PLAN, 8, 0);
+        $chestId = (new \App\Service\BuildingService())->place('coffre_metal', $this->tile(8, 0, self::PLAN));
+        $this->trackEntityId($chestId);
+        $cell = $this->coordsIdOn(self::PLAN, 8, 0);
+        $this->link->executeStatement("INSERT INTO players_bonus (player_id, name, n) VALUES (?, 'pv', -5)", [$chestId]);
+
+        $listed = fn(): int => count((new \App\Service\BuildingService())->placedObjectsOn($cell));
+        $this->assertSame(1, $listed());
+
+        // Owned like any chest a player placed: the eraser still takes it while empty.
+        $this->link->executeStatement('UPDATE players SET owner_id = ? WHERE id = ?', [(int) $this->createRealPlayer('Gommeur2')->id, $chestId]);
+        $this->assertSame([], (new TileEraserService())->eraseAll($cell));
+        $this->assertSame(0, $listed());
+        $this->assertSame(1, (int) $this->link->fetchOne('SELECT destroyed FROM item_instances WHERE entity_id = ?', [$chestId]));
+    }
+
     public function testAnUnknownLayerIsRefused(): void
     {
         $this->expectException(\InvalidArgumentException::class);
