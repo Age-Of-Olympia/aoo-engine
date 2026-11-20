@@ -75,7 +75,7 @@ class SearchView
                 }
 
 
-                if (!empty($forumJson->factions) && !in_array($player->data->faction, $forumJson->factions)) {
+                if (!Forum::may_access($player, $forumJson)) {
 
                     continue;
                 }

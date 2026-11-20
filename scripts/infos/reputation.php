@@ -138,7 +138,7 @@ else{
             $forumJson = $topJson ? json()->decode('forum/forums', $topJson->forum_id) : false;
 
 
-            if(!$topJson || (!empty($forumJson->factions) && !in_array($player->data->faction, $forumJson->factions))){
+            if(!$topJson || !\Classes\Forum::may_access($player, $forumJson)){
 
 
                 echo '<th>?</th>

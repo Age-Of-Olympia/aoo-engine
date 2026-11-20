@@ -3,6 +3,7 @@
 namespace App\View\Forum;
 
 use App\Factory\PlayerFactory;
+use Classes\Forum;
 use Classes\Str;
 use Classes\Ui;
 use App\View\InfosView;
@@ -78,13 +79,9 @@ class ForumHomeView
                 if ($catJson->name == 'Privés') {
 
 
-                    if (!empty($forJson->factions)) {
+                    if (!Forum::may_access($player, $forJson)) {
 
-
-                        if (!in_array($player->data->faction, $forJson->factions) && !in_array($player->data->secretFaction, $forJson->factions)) {
-
-                            continue;
-                        }
+                        continue;
                     }
 
 

@@ -2,6 +2,7 @@
 
 namespace App\Service;
 use App\Factory\EntityManagerFactory;
+use Classes\Forum;
 use Classes\Player;
 use Exception;
 
@@ -97,13 +98,9 @@ class ForumService
                 if ($catJson->name == 'Privés') {
 
 
-                    if (!empty($forJson->factions)) {
+                    if (!Forum::may_access($player, $forJson)) {
 
-
-                        if (!in_array($player->data->faction, $forJson->factions) && !in_array($player->data->secretFaction, $forJson->factions)) {
-
-                            continue;
-                        }
+                        continue;
                     }
                 }
 

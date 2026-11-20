@@ -22,6 +22,9 @@ class FactionService
     /** @var array<string, Faction|null> Per-request cache, keyed by lowercase code. */
     private static array $cache = [];
 
+    /** @var array<string, array<string, mixed>|null> Per-request memo of roleIn(), keyed "playerId|code". */
+    private static array $roleInMemo = [];
+
     private $entityManager;
 
     public function __construct()
@@ -394,6 +397,53 @@ class FactionService
         );
 
         return $row ?: null;
+    }
+
+    /**
+     * The role row a player holds in the faction `$code`, public
+     * (players.faction + factionRole) or secret (players.secretFaction +
+     * secretFactionRole). Null when the player belongs to neither or the
+     * position points at no row.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function roleIn(int $playerId, string $code): ?array
+    {
+        $key = $playerId . '|' . strtolower($code);
+        if (array_key_exists($key, self::$roleInMemo)) {
+            return self::$roleInMemo[$key];
+        }
+
+        $row = $this->entityManager->getConnection()->fetchAssociative(
+            'SELECT fr.* FROM players p
+               JOIN factions f ON CONVERT(f.code USING utf8mb4) = CONVERT(? USING utf8mb4)
+               JOIN faction_roles fr ON fr.faction_id = f.id
+                AND fr.position = CASE
+                      WHEN CONVERT(p.faction USING utf8mb4) = CONVERT(f.code USING utf8mb4) THEN p.factionRole
+                      WHEN CONVERT(p.secretFaction USING utf8mb4) = CONVERT(f.code USING utf8mb4) THEN p.secretFactionRole
+                      ELSE -1
+                    END
+              WHERE p.id = ?',
+            [$code, $playerId]
+        );
+
+        return self::$roleInMemo[$key] = ($row ?: null);
+    }
+
+    /**
+     * May this member, in the faction `$code`, exercise `$flag`? Same rule
+     * as mayManage(), read on the rank held in THAT faction (secret included).
+     */
+    public function mayInFaction(int $playerId, string $code, string $flag): bool
+    {
+        if (!in_array($flag, FactionRole::flagKeys(), true)) {
+            return false;
+        }
+
+        $role = $this->roleIn($playerId, $code);
+
+        return $role !== null
+            && (!empty($role[$flag]) || !empty($role[FactionRole::IMPLIED_BY[$flag] ?? '']));
     }
 
     /**
@@ -865,5 +915,6 @@ class FactionService
     public static function clearCache(): void
     {
         self::$cache = [];
+        self::$roleInMemo = [];
     }
 }

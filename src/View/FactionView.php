@@ -2,6 +2,7 @@
 
 namespace App\View;
 
+use App\Service\FactionService;
 use App\Service\RaceService;
 
 class FactionView
@@ -39,6 +40,9 @@ class FactionView
     ';
 
         $raceService = new RaceService();
+
+        /* Territory is shown only to a member whose rank holds showPosition */
+        $mayShowPosition = (new FactionService())->mayInFaction((int) $player->id, (string) $_GET['faction'], 'showPosition');
 
         while ($row = $res->fetch_object()) {
 
@@ -85,7 +89,7 @@ class FactionView
                 )
             );
 
-            if ($player->check_share_factions($target)) {
+            if ($mayShowPosition && $player->check_share_factions($target)) {
 
                 echo $planName;
             } else {

@@ -255,20 +255,41 @@ class Forum{
     }
 
 
-    public static function check_access($player, $forumJson){
+    /**
+     * A faction-bound forum is open to a member whose rank holds showForum,
+     * in the public or the secret faction the forum belongs to.
+     */
+    public static function may_access($player, $forumJson): bool{
 
+        if(empty($forumJson->factions)){
+
+            return true;
+        }
 
         if(!isset($player->data)){
 
             $player->get_data();
         }
 
-        if(!empty($forumJson->factions)){
+        $factionService = new \App\Service\FactionService();
 
-            if(!in_array($player->data->faction, $forumJson->factions) && !in_array($player->data->secretFaction, $forumJson->factions)){
+        foreach([$player->data->faction, $player->data->secretFaction] as $code){
 
-                exit('Accès refusé');
+            if($code != '' && in_array($code, $forumJson->factions)
+                && $factionService->mayInFaction((int) $player->id, $code, 'showForum')){
+
+                return true;
             }
+        }
+
+        return false;
+    }
+
+    public static function check_access($player, $forumJson){
+
+        if(!self::may_access($player, $forumJson)){
+
+            exit('Accès refusé');
         }
     }
 

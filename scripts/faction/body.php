@@ -111,25 +111,34 @@ if ($player->data->faction === ($_GET['faction'] ?? '') || \App\Service\AdminAut
     $factionChests = new \App\Service\FactionChestService();
     $managesChests = $member && (new FactionService())->mayManage((int) $player->id, \App\Service\FactionChestService::FLAG);
 
-    FactionView::renderBuildings((new FactionService())->buildingsOf($code), $member, (int) $player->id);
+    /* Where things stand is the showPosition right: without it the
+     * lists (buildings, chests, doors) stay hidden. The admin sees all. */
+    $seesPlaces = \App\Service\AdminAuthorizationService::isAdmin()
+        || ($member && (new FactionService())->mayInFaction((int) $player->id, $code, 'showPosition'));
 
-    /* Its chests, listed like its walls: contents for the eyes the
-     * rank allows, and the lock turnable from here. */
-    FactionView::renderContainers(
-        (new FactionService())->containersOf($code),
-        $member,
-        (int) $player->id,
-        $managesChests ? $factionChests->membersOf($code) : []
-    );
+    if ($seesPlaces) {
+        FactionView::renderBuildings((new FactionService())->buildingsOf($code), $member, (int) $player->id);
+
+        /* Its chests, listed like its walls: contents for the eyes the
+         * rank allows, and the lock turnable from here. */
+        FactionView::renderContainers(
+            (new FactionService())->containersOf($code),
+            $member,
+            (int) $player->id,
+            $managesChests ? $factionChests->membersOf($code) : []
+        );
+
+        if ($member) {
+            FactionView::renderDoors((new FactionService())->doorsOf($code), (int) $player->id);
+
+            if ($managesChests) {
+                FactionView::renderClaimableChests($factionChests->claimableOf($code));
+                FactionView::renderChestFloors($factionChests->floorsOf($code));
+            }
+        }
+    }
 
     if ($member) {
-        FactionView::renderDoors((new FactionService())->doorsOf($code), (int) $player->id);
-
-        if ($managesChests) {
-            FactionView::renderClaimableChests($factionChests->claimableOf($code));
-            FactionView::renderChestFloors($factionChests->floorsOf($code));
-        }
-
         /* The journal is the house's eyes — for the ranks it trusts
          * with them (showLogs). */
         if ((new FactionService())->mayManage((int) $player->id, 'showLogs')) {
