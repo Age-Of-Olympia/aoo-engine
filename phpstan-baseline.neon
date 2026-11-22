@@ -655,12 +655,6 @@ parameters:
 			path: src/Action/Condition/DistancePureComputeCondition.php
 
 		-
-			message: '#^Method App\\Action\\Condition\\DistancePureComputeCondition\:\:getDistanceTreshold\(\) should return int but returns float\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Action/Condition/DistancePureComputeCondition.php
-
-		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$coords\.$#'
 			identifier: property.notFound
 			count: 1

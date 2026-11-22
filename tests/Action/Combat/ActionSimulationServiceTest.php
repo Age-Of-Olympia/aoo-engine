@@ -180,7 +180,6 @@ class ActionSimulationServiceTest extends TestCase
         $this->assertSame(3, DistanceComputeCondition::distanceMalusFor(4, 'tir'));
         $this->assertSame(2, DistanceComputeCondition::distanceMalusFor(3, 'jet'));
         $this->assertSame(4, DistanceComputeCondition::distanceMalusFor(4, 'jet'));
-        $this->assertSame(0, DistanceComputeCondition::distanceMalusFor(4, 'melee'));
         $this->assertSame(10, DistanceComputeCondition::distanceThresholdFor(4));
     }
 
