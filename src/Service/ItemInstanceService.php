@@ -345,6 +345,44 @@ class ItemInstanceService
         });
     }
 
+    /** Consume one unit from legacy stack-backed equipment. */
+    public function consumeLegacyEquippedUnit(int $playerId, int $itemId, string $equipmentSlot): bool
+    {
+        if ($equipmentSlot === '') {
+            return false;
+        }
+
+        $conn = $this->entityManager->getConnection();
+
+        return $conn->transactional(function ($conn) use ($playerId, $itemId, $equipmentSlot): bool {
+            $row = $conn->fetchAssociative(
+                'SELECT n FROM players_items
+                 WHERE player_id = ? AND item_id = ? AND equiped = ? AND slot = ?
+                 FOR UPDATE',
+                [$playerId, $itemId, $equipmentSlot, '']
+            );
+            if ($row === false) {
+                return false;
+            }
+
+            if ((int) $row['n'] <= 1) {
+                $conn->executeStatement(
+                    'DELETE FROM players_items
+                     WHERE player_id = ? AND item_id = ? AND equiped = ? AND slot = ?',
+                    [$playerId, $itemId, $equipmentSlot, '']
+                );
+            } else {
+                $conn->executeStatement(
+                    'UPDATE players_items SET n = n - 1
+                     WHERE player_id = ? AND item_id = ? AND equiped = ? AND slot = ?',
+                    [$playerId, $itemId, $equipmentSlot, '']
+                );
+            }
+
+            return true;
+        });
+    }
+
     /**
      * Rollback path: return a PRISTINE, unequipped instance to its
      * owner's stack. Refuses as soon as any state diverged (wear,
@@ -449,6 +487,18 @@ class ItemInstanceService
         self::writeSlot($conn, $instanceId, $emplacement);
 
         return $instanceId;
+    }
+
+    /** Equip the player's complete inventory stack without promoting a unit. */
+    public function equipStack(int $playerId, int $itemId, string $emplacement): bool
+    {
+        $emplacement = EquipmentSlotService::storageSlot($emplacement);
+
+        return $this->entityManager->getConnection()->executeStatement(
+            'UPDATE players_items SET equiped = ?
+             WHERE player_id = ? AND item_id = ? AND equiped = ? AND slot = ? AND n > 0',
+            [$emplacement, $playerId, $itemId, '', '']
+        ) > 0;
     }
 
     /** Equipping one unit empties a bag line: a loose exemplar, or the last unit of a pile (see equipCatalogItem). */
@@ -1087,8 +1137,15 @@ class ItemInstanceService
             return true;
         }
 
-        return (int) ($conn->fetchOne(
-            'SELECT n FROM players_items WHERE player_id = ? AND item_id = ? AND slot = ""',
+        return $this->hasStackedUnit($playerId, $itemId);
+    }
+
+    /** Does the player have a stack unit in the bag, rather than equipped or stored elsewhere? */
+    public function hasStackedUnit(int $playerId, int $itemId): bool
+    {
+        return (int) ($this->entityManager->getConnection()->fetchOne(
+            'SELECT n FROM players_items
+             WHERE player_id = ? AND item_id = ? AND equiped = "" AND slot = ""',
             [$playerId, $itemId]
         ) ?: 0) > 0;
     }

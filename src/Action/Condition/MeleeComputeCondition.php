@@ -4,10 +4,19 @@ namespace App\Action\Condition;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetail;
 use App\Action\Combat\RollDetailView;
+use App\Entity\ActionCondition;
+use App\Interface\ActorInterface;
 use App\Interface\DeclaresSimulationInputsInterface;
 
 class MeleeComputeCondition extends ComputeCondition implements DeclaresSimulationInputsInterface
 {
+    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
+    {
+        $result = parent::check($actor, $target, $condition, $conditionObject);
+
+        return $this->appendJumpDistanceResult($result, $actor, $target, $condition);
+    }
+
     public static function targetDefenseValue(int $cc, int $agi): int
     {
         return max($cc, $agi);
@@ -53,10 +62,8 @@ class MeleeComputeCondition extends ComputeCondition implements DeclaresSimulati
     }
 
     protected function getDistanceMalus(\App\Interface\ActorInterface $actor): int {
-        $distanceMalus = 0;
-        if($this->distance > 2){
-            $distanceMalus = $this->distance * ($this->distance - 1);
-        }
-        return $distanceMalus;
+        return $this->distance > 2
+            ? 2 * self::triangularNumber($this->distance - 1)
+            : 0;
     }
 }

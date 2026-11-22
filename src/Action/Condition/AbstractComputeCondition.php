@@ -3,6 +3,7 @@
 namespace App\Action\Condition;
 
 use App\Action\Combat\CombatResolver;
+use App\Action\OutcomeInstruction\LifeLossOutcomeInstruction;
 use App\Action\OutcomeInstruction\MalusOutcomeInstruction;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
@@ -64,6 +65,61 @@ abstract class AbstractComputeCondition extends BaseCondition
         }
 
         return $result;
+    }
+
+    /** Apply the jump landing check from the melee roll, even when that attack misses. */
+    protected function appendJumpDistanceResult(
+        ConditionResult $result,
+        ActorInterface $actor,
+        ?ActorInterface $target,
+        ActionCondition $condition
+    ): ConditionResult {
+        if ($target === null || !$this->hasJumpInfluence($condition) || !($actor instanceof \Classes\Player)) {
+            return $result;
+        }
+
+        $rollTrait = (int) floor(((int) $actor->caracs->cc + (int) $actor->caracs->agi) / 2);
+        $roll = (new CombatResolver($this->dice))->roll($rollTrait);
+        $total = array_sum($roll);
+        $threshold = self::triangularNumber($this->distance + 1);
+        $message = 'Jet de saut : ' . $total . ' contre un seuil de ' . $threshold . '.';
+
+        if ($total < $threshold) {
+            $damage = $threshold - $total;
+            $actor->putBonus(['pv' => -$damage]);
+            $message .= ' ' . $actor->get_data()->name . ' perd ' . $damage . ' PV en retombant.';
+        } else {
+            $message .= ' Le saut est maîtrisé.';
+        }
+
+        $successMessages = $result->getConditionSuccessMessages() ?? [];
+        $failureMessages = $result->getConditionFailureMessages() ?? [];
+        if ($result->isSuccess()) {
+            $successMessages[] = $message;
+        } else {
+            $failureMessages[] = $message;
+        }
+
+        return new ConditionResult($result->isSuccess(), $successMessages, $failureMessages, $result->isBlocking());
+    }
+
+    private function hasJumpInfluence(ActionCondition $condition): bool
+    {
+        foreach ($condition->getAction()?->getOutcomes() ?? [] as $outcome) {
+            foreach ($outcome->getInstructions() as $instruction) {
+                if ($instruction instanceof LifeLossOutcomeInstruction
+                    && ($instruction->getParameters()['saut'] ?? false)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    protected static function triangularNumber(int $value): int
+    {
+        return intdiv($value * ($value + 1), 2);
     }
 
     private function applyActorPassives(ActorInterface $actor, ConditionObject $conditionObject): void
@@ -151,7 +207,13 @@ abstract class AbstractComputeCondition extends BaseCondition
 
     private function checkDistanceCondition(int $actorTotal, ActorInterface $actor): bool
     {
-        return $this->distance <= 1 || $actorTotal >= $this->getDistanceTreshold($actor);
+        return !$this->requiresDistanceThreshold() || $actorTotal >= $this->getDistanceTreshold($actor);
+    }
+
+    /** By default, rolls at distance 0 or 1 skip the distance threshold. */
+    protected function requiresDistanceThreshold(): bool
+    {
+        return $this->distance > 1;
     }
 
     protected function getDistanceMalus(ActorInterface $actor): int

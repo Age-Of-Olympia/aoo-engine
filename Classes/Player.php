@@ -1605,8 +1605,8 @@ class Player implements ActorInterface, HasMatriculeInterface {
 
     /**
      * @param int|null $instanceId instance PRÉCISE à équiper (clic sur une
-     *        ligne d'instance de l'inventaire) — null : la plus ancienne
-     *        disponible, sinon promotion depuis la pile
+     *        ligne d'instance de l'inventaire) — null : pile entière si
+     *        présente pour une arme de jet, sinon instance ou promotion
      */
     /**
      * @param bool|null $clickedEquippedLine la ligne d'inventaire cliquée
@@ -1697,6 +1697,10 @@ class Player implements ActorInterface, HasMatriculeInterface {
                 player_id = ?
                 AND
                 item_id = ?
+                AND
+                equiped <> ""
+                AND
+                slot = ""
                 ';
 
                 $db->exe($sql, array(
@@ -1784,9 +1788,16 @@ class Player implements ActorInterface, HasMatriculeInterface {
             // branche UNEQUIP l'aurait intercepté — donc libérer des
             // emplacements ne peut pas le rendre disponible).
             $instanceService = new \App\Service\ItemInstanceService();
-            $available = $instanceId !== null
+            $stackEquipmentSlot = in_array($catalogSlot, ['munition', 'trophee'], true);
+            $equipJetStack = !$stackEquipmentSlot
+                && (string) ($item->data->subtype ?? '') === 'jet'
+                && $instanceId === null
+                && $instanceService->hasStackedUnit((int) $this->id, (int) $item->id);
+            $equipWholeStack = $stackEquipmentSlot || $equipJetStack;
+
+            $available = $equipWholeStack || ($instanceId !== null
                 ? $instanceService->isInstanceEquippable($this->id, (int) $item->id, $instanceId)
-                : $instanceService->hasEquippableUnit($this->id, (int) $item->id);
+                : $instanceService->hasEquippableUnit($this->id, (int) $item->id));
             if($item->data->emplacement != 'munition' && $item->data->emplacement != 'trophee'
                 && !$available){
 
@@ -1797,9 +1808,8 @@ class Player implements ActorInterface, HasMatriculeInterface {
             if ($bagGuard) {
                 $bag = new \App\Service\ContainerService();
                 $capacity = $bag->capacityOf((int) $this->id);
-                $wholeStack = in_array($catalogSlot, ['munition', 'trophee'], true);
                 $added = $bag->linesToUnequip((int) $this->id, $emplacementsToClear)
-                    - (int) ($wholeStack || $instanceService->equipFreesALine((int) $this->id, (int) $item->id, $instanceId));
+                    - (int) ($equipWholeStack || $instanceService->equipFreesALine((int) $this->id, (int) $item->id, $instanceId));
                 if ($capacity !== null && $added > 0 && $bag->lineCountOf((int) $this->id) + $added > $capacity) {
                     return EquipResult::BagFull;
                 }
@@ -1831,27 +1841,12 @@ class Player implements ActorInterface, HasMatriculeInterface {
 
             $instanceService->unequipEmplacements($this->id, $emplacementsToClear);
 
-            if($item->data->emplacement == 'munition' || $item->data->emplacement == 'trophee'){
+            if ($equipWholeStack) {
 
-                // Sémantique de PILE conservée : tout le carquois est équipé
-                // d'un bloc et consommé unité par unité (RequiresAmmo) — une
-                // instance par flèche n'aurait aucun sens.
-                $sql = '
-                UPDATE
-                players_items
-                SET
-                equiped = ?
-                WHERE
-                player_id = ?
-                AND
-                item_id = ?
-                ';
-
-                $db->exe($sql, array(
-                    $item->data->emplacement,
-                    $this->id,
-                    $item->id
-                ));
+                // Ammunition and thrown weapons stay stack-backed while worn.
+                // The whole stack occupies one hand slot and each throw takes
+                // one unit from that equipped row.
+                $instanceService->equipStack((int) $this->id, (int) $item->id, $storageSlot);
             }
             else{
 

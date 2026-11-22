@@ -94,17 +94,27 @@ class RequiresAmmoCondition extends BaseCondition implements HasParameterSchemaI
                 $weapon = $actor->emplacements->main1;
                 $fragile = !empty($weapon->row->fragile) || !empty($weapon->data->fragile);
                 if ($target !== null && $fragile) {
+                    $instanceId = (int) ($weapon->row->instance_id ?? $weapon->instance_id ?? 0);
+                    $itemInstances = new \App\Service\ItemInstanceService();
+                    $destroyed = $actor->isSimulated();
+
                     if (!$actor->isSimulated()) {
-                        $instanceId = (int) ($weapon->instance_id ?? 0);
-                        if ($instanceId > 0) {
-                            (new \App\Service\ItemInstanceService())->destroy($instanceId);
-                        } else {
-                            $weapon->add_item($actor, -1);
-                        }
+                        $destroyed = $instanceId > 0
+                            ? $itemInstances->destroy($instanceId)
+                            : $itemInstances->consumeLegacyEquippedUnit(
+                                $actor->getId(),
+                                (int) $weapon->id,
+                                (string) ($weapon->row->equiped ?? '')
+                            );
+                    }
+
+                    if ($destroyed) {
                         $conditionToPay->getAction()->setRefreshScreen(true);
                     }
 
-                    $text = 'Vous détruisez ' . $weapon->data->name . ' en la lançant.';
+                    $text = $destroyed
+                        ? 'Vous détruisez ' . $weapon->data->name . ' en le lançant.'
+                        : 'Vous lancez ' . $weapon->data->name . ', mais il reste équipé.';
                     array_push($result, $text);
                 } elseif($target !== null && $distance > 2){
                     // A simulation must not drop the weapon onto the real map; still report the loss.
@@ -120,7 +130,16 @@ class RequiresAmmoCondition extends BaseCondition implements HasParameterSchemaI
                             [$actor->emplacements->main1->id, $coordsId]
                         );
 
-                        $actor->emplacements->main1->add_item($actor, -1);
+                        $instanceId = (int) ($weapon->row->instance_id ?? $weapon->instance_id ?? 0);
+                        if ($instanceId === 0) {
+                            (new \App\Service\ItemInstanceService())->consumeLegacyEquippedUnit(
+                                $actor->getId(),
+                                (int) $weapon->id,
+                                (string) ($weapon->row->equiped ?? '')
+                            );
+                        } else {
+                            $weapon->add_item($actor, -1);
+                        }
 
                         \App\Service\Map\BoardChanges::cell($dropCoords);
                         $conditionToPay->getAction()->setRefreshScreen(true);
