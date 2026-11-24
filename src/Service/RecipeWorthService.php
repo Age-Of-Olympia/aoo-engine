@@ -173,18 +173,15 @@ final class RecipeWorthService
     }
 
     /**
-     * One resource of the object's race (a base one for a common object):
-     * drawn from the recipe when it holds one, else the cheapest the
-     * catalog knows. Tied catalog prices are drawn from, using the caller's
+     * One cheapest material of the object's race, whether or not the recipe
+     * contains it. Tied catalog prices are drawn from, using the caller's
      * seeded dice when provided.
      *
-     * @param array<string, array{count: float, price: int, race: string}> $recipe
      * @param array<string, int> $reserved resources already selected for this quote
      * @return array{name: string, price: int}|null
      */
     public function racialResource(
         string $race,
-        array $recipe,
         ?Randomizer $dice = null,
         ?int $playerId = null,
         array $reserved = []
@@ -192,13 +189,6 @@ final class RecipeWorthService
     {
         $dice ??= new Randomizer();
         $race = $race === '' ? 'common' : $race;
-
-        $own = array_filter($recipe, static fn (array $line, string $name): bool => $name !== 'or' && $line['race'] === $race, ARRAY_FILTER_USE_BOTH);
-        if ($own !== []) {
-            $name = $this->pickResource($own, $dice, $playerId, $reserved);
-
-            return ['name' => $name, 'price' => $own[$name]['price']];
-        }
 
         $rows = $this->conn->fetchAllAssociativeIndexed(
             "SELECT name, price FROM items WHERE race = ? AND type = 'matiere' AND is_deprecated = 0 ORDER BY price, name",
@@ -213,7 +203,9 @@ final class RecipeWorthService
         $name = $this->pickResource($cheapest, $dice, $playerId, $reserved);
         $row = $cheapest[$name];
 
-        return ['name' => (string) $row['name'], 'price' => (int) $row['price']];
+        // fetchAllAssociativeIndexed() uses the first selected column as the
+        // array key and omits it from each row.
+        return ['name' => (string) $name, 'price' => (int) $row['price']];
     }
 
     /**
