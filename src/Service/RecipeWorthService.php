@@ -203,7 +203,9 @@ final class RecipeWorthService
         $name = $this->pickResource($cheapest, $dice, $playerId, $reserved);
         $row = $cheapest[$name];
 
-        return ['name' => (string) $row['name'], 'price' => (int) $row['price']];
+        // fetchAllAssociativeIndexed() uses the first selected column as the
+        // array key and omits it from each row.
+        return ['name' => (string) $name, 'price' => (int) $row['price']];
     }
 
     /**
