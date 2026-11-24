@@ -121,7 +121,7 @@ final class RepairService
         $dice = new Randomizer(new Mt19937($seed ?? random_int(0, 2147483647)));
         $resources = $this->worth->resourcesWorth($bill, $recipe, $dice, $playerId);
 
-        $racial = $this->worth->racialResource((string) $row['race'], $recipe, $dice, $playerId, $resources);
+        $racial = $this->worth->racialResource((string) $row['race'], $dice, $playerId, $resources);
         if ($racial !== null) {
             $resources[$racial['name']] = ($resources[$racial['name']] ?? 0) + 1;
         }
