@@ -32,9 +32,11 @@ class FoiView
         $seasonPlans = array_keys(plans()->forSeason()) ?: [''];
         $inSeason = '(' . implode(',', array_fill(0, count($seasonPlans), '?')) . ')';
         $onSeasonPlan = 'coords_id IN (SELECT id FROM coords WHERE plan IN ' . $inSeason . ')';
-        $contestedPlans = (new AltarControlService())->contestedPlans($seasonPlans);
-        $controlledPlans = array_values(array_diff($seasonPlans, $contestedPlans)) ?: [''];
-        $inControlledPlans = '(' . implode(',', array_fill(0, count($controlledPlans), '?')) . ')';
+        $altarControl = new AltarControlService();
+        $controlledByGod = $altarControl->controlledPlanCountsByGod($seasonPlans);
+        /* Only a god holding a consecrated altar on a season plan ranks. */
+        $altarGodIds = array_map('intval', array_keys($altarControl->altarCountsByGod($seasonPlans)));
+        $inAltarGods = '(' . implode(',', $altarGodIds ?: [0]) . ')';
 
         $sql = '
         SELECT
@@ -43,8 +45,7 @@ class FoiView
             COALESCE(SUM(f.pf), 0) AS total_foi,
             COUNT(f.id) AS nb_fideles,
             top.name AS top_prieur_name,
-            top.id AS top_prieur_id,
-            COALESCE(excl.total_plans, 0) AS plans_controles
+            top.id AS top_prieur_id
         FROM players AS g
         LEFT JOIN players AS f ON f.godId = g.id AND f.id > 0 AND ' . self::activeSql('f') . '
             AND f.' . $onSeasonPlan . '
@@ -55,32 +56,14 @@ class FoiView
             ORDER BY b.pf DESC
             LIMIT 1
         )
-        /* A plan is controlled when exactly ONE god has a consecrated altar
-           on it. `godId != 0` twice over is the rule that a naked altar is
-           neutral: counted, it would read as a rival and take the plan away
-           from the god who actually holds it. */
-        LEFT JOIN (
-            SELECT a.godId, COUNT(DISTINCT ec.plan) AS total_plans
-            FROM players AS a
-            JOIN entity_cells AS ec ON ec.player_id = a.id
-            WHERE a.race = "altar" AND a.godId != 0
-            AND ec.plan IN ' . $inControlledPlans . '
-            GROUP BY a.godId
-        ) AS excl ON excl.godId = g.id
         WHERE g.race = "dieu"
-        AND EXISTS (
-            /* The altar IS the entity now. Reading the trigger meant a god
-               whose altar had been taken away still ranked, and a god given
-               one by consecration did not. */
-            SELECT 1 FROM players AS a
-            WHERE a.race = "altar" AND a.godId = g.id
-        )
-        GROUP BY g.id, top.id, top.name, excl.total_plans
+        AND g.id IN ' . $inAltarGods . '
+        GROUP BY g.id, top.id, top.name
         HAVING nb_fideles > 0 AND total_foi > 0
         ORDER BY total_foi DESC
         ';
 
-        $res = $db->exe($sql, array_merge($seasonPlans, $seasonPlans, $controlledPlans));
+        $res = $db->exe($sql, array_merge($seasonPlans, $seasonPlans));
 
         echo '
         <h2>Dieux les plus vénérés</h2>
@@ -101,6 +84,9 @@ class FoiView
 
         $rank = 1;
         while ($row = $res->fetch_object()) {
+            /* A plan is controlled when exactly ONE god has a consecrated
+               altar on it; a naked altar is neutral. */
+            $row->plans_controles = $controlledByGod[(int) $row->id] ?? 0;
             $topPrieur = $row->top_prieur_name
                 ? '<a href="infos.php?targetId='. $row->top_prieur_id .'">'. $row->top_prieur_name .'</a>'
                 : '—';

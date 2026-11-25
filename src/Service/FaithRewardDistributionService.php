@@ -154,52 +154,45 @@ final class FaithRewardDistributionService
 
     private function winningGodId(): ?int
     {
-        $plans = array_keys((new PlanService())->forSeason());
+        $altarControl = new AltarControlService();
+        $plans = $altarControl->seasonPlans();
         if ($plans === []) {
+            return null;
+        }
+        $controlled = $altarControl->controlledPlanCountsByGod($plans);
+        $altarGodIds = array_map('intval', array_keys($altarControl->altarCountsByGod($plans)));
+        if ($altarGodIds === []) {
             return null;
         }
         $marks = implode(', ', array_fill(0, count($plans), '?'));
         $activeSince = time() - INACTIVE_TIME;
-        $gods = $this->connection->fetchAllAssociative(
-            "SELECT g.id, COALESCE(controlled.total_plans, 0) AS total_plans
+        $godMarks = implode(', ', array_fill(0, count($altarGodIds), '?'));
+        $rows = $this->connection->fetchAllAssociative(
+            "SELECT g.id
                FROM players g
                JOIN players f ON f.godId = g.id AND f.id > 0
                  AND f.coords_id IN (SELECT c.id FROM coords c WHERE c.plan IN ({$marks}))
                JOIN accounts acc ON acc.player_id = f.id
                  AND acc.last_login_time >= ?
-               LEFT JOIN (
-                    SELECT a.godId, COUNT(DISTINCT ec.plan) AS total_plans
-                      FROM players a
-                      JOIN entity_cells ec ON ec.player_id = a.id
-                     WHERE a.race = 'altar' AND a.godId != 0
-                       AND ec.plan IN ({$marks})
-                       AND ec.plan IN (
-                            SELECT ec2.plan
-                              FROM players a2
-                              JOIN entity_cells ec2 ON ec2.player_id = a2.id
-                             WHERE a2.race = 'altar' AND a2.godId != 0
-                               AND ec2.plan IN ({$marks})
-                             GROUP BY ec2.plan
-                            HAVING COUNT(DISTINCT a2.godId) = 1
-                       )
-                     GROUP BY a.godId
-               ) controlled ON controlled.godId = g.id
-              WHERE g.race = 'dieu'
-                AND EXISTS (SELECT 1 FROM players a WHERE a.race = 'altar' AND a.godId = g.id)
-              GROUP BY g.id, controlled.total_plans
-             HAVING SUM(f.pf) > 0
-              ORDER BY total_plans DESC, g.id ASC",
-            [...$plans, $activeSince, ...$plans, ...$plans]
+              WHERE g.race = 'dieu' AND g.id IN ({$godMarks})
+              GROUP BY g.id
+             HAVING SUM(f.pf) > 0",
+            [...$plans, $activeSince, ...$altarGodIds]
         );
+        $gods = array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'],
+            'total_plans' => $controlled[(int) $row['id']] ?? 0,
+        ], $rows);
+        usort($gods, static fn (array $a, array $b): int => [$b['total_plans'], $a['id']] <=> [$a['total_plans'], $b['id']]);
 
-        if ($gods === [] || (int) $gods[0]['total_plans'] < 1) {
+        if ($gods === [] || $gods[0]['total_plans'] < 1) {
             return null;
         }
 
-        if (isset($gods[1]) && (int) $gods[1]['total_plans'] === (int) $gods[0]['total_plans']) {
+        if (isset($gods[1]) && $gods[1]['total_plans'] === $gods[0]['total_plans']) {
             return null;
         }
 
-        return (int) $gods[0]['id'];
+        return $gods[0]['id'];
     }
 }

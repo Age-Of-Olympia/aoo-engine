@@ -109,10 +109,14 @@ function cult_render_details(CultAdminService $service, array $god, array $planL
         if ($altar['contested']) {
             $position .= ' <strong class="text-danger ml-3">(Contesté)</strong>';
         }
-        $altars .= '<tr><td>' . e($altar['name']) . ' <small class="text-muted">#' . $altar['id'] . '</small></td>'
+        if (!$altar['counted']) {
+            $position .= ' <strong class="ml-3">(Autre saison — non compté)</strong>';
+        }
+        $altars .= '<tr' . ($altar['counted'] ? '' : ' class="text-muted" style="opacity:.55"') . '><td>' . e($altar['name']) . ' <small class="text-muted">#' . $altar['id'] . '</small></td>'
             . '<td>' . $position . '</td><td>' . $altar['pv'] . '</td></tr>';
     }
 
+    $countedAltars = count(array_filter($altarRows, static fn (array $altar): bool => $altar['counted']));
     $followersTable = $followers !== ''
         ? '<div class="table-responsive"><table class="table table-sm table-striped"><thead><tr><th>Fidèle</th><th>Race</th><th>Position</th><th>PF</th></tr></thead><tbody>' . $followers . '</tbody></table></div>'
         : '<p class="text-muted mb-0">Aucun fidèle.</p>';
@@ -121,7 +125,7 @@ function cult_render_details(CultAdminService $service, array $god, array $planL
         : '<p class="text-muted mb-0">Aucun autel affilié.</p>';
 
     return '<div class="card mb-3"><div class="card-header">Fidèles (' . count($followerRows) . ')</div><div class="card-body">' . $followersTable . '</div></div>'
-        . '<div class="card"><div class="card-header">Autels affiliés (' . count($altarRows) . ')</div><div class="card-body">' . $altarsTable . '</div></div>';
+        . '<div class="card"><div class="card-header">Autels affiliés (' . $countedAltars . ' comptés / ' . count($altarRows) . ' au total)</div><div class="card-body">' . $altarsTable . '</div></div>';
 }
 
 $service = new CultAdminService();
