@@ -22,12 +22,15 @@ final class MoveResponseView
      * $feedLogId: the log the page's events feed is current up to (0: unknown).
      * feedChanged: something newer may show in it.
      *
-     * @return array{board: string, feedChanged: bool}
+     * @return array{board: string, feedChanged: bool, death?: bool}
      */
     public static function render(Player $player, int $feedLogId = 0): array
     {
         // As index.php does before drawing: a turn that fell due is processed
-        (new TurnProcessingService())->processIfDue($player);
+        $turnRecap = (new TurnProcessingService())->processIfDue($player);
+        if (!empty($turnRecap->death)) {
+            return ['board' => '', 'feedChanged' => true, 'death' => true];
+        }
 
         ob_start();
         TopBarView::render($player);

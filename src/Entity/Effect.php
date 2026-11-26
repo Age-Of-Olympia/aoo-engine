@@ -129,6 +129,10 @@ class Effect
     #[ORM\Column(type: "boolean", options: ["default" => false], name: "turn_mvt_malus")]
     private bool $turnMvtMalus = false;
 
+    /** Pool reduced at the turn boundary by the carried effect's value. */
+    #[ORM\Column(type: "string", length: 4, options: ["default" => ""], name: "turn_loss_carac")]
+    private string $turnLossCarac = '';
+
     /**
      * Posture de défense : portée d'annulation d'une attaque subie —
      * '' (pas une posture), 'spell', 'physical', 'distance' ou 'any'. La posture
@@ -291,6 +295,28 @@ class Effect
         return array_filter(array_map('intval', $this->caracMods ?? []));
     }
 
+    /** Whether lowering this carried effect's value weakens an active behavior. */
+    public function usesIntensity(): bool
+    {
+        if ($this->getCaracMods() !== []
+            || $this->isTurnMvtMalus()
+            || $this->getTurnLossCarac() !== ''
+            || $this->isCostMultiplier()) {
+            return true;
+        }
+
+        foreach ([
+            'getRollAttackMod', 'getRollDefenseMod', 'getDamageDealtMod',
+            'getDamageTakenMod', 'getPushAttackMod', 'getPushDefenseMod',
+        ] as $getter) {
+            if ($this->{$getter}() !== 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** @param array<string, int> $mods */
     public function setCaracMods(array $mods): void
     {
@@ -404,6 +430,16 @@ class Effect
     public function setTurnMvtMalus(bool $turnMvtMalus): void
     {
         $this->turnMvtMalus = $turnMvtMalus;
+    }
+
+    public function getTurnLossCarac(): string
+    {
+        return $this->turnLossCarac;
+    }
+
+    public function setTurnLossCarac(string $carac): void
+    {
+        $this->turnLossCarac = in_array($carac, ['pv', 'pm'], true) ? $carac : '';
     }
 
     public function getDodgeScope(): string

@@ -383,6 +383,7 @@ class EffectService
                 'block_recovery' => $effect->getBlockRecovery() === $carac,
                 'turn_regen' => $effect->isTurnRegen(),
                 'turn_mvt_malus' => $effect->isTurnMvtMalus(),
+                'turn_loss' => $effect->getTurnLossCarac() === $carac,
                 default => false,
             };
             if ($matches) {

@@ -25,7 +25,9 @@ final class SimulatedEffectService
         $entries = [];
         foreach ($this->effects as $name => $value) {
             $entry = new \App\Entity\PlayerEffect();
+            $entry->setPlayer_Id(0);
             $entry->setName((string) $name);
+            $entry->setEndTime(\App\Service\PlayerEffectService::DURATION_INFINITE);
             $entry->setValue((int) $value);
             $entries[] = $entry;
         }
@@ -49,5 +51,17 @@ final class SimulatedEffectService
 
     public function removeEffectByPlayerId(int $playerId, string $name): void
     {
+        unset($this->effects[$name]);
+    }
+
+    public function updateEffectByPlayerId(int $playerId, string $name, ?int $endTime, int $value): bool
+    {
+        if (!array_key_exists($name, $this->effects)) {
+            return false;
+        }
+
+        $this->effects[$name] = $value;
+
+        return true;
     }
 }

@@ -178,7 +178,7 @@ class PlayerEffectService
      * here. No cancellation rules — the effect is already in place, only its
      * counters are corrected.
      */
-    public function updateEffectByPlayerId(int $playerId, string $name, int $endTime, int $value): bool
+    public function updateEffectByPlayerId(int $playerId, string $name, ?int $endTime, int $value): bool
     {
         $existingEffect = $this->entityManager->getRepository(PlayerEffect::class)->findOneBy([
             'player_id' => $playerId,

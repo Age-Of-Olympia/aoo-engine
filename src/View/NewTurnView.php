@@ -20,6 +20,12 @@ class NewTurnView
             return;
         }
 
+        if (!empty($recap->death)) {
+            DeathView::renderDeathScreen($player);
+
+            return;
+        }
+
         echo '<link rel="stylesheet" href="css/interstitial.css?v=20260821b" />';
 
         echo '<div class="aoo-notice aoo-notice--turn">';

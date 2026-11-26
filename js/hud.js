@@ -739,6 +739,11 @@
      * with the step. The new cell's panel and the feed are asked for apart,
      * in parallel, the feed only when something new may show in it. */
     window.hudApplyMove = function (data) {
+        if (data.death) {
+            document.location.reload();
+            return;
+        }
+
         if (boardSlide) {
             clearStepPending(boardSlide);
         }

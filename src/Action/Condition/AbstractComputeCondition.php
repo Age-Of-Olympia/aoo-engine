@@ -87,9 +87,9 @@ abstract class AbstractComputeCondition extends BaseCondition
         if ($total < $threshold) {
             $damage = $threshold - $total;
             $actor->putBonus(['pv' => -$damage]);
-            $message .= ' ' . $actor->get_data()->name . ' perd ' . $damage . ' PV en retombant.';
+            $message .= ' ' . $actor->get_data()->name . ' ne se réceptionne pas correctement et perd ' . $damage . ' PV en tombant.';
         } else {
-            $message .= ' Le saut est maîtrisé.';
+            $message .= ' ' . $actor->get_data()->name . ' se réceptionne parfaitement !';
         }
 
         $successMessages = $result->getConditionSuccessMessages() ?? [];

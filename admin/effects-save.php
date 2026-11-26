@@ -93,6 +93,7 @@ $applyForm = static function (Effect $effect): void {
     $effect->setBlockRecovery(trim((string) ($_POST['block_recovery'] ?? '')));
     $effect->setTurnRegen(booleanCheckbox('turn_regen'));
     $effect->setTurnMvtMalus(booleanCheckbox('turn_mvt_malus'));
+    $effect->setTurnLossCarac(trim((string) ($_POST['turn_loss_carac'] ?? '')));
 
     // Posture de défense + présences — les setters valident les enums
     // (valeur inconnue → champ vidé, jamais de valeur folle en base).

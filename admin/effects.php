@@ -76,6 +76,9 @@ function effect_modifiers(Effect $effect): string
     if ($effect->isTurnMvtMalus()) {
         $parts[] = '−valeur Mvt au tour';
     }
+    if ($effect->getTurnLossCarac() !== '') {
+        $parts[] = '−valeur ' . strtoupper($effect->getTurnLossCarac()) . ' au tour';
+    }
     if ($effect->getDodgeScope() !== '') {
         $scopes = ['any' => 'tout', 'physical' => 'mêlée', 'distance' => 'tirs', 'spell' => 'sorts'];
         $parts[] = 'posture (' . ($scopes[$effect->getDodgeScope()] ?? $effect->getDodgeScope()) . ')';
@@ -319,6 +322,11 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
             '<div>' . formCheckbox('turn_mvt_malus', $isEdit && $effect->isTurnMvtMalus(),
                 'Retire sa valeur en Mvt au tour suivant') . '</div>',
             'form-group col-md-3')
+        . formField('Perte au nouveau tour',
+            formSelect('turn_loss_carac', ['pv' => 'PV (brûlure)', 'pm' => 'PM (mouillé)'],
+                $isEdit ? $effect->getTurnLossCarac() : '', '— aucune —'),
+            'form-group col-md-3',
+            'Retire la valeur portée de la réserve au début du nouveau tour; la perte de PV peut tuer et la perte de PM peut passer sous zéro.')
         . '</div>';
 
     return '<form method="post" action="/admin/effects-save.php?action=' . $action . '">'

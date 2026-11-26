@@ -32,8 +32,8 @@ class TurnProcessingService
      * {@see processDue()}, which no session can reach into.
      *
      * @return object|null a displayable recap:
-     *   {nextTurnTime: int, rows: array<int, array{0: ?string, 1: string, 2: string}>,
-     *    wearRecap: string[], showMailPrompt: bool}
+     *   {nextTurnTime?: int, rows?: array<int, array{0: ?string, 1: string, 2: string}>,
+     *    wearRecap?: string[], showMailPrompt?: bool, death?: bool}
      *   — rows = [tooltipKey|null, label, value (light HTML)]
      */
     public function processIfDue(Player $player): ?object
@@ -160,6 +160,13 @@ class TurnProcessingService
 
         if (file_exists('img/foregrounds/doubles/' . $player->id . '.png')) {
             View::delete_double($player);
+        }
+
+        // Resolve previous-turn elemental losses before any new-turn recovery.
+        // A lethal burn is processed as a death by the elements, and the
+        // pending turn remains due until the player dismisses the death page.
+        if ($this->applyTurnLosses($player, $rows)) {
+            return (object) ['death' => true];
         }
 
         // XP du tour, avec rattrapage sur le premier joueur (plafonné).
@@ -311,6 +318,34 @@ class TurnProcessingService
         }
 
         return [$k, CARACS[$k], '+' . $val];
+    }
+
+    /** Apply carried turn-loss effects; true means their PV loss killed the character. */
+    private function applyTurnLosses(Player $player, array &$rows): bool
+    {
+        foreach ($player->getEffects() as $carriedEffect) {
+            $effect = $player->effectService->getEffectByName($carriedEffect->getName());
+            if ($effect === null) {
+                continue;
+            }
+
+            $carac = $effect->getTurnLossCarac();
+            $amount = (int) ($carriedEffect->getValue() ?? 0);
+            if ($carac === '' || $amount <= 0) {
+                continue;
+            }
+
+            $player->putBonus([$carac => -$amount]);
+            $rows[] = [$carac, $effect->getLabel(), '-' . $amount];
+
+            if ($carac === 'pv' && $player->getRemaining('pv') < 1) {
+                PlayerService::processSelfDeath($player, 'aux éléments');
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Le récap en texte lisible pour l'événement (sans HTML). */

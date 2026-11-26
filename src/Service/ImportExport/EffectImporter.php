@@ -101,6 +101,7 @@ final class EffectImporter extends AbstractObjectImporter
         $effect->setBlockRecovery((string) ($plan['blockRecovery'] ?? ''));
         $effect->setTurnRegen((bool) ($plan['turnRegen'] ?? false));
         $effect->setTurnMvtMalus((bool) ($plan['turnMvtMalus'] ?? false));
+        $effect->setTurnLossCarac((string) ($plan['turnLossCarac'] ?? ''));
         $effect->setDodgeScope((string) ($plan['dodgeScope'] ?? ''));
         $effect->setDodgeAttackerWeapon((string) ($plan['dodgeAttackerWeapon'] ?? ''));
         $effect->setDodgeDefenderWeapon((string) ($plan['dodgeDefenderWeapon'] ?? ''));

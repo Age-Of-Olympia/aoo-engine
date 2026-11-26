@@ -67,6 +67,7 @@ final class EffectExporter implements ObjectExporterInterface
             'blockRecovery'         => $entity->getBlockRecovery(),
             'turnRegen'             => $entity->isTurnRegen(),
             'turnMvtMalus'          => $entity->isTurnMvtMalus(),
+            'turnLossCarac'         => $entity->getTurnLossCarac(),
             'dodgeScope'            => $entity->getDodgeScope(),
             'dodgeAttackerWeapon'   => $entity->getDodgeAttackerWeapon(),
             'dodgeDefenderWeapon'   => $entity->getDodgeDefenderWeapon(),
